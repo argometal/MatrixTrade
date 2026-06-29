@@ -20,6 +20,9 @@ export interface Trade {
 
   /** Absolute path to the note file on disk */
   filePath: string;
+
+  /** Set when frontmatter is readable but logically inconsistent (e.g. closed without exit) */
+  inconsistent?: boolean;
 }
 
 export interface ExperimentRules {

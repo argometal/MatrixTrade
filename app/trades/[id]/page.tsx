@@ -33,6 +33,9 @@ export default async function TradeDetailPage({
           {trade.id} · {trade.ticker}
         </h1>
         <p className="text-sm capitalize text-zinc-500">Status: {trade.status}</p>
+        {trade.inconsistent && (
+          <p className="mt-1 text-sm text-amber-600">⚠ inconsistent trade data</p>
+        )}
       </header>
 
       <dl className="grid grid-cols-2 gap-4 rounded-lg border border-zinc-200 bg-white p-6 text-sm shadow-sm">

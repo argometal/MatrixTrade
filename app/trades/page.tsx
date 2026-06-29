@@ -68,6 +68,11 @@ export default async function TradesPage() {
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusStyles[trade.status]}`}>
                         {trade.status}
                       </span>
+                      {trade.inconsistent && (
+                        <span className="ml-2 text-xs text-amber-600" title="Closed without exit in frontmatter">
+                          ⚠ inconsistent
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 tabular-nums">{trade.entry.toFixed(2)}</td>
                     <td className="px-4 py-3 tabular-nums">

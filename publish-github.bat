@@ -3,88 +3,65 @@ setlocal EnableDelayedExpansion
 set "ROOT=%~dp0"
 cd /d "%ROOT%"
 
-rem --- Find git.exe ---
 set "GIT=git"
-where git >nul 2>&1 || (
-  if exist "C:\Tools\Git\cmd\git.exe" set "GIT=C:\Tools\Git\cmd\git.exe"
-)
+if exist "C:\Tools\Git\cmd\git.exe" set "GIT=C:\Tools\Git\cmd\git.exe"
 if exist "C:\Program Files\Git\cmd\git.exe" set "GIT=C:\Program Files\Git\cmd\git.exe"
 
 "%GIT%" --version >nul 2>&1
 if errorlevel 1 (
-  echo.
-  echo ERROR: Git not found.
-  echo Install: https://git-scm.com/download/win
-  echo Then run this script again.
-  echo.
-  echo See GITHUB.md for manual steps.
+  echo ERROR: Git no encontrado. Instala Git o usa C:\Tools\Git
   pause
   exit /b 1
 )
 
-echo MatrixTrade — publish to GitHub
-echo Using Git: %GIT%
+echo MatrixTrade — publicar en GitHub
+echo Git: %GIT%
 echo.
 
 if not exist "%ROOT%\.git" (
-  echo Initializing repository...
   "%GIT%" init
   "%GIT%" branch -M main
 )
 
-echo Staging files...
 "%GIT%" add .
-
 "%GIT%" diff --cached --quiet
 if errorlevel 1 (
-  echo Creating commit...
   "%GIT%" commit -m "MatrixTrade MVP: experiment control H001-H030 with Obsidian storage"
 ) else (
-  echo Nothing new to commit.
+  echo Sin cambios nuevos para commit.
 )
-
-rem --- gh CLI (optional) ---
-where gh >nul 2>&1
-if errorlevel 1 goto MANUAL
-
-gh auth status >nul 2>&1
-if errorlevel 1 (
-  echo.
-  echo GitHub CLI not logged in. Run: gh auth login
-  goto MANUAL
-)
-
-echo.
-set /p REPO_NAME="GitHub repo name [MatrixTrade]: "
-if "!REPO_NAME!"=="" set "REPO_NAME=MatrixTrade"
-
-set /p VISIBILITY="Visibility (private/public) [private]: "
-if "!VISIBILITY!"=="" set "VISIBILITY=private"
 
 "%GIT%" remote get-url origin >nul 2>&1
 if errorlevel 1 (
-  echo Creating GitHub repo !REPO_NAME!...
-  gh repo create !REPO_NAME! --!VISIBILITY! --source=. --remote=origin --push
-) else (
-  echo Pushing to existing remote...
-  "%GIT%" push -u origin main
+  echo.
+  echo === Crear repo en GitHub ===
+  echo 1. Abre https://github.com/new
+  echo 2. Nombre: MatrixTrade  ^|  Private  ^|  SIN README
+  echo 3. Copia la URL del repo y pegala abajo
+  echo.
+  set /p REPO_URL="URL del repo (https://github.com/USUARIO/MatrixTrade.git): "
+  if "!REPO_URL!"=="" (
+    echo Cancelado.
+    pause
+    exit /b 1
+  )
+  "%GIT%" remote add origin "!REPO_URL!"
 )
 
-if errorlevel 1 goto MANUAL
+echo.
+echo Subiendo a GitHub...
+"%GIT%" push -u origin main
+if errorlevel 1 (
+  echo.
+  echo Push fallo. Causas comunes:
+  echo - Repo no creado en github.com
+  echo - URL incorrecta
+  echo - Login: Git pedira usuario + token de GitHub
+  pause
+  exit /b 1
+)
 
 echo.
-echo Done! Open your repo on GitHub.
-gh repo view --web 2>nul
-pause
-exit /b 0
-
-:MANUAL
-echo.
-echo --- Manual push ---
-echo 1. Create repo at https://github.com/new  (name: MatrixTrade, private)
-echo 2. Run:
-echo    git remote add origin https://github.com/YOUR_USER/MatrixTrade.git
-echo    git push -u origin main
-echo.
-echo Full guide: GITHUB.md
+echo Listo. Tu repo: 
+"%GIT%" remote get-url origin
 pause

@@ -53,6 +53,9 @@ function parseRequiredNumber(value: string | undefined, field: string): number {
   if (n === undefined) {
     throw new Error(`Invalid or missing numeric field: ${field}`);
   }
+  if (n <= 0) {
+    throw new Error(`Field ${field} must be > 0`);
+  }
   return n;
 }
 
@@ -73,15 +76,19 @@ export function parseTradeFile(filePath: string, content: string, rules: Experim
   }
 
   const id = (raw.id ?? "").toUpperCase();
-  const ticker = (raw.ticker ?? "").toUpperCase();
+  const ticker = (raw.ticker ?? "").trim().toUpperCase();
   const status = raw.status as TradeStatus;
 
   if (!isValidExperimentId(id)) {
-    throw new Error(`Invalid experiment ID in ${filePath}: ${id}`);
+    throw new Error(`Invalid experiment ID: ${id}`);
+  }
+
+  if (!ticker) {
+    throw new Error("Missing or empty ticker");
   }
 
   if (!["pending", "open", "closed"].includes(status)) {
-    throw new Error(`Invalid status in ${filePath}: ${status}`);
+    throw new Error(`Invalid status: ${status}`);
   }
 
   const trade: Trade = {
@@ -100,7 +107,7 @@ export function parseTradeFile(filePath: string, content: string, rules: Experim
   };
 
   if (status === "closed" && trade.exit === undefined) {
-    throw new Error(`Closed trade missing exit in ${filePath}`);
+    trade.inconsistent = true;
   }
 
   return trade;
@@ -180,17 +187,23 @@ export async function readAllTrades(rules: ExperimentRules): Promise<Trade[]> {
   }
 
   const trades: Trade[] = [];
+  let valid = 0;
+  let invalid = 0;
 
   for (const entry of entries) {
     if (!entry.endsWith(".md")) continue;
     const filePath = path.join(tradesDir, entry);
-    const content = await fs.readFile(filePath, "utf-8");
     try {
+      const content = await fs.readFile(filePath, "utf-8");
       trades.push(parseTradeFile(filePath, content, rules));
+      valid++;
     } catch (err) {
-      console.warn(`Skipping invalid trade file ${entry}:`, err);
+      invalid++;
+      console.warn(`[MatrixTrade] Skipped invalid file: ${filePath}`, err);
     }
   }
+
+  console.log(`[MatrixTrade] Loaded ${valid} trades, skipped ${invalid}`);
 
   return trades.sort((a, b) => a.id.localeCompare(b.id));
 }
