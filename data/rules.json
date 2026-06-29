@@ -1,0 +1,7 @@
+{
+  "cycleLossLimit": -300,
+  "maxTrades": 30,
+  "obsidianVault": "TradingVault",
+  "obsidianVaultPath": "vault",
+  "tradesFolder": "Trades"
+}

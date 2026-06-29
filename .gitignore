@@ -1,0 +1,33 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# portable Node (copy locally — see runtime/README.md)
+/runtime/node/
+
+# next.js
+/.next/
+/out/
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+.env*.local
+
+# typescript
+next-env.d.ts
+
+# Obsidian trade notes (your data — keep local)
+/vault/Trades/*.md
+*.matrixtrade.tmp
+
+# OS / editor
+Thumbs.db
+*.swp
