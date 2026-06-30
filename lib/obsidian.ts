@@ -103,7 +103,7 @@ export function parseTradeFile(filePath: string, content: string, rules: Experim
     createdAt: raw.createdAt ?? new Date(0).toISOString(),
     closedAt: raw.closedAt || undefined,
     obsidianNote: buildNoteUri(id, ticker, rules),
-    filePath,
+    notePath: `${rules.obsidianVaultPath}/${rules.tradesFolder}/${id}-${ticker}.md`.replace(/\\/g, "/"),
   };
 
   if (status === "closed" && trade.exit === undefined) {
@@ -184,7 +184,8 @@ export async function readAllTradeNotes(
   await Promise.all(
     trades.map(async (trade) => {
       try {
-        const body = await readNoteBody(trade.filePath);
+        const abs = path.join(resolveTradesDir(rules), tradeFilename(trade.id, trade.ticker));
+        const body = await readNoteBody(abs);
         notes.set(trade.id, body);
       } catch {
         notes.set(trade.id, "");
@@ -249,7 +250,7 @@ export async function writeTradeFile(trade: Trade, rules: ExperimentRules): Prom
     // new file
   }
 
-  const content = serializeTradeFile({ ...trade, filePath }, body);
+  const content = serializeTradeFile(trade, body);
   await fs.writeFile(tmpPath, content, "utf-8");
   await fs.rename(tmpPath, filePath);
 }

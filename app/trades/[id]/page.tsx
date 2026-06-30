@@ -55,6 +55,14 @@ export default async function TradeDetailPage({
       >
         Open Obsidian note →
       </a>
+      {trade.notePath && (
+        <p className="text-xs text-zinc-500">
+          Note: <code className="rounded bg-zinc-100 px-1">{trade.notePath}</code>
+        </p>
+      )}
+      {trade.lessons && (
+        <p className="text-sm text-zinc-600">{trade.lessons}</p>
+      )}
 
       {trade.status === "pending" && (
         <form action={openTradeAction.bind(null, trade.id)}>

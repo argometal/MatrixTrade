@@ -113,6 +113,19 @@ Rules config stays in `data/rules.json` (limits, vault path).
 
 See `MatrixTrade-IP01.md` for full rules.
 
+## Deploy to Vercel (free)
+
+Read-only dashboard from any device — no LAN, no QR required.
+
+1. **Commit and push** (must include `data/trades.json` and `data/rules.json`).
+2. Go to [vercel.com](https://vercel.com) → **Add New Project** → import `argometal/MatrixTrade`.
+3. Framework: **Next.js** (auto-detected). No env vars needed for the view checkpoint.
+4. Deploy → open the `*.vercel.app` URL on your iPhone.
+
+**Checkpoint:** `/` dashboard and `/trades` (H001) load from the deployed URL.
+
+**Limitation (v1):** Vercel serverless has no persistent disk. Creating/closing trades in the UI only works locally; production is read-only until GitHub-sync write path is chosen (see open issue).
+
 ## Publish to GitHub
 
 See **`GITHUB.md`** or run **`publish-github.bat`** (requires [Git for Windows](https://git-scm.com/download/win)).

@@ -1,8 +1,9 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { readAllTradeNotes } from "./obsidian";
 import { computeExperiment } from "./calculate";
-import { buildNoteUri, readAllTrades, resolveVaultPath, writeTradeFile } from "./obsidian";
+import { readNoteBody, resolveVaultPath, writeTradeFile, buildNoteUri } from "./obsidian";
+import { enrichTrade, absoluteNotePath } from "./trade-links";
+import { readTradesJson, upsertTradeInJson } from "./trades-json";
 import { validateCloseTrade, validateCreateTrade } from "./validation";
 import type {
   CloseTradeInput,
@@ -25,8 +26,13 @@ export async function getRules(): Promise<ExperimentRules> {
 }
 
 export async function getTrades(): Promise<Trade[]> {
-  const rules = await getRules();
-  return readAllTrades(rules);
+  const [rules, raw] = await Promise.all([getRules(), readTradesJson()]);
+  return raw.map((t) => enrichTrade(t, rules));
+}
+
+export async function getTradeById(id: string): Promise<Trade | undefined> {
+  const trades = await getTrades();
+  return trades.find((t) => t.id === id.toUpperCase());
 }
 
 export async function getExperiment(): Promise<Experiment> {
@@ -39,6 +45,7 @@ export async function getVaultStatus(): Promise<{
   tradesFolder: string;
   vaultName: string;
   ready: boolean;
+  dataFile: string;
 }> {
   const rules = await getRules();
   const vaultPath = resolveVaultPath(rules);
@@ -54,21 +61,36 @@ export async function getVaultStatus(): Promise<{
     tradesFolder: rules.tradesFolder,
     vaultName: rules.obsidianVault,
     ready,
+    dataFile: path.join(DATA_DIR, "trades.json"),
   };
 }
 
 export async function getTradeNotes(): Promise<Map<string, string>> {
-  const rules = await getRules();
-  return readAllTradeNotes(rules);
+  const [trades, rules] = await Promise.all([getTrades(), getRules()]);
+  const notes = new Map<string, string>();
+
+  for (const trade of trades) {
+    let body = "";
+    try {
+      body = await readNoteBody(absoluteNotePath(trade, rules));
+    } catch {
+      body = "";
+    }
+    if (!body.trim()) {
+      body = [trade.thesis, trade.psychology, trade.lessons, trade.notes].filter(Boolean).join("\n\n");
+    }
+    notes.set(trade.id, body);
+  }
+
+  return notes;
 }
 
 export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Trade; errors?: string[] }> {
   const rules = await getRules();
-  const trades = await readAllTrades(rules);
+  const trades = await getTrades();
   const experiment = computeExperiment(trades, rules.cycleLossLimit, rules.maxTrades);
 
   const validationErrors = validateCreateTrade(input, trades, rules, experiment.realizedPnL);
-
   if (validationErrors.length > 0) {
     return { errors: validationErrors.map((e) => e.message) };
   }
@@ -76,21 +98,29 @@ export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Tr
   const id = input.id.toUpperCase();
   const ticker = input.ticker.trim().toUpperCase();
 
-  const trade: Trade = {
-    id,
-    ticker,
-    entry: input.entry,
-    stop: input.stop,
-    target: input.target,
-    shares: input.shares,
-    status: "pending",
-    obsidianNote: buildNoteUri(id, ticker, rules),
-    createdAt: new Date().toISOString(),
-    filePath: "",
-  };
+  const trade: Trade = enrichTrade(
+    {
+      id,
+      ticker,
+      entry: input.entry,
+      stop: input.stop,
+      target: input.target,
+      shares: input.shares,
+      status: input.status ?? "pending",
+      thesis: input.thesis,
+      psychology: input.psychology,
+      lessons: input.lessons,
+      notes: input.notes,
+      createdAt: new Date().toISOString(),
+    },
+    rules
+  );
 
-  await writeTradeFile(trade, rules);
-  trade.filePath = path.join(resolveVaultPath(rules), rules.tradesFolder, `${id}-${ticker}.md`);
+  await upsertTradeInJson(trade);
+  await writeTradeFile(
+    { ...trade, obsidianNote: buildNoteUri(id, ticker, rules), notePath: trade.notePath! },
+    rules
+  );
 
   return { trade };
 }
@@ -100,46 +130,54 @@ export async function closeTrade(
   input: CloseTradeInput
 ): Promise<{ trade?: Trade; errors?: string[] }> {
   const rules = await getRules();
-  const trades = await readAllTrades(rules);
+  const trades = await getTrades();
   const trade = trades.find((t) => t.id === id.toUpperCase());
 
   const validationErrors = validateCloseTrade(trade, input);
-
   if (validationErrors.length > 0) {
     return { errors: validationErrors.map((e) => e.message) };
   }
 
-  const updated: Trade = {
-    ...trade!,
-    exit: input.exit,
-    status: "closed",
-    closedAt: new Date().toISOString(),
-  };
+  const updated = enrichTrade(
+    {
+      ...trade!,
+      exit: input.exit,
+      status: "closed",
+      closedAt: new Date().toISOString(),
+    },
+    rules
+  );
 
-  await writeTradeFile(updated, rules);
+  await upsertTradeInJson(updated);
+  await writeTradeFile(
+    { ...updated, obsidianNote: updated.obsidianNote!, notePath: updated.notePath! },
+    rules
+  );
 
   return { trade: updated };
 }
 
 export async function openTrade(id: string): Promise<{ trade?: Trade; errors?: string[] }> {
   const rules = await getRules();
-  const trades = await readAllTrades(rules);
+  const trades = await getTrades();
   const trade = trades.find((t) => t.id === id.toUpperCase());
 
   if (!trade) {
     return { errors: ["Trade not found."] };
   }
-
   if (trade.status === "closed") {
     return { errors: ["Closed trades cannot be reopened."] };
   }
-
   if (trade.status === "open") {
     return { trade };
   }
 
-  const updated: Trade = { ...trade, status: "open" };
-  await writeTradeFile(updated, rules);
+  const updated = enrichTrade({ ...trade, status: "open" }, rules);
+  await upsertTradeInJson(updated);
+  await writeTradeFile(
+    { ...updated, obsidianNote: updated.obsidianNote!, notePath: updated.notePath! },
+    rules
+  );
 
   return { trade: updated };
 }

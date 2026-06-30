@@ -3,36 +3,31 @@ export type TradeStatus = "pending" | "open" | "closed";
 export interface Trade {
   id: string;
   ticker: string;
-
   entry: number;
   exit?: number;
   stop: number;
   target?: number;
-
   shares: number;
-
   status: TradeStatus;
-
-  obsidianNote: string;
-
   createdAt: string;
   closedAt?: string;
-
-  /** Absolute path to the note file on disk */
-  filePath: string;
-
-  /** Set when frontmatter is readable but logically inconsistent (e.g. closed without exit) */
+  /** Qualitative — user or ChatGPT via import */
+  thesis?: string;
+  psychology?: string;
+  lessons?: string;
+  notes?: string;
+  /** Set when loaded — Obsidian deep link */
+  obsidianNote?: string;
+  /** Set when loaded — e.g. vault/Trades/H001-AMZN.md */
+  notePath?: string;
   inconsistent?: boolean;
 }
 
 export interface ExperimentRules {
   cycleLossLimit: number;
   maxTrades: number;
-  /** Vault name as shown in Obsidian (used in obsidian:// links) */
   obsidianVault: string;
-  /** Folder path on disk — absolute or relative to the app root */
   obsidianVaultPath: string;
-  /** Subfolder inside the vault where trade notes live */
   tradesFolder: string;
 }
 
@@ -41,7 +36,6 @@ export interface Experiment {
   realizedPnL: number;
   remainingLossBudget: number;
   maxTrades: number;
-
   closedTrades: number;
   wins: number;
   losses: number;
@@ -54,24 +48,34 @@ export interface CreateTradeInput {
   stop: number;
   shares: number;
   target?: number;
+  status?: TradeStatus;
+  thesis?: string;
+  psychology?: string;
+  lessons?: string;
+  notes?: string;
+}
+
+export interface UpdateTradeInput {
+  ticker?: string;
+  entry?: number;
+  exit?: number;
+  stop?: number;
+  target?: number;
+  shares?: number;
+  status?: TradeStatus;
+  thesis?: string;
+  psychology?: string;
+  lessons?: string;
+  notes?: string;
 }
 
 export interface CloseTradeInput {
   exit: number;
 }
 
-/** Fields the app owns — never edit these manually in Obsidian */
-export const MANAGED_FIELDS = [
-  "id",
-  "ticker",
-  "entry",
-  "exit",
-  "stop",
-  "target",
-  "shares",
-  "status",
-  "createdAt",
-  "closedAt",
-  "matrixtrade",
-  "mtVersion",
-] as const;
+export interface TradesExport {
+  version: 1;
+  exportedAt: string;
+  rules: ExperimentRules;
+  trades: Trade[];
+}

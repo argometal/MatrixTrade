@@ -23,6 +23,9 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+/** Read data/*.json at request time (required for Vercel serverless). */
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{
