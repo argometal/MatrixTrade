@@ -6,6 +6,8 @@ If you need architecture, rules, integrations, or roadmap — it lives here.
 
 Private repo: `github.com/argometal/MatrixTrade`
 
+**ChatGPT entry point:** [`../CHATGPT.md`](../CHATGPT.md) (repo root — read first)
+
 ---
 
 ## How to use
