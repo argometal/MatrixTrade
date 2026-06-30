@@ -13,6 +13,14 @@ cd c:\Tools\MatrixTrade\bridge
 deploy.bat
 ```
 
-First run opens Cloudflare login in browser. Tokens saved to `.dev.vars` (gitignored). Script prints GET URL for ChatGPT.
+Uses portable Node from `c:\Tools\runtime\node` — no global npm/npx required.
+
+Manual login only:
+
+```bat
+call c:\Tools\runtime\env.bat
+cd c:\Tools\MatrixTrade\bridge
+"%NPX%" wrangler login
+```
 
 Manual steps: see [`md/integrations/cloudflare-worker-bridge.md`](../md/integrations/cloudflare-worker-bridge.md)

@@ -1,26 +1,41 @@
 # MatrixTrade bridge — one-shot deploy + curl test
-# Prerequisite: npx wrangler login  (once, opens browser)
+# Prerequisite: wrangler login (deploy.bat runs it if needed)
 
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
-$nodeDir = "c:\Tools\runtime\node"
-if (Test-Path "$nodeDir\npm.cmd") {
-  $env:PATH = "$nodeDir;$env:PATH"
+$runtimeNode = "c:\Tools\runtime\node"
+$npx = if (Test-Path "$runtimeNode\npx.cmd") { "$runtimeNode\npx.cmd" } else { "npx" }
+$npm = if (Test-Path "$runtimeNode\npm.cmd") { "$runtimeNode\npm.cmd" } else { "npm" }
+
+if ($npx -ne "npx") {
+  $env:PATH = "$runtimeNode;$env:PATH"
+}
+
+function Invoke-Wrangler {
+  param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Args)
+  & $npx wrangler @Args
 }
 
 Write-Host "`n=== MatrixTrade bridge deploy ===" -ForegroundColor Cyan
+Write-Host "Using: $npx"
 
-$whoami = npx wrangler whoami 2>&1 | Out-String
+if (-not (Test-Path "node_modules\wrangler")) {
+  Write-Host "Installing dependencies..." -ForegroundColor Yellow
+  & $npm install
+}
+
+$whoami = Invoke-Wrangler whoami 2>&1 | Out-String
 if ($whoami -match "not authenticated") {
-  Write-Host "Not logged in. Run: npx wrangler login" -ForegroundColor Red
+  Write-Host "Not logged in. Run deploy.bat or:" -ForegroundColor Red
+  Write-Host "  $npx wrangler login"
   exit 1
 }
 
 $toml = Get-Content "wrangler.toml" -Raw
 if ($toml -match "REPLACE_WITH_KV_NAMESPACE_ID") {
   Write-Host "Creating KV namespace SNAPSHOT..." -ForegroundColor Yellow
-  $kvOut = npx wrangler kv namespace create SNAPSHOT 2>&1 | Out-String
+  $kvOut = Invoke-Wrangler kv namespace create SNAPSHOT 2>&1 | Out-String
   if ($kvOut -match 'id = "([a-f0-9]+)"') {
     $kvId = $Matches[1]
     $toml = $toml -replace "REPLACE_WITH_KV_NAMESPACE_ID", $kvId
@@ -49,7 +64,7 @@ Get-Content ".dev.vars" | ForEach-Object {
 }
 
 Write-Host "Deploying worker..." -ForegroundColor Yellow
-$deployOut = npx wrangler deploy --secrets-file .dev.vars 2>&1 | Out-String
+$deployOut = Invoke-Wrangler deploy --secrets-file .dev.vars 2>&1 | Out-String
 Write-Host $deployOut
 
 if ($deployOut -match "(https://[a-z0-9-]+\.workers\.dev)") {
