@@ -29,11 +29,14 @@ See `md/protocols/import-handoff-v1.md`.
 
 ## Sync control
 
-You decide what leaves the machine:
+**Primary path (planned / in progress):** Cloudflare Worker + KV — MatrixTrade POSTs a snapshot; ChatGPT reads `GET /snapshot?token=…`. See **`md/integrations/cloudflare-worker-bridge.md`**.
 
-- Paste export manually (always works, mobile-friendly)
+Legacy / secondary:
+
+- Paste export manually (works today, mobile-friendly)
 - GitHub connector reads repo docs (private)
-- DataTransfer for file handoff
+- Vercel URL for read-only dashboard (no LAN)
+- DataTransfer / QR / LAN — secondary only, not architecture
 
 Nothing auto-sent to OpenAI API.
 

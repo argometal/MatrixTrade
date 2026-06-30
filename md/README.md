@@ -46,6 +46,7 @@ Private repo: `github.com/argometal/MatrixTrade`
 |----------|----------|
 | [obsidian.md](integrations/obsidian.md) | Vault, frontmatter, note body |
 | [chatgpt-bridge.md](integrations/chatgpt-bridge.md) | Export, sync control, ChatGPT role |
+| [cloudflare-worker-bridge.md](integrations/cloudflare-worker-bridge.md) | **Active plan:** Worker + KV snapshot URL for ChatGPT |
 | [github-and-privacy.md](integrations/github-and-privacy.md) | Private repo, gitignore, what syncs |
 | [mobile-connect.md](integrations/mobile-connect.md) | QR codes, local network access |
 
