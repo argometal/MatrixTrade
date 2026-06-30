@@ -6,29 +6,13 @@ Canonical plan: [`md/integrations/cloudflare-worker-bridge.md`](../md/integratio
 
 ## Deploy
 
+One-shot (creates KV, tokens, deploy, curl test):
+
 ```bat
 cd c:\Tools\MatrixTrade\bridge
-call c:\Tools\runtime\env.bat
-npm install
-npx wrangler login
-npx wrangler kv namespace create SNAPSHOT
+deploy.bat
 ```
 
-Paste KV `id` into `wrangler.toml`, then:
+First run opens Cloudflare login in browser. Tokens saved to `.dev.vars` (gitignored). Script prints GET URL for ChatGPT.
 
-```bat
-npx wrangler secret put WRITE_TOKEN
-npx wrangler secret put READ_TOKEN
-npx wrangler deploy
-```
-
-## Test
-
-```powershell
-curl.exe -X POST "https://WORKER_URL/snapshot" `
-  -H "Authorization: Bearer WRITE_TOKEN" `
-  -H "Content-Type: application/json" `
-  --data-binary "@sample-snapshot.json"
-
-curl.exe "https://WORKER_URL/snapshot?token=READ_TOKEN"
-```
+Manual steps: see [`md/integrations/cloudflare-worker-bridge.md`](../md/integrations/cloudflare-worker-bridge.md)

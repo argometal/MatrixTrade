@@ -7,6 +7,17 @@ Read this file first when assisting on MatrixTrade.
 
 ---
 
+## Current objective
+
+| | |
+|---|---|
+| **Objective** | Worker + KV isolated |
+| **Phase** | Phase 1 |
+| **Next action** | Run `bridge/deploy.bat` (Cloudflare login once) → pass GET URL to ChatGPT |
+| **Stop condition** | ChatGPT can successfully consume the snapshot URL |
+
+---
+
 ## Active plan: ChatGPT handoff (Cloudflare Worker)
 
 **Canonical document:** [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md)
@@ -45,7 +56,7 @@ Obsidian note bodies are **not** in v1 snapshot.
 
 | Phase | Status |
 |-------|--------|
-| 1. Worker + KV isolated | Code in `bridge/` — deploy & curl test pending |
+| 1. Worker + KV isolated | Code in `bridge/` — run `deploy.bat` after `wrangler login` |
 | 2. MatrixTrade Sync button | Not started |
 | 3. Auto-sync on trade close | Not started |
 
