@@ -3,6 +3,8 @@
 Experiment control for trades **H001–H030**.  
 Data lives in **Obsidian** (markdown files); the app manages numbers and rules.
 
+**Roadmap:** see [`MATRIX-v2-VISION.md`](MATRIX-v2-VISION.md) for the private investment knowledge base (portfolio, companies, journal, …).
+
 ## Name
 
 **MatrixTrade** — folder: `c:\Tools\MatrixTrade`
