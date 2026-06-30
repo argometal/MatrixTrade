@@ -2,6 +2,8 @@
 
 North star document. MatrixTrade app = experiment engine (H001–H030). This repo = long-term private memory.
 
+**Canonical documentation:** [`md/README.md`](md/README.md) — full MD library by topic. Start there to find or rebuild anything.
+
 ## Objective
 
 Build a private investment system that stores every investment, trade, thesis, lesson and portfolio movement in a structured way.
@@ -103,6 +105,7 @@ No trade unless higher timeframes support the thesis.
 |-------|--------|
 | 0 — MatrixTrade app + GitHub private repo | Done |
 | 1 — Vision doc + folder skeleton | Done |
+| 1b — `md/` documentation library | Done |
 | 2 — Manual content (H001, company theses) | Next |
 | 3 — MT-IMPORT parser + selective export | Planned |
 | 4 — Auto metrics from trades | Planned |
