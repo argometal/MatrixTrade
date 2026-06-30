@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { readAllTradeNotes } from "./obsidian";
 import { computeExperiment } from "./calculate";
 import { buildNoteUri, readAllTrades, resolveVaultPath, writeTradeFile } from "./obsidian";
 import { validateCloseTrade, validateCreateTrade } from "./validation";
@@ -54,6 +55,11 @@ export async function getVaultStatus(): Promise<{
     vaultName: rules.obsidianVault,
     ready,
   };
+}
+
+export async function getTradeNotes(): Promise<Map<string, string>> {
+  const rules = await getRules();
+  return readAllTradeNotes(rules);
 }
 
 export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Trade; errors?: string[] }> {

@@ -12,7 +12,6 @@ if not exist "%NODE%" (
   exit /b 1
 )
 
-rem Postinstall scripts and Next.js need "node" on PATH
 set "PATH=%ROOT%runtime\node;%PATH%"
 
 if not exist "%ROOT%node_modules\next\package.json" (
@@ -23,8 +22,14 @@ if not exist "%ROOT%node_modules\next\package.json" (
 
 call "%ROOT%stop.bat" silent
 
-echo MatrixTrade — http://localhost:3000
+if not exist "%ROOT%.next\BUILD_ID" (
+  echo Building production bundle (one time)...
+  call "%NPM%" run build
+  if errorlevel 1 exit /b 1
+)
+
+echo MatrixTrade PROD — http://localhost:3000
 "%NODE%" "%ROOT%scripts\print-url.js"
-echo Press Ctrl+C to stop, or run stop.bat to free memory.
+echo Lighter on memory than dev mode. Run stop.bat when done.
 echo.
-call "%NPM%" run dev
+call "%NPM%" run start

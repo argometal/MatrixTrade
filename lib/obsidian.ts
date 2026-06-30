@@ -170,6 +170,31 @@ export function extractNoteBody(content: string): string {
   return match ? match[2].trim() : content.trim();
 }
 
+export async function readNoteBody(filePath: string): Promise<string> {
+  const content = await fs.readFile(filePath, "utf-8");
+  return extractNoteBody(content);
+}
+
+export async function readAllTradeNotes(
+  rules: ExperimentRules
+): Promise<Map<string, string>> {
+  const trades = await readAllTrades(rules);
+  const notes = new Map<string, string>();
+
+  await Promise.all(
+    trades.map(async (trade) => {
+      try {
+        const body = await readNoteBody(trade.filePath);
+        notes.set(trade.id, body);
+      } catch {
+        notes.set(trade.id, "");
+      }
+    })
+  );
+
+  return notes;
+}
+
 export async function ensureTradesDir(rules: ExperimentRules): Promise<string> {
   const tradesDir = resolveTradesDir(rules);
   await fs.mkdir(tradesDir, { recursive: true });

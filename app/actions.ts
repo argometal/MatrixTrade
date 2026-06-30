@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createTrade, closeTrade, openTrade } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput } from "@/lib/types";
 
-export async function createTradeAction(formData: FormData) {
+export async function createTradeAction(formData: FormData): Promise<void> {
   const input: CreateTradeInput = {
     id: String(formData.get("id") ?? "").trim(),
     ticker: String(formData.get("ticker") ?? "").trim(),
@@ -22,7 +22,7 @@ export async function createTradeAction(formData: FormData) {
   const result = await createTrade(input);
 
   if (result.errors) {
-    return { errors: result.errors };
+    return;
   }
 
   revalidatePath("/");
@@ -30,7 +30,7 @@ export async function createTradeAction(formData: FormData) {
   redirect("/trades");
 }
 
-export async function closeTradeAction(id: string, formData: FormData) {
+export async function closeTradeAction(id: string, formData: FormData): Promise<void> {
   const input: CloseTradeInput = {
     exit: Number(formData.get("exit")),
   };
@@ -38,7 +38,7 @@ export async function closeTradeAction(id: string, formData: FormData) {
   const result = await closeTrade(id, input);
 
   if (result.errors) {
-    return { errors: result.errors };
+    return;
   }
 
   revalidatePath("/");
@@ -46,11 +46,11 @@ export async function closeTradeAction(id: string, formData: FormData) {
   revalidatePath(`/trades/${id}`);
 }
 
-export async function openTradeAction(id: string) {
+export async function openTradeAction(id: string, _formData: FormData): Promise<void> {
   const result = await openTrade(id);
 
   if (result.errors) {
-    return { errors: result.errors };
+    return;
   }
 
   revalidatePath("/");
