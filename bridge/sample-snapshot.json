@@ -1,0 +1,26 @@
+{
+  "rules": {
+    "cycleLossLimit": -300,
+    "maxTrades": 30
+  },
+  "experiment": {
+    "realizedPnL": -112.8,
+    "remainingLossBudget": -187.2,
+    "closedTrades": 1,
+    "wins": 0,
+    "losses": 1
+  },
+  "trades": [
+    {
+      "id": "H001",
+      "ticker": "AMZN",
+      "status": "closed",
+      "entry": 240,
+      "exit": 225.9,
+      "stop": 230,
+      "shares": 8,
+      "result": -112.8,
+      "lessons": "Stop executed correctly. No immediate re-entry. Maintain discipline."
+    }
+  ]
+}

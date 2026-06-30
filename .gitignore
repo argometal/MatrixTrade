@@ -21,6 +21,11 @@
 npm-debug.log*
 .env*.local
 
+# Cloudflare bridge (local only)
+/bridge/node_modules/
+/bridge/.wrangler/
+/bridge/.dev.vars
+
 # typescript
 next-env.d.ts
 

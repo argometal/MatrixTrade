@@ -2,7 +2,7 @@
 
 **Purpose:** Let ChatGPT read MatrixTrade state from a public URL without LAN, QR, DataTransfer, or long copy-paste blocks.
 
-**Status:** Worker code exists locally at `c:\Tools\matrixtrade-bridge` (separate folder). **Not connected to MatrixTrade app yet.** Validate Worker in isolation first, then add Sync button.
+**Status:** Worker code in repo at `bridge/`. **Not connected to MatrixTrade app yet.** Validate Worker in isolation first, then add Sync button.
 
 **Cost:** $0 — Cloudflare Workers + KV free tier.
 
@@ -125,10 +125,10 @@ ChatGPT does **not** maintain a live connection. It reads the **last published s
 
 ## Deploy steps (Worker only)
 
-Repo folder: `c:\Tools\matrixtrade-bridge` (sibling to MatrixTrade, not inside app).
+Folder: `bridge/` (inside this repo).
 
 ```bat
-cd c:\Tools\matrixtrade-bridge
+cd c:\Tools\MatrixTrade\bridge
 call c:\Tools\runtime\env.bat
 npm install
 npx wrangler login
