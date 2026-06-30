@@ -1,27 +1,18 @@
-# Portable Node (copy here)
+# Portable Node — shared copy (do not duplicate)
 
-MatrixTrade uses a **local Node** — same pattern as TBCompanion and DataTransfer.
+MatrixTrade uses the **shared Node** at `c:\Tools\runtime\node`.
 
-## Copy Node into this folder
-
-Copy the entire folder:
+## Setup (once, for all Tools projects)
 
 ```
-FROM: c:\Tools\runtime\node
-TO:   c:\Tools\MatrixTrade\runtime\node
+c:\Tools\runtime\install-node.bat
 ```
 
-You can use any of these sources (they are the same):
+Or use the unified launcher: `c:\Tools\start.bat`
 
-- `c:\Tools\runtime\node`
-- `c:\Tools\TBCompanion\runtime\node`
-- `c:\Tools\DataTransfer-1.0.0\runtime\node`
-
-Or double-click **`setup-runtime.bat`** in the MatrixTrade root (copies from `c:\Tools\runtime\node` automatically).
-
-## After copying
+## This project
 
 1. `install.bat` — installs app dependencies (once)
 2. `start.bat` — runs the app at http://localhost:3000
 
-No system-wide Node install required.
+No local `runtime\node` copy required. If you still have `MatrixTrade\runtime\node` from an older setup, you can delete it to save disk space.
