@@ -4,7 +4,15 @@ export interface Env {
   READ_TOKEN: string;
 }
 
-const KV_KEY = "snapshot:latest";
+const SNAPSHOT_KEY = "snapshot:latest";
+const INBOX_INDEX_KEY = "inbox:index";
+
+export interface InboxItem {
+  id: string;
+  receivedAt: string;
+  status: "pending";
+  payload: Record<string, unknown>;
+}
 
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -22,6 +30,14 @@ function readBearerToken(request: Request): string | null {
   return auth.slice("Bearer ".length).trim();
 }
 
+function readReadToken(request: Request): string | null {
+  return new URL(request.url).searchParams.get("token");
+}
+
+function unauthorized(): Response {
+  return jsonResponse({ error: "Unauthorized" }, 401);
+}
+
 function normalizeUpdatedAt(value: unknown): string {
   if (typeof value === "string" && !Number.isNaN(Date.parse(value))) {
     return new Date(value).toISOString();
@@ -29,39 +45,61 @@ function normalizeUpdatedAt(value: unknown): string {
   return new Date().toISOString();
 }
 
-async function handlePost(request: Request, env: Env): Promise<Response> {
-  const token = readBearerToken(request);
-  if (!token || token !== env.WRITE_TOKEN) {
-    return jsonResponse({ error: "Unauthorized" }, 401);
-  }
-
-  let body: Record<string, unknown>;
+async function parseJsonObject(request: Request): Promise<Record<string, unknown> | Response> {
   try {
     const parsed = await request.json();
     if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
       return jsonResponse({ error: "Body must be a JSON object" }, 400);
     }
-    body = parsed as Record<string, unknown>;
+    return parsed as Record<string, unknown>;
   } catch {
     return jsonResponse({ error: "Invalid JSON body" }, 400);
   }
+}
+
+function inboxItemKey(id: string): string {
+  return `inbox:item:${id}`;
+}
+
+async function readInboxIndex(env: Env): Promise<string[]> {
+  const raw = await env.SNAPSHOT.get(INBOX_INDEX_KEY);
+  if (!raw) return [];
+  try {
+    const ids = JSON.parse(raw) as unknown;
+    return Array.isArray(ids) ? ids.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+async function writeInboxIndex(env: Env, ids: string[]): Promise<void> {
+  await env.SNAPSHOT.put(INBOX_INDEX_KEY, JSON.stringify(ids));
+}
+
+// --- /snapshot ---
+
+async function handlePostSnapshot(request: Request, env: Env): Promise<Response> {
+  const token = readBearerToken(request);
+  if (!token || token !== env.WRITE_TOKEN) {
+    return unauthorized();
+  }
+
+  const body = await parseJsonObject(request);
+  if (body instanceof Response) return body;
 
   body.updatedAt = normalizeUpdatedAt(body.updatedAt);
-
-  await env.SNAPSHOT.put(KV_KEY, JSON.stringify(body));
+  await env.SNAPSHOT.put(SNAPSHOT_KEY, JSON.stringify(body));
 
   return jsonResponse({ ok: true, updatedAt: body.updatedAt }, 200);
 }
 
-async function handleGet(request: Request, env: Env): Promise<Response> {
-  const url = new URL(request.url);
-  const token = url.searchParams.get("token");
-
+async function handleGetSnapshot(request: Request, env: Env): Promise<Response> {
+  const token = readReadToken(request);
   if (!token || token !== env.READ_TOKEN) {
-    return jsonResponse({ error: "Unauthorized" }, 401);
+    return unauthorized();
   }
 
-  const snapshot = await env.SNAPSHOT.get(KV_KEY);
+  const snapshot = await env.SNAPSHOT.get(SNAPSHOT_KEY);
   if (!snapshot) {
     return jsonResponse({ error: "No snapshot published yet" }, 404);
   }
@@ -75,22 +113,74 @@ async function handleGet(request: Request, env: Env): Promise<Response> {
   });
 }
 
+// --- /inbox ---
+
+async function handlePostInbox(request: Request, env: Env): Promise<Response> {
+  const token = readBearerToken(request);
+  if (!token || token !== env.WRITE_TOKEN) {
+    return unauthorized();
+  }
+
+  const body = await parseJsonObject(request);
+  if (body instanceof Response) return body;
+
+  const item: InboxItem = {
+    id: crypto.randomUUID(),
+    receivedAt: new Date().toISOString(),
+    status: "pending",
+    payload: body,
+  };
+
+  await env.SNAPSHOT.put(inboxItemKey(item.id), JSON.stringify(item));
+
+  const index = await readInboxIndex(env);
+  index.push(item.id);
+  await writeInboxIndex(env, index);
+
+  return jsonResponse({ ok: true, id: item.id, receivedAt: item.receivedAt, status: item.status }, 201);
+}
+
+async function handleGetInbox(request: Request, env: Env): Promise<Response> {
+  const token = readReadToken(request);
+  if (!token || token !== env.READ_TOKEN) {
+    return unauthorized();
+  }
+
+  const index = await readInboxIndex(env);
+  const items: InboxItem[] = [];
+
+  for (const id of index) {
+    const raw = await env.SNAPSHOT.get(inboxItemKey(id));
+    if (!raw) continue;
+    try {
+      const item = JSON.parse(raw) as InboxItem;
+      if (item.status === "pending") {
+        items.push(item);
+      }
+    } catch {
+      // skip corrupt entries
+    }
+  }
+
+  return jsonResponse({ count: items.length, items }, 200);
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
+    const { pathname } = new URL(request.url);
 
-    if (url.pathname !== "/snapshot") {
-      return jsonResponse({ error: "Not found" }, 404);
+    if (pathname === "/snapshot") {
+      if (request.method === "POST") return handlePostSnapshot(request, env);
+      if (request.method === "GET") return handleGetSnapshot(request, env);
+      return jsonResponse({ error: "Method not allowed" }, 405);
     }
 
-    if (request.method === "POST") {
-      return handlePost(request, env);
+    if (pathname === "/inbox") {
+      if (request.method === "POST") return handlePostInbox(request, env);
+      if (request.method === "GET") return handleGetInbox(request, env);
+      return jsonResponse({ error: "Method not allowed" }, 405);
     }
 
-    if (request.method === "GET") {
-      return handleGet(request, env);
-    }
-
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return jsonResponse({ error: "Not found" }, 404);
   },
 };

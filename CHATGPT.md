@@ -11,10 +11,10 @@ Read this file first when assisting on MatrixTrade.
 
 | | |
 |---|---|
-| **Objective** | Worker + KV isolated |
-| **Phase** | Phase 1 — **done** (deploy validated) |
-| **Next action** | Pass GET URL to ChatGPT; then Phase 2 Sync button |
-| **Stop condition** | ChatGPT can successfully consume the snapshot URL ✓ |
+| **Objective** | Inbox endpoint for ChatGPT → Worker |
+| **Phase** | Phase 1b — inbox on Worker (deploy pending) |
+| **Next action** | `deploy.bat` → test POST/GET `/inbox` |
+| **Stop condition** | ChatGPT can POST validated JSON to `/inbox` and MatrixTrade can read pending items later |
 
 ---
 
@@ -32,17 +32,23 @@ MatrixTrade publishes a JSON snapshot to a Cloudflare Worker. ChatGPT reads it f
 
 ```text
 MatrixTrade (local)  --POST /snapshot-->  Cloudflare Worker + KV
-ChatGPT / iPhone     --GET  /snapshot?token=-->  same Worker
+ChatGPT            --POST /inbox----->  Cloudflare Worker + KV  (pending queue)
+ChatGPT / iPhone     --GET  /snapshot?token=-->  read experiment state
+MatrixTrade (later)  --GET  /inbox?token=---->  process pending items
 ```
 
 ### Endpoints
 
-| Method | Path | Auth |
-|--------|------|------|
-| POST | `/snapshot` | `Authorization: Bearer WRITE_TOKEN` |
-| GET | `/snapshot?token=READ_TOKEN` | query param |
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| POST | `/snapshot` | Bearer WRITE_TOKEN | Publish experiment snapshot |
+| GET | `/snapshot?token=…` | query | Read snapshot |
+| POST | `/inbox` | Bearer WRITE_TOKEN | Queue validated JSON from ChatGPT |
+| GET | `/inbox?token=…` | query | List pending inbox items |
 
-KV key: `snapshot:latest`
+KV keys: `snapshot:latest`, `inbox:index`, `inbox:item:{id}`
+
+**Inbox does not write trades.** MatrixTrade processes pending items later.
 
 ### Snapshot payload (minimum)
 

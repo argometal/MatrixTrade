@@ -48,8 +48,12 @@ ChatGPT (web browsing) or Safari on iPhone
 |--------|------|------|----------|
 | `POST` | `/snapshot` | `Authorization: Bearer WRITE_TOKEN` | Accept JSON body, set/validate `updatedAt`, write to KV |
 | `GET` | `/snapshot?token=READ_TOKEN` | query param | Return JSON from KV or `404` if empty |
+| `POST` | `/inbox` | `Authorization: Bearer WRITE_TOKEN` | Queue structured JSON; adds `id`, `receivedAt`, `status: pending` |
+| `GET` | `/inbox?token=READ_TOKEN` | query param | Return pending inbox items (does not modify trades) |
 
-KV key: `snapshot:latest`
+KV keys: `snapshot:latest`, `inbox:index`, `inbox:item:{id}`
+
+**Flow:** User → ChatGPT → validated JSON → `POST /inbox` → MatrixTrade processes later via `GET /inbox`.
 
 ---
 

@@ -1,0 +1,12 @@
+{
+  "type": "trade-proposal",
+  "source": "chatgpt",
+  "proposal": {
+    "id": "H002",
+    "ticker": "MSFT",
+    "entry": 420,
+    "stop": 410,
+    "shares": 10,
+    "thesis": "Example proposal — not applied to trades yet."
+  }
+}

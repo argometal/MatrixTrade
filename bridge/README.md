@@ -4,31 +4,33 @@ Lives inside the MatrixTrade repo: `bridge/`. Not connected to the Next.js app y
 
 Canonical plan: [`md/integrations/cloudflare-worker-bridge.md`](../md/integrations/cloudflare-worker-bridge.md)
 
-## Deploy
+## Endpoints
 
-One-shot (creates KV, tokens, deploy, curl test):
+| Method | Path | Auth |
+|--------|------|------|
+| POST | `/snapshot` | Bearer WRITE_TOKEN |
+| GET | `/snapshot?token=READ_TOKEN` | |
+| POST | `/inbox` | Bearer WRITE_TOKEN — queues JSON, does **not** write trades |
+| GET | `/inbox?token=READ_TOKEN` | pending items only |
+
+## Deploy
 
 ```bat
 cd c:\Tools\MatrixTrade\bridge
 deploy.bat
 ```
 
-Uses portable Node from `c:\Tools\runtime\node` — no global npm/npx required.
+First-time subdomain: `register-subdomain.bat`
 
-**First-time Cloudflare account:** if deploy stops with *register a workers.dev subdomain*, run once:
+## Test inbox
 
-```bat
-register-subdomain.bat
+```powershell
+curl.exe -X POST "https://matrixtrade-bridge.argometal.workers.dev/inbox" `
+  -H "Authorization: Bearer WRITE_TOKEN" `
+  -H "Content-Type: application/json" `
+  --data-binary "@sample-inbox.json"
+
+curl.exe "https://matrixtrade-bridge.argometal.workers.dev/inbox?token=READ_TOKEN"
 ```
 
-Then run `deploy.bat` again.
-
-Manual login only:
-
-```bat
-call c:\Tools\runtime\env.bat
-cd c:\Tools\MatrixTrade\bridge
-"%NPX%" wrangler login
-```
-
-Manual steps: see [`md/integrations/cloudflare-worker-bridge.md`](../md/integrations/cloudflare-worker-bridge.md)
+Replace tokens from `.dev.vars` (gitignored).
