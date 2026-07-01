@@ -82,7 +82,7 @@ if ($deployOut -match "register a workers\.dev subdomain") {
   exit 1
 }
 
-if ($deployOut -match "(https://[a-z0-9-]+\.workers\.dev)") {
+if ($deployOut -match "(https://[\w.-]+\.workers\.dev)") {
   $workerUrl = $Matches[1]
 } else {
   throw "Could not parse worker URL from deploy output"
