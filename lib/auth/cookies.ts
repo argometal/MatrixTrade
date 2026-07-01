@@ -23,7 +23,7 @@ export async function setTradingSession(): Promise<void> {
 
 export async function setHealthSession(): Promise<void> {
   const token = createSessionToken("hv-auth");
-  if (!token) throw new Error("HEALTH_VAULT_PASSWORD is not configured");
+  if (!token) throw new Error("HEALTH_VAULT_TOTP_SECRET is not configured");
   const jar = await cookies();
   jar.set(HV_AUTH, token, {
     httpOnly: true,
@@ -36,7 +36,7 @@ export async function setHealthSession(): Promise<void> {
 
 export async function setHealthSecretUnlock(): Promise<void> {
   const token = createSessionToken("hv-secret");
-  if (!token) throw new Error("HEALTH_VAULT_SECRET is not configured");
+  if (!token) throw new Error("Health Vault secret unlock is not configured");
   const jar = await cookies();
   jar.set(HV_SECRET, token, {
     httpOnly: true,

@@ -1,11 +1,15 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { isHealthEnvConfigured, isTradingEnvConfigured } from "@/lib/auth/env";
 import {
-  isHealthEnvConfigured,
-  isTradingEnvConfigured,
-} from "@/lib/auth/env";
-import { verifyHealthPassword, verifyHealthSecret, verifyTradingPassword } from "@/lib/auth/passwords";
+  clearHealthLoginFailures,
+  getHealthLoginLockRemainingMs,
+  isHealthLoginLocked,
+  recordHealthLoginFailure,
+} from "@/lib/auth/health-login-lock";
+import { verifyHealthTotp } from "@/lib/auth/health-totp";
+import { verifyHealthSecret, verifyTradingPassword } from "@/lib/auth/passwords";
 import {
   clearHealthSecretUnlock,
   setHealthSecretUnlock,
@@ -35,14 +39,29 @@ export async function loginHealthAction(formData: FormData): Promise<void> {
     redirect("/health/login?config=health");
   }
 
-  const password = String(formData.get("password") ?? "");
+  if (await isHealthLoginLocked()) {
+    redirect("/health/login?locked=1");
+  }
 
-  if (!verifyHealthPassword(password)) {
+  const code = String(formData.get("code") ?? "");
+
+  if (!verifyHealthTotp(code)) {
+    const result = await recordHealthLoginFailure();
+    if (result.locked) {
+      redirect("/health/login?locked=1");
+    }
     redirect("/health/login?error=1");
   }
 
+  await clearHealthLoginFailures();
   await setHealthSession();
   redirect("/health");
+}
+
+function verifySecretUnlock(code: string): boolean {
+  if (verifyHealthTotp(code)) return true;
+  if (verifyHealthSecret(code)) return true;
+  return false;
 }
 
 export async function unlockHealthSecretAction(formData: FormData): Promise<void> {
@@ -50,9 +69,9 @@ export async function unlockHealthSecretAction(formData: FormData): Promise<void
     redirect("/health/login?config=health");
   }
 
-  const pin = String(formData.get("pin") ?? "");
+  const code = String(formData.get("code") ?? "");
 
-  if (!verifyHealthSecret(pin)) {
+  if (!verifySecretUnlock(code)) {
     redirect("/health?secret_error=1");
   }
 
@@ -63,4 +82,9 @@ export async function unlockHealthSecretAction(formData: FormData): Promise<void
 export async function lockHealthSecretAction(): Promise<void> {
   await clearHealthSecretUnlock();
   redirect("/health");
+}
+
+export async function getHealthLockRemainingMinutes(): Promise<number> {
+  const ms = await getHealthLoginLockRemainingMs();
+  return Math.ceil(ms / 60000);
 }

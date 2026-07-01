@@ -15,28 +15,20 @@ export function verifyTradingPassword(input: string): boolean {
   return safeEqual(input, expected);
 }
 
-export function verifyHealthPassword(input: string): boolean {
-  const expected = process.env.HEALTH_VAULT_PASSWORD?.trim() ?? "";
-  if (!expected) return false;
-  return safeEqual(input, expected);
-}
-
 export function verifyHealthSecret(input: string): boolean {
   const expected = process.env.HEALTH_VAULT_SECRET?.trim() ?? "";
   if (!expected) return false;
   return safeEqual(input, expected);
 }
 
-/** Auth is always required when env is configured; fail closed if missing. */
 export function tradingAuthRequired(): boolean {
   return isTradingEnvConfigured();
 }
 
-/** Auth is always required when env is configured; fail closed if missing. */
 export function healthAuthRequired(): boolean {
   return isHealthEnvConfigured();
 }
 
-export function healthSecretConfigured(): boolean {
+export function healthSecretPinConfigured(): boolean {
   return Boolean(process.env.HEALTH_VAULT_SECRET?.trim());
 }

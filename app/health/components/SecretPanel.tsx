@@ -1,10 +1,8 @@
 import { lockHealthSecretAction, unlockHealthSecretAction } from "@/app/auth/actions";
-import { healthSecretConfigured } from "@/lib/auth/passwords";
+import { healthSecretPinConfigured } from "@/lib/auth/passwords";
 import { hasHealthSecretUnlock } from "@/lib/auth/cookies";
 
 export async function SecretPanel({ secretError }: { secretError?: boolean }) {
-  if (!healthSecretConfigured()) return null;
-
   const unlocked = await hasHealthSecretUnlock();
 
   if (unlocked) {
@@ -18,21 +16,27 @@ export async function SecretPanel({ secretError }: { secretError?: boolean }) {
     );
   }
 
+  const pinHint = healthSecretPinConfigured()
+    ? "Código Authenticator o PIN secreto"
+    : "Código Authenticator (6 dígitos)";
+
   return (
     <form action={unlockHealthSecretAction} className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-3">
-      <p className="text-xs text-zinc-400">Desbloquear registros secretos (solo tú)</p>
+      <p className="text-xs text-zinc-400">Desbloquear registros secretos</p>
       <div className="mt-2 flex gap-2">
         <input
-          name="pin"
-          type="password"
-          placeholder="PIN secreto"
-          className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm"
+          name="code"
+          type="text"
+          inputMode="numeric"
+          maxLength={healthSecretPinConfigured() ? 32 : 6}
+          placeholder={pinHint}
+          className="flex-1 rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm font-mono"
         />
         <button type="submit" className="rounded-lg bg-violet-700 px-3 py-2 text-sm font-medium text-white">
           Desbloquear
         </button>
       </div>
-      {secretError && <p className="mt-1 text-xs text-red-400">PIN incorrecto</p>}
+      {secretError && <p className="mt-1 text-xs text-red-400">Código o PIN incorrecto</p>}
     </form>
   );
 }

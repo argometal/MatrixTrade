@@ -5,9 +5,13 @@ function signingKey(purpose: SessionPurpose): string | null {
     case "mt-auth":
       return process.env.MATRIXTRADE_PASSWORD?.trim() || null;
     case "hv-auth":
-      return process.env.HEALTH_VAULT_PASSWORD?.trim() || null;
+      return process.env.HEALTH_VAULT_TOTP_SECRET?.trim() || null;
     case "hv-secret":
-      return process.env.HEALTH_VAULT_SECRET?.trim() || null;
+      return (
+        process.env.HEALTH_VAULT_SECRET?.trim() ||
+        process.env.HEALTH_VAULT_TOTP_SECRET?.trim() ||
+        null
+      );
   }
 }
 
