@@ -1,19 +1,43 @@
 # Health Vault
 
-Bitácora laboral personal para documentar quejas, incidentes, comportamientos, correos y relaciones — con evidencias.
+Bitácora laboral con evidencias. Rama discreta de MatrixTrade.
 
-> Eres tan bueno como lo que puedes comprobar con evidencias.
+> *Eres tan bueno como lo que puedes comprobar con evidencias.*
 
-## Qué es
+---
 
-**Health Vault** no es MatrixTrade ni tiene relación con trading. Es un proyecto independiente.
+## Para IAs — leer primero
 
-- Registros: quejas, incidentes, comportamientos (correcto/incorrecto), correspondencia
-- Evidencias: correos, mensajes, documentos, capturas, testigos, notas
-- Personas: jefes, RH, compañeros, testigos
-- Todo en **localStorage** (sin base de datos ni login por ahora)
+**[`CONTEXTO-IA.md`](CONTEXTO-IA.md)** — handoff completo: qué es, qué no es, historial de sesiones, reglas.
 
-## Inicio rápido
+**[`docs/`](docs/)** — aquí el usuario mete sus archivos `.md` (quejas, correos, notas, explicaciones de otras IAs).
+
+---
+
+## Ubicación
+
+| | |
+|---|---|
+| Repo | `github.com/argometal/MatrixTrade` (privado) |
+| Rama | `cursor/health-vault-dbc8` |
+| Carpeta | `health-vault/` |
+| Trading | rama `main` — **no tocar** |
+
+---
+
+## Flujo principal (acordado)
+
+1. El usuario **mete cosas** en esta rama (archivos, textos, evidencias).
+2. Queda **escondido** respecto a `main` — conveniente y profesional.
+3. Cursor u otras IAs ayudan a organizar y documentar en `docs/`.
+
+La app web en `app/` es **opcional** (ver abajo).
+
+---
+
+## App web (opcional)
+
+Next.js + TypeScript + Tailwind + localStorage. Solo si se corre en PC:
 
 ```bash
 cd health-vault
@@ -21,19 +45,14 @@ npm install
 npm run dev
 ```
 
-Abre [http://localhost:3000](http://localhost:3000)
+Registros, personas, evidencias. Datos en el navegador, no en GitHub.
 
-## Flujo principal
+---
 
-1. Registrar una persona involucrada
-2. Crear un registro (queja, incidente, etc.)
-3. Adjuntar evidencias (pegar correos, declaraciones)
-4. Buscar y consultar cuando lo necesites
+## Documentación
 
-## Datos de ejemplo
-
-Al primer uso se cargan 3 personas, 3 registros y 4 evidencias de ejemplo.
-
-## iPhone
-
-Diseño mobile-first con navegación inferior y modo oscuro.
+| Archivo | Contenido |
+|---------|-----------|
+| [CONTEXTO-IA.md](CONTEXTO-IA.md) | Handoff para cualquier IA |
+| [docs/README.md](docs/README.md) | Índice de documentos del usuario |
+| [docs/historial-ia.md](docs/historial-ia.md) | Qué hizo cada sesión de IA |
