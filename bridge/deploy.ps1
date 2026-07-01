@@ -14,7 +14,14 @@ if ($npx -ne "npx") {
 
 function Invoke-Wrangler {
   param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Args)
-  & $npx wrangler @Args
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try {
+    $out = & $npx wrangler @Args 2>&1 | Out-String
+    return $out
+  } finally {
+    $ErrorActionPreference = $prev
+  }
 }
 
 Write-Host "`n=== MatrixTrade bridge deploy ===" -ForegroundColor Cyan
@@ -64,8 +71,16 @@ Get-Content ".dev.vars" | ForEach-Object {
 }
 
 Write-Host "Deploying worker..." -ForegroundColor Yellow
-$deployOut = Invoke-Wrangler deploy --secrets-file .dev.vars 2>&1 | Out-String
+$deployOut = Invoke-Wrangler deploy --secrets-file .dev.vars
 Write-Host $deployOut
+
+if ($deployOut -match "register a workers\.dev subdomain") {
+  Write-Host "`nSTOP: workers.dev subdomain not registered yet." -ForegroundColor Red
+  Write-Host "Run once (interactive, picks your subdomain):" -ForegroundColor Yellow
+  Write-Host "  register-subdomain.bat"
+  Write-Host "Or dashboard: Workers and Pages -> Your subdomain -> Change"
+  exit 1
+}
 
 if ($deployOut -match "(https://[a-z0-9-]+\.workers\.dev)") {
   $workerUrl = $Matches[1]

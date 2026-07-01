@@ -6,7 +6,7 @@ compatibility_date = "2024-12-01"
 # Paste the returned id below (production).
 [[kv_namespaces]]
 binding = "SNAPSHOT"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "cec27334c4a04d3e88e57f315377933f"
 
 # Optional: for wrangler dev — create with: wrangler kv namespace create SNAPSHOT --preview
 # preview_id = "REPLACE_WITH_PREVIEW_KV_ID"

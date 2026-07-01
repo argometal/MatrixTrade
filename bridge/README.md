@@ -15,6 +15,14 @@ deploy.bat
 
 Uses portable Node from `c:\Tools\runtime\node` — no global npm/npx required.
 
+**First-time Cloudflare account:** if deploy stops with *register a workers.dev subdomain*, run once:
+
+```bat
+register-subdomain.bat
+```
+
+Then run `deploy.bat` again.
+
 Manual login only:
 
 ```bat
