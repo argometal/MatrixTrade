@@ -2,6 +2,15 @@
 
 Bitácora laboral privada — integrada en MatrixTrade (ruta `/health/*`).
 
+## Uso rápido (inbox)
+
+1. Abre `/health`
+2. Escribe qué pasó
+3. Opcional: tipo, fecha, persona, adjunto, secreto
+4. **Guardar** — menos de 60 segundos
+
+Campos: fecha, título (auto si vacío), tipo, persona, texto, adjunto, secreto.
+
 ## Acceso
 
 | | |
