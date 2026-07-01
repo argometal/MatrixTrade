@@ -16,7 +16,7 @@ function pnlColor(value: number): string {
   return "text-zinc-600";
 }
 
-export default async function DashboardPage() {
+export default async function MatrixDashboardPage() {
   const [experiment, trades, vault, notes] = await Promise.all([
     getExperiment(),
     getTrades(),
@@ -31,7 +31,14 @@ export default async function DashboardPage() {
   const fullContextAllClosed = buildFullContext(experiment, trades, notes, { full: true });
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto max-w-5xl space-y-8 px-4 py-6 text-zinc-900">
+      <nav className="flex flex-wrap gap-x-6 gap-y-2 border-b border-zinc-200 pb-4 text-sm font-medium">
+        <Link href="/matrix" className="hover:text-zinc-600">MatrixTrade</Link>
+        <Link href="/trades" className="hover:text-zinc-600">Trades</Link>
+        <Link href="/connect" className="hover:text-zinc-600">Connect</Link>
+        <Link href="/" className="hover:text-zinc-600">Network Vault</Link>
+      </nav>
+
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">MatrixTrade</h1>
