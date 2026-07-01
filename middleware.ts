@@ -1,34 +1,57 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isHealthEnvConfigured, isTradingEnvConfigured } from "@/lib/auth/env";
+import { HV_AUTH, MT_AUTH } from "@/lib/auth/cookies";
+import { verifySessionTokenEdge } from "@/lib/auth/session-token-edge";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const tradingPasswordSet = Boolean(process.env.MATRIXTRADE_PASSWORD);
-  const healthPasswordSet = Boolean(process.env.HEALTH_VAULT_PASSWORD);
 
   const isTradingRoute =
     pathname === "/" ||
     pathname.startsWith("/trades") ||
     pathname.startsWith("/connect");
 
-  if (tradingPasswordSet && isTradingRoute && !request.cookies.get("mt-auth")?.value) {
-    const login = new URL("/login", request.url);
-    login.searchParams.set("next", pathname);
-    return NextResponse.redirect(login);
+  const isHealthAppRoute = pathname.startsWith("/health") && pathname !== "/health/login";
+  const isHealthFileRoute = pathname.startsWith("/api/health-vault/files/");
+
+  if (isTradingRoute) {
+    if (!isTradingEnvConfigured()) {
+      const login = new URL("/login", request.url);
+      login.searchParams.set("config", "trading");
+      if (pathname !== "/login") {
+        login.searchParams.set("next", pathname);
+        return NextResponse.redirect(login);
+      }
+      return NextResponse.next();
+    }
+
+    if (pathname !== "/login") {
+      const token = request.cookies.get(MT_AUTH)?.value;
+      if (!(await verifySessionTokenEdge("mt-auth", token))) {
+        const login = new URL("/login", request.url);
+        login.searchParams.set("next", pathname);
+        return NextResponse.redirect(login);
+      }
+    }
   }
 
-  if (
-    healthPasswordSet &&
-    pathname.startsWith("/health") &&
-    pathname !== "/health/login" &&
-    !request.cookies.get("hv-auth")?.value
-  ) {
-    return NextResponse.redirect(new URL("/health/login", request.url));
+  if (isHealthAppRoute || isHealthFileRoute) {
+    if (!isHealthEnvConfigured()) {
+      const login = new URL("/health/login", request.url);
+      login.searchParams.set("config", "health");
+      return NextResponse.redirect(login);
+    }
+
+    const token = request.cookies.get(HV_AUTH)?.value;
+    if (!(await verifySessionTokenEdge("hv-auth", token))) {
+      return NextResponse.redirect(new URL("/health/login", request.url));
+    }
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/", "/trades/:path*", "/connect/:path*", "/health/:path*"],
+  matcher: ["/", "/login", "/trades/:path*", "/connect/:path*", "/health/:path*", "/api/health-vault/files/:path*"],
 };

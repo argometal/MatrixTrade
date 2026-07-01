@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { createSessionToken, verifySessionToken } from "./session-token";
 
 export const MT_AUTH = "mt-auth";
 export const HV_AUTH = "hv-auth";
@@ -8,8 +9,10 @@ const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 const SECRET_MAX_AGE = 60 * 60;
 
 export async function setTradingSession(): Promise<void> {
+  const token = createSessionToken("mt-auth");
+  if (!token) throw new Error("MATRIXTRADE_PASSWORD is not configured");
   const jar = await cookies();
-  jar.set(MT_AUTH, "1", {
+  jar.set(MT_AUTH, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -19,8 +22,10 @@ export async function setTradingSession(): Promise<void> {
 }
 
 export async function setHealthSession(): Promise<void> {
+  const token = createSessionToken("hv-auth");
+  if (!token) throw new Error("HEALTH_VAULT_TOTP_SECRET is not configured");
   const jar = await cookies();
-  jar.set(HV_AUTH, "1", {
+  jar.set(HV_AUTH, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -30,8 +35,10 @@ export async function setHealthSession(): Promise<void> {
 }
 
 export async function setHealthSecretUnlock(): Promise<void> {
+  const token = createSessionToken("hv-secret");
+  if (!token) throw new Error("Health Vault secret unlock is not configured");
   const jar = await cookies();
-  jar.set(HV_SECRET, "1", {
+  jar.set(HV_SECRET, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -47,15 +54,15 @@ export async function clearHealthSecretUnlock(): Promise<void> {
 
 export async function hasTradingSession(): Promise<boolean> {
   const jar = await cookies();
-  return jar.get(MT_AUTH)?.value === "1";
+  return verifySessionToken("mt-auth", jar.get(MT_AUTH)?.value);
 }
 
 export async function hasHealthSession(): Promise<boolean> {
   const jar = await cookies();
-  return jar.get(HV_AUTH)?.value === "1";
+  return verifySessionToken("hv-auth", jar.get(HV_AUTH)?.value);
 }
 
 export async function hasHealthSecretUnlock(): Promise<boolean> {
   const jar = await cookies();
-  return jar.get(HV_SECRET)?.value === "1";
+  return verifySessionToken("hv-secret", jar.get(HV_SECRET)?.value);
 }

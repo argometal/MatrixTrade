@@ -10,9 +10,9 @@ export default async function RecordsPage() {
 
   return (
     <>
-      <PageHeader title="Registros" subtitle="Por fecha (más reciente primero)" />
-      <Button href="/health/records/new" fullWidth className="mb-6">
-        + Nuevo registro
+      <PageHeader title="Registros" subtitle={`${records.length} en total`} />
+      <Button href="/health" fullWidth className="mb-6">
+        + Nuevo en inbox
       </Button>
       {records.length === 0 ? (
         <EmptyState message="Sin registros." />

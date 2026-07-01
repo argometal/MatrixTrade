@@ -5,9 +5,7 @@ export default function HealthAppLayout({ children }: { children: React.ReactNod
     <div className="mx-auto min-h-screen max-w-lg px-4 pb-24 pt-6">
       <header className="mb-4">
         <p className="text-xs font-semibold uppercase tracking-widest text-teal-400">Health Vault</p>
-        <p className="mt-0.5 text-xs text-zinc-500">
-          Eres tan bueno como lo que puedes comprobar con evidencias
-        </p>
+        <p className="mt-0.5 text-xs text-zinc-500">Inbox privado — registra y guarda</p>
       </header>
       {children}
       <BottomNav />

@@ -2,18 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { hasHealthSecretUnlock } from "@/lib/auth/cookies";
 import {
   createEvidence,
   createPerson,
   createRecord,
   saveEvidenceAttachment,
 } from "@/lib/health-vault/server-storage";
-import type { BehaviorKind, EvidenceType, RecordStatus, RecordType } from "@/lib/health-vault/types";
-
-async function includeSecret(): Promise<boolean> {
-  return hasHealthSecretUnlock();
-}
+import type { EvidenceType, RecordType } from "@/lib/health-vault/types";
 
 export async function createPersonAction(formData: FormData): Promise<void> {
   await createPerson({
@@ -30,30 +25,54 @@ export async function createPersonAction(formData: FormData): Promise<void> {
 }
 
 export async function createRecordAction(formData: FormData): Promise<void> {
+  await logIntakeAction(formData);
+}
+
+/** Single-step intake: record + optional attachment. */
+export async function logIntakeAction(formData: FormData): Promise<void> {
+  const description = String(formData.get("description") ?? "").trim();
+  if (!description) {
+    redirect("/health?error=1");
+  }
+
+  let title = String(formData.get("title") ?? "").trim();
+  if (!title) {
+    title = description.split("\n")[0].slice(0, 80).trim() || "Registro";
+  }
+
   const type = String(formData.get("type") ?? "queja") as RecordType;
-  const personIds = formData.getAll("personIds").map(String);
-  const tags = String(formData.get("tags") ?? "")
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
-  const behaviorRaw = formData.get("behaviorKind");
+  const personId = String(formData.get("personId") ?? "").trim();
+  const personIds = personId ? [personId] : [];
+
   const record = await createRecord({
     type,
-    title: String(formData.get("title") ?? "").trim(),
-    date: String(formData.get("date") ?? "").slice(0, 10),
-    description: String(formData.get("description") ?? "").trim(),
+    title,
+    date: String(formData.get("date") ?? "").slice(0, 10) || new Date().toISOString().slice(0, 10),
+    description,
     personIds,
-    status: String(formData.get("status") ?? "abierto") as RecordStatus,
-    behaviorKind:
-      type === "comportamiento" && behaviorRaw
-        ? (String(behaviorRaw) as BehaviorKind)
-        : undefined,
-    tags,
+    status: "documentado",
+    tags: [],
     secret: formData.get("secret") === "on",
   });
+
+  const file = formData.get("attachment");
+  if (file instanceof File && file.size > 0) {
+    const item = await createEvidence({
+      recordId: record.id,
+      type: "documento",
+      title: file.name,
+      date: record.date,
+      content: "",
+      source: "adjunto",
+      personId: personId || undefined,
+    });
+    const bytes = Buffer.from(await file.arrayBuffer());
+    await saveEvidenceAttachment(item.id, file.name, file.type || "application/octet-stream", bytes);
+  }
+
   revalidatePath("/health");
   revalidatePath("/health/records");
-  redirect(`/health/records/${record.id}`);
+  redirect("/health?saved=1");
 }
 
 export async function createEvidenceAction(formData: FormData): Promise<void> {

@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { HV_AUTH } from "@/lib/auth/cookies";
+import { hasHealthSecretUnlock, hasHealthSession } from "@/lib/auth/cookies";
 import { readEvidenceAttachment, readVault } from "@/lib/health-vault/server-storage";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const jar = await cookies();
-  if (jar.get(HV_AUTH)?.value !== "1") {
+  if (!(await hasHealthSession())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -14,6 +12,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const item = vault.evidence.find((e) => e.id === id);
   if (!item?.attachmentName) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const record = vault.records.find((r) => r.id === item.recordId);
+  if (record?.secret && !(await hasHealthSecretUnlock())) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const bytes = await readEvidenceAttachment(id);
