@@ -2,6 +2,9 @@
 
 Plain text export from MatrixTrade dashboard.
 
+**Primary handoff (2026):** Cloudflare Worker GET `/snapshot` — see [`CHATGPT.md`](../../CHATGPT.md).  
+This copy-paste protocol remains as **local fallback** when Worker snapshot is stale or unavailable.
+
 ## Trigger
 
 **Copy Full Context for ChatGPT** button on `/`

@@ -1,9 +1,10 @@
 # MatrixTrade — context for ChatGPT
 
-Read this file first when assisting on MatrixTrade.
+**Read this file first** in every new conversation about MatrixTrade.
 
-**Repo:** `github.com/argometal/MatrixTrade`  
-**Full doc library:** [`md/README.md`](md/README.md)
+**Repo:** `github.com/argometal/MatrixTrade` (private)  
+**Doc library:** [`md/README.md`](md/README.md)  
+**Bridge detail:** [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md)
 
 ---
 
@@ -11,83 +12,212 @@ Read this file first when assisting on MatrixTrade.
 
 | | |
 |---|---|
-| **Objective** | Inbox endpoint for ChatGPT → Worker |
-| **Phase** | Phase 1b — inbox on Worker (deploy pending) |
-| **Next action** | `deploy.bat` → test POST/GET `/inbox` |
-| **Stop condition** | ChatGPT can POST validated JSON to `/inbox` and MatrixTrade can read pending items later |
+| **Objective** | Validate inbox end-to-end: ChatGPT POST/GET `/inbox` in real use |
+| **Phase** | Phase 1c — inbox on Worker deployed; workflow not closed yet |
+| **Next action** | ChatGPT POST validated JSON to `/inbox`; confirm GET returns pending items |
+| **Stop condition** | Both endpoints confirmed from ChatGPT browsing + user review of queued payload |
+| **Do not start yet** | MatrixTrade Sync button, auto-sync, inbox processing in app, POST /trades |
 
 ---
 
-## Active plan: ChatGPT handoff (Cloudflare Worker)
+## 1. Checkpoint alcanzado
 
-**Canonical document:** [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md)
+| Item | Status |
+|------|--------|
+| Cloudflare Worker desplegado | ✓ |
+| URL del Worker | `https://matrixtrade-bridge.argometal.workers.dev` |
+| Wrangler autenticado | ✓ (cuenta Cloudflare, subdomain `argometal.workers.dev`) |
+| KV namespace | ✓ `SNAPSHOT` bound |
+| POST `/snapshot` probado | ✓ → `200`, guarda en KV |
+| GET `/snapshot` probado | ✓ → `200`, JSON con trades |
+| H001 AMZN validado desde Worker | ✓ (entry 240, exit 225.9, result -112.8) |
+| POST `/inbox` desplegado | ✓ → `201`, agrega id + receivedAt + pending |
+| GET `/inbox` desplegado | ✓ → devuelve `{ count, items[] }` |
+| MatrixTrade conectado al Worker | ✗ (app no publica snapshot ni lee inbox aún) |
 
-**Worker code:** [`bridge/`](bridge/) (Cloudflare Worker + KV — not connected to app yet)
+**Tokens:** `WRITE_TOKEN` / `READ_TOKEN` en Cloudflare secrets + `bridge/.dev.vars` local (nunca en git).
 
-### Goal
+**App local:** H001 en `data/trades.json`, dashboard en `http://localhost:3000`  
+**Vercel (opcional):** read-only desde git — no escribe al Worker.
 
-MatrixTrade publishes a JSON snapshot to a Cloudflare Worker. ChatGPT reads it from a URL — no LAN, no QR, no DataTransfer, $0 cost.
+---
 
-### Architecture
+## 2. Arquitectura actual
+
+### Flujo de lectura (ChatGPT analiza estado)
 
 ```text
-MatrixTrade (local)  --POST /snapshot-->  Cloudflare Worker + KV
-ChatGPT            --POST /inbox----->  Cloudflare Worker + KV  (pending queue)
-ChatGPT / iPhone     --GET  /snapshot?token=-->  read experiment state
-MatrixTrade (later)  --GET  /inbox?token=---->  process pending items
+User
+  ↓ pide análisis
+ChatGPT
+  ↓ GET /snapshot?token=READ_TOKEN
+Cloudflare Worker + KV
+  ↓ JSON (rules, experiment, trades[])
+ChatGPT
+  ↓ patrones, comparación, recomendaciones
+User
 ```
 
-### Endpoints
+### Flujo de escritura (futuro inmediato — inbox)
 
-| Method | Path | Auth | Purpose |
-|--------|------|------|---------|
-| POST | `/snapshot` | Bearer WRITE_TOKEN | Publish experiment snapshot |
-| GET | `/snapshot?token=…` | query | Read snapshot |
-| POST | `/inbox` | Bearer WRITE_TOKEN | Queue validated JSON from ChatGPT |
-| GET | `/inbox?token=…` | query | List pending inbox items |
+```text
+User
+  ↓ describe intención / trade propuesto
+ChatGPT
+  ↓ genera JSON validado
+  ↓ POST /inbox  (Bearer WRITE_TOKEN)
+Cloudflare Worker + KV   ← cola pending, NO escribe trades
+  ↓
+MatrixTrade (pendiente)  ← GET /inbox, revisión humana, luego guarda en data/trades.json + Obsidian
+```
 
-KV keys: `snapshot:latest`, `inbox:index`, `inbox:item:{id}`
+### Flujo de publicación (pendiente en app)
 
-**Inbox does not write trades.** MatrixTrade processes pending items later.
+```text
+MatrixTrade (local)
+  ↓ POST /snapshot  (Bearer WRITE_TOKEN)
+Cloudflare Worker + KV
+  ↓
+ChatGPT lee GET /snapshot
+```
 
-### Snapshot payload (minimum)
+### Por qué esta arquitectura
 
-JSON with: `updatedAt`, `rules`, `experiment` (P/L, budget, wins/losses), `trades[]` (id, ticker, status, entry, exit, stop, shares, result, lessons).
+| Decisión | Razón |
+|----------|-------|
+| Cloudflare Worker + KV | URL pública, $0, sin LAN, sin QR, sin DataTransfer |
+| Snapshot separado de inbox | Lectura (estado) vs escritura (propuestas) con responsabilidades claras |
+| Worker no escribe trades | MatrixTrade sigue siendo fuente de verdad; evita corrupción automática |
+| Obsidian fuera del snapshot v1 | Privacidad y tamaño; tesis largas quedan en vault local |
+| GitHub privado | Documentación + código; no expone tokens ni notas |
+| Vercel secundario | Dashboard móvil read-only; no reemplaza el bridge |
 
-Example trade: **H001 AMZN** — entry 240, exit 225.9, 8 shares, result -112.8.
-
-Obsidian note bodies are **not** in v1 snapshot.
-
-### Status (phases)
-
-| Phase | Status |
-|-------|--------|
-| 1. Worker + KV isolated | **Done** — `https://matrixtrade-bridge.argometal.workers.dev` |
-| 2. MatrixTrade Sync button | Not started |
-| 3. Auto-sync on trade close | Not started |
-
-### What NOT to propose
-
-LAN, localhost, QR as primary, DataTransfer, D1, Supabase, Telegram, Gmail, Drive, paid services — unless user explicitly asks.
-
-### Roles
-
-| Component | Role |
-|-----------|------|
-| MatrixTrade | UI, dashboard, metrics, publish snapshot |
-| Obsidian | Thesis, psychology, lessons (local vault) |
-| GitHub | Versioning, this documentation |
-| ChatGPT | Analysis and decisions — not infrastructure |
-| Cursor | Builder only |
-| Vercel | Read-only dashboard from git (optional) |
+**Descartado como arquitectura principal:** LAN, localhost, QR, DataTransfer (ver lecciones aprendidas).
 
 ---
 
-## App checkpoint (done)
+## 3. Objetivo del proyecto
 
-- Trades in `data/trades.json` (H001 AMZN committed)
-- Local: `start.bat` → http://localhost:3000
-- Vercel: read-only deploy from main branch
+MatrixTrade **no es solo un registro de trades**.
+
+Es una base estadística y conductual para que **tú (ChatGPT)** puedas:
+
+- Identificar **patrones de comportamiento** del usuario
+- **Comparar setups** entre trades (H001–H030)
+- Medir **expectativa vs resultado**
+- Detectar **errores repetitivos** (disciplina, stops, re-entries)
+- **Mejorar la toma de decisiones** con datos estructurados + contexto cualitativo (Obsidian)
+
+El experimento H001–H030 es un ciclo acotado: límite -$300, máximo 30 trades.
+
+---
+
+## 4. Estado actual
+
+### Completado
+
+- ✓ **Worker** — desplegado en producción
+- ✓ **Snapshot** — POST/GET funcionando, H001 en KV
+- ✓ **Lectura desde ChatGPT** — GET `/snapshot?token=…` validado
+- ✓ **Inbox endpoints** — POST/GET `/inbox` en Worker (infra lista)
+
+### Pendiente
+
+- □ **Inbox en uso real** — ChatGPT envía JSON validado en conversación (workflow humano)
+- □ **Escritura desde ChatGPT** — flujo acordado de propuestas → cola → aprobación
+- □ **Integración MatrixTrade → Worker** — botón Sync `/snapshot` desde app local
+- □ **Integración MatrixTrade ← Inbox** — app lee pending, preview, apply a `data/trades.json`
+- □ **Consultas avanzadas** — patrones, setups, comparaciones históricas automatizadas
+
+---
+
+## 5. Próximo objetivo
+
+**Validar completamente desde ChatGPT (sin tocar MatrixTrade app):**
+
+1. **POST `/inbox`** — enviar JSON estructurado (ej. `bridge/sample-inbox.json`)
+2. **GET `/inbox`** — confirmar item pending con `id`, `receivedAt`, `status`, `payload`
+
+No avanzar a Sync en MatrixTrade ni procesamiento de inbox en app hasta cerrar esta validación.
+
+**URLs base:** `https://matrixtrade-bridge.argometal.workers.dev`
+
+| Acción | Método | Auth |
+|--------|--------|------|
+| Leer estado | GET `/snapshot?token=READ_TOKEN` | query |
+| Encolar propuesta | POST `/inbox` | `Authorization: Bearer WRITE_TOKEN` |
+| Ver cola | GET `/inbox?token=READ_TOKEN` | query |
+
+---
+
+## 6. Principios
+
+| Rol | Responsabilidad |
+|-----|-----------------|
+| **Cursor** | Construye infraestructura solamente |
+| **ChatGPT (tú)** | Analiza datos, razona, propone JSON validado |
+| **MatrixTrade** | Fuente de verdad numérica (`data/trades.json`, reglas, métricas) |
+| **Cloudflare Worker** | Puente stateless entre ChatGPT y MatrixTrade |
+| **Obsidian** | Conocimiento largo plazo (tesis, psicología, lecciones) |
+| **GitHub** | Versionado y documentación de arquitectura |
+
+**Reglas de conducta para ChatGPT:**
+
+- No proponer Supabase, Telegram, Gmail, Drive, D1, LAN, QR como solución principal
+- No decidir trades solo — el usuario aprueba
+- No asumir que el snapshot está actualizado si no hubo POST reciente
+- Leer este archivo + GET snapshot antes de analizar trades
+
+---
+
+## 7. Lecciones aprendidas
+
+| Intento | Resultado |
+|---------|-----------|
+| LAN + localhost + QR | Descartado — restricciones de red, no funciona desde iPhone fuera de casa |
+| DataTransfer | Descartado como flujo principal — fricción y dependencia local |
+| Copy/paste bloques largos | Funciona pero no escala — reemplazado por URL + JSON |
+| **Worker + Cloudflare KV** | **Resolvió conectividad** — URL pública, $0, accesible desde cualquier dispositivo |
+| `CHATGPT.md` en raíz del repo | Permite retomar contexto sin prompts largos — **mantener actualizado** |
+| Patrón reutilizable | Worker + KV + tokens puede usarse en **otros proyectos** del usuario |
+
+---
+
+## 8. Idea futura (NO implementar aún)
+
+**Flujo objetivo cuando inbox esté validado:**
+
+1. Usuario describe trade o ajuste en ChatGPT
+2. ChatGPT genera JSON validado (tipo, proposal, thesis, etc.)
+3. ChatGPT (o script) hace **POST `/inbox`** al Worker
+4. MatrixTrade hace **GET `/inbox`**, muestra preview, usuario confirma
+5. MatrixTrade escribe en `data/trades.json` + Obsidian — nunca el Worker directamente
+
+**No implementar todavía:** POST `/trades`, escritura automática, procesamiento inbox en app.
+
+Solo documentado como dirección evolutiva.
+
+---
+
+## Endpoints (referencia rápida)
+
+| Method | Path | Auth | KV |
+|--------|------|------|-----|
+| POST | `/snapshot` | Bearer WRITE_TOKEN | `snapshot:latest` |
+| GET | `/snapshot` | `?token=READ_TOKEN` | read snapshot |
+| POST | `/inbox` | Bearer WRITE_TOKEN | `inbox:item:{uuid}` + `inbox:index` |
+| GET | `/inbox` | `?token=READ_TOKEN` | pending items only |
+
+**Inbox item shape:**
+
+```json
+{
+  "id": "uuid",
+  "receivedAt": "ISO-8601",
+  "status": "pending",
+  "payload": { }
+}
+```
 
 ---
 
@@ -95,8 +225,24 @@ LAN, localhost, QR as primary, DataTransfer, D1, Supabase, Telegram, Gmail, Driv
 
 | Path | Contents |
 |------|----------|
-| [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md) | Full bridge plan, deploy, curls, risks |
-| [`md/integrations/chatgpt-bridge.md`](md/integrations/chatgpt-bridge.md) | ChatGPT roles and sync policy |
-| [`bridge/src/index.ts`](bridge/src/index.ts) | Worker implementation |
-| [`data/trades.json`](data/trades.json) | Structured trades (H001) |
-| [`data/rules.json`](data/rules.json) | Cycle limits, Obsidian paths |
+| [`CHATGPT.md`](CHATGPT.md) | Este archivo — punto de entrada |
+| [`bridge/src/index.ts`](bridge/src/index.ts) | Worker: snapshot + inbox |
+| [`bridge/sample-snapshot.json`](bridge/sample-snapshot.json) | Ejemplo snapshot H001 |
+| [`bridge/sample-inbox.json`](bridge/sample-inbox.json) | Ejemplo propuesta H002 |
+| [`data/trades.json`](data/trades.json) | Trades estructurados (H001) |
+| [`data/rules.json`](data/rules.json) | Límites ciclo, paths Obsidian |
+| [`md/integrations/chatgpt-bridge.md`](md/integrations/chatgpt-bridge.md) | Roles y política de sync |
+
+---
+
+## App phases (roadmap)
+
+| Phase | What | Status |
+|-------|------|--------|
+| 0 | H001 visible en app local + Vercel read-only | Done |
+| 1 | Worker + snapshot GET/POST | Done |
+| 1b | Worker + inbox GET/POST | Done (infra) |
+| 1c | ChatGPT valida inbox en conversación real | **Current** |
+| 2 | MatrixTrade Sync → POST `/snapshot` | Not started |
+| 3 | MatrixTrade lee `/inbox`, preview, apply | Not started |
+| 4 | Consultas avanzadas / index / patrones | Not started |

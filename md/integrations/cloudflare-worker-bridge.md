@@ -1,44 +1,48 @@
 # Cloudflare Worker bridge — plan & status
 
-**Purpose:** Let ChatGPT read MatrixTrade state from a public URL without LAN, QR, DataTransfer, or long copy-paste blocks.
+**Purpose:** Bridge between ChatGPT and MatrixTrade without LAN, QR, or DataTransfer.
 
-**Status:** Worker code in repo at `bridge/`. **Not connected to MatrixTrade app yet.** Validate Worker in isolation first, then add Sync button.
+**Worker URL:** `https://matrixtrade-bridge.argometal.workers.dev`  
+**Status:** Deployed and tested. MatrixTrade app **not connected** yet.
+
+**Entry point for ChatGPT:** [`CHATGPT.md`](../../CHATGPT.md) (repo root)
 
 **Cost:** $0 — Cloudflare Workers + KV free tier.
 
 ---
 
-## Architecture (minimal)
+## Architecture
+
+### Read path (ChatGPT analyzes state)
 
 ```text
-MatrixTrade (local PC)
-        │  POST /snapshot  + Bearer WRITE_TOKEN
-        ▼
-Cloudflare Worker + KV  (key: snapshot:latest)
-        │  GET /snapshot?token=READ_TOKEN
-        ▼
-ChatGPT (web browsing) or Safari on iPhone
+User → ChatGPT → GET /snapshot?token= → Worker/KV → analysis → User
 ```
 
-### Roles
+### Write path (proposals — inbox)
 
-| Component | Role |
-|-----------|------|
-| MatrixTrade | UI, metrics, publishes snapshot on demand |
-| Cloudflare Worker | Auth + store/retrieve one JSON blob |
-| Cloudflare KV | Persistent storage (`snapshot:latest`) |
-| ChatGPT | Reads URL, analyzes trades — no MatrixTrade API |
-| Obsidian | Long-term notes (not in v1 snapshot body) |
-| GitHub | Repo + this doc; optional deploy trigger later |
-| Vercel | Read-only dashboard from git (separate path) |
+```text
+User → ChatGPT → validated JSON → POST /inbox → Worker/KV (pending queue)
+                                              → MatrixTrade processes later (not built)
+```
 
-### What we are NOT using
+### Publish path (pending in app)
 
-- LAN / localhost as primary access
-- QR codes as primary flow
-- DataTransfer
-- D1, Supabase, Telegram, Gmail, Google Drive
-- Paid services
+```text
+MatrixTrade (local) → POST /snapshot → Worker/KV → ChatGPT reads GET /snapshot
+```
+
+### Why Worker + KV
+
+- Public HTTPS URL from any device (iPhone, ChatGPT browsing)
+- No local network dependency
+- Zero cost at current scale
+- Clear separation: Worker stores/transits; MatrixTrade owns truth
+- Pattern reusable in other projects
+
+### What we are NOT using (primary path)
+
+LAN, localhost, QR, DataTransfer, D1, Supabase, Telegram, Gmail, Drive, paid services.
 
 ---
 
@@ -46,164 +50,106 @@ ChatGPT (web browsing) or Safari on iPhone
 
 | Method | Path | Auth | Behavior |
 |--------|------|------|----------|
-| `POST` | `/snapshot` | `Authorization: Bearer WRITE_TOKEN` | Accept JSON body, set/validate `updatedAt`, write to KV |
-| `GET` | `/snapshot?token=READ_TOKEN` | query param | Return JSON from KV or `404` if empty |
-| `POST` | `/inbox` | `Authorization: Bearer WRITE_TOKEN` | Queue structured JSON; adds `id`, `receivedAt`, `status: pending` |
-| `GET` | `/inbox?token=READ_TOKEN` | query param | Return pending inbox items (does not modify trades) |
+| POST | `/snapshot` | Bearer WRITE_TOKEN | Save experiment snapshot; sets `updatedAt` |
+| GET | `/snapshot` | `?token=READ_TOKEN` | Return snapshot or 404 |
+| POST | `/inbox` | Bearer WRITE_TOKEN | Queue JSON; adds `id`, `receivedAt`, `status: pending` |
+| GET | `/inbox` | `?token=READ_TOKEN` | Return `{ count, items[] }` pending only |
 
-KV keys: `snapshot:latest`, `inbox:index`, `inbox:item:{id}`
+**KV keys:** `snapshot:latest`, `inbox:index`, `inbox:item:{id}`
 
-**Flow:** User → ChatGPT → validated JSON → `POST /inbox` → MatrixTrade processes later via `GET /inbox`.
+**Inbox never writes trades.** MatrixTrade applies changes after human review.
 
 ---
 
-## Minimum snapshot payload
+## Validated checkpoint
 
-Single JSON object (~2–5 KB). MatrixTrade will build this from `data/trades.json`, `data/rules.json`, and computed experiment metrics.
+| Test | Result |
+|------|--------|
+| POST `/snapshot` | 200 |
+| GET `/snapshot` | 200, H001 AMZN present |
+| POST `/inbox` | 201 |
+| GET `/inbox` | 200, pending items |
+| Wrangler auth | OK |
+| Subdomain | `argometal.workers.dev` |
+
+---
+
+## Snapshot payload (minimum)
+
+See [`bridge/sample-snapshot.json`](../../bridge/sample-snapshot.json).
+
+H001 AMZN: entry 240, exit 225.9, stop 230, shares 8, result -112.8.
+
+Obsidian note bodies excluded from v1 snapshot.
+
+---
+
+## Inbox payload (example)
+
+See [`bridge/sample-inbox.json`](../../bridge/sample-inbox.json).
+
+Stored shape:
 
 ```json
 {
-  "updatedAt": "2026-06-30T12:00:00.000Z",
-  "rules": {
-    "cycleLossLimit": -300,
-    "maxTrades": 30
-  },
-  "experiment": {
-    "realizedPnL": -112.8,
-    "remainingLossBudget": -187.2,
-    "closedTrades": 1,
-    "wins": 0,
-    "losses": 1
-  },
-  "trades": [
-    {
-      "id": "H001",
-      "ticker": "AMZN",
-      "status": "closed",
-      "entry": 240,
-      "exit": 225.9,
-      "stop": 230,
-      "shares": 8,
-      "result": -112.8,
-      "lessons": "Stop executed correctly. No immediate re-entry. Maintain discipline."
-    }
-  ]
+  "id": "uuid",
+  "receivedAt": "ISO-8601",
+  "status": "pending",
+  "payload": { }
 }
 ```
 
-**v1 excludes:** full Obsidian note bodies (privacy + size). Only structured fields already in JSON (`lessons`, etc.).
+---
+
+## Tokens
+
+| Operation | Secret |
+|-----------|--------|
+| POST (snapshot, inbox) | WRITE_TOKEN — header `Authorization: Bearer …` |
+| GET (snapshot, inbox) | READ_TOKEN — query `?token=…` |
+
+Set via `wrangler secret put`. Local copy: `bridge/.dev.vars` (gitignored).
 
 ---
 
-## Storage choice
-
-| Option | Verdict |
-|--------|---------|
-| Worker memory | ❌ Stateless — data lost between requests |
-| **KV** | ✅ **Use this** — one key, one JSON string |
-| D1 | ❌ Overkill for a single blob |
-| R2 | ❌ Unnecessary complexity |
-
----
-
-## Token protection
-
-| Operation | Secret | Where |
-|-----------|--------|-------|
-| Write (POST) | `WRITE_TOKEN` | Cloudflare secret; header `Authorization: Bearer …` |
-| Read (GET) | `READ_TOKEN` | Cloudflare secret; query `?token=…` |
-
-Never commit tokens. Set via `wrangler secret put`.
-
----
-
-## How ChatGPT reads state
-
-1. **Primary:** User asks ChatGPT (with browsing): *“Read https://WORKER_URL/snapshot?token=READ_TOKEN and analyze H001.”*
-2. **Fallback:** Open URL in Safari → copy JSON → paste in ChatGPT.
-3. **Not v1:** Custom GPT Actions (requires paid ChatGPT plan).
-
-ChatGPT does **not** maintain a live connection. It reads the **last published snapshot**.
-
----
-
-## Deploy steps (Worker only)
-
-Folder: `bridge/` (inside this repo).
+## Deploy
 
 ```bat
 cd c:\Tools\MatrixTrade\bridge
-call c:\Tools\runtime\env.bat
-npm install
-npx wrangler login
-npx wrangler kv namespace create SNAPSHOT
+deploy.bat
 ```
 
-1. Paste KV `id` into `wrangler.toml` (replace `REPLACE_WITH_KV_NAMESPACE_ID`).
-2. Set secrets: `npx wrangler secret put WRITE_TOKEN` and `READ_TOKEN`.
-3. Deploy: `npx wrangler deploy`.
-4. Note URL: `https://matrixtrade-bridge.<account>.workers.dev`
+First-time subdomain: `register-subdomain.bat`
 
-### Test POST
-
-```powershell
-curl.exe -X POST "https://WORKER_URL/snapshot" `
-  -H "Authorization: Bearer WRITE_TOKEN" `
-  -H "Content-Type: application/json" `
-  --data-binary "@sample-snapshot.json"
-```
-
-Expected: `200` → `{"ok":true,"updatedAt":"..."}`
-
-### Test GET
-
-```bash
-curl "https://WORKER_URL/snapshot?token=READ_TOKEN"
-```
-
-Expected: `200` → full snapshot JSON with H001.
-
-Before first POST: `404` → `{"error":"No snapshot published yet"}`
+Code: [`bridge/src/index.ts`](../../bridge/src/index.ts)
 
 ---
 
-## Implementation phases
+## Phases
 
-| Phase | What | Status |
-|-------|------|--------|
-| 1 | Worker + KV + tokens (isolated) | Code ready — deploy & curl test |
-| 2 | MatrixTrade script or **Sync to bridge** button | Not started |
-| 3 | Optional: auto-sync after trade close | Not started |
-
-**Checkpoint success:** iPhone opens GET URL → sees H001 AMZN JSON → ChatGPT interprets it without localhost.
-
----
-
-## Risks
-
-| Risk | Mitigation |
-|------|------------|
-| ChatGPT fails to fetch URL | Copy-paste fallback |
-| Stale data | Manual sync after changes; `updatedAt` in payload |
-| Token in URL leaked | Rotate READ_TOKEN; private repo for docs |
-| Obsidian thesis not in snapshot | By design in v1; expand payload later if needed |
-| Vercel cannot POST to Worker | Sync from local MatrixTrade only |
-
----
-
-## Related docs
-
-- [chatgpt-bridge.md](chatgpt-bridge.md) — roles, export, sync policy
-- [export-context.md](../protocols/export-context.md) — current copy-paste format (legacy until bridge live)
-- [mobile-connect.md](mobile-connect.md) — LAN/QR (secondary, not primary)
+| Phase | Status |
+|-------|--------|
+| 1 Worker + snapshot | Done |
+| 1b Worker + inbox endpoints | Done |
+| 1c ChatGPT validates inbox in conversation | **Current** |
+| 2 MatrixTrade Sync → snapshot | Not started |
+| 3 MatrixTrade reads inbox, preview, apply | Not started |
 
 ---
 
 ## For ChatGPT reading this repo
 
-When assisting the user on MatrixTrade + ChatGPT handoff:
+1. Read [`CHATGPT.md`](../../CHATGPT.md) first every session.
+2. Primary read: GET `/snapshot` — not LAN or QR.
+3. Primary write (when user asks): POST `/inbox` with validated JSON — not direct trade writes.
+4. MatrixTrade is source of truth; you analyze and propose.
+5. Cursor builds infrastructure only.
+6. Do not propose discarded alternatives unless user explicitly asks.
 
-1. **Primary path going forward:** Cloudflare Worker URL with snapshot JSON — not LAN or QR.
-2. **MatrixTrade app** publishes state; **you** analyze it when the user shares the GET URL or pasted JSON.
-3. **Trade decisions** stay between user and ChatGPT — Cursor only builds infrastructure.
-4. **Do not** propose Supabase, Telegram, D1, or local-network solutions unless the user explicitly asks.
+---
+
+## Related
+
+- [chatgpt-bridge.md](chatgpt-bridge.md)
+- [export-context.md](../protocols/export-context.md) — legacy copy-paste
+- [mobile-connect.md](mobile-connect.md) — LAN/QR secondary only
