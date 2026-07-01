@@ -33,6 +33,9 @@ next-env.d.ts
 /vault/Trades/*.md
 *.matrixtrade.tmp
 
+# Health Vault — private data (never commit)
+/data/health-vault/
+
 # OS / editor
 Thumbs.db
 *.swp
