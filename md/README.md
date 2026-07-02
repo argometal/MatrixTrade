@@ -82,6 +82,7 @@ Add one `.md` per subject as the system grows.
 
 | Document | Contents |
 |----------|----------|
+| [trading-journal-product-research.md](research/trading-journal-product-research.md) | **Product research:** TraderSync, Edgewonk, TradesViz, etc. — principles before design |
 | [companies-model.md](topics/companies-model.md) | Per-ticker folder structure |
 | [decision-framework.md](topics/decision-framework.md) | Why this company, why now |
 | [analysis-workflow.md](topics/analysis-workflow.md) | Multi-timeframe workflow |
