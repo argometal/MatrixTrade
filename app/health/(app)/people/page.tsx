@@ -9,12 +9,12 @@ export default async function PeoplePage() {
 
   return (
     <>
-      <PageHeader title="Personas" subtitle="Jefes, RH, testigos, compañeros" />
+      <PageHeader title="People" subtitle="Managers, HR, witnesses, colleagues" />
       <Button href="/health/people/new" fullWidth className="mb-6">
-        + Nueva persona
+        + New person
       </Button>
       {people.length === 0 ? (
-        <EmptyState message="Sin personas registradas." />
+        <EmptyState message="No people yet." />
       ) : (
         <div className="space-y-3">
           {await Promise.all(

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { RecordType } from "@/lib/health-vault/types";
-import { RECORD_TYPE_LABELS } from "@/lib/health-vault/labels";
+import { RECORD_STATUS_LABELS, RECORD_TYPE_LABELS } from "@/lib/health-vault/labels";
 
 export function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <div className={`rounded-2xl border border-zinc-800 bg-zinc-900 p-4 ${className}`}>{children}</div>;
@@ -34,9 +34,9 @@ export function Button({
 export function PageHeader({ title, subtitle, backHref }: { title: string; subtitle?: string; backHref?: string }) {
   return (
     <div className="mb-6">
-      {backHref && (
+        {backHref && (
         <Link href={backHref} className="mb-2 inline-block text-sm text-zinc-400 hover:text-zinc-200">
-          ← Volver
+          ← Back
         </Link>
       )}
       <h1 className="text-2xl font-bold tracking-tight text-zinc-50">{title}</h1>
@@ -65,7 +65,7 @@ export function EmptyState({ message }: { message: string }) {
 
 export function formatDate(dateStr: string): string {
   if (!dateStr) return "—";
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("es-MX", {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-US", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -93,9 +93,10 @@ export function StatusBadge({ status }: { status: string }) {
     resuelto: "bg-emerald-600/20 text-emerald-400",
     escalado: "bg-red-600/20 text-red-400",
   };
+  const label = RECORD_STATUS_LABELS[status as keyof typeof RECORD_STATUS_LABELS] ?? status;
   return (
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${colors[status] ?? "bg-zinc-800 text-zinc-300"}`}>
-      {status}
+      {label}
     </span>
   );
 }

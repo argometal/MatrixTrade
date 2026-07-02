@@ -4,8 +4,8 @@ import { Geist } from "next/font/google";
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Health Vault",
-  description: "Bitácora laboral privada con evidencias",
+  title: "Private",
+  description: "",
 };
 
 export const viewport: Viewport = {

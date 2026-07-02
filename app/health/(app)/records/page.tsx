@@ -1,7 +1,7 @@
 import { hasHealthSecretUnlock } from "@/lib/auth/cookies";
 import { RecordCard } from "@/app/health/components/Cards";
 import { Button, EmptyState, PageHeader } from "@/app/health/components/ui";
-import { getRecords, readVault, evidenceCountForRecord } from "@/lib/health-vault/server-storage";
+import { getRecords, evidenceCountForRecord, readVault } from "@/lib/health-vault/server-storage";
 
 export default async function RecordsPage() {
   const includeSecret = await hasHealthSecretUnlock();
@@ -10,12 +10,12 @@ export default async function RecordsPage() {
 
   return (
     <>
-      <PageHeader title="Registros" subtitle="Por fecha (más reciente primero)" />
+      <PageHeader title="Records" subtitle="Newest first" />
       <Button href="/health/records/new" fullWidth className="mb-6">
-        + Nuevo registro
+        + New record
       </Button>
       {records.length === 0 ? (
-        <EmptyState message="Sin registros." />
+        <EmptyState message="No records." />
       ) : (
         <div className="space-y-3">
           {records.map((r) => (

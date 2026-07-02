@@ -16,35 +16,35 @@ export default async function HealthHomePage({
 
   return (
     <>
-      <PageHeader title="Inicio" subtitle="Tu bitácora laboral con evidencias" />
+      <PageHeader title="Home" />
       <SecretPanel secretError={Boolean(secret_error)} />
 
       <div className="mb-6 grid grid-cols-2 gap-3">
-        <StatCard label="Registros" value={stats.totalRecords} accent="teal" />
-        <StatCard label="Evidencias" value={stats.totalEvidence} accent="teal" />
-        <StatCard label="Personas" value={stats.totalPeople} />
-        <StatCard label="Abiertos" value={stats.openRecords} accent="amber" />
+        <StatCard label="Records" value={stats.totalRecords} accent="teal" />
+        <StatCard label="Evidence" value={stats.totalEvidence} accent="teal" />
+        <StatCard label="People" value={stats.totalPeople} />
+        <StatCard label="Open" value={stats.openRecords} accent="amber" />
       </div>
 
       {stats.secretRecords > 0 && !includeSecret && (
         <p className="mb-4 text-xs text-violet-400">
-          {stats.secretRecords} registro(s) secreto(s) oculto(s). Desbloquea arriba.
+          {stats.secretRecords} secret record(s) hidden. Unlock above.
         </p>
       )}
 
       <div className="mb-6 flex flex-col gap-3">
         <Button href="/health/records/new" fullWidth>
-          + Nuevo registro
+          + New record
         </Button>
         <Button href="/health/people/new" variant="secondary" fullWidth>
-          + Nueva persona
+          + New person
         </Button>
       </div>
 
       <section className="mb-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Registros recientes</h2>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Recent records</h2>
         {recentRecords.length === 0 ? (
-          <EmptyState message="Sin registros. Documenta el primer incidente o queja." />
+          <EmptyState message="No records yet." />
         ) : (
           <div className="space-y-3">
             {recentRecords.map((r) => (
@@ -55,9 +55,9 @@ export default async function HealthHomePage({
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Evidencias recientes</h2>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Recent evidence</h2>
         {recentEvidence.length === 0 ? (
-          <EmptyState message="Sin evidencias aún." />
+          <EmptyState message="No evidence yet." />
         ) : (
           <div className="space-y-3">
             {recentEvidence.map((e) => (

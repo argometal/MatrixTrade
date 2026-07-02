@@ -13,8 +13,8 @@ export default async function RecordDetailPage({ params }: { params: Promise<{ i
   if (!record) {
     return (
       <>
-        <PageHeader title="No encontrado" backHref="/health/records" />
-        <EmptyState message="Registro no encontrado o requiere desbloqueo secreto." />
+        <PageHeader title="Not found" backHref="/health/records" />
+        <EmptyState message="Record not found or requires secret unlock." />
       </>
     );
   }
@@ -33,7 +33,7 @@ export default async function RecordDetailPage({ params }: { params: Promise<{ i
           <StatusBadge status={record.status} />
           {record.secret && (
             <span className="rounded-full bg-violet-600/20 px-2.5 py-0.5 text-xs font-medium text-violet-300">
-              Secreto
+              Secret
             </span>
           )}
           {record.behaviorKind && (
@@ -59,7 +59,7 @@ export default async function RecordDetailPage({ params }: { params: Promise<{ i
         )}
         {people.length > 0 && (
           <div className="mt-4 border-t border-zinc-800 pt-3">
-            <p className="mb-2 text-xs font-medium uppercase text-zinc-500">Personas</p>
+            <p className="mb-2 text-xs font-medium uppercase text-zinc-500">People</p>
             {people.map(
               (p) =>
                 p && (
@@ -73,15 +73,15 @@ export default async function RecordDetailPage({ params }: { params: Promise<{ i
       </Card>
 
       <Button href={`/health/records/${id}/evidence/new`} fullWidth className="mb-6">
-        + Agregar evidencia
+        + Add evidence
       </Button>
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">
-          Evidencias ({evidence.length})
+          Evidence ({evidence.length})
         </h2>
         {evidence.length === 0 ? (
-          <EmptyState message="Sin evidencias. Agrega correos, mensajes o archivos." />
+          <EmptyState message="No evidence yet. Add emails, messages, or files." />
         ) : (
           <div className="space-y-3">
             {evidence.map((e) => (
@@ -92,7 +92,7 @@ export default async function RecordDetailPage({ params }: { params: Promise<{ i
                     href={`/api/health-vault/files/${e.id}`}
                     className="mt-1 inline-block text-xs text-teal-500 underline"
                   >
-                    Descargar adjunto
+                    Download attachment
                   </Link>
                 )}
               </div>

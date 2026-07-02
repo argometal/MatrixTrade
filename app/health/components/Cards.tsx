@@ -14,7 +14,7 @@ export function RecordCard({ record, evidenceCount }: { record: WorkRecord; evid
               <StatusBadge status={record.status} />
               {record.secret && (
                 <span className="rounded-full bg-violet-600/20 px-2.5 py-0.5 text-xs font-medium text-violet-300">
-                  Secreto
+                  Secret
                 </span>
               )}
               {record.behaviorKind && (
@@ -30,7 +30,7 @@ export function RecordCard({ record, evidenceCount }: { record: WorkRecord; evid
             <p className="mt-2 line-clamp-2 text-sm text-zinc-400">{record.description}</p>
             {evidenceCount !== undefined && (
               <p className="mt-2 text-xs text-teal-500">
-                {evidenceCount} evidencia{evidenceCount !== 1 ? "s" : ""}
+                {evidenceCount} evidence item{evidenceCount !== 1 ? "s" : ""}
               </p>
             )}
           </div>
@@ -52,7 +52,7 @@ export function EvidenceCard({ item }: { item: Evidence }) {
         {formatDate(item.date)} · {item.source}
       </p>
       {item.attachmentName && (
-        <p className="mt-1 text-xs text-teal-500">Adjunto: {item.attachmentName}</p>
+        <p className="mt-1 text-xs text-teal-500">Attachment: {item.attachmentName}</p>
       )}
       <p className="mt-2 line-clamp-4 whitespace-pre-wrap text-sm text-zinc-400">{item.content}</p>
     </Card>
@@ -74,7 +74,7 @@ export function PersonCard({ person, recordCount }: { person: Person; recordCoun
             </span>
             {recordCount !== undefined && (
               <p className="mt-2 text-xs text-zinc-500">
-                {recordCount} registro{recordCount !== 1 ? "s" : ""}
+                {recordCount} record{recordCount !== 1 ? "s" : ""}
               </p>
             )}
           </div>

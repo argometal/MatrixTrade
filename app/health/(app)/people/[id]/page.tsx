@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { hasHealthSecretUnlock } from "@/lib/auth/cookies";
 import { getPerson, getRecordsForPerson } from "@/lib/health-vault/server-storage";
 import { RecordCard } from "@/app/health/components/Cards";
@@ -13,8 +12,8 @@ export default async function PersonDetailPage({ params }: { params: Promise<{ i
   if (!person) {
     return (
       <>
-        <PageHeader title="No encontrado" backHref="/health/people" />
-        <EmptyState message="Persona no encontrada." />
+        <PageHeader title="Not found" backHref="/health/people" />
+        <EmptyState message="Person not found." />
       </>
     );
   }
@@ -34,9 +33,9 @@ export default async function PersonDetailPage({ params }: { params: Promise<{ i
         {person.phone && <p className="text-sm text-zinc-400">{person.phone}</p>}
         {person.notes && <p className="mt-3 whitespace-pre-wrap text-sm text-zinc-300">{person.notes}</p>}
       </Card>
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Registros vinculados</h2>
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Linked records</h2>
       {records.length === 0 ? (
-        <EmptyState message="Sin registros vinculados." />
+        <EmptyState message="No linked records." />
       ) : (
         <div className="space-y-3">
           {records.map((r) => (

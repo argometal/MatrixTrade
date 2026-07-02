@@ -4,9 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const links = [
-  { href: "/health", label: "Inicio", icon: "⌂" },
-  { href: "/health/records", label: "Registros", icon: "▤" },
-  { href: "/health/people", label: "Personas", icon: "◎" },
+  { href: "/health", label: "Home", icon: "⌂" },
+  { href: "/health/records", label: "Records", icon: "▤" },
+  { href: "/health/people", label: "People", icon: "◎" },
 ];
 
 export function BottomNav() {

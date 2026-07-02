@@ -55,7 +55,7 @@ export function ChatGptHandoff({ fullContext, fullContextAllClosed }: ChatGptHan
       <div>
         <h2 className="text-lg font-semibold">ChatGPT Handoff</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          One tap copies numbers + your Obsidian analysis (tesis, psicología, lecciones). Write
+          One tap copies numbers + your Obsidian analysis (thesis, psychology, lessons). Write
           analysis in Obsidian — the app pulls it automatically.
         </p>
       </div>

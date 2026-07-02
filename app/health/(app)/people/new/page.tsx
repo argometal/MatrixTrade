@@ -5,18 +5,18 @@ import { Field, inputClass, PageHeader, textareaClass } from "@/app/health/compo
 export default function NewPersonPage() {
   return (
     <>
-      <PageHeader title="Nueva persona" backHref="/health/people" />
+      <PageHeader title="New person" backHref="/health/people" />
       <form action={createPersonAction} className="space-y-4">
-        <Field label="Nombre">
+        <Field label="Name">
           <input name="name" required className={inputClass} />
         </Field>
-        <Field label="Rol / puesto">
+        <Field label="Role / title">
           <input name="role" className={inputClass} />
         </Field>
-        <Field label="Departamento">
+        <Field label="Department">
           <input name="department" className={inputClass} />
         </Field>
-        <Field label="Relación contigo">
+        <Field label="Relationship to you">
           <select name="relationship" className={inputClass} defaultValue={RELATIONSHIPS[0]}>
             {RELATIONSHIPS.map((r) => (
               <option key={r} value={r}>
@@ -28,14 +28,14 @@ export default function NewPersonPage() {
         <Field label="Email">
           <input name="email" type="email" className={inputClass} />
         </Field>
-        <Field label="Teléfono">
+        <Field label="Phone">
           <input name="phone" className={inputClass} />
         </Field>
-        <Field label="Notas">
+        <Field label="Notes">
           <textarea name="notes" className={textareaClass} />
         </Field>
         <button type="submit" className="w-full rounded-xl bg-teal-600 py-3.5 font-semibold text-white">
-          Guardar persona
+          Save person
         </button>
       </form>
     </>

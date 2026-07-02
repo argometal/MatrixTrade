@@ -14,18 +14,18 @@ export default async function NewEvidencePage({ params }: { params: Promise<{ id
   if (!record) {
     return (
       <>
-        <PageHeader title="Registro no disponible" backHref="/health/records" />
-        <EmptyState message="No encontrado o requiere desbloqueo secreto." />
+        <PageHeader title="Record unavailable" backHref="/health/records" />
+        <EmptyState message="Not found or requires secret unlock." />
       </>
     );
   }
 
   return (
     <>
-      <PageHeader title="Nueva evidencia" subtitle={record.title} backHref={`/health/records/${id}`} />
+      <PageHeader title="New evidence" subtitle={record.title} backHref={`/health/records/${id}`} />
       <form action={createEvidenceAction} className="space-y-4" encType="multipart/form-data">
         <input type="hidden" name="recordId" value={id} />
-        <Field label="Tipo">
+        <Field label="Type">
           <select name="type" className={inputClass} defaultValue="email">
             {EVIDENCE_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -34,19 +34,19 @@ export default async function NewEvidencePage({ params }: { params: Promise<{ id
             ))}
           </select>
         </Field>
-        <Field label="Título">
+        <Field label="Title">
           <input name="title" required className={inputClass} />
         </Field>
-        <Field label="Fecha">
+        <Field label="Date">
           <input name="date" type="date" required defaultValue={today} className={inputClass} />
         </Field>
-        <Field label="Fuente">
-          <input name="source" className={inputClass} placeholder="Outlook, Teams, testigo..." />
+        <Field label="Source">
+          <input name="source" className={inputClass} placeholder="Outlook, Teams, witness..." />
         </Field>
-        <Field label="Contenido">
-          <textarea name="content" required className={textareaClass} placeholder="Pega correo, mensaje o nota..." />
+        <Field label="Content">
+          <textarea name="content" required className={textareaClass} placeholder="Paste email, message, or note..." />
         </Field>
-        <Field label="Persona relacionada (opcional)">
+        <Field label="Related person (optional)">
           <select name="personId" className={inputClass} defaultValue="">
             <option value="">—</option>
             {people.map((p) => (
@@ -56,11 +56,11 @@ export default async function NewEvidencePage({ params }: { params: Promise<{ id
             ))}
           </select>
         </Field>
-        <Field label="Adjunto (PDF, imagen, doc — opcional)">
+        <Field label="Attachment (PDF, image, doc — optional)">
           <input name="attachment" type="file" className={inputClass} accept="*/*" />
         </Field>
         <button type="submit" className="w-full rounded-xl bg-teal-600 py-3.5 font-semibold text-white">
-          Guardar evidencia
+          Save evidence
         </button>
       </form>
     </>
