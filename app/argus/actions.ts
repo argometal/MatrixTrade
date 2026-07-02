@@ -13,7 +13,7 @@ import {
 } from "@/lib/argus/server-storage";
 import type { EntityType, JournalKind, LogSource } from "@/lib/argus/types";
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
-import { inferJournalKind, resolveLogDate } from "@/lib/argus/journal-helpers";
+import { inferJournalKind, resolveLogDate, autoTitleFromBody } from "@/lib/argus/journal-helpers";
 import { resolveClassificationStatus } from "@/lib/argus/normalize";
 
 function revalidateArgus(): void {
@@ -76,12 +76,15 @@ async function resolveEntityIds(formData: FormData): Promise<string[]> {
 export async function createLogAction(formData: FormData): Promise<void> {
   const entityIds = await resolveEntityIds(formData);
   const input = parseJournalInput(formData);
-  if (!input.title || !input.body) {
-    redirect("/argus/new?error=content");
+  if (!input.body) {
+    redirect("/argus/journal?capture=1&error=content");
   }
+
+  const title = input.title || autoTitleFromBody(input.body);
 
   const log = await createLog({
     ...input,
+    title,
     entityIds,
     classificationStatus: resolveClassificationStatus(entityIds),
     attachmentIds: [],
@@ -119,12 +122,15 @@ export async function convertInboxAction(formData: FormData): Promise<void> {
   const inboxId = String(formData.get("inboxId") ?? "");
   const entityIds = await resolveEntityIds(formData);
   const input = parseJournalInput(formData);
-  if (!input.title || !input.body) {
+  if (!input.body) {
     redirect(`/argus/inbox/${inboxId}?error=content`);
   }
 
+  const title = input.title || autoTitleFromBody(input.body);
+
   const { log } = await convertInboxToLog(inboxId, {
     ...input,
+    title,
     entityIds,
   });
 

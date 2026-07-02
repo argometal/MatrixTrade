@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { classifyLogAction } from "@/app/argus/actions";
+import { ClassifyLogForm } from "@/app/argus/components/ClassifyLogForm";
 import { EntityChip } from "@/app/argus/components/Cards";
 import { Card, EmptyState, formatDate, PageHeader } from "@/app/argus/components/ui";
+import { buildEntityPickerBuckets } from "@/lib/argus/journal-helpers";
 import { JOURNAL_KIND_LABELS, LOG_SOURCE_LABELS } from "@/lib/argus/labels";
-import { getAttachment, getEntity, getInboxItem, getLog } from "@/lib/argus/server-storage";
+import { getAttachment, getEntity, getInboxItem, getLog, readArgus } from "@/lib/argus/server-storage";
 
 export default async function LogDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,6 +22,8 @@ export default async function LogDetailPage({ params }: { params: Promise<{ id: 
     );
   }
 
+  const data = await readArgus();
+  const buckets = buildEntityPickerBuckets(data, includePrivate);
   const entities = (
     await Promise.all(log.entityIds.map((eid) => getEntity(eid)))
   ).filter(Boolean);
@@ -28,6 +33,9 @@ export default async function LogDetailPage({ params }: { params: Promise<{ id: 
   return (
     <>
       <PageHeader title={log.title} backHref="/argus/journal" />
+      {log.classificationStatus === "needs_classification" && (
+        <ClassifyLogForm logId={log.id} buckets={buckets} action={classifyLogAction} />
+      )}
       <Card className="mb-4">
         <div className="mb-3 flex flex-wrap gap-2">
           <span className="rounded-full bg-teal-600/20 px-2.5 py-0.5 text-xs text-teal-400">
@@ -36,6 +44,11 @@ export default async function LogDetailPage({ params }: { params: Promise<{ id: 
           <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-400">
             {LOG_SOURCE_LABELS[log.source]}
           </span>
+          {log.classificationStatus === "needs_classification" && (
+            <span className="rounded-full bg-amber-600/20 px-2.5 py-0.5 text-xs text-amber-300">
+              Needs classification
+            </span>
+          )}
           {log.private && (
             <span className="rounded-full bg-violet-600/20 px-2.5 py-0.5 text-xs text-violet-300">
               Private

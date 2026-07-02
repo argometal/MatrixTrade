@@ -87,6 +87,22 @@ export function getUpcomingFollowUps(logs: Log[], today: string, limit: number):
     .slice(0, limit);
 }
 
+/** First line of body, max 60 chars — used when title omitted at capture. */
+export function autoTitleFromBody(body: string): string {
+  const line = body.trim().split(/\n/)[0]?.trim() ?? "";
+  if (!line) return "Untitled memory";
+  if (line.length <= 60) return line;
+  return `${line.slice(0, 57)}...`;
+}
+
+export function getMemoryStream(logs: Log[], limit: number): Log[] {
+  return [...logs].sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
+}
+
+export function getUpcomingReminders(logs: Log[], today: string, limit: number): Log[] {
+  return getUpcomingFollowUps(logs, today, limit);
+}
+
 export function getNeedsClassificationLogs(logs: Log[], limit?: number): Log[] {
   const items = logs
     .filter((l) => l.classificationStatus === "needs_classification")

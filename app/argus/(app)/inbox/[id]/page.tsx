@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
-import { JournalEntryForm } from "@/app/argus/components/JournalEntryForm";
+import { MemoryComposer } from "@/app/argus/components/MemoryComposer";
 import { Card, EmptyState, PageHeader } from "@/app/argus/components/ui";
 import { INBOX_SOURCE_LABELS } from "@/lib/argus/labels";
 import { buildEntityPickerBuckets } from "@/lib/argus/journal-helpers";
@@ -86,10 +86,10 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
 
       {item.status === "pending" && (
         <>
-          <JournalEntryForm
+          <MemoryComposer
             action={convertInboxAction}
             buckets={buckets}
-            submitLabel="Convert to journal"
+            submitLabel="Remember"
             initial={{
               title: defaultTitle,
               body: defaultBody,

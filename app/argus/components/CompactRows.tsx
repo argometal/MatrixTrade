@@ -16,7 +16,14 @@ export function CompactLogRow({ log, entities }: { log: Log; entities: Entity[] 
         {JOURNAL_KIND_LABELS[log.kind]}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-zinc-100">{log.title}</p>
+        <p className="truncate text-sm font-medium text-zinc-100">
+          {log.classificationStatus === "needs_classification" && (
+            <span className="mr-1.5 text-amber-400" title="Needs classification">
+              ○
+            </span>
+          )}
+          {log.title}
+        </p>
         <p className="truncate text-xs text-zinc-500">
           {formatDate(touchDate)}
           {names.length > 0 && ` · ${names.join(", ")}`}

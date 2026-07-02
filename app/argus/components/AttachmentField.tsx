@@ -1,46 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { inputClass } from "./ui";
-
-type AttachmentMode = "file" | "inbox" | "email" | "image" | "pdf";
-
-const MODES: { id: AttachmentMode; label: string; available: boolean }[] = [
-  { id: "file", label: "Upload file", available: true },
-  { id: "inbox", label: "Inbox evidence", available: false },
-  { id: "email", label: "Email", available: false },
-  { id: "image", label: "Image", available: false },
-  { id: "pdf", label: "PDF", available: false },
-];
 
 export function AttachmentField() {
-  const [mode, setMode] = useState<AttachmentMode>("file");
+  const [name, setName] = useState("");
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        {MODES.map((m) => (
-          <button
-            key={m.id}
-            type="button"
-            disabled={!m.available}
-            onClick={() => m.available && setMode(m.id)}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-              mode === m.id && m.available
-                ? "bg-teal-600/30 text-teal-300"
-                : m.available
-                  ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
-                  : "cursor-not-allowed bg-zinc-900 text-zinc-600"
-            }`}
-          >
-            {m.label}
-            {!m.available && <span className="ml-1 opacity-60">soon</span>}
-          </button>
-        ))}
-      </div>
-      {mode === "file" && (
-        <input name="attachment" type="file" className={inputClass} accept="*/*" />
-      )}
-    </div>
+    <label className="block">
+      <span className="text-[11px] uppercase tracking-wider text-zinc-600">Attach</span>
+      <input
+        name="attachment"
+        type="file"
+        accept="*/*"
+        onChange={(e) => setName(e.target.files?.[0]?.name ?? "")}
+        className="mt-2 block w-full text-[13px] text-zinc-500 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-800 file:px-3 file:py-1.5 file:text-[13px] file:text-zinc-300"
+      />
+      {name && <span className="mt-1 block text-[12px] text-zinc-600">{name}</span>}
+    </label>
   );
 }
