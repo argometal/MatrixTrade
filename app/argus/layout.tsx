@@ -6,7 +6,7 @@ const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "ARGUS",
-  description: "Private professional journal",
+  description: "Investigation, issue tracking, and evidence analysis",
 };
 
 export const viewport: Viewport = {

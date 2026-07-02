@@ -279,13 +279,13 @@ export async function getInboxItem(id: string): Promise<InboxItem | undefined> {
 }
 
 export async function createInboxItem(
-  input: InboxItemInput & { status?: InboxItem["status"] }
+  input: InboxItemInput & { status?: InboxItem["status"]; receivedAt?: string }
 ): Promise<InboxItem> {
   const data = await readArgus();
   const now = new Date().toISOString();
   const item: InboxItem = {
     id: generateId(),
-    receivedAt: now,
+    receivedAt: input.receivedAt ?? now,
     source: input.source,
     rawText: input.rawText,
     rawEmail: input.rawEmail,

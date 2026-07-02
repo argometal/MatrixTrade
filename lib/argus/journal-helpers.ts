@@ -90,7 +90,7 @@ export function getUpcomingFollowUps(logs: Log[], today: string, limit: number):
 /** First line of body, max 60 chars — used when title omitted at capture. */
 export function autoTitleFromBody(body: string): string {
   const line = body.trim().split(/\n/)[0]?.trim() ?? "";
-  if (!line) return "Untitled memory";
+  if (!line) return "Untitled record";
   if (line.length <= 60) return line;
   return `${line.slice(0, 57)}...`;
 }

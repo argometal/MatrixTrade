@@ -5,6 +5,8 @@ import type { EntityType } from "@/lib/argus/types";
 import { AttachmentField } from "./AttachmentField";
 import { EntityPicker, type EntityPickerBuckets } from "./EntityPicker";
 
+export type CaptureIntent = "case" | "evidence" | "event" | "log";
+
 export interface MemoryComposerInitial {
   body?: string;
   title?: string;
@@ -12,10 +14,35 @@ export interface MemoryComposerInitial {
   entityIds?: string[];
 }
 
+const INTENT_COPY: Record<
+  CaptureIntent,
+  { placeholder: string; submitLabel: string; kindOverride?: "follow_up" | "event" | "log" }
+> = {
+  case: {
+    placeholder: "Describe the case — issue, scope, and what you need to track…",
+    submitLabel: "Open case",
+    kindOverride: "follow_up",
+  },
+  evidence: {
+    placeholder: "Describe the evidence — source, facts, and relevance…",
+    submitLabel: "Add evidence",
+  },
+  event: {
+    placeholder: "What happened? Include date, actors, and outcome…",
+    submitLabel: "Log event",
+    kindOverride: "event",
+  },
+  log: {
+    placeholder: "Quick field note — observation, lead, or update…",
+    submitLabel: "Save log",
+  },
+};
+
 interface MemoryComposerProps {
   action: (formData: FormData) => Promise<void>;
   buckets: EntityPickerBuckets;
   initial?: MemoryComposerInitial;
+  intent?: CaptureIntent;
   submitLabel?: string;
   onCancel?: () => void;
   autoFocus?: boolean;
@@ -50,16 +77,19 @@ export function MemoryComposer({
   action,
   buckets,
   initial,
-  submitLabel = "Remember",
+  intent = "log",
+  submitLabel,
   onCancel,
   autoFocus = true,
   variant = "inline",
 }: MemoryComposerProps) {
+  const copy = INTENT_COPY[intent];
+  const resolvedSubmitLabel = submitLabel ?? copy.submitLabel;
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState(initial?.body ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
   const [selectedIds, setSelectedIds] = useState<string[]>(initial?.entityIds ?? []);
-  const [eventDate, setEventDate] = useState("");
+  const [eventDate, setEventDate] = useState(intent === "event" ? new Date().toISOString().slice(0, 10) : "");
   const [followUpDate, setFollowUpDate] = useState("");
   const [panel, setPanel] = useState<"none" | "entity" | "more">("none");
   const [quickCreateName, setQuickCreateName] = useState("");
@@ -93,6 +123,7 @@ export function MemoryComposer({
       <input type="hidden" name="eventDate" value={eventDate} />
       <input type="hidden" name="followUpDate" value={followUpDate} />
       <input type="hidden" name="source" value={initial?.inboxId ? "inbox" : "manual"} />
+      {copy.kindOverride && <input type="hidden" name="kindOverride" value={copy.kindOverride} />}
 
       {variant === "sheet" && (
         <div className="mb-4 flex items-center justify-between">
@@ -108,7 +139,7 @@ export function MemoryComposer({
             disabled={!canSave}
             className="text-[15px] font-semibold text-teal-400 disabled:opacity-30"
           >
-            {submitLabel}
+            {resolvedSubmitLabel}
           </button>
         </div>
       )}
@@ -117,7 +148,7 @@ export function MemoryComposer({
         ref={bodyRef}
         value={body}
         onChange={(e) => setBody(e.target.value)}
-        placeholder="Remember something..."
+        placeholder={copy.placeholder}
         rows={variant === "sheet" ? 12 : 6}
         className="w-full flex-1 resize-none bg-transparent text-[17px] leading-[1.55] text-zinc-100 placeholder:text-zinc-600 focus:outline-none"
       />
@@ -223,7 +254,7 @@ export function MemoryComposer({
               disabled={!canSave}
               className="ml-auto text-[15px] font-semibold text-teal-400 disabled:opacity-30"
             >
-              {submitLabel}
+              {resolvedSubmitLabel}
             </button>
           </div>
         )}

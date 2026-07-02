@@ -41,7 +41,7 @@ export default async function NetworkPage({
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Entities</h2>
         {views.length === 0 ? (
-          <EmptyState message="No entities yet. Create one when adding a Journal entry." />
+          <EmptyState message="No entities yet. Create one when logging evidence or opening a case." />
         ) : (
           <div className="space-y-3">
             {views.map(({ entity, lastInteraction, nextTouch, topics: entityTopics, logCount, openFollowUps }) => (
@@ -52,7 +52,7 @@ export default async function NetworkPage({
                   <div className="mt-2 flex flex-wrap gap-3 text-xs text-zinc-400">
                     {lastInteraction && <span>Last: {formatDate(lastInteraction)}</span>}
                     {nextTouch && <span className="text-amber-400">Next touch: {formatDate(nextTouch)}</span>}
-                    <span>{logCount} journal item{logCount !== 1 ? "s" : ""}</span>
+                    <span>{logCount} linked item{logCount !== 1 ? "s" : ""}</span>
                     {openFollowUps > 0 && <span>{openFollowUps} open follow-up{openFollowUps !== 1 ? "s" : ""}</span>}
                   </div>
                   {entityTopics.length > 0 && (
@@ -68,7 +68,7 @@ export default async function NetworkPage({
       <section className="mb-8">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Topics</h2>
         {topics.length === 0 ? (
-          <EmptyState message="Topics appear when you tag journal entries." />
+          <EmptyState message="Topics appear when you tag evidence and logs." />
         ) : (
           <div className="flex flex-wrap gap-2">
             {topics.map((t) => (

@@ -45,7 +45,7 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
 
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Relationship history</h2>
       {history.length === 0 ? (
-        <EmptyState message="No journal items linked yet." />
+        <EmptyState message="No evidence or logs linked yet." />
       ) : (
         <div className="space-y-3">
           {history.map((log) => (
@@ -56,7 +56,7 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
 
       <p className="mt-6 text-center">
         <Link href={`/argus/new?q=${encodeURIComponent(entity.name)}`} className="text-sm text-teal-500 underline">
-          + New journal entry for {entity.name}
+          + Add evidence for {entity.name}
         </Link>
       </p>
     </>

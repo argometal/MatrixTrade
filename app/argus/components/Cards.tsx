@@ -62,6 +62,9 @@ export function InboxCard({ item }: { item: InboxItem }) {
                 minute: "2-digit",
               })}
               {item.from ? ` · ${item.from}` : ""}
+              {item.attachmentIds.length > 0
+                ? ` · ${item.attachmentIds.length} attachment${item.attachmentIds.length !== 1 ? "s" : ""}`
+                : ""}
             </p>
             <p className="mt-2 line-clamp-2 text-sm text-zinc-400">{item.rawText}</p>
           </div>

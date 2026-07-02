@@ -41,6 +41,21 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
         {item.subject && <h2 className="mt-2 font-semibold text-zinc-100">{item.subject}</h2>}
         {item.from && <p className="mt-1 text-xs text-zinc-500">From: {item.from}</p>}
         {item.to && <p className="text-xs text-zinc-500">To: {item.to}</p>}
+        <p className="mt-1 text-xs text-zinc-500">
+          Received:{" "}
+          {new Date(item.receivedAt).toLocaleString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
+        {item.attachmentIds.length > 0 && (
+          <p className="text-xs text-zinc-500">
+            Attachments: {item.attachmentIds.length}
+          </p>
+        )}
         <p className="mt-3 whitespace-pre-wrap text-sm text-zinc-300">{item.rawText}</p>
         {item.rawEmail && (
           <details className="mt-4 border-t border-zinc-800 pt-3">
@@ -89,7 +104,7 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
           <MemoryComposer
             action={convertInboxAction}
             buckets={buckets}
-            submitLabel="Remember"
+            submitLabel="Add evidence"
             initial={{
               title: defaultTitle,
               body: defaultBody,

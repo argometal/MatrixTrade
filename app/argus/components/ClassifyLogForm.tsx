@@ -23,7 +23,7 @@ export function ClassifyLogForm({
     <form action={action} className="mb-4 space-y-3 rounded-xl border border-amber-900/50 bg-amber-950/20 p-4">
       <input type="hidden" name="logId" value={logId} />
       <p className="text-sm font-medium text-amber-200">Needs classification</p>
-      <p className="text-xs text-amber-200/70">Link this memory to one or more entities.</p>
+      <p className="text-xs text-amber-200/70">Link this item to one or more entities.</p>
       <EntityPicker
         buckets={buckets}
         selectedIds={selectedIds}

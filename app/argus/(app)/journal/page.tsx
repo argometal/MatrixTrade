@@ -6,9 +6,18 @@ import {
   buildEntityPickerBuckets,
   getMemoryStream,
   getNeedsClassificationLogs,
+  getRecentlyAddedEntities,
   getUpcomingReminders,
 } from "@/lib/argus/journal-helpers";
 import { getEntities, getLogs, readArgus } from "@/lib/argus/server-storage";
+import type { Log } from "@/lib/argus/types";
+
+function getOpenCases(logs: Log[], limit: number): Log[] {
+  return logs
+    .filter((l) => l.kind === "follow_up" || l.topics.length > 0)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, limit);
+}
 
 export default async function JournalPage({
   searchParams,
@@ -25,22 +34,25 @@ export default async function JournalPage({
 
   const needsClassification = getNeedsClassificationLogs(logs, 8);
   const needsIds = new Set(needsClassification.map((l) => l.id));
-  const memoryStream = getMemoryStream(
-    logs.filter((l) => !needsIds.has(l.id)),
+  const openCaseIds = new Set(getOpenCases(logs, 12).map((l) => l.id));
+  const recentEvidence = getMemoryStream(
+    logs.filter((l) => !needsIds.has(l.id) && !openCaseIds.has(l.id)),
     12
   );
 
   return (
     <>
       <header className="mb-6">
-        <h1 className="text-[28px] font-semibold tracking-tight text-zinc-50">Journal</h1>
+        <h1 className="text-[28px] font-semibold tracking-tight text-zinc-50">ARGUS</h1>
       </header>
       <PrivatePanel privateError={Boolean(private_error)} />
       <Suspense fallback={null}>
         <JournalHome
-          memoryStream={memoryStream}
+          openCases={getOpenCases(logs, 8)}
+          recentEvidence={recentEvidence}
           needsClassification={needsClassification}
-          upcomingReminders={getUpcomingReminders(logs, today, 5)}
+          upcomingFollowUps={getUpcomingReminders(logs, today, 5)}
+          recentEntities={getRecentlyAddedEntities(entities, 6)}
           entities={entities}
           buckets={buckets}
         />

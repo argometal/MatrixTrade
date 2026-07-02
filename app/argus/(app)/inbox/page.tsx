@@ -9,7 +9,7 @@ export default async function InboxPage() {
     <>
         <PageHeader title="Inbox" subtitle="Pending items to convert or archive" backHref="/argus/journal" />
       {pending.length === 0 ? (
-        <EmptyState message="Inbox empty. Send content to POST /api/argus/inbox." />
+        <EmptyState message="Inbox empty. POST email JSON to /api/argus/email-inbox or content to /api/argus/inbox." />
       ) : (
         <div className="space-y-3">
           {pending.map((item) => (
