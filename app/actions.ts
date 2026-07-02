@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireTradingSession } from "@/lib/auth/require-session";
 import { createTrade, closeTrade, openTrade } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput } from "@/lib/types";
 
 export async function createTradeAction(formData: FormData): Promise<void> {
+  await requireTradingSession();
   const input: CreateTradeInput = {
     id: String(formData.get("id") ?? "").trim(),
     ticker: String(formData.get("ticker") ?? "").trim(),
@@ -31,6 +33,7 @@ export async function createTradeAction(formData: FormData): Promise<void> {
 }
 
 export async function closeTradeAction(id: string, formData: FormData): Promise<void> {
+  await requireTradingSession();
   const input: CloseTradeInput = {
     exit: Number(formData.get("exit")),
   };
@@ -47,6 +50,7 @@ export async function closeTradeAction(id: string, formData: FormData): Promise<
 }
 
 export async function openTradeAction(id: string, _formData: FormData): Promise<void> {
+  await requireTradingSession();
   const result = await openTrade(id);
 
   if (result.errors) {

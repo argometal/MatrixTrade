@@ -1,14 +1,32 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+function isPublicPath(pathname: string): boolean {
+  if (pathname === "/login" || pathname === "/argus/login") return true;
+  if (pathname.startsWith("/_next")) return true;
+  if (pathname.startsWith("/api/")) return true;
+  if (/\.(?:svg|png|jpg|jpeg|gif|webp|ico)$/.test(pathname)) return true;
+  return false;
+}
+
+function isTradingRoute(pathname: string): boolean {
+  return pathname === "/" || pathname.startsWith("/trades") || pathname.startsWith("/connect");
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname === "/health" || pathname.startsWith("/health/")) {
     let next = pathname.replace(/^\/health/, "/argus");
-    next = next.replace(/^\/argus\/records/, "/argus/entries");
-    next = next.replace(/^\/argus\/people/, "/argus/contacts");
+    next = next.replace(/^\/argus\/records/, "/argus/logs");
+    next = next.replace(/^\/argus\/people/, "/argus/search");
+    next = next.replace(/^\/argus\/entries/, "/argus/logs");
+    next = next.replace(/^\/argus\/contacts/, "/argus/search");
     return NextResponse.redirect(new URL(next, request.url));
+  }
+
+  if (isPublicPath(pathname)) {
+    return NextResponse.next();
   }
 
   const tradingPasswordSet = Boolean(process.env.MATRIXTRADE_PASSWORD);
@@ -16,12 +34,7 @@ export function middleware(request: NextRequest) {
     process.env.ARGUS_PASSWORD ?? process.env.HEALTH_VAULT_PASSWORD
   );
 
-  const isTradingRoute =
-    pathname === "/" ||
-    pathname.startsWith("/trades") ||
-    pathname.startsWith("/connect");
-
-  if (tradingPasswordSet && isTradingRoute && !request.cookies.get("mt-auth")?.value) {
+  if (tradingPasswordSet && isTradingRoute(pathname) && !request.cookies.get("mt-auth")?.value) {
     const login = new URL("/login", request.url);
     login.searchParams.set("next", pathname);
     return NextResponse.redirect(login);
@@ -40,5 +53,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/trades/:path*", "/connect/:path*", "/argus/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };

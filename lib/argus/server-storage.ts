@@ -1,15 +1,15 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { migrateToArgusData } from "./migrate";
+import { migrateToV3 } from "./migrate";
 import type {
   ArgusData,
-  ArgusStats,
-  Contact,
-  ContactInput,
-  Entry,
-  EntryInput,
-  Evidence,
-  EvidenceInput,
+  Attachment,
+  Entity,
+  EntityInput,
+  InboxItem,
+  InboxItemInput,
+  Log,
+  LogInput,
 } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "data", "argus");
@@ -17,43 +17,23 @@ const LEGACY_DATA_DIR = path.join(process.cwd(), "data", "health-vault");
 const JOURNAL_FILE = path.join(DATA_DIR, "journal.json");
 const LEGACY_VAULT_FILE = path.join(LEGACY_DATA_DIR, "vault.json");
 const FILES_DIR = path.join(DATA_DIR, "files");
-const LEGACY_FILES_DIR = path.join(LEGACY_DATA_DIR, "files");
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 function emptyArgus(): ArgusData {
-  return { contacts: [], entries: [], evidence: [], version: 2 };
+  return { entities: [], logs: [], inboxItems: [], attachments: [], version: 3 };
 }
 
-async function ensureDirs(): Promise<void> {
+async function ensureFilesDir(): Promise<void> {
   await fs.mkdir(FILES_DIR, { recursive: true });
-}
-
-async function migrateLegacyFiles(): Promise<void> {
-  try {
-    await fs.access(LEGACY_FILES_DIR);
-  } catch {
-    return;
-  }
-  await ensureDirs();
-  const names = await fs.readdir(LEGACY_FILES_DIR);
-  for (const name of names) {
-    const src = path.join(LEGACY_FILES_DIR, name);
-    const dest = path.join(FILES_DIR, name);
-    try {
-      await fs.access(dest);
-    } catch {
-      await fs.copyFile(src, dest);
-    }
-  }
 }
 
 async function readRawJournal(): Promise<ArgusData> {
   try {
     const raw = await fs.readFile(JOURNAL_FILE, "utf-8");
-    return migrateToArgusData(JSON.parse(raw));
+    return migrateToV3(JSON.parse(raw));
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code !== "ENOENT") throw err;
@@ -61,8 +41,7 @@ async function readRawJournal(): Promise<ArgusData> {
 
   try {
     const raw = await fs.readFile(LEGACY_VAULT_FILE, "utf-8");
-    const migrated = migrateToArgusData(JSON.parse(raw));
-    await migrateLegacyFiles();
+    const migrated = migrateToV3(JSON.parse(raw));
     await writeArgus(migrated);
     return migrated;
   } catch (err) {
@@ -79,156 +58,250 @@ async function writeArgus(data: ArgusData): Promise<void> {
   await fs.rename(tmp, JOURNAL_FILE);
 }
 
-function filterEntries(entries: Entry[], includePrivate: boolean): Entry[] {
-  if (includePrivate) return entries;
-  return entries.filter((e) => !e.private);
+function filterPrivateLogs(logs: Log[], includePrivate: boolean): Log[] {
+  if (includePrivate) return logs;
+  return logs.filter((l) => !l.private);
 }
 
 export async function readArgus(): Promise<ArgusData> {
   return readRawJournal();
 }
 
-export async function getContacts(): Promise<Contact[]> {
+// --- Entities ---
+
+export async function getEntities(): Promise<Entity[]> {
   const data = await readArgus();
-  return data.contacts.sort((a, b) => a.name.localeCompare(b.name));
+  return data.entities.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function getContact(id: string): Promise<Contact | undefined> {
+export async function getEntity(id: string): Promise<Entity | undefined> {
   const data = await readArgus();
-  return data.contacts.find((c) => c.id === id);
+  return data.entities.find((e) => e.id === id);
 }
 
-export async function createContact(input: ContactInput): Promise<Contact> {
+export async function searchEntities(query: string): Promise<Entity[]> {
+  const q = query.trim().toLowerCase();
+  if (!q) return getEntities();
   const data = await readArgus();
-  const contact: Contact = { ...input, id: generateId(), createdAt: new Date().toISOString() };
-  data.contacts.push(contact);
-  await writeArgus(data);
-  return contact;
+  return data.entities
+    .filter(
+      (e) =>
+        e.name.toLowerCase().includes(q) ||
+        e.notes.toLowerCase().includes(q) ||
+        e.type.toLowerCase().includes(q)
+    )
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function getEntries(includePrivate: boolean): Promise<Entry[]> {
-  const data = await readArgus();
-  return filterEntries(data.entries, includePrivate).sort((a, b) => b.date.localeCompare(a.date));
-}
-
-export async function getEntry(id: string, includePrivate: boolean): Promise<Entry | undefined> {
-  const data = await readArgus();
-  const entry = data.entries.find((e) => e.id === id);
-  if (!entry) return undefined;
-  if (entry.private && !includePrivate) return undefined;
-  return entry;
-}
-
-export async function createEntry(input: EntryInput): Promise<Entry> {
+export async function createEntity(input: EntityInput): Promise<Entity> {
   const data = await readArgus();
   const now = new Date().toISOString();
-  const entry: Entry = {
-    ...input,
-    private: input.private ?? false,
-    id: generateId(),
-    createdAt: now,
-    updatedAt: now,
-  };
-  data.entries.push(entry);
+  const entity: Entity = { ...input, id: generateId(), createdAt: now, updatedAt: now };
+  data.entities.push(entity);
   await writeArgus(data);
-  return entry;
+  return entity;
 }
 
-export async function getEvidence(entryId: string | undefined, includePrivate: boolean): Promise<Evidence[]> {
+// --- Attachments ---
+
+export async function saveAttachment(
+  fileName: string,
+  mimeType: string,
+  bytes: Buffer
+): Promise<Attachment> {
+  await ensureFilesDir();
   const data = await readArgus();
-  const privateEntryIds = new Set(data.entries.filter((e) => e.private).map((e) => e.id));
-  let items = data.evidence;
-  if (entryId) items = items.filter((e) => e.entryId === entryId);
-  if (!includePrivate) items = items.filter((e) => !privateEntryIds.has(e.entryId));
-  return items.sort((a, b) => b.date.localeCompare(a.date));
+  const id = generateId();
+  const safeName = fileName.replace(/[^\w.\-() ]/g, "_").slice(0, 120);
+  await fs.writeFile(path.join(FILES_DIR, id), bytes);
+  const attachment: Attachment = {
+    id,
+    fileName: safeName,
+    mimeType: mimeType || "application/octet-stream",
+    createdAt: new Date().toISOString(),
+  };
+  data.attachments.push(attachment);
+  await writeArgus(data);
+  return attachment;
 }
 
-export async function createEvidence(input: EvidenceInput): Promise<Evidence> {
+export async function readAttachmentBytes(id: string): Promise<Buffer | null> {
+  try {
+    return await fs.readFile(path.join(FILES_DIR, id));
+  } catch {
+    return null;
+  }
+}
+
+export async function getAttachment(id: string): Promise<Attachment | undefined> {
   const data = await readArgus();
-  const item: Evidence = { ...input, id: generateId(), createdAt: new Date().toISOString() };
-  data.evidence.push(item);
+  return data.attachments.find((a) => a.id === id);
+}
+
+// --- Logs ---
+
+export async function getLogs(includePrivate: boolean): Promise<Log[]> {
+  const data = await readArgus();
+  return filterPrivateLogs(data.logs, includePrivate).sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export async function getRecentLogs(limit: number, includePrivate: boolean): Promise<Log[]> {
+  return (await getLogs(includePrivate)).slice(0, limit);
+}
+
+export async function getLogsByKind(
+  kind: Log["kind"],
+  includePrivate: boolean,
+  limit?: number
+): Promise<Log[]> {
+  const logs = (await getLogs(includePrivate)).filter((l) => l.kind === kind);
+  return limit ? logs.slice(0, limit) : logs;
+}
+
+export async function getLog(id: string, includePrivate: boolean): Promise<Log | undefined> {
+  const data = await readArgus();
+  const log = data.logs.find((l) => l.id === id);
+  if (!log) return undefined;
+  if (log.private && !includePrivate) return undefined;
+  return log;
+}
+
+export async function getLogsForEntity(entityId: string, includePrivate: boolean): Promise<Log[]> {
+  return (await getLogs(includePrivate)).filter((l) => l.entityIds.includes(entityId));
+}
+
+export async function createLog(input: LogInput): Promise<Log> {
+  if (input.entityIds.length === 0) {
+    throw new Error("A log must be linked to at least one entity");
+  }
+  const data = await readArgus();
+  const now = new Date().toISOString();
+  const log: Log = { ...input, id: generateId(), createdAt: now, updatedAt: now };
+  data.logs.push(log);
+  for (const eid of log.entityIds) {
+    const entity = data.entities.find((e) => e.id === eid);
+    if (entity) entity.updatedAt = now;
+  }
+  await writeArgus(data);
+  return log;
+}
+
+// --- Inbox ---
+
+export async function getInboxItems(status?: "pending" | "converted" | "archived"): Promise<InboxItem[]> {
+  const data = await readArgus();
+  let items = data.inboxItems;
+  if (status) items = items.filter((i) => i.status === status);
+  return items.sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
+}
+
+export async function getPendingInboxCount(): Promise<number> {
+  const data = await readArgus();
+  return data.inboxItems.filter((i) => i.status === "pending").length;
+}
+
+export async function getInboxItem(id: string): Promise<InboxItem | undefined> {
+  const data = await readArgus();
+  return data.inboxItems.find((i) => i.id === id);
+}
+
+export async function createInboxItem(
+  input: InboxItemInput & { status?: InboxItem["status"] }
+): Promise<InboxItem> {
+  const data = await readArgus();
+  const now = new Date().toISOString();
+  const item: InboxItem = {
+    id: generateId(),
+    receivedAt: now,
+    source: input.source,
+    rawText: input.rawText,
+    rawEmail: input.rawEmail,
+    subject: input.subject,
+    from: input.from,
+    to: input.to,
+    attachmentIds: input.attachmentIds ?? [],
+    status: input.status ?? "pending",
+    createdAt: now,
+  };
+  data.inboxItems.push(item);
   await writeArgus(data);
   return item;
 }
 
-export async function saveEvidenceAttachment(
-  evidenceId: string,
-  fileName: string,
-  mime: string,
-  bytes: Buffer
-): Promise<void> {
-  await ensureDirs();
+export async function archiveInboxItem(id: string): Promise<InboxItem | undefined> {
   const data = await readArgus();
-  const idx = data.evidence.findIndex((e) => e.id === evidenceId);
-  if (idx === -1) throw new Error("Evidence not found");
-  const safeName = fileName.replace(/[^\w.\-() ]/g, "_").slice(0, 120);
-  await fs.writeFile(path.join(FILES_DIR, evidenceId), bytes);
-  data.evidence[idx] = {
-    ...data.evidence[idx],
-    attachmentName: safeName,
-    attachmentMime: mime,
-  };
+  const idx = data.inboxItems.findIndex((i) => i.id === id);
+  if (idx === -1) return undefined;
+  data.inboxItems[idx] = { ...data.inboxItems[idx], status: "archived" };
   await writeArgus(data);
+  return data.inboxItems[idx];
 }
 
-export async function readEvidenceAttachment(evidenceId: string): Promise<Buffer | null> {
-  const primary = path.join(FILES_DIR, evidenceId);
-  try {
-    return await fs.readFile(primary);
-  } catch {
-    try {
-      return await fs.readFile(path.join(LEGACY_FILES_DIR, evidenceId));
-    } catch {
-      return null;
-    }
+export async function convertInboxToLog(
+  inboxId: string,
+  input: {
+    kind: Log["kind"];
+    title: string;
+    body: string;
+    date: string;
+    entityIds: string[];
+    private: boolean;
+    followUpDate?: string;
+    topics?: string[];
   }
-}
-
-export async function getEntriesForContact(contactId: string, includePrivate: boolean): Promise<Entry[]> {
-  const entries = await getEntries(includePrivate);
-  return entries.filter((e) => e.contactIds.includes(contactId));
-}
-
-export async function getStats(includePrivate: boolean): Promise<ArgusStats> {
+): Promise<{ log: Log; inbox: InboxItem }> {
   const data = await readArgus();
-  const visible = filterEntries(data.entries, includePrivate);
-  const privateIds = new Set(data.entries.filter((e) => e.private).map((e) => e.id));
-  const visibleEvidence = includePrivate
-    ? data.evidence
-    : data.evidence.filter((e) => !privateIds.has(e.entryId));
+  const idx = data.inboxItems.findIndex((i) => i.id === inboxId);
+  if (idx === -1) throw new Error("Inbox item not found");
+  const inbox = data.inboxItems[idx];
+  if (inbox.status !== "pending") throw new Error("Inbox item is not pending");
 
-  return {
-    totalEntries: visible.length,
-    totalEvidence: visibleEvidence.length,
-    totalContacts: data.contacts.length,
-    openEntries: visible.filter((e) => e.status === "open" || e.status === "follow_up").length,
-    privateEntries: data.entries.filter((e) => e.private).length,
+  if (input.entityIds.length === 0) {
+    throw new Error("A log must be linked to at least one entity");
+  }
+
+  const now = new Date().toISOString();
+  const log: Log = {
+    id: generateId(),
+    kind: input.kind,
+    date: input.date,
+    title: input.title,
+    body: input.body,
+    entityIds: input.entityIds,
+    private: input.private,
+    source: inbox.source === "email" ? "email" : "inbox",
+    attachmentIds: [...inbox.attachmentIds],
+    inboxItemId: inbox.id,
+    followUpDate: input.kind === "follow_up" ? input.followUpDate : undefined,
+    topics: input.topics ?? [],
+    createdAt: now,
+    updatedAt: now,
   };
-}
+  data.logs.push(log);
 
-export function evidenceCountForEntry(data: ArgusData, entryId: string): number {
-  return data.evidence.filter((e) => e.entryId === entryId).length;
-}
+  data.inboxItems[idx] = {
+    ...inbox,
+    status: "converted",
+    convertedLogId: log.id,
+  };
 
-export async function loadArgusWithCounts(includePrivate: boolean): Promise<{
-  stats: ArgusStats;
-  recentEntries: Entry[];
-  recentEvidence: Evidence[];
-  evidenceCounts: Map<string, number>;
-}> {
-  const data = await readArgus();
-  const stats = await getStats(includePrivate);
-  const recentEntries = filterEntries(data.entries, includePrivate)
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 5);
-  const privateIds = new Set(data.entries.filter((e) => e.private).map((e) => e.id));
-  const recentEvidence = data.evidence
-    .filter((e) => includePrivate || !privateIds.has(e.entryId))
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 5);
-  const counts = new Map<string, number>();
-  for (const e of filterEntries(data.entries, includePrivate)) {
-    counts.set(e.id, evidenceCountForEntry(data, e.id));
+  for (const eid of log.entityIds) {
+    const entity = data.entities.find((e) => e.id === eid);
+    if (entity) entity.updatedAt = now;
   }
-  return { stats, recentEntries, recentEvidence, evidenceCounts: counts };
+
+  await writeArgus(data);
+  return { log, inbox: data.inboxItems[idx] };
+}
+
+export async function searchLogs(query: string, includePrivate: boolean): Promise<Log[]> {
+  const q = query.trim().toLowerCase();
+  const logs = await getLogs(includePrivate);
+  if (!q) return logs;
+  return logs.filter(
+    (l) =>
+      l.title.toLowerCase().includes(q) ||
+      l.body.toLowerCase().includes(q) ||
+      l.topics.some((t) => t.toLowerCase().includes(q))
+  );
 }

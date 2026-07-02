@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ARGUS_AUTH } from "@/lib/auth/cookies";
-import { readArgus, readEvidenceAttachment } from "@/lib/argus/server-storage";
+import { getAttachment, readAttachmentBytes } from "@/lib/argus/server-storage";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const jar = await cookies();
@@ -10,21 +10,20 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   }
 
   const { id } = await params;
-  const data = await readArgus();
-  const item = data.evidence.find((e) => e.id === id);
-  if (!item?.attachmentName) {
+  const attachment = await getAttachment(id);
+  if (!attachment) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const bytes = await readEvidenceAttachment(id);
+  const bytes = await readAttachmentBytes(id);
   if (!bytes) {
     return NextResponse.json({ error: "File missing" }, { status: 404 });
   }
 
   return new NextResponse(new Uint8Array(bytes), {
     headers: {
-      "Content-Type": item.attachmentMime ?? "application/octet-stream",
-      "Content-Disposition": `attachment; filename="${item.attachmentName}"`,
+      "Content-Type": attachment.mimeType,
+      "Content-Disposition": `attachment; filename="${attachment.fileName}"`,
     },
   });
 }

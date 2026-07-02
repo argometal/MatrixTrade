@@ -1,86 +1,80 @@
-export type EntryType =
-  | "observation"
-  | "event"
-  | "interaction"
-  | "correspondence"
-  | "meeting"
-  | "networking"
-  | "opportunity"
-  | "recognition"
-  | "follow_up"
-  | "note";
+export type EntityType = "person" | "company" | "project" | "other";
 
-export type InteractionKind = "positive" | "negative";
+export type JournalKind = "log" | "event" | "follow_up";
 
-export type EntryStatus = "open" | "documented" | "resolved" | "follow_up" | "archived";
+export type LogSource = "manual" | "inbox" | "email" | "file";
 
-export type EvidenceType =
-  | "email"
-  | "message"
-  | "document"
-  | "screenshot"
-  | "witness"
-  | "note"
-  | "recording"
-  | "attachment";
+export type InboxSource = "manual" | "api" | "email" | "file";
 
-export interface Contact {
+export type InboxStatus = "pending" | "converted" | "archived";
+
+export interface Entity {
   id: string;
+  type: EntityType;
   name: string;
-  role: string;
-  department: string;
-  relationship: string;
-  email: string;
-  phone: string;
   notes: string;
-  createdAt: string;
-}
-
-export interface Entry {
-  id: string;
-  type: EntryType;
-  title: string;
-  date: string;
-  description: string;
-  contactIds: string[];
-  status: EntryStatus;
-  interactionKind?: InteractionKind;
-  tags: string[];
-  /** Visible only when ARGUS_PRIVATE_PIN is unlocked */
-  private: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface Evidence {
+export interface Attachment {
   id: string;
-  entryId: string;
-  type: EvidenceType;
-  title: string;
+  fileName: string;
+  mimeType: string;
+  createdAt: string;
+}
+
+/** Journal record — source of truth for logs, events, and follow-ups */
+export interface Log {
+  id: string;
+  kind: JournalKind;
   date: string;
-  content: string;
-  source: string;
-  contactId?: string;
-  attachmentName?: string;
-  attachmentMime?: string;
+  title: string;
+  body: string;
+  entityIds: string[];
+  private: boolean;
+  source: LogSource;
+  attachmentIds: string[];
+  inboxItemId?: string;
+  /** When to revisit (follow_up kind) */
+  followUpDate?: string;
+  topics: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InboxItem {
+  id: string;
+  receivedAt: string;
+  source: InboxSource;
+  rawText: string;
+  rawEmail?: string;
+  subject?: string;
+  from?: string;
+  to?: string;
+  attachmentIds: string[];
+  status: InboxStatus;
+  convertedLogId?: string;
   createdAt: string;
 }
 
 export interface ArgusData {
-  contacts: Contact[];
-  entries: Entry[];
-  evidence: Evidence[];
-  version: 2;
+  entities: Entity[];
+  logs: Log[];
+  inboxItems: InboxItem[];
+  attachments: Attachment[];
+  version: 3;
 }
 
-export type ContactInput = Omit<Contact, "id" | "createdAt">;
-export type EntryInput = Omit<Entry, "id" | "createdAt" | "updatedAt">;
-export type EvidenceInput = Omit<Evidence, "id" | "createdAt">;
+export type EntityInput = Omit<Entity, "id" | "createdAt" | "updatedAt">;
+export type LogInput = Omit<Log, "id" | "createdAt" | "updatedAt">;
+export type InboxItemInput = Omit<InboxItem, "id" | "receivedAt" | "status" | "createdAt" | "convertedLogId">;
 
-export interface ArgusStats {
-  totalEntries: number;
-  totalEvidence: number;
-  totalContacts: number;
-  openEntries: number;
-  privateEntries: number;
+export interface EntityNetworkView {
+  entity: Entity;
+  lastInteraction?: string;
+  nextTouch?: string;
+  topics: string[];
+  logCount: number;
+  openFollowUps: number;
 }

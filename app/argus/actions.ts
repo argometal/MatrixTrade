@@ -3,73 +3,104 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
-  createContact,
-  createEntry,
-  createEvidence,
-  saveEvidenceAttachment,
+  archiveInboxItem,
+  convertInboxToLog,
+  createEntity,
+  createLog,
+  saveAttachment,
 } from "@/lib/argus/server-storage";
-import type { EntryStatus, EntryType, EvidenceType, InteractionKind } from "@/lib/argus/types";
+import type { EntityType, JournalKind, LogSource } from "@/lib/argus/types";
 
-export async function createContactAction(formData: FormData): Promise<void> {
-  await createContact({
-    name: String(formData.get("name") ?? "").trim(),
-    role: String(formData.get("role") ?? "").trim(),
-    department: String(formData.get("department") ?? "").trim(),
-    relationship: String(formData.get("relationship") ?? "").trim(),
-    email: String(formData.get("email") ?? "").trim(),
-    phone: String(formData.get("phone") ?? "").trim(),
-    notes: String(formData.get("notes") ?? "").trim(),
-  });
-  revalidatePath("/argus/contacts");
-  redirect("/argus/contacts");
+function revalidateArgus(): void {
+  revalidatePath("/argus");
+  revalidatePath("/argus/journal");
+  revalidatePath("/argus/network");
+  revalidatePath("/argus/search");
+  revalidatePath("/argus/inbox");
 }
 
-export async function createEntryAction(formData: FormData): Promise<void> {
-  const type = String(formData.get("type") ?? "note") as EntryType;
-  const contactIds = formData.getAll("contactIds").map(String);
-  const tags = String(formData.get("tags") ?? "")
+function parseTopics(raw: string): string[] {
+  return raw
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean);
-  const interactionRaw = formData.get("interactionKind");
-  const entry = await createEntry({
-    type,
-    title: String(formData.get("title") ?? "").trim(),
-    date: String(formData.get("date") ?? "").slice(0, 10),
-    description: String(formData.get("description") ?? "").trim(),
-    contactIds,
-    status: String(formData.get("status") ?? "open") as EntryStatus,
-    interactionKind:
-      type === "interaction" && interactionRaw
-        ? (String(interactionRaw) as InteractionKind)
-        : undefined,
-    tags,
-    private: formData.get("private") === "on",
-  });
-  revalidatePath("/argus");
-  revalidatePath("/argus/entries");
-  redirect(`/argus/entries/${entry.id}`);
 }
 
-export async function createEvidenceAction(formData: FormData): Promise<void> {
-  const entryId = String(formData.get("entryId") ?? "");
-  const item = await createEvidence({
-    entryId,
-    type: String(formData.get("type") ?? "note") as EvidenceType,
-    title: String(formData.get("title") ?? "").trim(),
+function parseJournalInput(formData: FormData) {
+  const kind = String(formData.get("kind") ?? "log") as JournalKind;
+  const followUpRaw = String(formData.get("followUpDate") ?? "").slice(0, 10);
+  return {
+    kind,
     date: String(formData.get("date") ?? "").slice(0, 10),
-    content: String(formData.get("content") ?? "").trim(),
-    source: String(formData.get("source") ?? "").trim(),
-    contactId: String(formData.get("contactId") ?? "") || undefined,
-  });
+    title: String(formData.get("title") ?? "").trim(),
+    body: String(formData.get("body") ?? "").trim(),
+    private: formData.get("private") === "on",
+    source: String(formData.get("source") ?? "manual") as LogSource,
+    followUpDate: kind === "follow_up" && followUpRaw ? followUpRaw : undefined,
+    topics: parseTopics(String(formData.get("topics") ?? "")),
+  };
+}
 
+async function resolveEntityIds(formData: FormData): Promise<string[]> {
+  const entityIds = formData.getAll("entityIds").map(String).filter(Boolean);
+  const newEntityName = String(formData.get("newEntityName") ?? "").trim();
+  if (newEntityName) {
+    const entity = await createEntity({
+      type: String(formData.get("newEntityType") ?? "person") as EntityType,
+      name: newEntityName,
+      notes: String(formData.get("newEntityNotes") ?? "").trim(),
+    });
+    entityIds.push(entity.id);
+  }
+  return entityIds;
+}
+
+export async function createLogAction(formData: FormData): Promise<void> {
+  const entityIds = await resolveEntityIds(formData);
+  if (entityIds.length === 0) {
+    throw new Error("Select or create at least one entity");
+  }
+
+  const attachmentIds: string[] = [];
   const file = formData.get("attachment");
   if (file instanceof File && file.size > 0) {
     const bytes = Buffer.from(await file.arrayBuffer());
-    await saveEvidenceAttachment(item.id, file.name, file.type || "application/octet-stream", bytes);
+    const att = await saveAttachment(file.name, file.type || "application/octet-stream", bytes);
+    attachmentIds.push(att.id);
   }
 
-  revalidatePath(`/argus/entries/${entryId}`);
-  revalidatePath("/argus");
-  redirect(`/argus/entries/${entryId}`);
+  const input = parseJournalInput(formData);
+  const log = await createLog({
+    ...input,
+    entityIds,
+    attachmentIds,
+  });
+
+  revalidateArgus();
+  redirect(`/argus/logs/${log.id}`);
+}
+
+export async function convertInboxAction(formData: FormData): Promise<void> {
+  const inboxId = String(formData.get("inboxId") ?? "");
+  const entityIds = await resolveEntityIds(formData);
+  if (entityIds.length === 0) {
+    throw new Error("Assign at least one entity");
+  }
+
+  const input = parseJournalInput(formData);
+  const { log } = await convertInboxToLog(inboxId, {
+    ...input,
+    entityIds,
+  });
+
+  revalidateArgus();
+  revalidatePath(`/argus/inbox/${inboxId}`);
+  redirect(`/argus/logs/${log.id}`);
+}
+
+export async function archiveInboxAction(formData: FormData): Promise<void> {
+  const inboxId = String(formData.get("inboxId") ?? "");
+  await archiveInboxItem(inboxId);
+  revalidateArgus();
+  redirect("/argus/inbox");
 }

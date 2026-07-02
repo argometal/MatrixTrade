@@ -1,38 +1,39 @@
 import Link from "next/link";
-import { Card, formatDate, StatusBadge, TypeBadge } from "./ui";
-import type { Contact, Entry, Evidence } from "@/lib/argus/types";
-import { EVIDENCE_TYPE_LABELS, INTERACTION_LABELS } from "@/lib/argus/labels";
+import { Card, formatDate } from "./ui";
+import type { Entity, InboxItem, Log } from "@/lib/argus/types";
+import { ENTITY_TYPE_LABELS, INBOX_SOURCE_LABELS, JOURNAL_KIND_LABELS, LOG_SOURCE_LABELS } from "@/lib/argus/labels";
 
-export function EntryCard({ entry, evidenceCount }: { entry: Entry; evidenceCount?: number }) {
+export function LogCard({ log, entities }: { log: Log; entities?: Entity[] }) {
+  const names =
+    entities?.filter((e) => log.entityIds.includes(e.id)).map((e) => e.name) ?? [];
+
   return (
-    <Link href={`/argus/entries/${entry.id}`}>
+    <Link href={`/argus/logs/${log.id}`}>
       <Card className="transition hover:border-zinc-700">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap gap-2">
-              <TypeBadge type={entry.type} />
-              <StatusBadge status={entry.status} />
-              {entry.private && (
-                <span className="rounded-full bg-violet-600/20 px-2.5 py-0.5 text-xs font-medium text-violet-300">
+              <span className="rounded-full bg-teal-600/20 px-2.5 py-0.5 text-xs text-teal-400">
+                {JOURNAL_KIND_LABELS[log.kind]}
+              </span>
+              <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-400">
+                {LOG_SOURCE_LABELS[log.source]}
+              </span>
+              {log.private && (
+                <span className="rounded-full bg-violet-600/20 px-2.5 py-0.5 text-xs text-violet-300">
                   Private
                 </span>
               )}
-              {entry.interactionKind && (
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${entry.interactionKind === "positive" ? "bg-emerald-600/20 text-emerald-400" : "bg-red-600/20 text-red-400"}`}
-                >
-                  {INTERACTION_LABELS[entry.interactionKind]}
-                </span>
-              )}
             </div>
-            <h3 className="font-semibold text-zinc-50">{entry.title}</h3>
-            <p className="mt-1 text-xs text-zinc-500">{formatDate(entry.date)}</p>
-            <p className="mt-2 line-clamp-2 text-sm text-zinc-400">{entry.description}</p>
-            {evidenceCount !== undefined && (
-              <p className="mt-2 text-xs text-teal-500">
-                {evidenceCount} evidence item{evidenceCount !== 1 ? "s" : ""}
-              </p>
+            <h3 className="font-semibold text-zinc-50">{log.title}</h3>
+            <p className="mt-1 text-xs text-zinc-500">{formatDate(log.date)}</p>
+            {log.kind === "follow_up" && log.followUpDate && (
+              <p className="mt-1 text-xs text-amber-400">Next touch: {formatDate(log.followUpDate)}</p>
             )}
+            {names.length > 0 && (
+              <p className="mt-1 text-xs text-teal-500">{names.join(" · ")}</p>
+            )}
+            <p className="mt-2 line-clamp-2 text-sm text-zinc-400">{log.body}</p>
           </div>
           <span className="text-zinc-600">›</span>
         </div>
@@ -41,46 +42,40 @@ export function EntryCard({ entry, evidenceCount }: { entry: Entry; evidenceCoun
   );
 }
 
-export function EvidenceCard({ item }: { item: Evidence }) {
+export function InboxCard({ item }: { item: InboxItem }) {
   return (
-    <Card>
-      <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs font-medium text-zinc-300">
-        {EVIDENCE_TYPE_LABELS[item.type]}
-      </span>
-      <h4 className="mt-2 font-medium text-zinc-100">{item.title}</h4>
-      <p className="text-xs text-zinc-500">
-        {formatDate(item.date)} · {item.source}
-      </p>
-      {item.attachmentName && (
-        <p className="mt-1 text-xs text-teal-500">Attachment: {item.attachmentName}</p>
-      )}
-      <p className="mt-2 line-clamp-4 whitespace-pre-wrap text-sm text-zinc-400">{item.content}</p>
-    </Card>
-  );
-}
-
-export function ContactCard({ contact, entryCount }: { contact: Contact; entryCount?: number }) {
-  return (
-    <Link href={`/argus/contacts/${contact.id}`}>
+    <Link href={`/argus/inbox/${item.id}`}>
       <Card className="transition hover:border-zinc-700">
         <div className="flex items-start justify-between gap-2">
-          <div>
-            <h3 className="font-semibold text-zinc-50">{contact.name}</h3>
-            <p className="text-sm text-zinc-400">
-              {contact.role} · {contact.department}
-            </p>
-            <span className="mt-2 inline-block rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">
-              {contact.relationship}
+          <div className="min-w-0 flex-1">
+            <span className="rounded-full bg-amber-600/20 px-2.5 py-0.5 text-xs text-amber-400">
+              {INBOX_SOURCE_LABELS[item.source]}
             </span>
-            {entryCount !== undefined && (
-              <p className="mt-2 text-xs text-zinc-500">
-                {entryCount} {entryCount !== 1 ? "entries" : "entry"}
-              </p>
-            )}
+            <h3 className="mt-2 font-semibold text-zinc-50">
+              {item.subject || item.rawText.slice(0, 80) || "Inbox item"}
+            </h3>
+            <p className="mt-1 text-xs text-zinc-500">
+              {new Date(item.receivedAt).toLocaleString("en-US", {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+              {item.from ? ` · ${item.from}` : ""}
+            </p>
+            <p className="mt-2 line-clamp-2 text-sm text-zinc-400">{item.rawText}</p>
           </div>
           <span className="text-zinc-600">›</span>
         </div>
       </Card>
     </Link>
+  );
+}
+
+export function EntityChip({ entity }: { entity: Entity }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">
+      {ENTITY_TYPE_LABELS[entity.type]} · {entity.name}
+    </span>
   );
 }

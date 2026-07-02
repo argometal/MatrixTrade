@@ -29,21 +29,21 @@ export async function loginArgusAction(formData: FormData): Promise<void> {
   }
 
   await setArgusSession();
-  redirect("/argus");
+  redirect("/argus/journal");
 }
 
 export async function unlockArgusPrivateAction(formData: FormData): Promise<void> {
   const pin = String(formData.get("pin") ?? "");
 
   if (!verifyArgusPrivatePin(pin)) {
-    redirect("/argus?private_error=1");
+    redirect("/argus/journal?private_error=1");
   }
 
   await setArgusPrivateUnlock();
-  redirect("/argus");
+  redirect("/argus/journal");
 }
 
 export async function lockArgusPrivateAction(): Promise<void> {
   await clearArgusPrivateUnlock();
-  redirect("/argus");
+  redirect("/argus/journal");
 }

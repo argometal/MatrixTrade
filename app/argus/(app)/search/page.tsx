@@ -1,0 +1,69 @@
+import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { LogCard } from "@/app/argus/components/Cards";
+import { EmptyState, Field, inputClass, PageHeader } from "@/app/argus/components/ui";
+import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
+import { getEntities, searchEntities, searchLogs } from "@/lib/argus/server-storage";
+import Link from "next/link";
+
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  const query = q?.trim() ?? "";
+  const includePrivate = await hasArgusPrivateUnlock();
+  const entities = query ? await searchEntities(query) : await getEntities();
+  const logs = query ? await searchLogs(query, includePrivate) : [];
+
+  return (
+    <>
+      <PageHeader title="Search" subtitle="Entities and journal" backHref="/argus/journal" />
+      <form action="/argus/search" method="get" className="mb-6 flex gap-2">
+        <input
+          name="q"
+          defaultValue={query}
+          placeholder="Search..."
+          className={inputClass}
+        />
+        <button type="submit" className="shrink-0 rounded-xl bg-zinc-700 px-4 py-2 text-sm text-white">
+          Go
+        </button>
+      </form>
+
+      {query && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Logs</h2>
+          {logs.length === 0 ? (
+            <EmptyState message="No logs match." />
+          ) : (
+            <div className="space-y-3">
+              {logs.map((log) => (
+                <LogCard key={log.id} log={log} entities={entities} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Entities</h2>
+        {entities.length === 0 ? (
+          <EmptyState message="No entities yet." />
+        ) : (
+          <div className="space-y-2">
+            {entities.map((e) => (
+              <Link key={e.id} href={`/argus/new?q=${encodeURIComponent(e.name)}`}>
+                <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-3 transition hover:border-zinc-700">
+                  <p className="font-medium text-zinc-100">{e.name}</p>
+                  <p className="text-xs text-zinc-500">{ENTITY_TYPE_LABELS[e.type]}</p>
+                  {e.notes && <p className="mt-1 line-clamp-2 text-sm text-zinc-400">{e.notes}</p>}
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+    </>
+  );
+}

@@ -8,7 +8,7 @@ export default async function LoginPage({
   const { error, next } = await searchParams;
 
   return (
-    <div className="mx-auto flex min-h-[60vh] max-w-sm flex-col justify-center">
+    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
       <h1 className="text-2xl font-semibold">MatrixTrade</h1>
       <p className="mt-1 text-sm text-zinc-500">Trading access</p>
       <form action={loginTradingAction} className="mt-8 space-y-4">

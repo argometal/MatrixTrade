@@ -5,7 +5,8 @@
 **Repo:** `github.com/argometal/MatrixTrade` (private)  
 **Doc library:** [`md/README.md`](md/README.md)  
 **Bridge detail:** [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md)  
-**Vercel + ARGUS production (OPEN):** [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md)
+**Vercel + ARGUS production (OPEN):** [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md)  
+**ARGUS for ChatGPT:** [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md)
 
 ---
 
@@ -32,20 +33,33 @@
 | **Stop condition** | Both endpoints confirmed from ChatGPT browsing + user review of queued payload |
 | **Do not start yet** | MatrixTrade Sync button, auto-sync, inbox processing in app, POST /trades |
 
-**Parallel track (ARGUS):** Local professional journal at `/argus` — see handoff doc. Vercel is **not** ARGUS storage v1.
+**Parallel track (ARGUS):** Journal + Network at `/argus/journal` — local disk only. See [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md).
 
 ---
 
-## ARGUS (professional journal module)
+## ARGUS (Journal + Network)
 
 | | |
 |---|---|
-| **Routes** | `/argus`, `/argus/entries`, `/argus/contacts`, `/argus/login` |
-| **Code** | `app/argus/`, `lib/argus/`, `data/argus/` (local, gitignored) |
-| **Concept** | Private professional relationship + event journal — not complaint-only |
-| **Auth** | Separate password `ARGUS_PASSWORD`; private entries via `ARGUS_PRIVATE_PIN` |
-| **Legacy** | `/health/*` redirects to `/argus/*`; migrates `data/health-vault/` on first read |
-| **Production** | Deployed on Vercel but **empty + no login until env vars set** — see blocker above |
+| **Entry doc for ChatGPT** | [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md) |
+| **Routes** | `/argus/journal`, `/argus/network`, `/argus/inbox`, `/argus/search`, `/argus/new` |
+| **Login** | `/argus/login` — `ARGUS_PASSWORD` |
+| **Inbox API** | `POST /api/argus/inbox` — Bearer `ARGUS_INBOX_TOKEN` (write-only) |
+| **Data** | `data/argus/journal.json` + `files/` (gitignored, local only) |
+| **Model** | Entity · Log/Event/Follow-up · InboxItem · Attachment |
+| **Rule** | Journal = source of truth; Network reads Journal only |
+| **Worker bridge** | Trading only — **not** ARGUS inbox |
+
+Quick inbox POST (local):
+
+```bash
+curl.exe -X POST "http://localhost:3000/api/argus/inbox" \
+  -H "Authorization: Bearer ARGUS_INBOX_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"text\":\"Note from ChatGPT\",\"source\":\"api\"}"
+```
+
+User converts pending items in `/argus/inbox` UI. `rawEmail` preserved unchanged.
 
 ---
 
@@ -261,9 +275,10 @@ Solo documentado como dirección evolutiva.
 | [`data/trades.json`](data/trades.json) | Trades estructurados (H001) |
 | [`data/rules.json`](data/rules.json) | Límites ciclo, paths Obsidian |
 | [`md/integrations/chatgpt-bridge.md`](md/integrations/chatgpt-bridge.md) | Roles and política de sync |
-| [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md) | **Vercel + ARGUS production gap** |
-| [`app/argus/`](app/argus/) | ARGUS UI |
-| [`lib/argus/`](lib/argus/) | ARGUS storage + migration |
+| [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md) | **ARGUS Journal + Network + inbox for ChatGPT** |
+| [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md) | Vercel + ARGUS production gap |
+| [`app/api/argus/inbox/route.ts`](app/api/argus/inbox/route.ts) | Write-only ARGUS inbox API |
+| [`lib/argus/network.ts`](lib/argus/network.ts) | Network view (read-only) |
 
 ---
 

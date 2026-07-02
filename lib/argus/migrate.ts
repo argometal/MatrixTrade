@@ -1,56 +1,7 @@
-import type {
-  ArgusData,
-  Contact,
-  Entry,
-  EntryStatus,
-  EntryType,
-  Evidence,
-  EvidenceType,
-  InteractionKind,
-} from "./types";
+import type { ArgusData, Entity, Log, LogSource } from "./types";
+import { normalizeArgusData, normalizeLog } from "./normalize";
 
-const LEGACY_ENTRY_TYPE: Record<string, EntryType> = {
-  queja: "observation",
-  incidente: "event",
-  comportamiento: "interaction",
-  correspondencia: "correspondence",
-};
-
-const LEGACY_STATUS: Record<string, EntryStatus> = {
-  abierto: "open",
-  documentado: "documented",
-  resuelto: "resolved",
-  escalado: "follow_up",
-};
-
-const LEGACY_EVIDENCE_TYPE: Record<string, EvidenceType> = {
-  mensaje: "message",
-  documento: "document",
-  captura: "screenshot",
-  testigo: "witness",
-  nota: "note",
-};
-
-function mapEntryType(raw: string): EntryType {
-  return LEGACY_ENTRY_TYPE[raw] ?? (raw as EntryType);
-}
-
-function mapStatus(raw: string): EntryStatus {
-  return LEGACY_STATUS[raw] ?? (raw as EntryStatus);
-}
-
-function mapEvidenceType(raw: string): EvidenceType {
-  return LEGACY_EVIDENCE_TYPE[raw] ?? (raw as EvidenceType);
-}
-
-function mapInteraction(raw: string | undefined): InteractionKind | undefined {
-  if (raw === "correcto") return "positive";
-  if (raw === "incorrecto") return "negative";
-  if (raw === "positive" || raw === "negative") return raw;
-  return undefined;
-}
-
-interface LegacyPerson {
+interface LegacyContact {
   id: string;
   name: string;
   role?: string;
@@ -62,19 +13,12 @@ interface LegacyPerson {
   createdAt?: string;
 }
 
-interface LegacyRecord {
+interface LegacyEntry {
   id: string;
-  type: string;
   title: string;
   date: string;
   description: string;
-  personIds?: string[];
   contactIds?: string[];
-  status: string;
-  behaviorKind?: string;
-  interactionKind?: string;
-  tags?: string[];
-  secret?: boolean;
   private?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -82,96 +26,101 @@ interface LegacyRecord {
 
 interface LegacyEvidence {
   id: string;
-  recordId?: string;
   entryId?: string;
-  type: string;
   title: string;
   date: string;
   content: string;
   source?: string;
-  personId?: string;
-  contactId?: string;
   attachmentName?: string;
   attachmentMime?: string;
   createdAt?: string;
 }
 
-interface LegacyVaultV1 {
-  people?: LegacyPerson[];
-  contacts?: Contact[];
-  records?: LegacyRecord[];
-  entries?: Entry[];
-  evidence?: LegacyEvidence[];
+interface LegacyV2 {
   version?: number;
+  contacts?: LegacyContact[];
+  entries?: LegacyEntry[];
+  evidence?: LegacyEvidence[];
 }
 
-export function migrateToArgusData(raw: LegacyVaultV1): ArgusData {
+function mapEvidenceSource(source?: string): LogSource {
+  const s = (source ?? "").toLowerCase();
+  if (s.includes("email") || s.includes("outlook")) return "email";
+  if (s.includes("file") || s.includes("doc")) return "file";
+  return "manual";
+}
+
+export function migrateToV3(raw: unknown): ArgusData {
+  const data = raw as LegacyV2 & ArgusData;
   const now = new Date().toISOString();
 
-  if (raw.version === 2 && raw.contacts && raw.entries) {
-    return {
-      contacts: raw.contacts,
-      entries: raw.entries.map((e) => ({
-        ...e,
-        private: e.private ?? false,
-        contactIds: e.contactIds ?? [],
-        tags: e.tags ?? [],
-      })),
-      evidence: (raw.evidence ?? []).map((e) => ({
-        ...e,
-        entryId: e.entryId,
-        type: mapEvidenceType(e.type),
-      })) as Evidence[],
-      version: 2,
-    };
+  if (data.version === 3 && Array.isArray(data.entities)) {
+    return normalizeArgusData({
+      entities: data.entities,
+      logs: (data.logs ?? []).map(normalizeLog),
+      inboxItems: data.inboxItems ?? [],
+      attachments: data.attachments ?? [],
+      version: 3,
+    });
   }
 
-  const contacts: Contact[] = (raw.people ?? raw.contacts ?? []).map((p) => ({
-    id: p.id,
-    name: p.name,
-    role: p.role ?? "",
-    department: p.department ?? "",
-    relationship: p.relationship ?? "",
-    email: p.email ?? "",
-    phone: p.phone ?? "",
-    notes: p.notes ?? "",
-    createdAt: p.createdAt ?? now,
-  }));
-
-  const entries: Entry[] = (raw.records ?? raw.entries ?? []).map((r) => {
-    const legacy = r as LegacyRecord;
+  const entities: Entity[] = (data.contacts ?? []).map((c) => {
+    const parts = [c.role, c.department, c.relationship, c.email, c.phone, c.notes].filter(Boolean);
     return {
-      id: legacy.id,
-      type: mapEntryType(legacy.type),
-      title: legacy.title,
-      date: legacy.date,
-      description: legacy.description,
-      contactIds: legacy.contactIds ?? legacy.personIds ?? [],
-      status: mapStatus(legacy.status),
-      interactionKind:
-        mapEntryType(legacy.type) === "interaction"
-          ? mapInteraction(legacy.interactionKind ?? legacy.behaviorKind)
-          : mapInteraction(legacy.interactionKind ?? legacy.behaviorKind),
-      tags: legacy.tags ?? [],
-      private: legacy.private ?? legacy.secret ?? false,
-      createdAt: legacy.createdAt ?? now,
-      updatedAt: legacy.updatedAt ?? legacy.createdAt ?? now,
+      id: c.id,
+      type: "person" as const,
+      name: c.name,
+      notes: parts.join(" · "),
+      createdAt: c.createdAt ?? now,
+      updatedAt: c.createdAt ?? now,
     };
   });
 
-  const evidence: Evidence[] = (raw.evidence ?? []).map((e) => ({
+  const logs: Log[] = (data.entries ?? []).map((e) => ({
     id: e.id,
-    entryId: e.entryId ?? e.recordId ?? "",
-    type: mapEvidenceType(e.type),
-    title: e.title,
+    kind: "log" as const,
     date: e.date,
-    content: e.content,
-    source: e.source ?? "",
-    contactId: e.contactId ?? e.personId,
-    attachmentName: e.attachmentName,
-    attachmentMime: e.attachmentMime,
+    title: e.title,
+    body: e.description,
+    entityIds: e.contactIds ?? [],
+    private: e.private ?? false,
+    source: "manual" as const,
+    attachmentIds: [],
+    topics: [],
     createdAt: e.createdAt ?? now,
+    updatedAt: e.updatedAt ?? e.createdAt ?? now,
   }));
 
-  return { contacts, entries, evidence, version: 2 };
+  for (const ev of data.evidence ?? []) {
+    const parent = (data.entries ?? []).find((e) => e.id === ev.entryId);
+    logs.push({
+      id: ev.id,
+      kind: "log" as const,
+      date: ev.date,
+      title: ev.title,
+      body: ev.content,
+      entityIds: parent?.contactIds ?? [],
+      private: parent?.private ?? false,
+      source: mapEvidenceSource(ev.source),
+      attachmentIds: ev.attachmentName ? [ev.id] : [],
+      topics: [],
+      createdAt: ev.createdAt ?? now,
+      updatedAt: ev.createdAt ?? now,
+    });
+  }
+
+  return normalizeArgusData({
+    entities,
+    logs,
+    inboxItems: [],
+    attachments: (data.evidence ?? [])
+      .filter((e) => e.attachmentName)
+      .map((e) => ({
+        id: e.id,
+        fileName: e.attachmentName!,
+        mimeType: e.attachmentMime ?? "application/octet-stream",
+        createdAt: e.createdAt ?? now,
+      })),
+    version: 3,
+  });
 }
