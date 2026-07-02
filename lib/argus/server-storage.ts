@@ -4,6 +4,7 @@ import { migrateToV3 } from "./migrate";
 import type {
   ArgusData,
   Attachment,
+  AttachmentParentType,
   Entity,
   EntityInput,
   InboxItem,
@@ -11,6 +12,7 @@ import type {
   Log,
   LogInput,
 } from "./types";
+import { resolveClassificationStatus } from "./normalize";
 
 const DATA_DIR = path.join(process.cwd(), "data", "argus");
 const LEGACY_DATA_DIR = path.join(process.cwd(), "data", "health-vault");
@@ -107,7 +109,9 @@ export async function createEntity(input: EntityInput): Promise<Entity> {
 export async function saveAttachment(
   fileName: string,
   mimeType: string,
-  bytes: Buffer
+  bytes: Buffer,
+  parentType: AttachmentParentType,
+  parentId: string
 ): Promise<Attachment> {
   await ensureFilesDir();
   const data = await readArgus();
@@ -119,10 +123,25 @@ export async function saveAttachment(
     fileName: safeName,
     mimeType: mimeType || "application/octet-stream",
     createdAt: new Date().toISOString(),
+    parentType,
+    parentId,
   };
   data.attachments.push(attachment);
   await writeArgus(data);
   return attachment;
+}
+
+function assignAttachmentParent(
+  data: ArgusData,
+  attachmentId: string,
+  parentType: AttachmentParentType,
+  parentId: string
+): void {
+  const att = data.attachments.find((a) => a.id === attachmentId);
+  if (att) {
+    att.parentType = parentType;
+    att.parentId = parentId;
+  }
 }
 
 export async function readAttachmentBytes(id: string): Promise<Buffer | null> {
@@ -171,12 +190,20 @@ export async function getLogsForEntity(entityId: string, includePrivate: boolean
 }
 
 export async function createLog(input: LogInput): Promise<Log> {
-  if (input.entityIds.length === 0) {
-    throw new Error("A log must be linked to at least one entity");
+  const classificationStatus = resolveClassificationStatus(input.entityIds);
+  if (input.entityIds.length === 0 && classificationStatus !== "needs_classification") {
+    throw new Error("Entries without entities must be marked needs_classification");
   }
+
   const data = await readArgus();
   const now = new Date().toISOString();
-  const log: Log = { ...input, id: generateId(), createdAt: now, updatedAt: now };
+  const log: Log = {
+    ...input,
+    classificationStatus,
+    id: generateId(),
+    createdAt: now,
+    updatedAt: now,
+  };
   data.logs.push(log);
   for (const eid of log.entityIds) {
     const entity = data.entities.find((e) => e.id === eid);
@@ -184,6 +211,47 @@ export async function createLog(input: LogInput): Promise<Log> {
   }
   await writeArgus(data);
   return log;
+}
+
+export async function classifyLog(logId: string, entityIds: string[]): Promise<Log> {
+  if (entityIds.length === 0) {
+    throw new Error("Assign at least one entity to classify");
+  }
+  const data = await readArgus();
+  const log = data.logs.find((l) => l.id === logId);
+  if (!log) throw new Error("Journal entry not found");
+
+  const now = new Date().toISOString();
+  log.entityIds = entityIds;
+  log.classificationStatus = "classified";
+  log.updatedAt = now;
+  for (const eid of entityIds) {
+    const entity = data.entities.find((e) => e.id === eid);
+    if (entity) entity.updatedAt = now;
+  }
+  await writeArgus(data);
+  return log;
+}
+
+export async function appendLogAttachment(logId: string, attachmentId: string): Promise<void> {
+  const data = await readArgus();
+  const log = data.logs.find((l) => l.id === logId);
+  if (!log) throw new Error("Journal entry not found");
+  if (!log.attachmentIds.includes(attachmentId)) {
+    log.attachmentIds.push(attachmentId);
+    log.updatedAt = new Date().toISOString();
+    await writeArgus(data);
+  }
+}
+
+export async function appendInboxAttachment(inboxId: string, attachmentId: string): Promise<void> {
+  const data = await readArgus();
+  const item = data.inboxItems.find((i) => i.id === inboxId);
+  if (!item) throw new Error("Inbox item not found");
+  if (!item.attachmentIds.includes(attachmentId)) {
+    item.attachmentIds.push(attachmentId);
+    await writeArgus(data);
+  }
 }
 
 // --- Inbox ---
@@ -256,10 +324,7 @@ export async function convertInboxToLog(
   const inbox = data.inboxItems[idx];
   if (inbox.status !== "pending") throw new Error("Inbox item is not pending");
 
-  if (input.entityIds.length === 0) {
-    throw new Error("A log must be linked to at least one entity");
-  }
-
+  const classificationStatus = resolveClassificationStatus(input.entityIds);
   const now = new Date().toISOString();
   const log: Log = {
     id: generateId(),
@@ -268,16 +333,21 @@ export async function convertInboxToLog(
     title: input.title,
     body: input.body,
     entityIds: input.entityIds,
+    classificationStatus,
     private: input.private,
     source: inbox.source === "email" ? "email" : "inbox",
     attachmentIds: [...inbox.attachmentIds],
     inboxItemId: inbox.id,
-    followUpDate: input.kind === "follow_up" ? input.followUpDate : undefined,
+    followUpDate: input.followUpDate,
     topics: input.topics ?? [],
     createdAt: now,
     updatedAt: now,
   };
   data.logs.push(log);
+
+  for (const aid of inbox.attachmentIds) {
+    assignAttachmentParent(data, aid, "journal", log.id);
+  }
 
   data.inboxItems[idx] = {
     ...inbox,

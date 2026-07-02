@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { Entity } from "@/lib/argus/types";
+import type { Entity, EntityType } from "@/lib/argus/types";
 import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
 import { FAVORITES_KEY } from "@/lib/argus/journal-helpers";
 import { inputClass } from "./ui";
@@ -19,6 +19,12 @@ interface EntityPickerProps {
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   onValidityChange?: (valid: boolean) => void;
+  quickCreateName: string;
+  onQuickCreateNameChange: (value: string) => void;
+  quickCreateType: EntityType;
+  onQuickCreateTypeChange: (value: EntityType) => void;
+  quickCreateNotes: string;
+  onQuickCreateNotesChange: (value: string) => void;
 }
 
 function loadFavorites(): string[] {
@@ -67,12 +73,22 @@ function EntityRow({
   );
 }
 
-export function EntityPicker({ buckets, selectedIds, onChange, onValidityChange }: EntityPickerProps) {
+export function EntityPicker({
+  buckets,
+  selectedIds,
+  onChange,
+  onValidityChange,
+  quickCreateName,
+  onQuickCreateNameChange,
+  quickCreateType,
+  onQuickCreateTypeChange,
+  quickCreateNotes,
+  onQuickCreateNotesChange,
+}: EntityPickerProps) {
   const [tab, setTab] = useState<Tab>("recent");
   const [query, setQuery] = useState("");
   const [favorites, setFavorites] = useState<string[]>(() => loadFavorites());
   const [showCreate, setShowCreate] = useState(false);
-  const [quickCreateName, setQuickCreateName] = useState("");
 
   useEffect(() => {
     onValidityChange?.(selectedIds.length > 0 || quickCreateName.trim().length > 0);
@@ -196,25 +212,29 @@ export function EntityPicker({ buckets, selectedIds, onChange, onValidityChange 
       {showCreate && (
         <div className="space-y-3 rounded-xl border border-zinc-800 p-3">
           <input
-            name="newEntityName"
             className={inputClass}
             placeholder="Name"
             value={quickCreateName}
-            onChange={(e) => setQuickCreateName(e.target.value)}
+            onChange={(e) => onQuickCreateNameChange(e.target.value)}
           />
-          <select name="newEntityType" className={inputClass} defaultValue="person">
+          <select
+            className={inputClass}
+            value={quickCreateType}
+            onChange={(e) => onQuickCreateTypeChange(e.target.value as EntityType)}
+          >
             <option value="person">Person</option>
             <option value="company">Company</option>
             <option value="project">Project</option>
             <option value="other">Other</option>
           </select>
-          <input name="newEntityNotes" className={inputClass} placeholder="Notes (optional)" />
+          <input
+            className={inputClass}
+            placeholder="Notes (optional)"
+            value={quickCreateNotes}
+            onChange={(e) => onQuickCreateNotesChange(e.target.value)}
+          />
         </div>
       )}
-
-      {selectedIds.map((id) => (
-        <input key={id} type="hidden" name="entityIds" value={id} />
-      ))}
     </div>
   );
 }

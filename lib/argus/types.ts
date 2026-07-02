@@ -8,6 +8,10 @@ export type InboxSource = "manual" | "api" | "email" | "file";
 
 export type InboxStatus = "pending" | "converted" | "archived";
 
+export type ClassificationStatus = "classified" | "needs_classification";
+
+export type AttachmentParentType = "inbox" | "journal";
+
 export interface Entity {
   id: string;
   type: EntityType;
@@ -22,6 +26,8 @@ export interface Attachment {
   fileName: string;
   mimeType: string;
   createdAt: string;
+  parentType: AttachmentParentType;
+  parentId: string;
 }
 
 /** Journal record — source of truth for logs, events, and follow-ups */
@@ -32,6 +38,8 @@ export interface Log {
   title: string;
   body: string;
   entityIds: string[];
+  /** classified = linked entities; needs_classification = capture deferred */
+  classificationStatus: ClassificationStatus;
   private: boolean;
   source: LogSource;
   attachmentIds: string[];
@@ -77,4 +85,14 @@ export interface EntityNetworkView {
   topics: string[];
   logCount: number;
   openFollowUps: number;
+  /** Co-occurring entities from shared journal entries (relationship graph) */
+  relatedEntityIds: string[];
+}
+
+/** Time-varying context slice derived from journal co-mentions */
+export interface EntityContextSlice {
+  periodStart: string;
+  periodEnd?: string;
+  coEntityIds: string[];
+  logIds: string[];
 }

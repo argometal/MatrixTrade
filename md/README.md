@@ -50,7 +50,9 @@ Private repo: `github.com/argometal/MatrixTrade`
 | [chatgpt-bridge.md](integrations/chatgpt-bridge.md) | Export, sync control, ChatGPT role |
 | [cloudflare-worker-bridge.md](integrations/cloudflare-worker-bridge.md) | **Active plan:** Worker + KV snapshot URL for ChatGPT |
 | [vercel-argus-production-handoff.md](integrations/vercel-argus-production-handoff.md) | Vercel + ARGUS production gap |
-| [argus-chatgpt-handoff.md](integrations/argus-chatgpt-handoff.md) | **ARGUS Journal + Network — ChatGPT instructions** |
+| [argus-architecture.md](integrations/argus-architecture.md) | **ARGUS accepted architecture (constitution)** |
+| [argus-design-principles.md](integrations/argus-design-principles.md) | **ARGUS design principles — gate before UX** |
+| [argus-chatgpt-handoff.md](integrations/argus-chatgpt-handoff.md) | ARGUS Journal + Network — ChatGPT instructions |
 | [github-and-privacy.md](integrations/github-and-privacy.md) | Private repo, gitignore, what syncs |
 | [mobile-connect.md](integrations/mobile-connect.md) | QR codes, local network access |
 

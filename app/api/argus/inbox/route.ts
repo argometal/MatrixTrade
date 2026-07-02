@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createInboxItem, saveAttachment } from "@/lib/argus/server-storage";
+import { createInboxItem, saveAttachment, appendInboxAttachment } from "@/lib/argus/server-storage";
 import type { InboxSource } from "@/lib/argus/types";
 
 function readInboxToken(request: Request): string | null {
@@ -44,7 +44,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   let to: string | undefined;
   let rawEmail: string | undefined;
   let explicitSource: string | undefined;
-  const attachmentIds: string[] = [];
+  let pendingFile: File | undefined;
 
   if (contentType.includes("multipart/form-data")) {
     const form = await request.formData();
@@ -63,9 +63,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const file = form.get("file") ?? form.get("attachment");
     if (file instanceof File && file.size > 0) {
-      const bytes = Buffer.from(await file.arrayBuffer());
-      const att = await saveAttachment(file.name, file.type, bytes);
-      attachmentIds.push(att.id);
+      pendingFile = file;
     }
   } else {
     try {
@@ -85,7 +83,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "text or rawEmail required" }, { status: 400 });
   }
 
-  const source = resolveSource(explicitSource, rawEmail, from, attachmentIds.length > 0);
+  const source = resolveSource(explicitSource, rawEmail, from, Boolean(pendingFile));
 
   const item = await createInboxItem({
     source,
@@ -94,8 +92,20 @@ export async function POST(request: Request): Promise<NextResponse> {
     subject,
     from,
     to,
-    attachmentIds,
+    attachmentIds: [],
   });
+
+  if (pendingFile) {
+    const bytes = Buffer.from(await pendingFile.arrayBuffer());
+    const att = await saveAttachment(
+      pendingFile.name,
+      pendingFile.type,
+      bytes,
+      "inbox",
+      item.id
+    );
+    await appendInboxAttachment(item.id, att.id);
+  }
 
   return NextResponse.json({ ok: true, inboxItemId: item.id }, { status: 201 });
 }

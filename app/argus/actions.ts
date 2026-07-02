@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  appendLogAttachment,
   archiveInboxItem,
+  classifyLog,
   convertInboxToLog,
   createEntity,
   createLog,
@@ -12,6 +14,7 @@ import {
 import type { EntityType, JournalKind, LogSource } from "@/lib/argus/types";
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
 import { inferJournalKind, resolveLogDate } from "@/lib/argus/journal-helpers";
+import { resolveClassificationStatus } from "@/lib/argus/normalize";
 
 function revalidateArgus(): void {
   revalidatePath("/argus");
@@ -51,7 +54,7 @@ function parseJournalInput(formData: FormData) {
     body: String(formData.get("body") ?? "").trim(),
     private: formData.get("private") === "on",
     source: String(formData.get("source") ?? "manual") as LogSource,
-    followUpDate: kind === "follow_up" && followUpRaw ? followUpRaw : undefined,
+    followUpDate: followUpRaw ? followUpRaw : undefined,
     topics: parseTopics(String(formData.get("topics") ?? "")),
   };
 }
@@ -72,37 +75,54 @@ async function resolveEntityIds(formData: FormData): Promise<string[]> {
 
 export async function createLogAction(formData: FormData): Promise<void> {
   const entityIds = await resolveEntityIds(formData);
-  if (entityIds.length === 0) {
-    throw new Error("Select or create at least one entity");
-  }
-
-  const attachmentIds: string[] = [];
-  const file = formData.get("attachment");
-  if (file instanceof File && file.size > 0) {
-    const bytes = Buffer.from(await file.arrayBuffer());
-    const att = await saveAttachment(file.name, file.type || "application/octet-stream", bytes);
-    attachmentIds.push(att.id);
-  }
-
   const input = parseJournalInput(formData);
+  if (!input.title || !input.body) {
+    redirect("/argus/new?error=content");
+  }
+
   const log = await createLog({
     ...input,
     entityIds,
-    attachmentIds,
+    classificationStatus: resolveClassificationStatus(entityIds),
+    attachmentIds: [],
   });
+
+  const file = formData.get("attachment");
+  if (file instanceof File && file.size > 0) {
+    const bytes = Buffer.from(await file.arrayBuffer());
+    const att = await saveAttachment(
+      file.name,
+      file.type || "application/octet-stream",
+      bytes,
+      "journal",
+      log.id
+    );
+    await appendLogAttachment(log.id, att.id);
+  }
 
   revalidateArgus();
   redirect(`/argus/logs/${log.id}`);
 }
 
+export async function classifyLogAction(formData: FormData): Promise<void> {
+  const logId = String(formData.get("logId") ?? "");
+  const entityIds = await resolveEntityIds(formData);
+  if (entityIds.length === 0) {
+    redirect(`/argus/logs/${logId}?error=entity`);
+  }
+  await classifyLog(logId, entityIds);
+  revalidateArgus();
+  redirect(`/argus/logs/${logId}`);
+}
+
 export async function convertInboxAction(formData: FormData): Promise<void> {
   const inboxId = String(formData.get("inboxId") ?? "");
   const entityIds = await resolveEntityIds(formData);
-  if (entityIds.length === 0) {
-    throw new Error("Assign at least one entity");
+  const input = parseJournalInput(formData);
+  if (!input.title || !input.body) {
+    redirect(`/argus/inbox/${inboxId}?error=content`);
   }
 
-  const input = parseJournalInput(formData);
   const { log } = await convertInboxToLog(inboxId, {
     ...input,
     entityIds,

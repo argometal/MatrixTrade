@@ -6,7 +6,8 @@
 **Doc library:** [`md/README.md`](md/README.md)  
 **Bridge detail:** [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md)  
 **Vercel + ARGUS production (OPEN):** [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md)  
-**ARGUS for ChatGPT:** [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md)
+**ARGUS for ChatGPT:** [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md)  
+**ARGUS architecture (constitution):** [`md/integrations/argus-architecture.md`](md/integrations/argus-architecture.md) · [`md/integrations/argus-design-principles.md`](md/integrations/argus-design-principles.md)
 
 ---
 
@@ -33,7 +34,7 @@
 | **Stop condition** | Both endpoints confirmed from ChatGPT browsing + user review of queued payload |
 | **Do not start yet** | MatrixTrade Sync button, auto-sync, inbox processing in app, POST /trades |
 
-**Parallel track (ARGUS):** Journal + Network at `/argus/journal` — local disk only. See [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md).
+**Parallel track (ARGUS):** Architecture frozen — **no UX implementation** until [`argus-architecture.md`](md/integrations/argus-architecture.md) + [`argus-design-principles.md`](md/integrations/argus-design-principles.md) are read. Operational handoff: [`argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md).
 
 ---
 
@@ -41,6 +42,7 @@
 
 | | |
 |---|---|
+| **Architecture** | [`argus-architecture.md`](md/integrations/argus-architecture.md) · [`argus-design-principles.md`](md/integrations/argus-design-principles.md) — **read before any ARGUS UX work** |
 | **Entry doc for ChatGPT** | [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md) |
 | **Routes** | `/argus/journal`, `/argus/network`, `/argus/inbox`, `/argus/search`, `/argus/new` |
 | **Login** | `/argus/login` — `ARGUS_PASSWORD` |
@@ -275,7 +277,9 @@ Solo documentado como dirección evolutiva.
 | [`data/trades.json`](data/trades.json) | Trades estructurados (H001) |
 | [`data/rules.json`](data/rules.json) | Límites ciclo, paths Obsidian |
 | [`md/integrations/chatgpt-bridge.md`](md/integrations/chatgpt-bridge.md) | Roles and política de sync |
-| [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md) | **ARGUS Journal + Network + inbox for ChatGPT** |
+| [`md/integrations/argus-architecture.md`](md/integrations/argus-architecture.md) | **ARGUS accepted architecture — constitution** |
+| [`md/integrations/argus-design-principles.md`](md/integrations/argus-design-principles.md) | **ARGUS design principles — 10 rules** |
+| [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md) | ARGUS Journal + Network + inbox for ChatGPT |
 | [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md) | Vercel + ARGUS production gap |
 | [`app/api/argus/inbox/route.ts`](app/api/argus/inbox/route.ts) | Write-only ARGUS inbox API |
 | [`lib/argus/network.ts`](lib/argus/network.ts) | Network view (read-only) |

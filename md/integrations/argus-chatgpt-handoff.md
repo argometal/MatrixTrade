@@ -1,8 +1,11 @@
 # ARGUS — ChatGPT handoff
 
-**Read with [`CHATGPT.md`](../../CHATGPT.md)** (repo root).
+**Read first:** [`argus-architecture.md`](argus-architecture.md) · [`argus-design-principles.md`](argus-design-principles.md)  
+**Then:** [`CHATGPT.md`](../../CHATGPT.md) (repo root).
 
 ARGUS is the private professional journal inside MatrixTrade. Trading and ARGUS share only auth infrastructure — **do not mix business logic**.
+
+**UX implementation is frozen** until architecture documents are complete.
 
 ---
 
@@ -23,8 +26,10 @@ Everything starts in **Journal**. Network only interprets linked entities.
 |------|---------|
 | **Entity** | person / company / project / other |
 | **Log** | Journal item — something that happened (kind: `log`) |
-| **Event** | Dated journal item (kind: `event`) |
-| **Follow-up** | Revisit item with optional `followUpDate` (kind: `follow_up`) |
+| **Event** | Derived view — dated occurrence; purpose under review (see architecture doc) |
+| **Follow-up** | Derived view — entry with reminder date; not a user-facing type at capture |
+| **Relationship** | Derived from Journal history — not a stored object |
+| **Context** | Time-varying association (e.g. person + company at a point in time) — derived from Journal |
 | **Attachment** | File stored under `data/argus/files/` |
 | **InboxItem** | Unclassified input awaiting conversion |
 
@@ -115,7 +120,10 @@ curl.exe -X POST "http://localhost:3000/api/argus/inbox" ^
 
 ## Journal entry rules
 
-- Every log **must** link to at least one entity
+**Current (v3 code):** Every log must link to at least one entity.
+
+**Accepted direction (not implemented):** Entries without entities may exist only as **Needs Classification**. See [`argus-architecture.md`](argus-architecture.md).
+
 - Inbox items may be unlinked until conversion
 - `rawEmail` is never overwritten during conversion
 - Private items hidden until `ARGUS_PRIVATE_PIN` unlocked on Journal home
@@ -126,9 +134,11 @@ curl.exe -X POST "http://localhost:3000/api/argus/inbox" ^
 
 When user asks about relationships, read from Journal via Network concepts:
 
+- **Relationship** — derived pattern of interaction, not a contact record
 - **Last interaction** — latest log date per entity
-- **Next touch** — nearest `followUpDate` on follow-up items
-- **Topics** — comma tags on journal entries, aggregated per entity
+- **Next touch** — nearest reminder date on journal entries
+- **Topics** — tags on journal entries, aggregated per entity
+- **Context** — co-occurring entities over time (e.g. Mike + SLB in 2026, Mike + Exxon in 2028)
 - Person ↔ company links emerge through **shared logs**, not hard-coded employer fields
 
 Do **not** implement cadence/Fibonacci engine yet.

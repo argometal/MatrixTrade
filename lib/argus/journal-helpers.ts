@@ -75,10 +75,9 @@ export function getUpcomingEvents(logs: Log[], today: string, limit: number): Lo
 
 export function getUpcomingFollowUps(logs: Log[], today: string, limit: number): Log[] {
   return logs
-    .filter((l) => l.kind === "follow_up")
     .filter((l) => {
-      const touch = l.followUpDate ?? l.date;
-      return touch >= today;
+      const touch = l.followUpDate ?? (l.kind === "follow_up" ? l.date : undefined);
+      return touch && touch >= today;
     })
     .sort((a, b) => {
       const da = a.followUpDate ?? a.date;
@@ -86,6 +85,13 @@ export function getUpcomingFollowUps(logs: Log[], today: string, limit: number):
       return da.localeCompare(db);
     })
     .slice(0, limit);
+}
+
+export function getNeedsClassificationLogs(logs: Log[], limit?: number): Log[] {
+  const items = logs
+    .filter((l) => l.classificationStatus === "needs_classification")
+    .sort((a, b) => b.date.localeCompare(a.date));
+  return limit ? items.slice(0, limit) : items;
 }
 
 export function getRecentlyAddedEntities(entities: Entity[], limit: number): Entity[] {

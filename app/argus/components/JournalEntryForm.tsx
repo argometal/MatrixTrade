@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { JOURNAL_KINDS, JOURNAL_KIND_LABELS } from "@/lib/argus/labels";
 import { inferJournalKind } from "@/lib/argus/journal-helpers";
-import type { JournalKind } from "@/lib/argus/types";
+import type { EntityType, JournalKind } from "@/lib/argus/types";
 import { AttachmentField } from "./AttachmentField";
 import { EntityPicker, type EntityPickerBuckets } from "./EntityPicker";
 import { Field, inputClass, textareaClass } from "./ui";
@@ -39,6 +39,9 @@ export function JournalEntryForm({
   const [eventDate, setEventDate] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
   const [kindOverride, setKindOverride] = useState<JournalKind | "">("");
+  const [quickCreateName, setQuickCreateName] = useState("");
+  const [quickCreateType, setQuickCreateType] = useState<EntityType>("person");
+  const [quickCreateNotes, setQuickCreateNotes] = useState("");
 
   const inferredKind = inferJournalKind({
     followUpDate: followUpDate || undefined,
@@ -55,6 +58,18 @@ export function JournalEntryForm({
   return (
     <form action={action} className="space-y-5">
       {initial?.inboxId && <input type="hidden" name="inboxId" value={initial.inboxId} />}
+      <input type="hidden" name="title" value={title} />
+      <input type="hidden" name="body" value={body} />
+      {selectedIds.map((id) => (
+        <input key={id} type="hidden" name="entityIds" value={id} />
+      ))}
+      {quickCreateName.trim() && (
+        <>
+          <input type="hidden" name="newEntityName" value={quickCreateName.trim()} />
+          <input type="hidden" name="newEntityType" value={quickCreateType} />
+          <input type="hidden" name="newEntityNotes" value={quickCreateNotes} />
+        </>
+      )}
 
       <nav className="flex items-center gap-2 text-xs text-zinc-500">
         {STEPS.map((s, i) => (
@@ -88,6 +103,12 @@ export function JournalEntryForm({
             selectedIds={selectedIds}
             onChange={setSelectedIds}
             onValidityChange={setEntityStepValid}
+            quickCreateName={quickCreateName}
+            onQuickCreateNameChange={setQuickCreateName}
+            quickCreateType={quickCreateType}
+            onQuickCreateTypeChange={setQuickCreateType}
+            quickCreateNotes={quickCreateNotes}
+            onQuickCreateNotesChange={setQuickCreateNotes}
           />
           <button
             type="button"
@@ -108,8 +129,6 @@ export function JournalEntryForm({
           </div>
           <Field label="Title">
             <input
-              name="title"
-              required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className={inputClass}
@@ -118,8 +137,6 @@ export function JournalEntryForm({
           </Field>
           <Field label="What happened">
             <textarea
-              name="body"
-              required
               value={body}
               onChange={(e) => setBody(e.target.value)}
               className={textareaClass}

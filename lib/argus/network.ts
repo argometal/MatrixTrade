@@ -1,4 +1,5 @@
 import type { ArgusData, Entity, EntityNetworkView, Log } from "./types";
+import { getRelatedEntityIds } from "./context";
 
 function logsForEntity(logs: Log[], entityId: string): Log[] {
   return logs.filter((l) => l.entityIds.includes(entityId));
@@ -10,14 +11,14 @@ function lastInteractionDate(logs: Log[]): string | undefined {
 }
 
 function nextTouchDate(logs: Log[], today: string): string | undefined {
-  const followUps = logs
-    .filter((l) => l.kind === "follow_up" && l.followUpDate)
-    .map((l) => l.followUpDate!)
+  const reminders = logs
+    .map((l) => l.followUpDate ?? (l.kind === "follow_up" ? l.date : undefined))
+    .filter((d): d is string => Boolean(d))
     .sort();
 
-  const upcoming = followUps.find((d) => d >= today);
+  const upcoming = reminders.find((d) => d >= today);
   if (upcoming) return upcoming;
-  return followUps.length > 0 ? followUps[followUps.length - 1] : undefined;
+  return reminders.length > 0 ? reminders[reminders.length - 1] : undefined;
 }
 
 function topicsForEntity(logs: Log[]): string[] {
@@ -52,14 +53,18 @@ export function buildEntityNetworkViews(
   return entities
     .map((entity) => {
       const linked = logsForEntity(visibleLogs, entity.id);
-      const followUps = linked.filter((l) => l.kind === "follow_up");
+      const followUps = linked.filter((l) => l.followUpDate || l.kind === "follow_up");
       return {
         entity,
         lastInteraction: lastInteractionDate(linked),
         nextTouch: nextTouchDate(linked, today),
         topics: topicsForEntity(linked),
         logCount: linked.length,
-        openFollowUps: followUps.filter((l) => !l.followUpDate || l.followUpDate >= today).length,
+        openFollowUps: followUps.filter((l) => {
+          const touch = l.followUpDate ?? l.date;
+          return touch >= today;
+        }).length,
+        relatedEntityIds: getRelatedEntityIds(data, entity.id, includePrivate),
       };
     })
     .sort((a, b) => a.entity.name.localeCompare(b.entity.name));
