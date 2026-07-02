@@ -14,14 +14,16 @@ export function verifyTradingPassword(input: string): boolean {
   return safeEqual(input, expected);
 }
 
-export function verifyHealthPassword(input: string): boolean {
-  const expected = process.env.HEALTH_VAULT_PASSWORD ?? "";
+export function verifyArgusPassword(input: string): boolean {
+  const expected =
+    process.env.ARGUS_PASSWORD ?? process.env.HEALTH_VAULT_PASSWORD ?? "";
   if (!expected) return true;
   return safeEqual(input, expected);
 }
 
-export function verifyHealthSecret(input: string): boolean {
-  const expected = process.env.HEALTH_VAULT_SECRET ?? "";
+export function verifyArgusPrivatePin(input: string): boolean {
+  const expected =
+    process.env.ARGUS_PRIVATE_PIN ?? process.env.HEALTH_VAULT_SECRET ?? "";
   if (!expected) return false;
   return safeEqual(input, expected);
 }
@@ -30,10 +32,10 @@ export function tradingAuthRequired(): boolean {
   return Boolean(process.env.MATRIXTRADE_PASSWORD);
 }
 
-export function healthAuthRequired(): boolean {
-  return Boolean(process.env.HEALTH_VAULT_PASSWORD);
+export function argusAuthRequired(): boolean {
+  return Boolean(process.env.ARGUS_PASSWORD ?? process.env.HEALTH_VAULT_PASSWORD);
 }
 
-export function healthSecretConfigured(): boolean {
-  return Boolean(process.env.HEALTH_VAULT_SECRET);
+export function argusPrivateConfigured(): boolean {
+  return Boolean(process.env.ARGUS_PRIVATE_PIN ?? process.env.HEALTH_VAULT_SECRET);
 }

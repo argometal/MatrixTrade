@@ -3,8 +3,18 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname === "/health" || pathname.startsWith("/health/")) {
+    let next = pathname.replace(/^\/health/, "/argus");
+    next = next.replace(/^\/argus\/records/, "/argus/entries");
+    next = next.replace(/^\/argus\/people/, "/argus/contacts");
+    return NextResponse.redirect(new URL(next, request.url));
+  }
+
   const tradingPasswordSet = Boolean(process.env.MATRIXTRADE_PASSWORD);
-  const healthPasswordSet = Boolean(process.env.HEALTH_VAULT_PASSWORD);
+  const argusPasswordSet = Boolean(
+    process.env.ARGUS_PASSWORD ?? process.env.HEALTH_VAULT_PASSWORD
+  );
 
   const isTradingRoute =
     pathname === "/" ||
@@ -18,17 +28,17 @@ export function middleware(request: NextRequest) {
   }
 
   if (
-    healthPasswordSet &&
-    pathname.startsWith("/health") &&
-    pathname !== "/health/login" &&
-    !request.cookies.get("hv-auth")?.value
+    argusPasswordSet &&
+    pathname.startsWith("/argus") &&
+    pathname !== "/argus/login" &&
+    !request.cookies.get("argus-auth")?.value
   ) {
-    return NextResponse.redirect(new URL("/health/login", request.url));
+    return NextResponse.redirect(new URL("/argus/login", request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/", "/trades/:path*", "/connect/:path*", "/health/:path*"],
+  matcher: ["/", "/trades/:path*", "/connect/:path*", "/argus/:path*"],
 };

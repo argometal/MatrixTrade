@@ -1,11 +1,11 @@
 import { cookies } from "next/headers";
 
 export const MT_AUTH = "mt-auth";
-export const HV_AUTH = "hv-auth";
-export const HV_SECRET = "hv-secret";
+export const ARGUS_AUTH = "argus-auth";
+export const ARGUS_PRIVATE = "argus-private";
 
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
-const SECRET_MAX_AGE = 60 * 60;
+const PRIVATE_MAX_AGE = 60 * 60;
 
 export async function setTradingSession(): Promise<void> {
   const jar = await cookies();
@@ -18,9 +18,9 @@ export async function setTradingSession(): Promise<void> {
   });
 }
 
-export async function setHealthSession(): Promise<void> {
+export async function setArgusSession(): Promise<void> {
   const jar = await cookies();
-  jar.set(HV_AUTH, "1", {
+  jar.set(ARGUS_AUTH, "1", {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -29,20 +29,20 @@ export async function setHealthSession(): Promise<void> {
   });
 }
 
-export async function setHealthSecretUnlock(): Promise<void> {
+export async function setArgusPrivateUnlock(): Promise<void> {
   const jar = await cookies();
-  jar.set(HV_SECRET, "1", {
+  jar.set(ARGUS_PRIVATE, "1", {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    maxAge: SECRET_MAX_AGE,
+    maxAge: PRIVATE_MAX_AGE,
     path: "/",
   });
 }
 
-export async function clearHealthSecretUnlock(): Promise<void> {
+export async function clearArgusPrivateUnlock(): Promise<void> {
   const jar = await cookies();
-  jar.delete(HV_SECRET);
+  jar.delete(ARGUS_PRIVATE);
 }
 
 export async function hasTradingSession(): Promise<boolean> {
@@ -50,12 +50,12 @@ export async function hasTradingSession(): Promise<boolean> {
   return jar.get(MT_AUTH)?.value === "1";
 }
 
-export async function hasHealthSession(): Promise<boolean> {
+export async function hasArgusSession(): Promise<boolean> {
   const jar = await cookies();
-  return jar.get(HV_AUTH)?.value === "1";
+  return jar.get(ARGUS_AUTH)?.value === "1";
 }
 
-export async function hasHealthSecretUnlock(): Promise<boolean> {
+export async function hasArgusPrivateUnlock(): Promise<boolean> {
   const jar = await cookies();
-  return jar.get(HV_SECRET)?.value === "1";
+  return jar.get(ARGUS_PRIVATE)?.value === "1";
 }

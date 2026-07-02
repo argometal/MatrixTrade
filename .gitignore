@@ -33,7 +33,8 @@ next-env.d.ts
 /vault/Trades/*.md
 *.matrixtrade.tmp
 
-# Health Vault — private data (never commit)
+# ARGUS — private journal data (never commit)
+/data/argus/
 /data/health-vault/
 
 # OS / editor
