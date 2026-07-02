@@ -85,7 +85,6 @@ Add one `.md` per subject as the system grows.
 | [companies-model.md](topics/companies-model.md) | Per-ticker folder structure |
 | [decision-framework.md](topics/decision-framework.md) | Why this company, why now |
 | [analysis-workflow.md](topics/analysis-workflow.md) | Multi-timeframe workflow |
-| [matrix-trading-ux-design.md](topics/matrix-trading-ux-design.md) | **Matrix Trading UX design proposal** (Capture → Analyze → Learn → Improve) |
 
 ---
 
