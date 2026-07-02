@@ -4,7 +4,21 @@
 
 **Repo:** `github.com/argometal/MatrixTrade` (private)  
 **Doc library:** [`md/README.md`](md/README.md)  
-**Bridge detail:** [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md)
+**Bridge detail:** [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md)  
+**Vercel + ARGUS production (OPEN):** [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md)
+
+---
+
+## ⚠ Production blocker (Vercel — not a bad deploy)
+
+| Symptom | Cause |
+|---------|--------|
+| No login on `matrix-trade-theta.vercel.app` | `MATRIXTRADE_PASSWORD` / `ARGUS_PASSWORD` **not set in Vercel** — auth is opt-in, fails **open** |
+| “ARGUS missing” | ARGUS is at **`/argus`**, not `/`. No nav link from trading (by design) |
+| ARGUS empty on Vercel | `data/argus/` gitignored; no persistent disk on serverless |
+
+**Stable production URL:** `https://matrix-trade-theta.vercel.app` (not the deployment hash URL).  
+**Full diagnosis + fix checklist:** [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md)
 
 ---
 
@@ -17,6 +31,21 @@
 | **Next action** | ChatGPT POST validated JSON to `/inbox`; confirm GET returns pending items |
 | **Stop condition** | Both endpoints confirmed from ChatGPT browsing + user review of queued payload |
 | **Do not start yet** | MatrixTrade Sync button, auto-sync, inbox processing in app, POST /trades |
+
+**Parallel track (ARGUS):** Local professional journal at `/argus` — see handoff doc. Vercel is **not** ARGUS storage v1.
+
+---
+
+## ARGUS (professional journal module)
+
+| | |
+|---|---|
+| **Routes** | `/argus`, `/argus/entries`, `/argus/contacts`, `/argus/login` |
+| **Code** | `app/argus/`, `lib/argus/`, `data/argus/` (local, gitignored) |
+| **Concept** | Private professional relationship + event journal — not complaint-only |
+| **Auth** | Separate password `ARGUS_PASSWORD`; private entries via `ARGUS_PRIVATE_PIN` |
+| **Legacy** | `/health/*` redirects to `/argus/*`; migrates `data/health-vault/` on first read |
+| **Production** | Deployed on Vercel but **empty + no login until env vars set** — see blocker above |
 
 ---
 
@@ -231,7 +260,10 @@ Solo documentado como dirección evolutiva.
 | [`bridge/sample-inbox.json`](bridge/sample-inbox.json) | Ejemplo propuesta H002 |
 | [`data/trades.json`](data/trades.json) | Trades estructurados (H001) |
 | [`data/rules.json`](data/rules.json) | Límites ciclo, paths Obsidian |
-| [`md/integrations/chatgpt-bridge.md`](md/integrations/chatgpt-bridge.md) | Roles y política de sync |
+| [`md/integrations/chatgpt-bridge.md`](md/integrations/chatgpt-bridge.md) | Roles and política de sync |
+| [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md) | **Vercel + ARGUS production gap** |
+| [`app/argus/`](app/argus/) | ARGUS UI |
+| [`lib/argus/`](lib/argus/) | ARGUS storage + migration |
 
 ---
 

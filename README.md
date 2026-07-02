@@ -117,16 +117,23 @@ See `MatrixTrade-IP01.md` for full rules.
 
 ## Deploy to Vercel (free)
 
-Read-only dashboard from any device — no LAN, no QR required.
+Read-only **trading** dashboard from any device — no LAN, no QR required.
 
 1. **Commit and push** (must include `data/trades.json` and `data/rules.json`).
 2. Go to [vercel.com](https://vercel.com) → **Add New Project** → import `argometal/MatrixTrade`.
-3. Framework: **Next.js** (auto-detected). No env vars needed for the view checkpoint.
-4. Deploy → open the `*.vercel.app` URL on your iPhone.
+3. Framework: **Next.js** (auto-detected).
+4. **Environment variables (Production)** — required for login:
+   - `MATRIXTRADE_PASSWORD`
+   - `ARGUS_PASSWORD` (if using ARGUS on web)
+   - `ARGUS_PRIVATE_PIN` (optional)
+5. Deploy → use stable URL **`matrix-trade-theta.vercel.app`** (not the per-deployment hash URL).
 
-**Checkpoint:** `/` dashboard and `/trades` (H001) load from the deployed URL.
+**Checkpoint:** `/` dashboard and `/trades` (H001) load from the deployed URL.  
+**ARGUS:** `/argus` — separate module; data stays local (`data/argus/` gitignored). See [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md).
 
-**Limitation (v1):** Vercel serverless has no persistent disk. Creating/closing trades in the UI only works locally; production is read-only until GitHub-sync write path is chosen (see open issue).
+**If login does not appear:** env vars are missing — auth is opt-in and production is public until you set them and redeploy.
+
+**Limitation (v1):** Vercel serverless has no persistent disk. Creating/closing trades in the UI only works locally; production is read-only until GitHub-sync write path is chosen. ARGUS journal does not persist on Vercel.
 
 ## Publish to GitHub
 
