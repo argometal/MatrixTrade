@@ -235,7 +235,7 @@ Future candidates (not approved): **Calendar** (if Event purpose demands it), **
 - Network derived read-only
 - Inbox raw content immutable
 - Auth separation from Trading
-- Local-first v1 storage path (`data/argus/`)
+- Local-first v1 — set **`ARGUS_DATA_DIR`** outside repo ([`argus-storage.md`](argus-storage.md))
 
 ---
 
@@ -255,6 +255,7 @@ Future candidates (not approved): **Calendar** (if Event purpose demands it), **
 
 | Document | Role |
 |----------|------|
+| [`argus-storage.md`](argus-storage.md) | Persistent storage — `ARGUS_DATA_DIR`, backup, migration |
 | [`argus-design-principles.md`](argus-design-principles.md) | Constitution — 10 principles |
 | [`argus-chatgpt-handoff.md`](argus-chatgpt-handoff.md) | ChatGPT operational handoff |
 | [`vercel-argus-production-handoff.md`](vercel-argus-production-handoff.md) | Production deployment gap |

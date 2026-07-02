@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { migrateToV3 } from "./migrate";
+import { ensureArgusStorageReady, getArgusStoragePaths, isExternalDataRoot } from "./storage";
 import type {
   ArgusData,
   Attachment,
@@ -14,11 +15,9 @@ import type {
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
 
-const DATA_DIR = path.join(process.cwd(), "data", "argus");
-const LEGACY_DATA_DIR = path.join(process.cwd(), "data", "health-vault");
-const JOURNAL_FILE = path.join(DATA_DIR, "journal.json");
-const LEGACY_VAULT_FILE = path.join(LEGACY_DATA_DIR, "vault.json");
-const FILES_DIR = path.join(DATA_DIR, "files");
+function paths() {
+  return getArgusStoragePaths();
+}
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -29,12 +28,16 @@ function emptyArgus(): ArgusData {
 }
 
 async function ensureFilesDir(): Promise<void> {
-  await fs.mkdir(FILES_DIR, { recursive: true });
+  await ensureArgusStorageReady();
+  await fs.mkdir(paths().filesDir, { recursive: true });
 }
 
 async function readRawJournal(): Promise<ArgusData> {
+  await ensureArgusStorageReady();
+  const p = paths();
+
   try {
-    const raw = await fs.readFile(JOURNAL_FILE, "utf-8");
+    const raw = await fs.readFile(p.journalFile, "utf-8");
     return migrateToV3(JSON.parse(raw));
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
@@ -42,7 +45,7 @@ async function readRawJournal(): Promise<ArgusData> {
   }
 
   try {
-    const raw = await fs.readFile(LEGACY_VAULT_FILE, "utf-8");
+    const raw = await fs.readFile(p.legacyVaultFile, "utf-8");
     const migrated = migrateToV3(JSON.parse(raw));
     await writeArgus(migrated);
     return migrated;
@@ -54,10 +57,12 @@ async function readRawJournal(): Promise<ArgusData> {
 }
 
 async function writeArgus(data: ArgusData): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  const tmp = `${JOURNAL_FILE}.tmp`;
+  await ensureArgusStorageReady();
+  const p = paths();
+  await fs.mkdir(p.root, { recursive: true });
+  const tmp = `${p.journalFile}.tmp`;
   await fs.writeFile(tmp, `${JSON.stringify(data, null, 2)}\n`, "utf-8");
-  await fs.rename(tmp, JOURNAL_FILE);
+  await fs.rename(tmp, p.journalFile);
 }
 
 function filterPrivateLogs(logs: Log[], includePrivate: boolean): Log[] {
@@ -117,7 +122,7 @@ export async function saveAttachment(
   const data = await readArgus();
   const id = generateId();
   const safeName = fileName.replace(/[^\w.\-() ]/g, "_").slice(0, 120);
-  await fs.writeFile(path.join(FILES_DIR, id), bytes);
+  await fs.writeFile(path.join(paths().filesDir, id), bytes);
   const attachment: Attachment = {
     id,
     fileName: safeName,
@@ -146,7 +151,7 @@ function assignAttachmentParent(
 
 export async function readAttachmentBytes(id: string): Promise<Buffer | null> {
   try {
-    return await fs.readFile(path.join(FILES_DIR, id));
+    return await fs.readFile(path.join(paths().filesDir, id));
   } catch {
     return null;
   }
@@ -362,6 +367,24 @@ export async function convertInboxToLog(
 
   await writeArgus(data);
   return { log, inbox: data.inboxItems[idx] };
+}
+
+export { getArgusDataRoot, getArgusStoragePaths, readStorageMeta } from "./storage";
+
+export async function getStorageDiagnostics(): Promise<{
+  root: string;
+  external: boolean;
+  journalFile: string;
+  filesDir: string;
+}> {
+  await ensureArgusStorageReady();
+  const p = getArgusStoragePaths();
+  return {
+    root: p.root,
+    external: isExternalDataRoot(),
+    journalFile: p.journalFile,
+    filesDir: p.filesDir,
+  };
 }
 
 export async function searchLogs(query: string, includePrivate: boolean): Promise<Log[]> {

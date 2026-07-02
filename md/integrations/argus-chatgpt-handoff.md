@@ -64,10 +64,15 @@ Legacy names still work: `HEALTH_VAULT_PASSWORD`, `HEALTH_VAULT_SECRET`.
 
 ## Data storage
 
+Set **`ARGUS_DATA_DIR`** in `.env.local` to keep all user data outside the repository.  
+Full layout, migration, backup: [`argus-storage.md`](argus-storage.md)
+
 | Path | In git? |
 |------|---------|
-| `data/argus/journal.json` | **No** (gitignored) |
-| `data/argus/files/` | **No** |
+| `{ARGUS_DATA_DIR}/journal.json` | **No** — never commit user data |
+| `{ARGUS_DATA_DIR}/files/` | **No** |
+
+Default when `ARGUS_DATA_DIR` unset: `{repo}/data/argus/` (legacy, gitignored).
 
 Schema version **3**: `entities`, `logs`, `inboxItems`, `attachments`.
 
@@ -151,7 +156,8 @@ Do **not** implement cadence/Fibonacci engine yet.
 |------|----------|
 | `app/argus/` | UI + server actions |
 | `lib/argus/types.ts` | Entity, Log, InboxItem models |
-| `lib/argus/server-storage.ts` | Disk I/O |
+| `lib/argus/server-storage.ts` | Disk I/O + legacy `data/health-vault/` migration |
+| `lib/argus/storage/` | `ARGUS_DATA_DIR`, paths, boot migration |
 | `lib/argus/network.ts` | Network view (read-only) |
 | `app/api/argus/inbox/route.ts` | Write-only inbox receiver |
 | `lib/auth/require-session.ts` | Server-side session guards (trading layout) |

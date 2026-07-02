@@ -47,7 +47,7 @@
 | **Routes** | `/argus/journal`, `/argus/network`, `/argus/inbox`, `/argus/search`, `/argus/new` |
 | **Login** | `/argus/login` — `ARGUS_PASSWORD` |
 | **Inbox API** | `POST /api/argus/inbox` — Bearer `ARGUS_INBOX_TOKEN` (write-only) |
-| **Data** | `data/argus/journal.json` + `files/` (gitignored, local only) |
+| **Data** | `ARGUS_DATA_DIR` (see [`argus-storage.md`](md/integrations/argus-storage.md)) |
 | **Model** | Entity · Log/Event/Follow-up · InboxItem · Attachment |
 | **Rule** | Journal = source of truth; Network reads Journal only |
 | **Worker bridge** | Trading only — **not** ARGUS inbox |
