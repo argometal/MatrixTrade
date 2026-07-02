@@ -25,7 +25,11 @@ export default async function NetworkPage({
 
   return (
     <>
-      <PageHeader title="Network" subtitle="Relationships read from Journal — never duplicated" backHref="/argus/journal" />
+      <PageHeader
+        title="Network"
+        subtitle="Who needs follow-up · what topics · what evidence"
+        backHref="/argus/journal"
+      />
 
       <form action="/argus/network" method="get" className="mb-6 flex gap-2">
         <input name="q" defaultValue={q ?? ""} placeholder="Search entities..." className={inputClass} />

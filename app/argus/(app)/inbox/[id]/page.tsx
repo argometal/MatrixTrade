@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
-import { ENTITY_TYPES, ENTITY_TYPE_LABELS, INBOX_SOURCE_LABELS, JOURNAL_KINDS, JOURNAL_KIND_LABELS } from "@/lib/argus/labels";
-import { getAttachment, getEntities, getInboxItem, getLog } from "@/lib/argus/server-storage";
+import { JournalEntryForm } from "@/app/argus/components/JournalEntryForm";
+import { Card, EmptyState, PageHeader } from "@/app/argus/components/ui";
+import { INBOX_SOURCE_LABELS } from "@/lib/argus/labels";
+import { buildEntityPickerBuckets } from "@/lib/argus/journal-helpers";
+import { getAttachment, getInboxItem, getLog, readArgus } from "@/lib/argus/server-storage";
 import { archiveInboxAction, convertInboxAction } from "@/app/argus/actions";
-import { Card, EmptyState, Field, inputClass, PageHeader, textareaClass } from "@/app/argus/components/ui";
 
 export default async function InboxDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,14 +20,15 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
     );
   }
 
-  const entities = await getEntities();
-  const today = new Date().toISOString().slice(0, 10);
+  const includePrivate = await hasArgusPrivateUnlock();
+  const data = await readArgus();
+  const buckets = buildEntityPickerBuckets(data, includePrivate);
   const defaultTitle = item.subject || item.rawText.slice(0, 120);
   const defaultBody = item.rawText;
 
   const convertedLog =
     item.status === "converted" && item.convertedLogId
-      ? await getLog(item.convertedLogId, await hasArgusPrivateUnlock())
+      ? await getLog(item.convertedLogId, includePrivate)
       : undefined;
 
   return (
@@ -83,65 +86,17 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
 
       {item.status === "pending" && (
         <>
-          <form action={convertInboxAction} className="mb-4 space-y-4">
-            <input type="hidden" name="inboxId" value={item.id} />
-            <Field label="Link entities">
-              <div className="max-h-40 space-y-2 overflow-y-auto rounded-xl border border-zinc-800 p-3">
-                {entities.map((e) => (
-                  <label key={e.id} className="flex items-center gap-2 text-sm">
-                    <input type="checkbox" name="entityIds" value={e.id} />
-                    {ENTITY_TYPE_LABELS[e.type]} · {e.name}
-                  </label>
-                ))}
-              </div>
-            </Field>
-            <details className="rounded-xl border border-zinc-800 p-3">
-              <summary className="cursor-pointer text-sm text-zinc-300">Create new entity</summary>
-              <div className="mt-3 space-y-3">
-                <input name="newEntityName" className={inputClass} placeholder="Name" />
-                <select name="newEntityType" className={inputClass} defaultValue="person">
-                  {ENTITY_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {ENTITY_TYPE_LABELS[t]}
-                    </option>
-                  ))}
-                </select>
-                <input name="newEntityNotes" className={inputClass} placeholder="Notes" />
-              </div>
-            </details>
-            <Field label="Convert as">
-              <select name="kind" className={inputClass} defaultValue="log">
-                {JOURNAL_KINDS.map((k) => (
-                  <option key={k} value={k}>
-                    {JOURNAL_KIND_LABELS[k]}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label="Title">
-              <input name="title" required defaultValue={defaultTitle} className={inputClass} />
-            </Field>
-            <Field label="Date">
-              <input name="date" type="date" required defaultValue={today} className={inputClass} />
-            </Field>
-            <Field label="Follow-up date (if follow-up)">
-              <input name="followUpDate" type="date" className={inputClass} />
-            </Field>
-            <Field label="Body">
-              <textarea name="body" required defaultValue={defaultBody} className={textareaClass} />
-            </Field>
-            <Field label="Topics (comma-separated)">
-              <input name="topics" className={inputClass} placeholder="optional" />
-            </Field>
-            <label className="flex items-center gap-2 text-sm text-violet-200">
-              <input type="checkbox" name="private" />
-              Private
-            </label>
-            <button type="submit" className="w-full rounded-xl bg-teal-600 py-3.5 font-semibold text-white">
-              Convert to journal
-            </button>
-          </form>
-          <form action={archiveInboxAction}>
+          <JournalEntryForm
+            action={convertInboxAction}
+            buckets={buckets}
+            submitLabel="Convert to journal"
+            initial={{
+              title: defaultTitle,
+              body: defaultBody,
+              inboxId: item.id,
+            }}
+          />
+          <form action={archiveInboxAction} className="mt-4">
             <input type="hidden" name="inboxId" value={item.id} />
             <button type="submit" className="w-full rounded-xl border border-zinc-700 py-3 text-sm text-zinc-400">
               Archive

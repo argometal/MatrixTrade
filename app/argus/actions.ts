@@ -10,6 +10,8 @@ import {
   saveAttachment,
 } from "@/lib/argus/server-storage";
 import type { EntityType, JournalKind, LogSource } from "@/lib/argus/types";
+import { JOURNAL_KINDS } from "@/lib/argus/labels";
+import { inferJournalKind, resolveLogDate } from "@/lib/argus/journal-helpers";
 
 function revalidateArgus(): void {
   revalidatePath("/argus");
@@ -27,11 +29,24 @@ function parseTopics(raw: string): string[] {
 }
 
 function parseJournalInput(formData: FormData) {
-  const kind = String(formData.get("kind") ?? "log") as JournalKind;
+  const today = new Date().toISOString().slice(0, 10);
+  const eventDate = String(formData.get("eventDate") ?? "").slice(0, 10);
   const followUpRaw = String(formData.get("followUpDate") ?? "").slice(0, 10);
+  const overrideRaw = String(formData.get("kindOverride") ?? "").trim();
+  const kindOverride = JOURNAL_KINDS.includes(overrideRaw as JournalKind)
+    ? (overrideRaw as JournalKind)
+    : undefined;
+
+  const kind = inferJournalKind({
+    followUpDate: followUpRaw || undefined,
+    eventDate: eventDate || undefined,
+    kindOverride,
+  });
+  const date = resolveLogDate(kind, eventDate, today);
+
   return {
     kind,
-    date: String(formData.get("date") ?? "").slice(0, 10),
+    date,
     title: String(formData.get("title") ?? "").trim(),
     body: String(formData.get("body") ?? "").trim(),
     private: formData.get("private") === "on",

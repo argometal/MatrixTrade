@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { verifyArgusPassword, verifyArgusPrivatePin, verifyTradingPassword } from "@/lib/auth/passwords";
 import {
+  clearAllSessions,
   clearArgusPrivateUnlock,
   setArgusPrivateUnlock,
   setArgusSession,
@@ -46,4 +47,9 @@ export async function unlockArgusPrivateAction(formData: FormData): Promise<void
 export async function lockArgusPrivateAction(): Promise<void> {
   await clearArgusPrivateUnlock();
   redirect("/argus/journal");
+}
+
+export async function logoutAction(): Promise<void> {
+  await clearAllSessions();
+  redirect("/login");
 }

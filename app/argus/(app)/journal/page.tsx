@@ -1,8 +1,34 @@
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
-import { LogCard } from "@/app/argus/components/Cards";
+import { CompactEntityRow, CompactLogRow } from "@/app/argus/components/CompactRows";
+import { PinnedEntities } from "@/app/argus/components/PinnedEntities";
 import { PrivatePanel } from "@/app/argus/components/PrivatePanel";
 import { Button, EmptyState, PageHeader } from "@/app/argus/components/ui";
-import { getEntities, getLogsByKind } from "@/lib/argus/server-storage";
+import {
+  getRecentActivity,
+  getRecentlyAddedEntities,
+  getUpcomingEvents,
+  getUpcomingFollowUps,
+} from "@/lib/argus/journal-helpers";
+import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
+import { getEntities, getLogs } from "@/lib/argus/server-storage";
+
+function CompactSection({
+  title,
+  children,
+  empty,
+}: {
+  title: string;
+  children: React.ReactNode;
+  empty?: boolean;
+}) {
+  if (empty) return null;
+  return (
+    <section className="mb-5">
+      <h2 className="mb-1 text-xs font-semibold uppercase tracking-wider text-zinc-500">{title}</h2>
+      <div className="rounded-xl border border-zinc-800/80 px-3">{children}</div>
+    </section>
+  );
+}
 
 export default async function JournalPage({
   searchParams,
@@ -11,58 +37,61 @@ export default async function JournalPage({
 }) {
   const { private_error } = await searchParams;
   const includePrivate = await hasArgusPrivateUnlock();
+  const today = new Date().toISOString().slice(0, 10);
   const entities = await getEntities();
-  const recentLogs = await getLogsByKind("log", includePrivate, 5);
-  const recentEvents = await getLogsByKind("event", includePrivate, 5);
-  const followUps = await getLogsByKind("follow_up", includePrivate, 5);
+  const logs = await getLogs(includePrivate);
+
+  const recentActivity = getRecentActivity(logs, 8);
+  const upcomingFollowUps = getUpcomingFollowUps(logs, today, 5);
+  const upcomingEvents = getUpcomingEvents(logs, today, 5);
+  const recentEntities = getRecentlyAddedEntities(entities, 5);
+
+  const hasContent =
+    recentActivity.length > 0 ||
+    upcomingFollowUps.length > 0 ||
+    upcomingEvents.length > 0 ||
+    recentEntities.length > 0;
 
   return (
     <>
-      <PageHeader title="Journal" subtitle="Source of truth — logs, events, follow-ups" />
+      <PageHeader title="Journal" subtitle="Source of truth — facts, not notes" />
       <PrivatePanel privateError={Boolean(private_error)} />
 
-      <Button href="/argus/new" fullWidth className="mb-8">
+      <Button href="/argus/new" fullWidth className="mb-5 py-3 text-sm">
         + New
       </Button>
 
-      <section className="mb-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Recent logs</h2>
-        {recentLogs.length === 0 ? (
-          <EmptyState message="No logs yet." />
-        ) : (
-          <div className="space-y-3">
-            {recentLogs.map((log) => (
-              <LogCard key={log.id} log={log} entities={entities} />
-            ))}
-          </div>
-        )}
-      </section>
+      <PinnedEntities entities={entities} />
 
-      <section className="mb-8">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Events</h2>
-        {recentEvents.length === 0 ? (
-          <EmptyState message="No events yet." />
-        ) : (
-          <div className="space-y-3">
-            {recentEvents.map((log) => (
-              <LogCard key={log.id} log={log} entities={entities} />
-            ))}
-          </div>
-        )}
-      </section>
+      <CompactSection title="Recent activity" empty={recentActivity.length === 0}>
+        {recentActivity.map((log) => (
+          <CompactLogRow key={log.id} log={log} entities={entities} />
+        ))}
+      </CompactSection>
 
-      <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Follow-ups</h2>
-        {followUps.length === 0 ? (
-          <EmptyState message="No follow-ups yet." />
-        ) : (
-          <div className="space-y-3">
-            {followUps.map((log) => (
-              <LogCard key={log.id} log={log} entities={entities} />
-            ))}
-          </div>
-        )}
-      </section>
+      <CompactSection title="Upcoming follow-ups" empty={upcomingFollowUps.length === 0}>
+        {upcomingFollowUps.map((log) => (
+          <CompactLogRow key={log.id} log={log} entities={entities} />
+        ))}
+      </CompactSection>
+
+      <CompactSection title="Upcoming events" empty={upcomingEvents.length === 0}>
+        {upcomingEvents.map((log) => (
+          <CompactLogRow key={log.id} log={log} entities={entities} />
+        ))}
+      </CompactSection>
+
+      <CompactSection title="Recently added entities" empty={recentEntities.length === 0}>
+        {recentEntities.map((entity) => (
+          <CompactEntityRow
+            key={entity.id}
+            entity={entity}
+            meta={ENTITY_TYPE_LABELS[entity.type]}
+          />
+        ))}
+      </CompactSection>
+
+      {!hasContent && <EmptyState message="No journal entries yet. Start with who you talked to." />}
     </>
   );
 }

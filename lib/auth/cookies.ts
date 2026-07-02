@@ -45,6 +45,14 @@ export async function clearArgusPrivateUnlock(): Promise<void> {
   jar.delete(ARGUS_PRIVATE);
 }
 
+/** Clears trading, ARGUS, and private unlock — one logout for the whole app. */
+export async function clearAllSessions(): Promise<void> {
+  const jar = await cookies();
+  jar.delete(MT_AUTH);
+  jar.delete(ARGUS_AUTH);
+  jar.delete(ARGUS_PRIVATE);
+}
+
 export async function hasTradingSession(): Promise<boolean> {
   const jar = await cookies();
   return jar.get(MT_AUTH)?.value === "1";
