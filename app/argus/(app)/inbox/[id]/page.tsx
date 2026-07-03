@@ -1,11 +1,10 @@
 import Link from "next/link";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
-import { CaptureSheet } from "@/app/argus/components/CaptureSheet";
+import { InboxTriagePanel } from "@/app/argus/components/InboxTriagePanel";
 import { Card, EmptyState, PageHeader } from "@/app/argus/components/ui";
-import { INBOX_SOURCE_LABELS } from "@/lib/argus/labels";
+import { INBOX_SOURCE_LABELS, INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
 import { getAttachment, getInboxItem, getLog, readArgus } from "@/lib/argus/server-storage";
-import { archiveInboxAction, convertInboxAction } from "@/app/argus/actions";
 import { INBOX } from "@/lib/argus/ux-copy";
 
 export default async function InboxDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -28,20 +27,43 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
   const defaultTitle = item.subject || item.rawText.slice(0, 120);
   const defaultBody = item.rawText;
 
+  const linkedEntities = (item.linkedEntityIds ?? [])
+    .map((eid) => data.entities.find((e) => e.id === eid))
+    .filter((e): e is NonNullable<typeof e> => Boolean(e));
+
   const convertedLog =
     item.status === "converted" && item.convertedLogId
       ? await getLog(item.convertedLogId, includePrivate)
       : undefined;
 
+  const attachments = (
+    await Promise.all(item.attachmentIds.map(async (aid) => getAttachment(aid)))
+  ).filter((a): a is NonNullable<typeof a> => Boolean(a));
+
   return (
     <>
       <PageHeader title="Inbox item" backHref="/argus/inbox" />
       <Card className="mb-4">
-        <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-400">
-          {INBOX_SOURCE_LABELS[item.source]} · {item.status}
-        </span>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-400">
+            {INBOX_SOURCE_LABELS[item.source]}
+          </span>
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-xs ${
+              item.status === "pending"
+                ? "bg-amber-600/20 text-amber-400"
+                : item.status === "linked"
+                  ? "bg-teal-600/20 text-teal-400"
+                  : item.status === "converted"
+                    ? "bg-violet-600/20 text-violet-300"
+                    : "bg-zinc-800 text-zinc-500"
+            }`}
+          >
+            {INBOX_STATUS_LABELS[item.status]}
+          </span>
+        </div>
         {item.subject && <h2 className="mt-2 font-semibold text-zinc-100">{item.subject}</h2>}
-        {item.from && <p className="mt-1 text-xs text-zinc-500">From: {item.from}</p>}
+        {item.from && <p className="mt-2 text-xs text-zinc-500">From: {item.from}</p>}
         {item.to && <p className="text-xs text-zinc-500">To: {item.to}</p>}
         <p className="mt-1 text-xs text-zinc-500">
           Received:{" "}
@@ -53,11 +75,6 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
             minute: "2-digit",
           })}
         </p>
-        {item.attachmentIds.length > 0 && (
-          <p className="text-xs text-zinc-500">
-            Attachments: {item.attachmentIds.length}
-          </p>
-        )}
         <p className="mt-3 whitespace-pre-wrap text-sm text-zinc-300">{item.rawText}</p>
         {item.rawEmail && (
           <details className="mt-4 border-t border-zinc-800 pt-3">
@@ -69,65 +86,33 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
             </pre>
           </details>
         )}
-        {item.attachmentIds.length > 0 && (
+        {attachments.length > 0 && (
           <div className="mt-3 border-t border-zinc-800 pt-3">
-            <p className="mb-2 text-xs font-medium uppercase text-zinc-500">Attachments</p>
-            {await Promise.all(
-              item.attachmentIds.map(async (aid) => {
-                const att = await getAttachment(aid);
-                return att ? (
-                  <Link
-                    key={aid}
-                    href={`/api/argus/files/${aid}`}
-                    className="block text-xs text-teal-500 underline"
-                  >
-                    {att.fileName}
-                  </Link>
-                ) : null;
-              })
-            )}
+            <p className="mb-2 text-xs font-medium uppercase text-zinc-500">
+              {INBOX.attachments} ({attachments.length})
+            </p>
+            {attachments.map((att) => (
+              <Link
+                key={att.id}
+                href={`/api/argus/files/${att.id}`}
+                className="block text-xs text-teal-500 underline"
+              >
+                {att.fileName}
+              </Link>
+            ))}
           </div>
         )}
       </Card>
 
-      {item.status === "converted" && convertedLog && (
-        <Card className="mb-4">
-          <p className="text-sm text-zinc-400">
-            Converted to log:{" "}
-            <Link href={`/argus/logs/${convertedLog.id}`} className="text-teal-500 underline">
-              {convertedLog.title}
-            </Link>
-          </p>
-        </Card>
-      )}
-
-      {item.status === "pending" && (
-        <>
-          <CaptureSheet
-            open
-            action={convertInboxAction}
-            buckets={buckets}
-            tagBuckets={tagBuckets}
-            mode="embedded"
-            onClose={() => {}}
-            initial={{
-              title: defaultTitle,
-              body: defaultBody,
-              inboxId: item.id,
-            }}
-          />
-          <form action={archiveInboxAction} className="mt-4">
-            <input type="hidden" name="inboxId" value={item.id} />
-            <button type="submit" className="w-full rounded-xl border border-zinc-700 py-3 text-sm text-zinc-400">
-              Archive
-            </button>
-          </form>
-        </>
-      )}
-
-      {item.status === "archived" && (
-        <EmptyState message="Archived. Original content preserved above." />
-      )}
+      <InboxTriagePanel
+        item={item}
+        linkedEntities={linkedEntities}
+        buckets={buckets}
+        tagBuckets={tagBuckets}
+        convertedLog={convertedLog}
+        defaultTitle={defaultTitle}
+        defaultBody={defaultBody}
+      />
     </>
   );
 }

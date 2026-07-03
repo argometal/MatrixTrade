@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { Card, formatDate } from "./ui";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
-import { ENTITY_TYPE_LABELS, INBOX_SOURCE_LABELS, JOURNAL_KIND_LABELS, LOG_SOURCE_LABELS } from "@/lib/argus/labels";
+import {
+  ENTITY_TYPE_LABELS,
+  INBOX_SOURCE_LABELS,
+  INBOX_STATUS_LABELS,
+  JOURNAL_KIND_LABELS,
+  LOG_SOURCE_LABELS,
+} from "@/lib/argus/labels";
 
 export function LogCard({ log, entities }: { log: Log; entities?: Entity[] }) {
   const names =
@@ -43,14 +49,28 @@ export function LogCard({ log, entities }: { log: Log; entities?: Entity[] }) {
 }
 
 export function InboxCard({ item }: { item: InboxItem }) {
+  const statusClass =
+    item.status === "pending"
+      ? "bg-amber-600/20 text-amber-400"
+      : item.status === "linked"
+        ? "bg-teal-600/20 text-teal-400"
+        : item.status === "converted"
+          ? "bg-violet-600/20 text-violet-300"
+          : "bg-zinc-800 text-zinc-500";
+
   return (
     <Link href={`/argus/inbox/${item.id}`}>
       <Card className="transition hover:border-zinc-700">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <span className="rounded-full bg-amber-600/20 px-2.5 py-0.5 text-xs text-amber-400">
-              {INBOX_SOURCE_LABELS[item.source]}
-            </span>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full bg-amber-600/20 px-2.5 py-0.5 text-xs text-amber-400">
+                {INBOX_SOURCE_LABELS[item.source]}
+              </span>
+              <span className={`rounded-full px-2.5 py-0.5 text-xs ${statusClass}`}>
+                {INBOX_STATUS_LABELS[item.status]}
+              </span>
+            </div>
             <h3 className="mt-2 font-semibold text-zinc-50">
               {item.subject || item.rawText.slice(0, 80) || "Inbox item"}
             </h3>

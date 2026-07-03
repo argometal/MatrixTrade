@@ -37,11 +37,27 @@ export function referenceKindToEntityType(kind: ReferenceKind): EntityType {
   return "other";
 }
 
-export function entityTypeToReferenceKind(type: EntityType): ReferenceKind {
+const KIND_PREFIX = /^Kind:\s*(Person|Organization|Project|Place|Document|Topic|Other)\s*(?:\n|$)/i;
+
+export function referenceKindFromNotes(notes: string): ReferenceKind | null {
+  const match = notes.match(KIND_PREFIX);
+  if (!match) return null;
+  const key = match[1].toLowerCase() as ReferenceKind;
+  return REFERENCE_KINDS.includes(key) ? key : null;
+}
+
+export function entityTypeToReferenceKind(type: EntityType, notes = ""): ReferenceKind {
+  const fromNotes = referenceKindFromNotes(notes);
+  if (fromNotes) return fromNotes;
   if (type === "person") return "person";
   if (type === "company") return "organization";
   if (type === "project") return "project";
   return "other";
+}
+
+export function referenceDisplayLabel(entity: { type: EntityType; name: string; notes?: string }): string {
+  const kind = entityTypeToReferenceKind(entity.type, entity.notes ?? "");
+  return `${REFERENCE_KIND_LABELS[kind]} · ${entity.name}`;
 }
 
 /** Store place/document/topic distinction in notes when persisted as `other` */

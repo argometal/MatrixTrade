@@ -6,7 +6,7 @@ export type LogSource = "manual" | "inbox" | "email" | "file";
 
 export type InboxSource = "manual" | "api" | "email" | "file";
 
-export type InboxStatus = "pending" | "converted" | "archived";
+export type InboxStatus = "pending" | "linked" | "converted" | "archived";
 
 export type ClassificationStatus = "classified" | "needs_classification";
 
@@ -66,6 +66,8 @@ export interface InboxItem {
   from?: string;
   to?: string;
   attachmentIds: string[];
+  /** References (entities) this inbox item is linked to — handover, topic, person, etc. */
+  linkedEntityIds?: string[];
   status: InboxStatus;
   convertedLogId?: string;
   createdAt: string;

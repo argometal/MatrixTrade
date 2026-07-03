@@ -1,4 +1,4 @@
-import type { ArgusData, Attachment, ClassificationStatus, Entity, Log } from "./types";
+import type { ArgusData, Attachment, ClassificationStatus, Entity, InboxItem, Log } from "./types";
 
 export function resolveClassificationStatus(entityIds: string[]): ClassificationStatus {
   return entityIds.length > 0 ? "classified" : "needs_classification";
@@ -38,9 +38,24 @@ export function normalizeEntity(entity: Entity): Entity {
   };
 }
 
+export function normalizeInboxItem(item: InboxItem): InboxItem {
+  const linkedEntityIds = item.linkedEntityIds ?? [];
+  let status = item.status ?? "pending";
+  if (status !== "archived") {
+    if (item.convertedLogId) status = "converted";
+    else if (linkedEntityIds.length > 0 && status === "pending") status = "linked";
+  }
+  return {
+    ...item,
+    linkedEntityIds,
+    attachmentIds: item.attachmentIds ?? [],
+    status,
+  };
+}
+
 export function normalizeArgusData(data: ArgusData): ArgusData {
   const logs = (data.logs ?? []).map(normalizeLog);
-  const inboxItems = data.inboxItems ?? [];
+  const inboxItems = (data.inboxItems ?? []).map(normalizeInboxItem);
   const attachments = backfillAttachmentParents(
     (data.attachments ?? []).map(normalizeAttachment),
     logs,

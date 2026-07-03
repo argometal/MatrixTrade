@@ -4,16 +4,16 @@ import { getInboxItems } from "@/lib/argus/server-storage";
 import { INBOX } from "@/lib/argus/ux-copy";
 
 export default async function InboxPage() {
-  const pending = await getInboxItems("pending");
+  const items = await getInboxItems();
 
   return (
     <>
       <PageHeader title={INBOX.title} subtitle={INBOX.subtitle} backHref="/argus/journal" />
-      {pending.length === 0 ? (
+      {items.length === 0 ? (
         <EmptyState message={`${INBOX.empty} ${INBOX.emptyHint}`} />
       ) : (
         <div className="space-y-3">
-          {pending.map((item) => (
+          {items.map((item) => (
             <InboxCard key={item.id} item={item} />
           ))}
         </div>

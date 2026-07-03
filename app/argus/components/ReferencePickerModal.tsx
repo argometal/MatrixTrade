@@ -20,6 +20,7 @@ interface ReferencePickerModalProps {
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   onClose: () => void;
+  onConfirm?: () => void;
   pendingNewName?: string;
   onPendingNew: (data: { name: string; entityType: EntityType; notes: string } | null) => void;
 }
@@ -62,6 +63,7 @@ export function ReferencePickerModal({
   selectedIds,
   onChange,
   onClose,
+  onConfirm,
   pendingNewName,
   onPendingNew,
 }: ReferencePickerModalProps) {
@@ -167,7 +169,10 @@ export function ReferencePickerModal({
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={() => {
+                onConfirm?.();
+                onClose();
+              }}
               className="flex-1 rounded-lg bg-teal-700 py-2.5 text-sm font-medium text-white hover:bg-teal-600"
             >
               {CAPTURE.done}

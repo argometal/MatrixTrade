@@ -323,12 +323,41 @@ export async function createInboxItem(
     from: input.from,
     to: input.to,
     attachmentIds: input.attachmentIds ?? [],
+    linkedEntityIds: input.linkedEntityIds ?? [],
     status: input.status ?? "pending",
     createdAt: now,
   };
   data.inboxItems.push(item);
   await writeArgus(data);
   return item;
+}
+
+export async function linkInboxToEntities(inboxId: string, entityIds: string[]): Promise<InboxItem> {
+  const unique = [...new Set(entityIds.filter(Boolean))];
+  if (unique.length === 0) throw new Error("Select at least one reference");
+
+  const data = await readArgus();
+  const idx = data.inboxItems.findIndex((i) => i.id === inboxId);
+  if (idx === -1) throw new Error("Inbox item not found");
+  const inbox = data.inboxItems[idx];
+  if (inbox.status === "archived") throw new Error("Inbox item is archived");
+
+  const merged = [...new Set([...(inbox.linkedEntityIds ?? []), ...unique])];
+  const now = new Date().toISOString();
+
+  data.inboxItems[idx] = {
+    ...inbox,
+    linkedEntityIds: merged,
+    status: inbox.status === "converted" ? "converted" : "linked",
+  };
+
+  for (const eid of unique) {
+    const entity = data.entities.find((e) => e.id === eid);
+    if (entity) entity.updatedAt = now;
+  }
+
+  await writeArgus(data);
+  return data.inboxItems[idx];
 }
 
 export async function archiveInboxItem(id: string): Promise<InboxItem | undefined> {
@@ -357,9 +386,12 @@ export async function convertInboxToLog(
   const idx = data.inboxItems.findIndex((i) => i.id === inboxId);
   if (idx === -1) throw new Error("Inbox item not found");
   const inbox = data.inboxItems[idx];
-  if (inbox.status !== "pending") throw new Error("Inbox item is not pending");
+  if (inbox.status !== "pending" && inbox.status !== "linked") {
+    throw new Error("Inbox item cannot be converted");
+  }
 
-  const classificationStatus = resolveClassificationStatus(input.entityIds);
+  const entityIds = [...new Set([...(inbox.linkedEntityIds ?? []), ...input.entityIds])];
+  const classificationStatus = resolveClassificationStatus(entityIds);
   const now = new Date().toISOString();
   const log: Log = {
     id: generateId(),
@@ -367,7 +399,7 @@ export async function convertInboxToLog(
     date: input.date,
     title: input.title,
     body: input.body,
-    entityIds: input.entityIds,
+    entityIds,
     classificationStatus,
     private: input.private,
     source: inbox.source === "email" ? "email" : "inbox",
@@ -388,6 +420,7 @@ export async function convertInboxToLog(
     ...inbox,
     status: "converted",
     convertedLogId: log.id,
+    linkedEntityIds: entityIds,
   };
 
   for (const eid of log.entityIds) {

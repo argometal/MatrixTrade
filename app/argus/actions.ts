@@ -9,6 +9,7 @@ import {
   convertInboxToLog,
   createEntity,
   createLog,
+  linkInboxToEntities,
   saveAttachment,
   updateEntity,
 } from "@/lib/argus/server-storage";
@@ -120,6 +121,18 @@ export async function classifyLogAction(formData: FormData): Promise<void> {
   await classifyLog(logId, entityIds);
   revalidateArgus();
   redirect(`/argus/logs/${logId}`);
+}
+
+export async function linkInboxAction(formData: FormData): Promise<void> {
+  const inboxId = String(formData.get("inboxId") ?? "");
+  const entityIds = await resolveEntityIds(formData);
+  if (entityIds.length === 0) {
+    redirect(`/argus/inbox/${inboxId}?error=reference`);
+  }
+  await linkInboxToEntities(inboxId, entityIds);
+  revalidateArgus();
+  revalidatePath(`/argus/inbox/${inboxId}`);
+  redirect(`/argus/inbox/${inboxId}`);
 }
 
 export async function convertInboxAction(formData: FormData): Promise<void> {

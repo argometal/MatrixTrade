@@ -1,4 +1,4 @@
-import type { EntityType, InboxSource, JournalKind, LogSource, StrategicValue } from "./types";
+import type { EntityType, InboxSource, InboxStatus, JournalKind, LogSource, StrategicValue } from "./types";
 import type { RelationshipHealth } from "./network-intelligence";
 
 export const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
@@ -33,6 +33,13 @@ export const INBOX_SOURCE_LABELS: Record<InboxSource, string> = {
 };
 
 export const INBOX_SOURCES: InboxSource[] = ["manual", "api", "email", "file"];
+
+export const INBOX_STATUS_LABELS: Record<InboxStatus, string> = {
+  pending: "Pending",
+  linked: "Linked",
+  converted: "Converted",
+  archived: "Archived",
+};
 
 export const STRATEGIC_VALUE_LABELS: Record<StrategicValue, string> = {
   1: "Low — maintain occasionally",

@@ -99,10 +99,22 @@ export const PRIVATE = {
 
 export const INBOX = {
   title: "Inbox",
-  subtitle: "Pending items to review",
-  empty: "No pending items.",
+  subtitle: "Review, link, and convert incoming items",
+  empty: "No inbox items.",
   emptyHint: "Incoming messages appear here for you to review.",
   addDocument: "Add document",
+  linkedTo: "Linked to",
+  attachments: "Attachments",
+  actions: "Actions",
+  linkReference: "Link to reference",
+  createReference: "Create reference",
+  convertRecord: "Convert to record",
+  archive: "Archive",
+  saveLink: "Save link",
+  convertHeading: "Convert to record",
+  convertHint: "Creates a journal entry. Original email stays in inbox.",
+  actionsRemaining: "Actions remaining",
+  noActions: "No actions — item is archived or fully converted.",
 } as const;
 
 export const SECTION_EMPTY = {
