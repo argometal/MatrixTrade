@@ -115,6 +115,14 @@ export const INBOX = {
   convertHint: "Creates a journal entry. Original email stays in inbox.",
   actionsRemaining: "Actions remaining",
   noActions: "No actions — item is archived or fully converted.",
+  fromLabel: "From",
+  toLabel: "To",
+  receivedLabel: "Received",
+  messageBody: "Message",
+  htmlBody: "HTML version",
+  viewRaw: "View raw",
+  noSubject: "(No subject)",
+  downloadAttachment: "Download",
 } as const;
 
 export const SECTION_EMPTY = {

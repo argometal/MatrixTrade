@@ -123,6 +123,23 @@ See also: [`argus-email-routing-final.md`](argus-email-routing-final.md), [`argu
 
 ---
 
+## Email viewer (P1)
+
+Inbox detail renders received email as **human-readable evidence** — presentation only; storage unchanged.
+
+| Layer | What the user sees |
+|-------|-------------------|
+| Primary | From, To, Subject, Received, plain-text body |
+| Secondary | **HTML version** (collapsible iframe, sandboxed) |
+| Evidence | **Attachments** — filename, type, size, Download, image/PDF preview |
+| Audit | **View raw** — collapsible preserved `rawEmail` JSON |
+
+Download: `GET /api/argus/files/{attachmentId}` (auth required). Preview: same URL with `?inline=1` for images and PDF.
+
+Code: `lib/argus/email-view.ts`, `EmailViewer.tsx`, `InboxAttachmentList.tsx`.
+
+---
+
 ## Next (out of scope for P1)
 
 - Cloud-first storage (Supabase + R2) — [`argus-cloud-first-audit.md`](argus-cloud-first-audit.md)
