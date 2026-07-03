@@ -2,6 +2,26 @@
 
 **Read this file first** in every new conversation about MatrixTrade.
 
+## Prompt para conversación nueva (copiar y pegar)
+
+```text
+Eres mi coach de trading para MatrixTrade (experimento H001–H030, límite -$300, máx 30 trades).
+
+Antes de analizar:
+1. Lee CHATGPT.md si está adjunto o en el repo.
+2. Confirma que hice "Sync to Worker" en el dashboard (o pídeme la URL snapshot con READ_TOKEN).
+3. GET https://matrixtrade-bridge.argometal.workers.dev/snapshot?token=READ_TOKEN
+
+Para proponer cambios (review, cierre, trade nuevo, análisis Obsidian):
+- JSON con "type" + "proposal" (ver sección Trading inbox en CHATGPT.md).
+- POST https://matrixtrade-bridge.argometal.workers.dev/inbox
+  Authorization: Bearer WRITE_TOKEN
+- Yo aplico en http://localhost:3000/inbox — nunca auto-aplicar.
+
+Mistakes: fomo, chased, oversized, ignored_stop, ignored_htf, revenge, none.
+No ARGUS. Fuente de verdad: data/trades.json + Obsidian local.
+```
+
 **Repo:** `github.com/argometal/MatrixTrade` (private)  
 **Doc library:** [`md/README.md`](md/README.md)  
 **Product research (read before design):** [`md/research/trading-journal-product-research.md`](md/research/trading-journal-product-research.md)  
@@ -254,19 +274,13 @@ User reviews in MatrixTrade `/inbox` — **never auto-applied**.
 
 ---
 
-## 8. Idea futura (NO implementar aún)
+## 8. Futuro (no implementar aún)
 
-**Flujo objetivo cuando inbox esté validado:**
+- Auto-sync al cerrar trade
+- Parser MT-IMPORT:v1 (texto pegado)
+- POST `/trades` directo sin inbox
 
-1. Usuario describe trade o ajuste en ChatGPT
-2. ChatGPT genera JSON validado (tipo, proposal, thesis, etc.)
-3. ChatGPT (o script) hace **POST `/inbox`** al Worker
-4. MatrixTrade hace **GET `/inbox`**, muestra preview, usuario confirma
-5. MatrixTrade escribe en `data/trades.json` + Obsidian — nunca el Worker directamente
-
-**No implementar todavía:** POST `/trades`, escritura automática, procesamiento inbox en app.
-
-Solo documentado como dirección evolutiva.
+**Flujo inbox (ya implementado):** ChatGPT POST `/inbox` → usuario Apply en `/inbox` → `data/trades.json` + Obsidian.
 
 ---
 
@@ -278,6 +292,7 @@ Solo documentado como dirección evolutiva.
 | GET | `/snapshot` | `?token=READ_TOKEN` | read snapshot |
 | POST | `/inbox` | Bearer WRITE_TOKEN | `inbox:item:{uuid}` + `inbox:index` |
 | GET | `/inbox` | `?token=READ_TOKEN` | pending items only |
+| POST | `/inbox/{id}/ack` | Bearer WRITE_TOKEN | mark applied/rejected |
 
 **Inbox item shape:**
 
@@ -299,7 +314,10 @@ Solo documentado como dirección evolutiva.
 | [`CHATGPT.md`](CHATGPT.md) | Este archivo — punto de entrada |
 | [`bridge/src/index.ts`](bridge/src/index.ts) | Worker: snapshot + inbox |
 | [`bridge/sample-snapshot.json`](bridge/sample-snapshot.json) | Ejemplo snapshot H001 |
-| [`bridge/sample-inbox.json`](bridge/sample-inbox.json) | Ejemplo propuesta H002 |
+| [`bridge/sample-inbox-review.json`](bridge/sample-inbox-review.json) | Ejemplo trade-review |
+| [`lib/bridge.ts`](lib/bridge.ts) | Bridge + validación propuestas |
+| [`app/(trading)/inbox/`](app/(trading)/inbox/) | UI inbox trading |
+| [`app/api/trading/inbox/route.ts`](app/api/trading/inbox/route.ts) | API local inbox |
 | [`data/trades.json`](data/trades.json) | Trades estructurados (H001) |
 | [`data/rules.json`](data/rules.json) | Límites ciclo, paths Obsidian |
 | [`md/integrations/chatgpt-bridge.md`](md/integrations/chatgpt-bridge.md) | Roles and política de sync |
@@ -318,8 +336,8 @@ Solo documentado como dirección evolutiva.
 |-------|------|--------|
 | 0 | H001 visible en app local + Vercel read-only | Done |
 | 1 | Worker + snapshot GET/POST | Done |
-| 1b | Worker + inbox GET/POST | Done (infra) |
-| 1c | ChatGPT valida inbox en conversación real | **Current** |
-| 2 | MatrixTrade Sync → POST `/snapshot` | Not started |
-| 3 | MatrixTrade lee `/inbox`, preview, apply | Not started |
-| 4 | Consultas avanzadas / index / patrones | Not started |
+| 1b | Worker + inbox GET/POST | Done |
+| 1c | Learning loop (review, stats, mistakes) | Done |
+| 2 | MatrixTrade Sync + inbox Apply + cloud QR | Done |
+| 2b | Validación end-to-end con usuario + ChatGPT | **Current** |
+| 3 | Auto-sync, MT-IMPORT, consultas avanzadas | Not started |

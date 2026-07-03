@@ -32,6 +32,7 @@ next-env.d.ts
 # Obsidian trade notes (your data — keep local)
 /vault/Trades/*.md
 *.matrixtrade.tmp
+Chaos.bundle
 
 # ARGUS — private journal data (never commit)
 /data/argus/
