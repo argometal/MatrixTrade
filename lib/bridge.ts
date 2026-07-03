@@ -132,14 +132,18 @@ export async function fetchBridgeInbox(): Promise<BridgeInboxItem[]> {
   const { url, readToken, configured } = getBridgeConfig();
   if (!configured || !readToken) return [];
 
-  const response = await fetch(`${url}/inbox?token=${encodeURIComponent(readToken)}`, {
-    cache: "no-store",
-  });
+  try {
+    const response = await fetch(`${url}/inbox?token=${encodeURIComponent(readToken)}`, {
+      cache: "no-store",
+    });
 
-  if (!response.ok) return [];
+    if (!response.ok) return [];
 
-  const data = (await response.json()) as { items?: BridgeInboxItem[] };
-  return (data.items ?? []).map((item) => ({ ...item, origin: "worker" as const }));
+    const data = (await response.json()) as { items?: BridgeInboxItem[] };
+    return (data.items ?? []).map((item) => ({ ...item, origin: "worker" as const }));
+  } catch {
+    return [];
+  }
 }
 
 export async function ackBridgeInboxItem(

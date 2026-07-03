@@ -86,7 +86,7 @@ export function NetworkHomeSections({
         empty="No relationships need attention right now."
       />
       <NetworkSection
-        title="Top strategic contacts"
+        title="Top strategic references"
         items={sections.topStrategic}
         empty="Mark entities as strategic value 4–5 to surface them here."
       />

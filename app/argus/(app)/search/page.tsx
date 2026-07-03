@@ -2,7 +2,7 @@ import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { LogCard } from "@/app/argus/components/Cards";
 import { EmptyState, inputClass, PageHeader } from "@/app/argus/components/ui";
 import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
-import { CONTACTS, SEARCH } from "@/lib/argus/ux-copy";
+import { REFERENCES, SEARCH } from "@/lib/argus/ux-copy";
 import { getEntities, searchEntities, searchLogs } from "@/lib/argus/server-storage";
 import Link from "next/link";
 
@@ -24,7 +24,7 @@ export default async function SearchPage({
         <input
           name="q"
           defaultValue={query}
-          placeholder={CONTACTS.search + "…"}
+          placeholder={REFERENCES.search + "…"}
           className={inputClass}
         />
         <button type="submit" className="shrink-0 rounded-xl bg-zinc-700 px-4 py-2 text-sm text-white">
@@ -48,9 +48,9 @@ export default async function SearchPage({
       )}
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">{CONTACTS.search}</h2>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">{REFERENCES.search}</h2>
         {entities.length === 0 ? (
-          <EmptyState message={`${CONTACTS.emptyNetwork} ${CONTACTS.emptyNetworkHint}`} />
+          <EmptyState message={`${REFERENCES.emptyNetwork} ${REFERENCES.emptyNetworkHint}`} />
         ) : (
           <div className="space-y-2">
             {entities.map((e) => (

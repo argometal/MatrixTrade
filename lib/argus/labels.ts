@@ -3,7 +3,7 @@ import type { RelationshipHealth } from "./network-intelligence";
 
 export const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
   person: "Person",
-  company: "Company",
+  company: "Organization",
   project: "Project",
   other: "Other",
 };

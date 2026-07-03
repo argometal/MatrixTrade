@@ -10,7 +10,7 @@ import {
   STRATEGIC_VALUE_LABELS,
 } from "@/lib/argus/labels";
 import { buildEntityIntelligence } from "@/lib/argus/network-intelligence";
-import { ENTITY_PAGE, CONTACTS } from "@/lib/argus/ux-copy";
+import { ENTITY_PAGE, REFERENCES } from "@/lib/argus/ux-copy";
 import { getEntityHistory } from "@/lib/argus/network";
 import { getEntities, getEntity, readArgus } from "@/lib/argus/server-storage";
 
@@ -104,7 +104,7 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
 
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">{ENTITY_PAGE.recentActivity}</h2>
       {history.length === 0 ? (
-        <EmptyState message={CONTACTS.emptyActivity} />
+        <EmptyState message={REFERENCES.emptyActivity} />
       ) : (
         <div className="space-y-3">
           {history.slice(0, 12).map((log) => (

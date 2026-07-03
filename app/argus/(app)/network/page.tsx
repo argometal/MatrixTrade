@@ -6,7 +6,7 @@ import {
   buildNetworkHomeSections,
 } from "@/lib/argus/network-intelligence";
 import { readArgus } from "@/lib/argus/server-storage";
-import { CONTACTS, NETWORK } from "@/lib/argus/ux-copy";
+import { REFERENCES, NETWORK } from "@/lib/argus/ux-copy";
 import Link from "next/link";
 
 export default async function NetworkPage({
@@ -35,13 +35,13 @@ export default async function NetworkPage({
 
       {!hasEntities ? (
         <EmptyState
-          message={`${CONTACTS.emptyNetwork} ${CONTACTS.emptyNetworkHint}`}
+          message={`${REFERENCES.emptyNetwork} ${REFERENCES.emptyNetworkHint}`}
           action={
             <Link
               href="/argus/journal?capture=1&panel=entity&createEntity=person"
               className="text-sm font-medium text-teal-500 underline hover:text-teal-400"
             >
-              {CONTACTS.createFirst}
+              {REFERENCES.createFirst}
             </Link>
           }
         />

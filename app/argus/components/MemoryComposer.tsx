@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { EntityType } from "@/lib/argus/types";
-import { COMPOSER, CONTACTS } from "@/lib/argus/ux-copy";
+import { COMPOSER, REFERENCES } from "@/lib/argus/ux-copy";
 import { AttachmentField } from "./AttachmentField";
-import { EntityPicker, type EntityPickerBuckets } from "./EntityPicker";
+import { ReferenceLinkPanel, type EntityPickerBuckets } from "./ReferenceLinkPanel";
 
 export type CaptureIntent = "case" | "evidence" | "event" | "log";
 
@@ -96,26 +96,35 @@ export function MemoryComposer({
   const [selectedIds, setSelectedIds] = useState<string[]>(initial?.entityIds ?? []);
   const [eventDate, setEventDate] = useState(intent === "event" ? new Date().toISOString().slice(0, 10) : "");
   const [followUpDate, setFollowUpDate] = useState("");
-  const [panel, setPanel] = useState<"none" | "entity" | "more">(initialPanel);
+  const [moreOpen, setMoreOpen] = useState(initialPanel === "more");
+  const [linkOpen, setLinkOpen] = useState(initialPanel === "entity" || Boolean(initialQuickCreateType));
   const [quickCreateName, setQuickCreateName] = useState("");
   const [quickCreateType, setQuickCreateType] = useState<EntityType>(initialQuickCreateType ?? "person");
   const [quickCreateNotes, setQuickCreateNotes] = useState("");
-  const hasContacts = buckets.alphabetical.length > 0;
 
   useEffect(() => {
-    if (autoFocus && initialPanel !== "entity") bodyRef.current?.focus();
-  }, [autoFocus, initialPanel]);
+    if (autoFocus && !linkOpen) bodyRef.current?.focus();
+  }, [autoFocus, linkOpen]);
 
   useEffect(() => {
-    if (initialQuickCreateType) setQuickCreateType(initialQuickCreateType);
+    if (initialQuickCreateType) {
+      setQuickCreateType(initialQuickCreateType);
+      setLinkOpen(true);
+    }
   }, [initialQuickCreateType]);
 
-  const toggleEntityPanel = () => setPanel((p) => (p === "entity" ? "none" : "entity"));
+  useEffect(() => {
+    if (initialPanel === "entity") setLinkOpen(true);
+  }, [initialPanel]);
 
   const canSave = body.trim().length > 0;
   const selectedNames = selectedIds
     .map((id) => buckets.alphabetical.find((e) => e.id === id)?.name)
     .filter(Boolean);
+  const linkedLabel = [
+    ...selectedNames,
+    ...(quickCreateName.trim() ? [quickCreateName.trim()] : []),
+  ].join(", ");
 
   return (
     <form action={action} className="flex min-h-0 flex-1 flex-col">
@@ -144,7 +153,7 @@ export function MemoryComposer({
             onClick={onCancel}
             className="text-[15px] text-zinc-500 hover:text-zinc-300"
           >
-            Cancel
+            {REFERENCES.cancel}
           </button>
           <button
             type="submit"
@@ -156,133 +165,140 @@ export function MemoryComposer({
         </div>
       )}
 
-      <textarea
-        ref={bodyRef}
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        placeholder={copy.placeholder}
-        rows={variant === "sheet" ? 12 : 6}
-        className="w-full flex-1 resize-none bg-transparent text-[17px] leading-[1.55] text-zinc-100 placeholder:text-zinc-600 focus:outline-none"
-      />
+      <div className={`flex min-h-0 flex-1 ${linkOpen ? "flex-col sm:flex-row" : "flex-col"}`}>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <textarea
+            ref={bodyRef}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder={copy.placeholder}
+            rows={variant === "sheet" ? 12 : 6}
+            className="w-full flex-1 resize-none bg-transparent text-[17px] leading-[1.55] text-zinc-100 placeholder:text-zinc-600 focus:outline-none"
+          />
 
-      {selectedNames.length > 0 && (
-        <p className="mb-2 text-[12px] text-teal-400/90">
-          {CONTACTS.linkContact}: {selectedNames.join(", ")}
-        </p>
-      )}
+          {linkedLabel && (
+            <p className="mb-2 text-[12px] text-teal-400/90">
+              {REFERENCES.linkLabel}: {linkedLabel}
+            </p>
+          )}
 
-      <div className="mt-auto space-y-3 pt-4">
-        <div className="flex flex-wrap items-center gap-1 border-t border-zinc-800/60 pt-3">
-          <Chip active={panel === "entity" || selectedIds.length > 0} onClick={toggleEntityPanel}>
-            @
-          </Chip>
-          <button
-            type="button"
-            onClick={toggleEntityPanel}
-            className={`rounded-md px-2.5 py-1 text-[13px] font-medium transition ${
-              panel === "entity" || selectedIds.length > 0
-                ? "bg-teal-500/15 text-teal-300"
-                : "border border-zinc-700 text-zinc-300 hover:border-zinc-600"
-            }`}
-          >
-            {CONTACTS.linkContact}
-          </button>
-          <Chip
-            active={Boolean(eventDate)}
-            onClick={() => {
-              setPanel("more");
-              if (!eventDate) setEventDate(new Date().toISOString().slice(0, 10));
-            }}
-          >
-            Date
-          </Chip>
-          <Chip active={Boolean(followUpDate)} onClick={() => setPanel("more")}>
-            Reminder
-          </Chip>
-          <Chip active={panel === "more"} onClick={() => setPanel(panel === "more" ? "none" : "more")}>
-            ···
-          </Chip>
+          <div className="mt-auto space-y-3 pt-4">
+            <div className="flex flex-wrap items-center gap-1 border-t border-zinc-800/60 pt-3">
+              <Chip active={linkOpen || selectedIds.length > 0 || Boolean(quickCreateName)} onClick={() => setLinkOpen((v) => !v)}>
+                @
+              </Chip>
+              <button
+                type="button"
+                onClick={() => setLinkOpen((v) => !v)}
+                className={`rounded-md px-2.5 py-1 text-[13px] font-medium transition ${
+                  linkOpen || selectedIds.length > 0 || quickCreateName
+                    ? "bg-teal-500/15 text-teal-300"
+                    : "border border-zinc-700 text-zinc-300 hover:border-zinc-600"
+                }`}
+              >
+                {REFERENCES.link}
+              </button>
+              <Chip
+                active={Boolean(eventDate)}
+                onClick={() => {
+                  setMoreOpen(true);
+                  if (!eventDate) setEventDate(new Date().toISOString().slice(0, 10));
+                }}
+              >
+                Date
+              </Chip>
+              <Chip active={Boolean(followUpDate)} onClick={() => setMoreOpen(true)}>
+                Reminder
+              </Chip>
+              <Chip active={moreOpen} onClick={() => setMoreOpen((v) => !v)}>
+                ···
+              </Chip>
+            </div>
+
+            {moreOpen && (
+              <div className="space-y-4 rounded-lg bg-zinc-900/60 p-4">
+                <label className="block">
+                  <span className="text-[11px] uppercase tracking-wider text-zinc-600">Title</span>
+                  <input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Optional — auto from first line"
+                    className="mt-1 w-full border-0 border-b border-zinc-800 bg-transparent py-2 text-[15px] text-zinc-200 placeholder:text-zinc-600 focus:border-teal-700 focus:outline-none"
+                  />
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <label className="block">
+                    <span className="text-[11px] uppercase tracking-wider text-zinc-600">Occurred</span>
+                    <input
+                      type="date"
+                      value={eventDate}
+                      onChange={(e) => setEventDate(e.target.value)}
+                      className="mt-1 w-full bg-transparent text-[14px] text-zinc-300 focus:outline-none"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-[11px] uppercase tracking-wider text-zinc-600">Reminder</span>
+                    <input
+                      type="date"
+                      value={followUpDate}
+                      onChange={(e) => setFollowUpDate(e.target.value)}
+                      className="mt-1 w-full bg-transparent text-[14px] text-zinc-300 focus:outline-none"
+                    />
+                  </label>
+                </div>
+                <AttachmentField />
+                <label className="flex items-center gap-2 text-[14px] text-zinc-400">
+                  <input type="checkbox" name="private" className="rounded border-zinc-700" />
+                  Private
+                </label>
+                <label className="block">
+                  <span className="text-[11px] uppercase tracking-wider text-zinc-600">Topics</span>
+                  <input
+                    name="topics"
+                    placeholder="optional, comma-separated"
+                    className="mt-1 w-full border-0 border-b border-zinc-800 bg-transparent py-2 text-[14px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none"
+                  />
+                </label>
+              </div>
+            )}
+
+            {variant === "inline" && (
+              <div className="flex gap-3">
+                {onCancel && (
+                  <button type="button" onClick={onCancel} className="text-[14px] text-zinc-500 hover:text-zinc-300">
+                    {REFERENCES.cancel}
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  disabled={!canSave}
+                  className="ml-auto text-[15px] font-semibold text-teal-400 disabled:opacity-30"
+                >
+                  {resolvedSubmitLabel}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {panel === "entity" && (
-          <div className="rounded-lg bg-zinc-900/60 px-1 py-2">
-            <EntityPicker
-              buckets={buckets}
-              selectedIds={selectedIds}
-              onChange={setSelectedIds}
-              quickCreateName={quickCreateName}
-              onQuickCreateNameChange={setQuickCreateName}
-              quickCreateType={quickCreateType}
-              onQuickCreateTypeChange={setQuickCreateType}
-              quickCreateNotes={quickCreateNotes}
-              onQuickCreateNotesChange={setQuickCreateNotes}
-              defaultShowCreate={!hasContacts || Boolean(initialQuickCreateType)}
-            />
-          </div>
-        )}
-
-        {panel === "more" && (
-          <div className="space-y-4 rounded-lg bg-zinc-900/60 p-4">
-            <label className="block">
-              <span className="text-[11px] uppercase tracking-wider text-zinc-600">Title</span>
-              <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Optional — auto from first line"
-                className="mt-1 w-full border-0 border-b border-zinc-800 bg-transparent py-2 text-[15px] text-zinc-200 placeholder:text-zinc-600 focus:border-teal-700 focus:outline-none"
-              />
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <label className="block">
-                <span className="text-[11px] uppercase tracking-wider text-zinc-600">Occurred</span>
-                <input
-                  type="date"
-                  value={eventDate}
-                  onChange={(e) => setEventDate(e.target.value)}
-                  className="mt-1 w-full bg-transparent text-[14px] text-zinc-300 focus:outline-none"
-                />
-              </label>
-              <label className="block">
-                <span className="text-[11px] uppercase tracking-wider text-zinc-600">Reminder</span>
-                <input
-                  type="date"
-                  value={followUpDate}
-                  onChange={(e) => setFollowUpDate(e.target.value)}
-                  className="mt-1 w-full bg-transparent text-[14px] text-zinc-300 focus:outline-none"
-                />
-              </label>
-            </div>
-            <AttachmentField />
-            <label className="flex items-center gap-2 text-[14px] text-zinc-400">
-              <input type="checkbox" name="private" className="rounded border-zinc-700" />
-              Private
-            </label>
-            <label className="block">
-              <span className="text-[11px] uppercase tracking-wider text-zinc-600">Topics</span>
-              <input
-                name="topics"
-                placeholder="optional, comma-separated"
-                className="mt-1 w-full border-0 border-b border-zinc-800 bg-transparent py-2 text-[14px] text-zinc-300 placeholder:text-zinc-600 focus:outline-none"
-              />
-            </label>
-          </div>
-        )}
-
-        {variant === "inline" && (
-          <div className="flex gap-3">
-            {onCancel && (
-              <button type="button" onClick={onCancel} className="text-[14px] text-zinc-500 hover:text-zinc-300">
-                Cancel
-              </button>
-            )}
-            <button
-              type="submit"
-              disabled={!canSave}
-              className="ml-auto text-[15px] font-semibold text-teal-400 disabled:opacity-30"
-            >
-              {resolvedSubmitLabel}
-            </button>
-          </div>
+        {linkOpen && (
+          <ReferenceLinkPanel
+            buckets={buckets}
+            selectedIds={selectedIds}
+            onChange={setSelectedIds}
+            onClose={() => setLinkOpen(false)}
+            pendingNewName={quickCreateName.trim() || undefined}
+            onPendingNew={(data) => {
+              if (!data) {
+                setQuickCreateName("");
+                setQuickCreateNotes("");
+                return;
+              }
+              setQuickCreateName(data.name);
+              setQuickCreateType(data.entityType);
+              setQuickCreateNotes(data.notes);
+            }}
+          />
         )}
       </div>
     </form>

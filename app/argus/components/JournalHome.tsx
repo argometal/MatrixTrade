@@ -7,7 +7,7 @@ import type { Entity, EntityType, Log } from "@/lib/argus/types";
 import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
 import {
   ARGUS_TAGLINE,
-  CONTACTS,
+  REFERENCES,
   HOME_ACTIONS,
   HOME_EMPTY,
   HOME_PROMPT,
@@ -17,7 +17,7 @@ import {
 import { createLogAction } from "@/app/argus/actions";
 import { MemoryComposer, type CaptureIntent } from "./MemoryComposer";
 import { MemoryStreamRow } from "./MemoryStreamRow";
-import type { EntityPickerBuckets } from "./EntityPicker";
+import type { EntityPickerBuckets } from "./ReferenceLinkPanel";
 
 function Section({
   id,
@@ -80,7 +80,7 @@ function EntityPreviewRow({ entity }: { entity: Entity }) {
   );
 }
 
-function ContactsStrip({
+function ReferencesStrip({
   hasEntities,
   onCreate,
 }: {
@@ -91,25 +91,25 @@ function ContactsStrip({
     <div className="mb-6 rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <h2 className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-600">
-          {HOME_SECTIONS.contacts}
+          {HOME_SECTIONS.references}
         </h2>
         <Link href="/argus/network" className="text-[11px] text-teal-500/90 hover:text-teal-400">
-          {CONTACTS.search}
+          {REFERENCES.search}
         </Link>
       </div>
       {!hasEntities ? (
         <div className="space-y-2">
-          <p className="text-[13px] text-zinc-500">{CONTACTS.emptyNetworkHint}</p>
+          <p className="text-[13px] text-zinc-500">{REFERENCES.emptyHint}</p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <ActionButton label={CONTACTS.createFirst} onClick={() => onCreate("person")} />
-            <ActionButton label={CONTACTS.createPerson} onClick={() => onCreate("person")} />
-            <ActionButton label={CONTACTS.createOrganization} onClick={() => onCreate("company")} />
+            <ActionButton label={REFERENCES.createFirst} onClick={() => onCreate("person")} />
+            <ActionButton label={REFERENCES.createPerson} onClick={() => onCreate("person")} />
+            <ActionButton label={REFERENCES.createOrganization} onClick={() => onCreate("company")} />
           </div>
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
-          <ActionButton label={CONTACTS.quickCreate} onClick={() => onCreate("person")} />
-          <ActionButton label={CONTACTS.createOrganization} onClick={() => onCreate("company")} />
+          <ActionButton label={REFERENCES.createNew} onClick={() => onCreate("person")} />
+          <ActionButton label={REFERENCES.createOrganization} onClick={() => onCreate("company")} />
         </div>
       )}
     </div>
@@ -219,7 +219,7 @@ export function JournalHome({
             <ActionButton label={HOME_ACTIONS.reviewPending} onClick={scrollToOpenItems} />
           </div>
 
-          <ContactsStrip hasEntities={hasEntities} onCreate={openCreateContact} />
+          <ReferencesStrip hasEntities={hasEntities} onCreate={openCreateContact} />
         </>
       )}
 
@@ -289,7 +289,7 @@ export function JournalHome({
       </Section>
 
       <Section
-        label={HOME_SECTIONS.recentContacts}
+        label={HOME_SECTIONS.recentReferences}
         empty={recentEntities.length === 0}
         action={
           <Link href="/argus/network" className="text-[11px] text-teal-500/90 hover:text-teal-400">
@@ -299,13 +299,13 @@ export function JournalHome({
       >
         {recentEntities.length === 0 ? (
           <p className="py-4 text-[13px] text-zinc-500">
-            {CONTACTS.emptyNetwork}.{" "}
+            {REFERENCES.emptyNetwork}.{" "}
             <button
               type="button"
               onClick={() => openCreateContact("person")}
               className="text-teal-500 underline hover:text-teal-400"
             >
-              {CONTACTS.createFirst}
+              {REFERENCES.createFirst}
             </button>
           </p>
         ) : (

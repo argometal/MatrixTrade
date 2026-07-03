@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Entity, EntityType } from "@/lib/argus/types";
 import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
-import { CONTACTS, ENTITY_PICKER } from "@/lib/argus/ux-copy";
+import { REFERENCES, REFERENCE_PICKER } from "@/lib/argus/ux-copy";
 import { FAVORITES_KEY } from "@/lib/argus/journal-helpers";
 import { inputClass } from "./ui";
 
@@ -165,7 +165,7 @@ export function EntityPicker({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={ENTITY_PICKER.searchPlaceholder}
+          placeholder={REFERENCE_PICKER.searchPlaceholder}
           className={inputClass}
           autoFocus
         />
@@ -175,10 +175,10 @@ export function EntityPicker({
         {visible.length === 0 ? (
           <p className="px-2 py-4 text-center text-sm text-zinc-500">
             {tab === "search" && !query.trim()
-              ? ENTITY_PICKER.typeToSearch
+              ? REFERENCE_PICKER.typeToSearch
               : tab === "favorites"
-                ? ENTITY_PICKER.starToPin
-                : ENTITY_PICKER.noContacts}
+                ? REFERENCE_PICKER.starToPin
+                : REFERENCE_PICKER.noReferences}
           </p>
         ) : (
           visible.map((entity) => (
@@ -196,7 +196,7 @@ export function EntityPicker({
 
       {selectedIds.length > 0 && (
         <p className="text-xs text-teal-400">
-          {ENTITY_PICKER.selected(
+          {REFERENCE_PICKER.selected(
             selectedIds.length,
             selectedIds
               .map((id) => allEntities.find((e) => e.id === id)?.name)
@@ -211,7 +211,7 @@ export function EntityPicker({
         onClick={() => setShowCreate((v) => !v)}
         className="text-sm font-medium text-teal-500/90 hover:text-teal-400"
       >
-        {showCreate ? CONTACTS.hideQuickCreate : CONTACTS.quickCreate}
+        {showCreate ? REFERENCES.hideCreate : REFERENCES.createNew}
       </button>
 
       {showCreate && (
