@@ -9,7 +9,7 @@ export const CAPTURE = {
   title: "Capture",
   titlePlaceholder: "Title (optional)",
   bodyPlaceholder: "What do you need to remember?",
-  reference: "Reference",
+  reference: "Link to",
   date: "Date",
   reminder: "Reminder",
   attachment: "Attachment",
@@ -52,40 +52,43 @@ export const HOME_EMPTY = {
 export const HOME_SECTIONS = {
   recentActivity: "Recent activity",
   upcomingFollowUps: "Pending follow-ups",
-  recentReferences: "Recent references",
+  recentReferences: "Recent networking",
   inbox: "Inbox",
   recentDocuments: "Recent documents",
   openItems: "Open items",
   needsReview: "Needs review",
-  references: "References",
+  references: "Networking",
 } as const;
 
-export const REFERENCES = {
-  createFirst: "Create first reference",
-  createPerson: "Create person",
-  createOrganization: "Create organization",
-  search: "Search references",
-  link: "Link",
-  linkLabel: "Linked",
-  createNew: "Create new",
+export const NETWORKING = {
+  createFirst: "Add to network",
+  createPerson: "Add person",
+  createOrganization: "Add organization",
+  search: "Search network",
+  link: "Link to",
+  linkLabel: "Linked to",
+  createNew: "Add new",
   hideCreate: "Hide",
   select: "Select",
   cancel: "Cancel",
   save: "Save",
-  empty: "No references yet.",
-  emptyHint: "Create your first reference.",
-  emptyPicker: "No references yet.",
-  emptySearch: "Type to search references",
-  emptyFavorites: "Star references to pin them here",
-  emptyNetwork: "No references yet.",
-  emptyNetworkHint: "Create your first reference from Home.",
+  empty: "No contacts yet.",
+  emptyHint: "Add people from Capture.",
+  emptyPicker: "No contacts yet.",
+  emptySearch: "Type to search network",
+  emptyFavorites: "Star contacts to pin them here",
+  emptyNetwork: "No contacts yet.",
+  emptyNetworkHint: "Use Link to in Capture.",
   emptyActivity: "No notes or documents linked yet.",
   addDocumentFor: (name: string) => `Add document for ${name}`,
   pendingNew: (name: string) => `New: ${name}`,
 } as const;
 
-/** @deprecated use REFERENCES */
-export const CONTACTS = REFERENCES;
+/** @deprecated use NETWORKING */
+export const REFERENCES = NETWORKING;
+
+/** @deprecated use NETWORKING */
+export const CONTACTS = NETWORKING;
 
 export const PRIVATE = {
   unlock: "Unlock private",
@@ -118,9 +121,9 @@ export const SECTION_EMPTY = {
 
 export const REFERENCE_PICKER = {
   searchPlaceholder: "Search…",
-  typeToSearch: "Type to search references",
-  starToPin: "Star references to pin them here",
-  noReferences: "No references yet.",
+  typeToSearch: "Type to search network",
+  starToPin: "Star contacts to pin them here",
+  noReferences: "No contacts yet.",
   selected: (n: number, names: string) => `${n} selected · ${names}`,
   recent: "Recent",
   favorites: "Favorites",
@@ -137,14 +140,14 @@ export const ENTITY_PAGE = {
 } as const;
 
 export const NETWORK = {
-  title: "References",
-  subtitle: "People, organizations, and topics you track",
-  searchPlaceholder: "Search references…",
+  title: "Networking",
+  subtitle: "People and organizations you track",
+  searchPlaceholder: "Search network…",
 } as const;
 
 export const SEARCH = {
   title: "Search",
-  subtitle: "References and notes",
+  subtitle: "Networking and notes",
 } as const;
 
 export const COMPOSER = {

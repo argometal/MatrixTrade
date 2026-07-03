@@ -1,0 +1,16 @@
+{
+  "from": "witness@example.com",
+  "to": "argus@example.com",
+  "subject": "Field notes — site visit",
+  "text": "Observed damage on north wall. Photos attached.\n\n— Witness",
+  "html": "<p>Observed damage on north wall. Photos attached.</p><p>— Witness</p>",
+  "receivedAt": "2026-07-03T06:00:00.000Z",
+  "attachments": [
+    {
+      "filename": "evidence.txt",
+      "contentType": "text/plain",
+      "size": 11,
+      "contentBase64": "c2FtcGxlIGZpbGU="
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+name = "argus-email-intake"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# Email Routing → Send to Worker (configure in Cloudflare Dashboard)
+# Secrets: ARGUS_INBOX_TOKEN, ARGUS_INTAKE_URL
+
+[observability]
+enabled = true
