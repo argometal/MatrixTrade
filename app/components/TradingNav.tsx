@@ -22,6 +22,9 @@ export function TradingNav() {
       <Link href="/journal" className="hover:text-zinc-600">
         Journal
       </Link>
+      <Link href="/ai-workspace" className="hover:text-zinc-600">
+        AI Workspace
+      </Link>
       <Link href="/system" className="hover:text-zinc-600">
         System
       </Link>

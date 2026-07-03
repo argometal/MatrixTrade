@@ -28,6 +28,7 @@ function revalidateTradingPaths() {
   revalidatePath("/playbook");
   revalidatePath("/review");
   revalidatePath("/journal");
+  revalidatePath("/ai-workspace");
   revalidatePath("/inbox");
   revalidatePath("/system");
 }

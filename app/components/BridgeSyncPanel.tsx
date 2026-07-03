@@ -19,7 +19,7 @@ export function BridgeSyncPanel({
           <code className="rounded bg-white px-1">BRIDGE_READ_TOKEN</code> to{" "}
           <code className="rounded bg-white px-1">.env.local</code> (same values as{" "}
           <code className="rounded bg-white px-1">bridge/.dev.vars</code>) to publish snapshots
-          for ChatGPT and phone QR.
+          for external assistants and phone QR.
         </p>
       </section>
     );
@@ -43,7 +43,7 @@ export function BridgeSyncPanel({
             Cloud bridge
           </h2>
           <p className="mt-1 text-sm text-zinc-600">
-            Publish cycle state to Worker so ChatGPT reads{" "}
+            Publish cycle state to Worker so assistants read{" "}
             <code className="text-xs">GET /snapshot</code> without copy/paste.
           </p>
         </div>

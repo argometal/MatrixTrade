@@ -182,6 +182,7 @@ Set `ARGUS_INBOX_TOKEN` and `ARGUS_DATA_DIR=/tmp/argus` in Vercel for production
 
 ## Limitations (current phase)
 
+- P1 intake: Cloudflare Email Routing + Worker only (see `argus-email-intake-p1.md`)
 - No Gmail OAuth
 - No Outlook OAuth
 - No IMAP polling
@@ -194,14 +195,16 @@ Set `ARGUS_INBOX_TOKEN` and `ARGUS_DATA_DIR=/tmp/argus` in Vercel for production
 
 ## Future providers
 
-This endpoint is provider-agnostic. Expected integrations:
+P1 implemented: **Cloudflare Email Routing + Email Worker** — see [`argus-email-intake-p1.md`](argus-email-intake-p1.md) and `argus-email-bridge/`.
+
+This endpoint remains provider-agnostic. Other integrations:
 
 | Provider | Pattern |
 |----------|---------|
 | SendGrid Inbound Parse | Webhook → transform to JSON → POST here |
 | Mailgun Routes | Same |
 | Postmark Inbound | Same |
-| Cloudflare Email Workers | Parse MIME → JSON → POST here |
+| Gmail forward → Cloudflare | Forward to routed address → P1 worker |
 | Custom forwarder | Cron/IMAP script on a VPS → JSON → POST here |
 
 Each provider handles MIME parsing and DNS/routing. ARGUS only receives normalized JSON and stores evidence in Inbox.
