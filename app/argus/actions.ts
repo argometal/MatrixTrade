@@ -10,8 +10,9 @@ import {
   createEntity,
   createLog,
   saveAttachment,
+  updateEntity,
 } from "@/lib/argus/server-storage";
-import type { EntityType, JournalKind, LogSource } from "@/lib/argus/types";
+import type { EntityType, JournalKind, LogSource, StrategicValue } from "@/lib/argus/types";
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
 import { inferJournalKind, resolveLogDate, autoTitleFromBody } from "@/lib/argus/journal-helpers";
 import { resolveClassificationStatus } from "@/lib/argus/normalize";
@@ -67,6 +68,8 @@ async function resolveEntityIds(formData: FormData): Promise<string[]> {
       type: String(formData.get("newEntityType") ?? "person") as EntityType,
       name: newEntityName,
       notes: String(formData.get("newEntityNotes") ?? "").trim(),
+      alias: "",
+      strategicValue: 3,
     });
     entityIds.push(entity.id);
   }
@@ -144,4 +147,22 @@ export async function archiveInboxAction(formData: FormData): Promise<void> {
   await archiveInboxItem(inboxId);
   revalidateArgus();
   redirect("/argus/inbox");
+}
+
+export async function updateEntityAction(formData: FormData): Promise<void> {
+  const entityId = String(formData.get("entityId") ?? "");
+  const rawValue = Number(formData.get("strategicValue") ?? 3);
+  const strategicValue = (
+    rawValue >= 1 && rawValue <= 5 ? rawValue : 3
+  ) as StrategicValue;
+
+  await updateEntity(entityId, {
+    strategicValue,
+    alias: String(formData.get("alias") ?? "").trim(),
+    notes: String(formData.get("notes") ?? "").trim(),
+  });
+
+  revalidateArgus();
+  revalidatePath(`/argus/network/${entityId}`);
+  redirect(`/argus/network/${entityId}`);
 }

@@ -1,4 +1,4 @@
-import type { ArgusData, Attachment, ClassificationStatus, Log } from "./types";
+import type { ArgusData, Attachment, ClassificationStatus, Entity, Log } from "./types";
 
 export function resolveClassificationStatus(entityIds: string[]): ClassificationStatus {
   return entityIds.length > 0 ? "classified" : "needs_classification";
@@ -27,6 +27,17 @@ export function normalizeAttachment(att: Attachment): Attachment {
   };
 }
 
+export function normalizeEntity(entity: Entity): Entity {
+  const raw = entity.strategicValue ?? 3;
+  const strategicValue = (raw >= 1 && raw <= 5 ? raw : 3) as Entity["strategicValue"];
+  return {
+    ...entity,
+    alias: entity.alias ?? "",
+    notes: entity.notes ?? "",
+    strategicValue,
+  };
+}
+
 export function normalizeArgusData(data: ArgusData): ArgusData {
   const logs = (data.logs ?? []).map(normalizeLog);
   const inboxItems = data.inboxItems ?? [];
@@ -39,7 +50,7 @@ export function normalizeArgusData(data: ArgusData): ArgusData {
   return {
     ...data,
     logs,
-    entities: data.entities ?? [],
+    entities: (data.entities ?? []).map(normalizeEntity),
     inboxItems,
     attachments,
     version: 3,

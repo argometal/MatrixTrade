@@ -12,11 +12,16 @@ export type ClassificationStatus = "classified" | "needs_classification";
 
 export type AttachmentParentType = "inbox" | "journal";
 
+export type StrategicValue = 1 | 2 | 3 | 4 | 5;
+
 export interface Entity {
   id: string;
   type: EntityType;
   name: string;
+  alias?: string;
   notes: string;
+  /** 1=low … 5=strategic. Default 3. Only user-editable network field besides alias/notes. */
+  strategicValue: StrategicValue;
   createdAt: string;
   updatedAt: string;
 }

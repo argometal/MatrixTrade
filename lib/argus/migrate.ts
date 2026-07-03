@@ -70,7 +70,9 @@ export function migrateToV3(raw: unknown): ArgusData {
       id: c.id,
       type: "person" as const,
       name: c.name,
+      alias: "",
       notes: parts.join(" · "),
+      strategicValue: 3 as const,
       createdAt: c.createdAt ?? now,
       updatedAt: c.createdAt ?? now,
     };

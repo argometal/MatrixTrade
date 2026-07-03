@@ -1,4 +1,5 @@
-import type { EntityType, InboxSource, JournalKind, LogSource } from "./types";
+import type { EntityType, InboxSource, JournalKind, LogSource, StrategicValue } from "./types";
+import type { RelationshipHealth } from "./network-intelligence";
 
 export const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
   person: "Person",
@@ -32,3 +33,25 @@ export const INBOX_SOURCE_LABELS: Record<InboxSource, string> = {
 };
 
 export const INBOX_SOURCES: InboxSource[] = ["manual", "api", "email", "file"];
+
+export const STRATEGIC_VALUE_LABELS: Record<StrategicValue, string> = {
+  1: "Low — maintain occasionally",
+  2: "Useful — keep alive",
+  3: "Normal — regular contact",
+  4: "High — prioritize periodically",
+  5: "Strategic — protect relationship",
+};
+
+export const RELATIONSHIP_HEALTH_LABELS: Record<RelationshipHealth, string> = {
+  active: "Active",
+  cooling: "Cooling",
+  dormant: "Dormant",
+  neglected: "Neglected",
+};
+
+export const RELATIONSHIP_HEALTH_COLORS: Record<RelationshipHealth, string> = {
+  active: "text-teal-400",
+  cooling: "text-sky-400",
+  dormant: "text-zinc-500",
+  neglected: "text-amber-400",
+};

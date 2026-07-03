@@ -3,8 +3,16 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import type { Entity, Log } from "@/lib/argus/types";
+import type { Entity, EntityType, Log } from "@/lib/argus/types";
 import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
+import {
+  ARGUS_TAGLINE,
+  CONTACTS,
+  HOME_ACTIONS,
+  HOME_EMPTY,
+  HOME_PROMPT,
+  HOME_SECTIONS,
+} from "@/lib/argus/ux-copy";
 import { createLogAction } from "@/app/argus/actions";
 import { MemoryComposer, type CaptureIntent } from "./MemoryComposer";
 import { MemoryStreamRow } from "./MemoryStreamRow";
@@ -65,6 +73,42 @@ function EntityPreviewRow({ entity }: { entity: Entity }) {
   );
 }
 
+function ContactsStrip({
+  hasEntities,
+  onCreate,
+}: {
+  hasEntities: boolean;
+  onCreate: (type: EntityType) => void;
+}) {
+  return (
+    <div className="mb-6 rounded-xl border border-zinc-800/80 bg-zinc-900/40 p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <h2 className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-600">
+          {HOME_SECTIONS.contacts}
+        </h2>
+        <Link href="/argus/network" className="text-[11px] text-teal-500/90 hover:text-teal-400">
+          {CONTACTS.search}
+        </Link>
+      </div>
+      {!hasEntities ? (
+        <div className="space-y-2">
+          <p className="text-[13px] text-zinc-500">{CONTACTS.emptyNetworkHint}</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <ActionButton label={CONTACTS.createFirst} onClick={() => onCreate("person")} />
+            <ActionButton label={CONTACTS.createPerson} onClick={() => onCreate("person")} />
+            <ActionButton label={CONTACTS.createOrganization} onClick={() => onCreate("company")} />
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          <ActionButton label={CONTACTS.quickCreate} onClick={() => onCreate("person")} />
+          <ActionButton label={CONTACTS.createOrganization} onClick={() => onCreate("company")} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function JournalHome({
   openCases,
   recentEvidence,
@@ -85,6 +129,7 @@ export function JournalHome({
   const router = useRouter();
   const searchParams = useSearchParams();
   const intentParam = searchParams.get("intent");
+  const createEntityParam = searchParams.get("createEntity");
   const captureIntent: CaptureIntent | null =
     intentParam === "case" || intentParam === "evidence" || intentParam === "event" || intentParam === "log"
       ? intentParam
@@ -92,7 +137,17 @@ export function JournalHome({
         ? "log"
         : null;
 
-  const [composerOpen, setComposerOpen] = useState(Boolean(captureIntent));
+  const initialEntityType: EntityType | undefined =
+    createEntityParam === "person" ||
+    createEntityParam === "company" ||
+    createEntityParam === "project" ||
+    createEntityParam === "other"
+      ? createEntityParam
+      : undefined;
+
+  const openEntityPanel = searchParams.get("panel") === "entity" || Boolean(initialEntityType);
+
+  const [composerOpen, setComposerOpen] = useState(Boolean(captureIntent) || openEntityPanel);
   const [composerIntent, setComposerIntent] = useState<CaptureIntent>(captureIntent ?? "log");
 
   useEffect(() => {
@@ -102,14 +157,27 @@ export function JournalHome({
     }
   }, [captureIntent]);
 
+  useEffect(() => {
+    if (openEntityPanel) setComposerOpen(true);
+  }, [openEntityPanel]);
+
   const openComposer = useCallback((intent: CaptureIntent) => {
     setComposerIntent(intent);
     setComposerOpen(true);
   }, []);
 
+  const openCreateContact = useCallback(
+    (type: EntityType) => {
+      setComposerIntent("log");
+      setComposerOpen(true);
+      router.replace(`/argus/journal?capture=1&intent=log&panel=entity&createEntity=${type}`);
+    },
+    [router]
+  );
+
   const closeComposer = useCallback(() => {
     setComposerOpen(false);
-    if (searchParams.get("capture") || searchParams.get("intent")) {
+    if (searchParams.get("capture") || searchParams.get("intent") || searchParams.get("panel")) {
       router.replace("/argus/journal");
     }
   }, [router, searchParams]);
@@ -127,18 +195,24 @@ export function JournalHome({
     upcomingFollowUps.length > 0 ||
     recentEntities.length > 0;
 
+  const hasEntities = entities.length > 0;
+
   return (
     <>
+      <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-600">{ARGUS_TAGLINE}</p>
+
       {!composerOpen && (
         <>
-          <p className="mb-5 text-[15px] text-zinc-500">What are you tracking?</p>
+          <p className="mb-4 text-[15px] text-zinc-500">{HOME_PROMPT}</p>
 
           <div className="grid grid-cols-2 gap-2">
-            <ActionButton label="New case" onClick={() => openComposer("case")} />
-            <ActionButton label="Add evidence" onClick={() => openComposer("evidence")} />
-            <ActionButton label="Log event" onClick={() => openComposer("event")} />
-            <ActionButton label="Review open items" onClick={scrollToOpenItems} />
+            <ActionButton label={HOME_ACTIONS.newItem} onClick={() => openComposer("case")} />
+            <ActionButton label={HOME_ACTIONS.addDocument} onClick={() => openComposer("evidence")} />
+            <ActionButton label={HOME_ACTIONS.recordUpdate} onClick={() => openComposer("event")} />
+            <ActionButton label={HOME_ACTIONS.reviewPending} onClick={scrollToOpenItems} />
           </div>
+
+          <ContactsStrip hasEntities={hasEntities} onCreate={openCreateContact} />
         </>
       )}
 
@@ -150,45 +224,47 @@ export function JournalHome({
             intent={composerIntent}
             onCancel={closeComposer}
             variant="sheet"
-            autoFocus
+            autoFocus={!openEntityPanel}
+            initialPanel={openEntityPanel ? "entity" : "none"}
+            initialQuickCreateType={initialEntityType}
           />
         </div>
       )}
 
       {!hasContent && !composerOpen && (
-        <p className="py-16 text-center text-[15px] leading-relaxed text-zinc-600">
-          No open investigations yet.
+        <p className="py-12 text-center text-[15px] leading-relaxed text-zinc-600">
+          {HOME_EMPTY.title}
           <br />
-          <span className="text-zinc-500">Start with New case or Add evidence.</span>
+          <span className="text-zinc-500">{HOME_EMPTY.hint}</span>
         </p>
       )}
 
-      <Section id="open-cases" label="Open cases" empty={openCases.length === 0}>
+      <Section id="open-cases" label={HOME_SECTIONS.openItems} empty={openCases.length === 0}>
         {openCases.map((log) => (
           <MemoryStreamRow key={log.id} log={log} entities={entities} />
         ))}
       </Section>
 
-      <Section id="needs-classification" label="Needs classification" empty={needsClassification.length === 0}>
+      <Section id="needs-classification" label={HOME_SECTIONS.needsReview} empty={needsClassification.length === 0}>
         {needsClassification.map((log) => (
           <MemoryStreamRow key={log.id} log={log} entities={entities} accent="amber" />
         ))}
       </Section>
 
-      <Section label="Recent evidence" empty={recentEvidence.length === 0}>
+      <Section label={HOME_SECTIONS.recentDocuments} empty={recentEvidence.length === 0}>
         {recentEvidence.map((log) => (
           <MemoryStreamRow key={log.id} log={log} entities={entities} />
         ))}
       </Section>
 
-      <Section label="Upcoming follow-ups" empty={upcomingFollowUps.length === 0}>
+      <Section label={HOME_SECTIONS.upcomingFollowUps} empty={upcomingFollowUps.length === 0}>
         {upcomingFollowUps.map((log) => (
           <MemoryStreamRow key={log.id} log={log} entities={entities} />
         ))}
       </Section>
 
       <Section
-        label="People / Entities"
+        label={HOME_SECTIONS.recentContacts}
         empty={recentEntities.length === 0}
         action={
           <Link href="/argus/network" className="text-[11px] text-teal-500/90 hover:text-teal-400">
@@ -196,9 +272,20 @@ export function JournalHome({
           </Link>
         }
       >
-        {recentEntities.map((entity) => (
-          <EntityPreviewRow key={entity.id} entity={entity} />
-        ))}
+        {recentEntities.length === 0 ? (
+          <p className="py-4 text-[13px] text-zinc-500">
+            {CONTACTS.emptyNetwork}.{" "}
+            <button
+              type="button"
+              onClick={() => openCreateContact("person")}
+              className="text-teal-500 underline hover:text-teal-400"
+            >
+              {CONTACTS.createFirst}
+            </button>
+          </p>
+        ) : (
+          recentEntities.map((entity) => <EntityPreviewRow key={entity.id} entity={entity} />)
+        )}
       </Section>
     </>
   );

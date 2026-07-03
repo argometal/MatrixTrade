@@ -94,6 +94,7 @@ export async function searchEntities(query: string): Promise<Entity[]> {
     .filter(
       (e) =>
         e.name.toLowerCase().includes(q) ||
+        (e.alias ?? "").toLowerCase().includes(q) ||
         e.notes.toLowerCase().includes(q) ||
         e.type.toLowerCase().includes(q)
     )
@@ -103,10 +104,39 @@ export async function searchEntities(query: string): Promise<Entity[]> {
 export async function createEntity(input: EntityInput): Promise<Entity> {
   const data = await readArgus();
   const now = new Date().toISOString();
-  const entity: Entity = { ...input, id: generateId(), createdAt: now, updatedAt: now };
+  const entity: Entity = {
+    ...input,
+    alias: input.alias ?? "",
+    strategicValue: input.strategicValue ?? 3,
+    id: generateId(),
+    createdAt: now,
+    updatedAt: now,
+  };
   data.entities.push(entity);
   await writeArgus(data);
   return entity;
+}
+
+export async function updateEntity(
+  id: string,
+  patch: Pick<Entity, "strategicValue" | "alias" | "notes">
+): Promise<Entity | undefined> {
+  const data = await readArgus();
+  const idx = data.entities.findIndex((e) => e.id === id);
+  if (idx === -1) return undefined;
+
+  const sv = patch.strategicValue;
+  const strategicValue = sv >= 1 && sv <= 5 ? sv : data.entities[idx].strategicValue;
+
+  data.entities[idx] = {
+    ...data.entities[idx],
+    strategicValue,
+    alias: patch.alias ?? "",
+    notes: patch.notes ?? "",
+    updatedAt: new Date().toISOString(),
+  };
+  await writeArgus(data);
+  return data.entities[idx];
 }
 
 // --- Attachments ---
