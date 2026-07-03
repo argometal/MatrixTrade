@@ -42,5 +42,5 @@ next-env.d.ts
 Thumbs.db
 *.swp
 
-# Chaos — separate repo (c:\Tools\Chaos), coordination only
-/tools/Chaos/
+# Chaos — separate repo; ignore only nested .git (sources sync via MatrixTrade pull)
+/tools/Chaos/.git/
