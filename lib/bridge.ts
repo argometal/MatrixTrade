@@ -1,0 +1,259 @@
+import { calculateTradeResult } from "./calculate";
+import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
+import type { Setup } from "./setup-types";
+import { getSetupName } from "./setup-types";
+
+export interface BridgeConfig {
+  url: string;
+  writeToken?: string;
+  readToken?: string;
+  configured: boolean;
+}
+
+export function getBridgeConfig(): BridgeConfig {
+  const url =
+    process.env.BRIDGE_WORKER_URL?.replace(/\/$/, "") ??
+    "https://matrixtrade-bridge.argometal.workers.dev";
+  const writeToken = process.env.BRIDGE_WRITE_TOKEN?.trim();
+  const readToken = process.env.BRIDGE_READ_TOKEN?.trim();
+
+  return {
+    url,
+    writeToken,
+    readToken,
+    configured: Boolean(writeToken && readToken),
+  };
+}
+
+export function buildBridgeSnapshot(
+  experiment: Experiment,
+  trades: Trade[],
+  rules: ExperimentRules,
+  setups: Setup[] = []
+): Record<string, unknown> {
+  const closed = trades.filter((t) => t.status === "closed");
+
+  return {
+    updatedAt: new Date().toISOString(),
+    rules: {
+      cycleLossLimit: rules.cycleLossLimit,
+      maxTrades: rules.maxTrades,
+    },
+    experiment: {
+      realizedPnL: experiment.realizedPnL,
+      remainingLossBudget: experiment.remainingLossBudget,
+      closedTrades: experiment.closedTrades,
+      wins: experiment.wins,
+      losses: experiment.losses,
+    },
+    trades: trades.map((trade) => {
+      const result = calculateTradeResult(trade);
+      const row: Record<string, unknown> = {
+        id: trade.id,
+        ticker: trade.ticker,
+        status: trade.status,
+        entry: trade.entry,
+        stop: trade.stop,
+        shares: trade.shares,
+        target: trade.target,
+        setup: getSetupName(setups, trade.setupId),
+        exit: trade.exit,
+        result,
+        reviewedAt: trade.reviewedAt,
+        mistakes: trade.mistakes,
+        qualityEntry: trade.qualityEntry,
+        qualityExit: trade.qualityExit,
+        qualityMgmt: trade.qualityMgmt,
+        lesson: trade.lesson,
+        actionItem: trade.actionItem,
+      };
+      return row;
+    }),
+    summary: {
+      pendingReview: closed.filter((t) => !t.reviewedAt).length,
+    },
+  };
+}
+
+export interface BridgeInboxItem {
+  id: string;
+  receivedAt: string;
+  status: "pending" | "applied" | "rejected";
+  payload: Record<string, unknown>;
+  origin: "worker" | "local";
+}
+
+export async function publishSnapshotToBridge(
+  body: Record<string, unknown>
+): Promise<{ ok: true; updatedAt: string } | { error: string }> {
+  const { url, writeToken, configured } = getBridgeConfig();
+  if (!configured || !writeToken) {
+    return { error: "Bridge not configured. Set BRIDGE_WRITE_TOKEN and BRIDGE_READ_TOKEN in .env.local" };
+  }
+
+  const response = await fetch(`${url}/snapshot`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${writeToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    return { error: `Bridge POST /snapshot failed (${response.status}): ${text}` };
+  }
+
+  const data = (await response.json()) as { updatedAt?: string };
+  return { ok: true, updatedAt: data.updatedAt ?? new Date().toISOString() };
+}
+
+export async function fetchBridgeInbox(): Promise<BridgeInboxItem[]> {
+  const { url, readToken, configured } = getBridgeConfig();
+  if (!configured || !readToken) return [];
+
+  const response = await fetch(`${url}/inbox?token=${encodeURIComponent(readToken)}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) return [];
+
+  const data = (await response.json()) as { items?: BridgeInboxItem[] };
+  return (data.items ?? []).map((item) => ({ ...item, origin: "worker" as const }));
+}
+
+export async function ackBridgeInboxItem(
+  id: string,
+  status: "applied" | "rejected"
+): Promise<boolean> {
+  const { url, writeToken, configured } = getBridgeConfig();
+  if (!configured || !writeToken) return false;
+
+  const response = await fetch(`${url}/inbox/${encodeURIComponent(id)}/ack`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${writeToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status }),
+    cache: "no-store",
+  });
+
+  return response.ok;
+}
+
+export function getSnapshotReadUrl(): string | null {
+  const { url, readToken, configured } = getBridgeConfig();
+  if (!configured || !readToken) return null;
+  return `${url}/snapshot?token=${encodeURIComponent(readToken)}`;
+}
+
+export type TradingProposalType =
+  | "trade-proposal"
+  | "trade-close"
+  | "trade-review"
+  | "analysis";
+
+export interface TradingInboxPayload {
+  type: TradingProposalType;
+  source?: string;
+  proposal: Record<string, unknown>;
+}
+
+export function parseTradingInboxPayload(
+  payload: Record<string, unknown>
+): TradingInboxPayload | null {
+  const type = payload.type;
+  const proposal = payload.proposal;
+  if (
+    type !== "trade-proposal" &&
+    type !== "trade-close" &&
+    type !== "trade-review" &&
+    type !== "analysis"
+  ) {
+    return null;
+  }
+  if (!proposal || typeof proposal !== "object" || Array.isArray(proposal)) {
+    return null;
+  }
+  return {
+    type,
+    source: typeof payload.source === "string" ? payload.source : undefined,
+    proposal: proposal as Record<string, unknown>,
+  };
+}
+
+export function describeProposal(payload: TradingInboxPayload): string {
+  const p = payload.proposal;
+  switch (payload.type) {
+    case "trade-proposal":
+      return `New trade ${p.id} ${p.ticker} · entry ${p.entry} · stop ${p.stop} · ${p.shares} sh`;
+    case "trade-close":
+      return `Close ${p.id} at exit ${p.exit}`;
+    case "trade-review":
+      return `Review ${p.id} · mistakes ${(p.mistakes as string[] | undefined)?.join(", ") ?? "—"}`;
+    case "analysis":
+      return `Analysis for ${p.id} · append to Obsidian`;
+    default:
+      return payload.type;
+  }
+}
+
+export function validateProposalPayload(
+  parsed: TradingInboxPayload
+): { ok: true } | { ok: false; errors: string[] } {
+  const p = parsed.proposal;
+  const errors: string[] = [];
+
+  if (parsed.type === "trade-proposal") {
+    if (!p.id) errors.push("proposal.id required");
+    if (!p.ticker) errors.push("proposal.ticker required");
+    if (!p.entry) errors.push("proposal.entry required");
+    if (!p.stop) errors.push("proposal.stop required");
+    if (!p.shares) errors.push("proposal.shares required");
+  }
+
+  if (parsed.type === "trade-close") {
+    if (!p.id) errors.push("proposal.id required");
+    if (!p.exit) errors.push("proposal.exit required");
+  }
+
+  if (parsed.type === "trade-review") {
+    if (!p.id) errors.push("proposal.id required");
+    if (!p.qualityEntry || !p.qualityExit || !p.qualityMgmt) {
+      errors.push("qualityEntry, qualityExit, qualityMgmt required (1-5)");
+    }
+  }
+
+  if (parsed.type === "analysis") {
+    if (!p.id) errors.push("proposal.id required");
+    if (!p.thesis && !p.psychology && !p.lessons && !p.notes) {
+      errors.push("At least one of thesis, psychology, lessons, notes required");
+    }
+  }
+
+  return errors.length ? { ok: false, errors } : { ok: true };
+}
+
+export function proposalToPreviewJson(parsed: TradingInboxPayload): string {
+  return JSON.stringify(parsed, null, 2);
+}
+
+export function parseMistakes(value: unknown): MistakeType[] {
+  if (!Array.isArray(value)) return ["none"];
+  const allowed: MistakeType[] = [
+    "fomo",
+    "chased",
+    "oversized",
+    "ignored_stop",
+    "ignored_htf",
+    "revenge",
+    "none",
+  ];
+  const filtered = value.filter((v): v is MistakeType =>
+    typeof v === "string" && allowed.includes(v as MistakeType)
+  );
+  return filtered.length ? filtered.slice(0, 3) : ["none"];
+}

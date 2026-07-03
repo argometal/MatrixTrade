@@ -29,11 +29,11 @@
 
 | | |
 |---|---|
-| **Objective** | Validate inbox end-to-end: ChatGPT POST/GET `/inbox` in real use |
-| **Phase** | Phase 1c — inbox on Worker deployed; workflow not closed yet |
-| **Next action** | ChatGPT POST validated JSON to `/inbox`; confirm GET returns pending items |
-| **Stop condition** | Both endpoints confirmed from ChatGPT browsing + user review of queued payload |
-| **Do not start yet** | MatrixTrade Sync button, auto-sync, inbox processing in app, POST /trades |
+| **Objective** | Close the loop in real use: Sync → ChatGPT reads snapshot → POST proposal → user Apply in `/inbox` |
+| **Phase** | Phase 2 — app wired to Worker + local inbox API |
+| **Next action** | User sets `BRIDGE_*` + `MATRIXTRADE_INBOX_TOKEN` in `.env.local`; redeploy Worker (`bridge/deploy.bat`) for `/inbox/:id/ack`; run one trade-review proposal end-to-end |
+| **Stop condition** | Proposal visible in `/inbox`, Apply updates `data/trades.json` (or Obsidian for `analysis`), Worker item acked |
+| **Do not start yet** | Auto-sync on trade close, MT-IMPORT:v1 text parser, POST /trades direct write |
 
 **Parallel track (ARGUS):** Architecture frozen — **no UX implementation** until [`argus-architecture.md`](md/integrations/argus-architecture.md) + [`argus-design-principles.md`](md/integrations/argus-design-principles.md) are read. Operational handoff: [`argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md).
 
@@ -79,7 +79,11 @@ User converts pending items in `/argus/inbox` UI. `rawEmail` preserved unchanged
 | H001 AMZN validado desde Worker | ✓ (entry 240, exit 225.9, result -112.8) |
 | POST `/inbox` desplegado | ✓ → `201`, agrega id + receivedAt + pending |
 | GET `/inbox` desplegado | ✓ → devuelve `{ count, items[] }` |
-| MatrixTrade conectado al Worker | ✗ (app no publica snapshot ni lee inbox aún) |
+| POST `/inbox/:id/ack` | ✓ en código — **redeploy Worker** si producción aún no lo tiene |
+| MatrixTrade Sync → Worker | ✓ botón en dashboard (`BRIDGE_WRITE_TOKEN`) |
+| MatrixTrade Inbox UI | ✓ `/inbox` — preview, Apply, Reject |
+| Local inbox API | ✓ `POST /api/trading/inbox` (`MATRIXTRADE_INBOX_TOKEN`) |
+| Cloud snapshot QR | ✓ `/connect` — `GET /snapshot?token=READ_TOKEN` (read-only) |
 
 **Tokens:** `WRITE_TOKEN` / `READ_TOKEN` en Cloudflare secrets + `bridge/.dev.vars` local (nunca en git).
 
@@ -104,27 +108,28 @@ ChatGPT
 User
 ```
 
-### Flujo de escritura (futuro inmediato — inbox)
+### Flujo de escritura (inbox — human approval)
 
 ```text
 User
   ↓ describe intención / trade propuesto
 ChatGPT
   ↓ genera JSON validado
-  ↓ POST /inbox  (Bearer WRITE_TOKEN)
+  ↓ POST /inbox  (Bearer WRITE_TOKEN)  — or POST /api/trading/inbox on LAN
 Cloudflare Worker + KV   ← cola pending, NO escribe trades
   ↓
-MatrixTrade (pendiente)  ← GET /inbox, revisión humana, luego guarda en data/trades.json + Obsidian
+MatrixTrade /inbox  ← preview → Apply → data/trades.json + Obsidian
+  ↓ POST /inbox/:id/ack (applied|rejected)
 ```
 
-### Flujo de publicación (pendiente en app)
+### Flujo de publicación (app)
 
 ```text
-MatrixTrade (local)
+MatrixTrade (local) — Sync to Worker
   ↓ POST /snapshot  (Bearer WRITE_TOKEN)
 Cloudflare Worker + KV
   ↓
-ChatGPT lee GET /snapshot
+ChatGPT lee GET /snapshot  ·  phone scans QR en /connect
 ```
 
 ### Por qué esta arquitectura
@@ -165,26 +170,45 @@ El experimento H001–H030 es un ciclo acotado: límite -$300, máximo 30 trades
 - ✓ **Worker** — desplegado en producción
 - ✓ **Snapshot** — POST/GET funcionando, H001 en KV
 - ✓ **Lectura desde ChatGPT** — GET `/snapshot?token=…` validado
-- ✓ **Inbox endpoints** — POST/GET `/inbox` en Worker (infra lista)
+- ✓ **Inbox endpoints** — POST/GET `/inbox` + ack en Worker
+- ✓ **MatrixTrade Sync** — dashboard publica snapshot
+- ✓ **MatrixTrade Inbox** — `/inbox` Apply/Reject (Worker + local API)
+- ✓ **Connect QR** — cloud snapshot URL + local WiFi QR
 
 ### Pendiente
 
-- □ **Inbox en uso real** — ChatGPT envía JSON validado en conversación (workflow humano)
-- □ **Escritura desde ChatGPT** — flujo acordado de propuestas → cola → aprobación
-- □ **Integración MatrixTrade → Worker** — botón Sync `/snapshot` desde app local
-- □ **Integración MatrixTrade ← Inbox** — app lee pending, preview, apply a `data/trades.json`
-- □ **Consultas avanzadas** — patrones, setups, comparaciones históricas automatizadas
+- □ **Redeploy Worker** — si `/inbox/:id/ack` no responde en producción
+- □ **Validación en uso real** — un ciclo completo con ChatGPT
+- □ **Auto-sync** — opcional tras cerrar trade
+- □ **Consultas avanzadas** — patrones, setups, comparaciones automatizadas
 
 ---
 
-## 5. Próximo objetivo
+## 5. Trading inbox (ChatGPT → MatrixTrade)
 
-**Validar completamente desde ChatGPT (sin tocar MatrixTrade app):**
+**Routes:** `/inbox`, `/inbox/[id]`  
+**Worker:** POST `/inbox` (Bearer `WRITE_TOKEN`) · GET `/inbox?token=READ_TOKEN`  
+**Local API:** `POST /api/trading/inbox` (Bearer `MATRIXTRADE_INBOX_TOKEN`)
 
-1. **POST `/inbox`** — enviar JSON estructurado (ej. `bridge/sample-inbox.json`)
-2. **GET `/inbox`** — confirmar item pending con `id`, `receivedAt`, `status`, `payload`
+**Proposal types:**
 
-No avanzar a Sync en MatrixTrade ni procesamiento de inbox en app hasta cerrar esta validación.
+| `type` | `proposal` fields | Apply effect |
+|--------|-------------------|--------------|
+| `trade-proposal` | `id`, `ticker`, `entry`, `stop`, `shares`, optional `target`, `setupId` | Creates pending trade |
+| `trade-close` | `id`, `exit` | Closes trade |
+| `trade-review` | `id`, `mistakes[]`, `qualityEntry/Exit/Mgmt`, optional `lesson`, `actionItem` | Saves review |
+| `analysis` | `id`, at least one of `thesis`, `psychology`, `lessons`, `notes` | Appends to Obsidian note |
+
+Examples: [`bridge/sample-inbox.json`](bridge/sample-inbox.json), [`bridge/sample-inbox-review.json`](bridge/sample-inbox-review.json)
+
+```bash
+curl -X POST "https://matrixtrade-bridge.argometal.workers.dev/inbox" \
+  -H "Authorization: Bearer WRITE_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d @bridge/sample-inbox-review.json
+```
+
+User reviews in MatrixTrade `/inbox` — **never auto-applied**.
 
 **URLs base:** `https://matrixtrade-bridge.argometal.workers.dev`
 
@@ -193,6 +217,7 @@ No avanzar a Sync en MatrixTrade ni procesamiento de inbox en app hasta cerrar e
 | Leer estado | GET `/snapshot?token=READ_TOKEN` | query |
 | Encolar propuesta | POST `/inbox` | `Authorization: Bearer WRITE_TOKEN` |
 | Ver cola | GET `/inbox?token=READ_TOKEN` | query |
+| Ack tras Apply/Reject | POST `/inbox/{id}/ack` | `Authorization: Bearer WRITE_TOKEN` body `{"status":"applied"}` |
 
 ---
 

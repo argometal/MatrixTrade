@@ -10,6 +10,9 @@ export function TradingNav() {
       <Link href="/trades" className="hover:text-zinc-600">
         Trades
       </Link>
+      <Link href="/inbox" className="hover:text-zinc-600">
+        Inbox
+      </Link>
       <Link href="/stats" className="hover:text-zinc-600">
         Stats
       </Link>

@@ -14,6 +14,7 @@ function isTradingRoute(pathname: string): boolean {
     pathname === "/" ||
     pathname.startsWith("/trades") ||
     pathname.startsWith("/connect") ||
+    pathname.startsWith("/inbox") ||
     pathname === "/stats" ||
     pathname === "/mistakes"
   );

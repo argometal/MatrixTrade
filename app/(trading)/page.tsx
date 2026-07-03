@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BridgeSyncPanel } from "@/app/components/BridgeSyncPanel";
 import { ChatGptHandoff } from "@/app/components/ChatGptHandoff";
 import { EquityCurve } from "@/app/components/EquityCurve";
 import { MobileAccessBanner } from "@/app/components/MobileAccessBanner";
@@ -11,8 +12,10 @@ import {
   isBudgetWarning,
   suggestExportQuestion,
 } from "@/lib/review";
+import { fetchBridgeInbox } from "@/lib/bridge";
 import { buildFullContext } from "@/lib/snapshot";
 import { getSetups } from "@/lib/setups";
+import { listAllPendingInboxItems } from "@/lib/trading-inbox-storage";
 import { getExperiment, getTrades, getTradeNotes, getVaultStatus } from "@/lib/storage";
 
 function formatUsd(value: number): string {
@@ -27,12 +30,13 @@ function pnlColor(value: number): string {
 }
 
 export default async function DashboardPage() {
-  const [experiment, trades, vault, notes, setups] = await Promise.all([
+  const [experiment, trades, vault, notes, setups, workerInbox] = await Promise.all([
     getExperiment(),
     getTrades(),
     getVaultStatus(),
     getTradeNotes(),
     getSetups(),
+    fetchBridgeInbox(),
   ]);
 
   const active = trades.filter((t) => t.status === "open");
@@ -47,6 +51,7 @@ export default async function DashboardPage() {
   });
 
   const unreviewed = getUnreviewedTrades(trades);
+  const pendingInbox = await listAllPendingInboxItems(workerInbox);
   const mistakeStats = computeMistakeStats(trades);
   const nextAction = getNextAction(trades, experiment);
   const equityPoints = buildEquityCurve(trades);
@@ -83,6 +88,8 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      <BridgeSyncPanel />
+
       <MobileAccessBanner />
 
       <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3 text-sm shadow-sm">
@@ -113,10 +120,18 @@ export default async function DashboardPage() {
         />
       </section>
 
-      {(unreviewed.length > 0 || budgetWarning) && (
+      {(unreviewed.length > 0 || budgetWarning || pendingInbox.length > 0) && (
         <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">Needs attention</h2>
           <ul className="mt-3 space-y-2 text-sm text-amber-950">
+            {pendingInbox.length > 0 && (
+              <li className="flex items-center justify-between gap-4">
+                <span>{pendingInbox.length} AI proposal(s) in inbox</span>
+                <Link href="/inbox" className="font-medium underline">
+                  Review inbox
+                </Link>
+              </li>
+            )}
             {unreviewed.map((trade) => (
               <li key={trade.id} className="flex items-center justify-between gap-4">
                 <span>

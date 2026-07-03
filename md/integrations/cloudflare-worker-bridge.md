@@ -3,7 +3,7 @@
 **Purpose:** Bridge between ChatGPT and MatrixTrade without LAN, QR, or DataTransfer.
 
 **Worker URL:** `https://matrixtrade-bridge.argometal.workers.dev`  
-**Status:** Deployed and tested. MatrixTrade app **not connected** yet.
+**Status:** Deployed. MatrixTrade app **connected** (Sync, Inbox UI, Connect QR).
 
 **Entry point for ChatGPT:** [`CHATGPT.md`](../../CHATGPT.md) (repo root)
 
@@ -23,13 +23,13 @@ User → ChatGPT → GET /snapshot?token= → Worker/KV → analysis → User
 
 ```text
 User → ChatGPT → validated JSON → POST /inbox → Worker/KV (pending queue)
-                                              → MatrixTrade processes later (not built)
+MatrixTrade (local) → GET /inbox, preview, Apply → data/trades.json + Obsidian
 ```
 
-### Publish path (pending in app)
+### Publish path (app)
 
 ```text
-MatrixTrade (local) → POST /snapshot → Worker/KV → ChatGPT reads GET /snapshot
+MatrixTrade (local) → POST /snapshot → Worker/KV → ChatGPT reads GET /snapshot · phone QR on /connect
 ```
 
 ### Why Worker + KV
@@ -54,6 +54,7 @@ LAN, localhost, QR, DataTransfer, D1, Supabase, Telegram, Gmail, Drive, paid ser
 | GET | `/snapshot` | `?token=READ_TOKEN` | Return snapshot or 404 |
 | POST | `/inbox` | Bearer WRITE_TOKEN | Queue JSON; adds `id`, `receivedAt`, `status: pending` |
 | GET | `/inbox` | `?token=READ_TOKEN` | Return `{ count, items[] }` pending only |
+| POST | `/inbox/{id}/ack` | Bearer WRITE_TOKEN | Set `status` to `applied` or `rejected` |
 
 **KV keys:** `snapshot:latest`, `inbox:index`, `inbox:item:{id}`
 

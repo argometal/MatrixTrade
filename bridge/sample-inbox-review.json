@@ -1,0 +1,13 @@
+{
+  "type": "trade-review",
+  "source": "chatgpt",
+  "proposal": {
+    "id": "H001",
+    "mistakes": ["fomo", "chased"],
+    "qualityEntry": 2,
+    "qualityExit": 3,
+    "qualityMgmt": 4,
+    "lesson": "Wait for weekly close above resistance.",
+    "actionItem": "No entries on earnings week."
+  }
+}

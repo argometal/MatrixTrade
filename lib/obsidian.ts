@@ -244,20 +244,27 @@ export async function readAllTrades(rules: ExperimentRules): Promise<Trade[]> {
   return trades.sort((a, b) => a.id.localeCompare(b.id));
 }
 
-/** Atomic write: temp file then rename. Preserves note body. */
-export async function writeTradeFile(trade: Trade, rules: ExperimentRules): Promise<void> {
+/** Atomic write: temp file then rename. Preserves note body unless override provided. */
+export async function writeTradeFile(
+  trade: Trade,
+  rules: ExperimentRules,
+  bodyOverride?: string
+): Promise<void> {
   const tradesDir = await ensureTradesDir(rules);
   const filename = tradeFilename(trade.id, trade.ticker);
   const filePath = path.join(tradesDir, filename);
   const tmpPath = `${filePath}.matrixtrade.tmp`;
 
-  let body = defaultNoteBody(trade);
-  try {
-    const existing = await fs.readFile(filePath, "utf-8");
-    body = extractNoteBody(existing);
-    if (!body) body = defaultNoteBody(trade);
-  } catch {
-    // new file
+  let body = bodyOverride;
+  if (body === undefined) {
+    body = defaultNoteBody(trade);
+    try {
+      const existing = await fs.readFile(filePath, "utf-8");
+      body = extractNoteBody(existing);
+      if (!body) body = defaultNoteBody(trade);
+    } catch {
+      // new file
+    }
   }
 
   const content = serializeTradeFile(trade, body);

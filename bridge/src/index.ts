@@ -10,7 +10,7 @@ const INBOX_INDEX_KEY = "inbox:index";
 export interface InboxItem {
   id: string;
   receivedAt: string;
-  status: "pending";
+  status: "pending" | "applied" | "rejected";
   payload: Record<string, unknown>;
 }
 
@@ -165,9 +165,43 @@ async function handleGetInbox(request: Request, env: Env): Promise<Response> {
   return jsonResponse({ count: items.length, items }, 200);
 }
 
+async function handlePostInboxAck(request: Request, env: Env, id: string): Promise<Response> {
+  const token = readBearerToken(request);
+  if (!token || token !== env.WRITE_TOKEN) {
+    return unauthorized();
+  }
+
+  const body = await parseJsonObject(request);
+  if (body instanceof Response) return body;
+
+  const nextStatus = body.status === "rejected" ? "rejected" : "applied";
+
+  const raw = await env.SNAPSHOT.get(inboxItemKey(id));
+  if (!raw) {
+    return jsonResponse({ error: "Inbox item not found" }, 404);
+  }
+
+  let item: InboxItem;
+  try {
+    item = JSON.parse(raw) as InboxItem;
+  } catch {
+    return jsonResponse({ error: "Corrupt inbox item" }, 500);
+  }
+
+  item.status = nextStatus;
+  await env.SNAPSHOT.put(inboxItemKey(id), JSON.stringify(item));
+
+  return jsonResponse({ ok: true, id, status: item.status }, 200);
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const { pathname } = new URL(request.url);
+
+    const inboxAckMatch = pathname.match(/^\/inbox\/([^/]+)\/ack$/);
+    if (inboxAckMatch && request.method === "POST") {
+      return handlePostInboxAck(request, env, inboxAckMatch[1]);
+    }
 
     if (pathname === "/snapshot") {
       if (request.method === "POST") return handlePostSnapshot(request, env);
