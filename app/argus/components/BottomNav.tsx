@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const links = [
   { href: "/argus/journal", label: "Home", icon: "▤" },
-  { href: "/argus/network", label: "Network", icon: "◎" },
+  { href: "/argus/network", label: "Contacts", icon: "◎" },
   { href: "/argus/inbox", label: "Inbox", icon: "📥" },
   { href: "/argus/search", label: "Search", icon: "⌕" },
 ];

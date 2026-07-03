@@ -12,6 +12,7 @@ import {
   HOME_EMPTY,
   HOME_PROMPT,
   HOME_SECTIONS,
+  SECTION_EMPTY,
 } from "@/lib/argus/ux-copy";
 import { createLogAction } from "@/app/argus/actions";
 import { MemoryComposer, type CaptureIntent } from "./MemoryComposer";
@@ -23,22 +24,28 @@ function Section({
   label,
   children,
   empty,
+  emptyHint,
   action,
 }: {
   id?: string;
   label: string;
   children: React.ReactNode;
   empty?: boolean;
+  emptyHint?: string;
   action?: React.ReactNode;
 }) {
-  if (empty) return null;
+  if (empty && !emptyHint) return null;
   return (
     <section id={id} className="mt-8 first:mt-0">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-[11px] font-medium uppercase tracking-[0.12em] text-zinc-600">{label}</h2>
         {action}
       </div>
-      <div className="divide-y divide-zinc-800/50">{children}</div>
+      {empty && emptyHint ? (
+        <p className="py-4 text-[13px] text-zinc-500">{emptyHint}</p>
+      ) : (
+        <div className="divide-y divide-zinc-800/50">{children}</div>
+      )}
     </section>
   );
 }
@@ -239,25 +246,43 @@ export function JournalHome({
         </p>
       )}
 
-      <Section id="open-cases" label={HOME_SECTIONS.openItems} empty={openCases.length === 0}>
+      <Section
+        id="open-cases"
+        label={HOME_SECTIONS.openItems}
+        empty={openCases.length === 0}
+        emptyHint={SECTION_EMPTY.openItemsHint}
+      >
         {openCases.map((log) => (
           <MemoryStreamRow key={log.id} log={log} entities={entities} />
         ))}
       </Section>
 
-      <Section id="needs-classification" label={HOME_SECTIONS.needsReview} empty={needsClassification.length === 0}>
+      <Section
+        id="needs-classification"
+        label={HOME_SECTIONS.needsReview}
+        empty={needsClassification.length === 0}
+        emptyHint={SECTION_EMPTY.needsReview}
+      >
         {needsClassification.map((log) => (
           <MemoryStreamRow key={log.id} log={log} entities={entities} accent="amber" />
         ))}
       </Section>
 
-      <Section label={HOME_SECTIONS.recentDocuments} empty={recentEvidence.length === 0}>
+      <Section
+        label={HOME_SECTIONS.recentDocuments}
+        empty={recentEvidence.length === 0}
+        emptyHint={SECTION_EMPTY.documentsHint}
+      >
         {recentEvidence.map((log) => (
           <MemoryStreamRow key={log.id} log={log} entities={entities} />
         ))}
       </Section>
 
-      <Section label={HOME_SECTIONS.upcomingFollowUps} empty={upcomingFollowUps.length === 0}>
+      <Section
+        label={HOME_SECTIONS.upcomingFollowUps}
+        empty={upcomingFollowUps.length === 0}
+        emptyHint={SECTION_EMPTY.reminders}
+      >
         {upcomingFollowUps.map((log) => (
           <MemoryStreamRow key={log.id} log={log} entities={entities} />
         ))}

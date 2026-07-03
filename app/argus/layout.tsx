@@ -4,9 +4,11 @@ import { TradingCornerEntry } from "@/app/components/TradingCornerEntry";
 
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
+import { ARGUS_SUBTITLE } from "@/lib/argus/ux-copy";
+
 export const metadata: Metadata = {
   title: "ARGUS",
-  description: "Investigation, issue tracking, and evidence analysis",
+  description: ARGUS_SUBTITLE,
 };
 
 export const viewport: Viewport = {

@@ -1,6 +1,7 @@
 import { lockArgusPrivateAction, unlockArgusPrivateAction } from "@/app/auth/actions";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { PRIVATE } from "@/lib/argus/ux-copy";
 
 export async function PrivatePanel({ privateError }: { privateError?: boolean }) {
   if (!argusPrivateConfigured()) return null;
@@ -10,9 +11,9 @@ export async function PrivatePanel({ privateError }: { privateError?: boolean })
   if (unlocked) {
     return (
       <form action={lockArgusPrivateAction} className="mb-4 rounded-xl border border-violet-800/50 bg-violet-950/30 p-3">
-        <p className="text-xs text-violet-300">Private entries visible</p>
+        <p className="text-xs text-violet-300">{PRIVATE.visible}</p>
         <button type="submit" className="mt-2 text-xs font-medium text-violet-400 underline">
-          Hide private entries
+          {PRIVATE.hide}
         </button>
       </form>
     );
@@ -20,7 +21,8 @@ export async function PrivatePanel({ privateError }: { privateError?: boolean })
 
   return (
     <form action={unlockArgusPrivateAction} className="mb-4 rounded-xl border border-zinc-800 bg-zinc-900 p-3">
-      <p className="text-xs text-zinc-400">Unlock private entries</p>
+      <p className="text-xs text-zinc-400">{PRIVATE.unlock}</p>
+      <p className="mt-0.5 text-[11px] text-zinc-600">{PRIVATE.unlockHint}</p>
       <div className="mt-2 flex gap-2">
         <input
           name="pin"

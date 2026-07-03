@@ -1,4 +1,5 @@
 import { loginArgusAction } from "@/app/auth/actions";
+import { ARGUS_PRODUCT_NAME, ARGUS_SUBTITLE, ARGUS_TAGLINE } from "@/lib/argus/ux-copy";
 
 export default async function ArgusLoginPage({
   searchParams,
@@ -9,9 +10,9 @@ export default async function ArgusLoginPage({
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center bg-zinc-950 px-4 text-zinc-100">
-      <p className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-500">ARGUS</p>
-      <h1 className="mt-2 text-xl font-medium text-zinc-200">Investigation workspace</h1>
-      <p className="mt-1 text-sm text-zinc-500">Track cases, evidence, and follow-ups.</p>
+      <p className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-500">{ARGUS_PRODUCT_NAME}</p>
+      <h1 className="mt-2 text-xl font-medium text-zinc-200">{ARGUS_TAGLINE}</h1>
+      <p className="mt-1 text-sm text-zinc-500">{ARGUS_SUBTITLE}</p>
       <form action={loginArgusAction} className="mt-8 space-y-4">
         <label className="block text-sm">
           <span className="font-medium text-zinc-400">Password</span>

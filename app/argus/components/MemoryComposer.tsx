@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { EntityType } from "@/lib/argus/types";
+import { COMPOSER, CONTACTS } from "@/lib/argus/ux-copy";
 import { AttachmentField } from "./AttachmentField";
 import { EntityPicker, type EntityPickerBuckets } from "./EntityPicker";
 
@@ -19,22 +20,22 @@ const INTENT_COPY: Record<
   { placeholder: string; submitLabel: string; kindOverride?: "follow_up" | "event" | "log" }
 > = {
   case: {
-    placeholder: "Describe the case — issue, scope, and what you need to track…",
-    submitLabel: "Open case",
+    placeholder: COMPOSER.case.placeholder,
+    submitLabel: COMPOSER.case.submit,
     kindOverride: "follow_up",
   },
   evidence: {
-    placeholder: "Describe the evidence — source, facts, and relevance…",
-    submitLabel: "Add evidence",
+    placeholder: COMPOSER.evidence.placeholder,
+    submitLabel: COMPOSER.evidence.submit,
   },
   event: {
-    placeholder: "What happened? Include date, actors, and outcome…",
-    submitLabel: "Log event",
+    placeholder: COMPOSER.event.placeholder,
+    submitLabel: COMPOSER.event.submit,
     kindOverride: "event",
   },
   log: {
-    placeholder: "Quick field note — observation, lead, or update…",
-    submitLabel: "Save log",
+    placeholder: COMPOSER.log.placeholder,
+    submitLabel: COMPOSER.log.submit,
   },
 };
 
@@ -47,6 +48,8 @@ interface MemoryComposerProps {
   onCancel?: () => void;
   autoFocus?: boolean;
   variant?: "inline" | "sheet";
+  initialPanel?: "none" | "entity" | "more";
+  initialQuickCreateType?: EntityType;
 }
 
 function Chip({
@@ -82,6 +85,8 @@ export function MemoryComposer({
   onCancel,
   autoFocus = true,
   variant = "inline",
+  initialPanel = "none",
+  initialQuickCreateType,
 }: MemoryComposerProps) {
   const copy = INTENT_COPY[intent];
   const resolvedSubmitLabel = submitLabel ?? copy.submitLabel;
@@ -91,14 +96,21 @@ export function MemoryComposer({
   const [selectedIds, setSelectedIds] = useState<string[]>(initial?.entityIds ?? []);
   const [eventDate, setEventDate] = useState(intent === "event" ? new Date().toISOString().slice(0, 10) : "");
   const [followUpDate, setFollowUpDate] = useState("");
-  const [panel, setPanel] = useState<"none" | "entity" | "more">("none");
+  const [panel, setPanel] = useState<"none" | "entity" | "more">(initialPanel);
   const [quickCreateName, setQuickCreateName] = useState("");
-  const [quickCreateType, setQuickCreateType] = useState<EntityType>("person");
+  const [quickCreateType, setQuickCreateType] = useState<EntityType>(initialQuickCreateType ?? "person");
   const [quickCreateNotes, setQuickCreateNotes] = useState("");
+  const hasContacts = buckets.alphabetical.length > 0;
 
   useEffect(() => {
-    if (autoFocus) bodyRef.current?.focus();
-  }, [autoFocus]);
+    if (autoFocus && initialPanel !== "entity") bodyRef.current?.focus();
+  }, [autoFocus, initialPanel]);
+
+  useEffect(() => {
+    if (initialQuickCreateType) setQuickCreateType(initialQuickCreateType);
+  }, [initialQuickCreateType]);
+
+  const toggleEntityPanel = () => setPanel((p) => (p === "entity" ? "none" : "entity"));
 
   const canSave = body.trim().length > 0;
   const selectedNames = selectedIds
@@ -154,14 +166,27 @@ export function MemoryComposer({
       />
 
       {selectedNames.length > 0 && (
-        <p className="mb-2 text-[12px] text-teal-400/90">@ {selectedNames.join(", ")}</p>
+        <p className="mb-2 text-[12px] text-teal-400/90">
+          {CONTACTS.linkContact}: {selectedNames.join(", ")}
+        </p>
       )}
 
       <div className="mt-auto space-y-3 pt-4">
-        <div className="flex flex-wrap items-center gap-0.5 border-t border-zinc-800/60 pt-3">
-          <Chip active={panel === "entity" || selectedIds.length > 0} onClick={() => setPanel(panel === "entity" ? "none" : "entity")}>
+        <div className="flex flex-wrap items-center gap-1 border-t border-zinc-800/60 pt-3">
+          <Chip active={panel === "entity" || selectedIds.length > 0} onClick={toggleEntityPanel}>
             @
           </Chip>
+          <button
+            type="button"
+            onClick={toggleEntityPanel}
+            className={`rounded-md px-2.5 py-1 text-[13px] font-medium transition ${
+              panel === "entity" || selectedIds.length > 0
+                ? "bg-teal-500/15 text-teal-300"
+                : "border border-zinc-700 text-zinc-300 hover:border-zinc-600"
+            }`}
+          >
+            {CONTACTS.linkContact}
+          </button>
           <Chip
             active={Boolean(eventDate)}
             onClick={() => {
@@ -191,6 +216,7 @@ export function MemoryComposer({
               onQuickCreateTypeChange={setQuickCreateType}
               quickCreateNotes={quickCreateNotes}
               onQuickCreateNotesChange={setQuickCreateNotes}
+              defaultShowCreate={!hasContacts || Boolean(initialQuickCreateType)}
             />
           </div>
         )}

@@ -43,10 +43,17 @@ export function PageHeader({ title, subtitle, backHref }: { title: string; subti
   );
 }
 
-export function EmptyState({ message }: { message: string }) {
+export function EmptyState({
+  message,
+  action,
+}: {
+  message: string;
+  action?: React.ReactNode;
+}) {
   return (
     <Card className="py-8 text-center">
       <p className="text-zinc-400">{message}</p>
+      {action && <div className="mt-4">{action}</div>}
     </Card>
   );
 }

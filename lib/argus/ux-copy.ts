@@ -59,6 +59,31 @@ export const INBOX = {
   addDocument: "Add document",
 } as const;
 
+export const SECTION_EMPTY = {
+  openItems: "No active items yet.",
+  openItemsHint: "Start with New item on Home.",
+  needsReview: "Nothing needs review.",
+  documents: "No documents yet.",
+  documentsHint: "Attach your first document from Home.",
+  reminders: "No pending reminders.",
+  remindersHint: "Add a reminder when recording an update.",
+} as const;
+
+export const ENTITY_PICKER = {
+  searchPlaceholder: "Search contacts…",
+  typeToSearch: "Type to search contacts",
+  starToPin: "Star contacts to pin them here",
+  noContacts: "No contacts yet — create one below.",
+  selected: (n: number, names: string) => `${n} selected · ${names}`,
+} as const;
+
+export const ENTITY_PAGE = {
+  linkedDocuments: "Linked documents",
+  notes: "Notes",
+  recentActivity: "Recent activity",
+  addDocumentFor: (name: string) => `Add document for ${name}`,
+} as const;
+
 export const NETWORK = {
   title: "Contacts",
   subtitle: "People and organizations you work with",

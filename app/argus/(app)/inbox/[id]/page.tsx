@@ -6,6 +6,7 @@ import { INBOX_SOURCE_LABELS } from "@/lib/argus/labels";
 import { buildEntityPickerBuckets } from "@/lib/argus/journal-helpers";
 import { getAttachment, getInboxItem, getLog, readArgus } from "@/lib/argus/server-storage";
 import { archiveInboxAction, convertInboxAction } from "@/app/argus/actions";
+import { INBOX } from "@/lib/argus/ux-copy";
 
 export default async function InboxDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -104,7 +105,7 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
           <MemoryComposer
             action={convertInboxAction}
             buckets={buckets}
-            submitLabel="Add evidence"
+            submitLabel={INBOX.addDocument}
             initial={{
               title: defaultTitle,
               body: defaultBody,

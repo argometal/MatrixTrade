@@ -10,6 +10,7 @@ import {
   STRATEGIC_VALUE_LABELS,
 } from "@/lib/argus/labels";
 import { buildEntityIntelligence } from "@/lib/argus/network-intelligence";
+import { ENTITY_PAGE, CONTACTS } from "@/lib/argus/ux-copy";
 import { getEntityHistory } from "@/lib/argus/network";
 import { getEntities, getEntity, readArgus } from "@/lib/argus/server-storage";
 
@@ -79,11 +80,11 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
             <dd className="text-zinc-200">{intel.openFollowUps}</dd>
           </div>
           <div>
-            <dt className="text-xs text-zinc-600">Evidence count</dt>
+            <dt className="text-xs text-zinc-600">{ENTITY_PAGE.linkedDocuments}</dt>
             <dd className="text-zinc-200">{intel.evidenceCount}</dd>
           </div>
           <div>
-            <dt className="text-xs text-zinc-600">Journal count</dt>
+            <dt className="text-xs text-zinc-600">{ENTITY_PAGE.notes}</dt>
             <dd className="text-zinc-200">{intel.logCount}</dd>
           </div>
         </dl>
@@ -101,9 +102,9 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
 
       <EntityEditForm entity={entity} />
 
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">Recent activity</h2>
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">{ENTITY_PAGE.recentActivity}</h2>
       {history.length === 0 ? (
-        <EmptyState message="No evidence or logs linked yet." />
+        <EmptyState message={CONTACTS.emptyActivity} />
       ) : (
         <div className="space-y-3">
           {history.slice(0, 12).map((log) => (
@@ -113,8 +114,8 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
       )}
 
       <p className="mt-6 text-center">
-        <Link href={`/argus/new?q=${encodeURIComponent(entity.name)}`} className="text-sm text-teal-500 underline">
-          + Add evidence for {entity.name}
+        <Link href={`/argus/journal?intent=evidence&capture=1`} className="text-sm text-teal-500 underline">
+          + {ENTITY_PAGE.addDocumentFor(entity.name)}
         </Link>
       </p>
     </>
