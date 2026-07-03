@@ -1,8 +1,18 @@
 import Link from "next/link";
 import { ChatGptHandoff } from "@/app/components/ChatGptHandoff";
+import { EquityCurve } from "@/app/components/EquityCurve";
 import { MobileAccessBanner } from "@/app/components/MobileAccessBanner";
 import { calculateTradeResult, winRate } from "@/lib/calculate";
+import {
+  buildEquityCurve,
+  computeMistakeStats,
+  getNextAction,
+  getUnreviewedTrades,
+  isBudgetWarning,
+  suggestExportQuestion,
+} from "@/lib/review";
 import { buildFullContext } from "@/lib/snapshot";
+import { getSetups } from "@/lib/setups";
 import { getExperiment, getTrades, getTradeNotes, getVaultStatus } from "@/lib/storage";
 
 function formatUsd(value: number): string {
@@ -17,18 +27,31 @@ function pnlColor(value: number): string {
 }
 
 export default async function DashboardPage() {
-  const [experiment, trades, vault, notes] = await Promise.all([
+  const [experiment, trades, vault, notes, setups] = await Promise.all([
     getExperiment(),
     getTrades(),
     getVaultStatus(),
     getTradeNotes(),
+    getSetups(),
   ]);
 
   const active = trades.filter((t) => t.status === "open");
   const pending = trades.filter((t) => t.status === "pending");
   const rate = winRate(experiment);
-  const fullContext = buildFullContext(experiment, trades, notes);
-  const fullContextAllClosed = buildFullContext(experiment, trades, notes, { full: true });
+  const snapshotOpts = { setups };
+  const fullContext = buildFullContext(experiment, trades, notes, snapshotOpts);
+  const fullContextAllClosed = buildFullContext(experiment, trades, notes, { full: true, setups });
+  const unreviewedContext = buildFullContext(experiment, trades, notes, {
+    unreviewedOnly: true,
+    setups,
+  });
+
+  const unreviewed = getUnreviewedTrades(trades);
+  const mistakeStats = computeMistakeStats(trades);
+  const nextAction = getNextAction(trades, experiment);
+  const equityPoints = buildEquityCurve(trades);
+  const suggestedQuestion = suggestExportQuestion(trades, mistakeStats);
+  const budgetWarning = isBudgetWarning(experiment);
 
   return (
     <div className="space-y-8">
@@ -44,6 +67,21 @@ export default async function DashboardPage() {
           New trade
         </Link>
       </header>
+
+      {nextAction && (
+        <div className="rounded-lg border border-zinc-900 bg-zinc-900 px-4 py-3 text-white shadow-sm sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">Next action</p>
+            <p className="mt-1 text-sm font-medium">{nextAction.label}</p>
+          </div>
+          <Link
+            href={nextAction.href}
+            className="mt-3 inline-block rounded-md bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100 sm:mt-0"
+          >
+            Go →
+          </Link>
+        </div>
+      )}
 
       <MobileAccessBanner />
 
@@ -75,16 +113,63 @@ export default async function DashboardPage() {
         />
       </section>
 
+      {(unreviewed.length > 0 || budgetWarning) && (
+        <section className="rounded-lg border border-amber-200 bg-amber-50 p-4 shadow-sm">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-amber-900">Needs attention</h2>
+          <ul className="mt-3 space-y-2 text-sm text-amber-950">
+            {unreviewed.map((trade) => (
+              <li key={trade.id} className="flex items-center justify-between gap-4">
+                <span>
+                  {trade.id} · {trade.ticker} — review pending
+                </span>
+                <Link href={`/trades/${trade.id}/review`} className="font-medium underline">
+                  Review
+                </Link>
+              </li>
+            ))}
+            {budgetWarning && (
+              <li>Loss budget is over 70% used — slow down or tighten rules.</li>
+            )}
+          </ul>
+        </section>
+      )}
+
+      <EquityCurve points={equityPoints} lossLimit={experiment.cycleLossLimit} compact />
+
+      {mistakeStats.length > 0 && (
+        <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Top mistake cost</h2>
+            <Link href="/mistakes" className="text-xs text-zinc-500 hover:underline">
+              View all →
+            </Link>
+          </div>
+          <p className="mt-2 text-sm">
+            <span className="font-medium">{mistakeStats[0].label}</span>
+            <span className="ml-2 text-red-600">{formatUsd(mistakeStats[0].totalCost)}</span>
+            <span className="ml-2 text-zinc-400">({mistakeStats[0].count} trades)</span>
+          </p>
+        </section>
+      )}
+
       <section className="grid gap-6 lg:grid-cols-2">
         <StatusPanel title="Open" trades={active} empty="No open trades." />
         <StatusPanel title="Pending" trades={pending} empty="No pending trades." />
       </section>
 
-      <ChatGptHandoff fullContext={fullContext} fullContextAllClosed={fullContextAllClosed} />
+      <ChatGptHandoff
+        fullContext={fullContext}
+        fullContextAllClosed={fullContextAllClosed}
+        unreviewedContext={unreviewedContext}
+        suggestedQuestion={suggestedQuestion}
+      />
 
-      <nav className="flex gap-4 text-sm">
+      <nav className="flex flex-wrap gap-4 text-sm">
         <Link href="/trades" className="text-zinc-600 underline-offset-4 hover:underline">
           View all trades →
+        </Link>
+        <Link href="/stats" className="text-zinc-600 underline-offset-4 hover:underline">
+          Statistics →
         </Link>
       </nav>
     </div>

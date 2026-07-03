@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { getTrades } from "@/lib/storage";
+import { getExperiment, getTrades } from "@/lib/storage";
 import { calculateTradeResult } from "@/lib/calculate";
+import { isTradeReviewed } from "@/lib/review";
 
 function formatUsd(value: number): string {
   const sign = value >= 0 ? "+" : "";
@@ -14,7 +15,8 @@ const statusStyles: Record<string, string> = {
 };
 
 export default async function TradesPage() {
-  const trades = await getTrades();
+  const [trades, experiment] = await Promise.all([getTrades(), getExperiment()]);
+
   const sorted = [...trades].sort((a, b) => a.id.localeCompare(b.id));
 
   return (
@@ -22,7 +24,9 @@ export default async function TradesPage() {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Trades</h1>
-          <p className="text-sm text-zinc-500">{trades.length} / 30 in cycle</p>
+          <p className="text-sm text-zinc-500">
+            {trades.length} / {experiment.maxTrades} in cycle
+          </p>
         </div>
         <div className="flex gap-3">
           <Link href="/" className="text-sm text-zinc-600 hover:underline">
@@ -47,6 +51,7 @@ export default async function TradesPage() {
                 <th className="px-4 py-3 font-medium">ID</th>
                 <th className="px-4 py-3 font-medium">Ticker</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Review</th>
                 <th className="px-4 py-3 font-medium">Entry</th>
                 <th className="px-4 py-3 font-medium">Exit</th>
                 <th className="px-4 py-3 font-medium">Result</th>
@@ -56,6 +61,7 @@ export default async function TradesPage() {
             <tbody className="divide-y divide-zinc-100">
               {sorted.map((trade) => {
                 const result = calculateTradeResult(trade);
+                const reviewed = isTradeReviewed(trade);
                 return (
                   <tr key={trade.id} className="hover:bg-zinc-50">
                     <td className="px-4 py-3 font-medium">
@@ -70,8 +76,21 @@ export default async function TradesPage() {
                       </span>
                       {trade.inconsistent && (
                         <span className="ml-2 text-xs text-amber-600" title="Closed without exit in frontmatter">
-                          ⚠ inconsistent
+                          ⚠
                         </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {trade.status === "closed" ? (
+                        reviewed ? (
+                          <span className="text-emerald-600">Done</span>
+                        ) : (
+                          <Link href={`/trades/${trade.id}/review`} className="text-amber-700 underline">
+                            Pending
+                          </Link>
+                        )
+                      ) : (
+                        "—"
                       )}
                     </td>
                     <td className="px-4 py-3 tabular-nums">{trade.entry.toFixed(2)}</td>

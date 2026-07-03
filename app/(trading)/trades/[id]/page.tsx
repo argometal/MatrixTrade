@@ -2,6 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { closeTradeAction, openTradeAction } from "@/app/actions";
 import { calculateTradeResult } from "@/lib/calculate";
+import {
+  computeHoldDays,
+  computeRMultiple,
+  computeRiskAmount,
+  isTradeReviewed,
+  MISTAKE_LABELS,
+} from "@/lib/review";
+import { getSetupName, getSetups } from "@/lib/setups";
 import { getExperiment, getTrades } from "@/lib/storage";
 
 function formatUsd(value: number): string {
@@ -16,12 +24,21 @@ export default async function TradeDetailPage({
 }) {
   const { id } = await params;
   const tradeId = id.toUpperCase();
-  const [trades, experiment] = await Promise.all([getTrades(), getExperiment()]);
+  const [trades, experiment, setups] = await Promise.all([
+    getTrades(),
+    getExperiment(),
+    getSetups(),
+  ]);
   const trade = trades.find((t) => t.id === tradeId);
 
   if (!trade) notFound();
 
   const result = calculateTradeResult(trade);
+  const rMultiple = computeRMultiple(trade);
+  const risk = computeRiskAmount(trade);
+  const holdDays = computeHoldDays(trade);
+  const setupName = getSetupName(setups, trade.setupId);
+  const reviewed = isTradeReviewed(trade);
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -45,7 +62,62 @@ export default async function TradeDetailPage({
         <Detail label="Target" value={trade.target?.toFixed(2) ?? "—"} />
         <Detail label="Exit" value={trade.exit?.toFixed(2) ?? "—"} />
         <Detail label="Result" value={result !== null ? formatUsd(result) : "—"} />
+        {risk !== null && <Detail label="Risk" value={formatUsd(-risk)} />}
+        {rMultiple !== null && (
+          <Detail
+            label="R-multiple"
+            value={`${rMultiple >= 0 ? "+" : ""}${rMultiple.toFixed(2)}R`}
+          />
+        )}
+        {holdDays !== null && trade.status === "closed" && (
+          <Detail label="Hold" value={`${holdDays}d`} />
+        )}
+        {setupName && <Detail label="Setup" value={setupName} />}
       </dl>
+
+      {trade.status === "closed" && (
+        <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Review</h2>
+            <Link
+              href={`/trades/${trade.id}/review`}
+              className="text-sm font-medium text-zinc-900 underline"
+            >
+              {reviewed ? "Edit review" : "Start review →"}
+            </Link>
+          </div>
+          {reviewed ? (
+            <dl className="mt-3 space-y-2 text-sm">
+              {trade.mistakes?.length ? (
+                <div>
+                  <dt className="text-xs text-zinc-400">Mistakes</dt>
+                  <dd>{trade.mistakes.map((m) => MISTAKE_LABELS[m]).join(", ")}</dd>
+                </div>
+              ) : null}
+              <div>
+                <dt className="text-xs text-zinc-400">Quality</dt>
+                <dd>
+                  E{trade.qualityEntry} · X{trade.qualityExit} · M{trade.qualityMgmt}
+                </dd>
+              </div>
+              {trade.lesson && (
+                <div>
+                  <dt className="text-xs text-zinc-400">Lesson</dt>
+                  <dd>{trade.lesson}</dd>
+                </div>
+              )}
+              {trade.actionItem && (
+                <div>
+                  <dt className="text-xs text-zinc-400">Action</dt>
+                  <dd>{trade.actionItem}</dd>
+                </div>
+              )}
+            </dl>
+          ) : (
+            <p className="mt-2 text-sm text-amber-700">Review pending — close the learning loop.</p>
+          )}
+        </section>
+      )}
 
       <a
         href={trade.obsidianNote}

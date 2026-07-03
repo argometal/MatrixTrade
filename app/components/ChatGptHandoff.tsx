@@ -6,6 +6,8 @@ import { buildPacket } from "@/lib/snapshot";
 interface ChatGptHandoffProps {
   fullContext: string;
   fullContextAllClosed: string;
+  unreviewedContext: string;
+  suggestedQuestion: string;
 }
 
 async function copyText(text: string): Promise<boolean> {
@@ -25,13 +27,29 @@ async function copyText(text: string): Promise<boolean> {
   }
 }
 
-export function ChatGptHandoff({ fullContext, fullContextAllClosed }: ChatGptHandoffProps) {
-  const [question, setQuestion] = useState("");
+type Scope = "current" | "all" | "unreviewed";
+
+export function ChatGptHandoff({
+  fullContext,
+  fullContextAllClosed,
+  unreviewedContext,
+  suggestedQuestion,
+}: ChatGptHandoffProps) {
+  const [question, setQuestion] = useState(suggestedQuestion);
+  const [scope, setScope] = useState<Scope>("current");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [screenshots, setScreenshots] = useState("");
-  const [copied, setCopied] = useState<"context" | "contextAll" | "packet" | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
 
-  async function handleCopy(text: string, kind: "context" | "contextAll" | "packet") {
+  const contextByScope: Record<Scope, string> = {
+    current: fullContext,
+    all: fullContextAllClosed,
+    unreviewed: unreviewedContext,
+  };
+
+  const activeContext = contextByScope[scope];
+
+  async function handleCopy(text: string, kind: string) {
     const ok = await copyText(text);
     if (ok) {
       setCopied(kind);
@@ -44,10 +62,10 @@ export function ChatGptHandoff({ fullContext, fullContextAllClosed }: ChatGptHan
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean);
-    handleCopy(buildPacket(fullContext, question, names), "packet");
+    handleCopy(buildPacket(activeContext, question, names), "packet");
   }
 
-  const copyLabel = (kind: "context" | "contextAll" | "packet", defaultLabel: string) =>
+  const copyLabel = (kind: string, defaultLabel: string) =>
     copied === kind ? "Copied!" : defaultLabel;
 
   return (
@@ -55,28 +73,51 @@ export function ChatGptHandoff({ fullContext, fullContextAllClosed }: ChatGptHan
       <div>
         <h2 className="text-lg font-semibold">ChatGPT Handoff</h2>
         <p className="mt-1 text-sm text-zinc-500">
-          One tap copies numbers + your Obsidian analysis (thesis, psychology, lessons). Write
-          analysis in Obsidian — the app pulls it automatically.
+          One tap copies numbers + review metadata + Obsidian analysis. Write long-form notes in
+          Obsidian — the app pulls them automatically.
         </p>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Export scope</p>
+        <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ["current", "Current state"],
+              ["unreviewed", "Unreviewed only"],
+              ["all", "Full cycle"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setScope(value)}
+              className={`rounded-full px-3 py-1 text-sm ${
+                scope === value
+                  ? "bg-zinc-900 text-white"
+                  : "border border-zinc-200 text-zinc-600 hover:border-zinc-400"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-3">
         <button
           type="button"
-          onClick={() => handleCopy(fullContext, "context")}
+          onClick={() => handleCopy(activeContext, "context")}
           className="w-full rounded-md bg-emerald-700 px-4 py-3.5 text-sm font-medium text-white hover:bg-emerald-600 sm:w-auto"
         >
           {copyLabel("context", "Copy Full Context for ChatGPT")}
         </button>
-        <p className="text-xs text-zinc-500">
-          Includes open, pending, and recent closed trades + all notes from Obsidian.
-        </p>
         <details className="rounded-md border border-zinc-200 bg-zinc-50">
           <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-zinc-700">
             Preview what will be copied
           </summary>
           <pre className="max-h-64 overflow-auto border-t border-zinc-200 p-3 text-xs leading-relaxed text-zinc-700">
-            {fullContext}
+            {activeContext}
           </pre>
         </details>
       </div>
@@ -89,7 +130,7 @@ export function ChatGptHandoff({ fullContext, fullContextAllClosed }: ChatGptHan
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           rows={2}
-          placeholder="Leave empty for a default review question, or ask something specific..."
+          placeholder="Suggested question based on your cycle state..."
           className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none"
         />
         <button
@@ -110,27 +151,18 @@ export function ChatGptHandoff({ fullContext, fullContextAllClosed }: ChatGptHan
           {showAdvanced ? "Hide advanced options" : "Advanced options"}
         </button>
         {showAdvanced && (
-          <div className="mt-3 space-y-3">
-            <button
-              type="button"
-              onClick={() => handleCopy(fullContextAllClosed, "contextAll")}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
-            >
-              {copyLabel("contextAll", "Copy with ALL closed trades")}
-            </button>
-            <label className="block space-y-1">
-              <span className="text-sm font-medium text-zinc-700">
-                Screenshot filenames (optional)
-              </span>
-              <textarea
-                value={screenshots}
-                onChange={(e) => setScreenshots(e.target.value)}
-                rows={2}
-                placeholder={"chart-amzn-1h.png"}
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none"
-              />
-            </label>
-          </div>
+          <label className="mt-3 block space-y-1">
+            <span className="text-sm font-medium text-zinc-700">
+              Screenshot filenames (optional)
+            </span>
+            <textarea
+              value={screenshots}
+              onChange={(e) => setScreenshots(e.target.value)}
+              rows={2}
+              placeholder={"chart-amzn-1h.png"}
+              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none"
+            />
+          </label>
         )}
       </div>
     </section>

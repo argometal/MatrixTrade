@@ -1,0 +1,7 @@
+[
+  { "id": "breakout", "name": "Breakout pullback" },
+  { "id": "mean-reversion", "name": "Mean reversion" },
+  { "id": "earnings", "name": "Earnings play" },
+  { "id": "trend", "name": "Trend follow" },
+  { "id": "other", "name": "Other" }
+]

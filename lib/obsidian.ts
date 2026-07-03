@@ -154,8 +154,18 @@ export function serializeTradeFile(trade: Trade, body: string): string {
     `exit: ${serializeValue(trade.exit)}`,
     `createdAt: ${trade.createdAt}`,
     `closedAt: ${serializeValue(trade.closedAt)}`,
-    "---",
   ];
+
+  if (trade.setupId) lines.push(`setupId: ${trade.setupId}`);
+  if (trade.mistakes?.length) lines.push(`mistakes: ${trade.mistakes.join(",")}`);
+  if (trade.qualityEntry) lines.push(`qualityEntry: ${trade.qualityEntry}`);
+  if (trade.qualityExit) lines.push(`qualityExit: ${trade.qualityExit}`);
+  if (trade.qualityMgmt) lines.push(`qualityMgmt: ${trade.qualityMgmt}`);
+  if (trade.reviewedAt) lines.push(`reviewedAt: ${trade.reviewedAt}`);
+  if (trade.lesson) lines.push(`lesson: ${JSON.stringify(trade.lesson)}`);
+  if (trade.actionItem) lines.push(`actionItem: ${JSON.stringify(trade.actionItem)}`);
+
+  lines.push("---");
 
   const trimmedBody = body.trim();
   if (trimmedBody) {

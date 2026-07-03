@@ -10,7 +10,13 @@ function isPublicPath(pathname: string): boolean {
 }
 
 function isTradingRoute(pathname: string): boolean {
-  return pathname === "/" || pathname.startsWith("/trades") || pathname.startsWith("/connect");
+  return (
+    pathname === "/" ||
+    pathname.startsWith("/trades") ||
+    pathname.startsWith("/connect") ||
+    pathname === "/stats" ||
+    pathname === "/mistakes"
+  );
 }
 
 export function middleware(request: NextRequest) {

@@ -1,4 +1,6 @@
 import { calculateTradeResult } from "./calculate";
+import { MISTAKE_LABELS } from "./review";
+import { getSetupName, type Setup } from "./setup-types";
 import type { Experiment, Trade } from "./types";
 
 function formatSigned(value: number): string {
@@ -10,7 +12,7 @@ function formatPrice(value: number): string {
   return value.toFixed(2);
 }
 
-function formatTrade(trade: Trade): string {
+function formatTrade(trade: Trade, setups: Setup[] = []): string {
   const lines: string[] = [];
   lines.push(`${trade.id} ${trade.ticker}`);
   lines.push(`Entry: ${formatPrice(trade.entry)}`);
@@ -24,27 +26,45 @@ function formatTrade(trade: Trade): string {
   }
   lines.push(`Status: ${trade.status}`);
   lines.push(`Stop: ${formatPrice(trade.stop)}`);
+  const setupName = getSetupName(setups, trade.setupId);
+  if (setupName) lines.push(`Setup: ${setupName}`);
+  if (trade.mistakes?.length) {
+    const labels = trade.mistakes.map((m) => MISTAKE_LABELS[m] ?? m).join(", ");
+    lines.push(`Mistakes: ${labels}`);
+  }
+  if (trade.reviewedAt) {
+    lines.push(
+      `Review: E${trade.qualityEntry ?? "—"} X${trade.qualityExit ?? "—"} M${trade.qualityMgmt ?? "—"}`
+    );
+    if (trade.lesson) lines.push(`Lesson: ${trade.lesson}`);
+    if (trade.actionItem) lines.push(`Action: ${trade.actionItem}`);
+  } else if (trade.status === "closed") {
+    lines.push("Review: pending");
+  }
   return lines.join("\n");
 }
 
-function formatSection(title: string, trades: Trade[]): string {
+function formatSection(title: string, trades: Trade[], setups: Setup[] = []): string {
   if (trades.length === 0) {
     return `${title}\n(none)`;
   }
-  return `${title}\n${trades.map(formatTrade).join("\n\n")}`;
+  return `${title}\n${trades.map((t) => formatTrade(t, setups)).join("\n\n")}`;
 }
 
 export interface SnapshotOptions {
   /** Include all closed trades instead of recent only */
   full?: boolean;
   recentClosedLimit?: number;
+  /** Only closed trades without review */
+  unreviewedOnly?: boolean;
+  setups?: Setup[];
 }
 
 export function selectSnapshotTrades(
   trades: Trade[],
   options: SnapshotOptions = {}
 ): { open: Trade[]; pending: Trade[]; closed: Trade[]; totalClosed: number } {
-  const { full = false, recentClosedLimit = 10 } = options;
+  const { full = false, recentClosedLimit = 10, unreviewedOnly = false } = options;
 
   const open = trades
     .filter((t) => t.status === "open")
@@ -54,11 +74,14 @@ export function selectSnapshotTrades(
     .sort((a, b) => a.id.localeCompare(b.id));
 
   let closed = trades.filter((t) => t.status === "closed");
+  if (unreviewedOnly) {
+    closed = closed.filter((t) => !t.reviewedAt);
+  }
   closed.sort((a, b) =>
     (b.closedAt ?? b.createdAt).localeCompare(a.closedAt ?? a.createdAt)
   );
   const totalClosed = closed.length;
-  if (!full && closed.length > recentClosedLimit) {
+  if (!full && !unreviewedOnly && closed.length > recentClosedLimit) {
     closed = closed.slice(0, recentClosedLimit);
   }
   closed.sort((a, b) => a.id.localeCompare(b.id));
@@ -71,14 +94,17 @@ export function buildSnapshot(
   trades: Trade[],
   options: SnapshotOptions = {}
 ): string {
-  const { full = false, recentClosedLimit = 10 } = options;
+  const { full = false, recentClosedLimit = 10, unreviewedOnly = false, setups = [] } = options;
   const today = new Date().toISOString().slice(0, 10);
   const { open, pending, closed, totalClosed } = selectSnapshotTrades(trades, options);
 
-  const closedTitle =
-    full || totalClosed <= recentClosedLimit
+  const closedTitle = unreviewedOnly
+    ? "UNREVIEWED CLOSED TRADES:"
+    : full || totalClosed <= recentClosedLimit
       ? "CLOSED TRADES:"
       : `CLOSED TRADES (recent ${closed.length} of ${totalClosed}):`;
+
+  const unreviewedCount = trades.filter((t) => t.status === "closed" && !t.reviewedAt).length;
 
   return [
     "MATRIX TRADE SNAPSHOT",
@@ -92,13 +118,16 @@ export function buildSnapshot(
     `Closed trades: ${experiment.closedTrades} / ${experiment.maxTrades}`,
     `Wins: ${experiment.wins}`,
     `Losses: ${experiment.losses}`,
+    unreviewedCount > 0 ? `Pending review: ${unreviewedCount}` : "",
     "",
-    formatSection("OPEN TRADES:", open),
+    formatSection("OPEN TRADES:", open, setups),
     "",
-    formatSection("PENDING ORDERS:", pending),
+    formatSection("PENDING ORDERS:", pending, setups),
     "",
-    formatSection(closedTitle, closed),
-  ].join("\n");
+    formatSection(closedTitle, closed, setups),
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function cleanNoteBody(body: string): string {

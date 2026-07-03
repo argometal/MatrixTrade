@@ -10,6 +10,8 @@ import type {
   CreateTradeInput,
   Experiment,
   ExperimentRules,
+  MistakeType,
+  SaveReviewInput,
   Trade,
 } from "./types";
 
@@ -107,6 +109,7 @@ export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Tr
       target: input.target,
       shares: input.shares,
       status: input.status ?? "pending",
+      setupId: input.setupId?.trim() || undefined,
       thesis: input.thesis,
       psychology: input.psychology,
       lessons: input.lessons,
@@ -173,6 +176,67 @@ export async function openTrade(id: string): Promise<{ trade?: Trade; errors?: s
   }
 
   const updated = enrichTrade({ ...trade, status: "open" }, rules);
+  await upsertTradeInJson(updated);
+  await writeTradeFile(
+    { ...updated, obsidianNote: updated.obsidianNote!, notePath: updated.notePath! },
+    rules
+  );
+
+  return { trade: updated };
+}
+
+export async function saveTradeReview(
+  id: string,
+  input: SaveReviewInput
+): Promise<{ trade?: Trade; errors?: string[] }> {
+  const rules = await getRules();
+  const trades = await getTrades();
+  const trade = trades.find((t) => t.id === id.toUpperCase());
+
+  if (!trade) {
+    return { errors: ["Trade not found."] };
+  }
+  if (trade.status !== "closed") {
+    return { errors: ["Only closed trades can be reviewed."] };
+  }
+
+  const rateError = (n: number, field: string) => {
+    if (!Number.isInteger(n) || n < 1 || n > 5) {
+      return `${field} must be between 1 and 5.`;
+    }
+    return null;
+  };
+
+  const errors: string[] = [];
+  const qe = rateError(input.qualityEntry, "Entry quality");
+  const qx = rateError(input.qualityExit, "Exit quality");
+  const qm = rateError(input.qualityMgmt, "Management quality");
+  if (qe) errors.push(qe);
+  if (qx) errors.push(qx);
+  if (qm) errors.push(qm);
+
+  if (errors.length > 0) {
+    return { errors };
+  }
+
+  const mistakes: MistakeType[] = input.mistakes?.length
+    ? input.mistakes.slice(0, 3)
+    : ["none"];
+
+  const updated = enrichTrade(
+    {
+      ...trade,
+      mistakes: [...mistakes],
+      qualityEntry: input.qualityEntry,
+      qualityExit: input.qualityExit,
+      qualityMgmt: input.qualityMgmt,
+      lesson: input.lesson?.trim().slice(0, 280) || undefined,
+      actionItem: input.actionItem?.trim().slice(0, 280) || undefined,
+      reviewedAt: new Date().toISOString(),
+    },
+    rules
+  );
+
   await upsertTradeInJson(updated);
   await writeTradeFile(
     { ...updated, obsidianNote: updated.obsidianNote!, notePath: updated.notePath! },
