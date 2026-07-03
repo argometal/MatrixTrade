@@ -36,7 +36,16 @@ export default {
       const parsed = await new PostalMime().parse(raw);
 
       const attachments = (parsed.attachments ?? []).map((att, index) => {
-        const content = att.content instanceof Uint8Array ? att.content : new Uint8Array(0);
+        let content: Uint8Array;
+        if (att.content instanceof Uint8Array) {
+          content = att.content;
+        } else if (typeof att.content === "string") {
+          content = new TextEncoder().encode(att.content);
+        } else if (att.content instanceof ArrayBuffer) {
+          content = new Uint8Array(att.content);
+        } else {
+          content = new Uint8Array(0);
+        }
         return {
           filename: att.filename ?? att.mimeType ?? `attachment-${index + 1}`,
           contentType: att.mimeType ?? "application/octet-stream",
