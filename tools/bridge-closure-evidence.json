@@ -1,5 +1,5 @@
 {
-  "at": "2026-07-03T05:07:19.634Z",
+  "at": "2026-07-03T05:21:42.051Z",
   "evidence": [
     {
       "step": "GET /",
@@ -34,15 +34,15 @@
       "ok": true,
       "httpStatus": 200,
       "error": null,
-      "snapshotRevisionBefore": 4,
-      "snapshotRevisionAfter": 5,
-      "updatedAt": "2026-07-03T05:07:17.253Z",
+      "snapshotRevisionBefore": 6,
+      "snapshotRevisionAfter": 7,
+      "updatedAt": "2026-07-03T05:21:39.483Z",
       "bridgeConfigured": true
     },
     {
       "step": "H001 in Worker snapshot after sync",
       "ok": true,
-      "snapshotRevision": 5,
+      "snapshotRevision": 7,
       "schemaVersion": 1,
       "h001ReviewedAt": "2026-07-03T04:53:41.835Z",
       "h001Mistakes": [
@@ -54,7 +54,7 @@
       "step": "POST /inbox",
       "ok": true,
       "httpStatus": 201,
-      "inboxItemId": "c1dd2da4-5f9f-4817-9cc0-4f3f00421479",
+      "inboxItemId": "16e8f2b6-05cf-4e32-9a18-a9955a391696",
       "status": "pending"
     },
     {
@@ -62,7 +62,7 @@
       "ok": true,
       "httpStatus": 200,
       "found": true,
-      "inboxItemId": "c1dd2da4-5f9f-4817-9cc0-4f3f00421479"
+      "inboxItemId": "16e8f2b6-05cf-4e32-9a18-a9955a391696"
     },
     {
       "step": "Apply (lib/apply-trading-inbox)",
@@ -86,14 +86,14 @@
       "step": "POST /inbox/{id}/ack",
       "ok": true,
       "httpStatus": 200,
-      "inboxItemId": "c1dd2da4-5f9f-4817-9cc0-4f3f00421479",
-      "body": "{\"ok\":true,\"id\":\"c1dd2da4-5f9f-4817-9cc0-4f3f00421479\",\"status\":\"applied\"}"
+      "inboxItemId": "16e8f2b6-05cf-4e32-9a18-a9955a391696",
+      "body": "{\"ok\":true,\"id\":\"16e8f2b6-05cf-4e32-9a18-a9955a391696\",\"status\":\"applied\"}"
     },
     {
       "step": "Re-sync after apply",
       "ok": true,
       "httpStatus": 200,
-      "snapshotRevision": 6,
+      "snapshotRevision": 8,
       "h001ReviewedAt": "2026-07-03T04:53:41.835Z",
       "h001Lesson": "Wait for weekly close above resistance."
     },

@@ -11,31 +11,35 @@ import {
   publishSnapshotToBridge,
 } from "@/lib/bridge";
 import { nextSnapshotRevision } from "@/lib/snapshot-revision";
+import { appendSyncHistory } from "@/lib/sync-history";
 import { getSetups } from "@/lib/setups";
 import {
   getLocalInboxItem,
   setLocalInboxStatus,
 } from "@/lib/trading-inbox-storage";
-import { createTrade, closeTrade, openTrade, saveTradeReview, getExperiment, getTrades, getRules } from "@/lib/storage";
-import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput } from "@/lib/types";
+import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules } from "@/lib/storage";
+import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
 
 function revalidateTradingPaths() {
   revalidatePath("/");
   revalidatePath("/trades");
   revalidatePath("/stats");
   revalidatePath("/mistakes");
+  revalidatePath("/playbook");
+  revalidatePath("/review");
+  revalidatePath("/journal");
   revalidatePath("/inbox");
-  revalidatePath("/connect");
+  revalidatePath("/system");
 }
 
 export async function syncBridgeFormAction(): Promise<void> {
   await requireTradingSession();
   const result = await syncBridgeAction();
   if ("error" in result) {
-    redirect(`/?syncError=${encodeURIComponent(result.error)}`);
+    redirect(`/system?syncError=${encodeURIComponent(result.error)}`);
   }
   const message = `Snapshot synced (HTTP ${result.httpStatus}) · revision ${result.snapshotRevision} · ${result.updatedAt}`;
-  redirect(`/?syncOk=${encodeURIComponent(message)}`);
+  redirect(`/system?syncOk=${encodeURIComponent(message)}`);
 }
 
 export async function syncBridgeAction(): Promise<
@@ -56,8 +60,23 @@ export async function syncBridgeAction(): Promise<
   revalidateTradingPaths();
 
   if ("error" in result) {
+    await appendSyncHistory({
+      at: new Date().toISOString(),
+      ok: false,
+      httpStatus: result.httpStatus,
+      error: result.error,
+    });
     return result;
   }
+
+  await appendSyncHistory({
+    at: new Date().toISOString(),
+    ok: true,
+    httpStatus: result.httpStatus,
+    snapshotRevision: result.snapshotRevision,
+    updatedAt: result.updatedAt,
+  });
+
   return result;
 }
 
@@ -139,6 +158,11 @@ export async function createTradeAction(formData: FormData): Promise<void> {
     input.setupId = String(setupRaw).trim();
   }
 
+  const playbookRaw = formData.get("playbookId");
+  if (playbookRaw && String(playbookRaw).trim()) {
+    input.playbookId = String(playbookRaw).trim();
+  }
+
   const result = await createTrade(input);
 
   if (result.errors) {
@@ -200,4 +224,42 @@ export async function saveReviewAction(id: string, formData: FormData): Promise<
   revalidateTradingPaths();
   revalidatePath(`/trades/${id}`);
   redirect(`/trades/${id}`);
+}
+
+export async function updateTradeMetaAction(id: string, formData: FormData): Promise<void> {
+  await requireTradingSession();
+
+  const directionRaw = String(formData.get("direction") ?? "").trim();
+  const input: TradeMetaInput = {
+    playbookId: String(formData.get("playbookId") ?? ""),
+    setupId: String(formData.get("setupId") ?? ""),
+    setup: String(formData.get("setup") ?? "").trim() || undefined,
+    direction: directionRaw === "long" || directionRaw === "short" ? directionRaw : undefined,
+  };
+
+  const plannedRisk = formData.get("plannedRisk");
+  if (plannedRisk && String(plannedRisk).trim()) {
+    input.plannedRisk = Number(plannedRisk);
+  }
+  const actualRisk = formData.get("actualRisk");
+  if (actualRisk && String(actualRisk).trim()) {
+    input.actualRisk = Number(actualRisk);
+  }
+  const rrPlanned = formData.get("riskRewardPlanned");
+  if (rrPlanned && String(rrPlanned).trim()) {
+    input.riskRewardPlanned = Number(rrPlanned);
+  }
+  const rrActual = formData.get("riskRewardActual");
+  if (rrActual && String(rrActual).trim()) {
+    input.riskRewardActual = Number(rrActual);
+  }
+
+  const result = await updateTradeMeta(id, input);
+  if (result.errors) {
+    return;
+  }
+
+  revalidateTradingPaths();
+  revalidatePath(`/trades/${id}`);
+  redirect(`/trades/${id}?metaOk=${encodeURIComponent("Trade updated")}`);
 }

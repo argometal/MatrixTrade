@@ -62,14 +62,18 @@ export interface MistakeStat {
   count: number;
   totalCost: number;
   avgCost: number;
+  worstTrade: { id: string; ticker: string; pnl: number } | null;
 }
 
 export function computeMistakeStats(trades: Trade[]): MistakeStat[] {
-  const totals = new Map<MistakeType, { count: number; cost: number }>();
+  const totals = new Map<
+    MistakeType,
+    { count: number; cost: number; worst: { id: string; ticker: string; pnl: number } | null }
+  >();
 
   for (const type of MISTAKE_TYPES) {
     if (type === "none") continue;
-    totals.set(type, { count: 0, cost: 0 });
+    totals.set(type, { count: 0, cost: 0, worst: null });
   }
 
   for (const trade of trades) {
@@ -80,19 +84,25 @@ export function computeMistakeStats(trades: Trade[]): MistakeStat[] {
       const row = totals.get(mistake);
       if (!row) continue;
       row.count += 1;
-      if (pnl < 0) row.cost += pnl;
+      if (pnl < 0) {
+        row.cost += pnl;
+        if (!row.worst || pnl < row.worst.pnl) {
+          row.worst = { id: trade.id, ticker: trade.ticker, pnl };
+        }
+      }
     }
   }
 
   return MISTAKE_TYPES.filter((id) => id !== "none")
     .map((id) => {
-      const row = totals.get(id) ?? { count: 0, cost: 0 };
+      const row = totals.get(id) ?? { count: 0, cost: 0, worst: null };
       return {
         id,
         label: MISTAKE_LABELS[id],
         count: row.count,
         totalCost: row.cost,
         avgCost: row.count > 0 ? row.cost / row.count : 0,
+        worstTrade: row.worst,
       };
     })
     .filter((s) => s.count > 0)

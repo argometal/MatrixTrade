@@ -3,26 +3,32 @@ import { SignOutButton } from "@/app/components/SignOutButton";
 
 export function TradingNav() {
   return (
-    <nav className="mb-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-zinc-200 pb-4 text-sm font-medium sm:mb-8">
+    <nav className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-zinc-200 pb-4 text-sm font-medium sm:mb-8">
       <Link href="/" className="hover:text-zinc-600">
         Dashboard
       </Link>
       <Link href="/trades" className="hover:text-zinc-600">
         Trades
       </Link>
-      <Link href="/inbox" className="hover:text-zinc-600">
-        Inbox
+      <Link href="/playbook" className="hover:text-zinc-600">
+        Playbook
+      </Link>
+      <Link href="/review" className="hover:text-zinc-600">
+        Review
       </Link>
       <Link href="/stats" className="hover:text-zinc-600">
-        Stats
+        Statistics
       </Link>
-      <Link href="/mistakes" className="hover:text-zinc-600">
-        Mistakes
+      <Link href="/journal" className="hover:text-zinc-600">
+        Journal
       </Link>
-      <Link href="/connect" className="hover:text-zinc-600">
-        Connect
+      <Link href="/system" className="hover:text-zinc-600">
+        System
       </Link>
-      <Link href="/trades/new" className="hover:text-zinc-600">
+      <Link
+        href="/trades/new"
+        className="rounded-md bg-zinc-900 px-3 py-1.5 text-white hover:bg-zinc-800"
+      >
         New trade
       </Link>
       <SignOutButton className="ml-auto text-sm font-medium text-zinc-500 hover:text-zinc-800" />

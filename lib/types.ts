@@ -9,6 +9,8 @@ export type MistakeType =
   | "revenge"
   | "none";
 
+export type TradeDirection = "long" | "short";
+
 export interface Trade {
   id: string;
   ticker: string;
@@ -20,8 +22,17 @@ export interface Trade {
   status: TradeStatus;
   createdAt: string;
   closedAt?: string;
-  /** Playbook reference — data/setups.json */
+  /** Legacy setup tag — data/setups.json */
   setupId?: string;
+  /** Playbook lab — data/playbooks.json */
+  playbookId?: string;
+  /** Free-text setup note (optional) */
+  setup?: string;
+  direction?: TradeDirection;
+  plannedRisk?: number;
+  actualRisk?: number;
+  riskRewardPlanned?: number;
+  riskRewardActual?: number;
   /** Post-close review metadata */
   mistakes?: MistakeType[];
   qualityEntry?: number;
@@ -69,6 +80,17 @@ export interface Experiment {
   losses: number;
 }
 
+export interface TradeMetaInput {
+  playbookId?: string;
+  setup?: string;
+  direction?: TradeDirection;
+  plannedRisk?: number;
+  actualRisk?: number;
+  riskRewardPlanned?: number;
+  riskRewardActual?: number;
+  setupId?: string;
+}
+
 export interface CreateTradeInput {
   id: string;
   ticker: string;
@@ -77,6 +99,13 @@ export interface CreateTradeInput {
   shares: number;
   target?: number;
   setupId?: string;
+  playbookId?: string;
+  setup?: string;
+  direction?: TradeDirection;
+  plannedRisk?: number;
+  actualRisk?: number;
+  riskRewardPlanned?: number;
+  riskRewardActual?: number;
   status?: TradeStatus;
   thesis?: string;
   psychology?: string;
@@ -84,7 +113,7 @@ export interface CreateTradeInput {
   notes?: string;
 }
 
-export interface UpdateTradeInput {
+export interface UpdateTradeInput extends TradeMetaInput {
   ticker?: string;
   entry?: number;
   exit?: number;

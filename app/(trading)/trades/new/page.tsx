@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { createTradeAction } from "@/app/actions";
+import { getPlaybooks } from "@/lib/playbooks";
 import { getSetups } from "@/lib/setups";
 
 export default async function NewTradePage() {
-  const setups = await getSetups();
+  const [setups, playbooks] = await Promise.all([getSetups(), getPlaybooks()]);
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
@@ -24,7 +25,23 @@ export default async function NewTradePage() {
         <Field label="Shares" name="shares" type="number" step="1" min="1" required />
 
         <label className="block text-sm">
-          <span className="font-medium text-zinc-700">Setup (optional)</span>
+          <span className="font-medium text-zinc-700">Playbook (optional)</span>
+          <select
+            name="playbookId"
+            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+            defaultValue=""
+          >
+            <option value="">— Assign later —</option>
+            {playbooks.map((pb) => (
+              <option key={pb.id} value={pb.id}>
+                {pb.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block text-sm">
+          <span className="font-medium text-zinc-700">Setup tag (optional)</span>
           <select
             name="setupId"
             className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"

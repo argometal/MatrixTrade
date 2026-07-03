@@ -10,14 +10,20 @@ function formatUsd(value: number): string {
 export default async function MistakesPage() {
   const trades = await getTrades();
   const stats = computeMistakeStats(trades);
+  const totalCost = stats.reduce((sum, row) => sum + row.totalCost, 0);
 
   return (
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-semibold">Mistakes</h1>
         <p className="text-sm text-zinc-500">
-          Cost in USD from losing trades tagged in review. Click a row to see trades.
+          What errors cost you money — tagged in trade reviews.
         </p>
+        {stats.length > 0 && (
+          <p className="mt-1 text-sm font-medium text-red-700">
+            Total P/L impact: {formatUsd(totalCost)}
+          </p>
+        )}
       </header>
 
       {stats.length === 0 ? (
@@ -31,8 +37,9 @@ export default async function MistakesPage() {
               <tr>
                 <th className="px-4 py-3 font-medium">Mistake</th>
                 <th className="px-4 py-3 font-medium">Count</th>
-                <th className="px-4 py-3 font-medium">Total cost</th>
-                <th className="px-4 py-3 font-medium">Avg / trade</th>
+                <th className="px-4 py-3 font-medium">P/L impact</th>
+                <th className="px-4 py-3 font-medium">Avg loss</th>
+                <th className="px-4 py-3 font-medium">Worst trade</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
@@ -40,8 +47,25 @@ export default async function MistakesPage() {
                 <tr key={row.id} className="hover:bg-zinc-50">
                   <td className="px-4 py-3 font-medium">{row.label}</td>
                   <td className="px-4 py-3">{row.count}</td>
-                  <td className="px-4 py-3 tabular-nums text-red-600">{formatUsd(row.totalCost)}</td>
+                  <td className="px-4 py-3 tabular-nums text-red-600">
+                    {formatUsd(row.totalCost)}
+                  </td>
                   <td className="px-4 py-3 tabular-nums">{formatUsd(row.avgCost)}</td>
+                  <td className="px-4 py-3">
+                    {row.worstTrade ? (
+                      <Link
+                        href={`/trades/${row.worstTrade.id}`}
+                        className="hover:underline"
+                      >
+                        {row.worstTrade.id} {row.worstTrade.ticker}{" "}
+                        <span className="tabular-nums text-red-600">
+                          {formatUsd(row.worstTrade.pnl)}
+                        </span>
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -51,7 +75,7 @@ export default async function MistakesPage() {
 
       <section className="space-y-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
-          Trades by mistake
+          Related trades
         </h2>
         <ul className="space-y-3 text-sm">
           {stats.map((row) => {
@@ -76,9 +100,17 @@ export default async function MistakesPage() {
         </ul>
       </section>
 
-      <Link href="/stats" className="text-sm text-zinc-600 hover:underline">
-        ← Statistics
-      </Link>
+      <nav className="flex gap-4 text-sm">
+        <Link href="/stats" className="text-zinc-600 hover:underline">
+          ← Statistics
+        </Link>
+        <Link href="/playbook" className="text-zinc-600 hover:underline">
+          Playbook Lab
+        </Link>
+        <Link href="/journal" className="text-zinc-600 hover:underline">
+          Journal
+        </Link>
+      </nav>
     </div>
   );
 }

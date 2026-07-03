@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getExperiment, getTrades } from "@/lib/storage";
 import { calculateTradeResult } from "@/lib/calculate";
 import { isTradeReviewed } from "@/lib/review";
+import { getPlaybookName, getPlaybooks } from "@/lib/playbooks";
 
 function formatUsd(value: number): string {
   const sign = value >= 0 ? "+" : "";
@@ -15,7 +16,11 @@ const statusStyles: Record<string, string> = {
 };
 
 export default async function TradesPage() {
-  const [trades, experiment] = await Promise.all([getTrades(), getExperiment()]);
+  const [trades, experiment, playbooks] = await Promise.all([
+    getTrades(),
+    getExperiment(),
+    getPlaybooks(),
+  ]);
 
   const sorted = [...trades].sort((a, b) => a.id.localeCompare(b.id));
 
@@ -51,6 +56,7 @@ export default async function TradesPage() {
                 <th className="px-4 py-3 font-medium">ID</th>
                 <th className="px-4 py-3 font-medium">Ticker</th>
                 <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Playbook</th>
                 <th className="px-4 py-3 font-medium">Review</th>
                 <th className="px-4 py-3 font-medium">Entry</th>
                 <th className="px-4 py-3 font-medium">Exit</th>
@@ -62,6 +68,7 @@ export default async function TradesPage() {
               {sorted.map((trade) => {
                 const result = calculateTradeResult(trade);
                 const reviewed = isTradeReviewed(trade);
+                const playbookName = getPlaybookName(playbooks, trade.playbookId);
                 return (
                   <tr key={trade.id} className="hover:bg-zinc-50">
                     <td className="px-4 py-3 font-medium">
@@ -78,6 +85,11 @@ export default async function TradesPage() {
                         <span className="ml-2 text-xs text-amber-600" title="Closed without exit in frontmatter">
                           ⚠
                         </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-zinc-600">
+                      {playbookName ?? (
+                        <span className="text-zinc-400">Unassigned</span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs">

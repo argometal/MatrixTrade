@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { closeTradeAction, openTradeAction } from "@/app/actions";
+import { closeTradeAction, openTradeAction, updateTradeMetaAction } from "@/app/actions";
 import { calculateTradeResult } from "@/lib/calculate";
 import {
   computeHoldDays,
@@ -9,6 +9,7 @@ import {
   isTradeReviewed,
   MISTAKE_LABELS,
 } from "@/lib/review";
+import { getPlaybookName, getPlaybooks } from "@/lib/playbooks";
 import { getSetupName, getSetups } from "@/lib/setups";
 import { getExperiment, getTrades } from "@/lib/storage";
 
@@ -19,15 +20,19 @@ function formatUsd(value: number): string {
 
 export default async function TradeDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ metaOk?: string }>;
 }) {
   const { id } = await params;
+  const query = await searchParams;
   const tradeId = id.toUpperCase();
-  const [trades, experiment, setups] = await Promise.all([
+  const [trades, experiment, setups, playbooks] = await Promise.all([
     getTrades(),
     getExperiment(),
     getSetups(),
+    getPlaybooks(),
   ]);
   const trade = trades.find((t) => t.id === tradeId);
 
@@ -38,10 +43,16 @@ export default async function TradeDetailPage({
   const risk = computeRiskAmount(trade);
   const holdDays = computeHoldDays(trade);
   const setupName = getSetupName(setups, trade.setupId);
+  const playbookName = getPlaybookName(playbooks, trade.playbookId);
   const reviewed = isTradeReviewed(trade);
 
   return (
     <div className="mx-auto max-w-lg space-y-6">
+      {query.metaOk && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          ✓ {decodeURIComponent(query.metaOk)}
+        </div>
+      )}
       <header>
         <Link href="/trades" className="text-sm text-zinc-500 hover:underline">
           ← Back to trades
@@ -73,7 +84,84 @@ export default async function TradeDetailPage({
           <Detail label="Hold" value={`${holdDays}d`} />
         )}
         {setupName && <Detail label="Setup" value={setupName} />}
+        <Detail label="Playbook" value={playbookName ?? "Unassigned"} />
+        {trade.direction && <Detail label="Direction" value={trade.direction} />}
       </dl>
+
+      <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          Assign playbook
+        </h2>
+        <p className="mt-1 text-xs text-zinc-500">
+          Manual assignment — optional risk fields for later analysis.
+        </p>
+        <form action={updateTradeMetaAction.bind(null, trade.id)} className="mt-3 space-y-3">
+          <label className="block text-sm">
+            <span className="font-medium">Playbook</span>
+            <select
+              name="playbookId"
+              defaultValue={trade.playbookId ?? "__none__"}
+              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            >
+              <option value="__none__">Unassigned</option>
+              {playbooks.map((pb) => (
+                <option key={pb.id} value={pb.id}>
+                  {pb.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium">Setup tag</span>
+            <select
+              name="setupId"
+              defaultValue={trade.setupId ?? "__none__"}
+              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            >
+              <option value="__none__">— None —</option>
+              {setups.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium">Setup note</span>
+            <input
+              name="setup"
+              type="text"
+              defaultValue={trade.setup ?? ""}
+              placeholder="Optional free-text setup description"
+              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium">Direction</span>
+            <select
+              name="direction"
+              defaultValue={trade.direction ?? ""}
+              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            >
+              <option value="">—</option>
+              <option value="long">Long</option>
+              <option value="short">Short</option>
+            </select>
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <OptionalField label="Planned risk ($)" name="plannedRisk" defaultValue={trade.plannedRisk} />
+            <OptionalField label="Actual risk ($)" name="actualRisk" defaultValue={trade.actualRisk} />
+            <OptionalField label="R:R planned" name="riskRewardPlanned" defaultValue={trade.riskRewardPlanned} />
+            <OptionalField label="R:R actual" name="riskRewardActual" defaultValue={trade.riskRewardActual} />
+          </div>
+          <button
+            type="submit"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+          >
+            Save assignment
+          </button>
+        </form>
+      </section>
 
       {trade.status === "closed" && (
         <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
@@ -183,5 +271,28 @@ function Detail({ label, value }: { label: string; value: string }) {
       <dt className="text-xs uppercase tracking-wide text-zinc-400">{label}</dt>
       <dd className="mt-0.5 font-medium tabular-nums">{value}</dd>
     </div>
+  );
+}
+
+function OptionalField({
+  label,
+  name,
+  defaultValue,
+}: {
+  label: string;
+  name: string;
+  defaultValue?: number;
+}) {
+  return (
+    <label className="block text-sm">
+      <span className="text-xs font-medium text-zinc-600">{label}</span>
+      <input
+        name={name}
+        type="number"
+        step="0.01"
+        defaultValue={defaultValue ?? ""}
+        className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+      />
+    </label>
   );
 }

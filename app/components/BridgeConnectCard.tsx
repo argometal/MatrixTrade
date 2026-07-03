@@ -27,7 +27,7 @@ export async function BridgeConnectCard() {
         <h2 className="text-lg font-semibold">Cloud snapshot QR</h2>
         <p className="mt-1 text-sm text-zinc-600">
           Works on any network. Scan to open the latest published snapshot JSON (read-only). Sync
-          from the dashboard first.
+          from System first.
         </p>
       </div>
       <div className="flex flex-col items-center rounded-lg border border-emerald-200 bg-emerald-50/50 p-4 sm:max-w-sm">

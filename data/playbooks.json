@@ -1,0 +1,15 @@
+[
+  {
+    "id": "weekly-breakout",
+    "name": "Weekly Breakout",
+    "status": "TESTING",
+    "description": "Breakout with higher timeframe confirmation.",
+    "checklist": [
+      "3M trend supports direction",
+      "1M trend supports direction",
+      "1W confirmation",
+      "Entry on daily trigger",
+      "Stop defined before entry"
+    ]
+  }
+]

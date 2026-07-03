@@ -13,6 +13,7 @@ import type {
   MistakeType,
   SaveReviewInput,
   Trade,
+  TradeMetaInput,
 } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -110,6 +111,13 @@ export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Tr
       shares: input.shares,
       status: input.status ?? "pending",
       setupId: input.setupId?.trim() || undefined,
+      playbookId: input.playbookId?.trim() || undefined,
+      setup: input.setup?.trim() || undefined,
+      direction: input.direction,
+      plannedRisk: input.plannedRisk,
+      actualRisk: input.actualRisk,
+      riskRewardPlanned: input.riskRewardPlanned,
+      riskRewardActual: input.riskRewardActual,
       thesis: input.thesis,
       psychology: input.psychology,
       lessons: input.lessons,
@@ -233,6 +241,49 @@ export async function saveTradeReview(
       lesson: input.lesson?.trim().slice(0, 280) || undefined,
       actionItem: input.actionItem?.trim().slice(0, 280) || undefined,
       reviewedAt: new Date().toISOString(),
+    },
+    rules
+  );
+
+  await upsertTradeInJson(updated);
+  await writeTradeFile(
+    { ...updated, obsidianNote: updated.obsidianNote!, notePath: updated.notePath! },
+    rules
+  );
+
+  return { trade: updated };
+}
+
+export async function updateTradeMeta(
+  id: string,
+  input: TradeMetaInput
+): Promise<{ trade?: Trade; errors?: string[] }> {
+  const rules = await getRules();
+  const trades = await getTrades();
+  const trade = trades.find((t) => t.id === id.toUpperCase());
+
+  if (!trade) {
+    return { errors: ["Trade not found."] };
+  }
+
+  const playbookIdRaw = input.playbookId;
+  const updated = enrichTrade(
+    {
+      ...trade,
+      playbookId:
+        playbookIdRaw === "" || playbookIdRaw === "__none__"
+          ? undefined
+          : playbookIdRaw?.trim() || trade.playbookId,
+      setup: input.setup !== undefined ? input.setup.trim() || undefined : trade.setup,
+      setupId:
+        input.setupId === "" || input.setupId === "__none__"
+          ? undefined
+          : input.setupId?.trim() || trade.setupId,
+      direction: input.direction ?? trade.direction,
+      plannedRisk: input.plannedRisk ?? trade.plannedRisk,
+      actualRisk: input.actualRisk ?? trade.actualRisk,
+      riskRewardPlanned: input.riskRewardPlanned ?? trade.riskRewardPlanned,
+      riskRewardActual: input.riskRewardActual ?? trade.riskRewardActual,
     },
     rules
   );
