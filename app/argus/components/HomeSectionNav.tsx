@@ -1,6 +1,8 @@
 "use client";
 
-export type HomeSectionId = "activity" | "followUps" | "inbox" | "network" | "documents";
+import { HOME_DETAIL } from "@/lib/argus/ux-copy";
+
+export type HomeSectionId = "activity" | "followUps" | "inbox" | "projects" | "network" | "documents";
 
 export type HomeSectionNavItem = {
   id: HomeSectionId;
@@ -41,17 +43,19 @@ function NavButton({
       }
     >
       <span className="min-w-0 truncate">{item.label}</span>
-      {showBadge && (
+      {showBadge ? (
         <span
           className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums ${
             item.id === "inbox"
               ? "bg-teal-500/20 text-teal-300"
-              : "bg-amber-500/20 text-amber-300"
+              : item.id === "followUps"
+                ? "bg-amber-500/20 text-amber-300"
+                : "bg-zinc-700/80 text-zinc-300"
           } ${layout === "sidebar" ? "ml-auto" : ""}`}
         >
           {item.badge}
         </span>
-      )}
+      ) : null}
     </button>
   );
 }
@@ -78,11 +82,16 @@ export function HomeSectionNav({
 
       <nav
         aria-label="Home sections"
-        className="mb-0 hidden w-[7.25rem] shrink-0 flex-col gap-1 md:flex"
+        className="mb-0 hidden w-[8.5rem] shrink-0 flex-col md:flex"
       >
-        {items.map((item) => (
-          <NavButton key={item.id} item={item} active={active === item.id} onSelect={onSelect} layout="sidebar" />
-        ))}
+        <p className="mb-2 px-3 text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-600">
+          {HOME_DETAIL.sectionsLabel}
+        </p>
+        <div className="flex flex-col gap-1">
+          {items.map((item) => (
+            <NavButton key={item.id} item={item} active={active === item.id} onSelect={onSelect} layout="sidebar" />
+          ))}
+        </div>
       </nav>
     </>
   );

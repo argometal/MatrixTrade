@@ -54,10 +54,38 @@ export const HOME_SECTIONS = {
   upcomingFollowUps: "Pending follow-ups",
   recentReferences: "Recent networking",
   inbox: "Inbox",
+  projects: "Projects",
   recentDocuments: "Recent documents",
   openItems: "Open items",
   needsReview: "Needs review",
   references: "Networking",
+} as const;
+
+export const HOME_NAV = {
+  activity: "Activity",
+  followUps: "Follow-ups",
+  inbox: "Inbox",
+  projects: "Projects",
+  network: "Network",
+  documents: "Documents",
+} as const;
+
+export const HOME_DETAIL = {
+  sectionsLabel: "Sections",
+  inboxPending: (n: number) => (n === 1 ? "1 pending email" : `${n} pending emails`),
+  followUpPending: (n: number) => (n === 1 ? "1 pending follow-up" : `${n} pending follow-ups`),
+  projectCount: (n: number) => (n === 1 ? "1 project" : `${n} projects`),
+  linkedItems: (n: number) => (n === 1 ? "1 linked item" : `${n} linked items`),
+  activityCount: (n: number) => (n === 1 ? "1 recent update" : `${n} recent updates`),
+  documentCount: (n: number) => (n === 1 ? "1 document" : `${n} documents`),
+} as const;
+
+export const HOME_INBOX_ACTIONS = {
+  assignProject: "Assign to Project",
+  linkContact: "Link Contact",
+  createFollowUp: "Create Follow-up",
+  downloadOriginal: "Download Original",
+  openFullViewer: "Open Full Viewer",
 } as const;
 
 export const NETWORKING = {

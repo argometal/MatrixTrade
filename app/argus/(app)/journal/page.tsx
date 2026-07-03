@@ -2,22 +2,61 @@ import { Suspense } from "react";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { ArgusAppHeader } from "@/app/argus/components/ArgusAppHeader";
-import { JournalHome } from "@/app/argus/components/JournalHome";
+import { JournalHome, type HomeInboxEnriched } from "@/app/argus/components/JournalHome";
+import {
+  attachmentSizeFromStored,
+  buildEmailView,
+  parseStoredEmailPayload,
+  type AttachmentViewModel,
+} from "@/lib/argus/email-view";
+import { buildHomeNetworkSummaries, buildHomeProjectSummaries } from "@/lib/argus/home-helpers";
 import {
   buildEntityPickerBuckets,
   buildTagBuckets,
   getMemoryStream,
   getRecentActivity,
-  getRecentlyAddedEntities,
   getUpcomingReminders,
 } from "@/lib/argus/journal-helpers";
-import { getEntities, getInboxItems, getLogs, readArgus } from "@/lib/argus/server-storage";
-import type { Log } from "@/lib/argus/types";
+import {
+  getAttachment,
+  getEntities,
+  getInboxItems,
+  getLogs,
+  readArgus,
+  readAttachmentBytes,
+} from "@/lib/argus/server-storage";
+import type { InboxItem, Log } from "@/lib/argus/types";
 
 function getRecentDocuments(logs: Log[], limit: number): Log[] {
   return getMemoryStream(
     logs.filter((l) => l.attachmentIds.length > 0),
     limit
+  );
+}
+
+async function buildInboxHomeData(inboxPending: InboxItem[]): Promise<HomeInboxEnriched[]> {
+  return Promise.all(
+    inboxPending.map(async (item) => {
+      const emailView = buildEmailView(item);
+      const stored = parseStoredEmailPayload(item.rawEmail);
+      const attachments = (
+        await Promise.all(
+          item.attachmentIds.map(async (aid) => {
+            const att = await getAttachment(aid);
+            if (!att) return null;
+            const bytes = await readAttachmentBytes(aid);
+            return {
+              id: att.id,
+              fileName: att.fileName,
+              mimeType: att.mimeType,
+              sizeBytes: attachmentSizeFromStored(att.fileName, stored, bytes?.length ?? 0),
+            } satisfies AttachmentViewModel;
+          })
+        )
+      ).filter((a): a is AttachmentViewModel => a !== null);
+
+      return { item, emailView, attachments };
+    })
   );
 }
 
@@ -35,6 +74,10 @@ export default async function JournalPage({
   const buckets = buildEntityPickerBuckets(data, includePrivate);
   const tagBuckets = buildTagBuckets(data, includePrivate);
   const inboxPending = await getInboxItems("pending");
+  const allInbox = data.inboxItems;
+  const inboxEnriched = await buildInboxHomeData(inboxPending);
+  const projects = buildHomeProjectSummaries(entities, logs, allInbox);
+  const networkSummaries = buildHomeNetworkSummaries(data, entities, includePrivate, today, 8);
 
   return (
     <>
@@ -47,9 +90,10 @@ export default async function JournalPage({
         <JournalHome
           recentActivity={getRecentActivity(logs, 8)}
           upcomingFollowUps={getUpcomingReminders(logs, today, 50)}
-          recentEntities={getRecentlyAddedEntities(entities, 6)}
           recentDocuments={getRecentDocuments(logs, 6)}
-          inboxItems={inboxPending}
+          inboxEnriched={inboxEnriched}
+          projects={projects}
+          networkSummaries={networkSummaries}
           entities={entities}
           buckets={buckets}
           tagBuckets={tagBuckets}
