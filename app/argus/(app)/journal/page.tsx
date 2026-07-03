@@ -46,10 +46,10 @@ export default async function JournalPage({
       <Suspense fallback={null}>
         <JournalHome
           recentActivity={getRecentActivity(logs, 8)}
-          upcomingFollowUps={getUpcomingReminders(logs, today, 5)}
+          upcomingFollowUps={getUpcomingReminders(logs, today, 50)}
           recentEntities={getRecentlyAddedEntities(entities, 6)}
           recentDocuments={getRecentDocuments(logs, 6)}
-          inboxItems={inboxPending.slice(0, 4)}
+          inboxItems={inboxPending}
           entities={entities}
           buckets={buckets}
           tagBuckets={tagBuckets}
