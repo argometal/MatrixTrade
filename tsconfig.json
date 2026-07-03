@@ -19,5 +19,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "bridge", "argus-email-bridge", "tools/validate-argus-capture.ts"]
+  "exclude": ["node_modules", "bridge", "argus-email-bridge", "tools/validate-argus-capture.ts", "tools/simulate-email-worker-intake.ts", "tools/validate-supabase-trades.ts"]
 }

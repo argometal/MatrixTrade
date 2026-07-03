@@ -1,9 +1,10 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { computeExperiment } from "./calculate";
-import { readNoteBody, resolveVaultPath, writeTradeFile, buildNoteUri } from "./obsidian";
+import { readNoteBody, resolveVaultPath } from "./obsidian";
+import { syncObsidianTradeIfLocal } from "./obsidian-local";
 import { enrichTrade, absoluteNotePath } from "./trade-links";
-import { readTradesJson, upsertTradeInJson } from "./trades-json";
+import { isSupabaseTradesStore, readTradesJson, upsertTradeInJson } from "./trades-json";
 import { validateCloseTrade, validateCreateTrade } from "./validation";
 import type {
   CloseTradeInput,
@@ -64,7 +65,7 @@ export async function getVaultStatus(): Promise<{
     tradesFolder: rules.tradesFolder,
     vaultName: rules.obsidianVault,
     ready,
-    dataFile: path.join(DATA_DIR, "trades.json"),
+    dataFile: isSupabaseTradesStore() ? "supabase:trades" : path.join(DATA_DIR, "trades.json"),
   };
 }
 
@@ -128,10 +129,7 @@ export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Tr
   );
 
   await upsertTradeInJson(trade);
-  await writeTradeFile(
-    { ...trade, obsidianNote: buildNoteUri(id, ticker, rules), notePath: trade.notePath! },
-    rules
-  );
+  await syncObsidianTradeIfLocal(trade, rules);
 
   return { trade };
 }
@@ -160,10 +158,7 @@ export async function closeTrade(
   );
 
   await upsertTradeInJson(updated);
-  await writeTradeFile(
-    { ...updated, obsidianNote: updated.obsidianNote!, notePath: updated.notePath! },
-    rules
-  );
+  await syncObsidianTradeIfLocal(updated, rules);
 
   return { trade: updated };
 }
@@ -185,10 +180,7 @@ export async function openTrade(id: string): Promise<{ trade?: Trade; errors?: s
 
   const updated = enrichTrade({ ...trade, status: "open" }, rules);
   await upsertTradeInJson(updated);
-  await writeTradeFile(
-    { ...updated, obsidianNote: updated.obsidianNote!, notePath: updated.notePath! },
-    rules
-  );
+  await syncObsidianTradeIfLocal(updated, rules);
 
   return { trade: updated };
 }
@@ -246,10 +238,7 @@ export async function saveTradeReview(
   );
 
   await upsertTradeInJson(updated);
-  await writeTradeFile(
-    { ...updated, obsidianNote: updated.obsidianNote!, notePath: updated.notePath! },
-    rules
-  );
+  await syncObsidianTradeIfLocal(updated, rules);
 
   return { trade: updated };
 }
@@ -289,10 +278,7 @@ export async function updateTradeMeta(
   );
 
   await upsertTradeInJson(updated);
-  await writeTradeFile(
-    { ...updated, obsidianNote: updated.obsidianNote!, notePath: updated.notePath! },
-    rules
-  );
+  await syncObsidianTradeIfLocal(updated, rules);
 
   return { trade: updated };
 }

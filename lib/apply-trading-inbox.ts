@@ -1,4 +1,5 @@
-import { readNoteBody, writeTradeFile } from "./obsidian";
+import { readNoteBody } from "./obsidian";
+import { syncObsidianTradeIfLocal } from "./obsidian-local";
 import { absoluteNotePath } from "./trade-links";
 import {
   parseMistakes,
@@ -112,11 +113,7 @@ async function applyAnalysis(
   const appendix = `\n\n---\n\n## AI import · ${stamp}\n\n${blocks.join("\n\n")}\n`;
   const nextBody = `${body.trim()}${appendix}`;
 
-  await writeTradeFile(
-    { ...trade, obsidianNote: trade.obsidianNote!, notePath: trade.notePath! },
-    rules,
-    nextBody
-  );
+  await syncObsidianTradeIfLocal(trade, rules, nextBody);
 
   return { ok: true, message: `Appended analysis to Obsidian note for ${id}` };
 }
