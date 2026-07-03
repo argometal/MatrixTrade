@@ -29,7 +29,12 @@ function pnlColor(value: number): string {
   return "text-zinc-600";
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ syncOk?: string; syncError?: string }>;
+}) {
+  const syncParams = await searchParams;
   const [experiment, trades, vault, notes, setups, workerInbox] = await Promise.all([
     getExperiment(),
     getTrades(),
@@ -88,7 +93,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <BridgeSyncPanel />
+      <BridgeSyncPanel syncOk={syncParams.syncOk} syncError={syncParams.syncError} />
 
       <MobileAccessBanner />
 

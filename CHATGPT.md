@@ -45,15 +45,42 @@ No ARGUS. Fuente de verdad: data/trades.json + Obsidian local.
 
 ---
 
+## Bridge phase — CLOSED (2026-07-03)
+
+**Criterio de cierre cumplido:** el flujo completo funciona **sin Cursor**:
+
+```text
+ChatGPT → POST Worker /inbox → MatrixTrade /inbox → Apply
+  → data/trades.json + vault/Trades/*.md → POST Worker /inbox/{id}/ack → Sync snapshot
+```
+
+### Reglas post-cierre
+
+1. **Infra cerrada** solo si el flujo anterior funciona end-to-end con el usuario (login → inbox → Apply → Sync).
+2. **Worker:** solo bugfix desde ahora — no agregar features al bridge.
+3. **Siguiente foco (producto, no infra):** modelo de trading, review, mistakes, estadísticas, playbook sobre datos reales.
+4. **Agregar después, no ahora:** `experimentId: "H001-H030-Cycle01"` en snapshot.
+5. **Evidencia de cierre:** reportar `snapshotRevision` antes/después, `inboxItemId`, HTTP status POST `/inbox` y ACK, Obsidian actualizado, H001 en snapshot.
+
+### Snapshot versionado (v1)
+
+| Campo | Uso |
+|-------|-----|
+| `schemaVersion` | `1` — contrato estable |
+| `snapshotRevision` | Entero incremental local (`data/snapshot-revision.json`) — ChatGPT sabe qué versión analiza |
+| `updatedAt` | ISO timestamp del último Sync |
+
+---
+
 ## Current objective
 
 | | |
 |---|---|
-| **Objective** | Close the loop in real use: Sync → ChatGPT reads snapshot → POST proposal → user Apply in `/inbox` |
-| **Phase** | Phase 2 — app wired to Worker + local inbox API |
-| **Next action** | User sets `BRIDGE_*` + `MATRIXTRADE_INBOX_TOKEN` in `.env.local`; redeploy Worker (`bridge/deploy.bat`) for `/inbox/:id/ack`; run one trade-review proposal end-to-end |
-| **Stop condition** | Proposal visible in `/inbox`, Apply updates `data/trades.json` (or Obsidian for `analysis`), Worker item acked |
-| **Do not start yet** | Auto-sync on trade close, MT-IMPORT:v1 text parser, POST /trades direct write |
+| **Objective** | **Producto:** review, mistakes, stats, playbook — sobre datos reales del ciclo H001–H030 |
+| **Phase** | **3 — Bridge cerrado.** Validar snapshot con ChatGPT en uso real |
+| **Next action** | Usuario: login → Sync → ChatGPT lee snapshot → propone JSON → Apply en `/inbox` |
+| **Stop condition** | Un ciclo real completo documentado por el usuario (no por Cursor) |
+| **Do not start yet** | `experimentId`, auto-sync, MT-IMPORT:v1, nuevas rutas Worker |
 
 **Parallel track (ARGUS):** Architecture frozen — **no UX implementation** until [`argus-architecture.md`](md/integrations/argus-architecture.md) + [`argus-design-principles.md`](md/integrations/argus-design-principles.md) are read. Operational handoff: [`argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md).
 

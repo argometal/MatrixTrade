@@ -27,7 +27,7 @@ export default async function TradingInboxPage({
 
       {params.applied && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          {decodeURIComponent(params.applied)}
+          ✓ {decodeURIComponent(params.applied)}
         </div>
       )}
 

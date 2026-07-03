@@ -10,6 +10,7 @@ import {
   fetchBridgeInbox,
   publishSnapshotToBridge,
 } from "@/lib/bridge";
+import { nextSnapshotRevision } from "@/lib/snapshot-revision";
 import { getSetups } from "@/lib/setups";
 import {
   getLocalInboxItem,
@@ -28,10 +29,19 @@ function revalidateTradingPaths() {
 }
 
 export async function syncBridgeFormAction(): Promise<void> {
-  await syncBridgeAction();
+  await requireTradingSession();
+  const result = await syncBridgeAction();
+  if ("error" in result) {
+    redirect(`/?syncError=${encodeURIComponent(result.error)}`);
+  }
+  const message = `Snapshot synced (HTTP ${result.httpStatus}) · revision ${result.snapshotRevision} · ${result.updatedAt}`;
+  redirect(`/?syncOk=${encodeURIComponent(message)}`);
 }
 
-export async function syncBridgeAction(): Promise<{ ok?: boolean; error?: string; updatedAt?: string }> {
+export async function syncBridgeAction(): Promise<
+  | { ok: true; updatedAt: string; snapshotRevision: number; httpStatus: number }
+  | { error: string; httpStatus?: number }
+> {
   await requireTradingSession();
   const [experiment, trades, rules, setups] = await Promise.all([
     getExperiment(),
@@ -40,14 +50,15 @@ export async function syncBridgeAction(): Promise<{ ok?: boolean; error?: string
     getSetups(),
   ]);
 
-  const body = buildBridgeSnapshot(experiment, trades, rules, setups);
+  const snapshotRevision = await nextSnapshotRevision();
+  const body = buildBridgeSnapshot(experiment, trades, rules, setups, snapshotRevision);
   const result = await publishSnapshotToBridge(body);
   revalidateTradingPaths();
 
   if ("error" in result) {
-    return { error: result.error };
+    return result;
   }
-  return { ok: true, updatedAt: result.updatedAt };
+  return result;
 }
 
 export async function applyInboxItemAction(formData: FormData): Promise<void> {
@@ -73,14 +84,20 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
     redirect(`/inbox/${id}?error=${encodeURIComponent(result.errors.join("; "))}`);
   }
 
+  let feedback = `Review applied — ${result.message}`;
+
   if (origin === "worker") {
-    await ackBridgeInboxItem(id, "applied");
+    const ack = await ackBridgeInboxItem(id, "applied");
+    feedback = ack.ok
+      ? `${feedback} · Worker acknowledged (HTTP ${ack.httpStatus})`
+      : `${feedback} · Worker ack failed: ${ack.error ?? "unknown error"}`;
   } else {
     await setLocalInboxStatus(id, "applied");
+    feedback = `${feedback} · Local inbox item marked applied`;
   }
 
   revalidateTradingPaths();
-  redirect(`/inbox?applied=${encodeURIComponent(result.message)}`);
+  redirect(`/inbox?applied=${encodeURIComponent(feedback)}`);
 }
 
 export async function rejectInboxItemAction(formData: FormData): Promise<void> {
@@ -89,13 +106,17 @@ export async function rejectInboxItemAction(formData: FormData): Promise<void> {
   const origin = String(formData.get("origin") ?? "worker");
 
   if (origin === "worker") {
-    await ackBridgeInboxItem(id, "rejected");
+    const ack = await ackBridgeInboxItem(id, "rejected");
+    const msg = ack.ok
+      ? `Inbox item rejected · Worker acknowledged (HTTP ${ack.httpStatus})`
+      : `Inbox item rejected · Worker ack failed: ${ack.error ?? "unknown error"}`;
+    revalidateTradingPaths();
+    redirect(`/inbox?applied=${encodeURIComponent(msg)}`);
   } else {
     await setLocalInboxStatus(id, "rejected");
+    revalidateTradingPaths();
+    redirect(`/inbox?applied=${encodeURIComponent("Inbox item rejected · Local item marked rejected")}`);
   }
-
-  revalidateTradingPaths();
-  redirect("/inbox");
 }
 
 export async function createTradeAction(formData: FormData): Promise<void> {

@@ -25,15 +25,20 @@ export function getBridgeConfig(): BridgeConfig {
   };
 }
 
+export const BRIDGE_SCHEMA_VERSION = 1;
+
 export function buildBridgeSnapshot(
   experiment: Experiment,
   trades: Trade[],
   rules: ExperimentRules,
-  setups: Setup[] = []
+  setups: Setup[] = [],
+  snapshotRevision = 0
 ): Record<string, unknown> {
   const closed = trades.filter((t) => t.status === "closed");
 
   return {
+    schemaVersion: BRIDGE_SCHEMA_VERSION,
+    snapshotRevision,
     updatedAt: new Date().toISOString(),
     rules: {
       cycleLossLimit: rules.cycleLossLimit,
@@ -85,7 +90,10 @@ export interface BridgeInboxItem {
 
 export async function publishSnapshotToBridge(
   body: Record<string, unknown>
-): Promise<{ ok: true; updatedAt: string } | { error: string }> {
+): Promise<
+  | { ok: true; updatedAt: string; snapshotRevision: number; httpStatus: number }
+  | { error: string; httpStatus?: number }
+> {
   const { url, writeToken, configured } = getBridgeConfig();
   if (!configured || !writeToken) {
     return { error: "Bridge not configured. Set BRIDGE_WRITE_TOKEN and BRIDGE_READ_TOKEN in .env.local" };
@@ -103,11 +111,21 @@ export async function publishSnapshotToBridge(
 
   if (!response.ok) {
     const text = await response.text();
-    return { error: `Bridge POST /snapshot failed (${response.status}): ${text}` };
+    return {
+      error: `Bridge POST /snapshot failed (${response.status}): ${text}`,
+      httpStatus: response.status,
+    };
   }
 
   const data = (await response.json()) as { updatedAt?: string };
-  return { ok: true, updatedAt: data.updatedAt ?? new Date().toISOString() };
+  const snapshotRevision =
+    typeof body.snapshotRevision === "number" ? body.snapshotRevision : 0;
+  return {
+    ok: true,
+    updatedAt: data.updatedAt ?? String(body.updatedAt ?? new Date().toISOString()),
+    snapshotRevision,
+    httpStatus: response.status,
+  };
 }
 
 export async function fetchBridgeInbox(): Promise<BridgeInboxItem[]> {
@@ -127,9 +145,11 @@ export async function fetchBridgeInbox(): Promise<BridgeInboxItem[]> {
 export async function ackBridgeInboxItem(
   id: string,
   status: "applied" | "rejected"
-): Promise<boolean> {
+): Promise<{ ok: boolean; httpStatus?: number; error?: string }> {
   const { url, writeToken, configured } = getBridgeConfig();
-  if (!configured || !writeToken) return false;
+  if (!configured || !writeToken) {
+    return { ok: false, error: "Bridge not configured" };
+  }
 
   const response = await fetch(`${url}/inbox/${encodeURIComponent(id)}/ack`, {
     method: "POST",
@@ -141,7 +161,16 @@ export async function ackBridgeInboxItem(
     cache: "no-store",
   });
 
-  return response.ok;
+  if (!response.ok) {
+    const text = await response.text();
+    return {
+      ok: false,
+      httpStatus: response.status,
+      error: `Worker ack failed (${response.status}): ${text}`,
+    };
+  }
+
+  return { ok: true, httpStatus: response.status };
 }
 
 export function getSnapshotReadUrl(): string | null {

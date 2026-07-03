@@ -1,0 +1,115 @@
+{
+  "at": "2026-07-03T05:07:19.634Z",
+  "evidence": [
+    {
+      "step": "GET /",
+      "ok": true,
+      "httpStatus": 307,
+      "location": "/login?next=%2F",
+      "note": "auth redirect to login (expected if password set)"
+    },
+    {
+      "step": "GET /inbox",
+      "ok": true,
+      "httpStatus": 307,
+      "location": "/login?next=%2Finbox",
+      "note": "auth redirect to login (expected if password set)"
+    },
+    {
+      "step": "GET /trades",
+      "ok": true,
+      "httpStatus": 307,
+      "location": "/login?next=%2Ftrades",
+      "note": "auth redirect to login (expected if password set)"
+    },
+    {
+      "step": "H001 visible in data/trades.json",
+      "ok": true,
+      "id": "H001",
+      "ticker": "AMZN",
+      "reviewedAt": "2026-07-03T04:53:41.835Z"
+    },
+    {
+      "step": "Sync POST /snapshot",
+      "ok": true,
+      "httpStatus": 200,
+      "error": null,
+      "snapshotRevisionBefore": 4,
+      "snapshotRevisionAfter": 5,
+      "updatedAt": "2026-07-03T05:07:17.253Z",
+      "bridgeConfigured": true
+    },
+    {
+      "step": "H001 in Worker snapshot after sync",
+      "ok": true,
+      "snapshotRevision": 5,
+      "schemaVersion": 1,
+      "h001ReviewedAt": "2026-07-03T04:53:41.835Z",
+      "h001Mistakes": [
+        "fomo",
+        "chased"
+      ]
+    },
+    {
+      "step": "POST /inbox",
+      "ok": true,
+      "httpStatus": 201,
+      "inboxItemId": "c1dd2da4-5f9f-4817-9cc0-4f3f00421479",
+      "status": "pending"
+    },
+    {
+      "step": "GET /inbox pending item",
+      "ok": true,
+      "httpStatus": 200,
+      "found": true,
+      "inboxItemId": "c1dd2da4-5f9f-4817-9cc0-4f3f00421479"
+    },
+    {
+      "step": "Apply (lib/apply-trading-inbox)",
+      "ok": true,
+      "message": "Appended analysis to Obsidian note for H001",
+      "errors": null
+    },
+    {
+      "step": "Obsidian H001-AMZN.md updated",
+      "ok": true,
+      "path": "vault/Trades/H001-AMZN.md",
+      "addedBytes": 181,
+      "containsClosureMarker": true
+    },
+    {
+      "step": "data/trades.json unchanged for analysis apply",
+      "ok": true,
+      "note": "analysis type appends Obsidian only — expected"
+    },
+    {
+      "step": "POST /inbox/{id}/ack",
+      "ok": true,
+      "httpStatus": 200,
+      "inboxItemId": "c1dd2da4-5f9f-4817-9cc0-4f3f00421479",
+      "body": "{\"ok\":true,\"id\":\"c1dd2da4-5f9f-4817-9cc0-4f3f00421479\",\"status\":\"applied\"}"
+    },
+    {
+      "step": "Re-sync after apply",
+      "ok": true,
+      "httpStatus": 200,
+      "snapshotRevision": 6,
+      "h001ReviewedAt": "2026-07-03T04:53:41.835Z",
+      "h001Lesson": "Wait for weekly close above resistance."
+    },
+    {
+      "step": "BRIDGE_PHASE_CLOSURE",
+      "ok": true,
+      "workerUrl": "https://matrixtrade-bridge.argometal.workers.dev",
+      "localUrl": "http://localhost:3000",
+      "routes": [
+        "/",
+        "/inbox",
+        "/trades",
+        "/connect"
+      ],
+      "totalSteps": 13,
+      "failed": []
+    }
+  ]
+}

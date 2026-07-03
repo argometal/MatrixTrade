@@ -1,7 +1,13 @@
 import { syncBridgeFormAction } from "@/app/actions";
 import { getBridgeConfig } from "@/lib/bridge";
 
-export async function BridgeSyncPanel() {
+export function BridgeSyncPanel({
+  syncOk,
+  syncError,
+}: {
+  syncOk?: string;
+  syncError?: string;
+}) {
   const config = getBridgeConfig();
 
   if (!config.configured) {
@@ -21,6 +27,16 @@ export async function BridgeSyncPanel() {
 
   return (
     <section className="rounded-lg border border-zinc-200 bg-white p-4 shadow-sm">
+      {syncOk && (
+        <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          ✓ {decodeURIComponent(syncOk)}
+        </div>
+      )}
+      {syncError && (
+        <div className="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          ✗ Sync failed — {decodeURIComponent(syncError)}
+        </div>
+      )}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
