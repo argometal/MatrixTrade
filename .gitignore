@@ -41,3 +41,6 @@ next-env.d.ts
 # OS / editor
 Thumbs.db
 *.swp
+
+# Chaos — separate repo (c:\Tools\Chaos), coordination only
+/tools/Chaos/
