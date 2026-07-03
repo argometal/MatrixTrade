@@ -283,6 +283,7 @@ export function MemoryComposer({
 
         {linkOpen && (
           <ReferenceLinkPanel
+            open={linkOpen}
             buckets={buckets}
             selectedIds={selectedIds}
             onChange={setSelectedIds}

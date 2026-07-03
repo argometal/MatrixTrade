@@ -107,7 +107,8 @@ export async function createLogAction(formData: FormData): Promise<void> {
   }
 
   revalidateArgus();
-  redirect(`/argus/logs/${log.id}`);
+  const returnTo = String(formData.get("returnTo") ?? "log");
+  redirect(returnTo === "journal" ? "/argus/journal" : `/argus/logs/${log.id}`);
 }
 
 export async function classifyLogAction(formData: FormData): Promise<void> {

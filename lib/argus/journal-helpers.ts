@@ -62,10 +62,6 @@ export function buildEntityPickerBuckets(data: ArgusData, includePrivate: boolea
   };
 }
 
-export function getRecentActivity(logs: Log[], limit: number): Log[] {
-  return [...logs].sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
-}
-
 export function getUpcomingEvents(logs: Log[], today: string, limit: number): Log[] {
   return logs
     .filter((l) => l.kind === "event" && l.date >= today)
@@ -93,6 +89,10 @@ export function autoTitleFromBody(body: string): string {
   if (!line) return "Untitled record";
   if (line.length <= 60) return line;
   return `${line.slice(0, 57)}...`;
+}
+
+export function getRecentActivity(logs: Log[], limit: number): Log[] {
+  return [...logs].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, limit);
 }
 
 export function getMemoryStream(logs: Log[], limit: number): Log[] {

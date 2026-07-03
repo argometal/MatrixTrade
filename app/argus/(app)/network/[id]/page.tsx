@@ -114,7 +114,7 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
       )}
 
       <p className="mt-6 text-center">
-        <Link href={`/argus/journal?intent=evidence&capture=1`} className="text-sm text-teal-500 underline">
+        <Link href="/argus/journal?capture=1" className="text-sm text-teal-500 underline">
           + {ENTITY_PAGE.addDocumentFor(entity.name)}
         </Link>
       </p>

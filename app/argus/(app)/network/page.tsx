@@ -38,7 +38,7 @@ export default async function NetworkPage({
           message={`${REFERENCES.emptyNetwork} ${REFERENCES.emptyNetworkHint}`}
           action={
             <Link
-              href="/argus/journal?capture=1&panel=entity&createEntity=person"
+              href="/argus/journal?capture=1&reference=1"
               className="text-sm font-medium text-teal-500 underline hover:text-teal-400"
             >
               {REFERENCES.createFirst}

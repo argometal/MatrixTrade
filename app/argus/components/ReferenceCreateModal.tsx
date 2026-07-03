@@ -40,7 +40,7 @@ export function ReferenceCreateModal({ open, onCancel, onSave }: ReferenceCreate
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
       <div
         className="w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
         role="dialog"

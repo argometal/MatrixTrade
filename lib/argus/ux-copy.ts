@@ -4,8 +4,24 @@ export const ARGUS_PRODUCT_NAME = "ARGUS";
 export const ARGUS_TAGLINE = "Work Tracker";
 export const ARGUS_SUBTITLE = "Track items, documents, and follow-ups.";
 
+export const CAPTURE = {
+  fab: "Capture",
+  title: "Capture",
+  titlePlaceholder: "Title (optional)",
+  bodyPlaceholder: "What do you need to remember?",
+  reference: "Reference",
+  date: "Date",
+  reminder: "Reminder",
+  attachment: "Attachment",
+  cancel: "Cancel",
+  save: "Save",
+  done: "Done",
+} as const;
+
+/** @deprecated capture-first home — no workflow menu */
 export const HOME_PROMPT = "What do you want to add?";
 
+/** @deprecated use + Capture */
 export const HOME_ACTIONS = {
   newItem: "New item",
   recordUpdate: "Record update",
@@ -14,16 +30,18 @@ export const HOME_ACTIONS = {
 } as const;
 
 export const HOME_EMPTY = {
-  title: "No active items yet.",
-  hint: "Start by adding an item or document.",
+  title: "Nothing captured yet.",
+  hint: "Tap + Capture to write your first note.",
 } as const;
 
 export const HOME_SECTIONS = {
+  recentActivity: "Recent activity",
+  upcomingFollowUps: "Pending follow-ups",
+  recentReferences: "Recent references",
+  inbox: "Inbox",
+  recentDocuments: "Recent documents",
   openItems: "Open items",
   needsReview: "Needs review",
-  recentDocuments: "Recent documents",
-  upcomingFollowUps: "Upcoming reminders",
-  recentReferences: "Recent references",
   references: "References",
 } as const;
 
@@ -70,13 +88,17 @@ export const INBOX = {
 } as const;
 
 export const SECTION_EMPTY = {
+  recentActivity: "No activity yet.",
+  recentActivityHint: "Captured notes appear here.",
   openItems: "No active items yet.",
-  openItemsHint: "Start with New item on Home.",
+  openItemsHint: "Use + Capture on Home.",
   needsReview: "Nothing needs review.",
   documents: "No documents yet.",
-  documentsHint: "Attach your first document from Home.",
-  reminders: "No pending reminders.",
-  remindersHint: "Add a reminder when recording an update.",
+  documentsHint: "Attach files from Capture.",
+  reminders: "No pending follow-ups.",
+  remindersHint: "Set a reminder when capturing.",
+  inbox: "Inbox is empty.",
+  inboxHint: "Incoming items appear here.",
 } as const;
 
 export const REFERENCE_PICKER = {
