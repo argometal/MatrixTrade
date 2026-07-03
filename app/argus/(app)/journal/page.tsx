@@ -5,6 +5,7 @@ import { ArgusAppHeader } from "@/app/argus/components/ArgusAppHeader";
 import { JournalHome } from "@/app/argus/components/JournalHome";
 import {
   buildEntityPickerBuckets,
+  buildTagBuckets,
   getMemoryStream,
   getRecentActivity,
   getRecentlyAddedEntities,
@@ -32,6 +33,7 @@ export default async function JournalPage({
   const logs = await getLogs(includePrivate);
   const data = await readArgus();
   const buckets = buildEntityPickerBuckets(data, includePrivate);
+  const tagBuckets = buildTagBuckets(data, includePrivate);
   const inboxPending = await getInboxItems("pending");
 
   return (
@@ -50,6 +52,7 @@ export default async function JournalPage({
           inboxItems={inboxPending.slice(0, 4)}
           entities={entities}
           buckets={buckets}
+          tagBuckets={tagBuckets}
         />
       </Suspense>
     </>

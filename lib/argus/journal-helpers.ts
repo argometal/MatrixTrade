@@ -62,6 +62,54 @@ export function buildEntityPickerBuckets(data: ArgusData, includePrivate: boolea
   };
 }
 
+export interface TagBuckets {
+  recent: string[];
+  frequent: string[];
+  all: string[];
+}
+
+export function buildTagBuckets(data: ArgusData, includePrivate: boolean): TagBuckets {
+  const visibleLogs = includePrivate ? data.logs : data.logs.filter((l) => !l.private);
+  const counts = new Map<string, number>();
+  const recent: string[] = [];
+  const seenRecent = new Set<string>();
+  const canonical = new Map<string, string>();
+
+  for (const log of [...visibleLogs].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))) {
+    for (const raw of log.topics) {
+      const tag = raw.trim().replace(/\s+/g, " ");
+      if (!tag) continue;
+      const key = tag.toLowerCase();
+      if (!canonical.has(key)) canonical.set(key, tag);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+      if (!seenRecent.has(key)) {
+        seenRecent.add(key);
+        recent.push(canonical.get(key)!);
+      }
+    }
+    if (recent.length >= 12) break;
+  }
+
+  for (const log of visibleLogs) {
+    for (const raw of log.topics) {
+      const tag = raw.trim().replace(/\s+/g, " ");
+      if (!tag) continue;
+      const key = tag.toLowerCase();
+      if (!canonical.has(key)) canonical.set(key, tag);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+
+  const frequent = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([key]) => canonical.get(key)!)
+    .slice(0, 12);
+
+  const all = [...canonical.values()].sort((a, b) => a.localeCompare(b));
+
+  return { recent, frequent, all };
+}
+
 export function getUpcomingEvents(logs: Log[], today: string, limit: number): Log[] {
   return logs
     .filter((l) => l.kind === "event" && l.date >= today)

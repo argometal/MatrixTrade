@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { EntityType } from "@/lib/argus/types";
-import { CAPTURE, REFERENCES } from "@/lib/argus/ux-copy";
+import { CAPTURE, REFERENCES, TAGS } from "@/lib/argus/ux-copy";
 import { AttachmentField } from "./AttachmentField";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
+import { TagPickerModal, type TagBuckets } from "./TagPickerModal";
 
 export interface CaptureInitial {
   body?: string;
@@ -17,6 +18,7 @@ interface CaptureSheetProps {
   open: boolean;
   action: (formData: FormData) => Promise<void>;
   buckets: EntityPickerBuckets;
+  tagBuckets: TagBuckets;
   initial?: CaptureInitial;
   onClose: () => void;
   mode?: "modal" | "embedded";
@@ -51,6 +53,7 @@ export function CaptureSheet({
   open,
   action,
   buckets,
+  tagBuckets,
   initial,
   onClose,
   mode = "modal",
@@ -60,12 +63,14 @@ export function CaptureSheet({
   const [body, setBody] = useState(initial?.body ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
   const [selectedIds, setSelectedIds] = useState<string[]>(initial?.entityIds ?? []);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [eventDate, setEventDate] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
   const [dateOpen, setDateOpen] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(autoOpenReference);
+  const [tagsOpen, setTagsOpen] = useState(false);
   const [quickCreateName, setQuickCreateName] = useState("");
   const [quickCreateType, setQuickCreateType] = useState<EntityType>("person");
   const [quickCreateNotes, setQuickCreateNotes] = useState("");
@@ -75,16 +80,18 @@ export function CaptureSheet({
       setBody(initial?.body ?? "");
       setTitle(initial?.title ?? "");
       setSelectedIds(initial?.entityIds ?? []);
+      setSelectedTags([]);
       setReferenceOpen(autoOpenReference);
+      setTagsOpen(false);
     }
   }, [open, initial?.body, initial?.title, initial?.entityIds, autoOpenReference]);
 
   useEffect(() => {
-    if (open && !referenceOpen) {
+    if (open && !referenceOpen && !tagsOpen) {
       const t = setTimeout(() => bodyRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
-  }, [open, referenceOpen]);
+  }, [open, referenceOpen, tagsOpen]);
 
   if (!open && mode === "modal") return null;
 
@@ -115,6 +122,7 @@ export function CaptureSheet({
       )}
       <input type="hidden" name="eventDate" value={eventDate} />
       <input type="hidden" name="followUpDate" value={followUpDate} />
+      <input type="hidden" name="topics" value={selectedTags.join(", ")} />
       <input type="hidden" name="source" value={initial?.inboxId ? "inbox" : "manual"} />
 
       <input
@@ -139,12 +147,21 @@ export function CaptureSheet({
         </p>
       )}
 
+      {selectedTags.length > 0 && (
+        <p className="mt-1 text-[12px] text-teal-400/90">
+          {TAGS.linkLabel}: {selectedTags.map((t) => `#${t}`).join(", ")}
+        </p>
+      )}
+
       <div className="mt-3 flex flex-wrap gap-2">
         <MetaButton
           active={referenceOpen || selectedIds.length > 0 || Boolean(quickCreateName)}
           onClick={() => setReferenceOpen(true)}
         >
           {CAPTURE.reference}
+        </MetaButton>
+        <MetaButton active={tagsOpen || selectedTags.length > 0} onClick={() => setTagsOpen(true)}>
+          {CAPTURE.tags}
         </MetaButton>
         <MetaButton active={Boolean(eventDate) || dateOpen} onClick={() => setDateOpen((v) => !v)}>
           {CAPTURE.date}
@@ -219,6 +236,14 @@ export function CaptureSheet({
           setQuickCreateType(data.entityType);
           setQuickCreateNotes(data.notes);
         }}
+      />
+
+      <TagPickerModal
+        open={tagsOpen}
+        buckets={tagBuckets}
+        selectedTags={selectedTags}
+        onChange={setSelectedTags}
+        onClose={() => setTagsOpen(false)}
       />
     </form>
   );

@@ -3,7 +3,7 @@ import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { CaptureSheet } from "@/app/argus/components/CaptureSheet";
 import { Card, EmptyState, PageHeader } from "@/app/argus/components/ui";
 import { INBOX_SOURCE_LABELS } from "@/lib/argus/labels";
-import { buildEntityPickerBuckets } from "@/lib/argus/journal-helpers";
+import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
 import { getAttachment, getInboxItem, getLog, readArgus } from "@/lib/argus/server-storage";
 import { archiveInboxAction, convertInboxAction } from "@/app/argus/actions";
 import { INBOX } from "@/lib/argus/ux-copy";
@@ -24,6 +24,7 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
   const includePrivate = await hasArgusPrivateUnlock();
   const data = await readArgus();
   const buckets = buildEntityPickerBuckets(data, includePrivate);
+  const tagBuckets = buildTagBuckets(data, includePrivate);
   const defaultTitle = item.subject || item.rawText.slice(0, 120);
   const defaultBody = item.rawText;
 
@@ -106,6 +107,7 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
             open
             action={convertInboxAction}
             buckets={buckets}
+            tagBuckets={tagBuckets}
             mode="embedded"
             onClose={() => {}}
             initial={{

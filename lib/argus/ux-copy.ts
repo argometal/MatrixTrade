@@ -13,9 +13,24 @@ export const CAPTURE = {
   date: "Date",
   reminder: "Reminder",
   attachment: "Attachment",
+  tags: "Tags",
   cancel: "Cancel",
   save: "Save",
   done: "Done",
+} as const;
+
+export const TAGS = {
+  title: "Tags",
+  linkLabel: "Tagged",
+  createNew: "Create new tag",
+  namePlaceholder: "Tag name",
+  searchPlaceholder: "Search tags…",
+  recent: "Recent",
+  all: "All tags",
+  empty: "No tags yet.",
+  emptyHint: "Create a tag to relate notes.",
+  noResults: "No matching tags.",
+  selected: (n: number, names: string) => `${n} tagged · ${names}`,
 } as const;
 
 /** @deprecated capture-first home — no workflow menu */

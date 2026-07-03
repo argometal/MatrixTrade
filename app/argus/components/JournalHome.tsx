@@ -10,7 +10,8 @@ import { createLogAction } from "@/app/argus/actions";
 import { CaptureFab } from "./CaptureFab";
 import { CaptureSheet } from "./CaptureSheet";
 import { MemoryStreamRow } from "./MemoryStreamRow";
-import type { EntityPickerBuckets } from "./ReferencePickerModal";
+import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
+import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 
 function Section({
   label,
@@ -69,6 +70,7 @@ export function JournalHome({
   inboxItems,
   entities,
   buckets,
+  tagBuckets,
 }: {
   recentActivity: Log[];
   upcomingFollowUps: Log[];
@@ -77,6 +79,7 @@ export function JournalHome({
   inboxItems: InboxItem[];
   entities: Entity[];
   buckets: EntityPickerBuckets;
+  tagBuckets: TagBuckets;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -182,6 +185,7 @@ export function JournalHome({
         open={sheetOpen}
         action={createLogAction}
         buckets={buckets}
+        tagBuckets={tagBuckets}
         onClose={closeCapture}
         autoOpenReference={referenceOpen}
       />
