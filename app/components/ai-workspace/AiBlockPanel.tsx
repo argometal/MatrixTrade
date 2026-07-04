@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { ImportAiBlockActionResult } from "@/app/actions";
+import { AI_BRIDGE_CAPABILITIES, AI_BRIDGE_FLOW } from "@/lib/ai-bridge-types";
 import { sampleTradeAiBlock } from "@/lib/ai-block";
 
 const FLOW_STEPS = [
   "Copy Snapshot",
-  "ChatGPT",
+  "Your AI",
   "Paste AI Block",
   "Import",
   "Inbox",
@@ -76,6 +77,12 @@ export function AiBlockPanel({
 
   return (
     <div className="space-y-5">
+      <p className="text-sm text-zinc-600">
+        AI Bridge is not an AI — it is the structured bridge between MatrixTrade and your external
+        assistant. {AI_BRIDGE_CAPABILITIES}
+      </p>
+      <p className="text-xs text-zinc-500">{AI_BRIDGE_FLOW}</p>
+
       <ol className="flex flex-wrap gap-x-2 gap-y-1 text-sm text-zinc-700">
         {FLOW_STEPS.map((step, index) => (
           <li key={step} className="flex items-center gap-2">
@@ -151,12 +158,12 @@ export function AiBlockPanel({
             onClick={() => setPasteValue(sampleTradeAiBlock())}
             className="rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
           >
-            Load trade
+            Load sample trade-proposal
           </button>
         </div>
         <p className="text-xs text-zinc-500">
-          Supports plain JSON or a ```json fenced block. Types: trade-proposal, trade-close,
-          trade-review, analysis. Not applied automatically.
+          Types with Apply today: trade-proposal, trade-close, trade-review, analysis. Parser-only
+          (Apply pending): trade-update, playbook-create, playbook-update. Never auto-applied.
         </p>
       </form>
     </div>

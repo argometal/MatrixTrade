@@ -1,28 +1,29 @@
+import { AI_BRIDGE_BLOCK_TYPES } from "./ai-bridge-types";
 import { parseTradingInboxPayload, validateProposalPayload } from "./bridge";
 import type { TradingInboxPayload } from "./bridge";
 
-export const AI_BLOCK_TYPES = [
-  "trade-proposal",
-  "trade-close",
-  "trade-review",
-  "analysis",
-] as const;
-
-export type AiBlockType = (typeof AI_BLOCK_TYPES)[number];
+export { AI_BRIDGE_BLOCK_TYPES as AI_BLOCK_TYPES };
+export type AiBlockType = (typeof AI_BRIDGE_BLOCK_TYPES)[number];
 
 export const DEFAULT_AI_BLOCK_REQUEST = `Return ONE AI Block only — plain JSON or a single \`\`\`json fenced block.
 Required shape:
 {
-  "type": "trade-proposal" | "trade-close" | "trade-review" | "analysis",
+  "type": "<block-type>",
   "proposal": { ... }
 }
-Valid types:
-- trade-proposal: new trade (id, ticker, entry, stop, shares required)
-- trade-close: close trade (id, exit required)
-- trade-review: post-close review (id, qualityEntry, qualityExit, qualityMgmt)
-- analysis: Obsidian fields (id + thesis/psychology/lessons/notes)
-If this snapshot is not enough, ask the user for ONE focused follow-up using a single next_focus_suggestions item (ticker, playbook, or review trade_id). Do not ask for multiple.
-Do NOT apply changes. Human imports the block in MatrixTrade → Inbox → Apply.`;
+Block types (Apply ready):
+- trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId
+- trade-close: close trade — id, exit required
+- trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
+- analysis: notes on existing trade — id required; at least one of thesis, psychology, lessons, notes
+Block types (parser only — import OK, Apply pending):
+- trade-update: id required; at least one field to change (entry, stop, target, shares, ticker, thesis, notes, playbookId, setupId, status)
+- playbook-create: name required; optional description, status (TESTING|ACTIVE|RETIRED), checklist[]
+- playbook-update: id required; at least one of name, description, status, checklist
+Rules:
+- Return exactly one block. No arrays of blocks.
+- Do not apply changes — human imports in MatrixTrade AI Bridge → Inbox → Apply.
+- If this snapshot is not enough, ask for ONE next_focus_suggestions item (ticker, playbook, or review trade_id).`;
 
 export function extractJsonFromAiBlock(raw: string): string {
   const trimmed = raw.trim();
@@ -58,7 +59,7 @@ export function parseAiBlock(raw: string):
   if (!inboxPayload) {
     return {
       ok: false,
-      error: `Invalid type. Supported: ${AI_BLOCK_TYPES.join(", ")}`,
+      error: `Invalid type. Supported: ${AI_BRIDGE_BLOCK_TYPES.join(", ")}`,
     };
   }
 

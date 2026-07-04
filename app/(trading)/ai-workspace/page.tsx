@@ -64,17 +64,17 @@ export default async function AiWorkspacePage() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-semibold">AI Workspace</h1>
+        <h1 className="text-2xl font-semibold">AI Bridge</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Production test flow: Copy Snapshot → ChatGPT → Paste AI Block → Import → Inbox → Review
-          → Apply → confirm persisted.
+          Structured bridge to your AI — not an AI itself. Copy Snapshot → your AI → AI Block →
+          Import → Inbox → Apply → confirm persisted.
         </p>
       </header>
 
       <SystemSection
         id="ai-block"
         title="AI Block"
-        description="The only active AI workflow — copy context out, import proposals back."
+        description="Fast AI-assisted actions — copy context out, import proposals back through Inbox."
       >
         <AiBlockPanel snapshotText={snapshotText} importAction={importAiBlockAction} />
       </SystemSection>

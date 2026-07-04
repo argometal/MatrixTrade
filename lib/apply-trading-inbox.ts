@@ -44,6 +44,15 @@ export async function applyTradingProposal(
       return applyTradeReview(parsed);
     case "analysis":
       return applyAnalysis(parsed);
+    case "trade-update":
+    case "playbook-create":
+    case "playbook-update":
+      return {
+        ok: false,
+        errors: [
+          `Block type "${parsed.type}" is supported by the parser; Apply is pending implementation.`,
+        ],
+      };
     default:
       return { ok: false, errors: ["Unsupported proposal type."] };
   }

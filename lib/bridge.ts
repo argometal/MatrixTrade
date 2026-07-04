@@ -187,7 +187,10 @@ export type TradingProposalType =
   | "trade-proposal"
   | "trade-close"
   | "trade-review"
-  | "analysis";
+  | "analysis"
+  | "trade-update"
+  | "playbook-create"
+  | "playbook-update";
 
 export interface TradingInboxPayload {
   type: TradingProposalType;
@@ -204,7 +207,10 @@ export function parseTradingInboxPayload(
     type !== "trade-proposal" &&
     type !== "trade-close" &&
     type !== "trade-review" &&
-    type !== "analysis"
+    type !== "analysis" &&
+    type !== "trade-update" &&
+    type !== "playbook-create" &&
+    type !== "playbook-update"
   ) {
     return null;
   }
@@ -228,7 +234,13 @@ export function describeProposal(payload: TradingInboxPayload): string {
     case "trade-review":
       return `Review ${p.id} · mistakes ${(p.mistakes as string[] | undefined)?.join(", ") ?? "—"}`;
     case "analysis":
-      return `Analysis for ${p.id} · append to Obsidian`;
+      return `Analysis for ${p.id} · notes on trade`;
+    case "trade-update":
+      return `Update trade ${p.id}`;
+    case "playbook-create":
+      return `New playbook · ${p.name ?? "unnamed"}`;
+    case "playbook-update":
+      return `Update playbook ${p.id ?? p.name ?? "—"}`;
     default:
       return payload.type;
   }
@@ -264,6 +276,44 @@ export function validateProposalPayload(
     if (!p.id) errors.push("proposal.id required");
     if (!p.thesis && !p.psychology && !p.lessons && !p.notes) {
       errors.push("At least one of thesis, psychology, lessons, notes required");
+    }
+  }
+
+  if (parsed.type === "trade-update") {
+    if (!p.id) errors.push("proposal.id required");
+    const hasField =
+      p.entry !== undefined ||
+      p.stop !== undefined ||
+      p.target !== undefined ||
+      p.shares !== undefined ||
+      p.ticker !== undefined ||
+      p.thesis !== undefined ||
+      p.psychology !== undefined ||
+      p.lessons !== undefined ||
+      p.notes !== undefined ||
+      p.playbookId !== undefined ||
+      p.setupId !== undefined ||
+      p.status !== undefined;
+    if (!hasField) {
+      errors.push(
+        "At least one field to update required (entry, stop, target, shares, ticker, thesis, notes, playbookId, setupId, status)"
+      );
+    }
+  }
+
+  if (parsed.type === "playbook-create") {
+    if (!p.name || !String(p.name).trim()) errors.push("proposal.name required");
+  }
+
+  if (parsed.type === "playbook-update") {
+    if (!p.id) errors.push("proposal.id required");
+    const hasField =
+      p.name !== undefined ||
+      p.description !== undefined ||
+      p.status !== undefined ||
+      p.checklist !== undefined;
+    if (!hasField) {
+      errors.push("At least one of name, description, status, checklist required");
     }
   }
 

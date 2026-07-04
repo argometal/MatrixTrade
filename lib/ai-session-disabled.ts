@@ -41,7 +41,7 @@ export const AI_SESSION_DISABLED_MESSAGE =
   "AI Session / QR workflow is disabled — blocked by ChatGPT platform capability, not by MatrixTrade.";
 
 export const AI_SESSION_DISABLED_DETAIL =
-  "Supported workflow: Copy Snapshot → ChatGPT → Paste Proposal JSON → Inbox → Apply.";
+  "Supported workflow: Copy Snapshot → your AI → AI Block → Import → Inbox → Apply.";
 
 export function isAiSessionDisabled(): boolean {
   return AI_SESSION_DISABLED;

@@ -9,6 +9,7 @@ import {
   proposalToPreviewJson,
   validateProposalPayload,
 } from "@/lib/bridge";
+import { getApplyStatusLabel, isApplyImplemented } from "@/lib/ai-bridge-types";
 import { getInboxItemById } from "@/lib/trading-inbox-storage";
 
 type InboxDetailSearchParams = {
@@ -100,6 +101,8 @@ export default async function TradingInboxDetailPage({
   const validation = parsed
     ? validateProposalPayload(parsed)
     : { ok: false as const, errors: ["Invalid payload"] };
+  const applyReady = Boolean(parsed && validation.ok && isApplyImplemented(parsed.type));
+  const applyPending = Boolean(parsed && validation.ok && !isApplyImplemented(parsed.type));
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -125,6 +128,9 @@ export default async function TradingInboxDetailPage({
         <p className="mt-2 text-sm">
           {parsed ? describeProposal(parsed) : "Could not parse proposal type."}
         </p>
+        {parsed && validation.ok && (
+          <p className="mt-2 text-xs font-medium text-zinc-600">{getApplyStatusLabel(parsed.type)}</p>
+        )}
         {!validation.ok && (
           <ul className="mt-3 list-inside list-disc text-sm text-amber-700">
             {validation.errors.map((err) => (
@@ -133,6 +139,13 @@ export default async function TradingInboxDetailPage({
           </ul>
         )}
       </section>
+
+      {applyPending && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          Supported by parser · Apply pending — you can import and review this block, but Apply is
+          not implemented yet for type <span className="font-mono">{parsed?.type}</span>.
+        </div>
+      )}
 
       <section className="rounded-lg border border-zinc-200 bg-zinc-50 p-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Payload</h2>
@@ -147,7 +160,7 @@ export default async function TradingInboxDetailPage({
           <input type="hidden" name="origin" value={item.origin} />
           <button
             type="submit"
-            disabled={!validation.ok}
+            disabled={!applyReady}
             className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Apply to MatrixTrade
