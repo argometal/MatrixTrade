@@ -1,0 +1,37 @@
+---
+description: ARGUS Phase 1 development gate — no work outside MOP until complete
+globs: app/argus/**,lib/argus/**,argus-email-bridge/**,app/api/argus/**
+alwaysApply: false
+---
+
+# ARGUS Development Gate
+
+Until **every** Phase 1 item in `md/argus/phase-1-gate.md` is complete and verified end-to-end, **do not add**:
+
+- New features outside the checklist
+- AI, automation, OCR, analytics
+- Dashboards or UI redesigns
+- Supabase or storage-provider changes unless required to complete a checkbox
+
+## Definition of done
+
+A checkbox is complete only when it **works end-to-end** (user action → persisted state → visible result).
+
+## Before any change
+
+1. Name which Phase 1 checkbox(es) the change completes.
+2. If it completes **none**, defer it.
+3. Prefer the **smallest** change that closes one checkbox.
+4. Do not start Phase 2.
+
+## Current blockers (see gate doc for full audit)
+
+- Topic timeline (unified chronological view)
+- Search: email + document
+- Project: edit name, archive
+- Topic: edit, assign to project
+- Person/Project pages: show linked emails
+- Email: link to topic from inbox, archive after classification
+- Usability: no dead records (`needs_classification` loop)
+
+Reference: `md/argus/phase-1-gate.md`
