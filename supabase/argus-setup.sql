@@ -1,11 +1,71 @@
--- ARGUS Rule 0 — Supabase protection
--- PREREQUISITE: argus_journal table must exist (run supabase/argus-journal.sql first).
--- Or run the all-in-one: supabase/argus-setup.sql
--- Adds soft delete, RLS, hard-delete blocks. Safe to re-run (idempotent alters).
+-- ARGUS Supabase — full setup (run this ONCE in Supabase SQL editor)
+-- Order: inbox → journal → protection
+-- Safe to re-run (idempotent).
 
--- ---------------------------------------------------------------------------
--- 1. Soft delete columns
--- ---------------------------------------------------------------------------
+-- =============================================================================
+-- 1. INBOX (argus-inbox.sql)
+-- =============================================================================
+
+create table if not exists public.argus_inbox_items (
+  id text primary key,
+  received_at timestamptz not null,
+  source text not null check (source in ('manual', 'api', 'email', 'file')),
+  raw_text text not null default '',
+  raw_email text,
+  subject text,
+  from_address text,
+  to_address text,
+  attachment_ids text[] not null default '{}',
+  linked_entity_ids text[] not null default '{}',
+  status text not null default 'pending' check (status in ('pending', 'linked', 'converted', 'archived')),
+  converted_log_id text,
+  created_at timestamptz not null default now(),
+  deleted_at timestamptz
+);
+
+create index if not exists argus_inbox_items_status_idx on public.argus_inbox_items (status);
+create index if not exists argus_inbox_items_received_at_idx on public.argus_inbox_items (received_at desc);
+
+create table if not exists public.argus_attachments (
+  id text primary key,
+  file_name text not null,
+  mime_type text not null default 'application/octet-stream',
+  created_at timestamptz not null default now(),
+  parent_type text not null check (parent_type in ('inbox', 'journal')),
+  parent_id text not null,
+  storage_key text not null,
+  deleted_at timestamptz
+);
+
+create index if not exists argus_attachments_parent_idx on public.argus_attachments (parent_type, parent_id);
+
+insert into storage.buckets (id, name, public)
+values ('argus-files', 'argus-files', false)
+on conflict (id) do nothing;
+
+-- =============================================================================
+-- 2. JOURNAL (argus-journal.sql)
+-- =============================================================================
+
+create table if not exists public.argus_journal (
+  id text primary key default 'primary',
+  data jsonb not null default '{"entities":[],"logs":[],"inboxItems":[],"attachments":[],"version":3}'::jsonb,
+  updated_at timestamptz not null default now(),
+  deleted_at timestamptz
+);
+
+create index if not exists argus_journal_updated_at_idx on public.argus_journal (updated_at desc);
+
+insert into public.argus_journal (id, data)
+values (
+  'primary',
+  '{"entities":[],"logs":[],"inboxItems":[],"attachments":[],"version":3}'::jsonb
+)
+on conflict (id) do nothing;
+
+-- =============================================================================
+-- 3. PROTECTION (argus-protection.sql)
+-- =============================================================================
 
 alter table public.argus_inbox_items
   add column if not exists deleted_at timestamptz;
@@ -23,10 +83,6 @@ create index if not exists argus_inbox_items_active_idx
 create index if not exists argus_attachments_active_idx
   on public.argus_attachments (parent_type, parent_id)
   where deleted_at is null;
-
--- ---------------------------------------------------------------------------
--- 2. Block hard DELETE / TRUNCATE (dev bypass: SET argus.allow_hard_delete = on)
--- ---------------------------------------------------------------------------
 
 create or replace function public.argus_prevent_hard_delete()
 returns trigger
@@ -82,11 +138,6 @@ create trigger argus_journal_no_truncate
   before truncate on public.argus_journal
   for each statement execute function public.argus_prevent_truncate();
 
--- ---------------------------------------------------------------------------
--- 3. Row Level Security — block direct anon/authenticated access
---    ARGUS app uses service role on server after cookie auth only.
--- ---------------------------------------------------------------------------
-
 alter table public.argus_inbox_items enable row level security;
 alter table public.argus_attachments enable row level security;
 alter table public.argus_journal enable row level security;
@@ -94,13 +145,6 @@ alter table public.argus_journal enable row level security;
 revoke all on table public.argus_inbox_items from anon, authenticated;
 revoke all on table public.argus_attachments from anon, authenticated;
 revoke all on table public.argus_journal from anon, authenticated;
-
--- No permissive policies for anon/authenticated → denied.
--- service_role bypasses RLS (Supabase default).
-
--- ---------------------------------------------------------------------------
--- 4. Storage bucket — deny public/anon object access
--- ---------------------------------------------------------------------------
 
 drop policy if exists "argus_files_service_only_select" on storage.objects;
 create policy "argus_files_service_only_select"
@@ -121,3 +165,5 @@ drop policy if exists "argus_files_service_only_delete" on storage.objects;
 create policy "argus_files_service_only_delete"
   on storage.objects for delete
   using (bucket_id = 'argus-files' and auth.role() = 'service_role');
+
+select 'ARGUS setup complete: argus_inbox_items, argus_attachments, argus_journal, protection applied.' as status;

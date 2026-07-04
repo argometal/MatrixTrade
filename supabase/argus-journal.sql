@@ -9,3 +9,10 @@ create table if not exists public.argus_journal (
 );
 
 create index if not exists argus_journal_updated_at_idx on public.argus_journal (updated_at desc);
+
+insert into public.argus_journal (id, data)
+values (
+  'primary',
+  '{"entities":[],"logs":[],"inboxItems":[],"attachments":[],"version":3}'::jsonb
+)
+on conflict (id) do nothing;
