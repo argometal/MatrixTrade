@@ -1,0 +1,6 @@
+tunnel: c55d060c-a0c6-4b86-ab9f-1cdc87e7323e
+
+ingress:
+  - hostname: intake.argometal.dev
+    service: http://localhost:3002
+  - service: http_status:404

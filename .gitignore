@@ -21,8 +21,9 @@
 npm-debug.log*
 .env*.local
 
-# Cloudflare bridge (local only)
-/bridge/node_modules/
+/argus-email-bridge/node_modules/
+/argus-email-bridge/cloudflared/*.json
+/argus-email-bridge/cloudflared/*.token
 /bridge/.wrangler/
 /bridge/.dev.vars
 
