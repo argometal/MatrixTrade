@@ -197,7 +197,7 @@ async function main() {
     const log = await createLog({
       title: `PHASE0-log-${stamp}`,
       body,
-      kind: "note",
+      kind: "log",
       date: new Date().toISOString().slice(0, 10),
       entityIds: createdEntityIds.slice(0, 1),
       classificationStatus: "classified",
