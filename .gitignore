@@ -41,6 +41,7 @@ Chaos.bundle
 
 # Trading live data (seed to Supabase — see md/integrations/supabase-cloud-first.md)
 /data/trades.json
+/data/ai-notes.json
 
 # OS / editor
 Thumbs.db

@@ -17,6 +17,8 @@ import {
   getLocalInboxItem,
   setLocalInboxStatus,
 } from "@/lib/trading-inbox-storage";
+import { createAiNotes } from "@/lib/ai-notes";
+import { parseAiNotesPaste } from "@/lib/ai-notes-parse";
 import {
   aiSessionDisabledActionError,
   isAiSessionDisabled,
@@ -31,6 +33,8 @@ import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, g
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
 
 // DISABLED BY DESIGN — see lib/ai-session-disabled.ts (AI Session server actions)
+
+export type SaveAiNotesActionResult = { count: number } | { error: string };
 
 export type CreateAiSessionActionResult =
   | { token: string; connectUrl: string; qrDataUrl: string }
@@ -47,6 +51,38 @@ function revalidateTradingPaths() {
   revalidatePath("/ai-workspace");
   revalidatePath("/inbox");
   revalidatePath("/system");
+}
+
+export async function saveAiNotesAction(formData: FormData): Promise<SaveAiNotesActionResult> {
+  await requireTradingSession();
+
+  const pasteJson = String(formData.get("pasteJson") ?? "");
+  const revisionRaw = Number(formData.get("snapshotRevision"));
+  const snapshotRevision = Number.isFinite(revisionRaw) ? revisionRaw : 0;
+
+  const parsed = parseAiNotesPaste(pasteJson);
+  if (!parsed.ok) {
+    return { error: parsed.error };
+  }
+
+  try {
+    await createAiNotes(
+      parsed.notes.map((note) => ({
+        tradeId: note.tradeId,
+        snapshotRevision,
+        date: note.date,
+        noteType: note.noteType,
+        body: note.body,
+        proposalJson: note.proposalJson,
+      }))
+    );
+    revalidatePath("/ai-workspace");
+    return { count: parsed.notes.length };
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Failed to save AI notes",
+    };
+  }
 }
 
 export async function createAiSessionAction(

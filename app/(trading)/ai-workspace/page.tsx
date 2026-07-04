@@ -1,9 +1,16 @@
 import Link from "next/link";
-import { QuickConnectPanel } from "@/app/components/ai-workspace/QuickConnectPanel";
+import { saveAiNotesAction } from "@/app/actions";
 import { ContextHandoffPanel } from "@/app/components/ai-workspace/ContextHandoffPanel";
+import { PasteAiNotesPanel } from "@/app/components/ai-workspace/PasteAiNotesPanel";
+import { QuickConnectPanel } from "@/app/components/ai-workspace/QuickConnectPanel";
+import { SectionedSnapshotPanel } from "@/app/components/ai-workspace/SectionedSnapshotPanel";
 import { SystemSection } from "@/app/components/system/SystemSection";
+import { listAiNotes } from "@/lib/ai-notes";
 import { fetchBridgeInbox, getBridgeConfig, getSnapshotReadUrl } from "@/lib/bridge";
+import { getPlaybooks } from "@/lib/playbooks";
 import { createQrDataUrl } from "@/lib/qr";
+import { computeMistakeStats, suggestExportQuestion } from "@/lib/review";
+import { buildSectionedSnapshot } from "@/lib/sectioned-snapshot";
 import { buildFullContext } from "@/lib/snapshot";
 import { getSnapshotRevisionState } from "@/lib/snapshot-revision-read";
 import { getSyncHistory } from "@/lib/sync-history";
@@ -11,7 +18,6 @@ import { ANALYSIS_TEMPLATES } from "@/lib/ai-workspace";
 import { checkWorkerReachable } from "@/lib/system-status";
 import { getSetups } from "@/lib/setups";
 import { describeProposal, parseTradingInboxPayload } from "@/lib/bridge";
-import { computeMistakeStats, suggestExportQuestion } from "@/lib/review";
 import { listAllPendingInboxItems } from "@/lib/trading-inbox-storage";
 import { getExperiment, getTrades, getTradeNotes } from "@/lib/storage";
 
@@ -22,20 +28,26 @@ export default async function AiWorkspacePage() {
     trades,
     notes,
     setups,
+    playbooks,
     revision,
     workerStatus,
     workerInbox,
     syncHistory,
+    aiNotes,
   ] = await Promise.all([
     getExperiment(),
     getTrades(),
     getTradeNotes(),
     getSetups(),
+    getPlaybooks(),
     getSnapshotRevisionState(),
     checkWorkerReachable(),
     fetchBridgeInbox(),
     getSyncHistory(),
+    listAiNotes(30),
   ]);
+
+  const snapshotRevision = workerStatus.snapshotRevision ?? revision?.revision ?? 0;
 
   const snapshotUrl = getSnapshotReadUrl();
   const snapshotQrDataUrl = snapshotUrl ? await createQrDataUrl(snapshotUrl) : null;
@@ -48,6 +60,26 @@ export default async function AiWorkspacePage() {
     unreviewedOnly: true,
     setups,
   });
+
+  const sectionedBase = {
+    experiment,
+    trades,
+    setups,
+    playbooks,
+    snapshotRevision,
+    priorAiNotes: aiNotes,
+  };
+
+  const sectionedCurrent = buildSectionedSnapshot({ ...sectionedBase, options: snapshotOpts });
+  const sectionedAll = buildSectionedSnapshot({
+    ...sectionedBase,
+    options: { full: true, setups },
+  });
+  const sectionedUnreviewed = buildSectionedSnapshot({
+    ...sectionedBase,
+    options: { unreviewedOnly: true, setups },
+  });
+
   const mistakeStats = computeMistakeStats(trades);
   const suggestedQuestion = suggestExportQuestion(trades, mistakeStats);
 
@@ -63,9 +95,34 @@ export default async function AiWorkspacePage() {
       <header>
         <h1 className="text-2xl font-semibold">AI Workspace</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Copy context, sync snapshot, paste proposals to Inbox — human Apply required.
+          Copy sectioned context → AI assistant → paste notes back. Proposals still go through Inbox.
         </p>
       </header>
+
+      <SystemSection
+        id="sectioned-snapshot"
+        title="Sectioned Snapshot"
+        description="Compact context with prior AI notes — copy and paste into your AI assistant."
+      >
+        <SectionedSnapshotPanel
+          sectionedCurrent={sectionedCurrent}
+          sectionedAll={sectionedAll}
+          sectionedUnreviewed={sectionedUnreviewed}
+          suggestedQuestion={suggestedQuestion}
+        />
+      </SystemSection>
+
+      <SystemSection
+        id="paste-ai-notes"
+        title="Paste AI Notes"
+        description="Save structured notes returned by your AI assistant."
+      >
+        <PasteAiNotesPanel
+          snapshotRevision={snapshotRevision}
+          recentNotes={aiNotes}
+          saveAction={saveAiNotesAction}
+        />
+      </SystemSection>
 
       <SystemSection
         id="quick-connect"
@@ -75,14 +132,14 @@ export default async function AiWorkspacePage() {
         <QuickConnectPanel
           snapshotUrl={snapshotUrl}
           snapshotQrDataUrl={snapshotQrDataUrl}
-          snapshotRevision={workerStatus.snapshotRevision ?? revision?.revision ?? null}
+          snapshotRevision={snapshotRevision}
           snapshotUpdatedAt={workerStatus.updatedAt ?? revision?.updatedAt ?? null}
           bridgeConfigured={bridge.configured}
           workerReachable={workerStatus.reachable}
         />
       </SystemSection>
 
-      <SystemSection id="context" title="Copy Context" description="Paste handoff when snapshot URL is not enough.">
+      <SystemSection id="context" title="Copy Context" description="Legacy full context packet (Obsidian analysis included).">
         <ContextHandoffPanel
           fullContext={fullContext}
           fullContextAllClosed={fullContextAllClosed}
@@ -164,10 +221,6 @@ export default async function AiWorkspacePage() {
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-xs text-zinc-400">
-          Deep link research: see{" "}
-          <code className="text-xs">md/integrations/ai-workspace-deeplinks.md</code> in the repo.
-        </p>
       </SystemSection>
 
       <nav className="flex gap-4 text-sm">
