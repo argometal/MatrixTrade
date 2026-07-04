@@ -14,6 +14,8 @@ import type {
   LogInput,
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
+import { isCloudInboxStore } from "./inbox-store/config";
+import * as cloudInbox from "./inbox-store/supabase";
 
 function paths() {
   return getArgusStoragePaths();
@@ -148,6 +150,10 @@ export async function saveAttachment(
   parentType: AttachmentParentType,
   parentId: string
 ): Promise<Attachment> {
+  if (isCloudInboxStore() && parentType === "inbox") {
+    return cloudInbox.saveInboxAttachment(fileName, mimeType, bytes, parentId);
+  }
+
   await ensureFilesDir();
   const data = await readArgus();
   const id = generateId();
@@ -180,6 +186,10 @@ function assignAttachmentParent(
 }
 
 export async function readAttachmentBytes(id: string): Promise<Buffer | null> {
+  if (isCloudInboxStore()) {
+    const cloud = await cloudInbox.readInboxAttachmentBytes(id);
+    if (cloud) return cloud;
+  }
   try {
     return await fs.readFile(path.join(paths().filesDir, id));
   } catch {
@@ -188,6 +198,10 @@ export async function readAttachmentBytes(id: string): Promise<Buffer | null> {
 }
 
 export async function getAttachment(id: string): Promise<Attachment | undefined> {
+  if (isCloudInboxStore()) {
+    const cloud = await cloudInbox.getInboxAttachment(id);
+    if (cloud) return cloud;
+  }
   const data = await readArgus();
   return data.attachments.find((a) => a.id === id);
 }
@@ -316,6 +330,9 @@ export async function appendLogAttachment(logId: string, attachmentId: string): 
 }
 
 export async function appendInboxAttachment(inboxId: string, attachmentId: string): Promise<void> {
+  if (isCloudInboxStore()) {
+    return cloudInbox.appendInboxAttachment(inboxId, attachmentId);
+  }
   const data = await readArgus();
   const item = data.inboxItems.find((i) => i.id === inboxId);
   if (!item) throw new Error("Inbox item not found");
@@ -328,6 +345,7 @@ export async function appendInboxAttachment(inboxId: string, attachmentId: strin
 // --- Inbox ---
 
 export async function getInboxItems(status?: "pending" | "converted" | "archived"): Promise<InboxItem[]> {
+  if (isCloudInboxStore()) return cloudInbox.getInboxItems(status);
   const data = await readArgus();
   let items = data.inboxItems;
   if (status) items = items.filter((i) => i.status === status);
@@ -335,11 +353,13 @@ export async function getInboxItems(status?: "pending" | "converted" | "archived
 }
 
 export async function getPendingInboxCount(): Promise<number> {
+  if (isCloudInboxStore()) return cloudInbox.getPendingInboxCount();
   const data = await readArgus();
   return data.inboxItems.filter((i) => i.status === "pending").length;
 }
 
 export async function getInboxItem(id: string): Promise<InboxItem | undefined> {
+  if (isCloudInboxStore()) return cloudInbox.getInboxItem(id);
   const data = await readArgus();
   return data.inboxItems.find((i) => i.id === id);
 }
@@ -347,6 +367,7 @@ export async function getInboxItem(id: string): Promise<InboxItem | undefined> {
 export async function createInboxItem(
   input: InboxItemInput & { status?: InboxItem["status"]; receivedAt?: string }
 ): Promise<InboxItem> {
+  if (isCloudInboxStore()) return cloudInbox.createInboxItem(input);
   const data = await readArgus();
   const now = new Date().toISOString();
   const item: InboxItem = {
@@ -369,6 +390,7 @@ export async function createInboxItem(
 }
 
 export async function linkInboxToEntities(inboxId: string, entityIds: string[]): Promise<InboxItem> {
+  if (isCloudInboxStore()) return cloudInbox.linkInboxToEntities(inboxId, entityIds);
   const unique = [...new Set(entityIds.filter(Boolean))];
   if (unique.length === 0) throw new Error("Select at least one reference");
 
@@ -397,6 +419,7 @@ export async function linkInboxToEntities(inboxId: string, entityIds: string[]):
 }
 
 export async function archiveInboxItem(id: string): Promise<InboxItem | undefined> {
+  if (isCloudInboxStore()) return cloudInbox.archiveInboxItem(id);
   const data = await readArgus();
   const idx = data.inboxItems.findIndex((i) => i.id === id);
   if (idx === -1) return undefined;
@@ -553,6 +576,7 @@ export async function deleteEntity(id: string): Promise<boolean> {
 }
 
 export async function deleteInboxItem(id: string): Promise<boolean> {
+  if (isCloudInboxStore()) return cloudInbox.deleteInboxItem(id);
   const data = await readArgus();
   const item = data.inboxItems.find((i) => i.id === id);
   if (!item) return false;

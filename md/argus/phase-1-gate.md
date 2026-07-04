@@ -37,7 +37,7 @@ Legend: ✅ Complete · ⚠️ Partial · ❌ Missing
 
 | | Item | Status | Notes |
 |---|------|--------|-------|
-| ☐ | Receive email automatically | ⚠️ | Worker → tunnel → API verified 2026-07-04; requires dev + cloudflared running; redeploy Worker when quick tunnel URL changes; fix intake DNS CNAME for permanent hostname |
+| ☐ | Receive email automatically | ⚠️ | Cloud-first: Worker → Vercel → Supabase (`ARGUS_INBOX_STORE=supabase`). Run `supabase/argus-inbox.sql` + `tools/setup-argus-production-inbox.ts`. Tunnel deprecated. |
 | ☐ | Email appears in Inbox | ✅ | inbox list + journal home |
 | ☐ | Read email correctly | ✅ | EmailViewer |
 | ☐ | View HTML/text | ✅ | text + sandboxed HTML iframe |

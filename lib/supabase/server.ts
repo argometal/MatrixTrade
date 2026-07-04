@@ -12,7 +12,7 @@ export function createSupabaseAdmin(): SupabaseClient {
 
   if (!url || !key) {
     throw new Error(
-      "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required when TRADES_STORE=supabase"
+      "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required when TRADES_STORE=supabase or ARGUS_INBOX_STORE=supabase"
     );
   }
 

@@ -1,0 +1,269 @@
+import { createSupabaseAdmin } from "@/lib/supabase/server";
+import type { Attachment, AttachmentParentType, InboxItem, InboxItemInput } from "../types";
+import { ARGUS_FILES_BUCKET } from "./config";
+
+function generateId(): string {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+type InboxRow = {
+  id: string;
+  received_at: string;
+  source: InboxItem["source"];
+  raw_text: string;
+  raw_email: string | null;
+  subject: string | null;
+  from_address: string | null;
+  to_address: string | null;
+  attachment_ids: string[] | null;
+  linked_entity_ids: string[] | null;
+  status: InboxItem["status"];
+  converted_log_id: string | null;
+  created_at: string;
+};
+
+type AttachmentRow = {
+  id: string;
+  file_name: string;
+  mime_type: string;
+  created_at: string;
+  parent_type: AttachmentParentType;
+  parent_id: string;
+  storage_key: string;
+};
+
+function rowToInboxItem(row: InboxRow): InboxItem {
+  return {
+    id: row.id,
+    receivedAt: row.received_at,
+    source: row.source,
+    rawText: row.raw_text,
+    rawEmail: row.raw_email ?? undefined,
+    subject: row.subject ?? undefined,
+    from: row.from_address ?? undefined,
+    to: row.to_address ?? undefined,
+    attachmentIds: row.attachment_ids ?? [],
+    linkedEntityIds: row.linked_entity_ids ?? [],
+    status: row.status,
+    convertedLogId: row.converted_log_id ?? undefined,
+    createdAt: row.created_at,
+  };
+}
+
+function rowToAttachment(row: AttachmentRow): Attachment {
+  return {
+    id: row.id,
+    fileName: row.file_name,
+    mimeType: row.mime_type,
+    createdAt: row.created_at,
+    parentType: row.parent_type,
+    parentId: row.parent_id,
+  };
+}
+
+function inboxToRow(
+  item: InboxItem
+): Omit<InboxRow, "created_at"> & { created_at?: string } {
+  return {
+    id: item.id,
+    received_at: item.receivedAt,
+    source: item.source,
+    raw_text: item.rawText,
+    raw_email: item.rawEmail ?? null,
+    subject: item.subject ?? null,
+    from_address: item.from ?? null,
+    to_address: item.to ?? null,
+    attachment_ids: item.attachmentIds,
+    linked_entity_ids: item.linkedEntityIds ?? [],
+    status: item.status,
+    converted_log_id: item.convertedLogId ?? null,
+    created_at: item.createdAt,
+  };
+}
+
+export async function getInboxItems(
+  status?: "pending" | "converted" | "archived"
+): Promise<InboxItem[]> {
+  const supabase = createSupabaseAdmin();
+  let query = supabase.from("argus_inbox_items").select("*").order("received_at", { ascending: false });
+  if (status) query = query.eq("status", status);
+  const { data, error } = await query;
+  if (error) throw new Error(`Supabase inbox list failed: ${error.message}`);
+  return (data as InboxRow[]).map(rowToInboxItem);
+}
+
+export async function getPendingInboxCount(): Promise<number> {
+  const supabase = createSupabaseAdmin();
+  const { count, error } = await supabase
+    .from("argus_inbox_items")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pending");
+  if (error) throw new Error(`Supabase inbox count failed: ${error.message}`);
+  return count ?? 0;
+}
+
+export async function getInboxItem(id: string): Promise<InboxItem | undefined> {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase.from("argus_inbox_items").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(`Supabase inbox read failed: ${error.message}`);
+  return data ? rowToInboxItem(data as InboxRow) : undefined;
+}
+
+export async function createInboxItem(
+  input: InboxItemInput & { status?: InboxItem["status"]; receivedAt?: string }
+): Promise<InboxItem> {
+  const now = new Date().toISOString();
+  const item: InboxItem = {
+    id: generateId(),
+    receivedAt: input.receivedAt ?? now,
+    source: input.source,
+    rawText: input.rawText,
+    rawEmail: input.rawEmail,
+    subject: input.subject,
+    from: input.from,
+    to: input.to,
+    attachmentIds: input.attachmentIds ?? [],
+    linkedEntityIds: input.linkedEntityIds ?? [],
+    status: input.status ?? "pending",
+    createdAt: now,
+  };
+
+  const supabase = createSupabaseAdmin();
+  const { error } = await supabase.from("argus_inbox_items").insert(inboxToRow(item));
+  if (error) throw new Error(`Supabase inbox create failed: ${error.message}`);
+  return item;
+}
+
+export async function appendInboxAttachment(inboxId: string, attachmentId: string): Promise<void> {
+  const item = await getInboxItem(inboxId);
+  if (!item) throw new Error("Inbox item not found");
+  if (item.attachmentIds.includes(attachmentId)) return;
+
+  const supabase = createSupabaseAdmin();
+  const { error } = await supabase
+    .from("argus_inbox_items")
+    .update({ attachment_ids: [...item.attachmentIds, attachmentId] })
+    .eq("id", inboxId);
+  if (error) throw new Error(`Supabase inbox attachment link failed: ${error.message}`);
+}
+
+export async function linkInboxToEntities(inboxId: string, entityIds: string[]): Promise<InboxItem> {
+  const unique = [...new Set(entityIds.filter(Boolean))];
+  if (unique.length === 0) throw new Error("Select at least one reference");
+
+  const item = await getInboxItem(inboxId);
+  if (!item) throw new Error("Inbox item not found");
+  if (item.status === "archived") throw new Error("Inbox item is archived");
+
+  const merged = [...new Set([...(item.linkedEntityIds ?? []), ...unique])];
+  const status = item.status === "converted" ? "converted" : "linked";
+
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("argus_inbox_items")
+    .update({ linked_entity_ids: merged, status })
+    .eq("id", inboxId)
+    .select("*")
+    .single();
+  if (error) throw new Error(`Supabase inbox link failed: ${error.message}`);
+  return rowToInboxItem(data as InboxRow);
+}
+
+export async function archiveInboxItem(id: string): Promise<InboxItem | undefined> {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("argus_inbox_items")
+    .update({ status: "archived" })
+    .eq("id", id)
+    .select("*")
+    .maybeSingle();
+  if (error) throw new Error(`Supabase inbox archive failed: ${error.message}`);
+  return data ? rowToInboxItem(data as InboxRow) : undefined;
+}
+
+export async function saveInboxAttachment(
+  fileName: string,
+  mimeType: string,
+  bytes: Buffer,
+  parentId: string
+): Promise<Attachment> {
+  const id = generateId();
+  const safeName = fileName.replace(/[^\w.\-() ]/g, "_").slice(0, 120);
+  const storageKey = `${id}`;
+  const now = new Date().toISOString();
+
+  const supabase = createSupabaseAdmin();
+  const { error: uploadError } = await supabase.storage
+    .from(ARGUS_FILES_BUCKET)
+    .upload(storageKey, bytes, {
+      contentType: mimeType || "application/octet-stream",
+      upsert: true,
+    });
+  if (uploadError) {
+    throw new Error(`Supabase attachment upload failed: ${uploadError.message}`);
+  }
+
+  const row: AttachmentRow = {
+    id,
+    file_name: safeName,
+    mime_type: mimeType || "application/octet-stream",
+    created_at: now,
+    parent_type: "inbox",
+    parent_id: parentId,
+    storage_key: storageKey,
+  };
+
+  const { error: insertError } = await supabase.from("argus_attachments").insert(row);
+  if (insertError) {
+    throw new Error(`Supabase attachment metadata failed: ${insertError.message}`);
+  }
+
+  return rowToAttachment(row);
+}
+
+export async function getInboxAttachment(id: string): Promise<Attachment | undefined> {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase.from("argus_attachments").select("*").eq("id", id).maybeSingle();
+  if (error) throw new Error(`Supabase attachment read failed: ${error.message}`);
+  return data ? rowToAttachment(data as AttachmentRow) : undefined;
+}
+
+export async function readInboxAttachmentBytes(id: string): Promise<Buffer | null> {
+  const supabase = createSupabaseAdmin();
+  const { data: row, error: metaError } = await supabase
+    .from("argus_attachments")
+    .select("storage_key")
+    .eq("id", id)
+    .maybeSingle();
+  if (metaError) throw new Error(`Supabase attachment lookup failed: ${metaError.message}`);
+  if (!row) return null;
+
+  const { data, error } = await supabase.storage.from(ARGUS_FILES_BUCKET).download(row.storage_key);
+  if (error || !data) return null;
+  return Buffer.from(await data.arrayBuffer());
+}
+
+export async function deleteInboxItem(id: string): Promise<boolean> {
+  const item = await getInboxItem(id);
+  if (!item) return false;
+
+  const supabase = createSupabaseAdmin();
+  for (const aid of item.attachmentIds) {
+    const att = await getInboxAttachment(aid);
+    if (att) {
+      const { data: row } = await supabase
+        .from("argus_attachments")
+        .select("storage_key")
+        .eq("id", aid)
+        .maybeSingle();
+      if (row?.storage_key) {
+        await supabase.storage.from(ARGUS_FILES_BUCKET).remove([row.storage_key]);
+      }
+      await supabase.from("argus_attachments").delete().eq("id", aid);
+    }
+  }
+
+  const { error } = await supabase.from("argus_inbox_items").delete().eq("id", id);
+  if (error) throw new Error(`Supabase inbox delete failed: ${error.message}`);
+  return true;
+}

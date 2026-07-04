@@ -1,105 +1,79 @@
-# ARGUS Email Intake — End-to-End Flow
+# ARGUS Email Intake — Production (cloud-first)
 
 **Phase 1 checkbox:** Receive email automatically  
-**Last verified:** 2026-07-04 (Worker → tunnel → API → `ARGUS_DATA_DIR`)
+**Architecture:** No tunnel. No local PC required for production email.
 
 ---
 
-## Complete flow
+## Production flow
 
 ```mermaid
 flowchart LR
-  SMTP[Internet SMTP] --> ER[Cloudflare Email Routing<br/>argus@argometal.dev]
-  ER --> W[Worker argus-email-intake<br/>postal-mime → JSON]
-  W -->|POST Bearer ARGUS_INBOX_TOKEN| T[Tunnel URL]
-  T --> DEV[Next.js :3002<br/>POST /api/argus/email-inbox]
-  DEV --> FS[ARGUS_DATA_DIR<br/>journal.json + files/]
-  FS --> UI[/argus/inbox]
+  SMTP[Real email] --> ER[argus@argometal.dev]
+  ER --> W[Worker argus-email-intake]
+  W -->|POST Bearer| V[Vercel /api/argus/email-inbox]
+  V --> SB[(Supabase argus_inbox_items)]
+  V --> ST[(Supabase Storage argus-files)]
+  SB --> UI[/argus/inbox on Vercel]
 ```
 
-| Step | Component | Status |
-|------|-----------|--------|
-| 1 | MX / Email Routing → `argus@argometal.dev` | ✅ Configured |
-| 2 | Worker `argus-email-intake` | ✅ Deployed |
-| 3 | Worker `ARGUS_INTAKE_URL` | Must match **live** tunnel |
-| 4 | Tunnel → `localhost:3002` | Requires `cloudflared` + `npm run dev` |
-| 5 | API auth `ARGUS_INBOX_TOKEN` | Must match Worker secret + `.env.local` |
-| 6 | Storage `ARGUS_DATA_DIR` | Local disk (not Vercel) |
-| 7 | UI `/argus/inbox` | Reads same storage as API |
+| Step | Component |
+|------|-----------|
+| 1 | Cloudflare Email Routing → Worker |
+| 2 | Worker POST → `https://matrix-trade-theta.vercel.app/api/argus/email-inbox` |
+| 3 | `ARGUS_INBOX_STORE=supabase` persists inbox + attachments |
+| 4 | UI reads same Supabase tables |
+
+**Tunnel approach: deprecated.** Do not use `cloudflared` for production.
 
 ---
 
-## Where the chain broke (2026-07-04 audit)
+## One-time setup
 
-| Failure | Symptom | Cause |
-|---------|---------|-------|
-| **Primary** | Real email rejected / never in inbox | Worker `ARGUS_INTAKE_URL` pointed to **expired quick tunnel** |
-| **Secondary** | `intake.argometal.dev` → HTTP 525 | Named tunnel connector down **or** DNS not CNAME to `{tunnel-id}.cfargotunnel.com` |
-| **Tertiary** | Local API 500 | Corrupt `.next` cache — restart dev after `Remove-Item .next` |
-| **Not the fix (yet)** | Vercel inbox empty | Vercel has no `ARGUS_INBOX_TOKEN` and no persistent `ARGUS_DATA_DIR` |
+### 1. Supabase schema
 
----
+Run [`supabase/argus-inbox.sql`](../../supabase/argus-inbox.sql) in Supabase SQL editor.
 
-## Smallest fix applied
+Creates:
+- `argus_inbox_items`
+- `argus_attachments`
+- Storage bucket `argus-files`
 
-1. **Restart** clean dev server on `:3002`
-2. **Start** live quick tunnel → `https://….trycloudflare.com`
-3. **Redeploy** Worker secrets:
+### 2. Vercel + Worker
 
 ```powershell
 cd c:\Tools\MatrixTrade
-npx tsx tools/deploy-argus-email-worker.ts https://YOUR-QUICK-TUNNEL.trycloudflare.com/api/argus/email-inbox
+npx tsx tools/setup-argus-production-inbox.ts
 ```
 
-4. **Verify**:
+This sets Vercel env (`ARGUS_INBOX_STORE=supabase`, `ARGUS_INBOX_TOKEN`, Supabase keys) and redeploys Worker secrets to Vercel production URL.
+
+Redeploy Vercel after env sync.
+
+### 3. Verify
 
 ```powershell
-npx tsx tools/verify-argus-email-intake.ts https://YOUR-QUICK-TUNNEL.trycloudflare.com
-$env:NODE_PATH = "argus-email-bridge\node_modules"
-npx tsx tools/simulate-email-worker-intake.ts https://YOUR-QUICK-TUNNEL.trycloudflare.com/api/argus/email-inbox
+npx tsx tools/test-email-inbox.ts https://matrix-trade-theta.vercel.app
 ```
 
-5. **Real email:** send to `argus@argometal.dev` → open `http://localhost:3002/argus/inbox`
+Send real email to `argus@argometal.dev` → open `https://matrix-trade-theta.vercel.app/argus/inbox`.
 
 ---
 
-## Permanent tunnel (intake.argometal.dev)
+## Local dev
 
-Named tunnel ID: `c55d060c-a0c6-4b86-ab9f-1cdc87e7323e`
-
-**Manual DNS** (required when Zone API auth fails):
-
-| Type | Name | Target | Proxy |
-|------|------|--------|-------|
-| CNAME | `intake` | `c55d060c-a0c6-4b86-ab9f-1cdc87e7323e.cfargotunnel.com` | Proxied |
-
-Then:
-
-```powershell
-.\tools\run-argus-intake-stack.ps1
-npx tsx tools/deploy-argus-email-worker.ts https://intake.argometal.dev/api/argus/email-inbox
-```
+Keep `ARGUS_INBOX_STORE` unset or `json` in `.env.local` — uses filesystem `ARGUS_DATA_DIR` as before.
 
 ---
 
-## Operational requirement
+## Env vars (Vercel production)
 
-Email intake is **automatic only while the stack runs**:
+| Variable | Value |
+|----------|--------|
+| `ARGUS_INBOX_STORE` | `supabase` |
+| `ARGUS_INBOX_TOKEN` | same as Worker secret |
+| `SUPABASE_URL` | project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | service role |
+| `ARGUS_PASSWORD` | optional UI login |
 
-- `npm run dev` (port 3002)
-- `cloudflared` (quick or named tunnel)
-- Worker secret matches current tunnel URL
-
-Quick tunnel URLs **change on restart** — redeploy Worker after each restart until permanent DNS works.
-
----
-
-## Verification template
-
-```
-[ ] npm run dev listening on :3002
-[ ] POST /api/argus/email-inbox → 201 (tools/test-email-inbox.ts)
-[ ] Tunnel POST → 201 (tools/verify-argus-email-intake.ts)
-[ ] Worker simulate → 201 (tools/simulate-email-worker-intake.ts)
-[ ] Real email to argus@argometal.dev → item in /argus/inbox
-```
+Worker secret `ARGUS_INTAKE_URL` = `https://matrix-trade-theta.vercel.app/api/argus/email-inbox`
