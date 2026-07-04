@@ -259,3 +259,53 @@ See also: `md/argus/rule-0-protected-data-audit.md`, `md/argus/p0-data-safety-au
 - `md/argus/phase-0-1-stabilization-audit.md` (this file)
 
 **Do not implement Phases 2–6.**
+
+---
+
+## Production verification (2026-07-04)
+
+### Vercel environment (verified via `vercel env ls production`)
+
+| Variable | Production |
+|----------|------------|
+| `SUPABASE_URL` | Set (Encrypted) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Set (Encrypted) |
+| `ARGUS_INBOX_STORE` | Set (`supabase`) |
+| `ARGUS_JOURNAL_STORE` | **Not set** — auto-detect on Vercel when creds present |
+
+### Database schema (verified via `tools/verify-supabase-schema.ts`)
+
+```
+PASS  argus_journal: reachable (count=1)
+PASS  argus_inbox_items: reachable (count=4)
+PASS  argus_attachments: reachable (count=10)
+PASS  argus_journal primary row exists
+PASS  argus-files storage bucket reachable
+```
+
+### Deployments
+
+| Commit | Deployment | Status |
+|--------|------------|--------|
+| `4ed6cda` | `matrix-trade-amjeq0e6c` | **Error** (Next.js typecheck: invalid `JournalKind` in tools) |
+| `d946e88` | `matrix-trade-4cmstlqm7` | **Ready** — alias `https://matrix-trade-theta.vercel.app` |
+
+### Production backend acceptance (`tools/validate-argus-production-acceptance.ts`)
+
+All PASS: Vercel auto-detect, production URL reachable, schema, Person/Project/Topic/Event create+search, Evidence create+search, Rule 0 no drop, cleanup.
+
+### Production workflow validation (`tools/validate-argus-production-workflows.ts`)
+
+All PASS on shared Supabase backend:
+
+- Scenario 1: Person + evidence + meeting log + linked email inbox
+- Scenario 2: Project + 2 linked people + event + project log
+- Scenario 3: Event + participant + evidence retrieval
+- Scenario 4: Unclassified capture → classify to Person/Project/Event (single log, no duplication)
+
+### UI acceptance on production URL
+
+**Not completed in this session.** Production requires `ARGUS_PASSWORD` (set on Vercel). Automated browser reached `/argus/login` and cannot proceed without credentials.
+
+**Operator must manually verify** on `https://matrix-trade-theta.vercel.app`: create each object via ◇ launcher → detail → refresh → search → activity → home → redeploy persistence.
+
