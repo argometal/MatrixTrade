@@ -16,6 +16,7 @@ export function normalizeLog(log: Log): Log {
     kind: log.kind ?? "log",
     topics: log.topics ?? [],
     attachmentIds: log.attachmentIds ?? [],
+    deletedAt: log.deletedAt,
   };
 }
 
@@ -24,6 +25,7 @@ export function normalizeAttachment(att: Attachment): Attachment {
     ...att,
     parentType: att.parentType ?? "journal",
     parentId: att.parentId ?? "",
+    deletedAt: att.deletedAt,
   };
 }
 
@@ -39,13 +41,14 @@ export function normalizeEntity(entity: Entity): Entity {
     linkedTags: entity.linkedTags ?? [],
     startDate: entity.startDate?.slice(0, 10),
     endDate: entity.endDate?.slice(0, 10),
+    deletedAt: entity.deletedAt,
   };
 }
 
 export function normalizeInboxItem(item: InboxItem): InboxItem {
   const linkedEntityIds = item.linkedEntityIds ?? [];
   let status = item.status ?? "pending";
-  if (status !== "archived") {
+  if (status !== "archived" && !item.deletedAt) {
     if (item.convertedLogId) status = "converted";
     else if (linkedEntityIds.length > 0 && status === "pending") status = "linked";
   }
@@ -54,6 +57,7 @@ export function normalizeInboxItem(item: InboxItem): InboxItem {
     linkedEntityIds,
     attachmentIds: item.attachmentIds ?? [],
     status,
+    deletedAt: item.deletedAt,
   };
 }
 

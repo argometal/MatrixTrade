@@ -14,7 +14,8 @@ create table if not exists public.argus_inbox_items (
   linked_entity_ids text[] not null default '{}',
   status text not null default 'pending' check (status in ('pending', 'linked', 'converted', 'archived')),
   converted_log_id text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  deleted_at timestamptz
 );
 
 create index if not exists argus_inbox_items_status_idx on public.argus_inbox_items (status);
@@ -27,7 +28,8 @@ create table if not exists public.argus_attachments (
   created_at timestamptz not null default now(),
   parent_type text not null check (parent_type in ('inbox', 'journal')),
   parent_id text not null,
-  storage_key text not null
+  storage_key text not null,
+  deleted_at timestamptz
 );
 
 create index if not exists argus_attachments_parent_idx on public.argus_attachments (parent_type, parent_id);

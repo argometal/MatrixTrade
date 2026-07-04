@@ -21,6 +21,11 @@ import type {
   LogInput,
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
+import { isActiveRecord, softDeleteEntity, softDeleteLog, softDeleteInboxItem } from "./supabase-protection/protected-counts";
+import {
+  isSupabaseDestructiveBlocked,
+  supabaseDestructiveBlockedMessage,
+} from "./supabase-protection/policy";
 import { isCloudInboxStore } from "./inbox-store/config";
 import * as cloudInbox from "./inbox-store/supabase";
 import { isCloudJournalStore } from "./journal-store/config";
@@ -105,8 +110,9 @@ async function writeArgus(data: ArgusData, intent: WriteIntent = "mutation"): Pr
 }
 
 function filterPrivateLogs(logs: Log[], includePrivate: boolean): Log[] {
-  if (includePrivate) return logs;
-  return logs.filter((l) => !l.private);
+  const active = logs.filter(isActiveRecord);
+  if (includePrivate) return active;
+  return active.filter((l) => !l.private);
 }
 
 export async function readArgus(): Promise<ArgusData> {
@@ -117,12 +123,14 @@ export async function readArgus(): Promise<ArgusData> {
 
 export async function getEntities(): Promise<Entity[]> {
   const data = await readArgus();
-  return data.entities.sort((a, b) => a.name.localeCompare(b.name));
+  return data.entities.filter(isActiveRecord).sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function getEntity(id: string): Promise<Entity | undefined> {
   const data = await readArgus();
-  return data.entities.find((e) => e.id === id);
+  const entity = data.entities.find((e) => e.id === id);
+  if (!entity || !isActiveRecord(entity)) return undefined;
+  return entity;
 }
 
 export async function searchEntities(query: string): Promise<Entity[]> {
@@ -130,6 +138,7 @@ export async function searchEntities(query: string): Promise<Entity[]> {
   if (!q) return getEntities();
   const data = await readArgus();
   return data.entities
+    .filter(isActiveRecord)
     .filter(
       (e) =>
         e.name.toLowerCase().includes(q) ||
@@ -173,7 +182,7 @@ function normalizeOptionalDate(value: string | undefined): string | undefined {
 function normalizeLinkedPersonIds(data: ArgusData, ids: string[] | undefined): string[] {
   if (!ids?.length) return [];
   const valid = new Set(
-    data.entities.filter((e) => e.type === "person" || e.type === "company").map((e) => e.id)
+    data.entities.filter(isActiveRecord).filter((e) => e.type === "person" || e.type === "company").map((e) => e.id)
   );
   return [...new Set(ids.filter((id) => valid.has(id)))];
 }
@@ -296,7 +305,9 @@ export async function getAttachment(id: string): Promise<Attachment | undefined>
     if (cloud) return cloud;
   }
   const data = await readArgus();
-  return data.attachments.find((a) => a.id === id);
+  const att = data.attachments.find((a) => a.id === id);
+  if (!att || !isActiveRecord(att)) return undefined;
+  return att;
 }
 
 // --- Logs ---
@@ -322,7 +333,7 @@ export async function getLogsByKind(
 export async function getLog(id: string, includePrivate: boolean): Promise<Log | undefined> {
   const data = await readArgus();
   const log = data.logs.find((l) => l.id === id);
-  if (!log) return undefined;
+  if (!log || !isActiveRecord(log)) return undefined;
   if (log.private && !includePrivate) return undefined;
   return log;
 }
@@ -440,7 +451,7 @@ export async function appendInboxAttachment(inboxId: string, attachmentId: strin
 export async function getInboxItems(status?: "pending" | "converted" | "archived"): Promise<InboxItem[]> {
   if (isCloudInboxStore()) return cloudInbox.getInboxItems(status);
   const data = await readArgus();
-  let items = data.inboxItems;
+  let items = data.inboxItems.filter(isActiveRecord);
   if (status) items = items.filter((i) => i.status === status);
   return items.sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
 }
@@ -448,13 +459,15 @@ export async function getInboxItems(status?: "pending" | "converted" | "archived
 export async function getPendingInboxCount(): Promise<number> {
   if (isCloudInboxStore()) return cloudInbox.getPendingInboxCount();
   const data = await readArgus();
-  return data.inboxItems.filter((i) => i.status === "pending").length;
+  return data.inboxItems.filter((i) => isActiveRecord(i) && i.status === "pending").length;
 }
 
 export async function getInboxItem(id: string): Promise<InboxItem | undefined> {
   if (isCloudInboxStore()) return cloudInbox.getInboxItem(id);
   const data = await readArgus();
-  return data.inboxItems.find((i) => i.id === id);
+  const item = data.inboxItems.find((i) => i.id === id);
+  if (!item || !isActiveRecord(item)) return undefined;
+  return item;
 }
 
 export async function createInboxItem(
@@ -616,10 +629,17 @@ export async function searchLogs(query: string, includePrivate: boolean): Promis
   );
 }
 
-async function removeAttachmentFile(id: string): Promise<void> {
-  if (isCloudJournalStore()) {
-    await cloudJournalFiles.removeJournalAttachmentBytes(id).catch(() => {});
+function softDeleteAttachmentRecords(data: ArgusData, ids: string[], at: string): void {
+  for (const id of ids) {
+    const att = data.attachments.find((a) => a.id === id);
+    if (att && isActiveRecord(att)) {
+      att.deletedAt = at;
+    }
   }
+}
+
+/** Local JSON clear-all only — never used when Supabase stores are enabled. */
+async function removeLocalAttachmentFile(id: string): Promise<void> {
   try {
     await fs.unlink(path.join(paths().filesDir, id));
   } catch {
@@ -627,31 +647,15 @@ async function removeAttachmentFile(id: string): Promise<void> {
   }
 }
 
-function removeAttachmentRecord(data: ArgusData, id: string): void {
-  data.attachments = data.attachments.filter((a) => a.id !== id);
-}
-
-async function deleteAttachmentsForIds(data: ArgusData, ids: string[]): Promise<void> {
-  for (const id of ids) {
-    removeAttachmentRecord(data, id);
-    await removeAttachmentFile(id);
-  }
-}
-
 export async function deleteLog(id: string): Promise<boolean> {
   const data = await readArgus();
-  const log = data.logs.find((l) => l.id === id);
-  if (!log) return false;
+  const idx = data.logs.findIndex((l) => l.id === id);
+  if (idx === -1 || !isActiveRecord(data.logs[idx])) return false;
 
-  await deleteAttachmentsForIds(data, log.attachmentIds);
-  data.logs = data.logs.filter((l) => l.id !== id);
-
-  for (const item of data.inboxItems) {
-    if (item.convertedLogId === id) {
-      item.convertedLogId = undefined;
-      if (item.status === "converted") item.status = "linked";
-    }
-  }
+  const now = new Date().toISOString();
+  const log = data.logs[idx];
+  softDeleteAttachmentRecords(data, log.attachmentIds, now);
+  data.logs[idx] = softDeleteLog(log, now);
 
   await writeArgus(data, "destructive");
   return true;
@@ -659,33 +663,32 @@ export async function deleteLog(id: string): Promise<boolean> {
 
 export async function deleteEntity(id: string): Promise<boolean> {
   const data = await readArgus();
-  if (!data.entities.some((e) => e.id === id)) return false;
+  const idx = data.entities.findIndex((e) => e.id === id);
+  if (idx === -1 || !isActiveRecord(data.entities[idx])) return false;
 
-  data.entities = data.entities.filter((e) => e.id !== id);
-  for (const log of data.logs) {
-    log.entityIds = log.entityIds.filter((eid) => eid !== id);
-  }
-  for (const item of data.inboxItems) {
-    item.linkedEntityIds = (item.linkedEntityIds ?? []).filter((eid) => eid !== id);
-  }
-
+  data.entities[idx] = softDeleteEntity(data.entities[idx]);
   await writeArgus(data, "destructive");
   return true;
 }
 
 export async function deleteInboxItem(id: string): Promise<boolean> {
-  if (isCloudInboxStore()) return cloudInbox.deleteInboxItem(id);
+  if (isCloudInboxStore()) return cloudInbox.softDeleteInboxItem(id);
   const data = await readArgus();
-  const item = data.inboxItems.find((i) => i.id === id);
-  if (!item) return false;
+  const idx = data.inboxItems.findIndex((i) => i.id === id);
+  if (idx === -1 || !isActiveRecord(data.inboxItems[idx])) return false;
 
-  await deleteAttachmentsForIds(data, item.attachmentIds);
-  data.inboxItems = data.inboxItems.filter((i) => i.id !== id);
+  const now = new Date().toISOString();
+  const item = data.inboxItems[idx];
+  softDeleteAttachmentRecords(data, item.attachmentIds, now);
+  data.inboxItems[idx] = softDeleteInboxItem(item, now);
   await writeArgus(data, "destructive");
   return true;
 }
 
 export async function clearAllArgusData(): Promise<void> {
+  if (isSupabaseDestructiveBlocked()) {
+    throw new Error(supabaseDestructiveBlockedMessage());
+  }
   if (!isDestructiveAllowed()) {
     throw new Error(
       "Clear all ARGUS data is disabled in production. Set ARGUS_ALLOW_DESTRUCTIVE=1 to override."
@@ -696,7 +699,7 @@ export async function clearAllArgusData(): Promise<void> {
   await fs.mkdir(p.filesDir, { recursive: true });
 
   const files = await fs.readdir(p.filesDir);
-  await Promise.all(files.map((file) => removeAttachmentFile(file)));
+  await Promise.all(files.map((file) => removeLocalAttachmentFile(file)));
 
   await writeArgus(emptyArgus(), "destructive");
 }

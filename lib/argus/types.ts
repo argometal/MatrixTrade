@@ -31,6 +31,8 @@ export interface Entity {
   linkedTags?: string[];
   createdAt: string;
   updatedAt: string;
+  /** Soft delete — never hard-remove user data (Rule 0). */
+  deletedAt?: string;
 }
 
 export interface Attachment {
@@ -40,6 +42,8 @@ export interface Attachment {
   createdAt: string;
   parentType: AttachmentParentType;
   parentId: string;
+  /** Soft delete — never hard-remove user data (Rule 0). */
+  deletedAt?: string;
 }
 
 /** Journal record — source of truth for logs, events, and follow-ups */
@@ -61,6 +65,8 @@ export interface Log {
   topics: string[];
   createdAt: string;
   updatedAt: string;
+  /** Soft delete — never hard-remove user data (Rule 0). */
+  deletedAt?: string;
 }
 
 export interface InboxItem {
@@ -78,6 +84,8 @@ export interface InboxItem {
   status: InboxStatus;
   convertedLogId?: string;
   createdAt: string;
+  /** Soft delete — never hard-remove user data (Rule 0). */
+  deletedAt?: string;
 }
 
 export interface ArgusData {

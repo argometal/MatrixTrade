@@ -1,4 +1,5 @@
 import type { ArgusData } from "../types";
+import { isActiveRecord } from "../supabase-protection/protected-counts";
 
 export interface ArgusDataCounts {
   entities: number;
@@ -7,12 +8,13 @@ export interface ArgusDataCounts {
   attachments: number;
 }
 
+/** Count active (non-soft-deleted) records only. */
 export function countArgusData(data: ArgusData): ArgusDataCounts {
   return {
-    entities: data.entities.length,
-    logs: data.logs.length,
-    inboxItems: data.inboxItems.length,
-    attachments: data.attachments.length,
+    entities: data.entities.filter(isActiveRecord).length,
+    logs: data.logs.filter(isActiveRecord).length,
+    inboxItems: data.inboxItems.filter(isActiveRecord).length,
+    attachments: data.attachments.filter(isActiveRecord).length,
   };
 }
 

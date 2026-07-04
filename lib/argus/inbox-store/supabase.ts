@@ -20,6 +20,7 @@ type InboxRow = {
   status: InboxItem["status"];
   converted_log_id: string | null;
   created_at: string;
+  deleted_at: string | null;
 };
 
 type AttachmentRow = {
@@ -30,6 +31,7 @@ type AttachmentRow = {
   parent_type: AttachmentParentType;
   parent_id: string;
   storage_key: string;
+  deleted_at: string | null;
 };
 
 function rowToInboxItem(row: InboxRow): InboxItem {
@@ -47,6 +49,7 @@ function rowToInboxItem(row: InboxRow): InboxItem {
     status: row.status,
     convertedLogId: row.converted_log_id ?? undefined,
     createdAt: row.created_at,
+    deletedAt: row.deleted_at ?? undefined,
   };
 }
 
@@ -58,12 +61,13 @@ function rowToAttachment(row: AttachmentRow): Attachment {
     createdAt: row.created_at,
     parentType: row.parent_type,
     parentId: row.parent_id,
+    deletedAt: row.deleted_at ?? undefined,
   };
 }
 
 function inboxToRow(
   item: InboxItem
-): Omit<InboxRow, "created_at"> & { created_at?: string } {
+): Omit<InboxRow, "created_at" | "deleted_at"> & { created_at?: string; deleted_at?: string | null } {
   return {
     id: item.id,
     received_at: item.receivedAt,
@@ -78,14 +82,19 @@ function inboxToRow(
     status: item.status,
     converted_log_id: item.convertedLogId ?? null,
     created_at: item.createdAt,
+    deleted_at: item.deletedAt ?? null,
   };
+}
+
+function activeInboxQuery() {
+  const supabase = createSupabaseAdmin();
+  return supabase.from("argus_inbox_items").select("*").is("deleted_at", null);
 }
 
 export async function getInboxItems(
   status?: "pending" | "converted" | "archived"
 ): Promise<InboxItem[]> {
-  const supabase = createSupabaseAdmin();
-  let query = supabase.from("argus_inbox_items").select("*").order("received_at", { ascending: false });
+  let query = activeInboxQuery().order("received_at", { ascending: false });
   if (status) query = query.eq("status", status);
   const { data, error } = await query;
   if (error) throw new Error(`Supabase inbox list failed: ${error.message}`);
@@ -97,6 +106,7 @@ export async function getPendingInboxCount(): Promise<number> {
   const { count, error } = await supabase
     .from("argus_inbox_items")
     .select("*", { count: "exact", head: true })
+    .is("deleted_at", null)
     .eq("status", "pending");
   if (error) throw new Error(`Supabase inbox count failed: ${error.message}`);
   return count ?? 0;
@@ -104,7 +114,12 @@ export async function getPendingInboxCount(): Promise<number> {
 
 export async function getInboxItem(id: string): Promise<InboxItem | undefined> {
   const supabase = createSupabaseAdmin();
-  const { data, error } = await supabase.from("argus_inbox_items").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("argus_inbox_items")
+    .select("*")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
   if (error) throw new Error(`Supabase inbox read failed: ${error.message}`);
   return data ? rowToInboxItem(data as InboxRow) : undefined;
 }
@@ -143,7 +158,8 @@ export async function appendInboxAttachment(inboxId: string, attachmentId: strin
   const { error } = await supabase
     .from("argus_inbox_items")
     .update({ attachment_ids: [...item.attachmentIds, attachmentId] })
-    .eq("id", inboxId);
+    .eq("id", inboxId)
+    .is("deleted_at", null);
   if (error) throw new Error(`Supabase inbox attachment link failed: ${error.message}`);
 }
 
@@ -163,6 +179,7 @@ export async function linkInboxToEntities(inboxId: string, entityIds: string[]):
     .from("argus_inbox_items")
     .update({ linked_entity_ids: merged, status })
     .eq("id", inboxId)
+    .is("deleted_at", null)
     .select("*")
     .single();
   if (error) throw new Error(`Supabase inbox link failed: ${error.message}`);
@@ -175,6 +192,7 @@ export async function archiveInboxItem(id: string): Promise<InboxItem | undefine
     .from("argus_inbox_items")
     .update({ status: "archived" })
     .eq("id", id)
+    .is("deleted_at", null)
     .select("*")
     .maybeSingle();
   if (error) throw new Error(`Supabase inbox archive failed: ${error.message}`);
@@ -211,6 +229,7 @@ export async function saveInboxAttachment(
     parent_type: "inbox",
     parent_id: parentId,
     storage_key: storageKey,
+    deleted_at: null,
   };
 
   const { error: insertError } = await supabase.from("argus_attachments").insert(row);
@@ -223,7 +242,12 @@ export async function saveInboxAttachment(
 
 export async function getInboxAttachment(id: string): Promise<Attachment | undefined> {
   const supabase = createSupabaseAdmin();
-  const { data, error } = await supabase.from("argus_attachments").select("*").eq("id", id).maybeSingle();
+  const { data, error } = await supabase
+    .from("argus_attachments")
+    .select("*")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .maybeSingle();
   if (error) throw new Error(`Supabase attachment read failed: ${error.message}`);
   return data ? rowToAttachment(data as AttachmentRow) : undefined;
 }
@@ -234,6 +258,7 @@ export async function readInboxAttachmentBytes(id: string): Promise<Buffer | nul
     .from("argus_attachments")
     .select("storage_key")
     .eq("id", id)
+    .is("deleted_at", null)
     .maybeSingle();
   if (metaError) throw new Error(`Supabase attachment lookup failed: ${metaError.message}`);
   if (!row) return null;
@@ -243,27 +268,32 @@ export async function readInboxAttachmentBytes(id: string): Promise<Buffer | nul
   return Buffer.from(await data.arrayBuffer());
 }
 
-export async function deleteInboxItem(id: string): Promise<boolean> {
+/** Soft delete — sets deleted_at, preserves rows and storage objects (Rule 0). */
+export async function softDeleteInboxItem(id: string): Promise<boolean> {
   const item = await getInboxItem(id);
   if (!item) return false;
 
+  const now = new Date().toISOString();
   const supabase = createSupabaseAdmin();
+
   for (const aid of item.attachmentIds) {
-    const att = await getInboxAttachment(aid);
-    if (att) {
-      const { data: row } = await supabase
-        .from("argus_attachments")
-        .select("storage_key")
-        .eq("id", aid)
-        .maybeSingle();
-      if (row?.storage_key) {
-        await supabase.storage.from(ARGUS_FILES_BUCKET).remove([row.storage_key]);
-      }
-      await supabase.from("argus_attachments").delete().eq("id", aid);
-    }
+    await supabase
+      .from("argus_attachments")
+      .update({ deleted_at: now })
+      .eq("id", aid)
+      .is("deleted_at", null);
   }
 
-  const { error } = await supabase.from("argus_inbox_items").delete().eq("id", id);
-  if (error) throw new Error(`Supabase inbox delete failed: ${error.message}`);
+  const { error } = await supabase
+    .from("argus_inbox_items")
+    .update({ deleted_at: now })
+    .eq("id", id)
+    .is("deleted_at", null);
+  if (error) throw new Error(`Supabase inbox soft delete failed: ${error.message}`);
   return true;
+}
+
+/** @deprecated Use softDeleteInboxItem — hard delete blocked by DB triggers. */
+export async function deleteInboxItem(id: string): Promise<boolean> {
+  return softDeleteInboxItem(id);
 }

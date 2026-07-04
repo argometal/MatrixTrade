@@ -277,7 +277,14 @@ export async function clearAllArgusDataAction(): Promise<void> {
   if (!isDestructiveAllowed()) {
     redirect("/argus/journal?error=destructive");
   }
-  await clearAllArgusData();
+  try {
+    await clearAllArgusData();
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("Supabase")) {
+      redirect("/argus/journal?error=supabase-destructive");
+    }
+    throw err;
+  }
   revalidateArgus();
   redirect("/argus/journal");
 }
