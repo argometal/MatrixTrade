@@ -21,7 +21,23 @@ export function useArgusAdd() {
   return value;
 }
 
-function ArgusAddProviderInner({
+function CaptureDeepLinkSync({
+  onOpen,
+}: {
+  onOpen: (options?: { openReference?: boolean }) => void;
+}) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("capture") === "1") {
+      onOpen({ openReference: searchParams.get("reference") === "1" });
+    }
+  }, [onOpen, searchParams]);
+
+  return null;
+}
+
+export function ArgusAddProvider({
   children,
   buckets,
   tagBuckets,
@@ -32,32 +48,25 @@ function ArgusAddProviderInner({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [captureOpen, setCaptureOpen] = useState(false);
   const [autoOpenReference, setAutoOpenReference] = useState(false);
 
   const closeCapture = useCallback(() => {
     setCaptureOpen(false);
     setAutoOpenReference(false);
-    if (searchParams.get("capture") || searchParams.get("reference")) {
-      const next = new URLSearchParams(searchParams.toString());
-      next.delete("capture");
-      next.delete("reference");
-      const query = next.toString();
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("capture") || params.get("reference")) {
+      params.delete("capture");
+      params.delete("reference");
+      const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname);
     }
-  }, [pathname, router, searchParams]);
+  }, [pathname, router]);
 
   const openCapture = useCallback((options?: { openReference?: boolean }) => {
     setAutoOpenReference(Boolean(options?.openReference));
     setCaptureOpen(true);
   }, []);
-
-  useEffect(() => {
-    if (searchParams.get("capture") === "1") {
-      openCapture({ openReference: searchParams.get("reference") === "1" });
-    }
-  }, [openCapture, searchParams]);
 
   return (
     <ArgusAddContext.Provider value={{ openCapture }}>
@@ -70,24 +79,9 @@ function ArgusAddProviderInner({
         onClose={closeCapture}
         autoOpenReference={autoOpenReference}
       />
+      <Suspense fallback={null}>
+        <CaptureDeepLinkSync onOpen={openCapture} />
+      </Suspense>
     </ArgusAddContext.Provider>
-  );
-}
-
-export function ArgusAddProvider({
-  children,
-  buckets,
-  tagBuckets,
-}: {
-  children: ReactNode;
-  buckets: EntityPickerBuckets;
-  tagBuckets: TagBuckets;
-}) {
-  return (
-    <Suspense fallback={children}>
-      <ArgusAddProviderInner buckets={buckets} tagBuckets={tagBuckets}>
-        {children}
-      </ArgusAddProviderInner>
-    </Suspense>
   );
 }
