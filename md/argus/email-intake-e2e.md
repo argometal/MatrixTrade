@@ -53,8 +53,12 @@ Redeploy Vercel after env sync.
 ### 3. Verify
 
 ```powershell
-npx tsx tools/test-email-inbox.ts https://matrix-trade-theta.vercel.app
+cd c:\Tools\MatrixTrade
+.\tools\verify-argus-inbox-schema.cmd
+.\tools\test-email-inbox.cmd https://matrix-trade-theta.vercel.app
 ```
+
+Use the `.cmd` wrappers if PowerShell blocks `npx` (execution policy).
 
 Send real email to `argus@argometal.dev` → open `https://matrix-trade-theta.vercel.app/argus/inbox`.
 
