@@ -1,24 +1,18 @@
 import type { TradingProposalType } from "./bridge";
 
-/** Block types that Import + Inbox accept and Apply executes today. */
-export const AI_BRIDGE_APPLY_READY = [
+export const AI_BRIDGE_BLOCK_TYPES = [
   "analysis",
   "trade-proposal",
   "trade-close",
   "trade-review",
-] as const satisfies readonly TradingProposalType[];
-
-/** Block types validated on import; Apply handler not implemented yet. */
-export const AI_BRIDGE_PARSER_ONLY = [
   "trade-update",
   "playbook-create",
   "playbook-update",
 ] as const satisfies readonly TradingProposalType[];
 
-export const AI_BRIDGE_BLOCK_TYPES = [
-  ...AI_BRIDGE_APPLY_READY,
-  ...AI_BRIDGE_PARSER_ONLY,
-] as const;
+export const AI_BRIDGE_APPLY_READY = [...AI_BRIDGE_BLOCK_TYPES] as const;
+
+export const AI_BRIDGE_PARSER_ONLY = [] as const satisfies readonly TradingProposalType[];
 
 export type AiBridgeBlockType = (typeof AI_BRIDGE_BLOCK_TYPES)[number];
 

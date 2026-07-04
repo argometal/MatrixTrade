@@ -11,14 +11,13 @@ Required shape:
   "type": "<block-type>",
   "proposal": { ... }
 }
-Block types (Apply ready):
+Block types (all Apply ready):
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId
 - trade-close: close trade — id, exit required
 - trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
 - analysis: notes on existing trade — id required; at least one of thesis, psychology, lessons, notes
-Block types (parser only — import OK, Apply pending):
 - trade-update: id required; at least one field to change (entry, stop, target, shares, ticker, thesis, notes, playbookId, setupId, status)
-- playbook-create: name required; optional description, status (TESTING|ACTIVE|RETIRED), checklist[]
+- playbook-create: name required; optional id, description, status (TESTING|ACTIVE|RETIRED), checklist[]
 - playbook-update: id required; at least one of name, description, status, checklist
 Rules:
 - Return exactly one block. No arrays of blocks.

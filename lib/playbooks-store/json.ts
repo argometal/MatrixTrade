@@ -22,5 +22,17 @@ export async function readPlaybooksJsonFile(): Promise<Playbook[]> {
 export function createJsonPlaybooksStore(): PlaybooksStore {
   return {
     readAll: readPlaybooksJsonFile,
+    async upsert(playbook) {
+      const all = await readPlaybooksJsonFile();
+      const index = all.findIndex((row) => row.id === playbook.id);
+      if (index >= 0) {
+        all[index] = playbook;
+      } else {
+        all.push(playbook);
+      }
+      all.sort((a, b) => a.id.localeCompare(b.id));
+      await fs.mkdir(path.dirname(PLAYBOOKS_FILE), { recursive: true });
+      await fs.writeFile(PLAYBOOKS_FILE, `${JSON.stringify(all, null, 2)}\n`, "utf-8");
+    },
   };
 }

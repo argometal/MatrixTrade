@@ -162,8 +162,8 @@ export function AiBlockPanel({
           </button>
         </div>
         <p className="text-xs text-zinc-500">
-          Types with Apply today: trade-proposal, trade-close, trade-review, analysis. Parser-only
-          (Apply pending): trade-update, playbook-create, playbook-update. Never auto-applied.
+          Types with Apply today: trade-proposal, trade-close, trade-review, analysis, trade-update,
+          playbook-create, playbook-update. Never auto-applied.
         </p>
       </form>
     </div>

@@ -1,13 +1,15 @@
 import Link from "next/link";
 import {
   formatPersistenceTarget,
+  summarizePlaybookEvidence,
   summarizeTradeEvidence,
 } from "@/lib/apply-verify";
+import { getPlaybookById } from "@/lib/playbooks";
 import { getTradeById } from "@/lib/storage";
-import type { Trade } from "@/lib/types";
 
 export async function InboxApplyResult({
   tradeId,
+  playbookId,
   type,
   store,
   verified,
@@ -16,6 +18,7 @@ export async function InboxApplyResult({
   inboxError,
 }: {
   tradeId: string;
+  playbookId?: string;
   type: string;
   store: string;
   verified: boolean;
@@ -23,9 +26,12 @@ export async function InboxApplyResult({
   verifyDetail?: string;
   inboxError?: string;
 }) {
-  const trade: Trade | undefined = tradeId ? await getTradeById(tradeId) : undefined;
-  const evidence = summarizeTradeEvidence(trade, type);
+  const trade = tradeId ? await getTradeById(tradeId) : undefined;
+  const playbook = playbookId ? await getPlaybookById(playbookId) : undefined;
+  const evidence =
+    summarizeTradeEvidence(trade, type) ?? summarizePlaybookEvidence(playbook ?? undefined);
   const persistenceTarget = formatPersistenceTarget(store);
+  const isPlaybookType = type.startsWith("playbook-");
 
   return (
     <section className="space-y-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
@@ -36,8 +42,10 @@ export async function InboxApplyResult({
           <dd className="font-mono">{type}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-emerald-800">Affected trade</dt>
-          <dd className="font-mono">{tradeId || "—"}</dd>
+          <dt className="text-xs uppercase tracking-wide text-emerald-800">
+            {isPlaybookType ? "Affected playbook" : "Affected trade"}
+          </dt>
+          <dd className="font-mono">{isPlaybookType ? playbookId || "—" : tradeId || "—"}</dd>
         </div>
         <div>
           <dt className="text-xs uppercase tracking-wide text-emerald-800">Persistence target</dt>
@@ -61,12 +69,20 @@ export async function InboxApplyResult({
         </p>
       )}
       <div className="flex flex-wrap gap-3 pt-1">
-        {tradeId && (
+        {tradeId && !isPlaybookType && (
           <Link
             href={`/trades/${tradeId}`}
             className="rounded-md bg-emerald-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
           >
             Open trade {tradeId}
+          </Link>
+        )}
+        {playbookId && isPlaybookType && (
+          <Link
+            href="/playbook"
+            className="rounded-md bg-emerald-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
+          >
+            Open Playbooks
           </Link>
         )}
         <Link

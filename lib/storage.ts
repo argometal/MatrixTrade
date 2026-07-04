@@ -15,6 +15,8 @@ import type {
   SaveReviewInput,
   Trade,
   TradeMetaInput,
+  TradeStatus,
+  UpdateTradeInput,
 } from "./types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -268,6 +270,70 @@ export async function updateTradeMeta(
         input.setupId === "" || input.setupId === "__none__"
           ? undefined
           : input.setupId?.trim() || trade.setupId,
+      direction: input.direction ?? trade.direction,
+      plannedRisk: input.plannedRisk ?? trade.plannedRisk,
+      actualRisk: input.actualRisk ?? trade.actualRisk,
+      riskRewardPlanned: input.riskRewardPlanned ?? trade.riskRewardPlanned,
+      riskRewardActual: input.riskRewardActual ?? trade.riskRewardActual,
+    },
+    rules
+  );
+
+  await upsertTradeInJson(updated);
+  await syncObsidianTradeIfLocal(updated, rules);
+
+  return { trade: updated };
+}
+
+function parseTradeStatus(value: unknown): TradeStatus | undefined {
+  const raw = String(value ?? "").toLowerCase();
+  if (raw === "pending" || raw === "open" || raw === "closed") return raw;
+  return undefined;
+}
+
+export async function updateTrade(
+  id: string,
+  input: UpdateTradeInput
+): Promise<{ trade?: Trade; errors?: string[] }> {
+  const rules = await getRules();
+  const trade = (await getTrades()).find((t) => t.id === id.toUpperCase());
+
+  if (!trade) {
+    return { errors: ["Trade not found."] };
+  }
+
+  const nextStatus = input.status !== undefined ? parseTradeStatus(input.status) : trade.status;
+  if (input.status !== undefined && !nextStatus) {
+    return { errors: ["status must be pending, open, or closed."] };
+  }
+
+  const updated = enrichTrade(
+    {
+      ...trade,
+      ticker: input.ticker !== undefined ? String(input.ticker).trim().toUpperCase() : trade.ticker,
+      entry: input.entry ?? trade.entry,
+      exit: input.exit ?? trade.exit,
+      stop: input.stop ?? trade.stop,
+      target: input.target ?? trade.target,
+      shares: input.shares ?? trade.shares,
+      status: nextStatus ?? trade.status,
+      thesis: input.thesis !== undefined ? String(input.thesis) : trade.thesis,
+      psychology: input.psychology !== undefined ? String(input.psychology) : trade.psychology,
+      lessons: input.lessons !== undefined ? String(input.lessons) : trade.lessons,
+      notes: input.notes !== undefined ? String(input.notes) : trade.notes,
+      playbookId:
+        input.playbookId === "" || input.playbookId === "__none__"
+          ? undefined
+          : input.playbookId !== undefined
+            ? String(input.playbookId).trim() || undefined
+            : trade.playbookId,
+      setupId:
+        input.setupId === "" || input.setupId === "__none__"
+          ? undefined
+          : input.setupId !== undefined
+            ? String(input.setupId).trim() || undefined
+            : trade.setupId,
+      setup: input.setup !== undefined ? input.setup.trim() || undefined : trade.setup,
       direction: input.direction ?? trade.direction,
       plannedRisk: input.plannedRisk ?? trade.plannedRisk,
       actualRisk: input.actualRisk ?? trade.actualRisk,

@@ -1,5 +1,13 @@
 import { readNoteBody } from "./obsidian";
 import { syncObsidianTradeIfLocal } from "./obsidian-local";
+import type { Playbook } from "./playbook-types";
+import {
+  getPlaybookById,
+  parsePlaybookChecklist,
+  parsePlaybookStatus,
+  slugifyPlaybookId,
+  upsertPlaybook,
+} from "./playbooks";
 import { absoluteNotePath, enrichTrade } from "./trade-links";
 import {
   parseMistakes,
@@ -13,17 +21,20 @@ import {
   getRules,
   getTradeById,
   saveTradeReview,
+  updateTrade,
 } from "./storage";
 import { upsertTradeInJson } from "./trades-json";
-import type { CreateTradeInput, SaveReviewInput, Trade } from "./types";
+import type { CreateTradeInput, SaveReviewInput, Trade, UpdateTradeInput } from "./types";
 
 export type ApplyTradingProposalResult =
   | {
       ok: true;
       message: string;
       type: TradingProposalType;
-      tradeId: string;
+      tradeId?: string;
+      playbookId?: string;
       trade?: Trade;
+      playbook?: Playbook;
     }
   | { ok: false; errors: string[] };
 
@@ -45,14 +56,11 @@ export async function applyTradingProposal(
     case "analysis":
       return applyAnalysis(parsed);
     case "trade-update":
+      return applyTradeUpdate(parsed);
     case "playbook-create":
+      return applyPlaybookCreate(parsed);
     case "playbook-update":
-      return {
-        ok: false,
-        errors: [
-          `Block type "${parsed.type}" is supported by the parser; Apply is pending implementation.`,
-        ],
-      };
+      return applyPlaybookUpdate(parsed);
     default:
       return { ok: false, errors: ["Unsupported proposal type."] };
   }
@@ -174,5 +182,99 @@ async function applyAnalysis(
     type: "analysis",
     tradeId: id,
     trade: updated,
+  };
+}
+
+function buildTradeUpdateInput(proposal: Record<string, unknown>): UpdateTradeInput {
+  const input: UpdateTradeInput = {};
+  if (proposal.ticker !== undefined) input.ticker = String(proposal.ticker);
+  if (proposal.entry !== undefined) input.entry = Number(proposal.entry);
+  if (proposal.exit !== undefined) input.exit = Number(proposal.exit);
+  if (proposal.stop !== undefined) input.stop = Number(proposal.stop);
+  if (proposal.target !== undefined) input.target = Number(proposal.target);
+  if (proposal.shares !== undefined) input.shares = Number(proposal.shares);
+  if (proposal.status !== undefined) input.status = String(proposal.status) as UpdateTradeInput["status"];
+  if (proposal.thesis !== undefined) input.thesis = String(proposal.thesis);
+  if (proposal.psychology !== undefined) input.psychology = String(proposal.psychology);
+  if (proposal.lessons !== undefined) input.lessons = String(proposal.lessons);
+  if (proposal.notes !== undefined) input.notes = String(proposal.notes);
+  if (proposal.playbookId !== undefined) input.playbookId = String(proposal.playbookId);
+  if (proposal.setupId !== undefined) input.setupId = String(proposal.setupId);
+  return input;
+}
+
+async function applyTradeUpdate(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const id = String(parsed.proposal.id).toUpperCase();
+  const result = await updateTrade(id, buildTradeUpdateInput(parsed.proposal));
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  return {
+    ok: true,
+    message: `Updated trade ${id}`,
+    type: "trade-update",
+    tradeId: id,
+    trade: result.trade,
+  };
+}
+
+async function applyPlaybookCreate(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const p = parsed.proposal;
+  const name = String(p.name).trim();
+  const idRaw = p.id ? String(p.id).trim() : slugifyPlaybookId(name);
+  const id = idRaw || slugifyPlaybookId(`playbook-${Date.now()}`);
+
+  const existing = await getPlaybookById(id);
+  if (existing) {
+    return { ok: false, errors: [`Playbook id "${id}" already exists.`] };
+  }
+
+  const playbook: Playbook = {
+    id,
+    name,
+    status: parsePlaybookStatus(p.status),
+    description: p.description ? String(p.description) : "",
+    checklist: parsePlaybookChecklist(p.checklist),
+  };
+
+  await upsertPlaybook(playbook);
+  return {
+    ok: true,
+    message: `Created playbook ${playbook.id} · ${playbook.name}`,
+    type: "playbook-create",
+    playbookId: playbook.id,
+    playbook,
+  };
+}
+
+async function applyPlaybookUpdate(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const p = parsed.proposal;
+  const id = String(p.id).trim();
+  const existing = await getPlaybookById(id);
+  if (!existing) {
+    return { ok: false, errors: [`Playbook "${id}" not found.`] };
+  }
+
+  const updated: Playbook = {
+    ...existing,
+    name: p.name !== undefined ? String(p.name).trim() : existing.name,
+    status: p.status !== undefined ? parsePlaybookStatus(p.status) : existing.status,
+    description:
+      p.description !== undefined ? String(p.description) : existing.description,
+    checklist:
+      p.checklist !== undefined ? parsePlaybookChecklist(p.checklist) : existing.checklist,
+  };
+
+  await upsertPlaybook(updated);
+  return {
+    ok: true,
+    message: `Updated playbook ${updated.id} · ${updated.name}`,
+    type: "playbook-update",
+    playbookId: updated.id,
+    playbook: updated,
   };
 }

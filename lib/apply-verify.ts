@@ -1,4 +1,5 @@
 import type { TradingInboxPayload } from "./bridge";
+import { getPlaybookById, slugifyPlaybookId } from "./playbooks";
 import { getTradeById } from "./storage";
 import type { Trade } from "./types";
 
@@ -13,9 +14,32 @@ function fieldContains(stored: string | undefined, expected: string): boolean {
   return stored.includes(expected.trim());
 }
 
+function numMatch(stored: number | undefined, expected: unknown): boolean {
+  if (expected === undefined) return true;
+  return stored === Number(expected);
+}
+
 export async function verifyApplyPersistence(
   parsed: TradingInboxPayload
 ): Promise<ApplyVerifyResult> {
+  const p = parsed.proposal;
+
+  switch (parsed.type) {
+    case "trade-proposal":
+    case "trade-close":
+    case "trade-review":
+    case "analysis":
+    case "trade-update":
+      return verifyTradePersistence(parsed);
+    case "playbook-create":
+    case "playbook-update":
+      return verifyPlaybookPersistence(parsed);
+    default:
+      return { ok: false, detail: "Unsupported proposal type for verification." };
+  }
+}
+
+async function verifyTradePersistence(parsed: TradingInboxPayload): Promise<ApplyVerifyResult> {
   const p = parsed.proposal;
   const tradeId = String(p.id).toUpperCase();
   const reloaded = await getTradeById(tradeId);
@@ -95,9 +119,58 @@ export async function verifyApplyPersistence(
         detail: `Analysis fields persisted on ${tradeId}: ${checks.join(", ")}.`,
       };
     }
+    case "trade-update": {
+      if (!reloaded) {
+        return { ok: false, detail: `Trade ${tradeId} not found after update apply.` };
+      }
+      const failures: string[] = [];
+      if (p.stop !== undefined && !numMatch(reloaded.stop, p.stop)) failures.push("stop");
+      if (p.target !== undefined && !numMatch(reloaded.target, p.target)) failures.push("target");
+      if (p.entry !== undefined && !numMatch(reloaded.entry, p.entry)) failures.push("entry");
+      if (p.ticker !== undefined && reloaded.ticker !== String(p.ticker).toUpperCase()) {
+        failures.push("ticker");
+      }
+      if (p.thesis !== undefined && !fieldContains(reloaded.thesis, String(p.thesis))) {
+        failures.push("thesis");
+      }
+      if (p.playbookId !== undefined && reloaded.playbookId !== String(p.playbookId)) {
+        failures.push("playbookId");
+      }
+      if (failures.length > 0) {
+        return {
+          ok: false,
+          detail: `Trade ${tradeId} updated but fields mismatch: ${failures.join(", ")}.`,
+        };
+      }
+      return { ok: true, detail: `Trade ${tradeId} update verified in store.` };
+    }
     default:
-      return { ok: false, detail: "Unsupported proposal type for verification." };
+      return { ok: false, detail: "Unsupported trade verification type." };
   }
+}
+
+async function verifyPlaybookPersistence(parsed: TradingInboxPayload): Promise<ApplyVerifyResult> {
+  const p = parsed.proposal;
+  const playbookId =
+    parsed.type === "playbook-create"
+      ? (p.id ? String(p.id).trim() : slugifyPlaybookId(String(p.name)))
+      : String(p.id).trim();
+  const reloaded = await getPlaybookById(playbookId);
+  if (!reloaded) {
+    return { ok: false, detail: `Playbook ${playbookId} not found after apply.` };
+  }
+  if (parsed.type === "playbook-create" && reloaded.name !== String(p.name).trim()) {
+    return { ok: false, detail: `Playbook name mismatch for ${playbookId}.` };
+  }
+  if (parsed.type === "playbook-update") {
+    if (p.name !== undefined && reloaded.name !== String(p.name).trim()) {
+      return { ok: false, detail: `Playbook ${playbookId} name not updated.` };
+    }
+    if (p.status !== undefined && reloaded.status !== String(p.status).toUpperCase()) {
+      return { ok: false, detail: `Playbook ${playbookId} status not updated.` };
+    }
+  }
+  return { ok: true, detail: `Playbook ${playbookId} · ${reloaded.name} verified in store.` };
 }
 
 export function formatPersistenceTarget(storeMode: string): string {
@@ -113,6 +186,9 @@ export function summarizeTradeEvidence(trade: Trade | undefined, type: string): 
     ].filter(Boolean);
     return parts.length ? parts.join(" · ") : null;
   }
+  if (type === "trade-update") {
+    return `stop: ${trade.stop} · target: ${trade.target ?? "—"} · ${trade.ticker}`;
+  }
   if (type === "trade-review") {
     return trade.reviewedAt ? `reviewedAt: ${trade.reviewedAt}` : null;
   }
@@ -120,4 +196,11 @@ export function summarizeTradeEvidence(trade: Trade | undefined, type: string): 
     return trade.status === "closed" ? `status: closed · exit: ${trade.exit}` : null;
   }
   return `${trade.ticker} · ${trade.status}`;
+}
+
+export function summarizePlaybookEvidence(
+  playbook: { id: string; name: string; status: string } | undefined
+): string | null {
+  if (!playbook) return null;
+  return `${playbook.id} · ${playbook.name} · ${playbook.status}`;
 }

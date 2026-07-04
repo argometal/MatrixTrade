@@ -16,6 +16,7 @@ type InboxDetailSearchParams = {
   origin?: string;
   error?: string;
   applied?: string;
+  playbookId?: string;
   type?: string;
   tradeId?: string;
   store?: string;
@@ -84,6 +85,7 @@ export default async function TradingInboxDetailPage({
 
         <InboxApplyResult
           tradeId={query.tradeId ?? ""}
+          playbookId={query.playbookId}
           type={query.type ?? "unknown"}
           store={query.store ?? "json"}
           verified={query.verified === "1"}

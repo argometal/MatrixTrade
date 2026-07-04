@@ -254,7 +254,8 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
     applied: "1",
     origin,
     type: result.type,
-    tradeId: result.tradeId,
+    tradeId: result.tradeId ?? "",
+    playbookId: result.playbookId ?? "",
     store: getTradesStoreMode(),
     verified: verify.ok ? "1" : "0",
     message: result.message,
@@ -263,7 +264,7 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
   if (inboxError) params.set("inboxError", inboxError);
 
   revalidateTradingPaths();
-  revalidatePath(`/trades/${result.tradeId}`);
+  if (result.tradeId) revalidatePath(`/trades/${result.tradeId}`);
   redirect(`/inbox/${id}?${params.toString()}`);
 }
 
