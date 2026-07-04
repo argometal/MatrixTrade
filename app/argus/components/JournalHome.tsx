@@ -250,8 +250,6 @@ export function JournalHome({
                   linkedEntities={linkedEntitiesFor(item)}
                   buckets={buckets}
                   tagBuckets={tagBuckets}
-                  expanded={expandedId === item.id}
-                  onToggle={() => toggleExpanded(item.id)}
                 />
               ))}
             </DetailList>

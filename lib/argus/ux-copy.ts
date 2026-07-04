@@ -182,6 +182,7 @@ export const INBOX = {
   attachments: "Attachments",
   actions: "Actions",
   linkReference: "Link to reference",
+  tapToLink: "Tap to link to a person, project, topic, or event",
   createReference: "Create reference",
   createPerson: "+ New Person",
   createProject: "+ New Project",
@@ -213,7 +214,7 @@ export const SECTION_EMPTY = {
   reminders: "No pending follow-ups.",
   remindersHint: "Set a reminder when capturing.",
   inbox: "Inbox is empty.",
-  inboxHint: "Incoming items appear here.",
+  inboxHint: "Tap an email to link it to a reference.",
 } as const;
 
 export const REFERENCE_PICKER = {

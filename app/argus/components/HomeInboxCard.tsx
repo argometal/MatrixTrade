@@ -14,8 +14,6 @@ import { HOME_INBOX_ACTIONS, INBOX, TESTING } from "@/lib/argus/ux-copy";
 import { archiveInboxAction, convertInboxAction, deleteInboxAction, linkInboxAction, type CreatedEntityResult } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "./ArgusDeleteForm";
 import { CaptureSheet } from "./CaptureSheet";
-import { HomeExpandableCard } from "./HomeExpandableCard";
-import { InboxAttachmentList } from "./InboxAttachmentList";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
 import type { TagBuckets } from "./TagPickerModal";
 
@@ -35,6 +33,10 @@ function actionButtonClass(compact = false): string {
   return base;
 }
 
+function primaryActionClass(): string {
+  return "rounded-lg bg-teal-700/90 px-3 py-2 text-xs font-medium text-white hover:bg-teal-600";
+}
+
 export function HomeInboxCard({
   item,
   view,
@@ -42,8 +44,6 @@ export function HomeInboxCard({
   linkedEntities,
   buckets,
   tagBuckets,
-  expanded,
-  onToggle,
 }: {
   item: InboxItem;
   view: EmailViewModel;
@@ -51,8 +51,6 @@ export function HomeInboxCard({
   linkedEntities: Entity[];
   buckets: EntityPickerBuckets;
   tagBuckets: TagBuckets;
-  expanded: boolean;
-  onToggle: () => void;
 }) {
   const linkFormRef = useRef<HTMLFormElement>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -61,6 +59,7 @@ export function HomeInboxCard({
 
   const canTriage = item.status === "pending" || item.status === "linked";
   const preview = view.textBody.replace(/\s+/g, " ").trim().slice(0, 120);
+  const primaryAttachment = attachments[0];
 
   function submitLinkForm() {
     linkFormRef.current?.requestSubmit();
@@ -80,88 +79,82 @@ export function HomeInboxCard({
     return false;
   }
 
-  const primaryAttachment = attachments[0];
+  const cardBody = (
+    <>
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-600">Email</p>
+        <span className="text-[11px] text-zinc-600">{INBOX_STATUS_LABELS[item.status]}</span>
+      </div>
+      <p className="mt-2 text-[15px] font-medium text-zinc-100">{view.subject || INBOX.noSubject}</p>
+      <dl className="mt-2 space-y-1 text-[13px]">
+        <div className="flex gap-2">
+          <dt className="text-zinc-600">{INBOX.fromLabel}</dt>
+          <dd className="min-w-0 truncate text-zinc-300">{view.from}</dd>
+        </div>
+        <div className="flex gap-2">
+          <dt className="text-zinc-600">{INBOX.receivedLabel}</dt>
+          <dd className="text-zinc-400">{formatReceived(view.receivedAt)}</dd>
+        </div>
+      </dl>
+      {preview ? <p className="mt-2 line-clamp-2 text-[13px] text-zinc-500">{preview}</p> : null}
+
+      {linkedEntities.length > 0 ? (
+        <div className="mt-3 border-t border-zinc-800/80 pt-3">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-600">{INBOX.linkedTo}</p>
+          <ul className="mt-1.5 space-y-1">
+            {linkedEntities.map((entity) => (
+              <li key={entity.id}>
+                <Link
+                  href={entityDetailHref(entity)}
+                  onClick={(event) => event.stopPropagation()}
+                  className="text-[13px] text-teal-500 hover:text-teal-400"
+                >
+                  {referenceDisplayLabel(entity)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {canTriage ? (
+        <p className="mt-3 text-[11px] font-medium text-teal-500/90">{INBOX.tapToLink}</p>
+      ) : null}
+    </>
+  );
 
   return (
     <>
-      <HomeExpandableCard
-        expanded={expanded}
-        onToggle={onToggle}
-        collapsed={
-          <div>
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-600">Email</p>
-              <span className="text-[11px] text-zinc-600">{INBOX_STATUS_LABELS[item.status]}</span>
-            </div>
-            <p className="mt-2 text-[15px] font-medium text-zinc-100">{view.subject || INBOX.noSubject}</p>
-            <dl className="mt-2 space-y-1 text-[13px]">
-              <div className="flex gap-2">
-                <dt className="text-zinc-600">{INBOX.fromLabel}</dt>
-                <dd className="min-w-0 truncate text-zinc-300">{view.from}</dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="text-zinc-600">{INBOX.receivedLabel}</dt>
-                <dd className="text-zinc-400">{formatReceived(view.receivedAt)}</dd>
-              </div>
-            </dl>
-            {preview ? <p className="mt-2 line-clamp-2 text-[13px] text-zinc-500">{preview}</p> : null}
-          </div>
-        }
-      >
-        <dl className="space-y-2 text-sm">
-          <div className="grid grid-cols-[4.5rem_1fr] gap-x-3 gap-y-1">
-            <dt className="text-zinc-500">{INBOX.fromLabel}</dt>
-            <dd className="break-all text-zinc-200">{view.from}</dd>
-            {view.to ? (
-              <>
-                <dt className="text-zinc-500">{INBOX.toLabel}</dt>
-                <dd className="break-all text-zinc-200">{view.to}</dd>
-              </>
-            ) : null}
-            <dt className="text-zinc-500">{INBOX.receivedLabel}</dt>
-            <dd className="text-zinc-200">{formatReceived(view.receivedAt)}</dd>
-          </div>
-        </dl>
+      <div className="overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-900/30">
+        {canTriage ? (
+          <button
+            type="button"
+            onClick={openLinkPicker}
+            className="w-full px-4 py-3 text-left transition hover:bg-zinc-800/40"
+          >
+            {cardBody}
+          </button>
+        ) : (
+          <Link
+            href={`/argus/inbox/${item.id}`}
+            className="block px-4 py-3 transition hover:bg-zinc-800/30"
+          >
+            {cardBody}
+          </Link>
+        )}
 
-        <section className="mt-4">
-          <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">{INBOX.messageBody}</h3>
-          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">{view.textBody}</p>
-        </section>
-
-        <InboxAttachmentList attachments={attachments} />
-
-        {linkedEntities.length > 0 ? (
-          <div className="mt-4 border-t border-zinc-800 pt-4">
-            <p className="text-xs font-medium uppercase text-zinc-500">{INBOX.linkedTo}</p>
-            <ul className="mt-2 space-y-1">
-              {linkedEntities.map((entity) => (
-                <li key={entity.id}>
-                  <Link href={entityDetailHref(entity)} className="text-sm text-teal-500 hover:text-teal-400">
-                    {referenceDisplayLabel(entity)}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        <div className="mt-4 border-t border-zinc-800 pt-4">
-          <p className="mb-3 text-xs font-medium uppercase text-zinc-500">{INBOX.actions}</p>
-          <div className="flex flex-wrap gap-2">
-            {canTriage ? (
-              <>
-                <button type="button" onClick={openLinkPicker} className={actionButtonClass(true)}>
-                  {INBOX.linkReference}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowConvert(true)}
-                  className={actionButtonClass(true)}
-                >
-                  {INBOX.convertRecord}
-                </button>
-              </>
-            ) : null}
+        {canTriage ? (
+          <div className="flex flex-wrap gap-2 border-t border-zinc-800/80 px-4 py-3">
+            <button type="button" onClick={openLinkPicker} className={primaryActionClass()}>
+              {INBOX.linkReference}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowConvert((open) => !open)}
+              className={actionButtonClass(true)}
+            >
+              {INBOX.convertRecord}
+            </button>
             {primaryAttachment ? (
               <Link href={attachmentDownloadUrl(primaryAttachment.id)} className={actionButtonClass(true)}>
                 {HOME_INBOX_ACTIONS.downloadOriginal}
@@ -180,10 +173,10 @@ export function HomeInboxCard({
               <input type="hidden" name="returnTo" value="journal" />
             </ArgusDeleteForm>
           </div>
-        </div>
+        ) : null}
 
         {canTriage && showConvert ? (
-          <div className="mt-4 border-t border-zinc-800 pt-4">
+          <div className="border-t border-zinc-800/80 px-4 py-4">
             <CaptureSheet
               open
               action={convertInboxAction}
@@ -200,7 +193,7 @@ export function HomeInboxCard({
             />
           </div>
         ) : null}
-      </HomeExpandableCard>
+      </div>
 
       {canTriage ? (
         <>
