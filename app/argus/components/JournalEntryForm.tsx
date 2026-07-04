@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { JOURNAL_KINDS, JOURNAL_KIND_LABELS } from "@/lib/argus/labels";
 import { inferJournalKind } from "@/lib/argus/journal-helpers";
-import { referenceKindToCreateInput, type ReferenceKind } from "@/lib/argus/reference-types";
+import type { ReferenceKind } from "@/lib/argus/reference-types";
 import type { JournalKind } from "@/lib/argus/types";
 import { AttachmentField } from "./AttachmentField";
 import { EntityPicker, type EntityPickerBuckets } from "./EntityPicker";
@@ -43,11 +43,6 @@ export function JournalEntryForm({
   const [quickCreateName, setQuickCreateName] = useState("");
   const [quickCreateKind, setQuickCreateKind] = useState<ReferenceKind>("person");
   const [quickCreateNotes, setQuickCreateNotes] = useState("");
-  const quickCreatePayload = referenceKindToCreateInput(
-    quickCreateKind,
-    quickCreateName,
-    quickCreateNotes
-  );
 
   const inferredKind = inferJournalKind({
     followUpDate: followUpDate || undefined,
@@ -69,13 +64,6 @@ export function JournalEntryForm({
       {selectedIds.map((id) => (
         <input key={id} type="hidden" name="entityIds" value={id} />
       ))}
-      {quickCreateName.trim() && (
-        <>
-          <input type="hidden" name="newEntityName" value={quickCreateName.trim()} />
-          <input type="hidden" name="newEntityType" value={quickCreatePayload.entityType} />
-          <input type="hidden" name="newEntityNotes" value={quickCreatePayload.notes} />
-        </>
-      )}
 
       <nav className="flex items-center gap-2 text-xs text-zinc-500">
         {STEPS.map((s, i) => (

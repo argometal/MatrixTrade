@@ -21,6 +21,7 @@ interface ReferenceCreateModalProps {
   title?: string;
   saveLabel?: string;
   notesOptional?: boolean;
+  error?: string;
 }
 
 export function ReferenceCreateModal({
@@ -31,6 +32,7 @@ export function ReferenceCreateModal({
   title,
   saveLabel,
   notesOptional = false,
+  error,
 }: ReferenceCreateModalProps) {
   const [name, setName] = useState("");
   const [kind, setKind] = useState<ReferenceKind>(defaultKind);
@@ -66,6 +68,7 @@ export function ReferenceCreateModal({
         <h2 id="reference-create-title" className="text-lg font-semibold text-zinc-100">
           {title ?? REFERENCES.createNew}
         </h2>
+        {error ? <p className="mt-2 text-sm text-amber-400">{error}</p> : null}
         <div className="mt-4 space-y-3">
           <label className="block">
             <span className="text-xs font-medium text-zinc-500">Name</span>

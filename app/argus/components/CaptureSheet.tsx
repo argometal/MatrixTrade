@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { referenceKindToCreateInput, createInputToReferenceKind, type ReferenceKind } from "@/lib/argus/reference-types";
 import { CAPTURE, REFERENCES, TAGS } from "@/lib/argus/ux-copy";
 import { AttachmentField } from "./AttachmentField";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
@@ -71,14 +70,6 @@ export function CaptureSheet({
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(autoOpenReference);
   const [tagsOpen, setTagsOpen] = useState(false);
-  const [quickCreateName, setQuickCreateName] = useState("");
-  const [quickCreateKind, setQuickCreateKind] = useState<ReferenceKind>("person");
-  const [quickCreateNotes, setQuickCreateNotes] = useState("");
-  const quickCreatePayload = referenceKindToCreateInput(
-    quickCreateKind,
-    quickCreateName,
-    quickCreateNotes
-  );
 
   useEffect(() => {
     if (open) {
@@ -104,10 +95,7 @@ export function CaptureSheet({
   const selectedNames = selectedIds
     .map((id) => buckets.alphabetical.find((e) => e.id === id)?.name)
     .filter(Boolean);
-  const linkedLabel = [
-    ...selectedNames,
-    ...(quickCreateName.trim() ? [quickCreateName.trim()] : []),
-  ].join(", ");
+  const linkedLabel = selectedNames.join(", ");
 
   const formContent = (
     <form action={action} className="flex min-h-0 flex-1 flex-col">
@@ -118,13 +106,6 @@ export function CaptureSheet({
       {selectedIds.map((id) => (
         <input key={id} type="hidden" name="entityIds" value={id} />
       ))}
-      {quickCreateName.trim() && (
-        <>
-          <input type="hidden" name="newEntityName" value={quickCreateName.trim()} />
-          <input type="hidden" name="newEntityType" value={quickCreatePayload.entityType} />
-          <input type="hidden" name="newEntityNotes" value={quickCreatePayload.notes} />
-        </>
-      )}
       <input type="hidden" name="eventDate" value={eventDate} />
       <input type="hidden" name="followUpDate" value={followUpDate} />
       <input type="hidden" name="topics" value={selectedTags.join(", ")} />
@@ -160,7 +141,7 @@ export function CaptureSheet({
 
       <div className="mt-3 flex flex-wrap gap-2">
         <MetaButton
-          active={referenceOpen || selectedIds.length > 0 || Boolean(quickCreateName)}
+          active={referenceOpen || selectedIds.length > 0}
           onClick={() => setReferenceOpen(true)}
         >
           {CAPTURE.reference}
@@ -230,17 +211,6 @@ export function CaptureSheet({
         selectedIds={selectedIds}
         onChange={setSelectedIds}
         onClose={() => setReferenceOpen(false)}
-        pendingNewName={quickCreateName.trim() || undefined}
-        onPendingNew={(data) => {
-          if (!data) {
-            setQuickCreateName("");
-            setQuickCreateNotes("");
-            return;
-          }
-          setQuickCreateName(data.name);
-          setQuickCreateKind(createInputToReferenceKind(data.entityType, data.notes));
-          setQuickCreateNotes(data.notes);
-        }}
       />
 
       <TagPickerModal

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import type { Entity, EntityType, InboxItem } from "@/lib/argus/types";
+import type { Entity, InboxItem } from "@/lib/argus/types";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import { referenceDisplayLabel } from "@/lib/argus/reference-types";
 import {
@@ -11,12 +11,11 @@ import {
   type EmailViewModel,
 } from "@/lib/argus/email-view";
 import { HOME_INBOX_ACTIONS, INBOX, TESTING } from "@/lib/argus/ux-copy";
-import { archiveInboxAction, convertInboxAction, deleteInboxAction, linkInboxAction } from "@/app/argus/actions";
+import { archiveInboxAction, convertInboxAction, deleteInboxAction, linkInboxAction, type CreatedEntityResult } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "./ArgusDeleteForm";
 import { CaptureSheet } from "./CaptureSheet";
 import { HomeExpandableCard } from "./HomeExpandableCard";
 import { InboxAttachmentList } from "./InboxAttachmentList";
-import { ReferenceCreateModal } from "./ReferenceCreateModal";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
 import type { TagBuckets } from "./TagPickerModal";
 
@@ -69,13 +68,7 @@ export function HomeInboxCard({
   const linkFormRef = useRef<HTMLFormElement>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerMode, setPickerMode] = useState<"project" | "contact">("project");
-  const [createOpen, setCreateOpen] = useState(false);
   const [linkIds, setLinkIds] = useState<string[]>([]);
-  const [pendingNew, setPendingNew] = useState<{
-    name: string;
-    entityType: EntityType;
-    notes: string;
-  } | null>(null);
   const [showConvert, setShowConvert] = useState(false);
 
   const canTriage = item.status === "pending" || item.status === "linked";
@@ -92,8 +85,16 @@ export function HomeInboxCard({
   function openPicker(mode: "project" | "contact") {
     setPickerMode(mode);
     setLinkIds([]);
-    setPendingNew(null);
     setPickerOpen(true);
+  }
+
+  async function linkCreatedEntity(entity: CreatedEntityResult): Promise<false> {
+    const formData = new FormData();
+    formData.set("inboxId", item.id);
+    formData.set("entityIds", entity.id);
+    formData.set("returnTo", "journal");
+    await linkInboxAction(formData);
+    return false;
   }
 
   const primaryAttachment = attachments[0];
@@ -225,16 +226,10 @@ export function HomeInboxCard({
         <>
           <form ref={linkFormRef} action={linkInboxAction} className="hidden">
             <input type="hidden" name="inboxId" value={item.id} />
+            <input type="hidden" name="returnTo" value="journal" />
             {linkIds.map((id) => (
               <input key={id} type="hidden" name="entityIds" value={id} />
             ))}
-            {pendingNew ? (
-              <>
-                <input type="hidden" name="newEntityName" value={pendingNew.name} />
-                <input type="hidden" name="newEntityType" value={pendingNew.entityType} />
-                <input type="hidden" name="newEntityNotes" value={pendingNew.notes} />
-              </>
-            ) : null}
           </form>
 
           <ReferencePickerModal
@@ -244,28 +239,11 @@ export function HomeInboxCard({
             onChange={setLinkIds}
             onClose={() => setPickerOpen(false)}
             onConfirm={() => {
-              if (linkIds.length > 0 || pendingNew) submitLinkForm();
+              if (linkIds.length > 0) submitLinkForm();
             }}
-            pendingNewName={pendingNew?.name}
-            onPendingNew={(data) => {
-              if (data) {
-                setPendingNew(data);
-                setPickerOpen(false);
-                setTimeout(() => submitLinkForm(), 0);
-              } else {
-                setPendingNew(null);
-              }
-            }}
-          />
-
-          <ReferenceCreateModal
-            open={createOpen}
-            onCancel={() => setCreateOpen(false)}
-            onSave={(data) => {
-              setPendingNew(data);
-              setCreateOpen(false);
-              setTimeout(() => submitLinkForm(), 0);
-            }}
+            onEntityCreated={linkCreatedEntity}
+            defaultCreateKind={pickerMode === "project" ? "project" : "person"}
+            createButtonLabel={pickerMode === "project" ? INBOX.createProject : INBOX.createPerson}
           />
 
           <form action={archiveInboxAction} className="hidden" aria-hidden>

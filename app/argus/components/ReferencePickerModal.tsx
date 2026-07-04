@@ -1,10 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import type { Entity, EntityType } from "@/lib/argus/types";
-import { entityKindLabel } from "@/lib/argus/reference-types";
+import { createEntityInlineAction, type CreatedEntityResult } from "@/app/argus/actions";
+import {
+  createInputToReferenceKind,
+  entityKindLabel,
+  entityNotesForDisplay,
+  type ReferenceKind,
+} from "@/lib/argus/reference-types";
 import { CAPTURE, REFERENCES, REFERENCE_PICKER } from "@/lib/argus/ux-copy";
-import { FAVORITES_KEY } from "@/lib/argus/journal-helpers";
 import { inputClass } from "./ui";
 import { ReferenceCreateModal } from "./ReferenceCreateModal";
 
@@ -21,22 +26,10 @@ interface ReferencePickerModalProps {
   onChange: (ids: string[]) => void;
   onClose: () => void;
   onConfirm?: () => void;
-  pendingNewName?: string;
-  onPendingNew: (data: { name: string; entityType: EntityType; notes: string } | null) => void;
-}
-
-function loadFavorites(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(FAVORITES_KEY);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveFavorites(ids: string[]): void {
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids));
+  /** After inline create — picker closes. Return false to skip default select behavior. */
+  onEntityCreated?: (entity: CreatedEntityResult) => void | Promise<void | false>;
+  defaultCreateKind?: ReferenceKind;
+  createButtonLabel?: string;
 }
 
 function ReferenceRow({
@@ -64,12 +57,14 @@ export function ReferencePickerModal({
   onChange,
   onClose,
   onConfirm,
-  pendingNewName,
-  onPendingNew,
+  onEntityCreated,
+  defaultCreateKind = "person",
+  createButtonLabel,
 }: ReferencePickerModalProps) {
   const [query, setQuery] = useState("");
-  const [favorites, setFavorites] = useState<string[]>(() => loadFavorites());
   const [createOpen, setCreateOpen] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [isCreating, startCreate] = useTransition();
 
   const allEntities = buckets.alphabetical;
   const hasReferences = allEntities.length > 0;
@@ -81,7 +76,7 @@ export function ReferencePickerModal({
       (e) =>
         e.name.toLowerCase().includes(q) ||
         e.notes.toLowerCase().includes(q) ||
-        e.type.toLowerCase().includes(q)
+        entityKindLabel(e).toLowerCase().includes(q)
     );
   }, [allEntities, query]);
 
@@ -94,7 +89,33 @@ export function ReferencePickerModal({
     onChange(selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id]);
   }
 
+  function handleCreateSave(data: { name: string; entityType: EntityType; notes: string }) {
+    setCreateError(null);
+    startCreate(async () => {
+      try {
+        const kind = createInputToReferenceKind(data.entityType, data.notes);
+        const entity = await createEntityInlineAction(kind, data.name, entityNotesForDisplay(data.notes));
+        setCreateOpen(false);
+        onClose();
+
+        if (onEntityCreated) {
+          const handled = await onEntityCreated(entity);
+          if (handled === false) return;
+        }
+
+        if (!selectedIds.includes(entity.id)) {
+          onChange([...selectedIds, entity.id]);
+        }
+      } catch (err) {
+        setCreateError(err instanceof Error ? err.message : "Could not create");
+        setCreateOpen(true);
+      }
+    });
+  }
+
   if (!open) return null;
+
+  const createLabel = createButtonLabel ?? `+ ${REFERENCES.createNew}`;
 
   return (
     <>
@@ -120,10 +141,13 @@ export function ReferencePickerModal({
 
             <button
               type="button"
-              onClick={() => setCreateOpen(true)}
+              onClick={() => {
+                setCreateError(null);
+                setCreateOpen(true);
+              }}
               className="mt-3 w-full rounded-xl border border-teal-800/60 bg-teal-950/40 py-2 text-sm font-medium text-teal-300 hover:bg-teal-900/40"
             >
-              + {REFERENCES.createNew}
+              {createLabel}
             </button>
 
             {!query.trim() && recentList.length > 0 && (
@@ -136,7 +160,7 @@ export function ReferencePickerModal({
               {!hasReferences && !query.trim() ? (
                 <div className="py-8 text-center">
                   <p className="text-sm text-zinc-500">{REFERENCES.empty}</p>
-                  <p className="mt-1 text-xs text-zinc-600">{REFERENCES.emptyHint}</p>
+                  <p className="mt-1 text-xs text-zinc-600">{createLabel} to add one.</p>
                 </div>
               ) : visible.length === 0 ? (
                 <p className="py-6 text-center text-sm text-zinc-500">
@@ -153,10 +177,6 @@ export function ReferencePickerModal({
                 ))
               )}
             </div>
-
-            {pendingNewName && (
-              <p className="mt-2 text-xs text-teal-400">{REFERENCES.pendingNew(pendingNewName)}</p>
-            )}
           </div>
 
           <div className="flex gap-2 border-t border-zinc-800 p-4">
@@ -173,7 +193,8 @@ export function ReferencePickerModal({
                 onConfirm?.();
                 onClose();
               }}
-              className="flex-1 rounded-lg bg-teal-700 py-2.5 text-sm font-medium text-white hover:bg-teal-600"
+              disabled={selectedIds.length === 0}
+              className="flex-1 rounded-lg bg-teal-700 py-2.5 text-sm font-medium text-white hover:bg-teal-600 disabled:opacity-40"
             >
               {CAPTURE.done}
             </button>
@@ -183,11 +204,13 @@ export function ReferencePickerModal({
 
       <ReferenceCreateModal
         open={createOpen}
-        onCancel={() => setCreateOpen(false)}
-        onSave={(data) => {
-          onPendingNew(data);
-          setCreateOpen(false);
+        defaultKind={defaultCreateKind}
+        onCancel={() => {
+          if (!isCreating) setCreateOpen(false);
         }}
+        onSave={handleCreateSave}
+        saveLabel={isCreating ? "Saving…" : undefined}
+        error={createError ?? undefined}
       />
     </>
   );

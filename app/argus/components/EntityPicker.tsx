@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import type { Entity } from "@/lib/argus/types";
+import { createEntityInlineAction } from "@/app/argus/actions";
 import {
   REFERENCE_KINDS,
   REFERENCE_KIND_LABELS,
   entityKindLabel,
+  entityNotesForDisplay,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
 import { REFERENCES, REFERENCE_PICKER } from "@/lib/argus/ux-copy";
@@ -99,8 +101,11 @@ export function EntityPicker({
   const [showCreate, setShowCreate] = useState(defaultShowCreate);
 
   useEffect(() => {
-    onValidityChange?.(selectedIds.length > 0 || quickCreateName.trim().length > 0);
-  }, [selectedIds, quickCreateName, onValidityChange]);
+    onValidityChange?.(selectedIds.length > 0);
+  }, [selectedIds, onValidityChange]);
+
+  const [, startCreate] = useTransition();
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const allEntities = buckets.alphabetical;
 
@@ -244,6 +249,32 @@ export function EntityPicker({
             value={quickCreateNotes}
             onChange={(e) => onQuickCreateNotesChange(e.target.value)}
           />
+          {createError ? <p className="text-xs text-amber-400">{createError}</p> : null}
+          <button
+            type="button"
+            disabled={!quickCreateName.trim()}
+            onClick={() => {
+              setCreateError(null);
+              startCreate(async () => {
+                try {
+                  const entity = await createEntityInlineAction(
+                    quickCreateKind,
+                    quickCreateName.trim(),
+                    entityNotesForDisplay(quickCreateNotes)
+                  );
+                  onChange([...selectedIds, entity.id]);
+                  onQuickCreateNameChange("");
+                  onQuickCreateNotesChange("");
+                  setShowCreate(false);
+                } catch (err) {
+                  setCreateError(err instanceof Error ? err.message : "Could not create");
+                }
+              });
+            }}
+            className="w-full rounded-lg bg-teal-700 py-2 text-sm font-medium text-white hover:bg-teal-600 disabled:opacity-40"
+          >
+            Create
+          </button>
         </div>
       )}
     </div>

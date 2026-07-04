@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { referenceKindToCreateInput, createInputToReferenceKind, type ReferenceKind } from "@/lib/argus/reference-types";
 import type { EntityType } from "@/lib/argus/types";
+import type { ReferenceKind } from "@/lib/argus/reference-types";
 import { COMPOSER, REFERENCES } from "@/lib/argus/ux-copy";
 import { AttachmentField } from "./AttachmentField";
 import { ReferenceLinkPanel, type EntityPickerBuckets } from "./ReferenceLinkPanel";
@@ -99,19 +99,12 @@ export function MemoryComposer({
   const [followUpDate, setFollowUpDate] = useState("");
   const [moreOpen, setMoreOpen] = useState(initialPanel === "more");
   const [linkOpen, setLinkOpen] = useState(initialPanel === "entity" || Boolean(initialQuickCreateType));
-  const [quickCreateName, setQuickCreateName] = useState("");
-  const [quickCreateKind, setQuickCreateKind] = useState<ReferenceKind>(
+  const [defaultCreateKind] = useState<ReferenceKind>(
     initialQuickCreateType === "company"
       ? "organization"
       : initialQuickCreateType === "project"
         ? "project"
         : "person"
-  );
-  const [quickCreateNotes, setQuickCreateNotes] = useState("");
-  const quickCreatePayload = referenceKindToCreateInput(
-    quickCreateKind,
-    quickCreateName,
-    quickCreateNotes
   );
 
   useEffect(() => {
@@ -120,13 +113,6 @@ export function MemoryComposer({
 
   useEffect(() => {
     if (initialQuickCreateType) {
-      setQuickCreateKind(
-        initialQuickCreateType === "company"
-          ? "organization"
-          : initialQuickCreateType === "project"
-            ? "project"
-            : "person"
-      );
       setLinkOpen(true);
     }
   }, [initialQuickCreateType]);
@@ -139,10 +125,7 @@ export function MemoryComposer({
   const selectedNames = selectedIds
     .map((id) => buckets.alphabetical.find((e) => e.id === id)?.name)
     .filter(Boolean);
-  const linkedLabel = [
-    ...selectedNames,
-    ...(quickCreateName.trim() ? [quickCreateName.trim()] : []),
-  ].join(", ");
+  const linkedLabel = selectedNames.join(", ");
 
   return (
     <form action={action} className="flex min-h-0 flex-1 flex-col">
@@ -152,13 +135,6 @@ export function MemoryComposer({
       {selectedIds.map((id) => (
         <input key={id} type="hidden" name="entityIds" value={id} />
       ))}
-      {quickCreateName.trim() && (
-        <>
-          <input type="hidden" name="newEntityName" value={quickCreateName.trim()} />
-          <input type="hidden" name="newEntityType" value={quickCreatePayload.entityType} />
-          <input type="hidden" name="newEntityNotes" value={quickCreatePayload.notes} />
-        </>
-      )}
       <input type="hidden" name="eventDate" value={eventDate} />
       <input type="hidden" name="followUpDate" value={followUpDate} />
       <input type="hidden" name="source" value={initial?.inboxId ? "inbox" : "manual"} />
@@ -202,14 +178,14 @@ export function MemoryComposer({
 
           <div className="mt-auto space-y-3 pt-4">
             <div className="flex flex-wrap items-center gap-1 border-t border-zinc-800/60 pt-3">
-              <Chip active={linkOpen || selectedIds.length > 0 || Boolean(quickCreateName)} onClick={() => setLinkOpen((v) => !v)}>
+              <Chip active={linkOpen || selectedIds.length > 0} onClick={() => setLinkOpen((v) => !v)}>
                 @
               </Chip>
               <button
                 type="button"
                 onClick={() => setLinkOpen((v) => !v)}
                 className={`rounded-md px-2.5 py-1 text-[13px] font-medium transition ${
-                  linkOpen || selectedIds.length > 0 || quickCreateName
+                  linkOpen || selectedIds.length > 0
                     ? "bg-teal-500/15 text-teal-300"
                     : "border border-zinc-700 text-zinc-300 hover:border-zinc-600"
                 }`}
@@ -306,17 +282,7 @@ export function MemoryComposer({
             selectedIds={selectedIds}
             onChange={setSelectedIds}
             onClose={() => setLinkOpen(false)}
-            pendingNewName={quickCreateName.trim() || undefined}
-            onPendingNew={(data) => {
-              if (!data) {
-                setQuickCreateName("");
-                setQuickCreateNotes("");
-                return;
-              }
-              setQuickCreateName(data.name);
-              setQuickCreateKind(createInputToReferenceKind(data.entityType, data.notes));
-              setQuickCreateNotes(data.notes);
-            }}
+            defaultCreateKind={defaultCreateKind}
           />
         )}
       </div>

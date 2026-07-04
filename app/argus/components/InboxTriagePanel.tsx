@@ -7,7 +7,6 @@ import { referenceDisplayLabel } from "@/lib/argus/reference-types";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import { INBOX, TESTING } from "@/lib/argus/ux-copy";
 import { CaptureSheet } from "./CaptureSheet";
-import { ReferenceCreateModal } from "./ReferenceCreateModal";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
 import type { TagBuckets } from "./TagPickerModal";
 import { Card } from "./ui";
@@ -16,6 +15,7 @@ import {
   convertInboxAction,
   deleteInboxAction,
   linkInboxAction,
+  type CreatedEntityResult,
 } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "./ArgusDeleteForm";
 
@@ -47,13 +47,7 @@ export function InboxTriagePanel({
 }: InboxTriagePanelProps) {
   const linkFormRef = useRef<HTMLFormElement>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
   const [linkIds, setLinkIds] = useState<string[]>([]);
-  const [pendingNew, setPendingNew] = useState<{
-    name: string;
-    entityType: Entity["type"];
-    notes: string;
-  } | null>(null);
   const [showConvert, setShowConvert] = useState(false);
 
   const canTriage = item.status === "pending" || item.status === "linked";
@@ -61,6 +55,14 @@ export function InboxTriagePanel({
 
   function submitLinkForm() {
     linkFormRef.current?.requestSubmit();
+  }
+
+  async function linkCreatedEntity(entity: CreatedEntityResult): Promise<false> {
+    const formData = new FormData();
+    formData.set("inboxId", item.id);
+    formData.set("entityIds", entity.id);
+    await linkInboxAction(formData);
+    return false;
   }
 
   return (
@@ -108,15 +110,11 @@ export function InboxTriagePanel({
                 type="button"
                 onClick={() => {
                   setLinkIds([]);
-                  setPendingNew(null);
                   setPickerOpen(true);
                 }}
                 className={actionButtonClass()}
               >
                 {INBOX.linkReference}
-              </button>
-              <button type="button" onClick={() => setCreateOpen(true)} className={actionButtonClass()}>
-                {INBOX.createReference}
               </button>
               <button
                 type="button"
@@ -139,13 +137,6 @@ export function InboxTriagePanel({
             {linkIds.map((id) => (
               <input key={id} type="hidden" name="entityIds" value={id} />
             ))}
-            {pendingNew && (
-              <>
-                <input type="hidden" name="newEntityName" value={pendingNew.name} />
-                <input type="hidden" name="newEntityType" value={pendingNew.entityType} />
-                <input type="hidden" name="newEntityNotes" value={pendingNew.notes} />
-              </>
-            )}
           </form>
 
           <ReferencePickerModal
@@ -155,28 +146,11 @@ export function InboxTriagePanel({
             onChange={setLinkIds}
             onClose={() => setPickerOpen(false)}
             onConfirm={() => {
-              if (linkIds.length > 0 || pendingNew) submitLinkForm();
+              if (linkIds.length > 0) submitLinkForm();
             }}
-            pendingNewName={pendingNew?.name}
-            onPendingNew={(data) => {
-              if (data) {
-                setPendingNew(data);
-                setPickerOpen(false);
-                setTimeout(() => submitLinkForm(), 0);
-              } else {
-                setPendingNew(null);
-              }
-            }}
-          />
-
-          <ReferenceCreateModal
-            open={createOpen}
-            onCancel={() => setCreateOpen(false)}
-            onSave={(data) => {
-              setPendingNew(data);
-              setCreateOpen(false);
-              setTimeout(() => submitLinkForm(), 0);
-            }}
+            onEntityCreated={linkCreatedEntity}
+            defaultCreateKind="person"
+            createButtonLabel={INBOX.createPerson}
           />
 
           {showConvert && (

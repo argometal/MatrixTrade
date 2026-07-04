@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { createInputToReferenceKind, referenceKindToCreateInput, type ReferenceKind } from "@/lib/argus/reference-types";
+import { useMemo, useState, useTransition } from "react";
+import { createEntityInlineAction } from "@/app/argus/actions";
+import { createInputToReferenceKind, entityNotesForDisplay, type ReferenceKind } from "@/lib/argus/reference-types";
 import type { Entity, Log } from "@/lib/argus/types";
 import { ACTIVITY_EDIT, TAGS } from "@/lib/argus/ux-copy";
 import { JOURNAL_KIND_LABELS, LOG_SOURCE_LABELS } from "@/lib/argus/labels";
@@ -74,14 +75,7 @@ export function ActivityEditPanel({
   const [tagsOpen, setTagsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createKind, setCreateKind] = useState<ReferenceKind>("project");
-  const [quickCreateName, setQuickCreateName] = useState("");
-  const [quickCreateKind, setQuickCreateKind] = useState<ReferenceKind>("person");
-  const [quickCreateNotes, setQuickCreateNotes] = useState("");
-  const quickCreatePayload = referenceKindToCreateInput(
-    quickCreateKind,
-    quickCreateName,
-    quickCreateNotes
-  );
+  const [, startCreate] = useTransition();
 
   const entityMap = useMemo(
     () => new Map(buckets.alphabetical.map((e) => [e.id, e])),
@@ -110,13 +104,6 @@ export function ActivityEditPanel({
       {selectedIds.map((id) => (
         <input key={id} type="hidden" name="entityIds" value={id} />
       ))}
-      {quickCreateName.trim() && (
-        <>
-          <input type="hidden" name="newEntityName" value={quickCreateName.trim()} />
-          <input type="hidden" name="newEntityType" value={quickCreatePayload.entityType} />
-          <input type="hidden" name="newEntityNotes" value={quickCreatePayload.notes} />
-        </>
-      )}
 
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
         <div className="mb-3 flex flex-wrap gap-2">
@@ -161,7 +148,7 @@ export function ActivityEditPanel({
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <MetaButton
-              active={referenceOpen || selectedIds.length > 0 || Boolean(quickCreateName)}
+              active={referenceOpen || selectedIds.length > 0}
               onClick={() => setReferenceOpen(true)}
             >
               {ACTIVITY_EDIT.linkTo}
@@ -217,18 +204,13 @@ export function ActivityEditPanel({
             </label>
           )}
 
-          {(linkedEntities.length > 0 || quickCreateName.trim()) && (
+          {linkedEntities.length > 0 && (
             <div className="mt-3">
               <p className="mb-2 text-[12px] text-teal-400/90">{ACTIVITY_EDIT.linkedLabel}</p>
               <div className="flex flex-wrap gap-2">
                 {linkedEntities.map((e) => (
                   <EntityChip key={e.id} entity={e} />
                 ))}
-                {quickCreateName.trim() && (
-                  <span className="rounded-full bg-teal-600/15 px-2.5 py-0.5 text-xs text-teal-300">
-                    New: {quickCreateName.trim()}
-                  </span>
-                )}
               </div>
             </div>
           )}
@@ -288,17 +270,6 @@ export function ActivityEditPanel({
         selectedIds={selectedIds}
         onChange={setSelectedIds}
         onClose={() => setReferenceOpen(false)}
-        pendingNewName={quickCreateName.trim() || undefined}
-        onPendingNew={(data) => {
-          if (!data) {
-            setQuickCreateName("");
-            setQuickCreateNotes("");
-            return;
-          }
-          setQuickCreateName(data.name);
-          setQuickCreateKind(createInputToReferenceKind(data.entityType, data.notes));
-          setQuickCreateNotes(data.notes);
-        }}
       />
 
       <TagPickerModal
@@ -314,10 +285,16 @@ export function ActivityEditPanel({
         defaultKind={createKind}
         onCancel={() => setCreateOpen(false)}
         onSave={(data) => {
-          setQuickCreateName(data.name);
-          setQuickCreateKind(createInputToReferenceKind(data.entityType, data.notes));
-          setQuickCreateNotes(data.notes);
-          setCreateOpen(false);
+          startCreate(async () => {
+            const kind = createInputToReferenceKind(data.entityType, data.notes);
+            const entity = await createEntityInlineAction(
+              kind,
+              data.name,
+              entityNotesForDisplay(data.notes)
+            );
+            setSelectedIds((prev) => [...prev, entity.id]);
+            setCreateOpen(false);
+          });
         }}
       />
     </form>

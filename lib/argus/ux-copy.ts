@@ -163,6 +163,8 @@ export const INBOX = {
   actions: "Actions",
   linkReference: "Link to reference",
   createReference: "Create reference",
+  createPerson: "+ New Person",
+  createProject: "+ New Project",
   convertRecord: "Convert to record",
   archive: "Archive",
   saveLink: "Save link",

@@ -25,6 +25,7 @@ import { inferJournalKind, resolveLogDate, autoTitleFromBody } from "@/lib/argus
 import { resolveClassificationStatus } from "@/lib/argus/normalize";
 import {
   buildReferenceNotes,
+  entityDetailHref,
   isCreatableReferenceKind,
   referenceKindFromNotes,
   referenceKindToCreateInput,
@@ -192,7 +193,8 @@ export async function linkInboxAction(formData: FormData): Promise<void> {
   await linkInboxToEntities(inboxId, entityIds);
   revalidateArgus();
   revalidatePath(`/argus/inbox/${inboxId}`);
-  redirect(`/argus/inbox/${inboxId}`);
+  const returnTo = String(formData.get("returnTo") ?? "inbox");
+  redirect(returnTo === "journal" ? "/argus/journal" : `/argus/inbox/${inboxId}`);
 }
 
 export async function convertInboxAction(formData: FormData): Promise<void> {
@@ -223,6 +225,56 @@ export async function archiveInboxAction(formData: FormData): Promise<void> {
   redirect("/argus/inbox");
 }
 
+export type CreatedEntityResult = {
+  id: string;
+  href: string;
+  name: string;
+};
+
+async function persistNewEntity(
+  kind: ReferenceKind,
+  name: string,
+  notes: string
+): Promise<CreatedEntityResult> {
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    throw new Error("Name is required");
+  }
+  if (!isCreatableReferenceKind(kind)) {
+    throw new Error("Invalid reference type");
+  }
+
+  const { entityType, notes: builtNotes } = referenceKindToCreateInput(kind, trimmedName, notes);
+  const entity = await createEntity({
+    type: entityType,
+    name: trimmedName,
+    notes: builtNotes,
+    alias: "",
+    strategicValue: 3,
+  });
+
+  revalidateArgus();
+  revalidatePath(`/argus/network/${entity.id}`);
+  revalidatePath(`/argus/projects/${entity.id}`);
+
+  return { id: entity.id, href: entityDetailHref(entity), name: entity.name };
+}
+
+export async function createEntityInlineAction(
+  kind: ReferenceKind,
+  name: string,
+  notes = ""
+): Promise<CreatedEntityResult> {
+  try {
+    return await persistNewEntity(kind, name, notes);
+  } catch (err) {
+    if (err instanceof ArgusWriteBlockedError) {
+      throw new Error("Storage not available — configure Supabase journal store");
+    }
+    throw err;
+  }
+}
+
 export async function createEntityAction(formData: FormData): Promise<void> {
   const name = String(formData.get("name") ?? "").trim();
   const kindRaw = String(formData.get("kind") ?? "person");
@@ -235,26 +287,12 @@ export async function createEntityAction(formData: FormData): Promise<void> {
     redirect("/argus/network?error=kind");
   }
 
-  const kind = kindRaw as ReferenceKind;
-  const { entityType, notes: builtNotes } = referenceKindToCreateInput(kind, name, notes);
-
   try {
-    const entity = await createEntity({
-      type: entityType,
-      name,
-      notes: builtNotes,
-      alias: "",
-      strategicValue: 3,
-    });
-
-    revalidateArgus();
-    revalidatePath(`/argus/network/${entity.id}`);
-    revalidatePath(`/argus/projects/${entity.id}`);
-
-    if (entity.type === "project") {
-      redirect(`/argus/projects/${entity.id}`);
+    const entity = await persistNewEntity(kindRaw as ReferenceKind, name, notes);
+    if (entity.href.startsWith("/argus/projects/")) {
+      redirect(entity.href);
     }
-    redirect(`/argus/network/${entity.id}`);
+    redirect(entity.href);
   } catch (err) {
     handleWriteError(err, "/argus/network");
   }

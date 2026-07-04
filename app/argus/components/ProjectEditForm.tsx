@@ -134,7 +134,8 @@ export function ProjectEditForm({
         onChange={setLinkedPersonIds}
         onClose={() => setPeopleOpen(false)}
         onConfirm={() => setPeopleOpen(false)}
-        onPendingNew={() => {}}
+        defaultCreateKind="person"
+        createButtonLabel="+ New Person"
       />
 
       <TagPickerModal
