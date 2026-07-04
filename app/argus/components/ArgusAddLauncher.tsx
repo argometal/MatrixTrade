@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { createEntityInlineAction } from "@/app/argus/actions";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import {
   createInputToReferenceKind,
   entityNotesForDisplay,
@@ -17,11 +18,17 @@ import { ReferenceCreateModal } from "./ReferenceCreateModal";
 
 type AddMenuButtonProps = {
   variant?: "nav" | "floating";
+  align?: "start" | "end";
   className?: string;
 };
 
-export function AddMenuButton({ variant = "nav", className = "" }: AddMenuButtonProps) {
+export function AddMenuButton({
+  variant = "nav",
+  align = "end",
+  className = "",
+}: AddMenuButtonProps) {
   const router = useRouter();
+  const { openCapture } = useArgusAdd();
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -47,9 +54,9 @@ export function AddMenuButton({ variant = "nav", className = "" }: AddMenuButton
     setCreateOpen(true);
   }
 
-  function openCapture() {
+  function openCaptureNote() {
     setMenuOpen(false);
-    router.push("/argus/journal?capture=1");
+    openCapture();
   }
 
   function handleSave(data: { name: string; entityType: EntityType; notes: string }) {
@@ -73,8 +80,10 @@ export function AddMenuButton({ variant = "nav", className = "" }: AddMenuButton
 
   const buttonClass =
     variant === "nav"
-      ? "flex h-12 w-12 -translate-y-3 items-center justify-center rounded-full bg-teal-500 text-xl font-light text-white shadow-lg shadow-teal-950/50 transition hover:bg-teal-400 active:scale-95"
+      ? "flex h-11 w-11 items-center justify-center rounded-full bg-teal-500 text-xl font-light text-white shadow-lg shadow-teal-950/50 transition hover:bg-teal-400 active:scale-95"
       : "flex h-14 w-14 items-center justify-center rounded-full bg-teal-500 text-2xl font-light text-white shadow-lg shadow-teal-950/50 transition hover:bg-teal-400 active:scale-95";
+
+  const menuAlignClass = align === "end" ? "right-0" : "left-0";
 
   return (
     <>
@@ -84,7 +93,7 @@ export function AddMenuButton({ variant = "nav", className = "" }: AddMenuButton
       >
         {menuOpen ? (
           <div
-            className="absolute bottom-full z-50 mb-3 w-[min(280px,calc(100vw-2.5rem))] rounded-2xl border border-zinc-700/80 bg-zinc-900 p-2 shadow-2xl shadow-black/50"
+            className={`absolute bottom-full z-50 mb-2 w-[min(280px,calc(100vw-2.5rem))] rounded-2xl border border-zinc-700/80 bg-zinc-900 p-2 shadow-2xl shadow-black/50 ${menuAlignClass}`}
             role="menu"
             aria-label={ADD_MENU.title}
           >
@@ -94,7 +103,7 @@ export function AddMenuButton({ variant = "nav", className = "" }: AddMenuButton
             <button
               type="button"
               role="menuitem"
-              onClick={openCapture}
+              onClick={openCaptureNote}
               className="flex w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-medium text-zinc-100 hover:bg-zinc-800"
             >
               {ADD_MENU.captureNote}
@@ -148,7 +157,7 @@ export function AddMenuButton({ variant = "nav", className = "" }: AddMenuButton
 export function ArgusAddLauncher() {
   return (
     <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-5 z-40">
-      <AddMenuButton variant="floating" />
+      <AddMenuButton variant="floating" align="end" />
     </div>
   );
 }

@@ -5,24 +5,34 @@ import { usePathname } from "next/navigation";
 import { BOTTOM_NAV } from "@/lib/argus/ux-copy";
 import { AddMenuButton } from "./ArgusAddLauncher";
 
-const sideLinks = [
-  { href: "/argus/journal", label: BOTTOM_NAV.home, icon: "▤", match: (path: string) =>
+const navLinks = [
+  {
+    href: "/argus/journal",
+    label: BOTTOM_NAV.home,
+    icon: "▤",
+    match: (path: string) =>
       path.startsWith("/argus/journal") ||
       path.startsWith("/argus/projects") ||
       path.startsWith("/argus/logs") ||
       path.startsWith("/argus/diagnostics"),
   },
-  { href: "/argus/network", label: BOTTOM_NAV.network, icon: "◎", match: (path: string) =>
-      path.startsWith("/argus/network"),
+  {
+    href: "/argus/network",
+    label: BOTTOM_NAV.network,
+    icon: "◎",
+    match: (path: string) => path.startsWith("/argus/network"),
   },
-] as const;
-
-const rightLinks = [
-  { href: "/argus/inbox", label: BOTTOM_NAV.inbox, icon: "📥", match: (path: string) =>
-      path.startsWith("/argus/inbox"),
+  {
+    href: "/argus/inbox",
+    label: BOTTOM_NAV.inbox,
+    icon: "📥",
+    match: (path: string) => path.startsWith("/argus/inbox"),
   },
-  { href: "/argus/search", label: BOTTOM_NAV.search, icon: "⌕", match: (path: string) =>
-      path.startsWith("/argus/search"),
+  {
+    href: "/argus/search",
+    label: BOTTOM_NAV.search,
+    icon: "⌕",
+    match: (path: string) => path.startsWith("/argus/search"),
   },
 ] as const;
 
@@ -58,8 +68,8 @@ export function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-800/80 bg-zinc-950/95 backdrop-blur-xl"
       aria-label="Main navigation"
     >
-      <div className="mx-auto flex max-w-lg items-end justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 md:max-w-4xl">
-        {sideLinks.map((link) => (
+      <div className="mx-auto flex max-w-lg items-end gap-1 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 md:max-w-4xl">
+        {navLinks.map((link) => (
           <NavLink
             key={link.href}
             href={link.href}
@@ -69,19 +79,9 @@ export function BottomNav() {
           />
         ))}
 
-        <div className="flex flex-1 justify-center px-1">
-          <AddMenuButton variant="nav" />
+        <div className="flex shrink-0 items-end pl-1">
+          <AddMenuButton variant="nav" align="end" />
         </div>
-
-        {rightLinks.map((link) => (
-          <NavLink
-            key={link.href}
-            href={link.href}
-            label={link.label}
-            icon={link.icon}
-            active={link.match(pathname)}
-          />
-        ))}
       </div>
     </nav>
   );

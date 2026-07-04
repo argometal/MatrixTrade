@@ -1,16 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import type { HomeNetworkSummary, HomeProjectSummary, HomeActivityItem } from "@/lib/argus/home-helpers";
 import { entityDetailHref, entityKindLabel } from "@/lib/argus/reference-types";
 import { HOME_DETAIL, HOME_EMPTY, HOME_NAV, INBOX, SECTION_EMPTY, TESTING, ENTITY_CREATE, ACTIVITY_SORT } from "@/lib/argus/ux-copy";
-import { createLogAction, clearAllArgusDataAction } from "@/app/argus/actions";
+import { clearAllArgusDataAction } from "@/app/argus/actions";
 import { ArgusClearAllForm } from "./ArgusDeleteForm";
-import { CaptureSheet } from "./CaptureSheet";
 import { HomeDetailHeader } from "./HomeDetailHeader";
 import { HomeInboxCard } from "./HomeInboxCard";
 import { HomeLogCard, HomeNetworkCard } from "./HomeNetworkCard";
@@ -62,12 +60,6 @@ export function JournalHome({
   tagBuckets: TagBuckets;
   showClearAll?: boolean;
 }) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const captureOpen = searchParams.get("capture") === "1";
-  const referenceOpen = searchParams.get("reference") === "1";
-
-  const [sheetOpen, setSheetOpen] = useState(captureOpen);
   const [activeSection, setActiveSection] = useState<HomeSectionId>("inbox");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [activitySort, setActivitySort] = useState<"newest" | "oldest">("newest");
@@ -78,17 +70,6 @@ export function JournalHome({
       setActivitySort(stored);
     }
   }, []);
-
-  useEffect(() => {
-    if (captureOpen) setSheetOpen(true);
-  }, [captureOpen]);
-
-  const closeCapture = useCallback(() => {
-    setSheetOpen(false);
-    if (searchParams.get("capture") || searchParams.get("reference")) {
-      router.replace("/argus/journal");
-    }
-  }, [router, searchParams]);
 
   const hasContent =
     recentActivity.length > 0 ||
@@ -204,7 +185,7 @@ export function JournalHome({
         <HomeSectionNav items={navItems} active={activeSection} onSelect={selectSection} />
 
         <div className="min-w-0 flex-1">
-          {!hasContent && !sheetOpen && activeSection === "activity" ? (
+          {!hasContent && activeSection === "activity" ? (
             <p className="mb-6 py-8 text-center text-[15px] leading-relaxed text-zinc-600">
               {HOME_EMPTY.title}
               <br />
@@ -326,16 +307,6 @@ export function JournalHome({
           hint={TESTING.clearAllHint}
         />
       ) : null}
-
-
-      <CaptureSheet
-        open={sheetOpen}
-        action={createLogAction}
-        buckets={buckets}
-        tagBuckets={tagBuckets}
-        onClose={closeCapture}
-        autoOpenReference={referenceOpen}
-      />
     </>
   );
 }

@@ -6,6 +6,7 @@ Use git tags to restore any point.
 |--------|-----|-------------|
 | **99** | `change-99` | Unified **+** Add menu — capture note plus Person, Organization, Project, Topic, Event |
 | **100** | `change-100` | Activity sort toggle, sign-out top-right, **+** centered in bottom nav |
+| **101** | `change-101` | Capture + create unified on **right**; global capture sheet from **+** on any page |
 
 ## Restore
 
