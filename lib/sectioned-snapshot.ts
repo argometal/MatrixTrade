@@ -27,7 +27,7 @@ function formatRiskAtStop(trade: Trade): string | null {
   return formatSigned(-Math.abs(risk));
 }
 
-function formatCompactTrade(trade: Trade, setups: Setup[] = []): string {
+export function formatCompactTrade(trade: Trade, setups: Setup[] = []): string {
   const lines: string[] = [trade.id];
   lines.push(`ticker:${trade.ticker}`);
   lines.push(`entry:${formatPrice(trade.entry)}`);
@@ -60,12 +60,12 @@ function formatCompactTrade(trade: Trade, setups: Setup[] = []): string {
   return lines.join("\n");
 }
 
-function formatTradeSection(title: string, trades: Trade[], setups: Setup[]): string {
+export function formatTradeSection(title: string, trades: Trade[], setups: Setup[]): string {
   if (trades.length === 0) return `${title}\n(none)`;
   return [title, trades.map((t) => formatCompactTrade(t, setups)).join("\n\n")].join("\n");
 }
 
-function formatPlaybookSection(playbooks: Playbook[], trades: Trade[]): string {
+export function formatPlaybookSection(playbooks: Playbook[], trades: Trade[]): string {
   const stats = computeAllPlaybookStats(playbooks, trades).filter((row) => row.tradeCount > 0);
   if (stats.length === 0) return "=== PLAYBOOK ===\n(none)";
 
@@ -86,7 +86,7 @@ function formatPlaybookSection(playbooks: Playbook[], trades: Trade[]): string {
   return ["=== PLAYBOOK ===", blocks.join("\n\n")].join("\n");
 }
 
-function formatPriorAiNotesSection(notes: AiNote[]): string {
+export function formatPriorAiNotesSection(notes: AiNote[]): string {
   if (notes.length === 0) return "=== AI NOTES (PRIOR) ===\n(none)";
 
   const blocks = notes.map((note) => {

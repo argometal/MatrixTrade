@@ -21,6 +21,7 @@ Valid types:
 - trade-close: close trade (id, exit required)
 - trade-review: post-close review (id, qualityEntry, qualityExit, qualityMgmt)
 - analysis: Obsidian fields (id + thesis/psychology/lessons/notes)
+If this snapshot is not enough, ask the user for ONE focused follow-up using a single next_focus_suggestions item (ticker, playbook, or review trade_id). Do not ask for multiple.
 Do NOT apply changes. Human imports the block in MatrixTrade → Inbox → Apply.`;
 
 export function extractJsonFromAiBlock(raw: string): string {
@@ -69,19 +70,19 @@ export function parseAiBlock(raw: string):
   return { ok: true, payload: inboxPayload, body };
 }
 
-export function aiBlockTradeProposalExample(): string {
+export function sampleTradeAiBlock(): string {
   return JSON.stringify(
     {
       type: "trade-proposal",
       source: "ai-block",
       proposal: {
         id: "H002",
-        ticker: "GOOGL",
-        entry: 175.5,
-        stop: 170,
+        ticker: "TICKER",
+        entry: 100,
+        stop: 95,
         shares: 10,
-        target: 185,
-        thesis: "Momentum breakout above prior high.",
+        target: 110,
+        thesis: "Setup per snapshot context.",
       },
     },
     null,

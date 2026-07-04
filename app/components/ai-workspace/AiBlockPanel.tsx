@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import type { ImportAiBlockActionResult } from "@/app/actions";
-import { aiBlockTradeProposalExample } from "@/lib/ai-block";
+import { sampleTradeAiBlock } from "@/lib/ai-block";
 
 async function copyText(text: string): Promise<boolean> {
   try {
@@ -96,7 +96,7 @@ export function AiBlockPanel({
             value={pasteValue}
             onChange={(e) => setPasteValue(e.target.value)}
             rows={14}
-            placeholder='{ "type": "trade-proposal", "proposal": { "id": "H002", "ticker": "GOOGL", ... } }'
+            placeholder='{ "type": "trade-proposal", "proposal": { "id": "H00X", "ticker": "...", "entry": 0, "stop": 0, "shares": 0 } }'
             className="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-xs focus:border-zinc-500 focus:outline-none"
           />
         </label>
@@ -110,10 +110,10 @@ export function AiBlockPanel({
           </button>
           <button
             type="button"
-            onClick={() => setPasteValue(aiBlockTradeProposalExample())}
+            onClick={() => setPasteValue(sampleTradeAiBlock())}
             className="rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
           >
-            Load GOOGL example
+            Load trade
           </button>
         </div>
         <p className="text-xs text-zinc-500">
