@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { EntityType } from "@/lib/argus/types";
+import { referenceKindToCreateInput, createInputToReferenceKind, type ReferenceKind } from "@/lib/argus/reference-types";
 import { CAPTURE, REFERENCES, TAGS } from "@/lib/argus/ux-copy";
 import { AttachmentField } from "./AttachmentField";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
@@ -72,8 +72,13 @@ export function CaptureSheet({
   const [referenceOpen, setReferenceOpen] = useState(autoOpenReference);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [quickCreateName, setQuickCreateName] = useState("");
-  const [quickCreateType, setQuickCreateType] = useState<EntityType>("person");
+  const [quickCreateKind, setQuickCreateKind] = useState<ReferenceKind>("person");
   const [quickCreateNotes, setQuickCreateNotes] = useState("");
+  const quickCreatePayload = referenceKindToCreateInput(
+    quickCreateKind,
+    quickCreateName,
+    quickCreateNotes
+  );
 
   useEffect(() => {
     if (open) {
@@ -116,8 +121,8 @@ export function CaptureSheet({
       {quickCreateName.trim() && (
         <>
           <input type="hidden" name="newEntityName" value={quickCreateName.trim()} />
-          <input type="hidden" name="newEntityType" value={quickCreateType} />
-          <input type="hidden" name="newEntityNotes" value={quickCreateNotes} />
+          <input type="hidden" name="newEntityType" value={quickCreatePayload.entityType} />
+          <input type="hidden" name="newEntityNotes" value={quickCreatePayload.notes} />
         </>
       )}
       <input type="hidden" name="eventDate" value={eventDate} />
@@ -233,7 +238,7 @@ export function CaptureSheet({
             return;
           }
           setQuickCreateName(data.name);
-          setQuickCreateType(data.entityType);
+          setQuickCreateKind(createInputToReferenceKind(data.entityType, data.notes));
           setQuickCreateNotes(data.notes);
         }}
       />

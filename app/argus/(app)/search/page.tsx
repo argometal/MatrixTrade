@@ -1,7 +1,7 @@
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { LogCard } from "@/app/argus/components/Cards";
 import { EmptyState, inputClass, PageHeader } from "@/app/argus/components/ui";
-import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
+import { entityKindLabel } from "@/lib/argus/reference-types";
 import { REFERENCES, SEARCH } from "@/lib/argus/ux-copy";
 import { getEntities, searchEntities, searchLogs } from "@/lib/argus/server-storage";
 import Link from "next/link";
@@ -57,7 +57,7 @@ export default async function SearchPage({
               <Link key={e.id} href={`/argus/network/${e.id}`}>
                 <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-3 transition hover:border-zinc-700">
                   <p className="font-medium text-zinc-100">{e.name}</p>
-                  <p className="text-xs text-zinc-500">{ENTITY_TYPE_LABELS[e.type]}</p>
+                  <p className="text-xs text-zinc-500">{entityKindLabel(e)}</p>
                   {e.notes && <p className="mt-1 line-clamp-2 text-sm text-zinc-400">{e.notes}</p>}
                 </div>
               </Link>

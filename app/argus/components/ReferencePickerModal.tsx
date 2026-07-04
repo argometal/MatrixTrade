@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Entity, EntityType } from "@/lib/argus/types";
-import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
+import { entityKindLabel } from "@/lib/argus/reference-types";
 import { CAPTURE, REFERENCES, REFERENCE_PICKER } from "@/lib/argus/ux-copy";
 import { FAVORITES_KEY } from "@/lib/argus/journal-helpers";
 import { inputClass } from "./ui";
@@ -52,7 +52,7 @@ function ReferenceRow({
     <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 hover:bg-zinc-800/60">
       <input type="checkbox" checked={checked} onChange={onToggle} className="shrink-0" />
       <span className="min-w-0 flex-1 truncate text-sm text-zinc-200">{entity.name}</span>
-      <span className="shrink-0 text-xs text-zinc-500">{ENTITY_TYPE_LABELS[entity.type]}</span>
+      <span className="shrink-0 text-xs text-zinc-500">{entityKindLabel(entity)}</span>
     </label>
   );
 }

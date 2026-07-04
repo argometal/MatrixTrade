@@ -6,8 +6,8 @@ import { ArgusDeleteForm } from "@/app/argus/components/ArgusDeleteForm";
 import { EntityEditForm } from "@/app/argus/components/EntityEditForm";
 import { LogCard } from "@/app/argus/components/Cards";
 import { Card, EmptyState, formatDate, PageHeader } from "@/app/argus/components/ui";
+import { entityKindLabel } from "@/lib/argus/reference-types";
 import {
-  ENTITY_TYPE_LABELS,
   RELATIONSHIP_HEALTH_COLORS,
   RELATIONSHIP_HEALTH_LABELS,
   STRATEGIC_VALUE_LABELS,
@@ -49,7 +49,7 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
       <Card className="mb-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="text-sm text-zinc-400">{ENTITY_TYPE_LABELS[entity.type]}</p>
+            <p className="text-sm text-zinc-400">{entityKindLabel(entity)}</p>
             {entity.alias && <p className="mt-1 text-sm text-zinc-500">{entity.alias}</p>}
           </div>
           <span className={`text-sm font-medium ${RELATIONSHIP_HEALTH_COLORS[intel.relationshipHealth]}`}>

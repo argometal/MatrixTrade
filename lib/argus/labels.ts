@@ -5,10 +5,11 @@ export const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
   person: "Person",
   company: "Organization",
   project: "Project",
-  other: "Other",
+  other: "Reference",
 };
 
-export const ENTITY_TYPES: EntityType[] = ["person", "company", "project", "other"];
+/** Storage types creatable via reference UI — Topic/Event use type `other` + Kind notes. */
+export const ENTITY_TYPES: EntityType[] = ["person", "company", "project"];
 
 export const JOURNAL_KIND_LABELS: Record<JournalKind, string> = {
   log: "Note",

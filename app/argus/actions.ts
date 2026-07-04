@@ -22,6 +22,7 @@ import type { EntityType, JournalKind, LogSource, StrategicValue } from "@/lib/a
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
 import { inferJournalKind, resolveLogDate, autoTitleFromBody } from "@/lib/argus/journal-helpers";
 import { resolveClassificationStatus } from "@/lib/argus/normalize";
+import { referenceKindFromNotes } from "@/lib/argus/reference-types";
 import { ArgusWriteBlockedError, isDestructiveAllowed } from "@/lib/argus/data-safety";
 
 function revalidateArgus(): void {
@@ -80,10 +81,18 @@ async function resolveEntityIds(formData: FormData): Promise<string[]> {
   const entityIds = formData.getAll("entityIds").map(String).filter(Boolean);
   const newEntityName = String(formData.get("newEntityName") ?? "").trim();
   if (newEntityName) {
+    const rawType = String(formData.get("newEntityType") ?? "person") as EntityType;
+    const rawNotes = String(formData.get("newEntityNotes") ?? "").trim();
+    if (rawType === "other") {
+      const kind = referenceKindFromNotes(rawNotes);
+      if (kind !== "topic" && kind !== "event") {
+        throw new Error("Invalid reference type: only Topic and Event are allowed");
+      }
+    }
     const entity = await createEntity({
-      type: String(formData.get("newEntityType") ?? "person") as EntityType,
+      type: rawType,
       name: newEntityName,
-      notes: String(formData.get("newEntityNotes") ?? "").trim(),
+      notes: rawNotes,
       alias: "",
       strategicValue: 3,
     });

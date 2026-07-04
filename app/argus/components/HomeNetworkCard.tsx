@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Entity, Log } from "@/lib/argus/types";
-import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
+import { entityKindLabel } from "@/lib/argus/reference-types";
 import { deleteEntityAction, deleteLogAction } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "./ArgusDeleteForm";
 import { HOME_DETAIL, TESTING } from "@/lib/argus/ux-copy";
@@ -29,7 +29,7 @@ export function HomeNetworkCard({
       collapsed={
         <div>
           <p className="text-[15px] font-medium text-zinc-100">{entity.name}</p>
-          <p className="mt-0.5 text-[13px] text-zinc-500">{ENTITY_TYPE_LABELS[entity.type]}</p>
+          <p className="mt-0.5 text-[13px] text-zinc-500">{entityKindLabel(entity)}</p>
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-zinc-500">
             {lastMeaningfulInteraction ? (
               <span>Last interaction {formatDate(lastMeaningfulInteraction)}</span>
@@ -44,7 +44,7 @@ export function HomeNetworkCard({
       <dl className="space-y-2 text-sm">
         <div>
           <dt className="text-xs text-zinc-600">Type</dt>
-          <dd className="text-zinc-200">{ENTITY_TYPE_LABELS[entity.type]}</dd>
+          <dd className="text-zinc-200">{entityKindLabel(entity)}</dd>
         </div>
         {entity.alias ? (
           <div className="mt-2">

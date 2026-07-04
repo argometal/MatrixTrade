@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { Entity, EntityType } from "@/lib/argus/types";
-import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
+import type { Entity } from "@/lib/argus/types";
+import {
+  REFERENCE_KINDS,
+  REFERENCE_KIND_LABELS,
+  entityKindLabel,
+  type ReferenceKind,
+} from "@/lib/argus/reference-types";
 import { REFERENCES, REFERENCE_PICKER } from "@/lib/argus/ux-copy";
 import { FAVORITES_KEY } from "@/lib/argus/journal-helpers";
 import { inputClass } from "./ui";
@@ -22,8 +27,8 @@ interface EntityPickerProps {
   onValidityChange?: (valid: boolean) => void;
   quickCreateName: string;
   onQuickCreateNameChange: (value: string) => void;
-  quickCreateType: EntityType;
-  onQuickCreateTypeChange: (value: EntityType) => void;
+  quickCreateKind: ReferenceKind;
+  onQuickCreateKindChange: (value: ReferenceKind) => void;
   quickCreateNotes: string;
   onQuickCreateNotesChange: (value: string) => void;
   defaultShowCreate?: boolean;
@@ -61,7 +66,7 @@ function EntityRow({
       <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
         <input type="checkbox" checked={checked} onChange={onToggle} className="shrink-0" />
         <span className="truncate text-sm text-zinc-200">{entity.name}</span>
-        <span className="shrink-0 text-xs text-zinc-500">{ENTITY_TYPE_LABELS[entity.type]}</span>
+        <span className="shrink-0 text-xs text-zinc-500">{entityKindLabel(entity)}</span>
       </label>
       <button
         type="button"
@@ -82,8 +87,8 @@ export function EntityPicker({
   onValidityChange,
   quickCreateName,
   onQuickCreateNameChange,
-  quickCreateType,
-  onQuickCreateTypeChange,
+  quickCreateKind,
+  onQuickCreateKindChange,
   quickCreateNotes,
   onQuickCreateNotesChange,
   defaultShowCreate = false,
@@ -111,7 +116,7 @@ export function EntityPicker({
       (e) =>
         e.name.toLowerCase().includes(q) ||
         e.notes.toLowerCase().includes(q) ||
-        e.type.toLowerCase().includes(q)
+        entityKindLabel(e).toLowerCase().includes(q)
     );
   }, [allEntities, query]);
 
@@ -224,13 +229,14 @@ export function EntityPicker({
           />
           <select
             className={inputClass}
-            value={quickCreateType}
-            onChange={(e) => onQuickCreateTypeChange(e.target.value as EntityType)}
+            value={quickCreateKind}
+            onChange={(e) => onQuickCreateKindChange(e.target.value as ReferenceKind)}
           >
-            <option value="person">Person</option>
-            <option value="company">Company</option>
-            <option value="project">Project</option>
-            <option value="other">Other</option>
+            {REFERENCE_KINDS.map((k) => (
+              <option key={k} value={k}>
+                {REFERENCE_KIND_LABELS[k]}
+              </option>
+            ))}
           </select>
           <input
             className={inputClass}

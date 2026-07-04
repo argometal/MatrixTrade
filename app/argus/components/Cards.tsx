@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Card, formatDate } from "./ui";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
+import { entityKindLabel } from "@/lib/argus/reference-types";
 import {
-  ENTITY_TYPE_LABELS,
   INBOX_SOURCE_LABELS,
   INBOX_STATUS_LABELS,
   JOURNAL_KIND_LABELS,
@@ -98,7 +98,7 @@ export function InboxCard({ item }: { item: InboxItem }) {
 export function EntityChip({ entity }: { entity: Entity }) {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-300">
-      {ENTITY_TYPE_LABELS[entity.type]} · {entity.name}
+      {entityKindLabel(entity)} · {entity.name}
     </span>
   );
 }

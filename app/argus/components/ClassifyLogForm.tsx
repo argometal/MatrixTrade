@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { EntityType } from "@/lib/argus/types";
+import { referenceKindToCreateInput, type ReferenceKind } from "@/lib/argus/reference-types";
 import { EntityPicker, type EntityPickerBuckets } from "./EntityPicker";
 
 export function ClassifyLogForm({
@@ -16,12 +16,24 @@ export function ClassifyLogForm({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [canSubmit, setCanSubmit] = useState(false);
   const [quickCreateName, setQuickCreateName] = useState("");
-  const [quickCreateType, setQuickCreateType] = useState<EntityType>("person");
+  const [quickCreateKind, setQuickCreateKind] = useState<ReferenceKind>("person");
   const [quickCreateNotes, setQuickCreateNotes] = useState("");
+  const quickCreatePayload = referenceKindToCreateInput(
+    quickCreateKind,
+    quickCreateName,
+    quickCreateNotes
+  );
 
   return (
     <form action={action} className="mb-4 space-y-3 rounded-xl border border-amber-900/50 bg-amber-950/20 p-4">
       <input type="hidden" name="logId" value={logId} />
+      {quickCreateName.trim() && (
+        <>
+          <input type="hidden" name="newEntityName" value={quickCreateName.trim()} />
+          <input type="hidden" name="newEntityType" value={quickCreatePayload.entityType} />
+          <input type="hidden" name="newEntityNotes" value={quickCreatePayload.notes} />
+        </>
+      )}
       <p className="text-sm font-medium text-amber-200">Needs classification</p>
       <p className="text-xs text-amber-200/70">Link this item to one or more entities.</p>
       <EntityPicker
@@ -31,8 +43,8 @@ export function ClassifyLogForm({
         onValidityChange={setCanSubmit}
         quickCreateName={quickCreateName}
         onQuickCreateNameChange={setQuickCreateName}
-        quickCreateType={quickCreateType}
-        onQuickCreateTypeChange={setQuickCreateType}
+        quickCreateKind={quickCreateKind}
+        onQuickCreateKindChange={setQuickCreateKind}
         quickCreateNotes={quickCreateNotes}
         onQuickCreateNotesChange={setQuickCreateNotes}
       />

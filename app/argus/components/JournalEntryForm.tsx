@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { JOURNAL_KINDS, JOURNAL_KIND_LABELS } from "@/lib/argus/labels";
 import { inferJournalKind } from "@/lib/argus/journal-helpers";
-import type { EntityType, JournalKind } from "@/lib/argus/types";
+import { referenceKindToCreateInput, type ReferenceKind } from "@/lib/argus/reference-types";
+import type { JournalKind } from "@/lib/argus/types";
 import { AttachmentField } from "./AttachmentField";
 import { EntityPicker, type EntityPickerBuckets } from "./EntityPicker";
 import { Field, inputClass, textareaClass } from "./ui";
@@ -40,8 +41,13 @@ export function JournalEntryForm({
   const [followUpDate, setFollowUpDate] = useState("");
   const [kindOverride, setKindOverride] = useState<JournalKind | "">("");
   const [quickCreateName, setQuickCreateName] = useState("");
-  const [quickCreateType, setQuickCreateType] = useState<EntityType>("person");
+  const [quickCreateKind, setQuickCreateKind] = useState<ReferenceKind>("person");
   const [quickCreateNotes, setQuickCreateNotes] = useState("");
+  const quickCreatePayload = referenceKindToCreateInput(
+    quickCreateKind,
+    quickCreateName,
+    quickCreateNotes
+  );
 
   const inferredKind = inferJournalKind({
     followUpDate: followUpDate || undefined,
@@ -66,8 +72,8 @@ export function JournalEntryForm({
       {quickCreateName.trim() && (
         <>
           <input type="hidden" name="newEntityName" value={quickCreateName.trim()} />
-          <input type="hidden" name="newEntityType" value={quickCreateType} />
-          <input type="hidden" name="newEntityNotes" value={quickCreateNotes} />
+          <input type="hidden" name="newEntityType" value={quickCreatePayload.entityType} />
+          <input type="hidden" name="newEntityNotes" value={quickCreatePayload.notes} />
         </>
       )}
 
@@ -105,8 +111,8 @@ export function JournalEntryForm({
             onValidityChange={setEntityStepValid}
             quickCreateName={quickCreateName}
             onQuickCreateNameChange={setQuickCreateName}
-            quickCreateType={quickCreateType}
-            onQuickCreateTypeChange={setQuickCreateType}
+            quickCreateKind={quickCreateKind}
+            onQuickCreateKindChange={setQuickCreateKind}
             quickCreateNotes={quickCreateNotes}
             onQuickCreateNotesChange={setQuickCreateNotes}
           />

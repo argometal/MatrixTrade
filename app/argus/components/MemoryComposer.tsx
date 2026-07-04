@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { referenceKindToCreateInput, createInputToReferenceKind, type ReferenceKind } from "@/lib/argus/reference-types";
 import type { EntityType } from "@/lib/argus/types";
 import { COMPOSER, REFERENCES } from "@/lib/argus/ux-copy";
 import { AttachmentField } from "./AttachmentField";
@@ -99,8 +100,19 @@ export function MemoryComposer({
   const [moreOpen, setMoreOpen] = useState(initialPanel === "more");
   const [linkOpen, setLinkOpen] = useState(initialPanel === "entity" || Boolean(initialQuickCreateType));
   const [quickCreateName, setQuickCreateName] = useState("");
-  const [quickCreateType, setQuickCreateType] = useState<EntityType>(initialQuickCreateType ?? "person");
+  const [quickCreateKind, setQuickCreateKind] = useState<ReferenceKind>(
+    initialQuickCreateType === "company"
+      ? "organization"
+      : initialQuickCreateType === "project"
+        ? "project"
+        : "person"
+  );
   const [quickCreateNotes, setQuickCreateNotes] = useState("");
+  const quickCreatePayload = referenceKindToCreateInput(
+    quickCreateKind,
+    quickCreateName,
+    quickCreateNotes
+  );
 
   useEffect(() => {
     if (autoFocus && !linkOpen) bodyRef.current?.focus();
@@ -108,7 +120,13 @@ export function MemoryComposer({
 
   useEffect(() => {
     if (initialQuickCreateType) {
-      setQuickCreateType(initialQuickCreateType);
+      setQuickCreateKind(
+        initialQuickCreateType === "company"
+          ? "organization"
+          : initialQuickCreateType === "project"
+            ? "project"
+            : "person"
+      );
       setLinkOpen(true);
     }
   }, [initialQuickCreateType]);
@@ -137,8 +155,8 @@ export function MemoryComposer({
       {quickCreateName.trim() && (
         <>
           <input type="hidden" name="newEntityName" value={quickCreateName.trim()} />
-          <input type="hidden" name="newEntityType" value={quickCreateType} />
-          <input type="hidden" name="newEntityNotes" value={quickCreateNotes} />
+          <input type="hidden" name="newEntityType" value={quickCreatePayload.entityType} />
+          <input type="hidden" name="newEntityNotes" value={quickCreatePayload.notes} />
         </>
       )}
       <input type="hidden" name="eventDate" value={eventDate} />
@@ -296,7 +314,7 @@ export function MemoryComposer({
                 return;
               }
               setQuickCreateName(data.name);
-              setQuickCreateType(data.entityType);
+              setQuickCreateKind(createInputToReferenceKind(data.entityType, data.notes));
               setQuickCreateNotes(data.notes);
             }}
           />
