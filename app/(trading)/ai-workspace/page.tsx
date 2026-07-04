@@ -66,7 +66,8 @@ export default async function AiWorkspacePage() {
       <header>
         <h1 className="text-2xl font-semibold">AI Workspace</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Copy Snapshot → AI assistant → Import AI Block → Inbox → Apply.
+          Production test flow: Copy Snapshot → ChatGPT → Paste AI Block → Import → Inbox → Review
+          → Apply → confirm persisted.
         </p>
       </header>
 

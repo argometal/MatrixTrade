@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { applyInboxItemAction, rejectInboxItemAction } from "@/app/actions";
+import { InboxApplyResult } from "@/app/components/inbox/InboxApplyResult";
 import {
   describeProposal,
   fetchBridgeInbox,
@@ -10,29 +11,95 @@ import {
 } from "@/lib/bridge";
 import { getInboxItemById } from "@/lib/trading-inbox-storage";
 
+type InboxDetailSearchParams = {
+  origin?: string;
+  error?: string;
+  applied?: string;
+  type?: string;
+  tradeId?: string;
+  store?: string;
+  verified?: string;
+  message?: string;
+  verifyDetail?: string;
+  inboxError?: string;
+};
+
+function resolveOrigin(origin: string | undefined): "local" | "supabase" | "worker" {
+  if (origin === "local") return "local";
+  if (origin === "supabase") return "supabase";
+  return "worker";
+}
+
 export default async function TradingInboxDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ origin?: string; error?: string }>;
+  searchParams: Promise<InboxDetailSearchParams>;
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const origin =
-    query.origin === "local"
-      ? "local"
-      : query.origin === "supabase"
-        ? "supabase"
-        : "worker";
+  const origin = resolveOrigin(query.origin);
+  const isApplyResult = query.applied === "1";
 
   const workerItems = await fetchBridgeInbox();
   const item = await getInboxItemById(id, workerItems, origin);
 
-  if (!item || item.status !== "pending") notFound();
+  if (!item && !isApplyResult) notFound();
+  if (item && item.status !== "pending" && !isApplyResult) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-4">
+        <Link href="/inbox" className="text-sm text-zinc-500 hover:underline">
+          ← Inbox
+        </Link>
+        <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700">
+          This inbox item was already processed ({item.status}).
+        </div>
+        <Link href="/inbox" className="text-sm font-medium underline">
+          Back to Inbox
+        </Link>
+      </div>
+    );
+  }
+
+  if (isApplyResult) {
+    return (
+      <div className="mx-auto max-w-2xl space-y-6">
+        <header>
+          <Link href="/inbox" className="text-sm text-zinc-500 hover:underline">
+            ← Inbox
+          </Link>
+          <h1 className="mt-2 text-2xl font-semibold">Apply result</h1>
+          <p className="text-sm text-zinc-500">
+            {query.origin ?? origin} · inbox item {id}
+          </p>
+        </header>
+
+        {query.error && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {decodeURIComponent(query.error)}
+          </div>
+        )}
+
+        <InboxApplyResult
+          tradeId={query.tradeId ?? ""}
+          type={query.type ?? "unknown"}
+          store={query.store ?? "json"}
+          verified={query.verified === "1"}
+          message={query.message ?? "Apply completed."}
+          verifyDetail={query.verifyDetail}
+          inboxError={query.inboxError}
+        />
+      </div>
+    );
+  }
+
+  if (!item) notFound();
 
   const parsed = parseTradingInboxPayload(item.payload);
-  const validation = parsed ? validateProposalPayload(parsed) : { ok: false as const, errors: ["Invalid payload"] };
+  const validation = parsed
+    ? validateProposalPayload(parsed)
+    : { ok: false as const, errors: ["Invalid payload"] };
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -44,11 +111,12 @@ export default async function TradingInboxDetailPage({
         <p className="text-sm text-zinc-500">
           {item.origin} · {new Date(item.receivedAt).toLocaleString()}
         </p>
+        <p className="mt-1 font-mono text-xs text-zinc-500">inboxItemId: {item.id}</p>
       </header>
 
       {query.error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {decodeURIComponent(query.error)}
+          Apply failed: {query.error}
         </div>
       )}
 
@@ -98,8 +166,8 @@ export default async function TradingInboxDetailPage({
       </div>
 
       <p className="text-xs text-zinc-500">
-        Applies run through the same validation as manual entry. Trades are never written without
-        your click.
+        Apply writes to the active trades store (Supabase or local JSON). You will see verification
+        on the next screen.
       </p>
     </div>
   );

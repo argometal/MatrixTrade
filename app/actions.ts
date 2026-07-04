@@ -3,11 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { applyTradingProposal } from "@/lib/apply-trading-inbox";
+import { verifyApplyPersistence } from "@/lib/apply-verify";
 import { requireTradingSession } from "@/lib/auth/require-session";
 import {
   ackBridgeInboxItem,
   buildBridgeSnapshot,
   fetchBridgeInbox,
+  parseTradingInboxPayload,
   publishSnapshotToBridge,
 } from "@/lib/bridge";
 import { nextSnapshotRevision } from "@/lib/snapshot-revision";
@@ -31,6 +33,7 @@ import {
   revokeAiSession,
 } from "@/lib/ai-session";
 import { createQrDataUrl } from "@/lib/qr";
+import { getTradesStoreMode } from "@/lib/trades-json";
 import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
 
@@ -217,25 +220,51 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
     redirect("/inbox?error=notfound");
   }
 
+  const parsed = parseTradingInboxPayload(payload);
+  if (!parsed) {
+    redirect(
+      `/inbox/${id}?origin=${origin}&error=${encodeURIComponent("Invalid inbox payload shape.")}`
+    );
+  }
+
   const result = await applyTradingProposal(payload);
   if (!result.ok) {
     redirect(`/inbox/${id}?origin=${origin}&error=${encodeURIComponent(result.errors.join("; "))}`);
   }
 
-  let feedback = `Review applied — ${result.message}`;
-
+  let inboxError: string | undefined;
   if (origin === "worker") {
     const ack = await ackBridgeInboxItem(id, "applied");
-    feedback = ack.ok
-      ? `${feedback} · Worker acknowledged (HTTP ${ack.httpStatus})`
-      : `${feedback} · Worker ack failed: ${ack.error ?? "unknown error"}`;
+    if (!ack.ok) {
+      inboxError = `Worker ack failed: ${ack.error ?? "unknown error"}`;
+    }
   } else {
-    await markInboxItemStatus(id, origin, "applied");
-    feedback = `${feedback} · Inbox item marked applied (${origin})`;
+    try {
+      const marked = await markInboxItemStatus(id, origin, "applied");
+      if (!marked) {
+        inboxError = `Inbox item was not marked applied (${origin}).`;
+      }
+    } catch (err) {
+      inboxError = err instanceof Error ? err.message : "Inbox status update failed.";
+    }
   }
 
+  const verify = await verifyApplyPersistence(parsed);
+  const params = new URLSearchParams({
+    applied: "1",
+    origin,
+    type: result.type,
+    tradeId: result.tradeId,
+    store: getTradesStoreMode(),
+    verified: verify.ok ? "1" : "0",
+    message: result.message,
+  });
+  if (verify.detail) params.set("verifyDetail", verify.detail);
+  if (inboxError) params.set("inboxError", inboxError);
+
   revalidateTradingPaths();
-  redirect(`/inbox?applied=${encodeURIComponent(feedback)}`);
+  revalidatePath(`/trades/${result.tradeId}`);
+  redirect(`/inbox/${id}?${params.toString()}`);
 }
 
 export async function rejectInboxItemAction(formData: FormData): Promise<void> {

@@ -1,8 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { ImportAiBlockActionResult } from "@/app/actions";
 import { sampleTradeAiBlock } from "@/lib/ai-block";
+
+const FLOW_STEPS = [
+  "Copy Snapshot",
+  "ChatGPT",
+  "Paste AI Block",
+  "Import",
+  "Inbox",
+  "Review",
+  "Apply",
+  "Confirm persisted",
+] as const;
 
 async function copyText(text: string): Promise<boolean> {
   try {
@@ -32,7 +44,9 @@ export function AiBlockPanel({
   const [copied, setCopied] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<{ inboxItemId: string; origin: string } | null>(
+    null
+  );
 
   async function handleCopySnapshot() {
     const ok = await copyText(snapshotText);
@@ -44,7 +58,7 @@ export function AiBlockPanel({
 
   function handleImport(formData: FormData) {
     setError(null);
-    setSuccess(null);
+    setImportResult(null);
     startTransition(async () => {
       const result = await importAction(formData);
       if ("error" in result) {
@@ -55,17 +69,24 @@ export function AiBlockPanel({
         );
         return;
       }
-      setSuccess(`Imported to Inbox (${result.origin}). Open Inbox to review and Apply.`);
+      setImportResult({ inboxItemId: result.inboxItemId, origin: result.origin });
       setPasteValue("");
     });
   }
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-zinc-600">
-        Copy Snapshot → paste in your AI assistant → paste the returned AI Block here → Import →
-        review in Inbox → Apply.
-      </p>
+      <ol className="flex flex-wrap gap-x-2 gap-y-1 text-sm text-zinc-700">
+        {FLOW_STEPS.map((step, index) => (
+          <li key={step} className="flex items-center gap-2">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium text-zinc-700">
+              {index + 1}
+            </span>
+            <span>{step}</span>
+            {index < FLOW_STEPS.length - 1 && <span className="text-zinc-400">→</span>}
+          </li>
+        ))}
+      </ol>
 
       <div className="flex flex-wrap gap-2">
         <button
@@ -82,10 +103,27 @@ export function AiBlockPanel({
           {error}
         </p>
       )}
-      {success && (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          {success}
-        </p>
+
+      {importResult && (
+        <div className="space-y-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+          <p className="font-medium">Imported to Inbox — next: Review → Apply</p>
+          <dl className="grid gap-2 font-mono text-xs sm:grid-cols-2">
+            <div>
+              <dt className="text-emerald-800">inboxItemId</dt>
+              <dd className="break-all">{importResult.inboxItemId}</dd>
+            </div>
+            <div>
+              <dt className="text-emerald-800">origin</dt>
+              <dd>{importResult.origin}</dd>
+            </div>
+          </dl>
+          <Link
+            href={`/inbox/${importResult.inboxItemId}?origin=${importResult.origin}`}
+            className="inline-block rounded-md bg-emerald-800 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+          >
+            Open Inbox to Apply
+          </Link>
+        </div>
       )}
 
       <form action={handleImport} className="space-y-3">

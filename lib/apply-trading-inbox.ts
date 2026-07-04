@@ -1,10 +1,11 @@
 import { readNoteBody } from "./obsidian";
 import { syncObsidianTradeIfLocal } from "./obsidian-local";
-import { absoluteNotePath } from "./trade-links";
+import { absoluteNotePath, enrichTrade } from "./trade-links";
 import {
   parseMistakes,
   parseTradingInboxPayload,
   type TradingInboxPayload,
+  type TradingProposalType,
 } from "./bridge";
 import {
   closeTrade,
@@ -13,11 +14,22 @@ import {
   getTradeById,
   saveTradeReview,
 } from "./storage";
-import type { CreateTradeInput, SaveReviewInput } from "./types";
+import { upsertTradeInJson } from "./trades-json";
+import type { CreateTradeInput, SaveReviewInput, Trade } from "./types";
+
+export type ApplyTradingProposalResult =
+  | {
+      ok: true;
+      message: string;
+      type: TradingProposalType;
+      tradeId: string;
+      trade?: Trade;
+    }
+  | { ok: false; errors: string[] };
 
 export async function applyTradingProposal(
   payload: Record<string, unknown>
-): Promise<{ ok: true; message: string } | { ok: false; errors: string[] }> {
+): Promise<ApplyTradingProposalResult> {
   const parsed = parseTradingInboxPayload(payload);
   if (!parsed) {
     return { ok: false, errors: ["Invalid inbox payload shape."] };
@@ -39,7 +51,7 @@ export async function applyTradingProposal(
 
 async function applyTradeProposal(
   parsed: TradingInboxPayload
-): Promise<{ ok: true; message: string } | { ok: false; errors: string[] }> {
+): Promise<ApplyTradingProposalResult> {
   const p = parsed.proposal;
   const input: CreateTradeInput = {
     id: String(p.id).toUpperCase(),
@@ -54,22 +66,34 @@ async function applyTradeProposal(
 
   const result = await createTrade(input);
   if (result.errors?.length) return { ok: false, errors: result.errors };
-  return { ok: true, message: `Created trade ${input.id} · ${input.ticker}` };
+  return {
+    ok: true,
+    message: `Created trade ${input.id} · ${input.ticker}`,
+    type: "trade-proposal",
+    tradeId: input.id,
+    trade: result.trade,
+  };
 }
 
 async function applyTradeClose(
   parsed: TradingInboxPayload
-): Promise<{ ok: true; message: string } | { ok: false; errors: string[] }> {
+): Promise<ApplyTradingProposalResult> {
   const id = String(parsed.proposal.id).toUpperCase();
   const exit = Number(parsed.proposal.exit);
   const result = await closeTrade(id, { exit });
   if (result.errors?.length) return { ok: false, errors: result.errors };
-  return { ok: true, message: `Closed trade ${id} at ${exit}` };
+  return {
+    ok: true,
+    message: `Closed trade ${id} at ${exit}`,
+    type: "trade-close",
+    tradeId: id,
+    trade: result.trade,
+  };
 }
 
 async function applyTradeReview(
   parsed: TradingInboxPayload
-): Promise<{ ok: true; message: string } | { ok: false; errors: string[] }> {
+): Promise<ApplyTradingProposalResult> {
   const p = parsed.proposal;
   const id = String(p.id).toUpperCase();
   const input: SaveReviewInput = {
@@ -83,12 +107,18 @@ async function applyTradeReview(
 
   const result = await saveTradeReview(id, input);
   if (result.errors?.length) return { ok: false, errors: result.errors };
-  return { ok: true, message: `Saved review for ${id}` };
+  return {
+    ok: true,
+    message: `Saved review for ${id}`,
+    type: "trade-review",
+    tradeId: id,
+    trade: result.trade,
+  };
 }
 
 async function applyAnalysis(
   parsed: TradingInboxPayload
-): Promise<{ ok: true; message: string } | { ok: false; errors: string[] }> {
+): Promise<ApplyTradingProposalResult> {
   const p = parsed.proposal;
   const id = String(p.id).toUpperCase();
   const trade = await getTradeById(id);
@@ -113,7 +143,27 @@ async function applyAnalysis(
   const appendix = `\n\n---\n\n## AI import · ${stamp}\n\n${blocks.join("\n\n")}\n`;
   const nextBody = `${body.trim()}${appendix}`;
 
-  await syncObsidianTradeIfLocal(trade, rules, nextBody);
+  const updated = enrichTrade(
+    {
+      ...trade,
+      thesis: p.thesis ? String(p.thesis) : trade.thesis,
+      psychology: p.psychology ? String(p.psychology) : trade.psychology,
+      lessons: p.lessons ? String(p.lessons) : trade.lessons,
+      notes: p.notes
+        ? [trade.notes, String(p.notes)].filter(Boolean).join("\n\n")
+        : trade.notes,
+    },
+    rules
+  );
 
-  return { ok: true, message: `Appended analysis to Obsidian note for ${id}` };
+  await upsertTradeInJson(updated);
+  await syncObsidianTradeIfLocal(updated, rules, nextBody);
+
+  return {
+    ok: true,
+    message: `Saved analysis for ${id} (trade store + Obsidian when local)`,
+    type: "analysis",
+    tradeId: id,
+    trade: updated,
+  };
 }
