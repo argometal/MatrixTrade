@@ -60,7 +60,7 @@ export function InboxTriagePanel({
   }
 
   function openLinkPicker() {
-    setLinkIds([]);
+    setLinkIds(item.linkedEntityIds ?? []);
     setPickerOpen(true);
   }
 
@@ -78,6 +78,7 @@ export function InboxTriagePanel({
         <>
           <Card className="mb-4">
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">{INBOX.actions}</p>
+            <p className="mb-3 text-[12px] text-zinc-500">{INBOX.multiLinkHint}</p>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={openLinkPicker} className={compactActionClass(true)}>
                 {INBOX.linkReference}

@@ -7,7 +7,7 @@ import {
 import type { EntityPickerBuckets } from "./journal-helpers";
 
 /** Where the link picker is opened from — drives allowed targets and time rules. */
-export type LinkSourceKind = "inbox" | "project" | "topic" | "event" | "organization" | "person";
+export type LinkSourceKind = "inbox" | "log" | "project" | "topic" | "event" | "organization" | "person";
 
 export type LinkContext = {
   projectStart?: string;
@@ -16,6 +16,8 @@ export type LinkContext = {
 
 export const ALLOWED_LINK_TARGETS: Record<LinkSourceKind, ReferenceKind[]> = {
   inbox: ["person", "organization", "project", "topic", "event"],
+  /** Notes and captures can gain any reference link over time. */
+  log: ["person", "organization", "project", "topic", "event"],
   project: ["person", "topic", "event"],
   topic: ["person", "event"],
   event: ["person"],

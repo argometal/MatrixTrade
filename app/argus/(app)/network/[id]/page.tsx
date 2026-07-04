@@ -14,7 +14,7 @@ import {
 import { buildEntityPickerBuckets } from "@/lib/argus/journal-helpers";
 import { loadEnrichedEntityEvidence } from "@/lib/argus/entity-evidence";
 import { buildEntityIntelligence } from "@/lib/argus/network-intelligence";
-import { ENTITY_PAGE, TESTING } from "@/lib/argus/ux-copy";
+import { ENTITY_PAGE, KIND_GUIDE, TESTING } from "@/lib/argus/ux-copy";
 import { getEntities, getEntity, readArgus } from "@/lib/argus/server-storage";
 
 export default async function EntityNetworkPage({ params }: { params: Promise<{ id: string }> }) {
@@ -43,6 +43,7 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
   const evidence = await loadEnrichedEntityEvidence(id, includePrivate);
   const sv = entity.strategicValue ?? 3;
   const isEvent = referenceKindFromNotes(entity.notes ?? "") === "event";
+  const isOrganization = entity.type === "company";
   const hasEvidence = evidence.emailCount > 0 || evidence.logCount > 0;
 
   return (
@@ -50,6 +51,9 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
       <PageHeader title={entity.name} backHref="/argus/network" />
 
       <Card className="mb-4">
+        {isOrganization ? (
+          <p className="mb-4 text-[13px] leading-relaxed text-zinc-500">{KIND_GUIDE.organization}</p>
+        ) : null}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-sm text-zinc-400">{entityKindLabel(entity)}</p>

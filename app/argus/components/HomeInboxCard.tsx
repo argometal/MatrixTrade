@@ -71,7 +71,7 @@ export function HomeInboxCard({
   }
 
   function openLinkPicker() {
-    setLinkIds([]);
+    setLinkIds(item.linkedEntityIds ?? []);
     setPickerOpen(true);
   }
 
@@ -133,6 +133,7 @@ export function HomeInboxCard({
   const actionBar = canTriage ? (
     <div className="border-b border-zinc-800/80 px-4 py-3">
       <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">{INBOX.actions}</p>
+      <p className="mb-3 text-[12px] text-zinc-500">{INBOX.multiLinkHint}</p>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={openLinkPicker} className={primaryActionClass()}>
           {INBOX.linkReference}

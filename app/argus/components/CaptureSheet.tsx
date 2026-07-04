@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CAPTURE, REFERENCES, TAGS } from "@/lib/argus/ux-copy";
+import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { AttachmentField } from "./AttachmentField";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
 import { TagPickerModal, type TagBuckets } from "./TagPickerModal";
@@ -70,6 +71,9 @@ export function CaptureSheet({
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(autoOpenReference);
   const [tagsOpen, setTagsOpen] = useState(false);
+
+  const logBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "log"), [buckets]);
+  const logCreateKinds = allowedCreateKinds("log");
 
   useEffect(() => {
     if (open) {
@@ -207,10 +211,12 @@ export function CaptureSheet({
 
       <ReferencePickerModal
         open={referenceOpen}
-        buckets={buckets}
+        buckets={logBuckets}
         selectedIds={selectedIds}
         onChange={setSelectedIds}
         onClose={() => setReferenceOpen(false)}
+        allowedCreateKinds={logCreateKinds}
+        listMode="all"
       />
 
       <TagPickerModal

@@ -5,8 +5,8 @@ import { ArgusDeleteForm } from "@/app/argus/components/ArgusDeleteForm";
 import { ProjectEditForm } from "@/app/argus/components/ProjectEditForm";
 import { EmptyState, formatDate, PageHeader } from "@/app/argus/components/ui";
 import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
-import { loadEnrichedEntityEvidence } from "@/lib/argus/entity-evidence";
-import { TESTING } from "@/lib/argus/ux-copy";
+import { loadEnrichedProjectEvidence } from "@/lib/argus/project-evidence";
+import { ENTITY_PAGE, KIND_GUIDE, TESTING } from "@/lib/argus/ux-copy";
 import { getEntities, getEntity, readArgus } from "@/lib/argus/server-storage";
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,7 +25,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
   const data = await readArgus();
   const entities = await getEntities();
-  const evidence = await loadEnrichedEntityEvidence(id, includePrivate);
+  const evidence = await loadEnrichedProjectEvidence(entity, includePrivate);
   const allBuckets = buildEntityPickerBuckets(data, includePrivate);
   const tagBuckets = buildTagBuckets(data, includePrivate);
 
@@ -34,7 +34,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       <PageHeader title={entity.name} backHref="/argus/journal" />
 
       <div className="mb-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-400">
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <p className="mb-4 text-[13px] leading-relaxed text-zinc-500">{KIND_GUIDE.project}</p>
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-3 border-t border-zinc-800 pt-4">
           <div>
             <dt className="text-xs text-zinc-600">Start</dt>
             <dd className="text-zinc-200">{entity.startDate ? formatDate(entity.startDate) : "—"}</dd>
@@ -82,12 +83,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       </ArgusDeleteForm>
 
       <EntityEvidenceSection
-        logs={evidence.logs}
+        logs={evidence.directLogs}
         enrichedInbox={evidence.enrichedInbox}
+        viaContactEnrichedInbox={evidence.viaContactEnrichedInbox}
+        viaContactLogs={evidence.viaContactLogs}
         entities={entities}
         entityName={entity.name}
         emailCount={evidence.emailCount}
         logCount={evidence.logCount}
+        scopeHint={ENTITY_PAGE.projectScopeHint}
       />
     </>
   );

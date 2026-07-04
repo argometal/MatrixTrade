@@ -6,6 +6,7 @@ import { createEntityInlineAction } from "@/app/argus/actions";
 import { createInputToReferenceKind, entityNotesForDisplay, type ReferenceKind } from "@/lib/argus/reference-types";
 import type { Entity, Log } from "@/lib/argus/types";
 import { ACTIVITY_EDIT, TAGS } from "@/lib/argus/ux-copy";
+import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { JOURNAL_KIND_LABELS, LOG_SOURCE_LABELS } from "@/lib/argus/labels";
 import { EntityChip } from "./Cards";
 import { ReferenceCreateModal } from "./ReferenceCreateModal";
@@ -77,6 +78,9 @@ export function ActivityEditPanel({
   const [createKind, setCreateKind] = useState<ReferenceKind>("project");
   const [, startCreate] = useTransition();
 
+  const logBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "log"), [buckets]);
+  const logCreateKinds = allowedCreateKinds("log");
+
   const entityMap = useMemo(
     () => new Map(buckets.alphabetical.map((e) => [e.id, e])),
     [buckets.alphabetical]
@@ -146,6 +150,7 @@ export function ActivityEditPanel({
           <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">
             {ACTIVITY_EDIT.relationships}
           </p>
+          <p className="mt-1 text-[12px] text-zinc-500">{ACTIVITY_EDIT.evolveHint}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <MetaButton
               active={referenceOpen || selectedIds.length > 0}
@@ -166,6 +171,13 @@ export function ActivityEditPanel({
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"
+              onClick={() => openCreate("person")}
+              className="rounded-full border border-zinc-700 px-3 py-1 text-[12px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+            >
+              + Person
+            </button>
+            <button
+              type="button"
               onClick={() => openCreate("project")}
               className="rounded-full border border-zinc-700 px-3 py-1 text-[12px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
             >
@@ -173,10 +185,24 @@ export function ActivityEditPanel({
             </button>
             <button
               type="button"
+              onClick={() => openCreate("organization")}
+              className="rounded-full border border-zinc-700 px-3 py-1 text-[12px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+            >
+              + Organization
+            </button>
+            <button
+              type="button"
               onClick={() => openCreate("topic")}
               className="rounded-full border border-zinc-700 px-3 py-1 text-[12px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
             >
               {ACTIVITY_EDIT.newTopic}
+            </button>
+            <button
+              type="button"
+              onClick={() => openCreate("event")}
+              className="rounded-full border border-zinc-700 px-3 py-1 text-[12px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+            >
+              + Event
             </button>
           </div>
 
@@ -266,10 +292,12 @@ export function ActivityEditPanel({
 
       <ReferencePickerModal
         open={referenceOpen}
-        buckets={buckets}
+        buckets={logBuckets}
         selectedIds={selectedIds}
         onChange={setSelectedIds}
         onClose={() => setReferenceOpen(false)}
+        allowedCreateKinds={logCreateKinds}
+        listMode="all"
       />
 
       <TagPickerModal

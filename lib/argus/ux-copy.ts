@@ -16,6 +16,7 @@ export const ACTIVITY_EDIT = {
   save: "Save",
   cancel: "Cancel",
   linkedLabel: "Linked to",
+  evolveHint: "Add more links anytime — a note can connect to people, projects, topics, events, and organizations.",
   attachments: "Attachments",
   fromInbox: "From inbox",
   viewOriginal: "view original",
@@ -45,8 +46,8 @@ export const ADD_MENU = {
   newKind: (label: string) => `New ${label}`,
   kindHint: {
     person: "A contact — can link to anything",
-    organization: "A company — links people, no date limit",
-    project: "Work in a start–end date range",
+    organization: "A company — ongoing shell for people; use Projects for bounded work",
+    project: "Time-bounded work — links people, topics, events, and project evidence",
     topic: "Ongoing theme — links people and events",
     event: "One dated moment — can attach emails",
   },
@@ -192,6 +193,7 @@ export const INBOX = {
   attachments: "Attachments",
   actions: "Actions",
   linkReference: "Link to reference",
+  multiLinkHint: "Select multiple — e.g. link the contact and the project together.",
   tapToRead: "Tap to read email",
   createReference: "Create reference",
   createPerson: "+ New Person",
@@ -225,6 +227,14 @@ export const LINK_HIERARCHY = {
   projectEventsHint: "Only events within the project date range can be linked.",
   topicEventsHint: "Topics can link people and dated events.",
   inboxLinkHint: "Link to people, organizations, projects, topics, or events.",
+  multiLinkHint: "Link a person and a project together to file email under both.",
+} as const;
+
+export const KIND_GUIDE = {
+  project:
+    "A project is time-bounded work with a start and end. Link people here, then file emails to both the contact and the project to keep evidence inside the project boundary.",
+  organization:
+    "An organization is the company shell — ongoing, no date range. Link people to it. Use a Project when you need to bundle work, emails, and records for a specific engagement.",
 } as const;
 
 export const SECTION_EMPTY = {
@@ -271,6 +281,13 @@ export const ENTITY_PAGE = {
   addDocumentFor: (name: string) => `Attach evidence for ${name}`,
   eventEvidenceHint:
     "Events should link emails and journal records from Inbox or Capture so the moment is fully documented.",
+  projectScopeHint:
+    "Project evidence includes emails and records linked to the project, plus items linked to project contacts within the project dates.",
+  projectViaContactEmails: (n: number) =>
+    n === 1 ? "1 email via project contact" : `${n} emails via project contacts`,
+  projectViaContactRecords: (n: number) =>
+    n === 1 ? "1 record via project contact" : `${n} records via project contacts`,
+  projectViaContactHint: "Linked to a project contact only — also link the project from Inbox for a direct tag.",
 } as const;
 
 export const NETWORK = {
