@@ -20,8 +20,7 @@ export default async function TradingInboxPage({
       <header>
         <h1 className="text-2xl font-semibold">Inbox</h1>
         <p className="text-sm text-zinc-500">
-          AI proposals from Worker or <code className="text-xs">POST /api/trading/inbox</code> —
-          preview before apply.
+          Import AI Blocks from AI Workspace or Worker bridge — preview before Apply.
         </p>
       </header>
 
@@ -39,9 +38,11 @@ export default async function TradingInboxPage({
 
       {items.length === 0 ? (
         <p className="text-sm text-zinc-500">
-          Inbox empty. ChatGPT can POST to Worker <code className="text-xs">/inbox</code> or local{" "}
-          <code className="text-xs">/api/trading/inbox</code> with{" "}
-          <code className="text-xs">MATRIXTRADE_INBOX_TOKEN</code>.
+          Inbox empty. Import an AI Block from{" "}
+          <Link href="/ai-workspace" className="underline">
+            AI Workspace
+          </Link>
+          .
         </p>
       ) : (
         <ul className="divide-y divide-zinc-100 rounded-lg border border-zinc-200 bg-white shadow-sm">

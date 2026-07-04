@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { parseTradingInboxPayload, validateProposalPayload } from "@/lib/bridge";
-import { createLocalInboxItem } from "@/lib/trading-inbox-storage";
+import { isSupabaseInboxStore } from "@/lib/trading-inbox-submit";
+import { createLocalInboxItem } from "@/lib/trading-inbox-storage-local";
+import { createSupabaseInboxItem } from "@/lib/trading-inbox-store/supabase";
 
 function readInboxToken(request: Request): string | null {
   const auth = request.headers.get("Authorization");
@@ -47,13 +49,45 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Validation failed", details: validation.errors }, { status: 400 });
   }
 
-  const item = await createLocalInboxItem({
-    ...body,
-    source: body.source ?? "api",
-  });
+  const enriched = { ...body, source: body.source ?? "api" };
 
-  return NextResponse.json(
-    { ok: true, inboxItemId: item.id, receivedAt: item.receivedAt, status: item.status },
-    { status: 201 }
-  );
+  try {
+    if (isSupabaseInboxStore()) {
+      const item = await createSupabaseInboxItem(enriched);
+      return NextResponse.json(
+        {
+          ok: true,
+          inboxItemId: item.id,
+          receivedAt: item.receivedAt,
+          status: item.status,
+          origin: "supabase",
+        },
+        { status: 201 }
+      );
+    }
+
+    if (process.env.VERCEL_ENV === "production") {
+      return NextResponse.json(
+        { error: "Production inbox requires Supabase. Run supabase/trading-inbox.sql." },
+        { status: 503 }
+      );
+    }
+
+    const item = await createLocalInboxItem(enriched);
+    return NextResponse.json(
+      {
+        ok: true,
+        inboxItemId: item.id,
+        receivedAt: item.receivedAt,
+        status: item.status,
+        origin: "local",
+      },
+      { status: 201 }
+    );
+  } catch (err) {
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Inbox insert failed" },
+      { status: 502 }
+    );
+  }
 }

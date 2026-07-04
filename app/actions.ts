@@ -13,12 +13,14 @@ import {
 import { nextSnapshotRevision } from "@/lib/snapshot-revision";
 import { appendSyncHistory } from "@/lib/sync-history";
 import { getSetups } from "@/lib/setups";
-import {
-  getLocalInboxItem,
-  setLocalInboxStatus,
-} from "@/lib/trading-inbox-storage";
+import { parseAiBlock } from "@/lib/ai-block";
 import { createAiNotes } from "@/lib/ai-notes";
 import { parseAiNotesPaste } from "@/lib/ai-notes-parse";
+import {
+  getInboxItemFromStore,
+  markInboxItemStatus,
+  submitToTradingInbox,
+} from "@/lib/trading-inbox-submit";
 import {
   aiSessionDisabledActionError,
   isAiSessionDisabled,
@@ -36,6 +38,10 @@ import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, T
 
 export type SaveAiNotesActionResult = { count: number } | { error: string };
 
+export type ImportAiBlockActionResult =
+  | { ok: true; inboxItemId: string; origin: string }
+  | { error: string; details?: string[] };
+
 export type CreateAiSessionActionResult =
   | { token: string; connectUrl: string; qrDataUrl: string }
   | { error: string };
@@ -51,6 +57,32 @@ function revalidateTradingPaths() {
   revalidatePath("/ai-workspace");
   revalidatePath("/inbox");
   revalidatePath("/system");
+}
+
+export async function importAiBlockAction(formData: FormData): Promise<ImportAiBlockActionResult> {
+  await requireTradingSession();
+
+  const raw = String(formData.get("aiBlock") ?? "");
+  const parsed = parseAiBlock(raw);
+  if (!parsed.ok) {
+    return { error: parsed.error, details: parsed.details };
+  }
+
+  const result = await submitToTradingInbox({
+    ...parsed.body,
+    source: "ai-block",
+  });
+
+  if (!result.ok) {
+    return { error: result.error };
+  }
+
+  revalidateTradingPaths();
+  return {
+    ok: true,
+    inboxItemId: result.inboxItemId,
+    origin: result.origin,
+  };
 }
 
 export async function saveAiNotesAction(formData: FormData): Promise<SaveAiNotesActionResult> {
@@ -173,12 +205,12 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
   const origin = String(formData.get("origin") ?? "worker");
 
   let payload: Record<string, unknown> | undefined;
-  if (origin === "local") {
-    const item = await getLocalInboxItem(id);
-    payload = item?.payload;
-  } else {
+  if (origin === "worker") {
     const workerItems = await fetchBridgeInbox();
     payload = workerItems.find((item) => item.id === id)?.payload;
+  } else {
+    const item = await getInboxItemFromStore(id, origin);
+    payload = item?.payload;
   }
 
   if (!payload) {
@@ -187,7 +219,7 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
 
   const result = await applyTradingProposal(payload);
   if (!result.ok) {
-    redirect(`/inbox/${id}?error=${encodeURIComponent(result.errors.join("; "))}`);
+    redirect(`/inbox/${id}?origin=${origin}&error=${encodeURIComponent(result.errors.join("; "))}`);
   }
 
   let feedback = `Review applied — ${result.message}`;
@@ -198,8 +230,8 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
       ? `${feedback} · Worker acknowledged (HTTP ${ack.httpStatus})`
       : `${feedback} · Worker ack failed: ${ack.error ?? "unknown error"}`;
   } else {
-    await setLocalInboxStatus(id, "applied");
-    feedback = `${feedback} · Local inbox item marked applied`;
+    await markInboxItemStatus(id, origin, "applied");
+    feedback = `${feedback} · Inbox item marked applied (${origin})`;
   }
 
   revalidateTradingPaths();
@@ -219,9 +251,11 @@ export async function rejectInboxItemAction(formData: FormData): Promise<void> {
     revalidateTradingPaths();
     redirect(`/inbox?applied=${encodeURIComponent(msg)}`);
   } else {
-    await setLocalInboxStatus(id, "rejected");
+    await markInboxItemStatus(id, origin, "rejected");
     revalidateTradingPaths();
-    redirect(`/inbox?applied=${encodeURIComponent("Inbox item rejected · Local item marked rejected")}`);
+    redirect(
+      `/inbox?applied=${encodeURIComponent(`Inbox item rejected · marked rejected (${origin})`)}`
+    );
   }
 }
 

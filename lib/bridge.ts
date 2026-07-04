@@ -85,7 +85,7 @@ export interface BridgeInboxItem {
   receivedAt: string;
   status: "pending" | "applied" | "rejected";
   payload: Record<string, unknown>;
-  origin: "worker" | "local";
+  origin: "worker" | "local" | "supabase";
 }
 
 export async function publishSnapshotToBridge(

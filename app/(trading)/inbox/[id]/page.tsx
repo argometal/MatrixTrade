@@ -19,10 +19,15 @@ export default async function TradingInboxDetailPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
-  const origin = query.origin === "local" ? "local" : "worker";
+  const origin =
+    query.origin === "local"
+      ? "local"
+      : query.origin === "supabase"
+        ? "supabase"
+        : "worker";
 
   const workerItems = await fetchBridgeInbox();
-  const item = await getInboxItemById(id, workerItems);
+  const item = await getInboxItemById(id, workerItems, origin);
 
   if (!item || item.status !== "pending") notFound();
 

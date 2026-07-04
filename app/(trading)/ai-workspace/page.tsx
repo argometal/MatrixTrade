@@ -1,32 +1,26 @@
 import Link from "next/link";
-import { saveAiNotesAction } from "@/app/actions";
-import { ContextHandoffPanel } from "@/app/components/ai-workspace/ContextHandoffPanel";
-import { PasteAiNotesPanel } from "@/app/components/ai-workspace/PasteAiNotesPanel";
-import { QuickConnectPanel } from "@/app/components/ai-workspace/QuickConnectPanel";
-import { SectionedSnapshotPanel } from "@/app/components/ai-workspace/SectionedSnapshotPanel";
+import { importAiBlockAction } from "@/app/actions";
+import { AiBlockPanel } from "@/app/components/ai-workspace/AiBlockPanel";
 import { SystemSection } from "@/app/components/system/SystemSection";
+import { buildAiBlockSnapshot } from "@/lib/ai-block-snapshot";
 import { listAiNotes } from "@/lib/ai-notes";
-import { fetchBridgeInbox, getBridgeConfig, getSnapshotReadUrl } from "@/lib/bridge";
+import { fetchBridgeInbox, getBridgeConfig } from "@/lib/bridge";
 import { getPlaybooks } from "@/lib/playbooks";
-import { createQrDataUrl } from "@/lib/qr";
-import { computeMistakeStats, suggestExportQuestion } from "@/lib/review";
-import { buildSectionedSnapshot } from "@/lib/sectioned-snapshot";
-import { buildFullContext } from "@/lib/snapshot";
+import { getTradesStoreMode } from "@/lib/trades-json";
+import { resolveInboxBackendLabel } from "@/lib/trading-inbox-submit";
 import { getSnapshotRevisionState } from "@/lib/snapshot-revision-read";
 import { getSyncHistory } from "@/lib/sync-history";
-import { ANALYSIS_TEMPLATES } from "@/lib/ai-workspace";
 import { checkWorkerReachable } from "@/lib/system-status";
 import { getSetups } from "@/lib/setups";
 import { describeProposal, parseTradingInboxPayload } from "@/lib/bridge";
 import { listAllPendingInboxItems } from "@/lib/trading-inbox-storage";
-import { getExperiment, getTrades, getTradeNotes } from "@/lib/storage";
+import { getExperiment, getTrades } from "@/lib/storage";
 
 export default async function AiWorkspacePage() {
   const bridge = getBridgeConfig();
   const [
     experiment,
     trades,
-    notes,
     setups,
     playbooks,
     revision,
@@ -37,130 +31,60 @@ export default async function AiWorkspacePage() {
   ] = await Promise.all([
     getExperiment(),
     getTrades(),
-    getTradeNotes(),
     getSetups(),
     getPlaybooks(),
     getSnapshotRevisionState(),
     checkWorkerReachable(),
     fetchBridgeInbox(),
     getSyncHistory(),
-    listAiNotes(30),
+    listAiNotes(20),
   ]);
 
   const snapshotRevision = workerStatus.snapshotRevision ?? revision?.revision ?? 0;
+  const lastSync = syncHistory.find((e) => e.ok);
 
-  const snapshotUrl = getSnapshotReadUrl();
-  const snapshotQrDataUrl = snapshotUrl ? await createQrDataUrl(snapshotUrl) : null;
-  const pendingInbox = await listAllPendingInboxItems(workerInbox);
-
-  const snapshotOpts = { setups };
-  const fullContext = buildFullContext(experiment, trades, notes, snapshotOpts);
-  const fullContextAllClosed = buildFullContext(experiment, trades, notes, { full: true, setups });
-  const unreviewedContext = buildFullContext(experiment, trades, notes, {
-    unreviewedOnly: true,
-    setups,
-  });
-
-  const sectionedBase = {
+  const snapshotText = buildAiBlockSnapshot({
     experiment,
     trades,
     setups,
     playbooks,
     snapshotRevision,
     priorAiNotes: aiNotes,
-  };
-
-  const sectionedCurrent = buildSectionedSnapshot({ ...sectionedBase, options: snapshotOpts });
-  const sectionedAll = buildSectionedSnapshot({
-    ...sectionedBase,
-    options: { full: true, setups },
-  });
-  const sectionedUnreviewed = buildSectionedSnapshot({
-    ...sectionedBase,
-    options: { unreviewedOnly: true, setups },
+    systemNotes: {
+      tradesStore: getTradesStoreMode(),
+      bridgeConfigured: bridge.configured,
+      workerReachable: workerStatus.reachable,
+      inboxBackend: resolveInboxBackendLabel(),
+      lastSyncAt: lastSync?.at ?? null,
+    },
   });
 
-  const mistakeStats = computeMistakeStats(trades);
-  const suggestedQuestion = suggestExportQuestion(trades, mistakeStats);
-
-  const proposalHistory = workerInbox
-    .filter((item) => item.status !== "pending")
-    .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt))
-    .slice(0, 8);
-
-  const lastSync = syncHistory.find((e) => e.ok);
+  const pendingInbox = await listAllPendingInboxItems(workerInbox);
 
   return (
     <div className="space-y-8">
       <header>
         <h1 className="text-2xl font-semibold">AI Workspace</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Copy sectioned context → AI assistant → paste notes back. Proposals still go through Inbox.
+          Copy Snapshot → AI assistant → Import AI Block → Inbox → Apply.
         </p>
       </header>
 
       <SystemSection
-        id="sectioned-snapshot"
-        title="Sectioned Snapshot"
-        description="Compact context with prior AI notes — copy and paste into your AI assistant."
+        id="ai-block"
+        title="AI Block"
+        description="The only active AI workflow — copy context out, import proposals back."
       >
-        <SectionedSnapshotPanel
-          sectionedCurrent={sectionedCurrent}
-          sectionedAll={sectionedAll}
-          sectionedUnreviewed={sectionedUnreviewed}
-          suggestedQuestion={suggestedQuestion}
-        />
+        <AiBlockPanel snapshotText={snapshotText} importAction={importAiBlockAction} />
       </SystemSection>
 
-      <SystemSection
-        id="paste-ai-notes"
-        title="Paste AI Notes"
-        description="Save structured notes returned by your AI assistant."
-      >
-        <PasteAiNotesPanel
-          snapshotRevision={snapshotRevision}
-          recentNotes={aiNotes}
-          saveAction={saveAiNotesAction}
-        />
-      </SystemSection>
-
-      <SystemSection
-        id="quick-connect"
-        title="Quick Connect"
-        description="Three steps after Sync — snapshot URL, QR, and assistant."
-      >
-        <QuickConnectPanel
-          snapshotUrl={snapshotUrl}
-          snapshotQrDataUrl={snapshotQrDataUrl}
-          snapshotRevision={snapshotRevision}
-          snapshotUpdatedAt={workerStatus.updatedAt ?? revision?.updatedAt ?? null}
-          bridgeConfigured={bridge.configured}
-          workerReachable={workerStatus.reachable}
-        />
-      </SystemSection>
-
-      <SystemSection id="context" title="Copy Context" description="Legacy full context packet (Obsidian analysis included).">
-        <ContextHandoffPanel
-          fullContext={fullContext}
-          fullContextAllClosed={fullContextAllClosed}
-          unreviewedContext={unreviewedContext}
-          suggestedQuestion={suggestedQuestion}
-          templates={ANALYSIS_TEMPLATES}
-        />
-      </SystemSection>
-
-      <SystemSection id="inbox" title="Inbox" description="Proposals from pasted JSON — review before Apply.">
+      <SystemSection id="inbox" title="Inbox" description="Imported AI Blocks wait here for human Apply.">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-sm text-zinc-700">
             {pendingInbox.length === 0 ? (
               "No pending proposals."
             ) : (
               <span className="font-medium">{pendingInbox.length} pending</span>
-            )}
-            {lastSync && (
-              <span className="ml-2 text-zinc-400">
-                · Last sync {new Date(lastSync.at).toLocaleString()}
-              </span>
             )}
           </p>
           <Link
@@ -175,7 +99,7 @@ export default async function AiWorkspacePage() {
             {pendingInbox.slice(0, 5).map((item) => {
               const parsed = parseTradingInboxPayload(item.payload);
               return (
-                <li key={item.id} className="flex justify-between gap-3 px-4 py-2">
+                <li key={`${item.origin}-${item.id}`} className="flex justify-between gap-3 px-4 py-2">
                   <span>{parsed ? describeProposal(parsed) : "Proposal"}</span>
                   <Link href={`/inbox/${item.id}?origin=${item.origin}`} className="underline">
                     Review
@@ -187,45 +111,9 @@ export default async function AiWorkspacePage() {
         )}
       </SystemSection>
 
-      <SystemSection id="history" title="Proposal History" description="Recently applied or rejected (Worker).">
-        {proposalHistory.length === 0 ? (
-          <p className="text-sm text-zinc-500">No processed proposals yet.</p>
-        ) : (
-          <ul className="divide-y divide-zinc-100 rounded-lg border border-zinc-200 text-sm">
-            {proposalHistory.map((item) => {
-              const parsed = parseTradingInboxPayload(item.payload);
-              return (
-                <li key={item.id} className="flex justify-between gap-3 px-4 py-2">
-                  <span className="text-zinc-700">
-                    {parsed ? describeProposal(parsed) : item.id.slice(0, 8)}
-                  </span>
-                  <span
-                    className={
-                      item.status === "applied" ? "text-emerald-600" : "text-zinc-400"
-                    }
-                  >
-                    {item.status}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </SystemSection>
-
-      <SystemSection id="templates" title="Analysis Templates" description="Click to use in Copy Context.">
-        <ul className="space-y-2 text-sm text-zinc-700">
-          {ANALYSIS_TEMPLATES.map((t) => (
-            <li key={t} className="rounded-md border border-zinc-100 bg-zinc-50 px-3 py-2">
-              {t}
-            </li>
-          ))}
-        </ul>
-      </SystemSection>
-
       <nav className="flex gap-4 text-sm">
         <Link href="/system" className="text-zinc-600 hover:underline">
-          System (sync &amp; bridge) →
+          System (sync) →
         </Link>
         <Link href="/" className="text-zinc-600 hover:underline">
           Dashboard
