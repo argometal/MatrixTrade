@@ -19,7 +19,7 @@ export function HomeNetworkCard({
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const { intelligence, linkedCount } = summary;
+  const { intelligence, logCount, inboxCount, linkedCount } = summary;
   const { entity, lastMeaningfulInteraction, openFollowUps } = intelligence;
 
   return (
@@ -36,7 +36,7 @@ export function HomeNetworkCard({
             ) : (
               <span>No interactions yet</span>
             )}
-            <span>{HOME_DETAIL.linkedItems(linkedCount)}</span>
+            <span>{HOME_DETAIL.projectEvidence(inboxCount, logCount)}</span>
           </div>
         </div>
       }
@@ -57,8 +57,16 @@ export function HomeNetworkCard({
           <dd className="text-zinc-200">{openFollowUps}</dd>
         </div>
         <div className="mt-2">
-          <dt className="text-xs text-zinc-600">Linked items</dt>
-          <dd className="text-zinc-200">{HOME_DETAIL.linkedItems(linkedCount)}</dd>
+          <dt className="text-xs text-zinc-600">Emails</dt>
+          <dd className="text-zinc-200">{inboxCount}</dd>
+        </div>
+        <div className="mt-2">
+          <dt className="text-xs text-zinc-600">Journal records</dt>
+          <dd className="text-zinc-200">{logCount}</dd>
+        </div>
+        <div className="mt-2">
+          <dt className="text-xs text-zinc-600">Total linked</dt>
+          <dd className="text-zinc-200">{linkedCount}</dd>
         </div>
       </dl>
       <Link

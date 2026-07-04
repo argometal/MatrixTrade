@@ -15,6 +15,7 @@ Use git tags to restore any point.
 | **107** | `change-107` | Add menu hints; inbox tap email to read, actions for link |
 | **108** | `change-108` | Inbox link picker shows all reference types (not recent people only) |
 | **109** | `change-109` | Fix project email counts (cloud inbox); improved email evidence viewer |
+| **110** | `change-110` | People and events show linked email counts on Home and entity pages |
 
 ## Restore
 

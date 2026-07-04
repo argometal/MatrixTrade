@@ -79,7 +79,14 @@ export default async function JournalPage({
   const allInbox = await getInboxItems();
   const inboxEnriched = await buildInboxHomeData(inboxPending);
   const projects = buildHomeProjectSummaries(entities, logs, allInbox);
-  const networkSummaries = buildHomeNetworkSummaries(data, entities, includePrivate, today, 8);
+  const networkSummaries = buildHomeNetworkSummaries(
+    data,
+    entities,
+    allInbox,
+    includePrivate,
+    today,
+    8
+  );
   const activityFeed = buildHomeActivityFeed(entities, logs, 16);
 
   return (

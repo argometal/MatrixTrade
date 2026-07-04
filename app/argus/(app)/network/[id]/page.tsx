@@ -42,6 +42,8 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
   const intel = buildEntityIntelligence(data, entity, includePrivate, today);
   const evidence = await loadEnrichedEntityEvidence(id, includePrivate);
   const sv = entity.strategicValue ?? 3;
+  const isEvent = referenceKindFromNotes(entity.notes ?? "") === "event";
+  const hasEvidence = evidence.emailCount > 0 || evidence.logCount > 0;
 
   return (
     <>
@@ -100,12 +102,12 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
             <dd className="text-zinc-200">{intel.openFollowUps}</dd>
           </div>
           <div>
-            <dt className="text-xs text-zinc-600">{ENTITY_PAGE.linkedDocuments}</dt>
-            <dd className="text-zinc-200">{intel.evidenceCount}</dd>
+            <dt className="text-xs text-zinc-600">Linked emails</dt>
+            <dd className="text-zinc-200">{evidence.emailCount}</dd>
           </div>
           <div>
-            <dt className="text-xs text-zinc-600">{ENTITY_PAGE.notes}</dt>
-            <dd className="text-zinc-200">{intel.logCount}</dd>
+            <dt className="text-xs text-zinc-600">Journal records</dt>
+            <dd className="text-zinc-200">{evidence.logCount}</dd>
           </div>
         </dl>
 
@@ -132,6 +134,12 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
       >
         <input type="hidden" name="entityId" value={entity.id} />
       </ArgusDeleteForm>
+
+      {isEvent && !hasEvidence ? (
+        <p className="mb-4 rounded-lg border border-amber-900/40 bg-amber-950/20 px-3 py-2 text-sm text-amber-200/90">
+          {ENTITY_PAGE.eventEvidenceHint}
+        </p>
+      ) : null}
 
       <EntityEvidenceSection
         logs={evidence.logs}

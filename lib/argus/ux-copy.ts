@@ -269,6 +269,8 @@ export const ENTITY_PAGE = {
   notes: "Notes",
   recentActivity: "Recent activity",
   addDocumentFor: (name: string) => `Attach evidence for ${name}`,
+  eventEvidenceHint:
+    "Events should link emails and journal records from Inbox or Capture so the moment is fully documented.",
 } as const;
 
 export const NETWORK = {

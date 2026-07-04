@@ -32,6 +32,8 @@ export interface HomeProjectSummary {
 
 export interface HomeNetworkSummary {
   intelligence: EntityIntelligence;
+  logCount: number;
+  inboxCount: number;
   linkedCount: number;
 }
 
@@ -53,6 +55,7 @@ export function buildHomeProjectSummaries(
 export function buildHomeNetworkSummaries(
   data: ArgusData,
   entities: Entity[],
+  inboxItems: InboxItem[],
   includePrivate: boolean,
   today: string,
   limit: number
@@ -68,9 +71,12 @@ export function buildHomeNetworkSummaries(
     })
     .map((entity) => {
       const intelligence = buildEntityIntelligence(data, entity, includePrivate, today);
+      const inboxCount = getLinkedInboxForEntity(inboxItems, entity.id).length;
       return {
         intelligence,
-        linkedCount: intelligence.logCount + intelligence.evidenceCount,
+        logCount: intelligence.logCount,
+        inboxCount,
+        linkedCount: intelligence.logCount + inboxCount,
       };
     })
     .sort(
