@@ -25,10 +25,14 @@ export const ACTIVITY_EDIT = {
 } as const;
 
 export const CAPTURE = {
-  fab: "Capture",
-  title: "Capture",
+  fab: "Journal",
+  title: "Journal",
   titlePlaceholder: "Title (optional)",
   bodyPlaceholder: "What do you need to remember?",
+  log: "Log",
+  note: "Note",
+  logHint: "Ongoing sequence on linked people, projects, topics, or events",
+  noteHint: "Standalone entry — set a date if needed",
   reference: "Link to",
   date: "Date",
   reminder: "Reminder",
@@ -43,8 +47,12 @@ export const CAPTURE = {
 export const ADD_MENU = {
   fab: "Add",
   title: "Add",
-  captureNote: "Capture note",
-  captureHint: "Quick journal entry — link it later",
+  journal: "Journal",
+  journalHint: "Log (ongoing) or Note (standalone) — link people, projects, topics, events, and evidence",
+  /** @deprecated use journal */
+  captureNote: "Journal",
+  /** @deprecated use journalHint */
+  captureHint: "Log (ongoing) or Note (standalone) — link people, projects, topics, events, and evidence",
   newKind: (label: string) => `New ${label}`,
   kindHint: {
     person: "A contact — can link to anything",
@@ -95,7 +103,7 @@ export const HOME_ACTIONS = {
 
 export const HOME_EMPTY = {
   title: "Nothing needs attention yet.",
-  hint: "Incoming items appear in Inbox. Tap + to capture a note or create a person, project, topic, or event.",
+  hint: "Incoming items appear in Inbox. Tap + for Journal or to create a person, project, topic, or event.",
 } as const;
 
 export const HOME_SECTIONS = {
@@ -251,10 +259,10 @@ export const SECTION_EMPTY = {
   recentActivity: "No activity yet.",
   recentActivityHint: "Captured notes appear here.",
   openItems: "No active items yet.",
-  openItemsHint: "Use + Capture on Home.",
+  openItemsHint: "Use + Journal on Home.",
   needsReview: "Nothing needs review.",
   documents: "No documents yet.",
-  documentsHint: "Attach files from Capture.",
+  documentsHint: "Attach files from Journal.",
   reminders: "No pending follow-ups.",
   remindersHint: "Set a reminder when capturing.",
   inbox: "Inbox is empty.",

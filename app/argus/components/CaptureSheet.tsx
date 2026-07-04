@@ -12,6 +12,7 @@ export interface CaptureInitial {
   title?: string;
   inboxId?: string;
   entityIds?: string[];
+  entryType?: "log" | "note";
 }
 
 interface CaptureSheetProps {
@@ -73,9 +74,12 @@ export function CaptureSheet({
   const [isProtected, setIsProtected] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(autoOpenReference);
   const [tagsOpen, setTagsOpen] = useState(false);
+  const [entryType, setEntryType] = useState<"log" | "note">(initial?.entryType ?? "log");
 
   const logBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "log"), [buckets]);
   const logCreateKinds = allowedCreateKinds("log");
+  const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const kindOverride = entryType === "note" ? "event" : "log";
 
   useEffect(() => {
     if (open) {
@@ -85,10 +89,22 @@ export function CaptureSheet({
       setSelectedTags([]);
       setIsProtected(false);
       setProtectedOpen(false);
+      setEntryType(initial?.entryType ?? "log");
+      setEventDate(initial?.entryType === "note" ? today : "");
       setReferenceOpen(autoOpenReference);
       setTagsOpen(false);
     }
-  }, [open, initial?.body, initial?.title, initial?.entityIds, autoOpenReference]);
+  }, [open, initial?.body, initial?.title, initial?.entityIds, initial?.entryType, autoOpenReference, today]);
+
+  function selectEntryType(type: "log" | "note") {
+    setEntryType(type);
+    if (type === "note") {
+      setEventDate(today);
+    } else {
+      setEventDate("");
+      setDateOpen(false);
+    }
+  }
 
   useEffect(() => {
     if (open && !referenceOpen && !tagsOpen) {
@@ -114,11 +130,39 @@ export function CaptureSheet({
       {selectedIds.map((id) => (
         <input key={id} type="hidden" name="entityIds" value={id} />
       ))}
-      <input type="hidden" name="eventDate" value={eventDate} />
+      <input type="hidden" name="kindOverride" value={kindOverride} />
+      <input type="hidden" name="eventDate" value={entryType === "note" ? eventDate || today : eventDate} />
       <input type="hidden" name="followUpDate" value={followUpDate} />
       <input type="hidden" name="topics" value={selectedTags.join(", ")} />
       {isProtected ? <input type="hidden" name="private" value="on" /> : null}
       <input type="hidden" name="source" value={initial?.inboxId ? "inbox" : "manual"} />
+
+      <div className="mb-3 flex gap-2 rounded-xl bg-zinc-900/80 p-1">
+        <button
+          type="button"
+          onClick={() => selectEntryType("log")}
+          className={`flex-1 rounded-lg px-3 py-2 text-left transition ${
+            entryType === "log"
+              ? "bg-teal-600/20 text-teal-200 ring-1 ring-teal-700/50"
+              : "text-zinc-400 hover:bg-zinc-800"
+          }`}
+        >
+          <span className="block text-[14px] font-medium">{CAPTURE.log}</span>
+          <span className="mt-0.5 block text-[11px] leading-snug text-zinc-500">{CAPTURE.logHint}</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => selectEntryType("note")}
+          className={`flex-1 rounded-lg px-3 py-2 text-left transition ${
+            entryType === "note"
+              ? "bg-teal-600/20 text-teal-200 ring-1 ring-teal-700/50"
+              : "text-zinc-400 hover:bg-zinc-800"
+          }`}
+        >
+          <span className="block text-[14px] font-medium">{CAPTURE.note}</span>
+          <span className="mt-0.5 block text-[11px] leading-snug text-zinc-500">{CAPTURE.noteHint}</span>
+        </button>
+      </div>
 
       <input
         value={title}
@@ -158,9 +202,11 @@ export function CaptureSheet({
         <MetaButton active={tagsOpen || selectedTags.length > 0} onClick={() => setTagsOpen(true)}>
           {CAPTURE.tags}
         </MetaButton>
-        <MetaButton active={Boolean(eventDate) || dateOpen} onClick={() => setDateOpen((v) => !v)}>
-          {CAPTURE.date}
-        </MetaButton>
+        {entryType === "note" ? (
+          <MetaButton active={Boolean(eventDate) || dateOpen} onClick={() => setDateOpen((v) => !v)}>
+            {CAPTURE.date}
+          </MetaButton>
+        ) : null}
         <MetaButton active={Boolean(followUpDate) || reminderOpen} onClick={() => setReminderOpen((v) => !v)}>
           {CAPTURE.reminder}
         </MetaButton>

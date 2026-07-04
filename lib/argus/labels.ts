@@ -12,8 +12,8 @@ export const ENTITY_TYPE_LABELS: Record<EntityType, string> = {
 export const ENTITY_TYPES: EntityType[] = ["person", "company", "project"];
 
 export const JOURNAL_KIND_LABELS: Record<JournalKind, string> = {
-  log: "Note",
-  event: "Update",
+  log: "Log",
+  event: "Note",
   follow_up: "Follow-up",
 };
 

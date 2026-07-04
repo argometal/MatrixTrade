@@ -107,8 +107,8 @@ export function AddMenuButton({
               onClick={openCaptureNote}
               className="flex w-full flex-col rounded-xl px-3 py-2.5 text-left hover:bg-zinc-800"
             >
-              <span className="text-[15px] font-medium text-zinc-100">{ADD_MENU.captureNote}</span>
-              <span className="mt-0.5 text-[12px] leading-snug text-zinc-500">{ADD_MENU.captureHint}</span>
+              <span className="text-[15px] font-medium text-zinc-100">{ADD_MENU.journal}</span>
+              <span className="mt-0.5 text-[12px] leading-snug text-zinc-500">{ADD_MENU.journalHint}</span>
             </button>
             <div className="my-1 border-t border-zinc-800" />
             {REFERENCE_KINDS.map((kind) => (
