@@ -69,6 +69,8 @@ export function CaptureSheet({
   const [dateOpen, setDateOpen] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
+  const [protectedOpen, setProtectedOpen] = useState(false);
+  const [isProtected, setIsProtected] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(autoOpenReference);
   const [tagsOpen, setTagsOpen] = useState(false);
 
@@ -81,6 +83,8 @@ export function CaptureSheet({
       setTitle(initial?.title ?? "");
       setSelectedIds(initial?.entityIds ?? []);
       setSelectedTags([]);
+      setIsProtected(false);
+      setProtectedOpen(false);
       setReferenceOpen(autoOpenReference);
       setTagsOpen(false);
     }
@@ -113,6 +117,7 @@ export function CaptureSheet({
       <input type="hidden" name="eventDate" value={eventDate} />
       <input type="hidden" name="followUpDate" value={followUpDate} />
       <input type="hidden" name="topics" value={selectedTags.join(", ")} />
+      {isProtected ? <input type="hidden" name="private" value="on" /> : null}
       <input type="hidden" name="source" value={initial?.inboxId ? "inbox" : "manual"} />
 
       <input
@@ -162,7 +167,22 @@ export function CaptureSheet({
         <MetaButton active={attachmentOpen} onClick={() => setAttachmentOpen((v) => !v)}>
           {CAPTURE.attachment}
         </MetaButton>
+        <MetaButton active={isProtected || protectedOpen} onClick={() => setProtectedOpen((v) => !v)}>
+          {CAPTURE.protected}
+        </MetaButton>
       </div>
+
+      {protectedOpen ? (
+        <label className="mt-3 flex items-center gap-2 text-sm text-zinc-300">
+          <input
+            type="checkbox"
+            checked={isProtected}
+            onChange={(e) => setIsProtected(e.target.checked)}
+            className="rounded border-zinc-700"
+          />
+          {CAPTURE.protected}
+        </label>
+      ) : null}
 
       {dateOpen && (
         <label className="mt-3 block">

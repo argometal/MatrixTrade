@@ -16,6 +16,7 @@ import {
   convertInboxAction,
   deleteInboxAction,
   linkInboxAction,
+  setInboxPrivateAction,
   type CreatedEntityResult,
 } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "./ArgusDeleteForm";
@@ -90,6 +91,13 @@ export function InboxTriagePanel({
               >
                 {INBOX.convertRecord}
               </button>
+              <form action={setInboxPrivateAction} className="inline">
+                <input type="hidden" name="inboxId" value={item.id} />
+                <input type="hidden" name="private" value={item.private ? "false" : "true"} />
+                <button type="submit" className={compactActionClass()}>
+                  {item.private ? INBOX.unprotectEmail : INBOX.protectEmail}
+                </button>
+              </form>
               <form action={archiveInboxAction} className="inline">
                 <input type="hidden" name="inboxId" value={item.id} />
                 <button type="submit" className={compactActionClass()}>

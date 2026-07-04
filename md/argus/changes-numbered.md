@@ -17,6 +17,7 @@ Use git tags to restore any point.
 | **109** | `change-109` | Fix project email counts (cloud inbox); improved email evidence viewer |
 | **110** | `change-110` | People and events show linked email counts on Home and entity pages |
 | **111** | `change-111` | Dual inbox links, project-scoped evidence, notes evolve to any reference |
+| **112** | `change-112` | Protected emails and records hidden until PIN unlock |
 
 ## Restore
 

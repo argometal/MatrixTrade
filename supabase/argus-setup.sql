@@ -20,6 +20,7 @@ create table if not exists public.argus_inbox_items (
   status text not null default 'pending' check (status in ('pending', 'linked', 'converted', 'archived')),
   converted_log_id text,
   created_at timestamptz not null default now(),
+  private boolean not null default false,
   deleted_at timestamptz
 );
 
@@ -165,5 +166,8 @@ drop policy if exists "argus_files_service_only_delete" on storage.objects;
 create policy "argus_files_service_only_delete"
   on storage.objects for delete
   using (bucket_id = 'argus-files' and auth.role() = 'service_role');
+
+alter table public.argus_inbox_items
+  add column if not exists private boolean not null default false;
 
 select 'ARGUS setup complete: argus_inbox_items, argus_attachments, argus_journal, protection applied.' as status;

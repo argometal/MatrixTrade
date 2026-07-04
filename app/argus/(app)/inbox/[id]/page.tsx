@@ -13,18 +13,18 @@ import { getAttachment, getInboxItem, getLog, readArgus, readAttachmentBytes } f
 
 export default async function InboxDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const item = await getInboxItem(id);
+  const includePrivate = await hasArgusPrivateUnlock();
+  const item = await getInboxItem(id, includePrivate);
 
   if (!item) {
     return (
       <>
         <PageHeader title="Not found" backHref="/argus/inbox" />
-        <EmptyState message="Inbox item not found." />
+        <EmptyState message="Inbox item not found or requires protected unlock." />
       </>
     );
   }
 
-  const includePrivate = await hasArgusPrivateUnlock();
   const data = await readArgus();
   const buckets = buildEntityPickerBuckets(data, includePrivate);
   const tagBuckets = buildTagBuckets(data, includePrivate);

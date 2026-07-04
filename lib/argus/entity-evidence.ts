@@ -3,19 +3,31 @@ import { getEntityHistory } from "./network";
 import { getInboxItems, readArgus } from "./server-storage";
 import { isActiveRecord } from "./supabase-protection/protected-counts";
 import { enrichInboxItems, type EnrichedInboxItem } from "./inbox-enrich";
+import { filterPrivateInbox } from "./private-access";
 
 /** Inbox items linked to an entity (any active status except archived). */
-export function getLinkedInboxForEntity(inboxItems: InboxItem[], entityId: string): InboxItem[] {
-  return inboxItems
-    .filter(isActiveRecord)
-    .filter((item) => (item.linkedEntityIds ?? []).includes(entityId))
-    .filter((item) => item.status !== "archived")
-    .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
+export function getLinkedInboxForEntity(
+  inboxItems: InboxItem[],
+  entityId: string,
+  includePrivate = false
+): InboxItem[] {
+  return filterPrivateInbox(
+    inboxItems
+      .filter(isActiveRecord)
+      .filter((item) => (item.linkedEntityIds ?? []).includes(entityId))
+      .filter((item) => item.status !== "archived")
+      .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt)),
+    includePrivate
+  );
 }
 
 /** Inbox cards to show — pending/linked only; converted items appear as journal logs. */
-export function getInboxCardsForEntity(inboxItems: InboxItem[], entityId: string): InboxItem[] {
-  return getLinkedInboxForEntity(inboxItems, entityId).filter(
+export function getInboxCardsForEntity(
+  inboxItems: InboxItem[],
+  entityId: string,
+  includePrivate = false
+): InboxItem[] {
+  return getLinkedInboxForEntity(inboxItems, entityId, includePrivate).filter(
     (item) => item.status === "pending" || item.status === "linked"
   );
 }
@@ -27,8 +39,8 @@ export function getEntityEvidence(
   includePrivate: boolean
 ) {
   const logs = getEntityHistory(data, entityId, includePrivate);
-  const allLinkedInbox = getLinkedInboxForEntity(inboxItems, entityId);
-  const linkedInbox = getInboxCardsForEntity(inboxItems, entityId);
+  const allLinkedInbox = getLinkedInboxForEntity(inboxItems, entityId, includePrivate);
+  const linkedInbox = getInboxCardsForEntity(inboxItems, entityId, includePrivate);
 
   return {
     logs,
@@ -40,8 +52,8 @@ export function getEntityEvidence(
 }
 
 export async function loadEntityEvidence(entityId: string, includePrivate: boolean) {
-  const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems()]);
-  return getEntityEvidence(data, inboxItems, entityId, includePrivate);
+  const [data, inboxItemsRaw] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
+  return getEntityEvidence(data, inboxItemsRaw, entityId, includePrivate);
 }
 
 export async function loadEnrichedEntityEvidence(

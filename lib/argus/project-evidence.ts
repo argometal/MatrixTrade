@@ -6,6 +6,7 @@ import {
 } from "./entity-evidence";
 import { getEntityHistory } from "./network";
 import { getInboxItems, readArgus } from "./server-storage";
+import { filterPrivateInbox } from "./private-access";
 import { isActiveRecord } from "./supabase-protection/protected-counts";
 import { enrichInboxItems, type EnrichedInboxItem } from "./inbox-enrich";
 
@@ -23,37 +24,58 @@ function inboxLinkedToAny(inbox: InboxItem, ids: Set<string>): boolean {
 }
 
 /** Emails linked directly to the project entity. */
-export function getDirectProjectInbox(inboxItems: InboxItem[], projectId: string): InboxItem[] {
-  return getLinkedInboxForEntity(inboxItems, projectId);
+export function getDirectProjectInbox(
+  inboxItems: InboxItem[],
+  projectId: string,
+  includePrivate = false
+): InboxItem[] {
+  return getLinkedInboxForEntity(inboxItems, projectId, includePrivate);
 }
 
 /** Emails linked to project contacts (not the project) within the project date range. */
-export function getViaContactProjectInbox(inboxItems: InboxItem[], project: Entity): InboxItem[] {
+export function getViaContactProjectInbox(
+  inboxItems: InboxItem[],
+  project: Entity,
+  includePrivate = false
+): InboxItem[] {
   const people = projectPeople(project);
   if (people.size === 0) return [];
 
-  const directIds = new Set(getDirectProjectInbox(inboxItems, project.id).map((item) => item.id));
+  const directIds = new Set(
+    getDirectProjectInbox(inboxItems, project.id, includePrivate).map((item) => item.id)
+  );
 
-  return inboxItems
-    .filter(isActiveRecord)
-    .filter((item) => item.status !== "archived")
-    .filter((item) => !directIds.has(item.id))
-    .filter((item) => !(item.linkedEntityIds ?? []).includes(project.id))
-    .filter((item) => inboxLinkedToAny(item, people))
-    .filter((item) => inProjectDateRange(item.receivedAt, project))
-    .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
+  return filterPrivateInbox(
+    inboxItems
+      .filter(isActiveRecord)
+      .filter((item) => item.status !== "archived")
+      .filter((item) => !directIds.has(item.id))
+      .filter((item) => !(item.linkedEntityIds ?? []).includes(project.id))
+      .filter((item) => inboxLinkedToAny(item, people))
+      .filter((item) => inProjectDateRange(item.receivedAt, project))
+      .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt)),
+    includePrivate
+  );
 }
 
-export function getAllProjectScopeInbox(inboxItems: InboxItem[], project: Entity): InboxItem[] {
-  return [...getDirectProjectInbox(inboxItems, project.id), ...getViaContactProjectInbox(inboxItems, project)];
+export function getAllProjectScopeInbox(
+  inboxItems: InboxItem[],
+  project: Entity,
+  includePrivate = false
+): InboxItem[] {
+  return [
+    ...getDirectProjectInbox(inboxItems, project.id, includePrivate),
+    ...getViaContactProjectInbox(inboxItems, project, includePrivate),
+  ];
 }
 
 export function getProjectHomeCounts(
   project: Entity,
   logs: Log[],
-  inboxItems: InboxItem[]
+  inboxItems: InboxItem[],
+  includePrivate = false
 ): { logCount: number; inboxCount: number; linkedCount: number } {
-  const inboxCount = getAllProjectScopeInbox(inboxItems, project).length;
+  const inboxCount = getAllProjectScopeInbox(inboxItems, project, includePrivate).length;
   const directLogCount = logs.filter((log) => log.entityIds.includes(project.id)).length;
   const people = projectPeople(project);
   const viaLogCount =
@@ -104,9 +126,9 @@ export function getProjectEvidenceScope(
   project: Entity,
   includePrivate: boolean
 ) {
-  const directInboxAll = getDirectProjectInbox(inboxItems, project.id);
-  const viaContactInboxAll = getViaContactProjectInbox(inboxItems, project);
-  const directInbox = getInboxCardsForEntity(inboxItems, project.id);
+  const directInboxAll = getDirectProjectInbox(inboxItems, project.id, includePrivate);
+  const viaContactInboxAll = getViaContactProjectInbox(inboxItems, project, includePrivate);
+  const directInbox = getInboxCardsForEntity(inboxItems, project.id, includePrivate);
   const viaContactInbox = viaContactInboxAll.filter(
     (item) => item.status === "pending" || item.status === "linked"
   );
@@ -142,7 +164,7 @@ export async function loadEnrichedProjectEvidence(
   logCount: number;
   totalCount: number;
 }> {
-  const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems()]);
+  const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
   const scope = getProjectEvidenceScope(data, inboxItems, project, includePrivate);
   const [enrichedInbox, viaContactEnrichedInbox] = await Promise.all([
     enrichInboxItems(scope.directInbox),

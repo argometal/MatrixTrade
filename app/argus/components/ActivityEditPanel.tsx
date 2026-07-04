@@ -76,6 +76,7 @@ export function ActivityEditPanel({
   const [tagsOpen, setTagsOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createKind, setCreateKind] = useState<ReferenceKind>("project");
+  const [isProtected, setIsProtected] = useState(log.private);
   const [, startCreate] = useTransition();
 
   const logBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "log"), [buckets]);
@@ -108,6 +109,7 @@ export function ActivityEditPanel({
       {selectedIds.map((id) => (
         <input key={id} type="hidden" name="entityIds" value={id} />
       ))}
+      {isProtected ? <input type="hidden" name="private" value="on" /> : null}
 
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
         <div className="mb-3 flex flex-wrap gap-2">
@@ -166,6 +168,9 @@ export function ActivityEditPanel({
             </MetaButton>
             <MetaButton active={Boolean(followUpDate) || reminderOpen} onClick={() => setReminderOpen((v) => !v)}>
               {ACTIVITY_EDIT.reminder}
+            </MetaButton>
+            <MetaButton active={isProtected} onClick={() => setIsProtected((v) => !v)}>
+              {ACTIVITY_EDIT.protected}
             </MetaButton>
           </div>
           <div className="mt-2 flex flex-wrap gap-2">

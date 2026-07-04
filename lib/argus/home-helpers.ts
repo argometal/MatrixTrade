@@ -41,12 +41,13 @@ export interface HomeNetworkSummary {
 export function buildHomeProjectSummaries(
   entities: Entity[],
   logs: Log[],
-  inboxItems: InboxItem[]
+  inboxItems: InboxItem[],
+  includePrivate: boolean
 ): HomeProjectSummary[] {
   return entities
     .filter((e) => e.type === "project")
     .map((entity) => {
-      const counts = getProjectHomeCounts(entity, logs, inboxItems);
+      const counts = getProjectHomeCounts(entity, logs, inboxItems, includePrivate);
       return { entity, ...counts };
     })
     .sort((a, b) => b.linkedCount - a.linkedCount || a.entity.name.localeCompare(b.entity.name));
@@ -71,7 +72,7 @@ export function buildHomeNetworkSummaries(
     })
     .map((entity) => {
       const intelligence = buildEntityIntelligence(data, entity, includePrivate, today);
-      const inboxCount = getLinkedInboxForEntity(inboxItems, entity.id).length;
+      const inboxCount = getLinkedInboxForEntity(inboxItems, entity.id, includePrivate).length;
       return {
         intelligence,
         logCount: intelligence.logCount,

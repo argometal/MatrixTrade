@@ -12,6 +12,9 @@ import {
   type AttachmentViewModel,
 } from "@/lib/argus/email-view";
 import { buildHomeActivityFeed, buildHomeNetworkSummaries, buildHomeProjectSummaries } from "@/lib/argus/home-helpers";
+import { countHiddenProtected } from "@/lib/argus/private-access";
+import { isActiveRecord } from "@/lib/argus/supabase-protection/protected-counts";
+import { PRIVATE } from "@/lib/argus/ux-copy";
 import {
   buildEntityPickerBuckets,
   buildTagBuckets,
@@ -75,10 +78,10 @@ export default async function JournalPage({
   const data = await readArgus();
   const buckets = buildEntityPickerBuckets(data, includePrivate);
   const tagBuckets = buildTagBuckets(data, includePrivate);
-  const inboxPending = await getInboxItems("pending");
-  const allInbox = await getInboxItems();
+  const inboxPending = await getInboxItems("pending", includePrivate);
+  const allInbox = await getInboxItems(undefined, true);
   const inboxEnriched = await buildInboxHomeData(inboxPending);
-  const projects = buildHomeProjectSummaries(entities, logs, allInbox);
+  const projects = buildHomeProjectSummaries(entities, logs, allInbox, includePrivate);
   const networkSummaries = buildHomeNetworkSummaries(
     data,
     entities,
@@ -88,6 +91,9 @@ export default async function JournalPage({
     8
   );
   const activityFeed = buildHomeActivityFeed(entities, logs, 16);
+  const hiddenProtected = includePrivate
+    ? 0
+    : countHiddenProtected(data.logs.filter(isActiveRecord), allInbox);
 
   return (
     <>
@@ -96,6 +102,11 @@ export default async function JournalPage({
         privateUnlocked={includePrivate}
         privateError={Boolean(private_error)}
       />
+      {!includePrivate && hiddenProtected > 0 ? (
+        <p className="mb-4 rounded-lg border border-violet-900/40 bg-violet-950/20 px-3 py-2 text-sm text-violet-200/90">
+          {PRIVATE.hiddenCount(hiddenProtected)}
+        </p>
+      ) : null}
       <ArgusStatusAlert />
       {errorLayer && errorMsg ? (
         <p className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 text-sm text-red-200">

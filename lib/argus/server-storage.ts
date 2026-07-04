@@ -30,6 +30,11 @@ import { referenceKindFromNotes } from "./reference-types";
 import { ArgusPersistenceError } from "./persistence/errors";
 import { isActiveRecord, softDeleteEntity, softDeleteLog, softDeleteInboxItem } from "./supabase-protection/protected-counts";
 import {
+  canAccessProtectedRecord,
+  filterPrivateInbox,
+  filterPrivateLogs,
+} from "./private-access";
+import {
   isSupabaseDestructiveBlocked,
   supabaseDestructiveBlockedMessage,
 } from "./supabase-protection/policy";
@@ -116,11 +121,6 @@ async function writeArgus(data: ArgusData, intent: WriteIntent = "mutation"): Pr
   await writeArgusSafe(data, { intent, journalFile: p.journalFile });
 }
 
-function filterPrivateLogs(logs: Log[], includePrivate: boolean): Log[] {
-  const active = logs.filter(isActiveRecord);
-  if (includePrivate) return active;
-  return active.filter((l) => !l.private);
-}
 
 export async function readArgus(): Promise<ArgusData> {
   return readRawJournal();
@@ -396,7 +396,9 @@ export async function getAttachment(id: string): Promise<Attachment | undefined>
 
 export async function getLogs(includePrivate: boolean): Promise<Log[]> {
   const data = await readArgus();
-  return filterPrivateLogs(data.logs, includePrivate).sort((a, b) => b.date.localeCompare(a.date));
+  return filterPrivateLogs(data.logs.filter(isActiveRecord), includePrivate).sort((a, b) =>
+    b.date.localeCompare(a.date)
+  );
 }
 
 export async function getRecentLogs(limit: number, includePrivate: boolean): Promise<Log[]> {
@@ -497,6 +499,7 @@ export async function updateLog(
     followUpDate?: string;
     entityIds: string[];
     topics: string[];
+    private?: boolean;
   }
 ): Promise<Log> {
   const data = await readArgus();
@@ -511,6 +514,7 @@ export async function updateLog(
   log.followUpDate = input.followUpDate;
   log.entityIds = input.entityIds;
   log.topics = input.topics;
+  if (input.private !== undefined) log.private = input.private;
   log.classificationStatus = resolveClassificationStatus(input.entityIds);
   log.updatedAt = now;
 
@@ -549,26 +553,53 @@ export async function appendInboxAttachment(inboxId: string, attachmentId: strin
 
 // --- Inbox ---
 
-export async function getInboxItems(status?: "pending" | "converted" | "archived"): Promise<InboxItem[]> {
-  if (isCloudInboxStore()) return cloudInbox.getInboxItems(status);
-  const data = await readArgus();
-  let items = data.inboxItems.filter(isActiveRecord);
-  if (status) items = items.filter((i) => i.status === status);
-  return items.sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
+export async function getInboxItems(
+  status?: "pending" | "converted" | "archived",
+  includePrivate = false
+): Promise<InboxItem[]> {
+  let items: InboxItem[];
+  if (isCloudInboxStore()) {
+    items = await cloudInbox.getInboxItems(status);
+  } else {
+    const data = await readArgus();
+    items = data.inboxItems.filter(isActiveRecord);
+    if (status) items = items.filter((i) => i.status === status);
+    items = items.sort((a, b) => b.receivedAt.localeCompare(a.receivedAt));
+  }
+  return filterPrivateInbox(items, includePrivate);
 }
 
-export async function getPendingInboxCount(): Promise<number> {
-  if (isCloudInboxStore()) return cloudInbox.getPendingInboxCount();
+export async function getPendingInboxCount(includePrivate = false): Promise<number> {
+  if (isCloudInboxStore()) {
+    const items = await getInboxItems("pending", includePrivate);
+    return items.length;
+  }
   const data = await readArgus();
-  return data.inboxItems.filter((i) => isActiveRecord(i) && i.status === "pending").length;
+  const pending = data.inboxItems.filter((i) => isActiveRecord(i) && i.status === "pending");
+  return filterPrivateInbox(pending, includePrivate).length;
 }
 
-export async function getInboxItem(id: string): Promise<InboxItem | undefined> {
-  if (isCloudInboxStore()) return cloudInbox.getInboxItem(id);
-  const data = await readArgus();
-  const item = data.inboxItems.find((i) => i.id === id);
+export async function getInboxItem(id: string, includePrivate = false): Promise<InboxItem | undefined> {
+  let item: InboxItem | undefined;
+  if (isCloudInboxStore()) item = await cloudInbox.getInboxItem(id);
+  else {
+    const data = await readArgus();
+    item = data.inboxItems.find((i) => i.id === id);
+  }
   if (!item || !isActiveRecord(item)) return undefined;
+  if (!canAccessProtectedRecord(item, includePrivate)) return undefined;
   return item;
+}
+
+export async function setInboxPrivate(inboxId: string, isPrivate: boolean): Promise<InboxItem> {
+  if (isCloudInboxStore()) return cloudInbox.setInboxPrivate(inboxId, isPrivate);
+
+  const data = await readArgus();
+  const idx = data.inboxItems.findIndex((i) => i.id === inboxId);
+  if (idx === -1) throw new Error("Inbox item not found");
+  data.inboxItems[idx] = { ...data.inboxItems[idx], private: isPrivate };
+  await writeArgus(data);
+  return data.inboxItems[idx];
 }
 
 export async function createInboxItem(
@@ -588,6 +619,7 @@ export async function createInboxItem(
     to: input.to,
     attachmentIds: input.attachmentIds ?? [],
     linkedEntityIds: input.linkedEntityIds ?? [],
+    private: input.private ?? false,
     status: input.status ?? "pending",
     createdAt: now,
   };
@@ -660,6 +692,7 @@ export async function convertInboxToLog(
   const entityIds = [...new Set([...(inbox.linkedEntityIds ?? []), ...input.entityIds])];
   const classificationStatus = resolveClassificationStatus(entityIds);
   const now = new Date().toISOString();
+  const isPrivate = input.private || Boolean(inbox.private);
   const log: Log = {
     id: generateId(),
     kind: input.kind,
@@ -668,7 +701,7 @@ export async function convertInboxToLog(
     body: input.body,
     entityIds,
     classificationStatus,
-    private: input.private,
+    private: isPrivate,
     source: inbox.source === "email" ? "email" : "inbox",
     attachmentIds: [...inbox.attachmentIds],
     inboxItemId: inbox.id,
@@ -695,6 +728,7 @@ export async function convertInboxToLog(
       status: "converted",
       convertedLogId: log.id,
       linkedEntityIds: entityIds,
+      private: isPrivate,
     };
   }
 
@@ -714,7 +748,7 @@ export async function convertInboxToLog(
   }
 
   const updatedInbox = isCloudInboxStore()
-    ? await cloudInbox.markInboxConverted(inboxId, saved.id, entityIds)
+    ? await cloudInbox.markInboxConverted(inboxId, saved.id, entityIds, isPrivate)
     : data.inboxItems.find((i) => i.id === inboxId)!;
 
   return { log: saved, inbox: updatedInbox };

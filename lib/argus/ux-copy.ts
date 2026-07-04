@@ -17,6 +17,7 @@ export const ACTIVITY_EDIT = {
   cancel: "Cancel",
   linkedLabel: "Linked to",
   evolveHint: "Add more links anytime — a note can connect to people, projects, topics, events, and organizations.",
+  protected: "Protected",
   attachments: "Attachments",
   fromInbox: "From inbox",
   viewOriginal: "view original",
@@ -33,6 +34,7 @@ export const CAPTURE = {
   reminder: "Reminder",
   attachment: "Attachment",
   tags: "Tags",
+  protected: "Protected",
   cancel: "Cancel",
   save: "Save",
   done: "Done",
@@ -177,10 +179,16 @@ export const REFERENCES = NETWORKING;
 export const CONTACTS = NETWORKING;
 
 export const PRIVATE = {
-  unlock: "Unlock private",
-  unlockHint: "Enter PIN to show private entries",
-  visible: "Private entries visible",
-  hide: "Hide private entries",
+  unlock: "Unlock protected",
+  unlockHint: "Enter PIN to show protected emails and records",
+  visible: "Protected items visible",
+  hide: "Hide protected items",
+  protectedLabel: "Protected",
+  protectItem: "Mark protected",
+  unprotectItem: "Remove protection",
+  hiddenCount: (n: number) =>
+    `${n} protected item${n === 1 ? "" : "s"} hidden — tap the lock to unlock.`,
+  protectedHint: "Protected emails and journal records stay hidden until you unlock with PIN.",
 } as const;
 
 export const INBOX = {
@@ -191,6 +199,8 @@ export const INBOX = {
   addDocument: "Add document",
   linkedTo: "Linked to",
   attachments: "Attachments",
+  protectEmail: "Mark email protected",
+  unprotectEmail: "Remove email protection",
   actions: "Actions",
   linkReference: "Link to reference",
   multiLinkHint: "Select multiple — e.g. link the contact and the project together.",

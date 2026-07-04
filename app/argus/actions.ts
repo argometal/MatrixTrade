@@ -17,6 +17,7 @@ import {
   linkInboxToEntities,
   readArgus,
   saveAttachment,
+  setInboxPrivate,
   updateEntity,
   updateLog,
 } from "@/lib/argus/server-storage";
@@ -163,6 +164,7 @@ export async function updateLogAction(formData: FormData): Promise<void> {
     followUpDate: input.followUpDate,
     entityIds,
     topics: input.topics,
+    private: input.private,
   });
 
   revalidateArgus();
@@ -222,6 +224,17 @@ export async function archiveInboxAction(formData: FormData): Promise<void> {
   await archiveInboxItem(inboxId);
   revalidateArgus();
   redirect("/argus/inbox");
+}
+
+export async function setInboxPrivateAction(formData: FormData): Promise<void> {
+  const inboxId = String(formData.get("inboxId") ?? "");
+  const isPrivate = formData.get("private") === "on" || formData.get("private") === "true";
+  await setInboxPrivate(inboxId, isPrivate);
+  revalidateArgus();
+  revalidatePath(`/argus/inbox/${inboxId}`);
+  revalidatePath("/argus/journal");
+  const returnTo = String(formData.get("returnTo") ?? "inbox");
+  redirect(returnTo === "journal" ? "/argus/journal" : `/argus/inbox/${inboxId}`);
 }
 
 export type CreatedEntityResult = {

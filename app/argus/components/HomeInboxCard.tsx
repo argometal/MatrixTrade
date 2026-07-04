@@ -12,7 +12,7 @@ import {
 } from "@/lib/argus/email-view";
 import { HOME_INBOX_ACTIONS, INBOX, TESTING } from "@/lib/argus/ux-copy";
 import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
-import { archiveInboxAction, convertInboxAction, deleteInboxAction, linkInboxAction, type CreatedEntityResult } from "@/app/argus/actions";
+import { archiveInboxAction, convertInboxAction, deleteInboxAction, linkInboxAction, setInboxPrivateAction, type CreatedEntityResult } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "./ArgusDeleteForm";
 import { CaptureSheet } from "./CaptureSheet";
 import { InboxAttachmentList } from "./InboxAttachmentList";
@@ -89,6 +89,11 @@ export function HomeInboxCard({
       <div className="flex items-start justify-between gap-3">
         <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-600">Email</p>
         <span className="text-[11px] text-zinc-600">{INBOX_STATUS_LABELS[item.status]}</span>
+        {item.private ? (
+          <span className="rounded-full bg-violet-600/20 px-2 py-0.5 text-[10px] font-medium text-violet-300">
+            Protected
+          </span>
+        ) : null}
       </div>
       <p className="mt-2 text-[15px] font-medium text-zinc-100">{view.subject || INBOX.noSubject}</p>
       <dl className="mt-2 space-y-1 text-[13px]">
@@ -153,6 +158,16 @@ export function HomeInboxCard({
         <Link href={`/argus/inbox/${item.id}`} className={actionButtonClass(true)}>
           {HOME_INBOX_ACTIONS.openFullViewer}
         </Link>
+        {canTriage ? (
+          <form action={setInboxPrivateAction} className="inline">
+            <input type="hidden" name="inboxId" value={item.id} />
+            <input type="hidden" name="returnTo" value="journal" />
+            <input type="hidden" name="private" value={item.private ? "false" : "true"} />
+            <button type="submit" className={actionButtonClass(true)}>
+              {item.private ? INBOX.unprotectEmail : INBOX.protectEmail}
+            </button>
+          </form>
+        ) : null}
         <ArgusDeleteForm
           action={deleteInboxAction}
           confirmMessage={TESTING.deleteInboxConfirm}

@@ -18,6 +18,7 @@ type InboxRow = {
   to_address: string | null;
   attachment_ids: string[] | null;
   linked_entity_ids: string[] | null;
+  private?: boolean | null;
   status: InboxItem["status"];
   converted_log_id: string | null;
   created_at: string;
@@ -47,6 +48,7 @@ function rowToInboxItem(row: InboxRow): InboxItem {
     to: row.to_address ?? undefined,
     attachmentIds: row.attachment_ids ?? [],
     linkedEntityIds: row.linked_entity_ids ?? [],
+    private: row.private ?? false,
     status: row.status,
     convertedLogId: row.converted_log_id ?? undefined,
     createdAt: row.created_at,
@@ -82,6 +84,7 @@ function inboxToInsertRow(item: InboxItem, softDeleteReady: boolean): Record<str
     to_address: item.to ?? null,
     attachment_ids: item.attachmentIds,
     linked_entity_ids: item.linkedEntityIds ?? [],
+    private: item.private ?? false,
     status: item.status,
     converted_log_id: item.convertedLogId ?? null,
     created_at: item.createdAt,
@@ -142,6 +145,7 @@ export async function createInboxItem(
     to: input.to,
     attachmentIds: input.attachmentIds ?? [],
     linkedEntityIds: input.linkedEntityIds ?? [],
+    private: input.private ?? false,
     status: input.status ?? "pending",
     createdAt: now,
   };
@@ -172,7 +176,8 @@ export async function appendInboxAttachment(inboxId: string, attachmentId: strin
 export async function markInboxConverted(
   inboxId: string,
   logId: string,
-  entityIds: string[]
+  entityIds: string[],
+  isPrivate = false
 ): Promise<InboxItem> {
   const item = await getInboxItem(inboxId);
   if (!item) throw new Error("Inbox item not found");
@@ -189,6 +194,7 @@ export async function markInboxConverted(
       status: "converted",
       converted_log_id: logId,
       linked_entity_ids: mergedEntityIds,
+      private: isPrivate,
     })
     .eq("id", inboxId);
   if (softDeleteReady) query = query.is("deleted_at", null);
@@ -233,6 +239,19 @@ export async function linkInboxToEntities(inboxId: string, entityIds: string[]):
   if (softDeleteReady) query = query.is("deleted_at", null);
   const { data, error } = await query.select("*").single();
   if (error) throw new Error(`Supabase inbox link failed: ${error.message}`);
+  return rowToInboxItem(data as InboxRow);
+}
+
+export async function setInboxPrivate(inboxId: string, isPrivate: boolean): Promise<InboxItem> {
+  const item = await getInboxItem(inboxId);
+  if (!item) throw new Error("Inbox item not found");
+
+  const softDeleteReady = await isArgusSoftDeleteSchemaReady();
+  const supabase = createSupabaseAdmin();
+  let query = supabase.from("argus_inbox_items").update({ private: isPrivate }).eq("id", inboxId);
+  if (softDeleteReady) query = query.is("deleted_at", null);
+  const { data, error } = await query.select("*").single();
+  if (error) throw new Error(`Supabase inbox protect failed: ${error.message}`);
   return rowToInboxItem(data as InboxRow);
 }
 

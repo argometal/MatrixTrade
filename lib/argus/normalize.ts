@@ -12,6 +12,7 @@ export function normalizeLog(log: Log): Log {
   return {
     ...log,
     entityIds,
+    private: log.private ?? false,
     classificationStatus,
     kind: log.kind ?? "log",
     topics: log.topics ?? [],
@@ -59,6 +60,7 @@ export function normalizeInboxItem(item: InboxItem): InboxItem {
     ...item,
     linkedEntityIds,
     attachmentIds: item.attachmentIds ?? [],
+    private: item.private ?? false,
     status,
     deletedAt: item.deletedAt,
   };

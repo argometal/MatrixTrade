@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ARGUS_AUTH } from "@/lib/auth/cookies";
+import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { canPreviewInline } from "@/lib/argus/email-view";
-import { getAttachment, readAttachmentBytes } from "@/lib/argus/server-storage";
+import { getAttachment, getInboxItem, getLog, readAttachmentBytes } from "@/lib/argus/server-storage";
 
 function contentDisposition(fileName: string, inline: boolean): string {
   const safe = fileName.replace(/[\r\n"]/g, "_");
@@ -20,6 +21,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const attachment = await getAttachment(id);
   if (!attachment) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const includePrivate = await hasArgusPrivateUnlock();
+  if (attachment.parentType === "journal") {
+    const log = await getLog(attachment.parentId, includePrivate);
+    if (!log) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+  } else {
+    const inbox = await getInboxItem(attachment.parentId, includePrivate);
+    if (!inbox) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
   }
 
   const bytes = await readAttachmentBytes(id);

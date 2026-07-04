@@ -87,6 +87,8 @@ export interface InboxItem {
   attachmentIds: string[];
   /** References (entities) this inbox item is linked to — handover, topic, person, etc. */
   linkedEntityIds?: string[];
+  /** When true, hidden until ARGUS private PIN unlock. */
+  private?: boolean;
   status: InboxStatus;
   convertedLogId?: string;
   createdAt: string;
