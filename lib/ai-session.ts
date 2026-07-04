@@ -55,11 +55,57 @@ export async function listActiveAiSessions(): Promise<AiSessionPublic[]> {
   return listJsonAiSessions();
 }
 
+function hostFromUrlOrHost(input: string): string {
+  const trimmed = input.trim().replace(/\/$/, "");
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return new URL(trimmed).hostname;
+  }
+  return trimmed.split("/")[0]!;
+}
+
+function normalizeBaseUrl(input: string): string {
+  const trimmed = input.trim().replace(/\/$/, "");
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
+/** Vercel preview deployment hosts — may require Vercel Authentication. */
+function looksLikeVercelPreviewDeployment(host: string): boolean {
+  if (!host.endsWith(".vercel.app")) return false;
+  if (host.includes("-git-")) return true;
+  if (host.includes("-projects.vercel.app")) return true;
+  return false;
+}
+
+/**
+ * Public base URL for AI session QR / connect links.
+ * Always prefers production — never a Vercel preview deployment URL.
+ */
 export function getPublicAppBaseUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (explicit) return explicit.replace(/\/$/, "");
-  const vercel = process.env.VERCEL_URL?.trim();
-  if (vercel) return `https://${vercel.replace(/\/$/, "")}`;
+  if (explicit) {
+    const host = hostFromUrlOrHost(explicit);
+    if (!looksLikeVercelPreviewDeployment(host)) {
+      return normalizeBaseUrl(explicit);
+    }
+  }
+
+  const productionHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (productionHost) {
+    return normalizeBaseUrl(productionHost);
+  }
+
+  const vercelEnv = process.env.VERCEL_ENV?.trim();
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelEnv === "production" && vercelUrl) {
+    const host = hostFromUrlOrHost(vercelUrl);
+    if (!looksLikeVercelPreviewDeployment(host)) {
+      return normalizeBaseUrl(vercelUrl);
+    }
+  }
+
   return "http://localhost:3000";
 }
 

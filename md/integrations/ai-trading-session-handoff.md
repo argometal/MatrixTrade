@@ -78,7 +78,7 @@ Required when `TRADES_STORE=supabase` or when `SUPABASE_URL` + `SUPABASE_SERVICE
 | `TRADES_STORE=supabase` | Reads via `lib/storage.ts` |
 | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Session persistence in prod |
 | `BRIDGE_WORKER_URL`, `BRIDGE_WRITE_TOKEN` | Proposals → Worker inbox (preferred) |
-| `NEXT_PUBLIC_APP_URL` | Optional; used for connect URL / manifest base |
+| `NEXT_PUBLIC_APP_URL` | Recommended | Production domain for AI session QR (e.g. `https://matrix-trade-theta.vercel.app`). If unset, uses `VERCEL_PROJECT_PRODUCTION_URL` — **never** preview deployment URLs |
 
 If bridge is not configured, proposals fall back to **local inbox** (`data/trading-inbox.json`) — fine for dev, not ideal on Vercel serverless.
 
@@ -195,5 +195,6 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/
 2. **`ai_sessions` table** — confirm SQL ran in Supabase prod.
 3. **E2E with real AI tool** — one full cycle: session → read → propose → Inbox → Apply → Supabase row update.
 4. **UX** — two connect paths (AI Trading Session vs Quick Connect); may consolidate later.
+5. **QR base URL** — must use production domain (`NEXT_PUBLIC_APP_URL` or `VERCEL_PROJECT_PRODUCTION_URL`). Preview deployment URLs (`…-projects.vercel.app`) redirect to Vercel login when Deployment Protection is on.
 
 **Last updated:** 2026-07-03
