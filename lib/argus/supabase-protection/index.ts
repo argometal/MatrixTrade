@@ -23,3 +23,5 @@ export {
   isSupabaseDestructiveBlocked,
   supabaseDestructiveBlockedMessage,
 } from "./policy";
+
+export { isArgusSoftDeleteSchemaReady, resetArgusSoftDeleteSchemaCache } from "./schema-ready";

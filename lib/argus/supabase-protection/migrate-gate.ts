@@ -1,4 +1,5 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { isArgusSoftDeleteSchemaReady } from "./schema-ready";
 import { isCloudInboxStore } from "../inbox-store/config";
 import { isCloudJournalStore } from "../journal-store/config";
 import type { InboxItem } from "../types";
@@ -31,13 +32,15 @@ function rowToInboxItem(row: Record<string, unknown>): InboxItem {
 
 async function fetchActiveInboxFromSupabase(): Promise<InboxItem[]> {
   if (!isCloudInboxStore()) return [];
+  const softDeleteReady = await isArgusSoftDeleteSchemaReady();
   const supabase = createSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("argus_inbox_items")
-    .select("*")
-    .is("deleted_at", null);
+  let query = supabase.from("argus_inbox_items").select("*");
+  if (softDeleteReady) query = query.is("deleted_at", null);
+  const { data, error } = await query;
   if (error) throw new Error(`Protected inbox count failed: ${error.message}`);
-  return (data ?? []).map((row) => rowToInboxItem(row as Record<string, unknown>));
+  return (data ?? [])
+    .filter((row) => !(row as { deleted_at?: string | null }).deleted_at)
+    .map((row) => rowToInboxItem(row as Record<string, unknown>));
 }
 
 /** Protected-order counts across Supabase + journal blob. */
