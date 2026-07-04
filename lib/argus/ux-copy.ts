@@ -122,6 +122,8 @@ export const HOME_DETAIL = {
   followUpPending: (n: number) => (n === 1 ? "1 pending follow-up" : `${n} pending follow-ups`),
   projectCount: (n: number) => (n === 1 ? "1 project" : `${n} projects`),
   linkedItems: (n: number) => (n === 1 ? "1 linked item" : `${n} linked items`),
+  projectEvidence: (emails: number, records: number) =>
+    `${emails} email${emails === 1 ? "" : "s"} · ${records} record${records === 1 ? "" : "s"}`,
   activityCount: (n: number) => (n === 1 ? "1 recent update" : `${n} recent updates`),
   documentCount: (n: number) => (n === 1 ? "1 document" : `${n} documents`),
 } as const;
@@ -256,6 +258,14 @@ export const ENTITY_PICKER = REFERENCE_PICKER;
 
 export const ENTITY_PAGE = {
   linkedDocuments: "Linked evidence",
+  linkedEmails: (n: number) => (n === 1 ? "1 linked email" : `${n} linked emails`),
+  linkedRecords: (n: number) => (n === 1 ? "1 journal record" : `${n} journal records`),
+  evidenceSummary: (emails: number, records: number) =>
+    `${emails} email${emails === 1 ? "" : "s"} · ${records} record${records === 1 ? "" : "s"}`,
+  convertedEmailsHint: (n: number) =>
+    `${n} linked email${n === 1 ? "" : "s"} converted to journal records — see records below.`,
+  expandEmail: "Tap to read full email",
+  collapseEmail: "Tap to collapse",
   notes: "Notes",
   recentActivity: "Recent activity",
   addDocumentFor: (name: string) => `Attach evidence for ${name}`,

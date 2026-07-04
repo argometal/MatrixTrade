@@ -12,7 +12,7 @@ import {
   STRATEGIC_VALUE_LABELS,
 } from "@/lib/argus/labels";
 import { buildEntityPickerBuckets } from "@/lib/argus/journal-helpers";
-import { loadEntityEvidence } from "@/lib/argus/entity-evidence";
+import { loadEnrichedEntityEvidence } from "@/lib/argus/entity-evidence";
 import { buildEntityIntelligence } from "@/lib/argus/network-intelligence";
 import { ENTITY_PAGE, TESTING } from "@/lib/argus/ux-copy";
 import { getEntities, getEntity, readArgus } from "@/lib/argus/server-storage";
@@ -40,7 +40,7 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
   const allBuckets = buildEntityPickerBuckets(data, includePrivate);
   const today = new Date().toISOString().slice(0, 10);
   const intel = buildEntityIntelligence(data, entity, includePrivate, today);
-  const evidence = await loadEntityEvidence(id, includePrivate);
+  const evidence = await loadEnrichedEntityEvidence(id, includePrivate);
   const sv = entity.strategicValue ?? 3;
 
   return (
@@ -135,9 +135,11 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
 
       <EntityEvidenceSection
         logs={evidence.logs}
-        linkedInbox={evidence.linkedInbox}
+        enrichedInbox={evidence.enrichedInbox}
         entities={entities}
         entityName={entity.name}
+        emailCount={evidence.emailCount}
+        logCount={evidence.logCount}
       />
     </>
   );

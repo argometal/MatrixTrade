@@ -14,6 +14,7 @@ Use git tags to restore any point.
 | **106** | `change-106` | Fix Argus client crash — keep Add provider outside Suspense fallback |
 | **107** | `change-107` | Add menu hints; inbox tap email to read, actions for link |
 | **108** | `change-108` | Inbox link picker shows all reference types (not recent people only) |
+| **109** | `change-109` | Fix project email counts (cloud inbox); improved email evidence viewer |
 
 ## Restore
 

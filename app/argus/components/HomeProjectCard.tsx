@@ -25,7 +25,9 @@ export function HomeProjectCard({
       collapsed={
         <div>
           <p className="text-[15px] font-medium text-zinc-100">{entity.name}</p>
-          <p className="mt-1 text-[13px] text-zinc-500">{HOME_DETAIL.linkedItems(linkedCount)}</p>
+          <p className="mt-1 text-[13px] text-zinc-500">
+            {HOME_DETAIL.projectEvidence(inboxCount, logCount)}
+          </p>
         </div>
       }
     >

@@ -2,7 +2,6 @@ import { INBOX_SOURCE_LABELS, INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import type { InboxSource, InboxStatus } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import { INBOX } from "@/lib/argus/ux-copy";
-import { Card } from "./ui";
 import { InboxAttachmentList } from "./InboxAttachmentList";
 
 function statusClass(status: InboxStatus): string {
@@ -34,66 +33,72 @@ export function EmailViewer({
   source: InboxSource;
 }) {
   return (
-    <Card className="mb-4">
-      <div className="flex flex-wrap gap-2">
-        <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-400">
-          {INBOX_SOURCE_LABELS[source]}
-        </span>
-        <span className={`rounded-full px-2.5 py-0.5 text-xs ${statusClass(status)}`}>
-          {INBOX_STATUS_LABELS[status]}
-        </span>
-      </div>
+    <article className="mb-4 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/50">
+      <div className="border-b border-zinc-800 px-5 py-4">
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full bg-zinc-800 px-2.5 py-0.5 text-xs text-zinc-400">
+            {INBOX_SOURCE_LABELS[source]}
+          </span>
+          <span className={`rounded-full px-2.5 py-0.5 text-xs ${statusClass(status)}`}>
+            {INBOX_STATUS_LABELS[status]}
+          </span>
+        </div>
 
-      <h2 className="mt-3 text-lg font-semibold text-zinc-50">{view.subject || INBOX.noSubject}</h2>
+        <h2 className="mt-3 text-xl font-semibold leading-snug text-zinc-50">
+          {view.subject || INBOX.noSubject}
+        </h2>
 
-      <dl className="mt-4 space-y-2 border-b border-zinc-800 pb-4 text-sm">
-        <div className="grid grid-cols-[4.5rem_1fr] gap-x-3 gap-y-1">
+        <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-[5.5rem_1fr]">
           <dt className="text-zinc-500">{INBOX.fromLabel}</dt>
-          <dd className="break-all text-zinc-200">{view.from}</dd>
-          {view.to && (
+          <dd className="break-all text-zinc-200">{view.from || "—"}</dd>
+          {view.to ? (
             <>
               <dt className="text-zinc-500">{INBOX.toLabel}</dt>
               <dd className="break-all text-zinc-200">{view.to}</dd>
             </>
-          )}
+          ) : null}
           <dt className="text-zinc-500">{INBOX.receivedLabel}</dt>
           <dd className="text-zinc-200">{formatReceived(view.receivedAt)}</dd>
+        </dl>
+      </div>
+
+      <div className="px-5 py-4">
+        <h3 className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{INBOX.messageBody}</h3>
+        <div className="mt-3 max-h-[min(560px,65vh)] overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
+          <p className="whitespace-pre-wrap text-[15px] leading-7 text-zinc-100">{view.textBody}</p>
         </div>
-      </dl>
+      </div>
 
-      <section className="mt-4">
-        <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">{INBOX.messageBody}</h3>
-        <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">{view.textBody}</p>
-      </section>
-
-      {view.htmlBody && (
-        <details className="mt-4 rounded-xl border border-zinc-800 bg-zinc-900/30">
-          <summary className="cursor-pointer px-4 py-3 text-xs font-medium uppercase tracking-wide text-zinc-500">
+      {view.htmlBody ? (
+        <details className="border-t border-zinc-800">
+          <summary className="cursor-pointer px-5 py-3 text-[11px] font-medium uppercase tracking-wide text-zinc-500">
             {INBOX.htmlBody}
           </summary>
-          <div className="border-t border-zinc-800 p-2">
+          <div className="border-t border-zinc-800 p-3">
             <iframe
               title="Email HTML body"
               srcDoc={view.htmlBody}
               sandbox=""
-              className="min-h-[240px] w-full rounded-lg bg-white"
+              className="min-h-[320px] w-full rounded-lg bg-white"
             />
           </div>
         </details>
-      )}
+      ) : null}
 
-      <InboxAttachmentList attachments={attachments} />
+      <div className="border-t border-zinc-800 px-5 py-4">
+        <InboxAttachmentList attachments={attachments} />
+      </div>
 
-      {view.rawEmail && (
-        <details className="mt-4 rounded-xl border border-zinc-800 bg-zinc-900/30">
-          <summary className="cursor-pointer px-4 py-3 text-xs font-medium uppercase tracking-wide text-zinc-500">
+      {view.rawEmail ? (
+        <details className="border-t border-zinc-800">
+          <summary className="cursor-pointer px-5 py-3 text-[11px] font-medium uppercase tracking-wide text-zinc-500">
             {INBOX.viewRaw}
           </summary>
           <pre className="max-h-72 overflow-auto border-t border-zinc-800 p-4 text-xs leading-relaxed text-zinc-400">
             {view.rawEmail}
           </pre>
         </details>
-      )}
-    </Card>
+      ) : null}
+    </article>
   );
 }

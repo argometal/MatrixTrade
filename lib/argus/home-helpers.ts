@@ -1,5 +1,6 @@
 import type { ArgusData, Entity, InboxItem, Log } from "./types";
 import { referenceKindFromNotes } from "./reference-types";
+import { getLinkedInboxForEntity } from "./entity-evidence";
 import { buildEntityIntelligence, type EntityIntelligence } from "./network-intelligence";
 
 export type HomeActivityItem =
@@ -43,7 +44,7 @@ export function buildHomeProjectSummaries(
     .filter((e) => e.type === "project")
     .map((entity) => {
       const logCount = logs.filter((l) => l.entityIds.includes(entity.id)).length;
-      const inboxCount = inboxItems.filter((i) => (i.linkedEntityIds ?? []).includes(entity.id)).length;
+      const inboxCount = getLinkedInboxForEntity(inboxItems, entity.id).length;
       return { entity, logCount, inboxCount, linkedCount: logCount + inboxCount };
     })
     .sort((a, b) => b.linkedCount - a.linkedCount || a.entity.name.localeCompare(b.entity.name));

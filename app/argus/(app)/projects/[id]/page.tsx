@@ -5,7 +5,7 @@ import { ArgusDeleteForm } from "@/app/argus/components/ArgusDeleteForm";
 import { ProjectEditForm } from "@/app/argus/components/ProjectEditForm";
 import { EmptyState, formatDate, PageHeader } from "@/app/argus/components/ui";
 import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
-import { loadEntityEvidence } from "@/lib/argus/entity-evidence";
+import { loadEnrichedEntityEvidence } from "@/lib/argus/entity-evidence";
 import { TESTING } from "@/lib/argus/ux-copy";
 import { getEntities, getEntity, readArgus } from "@/lib/argus/server-storage";
 
@@ -25,7 +25,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
   const data = await readArgus();
   const entities = await getEntities();
-  const evidence = await loadEntityEvidence(id, includePrivate);
+  const evidence = await loadEnrichedEntityEvidence(id, includePrivate);
   const allBuckets = buildEntityPickerBuckets(data, includePrivate);
   const tagBuckets = buildTagBuckets(data, includePrivate);
 
@@ -44,16 +44,24 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             <dd className="text-zinc-200">{entity.endDate ? formatDate(entity.endDate) : "—"}</dd>
           </div>
           <div>
+            <dt className="text-xs text-zinc-600">Linked emails</dt>
+            <dd className="text-zinc-200">{evidence.emailCount}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-zinc-600">Journal records</dt>
+            <dd className="text-zinc-200">{evidence.logCount}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-zinc-600">People</dt>
+            <dd className="text-zinc-200">{entity.linkedPersonIds?.length ?? 0}</dd>
+          </div>
+          <div>
             <dt className="text-xs text-zinc-600">Topics</dt>
             <dd className="text-zinc-200">{entity.linkedTopicIds?.length ?? 0}</dd>
           </div>
           <div>
             <dt className="text-xs text-zinc-600">Events</dt>
             <dd className="text-zinc-200">{entity.linkedEventIds?.length ?? 0}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-zinc-600">People</dt>
-            <dd className="text-zinc-200">{entity.linkedPersonIds?.length ?? 0}</dd>
           </div>
           <div>
             <dt className="text-xs text-zinc-600">Tags</dt>
@@ -75,9 +83,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
       <EntityEvidenceSection
         logs={evidence.logs}
-        linkedInbox={evidence.linkedInbox}
+        enrichedInbox={evidence.enrichedInbox}
         entities={entities}
         entityName={entity.name}
+        emailCount={evidence.emailCount}
+        logCount={evidence.logCount}
       />
     </>
   );

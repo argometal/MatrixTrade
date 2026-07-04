@@ -76,7 +76,7 @@ export default async function JournalPage({
   const buckets = buildEntityPickerBuckets(data, includePrivate);
   const tagBuckets = buildTagBuckets(data, includePrivate);
   const inboxPending = await getInboxItems("pending");
-  const allInbox = data.inboxItems;
+  const allInbox = await getInboxItems();
   const inboxEnriched = await buildInboxHomeData(inboxPending);
   const projects = buildHomeProjectSummaries(entities, logs, allInbox);
   const networkSummaries = buildHomeNetworkSummaries(data, entities, includePrivate, today, 8);
