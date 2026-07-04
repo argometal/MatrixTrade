@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
+import { isTestingUiEnabled } from "@/lib/argus/data-safety";
 import { ArgusAppHeader } from "@/app/argus/components/ArgusAppHeader";
+import { StorageWarningBanner } from "@/app/argus/components/StorageWarningBanner";
 import { JournalHome, type HomeInboxEnriched } from "@/app/argus/components/JournalHome";
 import {
   attachmentSizeFromStored,
@@ -22,6 +24,7 @@ import {
   getEntities,
   getInboxItems,
   getLogs,
+  getStorageDiagnostics,
   readArgus,
   readAttachmentBytes,
 } from "@/lib/argus/server-storage";
@@ -63,10 +66,11 @@ async function buildInboxHomeData(inboxPending: InboxItem[]): Promise<HomeInboxE
 export default async function JournalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ private_error?: string }>;
+  searchParams: Promise<{ private_error?: string; error?: string }>;
 }) {
-  const { private_error } = await searchParams;
+  const { private_error, error } = await searchParams;
   const includePrivate = await hasArgusPrivateUnlock();
+  const storage = await getStorageDiagnostics();
   const today = new Date().toISOString().slice(0, 10);
   const entities = await getEntities();
   const logs = await getLogs(includePrivate);
@@ -86,6 +90,17 @@ export default async function JournalPage({
         privateUnlocked={includePrivate}
         privateError={Boolean(private_error)}
       />
+      <StorageWarningBanner safety={storage.safety} />
+      {error === "storage" && (
+        <p className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 text-sm text-red-200">
+          Could not save — journal storage is not persistent on this server. Configure cloud journal storage.
+        </p>
+      )}
+      {error === "destructive" && (
+        <p className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 text-sm text-red-200">
+          That action is disabled in production.
+        </p>
+      )}
       <Suspense fallback={null}>
         <JournalHome
           recentActivity={getRecentActivity(logs, 8)}
@@ -97,6 +112,7 @@ export default async function JournalPage({
           entities={entities}
           buckets={buckets}
           tagBuckets={tagBuckets}
+          showClearAll={isTestingUiEnabled()}
         />
       </Suspense>
     </>

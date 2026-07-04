@@ -46,6 +46,7 @@ export function JournalHome({
   entities,
   buckets,
   tagBuckets,
+  showClearAll = false,
 }: {
   recentActivity: Log[];
   upcomingFollowUps: Log[];
@@ -56,6 +57,7 @@ export function JournalHome({
   entities: Entity[];
   buckets: EntityPickerBuckets;
   tagBuckets: TagBuckets;
+  showClearAll?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -279,12 +281,14 @@ export function JournalHome({
         </div>
       </div>
 
-      <ArgusClearAllForm
-        action={clearAllArgusDataAction}
-        confirmMessage={TESTING.clearAllConfirm}
-        label={TESTING.clearAll}
-        hint={TESTING.clearAllHint}
-      />
+      {showClearAll ? (
+        <ArgusClearAllForm
+          action={clearAllArgusDataAction}
+          confirmMessage={TESTING.clearAllConfirm}
+          label={TESTING.clearAll}
+          hint={TESTING.clearAllHint}
+        />
+      ) : null}
 
       {!sheetOpen ? <CaptureFab onClick={openCapture} /> : null}
 

@@ -2,7 +2,7 @@
  * Point ARGUS email Worker at Vercel production and sync required Vercel env vars.
  *
  * Prerequisites:
- *   1. Run supabase/argus-inbox.sql in Supabase SQL editor
+ *   1. Run supabase/argus-inbox.sql and supabase/argus-journal.sql in Supabase SQL editor
  *   2. .env.local has SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, ARGUS_INBOX_TOKEN
  *
  * Usage:
@@ -80,6 +80,7 @@ async function main(): Promise<void> {
       updateEnv("SUPABASE_URL", supabaseUrl, target);
       updateEnv("SUPABASE_SERVICE_ROLE_KEY", supabaseKey, target, true);
       updateEnv("ARGUS_INBOX_STORE", "supabase", target);
+      updateEnv("ARGUS_JOURNAL_STORE", "supabase", target);
       updateEnv("ARGUS_INBOX_TOKEN", inboxToken, target, true);
       if (env.ARGUS_PASSWORD) updateEnv("ARGUS_PASSWORD", env.ARGUS_PASSWORD, target, true);
     }
@@ -94,7 +95,7 @@ async function main(): Promise<void> {
   });
 
   console.log("\nDone. Verify:");
-  console.log("  1. Run supabase/argus-inbox.sql in Supabase SQL editor (once)");
+  console.log("  1. Run supabase/argus-inbox.sql and supabase/argus-journal.sql in Supabase SQL editor (once)");
   console.log("  2. npx tsx tools/verify-argus-inbox-schema.ts");
   console.log(`  3. npx tsx tools/test-email-inbox.ts ${PRODUCTION_APP}`);
   console.log("  4. Send real email to argus@argometal.dev");

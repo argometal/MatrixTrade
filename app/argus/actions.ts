@@ -22,6 +22,7 @@ import type { EntityType, JournalKind, LogSource, StrategicValue } from "@/lib/a
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
 import { inferJournalKind, resolveLogDate, autoTitleFromBody } from "@/lib/argus/journal-helpers";
 import { resolveClassificationStatus } from "@/lib/argus/normalize";
+import { ArgusWriteBlockedError, isDestructiveAllowed } from "@/lib/argus/data-safety";
 
 function revalidateArgus(): void {
   revalidatePath("/argus");
@@ -36,6 +37,15 @@ function parseTopics(raw: string): string[] {
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean);
+}
+
+function redirectStorageBlocked(fallback: string): never {
+  redirect(`${fallback}?error=storage`);
+}
+
+function handleWriteError(err: unknown, fallback: string): never {
+  if (err instanceof ArgusWriteBlockedError) redirectStorageBlocked(fallback);
+  throw err;
 }
 
 function parseJournalInput(formData: FormData) {
@@ -83,38 +93,42 @@ async function resolveEntityIds(formData: FormData): Promise<string[]> {
 }
 
 export async function createLogAction(formData: FormData): Promise<void> {
-  const entityIds = await resolveEntityIds(formData);
-  const input = parseJournalInput(formData);
-  if (!input.body) {
-    redirect("/argus/journal?capture=1&error=content");
+  try {
+    const entityIds = await resolveEntityIds(formData);
+    const input = parseJournalInput(formData);
+    if (!input.body) {
+      redirect("/argus/journal?capture=1&error=content");
+    }
+
+    const title = input.title || autoTitleFromBody(input.body);
+
+    const log = await createLog({
+      ...input,
+      title,
+      entityIds,
+      classificationStatus: resolveClassificationStatus(entityIds),
+      attachmentIds: [],
+    });
+
+    const file = formData.get("attachment");
+    if (file instanceof File && file.size > 0) {
+      const bytes = Buffer.from(await file.arrayBuffer());
+      const att = await saveAttachment(
+        file.name,
+        file.type || "application/octet-stream",
+        bytes,
+        "journal",
+        log.id
+      );
+      await appendLogAttachment(log.id, att.id);
+    }
+
+    revalidateArgus();
+    const returnTo = String(formData.get("returnTo") ?? "log");
+    redirect(returnTo === "journal" ? "/argus/journal" : `/argus/logs/${log.id}`);
+  } catch (err) {
+    handleWriteError(err, "/argus/journal");
   }
-
-  const title = input.title || autoTitleFromBody(input.body);
-
-  const log = await createLog({
-    ...input,
-    title,
-    entityIds,
-    classificationStatus: resolveClassificationStatus(entityIds),
-    attachmentIds: [],
-  });
-
-  const file = formData.get("attachment");
-  if (file instanceof File && file.size > 0) {
-    const bytes = Buffer.from(await file.arrayBuffer());
-    const att = await saveAttachment(
-      file.name,
-      file.type || "application/octet-stream",
-      bytes,
-      "journal",
-      log.id
-    );
-    await appendLogAttachment(log.id, att.id);
-  }
-
-  revalidateArgus();
-  const returnTo = String(formData.get("returnTo") ?? "log");
-  redirect(returnTo === "journal" ? "/argus/journal" : `/argus/logs/${log.id}`);
 }
 
 export async function updateLogAction(formData: FormData): Promise<void> {
@@ -260,6 +274,9 @@ export async function deleteInboxAction(formData: FormData): Promise<void> {
 }
 
 export async function clearAllArgusDataAction(): Promise<void> {
+  if (!isDestructiveAllowed()) {
+    redirect("/argus/journal?error=destructive");
+  }
   await clearAllArgusData();
   revalidateArgus();
   redirect("/argus/journal");

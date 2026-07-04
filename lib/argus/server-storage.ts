@@ -1,5 +1,12 @@
 import { promises as fs } from "fs";
 import path from "path";
+import {
+  ArgusWriteBlockedError,
+  getStorageSafetyStatus,
+  isDestructiveAllowed,
+  writeArgusSafe,
+  type WriteIntent,
+} from "./data-safety";
 import { migrateToV3 } from "./migrate";
 import { ensureArgusStorageReady, getArgusStoragePaths, isExternalDataRoot } from "./storage";
 import type {
@@ -16,6 +23,9 @@ import type {
 import { resolveClassificationStatus } from "./normalize";
 import { isCloudInboxStore } from "./inbox-store/config";
 import * as cloudInbox from "./inbox-store/supabase";
+import { isCloudJournalStore } from "./journal-store/config";
+import * as cloudJournal from "./journal-store/supabase";
+import * as cloudJournalFiles from "./journal-store/attachments";
 
 function paths() {
   return getArgusStoragePaths();
@@ -35,6 +45,24 @@ async function ensureFilesDir(): Promise<void> {
 }
 
 async function readRawJournal(): Promise<ArgusData> {
+  if (isCloudJournalStore()) {
+    const cloud = await cloudJournal.readJournalFromSupabase();
+    if (cloud) return cloud;
+
+    await ensureArgusStorageReady();
+    const p = paths();
+    try {
+      const raw = await fs.readFile(p.journalFile, "utf-8");
+      const migrated = migrateToV3(JSON.parse(raw));
+      await writeArgus(migrated, "bootstrap");
+      return migrated;
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== "ENOENT") throw err;
+    }
+    return emptyArgus();
+  }
+
   await ensureArgusStorageReady();
   const p = paths();
 
@@ -49,7 +77,7 @@ async function readRawJournal(): Promise<ArgusData> {
   try {
     const raw = await fs.readFile(p.legacyVaultFile, "utf-8");
     const migrated = migrateToV3(JSON.parse(raw));
-    await writeArgus(migrated);
+    await writeArgus(migrated, "bootstrap");
     return migrated;
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
@@ -58,13 +86,22 @@ async function readRawJournal(): Promise<ArgusData> {
   }
 }
 
-async function writeArgus(data: ArgusData): Promise<void> {
+async function writeArgus(data: ArgusData, intent: WriteIntent = "mutation"): Promise<void> {
   await ensureArgusStorageReady();
   const p = paths();
-  await fs.mkdir(p.root, { recursive: true });
-  const tmp = `${p.journalFile}.tmp`;
-  await fs.writeFile(tmp, `${JSON.stringify(data, null, 2)}\n`, "utf-8");
-  await fs.rename(tmp, p.journalFile);
+
+  if (isCloudJournalStore()) {
+    const currentJsonForBackup = await cloudJournal.readJournalBackupFromSupabase();
+    await writeArgusSafe(data, {
+      intent,
+      journalFile: p.journalFile,
+      cloudWrite: (payload) => cloudJournal.writeJournalToSupabase(payload),
+      currentJsonForBackup,
+    });
+    return;
+  }
+
+  await writeArgusSafe(data, { intent, journalFile: p.journalFile });
 }
 
 function filterPrivateLogs(logs: Log[], includePrivate: boolean): Log[] {
@@ -199,15 +236,22 @@ export async function saveAttachment(
     return cloudInbox.saveInboxAttachment(fileName, mimeType, bytes, parentId);
   }
 
-  await ensureFilesDir();
-  const data = await readArgus();
   const id = generateId();
   const safeName = fileName.replace(/[^\w.\-() ]/g, "_").slice(0, 120);
-  await fs.writeFile(path.join(paths().filesDir, id), bytes);
+  const mime = mimeType || "application/octet-stream";
+
+  if (isCloudJournalStore() && parentType === "journal") {
+    await cloudJournalFiles.uploadJournalAttachmentBytes(id, bytes, mime);
+  } else {
+    await ensureFilesDir();
+    await fs.writeFile(path.join(paths().filesDir, id), bytes);
+  }
+
+  const data = await readArgus();
   const attachment: Attachment = {
     id,
     fileName: safeName,
-    mimeType: mimeType || "application/octet-stream",
+    mimeType: mime,
     createdAt: new Date().toISOString(),
     parentType,
     parentId,
@@ -234,6 +278,10 @@ export async function readAttachmentBytes(id: string): Promise<Buffer | null> {
   if (isCloudInboxStore()) {
     const cloud = await cloudInbox.readInboxAttachmentBytes(id);
     if (cloud) return cloud;
+  }
+  if (isCloudJournalStore()) {
+    const journal = await cloudJournalFiles.readJournalAttachmentBytes(id);
+    if (journal) return journal;
   }
   try {
     return await fs.readFile(path.join(paths().filesDir, id));
@@ -543,6 +591,7 @@ export async function getStorageDiagnostics(): Promise<{
   external: boolean;
   journalFile: string;
   filesDir: string;
+  safety: ReturnType<typeof getStorageSafetyStatus>;
 }> {
   await ensureArgusStorageReady();
   const p = getArgusStoragePaths();
@@ -551,6 +600,7 @@ export async function getStorageDiagnostics(): Promise<{
     external: isExternalDataRoot(),
     journalFile: p.journalFile,
     filesDir: p.filesDir,
+    safety: getStorageSafetyStatus(),
   };
 }
 
@@ -567,6 +617,9 @@ export async function searchLogs(query: string, includePrivate: boolean): Promis
 }
 
 async function removeAttachmentFile(id: string): Promise<void> {
+  if (isCloudJournalStore()) {
+    await cloudJournalFiles.removeJournalAttachmentBytes(id).catch(() => {});
+  }
   try {
     await fs.unlink(path.join(paths().filesDir, id));
   } catch {
@@ -600,7 +653,7 @@ export async function deleteLog(id: string): Promise<boolean> {
     }
   }
 
-  await writeArgus(data);
+  await writeArgus(data, "destructive");
   return true;
 }
 
@@ -616,7 +669,7 @@ export async function deleteEntity(id: string): Promise<boolean> {
     item.linkedEntityIds = (item.linkedEntityIds ?? []).filter((eid) => eid !== id);
   }
 
-  await writeArgus(data);
+  await writeArgus(data, "destructive");
   return true;
 }
 
@@ -628,11 +681,16 @@ export async function deleteInboxItem(id: string): Promise<boolean> {
 
   await deleteAttachmentsForIds(data, item.attachmentIds);
   data.inboxItems = data.inboxItems.filter((i) => i.id !== id);
-  await writeArgus(data);
+  await writeArgus(data, "destructive");
   return true;
 }
 
 export async function clearAllArgusData(): Promise<void> {
+  if (!isDestructiveAllowed()) {
+    throw new Error(
+      "Clear all ARGUS data is disabled in production. Set ARGUS_ALLOW_DESTRUCTIVE=1 to override."
+    );
+  }
   await ensureArgusStorageReady();
   const p = paths();
   await fs.mkdir(p.filesDir, { recursive: true });
@@ -640,5 +698,8 @@ export async function clearAllArgusData(): Promise<void> {
   const files = await fs.readdir(p.filesDir);
   await Promise.all(files.map((file) => removeAttachmentFile(file)));
 
-  await writeArgus(emptyArgus());
+  await writeArgus(emptyArgus(), "destructive");
 }
+
+export { ArgusWriteBlockedError } from "./data-safety";
+export { getStorageSafetyStatus };
