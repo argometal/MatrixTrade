@@ -1,3 +1,6 @@
+-- DISABLED BY DESIGN — see lib/ai-session-disabled.ts and md/integrations/ai-trading-session-handoff.md
+-- Blocked by ChatGPT platform capability, not by MatrixTrade.
+-- Table optional; do not run unless AI Session workflow is re-enabled.
 -- AI session tokens (Phase AI-1/2) — run after schema.sql if table missing
 create table if not exists public.ai_sessions (
   id uuid primary key default gen_random_uuid(),

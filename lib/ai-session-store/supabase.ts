@@ -1,3 +1,7 @@
+/**
+ * DISABLED BY DESIGN — see lib/ai-session-disabled.ts
+ * Blocked by ChatGPT platform capability, not by MatrixTrade.
+ */
 import { createSupabaseAdmin } from "../supabase/server";
 import type { AiSessionPublic, AiSessionRecord, CreateAiSessionOptions } from "../ai-session-types";
 import { AI_DEFAULT_SCOPES } from "../ai-session-types";

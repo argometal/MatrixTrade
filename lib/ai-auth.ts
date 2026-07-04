@@ -1,3 +1,7 @@
+/**
+ * DISABLED BY DESIGN — see lib/ai-session-disabled.ts
+ * Blocked by ChatGPT platform capability, not by MatrixTrade.
+ */
 import { NextResponse } from "next/server";
 import type { AiSessionRecord } from "./ai-session-types";
 import { isAiSessionTokenFormat } from "./ai-session-crypto";

@@ -1,3 +1,7 @@
+/**
+ * DISABLED BY DESIGN — see lib/ai-session-disabled.ts
+ * Blocked by ChatGPT platform capability, not by MatrixTrade.
+ */
 import { stripComputedTradeFields } from "./trades-store/mapping";
 import type { Trade } from "./types";
 

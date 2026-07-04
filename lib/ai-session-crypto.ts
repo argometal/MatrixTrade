@@ -1,3 +1,7 @@
+/**
+ * DISABLED BY DESIGN — see lib/ai-session-disabled.ts
+ * Blocked by ChatGPT platform capability, not by MatrixTrade.
+ */
 import { createHash, randomBytes } from "crypto";
 
 const TOKEN_PREFIX = "mtai_";

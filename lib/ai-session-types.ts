@@ -1,3 +1,7 @@
+/**
+ * DISABLED BY DESIGN — see lib/ai-session-disabled.ts
+ * Blocked by ChatGPT platform capability, not by MatrixTrade.
+ */
 export const AI_READ_SCOPES = [
   "read:trades",
   "read:stats",

@@ -1,3 +1,8 @@
+/**
+ * DISABLED BY DESIGN — see lib/ai-session-disabled.ts
+ * Blocked by ChatGPT platform capability, not by MatrixTrade.
+ * UI removed from /ai-workspace; API routes return 503.
+ */
 "use client";
 
 import { useState, useTransition } from "react";

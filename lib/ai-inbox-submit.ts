@@ -1,3 +1,7 @@
+/**
+ * DISABLED BY DESIGN — see lib/ai-session-disabled.ts
+ * Blocked by ChatGPT platform capability, not by MatrixTrade.
+ */
 import { getBridgeConfig } from "./bridge";
 import { createLocalInboxItem } from "./trading-inbox-storage";
 

@@ -18,6 +18,10 @@ import {
   setLocalInboxStatus,
 } from "@/lib/trading-inbox-storage";
 import {
+  aiSessionDisabledActionError,
+  isAiSessionDisabled,
+} from "@/lib/ai-session-disabled";
+import {
   buildAiConnectUrl,
   createAiSession,
   revokeAiSession,
@@ -25,6 +29,8 @@ import {
 import { createQrDataUrl } from "@/lib/qr";
 import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
+
+// DISABLED BY DESIGN — see lib/ai-session-disabled.ts (AI Session server actions)
 
 export type CreateAiSessionActionResult =
   | { token: string; connectUrl: string; qrDataUrl: string }
@@ -46,6 +52,7 @@ function revalidateTradingPaths() {
 export async function createAiSessionAction(
   formData: FormData
 ): Promise<CreateAiSessionActionResult> {
+  if (isAiSessionDisabled()) return aiSessionDisabledActionError();
   await requireTradingSession();
 
   const ttlRaw = Number(formData.get("ttlMinutes"));
@@ -67,6 +74,7 @@ export async function createAiSessionAction(
 }
 
 export async function revokeAiSessionAction(formData: FormData): Promise<void> {
+  if (isAiSessionDisabled()) return;
   await requireTradingSession();
   const sessionId = String(formData.get("sessionId") ?? "").trim();
   if (sessionId) {

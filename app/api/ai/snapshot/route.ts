@@ -1,10 +1,17 @@
+/**
+ * DISABLED BY DESIGN — see lib/ai-session-disabled.ts
+ * Blocked by ChatGPT platform capability, not by MatrixTrade.
+ */
 import { NextResponse } from "next/server";
 import { buildBridgeSnapshot } from "@/lib/bridge";
+import { aiSessionDisabledResponse, isAiSessionDisabled } from "@/lib/ai-session-disabled";
 import { isAiSessionError, requireAiSession } from "@/lib/ai-auth";
 import { getExperiment, getRules, getTrades } from "@/lib/storage";
 import { getSetups } from "@/lib/setups";
 
 export async function GET(request: Request): Promise<NextResponse> {
+  if (isAiSessionDisabled()) return aiSessionDisabledResponse();
+
   const session = await requireAiSession(request, [
     "read:trades",
     "read:stats",

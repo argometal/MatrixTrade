@@ -1,3 +1,7 @@
+/**
+ * DISABLED BY DESIGN — see lib/ai-session-disabled.ts
+ * Blocked by ChatGPT platform capability, not by MatrixTrade.
+ */
 import { promises as fs } from "fs";
 import path from "path";
 import type { AiSessionPublic, AiSessionRecord, CreateAiSessionOptions } from "../ai-session-types";
