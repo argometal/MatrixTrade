@@ -61,12 +61,6 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
   return (
     <>
       <PageHeader title="Inbox item" backHref="/argus/inbox" />
-      <EmailViewer
-        view={emailView}
-        attachments={attachmentViews}
-        status={item.status}
-        source={item.source}
-      />
       <InboxTriagePanel
         item={item}
         linkedEntities={linkedEntities}
@@ -75,6 +69,12 @@ export default async function InboxDetailPage({ params }: { params: Promise<{ id
         convertedLog={convertedLog}
         defaultTitle={defaultTitle}
         defaultBody={defaultBody}
+      />
+      <EmailViewer
+        view={emailView}
+        attachments={attachmentViews}
+        status={item.status}
+        source={item.source}
       />
     </>
   );

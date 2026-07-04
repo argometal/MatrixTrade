@@ -9,6 +9,7 @@ Use git tags to restore any point.
 | **101** | `change-101` | Capture + create unified on **right**; global capture sheet from **+** on any page |
 | **102** | `change-102` | Compact floating bottom dock — grouped tabs, **+** centered, lifted above screen edge |
 | **103** | `change-103` | Home inbox cards tap-to-link (no expand); actions visible on card face |
+| **104** | `change-104` | Email action menus moved to top of card (Home + inbox detail) |
 
 ## Restore
 

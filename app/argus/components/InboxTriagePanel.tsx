@@ -29,11 +29,10 @@ interface InboxTriagePanelProps {
   defaultBody: string;
 }
 
-function actionButtonClass(variant: "primary" | "secondary" | "danger" = "secondary"): string {
-  const base = "w-full rounded-xl py-3 text-sm font-medium";
-  if (variant === "primary") return `${base} bg-teal-700 text-white hover:bg-teal-600`;
-  if (variant === "danger") return `${base} border border-zinc-700 text-zinc-400 hover:bg-zinc-800`;
-  return `${base} border border-zinc-700 text-zinc-200 hover:bg-zinc-800`;
+function compactActionClass(primary = false): string {
+  return primary
+    ? "rounded-lg bg-teal-700/90 px-3 py-2 text-xs font-medium text-white hover:bg-teal-600"
+    : "rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800";
 }
 
 export function InboxTriagePanel({
@@ -57,6 +56,11 @@ export function InboxTriagePanel({
     linkFormRef.current?.requestSubmit();
   }
 
+  function openLinkPicker() {
+    setLinkIds([]);
+    setPickerOpen(true);
+  }
+
   async function linkCreatedEntity(entity: CreatedEntityResult): Promise<false> {
     const formData = new FormData();
     formData.set("inboxId", item.id);
@@ -67,68 +71,35 @@ export function InboxTriagePanel({
 
   return (
     <>
-      <Card className="mb-4">
-        <p className="text-xs font-medium uppercase text-zinc-500">{INBOX.linkedTo}</p>
-        {linkedEntities.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-500">Not linked yet.</p>
-        ) : (
-          <ul className="mt-2 space-y-1">
-            {linkedEntities.map((entity) => (
-              <li key={entity.id}>
-                <Link href={entityDetailHref(entity)} className="text-sm text-teal-500 underline">
-                  {referenceDisplayLabel(entity)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {canTriage && (
-          <p className="mt-4 text-xs text-zinc-500">
-            {INBOX.actionsRemaining}: link a reference, convert to a record, or archive.
-          </p>
-        )}
-        {!canTriage && item.status === "converted" && convertedLog && (
-          <p className="mt-4 text-sm text-zinc-400">
-            Converted to{" "}
-            <Link href={`/argus/logs/${convertedLog.id}`} className="text-teal-500 underline">
-              {convertedLog.title}
-            </Link>
-          </p>
-        )}
-        {!canTriage && item.status === "archived" && (
-          <p className="mt-4 text-sm text-zinc-500">{INBOX.noActions}</p>
-        )}
-      </Card>
-
-      {canTriage && (
+      {canTriage ? (
         <>
           <Card className="mb-4">
-            <p className="mb-3 text-xs font-medium uppercase text-zinc-500">{INBOX.actions}</p>
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setLinkIds([]);
-                  setPickerOpen(true);
-                }}
-                className={actionButtonClass()}
-              >
+            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">{INBOX.actions}</p>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={openLinkPicker} className={compactActionClass(true)}>
                 {INBOX.linkReference}
               </button>
               <button
                 type="button"
-                onClick={() => setShowConvert((v) => !v)}
-                className={actionButtonClass("primary")}
+                onClick={() => setShowConvert((open) => !open)}
+                className={compactActionClass()}
               >
                 {INBOX.convertRecord}
               </button>
-              <form action={archiveInboxAction}>
+              <form action={archiveInboxAction} className="inline">
                 <input type="hidden" name="inboxId" value={item.id} />
-                <button type="submit" className={actionButtonClass("danger")}>
+                <button type="submit" className={compactActionClass()}>
                   {INBOX.archive}
                 </button>
               </form>
+              <ArgusDeleteForm
+                action={deleteInboxAction}
+                confirmMessage={TESTING.deleteInboxConfirm}
+                label={TESTING.deleteInbox}
+                className="inline"
+              >
+                <input type="hidden" name="inboxId" value={item.id} />
+              </ArgusDeleteForm>
             </div>
           </Card>
 
@@ -153,7 +124,7 @@ export function InboxTriagePanel({
             createButtonLabel={INBOX.createPerson}
           />
 
-          {showConvert && (
+          {showConvert ? (
             <div className="mb-4">
               <p className="mb-2 text-sm font-medium text-zinc-200">{INBOX.convertHeading}</p>
               <p className="mb-3 text-xs text-zinc-500">{INBOX.convertHint}</p>
@@ -172,20 +143,51 @@ export function InboxTriagePanel({
                 }}
               />
             </div>
-          )}
+          ) : null}
         </>
-      )}
+      ) : null}
 
-      <ArgusDeleteForm
-        action={deleteInboxAction}
-        confirmMessage={TESTING.deleteInboxConfirm}
-        label={TESTING.deleteInbox}
-        className="mb-4"
-      >
-        <input type="hidden" name="inboxId" value={item.id} />
-      </ArgusDeleteForm>
+      <Card className="mb-4">
+        <p className="text-xs font-medium uppercase text-zinc-500">{INBOX.linkedTo}</p>
+        {linkedEntities.length === 0 ? (
+          <p className="mt-2 text-sm text-zinc-500">Not linked yet.</p>
+        ) : (
+          <ul className="mt-2 space-y-1">
+            {linkedEntities.map((entity) => (
+              <li key={entity.id}>
+                <Link href={entityDetailHref(entity)} className="text-sm text-teal-500 underline">
+                  {referenceDisplayLabel(entity)}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
 
-      <p className="text-center text-xs text-zinc-600">
+        {!canTriage && item.status === "converted" && convertedLog && (
+          <p className="mt-4 text-sm text-zinc-400">
+            Converted to{" "}
+            <Link href={`/argus/logs/${convertedLog.id}`} className="text-teal-500 underline">
+              {convertedLog.title}
+            </Link>
+          </p>
+        )}
+        {!canTriage && item.status === "archived" && (
+          <p className="mt-4 text-sm text-zinc-500">{INBOX.noActions}</p>
+        )}
+      </Card>
+
+      {!canTriage ? (
+        <ArgusDeleteForm
+          action={deleteInboxAction}
+          confirmMessage={TESTING.deleteInboxConfirm}
+          label={TESTING.deleteInbox}
+          className="mb-4"
+        >
+          <input type="hidden" name="inboxId" value={item.id} />
+        </ArgusDeleteForm>
+      ) : null}
+
+      <p className="mb-4 text-center text-xs text-zinc-600">
         Status: {statusLabel}
         {item.attachmentIds.length > 0 ? ` · ${item.attachmentIds.length} attachment(s)` : ""}
       </p>

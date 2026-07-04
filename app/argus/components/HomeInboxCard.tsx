@@ -116,16 +116,49 @@ export function HomeInboxCard({
           </ul>
         </div>
       ) : null}
-
-      {canTriage ? (
-        <p className="mt-3 text-[11px] font-medium text-teal-500/90">{INBOX.tapToLink}</p>
-      ) : null}
     </>
   );
+
+  const actionBar = canTriage ? (
+    <div className="border-b border-zinc-800/80 px-4 py-3">
+      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">{INBOX.actions}</p>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={openLinkPicker} className={primaryActionClass()}>
+          {INBOX.linkReference}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowConvert((open) => !open)}
+          className={actionButtonClass(true)}
+        >
+          {INBOX.convertRecord}
+        </button>
+        {primaryAttachment ? (
+          <Link href={attachmentDownloadUrl(primaryAttachment.id)} className={actionButtonClass(true)}>
+            {HOME_INBOX_ACTIONS.downloadOriginal}
+          </Link>
+        ) : null}
+        <Link href={`/argus/inbox/${item.id}`} className={actionButtonClass(true)}>
+          {HOME_INBOX_ACTIONS.openFullViewer}
+        </Link>
+        <ArgusDeleteForm
+          action={deleteInboxAction}
+          confirmMessage={TESTING.deleteInboxConfirm}
+          label={TESTING.deleteInbox}
+          className="inline"
+        >
+          <input type="hidden" name="inboxId" value={item.id} />
+          <input type="hidden" name="returnTo" value="journal" />
+        </ArgusDeleteForm>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <>
       <div className="overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-900/30">
+        {actionBar}
+
         {canTriage ? (
           <button
             type="button"
@@ -142,38 +175,6 @@ export function HomeInboxCard({
             {cardBody}
           </Link>
         )}
-
-        {canTriage ? (
-          <div className="flex flex-wrap gap-2 border-t border-zinc-800/80 px-4 py-3">
-            <button type="button" onClick={openLinkPicker} className={primaryActionClass()}>
-              {INBOX.linkReference}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowConvert((open) => !open)}
-              className={actionButtonClass(true)}
-            >
-              {INBOX.convertRecord}
-            </button>
-            {primaryAttachment ? (
-              <Link href={attachmentDownloadUrl(primaryAttachment.id)} className={actionButtonClass(true)}>
-                {HOME_INBOX_ACTIONS.downloadOriginal}
-              </Link>
-            ) : null}
-            <Link href={`/argus/inbox/${item.id}`} className={actionButtonClass(true)}>
-              {HOME_INBOX_ACTIONS.openFullViewer}
-            </Link>
-            <ArgusDeleteForm
-              action={deleteInboxAction}
-              confirmMessage={TESTING.deleteInboxConfirm}
-              label={TESTING.deleteInbox}
-              className="inline"
-            >
-              <input type="hidden" name="inboxId" value={item.id} />
-              <input type="hidden" name="returnTo" value="journal" />
-            </ArgusDeleteForm>
-          </div>
-        ) : null}
 
         {canTriage && showConvert ? (
           <div className="border-t border-zinc-800/80 px-4 py-4">
