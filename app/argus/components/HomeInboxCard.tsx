@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import type { Entity, InboxItem } from "@/lib/argus/types";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
-import { referenceDisplayLabel } from "@/lib/argus/reference-types";
+import { entityDetailHref, referenceDisplayLabel } from "@/lib/argus/reference-types";
 import {
   attachmentDownloadUrl,
   type AttachmentViewModel,
@@ -26,17 +26,6 @@ function formatReceived(iso: string): string {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function filterBuckets(
-  buckets: EntityPickerBuckets,
-  predicate: (entity: Entity) => boolean
-): EntityPickerBuckets {
-  return {
-    recent: buckets.recent.filter(predicate),
-    frequent: buckets.frequent.filter(predicate),
-    alphabetical: buckets.alphabetical.filter(predicate),
-  };
 }
 
 function actionButtonClass(compact = false): string {
@@ -67,23 +56,17 @@ export function HomeInboxCard({
 }) {
   const linkFormRef = useRef<HTMLFormElement>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [pickerMode, setPickerMode] = useState<"project" | "contact">("project");
   const [linkIds, setLinkIds] = useState<string[]>([]);
   const [showConvert, setShowConvert] = useState(false);
 
   const canTriage = item.status === "pending" || item.status === "linked";
   const preview = view.textBody.replace(/\s+/g, " ").trim().slice(0, 120);
-  const filteredBuckets =
-    pickerMode === "project"
-      ? filterBuckets(buckets, (e) => e.type === "project")
-      : filterBuckets(buckets, (e) => e.type === "person" || e.type === "company");
 
   function submitLinkForm() {
     linkFormRef.current?.requestSubmit();
   }
 
-  function openPicker(mode: "project" | "contact") {
-    setPickerMode(mode);
+  function openLinkPicker() {
     setLinkIds([]);
     setPickerOpen(true);
   }
@@ -153,7 +136,7 @@ export function HomeInboxCard({
             <ul className="mt-2 space-y-1">
               {linkedEntities.map((entity) => (
                 <li key={entity.id}>
-                  <Link href={`/argus/network/${entity.id}`} className="text-sm text-teal-500 hover:text-teal-400">
+                  <Link href={entityDetailHref(entity)} className="text-sm text-teal-500 hover:text-teal-400">
                     {referenceDisplayLabel(entity)}
                   </Link>
                 </li>
@@ -167,18 +150,15 @@ export function HomeInboxCard({
           <div className="flex flex-wrap gap-2">
             {canTriage ? (
               <>
-                <button type="button" onClick={() => openPicker("project")} className={actionButtonClass(true)}>
-                  {HOME_INBOX_ACTIONS.assignProject}
-                </button>
-                <button type="button" onClick={() => openPicker("contact")} className={actionButtonClass(true)}>
-                  {HOME_INBOX_ACTIONS.linkContact}
+                <button type="button" onClick={openLinkPicker} className={actionButtonClass(true)}>
+                  {INBOX.linkReference}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowConvert(true)}
                   className={actionButtonClass(true)}
                 >
-                  {HOME_INBOX_ACTIONS.createFollowUp}
+                  {INBOX.convertRecord}
                 </button>
               </>
             ) : null}
@@ -234,7 +214,7 @@ export function HomeInboxCard({
 
           <ReferencePickerModal
             open={pickerOpen}
-            buckets={filteredBuckets}
+            buckets={buckets}
             selectedIds={linkIds}
             onChange={setLinkIds}
             onClose={() => setPickerOpen(false)}
@@ -242,8 +222,7 @@ export function HomeInboxCard({
               if (linkIds.length > 0) submitLinkForm();
             }}
             onEntityCreated={linkCreatedEntity}
-            defaultCreateKind={pickerMode === "project" ? "project" : "person"}
-            createButtonLabel={pickerMode === "project" ? INBOX.createProject : INBOX.createPerson}
+            createButtonLabel={INBOX.createReference}
           />
 
           <form action={archiveInboxAction} className="hidden" aria-hidden>

@@ -1,11 +1,13 @@
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { deleteEntityAction } from "@/app/argus/actions";
+import { EntityEvidenceSection } from "@/app/argus/components/EntityEvidenceSection";
 import { ArgusDeleteForm } from "@/app/argus/components/ArgusDeleteForm";
 import { ProjectEditForm } from "@/app/argus/components/ProjectEditForm";
 import { EmptyState, formatDate, PageHeader } from "@/app/argus/components/ui";
 import { buildEntityPickerBuckets, buildPeoplePickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
+import { loadEntityEvidence } from "@/lib/argus/entity-evidence";
 import { TESTING } from "@/lib/argus/ux-copy";
-import { getEntity, readArgus } from "@/lib/argus/server-storage";
+import { getEntities, getEntity, readArgus } from "@/lib/argus/server-storage";
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,6 +24,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   }
 
   const data = await readArgus();
+  const entities = await getEntities();
+  const evidence = await loadEntityEvidence(id, includePrivate);
   const peopleBuckets = buildPeoplePickerBuckets(buildEntityPickerBuckets(data, includePrivate));
   const tagBuckets = buildTagBuckets(data, includePrivate);
 
@@ -60,6 +64,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       >
         <input type="hidden" name="entityId" value={entity.id} />
       </ArgusDeleteForm>
+
+      <EntityEvidenceSection
+        logs={evidence.logs}
+        linkedInbox={evidence.linkedInbox}
+        entities={entities}
+        entityName={entity.name}
+      />
     </>
   );
 }

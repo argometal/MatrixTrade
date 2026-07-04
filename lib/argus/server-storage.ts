@@ -586,10 +586,11 @@ export async function convertInboxToLog(
     topics?: string[];
   }
 ): Promise<{ log: Log; inbox: InboxItem }> {
-  const data = await readArgus();
-  const idx = data.inboxItems.findIndex((i) => i.id === inboxId);
-  if (idx === -1) throw new Error("Inbox item not found");
-  const inbox = data.inboxItems[idx];
+  const inbox = isCloudInboxStore()
+    ? await cloudInbox.getInboxItem(inboxId)
+    : (await readArgus()).inboxItems.find((i) => i.id === inboxId);
+
+  if (!inbox || !isActiveRecord(inbox)) throw new Error("Inbox item not found");
   if (inbox.status !== "pending" && inbox.status !== "linked") {
     throw new Error("Inbox item cannot be converted");
   }
@@ -614,18 +615,26 @@ export async function convertInboxToLog(
     createdAt: now,
     updatedAt: now,
   };
+
+  const data = await readArgus();
   data.logs.push(log);
 
-  for (const aid of inbox.attachmentIds) {
-    assignAttachmentParent(data, aid, "journal", log.id);
+  if (isCloudInboxStore()) {
+    for (const aid of inbox.attachmentIds) {
+      await cloudInbox.reassignAttachmentParent(aid, "journal", log.id);
+    }
+  } else {
+    const idx = data.inboxItems.findIndex((i) => i.id === inboxId);
+    for (const aid of inbox.attachmentIds) {
+      assignAttachmentParent(data, aid, "journal", log.id);
+    }
+    data.inboxItems[idx] = {
+      ...inbox,
+      status: "converted",
+      convertedLogId: log.id,
+      linkedEntityIds: entityIds,
+    };
   }
-
-  data.inboxItems[idx] = {
-    ...inbox,
-    status: "converted",
-    convertedLogId: log.id,
-    linkedEntityIds: entityIds,
-  };
 
   for (const eid of log.entityIds) {
     const entity = data.entities.find((e) => e.id === eid);
@@ -633,7 +642,20 @@ export async function convertInboxToLog(
   }
 
   await writeArgus(data);
-  return { log, inbox: data.inboxItems[idx] };
+
+  const saved = (await readArgus()).logs.find((l) => l.id === log.id && isActiveRecord(l));
+  if (!saved) {
+    throw new ArgusPersistenceError(
+      "database",
+      `Converted evidence "${log.title}" was not found after database write confirmation.`
+    );
+  }
+
+  const updatedInbox = isCloudInboxStore()
+    ? await cloudInbox.markInboxConverted(inboxId, saved.id, entityIds)
+    : data.inboxItems.find((i) => i.id === inboxId)!;
+
+  return { log: saved, inbox: updatedInbox };
 }
 
 export { getArgusDataRoot, getArgusStoragePaths, readStorageMeta } from "./storage";

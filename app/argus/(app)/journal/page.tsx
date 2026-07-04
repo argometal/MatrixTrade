@@ -3,7 +3,7 @@ import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { isTestingUiEnabled } from "@/lib/argus/data-safety";
 import { ArgusAppHeader } from "@/app/argus/components/ArgusAppHeader";
-import { ArgusStatusPanel } from "@/app/argus/components/ArgusStatusPanel";
+import { ArgusStatusAlert } from "@/app/argus/components/ArgusStatusAlert";
 import { JournalHome, type HomeInboxEnriched } from "@/app/argus/components/JournalHome";
 import {
   attachmentSizeFromStored,
@@ -89,7 +89,7 @@ export default async function JournalPage({
         privateUnlocked={includePrivate}
         privateError={Boolean(private_error)}
       />
-      <ArgusStatusPanel />
+      <ArgusStatusAlert />
       {errorLayer && errorMsg ? (
         <p className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 text-sm text-red-200">
           <span className="font-medium uppercase">{errorLayer}:</span> {errorMsg}

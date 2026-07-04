@@ -19,5 +19,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "bridge", "argus-email-bridge", "tools/validate-argus-capture.ts", "tools/simulate-email-worker-intake.ts", "tools/validate-supabase-trades.ts", "tools/validate-argus-phase0-crud.ts", "tools/validate-argus-production-acceptance.ts", "tools/validate-argus-production-workflows.ts", "tools/verify-supabase-schema.ts"]
+  "exclude": ["node_modules", "bridge", "argus-email-bridge", "tools/validate-argus-capture.ts", "tools/simulate-email-worker-intake.ts", "tools/validate-supabase-trades.ts", "tools/validate-argus-phase0-crud.ts", "tools/validate-argus-production-acceptance.ts", "tools/validate-argus-production-workflows.ts", "tools/validate-argus-link-workflow.ts", "tools/verify-supabase-schema.ts"]
 }

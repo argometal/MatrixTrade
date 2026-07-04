@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
-import { referenceDisplayLabel } from "@/lib/argus/reference-types";
+import { referenceDisplayLabel, entityDetailHref } from "@/lib/argus/reference-types";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import { INBOX, TESTING } from "@/lib/argus/ux-copy";
 import { CaptureSheet } from "./CaptureSheet";
@@ -75,7 +75,7 @@ export function InboxTriagePanel({
           <ul className="mt-2 space-y-1">
             {linkedEntities.map((entity) => (
               <li key={entity.id}>
-                <Link href={`/argus/network/${entity.id}`} className="text-sm text-teal-500 underline">
+                <Link href={entityDetailHref(entity)} className="text-sm text-teal-500 underline">
                   {referenceDisplayLabel(entity)}
                 </Link>
               </li>

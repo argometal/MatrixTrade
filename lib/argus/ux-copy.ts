@@ -63,8 +63,8 @@ export const HOME_ACTIONS = {
 } as const;
 
 export const HOME_EMPTY = {
-  title: "Nothing captured yet.",
-  hint: "Tap + Capture to write your first note.",
+  title: "Nothing needs attention yet.",
+  hint: "Incoming items appear in Inbox. Use ◇ Create for a person or project, or + Capture for a note.",
 } as const;
 
 export const HOME_SECTIONS = {

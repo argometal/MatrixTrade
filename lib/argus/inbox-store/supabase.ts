@@ -169,6 +169,50 @@ export async function appendInboxAttachment(inboxId: string, attachmentId: strin
   if (error) throw new Error(`Supabase inbox attachment link failed: ${error.message}`);
 }
 
+export async function markInboxConverted(
+  inboxId: string,
+  logId: string,
+  entityIds: string[]
+): Promise<InboxItem> {
+  const item = await getInboxItem(inboxId);
+  if (!item) throw new Error("Inbox item not found");
+  if (item.status !== "pending" && item.status !== "linked") {
+    throw new Error("Inbox item cannot be converted");
+  }
+
+  const mergedEntityIds = [...new Set([...(item.linkedEntityIds ?? []), ...entityIds.filter(Boolean)])];
+  const softDeleteReady = await isArgusSoftDeleteSchemaReady();
+  const supabase = createSupabaseAdmin();
+  let query = supabase
+    .from("argus_inbox_items")
+    .update({
+      status: "converted",
+      converted_log_id: logId,
+      linked_entity_ids: mergedEntityIds,
+    })
+    .eq("id", inboxId);
+  if (softDeleteReady) query = query.is("deleted_at", null);
+  const { data, error } = await query.select("*").single();
+  if (error) throw new Error(`Supabase inbox convert failed: ${error.message}`);
+  return rowToInboxItem(data as InboxRow);
+}
+
+export async function reassignAttachmentParent(
+  attachmentId: string,
+  parentType: AttachmentParentType,
+  parentId: string
+): Promise<void> {
+  const softDeleteReady = await isArgusSoftDeleteSchemaReady();
+  const supabase = createSupabaseAdmin();
+  let query = supabase
+    .from("argus_attachments")
+    .update({ parent_type: parentType, parent_id: parentId })
+    .eq("id", attachmentId);
+  if (softDeleteReady) query = query.is("deleted_at", null);
+  const { error } = await query;
+  if (error) throw new Error(`Supabase attachment reassign failed: ${error.message}`);
+}
+
 export async function linkInboxToEntities(inboxId: string, entityIds: string[]): Promise<InboxItem> {
   const unique = [...new Set(entityIds.filter(Boolean))];
   if (unique.length === 0) throw new Error("Select at least one reference");

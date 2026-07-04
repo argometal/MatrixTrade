@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { deleteEntityAction } from "@/app/argus/actions";
-import { ArgusDeleteForm } from "@/app/argus/components/ArgusDeleteForm";
+import { EntityEvidenceSection } from "@/app/argus/components/EntityEvidenceSection";
 import { EntityEditForm } from "@/app/argus/components/EntityEditForm";
-import { LogCard } from "@/app/argus/components/Cards";
+import { ArgusDeleteForm } from "@/app/argus/components/ArgusDeleteForm";
 import { Card, EmptyState, formatDate, PageHeader } from "@/app/argus/components/ui";
 import { entityKindLabel, entityNotesForDisplay } from "@/lib/argus/reference-types";
 import {
@@ -12,9 +11,9 @@ import {
   RELATIONSHIP_HEALTH_LABELS,
   STRATEGIC_VALUE_LABELS,
 } from "@/lib/argus/labels";
+import { loadEntityEvidence } from "@/lib/argus/entity-evidence";
 import { buildEntityIntelligence } from "@/lib/argus/network-intelligence";
-import { ENTITY_PAGE, REFERENCES, TESTING } from "@/lib/argus/ux-copy";
-import { getEntityHistory } from "@/lib/argus/network";
+import { ENTITY_PAGE, TESTING } from "@/lib/argus/ux-copy";
 import { getEntities, getEntity, readArgus } from "@/lib/argus/server-storage";
 
 export default async function EntityNetworkPage({ params }: { params: Promise<{ id: string }> }) {
@@ -39,7 +38,7 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
   const entities = await getEntities();
   const today = new Date().toISOString().slice(0, 10);
   const intel = buildEntityIntelligence(data, entity, includePrivate, today);
-  const history = getEntityHistory(data, id, includePrivate);
+  const evidence = await loadEntityEvidence(id, includePrivate);
   const sv = entity.strategicValue ?? 3;
 
   return (
@@ -120,22 +119,12 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
         <input type="hidden" name="entityId" value={entity.id} />
       </ArgusDeleteForm>
 
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">{ENTITY_PAGE.recentActivity}</h2>
-      {history.length === 0 ? (
-        <EmptyState message={REFERENCES.emptyActivity} />
-      ) : (
-        <div className="space-y-3">
-          {history.slice(0, 12).map((log) => (
-            <LogCard key={log.id} log={log} entities={entities} />
-          ))}
-        </div>
-      )}
-
-      <p className="mt-6 text-center">
-        <Link href="/argus/journal?capture=1" className="text-sm text-teal-500 underline">
-          + {ENTITY_PAGE.addDocumentFor(entity.name)}
-        </Link>
-      </p>
+      <EntityEvidenceSection
+        logs={evidence.logs}
+        linkedInbox={evidence.linkedInbox}
+        entities={entities}
+        entityName={entity.name}
+      />
     </>
   );
 }
