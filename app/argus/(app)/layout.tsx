@@ -1,5 +1,4 @@
 import { BottomNav } from "@/app/argus/components/BottomNav";
-import { ArgusAddLauncher } from "@/app/argus/components/ArgusAddLauncher";
 import { SignOutButton } from "@/app/components/SignOutButton";
 import { requireArgusSession } from "@/lib/auth/require-session";
 
@@ -7,12 +6,11 @@ export default async function ArgusAppLayout({ children }: { children: React.Rea
   await requireArgusSession();
 
   return (
-    <div className="mx-auto min-h-screen max-w-lg px-5 pb-28 pt-2 md:max-w-4xl">
-      <div className="mb-2 flex justify-start pt-14">
+    <div className="mx-auto min-h-screen max-w-lg px-5 pb-28 pt-4 md:max-w-4xl">
+      <div className="mb-3 flex justify-end">
         <SignOutButton className="text-xs font-medium text-zinc-500 hover:text-zinc-300" />
       </div>
       {children}
-      <ArgusAddLauncher />
       <BottomNav />
     </div>
   );

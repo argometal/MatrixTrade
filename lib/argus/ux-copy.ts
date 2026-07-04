@@ -44,6 +44,19 @@ export const ADD_MENU = {
   newKind: (label: string) => `New ${label}`,
 } as const;
 
+export const BOTTOM_NAV = {
+  home: "Home",
+  network: "Network",
+  inbox: "Inbox",
+  search: "Search",
+} as const;
+
+export const ACTIVITY_SORT = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+  toggleLabel: "Sort",
+} as const;
+
 export const TAGS = {
   title: "Tags",
   linkLabel: "Tagged",

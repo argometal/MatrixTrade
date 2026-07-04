@@ -15,7 +15,12 @@ import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { ADD_MENU, ENTITY_CREATE } from "@/lib/argus/ux-copy";
 import { ReferenceCreateModal } from "./ReferenceCreateModal";
 
-export function ArgusAddLauncher() {
+type AddMenuButtonProps = {
+  variant?: "nav" | "floating";
+  className?: string;
+};
+
+export function AddMenuButton({ variant = "nav", className = "" }: AddMenuButtonProps) {
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -66,15 +71,20 @@ export function ArgusAddLauncher() {
     });
   }
 
+  const buttonClass =
+    variant === "nav"
+      ? "flex h-12 w-12 -translate-y-3 items-center justify-center rounded-full bg-teal-500 text-xl font-light text-white shadow-lg shadow-teal-950/50 transition hover:bg-teal-400 active:scale-95"
+      : "flex h-14 w-14 items-center justify-center rounded-full bg-teal-500 text-2xl font-light text-white shadow-lg shadow-teal-950/50 transition hover:bg-teal-400 active:scale-95";
+
   return (
     <>
       <div
         ref={menuRef}
-        className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-5 z-40 flex flex-col items-end gap-2"
+        className={`relative flex flex-col items-center ${className}`}
       >
         {menuOpen ? (
           <div
-            className="mb-1 w-[min(280px,calc(100vw-2.5rem))] rounded-2xl border border-zinc-700/80 bg-zinc-900 p-2 shadow-2xl shadow-black/50"
+            className="absolute bottom-full z-50 mb-3 w-[min(280px,calc(100vw-2.5rem))] rounded-2xl border border-zinc-700/80 bg-zinc-900 p-2 shadow-2xl shadow-black/50"
             role="menu"
             aria-label={ADD_MENU.title}
           >
@@ -109,7 +119,7 @@ export function ArgusAddLauncher() {
           onClick={() => setMenuOpen((open) => !open)}
           aria-label={ADD_MENU.fab}
           aria-expanded={menuOpen}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-500 text-2xl font-light text-white shadow-lg shadow-teal-950/50 transition hover:bg-teal-400 active:scale-95"
+          className={buttonClass}
         >
           +
         </button>
@@ -134,5 +144,13 @@ export function ArgusAddLauncher() {
   );
 }
 
-/** @deprecated Use ArgusAddLauncher — kept for imports during transition */
+/** @deprecated Use AddMenuButton in BottomNav */
+export function ArgusAddLauncher() {
+  return (
+    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-5 z-40">
+      <AddMenuButton variant="floating" />
+    </div>
+  );
+}
+
 export const EntityCreateLauncher = ArgusAddLauncher;

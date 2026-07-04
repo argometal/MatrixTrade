@@ -13,7 +13,11 @@ export function buildHomeActivityFeed(
 ): HomeActivityItem[] {
   const items: HomeActivityItem[] = [
     ...entities.map((entity) => ({ type: "entity" as const, entity, at: entity.updatedAt })),
-    ...logs.map((log) => ({ type: "log" as const, log, at: log.date })),
+    ...logs.map((log) => ({
+      type: "log" as const,
+      log,
+      at: log.updatedAt || log.createdAt || log.date,
+    })),
   ];
   return items.sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit);
 }

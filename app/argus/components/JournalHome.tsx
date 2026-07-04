@@ -7,7 +7,7 @@ import type { Entity, InboxItem, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import type { HomeNetworkSummary, HomeProjectSummary, HomeActivityItem } from "@/lib/argus/home-helpers";
 import { entityDetailHref, entityKindLabel } from "@/lib/argus/reference-types";
-import { HOME_DETAIL, HOME_EMPTY, HOME_NAV, INBOX, SECTION_EMPTY, TESTING, ENTITY_CREATE } from "@/lib/argus/ux-copy";
+import { HOME_DETAIL, HOME_EMPTY, HOME_NAV, INBOX, SECTION_EMPTY, TESTING, ENTITY_CREATE, ACTIVITY_SORT } from "@/lib/argus/ux-copy";
 import { createLogAction, clearAllArgusDataAction } from "@/app/argus/actions";
 import { ArgusClearAllForm } from "./ArgusDeleteForm";
 import { CaptureSheet } from "./CaptureSheet";
@@ -20,6 +20,7 @@ import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePicker
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 
 const ACTIVITY_PREVIEW_LIMIT = 8;
+const ACTIVITY_SORT_KEY = "argus-activity-sort";
 const FOLLOW_UP_PREVIEW_LIMIT = 5;
 const DOCUMENT_PREVIEW_LIMIT = 6;
 
@@ -69,6 +70,14 @@ export function JournalHome({
   const [sheetOpen, setSheetOpen] = useState(captureOpen);
   const [activeSection, setActiveSection] = useState<HomeSectionId>("inbox");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [activitySort, setActivitySort] = useState<"newest" | "oldest">("newest");
+
+  useEffect(() => {
+    const stored = localStorage.getItem(ACTIVITY_SORT_KEY);
+    if (stored === "newest" || stored === "oldest") {
+      setActivitySort(stored);
+    }
+  }, []);
 
   useEffect(() => {
     if (captureOpen) setSheetOpen(true);
@@ -89,7 +98,10 @@ export function JournalHome({
     recentDocuments.length > 0 ||
     networkSummaries.length > 0;
 
-  const activityItems = activityFeed.slice(0, ACTIVITY_PREVIEW_LIMIT);
+  const activityItems = useMemo(() => {
+    const base = activityFeed.slice(0, ACTIVITY_PREVIEW_LIMIT);
+    return activitySort === "oldest" ? [...base].reverse() : base;
+  }, [activityFeed, activitySort]);
   const followUpItems = upcomingFollowUps.slice(0, FOLLOW_UP_PREVIEW_LIMIT);
   const documentItems = recentDocuments.slice(0, DOCUMENT_PREVIEW_LIMIT);
   const activeProjects = projects.filter((p) => p.linkedCount > 0);
@@ -121,12 +133,29 @@ export function JournalHome({
       .filter((e): e is Entity => Boolean(e));
   }
 
+  function toggleActivitySort() {
+    setActivitySort((current) => {
+      const next = current === "newest" ? "oldest" : "newest";
+      localStorage.setItem(ACTIVITY_SORT_KEY, next);
+      return next;
+    });
+  }
+
   const detailHeader = (() => {
     switch (activeSection) {
       case "activity":
         return {
           title: HOME_NAV.activity,
           subtitle: HOME_DETAIL.activityCount(activityItems.length),
+          action: (
+            <button
+              type="button"
+              onClick={toggleActivitySort}
+              className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+            >
+              {activitySort === "newest" ? ACTIVITY_SORT.newest : ACTIVITY_SORT.oldest}
+            </button>
+          ),
         };
       case "followUps":
         return {
