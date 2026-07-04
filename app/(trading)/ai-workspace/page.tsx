@@ -13,7 +13,7 @@ import { getSyncHistory } from "@/lib/sync-history";
 import { checkWorkerReachable } from "@/lib/system-status";
 import { getSetups } from "@/lib/setups";
 import { describeProposal, parseTradingInboxPayload } from "@/lib/bridge";
-import { listAllPendingInboxItems } from "@/lib/trading-inbox-storage";
+import { listPendingInboxForRuntime } from "@/lib/trading-inbox-submit";
 import { getExperiment, getTrades } from "@/lib/storage";
 
 export default async function AiWorkspacePage() {
@@ -59,7 +59,7 @@ export default async function AiWorkspacePage() {
     },
   });
 
-  const pendingInbox = await listAllPendingInboxItems(workerInbox);
+  const pendingInbox = await listPendingInboxForRuntime(workerInbox);
 
   return (
     <div className="space-y-8">

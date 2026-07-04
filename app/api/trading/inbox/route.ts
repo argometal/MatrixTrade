@@ -66,9 +66,12 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    if (process.env.VERCEL_ENV === "production") {
+    if (process.env.VERCEL) {
       return NextResponse.json(
-        { error: "Production inbox requires Supabase. Run supabase/trading-inbox.sql." },
+        {
+          error:
+            "Production inbox unavailable. Configure Worker bridge or run supabase/trading-inbox.sql.",
+        },
         { status: 503 }
       );
     }

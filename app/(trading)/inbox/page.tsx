@@ -4,7 +4,7 @@ import {
   fetchBridgeInbox,
   parseTradingInboxPayload,
 } from "@/lib/bridge";
-import { listAllPendingInboxItems } from "@/lib/trading-inbox-storage";
+import { listPendingInboxForRuntime } from "@/lib/trading-inbox-submit";
 
 export default async function TradingInboxPage({
   searchParams,
@@ -13,7 +13,7 @@ export default async function TradingInboxPage({
 }) {
   const params = await searchParams;
   const workerItems = await fetchBridgeInbox();
-  const items = await listAllPendingInboxItems(workerItems);
+  const items = await listPendingInboxForRuntime(workerItems);
 
   return (
     <div className="space-y-6">

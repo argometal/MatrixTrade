@@ -15,6 +15,10 @@ import {
 
 export type InboxBackend = "worker" | "supabase" | "local";
 
+function isVercelRuntime(): boolean {
+  return Boolean(process.env.VERCEL);
+}
+
 function isSupabaseInboxStore(): boolean {
   if (isSupabaseTradesStore()) return true;
   if (process.env.VERCEL_ENV === "production") return true;
@@ -61,19 +65,20 @@ export async function submitToTradingInbox(
         origin: "supabase",
       };
     } catch (err) {
+      const detail = err instanceof Error ? err.message : "unknown error";
       return {
         ok: false,
-        error: err instanceof Error ? err.message : "Supabase inbox insert failed",
+        error: `Production inbox unavailable (Supabase). Run supabase/trading-inbox.sql. ${detail}`,
       };
     }
   }
 
-  if (process.env.VERCEL_ENV === "production") {
+  if (isVercelRuntime()) {
     return {
       ok: false,
       error:
         workerResult.error ??
-        "Production inbox unavailable. Configure Worker bridge or Supabase trading_inbox table.",
+        "Production inbox unavailable. Configure Worker bridge (BRIDGE_WRITE_TOKEN) or run supabase/trading-inbox.sql.",
     };
   }
 
@@ -138,6 +143,18 @@ export async function listSupabasePendingInboxItems() {
   } catch {
     return [];
   }
+}
+
+export async function listPendingInboxForRuntime(
+  workerItems: import("./bridge").BridgeInboxItem[]
+): Promise<import("./bridge").BridgeInboxItem[]> {
+  const [supabase, local] = await Promise.all([
+    listSupabasePendingInboxItems(),
+    isVercelRuntime() ? Promise.resolve([]) : listLocalInboxItems(),
+  ]);
+  return [...workerItems, ...supabase, ...local].sort((a, b) =>
+    b.receivedAt.localeCompare(a.receivedAt)
+  );
 }
 
 export async function getInboxItemFromStore(
