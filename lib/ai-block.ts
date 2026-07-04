@@ -70,22 +70,133 @@ export function parseAiBlock(raw: string):
   return { ok: true, payload: inboxPayload, body };
 }
 
-export function sampleTradeAiBlock(): string {
-  return JSON.stringify(
-    {
-      type: "trade-proposal",
-      source: "ai-block",
-      proposal: {
-        id: "H002",
-        ticker: "TICKER",
-        entry: 100,
-        stop: 95,
-        shares: 10,
-        target: 110,
-        thesis: "Setup per snapshot context.",
-      },
+export interface AiBlockSampleOption {
+  type: AiBlockType;
+  label: string;
+  hint: string;
+}
+
+export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
+  {
+    type: "trade-proposal",
+    label: "trade-proposal — create trade",
+    hint: "New trade: id, ticker, entry, stop, shares",
+  },
+  {
+    type: "trade-update",
+    label: "trade-update — update trade",
+    hint: "Change fields on existing trade (stop, target, thesis, …)",
+  },
+  {
+    type: "trade-close",
+    label: "trade-close — close trade",
+    hint: "Close with exit price",
+  },
+  {
+    type: "trade-review",
+    label: "trade-review — post-close review",
+    hint: "Quality scores 1–5 + optional lesson",
+  },
+  {
+    type: "analysis",
+    label: "analysis — notes on trade",
+    hint: "Thesis, psychology, lessons, or notes on existing trade",
+  },
+  {
+    type: "playbook-create",
+    label: "playbook-create — new playbook",
+    hint: "Name, status, checklist",
+  },
+  {
+    type: "playbook-update",
+    label: "playbook-update — edit playbook",
+    hint: "Update name, status, description, or checklist",
+  },
+];
+
+const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
+  "trade-proposal": {
+    type: "trade-proposal",
+    source: "ai-block",
+    proposal: {
+      id: "H00X",
+      ticker: "TICKER",
+      entry: 100,
+      stop: 95,
+      shares: 10,
+      target: 110,
+      thesis: "Setup per snapshot context.",
     },
-    null,
-    2
-  );
+  },
+  "trade-update": {
+    type: "trade-update",
+    source: "ai-block",
+    proposal: {
+      id: "H001",
+      stop: 95,
+      target: 110,
+      thesis: "Updated stop and target after review.",
+    },
+  },
+  "trade-close": {
+    type: "trade-close",
+    source: "ai-block",
+    proposal: {
+      id: "H001",
+      exit: 108.5,
+    },
+  },
+  "trade-review": {
+    type: "trade-review",
+    source: "ai-block",
+    proposal: {
+      id: "H001",
+      qualityEntry: 4,
+      qualityExit: 3,
+      qualityMgmt: 4,
+      mistakes: ["none"],
+      lesson: "Waited for confirmation; exit was early.",
+      actionItem: "Hold to target when trend intact.",
+    },
+  },
+  analysis: {
+    type: "analysis",
+    source: "ai-block",
+    proposal: {
+      id: "H001",
+      thesis: "Breakout held above prior high; trend intact.",
+      psychology: "Patient entry; no FOMO.",
+      lessons: "Let winners run when structure supports it.",
+      notes: "Watch next resistance at target.",
+    },
+  },
+  "playbook-create": {
+    type: "playbook-create",
+    source: "ai-block",
+    proposal: {
+      id: "momentum-pullback",
+      name: "Momentum Pullback",
+      status: "TESTING",
+      description: "Pullback to support in an uptrend.",
+      checklist: ["HTF trend up", "Pullback to support", "Trigger on lower timeframe"],
+    },
+  },
+  "playbook-update": {
+    type: "playbook-update",
+    source: "ai-block",
+    proposal: {
+      id: "weekly-breakout",
+      status: "ACTIVE",
+      description: "Promoted after positive sample size.",
+    },
+  },
+};
+
+export function sampleAiBlock(type: AiBlockType): string {
+  const block = SAMPLE_BLOCKS[type];
+  return JSON.stringify(block, null, 2);
+}
+
+export function sampleTradeAiBlock(): string {
+  return sampleAiBlock("trade-proposal");
 }

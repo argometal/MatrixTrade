@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { ImportAiBlockActionResult } from "@/app/actions";
 import { AI_BRIDGE_CAPABILITIES, AI_BRIDGE_FLOW } from "@/lib/ai-bridge-types";
-import { sampleTradeAiBlock } from "@/lib/ai-block";
+import {
+  AI_BLOCK_SAMPLE_OPTIONS,
+  sampleAiBlock,
+  type AiBlockType,
+} from "@/lib/ai-block";
 
 const FLOW_STEPS = [
   "Copy Snapshot",
@@ -48,6 +52,13 @@ export function AiBlockPanel({
   const [importResult, setImportResult] = useState<{ inboxItemId: string; origin: string } | null>(
     null
   );
+  const [sampleType, setSampleType] = useState("");
+
+  function handleSampleSelect(type: string) {
+    setSampleType(type);
+    if (!type) return;
+    setPasteValue(sampleAiBlock(type as AiBlockType));
+  }
 
   async function handleCopySnapshot() {
     const ok = await copyText(snapshotText);
@@ -145,7 +156,7 @@ export function AiBlockPanel({
             className="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-xs focus:border-zinc-500 focus:outline-none"
           />
         </label>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-end gap-3">
           <button
             type="submit"
             disabled={pending || !pasteValue.trim()}
@@ -153,17 +164,30 @@ export function AiBlockPanel({
           >
             {pending ? "Importing…" : "Import AI Block"}
           </button>
-          <button
-            type="button"
-            onClick={() => setPasteValue(sampleTradeAiBlock())}
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
-          >
-            Load sample trade-proposal
-          </button>
+          <label className="block min-w-[14rem] flex-1 space-y-1">
+            <span className="text-sm text-zinc-700">Load sample format</span>
+            <select
+              value={sampleType}
+              onChange={(e) => handleSampleSelect(e.target.value)}
+              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-800 focus:border-zinc-500 focus:outline-none"
+            >
+              <option value="">Choose block type…</option>
+              {AI_BLOCK_SAMPLE_OPTIONS.map((option) => (
+                <option key={option.type} value={option.type}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
+        {sampleType && (
+          <p className="text-xs text-zinc-500">
+            {AI_BLOCK_SAMPLE_OPTIONS.find((o) => o.type === sampleType)?.hint} — edit values, then
+            Import (not applied until Inbox → Apply).
+          </p>
+        )}
         <p className="text-xs text-zinc-500">
-          Types with Apply today: trade-proposal, trade-close, trade-review, analysis, trade-update,
-          playbook-create, playbook-update. Never auto-applied.
+          All block types apply through Inbox. Never auto-applied.
         </p>
       </form>
     </div>
