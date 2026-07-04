@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { Entity, InboxItem } from "@/lib/argus/types";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import { entityDetailHref, referenceDisplayLabel } from "@/lib/argus/reference-types";
@@ -10,7 +10,8 @@ import {
   type AttachmentViewModel,
   type EmailViewModel,
 } from "@/lib/argus/email-view";
-import { HOME_INBOX_ACTIONS, INBOX, TESTING } from "@/lib/argus/ux-copy";
+import { HOME_INBOX_ACTIONS, INBOX, LINK_HIERARCHY, TESTING } from "@/lib/argus/ux-copy";
+import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { archiveInboxAction, convertInboxAction, deleteInboxAction, linkInboxAction, type CreatedEntityResult } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "./ArgusDeleteForm";
 import { CaptureSheet } from "./CaptureSheet";
@@ -60,6 +61,8 @@ export function HomeInboxCard({
   const canTriage = item.status === "pending" || item.status === "linked";
   const preview = view.textBody.replace(/\s+/g, " ").trim().slice(0, 120);
   const primaryAttachment = attachments[0];
+  const inboxBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "inbox"), [buckets]);
+  const inboxCreateKinds = allowedCreateKinds("inbox");
 
   function submitLinkForm() {
     linkFormRef.current?.requestSubmit();
@@ -208,7 +211,7 @@ export function HomeInboxCard({
 
           <ReferencePickerModal
             open={pickerOpen}
-            buckets={buckets}
+            buckets={inboxBuckets}
             selectedIds={linkIds}
             onChange={setLinkIds}
             onClose={() => setPickerOpen(false)}
@@ -216,6 +219,7 @@ export function HomeInboxCard({
               if (linkIds.length > 0) submitLinkForm();
             }}
             onEntityCreated={linkCreatedEntity}
+            allowedCreateKinds={inboxCreateKinds}
             createButtonLabel={INBOX.createReference}
           />
 

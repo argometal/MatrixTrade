@@ -27,6 +27,12 @@ export interface Entity {
   endDate?: string;
   /** Person/company entity IDs linked to this project */
   linkedPersonIds?: string[];
+  /** Topic entity IDs linked to this project */
+  linkedTopicIds?: string[];
+  /** Event entity IDs linked to this project (filtered by project date range in UI) */
+  linkedEventIds?: string[];
+  /** Outbound entity links for person, organization, topic, and event records */
+  linkedEntityIds?: string[];
   /** Tag strings linked to this project — same canonical form as log.topics */
   linkedTags?: string[];
   createdAt: string;

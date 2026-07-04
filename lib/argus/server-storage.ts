@@ -21,6 +21,12 @@ import type {
   LogInput,
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
+import {
+  filterLinkIdsForSource,
+  linkSourceKindFromEntity,
+  type LinkContext,
+} from "./link-hierarchy";
+import { referenceKindFromNotes } from "./reference-types";
 import { ArgusPersistenceError } from "./persistence/errors";
 import { isActiveRecord, softDeleteEntity, softDeleteLog, softDeleteInboxItem } from "./supabase-protection/protected-counts";
 import {
@@ -158,6 +164,9 @@ export async function createEntity(input: EntityInput): Promise<Entity> {
     alias: input.alias ?? "",
     strategicValue: input.strategicValue ?? 3,
     linkedPersonIds: input.linkedPersonIds ?? [],
+    linkedTopicIds: input.linkedTopicIds ?? [],
+    linkedEventIds: input.linkedEventIds ?? [],
+    linkedEntityIds: input.linkedEntityIds ?? [],
     linkedTags: input.linkedTags ?? [],
     id: generateId(),
     createdAt: now,
@@ -190,7 +199,17 @@ export async function createEntity(input: EntityInput): Promise<Entity> {
 export type EntityUpdatePatch = Partial<
   Pick<
     Entity,
-    "strategicValue" | "alias" | "notes" | "name" | "startDate" | "endDate" | "linkedPersonIds" | "linkedTags"
+    | "strategicValue"
+    | "alias"
+    | "notes"
+    | "name"
+    | "startDate"
+    | "endDate"
+    | "linkedPersonIds"
+    | "linkedTopicIds"
+    | "linkedEventIds"
+    | "linkedEntityIds"
+    | "linkedTags"
   >
 >;
 
@@ -200,11 +219,37 @@ function normalizeOptionalDate(value: string | undefined): string | undefined {
 }
 
 function normalizeLinkedPersonIds(data: ArgusData, ids: string[] | undefined): string[] {
-  if (!ids?.length) return [];
-  const valid = new Set(
-    data.entities.filter(isActiveRecord).filter((e) => e.type === "person" || e.type === "company").map((e) => e.id)
-  );
-  return [...new Set(ids.filter((id) => valid.has(id)))];
+  return filterLinkIdsForSource(
+    data.entities.filter(isActiveRecord),
+    "project",
+    ids
+  ).filter((id) => {
+    const entity = data.entities.find((entry) => entry.id === id);
+    return entity?.type === "person" || entity?.type === "company";
+  });
+}
+
+function normalizeLinkedTopicIds(data: ArgusData, ids: string[] | undefined): string[] {
+  return filterLinkIdsForSource(data.entities.filter(isActiveRecord), "project", ids).filter((id) => {
+    const entity = data.entities.find((entry) => entry.id === id);
+    return entity && referenceKindFromNotes(entity.notes ?? "") === "topic";
+  });
+}
+
+function normalizeLinkedEventIds(
+  data: ArgusData,
+  ids: string[] | undefined,
+  context: LinkContext
+): string[] {
+  return filterLinkIdsForSource(data.entities.filter(isActiveRecord), "project", ids, context).filter((id) => {
+    const entity = data.entities.find((entry) => entry.id === id);
+    return entity && referenceKindFromNotes(entity.notes ?? "") === "event";
+  });
+}
+
+function normalizeLinkedEntityIds(data: ArgusData, entity: Entity, ids: string[] | undefined): string[] {
+  const source = linkSourceKindFromEntity(entity);
+  return filterLinkIdsForSource(data.entities.filter(isActiveRecord), source, ids);
 }
 
 function normalizeLinkedTags(tags: string[] | undefined): string[] {
@@ -231,6 +276,11 @@ export async function updateEntity(id: string, patch: EntityUpdatePatch): Promis
   const sv = patch.strategicValue;
   const strategicValue = sv !== undefined && sv >= 1 && sv <= 5 ? sv : current.strategicValue;
   const name = patch.name !== undefined ? patch.name.trim() : current.name;
+  const linkContext: LinkContext = {
+    projectStart:
+      patch.startDate !== undefined ? normalizeOptionalDate(patch.startDate) : current.startDate,
+    projectEnd: patch.endDate !== undefined ? normalizeOptionalDate(patch.endDate) : current.endDate,
+  };
 
   data.entities[idx] = {
     ...current,
@@ -244,6 +294,18 @@ export async function updateEntity(id: string, patch: EntityUpdatePatch): Promis
       patch.linkedPersonIds !== undefined
         ? normalizeLinkedPersonIds(data, patch.linkedPersonIds)
         : current.linkedPersonIds ?? [],
+    linkedTopicIds:
+      patch.linkedTopicIds !== undefined
+        ? normalizeLinkedTopicIds(data, patch.linkedTopicIds)
+        : current.linkedTopicIds ?? [],
+    linkedEventIds:
+      patch.linkedEventIds !== undefined
+        ? normalizeLinkedEventIds(data, patch.linkedEventIds, linkContext)
+        : current.linkedEventIds ?? [],
+    linkedEntityIds:
+      patch.linkedEntityIds !== undefined
+        ? normalizeLinkedEntityIds(data, current, patch.linkedEntityIds)
+        : current.linkedEntityIds ?? [],
     linkedTags:
       patch.linkedTags !== undefined ? normalizeLinkedTags(patch.linkedTags) : current.linkedTags ?? [],
     updatedAt: new Date().toISOString(),

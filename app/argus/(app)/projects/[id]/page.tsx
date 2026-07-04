@@ -4,7 +4,7 @@ import { EntityEvidenceSection } from "@/app/argus/components/EntityEvidenceSect
 import { ArgusDeleteForm } from "@/app/argus/components/ArgusDeleteForm";
 import { ProjectEditForm } from "@/app/argus/components/ProjectEditForm";
 import { EmptyState, formatDate, PageHeader } from "@/app/argus/components/ui";
-import { buildEntityPickerBuckets, buildPeoplePickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
+import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
 import { loadEntityEvidence } from "@/lib/argus/entity-evidence";
 import { TESTING } from "@/lib/argus/ux-copy";
 import { getEntities, getEntity, readArgus } from "@/lib/argus/server-storage";
@@ -26,7 +26,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const data = await readArgus();
   const entities = await getEntities();
   const evidence = await loadEntityEvidence(id, includePrivate);
-  const peopleBuckets = buildPeoplePickerBuckets(buildEntityPickerBuckets(data, includePrivate));
+  const allBuckets = buildEntityPickerBuckets(data, includePrivate);
   const tagBuckets = buildTagBuckets(data, includePrivate);
 
   return (
@@ -44,6 +44,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             <dd className="text-zinc-200">{entity.endDate ? formatDate(entity.endDate) : "—"}</dd>
           </div>
           <div>
+            <dt className="text-xs text-zinc-600">Topics</dt>
+            <dd className="text-zinc-200">{entity.linkedTopicIds?.length ?? 0}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-zinc-600">Events</dt>
+            <dd className="text-zinc-200">{entity.linkedEventIds?.length ?? 0}</dd>
+          </div>
+          <div>
             <dt className="text-xs text-zinc-600">People</dt>
             <dd className="text-zinc-200">{entity.linkedPersonIds?.length ?? 0}</dd>
           </div>
@@ -54,7 +62,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         </dl>
       </div>
 
-      <ProjectEditForm entity={entity} peopleBuckets={peopleBuckets} tagBuckets={tagBuckets} />
+      <ProjectEditForm entity={entity} allBuckets={allBuckets} tagBuckets={tagBuckets} />
 
       <ArgusDeleteForm
         action={deleteEntityAction}

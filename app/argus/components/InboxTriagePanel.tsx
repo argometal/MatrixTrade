@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
 import { referenceDisplayLabel, entityDetailHref } from "@/lib/argus/reference-types";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import { INBOX, TESTING } from "@/lib/argus/ux-copy";
+import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { CaptureSheet } from "./CaptureSheet";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
 import type { TagBuckets } from "./TagPickerModal";
@@ -51,6 +52,8 @@ export function InboxTriagePanel({
 
   const canTriage = item.status === "pending" || item.status === "linked";
   const statusLabel = INBOX_STATUS_LABELS[item.status];
+  const inboxBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "inbox"), [buckets]);
+  const inboxCreateKinds = allowedCreateKinds("inbox");
 
   function submitLinkForm() {
     linkFormRef.current?.requestSubmit();
@@ -112,7 +115,7 @@ export function InboxTriagePanel({
 
           <ReferencePickerModal
             open={pickerOpen}
-            buckets={buckets}
+            buckets={inboxBuckets}
             selectedIds={linkIds}
             onChange={setLinkIds}
             onClose={() => setPickerOpen(false)}
@@ -120,8 +123,8 @@ export function InboxTriagePanel({
               if (linkIds.length > 0) submitLinkForm();
             }}
             onEntityCreated={linkCreatedEntity}
-            defaultCreateKind="person"
-            createButtonLabel={INBOX.createPerson}
+            allowedCreateKinds={inboxCreateKinds}
+            createButtonLabel={INBOX.createReference}
           />
 
           {showConvert ? (

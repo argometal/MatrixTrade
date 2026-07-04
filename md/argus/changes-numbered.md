@@ -10,6 +10,7 @@ Use git tags to restore any point.
 | **102** | `change-102` | Compact floating bottom dock — grouped tabs, **+** centered, lifted above screen edge |
 | **103** | `change-103` | Home inbox cards tap-to-link (no expand); actions visible on card face |
 | **104** | `change-104` | Email action menus moved to top of card (Home + inbox detail) |
+| **105** | `change-105` | Hierarchical entity linking with time rules (inbox, project, topic, event) |
 
 ## Restore
 

@@ -203,6 +203,20 @@ export const INBOX = {
   downloadAttachment: "Download",
 } as const;
 
+export const LINK_HIERARCHY = {
+  linkedPeople: "Linked people",
+  linkedTopics: "Linked topics",
+  linkedEvents: "Linked events",
+  newPerson: "+ New Person",
+  newTopic: "+ New Topic",
+  newEvent: "+ New Event",
+  eventDate: "Event date",
+  eventEndDate: "End date (optional)",
+  projectEventsHint: "Only events within the project date range can be linked.",
+  topicEventsHint: "Topics can link people and dated events.",
+  inboxLinkHint: "Link to people, organizations, projects, topics, or events.",
+} as const;
+
 export const SECTION_EMPTY = {
   recentActivity: "No activity yet.",
   recentActivityHint: "Captured notes appear here.",

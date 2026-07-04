@@ -15,6 +15,7 @@ import {
   deleteLog,
   getEntity,
   linkInboxToEntities,
+  readArgus,
   saveAttachment,
   updateEntity,
   updateLog,
@@ -32,6 +33,7 @@ import {
   createInputToReferenceKind,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
+import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
 import { ArgusWriteBlockedError, isDestructiveAllowed } from "@/lib/argus/data-safety";
 import {
   ArgusPersistenceError,
@@ -182,10 +184,12 @@ export async function classifyLogAction(formData: FormData): Promise<void> {
 export async function linkInboxAction(formData: FormData): Promise<void> {
   const inboxId = String(formData.get("inboxId") ?? "");
   const entityIds = await resolveEntityIds(formData);
-  if (entityIds.length === 0) {
+  const data = await readArgus();
+  const validIds = filterLinkIdsForSource(data.entities, "inbox", entityIds);
+  if (validIds.length === 0) {
     redirect(`/argus/inbox/${inboxId}?error=reference`);
   }
-  await linkInboxToEntities(inboxId, entityIds);
+  await linkInboxToEntities(inboxId, validIds);
   revalidateArgus();
   revalidatePath(`/argus/inbox/${inboxId}`);
   const returnTo = String(formData.get("returnTo") ?? "inbox");
@@ -312,10 +316,21 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
     notes = buildReferenceNotes(kind, notes);
   }
 
+  const linkedEntityIds = formData.getAll("linkedEntityIds").map(String);
+  const startDate = String(formData.get("startDate") ?? "").trim();
+  const endDate = String(formData.get("endDate") ?? "").trim();
+
   await updateEntity(entityId, {
     strategicValue,
     alias: String(formData.get("alias") ?? "").trim(),
     notes,
+    linkedEntityIds,
+    ...(kind === "event"
+      ? {
+          startDate,
+          endDate,
+        }
+      : {}),
   });
 
   revalidateArgus();
@@ -333,6 +348,8 @@ export async function updateProjectAction(formData: FormData): Promise<void> {
   const startDate = String(formData.get("startDate") ?? "").trim();
   const endDate = String(formData.get("endDate") ?? "").trim();
   const linkedPersonIds = formData.getAll("linkedPersonIds").map(String);
+  const linkedTopicIds = formData.getAll("linkedTopicIds").map(String);
+  const linkedEventIds = formData.getAll("linkedEventIds").map(String);
   const linkedTags = parseTopics(String(formData.get("linkedTags") ?? ""));
 
   await updateEntity(entityId, {
@@ -340,6 +357,8 @@ export async function updateProjectAction(formData: FormData): Promise<void> {
     startDate,
     endDate,
     linkedPersonIds,
+    linkedTopicIds,
+    linkedEventIds,
     linkedTags,
   });
 

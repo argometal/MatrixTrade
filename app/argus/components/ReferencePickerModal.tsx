@@ -8,6 +8,7 @@ import {
   createInputToReferenceKind,
   entityKindLabel,
   entityNotesForDisplay,
+  REFERENCE_KINDS,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
 import { CAPTURE, REFERENCES, REFERENCE_PICKER } from "@/lib/argus/ux-copy";
@@ -30,6 +31,7 @@ interface ReferencePickerModalProps {
   /** After inline create — picker closes. Return false to skip default select behavior. */
   onEntityCreated?: (entity: CreatedEntityResult) => void | Promise<void | false>;
   defaultCreateKind?: ReferenceKind;
+  allowedCreateKinds?: ReferenceKind[];
   createButtonLabel?: string;
 }
 
@@ -60,8 +62,13 @@ export function ReferencePickerModal({
   onConfirm,
   onEntityCreated,
   defaultCreateKind = "person",
+  allowedCreateKinds,
   createButtonLabel,
 }: ReferencePickerModalProps) {
+  const creatableKinds = allowedCreateKinds ?? REFERENCE_KINDS;
+  const resolvedDefaultKind = creatableKinds.includes(defaultCreateKind)
+    ? defaultCreateKind
+    : creatableKinds[0] ?? "person";
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -206,7 +213,8 @@ export function ReferencePickerModal({
 
       <ReferenceCreateModal
         open={createOpen}
-        defaultKind={defaultCreateKind}
+        defaultKind={resolvedDefaultKind}
+        allowedKinds={creatableKinds}
         onCancel={() => {
           if (!isCreating) setCreateOpen(false);
         }}

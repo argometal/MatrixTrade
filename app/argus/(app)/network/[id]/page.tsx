@@ -5,12 +5,13 @@ import { EntityEvidenceSection } from "@/app/argus/components/EntityEvidenceSect
 import { EntityEditForm } from "@/app/argus/components/EntityEditForm";
 import { ArgusDeleteForm } from "@/app/argus/components/ArgusDeleteForm";
 import { Card, EmptyState, formatDate, PageHeader } from "@/app/argus/components/ui";
-import { entityKindLabel, entityNotesForDisplay } from "@/lib/argus/reference-types";
+import { entityKindLabel, entityNotesForDisplay, referenceKindFromNotes } from "@/lib/argus/reference-types";
 import {
   RELATIONSHIP_HEALTH_COLORS,
   RELATIONSHIP_HEALTH_LABELS,
   STRATEGIC_VALUE_LABELS,
 } from "@/lib/argus/labels";
+import { buildEntityPickerBuckets } from "@/lib/argus/journal-helpers";
 import { loadEntityEvidence } from "@/lib/argus/entity-evidence";
 import { buildEntityIntelligence } from "@/lib/argus/network-intelligence";
 import { ENTITY_PAGE, TESTING } from "@/lib/argus/ux-copy";
@@ -36,6 +37,7 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
 
   const data = await readArgus();
   const entities = await getEntities();
+  const allBuckets = buildEntityPickerBuckets(data, includePrivate);
   const today = new Date().toISOString().slice(0, 10);
   const intel = buildEntityIntelligence(data, entity, includePrivate, today);
   const evidence = await loadEntityEvidence(id, includePrivate);
@@ -57,6 +59,18 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
         </div>
 
         <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-zinc-800 pt-4 text-sm">
+          {referenceKindFromNotes(entity.notes ?? "") === "event" ? (
+            <>
+              <div>
+                <dt className="text-xs text-zinc-600">Event date</dt>
+                <dd className="text-zinc-200">{entity.startDate ? formatDate(entity.startDate) : "—"}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-zinc-600">End date</dt>
+                <dd className="text-zinc-200">{entity.endDate ? formatDate(entity.endDate) : "—"}</dd>
+              </div>
+            </>
+          ) : null}
           <div>
             <dt className="text-xs text-zinc-600">Strategic value</dt>
             <dd className="text-zinc-200">{sv}/5 — {STRATEGIC_VALUE_LABELS[sv]}</dd>
@@ -108,7 +122,7 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
         )}
       </Card>
 
-      <EntityEditForm entity={entity} />
+      <EntityEditForm entity={entity} allBuckets={allBuckets} />
 
       <ArgusDeleteForm
         action={deleteEntityAction}

@@ -18,6 +18,7 @@ interface ReferenceCreateModalProps {
   onCancel: () => void;
   onSave: (data: { name: string; entityType: EntityType; notes: string }) => void;
   defaultKind?: ReferenceKind;
+  allowedKinds?: ReferenceKind[];
   title?: string;
   saveLabel?: string;
   notesOptional?: boolean;
@@ -29,18 +30,24 @@ export function ReferenceCreateModal({
   onCancel,
   onSave,
   defaultKind = "person",
+  allowedKinds = REFERENCE_KINDS,
   title,
   saveLabel,
   notesOptional = false,
   error,
 }: ReferenceCreateModalProps) {
+  const creatableKinds = useMemo(
+    () => REFERENCE_KINDS.filter((kind) => allowedKinds.includes(kind)),
+    [allowedKinds]
+  );
+  const initialKind = creatableKinds.includes(defaultKind) ? defaultKind : creatableKinds[0] ?? "person";
   const [name, setName] = useState("");
-  const [kind, setKind] = useState<ReferenceKind>(defaultKind);
+  const [kind, setKind] = useState<ReferenceKind>(initialKind);
   const [notes, setNotes] = useState("");
 
   useEffect(() => {
-    if (open) setKind(defaultKind);
-  }, [open, defaultKind]);
+    if (open) setKind(initialKind);
+  }, [open, initialKind]);
 
   if (!open) return null;
 
@@ -53,7 +60,7 @@ export function ReferenceCreateModal({
       notes: buildReferenceNotes(kind, notes),
     });
     setName("");
-    setKind(defaultKind);
+    setKind(initialKind);
     setNotes("");
   }
 
@@ -86,7 +93,7 @@ export function ReferenceCreateModal({
               value={kind}
               onChange={(e) => setKind(e.target.value as ReferenceKind)}
             >
-              {REFERENCE_KINDS.map((k) => (
+              {creatableKinds.map((k) => (
                 <option key={k} value={k}>
                   {REFERENCE_KIND_LABELS[k]}
                 </option>
