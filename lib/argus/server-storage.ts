@@ -110,6 +110,8 @@ export async function createEntity(input: EntityInput): Promise<Entity> {
     ...input,
     alias: input.alias ?? "",
     strategicValue: input.strategicValue ?? 3,
+    linkedPersonIds: input.linkedPersonIds ?? [],
+    linkedTags: input.linkedTags ?? [],
     id: generateId(),
     createdAt: now,
     updatedAt: now,
@@ -119,22 +121,65 @@ export async function createEntity(input: EntityInput): Promise<Entity> {
   return entity;
 }
 
-export async function updateEntity(
-  id: string,
-  patch: Pick<Entity, "strategicValue" | "alias" | "notes">
-): Promise<Entity | undefined> {
+export type EntityUpdatePatch = Partial<
+  Pick<
+    Entity,
+    "strategicValue" | "alias" | "notes" | "name" | "startDate" | "endDate" | "linkedPersonIds" | "linkedTags"
+  >
+>;
+
+function normalizeOptionalDate(value: string | undefined): string | undefined {
+  const trimmed = value?.trim().slice(0, 10);
+  return trimmed || undefined;
+}
+
+function normalizeLinkedPersonIds(data: ArgusData, ids: string[] | undefined): string[] {
+  if (!ids?.length) return [];
+  const valid = new Set(
+    data.entities.filter((e) => e.type === "person" || e.type === "company").map((e) => e.id)
+  );
+  return [...new Set(ids.filter((id) => valid.has(id)))];
+}
+
+function normalizeLinkedTags(tags: string[] | undefined): string[] {
+  if (!tags?.length) return [];
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  for (const raw of tags) {
+    const tag = raw.trim().replace(/\s+/g, " ");
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    normalized.push(tag);
+  }
+  return normalized;
+}
+
+export async function updateEntity(id: string, patch: EntityUpdatePatch): Promise<Entity | undefined> {
   const data = await readArgus();
   const idx = data.entities.findIndex((e) => e.id === id);
   if (idx === -1) return undefined;
 
+  const current = data.entities[idx];
   const sv = patch.strategicValue;
-  const strategicValue = sv >= 1 && sv <= 5 ? sv : data.entities[idx].strategicValue;
+  const strategicValue = sv !== undefined && sv >= 1 && sv <= 5 ? sv : current.strategicValue;
+  const name = patch.name !== undefined ? patch.name.trim() : current.name;
 
   data.entities[idx] = {
-    ...data.entities[idx],
+    ...current,
+    name: name || current.name,
     strategicValue,
-    alias: patch.alias ?? "",
-    notes: patch.notes ?? "",
+    alias: patch.alias ?? current.alias ?? "",
+    notes: patch.notes ?? current.notes ?? "",
+    startDate: patch.startDate !== undefined ? normalizeOptionalDate(patch.startDate) : current.startDate,
+    endDate: patch.endDate !== undefined ? normalizeOptionalDate(patch.endDate) : current.endDate,
+    linkedPersonIds:
+      patch.linkedPersonIds !== undefined
+        ? normalizeLinkedPersonIds(data, patch.linkedPersonIds)
+        : current.linkedPersonIds ?? [],
+    linkedTags:
+      patch.linkedTags !== undefined ? normalizeLinkedTags(patch.linkedTags) : current.linkedTags ?? [],
     updatedAt: new Date().toISOString(),
   };
   await writeArgus(data);

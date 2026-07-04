@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { deleteEntityAction } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "@/app/argus/components/ArgusDeleteForm";
@@ -28,6 +29,10 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
         <EmptyState message="Entity not found." />
       </>
     );
+  }
+
+  if (entity.type === "project") {
+    redirect(`/argus/projects/${id}`);
   }
 
   const data = await readArgus();

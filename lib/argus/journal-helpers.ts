@@ -62,6 +62,18 @@ export function buildEntityPickerBuckets(data: ArgusData, includePrivate: boolea
   };
 }
 
+function isNetworkEntity(entity: Entity): boolean {
+  return entity.type === "person" || entity.type === "company";
+}
+
+export function buildPeoplePickerBuckets(buckets: EntityPickerBuckets): EntityPickerBuckets {
+  return {
+    recent: buckets.recent.filter(isNetworkEntity),
+    frequent: buckets.frequent.filter(isNetworkEntity),
+    alphabetical: buckets.alphabetical.filter(isNetworkEntity),
+  };
+}
+
 export interface TagBuckets {
   recent: string[];
   frequent: string[];

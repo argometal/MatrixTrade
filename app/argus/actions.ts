@@ -211,6 +211,31 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
   redirect(`/argus/network/${entityId}`);
 }
 
+export async function updateProjectAction(formData: FormData): Promise<void> {
+  const entityId = String(formData.get("entityId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) {
+    redirect(`/argus/projects/${entityId}?error=name`);
+  }
+
+  const startDate = String(formData.get("startDate") ?? "").trim();
+  const endDate = String(formData.get("endDate") ?? "").trim();
+  const linkedPersonIds = formData.getAll("linkedPersonIds").map(String);
+  const linkedTags = parseTopics(String(formData.get("linkedTags") ?? ""));
+
+  await updateEntity(entityId, {
+    name,
+    startDate,
+    endDate,
+    linkedPersonIds,
+    linkedTags,
+  });
+
+  revalidateArgus();
+  revalidatePath(`/argus/projects/${entityId}`);
+  redirect(`/argus/projects/${entityId}`);
+}
+
 export async function deleteLogAction(formData: FormData): Promise<void> {
   const logId = String(formData.get("logId") ?? "");
   await deleteLog(logId);
@@ -222,6 +247,7 @@ export async function deleteEntityAction(formData: FormData): Promise<void> {
   const entityId = String(formData.get("entityId") ?? "");
   await deleteEntity(entityId);
   revalidateArgus();
+  revalidatePath(`/argus/projects/${entityId}`);
   redirect("/argus/network");
 }
 

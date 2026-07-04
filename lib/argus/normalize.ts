@@ -35,6 +35,10 @@ export function normalizeEntity(entity: Entity): Entity {
     alias: entity.alias ?? "",
     notes: entity.notes ?? "",
     strategicValue,
+    linkedPersonIds: entity.linkedPersonIds ?? [],
+    linkedTags: entity.linkedTags ?? [],
+    startDate: entity.startDate?.slice(0, 10),
+    endDate: entity.endDate?.slice(0, 10),
   };
 }
 

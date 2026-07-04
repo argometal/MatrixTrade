@@ -22,6 +22,13 @@ export interface Entity {
   notes: string;
   /** 1=low … 5=strategic. Default 3. Only user-editable network field besides alias/notes. */
   strategicValue: StrategicValue;
+  /** Project date range (YYYY-MM-DD) — relations only, not duplicate evidence */
+  startDate?: string;
+  endDate?: string;
+  /** Person/company entity IDs linked to this project */
+  linkedPersonIds?: string[];
+  /** Tag strings linked to this project — same canonical form as log.topics */
+  linkedTags?: string[];
   createdAt: string;
   updatedAt: string;
 }

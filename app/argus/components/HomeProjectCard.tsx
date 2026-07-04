@@ -44,7 +44,7 @@ export function HomeProjectCard({
         </div>
       </dl>
       <Link
-        href={`/argus/network/${entity.id}`}
+        href={`/argus/projects/${entity.id}`}
         className="mt-4 inline-flex rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
       >
         Open project
