@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import type { Entity } from "@/lib/argus/types";
+import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { createEntityInlineAction } from "@/app/argus/actions";
 import {
   REFERENCE_KINDS,
@@ -267,7 +268,8 @@ export function EntityPicker({
                   onQuickCreateNotesChange("");
                   setShowCreate(false);
                 } catch (err) {
-                  setCreateError(err instanceof Error ? err.message : "Could not create");
+                  const { layer, message } = formatArgusError(err);
+                  setCreateError(`${layer.toUpperCase()}: ${message}`);
                 }
               });
             }}

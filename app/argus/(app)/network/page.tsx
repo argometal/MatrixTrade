@@ -12,9 +12,9 @@ import { REFERENCES, NETWORK, ENTITY_CREATE } from "@/lib/argus/ux-copy";
 export default async function NetworkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; error?: string }>;
+  searchParams: Promise<{ q?: string; error?: string; errorLayer?: string; errorMsg?: string }>;
 }) {
-  const { q, error } = await searchParams;
+  const { q, error, errorLayer, errorMsg } = await searchParams;
   const includePrivate = await hasArgusPrivateUnlock();
   const data = await readArgus();
   const intelligence = buildAllEntityIntelligence(data, includePrivate, q);
@@ -26,7 +26,7 @@ export default async function NetworkPage({
     <>
       <PageHeader title={NETWORK.title} subtitle={NETWORK.subtitle} backHref="/argus/journal" />
 
-      <EntityCreateForm error={error} />
+      <EntityCreateForm error={error} errorLayer={errorLayer} errorMsg={errorMsg} />
 
       <form action="/argus/network" method="get" className="mb-6 flex gap-2">
         <input name="q" defaultValue={q ?? ""} placeholder={NETWORK.searchPlaceholder} className={inputClass} />

@@ -21,6 +21,7 @@ import type {
   LogInput,
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
+import { ArgusPersistenceError } from "./persistence/errors";
 import { isActiveRecord, softDeleteEntity, softDeleteLog, softDeleteInboxItem } from "./supabase-protection/protected-counts";
 import {
   isSupabaseDestructiveBlocked,
@@ -163,8 +164,27 @@ export async function createEntity(input: EntityInput): Promise<Entity> {
     updatedAt: now,
   };
   data.entities.push(entity);
-  await writeArgus(data);
-  return entity;
+  try {
+    await writeArgus(data);
+  } catch (err) {
+    throw err instanceof ArgusWriteBlockedError
+      ? new ArgusPersistenceError(
+          "supabase",
+          "Journal write blocked — Supabase journal store is not active on this host.",
+          { cause: err }
+        )
+      : err;
+  }
+
+  const fresh = await readArgus();
+  const saved = fresh.entities.find((e) => e.id === entity.id && isActiveRecord(e));
+  if (!saved) {
+    throw new ArgusPersistenceError(
+      "database",
+      `Entity "${entity.name}" was not found after database write confirmation.`
+    );
+  }
+  return saved;
 }
 
 export type EntityUpdatePatch = Partial<
@@ -362,8 +382,27 @@ export async function createLog(input: LogInput): Promise<Log> {
     const entity = data.entities.find((e) => e.id === eid);
     if (entity) entity.updatedAt = now;
   }
-  await writeArgus(data);
-  return log;
+  try {
+    await writeArgus(data);
+  } catch (err) {
+    throw err instanceof ArgusWriteBlockedError
+      ? new ArgusPersistenceError(
+          "supabase",
+          "Journal write blocked — Supabase journal store is not active on this host.",
+          { cause: err }
+        )
+      : err;
+  }
+
+  const fresh = await readArgus();
+  const saved = fresh.logs.find((l) => l.id === log.id && isActiveRecord(l));
+  if (!saved) {
+    throw new ArgusPersistenceError(
+      "database",
+      `Evidence "${log.title || log.id}" was not found after database write confirmation.`
+    );
+  }
+  return saved;
 }
 
 export async function classifyLog(logId: string, entityIds: string[]): Promise<Log> {

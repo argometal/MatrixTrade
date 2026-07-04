@@ -1,31 +1,41 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { createEntityAction } from "@/app/argus/actions";
+import { createEntityInlineAction } from "@/app/argus/actions";
 import {
   createInputToReferenceKind,
   entityNotesForDisplay,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
 import type { EntityType } from "@/lib/argus/types";
+import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { ENTITY_CREATE } from "@/lib/argus/ux-copy";
 import { ReferenceCreateModal } from "./ReferenceCreateModal";
 
 export function EntityCreateLauncher() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [, startTransition] = useTransition();
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   function handleSave(data: { name: string; entityType: EntityType; notes: string }) {
     const kind = createInputToReferenceKind(data.entityType, data.notes);
-    const formData = new FormData();
-    formData.set("name", data.name);
-    formData.set("kind", kind);
-    formData.set("notes", entityNotesForDisplay(data.notes));
-
-    startTransition(() => {
-      void createEntityAction(formData);
+    setSaveError(null);
+    startTransition(async () => {
+      try {
+        const entity = await createEntityInlineAction(
+          kind,
+          data.name,
+          entityNotesForDisplay(data.notes)
+        );
+        setOpen(false);
+        router.push(entity.href);
+      } catch (err) {
+        const { layer, message } = formatArgusError(err);
+        setSaveError(`${layer.toUpperCase()}: ${message}`);
+      }
     });
-    setOpen(false);
   }
 
   return (
@@ -40,11 +50,17 @@ export function EntityCreateLauncher() {
       </button>
       <ReferenceCreateModal
         open={open}
-        onCancel={() => setOpen(false)}
+        onCancel={() => {
+          if (!isPending) {
+            setSaveError(null);
+            setOpen(false);
+          }
+        }}
         onSave={handleSave}
         title={ENTITY_CREATE.title}
-        saveLabel={ENTITY_CREATE.save}
+        saveLabel={isPending ? "Saving…" : ENTITY_CREATE.save}
         notesOptional
+        error={saveError ?? undefined}
       />
     </>
   );

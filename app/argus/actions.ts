@@ -29,9 +29,15 @@ import {
   isCreatableReferenceKind,
   referenceKindFromNotes,
   referenceKindToCreateInput,
+  createInputToReferenceKind,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
 import { ArgusWriteBlockedError, isDestructiveAllowed } from "@/lib/argus/data-safety";
+import {
+  ArgusPersistenceError,
+  argusErrorQueryParams,
+  formatArgusError,
+} from "@/lib/argus/persistence/errors";
 
 function revalidateArgus(): void {
   revalidatePath("/argus");
@@ -48,13 +54,13 @@ function parseTopics(raw: string): string[] {
     .filter(Boolean);
 }
 
-function redirectStorageBlocked(fallback: string): never {
-  redirect(`${fallback}?error=storage`);
+function redirectWriteFailure(fallback: string, err: unknown): never {
+  const { errorLayer, errorMsg } = argusErrorQueryParams(err);
+  redirect(`${fallback}?errorLayer=${encodeURIComponent(errorLayer)}&errorMsg=${encodeURIComponent(errorMsg)}`);
 }
 
 function handleWriteError(err: unknown, fallback: string): never {
-  if (err instanceof ArgusWriteBlockedError) redirectStorageBlocked(fallback);
-  throw err;
+  redirectWriteFailure(fallback, err);
 }
 
 function parseJournalInput(formData: FormData) {
@@ -91,20 +97,9 @@ async function resolveEntityIds(formData: FormData): Promise<string[]> {
   if (newEntityName) {
     const rawType = String(formData.get("newEntityType") ?? "person") as EntityType;
     const rawNotes = String(formData.get("newEntityNotes") ?? "").trim();
-    if (rawType === "other") {
-      const kind = referenceKindFromNotes(rawNotes);
-      if (kind !== "topic" && kind !== "event") {
-        throw new Error("Invalid reference type: only Topic and Event are allowed");
-      }
-    }
-    const entity = await createEntity({
-      type: rawType,
-      name: newEntityName,
-      notes: rawNotes,
-      alias: "",
-      strategicValue: 3,
-    });
-    entityIds.push(entity.id);
+    const kind = createInputToReferenceKind(rawType, rawNotes);
+    const created = await persistNewEntity(kind, newEntityName, rawNotes);
+    entityIds.push(created.id);
   }
   return entityIds;
 }
@@ -238,10 +233,10 @@ async function persistNewEntity(
 ): Promise<CreatedEntityResult> {
   const trimmedName = name.trim();
   if (!trimmedName) {
-    throw new Error("Name is required");
+    throw new ArgusPersistenceError("validation", "Name is required.");
   }
   if (!isCreatableReferenceKind(kind)) {
-    throw new Error("Invalid reference type");
+    throw new ArgusPersistenceError("validation", "Invalid reference type.");
   }
 
   const { entityType, notes: builtNotes } = referenceKindToCreateInput(kind, trimmedName, notes);
@@ -252,6 +247,14 @@ async function persistNewEntity(
     alias: "",
     strategicValue: 3,
   });
+
+  const confirmed = await getEntity(entity.id);
+  if (!confirmed) {
+    throw new ArgusPersistenceError(
+      "database",
+      `Object "${trimmedName}" was not readable after save confirmation.`
+    );
+  }
 
   revalidateArgus();
   revalidatePath(`/argus/network/${entity.id}`);
@@ -265,14 +268,7 @@ export async function createEntityInlineAction(
   name: string,
   notes = ""
 ): Promise<CreatedEntityResult> {
-  try {
-    return await persistNewEntity(kind, name, notes);
-  } catch (err) {
-    if (err instanceof ArgusWriteBlockedError) {
-      throw new Error("Storage not available — configure Supabase journal store");
-    }
-    throw err;
-  }
+  return persistNewEntity(kind, name, notes);
 }
 
 export async function createEntityAction(formData: FormData): Promise<void> {

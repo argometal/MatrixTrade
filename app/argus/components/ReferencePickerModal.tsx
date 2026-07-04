@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import type { Entity, EntityType } from "@/lib/argus/types";
 import { createEntityInlineAction, type CreatedEntityResult } from "@/app/argus/actions";
+import { formatArgusError } from "@/lib/argus/persistence/errors";
 import {
   createInputToReferenceKind,
   entityKindLabel,
@@ -107,7 +108,8 @@ export function ReferencePickerModal({
           onChange([...selectedIds, entity.id]);
         }
       } catch (err) {
-        setCreateError(err instanceof Error ? err.message : "Could not create");
+        const { layer, message } = formatArgusError(err);
+        setCreateError(`${layer.toUpperCase()}: ${message}`);
         setCreateOpen(true);
       }
     });

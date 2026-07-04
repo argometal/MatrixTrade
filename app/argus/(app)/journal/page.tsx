@@ -65,9 +65,9 @@ async function buildInboxHomeData(inboxPending: InboxItem[]): Promise<HomeInboxE
 export default async function JournalPage({
   searchParams,
 }: {
-  searchParams: Promise<{ private_error?: string; error?: string }>;
+  searchParams: Promise<{ private_error?: string; error?: string; errorLayer?: string; errorMsg?: string }>;
 }) {
-  const { private_error, error } = await searchParams;
+  const { private_error, error, errorLayer, errorMsg } = await searchParams;
   const includePrivate = await hasArgusPrivateUnlock();
   const today = new Date().toISOString().slice(0, 10);
   const entities = await getEntities();
@@ -90,11 +90,17 @@ export default async function JournalPage({
         privateError={Boolean(private_error)}
       />
       <ArgusStatusPanel />
-      {error === "storage" && (
+      {errorLayer && errorMsg ? (
         <p className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 text-sm text-red-200">
-          Could not save — journal storage is not persistent on this server. Configure cloud journal storage.
+          <span className="font-medium uppercase">{errorLayer}:</span> {errorMsg}
         </p>
-      )}
+      ) : null}
+      {error === "storage" && !errorMsg ? (
+        <p className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 text-sm text-red-200">
+          SUPABASE: Journal writes blocked on this host. Set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and
+          ARGUS_JOURNAL_STORE=supabase on Vercel.
+        </p>
+      ) : null}
       {error === "destructive" && (
         <p className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 text-sm text-red-200">
           That action is disabled in production.
