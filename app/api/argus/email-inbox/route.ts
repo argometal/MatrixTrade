@@ -21,34 +21,39 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const email = parsed.data;
 
-  const item = await createInboxItem({
-    source: "email",
-    rawText: email.text,
-    rawEmail: email.rawEmail,
-    subject: email.subject,
-    from: email.from,
-    to: email.to,
-    attachmentIds: [],
-    receivedAt: email.receivedAt,
-  });
+  try {
+    const item = await createInboxItem({
+      source: "email",
+      rawText: email.text,
+      rawEmail: email.rawEmail,
+      subject: email.subject,
+      from: email.from,
+      to: email.to,
+      attachmentIds: [],
+      receivedAt: email.receivedAt,
+    });
 
-  for (const attachment of email.attachments) {
-    const saved = await saveAttachment(
-      attachment.filename,
-      attachment.contentType,
-      attachment.bytes,
-      "inbox",
-      item.id
+    for (const attachment of email.attachments) {
+      const saved = await saveAttachment(
+        attachment.filename,
+        attachment.contentType,
+        attachment.bytes,
+        "inbox",
+        item.id
+      );
+      await appendInboxAttachment(item.id, saved.id);
+    }
+
+    return NextResponse.json(
+      {
+        ok: true,
+        inboxItemId: item.id,
+        attachmentCount: email.attachments.length,
+      },
+      { status: 201 }
     );
-    await appendInboxAttachment(item.id, saved.id);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  return NextResponse.json(
-    {
-      ok: true,
-      inboxItemId: item.id,
-      attachmentCount: email.attachments.length,
-    },
-    { status: 201 }
-  );
 }

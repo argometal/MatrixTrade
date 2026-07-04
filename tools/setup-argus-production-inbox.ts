@@ -94,8 +94,10 @@ async function main(): Promise<void> {
   });
 
   console.log("\nDone. Verify:");
-  console.log(`  npx tsx tools/test-email-inbox.ts ${PRODUCTION_APP}`);
-  console.log("  Send real email to argus@argometal.dev");
+  console.log("  1. Run supabase/argus-inbox.sql in Supabase SQL editor (once)");
+  console.log("  2. npx tsx tools/verify-argus-inbox-schema.ts");
+  console.log(`  3. npx tsx tools/test-email-inbox.ts ${PRODUCTION_APP}`);
+  console.log("  4. Send real email to argus@argometal.dev");
 }
 
 main().catch((err) => {
