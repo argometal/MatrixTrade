@@ -2,12 +2,16 @@
  * Simulates Cloudflare Email Worker MIME parse → POST intake (same path as deployed Worker).
  * Usage: npx tsx tools/simulate-email-worker-intake.ts [intakeUrl]
  */
+import { createRequire } from "module";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import PostalMime from "postal-mime";
+
+const require = createRequire(import.meta.url);
+const PostalMime = require(resolve(process.cwd(), "argus-email-bridge/node_modules/postal-mime/dist/index.js"))
+  .default as typeof import("postal-mime").default;
 
 const intakeUrl =
-  process.argv[2] ?? "https://investigated-used-develops-sight.trycloudflare.com/api/argus/email-inbox";
+  process.argv[2] ?? "https://intake.argometal.dev/api/argus/email-inbox";
 
 function loadInboxToken(): string {
   const raw = readFileSync(resolve(process.cwd(), ".env.local"), "utf8");

@@ -2,7 +2,7 @@
 import { readFileSync } from "fs";
 import { resolve } from "path";
 
-const baseUrl = process.argv[2] ?? "http://localhost:3000";
+const baseUrl = process.argv[2] ?? "http://localhost:3002";
 
 function loadToken(): string {
   const raw = readFileSync(resolve(process.cwd(), ".env.local"), "utf8");

@@ -37,7 +37,7 @@ Legend: ✅ Complete · ⚠️ Partial · ❌ Missing
 
 | | Item | Status | Notes |
 |---|------|--------|-------|
-| ☐ | Receive email automatically | ✅ | Worker → `/api/argus/email-inbox` (requires tunnel + DNS in prod) |
+| ☐ | Receive email automatically | ⚠️ | Worker → tunnel → API verified 2026-07-04; requires dev + cloudflared running; redeploy Worker when quick tunnel URL changes; fix intake DNS CNAME for permanent hostname |
 | ☐ | Email appears in Inbox | ✅ | inbox list + journal home |
 | ☐ | Read email correctly | ✅ | EmailViewer |
 | ☐ | View HTML/text | ✅ | text + sandboxed HTML iframe |
