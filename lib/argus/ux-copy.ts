@@ -41,7 +41,15 @@ export const ADD_MENU = {
   fab: "Add",
   title: "Add",
   captureNote: "Capture note",
+  captureHint: "Quick journal entry — link it later",
   newKind: (label: string) => `New ${label}`,
+  kindHint: {
+    person: "A contact — can link to anything",
+    organization: "A company — links people, no date limit",
+    project: "Work in a start–end date range",
+    topic: "Ongoing theme — links people and events",
+    event: "One dated moment — can attach emails",
+  },
 } as const;
 
 export const BOTTOM_NAV = {
@@ -182,7 +190,7 @@ export const INBOX = {
   attachments: "Attachments",
   actions: "Actions",
   linkReference: "Link to reference",
-  tapToLink: "Tap to link to a person, project, topic, or event",
+  tapToRead: "Tap to read email",
   createReference: "Create reference",
   createPerson: "+ New Person",
   createProject: "+ New Project",
@@ -228,7 +236,7 @@ export const SECTION_EMPTY = {
   reminders: "No pending follow-ups.",
   remindersHint: "Set a reminder when capturing.",
   inbox: "Inbox is empty.",
-  inboxHint: "Tap an email to link it to a reference.",
+  inboxHint: "Tap an email to read it; use Actions to link.",
 } as const;
 
 export const REFERENCE_PICKER = {

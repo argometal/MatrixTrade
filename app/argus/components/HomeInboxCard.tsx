@@ -10,11 +10,12 @@ import {
   type AttachmentViewModel,
   type EmailViewModel,
 } from "@/lib/argus/email-view";
-import { HOME_INBOX_ACTIONS, INBOX, LINK_HIERARCHY, TESTING } from "@/lib/argus/ux-copy";
+import { HOME_INBOX_ACTIONS, INBOX, TESTING } from "@/lib/argus/ux-copy";
 import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { archiveInboxAction, convertInboxAction, deleteInboxAction, linkInboxAction, type CreatedEntityResult } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "./ArgusDeleteForm";
 import { CaptureSheet } from "./CaptureSheet";
+import { InboxAttachmentList } from "./InboxAttachmentList";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
 import type { TagBuckets } from "./TagPickerModal";
 
@@ -57,6 +58,7 @@ export function HomeInboxCard({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [linkIds, setLinkIds] = useState<string[]>([]);
   const [showConvert, setShowConvert] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
 
   const canTriage = item.status === "pending" || item.status === "linked";
   const preview = view.textBody.replace(/\s+/g, " ").trim().slice(0, 120);
@@ -82,7 +84,7 @@ export function HomeInboxCard({
     return false;
   }
 
-  const cardBody = (
+  const cardPreview = (
     <>
       <div className="flex items-start justify-between gap-3">
         <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-600">Email</p>
@@ -99,7 +101,9 @@ export function HomeInboxCard({
           <dd className="text-zinc-400">{formatReceived(view.receivedAt)}</dd>
         </div>
       </dl>
-      {preview ? <p className="mt-2 line-clamp-2 text-[13px] text-zinc-500">{preview}</p> : null}
+      {!emailOpen && preview ? (
+        <p className="mt-2 line-clamp-2 text-[13px] text-zinc-500">{preview}</p>
+      ) : null}
 
       {linkedEntities.length > 0 ? (
         <div className="mt-3 border-t border-zinc-800/80 pt-3">
@@ -118,6 +122,10 @@ export function HomeInboxCard({
             ))}
           </ul>
         </div>
+      ) : null}
+
+      {!emailOpen ? (
+        <p className="mt-3 text-[11px] text-zinc-600">{INBOX.tapToRead}</p>
       ) : null}
     </>
   );
@@ -163,19 +171,28 @@ export function HomeInboxCard({
         {actionBar}
 
         {canTriage ? (
-          <button
-            type="button"
-            onClick={openLinkPicker}
-            className="w-full px-4 py-3 text-left transition hover:bg-zinc-800/40"
-          >
-            {cardBody}
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={() => setEmailOpen((open) => !open)}
+              aria-expanded={emailOpen}
+              className="w-full px-4 py-3 text-left transition hover:bg-zinc-800/40"
+            >
+              {cardPreview}
+            </button>
+            {emailOpen ? (
+              <div className="border-t border-zinc-800/80 px-4 pb-4">
+                <section className="mt-3">
+                  <h3 className="text-xs font-medium uppercase tracking-wide text-zinc-500">{INBOX.messageBody}</h3>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-zinc-200">{view.textBody}</p>
+                </section>
+                <InboxAttachmentList attachments={attachments} />
+              </div>
+            ) : null}
+          </>
         ) : (
-          <Link
-            href={`/argus/inbox/${item.id}`}
-            className="block px-4 py-3 transition hover:bg-zinc-800/30"
-          >
-            {cardBody}
+          <Link href={`/argus/inbox/${item.id}`} className="block px-4 py-3 transition hover:bg-zinc-800/30">
+            {cardPreview}
           </Link>
         )}
 

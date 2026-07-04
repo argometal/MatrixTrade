@@ -12,6 +12,7 @@ Use git tags to restore any point.
 | **104** | `change-104` | Email action menus moved to top of card (Home + inbox detail) |
 | **105** | `change-105` | Hierarchical entity linking with time rules (inbox, project, topic, event) |
 | **106** | `change-106` | Fix Argus client crash — keep Add provider outside Suspense fallback |
+| **107** | `change-107` | Add menu hints; inbox tap email to read, actions for link |
 
 ## Restore
 
