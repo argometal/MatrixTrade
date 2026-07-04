@@ -244,6 +244,8 @@ export const REFERENCE_PICKER = {
   typeToSearch: "Type to search",
   starToPin: "Star contacts to pin them here",
   noReferences: "No records yet. Create one first.",
+  allReferences: "All references",
+  inboxBrowseHint: "Projects, topics, events, and organizations appear here — search if the list is long.",
   selected: (n: number, names: string) => `${n} selected · ${names}`,
   recent: "Recent",
   favorites: "Favorites",

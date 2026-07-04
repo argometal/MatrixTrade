@@ -124,6 +124,7 @@ export function InboxTriagePanel({
             }}
             onEntityCreated={linkCreatedEntity}
             allowedCreateKinds={inboxCreateKinds}
+            listMode="all"
             createButtonLabel={INBOX.createReference}
           />
 

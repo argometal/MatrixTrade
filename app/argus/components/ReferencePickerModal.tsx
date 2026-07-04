@@ -33,6 +33,8 @@ interface ReferencePickerModalProps {
   defaultCreateKind?: ReferenceKind;
   allowedCreateKinds?: ReferenceKind[];
   createButtonLabel?: string;
+  /** Inbox linking needs every reference type visible, not just journal recents. */
+  listMode?: "recent-first" | "all";
 }
 
 function ReferenceRow({
@@ -64,6 +66,7 @@ export function ReferencePickerModal({
   defaultCreateKind = "person",
   allowedCreateKinds,
   createButtonLabel,
+  listMode = "recent-first",
 }: ReferencePickerModalProps) {
   const creatableKinds = allowedCreateKinds ?? REFERENCE_KINDS;
   const resolvedDefaultKind = creatableKinds.includes(defaultCreateKind)
@@ -91,7 +94,20 @@ export function ReferencePickerModal({
   const recentList =
     buckets.recent.length > 0 ? buckets.recent : buckets.frequent.length > 0 ? buckets.frequent : [];
 
-  const visible = query.trim() ? searchResults : recentList;
+  const visible = useMemo(() => {
+    if (query.trim()) return searchResults;
+    if (listMode === "all") return allEntities;
+    if (recentList.length > 0) return recentList;
+    return allEntities;
+  }, [allEntities, listMode, query, recentList, searchResults]);
+
+  const listHeading = query.trim()
+    ? null
+    : listMode === "all"
+      ? REFERENCE_PICKER.allReferences
+      : recentList.length > 0
+        ? REFERENCE_PICKER.recent
+        : REFERENCE_PICKER.allReferences;
 
   function toggle(id: string) {
     onChange(selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id]);
@@ -159,11 +175,13 @@ export function ReferencePickerModal({
               {createLabel}
             </button>
 
-            {!query.trim() && recentList.length > 0 && (
-              <p className="mt-3 text-[11px] font-medium uppercase tracking-wider text-zinc-600">
-                {REFERENCE_PICKER.recent}
-              </p>
-            )}
+            {!query.trim() && listHeading ? (
+              <p className="mt-3 text-[11px] font-medium uppercase tracking-wider text-zinc-600">{listHeading}</p>
+            ) : null}
+
+            {!query.trim() && listMode === "all" ? (
+              <p className="mt-1 text-[11px] leading-snug text-zinc-600">{REFERENCE_PICKER.inboxBrowseHint}</p>
+            ) : null}
 
             <div className="mt-2 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
               {!hasReferences && !query.trim() ? (

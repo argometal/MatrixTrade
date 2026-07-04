@@ -237,6 +237,7 @@ export function HomeInboxCard({
             }}
             onEntityCreated={linkCreatedEntity}
             allowedCreateKinds={inboxCreateKinds}
+            listMode="all"
             createButtonLabel={INBOX.createReference}
           />
 
