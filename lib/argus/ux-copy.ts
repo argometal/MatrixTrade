@@ -37,6 +37,13 @@ export const CAPTURE = {
   done: "Done",
 } as const;
 
+export const ADD_MENU = {
+  fab: "Add",
+  title: "Add",
+  captureNote: "Capture note",
+  newKind: (label: string) => `New ${label}`,
+} as const;
+
 export const TAGS = {
   title: "Tags",
   linkLabel: "Tagged",
@@ -64,7 +71,7 @@ export const HOME_ACTIONS = {
 
 export const HOME_EMPTY = {
   title: "Nothing needs attention yet.",
-  hint: "Incoming items appear in Inbox. Use ◇ Create for a person or project, or + Capture for a note.",
+  hint: "Incoming items appear in Inbox. Tap + to capture a note or create a person, project, topic, or event.",
 } as const;
 
 export const HOME_SECTIONS = {

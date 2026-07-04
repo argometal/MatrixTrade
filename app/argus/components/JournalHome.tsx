@@ -10,7 +10,6 @@ import { entityDetailHref, entityKindLabel } from "@/lib/argus/reference-types";
 import { HOME_DETAIL, HOME_EMPTY, HOME_NAV, INBOX, SECTION_EMPTY, TESTING, ENTITY_CREATE } from "@/lib/argus/ux-copy";
 import { createLogAction, clearAllArgusDataAction } from "@/app/argus/actions";
 import { ArgusClearAllForm } from "./ArgusDeleteForm";
-import { CaptureFab } from "./CaptureFab";
 import { CaptureSheet } from "./CaptureSheet";
 import { HomeDetailHeader } from "./HomeDetailHeader";
 import { HomeInboxCard } from "./HomeInboxCard";
@@ -74,8 +73,6 @@ export function JournalHome({
   useEffect(() => {
     if (captureOpen) setSheetOpen(true);
   }, [captureOpen]);
-
-  const openCapture = useCallback(() => setSheetOpen(true), []);
 
   const closeCapture = useCallback(() => {
     setSheetOpen(false);
@@ -301,7 +298,6 @@ export function JournalHome({
         />
       ) : null}
 
-      {!sheetOpen ? <CaptureFab onClick={openCapture} /> : null}
 
       <CaptureSheet
         open={sheetOpen}

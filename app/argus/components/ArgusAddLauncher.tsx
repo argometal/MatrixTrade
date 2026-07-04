@@ -1,0 +1,138 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { createEntityInlineAction } from "@/app/argus/actions";
+import {
+  createInputToReferenceKind,
+  entityNotesForDisplay,
+  REFERENCE_KINDS,
+  REFERENCE_KIND_LABELS,
+  type ReferenceKind,
+} from "@/lib/argus/reference-types";
+import type { EntityType } from "@/lib/argus/types";
+import { formatArgusError } from "@/lib/argus/persistence/errors";
+import { ADD_MENU, ENTITY_CREATE } from "@/lib/argus/ux-copy";
+import { ReferenceCreateModal } from "./ReferenceCreateModal";
+
+export function ArgusAddLauncher() {
+  const router = useRouter();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createKind, setCreateKind] = useState<ReferenceKind>("person");
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onPointerDown(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [menuOpen]);
+
+  function openCreate(kind: ReferenceKind) {
+    setMenuOpen(false);
+    setSaveError(null);
+    setCreateKind(kind);
+    setCreateOpen(true);
+  }
+
+  function openCapture() {
+    setMenuOpen(false);
+    router.push("/argus/journal?capture=1");
+  }
+
+  function handleSave(data: { name: string; entityType: EntityType; notes: string }) {
+    const kind = createInputToReferenceKind(data.entityType, data.notes);
+    setSaveError(null);
+    startTransition(async () => {
+      try {
+        const entity = await createEntityInlineAction(
+          kind,
+          data.name,
+          entityNotesForDisplay(data.notes)
+        );
+        setCreateOpen(false);
+        router.push(entity.href);
+      } catch (err) {
+        const { layer, message } = formatArgusError(err);
+        setSaveError(`${layer.toUpperCase()}: ${message}`);
+      }
+    });
+  }
+
+  return (
+    <>
+      <div
+        ref={menuRef}
+        className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-5 z-40 flex flex-col items-end gap-2"
+      >
+        {menuOpen ? (
+          <div
+            className="mb-1 w-[min(280px,calc(100vw-2.5rem))] rounded-2xl border border-zinc-700/80 bg-zinc-900 p-2 shadow-2xl shadow-black/50"
+            role="menu"
+            aria-label={ADD_MENU.title}
+          >
+            <p className="px-3 py-2 text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+              {ADD_MENU.title}
+            </p>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={openCapture}
+              className="flex w-full rounded-xl px-3 py-2.5 text-left text-[15px] font-medium text-zinc-100 hover:bg-zinc-800"
+            >
+              {ADD_MENU.captureNote}
+            </button>
+            <div className="my-1 border-t border-zinc-800" />
+            {REFERENCE_KINDS.map((kind) => (
+              <button
+                key={kind}
+                type="button"
+                role="menuitem"
+                onClick={() => openCreate(kind)}
+                className="flex w-full rounded-xl px-3 py-2.5 text-left text-[15px] text-zinc-200 hover:bg-zinc-800"
+              >
+                {ADD_MENU.newKind(REFERENCE_KIND_LABELS[kind])}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => setMenuOpen((open) => !open)}
+          aria-label={ADD_MENU.fab}
+          aria-expanded={menuOpen}
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-500 text-2xl font-light text-white shadow-lg shadow-teal-950/50 transition hover:bg-teal-400 active:scale-95"
+        >
+          +
+        </button>
+      </div>
+
+      <ReferenceCreateModal
+        open={createOpen}
+        defaultKind={createKind}
+        onCancel={() => {
+          if (!isPending) {
+            setSaveError(null);
+            setCreateOpen(false);
+          }
+        }}
+        onSave={handleSave}
+        title={ENTITY_CREATE.title}
+        saveLabel={isPending ? "Saving…" : ENTITY_CREATE.save}
+        notesOptional
+        error={saveError ?? undefined}
+      />
+    </>
+  );
+}
+
+/** @deprecated Use ArgusAddLauncher — kept for imports during transition */
+export const EntityCreateLauncher = ArgusAddLauncher;
