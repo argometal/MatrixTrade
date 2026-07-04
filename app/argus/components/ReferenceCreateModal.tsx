@@ -18,6 +18,9 @@ interface ReferenceCreateModalProps {
   onCancel: () => void;
   onSave: (data: { name: string; entityType: EntityType; notes: string }) => void;
   defaultKind?: ReferenceKind;
+  title?: string;
+  saveLabel?: string;
+  notesOptional?: boolean;
 }
 
 export function ReferenceCreateModal({
@@ -25,6 +28,9 @@ export function ReferenceCreateModal({
   onCancel,
   onSave,
   defaultKind = "person",
+  title,
+  saveLabel,
+  notesOptional = false,
 }: ReferenceCreateModalProps) {
   const [name, setName] = useState("");
   const [kind, setKind] = useState<ReferenceKind>(defaultKind);
@@ -58,7 +64,7 @@ export function ReferenceCreateModal({
         aria-labelledby="reference-create-title"
       >
         <h2 id="reference-create-title" className="text-lg font-semibold text-zinc-100">
-          {REFERENCES.createNew}
+          {title ?? REFERENCES.createNew}
         </h2>
         <div className="mt-4 space-y-3">
           <label className="block">
@@ -85,7 +91,7 @@ export function ReferenceCreateModal({
             </select>
           </label>
           <label className="block">
-            <span className="text-xs font-medium text-zinc-500">Notes (optional)</span>
+            <span className="text-xs font-medium text-zinc-500">Notes{notesOptional ? " (optional)" : ""}</span>
             <input
               className={`${inputClass} mt-1`}
               value={notes}
@@ -107,7 +113,7 @@ export function ReferenceCreateModal({
             disabled={!name.trim()}
             className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600 disabled:opacity-40"
           >
-            {REFERENCES.save}
+            {saveLabel ?? REFERENCES.save}
           </button>
         </div>
       </div>

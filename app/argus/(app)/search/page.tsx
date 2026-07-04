@@ -1,8 +1,8 @@
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { LogCard } from "@/app/argus/components/Cards";
 import { EmptyState, inputClass, PageHeader } from "@/app/argus/components/ui";
-import { entityKindLabel } from "@/lib/argus/reference-types";
-import { REFERENCES, SEARCH } from "@/lib/argus/ux-copy";
+import { entityDetailHref, entityKindLabel } from "@/lib/argus/reference-types";
+import { REFERENCES, SEARCH, ENTITY_CREATE } from "@/lib/argus/ux-copy";
 import { getEntities, searchEntities, searchLogs } from "@/lib/argus/server-storage";
 import Link from "next/link";
 
@@ -50,11 +50,11 @@ export default async function SearchPage({
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">{REFERENCES.search}</h2>
         {entities.length === 0 ? (
-          <EmptyState message={`${REFERENCES.emptyNetwork} ${REFERENCES.emptyNetworkHint}`} />
+          <EmptyState message={ENTITY_CREATE.emptySearch} />
         ) : (
           <div className="space-y-2">
             {entities.map((e) => (
-              <Link key={e.id} href={`/argus/network/${e.id}`}>
+              <Link key={e.id} href={entityDetailHref(e)}>
                 <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-3 transition hover:border-zinc-700">
                   <p className="font-medium text-zinc-100">{e.name}</p>
                   <p className="text-xs text-zinc-500">{entityKindLabel(e)}</p>

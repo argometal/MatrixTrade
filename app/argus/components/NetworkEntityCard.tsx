@@ -6,6 +6,7 @@ import {
   STRATEGIC_VALUE_LABELS,
 } from "@/lib/argus/labels";
 import type { EntityIntelligence } from "@/lib/argus/network-intelligence";
+import { entityDetailHref } from "@/lib/argus/reference-types";
 
 export function NetworkEntityCard({ intel }: { intel: EntityIntelligence }) {
   const { entity, relationshipHealth, lastMeaningfulInteraction, attentionScore, outcomeScore, openFollowUps } =
@@ -13,7 +14,7 @@ export function NetworkEntityCard({ intel }: { intel: EntityIntelligence }) {
   const sv = entity.strategicValue ?? 3;
 
   return (
-    <Link href={`/argus/network/${entity.id}`}>
+    <Link href={entityDetailHref(entity)}>
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 transition hover:border-zinc-700">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">

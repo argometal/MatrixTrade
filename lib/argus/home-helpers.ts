@@ -1,5 +1,22 @@
 import type { ArgusData, Entity, InboxItem, Log } from "./types";
+import { referenceKindFromNotes } from "./reference-types";
 import { buildEntityIntelligence, type EntityIntelligence } from "./network-intelligence";
+
+export type HomeActivityItem =
+  | { type: "entity"; entity: Entity; at: string }
+  | { type: "log"; log: Log; at: string };
+
+export function buildHomeActivityFeed(
+  entities: Entity[],
+  logs: Log[],
+  limit: number
+): HomeActivityItem[] {
+  const items: HomeActivityItem[] = [
+    ...entities.map((entity) => ({ type: "entity" as const, entity, at: entity.updatedAt })),
+    ...logs.map((log) => ({ type: "log" as const, log, at: log.date })),
+  ];
+  return items.sort((a, b) => b.at.localeCompare(a.at)).slice(0, limit);
+}
 
 export interface HomeProjectSummary {
   entity: Entity;
@@ -36,7 +53,14 @@ export function buildHomeNetworkSummaries(
   limit: number
 ): HomeNetworkSummary[] {
   return entities
-    .filter((e) => e.type === "person" || e.type === "company")
+    .filter((e) => {
+      if (e.type === "person" || e.type === "company") return true;
+      if (e.type === "other") {
+        const kind = referenceKindFromNotes(e.notes);
+        return kind === "topic" || kind === "event";
+      }
+      return false;
+    })
     .map((entity) => {
       const intelligence = buildEntityIntelligence(data, entity, includePrivate, today);
       return {

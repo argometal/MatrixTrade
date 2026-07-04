@@ -5,8 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
-import type { HomeNetworkSummary, HomeProjectSummary } from "@/lib/argus/home-helpers";
-import { HOME_DETAIL, HOME_EMPTY, HOME_NAV, INBOX, SECTION_EMPTY, TESTING } from "@/lib/argus/ux-copy";
+import type { HomeNetworkSummary, HomeProjectSummary, HomeActivityItem } from "@/lib/argus/home-helpers";
+import { entityDetailHref, entityKindLabel } from "@/lib/argus/reference-types";
+import { HOME_DETAIL, HOME_EMPTY, HOME_NAV, INBOX, SECTION_EMPTY, TESTING, ENTITY_CREATE } from "@/lib/argus/ux-copy";
 import { createLogAction, clearAllArgusDataAction } from "@/app/argus/actions";
 import { ArgusClearAllForm } from "./ArgusDeleteForm";
 import { CaptureFab } from "./CaptureFab";
@@ -43,6 +44,7 @@ export function JournalHome({
   inboxEnriched,
   projects,
   networkSummaries,
+  activityFeed,
   entities,
   buckets,
   tagBuckets,
@@ -54,6 +56,7 @@ export function JournalHome({
   inboxEnriched: HomeInboxEnriched[];
   projects: HomeProjectSummary[];
   networkSummaries: HomeNetworkSummary[];
+  activityFeed: HomeActivityItem[];
   entities: Entity[];
   buckets: EntityPickerBuckets;
   tagBuckets: TagBuckets;
@@ -89,7 +92,7 @@ export function JournalHome({
     recentDocuments.length > 0 ||
     networkSummaries.length > 0;
 
-  const activityItems = recentActivity.slice(0, ACTIVITY_PREVIEW_LIMIT);
+  const activityItems = activityFeed.slice(0, ACTIVITY_PREVIEW_LIMIT);
   const followUpItems = upcomingFollowUps.slice(0, FOLLOW_UP_PREVIEW_LIMIT);
   const documentItems = recentDocuments.slice(0, DOCUMENT_PREVIEW_LIMIT);
   const activeProjects = projects.filter((p) => p.linkedCount > 0);
@@ -191,15 +194,26 @@ export function JournalHome({
 
           {activeSection === "activity" ? (
             <DetailList empty={activityItems.length === 0} emptyHint={SECTION_EMPTY.recentActivityHint}>
-              {activityItems.map((log) => (
-                <HomeLogCard
-                  key={log.id}
-                  log={log}
-                  entities={entities}
-                  expanded={expandedId === log.id}
-                  onToggle={() => toggleExpanded(log.id)}
-                />
-              ))}
+              {activityItems.map((item) =>
+                item.type === "log" ? (
+                  <HomeLogCard
+                    key={`log-${item.log.id}`}
+                    log={item.log}
+                    entities={entities}
+                    expanded={expandedId === item.log.id}
+                    onToggle={() => toggleExpanded(item.log.id)}
+                  />
+                ) : (
+                  <Link
+                    key={`entity-${item.entity.id}`}
+                    href={entityDetailHref(item.entity)}
+                    className="block rounded-2xl border border-zinc-800 bg-zinc-900 p-4 transition hover:border-zinc-700"
+                  >
+                    <p className="text-[15px] font-medium text-zinc-100">{item.entity.name}</p>
+                    <p className="mt-0.5 text-[13px] text-zinc-500">{entityKindLabel(item.entity)}</p>
+                  </Link>
+                )
+              )}
             </DetailList>
           ) : null}
 
@@ -237,10 +251,7 @@ export function JournalHome({
           ) : null}
 
           {activeSection === "projects" ? (
-            <DetailList
-              empty={projects.length === 0}
-              emptyHint="No projects yet. Create a Project reference from Capture or link inbox items to one."
-            >
+            <DetailList empty={projects.length === 0} emptyHint={ENTITY_CREATE.emptyProjects}>
               {projects.map((summary) => (
                 <HomeProjectCard
                   key={summary.entity.id}
@@ -253,7 +264,7 @@ export function JournalHome({
           ) : null}
 
           {activeSection === "network" ? (
-            <DetailList empty={networkSummaries.length === 0} emptyHint="No contacts yet. Add people from Capture.">
+            <DetailList empty={networkSummaries.length === 0} emptyHint={ENTITY_CREATE.emptyNetwork}>
               {networkSummaries.map((summary) => (
                 <HomeNetworkCard
                   key={summary.intelligence.entity.id}

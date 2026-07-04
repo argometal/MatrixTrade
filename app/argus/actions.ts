@@ -13,6 +13,7 @@ import {
   deleteEntity,
   deleteInboxItem,
   deleteLog,
+  getEntity,
   linkInboxToEntities,
   saveAttachment,
   updateEntity,
@@ -22,7 +23,13 @@ import type { EntityType, JournalKind, LogSource, StrategicValue } from "@/lib/a
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
 import { inferJournalKind, resolveLogDate, autoTitleFromBody } from "@/lib/argus/journal-helpers";
 import { resolveClassificationStatus } from "@/lib/argus/normalize";
-import { referenceKindFromNotes } from "@/lib/argus/reference-types";
+import {
+  buildReferenceNotes,
+  isCreatableReferenceKind,
+  referenceKindFromNotes,
+  referenceKindToCreateInput,
+  type ReferenceKind,
+} from "@/lib/argus/reference-types";
 import { ArgusWriteBlockedError, isDestructiveAllowed } from "@/lib/argus/data-safety";
 
 function revalidateArgus(): void {
@@ -216,17 +223,65 @@ export async function archiveInboxAction(formData: FormData): Promise<void> {
   redirect("/argus/inbox");
 }
 
+export async function createEntityAction(formData: FormData): Promise<void> {
+  const name = String(formData.get("name") ?? "").trim();
+  const kindRaw = String(formData.get("kind") ?? "person");
+  const notes = String(formData.get("notes") ?? "").trim();
+
+  if (!name) {
+    redirect("/argus/network?error=name");
+  }
+  if (!isCreatableReferenceKind(kindRaw)) {
+    redirect("/argus/network?error=kind");
+  }
+
+  const kind = kindRaw as ReferenceKind;
+  const { entityType, notes: builtNotes } = referenceKindToCreateInput(kind, name, notes);
+
+  try {
+    const entity = await createEntity({
+      type: entityType,
+      name,
+      notes: builtNotes,
+      alias: "",
+      strategicValue: 3,
+    });
+
+    revalidateArgus();
+    revalidatePath(`/argus/network/${entity.id}`);
+    revalidatePath(`/argus/projects/${entity.id}`);
+
+    if (entity.type === "project") {
+      redirect(`/argus/projects/${entity.id}`);
+    }
+    redirect(`/argus/network/${entity.id}`);
+  } catch (err) {
+    handleWriteError(err, "/argus/network");
+  }
+}
+
 export async function updateEntityAction(formData: FormData): Promise<void> {
   const entityId = String(formData.get("entityId") ?? "");
+  const entity = await getEntity(entityId);
+  if (!entity) {
+    redirect("/argus/network");
+  }
+
   const rawValue = Number(formData.get("strategicValue") ?? 3);
   const strategicValue = (
     rawValue >= 1 && rawValue <= 5 ? rawValue : 3
   ) as StrategicValue;
 
+  let notes = String(formData.get("notes") ?? "").trim();
+  const kind = referenceKindFromNotes(entity.notes);
+  if (kind === "topic" || kind === "event") {
+    notes = buildReferenceNotes(kind, notes);
+  }
+
   await updateEntity(entityId, {
     strategicValue,
     alias: String(formData.get("alias") ?? "").trim(),
-    notes: String(formData.get("notes") ?? "").trim(),
+    notes,
   });
 
   revalidateArgus();

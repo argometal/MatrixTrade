@@ -1,4 +1,5 @@
 import { updateEntityAction } from "@/app/argus/actions";
+import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { STRATEGIC_VALUE_LABELS } from "@/lib/argus/labels";
 import type { Entity, StrategicValue } from "@/lib/argus/types";
 import { inputClass } from "./ui";
@@ -35,7 +36,7 @@ export function EntityEditForm({ entity }: { entity: Entity }) {
         <span className="text-xs text-zinc-500">Notes</span>
         <textarea
           name="notes"
-          defaultValue={entity.notes}
+          defaultValue={entityNotesForDisplay(entity.notes)}
           rows={3}
           className={`${inputClass} mt-1 resize-none`}
         />

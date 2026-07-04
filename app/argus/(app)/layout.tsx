@@ -1,4 +1,5 @@
 import { BottomNav } from "@/app/argus/components/BottomNav";
+import { EntityCreateLauncher } from "@/app/argus/components/EntityCreateLauncher";
 import { SignOutButton } from "@/app/components/SignOutButton";
 import { requireArgusSession } from "@/lib/auth/require-session";
 
@@ -11,6 +12,7 @@ export default async function ArgusAppLayout({ children }: { children: React.Rea
         <SignOutButton className="text-xs font-medium text-zinc-500 hover:text-zinc-300" />
       </div>
       {children}
+      <EntityCreateLauncher />
       <BottomNav />
     </div>
   );

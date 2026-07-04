@@ -1,4 +1,5 @@
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { EntityCreateForm } from "@/app/argus/components/EntityCreateForm";
 import { NetworkHomeSections } from "@/app/argus/components/NetworkEntityCard";
 import { EmptyState, inputClass, PageHeader } from "@/app/argus/components/ui";
 import {
@@ -6,15 +7,14 @@ import {
   buildNetworkHomeSections,
 } from "@/lib/argus/network-intelligence";
 import { readArgus } from "@/lib/argus/server-storage";
-import { REFERENCES, NETWORK } from "@/lib/argus/ux-copy";
-import Link from "next/link";
+import { REFERENCES, NETWORK, ENTITY_CREATE } from "@/lib/argus/ux-copy";
 
 export default async function NetworkPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; error?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, error } = await searchParams;
   const includePrivate = await hasArgusPrivateUnlock();
   const data = await readArgus();
   const intelligence = buildAllEntityIntelligence(data, includePrivate, q);
@@ -26,6 +26,8 @@ export default async function NetworkPage({
     <>
       <PageHeader title={NETWORK.title} subtitle={NETWORK.subtitle} backHref="/argus/journal" />
 
+      <EntityCreateForm error={error} />
+
       <form action="/argus/network" method="get" className="mb-6 flex gap-2">
         <input name="q" defaultValue={q ?? ""} placeholder={NETWORK.searchPlaceholder} className={inputClass} />
         <button type="submit" className="shrink-0 rounded-xl bg-zinc-700 px-4 py-2 text-sm text-white">
@@ -34,17 +36,7 @@ export default async function NetworkPage({
       </form>
 
       {!hasEntities ? (
-        <EmptyState
-          message={`${REFERENCES.emptyNetwork} ${REFERENCES.emptyNetworkHint}`}
-          action={
-            <Link
-              href="/argus/journal?capture=1&reference=1"
-              className="text-sm font-medium text-teal-500 underline hover:text-teal-400"
-            >
-              {REFERENCES.createFirst}
-            </Link>
-          }
-        />
+        <EmptyState message={`${REFERENCES.emptyNetwork} ${ENTITY_CREATE.emptySearch}`} />
       ) : (
         <NetworkHomeSections sections={sections} />
       )}

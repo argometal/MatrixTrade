@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { Entity, Log } from "@/lib/argus/types";
-import { entityKindLabel } from "@/lib/argus/reference-types";
+import { entityDetailHref, entityKindLabel } from "@/lib/argus/reference-types";
 import { deleteEntityAction, deleteLogAction } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "./ArgusDeleteForm";
 import { HOME_DETAIL, TESTING } from "@/lib/argus/ux-copy";
@@ -62,7 +62,7 @@ export function HomeNetworkCard({
         </div>
       </dl>
       <Link
-        href={`/argus/network/${entity.id}`}
+        href={entityDetailHref(entity)}
         className="mt-4 inline-flex rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
       >
         Open profile

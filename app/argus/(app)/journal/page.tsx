@@ -3,7 +3,7 @@ import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { isTestingUiEnabled } from "@/lib/argus/data-safety";
 import { ArgusAppHeader } from "@/app/argus/components/ArgusAppHeader";
-import { StorageWarningBanner } from "@/app/argus/components/StorageWarningBanner";
+import { ArgusStatusPanel } from "@/app/argus/components/ArgusStatusPanel";
 import { JournalHome, type HomeInboxEnriched } from "@/app/argus/components/JournalHome";
 import {
   attachmentSizeFromStored,
@@ -11,7 +11,7 @@ import {
   parseStoredEmailPayload,
   type AttachmentViewModel,
 } from "@/lib/argus/email-view";
-import { buildHomeNetworkSummaries, buildHomeProjectSummaries } from "@/lib/argus/home-helpers";
+import { buildHomeActivityFeed, buildHomeNetworkSummaries, buildHomeProjectSummaries } from "@/lib/argus/home-helpers";
 import {
   buildEntityPickerBuckets,
   buildTagBuckets,
@@ -24,7 +24,6 @@ import {
   getEntities,
   getInboxItems,
   getLogs,
-  getStorageDiagnostics,
   readArgus,
   readAttachmentBytes,
 } from "@/lib/argus/server-storage";
@@ -70,7 +69,6 @@ export default async function JournalPage({
 }) {
   const { private_error, error } = await searchParams;
   const includePrivate = await hasArgusPrivateUnlock();
-  const storage = await getStorageDiagnostics();
   const today = new Date().toISOString().slice(0, 10);
   const entities = await getEntities();
   const logs = await getLogs(includePrivate);
@@ -82,6 +80,7 @@ export default async function JournalPage({
   const inboxEnriched = await buildInboxHomeData(inboxPending);
   const projects = buildHomeProjectSummaries(entities, logs, allInbox);
   const networkSummaries = buildHomeNetworkSummaries(data, entities, includePrivate, today, 8);
+  const activityFeed = buildHomeActivityFeed(entities, logs, 16);
 
   return (
     <>
@@ -90,7 +89,7 @@ export default async function JournalPage({
         privateUnlocked={includePrivate}
         privateError={Boolean(private_error)}
       />
-      <StorageWarningBanner safety={storage.safety} />
+      <ArgusStatusPanel />
       {error === "storage" && (
         <p className="mb-4 rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 text-sm text-red-200">
           Could not save — journal storage is not persistent on this server. Configure cloud journal storage.
@@ -109,6 +108,7 @@ export default async function JournalPage({
           inboxEnriched={inboxEnriched}
           projects={projects}
           networkSummaries={networkSummaries}
+          activityFeed={activityFeed}
           entities={entities}
           buckets={buckets}
           tagBuckets={tagBuckets}

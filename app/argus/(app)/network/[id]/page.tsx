@@ -6,7 +6,7 @@ import { ArgusDeleteForm } from "@/app/argus/components/ArgusDeleteForm";
 import { EntityEditForm } from "@/app/argus/components/EntityEditForm";
 import { LogCard } from "@/app/argus/components/Cards";
 import { Card, EmptyState, formatDate, PageHeader } from "@/app/argus/components/ui";
-import { entityKindLabel } from "@/lib/argus/reference-types";
+import { entityKindLabel, entityNotesForDisplay } from "@/lib/argus/reference-types";
 import {
   RELATIONSHIP_HEALTH_COLORS,
   RELATIONSHIP_HEALTH_LABELS,
@@ -102,8 +102,10 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
           </p>
         )}
 
-        {entity.notes && (
-          <p className="mt-3 border-t border-zinc-800 pt-3 text-sm text-zinc-400">{entity.notes}</p>
+        {entityNotesForDisplay(entity.notes) && (
+          <p className="mt-3 border-t border-zinc-800 pt-3 text-sm text-zinc-400">
+            {entityNotesForDisplay(entity.notes)}
+          </p>
         )}
       </Card>
 

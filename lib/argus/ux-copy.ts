@@ -106,27 +106,36 @@ export const HOME_INBOX_ACTIONS = {
   openFullViewer: "Open Full Viewer",
 } as const;
 
+export const ENTITY_CREATE = {
+  fab: "Create",
+  title: "Create",
+  save: "Create",
+  emptyProjects: "No projects yet. Tap Create to add one.",
+  emptyNetwork: "Nothing here yet. Tap Create to add a person, organization, topic, or event.",
+  emptySearch: "No records yet. Tap Create to add one.",
+} as const;
+
 export const NETWORKING = {
-  createFirst: "Add to network",
+  createFirst: "Create",
   createPerson: "Add person",
   createOrganization: "Add organization",
   search: "Search network",
   link: "Link to",
   linkLabel: "Linked to",
-  createNew: "Add new",
+  createNew: "Create new",
   hideCreate: "Hide",
   select: "Select",
   cancel: "Cancel",
   save: "Save",
-  empty: "No contacts yet.",
-  emptyHint: "Add people from Capture.",
-  emptyPicker: "No contacts yet.",
-  emptySearch: "Type to search network",
+  empty: "No records yet.",
+  emptyHint: "Tap Create (+) to add a person, organization, project, topic, or event.",
+  emptyPicker: "No records yet.",
+  emptySearch: "Type to search",
   emptyFavorites: "Star contacts to pin them here",
-  emptyNetwork: "No contacts yet.",
-  emptyNetworkHint: "Use Link to in Capture.",
-  emptyActivity: "No notes or documents linked yet.",
-  addDocumentFor: (name: string) => `Add document for ${name}`,
+  emptyNetwork: "No records yet.",
+  emptyNetworkHint: "Tap Create (+) to add one — no note or inbox item required.",
+  emptyActivity: "No evidence linked yet.",
+  addDocumentFor: (name: string) => `Attach evidence for ${name}`,
   pendingNew: (name: string) => `New: ${name}`,
 } as const;
 
@@ -187,9 +196,9 @@ export const SECTION_EMPTY = {
 
 export const REFERENCE_PICKER = {
   searchPlaceholder: "Search…",
-  typeToSearch: "Type to search network",
+  typeToSearch: "Type to search",
   starToPin: "Star contacts to pin them here",
-  noReferences: "No contacts yet.",
+  noReferences: "No records yet. Create one first.",
   selected: (n: number, names: string) => `${n} selected · ${names}`,
   recent: "Recent",
   favorites: "Favorites",
@@ -199,15 +208,15 @@ export const REFERENCE_PICKER = {
 export const ENTITY_PICKER = REFERENCE_PICKER;
 
 export const ENTITY_PAGE = {
-  linkedDocuments: "Linked documents",
+  linkedDocuments: "Linked evidence",
   notes: "Notes",
   recentActivity: "Recent activity",
-  addDocumentFor: (name: string) => `Add document for ${name}`,
+  addDocumentFor: (name: string) => `Attach evidence for ${name}`,
 } as const;
 
 export const NETWORK = {
   title: "Networking",
-  subtitle: "People and organizations you track",
+  subtitle: "People, organizations, topics, and events",
   searchPlaceholder: "Search network…",
 } as const;
 
