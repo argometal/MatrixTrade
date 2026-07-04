@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Entity } from "@/lib/argus/types";
 import {
   REFERENCE_KINDS,
@@ -17,12 +17,22 @@ interface ReferenceCreateModalProps {
   open: boolean;
   onCancel: () => void;
   onSave: (data: { name: string; entityType: EntityType; notes: string }) => void;
+  defaultKind?: ReferenceKind;
 }
 
-export function ReferenceCreateModal({ open, onCancel, onSave }: ReferenceCreateModalProps) {
+export function ReferenceCreateModal({
+  open,
+  onCancel,
+  onSave,
+  defaultKind = "person",
+}: ReferenceCreateModalProps) {
   const [name, setName] = useState("");
-  const [kind, setKind] = useState<ReferenceKind>("person");
+  const [kind, setKind] = useState<ReferenceKind>(defaultKind);
   const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    if (open) setKind(defaultKind);
+  }, [open, defaultKind]);
 
   if (!open) return null;
 
@@ -35,7 +45,7 @@ export function ReferenceCreateModal({ open, onCancel, onSave }: ReferenceCreate
       notes: buildReferenceNotes(kind, notes),
     });
     setName("");
-    setKind("person");
+    setKind(defaultKind);
     setNotes("");
   }
 

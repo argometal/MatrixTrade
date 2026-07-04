@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
 import { referenceDisplayLabel } from "@/lib/argus/reference-types";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
-import { INBOX } from "@/lib/argus/ux-copy";
+import { INBOX, TESTING } from "@/lib/argus/ux-copy";
 import { CaptureSheet } from "./CaptureSheet";
 import { ReferenceCreateModal } from "./ReferenceCreateModal";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
@@ -14,8 +14,10 @@ import { Card } from "./ui";
 import {
   archiveInboxAction,
   convertInboxAction,
+  deleteInboxAction,
   linkInboxAction,
 } from "@/app/argus/actions";
+import { ArgusDeleteForm } from "./ArgusDeleteForm";
 
 interface InboxTriagePanelProps {
   item: InboxItem;
@@ -199,6 +201,15 @@ export function InboxTriagePanel({
           )}
         </>
       )}
+
+      <ArgusDeleteForm
+        action={deleteInboxAction}
+        confirmMessage={TESTING.deleteInboxConfirm}
+        label={TESTING.deleteInbox}
+        className="mb-4"
+      >
+        <input type="hidden" name="inboxId" value={item.id} />
+      </ArgusDeleteForm>
 
       <p className="text-center text-xs text-zinc-600">
         Status: {statusLabel}

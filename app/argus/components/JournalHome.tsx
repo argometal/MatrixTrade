@@ -6,8 +6,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import type { HomeNetworkSummary, HomeProjectSummary } from "@/lib/argus/home-helpers";
-import { HOME_DETAIL, HOME_EMPTY, HOME_NAV, INBOX, SECTION_EMPTY } from "@/lib/argus/ux-copy";
-import { createLogAction } from "@/app/argus/actions";
+import { HOME_DETAIL, HOME_EMPTY, HOME_NAV, INBOX, SECTION_EMPTY, TESTING } from "@/lib/argus/ux-copy";
+import { createLogAction, clearAllArgusDataAction } from "@/app/argus/actions";
+import { ArgusClearAllForm } from "./ArgusDeleteForm";
 import { CaptureFab } from "./CaptureFab";
 import { CaptureSheet } from "./CaptureSheet";
 import { HomeDetailHeader } from "./HomeDetailHeader";
@@ -277,6 +278,13 @@ export function JournalHome({
           ) : null}
         </div>
       </div>
+
+      <ArgusClearAllForm
+        action={clearAllArgusDataAction}
+        confirmMessage={TESTING.clearAllConfirm}
+        label={TESTING.clearAll}
+        hint={TESTING.clearAllHint}
+      />
 
       {!sheetOpen ? <CaptureFab onClick={openCapture} /> : null}
 

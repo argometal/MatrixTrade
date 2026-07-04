@@ -6,12 +6,17 @@ import {
   appendLogAttachment,
   archiveInboxItem,
   classifyLog,
+  clearAllArgusData,
   convertInboxToLog,
   createEntity,
   createLog,
+  deleteEntity,
+  deleteInboxItem,
+  deleteLog,
   linkInboxToEntities,
   saveAttachment,
   updateEntity,
+  updateLog,
 } from "@/lib/argus/server-storage";
 import type { EntityType, JournalKind, LogSource, StrategicValue } from "@/lib/argus/types";
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
@@ -112,6 +117,31 @@ export async function createLogAction(formData: FormData): Promise<void> {
   redirect(returnTo === "journal" ? "/argus/journal" : `/argus/logs/${log.id}`);
 }
 
+export async function updateLogAction(formData: FormData): Promise<void> {
+  const logId = String(formData.get("logId") ?? "");
+  const entityIds = await resolveEntityIds(formData);
+  const input = parseJournalInput(formData);
+  if (!input.body) {
+    redirect(`/argus/logs/${logId}?error=content`);
+  }
+
+  const title = input.title || autoTitleFromBody(input.body);
+
+  await updateLog(logId, {
+    title,
+    body: input.body,
+    kind: input.kind,
+    date: input.date,
+    followUpDate: input.followUpDate,
+    entityIds,
+    topics: input.topics,
+  });
+
+  revalidateArgus();
+  revalidatePath(`/argus/logs/${logId}`);
+  redirect(`/argus/logs/${logId}`);
+}
+
 export async function classifyLogAction(formData: FormData): Promise<void> {
   const logId = String(formData.get("logId") ?? "");
   const entityIds = await resolveEntityIds(formData);
@@ -179,4 +209,32 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
   revalidateArgus();
   revalidatePath(`/argus/network/${entityId}`);
   redirect(`/argus/network/${entityId}`);
+}
+
+export async function deleteLogAction(formData: FormData): Promise<void> {
+  const logId = String(formData.get("logId") ?? "");
+  await deleteLog(logId);
+  revalidateArgus();
+  redirect("/argus/journal");
+}
+
+export async function deleteEntityAction(formData: FormData): Promise<void> {
+  const entityId = String(formData.get("entityId") ?? "");
+  await deleteEntity(entityId);
+  revalidateArgus();
+  redirect("/argus/network");
+}
+
+export async function deleteInboxAction(formData: FormData): Promise<void> {
+  const inboxId = String(formData.get("inboxId") ?? "");
+  await deleteInboxItem(inboxId);
+  revalidateArgus();
+  const returnTo = String(formData.get("returnTo") ?? "inbox");
+  redirect(returnTo === "journal" ? "/argus/journal" : "/argus/inbox");
+}
+
+export async function clearAllArgusDataAction(): Promise<void> {
+  await clearAllArgusData();
+  revalidateArgus();
+  redirect("/argus/journal");
 }

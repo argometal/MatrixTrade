@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { deleteEntityAction } from "@/app/argus/actions";
+import { ArgusDeleteForm } from "@/app/argus/components/ArgusDeleteForm";
 import { EntityEditForm } from "@/app/argus/components/EntityEditForm";
 import { LogCard } from "@/app/argus/components/Cards";
 import { Card, EmptyState, formatDate, PageHeader } from "@/app/argus/components/ui";
@@ -10,7 +12,7 @@ import {
   STRATEGIC_VALUE_LABELS,
 } from "@/lib/argus/labels";
 import { buildEntityIntelligence } from "@/lib/argus/network-intelligence";
-import { ENTITY_PAGE, REFERENCES } from "@/lib/argus/ux-copy";
+import { ENTITY_PAGE, REFERENCES, TESTING } from "@/lib/argus/ux-copy";
 import { getEntityHistory } from "@/lib/argus/network";
 import { getEntities, getEntity, readArgus } from "@/lib/argus/server-storage";
 
@@ -101,6 +103,15 @@ export default async function EntityNetworkPage({ params }: { params: Promise<{ 
       </Card>
 
       <EntityEditForm entity={entity} />
+
+      <ArgusDeleteForm
+        action={deleteEntityAction}
+        confirmMessage={TESTING.deleteEntityConfirm}
+        label={TESTING.deleteEntity}
+        className="mb-6"
+      >
+        <input type="hidden" name="entityId" value={entity.id} />
+      </ArgusDeleteForm>
 
       <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-zinc-500">{ENTITY_PAGE.recentActivity}</h2>
       {history.length === 0 ? (

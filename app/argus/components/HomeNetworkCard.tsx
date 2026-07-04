@@ -3,7 +3,9 @@
 import Link from "next/link";
 import type { Entity, Log } from "@/lib/argus/types";
 import { ENTITY_TYPE_LABELS } from "@/lib/argus/labels";
-import { HOME_DETAIL } from "@/lib/argus/ux-copy";
+import { deleteEntityAction, deleteLogAction } from "@/app/argus/actions";
+import { ArgusDeleteForm } from "./ArgusDeleteForm";
+import { HOME_DETAIL, TESTING } from "@/lib/argus/ux-copy";
 import { formatDate } from "./ui";
 import { HomeExpandableCard } from "./HomeExpandableCard";
 import type { HomeNetworkSummary } from "@/lib/argus/home-helpers";
@@ -65,6 +67,14 @@ export function HomeNetworkCard({
       >
         Open profile
       </Link>
+      <ArgusDeleteForm
+        action={deleteEntityAction}
+        confirmMessage={TESTING.deleteEntityConfirm}
+        label={TESTING.deleteEntity}
+        className="mt-3"
+      >
+        <input type="hidden" name="entityId" value={entity.id} />
+      </ArgusDeleteForm>
     </HomeExpandableCard>
   );
 }
@@ -114,6 +124,14 @@ export function HomeLogCard({
       >
         Open full record
       </Link>
+      <ArgusDeleteForm
+        action={deleteLogAction}
+        confirmMessage={TESTING.deleteLogConfirm}
+        label={TESTING.deleteLog}
+        className="mt-3"
+      >
+        <input type="hidden" name="logId" value={log.id} />
+      </ArgusDeleteForm>
     </HomeExpandableCard>
   );
 }

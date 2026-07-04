@@ -10,8 +10,9 @@ import {
   type AttachmentViewModel,
   type EmailViewModel,
 } from "@/lib/argus/email-view";
-import { HOME_INBOX_ACTIONS, INBOX } from "@/lib/argus/ux-copy";
-import { archiveInboxAction, convertInboxAction, linkInboxAction } from "@/app/argus/actions";
+import { HOME_INBOX_ACTIONS, INBOX, TESTING } from "@/lib/argus/ux-copy";
+import { archiveInboxAction, convertInboxAction, deleteInboxAction, linkInboxAction } from "@/app/argus/actions";
+import { ArgusDeleteForm } from "./ArgusDeleteForm";
 import { CaptureSheet } from "./CaptureSheet";
 import { HomeExpandableCard } from "./HomeExpandableCard";
 import { InboxAttachmentList } from "./InboxAttachmentList";
@@ -188,6 +189,15 @@ export function HomeInboxCard({
             <Link href={`/argus/inbox/${item.id}`} className={actionButtonClass(true)}>
               {HOME_INBOX_ACTIONS.openFullViewer}
             </Link>
+            <ArgusDeleteForm
+              action={deleteInboxAction}
+              confirmMessage={TESTING.deleteInboxConfirm}
+              label={TESTING.deleteInbox}
+              className="inline"
+            >
+              <input type="hidden" name="inboxId" value={item.id} />
+              <input type="hidden" name="returnTo" value="journal" />
+            </ArgusDeleteForm>
           </div>
         </div>
 

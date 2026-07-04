@@ -268,6 +268,42 @@ export async function classifyLog(logId: string, entityIds: string[]): Promise<L
   return log;
 }
 
+export async function updateLog(
+  id: string,
+  input: {
+    title: string;
+    body: string;
+    kind: Log["kind"];
+    date: string;
+    followUpDate?: string;
+    entityIds: string[];
+    topics: string[];
+  }
+): Promise<Log> {
+  const data = await readArgus();
+  const log = data.logs.find((l) => l.id === id);
+  if (!log) throw new Error("Journal entry not found");
+
+  const now = new Date().toISOString();
+  log.title = input.title.trim() || log.title;
+  log.body = input.body;
+  log.kind = input.kind;
+  log.date = input.date;
+  log.followUpDate = input.followUpDate;
+  log.entityIds = input.entityIds;
+  log.topics = input.topics;
+  log.classificationStatus = resolveClassificationStatus(input.entityIds);
+  log.updatedAt = now;
+
+  for (const eid of input.entityIds) {
+    const entity = data.entities.find((e) => e.id === eid);
+    if (entity) entity.updatedAt = now;
+  }
+
+  await writeArgus(data);
+  return log;
+}
+
 export async function appendLogAttachment(logId: string, attachmentId: string): Promise<void> {
   const data = await readArgus();
   const log = data.logs.find((l) => l.id === logId);
@@ -460,4 +496,80 @@ export async function searchLogs(query: string, includePrivate: boolean): Promis
       l.body.toLowerCase().includes(q) ||
       l.topics.some((t) => t.toLowerCase().includes(q))
   );
+}
+
+async function removeAttachmentFile(id: string): Promise<void> {
+  try {
+    await fs.unlink(path.join(paths().filesDir, id));
+  } catch {
+    /* file may already be missing */
+  }
+}
+
+function removeAttachmentRecord(data: ArgusData, id: string): void {
+  data.attachments = data.attachments.filter((a) => a.id !== id);
+}
+
+async function deleteAttachmentsForIds(data: ArgusData, ids: string[]): Promise<void> {
+  for (const id of ids) {
+    removeAttachmentRecord(data, id);
+    await removeAttachmentFile(id);
+  }
+}
+
+export async function deleteLog(id: string): Promise<boolean> {
+  const data = await readArgus();
+  const log = data.logs.find((l) => l.id === id);
+  if (!log) return false;
+
+  await deleteAttachmentsForIds(data, log.attachmentIds);
+  data.logs = data.logs.filter((l) => l.id !== id);
+
+  for (const item of data.inboxItems) {
+    if (item.convertedLogId === id) {
+      item.convertedLogId = undefined;
+      if (item.status === "converted") item.status = "linked";
+    }
+  }
+
+  await writeArgus(data);
+  return true;
+}
+
+export async function deleteEntity(id: string): Promise<boolean> {
+  const data = await readArgus();
+  if (!data.entities.some((e) => e.id === id)) return false;
+
+  data.entities = data.entities.filter((e) => e.id !== id);
+  for (const log of data.logs) {
+    log.entityIds = log.entityIds.filter((eid) => eid !== id);
+  }
+  for (const item of data.inboxItems) {
+    item.linkedEntityIds = (item.linkedEntityIds ?? []).filter((eid) => eid !== id);
+  }
+
+  await writeArgus(data);
+  return true;
+}
+
+export async function deleteInboxItem(id: string): Promise<boolean> {
+  const data = await readArgus();
+  const item = data.inboxItems.find((i) => i.id === id);
+  if (!item) return false;
+
+  await deleteAttachmentsForIds(data, item.attachmentIds);
+  data.inboxItems = data.inboxItems.filter((i) => i.id !== id);
+  await writeArgus(data);
+  return true;
+}
+
+export async function clearAllArgusData(): Promise<void> {
+  await ensureArgusStorageReady();
+  const p = paths();
+  await fs.mkdir(p.filesDir, { recursive: true });
+
+  const files = await fs.readdir(p.filesDir);
+  await Promise.all(files.map((file) => removeAttachmentFile(file)));
+
+  await writeArgus(emptyArgus());
 }

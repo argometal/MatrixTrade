@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { HOME_DETAIL } from "@/lib/argus/ux-copy";
+import { deleteEntityAction } from "@/app/argus/actions";
+import { ArgusDeleteForm } from "./ArgusDeleteForm";
+import { HOME_DETAIL, TESTING } from "@/lib/argus/ux-copy";
 import { HomeExpandableCard } from "./HomeExpandableCard";
 import type { HomeProjectSummary } from "@/lib/argus/home-helpers";
 
@@ -47,6 +49,14 @@ export function HomeProjectCard({
       >
         Open project
       </Link>
+      <ArgusDeleteForm
+        action={deleteEntityAction}
+        confirmMessage={TESTING.deleteEntityConfirm}
+        label={TESTING.deleteEntity}
+        className="mt-3"
+      >
+        <input type="hidden" name="entityId" value={entity.id} />
+      </ArgusDeleteForm>
     </HomeExpandableCard>
   );
 }

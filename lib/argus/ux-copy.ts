@@ -4,6 +4,24 @@ export const ARGUS_PRODUCT_NAME = "ARGUS";
 export const ARGUS_TAGLINE = "Work Tracker";
 export const ARGUS_SUBTITLE = "Track items, documents, and follow-ups.";
 
+export const ACTIVITY_EDIT = {
+  title: "Edit & organize",
+  relationships: "Relationships",
+  newProject: "New project",
+  newTopic: "New topic",
+  linkTo: "Link to",
+  tags: "Tags",
+  date: "Date",
+  reminder: "Reminder",
+  save: "Save",
+  cancel: "Cancel",
+  linkedLabel: "Linked to",
+  attachments: "Attachments",
+  fromInbox: "From inbox",
+  viewOriginal: "view original",
+  rawPreserved: "raw email preserved unchanged",
+} as const;
+
 export const CAPTURE = {
   fab: "Capture",
   title: "Capture",
@@ -220,4 +238,20 @@ export const COMPOSER = {
 export const ENTITY_DETAIL = {
   documentCount: "Linked documents",
   noteCount: "Notes",
+} as const;
+
+/** Temporary testing controls — protect before production */
+export const TESTING = {
+  sectionLabel: "Testing",
+  delete: "Delete",
+  deleteLog: "Delete record",
+  deleteLogConfirm: "Delete this record permanently? Attachments will be removed.",
+  deleteEntity: "Delete reference",
+  deleteEntityConfirm: "Delete this reference permanently? It will be unlinked from all records.",
+  deleteInbox: "Delete email",
+  deleteInboxConfirm: "Delete this inbox item permanently? Attachments will be removed.",
+  clearAll: "Clear all ARGUS data",
+  clearAllHint: "Removes all logs, inbox items, references, attachments, and files. For testing only.",
+  clearAllConfirm:
+    "Delete ALL ARGUS data? This removes every log, email, reference, and attachment. This cannot be undone.",
 } as const;
