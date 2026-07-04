@@ -17,8 +17,18 @@ import {
   getLocalInboxItem,
   setLocalInboxStatus,
 } from "@/lib/trading-inbox-storage";
+import {
+  buildAiConnectUrl,
+  createAiSession,
+  revokeAiSession,
+} from "@/lib/ai-session";
+import { createQrDataUrl } from "@/lib/qr";
 import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
+
+export type CreateAiSessionActionResult =
+  | { token: string; connectUrl: string; qrDataUrl: string }
+  | { error: string };
 
 function revalidateTradingPaths() {
   revalidatePath("/");
@@ -31,6 +41,38 @@ function revalidateTradingPaths() {
   revalidatePath("/ai-workspace");
   revalidatePath("/inbox");
   revalidatePath("/system");
+}
+
+export async function createAiSessionAction(
+  formData: FormData
+): Promise<CreateAiSessionActionResult> {
+  await requireTradingSession();
+
+  const ttlRaw = Number(formData.get("ttlMinutes"));
+  const ttlMinutes =
+    Number.isFinite(ttlRaw) && ttlRaw >= 5 && ttlRaw <= 1440 ? ttlRaw : 60;
+  const label = String(formData.get("label") ?? "").trim() || undefined;
+
+  try {
+    const { token } = await createAiSession({ ttlMinutes, label });
+    const connectUrl = buildAiConnectUrl(token);
+    const qrDataUrl = await createQrDataUrl(connectUrl);
+    revalidatePath("/ai-workspace");
+    return { token, connectUrl, qrDataUrl };
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Failed to create AI session",
+    };
+  }
+}
+
+export async function revokeAiSessionAction(formData: FormData): Promise<void> {
+  await requireTradingSession();
+  const sessionId = String(formData.get("sessionId") ?? "").trim();
+  if (sessionId) {
+    await revokeAiSession(sessionId);
+  }
+  revalidatePath("/ai-workspace");
 }
 
 export async function syncBridgeFormAction(): Promise<void> {

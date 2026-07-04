@@ -1,4 +1,9 @@
 import Link from "next/link";
+import {
+  createAiSessionAction,
+  revokeAiSessionAction,
+} from "@/app/actions";
+import { AiSessionPanel } from "@/app/components/ai-workspace/AiSessionPanel";
 import { QuickConnectPanel } from "@/app/components/ai-workspace/QuickConnectPanel";
 import { ContextHandoffPanel } from "@/app/components/ai-workspace/ContextHandoffPanel";
 import { SystemSection } from "@/app/components/system/SystemSection";
@@ -13,6 +18,7 @@ import { getSetups } from "@/lib/setups";
 import { describeProposal, parseTradingInboxPayload } from "@/lib/bridge";
 import { computeMistakeStats, suggestExportQuestion } from "@/lib/review";
 import { listAllPendingInboxItems } from "@/lib/trading-inbox-storage";
+import { listActiveAiSessions } from "@/lib/ai-session";
 import { getExperiment, getTrades, getTradeNotes } from "@/lib/storage";
 
 export default async function AiWorkspacePage() {
@@ -26,6 +32,7 @@ export default async function AiWorkspacePage() {
     workerStatus,
     workerInbox,
     syncHistory,
+    aiSessions,
   ] = await Promise.all([
     getExperiment(),
     getTrades(),
@@ -35,6 +42,7 @@ export default async function AiWorkspacePage() {
     checkWorkerReachable(),
     fetchBridgeInbox(),
     getSyncHistory(),
+    listActiveAiSessions(),
   ]);
 
   const snapshotUrl = getSnapshotReadUrl();
@@ -63,9 +71,21 @@ export default async function AiWorkspacePage() {
       <header>
         <h1 className="text-2xl font-semibold">AI Workspace</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Connect any assistant to your experiment — no URLs or tokens to remember.
+          AI-assisted trading for your experiment — read context, collaborate, propose to Inbox.
         </p>
       </header>
+
+      <SystemSection
+        id="ai-connection"
+        title="AI Trading Session"
+        description="Temporary token and QR for AI trading assistance — read-only context; proposals queue in Inbox for your review."
+      >
+        <AiSessionPanel
+          sessions={aiSessions}
+          createAction={createAiSessionAction}
+          revokeAction={revokeAiSessionAction}
+        />
+      </SystemSection>
 
       <SystemSection
         id="quick-connect"
@@ -92,7 +112,7 @@ export default async function AiWorkspacePage() {
         />
       </SystemSection>
 
-      <SystemSection id="inbox" title="Inbox" description="Proposals from your assistant — review before Apply.">
+      <SystemSection id="inbox" title="Inbox" description="Proposals from AI collaboration — review before Apply.">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-sm text-zinc-700">
             {pendingInbox.length === 0 ? (
