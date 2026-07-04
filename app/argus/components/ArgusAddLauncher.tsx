@@ -18,13 +18,13 @@ import { ReferenceCreateModal } from "./ReferenceCreateModal";
 
 type AddMenuButtonProps = {
   variant?: "nav" | "floating";
-  align?: "start" | "end";
+  align?: "start" | "center" | "end";
   className?: string;
 };
 
 export function AddMenuButton({
   variant = "nav",
-  align = "end",
+  align = "center",
   className = "",
 }: AddMenuButtonProps) {
   const router = useRouter();
@@ -80,10 +80,11 @@ export function AddMenuButton({
 
   const buttonClass =
     variant === "nav"
-      ? "flex h-11 w-11 items-center justify-center rounded-full bg-teal-500 text-xl font-light text-white shadow-lg shadow-teal-950/50 transition hover:bg-teal-400 active:scale-95"
+      ? "flex h-10 w-10 items-center justify-center rounded-full bg-teal-500 text-lg font-light text-white shadow-md shadow-teal-950/40 transition hover:bg-teal-400 active:scale-95"
       : "flex h-14 w-14 items-center justify-center rounded-full bg-teal-500 text-2xl font-light text-white shadow-lg shadow-teal-950/50 transition hover:bg-teal-400 active:scale-95";
 
-  const menuAlignClass = align === "end" ? "right-0" : "left-0";
+  const menuAlignClass =
+    align === "end" ? "right-0" : align === "start" ? "left-0" : "left-1/2 -translate-x-1/2";
 
   return (
     <>

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { BOTTOM_NAV } from "@/lib/argus/ux-copy";
 import { AddMenuButton } from "./ArgusAddLauncher";
 
-const navLinks = [
+const leftLinks = [
   {
     href: "/argus/journal",
     label: BOTTOM_NAV.home,
@@ -22,6 +22,9 @@ const navLinks = [
     icon: "◎",
     match: (path: string) => path.startsWith("/argus/network"),
   },
+] as const;
+
+const rightLinks = [
   {
     href: "/argus/inbox",
     label: BOTTOM_NAV.inbox,
@@ -50,12 +53,14 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium tracking-wide transition ${
-        active ? "text-teal-400" : "text-zinc-600 hover:text-zinc-400"
+      className={`flex w-[3.25rem] flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-medium tracking-wide transition ${
+        active
+          ? "bg-zinc-800/90 text-teal-400"
+          : "text-zinc-500 hover:bg-zinc-900/80 hover:text-zinc-300"
       }`}
     >
-      <span className="text-[18px] leading-none opacity-90">{icon}</span>
-      <span className="truncate">{label}</span>
+      <span className="text-[17px] leading-none">{icon}</span>
+      <span className="max-w-full truncate">{label}</span>
     </Link>
   );
 }
@@ -65,11 +70,11 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-30 border-t border-zinc-800/80 bg-zinc-950/95 backdrop-blur-xl"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center pb-[max(0.65rem,env(safe-area-inset-bottom))]"
       aria-label="Main navigation"
     >
-      <div className="mx-auto flex max-w-lg items-end gap-1 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1 md:max-w-4xl">
-        {navLinks.map((link) => (
+      <div className="pointer-events-auto flex items-center gap-0.5 rounded-2xl border border-zinc-800/90 bg-zinc-950/95 p-1 shadow-lg shadow-black/40 backdrop-blur-xl">
+        {leftLinks.map((link) => (
           <NavLink
             key={link.href}
             href={link.href}
@@ -79,9 +84,17 @@ export function BottomNav() {
           />
         ))}
 
-        <div className="flex shrink-0 items-end pl-1">
-          <AddMenuButton variant="nav" align="end" />
-        </div>
+        <AddMenuButton variant="nav" align="center" className="mx-0.5" />
+
+        {rightLinks.map((link) => (
+          <NavLink
+            key={link.href}
+            href={link.href}
+            label={link.label}
+            icon={link.icon}
+            active={link.match(pathname)}
+          />
+        ))}
       </div>
     </nav>
   );
