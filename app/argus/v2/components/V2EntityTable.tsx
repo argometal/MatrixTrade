@@ -1,40 +1,48 @@
 import Link from "next/link";
+import { V2_ENTITY_TABS, type V2EntityTab } from "@/lib/argus/v2/loaders";
 
-export type EntityTab = "organizations" | "projects" | "people";
+const TAB_LABELS: Record<V2EntityTab, string> = {
+  organizations: "Organizations",
+  projects: "Projects",
+  people: "People",
+  topics: "Topics",
+  events: "Events",
+};
 
 export function V2EntityTable({
   tab,
   rows,
 }: {
-  tab: EntityTab;
+  tab: V2EntityTab;
   rows: { id: string; name: string; type: string; people: number; last: string; active: boolean; href: string }[];
 }) {
-  const tabs: EntityTab[] = ["organizations", "projects", "people"];
+  const thirdColumnLabel =
+    tab === "people" ? "Role" : tab === "topics" || tab === "events" ? "Links" : "People";
 
   return (
     <div className="overflow-x-auto">
-      <div className="mb-3 flex gap-2">
-        {tabs.map((t) => (
+      <div className="mb-3 flex flex-wrap gap-2">
+        {V2_ENTITY_TABS.map((t) => (
           <Link
             key={t}
-            href={t === tab ? "/argus/v2" : `/argus/v2?tab=${t}`}
-            className={`rounded-lg px-2.5 py-1 text-[11px] font-medium capitalize ${
+            href={t === "organizations" ? "/argus/v2" : `/argus/v2?tab=${t}`}
+            className={`rounded-lg px-2.5 py-1 text-[11px] font-medium ${
               t === tab ? "bg-violet-500/15 text-violet-300" : "text-zinc-600 hover:text-zinc-400"
             }`}
           >
-            {t}
+            {TAB_LABELS[t]}
           </Link>
         ))}
       </div>
       {rows.length === 0 ? (
-        <p className="text-sm text-zinc-500">No {tab} yet.</p>
+        <p className="text-sm text-zinc-500">No {TAB_LABELS[tab].toLowerCase()} yet.</p>
       ) : (
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-zinc-800 text-xs text-zinc-600">
               <th className="pb-2 font-medium">Name</th>
               <th className="pb-2 font-medium">Type</th>
-              <th className="pb-2 font-medium">{tab === "people" ? "Role" : "People"}</th>
+              <th className="pb-2 font-medium">{thirdColumnLabel}</th>
               <th className="pb-2 font-medium">Last Activity</th>
             </tr>
           </thead>

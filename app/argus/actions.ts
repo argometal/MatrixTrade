@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireArgusSession } from "@/lib/auth/require-session";
 import {
   appendLogAttachment,
   archiveInboxItem,
@@ -48,6 +49,41 @@ function revalidateArgus(): void {
   revalidatePath("/argus/network");
   revalidatePath("/argus/search");
   revalidatePath("/argus/inbox");
+  revalidatePath("/argus/diagnostics");
+  revalidatePath("/argus/v2");
+}
+
+export type RefreshInboxResult = {
+  ok: boolean;
+  count: number;
+  checkedAt: string;
+  message?: string;
+};
+
+export async function refreshArgusInboxFromEmailAction(): Promise<RefreshInboxResult> {
+  await requireArgusSession();
+
+  const { getInboxItems } = await import("@/lib/argus/server-storage");
+  const { isActiveRecord } = await import("@/lib/argus/supabase-protection/protected-counts");
+
+  try {
+    const items = await getInboxItems();
+    const count = items.filter(isActiveRecord).length;
+    revalidateArgus();
+
+    return {
+      ok: true,
+      count,
+      checkedAt: new Date().toISOString(),
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      count: 0,
+      checkedAt: new Date().toISOString(),
+      message: err instanceof Error ? err.message : "Inbox refresh failed",
+    };
+  }
 }
 
 function parseTopics(raw: string): string[] {

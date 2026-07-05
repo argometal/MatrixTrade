@@ -187,16 +187,41 @@ export interface V2EntityRow {
   href: string;
 }
 
+export type V2EntityTab = "organizations" | "projects" | "people" | "topics" | "events";
+
+export const V2_ENTITY_TABS: V2EntityTab[] = [
+  "organizations",
+  "projects",
+  "people",
+  "topics",
+  "events",
+];
+
+export function parseV2EntityTab(value: string | undefined): V2EntityTab {
+  if (value && V2_ENTITY_TABS.includes(value as V2EntityTab)) {
+    return value as V2EntityTab;
+  }
+  return "organizations";
+}
+
 export function buildV2EntityRows(
   data: ArgusData,
   inboxItems: InboxItem[],
   includePrivate: boolean,
   today: string,
-  tab: "organizations" | "projects" | "people"
+  tab: V2EntityTab
 ): V2EntityRow[] {
   const kinds = entitiesByKind(data);
   const list =
-    tab === "organizations" ? kinds.organizations : tab === "projects" ? kinds.projects : kinds.people;
+    tab === "organizations"
+      ? kinds.organizations
+      : tab === "projects"
+        ? kinds.projects
+        : tab === "people"
+          ? kinds.people
+          : tab === "topics"
+            ? kinds.topics
+            : kinds.events;
 
   return list
     .map((entity) => {
@@ -222,6 +247,9 @@ export function buildV2EntityRows(
         const logs = visibleLogs(data, includePrivate).filter((l) => l.entityIds.includes(entity.id));
         const inbox = getLinkedInboxForEntity(inboxItems, entity.id, includePrivate);
         lastIso = logs[0]?.date || inbox[0]?.receivedAt || entity.updatedAt;
+        if (tab === "events") {
+          peopleCount = (entity.linkedEntityIds ?? []).length;
+        }
       }
 
       const href =
@@ -231,15 +259,21 @@ export function buildV2EntityRows(
             ? `/argus/v2/projects/${entity.id}`
             : `/argus/network/${entity.id}`;
 
+      const typeLabel =
+        tab === "organizations"
+          ? entityNotesForDisplay(entity.notes) || "Organization"
+          : tab === "projects"
+            ? "Project"
+            : tab === "people"
+              ? entity.alias || "Person"
+              : tab === "topics"
+                ? "Topic"
+                : "Event";
+
       return {
         id: entity.id,
         name: entity.name,
-        type:
-          tab === "organizations"
-            ? entityNotesForDisplay(entity.notes) || "Organization"
-            : tab === "projects"
-              ? "Project"
-              : entity.alias || "Person",
+        type: typeLabel,
         people: peopleCount,
         last: relativeActivityLabel(lastIso, today),
         lastSort: lastIso ?? "",

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AddMenuButton } from "@/app/argus/components/ArgusAddLauncher";
 import type { V2NavCounts } from "@/lib/argus/v2/loaders";
 
 const DEFAULT_COUNTS: V2NavCounts = {
@@ -98,13 +99,7 @@ export function V2MobileNav({ inboxCount = 0 }: { inboxCount?: number }) {
           {item.icon}
         </Link>
       ))}
-      <Link
-        href="/argus/journal"
-        className="mx-1 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-xl text-white shadow-lg shadow-emerald-900/40"
-        aria-label="Add"
-      >
-        +
-      </Link>
+      <AddMenuButton variant="nav" align="center" className="mx-1" />
       {items.slice(2).map((item) => (
         <Link
           key={item.href}

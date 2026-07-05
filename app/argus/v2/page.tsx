@@ -8,6 +8,7 @@ import {
   buildV2HomeTimeline,
   buildV2RecentActivity,
   buildV2TagCloud,
+  parseV2EntityTab,
 } from "@/lib/argus/v2/loaders";
 import { V2Card, V2SectionTitle } from "./components/v2-ui";
 import { V2Timeline, V2TimelineRail } from "./components/V2Timeline";
@@ -58,8 +59,7 @@ export default async function V2HomePage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const { tab: tabParam } = await searchParams;
-  const tab =
-    tabParam === "projects" || tabParam === "people" ? tabParam : ("organizations" as const);
+  const tab = parseV2EntityTab(tabParam);
 
   const includePrivate = await hasArgusPrivateUnlock();
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);

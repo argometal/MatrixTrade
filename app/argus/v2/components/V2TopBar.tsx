@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { V2TopBarAdd } from "./V2TopBarAdd";
 
 export function V2TopBar({ showJournal = true }: { showJournal?: boolean }) {
   return (
@@ -29,10 +30,11 @@ export function V2TopBar({ showJournal = true }: { showJournal?: boolean }) {
           >
             PIN
           </button>
+          <V2TopBarAdd />
           {showJournal ? (
             <Link
-              href="/argus/journal"
-              className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 hover:bg-violet-500"
+              href="/argus/journal?capture=1"
+              className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 hover:bg-violet-500 lg:hidden"
             >
               + Journal
             </Link>
