@@ -50,6 +50,25 @@ export function AiBridgeShell({
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    const nav = document.getElementById("trading-top-nav");
+    const container = document.getElementById("trading-layout-container");
+    if (view === "v2") {
+      nav?.classList.add("hidden");
+      container?.classList.remove("mx-auto", "max-w-5xl", "px-4", "py-6", "sm:py-8");
+      container?.classList.add("max-w-none", "p-0");
+    } else {
+      nav?.classList.remove("hidden");
+      container?.classList.add("mx-auto", "max-w-5xl", "px-4", "py-6", "sm:py-8");
+      container?.classList.remove("max-w-none", "p-0");
+    }
+    return () => {
+      nav?.classList.remove("hidden");
+      container?.classList.add("mx-auto", "max-w-5xl", "px-4", "py-6", "sm:py-8");
+      container?.classList.remove("max-w-none", "p-0");
+    };
+  }, [view]);
+
   const setView = useCallback(
     (next: AiBridgeView) => {
       setViewState(next);

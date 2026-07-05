@@ -3,7 +3,7 @@ import { SignOutButton } from "@/app/components/SignOutButton";
 
 export function TradingNav() {
   return (
-    <nav className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-zinc-200 pb-4 text-sm font-medium sm:mb-8">
+    <nav id="trading-top-nav" className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-zinc-200 pb-4 text-sm font-medium sm:mb-8">
       <Link href="/" className="hover:text-zinc-600">
         Dashboard
       </Link>

@@ -18,6 +18,14 @@ export interface AiBridgeLiveSnapshot {
     winRatePercent: number | null;
     tradeCount: number;
   }>;
+  bestPlaybook: { name: string; netPnL: number } | null;
+  worstPlaybook: { name: string; netPnL: number } | null;
+  topPlaybooks: Array<{
+    name: string;
+    netPnL: number;
+    winRatePercent: number | null;
+    tradeCount: number;
+  }>;
   recentClosed: Array<{
     id: string;
     ticker: string;
@@ -57,6 +65,25 @@ export function buildAiBridgeLiveSnapshot(
     tradeCount: row.tradeCount,
   }));
 
+  const topPlaybooks = stats.slice(0, 3).map((row) => ({
+    name: row.playbook?.name ?? "Unassigned",
+    netPnL: row.netPnL,
+    winRatePercent: row.winRate !== null ? Math.round(row.winRate * 100) : null,
+    tradeCount: row.tradeCount,
+  }));
+
+  const bestPlaybook =
+    stats.length > 0
+      ? { name: stats[0].playbook?.name ?? "Unassigned", netPnL: stats[0].netPnL }
+      : null;
+  const worstPlaybook =
+    stats.length > 0
+      ? {
+          name: stats[stats.length - 1].playbook?.name ?? "Unassigned",
+          netPnL: stats[stats.length - 1].netPnL,
+        }
+      : null;
+
   const recentClosed = [...closed]
     .sort((a, b) => (b.closedAt ?? b.createdAt).localeCompare(a.closedAt ?? a.createdAt))
     .slice(0, 5)
@@ -91,6 +118,9 @@ export function buildAiBridgeLiveSnapshot(
     expectancyPerTrade:
       closed.length > 0 ? experiment.realizedPnL / closed.length : null,
     playbookRows,
+    bestPlaybook,
+    worstPlaybook,
+    topPlaybooks,
     recentClosed,
     aiNoteBullets,
   };
