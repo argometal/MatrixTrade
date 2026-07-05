@@ -68,7 +68,7 @@ function useArgusAddMenuControls() {
 
   function openCaptureNote() {
     setMenuOpen(false);
-    openCapture();
+    openCapture({ entryType: "note" });
   }
 
   function handleSave(data: { name: string; entityType: EntityType; notes: string }) {
@@ -82,6 +82,9 @@ function useArgusAddMenuControls() {
           entityNotesForDisplay(data.notes)
         );
         setCreateOpen(false);
+        if (kind === "event") {
+          openCapture({ entityIds: [entity.id], entryType: "note" });
+        }
         router.push(postCreateHref(pathname, kind, entity.id, entity.href));
         router.refresh();
       } catch (err) {

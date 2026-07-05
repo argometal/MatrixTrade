@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CAPTURE, REFERENCES, TAGS } from "@/lib/argus/ux-copy";
 import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
+import { eventDateFromLinkedEntities } from "@/lib/argus/journal-event-origin";
 import { AttachmentField } from "./AttachmentField";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
 import { TagPickerModal, type TagBuckets } from "./TagPickerModal";
@@ -13,6 +14,7 @@ export interface CaptureInitial {
   inboxId?: string;
   entityIds?: string[];
   entryType?: "log" | "note";
+  eventDate?: string;
 }
 
 interface CaptureSheetProps {
@@ -74,7 +76,7 @@ export function CaptureSheet({
   const [isProtected, setIsProtected] = useState(false);
   const [referenceOpen, setReferenceOpen] = useState(autoOpenReference);
   const [tagsOpen, setTagsOpen] = useState(false);
-  const [entryType, setEntryType] = useState<"log" | "note">(initial?.entryType ?? "log");
+  const [entryType, setEntryType] = useState<"log" | "note">(initial?.entryType ?? "note");
 
   const logBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "log"), [buckets]);
   const logCreateKinds = allowedCreateKinds("log");
@@ -89,22 +91,33 @@ export function CaptureSheet({
       setSelectedTags([]);
       setIsProtected(false);
       setProtectedOpen(false);
-      setEntryType(initial?.entryType ?? "log");
-      setEventDate(initial?.entryType === "note" ? today : "");
+      setEntryType(initial?.entryType ?? "note");
+      const noteDate =
+        initial?.eventDate?.slice(0, 10) ||
+        eventDateFromLinkedEntities(buckets.alphabetical, initial?.entityIds ?? []) ||
+        today;
+      setEventDate((initial?.entryType ?? "note") === "note" ? noteDate : "");
       setReferenceOpen(autoOpenReference);
       setTagsOpen(false);
     }
-  }, [open, initial?.body, initial?.title, initial?.entityIds, initial?.entryType, autoOpenReference, today]);
+  }, [open, initial?.body, initial?.title, initial?.entityIds, initial?.entryType, initial?.eventDate, autoOpenReference, today, buckets.alphabetical]);
 
   function selectEntryType(type: "log" | "note") {
     setEntryType(type);
     if (type === "note") {
-      setEventDate(today);
+      const linkedDate = eventDateFromLinkedEntities(buckets.alphabetical, selectedIds);
+      setEventDate(linkedDate || today);
     } else {
       setEventDate("");
       setDateOpen(false);
     }
   }
+
+  useEffect(() => {
+    if (!open || entryType !== "note") return;
+    const linkedDate = eventDateFromLinkedEntities(buckets.alphabetical, selectedIds);
+    if (linkedDate) setEventDate(linkedDate);
+  }, [open, entryType, selectedIds, buckets.alphabetical]);
 
   useEffect(() => {
     if (open && !referenceOpen && !tagsOpen) {

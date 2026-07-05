@@ -27,14 +27,15 @@ export const ACTIVITY_EDIT = {
 /** Note vs Log sequence rules — behavior only, no schema change. */
 export const JOURNAL_BEHAVIOR = {
   title: "Journal type",
-  noteHint: "Standalone note — can convert to a log when you want an ongoing sequence.",
+  noteHint: "Standalone note — event date applies when linked to an event.",
   logHint: "Sequence log — to branch, extract an entry into a standalone note first.",
+  eventNoteHint: "Event note — link a topic before converting to a log sequence.",
   convertToLog: "Convert to Log",
   extractToNote: "Extract to Note",
   extractPending: "Extracting…",
   convertModalTitle: "Convert Note to Log",
   convertDate: "Date",
-  convertModalHint: "Creates a log entry in the sequence. Links and tags are kept.",
+  convertModalHint: "Starts a log sequence on the linked topic. Event notes keep their date.",
   convertConfirm: "Convert to Log",
   convertPending: "Converting…",
   cancel: "Cancel",
@@ -65,7 +66,7 @@ export const ADD_MENU = {
   fab: "Add",
   title: "Add",
   journal: "Journal",
-  journalHint: "Create a journal entry",
+  journalHint: "Start a note from an event · sequence becomes a log on a topic",
   journalHintLong:
     "Log (ongoing) or Note (standalone) — link people, projects, topics, events, and evidence",
   /** @deprecated use journal */

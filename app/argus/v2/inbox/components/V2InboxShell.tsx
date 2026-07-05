@@ -109,7 +109,11 @@ export function V2InboxShell({
               >
                 Select
               </button>
-              <button type="button" className="text-xs text-zinc-500 hover:text-zinc-300">
+              <button
+                type="button"
+                onClick={() => setTab("unread")}
+                className="text-xs text-zinc-500 hover:text-zinc-300"
+              >
                 Mark all read
               </button>
               <div className="relative">

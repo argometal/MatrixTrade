@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
+import { V2OpenCaptureButton } from "@/app/argus/v2/components/V2OpenCaptureButton";
 import {
   buildV2EventTabCounts,
   filterV2EventRows,
@@ -249,6 +250,19 @@ export function V2EventsShell({
                 ))}
               </ul>
             )}
+
+            <div className="mt-6 border-t border-zinc-800/80 pt-6">
+              <V2OpenCaptureButton
+                entityIds={[selected.id]}
+                entryType="note"
+                className="inline-flex rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"
+              >
+                + Journal about this event
+              </V2OpenCaptureButton>
+              <p className="mt-2 text-xs text-zinc-600">
+                Event notes use the event date. Link a topic, then convert to a log sequence.
+              </p>
+            </div>
           </div>
         ) : (
           <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">

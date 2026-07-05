@@ -1,12 +1,16 @@
+import Link from "next/link";
 import { AddJournalMenuButton } from "@/app/argus/components/ArgusAddLauncher";
 
 export function V2TopBar() {
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
       <div className="flex items-center gap-3 px-4 py-3 lg:px-6">
-        <div className="flex items-center gap-2 lg:hidden">
-          <span className="text-base font-bold text-zinc-50">Argus</span>
-        </div>
+        <Link href="/argus/v2" className="flex min-w-0 items-center gap-2 lg:hidden">
+          <span className="text-lg" aria-hidden>
+            🌐
+          </span>
+          <span className="truncate text-base font-bold text-zinc-50">Argus</span>
+        </Link>
 
         <div className="mx-auto hidden max-w-xl flex-1 lg:block">
           <div className="relative">
@@ -25,11 +29,11 @@ export function V2TopBar() {
         <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
-            className="hidden rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-400 sm:inline-flex"
+            className="hidden items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-400 sm:inline-flex"
           >
-            PIN
+            <span aria-hidden>🛡</span> PIN
           </button>
-          <AddJournalMenuButton />
+          <AddJournalMenuButton className="shrink-0" />
           <button
             type="button"
             className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 sm:flex"

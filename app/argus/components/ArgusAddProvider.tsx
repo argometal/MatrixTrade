@@ -5,10 +5,17 @@ import { createContext, Suspense, useCallback, useContext, useEffect, useState, 
 import { createLogAction } from "@/app/argus/actions";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
-import { CaptureSheet } from "./CaptureSheet";
+import { CaptureSheet, type CaptureInitial } from "./CaptureSheet";
+
+export type CaptureOpenOptions = {
+  openReference?: boolean;
+  entityIds?: string[];
+  entryType?: "log" | "note";
+  eventDate?: string;
+};
 
 type ArgusAddContextValue = {
-  openCapture: (options?: { openReference?: boolean }) => void;
+  openCapture: (options?: CaptureOpenOptions) => void;
 };
 
 const ArgusAddContext = createContext<ArgusAddContextValue | null>(null);
@@ -24,14 +31,18 @@ export function useArgusAdd() {
 function CaptureDeepLinkSync({
   onOpen,
 }: {
-  onOpen: (options?: { openReference?: boolean }) => void;
+  onOpen: (options?: CaptureOpenOptions) => void;
 }) {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (searchParams.get("capture") === "1") {
-      onOpen({ openReference: searchParams.get("reference") === "1" });
-    }
+    if (searchParams.get("capture") !== "1") return;
+    const eventId = searchParams.get("eventId");
+    onOpen({
+      openReference: searchParams.get("reference") === "1",
+      entityIds: eventId ? [eventId] : undefined,
+      entryType: "note",
+    });
   }, [onOpen, searchParams]);
 
   return null;
@@ -50,20 +61,28 @@ export function ArgusAddProvider({
   const pathname = usePathname();
   const [captureOpen, setCaptureOpen] = useState(false);
   const [autoOpenReference, setAutoOpenReference] = useState(false);
+  const [captureInitial, setCaptureInitial] = useState<CaptureInitial | undefined>();
 
   const closeCapture = useCallback(() => {
     setCaptureOpen(false);
     setAutoOpenReference(false);
+    setCaptureInitial(undefined);
     const params = new URLSearchParams(window.location.search);
-    if (params.get("capture") || params.get("reference")) {
+    if (params.get("capture") || params.get("reference") || params.get("eventId")) {
       params.delete("capture");
       params.delete("reference");
+      params.delete("eventId");
       const query = params.toString();
       router.replace(query ? `${pathname}?${query}` : pathname);
     }
   }, [pathname, router]);
 
-  const openCapture = useCallback((options?: { openReference?: boolean }) => {
+  const openCapture = useCallback((options?: CaptureOpenOptions) => {
+    setCaptureInitial({
+      entityIds: options?.entityIds,
+      entryType: options?.entryType ?? "note",
+      eventDate: options?.eventDate,
+    });
     setAutoOpenReference(Boolean(options?.openReference));
     setCaptureOpen(true);
   }, []);
@@ -76,6 +95,7 @@ export function ArgusAddProvider({
         action={createLogAction}
         buckets={buckets}
         tagBuckets={tagBuckets}
+        initial={captureInitial}
         onClose={closeCapture}
         autoOpenReference={autoOpenReference}
       />

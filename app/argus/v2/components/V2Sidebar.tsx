@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AddMenuButton } from "@/app/argus/components/ArgusAddLauncher";
 import type { V2NavCounts } from "@/lib/argus/v2/loaders";
 
 const DEFAULT_COUNTS: V2NavCounts = {
@@ -87,25 +86,14 @@ export function V2MobileNav({ inboxCount = 0 }: { inboxCount?: number }) {
 
   return (
     <nav className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-full border border-zinc-700/80 bg-zinc-900/95 px-2 py-2 shadow-2xl backdrop-blur-md lg:hidden">
-      {items.slice(0, 2).map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={`flex h-11 w-11 items-center justify-center rounded-full text-lg ${
-            pathname === item.href ? "text-violet-400" : "text-zinc-500"
-          }`}
-          aria-label={item.label}
-        >
-          {item.icon}
-        </Link>
-      ))}
-      <AddMenuButton variant="nav" align="center" className="mx-1" />
-      {items.slice(2).map((item) => (
+      {items.map((item) => (
         <Link
           key={item.href}
           href={item.href}
           className={`relative flex h-11 w-11 items-center justify-center rounded-full text-lg ${
-            pathname.startsWith(item.href) ? "text-violet-400" : "text-zinc-500"
+            pathname === item.href || pathname.startsWith(item.href)
+              ? "text-violet-400"
+              : "text-zinc-500"
           }`}
           aria-label={item.label}
         >

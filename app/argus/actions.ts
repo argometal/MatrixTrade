@@ -43,6 +43,7 @@ import {
   canExtractLogToNote,
   JournalBehaviorError,
 } from "@/lib/argus/journal-behavior";
+import { assertEventNoteCanBecomeTopicLog, eventDateFromLinkedEntities } from "@/lib/argus/journal-event-origin";
 import { ArgusWriteBlockedError, isDestructiveAllowed } from "@/lib/argus/data-safety";
 import {
   ArgusPersistenceError,
@@ -182,6 +183,7 @@ export async function createLogAction(formData: FormData): Promise<void> {
     }
 
     revalidateArgus();
+    revalidatePath("/argus/v2/inbox");
     const returnTo = String(formData.get("returnTo") ?? "log");
     redirect(returnTo === "journal" ? "/argus/journal" : `/argus/logs/${log.id}`);
   } catch (err) {
@@ -240,11 +242,20 @@ export async function convertNoteToLogAction(formData: FormData): Promise<void> 
       throw new JournalBehaviorError("Only a standalone note can convert to a log.");
     }
 
+    const data = await readArgus();
+    assertEventNoteCanBecomeTopicLog(data.entities, existing.entityIds);
+
+    const convertDate =
+      date ||
+      eventDateFromLinkedEntities(data.entities, existing.entityIds) ||
+      existing.date.slice(0, 10) ||
+      today;
+
     await updateLog(logId, {
       title: existing.title,
       body: existing.body,
       kind: "log",
-      date,
+      date: convertDate,
       followUpDate: undefined,
       entityIds: existing.entityIds,
       topics: existing.topics,
@@ -340,6 +351,9 @@ export async function convertInboxAction(formData: FormData): Promise<void> {
 
   revalidateArgus();
   revalidatePath(`/argus/inbox/${inboxId}`);
+  revalidatePath("/argus/v2/inbox");
+  const returnTo = String(formData.get("returnTo") ?? "");
+  if (returnTo.startsWith("/argus/")) redirect(returnTo);
   redirect(`/argus/logs/${log.id}`);
 }
 

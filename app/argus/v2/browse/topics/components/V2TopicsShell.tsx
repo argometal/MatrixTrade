@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
+import { V2OpenCaptureButton } from "@/app/argus/v2/components/V2OpenCaptureButton";
 import {
   buildV2TopicTabCounts,
   filterV2TopicRows,
@@ -199,12 +200,13 @@ export function V2TopicsShell({
             )}
 
             <div className="mt-auto pt-6">
-              <Link
-                href={`/argus/journal?capture=1&reference=1`}
+              <V2OpenCaptureButton
+                entityIds={selected ? [selected.id] : undefined}
+                entryType="note"
                 className="inline-flex rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"
               >
                 + Journal about this topic
-              </Link>
+              </V2OpenCaptureButton>
             </div>
           </div>
         ) : (
