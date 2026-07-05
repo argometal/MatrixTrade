@@ -22,6 +22,7 @@ Use git tags to restore any point.
 | **114-revert** | `change-114-revert` | **Emergency rollback point** — last commit before v2 UI (`aad2a3e`) |
 | **114** | `change-114` | v2 design preview shells at `/argus/v2` (layout + mock structure) |
 | **115** | `change-115` | Wire v2 to live data with org/project hierarchy rules + implementation report |
+| **116** | `change-116` | v2 Home side-by-side panels, org/project mockup layouts, legacy journal link to v2 |
 
 ## Restore
 

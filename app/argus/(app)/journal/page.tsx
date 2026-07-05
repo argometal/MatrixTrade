@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { isTestingUiEnabled } from "@/lib/argus/data-safety";
@@ -102,6 +103,15 @@ export default async function JournalPage({
         privateUnlocked={includePrivate}
         privateError={Boolean(private_error)}
       />
+      <div className="mb-4 flex justify-end">
+        <Link
+          href="/argus/v2"
+          className="inline-flex items-center gap-2 rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-2 text-sm font-medium text-violet-200 transition hover:border-violet-400/60 hover:bg-violet-500/15"
+        >
+          <span aria-hidden>✦</span>
+          Open new Home preview
+        </Link>
+      </div>
       {!includePrivate && hiddenProtected > 0 ? (
         <p className="mb-4 rounded-lg border border-violet-900/40 bg-violet-950/20 px-3 py-2 text-sm text-violet-200/90">
           {PRIVATE.hiddenCount(hiddenProtected)}

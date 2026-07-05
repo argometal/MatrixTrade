@@ -113,23 +113,51 @@ export function buildV2RecentActivity(
   });
 }
 
-export function buildV2FollowUps(data: ArgusData, includePrivate: boolean, today: string) {
+export function buildV2FollowUps(
+  data: ArgusData,
+  entities: Entity[],
+  includePrivate: boolean,
+  today: string
+) {
+  const entityMap = new Map(entities.map((e) => [e.id, e]));
   const logs = visibleLogs(data, includePrivate).filter((l) => l.followUpDate || l.kind === "follow_up");
   return logs
     .map((log) => {
-      const due = log.followUpDate ?? log.date;
+      const dueIso = (log.followUpDate ?? log.date).slice(0, 10);
       let tone: "danger" | "warning" | "muted" = "muted";
-      if (due < today) tone = "danger";
-      else if (due <= addDays(today, 3)) tone = "warning";
+      if (dueIso < today) tone = "danger";
+      else if (dueIso <= addDays(today, 3)) tone = "warning";
+
+      const linkedNames = log.entityIds
+        .map((id) => entityMap.get(id)?.name)
+        .filter(Boolean)
+        .slice(0, 2);
+      const dueLabel =
+        dueIso < today
+          ? "Overdue"
+          : dueIso === today
+            ? "Due today"
+            : dueIso <= addDays(today, 3)
+              ? "Due soon"
+              : "Upcoming";
+      const metaParts = [...linkedNames];
+      if (dueIso === today) metaParts.push("Today");
+      else if (dueIso === addDays(today, 1)) metaParts.push("Tomorrow");
+      else if (dueIso > today) {
+        metaParts.push(formatShortDate(dueIso));
+      }
+
       return {
         id: log.id,
         title: log.title || "Follow-up",
-        due: due < today ? "Overdue" : due === today ? "Due today" : due <= addDays(today, 3) ? "Due soon" : "Upcoming",
+        meta: metaParts.join(" · ") || dueLabel,
+        due: dueLabel,
+        dueIso,
         tone,
         href: `/argus/logs/${log.id}`,
       };
     })
-    .sort((a, b) => a.due.localeCompare(b.due))
+    .sort((a, b) => a.dueIso.localeCompare(b.dueIso))
     .slice(0, 5);
 }
 
@@ -285,15 +313,34 @@ export function loadOrganizationPageData(
   const firstInbox = scope.inbox[scope.inbox.length - 1];
   const firstContact = [firstLog?.date, firstInbox?.receivedAt].filter(Boolean).sort()[0];
 
+  const monthPrefix = today.slice(0, 7);
+  const journalThisMonth = scope.logs.filter((l) => l.date.slice(0, 7) === monthPrefix).length;
+  const emailsThisMonth = scope.inbox.filter((i) => i.receivedAt.slice(0, 7) === monthPrefix).length;
+
+  const sparkline = buildMonthlyActivitySparkline(scope.logs, scope.inbox, 12);
+  const relationshipMetrics = buildRelationshipMetrics(intel, org.strategicValue ?? 3);
+
+  const recentProjects = orgProjects.slice(0, 3).map((project) => ({
+    id: project.id,
+    name: project.name,
+    status: projectStatus(project, today),
+    year: projectYear(project),
+  }));
+
   return {
     scope,
     timeline,
     intel,
     linkedPeople,
     orgProjects,
+    recentProjects,
+    sparkline,
+    relationshipMetrics,
     stats: {
       journalEntries: scope.logCount,
+      journalDelta: journalThisMonth > 0 ? `+${journalThisMonth} this month` : "No change",
       emails: scope.emailCount,
+      emailsDelta: emailsThisMonth > 0 ? `+${emailsThisMonth} this month` : "No change",
       people: linkedPeople.length,
       projects: orgProjects.length,
       firstContact: firstContact ? formatDisplayDate(firstContact) : "—",
@@ -301,24 +348,78 @@ export function loadOrganizationPageData(
         scope.logs[0]?.date || scope.inbox[0]?.receivedAt || org.updatedAt,
         today
       ),
+      isActiveToday:
+        relativeActivityLabel(
+          scope.logs[0]?.date || scope.inbox[0]?.receivedAt || org.updatedAt,
+          today
+        ) === "Today",
     },
   };
+}
+
+function projectStatus(project: Entity, today: string): "Completed" | "In Progress" | "Planning" {
+  const end = project.endDate?.slice(0, 10);
+  const start = project.startDate?.slice(0, 10);
+  if (end && end < today) return "Completed";
+  if (start && start <= today) return "In Progress";
+  return "Planning";
+}
+
+function projectYear(project: Entity): string {
+  const d = project.endDate || project.startDate || project.createdAt;
+  return d ? d.slice(0, 4) : "—";
+}
+
+function buildMonthlyActivitySparkline(logs: Log[], inbox: InboxItem[], months: number): number[] {
+  const counts: number[] = [];
+  const now = new Date();
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const prefix = d.toISOString().slice(0, 7);
+    const c =
+      logs.filter((l) => l.date.slice(0, 7) === prefix).length +
+      inbox.filter((item) => item.receivedAt.slice(0, 7) === prefix).length;
+    counts.push(c);
+  }
+  return counts;
+}
+
+function buildRelationshipMetrics(
+  intel: ReturnType<typeof buildEntityIntelligence>,
+  strategicValue: number
+) {
+  const high = (n: number) => (n >= 4 ? "High" : n >= 3 ? "Strong" : "Moderate");
+  return [
+    { label: "Engagement", value: intel.relationshipHealth === "active" ? "High" : "Moderate" },
+    { label: "Collaboration", value: intel.outcomeScore >= 20 ? "Strong" : "Moderate" },
+    { label: "Trust", value: high(strategicValue) },
+    { label: "Future Potential", value: strategicValue >= 4 ? "High" : "Moderate" },
+  ];
 }
 
 export function loadProjectPageData(
   data: ArgusData,
   inboxItems: InboxItem[],
   project: Entity,
-  includePrivate: boolean
+  includePrivate: boolean,
+  today: string
 ) {
   const scope = getProjectEvidenceScope(data, inboxItems, project, includePrivate);
   const allInbox = getAllProjectScopeInbox(inboxItems, project, includePrivate);
   const allLogs = [...scope.directLogs, ...scope.viaContactLogs];
-  const timeline = buildTimelineFromLogsAndInbox(allLogs, allInbox);
+  let timeline = buildTimelineFromLogsAndInbox(allLogs, allInbox);
+  timeline = enrichTimelineMeta(timeline, allLogs, allInbox, data.entities);
 
   const linkedPeople = (project.linkedPersonIds ?? [])
     .map((id) => data.entities.find((e) => e.id === id))
     .filter((e): e is Entity => Boolean(e));
+
+  const peopleWithRoles = linkedPeople.map((person, index) => ({
+    id: person.id,
+    name: person.name,
+    initials: initialsFromName(person.name),
+    role: person.alias?.trim() || (index === 0 ? "Lead" : index === 1 ? "Support" : "Member"),
+  }));
 
   const durationDays =
     project.startDate && project.endDate
@@ -335,22 +436,105 @@ export function loadProjectPageData(
     .map((id) => data.entities.find((e) => e.id === id && e.type === "company"))
     .find(Boolean);
 
+  const topicNames = [
+    ...(project.linkedTopicIds ?? [])
+      .map((id) => data.entities.find((e) => e.id === id))
+      .filter((e): e is Entity => Boolean(e))
+      .map((e) => e.name),
+    ...(project.linkedTags ?? []),
+  ].filter(Boolean);
+
+  const linkedEventsCount = (project.linkedEventIds ?? []).length;
+  const attachmentCount = allLogs.reduce((n, l) => n + l.attachmentIds.length, 0);
+  const status = projectStatus(project, today);
+  const dateRangeLabel = formatProjectDateRange(project);
+
+  const directCount = scope.directLogs.length + scope.directInbox.length;
+  const viaCount = scope.viaContactLogs.length + scope.viaContactInbox.length;
+
   return {
     scope,
     timeline,
     linkedPeople,
+    peopleWithRoles,
     durationDays,
     org,
+    status,
+    dateRangeLabel,
+    linkedTopics: [...new Set(topicNames)],
+    linkedEventsCount,
+    keyMetrics: buildProjectKeyMetrics(scope, attachmentCount, directCount),
     stats: {
       people: linkedPeople.length,
       journalEntries: scope.logCount,
       emails: scope.emailCount,
-      files: allLogs.reduce((n, l) => n + l.attachmentIds.length, 0),
+      files: attachmentCount,
     },
   };
 }
 
+function enrichTimelineMeta(
+  entries: ReturnType<typeof buildTimelineFromLogsAndInbox>,
+  logs: Log[],
+  inbox: InboxItem[],
+  entities: Entity[]
+) {
+  const logMap = new Map(logs.map((l) => [l.id, l]));
+  const inboxMap = new Map(inbox.map((i) => [i.id, i]));
+  const entityMap = new Map(entities.map((e) => [e.id, e]));
+
+  return entries.map((entry) => {
+    const log = logMap.get(entry.id);
+    if (log) {
+      const linked = log.entityIds.map((id) => entityMap.get(id)?.name).filter(Boolean);
+      return { ...entry, author: linked[0] ?? entry.author };
+    }
+    const mail = inboxMap.get(entry.id);
+    if (mail?.from) {
+      return { ...entry, author: mail.from.replace(/<.*>/, "").trim() };
+    }
+    return entry;
+  });
+}
+
+function buildProjectKeyMetrics(
+  scope: ReturnType<typeof getProjectEvidenceScope>,
+  attachments: number,
+  directCount: number
+) {
+  return [
+    { label: "Journal entries", value: String(scope.logCount) },
+    { label: "Emails", value: String(scope.emailCount) },
+    { label: "Direct evidence", value: String(directCount) },
+    { label: "Attachments", value: String(attachments), highlight: attachments > 0 },
+  ];
+}
+
+function formatProjectDateRange(project: Entity): string | undefined {
+  if (!project.startDate) return undefined;
+  const start = formatDisplayDate(project.startDate);
+  const end = project.endDate ? formatDisplayDate(project.endDate) : "open";
+  return `${start} – ${end}`;
+}
+
+function initialsFromName(name: string): string {
+  return name
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
 function formatDisplayDate(iso: string): string {
+  return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatShortDate(iso: string): string {
   return new Date(`${iso.slice(0, 10)}T12:00:00`).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
