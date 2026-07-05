@@ -1,5 +1,5 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
-import { isArgusSoftDeleteSchemaReady } from "../supabase-protection/schema-ready";
+import { isArgusInboxPrivateColumnReady, isArgusSoftDeleteSchemaReady } from "../supabase-protection/schema-ready";
 import type { Attachment, AttachmentParentType, InboxItem, InboxItemInput } from "../types";
 import { ARGUS_FILES_BUCKET } from "./config";
 
@@ -72,7 +72,11 @@ function isRowActive(row: { deleted_at?: string | null }): boolean {
   return !row.deleted_at;
 }
 
-function inboxToInsertRow(item: InboxItem, softDeleteReady: boolean): Record<string, unknown> {
+function inboxToInsertRow(
+  item: InboxItem,
+  softDeleteReady: boolean,
+  privateReady: boolean
+): Record<string, unknown> {
   const row: Record<string, unknown> = {
     id: item.id,
     received_at: item.receivedAt,
@@ -84,11 +88,11 @@ function inboxToInsertRow(item: InboxItem, softDeleteReady: boolean): Record<str
     to_address: item.to ?? null,
     attachment_ids: item.attachmentIds,
     linked_entity_ids: item.linkedEntityIds ?? [],
-    private: item.private ?? false,
     status: item.status,
     converted_log_id: item.convertedLogId ?? null,
     created_at: item.createdAt,
   };
+  if (privateReady) row.private = item.private ?? false;
   if (softDeleteReady) row.deleted_at = null;
   return row;
 }
@@ -151,8 +155,11 @@ export async function createInboxItem(
   };
 
   const softDeleteReady = await isArgusSoftDeleteSchemaReady();
+  const privateReady = await isArgusInboxPrivateColumnReady();
   const supabase = createSupabaseAdmin();
-  const { error } = await supabase.from("argus_inbox_items").insert(inboxToInsertRow(item, softDeleteReady));
+  const { error } = await supabase
+    .from("argus_inbox_items")
+    .insert(inboxToInsertRow(item, softDeleteReady, privateReady));
   if (error) throw new Error(`Supabase inbox create failed: ${error.message}`);
   return item;
 }
@@ -187,16 +194,15 @@ export async function markInboxConverted(
 
   const mergedEntityIds = [...new Set([...(item.linkedEntityIds ?? []), ...entityIds.filter(Boolean)])];
   const softDeleteReady = await isArgusSoftDeleteSchemaReady();
+  const privateReady = await isArgusInboxPrivateColumnReady();
   const supabase = createSupabaseAdmin();
-  let query = supabase
-    .from("argus_inbox_items")
-    .update({
-      status: "converted",
-      converted_log_id: logId,
-      linked_entity_ids: mergedEntityIds,
-      private: isPrivate,
-    })
-    .eq("id", inboxId);
+  const updatePayload: Record<string, unknown> = {
+    status: "converted",
+    converted_log_id: logId,
+    linked_entity_ids: mergedEntityIds,
+  };
+  if (privateReady) updatePayload.private = isPrivate;
+  let query = supabase.from("argus_inbox_items").update(updatePayload).eq("id", inboxId);
   if (softDeleteReady) query = query.is("deleted_at", null);
   const { data, error } = await query.select("*").single();
   if (error) throw new Error(`Supabase inbox convert failed: ${error.message}`);
@@ -247,6 +253,10 @@ export async function setInboxPrivate(inboxId: string, isPrivate: boolean): Prom
   if (!item) throw new Error("Inbox item not found");
 
   const softDeleteReady = await isArgusSoftDeleteSchemaReady();
+  const privateReady = await isArgusInboxPrivateColumnReady();
+  if (!privateReady) {
+    throw new Error("Inbox protect requires argus_inbox_items.private — run supabase/argus-setup.sql");
+  }
   const supabase = createSupabaseAdmin();
   let query = supabase.from("argus_inbox_items").update({ private: isPrivate }).eq("id", inboxId);
   if (softDeleteReady) query = query.is("deleted_at", null);

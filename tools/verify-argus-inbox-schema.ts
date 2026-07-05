@@ -56,6 +56,16 @@ async function main(): Promise<void> {
 
   console.log("OK: argus_inbox_items, argus_attachments, argus-files bucket exist.");
 
+  const { error: privateError } = await supabase.from("argus_inbox_items").select("private").limit(1);
+  if (privateError) {
+    console.error("argus_inbox_items.private column missing:", privateError.message);
+    console.error("\nRun this in Supabase SQL editor:");
+    console.error("  supabase/argus-inbox-private.sql");
+    console.error("  (or re-run supabase/argus-setup.sql)");
+    process.exit(1);
+  }
+  console.log("OK: argus_inbox_items.private column exists.");
+
   const token = readFileSync(resolve(process.cwd(), ".env.local"), "utf8")
     .split("\n")
     .find((l) => l.startsWith("ARGUS_INBOX_TOKEN="))

@@ -15,6 +15,7 @@ create table if not exists public.argus_inbox_items (
   status text not null default 'pending' check (status in ('pending', 'linked', 'converted', 'archived')),
   converted_log_id text,
   created_at timestamptz not null default now(),
+  private boolean not null default false,
   deleted_at timestamptz
 );
 
