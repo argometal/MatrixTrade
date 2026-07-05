@@ -7,6 +7,9 @@ export function TradingNav() {
       <Link href="/" className="hover:text-zinc-600">
         Dashboard
       </Link>
+      <Link href="/ai-workspace" className="font-medium text-violet-700 hover:text-violet-800">
+        AI Bridge
+      </Link>
       <Link href="/trades" className="hover:text-zinc-600">
         Trades
       </Link>
@@ -22,8 +25,8 @@ export function TradingNav() {
       <Link href="/journal" className="hover:text-zinc-600">
         Journal
       </Link>
-      <Link href="/ai-workspace" className="hover:text-zinc-600">
-        AI Bridge
+      <Link href="/inbox" className="hover:text-zinc-600">
+        Inbox
       </Link>
       <Link href="/system" className="hover:text-zinc-600">
         System

@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { importAiBlockAction } from "@/app/actions";
-import { AiBlockPanel } from "@/app/components/ai-workspace/AiBlockPanel";
-import { SystemSection } from "@/app/components/system/SystemSection";
+import { AiBridgeMain } from "@/app/components/ai-bridge/AiBridgeMain";
+import { AiBridgeSidebar } from "@/app/components/ai-bridge/AiBridgeSidebar";
+import { buildAiBridgeOverview } from "@/lib/ai-bridge-overview";
 import { buildAiBlockSnapshot } from "@/lib/ai-block-snapshot";
 import { listAiNotes } from "@/lib/ai-notes";
 import { fetchBridgeInbox, getBridgeConfig } from "@/lib/bridge";
@@ -12,7 +12,6 @@ import { getSnapshotRevisionState } from "@/lib/snapshot-revision-read";
 import { getSyncHistory } from "@/lib/sync-history";
 import { checkWorkerReachable } from "@/lib/system-status";
 import { getSetups } from "@/lib/setups";
-import { describeProposal, parseTradingInboxPayload } from "@/lib/bridge";
 import { listPendingInboxForRuntime } from "@/lib/trading-inbox-submit";
 import { getExperiment, getTrades } from "@/lib/storage";
 
@@ -60,66 +59,17 @@ export default async function AiWorkspacePage() {
   });
 
   const pendingInbox = await listPendingInboxForRuntime(workerInbox);
+  const overview = buildAiBridgeOverview(experiment, trades, playbooks);
 
   return (
-    <div className="space-y-8">
-      <header>
-        <h1 className="text-2xl font-semibold">AI Bridge</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Structured bridge to your AI — not an AI itself. Copy Snapshot → your AI → AI Block →
-          Import → Inbox → Apply → confirm persisted.
-        </p>
-      </header>
-
-      <SystemSection
-        id="ai-block"
-        title="AI Block"
-        description="Fast AI-assisted actions — copy context out, import proposals back through Inbox."
-      >
-        <AiBlockPanel snapshotText={snapshotText} importAction={importAiBlockAction} />
-      </SystemSection>
-
-      <SystemSection id="inbox" title="Inbox" description="Imported AI Blocks wait here for human Apply.">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <p className="text-sm text-zinc-700">
-            {pendingInbox.length === 0 ? (
-              "No pending proposals."
-            ) : (
-              <span className="font-medium">{pendingInbox.length} pending</span>
-            )}
-          </p>
-          <Link
-            href="/inbox"
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
-          >
-            Open Inbox
-          </Link>
-        </div>
-        {pendingInbox.length > 0 && (
-          <ul className="mt-4 divide-y divide-zinc-100 rounded-lg border border-zinc-200 text-sm">
-            {pendingInbox.slice(0, 5).map((item) => {
-              const parsed = parseTradingInboxPayload(item.payload);
-              return (
-                <li key={`${item.origin}-${item.id}`} className="flex justify-between gap-3 px-4 py-2">
-                  <span>{parsed ? describeProposal(parsed) : "Proposal"}</span>
-                  <Link href={`/inbox/${item.id}?origin=${item.origin}`} className="underline">
-                    Review
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </SystemSection>
-
-      <nav className="flex gap-4 text-sm">
-        <Link href="/system" className="text-zinc-600 hover:underline">
-          System (sync) →
-        </Link>
-        <Link href="/" className="text-zinc-600 hover:underline">
-          Dashboard
-        </Link>
-      </nav>
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <AiBridgeMain
+        snapshotText={snapshotText}
+        overview={overview}
+        pendingInboxCount={pendingInbox.length}
+        importAction={importAiBlockAction}
+      />
+      <AiBridgeSidebar overview={overview} pendingInboxCount={pendingInbox.length} />
     </div>
   );
 }
