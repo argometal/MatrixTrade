@@ -315,8 +315,11 @@ export async function linkInboxAction(formData: FormData): Promise<void> {
   await linkInboxToEntities(inboxId, validIds);
   revalidateArgus();
   revalidatePath(`/argus/inbox/${inboxId}`);
+  revalidatePath("/argus/v2/inbox");
   const returnTo = String(formData.get("returnTo") ?? "inbox");
-  redirect(returnTo === "journal" ? "/argus/journal" : `/argus/inbox/${inboxId}`);
+  if (returnTo === "journal") redirect("/argus/journal");
+  if (returnTo.startsWith("/argus/")) redirect(returnTo);
+  redirect(`/argus/inbox/${inboxId}`);
 }
 
 export async function convertInboxAction(formData: FormData): Promise<void> {
@@ -344,7 +347,9 @@ export async function archiveInboxAction(formData: FormData): Promise<void> {
   const inboxId = String(formData.get("inboxId") ?? "");
   await archiveInboxItem(inboxId);
   revalidateArgus();
-  redirect("/argus/inbox");
+  revalidatePath("/argus/v2/inbox");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/inbox");
+  redirect(returnTo.startsWith("/argus/") ? returnTo : "/argus/inbox");
 }
 
 export async function setInboxPrivateAction(formData: FormData): Promise<void> {

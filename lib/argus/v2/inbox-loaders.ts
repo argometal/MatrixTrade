@@ -19,7 +19,7 @@ export interface V2InboxRow {
   timeLabel: string;
   status: InboxStatus;
   statusLabel: string;
-  statusTone: "violet" | "amber" | "zinc";
+  statusTone: "violet" | "amber" | "emerald" | "zinc";
   tags: V2InboxTag[];
   unread: boolean;
   isPrivate: boolean;
@@ -40,7 +40,7 @@ const STATUS_UI: Record<
 > = {
   pending: { tab: "unread", label: "Unread", tone: "violet" },
   linked: { tab: "in_progress", label: "In Progress", tone: "amber" },
-  converted: { tab: "processed", label: "Processed", tone: "zinc" },
+  converted: { tab: "processed", label: "Processed", tone: "emerald" },
   archived: { tab: "archived", label: "Archived", tone: "zinc" },
 };
 
@@ -168,4 +168,82 @@ export function parseV2InboxTab(value: string | undefined): V2InboxTab {
     return value;
   }
   return "all";
+}
+
+const TAG_STOPWORDS = new Set([
+  "the",
+  "and",
+  "for",
+  "with",
+  "from",
+  "this",
+  "that",
+  "have",
+  "your",
+  "well",
+  "are",
+  "was",
+  "will",
+  "not",
+  "but",
+  "you",
+  "our",
+  "all",
+  "can",
+  "has",
+  "had",
+  "its",
+  "any",
+  "may",
+  "new",
+  "re",
+  "fw",
+]);
+
+/** Keyword tags inferred from subject/body for the inbox detail panel. */
+export function suggestInboxTags(subject: string, body: string, linkedEntities: V2InboxDetailEntity[]): string[] {
+  const tags = new Set<string>();
+  const text = `${subject} ${body}`.toLowerCase();
+  for (const match of text.match(/\b[a-z0-9]{3,}\b/g) ?? []) {
+    if (!TAG_STOPWORDS.has(match)) tags.add(match);
+  }
+  for (const entity of linkedEntities) {
+    for (const token of entity.name.toLowerCase().split(/[\s\-_/]+/)) {
+      if (token.length > 2 && !TAG_STOPWORDS.has(token)) tags.add(token);
+    }
+  }
+  return [...tags].slice(0, 10);
+}
+
+/** Entity suggestions from name matches in email subject/body. */
+export function suggestInboxEntities(
+  subject: string,
+  body: string,
+  entities: Entity[],
+  linkedIds: string[]
+): V2InboxDetailEntity[] {
+  const haystack = `${subject}\n${body}`.toLowerCase();
+  const linked = new Set(linkedIds);
+
+  return entities
+    .filter((entity) => !entity.deletedAt && !linked.has(entity.id))
+    .filter((entity) => {
+      const name = entity.name.trim().toLowerCase();
+      if (name.length < 3) return false;
+      if (haystack.includes(name)) return true;
+      return name.split(/\s+/).some((part) => part.length > 3 && haystack.includes(part));
+    })
+    .slice(0, 6)
+    .map((entity) => ({
+      id: entity.id,
+      name: entity.name,
+      label: entity.type === "company" ? "Organization" : entity.type === "project" ? "Project" : "Person",
+      href:
+        entity.type === "company"
+          ? `/argus/v2/organizations/${entity.id}`
+          : entity.type === "project"
+            ? `/argus/v2/projects/${entity.id}`
+            : `/argus/network/${entity.id}`,
+      kind: entityKind(entity),
+    }));
 }

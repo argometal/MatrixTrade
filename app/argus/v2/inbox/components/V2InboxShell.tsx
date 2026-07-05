@@ -1,13 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
-import { InboxTriagePanel } from "@/app/argus/components/InboxTriagePanel";
 import {
   buildV2InboxTabCounts,
   filterV2InboxRows,
@@ -16,6 +14,7 @@ import {
   type V2InboxRow,
   type V2InboxTab,
 } from "@/lib/argus/v2/inbox-loaders";
+import { V2InboxDetailPanel } from "./V2InboxDetailPanel";
 
 const TABS: { id: V2InboxTab; label: string }[] = [
   { id: "all", label: "All" },
@@ -36,6 +35,13 @@ type DetailBundle = {
   defaultTitle: string;
   defaultBody: string;
 };
+
+function statusClass(tone: V2InboxRow["statusTone"]): string {
+  if (tone === "violet") return "bg-violet-500/15 text-violet-300";
+  if (tone === "amber") return "bg-amber-500/15 text-amber-300";
+  if (tone === "emerald") return "bg-emerald-500/15 text-emerald-300";
+  return "bg-zinc-800 text-zinc-500";
+}
 
 export function V2InboxShell({
   rows,
@@ -61,6 +67,9 @@ export function V2InboxShell({
   const counts = useMemo(() => buildV2InboxTabCounts(rows), [rows]);
   const filtered = useMemo(() => filterV2InboxRows(rows, tab), [rows, tab]);
   const selectedDetail = details.find((d) => d.item.id === selectedId);
+  const [selectMode, setSelectMode] = useState(false);
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [processOpen, setProcessOpen] = useState(false);
 
   function setTab(next: V2InboxTab) {
     const params = new URLSearchParams(searchParams.toString());
@@ -74,10 +83,18 @@ export function V2InboxShell({
     router.replace(`/argus/v2/inbox?${params.toString()}`);
   }
 
+  function toggleChecked(id: string) {
+    setChecked((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   return (
     <div className="v2-inbox-shell -mx-4 flex min-h-[calc(100vh-4.5rem)] flex-col lg:-mx-8 lg:min-h-[calc(100vh-4rem)] lg:flex-row">
-      {/* List column */}
-      <section className="flex w-full flex-col border-b border-zinc-800/80 lg:w-[min(420px,38%)] lg:border-b-0 lg:border-r">
+      <section className="flex w-full flex-col border-b border-zinc-800/80 lg:w-[min(440px,40%)] lg:border-b-0 lg:border-r">
         <div className="border-b border-zinc-800/80 px-4 py-4 lg:px-5">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
@@ -85,17 +102,48 @@ export function V2InboxShell({
               <p className="mt-0.5 text-xs text-zinc-500">Unprocessed emails and items</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <button type="button" className="text-xs text-zinc-500 hover:text-zinc-300">
+              <button
+                type="button"
+                onClick={() => setSelectMode((value) => !value)}
+                className={`text-xs ${selectMode ? "text-violet-300" : "text-zinc-500 hover:text-zinc-300"}`}
+              >
                 Select
               </button>
               <button type="button" className="text-xs text-zinc-500 hover:text-zinc-300">
                 Mark all read
               </button>
-              <button
-                type="button"
-                className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
-              >
-                Process ▾
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setProcessOpen((open) => !open)}
+                  className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
+                >
+                  Process ▾
+                </button>
+                {processOpen ? (
+                  <div className="absolute right-0 top-full z-20 mt-1 min-w-[160px] rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProcessOpen(false);
+                        if (selectedId) selectItem(selectedId);
+                      }}
+                      className="block w-full rounded-lg px-3 py-2 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+                    >
+                      Process selected
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setProcessOpen(false)}
+                      className="block w-full rounded-lg px-3 py-2 text-left text-xs text-zinc-400 hover:bg-zinc-800"
+                    >
+                      Bulk archive
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+              <button type="button" className="text-zinc-600 hover:text-zinc-400">
+                ···
               </button>
             </div>
           </div>
@@ -110,7 +158,7 @@ export function V2InboxShell({
                   tab === t.id ? "bg-violet-500/15 text-violet-300" : "text-zinc-600 hover:text-zinc-400"
                 }`}
               >
-                {t.label} {counts[t.id] > 0 ? counts[t.id] : ""}
+                {t.label} {counts[t.id]}
               </button>
             ))}
           </div>
@@ -138,44 +186,51 @@ export function V2InboxShell({
           {filtered.length === 0 ? (
             <p className="px-5 py-10 text-center text-sm text-zinc-500">No items in this tab.</p>
           ) : (
-            <ul>
+            <ul className="p-2 lg:p-3">
               {filtered.map((row) => (
-                <li key={row.id}>
+                <li key={row.id} className="mb-2">
                   <button
                     type="button"
                     onClick={() => selectItem(row.id)}
-                    className={`w-full border-b border-zinc-800/60 px-4 py-3 text-left transition hover:bg-zinc-900/40 lg:px-5 ${
-                      selectedId === row.id ? "bg-violet-500/10" : ""
+                    className={`w-full rounded-xl border px-3 py-3 text-left transition hover:bg-zinc-900/40 ${
+                      selectedId === row.id
+                        ? "border-violet-500/50 bg-violet-500/10 ring-1 ring-violet-500/20"
+                        : "border-zinc-800/80 bg-zinc-900/20"
                     }`}
                   >
                     <div className="flex gap-3">
-                      <div className="flex flex-col items-center gap-2 pt-1">
-                        <input type="checkbox" className="rounded border-zinc-700 bg-zinc-900" readOnly />
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            row.unread ? "bg-violet-400" : "bg-zinc-700"
-                          }`}
+                      <div className="flex flex-col items-center gap-2 pt-0.5">
+                        <input
+                          type="checkbox"
+                          checked={checked.has(row.id)}
+                          readOnly={!selectMode}
+                          onClick={(event) => {
+                            if (selectMode) {
+                              event.stopPropagation();
+                              toggleChecked(row.id);
+                            }
+                          }}
+                          className="rounded border-zinc-700 bg-zinc-900"
                         />
+                        <span className="text-sm text-zinc-500" aria-hidden>
+                          ✉
+                        </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
                           <p className="truncate text-sm font-semibold text-zinc-100">{row.sender}</p>
-                          <span className="shrink-0 text-[10px] tabular-nums text-zinc-600">{row.timeLabel}</span>
+                          <div className="flex shrink-0 items-center gap-2">
+                            {row.attachmentCount > 0 ? (
+                              <span className="text-[11px] text-zinc-600" title="Attachments">
+                                📎
+                              </span>
+                            ) : null}
+                            <span className="text-[10px] tabular-nums text-zinc-600">{row.timeLabel}</span>
+                          </div>
                         </div>
                         <p className="truncate text-sm text-zinc-300">{row.subject}</p>
                         <p className="mt-0.5 line-clamp-1 text-xs text-zinc-600">{row.preview}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                              row.statusTone === "violet"
-                                ? "bg-violet-500/15 text-violet-300"
-                                : row.statusTone === "amber"
-                                  ? "bg-amber-500/15 text-amber-300"
-                                  : "bg-zinc-800 text-zinc-500"
-                            }`}
-                          >
-                            {row.statusLabel}
-                          </span>
                           {row.tags.map((tag) => (
                             <span
                               key={tag.id}
@@ -192,6 +247,11 @@ export function V2InboxShell({
                           ))}
                         </div>
                       </div>
+                      <div className="flex shrink-0 flex-col items-end justify-between">
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusClass(row.statusTone)}`}>
+                          {row.statusLabel}
+                        </span>
+                      </div>
                     </div>
                   </button>
                 </li>
@@ -201,7 +261,6 @@ export function V2InboxShell({
         </div>
       </section>
 
-      {/* Detail column */}
       <section className="min-w-0 flex-1 overflow-y-auto bg-zinc-950/50">
         {selectedDetail ? (
           <V2InboxDetailPanel
@@ -216,205 +275,6 @@ export function V2InboxShell({
           </div>
         )}
       </section>
-    </div>
-  );
-}
-
-function V2InboxDetailPanel({
-  detail,
-  buckets,
-  tagBuckets,
-  linkedEntityRecords,
-}: {
-  detail: DetailBundle;
-  buckets: EntityPickerBuckets;
-  tagBuckets: TagBuckets;
-  linkedEntityRecords: Entity[];
-}) {
-  const [panelTab, setPanelTab] = useState<"email" | "details" | "attachments" | "related">("email");
-  const { item, view, attachments, linkedEntities, convertedLog, defaultTitle, defaultBody } = detail;
-  const linkedRecords = linkedEntityRecords.filter((e) => (item.linkedEntityIds ?? []).includes(e.id));
-
-  const detailTabs = [
-    { id: "email" as const, label: "Email" },
-    { id: "details" as const, label: "Details" },
-    { id: "attachments" as const, label: `Attachments (${attachments.length})` },
-    { id: "related" as const, label: "Related" },
-  ];
-
-  return (
-    <div className="flex h-full flex-col">
-      <div className="border-b border-zinc-800/80 px-5 py-4">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="text-lg font-semibold leading-snug text-zinc-50">
-            {view.subject || "(No subject)"}
-          </h2>
-          <div className="flex shrink-0 gap-2">
-            <Link
-              href={`/argus/inbox/${item.id}`}
-              className="text-zinc-600 hover:text-zinc-400"
-              title="Open legacy view"
-            >
-              ↗
-            </Link>
-            <button type="button" className="text-zinc-600 hover:text-zinc-400">
-              ···
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/50 to-zinc-700 text-xs font-bold text-violet-100">
-            {view.from.slice(0, 2).toUpperCase()}
-          </div>
-          <div className="min-w-0 flex-1 text-sm">
-            <p className="font-medium text-zinc-200">{view.from}</p>
-            {view.to ? <p className="text-xs text-zinc-500">To {view.to}</p> : null}
-            <p className="text-xs text-zinc-600">
-              {new Date(view.receivedAt).toLocaleString(undefined, {
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4 flex gap-1 border-b border-zinc-800/80">
-          {detailTabs.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setPanelTab(t.id)}
-              className={`border-b-2 px-3 py-2 text-xs font-medium ${
-                panelTab === t.id
-                  ? "border-violet-500 text-violet-300"
-                  : "border-transparent text-zinc-500 hover:text-zinc-300"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-5 py-4">
-        {panelTab === "email" ? (
-          <div className="whitespace-pre-wrap text-sm leading-7 text-zinc-300">{view.textBody}</div>
-        ) : null}
-        {panelTab === "details" ? (
-          <dl className="grid gap-3 text-sm sm:grid-cols-[6rem_1fr]">
-            <dt className="text-zinc-500">From</dt>
-            <dd className="text-zinc-200">{view.from}</dd>
-            <dt className="text-zinc-500">To</dt>
-            <dd className="text-zinc-200">{view.to || "—"}</dd>
-            <dt className="text-zinc-500">Status</dt>
-            <dd className="text-zinc-200">{item.status}</dd>
-            <dt className="text-zinc-500">Source</dt>
-            <dd className="text-zinc-200">{item.source}</dd>
-          </dl>
-        ) : null}
-        {panelTab === "attachments" ? (
-          attachments.length === 0 ? (
-            <p className="text-sm text-zinc-500">No attachments.</p>
-          ) : (
-            <ul className="space-y-2">
-              {attachments.map((att) => (
-                <li
-                  key={att.id}
-                  className="rounded-xl border border-zinc-800/80 px-3 py-2 text-sm text-zinc-300"
-                >
-                  {att.fileName}{" "}
-                  <span className="text-xs text-zinc-600">({Math.round(att.sizeBytes / 1024)} KB)</span>
-                </li>
-              ))}
-            </ul>
-          )
-        ) : null}
-        {panelTab === "related" ? (
-          linkedEntities.length === 0 ? (
-            <p className="text-sm text-zinc-500">No linked entities yet.</p>
-          ) : (
-            <ul className="space-y-2">
-              {linkedEntities.map((entity) => (
-                <li key={entity.id}>
-                  <Link href={entity.href} className="text-sm text-violet-400 hover:text-violet-300">
-                    {entity.label}: {entity.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )
-        ) : null}
-
-        <div className="mt-6 space-y-4 border-t border-zinc-800/80 pt-6">
-          <div>
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-zinc-100">Linked entities</h3>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {linkedEntities.map((entity) => (
-                <Link
-                  key={entity.id}
-                  href={entity.href}
-                  className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium ${
-                    entity.kind === "project"
-                      ? "border-sky-500/30 bg-sky-500/10 text-sky-300"
-                      : entity.kind === "organization"
-                        ? "border-orange-500/30 bg-orange-500/10 text-orange-300"
-                        : "border-zinc-700 bg-zinc-800/80 text-zinc-300"
-                  }`}
-                >
-                  {entity.kind === "project" ? "📁" : entity.kind === "organization" ? "🏢" : "👤"}
-                  {entity.name}
-                </Link>
-              ))}
-              <button
-                type="button"
-                className="rounded-xl border border-dashed border-zinc-700 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600"
-              >
-                + Add entity
-              </button>
-            </div>
-          </div>
-
-          {linkedEntities.length > 0 ? (
-            <div>
-              <h3 className="mb-3 text-sm font-semibold text-zinc-100">Tags</h3>
-              <div className="flex flex-wrap gap-1.5">
-                {linkedEntities.map((entity) => (
-                  <span
-                    key={`tag-${entity.id}`}
-                    className="rounded-md bg-zinc-800 px-2 py-1 text-[11px] text-zinc-400"
-                  >
-                    {entity.name.toLowerCase().replace(/\s+/g, "-").slice(0, 24)}
-                  </span>
-                ))}
-                <button type="button" className="rounded-md border border-dashed border-zinc-700 px-2 py-1 text-[11px] text-zinc-500">
-                  + Add tag
-                </button>
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="mt-6 rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4">
-          <InboxTriagePanel
-            item={item}
-            linkedEntities={linkedRecords}
-            buckets={buckets}
-            tagBuckets={tagBuckets}
-            convertedLog={convertedLog}
-            defaultTitle={defaultTitle}
-            defaultBody={defaultBody}
-          />
-        </div>
-      </div>
-
-      <div className="border-t border-zinc-800/80 px-5 py-3 text-center text-[11px] text-zinc-600">
-        ✨ Created for you by Argus AI
-      </div>
     </div>
   );
 }
