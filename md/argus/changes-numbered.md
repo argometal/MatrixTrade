@@ -19,6 +19,9 @@ Use git tags to restore any point.
 | **111** | `change-111` | Dual inbox links, project-scoped evidence, notes evolve to any reference |
 | **112** | `change-112` | Protected emails and records hidden until PIN unlock |
 | **113** | `change-113` | Rename Capture to Journal with Log vs Note entry types |
+| **114-revert** | `change-114-revert` | **Emergency rollback point** — last commit before v2 UI (`aad2a3e`) |
+| **114** | `change-114` | v2 design preview shells at `/argus/v2` (layout + mock structure) |
+| **115** | `change-115` | Wire v2 to live data with org/project hierarchy rules + implementation report |
 
 ## Restore
 

@@ -1,0 +1,24 @@
+import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { requireArgusSession } from "@/lib/auth/require-session";
+import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
+import { buildV2NavCounts } from "@/lib/argus/v2/loaders";
+import { V2MobileNav, V2Sidebar } from "./components/V2Sidebar";
+import { V2TopBar } from "./components/V2TopBar";
+
+export default async function V2Layout({ children }: { children: React.ReactNode }) {
+  await requireArgusSession();
+  const includePrivate = await hasArgusPrivateUnlock();
+  const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
+  const navCounts = buildV2NavCounts(data, inboxItems, includePrivate);
+
+  return (
+    <div className="flex min-h-screen bg-zinc-950">
+      <V2Sidebar counts={navCounts} />
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+        <V2TopBar />
+        <main className="flex-1 overflow-x-hidden pb-24 lg:pb-8">{children}</main>
+        <V2MobileNav inboxCount={navCounts.inbox} />
+      </div>
+    </div>
+  );
+}
