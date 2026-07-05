@@ -15,6 +15,7 @@ import {
   deleteInboxItem,
   deleteLog,
   getEntity,
+  getLog,
   linkInboxToEntities,
   readArgus,
   saveAttachment,
@@ -36,6 +37,12 @@ import {
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
 import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
+import {
+  assertJournalKindTransition,
+  canConvertNoteToLog,
+  canExtractLogToNote,
+  JournalBehaviorError,
+} from "@/lib/argus/journal-behavior";
 import { ArgusWriteBlockedError, isDestructiveAllowed } from "@/lib/argus/data-safety";
 import {
   ArgusPersistenceError,
@@ -190,6 +197,17 @@ export async function updateLogAction(formData: FormData): Promise<void> {
     redirect(`/argus/logs/${logId}?error=content`);
   }
 
+  const existing = await getLog(logId, true);
+  if (!existing) {
+    redirect(`/argus/logs/${logId}?error=notfound`);
+  }
+
+  try {
+    assertJournalKindTransition(existing.kind, input.kind);
+  } catch (err) {
+    handleWriteError(err, `/argus/logs/${logId}`);
+  }
+
   const title = input.title || autoTitleFromBody(input.body);
 
   await updateLog(logId, {
@@ -206,6 +224,73 @@ export async function updateLogAction(formData: FormData): Promise<void> {
   revalidateArgus();
   revalidatePath(`/argus/logs/${logId}`);
   redirect(`/argus/logs/${logId}`);
+}
+
+export async function convertNoteToLogAction(formData: FormData): Promise<void> {
+  const logId = String(formData.get("logId") ?? "");
+  const today = new Date().toISOString().slice(0, 10);
+  const date = String(formData.get("date") ?? "").slice(0, 10) || today;
+
+  try {
+    const existing = await getLog(logId, true);
+    if (!existing) {
+      throw new JournalBehaviorError("Journal entry not found.");
+    }
+    if (!canConvertNoteToLog(existing)) {
+      throw new JournalBehaviorError("Only a standalone note can convert to a log.");
+    }
+
+    await updateLog(logId, {
+      title: existing.title,
+      body: existing.body,
+      kind: "log",
+      date,
+      followUpDate: undefined,
+      entityIds: existing.entityIds,
+      topics: existing.topics,
+      private: existing.private,
+    });
+
+    revalidateArgus();
+    revalidatePath(`/argus/logs/${logId}`);
+    redirect(`/argus/logs/${logId}`);
+  } catch (err) {
+    handleWriteError(err, `/argus/logs/${logId}`);
+  }
+}
+
+export async function extractLogToNoteAction(formData: FormData): Promise<void> {
+  const logId = String(formData.get("logId") ?? "");
+  const today = new Date().toISOString().slice(0, 10);
+  const date = String(formData.get("date") ?? "").slice(0, 10) || today;
+
+  try {
+    const existing = await getLog(logId, true);
+    if (!existing) {
+      throw new JournalBehaviorError("Journal entry not found.");
+    }
+    if (!canExtractLogToNote(existing)) {
+      throw new JournalBehaviorError("Only a log entry can be extracted to a note.");
+    }
+
+    const note = await createLog({
+      kind: "event",
+      date,
+      title: existing.title,
+      body: existing.body,
+      entityIds: [...existing.entityIds],
+      topics: [...existing.topics],
+      classificationStatus: existing.classificationStatus,
+      private: existing.private,
+      source: existing.source,
+      attachmentIds: [],
+    });
+
+    revalidateArgus();
+    redirect(`/argus/logs/${note.id}`);
+  } catch (err) {
+    handleWriteError(err, `/argus/logs/${logId}`);
+  }
 }
 
 export async function classifyLogAction(formData: FormData): Promise<void> {

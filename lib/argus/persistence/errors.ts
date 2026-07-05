@@ -1,3 +1,5 @@
+import { JournalBehaviorError } from "../journal-behavior";
+
 export type ArgusErrorLayer =
   | "ui"
   | "api"
@@ -24,6 +26,9 @@ export class ArgusPersistenceError extends Error {
 export function formatArgusError(err: unknown): { layer: ArgusErrorLayer; message: string } {
   if (err instanceof ArgusPersistenceError) {
     return { layer: err.layer, message: err.message };
+  }
+  if (err instanceof JournalBehaviorError) {
+    return { layer: "validation", message: err.message };
   }
   if (err instanceof Error && err.name === "ArgusWriteBlockedError") {
     return {

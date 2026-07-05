@@ -24,6 +24,23 @@ export const ACTIVITY_EDIT = {
   rawPreserved: "raw email preserved unchanged",
 } as const;
 
+/** Note vs Log sequence rules — behavior only, no schema change. */
+export const JOURNAL_BEHAVIOR = {
+  title: "Journal type",
+  noteHint: "Standalone note — can convert to a log when you want an ongoing sequence.",
+  logHint: "Sequence log — to branch, extract an entry into a standalone note first.",
+  convertToLog: "Convert to Log",
+  extractToNote: "Extract to Note",
+  extractPending: "Extracting…",
+  convertModalTitle: "Convert Note to Log",
+  convertDate: "Date",
+  convertModalHint: "Creates a log entry in the sequence. Links and tags are kept.",
+  convertConfirm: "Convert to Log",
+  convertPending: "Converting…",
+  cancel: "Cancel",
+  untitled: "Untitled entry",
+} as const;
+
 export const CAPTURE = {
   fab: "Journal",
   title: "Journal",

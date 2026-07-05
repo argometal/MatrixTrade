@@ -8,7 +8,9 @@ import type { Entity, Log } from "@/lib/argus/types";
 import { ACTIVITY_EDIT, TAGS } from "@/lib/argus/ux-copy";
 import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { JOURNAL_KIND_LABELS, LOG_SOURCE_LABELS } from "@/lib/argus/labels";
+import { isJournalLogKind } from "@/lib/argus/journal-behavior";
 import { EntityChip } from "./Cards";
+import { JournalKindActions } from "./JournalKindActions";
 import { ReferenceCreateModal } from "./ReferenceCreateModal";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
 import { TagPickerModal, type TagBuckets } from "./TagPickerModal";
@@ -109,6 +111,7 @@ export function ActivityEditPanel({
       {selectedIds.map((id) => (
         <input key={id} type="hidden" name="entityIds" value={id} />
       ))}
+      <input type="hidden" name="kindOverride" value={log.kind} />
       {isProtected ? <input type="hidden" name="private" value="on" /> : null}
 
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
@@ -163,9 +166,11 @@ export function ActivityEditPanel({
             <MetaButton active={tagsOpen || selectedTags.length > 0} onClick={() => setTagsOpen(true)}>
               {ACTIVITY_EDIT.tags}
             </MetaButton>
-            <MetaButton active={Boolean(eventDate) || dateOpen} onClick={() => setDateOpen((v) => !v)}>
-              {ACTIVITY_EDIT.date}
-            </MetaButton>
+            {!isJournalLogKind(log.kind) ? (
+              <MetaButton active={Boolean(eventDate) || dateOpen} onClick={() => setDateOpen((v) => !v)}>
+                {ACTIVITY_EDIT.date}
+              </MetaButton>
+            ) : null}
             <MetaButton active={Boolean(followUpDate) || reminderOpen} onClick={() => setReminderOpen((v) => !v)}>
               {ACTIVITY_EDIT.reminder}
             </MetaButton>
@@ -211,7 +216,7 @@ export function ActivityEditPanel({
             </button>
           </div>
 
-          {dateOpen && (
+          {dateOpen && !isJournalLogKind(log.kind) ? (
             <label className="mt-3 block">
               <span className="text-xs text-zinc-500">{ACTIVITY_EDIT.date}</span>
               <input
@@ -278,6 +283,8 @@ export function ActivityEditPanel({
           </p>
         )}
       </div>
+
+      <JournalKindActions log={log} />
 
       <div className="flex gap-3">
         <Link
