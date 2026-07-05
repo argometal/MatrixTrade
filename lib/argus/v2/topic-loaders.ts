@@ -5,45 +5,25 @@ import { getLinkedInboxForEntity } from "../entity-evidence";
 import { entitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { relativeActivityLabel } from "./timeline-builders";
-
-export type V2TopicTab = "all" | "mine" | "followed";
-
-export interface V2TopicRow {
-  id: string;
-  name: string;
-  category: string;
-  orgCount: number;
-  projectCount: number;
-  peopleCount: number;
-  lastActivity: string;
-  lastSort: string;
-  entryCount: number;
-  tagHints: string[];
-}
-
-export interface V2TopicEntry {
-  id: string;
-  title: string;
-  kind: "Log" | "Note" | "Follow-up";
-  meta: string;
-  href: string;
-}
-
-export interface V2TopicDetail {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  orgCount: number;
-  projectCount: number;
-  peopleCount: number;
-  recentEntries: V2TopicEntry[];
-}
-
-export interface V2TopicTagChip {
-  name: string;
-  count: number;
-}
+import type {
+  V2TopicDetail,
+  V2TopicEntry,
+  V2TopicRow,
+  V2TopicTab,
+  V2TopicTagChip,
+} from "./topic-browse-utils";
+export type {
+  V2TopicDetail,
+  V2TopicEntry,
+  V2TopicRow,
+  V2TopicTab,
+  V2TopicTagChip,
+} from "./topic-browse-utils";
+export {
+  buildV2TopicTabCounts,
+  filterV2TopicRows,
+  parseV2TopicTab,
+} from "./topic-browse-utils";
 
 function visibleLogs(data: ArgusData, includePrivate: boolean): Log[] {
   const logs = data.logs.filter((l) => !l.deletedAt);
@@ -163,31 +143,6 @@ export function buildV2TopicTagChips(rows: V2TopicRow[], limit = 12): V2TopicTag
     .sort((a, b) => b[1] - a[1])
     .slice(0, limit)
     .map(([name, count]) => ({ name, count }));
-}
-
-export function buildV2TopicTabCounts(rows: V2TopicRow[]) {
-  const monthAgo = new Date();
-  monthAgo.setDate(monthAgo.getDate() - 30);
-  const cutoff = monthAgo.toISOString().slice(0, 10);
-  return {
-    all: rows.length,
-    mine: rows.filter((r) => r.entryCount > 0).length,
-    followed: rows.filter((r) => r.lastSort.slice(0, 10) >= cutoff).length,
-  };
-}
-
-export function filterV2TopicRows(rows: V2TopicRow[], tab: V2TopicTab): V2TopicRow[] {
-  if (tab === "all") return rows;
-  if (tab === "mine") return rows.filter((r) => r.entryCount > 0);
-  const monthAgo = new Date();
-  monthAgo.setDate(monthAgo.getDate() - 30);
-  const cutoff = monthAgo.toISOString().slice(0, 10);
-  return rows.filter((r) => r.lastSort.slice(0, 10) >= cutoff);
-}
-
-export function parseV2TopicTab(value: string | undefined): V2TopicTab {
-  if (value === "mine" || value === "followed") return value;
-  return "all";
 }
 
 /** Global log-topic chips for the topics browse filter row. */

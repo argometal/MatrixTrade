@@ -226,7 +226,7 @@ export function ActivityEditPanel({
                 className={`${inputClass} mt-1`}
               />
             </label>
-          )}
+          ) : null}
 
           {reminderOpen && (
             <label className="mt-3 block">

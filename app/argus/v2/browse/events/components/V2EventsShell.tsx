@@ -12,7 +12,7 @@ import {
   type V2EventDetail,
   type V2EventRow,
   type V2EventTab,
-} from "@/lib/argus/v2/event-loaders";
+} from "@/lib/argus/v2/event-browse-utils";
 
 const TABS: { id: V2EventTab; label: string }[] = [
   { id: "all", label: "All" },

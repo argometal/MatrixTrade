@@ -87,12 +87,12 @@ export function V2InboxDetailPanel({
   const returnTo = `/argus/v2/inbox?selected=${item.id}`;
 
   const suggestedTags = useMemo(
-    () => suggestInboxTags(view.subject, view.textBody, linkedEntities),
+    () => suggestInboxTags(view.subject ?? "", view.textBody, linkedEntities),
     [view.subject, view.textBody, linkedEntities]
   );
 
   const suggestedEntities = useMemo(
-    () => suggestInboxEntities(view.subject, view.textBody, linkedEntityRecords, linkIds),
+    () => suggestInboxEntities(view.subject ?? "", view.textBody, linkedEntityRecords, linkIds),
     [view.subject, view.textBody, linkedEntityRecords, linkIds]
   );
 

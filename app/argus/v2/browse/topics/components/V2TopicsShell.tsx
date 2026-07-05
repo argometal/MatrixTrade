@@ -12,7 +12,7 @@ import {
   type V2TopicRow,
   type V2TopicTab,
   type V2TopicTagChip,
-} from "@/lib/argus/v2/topic-loaders";
+} from "@/lib/argus/v2/topic-browse-utils";
 
 const TABS: { id: V2TopicTab; label: string }[] = [
   { id: "all", label: "All" },
