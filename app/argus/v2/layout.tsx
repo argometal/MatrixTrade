@@ -17,9 +17,9 @@ export default async function V2Layout({ children }: { children: React.ReactNode
 
   return (
     <ArgusAddProvider buckets={buckets} tagBuckets={tagBuckets}>
-      <div className="flex min-h-screen bg-zinc-950">
+      <div className="min-h-screen bg-zinc-950">
         <V2Sidebar counts={navCounts} />
-        <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+        <div className="flex min-h-screen min-w-0 flex-col lg:pl-56 xl:pl-60">
           <V2TopBar />
           <main className="min-w-0 flex-1 overflow-x-hidden pb-24 lg:pb-8 [&:has(.v2-inbox-shell)]:overflow-hidden [&:has(.v2-inbox-shell)]:pb-0 lg:[&:has(.v2-inbox-shell)]:pb-0 [&:has(.v2-browse-shell)]:overflow-hidden [&:has(.v2-browse-shell)]:pb-0 lg:[&:has(.v2-browse-shell)]:pb-0">
             {children}
