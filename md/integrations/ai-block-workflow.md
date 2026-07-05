@@ -7,7 +7,7 @@
 ## Flow
 
 ```
-/ai-workspace → Copy Snapshot
+/ai-bridge → Copy Snapshot
   → paste in AI assistant
   → receive AI Block (JSON)
   → Paste AI Block → Import AI Block

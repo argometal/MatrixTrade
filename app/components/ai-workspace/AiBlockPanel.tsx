@@ -3,22 +3,17 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import type { ImportAiBlockActionResult } from "@/app/actions";
+import { AI_BRIDGE_HUMAN_ACTIONS } from "@/lib/ai-bridge-human-actions";
 import { AI_BRIDGE_CAPABILITIES, AI_BRIDGE_FLOW } from "@/lib/ai-bridge-types";
-import {
-  AI_BLOCK_SAMPLE_OPTIONS,
-  sampleAiBlock,
-  type AiBlockType,
-} from "@/lib/ai-block";
+import { sampleAiBlock, type AiBlockType } from "@/lib/ai-block";
 
 const FLOW_STEPS = [
   "Copy Snapshot",
-  "Your AI",
-  "Paste AI Block",
+  "Tell your AI",
+  "Paste response",
   "Import",
   "Inbox",
-  "Review",
   "Apply",
-  "Confirm persisted",
 ] as const;
 
 async function copyText(text: string): Promise<boolean> {
@@ -52,12 +47,14 @@ export function AiBlockPanel({
   const [importResult, setImportResult] = useState<{ inboxItemId: string; origin: string } | null>(
     null
   );
-  const [sampleType, setSampleType] = useState("");
+  const [sampleAction, setSampleAction] = useState("");
 
-  function handleSampleSelect(type: string) {
-    setSampleType(type);
-    if (!type) return;
-    setPasteValue(sampleAiBlock(type as AiBlockType));
+  function handleSampleSelect(actionId: string) {
+    setSampleAction(actionId);
+    if (!actionId) return;
+    const action = AI_BRIDGE_HUMAN_ACTIONS.find((a) => a.id === actionId);
+    if (!action) return;
+    setPasteValue(sampleAiBlock(action.sampleType as AiBlockType));
   }
 
   async function handleCopySnapshot() {
@@ -86,13 +83,32 @@ export function AiBlockPanel({
     });
   }
 
+  const selectedAction = AI_BRIDGE_HUMAN_ACTIONS.find((a) => a.id === sampleAction);
+
   return (
     <div className="space-y-5">
       <p className="text-sm text-zinc-600">
-        AI Bridge is not an AI — it is the structured bridge between MatrixTrade and your external
-        assistant. {AI_BRIDGE_CAPABILITIES}
+        AI Bridge is not an AI — it connects MatrixTrade to your external assistant.{" "}
+        {AI_BRIDGE_CAPABILITIES}
       </p>
       <p className="text-xs text-zinc-500">{AI_BRIDGE_FLOW}</p>
+
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Your actions</p>
+        <ul className="mt-2 flex flex-wrap gap-2 text-sm text-zinc-800">
+          {AI_BRIDGE_HUMAN_ACTIONS.map((action) => (
+            <li
+              key={action.id}
+              className="rounded-full border border-zinc-300 bg-white px-3 py-1 font-medium"
+            >
+              {action.label}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-2 text-xs text-zinc-500">
+          Speak naturally to your AI — it picks the correct proposal format internally.
+        </p>
+      </div>
 
       <ol className="flex flex-wrap gap-x-2 gap-y-1 text-sm text-zinc-700">
         {FLOW_STEPS.map((step, index) => (
@@ -146,13 +162,13 @@ export function AiBlockPanel({
 
       <form action={handleImport} className="space-y-3">
         <label className="block space-y-1">
-          <span className="text-sm font-medium text-zinc-700">Paste AI Block</span>
+          <span className="text-sm font-medium text-zinc-700">Paste AI response</span>
           <textarea
             name="aiBlock"
             value={pasteValue}
             onChange={(e) => setPasteValue(e.target.value)}
             rows={14}
-            placeholder='{ "type": "trade-proposal", "proposal": { "id": "H00X", "ticker": "...", "entry": 0, "stop": 0, "shares": 0 } }'
+            placeholder="Paste the JSON your AI returned after you asked to open, adjust, close, or analyze a trade."
             className="w-full rounded-md border border-zinc-300 px-3 py-2 font-mono text-xs focus:border-zinc-500 focus:outline-none"
           />
         </label>
@@ -162,32 +178,31 @@ export function AiBlockPanel({
             disabled={pending || !pasteValue.trim()}
             className="rounded-md border border-zinc-900 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 disabled:opacity-50"
           >
-            {pending ? "Importing…" : "Import AI Block"}
+            {pending ? "Importing…" : "Import to Inbox"}
           </button>
           <label className="block min-w-[14rem] flex-1 space-y-1">
-            <span className="text-sm text-zinc-700">Load sample format</span>
+            <span className="text-sm text-zinc-700">Example for your AI</span>
             <select
-              value={sampleType}
+              value={sampleAction}
               onChange={(e) => handleSampleSelect(e.target.value)}
               className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-800 focus:border-zinc-500 focus:outline-none"
             >
-              <option value="">Choose block type…</option>
-              {AI_BLOCK_SAMPLE_OPTIONS.map((option) => (
-                <option key={option.type} value={option.type}>
-                  {option.label}
+              <option value="">Choose an action…</option>
+              {AI_BRIDGE_HUMAN_ACTIONS.map((action) => (
+                <option key={action.id} value={action.id}>
+                  {action.label}
                 </option>
               ))}
             </select>
           </label>
         </div>
-        {sampleType && (
+        {selectedAction && (
           <p className="text-xs text-zinc-500">
-            {AI_BLOCK_SAMPLE_OPTIONS.find((o) => o.type === sampleType)?.hint} — edit values, then
-            Import (not applied until Inbox → Apply).
+            {selectedAction.hint} — edit values, then Import (not applied until Inbox → Apply).
           </p>
         )}
         <p className="text-xs text-zinc-500">
-          All block types apply through Inbox. Never auto-applied.
+          All proposals go through Inbox. Never auto-applied.
         </p>
       </form>
     </div>

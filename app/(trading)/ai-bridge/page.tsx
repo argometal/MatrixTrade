@@ -16,7 +16,7 @@ import { describeProposal, parseTradingInboxPayload } from "@/lib/bridge";
 import { listPendingInboxForRuntime } from "@/lib/trading-inbox-submit";
 import { getExperiment, getTrades } from "@/lib/storage";
 
-export default async function AiWorkspacePage() {
+export default async function AiBridgePage() {
   const bridge = getBridgeConfig();
   const [
     experiment,
@@ -66,20 +66,20 @@ export default async function AiWorkspacePage() {
       <header>
         <h1 className="text-2xl font-semibold">AI Bridge</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Structured bridge to your AI — not an AI itself. Copy Snapshot → your AI → AI Block →
-          Import → Inbox → Apply → confirm persisted.
+          Structured bridge to your AI — not an AI itself. Copy Snapshot → describe what you want
+          (Open, Adjust, Close, Analyze) → paste response → Inbox → Apply.
         </p>
       </header>
 
       <SystemSection
-        id="ai-block"
-        title="AI Block"
-        description="Fast AI-assisted actions — copy context out, import proposals back through Inbox."
+        id="ai-bridge-handoff"
+        title="Snapshot & import"
+        description="Copy context to your AI, then import its proposal — never auto-applied."
       >
         <AiBlockPanel snapshotText={snapshotText} importAction={importAiBlockAction} />
       </SystemSection>
 
-      <SystemSection id="inbox" title="Inbox" description="Imported AI Blocks wait here for human Apply.">
+      <SystemSection id="inbox" title="Inbox" description="Imported proposals wait here for human Apply.">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-sm text-zinc-700">
             {pendingInbox.length === 0 ? (

@@ -39,7 +39,7 @@ export default async function TradingInboxPage({
       {items.length === 0 ? (
         <p className="text-sm text-zinc-500">
           Inbox empty. Import an AI Block from{" "}
-          <Link href="/ai-workspace" className="underline">
+          <Link href="/ai-bridge" className="underline">
             AI Bridge
           </Link>
           .

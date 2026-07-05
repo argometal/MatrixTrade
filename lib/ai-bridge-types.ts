@@ -25,7 +25,7 @@ export function getApplyStatusLabel(type: TradingProposalType): string {
 }
 
 export const AI_BRIDGE_CAPABILITIES =
-  "Analyze trades, create trades, update trades, close trades, review trades, add notes, and manage playbooks — via AI Blocks imported through Inbox (human Apply only).";
+  "Open, adjust, close, and analyze trades in natural language — proposals import through Inbox (human Apply only).";
 
 export const AI_BRIDGE_FLOW =
-  "MatrixTrade → Copy Snapshot → your AI → AI Block → Import → Inbox → Apply → Supabase";
+  "Copy Snapshot → tell your AI what you want → paste its response → Inbox → Apply → Supabase";

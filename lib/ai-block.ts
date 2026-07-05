@@ -5,24 +5,32 @@ import type { TradingInboxPayload } from "./bridge";
 export { AI_BRIDGE_BLOCK_TYPES as AI_BLOCK_TYPES };
 export type AiBlockType = (typeof AI_BRIDGE_BLOCK_TYPES)[number];
 
-export const DEFAULT_AI_BLOCK_REQUEST = `Return ONE AI Block only — plain JSON or a single \`\`\`json fenced block.
+export const DEFAULT_AI_BLOCK_REQUEST = `The human speaks naturally about trading: Open, Adjust, Close, Analyze.
+You infer the correct internal block type and return exactly ONE AI Block — plain JSON or a single \`\`\`json fenced block.
+
 Required shape:
 {
-  "type": "<block-type>",
+  "type": "<internal-type>",
   "proposal": { ... }
 }
-Block types (all Apply ready):
-- trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId
-- trade-close: close trade — id, exit required
-- trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
-- analysis: notes on existing trade — id required; at least one of thesis, psychology, lessons, notes
-- trade-update: id required; at least one field to change (entry, stop, target, shares, ticker, thesis, notes, playbookId, setupId, status)
-- playbook-create: name required; optional id, description, status (TESTING|ACTIVE|RETIRED), checklist[]
-- playbook-update: id required; at least one of name, description, status, checklist
+
+Human action → internal type (choose automatically — never ask the human to pick a type):
+- Open Trade → trade-proposal
+  · status "pending" (default) or "open" if already filled at the broker
+  · required: id, ticker, entry, stop, shares
+- Adjust Trade → trade-update
+  · id required; at least one field to change (stop, target, entry, shares, thesis, notes, status, …)
+- Close Trade → trade-close
+  · id and exit required
+  · confirmExternalClose: true only when closing a pending trade already executed at the broker
+- Analyze Trade → analysis (notes: thesis, psychology, lessons, notes)
+  · or trade-review when post-close review with qualityEntry/Exit/Mgmt (1-5), mistakes, lesson
+
 Rules:
 - Return exactly one block. No arrays of blocks.
 - Do not apply changes — human imports in MatrixTrade AI Bridge → Inbox → Apply.
-- If this snapshot is not enough, ask for ONE next_focus_suggestions item (ticker, playbook, or review trade_id).`;
+- Reply to the human in trading language, not internal type names.
+- If the snapshot is not enough, ask for ONE missing detail (ticker, trade id, or exit price).`;
 
 export function extractJsonFromAiBlock(raw: string): string {
   const trimmed = raw.trim();
@@ -58,7 +66,8 @@ export function parseAiBlock(raw: string):
   if (!inboxPayload) {
     return {
       ok: false,
-      error: `Invalid type. Supported: ${AI_BRIDGE_BLOCK_TYPES.join(", ")}`,
+      error:
+        "Could not read this proposal. Ask your AI to return one JSON block for Open, Adjust, Close, or Analyze.",
     };
   }
 

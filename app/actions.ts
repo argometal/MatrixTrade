@@ -57,7 +57,7 @@ function revalidateTradingPaths() {
   revalidatePath("/playbook");
   revalidatePath("/review");
   revalidatePath("/journal");
-  revalidatePath("/ai-workspace");
+  revalidatePath("/ai-bridge");
   revalidatePath("/inbox");
   revalidatePath("/system");
 }
@@ -111,7 +111,7 @@ export async function saveAiNotesAction(formData: FormData): Promise<SaveAiNotes
         proposalJson: note.proposalJson,
       }))
     );
-    revalidatePath("/ai-workspace");
+    revalidatePath("/ai-bridge");
     return { count: parsed.notes.length };
   } catch (err) {
     return {
@@ -135,7 +135,7 @@ export async function createAiSessionAction(
     const { token } = await createAiSession({ ttlMinutes, label });
     const connectUrl = buildAiConnectUrl(token);
     const qrDataUrl = await createQrDataUrl(connectUrl);
-    revalidatePath("/ai-workspace");
+    revalidatePath("/ai-bridge");
     return { token, connectUrl, qrDataUrl };
   } catch (err) {
     return {
@@ -151,7 +151,7 @@ export async function revokeAiSessionAction(formData: FormData): Promise<void> {
   if (sessionId) {
     await revokeAiSession(sessionId);
   }
-  revalidatePath("/ai-workspace");
+  revalidatePath("/ai-bridge");
 }
 
 export async function syncBridgeFormAction(): Promise<void> {
