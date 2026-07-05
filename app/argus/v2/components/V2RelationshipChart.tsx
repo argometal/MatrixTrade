@@ -1,5 +1,13 @@
 /** Decorative sparkline from monthly activity counts (mockup-style relationship chart). */
-export function V2RelationshipChart({ points }: { points: number[] }) {
+export function V2RelationshipChart({
+  points,
+  startYear,
+  endYear,
+}: {
+  points: number[];
+  startYear?: number;
+  endYear?: number;
+}) {
   if (points.length < 2) {
     return (
       <div className="mb-4 flex h-16 items-center justify-center rounded-xl bg-zinc-950/60 text-xs text-zinc-600">
@@ -23,7 +31,7 @@ export function V2RelationshipChart({ points }: { points: number[] }) {
   const area = `${pad},${height - pad} ${coords.join(" ")} ${pad + (points.length - 1) * step},${height - pad}`;
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="mb-4 h-16 w-full" preserveAspectRatio="none" aria-hidden>
+    <svg viewBox={`0 0 ${width} ${height + 16}`} className="mb-2 h-[4.5rem] w-full" preserveAspectRatio="none" aria-hidden>
       <defs>
         <linearGradient id="orgSparkFill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="rgb(16, 185, 129)" stopOpacity="0.35" />
@@ -39,6 +47,16 @@ export function V2RelationshipChart({ points }: { points: number[] }) {
         strokeLinejoin="round"
         strokeLinecap="round"
       />
+      {startYear && endYear ? (
+        <>
+          <text x={pad} y={height + 12} fill="rgb(113, 113, 122)" fontSize="9">
+            {startYear}
+          </text>
+          <text x={width - pad - 24} y={height + 12} fill="rgb(113, 113, 122)" fontSize="9">
+            {endYear}
+          </text>
+        </>
+      ) : null}
     </svg>
   );
 }

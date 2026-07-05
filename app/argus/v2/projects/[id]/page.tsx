@@ -3,9 +3,19 @@ import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { loadProjectPageData } from "@/lib/argus/v2/loaders";
-import { V2Badge, V2BackLink, V2Card, V2SectionTitle } from "../../components/v2-ui";
+import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
 import { V2ProjectTabs } from "../../components/V2ProjectTabs";
+import {
+  V2LegacyLink,
+  V2LinkedEntityRow,
+  V2MetricRows,
+  V2MorePeopleHint,
+  V2PanelCard,
+  V2PanelHeader,
+  V2PanelLinkAction,
+  V2PersonListItem,
+} from "../../components/V2RightPanel";
 import { EmptyState, formatDate } from "@/app/argus/components/ui";
 
 const TIMELINE_PREVIEW = 8;
@@ -147,131 +157,79 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
           </V2Card>
         </div>
 
-        {/* Right sidebar */}
-        <aside className="space-y-5">
-          <V2Card className="p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold text-zinc-100">About this project</h2>
-              <Link
-                href={`/argus/projects/${entity.id}`}
-                className="text-zinc-600 hover:text-zinc-400"
-                aria-label="Edit description"
-              >
-                ✎
-              </Link>
-            </div>
+        {/* Right sidebar — mockup layout */}
+        <aside className="space-y-4">
+          <V2PanelCard>
+            <V2PanelHeader title="About this project" editHref={`/argus/projects/${entity.id}`} />
             {notes ? (
               <p className="text-sm leading-relaxed text-zinc-400">{notes}</p>
             ) : (
               <p className="text-sm text-zinc-500">Add a description on the project record.</p>
             )}
-          </V2Card>
+          </V2PanelCard>
 
-          <V2Card className="p-5">
-            <V2SectionTitle
+          <V2PanelCard>
+            <V2PanelHeader
+              title="People on this project"
               action={
                 page.peopleWithRoles.length > 0 ? (
-                  <Link
-                    href={`/argus/projects/${entity.id}`}
-                    className="text-xs text-violet-400 hover:text-violet-300"
-                  >
-                    View all
-                  </Link>
+                  <V2PanelLinkAction href={`/argus/projects/${entity.id}`}>View all</V2PanelLinkAction>
                 ) : undefined
               }
-            >
-              People on this project
-            </V2SectionTitle>
+            />
             {page.peopleWithRoles.length === 0 ? (
               <p className="text-sm text-zinc-500">Add people via project links.</p>
             ) : (
               <>
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   {page.peopleWithRoles.slice(0, 4).map((person) => (
-                    <li key={person.id} className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-sky-600/40 to-zinc-700 text-xs font-bold text-sky-100">
-                        {person.initials}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <Link
-                          href={`/argus/network/${person.id}`}
-                          className="text-sm font-medium text-zinc-200 hover:text-violet-300"
-                        >
-                          {person.name}
-                        </Link>
-                        <p className="text-xs text-zinc-500">{person.role}</p>
-                      </div>
-                    </li>
+                    <V2PersonListItem
+                      key={person.id}
+                      href={`/argus/network/${person.id}`}
+                      name={person.name}
+                      subtitle={person.role}
+                      initials={person.initials}
+                    />
                   ))}
                 </ul>
-                {morePeople > 0 ? (
-                  <p className="mt-3 text-xs text-violet-400">+{morePeople} more</p>
-                ) : null}
+                <V2MorePeopleHint people={page.peopleWithRoles.slice(4)} moreCount={morePeople} />
               </>
             )}
-          </V2Card>
+          </V2PanelCard>
 
-          <V2Card className="p-5">
-            <V2SectionTitle>Key metrics</V2SectionTitle>
-            <ul className="space-y-3">
-              {page.keyMetrics.map((m) => (
-                <li key={m.label} className="flex items-center justify-between text-sm">
-                  <span className="text-zinc-500">{m.label}</span>
-                  <span
-                    className={`font-semibold tabular-nums ${
-                      m.highlight ? "text-emerald-400" : "text-zinc-100"
-                    }`}
-                  >
-                    {m.value}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </V2Card>
+          <V2PanelCard>
+            <V2PanelHeader title="Key metrics" />
+            <V2MetricRows metrics={page.keyMetrics} />
+          </V2PanelCard>
 
-          <V2Card className="p-5">
-            <V2SectionTitle>Linked entities</V2SectionTitle>
-            <ul className="space-y-3 text-sm">
+          <V2PanelCard>
+            <V2PanelHeader title="Linked entities" />
+            <div className="space-y-2.5">
               {page.org ? (
-                <li>
-                  <Link
-                    href={`/argus/v2/organizations/${page.org.id}`}
-                    className="flex items-center justify-between rounded-lg border border-zinc-800/60 px-3 py-2.5 hover:border-zinc-700"
-                  >
-                    <span className="text-zinc-500">Organization</span>
-                    <span className="font-medium text-violet-300">{page.org.name} →</span>
-                  </Link>
-                </li>
+                <V2LinkedEntityRow
+                  kind="organization"
+                  label="Organization"
+                  href={`/argus/v2/organizations/${page.org.id}`}
+                  value={page.org.name}
+                />
               ) : null}
               {page.linkedTopics.length > 0 ? (
-                <li className="rounded-lg border border-zinc-800/60 px-3 py-2.5">
-                  <p className="mb-2 text-zinc-500">Topics</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {page.linkedTopics.map((topic) => (
-                      <V2Badge key={topic} tone="default">
-                        {topic}
-                      </V2Badge>
-                    ))}
-                  </div>
-                </li>
+                <V2LinkedEntityRow kind="topics" label="Topics" tags={page.linkedTopics} />
               ) : null}
               {page.linkedEventsCount > 0 ? (
-                <li className="flex items-center justify-between rounded-lg border border-zinc-800/60 px-3 py-2.5">
-                  <span className="text-zinc-500">Events</span>
-                  <span className="text-zinc-300">{page.linkedEventsCount} events →</span>
-                </li>
+                <V2LinkedEntityRow
+                  kind="events"
+                  label="Events"
+                  value={`${page.linkedEventsCount} events`}
+                />
               ) : null}
               {!page.org && page.linkedTopics.length === 0 && page.linkedEventsCount === 0 ? (
                 <p className="text-sm text-zinc-500">Link org, topics, or events on the project.</p>
               ) : null}
-            </ul>
-          </V2Card>
+            </div>
+          </V2PanelCard>
 
-          <V2Card className="p-5">
-            <Link href={`/argus/projects/${entity.id}`} className="text-sm text-violet-400 hover:text-violet-300">
-              Open legacy project view →
-            </Link>
-          </V2Card>
+          <V2LegacyLink href={`/argus/projects/${entity.id}`}>Open legacy project view →</V2LegacyLink>
         </aside>
       </div>
     </div>

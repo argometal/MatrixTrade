@@ -41,7 +41,17 @@ function countThisWeek(isoDates: string[], today: string): number {
   return isoDates.filter((d) => d.slice(0, 10) >= cutoff).length;
 }
 
-export function buildV2HomeStats(data: ArgusData, inboxItems: InboxItem[], today: string) {
+export type V2HomeStatIcon = "journal" | "email" | "people" | "org" | "project";
+
+export interface V2HomeStat {
+  label: string;
+  value: string;
+  delta: string;
+  icon: V2HomeStatIcon;
+  href: string;
+}
+
+export function buildV2HomeStats(data: ArgusData, inboxItems: InboxItem[], today: string): V2HomeStat[] {
   const logs = visibleLogs(data, true);
   const inbox = visibleInbox(inboxItems, true);
   const kinds = entitiesByKind(data);
@@ -54,31 +64,36 @@ export function buildV2HomeStats(data: ArgusData, inboxItems: InboxItem[], today
       label: "Journal Entries",
       value: String(logs.length),
       delta: `+${countThisWeek(logDates, today)} this week`,
-      icon: "journal" as const,
+      icon: "journal",
+      href: "/argus/journal",
     },
     {
       label: "Emails",
       value: String(inbox.length),
       delta: `+${countThisWeek(inboxDates, today)} this week`,
-      icon: "email" as const,
+      icon: "email",
+      href: "/argus/v2/inbox",
     },
     {
       label: "People",
       value: String(kinds.people.length),
       delta: kinds.people.length ? "Active roster" : "None yet",
-      icon: "people" as const,
+      icon: "people",
+      href: "/argus/network",
     },
     {
       label: "Organizations",
       value: String(kinds.organizations.length),
       delta: kinds.organizations.length ? "Browse" : "None yet",
-      icon: "org" as const,
+      icon: "org",
+      href: "/argus/v2/browse/organizations",
     },
     {
       label: "Projects",
       value: String(kinds.projects.length),
       delta: kinds.projects.length ? "Browse" : "None yet",
-      icon: "project" as const,
+      icon: "project",
+      href: "/argus/v2/browse/projects",
     },
   ];
 }
@@ -257,7 +272,11 @@ export function buildV2EntityRows(
           ? `/argus/v2/organizations/${entity.id}`
           : tab === "projects"
             ? `/argus/v2/projects/${entity.id}`
-            : `/argus/network/${entity.id}`;
+            : tab === "topics"
+              ? `/argus/v2/browse/topics?selected=${entity.id}`
+              : tab === "events"
+                ? `/argus/v2/browse/events?selected=${entity.id}`
+                : `/argus/network/${entity.id}`;
 
       const typeLabel =
         tab === "organizations"
@@ -353,6 +372,11 @@ export function loadOrganizationPageData(
 
   const sparkline = buildMonthlyActivitySparkline(scope.logs, scope.inbox, 12);
   const relationshipMetrics = buildRelationshipMetrics(intel, org.strategicValue ?? 3);
+  const sv = org.strategicValue ?? 3;
+  const relationshipScore = Math.max(1, Math.min(5, sv + 0.3)).toFixed(1);
+  const relationshipLabel = relationshipDisplayLabel(sv, intel.relationshipHealth);
+  const chartEndYear = Number(today.slice(0, 4));
+  const chartStartYear = chartEndYear - 1;
 
   const recentProjects = orgProjects.slice(0, 3).map((project) => ({
     id: project.id,
@@ -370,6 +394,10 @@ export function loadOrganizationPageData(
     recentProjects,
     sparkline,
     relationshipMetrics,
+    relationshipScore,
+    relationshipLabel,
+    chartStartYear,
+    chartEndYear,
     stats: {
       journalEntries: scope.logCount,
       journalDelta: journalThisMonth > 0 ? `+${journalThisMonth} this month` : "No change",
@@ -429,6 +457,18 @@ function buildRelationshipMetrics(
     { label: "Trust", value: high(strategicValue) },
     { label: "Future Potential", value: strategicValue >= 4 ? "High" : "Moderate" },
   ];
+}
+
+function relationshipDisplayLabel(
+  strategicValue: number,
+  health: ReturnType<typeof buildEntityIntelligence>["relationshipHealth"]
+): string {
+  if (strategicValue >= 4 && health === "active") return "Strong Relationship";
+  if (strategicValue >= 4) return "High Priority Relationship";
+  if (health === "active") return "Active Relationship";
+  if (health === "cooling") return "Cooling Relationship";
+  if (health === "dormant") return "Dormant Relationship";
+  return "Needs Attention";
 }
 
 export function loadProjectPageData(

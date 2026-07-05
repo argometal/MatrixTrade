@@ -25,7 +25,15 @@ export function V2EntityTable({
         {V2_ENTITY_TABS.map((t) => (
           <Link
             key={t}
-            href={t === "organizations" ? "/argus/v2" : `/argus/v2?tab=${t}`}
+            href={
+              t === "organizations"
+                ? "/argus/v2"
+                : t === "topics"
+                  ? "/argus/v2/browse/topics"
+                  : t === "events"
+                    ? "/argus/v2/browse/events"
+                    : `/argus/v2?tab=${t}`
+            }
             className={`rounded-lg px-2.5 py-1 text-[11px] font-medium ${
               t === tab ? "bg-violet-500/15 text-violet-300" : "text-zinc-600 hover:text-zinc-400"
             }`}

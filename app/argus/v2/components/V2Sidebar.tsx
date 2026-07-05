@@ -24,8 +24,8 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
     { href: "/argus/v2/browse/organizations", label: "Organizations", count: counts.organizations },
     { href: "/argus/v2/browse/projects", label: "Projects", count: counts.projects },
     { href: "/argus/network", label: "People", count: counts.people },
-    { href: "/argus/network", label: "Topics", count: counts.topics },
-    { href: "/argus/network", label: "Events", count: counts.events },
+    { href: "/argus/v2/browse/topics", label: "Topics", count: counts.topics },
+    { href: "/argus/v2/browse/events", label: "Events", count: counts.events },
   ];
 
   return (
@@ -41,7 +41,7 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
         <NavItem href="/argus/v2" label="Home" active={pathname === "/argus/v2"} />
 
         <NavGroup title="Capture">
-          <NavItem href="/argus/inbox" label="Inbox" count={counts.inbox} active={pathname.startsWith("/argus/inbox")} />
+          <NavItem href="/argus/v2/inbox" label="Inbox" count={counts.inbox} active={pathname.startsWith("/argus/v2/inbox")} />
         </NavGroup>
 
         <NavGroup title="Browse">
@@ -81,7 +81,7 @@ export function V2MobileNav({ inboxCount = 0 }: { inboxCount?: number }) {
   const items = [
     { href: "/argus/v2", label: "Home", icon: "⌂" },
     { href: "/argus/network", label: "Network", icon: "◉" },
-    { href: "/argus/inbox", label: "Inbox", icon: "✉", badge: inboxCount },
+    { href: "/argus/v2/inbox", label: "Inbox", icon: "✉", badge: inboxCount },
     { href: "/argus/search", label: "Search", icon: "⌕" },
   ];
 

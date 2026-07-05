@@ -22,6 +22,22 @@ const STAT_ICONS: Record<string, string> = {
   project: "📁",
 };
 
+function V2HomeStatCard({ stat }: { stat: { label: string; value: string; delta: string; icon: string; href: string } }) {
+  return (
+    <Link
+      href={stat.href}
+      className="group block rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-4 transition hover:border-violet-500/40 hover:bg-zinc-900"
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-lg transition group-hover:scale-110">{STAT_ICONS[stat.icon]}</span>
+        <span className="text-[10px] text-emerald-400">{stat.delta}</span>
+      </div>
+      <p className="text-2xl font-bold tabular-nums text-zinc-50 group-hover:text-violet-100">{stat.value}</p>
+      <p className="mt-1 text-xs text-zinc-500 group-hover:text-zinc-400">{stat.label}</p>
+    </Link>
+  );
+}
+
 const ACTIVITY_ICON_STYLES: Record<string, { icon: string; box: string }> = {
   journal: { icon: "📓", box: "bg-emerald-500/15 text-emerald-400" },
   email: { icon: "✉", box: "bg-zinc-700/50 text-zinc-300" },
@@ -90,14 +106,7 @@ export default async function V2HomePage({
 
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
         {stats.map((stat) => (
-          <V2Card key={stat.label} className="p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-lg">{STAT_ICONS[stat.icon]}</span>
-              <span className="text-[10px] text-emerald-400">{stat.delta}</span>
-            </div>
-            <p className="text-2xl font-bold tabular-nums text-zinc-50">{stat.value}</p>
-            <p className="mt-1 text-xs text-zinc-500">{stat.label}</p>
-          </V2Card>
+          <V2HomeStatCard key={stat.label} stat={stat} />
         ))}
       </div>
 
