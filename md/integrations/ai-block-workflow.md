@@ -53,6 +53,69 @@ Supported types: `trade-proposal`, `trade-close`, `trade-review`, `analysis`.
 
 Import validates with existing `lib/bridge.ts` rules. **Never auto-applies.**
 
+### Protocol examples
+
+**Create pending trade** (planned entry — default when `status` omitted):
+
+```json
+{
+  "type": "trade-proposal",
+  "proposal": {
+    "id": "H002",
+    "ticker": "GOOGL",
+    "entry": 175.5,
+    "stop": 170,
+    "shares": 10,
+    "status": "pending"
+  }
+}
+```
+
+**Create already-open trade** (broker position filled before MatrixTrade record):
+
+```json
+{
+  "type": "trade-proposal",
+  "proposal": {
+    "id": "H002",
+    "ticker": "GOOGL",
+    "entry": 175.5,
+    "stop": 170,
+    "shares": 10,
+    "status": "open"
+  }
+}
+```
+
+**Close open trade**:
+
+```json
+{
+  "type": "trade-close",
+  "proposal": {
+    "id": "H001",
+    "exit": 108.5
+  }
+}
+```
+
+**Close externally executed pending trade** (record created as pending but broker already closed):
+
+```json
+{
+  "type": "trade-close",
+  "proposal": {
+    "id": "H002",
+    "exit": 172.25,
+    "confirmExternalClose": true
+  }
+}
+```
+
+If `trade-close` targets a pending trade without `confirmExternalClose: true`, Apply is blocked with:
+
+`Trade H002 is pending, not open. Open it first or use confirmExternalClose.`
+
 ---
 
 ## Inbox storage (production)

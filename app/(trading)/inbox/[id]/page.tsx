@@ -11,6 +11,8 @@ import {
 } from "@/lib/bridge";
 import { getApplyStatusLabel, isApplyImplemented } from "@/lib/ai-bridge-types";
 import { getInboxItemById } from "@/lib/trading-inbox-storage";
+import { getTradeById } from "@/lib/storage";
+import { validateTradeCloseProposal } from "@/lib/validation";
 
 type InboxDetailSearchParams = {
   origin?: string;
@@ -103,7 +105,16 @@ export default async function TradingInboxDetailPage({
   const validation = parsed
     ? validateProposalPayload(parsed)
     : { ok: false as const, errors: ["Invalid payload"] };
-  const applyReady = Boolean(parsed && validation.ok && isApplyImplemented(parsed.type));
+  const tradeCloseError =
+    parsed?.type === "trade-close" && validation.ok
+      ? validateTradeCloseProposal(
+          await getTradeById(String(parsed.proposal.id).toUpperCase()),
+          parsed.proposal
+        )
+      : null;
+  const applyReady =
+    Boolean(parsed && validation.ok && isApplyImplemented(parsed.type)) &&
+    !tradeCloseError;
   const applyPending = Boolean(parsed && validation.ok && !isApplyImplemented(parsed.type));
 
   return (
@@ -139,6 +150,11 @@ export default async function TradingInboxDetailPage({
               <li key={err}>{err}</li>
             ))}
           </ul>
+        )}
+        {tradeCloseError && (
+          <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+            {tradeCloseError}
+          </div>
         )}
       </section>
 

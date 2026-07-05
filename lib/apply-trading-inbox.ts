@@ -16,6 +16,10 @@ import {
   type TradingProposalType,
 } from "./bridge";
 import {
+  parseTradeProposalStatus,
+  validateTradeCloseProposal,
+} from "./validation";
+import {
   closeTrade,
   createTrade,
   getRules,
@@ -70,13 +74,21 @@ async function applyTradeProposal(
   parsed: TradingInboxPayload
 ): Promise<ApplyTradingProposalResult> {
   const p = parsed.proposal;
+  const status = parseTradeProposalStatus(p.status);
+  if (!status) {
+    return {
+      ok: false,
+      errors: ['proposal.status must be "pending" or "open".'],
+    };
+  }
+
   const input: CreateTradeInput = {
     id: String(p.id).toUpperCase(),
     ticker: String(p.ticker).toUpperCase(),
     entry: Number(p.entry),
     stop: Number(p.stop),
     shares: Number(p.shares),
-    status: "pending",
+    status,
   };
   if (p.target) input.target = Number(p.target);
   if (p.setupId) input.setupId = String(p.setupId);
@@ -85,7 +97,7 @@ async function applyTradeProposal(
   if (result.errors?.length) return { ok: false, errors: result.errors };
   return {
     ok: true,
-    message: `Created trade ${input.id} · ${input.ticker}`,
+    message: `Created trade ${input.id} · ${input.ticker} (${input.status ?? "pending"})`,
     type: "trade-proposal",
     tradeId: input.id,
     trade: result.trade,
@@ -97,6 +109,12 @@ async function applyTradeClose(
 ): Promise<ApplyTradingProposalResult> {
   const id = String(parsed.proposal.id).toUpperCase();
   const exit = Number(parsed.proposal.exit);
+  const trade = await getTradeById(id);
+  const closeError = validateTradeCloseProposal(trade, parsed.proposal);
+  if (closeError) {
+    return { ok: false, errors: [closeError] };
+  }
+
   const result = await closeTrade(id, { exit });
   if (result.errors?.length) return { ok: false, errors: result.errors };
   return {
