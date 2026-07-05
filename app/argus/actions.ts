@@ -312,6 +312,11 @@ async function persistNewEntity(
   revalidateArgus();
   revalidatePath(`/argus/network/${entity.id}`);
   revalidatePath(`/argus/projects/${entity.id}`);
+  revalidatePath(`/argus/v2/organizations/${entity.id}`);
+  revalidatePath(`/argus/v2/projects/${entity.id}`);
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/browse/events");
+  revalidatePath("/argus/v2");
 
   return { id: entity.id, href: entityDetailHref(entity), name: entity.name };
 }

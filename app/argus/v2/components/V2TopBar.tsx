@@ -1,7 +1,6 @@
-import Link from "next/link";
-import { V2TopBarAdd } from "./V2TopBarAdd";
+import { AddJournalMenuButton } from "@/app/argus/components/ArgusAddLauncher";
 
-export function V2TopBar({ showJournal = true }: { showJournal?: boolean }) {
+export function V2TopBar() {
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
       <div className="flex items-center gap-3 px-4 py-3 lg:px-6">
@@ -30,15 +29,7 @@ export function V2TopBar({ showJournal = true }: { showJournal?: boolean }) {
           >
             PIN
           </button>
-          <V2TopBarAdd />
-          {showJournal ? (
-            <Link
-              href="/argus/journal?capture=1"
-              className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 hover:bg-violet-500 lg:hidden"
-            >
-              + Journal
-            </Link>
-          ) : null}
+          <AddJournalMenuButton />
           <button
             type="button"
             className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 sm:flex"

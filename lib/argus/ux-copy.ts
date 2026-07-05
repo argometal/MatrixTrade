@@ -48,13 +48,22 @@ export const ADD_MENU = {
   fab: "Add",
   title: "Add",
   journal: "Journal",
-  journalHint: "Log (ongoing) or Note (standalone) — link people, projects, topics, events, and evidence",
+  journalHint: "Create a journal entry",
+  journalHintLong:
+    "Log (ongoing) or Note (standalone) — link people, projects, topics, events, and evidence",
   /** @deprecated use journal */
   captureNote: "Journal",
   /** @deprecated use journalHint */
   captureHint: "Log (ongoing) or Note (standalone) — link people, projects, topics, events, and evidence",
   newKind: (label: string) => `New ${label}`,
   kindHint: {
+    person: "Add a person",
+    organization: "Add an organization",
+    project: "Add a project",
+    topic: "Add a topic",
+    event: "Add an event",
+  },
+  kindHintLong: {
     person: "A contact — can link to anything",
     organization: "A company — ongoing shell for people; use Projects for bounded work",
     project: "Time-bounded work — links people, topics, events, and project evidence",
