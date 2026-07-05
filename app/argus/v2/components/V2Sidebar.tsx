@@ -28,7 +28,7 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
   ];
 
   return (
-    <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950/80 lg:flex xl:w-60">
+    <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-zinc-800/80 bg-zinc-950/80 lg:flex xl:w-60">
       <div className="border-b border-zinc-800/80 px-5 py-5">
         <Link href="/argus/v2" className="block">
           <span className="text-lg font-bold tracking-tight text-zinc-50">Argus</span>

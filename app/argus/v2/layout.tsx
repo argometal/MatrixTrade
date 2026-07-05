@@ -21,7 +21,7 @@ export default async function V2Layout({ children }: { children: React.ReactNode
         <V2Sidebar counts={navCounts} />
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <V2TopBar />
-          <main className="flex-1 overflow-x-hidden pb-24 lg:pb-8 [&:has(.v2-inbox-shell)]:overflow-hidden [&:has(.v2-inbox-shell)]:pb-0 lg:[&:has(.v2-inbox-shell)]:pb-0 [&:has(.v2-browse-shell)]:overflow-hidden [&:has(.v2-browse-shell)]:pb-0 lg:[&:has(.v2-browse-shell)]:pb-0">
+          <main className="min-w-0 flex-1 overflow-x-hidden pb-24 lg:pb-8 [&:has(.v2-inbox-shell)]:overflow-hidden [&:has(.v2-inbox-shell)]:pb-0 lg:[&:has(.v2-inbox-shell)]:pb-0 [&:has(.v2-browse-shell)]:overflow-hidden [&:has(.v2-browse-shell)]:pb-0 lg:[&:has(.v2-browse-shell)]:pb-0">
             {children}
           </main>
           <V2MobileNav inboxCount={navCounts.inbox} />

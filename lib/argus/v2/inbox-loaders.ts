@@ -1,5 +1,7 @@
 import type { Entity, InboxItem, InboxStatus } from "../types";
 import type { EnrichedInboxItem } from "../inbox-enrich";
+import { entityReferenceKind } from "../link-hierarchy";
+import { REFERENCE_KIND_LABELS } from "../reference-types";
 import { relativeActivityLabel } from "./timeline-builders";
 
 export type V2InboxTab = "all" | "unread" | "in_progress" | "processed" | "archived";
@@ -31,7 +33,7 @@ export interface V2InboxDetailEntity {
   name: string;
   label: string;
   href: string;
-  kind: "organization" | "project" | "person" | "other";
+  kind: "organization" | "project" | "person" | "topic" | "event" | "other";
 }
 
 const STATUS_UI: Record<
@@ -65,10 +67,29 @@ function entityTag(entity: Entity): V2InboxTag {
 }
 
 function entityKind(entity: Entity): V2InboxDetailEntity["kind"] {
-  if (entity.type === "company") return "organization";
-  if (entity.type === "project") return "project";
-  if (entity.type === "person") return "person";
+  const kind = entityReferenceKind(entity);
+  if (kind) return kind;
   return "other";
+}
+
+export function entityToV2InboxDetail(entity: Entity): V2InboxDetailEntity {
+  const kind = entityKind(entity);
+  const label =
+    kind === "other" ? "Reference" : REFERENCE_KIND_LABELS[kind as keyof typeof REFERENCE_KIND_LABELS];
+
+  let href = `/argus/network/${entity.id}`;
+  if (kind === "organization") href = `/argus/v2/organizations/${entity.id}`;
+  else if (kind === "project") href = `/argus/v2/projects/${entity.id}`;
+  else if (kind === "topic") href = `/argus/v2/browse/topics?selected=${entity.id}`;
+  else if (kind === "event") href = `/argus/v2/browse/events?selected=${entity.id}`;
+
+  return {
+    id: entity.id,
+    name: entity.name,
+    label,
+    href,
+    kind,
+  };
 }
 
 export function buildV2InboxRows(
@@ -137,18 +158,7 @@ export function buildV2InboxDetailEntities(item: InboxItem, entities: Entity[]):
   return (item.linkedEntityIds ?? [])
     .map((id) => entities.find((e) => e.id === id))
     .filter((e): e is Entity => Boolean(e))
-    .map((entity) => ({
-      id: entity.id,
-      name: entity.name,
-      label: entity.type === "company" ? "Organization" : entity.type === "project" ? "Project" : "Person",
-      href:
-        entity.type === "company"
-          ? `/argus/v2/organizations/${entity.id}`
-          : entity.type === "project"
-            ? `/argus/v2/projects/${entity.id}`
-            : `/argus/network/${entity.id}`,
-      kind: entityKind(entity),
-    }));
+    .map(entityToV2InboxDetail);
 }
 
 function formatInboxTime(iso: string, today: string): string {
@@ -234,16 +244,5 @@ export function suggestInboxEntities(
       return name.split(/\s+/).some((part) => part.length > 3 && haystack.includes(part));
     })
     .slice(0, 6)
-    .map((entity) => ({
-      id: entity.id,
-      name: entity.name,
-      label: entity.type === "company" ? "Organization" : entity.type === "project" ? "Project" : "Person",
-      href:
-        entity.type === "company"
-          ? `/argus/v2/organizations/${entity.id}`
-          : entity.type === "project"
-            ? `/argus/v2/projects/${entity.id}`
-            : `/argus/network/${entity.id}`,
-      kind: entityKind(entity),
-    }));
+    .map(entityToV2InboxDetail);
 }

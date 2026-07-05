@@ -53,7 +53,7 @@ export function V2EventsShell({
   }
 
   return (
-    <div className="v2-browse-shell -mx-4 flex min-h-[calc(100vh-4.5rem)] flex-col lg:-mx-8 lg:min-h-[calc(100vh-4rem)] lg:flex-row">
+    <div className="v2-browse-shell flex min-h-[calc(100vh-4.5rem)] flex-col lg:min-h-[calc(100vh-4rem)] lg:flex-row">
       <section className="flex w-full flex-col border-b border-zinc-800/80 lg:w-[min(480px,44%)] lg:border-b-0 lg:border-r">
         <div className="border-b border-zinc-800/80 px-4 py-4 lg:px-5">
           <div className="mb-3 flex items-start justify-between gap-3">

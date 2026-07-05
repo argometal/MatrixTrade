@@ -1,16 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
+import { TagPickerModal } from "@/app/argus/components/TagPickerModal";
 import { CaptureSheet } from "@/app/argus/components/CaptureSheet";
-import { ReferencePickerModal } from "@/app/argus/components/ReferencePickerModal";
-import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
+import { V2InboxEntityLinkModal } from "@/app/argus/v2/inbox/components/V2InboxEntityLinkModal";
+import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
-import { INBOX } from "@/lib/argus/ux-copy";
+import { INBOX, LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 import {
   archiveInboxAction,
   convertInboxAction,
@@ -18,6 +19,7 @@ import {
   type CreatedEntityResult,
 } from "@/app/argus/actions";
 import {
+  entityToV2InboxDetail,
   suggestInboxEntities,
   suggestInboxTags,
   type V2InboxDetailEntity,
@@ -46,12 +48,16 @@ function senderInitials(from: string): string {
 function entityChipClass(kind: V2InboxDetailEntity["kind"]): string {
   if (kind === "project") return "border-sky-500/30 bg-sky-500/10 text-sky-300";
   if (kind === "organization") return "border-orange-500/30 bg-orange-500/10 text-orange-300";
+  if (kind === "topic") return "border-amber-500/30 bg-amber-500/10 text-amber-300";
+  if (kind === "event") return "border-rose-500/30 bg-rose-500/10 text-rose-300";
   return "border-zinc-700 bg-zinc-800/80 text-zinc-300";
 }
 
 function entityIcon(kind: V2InboxDetailEntity["kind"]): string {
   if (kind === "project") return "📁";
   if (kind === "organization") return "🏢";
+  if (kind === "topic") return "🏷";
+  if (kind === "event") return "📅";
   return "👤";
 }
 
@@ -66,30 +72,27 @@ export function V2InboxDetailPanel({
   tagBuckets: TagBuckets;
   linkedEntityRecords: Entity[];
 }) {
-  const linkFormRef = useRef<HTMLFormElement>(null);
   const [panelTab, setPanelTab] = useState<"email" | "details" | "attachments" | "related">("email");
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const [showConvert, setShowConvert] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [linkIds, setLinkIds] = useState<string[]>(detail.item.linkedEntityIds ?? []);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [linkSaving, setLinkSaving] = useState(false);
 
   useEffect(() => {
     setLinkIds(detail.item.linkedEntityIds ?? []);
     setShowConvert(false);
     setMenuOpen(false);
     setPanelTab("email");
-  }, [detail.item.id, detail.item.linkedEntityIds]);
+    setSelectedTags(suggestInboxTags(detail.view.subject ?? "", detail.view.textBody, detail.linkedEntities));
+  }, [detail.item.id, detail.item.linkedEntityIds, detail.view.subject, detail.view.textBody, detail.linkedEntities]);
 
   const { item, view, attachments, linkedEntities, convertedLog, defaultTitle, defaultBody } = detail;
   const canTriage = item.status === "pending" || item.status === "linked";
   const inboxBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "inbox"), [buckets]);
-  const inboxCreateKinds = allowedCreateKinds("inbox");
   const returnTo = `/argus/v2/inbox?selected=${item.id}`;
-
-  const suggestedTags = useMemo(
-    () => suggestInboxTags(view.subject ?? "", view.textBody, linkedEntities),
-    [view.subject, view.textBody, linkedEntities]
-  );
 
   const suggestedEntities = useMemo(
     () => suggestInboxEntities(view.subject ?? "", view.textBody, linkedEntityRecords, linkIds),
@@ -101,25 +104,7 @@ export function V2InboxDetailPanel({
     [linkedEntityRecords]
   );
 
-  const resolveDetailEntity = (entity: Entity): V2InboxDetailEntity => ({
-    id: entity.id,
-    name: entity.name,
-    label: entity.type === "company" ? "Organization" : entity.type === "project" ? "Project" : "Person",
-    href:
-      entity.type === "company"
-        ? `/argus/v2/organizations/${entity.id}`
-        : entity.type === "project"
-          ? `/argus/v2/projects/${entity.id}`
-          : `/argus/network/${entity.id}`,
-    kind:
-      entity.type === "company"
-        ? "organization"
-        : entity.type === "project"
-          ? "project"
-          : entity.type === "person"
-            ? "person"
-            : "other",
-  });
+  const resolveDetailEntity = entityToV2InboxDetail;
 
   const selectedLinked = linkIds
     .map((id) => {
@@ -130,21 +115,57 @@ export function V2InboxDetailPanel({
     })
     .filter((entity): entity is V2InboxDetailEntity => Boolean(entity));
 
+  async function persistLinks(ids: string[]) {
+    if (ids.length === 0) return;
+    setLinkSaving(true);
+    try {
+      const formData = new FormData();
+      formData.set("inboxId", item.id);
+      formData.set("returnTo", returnTo);
+      for (const id of ids) formData.append("entityIds", id);
+      await linkInboxAction(formData);
+    } finally {
+      setLinkSaving(false);
+    }
+  }
+
   function submitLinks() {
-    linkFormRef.current?.requestSubmit();
+    void persistLinks(linkIds);
   }
 
-  function removeLink(id: string) {
-    setLinkIds((current) => current.filter((value) => value !== id));
+  async function removeLink(id: string) {
+    const next = linkIds.filter((value) => value !== id);
+    setLinkIds(next);
+    if (next.length > 0) await persistLinks(next);
   }
 
-  function addSuggestedEntity(entity: V2InboxDetailEntity) {
-    setLinkIds((current) => (current.includes(entity.id) ? current : [...current, entity.id]));
+  async function addSuggestedEntity(entity: V2InboxDetailEntity) {
+    if (linkIds.includes(entity.id)) return;
+    const next = [...linkIds, entity.id];
+    setLinkIds(next);
+    await persistLinks(next);
+  }
+
+  async function applySuggestedEntities() {
+    const next = [...linkIds];
+    for (const entity of suggestedEntities.slice(0, 3)) {
+      if (!next.includes(entity.id)) next.push(entity.id);
+    }
+    if (next.length === linkIds.length) return;
+    setLinkIds(next);
+    await persistLinks(next);
   }
 
   async function linkCreatedEntity(entity: CreatedEntityResult): Promise<false> {
-    setLinkIds((current) => [...current, entity.id]);
+    const next = [...linkIds, entity.id];
+    setLinkIds(next);
+    await persistLinks(next);
     return false;
+  }
+
+  async function confirmEntityLinks(ids: string[]) {
+    setLinkIds(ids);
+    await persistLinks(ids);
   }
 
   const detailTabs = [
@@ -302,7 +323,12 @@ export function V2InboxDetailPanel({
 
         <div className="mt-6 space-y-5 border-t border-zinc-800/80 pt-6">
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-zinc-100">Linked entities</h3>
+            <h3 className="mb-1 text-sm font-semibold text-zinc-100">Linked entities</h3>
+            {canTriage ? (
+              <p className="mb-3 text-[11px] leading-snug text-zinc-600">{LINK_HIERARCHY.inboxLinkHint}</p>
+            ) : (
+              <div className="mb-3" />
+            )}
             <div className="flex flex-wrap gap-2">
               {selectedLinked.map((entity) => (
                 <span
@@ -336,9 +362,7 @@ export function V2InboxDetailPanel({
                   {suggestedEntities.length > 0 ? (
                     <button
                       type="button"
-                      onClick={() => {
-                        for (const entity of suggestedEntities.slice(0, 3)) addSuggestedEntity(entity);
-                      }}
+                      onClick={() => void applySuggestedEntities()}
                       className="rounded-xl bg-violet-600/20 px-3 py-2 text-xs font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
                     >
                       ✨ Suggest entities
@@ -353,7 +377,7 @@ export function V2InboxDetailPanel({
                   <button
                     key={entity.id}
                     type="button"
-                    onClick={() => addSuggestedEntity(entity)}
+                    onClick={() => void addSuggestedEntity(entity)}
                     className="rounded-full border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500 hover:border-violet-500/40 hover:text-violet-300"
                   >
                     + {entity.name}
@@ -366,18 +390,34 @@ export function V2InboxDetailPanel({
           <div>
             <h3 className="mb-3 text-sm font-semibold text-zinc-100">Tags</h3>
             <div className="flex flex-wrap gap-1.5">
-              {suggestedTags.map((tag) => (
-                <span key={tag} className="rounded-md bg-zinc-800 px-2 py-1 text-[11px] text-zinc-400">
+              {selectedTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 rounded-md bg-zinc-800 px-2 py-1 text-[11px] text-zinc-400"
+                >
                   {tag}
+                  {canTriage ? (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTags((current) => current.filter((value) => value !== tag))}
+                      className="text-zinc-600 hover:text-zinc-300"
+                      aria-label={`Remove tag ${tag}`}
+                    >
+                      ×
+                    </button>
+                  ) : null}
                 </span>
               ))}
-              <button
-                type="button"
-                className="rounded-md border border-dashed border-zinc-700 px-2 py-1 text-[11px] text-zinc-500"
-                title="Tags apply when converting to journal"
-              >
-                + Add tag
-              </button>
+              {canTriage ? (
+                <button
+                  type="button"
+                  onClick={() => setTagPickerOpen(true)}
+                  className="rounded-md border border-dashed border-zinc-700 px-2 py-1 text-[11px] text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
+                  title="Tags apply when converting to journal"
+                >
+                  + Add tag
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -412,10 +452,10 @@ export function V2InboxDetailPanel({
                 <button
                   type="button"
                   onClick={submitLinks}
-                  disabled={linkIds.length === 0}
+                  disabled={linkIds.length === 0 || linkSaving}
                   className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
                 >
-                  Save
+                  {linkSaving ? "Saving…" : INBOX.saveLink}
                 </button>
                 <form action={archiveInboxAction} className="inline">
                   <input type="hidden" name="inboxId" value={item.id} />
@@ -454,6 +494,7 @@ export function V2InboxDetailPanel({
                   body: defaultBody,
                   inboxId: item.id,
                   entityIds: linkIds,
+                  topics: selectedTags,
                 }}
               />
             </div>
@@ -465,25 +506,21 @@ export function V2InboxDetailPanel({
         ✨ Created for you by Argus AI
       </div>
 
-      <form ref={linkFormRef} action={linkInboxAction} className="hidden">
-        <input type="hidden" name="inboxId" value={item.id} />
-        <input type="hidden" name="returnTo" value={returnTo} />
-        {linkIds.map((id) => (
-          <input key={id} type="hidden" name="entityIds" value={id} />
-        ))}
-      </form>
-
-      <ReferencePickerModal
+      <V2InboxEntityLinkModal
         open={pickerOpen}
         buckets={inboxBuckets}
         selectedIds={linkIds}
-        onChange={setLinkIds}
         onClose={() => setPickerOpen(false)}
-        onConfirm={() => setPickerOpen(false)}
+        onConfirm={(ids) => void confirmEntityLinks(ids)}
         onEntityCreated={linkCreatedEntity}
-        allowedCreateKinds={inboxCreateKinds}
-        listMode="all"
-        createButtonLabel={INBOX.createReference}
+      />
+
+      <TagPickerModal
+        open={tagPickerOpen}
+        buckets={tagBuckets}
+        selectedTags={selectedTags}
+        onChange={setSelectedTags}
+        onClose={() => setTagPickerOpen(false)}
       />
     </div>
   );
