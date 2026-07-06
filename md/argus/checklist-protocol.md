@@ -58,10 +58,13 @@ Use this to know which section to edit when code changes:
 ## Checkbox legend
 
 ```markdown
-- [ ]  Not verified
+- [ ]  Not verified / not implemented
+- [c]  Coded & build-verified — pending user QA
 - [x]  Verified by user (QA pass)
 - [~]  Placeholder or partial — also list in Known gaps
 ```
+
+Builders mark `[c]` after implementation; only the user upgrades `[c]` → `[x]`.
 
 ---
 
