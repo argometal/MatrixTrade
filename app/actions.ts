@@ -57,6 +57,7 @@ function revalidateTradingPaths() {
   revalidatePath("/playbook");
   revalidatePath("/review");
   revalidatePath("/journal");
+  revalidatePath("/");
   revalidatePath("/ai-workspace");
   revalidatePath("/inbox");
   revalidatePath("/system");
@@ -111,7 +112,8 @@ export async function saveAiNotesAction(formData: FormData): Promise<SaveAiNotes
         proposalJson: note.proposalJson,
       }))
     );
-    revalidatePath("/ai-workspace");
+    revalidatePath("/");
+  revalidatePath("/ai-workspace");
     return { count: parsed.notes.length };
   } catch (err) {
     return {
@@ -135,7 +137,8 @@ export async function createAiSessionAction(
     const { token } = await createAiSession({ ttlMinutes, label });
     const connectUrl = buildAiConnectUrl(token);
     const qrDataUrl = await createQrDataUrl(connectUrl);
-    revalidatePath("/ai-workspace");
+    revalidatePath("/");
+  revalidatePath("/ai-workspace");
     return { token, connectUrl, qrDataUrl };
   } catch (err) {
     return {
@@ -151,6 +154,7 @@ export async function revokeAiSessionAction(formData: FormData): Promise<void> {
   if (sessionId) {
     await revokeAiSession(sessionId);
   }
+  revalidatePath("/");
   revalidatePath("/ai-workspace");
 }
 

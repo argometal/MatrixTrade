@@ -1,19 +1,21 @@
 "use client";
 
-import { AiBridgeMain } from "@/app/components/ai-bridge/AiBridgeMain";
+import { HomeDashboardMain } from "@/app/components/home-dashboard/HomeDashboardMain";
 import type { ImportAiBlockActionResult } from "@/app/actions";
 import type { AiBridgeOverviewData } from "@/lib/ai-bridge-overview";
 
-/** @deprecated Use AiBridgeMain on /ai-workspace */
+/** @deprecated Use HomeDashboardMain on `/` */
 export function AiBlockPanel({
   snapshotText,
   overview,
   pendingInboxCount = 0,
+  cycleLabel = "—",
   importAction,
 }: {
   snapshotText: string;
   overview?: AiBridgeOverviewData;
   pendingInboxCount?: number;
+  cycleLabel?: string;
   importAction: (formData: FormData) => Promise<ImportAiBlockActionResult>;
 }) {
   const fallbackOverview: AiBridgeOverviewData = overview ?? {
@@ -31,10 +33,11 @@ export function AiBlockPanel({
   };
 
   return (
-    <AiBridgeMain
+    <HomeDashboardMain
       snapshotText={snapshotText}
       overview={fallbackOverview}
       pendingInboxCount={pendingInboxCount}
+      cycleLabel={cycleLabel}
       importAction={importAction}
     />
   );

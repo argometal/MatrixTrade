@@ -86,10 +86,10 @@ export async function InboxApplyResult({
           </Link>
         )}
         <Link
-          href="/ai-workspace"
+          href="/"
           className="rounded-md border border-emerald-800 px-3 py-1.5 text-sm font-medium text-emerald-900 hover:bg-white/60"
         >
-          Back to AI Bridge
+          Back to Dashboard
         </Link>
         <Link href="/inbox" className="text-sm font-medium underline text-emerald-900">
           Inbox list

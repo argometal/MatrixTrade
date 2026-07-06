@@ -4,11 +4,8 @@ import { SignOutButton } from "@/app/components/SignOutButton";
 export function TradingNav() {
   return (
     <nav className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-zinc-200 pb-4 text-sm font-medium sm:mb-8">
-      <Link href="/" className="hover:text-zinc-600">
+      <Link href="/" className="font-medium text-violet-700 hover:text-violet-800">
         Dashboard
-      </Link>
-      <Link href="/ai-workspace" className="font-medium text-violet-700 hover:text-violet-800">
-        AI Bridge
       </Link>
       <Link href="/trades" className="hover:text-zinc-600">
         Trades

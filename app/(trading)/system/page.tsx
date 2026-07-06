@@ -56,8 +56,8 @@ export default async function SystemPage({
         </p>
         <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
           Connect to an assistant via{" "}
-          <Link href="/ai-workspace" className="font-medium underline">
-            AI Bridge → Quick Connect
+          <Link href="/" className="font-medium underline">
+            Dashboard
           </Link>
           . Sync here first.
         </div>
@@ -104,7 +104,7 @@ export default async function SystemPage({
               "None"
             ) : (
               <Link href="/inbox" className="underline">
-                {pendingInbox.length} · open in AI Bridge
+                {pendingInbox.length} · open from Dashboard
               </Link>
             )
           }
@@ -205,8 +205,8 @@ export default async function SystemPage({
       </SystemSection>
 
       <nav className="flex gap-4 text-sm">
-        <Link href="/ai-workspace" className="text-zinc-600 hover:underline">
-          AI Bridge →
+        <Link href="/" className="text-zinc-600 hover:underline">
+          Dashboard →
         </Link>
         <Link href="/" className="text-zinc-600 hover:underline">
           Dashboard
