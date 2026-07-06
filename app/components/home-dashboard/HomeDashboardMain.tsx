@@ -164,9 +164,9 @@ export function HomeDashboardMain({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-violet-700">
-              Cycle {cycleLabel} trades
+              Home preview · Cycle {cycleLabel} trades
             </p>
-            <h1 className="mt-1 text-2xl font-semibold text-zinc-900">Dashboard</h1>
+            <h1 className="mt-1 text-2xl font-semibold text-zinc-900">MatrixTrade</h1>
             <p className="mt-2 max-w-2xl text-sm text-zinc-600">
               Your bridge to any AI. You think in actions. AI handles the rest.
             </p>

@@ -56,8 +56,8 @@ export default async function SystemPage({
         </p>
         <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
           Connect to an assistant via{" "}
-          <Link href="/" className="font-medium underline">
-            Dashboard
+          <Link href="/home-preview" className="font-medium underline">
+            Home preview
           </Link>
           . Sync here first.
         </div>
@@ -104,7 +104,7 @@ export default async function SystemPage({
               "None"
             ) : (
               <Link href="/inbox" className="underline">
-                {pendingInbox.length} · open from Dashboard
+                {pendingInbox.length} · open from Home preview
               </Link>
             )
           }
@@ -205,8 +205,8 @@ export default async function SystemPage({
       </SystemSection>
 
       <nav className="flex gap-4 text-sm">
-        <Link href="/" className="text-zinc-600 hover:underline">
-          Dashboard →
+        <Link href="/home-preview" className="text-zinc-600 hover:underline">
+          Home preview →
         </Link>
         <Link href="/" className="text-zinc-600 hover:underline">
           Dashboard
