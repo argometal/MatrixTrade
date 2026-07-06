@@ -41,6 +41,7 @@ Mark items:
 | 2026-07-06 | **Change 132 / second-origin** | Checklist fixes: inbox unlink, search, PIN, filters, nav anchors; `v2-checklist-solutions.md` |
 | 2026-07-06 | **Change 133** | Unified create+link (`CreateAndLinkModal`); event/project link counts; network empty-state CTA |
 | 2026-07-06 | **Change 134** | Unrestricted link targets (all 5 types); link modal inline create; picker fixes |
+| 2026-07-06 | **Change 135** | `ArgusUnifiedCreateFlow` — single + Create window (journal/person/org/project/event/topic/document + link + inline missing + save) |
 
 *Add a row here whenever v2 UI or checklist changes.*
 
@@ -80,7 +81,7 @@ Mark items:
 
 - [ ] Sticky header with blur on scroll
 - [ ] Search field visible on desktop (placeholder “Search anything…”)
-- [ ] **+ Journal** opens global capture / add menu (`ArgusAddProvider`)
+- [ ] **+ Create** opens unified create & link flow (`ArgusUnifiedCreateFlow` via `ArgusAddProvider`)
 - [ ] Mobile: compact Argus title visible when sidebar hidden
 
 ### Top bar — placeholders (expect `[~]`)

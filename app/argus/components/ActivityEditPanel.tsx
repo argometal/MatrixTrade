@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import type { CreatedEntityResult } from "@/app/argus/actions";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import type { ReferenceKind } from "@/lib/argus/reference-types";
 import type { Entity, Log } from "@/lib/argus/types";
 import { ACTIVITY_EDIT, TAGS } from "@/lib/argus/ux-copy";
@@ -10,7 +10,6 @@ import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-
 import { JOURNAL_KIND_LABELS, LOG_SOURCE_LABELS } from "@/lib/argus/labels";
 import { isJournalLogKind } from "@/lib/argus/journal-behavior";
 import { EntityChip } from "./Cards";
-import { CreateAndLinkModal } from "./CreateAndLinkModal";
 import { JournalKindActions } from "./JournalKindActions";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
 import { TagPickerModal, type TagBuckets } from "./TagPickerModal";
@@ -76,9 +75,8 @@ export function ActivityEditPanel({
   const [reminderOpen, setReminderOpen] = useState(Boolean(initialFollowUpDate(log)));
   const [referenceOpen, setReferenceOpen] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createKind, setCreateKind] = useState<ReferenceKind>("project");
   const [isProtected, setIsProtected] = useState(log.private);
+  const { openCreateFlow } = useArgusAdd();
 
   const logBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "log"), [buckets]);
   const logCreateKinds = allowedCreateKinds("log");
@@ -95,13 +93,13 @@ export function ActivityEditPanel({
   const canSave = body.trim().length > 0;
 
   function openCreate(kind: ReferenceKind) {
-    setCreateKind(kind);
-    setCreateOpen(true);
-  }
-
-  function handleEntityCreated(entity: CreatedEntityResult) {
-    setSelectedIds((prev) => (prev.includes(entity.id) ? prev : [...prev, entity.id]));
-    setCreateOpen(false);
+    openCreateFlow({
+      itemKind: kind,
+      lockItemKind: true,
+      onSaved: (result) => {
+        setSelectedIds((prev) => (prev.includes(result.id) ? prev : [...prev, result.id]));
+      },
+    });
   }
 
   return (
@@ -322,17 +320,6 @@ export function ActivityEditPanel({
         selectedTags={selectedTags}
         onChange={setSelectedTags}
         onClose={() => setTagsOpen(false)}
-      />
-
-      <CreateAndLinkModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        buckets={buckets}
-        mode="create"
-        defaultKind={createKind}
-        allowedKinds={logCreateKinds}
-        linkSource="create"
-        onCreated={handleEntityCreated}
       />
     </form>
   );

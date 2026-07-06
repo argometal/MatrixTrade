@@ -13,12 +13,18 @@ export function V2OpenCaptureButton({
   className?: string;
   children: React.ReactNode;
 }) {
-  const { openCapture } = useArgusAdd();
+  const { openCreateFlow } = useArgusAdd();
 
   return (
     <button
       type="button"
-      onClick={() => openCapture({ entityIds, entryType })}
+      onClick={() =>
+        openCreateFlow({
+          itemKind: "journal",
+          linkedEntityIds: entityIds,
+          entryType,
+        })
+      }
       className={className}
     >
       {children}

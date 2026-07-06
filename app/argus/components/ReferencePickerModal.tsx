@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Entity } from "@/lib/argus/types";
 import { type CreatedEntityResult } from "@/app/argus/actions";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import {
   entityKindLabel,
   REFERENCE_KINDS,
@@ -10,7 +11,6 @@ import {
 } from "@/lib/argus/reference-types";
 import { CAPTURE, REFERENCES, REFERENCE_PICKER } from "@/lib/argus/ux-copy";
 import { inputClass } from "./ui";
-import { CreateAndLinkModal } from "./CreateAndLinkModal";
 
 export interface EntityPickerBuckets {
   recent: Entity[];
@@ -70,7 +70,7 @@ export function ReferencePickerModal({
     ? defaultCreateKind
     : creatableKinds[0] ?? "person";
   const [query, setQuery] = useState("");
-  const [createOpen, setCreateOpen] = useState(false);
+  const { openCreateFlow } = useArgusAdd();
 
   const allEntities = buckets.alphabetical;
   const hasReferences = allEntities.length > 0;
@@ -109,7 +109,6 @@ export function ReferencePickerModal({
   }
 
   function handleEntityCreated(entity: CreatedEntityResult) {
-    setCreateOpen(false);
     onClose();
 
     void (async () => {
@@ -122,6 +121,14 @@ export function ReferencePickerModal({
         onChange([...selectedIds, entity.id]);
       }
     })();
+  }
+
+  function openInlineCreate() {
+    openCreateFlow({
+      itemKind: resolvedDefaultKind,
+      lockItemKind: creatableKinds.length === 1,
+      onSaved: (result) => handleEntityCreated(result),
+    });
   }
 
   if (!open) return null;
@@ -152,7 +159,7 @@ export function ReferencePickerModal({
 
             <button
               type="button"
-              onClick={() => setCreateOpen(true)}
+              onClick={openInlineCreate}
               className="mt-3 w-full rounded-xl border border-teal-800/60 bg-teal-950/40 py-2 text-sm font-medium text-teal-300 hover:bg-teal-900/40"
             >
               {createLabel}
@@ -211,17 +218,6 @@ export function ReferencePickerModal({
           </div>
         </div>
       </div>
-
-      <CreateAndLinkModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        buckets={buckets}
-        mode="create"
-        defaultKind={resolvedDefaultKind}
-        allowedKinds={creatableKinds}
-        linkSource="create"
-        onCreated={handleEntityCreated}
-      />
     </>
   );
 }

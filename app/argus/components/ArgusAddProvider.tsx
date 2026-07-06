@@ -3,8 +3,10 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createContext, Suspense, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { createLogAction } from "@/app/argus/actions";
+import { ArgusUnifiedCreateFlow } from "@/app/argus/components/ArgusUnifiedCreateFlow";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
+import type { CreateFlowOpenOptions, JournalLinkRow, UnifiedCreateResult } from "@/lib/argus/create-flow-types";
 import { CaptureSheet, type CaptureInitial } from "./CaptureSheet";
 
 export type CaptureOpenOptions = {
@@ -14,8 +16,13 @@ export type CaptureOpenOptions = {
   eventDate?: string;
 };
 
+type CreateFlowState = CreateFlowOpenOptions & {
+  onSaved?: (result: UnifiedCreateResult) => void;
+};
+
 type ArgusAddContextValue = {
   openCapture: (options?: CaptureOpenOptions) => void;
+  openCreateFlow: (options?: CreateFlowState) => void;
   buckets: EntityPickerBuckets;
 };
 
@@ -53,16 +60,20 @@ export function ArgusAddProvider({
   children,
   buckets,
   tagBuckets,
+  journalRows,
 }: {
   children: ReactNode;
   buckets: EntityPickerBuckets;
   tagBuckets: TagBuckets;
+  journalRows: JournalLinkRow[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const [captureOpen, setCaptureOpen] = useState(false);
   const [autoOpenReference, setAutoOpenReference] = useState(false);
   const [captureInitial, setCaptureInitial] = useState<CaptureInitial | undefined>();
+  const [createFlowOpen, setCreateFlowOpen] = useState(false);
+  const [createFlowState, setCreateFlowState] = useState<CreateFlowState>({});
 
   const closeCapture = useCallback(() => {
     setCaptureOpen(false);
@@ -88,9 +99,27 @@ export function ArgusAddProvider({
     setCaptureOpen(true);
   }, []);
 
+  const closeCreateFlow = useCallback(() => {
+    setCreateFlowOpen(false);
+    setCreateFlowState({});
+  }, []);
+
+  const openCreateFlow = useCallback((options: CreateFlowState = {}) => {
+    setCreateFlowState(options);
+    setCreateFlowOpen(true);
+  }, []);
+
   return (
-    <ArgusAddContext.Provider value={{ openCapture, buckets }}>
+    <ArgusAddContext.Provider value={{ openCapture, openCreateFlow, buckets }}>
       {children}
+      <ArgusUnifiedCreateFlow
+        open={createFlowOpen}
+        onClose={closeCreateFlow}
+        options={createFlowState}
+        buckets={buckets}
+        journalRows={journalRows}
+        onSaved={createFlowState.onSaved}
+      />
       <CaptureSheet
         open={captureOpen}
         action={createLogAction}

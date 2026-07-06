@@ -111,7 +111,7 @@ Each checklist item is classified:
 
 | Checklist item | Solution |
 |----------------|----------|
-| All **New / +** flows | **Fixed** — `CreateAndLinkModal` (name, notes, multi-link) |
+| All **New / +** flows | **Fixed** — `ArgusUnifiedCreateFlow` (create + link + inline missing + save) |
 | Topics / Events browse | **Fixed** — create + detail **+ Link**; link counts on detail |
 | Projects / Orgs detail | **Fixed** — **+ Link** on header; loaders read `linkedEntityIds` |
 | Global + menu | **Fixed** — `ArgusAddLauncher` uses create+link modal |

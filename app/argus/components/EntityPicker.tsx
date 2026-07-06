@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Entity } from "@/lib/argus/types";
 import type { CreatedEntityResult } from "@/app/argus/actions";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import {
-  REFERENCE_KINDS,
   REFERENCE_KIND_LABELS,
   entityKindLabel,
   type ReferenceKind,
@@ -12,7 +12,6 @@ import {
 import { REFERENCES, REFERENCE_PICKER } from "@/lib/argus/ux-copy";
 import { FAVORITES_KEY } from "@/lib/argus/journal-helpers";
 import { inputClass } from "./ui";
-import { CreateAndLinkModal } from "./CreateAndLinkModal";
 
 type Tab = "recent" | "favorites" | "frequent" | "search" | "alpha";
 
@@ -95,14 +94,29 @@ export function EntityPicker({
   onQuickCreateNotesChange,
   defaultShowCreate = false,
 }: EntityPickerProps) {
+  const { openCreateFlow } = useArgusAdd();
   const [tab, setTab] = useState<Tab>("recent");
   const [query, setQuery] = useState("");
   const [favorites, setFavorites] = useState<string[]>(() => loadFavorites());
-  const [createOpen, setCreateOpen] = useState(defaultShowCreate);
 
   useEffect(() => {
     onValidityChange?.(selectedIds.length > 0);
   }, [selectedIds, onValidityChange]);
+
+  useEffect(() => {
+    if (!defaultShowCreate) return;
+    openCreateFlow({
+      itemKind: quickCreateKind,
+      lockItemKind: true,
+      onSaved: (result) => {
+        onChange(selectedIds.includes(result.id) ? selectedIds : [...selectedIds, result.id]);
+        onQuickCreateNameChange("");
+        onQuickCreateNotesChange("");
+      },
+    });
+    // Only auto-open once when the picker mounts with defaultShowCreate.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultShowCreate]);
 
   const allEntities = buckets.alphabetical;
 
@@ -147,7 +161,14 @@ export function EntityPicker({
     onChange(selectedIds.includes(entity.id) ? selectedIds : [...selectedIds, entity.id]);
     onQuickCreateNameChange("");
     onQuickCreateNotesChange("");
-    setCreateOpen(false);
+  }
+
+  function openInlineCreate() {
+    openCreateFlow({
+      itemKind: quickCreateKind,
+      lockItemKind: true,
+      onSaved: (result) => handleEntityCreated(result),
+    });
   }
 
   const tabs: { id: Tab; label: string }[] = [
@@ -222,22 +243,11 @@ export function EntityPicker({
 
       <button
         type="button"
-        onClick={() => setCreateOpen(true)}
+        onClick={openInlineCreate}
         className="text-sm font-medium text-teal-500/90 hover:text-teal-400"
       >
         {REFERENCES.createNew}
       </button>
-
-      <CreateAndLinkModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        buckets={buckets}
-        mode="create"
-        defaultKind={quickCreateKind}
-        allowedKinds={REFERENCE_KINDS}
-        linkSource="create"
-        onCreated={handleEntityCreated}
-      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { requireArgusSession } from "@/lib/auth/require-session";
 import { ArgusAddProvider } from "@/app/argus/components/ArgusAddProvider";
 import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
+import { buildJournalLinkRows } from "@/lib/argus/create-flow-helpers";
 import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { buildV2NavCounts } from "@/lib/argus/v2/loaders";
 import { V2MobileNav, V2Sidebar } from "./components/V2Sidebar";
@@ -15,9 +16,10 @@ export default async function V2Layout({ children }: { children: React.ReactNode
   const navCounts = buildV2NavCounts(data, inboxItems, includePrivate);
   const buckets = buildEntityPickerBuckets(data, includePrivate);
   const tagBuckets = buildTagBuckets(data, includePrivate);
+  const journalRows = buildJournalLinkRows(data, includePrivate);
 
   return (
-    <ArgusAddProvider buckets={buckets} tagBuckets={tagBuckets}>
+    <ArgusAddProvider buckets={buckets} tagBuckets={tagBuckets} journalRows={journalRows}>
       <div className="min-h-screen bg-zinc-950">
         <V2Sidebar counts={navCounts} />
         <div className="flex min-h-screen min-w-0 flex-col lg:pl-56 xl:pl-60">

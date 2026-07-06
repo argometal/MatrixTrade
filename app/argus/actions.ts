@@ -39,6 +39,8 @@ import {
 } from "@/lib/argus/reference-types";
 import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
 import { partitionIdsByEntityKind } from "@/lib/argus/v2/entity-link-counts";
+import type { UnifiedCreatePayload, UnifiedCreateResult } from "@/lib/argus/create-flow-types";
+import { buildDocumentNotes } from "@/lib/argus/reference-types";
 import {
   assertJournalKindTransition,
   canConvertNoteToLog,
@@ -463,6 +465,148 @@ async function persistNewEntity(
   revalidatePath("/argus/v2");
 
   return { id: entity.id, href: entityDetailHref(entity), name: entity.name };
+}
+
+async function persistDocumentEntity(
+  name: string,
+  notes: string,
+  linkedEntityIds: string[] = []
+): Promise<CreatedEntityResult> {
+  const trimmedName = name.trim();
+  if (!trimmedName) {
+    throw new ArgusPersistenceError("validation", "Name is required.");
+  }
+
+  const data = await readArgus();
+  const validIds = filterLinkIdsForSource(data.entities, "create", linkedEntityIds);
+
+  const entity = await createEntity({
+    type: "other",
+    name: trimmedName,
+    notes: buildDocumentNotes(notes),
+    alias: "",
+    strategicValue: 3,
+    linkedEntityIds: validIds,
+  });
+
+  const confirmed = await getEntity(entity.id);
+  if (!confirmed) {
+    throw new ArgusPersistenceError(
+      "database",
+      `Object "${trimmedName}" was not readable after save confirmation.`
+    );
+  }
+
+  revalidateArgus();
+  revalidatePath(`/argus/network/${entity.id}`);
+  revalidatePath("/argus/v2");
+
+  return { id: entity.id, href: `/argus/network/${entity.id}`, name: entity.name };
+}
+
+async function linkEntityToLogsAction(entityId: string, logIds: string[]): Promise<void> {
+  if (!logIds.length) return;
+  const data = await readArgus();
+  for (const logId of logIds) {
+    const log = data.logs.find((entry) => entry.id === logId && !entry.deletedAt);
+    if (!log || log.entityIds.includes(entityId)) continue;
+    await updateLog(logId, {
+      title: log.title,
+      body: log.body,
+      kind: log.kind,
+      date: log.date,
+      followUpDate: log.followUpDate,
+      entityIds: [...log.entityIds, entityId],
+      topics: log.topics,
+      private: log.private,
+    });
+  }
+  revalidateArgus();
+}
+
+export async function createMissingLinkTargetAction(
+  kind: ReferenceKind | "document",
+  name: string,
+  notes = "",
+  options?: { startDate?: string; endDate?: string }
+): Promise<CreatedEntityResult> {
+  await requireArgusSession();
+  if (kind === "document") {
+    return persistDocumentEntity(name, notes);
+  }
+  return persistNewEntity(kind, name, notes, [], options);
+}
+
+export async function saveUnifiedCreateFlowAction(
+  payload: UnifiedCreatePayload
+): Promise<UnifiedCreateResult> {
+  await requireArgusSession();
+  const data = await readArgus();
+  const linkedEntityIds = filterLinkIdsForSource(data.entities, "create", payload.linkedEntityIds);
+
+  if (payload.mode === "link") {
+    if (!payload.entityId) {
+      throw new ArgusPersistenceError("validation", "Entity not found.");
+    }
+    await setEntityLinkedIdsAction(payload.entityId, linkedEntityIds);
+    await linkEntityToLogsAction(payload.entityId, payload.linkedLogIds);
+    const entity = await getEntity(payload.entityId);
+    if (!entity) {
+      throw new ArgusPersistenceError("validation", "Entity not found.");
+    }
+    return { id: entity.id, href: entityDetailHref(entity), name: entity.name };
+  }
+
+  if (payload.itemKind === "journal") {
+    const body = payload.body.trim();
+    if (!body) {
+      throw new ArgusPersistenceError("validation", "Content is required.");
+    }
+    const today = new Date().toISOString().slice(0, 10);
+    const date = payload.eventDate.trim().slice(0, 10) || today;
+    const kind: JournalKind = payload.entryType === "note" ? "event" : "log";
+    const title = payload.title.trim() || autoTitleFromBody(body);
+
+    const log = await createLog({
+      kind,
+      date,
+      title,
+      body,
+      private: false,
+      source: "manual",
+      entityIds: linkedEntityIds,
+      topics: payload.tags,
+      classificationStatus: resolveClassificationStatus(linkedEntityIds),
+      attachmentIds: [],
+    });
+
+    revalidateArgus();
+    revalidatePath("/argus/v2/inbox");
+    return { id: log.id, href: `/argus/logs/${log.id}`, name: title };
+  }
+
+  const trimmedName = payload.name.trim();
+  if (!trimmedName) {
+    throw new ArgusPersistenceError("validation", "Name is required.");
+  }
+
+  let result: CreatedEntityResult;
+  if (payload.itemKind === "document") {
+    result = await persistDocumentEntity(trimmedName, payload.notes, linkedEntityIds);
+  } else {
+    result = await persistNewEntity(
+      payload.itemKind,
+      trimmedName,
+      payload.notes,
+      linkedEntityIds,
+      payload.itemKind === "event" && payload.eventDate
+        ? { startDate: payload.eventDate.trim().slice(0, 10) }
+        : undefined
+    );
+  }
+
+  await linkEntityToLogsAction(result.id, payload.linkedLogIds);
+  return result;
 }
 
 export async function createEntityInlineAction(

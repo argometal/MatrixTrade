@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { AddJournalMenuButton } from "@/app/argus/components/ArgusAddLauncher";
+import { AddCreateButton } from "@/app/argus/components/ArgusAddLauncher";
 import { PrivateLockMenu } from "@/app/argus/components/PrivateLockMenu";
 
 export function V2TopBar({
@@ -63,7 +63,7 @@ export function V2TopBar({
               <span aria-hidden>🛡</span> PIN
             </span>
           )}
-          <AddJournalMenuButton className="shrink-0" />
+          <AddCreateButton className="shrink-0" />
           <Link
             href="/argus/v2/inbox"
             className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 sm:flex"

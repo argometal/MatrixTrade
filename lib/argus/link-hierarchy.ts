@@ -92,6 +92,10 @@ export function isEntityLinkableTarget(
   source: LinkSourceKind,
   context: LinkContext = {}
 ): boolean {
+  if (referenceKindFromNotes(target.notes ?? "") === "document") {
+    return source === "create";
+  }
+
   const targetKind = entityReferenceKind(target);
   if (!targetKind) return false;
   if (!ALLOWED_LINK_TARGETS[source].includes(targetKind)) return false;

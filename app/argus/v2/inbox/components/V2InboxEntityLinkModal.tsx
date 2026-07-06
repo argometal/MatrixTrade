@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Entity } from "@/lib/argus/types";
 import { type CreatedEntityResult } from "@/app/argus/actions";
-import { CreateAndLinkModal } from "@/app/argus/components/CreateAndLinkModal";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import { inputClass } from "@/app/argus/components/ui";
 import { entityReferenceKind } from "@/lib/argus/link-hierarchy";
@@ -64,10 +64,10 @@ export function V2InboxEntityLinkModal({
   onClose: () => void;
   onEntityCreated?: (entity: CreatedEntityResult) => void | Promise<void | false>;
 }) {
+  const { openCreateFlow } = useArgusAdd();
   const [query, setQuery] = useState("");
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [draftIds, setDraftIds] = useState<string[]>(selectedIds);
-  const [createOpen, setCreateOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -107,8 +107,6 @@ export function V2InboxEntityLinkModal({
   }
 
   function handleEntityCreated(entity: CreatedEntityResult) {
-    setCreateOpen(false);
-
     void (async () => {
       if (onEntityCreated) {
         const handled = await onEntityCreated(entity);
@@ -125,6 +123,14 @@ export function V2InboxEntityLinkModal({
       onConfirm(next);
       onClose();
     })();
+  }
+
+  function openInlineCreate() {
+    openCreateFlow({
+      itemKind: activeCreateKind,
+      lockItemKind: true,
+      onSaved: (result) => handleEntityCreated(result),
+    });
   }
 
   return (
@@ -176,7 +182,7 @@ export function V2InboxEntityLinkModal({
 
             <button
               type="button"
-              onClick={() => setCreateOpen(true)}
+              onClick={openInlineCreate}
               className="w-full rounded-xl border border-violet-800/50 bg-violet-950/30 py-2.5 text-sm font-medium text-violet-300 hover:bg-violet-900/30"
             >
               {createLabelForKind(activeCreateKind)}
@@ -224,17 +230,6 @@ export function V2InboxEntityLinkModal({
           </div>
         </div>
       </div>
-
-      <CreateAndLinkModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        buckets={buckets}
-        mode="create"
-        defaultKind={activeCreateKind}
-        allowedKinds={INBOX_KINDS}
-        linkSource="create"
-        onCreated={handleEntityCreated}
-      />
     </>
   );
 }
