@@ -13,10 +13,13 @@ Private repo: `github.com/argometal/MatrixTrade`
 ## How to use
 
 1. **New to the project?** Read in order: `architecture/system-overview.md` → `architecture/repo-structure.md` → `phases/roadmap.md`
-2. **Looking for a rule?** → `rules/`
-3. **How does X connect to ChatGPT/Obsidian?** → `integrations/`
-4. **Copy/paste protocols?** → `protocols/`
-5. **Adding a new topic?** Create `topics/your-topic.md` and add a line to this index.
+2. **Working on ARGUS?** Start with [`argus/ai-charter.md`](argus/ai-charter.md) → `integrations/argus-architecture.md` → `argus/knowledge-model-v01.md`
+3. **Verifying v2 UI?** → [`argus/v2-design-checklist.md`](argus/v2-design-checklist.md) — check each box before sign-off
+4. **Verifying MatrixTrade preview UI?** → [`design/README.md`](design/README.md) — Home & Trades preview functional checklists (update on every UI change)
+5. **Looking for a rule?** → `rules/`
+6. **How does X connect to ChatGPT/Obsidian?** → `integrations/`
+7. **Copy/paste protocols?** → `protocols/`
+8. **Adding a new topic?** Create `topics/your-topic.md` and add a line to this index.
 
 ---
 
@@ -39,6 +42,38 @@ Private repo: `github.com/argometal/MatrixTrade`
 | [investment-principles.md](rules/investment-principles.md) | Capital preservation, discipline, framework |
 | [data-ownership.md](rules/data-ownership.md) | App vs Obsidian vs you |
 | [immutability-and-history.md](rules/immutability-and-history.md) | Never delete, version, append |
+
+---
+
+## Design (MatrixTrade preview QA)
+
+| Document | Contents |
+|----------|----------|
+| [design/README.md](design/README.md) | **Index** — workflow + agent update rule |
+| [design/home-preview-checklist.md](design/home-preview-checklist.md) | Situation Room `/home-preview` — functional checklist |
+| [design/trades-preview-checklist.md](design/trades-preview-checklist.md) | Trades workspace `/trades-preview` — functional checklist |
+| [design/DESIGN-CHECKLIST-TEMPLATE.md](design/DESIGN-CHECKLIST-TEMPLATE.md) | Template for new screens |
+
+**Rule:** Update the matching checklist in the same change whenever preview UI code changes (see `.cursor/rules/design-checklists.mdc`).
+
+---
+
+## ARGUS
+
+**Rule of construction for AI:** [`argus/ai-charter.md`](argus/ai-charter.md) — all AI-assisted ARGUS work must follow this charter.
+
+| Document | Contents |
+|----------|----------|
+| [ai-charter.md](argus/ai-charter.md) | **AI Charter v1.0** — preserve professional truth; evidence before conclusions |
+| [knowledge-model-v01.md](argus/knowledge-model-v01.md) | **Canonical ontology** — Evidence, Project, Topic, Person, Organization, linking graph |
+| [v2-hierarchy-implementation-report.md](argus/v2-hierarchy-implementation-report.md) | **v2 linking rules** — org direct-only scope, project via contacts, code map |
+| [network-browse-spec.md](argus/network-browse-spec.md) | **Network browser** — relationship intelligence, strength from evidence |
+| [v2-design-checklist.md](argus/v2-design-checklist.md) | **v2 design QA checklist** — verify each screen; reset on redesign |
+| [design-matrix-stage.md](argus/design-matrix-stage.md) | Three lenses (org / project / person) and v2 route map |
+| [product-flow-proposal.md](argus/product-flow-proposal.md) | Evidence → relations → narrative; 30-second story test |
+| [changes-numbered.md](argus/changes-numbered.md) | Numbered change log (inbox linking, v2 hierarchy, etc.) |
+| [email-intake-e2e.md](argus/email-intake-e2e.md) | Email intake end-to-end |
+| [phase-1-gate.md](argus/phase-1-gate.md) | Phase 1 gate criteria |
 
 ---
 

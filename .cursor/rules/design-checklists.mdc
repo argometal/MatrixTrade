@@ -1,0 +1,20 @@
+---
+description: Update md/design checklists when MatrixTrade preview or major UI changes
+globs: app/components/**/*preview*/**,app/(trading)/**,md/design/**
+alwaysApply: false
+---
+
+# Design checklist maintenance
+
+When you **add, remove, or change** MatrixTrade preview UI or a documented screen:
+
+1. Find or create `md/design/<screen>-checklist.md` (see `md/design/README.md`).
+2. **Update checklist items** so they match current behavior (add/remove/reword sections).
+3. **Bump** `Last design version` (today's date + commit hash after commit).
+4. **Add a Changelog row** describing the change.
+5. **Reset** `- [ ]` for any item whose behavior or layout changed.
+6. **New screen** → copy `DESIGN-CHECKLIST-TEMPLATE.md`, register in `md/design/README.md`.
+
+Do not ship preview UI changes without updating the checklist in the same session.
+
+User verifies boxes in browser; agent keeps docs accurate.
