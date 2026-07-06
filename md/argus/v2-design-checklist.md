@@ -43,6 +43,7 @@ Mark items:
 | 2026-07-06 | **Change 134** | Unrestricted link targets (all 5 types); link modal inline create; picker fixes |
 | 2026-07-06 | **Change 135** | `ArgusUnifiedCreateFlow` — single + Create window (journal/person/org/project/event/topic/document + link + inline missing + save) |
 | 2026-07-06 | **Change 136** | `ArgusCreateLinkWindow` full-screen mockup UI; shared flow state hook; all + Create buttons open it |
+| 2026-07-06 | **Change 137** | Portal fix for create window (z-9999); Network browser mockup layout; `/argus/network` → v2 |
 
 *Add a row here whenever v2 UI or checklist changes.*
 

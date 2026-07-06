@@ -17,10 +17,11 @@ const leftLinks = [
       path.startsWith("/argus/diagnostics"),
   },
   {
-    href: "/argus/network",
+    href: "/argus/v2/browse/network",
     label: BOTTOM_NAV.network,
     icon: "◎",
-    match: (path: string) => path.startsWith("/argus/network"),
+    match: (path: string) =>
+      path.startsWith("/argus/network") || path.startsWith("/argus/v2/browse/network"),
   },
 ] as const;
 

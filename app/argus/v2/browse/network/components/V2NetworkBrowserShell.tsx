@@ -120,20 +120,31 @@ function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
       className="group block rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-4 transition hover:border-violet-500/40 hover:bg-zinc-900/80"
     >
       <div className="mb-3 flex items-start gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/40 to-zinc-800 text-sm font-bold text-violet-100 ring-2 ring-zinc-900">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/50 to-zinc-800 text-sm font-bold text-violet-100 ring-2 ring-zinc-900">
           {card.initials}
         </span>
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="truncate font-bold text-zinc-50 group-hover:text-violet-100">{card.name}</h2>
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h2 className="truncate font-bold text-zinc-50 group-hover:text-violet-100">{card.name}</h2>
+              <p className="truncate text-sm text-zinc-400">{card.role}</p>
+              {card.organization ? (
+                <p className="truncate text-xs text-zinc-500">{card.organization}</p>
+              ) : null}
+            </div>
+            <div className="flex shrink-0 gap-1 text-zinc-600">
+              <span className="rounded-md p-1 hover:bg-zinc-800 hover:text-amber-300" aria-hidden>
+                ★
+              </span>
+              <span className="rounded-md p-1 hover:bg-zinc-800" aria-hidden>
+                ⋮
+              </span>
+            </div>
+          </div>
+          <div className="mt-2">
             <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
           </div>
-          <p className="truncate text-sm text-zinc-400">{card.role}</p>
-          {card.organization ? (
-            <p className="truncate text-xs text-zinc-600">{card.organization}</p>
-          ) : null}
         </div>
-        <span className="shrink-0 text-xs text-zinc-600 group-hover:text-violet-400">Open →</span>
       </div>
 
       {card.expertise.length > 0 ? (
@@ -301,14 +312,25 @@ export function V2NetworkBrowserShell({
   const [view, setView] = useState<"grid" | "list">("grid");
   const [statusTab, setStatusTab] = useState<V2NetworkBrowseStatus | "all">("all");
   const [smartView, setSmartView] = useState<V2NetworkSmartView>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
 
   const filtered = useMemo(() => {
     let rows = cards;
     if (statusTab !== "all") rows = rows.filter((c) => c.status === statusTab);
     if (smartView !== "all") rows = applyNetworkSmartView(rows, smartView);
+    const q = searchQuery.trim().toLowerCase();
+    if (q) {
+      rows = rows.filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.role.toLowerCase().includes(q) ||
+          (c.organization ?? "").toLowerCase().includes(q) ||
+          c.expertise.some((tag) => tag.toLowerCase().includes(q))
+      );
+    }
     return rows;
-  }, [cards, statusTab, smartView]);
+  }, [cards, statusTab, smartView, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -320,8 +342,8 @@ export function V2NetworkBrowserShell({
   };
 
   return (
-    <div className="px-4 py-6 lg:px-8">
-      <div className="flex gap-8">
+    <div className="v2-browse-shell flex min-h-[calc(100vh-4rem)] flex-col pb-28">
+      <div className="flex min-h-0 flex-1 gap-8 px-4 py-6 lg:px-8">
         <div className="min-w-0 flex-1">
           <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -371,6 +393,18 @@ export function V2NetworkBrowserShell({
               />
             </div>
           </header>
+
+          <div className="mb-5">
+            <input
+              value={searchQuery}
+              onChange={(event) => {
+                setSearchQuery(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Search people, companies, roles, skills…"
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-4 pr-4 text-sm text-zinc-300 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none"
+            />
+          </div>
 
           <div className="mb-5 flex flex-wrap gap-2">
             {STATUS_TABS.map((tab) => (
@@ -422,7 +456,7 @@ export function V2NetworkBrowserShell({
               <p className="mt-1 text-xs text-zinc-600">Add a person or adjust filters.</p>
             </div>
           ) : view === "grid" ? (
-            <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
               {pageRows.map((card) => (
                 <PersonCard key={card.id} card={card} />
               ))}
@@ -475,39 +509,39 @@ export function V2NetworkBrowserShell({
               ) : null}
             </footer>
           ) : null}
-
-          <section className="mt-10">
-            <h2 className="text-sm font-semibold text-zinc-200">Smart filters (quick views)</h2>
-            <p className="mt-1 text-xs text-zinc-600">Predefined views — filters, not new objects.</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {SMART_VIEWS.map((preset) => (
-                <button
-                  key={preset.key}
-                  type="button"
-                  onClick={() => {
-                    setSmartView(preset.key);
-                    setStatusTab("all");
-                    setPage(1);
-                  }}
-                  className={`rounded-xl border px-4 py-3 text-left transition ${
-                    smartView === preset.key
-                      ? "border-violet-500/40 bg-violet-500/10"
-                      : "border-zinc-800/80 bg-zinc-900/40 hover:border-zinc-700"
-                  }`}
-                >
-                  <p className="text-sm font-medium text-zinc-200">{preset.label}</p>
-                  <p className="mt-1 text-xs text-zinc-500">{preset.description}</p>
-                  <p className="mt-2 text-xs tabular-nums text-violet-300">
-                    {smartViewCount(cards, preset.key)} people
-                  </p>
-                </button>
-              ))}
-            </div>
-          </section>
         </div>
 
         <NetworkInsightsSidebar summary={summary} insights={insights} />
       </div>
+
+      <section className="fixed bottom-0 left-0 right-0 z-20 border-t border-zinc-800/90 bg-zinc-950/95 px-4 py-3 backdrop-blur-md lg:left-56 xl:left-60">
+        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+          Smart filters (quick views)
+        </p>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {SMART_VIEWS.map((preset) => (
+            <button
+              key={preset.key}
+              type="button"
+              onClick={() => {
+                setSmartView(preset.key);
+                setStatusTab("all");
+                setPage(1);
+              }}
+              className={`min-w-[140px] shrink-0 rounded-xl border px-3 py-2 text-left transition ${
+                smartView === preset.key
+                  ? "border-violet-500/40 bg-violet-500/10"
+                  : "border-zinc-800 bg-zinc-900/60 hover:border-zinc-700"
+              }`}
+            >
+              <p className="text-xs font-medium text-zinc-200">{preset.label}</p>
+              <p className="text-[10px] tabular-nums text-violet-300">
+                {smartViewCount(cards, preset.key)} people
+              </p>
+            </button>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

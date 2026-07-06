@@ -275,9 +275,13 @@ export function useCreateLinkFlowState({
             ? { startDate: draft.extra.trim().slice(0, 10) || new Date().toISOString().slice(0, 10) }
             : undefined
         );
-        setDraftEntityIds((current) =>
-          current.includes(created.id) ? current : [...current, created.id]
-        );
+        setDraftEntityIds((current) => {
+          const next = current.includes(created.id) ? current : [...current, created.id];
+          if (kind === "person" && draft.extra.trim() && !next.includes(draft.extra.trim())) {
+            return [...next, draft.extra.trim()];
+          }
+          return next;
+        });
         setMissingDrafts((current) => ({
           ...current,
           [kind]: { name: "", detail: "", extra: "" },

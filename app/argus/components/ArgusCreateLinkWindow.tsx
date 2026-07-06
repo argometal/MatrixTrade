@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Entity } from "@/lib/argus/types";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import { inputClass, textareaClass } from "@/app/argus/components/ui";
@@ -152,6 +154,8 @@ function StepCrumb({ active, done, label }: { active?: boolean; done?: boolean; 
   );
 }
 
+type MobilePanel = "create" | "link" | "missing" | "save";
+
 export function ArgusCreateLinkWindow({
   open,
   onClose,
@@ -167,9 +171,19 @@ export function ArgusCreateLinkWindow({
   journalRows: JournalLinkRow[];
   onSaved?: (result: UnifiedCreateResult) => void;
 }) {
+  const [mounted, setMounted] = useState(false);
+  const [mobilePanel, setMobilePanel] = useState<MobilePanel>("create");
   const flow = useCreateLinkFlowState({ open, options, buckets, journalRows, onClose, onSaved });
 
-  if (!open) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (open) setMobilePanel(options.mode === "link" ? "link" : "create");
+  }, [open, options.itemKind, options.mode]);
+
+  if (!open || !mounted) return null;
 
   const saveLabel =
     flow.mode === "link"
@@ -180,8 +194,16 @@ export function ArgusCreateLinkWindow({
 
   const orgOptions = flow.allEntities.filter((entity) => entity.type === "company");
 
-  return (
-    <div className="fixed inset-0 z-[200] flex flex-col bg-[#07070a]/95 backdrop-blur-md">
+  const panelVisible = (panel: MobilePanel) =>
+    mobilePanel === panel ? "flex min-h-0 flex-col" : "hidden min-h-0 flex-col md:flex";
+
+  const content = (
+    <div
+      className="fixed inset-0 z-[9999] flex flex-col bg-[#050508]"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Create and link anything"
+    >
       <header className="shrink-0 border-b border-zinc-800/80 bg-zinc-950/90">
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-3 px-4 py-3 lg:px-6">
           <div className="flex min-w-0 items-center gap-3">
@@ -204,6 +226,28 @@ export function ArgusCreateLinkWindow({
           </div>
 
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
+            <div className="flex gap-1 md:hidden">
+              {(
+                [
+                  ["create", "Create"],
+                  ["link", "Link"],
+                  ["missing", "Missing"],
+                  ["save", "Save"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setMobilePanel(key)}
+                  className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                    mobilePanel === key ? "bg-violet-600 text-white" : "bg-zinc-800 text-zinc-400"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="hidden flex-wrap items-center gap-1.5 md:flex">
             <StepCrumb active={flow.mode === "create"} label="1 Create" />
             <span className="text-zinc-700">→</span>
             <StepCrumb done={flow.totalLinks > 0} label="2 Link" />
@@ -211,6 +255,7 @@ export function ArgusCreateLinkWindow({
             <StepCrumb done={flow.missingOpen} label="3 Missing" />
             <span className="text-zinc-700">→</span>
             <StepCrumb done={flow.canSave()} label="4 Save" />
+            </div>
             <button
               type="button"
               onClick={onClose}
@@ -229,14 +274,14 @@ export function ArgusCreateLinkWindow({
         <p className="shrink-0 bg-emerald-950/40 px-6 py-2 text-center text-sm text-emerald-300">{flow.flash}</p>
       ) : null}
 
-      <div className="mx-auto grid min-h-0 w-full max-w-[1400px] flex-1 grid-cols-1 gap-0 overflow-hidden lg:grid-cols-[220px_minmax(0,1fr)_340px]">
+      <div className="mx-auto grid min-h-0 w-full max-w-[1400px] flex-1 grid-cols-1 gap-0 overflow-hidden md:grid-cols-[220px_minmax(0,1fr)_340px]">
         {flow.mode === "create" ? (
-          <aside className="hidden overflow-y-auto border-b border-zinc-800/80 bg-zinc-950/50 lg:block lg:border-b-0 lg:border-r">
+          <aside className={`${panelVisible("create")} overflow-y-auto border-b border-zinc-800/80 bg-zinc-950/50 md:border-b-0 md:border-r`}>
             <p className="px-4 pb-2 pt-4 text-[10px] font-bold uppercase tracking-wider text-zinc-600">
               Create any item
             </p>
             <nav className="space-y-1 px-3 pb-4">
-              {(flow.lockItemKind ? [flow.itemKind] : CREATE_ITEM_KINDS).map((kind) => {
+              {CREATE_ITEM_KINDS.map((kind) => {
                 const style = ITEM_STYLES[kind];
                 const active = flow.itemKind === kind;
                 return (
@@ -268,7 +313,7 @@ export function ArgusCreateLinkWindow({
           <aside className="hidden lg:block lg:border-r lg:border-zinc-800/80" />
         )}
 
-        <section className="min-h-0 overflow-y-auto border-b border-zinc-800/80 px-4 py-4 lg:border-b-0 lg:border-r lg:px-6">
+        <section className={`${panelVisible("create")} overflow-y-auto border-b border-zinc-800/80 px-4 py-4 md:border-b-0 md:border-r md:px-6`}>
           {flow.mode === "create" ? (
             <>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -278,19 +323,6 @@ export function ArgusCreateLinkWindow({
                   </h2>
                   <p className="text-sm text-zinc-500">{CREATE_ITEM_HINTS[flow.itemKind]}</p>
                 </div>
-                {flow.lockItemKind ? (
-                  <select
-                    className={`${inputClass} w-auto py-2 text-sm lg:hidden`}
-                    value={flow.itemKind}
-                    onChange={(event) => flow.setItemKind(event.target.value as CreateItemKind)}
-                  >
-                    {CREATE_ITEM_KINDS.map((kind) => (
-                      <option key={kind} value={kind}>
-                        {CREATE_ITEM_LABELS[kind]}
-                      </option>
-                    ))}
-                  </select>
-                ) : null}
               </div>
 
               {flow.itemKind === "journal" ? (
@@ -439,8 +471,8 @@ export function ArgusCreateLinkWindow({
                 </button>
                 <button
                   type="button"
-                  onClick={() => document.getElementById("argus-link-panel")?.scrollIntoView({ behavior: "smooth" })}
-                  className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 lg:hidden"
+                  onClick={() => setMobilePanel("link")}
+                  className="rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 md:hidden"
                 >
                   Next: Link &amp; Connect →
                 </button>
@@ -457,7 +489,7 @@ export function ArgusCreateLinkWindow({
           )}
         </section>
 
-        <aside id="argus-link-panel" className="flex min-h-[320px] min-w-0 flex-col bg-zinc-950/40 lg:min-h-0">
+        <aside id="argus-link-panel" className={`${panelVisible("link")} bg-zinc-950/40`}>
           <div className="border-b border-zinc-800/80 px-4 py-4">
             <h2 className="text-sm font-bold uppercase tracking-wide text-zinc-200">Link &amp; Connect</h2>
             <input
@@ -549,8 +581,8 @@ export function ArgusCreateLinkWindow({
         </aside>
       </div>
 
-      {flow.missingOpen ? (
-        <section className="shrink-0 border-t border-zinc-800/80 bg-zinc-950/80">
+      {(flow.missingOpen || mobilePanel === "missing") ? (
+        <section className={`${panelVisible("missing")} shrink-0 border-t border-zinc-800/80 bg-zinc-950/80 md:block`}>
           <div className="mx-auto max-w-[1400px] px-4 py-4 lg:px-6">
             <h3 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">
               Create missing item (if needed)
@@ -622,7 +654,7 @@ export function ArgusCreateLinkWindow({
         </section>
       ) : null}
 
-      <footer className="shrink-0 border-t border-zinc-800/80 bg-zinc-950">
+      <footer className={`${panelVisible("save")} shrink-0 border-t border-zinc-800/80 bg-zinc-950 md:flex`}>
         <div className="mx-auto flex max-w-[1400px] flex-wrap items-end justify-between gap-4 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-600">
             <span>Link Everything</span>
@@ -682,4 +714,6 @@ export function ArgusCreateLinkWindow({
       </footer>
     </div>
   );
+
+  return createPortal(content, document.body);
 }

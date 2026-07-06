@@ -18,7 +18,7 @@ export function V2CreateEntityButton({
   return (
     <button
       type="button"
-      onClick={() => openCreateFlow({ itemKind: kind, lockItemKind: true })}
+      onClick={() => openCreateFlow({ itemKind: kind })}
       className={className}
     >
       {label}
