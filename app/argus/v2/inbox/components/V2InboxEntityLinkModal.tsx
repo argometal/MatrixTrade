@@ -44,10 +44,10 @@ function ReferenceRow({
   onToggle: () => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 hover:bg-zinc-800/60">
+    <label className="grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_5.5rem] items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-zinc-800/60">
       <input type="checkbox" checked={checked} onChange={onToggle} className="shrink-0" />
-      <span className="min-w-0 flex-1 truncate text-sm text-zinc-200">{entity.name}</span>
-      <span className="shrink-0 text-xs text-zinc-500">{entityKindLabel(entity)}</span>
+      <span className="truncate text-sm text-zinc-200">{entity.name}</span>
+      <span className="truncate text-right text-xs text-zinc-500">{entityKindLabel(entity)}</span>
     </label>
   );
 }
@@ -144,41 +144,42 @@ export function V2InboxEntityLinkModal({
   return (
     <>
       <div
-        className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-4 sm:items-center"
+        className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-4 sm:items-center sm:p-6"
         onClick={onClose}
       >
         <div
-          className="flex max-h-[min(560px,88vh)] w-full max-w-lg flex-col rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl"
+          className="flex max-h-[min(720px,92vh)] min-h-[min(520px,85vh)] w-full max-w-2xl flex-col rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl sm:min-h-[560px]"
           role="dialog"
           aria-modal="true"
           aria-labelledby="inbox-link-title"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="border-b border-zinc-800 px-4 py-3">
-            <h3 id="inbox-link-title" className="text-[15px] font-semibold text-zinc-100">
+          <div className="shrink-0 border-b border-zinc-800 px-5 py-4">
+            <h3 id="inbox-link-title" className="text-base font-semibold text-zinc-100">
               {INBOX.linkReference}
             </h3>
-            <p className="mt-1 text-xs leading-snug text-zinc-500">{LINK_HIERARCHY.inboxLinkHint}</p>
+            <p className="mt-1.5 text-sm leading-snug text-zinc-500">{LINK_HIERARCHY.inboxLinkHint}</p>
           </div>
 
-          <div className="flex gap-1 overflow-x-auto border-b border-zinc-800 px-3 py-2">
+          <div className="shrink-0 flex gap-1 overflow-x-auto px-4 pt-3 [scrollbar-gutter:stable]">
             {(["all", ...INBOX_KINDS] as KindFilter[]).map((kind) => (
               <button
                 key={kind}
                 type="button"
                 onClick={() => setKindFilter(kind)}
-                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-medium ${
+                className={`shrink-0 rounded-t-lg border-b-2 px-3 py-2 text-xs font-medium transition ${
                   kindFilter === kind
-                    ? "bg-violet-600/20 text-violet-300 ring-1 ring-violet-500/40"
-                    : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+                    ? "border-violet-500 bg-violet-600/10 text-violet-300"
+                    : "border-transparent text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
                 }`}
               >
                 {KIND_TAB_LABELS[kind]}
               </button>
             ))}
           </div>
+          <div className="mx-4 border-b border-zinc-800" />
 
-          <div className="flex min-h-0 flex-1 flex-col p-4">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 p-5">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -193,16 +194,16 @@ export function V2InboxEntityLinkModal({
                 setCreateError(null);
                 setCreateOpen(true);
               }}
-              className="mt-3 w-full rounded-xl border border-violet-800/50 bg-violet-950/30 py-2 text-sm font-medium text-violet-300 hover:bg-violet-900/30"
+              className="w-full rounded-xl border border-violet-800/50 bg-violet-950/30 py-2.5 text-sm font-medium text-violet-300 hover:bg-violet-900/30"
             >
               {createLabelForKind(activeCreateKind)}
             </button>
 
-            <p className="mt-2 text-[11px] leading-snug text-zinc-600">{LINK_HIERARCHY.multiLinkHint}</p>
+            <p className="text-xs leading-relaxed text-zinc-600">{LINK_HIERARCHY.multiLinkHint}</p>
 
-            <div className="mt-2 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
+            <div className="min-h-[240px] flex-1 overflow-y-auto overscroll-contain rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-2 [scrollbar-gutter:stable] sm:min-h-[320px]">
               {filteredEntities.length === 0 ? (
-                <p className="py-6 text-center text-sm text-zinc-500">
+                <p className="px-2 py-8 text-center text-sm text-zinc-500">
                   {query.trim() ? REFERENCE_PICKER.typeToSearch : REFERENCE_PICKER.noReferences}
                 </p>
               ) : (
@@ -218,7 +219,7 @@ export function V2InboxEntityLinkModal({
             </div>
           </div>
 
-          <div className="flex gap-2 border-t border-zinc-800 p-4">
+          <div className="flex shrink-0 gap-3 border-t border-zinc-800 p-5">
             <button
               type="button"
               onClick={onClose}
