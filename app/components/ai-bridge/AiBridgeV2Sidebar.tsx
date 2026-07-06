@@ -1,7 +1,6 @@
-"use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ArgusMark } from "@/app/components/ArgusMark";
 
 const MAIN_LINKS = [
   { href: "/ai-bridge", label: "AI Bridge", icon: "✦", activePrefix: "/ai-bridge" },
@@ -70,6 +69,21 @@ export function AiBridgeV2Sidebar({
               </li>
             );
           })}
+        </ul>
+
+        <p className="mt-6 px-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
+          ARGUS
+        </p>
+        <ul className="mt-2 space-y-0.5">
+          <li>
+            <Link
+              href="/argus/journal"
+              className="flex items-center gap-2 rounded-lg border border-teal-200/80 bg-gradient-to-r from-teal-50 to-violet-50 px-2 py-2 text-sm font-medium text-zinc-800 transition hover:border-teal-300 hover:from-teal-100 hover:to-violet-100"
+            >
+              <ArgusMark size={28} />
+              <span>Open ARGUS</span>
+            </Link>
+          </li>
         </ul>
 
         <p className="mt-6 px-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">

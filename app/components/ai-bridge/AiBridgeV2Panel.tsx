@@ -15,6 +15,7 @@ import {
 } from "@/lib/ai-bridge-v2-content";
 import { parseAiBlock } from "@/lib/ai-block";
 import { describeProposal } from "@/lib/bridge";
+import { ArgusMark } from "@/app/components/ArgusMark";
 import { AiBridgeV2RightPanel } from "./AiBridgeV2RightPanel";
 import { AiBridgeV2Sidebar } from "./AiBridgeV2Sidebar";
 
@@ -151,7 +152,15 @@ export function AiBridgeV2Panel({
                 Your bridge to any AI. You think in actions. AI handles the rest.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 pr-12 sm:pr-14">
+              <Link
+                href="/argus/journal"
+                title="Open ARGUS"
+                aria-label="Open ARGUS journal"
+                className="rounded-lg border border-teal-200 bg-white p-1 shadow-sm transition hover:border-teal-300 hover:shadow-md"
+              >
+                <ArgusMark size={32} />
+              </Link>
               <button
                 type="button"
                 onClick={() => setShowHelp((v) => !v)}
