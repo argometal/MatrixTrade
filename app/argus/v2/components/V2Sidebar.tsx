@@ -16,6 +16,16 @@ const DEFAULT_COUNTS: V2NavCounts = {
   reminders: 0,
 };
 
+function isBrowseNavActive(pathname: string, href: string, label: string): boolean {
+  if (label === "Projects") {
+    return pathname.startsWith("/argus/v2/browse/projects") || pathname.startsWith("/argus/v2/projects/");
+  }
+  if (label === "Organizations") {
+    return pathname.startsWith("/argus/v2/browse/organizations") || pathname.startsWith("/argus/v2/organizations/");
+  }
+  return pathname.startsWith(href);
+}
+
 export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts }) {
   const pathname = usePathname();
 
@@ -45,7 +55,11 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
 
         <NavGroup title="Browse">
           {browse.map((item) => (
-            <NavItem key={item.label} {...item} active={pathname.startsWith(item.href)} />
+            <NavItem
+              key={item.label}
+              {...item}
+              active={isBrowseNavActive(pathname, item.href, item.label)}
+            />
           ))}
         </NavGroup>
 
