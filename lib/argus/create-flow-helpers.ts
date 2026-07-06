@@ -1,5 +1,5 @@
 import type { ArgusData, Entity, Log } from "./types";
-import { entityKindLabel, referenceKindFromNotes } from "./reference-types";
+import { entityKindLabel, entityNotesForDisplay, referenceKindFromNotes } from "./reference-types";
 import type { JournalLinkRow, LinkFilterKind } from "./create-flow-types";
 
 export function buildJournalLinkRows(data: ArgusData, includePrivate: boolean, limit = 40): JournalLinkRow[] {
@@ -41,4 +41,36 @@ export function mergeEntityIdsFromLogs(data: ArgusData, logIds: string[], base: 
     for (const id of log.entityIds) merged.add(id);
   }
   return [...merged];
+}
+
+export function entityLinkCardMeta(entity: Entity, allEntities: Entity[]): { subtitle: string; meta: string } {
+  const kind = entityLinkFilterKind(entity);
+  const notes = entityNotesForDisplay(entity.notes ?? "");
+
+  if (kind === "person") {
+    const orgLink = (entity.linkedEntityIds ?? [])
+      .map((id) => allEntities.find((entry) => entry.id === id && entry.type === "company"))
+      .find(Boolean);
+    return {
+      subtitle: notes || "Individual history",
+      meta: orgLink ? orgLink.name : entityKindLabel(entity),
+    };
+  }
+  if (kind === "organization") {
+    return { subtitle: notes || "Long-term relationship", meta: "Organization" };
+  }
+  if (kind === "project") {
+    return { subtitle: notes.slice(0, 80) || "Bounded work", meta: "Project" };
+  }
+  if (kind === "event") {
+    const date = entity.startDate?.slice(0, 10);
+    return { subtitle: notes || "Dated occurrence", meta: date ? `Event · ${date}` : "Event" };
+  }
+  if (kind === "topic") {
+    return { subtitle: notes || "Ongoing knowledge", meta: "Topic" };
+  }
+  if (kind === "document") {
+    return { subtitle: notes || "Reference file or note", meta: "Document" };
+  }
+  return { subtitle: notes || entityKindLabel(entity), meta: entityKindLabel(entity) };
 }

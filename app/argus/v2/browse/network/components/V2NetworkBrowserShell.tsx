@@ -157,6 +157,12 @@ function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
       </div>
       <p className="mb-3 truncate text-xs text-zinc-500">{card.lastInteraction.label}</p>
 
+      {card.strength >= 75 ? (
+        <p className="mb-3 text-[11px] leading-snug text-amber-200/90">
+          High-value contact — evidence-backed relationship worth maintaining.
+        </p>
+      ) : null}
+
       <div className="mb-3 flex items-center justify-between text-xs">
         <span className="text-zinc-600">Relationship since</span>
         <span className="text-zinc-400">{card.relationshipSince}</span>

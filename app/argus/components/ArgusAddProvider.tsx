@@ -1,9 +1,9 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { createContext, Suspense, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, Suspense, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { createLogAction } from "@/app/argus/actions";
-import { ArgusUnifiedCreateFlow } from "@/app/argus/components/ArgusUnifiedCreateFlow";
+import { ArgusCreateLinkWindow } from "@/app/argus/components/ArgusCreateLinkWindow";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 import type { CreateFlowOpenOptions, JournalLinkRow, UnifiedCreateResult } from "@/lib/argus/create-flow-types";
@@ -74,6 +74,16 @@ export function ArgusAddProvider({
   const [captureInitial, setCaptureInitial] = useState<CaptureInitial | undefined>();
   const [createFlowOpen, setCreateFlowOpen] = useState(false);
   const [createFlowState, setCreateFlowState] = useState<CreateFlowState>({});
+  const onSavedRef = useRef<CreateFlowState["onSaved"]>(undefined);
+
+  useEffect(() => {
+    if (!createFlowOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [createFlowOpen]);
 
   const closeCapture = useCallback(() => {
     setCaptureOpen(false);
@@ -105,6 +115,7 @@ export function ArgusAddProvider({
   }, []);
 
   const openCreateFlow = useCallback((options: CreateFlowState = {}) => {
+    onSavedRef.current = options.onSaved;
     setCreateFlowState(options);
     setCreateFlowOpen(true);
   }, []);
@@ -112,13 +123,13 @@ export function ArgusAddProvider({
   return (
     <ArgusAddContext.Provider value={{ openCapture, openCreateFlow, buckets }}>
       {children}
-      <ArgusUnifiedCreateFlow
+      <ArgusCreateLinkWindow
         open={createFlowOpen}
         onClose={closeCreateFlow}
         options={createFlowState}
         buckets={buckets}
         journalRows={journalRows}
-        onSaved={createFlowState.onSaved}
+        onSaved={(result) => onSavedRef.current?.(result)}
       />
       <CaptureSheet
         open={captureOpen}
