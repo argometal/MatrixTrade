@@ -1,16 +1,11 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
-import { createEntityInlineAction } from "@/app/argus/actions";
-import { ReferenceCreateModal } from "@/app/argus/components/ReferenceCreateModal";
-import {
-  createInputToReferenceKind,
-  entityNotesForDisplay,
-  type ReferenceKind,
-} from "@/lib/argus/reference-types";
-import type { EntityType } from "@/lib/argus/types";
-import { formatArgusError } from "@/lib/argus/persistence/errors";
+import { useState } from "react";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
+import { CreateAndLinkModal } from "@/app/argus/components/CreateAndLinkModal";
+import type { CreatedEntityResult } from "@/app/argus/actions";
+import type { ReferenceKind } from "@/lib/argus/reference-types";
 
 function postCreateHref(pathname: string, kind: ReferenceKind, entityId: string): string {
   if (!pathname.startsWith("/argus/v2")) return `/argus/network/${entityId}`;
@@ -39,28 +34,12 @@ export function V2CreateEntityButton({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { buckets } = useArgusAdd();
   const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
 
-  function handleSave(data: { name: string; entityType: EntityType; notes: string }) {
-    setError(null);
-    startTransition(async () => {
-      try {
-        const resolvedKind = createInputToReferenceKind(data.entityType, data.notes);
-        const entity = await createEntityInlineAction(
-          resolvedKind,
-          data.name,
-          entityNotesForDisplay(data.notes)
-        );
-        setOpen(false);
-        router.push(postCreateHref(pathname, resolvedKind, entity.id));
-        router.refresh();
-      } catch (err) {
-        const { layer, message } = formatArgusError(err);
-        setError(`${layer.toUpperCase()}: ${message}`);
-      }
-    });
+  function handleCreated(entity: CreatedEntityResult) {
+    router.push(postCreateHref(pathname, kind, entity.id));
+    router.refresh();
   }
 
   return (
@@ -68,16 +47,54 @@ export function V2CreateEntityButton({
       <button type="button" onClick={() => setOpen(true)} className={className}>
         {label}
       </button>
-      <ReferenceCreateModal
+      <CreateAndLinkModal
         open={open}
+        onClose={() => setOpen(false)}
+        buckets={buckets}
+        mode="create"
         defaultKind={kind}
         allowedKinds={[kind]}
-        onCancel={() => {
-          if (!isPending) setOpen(false);
+        linkSource="create"
+        onCreated={handleCreated}
+      />
+    </>
+  );
+}
+
+export function V2EntityLinkButton({
+  entityId,
+  linkedIds,
+  label = "+ Link",
+  className,
+  linkSource = "create",
+}: {
+  entityId: string;
+  linkedIds: string[];
+  label?: string;
+  className?: string;
+  linkSource?: "create" | "topic" | "event" | "project" | "organization" | "person";
+}) {
+  const router = useRouter();
+  const { buckets } = useArgusAdd();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className={className}>
+        {label}
+      </button>
+      <CreateAndLinkModal
+        open={open}
+        onClose={() => {
+          setOpen(false);
+          router.refresh();
         }}
-        onSave={handleSave}
-        saveLabel={isPending ? "Saving…" : undefined}
-        error={error ?? undefined}
+        buckets={buckets}
+        mode="link"
+        entityId={entityId}
+        initialLinkedIds={linkedIds}
+        linkSource={linkSource}
+        title="Link references"
       />
     </>
   );

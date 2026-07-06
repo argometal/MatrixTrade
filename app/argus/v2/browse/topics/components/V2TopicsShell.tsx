@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
+import { V2CreateEntityButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2OpenCaptureButton } from "@/app/argus/v2/components/V2OpenCaptureButton";
 import {
   buildV2TopicTabCounts,
@@ -63,12 +64,11 @@ export function V2TopicsShell({
               <p className="mt-0.5 text-xs text-zinc-500">Knowledge areas and themes</p>
             </div>
             <div className="flex shrink-0 gap-2">
-              <Link
-                href="/argus/journal?capture=1"
+              <V2CreateEntityButton
+                kind="topic"
+                label="+ Topic"
                 className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
-              >
-                + New Topic
-              </Link>
+              />
               <button type="button" className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400">
                 Filters
               </button>
@@ -155,7 +155,7 @@ export function V2TopicsShell({
       <section className="min-w-0 flex-1 overflow-y-auto bg-zinc-950/50">
         {selected ? (
           <div className="flex h-full flex-col p-5">
-            <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
@@ -166,9 +166,14 @@ export function V2TopicsShell({
                 </div>
                 <p className="max-w-xl text-sm leading-relaxed text-zinc-400">{selected.description}</p>
               </div>
-              <Link href={`/argus/network/${selected.id}`} className="text-zinc-600 hover:text-zinc-400">
-                ↗
-              </Link>
+              <div className="flex shrink-0 gap-2">
+                <V2EntityLinkButton
+                  entityId={selected.id}
+                  linkedIds={selected.linkedEntityIds}
+                  linkSource="topic"
+                  className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+                />
+              </div>
             </div>
 
             <div className="mb-6 grid grid-cols-3 gap-3">
@@ -199,7 +204,7 @@ export function V2TopicsShell({
               </ul>
             )}
 
-            <div className="mt-auto pt-6">
+            <div className="mt-auto flex flex-wrap gap-3 pt-6">
               <V2OpenCaptureButton
                 entityIds={selected ? [selected.id] : undefined}
                 entryType="note"

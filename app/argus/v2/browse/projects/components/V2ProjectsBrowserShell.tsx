@@ -221,7 +221,14 @@ export function V2ProjectsBrowserShell({
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
           <p className="text-sm text-zinc-500">No projects yet.</p>
-          <p className="mt-1 text-xs text-zinc-600">Create one to start building a project case file.</p>
+          <p className="mt-1 text-xs text-zinc-600">Create one and link org, people, topics, or events.</p>
+          <div className="mt-4">
+            <V2CreateEntityButton
+              kind="project"
+              label="+ Project"
+              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+            />
+          </div>
         </div>
       ) : view === "grid" ? (
         <div className="grid gap-4 lg:grid-cols-2">

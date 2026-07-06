@@ -37,7 +37,8 @@ import {
   createInputToReferenceKind,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
-import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
+import { filterLinkIdsForSource, linkSourceKindFromEntity } from "@/lib/argus/link-hierarchy";
+import { partitionIdsByEntityKind } from "@/lib/argus/v2/entity-link-counts";
 import {
   assertJournalKindTransition,
   canConvertNoteToLog,
@@ -403,7 +404,9 @@ export type CreatedEntityResult = {
 async function persistNewEntity(
   kind: ReferenceKind,
   name: string,
-  notes: string
+  notes: string,
+  linkedEntityIds: string[] = [],
+  options?: { startDate?: string; endDate?: string }
 ): Promise<CreatedEntityResult> {
   const trimmedName = name.trim();
   if (!trimmedName) {
@@ -413,13 +416,33 @@ async function persistNewEntity(
     throw new ArgusPersistenceError("validation", "Invalid reference type.");
   }
 
+  const data = await readArgus();
+  const validIds = filterLinkIdsForSource(data.entities, "create", linkedEntityIds);
+  const partitioned = partitionIdsByEntityKind(data.entities, validIds);
   const { entityType, notes: builtNotes } = referenceKindToCreateInput(kind, trimmedName, notes);
+  const startDate = options?.startDate?.trim().slice(0, 10);
+  const endDate = options?.endDate?.trim().slice(0, 10);
+
   const entity = await createEntity({
     type: entityType,
     name: trimmedName,
     notes: builtNotes,
     alias: "",
     strategicValue: 3,
+    linkedEntityIds: validIds,
+    ...(kind === "project"
+      ? {
+          linkedPersonIds: partitioned.personIds,
+          linkedTopicIds: partitioned.topicIds,
+          linkedEventIds: partitioned.eventIds,
+        }
+      : {}),
+    ...(kind === "event"
+      ? {
+          linkedPersonIds: partitioned.personIds,
+          ...(startDate ? { startDate, ...(endDate ? { endDate } : {}) } : {}),
+        }
+      : {}),
   });
 
   const confirmed = await getEntity(entity.id);
@@ -445,9 +468,45 @@ async function persistNewEntity(
 export async function createEntityInlineAction(
   kind: ReferenceKind,
   name: string,
-  notes = ""
+  notes = "",
+  linkedEntityIds: string[] = [],
+  options?: { startDate?: string; endDate?: string }
 ): Promise<CreatedEntityResult> {
-  return persistNewEntity(kind, name, notes);
+  return persistNewEntity(kind, name, notes, linkedEntityIds, options);
+}
+
+export async function setEntityLinkedIdsAction(entityId: string, linkedEntityIds: string[]): Promise<void> {
+  const entity = await getEntity(entityId);
+  if (!entity) {
+    throw new ArgusPersistenceError("validation", "Entity not found.");
+  }
+  const data = await readArgus();
+  const source = linkSourceKindFromEntity(entity);
+  const validIds = filterLinkIdsForSource(data.entities, source, linkedEntityIds);
+  const partitioned = partitionIdsByEntityKind(data.entities, validIds);
+  const patch =
+    entity.type === "project"
+      ? {
+          linkedEntityIds: validIds,
+          linkedPersonIds: partitioned.personIds,
+          linkedTopicIds: partitioned.topicIds,
+          linkedEventIds: partitioned.eventIds,
+        }
+      : referenceKindFromNotes(entity.notes ?? "") === "event"
+        ? {
+            linkedEntityIds: validIds,
+            linkedPersonIds: partitioned.personIds,
+          }
+        : { linkedEntityIds: validIds };
+
+  await updateEntity(entityId, patch);
+  revalidateArgus();
+  revalidatePath(`/argus/network/${entityId}`);
+  revalidatePath(`/argus/v2/organizations/${entityId}`);
+  revalidatePath(`/argus/v2/projects/${entityId}`);
+  revalidatePath(`/argus/v2/browse/topics`);
+  revalidatePath(`/argus/v2/browse/events`);
+  revalidatePath("/argus/v2");
 }
 
 export async function createEntityAction(formData: FormData): Promise<void> {

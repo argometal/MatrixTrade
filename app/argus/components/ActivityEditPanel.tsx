@@ -1,17 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
-import { createEntityInlineAction } from "@/app/argus/actions";
-import { createInputToReferenceKind, entityNotesForDisplay, type ReferenceKind } from "@/lib/argus/reference-types";
+import { useMemo, useState } from "react";
+import type { CreatedEntityResult } from "@/app/argus/actions";
+import type { ReferenceKind } from "@/lib/argus/reference-types";
 import type { Entity, Log } from "@/lib/argus/types";
 import { ACTIVITY_EDIT, TAGS } from "@/lib/argus/ux-copy";
 import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { JOURNAL_KIND_LABELS, LOG_SOURCE_LABELS } from "@/lib/argus/labels";
 import { isJournalLogKind } from "@/lib/argus/journal-behavior";
 import { EntityChip } from "./Cards";
+import { CreateAndLinkModal } from "./CreateAndLinkModal";
 import { JournalKindActions } from "./JournalKindActions";
-import { ReferenceCreateModal } from "./ReferenceCreateModal";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
 import { TagPickerModal, type TagBuckets } from "./TagPickerModal";
 import { inputClass } from "./ui";
@@ -79,7 +79,6 @@ export function ActivityEditPanel({
   const [createOpen, setCreateOpen] = useState(false);
   const [createKind, setCreateKind] = useState<ReferenceKind>("project");
   const [isProtected, setIsProtected] = useState(log.private);
-  const [, startCreate] = useTransition();
 
   const logBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "log"), [buckets]);
   const logCreateKinds = allowedCreateKinds("log");
@@ -98,6 +97,11 @@ export function ActivityEditPanel({
   function openCreate(kind: ReferenceKind) {
     setCreateKind(kind);
     setCreateOpen(true);
+  }
+
+  function handleEntityCreated(entity: CreatedEntityResult) {
+    setSelectedIds((prev) => (prev.includes(entity.id) ? prev : [...prev, entity.id]));
+    setCreateOpen(false);
   }
 
   return (
@@ -320,22 +324,15 @@ export function ActivityEditPanel({
         onClose={() => setTagsOpen(false)}
       />
 
-      <ReferenceCreateModal
+      <CreateAndLinkModal
         open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        buckets={buckets}
+        mode="create"
         defaultKind={createKind}
-        onCancel={() => setCreateOpen(false)}
-        onSave={(data) => {
-          startCreate(async () => {
-            const kind = createInputToReferenceKind(data.entityType, data.notes);
-            const entity = await createEntityInlineAction(
-              kind,
-              data.name,
-              entityNotesForDisplay(data.notes)
-            );
-            setSelectedIds((prev) => [...prev, entity.id]);
-            setCreateOpen(false);
-          });
-        }}
+        allowedKinds={logCreateKinds}
+        linkSource="create"
+        onCreated={handleEntityCreated}
       />
     </form>
   );

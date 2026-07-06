@@ -5,6 +5,11 @@ import { getLinkedInboxForEntity } from "../entity-evidence";
 import { entitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { relativeActivityLabel } from "./timeline-builders";
+import {
+  collectRelatedEntityIds,
+  countLinkKinds,
+  linkedTopicNames,
+} from "./entity-link-counts";
 import type {
   V2EventDetail,
   V2EventEmail,
@@ -71,6 +76,10 @@ function linkedProject(data: ArgusData, event: Entity) {
 function attendeeInitials(data: ArgusData, event: Entity, logs: Log[]): string[] {
   const people = new Set<string>();
   for (const id of event.linkedPersonIds ?? []) {
+    const p = data.entities.find((e) => e.id === id && e.type === "person");
+    if (p) people.add(p.name);
+  }
+  for (const id of event.linkedEntityIds ?? []) {
     const p = data.entities.find((e) => e.id === id && e.type === "person");
     if (p) people.add(p.name);
   }
@@ -146,6 +155,9 @@ export function buildV2EventDetails(
     const inbox = getLinkedInboxForEntity(inboxItems, event.id, includePrivate);
 
     const topicTags = [...new Set(history.flatMap((l) => l.topics).filter(Boolean))].slice(0, 6);
+    const relatedIds = collectRelatedEntityIds(event, history);
+    const linkCounts = countLinkKinds(data, relatedIds);
+    const linkedTopicNamesList = linkedTopicNames(data, relatedIds, topicTags);
 
     const linkedEntries = history.slice(0, 5).map((log) => ({
       id: log.id,
@@ -172,9 +184,15 @@ export function buildV2EventDetails(
       projectName: project?.name,
       projectHref: project?.href,
       topicTags,
+      linkedTopicNames: linkedTopicNamesList,
       description: notes || "No description yet.",
       attendeeInitials: initials,
-      attendeeCount: initials.length,
+      attendeeCount: Math.max(initials.length, linkCounts.peopleCount),
+      orgCount: linkCounts.orgCount,
+      projectCount: linkCounts.projectCount,
+      peopleCount: linkCounts.peopleCount,
+      topicCount: linkCounts.topicCount,
+      linkedEntityIds: event.linkedEntityIds ?? [],
       linkedEntries,
       relatedEmails,
     };

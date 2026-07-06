@@ -3,6 +3,7 @@ import { entityNotesForDisplay } from "../reference-types";
 import { getAllProjectScopeInbox, getProjectEvidenceScope } from "../project-evidence";
 import { entitiesByKind } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
+import { collectProjectLinkIds, countLinkKinds } from "./entity-link-counts";
 
 export type V2ProjectBrowseStatus = "Planning" | "Active" | "On Hold" | "Completed" | "Archived";
 
@@ -182,8 +183,10 @@ export function buildV2ProjectBrowseCards(
       const allLogs = [...scope.directLogs, ...scope.viaContactLogs];
       const lastActivity = resolveLastActivity(project, allInbox, allLogs, today);
       const status = deriveProjectBrowseStatus(project, today, lastActivity.sortIso);
-      const linkedPeople = (project.linkedPersonIds ?? [])
-        .map((id) => data.entities.find((e) => e.id === id))
+      const linkIds = collectProjectLinkIds(project);
+      const linkCounts = countLinkKinds(data, linkIds);
+      const linkedPeople = linkIds
+        .map((id) => data.entities.find((e) => e.id === id && e.type === "person"))
         .filter((e): e is Entity => Boolean(e));
       const teamPreview = linkedPeople.slice(0, 4).map((person) => ({
         id: person.id,
@@ -200,11 +203,11 @@ export function buildV2ProjectBrowseCards(
         dateRangeLabel: formatProjectDateRange(project),
         description: projectDescription(project),
         metrics: {
-          people: linkedPeople.length,
+          people: linkCounts.peopleCount,
           journal: scope.logCount,
           emails: allInbox.length,
           files: countProjectFiles(allInbox, allLogs),
-          topics: (project.linkedTopicIds ?? []).length + (project.linkedTags ?? []).length,
+          topics: linkCounts.topicCount + (project.linkedTags ?? []).length,
         },
         lastActivity,
         progressPercent: durationProgress(project, today),

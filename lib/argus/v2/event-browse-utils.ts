@@ -37,9 +37,15 @@ export interface V2EventDetail {
   projectName?: string;
   projectHref?: string;
   topicTags: string[];
+  linkedTopicNames: string[];
   description: string;
   attendeeInitials: string[];
   attendeeCount: number;
+  orgCount: number;
+  projectCount: number;
+  peopleCount: number;
+  topicCount: number;
+  linkedEntityIds: string[];
   linkedEntries: V2EventEntry[];
   relatedEmails: V2EventEmail[];
 }

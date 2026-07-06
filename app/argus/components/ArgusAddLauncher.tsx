@@ -1,20 +1,15 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
-import { createEntityInlineAction } from "@/app/argus/actions";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import {
-  createInputToReferenceKind,
-  entityNotesForDisplay,
   REFERENCE_KINDS,
   REFERENCE_KIND_LABELS,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
-import type { EntityType } from "@/lib/argus/types";
-import { formatArgusError } from "@/lib/argus/persistence/errors";
-import { ADD_MENU, ENTITY_CREATE } from "@/lib/argus/ux-copy";
-import { ReferenceCreateModal } from "./ReferenceCreateModal";
+import { ADD_MENU } from "@/lib/argus/ux-copy";
+import { CreateAndLinkModal } from "./CreateAndLinkModal";
 
 type MenuPlacement = "up" | "down";
 type MenuAlign = "start" | "center" | "end";
@@ -52,16 +47,13 @@ function postCreateHref(pathname: string, kind: ReferenceKind, entityId: string,
 function useArgusAddMenuControls() {
   const router = useRouter();
   const pathname = usePathname();
-  const { openCapture } = useArgusAdd();
+  const { openCapture, buckets } = useArgusAdd();
   const [menuOpen, setMenuOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createKind, setCreateKind] = useState<ReferenceKind>("person");
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
 
   function openCreate(kind: ReferenceKind) {
     setMenuOpen(false);
-    setSaveError(null);
     setCreateKind(kind);
     setCreateOpen(true);
   }
@@ -71,27 +63,13 @@ function useArgusAddMenuControls() {
     openCapture({ entryType: "note" });
   }
 
-  function handleSave(data: { name: string; entityType: EntityType; notes: string }) {
-    const kind = createInputToReferenceKind(data.entityType, data.notes);
-    setSaveError(null);
-    startTransition(async () => {
-      try {
-        const entity = await createEntityInlineAction(
-          kind,
-          data.name,
-          entityNotesForDisplay(data.notes)
-        );
-        setCreateOpen(false);
-        if (kind === "event") {
-          openCapture({ entityIds: [entity.id], entryType: "note" });
-        }
-        router.push(postCreateHref(pathname, kind, entity.id, entity.href));
-        router.refresh();
-      } catch (err) {
-        const { layer, message } = formatArgusError(err);
-        setSaveError(`${layer.toUpperCase()}: ${message}`);
-      }
-    });
+  function handleCreated(entity: { id: string; href: string }) {
+    setCreateOpen(false);
+    if (createKind === "event") {
+      openCapture({ entityIds: [entity.id], entryType: "note" });
+    }
+    router.push(postCreateHref(pathname, createKind, entity.id, entity.href));
+    router.refresh();
   }
 
   return {
@@ -100,12 +78,10 @@ function useArgusAddMenuControls() {
     createOpen,
     setCreateOpen,
     createKind,
-    saveError,
-    setSaveError,
-    isPending,
+    buckets,
     openCreate,
     openCaptureNote,
-    handleSave,
+    handleCreated,
   };
 }
 
@@ -200,7 +176,7 @@ function ArgusAddMenuShell({
   controls: ReturnType<typeof useArgusAddMenuControls>;
 }) {
   const menuRef = useRef<HTMLDivElement>(null);
-  const { menuOpen, setMenuOpen, createOpen, setCreateOpen, createKind, saveError, setSaveError, isPending, openCreate, openCaptureNote, handleSave } =
+  const { menuOpen, setMenuOpen, createOpen, setCreateOpen, createKind, buckets, openCreate, openCaptureNote, handleCreated } =
     controls;
 
   useEffect(() => {
@@ -237,20 +213,15 @@ function ArgusAddMenuShell({
         })}
       </div>
 
-      <ReferenceCreateModal
+      <CreateAndLinkModal
         open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        buckets={buckets}
+        mode="create"
         defaultKind={createKind}
-        onCancel={() => {
-          if (!isPending) {
-            setSaveError(null);
-            setCreateOpen(false);
-          }
-        }}
-        onSave={handleSave}
-        title={ENTITY_CREATE.title}
-        saveLabel={isPending ? "Saving…" : ENTITY_CREATE.save}
-        notesOptional
-        error={saveError ?? undefined}
+        allowedKinds={[createKind]}
+        linkSource="create"
+        onCreated={handleCreated}
       />
     </>
   );

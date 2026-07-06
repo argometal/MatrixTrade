@@ -16,6 +16,7 @@ export type CaptureOpenOptions = {
 
 type ArgusAddContextValue = {
   openCapture: (options?: CaptureOpenOptions) => void;
+  buckets: EntityPickerBuckets;
 };
 
 const ArgusAddContext = createContext<ArgusAddContextValue | null>(null);
@@ -88,7 +89,7 @@ export function ArgusAddProvider({
   }, []);
 
   return (
-    <ArgusAddContext.Provider value={{ openCapture }}>
+    <ArgusAddContext.Provider value={{ openCapture, buckets }}>
       {children}
       <CaptureSheet
         open={captureOpen}

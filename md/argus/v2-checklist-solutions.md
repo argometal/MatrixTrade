@@ -107,6 +107,18 @@ Each checklist item is classified:
 
 ---
 
+## Create + link (Change 133)
+
+| Checklist item | Solution |
+|----------------|----------|
+| All **New / +** flows | **Fixed** — `CreateAndLinkModal` (name, notes, multi-link) |
+| Topics / Events browse | **Fixed** — create + detail **+ Link**; link counts on detail |
+| Projects / Orgs detail | **Fixed** — **+ Link** on header; loaders read `linkedEntityIds` |
+| Global + menu | **Fixed** — `ArgusAddLauncher` uses create+link modal |
+| Network browser | **QA** — shipped Change 132 at `/argus/v2/browse/network`; empty-state CTA Change 133 |
+
+---
+
 ## Next deferred work (v1.2+)
 
 1. v2 **Person detail** page (`/argus/v2/people/[id]`)

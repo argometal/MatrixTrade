@@ -396,7 +396,21 @@ export function V2NetworkBrowserShell({
             <SummaryPill label="Interactions Logged" value={summary.interactionsLogged} />
           </div>
 
-          {filtered.length === 0 ? (
+          {cards.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
+              <p className="text-sm text-zinc-500">No people in your network yet.</p>
+              <p className="mt-1 text-xs text-zinc-600">
+                Add someone and link orgs, projects, topics, or events in one step.
+              </p>
+              <div className="mt-4">
+                <V2CreateEntityButton
+                  kind="person"
+                  label="+ Person"
+                  className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+                />
+              </div>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
               <p className="text-sm text-zinc-500">No people match this view.</p>
               <p className="mt-1 text-xs text-zinc-600">Add a person or adjust filters.</p>

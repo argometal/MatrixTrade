@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
+import { V2CreateEntityButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2OpenCaptureButton } from "@/app/argus/v2/components/V2OpenCaptureButton";
 import {
   buildV2EventTabCounts,
@@ -62,12 +63,11 @@ export function V2EventsShell({
               <p className="mt-0.5 text-xs text-zinc-500">Meetings, calls, milestones and occurrences</p>
             </div>
             <div className="flex shrink-0 gap-2">
-              <Link
-                href="/argus/journal?capture=1"
+              <V2CreateEntityButton
+                kind="event"
+                label="+ Event"
                 className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
-              >
-                + New Event
-              </Link>
+              />
               <button type="button" className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400">
                 Filters
               </button>
@@ -92,7 +92,7 @@ export function V2EventsShell({
 
         <div className="flex-1 overflow-y-auto px-4 py-3 lg:px-5">
           {filtered.length === 0 ? (
-            <p className="py-10 text-center text-sm text-zinc-500">No events yet. Create one with + New Event.</p>
+            <p className="py-10 text-center text-sm text-zinc-500">No events yet. Create one with + Event.</p>
           ) : (
             groups.map((group) => (
               <div key={group.label} className="mb-6">
@@ -146,15 +146,23 @@ export function V2EventsShell({
       <section className="min-w-0 flex-1 overflow-y-auto bg-zinc-950/50">
         {selected ? (
           <div className="flex h-full flex-col p-5">
-            <div className="mb-4 flex items-start justify-between gap-3">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
-              <div className="flex gap-2 text-zinc-600">
-                <Link href={`/argus/network/${selected.id}`} className="hover:text-zinc-300">
-                  ✎
-                </Link>
-                <span>✉</span>
-                <span>🗑</span>
-                <span>···</span>
+              <div className="flex shrink-0 gap-2">
+                <V2EntityLinkButton
+                  entityId={selected.id}
+                  linkedIds={selected.linkedEntityIds}
+                  linkSource="event"
+                  className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+                />
+                <div className="flex gap-2 text-zinc-600">
+                  <Link href={`/argus/network/${selected.id}`} className="hover:text-zinc-300">
+                    ✎
+                  </Link>
+                  <span>✉</span>
+                  <span>🗑</span>
+                  <span>···</span>
+                </div>
               </div>
             </div>
 
@@ -177,7 +185,22 @@ export function V2EventsShell({
               </Link>
             ) : null}
 
-            {selected.topicTags.length > 0 ? (
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <LinkCountCard icon="🏢" label="Organizations" count={selected.orgCount} />
+              <LinkCountCard icon="📁" label="Projects" count={selected.projectCount} />
+              <LinkCountCard icon="👤" label="People" count={selected.peopleCount} />
+              <LinkCountCard icon="🏷" label="Topics" count={selected.topicCount} />
+            </div>
+
+            {selected.linkedTopicNames.length > 0 ? (
+              <div className="mb-4 flex flex-wrap gap-1.5">
+                {selected.linkedTopicNames.map((tag) => (
+                  <span key={tag} className="rounded-md bg-zinc-800 px-2 py-1 text-[11px] text-zinc-400">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            ) : selected.topicTags.length > 0 ? (
               <div className="mb-4 flex flex-wrap gap-1.5">
                 {selected.topicTags.map((tag) => (
                   <span key={tag} className="rounded-md bg-zinc-800 px-2 py-1 text-[11px] text-zinc-400">
@@ -270,6 +293,16 @@ export function V2EventsShell({
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+function LinkCountCard({ icon, label, count }: { icon: string; label: string; count: number }) {
+  return (
+    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4 text-center">
+      <div className="text-2xl">{icon}</div>
+      <p className="mt-2 text-2xl font-bold tabular-nums text-zinc-50">{count}</p>
+      <p className="mt-1 text-[11px] text-zinc-500">{label}</p>
     </div>
   );
 }

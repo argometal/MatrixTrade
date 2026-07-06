@@ -4,6 +4,7 @@ import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { loadOrganizationPageData } from "@/lib/argus/v2/loaders";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
+import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
 import { V2OrgTabs } from "../../components/V2OrgTabs";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
 import { V2RelationshipChart } from "../../components/V2RelationshipChart";
@@ -82,6 +83,12 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               >
                 ✎
               </Link>
+              <V2EntityLinkButton
+                entityId={entity.id}
+                linkedIds={entity.linkedEntityIds ?? []}
+                linkSource="organization"
+                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+              />
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-400">
               {entity.alias ? <span>{entity.alias}</span> : null}

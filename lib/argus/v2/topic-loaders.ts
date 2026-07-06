@@ -30,12 +30,12 @@ function visibleLogs(data: ArgusData, includePrivate: boolean): Log[] {
   return includePrivate ? logs : logs.filter((l) => !l.private);
 }
 
-function countLinkedByKind(data: ArgusData, topicId: string, logs: Log[]) {
-  const ids = new Set<string>();
+function countLinkedByKind(data: ArgusData, topic: Entity, logs: Log[]) {
+  const ids = new Set<string>(topic.linkedEntityIds ?? []);
   for (const log of logs) {
-    if (!log.entityIds.includes(topicId)) continue;
+    if (!log.entityIds.includes(topic.id)) continue;
     for (const id of log.entityIds) {
-      if (id !== topicId) ids.add(id);
+      if (id !== topic.id) ids.add(id);
     }
   }
   let orgCount = 0;
@@ -79,7 +79,7 @@ export function buildV2TopicRows(data: ArgusData, includePrivate: boolean, today
   return topics
     .map((topic) => {
       const history = getEntityHistory(data, topic.id, includePrivate);
-      const counts = countLinkedByKind(data, topic.id, history);
+      const counts = countLinkedByKind(data, topic, history);
       const lastIso = history[0]?.date || topic.updatedAt;
       const tagHints = [...new Set(history.flatMap((l) => l.topics).filter(Boolean))].slice(0, 4);
 
@@ -107,7 +107,7 @@ export function buildV2TopicDetails(
 
   return topics.map((topic) => {
     const history = getEntityHistory(data, topic.id, includePrivate);
-    const counts = countLinkedByKind(data, topic.id, history);
+    const counts = countLinkedByKind(data, topic, history);
 
     const recentEntries = history.slice(0, 6).map((log) => {
       const linked = log.entityIds.map((id) => entityMap.get(id)?.name).filter(Boolean);
@@ -126,6 +126,7 @@ export function buildV2TopicDetails(
       category: topicCategory(topic, history),
       description: entityNotesForDisplay(topic.notes ?? "") || "No description yet.",
       ...counts,
+      linkedEntityIds: topic.linkedEntityIds ?? [],
       recentEntries,
     };
   });

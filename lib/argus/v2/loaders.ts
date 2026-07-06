@@ -13,6 +13,7 @@ import {
 import { getAllProjectScopeInbox } from "../project-evidence";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
+import { collectProjectLinkIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
 
 import {
   buildTimelineFromLogsAndInbox,
@@ -484,8 +485,11 @@ export function loadProjectPageData(
   let timeline = buildTimelineFromLogsAndInbox(allLogs, allInbox);
   timeline = enrichTimelineMeta(timeline, allLogs, allInbox, data.entities);
 
-  const linkedPeople = (project.linkedPersonIds ?? [])
-    .map((id) => data.entities.find((e) => e.id === id))
+  const linkIds = collectProjectLinkIds(project);
+  const linkCounts = countLinkKinds(data, linkIds);
+
+  const linkedPeople = linkIds
+    .map((id) => data.entities.find((e) => e.id === id && e.type === "person"))
     .filter((e): e is Entity => Boolean(e));
 
   const peopleWithRoles = linkedPeople.map((person, index) => ({
@@ -506,19 +510,13 @@ export function loadProjectPageData(
         )
       : undefined;
 
-  const org = (project.linkedEntityIds ?? [])
+  const org = linkIds
     .map((id) => data.entities.find((e) => e.id === id && e.type === "company"))
     .find(Boolean);
 
-  const topicNames = [
-    ...(project.linkedTopicIds ?? [])
-      .map((id) => data.entities.find((e) => e.id === id))
-      .filter((e): e is Entity => Boolean(e))
-      .map((e) => e.name),
-    ...(project.linkedTags ?? []),
-  ].filter(Boolean);
+  const topicNames = linkedTopicNames(data, linkIds, project.linkedTags ?? []);
 
-  const linkedEventsCount = (project.linkedEventIds ?? []).length;
+  const linkedEventsCount = linkCounts.eventCount;
   const attachmentCount = allLogs.reduce((n, l) => n + l.attachmentIds.length, 0);
   const status = projectStatus(project, today);
   const dateRangeLabel = formatProjectDateRange(project);
@@ -539,7 +537,7 @@ export function loadProjectPageData(
     linkedEventsCount,
     keyMetrics: buildProjectKeyMetrics(scope, attachmentCount, directCount),
     stats: {
-      people: linkedPeople.length,
+      people: linkCounts.peopleCount,
       journalEntries: scope.logCount,
       emails: scope.emailCount,
       files: attachmentCount,

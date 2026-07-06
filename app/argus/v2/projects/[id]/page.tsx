@@ -4,6 +4,7 @@ import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { loadProjectPageData } from "@/lib/argus/v2/loaders";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
+import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
 import { V2ProjectTabs } from "../../components/V2ProjectTabs";
 import {
@@ -74,6 +75,12 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
             </div>
           </div>
           <div className="flex shrink-0 gap-2">
+            <V2EntityLinkButton
+              entityId={entity.id}
+              linkedIds={entity.linkedEntityIds ?? []}
+              linkSource="project"
+              className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+            />
             <button
               type="button"
               className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"

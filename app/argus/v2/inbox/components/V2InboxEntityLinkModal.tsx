@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Entity } from "@/lib/argus/types";
-import { createEntityInlineAction, type CreatedEntityResult } from "@/app/argus/actions";
-import { ReferenceCreateModal } from "@/app/argus/components/ReferenceCreateModal";
+import { type CreatedEntityResult } from "@/app/argus/actions";
+import { CreateAndLinkModal } from "@/app/argus/components/CreateAndLinkModal";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import { inputClass } from "@/app/argus/components/ui";
 import { entityReferenceKind } from "@/lib/argus/link-hierarchy";
-import { formatArgusError } from "@/lib/argus/persistence/errors";
 import {
-  createInputToReferenceKind,
   entityKindLabel,
-  entityNotesForDisplay,
   REFERENCE_KIND_LABELS,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
@@ -71,8 +68,6 @@ export function V2InboxEntityLinkModal({
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [draftIds, setDraftIds] = useState<string[]>(selectedIds);
   const [createOpen, setCreateOpen] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [isCreating, startCreate] = useTransition();
 
   useEffect(() => {
     if (open) {
@@ -111,34 +106,25 @@ export function V2InboxEntityLinkModal({
     );
   }
 
-  function handleCreateSave(data: { name: string; entityType: Entity["type"]; notes: string }) {
-    setCreateError(null);
-    startCreate(async () => {
-      try {
-        const kind = createInputToReferenceKind(data.entityType, data.notes);
-        const entity = await createEntityInlineAction(kind, data.name, entityNotesForDisplay(data.notes));
-        setCreateOpen(false);
+  function handleEntityCreated(entity: CreatedEntityResult) {
+    setCreateOpen(false);
 
-        if (onEntityCreated) {
-          const handled = await onEntityCreated(entity);
-          if (handled === false) {
-            if (!draftIds.includes(entity.id)) {
-              setDraftIds((current) => [...current, entity.id]);
-            }
-            return;
+    void (async () => {
+      if (onEntityCreated) {
+        const handled = await onEntityCreated(entity);
+        if (handled === false) {
+          if (!draftIds.includes(entity.id)) {
+            setDraftIds((current) => [...current, entity.id]);
           }
+          return;
         }
-
-        const next = draftIds.includes(entity.id) ? draftIds : [...draftIds, entity.id];
-        setDraftIds(next);
-        onConfirm(next);
-        onClose();
-      } catch (err) {
-        const { layer, message } = formatArgusError(err);
-        setCreateError(`${layer.toUpperCase()}: ${message}`);
-        setCreateOpen(true);
       }
-    });
+
+      const next = draftIds.includes(entity.id) ? draftIds : [...draftIds, entity.id];
+      setDraftIds(next);
+      onConfirm(next);
+      onClose();
+    })();
   }
 
   return (
@@ -190,10 +176,7 @@ export function V2InboxEntityLinkModal({
 
             <button
               type="button"
-              onClick={() => {
-                setCreateError(null);
-                setCreateOpen(true);
-              }}
+              onClick={() => setCreateOpen(true)}
               className="w-full rounded-xl border border-violet-800/50 bg-violet-950/30 py-2.5 text-sm font-medium text-violet-300 hover:bg-violet-900/30"
             >
               {createLabelForKind(activeCreateKind)}
@@ -242,16 +225,15 @@ export function V2InboxEntityLinkModal({
         </div>
       </div>
 
-      <ReferenceCreateModal
+      <CreateAndLinkModal
         open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        buckets={buckets}
+        mode="create"
         defaultKind={activeCreateKind}
         allowedKinds={INBOX_KINDS}
-        onCancel={() => {
-          if (!isCreating) setCreateOpen(false);
-        }}
-        onSave={handleCreateSave}
-        saveLabel={isCreating ? "Saving…" : undefined}
-        error={createError ?? undefined}
+        linkSource="create"
+        onCreated={handleEntityCreated}
       />
     </>
   );
