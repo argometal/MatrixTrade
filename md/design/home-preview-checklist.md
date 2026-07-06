@@ -16,7 +16,7 @@ Use this list after every deploy or redesign. Check each box only after you have
 |------|--------|--------|
 | 2026-07-06 | `c588a11` | Checklist docs + agent rule saved |
 | 2026-07-06 | `home-preview/checklist-v1` tag | Baseline solutions doc — verification starting point |
-| 2026-07-06 | (pending commit) | Implemented priority fixes: middleware routes, cycle label, donut pending proposals, revalidation consolidation |
+| 2026-07-06 | `618c6b3` | Implemented priority fixes: middleware routes, cycle label, donut pending proposals, revalidation consolidation |
 
 **User sign-off:** All boxes stay unchecked until you verify in the browser.
 
