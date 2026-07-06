@@ -47,6 +47,25 @@ export const KIND_BADGE: Record<string, string> = {
   journal: "bg-violet-500/20 text-violet-300",
 };
 
+export function InboxEvidenceBanner({
+  title,
+  preview,
+}: {
+  title: string;
+  preview?: string;
+}) {
+  return (
+    <div className="shrink-0 border-b border-violet-500/20 bg-violet-950/30 px-4 py-3 lg:px-6">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">Email evidence</p>
+      <p className="mt-1 truncate text-sm font-semibold text-zinc-100">{title || "(No subject)"}</p>
+      {preview ? <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{preview}</p> : null}
+      <p className="mt-2 text-[11px] leading-snug text-zinc-600">
+        Email stays in Inbox — links appear on every record timeline.
+      </p>
+    </div>
+  );
+}
+
 export function KindIcon({
   kind,
   className = "",

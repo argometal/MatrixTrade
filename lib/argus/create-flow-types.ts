@@ -6,7 +6,7 @@ export type CreateItemKind =
   | ReferenceKind
   | "document";
 
-export type CreateFlowMode = "create" | "link";
+export type CreateFlowMode = "create" | "link" | "inbox-evidence";
 
 export type LinkFilterKind = ReferenceKind | "document" | "journal" | "all";
 
@@ -27,6 +27,15 @@ export type CreateFlowOpenOptions = {
   entryType?: "log" | "note";
   /** When true, hide the left create-type rail (contextual + Topic, etc.). */
   lockItemKind?: boolean;
+  /** Inbox email evidence — link without requiring journal first. */
+  inboxId?: string;
+  prefillTitle?: string;
+  prefillBody?: string;
+  prefillTags?: string[];
+  prefillDate?: string;
+  returnTo?: string;
+  /** Link email to entities only — no new journal/entity row. */
+  linkOnly?: boolean;
 };
 
 export type UnifiedCreatePayload = {
@@ -42,6 +51,9 @@ export type UnifiedCreatePayload = {
   linkedEntityIds: string[];
   linkedLogIds: string[];
   entityId?: string;
+  inboxId?: string;
+  linkOnly?: boolean;
+  returnTo?: string;
 };
 
 export type UnifiedCreateResult = {

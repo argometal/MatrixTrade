@@ -45,6 +45,7 @@ Mark items:
 | 2026-07-06 | **Change 136** | `ArgusCreateLinkWindow` full-screen mockup UI; shared flow state hook; all + Create buttons open it |
 | 2026-07-06 | **Change 138** | Desktop Create & Link 4-column mockup layout |
 | 2026-07-06 | **Change 139** | Mobile Create & Link step wizard; `source-3` recovery tag; correlation docs |
+| 2026-07-06 | **Change 140** | Inbox email → unified Create/Link flow (`inbox-evidence` mode); email stays in inbox |
 
 *Add a row here whenever v2 UI or checklist changes.*
 
@@ -341,6 +342,7 @@ Mark items:
 
 ### Detail panel — header
 
+- [ ] **Create / Link** opens unified `ArgusCreateLinkWindow` with email preloaded (`mode: inbox-evidence`)
 - [ ] **+ Link** opens “Link email” modal (not bottom of page)
 - [ ] Share / ··· menu placeholders OK
 - [ ] Subject, from, date, status displayed

@@ -685,6 +685,14 @@ export async function setInboxLinkedEntities(inboxId: string, entityIds: string[
   return data.inboxItems[idx];
 }
 
+/** Link inbox email to entities; keep email in inbox (pending/linked, not converted). */
+export async function saveInboxEvidenceLinks(
+  inboxId: string,
+  entityIds: string[]
+): Promise<InboxItem> {
+  return setInboxLinkedEntities(inboxId, entityIds);
+}
+
 export async function archiveInboxItem(id: string): Promise<InboxItem | undefined> {
   if (isCloudInboxStore()) return cloudInbox.archiveInboxItem(id);
   const data = await readArgus();

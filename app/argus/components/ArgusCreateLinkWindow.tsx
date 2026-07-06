@@ -25,6 +25,7 @@ import {
   LINK_TABS,
   LinkedEntityRow,
   LinkedJournalRow,
+  InboxEvidenceBanner,
   StepBadge,
   TAB_ICONS,
   ITEM_STYLES,
@@ -130,19 +131,30 @@ export function ArgusCreateLinkWindow({
   const saveLabel =
     flow.mode === "link"
       ? "Save & Link"
-      : flow.itemKind === "journal"
-        ? "Create & Save"
-        : `Create ${CREATE_ITEM_LABELS[flow.itemKind]}`;
+      : flow.isInboxEvidence && flow.linkOnly
+        ? "Link Email"
+        : flow.isInboxEvidence
+          ? "Save & Link Email"
+          : flow.itemKind === "journal"
+            ? "Create & Save"
+            : `Create ${CREATE_ITEM_LABELS[flow.itemKind]}`;
+
+  const showCreateForm = flow.mode === "create" || (flow.isInboxEvidence && !flow.linkOnly);
+  const showCreateRail = flow.mode === "create" || flow.isInboxEvidence;
 
   const itemPreviewTitle =
-    flow.itemKind === "journal"
-      ? flow.title.trim() || "Untitled journal note"
-      : flow.name.trim() || `New ${CREATE_ITEM_LABELS[flow.itemKind]}`;
+    flow.isInboxEvidence && flow.linkOnly
+      ? flow.title.trim() || "Link email to records"
+      : flow.itemKind === "journal"
+        ? flow.title.trim() || "Untitled journal note"
+        : flow.name.trim() || `New ${CREATE_ITEM_LABELS[flow.itemKind]}`;
 
   const itemPreviewBody =
-    flow.itemKind === "journal"
-      ? flow.body.trim().slice(0, 120) || CREATE_ITEM_HINTS.journal
-      : flow.notes.trim().slice(0, 120) || CREATE_ITEM_HINTS[flow.itemKind];
+    flow.isInboxEvidence && flow.linkOnly
+      ? "Assign this email to people, organizations, projects, events, or topics."
+      : flow.itemKind === "journal"
+        ? flow.body.trim().slice(0, 120) || CREATE_ITEM_HINTS.journal
+        : flow.notes.trim().slice(0, 120) || CREATE_ITEM_HINTS[flow.itemKind];
 
   const orgOptions = flow.allEntities.filter((entity) => entity.type === "company");
 
@@ -201,10 +213,17 @@ export function ArgusCreateLinkWindow({
         <p className="shrink-0 bg-emerald-950/50 px-6 py-2 text-center text-sm text-emerald-300">{flow.flash}</p>
       ) : null}
 
+      {flow.isInboxEvidence ? (
+        <InboxEvidenceBanner
+          title={options.prefillTitle ?? flow.title}
+          preview={options.prefillBody?.slice(0, 160)}
+        />
+      ) : null}
+
       {/* Main 4-column workspace */}
       <div className="mx-auto grid min-h-0 w-full max-w-[1600px] flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[220px_minmax(0,1fr)_320px_280px]">
         {/* Step 1 — Create item */}
-        {flow.mode === "create" ? (
+        {showCreateRail ? (
           <aside
             className="flex min-h-0 flex-col overflow-y-auto border-b border-zinc-800/80 bg-zinc-950/60 lg:border-b-0 lg:border-r"
           >
@@ -212,18 +231,46 @@ export function ArgusCreateLinkWindow({
               <StepBadge n={1} active />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">Create Item</p>
-                <p className="text-[11px] text-zinc-600">Select what you want to create</p>
+                <p className="text-[11px] text-zinc-600">
+                  {flow.isInboxEvidence ? "Optional — or link email only" : "Select what you want to create"}
+                </p>
               </div>
             </div>
             <nav className="space-y-1 px-3 pb-4">
+              {flow.isInboxEvidence ? (
+                <button
+                  type="button"
+                  onClick={() => flow.setLinkOnly(true)}
+                  className={`flex w-full items-start gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+                    flow.linkOnly
+                      ? "border-violet-500/50 bg-violet-500/10 ring-1 ring-violet-500/40"
+                      : "border-transparent hover:border-zinc-800 hover:bg-zinc-900/60"
+                  }`}
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-lg">
+                    ✉
+                  </span>
+                  <span className="min-w-0">
+                    <span className={`block text-sm font-semibold ${flow.linkOnly ? "text-zinc-50" : "text-zinc-200"}`}>
+                      Link only
+                    </span>
+                    <span className="mt-1 block text-[11px] leading-snug text-zinc-500">
+                      Assign email to existing records — no new journal or entity
+                    </span>
+                  </span>
+                </button>
+              ) : null}
               {CREATE_ITEM_KINDS.map((kind) => {
                 const style = ITEM_STYLES[kind];
-                const active = flow.itemKind === kind;
+                const active = !flow.linkOnly && flow.itemKind === kind;
                 return (
                   <button
                     key={kind}
                     type="button"
-                    onClick={() => flow.setItemKind(kind)}
+                    onClick={() => {
+                      flow.setLinkOnly(false);
+                      flow.setItemKind(kind);
+                    }}
                     className={`flex w-full items-start gap-3 rounded-2xl border px-3 py-3 text-left transition ${
                       active
                         ? `border-violet-500/50 bg-violet-500/10 ring-1 ${style.ring}`
@@ -252,7 +299,7 @@ export function ArgusCreateLinkWindow({
         <section
           className="flex min-h-0 flex-col overflow-y-auto border-b border-zinc-800/80 px-4 py-4 lg:border-b-0 lg:border-r lg:px-6"
         >
-          {flow.mode === "create" ? (
+          {showCreateForm ? (
             <>
               <div className="mb-4 flex items-center gap-2">
                 <KindIcon kind={flow.itemKind} />
@@ -402,6 +449,14 @@ export function ArgusCreateLinkWindow({
                 </div>
               )}
             </>
+          ) : flow.isInboxEvidence && flow.linkOnly ? (
+            <div className="py-6">
+              <h2 className="text-xl font-bold text-zinc-100">Link email evidence</h2>
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-zinc-400">
+                Select people, organizations, projects, events, or topics. Create anything missing below — it
+                links to this email automatically.
+              </p>
+            </div>
           ) : (
             <div className="py-6">
               <h2 className="text-xl font-bold text-zinc-100">Link &amp; Connect</h2>

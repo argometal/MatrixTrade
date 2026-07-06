@@ -98,6 +98,8 @@ export function useCreateLinkFlowState({
 
   const mode = options.mode ?? "create";
   const lockItemKind = options.lockItemKind ?? false;
+  const isInboxEvidence = mode === "inbox-evidence";
+  const [linkOnly, setLinkOnly] = useState(Boolean(options.linkOnly));
   const [itemKind, setItemKind] = useState<CreateItemKind>(options.itemKind ?? "journal");
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
@@ -126,13 +128,14 @@ export function useCreateLinkFlowState({
 
   useEffect(() => {
     if (!open) return;
-    setItemKind(options.itemKind ?? "journal");
+    setLinkOnly(Boolean(options.linkOnly));
+    setItemKind(options.itemKind ?? (options.mode === "inbox-evidence" ? "journal" : "journal"));
     setName("");
-    setTitle("");
-    setBody("");
+    setTitle(options.prefillTitle ?? "");
+    setBody(options.prefillBody ?? "");
     setNotes("");
-    setEventDate(defaultLogDateTime());
-    setTags("");
+    setEventDate(options.prefillDate?.slice(0, 16) || defaultLogDateTime());
+    setTags((options.prefillTags ?? []).join(", "));
     setTagInput("");
     setTemplate("standard");
     setEntryType(options.entryType ?? "log");
@@ -210,6 +213,7 @@ export function useCreateLinkFlowState({
 
   function canSave(): boolean {
     if (mode === "link") return true;
+    if (isInboxEvidence && linkOnly) return draftEntityIds.length > 0;
     if (itemKind === "journal") return body.trim().length > 0;
     return name.trim().length > 0;
   }
@@ -228,6 +232,9 @@ export function useCreateLinkFlowState({
       linkedEntityIds: draftEntityIds,
       linkedLogIds: draftLogIds,
       entityId: options.entityId,
+      inboxId: options.inboxId,
+      linkOnly: isInboxEvidence ? linkOnly : undefined,
+      returnTo: options.returnTo,
     };
   }
 
@@ -244,6 +251,10 @@ export function useCreateLinkFlowState({
       try {
         const result = await executeSave();
         onClose();
+        if (isInboxEvidence && options.returnTo) {
+          router.push(options.returnTo);
+          return;
+        }
         if (mode === "create" && !onSaved) {
           router.push(postCreateHref(pathname, itemKind, result.id, result.href));
         }
@@ -302,6 +313,9 @@ export function useCreateLinkFlowState({
 
   return {
     mode,
+    isInboxEvidence,
+    linkOnly,
+    setLinkOnly,
     lockItemKind,
     itemKind,
     setItemKind,

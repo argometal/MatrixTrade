@@ -16,7 +16,9 @@ import {
   deleteLog,
   getEntity,
   getLog,
+  getInboxItem,
   linkInboxToEntities,
+  saveInboxEvidenceLinks,
   setInboxLinkedEntities,
   readArgus,
   saveAttachment,
@@ -555,6 +557,99 @@ export async function saveUnifiedCreateFlowAction(
       throw new ArgusPersistenceError("validation", "Entity not found.");
     }
     return { id: entity.id, href: entityDetailHref(entity), name: entity.name };
+  }
+
+  if (payload.mode === "inbox-evidence") {
+    if (!payload.inboxId) {
+      throw new ArgusPersistenceError("validation", "Inbox item not found.");
+    }
+    const inbox = await getInboxItem(payload.inboxId, true);
+    if (!inbox) {
+      throw new ArgusPersistenceError("validation", "Inbox item not found.");
+    }
+    if (inbox.status === "archived") {
+      throw new ArgusPersistenceError("validation", "Inbox item is archived.");
+    }
+
+    const mergedEntityIds = [
+      ...new Set([
+        ...(inbox.linkedEntityIds ?? []),
+        ...linkedEntityIds,
+      ]),
+    ];
+
+    if (payload.linkOnly) {
+      if (mergedEntityIds.length === 0) {
+        throw new ArgusPersistenceError("validation", "Link at least one person, organization, project, event, or topic.");
+      }
+      await saveInboxEvidenceLinks(payload.inboxId, mergedEntityIds);
+      revalidateArgus();
+      revalidatePath("/argus/v2/inbox");
+      const title = payload.title.trim() || "Email evidence";
+      return {
+        id: inbox.id,
+        href: payload.returnTo ?? `/argus/v2/inbox?selected=${inbox.id}`,
+        name: title,
+      };
+    }
+
+    if (payload.itemKind === "journal") {
+      const body = payload.body.trim();
+      if (!body) {
+        throw new ArgusPersistenceError("validation", "Content is required.");
+      }
+      const today = new Date().toISOString().slice(0, 10);
+      const date = payload.eventDate.trim().slice(0, 10) || today;
+      const kind: JournalKind = payload.entryType === "note" ? "event" : "log";
+      const title = payload.title.trim() || autoTitleFromBody(body);
+
+      const log = await createLog({
+        kind,
+        date,
+        title,
+        body,
+        private: inbox.private ?? false,
+        source: (inbox.source === "email" ? "email" : "inbox") as LogSource,
+        entityIds: mergedEntityIds,
+        topics: payload.tags,
+        classificationStatus: resolveClassificationStatus(mergedEntityIds),
+        attachmentIds: [],
+        inboxItemId: inbox.id,
+      });
+
+      await saveInboxEvidenceLinks(payload.inboxId, mergedEntityIds);
+      revalidateArgus();
+      revalidatePath("/argus/v2/inbox");
+      return { id: log.id, href: `/argus/logs/${log.id}`, name: title };
+    }
+
+    const trimmedName = payload.name.trim();
+    if (!trimmedName) {
+      throw new ArgusPersistenceError("validation", "Name is required.");
+    }
+
+    let result: CreatedEntityResult;
+    if (payload.itemKind === "document") {
+      result = await persistDocumentEntity(trimmedName, payload.notes, mergedEntityIds);
+    } else {
+      result = await persistNewEntity(
+        payload.itemKind,
+        trimmedName,
+        payload.notes,
+        mergedEntityIds,
+        payload.itemKind === "event" && payload.eventDate
+          ? { startDate: payload.eventDate.trim().slice(0, 10) }
+          : undefined
+      );
+    }
+
+    const withCreated = [...new Set([...mergedEntityIds, result.id])];
+    await saveInboxEvidenceLinks(payload.inboxId, withCreated);
+    await linkEntityToLogsAction(result.id, payload.linkedLogIds);
+
+    revalidateArgus();
+    revalidatePath("/argus/v2/inbox");
+    return result;
   }
 
   if (payload.itemKind === "journal") {

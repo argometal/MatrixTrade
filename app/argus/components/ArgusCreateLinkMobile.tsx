@@ -23,6 +23,7 @@ import {
   LINK_TABS,
   LinkedEntityRow,
   LinkedJournalRow,
+  InboxEvidenceBanner,
   MobileProgressBar,
   TAB_ICONS,
 } from "./create-link-shared";
@@ -41,6 +42,7 @@ type FlowState = ReturnType<typeof useCreateLinkFlowState>;
 
 function initialMobileStep(options: CreateFlowOpenOptions): MobileStep {
   if (options.mode === "link") return "link";
+  if (options.mode === "inbox-evidence" && options.linkOnly) return "link";
   if (options.lockItemKind) return "details";
   return "choose-type";
 }
@@ -97,30 +99,59 @@ function MobileFooter({
 function ChooseTypeStep({
   flow,
   onSelect,
+  onLinkOnly,
   onClose,
 }: {
   flow: FlowState;
   onSelect: (kind: CreateItemKind) => void;
+  onLinkOnly: () => void;
   onClose: () => void;
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-zinc-800/80 px-4 py-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">Create</p>
-          <h2 className="text-lg font-bold text-zinc-50">What do you want to create?</h2>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">
+            {flow.isInboxEvidence ? "Email evidence" : "Create"}
+          </p>
+          <h2 className="text-lg font-bold text-zinc-50">
+            {flow.isInboxEvidence ? "Create or link this email" : "What do you want to create?"}
+          </h2>
         </div>
         <button type="button" onClick={onClose} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800">
           ✕
         </button>
       </header>
+      {flow.isInboxEvidence ? (
+        <InboxEvidenceBanner title={flow.title} preview={flow.body.slice(0, 120)} />
+      ) : null}
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         <nav className="space-y-2">
+          {flow.isInboxEvidence ? (
+            <button
+              type="button"
+              onClick={() => {
+                flow.setLinkOnly(true);
+                onLinkOnly();
+              }}
+              className="flex w-full items-center gap-4 rounded-2xl border border-violet-500/30 bg-violet-950/20 px-4 py-4 text-left active:bg-violet-950/40"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-zinc-800 text-xl">✉</span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-base font-semibold text-zinc-100">Link only</span>
+                <span className="mt-0.5 block text-sm text-zinc-500">
+                  Assign email to existing records — no new journal
+                </span>
+              </span>
+              <span className="text-zinc-600">›</span>
+            </button>
+          ) : null}
           {CREATE_ITEM_KINDS.map((kind) => (
             <button
               key={kind}
               type="button"
               onClick={() => {
+                flow.setLinkOnly(false);
                 flow.setItemKind(kind);
                 onSelect(kind);
               }}
@@ -144,7 +175,13 @@ function ChooseTypeStep({
 
 function DetailsStep({ flow, onNext, onBack }: { flow: FlowState; onNext: () => void; onBack: () => void }) {
   const canNext =
-    flow.mode === "link" ? true : flow.itemKind === "journal" ? flow.body.trim().length > 0 : flow.name.trim().length > 0;
+    flow.mode === "link"
+      ? true
+      : flow.isInboxEvidence && flow.linkOnly
+        ? true
+        : flow.itemKind === "journal"
+          ? flow.body.trim().length > 0
+          : flow.name.trim().length > 0;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -689,14 +726,18 @@ export function ArgusCreateLinkMobile({
   if (!open) return null;
 
   const itemTitle =
-    flow.itemKind === "journal"
-      ? flow.title.trim() || "Untitled journal note"
-      : flow.name.trim() || `New ${CREATE_ITEM_LABELS[flow.itemKind]}`;
+    flow.isInboxEvidence && flow.linkOnly
+      ? flow.title.trim() || "Link email to records"
+      : flow.itemKind === "journal"
+        ? flow.title.trim() || "Untitled journal note"
+        : flow.name.trim() || `New ${CREATE_ITEM_LABELS[flow.itemKind]}`;
 
   const itemBody =
-    flow.itemKind === "journal"
-      ? flow.body.trim() || CREATE_ITEM_HINTS.journal
-      : flow.notes.trim() || CREATE_ITEM_HINTS[flow.itemKind];
+    flow.isInboxEvidence && flow.linkOnly
+      ? "Assign this email to people, organizations, projects, events, or topics."
+      : flow.itemKind === "journal"
+        ? flow.body.trim() || CREATE_ITEM_HINTS.journal
+        : flow.notes.trim() || CREATE_ITEM_HINTS[flow.itemKind];
 
   async function runSave() {
     setSaveError(null);
@@ -730,6 +771,7 @@ export function ArgusCreateLinkMobile({
         <ChooseTypeStep
           flow={flow}
           onSelect={() => setStep("details")}
+          onLinkOnly={() => setStep("link")}
           onClose={onClose}
         />
       ) : null}
@@ -750,7 +792,11 @@ export function ArgusCreateLinkMobile({
           searchResults={searchResults}
           suggestedRecent={suggestedRecent}
           onNext={goAfterLink}
-          onBack={() => (flow.mode === "link" ? onClose() : setStep("details"))}
+          onBack={() =>
+            flow.mode === "link" || (flow.isInboxEvidence && flow.linkOnly)
+              ? onClose()
+              : setStep("details")
+          }
         />
       ) : null}
 
@@ -792,11 +838,15 @@ export function ArgusCreateLinkMobile({
           result={saveResult}
           onViewItem={() => {
             onClose();
-            router.push(saveResult.href);
+            if (flow.isInboxEvidence && options.returnTo) {
+              router.push(options.returnTo);
+            } else {
+              router.push(saveResult.href);
+            }
           }}
           onGoHome={() => {
             onClose();
-            router.push("/argus/v2");
+            router.push(flow.isInboxEvidence && options.returnTo ? options.returnTo : "/argus/v2");
           }}
         />
       ) : null}

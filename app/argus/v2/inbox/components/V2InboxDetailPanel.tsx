@@ -8,6 +8,7 @@ import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePicker
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 import { TagPickerModal } from "@/app/argus/components/TagPickerModal";
 import { CaptureSheet } from "@/app/argus/components/CaptureSheet";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { V2InboxEntityLinkModal } from "@/app/argus/v2/inbox/components/V2InboxEntityLinkModal";
 import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
@@ -80,6 +81,7 @@ export function V2InboxDetailPanel({
   const [linkIds, setLinkIds] = useState<string[]>(detail.item.linkedEntityIds ?? []);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [linkSaving, setLinkSaving] = useState(false);
+  const { openCreateFlow } = useArgusAdd();
 
   useEffect(() => {
     setLinkIds(detail.item.linkedEntityIds ?? []);
@@ -181,13 +183,33 @@ export function V2InboxDetailPanel({
           <h2 className="text-lg font-semibold leading-snug text-zinc-50">{view.subject || "(No subject)"}</h2>
           <div className="relative flex shrink-0 items-center gap-2">
             {canTriage ? (
-              <button
-                type="button"
-                onClick={() => setPickerOpen(true)}
-                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
-              >
-                + Link
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() =>
+                    openCreateFlow({
+                      mode: "inbox-evidence",
+                      inboxId: item.id,
+                      prefillTitle: defaultTitle,
+                      prefillBody: defaultBody,
+                      prefillTags: selectedTags,
+                      prefillDate: view.receivedAt,
+                      linkedEntityIds: linkIds,
+                      returnTo,
+                    })
+                  }
+                  className="rounded-lg border border-emerald-500/40 bg-emerald-600/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/25"
+                >
+                  Create / Link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen(true)}
+                  className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+                >
+                  + Link
+                </button>
+              </>
             ) : null}
             <button type="button" className="text-zinc-600 hover:text-zinc-400" title="Share">
               ↗
