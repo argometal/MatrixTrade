@@ -14,7 +14,8 @@ Use this list after every deploy or redesign. Check each box only after you have
 
 | Date | Commit | Change |
 |------|--------|--------|
-| 2026-07-06 | `7036a85` | Initial checklist — full-viewport Situation Room v2 preview |
+| 2026-07-06 | `c588a11` | Checklist docs + agent rule saved |
+| 2026-07-06 | `home-preview/checklist-v1` tag | Baseline solutions doc — verification starting point |
 
 ---
 
