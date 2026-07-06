@@ -180,7 +180,16 @@ export function V2InboxDetailPanel({
       <div className="border-b border-zinc-800/80 px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold leading-snug text-zinc-50">{view.subject || "(No subject)"}</h2>
-          <div className="relative flex shrink-0 gap-2">
+          <div className="relative flex shrink-0 items-center gap-2">
+            {canTriage ? (
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+              >
+                + Link
+              </button>
+            ) : null}
             <button type="button" className="text-zinc-600 hover:text-zinc-400" title="Share">
               ↗
             </button>
@@ -350,25 +359,14 @@ export function V2InboxDetailPanel({
                   ) : null}
                 </span>
               ))}
-              {canTriage ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setPickerOpen(true)}
-                    className="rounded-xl border border-dashed border-zinc-700 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
-                  >
-                    + Add entity
-                  </button>
-                  {suggestedEntities.length > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => void applySuggestedEntities()}
-                      className="rounded-xl bg-violet-600/20 px-3 py-2 text-xs font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
-                    >
-                      ✨ Suggest entities
-                    </button>
-                  ) : null}
-                </>
+              {canTriage && suggestedEntities.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => void applySuggestedEntities()}
+                  className="rounded-xl bg-violet-600/20 px-3 py-2 text-xs font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
+                >
+                  ✨ Suggest entities
+                </button>
               ) : null}
             </div>
             {canTriage && suggestedEntities.length > 0 ? (

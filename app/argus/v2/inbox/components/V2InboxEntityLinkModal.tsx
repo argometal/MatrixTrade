@@ -15,7 +15,7 @@ import {
   REFERENCE_KIND_LABELS,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
-import { CAPTURE, INBOX, LINK_HIERARCHY, REFERENCE_PICKER, REFERENCES } from "@/lib/argus/ux-copy";
+import { CAPTURE, LINK_HIERARCHY, REFERENCE_PICKER, REFERENCES } from "@/lib/argus/ux-copy";
 
 const INBOX_KINDS: ReferenceKind[] = ["person", "organization", "project", "topic", "event"];
 
@@ -156,7 +156,7 @@ export function V2InboxEntityLinkModal({
         >
           <div className="shrink-0 border-b border-zinc-800 px-5 py-4">
             <h3 id="inbox-link-title" className="text-base font-semibold text-zinc-100">
-              {INBOX.linkReference}
+              Link email
             </h3>
             <p className="mt-1.5 text-sm leading-snug text-zinc-500">{LINK_HIERARCHY.inboxLinkHint}</p>
           </div>
