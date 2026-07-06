@@ -43,7 +43,8 @@ Mark items:
 | 2026-07-06 | **Change 134** | Unrestricted link targets (all 5 types); link modal inline create; picker fixes |
 | 2026-07-06 | **Change 135** | `ArgusUnifiedCreateFlow` — single + Create window (journal/person/org/project/event/topic/document + link + inline missing + save) |
 | 2026-07-06 | **Change 136** | `ArgusCreateLinkWindow` full-screen mockup UI; shared flow state hook; all + Create buttons open it |
-| 2026-07-06 | **Change 137** | Portal fix for create window (z-9999); Network browser mockup layout; `/argus/network` → v2 |
+| 2026-07-06 | **Change 138** | Desktop Create & Link 4-column mockup layout |
+| 2026-07-06 | **Change 139** | Mobile Create & Link step wizard; `source-3` recovery tag; correlation docs |
 
 *Add a row here whenever v2 UI or checklist changes.*
 
@@ -104,6 +105,43 @@ Mark items:
 - [ ] `/argus/v2` requires ARGUS session (redirects to login when configured)
 - [ ] Protected/private records hidden until PIN unlock (when enabled)
 - [ ] v2 reads live data (`readArgus` + inbox), not mock data
+
+---
+
+---
+
+## Create & Link — Desktop (`lg+`)
+
+**Files:** `ArgusCreateLinkWindow.tsx`, `create-link-shared.tsx`, `create-link-flow-state.ts`  
+**Checklist:** [`create-link-mobile-checklist.md`](create-link-mobile-checklist.md) (comparison table) · [`correlation-guide.md`](correlation-guide.md)
+
+### Layout
+
+- [ ] 4 columns: Create item | Form | Link | Review & Save
+- [ ] Step headers 1–4 in header bar
+- [ ] Linked (N) panel with remove + search/add
+- [ ] Create missing strip (step 3) with tag topic suggestions
+- [ ] Info footer: How it works / What you get / Built for you
+- [ ] Green **Create & Save** in review column + footer
+
+### Correlation
+
+- [ ] All 6 entity types linkable from link panel
+- [ ] Create missing inline without leaving flow
+- [ ] Save persists journal + links in one action
+
+---
+
+## Create & Link — Mobile (`< lg`)
+
+**Files:** `ArgusCreateLinkMobile.tsx`  
+**Full checklist:** [`create-link-mobile-checklist.md`](create-link-mobile-checklist.md)  
+**Post-QA review:** [`create-link-correlation-review.md`](create-link-correlation-review.md)
+
+- [ ] Step wizard: choose → details → link → missing → review-links → review-item → processing → success
+- [ ] Progress bar 1–4 matches mockup
+- [ ] View Item / Go Home on success
+- [ ] Desktop layout hidden on mobile; mobile hidden on desktop
 
 ---
 

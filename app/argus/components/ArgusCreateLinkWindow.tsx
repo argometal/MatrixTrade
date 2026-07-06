@@ -16,57 +16,19 @@ import {
   type LinkFilterKind,
   type UnifiedCreateResult,
 } from "@/lib/argus/create-flow-types";
-import {
-  entityLinkCardMeta,
-  entityLinkFilterKind,
-} from "@/lib/argus/create-flow-helpers";
+import { entityLinkCardMeta, entityLinkFilterKind } from "@/lib/argus/create-flow-helpers";
 import { useCreateLinkFlowState } from "@/lib/argus/create-link-flow-state";
 import type { ReferenceKind } from "@/lib/argus/reference-types";
-
-const LINK_TABS: LinkFilterKind[] = [
-  "all",
-  "person",
-  "organization",
-  "project",
-  "event",
-  "topic",
-  "document",
-  "journal",
-];
-
-const TAB_ICONS: Record<LinkFilterKind, string> = {
-  all: "◉",
-  person: "👤",
-  organization: "🏢",
-  project: "📁",
-  event: "📅",
-  topic: "🏷",
-  document: "📄",
-  journal: "▤",
-};
-
-const ITEM_STYLES: Record<
-  CreateItemKind,
-  { glyph: string; ring: string; bg: string; text: string }
-> = {
-  journal: { glyph: "▤", ring: "ring-violet-500/40", bg: "bg-violet-500/15", text: "text-violet-200" },
-  person: { glyph: "👤", ring: "ring-emerald-500/40", bg: "bg-emerald-500/15", text: "text-emerald-200" },
-  organization: { glyph: "🏢", ring: "ring-sky-500/40", bg: "bg-sky-500/15", text: "text-sky-200" },
-  project: { glyph: "📁", ring: "ring-amber-500/40", bg: "bg-amber-500/15", text: "text-amber-200" },
-  event: { glyph: "📅", ring: "ring-rose-500/40", bg: "bg-rose-500/15", text: "text-rose-200" },
-  topic: { glyph: "🏷", ring: "ring-yellow-500/40", bg: "bg-yellow-500/15", text: "text-yellow-100" },
-  document: { glyph: "📄", ring: "ring-zinc-500/40", bg: "bg-zinc-500/15", text: "text-zinc-200" },
-};
-
-const KIND_BADGE: Record<string, string> = {
-  person: "bg-emerald-500/20 text-emerald-300",
-  organization: "bg-sky-500/20 text-sky-300",
-  project: "bg-amber-500/20 text-amber-300",
-  event: "bg-rose-500/20 text-rose-300",
-  topic: "bg-violet-500/20 text-violet-300",
-  document: "bg-zinc-600/40 text-zinc-300",
-  journal: "bg-violet-500/20 text-violet-300",
-};
+import { ArgusCreateLinkMobile } from "@/app/argus/components/ArgusCreateLinkMobile";
+import {
+  KindIcon,
+  LINK_TABS,
+  LinkedEntityRow,
+  LinkedJournalRow,
+  StepBadge,
+  TAB_ICONS,
+  ITEM_STYLES,
+} from "@/app/argus/components/create-link-shared";
 
 const STEPS = [
   { key: "create", label: "Create", sub: "Select what you want to create" },
@@ -83,100 +45,6 @@ const MISSING_KINDS: Array<{ kind: ReferenceKind | "document"; title: string; fi
   { kind: "topic", title: "Topic", fields: ["Name", "Category", "Description"] },
   { kind: "document", title: "Document", fields: ["Name", "Description", "Source"] },
 ];
-
-function KindIcon({ kind, className = "" }: { kind: CreateItemKind | LinkFilterKind; className?: string }) {
-  const style =
-    kind in ITEM_STYLES
-      ? ITEM_STYLES[kind as CreateItemKind]
-      : { glyph: TAB_ICONS[kind as LinkFilterKind] ?? "•", bg: "bg-zinc-800", text: "text-zinc-300", ring: "" };
-  return (
-    <span
-      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm ${style.bg} ${style.text} ${className}`}
-    >
-      {style.glyph}
-    </span>
-  );
-}
-
-function StepBadge({ n, active }: { n: number; active?: boolean }) {
-  return (
-    <span
-      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${
-        active ? "bg-violet-600 text-white" : "bg-zinc-800 text-zinc-500"
-      }`}
-    >
-      {n}
-    </span>
-  );
-}
-
-function KindBadge({ kind }: { kind: string }) {
-  const label =
-    kind === "organization"
-      ? "Organization"
-      : kind === "journal"
-        ? "Journal"
-        : kind.charAt(0).toUpperCase() + kind.slice(1);
-  return (
-    <span className={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-semibold ${KIND_BADGE[kind] ?? KIND_BADGE.document}`}>
-      {label}
-    </span>
-  );
-}
-
-function LinkedEntityRow({
-  entity,
-  allEntities,
-  onRemove,
-}: {
-  entity: Entity;
-  allEntities: Entity[];
-  onRemove: () => void;
-}) {
-  const kind = entityLinkFilterKind(entity) ?? "person";
-  const { subtitle } = entityLinkCardMeta(entity, allEntities);
-  return (
-    <div className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-3 py-2.5">
-      <KindIcon kind={kind === "journal" || kind === "all" ? "person" : (kind as CreateItemKind)} className="!h-8 !w-8 !text-xs" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-zinc-100">{entity.name}</p>
-        <p className="truncate text-[11px] text-zinc-500">{subtitle}</p>
-      </div>
-      <KindBadge kind={kind} />
-      <button
-        type="button"
-        onClick={onRemove}
-        className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
-        aria-label={`Remove ${entity.name}`}
-      >
-        ✕
-      </button>
-    </div>
-  );
-}
-
-function LinkedJournalRow({ row, onRemove }: { row: JournalLinkRow; onRemove: () => void }) {
-  return (
-    <div className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-3 py-2.5">
-      <KindIcon kind="journal" className="!h-8 !w-8 !text-xs" />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-zinc-100">{row.title}</p>
-        <p className="truncate text-[11px] text-zinc-500">
-          {row.date} · {row.kind}
-        </p>
-      </div>
-      <KindBadge kind="journal" />
-      <button
-        type="button"
-        onClick={onRemove}
-        className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
-        aria-label={`Remove ${row.title}`}
-      >
-        ✕
-      </button>
-    </div>
-  );
-}
 
 function SearchResultRow({
   entity,
@@ -205,8 +73,6 @@ function SearchResultRow({
   );
 }
 
-type MobilePanel = "create" | "link" | "missing" | "save";
-
 export function ArgusCreateLinkWindow({
   open,
   onClose,
@@ -223,16 +89,11 @@ export function ArgusCreateLinkWindow({
   onSaved?: (result: UnifiedCreateResult) => void;
 }) {
   const [mounted, setMounted] = useState(false);
-  const [mobilePanel, setMobilePanel] = useState<MobilePanel>("create");
   const flow = useCreateLinkFlowState({ open, options, buckets, journalRows, onClose, onSaved });
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    if (open) setMobilePanel(options.mode === "link" ? "link" : "create");
-  }, [open, options.itemKind, options.mode]);
 
   const linkedEntities = useMemo(
     () =>
@@ -285,12 +146,9 @@ export function ArgusCreateLinkWindow({
 
   const orgOptions = flow.allEntities.filter((entity) => entity.type === "company");
 
-  const panelVisible = (panel: MobilePanel) =>
-    mobilePanel === panel ? "flex min-h-0 flex-col" : "hidden min-h-0 flex-col lg:flex";
-
-  const content = (
+  const desktop = (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col bg-[#030308]"
+      className="fixed inset-0 z-[9999] hidden flex-col bg-[#030308] lg:flex"
       role="dialog"
       aria-modal="true"
       aria-label="Create and link anything"
@@ -325,27 +183,6 @@ export function ArgusCreateLinkWindow({
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <div className="flex gap-1 lg:hidden">
-              {(
-                [
-                  ["create", "1"],
-                  ["link", "2"],
-                  ["missing", "3"],
-                  ["save", "4"],
-                ] as const
-              ).map(([key, label]) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setMobilePanel(key)}
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
-                    mobilePanel === key ? "bg-violet-600 text-white" : "bg-zinc-800 text-zinc-400"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
             <button
               type="button"
               onClick={onClose}
@@ -369,7 +206,7 @@ export function ArgusCreateLinkWindow({
         {/* Step 1 — Create item */}
         {flow.mode === "create" ? (
           <aside
-            className={`${panelVisible("create")} overflow-y-auto border-b border-zinc-800/80 bg-zinc-950/60 lg:border-b-0 lg:border-r`}
+            className="flex min-h-0 flex-col overflow-y-auto border-b border-zinc-800/80 bg-zinc-950/60 lg:border-b-0 lg:border-r"
           >
             <div className="flex items-start gap-2 px-4 pb-2 pt-4">
               <StepBadge n={1} active />
@@ -413,7 +250,7 @@ export function ArgusCreateLinkWindow({
 
         {/* Center — Form */}
         <section
-          className={`${panelVisible("create")} min-h-0 overflow-y-auto border-b border-zinc-800/80 px-4 py-4 lg:border-b-0 lg:border-r lg:px-6`}
+          className="flex min-h-0 flex-col overflow-y-auto border-b border-zinc-800/80 px-4 py-4 lg:border-b-0 lg:border-r lg:px-6"
         >
           {flow.mode === "create" ? (
             <>
@@ -577,7 +414,7 @@ export function ArgusCreateLinkWindow({
         </section>
 
         {/* Step 2 — Link panel */}
-        <aside className={`${panelVisible("link")} min-h-0 overflow-hidden border-b border-zinc-800/80 bg-zinc-950/40 lg:border-b-0 lg:border-r`}>
+        <aside className="flex min-h-0 flex-col overflow-hidden border-b border-zinc-800/80 bg-zinc-950/40 lg:border-b-0 lg:border-r">
           <div className="flex items-start gap-2 border-b border-zinc-800/80 px-4 py-3">
             <StepBadge n={2} />
             <div>
@@ -668,7 +505,7 @@ export function ArgusCreateLinkWindow({
         </aside>
 
         {/* Step 4 — Review & Save */}
-        <aside className={`${panelVisible("save")} min-h-0 overflow-y-auto bg-zinc-950/60`}>
+        <aside className="flex min-h-0 flex-col overflow-y-auto bg-zinc-950/60">
           <div className="flex items-start gap-2 border-b border-zinc-800/80 px-4 py-3">
             <StepBadge n={4} />
             <div>
@@ -729,7 +566,7 @@ export function ArgusCreateLinkWindow({
       </div>
 
       {/* Step 3 — Create missing */}
-      <section className={`${panelVisible("missing")} shrink-0 border-t border-zinc-800/80 bg-zinc-950/80 lg:block`}>
+      <section className="shrink-0 border-t border-zinc-800/80 bg-zinc-950/80">
         <div className="mx-auto max-w-[1600px] px-4 py-4 lg:px-6">
           <div className="mb-3 flex items-start gap-2">
             <StepBadge n={3} />
@@ -864,15 +701,7 @@ export function ArgusCreateLinkWindow({
             type="button"
             onClick={flow.handleSave}
             disabled={flow.isPending || !flow.canSave()}
-            className="rounded-xl bg-emerald-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-500 disabled:opacity-40 lg:hidden"
-          >
-            {flow.isPending ? "Saving…" : saveLabel}
-          </button>
-          <button
-            type="button"
-            onClick={flow.handleSave}
-            disabled={flow.isPending || !flow.canSave()}
-            className="hidden rounded-xl bg-emerald-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-500 disabled:opacity-40 lg:inline-flex"
+            className="rounded-xl bg-emerald-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-500 disabled:opacity-40"
           >
             {flow.isPending ? "Saving…" : saveLabel}
           </button>
@@ -881,5 +710,18 @@ export function ArgusCreateLinkWindow({
     </div>
   );
 
-  return createPortal(content, document.body);
+  return createPortal(
+    <>
+      <ArgusCreateLinkMobile
+        open={open}
+        onClose={onClose}
+        options={options}
+        buckets={buckets}
+        journalRows={journalRows}
+        onSaved={onSaved}
+      />
+      {desktop}
+    </>,
+    document.body
+  );
 }

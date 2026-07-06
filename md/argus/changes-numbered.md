@@ -33,6 +33,8 @@ Use git tags to restore any point.
 | **129** | `change-129` | v2 Organization Browser portfolio cards |
 | **130** | — | v2 Network Browser (relationship intelligence cards) — checklist § Network browser |
 | **132** | `second-origin` | v2 checkpoint: Network browser, AI Charter, checklist v1.1, inbox unlink fix, search/PIN/filters |
+| **138** | — | Desktop Create & Link 4-column mockup (`ArgusCreateLinkWindow`) |
+| **139** | `source-3` | Mobile Create & Link step wizard; correlation guide + QA checklists; recovery tag `source-3` |
 
 ## Restore
 

@@ -214,33 +214,39 @@ export function useCreateLinkFlowState({
     return name.trim().length > 0;
   }
 
+  function buildSavePayload(): UnifiedCreatePayload {
+    return {
+      mode,
+      itemKind,
+      name: name.trim(),
+      title: title.trim(),
+      body: body.trim(),
+      notes: entityNotesForDisplay(notes),
+      eventDate,
+      tags: tagList,
+      entryType,
+      linkedEntityIds: draftEntityIds,
+      linkedLogIds: draftLogIds,
+      entityId: options.entityId,
+    };
+  }
+
+  async function executeSave(): Promise<UnifiedCreateResult> {
+    const result = await saveUnifiedCreateFlowAction(buildSavePayload());
+    onSaved?.(result);
+    router.refresh();
+    return result;
+  }
+
   function handleSave() {
     setError(null);
     startTransition(async () => {
       try {
-        const payload: UnifiedCreatePayload = {
-          mode,
-          itemKind,
-          name: name.trim(),
-          title: title.trim(),
-          body: body.trim(),
-          notes: entityNotesForDisplay(notes),
-          eventDate,
-          tags: tagList,
-          entryType,
-          linkedEntityIds: draftEntityIds,
-          linkedLogIds: draftLogIds,
-          entityId: options.entityId,
-        };
-
-        const result = await saveUnifiedCreateFlowAction(payload);
-        onSaved?.(result);
+        const result = await executeSave();
         onClose();
-
         if (mode === "create" && !onSaved) {
           router.push(postCreateHref(pathname, itemKind, result.id, result.href));
         }
-        router.refresh();
       } catch (err) {
         const { layer, message } = formatArgusError(err);
         setError(`${layer.toUpperCase()}: ${message}`);
@@ -339,6 +345,8 @@ export function useCreateLinkFlowState({
     toggleEntity,
     toggleLog,
     canSave,
+    buildSavePayload,
+    executeSave,
     handleSave,
     handleMissingCreate,
   };
