@@ -176,7 +176,20 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
     data.summary.expectancy !== null && data.summary.expectancy >= 0 ? "pos" : "neg";
 
   return (
-    <div className="flex min-h-[720px] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-100">
+    <div className="flex h-full min-h-0 w-full overflow-hidden bg-zinc-950 text-zinc-100">
+      {/* Mobile top bar */}
+      <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-3 lg:hidden">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold">
+            M
+          </span>
+          <span className="font-semibold">MatrixTrade</span>
+        </div>
+        <Link href="/" className="text-xs text-zinc-500 hover:text-zinc-300">
+          Classic →
+        </Link>
+      </div>
+
       {/* Left sidebar */}
       <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 p-4 lg:flex xl:w-60">
         <div className="mb-8 flex items-center gap-2">
@@ -241,11 +254,17 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
               Loss budget {formatSituationUsd(data.summary.lossBudgetRemaining)} left
             </p>
           </div>
+          <Link
+            href="/"
+            className="block text-xs text-zinc-600 transition hover:text-zinc-400"
+          >
+            Classic dashboard →
+          </Link>
         </div>
       </aside>
 
       {/* Center */}
-      <div className="min-w-0 flex-1 overflow-y-auto">
+      <div className="min-w-0 flex-1 overflow-y-auto pt-14 lg:pt-0">
         <div className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -256,12 +275,18 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
                 Situation room · read-only briefing
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/"
+                className="hidden rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 sm:inline-block"
+              >
+                Classic dashboard →
+              </Link>
               <span className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400">
                 {data.cycleLabel} (Current)
               </span>
               <Link
-                href="/trades/new"
+                href="/trades-preview"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
               >
                 + New Trade

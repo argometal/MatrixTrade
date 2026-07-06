@@ -175,8 +175,20 @@ export function TradesWorkspace({
       : null;
 
   return (
-    <div className="flex min-h-[800px] overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-100">
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800 p-4 lg:flex xl:w-60">
+    <div className="relative flex h-full min-h-0 w-full overflow-hidden bg-zinc-950 text-zinc-100">
+      <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-3 lg:hidden">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold">
+            M
+          </span>
+          <span className="font-semibold">MatrixTrade</span>
+        </div>
+        <Link href="/trades" className="text-xs text-zinc-500 hover:text-zinc-300">
+          Classic →
+        </Link>
+      </div>
+
+      <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 p-4 lg:flex xl:w-60">
         <div className="mb-8 flex items-center gap-2">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold">
             M
@@ -200,10 +212,13 @@ export function TradesWorkspace({
         </nav>
         <div className="mt-auto border-t border-zinc-800 pt-4 text-xs text-zinc-500">
           <p>{data.counts.closed} / {data.tradesMax} trades this cycle</p>
+          <Link href="/trades" className="mt-3 block text-zinc-600 hover:text-zinc-400">
+            Classic trades →
+          </Link>
         </div>
       </aside>
 
-      <div className="min-w-0 flex-1 overflow-y-auto">
+      <div className="min-w-0 flex-1 overflow-y-auto pt-14 lg:pt-0">
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -213,6 +228,12 @@ export function TradesWorkspace({
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Link
+                href="/trades"
+                className="hidden rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-500 hover:text-zinc-300 sm:inline-block"
+              >
+                Classic trades →
+              </Link>
               <Link
                 href="/exchange"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:border-zinc-600"

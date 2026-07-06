@@ -39,7 +39,13 @@ function ArgusMark({ size = 40 }: { size?: number }) {
 
 export function ArgusCornerEntry() {
   const pathname = usePathname();
-  if (pathname.startsWith("/argus")) return null;
+  if (
+    pathname.startsWith("/argus") ||
+    pathname.startsWith("/home-preview") ||
+    pathname.startsWith("/trades-preview")
+  ) {
+    return null;
+  }
 
   return (
     <Link
