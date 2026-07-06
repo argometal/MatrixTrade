@@ -104,7 +104,7 @@ export default async function V2HomePage({
         </Link>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5" id="stats">
         {stats.map((stat) => (
           <V2HomeStatCard key={stat.label} stat={stat} />
         ))}
@@ -150,6 +150,7 @@ export default async function V2HomePage({
               )}
             </V2Card>
 
+            <div id="follow-ups">
             <V2Card className="flex flex-col p-5">
               <V2SectionTitle
                 action={
@@ -195,6 +196,7 @@ export default async function V2HomePage({
                 </ul>
               )}
             </V2Card>
+            </div>
           </div>
 
           <V2Card className="p-5">
@@ -213,6 +215,7 @@ export default async function V2HomePage({
             )}
           </V2Card>
 
+          <div id="tags">
           <V2Card className="p-5">
             <V2SectionTitle>Tags</V2SectionTitle>
             {tags.length === 0 ? (
@@ -231,6 +234,7 @@ export default async function V2HomePage({
               </div>
             )}
           </V2Card>
+          </div>
         </aside>
       </div>
 

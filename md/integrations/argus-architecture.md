@@ -3,6 +3,8 @@
 **Status:** Accepted — documentation only  
 **Implementation:** Do not implement until this document and [`argus-design-principles.md`](argus-design-principles.md) are complete.
 
+**AI rule of construction:** [`md/argus/ai-charter.md`](../argus/ai-charter.md) — preserve professional truth; never fabricate evidence.
+
 This is the architecture constitution for ARGUS inside MatrixTrade. Trading and ARGUS share auth only — no shared business logic or data.
 
 ---
@@ -17,7 +19,7 @@ This is the architecture constitution for ARGUS inside MatrixTrade. Trading and 
 | **Search** | Cross-cutting retrieval. Not part of the data pipeline. |
 | **Event / Follow-up** | Derived concepts — not primary user-facing types. Classification inferred from metadata (dates), not chosen upfront. |
 | **Inbox raw content** | Immutable. Never modified after receipt. |
-| **AI** | Annotates only. Never replaces original content. |
+| **AI** | Annotates only. Never replaces original content. See [`ai-charter.md`](../argus/ai-charter.md). |
 
 ---
 

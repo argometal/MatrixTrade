@@ -79,7 +79,7 @@ export function buildV2HomeStats(data: ArgusData, inboxItems: InboxItem[], today
       value: String(kinds.people.length),
       delta: kinds.people.length ? "Active roster" : "None yet",
       icon: "people",
-      href: "/argus/network",
+      href: "/argus/v2/browse/network",
     },
     {
       label: "Organizations",

@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
+import { V2BrowseStatusFilter } from "@/app/argus/v2/components/V2BrowseStatusFilter";
 import { V2Badge } from "../../../components/v2-ui";
 import type {
   V2ProjectBrowseCard,
+  V2ProjectBrowseStatus,
   V2ProjectBrowseSummary,
 } from "@/lib/argus/v2/project-browse-utils";
 
@@ -148,8 +150,13 @@ export function V2ProjectsBrowserShell({
   summary: V2ProjectBrowseSummary;
 }) {
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [statusFilter, setStatusFilter] = useState<V2ProjectBrowseStatus | "all">("all");
 
   const sorted = useMemo(() => cards, [cards]);
+  const filtered = useMemo(
+    () => (statusFilter === "all" ? sorted : sorted.filter((c) => c.status === statusFilter)),
+    [sorted, statusFilter]
+  );
 
   return (
     <div className="px-4 py-6 lg:px-8">
@@ -181,12 +188,19 @@ export function V2ProjectsBrowserShell({
               ☰
             </button>
           </div>
-          <button
-            type="button"
-            className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-          >
-            Filters
-          </button>
+          <V2BrowseStatusFilter
+            label="Filters"
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: "all", label: "All statuses" },
+              { value: "Planning", label: "Planning" },
+              { value: "Active", label: "Active" },
+              { value: "On Hold", label: "On Hold" },
+              { value: "Completed", label: "Completed" },
+              { value: "Archived", label: "Archived" },
+            ]}
+          />
           <V2CreateEntityButton
             kind="project"
             label="+ Project"
@@ -204,20 +218,20 @@ export function V2ProjectsBrowserShell({
         <SummaryPill label="Archived" value={summary.archived} />
       </div>
 
-      {sorted.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
           <p className="text-sm text-zinc-500">No projects yet.</p>
           <p className="mt-1 text-xs text-zinc-600">Create one to start building a project case file.</p>
         </div>
       ) : view === "grid" ? (
         <div className="grid gap-4 lg:grid-cols-2">
-          {sorted.map((card) => (
+          {filtered.map((card) => (
             <ProjectCard key={card.id} card={card} />
           ))}
         </div>
       ) : (
         <div className="space-y-2">
-          {sorted.map((card) => (
+          {filtered.map((card) => (
             <ProjectListRow key={card.id} card={card} />
           ))}
         </div>

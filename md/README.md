@@ -69,6 +69,8 @@ Private repo: `github.com/argometal/MatrixTrade`
 | [v2-hierarchy-implementation-report.md](argus/v2-hierarchy-implementation-report.md) | **v2 linking rules** — org direct-only scope, project via contacts, code map |
 | [network-browse-spec.md](argus/network-browse-spec.md) | **Network browser** — relationship intelligence, strength from evidence |
 | [v2-design-checklist.md](argus/v2-design-checklist.md) | **v2 design QA checklist** — verify each screen; reset on redesign |
+| [v2-checklist-solutions.md](argus/v2-checklist-solutions.md) | How each checklist item is solved or deferred |
+| [checklist-protocol.md](argus/checklist-protocol.md) | **Mandatory:** update checklist on every v2 UI change |
 | [design-matrix-stage.md](argus/design-matrix-stage.md) | Three lenses (org / project / person) and v2 route map |
 | [product-flow-proposal.md](argus/product-flow-proposal.md) | Evidence → relations → narrative; 30-second story test |
 | [changes-numbered.md](argus/changes-numbered.md) | Numbered change log (inbox linking, v2 hierarchy, etc.) |

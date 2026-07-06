@@ -2,6 +2,8 @@
 
 **Status:** Canonical design brief — **schema locked** (2026-07-04). Phase 1 DDL draft for review.
 
+**AI rule of construction:** [`ai-charter.md`](ai-charter.md) — facts before opinions; evidence before conclusions.
+
 **Objective:** Refactor the current data model into a single, consistent knowledge architecture that behaves like a graph, not a folder hierarchy.
 
 ---

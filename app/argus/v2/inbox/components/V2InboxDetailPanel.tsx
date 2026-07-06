@@ -15,7 +15,7 @@ import { INBOX, LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 import {
   archiveInboxAction,
   convertInboxAction,
-  linkInboxAction,
+  setInboxLinksAction,
   type CreatedEntityResult,
 } from "@/app/argus/actions";
 import {
@@ -116,14 +116,13 @@ export function V2InboxDetailPanel({
     .filter((entity): entity is V2InboxDetailEntity => Boolean(entity));
 
   async function persistLinks(ids: string[]) {
-    if (ids.length === 0) return;
     setLinkSaving(true);
     try {
       const formData = new FormData();
       formData.set("inboxId", item.id);
       formData.set("returnTo", returnTo);
       for (const id of ids) formData.append("entityIds", id);
-      await linkInboxAction(formData);
+      await setInboxLinksAction(formData);
     } finally {
       setLinkSaving(false);
     }
@@ -136,7 +135,7 @@ export function V2InboxDetailPanel({
   async function removeLink(id: string) {
     const next = linkIds.filter((value) => value !== id);
     setLinkIds(next);
-    if (next.length > 0) await persistLinks(next);
+    await persistLinks(next);
   }
 
   async function addSuggestedEntity(entity: V2InboxDetailEntity) {

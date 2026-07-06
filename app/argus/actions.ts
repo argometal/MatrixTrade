@@ -17,6 +17,7 @@ import {
   getEntity,
   getLog,
   linkInboxToEntities,
+  setInboxLinkedEntities,
   readArgus,
   saveAttachment,
   setInboxPrivate,
@@ -324,6 +325,22 @@ export async function linkInboxAction(formData: FormData): Promise<void> {
     redirect(`/argus/inbox/${inboxId}?error=reference`);
   }
   await linkInboxToEntities(inboxId, validIds);
+  revalidateArgus();
+  revalidatePath(`/argus/inbox/${inboxId}`);
+  revalidatePath("/argus/v2/inbox");
+  const returnTo = String(formData.get("returnTo") ?? "inbox");
+  if (returnTo === "journal") redirect("/argus/journal");
+  if (returnTo.startsWith("/argus/")) redirect(returnTo);
+  redirect(`/argus/inbox/${inboxId}`);
+}
+
+/** Replace inbox links exactly (v2 link UI — supports unlink). */
+export async function setInboxLinksAction(formData: FormData): Promise<void> {
+  const inboxId = String(formData.get("inboxId") ?? "");
+  const entityIds = await resolveEntityIds(formData);
+  const data = await readArgus();
+  const validIds = filterLinkIdsForSource(data.entities, "inbox", entityIds);
+  await setInboxLinkedEntities(inboxId, validIds);
   revalidateArgus();
   revalidatePath(`/argus/inbox/${inboxId}`);
   revalidatePath("/argus/v2/inbox");

@@ -1,12 +1,22 @@
 ---
-description: Update md/design checklists when MatrixTrade preview or major UI changes
-globs: app/components/**/*preview*/**,app/(trading)/**,md/design/**
+description: Update design checklists when MatrixTrade or ARGUS v2 preview UI changes
+globs: app/argus/v2/**,app/components/**/*preview*/**,app/(trading)/**,md/design/**,md/argus/v2-design-checklist.md,md/argus/checklist-protocol.md
 alwaysApply: false
 ---
 
 # Design checklist maintenance
 
-When you **add, remove, or change** MatrixTrade preview UI or a documented screen:
+When you **add, remove, or change** preview UI or a documented screen:
+
+## ARGUS v2 (`/argus/v2/*`)
+
+1. Update [`md/argus/v2-design-checklist.md`](md/argus/v2-design-checklist.md) — follow [`md/argus/checklist-protocol.md`](md/argus/checklist-protocol.md).
+2. Add a row to **Checklist maintenance log** in the same session.
+3. Bump **Design version** on redesign; reset affected `[x]` → `[ ]`.
+4. Update [`md/argus/changes-numbered.md`](md/argus/changes-numbered.md) when using a numbered change.
+5. Do not mark `[x]` unless the user verified; use `[~]` for placeholders.
+
+## MatrixTrade previews (Home, Trades, etc.)
 
 1. Find or create `md/design/<screen>-checklist.md` (see `md/design/README.md`).
 2. **Update checklist items** so they match current behavior (add/remove/reword sections).

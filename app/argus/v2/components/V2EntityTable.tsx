@@ -27,7 +27,7 @@ export function V2EntityTable({
             key={t}
             href={
               t === "organizations"
-                ? "/argus/v2"
+                ? "/argus/v2?tab=organizations"
                 : t === "topics"
                   ? "/argus/v2/browse/topics"
                   : t === "events"

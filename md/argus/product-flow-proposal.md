@@ -3,6 +3,7 @@
 **Date:** 2026-07-04  
 **Scope:** Flow reset proposal only — no schema changes, no new features, no code in this pass.  
 **Canonical lens:** Evidence → Relations → Narrative views ([`knowledge-model-v01.md`](knowledge-model-v01.md))  
+**AI rule of construction:** [`ai-charter.md`](ai-charter.md) — reconstruct reality from evidence; nothing invented.  
 **Product pain:** *“Reconstruct a professional story I can defend.”*
 
 ---

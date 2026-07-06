@@ -2,6 +2,10 @@
 
 **Status:** Locked for implementation. Current production UI unchanged; new shells live under `/argus/v2/*`.
 
+**QA checklist:** [`v2-design-checklist.md`](v2-design-checklist.md) · **Update rule:** [`checklist-protocol.md`](checklist-protocol.md)
+
+**AI rule of construction:** [`ai-charter.md`](ai-charter.md) — metrics prioritize attention; people are never reduced to scores.
+
 ## Three lenses (one evidence graph)
 
 | Lens | Time | Question | Evidence scope |

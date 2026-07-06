@@ -21,6 +21,7 @@ import type {
   LogInput,
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
+import { inboxStatusAfterLinkReplace } from "./inbox-store/set-linked-entities";
 import {
   filterLinkIdsForSource,
   linkSourceKindFromEntity,
@@ -646,6 +647,33 @@ export async function linkInboxToEntities(inboxId: string, entityIds: string[]):
     ...inbox,
     linkedEntityIds: merged,
     status: inbox.status === "converted" ? "converted" : "linked",
+  };
+
+  for (const eid of unique) {
+    const entity = data.entities.find((e) => e.id === eid);
+    if (entity) entity.updatedAt = now;
+  }
+
+  await writeArgus(data);
+  return data.inboxItems[idx];
+}
+
+/** Replace inbox entity links exactly (supports unlink all). Used by v2 link UI. */
+export async function setInboxLinkedEntities(inboxId: string, entityIds: string[]): Promise<InboxItem> {
+  if (isCloudInboxStore()) return cloudInbox.setInboxLinkedEntities(inboxId, entityIds);
+  const unique = [...new Set(entityIds.filter(Boolean))];
+
+  const data = await readArgus();
+  const idx = data.inboxItems.findIndex((i) => i.id === inboxId);
+  if (idx === -1) throw new Error("Inbox item not found");
+  const inbox = data.inboxItems[idx];
+  if (inbox.status === "archived") throw new Error("Inbox item is archived");
+
+  const now = new Date().toISOString();
+  data.inboxItems[idx] = {
+    ...inbox,
+    linkedEntityIds: unique,
+    status: inboxStatusAfterLinkReplace(inbox, unique.length),
   };
 
   for (const eid of unique) {

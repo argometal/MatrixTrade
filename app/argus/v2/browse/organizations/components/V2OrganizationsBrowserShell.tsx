@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
+import { V2BrowseStatusFilter } from "@/app/argus/v2/components/V2BrowseStatusFilter";
 import { V2RelationshipChart } from "@/app/argus/v2/components/V2RelationshipChart";
 import { V2Badge } from "../../../components/v2-ui";
 import type {
   V2OrganizationBrowseCard,
+  V2OrganizationBrowseStatus,
   V2OrganizationBrowseSummary,
 } from "@/lib/argus/v2/organization-browse-utils";
 
@@ -213,7 +215,12 @@ export function V2OrganizationsBrowserShell({
   summary: V2OrganizationBrowseSummary;
 }) {
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [statusFilter, setStatusFilter] = useState<V2OrganizationBrowseStatus | "all">("all");
   const sorted = useMemo(() => cards, [cards]);
+  const filtered = useMemo(
+    () => (statusFilter === "all" ? sorted : sorted.filter((c) => c.status === statusFilter)),
+    [sorted, statusFilter]
+  );
 
   return (
     <div className="px-4 py-6 lg:px-8">
@@ -252,12 +259,18 @@ export function V2OrganizationsBrowserShell({
                   ☰
                 </button>
               </div>
-              <button
-                type="button"
-                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-              >
-                Filters
-              </button>
+              <V2BrowseStatusFilter
+                label="Filters"
+                value={statusFilter}
+                onChange={setStatusFilter}
+                options={[
+                  { value: "all", label: "All statuses" },
+                  { value: "Prospect", label: "Prospect" },
+                  { value: "Active", label: "Active" },
+                  { value: "Inactive", label: "Inactive" },
+                  { value: "Archived", label: "Archived" },
+                ]}
+              />
               <V2CreateEntityButton
                 kind="organization"
                 label="+ Organization"
@@ -274,7 +287,7 @@ export function V2OrganizationsBrowserShell({
             <SummaryPill label="Total Projects" value={summary.totalProjects} icon="📁" tone="blue" />
           </div>
 
-          {sorted.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
               <p className="text-sm text-zinc-500">No organizations yet.</p>
               <p className="mt-1 text-xs text-zinc-600">
@@ -283,23 +296,23 @@ export function V2OrganizationsBrowserShell({
             </div>
           ) : view === "grid" ? (
             <div className="grid gap-4 lg:grid-cols-2">
-              {sorted.map((card) => (
+              {filtered.map((card) => (
                 <OrganizationCard key={card.id} card={card} />
               ))}
             </div>
           ) : (
             <div className="space-y-2">
-              {sorted.map((card) => (
+              {filtered.map((card) => (
                 <OrganizationListRow key={card.id} card={card} />
               ))}
             </div>
           )}
 
-          {sorted.length > 0 ? (
+          {filtered.length > 0 ? (
             <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800/80 pt-4 text-xs text-zinc-500">
               <p>
-                Showing 1 to {sorted.length} of {sorted.length} organization
-                {sorted.length === 1 ? "" : "s"}
+                Showing 1 to {filtered.length} of {filtered.length} organization
+                {filtered.length === 1 ? "" : "s"}
               </p>
             </footer>
           ) : null}

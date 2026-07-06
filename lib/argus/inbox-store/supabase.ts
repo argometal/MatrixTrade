@@ -1,3 +1,4 @@
+import { inboxStatusAfterLinkReplace } from "../inbox-store/set-linked-entities";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { isArgusInboxPrivateColumnReady, isArgusSoftDeleteSchemaReady } from "../supabase-protection/schema-ready";
 import type { Attachment, AttachmentParentType, InboxItem, InboxItemInput } from "../types";
@@ -245,6 +246,27 @@ export async function linkInboxToEntities(inboxId: string, entityIds: string[]):
   if (softDeleteReady) query = query.is("deleted_at", null);
   const { data, error } = await query.select("*").single();
   if (error) throw new Error(`Supabase inbox link failed: ${error.message}`);
+  return rowToInboxItem(data as InboxRow);
+}
+
+export async function setInboxLinkedEntities(inboxId: string, entityIds: string[]): Promise<InboxItem> {
+  const unique = [...new Set(entityIds.filter(Boolean))];
+
+  const item = await getInboxItem(inboxId);
+  if (!item) throw new Error("Inbox item not found");
+  if (item.status === "archived") throw new Error("Inbox item is archived");
+
+  const status = inboxStatusAfterLinkReplace(item, unique.length);
+
+  const softDeleteReady = await isArgusSoftDeleteSchemaReady();
+  const supabase = createSupabaseAdmin();
+  let query = supabase
+    .from("argus_inbox_items")
+    .update({ linked_entity_ids: unique, status })
+    .eq("id", inboxId);
+  if (softDeleteReady) query = query.is("deleted_at", null);
+  const { data, error } = await query.select("*").single();
+  if (error) throw new Error(`Supabase inbox set links failed: ${error.message}`);
   return rowToInboxItem(data as InboxRow);
 }
 

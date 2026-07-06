@@ -23,6 +23,9 @@ function isBrowseNavActive(pathname: string, href: string, label: string): boole
   if (label === "Organizations") {
     return pathname.startsWith("/argus/v2/browse/organizations") || pathname.startsWith("/argus/v2/organizations/");
   }
+  if (label === "People" || label === "Network") {
+    return pathname.startsWith("/argus/v2/browse/network") || pathname.startsWith("/argus/network/");
+  }
   return pathname.startsWith(href);
 }
 
@@ -32,7 +35,7 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
   const browse = [
     { href: "/argus/v2/browse/organizations", label: "Organizations", count: counts.organizations },
     { href: "/argus/v2/browse/projects", label: "Projects", count: counts.projects },
-    { href: "/argus/network", label: "People", count: counts.people },
+    { href: "/argus/v2/browse/network", label: "People", count: counts.people },
     { href: "/argus/v2/browse/topics", label: "Topics", count: counts.topics },
     { href: "/argus/v2/browse/events", label: "Events", count: counts.events },
   ];
@@ -64,13 +67,18 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
         </NavGroup>
 
         <NavGroup title="Intelligence">
-          <NavItem href="/argus/network" label="Network" count={counts.network} active={pathname.startsWith("/argus/network")} />
-          <NavItem href="/argus/journal" label="Follow Ups" count={counts.followUps} active={false} />
+          <NavItem
+            href="/argus/v2/browse/network"
+            label="Network"
+            count={counts.network}
+            active={pathname.startsWith("/argus/v2/browse/network") || pathname.startsWith("/argus/network/")}
+          />
+          <NavItem href="/argus/v2#follow-ups" label="Follow Ups" count={counts.followUps} active={false} />
           <NavItem href="/argus/journal" label="Reminders" count={counts.reminders} active={false} />
         </NavGroup>
 
         <NavGroup title="Settings">
-          <NavItem href="/argus/journal" label="Tags" active={false} />
+          <NavItem href="/argus/v2#tags" label="Tags" active={false} />
           <NavItem href="/argus/journal" label="Protected" active={false} />
           <NavItem href="/argus/diagnostics" label="Settings" active={pathname.startsWith("/argus/diagnostics")} />
         </NavGroup>
@@ -93,7 +101,7 @@ export function V2MobileNav({ inboxCount = 0 }: { inboxCount?: number }) {
   const pathname = usePathname();
   const items = [
     { href: "/argus/v2", label: "Home", icon: "⌂" },
-    { href: "/argus/network", label: "Network", icon: "◉" },
+    { href: "/argus/v2/browse/network", label: "Network", icon: "◉" },
     { href: "/argus/v2/inbox", label: "Inbox", icon: "✉", badge: inboxCount },
     { href: "/argus/search", label: "Search", icon: "⌕" },
   ];

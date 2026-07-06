@@ -1,4 +1,5 @@
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { requireArgusSession } from "@/lib/auth/require-session";
 import { ArgusAddProvider } from "@/app/argus/components/ArgusAddProvider";
 import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
@@ -20,7 +21,11 @@ export default async function V2Layout({ children }: { children: React.ReactNode
       <div className="min-h-screen bg-zinc-950">
         <V2Sidebar counts={navCounts} />
         <div className="flex min-h-screen min-w-0 flex-col lg:pl-56 xl:pl-60">
-          <V2TopBar />
+          <V2TopBar
+            inboxCount={navCounts.inbox}
+            privateConfigured={argusPrivateConfigured()}
+            privateUnlocked={includePrivate}
+          />
           <main className="min-w-0 flex-1 overflow-x-hidden pb-24 lg:pb-8 [&:has(.v2-inbox-shell)]:overflow-hidden [&:has(.v2-inbox-shell)]:pb-0 lg:[&:has(.v2-inbox-shell)]:pb-0 [&:has(.v2-browse-shell)]:overflow-hidden [&:has(.v2-browse-shell)]:pb-0 lg:[&:has(.v2-browse-shell)]:pb-0">
             {children}
           </main>

@@ -1,7 +1,33 @@
-import Link from "next/link";
-import { AddJournalMenuButton } from "@/app/argus/components/ArgusAddLauncher";
+"use client";
 
-export function V2TopBar() {
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { AddJournalMenuButton } from "@/app/argus/components/ArgusAddLauncher";
+import { PrivateLockMenu } from "@/app/argus/components/PrivateLockMenu";
+
+export function V2TopBar({
+  inboxCount = 0,
+  privateConfigured = false,
+  privateUnlocked = false,
+}: {
+  inboxCount?: number;
+  privateConfigured?: boolean;
+  privateUnlocked?: boolean;
+}) {
+  const router = useRouter();
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        router.push("/argus/search");
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [router]);
+
   return (
     <header className="sticky top-0 z-40 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
       <div className="flex items-center gap-3 px-4 py-3 lg:px-6">
@@ -12,39 +38,48 @@ export function V2TopBar() {
           <span className="truncate text-base font-bold text-zinc-50">Argus</span>
         </Link>
 
-        <div className="mx-auto hidden max-w-xl flex-1 lg:block">
+        <form action="/argus/search" method="get" className="mx-auto hidden max-w-xl flex-1 lg:block">
           <div className="relative">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">⌕</span>
             <input
-              readOnly
+              name="q"
               placeholder="Search anything…"
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-9 pr-16 text-sm text-zinc-300 placeholder:text-zinc-600"
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-9 pr-16 text-sm text-zinc-300 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none"
             />
             <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-500">
               ⌘ K
             </kbd>
           </div>
-        </div>
+        </form>
 
         <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            className="hidden items-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-400 sm:inline-flex"
-          >
-            <span aria-hidden>🛡</span> PIN
-          </button>
+          {privateConfigured ? (
+            <PrivateLockMenu configured={privateConfigured} unlocked={privateUnlocked} />
+          ) : (
+            <span
+              className="hidden items-center gap-1.5 rounded-xl border border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-600 sm:inline-flex"
+              title="Set ARGUS_PRIVATE_PIN to enable protected records"
+            >
+              <span aria-hidden>🛡</span> PIN
+            </span>
+          )}
           <AddJournalMenuButton className="shrink-0" />
-          <button
-            type="button"
+          <Link
+            href="/argus/v2/inbox"
             className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 sm:flex"
-            aria-label="Notifications"
+            aria-label="Inbox"
           >
             🔔
-            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">
-              12
-            </span>
-          </button>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600/30 text-xs font-bold text-violet-200 ring-1 ring-violet-500/40">
+            {inboxCount > 0 ? (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                {inboxCount > 99 ? "99+" : inboxCount}
+              </span>
+            ) : null}
+          </Link>
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600/30 text-xs font-bold text-violet-200 ring-1 ring-violet-500/40"
+            title="Profile"
+          >
             VA
           </div>
         </div>

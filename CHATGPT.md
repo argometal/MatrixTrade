@@ -28,7 +28,7 @@ No ARGUS. Fuente de verdad: data/trades.json + Obsidian local.
 **Bridge detail:** [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md)  
 **Vercel + ARGUS production (OPEN):** [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md)  
 **ARGUS for ChatGPT:** [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md)  
-**ARGUS architecture (constitution):** [`md/integrations/argus-architecture.md`](md/integrations/argus-architecture.md) · [`md/integrations/argus-design-principles.md`](md/integrations/argus-design-principles.md)
+**ARGUS architecture (constitution):** [`md/integrations/argus-architecture.md`](md/integrations/argus-architecture.md) · [`md/integrations/argus-design-principles.md`](md/integrations/argus-design-principles.md) · [`md/argus/ai-charter.md`](md/argus/ai-charter.md)
 
 ---
 
@@ -82,7 +82,7 @@ ChatGPT → POST Worker /inbox → MatrixTrade /inbox → Apply
 | **Stop condition** | Un ciclo real completo documentado por el usuario (no por Cursor) |
 | **Do not start yet** | `experimentId`, auto-sync, MT-IMPORT:v1, nuevas rutas Worker |
 
-**Parallel track (ARGUS):** Architecture frozen — **no UX implementation** until [`argus-architecture.md`](md/integrations/argus-architecture.md) + [`argus-design-principles.md`](md/integrations/argus-design-principles.md) are read. Operational handoff: [`argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md).
+**Parallel track (ARGUS):** Architecture frozen — **no UX implementation** until [`argus-architecture.md`](md/integrations/argus-architecture.md) + [`argus-design-principles.md`](md/integrations/argus-design-principles.md) + [`ai-charter.md`](md/argus/ai-charter.md) are read. Operational handoff: [`argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md).
 
 ---
 
@@ -90,7 +90,7 @@ ChatGPT → POST Worker /inbox → MatrixTrade /inbox → Apply
 
 | | |
 |---|---|
-| **Architecture** | [`argus-architecture.md`](md/integrations/argus-architecture.md) · [`argus-design-principles.md`](md/integrations/argus-design-principles.md) — **read before any ARGUS UX work** |
+| **Architecture** | [`argus-architecture.md`](md/integrations/argus-architecture.md) · [`argus-design-principles.md`](md/integrations/argus-design-principles.md) · [`ai-charter.md`](md/argus/ai-charter.md) — **read before any ARGUS UX or AI work** |
 | **Entry doc for ChatGPT** | [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md) |
 | **Routes** | `/argus/journal`, `/argus/network`, `/argus/inbox`, `/argus/search`, `/argus/new` |
 | **Login** | `/argus/login` — `ARGUS_PASSWORD` |
@@ -350,6 +350,10 @@ User reviews in MatrixTrade `/inbox` — **never auto-applied**.
 | [`md/integrations/chatgpt-bridge.md`](md/integrations/chatgpt-bridge.md) | Roles and política de sync |
 | [`md/integrations/argus-architecture.md`](md/integrations/argus-architecture.md) | **ARGUS accepted architecture — constitution** |
 | [`md/integrations/argus-design-principles.md`](md/integrations/argus-design-principles.md) | **ARGUS design principles — 10 rules** |
+| [`md/argus/ai-charter.md`](md/argus/ai-charter.md) | **ARGUS AI Charter v1.0 — rule of construction for all AI** |
+| [`md/argus/knowledge-model-v01.md`](md/argus/knowledge-model-v01.md) | ARGUS ontology — evidence graph, entities, linking |
+| [`md/argus/v2-design-checklist.md`](md/argus/v2-design-checklist.md) | v2 UI QA checklist — update on every design change |
+| [`md/argus/checklist-protocol.md`](md/argus/checklist-protocol.md) | How to maintain the v2 checklist |
 | [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md) | ARGUS Journal + Network + inbox for ChatGPT |
 | [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md) | Vercel + ARGUS production gap |
 | [`app/api/argus/inbox/route.ts`](app/api/argus/inbox/route.ts) | Write-only ARGUS inbox API |
