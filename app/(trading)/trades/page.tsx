@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TradesViewSwitch } from "@/app/components/trades-preview/TradesViewSwitch";
 import { getExperiment, getTrades } from "@/lib/storage";
 import { calculateTradeResult } from "@/lib/calculate";
 import { isTradeReviewed } from "@/lib/review";
@@ -26,6 +27,9 @@ export default async function TradesPage() {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <TradesViewSwitch mode="classic" />
+      </div>
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Trades</h1>

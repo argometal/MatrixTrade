@@ -52,6 +52,7 @@ export type CreateAiSessionActionResult =
 function revalidateTradingPaths() {
   revalidatePath("/");
   revalidatePath("/trades");
+  revalidatePath("/trades-preview");
   revalidatePath("/stats");
   revalidatePath("/mistakes");
   revalidatePath("/playbook");

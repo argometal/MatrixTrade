@@ -9,7 +9,7 @@ import {
 
 const NAV_MAIN = [
   { href: "/home-preview", label: "Dashboard", active: true },
-  { href: "/trades", label: "Trades", active: false },
+  { href: "/trades-preview", label: "Trades", active: false },
   { href: "/playbook", label: "Playbooks", active: false },
   { href: "/review", label: "Review", active: false },
   { href: "/stats", label: "Statistics", active: false },
@@ -23,7 +23,7 @@ const NAV_SYSTEM = [
 ] as const;
 
 const QUICK_NAV = [
-  { href: "/trades", label: "Trades" },
+  { href: "/trades-preview", label: "Trades" },
   { href: "/review", label: "Review" },
   { href: "/inbox", label: "Inbox" },
   { href: "/stats", label: "Statistics" },
