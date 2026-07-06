@@ -2,7 +2,7 @@ import type { ArgusData, Entity, InboxItem, Log } from "../types";
 import { entityNotesForDisplay } from "../reference-types";
 import { buildEntityIntelligence } from "../network-intelligence";
 import { getUpcomingFollowUps } from "../network";
-import { getLinkedInboxForEntity } from "../entity-evidence";
+import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import {
   entitiesByKind,
   getProjectEvidenceScope,
@@ -10,7 +10,7 @@ import {
   organizationEvidenceScope,
   projectsForOrganization,
 } from "./hierarchy";
-import { getAllProjectScopeInbox } from "../project-evidence";
+import { getAllProjectScopeInbox } from "../project-evidence-scope";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
 import { collectProjectLinkIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";

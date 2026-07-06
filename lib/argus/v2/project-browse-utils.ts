@@ -1,6 +1,6 @@
 import type { ArgusData, Entity, InboxItem } from "../types";
 import { entityNotesForDisplay } from "../reference-types";
-import { getAllProjectScopeInbox, getProjectEvidenceScope } from "../project-evidence";
+import { getAllProjectScopeInbox, getProjectEvidenceScope } from "../project-evidence-scope";
 import { entitiesByKind } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
 import { collectProjectLinkIds, countLinkKinds } from "./entity-link-counts";

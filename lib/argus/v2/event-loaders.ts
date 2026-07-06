@@ -1,7 +1,7 @@
 import type { ArgusData, Entity, InboxItem, Log } from "../types";
 import { entityNotesForDisplay } from "../reference-types";
 import { getEntityHistory } from "../network";
-import { getLinkedInboxForEntity } from "../entity-evidence";
+import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import { entitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { relativeActivityLabel } from "./timeline-builders";
