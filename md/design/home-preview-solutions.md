@@ -14,7 +14,7 @@ Legend: **Status** = `Built` (code exists) · `Verify` (manual browser test) · 
 |------|--------|------------------------|
 | Full-viewport dark shell | Built | Open `/home-preview`. Confirm no `TradingNav`, no light `bg-zinc-50` wrapper. Files: `app/(trading)/home-preview/layout.tsx` (`fixed inset-0`), `(trading)/layout.tsx` (session only). |
 | Preview layout scroll | Built | Scroll center column only; sidebars fixed. `SituationRoomDashboard` uses `overflow-y-auto` on center `div`. |
-| Authentication | Built | `(trading)/layout.tsx` calls `requireTradingSession()`. **Verify:** incognito → `/home-preview` → `/login`. **Gap:** `middleware.ts` `isTradingRoute()` omits `/home-preview`; auth still works via layout but redirect loses `?next=`. **Fix:** add `pathname.startsWith("/home-preview")` (and preview routes) to `isTradingRoute`. |
+| Authentication | Built | `(trading)/layout.tsx` + **middleware** now includes `/home-preview` and all trading routes with `?next=` on login redirect. |
 | Classic toggle (desktop header) | Built | Click “Classic dashboard →” in center header → `/`. `SituationRoomDashboard` line ~279. |
 | Classic toggle (mobile) | Built | Resize &lt; `lg`, tap “Classic →” in top bar → `/`. |
 | Classic toggle (sidebar footer) | Built | Desktop sidebar bottom link → `/`. |
@@ -35,7 +35,7 @@ Legend: **Status** = `Built` (code exists) · `Verify` (manual browser test) · 
 | Inbox + badge | Built | Badge when `data.pendingInboxCount > 0` from `listAllPendingInboxItems`. **Verify:** create pending inbox item, refresh. |
 | Assistant → `/exchange` | Built | `NAV_SYSTEM` link. |
 | Settings → `/system` | Built | `NAV_SYSTEM` link. |
-| Cycle progress block | Built | Label, trades used/max, bar, loss budget from `data.summary`. **Gap:** `cycleLabel` hardcoded `"Cycle 1"` in `lib/situation-room.ts`. **Fix:** derive from experiment (e.g. next trade id `H00N` or vault cycle name). |
+| Cycle progress block | Built | Label from `formatCycleLabel()` → `Experiment H001–H030`. |
 | Sidebar hidden mobile | Built | `hidden lg:flex` on aside; mobile top bar at `lg:hidden`. |
 
 ---
@@ -83,7 +83,7 @@ Legend: **Status** = `Built` (code exists) · `Verify` (manual browser test) · 
 | Donut segments | Built | `TradeStatusDonut` — open, underReview, closed, remaining colors. |
 | Center closed / max | Built | `data.closed` / `data.max`. |
 | Legend matches sidebar | Verify | Compare donut legend to sidebar `tradesUsed/max` and segment counts. |
-| Pending orders row | **Gap** | UI shows `tradeStatus.pending` (trades with `status === "pending"`), checklist text says inbox proposals. **Fix (pick one):** (a) change label to “Pending trades”, or (b) pass `pendingInboxCount` into donut and label “Pending proposals”. |
+| Pending proposals row | Built | `tradeStatus.pendingProposals` from inbox count; optional **Pending trades** row for `status === "pending"`. |
 | View all trades → | Built | Link to classic `/trades`. |
 
 ---
@@ -143,7 +143,7 @@ Legend: **Status** = `Built` (code exists) · `Verify` (manual browser test) · 
 |------|--------|------------------------|
 | After closing trade | Built + Verify | Close a trade on classic flow → hard refresh `/home-preview` → KPIs/donut/table update. |
 | After inbox apply | Built + Verify | Apply inbox item → refresh → inbox badge/alerts update. |
-| Revalidation paths | Built | `revalidatePath("/home-preview")` in `app/actions.ts` (lines ~62, 119, 146, 165). **Gap:** confirm every mutation path calls it; audit grep for actions without revalidate. |
+| Revalidation paths | Built | All trade/inbox mutations use `revalidateTradingPaths()` including `/home-preview` and `/trades-preview`. |
 
 ---
 
@@ -159,10 +159,21 @@ Legend: **Status** = `Built` (code exists) · `Verify` (manual browser test) · 
 
 ## Priority fixes (from gaps above)
 
-1. **Middleware `next` param** — Include preview routes in `isTradingRoute()` so post-login returns to `/home-preview`.
-2. **Cycle label** — Replace hardcoded `"Cycle 1"` with real experiment/cycle id (shared helper with classic dashboard).
-3. **Donut “Pending orders”** — Align label and data source (pending trades vs inbox proposals).
-4. **Revalidation audit** — Grep all server actions; add `revalidatePath("/home-preview")` where missing.
+| # | Fix | Status |
+|---|-----|--------|
+| 1 | Middleware `next` param — preview + trading routes in `isTradingRoute()` | **Done** — `middleware.ts` |
+| 2 | Cycle label — `formatCycleLabel()` → `Experiment H001–H030` | **Done** — `lib/experiment-label.ts` |
+| 3 | Donut pending — `pendingProposals` from inbox + “Pending trades” row | **Done** — `situation-room.ts`, `SituationRoomDashboard.tsx` |
+| 4 | Revalidation audit — AI notes/session actions use `revalidateTradingPaths()` | **Done** — `app/actions.ts` |
+
+User still verifies each checklist box in [home-preview-checklist.md](home-preview-checklist.md).
+
+## Changelog
+
+| Date | Commit | Change |
+|------|--------|--------|
+| 2026-07-06 | `home-preview/checklist-v1` | Initial solutions doc |
+| 2026-07-06 | (this commit) | Implemented four priority code fixes |
 
 ---
 

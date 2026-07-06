@@ -51,6 +51,7 @@ export type CreateAiSessionActionResult =
 
 function revalidateTradingPaths() {
   revalidatePath("/");
+  revalidatePath("/home-preview");
   revalidatePath("/trades");
   revalidatePath("/trades-preview");
   revalidatePath("/stats");
@@ -58,8 +59,6 @@ function revalidateTradingPaths() {
   revalidatePath("/playbook");
   revalidatePath("/review");
   revalidatePath("/journal");
-  revalidatePath("/");
-  revalidatePath("/home-preview");
   revalidatePath("/exchange");
   revalidatePath("/ai-workspace");
   revalidatePath("/inbox");
@@ -115,10 +114,7 @@ export async function saveAiNotesAction(formData: FormData): Promise<SaveAiNotes
         proposalJson: note.proposalJson,
       }))
     );
-    revalidatePath("/");
-  revalidatePath("/home-preview");
-  revalidatePath("/exchange");
-  revalidatePath("/ai-workspace");
+    revalidateTradingPaths();
     return { count: parsed.notes.length };
   } catch (err) {
     return {
@@ -142,10 +138,7 @@ export async function createAiSessionAction(
     const { token } = await createAiSession({ ttlMinutes, label });
     const connectUrl = buildAiConnectUrl(token);
     const qrDataUrl = await createQrDataUrl(connectUrl);
-    revalidatePath("/");
-  revalidatePath("/home-preview");
-  revalidatePath("/exchange");
-  revalidatePath("/ai-workspace");
+    revalidateTradingPaths();
     return { token, connectUrl, qrDataUrl };
   } catch (err) {
     return {
@@ -161,10 +154,7 @@ export async function revokeAiSessionAction(formData: FormData): Promise<void> {
   if (sessionId) {
     await revokeAiSession(sessionId);
   }
-  revalidatePath("/");
-  revalidatePath("/home-preview");
-  revalidatePath("/exchange");
-  revalidatePath("/ai-workspace");
+  revalidateTradingPaths();
 }
 
 export async function syncBridgeFormAction(): Promise<void> {

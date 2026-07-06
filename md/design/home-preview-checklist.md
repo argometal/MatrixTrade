@@ -16,6 +16,9 @@ Use this list after every deploy or redesign. Check each box only after you have
 |------|--------|--------|
 | 2026-07-06 | `c588a11` | Checklist docs + agent rule saved |
 | 2026-07-06 | `home-preview/checklist-v1` tag | Baseline solutions doc — verification starting point |
+| 2026-07-06 | (pending commit) | Implemented priority fixes: middleware routes, cycle label, donut pending proposals, revalidation consolidation |
+
+**User sign-off:** All boxes stay unchecked until you verify in the browser.
 
 ---
 
@@ -45,7 +48,7 @@ Use this list after every deploy or redesign. Check each box only after you have
 - [ ] **System nav — Inbox** — Links to `/inbox`; badge shows pending count when &gt; 0.
 - [ ] **System nav — Assistant** — Links to `/exchange`.
 - [ ] **System nav — Settings** — Links to `/system`.
-- [ ] **Cycle progress block** — Shows cycle label, trades used / max, progress bar, loss budget remaining.
+- [ ] **Cycle progress block** — Shows cycle label (`Experiment H001–H030`), trades used / max, progress bar, loss budget remaining.
 - [ ] **Sidebar hidden on mobile** — Left nav not shown below `lg`; mobile top bar used instead.
 
 ---
@@ -54,7 +57,7 @@ Use this list after every deploy or redesign. Check each box only after you have
 
 - [ ] **Time-based greeting** — “Good morning / afternoon / evening” + sun emoji.
 - [ ] **Subtitle** — “Situation room · read-only briefing”.
-- [ ] **Cycle badge** — Current cycle label with “(Current)”.
+- [ ] **Cycle badge** — Experiment label with “(Current)” (e.g. `Experiment H001–H030 (Current)`).
 - [ ] **+ New Trade CTA** — Violet button links to `/trades-preview` (not direct Supabase write).
 
 ---
@@ -86,7 +89,7 @@ Use this list after every deploy or redesign. Check each box only after you have
 - [ ] **Donut segments** — Open (green), pending reviews (amber), closed (violet), remaining (gray).
 - [ ] **Center label** — Closed count / max trades in cycle.
 - [ ] **Legend counts** — Each segment value matches sidebar cycle math.
-- [ ] **Pending orders row** — Shown only when pending inbox/proposal count &gt; 0.
+- [ ] **Pending proposals row** — Shown when inbox has pending proposals (`pendingProposals` &gt; 0); separate **Pending trades** row when trade status is pending.
 - [ ] **View all trades →** — Links to classic `/trades`.
 
 ---

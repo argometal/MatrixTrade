@@ -3,6 +3,7 @@ import { calculateTradeResult, winRate } from "./calculate";
 import type { BridgeInboxItem } from "./bridge";
 import { fetchBridgeInbox } from "./bridge";
 import { buildAttentionItems } from "./dashboard-attention";
+import { formatCycleLabel } from "./experiment-label";
 import { getPlaybookName } from "./playbooks";
 import { computeExpectancy, computeRMultiple, buildEquityCurve, type EquityPoint } from "./review";
 import { listAllPendingInboxItems } from "./trading-inbox-storage";
@@ -51,6 +52,7 @@ export interface SituationRoomData {
   tradeStatus: {
     open: number;
     pending: number;
+    pendingProposals: number;
     underReview: number;
     closed: number;
     remaining: number;
@@ -262,7 +264,7 @@ export function buildSituationRoomData(
 
   return {
     greeting: greetingForHour(hour),
-    cycleLabel: "Cycle 1",
+    cycleLabel: formatCycleLabel(experiment),
     summary: {
       totalPnL: experiment.realizedPnL,
       winRate: winRate(experiment),
@@ -285,6 +287,7 @@ export function buildSituationRoomData(
     tradeStatus: {
       open,
       pending,
+      pendingProposals: pendingInboxCount,
       underReview,
       closed,
       remaining,

@@ -1,5 +1,6 @@
 import { computeAllPlaybookStats, computeExpectancyR } from "./analytics";
 import { calculateTradeResult, winRate } from "./calculate";
+import { formatCycleLabel } from "./experiment-label";
 import { getPlaybookName } from "./playbooks";
 import { computeExpectancy, computeRMultiple, computeRiskAmount } from "./review";
 import type { Playbook } from "./playbook-types";
@@ -89,7 +90,7 @@ export function buildTradesWorkspaceData(
     }));
 
   return {
-    cycleLabel: "Cycle 1",
+    cycleLabel: formatCycleLabel(experiment),
     tradesMax: experiment.maxTrades,
     rows,
     counts: {

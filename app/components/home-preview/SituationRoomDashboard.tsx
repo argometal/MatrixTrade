@@ -153,9 +153,15 @@ function TradeStatusDonut({ data }: { data: SituationRoomData["tradeStatus"] }) 
             <span className="font-medium tabular-nums text-zinc-200">{seg.value}</span>
           </li>
         ))}
+        {data.pendingProposals > 0 && (
+          <li className="flex items-center justify-between gap-3 text-zinc-400">
+            <span>Pending proposals</span>
+            <span className="font-medium text-zinc-200">{data.pendingProposals}</span>
+          </li>
+        )}
         {data.pending > 0 && (
           <li className="flex items-center justify-between gap-3 text-zinc-400">
-            <span>Pending orders</span>
+            <span>Pending trades</span>
             <span className="font-medium text-zinc-200">{data.pending}</span>
           </li>
         )}

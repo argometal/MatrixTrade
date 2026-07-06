@@ -10,14 +10,24 @@ function isPublicPath(pathname: string): boolean {
 }
 
 function isTradingRoute(pathname: string): boolean {
-  return (
-    pathname === "/" ||
-    pathname.startsWith("/trades") ||
-    pathname.startsWith("/connect") ||
-    pathname.startsWith("/inbox") ||
-    pathname === "/stats" ||
-    pathname === "/mistakes"
-  );
+  if (pathname === "/") return true;
+
+  const prefixes = [
+    "/trades",
+    "/home-preview",
+    "/connect",
+    "/inbox",
+    "/exchange",
+    "/ai-workspace",
+    "/playbook",
+    "/review",
+    "/journal",
+    "/system",
+    "/stats",
+    "/mistakes",
+  ];
+
+  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
 export function middleware(request: NextRequest) {
