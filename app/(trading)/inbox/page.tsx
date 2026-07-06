@@ -20,7 +20,7 @@ export default async function TradingInboxPage({
       <header>
         <h1 className="text-2xl font-semibold">Inbox</h1>
         <p className="text-sm text-zinc-500">
-          Import AI Blocks from Home preview or Worker bridge — preview before Apply.
+          Import AI Blocks from Assistant workspace or Worker bridge — preview before Apply.
         </p>
       </header>
 
@@ -39,8 +39,8 @@ export default async function TradingInboxPage({
       {items.length === 0 ? (
         <p className="text-sm text-zinc-500">
           Inbox empty. Import an AI Block from{" "}
-          <Link href="/home-preview" className="underline">
-            Home preview
+          <Link href="/exchange" className="underline">
+            Assistant workspace
           </Link>
           .
         </p>

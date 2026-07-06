@@ -59,6 +59,7 @@ function revalidateTradingPaths() {
   revalidatePath("/journal");
   revalidatePath("/");
   revalidatePath("/home-preview");
+  revalidatePath("/exchange");
   revalidatePath("/ai-workspace");
   revalidatePath("/inbox");
   revalidatePath("/system");
@@ -115,6 +116,7 @@ export async function saveAiNotesAction(formData: FormData): Promise<SaveAiNotes
     );
     revalidatePath("/");
   revalidatePath("/home-preview");
+  revalidatePath("/exchange");
   revalidatePath("/ai-workspace");
     return { count: parsed.notes.length };
   } catch (err) {
@@ -141,6 +143,7 @@ export async function createAiSessionAction(
     const qrDataUrl = await createQrDataUrl(connectUrl);
     revalidatePath("/");
   revalidatePath("/home-preview");
+  revalidatePath("/exchange");
   revalidatePath("/ai-workspace");
     return { token, connectUrl, qrDataUrl };
   } catch (err) {
@@ -159,6 +162,7 @@ export async function revokeAiSessionAction(formData: FormData): Promise<void> {
   }
   revalidatePath("/");
   revalidatePath("/home-preview");
+  revalidatePath("/exchange");
   revalidatePath("/ai-workspace");
 }
 
