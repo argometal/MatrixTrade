@@ -37,7 +37,7 @@ import {
   createInputToReferenceKind,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
-import { filterLinkIdsForSource, linkSourceKindFromEntity } from "@/lib/argus/link-hierarchy";
+import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
 import { partitionIdsByEntityKind } from "@/lib/argus/v2/entity-link-counts";
 import {
   assertJournalKindTransition,
@@ -481,8 +481,7 @@ export async function setEntityLinkedIdsAction(entityId: string, linkedEntityIds
     throw new ArgusPersistenceError("validation", "Entity not found.");
   }
   const data = await readArgus();
-  const source = linkSourceKindFromEntity(entity);
-  const validIds = filterLinkIdsForSource(data.entities, source, linkedEntityIds);
+  const validIds = filterLinkIdsForSource(data.entities, "create", linkedEntityIds);
   const partitioned = partitionIdsByEntityKind(data.entities, validIds);
   const patch =
     entity.type === "project"

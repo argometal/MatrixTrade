@@ -82,12 +82,17 @@ export function CreateAndLinkModal({
   const [query, setQuery] = useState("");
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [draftIds, setDraftIds] = useState<string[]>(initialLinkedIds);
+  const [linkCreateOpen, setLinkCreateOpen] = useState(false);
+  const [linkCreateKind, setLinkCreateKind] = useState<ReferenceKind>("project");
+  const [linkCreateName, setLinkCreateName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const effectiveLinkSource: LinkSourceKind = mode === "link" ? "create" : linkSource;
+
   const filteredBuckets = useMemo(
-    () => filterEntityPickerBuckets(buckets, linkSource),
-    [buckets, linkSource]
+    () => filterEntityPickerBuckets(buckets, effectiveLinkSource),
+    [buckets, effectiveLinkSource]
   );
 
   useEffect(() => {
@@ -99,6 +104,9 @@ export function CreateAndLinkModal({
       setQuery("");
       setKindFilter("all");
       setDraftIds(initialLinkedIds);
+      setLinkCreateOpen(false);
+      setLinkCreateName("");
+      setLinkCreateKind("project");
       setError(null);
     }
   }, [open, initialLinkedIds, defaultKind]);
@@ -111,17 +119,23 @@ export function CreateAndLinkModal({
             (entity) => entityReferenceKind(entity) === kindFilter
           );
 
+    const withoutSelf = entityId
+      ? byKind.filter((entity) => entity.id !== entityId)
+      : byKind;
+
     const q = query.trim().toLowerCase();
-    if (!q) return byKind;
-    return byKind.filter(
+    if (!q) return withoutSelf;
+    return withoutSelf.filter(
       (entity) =>
         entity.name.toLowerCase().includes(q) ||
         entity.notes.toLowerCase().includes(q) ||
         entityKindLabel(entity).toLowerCase().includes(q)
     );
-  }, [filteredBuckets.alphabetical, kindFilter, query]);
+  }, [filteredBuckets.alphabetical, kindFilter, query, entityId]);
 
   if (!open) return null;
+
+  const resolvedCreateKind = allowedKinds.length === 1 ? allowedKinds[0]! : createKind;
 
   function toggle(id: string) {
     setDraftIds((current) =>
@@ -140,11 +154,11 @@ export function CreateAndLinkModal({
             return;
           }
           const entity = await createEntityInlineAction(
-            createKind,
+            resolvedCreateKind,
             trimmed,
             entityNotesForDisplay(notes),
             draftIds,
-            createKind === "event" && eventDate ? { startDate: eventDate } : undefined
+            resolvedCreateKind === "event" && eventDate ? { startDate: eventDate } : undefined
           );
           onCreated?.(entity);
           onClose();
@@ -167,11 +181,11 @@ export function CreateAndLinkModal({
   const resolvedTitle =
     title ??
     (mode === "create"
-      ? `New ${REFERENCE_KIND_LABELS[createKind]}`
+      ? `New ${REFERENCE_KIND_LABELS[resolvedCreateKind]}`
       : "Link references");
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
       <div
         className="flex max-h-[min(90vh,720px)] w-full max-w-2xl flex-col rounded-2xl border border-zinc-700 bg-zinc-900 shadow-xl"
         role="dialog"
@@ -223,7 +237,7 @@ export function CreateAndLinkModal({
                 </select>
               </label>
             ) : null}
-            {mode === "create" && createKind === "event" ? (
+            {mode === "create" && resolvedCreateKind === "event" ? (
               <label className="block">
                 <span className="text-xs font-medium text-zinc-500">Event date</span>
                 <input
@@ -259,6 +273,71 @@ export function CreateAndLinkModal({
               </button>
             ))}
           </div>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            {mode === "link" ? (
+              <button
+                type="button"
+                onClick={() => setLinkCreateOpen((value) => !value)}
+                className="rounded-lg border border-violet-800/50 bg-violet-950/30 px-3 py-1.5 text-xs font-medium text-violet-300 hover:bg-violet-900/30"
+              >
+                {linkCreateOpen ? "Cancel new" : "+ New reference"}
+              </button>
+            ) : null}
+          </div>
+
+          {mode === "link" && linkCreateOpen ? (
+            <div className="mb-3 space-y-2 rounded-xl border border-zinc-800 bg-zinc-950/40 p-3">
+              <div className="grid gap-2 sm:grid-cols-[8rem_minmax(0,1fr)_auto]">
+                <select
+                  className={inputClass}
+                  value={linkCreateKind}
+                  onChange={(e) => setLinkCreateKind(e.target.value as ReferenceKind)}
+                >
+                  {ALL_KINDS.map((kind) => (
+                    <option key={kind} value={kind}>
+                      {REFERENCE_KIND_LABELS[kind]}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className={inputClass}
+                  placeholder="Name"
+                  value={linkCreateName}
+                  onChange={(e) => setLinkCreateName(e.target.value)}
+                />
+                <button
+                  type="button"
+                  disabled={isPending || !linkCreateName.trim()}
+                  onClick={() => {
+                    setError(null);
+                    startTransition(async () => {
+                      try {
+                        const created = await createEntityInlineAction(
+                          linkCreateKind,
+                          linkCreateName.trim(),
+                          "",
+                          [],
+                          linkCreateKind === "event" ? { startDate: eventDate || new Date().toISOString().slice(0, 10) } : undefined
+                        );
+                        setDraftIds((current) =>
+                          current.includes(created.id) ? current : [...current, created.id]
+                        );
+                        setLinkCreateName("");
+                        setLinkCreateOpen(false);
+                      } catch (err) {
+                        const { layer, message } = formatArgusError(err);
+                        setError(`${layer.toUpperCase()}: ${message}`);
+                      }
+                    });
+                  }}
+                  className="rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-500 disabled:opacity-40"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          ) : null}
+
           <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-zinc-800">
             {filteredEntities.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-zinc-500">No matches.</p>

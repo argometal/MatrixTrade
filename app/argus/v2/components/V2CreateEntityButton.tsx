@@ -66,13 +66,11 @@ export function V2EntityLinkButton({
   linkedIds,
   label = "+ Link",
   className,
-  linkSource = "create",
 }: {
   entityId: string;
   linkedIds: string[];
   label?: string;
   className?: string;
-  linkSource?: "create" | "topic" | "event" | "project" | "organization" | "person";
 }) {
   const router = useRouter();
   const { buckets } = useArgusAdd();
@@ -93,7 +91,7 @@ export function V2EntityLinkButton({
         mode="link"
         entityId={entityId}
         initialLinkedIds={linkedIds}
-        linkSource={linkSource}
+        linkSource="create"
         title="Link references"
       />
     </>

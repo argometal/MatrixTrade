@@ -53,7 +53,9 @@ export function buildEntityPickerBuckets(data: ArgusData, includePrivate: boolea
     .filter((id) => entityMap.has(id))
     .slice(0, 12);
 
-  const alphabetical = [...data.entities].sort((a, b) => a.name.localeCompare(b.name));
+  const alphabetical = [...data.entities]
+    .filter((e) => !e.deletedAt)
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return {
     recent: recentIds.map((id) => entityMap.get(id)!),

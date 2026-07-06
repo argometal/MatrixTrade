@@ -249,8 +249,8 @@ function normalizeLinkedEventIds(
 }
 
 function normalizeLinkedEntityIds(data: ArgusData, entity: Entity, ids: string[] | undefined): string[] {
-  const source = linkSourceKindFromEntity(entity);
-  return filterLinkIdsForSource(data.entities.filter(isActiveRecord), source, ids);
+  void entity;
+  return filterLinkIdsForSource(data.entities.filter(isActiveRecord), "create", ids);
 }
 
 function normalizeLinkedTags(tags: string[] | undefined): string[] {

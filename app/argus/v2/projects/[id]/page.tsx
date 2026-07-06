@@ -78,7 +78,6 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
             <V2EntityLinkButton
               entityId={entity.id}
               linkedIds={entity.linkedEntityIds ?? []}
-              linkSource="project"
               className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
             />
             <button

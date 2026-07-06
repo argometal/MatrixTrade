@@ -40,6 +40,7 @@ Mark items:
 | 2026-07-06 | AI Charter + protocol docs | Cross-cutting → AI Charter alignment; `checklist-protocol.md` added |
 | 2026-07-06 | **Change 132 / second-origin** | Checklist fixes: inbox unlink, search, PIN, filters, nav anchors; `v2-checklist-solutions.md` |
 | 2026-07-06 | **Change 133** | Unified create+link (`CreateAndLinkModal`); event/project link counts; network empty-state CTA |
+| 2026-07-06 | **Change 134** | Unrestricted link targets (all 5 types); link modal inline create; picker fixes |
 
 *Add a row here whenever v2 UI or checklist changes.*
 
