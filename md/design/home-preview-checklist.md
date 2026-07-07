@@ -20,7 +20,7 @@ Use this list after every deploy or redesign. Check each box only after you have
 
 | 2026-07-07 | `d28cb58` | Restore ARGUS corner icon on preview routes |
 
-| 2026-07-07 | (pending) | Persistent preview sidebar with full TradingNav links |
+| 2026-07-07 | `96918be` | Persistent preview sidebar with full TradingNav links |
 
 **User sign-off:** All boxes stay unchecked until you verify in the browser.
 
