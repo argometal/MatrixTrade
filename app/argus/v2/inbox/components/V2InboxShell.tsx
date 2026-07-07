@@ -6,6 +6,13 @@ import type { Entity, InboxItem, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
+import type { ArgusLinkResult } from "@/app/argus/components/ArgusLinkModal";
+import {
+  setInboxLinksAction,
+  updateInboxTriageAction,
+  type CreatedEntityResult,
+} from "@/app/argus/actions";
+import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import {
   buildV2InboxFilterOptions,
   buildV2InboxTabCounts,
@@ -22,7 +29,7 @@ import {
   type InboxTopicContext,
 } from "@/lib/argus/v2/inbox-loaders";
 import { V2InboxDetailPanel } from "./V2InboxDetailPanel";
-import { V2InboxQuickLinkSheet } from "./V2InboxQuickLinkSheet";
+import { V2InboxEntityLinkModal } from "./V2InboxEntityLinkModal";
 import { V2InboxSwipeRow } from "./V2InboxSwipeRow";
 
 const TABS: { id: V2InboxTab; label: string }[] = [
@@ -154,36 +161,42 @@ export function V2InboxShell({
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [processOpen, setProcessOpen] = useState(false);
   const [openFilter, setOpenFilter] = useState<FilterMenu>(null);
-  const [quickLinkId, setQuickLinkId] = useState<string | null>(null);
+  const [swipeLinkId, setSwipeLinkId] = useState<string | null>(null);
   const filtersActive = hasActiveV2InboxFilters(filters);
+  const inboxBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "inbox"), [buckets]);
 
-  const quickLinkDetail = useMemo(
-    () => (quickLinkId ? details.find((d) => d.item.id === quickLinkId) : undefined),
-    [details, quickLinkId]
+  const swipeLinkDetail = useMemo(
+    () => (swipeLinkId ? details.find((d) => d.item.id === swipeLinkId) : undefined),
+    [details, swipeLinkId]
   );
 
-  const openQuickLink = useCallback((id: string) => {
-    setQuickLinkId(id);
+  const openSwipeLink = useCallback((id: string) => {
+    setSwipeLinkId(id);
   }, []);
 
-  const advanceToNext = useCallback(
-    (currentId: string) => {
-      const idx = filtered.findIndex((row) => row.id === currentId);
-      const next = idx >= 0 ? filtered[idx + 1] : undefined;
-      if (next) setQuickLinkId(next.id);
-      else setQuickLinkId(null);
-    },
-    [filtered]
-  );
+  async function confirmSwipeLinks(result: ArgusLinkResult) {
+    if (!swipeLinkDetail) return;
+    const formData = new FormData();
+    formData.set("inboxId", swipeLinkDetail.item.id);
+    formData.set("returnTo", `/argus/v2/inbox?tab=${tab}`);
+    for (const id of result.entityIds) formData.append("entityIds", id);
+    await setInboxLinksAction(formData);
+    await updateInboxTriageAction(swipeLinkDetail.item.id, { topics: result.tags });
+    router.refresh();
+    setSwipeLinkId(null);
+  }
 
-  useEffect(() => {
-    function onAdvance(event: Event) {
-      const detail = (event as CustomEvent<{ inboxId: string }>).detail;
-      if (detail?.inboxId) advanceToNext(detail.inboxId);
-    }
-    window.addEventListener("argus-inbox-advance", onAdvance);
-    return () => window.removeEventListener("argus-inbox-advance", onAdvance);
-  }, [advanceToNext]);
+  async function swipeLinkCreatedEntity(entity: CreatedEntityResult): Promise<false> {
+    if (!swipeLinkDetail) return false;
+    const next = [...new Set([...(swipeLinkDetail.item.linkedEntityIds ?? []), entity.id])];
+    const formData = new FormData();
+    formData.set("inboxId", swipeLinkDetail.item.id);
+    formData.set("returnTo", `/argus/v2/inbox?tab=${tab}`);
+    for (const id of next) formData.append("entityIds", id);
+    await setInboxLinksAction(formData);
+    router.refresh();
+    return false;
+  }
 
   function replaceInboxParams(mutate: (params: URLSearchParams) => void) {
     const params = new URLSearchParams(searchParams.toString());
@@ -263,7 +276,7 @@ export function V2InboxShell({
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-zinc-50">Inbox</h1>
-              <p className="mt-0.5 text-xs text-zinc-500">Swipe right on a row to quick-link · tap to read</p>
+              <p className="mt-0.5 text-xs text-zinc-500">Swipe right to link · tap to read</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button
@@ -493,7 +506,7 @@ export function V2InboxShell({
                 <li key={row.id}>
                   <V2InboxSwipeRow
                     onPress={() => selectItem(row.id)}
-                    onSwipeLink={() => openQuickLink(row.id)}
+                    onSwipeLink={() => openSwipeLink(row.id)}
                   >
                     <div
                       className={`w-full rounded-xl border px-3 py-3 text-left transition ${
@@ -591,17 +604,16 @@ export function V2InboxShell({
         )}
       </section>
 
-      {quickLinkDetail ? (
-        <V2InboxQuickLinkSheet
-          open={Boolean(quickLinkId)}
-          inboxId={quickLinkDetail.item.id}
-          subject={quickLinkDetail.view.subject ?? ""}
-          body={quickLinkDetail.view.textBody}
-          linkedIds={quickLinkDetail.item.linkedEntityIds ?? []}
-          returnTo={`/argus/v2/inbox?tab=${tab}`}
-          buckets={buckets}
-          linkedEntityRecords={linkedEntityRecords}
-          onClose={() => setQuickLinkId(null)}
+      {swipeLinkDetail ? (
+        <V2InboxEntityLinkModal
+          open={Boolean(swipeLinkId)}
+          buckets={inboxBuckets}
+          tagBuckets={tagBuckets}
+          selectedIds={swipeLinkDetail.item.linkedEntityIds ?? []}
+          selectedTags={swipeLinkDetail.item.topics ?? []}
+          onClose={() => setSwipeLinkId(null)}
+          onConfirm={(result) => void confirmSwipeLinks(result)}
+          onEntityCreated={swipeLinkCreatedEntity}
         />
       ) : null}
     </div>
