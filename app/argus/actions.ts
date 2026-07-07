@@ -30,6 +30,12 @@ import { JOURNAL_KINDS } from "@/lib/argus/labels";
 import { inferJournalKind, resolveLogDate, autoTitleFromBody } from "@/lib/argus/journal-helpers";
 import { resolveClassificationStatus } from "@/lib/argus/normalize";
 import {
+  normalizeContactValueKeys,
+  normalizeMyValueKeys,
+  normalizeRelationshipReason,
+  normalizeRelationshipStatus,
+} from "@/lib/argus/network-relationship-metrics";
+import {
   buildReferenceNotes,
   entityDetailHref,
   isCreatableReferenceKind,
@@ -739,10 +745,14 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
     redirect("/argus/network");
   }
 
-  const rawValue = Number(formData.get("strategicValue") ?? 3);
+  const rawValue = Number(formData.get("strategicValue") ?? entity.strategicValue ?? 3);
   const strategicValue = (
-    rawValue >= 1 && rawValue <= 5 ? rawValue : 3
+    rawValue >= 1 && rawValue <= 5 ? rawValue : entity.strategicValue ?? 3
   ) as StrategicValue;
+  const contactValue = normalizeContactValueKeys(formData.getAll("contactValue").map(String));
+  const myValue = normalizeMyValueKeys(formData.getAll("myValue").map(String));
+  const relationshipStatus = normalizeRelationshipStatus(String(formData.get("relationshipStatus") ?? ""));
+  const relationshipReason = normalizeRelationshipReason(String(formData.get("relationshipReason") ?? ""));
 
   let notes = String(formData.get("notes") ?? "").trim();
   const kind = referenceKindFromNotes(entity.notes);
@@ -756,6 +766,10 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
 
   await updateEntity(entityId, {
     strategicValue,
+    contactValue,
+    myValue,
+    relationshipStatus,
+    relationshipReason,
     alias: String(formData.get("alias") ?? "").trim(),
     notes,
     linkedEntityIds,

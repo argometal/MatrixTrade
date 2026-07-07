@@ -1,3 +1,10 @@
+import type {
+  ContactValueKey,
+  MyValueKey,
+  RelationshipReasonKey,
+  RelationshipStatusKey,
+} from "./network-relationship-metrics";
+
 export type EntityType = "person" | "company" | "project" | "other";
 
 export type JournalKind = "log" | "event" | "follow_up";
@@ -14,14 +21,22 @@ export type AttachmentParentType = "inbox" | "journal";
 
 export type StrategicValue = 1 | 2 | 3 | 4 | 5;
 
+export type { ContactValueKey, MyValueKey, RelationshipReasonKey, RelationshipStatusKey };
+
 export interface Entity {
   id: string;
   type: EntityType;
   name: string;
   alias?: string;
   notes: string;
-  /** 1=low … 5=strategic. Default 3. Only user-editable network field besides alias/notes. */
+  /** @deprecated Legacy 1–5 rating; use contactValue / myValue instead. */
   strategicValue: StrategicValue;
+  /** What this contact consistently brings to me. */
+  contactValue?: ContactValueKey[];
+  /** What I consistently bring to this contact. */
+  myValue?: MyValueKey[];
+  relationshipStatus?: RelationshipStatusKey;
+  relationshipReason?: RelationshipReasonKey;
   /** Project date range (YYYY-MM-DD) — relations only, not duplicate evidence */
   startDate?: string;
   endDate?: string;

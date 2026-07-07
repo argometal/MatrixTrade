@@ -8,9 +8,8 @@ import {
   filterEntityPickerBuckets,
   linkSourceKindFromEntity,
 } from "@/lib/argus/link-hierarchy";
-import { STRATEGIC_VALUE_LABELS } from "@/lib/argus/labels";
-import type { StrategicValue } from "@/lib/argus/types";
 import { ACTIVITY_EDIT, LINK_HIERARCHY } from "@/lib/argus/ux-copy";
+import { NetworkRelationshipMetricsFields } from "./NetworkRelationshipMetricsFields";
 import { EntityChip } from "./Cards";
 import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
 import { inputClass } from "./ui";
@@ -91,7 +90,6 @@ export function EntityEditForm({
   entity: Entity;
   allBuckets: EntityPickerBuckets;
 }) {
-  const sv = entity.strategicValue ?? 3;
   const sourceKind = linkSourceKindFromEntity(entity);
   const notesKind = referenceKindFromNotes(entity.notes ?? "");
   const allEntities = allBuckets.alphabetical;
@@ -145,16 +143,7 @@ export function EntityEditForm({
 
       <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Editable fields</p>
 
-      <label className="block">
-        <span className="text-xs text-zinc-500">Strategic value</span>
-        <select name="strategicValue" defaultValue={sv} className={`${inputClass} mt-1`}>
-          {([1, 2, 3, 4, 5] as StrategicValue[]).map((value) => (
-            <option key={value} value={value}>
-              {value} — {STRATEGIC_VALUE_LABELS[value]}
-            </option>
-          ))}
-        </select>
-      </label>
+      <NetworkRelationshipMetricsFields entity={entity} />
 
       <label className="block">
         <span className="text-xs text-zinc-500">Alias</span>

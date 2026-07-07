@@ -163,6 +163,10 @@ export async function createEntity(input: EntityInput): Promise<Entity> {
     ...input,
     alias: input.alias ?? "",
     strategicValue: input.strategicValue ?? 3,
+    contactValue: input.contactValue ?? [],
+    myValue: input.myValue ?? [],
+    relationshipStatus: input.relationshipStatus ?? "healthy",
+    relationshipReason: input.relationshipReason ?? "no_action_required",
     linkedPersonIds: input.linkedPersonIds ?? [],
     linkedTopicIds: input.linkedTopicIds ?? [],
     linkedEventIds: input.linkedEventIds ?? [],
@@ -200,6 +204,10 @@ export type EntityUpdatePatch = Partial<
   Pick<
     Entity,
     | "strategicValue"
+    | "contactValue"
+    | "myValue"
+    | "relationshipStatus"
+    | "relationshipReason"
     | "alias"
     | "notes"
     | "name"
@@ -286,6 +294,12 @@ export async function updateEntity(id: string, patch: EntityUpdatePatch): Promis
     ...current,
     name: name || current.name,
     strategicValue,
+    contactValue: patch.contactValue !== undefined ? patch.contactValue : current.contactValue ?? [],
+    myValue: patch.myValue !== undefined ? patch.myValue : current.myValue ?? [],
+    relationshipStatus:
+      patch.relationshipStatus !== undefined ? patch.relationshipStatus : current.relationshipStatus ?? "healthy",
+    relationshipReason:
+      patch.relationshipReason !== undefined ? patch.relationshipReason : current.relationshipReason ?? "no_action_required",
     alias: patch.alias ?? current.alias ?? "",
     notes: patch.notes ?? current.notes ?? "",
     startDate: patch.startDate !== undefined ? normalizeOptionalDate(patch.startDate) : current.startDate,
