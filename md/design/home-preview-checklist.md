@@ -20,6 +20,8 @@ Use this list after every deploy or redesign. Check each box only after you have
 
 | 2026-07-07 | `d28cb58` | Restore ARGUS corner icon on preview routes |
 
+| 2026-07-07 | (pending) | Persistent preview sidebar with full TradingNav links |
+
 **User sign-off:** All boxes stay unchecked until you verify in the browser.
 
 ---
@@ -38,19 +40,23 @@ Use this list after every deploy or redesign. Check each box only after you have
 
 ---
 
-## B. Left sidebar (desktop `lg+`)
+## B. Left sidebar (desktop `lg+`) — persistent preview shell
 
-- [ ] **Brand block** — Violet “M” logo + “MatrixTrade” label.
-- [ ] **Main nav — Dashboard** — Active state (violet highlight) on `/home-preview`.
-- [ ] **Main nav — Trades** — Links to `/trades-preview`.
-- [ ] **Main nav — Playbooks** — Links to `/playbook` (classic).
+- [ ] **Brand block** — Violet “M” logo + “MatrixTrade” label (links to `/home-preview`).
+- [ ] **Main nav — Dashboard (classic)** — Links to `/`.
+- [ ] **Main nav — Home preview** — Links to `/home-preview`; active on this route.
+- [ ] **Main nav — Trades preview** — Links to `/trades-preview`.
+- [ ] **Main nav — Playbook** — Links to `/playbook` (classic).
 - [ ] **Main nav — Review** — Links to `/review` (classic).
 - [ ] **Main nav — Statistics** — Links to `/stats` (classic).
 - [ ] **Main nav — Journal** — Links to `/journal` (classic).
-- [ ] **System nav — Inbox** — Links to `/inbox`; badge shows pending count when &gt; 0.
 - [ ] **System nav — Assistant** — Links to `/exchange`.
-- [ ] **System nav — Settings** — Links to `/system`.
+- [ ] **System nav — Inbox** — Links to `/inbox`; badge shows pending count when &gt; 0.
+- [ ] **System nav — System** — Links to `/system`.
+- [ ] **New trade** — Footer button links to `/trades/new`.
+- [ ] **Sign out** — Footer sign-out action works.
 - [ ] **Cycle progress block** — Shows cycle label (`Experiment H001–H030`), trades used / max, progress bar, loss budget remaining.
+- [ ] **Sidebar persistent** — Same menu visible on `/home-preview` and `/trades-preview` (layout shell).
 - [ ] **Sidebar hidden on mobile** — Left nav not shown below `lg`; mobile top bar used instead.
 
 ---

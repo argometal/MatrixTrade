@@ -36,15 +36,6 @@ const QUICK_ACTIONS = [
 
 type TabId = "new" | "open" | "pending" | "closed" | "all";
 
-const NAV_MAIN = [
-  { href: "/home-preview", label: "Dashboard" },
-  { href: "/trades-preview", label: "Trades", active: true },
-  { href: "/playbook", label: "Playbooks" },
-  { href: "/review", label: "Review" },
-  { href: "/stats", label: "Statistics" },
-  { href: "/journal", label: "Journal" },
-] as const;
-
 function statusLabel(row: TradesWorkspaceRow): string {
   if (row.status === "closed" && !row.reviewed) return "Pending review";
   return row.status.charAt(0).toUpperCase() + row.status.slice(1);
@@ -175,50 +166,8 @@ export function TradesWorkspace({
       : null;
 
   return (
-    <div className="relative flex h-full min-h-0 w-full overflow-hidden bg-zinc-950 text-zinc-100">
-      <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-3 lg:hidden">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold">
-            M
-          </span>
-          <span className="font-semibold">MatrixTrade</span>
-        </div>
-        <Link href="/trades" className="text-xs text-zinc-500 hover:text-zinc-300">
-          Classic →
-        </Link>
-      </div>
-
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 p-4 lg:flex xl:w-60">
-        <div className="mb-8 flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold">
-            M
-          </span>
-          <span className="font-semibold">MatrixTrade</span>
-        </div>
-        <nav className="space-y-1">
-          {NAV_MAIN.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`block rounded-lg px-3 py-2 text-sm ${
-                "active" in item && item.active
-                  ? "bg-violet-600/20 font-medium text-violet-300"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <div className="mt-auto border-t border-zinc-800 pt-4 text-xs text-zinc-500">
-          <p>{data.counts.closed} / {data.tradesMax} trades this cycle</p>
-          <Link href="/trades" className="mt-3 block text-zinc-600 hover:text-zinc-400">
-            Classic trades →
-          </Link>
-        </div>
-      </aside>
-
-      <div className="min-w-0 flex-1 overflow-y-auto pt-14 lg:pt-0">
+    <div className="flex h-full min-h-0 w-full overflow-hidden">
+      <div className="min-w-0 flex-1 overflow-y-auto">
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>

@@ -7,21 +7,6 @@ import {
   formatSituationUsd,
 } from "@/lib/situation-room";
 
-const NAV_MAIN = [
-  { href: "/home-preview", label: "Dashboard", active: true },
-  { href: "/trades-preview", label: "Trades", active: false },
-  { href: "/playbook", label: "Playbooks", active: false },
-  { href: "/review", label: "Review", active: false },
-  { href: "/stats", label: "Statistics", active: false },
-  { href: "/journal", label: "Journal", active: false },
-] as const;
-
-const NAV_SYSTEM = [
-  { href: "/inbox", label: "Inbox" },
-  { href: "/exchange", label: "Assistant" },
-  { href: "/system", label: "Settings" },
-] as const;
-
 const QUICK_NAV = [
   { href: "/trades-preview", label: "Trades" },
   { href: "/review", label: "Review" },
@@ -182,95 +167,8 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
     data.summary.expectancy !== null && data.summary.expectancy >= 0 ? "pos" : "neg";
 
   return (
-    <div className="flex h-full min-h-0 w-full overflow-hidden bg-zinc-950 text-zinc-100">
-      {/* Mobile top bar */}
-      <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between border-b border-zinc-800 bg-zinc-950 px-4 py-3 lg:hidden">
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold">
-            M
-          </span>
-          <span className="font-semibold">MatrixTrade</span>
-        </div>
-        <Link href="/" className="text-xs text-zinc-500 hover:text-zinc-300">
-          Classic →
-        </Link>
-      </div>
-
-      {/* Left sidebar */}
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 p-4 lg:flex xl:w-60">
-        <div className="mb-8 flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold">
-            M
-          </span>
-          <span className="font-semibold">MatrixTrade</span>
-        </div>
-        <nav className="space-y-1">
-          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
-            Main
-          </p>
-          {NAV_MAIN.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`block rounded-lg px-3 py-2 text-sm ${
-                item.active
-                  ? "bg-violet-600/20 font-medium text-violet-300"
-                  : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-              }`}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <nav className="mt-6 space-y-1">
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
-            System
-          </p>
-          {NAV_SYSTEM.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              {item.label}
-              {item.label === "Inbox" && data.pendingInboxCount > 0 && (
-                <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-medium text-white">
-                  {data.pendingInboxCount}
-                </span>
-              )}
-            </Link>
-          ))}
-        </nav>
-        <div className="mt-auto space-y-4 border-t border-zinc-800 pt-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-wide text-zinc-600">Current cycle</p>
-            <p className="mt-1 text-sm font-medium">{data.cycleLabel}</p>
-            <p className="text-xs text-zinc-500">
-              {data.summary.tradesUsed} / {data.summary.tradesMax} trades
-            </p>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
-              <div
-                className="h-full rounded-full bg-violet-500"
-                style={{
-                  width: `${Math.min(100, (data.summary.tradesUsed / data.summary.tradesMax) * 100)}%`,
-                }}
-              />
-            </div>
-            <p className="mt-2 text-xs text-zinc-500">
-              Loss budget {formatSituationUsd(data.summary.lossBudgetRemaining)} left
-            </p>
-          </div>
-          <Link
-            href="/"
-            className="block text-xs text-zinc-600 transition hover:text-zinc-400"
-          >
-            Classic dashboard →
-          </Link>
-        </div>
-      </aside>
-
-      {/* Center */}
-      <div className="min-w-0 flex-1 overflow-y-auto pt-14 lg:pt-0">
+    <div className="flex h-full min-h-0 w-full overflow-hidden">
+      <div className="min-w-0 flex-1 overflow-y-auto">
         <div className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
