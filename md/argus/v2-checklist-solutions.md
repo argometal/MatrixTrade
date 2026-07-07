@@ -70,7 +70,7 @@ Each checklist item is classified:
 | Checklist item | Solution |
 |----------------|----------|
 | Org / Project detail | **QA** — hierarchy rules in `loaders.ts` |
-| Person v2 shell | **Deferred** — `/argus/network/[id]` until v2 person page |
+| Person v2 shell | **Implemented** — `/argus/v2/network/[id]`; legacy redirects |
 
 ---
 

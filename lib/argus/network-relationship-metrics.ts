@@ -1,3 +1,6 @@
+import type { Entity } from "./types";
+import type { EntityIntelligence } from "./network-intelligence";
+
 export const CONTACT_VALUE_KEYS = [
   "knowledge",
   "opportunity",
@@ -120,3 +123,102 @@ export function relationshipStatusLabel(key: RelationshipStatusKey): string {
 export function relationshipReasonLabel(key: RelationshipReasonKey): string {
   return RELATIONSHIP_REASON_OPTIONS.find((option) => option.key === key)?.label ?? key;
 }
+
+export interface DerivedRelationshipAttention {
+  status: RelationshipStatusKey;
+  reason: RelationshipReasonKey;
+}
+
+/** Evidence-based attention — not user-editable. */
+export function deriveRelationshipAttention(input: {
+  entity: Entity;
+  intel: EntityIntelligence;
+  pendingInboxCount: number;
+  today?: string;
+}): DerivedRelationshipAttention {
+  const { entity, intel, pendingInboxCount } = input;
+  const today = input.today ?? new Date().toISOString().slice(0, 10);
+  const notes = entity.notes ?? "";
+
+  if (entity.deletedAt || /\bstatus:\s*archived\b/i.test(notes)) {
+    return { status: "archived", reason: "no_action_required" };
+  }
+
+  const overdueFollowUp =
+    Boolean(intel.nextFollowUp && intel.nextFollowUp < today) && intel.openFollowUps === 0;
+  const opportunityOpen =
+    (entity.contactValue ?? []).includes("opportunity") ||
+    intel.topics.some((topic) => /opportunit/i.test(topic));
+
+  let reason: RelationshipReasonKey = "no_action_required";
+  if (intel.openFollowUps > 0 || overdueFollowUp) {
+    reason = "follow_up_pending";
+  } else if (pendingInboxCount > 0) {
+    reason = "waiting_response";
+  } else if (opportunityOpen) {
+    reason = "opportunity_open";
+  }
+
+  let status: RelationshipStatusKey = "healthy";
+  if (intel.relationshipHealth === "dormant" || intel.relationshipHealth === "neglected") {
+    status = "dormant";
+  } else if (
+    reason !== "no_action_required" ||
+    intel.relationshipHealth === "cooling" ||
+    (intel.daysSinceLastInteraction !== null && intel.daysSinceLastInteraction > 90)
+  ) {
+    status = "needs_attention";
+  } else if (intel.relationshipHealth === "active") {
+    status = "healthy";
+  }
+
+  if (
+    status === "healthy" &&
+    intel.logCount === 0 &&
+    pendingInboxCount === 0 &&
+    intel.daysSinceLastInteraction === null
+  ) {
+    status = "dormant";
+    reason = "no_action_required";
+  }
+
+  return { status, reason };
+}
+
+export function attentionSummaryMessage(attention: DerivedRelationshipAttention): string {
+  if (attention.status === "archived") {
+    return "This relationship is archived. No active follow-up is expected.";
+  }
+  if (attention.status === "dormant") {
+    return "This relationship has gone quiet. Consider a light touch when timing is right.";
+  }
+  if (attention.status === "needs_attention" && attention.reason === "follow_up_pending") {
+    return "A follow-up is pending. Review open items and schedule the next touch.";
+  }
+  if (attention.status === "needs_attention" && attention.reason === "waiting_response") {
+    return "Linked inbox items are waiting. A response or triage step may be needed.";
+  }
+  if (attention.status === "needs_attention" && attention.reason === "opportunity_open") {
+    return "An opportunity signal is open. Keep momentum while context is fresh.";
+  }
+  if (attention.status === "needs_attention") {
+    return "This relationship needs attention based on recent activity signals.";
+  }
+  return "This relationship is healthy. No action is required at this time.";
+}
+
+export const CONTACT_VALUE_ICONS: Record<ContactValueKey, string> = {
+  knowledge: "📘",
+  opportunity: "📈",
+  support: "🤝",
+  inspiration: "💡",
+  alignment: "🎯",
+};
+
+export const MY_VALUE_ICONS: Record<MyValueKey, string> = {
+  help: "🛠",
+  knowledge: "📘",
+  opportunity: "📈",
+  connection: "🔗",
+  trust: "✓",
+};

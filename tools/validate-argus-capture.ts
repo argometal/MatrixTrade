@@ -55,7 +55,7 @@ async function main(): Promise<void> {
   const cookies = "argus-auth=1";
   console.log("Using session cookie for local validation.\n");
 
-  const homeHtml = await fetchHtml("/argus/journal", cookies);
+  const homeHtml = await fetchHtml("/argus/v2", cookies);
 
   console.log("Acceptance criteria (Home):");
   assert(!homeHtml.includes("New item"), "4. No 'New item' workflow button");
@@ -66,7 +66,7 @@ async function main(): Promise<void> {
   assert(homeHtml.includes('aria-label="Capture"') || homeHtml.includes("Capture"), "+ Capture FAB present");
   assert(homeHtml.includes("🔒") || homeHtml.includes("Unlock private"), "5. Private as lock only");
 
-  const captureHtml = await fetchHtml("/argus/journal?capture=1", cookies);
+  const captureHtml = await fetchHtml("/argus/v2?capture=1", cookies);
 
   console.log("\nAcceptance criteria (Capture sheet):");
   assert(captureHtml.includes("Cancel"), "2. Cancel always visible");
@@ -95,7 +95,7 @@ async function main(): Promise<void> {
   console.log("\nFlow: Open → Capture → Write → Save → Dashboard:");
   assert(found, "Saved note appears in Recent activity");
 
-  const afterHtml = await fetchHtml("/argus/journal", cookies);
+  const afterHtml = await fetchHtml("/argus/v2", cookies);
   const titleSnippet = autoTitleFromBody(testBody).slice(0, 24);
   const inHtml =
     afterHtml.includes(titleSnippet) ||

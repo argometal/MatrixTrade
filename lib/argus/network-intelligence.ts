@@ -106,6 +106,17 @@ function topicsForEntity(logs: Log[]): string[] {
   return [...set].sort();
 }
 
+/** Map selected contact-value outcomes to grace-period weight (replaces manual 1–5). */
+function contactValueWeight(entity: Entity): StrategicValue {
+  const count = entity.contactValue?.length ?? 0;
+  if (count >= 4) return 5;
+  if (count === 3) return 4;
+  if (count === 2) return 3;
+  if (count === 1) return 2;
+  const legacy = entity.strategicValue ?? 3;
+  return (legacy >= 1 && legacy <= 5 ? legacy : 3) as StrategicValue;
+}
+
 export function computeRelationshipHealth(
   strategicValue: StrategicValue,
   daysSince: number | null,
@@ -157,7 +168,7 @@ export function buildEntityIntelligence(
 ): EntityIntelligence {
   const visibleLogs = includePrivate ? data.logs : data.logs.filter((l) => !l.private);
   const linked = logsForEntity(visibleLogs, entity.id);
-  const strategicValue = (entity.strategicValue ?? 3) as StrategicValue;
+  const strategicValue = contactValueWeight(entity);
   const lastInteraction = lastMeaningfulInteractionDate(linked);
   const daysSince = lastInteraction ? daysBetween(lastInteraction, today) : null;
   const openFollowUps = openFollowUpCount(linked, today);

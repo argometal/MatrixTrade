@@ -35,7 +35,9 @@ export interface Entity {
   contactValue?: ContactValueKey[];
   /** What I consistently bring to this contact. */
   myValue?: MyValueKey[];
+  /** @deprecated Derived at read time — not persisted. */
   relationshipStatus?: RelationshipStatusKey;
+  /** @deprecated Derived at read time — not persisted. */
   relationshipReason?: RelationshipReasonKey;
   /** Project date range (YYYY-MM-DD) — relations only, not duplicate evidence */
   startDate?: string;

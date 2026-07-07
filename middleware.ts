@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { isMobileUserAgent } from "@/lib/is-mobile-user-agent";
+import { argusLegacyRedirectUrl } from "@/lib/argus/argus-legacy-redirects";
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/login" || pathname === "/argus/login") return true;
@@ -14,8 +15,9 @@ function isTradingRoute(pathname: string): boolean {
   if (pathname === "/") return true;
 
   const prefixes = [
-    "/trades",
     "/home-preview",
+    "/trades-preview",
+    "/trades",
     "/connect",
     "/inbox",
     "/exchange",
@@ -48,11 +50,14 @@ export function middleware(request: NextRequest) {
   }
 
   const ua = request.headers.get("user-agent");
-  if (
-    pathname === "/" &&
-    isMobileUserAgent(ua) &&
-    !request.cookies.get("mt-classic-dashboard")?.value
-  ) {
+  const mobile = isMobileUserAgent(ua);
+
+  const argusLegacy = argusLegacyRedirectUrl(request);
+  if (argusLegacy) {
+    return NextResponse.redirect(argusLegacy);
+  }
+
+  if (pathname === "/" && mobile && !request.nextUrl.searchParams.get("classic")) {
     return NextResponse.redirect(new URL("/home-preview", request.url));
   }
 

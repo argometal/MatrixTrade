@@ -107,7 +107,7 @@ export function entityToV2InboxDetail(entity: Entity): V2InboxDetailEntity {
   const label =
     kind === "other" ? "Reference" : REFERENCE_KIND_LABELS[kind as keyof typeof REFERENCE_KIND_LABELS];
 
-  let href = `/argus/network/${entity.id}`;
+  let href = `/argus/v2/network/${entity.id}`;
   if (kind === "organization") href = `/argus/v2/organizations/${entity.id}`;
   else if (kind === "project") href = `/argus/v2/projects/${entity.id}`;
   else if (kind === "topic") href = `/argus/v2/browse/topics?selected=${entity.id}`;

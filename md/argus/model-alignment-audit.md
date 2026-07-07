@@ -2,7 +2,8 @@
 
 **Date:** 2026-07-04  
 **Scope:** Alignment-only audit — no code, no migration, no UI changes.  
-**Canonical reference:** [`knowledge-model-v01.md`](knowledge-model-v01.md) · DDL draft: [`supabase/argus-v01-schema.sql`](../../supabase/argus-v01-schema.sql)
+**Canonical reference:** [`knowledge-model-v01.md`](knowledge-model-v01.md) · DDL draft: [`supabase/argus-v01-schema.sql`](../../supabase/argus-v01-schema.sql)  
+**Proposed delivery layer:** [`export-delivery-handoff.md`](export-delivery-handoff.md) — export packages, manifest, dedup (review only; not implemented)
 
 ---
 

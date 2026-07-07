@@ -290,7 +290,7 @@ export function ActivityEditPanel({
 
       <div className="flex gap-3">
         <Link
-          href="/argus/journal"
+          href="/argus/v2"
           className="flex-1 rounded-xl border border-zinc-700 py-2.5 text-center text-[15px] text-zinc-400 hover:bg-zinc-800"
         >
           {ACTIVITY_EDIT.cancel}

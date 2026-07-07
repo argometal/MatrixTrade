@@ -13,7 +13,7 @@ Private repo: `github.com/argometal/MatrixTrade`
 ## How to use
 
 1. **New to the project?** Read in order: `architecture/system-overview.md` → `architecture/repo-structure.md` → `phases/roadmap.md`
-2. **Working on ARGUS?** Start with [`argus/ai-charter.md`](argus/ai-charter.md) → `integrations/argus-architecture.md` → `argus/knowledge-model-v01.md`
+2. **Working on ARGUS?** Start with [`argus/README.md`](argus/README.md) — canonical index, reading order, runtime truth
 3. **Verifying v2 UI?** → [`argus/v2-design-checklist.md`](argus/v2-design-checklist.md) — check each box before sign-off
 4. **Verifying MatrixTrade preview UI?** → [`design/README.md`](design/README.md) — Home & Trades preview functional checklists (update on every UI change)
 5. **Looking for a rule?** → `rules/`
@@ -60,10 +60,13 @@ Private repo: `github.com/argometal/MatrixTrade`
 
 ## ARGUS
 
+**Start here:** [`argus/README.md`](argus/README.md) — index, reading order, runtime truth, known weaknesses.
+
 **Rule of construction for AI:** [`argus/ai-charter.md`](argus/ai-charter.md) — all AI-assisted ARGUS work must follow this charter.
 
 | Document | Contents |
 |----------|----------|
+| [README.md](argus/README.md) | **ARGUS doc index** — product loop, status legend, routes, mobile QA |
 | [ai-charter.md](argus/ai-charter.md) | **AI Charter v1.0** — preserve professional truth; evidence before conclusions |
 | [knowledge-model-v01.md](argus/knowledge-model-v01.md) | **Canonical ontology** — Evidence, Project, Topic, Person, Organization, linking graph |
 | [v2-hierarchy-implementation-report.md](argus/v2-hierarchy-implementation-report.md) | **v2 linking rules** — org direct-only scope, project via contacts, code map |
@@ -76,6 +79,7 @@ Private repo: `github.com/argometal/MatrixTrade`
 | [checklist-protocol.md](argus/checklist-protocol.md) | **Mandatory:** update checklist on every v2 UI change |
 | [design-matrix-stage.md](argus/design-matrix-stage.md) | Three lenses (org / project / person) and v2 route map |
 | [product-flow-proposal.md](argus/product-flow-proposal.md) | Evidence → relations → narrative; 30-second story test |
+| [deliver-export-checklist.md](argus/deliver-export-checklist.md) | **Deliver / Export QA** — Evidence Vault v1 testing |
 | [changes-numbered.md](argus/changes-numbered.md) | Numbered change log (inbox linking, v2 hierarchy, etc.) |
 | [email-intake-e2e.md](argus/email-intake-e2e.md) | Email intake end-to-end |
 | [phase-1-gate.md](argus/phase-1-gate.md) | Phase 1 gate criteria |

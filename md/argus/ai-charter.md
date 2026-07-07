@@ -190,5 +190,7 @@ The objective is to preserve professional truth.
 | [`v2-hierarchy-implementation-report.md`](v2-hierarchy-implementation-report.md) | Org / project / person linking rules in v2 |
 | [`design-matrix-stage.md`](design-matrix-stage.md) | Three lenses — organization, project, person |
 | [`product-flow-proposal.md`](product-flow-proposal.md) | Evidence → relations → narrative views |
+| [`README.md`](README.md) | **ARGUS doc index** — start here for all ARGUS documentation |
+| [`export-delivery-handoff.md`](export-delivery-handoff.md) | Proposed export/delivery layer — Evidence Vault v1 implemented |
 | [`argus-design-principles.md`](../integrations/argus-design-principles.md) | Capture-first architecture constitution |
 | [`argus-chatgpt-handoff.md`](../integrations/argus-chatgpt-handoff.md) | External AI handoff protocol |

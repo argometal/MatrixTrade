@@ -96,12 +96,6 @@ export default async function V2HomePage({
           <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Home</h1>
           <p className="mt-1 text-sm text-zinc-500">Overview of your knowledge base · live counts</p>
         </div>
-        <Link
-          href="/argus/journal"
-          className="rounded-xl border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-        >
-          Legacy journal →
-        </Link>
       </div>
 
       <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5" id="stats">
@@ -117,7 +111,7 @@ export default async function V2HomePage({
             <V2Card className="flex flex-col p-5">
               <V2SectionTitle
                 action={
-                  <Link href="/argus/journal" className="text-xs text-violet-400 hover:text-violet-300">
+                  <Link href="/argus/v2#stats" className="text-xs text-violet-400 hover:text-violet-300">
                     View all
                   </Link>
                 }
@@ -154,7 +148,7 @@ export default async function V2HomePage({
             <V2Card className="flex flex-col p-5">
               <V2SectionTitle
                 action={
-                  <Link href="/argus/journal" className="text-xs text-violet-400 hover:text-violet-300">
+                  <Link href="/argus/v2#follow-ups" className="text-xs text-violet-400 hover:text-violet-300">
                     View all
                   </Link>
                 }

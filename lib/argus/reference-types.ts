@@ -121,7 +121,8 @@ export function createInputToReferenceKind(entityType: EntityType, notes: string
 
 export function entityDetailHref(entity: { id: string; type: EntityType }): string {
   if (entity.type === "project") return `/argus/projects/${entity.id}`;
-  return `/argus/network/${entity.id}`;
+  if (entity.type === "company") return `/argus/v2/organizations/${entity.id}`;
+  return `/argus/v2/network/${entity.id}`;
 }
 
 export function entityNotesForDisplay(notes: string): string {

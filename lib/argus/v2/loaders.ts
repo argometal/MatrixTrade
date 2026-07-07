@@ -66,7 +66,7 @@ export function buildV2HomeStats(data: ArgusData, inboxItems: InboxItem[], today
       value: String(logs.length),
       delta: `+${countThisWeek(logDates, today)} this week`,
       icon: "journal",
-      href: "/argus/journal",
+      href: "/argus/v2#stats",
     },
     {
       label: "Emails",
@@ -277,7 +277,7 @@ export function buildV2EntityRows(
               ? `/argus/v2/browse/topics?selected=${entity.id}`
               : tab === "events"
                 ? `/argus/v2/browse/events?selected=${entity.id}`
-                : `/argus/network/${entity.id}`;
+                : `/argus/v2/network/${entity.id}`;
 
       const typeLabel =
         tab === "organizations"

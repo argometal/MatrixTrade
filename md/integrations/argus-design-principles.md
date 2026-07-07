@@ -1,9 +1,9 @@
 # ARGUS — Design Principles
 
-**Status:** Accepted — architecture constitution  
-**Implementation:** Frozen until architecture documents are complete.
+**Status:** Canonical — architecture constitution  
+**Implementation:** Active — v2 UX and export layers must conform to these principles.
 
-**AI rule of construction:** [`md/argus/ai-charter.md`](../argus/ai-charter.md) — all AI-assisted ARGUS work must follow the AI Charter.
+**Index:** [`md/argus/README.md`](../argus/README.md) · **AI rule:** [`ai-charter.md`](../argus/ai-charter.md)
 
 Read with [`argus-architecture.md`](argus-architecture.md).
 

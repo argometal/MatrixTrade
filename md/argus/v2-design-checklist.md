@@ -476,7 +476,8 @@ Track separately — do not check as complete until fixed:
 | Browser **Filters** buttons (org/project/network) | Org/project status filter wired; network uses tabs |
 | Inbox unlink / replace link persistence | **Fixed** — `setInboxLinkedEntities` |
 | Follow Ups / Reminders sidebar routes | Follow Ups → `#follow-ups`; Reminders → legacy journal |
-| Person detail page v2 shell | Uses legacy `/argus/network/[id]` |
+| Person detail page v2 shell | **Implemented** — `/argus/v2/network/[id]`; legacy redirects |
+| Evidence Vault export | **Implemented** — `/argus/v2/deliver` + `POST /api/argus/export` |
 | Production `/argus/journal` not replaced | By design until feature parity |
 
 ---

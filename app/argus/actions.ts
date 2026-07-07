@@ -32,8 +32,6 @@ import { resolveClassificationStatus } from "@/lib/argus/normalize";
 import {
   normalizeContactValueKeys,
   normalizeMyValueKeys,
-  normalizeRelationshipReason,
-  normalizeRelationshipStatus,
 } from "@/lib/argus/network-relationship-metrics";
 import {
   buildReferenceNotes,
@@ -64,7 +62,6 @@ import {
 
 function revalidateArgus(): void {
   revalidatePath("/argus");
-  revalidatePath("/argus/journal");
   revalidatePath("/argus/network");
   revalidatePath("/argus/search");
   revalidatePath("/argus/inbox");
@@ -167,7 +164,7 @@ export async function createLogAction(formData: FormData): Promise<void> {
     const entityIds = await resolveEntityIds(formData);
     const input = parseJournalInput(formData);
     if (!input.body) {
-      redirect("/argus/journal?capture=1&error=content");
+      redirect("/argus/v2?capture=1&error=content");
     }
 
     const title = input.title || autoTitleFromBody(input.body);
@@ -196,9 +193,9 @@ export async function createLogAction(formData: FormData): Promise<void> {
     revalidateArgus();
     revalidatePath("/argus/v2/inbox");
     const returnTo = String(formData.get("returnTo") ?? "log");
-    redirect(returnTo === "journal" ? "/argus/journal" : `/argus/logs/${log.id}`);
+    redirect(returnTo === "journal" ? "/argus/v2" : `/argus/logs/${log.id}`);
   } catch (err) {
-    handleWriteError(err, "/argus/journal");
+    handleWriteError(err, "/argus/v2");
   }
 }
 
@@ -339,7 +336,7 @@ export async function linkInboxAction(formData: FormData): Promise<void> {
   revalidatePath(`/argus/inbox/${inboxId}`);
   revalidatePath("/argus/v2/inbox");
   const returnTo = String(formData.get("returnTo") ?? "inbox");
-  if (returnTo === "journal") redirect("/argus/journal");
+  if (returnTo === "journal") redirect("/argus/v2");
   if (returnTo.startsWith("/argus/")) redirect(returnTo);
   redirect(`/argus/inbox/${inboxId}`);
 }
@@ -355,7 +352,7 @@ export async function setInboxLinksAction(formData: FormData): Promise<void> {
   revalidatePath(`/argus/inbox/${inboxId}`);
   revalidatePath("/argus/v2/inbox");
   const returnTo = String(formData.get("returnTo") ?? "inbox");
-  if (returnTo === "journal") redirect("/argus/journal");
+  if (returnTo === "journal") redirect("/argus/v2");
   if (returnTo.startsWith("/argus/")) redirect(returnTo);
   redirect(`/argus/inbox/${inboxId}`);
 }
@@ -455,9 +452,8 @@ export async function setInboxPrivateAction(formData: FormData): Promise<void> {
   await setInboxPrivate(inboxId, isPrivate);
   revalidateArgus();
   revalidatePath(`/argus/inbox/${inboxId}`);
-  revalidatePath("/argus/journal");
   const returnTo = String(formData.get("returnTo") ?? "inbox");
-  redirect(returnTo === "journal" ? "/argus/journal" : `/argus/inbox/${inboxId}`);
+  redirect(returnTo === "journal" ? "/argus/v2" : `/argus/inbox/${inboxId}`);
 }
 
 export type CreatedEntityResult = {
@@ -564,7 +560,7 @@ async function persistDocumentEntity(
   revalidatePath(`/argus/network/${entity.id}`);
   revalidatePath("/argus/v2");
 
-  return { id: entity.id, href: `/argus/network/${entity.id}`, name: entity.name };
+  return { id: entity.id, href: entityDetailHref(entity), name: entity.name };
 }
 
 async function linkEntityToLogsAction(entityId: string, logIds: string[]): Promise<void> {
@@ -751,8 +747,6 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
   ) as StrategicValue;
   const contactValue = normalizeContactValueKeys(formData.getAll("contactValue").map(String));
   const myValue = normalizeMyValueKeys(formData.getAll("myValue").map(String));
-  const relationshipStatus = normalizeRelationshipStatus(String(formData.get("relationshipStatus") ?? ""));
-  const relationshipReason = normalizeRelationshipReason(String(formData.get("relationshipReason") ?? ""));
 
   let notes = String(formData.get("notes") ?? "").trim();
   const kind = referenceKindFromNotes(entity.notes);
@@ -768,8 +762,6 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
     strategicValue,
     contactValue,
     myValue,
-    relationshipStatus,
-    relationshipReason,
     alias: String(formData.get("alias") ?? "").trim(),
     notes,
     linkedEntityIds,
@@ -783,7 +775,24 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
 
   revalidateArgus();
   revalidatePath(`/argus/network/${entityId}`);
-  redirect(`/argus/network/${entityId}`);
+  revalidatePath(`/argus/v2/network/${entityId}`);
+  redirect(`/argus/v2/network/${entityId}`);
+}
+
+export async function updateRelationshipMetricsAction(formData: FormData): Promise<void> {
+  const entityId = String(formData.get("entityId") ?? "");
+  const entity = await getEntity(entityId);
+  if (!entity) return;
+
+  const contactValue = normalizeContactValueKeys(formData.getAll("contactValue").map(String));
+  const myValue = normalizeMyValueKeys(formData.getAll("myValue").map(String));
+
+  await updateEntity(entityId, { contactValue, myValue });
+
+  revalidateArgus();
+  revalidatePath(`/argus/network/${entityId}`);
+  revalidatePath(`/argus/v2/network/${entityId}`);
+  revalidatePath("/argus/v2/browse/network");
 }
 
 export async function updateProjectAction(formData: FormData): Promise<void> {
@@ -819,7 +828,7 @@ export async function deleteLogAction(formData: FormData): Promise<void> {
   const logId = String(formData.get("logId") ?? "");
   await deleteLog(logId);
   revalidateArgus();
-  redirect("/argus/journal");
+  redirect("/argus/v2");
 }
 
 export async function deleteEntityAction(formData: FormData): Promise<void> {
@@ -835,21 +844,21 @@ export async function deleteInboxAction(formData: FormData): Promise<void> {
   await deleteInboxItem(inboxId);
   revalidateArgus();
   const returnTo = String(formData.get("returnTo") ?? "inbox");
-  redirect(returnTo === "journal" ? "/argus/journal" : "/argus/inbox");
+  redirect(returnTo === "journal" ? "/argus/v2" : "/argus/inbox");
 }
 
 export async function clearAllArgusDataAction(): Promise<void> {
   if (!isDestructiveAllowed()) {
-    redirect("/argus/journal?error=destructive");
+    redirect("/argus/v2?error=destructive");
   }
   try {
     await clearAllArgusData();
   } catch (err) {
     if (err instanceof Error && err.message.includes("Supabase")) {
-      redirect("/argus/journal?error=supabase-destructive");
+      redirect("/argus/v2?error=supabase-destructive");
     }
     throw err;
   }
   revalidateArgus();
-  redirect("/argus/journal");
+  redirect("/argus/v2");
 }

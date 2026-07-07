@@ -2,8 +2,6 @@ import type { ArgusData, Attachment, ClassificationStatus, Entity, InboxItem, Lo
 import {
   normalizeContactValueKeys,
   normalizeMyValueKeys,
-  normalizeRelationshipReason,
-  normalizeRelationshipStatus,
 } from "./network-relationship-metrics";
 
 export function resolveClassificationStatus(entityIds: string[]): ClassificationStatus {
@@ -46,8 +44,6 @@ export function normalizeEntity(entity: Entity): Entity {
     strategicValue,
     contactValue: normalizeContactValueKeys(entity.contactValue),
     myValue: normalizeMyValueKeys(entity.myValue),
-    relationshipStatus: normalizeRelationshipStatus(entity.relationshipStatus),
-    relationshipReason: normalizeRelationshipReason(entity.relationshipReason),
     linkedPersonIds: entity.linkedPersonIds ?? [],
     linkedTopicIds: entity.linkedTopicIds ?? [],
     linkedEventIds: entity.linkedEventIds ?? [],

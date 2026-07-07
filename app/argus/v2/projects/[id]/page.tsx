@@ -80,6 +80,12 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
               linkedIds={entity.linkedEntityIds ?? []}
               className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
             />
+            <Link
+              href={`/argus/v2/deliver?scopeType=project&scopeId=${entity.id}`}
+              className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-300 hover:border-zinc-600 hover:text-zinc-200"
+            >
+              Export
+            </Link>
             <button
               type="button"
               className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
@@ -191,7 +197,7 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
                   {page.peopleWithRoles.slice(0, 4).map((person) => (
                     <V2PersonListItem
                       key={person.id}
-                      href={`/argus/network/${person.id}`}
+                      href={`/argus/v2/network/${person.id}`}
                       name={person.name}
                       subtitle={person.role}
                       initials={person.initials}

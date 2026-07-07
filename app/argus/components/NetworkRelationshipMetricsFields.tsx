@@ -4,11 +4,8 @@ import type { Entity } from "@/lib/argus/types";
 import {
   CONTACT_VALUE_OPTIONS,
   MY_VALUE_OPTIONS,
-  RELATIONSHIP_REASON_OPTIONS,
-  RELATIONSHIP_STATUS_OPTIONS,
   countOfFive,
 } from "@/lib/argus/network-relationship-metrics";
-import { inputClass } from "./ui";
 
 function CheckboxGroup({
   title,
@@ -58,8 +55,6 @@ function CheckboxGroup({
 export function NetworkRelationshipMetricsFields({ entity }: { entity: Entity }) {
   const contactValue = entity.contactValue ?? [];
   const myValue = entity.myValue ?? [];
-  const relationshipStatus = entity.relationshipStatus ?? "healthy";
-  const relationshipReason = entity.relationshipReason ?? "no_action_required";
 
   return (
     <div className="space-y-4">
@@ -83,32 +78,10 @@ export function NetworkRelationshipMetricsFields({ entity }: { entity: Entity })
         selected={myValue}
       />
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="block">
-          <span className="text-xs text-zinc-500">Relationship status</span>
-          <select
-            name="relationshipStatus"
-            defaultValue={relationshipStatus}
-            className={`${inputClass} mt-1`}
-          >
-            {RELATIONSHIP_STATUS_OPTIONS.map((option) => (
-              <option key={option.key} value={option.key}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-xs text-zinc-500">Reason</span>
-          <select name="relationshipReason" defaultValue={relationshipReason} className={`${inputClass} mt-1`}>
-            {RELATIONSHIP_REASON_OPTIONS.map((option) => (
-              <option key={option.key} value={option.key}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <p className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3 text-[11px] leading-snug text-zinc-600">
+        Relationship status and reason update automatically from follow-ups, linked inbox items, and interaction
+        history when you save contact/my value changes.
+      </p>
     </div>
   );
 }

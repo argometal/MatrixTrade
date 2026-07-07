@@ -49,9 +49,9 @@ export function ArgusCornerEntry() {
 
   return (
     <Link
-      href="/argus/journal"
+      href="/argus/v2"
       title="ARGUS"
-      aria-label="Open ARGUS journal"
+      aria-label="Open ARGUS"
       className={`group fixed right-4 z-[60] rounded-xl shadow-lg transition hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:right-6 ${
         preview
           ? "top-14 shadow-black/40 hover:shadow-teal-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 lg:top-6"

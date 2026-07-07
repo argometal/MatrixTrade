@@ -2,7 +2,7 @@
 
 **Status:** Locked for implementation. Current production UI unchanged; new shells live under `/argus/v2/*`.
 
-**QA checklist:** [`v2-design-checklist.md`](v2-design-checklist.md) · **Update rule:** [`checklist-protocol.md`](checklist-protocol.md)
+**Index:** [`README.md`](README.md) · **QA checklist:** [`v2-design-checklist.md`](v2-design-checklist.md) · **Update rule:** [`checklist-protocol.md`](checklist-protocol.md)
 
 **AI rule of construction:** [`ai-charter.md`](ai-charter.md) — metrics prioritize attention; people are never reduced to scores.
 
@@ -35,8 +35,11 @@ Applies on org, project, and person pages. Migration adds “Continue log” UX 
 
 Do **not** remove or replace `(app)` routes (`/argus/journal`, `/argus/network`, etc.) until features are ported one by one into v2.
 
-## Production entry points (unchanged)
+## Production entry points
 
-- Home: `/argus/journal`
-- Network: `/argus/network`
-- Projects: entity pages under `/argus/projects/[id]`
+- Home: `/argus/v2` (v2) · `/argus/journal` (legacy)
+- Network browse: `/argus/v2/browse/network`
+- Person detail: `/argus/v2/network/[id]`
+- Organizations: `/argus/v2/organizations/[id]`
+- Projects: `/argus/v2/projects/[id]`
+- Inbox: `/argus/v2/inbox`

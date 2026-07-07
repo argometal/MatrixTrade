@@ -72,7 +72,7 @@ function postCreateHref(pathname: string, kind: CreateItemKind, id: string, fall
     case "event":
       return `/argus/v2/browse/events?selected=${id}`;
     default:
-      return `/argus/network/${id}`;
+      return `/argus/v2/network/${id}`;
   }
 }
 

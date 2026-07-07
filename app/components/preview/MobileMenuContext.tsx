@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
 type MobileMenuContextValue = {
   open: boolean;
@@ -12,6 +13,11 @@ const MobileMenuContext = createContext<MobileMenuContextValue | null>(null);
 
 export function MobileMenuProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
     <MobileMenuContext.Provider

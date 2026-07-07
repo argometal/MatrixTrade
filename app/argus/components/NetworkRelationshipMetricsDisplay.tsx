@@ -1,4 +1,5 @@
 import type { Entity } from "@/lib/argus/types";
+import type { DerivedRelationshipAttention } from "@/lib/argus/network-relationship-metrics";
 import {
   CONTACT_VALUE_OPTIONS,
   MY_VALUE_OPTIONS,
@@ -9,11 +10,15 @@ import {
   relationshipStatusLabel,
 } from "@/lib/argus/network-relationship-metrics";
 
-export function NetworkRelationshipMetricsDisplay({ entity }: { entity: Entity }) {
+export function NetworkRelationshipMetricsDisplay({
+  entity,
+  attention,
+}: {
+  entity: Entity;
+  attention: DerivedRelationshipAttention;
+}) {
   const contactValue = entity.contactValue ?? [];
   const myValue = entity.myValue ?? [];
-  const relationshipStatus = entity.relationshipStatus ?? "healthy";
-  const relationshipReason = entity.relationshipReason ?? "no_action_required";
 
   return (
     <div className="space-y-4 border-t border-zinc-800 pt-4">
@@ -59,8 +64,11 @@ export function NetworkRelationshipMetricsDisplay({ entity }: { entity: Entity }
 
       <div className="border-t border-zinc-800/80 pt-4">
         <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Attention</h3>
-        <p className="mt-1 text-sm font-medium text-zinc-200">{relationshipStatusLabel(relationshipStatus)}</p>
-        <p className="mt-1 text-sm text-zinc-500">{relationshipReasonLabel(relationshipReason)}</p>
+        <p className="mt-1 text-sm font-medium text-zinc-200">{relationshipStatusLabel(attention.status)}</p>
+        <p className="mt-1 text-sm text-zinc-500">{relationshipReasonLabel(attention.reason)}</p>
+        <p className="mt-2 text-[11px] leading-snug text-zinc-600">
+          Derived from follow-ups, inbox links, interaction recency, and opportunity signals — not manually set.
+        </p>
       </div>
     </div>
   );
