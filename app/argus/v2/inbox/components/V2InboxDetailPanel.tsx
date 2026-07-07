@@ -67,11 +67,13 @@ export function V2InboxDetailPanel({
   buckets,
   tagBuckets,
   linkedEntityRecords,
+  onBack,
 }: {
   detail: DetailBundle;
   buckets: EntityPickerBuckets;
   tagBuckets: TagBuckets;
   linkedEntityRecords: Entity[];
+  onBack?: () => void;
 }) {
   const [panelTab, setPanelTab] = useState<"email" | "details" | "attachments" | "related">("email");
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -177,11 +179,22 @@ export function V2InboxDetailPanel({
   ];
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
+      {onBack ? (
+        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-3 lg:hidden">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-sm font-medium text-violet-400 hover:text-violet-300"
+          >
+            ← Inbox
+          </button>
+        </div>
+      ) : null}
       <div className="border-b border-zinc-800/80 px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold leading-snug text-zinc-50">{view.subject || "(No subject)"}</h2>
-          <div className="relative flex shrink-0 items-center gap-2">
+          <div className="relative hidden shrink-0 items-center gap-2 lg:flex">
             {canTriage ? (
               <>
                 <button
@@ -293,7 +306,7 @@ export function V2InboxDetailPanel({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-5 py-4">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 pb-36 lg:pb-4">
         {panelTab === "email" ? (
           <div className="whitespace-pre-wrap text-sm leading-7 text-zinc-300">{view.textBody}</div>
         ) : null}
@@ -541,6 +554,36 @@ export function V2InboxDetailPanel({
         onChange={setSelectedTags}
         onClose={() => setTagPickerOpen(false)}
       />
+
+      {canTriage ? (
+        <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex gap-2 border-t border-zinc-800/80 bg-zinc-950/95 px-4 py-3 backdrop-blur-md lg:hidden">
+          <button
+            type="button"
+            onClick={() =>
+              openCreateFlow({
+                mode: "inbox-evidence",
+                inboxId: item.id,
+                prefillTitle: defaultTitle,
+                prefillBody: defaultBody,
+                prefillTags: selectedTags,
+                prefillDate: view.receivedAt,
+                linkedEntityIds: linkIds,
+                returnTo,
+              })
+            }
+            className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-600/20 py-3 text-sm font-semibold text-emerald-300"
+          >
+            Create / Link
+          </button>
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="flex-1 rounded-xl border border-violet-500/40 bg-violet-600/20 py-3 text-sm font-semibold text-violet-300"
+          >
+            + Link
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

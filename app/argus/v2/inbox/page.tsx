@@ -29,7 +29,6 @@ export default async function V2InboxPage({
   const today = new Date().toISOString().slice(0, 10);
   const rows = buildV2InboxRows(enriched, data.entities, today);
   const tab = parseV2InboxTab(tabParam);
-  const selectedId = selected ?? rows[0]?.id;
 
   const buckets = buildEntityPickerBuckets(data, includePrivate);
   const tagBuckets = buildTagBuckets(data, includePrivate);
@@ -79,7 +78,7 @@ export default async function V2InboxPage({
         buckets={buckets}
         tagBuckets={tagBuckets}
         linkedEntityRecords={data.entities.filter((e) => !e.deletedAt)}
-        initialSelectedId={selectedId}
+        initialSelectedId={selected ?? rows[0]?.id}
         initialTab={tab}
       />
     </Suspense>
