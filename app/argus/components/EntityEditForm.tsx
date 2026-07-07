@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import type { Entity } from "@/lib/argus/types";
 import { updateEntityAction } from "@/app/argus/actions";
 import { entityNotesForDisplay, referenceKindFromNotes } from "@/lib/argus/reference-types";
@@ -8,11 +9,10 @@ import {
   filterEntityPickerBuckets,
   linkSourceKindFromEntity,
 } from "@/lib/argus/link-hierarchy";
-import { STRATEGIC_VALUE_LABELS } from "@/lib/argus/labels";
-import type { StrategicValue } from "@/lib/argus/types";
 import { ACTIVITY_EDIT, LINK_HIERARCHY } from "@/lib/argus/ux-copy";
+import { NetworkRelationshipMetricsFields } from "./NetworkRelationshipMetricsFields";
 import { EntityChip } from "./Cards";
-import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
+import type { EntityPickerBuckets } from "./ReferencePickerModal";
 import { inputClass } from "./ui";
 
 function idsMatchingKind(entities: Entity[], ids: string[], kind: "person" | "event"): string[] {
@@ -46,7 +46,18 @@ function EntityLinkGroup({
   defaultKind: "person" | "event";
   createLabel: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const { openLinkModal } = useArgusAdd();
+
+  function openPicker() {
+    openLinkModal({
+      title: createLabel.replace(/^\+ /, "Link "),
+      linkedEntityIds: selectedIds,
+      buckets,
+      initialFilter: defaultKind,
+      showTags: false,
+      onConfirm: (result) => onChange(result.entityIds),
+    });
+  }
 
   return (
     <div>
@@ -55,7 +66,7 @@ function EntityLinkGroup({
       <div className="mt-2 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={openPicker}
           className="rounded-full border border-zinc-700 px-3 py-1.5 text-[13px] text-zinc-300 hover:bg-zinc-800"
         >
           {ACTIVITY_EDIT.linkTo}
@@ -68,18 +79,6 @@ function EntityLinkGroup({
           ))}
         </div>
       ) : null}
-
-      <ReferencePickerModal
-        open={open}
-        buckets={buckets}
-        selectedIds={selectedIds}
-        onChange={onChange}
-        onClose={() => setOpen(false)}
-        onConfirm={() => setOpen(false)}
-        defaultCreateKind={defaultKind}
-        allowedCreateKinds={allowedKinds}
-        createButtonLabel={createLabel}
-      />
     </div>
   );
 }
@@ -91,7 +90,6 @@ export function EntityEditForm({
   entity: Entity;
   allBuckets: EntityPickerBuckets;
 }) {
-  const sv = entity.strategicValue ?? 3;
   const sourceKind = linkSourceKindFromEntity(entity);
   const notesKind = referenceKindFromNotes(entity.notes ?? "");
   const allEntities = allBuckets.alphabetical;
@@ -145,16 +143,7 @@ export function EntityEditForm({
 
       <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Editable fields</p>
 
-      <label className="block">
-        <span className="text-xs text-zinc-500">Strategic value</span>
-        <select name="strategicValue" defaultValue={sv} className={`${inputClass} mt-1`}>
-          {([1, 2, 3, 4, 5] as StrategicValue[]).map((value) => (
-            <option key={value} value={value}>
-              {value} — {STRATEGIC_VALUE_LABELS[value]}
-            </option>
-          ))}
-        </select>
-      </label>
+      <NetworkRelationshipMetricsFields entity={entity} />
 
       <label className="block">
         <span className="text-xs text-zinc-500">Alias</span>

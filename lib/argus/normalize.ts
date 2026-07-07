@@ -1,4 +1,8 @@
 import type { ArgusData, Attachment, ClassificationStatus, Entity, InboxItem, Log } from "./types";
+import {
+  normalizeContactValueKeys,
+  normalizeMyValueKeys,
+} from "./network-relationship-metrics";
 
 export function resolveClassificationStatus(entityIds: string[]): ClassificationStatus {
   return entityIds.length > 0 ? "classified" : "needs_classification";
@@ -38,6 +42,8 @@ export function normalizeEntity(entity: Entity): Entity {
     alias: entity.alias ?? "",
     notes: entity.notes ?? "",
     strategicValue,
+    contactValue: normalizeContactValueKeys(entity.contactValue),
+    myValue: normalizeMyValueKeys(entity.myValue),
     linkedPersonIds: entity.linkedPersonIds ?? [],
     linkedTopicIds: entity.linkedTopicIds ?? [],
     linkedEventIds: entity.linkedEventIds ?? [],
@@ -54,13 +60,14 @@ export function normalizeInboxItem(item: InboxItem): InboxItem {
   let status = item.status ?? "pending";
   if (status !== "archived" && !item.deletedAt) {
     if (item.convertedLogId) status = "converted";
-    else if (linkedEntityIds.length > 0 && status === "pending") status = "linked";
   }
   return {
     ...item,
     linkedEntityIds,
     attachmentIds: item.attachmentIds ?? [],
     private: item.private ?? false,
+    topics: item.topics ?? [],
+    followUpDate: item.followUpDate?.slice(0, 10),
     status,
     deletedAt: item.deletedAt,
   };

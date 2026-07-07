@@ -4,9 +4,11 @@ import { buildEmailView, parseStoredEmailPayload, attachmentSizeFromStored, type
 import { enrichInboxItems } from "@/lib/argus/inbox-enrich";
 import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
 import {
+  buildInboxTopicContext,
   buildV2InboxDetailEntities,
   buildV2InboxRows,
   parseV2InboxTab,
+  type InboxTopicContext,
 } from "@/lib/argus/v2/inbox-loaders";
 import {
   getAttachment,
@@ -27,7 +29,8 @@ export default async function V2InboxPage({
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, includePrivate)]);
   const enriched = await enrichInboxItems(inboxItems);
   const today = new Date().toISOString().slice(0, 10);
-  const rows = buildV2InboxRows(enriched, data.entities, today);
+  const topicContext = buildInboxTopicContext(data);
+  const rows = buildV2InboxRows(enriched, data.entities, today, topicContext);
   const tab = parseV2InboxTab(tabParam);
 
   const buckets = buildEntityPickerBuckets(data, includePrivate);
@@ -78,7 +81,8 @@ export default async function V2InboxPage({
         buckets={buckets}
         tagBuckets={tagBuckets}
         linkedEntityRecords={data.entities.filter((e) => !e.deletedAt)}
-        initialSelectedId={selected ?? rows[0]?.id}
+        topicContext={topicContext}
+        initialSelectedId={selected}
         initialTab={tab}
       />
     </Suspense>

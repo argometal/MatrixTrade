@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { argusPrivateConfigured, verifyArgusPrivatePin } from "@/lib/auth/passwords";
 import { requireArgusSession } from "@/lib/auth/require-session";
 import {
   appendLogAttachment,
@@ -15,11 +17,13 @@ import {
   deleteInboxItem,
   deleteLog,
   getEntity,
+  getInboxItems,
   getLog,
   getInboxItem,
   linkInboxToEntities,
   saveInboxEvidenceLinks,
   setInboxLinkedEntities,
+  updateInboxTriage,
   readArgus,
   saveAttachment,
   setInboxPrivate,
@@ -30,6 +34,10 @@ import type { EntityType, JournalKind, LogSource, StrategicValue } from "@/lib/a
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
 import { inferJournalKind, resolveLogDate, autoTitleFromBody } from "@/lib/argus/journal-helpers";
 import { resolveClassificationStatus } from "@/lib/argus/normalize";
+import {
+  normalizeContactValueKeys,
+  normalizeMyValueKeys,
+} from "@/lib/argus/network-relationship-metrics";
 import {
   buildReferenceNotes,
   entityDetailHref,
@@ -56,10 +64,10 @@ import {
   argusErrorQueryParams,
   formatArgusError,
 } from "@/lib/argus/persistence/errors";
+import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
 
 function revalidateArgus(): void {
   revalidatePath("/argus");
-  revalidatePath("/argus/journal");
   revalidatePath("/argus/network");
   revalidatePath("/argus/search");
   revalidatePath("/argus/inbox");
@@ -162,7 +170,7 @@ export async function createLogAction(formData: FormData): Promise<void> {
     const entityIds = await resolveEntityIds(formData);
     const input = parseJournalInput(formData);
     if (!input.body) {
-      redirect("/argus/journal?capture=1&error=content");
+      redirect("/argus/v2?capture=1&error=content");
     }
 
     const title = input.title || autoTitleFromBody(input.body);
@@ -191,9 +199,9 @@ export async function createLogAction(formData: FormData): Promise<void> {
     revalidateArgus();
     revalidatePath("/argus/v2/inbox");
     const returnTo = String(formData.get("returnTo") ?? "log");
-    redirect(returnTo === "journal" ? "/argus/journal" : `/argus/logs/${log.id}`);
+    redirect(returnTo === "journal" ? "/argus/v2" : `/argus/logs/${log.id}`);
   } catch (err) {
-    handleWriteError(err, "/argus/journal");
+    handleWriteError(err, "/argus/v2");
   }
 }
 
@@ -334,7 +342,7 @@ export async function linkInboxAction(formData: FormData): Promise<void> {
   revalidatePath(`/argus/inbox/${inboxId}`);
   revalidatePath("/argus/v2/inbox");
   const returnTo = String(formData.get("returnTo") ?? "inbox");
-  if (returnTo === "journal") redirect("/argus/journal");
+  if (returnTo === "journal") redirect("/argus/v2");
   if (returnTo.startsWith("/argus/")) redirect(returnTo);
   redirect(`/argus/inbox/${inboxId}`);
 }
@@ -350,9 +358,65 @@ export async function setInboxLinksAction(formData: FormData): Promise<void> {
   revalidatePath(`/argus/inbox/${inboxId}`);
   revalidatePath("/argus/v2/inbox");
   const returnTo = String(formData.get("returnTo") ?? "inbox");
-  if (returnTo === "journal") redirect("/argus/journal");
+  if (returnTo === "journal") redirect("/argus/v2");
   if (returnTo.startsWith("/argus/")) redirect(returnTo);
   redirect(`/argus/inbox/${inboxId}`);
+}
+
+/** Persist inbox triage: status, follow-up date, user-selected tags. */
+export async function setInboxTriageAction(formData: FormData): Promise<void> {
+  const inboxId = String(formData.get("inboxId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? `/argus/v2/inbox?selected=${inboxId}`);
+  const patch = parseInboxTriagePatch(formData);
+  if (Object.keys(patch).length === 0) {
+    redirect(returnTo.startsWith("/argus/") ? returnTo : `/argus/v2/inbox?selected=${inboxId}`);
+  }
+
+  await updateInboxTriage(inboxId, patch);
+  revalidateArgus();
+  revalidatePath(`/argus/inbox/${inboxId}`);
+  revalidatePath("/argus/v2/inbox");
+  redirect(returnTo.startsWith("/argus/") ? returnTo : `/argus/v2/inbox?selected=${inboxId}`);
+}
+
+/** Client-side triage updates without redirect (detail panel fields). */
+export async function updateInboxTriageAction(
+  inboxId: string,
+  patch: {
+    status?: "pending" | "linked" | "converted" | "archived";
+    followUpDate?: string | null;
+    topics?: string[];
+  }
+): Promise<{ ok: true }> {
+  await requireArgusSession();
+  if (!inboxId) throw new Error("Missing inbox id");
+  if (Object.keys(patch).length === 0) return { ok: true };
+  await updateInboxTriage(inboxId, patch);
+  revalidateArgus();
+  revalidatePath(`/argus/inbox/${inboxId}`);
+  revalidatePath("/argus/v2/inbox");
+  return { ok: true };
+}
+
+function parseInboxTriagePatch(formData: FormData) {
+  const statusRaw = String(formData.get("status") ?? "").trim();
+  const followUpRaw = String(formData.get("followUpDate") ?? "").trim();
+  const topics = formData
+    .getAll("topics")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+
+  const patch: Parameters<typeof updateInboxTriage>[1] = {};
+  if (statusRaw === "pending" || statusRaw === "linked" || statusRaw === "converted" || statusRaw === "archived") {
+    patch.status = statusRaw;
+  }
+  if (formData.has("followUpDate")) {
+    patch.followUpDate = followUpRaw ? followUpRaw.slice(0, 10) : null;
+  }
+  if (formData.has("topics")) {
+    patch.topics = topics;
+  }
+  return patch;
 }
 
 export async function convertInboxAction(formData: FormData): Promise<void> {
@@ -394,9 +458,8 @@ export async function setInboxPrivateAction(formData: FormData): Promise<void> {
   await setInboxPrivate(inboxId, isPrivate);
   revalidateArgus();
   revalidatePath(`/argus/inbox/${inboxId}`);
-  revalidatePath("/argus/journal");
   const returnTo = String(formData.get("returnTo") ?? "inbox");
-  redirect(returnTo === "journal" ? "/argus/journal" : `/argus/inbox/${inboxId}`);
+  redirect(returnTo === "journal" ? "/argus/v2" : `/argus/inbox/${inboxId}`);
 }
 
 export type CreatedEntityResult = {
@@ -503,7 +566,7 @@ async function persistDocumentEntity(
   revalidatePath(`/argus/network/${entity.id}`);
   revalidatePath("/argus/v2");
 
-  return { id: entity.id, href: `/argus/network/${entity.id}`, name: entity.name };
+  return { id: entity.id, href: entityDetailHref(entity), name: entity.name };
 }
 
 async function linkEntityToLogsAction(entityId: string, logIds: string[]): Promise<void> {
@@ -631,6 +694,8 @@ export async function saveUnifiedCreateFlowAction(
     let result: CreatedEntityResult;
     if (payload.itemKind === "document") {
       result = await persistDocumentEntity(trimmedName, payload.notes, mergedEntityIds);
+    } else if (payload.itemKind === "tag") {
+      result = await persistNewEntity("topic", trimmedName, payload.notes, mergedEntityIds);
     } else {
       result = await persistNewEntity(
         payload.itemKind,
@@ -688,6 +753,8 @@ export async function saveUnifiedCreateFlowAction(
   let result: CreatedEntityResult;
   if (payload.itemKind === "document") {
     result = await persistDocumentEntity(trimmedName, payload.notes, linkedEntityIds);
+  } else if (payload.itemKind === "tag") {
+    result = await persistNewEntity("topic", trimmedName, payload.notes, linkedEntityIds);
   } else {
     result = await persistNewEntity(
       payload.itemKind,
@@ -777,10 +844,12 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
     redirect("/argus/network");
   }
 
-  const rawValue = Number(formData.get("strategicValue") ?? 3);
+  const rawValue = Number(formData.get("strategicValue") ?? entity.strategicValue ?? 3);
   const strategicValue = (
-    rawValue >= 1 && rawValue <= 5 ? rawValue : 3
+    rawValue >= 1 && rawValue <= 5 ? rawValue : entity.strategicValue ?? 3
   ) as StrategicValue;
+  const contactValue = normalizeContactValueKeys(formData.getAll("contactValue").map(String));
+  const myValue = normalizeMyValueKeys(formData.getAll("myValue").map(String));
 
   let notes = String(formData.get("notes") ?? "").trim();
   const kind = referenceKindFromNotes(entity.notes);
@@ -794,6 +863,8 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
 
   await updateEntity(entityId, {
     strategicValue,
+    contactValue,
+    myValue,
     alias: String(formData.get("alias") ?? "").trim(),
     notes,
     linkedEntityIds,
@@ -807,7 +878,24 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
 
   revalidateArgus();
   revalidatePath(`/argus/network/${entityId}`);
-  redirect(`/argus/network/${entityId}`);
+  revalidatePath(`/argus/v2/network/${entityId}`);
+  redirect(`/argus/v2/network/${entityId}`);
+}
+
+export async function updateRelationshipMetricsAction(formData: FormData): Promise<void> {
+  const entityId = String(formData.get("entityId") ?? "");
+  const entity = await getEntity(entityId);
+  if (!entity) return;
+
+  const contactValue = normalizeContactValueKeys(formData.getAll("contactValue").map(String));
+  const myValue = normalizeMyValueKeys(formData.getAll("myValue").map(String));
+
+  await updateEntity(entityId, { contactValue, myValue });
+
+  revalidateArgus();
+  revalidatePath(`/argus/network/${entityId}`);
+  revalidatePath(`/argus/v2/network/${entityId}`);
+  revalidatePath("/argus/v2/browse/network");
 }
 
 export async function updateProjectAction(formData: FormData): Promise<void> {
@@ -839,11 +927,86 @@ export async function updateProjectAction(formData: FormData): Promise<void> {
   redirect(`/argus/projects/${entityId}`);
 }
 
+export async function renameProjectAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/browse/projects");
+
+  if (!name) {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=name`);
+  }
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.type !== "project") {
+    redirect(returnTo);
+  }
+
+  await updateEntity(entityId, { name });
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/projects");
+  revalidatePath(`/argus/v2/projects/${entityId}`);
+  revalidatePath(`/argus/projects/${entityId}`);
+  redirect(returnTo);
+}
+
+export async function deleteProjectAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const confirmName = String(formData.get("confirmName") ?? "").trim();
+  const pin = String(formData.get("pin") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/browse/projects");
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.type !== "project") {
+    redirect(returnTo);
+  }
+
+  if (confirmName.toLowerCase() !== entity.name.trim().toLowerCase()) {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=confirm`);
+  }
+
+  const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
+  const needsPin =
+    argusPrivateConfigured() &&
+    projectHasPrivateEvidence(data, inboxItems, entity) &&
+    !(await hasArgusPrivateUnlock());
+
+  if (needsPin && !verifyArgusPrivatePin(pin)) {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=pin`);
+  }
+
+  await deleteEntity(entityId);
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/projects");
+  revalidatePath(`/argus/v2/projects/${entityId}`);
+  redirect(returnTo);
+}
+
+export async function updateTopicAliasesAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const linkedTags = parseTopics(String(formData.get("linkedTags") ?? ""));
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/browse/topics");
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.type !== "other" || referenceKindFromNotes(entity.notes ?? "") !== "topic") {
+    redirect(returnTo);
+  }
+
+  await updateEntity(entityId, { linkedTags });
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/inbox");
+  revalidatePath("/argus/v2");
+  redirect(returnTo);
+}
+
 export async function deleteLogAction(formData: FormData): Promise<void> {
   const logId = String(formData.get("logId") ?? "");
   await deleteLog(logId);
   revalidateArgus();
-  redirect("/argus/journal");
+  redirect("/argus/v2");
 }
 
 export async function deleteEntityAction(formData: FormData): Promise<void> {
@@ -859,21 +1022,21 @@ export async function deleteInboxAction(formData: FormData): Promise<void> {
   await deleteInboxItem(inboxId);
   revalidateArgus();
   const returnTo = String(formData.get("returnTo") ?? "inbox");
-  redirect(returnTo === "journal" ? "/argus/journal" : "/argus/inbox");
+  redirect(returnTo === "journal" ? "/argus/v2" : "/argus/inbox");
 }
 
 export async function clearAllArgusDataAction(): Promise<void> {
   if (!isDestructiveAllowed()) {
-    redirect("/argus/journal?error=destructive");
+    redirect("/argus/v2?error=destructive");
   }
   try {
     await clearAllArgusData();
   } catch (err) {
     if (err instanceof Error && err.message.includes("Supabase")) {
-      redirect("/argus/journal?error=supabase-destructive");
+      redirect("/argus/v2?error=supabase-destructive");
     }
     throw err;
   }
   revalidateArgus();
-  redirect("/argus/journal");
+  redirect("/argus/v2");
 }

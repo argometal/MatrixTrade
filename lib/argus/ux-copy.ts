@@ -370,6 +370,16 @@ export const ENTITY_DETAIL = {
   noteCount: "Notes",
 } as const;
 
+/** Topic tag aliases — bridge inbox/journal tags to topic entities */
+export const TOPIC_ALIASES = {
+  heading: "Tag aliases",
+  hint: "Synonyms that match this topic in inbox suggestions and filters (e.g. handover for HO).",
+  placeholder: "Add alias…",
+  add: "Add",
+  save: "Save aliases",
+  empty: "No aliases yet — add words from emails that should suggest this topic.",
+} as const;
+
 /** Temporary testing controls — protect before production */
 export const TESTING = {
   sectionLabel: "Testing",
@@ -380,6 +390,11 @@ export const TESTING = {
   deleteEntityConfirm: "Delete this reference permanently? It will be unlinked from all records.",
   deleteInbox: "Delete email",
   deleteInboxConfirm: "Delete this inbox item permanently? Attachments will be removed.",
+  deleteProject: "Delete project",
+  deleteProjectConfirmHint:
+    "This removes the project from your knowledge base and unlinks it from journal entries and emails. Evidence is kept.",
+  deleteProjectTypeName: "Type the project name to confirm",
+  deleteProjectPinHint: "This project includes protected evidence. Enter your PIN to delete.",
   clearAll: "Clear all ARGUS data",
   clearAllHint: "Removes all logs, inbox items, references, attachments, and files. For testing only.",
   clearAllConfirm:

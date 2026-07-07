@@ -254,7 +254,7 @@ export function buildV2NetworkBrowseCards(
       return {
         id: person.id,
         name: person.name,
-        href: `/argus/network/${person.id}`,
+        href: `/argus/v2/network/${person.id}`,
         initials: initialsFromName(person.name),
         role: personRole(person),
         organization: org?.name ?? null,

@@ -18,7 +18,7 @@ export function AddMenuButton({
   className?: string;
   defaultKind?: CreateItemKind;
 }) {
-  const { openCreateFlow } = useArgusAdd();
+  const { openCapture } = useArgusAdd();
 
   const buttonClass =
     variant === "nav"
@@ -29,7 +29,7 @@ export function AddMenuButton({
     <div className={`flex flex-col items-center ${className}`}>
       <button
         type="button"
-        onClick={() => openCreateFlow({ itemKind: defaultKind })}
+        onClick={() => openCapture({ entryType: "note" })}
         aria-label={ADD_MENU.fab}
         className={buttonClass}
       >
@@ -44,7 +44,7 @@ export function AddCreateButton({
   align = "end",
   className = "",
   defaultKind = "journal",
-  label = "+ Create",
+  label = "Create",
 }: {
   align?: MenuAlign;
   className?: string;

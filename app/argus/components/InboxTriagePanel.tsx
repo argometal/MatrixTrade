@@ -1,14 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
 import { referenceDisplayLabel, entityDetailHref } from "@/lib/argus/reference-types";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import { INBOX, TESTING } from "@/lib/argus/ux-copy";
-import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
+import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { CaptureSheet } from "./CaptureSheet";
-import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
+import type { EntityPickerBuckets } from "./ReferencePickerModal";
 import type { TagBuckets } from "./TagPickerModal";
 import { Card } from "./ui";
 import {
@@ -46,31 +47,36 @@ export function InboxTriagePanel({
   defaultTitle,
   defaultBody,
 }: InboxTriagePanelProps) {
-  const linkFormRef = useRef<HTMLFormElement>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [linkIds, setLinkIds] = useState<string[]>([]);
+  const { openLinkModal } = useArgusAdd();
   const [showConvert, setShowConvert] = useState(false);
 
   const canTriage = item.status === "pending" || item.status === "linked";
   const statusLabel = INBOX_STATUS_LABELS[item.status];
   const inboxBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "inbox"), [buckets]);
-  const inboxCreateKinds = allowedCreateKinds("inbox");
 
-  function submitLinkForm() {
-    linkFormRef.current?.requestSubmit();
-  }
-
-  function openLinkPicker() {
-    setLinkIds(item.linkedEntityIds ?? []);
-    setPickerOpen(true);
+  async function persistLinks(ids: string[]) {
+    const formData = new FormData();
+    formData.set("inboxId", item.id);
+    for (const id of ids) formData.append("entityIds", id);
+    await linkInboxAction(formData);
   }
 
   async function linkCreatedEntity(entity: CreatedEntityResult): Promise<false> {
-    const formData = new FormData();
-    formData.set("inboxId", item.id);
-    formData.set("entityIds", entity.id);
-    await linkInboxAction(formData);
+    await persistLinks([entity.id]);
     return false;
+  }
+
+  function openLinkPicker() {
+    openLinkModal({
+      title: "Link email",
+      linkedEntityIds: item.linkedEntityIds ?? [],
+      buckets: inboxBuckets,
+      showTags: false,
+      onConfirm: (result) => {
+        if (result.entityIds.length > 0) void persistLinks(result.entityIds);
+      },
+      onEntityCreated: linkCreatedEntity,
+    });
   }
 
   return (
@@ -114,28 +120,6 @@ export function InboxTriagePanel({
               </ArgusDeleteForm>
             </div>
           </Card>
-
-          <form ref={linkFormRef} action={linkInboxAction} className="hidden">
-            <input type="hidden" name="inboxId" value={item.id} />
-            {linkIds.map((id) => (
-              <input key={id} type="hidden" name="entityIds" value={id} />
-            ))}
-          </form>
-
-          <ReferencePickerModal
-            open={pickerOpen}
-            buckets={inboxBuckets}
-            selectedIds={linkIds}
-            onChange={setLinkIds}
-            onClose={() => setPickerOpen(false)}
-            onConfirm={() => {
-              if (linkIds.length > 0) submitLinkForm();
-            }}
-            onEntityCreated={linkCreatedEntity}
-            allowedCreateKinds={inboxCreateKinds}
-            listMode="all"
-            createButtonLabel={INBOX.createReference}
-          />
 
           {showConvert ? (
             <div className="mb-4">

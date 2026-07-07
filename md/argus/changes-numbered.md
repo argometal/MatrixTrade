@@ -35,7 +35,10 @@ Use git tags to restore any point.
 | **132** | `second-origin` | v2 checkpoint: Network browser, AI Charter, checklist v1.1, inbox unlink fix, search/PIN/filters |
 | **138** | — | Desktop Create & Link 4-column mockup (`ArgusCreateLinkWindow`) |
 | **139** | `source-3` | Mobile Create & Link step wizard; correlation guide + QA checklists; recovery tag `source-3` |
-| **140** | — | Inbox email → unified Create/Link (`inbox-evidence` mode); email stays in inbox; checklist v1.2 audit |
+| **140** | `change-140` | Topic tag aliases (`linkedTags` on topics); ranked inbox suggestions via topic signals; inbox **Process** tab; filter chip labels; project rename/delete on v2 browse; inbox email → unified Create/Link (`inbox-evidence` mode) |
+| **141** | `change-141` | Home timeline hover preview + click-through navigation; frequency-sized tag cloud (journal + inbox tags) |
+| **142** | `change-142` | CREATE flow simplification — hamburger item menu, top-bar-only entry, Create Tag, lighter inline creates elsewhere |
+| **143** | `change-143` | Unified **Link** modal (`ArgusLinkModal`) across ARGUS — inbox-style tabs incl. **Tags**; top **Create** stays full workspace; inline + New via `ReferenceCreateModal` |
 
 ## Restore
 

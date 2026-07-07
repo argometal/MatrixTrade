@@ -7,8 +7,6 @@ import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePicker
 import { inputClass, textareaClass } from "@/app/argus/components/ui";
 import {
   CREATE_ITEM_HINTS,
-  CREATE_ITEM_KINDS,
-  CREATE_ITEM_LABELS,
   LINK_FILTER_LABELS,
   type CreateFlowOpenOptions,
   type CreateItemKind,
@@ -20,6 +18,7 @@ import { entityLinkCardMeta, entityLinkFilterKind } from "@/lib/argus/create-flo
 import { useCreateLinkFlowState } from "@/lib/argus/create-link-flow-state";
 import type { ReferenceKind } from "@/lib/argus/reference-types";
 import { ArgusCreateLinkMobile } from "@/app/argus/components/ArgusCreateLinkMobile";
+import { ArgusCreateItemDrawer } from "@/app/argus/components/ArgusCreateItemDrawer";
 import {
   KindIcon,
   LINK_TABS,
@@ -28,24 +27,30 @@ import {
   InboxEvidenceBanner,
   StepBadge,
   TAB_ICONS,
-  ITEM_STYLES,
+  createItemDisplayLabel,
 } from "@/app/argus/components/create-link-shared";
 
 const STEPS = [
-  { key: "create", label: "Create", sub: "Select what you want to create" },
-  { key: "link", label: "Add Context", sub: "Link this item to anything in ARGUS" },
-  { key: "missing", label: "Create Missing", sub: "Auto-create and link if needed" },
-  { key: "save", label: "Save & Link", sub: "Review and save everything" },
+  { key: "create", label: "Create", sub: "Fill in your new item" },
+  { key: "link", label: "Link", sub: "Connect to existing ARGUS records" },
+  { key: "save", label: "Save", sub: "Review and save" },
 ] as const;
 
-const MISSING_KINDS: Array<{ kind: ReferenceKind | "document"; title: string; fields: string[] }> = [
-  { kind: "person", title: "Person", fields: ["Full name", "Role", "Organization"] },
-  { kind: "organization", title: "Organization", fields: ["Name", "Type", "Country"] },
-  { kind: "project", title: "Project", fields: ["Name", "Description", "Status"] },
-  { kind: "event", title: "Event", fields: ["Title", "Date", "Type"] },
-  { kind: "topic", title: "Topic", fields: ["Name", "Category", "Description"] },
-  { kind: "document", title: "Document", fields: ["Name", "Description", "Source"] },
-];
+function ArgusMenuButton({ open, onClick }: { open: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={open ? "Close create menu" : "Open create menu"}
+      aria-expanded={open}
+      className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-[5px] rounded-xl bg-violet-600/25 ring-1 ring-violet-500/30 transition hover:bg-violet-600/35"
+    >
+      <span className={`block h-0.5 w-4 rounded-full bg-violet-200 transition ${open ? "translate-y-[3.5px] rotate-45" : ""}`} />
+      <span className={`block h-0.5 w-4 rounded-full bg-violet-200 transition ${open ? "opacity-0" : ""}`} />
+      <span className={`block h-0.5 w-4 rounded-full bg-violet-200 transition ${open ? "-translate-y-[3.5px] -rotate-45" : ""}`} />
+    </button>
+  );
+}
 
 function SearchResultRow({
   entity,
@@ -90,11 +95,16 @@ export function ArgusCreateLinkWindow({
   onSaved?: (result: UnifiedCreateResult) => void;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const flow = useCreateLinkFlowState({ open, options, buckets, journalRows, onClose, onSaved });
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!open) setMenuOpen(false);
+  }, [open]);
 
   const linkedEntities = useMemo(
     () =>
@@ -137,17 +147,16 @@ export function ArgusCreateLinkWindow({
           ? "Save & Link Email"
           : flow.itemKind === "journal"
             ? "Create & Save"
-            : `Create ${CREATE_ITEM_LABELS[flow.itemKind]}`;
+            : `Create ${createItemDisplayLabel(flow.itemKind)}`;
 
   const showCreateForm = flow.mode === "create" || (flow.isInboxEvidence && !flow.linkOnly);
-  const showCreateRail = flow.mode === "create" || flow.isInboxEvidence;
 
   const itemPreviewTitle =
     flow.isInboxEvidence && flow.linkOnly
       ? flow.title.trim() || "Link email to records"
       : flow.itemKind === "journal"
         ? flow.title.trim() || "Untitled journal note"
-        : flow.name.trim() || `New ${CREATE_ITEM_LABELS[flow.itemKind]}`;
+        : flow.name.trim() || `New ${createItemDisplayLabel(flow.itemKind)}`;
 
   const itemPreviewBody =
     flow.isInboxEvidence && flow.linkOnly
@@ -163,20 +172,18 @@ export function ArgusCreateLinkWindow({
       className="fixed inset-0 z-[9999] hidden flex-col bg-[#030308] lg:flex"
       role="dialog"
       aria-modal="true"
-      aria-label="Create and link anything"
+      aria-label="Create"
     >
       {/* Header */}
       <header className="shrink-0 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-[1600px] items-center gap-4 px-4 py-3 lg:px-6">
+        <div className="mx-auto flex w-full max-w-[min(100%,1920px)] items-center gap-4 px-5 py-3 xl:px-10">
+          <ArgusMenuButton open={menuOpen} onClick={() => setMenuOpen((value) => !value)} />
           <div className="flex min-w-0 items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600/25 text-lg ring-1 ring-violet-500/30">
-              ◉
-            </span>
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-violet-400">
-                Create &amp; Link Anything
-              </p>
-              <h1 className="text-sm font-bold text-zinc-50">ARGUS</h1>
+            <div className="min-w-0">
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-violet-400">Create</p>
+              <h1 className="truncate text-sm font-bold text-zinc-50">
+                {flow.mode === "link" ? "Link & Connect" : createItemDisplayLabel(flow.itemKind)}
+              </h1>
             </div>
           </div>
 
@@ -220,84 +227,11 @@ export function ArgusCreateLinkWindow({
         />
       ) : null}
 
-      {/* Main 4-column workspace */}
-      <div className="mx-auto grid min-h-0 w-full max-w-[1600px] flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[220px_minmax(0,1fr)_320px_280px]">
-        {/* Step 1 — Create item */}
-        {showCreateRail ? (
-          <aside
-            className="flex min-h-0 flex-col overflow-y-auto border-b border-zinc-800/80 bg-zinc-950/60 lg:border-b-0 lg:border-r"
-          >
-            <div className="flex items-start gap-2 px-4 pb-2 pt-4">
-              <StepBadge n={1} active />
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">Create Item</p>
-                <p className="text-[11px] text-zinc-600">
-                  {flow.isInboxEvidence ? "Optional — or link email only" : "Select what you want to create"}
-                </p>
-              </div>
-            </div>
-            <nav className="space-y-1 px-3 pb-4">
-              {flow.isInboxEvidence ? (
-                <button
-                  type="button"
-                  onClick={() => flow.setLinkOnly(true)}
-                  className={`flex w-full items-start gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                    flow.linkOnly
-                      ? "border-violet-500/50 bg-violet-500/10 ring-1 ring-violet-500/40"
-                      : "border-transparent hover:border-zinc-800 hover:bg-zinc-900/60"
-                  }`}
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-800 text-lg">
-                    ✉
-                  </span>
-                  <span className="min-w-0">
-                    <span className={`block text-sm font-semibold ${flow.linkOnly ? "text-zinc-50" : "text-zinc-200"}`}>
-                      Link only
-                    </span>
-                    <span className="mt-1 block text-[11px] leading-snug text-zinc-500">
-                      Assign email to existing records — no new journal or entity
-                    </span>
-                  </span>
-                </button>
-              ) : null}
-              {CREATE_ITEM_KINDS.map((kind) => {
-                const style = ITEM_STYLES[kind];
-                const active = !flow.linkOnly && flow.itemKind === kind;
-                return (
-                  <button
-                    key={kind}
-                    type="button"
-                    onClick={() => {
-                      flow.setLinkOnly(false);
-                      flow.setItemKind(kind);
-                    }}
-                    className={`flex w-full items-start gap-3 rounded-2xl border px-3 py-3 text-left transition ${
-                      active
-                        ? `border-violet-500/50 bg-violet-500/10 ring-1 ${style.ring}`
-                        : "border-transparent hover:border-zinc-800 hover:bg-zinc-900/60"
-                    }`}
-                  >
-                    <KindIcon kind={kind} />
-                    <span className="min-w-0">
-                      <span className={`block text-sm font-semibold ${active ? "text-zinc-50" : "text-zinc-200"}`}>
-                        {kind === "journal" ? "Journal Note" : CREATE_ITEM_LABELS[kind]}
-                      </span>
-                      <span className="mt-1 block text-[11px] leading-snug text-zinc-500">
-                        {CREATE_ITEM_HINTS[kind]}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </nav>
-          </aside>
-        ) : (
-          <aside className="hidden lg:block lg:border-r lg:border-zinc-800/80" />
-        )}
-
+      {/* Main workspace — form + link + review (create item types live in the menu) */}
+      <div className="mx-auto grid min-h-[min(58vh,640px)] w-full max-w-[min(100%,1920px)] flex-1 grid-cols-1 gap-0 overflow-hidden lg:grid-cols-[minmax(0,1.65fr)_minmax(400px,1fr)_minmax(320px,0.9fr)]">
         {/* Center — Form */}
         <section
-          className="flex min-h-0 flex-col overflow-y-auto border-b border-zinc-800/80 px-4 py-4 lg:border-b-0 lg:border-r lg:px-6"
+          className="flex min-h-0 flex-col overflow-y-auto border-b border-zinc-800/80 px-5 py-5 lg:border-b-0 lg:border-r lg:px-8"
         >
           {showCreateForm ? (
             <>
@@ -305,10 +239,17 @@ export function ArgusCreateLinkWindow({
                 <KindIcon kind={flow.itemKind} />
                 <div>
                   <h2 className="text-sm font-bold uppercase tracking-wide text-zinc-100">
-                    {flow.itemKind === "journal" ? "Journal Note" : CREATE_ITEM_LABELS[flow.itemKind]}
+                    {createItemDisplayLabel(flow.itemKind)}
                   </h2>
                   <p className="text-xs text-zinc-500">{CREATE_ITEM_HINTS[flow.itemKind]}</p>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setMenuOpen(true)}
+                  className="ml-auto rounded-lg border border-zinc-700 px-2.5 py-1 text-[10px] font-medium text-zinc-400 hover:border-violet-500/40 hover:text-violet-300"
+                >
+                  Change type
+                </button>
               </div>
 
               {flow.itemKind === "journal" ? (
@@ -352,7 +293,7 @@ export function ArgusCreateLinkWindow({
                       ))}
                     </div>
                     <textarea
-                      className={`${textareaClass} min-h-[200px] rounded-t-none`}
+                      className={`${textareaClass} min-h-[260px] rounded-t-none`}
                       value={flow.body}
                       onChange={(event) => flow.setBody(event.target.value)}
                       placeholder="Record what matters — evidence for later retrieval…"
@@ -417,7 +358,9 @@ export function ArgusCreateLinkWindow({
               ) : (
                 <div className="space-y-4">
                   <label className="block">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Name</span>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                      {flow.itemKind === "tag" ? "Tag name" : "Name"}
+                    </span>
                     <input
                       className={`${inputClass} mt-1.5`}
                       value={flow.name}
@@ -469,8 +412,8 @@ export function ArgusCreateLinkWindow({
         </section>
 
         {/* Step 2 — Link panel */}
-        <aside className="flex min-h-0 flex-col overflow-hidden border-b border-zinc-800/80 bg-zinc-950/40 lg:border-b-0 lg:border-r">
-          <div className="flex items-start gap-2 border-b border-zinc-800/80 px-4 py-3">
+        <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden border-b border-zinc-800/80 bg-zinc-950/40 lg:border-b-0 lg:border-r">
+          <div className="flex items-start gap-2 border-b border-zinc-800/80 px-5 py-3">
             <StepBadge n={2} />
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">Add Context (Link)</p>
@@ -478,7 +421,7 @@ export function ArgusCreateLinkWindow({
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
             {linkedEntities.length > 0 || linkedJournalRows.length > 0 ? (
               <div className="mb-4">
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
@@ -559,17 +502,17 @@ export function ArgusCreateLinkWindow({
           </div>
         </aside>
 
-        {/* Step 4 — Review & Save */}
-        <aside className="flex min-h-0 flex-col overflow-y-auto bg-zinc-950/60">
-          <div className="flex items-start gap-2 border-b border-zinc-800/80 px-4 py-3">
-            <StepBadge n={4} />
+        {/* Review & Save */}
+        <aside className="flex min-h-0 min-w-0 flex-col overflow-y-auto bg-zinc-950/60">
+          <div className="flex items-start gap-2 border-b border-zinc-800/80 px-5 py-3">
+            <StepBadge n={3} />
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">Review &amp; Save</p>
               <p className="text-[11px] text-zinc-600">Everything ready to be saved</p>
             </div>
           </div>
 
-          <div className="space-y-4 px-4 py-4">
+          <div className="space-y-4 px-5 py-5">
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">This item</p>
               <div className="mt-3 flex items-start gap-3">
@@ -620,131 +563,19 @@ export function ArgusCreateLinkWindow({
         </aside>
       </div>
 
-      {/* Step 3 — Create missing */}
-      <section className="shrink-0 border-t border-zinc-800/80 bg-zinc-950/80">
-        <div className="mx-auto max-w-[1600px] px-4 py-4 lg:px-6">
-          <div className="mb-3 flex items-start gap-2">
-            <StepBadge n={3} />
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">
-                Create Missing (if needed)
-              </p>
-              <p className="text-[11px] text-zinc-600">These items will be created and linked automatically</p>
-            </div>
-          </div>
-
-          {suggestedTopics.length > 0 ? (
-            <div className="mb-4 flex flex-wrap gap-3">
-              {suggestedTopics.map((topic) => (
-                <div
-                  key={topic}
-                  className="flex min-w-[200px] items-center justify-between gap-3 rounded-2xl border border-violet-800/40 bg-violet-950/20 px-4 py-3"
-                >
-                  <div>
-                    <p className="text-xs text-zinc-500">Nothing found for</p>
-                    <p className="text-sm font-semibold text-zinc-200">&ldquo;{topic}&rdquo;</p>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={flow.isPending}
-                    onClick={() => {
-                      flow.updateMissingDraft("topic", { name: topic });
-                      flow.handleMissingCreate("topic");
-                    }}
-                    className="shrink-0 rounded-lg bg-violet-600 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
-                  >
-                    + Create Topic
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="flex gap-3 overflow-x-auto pb-1">
-            {MISSING_KINDS.map(({ kind, title, fields }) => {
-              const draft = flow.missingDrafts[kind] ?? { name: "", detail: "", extra: "" };
-              return (
-                <div
-                  key={kind}
-                  className="min-w-[200px] shrink-0 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4"
-                >
-                  <p className="mb-3 text-xs font-bold uppercase tracking-wide text-zinc-300">{title}</p>
-                  <input
-                    className={`${inputClass} mb-2 py-2 text-sm`}
-                    placeholder={fields[0]}
-                    value={draft.name}
-                    onChange={(event) => flow.updateMissingDraft(kind, { name: event.target.value })}
-                  />
-                  {kind === "person" && fields[2] === "Organization" ? (
-                    <select
-                      className={`${inputClass} mb-2 py-2 text-sm`}
-                      value={draft.extra}
-                      onChange={(event) => flow.updateMissingDraft(kind, { extra: event.target.value })}
-                    >
-                      <option value="">{fields[2]}</option>
-                      {orgOptions.map((org) => (
-                        <option key={org.id} value={org.id}>
-                          {org.name}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      className={`${inputClass} mb-2 py-2 text-sm`}
-                      placeholder={fields[1]}
-                      value={draft.detail}
-                      onChange={(event) => flow.updateMissingDraft(kind, { detail: event.target.value })}
-                    />
-                  )}
-                  <button
-                    type="button"
-                    disabled={flow.isPending || !draft.name.trim()}
-                    onClick={() => flow.handleMissingCreate(kind)}
-                    className="w-full rounded-lg bg-zinc-800 py-2 text-[11px] font-semibold text-zinc-200 hover:bg-zinc-700 disabled:opacity-40"
-                  >
-                    Create &amp; link
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Info footer */}
-      <section className="hidden shrink-0 border-t border-zinc-800/80 bg-zinc-950/90 lg:block">
-        <div className="mx-auto grid max-w-[1600px] grid-cols-3 gap-6 px-6 py-5">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">How it works in practice</p>
-            <p className="mt-2 text-xs leading-relaxed text-zinc-500">
-              Capture a note → link people, projects, and topics → create anything missing in one step → save with
-              full context preserved.
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">What you get</p>
-            <ul className="mt-2 space-y-1 text-xs text-zinc-500">
-              <li>✓ Everything connected</li>
-              <li>✓ No lost context</li>
-              <li>✓ Evidence preserved</li>
-              <li>✓ Searchable later</li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">Built for you</p>
-            <ul className="mt-2 space-y-1 text-xs text-zinc-500">
-              <li>Capture the truth</li>
-              <li>Organize your world</li>
-              <li>Link without friction</li>
-              <li>Professional memory</li>
-            </ul>
-          </div>
-        </div>
-      </section>
+      <ArgusCreateItemDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        itemKind={flow.itemKind}
+        onSelectKind={flow.setItemKind}
+        flow={flow}
+        suggestedTopics={suggestedTopics}
+        orgOptions={orgOptions}
+      />
 
       {/* Bottom actions */}
       <footer className="shrink-0 border-t border-zinc-800/80 bg-zinc-950">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6">
+        <div className="mx-auto flex w-full max-w-[min(100%,1920px)] flex-wrap items-center justify-between gap-3 px-5 py-3 xl:px-10">
           <button
             type="button"
             onClick={onClose}

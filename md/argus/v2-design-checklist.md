@@ -68,6 +68,8 @@ Mark items:
 | 2026-07-06 | **Change 133** | Unified create+link (`CreateAndLinkModal`); event/project link counts; network empty-state CTA |
 | 2026-07-06 | **Change 134** | Unrestricted link targets (all 5 types); link modal inline create; picker fixes |
 | 2026-07-06 | **Change 135** | `ArgusUnifiedCreateFlow` — single + Create window (journal/person/org/project/event/topic/document + link + inline missing + save) |
+| 2026-07-07 | **Change 140** | Topic tag aliases; inbox Process tab + ranked suggestions; project rename/delete; filter labels |
+| 2026-07-07 | **Change 141** | Home timeline hover + click-through; frequency tag cloud |
 | 2026-07-06 | **Change 136** | `ArgusCreateLinkWindow` full-screen mockup UI; shared flow state hook; all + Create buttons open it |
 | 2026-07-06 | **Change 138** | Desktop Create & Link 4-column mockup layout |
 | 2026-07-06 | **Change 139** | Mobile Create & Link step wizard; `source-3` recovery tag; correlation docs |
@@ -391,7 +393,9 @@ Mark items:
 
 ### Detail panel — linking
 
-- [c] Link modal: tabs All / People / Orgs / Projects / Topics / Events
+- [ ] **Process** tab hosts linking workspace (entities, tags, status, archive, convert)
+- [ ] Entity suggestions show match reason (e.g. topic alias hit)
+- [c] Link modal: tabs All / People / Orgs / Projects / Topics / Events / **Tags**
 - [c] Search within modal
 - [c] Multi-select entities
 - [c] Inline create entity from modal
@@ -478,6 +482,7 @@ Mark items:
 - [c] Tabs: All, My topics, Followed
 - [c] Tag chips filter row
 - [c] Detail shows linked orgs, projects, people counts
+- [c] **Tag aliases** editor on topic detail (`linkedTags` → inbox/topic signal bridge)
 - [c] **+ Capture** opens journal sheet scoped to topic
 - [c] Links to legacy network for linked people
 
@@ -528,12 +533,14 @@ Track separately — do not check as complete until fixed:
 | PIN button in top bar | Partial | No | Wired when `ARGUS_PRIVATE_PIN` set |
 | Notifications bell | Yes | No | Live inbox count |
 | Browser **Filters** buttons (org/project/network) | Partial | No | Org/project status filter wired; network uses tabs |
-| Inbox filter chips | Placeholder | No | UI only |
-| Inbox tag picker on email row | No | No | Tags apply on convert-to-journal only |
+| Inbox filter chips | Yes | No | Source, sender, type, entity, tag filters wired |
+| Inbox tag picker on email row | Partial | No | Tags persist via triage `topics` field |
 | Inbox HTML-only email body | Unknown | No | Text body verified in code |
-| Inbox Create/Link evidence (140) | Yes | **No** | On branch `cursor/inbox-evidence-create-link-e1a0` / PR #8 |
+| Inbox Create/Link evidence (140) | Yes | **No** | `inbox-evidence` mode + mobile full-screen detail |
+| Mobile inbox detail UX | Yes | **No** | Full-screen detail, swipe-to-link, sticky actions |
 | Follow Ups / Reminders sidebar routes | Partial | No | Follow Ups → `#follow-ups`; Reminders → legacy journal |
-| Person detail page v2 shell | Partial | No | Uses legacy `/argus/network/[id]` |
+| Person detail page v2 shell | Yes | No | `/argus/v2/network/[id]`; legacy redirects |
+| Evidence Vault export | Yes | No | `/argus/v2/deliver` + `POST /api/argus/export` |
 | Production `/argus/journal` not replaced | N/A | N/A | By design until feature parity |
 
 ---

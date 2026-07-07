@@ -7,11 +7,12 @@ import { AddMenuButton } from "./ArgusAddLauncher";
 
 const leftLinks = [
   {
-    href: "/argus/journal",
+    href: "/argus/v2",
     label: BOTTOM_NAV.home,
     icon: "▤",
     match: (path: string) =>
-      path.startsWith("/argus/journal") ||
+      path === "/argus/v2" ||
+      path.startsWith("/argus/v2/") ||
       path.startsWith("/argus/projects") ||
       path.startsWith("/argus/logs") ||
       path.startsWith("/argus/diagnostics"),
@@ -21,16 +22,18 @@ const leftLinks = [
     label: BOTTOM_NAV.network,
     icon: "◎",
     match: (path: string) =>
-      path.startsWith("/argus/network") || path.startsWith("/argus/v2/browse/network"),
+      path.startsWith("/argus/network") ||
+      path.startsWith("/argus/v2/browse/network") ||
+      path.startsWith("/argus/v2/network/"),
   },
 ] as const;
 
 const rightLinks = [
   {
-    href: "/argus/inbox",
+    href: "/argus/v2/inbox",
     label: BOTTOM_NAV.inbox,
     icon: "📥",
-    match: (path: string) => path.startsWith("/argus/inbox"),
+    match: (path: string) => path.startsWith("/argus/inbox") || path.startsWith("/argus/v2/inbox"),
   },
   {
     href: "/argus/search",

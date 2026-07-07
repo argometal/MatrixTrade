@@ -4,7 +4,8 @@ import type { ReferenceKind } from "./reference-types";
 export type CreateItemKind =
   | "journal"
   | ReferenceKind
-  | "document";
+  | "document"
+  | "tag";
 
 export type CreateFlowMode = "create" | "link" | "inbox-evidence";
 
@@ -69,6 +70,7 @@ export const CREATE_ITEM_KINDS: CreateItemKind[] = [
   "project",
   "event",
   "topic",
+  "tag",
   "document",
 ];
 
@@ -79,6 +81,7 @@ export const CREATE_ITEM_LABELS: Record<CreateItemKind, string> = {
   project: "Project",
   event: "Event",
   topic: "Topic",
+  tag: "Tag",
   document: "Document",
 };
 
@@ -89,6 +92,7 @@ export const CREATE_ITEM_HINTS: Record<CreateItemKind, string> = {
   project: "Bounded work",
   event: "Dated occurrence",
   topic: "Ongoing knowledge",
+  tag: "Short label for grouping and search",
   document: "Reference file or note",
 };
 

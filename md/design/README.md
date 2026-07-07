@@ -6,8 +6,8 @@ Functional verification lists for preview and major UI surfaces. **User checks e
 
 | Screen | Route | Checklist | Source component |
 |--------|-------|-----------|------------------|
-| Home preview (Situation Room) | `/home-preview` | [home-preview-checklist.md](home-preview-checklist.md) · [solutions](home-preview-solutions.md) | `app/components/home-preview/SituationRoomDashboard.tsx` |
-| Trades preview | `/trades-preview` | [trades-preview-checklist.md](trades-preview-checklist.md) | `app/components/trades-preview/TradesWorkspace.tsx` |
+| Home preview (Situation Room) | `/home-preview` | [home-preview-checklist.md](home-preview-checklist.md) · [solutions](home-preview-solutions.md) | `PreviewShell` · `SituationRoomDashboard` |
+| Trades preview | `/trades-preview` | [trades-preview-checklist.md](trades-preview-checklist.md) | `PreviewShell` · `TradesWorkspace` |
 
 Template for new screens: [DESIGN-CHECKLIST-TEMPLATE.md](DESIGN-CHECKLIST-TEMPLATE.md)
 

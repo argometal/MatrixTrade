@@ -10,7 +10,7 @@ export default async function InboxPage() {
 
   return (
     <>
-      <PageHeader title={INBOX.title} subtitle={INBOX.subtitle} backHref="/argus/journal" />
+      <PageHeader title={INBOX.title} subtitle={INBOX.subtitle} backHref="/argus/v2/inbox" />
       {items.length === 0 ? (
         <EmptyState message={`${INBOX.empty} ${INBOX.emptyHint}`} />
       ) : (

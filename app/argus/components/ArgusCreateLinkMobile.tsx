@@ -26,7 +26,9 @@ import {
   InboxEvidenceBanner,
   MobileProgressBar,
   TAB_ICONS,
+  createItemDisplayLabel,
 } from "./create-link-shared";
+import { ArgusCreateItemDrawer } from "@/app/argus/components/ArgusCreateItemDrawer";
 
 type MobileStep =
   | "choose-type"
@@ -173,7 +175,17 @@ function ChooseTypeStep({
   );
 }
 
-function DetailsStep({ flow, onNext, onBack }: { flow: FlowState; onNext: () => void; onBack: () => void }) {
+function DetailsStep({
+  flow,
+  onNext,
+  onBack,
+  onOpenMenu,
+}: {
+  flow: FlowState;
+  onNext: () => void;
+  onBack: () => void;
+  onOpenMenu: () => void;
+}) {
   const canNext =
     flow.mode === "link"
       ? true
@@ -189,12 +201,19 @@ function DetailsStep({ flow, onNext, onBack }: { flow: FlowState; onNext: () => 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2">
         <div className="mb-4 flex items-center gap-3">
           <KindIcon kind={flow.itemKind} />
-          <div>
+          <div className="min-w-0 flex-1">
             <h2 className="text-base font-bold uppercase tracking-wide text-zinc-100">
-              {flow.itemKind === "journal" ? "Journal Note" : CREATE_ITEM_LABELS[flow.itemKind]}
+              {createItemDisplayLabel(flow.itemKind)}
             </h2>
             <p className="text-xs text-zinc-500">Fill in the details</p>
           </div>
+          <button
+            type="button"
+            onClick={onOpenMenu}
+            className="rounded-lg border border-zinc-700 px-2.5 py-1.5 text-[10px] font-medium text-zinc-400"
+          >
+            ☰ Type
+          </button>
         </div>
 
         {flow.itemKind === "journal" ? (
@@ -683,12 +702,16 @@ export function ArgusCreateLinkMobile({
 }) {
   const router = useRouter();
   const flow = useCreateLinkFlowState({ open, options, buckets, journalRows, onClose, onSaved });
-  const [step, setStep] = useState<MobileStep>("choose-type");
+  const [step, setStep] = useState<MobileStep>("details");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [saveResult, setSaveResult] = useState<UnifiedCreateResult | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) setStep(initialMobileStep(options));
+    if (open) {
+      setStep(initialMobileStep(options));
+      setMenuOpen(false);
+    }
   }, [open, options]);
 
   const linkedEntities = useMemo(
@@ -723,6 +746,11 @@ export function ArgusCreateLinkMobile({
     return flow.tagList.filter((tag) => !existing.has(tag.toLowerCase()));
   }, [flow.tagList, flow.allEntities]);
 
+  const orgOptions = useMemo(
+    () => flow.allEntities.filter((entity) => entity.type === "company"),
+    [flow.allEntities]
+  );
+
   if (!open) return null;
 
   const itemTitle =
@@ -755,12 +783,11 @@ export function ArgusCreateLinkMobile({
   }
 
   function goAfterLink() {
-    if (suggestedTopics.length > 0) setStep("missing");
-    else setStep("review-links");
+    setStep("review-links");
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col bg-[#030308] lg:hidden" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[9999] flex flex-col bg-[#030308] lg:hidden" role="dialog" aria-modal="true" aria-label="Create">
       {flow.error || saveError ? (
         <p className="shrink-0 bg-amber-950/50 px-4 py-2 text-center text-sm text-amber-300">
           {flow.error ?? saveError}
@@ -780,7 +807,8 @@ export function ArgusCreateLinkMobile({
         <DetailsStep
           flow={flow}
           onNext={() => setStep("link")}
-          onBack={() => (flow.lockItemKind ? onClose() : setStep("choose-type"))}
+          onBack={onClose}
+          onOpenMenu={() => setMenuOpen(true)}
         />
       ) : null}
 
@@ -850,6 +878,16 @@ export function ArgusCreateLinkMobile({
           }}
         />
       ) : null}
+
+      <ArgusCreateItemDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        itemKind={flow.itemKind}
+        onSelectKind={flow.setItemKind}
+        flow={flow}
+        suggestedTopics={suggestedTopics}
+        orgOptions={orgOptions}
+      />
     </div>
   );
 }

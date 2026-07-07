@@ -1,5 +1,5 @@
 import type { ArgusData, Entity, InboxItem, Log } from "../types";
-import { entityNotesForDisplay } from "../reference-types";
+import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import { buildEntityIntelligence } from "../network-intelligence";
 import { getUpcomingFollowUps } from "../network";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
@@ -66,7 +66,7 @@ export function buildV2HomeStats(data: ArgusData, inboxItems: InboxItem[], today
       value: String(logs.length),
       delta: `+${countThisWeek(logDates, today)} this week`,
       icon: "journal",
-      href: "/argus/journal",
+      href: "/argus/v2#stats",
     },
     {
       label: "Emails",
@@ -184,12 +184,60 @@ function addDays(iso: string, days: number): string {
 }
 
 export function buildV2HomeTimeline(data: ArgusData, inboxItems: InboxItem[], includePrivate: boolean, limit = 8) {
-  const logs = visibleLogs(data, includePrivate).slice(0, limit);
-  const inbox = visibleInbox(inboxItems, includePrivate).slice(0, limit);
-  return mergeTimelineEntries([
-    ...logs.map(logToTimelineEntry),
-    ...inbox.map(inboxToTimelineEntry),
+  const logs = visibleLogs(data, includePrivate);
+  const inbox = visibleInbox(inboxItems, includePrivate);
+  const entityMap = new Map(data.entities.filter((e) => !e.deletedAt).map((e) => [e.id, e]));
+
+  const enriched = mergeTimelineEntries([
+    ...logs.map((log) => {
+      const entry = logToTimelineEntry(log);
+      const linked = log.entityIds.map((id) => entityMap.get(id)).filter((e): e is Entity => Boolean(e));
+      const topic = linked.find(
+        (entity) => entity.type === "other" && referenceKindFromNotes(entity.notes ?? "") === "topic"
+      );
+      const href =
+        topic && linked.length === 1
+          ? `/argus/v2/browse/topics?selected=${topic.id}`
+          : `/argus/logs/${log.id}`;
+
+      const kindLabel =
+        entry.kind === "email"
+          ? "Email"
+          : entry.journalSubtype === "note"
+            ? "Note"
+            : entry.journalSubtype === "log"
+              ? "Log"
+              : entry.kind === "meeting"
+                ? "Meeting"
+                : "Journal";
+
+      const metaParts = [
+        kindLabel,
+        ...linked.slice(0, 2).map((entity) => entity.name),
+        ...(log.topics.slice(0, 2).map((tag) => `#${tag}`) ?? []),
+      ].filter(Boolean);
+
+      return {
+        ...entry,
+        href,
+        meta: metaParts.join(" · "),
+        author: linked[0]?.name ?? entry.author,
+      };
+    }),
+    ...inbox.map((item) => {
+      const entry = inboxToTimelineEntry(item);
+      const from = item.from?.replace(/<.*>/, "").trim();
+      const metaParts = [item.subject?.trim(), from].filter(Boolean);
+      return {
+        ...entry,
+        href: `/argus/v2/inbox?selected=${item.id}`,
+        meta: metaParts.join(" · ") || "Email",
+        author: from ?? entry.author,
+      };
+    }),
   ]).slice(0, limit);
+
+  return enriched;
 }
 
 export interface V2EntityRow {
@@ -277,7 +325,7 @@ export function buildV2EntityRows(
               ? `/argus/v2/browse/topics?selected=${entity.id}`
               : tab === "events"
                 ? `/argus/v2/browse/events?selected=${entity.id}`
-                : `/argus/network/${entity.id}`;
+                : `/argus/v2/network/${entity.id}`;
 
       const typeLabel =
         tab === "organizations"
@@ -305,7 +353,7 @@ export function buildV2EntityRows(
     .slice(0, 8);
 }
 
-export function buildV2TagCloud(data: ArgusData, includePrivate: boolean, limit = 12) {
+export function buildV2TagCloud(data: ArgusData, inboxItems: InboxItem[], includePrivate: boolean, limit = 24) {
   const counts = new Map<string, number>();
   for (const log of visibleLogs(data, includePrivate)) {
     for (const t of log.topics) {
@@ -313,15 +361,25 @@ export function buildV2TagCloud(data: ArgusData, includePrivate: boolean, limit 
       if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
     }
   }
+  for (const item of visibleInbox(inboxItems, includePrivate)) {
+    for (const t of item.topics ?? []) {
+      const key = t.trim().toLowerCase();
+      if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+  if (sorted.length === 0) return [];
+
+  const max = sorted[0][1];
+  const min = sorted[sorted.length - 1][1];
   const colors = ["violet", "emerald", "amber", "sky", "orange"] as const;
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([name, count], i) => ({
-      name,
-      count,
-      color: colors[i % colors.length],
-    }));
+
+  return sorted.map(([name, count], i) => ({
+    name,
+    count,
+    color: colors[i % colors.length],
+    weight: max === min ? 1 : (count - min) / (max - min),
+  }));
 }
 
 export function buildV2NavCounts(data: ArgusData, inboxItems: InboxItem[], includePrivate: boolean) {

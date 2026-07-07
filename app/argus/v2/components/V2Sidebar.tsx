@@ -24,7 +24,7 @@ function isBrowseNavActive(pathname: string, href: string, label: string): boole
     return pathname.startsWith("/argus/v2/browse/organizations") || pathname.startsWith("/argus/v2/organizations/");
   }
   if (label === "People" || label === "Network") {
-    return pathname.startsWith("/argus/v2/browse/network") || pathname.startsWith("/argus/network/");
+    return pathname.startsWith("/argus/v2/browse/network") || pathname.startsWith("/argus/v2/network/");
   }
   return pathname.startsWith(href);
 }
@@ -71,15 +71,22 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
             href="/argus/v2/browse/network"
             label="Network"
             count={counts.network}
-            active={pathname.startsWith("/argus/v2/browse/network") || pathname.startsWith("/argus/network/")}
+            active={pathname.startsWith("/argus/v2/browse/network") || pathname.startsWith("/argus/v2/network/")}
           />
           <NavItem href="/argus/v2#follow-ups" label="Follow Ups" count={counts.followUps} active={false} />
-          <NavItem href="/argus/journal" label="Reminders" count={counts.reminders} active={false} />
+        </NavGroup>
+
+        <NavGroup title="Deliver">
+          <NavItem
+            href="/argus/v2/deliver"
+            label="Deliver / Export"
+            badge="NEW"
+            active={pathname.startsWith("/argus/v2/deliver")}
+          />
         </NavGroup>
 
         <NavGroup title="Settings">
           <NavItem href="/argus/v2#tags" label="Tags" active={false} />
-          <NavItem href="/argus/journal" label="Protected" active={false} />
           <NavItem href="/argus/diagnostics" label="Settings" active={pathname.startsWith("/argus/diagnostics")} />
         </NavGroup>
       </nav>
@@ -87,11 +94,8 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
       <div className="border-t border-zinc-800/80 px-5 py-4">
         <div className="flex items-center gap-2 text-xs text-zinc-500">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
-          Live data · v2 preview
+          Live data · v2
         </div>
-        <Link href="/argus/journal" className="mt-2 block text-[10px] text-zinc-600 hover:text-zinc-400">
-          Production UI → /argus/journal
-        </Link>
       </div>
     </aside>
   );
@@ -135,11 +139,13 @@ function NavItem({
   href,
   label,
   count,
+  badge,
   active,
 }: {
   href: string;
   label: string;
   count?: number;
+  badge?: string;
   active: boolean;
 }) {
   return (
@@ -149,7 +155,14 @@ function NavItem({
         active ? "bg-violet-500/15 text-violet-200" : "text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200"
       }`}
     >
-      <span>{label}</span>
+      <span className="flex items-center gap-2">
+        <span>{label}</span>
+        {badge ? (
+          <span className="rounded-full bg-sky-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-300">
+            {badge}
+          </span>
+        ) : null}
+      </span>
       {count !== undefined ? (
         <span className={`text-xs tabular-nums ${active ? "text-violet-300/80" : "text-zinc-600"}`}>{count}</span>
       ) : null}

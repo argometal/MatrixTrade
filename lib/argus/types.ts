@@ -1,3 +1,10 @@
+import type {
+  ContactValueKey,
+  MyValueKey,
+  RelationshipReasonKey,
+  RelationshipStatusKey,
+} from "./network-relationship-metrics";
+
 export type EntityType = "person" | "company" | "project" | "other";
 
 export type JournalKind = "log" | "event" | "follow_up";
@@ -14,14 +21,24 @@ export type AttachmentParentType = "inbox" | "journal";
 
 export type StrategicValue = 1 | 2 | 3 | 4 | 5;
 
+export type { ContactValueKey, MyValueKey, RelationshipReasonKey, RelationshipStatusKey };
+
 export interface Entity {
   id: string;
   type: EntityType;
   name: string;
   alias?: string;
   notes: string;
-  /** 1=low … 5=strategic. Default 3. Only user-editable network field besides alias/notes. */
+  /** @deprecated Legacy 1–5 rating; use contactValue / myValue instead. */
   strategicValue: StrategicValue;
+  /** What this contact consistently brings to me. */
+  contactValue?: ContactValueKey[];
+  /** What I consistently bring to this contact. */
+  myValue?: MyValueKey[];
+  /** @deprecated Derived at read time — not persisted. */
+  relationshipStatus?: RelationshipStatusKey;
+  /** @deprecated Derived at read time — not persisted. */
+  relationshipReason?: RelationshipReasonKey;
   /** Project date range (YYYY-MM-DD) — relations only, not duplicate evidence */
   startDate?: string;
   endDate?: string;
@@ -90,6 +107,10 @@ export interface InboxItem {
   /** When true, hidden until ARGUS private PIN unlock. */
   private?: boolean;
   status: InboxStatus;
+  /** User-set revisit date while triaging (YYYY-MM-DD). */
+  followUpDate?: string;
+  /** User-selected tags only — suggestions are not auto-saved here. */
+  topics?: string[];
   convertedLogId?: string;
   createdAt: string;
   /** Soft delete — never hard-remove user data (Rule 0). */

@@ -1,9 +1,9 @@
 # ARGUS — Architecture (Accepted Decisions)
 
-**Status:** Accepted — documentation only  
-**Implementation:** Do not implement until this document and [`argus-design-principles.md`](argus-design-principles.md) are complete.
+**Status:** Canonical — accepted constitution  
+**Implementation:** v2 shell, inbox, network metrics, and Evidence Vault v1 are **in progress** against this document. New work must not violate these rules.
 
-**AI rule of construction:** [`md/argus/ai-charter.md`](../argus/ai-charter.md) — preserve professional truth; never fabricate evidence.
+**Index:** [`md/argus/README.md`](../argus/README.md) · **AI rule:** [`ai-charter.md`](../argus/ai-charter.md)
 
 This is the architecture constitution for ARGUS inside MatrixTrade. Trading and ARGUS share auth only — no shared business logic or data.
 

@@ -19,7 +19,7 @@ Legend: **Status** = `Built` (code exists) · `Verify` (manual browser test) · 
 | Classic toggle (mobile) | Built | Resize &lt; `lg`, tap “Classic →” in top bar → `/`. |
 | Classic toggle (sidebar footer) | Built | Desktop sidebar bottom link → `/`. |
 | Classic entry from `/` | Built | `/` shows `DashboardViewSwitch` “Open Home preview” → `/home-preview`. |
-| ARGUS corner hidden | Built | `ArgusCornerEntry` returns `null` when path starts with `/home-preview`. |
+| ARGUS corner visible | Built | Shown on preview routes (`z-[60]`, below mobile bar on small screens). Hidden only under `/argus/*`. |
 | Footer disclaimer | Built | Scroll center column bottom; copy in `footer` of dashboard. |
 
 ---

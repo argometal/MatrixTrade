@@ -1,5 +1,6 @@
 import type { Entity } from "@/lib/argus/types";
 import type { CreateItemKind, JournalLinkRow, LinkFilterKind } from "@/lib/argus/create-flow-types";
+import { CREATE_ITEM_LABELS } from "@/lib/argus/create-flow-types";
 import { entityLinkCardMeta, entityLinkFilterKind } from "@/lib/argus/create-flow-helpers";
 
 export const LINK_TABS: LinkFilterKind[] = [
@@ -34,6 +35,7 @@ export const ITEM_STYLES: Record<
   project: { glyph: "📁", ring: "ring-amber-500/40", bg: "bg-amber-500/15", text: "text-amber-200" },
   event: { glyph: "📅", ring: "ring-rose-500/40", bg: "bg-rose-500/15", text: "text-rose-200" },
   topic: { glyph: "🏷", ring: "ring-yellow-500/40", bg: "bg-yellow-500/15", text: "text-yellow-100" },
+  tag: { glyph: "#", ring: "ring-fuchsia-500/40", bg: "bg-fuchsia-500/15", text: "text-fuchsia-200" },
   document: { glyph: "📄", ring: "ring-zinc-500/40", bg: "bg-zinc-500/15", text: "text-zinc-200" },
 };
 
@@ -43,6 +45,7 @@ export const KIND_BADGE: Record<string, string> = {
   project: "bg-amber-500/20 text-amber-300",
   event: "bg-rose-500/20 text-rose-300",
   topic: "bg-yellow-500/20 text-yellow-200",
+  tag: "bg-fuchsia-500/20 text-fuchsia-300",
   document: "bg-teal-500/20 text-teal-300",
   journal: "bg-violet-500/20 text-violet-300",
 };
@@ -100,6 +103,11 @@ export function KindBadge({ kind }: { kind: string }) {
       {label}
     </span>
   );
+}
+
+export function createItemDisplayLabel(kind: CreateItemKind): string {
+  if (kind === "journal") return "Journal Note";
+  return CREATE_ITEM_LABELS[kind];
 }
 
 export function StepBadge({ n, active }: { n: number; active?: boolean }) {

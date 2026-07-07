@@ -38,7 +38,7 @@ export function CompactLogRow({ log, entities }: { log: Log; entities: Entity[] 
 export function CompactEntityRow({ entity, meta }: { entity: Entity; meta?: string }) {
   return (
     <Link
-      href={`/argus/network/${entity.id}`}
+      href={`/argus/v2/network/${entity.id}`}
       className="flex items-center justify-between gap-2 border-b border-zinc-800/80 py-2.5 transition hover:bg-zinc-900/50"
     >
       <div className="min-w-0">

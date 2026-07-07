@@ -2,6 +2,7 @@ import { createSupabaseAdmin } from "@/lib/supabase/server";
 
 let softDeleteSchemaReady: boolean | null = null;
 let inboxPrivateColumnReady: boolean | null = null;
+let inboxTriageColumnsReady: boolean | null = null;
 
 /** True after supabase/argus-protection.sql has been applied (deleted_at columns exist). */
 export async function isArgusSoftDeleteSchemaReady(): Promise<boolean> {
@@ -47,8 +48,31 @@ export async function isArgusInboxPrivateColumnReady(): Promise<boolean> {
   return inboxPrivateColumnReady;
 }
 
+/** True when argus_inbox_items.follow_up_date and topics exist (supabase/argus-inbox-triage.sql). */
+export async function isArgusInboxTriageColumnsReady(): Promise<boolean> {
+  if (inboxTriageColumnsReady !== null) return inboxTriageColumnsReady;
+
+  try {
+    const supabase = createSupabaseAdmin();
+    const { error } = await supabase.from("argus_inbox_items").select("follow_up_date, topics").limit(1);
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes("follow_up_date") || msg.includes("topics") || error.code === "42703") {
+        inboxTriageColumnsReady = false;
+        return false;
+      }
+      throw error;
+    }
+    inboxTriageColumnsReady = true;
+  } catch {
+    inboxTriageColumnsReady = false;
+  }
+  return inboxTriageColumnsReady;
+}
+
 /** Reset cache (tests only). */
 export function resetArgusSoftDeleteSchemaCache(): void {
   softDeleteSchemaReady = null;
   inboxPrivateColumnReady = null;
+  inboxTriageColumnsReady = null;
 }

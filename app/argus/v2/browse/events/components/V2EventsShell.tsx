@@ -165,7 +165,7 @@ export function V2EventsShell({
                   className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
                 />
                 <div className="flex gap-2 text-zinc-600">
-                  <Link href={`/argus/network/${selected.id}`} className="hover:text-zinc-300">
+                  <Link href={`/argus/v2/network/${selected.id}`} className="hover:text-zinc-300">
                     ✎
                   </Link>
                   <span>✉</span>

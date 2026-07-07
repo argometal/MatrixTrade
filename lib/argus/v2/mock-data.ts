@@ -13,6 +13,10 @@ export interface V2TimelineEntry {
   tags?: string[];
   author?: string;
   protected?: boolean;
+  /** Navigation target for click-through */
+  href?: string;
+  /** One-line context for hover preview */
+  meta?: string;
 }
 
 export interface V2PersonPreview {

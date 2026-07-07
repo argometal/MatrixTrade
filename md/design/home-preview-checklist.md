@@ -18,6 +18,10 @@ Use this list after every deploy or redesign. Check each box only after you have
 | 2026-07-06 | `home-preview/checklist-v1` tag | Baseline solutions doc — verification starting point |
 | 2026-07-06 | `618c6b3` | Implemented priority fixes: middleware routes, cycle label, donut pending proposals, revalidation consolidation |
 
+| 2026-07-07 | `d28cb58` | Restore ARGUS corner icon on preview routes |
+
+| 2026-07-07 | `96918be` | Persistent preview sidebar with full TradingNav links |
+
 **User sign-off:** All boxes stay unchecked until you verify in the browser.
 
 ---
@@ -31,24 +35,28 @@ Use this list after every deploy or redesign. Check each box only after you have
 - [ ] **Classic toggle (mobile)** — Top bar “Classic →” links to `/`.
 - [ ] **Classic toggle (sidebar footer)** — “Classic dashboard →” links to `/`.
 - [ ] **Classic entry from `/`** — “Open Home preview” on classic dashboard opens `/home-preview`.
-- [ ] **ARGUS corner hidden** — ARGUS floating button does not appear on `/home-preview`.
+- [ ] **ARGUS corner visible** — Teal/violet ARGUS icon top-right on all MatrixTrade pages (including previews); hidden only on `/argus/*`.
 - [ ] **Footer disclaimer** — Bottom line reads live-data / v2 preview / human-actions-first messaging.
 
 ---
 
-## B. Left sidebar (desktop `lg+`)
+## B. Left sidebar (desktop `lg+`) — persistent preview shell
 
-- [ ] **Brand block** — Violet “M” logo + “MatrixTrade” label.
-- [ ] **Main nav — Dashboard** — Active state (violet highlight) on `/home-preview`.
-- [ ] **Main nav — Trades** — Links to `/trades-preview`.
-- [ ] **Main nav — Playbooks** — Links to `/playbook` (classic).
+- [ ] **Brand block** — Violet “M” logo + “MatrixTrade” label (links to `/home-preview`).
+- [ ] **Main nav — Dashboard (classic)** — Links to `/`.
+- [ ] **Main nav — Home preview** — Links to `/home-preview`; active on this route.
+- [ ] **Main nav — Trades preview** — Links to `/trades-preview`.
+- [ ] **Main nav — Playbook** — Links to `/playbook` (classic).
 - [ ] **Main nav — Review** — Links to `/review` (classic).
 - [ ] **Main nav — Statistics** — Links to `/stats` (classic).
 - [ ] **Main nav — Journal** — Links to `/journal` (classic).
-- [ ] **System nav — Inbox** — Links to `/inbox`; badge shows pending count when &gt; 0.
 - [ ] **System nav — Assistant** — Links to `/exchange`.
-- [ ] **System nav — Settings** — Links to `/system`.
+- [ ] **System nav — Inbox** — Links to `/inbox`; badge shows pending count when &gt; 0.
+- [ ] **System nav — System** — Links to `/system`.
+- [ ] **New trade** — Footer button links to `/trades/new`.
+- [ ] **Sign out** — Footer sign-out action works.
 - [ ] **Cycle progress block** — Shows cycle label (`Experiment H001–H030`), trades used / max, progress bar, loss budget remaining.
+- [ ] **Sidebar persistent** — Same menu visible on `/home-preview` and `/trades-preview` (layout shell).
 - [ ] **Sidebar hidden on mobile** — Left nav not shown below `lg`; mobile top bar used instead.
 
 ---
@@ -150,8 +158,10 @@ Use this list after every deploy or redesign. Check each box only after you have
 
 ## L. Responsive smoke test
 
-- [ ] **Mobile (`&lt; lg`)** — Top bar visible; left/right sidebars hidden; center scrolls.
-- [ ] **Tablet (`lg`, not `xl`)** — Left sidebar visible; right panel hidden; layout usable.
+- [ ] **Mobile (`&lt; lg`)** — Top bar + **persistent bottom nav** (Home, Trades, Assist, Inbox, More); content clears bottom bar.
+- [ ] **Mobile default dashboard** — Visiting `/` on phone redirects to `/home-preview`; login lands on Home preview.
+- [ ] **Mobile bottom nav on classic routes** — Inbox, Playbook, etc. still show bottom nav when opened from phone.
+- [ ] **Tablet (`lg`, not `xl`)** — Left sidebar visible; right panel hidden; no bottom nav.
 - [ ] **Desktop (`xl+`)** — Three-column layout: sidebar + center + right panel.
 
 ---

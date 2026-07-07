@@ -127,6 +127,7 @@ export function buildV2TopicDetails(
       description: entityNotesForDisplay(topic.notes ?? "") || "No description yet.",
       ...counts,
       linkedEntityIds: topic.linkedEntityIds ?? [],
+      aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
       recentEntries,
     };
   });

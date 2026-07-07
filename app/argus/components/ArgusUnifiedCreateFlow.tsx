@@ -47,6 +47,7 @@ const ITEM_ICONS: Record<CreateItemKind, { glyph: string; boxClass: string }> = 
   project: { glyph: "📁", boxClass: "bg-amber-500/20 text-amber-300" },
   event: { glyph: "📅", boxClass: "bg-rose-500/20 text-rose-300" },
   topic: { glyph: "🏷", boxClass: "bg-yellow-500/20 text-yellow-200" },
+  tag: { glyph: "#", boxClass: "bg-fuchsia-500/20 text-fuchsia-300" },
   document: { glyph: "📄", boxClass: "bg-zinc-500/20 text-zinc-300" },
 };
 
@@ -72,7 +73,7 @@ function postCreateHref(pathname: string, kind: CreateItemKind, id: string, fall
     case "event":
       return `/argus/v2/browse/events?selected=${id}`;
     default:
-      return `/argus/network/${id}`;
+      return `/argus/v2/network/${id}`;
   }
 }
 

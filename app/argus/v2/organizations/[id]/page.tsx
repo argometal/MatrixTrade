@@ -77,7 +77,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               </span>
               <h1 className="text-2xl font-bold tracking-tight text-zinc-50">{entity.name}</h1>
               <Link
-                href={`/argus/network/${entity.id}`}
+                href={`/argus/v2/network/${entity.id}`}
                 className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-zinc-800 hover:text-zinc-300"
                 aria-label="Edit organization"
               >
@@ -88,6 +88,12 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                 linkedIds={entity.linkedEntityIds ?? []}
                 className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
               />
+              <Link
+                href={`/argus/v2/deliver?scopeType=organization&scopeId=${entity.id}`}
+                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800"
+              >
+                Export
+              </Link>
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-400">
               {entity.alias ? <span>{entity.alias}</span> : null}
@@ -145,7 +151,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                 value={String(page.stats.journalEntries)}
                 label="Journal Entries"
                 delta={page.stats.journalDelta}
-                href="/argus/journal"
+                href="/argus/v2#stats"
               />
               <V2SummaryStatCard
                 kind="email"
@@ -158,7 +164,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                 kind="people"
                 value={String(page.stats.people)}
                 label="People"
-                href={`/argus/network/${entity.id}`}
+                href={`/argus/v2/network/${entity.id}`}
                 linkLabel="View all"
               />
               <V2SummaryStatCard
@@ -233,7 +239,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               title="Key People"
               action={
                 page.linkedPeople.length > 0 ? (
-                  <V2PanelLinkAction href={`/argus/network/${entity.id}`}>View all</V2PanelLinkAction>
+                  <V2PanelLinkAction href={`/argus/v2/network/${entity.id}`}>View all</V2PanelLinkAction>
                 ) : undefined
               }
             />
@@ -245,7 +251,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                   {page.linkedPeople.slice(0, 4).map((person, index) => (
                     <V2PersonListItem
                       key={person.id}
-                      href={`/argus/network/${person.id}`}
+                      href={`/argus/v2/network/${person.id}`}
                       name={person.name}
                       subtitle={person.alias || "Contact"}
                       initials={initials(person.name)}
@@ -301,7 +307,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
             )}
           </V2PanelCard>
 
-          <V2LegacyLink href={`/argus/network/${entity.id}`}>Open legacy network view →</V2LegacyLink>
+          <V2LegacyLink href={`/argus/v2/network/${entity.id}`}>Open legacy network view →</V2LegacyLink>
         </aside>
       </div>
     </div>
