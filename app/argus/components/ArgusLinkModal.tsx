@@ -9,6 +9,7 @@ import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePicker
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 import { inputClass } from "@/app/argus/components/ui";
 import { entityReferenceKind } from "@/lib/argus/link-hierarchy";
+import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { useOverlayLock } from "@/lib/argus/use-overlay-lock";
 import {
   entityKindLabel,
@@ -114,6 +115,8 @@ export function ArgusLinkModal({
   const [createOpen, setCreateOpen] = useState(false);
   const [, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -133,6 +136,8 @@ export function ArgusLinkModal({
       setQuery("");
       setTagInput("");
       setKindFilter(initialFilter);
+      setSaveError(null);
+      setSaving(false);
     }
   }, [open, selectedEntityIds, selectedTags, initialFilter]);
 
@@ -219,6 +224,21 @@ export function ArgusLinkModal({
   const canDone = draftIds.length > 0 || draftTags.length > 0;
   const onTagsTab = kindFilter === "tags";
 
+  async function handleDone() {
+    if (!canDone || saving) return;
+    setSaveError(null);
+    setSaving(true);
+    try {
+      await onConfirm({ entityIds: draftIds, tags: draftTags });
+      onClose();
+    } catch (err) {
+      const { message } = formatArgusError(err);
+      setSaveError(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (!open || !mounted) return null;
 
   const modal = (
@@ -258,6 +278,12 @@ export function ArgusLinkModal({
             ))}
           </div>
           <div className="mx-4 border-b border-zinc-800" />
+
+          {saveError ? (
+            <p className="mx-5 mt-3 rounded-lg border border-amber-800/50 bg-amber-950/40 px-3 py-2 text-sm text-amber-200">
+              {saveError}
+            </p>
+          ) : null}
 
           <div className="flex min-h-0 flex-1 flex-col gap-4 p-5">
             <input
@@ -369,11 +395,11 @@ export function ArgusLinkModal({
             </button>
             <button
               type="button"
-              onClick={() => void onConfirm({ entityIds: draftIds, tags: draftTags })}
-              disabled={!canDone}
+              onClick={() => void handleDone()}
+              disabled={!canDone || saving}
               className="flex-1 rounded-lg bg-violet-600 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-40"
             >
-              {CAPTURE.done}
+              {saving ? "Saving…" : CAPTURE.done}
             </button>
           </div>
         </div>

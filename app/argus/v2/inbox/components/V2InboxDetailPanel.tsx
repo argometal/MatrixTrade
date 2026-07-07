@@ -17,7 +17,7 @@ import { INBOX, LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 import {
   archiveInboxAction,
   convertInboxAction,
-  setInboxLinksAction,
+  saveInboxLinksAction,
   updateInboxTriageAction,
   type CreatedEntityResult,
 } from "@/app/argus/actions";
@@ -186,11 +186,8 @@ export function V2InboxDetailPanel({
   async function persistLinks(ids: string[]) {
     setLinkSaving(true);
     try {
-      const formData = new FormData();
-      formData.set("inboxId", item.id);
-      formData.set("returnTo", returnTo);
-      for (const id of ids) formData.append("entityIds", id);
-      await setInboxLinksAction(formData);
+      await saveInboxLinksAction(item.id, ids);
+      router.refresh();
     } finally {
       setLinkSaving(false);
     }

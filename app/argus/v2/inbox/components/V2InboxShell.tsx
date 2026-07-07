@@ -8,7 +8,7 @@ import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePicker
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 import type { ArgusLinkResult } from "@/app/argus/components/ArgusLinkModal";
 import {
-  setInboxLinksAction,
+  saveInboxLinksAction,
   updateInboxTriageAction,
   type CreatedEntityResult,
 } from "@/app/argus/actions";
@@ -176,11 +176,7 @@ export function V2InboxShell({
 
   async function confirmSwipeLinks(result: ArgusLinkResult) {
     if (!swipeLinkDetail) return;
-    const formData = new FormData();
-    formData.set("inboxId", swipeLinkDetail.item.id);
-    formData.set("returnTo", `/argus/v2/inbox?tab=${tab}`);
-    for (const id of result.entityIds) formData.append("entityIds", id);
-    await setInboxLinksAction(formData);
+    await saveInboxLinksAction(swipeLinkDetail.item.id, result.entityIds);
     await updateInboxTriageAction(swipeLinkDetail.item.id, { topics: result.tags });
     router.refresh();
     setSwipeLinkId(null);
@@ -189,11 +185,7 @@ export function V2InboxShell({
   async function swipeLinkCreatedEntity(entity: CreatedEntityResult): Promise<false> {
     if (!swipeLinkDetail) return false;
     const next = [...new Set([...(swipeLinkDetail.item.linkedEntityIds ?? []), entity.id])];
-    const formData = new FormData();
-    formData.set("inboxId", swipeLinkDetail.item.id);
-    formData.set("returnTo", `/argus/v2/inbox?tab=${tab}`);
-    for (const id of next) formData.append("entityIds", id);
-    await setInboxLinksAction(formData);
+    await saveInboxLinksAction(swipeLinkDetail.item.id, next);
     router.refresh();
     return false;
   }

@@ -347,16 +347,27 @@ export async function linkInboxAction(formData: FormData): Promise<void> {
   redirect(`/argus/inbox/${inboxId}`);
 }
 
-/** Replace inbox links exactly (v2 link UI — supports unlink). */
-export async function setInboxLinksAction(formData: FormData): Promise<void> {
-  const inboxId = String(formData.get("inboxId") ?? "");
-  const entityIds = await resolveEntityIds(formData);
+/** Replace inbox links exactly (v2 link UI — supports unlink). No redirect — for modals. */
+export async function saveInboxLinksAction(
+  inboxId: string,
+  entityIds: string[]
+): Promise<{ ok: true }> {
+  await requireArgusSession();
+  if (!inboxId) throw new Error("Missing inbox id");
   const data = await readArgus();
   const validIds = filterLinkIdsForSource(data.entities, "inbox", entityIds);
   await setInboxLinkedEntities(inboxId, validIds);
   revalidateArgus();
   revalidatePath(`/argus/inbox/${inboxId}`);
   revalidatePath("/argus/v2/inbox");
+  return { ok: true };
+}
+
+/** Replace inbox links exactly (v2 link UI — supports unlink). */
+export async function setInboxLinksAction(formData: FormData): Promise<void> {
+  const inboxId = String(formData.get("inboxId") ?? "");
+  const entityIds = await resolveEntityIds(formData);
+  await saveInboxLinksAction(inboxId, entityIds);
   const returnTo = String(formData.get("returnTo") ?? "inbox");
   if (returnTo === "journal") redirect("/argus/v2");
   if (returnTo.startsWith("/argus/")) redirect(returnTo);
