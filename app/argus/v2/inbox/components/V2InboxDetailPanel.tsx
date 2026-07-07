@@ -245,18 +245,18 @@ export function V2InboxDetailPanel({
               <button
                 type="button"
                 onClick={() => setPickerOpen(true)}
-                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-sm font-semibold text-violet-300 hover:bg-violet-600/25"
+                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
               >
                 + Link
               </button>
             ) : null}
-            <button type="button" className="text-zinc-400 hover:text-zinc-400" title="Share">
+            <button type="button" className="text-zinc-600 hover:text-zinc-400" title="Share">
               ↗
             </button>
             <button
               type="button"
               onClick={() => setMenuOpen((open) => !open)}
-              className="text-zinc-400 hover:text-zinc-400"
+              className="text-zinc-600 hover:text-zinc-400"
               aria-label="More actions"
             >
               ···
@@ -297,13 +297,13 @@ export function V2InboxDetailPanel({
         </div>
 
         <div className="mt-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/50 to-zinc-700 text-sm font-bold text-violet-100">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/50 to-zinc-700 text-xs font-bold text-violet-100">
             {senderInitials(view.from)}
           </div>
           <div className="min-w-0 flex-1 text-sm">
             <p className="font-medium text-zinc-200">{view.from.replace(/<.*>/, "").trim() || view.from}</p>
-            {view.to ? <p className="text-sm text-zinc-400">To {view.to}</p> : null}
-            <p className="text-sm text-zinc-400">
+            {view.to ? <p className="text-xs text-zinc-500">To {view.to}</p> : null}
+            <p className="text-xs text-zinc-600">
               {new Date(view.receivedAt).toLocaleString(undefined, {
                 month: "short",
                 day: "numeric",
@@ -320,10 +320,10 @@ export function V2InboxDetailPanel({
               key={t.id}
               type="button"
               onClick={() => setPanelTab(t.id)}
-              className={`border-b-2 px-3 py-2 text-sm font-medium ${
+              className={`border-b-2 px-3 py-2 text-xs font-medium ${
                 panelTab === t.id
                   ? "border-violet-500 text-violet-300"
-                  : "border-transparent text-zinc-400 hover:text-zinc-300"
+                  : "border-transparent text-zinc-500 hover:text-zinc-300"
               }`}
             >
               {t.label}
@@ -338,21 +338,21 @@ export function V2InboxDetailPanel({
         ) : null}
         {panelTab === "details" ? (
           <dl className="grid gap-3 text-sm sm:grid-cols-[6rem_1fr]">
-            <dt className="text-zinc-400">From</dt>
+            <dt className="text-zinc-500">From</dt>
             <dd className="text-zinc-200">{view.from}</dd>
-            <dt className="text-zinc-400">To</dt>
+            <dt className="text-zinc-500">To</dt>
             <dd className="text-zinc-200">{view.to || "—"}</dd>
-            <dt className="text-zinc-400">Status</dt>
+            <dt className="text-zinc-500">Status</dt>
             <dd className="text-zinc-200">{INBOX_STATUS_LABELS[status]}</dd>
-            <dt className="text-zinc-400">Follow up</dt>
+            <dt className="text-zinc-500">Follow up</dt>
             <dd className="text-zinc-200">{followUpDate || "—"}</dd>
-            <dt className="text-zinc-400">Source</dt>
+            <dt className="text-zinc-500">Source</dt>
             <dd className="text-zinc-200">{item.source}</dd>
           </dl>
         ) : null}
         {panelTab === "attachments" ? (
           attachments.length === 0 ? (
-            <p className="text-sm text-zinc-400">No attachments.</p>
+            <p className="text-sm text-zinc-500">No attachments.</p>
           ) : (
             <ul className="space-y-2">
               {attachments.map((att) => (
@@ -362,7 +362,7 @@ export function V2InboxDetailPanel({
                     className="flex items-center justify-between rounded-xl border border-zinc-800/80 px-3 py-2 text-sm text-zinc-300 hover:border-zinc-700"
                   >
                     <span>📎 {att.fileName}</span>
-                    <span className="text-sm text-zinc-400">{Math.round(att.sizeBytes / 1024)} KB</span>
+                    <span className="text-xs text-zinc-600">{Math.round(att.sizeBytes / 1024)} KB</span>
                   </Link>
                 </li>
               ))}
@@ -371,7 +371,7 @@ export function V2InboxDetailPanel({
         ) : null}
         {panelTab === "related" ? (
           selectedLinked.length === 0 && !convertedLog ? (
-            <p className="text-sm text-zinc-400">No linked entities yet.</p>
+            <p className="text-sm text-zinc-500">No linked entities yet.</p>
           ) : (
             <ul className="space-y-2">
               {selectedLinked.map((entity) => (
@@ -394,9 +394,9 @@ export function V2InboxDetailPanel({
 
         <div className="mt-6 space-y-5 border-t border-zinc-800/80 pt-6">
           <div>
-            <h3 className="mb-1 text-base font-semibold text-zinc-100">Linked entities</h3>
+            <h3 className="mb-1 text-sm font-semibold text-zinc-100">Linked entities</h3>
             {canTriage ? (
-              <p className="mb-3 text-sm leading-snug text-zinc-400">{LINK_HIERARCHY.inboxLinkHint}</p>
+              <p className="mb-3 text-[11px] leading-snug text-zinc-600">{LINK_HIERARCHY.inboxLinkHint}</p>
             ) : (
               <div className="mb-3" />
             )}
@@ -404,7 +404,7 @@ export function V2InboxDetailPanel({
               {selectedLinked.map((entity) => (
                 <span
                   key={entity.id}
-                  className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium ${entityChipClass(entity.kind)}`}
+                  className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium ${entityChipClass(entity.kind)}`}
                 >
                   <Link href={entity.href} className="inline-flex items-center gap-2">
                     {entityIcon(entity.kind)} {entity.name}
@@ -413,7 +413,7 @@ export function V2InboxDetailPanel({
                     <button
                       type="button"
                       onClick={() => removeLink(entity.id)}
-                      className="text-zinc-400 hover:text-zinc-300"
+                      className="text-zinc-500 hover:text-zinc-300"
                       aria-label={`Remove ${entity.name}`}
                     >
                       ×
@@ -425,7 +425,7 @@ export function V2InboxDetailPanel({
                 <button
                   type="button"
                   onClick={() => void applySuggestedEntities()}
-                  className="rounded-xl bg-violet-600/20 px-3 py-2 text-sm font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
+                  className="rounded-xl bg-violet-600/20 px-3 py-2 text-xs font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
                 >
                   ✨ Suggest entities
                 </button>
@@ -438,7 +438,7 @@ export function V2InboxDetailPanel({
                     key={entity.id}
                     type="button"
                     onClick={() => void addSuggestedEntity(entity)}
-                    className="rounded-full border border-zinc-800 px-2 py-0.5 text-sm text-zinc-400 hover:border-violet-500/40 hover:text-violet-300"
+                    className="rounded-full border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500 hover:border-violet-500/40 hover:text-violet-300"
                   >
                     + {entity.name}
                   </button>
@@ -448,15 +448,15 @@ export function V2InboxDetailPanel({
           </div>
 
           <div>
-            <h3 className="mb-1 text-base font-semibold text-zinc-100">Tags</h3>
-            <p className="mb-3 text-sm leading-snug text-zinc-400">
+            <h3 className="mb-1 text-sm font-semibold text-zinc-100">Tags</h3>
+            <p className="mb-3 text-[11px] leading-snug text-zinc-600">
               Suggestions are inferred from the email — click to add. Only tags you select are saved.
             </p>
             <div className="flex flex-wrap gap-1.5">
               {selectedTags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-sm text-violet-200"
+                  className="inline-flex items-center gap-1 rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[11px] text-violet-200"
                 >
                   {tag}
                   {canTriage ? (
@@ -475,7 +475,7 @@ export function V2InboxDetailPanel({
                 <button
                   type="button"
                   onClick={() => setTagPickerOpen(true)}
-                  className="rounded-md border border-dashed border-zinc-700 px-2 py-1 text-sm text-zinc-400 hover:border-zinc-600 hover:text-zinc-300"
+                  className="rounded-md border border-dashed border-zinc-700 px-2 py-1 text-[11px] text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
                 >
                   + Add tag
                 </button>
@@ -487,7 +487,7 @@ export function V2InboxDetailPanel({
                   <button
                     type="button"
                     onClick={() => void applySuggestedTags()}
-                    className="rounded-xl bg-violet-600/20 px-2.5 py-1 text-sm font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
+                    className="rounded-xl bg-violet-600/20 px-2.5 py-1 text-[10px] font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
                   >
                     ✨ Suggest tags
                   </button>
@@ -497,7 +497,7 @@ export function V2InboxDetailPanel({
                     key={tag}
                     type="button"
                     onClick={() => void addSuggestedTag(tag)}
-                    className="rounded-full border border-zinc-800 px-2 py-0.5 text-sm text-zinc-400 hover:border-violet-500/40 hover:text-violet-300"
+                    className="rounded-full border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500 hover:border-violet-500/40 hover:text-violet-300"
                   >
                     + {tag}
                   </button>
@@ -508,9 +508,9 @@ export function V2InboxDetailPanel({
 
           {canTriage ? (
             <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-              <h3 className="mb-3 text-base font-semibold text-zinc-100">{INBOX.actions}</h3>
+              <h3 className="mb-3 text-sm font-semibold text-zinc-100">{INBOX.actions}</h3>
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block text-sm text-zinc-400">
+                <label className="block text-xs text-zinc-500">
                   Status
                   <select
                     value={status}
@@ -522,7 +522,7 @@ export function V2InboxDetailPanel({
                     <option value="linked">In Progress</option>
                   </select>
                 </label>
-                <label className="block text-sm text-zinc-400">
+                <label className="block text-xs text-zinc-500">
                   Follow up
                   <input
                     type="date"
@@ -565,8 +565,8 @@ export function V2InboxDetailPanel({
 
           {showConvert && canTriage ? (
             <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-              <p className="mb-2 text-base font-medium text-zinc-200">{INBOX.convertHeading}</p>
-              <p className="mb-3 text-sm text-zinc-400">{INBOX.convertHint}</p>
+              <p className="mb-2 text-sm font-medium text-zinc-200">{INBOX.convertHeading}</p>
+              <p className="mb-3 text-xs text-zinc-500">{INBOX.convertHint}</p>
               <CaptureSheet
                 open
                 action={convertInboxAction}
@@ -588,7 +588,7 @@ export function V2InboxDetailPanel({
         </div>
       </div>
 
-      <div className="border-t border-zinc-800/80 px-5 py-3 text-center text-sm text-zinc-400">
+      <div className="border-t border-zinc-800/80 px-5 py-3 text-center text-[11px] text-zinc-600">
         ✨ Created for you by Argus AI
       </div>
 

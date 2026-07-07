@@ -60,15 +60,15 @@ export function V2EventsShell({
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-zinc-50">Events</h1>
-              <p className="mt-0.5 text-sm text-zinc-400">Meetings, calls, milestones and occurrences</p>
+              <p className="mt-0.5 text-xs text-zinc-500">Meetings, calls, milestones and occurrences</p>
             </div>
             <div className="flex shrink-0 gap-2">
               <V2CreateEntityButton
                 kind="event"
                 label="+ Event"
-                className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-500"
+                className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
               />
-              <button type="button" className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400">
+              <button type="button" className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400">
                 Filters
               </button>
             </div>
@@ -80,8 +80,8 @@ export function V2EventsShell({
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-sm font-medium ${
-                  tab === t.id ? "bg-violet-500/15 text-violet-300" : "text-zinc-400 hover:text-zinc-400"
+                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-medium ${
+                  tab === t.id ? "bg-violet-500/15 text-violet-300" : "text-zinc-600 hover:text-zinc-400"
                 }`}
               >
                 {t.label} {counts[t.id]}
@@ -93,8 +93,8 @@ export function V2EventsShell({
         <div className="flex-1 overflow-y-auto px-4 py-3 lg:px-5">
           {filtered.length === 0 ? (
             <div className="py-16 text-center">
-              <p className="text-sm text-zinc-400">No events yet.</p>
-              <p className="mt-1 text-sm text-zinc-400">Create an event and link it to projects, orgs, people, or topics.</p>
+              <p className="text-sm text-zinc-500">No events yet.</p>
+              <p className="mt-1 text-xs text-zinc-600">Create an event and link it to projects, orgs, people, or topics.</p>
               <div className="mt-4">
                 <V2CreateEntityButton
                   kind="event"
@@ -106,7 +106,7 @@ export function V2EventsShell({
           ) : (
             groups.map((group) => (
               <div key={group.label} className="mb-6">
-                <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-zinc-400">{group.label}</p>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">{group.label}</p>
                 <ul className="space-y-2">
                   {group.rows.map((row) => (
                     <li key={row.id}>
@@ -120,15 +120,15 @@ export function V2EventsShell({
                         }`}
                       >
                         <div className="w-12 shrink-0 text-center">
-                          <p className="text-sm font-bold tracking-wide text-violet-400">{row.dateLabel}</p>
-                          <p className="text-sm text-zinc-400">{row.timeLabel}</p>
+                          <p className="text-[10px] font-bold tracking-wide text-violet-400">{row.dateLabel}</p>
+                          <p className="text-[10px] text-zinc-600">{row.timeLabel}</p>
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="font-medium text-zinc-100">{row.name}</p>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
                             {row.meetingUrl ? <span>Webex</span> : null}
                             {row.projectName ? <span>{row.projectName}</span> : null}
-                            <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-sm text-zinc-400">
+                            <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
                               {row.typeLabel}
                             </span>
                           </div>
@@ -137,7 +137,7 @@ export function V2EventsShell({
                           {row.attendeeInitials.slice(0, 3).map((initials, i) => (
                             <span
                               key={`${row.id}-${initials}-${i}`}
-                              className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-700 text-sm font-bold text-zinc-200"
+                              className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-700 text-[9px] font-bold text-zinc-200"
                             >
                               {initials}
                             </span>
@@ -162,9 +162,9 @@ export function V2EventsShell({
                 <V2EntityLinkButton
                   entityId={selected.id}
                   linkedIds={selected.linkedEntityIds}
-                  className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-sm font-semibold text-violet-300 hover:bg-violet-600/25"
+                  className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
                 />
-                <div className="flex gap-2 text-zinc-400">
+                <div className="flex gap-2 text-zinc-600">
                   <Link href={`/argus/v2/network/${selected.id}`} className="hover:text-zinc-300">
                     ✎
                   </Link>
@@ -204,7 +204,7 @@ export function V2EventsShell({
             {selected.linkedTopicNames.length > 0 ? (
               <div className="mb-4 flex flex-wrap gap-1.5">
                 {selected.linkedTopicNames.map((tag) => (
-                  <span key={tag} className="rounded-md bg-zinc-800 px-2 py-1 text-sm text-zinc-400">
+                  <span key={tag} className="rounded-md bg-zinc-800 px-2 py-1 text-[11px] text-zinc-400">
                     {tag}
                   </span>
                 ))}
@@ -212,7 +212,7 @@ export function V2EventsShell({
             ) : selected.topicTags.length > 0 ? (
               <div className="mb-4 flex flex-wrap gap-1.5">
                 {selected.topicTags.map((tag) => (
-                  <span key={tag} className="rounded-md bg-zinc-800 px-2 py-1 text-sm text-zinc-400">
+                  <span key={tag} className="rounded-md bg-zinc-800 px-2 py-1 text-[11px] text-zinc-400">
                     {tag}
                   </span>
                 ))}
@@ -220,24 +220,24 @@ export function V2EventsShell({
             ) : null}
 
             <div className="mb-5 rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
-              <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-400">Description</h3>
+              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">Description</h3>
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-400">{selected.description}</p>
             </div>
 
             {selected.attendeeCount > 0 ? (
               <div className="mb-5">
-                <h3 className="mb-2 text-base font-semibold text-zinc-100">Attendees</h3>
+                <h3 className="mb-2 text-sm font-semibold text-zinc-100">Attendees</h3>
                 <div className="flex -space-x-2">
                   {selected.attendeeInitials.map((initials, i) => (
                     <span
                       key={`${selected.id}-att-${i}`}
-                      className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-700 text-sm font-bold text-zinc-200"
+                      className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-700 text-[10px] font-bold text-zinc-200"
                     >
                       {initials}
                     </span>
                   ))}
                   {selected.attendeeCount > selected.attendeeInitials.length ? (
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-800 text-sm text-zinc-400">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-800 text-[10px] text-zinc-400">
                       +{selected.attendeeCount - selected.attendeeInitials.length}
                     </span>
                   ) : null}
@@ -245,9 +245,9 @@ export function V2EventsShell({
               </div>
             ) : null}
 
-            <h3 className="mb-2 text-base font-semibold text-zinc-100">Linked entries</h3>
+            <h3 className="mb-2 text-sm font-semibold text-zinc-100">Linked entries</h3>
             {selected.linkedEntries.length === 0 ? (
-              <p className="mb-5 text-sm text-zinc-400">No linked journal entries.</p>
+              <p className="mb-5 text-sm text-zinc-500">No linked journal entries.</p>
             ) : (
               <ul className="mb-5 space-y-2">
                 {selected.linkedEntries.map((entry) => (
@@ -260,11 +260,11 @@ export function V2EventsShell({
               </ul>
             )}
 
-            <h3 className="mb-2 text-base font-semibold text-zinc-100">
+            <h3 className="mb-2 text-sm font-semibold text-zinc-100">
               Related emails ({selected.relatedEmails.length})
             </h3>
             {selected.relatedEmails.length === 0 ? (
-              <p className="text-sm text-zinc-400">No linked emails.</p>
+              <p className="text-sm text-zinc-500">No linked emails.</p>
             ) : (
               <ul className="space-y-2">
                 {selected.relatedEmails.map((email) => (
@@ -273,8 +273,8 @@ export function V2EventsShell({
                       href={email.href}
                       className="block rounded-xl border border-zinc-800/80 px-3 py-2 transition hover:border-zinc-700"
                     >
-                      <p className="text-base font-medium text-zinc-200">{email.subject}</p>
-                      <p className="text-sm text-zinc-400">
+                      <p className="text-sm font-medium text-zinc-200">{email.subject}</p>
+                      <p className="text-xs text-zinc-600">
                         {email.from} · {email.date}
                       </p>
                     </Link>
@@ -291,13 +291,13 @@ export function V2EventsShell({
               >
                 + Journal about this event
               </V2OpenCaptureButton>
-              <p className="mt-2 text-sm text-zinc-400">
+              <p className="mt-2 text-xs text-zinc-600">
                 Event notes use the event date. Link a topic, then convert to a log sequence.
               </p>
             </div>
           </div>
         ) : (
-          <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-400">
+          <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">
             Select an event to view details.
           </div>
         )}
@@ -311,7 +311,7 @@ function LinkCountCard({ icon, label, count }: { icon: string; label: string; co
     <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4 text-center">
       <div className="text-2xl">{icon}</div>
       <p className="mt-2 text-2xl font-bold tabular-nums text-zinc-50">{count}</p>
-      <p className="mt-1 text-sm text-zinc-400">{label}</p>
+      <p className="mt-1 text-[11px] text-zinc-500">{label}</p>
     </div>
   );
 }

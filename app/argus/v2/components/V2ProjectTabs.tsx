@@ -12,7 +12,7 @@ export function V2ProjectTabs({ active = "Overview" }: { active?: (typeof PROJEC
           className={`shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition ${
             tab === active
               ? "border-violet-500 text-violet-300"
-              : "border-transparent text-zinc-400 hover:text-zinc-300"
+              : "border-transparent text-zinc-500 hover:text-zinc-300"
           }`}
         >
           {tab}

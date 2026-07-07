@@ -27,7 +27,7 @@ const METRIC_ICONS = {
 function SummaryPill({ label, value }: { label: string; value: number }) {
   return (
     <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
-      <p className="text-sm font-medium uppercase tracking-wider text-zinc-400">{label}</p>
+      <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-600">{label}</p>
       <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-50">{value}</p>
     </div>
   );
@@ -41,13 +41,13 @@ function ProjectCard({ card }: { card: V2ProjectBrowseCard }) {
     >
       <div className="mb-3 flex items-start justify-between gap-3">
         <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
-        <span className="text-sm text-zinc-400 group-hover:text-violet-400">Open →</span>
+        <span className="text-xs text-zinc-600 group-hover:text-violet-400">Open →</span>
       </div>
 
       <h2 className="text-xl font-bold text-zinc-50 group-hover:text-violet-100">{card.name}</h2>
 
       {card.dateRangeLabel ? (
-        <p className="mt-2 flex items-center gap-1.5 text-sm text-zinc-400">
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-zinc-500">
           <span aria-hidden>📅</span>
           {card.dateRangeLabel}
         </p>
@@ -62,20 +62,20 @@ function ProjectCard({ card }: { card: V2ProjectBrowseCard }) {
               {METRIC_ICONS[key]}
             </div>
             <p className="mt-1 text-sm font-semibold tabular-nums text-violet-300">{card.metrics[key]}</p>
-            <p className="text-sm capitalize text-zinc-400">{key}</p>
+            <p className="text-[9px] capitalize text-zinc-600">{key}</p>
           </div>
         ))}
       </div>
 
       <div className="mt-4 rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5">
         <p className="truncate text-sm text-zinc-300">{card.lastActivity.label}</p>
-        <p className="mt-0.5 text-sm text-zinc-400">{card.lastActivity.timeLabel}</p>
+        <p className="mt-0.5 text-xs text-zinc-600">{card.lastActivity.timeLabel}</p>
       </div>
 
       {card.progressPercent !== undefined ? (
         <div className="mt-4">
-          <div className="mb-1.5 flex items-center justify-between text-sm">
-            <span className="text-zinc-400">Duration progress</span>
+          <div className="mb-1.5 flex items-center justify-between text-xs">
+            <span className="text-zinc-500">Duration progress</span>
             <span className="font-medium tabular-nums text-violet-300">{card.progressPercent}%</span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-zinc-800">
@@ -93,16 +93,16 @@ function ProjectCard({ card }: { card: V2ProjectBrowseCard }) {
             <span
               key={member.id}
               title={member.name}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-zinc-900 bg-gradient-to-br from-violet-600/40 to-zinc-700 text-sm font-bold text-violet-100"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border-2 border-zinc-900 bg-gradient-to-br from-violet-600/40 to-zinc-700 text-[10px] font-bold text-violet-100"
             >
               {member.initials}
             </span>
           ))}
         </div>
         {card.teamOverflow > 0 ? (
-          <span className="text-sm text-zinc-400">+{card.teamOverflow} more</span>
+          <span className="text-xs text-zinc-600">+{card.teamOverflow} more</span>
         ) : card.team.length === 0 ? (
-          <span className="text-sm text-zinc-400">No people linked yet</span>
+          <span className="text-xs text-zinc-600">No people linked yet</span>
         ) : null}
       </div>
     </Link>
@@ -120,20 +120,20 @@ function ProjectListRow({ card }: { card: V2ProjectBrowseCard }) {
           <p className="font-semibold text-zinc-100">{card.name}</p>
           <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
         </div>
-        <p className="mt-0.5 truncate text-sm text-zinc-400">
+        <p className="mt-0.5 truncate text-xs text-zinc-500">
           {card.dateRangeLabel ?? "No dates"} · {card.lastActivity.label} · {card.lastActivity.timeLabel}
         </p>
       </div>
       <div className="hidden shrink-0 gap-4 text-center sm:flex">
-        <span className="text-sm text-zinc-400">
+        <span className="text-xs text-zinc-500">
           <span className="block font-semibold text-violet-300">{card.metrics.people}</span>
           People
         </span>
-        <span className="text-sm text-zinc-400">
+        <span className="text-xs text-zinc-500">
           <span className="block font-semibold text-violet-300">{card.metrics.emails}</span>
           Emails
         </span>
-        <span className="text-sm text-zinc-400">
+        <span className="text-xs text-zinc-500">
           <span className="block font-semibold text-violet-300">{card.metrics.journal}</span>
           Journal
         </span>
@@ -163,15 +163,15 @@ export function V2ProjectsBrowserShell({
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Projects</h1>
-          <p className="mt-1 text-sm text-zinc-400">All projects in your knowledge base</p>
+          <p className="mt-1 text-sm text-zinc-500">All projects in your knowledge base</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5">
             <button
               type="button"
               onClick={() => setView("grid")}
-              className={`rounded-md px-2.5 py-1.5 text-sm font-medium ${
-                view === "grid" ? "bg-zinc-800 text-zinc-200" : "text-zinc-400 hover:text-zinc-300"
+              className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
+                view === "grid" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
               }`}
               aria-label="Grid view"
             >
@@ -180,8 +180,8 @@ export function V2ProjectsBrowserShell({
             <button
               type="button"
               onClick={() => setView("list")}
-              className={`rounded-md px-2.5 py-1.5 text-sm font-medium ${
-                view === "list" ? "bg-zinc-800 text-zinc-200" : "text-zinc-400 hover:text-zinc-300"
+              className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
+                view === "list" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
               }`}
               aria-label="List view"
             >
@@ -204,7 +204,7 @@ export function V2ProjectsBrowserShell({
           <V2CreateEntityButton
             kind="project"
             label="+ Project"
-            className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-500"
+            className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
           />
         </div>
       </header>
@@ -220,8 +220,8 @@ export function V2ProjectsBrowserShell({
 
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
-          <p className="text-sm text-zinc-400">No projects yet.</p>
-          <p className="mt-1 text-sm text-zinc-400">Create one and link org, people, topics, or events.</p>
+          <p className="text-sm text-zinc-500">No projects yet.</p>
+          <p className="mt-1 text-xs text-zinc-600">Create one and link org, people, topics, or events.</p>
           <div className="mt-4">
             <V2CreateEntityButton
               kind="project"
@@ -246,7 +246,7 @@ export function V2ProjectsBrowserShell({
 
       <section className="mt-10 rounded-2xl border border-zinc-800/80 bg-zinc-900/30 px-5 py-4">
         <h2 className="text-sm font-semibold text-zinc-200">Why this view helps</h2>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-400">
+        <p className="mt-2 text-sm leading-relaxed text-zinc-500">
           The browser is your portfolio — decide which project to open before you dive into evidence. Each card
           shows status, team, maturity, and recent activity so you can tell in seconds whether a project is alive
           and worth entering.

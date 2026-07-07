@@ -34,8 +34,8 @@ export function V2EntityTable({
                     ? "/argus/v2/browse/events"
                     : `/argus/v2?tab=${t}`
             }
-            className={`rounded-lg px-2.5 py-1 text-sm font-medium ${
-              t === tab ? "bg-violet-500/15 text-violet-300" : "text-zinc-400 hover:text-zinc-400"
+            className={`rounded-lg px-2.5 py-1 text-[11px] font-medium ${
+              t === tab ? "bg-violet-500/15 text-violet-300" : "text-zinc-600 hover:text-zinc-400"
             }`}
           >
             {TAB_LABELS[t]}
@@ -43,11 +43,11 @@ export function V2EntityTable({
         ))}
       </div>
       {rows.length === 0 ? (
-        <p className="text-sm text-zinc-400">No {TAB_LABELS[tab].toLowerCase()} yet.</p>
+        <p className="text-sm text-zinc-500">No {TAB_LABELS[tab].toLowerCase()} yet.</p>
       ) : (
         <table className="w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-zinc-800 text-sm text-zinc-400">
+            <tr className="border-b border-zinc-800 text-xs text-zinc-600">
               <th className="pb-2 font-medium">Name</th>
               <th className="pb-2 font-medium">Type</th>
               <th className="pb-2 font-medium">{thirdColumnLabel}</th>
@@ -62,12 +62,12 @@ export function V2EntityTable({
                     {row.name}
                   </Link>
                 </td>
-                <td className="py-2.5 text-zinc-400">{row.type}</td>
-                <td className="py-2.5 tabular-nums text-zinc-400">
+                <td className="py-2.5 text-zinc-500">{row.type}</td>
+                <td className="py-2.5 tabular-nums text-zinc-500">
                   {tab === "people" ? row.type : row.people || "—"}
                 </td>
                 <td className="py-2.5">
-                  <span className="inline-flex items-center gap-1.5 text-zinc-400">
+                  <span className="inline-flex items-center gap-1.5 text-zinc-500">
                     {row.active ? <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> : null}
                     {row.last}
                   </span>

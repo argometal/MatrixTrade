@@ -20,7 +20,7 @@ export function V2BrowseStatusFilter<T extends string>({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+        className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
       >
         {label}
         {value !== "all" ? ` · ${options.find((o) => o.value === value)?.label ?? value}` : ""}
@@ -42,7 +42,7 @@ export function V2BrowseStatusFilter<T extends string>({
                   onChange(option.value);
                   setOpen(false);
                 }}
-                className={`block w-full rounded-lg px-3 py-2 text-left text-sm ${
+                className={`block w-full rounded-lg px-3 py-2 text-left text-xs ${
                   value === option.value
                     ? "bg-violet-500/15 text-violet-200"
                     : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"

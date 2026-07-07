@@ -72,7 +72,7 @@ export default async function V2InboxPage({
   );
 
   return (
-    <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-400">Loading inbox…</div>}>
+    <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-500">Loading inbox…</div>}>
       <V2InboxShell
         rows={rows}
         details={details}

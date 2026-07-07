@@ -15,7 +15,7 @@ export default async function V2BrowseProjectsPage() {
   const summary = buildV2ProjectBrowseSummary(cards);
 
   return (
-    <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-400">Loading projects…</div>}>
+    <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-500">Loading projects…</div>}>
       <V2ProjectsBrowserShell cards={cards} summary={summary} />
     </Suspense>
   );

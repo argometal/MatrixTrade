@@ -46,7 +46,7 @@ export function V2OrgTimeline({
   const hasMore = limit ? entries.length > limit : false;
 
   if (shown.length === 0) {
-    return <p className="py-8 text-center text-sm text-zinc-400">No linked journal entries or emails yet.</p>;
+    return <p className="py-8 text-center text-sm text-zinc-500">No linked journal entries or emails yet.</p>;
   }
 
   return (
@@ -58,9 +58,9 @@ export function V2OrgTimeline({
             return (
               <article key={entry.id} className="flex gap-4 sm:gap-6">
                 <div className="hidden w-16 shrink-0 text-right sm:block">
-                  <p className="text-sm font-semibold tracking-wider text-zinc-400">{parts.month}</p>
+                  <p className="text-[10px] font-semibold tracking-wider text-zinc-500">{parts.month}</p>
                   <p className="text-2xl font-bold tabular-nums text-zinc-300">{parts.day}</p>
-                  <p className="text-sm text-zinc-400">{parts.year}</p>
+                  <p className="text-[10px] text-zinc-600">{parts.year}</p>
                 </div>
 
                 <div className="min-w-0 flex-1 rounded-2xl border border-zinc-800/80 bg-zinc-950/50 p-4 transition hover:border-zinc-700/80">
@@ -74,17 +74,17 @@ export function V2OrgTimeline({
                         {tag}
                       </V2Badge>
                     ))}
-                    <span className="ml-auto flex items-center gap-2 text-sm tabular-nums text-zinc-400">
+                    <span className="ml-auto flex items-center gap-2 text-[11px] tabular-nums text-zinc-600">
                       {entry.time}
                       <V2LockIcon protected={entry.protected} />
                     </span>
                   </div>
                   <h3 className="text-[15px] font-semibold leading-snug text-zinc-100">{entry.title}</h3>
                   {entry.body ? (
-                    <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-zinc-400">{entry.body}</p>
+                    <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-zinc-500">{entry.body}</p>
                   ) : null}
                   {entry.author ? (
-                    <p className="mt-3 text-sm text-zinc-400">{entry.author}</p>
+                    <p className="mt-3 text-xs text-zinc-600">{entry.author}</p>
                   ) : null}
                 </div>
               </article>
@@ -95,7 +95,7 @@ export function V2OrgTimeline({
       {hasMore ? (
         <button
           type="button"
-          className="mt-6 w-full rounded-xl border border-zinc-800 py-2.5 text-sm text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
+          className="mt-6 w-full rounded-xl border border-zinc-800 py-2.5 text-sm text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
         >
           Load more
         </button>

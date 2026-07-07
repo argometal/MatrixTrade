@@ -17,7 +17,7 @@ export default async function V2BrowseNetworkPage() {
   const insights = buildV2NetworkBrowseInsights(cards);
 
   return (
-    <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-400">Loading network…</div>}>
+    <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-500">Loading network…</div>}>
       <V2NetworkBrowserShell cards={cards} summary={summary} insights={insights} />
     </Suspense>
   );

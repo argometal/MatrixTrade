@@ -10,7 +10,7 @@ export function V2RelationshipChart({
 }) {
   if (points.length < 2) {
     return (
-      <div className="mb-4 flex h-16 items-center justify-center rounded-xl bg-zinc-950/60 text-sm text-zinc-400">
+      <div className="mb-4 flex h-16 items-center justify-center rounded-xl bg-zinc-950/60 text-xs text-zinc-600">
         Not enough history yet
       </div>
     );
