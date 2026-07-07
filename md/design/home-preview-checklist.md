@@ -158,8 +158,10 @@ Use this list after every deploy or redesign. Check each box only after you have
 
 ## L. Responsive smoke test
 
-- [ ] **Mobile (`&lt; lg`)** — Top bar visible; left/right sidebars hidden; center scrolls.
-- [ ] **Tablet (`lg`, not `xl`)** — Left sidebar visible; right panel hidden; layout usable.
+- [ ] **Mobile (`&lt; lg`)** — Top bar + **persistent bottom nav** (Home, Trades, Assist, Inbox, More); content clears bottom bar.
+- [ ] **Mobile default dashboard** — Visiting `/` on phone redirects to `/home-preview`; login lands on Home preview.
+- [ ] **Mobile bottom nav on classic routes** — Inbox, Playbook, etc. still show bottom nav when opened from phone.
+- [ ] **Tablet (`lg`, not `xl`)** — Left sidebar visible; right panel hidden; no bottom nav.
 - [ ] **Desktop (`xl+`)** — Three-column layout: sidebar + center + right panel.
 
 ---

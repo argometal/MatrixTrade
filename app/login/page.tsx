@@ -1,4 +1,6 @@
 import { loginTradingAction } from "@/app/auth/actions";
+import { headers } from "next/headers";
+import { isMobileUserAgent } from "@/lib/is-mobile-user-agent";
 
 export default async function LoginPage({
   searchParams,
@@ -6,13 +8,15 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const { error, next } = await searchParams;
+  const headerList = await headers();
+  const defaultNext = isMobileUserAgent(headerList.get("user-agent")) ? "/home-preview" : "/";
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
       <h1 className="text-2xl font-semibold">MatrixTrade</h1>
       <p className="mt-1 text-sm text-zinc-500">Trading access</p>
       <form action={loginTradingAction} className="mt-8 space-y-4">
-        <input type="hidden" name="next" value={next ?? "/"} />
+        <input type="hidden" name="next" value={next ?? defaultNext} />
         <label className="block text-sm">
           <span className="font-medium">Password</span>
           <input

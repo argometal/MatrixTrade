@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isMobileUserAgent } from "@/lib/is-mobile-user-agent";
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/login" || pathname === "/argus/login") return true;
@@ -44,6 +45,15 @@ export function middleware(request: NextRequest) {
 
   if (isPublicPath(pathname)) {
     return NextResponse.next();
+  }
+
+  const ua = request.headers.get("user-agent");
+  if (
+    pathname === "/" &&
+    isMobileUserAgent(ua) &&
+    !request.cookies.get("mt-classic-dashboard")?.value
+  ) {
+    return NextResponse.redirect(new URL("/home-preview", request.url));
   }
 
   const tradingPasswordSet = Boolean(process.env.MATRIXTRADE_PASSWORD);

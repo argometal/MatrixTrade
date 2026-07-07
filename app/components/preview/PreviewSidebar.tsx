@@ -27,9 +27,7 @@ export function PreviewSidebar({ nav }: { nav: PreviewNavContext }) {
           </span>
           <span className="font-semibold">MatrixTrade</span>
         </Link>
-        <Link href="/" className="text-xs text-zinc-500 hover:text-zinc-300">
-          Classic →
-        </Link>
+        <span className="text-xs text-zinc-600">Dashboard</span>
       </div>
 
       <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 p-4 lg:flex xl:w-60">
