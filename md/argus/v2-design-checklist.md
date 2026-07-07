@@ -351,7 +351,7 @@ Mark items:
 
 - [ ] **Process** tab hosts linking workspace (entities, tags, status, archive, convert)
 - [ ] Entity suggestions show match reason (e.g. topic alias hit)
-- [ ] Link modal: tabs All / People / Orgs / Projects / Topics / Events
+- [ ] Link modal: tabs All / People / Orgs / Projects / Topics / Events / **Tags**
 - [ ] Search within modal
 - [ ] Multi-select entities
 - [ ] Inline create entity from modal

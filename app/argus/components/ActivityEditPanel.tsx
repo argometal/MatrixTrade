@@ -3,16 +3,14 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
-import type { ReferenceKind } from "@/lib/argus/reference-types";
 import type { Entity, Log } from "@/lib/argus/types";
 import { ACTIVITY_EDIT, TAGS } from "@/lib/argus/ux-copy";
-import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { JOURNAL_KIND_LABELS, LOG_SOURCE_LABELS } from "@/lib/argus/labels";
 import { isJournalLogKind } from "@/lib/argus/journal-behavior";
 import { EntityChip } from "./Cards";
 import { JournalKindActions } from "./JournalKindActions";
-import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
-import { TagPickerModal, type TagBuckets } from "./TagPickerModal";
+import type { EntityPickerBuckets } from "./ReferencePickerModal";
+import type { TagBuckets } from "./TagPickerModal";
 import { inputClass } from "./ui";
 
 function MetaButton({
@@ -73,13 +71,8 @@ export function ActivityEditPanel({
   const [followUpDate, setFollowUpDate] = useState(initialFollowUpDate(log));
   const [dateOpen, setDateOpen] = useState(Boolean(initialEventDate(log)));
   const [reminderOpen, setReminderOpen] = useState(Boolean(initialFollowUpDate(log)));
-  const [referenceOpen, setReferenceOpen] = useState(false);
-  const [tagsOpen, setTagsOpen] = useState(false);
   const [isProtected, setIsProtected] = useState(log.private);
-  const { openCreateFlow } = useArgusAdd();
-
-  const logBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "log"), [buckets]);
-  const logCreateKinds = allowedCreateKinds("log");
+  const { openLinkModal } = useArgusAdd();
 
   const entityMap = useMemo(
     () => new Map(buckets.alphabetical.map((e) => [e.id, e])),
@@ -92,12 +85,14 @@ export function ActivityEditPanel({
 
   const canSave = body.trim().length > 0;
 
-  function openCreate(kind: ReferenceKind) {
-    openCreateFlow({
-      itemKind: kind,
-      lockItemKind: true,
-      onSaved: (result) => {
-        setSelectedIds((prev) => (prev.includes(result.id) ? prev : [...prev, result.id]));
+  function openLinkPicker() {
+    openLinkModal({
+      title: "Link",
+      linkedEntityIds: selectedIds,
+      selectedTags,
+      onConfirm: (result) => {
+        setSelectedIds(result.entityIds);
+        setSelectedTags(result.tags);
       },
     });
   }
@@ -160,13 +155,10 @@ export function ActivityEditPanel({
           <p className="mt-1 text-[12px] text-zinc-500">{ACTIVITY_EDIT.evolveHint}</p>
           <div className="mt-2 flex flex-wrap gap-2">
             <MetaButton
-              active={referenceOpen || selectedIds.length > 0}
-              onClick={() => setReferenceOpen(true)}
+              active={selectedIds.length > 0 || selectedTags.length > 0}
+              onClick={openLinkPicker}
             >
               {ACTIVITY_EDIT.linkTo}
-            </MetaButton>
-            <MetaButton active={tagsOpen || selectedTags.length > 0} onClick={() => setTagsOpen(true)}>
-              {ACTIVITY_EDIT.tags}
             </MetaButton>
             {!isJournalLogKind(log.kind) ? (
               <MetaButton active={Boolean(eventDate) || dateOpen} onClick={() => setDateOpen((v) => !v)}>
@@ -179,43 +171,6 @@ export function ActivityEditPanel({
             <MetaButton active={isProtected} onClick={() => setIsProtected((v) => !v)}>
               {ACTIVITY_EDIT.protected}
             </MetaButton>
-          </div>
-          <div className="mt-2 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => openCreate("person")}
-              className="rounded-full border border-zinc-700 px-3 py-1 text-[12px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-            >
-              + Person
-            </button>
-            <button
-              type="button"
-              onClick={() => openCreate("project")}
-              className="rounded-full border border-zinc-700 px-3 py-1 text-[12px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-            >
-              {ACTIVITY_EDIT.newProject}
-            </button>
-            <button
-              type="button"
-              onClick={() => openCreate("organization")}
-              className="rounded-full border border-zinc-700 px-3 py-1 text-[12px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-            >
-              + Organization
-            </button>
-            <button
-              type="button"
-              onClick={() => openCreate("topic")}
-              className="rounded-full border border-zinc-700 px-3 py-1 text-[12px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-            >
-              {ACTIVITY_EDIT.newTopic}
-            </button>
-            <button
-              type="button"
-              onClick={() => openCreate("event")}
-              className="rounded-full border border-zinc-700 px-3 py-1 text-[12px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-            >
-              + Event
-            </button>
           </div>
 
           {dateOpen && !isJournalLogKind(log.kind) ? (
@@ -303,24 +258,6 @@ export function ActivityEditPanel({
           {ACTIVITY_EDIT.save}
         </button>
       </div>
-
-      <ReferencePickerModal
-        open={referenceOpen}
-        buckets={logBuckets}
-        selectedIds={selectedIds}
-        onChange={setSelectedIds}
-        onClose={() => setReferenceOpen(false)}
-        allowedCreateKinds={logCreateKinds}
-        listMode="all"
-      />
-
-      <TagPickerModal
-        open={tagsOpen}
-        buckets={tagBuckets}
-        selectedTags={selectedTags}
-        onChange={setSelectedTags}
-        onClose={() => setTagsOpen(false)}
-      />
     </form>
   );
 }

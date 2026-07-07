@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import type { Entity } from "@/lib/argus/types";
 import { updateEntityAction } from "@/app/argus/actions";
 import { entityNotesForDisplay, referenceKindFromNotes } from "@/lib/argus/reference-types";
@@ -11,7 +12,7 @@ import {
 import { ACTIVITY_EDIT, LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 import { NetworkRelationshipMetricsFields } from "./NetworkRelationshipMetricsFields";
 import { EntityChip } from "./Cards";
-import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
+import type { EntityPickerBuckets } from "./ReferencePickerModal";
 import { inputClass } from "./ui";
 
 function idsMatchingKind(entities: Entity[], ids: string[], kind: "person" | "event"): string[] {
@@ -45,7 +46,18 @@ function EntityLinkGroup({
   defaultKind: "person" | "event";
   createLabel: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const { openLinkModal } = useArgusAdd();
+
+  function openPicker() {
+    openLinkModal({
+      title: createLabel.replace(/^\+ /, "Link "),
+      linkedEntityIds: selectedIds,
+      buckets,
+      initialFilter: defaultKind,
+      showTags: false,
+      onConfirm: (result) => onChange(result.entityIds),
+    });
+  }
 
   return (
     <div>
@@ -54,7 +66,7 @@ function EntityLinkGroup({
       <div className="mt-2 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={openPicker}
           className="rounded-full border border-zinc-700 px-3 py-1.5 text-[13px] text-zinc-300 hover:bg-zinc-800"
         >
           {ACTIVITY_EDIT.linkTo}
@@ -67,18 +79,6 @@ function EntityLinkGroup({
           ))}
         </div>
       ) : null}
-
-      <ReferencePickerModal
-        open={open}
-        buckets={buckets}
-        selectedIds={selectedIds}
-        onChange={onChange}
-        onClose={() => setOpen(false)}
-        onConfirm={() => setOpen(false)}
-        defaultCreateKind={defaultKind}
-        allowedCreateKinds={allowedKinds}
-        createButtonLabel={createLabel}
-      />
     </div>
   );
 }

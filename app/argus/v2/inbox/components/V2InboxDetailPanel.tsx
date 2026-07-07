@@ -7,9 +7,9 @@ import type { Entity, InboxItem, InboxStatus, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
-import { TagPickerModal } from "@/app/argus/components/TagPickerModal";
 import { CaptureSheet } from "@/app/argus/components/CaptureSheet";
 import { V2InboxEntityLinkModal } from "@/app/argus/v2/inbox/components/V2InboxEntityLinkModal";
+import type { ArgusLinkFilter, ArgusLinkResult } from "@/app/argus/components/ArgusLinkModal";
 import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import { INBOX, LINK_HIERARCHY } from "@/lib/argus/ux-copy";
@@ -79,7 +79,7 @@ export function V2InboxDetailPanel({
 }) {
   const [panelTab, setPanelTab] = useState<"email" | "details" | "attachments" | "process">("email");
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [tagPickerOpen, setTagPickerOpen] = useState(false);
+  const [linkModalFilter, setLinkModalFilter] = useState<ArgusLinkFilter>("all");
   const [showConvert, setShowConvert] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [linkIds, setLinkIds] = useState<string[]>(detail.item.linkedEntityIds ?? []);
@@ -226,9 +226,16 @@ export function V2InboxDetailPanel({
     return false;
   }
 
-  async function confirmEntityLinks(ids: string[]) {
-    setLinkIds(ids);
-    await persistLinks(ids);
+  async function confirmEntityLinks(result: ArgusLinkResult) {
+    setLinkIds(result.entityIds);
+    await persistLinks(result.entityIds);
+    setSelectedTags(result.tags);
+    await persistTriage({ topics: result.tags });
+  }
+
+  function openLinkModal(filter: ArgusLinkFilter = "all") {
+    setLinkModalFilter(filter);
+    setPickerOpen(true);
   }
 
   const detailTabs = [
@@ -284,7 +291,7 @@ export function V2InboxDetailPanel({
           {canTriage ? (
             <button
               type="button"
-              onClick={() => setPickerOpen(true)}
+              onClick={() => openLinkModal("all")}
               className="rounded-xl border border-dashed border-zinc-700 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
             >
               + Link
@@ -348,7 +355,7 @@ export function V2InboxDetailPanel({
           {canTriage ? (
             <button
               type="button"
-              onClick={() => setTagPickerOpen(true)}
+              onClick={() => openLinkModal("tags")}
               className="rounded-md border border-dashed border-zinc-700 px-2 py-1 text-[11px] text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
             >
               + Add tag
@@ -471,7 +478,7 @@ export function V2InboxDetailPanel({
             {canTriage ? (
               <button
                 type="button"
-                onClick={() => setPickerOpen(true)}
+                onClick={() => openLinkModal("all")}
                 className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
               >
                 + Link
@@ -606,21 +613,13 @@ export function V2InboxDetailPanel({
       <V2InboxEntityLinkModal
         open={pickerOpen}
         buckets={inboxBuckets}
+        tagBuckets={tagBuckets}
         selectedIds={linkIds}
-        onClose={() => setPickerOpen(false)}
-        onConfirm={(ids) => void confirmEntityLinks(ids)}
-        onEntityCreated={linkCreatedEntity}
-      />
-
-      <TagPickerModal
-        open={tagPickerOpen}
-        buckets={tagBuckets}
         selectedTags={selectedTags}
-        onChange={(tags) => {
-          setSelectedTags(tags);
-          void persistTriage({ topics: tags });
-        }}
-        onClose={() => setTagPickerOpen(false)}
+        initialFilter={linkModalFilter}
+        onClose={() => setPickerOpen(false)}
+        onConfirm={(result) => void confirmEntityLinks(result)}
+        onEntityCreated={linkCreatedEntity}
       />
     </div>
   );

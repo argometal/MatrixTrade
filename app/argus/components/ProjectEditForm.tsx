@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import type { Entity } from "@/lib/argus/types";
 import { updateProjectAction } from "@/app/argus/actions";
 import { ACTIVITY_EDIT, LINK_HIERARCHY, TAGS } from "@/lib/argus/ux-copy";
@@ -9,8 +10,8 @@ import {
   type LinkContext,
 } from "@/lib/argus/link-hierarchy";
 import { referenceKindFromNotes } from "@/lib/argus/reference-types";
-import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
-import { TagPickerModal, type TagBuckets } from "./TagPickerModal";
+import type { EntityPickerBuckets } from "./ReferencePickerModal";
+import type { TagBuckets } from "./TagPickerModal";
 import { EntityChip } from "./Cards";
 import { inputClass } from "./ui";
 
@@ -43,10 +44,7 @@ export function ProjectEditForm({
   const [linkedTopicIds, setLinkedTopicIds] = useState<string[]>(entity.linkedTopicIds ?? []);
   const [linkedEventIds, setLinkedEventIds] = useState<string[]>(entity.linkedEventIds ?? []);
   const [linkedTags, setLinkedTags] = useState<string[]>(entity.linkedTags ?? []);
-  const [peopleOpen, setPeopleOpen] = useState(false);
-  const [topicsOpen, setTopicsOpen] = useState(false);
-  const [eventsOpen, setEventsOpen] = useState(false);
-  const [tagsOpen, setTagsOpen] = useState(false);
+  const { openLinkModal } = useArgusAdd();
 
   const linkContext: LinkContext = useMemo(
     () => ({ projectStart: startDate || undefined, projectEnd: endDate || undefined }),
@@ -78,6 +76,50 @@ export function ProjectEditForm({
     .filter((entry): entry is Entity => Boolean(entry));
 
   const canSave = name.trim().length > 0;
+
+  function openPeopleLink() {
+    openLinkModal({
+      title: LINK_HIERARCHY.linkedPeople,
+      linkedEntityIds: linkedPersonIds,
+      buckets: peopleBuckets,
+      initialFilter: "person",
+      showTags: false,
+      onConfirm: (result) => setLinkedPersonIds(result.entityIds),
+    });
+  }
+
+  function openTopicsLink() {
+    openLinkModal({
+      title: LINK_HIERARCHY.linkedTopics,
+      linkedEntityIds: linkedTopicIds,
+      buckets: topicBuckets,
+      initialFilter: "topic",
+      showTags: false,
+      onConfirm: (result) => setLinkedTopicIds(result.entityIds),
+    });
+  }
+
+  function openEventsLink() {
+    openLinkModal({
+      title: LINK_HIERARCHY.linkedEvents,
+      linkedEntityIds: linkedEventIds,
+      buckets: eventBuckets,
+      initialFilter: "event",
+      showTags: false,
+      onConfirm: (result) => setLinkedEventIds(result.entityIds),
+    });
+  }
+
+  function openTagsLink() {
+    openLinkModal({
+      title: "Linked tags",
+      linkedEntityIds: [],
+      selectedTags: linkedTags,
+      initialFilter: "tags",
+      showTags: true,
+      onConfirm: (result) => setLinkedTags(result.tags),
+    });
+  }
 
   return (
     <form action={updateProjectAction} className="mb-6 space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
@@ -129,7 +171,7 @@ export function ProjectEditForm({
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => setPeopleOpen(true)}
+            onClick={openPeopleLink}
             className="rounded-full border border-zinc-700 px-3 py-1.5 text-[13px] text-zinc-300 hover:bg-zinc-800"
           >
             {ACTIVITY_EDIT.linkTo}
@@ -149,7 +191,7 @@ export function ProjectEditForm({
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => setTopicsOpen(true)}
+            onClick={openTopicsLink}
             className="rounded-full border border-zinc-700 px-3 py-1.5 text-[13px] text-zinc-300 hover:bg-zinc-800"
           >
             {ACTIVITY_EDIT.linkTo}
@@ -170,7 +212,7 @@ export function ProjectEditForm({
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => setEventsOpen(true)}
+            onClick={openEventsLink}
             className="rounded-full border border-zinc-700 px-3 py-1.5 text-[13px] text-zinc-300 hover:bg-zinc-800"
           >
             {ACTIVITY_EDIT.linkTo}
@@ -190,7 +232,7 @@ export function ProjectEditForm({
         <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => setTagsOpen(true)}
+            onClick={openTagsLink}
             className="rounded-full border border-zinc-700 px-3 py-1.5 text-[13px] text-zinc-300 hover:bg-zinc-800"
           >
             {ACTIVITY_EDIT.tags}
@@ -210,50 +252,6 @@ export function ProjectEditForm({
       >
         Save
       </button>
-
-      <ReferencePickerModal
-        open={peopleOpen}
-        buckets={peopleBuckets}
-        selectedIds={linkedPersonIds}
-        onChange={setLinkedPersonIds}
-        onClose={() => setPeopleOpen(false)}
-        onConfirm={() => setPeopleOpen(false)}
-        defaultCreateKind="person"
-        allowedCreateKinds={["person"]}
-        createButtonLabel={LINK_HIERARCHY.newPerson}
-      />
-
-      <ReferencePickerModal
-        open={topicsOpen}
-        buckets={topicBuckets}
-        selectedIds={linkedTopicIds}
-        onChange={setLinkedTopicIds}
-        onClose={() => setTopicsOpen(false)}
-        onConfirm={() => setTopicsOpen(false)}
-        defaultCreateKind="topic"
-        allowedCreateKinds={["topic"]}
-        createButtonLabel={LINK_HIERARCHY.newTopic}
-      />
-
-      <ReferencePickerModal
-        open={eventsOpen}
-        buckets={eventBuckets}
-        selectedIds={linkedEventIds}
-        onChange={setLinkedEventIds}
-        onClose={() => setEventsOpen(false)}
-        onConfirm={() => setEventsOpen(false)}
-        defaultCreateKind="event"
-        allowedCreateKinds={["event"]}
-        createButtonLabel={LINK_HIERARCHY.newEvent}
-      />
-
-      <TagPickerModal
-        open={tagsOpen}
-        buckets={tagBuckets}
-        selectedTags={linkedTags}
-        onChange={setLinkedTags}
-        onClose={() => setTagsOpen(false)}
-      />
     </form>
   );
 }

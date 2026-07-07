@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { createEntityInlineAction } from "@/app/argus/actions";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { ReferenceCreateModal } from "@/app/argus/components/ReferenceCreateModal";
+import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 import type { ReferenceKind } from "@/lib/argus/reference-types";
 
 export function V2CreateEntityButton({
@@ -53,18 +54,18 @@ export function V2EntityLinkButton({
   label?: string;
   className?: string;
 }) {
-  const router = useRouter();
-  const { openCreateFlow } = useArgusAdd();
+  const { openLinkModal } = useArgusAdd();
 
   return (
     <button
       type="button"
       onClick={() =>
-        openCreateFlow({
-          mode: "link",
+        openLinkModal({
           entityId,
           linkedEntityIds: linkedIds,
-          onSaved: () => router.refresh(),
+          title: "Link",
+          subtitle: LINK_HIERARCHY.inboxLinkHint,
+          showTags: false,
         })
       }
       className={className}

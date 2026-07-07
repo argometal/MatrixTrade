@@ -38,6 +38,7 @@ Use git tags to restore any point.
 | **140** | `change-140` | Topic tag aliases (`linkedTags` on topics); ranked inbox suggestions via topic signals; inbox **Process** tab; filter chip labels; project rename/delete on v2 browse |
 | **141** | `change-141` | Home timeline hover preview + click-through navigation; frequency-sized tag cloud (journal + inbox tags) |
 | **142** | `change-142` | CREATE flow simplification — hamburger item menu, top-bar-only entry, Create Tag, lighter inline creates elsewhere |
+| **143** | `change-143` | Unified **Link** modal (`ArgusLinkModal`) across ARGUS — inbox-style tabs incl. **Tags**; top **Create** stays full workspace; inline + New via `ReferenceCreateModal` |
 
 ## Restore
 

@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { CAPTURE, REFERENCES, TAGS } from "@/lib/argus/ux-copy";
-import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { eventDateFromLinkedEntities } from "@/lib/argus/journal-event-origin";
 import { AttachmentField } from "./AttachmentField";
-import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
-import { TagPickerModal, type TagBuckets } from "./TagPickerModal";
+import type { EntityPickerBuckets } from "./ReferencePickerModal";
+import type { TagBuckets } from "./TagPickerModal";
 
 export interface CaptureInitial {
   body?: string;
@@ -64,6 +64,7 @@ export function CaptureSheet({
   mode = "modal",
   autoOpenReference = false,
 }: CaptureSheetProps) {
+  const { openLinkModal } = useArgusAdd();
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const [body, setBody] = useState(initial?.body ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
@@ -76,12 +77,8 @@ export function CaptureSheet({
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [protectedOpen, setProtectedOpen] = useState(false);
   const [isProtected, setIsProtected] = useState(false);
-  const [referenceOpen, setReferenceOpen] = useState(autoOpenReference);
-  const [tagsOpen, setTagsOpen] = useState(false);
   const [entryType, setEntryType] = useState<"log" | "note">(initial?.entryType ?? "note");
 
-  const logBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "log"), [buckets]);
-  const logCreateKinds = allowedCreateKinds("log");
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const kindOverride = entryType === "note" ? "event" : "log";
 
@@ -100,10 +97,28 @@ export function CaptureSheet({
         eventDateFromLinkedEntities(buckets.alphabetical, initial?.entityIds ?? []) ||
         today;
       setEventDate((initial?.entryType ?? "note") === "note" ? noteDate : "");
-      setReferenceOpen(autoOpenReference);
-      setTagsOpen(false);
     }
-  }, [open, initial?.body, initial?.title, initial?.entityIds, initial?.entryType, initial?.eventDate, initial?.followUpDate, initial?.topics, autoOpenReference, today, buckets.alphabetical]);
+  }, [open, initial?.body, initial?.title, initial?.entityIds, initial?.entryType, initial?.eventDate, initial?.followUpDate, initial?.topics, today, buckets.alphabetical]);
+
+  const autoOpenedRef = useRef(false);
+
+  useEffect(() => {
+    if (!open) {
+      autoOpenedRef.current = false;
+      return;
+    }
+    if (!autoOpenReference || autoOpenedRef.current) return;
+    autoOpenedRef.current = true;
+    openLinkModal({
+      title: "Link",
+      linkedEntityIds: initial?.entityIds ?? [],
+      selectedTags: initial?.topics ?? [],
+      onConfirm: (result) => {
+        setSelectedIds(result.entityIds);
+        setSelectedTags(result.tags);
+      },
+    });
+  }, [open, autoOpenReference, initial?.entityIds, initial?.topics, openLinkModal]);
 
   function selectEntryType(type: "log" | "note") {
     setEntryType(type);
@@ -123,11 +138,23 @@ export function CaptureSheet({
   }, [open, entryType, selectedIds, buckets.alphabetical]);
 
   useEffect(() => {
-    if (open && !referenceOpen && !tagsOpen) {
+    if (open) {
       const t = setTimeout(() => bodyRef.current?.focus(), 50);
       return () => clearTimeout(t);
     }
-  }, [open, referenceOpen, tagsOpen]);
+  }, [open]);
+
+  function openLinkPicker() {
+    openLinkModal({
+      title: "Link",
+      linkedEntityIds: selectedIds,
+      selectedTags,
+      onConfirm: (result) => {
+        setSelectedIds(result.entityIds);
+        setSelectedTags(result.tags);
+      },
+    });
+  }
 
   if (!open && mode === "modal") return null;
 
@@ -210,13 +237,10 @@ export function CaptureSheet({
 
       <div className="mt-3 flex flex-wrap gap-2">
         <MetaButton
-          active={referenceOpen || selectedIds.length > 0}
-          onClick={() => setReferenceOpen(true)}
+          active={selectedIds.length > 0 || selectedTags.length > 0}
+          onClick={openLinkPicker}
         >
           {CAPTURE.reference}
-        </MetaButton>
-        <MetaButton active={tagsOpen || selectedTags.length > 0} onClick={() => setTagsOpen(true)}>
-          {CAPTURE.tags}
         </MetaButton>
         {entryType === "note" ? (
           <MetaButton active={Boolean(eventDate) || dateOpen} onClick={() => setDateOpen((v) => !v)}>
@@ -290,24 +314,6 @@ export function CaptureSheet({
           {CAPTURE.save}
         </button>
       </div>
-
-      <ReferencePickerModal
-        open={referenceOpen}
-        buckets={logBuckets}
-        selectedIds={selectedIds}
-        onChange={setSelectedIds}
-        onClose={() => setReferenceOpen(false)}
-        allowedCreateKinds={logCreateKinds}
-        listMode="all"
-      />
-
-      <TagPickerModal
-        open={tagsOpen}
-        buckets={tagBuckets}
-        selectedTags={selectedTags}
-        onChange={setSelectedTags}
-        onClose={() => setTagsOpen(false)}
-      />
     </form>
   );
 
