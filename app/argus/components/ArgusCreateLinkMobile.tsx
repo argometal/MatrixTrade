@@ -18,6 +18,7 @@ import { entityLinkFilterKind } from "@/lib/argus/create-flow-helpers";
 import { useCreateLinkFlowState } from "@/lib/argus/create-link-flow-state";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
+import { useOverlayLock } from "@/lib/argus/use-overlay-lock";
 import {
   KindIcon,
   LINK_TABS,
@@ -706,6 +707,8 @@ export function ArgusCreateLinkMobile({
   const [menuOpen, setMenuOpen] = useState(false);
   const [saveResult, setSaveResult] = useState<UnifiedCreateResult | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  useOverlayLock(open);
 
   useEffect(() => {
     if (open) {

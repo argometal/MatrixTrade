@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import type { Entity } from "@/lib/argus/types";
 import { setInboxLinksAction } from "@/app/argus/actions";
@@ -12,6 +13,7 @@ import {
   suggestInboxEntities,
   type V2InboxDetailEntity,
 } from "@/lib/argus/v2/inbox-loaders";
+import { useOverlayLock } from "@/lib/argus/use-overlay-lock";
 
 function entityIcon(kind: V2InboxDetailEntity["kind"]): string {
   if (kind === "project") return "📁";
@@ -48,6 +50,13 @@ export function V2InboxQuickLinkSheet({
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
   const [draftIds, setDraftIds] = useState<string[]>(linkedIds);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useOverlayLock(open);
 
   useEffect(() => {
     if (!open) return;
@@ -74,8 +83,6 @@ export function V2InboxQuickLinkSheet({
       )
       .slice(0, 12);
   }, [buckets.alphabetical, query]);
-
-  if (!open) return null;
 
   function toggle(id: string) {
     setDraftIds((current) =>
@@ -126,9 +133,11 @@ export function V2InboxQuickLinkSheet({
     );
   }
 
-  return (
+  if (!open || !mounted) return null;
+
+  const sheet = (
     <div
-      className="fixed inset-0 z-[110] flex items-end justify-center bg-black/60 lg:hidden"
+      className="fixed inset-0 z-[200] flex items-end justify-center bg-black/60 lg:hidden"
       onClick={onClose}
     >
       <div
@@ -217,4 +226,6 @@ export function V2InboxQuickLinkSheet({
       </div>
     </div>
   );
+
+  return createPortal(sheet, document.body);
 }

@@ -15,6 +15,7 @@ export function V2InboxSwipeRow({
 }) {
   const startX = useRef(0);
   const startY = useRef(0);
+  const offsetRef = useRef(0);
   const [offset, setOffset] = useState(0);
   const [swiping, setSwiping] = useState(false);
 
@@ -22,6 +23,7 @@ export function V2InboxSwipeRow({
     if (disabled) return;
     startX.current = event.touches[0].clientX;
     startY.current = event.touches[0].clientY;
+    offsetRef.current = 0;
     setSwiping(true);
   }
 
@@ -29,18 +31,27 @@ export function V2InboxSwipeRow({
     if (!swiping || disabled) return;
     const dx = event.touches[0].clientX - startX.current;
     const dy = event.touches[0].clientY - startY.current;
-    if (Math.abs(dy) > Math.abs(dx)) return;
-    if (dx > 0) setOffset(Math.min(dx, 96));
-    else setOffset(0);
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dx) < 12) return;
+    if (dx > 0) {
+      const next = Math.min(dx, 96);
+      offsetRef.current = next;
+      setOffset(next);
+      if (next > 8) event.preventDefault();
+    } else {
+      offsetRef.current = 0;
+      setOffset(0);
+    }
   }
 
   function onTouchEnd() {
     if (disabled) return;
-    if (offset >= 72) {
+    const finalOffset = offsetRef.current;
+    if (finalOffset >= 64) {
       onSwipeLink();
-    } else if (offset < 8) {
+    } else if (finalOffset < 8) {
       onPress();
     }
+    offsetRef.current = 0;
     setOffset(0);
     setSwiping(false);
   }
@@ -48,15 +59,18 @@ export function V2InboxSwipeRow({
   return (
     <div className="relative overflow-hidden rounded-xl">
       <div
-        className="absolute inset-y-0 left-0 flex w-24 items-center justify-center rounded-xl bg-emerald-600/90 text-xs font-bold text-white"
-        style={{ opacity: offset > 20 ? 1 : 0 }}
+        className="pointer-events-none absolute inset-y-0 left-0 flex w-24 items-center justify-center rounded-xl bg-emerald-600/90 text-xs font-bold text-white transition-opacity"
+        style={{ opacity: offset > 16 ? 1 : 0 }}
         aria-hidden
       >
         Link →
       </div>
       <div
-        className="relative transition-transform duration-150 ease-out"
-        style={{ transform: `translateX(${offset}px)` }}
+        className="relative touch-pan-y"
+        style={{
+          transform: `translateX(${offset}px)`,
+          transition: swiping ? "none" : "transform 150ms ease-out",
+        }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}

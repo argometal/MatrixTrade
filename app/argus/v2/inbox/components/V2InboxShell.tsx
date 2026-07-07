@@ -263,7 +263,7 @@ export function V2InboxShell({
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-zinc-50">Inbox</h1>
-              <p className="mt-0.5 text-xs text-zinc-500">Swipe right to link · tap to read</p>
+              <p className="mt-0.5 text-xs text-zinc-500">Swipe right on a row to quick-link · tap to read</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button

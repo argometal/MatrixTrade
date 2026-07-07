@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import type { Entity } from "@/lib/argus/types";
 import { createEntityInlineAction, type CreatedEntityResult } from "@/app/argus/actions";
 import { ReferenceCreateModal } from "@/app/argus/components/ReferenceCreateModal";
@@ -8,6 +9,7 @@ import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePicker
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 import { inputClass } from "@/app/argus/components/ui";
 import { entityReferenceKind } from "@/lib/argus/link-hierarchy";
+import { useOverlayLock } from "@/lib/argus/use-overlay-lock";
 import {
   entityKindLabel,
   REFERENCE_KIND_LABELS,
@@ -111,6 +113,13 @@ export function ArgusLinkModal({
   const [tagInput, setTagInput] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [, startTransition] = useTransition();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useOverlayLock(open);
 
   const tabs = useMemo(
     () => (showTags && tagBuckets ? (["all", ...LINK_KINDS, "tags"] as ArgusLinkFilter[]) : (["all", ...LINK_KINDS] as ArgusLinkFilter[])),
@@ -167,8 +176,6 @@ export function ArgusLinkModal({
     return merged.filter((tag) => tag.toLowerCase().includes(q));
   }, [draftTags, tagBuckets, query]);
 
-  if (!open) return null;
-
   function toggleEntity(id: string) {
     setDraftIds((current) =>
       current.includes(id) ? current.filter((value) => value !== id) : [...current, id]
@@ -212,10 +219,12 @@ export function ArgusLinkModal({
   const canDone = draftIds.length > 0 || draftTags.length > 0;
   const onTagsTab = kindFilter === "tags";
 
-  return (
+  if (!open || !mounted) return null;
+
+  const modal = (
     <>
       <div
-        className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-4 sm:items-center sm:p-6"
+        className="fixed inset-0 z-[200] flex items-end justify-center bg-black/60 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:items-center sm:p-6"
         onClick={onClose}
       >
         <div
@@ -350,7 +359,7 @@ export function ArgusLinkModal({
             ) : null}
           </div>
 
-          <div className="flex shrink-0 gap-3 border-t border-zinc-800 p-5">
+          <div className="flex shrink-0 gap-3 border-t border-zinc-800 p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
             <button
               type="button"
               onClick={onClose}
@@ -384,4 +393,6 @@ export function ArgusLinkModal({
       />
     </>
   );
+
+  return createPortal(modal, document.body);
 }

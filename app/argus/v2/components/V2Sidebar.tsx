@@ -111,7 +111,7 @@ export function V2MobileNav({ inboxCount = 0 }: { inboxCount?: number }) {
   ];
 
   return (
-    <nav className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-full border border-zinc-700/80 bg-zinc-900/95 px-2 py-2 shadow-2xl backdrop-blur-md lg:hidden">
+    <nav className="v2-mobile-nav fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-full border border-zinc-700/80 bg-zinc-900/95 px-2 py-2 shadow-2xl backdrop-blur-md lg:hidden">
       {items.map((item) => (
         <Link
           key={item.href}
