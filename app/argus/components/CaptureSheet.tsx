@@ -15,6 +15,7 @@ export interface CaptureInitial {
   entityIds?: string[];
   entryType?: "log" | "note";
   eventDate?: string;
+  followUpDate?: string;
   topics?: string[];
 }
 
@@ -90,6 +91,7 @@ export function CaptureSheet({
       setTitle(initial?.title ?? "");
       setSelectedIds(initial?.entityIds ?? []);
       setSelectedTags(initial?.topics ?? []);
+      setFollowUpDate(initial?.followUpDate?.slice(0, 10) ?? "");
       setIsProtected(false);
       setProtectedOpen(false);
       setEntryType(initial?.entryType ?? "note");
@@ -101,7 +103,7 @@ export function CaptureSheet({
       setReferenceOpen(autoOpenReference);
       setTagsOpen(false);
     }
-  }, [open, initial?.body, initial?.title, initial?.entityIds, initial?.entryType, initial?.eventDate, initial?.topics, autoOpenReference, today, buckets.alphabetical]);
+  }, [open, initial?.body, initial?.title, initial?.entityIds, initial?.entryType, initial?.eventDate, initial?.followUpDate, initial?.topics, autoOpenReference, today, buckets.alphabetical]);
 
   function selectEntryType(type: "log" | "note") {
     setEntryType(type);

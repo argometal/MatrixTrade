@@ -155,7 +155,7 @@ export function ArgusCreateLinkWindow({
     >
       {/* Header */}
       <header className="shrink-0 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-[1600px] items-center gap-4 px-4 py-3 lg:px-6">
+        <div className="mx-auto flex w-full max-w-[min(100%,1920px)] items-center gap-4 px-5 py-3 xl:px-10">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600/25 text-lg ring-1 ring-violet-500/30">
               ◉
@@ -201,8 +201,8 @@ export function ArgusCreateLinkWindow({
         <p className="shrink-0 bg-emerald-950/50 px-6 py-2 text-center text-sm text-emerald-300">{flow.flash}</p>
       ) : null}
 
-      {/* Main 4-column workspace */}
-      <div className="mx-auto grid min-h-0 w-full max-w-[1600px] flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[220px_minmax(0,1fr)_320px_280px]">
+      {/* Main 4-column workspace — taller + wider columns */}
+      <div className="mx-auto grid min-h-[min(58vh,640px)] w-full max-w-[min(100%,1920px)] flex-1 grid-cols-1 gap-0 overflow-hidden lg:grid-cols-[260px_minmax(0,1.65fr)_minmax(400px,1fr)_minmax(320px,0.9fr)]">
         {/* Step 1 — Create item */}
         {flow.mode === "create" ? (
           <aside
@@ -250,7 +250,7 @@ export function ArgusCreateLinkWindow({
 
         {/* Center — Form */}
         <section
-          className="flex min-h-0 flex-col overflow-y-auto border-b border-zinc-800/80 px-4 py-4 lg:border-b-0 lg:border-r lg:px-6"
+          className="flex min-h-0 flex-col overflow-y-auto border-b border-zinc-800/80 px-5 py-5 lg:border-b-0 lg:border-r lg:px-8"
         >
           {flow.mode === "create" ? (
             <>
@@ -305,7 +305,7 @@ export function ArgusCreateLinkWindow({
                       ))}
                     </div>
                     <textarea
-                      className={`${textareaClass} min-h-[200px] rounded-t-none`}
+                      className={`${textareaClass} min-h-[260px] rounded-t-none`}
                       value={flow.body}
                       onChange={(event) => flow.setBody(event.target.value)}
                       placeholder="Record what matters — evidence for later retrieval…"
@@ -414,8 +414,8 @@ export function ArgusCreateLinkWindow({
         </section>
 
         {/* Step 2 — Link panel */}
-        <aside className="flex min-h-0 flex-col overflow-hidden border-b border-zinc-800/80 bg-zinc-950/40 lg:border-b-0 lg:border-r">
-          <div className="flex items-start gap-2 border-b border-zinc-800/80 px-4 py-3">
+        <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden border-b border-zinc-800/80 bg-zinc-950/40 lg:border-b-0 lg:border-r">
+          <div className="flex items-start gap-2 border-b border-zinc-800/80 px-5 py-3">
             <StepBadge n={2} />
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">Add Context (Link)</p>
@@ -423,7 +423,7 @@ export function ArgusCreateLinkWindow({
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
             {linkedEntities.length > 0 || linkedJournalRows.length > 0 ? (
               <div className="mb-4">
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
@@ -505,8 +505,8 @@ export function ArgusCreateLinkWindow({
         </aside>
 
         {/* Step 4 — Review & Save */}
-        <aside className="flex min-h-0 flex-col overflow-y-auto bg-zinc-950/60">
-          <div className="flex items-start gap-2 border-b border-zinc-800/80 px-4 py-3">
+        <aside className="flex min-h-0 min-w-0 flex-col overflow-y-auto bg-zinc-950/60">
+          <div className="flex items-start gap-2 border-b border-zinc-800/80 px-5 py-3">
             <StepBadge n={4} />
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">Review &amp; Save</p>
@@ -514,7 +514,7 @@ export function ArgusCreateLinkWindow({
             </div>
           </div>
 
-          <div className="space-y-4 px-4 py-4">
+          <div className="space-y-4 px-5 py-5">
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">This item</p>
               <div className="mt-3 flex items-start gap-3">
@@ -565,9 +565,9 @@ export function ArgusCreateLinkWindow({
         </aside>
       </div>
 
-      {/* Step 3 — Create missing */}
+      {/* Step 3 — Create missing (full-width grid, not cramped scroll strip) */}
       <section className="shrink-0 border-t border-zinc-800/80 bg-zinc-950/80">
-        <div className="mx-auto max-w-[1600px] px-4 py-4 lg:px-6">
+        <div className="mx-auto w-full max-w-[min(100%,1920px)] px-5 py-5 xl:px-10">
           <div className="mb-3 flex items-start gap-2">
             <StepBadge n={3} />
             <div>
@@ -605,13 +605,13 @@ export function ArgusCreateLinkWindow({
             </div>
           ) : null}
 
-          <div className="flex gap-3 overflow-x-auto pb-1">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
             {MISSING_KINDS.map(({ kind, title, fields }) => {
               const draft = flow.missingDrafts[kind] ?? { name: "", detail: "", extra: "" };
               return (
                 <div
                   key={kind}
-                  className="min-w-[200px] shrink-0 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4"
+                  className="min-w-0 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5"
                 >
                   <p className="mb-3 text-xs font-bold uppercase tracking-wide text-zinc-300">{title}</p>
                   <input
@@ -658,7 +658,7 @@ export function ArgusCreateLinkWindow({
 
       {/* Info footer */}
       <section className="hidden shrink-0 border-t border-zinc-800/80 bg-zinc-950/90 lg:block">
-        <div className="mx-auto grid max-w-[1600px] grid-cols-3 gap-6 px-6 py-5">
+        <div className="mx-auto grid w-full max-w-[min(100%,1920px)] grid-cols-3 gap-6 px-8 py-5 xl:px-10">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">How it works in practice</p>
             <p className="mt-2 text-xs leading-relaxed text-zinc-500">
@@ -689,7 +689,7 @@ export function ArgusCreateLinkWindow({
 
       {/* Bottom actions */}
       <footer className="shrink-0 border-t border-zinc-800/80 bg-zinc-950">
-        <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-6">
+        <div className="mx-auto flex w-full max-w-[min(100%,1920px)] flex-wrap items-center justify-between gap-3 px-5 py-3 xl:px-10">
           <button
             type="button"
             onClick={onClose}

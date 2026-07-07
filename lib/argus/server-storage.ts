@@ -21,7 +21,6 @@ import type {
   LogInput,
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
-import { inboxStatusAfterLinkReplace } from "./inbox-store/set-linked-entities";
 import {
   filterLinkIdsForSource,
   linkSourceKindFromEntity,
@@ -646,7 +645,6 @@ export async function linkInboxToEntities(inboxId: string, entityIds: string[]):
   data.inboxItems[idx] = {
     ...inbox,
     linkedEntityIds: merged,
-    status: inbox.status === "converted" ? "converted" : "linked",
   };
 
   for (const eid of unique) {
@@ -673,7 +671,6 @@ export async function setInboxLinkedEntities(inboxId: string, entityIds: string[
   data.inboxItems[idx] = {
     ...inbox,
     linkedEntityIds: unique,
-    status: inboxStatusAfterLinkReplace(inbox, unique.length),
   };
 
   for (const eid of unique) {
@@ -691,6 +688,39 @@ export async function archiveInboxItem(id: string): Promise<InboxItem | undefine
   const idx = data.inboxItems.findIndex((i) => i.id === id);
   if (idx === -1) return undefined;
   data.inboxItems[idx] = { ...data.inboxItems[idx], status: "archived" };
+  await writeArgus(data);
+  return data.inboxItems[idx];
+}
+
+export type InboxTriagePatch = {
+  status?: InboxItem["status"];
+  followUpDate?: string | null;
+  topics?: string[];
+};
+
+export async function updateInboxTriage(inboxId: string, patch: InboxTriagePatch): Promise<InboxItem> {
+  if (isCloudInboxStore()) return cloudInbox.updateInboxTriage(inboxId, patch);
+
+  const data = await readArgus();
+  const idx = data.inboxItems.findIndex((i) => i.id === inboxId);
+  if (idx === -1) throw new Error("Inbox item not found");
+  const inbox = data.inboxItems[idx];
+  if (inbox.status === "archived") throw new Error("Inbox item is archived");
+
+  data.inboxItems[idx] = {
+    ...inbox,
+    status: patch.status ?? inbox.status,
+    followUpDate:
+      patch.followUpDate === null
+        ? undefined
+        : patch.followUpDate !== undefined
+          ? patch.followUpDate.slice(0, 10)
+          : inbox.followUpDate,
+    topics:
+      patch.topics !== undefined
+        ? [...new Set(patch.topics.map((tag) => tag.trim()).filter(Boolean))]
+        : inbox.topics,
+  };
   await writeArgus(data);
   return data.inboxItems[idx];
 }
@@ -721,6 +751,8 @@ export async function convertInboxToLog(
   const classificationStatus = resolveClassificationStatus(entityIds);
   const now = new Date().toISOString();
   const isPrivate = input.private || Boolean(inbox.private);
+  const followUpDate = input.followUpDate ?? inbox.followUpDate;
+  const topics = input.topics ?? inbox.topics ?? [];
   const log: Log = {
     id: generateId(),
     kind: input.kind,
@@ -733,8 +765,8 @@ export async function convertInboxToLog(
     source: inbox.source === "email" ? "email" : "inbox",
     attachmentIds: [...inbox.attachmentIds],
     inboxItemId: inbox.id,
-    followUpDate: input.followUpDate,
-    topics: input.topics ?? [],
+    followUpDate,
+    topics,
     createdAt: now,
     updatedAt: now,
   };

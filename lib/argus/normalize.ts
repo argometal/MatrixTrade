@@ -54,13 +54,14 @@ export function normalizeInboxItem(item: InboxItem): InboxItem {
   let status = item.status ?? "pending";
   if (status !== "archived" && !item.deletedAt) {
     if (item.convertedLogId) status = "converted";
-    else if (linkedEntityIds.length > 0 && status === "pending") status = "linked";
   }
   return {
     ...item,
     linkedEntityIds,
     attachmentIds: item.attachmentIds ?? [],
     private: item.private ?? false,
+    topics: item.topics ?? [],
+    followUpDate: item.followUpDate?.slice(0, 10),
     status,
     deletedAt: item.deletedAt,
   };

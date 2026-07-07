@@ -90,6 +90,10 @@ export interface InboxItem {
   /** When true, hidden until ARGUS private PIN unlock. */
   private?: boolean;
   status: InboxStatus;
+  /** User-set revisit date while triaging (YYYY-MM-DD). */
+  followUpDate?: string;
+  /** User-selected tags only — suggestions are not auto-saved here. */
+  topics?: string[];
   convertedLogId?: string;
   createdAt: string;
   /** Soft delete — never hard-remove user data (Rule 0). */

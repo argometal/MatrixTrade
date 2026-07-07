@@ -18,6 +18,7 @@ import {
   getLog,
   linkInboxToEntities,
   setInboxLinkedEntities,
+  updateInboxTriage,
   readArgus,
   saveAttachment,
   setInboxPrivate,
@@ -351,6 +352,62 @@ export async function setInboxLinksAction(formData: FormData): Promise<void> {
   if (returnTo === "journal") redirect("/argus/journal");
   if (returnTo.startsWith("/argus/")) redirect(returnTo);
   redirect(`/argus/inbox/${inboxId}`);
+}
+
+/** Persist inbox triage: status, follow-up date, user-selected tags. */
+export async function setInboxTriageAction(formData: FormData): Promise<void> {
+  const inboxId = String(formData.get("inboxId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? `/argus/v2/inbox?selected=${inboxId}`);
+  const patch = parseInboxTriagePatch(formData);
+  if (Object.keys(patch).length === 0) {
+    redirect(returnTo.startsWith("/argus/") ? returnTo : `/argus/v2/inbox?selected=${inboxId}`);
+  }
+
+  await updateInboxTriage(inboxId, patch);
+  revalidateArgus();
+  revalidatePath(`/argus/inbox/${inboxId}`);
+  revalidatePath("/argus/v2/inbox");
+  redirect(returnTo.startsWith("/argus/") ? returnTo : `/argus/v2/inbox?selected=${inboxId}`);
+}
+
+/** Client-side triage updates without redirect (detail panel fields). */
+export async function updateInboxTriageAction(
+  inboxId: string,
+  patch: {
+    status?: "pending" | "linked" | "converted" | "archived";
+    followUpDate?: string | null;
+    topics?: string[];
+  }
+): Promise<{ ok: true }> {
+  await requireArgusSession();
+  if (!inboxId) throw new Error("Missing inbox id");
+  if (Object.keys(patch).length === 0) return { ok: true };
+  await updateInboxTriage(inboxId, patch);
+  revalidateArgus();
+  revalidatePath(`/argus/inbox/${inboxId}`);
+  revalidatePath("/argus/v2/inbox");
+  return { ok: true };
+}
+
+function parseInboxTriagePatch(formData: FormData) {
+  const statusRaw = String(formData.get("status") ?? "").trim();
+  const followUpRaw = String(formData.get("followUpDate") ?? "").trim();
+  const topics = formData
+    .getAll("topics")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+
+  const patch: Parameters<typeof updateInboxTriage>[1] = {};
+  if (statusRaw === "pending" || statusRaw === "linked" || statusRaw === "converted" || statusRaw === "archived") {
+    patch.status = statusRaw;
+  }
+  if (formData.has("followUpDate")) {
+    patch.followUpDate = followUpRaw ? followUpRaw.slice(0, 10) : null;
+  }
+  if (formData.has("topics")) {
+    patch.topics = topics;
+  }
+  return patch;
 }
 
 export async function convertInboxAction(formData: FormData): Promise<void> {

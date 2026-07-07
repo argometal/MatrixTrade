@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import type { Entity, InboxItem, Log } from "@/lib/argus/types";
+import type { Entity, InboxItem, InboxStatus, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
@@ -16,6 +17,7 @@ import {
   archiveInboxAction,
   convertInboxAction,
   setInboxLinksAction,
+  updateInboxTriageAction,
   type CreatedEntityResult,
 } from "@/app/argus/actions";
 import {
@@ -78,16 +80,22 @@ export function V2InboxDetailPanel({
   const [showConvert, setShowConvert] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [linkIds, setLinkIds] = useState<string[]>(detail.item.linkedEntityIds ?? []);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [status, setStatus] = useState<InboxStatus>(detail.item.status);
+  const [followUpDate, setFollowUpDate] = useState(detail.item.followUpDate ?? "");
+  const [selectedTags, setSelectedTags] = useState<string[]>(detail.item.topics ?? []);
   const [linkSaving, setLinkSaving] = useState(false);
+  const [triageSaving, setTriageSaving] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setLinkIds(detail.item.linkedEntityIds ?? []);
+    setStatus(detail.item.status);
+    setFollowUpDate(detail.item.followUpDate ?? "");
+    setSelectedTags(detail.item.topics ?? []);
     setShowConvert(false);
     setMenuOpen(false);
     setPanelTab("email");
-    setSelectedTags(suggestInboxTags(detail.view.subject ?? "", detail.view.textBody, detail.linkedEntities));
-  }, [detail.item.id, detail.item.linkedEntityIds, detail.view.subject, detail.view.textBody, detail.linkedEntities]);
+  }, [detail.item.id, detail.item.linkedEntityIds, detail.item.status, detail.item.followUpDate, detail.item.topics]);
 
   const { item, view, attachments, linkedEntities, convertedLog, defaultTitle, defaultBody } = detail;
   const canTriage = item.status === "pending" || item.status === "linked";
@@ -114,6 +122,59 @@ export function V2InboxDetailPanel({
       return entity ? resolveDetailEntity(entity) : undefined;
     })
     .filter((entity): entity is V2InboxDetailEntity => Boolean(entity));
+
+  const suggestedTags = useMemo(
+    () =>
+      suggestInboxTags(view.subject ?? "", view.textBody, selectedLinked).filter((tag) => !selectedTags.includes(tag)),
+    [view.subject, view.textBody, selectedLinked, selectedTags]
+  );
+
+  async function persistTriage(patch: {
+    status?: InboxStatus;
+    followUpDate?: string | null;
+    topics?: string[];
+  }) {
+    setTriageSaving(true);
+    try {
+      await updateInboxTriageAction(item.id, patch);
+      router.refresh();
+    } finally {
+      setTriageSaving(false);
+    }
+  }
+
+  async function changeStatus(next: InboxStatus) {
+    setStatus(next);
+    await persistTriage({ status: next });
+  }
+
+  async function changeFollowUpDate(next: string) {
+    setFollowUpDate(next);
+    await persistTriage({ followUpDate: next || null });
+  }
+
+  async function addSuggestedTag(tag: string) {
+    if (selectedTags.includes(tag)) return;
+    const next = [...selectedTags, tag];
+    setSelectedTags(next);
+    await persistTriage({ topics: next });
+  }
+
+  async function removeTag(tag: string) {
+    const next = selectedTags.filter((value) => value !== tag);
+    setSelectedTags(next);
+    await persistTriage({ topics: next });
+  }
+
+  async function applySuggestedTags() {
+    const next = [...selectedTags];
+    for (const tag of suggestedTags.slice(0, 5)) {
+      if (!next.includes(tag)) next.push(tag);
+    }
+    if (next.length === selectedTags.length) return;
+    setSelectedTags(next);
+    await persistTriage({ topics: next });
+  }
 
   async function persistLinks(ids: string[]) {
     setLinkSaving(true);
@@ -282,7 +343,9 @@ export function V2InboxDetailPanel({
             <dt className="text-zinc-500">To</dt>
             <dd className="text-zinc-200">{view.to || "—"}</dd>
             <dt className="text-zinc-500">Status</dt>
-            <dd className="text-zinc-200">{INBOX_STATUS_LABELS[item.status]}</dd>
+            <dd className="text-zinc-200">{INBOX_STATUS_LABELS[status]}</dd>
+            <dt className="text-zinc-500">Follow up</dt>
+            <dd className="text-zinc-200">{followUpDate || "—"}</dd>
             <dt className="text-zinc-500">Source</dt>
             <dd className="text-zinc-200">{item.source}</dd>
           </dl>
@@ -385,19 +448,22 @@ export function V2InboxDetailPanel({
           </div>
 
           <div>
-            <h3 className="mb-3 text-sm font-semibold text-zinc-100">Tags</h3>
+            <h3 className="mb-1 text-sm font-semibold text-zinc-100">Tags</h3>
+            <p className="mb-3 text-[11px] leading-snug text-zinc-600">
+              Suggestions are inferred from the email — click to add. Only tags you select are saved.
+            </p>
             <div className="flex flex-wrap gap-1.5">
               {selectedTags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 rounded-md bg-zinc-800 px-2 py-1 text-[11px] text-zinc-400"
+                  className="inline-flex items-center gap-1 rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[11px] text-violet-200"
                 >
                   {tag}
                   {canTriage ? (
                     <button
                       type="button"
-                      onClick={() => setSelectedTags((current) => current.filter((value) => value !== tag))}
-                      className="text-zinc-600 hover:text-zinc-300"
+                      onClick={() => void removeTag(tag)}
+                      className="text-violet-400/70 hover:text-violet-200"
                       aria-label={`Remove tag ${tag}`}
                     >
                       ×
@@ -410,12 +476,34 @@ export function V2InboxDetailPanel({
                   type="button"
                   onClick={() => setTagPickerOpen(true)}
                   className="rounded-md border border-dashed border-zinc-700 px-2 py-1 text-[11px] text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
-                  title="Tags apply when converting to journal"
                 >
                   + Add tag
                 </button>
               ) : null}
             </div>
+            {canTriage && suggestedTags.length > 0 ? (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {suggestedTags.length > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => void applySuggestedTags()}
+                    className="rounded-xl bg-violet-600/20 px-2.5 py-1 text-[10px] font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
+                  >
+                    ✨ Suggest tags
+                  </button>
+                ) : null}
+                {suggestedTags.map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => void addSuggestedTag(tag)}
+                    className="rounded-full border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500 hover:border-violet-500/40 hover:text-violet-300"
+                  >
+                    + {tag}
+                  </button>
+                ))}
+              </div>
+            ) : null}
           </div>
 
           {canTriage ? (
@@ -425,23 +513,23 @@ export function V2InboxDetailPanel({
                 <label className="block text-xs text-zinc-500">
                   Status
                   <select
-                    value={item.status}
-                    disabled
+                    value={status}
+                    disabled={triageSaving}
+                    onChange={(event) => void changeStatus(event.target.value as InboxStatus)}
                     className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300"
                   >
                     <option value="pending">Unread</option>
                     <option value="linked">In Progress</option>
-                    <option value="converted">Processed</option>
-                    <option value="archived">Archived</option>
                   </select>
                 </label>
                 <label className="block text-xs text-zinc-500">
                   Follow up
                   <input
                     type="date"
-                    disabled
-                    className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-600"
-                    placeholder="Not set"
+                    value={followUpDate}
+                    disabled={triageSaving}
+                    onChange={(event) => void changeFollowUpDate(event.target.value)}
+                    className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300"
                   />
                 </label>
               </div>
@@ -492,6 +580,7 @@ export function V2InboxDetailPanel({
                   inboxId: item.id,
                   entityIds: linkIds,
                   topics: selectedTags,
+                  followUpDate,
                 }}
               />
             </div>
@@ -516,7 +605,10 @@ export function V2InboxDetailPanel({
         open={tagPickerOpen}
         buckets={tagBuckets}
         selectedTags={selectedTags}
-        onChange={setSelectedTags}
+        onChange={(tags) => {
+          setSelectedTags(tags);
+          void persistTriage({ topics: tags });
+        }}
         onClose={() => setTagPickerOpen(false)}
       />
     </div>

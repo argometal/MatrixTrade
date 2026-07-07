@@ -1,5 +1,6 @@
-import type { Entity, InboxItem, InboxStatus } from "../types";
+import type { Entity, InboxItem, InboxSource, InboxStatus } from "../types";
 import type { EnrichedInboxItem } from "../inbox-enrich";
+import { INBOX_SOURCE_LABELS } from "../labels";
 import { entityReferenceKind } from "../link-hierarchy";
 import { REFERENCE_KIND_LABELS } from "../reference-types";
 import { relativeActivityLabel } from "./timeline-builders";
@@ -26,6 +27,29 @@ export interface V2InboxRow {
   unread: boolean;
   isPrivate: boolean;
   attachmentCount: number;
+  source: InboxSource;
+  senderKey: string;
+  entityKinds: V2InboxDetailEntity["kind"][];
+  entityIds: string[];
+  topicTags: string[];
+}
+
+export type V2InboxEntityKind = V2InboxDetailEntity["kind"];
+
+export interface V2InboxFilters {
+  source?: InboxSource;
+  sender?: string;
+  type?: V2InboxEntityKind;
+  entityId?: string;
+  tag?: string;
+}
+
+export interface V2InboxFilterOptions {
+  sources: InboxSource[];
+  senders: Array<{ key: string; label: string }>;
+  types: V2InboxEntityKind[];
+  entities: Array<{ id: string; name: string }>;
+  tags: string[];
 }
 
 export interface V2InboxDetailEntity {
@@ -49,6 +73,12 @@ const STATUS_UI: Record<
 function senderName(from?: string): string {
   if (!from) return "Unknown sender";
   return from.replace(/<.*>/, "").trim() || from;
+}
+
+function senderKey(from?: string): string {
+  const raw = from?.trim() || "";
+  const email = raw.match(/<([^>]+)>/)?.[1] ?? raw;
+  return email.trim().toLowerCase() || "unknown";
 }
 
 function initials(name: string): string {
@@ -102,11 +132,10 @@ export function buildV2InboxRows(
   return enriched
     .map(({ item, view }) => {
       const ui = STATUS_UI[item.status];
-      const linked = (item.linkedEntityIds ?? [])
+      const linkedEntities = (item.linkedEntityIds ?? [])
         .map((id) => entityMap.get(id))
-        .filter((e): e is Entity => Boolean(e))
-        .slice(0, 3)
-        .map(entityTag);
+        .filter((e): e is Entity => Boolean(e));
+      const linked = linkedEntities.slice(0, 3).map(entityTag);
 
       const received = item.receivedAt || view.receivedAt;
       const timeLabel = formatInboxTime(received, today);
@@ -125,6 +154,11 @@ export function buildV2InboxRows(
         unread: item.status === "pending",
         isPrivate: Boolean(item.private),
         attachmentCount: item.attachmentIds.length,
+        source: item.source,
+        senderKey: senderKey(view.from),
+        entityKinds: [...new Set(linkedEntities.map((entity) => entityKind(entity)))],
+        entityIds: linkedEntities.map((entity) => entity.id),
+        topicTags: item.topics ?? [],
       };
     })
     .sort((a, b) => {
@@ -146,12 +180,100 @@ export function buildV2InboxTabCounts(rows: V2InboxRow[]) {
   };
 }
 
-export function filterV2InboxRows(rows: V2InboxRow[], tab: V2InboxTab): V2InboxRow[] {
-  if (tab === "all") return rows;
-  if (tab === "unread") return rows.filter((r) => r.status === "pending");
-  if (tab === "in_progress") return rows.filter((r) => r.status === "linked");
-  if (tab === "processed") return rows.filter((r) => r.status === "converted");
-  return rows.filter((r) => r.status === "archived");
+export function filterV2InboxRows(rows: V2InboxRow[], tab: V2InboxTab, filters: V2InboxFilters = {}): V2InboxRow[] {
+  let result = rows;
+  if (tab === "unread") result = result.filter((r) => r.status === "pending");
+  else if (tab === "in_progress") result = result.filter((r) => r.status === "linked");
+  else if (tab === "processed") result = result.filter((r) => r.status === "converted");
+  else if (tab === "archived") result = result.filter((r) => r.status === "archived");
+
+  if (filters.source) result = result.filter((row) => row.source === filters.source);
+  if (filters.sender) result = result.filter((row) => row.senderKey === filters.sender);
+  if (filters.type) result = result.filter((row) => row.entityKinds.includes(filters.type!));
+  if (filters.entityId) result = result.filter((row) => row.entityIds.includes(filters.entityId!));
+  if (filters.tag) {
+    const tag = filters.tag.toLowerCase();
+    result = result.filter(
+      (row) =>
+        row.topicTags.some((value) => value.toLowerCase() === tag) ||
+        row.tags.some((value) => value.name.toLowerCase() === tag)
+    );
+  }
+
+  return result;
+}
+
+const ENTITY_KIND_LABELS: Record<V2InboxEntityKind, string> = {
+  organization: "Organization",
+  project: "Project",
+  person: "Person",
+  topic: "Topic",
+  event: "Event",
+  other: "Reference",
+};
+
+export function inboxEntityKindLabel(kind: V2InboxEntityKind): string {
+  return ENTITY_KIND_LABELS[kind];
+}
+
+export function buildV2InboxFilterOptions(rows: V2InboxRow[]): V2InboxFilterOptions {
+  const sources = [...new Set(rows.map((row) => row.source))].sort();
+  const senderMap = new Map<string, string>();
+  for (const row of rows) senderMap.set(row.senderKey, row.sender);
+  const senders = [...senderMap.entries()]
+    .map(([key, label]) => ({ key, label }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  const types = [...new Set(rows.flatMap((row) => row.entityKinds))].sort();
+  const entityMap = new Map<string, string>();
+  for (const row of rows) {
+    for (const tag of row.tags) entityMap.set(tag.id, tag.name);
+  }
+  const entities = [...entityMap.entries()]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const tags = [
+    ...new Set(rows.flatMap((row) => [...row.topicTags, ...row.tags.map((tag) => tag.name)])),
+  ].sort((a, b) => a.localeCompare(b));
+
+  return { sources, senders, types, entities, tags };
+}
+
+export function parseV2InboxFilters(params: {
+  source?: string | null;
+  sender?: string | null;
+  type?: string | null;
+  entity?: string | null;
+  tag?: string | null;
+}): V2InboxFilters {
+  const filters: V2InboxFilters = {};
+  const source = params.source?.trim();
+  if (source === "manual" || source === "api" || source === "email" || source === "file") {
+    filters.source = source;
+  }
+
+  const sender = params.sender?.trim();
+  if (sender) filters.sender = sender.toLowerCase();
+
+  const type = params.type?.trim();
+  if (type === "organization" || type === "project" || type === "person" || type === "topic" || type === "event" || type === "other") {
+    filters.type = type;
+  }
+
+  const entityId = params.entity?.trim();
+  if (entityId) filters.entityId = entityId;
+
+  const tag = params.tag?.trim();
+  if (tag) filters.tag = tag;
+
+  return filters;
+}
+
+export function inboxSourceLabel(source: InboxSource): string {
+  return INBOX_SOURCE_LABELS[source];
+}
+
+export function hasActiveV2InboxFilters(filters: V2InboxFilters): boolean {
+  return Boolean(filters.source || filters.sender || filters.type || filters.entityId || filters.tag);
 }
 
 export function buildV2InboxDetailEntities(item: InboxItem, entities: Entity[]): V2InboxDetailEntity[] {
