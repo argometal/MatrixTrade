@@ -54,7 +54,7 @@ function ValueCheckboxList({
   return (
     <div className="flex h-full flex-col rounded-2xl border border-zinc-800/80 bg-zinc-900/50">
       <div className="border-b border-zinc-800/80 px-4 py-3">
-        <h3 className="text-sm font-semibold text-zinc-100">{title}</h3>
+        <h3 className="text-base font-semibold text-zinc-100">{title}</h3>
       </div>
       <div className="flex-1 space-y-1 p-3">
         {options.map((option) => (
@@ -72,7 +72,7 @@ function ValueCheckboxList({
             <span className="text-lg leading-none">{icons[option.key]}</span>
             <span className="min-w-0">
               <span className="block text-sm font-medium text-zinc-100">{option.label}</span>
-              <span className="block text-[11px] leading-snug text-zinc-500">{option.description}</span>
+              <span className="block text-sm leading-snug text-zinc-400">{option.description}</span>
             </span>
           </label>
         ))}
@@ -95,18 +95,18 @@ function AttentionPanel({ attention }: { attention: DerivedRelationshipAttention
   return (
     <div className="flex h-full flex-col rounded-2xl border border-zinc-800/80 bg-zinc-900/50">
       <div className="border-b border-zinc-800/80 px-4 py-3">
-        <h3 className="text-sm font-semibold text-zinc-100">Attention</h3>
+        <h3 className="text-base font-semibold text-zinc-100">Attention</h3>
       </div>
       <div className="space-y-4 p-4">
         <div>
-          <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Relationship status</p>
+          <p className="mb-1.5 text-sm font-medium uppercase tracking-wide text-zinc-400">Relationship status</p>
           <div className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200">
             <span>{attention.status === "healthy" ? "💚" : attention.status === "needs_attention" ? "⚠️" : "💤"}</span>
             <span>{statusOption?.label ?? relationshipStatusLabel(attention.status)}</span>
           </div>
         </div>
         <div>
-          <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Reason</p>
+          <p className="mb-1.5 text-sm font-medium uppercase tracking-wide text-zinc-400">Reason</p>
           <div className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200">
             <span>✓</span>
             <span>{reasonOption?.label ?? relationshipReasonLabel(attention.reason)}</span>
@@ -131,37 +131,37 @@ function ContactAside({
   return (
     <div className="space-y-4">
       <V2Card className="p-4">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-100">About</h3>
+        <h3 className="mb-3 text-base font-semibold text-zinc-100">About</h3>
         <dl className="space-y-2.5 text-sm">
           <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">Company</dt>
+            <dt className="text-zinc-400">Company</dt>
             <dd className="text-right text-zinc-200">{page.organization?.name ?? "—"}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">Role</dt>
+            <dt className="text-zinc-400">Role</dt>
             <dd className="text-right text-zinc-200">{page.role}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">Location</dt>
+            <dt className="text-zinc-400">Location</dt>
             <dd className="text-right text-zinc-200">{page.location ?? "—"}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">Industry</dt>
+            <dt className="text-zinc-400">Industry</dt>
             <dd className="text-right text-zinc-200">{page.industry ?? "—"}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">Date added</dt>
+            <dt className="text-zinc-400">Date added</dt>
             <dd className="text-right text-zinc-200">{formatDate(page.entity.createdAt)}</dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">By</dt>
+            <dt className="text-zinc-400">By</dt>
             <dd className="text-right text-zinc-200">You</dd>
           </div>
         </dl>
       </V2Card>
 
       <V2Card className="p-4">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-100">Tags</h3>
+        <h3 className="mb-3 text-base font-semibold text-zinc-100">Tags</h3>
         {page.tags.length > 0 ? (
           <div className="flex flex-wrap gap-2">
             {page.tags.map((tag, index) => (
@@ -171,25 +171,25 @@ function ContactAside({
             ))}
           </div>
         ) : (
-          <p className="text-sm text-zinc-600">No tags yet.</p>
+          <p className="text-sm text-zinc-400">No tags yet.</p>
         )}
       </V2Card>
 
       <V2Card className="p-4">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-100">Related organizations</h3>
+        <h3 className="mb-3 text-base font-semibold text-zinc-100">Related organizations</h3>
         {page.relatedOrganizations.length > 0 ? (
           <ul className="space-y-2">
             {page.relatedOrganizations.map((org) => (
               <li key={org.id}>
                 <a href={org.href} className="flex items-center justify-between gap-2 text-sm text-zinc-300 hover:text-violet-300">
                   <span>{org.name}</span>
-                  <span className="text-[11px] text-zinc-600">{org.relation}</span>
+                  <span className="text-sm text-zinc-400">{org.relation}</span>
                 </a>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-zinc-600">No linked organizations.</p>
+          <p className="text-sm text-zinc-400">No linked organizations.</p>
         )}
       </V2Card>
     </div>
@@ -208,15 +208,15 @@ function TimelineSection({ items }: { items: NetworkContactTimelineItem[] }) {
   return (
     <V2Card className="p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-zinc-100">Timeline</h3>
+        <h3 className="text-base font-semibold text-zinc-100">Timeline</h3>
         <div className="flex flex-wrap gap-1.5">
           {TIMELINE_FILTERS.map((entry) => (
             <button
               key={entry}
               type="button"
               onClick={() => setFilter(entry)}
-              className={`rounded-full px-2.5 py-1 text-[11px] ${
-                filter === entry ? "bg-violet-500/15 text-violet-300" : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+              className={`rounded-full px-2.5 py-1 text-sm ${
+                filter === entry ? "bg-violet-500/15 text-violet-300" : "bg-zinc-800 text-zinc-400 hover:text-zinc-300"
               }`}
             >
               {entry}
@@ -225,7 +225,7 @@ function TimelineSection({ items }: { items: NetworkContactTimelineItem[] }) {
         </div>
       </div>
       {filtered.length === 0 ? (
-        <p className="text-sm text-zinc-600">No timeline items yet.</p>
+        <p className="text-sm text-zinc-400">No timeline items yet.</p>
       ) : (
         <ul className="space-y-3">
           {filtered.slice(0, 12).map((item) => (
@@ -235,12 +235,12 @@ function TimelineSection({ items }: { items: NetworkContactTimelineItem[] }) {
                   <div className="min-w-0">
                     <div className="mb-1 flex items-center gap-2">
                       <V2Badge tone={item.kind === "journal" ? "purple" : "blue"}>{item.kind === "journal" ? "Journal" : "Email"}</V2Badge>
-                      <span className="text-[11px] text-zinc-600">{formatDate(item.date)}</span>
+                      <span className="text-sm text-zinc-400">{formatDate(item.date)}</span>
                     </div>
                     <p className="font-medium text-zinc-100">{item.title}</p>
-                    <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{item.preview}</p>
+                    <p className="mt-1 line-clamp-2 text-sm text-zinc-400">{item.preview}</p>
                   </div>
-                  <span className="text-zinc-600">›</span>
+                  <span className="text-zinc-400">›</span>
                 </div>
               </a>
             </li>
@@ -276,7 +276,7 @@ export function NetworkContactShell({
 
   return (
     <div className="network-contact-shell px-4 py-6 lg:px-8">
-      <div className="mb-4 text-xs text-zinc-600">
+      <div className="mb-4 text-sm text-zinc-400">
         <a href="/argus/v2/browse/network" className="hover:text-zinc-400">
           Network
         </a>
@@ -298,11 +298,11 @@ export function NetworkContactShell({
                 <span className="text-amber-400">★</span>
               </div>
               <p className="mt-1 text-sm text-zinc-400">{page.role}</p>
-              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-500">
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-400">
                 {page.organization ? <span>{page.organization.name}</span> : null}
                 {page.location ? <span>📍 {page.location}</span> : null}
               </div>
-              <div className="mt-2 flex flex-wrap gap-3 text-xs">
+              <div className="mt-2 flex flex-wrap gap-3 text-sm">
                 {page.email ? (
                   <a href={`mailto:${page.email}`} className="text-sky-400 hover:text-sky-300">
                     ✉ {page.email}
@@ -350,7 +350,7 @@ export function NetworkContactShell({
             className={`shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition ${
               tab === entry
                 ? "border-violet-500 text-violet-300"
-                : "border-transparent text-zinc-500 hover:text-zinc-300"
+                : "border-transparent text-zinc-400 hover:text-zinc-300"
             }`}
           >
             {entry}
@@ -368,7 +368,7 @@ export function NetworkContactShell({
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
           <div className="space-y-6">
             <section>
-              <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Relationship overview</h2>
+              <h2 className="mb-4 text-sm font-bold uppercase tracking-[0.18em] text-zinc-400">Relationship overview</h2>
               <form action={saveMetrics}>
                 <input type="hidden" name="entityId" value={entity.id} />
                 <div className="grid gap-4 lg:grid-cols-3">
@@ -413,7 +413,7 @@ export function NetworkContactShell({
 
       {tab === "Projects" ? (
         <V2Card className="p-4">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-100">Projects</h3>
+          <h3 className="mb-3 text-base font-semibold text-zinc-100">Projects</h3>
           <ul className="space-y-2">
             {page.relatedProjects.map((project) => (
               <li key={project.id}>
@@ -422,19 +422,19 @@ export function NetworkContactShell({
                 </a>
               </li>
             ))}
-            {page.relatedProjects.length === 0 ? <li className="text-sm text-zinc-600">No linked projects.</li> : null}
+            {page.relatedProjects.length === 0 ? <li className="text-sm text-zinc-400">No linked projects.</li> : null}
           </ul>
         </V2Card>
       ) : null}
 
       {tab === "Organizations" ? (
         <V2Card className="p-4">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-100">Organizations</h3>
+          <h3 className="mb-3 text-base font-semibold text-zinc-100">Organizations</h3>
           <ul className="space-y-2">
             {page.relatedOrganizations.map((org: NetworkContactRelatedOrg) => (
               <li key={org.id}>
                 <a href={org.href} className="text-sm text-violet-400 hover:text-violet-300">
-                  {org.name} <span className="text-zinc-600">({org.relation})</span>
+                  {org.name} <span className="text-zinc-400">({org.relation})</span>
                 </a>
               </li>
             ))}
@@ -444,7 +444,7 @@ export function NetworkContactShell({
 
       {tab === "Topics" ? (
         <V2Card className="p-4">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-100">Topics</h3>
+          <h3 className="mb-3 text-base font-semibold text-zinc-100">Topics</h3>
           <ul className="space-y-2">
             {page.relatedTopics.map((topic) => (
               <li key={topic.id}>
@@ -453,7 +453,7 @@ export function NetworkContactShell({
                 </a>
               </li>
             ))}
-            {page.relatedTopics.length === 0 ? <li className="text-sm text-zinc-600">No linked topics.</li> : null}
+            {page.relatedTopics.length === 0 ? <li className="text-sm text-zinc-400">No linked topics.</li> : null}
           </ul>
         </V2Card>
       ) : null}
@@ -477,7 +477,7 @@ export function NetworkContactShell({
                 <li key={item.id}>
                   <a href={item.href} className="block rounded-xl border border-zinc-800/80 px-3 py-2 text-sm text-zinc-300 hover:border-zinc-700">
                     <span className="font-medium text-zinc-100">{item.title}</span>
-                    <span className="mt-1 block text-xs text-zinc-600">{formatDate(item.date)}</span>
+                    <span className="mt-1 block text-sm text-zinc-400">{formatDate(item.date)}</span>
                   </a>
                 </li>
               ))}

@@ -47,7 +47,7 @@ function SummaryPill({
 
   return (
     <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
-      <p className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-zinc-600">
+      <p className="flex items-center gap-1.5 text-sm font-medium uppercase tracking-wider text-zinc-400">
         {icon ? <span aria-hidden>{icon}</span> : null}
         {label}
       </p>
@@ -78,7 +78,7 @@ function OrganizationCard({ card }: { card: V2OrganizationBrowseCard }) {
             <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
           </div>
         </div>
-        <span className="shrink-0 text-xs text-zinc-600 group-hover:text-violet-400">Open →</span>
+        <span className="shrink-0 text-sm text-zinc-400 group-hover:text-violet-400">Open →</span>
       </div>
 
       <p className="line-clamp-2 text-sm leading-relaxed text-zinc-400">{card.description}</p>
@@ -90,19 +90,19 @@ function OrganizationCard({ card }: { card: V2OrganizationBrowseCard }) {
               {METRIC_ICONS[key]}
             </div>
             <p className="mt-0.5 text-sm font-semibold tabular-nums text-violet-300">{card.metrics[key]}</p>
-            <p className="text-[8px] capitalize text-zinc-600">{key}</p>
+            <p className="text-[8px] capitalize text-zinc-400">{key}</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 space-y-2 rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5 text-xs">
+      <div className="mt-4 space-y-2 rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5 text-sm">
         <div className="flex items-start justify-between gap-2">
-          <span className="text-zinc-600">Last contact</span>
-          <span className="text-right text-zinc-500">{card.lastContact.timeLabel}</span>
+          <span className="text-zinc-400">Last contact</span>
+          <span className="text-right text-zinc-400">{card.lastContact.timeLabel}</span>
         </div>
         <p className="truncate text-sm text-zinc-300">{card.lastContact.label}</p>
         <div className="flex items-center justify-between border-t border-zinc-800/80 pt-2">
-          <span className="text-zinc-600">Relationship age</span>
+          <span className="text-zinc-400">Relationship age</span>
           <span className="font-medium tabular-nums text-violet-300">{card.relationshipAge}</span>
         </div>
       </div>
@@ -124,7 +124,7 @@ function OrganizationListRow({ card }: { card: V2OrganizationBrowseCard }) {
       href={card.href}
       className="flex items-center gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 transition hover:border-violet-500/30 hover:bg-zinc-900/70"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-sm font-bold text-violet-200">
         {orgInitials(card.name)}
       </span>
       <div className="min-w-0 flex-1">
@@ -132,20 +132,20 @@ function OrganizationListRow({ card }: { card: V2OrganizationBrowseCard }) {
           <p className="font-semibold text-zinc-100">{card.name}</p>
           <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
         </div>
-        <p className="mt-0.5 truncate text-xs text-zinc-500">
+        <p className="mt-0.5 truncate text-sm text-zinc-400">
           {card.lastContact.label} · {card.lastContact.timeLabel} · {card.relationshipAge} history
         </p>
       </div>
       <div className="hidden shrink-0 gap-4 text-center sm:flex">
-        <span className="text-xs text-zinc-500">
+        <span className="text-sm text-zinc-400">
           <span className="block font-semibold text-violet-300">{card.metrics.projects}</span>
           Projects
         </span>
-        <span className="text-xs text-zinc-500">
+        <span className="text-sm text-zinc-400">
           <span className="block font-semibold text-violet-300">{card.metrics.people}</span>
           People
         </span>
-        <span className="text-xs text-zinc-500">
+        <span className="text-sm text-zinc-400">
           <span className="block font-semibold text-violet-300">{card.metrics.emails}</span>
           Emails
         </span>
@@ -186,19 +186,19 @@ function HowToReadSidebar() {
     <aside className="hidden w-72 shrink-0 xl:block">
       <div className="sticky top-6 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
         <h2 className="text-sm font-semibold text-zinc-200">How to read this page</h2>
-        <p className="mt-1 text-xs text-zinc-600">
+        <p className="mt-1 text-sm text-zinc-400">
           Long-term memory — not a CRM. Which organization do you want to analyze?
         </p>
         <ul className="mt-4 space-y-4">
           {items.map((item) => (
             <li key={item.title}>
-              <p className="text-xs font-medium text-violet-300">{item.title}</p>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-500">{item.body}</p>
+              <p className="text-sm font-medium text-violet-300">{item.title}</p>
+              <p className="mt-1 text-sm leading-relaxed text-zinc-400">{item.body}</p>
             </li>
           ))}
         </ul>
         <div className="mt-5 rounded-xl border border-amber-500/25 bg-amber-500/5 px-3 py-2.5">
-          <p className="text-xs leading-relaxed text-amber-200/90">
+          <p className="text-sm leading-relaxed text-amber-200/90">
             Tip: use Filters to narrow by status when your portfolio grows.
           </p>
         </div>
@@ -234,15 +234,15 @@ export function V2OrganizationsBrowserShell({
                 </span>
                 <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Organizations</h1>
               </div>
-              <p className="mt-1 text-sm text-zinc-500">All organizations in your knowledge base.</p>
+              <p className="mt-1 text-sm text-zinc-400">All organizations in your knowledge base.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5">
                 <button
                   type="button"
                   onClick={() => setView("grid")}
-                  className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
-                    view === "grid" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
+                  className={`rounded-md px-2.5 py-1.5 text-sm font-medium ${
+                    view === "grid" ? "bg-zinc-800 text-zinc-200" : "text-zinc-400 hover:text-zinc-300"
                   }`}
                   aria-label="Grid view"
                 >
@@ -251,8 +251,8 @@ export function V2OrganizationsBrowserShell({
                 <button
                   type="button"
                   onClick={() => setView("list")}
-                  className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
-                    view === "list" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
+                  className={`rounded-md px-2.5 py-1.5 text-sm font-medium ${
+                    view === "list" ? "bg-zinc-800 text-zinc-200" : "text-zinc-400 hover:text-zinc-300"
                   }`}
                   aria-label="List view"
                 >
@@ -274,7 +274,7 @@ export function V2OrganizationsBrowserShell({
               <V2CreateEntityButton
                 kind="organization"
                 label="+ Organization"
-                className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
+                className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-500"
               />
             </div>
           </header>
@@ -289,8 +289,8 @@ export function V2OrganizationsBrowserShell({
 
           {filtered.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
-              <p className="text-sm text-zinc-500">No organizations yet.</p>
-              <p className="mt-1 text-xs text-zinc-600">
+              <p className="text-sm text-zinc-400">No organizations yet.</p>
+              <p className="mt-1 text-sm text-zinc-400">
                 Create one to start building institutional memory across years.
               </p>
             </div>
@@ -309,7 +309,7 @@ export function V2OrganizationsBrowserShell({
           )}
 
           {filtered.length > 0 ? (
-            <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800/80 pt-4 text-xs text-zinc-500">
+            <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800/80 pt-4 text-sm text-zinc-400">
               <p>
                 Showing 1 to {filtered.length} of {filtered.length} organization
                 {filtered.length === 1 ? "" : "s"}

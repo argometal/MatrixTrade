@@ -40,13 +40,13 @@ export function V2TopBar({
 
         <form action="/argus/search" method="get" className="mx-auto hidden max-w-xl flex-1 lg:block">
           <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500">⌕</span>
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">⌕</span>
             <input
               name="q"
               placeholder="Search anything…"
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-9 pr-16 text-sm text-zinc-300 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none"
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-9 pr-16 text-base text-zinc-300 placeholder:text-zinc-400 focus:border-violet-500/50 focus:outline-none"
             />
-            <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-500">
+            <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded-md border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-sm text-zinc-400">
               ⌘ K
             </kbd>
           </div>
@@ -57,7 +57,7 @@ export function V2TopBar({
             <PrivateLockMenu configured={privateConfigured} unlocked={privateUnlocked} />
           ) : (
             <span
-              className="hidden items-center gap-1.5 rounded-xl border border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-600 sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-xl border border-zinc-800 px-3 py-2 text-sm font-medium text-zinc-400 sm:inline-flex"
               title="Set ARGUS_PRIVATE_PIN to enable protected records"
             >
               <span aria-hidden>🛡</span> PIN
@@ -71,13 +71,13 @@ export function V2TopBar({
           >
             🔔
             {inboxCount > 0 ? (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-sm font-bold text-white">
                 {inboxCount > 99 ? "99+" : inboxCount}
               </span>
             ) : null}
           </Link>
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600/30 text-xs font-bold text-violet-200 ring-1 ring-violet-500/40"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600/30 text-sm font-bold text-violet-200 ring-1 ring-violet-500/40"
             title="Profile"
           >
             VA

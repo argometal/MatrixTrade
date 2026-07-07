@@ -44,7 +44,7 @@ function ReferenceRow({
     <label className="grid cursor-pointer grid-cols-[auto_minmax(0,1fr)_5.5rem] items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-zinc-800/60">
       <input type="checkbox" checked={checked} onChange={onToggle} className="shrink-0" />
       <span className="truncate text-sm text-zinc-200">{entity.name}</span>
-      <span className="truncate text-right text-xs text-zinc-500">{entityKindLabel(entity)}</span>
+      <span className="truncate text-right text-sm text-zinc-400">{entityKindLabel(entity)}</span>
     </label>
   );
 }
@@ -150,7 +150,7 @@ export function V2InboxEntityLinkModal({
             <h3 id="inbox-link-title" className="text-base font-semibold text-zinc-100">
               Link email
             </h3>
-            <p className="mt-1.5 text-sm leading-snug text-zinc-500">{LINK_HIERARCHY.inboxLinkHint}</p>
+            <p className="mt-1.5 text-sm leading-snug text-zinc-400">{LINK_HIERARCHY.inboxLinkHint}</p>
           </div>
 
           <div className="shrink-0 flex gap-1 overflow-x-auto px-4 pt-3 [scrollbar-gutter:stable]">
@@ -159,10 +159,10 @@ export function V2InboxEntityLinkModal({
                 key={kind}
                 type="button"
                 onClick={() => setKindFilter(kind)}
-                className={`shrink-0 rounded-t-lg border-b-2 px-3 py-2 text-xs font-medium transition ${
+                className={`shrink-0 rounded-t-lg border-b-2 px-3 py-2 text-sm font-medium transition ${
                   kindFilter === kind
                     ? "border-violet-500 bg-violet-600/10 text-violet-300"
-                    : "border-transparent text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+                    : "border-transparent text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
                 }`}
               >
                 {KIND_TAB_LABELS[kind]}
@@ -188,11 +188,11 @@ export function V2InboxEntityLinkModal({
               {createLabelForKind(activeCreateKind)}
             </button>
 
-            <p className="text-xs leading-relaxed text-zinc-600">{LINK_HIERARCHY.multiLinkHint}</p>
+            <p className="text-sm leading-relaxed text-zinc-400">{LINK_HIERARCHY.multiLinkHint}</p>
 
             <div className="min-h-[240px] flex-1 overflow-y-auto overscroll-contain rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-2 [scrollbar-gutter:stable] sm:min-h-[320px]">
               {filteredEntities.length === 0 ? (
-                <p className="px-2 py-8 text-center text-sm text-zinc-500">
+                <p className="px-2 py-8 text-center text-sm text-zinc-400">
                   {query.trim() ? REFERENCE_PICKER.typeToSearch : REFERENCE_PICKER.noReferences}
                 </p>
               ) : (

@@ -46,7 +46,7 @@ function statusClass(tone: V2InboxRow["statusTone"]): string {
   if (tone === "violet") return "bg-violet-500/15 text-violet-300";
   if (tone === "amber") return "bg-amber-500/15 text-amber-300";
   if (tone === "emerald") return "bg-emerald-500/15 text-emerald-300";
-  return "bg-zinc-800 text-zinc-500";
+  return "bg-zinc-800 text-zinc-400";
 }
 
 function FilterMenuPanel({
@@ -94,7 +94,7 @@ function FilterOption({
     <button
       type="button"
       onClick={onClick}
-      className={`block w-full rounded-lg px-3 py-2 text-left text-[11px] ${
+      className={`block w-full rounded-lg px-3 py-2 text-left text-sm ${
         active ? "bg-violet-500/15 text-violet-200" : "text-zinc-300 hover:bg-zinc-800"
       }`}
     >
@@ -210,20 +210,20 @@ export function V2InboxShell({
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-zinc-50">Inbox</h1>
-              <p className="mt-0.5 text-xs text-zinc-500">Unprocessed emails and items</p>
+              <p className="mt-0.5 text-sm text-zinc-400">Unprocessed emails and items</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button
                 type="button"
                 onClick={() => setSelectMode((value) => !value)}
-                className={`text-xs ${selectMode ? "text-violet-300" : "text-zinc-500 hover:text-zinc-300"}`}
+                className={`text-sm ${selectMode ? "text-violet-300" : "text-zinc-400 hover:text-zinc-300"}`}
               >
                 Select
               </button>
               <button
                 type="button"
                 onClick={() => setTab("unread")}
-                className="text-xs text-zinc-500 hover:text-zinc-300"
+                className="text-sm text-zinc-400 hover:text-zinc-300"
               >
                 Mark all read
               </button>
@@ -231,7 +231,7 @@ export function V2InboxShell({
                 <button
                   type="button"
                   onClick={() => setProcessOpen((open) => !open)}
-                  className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
+                  className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-500"
                 >
                   Process ▾
                 </button>
@@ -243,21 +243,21 @@ export function V2InboxShell({
                         setProcessOpen(false);
                         if (selectedId) selectItem(selectedId);
                       }}
-                      className="block w-full rounded-lg px-3 py-2 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+                      className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
                     >
                       Process selected
                     </button>
                     <button
                       type="button"
                       onClick={() => setProcessOpen(false)}
-                      className="block w-full rounded-lg px-3 py-2 text-left text-xs text-zinc-400 hover:bg-zinc-800"
+                      className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-400 hover:bg-zinc-800"
                     >
                       Bulk archive
                     </button>
                   </div>
                 ) : null}
               </div>
-              <button type="button" className="text-zinc-600 hover:text-zinc-400">
+              <button type="button" className="text-zinc-400 hover:text-zinc-400">
                 ···
               </button>
             </div>
@@ -269,8 +269,8 @@ export function V2InboxShell({
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-medium ${
-                  tab === t.id ? "bg-violet-500/15 text-violet-300" : "text-zinc-600 hover:text-zinc-400"
+                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-sm font-medium ${
+                  tab === t.id ? "bg-violet-500/15 text-violet-300" : "text-zinc-400 hover:text-zinc-400"
                 }`}
               >
                 {t.label} {counts[t.id]}
@@ -284,10 +284,10 @@ export function V2InboxShell({
             <button
               type="button"
               onClick={() => setOpenFilter((current) => (current === "source" ? null : "source"))}
-              className={`rounded-md border px-2 py-1 text-[10px] ${
+              className={`rounded-md border px-2 py-1 text-sm ${
                 filters.source
                   ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                  : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
+                  : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700"
               }`}
             >
               {filters.source ? inboxSourceLabel(filters.source) : "All sources"} ▾
@@ -312,10 +312,10 @@ export function V2InboxShell({
             <button
               type="button"
               onClick={() => setOpenFilter((current) => (current === "sender" ? null : "sender"))}
-              className={`max-w-[160px] truncate rounded-md border px-2 py-1 text-[10px] ${
+              className={`max-w-[160px] truncate rounded-md border px-2 py-1 text-sm ${
                 filters.sender
                   ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                  : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
+                  : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700"
               }`}
             >
               {filters.sender
@@ -343,10 +343,10 @@ export function V2InboxShell({
             <button
               type="button"
               onClick={() => setOpenFilter((current) => (current === "type" ? null : "type"))}
-              className={`rounded-md border px-2 py-1 text-[10px] ${
+              className={`rounded-md border px-2 py-1 text-sm ${
                 filters.type
                   ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                  : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
+                  : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700"
               }`}
             >
               {filters.type ? inboxEntityKindLabel(filters.type) : "All types"} ▾
@@ -367,10 +367,10 @@ export function V2InboxShell({
             <button
               type="button"
               onClick={() => setOpenFilter((current) => (current === "entity" ? null : "entity"))}
-              className={`max-w-[160px] truncate rounded-md border px-2 py-1 text-[10px] ${
+              className={`max-w-[160px] truncate rounded-md border px-2 py-1 text-sm ${
                 filters.entityId
                   ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                  : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
+                  : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700"
               }`}
             >
               {filters.entityId
@@ -398,10 +398,10 @@ export function V2InboxShell({
             <button
               type="button"
               onClick={() => setOpenFilter((current) => (current === "tag" ? null : "tag"))}
-              className={`max-w-[140px] truncate rounded-md border px-2 py-1 text-[10px] ${
+              className={`max-w-[140px] truncate rounded-md border px-2 py-1 text-sm ${
                 filters.tag
                   ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                  : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
+                  : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700"
               }`}
             >
               {filters.tag ?? "All tags"} ▾
@@ -422,10 +422,10 @@ export function V2InboxShell({
             type="button"
             onClick={clearFilters}
             disabled={!filtersActive}
-            className={`rounded-md border px-2 py-1 text-[10px] ${
+            className={`rounded-md border px-2 py-1 text-sm ${
               filtersActive
                 ? "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800"
-                : "border-zinc-800 bg-zinc-900/50 text-zinc-600"
+                : "border-zinc-800 bg-zinc-900/50 text-zinc-400"
             }`}
           >
             Clear filters
@@ -434,7 +434,7 @@ export function V2InboxShell({
 
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
-            <p className="px-5 py-10 text-center text-sm text-zinc-500">
+            <p className="px-5 py-10 text-center text-sm text-zinc-400">
               {filtersActive ? "No items match these filters." : "No items in this tab."}
             </p>
           ) : (
@@ -464,29 +464,29 @@ export function V2InboxShell({
                           }}
                           className="rounded border-zinc-700 bg-zinc-900"
                         />
-                        <span className="text-sm text-zinc-500" aria-hidden>
+                        <span className="text-sm text-zinc-400" aria-hidden>
                           ✉
                         </span>
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-2">
-                          <p className="truncate text-sm font-semibold text-zinc-100">{row.sender}</p>
+                          <p className="truncate text-base font-semibold text-zinc-100">{row.sender}</p>
                           <div className="flex shrink-0 items-center gap-2">
                             {row.attachmentCount > 0 ? (
-                              <span className="text-[11px] text-zinc-600" title="Attachments">
+                              <span className="text-sm text-zinc-400" title="Attachments">
                                 📎
                               </span>
                             ) : null}
-                            <span className="text-[10px] tabular-nums text-zinc-600">{row.timeLabel}</span>
+                            <span className="text-sm tabular-nums text-zinc-400">{row.timeLabel}</span>
                           </div>
                         </div>
                         <p className="truncate text-sm text-zinc-300">{row.subject}</p>
-                        <p className="mt-0.5 line-clamp-1 text-xs text-zinc-600">{row.preview}</p>
+                        <p className="mt-0.5 line-clamp-1 text-sm text-zinc-400">{row.preview}</p>
                         <div className="mt-2 flex flex-wrap items-center gap-2">
                           {row.tags.map((tag) => (
                             <span
                               key={tag.id}
-                              className={`rounded-full px-2 py-0.5 text-[10px] ${
+                              className={`rounded-full px-2 py-0.5 text-sm ${
                                 tag.tone === "blue"
                                   ? "bg-sky-500/15 text-sky-300"
                                   : tag.tone === "orange"
@@ -500,7 +500,7 @@ export function V2InboxShell({
                         </div>
                       </div>
                       <div className="flex shrink-0 flex-col items-end justify-between">
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusClass(row.statusTone)}`}>
+                        <span className={`rounded-full px-2 py-0.5 text-sm font-medium ${statusClass(row.statusTone)}`}>
                           {row.statusLabel}
                         </span>
                       </div>
@@ -522,7 +522,7 @@ export function V2InboxShell({
             linkedEntityRecords={linkedEntityRecords}
           />
         ) : (
-          <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">
+          <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-400">
             Select an inbox item to read and process.
           </div>
         )}

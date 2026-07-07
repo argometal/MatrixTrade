@@ -30,10 +30,10 @@ function V2HomeStatCard({ stat }: { stat: { label: string; value: string; delta:
     >
       <div className="mb-3 flex items-center justify-between">
         <span className="text-lg transition group-hover:scale-110">{STAT_ICONS[stat.icon]}</span>
-        <span className="text-[10px] text-emerald-400">{stat.delta}</span>
+        <span className="text-sm text-emerald-400">{stat.delta}</span>
       </div>
       <p className="text-2xl font-bold tabular-nums text-zinc-50 group-hover:text-violet-100">{stat.value}</p>
-      <p className="mt-1 text-xs text-zinc-500 group-hover:text-zinc-400">{stat.label}</p>
+      <p className="mt-1 text-sm text-zinc-400 group-hover:text-zinc-400">{stat.label}</p>
     </Link>
   );
 }
@@ -47,7 +47,7 @@ const ACTIVITY_ICON_STYLES: Record<string, { icon: string; box: string }> = {
 const FOLLOW_UP_ICON_STYLES: Record<string, { icon: string; box: string }> = {
   danger: { icon: "↩", box: "bg-red-500/15 text-red-400" },
   warning: { icon: "🏷", box: "bg-amber-500/15 text-amber-400" },
-  muted: { icon: "📄", box: "bg-zinc-800 text-zinc-500" },
+  muted: { icon: "📄", box: "bg-zinc-800 text-zinc-400" },
 };
 
 const TAG_COLORS: Record<string, string> = {
@@ -94,7 +94,7 @@ export default async function V2HomePage({
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Home</h1>
-          <p className="mt-1 text-sm text-zinc-500">Overview of your knowledge base · live counts</p>
+          <p className="mt-1 text-sm text-zinc-400">Overview of your knowledge base · live counts</p>
         </div>
       </div>
 
@@ -111,7 +111,7 @@ export default async function V2HomePage({
             <V2Card className="flex flex-col p-5">
               <V2SectionTitle
                 action={
-                  <Link href="/argus/v2#stats" className="text-xs text-violet-400 hover:text-violet-300">
+                  <Link href="/argus/v2#stats" className="text-sm text-violet-400 hover:text-violet-300">
                     View all
                   </Link>
                 }
@@ -119,7 +119,7 @@ export default async function V2HomePage({
                 Recent Activity
               </V2SectionTitle>
               {recentActivity.length === 0 ? (
-                <p className="text-sm text-zinc-500">No journal activity yet.</p>
+                <p className="text-sm text-zinc-400">No journal activity yet.</p>
               ) : (
                 <ul className="divide-y divide-zinc-800/80">
                   {recentActivity.map((item) => {
@@ -130,13 +130,13 @@ export default async function V2HomePage({
                         <div className="min-w-0 flex-1">
                           <Link
                             href={item.href}
-                            className="text-sm font-medium text-zinc-200 hover:text-violet-300"
+                            className="text-base font-medium text-zinc-200 hover:text-violet-300"
                           >
                             {item.title}
                           </Link>
-                          <p className="mt-0.5 text-xs text-zinc-500">{item.meta}</p>
+                          <p className="mt-0.5 text-sm text-zinc-400">{item.meta}</p>
                         </div>
-                        <span className="shrink-0 text-xs text-zinc-600">{item.time}</span>
+                        <span className="shrink-0 text-sm text-zinc-400">{item.time}</span>
                       </li>
                     );
                   })}
@@ -148,7 +148,7 @@ export default async function V2HomePage({
             <V2Card className="flex flex-col p-5">
               <V2SectionTitle
                 action={
-                  <Link href="/argus/v2#follow-ups" className="text-xs text-violet-400 hover:text-violet-300">
+                  <Link href="/argus/v2#follow-ups" className="text-sm text-violet-400 hover:text-violet-300">
                     View all
                   </Link>
                 }
@@ -156,7 +156,7 @@ export default async function V2HomePage({
                 Follow Ups
               </V2SectionTitle>
               {followUps.length === 0 ? (
-                <p className="text-sm text-zinc-500">No pending follow-ups.</p>
+                <p className="text-sm text-zinc-400">No pending follow-ups.</p>
               ) : (
                 <ul className="divide-y divide-zinc-800/80">
                   {followUps.map((item) => {
@@ -167,14 +167,14 @@ export default async function V2HomePage({
                         <div className="min-w-0 flex-1">
                           <Link
                             href={item.href}
-                            className="text-sm font-medium text-zinc-200 hover:text-violet-300"
+                            className="text-base font-medium text-zinc-200 hover:text-violet-300"
                           >
                             {item.title}
                           </Link>
-                          <p className="mt-0.5 text-xs text-zinc-500">{item.meta}</p>
+                          <p className="mt-0.5 text-sm text-zinc-400">{item.meta}</p>
                         </div>
                         <span
-                          className={`shrink-0 self-start rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ${
+                          className={`shrink-0 self-start rounded-full px-2 py-0.5 text-sm font-medium ring-1 ${
                             item.tone === "danger"
                               ? "bg-red-500/10 text-red-300 ring-red-500/30"
                               : item.tone === "warning"
@@ -203,7 +203,7 @@ export default async function V2HomePage({
           <V2Card className="hidden p-5 xl:block">
             <V2SectionTitle>Timeline</V2SectionTitle>
             {homeTimeline.length === 0 ? (
-              <p className="text-sm text-zinc-500">No timeline entries yet.</p>
+              <p className="text-sm text-zinc-400">No timeline entries yet.</p>
             ) : (
               <V2TimelineRail entries={homeTimeline} />
             )}
@@ -213,13 +213,13 @@ export default async function V2HomePage({
           <V2Card className="p-5">
             <V2SectionTitle>Tags</V2SectionTitle>
             {tags.length === 0 ? (
-              <p className="text-sm text-zinc-500">Tags appear on journal entries.</p>
+              <p className="text-sm text-zinc-400">Tags appear on journal entries.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => (
                   <span
                     key={tag.name}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 ${TAG_COLORS[tag.color]}`}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ring-1 ${TAG_COLORS[tag.color]}`}
                   >
                     {tag.name}
                     <span className="opacity-60">{tag.count}</span>

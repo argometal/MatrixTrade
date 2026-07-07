@@ -34,7 +34,7 @@ export function V2Badge({
     amber: "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30",
   };
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${tones[tone]}`}>
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium ${tones[tone]}`}>
       {children}
     </span>
   );
@@ -43,7 +43,7 @@ export function V2Badge({
 export function V2SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-4 flex items-center justify-between gap-3">
-      <h2 className="text-sm font-semibold text-zinc-100">{children}</h2>
+      <h2 className="text-base font-semibold text-zinc-100">{children}</h2>
       {action}
     </div>
   );
@@ -51,7 +51,7 @@ export function V2SectionTitle({ children, action }: { children: ReactNode; acti
 
 export function V2BackLink({ href, children }: { href: string; children: ReactNode }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition hover:text-zinc-300">
+    <Link href={href} className="inline-flex items-center gap-1.5 text-sm text-zinc-400 transition hover:text-zinc-300">
       <span aria-hidden>←</span>
       {children}
     </Link>
@@ -61,7 +61,7 @@ export function V2BackLink({ href, children }: { href: string; children: ReactNo
 export function V2LockIcon({ protected: isProtected }: { protected?: boolean }) {
   if (!isProtected) return null;
   return (
-    <span className="text-zinc-600" title="Protected">
+    <span className="text-zinc-400" title="Protected">
       <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
         <path
           strokeLinecap="round"

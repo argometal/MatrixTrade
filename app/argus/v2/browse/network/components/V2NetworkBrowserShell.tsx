@@ -50,9 +50,9 @@ function SummaryPill({
 }) {
   return (
     <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
-      <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-600">{label}</p>
+      <p className="text-sm font-medium uppercase tracking-wider text-zinc-400">{label}</p>
       <p className="mt-1 text-2xl font-bold tabular-nums text-zinc-50">{value}</p>
-      {sub ? <p className="mt-0.5 text-[10px] text-zinc-600">{sub}</p> : null}
+      {sub ? <p className="mt-0.5 text-sm text-zinc-400">{sub}</p> : null}
     </div>
   );
 }
@@ -60,7 +60,7 @@ function SummaryPill({
 function StatusDonut({ counts, total }: { counts: Record<V2NetworkBrowseStatus, number>; total: number }) {
   if (total === 0) {
     return (
-      <div className="flex h-28 items-center justify-center text-xs text-zinc-600">No people yet</div>
+      <div className="flex h-28 items-center justify-center text-sm text-zinc-400">No people yet</div>
     );
   }
 
@@ -101,7 +101,7 @@ function StatusDonut({ counts, total }: { counts: Record<V2NetworkBrowseStatus, 
           return el;
         })}
       </svg>
-      <ul className="space-y-1 text-xs text-zinc-500">
+      <ul className="space-y-1 text-sm text-zinc-400">
         {segments.map(({ status, color }) => (
           <li key={status} className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
@@ -129,10 +129,10 @@ function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
               <h2 className="truncate font-bold text-zinc-50 group-hover:text-violet-100">{card.name}</h2>
               <p className="truncate text-sm text-zinc-400">{card.role}</p>
               {card.organization ? (
-                <p className="truncate text-xs text-zinc-500">{card.organization}</p>
+                <p className="truncate text-sm text-zinc-400">{card.organization}</p>
               ) : null}
             </div>
-            <div className="flex shrink-0 gap-1 text-zinc-600">
+            <div className="flex shrink-0 gap-1 text-zinc-400">
               <span className="rounded-md p-1 hover:bg-zinc-800 hover:text-amber-300" aria-hidden>
                 ★
               </span>
@@ -152,35 +152,35 @@ function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
           {card.expertise.map((tag) => (
             <span
               key={tag}
-              className="rounded-full border border-violet-500/25 bg-violet-500/10 px-2 py-0.5 text-[10px] text-violet-200"
+              className="rounded-full border border-violet-500/25 bg-violet-500/10 px-2 py-0.5 text-sm text-violet-200"
             >
               {tag}
             </span>
           ))}
         </div>
       ) : (
-        <p className="mb-3 text-[10px] text-zinc-600">Expertise will emerge from journal topics</p>
+        <p className="mb-3 text-sm text-zinc-400">Expertise will emerge from journal topics</p>
       )}
 
-      <div className="mb-3 flex items-center justify-between text-xs">
-        <span className="text-zinc-600">Last interaction</span>
+      <div className="mb-3 flex items-center justify-between text-sm">
+        <span className="text-zinc-400">Last interaction</span>
         <span className="text-zinc-400">{card.lastInteraction.timeLabel}</span>
       </div>
-      <p className="mb-3 truncate text-xs text-zinc-500">{card.lastInteraction.label}</p>
+      <p className="mb-3 truncate text-sm text-zinc-400">{card.lastInteraction.label}</p>
 
       {card.strength >= 75 ? (
-        <p className="mb-3 text-[11px] leading-snug text-amber-200/90">
+        <p className="mb-3 text-sm leading-snug text-amber-200/90">
           High-value contact — evidence-backed relationship worth maintaining.
         </p>
       ) : null}
 
-      <div className="mb-3 flex items-center justify-between text-xs">
-        <span className="text-zinc-600">Relationship since</span>
+      <div className="mb-3 flex items-center justify-between text-sm">
+        <span className="text-zinc-400">Relationship since</span>
         <span className="text-zinc-400">{card.relationshipSince}</span>
       </div>
 
-      <div className="mb-1 flex items-center justify-between text-xs">
-        <span className="text-zinc-600">Strength</span>
+      <div className="mb-1 flex items-center justify-between text-sm">
+        <span className="text-zinc-400">Strength</span>
         <span className="font-semibold tabular-nums text-violet-300">{card.strength}%</span>
       </div>
       <div className="mb-4 h-2 overflow-hidden rounded-full bg-zinc-800">
@@ -190,7 +190,7 @@ function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
         />
       </div>
 
-      <div className="flex justify-around border-t border-zinc-800/80 pt-3 text-center text-xs text-zinc-500">
+      <div className="flex justify-around border-t border-zinc-800/80 pt-3 text-center text-sm text-zinc-400">
         <span>
           <span className="block font-semibold text-violet-300">{card.metrics.emails}</span>
           Emails
@@ -214,7 +214,7 @@ function PersonListRow({ card }: { card: V2NetworkBrowseCard }) {
       href={card.href}
       className="flex items-center gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 transition hover:border-violet-500/30 hover:bg-zinc-900/70"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-xs font-bold text-violet-200">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-sm font-bold text-violet-200">
         {card.initials}
       </span>
       <div className="min-w-0 flex-1">
@@ -222,7 +222,7 @@ function PersonListRow({ card }: { card: V2NetworkBrowseCard }) {
           <p className="font-semibold text-zinc-100">{card.name}</p>
           <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
         </div>
-        <p className="mt-0.5 truncate text-xs text-zinc-500">
+        <p className="mt-0.5 truncate text-sm text-zinc-400">
           {card.role}
           {card.organization ? ` · ${card.organization}` : ""} · {card.lastInteraction.timeLabel}
         </p>
@@ -254,14 +254,14 @@ function NetworkInsightsSidebar({
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
           <h2 className="text-sm font-semibold text-zinc-200">Top organizations</h2>
           {insights.topOrganizations.length === 0 ? (
-            <p className="mt-3 text-xs text-zinc-600">Link people to organizations to see clusters.</p>
+            <p className="mt-3 text-sm text-zinc-400">Link people to organizations to see clusters.</p>
           ) : (
             <ul className="mt-3 space-y-2">
               {insights.topOrganizations.map((row) => (
                 <li key={row.name}>
-                  <div className="mb-1 flex justify-between text-xs">
+                  <div className="mb-1 flex justify-between text-sm">
                     <span className="truncate text-zinc-400">{row.name}</span>
-                    <span className="tabular-nums text-zinc-600">{row.count}</span>
+                    <span className="tabular-nums text-zinc-400">{row.count}</span>
                   </div>
                   <div className="h-1.5 overflow-hidden rounded-full bg-zinc-800">
                     <div
@@ -280,17 +280,17 @@ function NetworkInsightsSidebar({
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
           <h2 className="text-sm font-semibold text-zinc-200">Relationship strength</h2>
           <p className="mt-2 text-3xl font-bold tabular-nums text-violet-300">{summary.averageStrength}%</p>
-          <p className="mt-1 text-xs text-zinc-600">Average strength score from evidence — not entered manually</p>
+          <p className="mt-1 text-sm text-zinc-400">Average strength score from evidence — not entered manually</p>
         </div>
 
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
           <h2 className="text-sm font-semibold text-zinc-200">Recent interactions</h2>
           <ul className="mt-3 space-y-3">
             {insights.recentInteractions.map((item) => (
-              <li key={`${item.personName}-${item.sortIso}`} className="text-xs">
+              <li key={`${item.personName}-${item.sortIso}`} className="text-sm">
                 <p className="font-medium text-zinc-300">{item.personName}</p>
-                <p className="truncate text-zinc-500">{item.label}</p>
-                <p className="text-zinc-600">{item.timeLabel}</p>
+                <p className="truncate text-zinc-400">{item.label}</p>
+                <p className="text-zinc-400">{item.timeLabel}</p>
               </li>
             ))}
           </ul>
@@ -353,7 +353,7 @@ export function V2NetworkBrowserShell({
                 </span>
                 <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Network</h1>
               </div>
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className="mt-1 text-sm text-zinc-400">
                 Your professional network · relationships that create opportunities.
               </p>
             </div>
@@ -362,8 +362,8 @@ export function V2NetworkBrowserShell({
                 <button
                   type="button"
                   onClick={() => setView("grid")}
-                  className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
-                    view === "grid" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
+                  className={`rounded-md px-2.5 py-1.5 text-sm font-medium ${
+                    view === "grid" ? "bg-zinc-800 text-zinc-200" : "text-zinc-400 hover:text-zinc-300"
                   }`}
                   aria-label="Grid view"
                 >
@@ -372,8 +372,8 @@ export function V2NetworkBrowserShell({
                 <button
                   type="button"
                   onClick={() => setView("list")}
-                  className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
-                    view === "list" ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
+                  className={`rounded-md px-2.5 py-1.5 text-sm font-medium ${
+                    view === "list" ? "bg-zinc-800 text-zinc-200" : "text-zinc-400 hover:text-zinc-300"
                   }`}
                   aria-label="List view"
                 >
@@ -382,14 +382,14 @@ export function V2NetworkBrowserShell({
               </div>
               <button
                 type="button"
-                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
               >
                 Filters
               </button>
               <V2CreateEntityButton
                 kind="person"
                 label="+ Person"
-                className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
+                className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-500"
               />
             </div>
           </header>
@@ -402,7 +402,7 @@ export function V2NetworkBrowserShell({
                 setPage(1);
               }}
               placeholder="Search people, companies, roles, skills…"
-              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-4 pr-4 text-sm text-zinc-300 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none"
+              className="w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-4 pr-4 text-sm text-zinc-300 placeholder:text-zinc-400 focus:border-violet-500/50 focus:outline-none"
             />
           </div>
 
@@ -416,10 +416,10 @@ export function V2NetworkBrowserShell({
                   setSmartView("all");
                   setPage(1);
                 }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
                   statusTab === tab.key && smartView === "all"
                     ? "bg-violet-500/20 text-violet-200 ring-1 ring-violet-500/40"
-                    : "border border-zinc-800 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+                    : "border border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
                 }`}
               >
                 {tab.label} ({tabCount(tab.key)})
@@ -438,8 +438,8 @@ export function V2NetworkBrowserShell({
 
           {cards.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
-              <p className="text-sm text-zinc-500">No people in your network yet.</p>
-              <p className="mt-1 text-xs text-zinc-600">
+              <p className="text-sm text-zinc-400">No people in your network yet.</p>
+              <p className="mt-1 text-sm text-zinc-400">
                 Add someone and link orgs, projects, topics, or events in one step.
               </p>
               <div className="mt-4">
@@ -452,8 +452,8 @@ export function V2NetworkBrowserShell({
             </div>
           ) : filtered.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
-              <p className="text-sm text-zinc-500">No people match this view.</p>
-              <p className="mt-1 text-xs text-zinc-600">Add a person or adjust filters.</p>
+              <p className="text-sm text-zinc-400">No people match this view.</p>
+              <p className="mt-1 text-sm text-zinc-400">Add a person or adjust filters.</p>
             </div>
           ) : view === "grid" ? (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
@@ -470,7 +470,7 @@ export function V2NetworkBrowserShell({
           )}
 
           {filtered.length > 0 ? (
-            <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800/80 pt-4 text-xs text-zinc-500">
+            <footer className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800/80 pt-4 text-sm text-zinc-400">
               <p>
                 Showing {(currentPage - 1) * PAGE_SIZE + 1} to{" "}
                 {Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} people
@@ -515,7 +515,7 @@ export function V2NetworkBrowserShell({
       </div>
 
       <section className="fixed bottom-0 left-0 right-0 z-20 border-t border-zinc-800/90 bg-zinc-950/95 px-4 py-3 backdrop-blur-md lg:left-56 xl:left-60">
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+        <p className="mb-2 text-sm font-semibold uppercase tracking-wider text-zinc-400">
           Smart filters (quick views)
         </p>
         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -534,8 +534,8 @@ export function V2NetworkBrowserShell({
                   : "border-zinc-800 bg-zinc-900/60 hover:border-zinc-700"
               }`}
             >
-              <p className="text-xs font-medium text-zinc-200">{preset.label}</p>
-              <p className="text-[10px] tabular-nums text-violet-300">
+              <p className="text-base font-medium text-zinc-200">{preset.label}</p>
+              <p className="text-sm tabular-nums text-violet-300">
                 {smartViewCount(cards, preset.key)} people
               </p>
             </button>

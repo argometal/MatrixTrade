@@ -57,7 +57,7 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
               <h1 className="text-2xl font-bold tracking-tight text-zinc-50">{entity.name}</h1>
               <Link
                 href={`/argus/projects/${entity.id}`}
-                className="rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-800 hover:text-zinc-400"
+                className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-400"
                 aria-label="Edit project"
               >
                 ✎
@@ -78,7 +78,7 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
             <V2EntityLinkButton
               entityId={entity.id}
               linkedIds={entity.linkedEntityIds ?? []}
-              className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+              className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-sm font-semibold text-violet-300 hover:bg-violet-600/25"
             />
             <Link
               href={`/argus/v2/deliver?scopeType=project&scopeId=${entity.id}`}
@@ -146,20 +146,20 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
             <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-zinc-100">Project Timeline</h2>
-                <p className="mt-1 text-xs text-zinc-500">
+                <p className="mt-1 text-sm text-zinc-400">
                   Bounded by project dates · direct links + via project contacts
                 </p>
               </div>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className="rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-400"
+                  className="rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-400"
                 >
                   All types ▾
                 </button>
                 <button
                   type="button"
-                  className="rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-400"
+                  className="rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-400"
                 >
                   Filters
                 </button>
@@ -176,7 +176,7 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
             {notes ? (
               <p className="text-sm leading-relaxed text-zinc-400">{notes}</p>
             ) : (
-              <p className="text-sm text-zinc-500">Add a description on the project record.</p>
+              <p className="text-sm text-zinc-400">Add a description on the project record.</p>
             )}
           </V2PanelCard>
 
@@ -190,7 +190,7 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
               }
             />
             {page.peopleWithRoles.length === 0 ? (
-              <p className="text-sm text-zinc-500">Add people via project links.</p>
+              <p className="text-sm text-zinc-400">Add people via project links.</p>
             ) : (
               <>
                 <ul className="space-y-4">
@@ -236,7 +236,7 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
                 />
               ) : null}
               {!page.org && page.linkedTopics.length === 0 && page.linkedEventsCount === 0 ? (
-                <p className="text-sm text-zinc-500">Link org, topics, or events on the project.</p>
+                <p className="text-sm text-zinc-400">Link org, topics, or events on the project.</p>
               ) : null}
             </div>
           </V2PanelCard>
@@ -264,15 +264,15 @@ function ProjectStatCard({
   return (
     <V2Card className="flex flex-col p-4">
       <p className="text-xl font-bold tabular-nums text-zinc-50">{value}</p>
-      {sub ? <p className="mt-1 text-[10px] leading-snug text-zinc-600">{sub}</p> : null}
-      <p className="mt-2 text-xs text-zinc-500">{label}</p>
+      {sub ? <p className="mt-1 text-sm leading-snug text-zinc-400">{sub}</p> : null}
+      <p className="mt-2 text-sm text-zinc-400">{label}</p>
       {linkLabel ? (
         linkHref ? (
-          <Link href={linkHref} className="mt-1 text-[10px] text-violet-400 hover:text-violet-300">
+          <Link href={linkHref} className="mt-1 text-sm text-violet-400 hover:text-violet-300">
             {linkLabel}
           </Link>
         ) : (
-          <p className="mt-1 text-[10px] text-violet-400">{linkLabel}</p>
+          <p className="mt-1 text-sm text-violet-400">{linkLabel}</p>
         )
       ) : null}
     </V2Card>

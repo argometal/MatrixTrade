@@ -15,7 +15,7 @@ export default async function V2BrowseOrganizationsPage() {
   const summary = buildV2OrganizationBrowseSummary(cards, data);
 
   return (
-    <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-500">Loading organizations…</div>}>
+    <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-400">Loading organizations…</div>}>
       <V2OrganizationsBrowserShell cards={cards} summary={summary} />
     </Suspense>
   );

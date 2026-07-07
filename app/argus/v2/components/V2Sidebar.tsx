@@ -45,7 +45,7 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
       <div className="border-b border-zinc-800/80 px-5 py-5">
         <Link href="/argus/v2" className="block">
           <span className="text-lg font-bold tracking-tight text-zinc-50">Argus</span>
-          <span className="mt-0.5 block text-xs text-zinc-500">Your knowledge. Connected.</span>
+          <span className="mt-0.5 block text-sm text-zinc-400">Your knowledge. Connected.</span>
         </Link>
       </div>
 
@@ -92,7 +92,7 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
       </nav>
 
       <div className="border-t border-zinc-800/80 px-5 py-4">
-        <div className="flex items-center gap-2 text-xs text-zinc-500">
+        <div className="flex items-center gap-2 text-sm text-zinc-400">
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
           Live data · v2
         </div>
@@ -119,13 +119,13 @@ export function V2MobileNav({ inboxCount = 0 }: { inboxCount?: number }) {
           className={`relative flex h-11 w-11 items-center justify-center rounded-full text-lg ${
             pathname === item.href || pathname.startsWith(item.href)
               ? "text-violet-400"
-              : "text-zinc-500"
+              : "text-zinc-400"
           }`}
           aria-label={item.label}
         >
           {item.icon}
           {item.badge ? (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-sm font-bold text-white">
               {item.badge}
             </span>
           ) : null}
@@ -151,20 +151,20 @@ function NavItem({
   return (
     <Link
       href={href}
-      className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
+      className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-base transition ${
         active ? "bg-violet-500/15 text-violet-200" : "text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200"
       }`}
     >
       <span className="flex items-center gap-2">
         <span>{label}</span>
         {badge ? (
-          <span className="rounded-full bg-sky-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-300">
+          <span className="rounded-full bg-sky-500/20 px-1.5 py-0.5 text-sm font-bold uppercase tracking-wide text-sky-300">
             {badge}
           </span>
         ) : null}
       </span>
       {count !== undefined ? (
-        <span className={`text-xs tabular-nums ${active ? "text-violet-300/80" : "text-zinc-600"}`}>{count}</span>
+        <span className={`text-sm tabular-nums ${active ? "text-violet-300/80" : "text-zinc-400"}`}>{count}</span>
       ) : null}
     </Link>
   );
@@ -173,7 +173,7 @@ function NavItem({
 function NavGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-5">
-      <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">{title}</p>
+      <p className="mb-2 px-3 text-sm font-semibold uppercase tracking-wider text-zinc-400">{title}</p>
       <div className="space-y-0.5">{children}</div>
     </div>
   );

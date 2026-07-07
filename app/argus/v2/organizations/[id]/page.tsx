@@ -78,7 +78,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               <h1 className="text-2xl font-bold tracking-tight text-zinc-50">{entity.name}</h1>
               <Link
                 href={`/argus/v2/network/${entity.id}`}
-                className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-zinc-800 hover:text-zinc-300"
+                className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-300"
                 aria-label="Edit organization"
               >
                 ✎
@@ -86,11 +86,11 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               <V2EntityLinkButton
                 entityId={entity.id}
                 linkedIds={entity.linkedEntityIds ?? []}
-                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-sm font-semibold text-violet-300 hover:bg-violet-600/25"
               />
               <Link
                 href={`/argus/v2/deliver?scopeType=organization&scopeId=${entity.id}`}
-                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800"
+                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:bg-zinc-800"
               >
                 Export
               </Link>
@@ -102,7 +102,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               {(entity.alias || notes) && <span className="text-zinc-700">·</span>}
               <V2Badge tone="green">Active</V2Badge>
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-400">
               {location ? (
                 <span className="inline-flex items-center gap-1">
                   <span aria-hidden>📍</span>
@@ -186,20 +186,20 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
             <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold text-zinc-100">Organization Timeline</h2>
-                <p className="mt-1 text-xs text-zinc-500">
+                <p className="mt-1 text-sm text-zinc-400">
                   All time · Chronological view of all interactions and knowledge
                 </p>
               </div>
               <div className="flex gap-2">
                 <button
                   type="button"
-                  className="rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-400"
+                  className="rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-400"
                 >
                   All types ▾
                 </button>
                 <button
                   type="button"
-                  className="rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-400"
+                  className="rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5 text-sm text-zinc-400"
                 >
                   Filters
                 </button>
@@ -215,7 +215,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
             <V2PanelHeader title="Relationship Performance" />
             <div className="mb-1 flex items-end gap-1.5">
               <span className="text-4xl font-bold tabular-nums text-zinc-50">{page.relationshipScore}</span>
-              <span className="pb-1 text-sm text-zinc-500">/ 5</span>
+              <span className="pb-1 text-sm text-zinc-400">/ 5</span>
             </div>
             <p className="mb-4 text-sm font-semibold text-emerald-400">{page.relationshipLabel}</p>
             <V2RelationshipChart
@@ -244,7 +244,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               }
             />
             {page.linkedPeople.length === 0 ? (
-              <p className="text-sm text-zinc-500">Link people on the organization record.</p>
+              <p className="text-sm text-zinc-400">Link people on the organization record.</p>
             ) : (
               <>
                 <ul className="space-y-4">
@@ -284,7 +284,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               }
             />
             {page.recentProjects.length === 0 ? (
-              <p className="text-sm text-zinc-500">Link this org on a project record.</p>
+              <p className="text-sm text-zinc-400">Link this org on a project record.</p>
             ) : (
               <>
                 <ul className="space-y-2.5">
@@ -301,7 +301,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                   ))}
                 </ul>
                 {moreProjects > 0 ? (
-                  <p className="mt-3 text-xs font-medium text-violet-400">+{moreProjects} more projects</p>
+                  <p className="mt-3 text-sm font-medium text-violet-400">+{moreProjects} more projects</p>
                 ) : null}
               </>
             )}

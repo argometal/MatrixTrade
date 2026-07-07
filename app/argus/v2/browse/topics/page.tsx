@@ -25,7 +25,7 @@ export default async function V2BrowseTopicsPage({
   const selectedId = selected ?? rows[0]?.id;
 
   return (
-    <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-500">Loading topics…</div>}>
+    <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-400">Loading topics…</div>}>
       <V2TopicsShell
         rows={rows}
         details={details}
