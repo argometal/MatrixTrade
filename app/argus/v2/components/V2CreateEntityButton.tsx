@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { createEntityInlineAction } from "@/app/argus/actions";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
+import { ReferenceCreateModal } from "@/app/argus/components/ReferenceCreateModal";
 import type { ReferenceKind } from "@/lib/argus/reference-types";
 
 export function V2CreateEntityButton({
@@ -13,16 +16,29 @@ export function V2CreateEntityButton({
   label: string;
   className?: string;
 }) {
-  const { openCreateFlow } = useArgusAdd();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
 
   return (
-    <button
-      type="button"
-      onClick={() => openCreateFlow({ itemKind: kind })}
-      className={className}
-    >
-      {label}
-    </button>
+    <>
+      <button type="button" onClick={() => setOpen(true)} disabled={pending} className={className}>
+        {label}
+      </button>
+      <ReferenceCreateModal
+        open={open}
+        defaultKind={kind}
+        allowedKinds={[kind]}
+        onCancel={() => setOpen(false)}
+        onSave={(data) => {
+          startTransition(async () => {
+            await createEntityInlineAction(kind, data.name, data.notes);
+            setOpen(false);
+            router.refresh();
+          });
+        }}
+      />
+    </>
   );
 }
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import type { Entity } from "@/lib/argus/types";
-import { type CreatedEntityResult } from "@/app/argus/actions";
-import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
+import { createEntityInlineAction, type CreatedEntityResult } from "@/app/argus/actions";
+import { ReferenceCreateModal } from "@/app/argus/components/ReferenceCreateModal";
 import {
   entityKindLabel,
   REFERENCE_KINDS,
@@ -70,7 +70,8 @@ export function ReferencePickerModal({
     ? defaultCreateKind
     : creatableKinds[0] ?? "person";
   const [query, setQuery] = useState("");
-  const { openCreateFlow } = useArgusAdd();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
 
   const allEntities = buckets.alphabetical;
   const hasReferences = allEntities.length > 0;
@@ -124,11 +125,7 @@ export function ReferencePickerModal({
   }
 
   function openInlineCreate() {
-    openCreateFlow({
-      itemKind: resolvedDefaultKind,
-      lockItemKind: creatableKinds.length === 1,
-      onSaved: (result) => handleEntityCreated(result),
-    });
+    setCreateOpen(true);
   }
 
   if (!open) return null;
@@ -218,6 +215,19 @@ export function ReferencePickerModal({
           </div>
         </div>
       </div>
+      <ReferenceCreateModal
+        open={createOpen}
+        defaultKind={resolvedDefaultKind}
+        allowedKinds={creatableKinds}
+        onCancel={() => setCreateOpen(false)}
+        onSave={(data) => {
+          startTransition(async () => {
+            const entity = await createEntityInlineAction(resolvedDefaultKind, data.name, data.notes);
+            setCreateOpen(false);
+            handleEntityCreated(entity);
+          });
+        }}
+      />
     </>
   );
 }

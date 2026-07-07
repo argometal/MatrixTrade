@@ -656,6 +656,8 @@ export async function saveUnifiedCreateFlowAction(
   let result: CreatedEntityResult;
   if (payload.itemKind === "document") {
     result = await persistDocumentEntity(trimmedName, payload.notes, linkedEntityIds);
+  } else if (payload.itemKind === "tag") {
+    result = await persistNewEntity("topic", trimmedName, payload.notes, linkedEntityIds);
   } else {
     result = await persistNewEntity(
       payload.itemKind,

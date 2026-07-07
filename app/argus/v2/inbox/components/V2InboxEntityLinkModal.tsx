@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import type { Entity } from "@/lib/argus/types";
-import { type CreatedEntityResult } from "@/app/argus/actions";
-import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
+import { createEntityInlineAction, type CreatedEntityResult } from "@/app/argus/actions";
+import { ReferenceCreateModal } from "@/app/argus/components/ReferenceCreateModal";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import { inputClass } from "@/app/argus/components/ui";
 import { entityReferenceKind } from "@/lib/argus/link-hierarchy";
@@ -64,10 +64,11 @@ export function V2InboxEntityLinkModal({
   onClose: () => void;
   onEntityCreated?: (entity: CreatedEntityResult) => void | Promise<void | false>;
 }) {
-  const { openCreateFlow } = useArgusAdd();
   const [query, setQuery] = useState("");
   const [kindFilter, setKindFilter] = useState<KindFilter>("all");
   const [draftIds, setDraftIds] = useState<string[]>(selectedIds);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
 
   useEffect(() => {
     if (open) {
@@ -126,11 +127,7 @@ export function V2InboxEntityLinkModal({
   }
 
   function openInlineCreate() {
-    openCreateFlow({
-      itemKind: activeCreateKind,
-      lockItemKind: true,
-      onSaved: (result) => handleEntityCreated(result),
-    });
+    setCreateOpen(true);
   }
 
   return (
@@ -230,6 +227,19 @@ export function V2InboxEntityLinkModal({
           </div>
         </div>
       </div>
+      <ReferenceCreateModal
+        open={createOpen}
+        defaultKind={activeCreateKind}
+        allowedKinds={[activeCreateKind]}
+        onCancel={() => setCreateOpen(false)}
+        onSave={(data) => {
+          startTransition(async () => {
+            const entity = await createEntityInlineAction(activeCreateKind, data.name, data.notes);
+            setCreateOpen(false);
+            handleEntityCreated(entity);
+          });
+        }}
+      />
     </>
   );
 }

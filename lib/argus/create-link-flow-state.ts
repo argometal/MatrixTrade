@@ -45,6 +45,8 @@ export function postCreateHref(
       return `/argus/v2/projects/${id}`;
     case "topic":
       return `/argus/v2/browse/topics?selected=${id}`;
+    case "tag":
+      return `/argus/v2/browse/topics?selected=${id}`;
     case "event":
       return `/argus/v2/browse/events?selected=${id}`;
     default:
