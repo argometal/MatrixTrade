@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
+import { V2ProjectActions } from "@/app/argus/v2/components/V2ProjectActions";
 import { V2BrowseStatusFilter } from "@/app/argus/v2/components/V2BrowseStatusFilter";
 import { V2Badge } from "../../../components/v2-ui";
 import type {
@@ -33,12 +34,28 @@ function SummaryPill({ label, value }: { label: string; value: number }) {
   );
 }
 
-function ProjectCard({ card }: { card: V2ProjectBrowseCard }) {
+function ProjectCard({
+  card,
+  privateConfigured,
+  privateUnlocked,
+}: {
+  card: V2ProjectBrowseCard;
+  privateConfigured: boolean;
+  privateUnlocked: boolean;
+}) {
   return (
-    <Link
-      href={card.href}
-      className="group block rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-5 transition hover:border-violet-500/40 hover:bg-zinc-900/80"
-    >
+    <div className="group relative rounded-2xl border border-zinc-800/80 bg-zinc-900/50 transition hover:border-violet-500/40 hover:bg-zinc-900/80">
+      <div className="absolute right-3 top-3 z-10">
+        <V2ProjectActions
+          projectId={card.id}
+          projectName={card.name}
+          href={card.href}
+          hasPrivateEvidence={card.hasPrivateEvidence}
+          privateConfigured={privateConfigured}
+          privateUnlocked={privateUnlocked}
+        />
+      </div>
+      <Link href={card.href} className="block p-5">
       <div className="mb-3 flex items-start justify-between gap-3">
         <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
         <span className="text-xs text-zinc-600 group-hover:text-violet-400">Open →</span>
@@ -106,15 +123,22 @@ function ProjectCard({ card }: { card: V2ProjectBrowseCard }) {
         ) : null}
       </div>
     </Link>
+    </div>
   );
 }
 
-function ProjectListRow({ card }: { card: V2ProjectBrowseCard }) {
+function ProjectListRow({
+  card,
+  privateConfigured,
+  privateUnlocked,
+}: {
+  card: V2ProjectBrowseCard;
+  privateConfigured: boolean;
+  privateUnlocked: boolean;
+}) {
   return (
-    <Link
-      href={card.href}
-      className="flex items-center gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 transition hover:border-violet-500/30 hover:bg-zinc-900/70"
-    >
+    <div className="flex items-center gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/40 transition hover:border-violet-500/30 hover:bg-zinc-900/70">
+      <Link href={card.href} className="flex min-w-0 flex-1 items-center gap-4 px-4 py-3">
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-semibold text-zinc-100">{card.name}</p>
@@ -138,16 +162,31 @@ function ProjectListRow({ card }: { card: V2ProjectBrowseCard }) {
           Journal
         </span>
       </div>
-    </Link>
+      </Link>
+      <div className="shrink-0 pr-3">
+        <V2ProjectActions
+          projectId={card.id}
+          projectName={card.name}
+          href={card.href}
+          hasPrivateEvidence={card.hasPrivateEvidence}
+          privateConfigured={privateConfigured}
+          privateUnlocked={privateUnlocked}
+        />
+      </div>
+    </div>
   );
 }
 
 export function V2ProjectsBrowserShell({
   cards,
   summary,
+  privateConfigured,
+  privateUnlocked,
 }: {
   cards: V2ProjectBrowseCard[];
   summary: V2ProjectBrowseSummary;
+  privateConfigured: boolean;
+  privateUnlocked: boolean;
 }) {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<V2ProjectBrowseStatus | "all">("all");
@@ -233,13 +272,23 @@ export function V2ProjectsBrowserShell({
       ) : view === "grid" ? (
         <div className="grid gap-4 lg:grid-cols-2">
           {filtered.map((card) => (
-            <ProjectCard key={card.id} card={card} />
+            <ProjectCard
+              key={card.id}
+              card={card}
+              privateConfigured={privateConfigured}
+              privateUnlocked={privateUnlocked}
+            />
           ))}
         </div>
       ) : (
         <div className="space-y-2">
           {filtered.map((card) => (
-            <ProjectListRow key={card.id} card={card} />
+            <ProjectListRow
+              key={card.id}
+              card={card}
+              privateConfigured={privateConfigured}
+              privateUnlocked={privateUnlocked}
+            />
           ))}
         </div>
       )}

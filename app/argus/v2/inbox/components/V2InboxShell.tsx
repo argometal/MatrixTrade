@@ -19,6 +19,7 @@ import {
   type V2InboxFilters,
   type V2InboxRow,
   type V2InboxTab,
+  type InboxTopicContext,
 } from "@/lib/argus/v2/inbox-loaders";
 import { V2InboxDetailPanel } from "./V2InboxDetailPanel";
 
@@ -109,6 +110,7 @@ export function V2InboxShell({
   buckets,
   tagBuckets,
   linkedEntityRecords,
+  topicContext,
   initialSelectedId,
   initialTab,
 }: {
@@ -117,6 +119,7 @@ export function V2InboxShell({
   buckets: EntityPickerBuckets;
   tagBuckets: TagBuckets;
   linkedEntityRecords: Entity[];
+  topicContext: InboxTopicContext;
   initialSelectedId?: string;
   initialTab?: string;
 }) {
@@ -137,7 +140,10 @@ export function V2InboxShell({
   const selectedId = searchParams.get("selected") ?? initialSelectedId ?? rows[0]?.id;
   const counts = useMemo(() => buildV2InboxTabCounts(rows), [rows]);
   const tabRows = useMemo(() => filterV2InboxRows(rows, tab), [rows, tab]);
-  const filterOptions = useMemo(() => buildV2InboxFilterOptions(tabRows), [tabRows]);
+  const filterOptions = useMemo(
+    () => buildV2InboxFilterOptions(tabRows, topicContext),
+    [tabRows, topicContext]
+  );
   const filtered = useMemo(() => filterV2InboxRows(rows, tab, filters), [rows, tab, filters]);
   const selectedDetail = details.find((d) => d.item.id === selectedId);
   const [selectMode, setSelectMode] = useState(false);
@@ -290,11 +296,11 @@ export function V2InboxShell({
                   : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
               }`}
             >
-              {filters.source ? inboxSourceLabel(filters.source) : "All sources"} ▾
+              {filters.source ? inboxSourceLabel(filters.source) : "Source"} ▾
             </button>
             <FilterMenuPanel open={openFilter === "source"} onClose={() => setOpenFilter(null)}>
               <FilterOption active={!filters.source} onClick={() => setFilter("source")}>
-                All sources
+                Any source
               </FilterOption>
               {filterOptions.sources.map((source) => (
                 <FilterOption
@@ -320,12 +326,12 @@ export function V2InboxShell({
             >
               {filters.sender
                 ? filterOptions.senders.find((sender) => sender.key === filters.sender)?.label ?? filters.sender
-                : "All senders"}{" "}
+                : "Sender"}{" "}
               ▾
             </button>
             <FilterMenuPanel open={openFilter === "sender"} onClose={() => setOpenFilter(null)}>
               <FilterOption active={!filters.sender} onClick={() => setFilter("sender")}>
-                All senders
+                Any sender
               </FilterOption>
               {filterOptions.senders.map((sender) => (
                 <FilterOption
@@ -349,11 +355,11 @@ export function V2InboxShell({
                   : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
               }`}
             >
-              {filters.type ? inboxEntityKindLabel(filters.type) : "All types"} ▾
+              {filters.type ? inboxEntityKindLabel(filters.type) : "Type"} ▾
             </button>
             <FilterMenuPanel open={openFilter === "type"} onClose={() => setOpenFilter(null)}>
               <FilterOption active={!filters.type} onClick={() => setFilter("type")}>
-                All types
+                Any type
               </FilterOption>
               {filterOptions.types.map((type) => (
                 <FilterOption key={type} active={filters.type === type} onClick={() => setFilter("type", type)}>
@@ -375,12 +381,12 @@ export function V2InboxShell({
             >
               {filters.entityId
                 ? filterOptions.entities.find((entity) => entity.id === filters.entityId)?.name ?? "Entity"
-                : "All entities"}{" "}
+                : "Entity"}{" "}
               ▾
             </button>
             <FilterMenuPanel open={openFilter === "entity"} onClose={() => setOpenFilter(null)}>
               <FilterOption active={!filters.entityId} onClick={() => setFilter("entityId")}>
-                All entities
+                Any entity
               </FilterOption>
               {filterOptions.entities.map((entity) => (
                 <FilterOption
@@ -404,11 +410,11 @@ export function V2InboxShell({
                   : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
               }`}
             >
-              {filters.tag ?? "All tags"} ▾
+              {filters.tag ?? "Tag"} ▾
             </button>
             <FilterMenuPanel open={openFilter === "tag"} onClose={() => setOpenFilter(null)}>
               <FilterOption active={!filters.tag} onClick={() => setFilter("tag")}>
-                All tags
+                Any tag
               </FilterOption>
               {filterOptions.tags.map((tag) => (
                 <FilterOption key={tag} active={filters.tag === tag} onClick={() => setFilter("tag", tag)}>
@@ -520,6 +526,7 @@ export function V2InboxShell({
             buckets={buckets}
             tagBuckets={tagBuckets}
             linkedEntityRecords={linkedEntityRecords}
+            topicContext={topicContext}
           />
         ) : (
           <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">

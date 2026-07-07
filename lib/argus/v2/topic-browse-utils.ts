@@ -30,6 +30,7 @@ export interface V2TopicDetail {
   projectCount: number;
   peopleCount: number;
   linkedEntityIds: string[];
+  aliases: string[];
   recentEntries: V2TopicEntry[];
 }
 

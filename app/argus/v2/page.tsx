@@ -12,6 +12,7 @@ import {
 } from "@/lib/argus/v2/loaders";
 import { V2Card, V2SectionTitle } from "./components/v2-ui";
 import { V2Timeline, V2TimelineRail } from "./components/V2Timeline";
+import { V2TagCloud } from "./components/V2TagCloud";
 import { V2EntityTable } from "./components/V2EntityTable";
 
 const STAT_ICONS: Record<string, string> = {
@@ -50,14 +51,6 @@ const FOLLOW_UP_ICON_STYLES: Record<string, { icon: string; box: string }> = {
   muted: { icon: "📄", box: "bg-zinc-800 text-zinc-500" },
 };
 
-const TAG_COLORS: Record<string, string> = {
-  violet: "bg-violet-500/15 text-violet-300 ring-violet-500/25",
-  emerald: "bg-emerald-500/15 text-emerald-300 ring-emerald-500/25",
-  amber: "bg-amber-500/15 text-amber-300 ring-amber-500/25",
-  sky: "bg-sky-500/15 text-sky-300 ring-sky-500/25",
-  orange: "bg-orange-500/15 text-orange-300 ring-orange-500/25",
-};
-
 function IconBox({ icon, boxClass }: { icon: string; boxClass: string }) {
   return (
     <span
@@ -87,7 +80,7 @@ export default async function V2HomePage({
   const followUps = buildV2FollowUps(data, entities, includePrivate, today);
   const homeTimeline = buildV2HomeTimeline(data, inboxItems, includePrivate);
   const entityRows = buildV2EntityRows(data, inboxItems, includePrivate, today, tab);
-  const tags = buildV2TagCloud(data, includePrivate);
+  const tags = buildV2TagCloud(data, inboxItems, includePrivate);
 
   return (
     <div className="px-4 py-6 lg:px-8">
@@ -212,21 +205,7 @@ export default async function V2HomePage({
           <div id="tags">
           <V2Card className="p-5">
             <V2SectionTitle>Tags</V2SectionTitle>
-            {tags.length === 0 ? (
-              <p className="text-sm text-zinc-500">Tags appear on journal entries.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag.name}
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 ${TAG_COLORS[tag.color]}`}
-                  >
-                    {tag.name}
-                    <span className="opacity-60">{tag.count}</span>
-                  </span>
-                ))}
-              </div>
-            )}
+            <V2TagCloud tags={tags} />
           </V2Card>
           </div>
         </aside>

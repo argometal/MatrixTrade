@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { argusPrivateConfigured, verifyArgusPrivatePin } from "@/lib/auth/passwords";
 import { requireArgusSession } from "@/lib/auth/require-session";
 import {
   appendLogAttachment,
@@ -15,6 +17,7 @@ import {
   deleteInboxItem,
   deleteLog,
   getEntity,
+  getInboxItems,
   getLog,
   linkInboxToEntities,
   setInboxLinkedEntities,
@@ -59,6 +62,7 @@ import {
   argusErrorQueryParams,
   formatArgusError,
 } from "@/lib/argus/persistence/errors";
+import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
 
 function revalidateArgus(): void {
   revalidatePath("/argus");
@@ -822,6 +826,81 @@ export async function updateProjectAction(formData: FormData): Promise<void> {
   revalidateArgus();
   revalidatePath(`/argus/projects/${entityId}`);
   redirect(`/argus/projects/${entityId}`);
+}
+
+export async function renameProjectAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/browse/projects");
+
+  if (!name) {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=name`);
+  }
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.type !== "project") {
+    redirect(returnTo);
+  }
+
+  await updateEntity(entityId, { name });
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/projects");
+  revalidatePath(`/argus/v2/projects/${entityId}`);
+  revalidatePath(`/argus/projects/${entityId}`);
+  redirect(returnTo);
+}
+
+export async function deleteProjectAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const confirmName = String(formData.get("confirmName") ?? "").trim();
+  const pin = String(formData.get("pin") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/browse/projects");
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.type !== "project") {
+    redirect(returnTo);
+  }
+
+  if (confirmName.toLowerCase() !== entity.name.trim().toLowerCase()) {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=confirm`);
+  }
+
+  const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
+  const needsPin =
+    argusPrivateConfigured() &&
+    projectHasPrivateEvidence(data, inboxItems, entity) &&
+    !(await hasArgusPrivateUnlock());
+
+  if (needsPin && !verifyArgusPrivatePin(pin)) {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=pin`);
+  }
+
+  await deleteEntity(entityId);
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/projects");
+  revalidatePath(`/argus/v2/projects/${entityId}`);
+  redirect(returnTo);
+}
+
+export async function updateTopicAliasesAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const linkedTags = parseTopics(String(formData.get("linkedTags") ?? ""));
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/browse/topics");
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.type !== "other" || referenceKindFromNotes(entity.notes ?? "") !== "topic") {
+    redirect(returnTo);
+  }
+
+  await updateEntity(entityId, { linkedTags });
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/inbox");
+  revalidatePath("/argus/v2");
+  redirect(returnTo);
 }
 
 export async function deleteLogAction(formData: FormData): Promise<void> {

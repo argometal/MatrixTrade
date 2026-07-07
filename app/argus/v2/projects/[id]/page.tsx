@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { loadProjectPageData } from "@/lib/argus/v2/loaders";
+import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
+import { V2ProjectActions } from "../../components/V2ProjectActions";
 import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
 import { V2ProjectTabs } from "../../components/V2ProjectTabs";
@@ -38,6 +41,7 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
   const today = new Date().toISOString().slice(0, 10);
   const page = loadProjectPageData(data, inboxItems, entity, includePrivate, today);
+  const hasPrivateEvidence = projectHasPrivateEvidence(data, inboxItems, entity);
   const notes = entityNotesForDisplay(entity.notes ?? "");
   const morePeople = Math.max(0, page.peopleWithRoles.length - 4);
   const statusTone =
@@ -55,13 +59,6 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight text-zinc-50">{entity.name}</h1>
-              <Link
-                href={`/argus/projects/${entity.id}`}
-                className="rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-800 hover:text-zinc-400"
-                aria-label="Edit project"
-              >
-                ✎
-              </Link>
             </div>
             <div className="flex flex-wrap gap-2">
               <V2Badge tone={statusTone}>{page.status}</V2Badge>
@@ -74,7 +71,17 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
               {entity.alias ? <V2Badge tone="blue">{entity.alias}</V2Badge> : null}
             </div>
           </div>
-          <div className="flex shrink-0 gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <V2ProjectActions
+              projectId={entity.id}
+              projectName={entity.name}
+              href={`/argus/v2/projects/${entity.id}`}
+              hasPrivateEvidence={hasPrivateEvidence}
+              privateConfigured={argusPrivateConfigured()}
+              privateUnlocked={includePrivate}
+              returnTo={`/argus/v2/projects/${entity.id}`}
+              variant="inline"
+            />
             <V2EntityLinkButton
               entityId={entity.id}
               linkedIds={entity.linkedEntityIds ?? []}

@@ -42,6 +42,8 @@ Mark items:
 | 2026-07-06 | **Change 133** | Unified create+link (`CreateAndLinkModal`); event/project link counts; network empty-state CTA |
 | 2026-07-06 | **Change 134** | Unrestricted link targets (all 5 types); link modal inline create; picker fixes |
 | 2026-07-06 | **Change 135** | `ArgusUnifiedCreateFlow` — single + Create window (journal/person/org/project/event/topic/document + link + inline missing + save) |
+| 2026-07-07 | **Change 140** | Topic tag aliases; inbox Process tab + ranked suggestions; project rename/delete; filter labels |
+| 2026-07-07 | **Change 141** | Home timeline hover + click-through; frequency tag cloud |
 | 2026-07-06 | **Change 136** | `ArgusCreateLinkWindow` full-screen mockup UI; shared flow state hook; all + Create buttons open it |
 | 2026-07-06 | **Change 138** | Desktop Create & Link 4-column mockup layout |
 | 2026-07-06 | **Change 139** | Mobile Create & Link step wizard; `source-3` recovery tag; correlation docs |
@@ -347,6 +349,8 @@ Mark items:
 
 ### Detail panel — linking
 
+- [ ] **Process** tab hosts linking workspace (entities, tags, status, archive, convert)
+- [ ] Entity suggestions show match reason (e.g. topic alias hit)
 - [ ] Link modal: tabs All / People / Orgs / Projects / Topics / Events
 - [ ] Search within modal
 - [ ] Multi-select entities
@@ -424,6 +428,7 @@ Mark items:
 - [ ] Tabs: All, My topics, Followed
 - [ ] Tag chips filter row
 - [ ] Detail shows linked orgs, projects, people counts
+- [ ] **Tag aliases** editor on topic detail (`linkedTags` → inbox/topic signal bridge)
 - [ ] **+ Capture** opens journal sheet scoped to topic
 - [ ] Links to legacy network for linked people
 

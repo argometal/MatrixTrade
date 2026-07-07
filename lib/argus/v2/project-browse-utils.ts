@@ -4,6 +4,7 @@ import { getAllProjectScopeInbox, getProjectEvidenceScope } from "../project-evi
 import { entitiesByKind } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
 import { collectProjectLinkIds, countLinkKinds } from "./entity-link-counts";
+import { projectHasPrivateEvidence } from "./project-private";
 
 export type V2ProjectBrowseStatus = "Planning" | "Active" | "On Hold" | "Completed" | "Archived";
 
@@ -28,6 +29,8 @@ export interface V2ProjectBrowseCard {
     files: number;
     topics: number;
   };
+  /** Project has private journal/inbox evidence — delete may require PIN. */
+  hasPrivateEvidence: boolean;
   lastActivity: {
     label: string;
     timeLabel: string;
@@ -213,6 +216,7 @@ export function buildV2ProjectBrowseCards(
         progressPercent: durationProgress(project, today),
         team: teamPreview,
         teamOverflow: Math.max(0, linkedPeople.length - teamPreview.length),
+        hasPrivateEvidence: projectHasPrivateEvidence(data, inboxItems, project),
       };
     })
     .sort((a, b) => b.lastActivity.sortIso.localeCompare(a.lastActivity.sortIso));

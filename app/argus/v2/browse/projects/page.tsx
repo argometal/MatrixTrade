@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import {
   buildV2ProjectBrowseCards,
@@ -16,7 +17,12 @@ export default async function V2BrowseProjectsPage() {
 
   return (
     <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-500">Loading projects…</div>}>
-      <V2ProjectsBrowserShell cards={cards} summary={summary} />
+      <V2ProjectsBrowserShell
+        cards={cards}
+        summary={summary}
+        privateConfigured={argusPrivateConfigured()}
+        privateUnlocked={includePrivate}
+      />
     </Suspense>
   );
 }

@@ -4,6 +4,15 @@ import { INBOX_SOURCE_LABELS } from "../labels";
 import { entityReferenceKind } from "../link-hierarchy";
 import { REFERENCE_KIND_LABELS } from "../reference-types";
 import { relativeActivityLabel } from "./timeline-builders";
+import {
+  buildInboxTopicContext,
+  contextTopicAliasMatches,
+  inboxRowMatchesTagFilter,
+  linkedTopicAliasTags,
+  rankInboxEntitySuggestions,
+  topicIndexFromContext,
+  type InboxTopicContext,
+} from "./topic-signals";
 
 export type V2InboxTab = "all" | "unread" | "in_progress" | "processed" | "archived";
 
@@ -32,6 +41,8 @@ export interface V2InboxRow {
   entityKinds: V2InboxDetailEntity["kind"][];
   entityIds: string[];
   topicTags: string[];
+  linkedTopicAliases: string[];
+  contextTopicMatches: string[];
 }
 
 export type V2InboxEntityKind = V2InboxDetailEntity["kind"];
@@ -125,9 +136,11 @@ export function entityToV2InboxDetail(entity: Entity): V2InboxDetailEntity {
 export function buildV2InboxRows(
   enriched: EnrichedInboxItem[],
   entities: Entity[],
-  today: string
+  today: string,
+  topicContext?: InboxTopicContext
 ): V2InboxRow[] {
   const entityMap = new Map(entities.map((e) => [e.id, e]));
+  const topicIndex = topicContext ? topicIndexFromContext(topicContext) : new Map();
 
   return enriched
     .map(({ item, view }) => {
@@ -139,13 +152,15 @@ export function buildV2InboxRows(
 
       const received = item.receivedAt || view.receivedAt;
       const timeLabel = formatInboxTime(received, today);
+      const subject = view.subject || "(No subject)";
+      const preview = view.textBody.replace(/\s+/g, " ").slice(0, 120);
 
       return {
         id: item.id,
         sender: senderName(view.from),
         senderInitials: initials(senderName(view.from)),
-        subject: view.subject || "(No subject)",
-        preview: view.textBody.replace(/\s+/g, " ").slice(0, 120),
+        subject,
+        preview,
         timeLabel,
         status: item.status,
         statusLabel: ui.label,
@@ -159,6 +174,10 @@ export function buildV2InboxRows(
         entityKinds: [...new Set(linkedEntities.map((entity) => entityKind(entity)))],
         entityIds: linkedEntities.map((entity) => entity.id),
         topicTags: item.topics ?? [],
+        linkedTopicAliases: linkedTopicAliasTags(linkedEntities),
+        contextTopicMatches: topicContext
+          ? contextTopicAliasMatches(subject, preview, topicIndex)
+          : [],
       };
     })
     .sort((a, b) => {
@@ -192,12 +211,7 @@ export function filterV2InboxRows(rows: V2InboxRow[], tab: V2InboxTab, filters: 
   if (filters.type) result = result.filter((row) => row.entityKinds.includes(filters.type!));
   if (filters.entityId) result = result.filter((row) => row.entityIds.includes(filters.entityId!));
   if (filters.tag) {
-    const tag = filters.tag.toLowerCase();
-    result = result.filter(
-      (row) =>
-        row.topicTags.some((value) => value.toLowerCase() === tag) ||
-        row.tags.some((value) => value.name.toLowerCase() === tag)
-    );
+    result = result.filter((row) => inboxRowMatchesTagFilter(row, filters.tag!));
   }
 
   return result;
@@ -216,7 +230,10 @@ export function inboxEntityKindLabel(kind: V2InboxEntityKind): string {
   return ENTITY_KIND_LABELS[kind];
 }
 
-export function buildV2InboxFilterOptions(rows: V2InboxRow[]): V2InboxFilterOptions {
+export function buildV2InboxFilterOptions(
+  rows: V2InboxRow[],
+  topicContext?: InboxTopicContext
+): V2InboxFilterOptions {
   const sources = [...new Set(rows.map((row) => row.source))].sort();
   const senderMap = new Map<string, string>();
   for (const row of rows) senderMap.set(row.senderKey, row.sender);
@@ -232,7 +249,12 @@ export function buildV2InboxFilterOptions(rows: V2InboxRow[]): V2InboxFilterOpti
     .map(([id, name]) => ({ id, name }))
     .sort((a, b) => a.name.localeCompare(b.name));
   const tags = [
-    ...new Set(rows.flatMap((row) => [...row.topicTags, ...row.tags.map((tag) => tag.name)])),
+    ...new Set([
+      ...rows.flatMap((row) => [...row.topicTags, ...row.tags.map((tag) => tag.name)]),
+      ...rows.flatMap((row) => row.linkedTopicAliases),
+      ...rows.flatMap((row) => row.contextTopicMatches),
+      ...(topicContext?.topicEntries.flatMap((entry) => entry.aliases) ?? []),
+    ]),
   ].sort((a, b) => a.localeCompare(b));
 
   return { sources, senders, types, entities, tags };
@@ -347,24 +369,33 @@ export function suggestInboxTags(subject: string, body: string, linkedEntities: 
   return [...tags].slice(0, 10);
 }
 
-/** Entity suggestions from name matches in email subject/body. */
+/** Entity suggestions ranked by name + topic alias signals. */
 export function suggestInboxEntities(
   subject: string,
   body: string,
   entities: Entity[],
-  linkedIds: string[]
-): V2InboxDetailEntity[] {
-  const haystack = `${subject}\n${body}`.toLowerCase();
-  const linked = new Set(linkedIds);
+  linkedIds: string[],
+  topicContext?: InboxTopicContext
+): Array<V2InboxDetailEntity & { matchReason?: string }> {
+  if (!topicContext) {
+    const haystack = `${subject}\n${body}`.toLowerCase();
+    const linked = new Set(linkedIds);
+    return entities
+      .filter((entity) => !entity.deletedAt && !linked.has(entity.id))
+      .filter((entity) => {
+        const name = entity.name.trim().toLowerCase();
+        if (name.length < 3) return false;
+        if (haystack.includes(name)) return true;
+        return name.split(/\s+/).some((part) => part.length > 3 && haystack.includes(part));
+      })
+      .slice(0, 6)
+      .map((entity) => entityToV2InboxDetail(entity));
+  }
 
-  return entities
-    .filter((entity) => !entity.deletedAt && !linked.has(entity.id))
-    .filter((entity) => {
-      const name = entity.name.trim().toLowerCase();
-      if (name.length < 3) return false;
-      if (haystack.includes(name)) return true;
-      return name.split(/\s+/).some((part) => part.length > 3 && haystack.includes(part));
-    })
-    .slice(0, 6)
-    .map(entityToV2InboxDetail);
+  return rankInboxEntitySuggestions(subject, body, entities, linkedIds, topicContext).map((match) => ({
+    ...entityToV2InboxDetail(match.entity),
+    matchReason: match.reason,
+  }));
 }
+
+export { buildInboxTopicContext, type InboxTopicContext };

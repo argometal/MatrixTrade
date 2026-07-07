@@ -35,6 +35,8 @@ Use git tags to restore any point.
 | **132** | `second-origin` | v2 checkpoint: Network browser, AI Charter, checklist v1.1, inbox unlink fix, search/PIN/filters |
 | **138** | — | Desktop Create & Link 4-column mockup (`ArgusCreateLinkWindow`) |
 | **139** | `source-3` | Mobile Create & Link step wizard; correlation guide + QA checklists; recovery tag `source-3` |
+| **140** | `change-140` | Topic tag aliases (`linkedTags` on topics); ranked inbox suggestions via topic signals; inbox **Process** tab; filter chip labels; project rename/delete on v2 browse |
+| **141** | `change-141` | Home timeline hover preview + click-through navigation; frequency-sized tag cloud (journal + inbox tags) |
 
 ## Restore
 

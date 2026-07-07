@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import { V2CreateEntityButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2OpenCaptureButton } from "@/app/argus/v2/components/V2OpenCaptureButton";
+import { V2TopicAliasEditor } from "./V2TopicAliasEditor";
 import {
   buildV2TopicTabCounts,
   filterV2TopicRows,
@@ -189,6 +190,15 @@ export function V2TopicsShell({
               <LinkCountCard icon="🏢" label="Organizations" count={selected.orgCount} />
               <LinkCountCard icon="📁" label="Projects" count={selected.projectCount} />
               <LinkCountCard icon="👤" label="People" count={selected.peopleCount} />
+            </div>
+
+            <div className="mb-6">
+              <V2TopicAliasEditor
+                topicId={selected.id}
+                topicName={selected.name}
+                initialAliases={selected.aliases}
+                returnTo={`/argus/v2/browse/topics?selected=${selected.id}${tab !== "all" ? `&tab=${tab}` : ""}`}
+              />
             </div>
 
             <h3 className="mb-3 text-sm font-semibold text-zinc-100">Recent entries</h3>

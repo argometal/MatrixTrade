@@ -24,6 +24,7 @@ import {
   entityToV2InboxDetail,
   suggestInboxEntities,
   suggestInboxTags,
+  type InboxTopicContext,
   type V2InboxDetailEntity,
 } from "@/lib/argus/v2/inbox-loaders";
 
@@ -68,13 +69,15 @@ export function V2InboxDetailPanel({
   buckets,
   tagBuckets,
   linkedEntityRecords,
+  topicContext,
 }: {
   detail: DetailBundle;
   buckets: EntityPickerBuckets;
   tagBuckets: TagBuckets;
   linkedEntityRecords: Entity[];
+  topicContext: InboxTopicContext;
 }) {
-  const [panelTab, setPanelTab] = useState<"email" | "details" | "attachments" | "related">("email");
+  const [panelTab, setPanelTab] = useState<"email" | "details" | "attachments" | "process">("email");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const [showConvert, setShowConvert] = useState(false);
@@ -103,8 +106,8 @@ export function V2InboxDetailPanel({
   const returnTo = `/argus/v2/inbox?selected=${item.id}`;
 
   const suggestedEntities = useMemo(
-    () => suggestInboxEntities(view.subject ?? "", view.textBody, linkedEntityRecords, linkIds),
-    [view.subject, view.textBody, linkedEntityRecords, linkIds]
+    () => suggestInboxEntities(view.subject ?? "", view.textBody, linkedEntityRecords, linkIds, topicContext),
+    [view.subject, view.textBody, linkedEntityRecords, linkIds, topicContext]
   );
 
   const entityRecordMap = useMemo(
@@ -232,8 +235,232 @@ export function V2InboxDetailPanel({
     { id: "email" as const, label: "Email" },
     { id: "details" as const, label: "Details" },
     { id: "attachments" as const, label: `Attachments (${attachments.length})` },
-    { id: "related" as const, label: "Related" },
+    { id: "process" as const, label: "Process" },
   ];
+
+  const processWorkspace = (
+    <div className="space-y-5">
+      <p className="text-sm leading-relaxed text-zinc-500">
+        Connect this email to people, projects, topics, and events. Tags and status save here.
+      </p>
+
+      {convertedLog ? (
+        <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
+          <p className="text-[11px] uppercase tracking-wide text-zinc-600">Converted to journal</p>
+          <Link href={`/argus/logs/${convertedLog.id}`} className="text-sm text-violet-400 hover:text-violet-300">
+            {convertedLog.title}
+          </Link>
+        </div>
+      ) : null}
+
+      <div>
+        <h3 className="mb-1 text-sm font-semibold text-zinc-100">Linked entities</h3>
+        {canTriage ? (
+          <p className="mb-3 text-[11px] leading-snug text-zinc-500">{LINK_HIERARCHY.inboxLinkHint}</p>
+        ) : (
+          <div className="mb-3" />
+        )}
+        <div className="flex flex-wrap gap-2">
+          {selectedLinked.map((entity) => (
+            <span
+              key={entity.id}
+              className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium ${entityChipClass(entity.kind)}`}
+            >
+              <Link href={entity.href} className="inline-flex items-center gap-2">
+                {entityIcon(entity.kind)} {entity.name}
+              </Link>
+              {canTriage ? (
+                <button
+                  type="button"
+                  onClick={() => removeLink(entity.id)}
+                  className="text-zinc-500 hover:text-zinc-300"
+                  aria-label={`Remove ${entity.name}`}
+                >
+                  ×
+                </button>
+              ) : null}
+            </span>
+          ))}
+          {canTriage ? (
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="rounded-xl border border-dashed border-zinc-700 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
+            >
+              + Link
+            </button>
+          ) : null}
+          {canTriage && suggestedEntities.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => void applySuggestedEntities()}
+              className="rounded-xl bg-violet-600/20 px-3 py-2 text-xs font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
+            >
+              ✨ Suggest entities
+            </button>
+          ) : null}
+        </div>
+        {canTriage && suggestedEntities.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {suggestedEntities.map((entity) => (
+              <button
+                key={entity.id}
+                type="button"
+                onClick={() => void addSuggestedEntity(entity)}
+                className="rounded-full border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500 hover:border-violet-500/40 hover:text-violet-300"
+                title={entity.matchReason}
+              >
+                + {entity.name}
+                {entity.matchReason ? <span className="text-zinc-600"> · {entity.matchReason}</span> : null}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {!canTriage && selectedLinked.length === 0 ? (
+          <p className="text-sm text-zinc-500">No linked entities.</p>
+        ) : null}
+      </div>
+
+      <div>
+        <h3 className="mb-1 text-sm font-semibold text-zinc-100">Tags</h3>
+        <p className="mb-3 text-[11px] leading-snug text-zinc-500">
+          Suggestions are inferred from the email — click to add. Only tags you select are saved.
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {selectedTags.map((tag) => (
+            <span
+              key={tag}
+              className="inline-flex items-center gap-1 rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[11px] text-violet-200"
+            >
+              {tag}
+              {canTriage ? (
+                <button
+                  type="button"
+                  onClick={() => void removeTag(tag)}
+                  className="text-violet-400/70 hover:text-violet-200"
+                  aria-label={`Remove tag ${tag}`}
+                >
+                  ×
+                </button>
+              ) : null}
+            </span>
+          ))}
+          {canTriage ? (
+            <button
+              type="button"
+              onClick={() => setTagPickerOpen(true)}
+              className="rounded-md border border-dashed border-zinc-700 px-2 py-1 text-[11px] text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
+            >
+              + Add tag
+            </button>
+          ) : null}
+        </div>
+        {canTriage && suggestedTags.length > 0 ? (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            {suggestedTags.length > 1 ? (
+              <button
+                type="button"
+                onClick={() => void applySuggestedTags()}
+                className="rounded-xl bg-violet-600/20 px-2.5 py-1 text-[10px] font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
+              >
+                ✨ Suggest tags
+              </button>
+            ) : null}
+            {suggestedTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => void addSuggestedTag(tag)}
+                className="rounded-full border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500 hover:border-violet-500/40 hover:text-violet-300"
+              >
+                + {tag}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      {canTriage ? (
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-zinc-100">{INBOX.actions}</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-xs text-zinc-500">
+              Status
+              <select
+                value={status}
+                disabled={triageSaving}
+                onChange={(event) => void changeStatus(event.target.value as InboxStatus)}
+                className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300"
+              >
+                <option value="pending">Unread</option>
+                <option value="linked">In Progress</option>
+              </select>
+            </label>
+            <label className="block text-xs text-zinc-500">
+              Follow up
+              <input
+                type="date"
+                value={followUpDate}
+                disabled={triageSaving}
+                onChange={(event) => void changeFollowUpDate(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300"
+              />
+            </label>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={submitLinks}
+              disabled={linkIds.length === 0 || linkSaving}
+              className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
+            >
+              {linkSaving ? "Saving…" : INBOX.saveLink}
+            </button>
+            <form action={archiveInboxAction} className="inline">
+              <input type="hidden" name="inboxId" value={item.id} />
+              <input type="hidden" name="returnTo" value={`/argus/v2/inbox?tab=archived`} />
+              <button
+                type="submit"
+                className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800"
+              >
+                {INBOX.archive}
+              </button>
+            </form>
+            <button
+              type="button"
+              onClick={() => setShowConvert(true)}
+              className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800"
+            >
+              {INBOX.convertRecord}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {showConvert && canTriage ? (
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4">
+          <p className="mb-2 text-sm font-medium text-zinc-200">{INBOX.convertHeading}</p>
+          <p className="mb-3 text-xs text-zinc-500">{INBOX.convertHint}</p>
+          <CaptureSheet
+            open
+            action={convertInboxAction}
+            buckets={buckets}
+            tagBuckets={tagBuckets}
+            mode="embedded"
+            onClose={() => setShowConvert(false)}
+            initial={{
+              title: defaultTitle,
+              body: defaultBody,
+              inboxId: item.id,
+              entityIds: linkIds,
+              topics: selectedTags,
+              followUpDate,
+            }}
+          />
+        </div>
+      ) : null}
+    </div>
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -369,223 +596,7 @@ export function V2InboxDetailPanel({
             </ul>
           )
         ) : null}
-        {panelTab === "related" ? (
-          selectedLinked.length === 0 && !convertedLog ? (
-            <p className="text-sm text-zinc-500">No linked entities yet.</p>
-          ) : (
-            <ul className="space-y-2">
-              {selectedLinked.map((entity) => (
-                <li key={entity.id}>
-                  <Link href={entity.href} className="text-sm text-violet-400 hover:text-violet-300">
-                    {entity.label}: {entity.name}
-                  </Link>
-                </li>
-              ))}
-              {convertedLog ? (
-                <li>
-                  <Link href={`/argus/logs/${convertedLog.id}`} className="text-sm text-violet-400 hover:text-violet-300">
-                    Journal: {convertedLog.title}
-                  </Link>
-                </li>
-              ) : null}
-            </ul>
-          )
-        ) : null}
-
-        <div className="mt-6 space-y-5 border-t border-zinc-800/80 pt-6">
-          <div>
-            <h3 className="mb-1 text-sm font-semibold text-zinc-100">Linked entities</h3>
-            {canTriage ? (
-              <p className="mb-3 text-[11px] leading-snug text-zinc-600">{LINK_HIERARCHY.inboxLinkHint}</p>
-            ) : (
-              <div className="mb-3" />
-            )}
-            <div className="flex flex-wrap gap-2">
-              {selectedLinked.map((entity) => (
-                <span
-                  key={entity.id}
-                  className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-medium ${entityChipClass(entity.kind)}`}
-                >
-                  <Link href={entity.href} className="inline-flex items-center gap-2">
-                    {entityIcon(entity.kind)} {entity.name}
-                  </Link>
-                  {canTriage ? (
-                    <button
-                      type="button"
-                      onClick={() => removeLink(entity.id)}
-                      className="text-zinc-500 hover:text-zinc-300"
-                      aria-label={`Remove ${entity.name}`}
-                    >
-                      ×
-                    </button>
-                  ) : null}
-                </span>
-              ))}
-              {canTriage && suggestedEntities.length > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => void applySuggestedEntities()}
-                  className="rounded-xl bg-violet-600/20 px-3 py-2 text-xs font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
-                >
-                  ✨ Suggest entities
-                </button>
-              ) : null}
-            </div>
-            {canTriage && suggestedEntities.length > 0 ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {suggestedEntities.map((entity) => (
-                  <button
-                    key={entity.id}
-                    type="button"
-                    onClick={() => void addSuggestedEntity(entity)}
-                    className="rounded-full border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500 hover:border-violet-500/40 hover:text-violet-300"
-                  >
-                    + {entity.name}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          <div>
-            <h3 className="mb-1 text-sm font-semibold text-zinc-100">Tags</h3>
-            <p className="mb-3 text-[11px] leading-snug text-zinc-600">
-              Suggestions are inferred from the email — click to add. Only tags you select are saved.
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {selectedTags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1 rounded-md border border-violet-500/30 bg-violet-500/10 px-2 py-1 text-[11px] text-violet-200"
-                >
-                  {tag}
-                  {canTriage ? (
-                    <button
-                      type="button"
-                      onClick={() => void removeTag(tag)}
-                      className="text-violet-400/70 hover:text-violet-200"
-                      aria-label={`Remove tag ${tag}`}
-                    >
-                      ×
-                    </button>
-                  ) : null}
-                </span>
-              ))}
-              {canTriage ? (
-                <button
-                  type="button"
-                  onClick={() => setTagPickerOpen(true)}
-                  className="rounded-md border border-dashed border-zinc-700 px-2 py-1 text-[11px] text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
-                >
-                  + Add tag
-                </button>
-              ) : null}
-            </div>
-            {canTriage && suggestedTags.length > 0 ? (
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                {suggestedTags.length > 1 ? (
-                  <button
-                    type="button"
-                    onClick={() => void applySuggestedTags()}
-                    className="rounded-xl bg-violet-600/20 px-2.5 py-1 text-[10px] font-medium text-violet-300 ring-1 ring-violet-500/30 hover:bg-violet-600/30"
-                  >
-                    ✨ Suggest tags
-                  </button>
-                ) : null}
-                {suggestedTags.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => void addSuggestedTag(tag)}
-                    className="rounded-full border border-zinc-800 px-2 py-0.5 text-[10px] text-zinc-500 hover:border-violet-500/40 hover:text-violet-300"
-                  >
-                    + {tag}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-
-          {canTriage ? (
-            <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-              <h3 className="mb-3 text-sm font-semibold text-zinc-100">{INBOX.actions}</h3>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block text-xs text-zinc-500">
-                  Status
-                  <select
-                    value={status}
-                    disabled={triageSaving}
-                    onChange={(event) => void changeStatus(event.target.value as InboxStatus)}
-                    className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300"
-                  >
-                    <option value="pending">Unread</option>
-                    <option value="linked">In Progress</option>
-                  </select>
-                </label>
-                <label className="block text-xs text-zinc-500">
-                  Follow up
-                  <input
-                    type="date"
-                    value={followUpDate}
-                    disabled={triageSaving}
-                    onChange={(event) => void changeFollowUpDate(event.target.value)}
-                    className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300"
-                  />
-                </label>
-              </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={submitLinks}
-                  disabled={linkIds.length === 0 || linkSaving}
-                  className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
-                >
-                  {linkSaving ? "Saving…" : INBOX.saveLink}
-                </button>
-                <form action={archiveInboxAction} className="inline">
-                  <input type="hidden" name="inboxId" value={item.id} />
-                  <input type="hidden" name="returnTo" value={`/argus/v2/inbox?tab=archived`} />
-                  <button
-                    type="submit"
-                    className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800"
-                  >
-                    {INBOX.archive}
-                  </button>
-                </form>
-                <button
-                  type="button"
-                  onClick={() => setShowConvert(true)}
-                  className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800"
-                >
-                  {INBOX.convertRecord}
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          {showConvert && canTriage ? (
-            <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-              <p className="mb-2 text-sm font-medium text-zinc-200">{INBOX.convertHeading}</p>
-              <p className="mb-3 text-xs text-zinc-500">{INBOX.convertHint}</p>
-              <CaptureSheet
-                open
-                action={convertInboxAction}
-                buckets={buckets}
-                tagBuckets={tagBuckets}
-                mode="embedded"
-                onClose={() => setShowConvert(false)}
-                initial={{
-                  title: defaultTitle,
-                  body: defaultBody,
-                  inboxId: item.id,
-                  entityIds: linkIds,
-                  topics: selectedTags,
-                  followUpDate,
-                }}
-              />
-            </div>
-          ) : null}
-        </div>
+        {panelTab === "process" ? processWorkspace : null}
       </div>
 
       <div className="border-t border-zinc-800/80 px-5 py-3 text-center text-[11px] text-zinc-600">
