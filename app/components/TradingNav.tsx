@@ -16,6 +16,9 @@ export function TradingNav() {
       <Link href="/trades-preview" className="hover:text-zinc-600">
         Trades preview
       </Link>
+      <Link href="/trades" className="hover:text-zinc-600">
+        Classic trades
+      </Link>
       <Link href="/playbook" className="hover:text-zinc-600">
         Playbook
       </Link>
@@ -28,11 +31,17 @@ export function TradingNav() {
       <Link href="/journal" className="hover:text-zinc-600">
         Journal
       </Link>
+      <Link href="/mistakes" className="hover:text-zinc-600">
+        Mistakes
+      </Link>
       <Link href="/inbox" className="hover:text-zinc-600">
         Inbox
       </Link>
       <Link href="/system" className="hover:text-zinc-600">
         System
+      </Link>
+      <Link href="/connect" className="hover:text-zinc-600">
+        Connect
       </Link>
       <Link
         href="/trades/new"
