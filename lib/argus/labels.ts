@@ -36,9 +36,9 @@ export const INBOX_SOURCE_LABELS: Record<InboxSource, string> = {
 export const INBOX_SOURCES: InboxSource[] = ["manual", "api", "email", "file"];
 
 export const INBOX_STATUS_LABELS: Record<InboxStatus, string> = {
-  pending: "Pending",
+  pending: "New",
   linked: "Linked",
-  converted: "Converted",
+  converted: "Done",
   archived: "Archived",
 };
 

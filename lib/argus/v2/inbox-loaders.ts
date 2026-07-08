@@ -75,11 +75,34 @@ const STATUS_UI: Record<
   InboxStatus,
   { tab: V2InboxTab; label: string; tone: V2InboxRow["statusTone"] }
 > = {
-  pending: { tab: "unread", label: "Unread", tone: "violet" },
-  linked: { tab: "in_progress", label: "In Progress", tone: "amber" },
-  converted: { tab: "processed", label: "Processed", tone: "emerald" },
+  pending: { tab: "unread", label: "New", tone: "violet" },
+  linked: { tab: "in_progress", label: "Linked", tone: "amber" },
+  converted: { tab: "processed", label: "Done", tone: "emerald" },
   archived: { tab: "archived", label: "Archived", tone: "zinc" },
 };
+
+/** Auto-derive triage status from link count — no manual unread/linked toggle. */
+export function inboxStatusAfterLinkChange(
+  current: InboxStatus,
+  linkCount: number
+): InboxStatus | undefined {
+  if (current === "archived" || current === "converted") return undefined;
+  if (linkCount > 0 && current === "pending") return "linked";
+  if (linkCount === 0 && current === "linked") return "pending";
+  return undefined;
+}
+
+export function inboxStatusDisplay(status: InboxStatus): { label: string; tone: V2InboxRow["statusTone"] } {
+  const ui = STATUS_UI[status];
+  return { label: ui.label, tone: ui.tone };
+}
+
+/** Display + filter status — reconciles legacy rows where links exist but status stayed pending. */
+export function effectiveInboxStatus(item: Pick<InboxItem, "status" | "linkedEntityIds">): InboxStatus {
+  if (item.status === "archived" || item.status === "converted") return item.status;
+  const linkCount = item.linkedEntityIds?.length ?? 0;
+  return linkCount > 0 ? "linked" : "pending";
+}
 
 function senderName(from?: string): string {
   if (!from) return "Unknown sender";
@@ -144,7 +167,8 @@ export function buildV2InboxRows(
 
   return enriched
     .map(({ item, view }) => {
-      const ui = STATUS_UI[item.status];
+      const status = effectiveInboxStatus(item);
+      const ui = STATUS_UI[status];
       const linkedEntities = (item.linkedEntityIds ?? [])
         .map((id) => entityMap.get(id))
         .filter((e): e is Entity => Boolean(e));
@@ -162,11 +186,11 @@ export function buildV2InboxRows(
         subject,
         preview,
         timeLabel,
-        status: item.status,
+        status,
         statusLabel: ui.label,
         statusTone: ui.tone,
         tags: linked,
-        unread: item.status === "pending",
+        unread: status === "pending",
         isPrivate: Boolean(item.private),
         attachmentCount: item.attachmentIds.length,
         source: item.source,

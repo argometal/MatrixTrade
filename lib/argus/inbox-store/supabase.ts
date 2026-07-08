@@ -1,6 +1,7 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { isArgusInboxPrivateColumnReady, isArgusInboxTriageColumnsReady, isArgusSoftDeleteSchemaReady } from "../supabase-protection/schema-ready";
 import type { Attachment, AttachmentParentType, InboxItem, InboxItemInput } from "../types";
+import { inboxStatusAfterLinkChange } from "../v2/inbox-loaders";
 import { ARGUS_FILES_BUCKET } from "./config";
 
 function generateId(): string {
@@ -266,9 +267,12 @@ export async function setInboxLinkedEntities(inboxId: string, entityIds: string[
 
   const softDeleteReady = await isArgusSoftDeleteSchemaReady();
   const supabase = createSupabaseAdmin();
+  const nextStatus = inboxStatusAfterLinkChange(item.status, unique.length);
+  const updatePayload: Record<string, unknown> = { linked_entity_ids: unique };
+  if (nextStatus) updatePayload.status = nextStatus;
   let query = supabase
     .from("argus_inbox_items")
-    .update({ linked_entity_ids: unique })
+    .update(updatePayload)
     .eq("id", inboxId);
   if (softDeleteReady) query = query.is("deleted_at", null);
   const { data, error } = await query.select("*").single();

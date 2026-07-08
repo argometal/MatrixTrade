@@ -36,9 +36,9 @@ import { V2InboxSwipeRow } from "./V2InboxSwipeRow";
 
 const TABS: { id: V2InboxTab; label: string }[] = [
   { id: "all", label: "All" },
-  { id: "unread", label: "Unread" },
-  { id: "in_progress", label: "In Progress" },
-  { id: "processed", label: "Processed" },
+  { id: "unread", label: "New" },
+  { id: "in_progress", label: "Linked" },
+  { id: "processed", label: "Done" },
   { id: "archived", label: "Archived" },
 ];
 

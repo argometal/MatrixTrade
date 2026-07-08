@@ -23,6 +23,7 @@ import type {
   RunbookInput,
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
+import { inboxStatusAfterLinkChange } from "./v2/inbox-loaders";
 import {
   filterLinkIdsForSource,
   linkSourceKindFromEntity,
@@ -747,9 +748,11 @@ export async function setInboxLinkedEntities(inboxId: string, entityIds: string[
   if (inbox.status === "archived") throw new Error("Inbox item is archived");
 
   const now = new Date().toISOString();
+  const nextStatus = inboxStatusAfterLinkChange(inbox.status, unique.length);
   data.inboxItems[idx] = {
     ...inbox,
     linkedEntityIds: unique,
+    ...(nextStatus ? { status: nextStatus } : {}),
   };
 
   for (const eid of unique) {

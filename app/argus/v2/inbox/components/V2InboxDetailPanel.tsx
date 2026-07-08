@@ -12,7 +12,6 @@ import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { V2InboxEntityLinkModal } from "@/app/argus/v2/inbox/components/V2InboxEntityLinkModal";
 import type { ArgusLinkFilter, ArgusLinkResult } from "@/app/argus/components/ArgusLinkModal";
 import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
-import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import { INBOX, LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 import {
   archiveInboxAction,
@@ -23,6 +22,9 @@ import {
 } from "@/app/argus/actions";
 import {
   entityToV2InboxDetail,
+  effectiveInboxStatus,
+  inboxStatusAfterLinkChange,
+  inboxStatusDisplay,
   suggestInboxEntities,
   suggestInboxTags,
   type InboxTopicContext,
@@ -80,13 +82,16 @@ export function V2InboxDetailPanel({
   topicContext: InboxTopicContext;
   onBack?: () => void;
 }) {
-  const [panelTab, setPanelTab] = useState<"email" | "details" | "attachments" | "process">("email");
+  const [panelTab, setPanelTab] = useState<"email" | "attachments" | "links">("email");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [linkModalFilter, setLinkModalFilter] = useState<ArgusLinkFilter>("all");
   const [showConvert, setShowConvert] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [linkIds, setLinkIds] = useState<string[]>(detail.item.linkedEntityIds ?? []);
-  const [status, setStatus] = useState<InboxStatus>(detail.item.status);
+  const [status, setStatus] = useState<InboxStatus>(
+    inboxStatusAfterLinkChange(detail.item.status, (detail.item.linkedEntityIds ?? []).length) ??
+      effectiveInboxStatus(detail.item)
+  );
   const [followUpDate, setFollowUpDate] = useState(detail.item.followUpDate ?? "");
   const [selectedTags, setSelectedTags] = useState<string[]>(detail.item.topics ?? []);
   const [linkSaving, setLinkSaving] = useState(false);
@@ -96,7 +101,10 @@ export function V2InboxDetailPanel({
 
   useEffect(() => {
     setLinkIds(detail.item.linkedEntityIds ?? []);
-    setStatus(detail.item.status);
+    setStatus(
+      inboxStatusAfterLinkChange(detail.item.status, (detail.item.linkedEntityIds ?? []).length) ??
+        effectiveInboxStatus(detail.item)
+    );
     setFollowUpDate(detail.item.followUpDate ?? "");
     setSelectedTags(detail.item.topics ?? []);
     setShowConvert(false);
@@ -137,7 +145,6 @@ export function V2InboxDetailPanel({
   );
 
   async function persistTriage(patch: {
-    status?: InboxStatus;
     followUpDate?: string | null;
     topics?: string[];
   }) {
@@ -148,11 +155,6 @@ export function V2InboxDetailPanel({
     } finally {
       setTriageSaving(false);
     }
-  }
-
-  async function changeStatus(next: InboxStatus) {
-    setStatus(next);
-    await persistTriage({ status: next });
   }
 
   async function changeFollowUpDate(next: string) {
@@ -187,14 +189,12 @@ export function V2InboxDetailPanel({
     setLinkSaving(true);
     try {
       await saveInboxLinksAction(item.id, ids);
+      const nextStatus = inboxStatusAfterLinkChange(status, ids.length);
+      if (nextStatus) setStatus(nextStatus);
       router.refresh();
     } finally {
       setLinkSaving(false);
     }
-  }
-
-  function submitLinks() {
-    void persistLinks(linkIds);
   }
 
   async function removeLink(id: string) {
@@ -241,15 +241,17 @@ export function V2InboxDetailPanel({
 
   const detailTabs = [
     { id: "email" as const, label: "Email" },
-    { id: "details" as const, label: "Details" },
     { id: "attachments" as const, label: `Attachments (${attachments.length})` },
-    { id: "process" as const, label: "Process" },
+    { id: "links" as const, label: "Links" },
   ];
 
-  const processWorkspace = (
+  const statusDisplay = inboxStatusDisplay(status);
+
+  const linksWorkspace = (
     <div className="space-y-5">
       <p className="text-sm leading-relaxed text-zinc-500">
-        Connect this email to people, projects, topics, and events. Tags and status save here.
+        Connect this email to people, projects, topics, and events. Status updates when you link or unlink — no manual
+        triage.
       </p>
 
       {convertedLog ? (
@@ -391,53 +393,49 @@ export function V2InboxDetailPanel({
       {canTriage ? (
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4">
           <h3 className="mb-3 text-sm font-semibold text-zinc-100">{INBOX.actions}</h3>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block text-xs text-zinc-500">
-              Status
-              <select
-                value={status}
-                disabled={triageSaving}
-                onChange={(event) => void changeStatus(event.target.value as InboxStatus)}
-                className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300"
-              >
-                <option value="pending">Unread</option>
-                <option value="linked">In Progress</option>
-              </select>
-            </label>
-            <label className="block text-xs text-zinc-500">
-              Follow up
-              <input
-                type="date"
-                value={followUpDate}
-                disabled={triageSaving}
-                onChange={(event) => void changeFollowUpDate(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300"
-              />
-            </label>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={submitLinks}
-              disabled={linkIds.length === 0 || linkSaving}
-              className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+                statusDisplay.tone === "violet"
+                  ? "bg-violet-500/15 text-violet-300"
+                  : statusDisplay.tone === "amber"
+                    ? "bg-amber-500/15 text-amber-300"
+                    : statusDisplay.tone === "emerald"
+                      ? "bg-emerald-500/15 text-emerald-300"
+                      : "bg-zinc-800 text-zinc-400"
+              }`}
             >
-              {linkSaving ? "Saving…" : INBOX.saveLink}
-            </button>
+              {statusDisplay.label}
+            </span>
+            <span className="text-[11px] text-zinc-600">
+              {linkIds.length > 0 ? `${linkIds.length} linked` : "No links yet"}
+            </span>
+          </div>
+          <label className="block text-xs text-zinc-500">
+            Follow up (optional)
+            <input
+              type="date"
+              value={followUpDate}
+              disabled={triageSaving}
+              onChange={(event) => void changeFollowUpDate(event.target.value)}
+              className="mt-1 w-full max-w-xs rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-300"
+            />
+          </label>
+          <div className="mt-4 flex flex-wrap gap-2">
             <form action={archiveInboxAction} className="inline">
               <input type="hidden" name="inboxId" value={item.id} />
               <input type="hidden" name="returnTo" value={`/argus/v2/inbox?tab=archived`} />
               <button
                 type="submit"
-                className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800"
+                className="rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-zinc-200 hover:bg-zinc-700"
               >
-                {INBOX.archive}
+                Done — archive
               </button>
             </form>
             <button
               type="button"
               onClick={() => setShowConvert(true)}
-              className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800"
+              className="rounded-xl border border-violet-500/40 bg-violet-600/15 px-4 py-2.5 text-sm font-medium text-violet-300 hover:bg-violet-600/25"
             >
               {INBOX.convertRecord}
             </button>
@@ -600,21 +598,23 @@ export function V2InboxDetailPanel({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 pb-36 lg:pb-4">
         {panelTab === "email" ? (
-          <div className="whitespace-pre-wrap text-sm leading-7 text-zinc-300">{view.textBody}</div>
-        ) : null}
-        {panelTab === "details" ? (
-          <dl className="grid gap-3 text-sm sm:grid-cols-[6rem_1fr]">
-            <dt className="text-zinc-500">From</dt>
-            <dd className="text-zinc-200">{view.from}</dd>
-            <dt className="text-zinc-500">To</dt>
-            <dd className="text-zinc-200">{view.to || "—"}</dd>
-            <dt className="text-zinc-500">Status</dt>
-            <dd className="text-zinc-200">{INBOX_STATUS_LABELS[status]}</dd>
-            <dt className="text-zinc-500">Follow up</dt>
-            <dd className="text-zinc-200">{followUpDate || "—"}</dd>
-            <dt className="text-zinc-500">Source</dt>
-            <dd className="text-zinc-200">{item.source}</dd>
-          </dl>
+          <div className="space-y-5">
+            <dl className="grid gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4 text-sm sm:grid-cols-[5.5rem_1fr]">
+              <dt className="text-zinc-500">Status</dt>
+              <dd className="text-zinc-200">{statusDisplay.label}</dd>
+              <dt className="text-zinc-500">Source</dt>
+              <dd className="text-zinc-200">{item.source}</dd>
+              <dt className="text-zinc-500">Follow up</dt>
+              <dd className="text-zinc-200">{followUpDate || "—"}</dd>
+              {selectedLinked.length > 0 ? (
+                <>
+                  <dt className="text-zinc-500">Linked</dt>
+                  <dd className="text-zinc-200">{selectedLinked.map((e) => e.name).join(" · ")}</dd>
+                </>
+              ) : null}
+            </dl>
+            <div className="whitespace-pre-wrap text-sm leading-7 text-zinc-300">{view.textBody}</div>
+          </div>
         ) : null}
         {panelTab === "attachments" ? (
           attachments.length === 0 ? (
@@ -635,7 +635,7 @@ export function V2InboxDetailPanel({
             </ul>
           )
         ) : null}
-        {panelTab === "process" ? processWorkspace : null}
+        {panelTab === "links" ? linksWorkspace : null}
       </div>
 
       <div className="border-t border-zinc-800/80 px-5 py-3 text-center text-[11px] text-zinc-600">
