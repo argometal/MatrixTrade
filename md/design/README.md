@@ -6,6 +6,7 @@ Functional verification lists for preview and major UI surfaces. **User checks e
 
 | Screen | Route | Checklist | Source component |
 |--------|-------|-----------|------------------|
+| **Feature audit** | all | [features-used-vs-unused-checklist.md](features-used-vs-unused-checklist.md) | Used vs built-but-unused inventory |
 | **Mode map** | all | [legacy-vs-preview-map.md](legacy-vs-preview-map.md) | Legacy vs preview routes + disable plan |
 | **Parity audit** | preview | [new-mode-parity-checklist.md](new-mode-parity-checklist.md) | Features to port before retiring classic |
 | Home preview (Situation Room) | `/home-preview` | [home-preview-checklist.md](home-preview-checklist.md) · [solutions](home-preview-solutions.md) | `PreviewShell` · `PreviewDashboard` |
