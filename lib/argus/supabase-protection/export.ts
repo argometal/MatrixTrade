@@ -30,7 +30,7 @@ async function readLocalJournal(): Promise<ArgusData> {
     const raw = await fs.readFile(journalFile, "utf-8");
     return normalizeArgusData(migrateToV3(JSON.parse(raw)));
   } catch {
-    return { entities: [], logs: [], inboxItems: [], attachments: [], version: 3 };
+    return { entities: [], logs: [], inboxItems: [], attachments: [], runbooks: [], version: 3 };
   }
 }
 

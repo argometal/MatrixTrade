@@ -50,6 +50,8 @@ Private repo: `github.com/argometal/MatrixTrade`
 | Document | Contents |
 |----------|----------|
 | [design/README.md](design/README.md) | **Index** — workflow + agent update rule |
+| [design/legacy-vs-preview-map.md](design/legacy-vs-preview-map.md) | **Legacy vs preview** — route map + disable candidates |
+| [design/new-mode-parity-checklist.md](design/new-mode-parity-checklist.md) | **Parity audit** — legacy features to add in preview mode |
 | [design/home-preview-checklist.md](design/home-preview-checklist.md) | Situation Room `/home-preview` — functional checklist |
 | [design/trades-preview-checklist.md](design/trades-preview-checklist.md) | Trades workspace `/trades-preview` — functional checklist |
 | [design/DESIGN-CHECKLIST-TEMPLATE.md](design/DESIGN-CHECKLIST-TEMPLATE.md) | Template for new screens |

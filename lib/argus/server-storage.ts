@@ -19,6 +19,8 @@ import type {
   InboxItemInput,
   Log,
   LogInput,
+  Runbook,
+  RunbookInput,
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
 import {
@@ -53,7 +55,7 @@ function generateId(): string {
 }
 
 function emptyArgus(): ArgusData {
-  return { entities: [], logs: [], inboxItems: [], attachments: [], version: 3 };
+  return { entities: [], logs: [], inboxItems: [], attachments: [], runbooks: [], version: 3 };
 }
 
 async function ensureFilesDir(): Promise<void> {
@@ -555,6 +557,77 @@ export async function appendInboxAttachment(inboxId: string, attachmentId: strin
     item.attachmentIds.push(attachmentId);
     await writeArgus(data);
   }
+}
+
+// --- Runbooks (Execution domain) ---
+
+export async function getRunbook(id: string): Promise<Runbook | undefined> {
+  const data = await readArgus();
+  const runbook = data.runbooks.find((entry) => entry.id === id);
+  if (!runbook || !isActiveRecord(runbook)) return undefined;
+  return runbook;
+}
+
+export async function listRunbooks(): Promise<Runbook[]> {
+  const data = await readArgus();
+  return data.runbooks
+    .filter(isActiveRecord)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.title.localeCompare(b.title));
+}
+
+export async function createRunbook(input: RunbookInput): Promise<Runbook> {
+  const data = await readArgus();
+  const now = new Date().toISOString();
+  const validIds = filterLinkIdsForSource(data.entities, "create", input.linkedEntityIds ?? []);
+
+  const runbook: Runbook = {
+    id: generateId(),
+    title: input.title.trim(),
+    items: input.items ?? [],
+    linkedEntityIds: validIds,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  data.runbooks.push(runbook);
+  for (const entityId of validIds) {
+    const entity = data.entities.find((entry) => entry.id === entityId);
+    if (entity) entity.updatedAt = now;
+  }
+
+  await writeArgus(data);
+  return runbook;
+}
+
+export async function updateRunbook(
+  id: string,
+  patch: Partial<Pick<Runbook, "title" | "items" | "linkedEntityIds">>
+): Promise<Runbook> {
+  const data = await readArgus();
+  const runbook = data.runbooks.find((entry) => entry.id === id);
+  if (!runbook || !isActiveRecord(runbook)) {
+    throw new Error("Runbook not found");
+  }
+
+  const now = new Date().toISOString();
+  if (patch.title !== undefined) runbook.title = patch.title.trim();
+  if (patch.items !== undefined) runbook.items = patch.items;
+  if (patch.linkedEntityIds !== undefined) {
+    runbook.linkedEntityIds = filterLinkIdsForSource(data.entities, "create", patch.linkedEntityIds);
+  }
+  runbook.updatedAt = now;
+
+  await writeArgus(data);
+  return runbook;
+}
+
+export async function softDeleteRunbook(id: string): Promise<void> {
+  const data = await readArgus();
+  const runbook = data.runbooks.find((entry) => entry.id === id);
+  if (!runbook || !isActiveRecord(runbook)) return;
+  runbook.deletedAt = new Date().toISOString();
+  runbook.updatedAt = runbook.deletedAt;
+  await writeArgus(data);
 }
 
 // --- Inbox ---

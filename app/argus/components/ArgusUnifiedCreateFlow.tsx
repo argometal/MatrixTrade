@@ -49,6 +49,7 @@ const ITEM_ICONS: Record<CreateItemKind, { glyph: string; boxClass: string }> = 
   topic: { glyph: "🏷", boxClass: "bg-yellow-500/20 text-yellow-200" },
   tag: { glyph: "#", boxClass: "bg-fuchsia-500/20 text-fuchsia-300" },
   document: { glyph: "📄", boxClass: "bg-zinc-500/20 text-zinc-300" },
+  runbook: { glyph: "☑", boxClass: "bg-lime-500/20 text-lime-300" },
 };
 
 const MISSING_KINDS: Array<ReferenceKind | "document"> = [
@@ -72,6 +73,8 @@ function postCreateHref(pathname: string, kind: CreateItemKind, id: string, fall
       return `/argus/v2/browse/topics?selected=${id}`;
     case "event":
       return `/argus/v2/browse/events?selected=${id}`;
+    case "runbook":
+      return `/argus/v2/runbooks/${id}`;
     default:
       return `/argus/v2/network/${id}`;
   }

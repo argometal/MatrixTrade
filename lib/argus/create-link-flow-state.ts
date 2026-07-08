@@ -24,6 +24,17 @@ import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { entityKindLabel, entityNotesForDisplay, type ReferenceKind } from "@/lib/argus/reference-types";
 
+export function flowNeedsItemKindPicker(options: CreateFlowOpenOptions): boolean {
+  if (options.mode === "link") return false;
+  if (options.lockItemKind) return false;
+  if (options.itemKind !== undefined && !options.pickItemKind) return false;
+  return (options.mode ?? "create") === "create";
+}
+
+export function flowPreselectsItemKind(options: CreateFlowOpenOptions): boolean {
+  return !flowNeedsItemKindPicker(options);
+}
+
 export function defaultLogDateTime(): string {
   const now = new Date();
   now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -49,6 +60,8 @@ export function postCreateHref(
       return `/argus/v2/browse/topics?selected=${id}`;
     case "event":
       return `/argus/v2/browse/events?selected=${id}`;
+    case "runbook":
+      return `/argus/v2/runbooks/${id}`;
     default:
       return `/argus/v2/network/${id}`;
   }
@@ -103,6 +116,7 @@ export function useCreateLinkFlowState({
   const isInboxEvidence = mode === "inbox-evidence";
   const [linkOnly, setLinkOnly] = useState(Boolean(options.linkOnly));
   const [itemKind, setItemKind] = useState<CreateItemKind>(options.itemKind ?? "journal");
+  const [itemKindChosen, setItemKindChosen] = useState(flowPreselectsItemKind(options));
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -131,7 +145,8 @@ export function useCreateLinkFlowState({
   useEffect(() => {
     if (!open) return;
     setLinkOnly(Boolean(options.linkOnly));
-    setItemKind(options.itemKind ?? (options.mode === "inbox-evidence" ? "journal" : "journal"));
+    setItemKind(options.itemKind ?? "journal");
+    setItemKindChosen(flowPreselectsItemKind(options));
     setName("");
     setTitle(options.prefillTitle ?? "");
     setBody(options.prefillBody ?? "");
@@ -213,10 +228,17 @@ export function useCreateLinkFlowState({
     setTags(tagList.filter((value) => value !== tag).join(", "));
   }
 
+  function chooseItemKind(kind: CreateItemKind) {
+    setItemKind(kind);
+    setItemKindChosen(true);
+  }
+
   function canSave(): boolean {
     if (mode === "link") return true;
+    if (mode === "create" && !itemKindChosen) return false;
     if (isInboxEvidence && linkOnly) return draftEntityIds.length > 0;
     if (itemKind === "journal") return body.trim().length > 0;
+    if (itemKind === "runbook") return name.trim().length > 0 && body.trim().length > 0;
     return name.trim().length > 0;
   }
 
@@ -321,6 +343,9 @@ export function useCreateLinkFlowState({
     lockItemKind,
     itemKind,
     setItemKind,
+    itemKindChosen,
+    chooseItemKind,
+    needsItemKindPicker: mode === "create" && !itemKindChosen && !lockItemKind,
     name,
     setName,
     title,

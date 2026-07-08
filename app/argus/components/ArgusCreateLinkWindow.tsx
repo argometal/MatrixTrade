@@ -97,14 +97,21 @@ export function ArgusCreateLinkWindow({
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const flow = useCreateLinkFlowState({ open, options, buckets, journalRows, onClose, onSaved });
+  const needsKindPicker = flow.needsItemKindPicker;
+  const drawerOpen = menuOpen || needsKindPicker;
+  const drawerDismissible = !needsKindPicker;
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (!open) setMenuOpen(false);
-  }, [open]);
+    if (!open) {
+      setMenuOpen(false);
+      return;
+    }
+    setMenuOpen(needsKindPicker);
+  }, [open, needsKindPicker]);
 
   const linkedEntities = useMemo(
     () =>
@@ -149,7 +156,8 @@ export function ArgusCreateLinkWindow({
             ? "Create & Save"
             : `Create ${createItemDisplayLabel(flow.itemKind)}`;
 
-  const showCreateForm = flow.mode === "create" || (flow.isInboxEvidence && !flow.linkOnly);
+  const showCreateForm =
+    (flow.mode === "create" || (flow.isInboxEvidence && !flow.linkOnly)) && flow.itemKindChosen;
 
   const itemPreviewTitle =
     flow.isInboxEvidence && flow.linkOnly
@@ -163,7 +171,9 @@ export function ArgusCreateLinkWindow({
       ? "Assign this email to people, organizations, projects, events, or topics."
       : flow.itemKind === "journal"
         ? flow.body.trim().slice(0, 120) || CREATE_ITEM_HINTS.journal
-        : flow.notes.trim().slice(0, 120) || CREATE_ITEM_HINTS[flow.itemKind];
+        : flow.itemKind === "runbook"
+          ? flow.body.trim().slice(0, 120) || CREATE_ITEM_HINTS.runbook
+          : flow.notes.trim().slice(0, 120) || CREATE_ITEM_HINTS[flow.itemKind];
 
   const orgOptions = flow.allEntities.filter((entity) => entity.type === "company");
 
@@ -177,12 +187,22 @@ export function ArgusCreateLinkWindow({
       {/* Header */}
       <header className="shrink-0 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-[min(100%,1920px)] items-center gap-4 px-5 py-3 xl:px-10">
-          <ArgusMenuButton open={menuOpen} onClick={() => setMenuOpen((value) => !value)} />
+          <ArgusMenuButton
+            open={drawerOpen}
+            onClick={() => {
+              if (needsKindPicker) return;
+              setMenuOpen((value) => !value);
+            }}
+          />
           <div className="flex min-w-0 items-center gap-3">
             <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-violet-400">Create</p>
               <h1 className="truncate text-sm font-bold text-zinc-50">
-                {flow.mode === "link" ? "Link & Connect" : createItemDisplayLabel(flow.itemKind)}
+                {needsKindPicker
+                  ? "Choose what to create"
+                  : flow.mode === "link"
+                    ? "Link & Connect"
+                    : createItemDisplayLabel(flow.itemKind)}
               </h1>
             </div>
           </div>
@@ -193,7 +213,10 @@ export function ArgusCreateLinkWindow({
                 <span key={step.key} className="flex items-center gap-2">
                   {index > 0 ? <span className="text-zinc-700">→</span> : null}
                   <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                    <StepBadge n={index + 1} active={index === 0} />
+                    <StepBadge
+                      n={index + 1}
+                      active={index === 0 ? needsKindPicker || showCreateForm : index === 1}
+                    />
                     {step.label}
                   </span>
                 </span>
@@ -355,6 +378,31 @@ export function ArgusCreateLinkWindow({
                     <p className="mt-2 text-xs text-zinc-600">Attach files after save from the journal entry page.</p>
                   </details>
                 </div>
+              ) : flow.itemKind === "runbook" ? (
+                <div className="space-y-4">
+                  <label className="block">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Title</span>
+                    <input
+                      className={`${inputClass} mt-1.5`}
+                      value={flow.name}
+                      onChange={(event) => flow.setName(event.target.value)}
+                      placeholder="RIG RUN — Prejob"
+                      autoFocus
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                      Steps (one line = one step)
+                    </span>
+                    <textarea
+                      className={`${textareaClass} mt-1.5 min-h-[220px] font-mono text-sm`}
+                      value={flow.body}
+                      onChange={(event) => flow.setBody(event.target.value)}
+                      placeholder={"Confirm permits\nCheck equipment\n\nSafety briefing"}
+                    />
+                    <p className="mt-1.5 text-[11px] text-zinc-600">Blank line = section break. Bullet prefixes are stripped.</p>
+                  </label>
+                </div>
               ) : (
                 <div className="space-y-4">
                   <label className="block">
@@ -392,6 +440,16 @@ export function ArgusCreateLinkWindow({
                 </div>
               )}
             </>
+          ) : needsKindPicker ? (
+            <div className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+              <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600/20 text-2xl ring-1 ring-violet-500/30">
+                ◉
+              </span>
+              <h2 className="text-lg font-bold text-zinc-100">Choose what to create</h2>
+              <p className="mt-2 max-w-sm text-sm leading-relaxed text-zinc-500">
+                Pick an intent — Knowledge, Entity, or Execution. The form unlocks once you choose.
+              </p>
+            </div>
           ) : flow.isInboxEvidence && flow.linkOnly ? (
             <div className="py-6">
               <h2 className="text-xl font-bold text-zinc-100">Link email evidence</h2>
@@ -412,16 +470,24 @@ export function ArgusCreateLinkWindow({
         </section>
 
         {/* Step 2 — Link panel */}
-        <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden border-b border-zinc-800/80 bg-zinc-950/40 lg:border-b-0 lg:border-r">
+        <aside
+          className={`flex min-h-0 min-w-0 flex-col overflow-hidden border-b border-zinc-800/80 bg-zinc-950/40 lg:border-b-0 lg:border-r ${
+            needsKindPicker ? "opacity-50" : ""
+          }`}
+        >
           <div className="flex items-start gap-2 border-b border-zinc-800/80 px-5 py-3">
-            <StepBadge n={2} />
+            <StepBadge n={2} active={!needsKindPicker && (showCreateForm || flow.mode === "link")} />
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">Add Context (Link)</p>
-              <p className="text-[11px] text-zinc-600">Link this item to anything in ARGUS</p>
+              <p className="text-[11px] text-zinc-600">
+                {needsKindPicker ? "Available after you choose a create type" : "Link this item to anything in ARGUS"}
+              </p>
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+          <div
+            className={`min-h-0 flex-1 overflow-y-auto px-4 py-4 ${needsKindPicker ? "pointer-events-none" : ""}`}
+          >
             {linkedEntities.length > 0 || linkedJournalRows.length > 0 ? (
               <div className="mb-4">
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
@@ -550,24 +616,16 @@ export function ArgusCreateLinkWindow({
                 </div>
               </dl>
             </div>
-
-            <button
-              type="button"
-              onClick={flow.handleSave}
-              disabled={flow.isPending || !flow.canSave()}
-              className="hidden w-full rounded-2xl bg-emerald-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-emerald-950/40 hover:bg-emerald-500 disabled:opacity-40 lg:block"
-            >
-              {flow.isPending ? "Saving…" : saveLabel}
-            </button>
           </div>
         </aside>
       </div>
 
       <ArgusCreateItemDrawer
-        open={menuOpen}
+        open={drawerOpen}
+        dismissible={drawerDismissible}
         onClose={() => setMenuOpen(false)}
         itemKind={flow.itemKind}
-        onSelectKind={flow.setItemKind}
+        onSelectKind={flow.chooseItemKind}
         flow={flow}
         suggestedTopics={suggestedTopics}
         orgOptions={orgOptions}

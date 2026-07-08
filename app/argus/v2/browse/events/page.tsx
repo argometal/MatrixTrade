@@ -20,11 +20,10 @@ export default async function V2BrowseEventsPage({
   const rows = buildV2EventRows(data, includePrivate, today);
   const details = buildV2EventDetails(data, inboxItems, includePrivate, today);
   const tab = parseV2EventTab(tabParam);
-  const selectedId = selected ?? rows.find((r) => r.isUpcoming)?.id ?? rows[0]?.id;
 
   return (
     <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-500">Loading events…</div>}>
-      <V2EventsShell rows={rows} details={details} initialSelectedId={selectedId} initialTab={tab} />
+      <V2EventsShell rows={rows} details={details} initialSelectedId={selected} initialTab={tab} />
     </Suspense>
   );
 }

@@ -50,7 +50,7 @@ export async function writeArgusSafe(data: ArgusData, options: WriteArgusOptions
     );
   }
 
-  let beforeCounts = countArgusData({ entities: [], logs: [], inboxItems: [], attachments: [], version: 3 });
+  let beforeCounts = countArgusData({ entities: [], logs: [], inboxItems: [], attachments: [], runbooks: [], version: 3 });
   let backupPath = "";
 
   if (options.cloudWrite) {
@@ -65,7 +65,7 @@ export async function writeArgusSafe(data: ArgusData, options: WriteArgusOptions
       backupPath = await backupJournalJson(priorJson);
     } else {
       backupPath = "";
-      beforeCounts = countArgusData({ entities: [], logs: [], inboxItems: [], attachments: [], version: 3 });
+      beforeCounts = countArgusData({ entities: [], logs: [], inboxItems: [], attachments: [], runbooks: [], version: 3 });
     }
   } else {
     try {

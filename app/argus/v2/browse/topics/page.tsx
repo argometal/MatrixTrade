@@ -22,7 +22,6 @@ export default async function V2BrowseTopicsPage({
   const details = buildV2TopicDetails(data, includePrivate, today);
   const tagChips = buildV2GlobalTopicChips(data, includePrivate);
   const tab = parseV2TopicTab(tabParam);
-  const selectedId = selected ?? rows[0]?.id;
 
   return (
     <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-500">Loading topics…</div>}>
@@ -30,7 +29,7 @@ export default async function V2BrowseTopicsPage({
         rows={rows}
         details={details}
         tagChips={tagChips}
-        initialSelectedId={selectedId}
+        initialSelectedId={selected}
         initialTab={tab}
       />
     </Suspense>

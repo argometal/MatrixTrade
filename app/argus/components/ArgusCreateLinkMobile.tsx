@@ -6,8 +6,7 @@ import type { Entity } from "@/lib/argus/types";
 import { inputClass, textareaClass } from "@/app/argus/components/ui";
 import {
   CREATE_ITEM_HINTS,
-  CREATE_ITEM_KINDS,
-  CREATE_ITEM_LABELS,
+  CREATE_MENU_SECTIONS,
   LINK_FILTER_LABELS,
   type CreateFlowOpenOptions,
   type CreateItemKind,
@@ -15,7 +14,7 @@ import {
   type UnifiedCreateResult,
 } from "@/lib/argus/create-flow-types";
 import { entityLinkFilterKind } from "@/lib/argus/create-flow-helpers";
-import { useCreateLinkFlowState } from "@/lib/argus/create-link-flow-state";
+import { useCreateLinkFlowState, flowNeedsItemKindPicker } from "@/lib/argus/create-link-flow-state";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { useOverlayLock } from "@/lib/argus/use-overlay-lock";
@@ -47,7 +46,8 @@ function initialMobileStep(options: CreateFlowOpenOptions): MobileStep {
   if (options.mode === "link") return "link";
   if (options.mode === "inbox-evidence" && options.linkOnly) return "link";
   if (options.lockItemKind) return "details";
-  return "choose-type";
+  if (flowNeedsItemKindPicker(options)) return "choose-type";
+  return "details";
 }
 
 function MobileFooter({
@@ -149,26 +149,33 @@ function ChooseTypeStep({
               <span className="text-zinc-600">›</span>
             </button>
           ) : null}
-          {CREATE_ITEM_KINDS.map((kind) => (
-            <button
-              key={kind}
-              type="button"
-              onClick={() => {
-                flow.setLinkOnly(false);
-                flow.setItemKind(kind);
-                onSelect(kind);
-              }}
-              className="flex w-full items-center gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-4 text-left active:bg-zinc-900"
-            >
-              <KindIcon kind={kind} className="!h-11 !w-11" />
-              <span className="min-w-0 flex-1">
-                <span className="block text-base font-semibold text-zinc-100">
-                  {kind === "journal" ? "Journal Note" : CREATE_ITEM_LABELS[kind]}
-                </span>
-                <span className="mt-0.5 block text-sm text-zinc-500">{CREATE_ITEM_HINTS[kind]}</span>
-              </span>
-              <span className="text-zinc-600">›</span>
-            </button>
+          {CREATE_MENU_SECTIONS.map((section) => (
+            <div key={section.id} className="mb-4">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">{section.label}</p>
+              <div className="space-y-2">
+                {section.kinds.map((kind) => (
+                  <button
+                    key={kind}
+                    type="button"
+                    onClick={() => {
+                      flow.setLinkOnly(false);
+                      flow.chooseItemKind(kind);
+                      onSelect(kind);
+                    }}
+                    className="flex w-full items-center gap-4 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-4 text-left active:bg-zinc-900"
+                  >
+                    <KindIcon kind={kind} className="!h-11 !w-11" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-base font-semibold text-zinc-100">
+                        {createItemDisplayLabel(kind)}
+                      </span>
+                      <span className="mt-0.5 block text-sm text-zinc-500">{CREATE_ITEM_HINTS[kind]}</span>
+                    </span>
+                    <span className="text-zinc-600">›</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </nav>
       </div>
@@ -194,7 +201,9 @@ function DetailsStep({
         ? true
         : flow.itemKind === "journal"
           ? flow.body.trim().length > 0
-          : flow.name.trim().length > 0;
+          : flow.itemKind === "runbook"
+            ? flow.name.trim().length > 0 && flow.body.trim().length > 0
+            : flow.name.trim().length > 0;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -297,6 +306,27 @@ function DetailsStep({
                 placeholder="rigmove, operations, logistics"
               />
             </div>
+          </div>
+        ) : flow.itemKind === "runbook" ? (
+          <div className="space-y-4">
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Title</span>
+              <input
+                className={`${inputClass} mt-1.5`}
+                value={flow.name}
+                onChange={(e) => flow.setName(e.target.value)}
+                placeholder="RIG RUN — Prejob"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Steps</span>
+              <textarea
+                className={`${textareaClass} mt-1.5 min-h-[180px] font-mono text-sm`}
+                value={flow.body}
+                onChange={(e) => flow.setBody(e.target.value)}
+                placeholder={"Confirm permits\nCheck equipment"}
+              />
+            </label>
           </div>
         ) : (
           <div className="space-y-4">
@@ -761,7 +791,7 @@ export function ArgusCreateLinkMobile({
       ? flow.title.trim() || "Link email to records"
       : flow.itemKind === "journal"
         ? flow.title.trim() || "Untitled journal note"
-        : flow.name.trim() || `New ${CREATE_ITEM_LABELS[flow.itemKind]}`;
+        : flow.name.trim() || `New ${createItemDisplayLabel(flow.itemKind)}`;
 
   const itemBody =
     flow.isInboxEvidence && flow.linkOnly
@@ -886,7 +916,7 @@ export function ArgusCreateLinkMobile({
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
         itemKind={flow.itemKind}
-        onSelectKind={flow.setItemKind}
+        onSelectKind={flow.chooseItemKind}
         flow={flow}
         suggestedTopics={suggestedTopics}
         orgOptions={orgOptions}

@@ -56,7 +56,7 @@ export function AddCreateButton({
   return (
     <button
       type="button"
-      onClick={() => openCreateFlow({ itemKind: defaultKind })}
+      onClick={() => openCreateFlow({ pickItemKind: true })}
       aria-label={label}
       className={`inline-flex items-center rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 transition hover:bg-violet-500 active:scale-[0.98] ${className}`}
     >

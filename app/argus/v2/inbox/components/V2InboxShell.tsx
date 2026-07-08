@@ -13,6 +13,8 @@ import {
   type CreatedEntityResult,
 } from "@/app/argus/actions";
 import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
+import { resolveV2SelectedId, v2ActiveListItemClass } from "@/lib/argus/v2/selection";
+import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
 import {
   buildV2InboxFilterOptions,
   buildV2InboxTabCounts,
@@ -148,7 +150,7 @@ export function V2InboxShell({
       }),
     [searchParams]
   );
-  const selectedId = urlSelected ?? initialSelectedId ?? rows[0]?.id;
+  const selectedId = resolveV2SelectedId(urlSelected, initialSelectedId);
   const counts = useMemo(() => buildV2InboxTabCounts(rows), [rows]);
   const tabRows = useMemo(() => filterV2InboxRows(rows, tab), [rows, tab]);
   const filterOptions = useMemo(
@@ -156,7 +158,7 @@ export function V2InboxShell({
     [tabRows, topicContext]
   );
   const filtered = useMemo(() => filterV2InboxRows(rows, tab, filters), [rows, tab, filters]);
-  const selectedDetail = details.find((d) => d.item.id === selectedId);
+  const selectedDetail = selectedId ? details.find((d) => d.item.id === selectedId) : undefined;
   const [selectMode, setSelectMode] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [processOpen, setProcessOpen] = useState(false);
@@ -237,16 +239,24 @@ export function V2InboxShell({
     });
   }
 
+  useScrollToSelected(selectedId);
+
   useEffect(() => {
-    if (filtered.length === 0) return;
-    const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches;
-    if (isMobile && !urlSelected) return;
-    if (!selectedId || !filtered.some((row) => row.id === selectedId)) {
-      replaceInboxParams((params) => {
-        params.set("selected", filtered[0].id);
-      });
+    if (!urlSelected) return;
+    if (filtered.length === 0) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("selected");
+      const query = params.toString();
+      router.replace(query ? `/argus/v2/inbox?${query}` : "/argus/v2/inbox");
+      return;
     }
-  }, [filtered, selectedId, urlSelected]);
+    if (!filtered.some((row) => row.id === urlSelected)) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("selected");
+      const query = params.toString();
+      router.replace(query ? `/argus/v2/inbox?${query}` : "/argus/v2/inbox");
+    }
+  }, [filtered, urlSelected, router, searchParams]);
 
   function toggleChecked(id: string) {
     setChecked((current) => {
@@ -495,17 +505,15 @@ export function V2InboxShell({
           ) : (
             <ul className="space-y-2 p-2 lg:p-3">
               {filtered.map((row) => (
-                <li key={row.id}>
+                <li key={row.id} data-v2-selected-id={row.id}>
                   <V2InboxSwipeRow
                     onPress={() => selectItem(row.id)}
                     onSwipeLink={() => openSwipeLink(row.id)}
                   >
                     <div
-                      className={`w-full rounded-xl border px-3 py-3 text-left transition ${
-                        selectedId === row.id && !mobileDetailOpen
-                          ? "border-violet-500/50 bg-violet-500/10 ring-1 ring-violet-500/20"
-                          : "border-zinc-800/80 bg-zinc-900/20"
-                      }`}
+                      className={`w-full rounded-xl border px-3 py-3 text-left transition ${v2ActiveListItemClass(
+                        selectedId === row.id
+                      )}`}
                     >
                       <div className="flex gap-3">
                         <div className="flex flex-col items-center gap-2 pt-0.5">

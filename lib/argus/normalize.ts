@@ -1,4 +1,4 @@
-import type { ArgusData, Attachment, ClassificationStatus, Entity, InboxItem, Log } from "./types";
+import type { ArgusData, Attachment, ClassificationStatus, Entity, InboxItem, Log, Runbook } from "./types";
 import {
   normalizeContactValueKeys,
   normalizeMyValueKeys,
@@ -73,6 +73,22 @@ export function normalizeInboxItem(item: InboxItem): InboxItem {
   };
 }
 
+export function normalizeRunbook(runbook: Runbook): Runbook {
+  return {
+    ...runbook,
+    title: runbook.title ?? "",
+    items: (runbook.items ?? []).map((item) => ({
+      id: item.id,
+      text: item.text ?? "",
+      done: !!item.done,
+      doneAt: item.doneAt ?? "",
+      type: item.type === "sep" ? "sep" : "item",
+    })),
+    linkedEntityIds: runbook.linkedEntityIds ?? [],
+    deletedAt: runbook.deletedAt,
+  };
+}
+
 export function normalizeArgusData(data: ArgusData): ArgusData {
   const logs = (data.logs ?? []).map(normalizeLog);
   const inboxItems = (data.inboxItems ?? []).map(normalizeInboxItem);
@@ -88,6 +104,7 @@ export function normalizeArgusData(data: ArgusData): ArgusData {
     entities: (data.entities ?? []).map(normalizeEntity),
     inboxItems,
     attachments,
+    runbooks: (data.runbooks ?? []).map(normalizeRunbook),
     version: 3,
   };
 }

@@ -37,6 +37,7 @@ export const ITEM_STYLES: Record<
   topic: { glyph: "🏷", ring: "ring-yellow-500/40", bg: "bg-yellow-500/15", text: "text-yellow-100" },
   tag: { glyph: "#", ring: "ring-fuchsia-500/40", bg: "bg-fuchsia-500/15", text: "text-fuchsia-200" },
   document: { glyph: "📄", ring: "ring-zinc-500/40", bg: "bg-zinc-500/15", text: "text-zinc-200" },
+  runbook: { glyph: "☑", ring: "ring-lime-500/40", bg: "bg-lime-500/15", text: "text-lime-200" },
 };
 
 export const KIND_BADGE: Record<string, string> = {
@@ -48,6 +49,7 @@ export const KIND_BADGE: Record<string, string> = {
   tag: "bg-fuchsia-500/20 text-fuchsia-300",
   document: "bg-teal-500/20 text-teal-300",
   journal: "bg-violet-500/20 text-violet-300",
+  runbook: "bg-lime-500/20 text-lime-300",
 };
 
 export function InboxEvidenceBanner({

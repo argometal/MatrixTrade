@@ -13,12 +13,14 @@ import {
   convertInboxToLog,
   createEntity,
   createLog,
+  createRunbook,
   deleteEntity,
   deleteInboxItem,
   deleteLog,
   getEntity,
   getInboxItems,
   getLog,
+  getRunbook,
   getInboxItem,
   linkInboxToEntities,
   saveInboxEvidenceLinks,
@@ -29,6 +31,7 @@ import {
   setInboxPrivate,
   updateEntity,
   updateLog,
+  updateRunbook,
 } from "@/lib/argus/server-storage";
 import type { EntityType, JournalKind, LogSource, StrategicValue } from "@/lib/argus/types";
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
@@ -50,6 +53,7 @@ import {
 import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
 import { partitionIdsByEntityKind } from "@/lib/argus/v2/entity-link-counts";
 import type { UnifiedCreatePayload, UnifiedCreateResult } from "@/lib/argus/create-flow-types";
+import { buildRunbookItemsFromText, runbookStamp } from "@/lib/argus/runbook-helpers";
 import { buildDocumentNotes } from "@/lib/argus/reference-types";
 import {
   assertJournalKindTransition,
@@ -72,6 +76,7 @@ function revalidateArgus(): void {
   revalidatePath("/argus/search");
   revalidatePath("/argus/inbox");
   revalidatePath("/argus/diagnostics");
+  revalidatePath("/argus/v2/diagnostics");
   revalidatePath("/argus/v2");
 }
 
@@ -580,6 +585,40 @@ async function persistDocumentEntity(
   return { id: entity.id, href: entityDetailHref(entity), name: entity.name };
 }
 
+async function persistRunbookFromPayload(
+  title: string,
+  stepsText: string,
+  linkedEntityIds: string[]
+): Promise<UnifiedCreateResult> {
+  const trimmedTitle = title.trim();
+  if (!trimmedTitle) {
+    throw new ArgusPersistenceError("validation", "Title is required.");
+  }
+  const items = buildRunbookItemsFromText(stepsText);
+  if (items.filter((item) => item.type === "item").length === 0) {
+    throw new ArgusPersistenceError("validation", "Add at least one step.");
+  }
+
+  const runbook = await createRunbook({
+    title: trimmedTitle,
+    items,
+    linkedEntityIds,
+  });
+
+  revalidateArgus();
+  revalidatePath(`/argus/v2/runbooks/${runbook.id}`);
+  for (const entityId of runbook.linkedEntityIds) {
+    revalidatePath(`/argus/v2/projects/${entityId}`);
+    revalidatePath(`/argus/v2/organizations/${entityId}`);
+  }
+
+  return {
+    id: runbook.id,
+    href: `/argus/v2/runbooks/${runbook.id}`,
+    name: runbook.title,
+  };
+}
+
 async function linkEntityToLogsAction(entityId: string, logIds: string[]): Promise<void> {
   if (!logIds.length) return;
   const data = await readArgus();
@@ -697,6 +736,13 @@ export async function saveUnifiedCreateFlowAction(
       return { id: log.id, href: `/argus/logs/${log.id}`, name: title };
     }
 
+    if (payload.itemKind === "runbook") {
+      const result = await persistRunbookFromPayload(payload.name, payload.body, mergedEntityIds);
+      await saveInboxEvidenceLinks(payload.inboxId, mergedEntityIds);
+      revalidatePath("/argus/v2/inbox");
+      return result;
+    }
+
     const trimmedName = payload.name.trim();
     if (!trimmedName) {
       throw new ArgusPersistenceError("validation", "Name is required.");
@@ -754,6 +800,10 @@ export async function saveUnifiedCreateFlowAction(
     revalidateArgus();
     revalidatePath("/argus/v2/inbox");
     return { id: log.id, href: `/argus/logs/${log.id}`, name: title };
+  }
+
+  if (payload.itemKind === "runbook") {
+    return persistRunbookFromPayload(payload.name, payload.body, linkedEntityIds);
   }
 
   const trimmedName = payload.name.trim();
@@ -1034,6 +1084,32 @@ export async function deleteInboxAction(formData: FormData): Promise<void> {
   revalidateArgus();
   const returnTo = String(formData.get("returnTo") ?? "inbox");
   redirect(returnTo === "journal" ? "/argus/v2" : "/argus/inbox");
+}
+
+export async function toggleRunbookItemAction(
+  runbookId: string,
+  itemId: string,
+  done: boolean
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const items = runbook.items.map((item) =>
+    item.id === itemId
+      ? { ...item, done, doneAt: done ? runbookStamp() : "" }
+      : item
+  );
+
+  await updateRunbook(runbookId, { items });
+  revalidateArgus();
+  revalidatePath(`/argus/v2/runbooks/${runbookId}`);
+  for (const entityId of runbook.linkedEntityIds) {
+    revalidatePath(`/argus/v2/projects/${entityId}`);
+    revalidatePath(`/argus/v2/organizations/${entityId}`);
+  }
 }
 
 export async function clearAllArgusDataAction(): Promise<void> {

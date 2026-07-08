@@ -14,6 +14,8 @@ import {
   type V2EventRow,
   type V2EventTab,
 } from "@/lib/argus/v2/event-browse-utils";
+import { resolveV2SelectedId, v2ActiveListItemClass } from "@/lib/argus/v2/selection";
+import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
 
 const TABS: { id: V2EventTab; label: string }[] = [
   { id: "all", label: "All" },
@@ -35,11 +37,13 @@ export function V2EventsShell({
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseV2EventTab(searchParams.get("tab") ?? initialTab);
-  const selectedId = searchParams.get("selected") ?? initialSelectedId ?? rows.find((r) => r.isUpcoming)?.id ?? rows[0]?.id;
+  const selectedId = resolveV2SelectedId(searchParams.get("selected"), initialSelectedId);
   const counts = useMemo(() => buildV2EventTabCounts(rows), [rows]);
   const filtered = useMemo(() => filterV2EventRows(rows, tab), [rows, tab]);
   const groups = useMemo(() => groupV2EventRows(filtered), [filtered]);
-  const selected = details.find((d) => d.id === selectedId);
+  const selected = selectedId ? details.find((d) => d.id === selectedId) : undefined;
+
+  useScrollToSelected(selectedId);
 
   function setTab(next: V2EventTab) {
     const params = new URLSearchParams(searchParams.toString());
@@ -109,15 +113,13 @@ export function V2EventsShell({
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">{group.label}</p>
                 <ul className="space-y-2">
                   {group.rows.map((row) => (
-                    <li key={row.id}>
+                    <li key={row.id} data-v2-selected-id={row.id}>
                       <button
                         type="button"
                         onClick={() => selectItem(row.id)}
-                        className={`flex w-full gap-3 rounded-xl border px-3 py-3 text-left transition hover:border-zinc-700 ${
+                        className={`flex w-full gap-3 rounded-xl border px-3 py-3 text-left transition hover:border-zinc-700 ${v2ActiveListItemClass(
                           selectedId === row.id
-                            ? "border-violet-500/40 bg-violet-500/10"
-                            : "border-zinc-800/80 bg-zinc-900/20"
-                        }`}
+                        )}`}
                       >
                         <div className="w-12 shrink-0 text-center">
                           <p className="text-[10px] font-bold tracking-wide text-violet-400">{row.dateLabel}</p>

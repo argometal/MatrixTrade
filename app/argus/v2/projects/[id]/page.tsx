@@ -3,6 +3,7 @@ import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
+import { runbooksForEntity } from "@/lib/argus/runbook-helpers";
 import { loadProjectPageData } from "@/lib/argus/v2/loaders";
 import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
@@ -10,6 +11,7 @@ import { V2ProjectActions } from "../../components/V2ProjectActions";
 import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
 import { V2ProjectTabs } from "../../components/V2ProjectTabs";
+import { V2ProjectRunbooksPanel } from "../../components/V2ProjectRunbooksPanel";
 import {
   V2LegacyLink,
   V2LinkedEntityRow,
@@ -41,6 +43,7 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
   const today = new Date().toISOString().slice(0, 10);
   const page = loadProjectPageData(data, inboxItems, entity, includePrivate, today);
+  const projectRunbooks = runbooksForEntity(data.runbooks ?? [], entity.id);
   const hasPrivateEvidence = projectHasPrivateEvidence(data, inboxItems, entity);
   const notes = entityNotesForDisplay(entity.notes ?? "");
   const morePeople = Math.max(0, page.peopleWithRoles.length - 4);
@@ -174,6 +177,8 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
             </div>
             <V2OrgTimeline entries={page.timeline} limit={TIMELINE_PREVIEW} />
           </V2Card>
+
+          <V2ProjectRunbooksPanel runbooks={projectRunbooks} projectId={entity.id} />
         </div>
 
         {/* Right sidebar — mockup layout */}

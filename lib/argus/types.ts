@@ -117,17 +117,42 @@ export interface InboxItem {
   deletedAt?: string;
 }
 
+export type RunbookItemType = "item" | "sep";
+
+export interface RunbookItem {
+  id: string;
+  text: string;
+  done: boolean;
+  doneAt: string;
+  type: RunbookItemType;
+}
+
+/** Execution domain — procedure with checkable steps (checklist is one UI view). */
+export interface Runbook {
+  id: string;
+  title: string;
+  items: RunbookItem[];
+  /** Project, organization, or other entity this runbook supports. */
+  linkedEntityIds: string[];
+  createdAt: string;
+  updatedAt: string;
+  /** Soft delete — never hard-remove user data (Rule 0). */
+  deletedAt?: string;
+}
+
 export interface ArgusData {
   entities: Entity[];
   logs: Log[];
   inboxItems: InboxItem[];
   attachments: Attachment[];
+  runbooks: Runbook[];
   version: 3;
 }
 
 export type EntityInput = Omit<Entity, "id" | "createdAt" | "updatedAt">;
 export type LogInput = Omit<Log, "id" | "createdAt" | "updatedAt">;
 export type InboxItemInput = Omit<InboxItem, "id" | "receivedAt" | "status" | "createdAt" | "convertedLogId">;
+export type RunbookInput = Omit<Runbook, "id" | "createdAt" | "updatedAt">;
 
 export interface EntityNetworkView {
   entity: Entity;

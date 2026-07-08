@@ -91,6 +91,7 @@ function testProtectedCountsLogic(): void {
       },
     ],
     attachments: [],
+    runbooks: [],
   };
 
   const before = countProtectedFromJournal(sample);

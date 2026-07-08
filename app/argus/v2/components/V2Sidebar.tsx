@@ -87,7 +87,7 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
 
         <NavGroup title="Settings">
           <NavItem href="/argus/v2#tags" label="Tags" active={false} />
-          <NavItem href="/argus/diagnostics" label="Settings" active={pathname.startsWith("/argus/diagnostics")} />
+          <NavItem href="/argus/v2/diagnostics" label="Diagnostics" active={pathname.startsWith("/argus/v2/diagnostics") || pathname.startsWith("/argus/diagnostics")} />
         </NavGroup>
       </nav>
 

@@ -15,6 +15,8 @@ import {
   type V2TopicTab,
   type V2TopicTagChip,
 } from "@/lib/argus/v2/topic-browse-utils";
+import { resolveV2SelectedId, v2ActiveTableRowClass } from "@/lib/argus/v2/selection";
+import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
 
 const TABS: { id: V2TopicTab; label: string }[] = [
   { id: "all", label: "All" },
@@ -38,10 +40,12 @@ export function V2TopicsShell({
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseV2TopicTab(searchParams.get("tab") ?? initialTab);
-  const selectedId = searchParams.get("selected") ?? initialSelectedId ?? rows[0]?.id;
+  const selectedId = resolveV2SelectedId(searchParams.get("selected"), initialSelectedId);
   const counts = useMemo(() => buildV2TopicTabCounts(rows), [rows]);
   const filtered = useMemo(() => filterV2TopicRows(rows, tab), [rows, tab]);
-  const selected = details.find((d) => d.id === selectedId);
+  const selected = selectedId ? details.find((d) => d.id === selectedId) : undefined;
+
+  useScrollToSelected(selectedId);
 
   function setTab(next: V2TopicTab) {
     const params = new URLSearchParams(searchParams.toString());
@@ -133,10 +137,11 @@ export function V2TopicsShell({
                 {filtered.map((row) => (
                   <tr
                     key={row.id}
+                    data-v2-selected-id={row.id}
                     onClick={() => selectItem(row.id)}
-                    className={`cursor-pointer border-b border-zinc-800/60 transition hover:bg-zinc-900/40 ${
-                      selectedId === row.id ? "bg-violet-500/10" : ""
-                    }`}
+                    className={`cursor-pointer border-b border-zinc-800/60 transition hover:bg-zinc-900/40 ${v2ActiveTableRowClass(
+                      selectedId === row.id
+                    )}`}
                   >
                     <td className="px-4 py-3 lg:px-5">
                       <div className="flex items-center gap-2">
