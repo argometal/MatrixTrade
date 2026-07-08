@@ -9,23 +9,34 @@ function activityColor(recentActivity: number): string {
   return "rgba(63, 63, 70, 0.75)";
 }
 
-export function V2KnowledgeTreemap({ rects }: { rects: V2TreemapRect[] }) {
+export function V2KnowledgeTreemap({
+  rects,
+  size = "compact",
+}: {
+  rects: V2TreemapRect[];
+  size?: "compact" | "full";
+}) {
   if (rects.length === 0) {
     return (
-      <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-zinc-800 text-sm text-zinc-500">
+      <div
+        className={`flex items-center justify-center rounded-xl border border-dashed border-zinc-800 text-sm text-zinc-500 ${
+          size === "full" ? "min-h-[min(480px,55vh)]" : "h-56"
+        }`}
+      >
         Link evidence to topics and projects to populate the knowledge map.
       </div>
     );
   }
 
   const width = 100;
-  const height = 56;
+  const height = size === "full" ? 72 : 56;
+  const heightClass = size === "full" ? "min-h-[min(480px,55vh)] h-[min(480px,55vh)]" : "h-56";
 
   return (
     <div>
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="h-56 w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60"
+        className={`w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60 ${heightClass}`}
         role="img"
         aria-label="Knowledge treemap — rectangle size is evidence volume, color is recent activity"
       >

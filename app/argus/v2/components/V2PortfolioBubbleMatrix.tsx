@@ -16,12 +16,21 @@ const QUADRANTS = [
   { x: 53, y: 53, w: 42, h: 42, label: "Archive", tone: "text-zinc-500" },
 ];
 
-export function V2PortfolioBubbleMatrix({ nodes }: { nodes: V2KnowledgeNode[] }) {
+export function V2PortfolioBubbleMatrix({
+  nodes,
+  size = "compact",
+}: {
+  nodes: V2KnowledgeNode[];
+  size?: "compact" | "full";
+}) {
   const portfolio = nodes.filter((n) => n.kind === "topic" || n.kind === "project" || n.kind === "organization");
+  const heightClass = size === "full" ? "min-h-[min(480px,55vh)] h-[min(480px,55vh)]" : "h-56";
 
   if (portfolio.length === 0) {
     return (
-      <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-zinc-800 text-sm text-zinc-500">
+      <div
+        className={`flex items-center justify-center rounded-xl border border-dashed border-zinc-800 text-sm text-zinc-500 ${heightClass}`}
+      >
         Add topics and projects with linked evidence to see the portfolio matrix.
       </div>
     );
@@ -33,7 +42,7 @@ export function V2PortfolioBubbleMatrix({ nodes }: { nodes: V2KnowledgeNode[] })
     <div>
       <svg
         viewBox="0 0 100 100"
-        className="h-56 w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60"
+        className={`w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60 ${heightClass}`}
         role="img"
         aria-label="Portfolio matrix — vertical axis strategic value, horizontal axis completion"
       >

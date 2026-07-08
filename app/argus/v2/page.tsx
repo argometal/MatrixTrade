@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
+import { isActiveRecord } from "@/lib/argus/supabase-protection/protected-counts";
 import {
   buildV2EntityRows,
   buildV2FollowUps,
@@ -15,8 +17,9 @@ import {
 } from "@/lib/argus/v2/intelligence-viz";
 import { V2Card, V2SectionTitle } from "./components/v2-ui";
 import { V2Timeline, V2TimelineRail } from "./components/V2Timeline";
-import { V2HomeIntelligenceShell } from "./components/V2HomeIntelligenceShell";
-import { V2RecentEntitiesShell } from "./components/V2RecentEntitiesShell";
+import { V2TagCloud } from "./components/V2TagCloud";
+import { V2HomePulse } from "./components/V2HomePulse";
+import { V2HomeMainShell } from "./components/V2HomeMainShell";
 
 const FOLLOW_UP_ICON_STYLES: Record<string, { icon: string; box: string }> = {
   danger: { icon: "↩", box: "bg-red-500/15 text-red-400" },
@@ -38,9 +41,9 @@ function IconBox({ icon, boxClass }: { icon: string; boxClass: string }) {
 export default async function V2HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; view?: string }>;
 }) {
-  const { tab: tabParam } = await searchParams;
+  const { tab: tabParam, view: viewParam } = await searchParams;
   const tab = parseV2EntityTab(tabParam);
 
   const includePrivate = await hasArgusPrivateUnlock();
@@ -55,29 +58,33 @@ export default async function V2HomePage({
   const knowledgeNodes = buildV2KnowledgeNodes(data, inboxItems, includePrivate, today);
   const graph = buildV2KnowledgeGraph(data, inboxItems, includePrivate, today);
   const summary = buildV2HomeEvidenceSummary(data, inboxItems, today);
+  const inboxPending = inboxItems.filter(
+    (item) => isActiveRecord(item) && (item.status === "pending" || item.status === "linked")
+  ).length;
 
   return (
     <div className="px-4 py-6 lg:px-8">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Home</h1>
-          <p className="mt-1 text-sm text-zinc-500">Evidence intelligence and entity entry points</p>
-        </div>
+      <div className="mb-2">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Home</h1>
+        <p className="mt-1 text-sm text-zinc-500">Entities first — intelligence when you need the full picture</p>
       </div>
 
-      <V2HomeIntelligenceShell
-        nodes={knowledgeNodes}
-        graphNodes={graph.nodes}
-        graphEdges={graph.edges}
-        tags={tags}
-        summary={summary}
-      />
+      <V2HomePulse summary={summary} inboxPending={inboxPending} />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
         <div className="space-y-6">
           <V2Card className="p-6">
-            <V2SectionTitle>Recent Entities</V2SectionTitle>
-            <V2RecentEntitiesShell tab={tab} rows={entityRows} matrixNodes={knowledgeNodes} />
+            <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+              <V2HomeMainShell
+                tab={tab}
+                rows={entityRows}
+                nodes={knowledgeNodes}
+                graphNodes={graph.nodes}
+                graphEdges={graph.edges}
+                tags={tags}
+                initialView={viewParam}
+              />
+            </Suspense>
           </V2Card>
         </div>
 
@@ -119,6 +126,21 @@ export default async function V2HomePage({
                   })}
                 </ul>
               )}
+            </V2Card>
+          </div>
+
+          <div id="tags">
+            <V2Card className="p-5">
+              <V2SectionTitle
+                action={
+                  <Link href="/argus/v2?view=intelligence" className="text-xs text-violet-400 hover:text-violet-300">
+                    Full view
+                  </Link>
+                }
+              >
+                Tags
+              </V2SectionTitle>
+              <V2TagCloud tags={tags.slice(0, 16)} />
             </V2Card>
           </div>
 

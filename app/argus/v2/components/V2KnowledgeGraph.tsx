@@ -21,13 +21,19 @@ const KIND_LABELS: Record<V2GraphNode["kind"], string> = {
 export function V2KnowledgeGraph({
   nodes,
   edges,
+  size = "compact",
 }: {
   nodes: V2GraphNode[];
   edges: V2GraphEdge[];
+  size?: "compact" | "full";
 }) {
+  const heightClass = size === "full" ? "min-h-[min(480px,55vh)] h-[min(480px,55vh)]" : "h-56";
+
   if (nodes.length === 0) {
     return (
-      <div className="flex h-56 items-center justify-center rounded-xl border border-dashed border-zinc-800 text-sm text-zinc-500">
+      <div
+        className={`flex items-center justify-center rounded-xl border border-dashed border-zinc-800 text-sm text-zinc-500 ${heightClass}`}
+      >
         Link people, projects, and topics to see the relationship graph.
       </div>
     );
@@ -39,7 +45,7 @@ export function V2KnowledgeGraph({
     <div>
       <svg
         viewBox="0 0 100 100"
-        className="h-56 w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60"
+        className={`w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60 ${heightClass}`}
         role="img"
         aria-label="Relationship graph of linked entities"
       >
