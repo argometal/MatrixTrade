@@ -124,6 +124,9 @@ export function V2InboxShell({
   topicContext,
   initialSelectedId,
   initialTab,
+  deleteUnlocked,
+  privateConfigured,
+  deleteError,
 }: {
   rows: V2InboxRow[];
   details: DetailBundle[];
@@ -133,6 +136,9 @@ export function V2InboxShell({
   topicContext: InboxTopicContext;
   initialSelectedId?: string;
   initialTab?: string;
+  deleteUnlocked: boolean;
+  privateConfigured: boolean;
+  deleteError?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -596,6 +602,9 @@ export function V2InboxShell({
             linkedEntityRecords={linkedEntityRecords}
             topicContext={topicContext}
             onBack={mobileDetailOpen ? backToList : undefined}
+            deleteUnlocked={deleteUnlocked}
+            privateConfigured={privateConfigured}
+            deleteError={deleteError}
           />
         ) : (
           <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">

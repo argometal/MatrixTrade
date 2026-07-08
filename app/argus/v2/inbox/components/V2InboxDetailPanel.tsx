@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import type { Entity, InboxItem, InboxStatus, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
@@ -20,6 +20,7 @@ import {
   updateInboxTriageAction,
   type CreatedEntityResult,
 } from "@/app/argus/actions";
+import { V2InboxDeleteControl } from "@/app/argus/v2/inbox/components/V2InboxDeleteControl";
 import {
   entityToV2InboxDetail,
   effectiveInboxStatus,
@@ -74,6 +75,9 @@ export function V2InboxDetailPanel({
   linkedEntityRecords,
   topicContext,
   onBack,
+  deleteUnlocked,
+  privateConfigured,
+  deleteError,
 }: {
   detail: DetailBundle;
   buckets: EntityPickerBuckets;
@@ -81,7 +85,16 @@ export function V2InboxDetailPanel({
   linkedEntityRecords: Entity[];
   topicContext: InboxTopicContext;
   onBack?: () => void;
+  deleteUnlocked: boolean;
+  privateConfigured: boolean;
+  deleteError?: boolean;
 }) {
+  const searchParams = useSearchParams();
+  const returnTo = useMemo(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("selected", detail.item.id);
+    return `/argus/v2/inbox?${params.toString()}`;
+  }, [detail.item.id, searchParams]);
   const [panelTab, setPanelTab] = useState<"email" | "attachments" | "links">("email");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [linkModalFilter, setLinkModalFilter] = useState<ArgusLinkFilter>("all");
@@ -115,7 +128,6 @@ export function V2InboxDetailPanel({
   const { item, view, attachments, linkedEntities, convertedLog, defaultTitle, defaultBody } = detail;
   const canTriage = item.status === "pending" || item.status === "linked";
   const inboxBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "inbox"), [buckets]);
-  const returnTo = `/argus/v2/inbox?selected=${item.id}`;
 
   const suggestedEntities = useMemo(
     () => suggestInboxEntities(view.subject ?? "", view.textBody, linkedEntityRecords, linkIds, topicContext),
@@ -439,6 +451,13 @@ export function V2InboxDetailPanel({
             >
               {INBOX.convertRecord}
             </button>
+            <V2InboxDeleteControl
+              inboxId={item.id}
+              returnTo={returnTo}
+              deleteUnlocked={deleteUnlocked}
+              privateConfigured={privateConfigured}
+              deleteError={deleteError}
+            />
           </div>
         </div>
       ) : null}

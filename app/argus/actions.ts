@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { hasArgusDeleteUnlock, hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured, verifyArgusPrivatePin } from "@/lib/auth/passwords";
 import { requireArgusSession } from "@/lib/auth/require-session";
 import {
@@ -1079,11 +1079,19 @@ export async function deleteEntityAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteInboxAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
   const inboxId = String(formData.get("inboxId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/inbox");
+
+  if (argusPrivateConfigured() && !(await hasArgusDeleteUnlock())) {
+    const separator = returnTo.includes("?") ? "&" : "?";
+    redirect(`${returnTo}${separator}delete_error=1`);
+  }
+
   await deleteInboxItem(inboxId);
   revalidateArgus();
-  const returnTo = String(formData.get("returnTo") ?? "inbox");
-  redirect(returnTo === "journal" ? "/argus/v2" : "/argus/inbox");
+  revalidatePath("/argus/v2/inbox");
+  redirect(returnTo.startsWith("/argus/") ? returnTo : "/argus/v2/inbox");
 }
 
 export async function toggleRunbookItemAction(

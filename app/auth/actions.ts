@@ -5,6 +5,7 @@ import { verifyArgusPassword, verifyArgusPrivatePin, verifyTradingPassword } fro
 import {
   clearAllSessions,
   clearArgusPrivateUnlock,
+  setArgusDeleteUnlock,
   setArgusPrivateUnlock,
   setArgusSession,
   setTradingSession,
@@ -42,6 +43,19 @@ export async function unlockArgusPrivateAction(formData: FormData): Promise<void
 
   await setArgusPrivateUnlock();
   redirect("/argus/v2");
+}
+
+export async function unlockArgusDeleteAction(formData: FormData): Promise<void> {
+  const pin = String(formData.get("pin") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/inbox");
+
+  if (!verifyArgusPrivatePin(pin)) {
+    const separator = returnTo.includes("?") ? "&" : "?";
+    redirect(`${returnTo}${separator}delete_error=1`);
+  }
+
+  await setArgusDeleteUnlock();
+  redirect(returnTo.startsWith("/") ? returnTo : "/argus/v2/inbox");
 }
 
 export async function lockArgusPrivateAction(): Promise<void> {
