@@ -16,6 +16,7 @@ export function V2InboxSwipeRow({
   const startX = useRef(0);
   const startY = useRef(0);
   const offsetRef = useRef(0);
+  const touchPressRef = useRef(false);
   const [offset, setOffset] = useState(0);
   const [swiping, setSwiping] = useState(false);
 
@@ -24,6 +25,7 @@ export function V2InboxSwipeRow({
     startX.current = event.touches[0].clientX;
     startY.current = event.touches[0].clientY;
     offsetRef.current = 0;
+    touchPressRef.current = false;
     setSwiping(true);
   }
 
@@ -49,11 +51,29 @@ export function V2InboxSwipeRow({
     if (finalOffset >= 64) {
       onSwipeLink();
     } else if (finalOffset < 8) {
+      touchPressRef.current = true;
       onPress();
     }
     offsetRef.current = 0;
     setOffset(0);
     setSwiping(false);
+  }
+
+  function onClick() {
+    if (disabled) return;
+    if (touchPressRef.current) {
+      touchPressRef.current = false;
+      return;
+    }
+    onPress();
+  }
+
+  function onKeyDown(event: React.KeyboardEvent) {
+    if (disabled) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onPress();
+    }
   }
 
   return (
@@ -66,7 +86,9 @@ export function V2InboxSwipeRow({
         Link →
       </div>
       <div
-        className="relative touch-pan-y"
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        className="relative cursor-pointer touch-pan-y"
         style={{
           transform: `translateX(${offset}px)`,
           transition: swiping ? "none" : "transform 150ms ease-out",
@@ -74,6 +96,8 @@ export function V2InboxSwipeRow({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onClick={onClick}
+        onKeyDown={onKeyDown}
       >
         {children}
       </div>
