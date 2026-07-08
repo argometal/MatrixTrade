@@ -105,9 +105,11 @@ export function PreviewSystem({
               workerHttpStatus={workerStatus.httpStatus}
               workerUpdatedAt={workerStatus.updatedAt}
               workerRevision={workerStatus.snapshotRevision}
+              workerError={workerStatus.error}
               localRevision={localRevision}
               localUpdatedAt={localUpdatedAt}
               history={history}
+              isVercel={isVercel}
             />
 
             {snapshotUrl && (

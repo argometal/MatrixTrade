@@ -10,9 +10,11 @@ export function SystemBridgePanel({
   workerHttpStatus,
   workerUpdatedAt,
   workerRevision,
+  workerError,
   localRevision,
   localUpdatedAt,
   history,
+  isVercel = false,
 }: {
   syncOk?: string;
   syncError?: string;
@@ -20,26 +22,28 @@ export function SystemBridgePanel({
   workerHttpStatus?: number;
   workerUpdatedAt?: string;
   workerRevision?: number;
+  workerError?: string;
   localRevision: number | null;
   localUpdatedAt: string | null;
   history: SyncHistoryEntry[];
+  isVercel?: boolean;
 }) {
   const bridge = getBridgeConfig();
 
   return (
     <div className="space-y-4">
       {syncOk && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
           ✓ {decodeURIComponent(syncOk)}
         </div>
       )}
       {syncError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="rounded-lg border border-red-500/30 bg-red-950/40 px-4 py-3 text-sm text-red-300">
           ✗ Sync failed — {decodeURIComponent(syncError)}
         </div>
       )}
 
-      <dl className="space-y-3 rounded-lg border border-zinc-100 bg-zinc-50 p-4">
+      <dl className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
         <SystemRow
           label="Worker status"
           value={
@@ -50,6 +54,9 @@ export function SystemBridgePanel({
             )
           }
         />
+        {!workerReachable && workerError && bridge.configured && (
+          <SystemRow label="Worker detail" value={<span className="text-red-300">{workerError}</span>} />
+        )}
         {workerHttpStatus !== undefined && (
           <SystemRow label="Worker HTTP" value={String(workerHttpStatus)} />
         )}
@@ -57,15 +64,19 @@ export function SystemBridgePanel({
           label="Snapshot revision"
           value={
             localRevision !== null
-              ? `#${localRevision}${workerRevision !== undefined ? ` (Worker: #${workerRevision})` : ""}`
-              : "—"
+              ? `#${localRevision}${workerRevision !== undefined ? ` · Worker #${workerRevision}` : ""}`
+              : workerRevision !== undefined
+                ? `Worker #${workerRevision}`
+                : isVercel
+                  ? "Worker-only on Vercel"
+                  : "—"
           }
         />
         <SystemRow
           label="Updated at"
           value={
             localUpdatedAt
-              ? `${localUpdatedAt}${workerUpdatedAt ? ` · Worker: ${workerUpdatedAt}` : ""}`
+              ? `${localUpdatedAt}${workerUpdatedAt ? ` · Worker ${workerUpdatedAt}` : ""}`
               : workerUpdatedAt ?? "—"
           }
         />
@@ -76,7 +87,7 @@ export function SystemBridgePanel({
         <button
           type="submit"
           disabled={!bridge.configured}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Sync to Worker
         </button>
@@ -84,25 +95,25 @@ export function SystemBridgePanel({
 
       {!bridge.configured && (
         <p className="text-sm text-zinc-500">
-          Set <code className="text-xs">BRIDGE_WRITE_TOKEN</code> and{" "}
-          <code className="text-xs">BRIDGE_READ_TOKEN</code> in{" "}
-          <code className="text-xs">.env.local</code>.
+          Set <code className="text-xs text-zinc-400">BRIDGE_WRITE_TOKEN</code> and{" "}
+          <code className="text-xs text-zinc-400">BRIDGE_READ_TOKEN</code> in Vercel env or{" "}
+          <code className="text-xs text-zinc-400">.env.local</code>.
         </p>
       )}
 
       <div>
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Sync history</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Sync history</h3>
         {history.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-400">No syncs recorded yet.</p>
+          <p className="mt-2 text-sm text-zinc-600">No syncs recorded yet.</p>
         ) : (
-          <ul className="mt-2 divide-y divide-zinc-100 rounded-lg border border-zinc-200 text-sm">
+          <ul className="mt-2 divide-y divide-zinc-800 rounded-lg border border-zinc-800 text-sm">
             {history.slice(0, 10).map((entry, i) => (
               <li key={`${entry.at}-${i}`} className="flex items-center justify-between gap-3 px-3 py-2">
-                <span className="text-zinc-600">
+                <span className="text-zinc-400">
                   {new Date(entry.at).toLocaleString()}
                   {entry.snapshotRevision !== undefined && ` · rev ${entry.snapshotRevision}`}
                 </span>
-                <span className={entry.ok ? "text-emerald-600" : "text-red-600"}>
+                <span className={entry.ok ? "text-emerald-400" : "text-red-400"}>
                   {entry.ok ? `✓ HTTP ${entry.httpStatus ?? 200}` : `✗ ${entry.error ?? "failed"}`}
                 </span>
               </li>
