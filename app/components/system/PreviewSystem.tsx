@@ -125,7 +125,7 @@ export function PreviewSystem({
                   >
                     Open snapshot
                   </a>
-                  <CopyUrlButton url={snapshotUrl} label="Copy snapshot URL" variant="dark" />
+                  <CopyUrlButton url={snapshotUrl} label="Copy snapshot URL" />
                 </div>
               </div>
             )}
