@@ -49,46 +49,50 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-4">
         <NavItem href="/argus/v2" label="Home" active={pathname === "/argus/v2"} />
 
-        <NavGroup title="Capture">
-          <NavItem href="/argus/v2/inbox" label="Inbox" count={counts.inbox} active={pathname.startsWith("/argus/v2/inbox")} />
-        </NavGroup>
+        <NavDivider />
 
-        <NavGroup title="Browse">
-          {browse.map((item) => (
-            <NavItem
-              key={item.label}
-              {...item}
-              active={isBrowseNavActive(pathname, item.href, item.label)}
-            />
-          ))}
-        </NavGroup>
+        <NavItem href="/argus/v2/inbox" label="Inbox" count={counts.inbox} active={pathname.startsWith("/argus/v2/inbox")} />
 
-        <NavGroup title="Intelligence">
+        <NavDivider />
+
+        {browse.map((item) => (
           <NavItem
-            href="/argus/v2/browse/network"
-            label="Network"
-            count={counts.network}
-            active={pathname.startsWith("/argus/v2/browse/network") || pathname.startsWith("/argus/v2/network/")}
+            key={item.label}
+            {...item}
+            active={isBrowseNavActive(pathname, item.href, item.label)}
           />
-          <NavItem href="/argus/v2#follow-ups" label="Follow Ups" count={counts.followUps} active={false} />
-        </NavGroup>
+        ))}
 
-        <NavGroup title="Deliver">
-          <NavItem
-            href="/argus/v2/deliver"
-            label="Deliver / Export"
-            badge="NEW"
-            active={pathname.startsWith("/argus/v2/deliver")}
-          />
-        </NavGroup>
+        <NavDivider />
 
-        <NavGroup title="Settings">
-          <NavItem href="/argus/v2#tags" label="Tags" active={false} />
-          <NavItem href="/argus/v2/diagnostics" label="Diagnostics" active={pathname.startsWith("/argus/v2/diagnostics") || pathname.startsWith("/argus/diagnostics")} />
-        </NavGroup>
+        <NavItem
+          href="/argus/v2/browse/network"
+          label="Network"
+          count={counts.network}
+          active={pathname.startsWith("/argus/v2/browse/network") || pathname.startsWith("/argus/v2/network/")}
+        />
+        <NavItem href="/argus/v2#follow-ups" label="Follow Ups" count={counts.followUps} active={false} />
+
+        <NavDivider />
+
+        <NavItem
+          href="/argus/v2/deliver"
+          label="Export"
+          badge="NEW"
+          active={pathname.startsWith("/argus/v2/deliver")}
+        />
+
+        <NavDivider />
+
+        <NavItem href="/argus/v2#tags" label="Tags" active={false} />
+        <NavItem
+          href="/argus/v2/diagnostics"
+          label="Diagnostics"
+          active={pathname.startsWith("/argus/v2/diagnostics") || pathname.startsWith("/argus/diagnostics")}
+        />
       </nav>
 
       <div className="border-t border-zinc-800/80 px-5 py-4">
@@ -151,7 +155,7 @@ function NavItem({
   return (
     <Link
       href={href}
-      className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
+      className={`mb-0.5 flex items-center justify-between rounded-xl px-3 py-2 text-sm transition ${
         active ? "bg-violet-500/15 text-violet-200" : "text-zinc-400 hover:bg-zinc-800/80 hover:text-zinc-200"
       }`}
     >
@@ -170,11 +174,6 @@ function NavItem({
   );
 }
 
-function NavGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="mb-5">
-      <p className="mb-2 px-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">{title}</p>
-      <div className="space-y-0.5">{children}</div>
-    </div>
-  );
+function NavDivider() {
+  return <div className="my-3 border-t border-zinc-800/60" role="separator" aria-hidden />;
 }
