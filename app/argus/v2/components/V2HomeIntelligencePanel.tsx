@@ -51,7 +51,7 @@ export function V2HomeIntelligencePanel({
       {tab === "portfolio" ? <V2PortfolioBubbleMatrix nodes={nodes} size="full" /> : null}
       {tab === "graph" ? <V2KnowledgeGraph nodes={graphNodes} edges={graphEdges} size="full" /> : null}
       {tab === "tags" ? (
-        <div className="flex min-h-[min(480px,55vh)] flex-col rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-6">
+        <div className="flex min-h-[min(560px,65vh)] flex-col rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-6">
           <p className="mb-4 text-xs text-zinc-500">Tag size reflects recurrence across journal and inbox evidence.</p>
           <V2TagCloud tags={tags} />
         </div>

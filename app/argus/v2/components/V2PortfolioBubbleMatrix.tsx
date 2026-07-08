@@ -24,7 +24,7 @@ export function V2PortfolioBubbleMatrix({
   size?: "compact" | "full";
 }) {
   const portfolio = nodes.filter((n) => n.kind === "topic" || n.kind === "project" || n.kind === "organization");
-  const heightClass = size === "full" ? "min-h-[min(480px,55vh)] h-[min(480px,55vh)]" : "h-56";
+  const heightClass = size === "full" ? "min-h-[min(560px,65vh)] h-[min(560px,65vh)]" : "h-56";
 
   if (portfolio.length === 0) {
     return (

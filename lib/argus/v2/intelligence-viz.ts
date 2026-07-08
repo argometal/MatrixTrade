@@ -308,16 +308,8 @@ export function buildV2KnowledgeGraph(
     .slice(0, limit);
 
   const idSet = new Set(scored.map((s) => s.entity.id));
-  const columns: Record<V2GraphNode["kind"], number> = {
-    organization: 0,
-    project: 1,
-    person: 2,
-    topic: 3,
-    event: 4,
-  };
 
-  const colCounts: Record<number, number> = {};
-  const nodes: V2GraphNode[] = scored.map(({ entity, total }) => {
+  const rawNodes: V2GraphNode[] = scored.map(({ entity, total }) => {
     const ref = referenceKindFromNotes(entity.notes ?? "");
     const kind: V2GraphNode["kind"] =
       entity.type === "company"
@@ -329,16 +321,13 @@ export function buildV2KnowledgeGraph(
             : ref === "event"
               ? "event"
               : "topic";
-    const col = columns[kind];
-    const row = colCounts[col] ?? 0;
-    colCounts[col] = row + 1;
 
     return {
       id: entity.id,
       name: entity.name,
       kind,
-      x: 12 + col * 22,
-      y: 10 + row * 16,
+      x: 0,
+      y: 0,
       evidenceCount: total,
       href: entityHref(entity),
     };
@@ -372,7 +361,37 @@ export function buildV2KnowledgeGraph(
     return { from, to, weight };
   });
 
-  return { nodes, edges };
+  return { nodes: layoutGraphNodes(rawNodes), edges };
+}
+
+const GRAPH_COLUMN_X: Record<V2GraphNode["kind"], number> = {
+  organization: 14,
+  project: 32,
+  person: 50,
+  topic: 68,
+  event: 86,
+};
+
+/** Spread nodes vertically per column — fills canvas (Obsidian / Neo4j pattern). */
+export function layoutGraphNodes(nodes: V2GraphNode[]): V2GraphNode[] {
+  const yMin = 16;
+  const yMax = 84;
+  const kinds: V2GraphNode["kind"][] = ["organization", "project", "person", "topic", "event"];
+  const laidOut: V2GraphNode[] = [];
+
+  for (const kind of kinds) {
+    const group = nodes.filter((n) => n.kind === kind);
+    if (group.length === 0) continue;
+    group.forEach((node, index) => {
+      const y =
+        group.length === 1
+          ? (yMin + yMax) / 2
+          : yMin + (index / (group.length - 1)) * (yMax - yMin);
+      laidOut.push({ ...node, x: GRAPH_COLUMN_X[kind], y });
+    });
+  }
+
+  return laidOut;
 }
 
 export type V2HomeEvidenceSummary = {
