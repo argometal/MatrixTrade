@@ -68,6 +68,16 @@ function entityIcon(kind: V2InboxDetailEntity["kind"]): string {
   return "👤";
 }
 
+type PanelTab = "email" | "attachments" | "links";
+const PANEL_TAB_STORAGE_KEY = "argus-inbox-panel-tab";
+
+function readStoredPanelTab(): PanelTab {
+  if (typeof window === "undefined") return "email";
+  const stored = sessionStorage.getItem(PANEL_TAB_STORAGE_KEY);
+  if (stored === "email" || stored === "attachments" || stored === "links") return stored;
+  return "email";
+}
+
 export function V2InboxDetailPanel({
   detail,
   buckets,
@@ -95,7 +105,7 @@ export function V2InboxDetailPanel({
     params.set("selected", detail.item.id);
     return `/argus/v2/inbox?${params.toString()}`;
   }, [detail.item.id, searchParams]);
-  const [panelTab, setPanelTab] = useState<"email" | "attachments" | "links">("email");
+  const [panelTab, setPanelTabState] = useState<PanelTab>("email");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [linkModalFilter, setLinkModalFilter] = useState<ArgusLinkFilter>("all");
   const [showConvert, setShowConvert] = useState(false);
@@ -113,6 +123,15 @@ export function V2InboxDetailPanel({
   const router = useRouter();
 
   useEffect(() => {
+    setPanelTabState(readStoredPanelTab());
+  }, []);
+
+  function setPanelTab(tab: PanelTab) {
+    setPanelTabState(tab);
+    sessionStorage.setItem(PANEL_TAB_STORAGE_KEY, tab);
+  }
+
+  useEffect(() => {
     setLinkIds(detail.item.linkedEntityIds ?? []);
     setStatus(
       inboxStatusAfterLinkChange(detail.item.status, (detail.item.linkedEntityIds ?? []).length) ??
@@ -122,7 +141,6 @@ export function V2InboxDetailPanel({
     setSelectedTags(detail.item.topics ?? []);
     setShowConvert(false);
     setMenuOpen(false);
-    setPanelTab("email");
   }, [detail.item.id, detail.item.linkedEntityIds, detail.item.status, detail.item.followUpDate, detail.item.topics]);
 
   const { item, view, attachments, linkedEntities, convertedLog, defaultTitle, defaultBody } = detail;
