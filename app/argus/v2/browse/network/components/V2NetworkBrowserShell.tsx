@@ -342,7 +342,7 @@ export function V2NetworkBrowserShell({
   };
 
   return (
-    <div className="v2-browse-shell flex min-h-[calc(100vh-4rem)] flex-col pb-28">
+    <div className="v2-browse-shell flex min-h-[calc(100vh-4rem)] flex-col pb-[calc(5.5rem+env(safe-area-inset-bottom))] lg:pb-8">
       <div className="flex min-h-0 flex-1 gap-8 px-4 py-6 lg:px-8">
         <div className="min-w-0 flex-1">
           <header className="mb-5 flex flex-wrap items-start justify-between gap-4">

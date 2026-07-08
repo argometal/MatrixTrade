@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-/** Hide v2 mobile nav pill and lock body scroll while a full-screen overlay is open. */
+/** Lock body scroll while a full-screen overlay is open. */
 export function useOverlayLock(active: boolean) {
   useEffect(() => {
     if (!active) return;

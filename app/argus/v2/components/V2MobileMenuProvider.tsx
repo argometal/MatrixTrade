@@ -86,9 +86,14 @@ function V2MobileMenuDrawer({ counts, open, onClose }: { counts: V2NavCounts; op
       >
         <div className="border-b border-zinc-800/80 px-5 py-5">
           <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-lg font-bold tracking-tight text-zinc-50">Argus</p>
-              <p className="mt-0.5 text-xs text-zinc-500">Your knowledge. Connected.</p>
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-violet-800 text-base font-bold text-white shadow-sm shadow-violet-950/50 ring-1 ring-violet-400/30">
+                A
+              </span>
+              <div>
+                <p className="text-lg font-bold tracking-tight text-zinc-50">Argus</p>
+                <p className="mt-0.5 text-xs text-zinc-500">Home · Organizations · Inbox · more</p>
+              </div>
             </div>
             <button
               type="button"
@@ -146,6 +151,15 @@ export function V2MobileMenuProvider({
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
 
   return (
     <V2MobileMenuContext.Provider
