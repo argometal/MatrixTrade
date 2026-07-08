@@ -48,24 +48,28 @@ Use these labels in docs and checklists. Update when reality changes.
 
 ### Track A — Principles & architecture (read first)
 
-1. [`../integrations/argus-design-principles.md`](../integrations/argus-design-principles.md) — 10 design rules
-2. [`../integrations/argus-architecture.md`](../integrations/argus-architecture.md) — objects, information flow
-3. [`ai-charter.md`](ai-charter.md) — AI must trace to evidence; never fabricate
-4. [`correlation-guide.md`](correlation-guide.md) — capture once, link everywhere
+1. [`observation-engine-vision.md`](observation-engine-vision.md) — **why** ARGUS exists (observation engine)
+2. [`../integrations/argus-design-principles.md`](../integrations/argus-design-principles.md) — 10 design rules
+3. [`../integrations/argus-architecture.md`](../integrations/argus-architecture.md) — objects, information flow
+4. [`ai-charter.md`](ai-charter.md) — AI must trace to evidence; never fabricate
+5. [`correlation-guide.md`](correlation-guide.md) — capture once, link everywhere
+6. [`vision-review-protocol.md`](vision-review-protocol.md) — periodic vision alignment (AI + human)
 
 ### Track B — Product & lenses
 
-5. [`knowledge-model-v01.md`](knowledge-model-v01.md) — **target** ontology (Evidence graph)
-6. [`design-matrix-stage.md`](design-matrix-stage.md) — org / project / person lenses
-7. [`product-flow-proposal.md`](product-flow-proposal.md) — evidence → relations → narrative
-8. [`v2-hierarchy-implementation-report.md`](v2-hierarchy-implementation-report.md) — **implemented** linking rules + code map
+7. [`knowledge-model-v01.md`](knowledge-model-v01.md) — **target** ontology (Evidence graph)
+8. [`knowledge-execution-model.md`](knowledge-execution-model.md) — Knowledge vs Execution (Runbook, etc.)
+9. [`timeline-vision.md`](timeline-vision.md) — Timeline scope and placement
+10. [`design-matrix-stage.md`](design-matrix-stage.md) — org / project / person lenses
+11. [`product-flow-proposal.md`](product-flow-proposal.md) — evidence → relations → narrative
+12. [`v2-hierarchy-implementation-report.md`](v2-hierarchy-implementation-report.md) — **implemented** linking rules + code map
 
 ### Track C — Build, QA, export
 
-9. [`v2-design-checklist.md`](v2-design-checklist.md) + [`checklist-protocol.md`](checklist-protocol.md)
-10. [`v2-checklist-solutions.md`](v2-checklist-solutions.md) — fixed vs deferred
-11. [`export-delivery-handoff.md`](export-delivery-handoff.md) — delivery layer analysis + vault v1
-12. [`model-alignment-audit.md`](model-alignment-audit.md) — v3 runtime vs v01 target gaps
+13. [`v2-design-checklist.md`](v2-design-checklist.md) + [`checklist-protocol.md`](checklist-protocol.md)
+14. [`v2-checklist-solutions.md`](v2-checklist-solutions.md) — fixed vs deferred
+15. [`export-delivery-handoff.md`](export-delivery-handoff.md) — delivery layer analysis + vault v1
+16. [`model-alignment-audit.md`](model-alignment-audit.md) — v3 runtime vs v01 target gaps
 
 ---
 
@@ -120,7 +124,9 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 
 | Doc | Status |
 |-----|--------|
+| [observation-engine-vision.md](observation-engine-vision.md) | Canonical |
 | [ai-charter.md](ai-charter.md) | Canonical |
+| [vision-review-protocol.md](vision-review-protocol.md) | Canonical |
 | [correlation-guide.md](correlation-guide.md) | Canonical |
 | [../integrations/argus-design-principles.md](../integrations/argus-design-principles.md) | Canonical |
 | [../integrations/argus-architecture.md](../integrations/argus-architecture.md) | Canonical |
@@ -130,6 +136,7 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 | Doc | Status |
 |-----|--------|
 | [knowledge-model-v01.md](knowledge-model-v01.md) | Canonical (target) |
+| [knowledge-execution-model.md](knowledge-execution-model.md) | Canonical |
 | [model-alignment-audit.md](model-alignment-audit.md) | Reference — gap list |
 | [../integrations/argus-storage.md](../integrations/argus-storage.md) | Implemented |
 
@@ -137,6 +144,7 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 
 | Doc | Status |
 |-----|--------|
+| [timeline-vision.md](timeline-vision.md) | Canonical |
 | [design-matrix-stage.md](design-matrix-stage.md) | Canonical lenses |
 | [product-flow-proposal.md](product-flow-proposal.md) | Canonical flow |
 | [network-browse-spec.md](network-browse-spec.md) | Spec |
@@ -232,4 +240,4 @@ Cookie: argus-auth=1
 
 ---
 
-*Last updated: 2026-07-07 — Evidence Vault v1, v2 person profile, inbox triage iterations.*
+*Last updated: 2026-07-07 — Observation Engine vision, timeline vision, vision review protocol.*

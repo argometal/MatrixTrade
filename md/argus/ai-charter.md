@@ -4,7 +4,9 @@
 **Status:** Canonical — rule of construction for all AI-assisted ARGUS work  
 **Scope:** Any AI supporting ARGUS (in-app assistants, ChatGPT handoffs, Cursor agents, report generation)
 
-Read with [`argus-design-principles.md`](../integrations/argus-design-principles.md) and [`argus-architecture.md`](../integrations/argus-architecture.md).
+**Parent vision:** [observation-engine-vision.md](observation-engine-vision.md) — evidence is permanent; interpretation is temporary.
+
+Read with [`argus-design-principles.md`](../integrations/argus-design-principles.md), [`argus-architecture.md`](../integrations/argus-architecture.md), and [`vision-review-protocol.md`](vision-review-protocol.md).
 
 ---
 

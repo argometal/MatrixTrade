@@ -4,48 +4,19 @@ import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import {
   buildV2EntityRows,
   buildV2FollowUps,
-  buildV2HomeStats,
   buildV2HomeTimeline,
   buildV2TagCloud,
   parseV2EntityTab,
-  type V2EntityTab,
 } from "@/lib/argus/v2/loaders";
+import {
+  buildV2HomeEvidenceSummary,
+  buildV2KnowledgeGraph,
+  buildV2KnowledgeNodes,
+} from "@/lib/argus/v2/intelligence-viz";
 import { V2Card, V2SectionTitle } from "./components/v2-ui";
 import { V2Timeline, V2TimelineRail } from "./components/V2Timeline";
-import { V2TagCloud } from "./components/V2TagCloud";
-import { V2EntityTable } from "./components/V2EntityTable";
-
-const STAT_ICONS: Record<string, string> = {
-  journal: "📓",
-  email: "✉",
-  people: "👤",
-  org: "🏢",
-  project: "📁",
-};
-
-const ENTITY_BROWSE_HREFS: Record<V2EntityTab, string> = {
-  organizations: "/argus/v2/browse/organizations",
-  projects: "/argus/v2/browse/projects",
-  people: "/argus/v2/browse/network",
-  topics: "/argus/v2/browse/topics",
-  events: "/argus/v2/browse/events",
-};
-
-function V2HomeStatCard({ stat }: { stat: { label: string; value: string; delta: string; icon: string; href: string } }) {
-  return (
-    <Link
-      href={stat.href}
-      className="group block rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-4 transition hover:border-violet-500/40 hover:bg-zinc-900"
-    >
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-lg transition group-hover:scale-110">{STAT_ICONS[stat.icon]}</span>
-        <span className="text-[10px] text-emerald-400">{stat.delta}</span>
-      </div>
-      <p className="text-2xl font-bold tabular-nums text-zinc-50 group-hover:text-violet-100">{stat.value}</p>
-      <p className="mt-1 text-xs text-zinc-500 group-hover:text-zinc-400">{stat.label}</p>
-    </Link>
-  );
-}
+import { V2HomeIntelligenceShell } from "./components/V2HomeIntelligenceShell";
+import { V2RecentEntitiesShell } from "./components/V2RecentEntitiesShell";
 
 const FOLLOW_UP_ICON_STYLES: Record<string, { icon: string; box: string }> = {
   danger: { icon: "↩", box: "bg-red-500/15 text-red-400" },
@@ -77,46 +48,36 @@ export default async function V2HomePage({
   const today = new Date().toISOString().slice(0, 10);
   const entities = data.entities.filter((e) => !e.deletedAt);
 
-  const stats = buildV2HomeStats(data, inboxItems, today);
   const followUps = buildV2FollowUps(data, entities, includePrivate, today);
   const homeTimeline = buildV2HomeTimeline(data, inboxItems, includePrivate);
   const entityRows = buildV2EntityRows(data, inboxItems, includePrivate, today, tab, 12);
   const tags = buildV2TagCloud(data, inboxItems, includePrivate);
+  const knowledgeNodes = buildV2KnowledgeNodes(data, inboxItems, includePrivate, today);
+  const graph = buildV2KnowledgeGraph(data, inboxItems, includePrivate, today);
+  const summary = buildV2HomeEvidenceSummary(data, inboxItems, today);
 
   return (
     <div className="px-4 py-6 lg:px-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Home</h1>
-          <p className="mt-1 text-sm text-zinc-500">Organizations, projects, and people — sorted by recent activity</p>
+          <p className="mt-1 text-sm text-zinc-500">Evidence intelligence and entity entry points</p>
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5" id="stats">
-        {stats.map((stat) => (
-          <V2HomeStatCard key={stat.label} stat={stat} />
-        ))}
-      </div>
+      <V2HomeIntelligenceShell
+        nodes={knowledgeNodes}
+        graphNodes={graph.nodes}
+        graphEdges={graph.edges}
+        tags={tags}
+        summary={summary}
+      />
 
       <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
         <div className="space-y-6">
           <V2Card className="p-6">
-            <V2SectionTitle
-              action={
-                <Link
-                  href={ENTITY_BROWSE_HREFS[tab]}
-                  className="text-xs font-medium text-violet-400 hover:text-violet-300"
-                >
-                  Browse all
-                </Link>
-              }
-            >
-              Recent Entities
-            </V2SectionTitle>
-            <p className="mb-1 text-sm text-zinc-500">
-              Open an organization, project, or person — your main entry points into Argus.
-            </p>
-            <V2EntityTable tab={tab} rows={entityRows} primary />
+            <V2SectionTitle>Recent Entities</V2SectionTitle>
+            <V2RecentEntitiesShell tab={tab} rows={entityRows} matrixNodes={knowledgeNodes} />
           </V2Card>
         </div>
 
@@ -177,13 +138,6 @@ export default async function V2HomePage({
               <V2TimelineRail entries={homeTimeline} />
             )}
           </V2Card>
-
-          <div id="tags">
-            <V2Card className="p-5">
-              <V2SectionTitle>Tags</V2SectionTitle>
-              <V2TagCloud tags={tags} />
-            </V2Card>
-          </div>
         </aside>
       </div>
 

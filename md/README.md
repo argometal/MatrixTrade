@@ -64,13 +64,17 @@ Private repo: `github.com/argometal/MatrixTrade`
 
 **Start here:** [`argus/README.md`](argus/README.md) — index, reading order, runtime truth, known weaknesses.
 
-**Rule of construction for AI:** [`argus/ai-charter.md`](argus/ai-charter.md) — all AI-assisted ARGUS work must follow this charter.
+**Rule of construction for AI:** [`argus/observation-engine-vision.md`](argus/observation-engine-vision.md) — product philosophy; then [`argus/ai-charter.md`](argus/ai-charter.md) for operational AI rules. Periodic review: [`argus/vision-review-protocol.md`](argus/vision-review-protocol.md).
 
 | Document | Contents |
 |----------|----------|
 | [README.md](argus/README.md) | **ARGUS doc index** — product loop, status legend, routes, mobile QA |
+| [observation-engine-vision.md](argus/observation-engine-vision.md) | **Observation Engine** — canonical product philosophy |
 | [ai-charter.md](argus/ai-charter.md) | **AI Charter v1.0** — preserve professional truth; evidence before conclusions |
+| [vision-review-protocol.md](argus/vision-review-protocol.md) | **Vision review** — cadence + alignment checklist |
 | [knowledge-model-v01.md](argus/knowledge-model-v01.md) | **Canonical ontology** — Evidence, Project, Topic, Person, Organization, linking graph |
+| [knowledge-execution-model.md](argus/knowledge-execution-model.md) | **Knowledge vs Execution** — Runbook, entities, Create menu |
+| [timeline-vision.md](argus/timeline-vision.md) | **Timeline UX** — entity-scoped evidence stream |
 | [v2-hierarchy-implementation-report.md](argus/v2-hierarchy-implementation-report.md) | **v2 linking rules** — org direct-only scope, project via contacts, code map |
 | [network-browse-spec.md](argus/network-browse-spec.md) | **Network browser** — relationship intelligence, strength from evidence |
 | [v2-design-checklist.md](argus/v2-design-checklist.md) | **v2 design QA checklist** — verify each screen; reset on redesign |

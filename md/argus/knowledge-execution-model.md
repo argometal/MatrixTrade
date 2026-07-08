@@ -2,6 +2,8 @@
 
 **Status:** Agreed direction (2026-07-07). Runbook is the first Execution type in the app.
 
+**Parent vision:** [`observation-engine-vision.md`](observation-engine-vision.md) — ARGUS is an observation engine; Execution guides procedure without replacing evidence.
+
 **Not the same as:** `v2-design-checklist.md` (internal UI/design QC only).
 
 ---
