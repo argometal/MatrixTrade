@@ -274,17 +274,17 @@ export function V2InboxShell({
   }
 
   return (
-    <div className="v2-inbox-shell flex h-[calc(100dvh-3.5rem)] min-h-0 flex-col overflow-hidden lg:h-auto lg:min-h-[calc(100vh-4rem)] lg:flex-row lg:overflow-visible">
+    <div className="v2-inbox-shell flex h-full min-h-0 flex-col overflow-hidden lg:min-h-[calc(100vh-4rem)] lg:flex-row">
       <section
         className={`flex min-h-0 w-full flex-1 flex-col border-b border-zinc-800/80 lg:w-[min(440px,40%)] lg:flex-none lg:border-b-0 lg:border-r ${
           mobileDetailOpen ? "hidden lg:flex" : "flex"
         }`}
       >
-        <div className="border-b border-zinc-800/80 px-4 py-4 lg:px-5">
+        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-4 lg:px-5">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-zinc-50">Inbox</h1>
-              <p className="mt-0.5 text-xs text-zinc-500">Swipe right to link · tap to read</p>
+              <p className="mt-0.5 text-xs text-zinc-500">Tap to read · Link to assign</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <button
@@ -350,7 +350,7 @@ export function V2InboxShell({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 border-b border-zinc-800/80 px-4 py-2 lg:px-5">
+        <div className="shrink-0 flex flex-wrap gap-2 border-b border-zinc-800/80 px-4 py-2 lg:px-5">
           <div className="relative">
             <button
               type="button"
@@ -511,10 +511,10 @@ export function V2InboxShell({
           ) : (
             <ul className="space-y-2 p-2 lg:p-3">
               {filtered.map((row) => (
-                <li key={row.id} data-v2-selected-id={row.id}>
+                <li key={row.id} data-v2-selected-id={row.id} className="flex items-stretch gap-1.5">
                   <V2InboxSwipeRow
+                    className="flex-1"
                     onPress={() => selectItem(row.id)}
-                    onSwipeLink={() => openSwipeLink(row.id)}
                   >
                     <div
                       className={`w-full rounded-xl border px-3 py-3 text-left transition ${v2ActiveListItemClass(
@@ -580,6 +580,14 @@ export function V2InboxShell({
                       </div>
                     </div>
                   </V2InboxSwipeRow>
+                  <button
+                    type="button"
+                    onClick={() => openSwipeLink(row.id)}
+                    className="my-1 shrink-0 self-center rounded-xl border border-violet-500/35 bg-violet-600/10 px-2.5 py-3 text-[11px] font-semibold text-violet-300 lg:hidden"
+                    aria-label={`Link ${row.subject || "email"}`}
+                  >
+                    Link
+                  </button>
                 </li>
               ))}
             </ul>
