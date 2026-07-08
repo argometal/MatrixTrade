@@ -1,7 +1,7 @@
-import { SituationRoomDashboard } from "@/app/components/home-preview/SituationRoomDashboard";
-import { loadSituationRoomData } from "@/lib/situation-room";
+import { PreviewDashboard } from "@/app/components/dashboard/PreviewDashboard";
+import { loadDashboardData } from "@/lib/dashboard-data";
 
 export default async function HomePreviewPage() {
-  const data = await loadSituationRoomData();
-  return <SituationRoomDashboard data={data} />;
+  const data = await loadDashboardData();
+  return <PreviewDashboard data={data} />;
 }

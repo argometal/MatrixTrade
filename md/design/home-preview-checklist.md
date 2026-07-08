@@ -1,10 +1,10 @@
-# MatrixTrade — Home Preview (Situation Room) Design Checklist
+# MatrixTrade — Dashboard Design Checklist
 
-**Route:** `/home-preview`  
+**Route:** `/home-preview` (primary Dashboard; `/` redirects here)  
 **Production:** https://matrix-trade-theta.vercel.app/home-preview  
-**Last design version:** 2026-07-06 (commit `7036a85`)  
-**Component:** `SituationRoomDashboard` · Data: `loadSituationRoomData()`  
-**Source files:** `app/components/home-preview/SituationRoomDashboard.tsx` · `lib/situation-room.ts` · `app/(trading)/home-preview/`
+**Last design version:** 2026-07-08 (Dashboard parity with classic `/`)  
+**Component:** `PreviewDashboard` · Data: `loadDashboardData()`  
+**Source files:** `app/components/dashboard/PreviewDashboard.tsx` · `lib/dashboard-data.ts` · `app/(trading)/(preview)/home-preview/`
 
 Use this list after every deploy or redesign. Check each box only after you have **seen it work** in the browser with real (or test) cycle data.
 

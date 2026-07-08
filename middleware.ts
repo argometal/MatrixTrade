@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { isMobileUserAgent } from "@/lib/is-mobile-user-agent";
 import { argusLegacyRedirectUrl } from "@/lib/argus/argus-legacy-redirects";
 
 function isPublicPath(pathname: string): boolean {
@@ -49,15 +48,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const ua = request.headers.get("user-agent");
-  const mobile = isMobileUserAgent(ua);
-
   const argusLegacy = argusLegacyRedirectUrl(request);
   if (argusLegacy) {
     return NextResponse.redirect(argusLegacy);
   }
 
-  if (pathname === "/" && mobile && !request.nextUrl.searchParams.get("classic")) {
+  if (pathname === "/" && !request.nextUrl.searchParams.get("classic")) {
     return NextResponse.redirect(new URL("/home-preview", request.url));
   }
 

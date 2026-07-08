@@ -8,7 +8,7 @@ Functional verification lists for preview and major UI surfaces. **User checks e
 |--------|-------|-----------|------------------|
 | **Mode map** | all | [legacy-vs-preview-map.md](legacy-vs-preview-map.md) | Legacy vs preview routes + disable plan |
 | **Parity audit** | preview | [new-mode-parity-checklist.md](new-mode-parity-checklist.md) | Features to port before retiring classic |
-| Home preview (Situation Room) | `/home-preview` | [home-preview-checklist.md](home-preview-checklist.md) · [solutions](home-preview-solutions.md) | `PreviewShell` · `SituationRoomDashboard` |
+| Home preview (Situation Room) | `/home-preview` | [home-preview-checklist.md](home-preview-checklist.md) · [solutions](home-preview-solutions.md) | `PreviewShell` · `PreviewDashboard` |
 | Trades preview | `/trades-preview` | [trades-preview-checklist.md](trades-preview-checklist.md) | `PreviewShell` · `TradesWorkspace` |
 
 Template for new screens: [DESIGN-CHECKLIST-TEMPLATE.md](DESIGN-CHECKLIST-TEMPLATE.md)

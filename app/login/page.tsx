@@ -1,6 +1,4 @@
 import { loginTradingAction } from "@/app/auth/actions";
-import { headers } from "next/headers";
-import { isMobileUserAgent } from "@/lib/is-mobile-user-agent";
 
 export default async function LoginPage({
   searchParams,
@@ -8,8 +6,7 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const { error, next } = await searchParams;
-  const headerList = await headers();
-  const defaultNext = isMobileUserAgent(headerList.get("user-agent")) ? "/home-preview" : "/";
+  const defaultNext = "/home-preview";
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">

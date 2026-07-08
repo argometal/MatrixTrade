@@ -1,13 +1,15 @@
+import { redirect } from "next/navigation";
 import { ClassicDashboard } from "@/app/components/dashboard/ClassicDashboard";
-import { DashboardViewSwitch } from "@/app/components/dashboard/DashboardViewSwitch";
 
-export default async function DashboardPage() {
-  return (
-    <>
-      <div className="mb-4 flex justify-end">
-        <DashboardViewSwitch mode="classic" />
-      </div>
-      <ClassicDashboard />
-    </>
-  );
+/** `/` redirects to Dashboard (`/home-preview`). Use `/?classic=1` for light classic view. */
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ classic?: string }>;
+}) {
+  const { classic } = await searchParams;
+  if (classic) {
+    return <ClassicDashboard />;
+  }
+  redirect("/home-preview");
 }

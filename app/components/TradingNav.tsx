@@ -4,11 +4,8 @@ import { SignOutButton } from "@/app/components/SignOutButton";
 export function TradingNav() {
   return (
     <nav className="mb-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-zinc-200 pb-4 text-sm font-medium sm:mb-8">
-      <Link href="/" className="font-medium text-violet-700 hover:text-violet-800">
+      <Link href="/home-preview" className="font-medium text-violet-700 hover:text-violet-800">
         Dashboard
-      </Link>
-      <Link href="/home-preview" className="hover:text-zinc-600">
-        Home preview
       </Link>
       <Link href="/exchange" className="hover:text-zinc-600">
         Assistant

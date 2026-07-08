@@ -13,7 +13,7 @@ export const PREVIEW_NAV_SECTIONS = [
     id: "workspace",
     label: "Workspace",
     items: [
-      { href: "/home-preview", label: "Home preview" },
+      { href: "/home-preview", label: "Dashboard" },
       { href: "/trades-preview", label: "Trades preview" },
       { href: "/exchange", label: "Assistant" },
     ],
@@ -22,7 +22,7 @@ export const PREVIEW_NAV_SECTIONS = [
     id: "trading",
     label: "Trading",
     items: [
-      { href: "/", label: "Classic dashboard" },
+      { href: "/?classic=1", label: "Classic view" },
       { href: "/trades", label: "Classic trades" },
       { href: "/trades/new", label: "New trade" },
       { href: "/playbook", label: "Playbook" },
@@ -45,7 +45,7 @@ export const PREVIEW_NAV_SECTIONS = [
 
 /** Bottom tab bar — quick access on phone. */
 export const PREVIEW_MOBILE_TABS = [
-  { href: "/home-preview", label: "Home" },
+  { href: "/home-preview", label: "Dashboard" },
   { href: "/trades-preview", label: "Trades" },
   { href: "/inbox", label: "Inbox" },
 ] as const;
