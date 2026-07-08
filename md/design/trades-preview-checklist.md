@@ -25,8 +25,8 @@ Use this list after every deploy or redesign. Check each box only after you have
 - [ ] **Preview layout** — `fixed inset-0`; scroll inside main column.
 - [ ] **Authentication** — Logged-out → login; logged-in → workspace.
 - [ ] **Classic toggle (mobile)** — Top bar “Classic →” links to `/trades`.
-- [ ] **Classic toggle (sidebar)** — “Classic trades →” links to `/trades`.
-- [ ] **Classic entry** — Classic `/trades` has “Open Trades preview”.
+- [ ] **Trades toggle (sidebar)** — “Trades →” links to `/trades`.
+- [ ] **Trades list** — `/trades` uses dark preview shell with trades table.
 - [ ] **ARGUS corner hidden** — No ARGUS button on this route.
 
 ---

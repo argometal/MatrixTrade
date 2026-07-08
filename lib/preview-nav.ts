@@ -22,8 +22,7 @@ export const PREVIEW_NAV_SECTIONS = [
     id: "trading",
     label: "Trading",
     items: [
-      { href: "/?classic=1", label: "Classic view" },
-      { href: "/trades", label: "Classic trades" },
+      { href: "/trades", label: "Trades" },
       { href: "/trades/new", label: "Classic form" },
       { href: "/playbook", label: "Playbook" },
       { href: "/review", label: "Review" },
@@ -51,14 +50,8 @@ export const PREVIEW_MOBILE_TABS = [
 ] as const;
 
 export function isPreviewNavActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
   if (href === "/home-preview") return pathname === "/home-preview";
   if (href === "/trades-preview") return pathname === "/trades-preview";
-  if (href === "/trades") {
-    return (
-      pathname === "/trades" ||
-      (pathname.startsWith("/trades/") && !pathname.startsWith("/trades-preview"))
-    );
-  }
+  if (href === "/trades") return pathname === "/trades";
   return pathname === href || pathname.startsWith(`${href}/`);
 }

@@ -14,7 +14,7 @@ export function TradingNav() {
         New Trade
       </Link>
       <Link href="/trades" className="hover:text-zinc-600">
-        Classic trades
+        Trades
       </Link>
       <Link href="/playbook" className="hover:text-zinc-600">
         Playbook

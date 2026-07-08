@@ -18,7 +18,7 @@ export function TradesViewSwitch({ mode }: { mode: "classic" | "preview" }) {
       href="/trades"
       className="rounded-xl border border-zinc-600 px-3 py-1.5 text-xs font-medium text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
     >
-      Classic trades →
+      Trades →
     </Link>
   );
 }
