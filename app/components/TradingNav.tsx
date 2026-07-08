@@ -11,7 +11,7 @@ export function TradingNav() {
         Assistant
       </Link>
       <Link href="/trades-preview" className="hover:text-zinc-600">
-        Trades preview
+        New Trade
       </Link>
       <Link href="/trades" className="hover:text-zinc-600">
         Classic trades
@@ -44,7 +44,7 @@ export function TradingNav() {
         href="/trades/new"
         className="rounded-md bg-zinc-900 px-3 py-1.5 text-white hover:bg-zinc-800"
       >
-        New trade
+        New trade (classic)
       </Link>
       <SignOutButton className="ml-auto text-sm font-medium text-zinc-500 hover:text-zinc-800" />
     </nav>

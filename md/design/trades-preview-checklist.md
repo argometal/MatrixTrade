@@ -1,7 +1,8 @@
-# MatrixTrade — Trades Preview Design Checklist
+# MatrixTrade — New Trade Design Checklist
 
-**Route:** `/trades-preview`  
+**Route:** `/trades-preview` (labeled **New Trade** in nav; URL unchanged)  
 **Production:** https://matrix-trade-theta.vercel.app/trades-preview  
+**Last design version:** 2026-07-08 (rename Trades preview → New Trade)  
 **Last design version:** 2026-07-06 (commit `7036a85`)  
 **Component:** `TradesWorkspace` · Data: `loadTradesWorkspaceData()`  
 **Source files:** `app/components/trades-preview/TradesWorkspace.tsx` · `lib/trades-workspace.ts` · `app/(trading)/trades-preview/`

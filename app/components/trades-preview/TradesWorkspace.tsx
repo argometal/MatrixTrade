@@ -171,9 +171,9 @@ export function TradesWorkspace({
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h1 className="text-xl font-semibold">Trades</h1>
+              <h1 className="text-xl font-semibold">New Trade</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                Execute trades your way. Assistant or traditional entry — one path to Inbox.
+                Assistant or traditional entry — proposals go to Inbox for approval.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

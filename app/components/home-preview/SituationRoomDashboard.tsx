@@ -8,7 +8,7 @@ import {
 } from "@/lib/situation-room";
 
 const QUICK_NAV = [
-  { href: "/trades-preview", label: "Trades" },
+  { href: "/trades-preview", label: "New Trade" },
   { href: "/review", label: "Review" },
   { href: "/inbox", label: "Inbox" },
   { href: "/stats", label: "Statistics" },

@@ -45,7 +45,7 @@ Use this list after every deploy or redesign. Check each box only after you have
 - [ ] **Brand block** — Violet “M” logo + “MatrixTrade” label (links to `/home-preview`).
 - [ ] **Main nav — Dashboard (classic)** — Links to `/`.
 - [ ] **Main nav — Home preview** — Links to `/home-preview`; active on this route.
-- [ ] **Main nav — Trades preview** — Links to `/trades-preview`.
+- [ ] **Main nav — New Trade** — Links to `/trades-preview`.
 - [ ] **Main nav — Playbook** — Links to `/playbook` (classic).
 - [ ] **Main nav — Review** — Links to `/review` (classic).
 - [ ] **Main nav — Statistics** — Links to `/stats` (classic).
@@ -115,7 +115,7 @@ Use this list after every deploy or redesign. Check each box only after you have
 
 ## H. Quick navigation (center footer)
 
-- [ ] **Trades pill** → `/trades-preview`
+- [ ] **New Trade pill** → `/trades-preview`
 - [ ] **Review pill** → `/review`
 - [ ] **Inbox pill** → `/inbox`
 - [ ] **Statistics pill** → `/stats`
