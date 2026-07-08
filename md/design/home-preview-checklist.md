@@ -49,7 +49,7 @@ Use this list after every deploy or redesign. Check each box only after you have
 - [ ] **Main nav — Playbook** — Links to `/playbook` (classic).
 - [ ] **Main nav — Review** — Links to `/review` (classic).
 - [ ] **Main nav — Statistics** — Links to `/stats` (classic).
-- [ ] **Main nav — Journal** — Links to `/journal` (classic).
+- [ ] **Main nav — Journal** — Links to `/journal` (dark preview shell).
 - [ ] **System nav — Assistant** — Links to `/exchange`.
 - [ ] **System nav — Inbox** — Links to `/inbox`; badge shows pending count when &gt; 0.
 - [ ] **System nav — System** — Links to `/system`.

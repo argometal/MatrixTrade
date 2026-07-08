@@ -36,7 +36,8 @@ Use this list after every deploy or redesign. Check each box only after you have
 - [ ] **Brand block** — M logo + MatrixTrade.
 - [ ] **Main nav — Dashboard** → `/home-preview`.
 - [ ] **Main nav — Trades** — Active (violet) on `/trades-preview`.
-- [ ] **Main nav — Playbooks / Review / Statistics / Journal** — Link to classic routes.
+- [ ] **Main nav — Playbooks / Review / Statistics** — Link to classic routes.
+- [ ] **Main nav — Journal** — Links to `/journal` (dark preview shell).
 - [ ] **Cycle footer** — Trades used / max this cycle + classic link.
 
 ---
