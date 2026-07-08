@@ -2,6 +2,9 @@
 
 import { useRef, useState, type ReactNode } from "react";
 
+const TAP_SLOP_PX = 12;
+const SWIPE_LINK_PX = 64;
+
 export function V2InboxSwipeRow({
   children,
   onPress,
@@ -15,8 +18,11 @@ export function V2InboxSwipeRow({
 }) {
   const startX = useRef(0);
   const startY = useRef(0);
+  const maxDx = useRef(0);
+  const maxDy = useRef(0);
   const offsetRef = useRef(0);
-  const touchPressRef = useRef(false);
+  /** True when finger moved enough to count as scroll or swipe — suppresses synthetic click. */
+  const suppressPressRef = useRef(false);
   const [offset, setOffset] = useState(0);
   const [swiping, setSwiping] = useState(false);
 
@@ -24,8 +30,10 @@ export function V2InboxSwipeRow({
     if (disabled) return;
     startX.current = event.touches[0].clientX;
     startY.current = event.touches[0].clientY;
+    maxDx.current = 0;
+    maxDy.current = 0;
     offsetRef.current = 0;
-    touchPressRef.current = false;
+    suppressPressRef.current = false;
     setSwiping(true);
   }
 
@@ -33,13 +41,25 @@ export function V2InboxSwipeRow({
     if (!swiping || disabled) return;
     const dx = event.touches[0].clientX - startX.current;
     const dy = event.touches[0].clientY - startY.current;
-    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dx) < 12) return;
-    if (dx > 0) {
+    maxDx.current = Math.max(maxDx.current, Math.abs(dx));
+    maxDy.current = Math.max(maxDy.current, Math.abs(dy));
+
+    if (maxDx.current > TAP_SLOP_PX || maxDy.current > TAP_SLOP_PX) {
+      suppressPressRef.current = true;
+    }
+
+    // Vertical scroll — do not capture; let the list scroll.
+    if (maxDy.current > TAP_SLOP_PX && maxDy.current >= maxDx.current) {
+      offsetRef.current = 0;
+      setOffset(0);
+      return;
+    }
+
+    if (dx > 0 && maxDx.current > maxDy.current) {
       const next = Math.min(dx, 96);
       offsetRef.current = next;
       setOffset(next);
-      if (next > 8) event.preventDefault();
-    } else {
+    } else if (dx <= 0) {
       offsetRef.current = 0;
       setOffset(0);
     }
@@ -48,12 +68,13 @@ export function V2InboxSwipeRow({
   function onTouchEnd() {
     if (disabled) return;
     const finalOffset = offsetRef.current;
-    if (finalOffset >= 64) {
+    const wasScroll = maxDy.current > TAP_SLOP_PX && maxDy.current >= maxDx.current;
+
+    if (finalOffset >= SWIPE_LINK_PX && !wasScroll) {
+      suppressPressRef.current = true;
       onSwipeLink();
-    } else if (finalOffset < 8) {
-      touchPressRef.current = true;
-      onPress();
     }
+
     offsetRef.current = 0;
     setOffset(0);
     setSwiping(false);
@@ -61,8 +82,8 @@ export function V2InboxSwipeRow({
 
   function onClick() {
     if (disabled) return;
-    if (touchPressRef.current) {
-      touchPressRef.current = false;
+    if (suppressPressRef.current) {
+      suppressPressRef.current = false;
       return;
     }
     onPress();
@@ -88,7 +109,7 @@ export function V2InboxSwipeRow({
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
-        className="relative cursor-pointer touch-pan-y"
+        className="relative cursor-pointer"
         style={{
           transform: `translateX(${offset}px)`,
           transition: swiping ? "none" : "transform 150ms ease-out",
@@ -96,6 +117,7 @@ export function V2InboxSwipeRow({
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
         onClick={onClick}
         onKeyDown={onKeyDown}
       >

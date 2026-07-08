@@ -274,9 +274,9 @@ export function V2InboxShell({
   }
 
   return (
-    <div className="v2-inbox-shell flex min-h-[calc(100vh-4.5rem)] flex-col lg:min-h-[calc(100vh-4rem)] lg:flex-row">
+    <div className="v2-inbox-shell flex h-[calc(100dvh-3.5rem)] min-h-0 flex-col overflow-hidden lg:h-auto lg:min-h-[calc(100vh-4rem)] lg:flex-row lg:overflow-visible">
       <section
-        className={`flex w-full flex-col border-b border-zinc-800/80 lg:w-[min(440px,40%)] lg:border-b-0 lg:border-r ${
+        className={`flex min-h-0 w-full flex-1 flex-col border-b border-zinc-800/80 lg:w-[min(440px,40%)] lg:flex-none lg:border-b-0 lg:border-r ${
           mobileDetailOpen ? "hidden lg:flex" : "flex"
         }`}
       >
@@ -503,7 +503,7 @@ export function V2InboxShell({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
           {filtered.length === 0 ? (
             <p className="px-5 py-10 text-center text-sm text-zinc-500">
               {filtersActive ? "No items match these filters." : "No items in this tab."}
