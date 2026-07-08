@@ -53,7 +53,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(argusLegacy);
   }
 
-  if (pathname === "/" && !request.nextUrl.searchParams.get("classic")) {
+  if (pathname === "/") {
     return NextResponse.redirect(new URL("/home-preview", request.url));
   }
 

@@ -159,7 +159,7 @@ export default async function StatsPage() {
         <Link href="/journal" className="text-zinc-600 hover:underline">
           Journal
         </Link>
-        <Link href="/" className="text-zinc-600 hover:underline">
+        <Link href="/home-preview" className="text-zinc-600 hover:underline">
           Dashboard
         </Link>
       </nav>

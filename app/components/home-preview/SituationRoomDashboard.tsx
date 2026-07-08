@@ -180,12 +180,6 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href="/"
-                className="hidden rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-500 hover:text-zinc-300 sm:inline-block"
-              >
-                Classic dashboard →
-              </Link>
               <span className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400">
                 {data.cycleLabel} (Current)
               </span>
