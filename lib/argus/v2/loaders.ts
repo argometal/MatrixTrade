@@ -273,7 +273,8 @@ export function buildV2EntityRows(
   inboxItems: InboxItem[],
   includePrivate: boolean,
   today: string,
-  tab: V2EntityTab
+  tab: V2EntityTab,
+  limit = 8
 ): V2EntityRow[] {
   const kinds = entitiesByKind(data);
   const list =
@@ -350,7 +351,7 @@ export function buildV2EntityRows(
       };
     })
     .sort((a, b) => b.lastSort.localeCompare(a.lastSort))
-    .slice(0, 8);
+    .slice(0, limit);
 }
 
 export function buildV2TagCloud(data: ArgusData, inboxItems: InboxItem[], includePrivate: boolean, limit = 24) {

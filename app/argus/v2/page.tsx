@@ -6,9 +6,9 @@ import {
   buildV2FollowUps,
   buildV2HomeStats,
   buildV2HomeTimeline,
-  buildV2RecentActivity,
   buildV2TagCloud,
   parseV2EntityTab,
+  type V2EntityTab,
 } from "@/lib/argus/v2/loaders";
 import { V2Card, V2SectionTitle } from "./components/v2-ui";
 import { V2Timeline, V2TimelineRail } from "./components/V2Timeline";
@@ -21,6 +21,14 @@ const STAT_ICONS: Record<string, string> = {
   people: "👤",
   org: "🏢",
   project: "📁",
+};
+
+const ENTITY_BROWSE_HREFS: Record<V2EntityTab, string> = {
+  organizations: "/argus/v2/browse/organizations",
+  projects: "/argus/v2/browse/projects",
+  people: "/argus/v2/browse/network",
+  topics: "/argus/v2/browse/topics",
+  events: "/argus/v2/browse/events",
 };
 
 function V2HomeStatCard({ stat }: { stat: { label: string; value: string; delta: string; icon: string; href: string } }) {
@@ -38,12 +46,6 @@ function V2HomeStatCard({ stat }: { stat: { label: string; value: string; delta:
     </Link>
   );
 }
-
-const ACTIVITY_ICON_STYLES: Record<string, { icon: string; box: string }> = {
-  journal: { icon: "📓", box: "bg-emerald-500/15 text-emerald-400" },
-  email: { icon: "✉", box: "bg-zinc-700/50 text-zinc-300" },
-  meeting: { icon: "📅", box: "bg-violet-500/15 text-violet-400" },
-};
 
 const FOLLOW_UP_ICON_STYLES: Record<string, { icon: string; box: string }> = {
   danger: { icon: "↩", box: "bg-red-500/15 text-red-400" },
@@ -76,10 +78,9 @@ export default async function V2HomePage({
   const entities = data.entities.filter((e) => !e.deletedAt);
 
   const stats = buildV2HomeStats(data, inboxItems, today);
-  const recentActivity = buildV2RecentActivity(data, entities, includePrivate, today);
   const followUps = buildV2FollowUps(data, entities, includePrivate, today);
   const homeTimeline = buildV2HomeTimeline(data, inboxItems, includePrivate);
-  const entityRows = buildV2EntityRows(data, inboxItems, includePrivate, today, tab);
+  const entityRows = buildV2EntityRows(data, inboxItems, includePrivate, today, tab, 12);
   const tags = buildV2TagCloud(data, inboxItems, includePrivate);
 
   return (
@@ -87,7 +88,7 @@ export default async function V2HomePage({
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Home</h1>
-          <p className="mt-1 text-sm text-zinc-500">Overview of your knowledge base · live counts</p>
+          <p className="mt-1 text-sm text-zinc-500">Organizations, projects, and people — sorted by recent activity</p>
         </div>
       </div>
 
@@ -99,55 +100,30 @@ export default async function V2HomePage({
 
       <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
         <div className="space-y-6">
-          {/* Recent Activity + Follow Ups side by side (per mockup) */}
-          <div className="grid gap-6 md:grid-cols-2">
-            <V2Card className="flex flex-col p-5">
-              <V2SectionTitle
-                action={
-                  <Link href="/argus/v2#stats" className="text-xs text-violet-400 hover:text-violet-300">
-                    View all
-                  </Link>
-                }
-              >
-                Recent Activity
-              </V2SectionTitle>
-              {recentActivity.length === 0 ? (
-                <p className="text-sm text-zinc-500">No journal activity yet.</p>
-              ) : (
-                <ul className="divide-y divide-zinc-800/80">
-                  {recentActivity.map((item) => {
-                    const style = ACTIVITY_ICON_STYLES[item.kind] ?? ACTIVITY_ICON_STYLES.journal;
-                    return (
-                      <li key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
-                        <IconBox icon={style.icon} boxClass={style.box} />
-                        <div className="min-w-0 flex-1">
-                          <Link
-                            href={item.href}
-                            className="text-sm font-medium text-zinc-200 hover:text-violet-300"
-                          >
-                            {item.title}
-                          </Link>
-                          <p className="mt-0.5 text-xs text-zinc-500">{item.meta}</p>
-                        </div>
-                        <span className="shrink-0 text-xs text-zinc-600">{item.time}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </V2Card>
+          <V2Card className="p-6">
+            <V2SectionTitle
+              action={
+                <Link
+                  href={ENTITY_BROWSE_HREFS[tab]}
+                  className="text-xs font-medium text-violet-400 hover:text-violet-300"
+                >
+                  Browse all
+                </Link>
+              }
+            >
+              Recent Entities
+            </V2SectionTitle>
+            <p className="mb-1 text-sm text-zinc-500">
+              Open an organization, project, or person — your main entry points into Argus.
+            </p>
+            <V2EntityTable tab={tab} rows={entityRows} primary />
+          </V2Card>
+        </div>
 
-            <div id="follow-ups">
+        <aside className="space-y-6">
+          <div id="follow-ups">
             <V2Card className="flex flex-col p-5">
-              <V2SectionTitle
-                action={
-                  <Link href="/argus/v2#follow-ups" className="text-xs text-violet-400 hover:text-violet-300">
-                    View all
-                  </Link>
-                }
-              >
-                Follow Ups
-              </V2SectionTitle>
+              <V2SectionTitle>Follow Ups</V2SectionTitle>
               {followUps.length === 0 ? (
                 <p className="text-sm text-zinc-500">No pending follow-ups.</p>
               ) : (
@@ -183,18 +159,18 @@ export default async function V2HomePage({
                 </ul>
               )}
             </V2Card>
-            </div>
           </div>
 
-          <V2Card className="p-5">
-            <V2SectionTitle>Recent Entities</V2SectionTitle>
-            <V2EntityTable tab={tab} rows={entityRows} />
-          </V2Card>
-        </div>
-
-        <aside className="space-y-6">
           <V2Card className="hidden p-5 xl:block">
-            <V2SectionTitle>Timeline</V2SectionTitle>
+            <V2SectionTitle
+              action={
+                <Link href="/argus/journal" className="text-xs text-violet-400 hover:text-violet-300">
+                  View all
+                </Link>
+              }
+            >
+              Timeline
+            </V2SectionTitle>
             {homeTimeline.length === 0 ? (
               <p className="text-sm text-zinc-500">No timeline entries yet.</p>
             ) : (
@@ -203,17 +179,25 @@ export default async function V2HomePage({
           </V2Card>
 
           <div id="tags">
-          <V2Card className="p-5">
-            <V2SectionTitle>Tags</V2SectionTitle>
-            <V2TagCloud tags={tags} />
-          </V2Card>
+            <V2Card className="p-5">
+              <V2SectionTitle>Tags</V2SectionTitle>
+              <V2TagCloud tags={tags} />
+            </V2Card>
           </div>
         </aside>
       </div>
 
       {homeTimeline.length > 0 ? (
         <V2Card className="mt-6 p-5 xl:hidden">
-          <V2SectionTitle>Timeline</V2SectionTitle>
+          <V2SectionTitle
+            action={
+              <Link href="/argus/journal" className="text-xs text-violet-400 hover:text-violet-300">
+                View all
+              </Link>
+            }
+          >
+            Timeline
+          </V2SectionTitle>
           <V2Timeline entries={homeTimeline} compact />
         </V2Card>
       ) : null}
