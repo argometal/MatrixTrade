@@ -128,7 +128,7 @@ export function V2TopicsShell({
                 <tr className="border-b border-zinc-800">
                   <th className="px-4 py-2 font-medium lg:px-5">Topic</th>
                   <th className="hidden px-2 py-2 font-medium sm:table-cell">Category</th>
-                  <th className="hidden px-2 py-2 font-medium md:table-cell">Linked to</th>
+                  <th className="hidden w-[7.5rem] min-w-[7.5rem] px-2 py-2 font-medium md:table-cell">Linked to</th>
                   <th className="px-2 py-2 font-medium">Last activity</th>
                   <th className="px-4 py-2 font-medium lg:px-5">Entries</th>
                 </tr>
@@ -150,10 +150,12 @@ export function V2TopicsShell({
                       </div>
                     </td>
                     <td className="hidden px-2 py-3 text-zinc-500 sm:table-cell">{row.category}</td>
-                    <td className="hidden px-2 py-3 text-[11px] text-zinc-500 md:table-cell">
-                      <span title="Organizations">🏢 {row.orgCount}</span>{" "}
-                      <span title="Projects">📁 {row.projectCount}</span>{" "}
-                      <span title="People">👤 {row.peopleCount}</span>
+                    <td className="hidden px-2 py-3 md:table-cell">
+                      <TopicLinkedStats
+                        orgCount={row.orgCount}
+                        projectCount={row.projectCount}
+                        peopleCount={row.peopleCount}
+                      />
                     </td>
                     <td className="px-2 py-3 text-zinc-500">{row.lastActivity}</td>
                     <td className="px-4 py-3 lg:px-5">
@@ -244,6 +246,41 @@ export function V2TopicsShell({
           </div>
         )}
       </section>
+    </div>
+  );
+}
+
+function TopicLinkedStats({
+  orgCount,
+  projectCount,
+  peopleCount,
+}: {
+  orgCount: number;
+  projectCount: number;
+  peopleCount: number;
+}) {
+  const stats = [
+    { icon: "🏢", label: "Organizations", count: orgCount },
+    { icon: "📁", label: "Projects", count: projectCount },
+    { icon: "👤", label: "People", count: peopleCount },
+  ];
+
+  return (
+    <div className="inline-grid w-[7rem] grid-cols-3 gap-1">
+      {stats.map((stat) => (
+        <div
+          key={stat.label}
+          title={stat.label}
+          className="flex flex-col items-center justify-center rounded-lg bg-zinc-900/50 px-1 py-1.5 ring-1 ring-zinc-800/70"
+        >
+          <span className="text-[11px] leading-none" aria-hidden>
+            {stat.icon}
+          </span>
+          <span className="mt-1 text-[11px] font-semibold tabular-nums leading-none text-violet-300/90">
+            {stat.count}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
