@@ -1,4 +1,7 @@
+import type { EventLegalPurpose } from "./event-record";
+
 export type V2EventTab = "all" | "upcoming" | "past";
+export type { EventLegalPurpose };
 
 export interface V2EventRow {
   id: string;
@@ -29,17 +32,38 @@ export interface V2EventEmail {
   href: string;
 }
 
+export interface V2EventEvidenceItem {
+  id: string;
+  kind: "email" | "journal" | "photo";
+  title: string;
+  meta: string;
+  sortIso: string;
+  href: string;
+}
+
+export interface V2EventInboxOption {
+  id: string;
+  subject: string;
+  from: string;
+  date: string;
+  alreadyLinked: boolean;
+}
+
 export interface V2EventDetail {
   id: string;
   name: string;
   dateTimeLabel: string;
+  eventDate: string;
   meetingUrl?: string;
   projectName?: string;
   projectHref?: string;
   topicTags: string[];
   linkedTopicNames: string[];
   description: string;
+  legalPurpose: EventLegalPurpose;
+  record: string;
   attendeeInitials: string[];
+  attendeeNames: string[];
   attendeeCount: number;
   orgCount: number;
   projectCount: number;
@@ -48,6 +72,7 @@ export interface V2EventDetail {
   linkedEntityIds: string[];
   linkedEntries: V2EventEntry[];
   relatedEmails: V2EventEmail[];
+  evidence: V2EventEvidenceItem[];
 }
 
 export function buildV2EventTabCounts(rows: V2EventRow[]) {

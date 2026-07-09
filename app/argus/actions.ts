@@ -50,6 +50,11 @@ import {
   createInputToReferenceKind,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
+import {
+  buildEventRecordNotes,
+  EVENT_LEGAL_PURPOSES,
+  type EventLegalPurpose,
+} from "@/lib/argus/v2/event-record";
 import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
 import { partitionIdsByEntityKind } from "@/lib/argus/v2/entity-link-counts";
 import type { UnifiedCreatePayload, UnifiedCreateResult } from "@/lib/argus/create-flow-types";
@@ -469,6 +474,42 @@ export async function bulkDeleteInboxAction(
   revalidateArgus();
   revalidatePath("/argus/v2/inbox");
   return { ok: true, count };
+}
+
+/** Update event formal record + legal purpose (no redirect). */
+export async function updateEventRecordAction(
+  eventId: string,
+  purpose: EventLegalPurpose,
+  record: string
+): Promise<{ ok: true }> {
+  await requireArgusSession();
+  const entity = await getEntity(eventId);
+  if (!entity || referenceKindFromNotes(entity.notes ?? "") !== "event") {
+    throw new Error("Event not found");
+  }
+  const validPurpose = EVENT_LEGAL_PURPOSES.some((p) => p.id === purpose) ? purpose : "general";
+  await updateEntity(eventId, {
+    notes: buildEventRecordNotes(validPurpose, record),
+  });
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/events");
+  return { ok: true };
+}
+
+/** Link an inbox email to an event (evidence chain). */
+export async function linkInboxEmailToEventAction(
+  inboxId: string,
+  eventId: string
+): Promise<{ ok: true }> {
+  await requireArgusSession();
+  const item = await getInboxItem(inboxId, true);
+  if (!item) throw new Error("Email not found");
+  const next = [...new Set([...(item.linkedEntityIds ?? []), eventId])];
+  await linkInboxToEntities(inboxId, next);
+  revalidateArgus();
+  revalidatePath("/argus/v2/inbox");
+  revalidatePath("/argus/v2/browse/events");
+  return { ok: true };
 }
 
 function parseInboxTriagePatch(formData: FormData) {

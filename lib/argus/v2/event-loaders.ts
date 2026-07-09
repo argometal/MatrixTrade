@@ -14,13 +14,18 @@ import type {
   V2EventDetail,
   V2EventEmail,
   V2EventEntry,
+  V2EventEvidenceItem,
+  V2EventInboxOption,
   V2EventRow,
   V2EventTab,
 } from "./event-browse-utils";
+import { parseEventRecord } from "./event-record";
 export type {
   V2EventDetail,
   V2EventEmail,
   V2EventEntry,
+  V2EventEvidenceItem,
+  V2EventInboxOption,
   V2EventRow,
   V2EventTab,
 } from "./event-browse-utils";
@@ -73,7 +78,7 @@ function linkedProject(data: ArgusData, event: Entity) {
   return undefined;
 }
 
-function attendeeInitials(data: ArgusData, event: Entity, logs: Log[]): string[] {
+function attendeePeople(data: ArgusData, event: Entity, logs: Log[]): string[] {
   const people = new Set<string>();
   for (const id of event.linkedPersonIds ?? []) {
     const p = data.entities.find((e) => e.id === id && e.type === "person");
@@ -90,7 +95,11 @@ function attendeeInitials(data: ArgusData, event: Entity, logs: Log[]): string[]
       if (p) people.add(p.name);
     }
   }
-  return [...people]
+  return [...people];
+}
+
+function attendeeInitials(names: string[]): string[] {
+  return names
     .slice(0, 5)
     .map((name) =>
       name
@@ -100,6 +109,87 @@ function attendeeInitials(data: ArgusData, event: Entity, logs: Log[]): string[]
         .slice(0, 2)
         .toUpperCase()
     );
+}
+
+function buildEventEvidence(
+  data: ArgusData,
+  eventId: string,
+  inbox: InboxItem[],
+  history: Log[],
+  today: string
+): V2EventEvidenceItem[] {
+  const items: V2EventEvidenceItem[] = [];
+
+  for (const item of inbox) {
+    items.push({
+      id: `email-${item.id}`,
+      kind: "email",
+      title: item.subject || "(No subject)",
+      meta: `${item.from?.replace(/<.*>/, "").trim() || "Unknown"} · ${relativeActivityLabel(item.receivedAt, today)}`,
+      sortIso: item.receivedAt,
+      href: `/argus/v2/inbox?selected=${item.id}`,
+    });
+    for (const aid of item.attachmentIds) {
+      const att = data.attachments.find((a) => a.id === aid && !a.deletedAt);
+      if (!att || !att.mimeType.startsWith("image/")) continue;
+      items.push({
+        id: `photo-${att.id}`,
+        kind: "photo",
+        title: att.fileName,
+        meta: `Photo from email · ${relativeActivityLabel(item.receivedAt, today)}`,
+        sortIso: item.receivedAt,
+        href: `/api/argus/files/${att.id}?inline=1`,
+      });
+    }
+  }
+
+  for (const log of history) {
+    items.push({
+      id: `journal-${log.id}`,
+      kind: "journal",
+      title: log.title || "Journal entry",
+      meta: `${log.kind === "log" ? "Log" : log.kind === "follow_up" ? "Follow-up" : "Note"} · ${relativeActivityLabel(log.date, today)}`,
+      sortIso: log.date,
+      href: `/argus/logs/${log.id}`,
+    });
+    for (const aid of log.attachmentIds ?? []) {
+      const att = data.attachments.find((a) => a.id === aid && !a.deletedAt);
+      if (!att || !att.mimeType.startsWith("image/")) continue;
+      items.push({
+        id: `photo-${att.id}`,
+        kind: "photo",
+        title: att.fileName,
+        meta: `Photo from journal · ${relativeActivityLabel(log.date, today)}`,
+        sortIso: log.date,
+        href: `/api/argus/files/${att.id}?inline=1`,
+      });
+    }
+  }
+
+  return items.sort((a, b) => b.sortIso.localeCompare(a.sortIso));
+}
+
+export function buildV2EventInboxOptions(
+  inboxItems: InboxItem[],
+  eventId: string,
+  includePrivate: boolean,
+  today: string
+): V2EventInboxOption[] {
+  const visible = includePrivate
+    ? inboxItems.filter(isActiveRecord)
+    : inboxItems.filter(isActiveRecord).filter((i) => !i.private);
+
+  return visible
+    .filter((item) => item.status !== "archived")
+    .sort((a, b) => b.receivedAt.localeCompare(a.receivedAt))
+    .slice(0, 40)
+    .map((item) => ({
+      id: item.id,
+      subject: item.subject || "(No subject)",
+      from: item.from?.replace(/<.*>/, "").trim() || "Unknown",
+      date: relativeActivityLabel(item.receivedAt, today),
+      alreadyLinked: (item.linkedEntityIds ?? []).includes(eventId),
+    }));
 }
 
 export function buildV2EventRows(data: ArgusData, includePrivate: boolean, today: string): V2EventRow[] {
@@ -114,6 +204,7 @@ export function buildV2EventRows(data: ArgusData, includePrivate: boolean, today
       const notes = entityNotesForDisplay(event.notes ?? "");
       const project = linkedProject(data, event);
       const history = getEntityHistory(data, event.id, includePrivate);
+      const people = attendeePeople(data, event, history);
 
       return {
         id: event.id,
@@ -124,7 +215,7 @@ export function buildV2EventRows(data: ArgusData, includePrivate: boolean, today
         projectName: project?.name,
         projectHref: project?.href,
         typeLabel: eventTypeLabel(event),
-        attendeeInitials: attendeeInitials(data, event, history),
+        attendeeInitials: attendeeInitials(people),
         isUpcoming,
         sortDate,
       };
@@ -148,10 +239,14 @@ export function buildV2EventDetails(
 
   return events.map((event) => {
     const eventDate = event.startDate || event.endDate || event.createdAt.slice(0, 10);
-    const notes = entityNotesForDisplay(event.notes ?? "");
+    const rawNotes = event.notes ?? "";
+    const { purpose, record } = parseEventRecord(rawNotes);
+    const displayNotes = entityNotesForDisplay(rawNotes);
+    const notes = record || displayNotes;
     const project = linkedProject(data, event);
     const history = getEntityHistory(data, event.id, includePrivate);
-    const initials = attendeeInitials(data, event, history);
+    const people = attendeePeople(data, event, history);
+    const initials = attendeeInitials(people);
     const inbox = getLinkedInboxForEntity(inboxItems, event.id, includePrivate);
 
     const topicTags = [...new Set(history.flatMap((l) => l.topics).filter(Boolean))].slice(0, 6);
@@ -166,7 +261,7 @@ export function buildV2EventDetails(
       href: `/argus/logs/${log.id}`,
     }));
 
-    const relatedEmails = inbox.slice(0, 3).map((item) => ({
+    const relatedEmails = inbox.slice(0, 8).map((item) => ({
       id: item.id,
       subject: item.subject || "(No subject)",
       from: item.from?.replace(/<.*>/, "").trim() || "Unknown",
@@ -174,20 +269,26 @@ export function buildV2EventDetails(
       href: `/argus/v2/inbox?selected=${item.id}`,
     }));
 
+    const evidence = buildEventEvidence(data, event.id, inbox, history, today);
+
     const dateTimeLabel = `${formatEventDate(eventDate).dateLabel} · ${formatEventDate(eventDate).timeLabel}`;
 
     return {
       id: event.id,
       name: event.name,
       dateTimeLabel,
-      meetingUrl: extractMeetingUrl(notes),
+      eventDate,
+      meetingUrl: extractMeetingUrl(displayNotes),
       projectName: project?.name,
       projectHref: project?.href,
       topicTags,
       linkedTopicNames: linkedTopicNamesList,
-      description: notes || "No description yet.",
+      description: notes || "No documentation yet.",
+      legalPurpose: purpose,
+      record: notes,
       attendeeInitials: initials,
-      attendeeCount: Math.max(initials.length, linkCounts.peopleCount),
+      attendeeNames: people,
+      attendeeCount: people.length,
       orgCount: linkCounts.orgCount,
       projectCount: linkCounts.projectCount,
       peopleCount: linkCounts.peopleCount,
@@ -195,6 +296,7 @@ export function buildV2EventDetails(
       linkedEntityIds: event.linkedEntityIds ?? [],
       linkedEntries,
       relatedEmails,
+      evidence,
     };
   });
 }
