@@ -13,6 +13,7 @@ import type {
 } from "@/lib/argus/v2/evidence-stream";
 import type { V2TopicDetail } from "@/lib/argus/v2/topic-browse-utils";
 import { V2TopicAliasEditor } from "./V2TopicAliasEditor";
+import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
 
 type PanelTab = "evidence" | "timeline" | "connections" | "aliases";
 type EvidenceFilter = "all" | V2EvidenceStreamKind;
@@ -85,6 +86,11 @@ export function V2TopicDetailPanel({
             <p className="max-w-xl text-sm leading-relaxed text-zinc-400">{selected.description}</p>
           </div>
           <div className="flex shrink-0 gap-2">
+            <V2QuickDeliverButton
+              scopeType="topic"
+              scopeId={selected.id}
+              scopeName={selected.name}
+            />
             <V2EntityLinkButton
               entityId={selected.id}
               linkedIds={selected.linkedEntityIds}

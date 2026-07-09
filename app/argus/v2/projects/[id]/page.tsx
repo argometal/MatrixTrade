@@ -7,6 +7,7 @@ import { runbooksForEntity } from "@/lib/argus/runbook-helpers";
 import { loadProjectPageData } from "@/lib/argus/v2/loaders";
 import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
+import { V2QuickDeliverButton } from "../../components/V2QuickDeliverModal";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
 import { V2EntityNeighborhoodPanel } from "../../components/V2EntityNeighborhoodPanel";
 import { V2ProjectActions } from "../../components/V2ProjectActions";
@@ -99,11 +100,18 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
               linkedIds={entity.linkedEntityIds ?? []}
               className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
             />
+            <V2QuickDeliverButton
+              scopeType="project"
+              scopeId={entity.id}
+              scopeName={entity.name}
+              label="Deliver"
+              className="rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-2 text-sm font-medium text-emerald-300 hover:bg-emerald-600/25"
+            />
             <Link
-              href={`/argus/v2/deliver?scopeType=project&scopeId=${entity.id}`}
+              href={`/argus/v2/deliver?scopeType=project&scopeId=${entity.id}&package=evidence_vault`}
               className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-300 hover:border-zinc-600 hover:text-zinc-200"
             >
-              Export
+              Full ZIP
             </Link>
             <button
               type="button"

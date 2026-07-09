@@ -4,13 +4,27 @@ export const EXPORT_MANIFEST_VERSION = "1.0.0";
 
 export type ExportPackageKind = "evidence_vault";
 
-/** UI package types — only evidence_vault exports today. */
+/** UI package types — quick_package and evidence_vault export today. */
 export type DeliverPackageKind =
   | "recognition_report"
   | "incident_package"
   | "knowledge_package"
   | "relationship_brief"
+  | "quick_package"
   | "evidence_vault";
+
+export type QuickDeliverSummary = {
+  scopeType: ExportScopeType;
+  scopeId: string;
+  scopeName: string;
+  generatedAt: string;
+  evidenceCount: number;
+  logCount: number;
+  inboxCount: number;
+  fileCount: number;
+  relatedEntityCount: number;
+  containsPrivate: boolean;
+};
 
 export type ExportCollectionOptions = {
   fromDate?: string;

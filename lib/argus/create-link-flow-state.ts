@@ -327,7 +327,7 @@ export function useCreateLinkFlowState({
           ...current,
           [kind]: { name: "", detail: "", extra: "" },
         }));
-        setFlash(`Created and linked: ${created.name}`);
+        setFlash(`Captured and linked: ${created.name}`);
       } catch (err) {
         const { layer, message } = formatArgusError(err);
         setError(`${layer.toUpperCase()}: ${message}`);

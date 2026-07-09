@@ -13,6 +13,7 @@ import {
 } from "@/lib/argus/v2/event-record";
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
 import { V2EventLinkEmailModal } from "./V2EventLinkEmailModal";
+import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
 
 type PanelTab = "record" | "chronicle" | "metrics";
 
@@ -84,6 +85,11 @@ export function V2EventDetailPanel({
             </span>
           </div>
           <div className="flex shrink-0 flex-wrap gap-2">
+            <V2QuickDeliverButton
+              scopeType="event"
+              scopeId={selected.id}
+              scopeName={selected.name}
+            />
             <button
               type="button"
               onClick={() => setEmailOpen(true)}

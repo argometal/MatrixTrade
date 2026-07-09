@@ -262,7 +262,7 @@ export function V2ProjectsBrowserShell({
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
           <p className="text-sm text-zinc-500">No projects yet.</p>
-          <p className="mt-1 text-xs text-zinc-600">Create one and link org, people, topics, or events.</p>
+          <p className="mt-1 text-xs text-zinc-600">Capture one and link org, people, topics, or events.</p>
           <div className="mt-4">
             <V2CreateEntityButton
               kind="project"

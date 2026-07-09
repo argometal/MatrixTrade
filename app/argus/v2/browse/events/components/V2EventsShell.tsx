@@ -100,7 +100,7 @@ export function V2EventsShell({
           {filtered.length === 0 ? (
             <div className="py-16 text-center">
               <p className="text-sm text-zinc-500">No events yet.</p>
-              <p className="mt-1 text-xs text-zinc-600">Create an event and link it to projects, orgs, people, or topics.</p>
+              <p className="mt-1 text-xs text-zinc-600">Capture an event and link it to projects, orgs, people, or topics.</p>
               <div className="mt-4">
                 <V2CreateEntityButton
                   kind="event"

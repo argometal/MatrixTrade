@@ -16,7 +16,7 @@ const SCOPE_TYPES = new Set<ExportScopeType>([
 export default async function V2DeliverPage({
   searchParams,
 }: {
-  searchParams: Promise<{ scopeType?: string; scopeId?: string }>;
+  searchParams: Promise<{ scopeType?: string; scopeId?: string; package?: string }>;
 }) {
   const params = await searchParams;
   const data = await readArgus();
@@ -27,6 +27,8 @@ export default async function V2DeliverPage({
     ? (params.scopeType as ExportScopeType)
     : undefined;
 
+  const packageParam = params.package as import("@/lib/argus/export/types").DeliverPackageKind | undefined;
+
   return (
     <V2DeliverShell
       entityOptions={entityOptions}
@@ -34,6 +36,7 @@ export default async function V2DeliverPage({
       privateUnlocked={includePrivate}
       initialScopeType={scopeType}
       initialScopeId={params.scopeId}
+      initialPackageKind={packageParam}
     />
   );
 }

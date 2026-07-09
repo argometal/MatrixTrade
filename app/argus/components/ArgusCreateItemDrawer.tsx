@@ -49,7 +49,7 @@ export function ArgusCreateItemDrawer({
         <button
           type="button"
           className="fixed inset-0 z-[10000] bg-black/50 backdrop-blur-[1px]"
-          aria-label="Close create menu"
+          aria-label="Close capture menu"
           onClick={onClose}
         />
       ) : (
@@ -58,7 +58,7 @@ export function ArgusCreateItemDrawer({
       <aside
         className="fixed left-0 top-0 z-[10001] flex h-full w-[min(320px,88vw)] flex-col border-r border-zinc-800 bg-zinc-950 shadow-2xl"
         role="dialog"
-        aria-label="Create item menu"
+        aria-label="Capture item menu"
       >
         <div className="flex items-center justify-between border-b border-zinc-800/80 px-4 py-4">
           <div className="flex items-center gap-3">
@@ -66,7 +66,7 @@ export function ArgusCreateItemDrawer({
               ◉
             </span>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400">Create</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400">Capture</p>
               <h2 className="text-sm font-bold text-zinc-50">ARGUS</h2>
             </div>
           </div>
@@ -125,9 +125,9 @@ export function ArgusCreateItemDrawer({
 
           <div className="mt-6 border-t border-zinc-800/80 pt-4">
             <p className="mb-1 px-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-              Create missing (if needed)
+              Capture missing (if needed)
             </p>
-            <p className="mb-3 px-1 text-[11px] text-zinc-600">Quick-create and link in one step</p>
+            <p className="mb-3 px-1 text-[11px] text-zinc-600">Quick-capture and link in one step</p>
 
             {suggestedTopics.length > 0 ? (
               <div className="mb-3 space-y-2">
@@ -192,7 +192,7 @@ export function ArgusCreateItemDrawer({
                       onClick={() => void flow.handleMissingCreate(kind)}
                       className="w-full rounded-lg bg-zinc-800 py-2 text-[10px] font-semibold text-zinc-200 hover:bg-zinc-700 disabled:opacity-40"
                     >
-                      Create &amp; link
+                      Capture &amp; link
                     </button>
                   </div>
                 );

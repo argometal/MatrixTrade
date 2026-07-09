@@ -27,6 +27,14 @@ export const DELIVER_PACKAGES: DeliverPackageCard[] = [
     available: false,
   },
   {
+    id: "quick_package",
+    title: "Quick Package",
+    description: "Fast handover summary. Timeline, evidence index, and file metadata — no ZIP bundling.",
+    badge: "Fast action",
+    badgeTone: "green",
+    available: true,
+  },
+  {
     id: "knowledge_package",
     title: "Knowledge Package",
     description: "For handover or technical learning. Lessons, timeline, documents and related evidence.",

@@ -541,7 +541,7 @@ export function V2InboxDetailPanel({
                   }
                   className="rounded-lg border border-emerald-500/40 bg-emerald-600/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/25"
                 >
-                  Create / Link
+                  Capture / Link
                 </button>
                 <button
                   type="button"
@@ -714,7 +714,7 @@ export function V2InboxDetailPanel({
             }
             className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-600/20 py-3 text-sm font-semibold text-emerald-300"
           >
-            Create / Link
+            Capture / Link
           </button>
           <button
             type="button"

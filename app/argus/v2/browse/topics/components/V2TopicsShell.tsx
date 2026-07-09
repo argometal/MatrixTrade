@@ -115,7 +115,7 @@ export function V2TopicsShell({
           {filtered.length === 0 ? (
             <div className="px-5 py-16 text-center">
               <p className="text-sm text-zinc-500">No topics yet.</p>
-              <p className="mt-1 text-xs text-zinc-600">Create a topic and link emails or journal entries to it.</p>
+              <p className="mt-1 text-xs text-zinc-600">Capture a topic and link emails or journal entries to it.</p>
             </div>
           ) : (
             <table className="w-full text-left text-sm">

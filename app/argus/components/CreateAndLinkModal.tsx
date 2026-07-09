@@ -195,7 +195,7 @@ export function CreateAndLinkModal({
           <h2 className="text-lg font-semibold text-zinc-100">{resolvedTitle}</h2>
           <p className="mt-1 text-xs text-zinc-500">
             {mode === "create"
-              ? "Create and link to people, organizations, projects, topics, or events."
+              ? "Capture and link to people, organizations, projects, topics, or events."
               : "Link to people, organizations, projects, topics, or events."}
           </p>
         </div>
@@ -372,7 +372,7 @@ export function CreateAndLinkModal({
             disabled={isPending || (mode === "create" && !name.trim())}
             className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-40"
           >
-            {isPending ? "Saving…" : mode === "create" ? "Create & link" : "Save links"}
+            {isPending ? "Saving…" : mode === "create" ? "Capture & link" : "Save links"}
           </button>
         </div>
       </div>

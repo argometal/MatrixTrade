@@ -115,10 +115,10 @@ function ChooseTypeStep({
       <header className="flex items-center justify-between border-b border-zinc-800/80 px-4 py-4">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">
-            {flow.isInboxEvidence ? "Email evidence" : "Create"}
+            {flow.isInboxEvidence ? "Email evidence" : "Capture"}
           </p>
           <h2 className="text-lg font-bold text-zinc-50">
-            {flow.isInboxEvidence ? "Create or link this email" : "What do you want to create?"}
+            {flow.isInboxEvidence ? "Capture or link this email" : "What do you want to capture?"}
           </h2>
         </div>
         <button type="button" onClick={onClose} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800">
@@ -426,7 +426,7 @@ function LinkStep({
           {flow.linkQuery.trim() ? (
             <div className="space-y-2">
               {searchResults.length === 0 ? (
-                <p className="py-4 text-center text-xs text-zinc-600">No matches — create missing on next step.</p>
+                <p className="py-4 text-center text-xs text-zinc-600">No matches — capture missing on next step.</p>
               ) : (
                 searchResults.map((entity) => (
                   <button
@@ -483,8 +483,8 @@ function MissingStep({
     <div className="flex min-h-0 flex-1 flex-col">
       <MobileProgressBar step={3} />
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2">
-        <h2 className="text-base font-bold text-zinc-100">Create Missing (if needed)</h2>
-        <p className="mt-1 text-xs text-zinc-500">These will be created and linked automatically</p>
+        <h2 className="text-base font-bold text-zinc-100">Capture missing (if needed)</h2>
+        <p className="mt-1 text-xs text-zinc-500">These will be captured and linked automatically</p>
 
         <div className="mt-4 space-y-3">
           {suggestedTopics.map((topic) => (
@@ -512,7 +512,7 @@ function MissingStep({
                 }}
                 className="mt-3 w-full rounded-xl bg-amber-600 py-3 text-sm font-bold text-white"
               >
-                Create &amp; Link Topic
+                Capture &amp; Link Topic
               </button>
             </div>
           ))}
@@ -820,7 +820,7 @@ export function ArgusCreateLinkMobile({
   }
 
   return (
-    <div className="fixed inset-0 z-[9999] flex flex-col bg-[#030308] lg:hidden" role="dialog" aria-modal="true" aria-label="Create">
+    <div className="fixed inset-0 z-[9999] flex flex-col bg-[#030308] lg:hidden" role="dialog" aria-modal="true" aria-label="Capture">
       {flow.error || saveError ? (
         <p className="shrink-0 bg-amber-950/50 px-4 py-2 text-center text-sm text-amber-300">
           {flow.error ?? saveError}

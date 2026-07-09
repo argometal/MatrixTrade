@@ -323,7 +323,7 @@ export function ArgusUnifiedCreateFlow({
           current.includes(created.id) ? current : [...current, created.id]
         );
         setMissingDrafts((current) => ({ ...current, [kind]: "" }));
-        setFlash(`Created and linked: ${created.name}`);
+        setFlash(`Captured and linked: ${created.name}`);
       } catch (err) {
         const { layer, message } = formatArgusError(err);
         setError(`${layer.toUpperCase()}: ${message}`);
@@ -335,8 +335,8 @@ export function ArgusUnifiedCreateFlow({
     mode === "link"
       ? "Save links"
       : itemKind === "journal"
-        ? "Create & Save Entry"
-        : `Create ${CREATE_ITEM_LABELS[itemKind]}`;
+        ? "Capture & Save Entry"
+        : `Capture ${CREATE_ITEM_LABELS[itemKind]}`;
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 p-2 sm:p-4">
@@ -344,19 +344,19 @@ export function ArgusUnifiedCreateFlow({
         className="flex max-h-[min(94vh,900px)] w-full max-w-[1200px] flex-col overflow-hidden rounded-2xl border border-zinc-700 bg-zinc-950 shadow-2xl"
         role="dialog"
         aria-modal="true"
-        aria-label="Create and link"
+        aria-label="Capture and link"
       >
         <header className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-zinc-800 px-4 py-3 sm:px-5">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-400">
-              Create &amp; Link Anything
+              Capture &amp; Link Anything
             </p>
             <h2 className="text-lg font-semibold text-zinc-100">
               {mode === "link" ? "Link & Connect" : CREATE_ITEM_LABELS[itemKind]}
             </h2>
           </div>
           <ol className="flex flex-wrap items-center gap-1 text-[10px] font-medium uppercase tracking-wide text-zinc-600">
-            <li className={mode === "create" ? "text-violet-300" : ""}>1 Create</li>
+            <li className={mode === "create" ? "text-violet-300" : ""}>1 Capture</li>
             <li aria-hidden>→</li>
             <li className={totalLinks > 0 ? "text-violet-300" : ""}>2 Link</li>
             <li aria-hidden>→</li>
@@ -373,7 +373,7 @@ export function ArgusUnifiedCreateFlow({
           {mode === "create" && !lockItemKind ? (
             <aside className="hidden border-b border-zinc-800 lg:block lg:border-b-0 lg:border-r">
               <p className="px-3 pb-2 pt-3 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
-                Create
+                Capture
               </p>
               <nav className="space-y-0.5 px-2 pb-3">
                 {CREATE_ITEM_KINDS.map((kind) => {
@@ -519,7 +519,7 @@ export function ArgusUnifiedCreateFlow({
             ) : (
               <p className="text-sm text-zinc-400">
                 Select people, organizations, projects, events, topics, documents, or journal entries to
-                connect. Create anything missing inline below.
+                connect. Capture anything missing inline below.
               </p>
             )}
           </section>
@@ -585,9 +585,9 @@ export function ArgusUnifiedCreateFlow({
                 onClick={() => setMissingOpen((value) => !value)}
                 className="w-full rounded-lg border border-dashed border-violet-800/50 px-3 py-2 text-left text-xs text-violet-300 hover:bg-violet-950/20"
               >
-                + Create missing item
+                + Capture missing item
                 <span className="mt-0.5 block text-[10px] text-zinc-500">
-                  Can&apos;t find it? Create it and link automatically.
+                  Can&apos;t find it? Capture it and link automatically.
                 </span>
               </button>
             </div>
@@ -597,7 +597,7 @@ export function ArgusUnifiedCreateFlow({
         {missingOpen ? (
           <div className="shrink-0 border-t border-zinc-800 bg-zinc-900/40 px-4 py-3">
             <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
-              Create missing &amp; auto-link
+              Capture missing &amp; auto-link
             </p>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {MISSING_KINDS.map((kind) => (
@@ -622,7 +622,7 @@ export function ArgusUnifiedCreateFlow({
                     onClick={() => handleMissingCreate(kind)}
                     className="mt-2 w-full rounded-lg bg-zinc-800 px-2 py-1.5 text-[11px] font-medium text-zinc-200 hover:bg-zinc-700 disabled:opacity-40"
                   >
-                    Create &amp; link
+                    Capture &amp; link
                   </button>
                 </div>
               ))}

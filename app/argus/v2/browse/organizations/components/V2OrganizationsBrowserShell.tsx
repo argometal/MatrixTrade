@@ -292,7 +292,7 @@ export function V2OrganizationsBrowserShell({
             <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
               <p className="text-sm text-zinc-500">No organizations yet.</p>
               <p className="mt-1 text-xs text-zinc-600">
-                Create one to start building institutional memory across years.
+                Capture one to start building institutional memory across years.
               </p>
             </div>
           ) : view === "grid" ? (

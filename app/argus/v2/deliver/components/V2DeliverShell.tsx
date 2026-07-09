@@ -42,14 +42,20 @@ export function V2DeliverShell({
   privateUnlocked,
   initialScopeType,
   initialScopeId,
+  initialPackageKind,
 }: {
   entityOptions: Record<ExportScopeType, ExportScopeEntityOption[]>;
   privateConfigured: boolean;
   privateUnlocked: boolean;
   initialScopeType?: ExportScopeType;
   initialScopeId?: string;
+  initialPackageKind?: DeliverPackageKind;
 }) {
-  const [packageKind, setPackageKind] = useState<DeliverPackageKind>("evidence_vault");
+  const validInitialPackage =
+    initialPackageKind && DELIVER_PACKAGES.some((p) => p.id === initialPackageKind)
+      ? initialPackageKind
+      : "quick_package";
+  const [packageKind, setPackageKind] = useState<DeliverPackageKind>(validInitialPackage);
   const [scopeType, setScopeType] = useState<ExportScopeType>(initialScopeType ?? "person");
   const [scopeId, setScopeId] = useState(initialScopeId ?? "");
   const [entityQuery, setEntityQuery] = useState("");
@@ -64,6 +70,7 @@ export function V2DeliverShell({
   const [previewLoading, setPreviewLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [quickMarkdown, setQuickMarkdown] = useState<string | null>(null);
 
   const scopeEntities = entityOptions[scopeType] ?? [];
   const filteredEntities = useMemo(() => {
@@ -125,6 +132,49 @@ export function V2DeliverShell({
     return () => window.clearTimeout(timer);
   }, [refreshPreview]);
 
+  const refreshQuickPreview = useCallback(async () => {
+    if (!scopeId || packageKind !== "quick_package") {
+      setQuickMarkdown(null);
+      return;
+    }
+    try {
+      const params = new URLSearchParams({
+        scopeType,
+        scopeId,
+        includePrivate: includePrivate ? "1" : "0",
+        includeLogs: includeLogs ? "1" : "0",
+        includeInbox: includeInbox ? "1" : "0",
+        includeAttachments: includeAttachments ? "1" : "0",
+      });
+      if (fromDate) params.set("fromDate", fromDate);
+      if (toDate) params.set("toDate", toDate);
+      const response = await fetch(`/api/argus/deliver/quick?${params.toString()}`);
+      if (!response.ok) {
+        setQuickMarkdown(null);
+        return;
+      }
+      const payload = (await response.json()) as { markdown?: string };
+      setQuickMarkdown(payload.markdown ?? null);
+    } catch {
+      setQuickMarkdown(null);
+    }
+  }, [
+    packageKind,
+    scopeType,
+    scopeId,
+    includePrivate,
+    includeLogs,
+    includeInbox,
+    includeAttachments,
+    fromDate,
+    toDate,
+  ]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => void refreshQuickPreview(), 400);
+    return () => window.clearTimeout(timer);
+  }, [refreshQuickPreview]);
+
   const packageAvailable = DELIVER_PACKAGES.find((pkg) => pkg.id === packageKind)?.available ?? false;
   const canGenerate = packageAvailable && Boolean(scopeId) && !generating;
 
@@ -137,6 +187,37 @@ export function V2DeliverShell({
     setGenerating(true);
     setStatusMessage(null);
     try {
+      if (packageKind === "quick_package") {
+        const response = await fetch("/api/argus/deliver/quick", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scopeType,
+            scopeId,
+            includePrivate,
+            fromDate: fromDate || undefined,
+            toDate: toDate || undefined,
+            includeLogs,
+            includeInbox,
+            includeAttachments,
+          }),
+        });
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => ({}))) as { error?: string };
+          throw new Error(payload.error ?? "Quick package failed");
+        }
+        const blob = await response.blob();
+        const stamp = new Date().toISOString().slice(0, 10);
+        const nameToken = (selectedEntity?.name ?? "export").replace(/[^a-zA-Z0-9._-]+/g, "-");
+        const anchor = document.createElement("a");
+        anchor.href = URL.createObjectURL(blob);
+        anchor.download = `argus-quick-${scopeType}-${nameToken}-${stamp}.md`;
+        anchor.click();
+        URL.revokeObjectURL(anchor.href);
+        setStatusMessage("Quick package downloaded.");
+        return;
+      }
+
       const response = await fetch("/api/argus/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -409,10 +490,24 @@ export function V2DeliverShell({
         </V2Card>
       </div>
 
+      {packageKind === "quick_package" && quickMarkdown ? (
+        <section className="mb-8">
+          <h2 className="mb-3 text-sm font-semibold text-zinc-100">Preview</h2>
+          <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4 font-mono text-[11px] leading-relaxed text-zinc-400">
+            {quickMarkdown.slice(0, 4000)}
+            {quickMarkdown.length > 4000 ? "\n\n… (truncated in preview)" : ""}
+          </pre>
+        </section>
+      ) : null}
+
       <footer className="mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-zinc-800/80 pt-6">
         <div className="text-xs text-zinc-500">
-          <p>Your data stays private. Only you can create and access these packages.</p>
-          <p className="mt-1">Output format: ZIP package with JSON manifest (v1).</p>
+          <p>Your data stays private. Only you can generate and access these packages.</p>
+          <p className="mt-1">
+            {packageKind === "quick_package"
+              ? "Output format: Markdown summary (.md) — fast handover, no file bundling."
+              : "Output format: ZIP package with JSON manifest (v1)."}
+          </p>
           {statusMessage ? <p className="mt-2 text-zinc-400">{statusMessage}</p> : null}
         </div>
         <button
@@ -421,7 +516,11 @@ export function V2DeliverShell({
           onClick={() => void generatePackage()}
           className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {generating ? "Generating…" : "⬇ Generate Package"}
+          {generating
+            ? "Generating…"
+            : packageKind === "quick_package"
+              ? "⬇ Download Quick Package"
+              : "⬇ Generate Package"}
         </button>
       </footer>
         </div>

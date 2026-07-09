@@ -31,7 +31,7 @@ import {
 } from "@/app/argus/components/create-link-shared";
 
 const STEPS = [
-  { key: "create", label: "Create", sub: "Fill in your new item" },
+  { key: "create", label: "Capture", sub: "Fill in your new item" },
   { key: "link", label: "Link", sub: "Connect to existing ARGUS records" },
   { key: "save", label: "Save", sub: "Review and save" },
 ] as const;
@@ -41,7 +41,7 @@ function ArgusMenuButton({ open, onClick }: { open: boolean; onClick: () => void
     <button
       type="button"
       onClick={onClick}
-      aria-label={open ? "Close create menu" : "Open create menu"}
+      aria-label={open ? "Close capture menu" : "Open capture menu"}
       aria-expanded={open}
       className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-[5px] rounded-xl bg-violet-600/25 ring-1 ring-violet-500/30 transition hover:bg-violet-600/35"
     >
@@ -153,8 +153,8 @@ export function ArgusCreateLinkWindow({
         : flow.isInboxEvidence
           ? "Save & Link Email"
           : flow.itemKind === "journal"
-            ? "Create & Save"
-            : `Create ${createItemDisplayLabel(flow.itemKind)}`;
+            ? "Capture & Save"
+            : `Capture ${createItemDisplayLabel(flow.itemKind)}`;
 
   const showCreateForm =
     (flow.mode === "create" || (flow.isInboxEvidence && !flow.linkOnly)) && flow.itemKindChosen;
@@ -182,7 +182,7 @@ export function ArgusCreateLinkWindow({
       className="fixed inset-0 z-[9999] hidden flex-col bg-[#030308] lg:flex"
       role="dialog"
       aria-modal="true"
-      aria-label="Create"
+      aria-label="Capture"
     >
       {/* Header */}
       <header className="shrink-0 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur-sm">
@@ -196,10 +196,10 @@ export function ArgusCreateLinkWindow({
           />
           <div className="flex min-w-0 items-center gap-3">
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-violet-400">Create</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-violet-400">Capture</p>
               <h1 className="truncate text-sm font-bold text-zinc-50">
                 {needsKindPicker
-                  ? "Choose what to create"
+                  ? "Choose what to capture"
                   : flow.mode === "link"
                     ? "Link & Connect"
                     : createItemDisplayLabel(flow.itemKind)}
@@ -445,7 +445,7 @@ export function ArgusCreateLinkWindow({
               <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600/20 text-2xl ring-1 ring-violet-500/30">
                 ◉
               </span>
-              <h2 className="text-lg font-bold text-zinc-100">Choose what to create</h2>
+              <h2 className="text-lg font-bold text-zinc-100">Choose what to capture</h2>
               <p className="mt-2 max-w-sm text-sm leading-relaxed text-zinc-500">
                 Pick an intent — Knowledge, Entity, or Execution. The form unlocks once you choose.
               </p>
@@ -454,7 +454,7 @@ export function ArgusCreateLinkWindow({
             <div className="py-6">
               <h2 className="text-xl font-bold text-zinc-100">Link email evidence</h2>
               <p className="mt-2 max-w-lg text-sm leading-relaxed text-zinc-400">
-                Select people, organizations, projects, events, or topics. Create anything missing below — it
+                Select people, organizations, projects, events, or topics. Capture anything missing below — it
                 links to this email automatically.
               </p>
             </div>
@@ -462,7 +462,7 @@ export function ArgusCreateLinkWindow({
             <div className="py-6">
               <h2 className="text-xl font-bold text-zinc-100">Link &amp; Connect</h2>
               <p className="mt-2 max-w-lg text-sm leading-relaxed text-zinc-400">
-                Select people, organizations, projects, events, topics, documents, or journal evidence. Create
+                Select people, organizations, projects, events, topics, documents, or journal evidence. Capture
                 anything missing — it links automatically.
               </p>
             </div>
@@ -480,7 +480,7 @@ export function ArgusCreateLinkWindow({
             <div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">Add Context (Link)</p>
               <p className="text-[11px] text-zinc-600">
-                {needsKindPicker ? "Available after you choose a create type" : "Link this item to anything in ARGUS"}
+                {needsKindPicker ? "Available after you choose a capture type" : "Link this item to anything in ARGUS"}
               </p>
             </div>
           </div>
@@ -553,7 +553,7 @@ export function ArgusCreateLinkWindow({
                     </button>
                   ))
               ) : searchResults.length === 0 ? (
-                <p className="py-6 text-center text-xs text-zinc-600">No matches — create missing below.</p>
+                <p className="py-6 text-center text-xs text-zinc-600">No matches — capture missing below.</p>
               ) : (
                 searchResults.map((entity) => (
                   <SearchResultRow

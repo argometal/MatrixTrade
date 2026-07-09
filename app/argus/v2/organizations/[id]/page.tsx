@@ -4,6 +4,7 @@ import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { loadOrganizationPageData } from "@/lib/argus/v2/loaders";
 import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
+import { V2QuickDeliverButton } from "../../components/V2QuickDeliverModal";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
 import { V2EntityNeighborhoodPanel } from "../../components/V2EntityNeighborhoodPanel";
 import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
@@ -97,11 +98,18 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                 linkedIds={entity.linkedEntityIds ?? []}
                 className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
               />
+              <V2QuickDeliverButton
+                scopeType="organization"
+                scopeId={entity.id}
+                scopeName={entity.name}
+                label="Deliver"
+                className="rounded-lg border border-emerald-500/40 bg-emerald-600/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/25"
+              />
               <Link
-                href={`/argus/v2/deliver?scopeType=organization&scopeId=${entity.id}`}
+                href={`/argus/v2/deliver?scopeType=organization&scopeId=${entity.id}&package=evidence_vault`}
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800"
               >
-                Export
+                Full ZIP
               </Link>
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-400">

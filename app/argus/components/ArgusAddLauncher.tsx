@@ -44,7 +44,7 @@ export function AddCreateButton({
   align = "end",
   className = "",
   defaultKind = "journal",
-  label = "Create",
+  label = "Capture",
 }: {
   align?: MenuAlign;
   className?: string;
