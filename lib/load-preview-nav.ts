@@ -1,9 +1,9 @@
 import { cache } from "react";
 import { fetchBridgeInbox } from "./bridge";
 import { formatCycleLabel } from "./experiment-label";
+import { formatMonthlyLossRoom } from "./monthly-risk";
 import type { PreviewNavContext } from "./preview-nav";
-import { formatSituationUsd } from "./situation-room";
-import { getExperiment } from "./storage";
+import { getExperiment, getMonthlyRisk } from "./storage";
 import { listAllPendingInboxItems } from "./trading-inbox-storage";
 
 const FALLBACK_NAV: PreviewNavContext = {
@@ -11,13 +11,17 @@ const FALLBACK_NAV: PreviewNavContext = {
   cycleLabel: formatCycleLabel(),
   tradesUsed: 0,
   tradesMax: 30,
-  lossBudgetRemaining: 0,
-  lossBudgetLabel: formatSituationUsd(0),
+  monthlyLossRoom: 0,
+  monthlyLossRoomLabel: formatMonthlyLossRoom(0),
 };
 
 export const loadPreviewNavContext = cache(async (): Promise<PreviewNavContext> => {
   try {
-    const [experiment, workerInbox] = await Promise.all([getExperiment(), fetchBridgeInbox()]);
+    const [experiment, monthly, workerInbox] = await Promise.all([
+      getExperiment(),
+      getMonthlyRisk(),
+      fetchBridgeInbox(),
+    ]);
     const pendingInbox = await listAllPendingInboxItems(workerInbox);
 
     return {
@@ -25,8 +29,8 @@ export const loadPreviewNavContext = cache(async (): Promise<PreviewNavContext> 
       cycleLabel: formatCycleLabel(experiment),
       tradesUsed: experiment.closedTrades,
       tradesMax: experiment.maxTrades,
-      lossBudgetRemaining: experiment.remainingLossBudget,
-      lossBudgetLabel: formatSituationUsd(experiment.remainingLossBudget),
+      monthlyLossRoom: monthly.monthlyLossRoom,
+      monthlyLossRoomLabel: formatMonthlyLossRoom(monthly.monthlyLossRoom),
     };
   } catch (err) {
     console.error("loadPreviewNavContext failed:", err);

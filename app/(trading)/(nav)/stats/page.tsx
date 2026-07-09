@@ -15,7 +15,8 @@ import {
   computeMistakeStats,
 } from "@/lib/review";
 import { getPlaybooks } from "@/lib/playbooks";
-import { getExperiment, getTrades } from "@/lib/storage";
+import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
+import { getExperiment, getMonthlyRisk, getTrades } from "@/lib/storage";
 
 function formatUsd(value: number): string {
   const sign = value >= 0 ? "+" : "";
@@ -29,9 +30,10 @@ function formatPf(value: number | null): string {
 }
 
 export default async function StatsPage() {
-  const [trades, experiment, playbooks] = await Promise.all([
+  const [trades, experiment, monthly, playbooks] = await Promise.all([
     getTrades(),
     getExperiment(),
+    getMonthlyRisk(),
     getPlaybooks(),
   ]);
 
@@ -67,14 +69,23 @@ export default async function StatsPage() {
         <p className="text-sm text-zinc-500">Cycle metrics — decide what to improve next.</p>
       </header>
 
-      <EquityCurve points={equityPoints} lossLimit={experiment.cycleLossLimit} />
+      <EquityCurve points={equityPoints} lossLimit={monthly.effectiveLossCap} />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Total trades" value={String(trades.length)} />
         <StatCard label="Closed trades" value={String(experiment.closedTrades)} />
         <StatCard label="Win rate" value={`${(rate * 100).toFixed(1)}%`} />
-        <StatCard label="Realized P/L" value={formatUsd(experiment.realizedPnL)} />
-        <StatCard label="Loss budget left" value={formatUsd(experiment.remainingLossBudget)} />
+        <StatCard label="Experiment net P/L" value={formatUsd(experiment.realizedPnL)} />
+        <StatCard label="Total losses" value={formatUsd(experiment.grossLoss)} />
+        <StatCard label="This month P/L" value={formatUsd(monthly.monthlyRealizedPnL)} />
+        <StatCard
+          label="Monthly carryover"
+          value={formatMonthlyLossRoom(monthly.carryoverIn)}
+        />
+        <StatCard
+          label="Monthly room left"
+          value={formatMonthlyLossRoom(monthly.monthlyLossRoom)}
+        />
         <StatCard
           label="Avg winner"
           value={avgWinner !== null ? formatUsd(avgWinner) : "—"}

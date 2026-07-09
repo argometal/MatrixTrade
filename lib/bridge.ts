@@ -1,4 +1,5 @@
 import { calculateTradeResult } from "./calculate";
+import { computeMonthlyRisk } from "./monthly-risk";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
 import { getSetupName } from "./setup-types";
@@ -35,21 +36,34 @@ export function buildBridgeSnapshot(
   snapshotRevision = 0
 ): Record<string, unknown> {
   const closed = trades.filter((t) => t.status === "closed");
+  const monthly = computeMonthlyRisk(trades, rules.monthlyLossLimit);
 
   return {
     schemaVersion: BRIDGE_SCHEMA_VERSION,
     snapshotRevision,
     updatedAt: new Date().toISOString(),
     rules: {
-      cycleLossLimit: rules.cycleLossLimit,
+      monthlyLossLimit: rules.monthlyLossLimit,
+      maxLossPerTicker: rules.maxLossPerTicker,
       maxTrades: rules.maxTrades,
+    },
+    monthly: {
+      monthKey: monthly.monthKey,
+      baseLimit: monthly.monthlyLossLimit,
+      carryoverIn: monthly.carryoverIn,
+      effectiveCap: monthly.effectiveLossCap,
+      realizedPnL: monthly.monthlyRealizedPnL,
+      lossRoom: monthly.monthlyLossRoom,
+      capBreached: monthly.monthlyCapBreached,
+      closedTrades: monthly.closedTradesThisMonth,
     },
     experiment: {
       realizedPnL: experiment.realizedPnL,
-      remainingLossBudget: experiment.remainingLossBudget,
+      grossLoss: experiment.grossLoss,
       closedTrades: experiment.closedTrades,
       wins: experiment.wins,
       losses: experiment.losses,
+      maxTrades: experiment.maxTrades,
     },
     trades: trades.map((trade) => {
       const result = calculateTradeResult(trade);

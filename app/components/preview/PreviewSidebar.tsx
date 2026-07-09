@@ -63,7 +63,7 @@ export function PreviewSidebar({ nav }: { nav: PreviewNavContext }) {
               }}
             />
           </div>
-          <p className="mt-2 text-xs text-zinc-500">Loss budget {nav.lossBudgetLabel} left</p>
+          <p className="mt-2 text-xs text-zinc-500">Monthly room {nav.monthlyLossRoomLabel}</p>
         </div>
 
         <SignOutButton className="text-xs text-zinc-500 transition hover:text-zinc-300" />

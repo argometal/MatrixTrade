@@ -3,8 +3,8 @@ export type PreviewNavContext = {
   cycleLabel: string;
   tradesUsed: number;
   tradesMax: number;
-  lossBudgetRemaining: number;
-  lossBudgetLabel: string;
+  monthlyLossRoom: number;
+  monthlyLossRoomLabel: string;
 };
 
 /** Full MatrixTrade route audit — single source for desktop sidebar + mobile menu. */

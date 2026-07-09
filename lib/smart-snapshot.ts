@@ -8,6 +8,7 @@ import {
   formatTradeSection,
 } from "./sectioned-snapshot";
 import { selectSnapshotTrades, type SnapshotOptions } from "./snapshot";
+import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment, Trade } from "./types";
 
 const RECENT_CLOSED_LIMIT = 5;
@@ -18,6 +19,7 @@ const MAX_RELEVANT_NOTES = 15;
 
 function formatOverviewSection(
   experiment: Experiment,
+  monthly: MonthlyRisk,
   trades: Trade[],
   openCount: number,
   pendingCount: number,
@@ -27,10 +29,14 @@ function formatOverviewSection(
   const winRate = computeWinRate(trades);
   const lines = [
     "=== OVERVIEW ===",
-    "cycle:1",
-    `loss_limit:${formatSigned(experiment.cycleLossLimit)}`,
-    `loss_used:${formatSigned(experiment.realizedPnL)}`,
-    `remaining:${formatSigned(experiment.remainingLossBudget)}`,
+    `month:${monthly.monthKey}`,
+    `monthly_base:${formatSigned(monthly.monthlyLossLimit)}`,
+    `carryover_in:${monthly.carryoverIn.toFixed(2)}`,
+    `monthly_effective_cap:${formatSigned(monthly.effectiveLossCap)}`,
+    `monthly_pnl:${formatSigned(monthly.monthlyRealizedPnL)}`,
+    `monthly_room:${monthly.monthlyLossRoom.toFixed(2)}`,
+    `experiment_net_pnl:${formatSigned(experiment.realizedPnL)}`,
+    `experiment_gross_loss:${formatSigned(experiment.grossLoss)}`,
     `closed:${experiment.closedTrades}/${experiment.maxTrades}`,
     `wins:${experiment.wins}`,
     `losses:${experiment.losses}`,
@@ -142,6 +148,7 @@ function formatRelevantAiNotesSection(notes: AiNote[]): string {
 
 export interface SmartSnapshotInput {
   experiment: Experiment;
+  monthly: MonthlyRisk;
   trades: Trade[];
   setups?: import("./setup-types").Setup[];
   playbooks?: Playbook[];
@@ -154,6 +161,7 @@ export interface SmartSnapshotInput {
 export function buildSmartSnapshot(input: SmartSnapshotInput): string {
   const {
     experiment,
+    monthly,
     trades,
     setups = [],
     playbooks = [],
@@ -186,6 +194,7 @@ export function buildSmartSnapshot(input: SmartSnapshotInput): string {
     "",
     formatOverviewSection(
       experiment,
+      monthly,
       trades,
       open.length,
       pending.length,

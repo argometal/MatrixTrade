@@ -8,6 +8,7 @@ import { getPlaybookName } from "./playbooks";
 import { computeExpectancy, computeRMultiple, buildEquityCurve, type EquityPoint } from "./review";
 import { listAllPendingInboxItems } from "./trading-inbox-storage";
 import type { Playbook } from "./playbook-types";
+import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment, Trade } from "./types";
 
 export type AlertSeverity = "danger" | "warning" | "info";
@@ -39,7 +40,8 @@ export interface SituationRoomData {
     tradesUsed: number;
     tradesMax: number;
     lossBudgetRemaining: number;
-    cycleLossLimit: number;
+    monthlyLossLimit: number;
+    monthlyRealizedPnL: number;
   };
   performance: {
     equityPoints: EquityPoint[];
@@ -156,29 +158,33 @@ function buildRecentActivity(trades: Trade[], playbooks: Playbook[]): SituationR
 
 function buildAlerts(
   experiment: Experiment,
+  monthly: MonthlyRisk,
   trades: Trade[],
   pendingInbox: BridgeInboxItem[],
   playbooks: Playbook[]
 ): SituationRoomAlert[] {
   const alerts: SituationRoomAlert[] = [];
 
-  if (experiment.remainingLossBudget <= 0) {
+  if (monthly.monthlyCapBreached) {
     alerts.push({
       id: "loss-limit",
       severity: "danger",
-      label: "Cycle loss budget exhausted",
+      label: `Monthly loss limit reached (${monthly.monthKey})`,
       href: "/stats",
     });
-  } else if (experiment.remainingLossBudget < experiment.cycleLossLimit * 0.25) {
+  } else if (
+    monthly.monthlyLossRoom <=
+    (Math.abs(monthly.monthlyLossLimit) + monthly.carryoverIn) * 0.25
+  ) {
     alerts.push({
       id: "loss-warning",
       severity: "warning",
-      label: "Loss budget running low",
+      label: "Monthly loss room running low",
       href: "/stats",
     });
   }
 
-  for (const item of buildAttentionItems(trades, pendingInbox as never, playbooks)) {
+  for (const item of buildAttentionItems(trades, pendingInbox as never, playbooks, monthly)) {
     const severity: AlertSeverity =
       item.id.startsWith("review") ? "warning" : item.id === "inbox" ? "info" : "warning";
     alerts.push({
@@ -219,6 +225,7 @@ function buildAlerts(
 
 export function buildSituationRoomData(
   experiment: Experiment,
+  monthly: MonthlyRisk,
   trades: Trade[],
   playbooks: Playbook[],
   pendingInboxCount: number,
@@ -273,12 +280,13 @@ export function buildSituationRoomData(
       expectancy: computeExpectancy(trades),
       tradesUsed: experiment.closedTrades,
       tradesMax: experiment.maxTrades,
-      lossBudgetRemaining: experiment.remainingLossBudget,
-      cycleLossLimit: experiment.cycleLossLimit,
+      lossBudgetRemaining: monthly.monthlyLossRoom,
+      monthlyLossLimit: monthly.monthlyLossLimit,
+      monthlyRealizedPnL: monthly.monthlyRealizedPnL,
     },
     performance: {
       equityPoints: buildEquityCurve(trades),
-      lossLimit: experiment.cycleLossLimit,
+      lossLimit: monthly.effectiveLossCap,
       bestDay: daily.bestDay,
       worstDay: daily.worstDay,
       avgDailyPnL: daily.avgDailyPnL,
@@ -295,23 +303,31 @@ export function buildSituationRoomData(
     },
     recentClosed,
     recentActivity: buildRecentActivity(trades, playbooks),
-    alerts: buildAlerts(experiment, trades, pendingInbox, playbooks),
+    alerts: buildAlerts(experiment, monthly, trades, pendingInbox, playbooks),
     topPlaybooks,
     pendingInboxCount,
   };
 }
 
 export async function loadSituationRoomData(): Promise<SituationRoomData> {
-  const { getExperiment, getTrades } = await import("./storage");
+  const { getExperiment, getMonthlyRisk, getTrades } = await import("./storage");
   const { getPlaybooks } = await import("./playbooks");
-  const [experiment, trades, playbooks, workerInbox] = await Promise.all([
+  const [experiment, monthly, trades, playbooks, workerInbox] = await Promise.all([
     getExperiment(),
+    getMonthlyRisk(),
     getTrades(),
     getPlaybooks(),
     fetchBridgeInbox(),
   ]);
   const pendingInbox = await listAllPendingInboxItems(workerInbox);
-  return buildSituationRoomData(experiment, trades, playbooks, pendingInbox.length, pendingInbox);
+  return buildSituationRoomData(
+    experiment,
+    monthly,
+    trades,
+    playbooks,
+    pendingInbox.length,
+    pendingInbox
+  );
 }
 
 export function formatSituationUsd(value: number): string {

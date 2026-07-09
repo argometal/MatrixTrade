@@ -5,6 +5,7 @@ import {
   formatDashboardUsd,
   type DashboardData,
 } from "@/lib/dashboard-data";
+import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
 
 function DarkEquityChart({
   points,
@@ -55,7 +56,7 @@ function pnlTone(value: number): string {
 }
 
 export function PreviewDashboard({ data }: { data: DashboardData }) {
-  const { experiment, mistakeStats } = data;
+  const { experiment, monthly, mistakeStats } = data;
   const topMistake = mistakeStats[0];
 
   return (
@@ -89,14 +90,34 @@ export function PreviewDashboard({ data }: { data: DashboardData }) {
                 value={`${experiment.closedTrades}/${experiment.maxTrades}`}
               />
               <StatusTile
-                label="Realized P/L"
+                label="Monthly cap (effective)"
+                value={formatMonthlyLossRoom(
+                  Math.abs(monthly.monthlyLossLimit) + monthly.carryoverIn
+                )}
+              />
+              <StatusTile
+                label="Carryover"
+                value={formatMonthlyLossRoom(monthly.carryoverIn)}
+              />
+              <StatusTile
+                label="This month P/L"
+                value={formatDashboardUsd(monthly.monthlyRealizedPnL)}
+                valueClass={pnlTone(monthly.monthlyRealizedPnL)}
+              />
+              <StatusTile
+                label="Monthly room left"
+                value={formatMonthlyLossRoom(monthly.monthlyLossRoom)}
+                valueClass={monthly.monthlyLossRoom > 0 ? "text-zinc-200" : "text-red-400"}
+              />
+              <StatusTile
+                label="Experiment net P/L"
                 value={formatDashboardUsd(experiment.realizedPnL)}
                 valueClass={pnlTone(experiment.realizedPnL)}
               />
               <StatusTile
-                label="Loss budget left"
-                value={formatDashboardUsd(experiment.remainingLossBudget)}
-                valueClass={pnlTone(experiment.remainingLossBudget)}
+                label="Total losses"
+                value={formatDashboardUsd(experiment.grossLoss)}
+                valueClass="text-red-400"
               />
               <StatusTile label="Open trades" value={String(data.openTrades)} />
               <StatusTile
@@ -169,7 +190,10 @@ export function PreviewDashboard({ data }: { data: DashboardData }) {
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
             <h2 className="text-sm font-semibold text-zinc-200">Equity curve</h2>
             <div className="mt-4">
-              <DarkEquityChart points={data.equityPoints} lossLimit={experiment.cycleLossLimit} />
+              <DarkEquityChart
+                points={data.equityPoints}
+                lossLimit={monthly.effectiveLossCap}
+              />
             </div>
           </section>
 

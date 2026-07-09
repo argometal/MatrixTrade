@@ -34,7 +34,7 @@ import {
 } from "@/lib/ai-session";
 import { createQrDataUrl } from "@/lib/qr";
 import { getTradesStoreMode } from "@/lib/trades-json";
-import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules } from "@/lib/storage";
+import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules, saveRules } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
 
 // DISABLED BY DESIGN — see lib/ai-session-disabled.ts (AI Session server actions)
@@ -416,4 +416,22 @@ export async function updateTradeMetaAction(id: string, formData: FormData): Pro
   revalidateTradingPaths();
   revalidatePath(`/trades/${id}`);
   redirect(`/trades/${id}?metaOk=${encodeURIComponent("Trade updated")}`);
+}
+
+export async function saveRulesAction(
+  formData: FormData
+): Promise<{ ok: true } | { error: string }> {
+  await requireTradingSession();
+
+  const monthlyLossLimit = Number(formData.get("monthlyLossLimit"));
+  const maxLossPerTicker = Number(formData.get("maxLossPerTicker"));
+  const maxTrades = Number(formData.get("maxTrades"));
+
+  const result = await saveRules({ monthlyLossLimit, maxLossPerTicker, maxTrades });
+  if (result.errors?.length) {
+    return { error: result.errors.join(" ") };
+  }
+
+  revalidateTradingPaths();
+  return { ok: true };
 }

@@ -17,7 +17,7 @@ import { aiSessionDisabledResponse, isAiSessionDisabled } from "@/lib/ai-session
 import { isAiSessionError, requireAiSession } from "@/lib/ai-auth";
 import { computeMistakeStats } from "@/lib/review";
 import { getPlaybooks } from "@/lib/playbooks";
-import { getExperiment, getTrades } from "@/lib/storage";
+import { getExperiment, getMonthlyRisk, getTrades } from "@/lib/storage";
 
 export async function GET(request: Request): Promise<NextResponse> {
   if (isAiSessionDisabled()) return aiSessionDisabledResponse();
@@ -25,9 +25,10 @@ export async function GET(request: Request): Promise<NextResponse> {
   const session = await requireAiSession(request, ["read:stats"]);
   if (isAiSessionError(session)) return session;
 
-  const [trades, experiment, playbooks] = await Promise.all([
+  const [trades, experiment, monthly, playbooks] = await Promise.all([
     getTrades(),
     getExperiment(),
+    getMonthlyRisk(),
     getPlaybooks(),
   ]);
 
@@ -47,10 +48,20 @@ export async function GET(request: Request): Promise<NextResponse> {
     ok: true,
     experiment: {
       realizedPnL: experiment.realizedPnL,
-      remainingLossBudget: experiment.remainingLossBudget,
+      grossLoss: experiment.grossLoss,
       closedTrades: experiment.closedTrades,
       wins: experiment.wins,
       losses: experiment.losses,
+      maxTrades: experiment.maxTrades,
+    },
+    monthly: {
+      monthKey: monthly.monthKey,
+      monthlyLossLimit: monthly.monthlyLossLimit,
+      carryoverIn: monthly.carryoverIn,
+      effectiveLossCap: monthly.effectiveLossCap,
+      monthlyRealizedPnL: monthly.monthlyRealizedPnL,
+      monthlyLossRoom: monthly.monthlyLossRoom,
+      monthlyCapBreached: monthly.monthlyCapBreached,
     },
     overall: {
       closedCount: closed.length,

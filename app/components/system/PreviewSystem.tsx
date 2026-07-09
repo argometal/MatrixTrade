@@ -2,10 +2,12 @@ import Link from "next/link";
 import { ConnectPageContent } from "@/app/components/ConnectPageContent";
 import { CopyUrlButton } from "@/app/components/CopyUrlButton";
 import { SystemBridgePanel } from "@/app/components/system/SystemBridgePanel";
+import { SystemRulesPanel } from "@/app/components/system/SystemRulesPanel";
 import { SystemSection, SystemRow, StatusBadge } from "@/app/components/system/SystemSection";
 import type { SystemPageData } from "@/lib/system-page-data";
 
 const SECTION_LINKS = [
+  { id: "rules", label: "Rules" },
   { id: "bridge", label: "Bridge" },
   { id: "connect", label: "Connect" },
   { id: "knowledge", label: "Knowledge" },
@@ -40,6 +42,7 @@ export function PreviewSystem({
     lastReview,
     localRevision,
     localUpdatedAt,
+    rules,
   } = data;
 
   return (
@@ -93,6 +96,14 @@ export function PreviewSystem({
         </header>
 
         <div className="space-y-6 px-4 py-6 lg:px-6">
+          <SystemSection
+            id="rules"
+            title="Experiment rules"
+            description="Monthly loss cap (account protection) and experiment sample size."
+          >
+            <SystemRulesPanel rules={rules} />
+          </SystemSection>
+
           <SystemSection
             id="bridge"
             title="Bridge"

@@ -7,7 +7,7 @@ import { getSetups } from "@/lib/setups";
 import { getSnapshotRevisionState } from "@/lib/snapshot-revision-read";
 import { getSyncHistory } from "@/lib/sync-history";
 import { checkWorkerReachable } from "@/lib/system-status";
-import { getExperiment, getTrades } from "@/lib/storage";
+import { getExperiment, getMonthlyRisk, getTrades } from "@/lib/storage";
 import { getTradesStoreMode } from "@/lib/trades-json";
 import {
   listPendingInboxForRuntime,
@@ -18,6 +18,7 @@ export async function loadHomeExchangePageData() {
   const bridge = getBridgeConfig();
   const [
     experiment,
+    monthly,
     trades,
     setups,
     playbooks,
@@ -28,6 +29,7 @@ export async function loadHomeExchangePageData() {
     aiNotes,
   ] = await Promise.all([
     getExperiment(),
+    getMonthlyRisk(),
     getTrades(),
     getSetups(),
     getPlaybooks(),
@@ -43,6 +45,7 @@ export async function loadHomeExchangePageData() {
 
   const snapshotText = buildAiBlockSnapshot({
     experiment,
+    monthly,
     trades,
     setups,
     playbooks,

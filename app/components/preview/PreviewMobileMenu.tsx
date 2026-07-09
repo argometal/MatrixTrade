@@ -72,7 +72,7 @@ export function PreviewMobileMenu({ nav }: { nav: PreviewNavContext }) {
           <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3 text-xs text-zinc-500">
             <p className="font-medium text-zinc-400">{nav.cycleLabel}</p>
             <p className="mt-1">
-              {nav.tradesUsed} / {nav.tradesMax} trades · {nav.lossBudgetLabel} risk left
+              {nav.tradesUsed} / {nav.tradesMax} trades · {nav.monthlyLossRoomLabel} monthly room
             </p>
           </div>
         </div>

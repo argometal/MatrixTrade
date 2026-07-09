@@ -225,7 +225,7 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
               <KpiCard
                 label="Trades"
                 value={`${data.summary.tradesUsed} / ${data.summary.tradesMax}`}
-                sub={`${formatSituationUsd(data.summary.lossBudgetRemaining)} risk left`}
+                sub={`${formatSituationUsd(data.summary.lossBudgetRemaining)} monthly room`}
                 tone="neutral"
               />
             </div>

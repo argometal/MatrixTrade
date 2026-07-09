@@ -1,5 +1,6 @@
 {
-  "cycleLossLimit": -300,
+  "monthlyLossLimit": -300,
+  "maxLossPerTicker": -250,
   "maxTrades": 30,
   "obsidianVault": "TradingVault",
   "obsidianVaultPath": "vault",

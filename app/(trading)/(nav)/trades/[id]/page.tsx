@@ -11,7 +11,8 @@ import {
 } from "@/lib/review";
 import { getPlaybookName, getPlaybooks } from "@/lib/playbooks";
 import { getSetupName, getSetups } from "@/lib/setups";
-import { getExperiment, getTrades } from "@/lib/storage";
+import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
+import { getExperiment, getMonthlyRisk, getTrades } from "@/lib/storage";
 
 function formatUsd(value: number): string {
   const sign = value >= 0 ? "+" : "";
@@ -28,9 +29,10 @@ export default async function TradeDetailPage({
   const { id } = await params;
   const query = await searchParams;
   const tradeId = id.toUpperCase();
-  const [trades, experiment, setups, playbooks] = await Promise.all([
+  const [trades, experiment, monthly, setups, playbooks] = await Promise.all([
     getTrades(),
     getExperiment(),
+    getMonthlyRisk(),
     getSetups(),
     getPlaybooks(),
   ]);
@@ -239,8 +241,8 @@ export default async function TradeDetailPage({
         <form action={closeTradeAction.bind(null, trade.id)} className="space-y-3 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
           <h2 className="text-sm font-semibold">Close trade</h2>
           <p className="text-xs text-zinc-500">
-            Cycle P/L: {formatUsd(experiment.realizedPnL)} · Budget remaining:{" "}
-            {formatUsd(experiment.remainingLossBudget)}
+            Experiment P/L: {formatUsd(experiment.realizedPnL)} · Monthly room:{" "}
+            {formatMonthlyLossRoom(monthly.monthlyLossRoom)}
           </p>
           <label className="block text-sm">
             <span className="font-medium">Exit price</span>

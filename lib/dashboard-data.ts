@@ -17,12 +17,14 @@ import {
   type MistakeStat,
 } from "./review";
 import { listAllPendingInboxItems } from "./trading-inbox-storage";
-import { getExperiment, getTrades } from "./storage";
+import { getExperiment, getMonthlyRisk, getTrades } from "./storage";
 import type { AttentionItem } from "./dashboard-attention";
 import type { Experiment } from "./types";
+import type { MonthlyRisk } from "./monthly-risk";
 
 export type DashboardData = {
   experiment: Experiment;
+  monthly: MonthlyRisk;
   cycleLabel: string;
   openTrades: number;
   pendingReviews: number;
@@ -40,8 +42,9 @@ export type DashboardData = {
 };
 
 export async function loadDashboardData(): Promise<DashboardData> {
-  const [experiment, trades, playbooks, workerInbox] = await Promise.all([
+  const [experiment, monthly, trades, playbooks, workerInbox] = await Promise.all([
     getExperiment(),
+    getMonthlyRisk(),
     getTrades(),
     getPlaybooks(),
     fetchBridgeInbox(),
@@ -54,12 +57,13 @@ export async function loadDashboardData(): Promise<DashboardData> {
 
   return {
     experiment,
+    monthly,
     cycleLabel: formatCycleLabel(experiment),
     openTrades: trades.filter((t) => t.status === "open").length,
     pendingReviews: trades.filter((t) => t.status === "closed" && !t.reviewedAt).length,
     activePlaybooks: playbooks.filter((p) => p.status === "ACTIVE").length,
     testingPlaybooks: playbooks.filter((p) => p.status === "TESTING").length,
-    attentionItems: buildAttentionItems(trades, pendingInbox, playbooks),
+    attentionItems: buildAttentionItems(trades, pendingInbox, playbooks, monthly),
     mistakeStats: computeMistakeStats(trades),
     equityPoints: buildEquityCurve(trades),
     winRate: winRate(experiment),

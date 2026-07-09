@@ -4,6 +4,7 @@ import type { AiNote } from "./ai-notes-types";
 import type { Playbook } from "./playbook-types";
 import { getSetupName, type Setup } from "./setup-types";
 import { selectSnapshotTrades, type SnapshotOptions } from "./snapshot";
+import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment, Trade } from "./types";
 
 function formatSigned(value: number): string {
@@ -101,6 +102,7 @@ export function formatPriorAiNotesSection(notes: AiNote[]): string {
 
 export interface SectionedSnapshotInput {
   experiment: Experiment;
+  monthly: MonthlyRisk;
   trades: Trade[];
   setups?: Setup[];
   playbooks?: Playbook[];
@@ -121,6 +123,7 @@ Do not apply changes — human saves notes in MatrixTrade.`;
 export function buildSectionedSnapshot(input: SectionedSnapshotInput): string {
   const {
     experiment,
+    monthly,
     trades,
     setups = [],
     playbooks = [],
@@ -142,11 +145,17 @@ export function buildSectionedSnapshot(input: SectionedSnapshotInput): string {
     `generated:${generated}`,
     `revision:${revision}`,
     "",
+    "=== MONTHLY RISK ===",
+    `month:${monthly.monthKey}`,
+    `base_limit:${formatSigned(monthly.monthlyLossLimit)}`,
+    `carryover_in:${monthly.carryoverIn.toFixed(2)}`,
+    `effective_cap:${formatSigned(monthly.effectiveLossCap)}`,
+    `month_pnl:${formatSigned(monthly.monthlyRealizedPnL)}`,
+    `room:${monthly.monthlyLossRoom.toFixed(2)}`,
+    "",
     "=== EXPERIMENT ===",
-    "cycle:1",
-    `loss_limit:${formatSigned(experiment.cycleLossLimit)}`,
-    `loss_used:${formatSigned(experiment.realizedPnL)}`,
-    `remaining:${formatSigned(experiment.remainingLossBudget)}`,
+    `net_pnl:${formatSigned(experiment.realizedPnL)}`,
+    `gross_loss:${formatSigned(experiment.grossLoss)}`,
     `closed:${experiment.closedTrades}/${experiment.maxTrades}`,
     `wins:${experiment.wins}`,
     `losses:${experiment.losses}`,

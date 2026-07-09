@@ -35,6 +35,7 @@ export async function loadSystemPageData() {
 
   return {
     bridge,
+    rules,
     isVercel,
     env: getEnvironmentLabel(),
     buildLabel: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "local dev",
