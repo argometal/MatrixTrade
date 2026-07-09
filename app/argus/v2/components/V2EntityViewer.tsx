@@ -16,13 +16,13 @@ const TAB_LABELS: Record<V2EntityTab, string> = {
   events: "Events",
 };
 
-const TAB_HREFS: Record<V2EntityTab, string> = {
-  organizations: "/argus/v2?tab=organizations",
-  projects: "/argus/v2?tab=projects",
-  people: "/argus/v2?tab=people",
-  topics: "/argus/v2/browse/topics",
-  events: "/argus/v2/browse/events",
-};
+function buildHomeEntityTabHref(targetTab: V2EntityTab, searchParams: URLSearchParams): string {
+  const params = new URLSearchParams(searchParams.toString());
+  if (targetTab === "organizations") params.delete("tab");
+  else params.set("tab", targetTab);
+  const query = params.toString();
+  return query ? `/argus/v2?${query}` : "/argus/v2";
+}
 
 const BROWSE_HREFS: Record<V2EntityTab, string> = {
   organizations: "/argus/v2/browse/organizations",
@@ -219,7 +219,7 @@ export function V2EntityViewer({
           {V2_ENTITY_TABS.map((t) => (
             <Link
               key={t}
-              href={TAB_HREFS[t]}
+              href={buildHomeEntityTabHref(t, searchParams)}
               className={`rounded-xl border px-3 py-1.5 font-medium transition ${
                 primary ? "text-xs" : "text-[11px]"
               } ${
