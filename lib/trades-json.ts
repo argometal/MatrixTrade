@@ -1,3 +1,4 @@
+import { hasSupabaseCredentials } from "./supabase/server";
 import { createJsonTradesStore } from "./trades-store/json";
 import { createSupabaseTradesStore } from "./trades-store/supabase";
 import type { TradesStore, TradesStoreMode } from "./trades-store/types";
@@ -18,7 +19,13 @@ export { readTradesJsonFile } from "./trades-store/json";
 
 export function getTradesStoreMode(): TradesStoreMode {
   const raw = process.env.TRADES_STORE?.trim().toLowerCase();
-  return raw === "supabase" ? "supabase" : "json";
+  if (raw === "supabase") {
+    if (hasSupabaseCredentials()) return "supabase";
+    console.error(
+      "TRADES_STORE=supabase but SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are missing — falling back to data/*.json"
+    );
+  }
+  return "json";
 }
 
 export function isSupabaseTradesStore(): boolean {
