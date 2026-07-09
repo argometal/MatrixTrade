@@ -34,7 +34,7 @@ export interface V2EventEmail {
 
 export interface V2EventEvidenceItem {
   id: string;
-  kind: "email" | "journal" | "photo";
+  kind: "email" | "journal" | "photo" | "file";
   title: string;
   meta: string;
   sortIso: string;

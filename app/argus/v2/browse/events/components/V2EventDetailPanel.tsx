@@ -19,6 +19,7 @@ type PanelTab = "record" | "chronicle" | "metrics";
 function EvidenceIcon({ kind }: { kind: V2EventDetail["evidence"][0]["kind"] }) {
   if (kind === "email") return <>✉</>;
   if (kind === "photo") return <>📷</>;
+  if (kind === "file") return <>📎</>;
   return <>📓</>;
 }
 

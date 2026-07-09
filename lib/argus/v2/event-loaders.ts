@@ -20,6 +20,7 @@ import type {
   V2EventTab,
 } from "./event-browse-utils";
 import { parseEventRecord } from "./event-record";
+import { buildEntityEvidenceStream } from "./evidence-stream";
 export type {
   V2EventDetail,
   V2EventEmail,
@@ -109,64 +110,6 @@ function attendeeInitials(names: string[]): string[] {
         .slice(0, 2)
         .toUpperCase()
     );
-}
-
-function buildEventEvidence(
-  data: ArgusData,
-  eventId: string,
-  inbox: InboxItem[],
-  history: Log[],
-  today: string
-): V2EventEvidenceItem[] {
-  const items: V2EventEvidenceItem[] = [];
-
-  for (const item of inbox) {
-    items.push({
-      id: `email-${item.id}`,
-      kind: "email",
-      title: item.subject || "(No subject)",
-      meta: `${item.from?.replace(/<.*>/, "").trim() || "Unknown"} · ${relativeActivityLabel(item.receivedAt, today)}`,
-      sortIso: item.receivedAt,
-      href: `/argus/v2/inbox?selected=${item.id}`,
-    });
-    for (const aid of item.attachmentIds) {
-      const att = data.attachments.find((a) => a.id === aid && !a.deletedAt);
-      if (!att || !att.mimeType.startsWith("image/")) continue;
-      items.push({
-        id: `photo-${att.id}`,
-        kind: "photo",
-        title: att.fileName,
-        meta: `Photo from email · ${relativeActivityLabel(item.receivedAt, today)}`,
-        sortIso: item.receivedAt,
-        href: `/api/argus/files/${att.id}?inline=1`,
-      });
-    }
-  }
-
-  for (const log of history) {
-    items.push({
-      id: `journal-${log.id}`,
-      kind: "journal",
-      title: log.title || "Journal entry",
-      meta: `${log.kind === "log" ? "Log" : log.kind === "follow_up" ? "Follow-up" : "Note"} · ${relativeActivityLabel(log.date, today)}`,
-      sortIso: log.date,
-      href: `/argus/logs/${log.id}`,
-    });
-    for (const aid of log.attachmentIds ?? []) {
-      const att = data.attachments.find((a) => a.id === aid && !a.deletedAt);
-      if (!att || !att.mimeType.startsWith("image/")) continue;
-      items.push({
-        id: `photo-${att.id}`,
-        kind: "photo",
-        title: att.fileName,
-        meta: `Photo from journal · ${relativeActivityLabel(log.date, today)}`,
-        sortIso: log.date,
-        href: `/api/argus/files/${att.id}?inline=1`,
-      });
-    }
-  }
-
-  return items.sort((a, b) => b.sortIso.localeCompare(a.sortIso));
 }
 
 export function buildV2EventInboxOptions(
@@ -269,7 +212,7 @@ export function buildV2EventDetails(
       href: `/argus/v2/inbox?selected=${item.id}`,
     }));
 
-    const evidence = buildEventEvidence(data, event.id, inbox, history, today);
+    const evidence = buildEntityEvidenceStream(data, event.id, inboxItems, includePrivate, today) as V2EventEvidenceItem[];
 
     const dateTimeLabel = `${formatEventDate(eventDate).dateLabel} · ${formatEventDate(eventDate).timeLabel}`;
 

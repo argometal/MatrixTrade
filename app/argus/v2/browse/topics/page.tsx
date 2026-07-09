@@ -19,8 +19,8 @@ export default async function V2BrowseTopicsPage({
   const includePrivate = await hasArgusPrivateUnlock();
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
   const today = new Date().toISOString().slice(0, 10);
-  const rows = buildV2TopicRows(data, includePrivate, today);
-  const details = buildV2TopicDetails(data, includePrivate, today);
+  const rows = buildV2TopicRows(data, inboxItems, includePrivate, today);
+  const details = buildV2TopicDetails(data, inboxItems, includePrivate, today);
   const tagChips = buildV2GlobalTopicChips(data, includePrivate);
   const tab = parseV2TopicTab(tabParam);
   const neighborhood = selected
