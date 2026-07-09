@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { V2NavCounts } from "@/lib/argus/v2/loaders";
+import { isBrowseNavActive } from "@/lib/argus/v2/nav-items";
 
 const DEFAULT_COUNTS: V2NavCounts = {
   inbox: 0,
@@ -15,19 +16,6 @@ const DEFAULT_COUNTS: V2NavCounts = {
   followUps: 0,
   reminders: 0,
 };
-
-function isBrowseNavActive(pathname: string, href: string, label: string): boolean {
-  if (label === "Projects") {
-    return pathname.startsWith("/argus/v2/browse/projects") || pathname.startsWith("/argus/v2/projects/");
-  }
-  if (label === "Organizations") {
-    return pathname.startsWith("/argus/v2/browse/organizations") || pathname.startsWith("/argus/v2/organizations/");
-  }
-  if (label === "People" || label === "Network") {
-    return pathname.startsWith("/argus/v2/browse/network") || pathname.startsWith("/argus/v2/network/");
-  }
-  return pathname.startsWith(href);
-}
 
 export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts }) {
   const pathname = usePathname();
@@ -102,40 +90,6 @@ export function V2Sidebar({ counts = DEFAULT_COUNTS }: { counts?: V2NavCounts })
         </div>
       </div>
     </aside>
-  );
-}
-
-export function V2MobileNav({ inboxCount = 0 }: { inboxCount?: number }) {
-  const pathname = usePathname();
-  const items = [
-    { href: "/argus/v2", label: "Home", icon: "⌂" },
-    { href: "/argus/v2/browse/network", label: "Network", icon: "◉" },
-    { href: "/argus/v2/inbox", label: "Inbox", icon: "✉", badge: inboxCount },
-    { href: "/argus/search", label: "Search", icon: "⌕" },
-  ];
-
-  return (
-    <nav className="v2-mobile-nav fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-full border border-zinc-700/80 bg-zinc-900/95 px-2 py-2 shadow-2xl backdrop-blur-md lg:hidden">
-      {items.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          className={`relative flex h-11 w-11 items-center justify-center rounded-full text-lg ${
-            pathname === item.href || pathname.startsWith(item.href)
-              ? "text-violet-400"
-              : "text-zinc-500"
-          }`}
-          aria-label={item.label}
-        >
-          {item.icon}
-          {item.badge ? (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
-              {item.badge}
-            </span>
-          ) : null}
-        </Link>
-      ))}
-    </nav>
   );
 }
 
