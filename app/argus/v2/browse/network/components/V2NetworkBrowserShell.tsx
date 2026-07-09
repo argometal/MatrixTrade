@@ -342,9 +342,10 @@ export function V2NetworkBrowserShell({
   };
 
   return (
-    <div className="v2-browse-shell flex min-h-[calc(100vh-4rem)] flex-col pb-28">
-      <div className="flex min-h-0 flex-1 gap-8 px-4 py-6 lg:px-8">
-        <div className="min-w-0 flex-1">
+    <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+        <div className="flex gap-8 px-4 py-6 lg:px-8">
+          <div className="min-w-0 flex-1">
           <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -512,9 +513,10 @@ export function V2NetworkBrowserShell({
         </div>
 
         <NetworkInsightsSidebar summary={summary} insights={insights} />
+        </div>
       </div>
 
-      <section className="fixed bottom-0 left-0 right-0 z-20 border-t border-zinc-800/90 bg-zinc-950/95 px-4 py-3 backdrop-blur-md lg:left-56 xl:left-60">
+      <section className="shrink-0 border-t border-zinc-800/90 bg-zinc-950/95 px-4 py-3 backdrop-blur-md">
         <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
           Smart filters (quick views)
         </p>
