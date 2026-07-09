@@ -12,7 +12,6 @@ import {
 } from "@/lib/argus/v2/loaders";
 import {
   buildV2HomeEvidenceSummary,
-  buildV2KnowledgeGraph,
   buildV2KnowledgeNodes,
 } from "@/lib/argus/v2/intelligence-viz";
 import { V2Card, V2SectionTitle } from "./components/v2-ui";
@@ -56,7 +55,6 @@ export default async function V2HomePage({
   const entityRows = buildV2EntityRows(data, inboxItems, includePrivate, today, tab, 12);
   const tags = buildV2TagCloud(data, inboxItems, includePrivate);
   const knowledgeNodes = buildV2KnowledgeNodes(data, inboxItems, includePrivate, today);
-  const graph = buildV2KnowledgeGraph(data, inboxItems, includePrivate, today);
   const summary = buildV2HomeEvidenceSummary(data, inboxItems, today);
   const inboxPending = inboxItems.filter(
     (item) => isActiveRecord(item) && (item.status === "pending" || item.status === "linked")
@@ -80,8 +78,6 @@ export default async function V2HomePage({
                 tab={tab}
                 rows={entityRows}
                 nodes={knowledgeNodes}
-                graphNodes={graph.nodes}
-                graphEdges={graph.edges}
                 tags={tags}
                 initialView={viewParam}
               />

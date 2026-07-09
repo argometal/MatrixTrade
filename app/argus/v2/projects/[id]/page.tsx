@@ -5,8 +5,10 @@ import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { runbooksForEntity } from "@/lib/argus/runbook-helpers";
 import { loadProjectPageData } from "@/lib/argus/v2/loaders";
+import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
+import { V2EntityNeighborhoodPanel } from "../../components/V2EntityNeighborhoodPanel";
 import { V2ProjectActions } from "../../components/V2ProjectActions";
 import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
@@ -33,9 +35,13 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
 
   if (!entity || entity.type !== "project") {
     return (
-      <div className="px-4 py-6 lg:px-8">
-        <V2BackLink href="/argus/v2/browse/projects">Back to Projects</V2BackLink>
-        <EmptyState message="Project not found." />
+      <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+          <div className="px-4 py-6 lg:px-8">
+            <V2BackLink href="/argus/v2/browse/projects">Back to Projects</V2BackLink>
+            <EmptyState message="Project not found." />
+          </div>
+        </div>
       </div>
     );
   }
@@ -43,6 +49,7 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
   const today = new Date().toISOString().slice(0, 10);
   const page = loadProjectPageData(data, inboxItems, entity, includePrivate, today);
+  const neighborhood = buildV2EntityNeighborhoodGraph(data, inboxItems, entity.id, includePrivate, today);
   const projectRunbooks = runbooksForEntity(data.runbooks ?? [], entity.id);
   const hasPrivateEvidence = projectHasPrivateEvidence(data, inboxItems, entity);
   const notes = entityNotesForDisplay(entity.notes ?? "");
@@ -51,7 +58,9 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
     page.status === "Completed" ? "green" : page.status === "In Progress" ? "blue" : "amber";
 
   return (
-    <div className="px-4 py-6 lg:px-8">
+    <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+        <div className="px-4 py-6 lg:px-8">
       <div className="mb-5">
         <V2BackLink href="/argus/v2/browse/projects">Back to Projects</V2BackLink>
       </div>
@@ -178,6 +187,10 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
             <V2OrgTimeline entries={page.timeline} limit={TIMELINE_PREVIEW} />
           </V2Card>
 
+          <V2Card className="p-5 sm:p-6">
+            <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entity.name} />
+          </V2Card>
+
           <V2ProjectRunbooksPanel runbooks={projectRunbooks} projectId={entity.id} />
         </div>
 
@@ -255,6 +268,8 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
 
           <V2LegacyLink href={`/argus/projects/${entity.id}`}>Open legacy project view →</V2LegacyLink>
         </aside>
+      </div>
+        </div>
       </div>
     </div>
   );

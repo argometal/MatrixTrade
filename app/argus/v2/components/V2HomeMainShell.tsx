@@ -8,11 +8,7 @@ import type { V2TagCloudItem } from "./V2TagCloud";
 import { V2EntityViewer } from "./V2EntityViewer";
 import { V2HomeIntelligencePanel } from "./V2HomeIntelligencePanel";
 import { V2TabBar } from "./V2TabBar";
-import {
-  type V2GraphEdge,
-  type V2GraphNode,
-  type V2KnowledgeNode,
-} from "@/lib/argus/v2/intelligence-viz";
+import { type V2KnowledgeNode } from "@/lib/argus/v2/intelligence-viz";
 
 export type V2HomeView = "entities" | "intelligence";
 
@@ -37,16 +33,12 @@ export function V2HomeMainShell({
   tab,
   rows,
   nodes,
-  graphNodes,
-  graphEdges,
   tags,
   initialView,
 }: {
   tab: V2EntityTab;
   rows: V2EntityRow[];
   nodes: V2KnowledgeNode[];
-  graphNodes: V2GraphNode[];
-  graphEdges: V2GraphEdge[];
   tags: V2TagCloudItem[];
   initialView?: string;
 }) {
@@ -86,12 +78,7 @@ export function V2HomeMainShell({
           <V2EntityViewer tab={tab} rows={rows} primary />
         </>
       ) : (
-        <V2HomeIntelligencePanel
-          nodes={treemapNodes}
-          graphNodes={graphNodes}
-          graphEdges={graphEdges}
-          tags={tags}
-        />
+        <V2HomeIntelligencePanel nodes={treemapNodes} tags={tags} />
       )}
     </div>
   );

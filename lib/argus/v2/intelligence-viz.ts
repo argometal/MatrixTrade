@@ -5,7 +5,7 @@ import { entitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
 
-export type V2KnowledgeNodeKind = "topic" | "project" | "organization" | "tag";
+export type V2KnowledgeNodeKind = "topic" | "project" | "organization";
 
 export type V2KnowledgeNode = {
   id: string;
@@ -14,8 +14,16 @@ export type V2KnowledgeNode = {
   evidenceCount: number;
   recentCount: number;
   recentActivity: number;
-  strategicValue: number;
-  completion: number;
+  /** 0–1 — 1 = most recent evidence (within ~90d window). */
+  recencyScore: number;
+  /** Raw count of evidence items in the last 30 days. */
+  recurrence30d: number;
+  /** 0–1 — normalized recurrence for portfolio X axis. */
+  recurrenceScore: number;
+  /** @deprecated Portfolio no longer uses manual strategic value. */
+  strategicValue?: number;
+  /** @deprecated Portfolio no longer uses completion heuristic. */
+  completion?: number;
   href: string;
   group: string;
 };
@@ -30,10 +38,19 @@ export type V2GraphNode = {
   href: string;
 };
 
+export type V2GraphEdgeKind = "linked" | "co-mentioned" | "project-link";
+
 export type V2GraphEdge = {
   from: string;
   to: string;
   weight: number;
+  kind?: V2GraphEdgeKind;
+};
+
+export type V2EntityNeighborhoodGraph = {
+  nodes: V2GraphNode[];
+  edges: V2GraphEdge[];
+  centerId: string;
 };
 
 export type V2TreemapRect = {
@@ -81,6 +98,45 @@ function entityHref(entity: Entity): string {
   return `/argus/v2/network/${entity.id}`;
 }
 
+function isEventEntity(data: ArgusData, entityId: string): boolean {
+  const entity = data.entities.find((e) => e.id === entityId && !e.deletedAt);
+  return (
+    entity != null &&
+    entity.type === "other" &&
+    referenceKindFromNotes(entity.notes ?? "") === "event"
+  );
+}
+
+function getLinkedEventIdsForTopic(data: ArgusData, topicId: string, logs: Log[]): Set<string> {
+  const eventIds = new Set<string>();
+  const topic = data.entities.find((e) => e.id === topicId && !e.deletedAt);
+  if (!topic) return eventIds;
+
+  for (const id of topic.linkedEntityIds ?? []) {
+    if (isEventEntity(data, id)) eventIds.add(id);
+  }
+
+  for (const project of data.entities) {
+    if (project.deletedAt || project.type !== "project") continue;
+    if (!(project.linkedTopicIds ?? []).includes(topicId)) continue;
+    for (const id of project.linkedEventIds ?? []) {
+      if (isEventEntity(data, id)) eventIds.add(id);
+    }
+    for (const id of project.linkedEntityIds ?? []) {
+      if (isEventEntity(data, id)) eventIds.add(id);
+    }
+  }
+
+  for (const log of logs) {
+    if (!log.entityIds.includes(topicId)) continue;
+    for (const id of log.entityIds) {
+      if (id !== topicId && isEventEntity(data, id)) eventIds.add(id);
+    }
+  }
+
+  return eventIds;
+}
+
 function countEvidenceForEntity(
   data: ArgusData,
   inboxItems: InboxItem[],
@@ -101,26 +157,60 @@ function countEvidenceForEntity(
   return { total: logs.length + inbox.length, recent, dates };
 }
 
-function completionScore(entity: Entity, evidenceCount: number, dates: string[], today: string): number {
-  if (entity.type === "project") {
-    if (entity.endDate && entity.endDate <= today) return 1;
-    if (entity.startDate && entity.endDate) {
-      const start = new Date(`${entity.startDate}T12:00:00`).getTime();
-      const end = new Date(`${entity.endDate}T12:00:00`).getTime();
-      const now = new Date(`${today}T12:00:00`).getTime();
-      if (end > start) return Math.min(1, Math.max(0, (now - start) / (end - start)));
-    }
-    return Math.min(1, evidenceCount / 12);
+function countEvidenceForTopicIncludingEvents(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  topicId: string,
+  includePrivate: boolean,
+  today: string,
+  logs: Log[]
+): { total: number; recent: number; dates: string[] } {
+  const base = countEvidenceForEntity(data, inboxItems, topicId, includePrivate, today);
+  const linkedEventIds = getLinkedEventIdsForTopic(data, topicId, logs);
+  let total = base.total;
+  let recent = base.recent;
+  const dates = [...base.dates];
+
+  for (const eventId of linkedEventIds) {
+    const eventEvidence = countEvidenceForEntity(data, inboxItems, eventId, includePrivate, today);
+    total += eventEvidence.total;
+    recent += eventEvidence.recent;
+    dates.push(...eventEvidence.dates);
   }
-  if (dates.length === 0) return 0.1;
-  const sorted = [...dates].sort();
-  const spanDays = Math.max(
-    1,
-    (new Date(`${sorted[sorted.length - 1]}T12:00:00`).getTime() -
-      new Date(`${sorted[0]}T12:00:00`).getTime()) /
+
+  return { total, recent, dates };
+}
+
+const RECENCY_WINDOW_DAYS = 90;
+const RECURRENCE_WINDOW_DAYS = 30;
+
+function recencyScoreFromDates(dates: string[], today: string): number {
+  if (dates.length === 0) return 0;
+  const lastDate = [...dates].sort().pop()!;
+  const daysSince = Math.max(
+    0,
+    (new Date(`${today}T12:00:00`).getTime() - new Date(`${lastDate}T12:00:00`).getTime()) /
       86400000
   );
-  return Math.min(1, evidenceCount / Math.max(4, spanDays / 30));
+  if (daysSince >= RECENCY_WINDOW_DAYS) return 0;
+  return 1 - daysSince / RECENCY_WINDOW_DAYS;
+}
+
+function countRecurrence30d(dates: string[], today: string): number {
+  const windowStart = new Date(`${today}T12:00:00`);
+  windowStart.setDate(windowStart.getDate() - RECURRENCE_WINDOW_DAYS);
+  const cutoff = windowStart.toISOString().slice(0, 10);
+  return dates.filter((d) => d >= cutoff).length;
+}
+
+function normalizeRecurrenceScores(nodes: V2KnowledgeNode[]): void {
+  const portfolio = nodes.filter(
+    (n) => n.kind === "topic" || n.kind === "project" || n.kind === "organization"
+  );
+  const maxRecurrence = Math.max(...portfolio.map((n) => n.recurrence30d), 1);
+  for (const node of portfolio) {
+    node.recurrenceScore = Math.min(1, node.recurrence30d / maxRecurrence);
+  }
 }
 
 function primaryGroupForEntity(data: ArgusData, entity: Entity, logs: Log[]): string {
@@ -137,56 +227,6 @@ function primaryGroupForEntity(data: ArgusData, entity: Entity, logs: Log[]): st
   return "General";
 }
 
-function buildTagNodes(
-  data: ArgusData,
-  inboxItems: InboxItem[],
-  includePrivate: boolean,
-  today: string,
-  limit: number
-): V2KnowledgeNode[] {
-  const counts = new Map<string, { total: number; recent: number }>();
-  const weekAgo = new Date(`${today}T12:00:00`);
-  weekAgo.setDate(weekAgo.getDate() - 7);
-  const cutoff = weekAgo.toISOString().slice(0, 10);
-
-  const bump = (tag: string, date: string) => {
-    const key = tag.trim().toLowerCase();
-    if (!key) return;
-    const row = counts.get(key) ?? { total: 0, recent: 0 };
-    row.total += 1;
-    if (date.slice(0, 10) >= cutoff) row.recent += 1;
-    counts.set(key, row);
-  };
-
-  for (const log of visibleLogs(data, includePrivate)) {
-    for (const tag of log.topics) bump(tag, log.updatedAt || log.date);
-  }
-  for (const item of visibleInbox(inboxItems, includePrivate)) {
-    for (const tag of item.topics ?? []) bump(tag, item.receivedAt);
-  }
-
-  const topicNames = new Set(
-    entitiesByKind(data).topics.map((t) => t.name.trim().toLowerCase())
-  );
-
-  return [...counts.entries()]
-    .filter(([name]) => !topicNames.has(name))
-    .sort((a, b) => b[1].total - a[1].total)
-    .slice(0, limit)
-    .map(([name, row]) => ({
-      id: `tag:${name}`,
-      name,
-      kind: "tag" as const,
-      evidenceCount: row.total,
-      recentCount: row.recent,
-      recentActivity: row.total ? row.recent / row.total : 0,
-      strategicValue: 3,
-      completion: Math.min(1, row.total / 8),
-      href: `/argus/v2/inbox?tag=${encodeURIComponent(name)}`,
-      group: "Tags",
-    }));
-}
-
 export function buildV2KnowledgeNodes(
   data: ArgusData,
   inboxItems: InboxItem[],
@@ -201,8 +241,23 @@ export function buildV2KnowledgeNodes(
   for (const entity of entities) {
     const kind = entityKind(entity);
     if (!kind || kind === "person" || kind === "event") continue;
-    const { total, recent, dates } = countEvidenceForEntity(data, inboxItems, entity.id, includePrivate, today);
+
+    const evidence =
+      kind === "topic"
+        ? countEvidenceForTopicIncludingEvents(
+            data,
+            inboxItems,
+            entity.id,
+            includePrivate,
+            today,
+            logs
+          )
+        : countEvidenceForEntity(data, inboxItems, entity.id, includePrivate, today);
+
+    const { total, recent, dates } = evidence;
     if (total === 0 && kind !== "organization") continue;
+
+    const recurrence30d = countRecurrence30d(dates, today);
 
     nodes.push({
       id: entity.id,
@@ -211,14 +266,15 @@ export function buildV2KnowledgeNodes(
       evidenceCount: Math.max(total, 1),
       recentCount: recent,
       recentActivity: total ? recent / total : 0,
-      strategicValue: entity.strategicValue ?? 3,
-      completion: completionScore(entity, total, dates, today),
+      recencyScore: recencyScoreFromDates(dates, today),
+      recurrence30d,
+      recurrenceScore: 0,
       href: entityHref(entity),
       group: primaryGroupForEntity(data, entity, logs),
     });
   }
 
-  nodes.push(...buildTagNodes(data, inboxItems, includePrivate, today, 8));
+  normalizeRecurrenceScores(nodes);
 
   return nodes
     .sort((a, b) => b.evidenceCount - a.evidenceCount || a.name.localeCompare(b.name))
@@ -362,6 +418,146 @@ export function buildV2KnowledgeGraph(
   });
 
   return { nodes: layoutGraphNodes(rawNodes), edges };
+}
+
+function graphKindForEntity(entity: Entity): V2GraphNode["kind"] {
+  const ref = referenceKindFromNotes(entity.notes ?? "");
+  if (entity.type === "company") return "organization";
+  if (entity.type === "project") return "project";
+  if (entity.type === "person") return "person";
+  if (ref === "event") return "event";
+  return "topic";
+}
+
+function collectLinkedNeighborIds(entity: Entity, entityMap: Map<string, Entity>): string[] {
+  const ids: string[] = [];
+  for (const id of entity.linkedEntityIds ?? []) {
+    if (entityMap.has(id)) ids.push(id);
+  }
+  if (entity.type === "project") {
+    for (const id of entity.linkedPersonIds ?? []) {
+      if (entityMap.has(id)) ids.push(id);
+    }
+    for (const id of entity.linkedTopicIds ?? []) {
+      if (entityMap.has(id)) ids.push(id);
+    }
+    for (const id of entity.linkedEventIds ?? []) {
+      if (entityMap.has(id)) ids.push(id);
+    }
+  }
+  return ids;
+}
+
+/** Local 1–2 hop subgraph from one entity — Kumu / Obsidian neighborhood pattern. */
+export function buildV2EntityNeighborhoodGraph(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  centerEntityId: string,
+  includePrivate: boolean,
+  today: string,
+  options: { maxNodes?: number } = {}
+): V2EntityNeighborhoodGraph {
+  const maxNodes = options.maxNodes ?? 14;
+  const entities = data.entities.filter((e) => !e.deletedAt);
+  const entityMap = new Map(entities.map((e) => [e.id, e]));
+  const center = entityMap.get(centerEntityId);
+  if (!center) return { nodes: [], edges: [], centerId: centerEntityId };
+
+  const neighborIds = new Set<string>([centerEntityId]);
+
+  for (const id of collectLinkedNeighborIds(center, entityMap)) neighborIds.add(id);
+
+  const hopOne = [...neighborIds];
+  for (const id of hopOne) {
+    if (id === centerEntityId) continue;
+    const entity = entityMap.get(id);
+    if (!entity) continue;
+    for (const linkedId of collectLinkedNeighborIds(entity, entityMap)) neighborIds.add(linkedId);
+  }
+
+  for (const log of visibleLogs(data, includePrivate)) {
+    if (!log.entityIds.includes(centerEntityId)) continue;
+    for (const id of log.entityIds) {
+      if (entityMap.has(id)) neighborIds.add(id);
+    }
+  }
+
+  const scored = [...neighborIds]
+    .map((id) => {
+      const entity = entityMap.get(id)!;
+      const { total } = countEvidenceForEntity(data, inboxItems, id, includePrivate, today);
+      return { entity, total, isCenter: id === centerEntityId };
+    })
+    .sort((a, b) => {
+      if (a.isCenter) return -1;
+      if (b.isCenter) return 1;
+      return b.total - a.total || a.entity.name.localeCompare(b.entity.name);
+    })
+    .slice(0, maxNodes);
+
+  const idSet = new Set(scored.map((s) => s.entity.id));
+  const rawNodes: V2GraphNode[] = scored.map(({ entity, total }) => ({
+    id: entity.id,
+    name: entity.name,
+    kind: graphKindForEntity(entity),
+    x: 0,
+    y: 0,
+    evidenceCount: total,
+    href: entityHref(entity),
+  }));
+
+  const edgeMap = new Map<string, V2GraphEdge>();
+  const addEdge = (from: string, to: string, weight: number, kind: V2GraphEdgeKind) => {
+    if (!idSet.has(from) || !idSet.has(to) || from === to) return;
+    const key = from < to ? `${from}|${to}` : `${to}|${from}`;
+    const existing = edgeMap.get(key);
+    if (!existing || weight > existing.weight) {
+      edgeMap.set(key, { from, to, weight, kind });
+    }
+  };
+
+  for (const { entity } of scored) {
+    for (const id of entity.linkedEntityIds ?? []) addEdge(entity.id, id, 2, "linked");
+    if (entity.type === "project") {
+      for (const id of entity.linkedPersonIds ?? []) addEdge(entity.id, id, 2, "project-link");
+      for (const id of entity.linkedTopicIds ?? []) addEdge(entity.id, id, 2, "project-link");
+      for (const id of entity.linkedEventIds ?? []) addEdge(entity.id, id, 1, "project-link");
+    }
+  }
+
+  for (const log of visibleLogs(data, includePrivate)) {
+    const linked = log.entityIds.filter((id) => idSet.has(id));
+    for (let i = 0; i < linked.length; i++) {
+      for (let j = i + 1; j < linked.length; j++) addEdge(linked[i], linked[j], 1, "co-mentioned");
+    }
+  }
+
+  return {
+    nodes: layoutNeighborhoodGraphNodes(rawNodes, centerEntityId),
+    edges: [...edgeMap.values()],
+    centerId: centerEntityId,
+  };
+}
+
+/** Radial layout — center entity in the middle, neighbors on a ring. */
+export function layoutNeighborhoodGraphNodes(nodes: V2GraphNode[], centerId: string): V2GraphNode[] {
+  const center = nodes.find((n) => n.id === centerId);
+  const neighbors = nodes.filter((n) => n.id !== centerId);
+  const laidOut: V2GraphNode[] = [];
+
+  if (center) laidOut.push({ ...center, x: 50, y: 50 });
+
+  neighbors.forEach((node, index) => {
+    const angle = (index / neighbors.length) * Math.PI * 2 - Math.PI / 2;
+    const radius = neighbors.length <= 4 ? 28 : 32;
+    laidOut.push({
+      ...node,
+      x: 50 + radius * Math.cos(angle),
+      y: 50 + radius * Math.sin(angle),
+    });
+  });
+
+  return laidOut;
 }
 
 const GRAPH_COLUMN_X: Record<V2GraphNode["kind"], number> = {

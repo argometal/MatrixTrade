@@ -223,9 +223,10 @@ export function V2OrganizationsBrowserShell({
   );
 
   return (
-    <div className="px-4 py-6 lg:px-8">
-      <div className="flex gap-8">
-        <div className="min-w-0 flex-1">
+    <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+        <div className="flex gap-8 px-4 py-6 lg:px-8">
+          <div className="min-w-0 flex-1">
           <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -319,6 +320,7 @@ export function V2OrganizationsBrowserShell({
         </div>
 
         <HowToReadSidebar />
+        </div>
       </div>
     </div>
   );

@@ -11,9 +11,13 @@ export default async function V2RunbookPage({ params }: { params: Promise<{ id: 
 
   if (!runbook) {
     return (
-      <div className="px-4 py-6 lg:px-8">
-        <V2BackLink href="/argus/v2/browse/projects">Back to Projects</V2BackLink>
-        <EmptyState message="Runbook not found." />
+      <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+          <div className="px-4 py-6 lg:px-8">
+            <V2BackLink href="/argus/v2/browse/projects">Back to Projects</V2BackLink>
+            <EmptyState message="Runbook not found." />
+          </div>
+        </div>
       </div>
     );
   }
@@ -31,7 +35,9 @@ export default async function V2RunbookPage({ params }: { params: Promise<{ id: 
         : "/argus/v2/browse/projects";
 
   return (
-    <div className="px-4 py-6 lg:px-8">
+    <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+        <div className="px-4 py-6 lg:px-8">
       <div className="mb-5">
         <V2BackLink href={backHref}>Back</V2BackLink>
       </div>
@@ -74,6 +80,8 @@ export default async function V2RunbookPage({ params }: { params: Promise<{ id: 
       </header>
 
       <V2RunbookWorkPanel runbook={runbook} />
+        </div>
+      </div>
     </div>
   );
 }

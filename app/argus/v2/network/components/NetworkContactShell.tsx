@@ -275,7 +275,9 @@ export function NetworkContactShell({
   }
 
   return (
-    <div className="network-contact-shell px-4 py-6 lg:px-8">
+    <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+        <div className="network-contact-shell px-4 py-6 lg:px-8">
       <div className="mb-4 text-xs text-zinc-600">
         <a href="/argus/v2/browse/network" className="hover:text-zinc-400">
           Network
@@ -484,6 +486,8 @@ export function NetworkContactShell({
           </ul>
         </V2Card>
       ) : null}
+        </div>
+      </div>
     </div>
   );
 }

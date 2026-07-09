@@ -198,7 +198,9 @@ export function V2ProjectsBrowserShell({
   );
 
   return (
-    <div className="px-4 py-6 lg:px-8">
+    <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+        <div className="px-4 py-6 lg:px-8">
       <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Projects</h1>
@@ -301,6 +303,8 @@ export function V2ProjectsBrowserShell({
           and worth entering.
         </p>
       </section>
+        </div>
+      </div>
     </div>
   );
 }

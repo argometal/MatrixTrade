@@ -17,6 +17,8 @@ import {
 } from "@/lib/argus/v2/topic-browse-utils";
 import { resolveV2SelectedId, v2ActiveTableRowClass } from "@/lib/argus/v2/selection";
 import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
+import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
+import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 
 const TABS: { id: V2TopicTab; label: string }[] = [
   { id: "all", label: "All" },
@@ -30,12 +32,14 @@ export function V2TopicsShell({
   tagChips,
   initialSelectedId,
   initialTab,
+  neighborhood,
 }: {
   rows: V2TopicRow[];
   details: V2TopicDetail[];
   tagChips: V2TopicTagChip[];
   initialSelectedId?: string;
   initialTab?: string;
+  neighborhood?: V2EntityNeighborhoodGraph | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -60,8 +64,8 @@ export function V2TopicsShell({
   }
 
   return (
-    <div className="v2-browse-shell flex min-h-[calc(100vh-4.5rem)] flex-col lg:min-h-[calc(100vh-4rem)] lg:flex-row">
-      <section className="flex w-full flex-col border-b border-zinc-800/80 lg:w-[min(520px,48%)] lg:border-b-0 lg:border-r">
+    <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
+      <section className="flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:w-[min(520px,48%)] lg:flex-none lg:border-b-0 lg:border-r">
         <div className="border-b border-zinc-800/80 px-4 py-4 lg:px-5">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
@@ -109,7 +113,7 @@ export function V2TopicsShell({
           ) : null}
         </div>
 
-        <div className="flex-1 overflow-auto">
+        <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
           {filtered.length === 0 ? (
             <div className="px-5 py-16 text-center">
               <p className="text-sm text-zinc-500">No topics yet.</p>
@@ -170,9 +174,10 @@ export function V2TopicsShell({
         </div>
       </section>
 
-      <section className="min-w-0 flex-1 overflow-y-auto bg-zinc-950/50">
+      <section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-950/50">
+        <div className="argus-v2-scroll h-full overflow-y-auto overscroll-y-contain">
         {selected ? (
-          <div className="flex h-full flex-col p-5">
+          <div className="flex min-h-full flex-col p-5">
             <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -207,6 +212,12 @@ export function V2TopicsShell({
                 returnTo={`/argus/v2/browse/topics?selected=${selected.id}${tab !== "all" ? `&tab=${tab}` : ""}`}
               />
             </div>
+
+            {neighborhood ? (
+              <div className="mb-6 rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
+                <V2EntityNeighborhoodPanel graph={neighborhood} entityName={selected.name} />
+              </div>
+            ) : null}
 
             <h3 className="mb-3 text-sm font-semibold text-zinc-100">Recent entries</h3>
             {selected.recentEntries.length === 0 ? (
@@ -245,6 +256,7 @@ export function V2TopicsShell({
             Select a topic to view details.
           </div>
         )}
+        </div>
       </section>
     </div>
   );

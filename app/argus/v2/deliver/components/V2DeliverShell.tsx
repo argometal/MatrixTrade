@@ -181,7 +181,9 @@ export function V2DeliverShell({
     .join(", ");
 
   return (
-    <div className="deliver-export-shell mx-auto max-w-6xl px-4 py-6 lg:px-8">
+    <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+        <div className="deliver-export-shell mx-auto max-w-6xl px-4 py-6 lg:px-8">
       <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="mb-2 flex flex-wrap items-center gap-2">
@@ -422,6 +424,8 @@ export function V2DeliverShell({
           {generating ? "Generating…" : "⬇ Generate Package"}
         </button>
       </footer>
+        </div>
+      </div>
     </div>
   );
 }

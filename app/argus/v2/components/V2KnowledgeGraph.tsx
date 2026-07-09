@@ -67,12 +67,16 @@ function GraphCanvas({
   displaySize,
   hoveredId,
   onHover,
+  centerId,
+  layout,
 }: {
   nodes: V2GraphNode[];
   edges: V2GraphEdge[];
   displaySize: GraphDisplaySize;
   hoveredId: string | null;
   onHover: (id: string | null) => void;
+  centerId?: string;
+  layout: "columns" | "neighborhood";
 }) {
   const cfg = SIZE_CONFIG[displaySize];
   const nodeMap = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
@@ -95,21 +99,36 @@ function GraphCanvas({
       preserveAspectRatio="xMidYMid meet"
       className={`w-full rounded-xl border border-zinc-800/80 bg-zinc-950/80 ${cfg.heightClass}`}
       role="img"
-      aria-label="Relationship graph of linked entities"
+      aria-label={
+        layout === "neighborhood"
+          ? "Entity neighborhood graph — local connections from evidence links"
+          : "Relationship graph of linked entities"
+      }
     >
-      {/* Column guides — subtle, Obsidian-style lanes */}
-      {[14, 32, 50, 68, 86].map((x) => (
-        <line
-          key={x}
-          x1={x}
-          y1={10}
-          x2={x}
-          y2={90}
-          stroke="rgba(39, 39, 42, 0.35)"
-          strokeWidth={0.3}
-          strokeDasharray="1 2"
-        />
-      ))}
+      {layout === "columns"
+        ? [14, 32, 50, 68, 86].map((x) => (
+            <line
+              key={x}
+              x1={x}
+              y1={10}
+              x2={x}
+              y2={90}
+              stroke="rgba(39, 39, 42, 0.35)"
+              strokeWidth={0.3}
+              strokeDasharray="1 2"
+            />
+          ))
+        : (
+          <circle
+            cx={50}
+            cy={50}
+            r={32}
+            fill="none"
+            stroke="rgba(39, 39, 42, 0.35)"
+            strokeWidth={0.3}
+            strokeDasharray="1 2"
+          />
+        )}
 
       {edges.map((edge) => {
         const from = nodeMap.get(edge.from);
@@ -131,7 +150,10 @@ function GraphCanvas({
       })}
 
       {nodes.map((node) => {
-        const r = cfg.nodeBase + Math.sqrt(node.evidenceCount / maxEvidence) * cfg.nodeScale;
+        const r =
+          (centerId === node.id ? cfg.nodeBase * 1.15 : cfg.nodeBase) +
+          Math.sqrt(node.evidenceCount / maxEvidence) * cfg.nodeScale;
+        const isCenter = centerId === node.id;
         const isHovered = hoveredId === node.id;
         const isConnected = connectedToHover.has(node.id);
         const dimmed = hoveredId && !isHovered && !isConnected;
@@ -153,9 +175,9 @@ function GraphCanvas({
                 cy={node.y}
                 r={isHovered ? r * 1.15 : r}
                 fill={NODE_COLORS[node.kind]}
-                fillOpacity={isHovered ? 0.95 : 0.75}
-                stroke={isHovered ? "rgb(216, 180, 254)" : "rgb(9, 9, 11)"}
-                strokeWidth={isHovered ? 0.8 : 0.4}
+                fillOpacity={isHovered || isCenter ? 0.95 : 0.75}
+                stroke={isCenter ? "rgb(251, 191, 36)" : isHovered ? "rgb(216, 180, 254)" : "rgb(9, 9, 11)"}
+                strokeWidth={isCenter ? 1 : isHovered ? 0.8 : 0.4}
                 className="transition-all duration-150"
               />
               <title>
@@ -196,10 +218,14 @@ export function V2KnowledgeGraph({
   nodes,
   edges,
   size = "compact",
+  centerId,
+  layout = "columns",
 }: {
   nodes: V2GraphNode[];
   edges: V2GraphEdge[];
   size?: "compact" | "full";
+  centerId?: string;
+  layout?: "columns" | "neighborhood";
 }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -251,6 +277,8 @@ export function V2KnowledgeGraph({
           displaySize={displaySize}
           hoveredId={hoveredId}
           onHover={setHoveredId}
+          centerId={centerId}
+          layout={layout}
         />
         <div className="mt-3">
           <GraphLegend />
@@ -286,6 +314,8 @@ export function V2KnowledgeGraph({
               displaySize="expanded"
               hoveredId={hoveredId}
               onHover={setHoveredId}
+              centerId={centerId}
+              layout={layout}
             />
           </div>
           <div className="mt-3 shrink-0">

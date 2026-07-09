@@ -3,7 +3,9 @@ import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { loadOrganizationPageData } from "@/lib/argus/v2/loaders";
+import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
+import { V2EntityNeighborhoodPanel } from "../../components/V2EntityNeighborhoodPanel";
 import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
 import { V2OrgTabs } from "../../components/V2OrgTabs";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
@@ -44,9 +46,13 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
 
   if (!entity || entity.type !== "company") {
     return (
-      <div className="px-4 py-6 lg:px-8">
-        <V2BackLink href="/argus/v2/browse/organizations">Back to Organizations</V2BackLink>
-        <EmptyState message="Organization not found." />
+      <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+          <div className="px-4 py-6 lg:px-8">
+            <V2BackLink href="/argus/v2/browse/organizations">Back to Organizations</V2BackLink>
+            <EmptyState message="Organization not found." />
+          </div>
+        </div>
       </div>
     );
   }
@@ -54,6 +60,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
   const today = new Date().toISOString().slice(0, 10);
   const page = loadOrganizationPageData(data, inboxItems, entity, includePrivate, today);
+  const neighborhood = buildV2EntityNeighborhoodGraph(data, inboxItems, entity.id, includePrivate, today);
   const notes = entityNotesForDisplay(entity.notes ?? "");
   const sinceYear = entity.createdAt?.slice(0, 4) ?? "—";
   const website = extractWebsite(entity.notes ?? "");
@@ -62,7 +69,9 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
   const moreProjects = Math.max(0, page.orgProjects.length - 3);
 
   return (
-    <div className="px-4 py-6 lg:px-8">
+    <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+        <div className="px-4 py-6 lg:px-8">
       <div className="mb-5">
         <V2BackLink href="/argus/v2/browse/organizations">Back to Organizations</V2BackLink>
       </div>
@@ -207,6 +216,10 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
             </div>
             <V2OrgTimeline entries={page.timeline} limit={TIMELINE_PREVIEW} />
           </V2Card>
+
+          <V2Card className="p-5 sm:p-6">
+            <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entity.name} />
+          </V2Card>
         </div>
 
         {/* Right sidebar — org mockup */}
@@ -309,6 +322,8 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
 
           <V2LegacyLink href={`/argus/v2/network/${entity.id}`}>Open legacy network view →</V2LegacyLink>
         </aside>
+      </div>
+        </div>
       </div>
     </div>
   );

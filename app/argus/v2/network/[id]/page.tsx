@@ -15,8 +15,12 @@ export default async function V2NetworkContactPage({ params }: { params: Promise
 
   if (!entity) {
     return (
-      <div className="px-4 py-6 lg:px-8">
-        <EmptyState message="Contact not found." />
+      <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+          <div className="px-4 py-6 lg:px-8">
+            <EmptyState message="Contact not found." />
+          </div>
+        </div>
       </div>
     );
   }
