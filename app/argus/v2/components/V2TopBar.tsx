@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AddCreateButton } from "@/app/argus/components/ArgusAddLauncher";
 import { PrivateLockMenu } from "@/app/argus/components/PrivateLockMenu";
+import { useV2SidebarCollapse } from "@/app/argus/v2/components/V2DesktopShell";
 import { useV2MobileMenu } from "@/app/argus/v2/components/V2MobileMenuProvider";
 
 export function V2TopBar({
@@ -18,6 +19,7 @@ export function V2TopBar({
 }) {
   const router = useRouter();
   const { toggle, open } = useV2MobileMenu();
+  const { collapsed, toggle: toggleSidebar } = useV2SidebarCollapse();
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
@@ -51,6 +53,16 @@ export function V2TopBar({
           <span className="ml-0.5 shrink-0 text-base text-zinc-500" aria-hidden>
             {open ? "✕" : "☰"}
           </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200 lg:flex"
+          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {collapsed ? "»" : "«"}
         </button>
 
         <form action="/argus/search" method="get" className="mx-auto hidden max-w-xl flex-1 lg:block">

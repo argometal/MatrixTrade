@@ -633,7 +633,7 @@ export function V2InboxDetailPanel({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 pb-36 lg:pb-4">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4 pb-36 lg:pb-4">
         {panelTab === "email" ? (
           <div className="space-y-5">
             <dl className="grid gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4 text-sm sm:grid-cols-[5.5rem_1fr]">

@@ -101,7 +101,7 @@ function V2MobileMenuDrawer({ counts, open, onClose }: { counts: V2NavCounts; op
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-4">
+        <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-4">
           {sections.map((section) => (
             <nav key={section.title} className="mb-5">
               <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-zinc-600">

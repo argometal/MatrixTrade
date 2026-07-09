@@ -274,7 +274,7 @@ export function V2InboxShell({
   }
 
   return (
-    <div className="v2-inbox-shell flex h-full min-h-0 flex-col overflow-hidden lg:min-h-[calc(100vh-4rem)] lg:flex-row">
+    <div className="v2-inbox-shell flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
       <section
         className={`flex min-h-0 w-full flex-1 flex-col border-b border-zinc-800/80 lg:w-[min(440px,40%)] lg:flex-none lg:border-b-0 lg:border-r ${
           mobileDetailOpen ? "hidden lg:flex" : "flex"
@@ -503,7 +503,7 @@ export function V2InboxShell({
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+        <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
           {filtered.length === 0 ? (
             <p className="px-5 py-10 text-center text-sm text-zinc-500">
               {filtersActive ? "No items match these filters." : "No items in this tab."}
@@ -596,10 +596,10 @@ export function V2InboxShell({
       </section>
 
       <section
-        className={`min-w-0 flex-1 bg-zinc-950/50 ${
+        className={`min-h-0 min-w-0 flex-1 bg-zinc-950/50 ${
           mobileDetailOpen
-            ? "fixed inset-x-0 bottom-0 top-14 z-40 flex flex-col overflow-hidden lg:static lg:z-auto lg:overflow-y-auto"
-            : "hidden overflow-y-auto lg:block"
+            ? "fixed inset-x-0 bottom-0 top-14 z-40 flex min-h-0 flex-col overflow-hidden lg:static lg:z-auto"
+            : "hidden min-h-0 flex-col overflow-hidden lg:flex"
         }`}
       >
         {selectedDetail ? (
