@@ -30,9 +30,9 @@ function formatOverviewSection(
   const lines = [
     "=== OVERVIEW ===",
     `month:${monthly.monthKey}`,
-    `monthly_base:${formatSigned(monthly.monthlyLossLimit)}`,
+    `monthly_base:${monthly.baseCap.toFixed(2)}`,
     `carryover_in:${monthly.carryoverIn.toFixed(2)}`,
-    `monthly_effective_cap:${formatSigned(monthly.effectiveLossCap)}`,
+    `monthly_allowance:${monthly.monthlyAllowance.toFixed(2)}`,
     `monthly_pnl:${formatSigned(monthly.monthlyRealizedPnL)}`,
     `monthly_room:${monthly.monthlyLossRoom.toFixed(2)}`,
     `experiment_net_pnl:${formatSigned(experiment.realizedPnL)}`,

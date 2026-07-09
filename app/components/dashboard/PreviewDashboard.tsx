@@ -90,14 +90,17 @@ export function PreviewDashboard({ data }: { data: DashboardData }) {
                 value={`${experiment.closedTrades}/${experiment.maxTrades}`}
               />
               <StatusTile
-                label="Monthly cap (effective)"
-                value={formatMonthlyLossRoom(
-                  Math.abs(monthly.monthlyLossLimit) + monthly.carryoverIn
-                )}
+                label="Allowance this month"
+                value={formatMonthlyLossRoom(monthly.monthlyAllowance)}
               />
               <StatusTile
                 label="Carryover"
                 value={formatMonthlyLossRoom(monthly.carryoverIn)}
+                sub={
+                  monthly.carryoverIn > 0
+                    ? `$300 − $${monthly.previousMonthLossUsed.toFixed(0)} last month`
+                    : "No unused cap from prior month"
+                }
               />
               <StatusTile
                 label="This month P/L"
@@ -263,11 +266,13 @@ function StatusTile({
   value,
   valueClass = "text-zinc-100",
   highlight = false,
+  sub,
 }: {
   label: string;
   value: string;
   valueClass?: string;
   highlight?: boolean;
+  sub?: string;
 }) {
   return (
     <div
@@ -277,6 +282,7 @@ function StatusTile({
     >
       <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</p>
       <p className={`mt-1 text-lg font-semibold tabular-nums ${valueClass}`}>{value}</p>
+      {sub ? <p className="mt-1 text-xs text-zinc-500">{sub}</p> : null}
     </div>
   );
 }

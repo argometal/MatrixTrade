@@ -29,7 +29,7 @@ export function buildAttentionItems(
     });
   } else if (
     monthly &&
-    monthly.monthlyLossRoom <= (Math.abs(monthly.monthlyLossLimit) + monthly.carryoverIn) * 0.25
+    monthly.monthlyLossRoom <= monthly.monthlyAllowance * 0.25
   ) {
     items.push({
       id: "monthly-loss-warning",

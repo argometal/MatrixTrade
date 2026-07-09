@@ -115,7 +115,7 @@ export function buildSnapshot(
     "",
     `Monthly base: ${formatSigned(monthly.monthlyLossLimit)}`,
     `Carryover from prior month: $${monthly.carryoverIn.toFixed(2)}`,
-    `Effective monthly cap: ${formatSigned(monthly.effectiveLossCap)}`,
+    `Allowance this month: $${monthly.monthlyAllowance.toFixed(2)}`,
     `This month P/L: ${formatSigned(monthly.monthlyRealizedPnL)}`,
     `Monthly room left: $${monthly.monthlyLossRoom.toFixed(2)}`,
     "",

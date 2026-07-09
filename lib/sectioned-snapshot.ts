@@ -149,7 +149,7 @@ export function buildSectionedSnapshot(input: SectionedSnapshotInput): string {
     `month:${monthly.monthKey}`,
     `base_limit:${formatSigned(monthly.monthlyLossLimit)}`,
     `carryover_in:${monthly.carryoverIn.toFixed(2)}`,
-    `effective_cap:${formatSigned(monthly.effectiveLossCap)}`,
+    `allowance:${monthly.monthlyAllowance.toFixed(2)}`,
     `month_pnl:${formatSigned(monthly.monthlyRealizedPnL)}`,
     `room:${monthly.monthlyLossRoom.toFixed(2)}`,
     "",

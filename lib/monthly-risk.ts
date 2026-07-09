@@ -5,34 +5,55 @@ export type MonthlyRisk = {
   monthKey: string;
   /** Base monthly cap from rules (negative USD, e.g. -300). */
   monthlyLossLimit: number;
-  /** Unused cap rolled from the previous calendar month (positive USD). */
+  /** Positive USD base allowance (e.g. 300). */
+  baseCap: number;
+  /** Unused cap rolled from the previous calendar month only (positive USD). */
   carryoverIn: number;
-  /** Total loss allowed this month: base + carryover (negative USD). */
+  /** Total allowance this month: base + carryover (positive USD, e.g. 398). */
+  monthlyAllowance: number;
+  /** Total loss allowed this month as negative USD (e.g. -398). */
   effectiveLossCap: number;
   /** Closed-trade P/L in the current calendar month only. */
   monthlyRealizedPnL: number;
-  /** Positive USD remaining before the effective monthly cap. */
+  /** Losses used in the previous calendar month (positive USD). */
+  previousMonthLossUsed: number;
+  /** Positive USD remaining before hitting the monthly allowance. */
   monthlyLossRoom: number;
   monthlyCapBreached: boolean;
   closedTradesThisMonth: number;
+  closedTradesPreviousMonth: number;
   previousMonthKey: string;
-  previousMonthUnused: number;
 };
 
 export function currentMonthKey(date = new Date()): string {
-  return date.toISOString().slice(0, 7);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
 }
 
 export function previousMonthKey(monthKey: string): string {
   const [year, month] = monthKey.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 2, 1));
-  return date.toISOString().slice(0, 7);
+  const date = new Date(year, month - 2, 1);
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+/** Local calendar month from an ISO timestamp (avoids UTC slice shifting month). */
+export function monthKeyFromIso(iso: string): string {
+  const parsed = Date.parse(iso);
+  if (!Number.isFinite(parsed)) return iso.slice(0, 7);
+  return currentMonthKey(new Date(parsed));
 }
 
 export function isTradeInMonth(trade: Trade, monthKey: string): boolean {
   if (trade.status !== "closed") return false;
   const stamp = trade.closedAt ?? trade.createdAt;
-  return stamp.slice(0, 7) === monthKey;
+  return monthKeyFromIso(stamp) === monthKey;
+}
+
+export function countClosedTradesInMonth(trades: Trade[], monthKey: string): number {
+  return trades.filter((t) => isTradeInMonth(t, monthKey)).length;
 }
 
 export function sumClosedPnLInMonth(trades: Trade[], monthKey: string): number {
@@ -45,11 +66,25 @@ export function sumClosedPnLInMonth(trades: Trade[], monthKey: string): number {
   return total;
 }
 
-/** Unused cap from a single month using the base limit only (no nested carryover). */
-export function unusedCapInMonth(trades: Trade[], monthKey: string, baseCap: number): number {
-  const monthlyPnL = sumClosedPnLInMonth(trades, monthKey);
-  const lossUsed = Math.abs(Math.min(monthlyPnL, 0));
-  return Math.max(0, baseCap - lossUsed);
+/**
+ * Carryover from the immediately previous calendar month only.
+ * If that month had no closed trades → $0 carryover (no free $300 rollover).
+ * If it had losses → unused = baseCap - losses (e.g. 300 - 202 = 98).
+ */
+export function carryoverFromPreviousMonth(
+  trades: Trade[],
+  previousMonthKey: string,
+  baseCap: number
+): { carryoverIn: number; previousMonthLossUsed: number; closedTrades: number } {
+  const closedTrades = countClosedTradesInMonth(trades, previousMonthKey);
+  if (closedTrades === 0) {
+    return { carryoverIn: 0, previousMonthLossUsed: 0, closedTrades: 0 };
+  }
+
+  const monthlyPnL = sumClosedPnLInMonth(trades, previousMonthKey);
+  const previousMonthLossUsed = Math.abs(Math.min(monthlyPnL, 0));
+  const carryoverIn = Math.max(0, baseCap - previousMonthLossUsed);
+  return { carryoverIn, previousMonthLossUsed, closedTrades };
 }
 
 export function computeMonthlyRisk(
@@ -60,28 +95,30 @@ export function computeMonthlyRisk(
   const key = monthKey ?? currentMonthKey();
   const baseCap = Math.abs(monthlyLossLimit);
   const prevKey = previousMonthKey(key);
-  const previousMonthUnused = unusedCapInMonth(trades, prevKey, baseCap);
-  const carryoverIn = previousMonthUnused;
-  const effectiveCapPositive = baseCap + carryoverIn;
-  const effectiveLossCap = -effectiveCapPositive;
+  const prev = carryoverFromPreviousMonth(trades, prevKey, baseCap);
+  const carryoverIn = prev.carryoverIn;
+  const monthlyAllowance = baseCap + carryoverIn;
+  const effectiveLossCap = -monthlyAllowance;
 
   const monthlyRealizedPnL = sumClosedPnLInMonth(trades, key);
   const lossUsedThisMonth = Math.abs(Math.min(monthlyRealizedPnL, 0));
-  const monthlyLossRoom = Math.max(0, effectiveCapPositive - lossUsedThisMonth);
+  const monthlyLossRoom = Math.max(0, monthlyAllowance - lossUsedThisMonth);
   const monthlyCapBreached = monthlyRealizedPnL <= effectiveLossCap;
-  const closedThisMonth = trades.filter((t) => isTradeInMonth(t, key));
 
   return {
     monthKey: key,
     monthlyLossLimit,
+    baseCap,
     carryoverIn,
+    monthlyAllowance,
     effectiveLossCap,
     monthlyRealizedPnL,
+    previousMonthLossUsed: prev.previousMonthLossUsed,
     monthlyLossRoom,
     monthlyCapBreached,
-    closedTradesThisMonth: closedThisMonth.length,
+    closedTradesThisMonth: countClosedTradesInMonth(trades, key),
+    closedTradesPreviousMonth: prev.closedTrades,
     previousMonthKey: prevKey,
-    previousMonthUnused,
   };
 }
 
@@ -98,10 +135,7 @@ export function sumTickerRealizedPnL(trades: Trade[], ticker: string, excludeTra
   return total;
 }
 
-export function isTickerLossBreached(
-  tickerPnL: number,
-  maxLossPerTicker: number
-): boolean {
+export function isTickerLossBreached(tickerPnL: number, maxLossPerTicker: number): boolean {
   return tickerPnL <= maxLossPerTicker;
 }
 

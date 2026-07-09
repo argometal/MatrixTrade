@@ -30,14 +30,16 @@ perTickerPnL       = sum(closed results for same ticker, all experiment)
 tickerCapBreached    = perTickerPnL <= maxLossPerTicker (-250)
 ```
 
-### Example (started last month)
+### Example
 
-| Month | Base | Carryover | Effective cap | Loss that month | Room left |
-|-------|------|-----------|---------------|-----------------|-----------|
-| June | $300 | $300 (May unused) | $600 | -$202 | $398 unused |
-| July | $300 | $398 (June unused) | $698 | $0 so far | $698 |
+| | Amount |
+|---|--------|
+| Base cap | $300 |
+| Spent last month | $202 |
+| Unused → carryover | **$98** |
+| **Allowance this month** | **$398** ($300 + $98) |
 
-July **this month P/L** = $0 (trades closed in July only). Experiment **net P/L** = all closed trades ever.
+If the previous month had **no closed trades**, carryover = **$0** (allowance stays $300).
 
 ### Rules
 

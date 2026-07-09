@@ -200,9 +200,8 @@ export function getNextAction(
 }
 
 export function isBudgetWarning(monthly: MonthlyRisk): boolean {
-  const effectivePositive = Math.abs(monthly.monthlyLossLimit) + monthly.carryoverIn;
-  if (effectivePositive <= 0) return false;
-  return monthly.monthlyLossRoom <= effectivePositive * 0.25;
+  if (monthly.monthlyAllowance <= 0) return false;
+  return monthly.monthlyLossRoom <= monthly.monthlyAllowance * 0.25;
 }
 
 export function suggestExportQuestion(

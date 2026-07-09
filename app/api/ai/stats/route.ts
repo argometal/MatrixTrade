@@ -57,6 +57,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     monthly: {
       monthKey: monthly.monthKey,
       monthlyLossLimit: monthly.monthlyLossLimit,
+      monthlyAllowance: monthly.monthlyAllowance,
       carryoverIn: monthly.carryoverIn,
       effectiveLossCap: monthly.effectiveLossCap,
       monthlyRealizedPnL: monthly.monthlyRealizedPnL,

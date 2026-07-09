@@ -172,10 +172,7 @@ function buildAlerts(
       label: `Monthly loss limit reached (${monthly.monthKey})`,
       href: "/stats",
     });
-  } else if (
-    monthly.monthlyLossRoom <=
-    (Math.abs(monthly.monthlyLossLimit) + monthly.carryoverIn) * 0.25
-  ) {
+  } else if (monthly.monthlyLossRoom <= monthly.monthlyAllowance * 0.25) {
     alerts.push({
       id: "loss-warning",
       severity: "warning",
