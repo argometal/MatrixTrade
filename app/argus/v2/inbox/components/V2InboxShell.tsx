@@ -30,6 +30,7 @@ import {
   type V2InboxTab,
   type InboxTopicContext,
 } from "@/lib/argus/v2/inbox-loaders";
+import { V2InboxBulkBar } from "./V2InboxBulkBar";
 import { V2InboxDetailPanel } from "./V2InboxDetailPanel";
 import { V2InboxEntityLinkModal } from "./V2InboxEntityLinkModal";
 import { V2InboxSwipeRow } from "./V2InboxSwipeRow";
@@ -167,10 +168,15 @@ export function V2InboxShell({
   const selectedDetail = selectedId ? details.find((d) => d.item.id === selectedId) : undefined;
   const [selectMode, setSelectMode] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [processOpen, setProcessOpen] = useState(false);
   const [openFilter, setOpenFilter] = useState<FilterMenu>(null);
   const [swipeLinkId, setSwipeLinkId] = useState<string | null>(null);
   const filtersActive = hasActiveV2InboxFilters(filters);
+  const bulkReturnTo = useMemo(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const query = params.toString();
+    return query ? `/argus/v2/inbox?${query}` : "/argus/v2/inbox";
+  }, [searchParams]);
+  const checkedIds = useMemo(() => [...checked], [checked]);
   const inboxBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "inbox"), [buckets]);
 
   const swipeLinkDetail = useMemo(
@@ -227,6 +233,8 @@ export function V2InboxShell({
   }
 
   function setTab(next: V2InboxTab) {
+    setChecked(new Set());
+    setSelectMode(false);
     replaceInboxParams((params) => {
       params.set("tab", next);
     });
@@ -265,12 +273,28 @@ export function V2InboxShell({
   }, [filtered, urlSelected, router, searchParams]);
 
   function toggleChecked(id: string) {
+    setSelectMode(true);
     setChecked((current) => {
       const next = new Set(current);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
+  }
+
+  function clearSelection() {
+    setChecked(new Set());
+    setSelectMode(false);
+  }
+
+  function selectAllVisible() {
+    setSelectMode(true);
+    setChecked(new Set(filtered.map((row) => row.id)));
+  }
+
+  function finishBulkAction() {
+    clearSelection();
+    router.refresh();
   }
 
   return (
@@ -284,53 +308,35 @@ export function V2InboxShell({
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-zinc-50">Inbox</h1>
-              <p className="mt-0.5 text-xs text-zinc-500">Tap to read · Link to assign</p>
+              <p className="mt-0.5 text-xs text-zinc-500">Evidence — read, link, act</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectMode((value) => !value)}
-                className={`text-xs ${selectMode ? "text-violet-300" : "text-zinc-500 hover:text-zinc-300"}`}
-              >
-                Select
-              </button>
-              <button
-                type="button"
-                onClick={() => setTab("unread")}
-                className="hidden text-xs text-zinc-500 hover:text-zinc-300 sm:inline"
-              >
-                Mark all read
-              </button>
-              <div className="relative hidden sm:block">
+              {selectMode || checked.size > 0 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={selectAllVisible}
+                    className="text-xs text-zinc-500 hover:text-zinc-300"
+                  >
+                    All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearSelection}
+                    className="text-xs text-violet-300 hover:text-violet-200"
+                  >
+                    Done
+                  </button>
+                </>
+              ) : (
                 <button
                   type="button"
-                  onClick={() => setProcessOpen((open) => !open)}
-                  className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
+                  onClick={() => setSelectMode(true)}
+                  className="text-xs text-zinc-500 hover:text-zinc-300"
                 >
-                  Process ▾
+                  Select
                 </button>
-                {processOpen ? (
-                  <div className="absolute right-0 top-full z-20 mt-1 min-w-[160px] rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProcessOpen(false);
-                        if (selectedId) selectItem(selectedId);
-                      }}
-                      className="block w-full rounded-lg px-3 py-2 text-left text-xs text-zinc-200 hover:bg-zinc-800"
-                    >
-                      Process selected
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setProcessOpen(false)}
-                      className="block w-full rounded-lg px-3 py-2 text-left text-xs text-zinc-400 hover:bg-zinc-800"
-                    >
-                      Bulk archive
-                    </button>
-                  </div>
-                ) : null}
-              </div>
+              )}
             </div>
           </div>
 
@@ -349,6 +355,19 @@ export function V2InboxShell({
             ))}
           </div>
         </div>
+
+        {checked.size > 0 ? (
+          <V2InboxBulkBar
+            count={checked.size}
+            inboxIds={checkedIds}
+            tagBuckets={tagBuckets}
+            deleteUnlocked={deleteUnlocked}
+            privateConfigured={privateConfigured}
+            returnTo={bulkReturnTo}
+            onClear={clearSelection}
+            onDone={finishBulkAction}
+          />
+        ) : null}
 
         <div className="shrink-0 flex flex-wrap gap-2 border-b border-zinc-800/80 px-4 py-2 lg:px-5">
           <div className="relative">
@@ -526,14 +545,13 @@ export function V2InboxShell({
                           <input
                             type="checkbox"
                             checked={checked.has(row.id)}
-                            readOnly={!selectMode}
-                            onClick={(event) => {
-                              if (selectMode) {
-                                event.stopPropagation();
-                                toggleChecked(row.id);
-                              }
+                            onChange={(event) => {
+                              event.stopPropagation();
+                              toggleChecked(row.id);
                             }}
-                            className="rounded border-zinc-700 bg-zinc-900"
+                            onClick={(event) => event.stopPropagation()}
+                            className="h-4 w-4 rounded border-zinc-600 bg-zinc-900 accent-violet-500"
+                            aria-label={`Select ${row.subject || "email"}`}
                           />
                           <span className="text-sm text-zinc-500" aria-hidden>
                             ✉

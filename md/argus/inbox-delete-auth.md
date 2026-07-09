@@ -43,7 +43,7 @@ Pattern: **GitHub sudo mode**, banking “confirm transfer”, iOS Screen Time �
 |---------|----------|
 | Inbox → Links tab → Actions | Done (archive), Convert, **Delete** / Unlock delete |
 | Legacy inbox / Home card | Same `deleteInboxAction` gate |
-| Bulk select | **Deferred** — same delete window when added |
+| Bulk select | Archive, assign topic, delete — same delete window |
 
 ---
 

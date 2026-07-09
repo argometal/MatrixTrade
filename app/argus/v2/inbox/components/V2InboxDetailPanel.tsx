@@ -21,6 +21,7 @@ import {
   type CreatedEntityResult,
 } from "@/app/argus/actions";
 import { V2InboxDeleteControl } from "@/app/argus/v2/inbox/components/V2InboxDeleteControl";
+import { V2InboxEmailBody } from "@/app/argus/v2/inbox/components/V2InboxEmailBody";
 import {
   entityToV2InboxDetail,
   effectiveInboxStatus,
@@ -635,22 +636,26 @@ export function V2InboxDetailPanel({
 
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4 pb-36 lg:pb-4">
         {panelTab === "email" ? (
-          <div className="space-y-5">
-            <dl className="grid gap-2 rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4 text-sm sm:grid-cols-[5.5rem_1fr]">
-              <dt className="text-zinc-500">Status</dt>
-              <dd className="text-zinc-200">{statusDisplay.label}</dd>
-              <dt className="text-zinc-500">Source</dt>
-              <dd className="text-zinc-200">{item.source}</dd>
-              <dt className="text-zinc-500">Follow up</dt>
-              <dd className="text-zinc-200">{followUpDate || "—"}</dd>
+          <div className="space-y-4">
+            <dl className="grid gap-1.5 rounded-xl border border-zinc-800/60 bg-zinc-900/20 px-4 py-3 text-xs sm:grid-cols-[5rem_1fr]">
+              <dt className="text-zinc-600">Status</dt>
+              <dd className="text-zinc-400">{statusDisplay.label}</dd>
+              <dt className="text-zinc-600">Source</dt>
+              <dd className="text-zinc-400">{item.source}</dd>
+              {followUpDate ? (
+                <>
+                  <dt className="text-zinc-600">Follow up</dt>
+                  <dd className="text-zinc-400">{followUpDate}</dd>
+                </>
+              ) : null}
               {selectedLinked.length > 0 ? (
                 <>
-                  <dt className="text-zinc-500">Linked</dt>
-                  <dd className="text-zinc-200">{selectedLinked.map((e) => e.name).join(" · ")}</dd>
+                  <dt className="text-zinc-600">Linked</dt>
+                  <dd className="text-zinc-400">{selectedLinked.map((e) => e.name).join(" · ")}</dd>
                 </>
               ) : null}
             </dl>
-            <div className="whitespace-pre-wrap text-sm leading-7 text-zinc-300">{view.textBody}</div>
+            <V2InboxEmailBody textBody={view.textBody} htmlBody={view.htmlBody} />
           </div>
         ) : null}
         {panelTab === "attachments" ? (

@@ -414,6 +414,63 @@ export async function updateInboxTriageAction(
   return { ok: true };
 }
 
+/** Archive multiple inbox items (evidence triage — no redirect). */
+export async function bulkArchiveInboxAction(inboxIds: string[]): Promise<{ ok: true; count: number }> {
+  await requireArgusSession();
+  const ids = [...new Set(inboxIds.filter(Boolean))];
+  let count = 0;
+  for (const id of ids) {
+    const archived = await archiveInboxItem(id);
+    if (archived) count += 1;
+  }
+  revalidateArgus();
+  revalidatePath("/argus/v2/inbox");
+  return { ok: true, count };
+}
+
+/** Merge tags into multiple inbox items (additive). */
+export async function bulkMergeInboxTopicsAction(
+  inboxIds: string[],
+  tagsToAdd: string[]
+): Promise<{ ok: true; count: number }> {
+  await requireArgusSession();
+  const ids = [...new Set(inboxIds.filter(Boolean))];
+  const tags = [...new Set(tagsToAdd.map((t) => t.trim()).filter(Boolean))];
+  if (ids.length === 0 || tags.length === 0) return { ok: true, count: 0 };
+
+  let count = 0;
+  for (const id of ids) {
+    const item = await getInboxItem(id, true);
+    if (!item || item.status === "archived") continue;
+    const merged = [...new Set([...(item.topics ?? []), ...tags])];
+    await updateInboxTriage(id, { topics: merged });
+    count += 1;
+  }
+  revalidateArgus();
+  revalidatePath("/argus/v2/inbox");
+  return { ok: true, count };
+}
+
+/** Soft-delete multiple inbox items — same PIN window as single delete. */
+export async function bulkDeleteInboxAction(
+  inboxIds: string[]
+): Promise<{ ok: true; count: number } | { error: "delete_locked" }> {
+  await requireArgusSession();
+  if (argusPrivateConfigured() && !(await hasArgusDeleteUnlock())) {
+    return { error: "delete_locked" };
+  }
+
+  const ids = [...new Set(inboxIds.filter(Boolean))];
+  let count = 0;
+  for (const id of ids) {
+    const deleted = await deleteInboxItem(id);
+    if (deleted) count += 1;
+  }
+  revalidateArgus();
+  revalidatePath("/argus/v2/inbox");
+  return { ok: true, count };
+}
+
 function parseInboxTriagePatch(formData: FormData) {
   const statusRaw = String(formData.get("status") ?? "").trim();
   const followUpRaw = String(formData.get("followUpDate") ?? "").trim();
