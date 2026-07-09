@@ -5,7 +5,7 @@ import { REGISTER } from "@/lib/argus/ux-copy";
 
 /** Top bar: Register evidence (sheet) + Add context (trimmed entity flow). */
 export function AddRegisterCaptureButtons({ className = "" }: { className?: string }) {
-  const { openCapture, openCreateFlow } = useArgusAdd();
+  const { openCapture, openAddContext } = useArgusAdd();
 
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
@@ -19,12 +19,7 @@ export function AddRegisterCaptureButtons({ className = "" }: { className?: stri
       </button>
       <button
         type="button"
-        onClick={() =>
-          openCreateFlow({
-            pickItemKind: true,
-            entityCaptureOnly: true,
-          })
-        }
+        onClick={() => openAddContext()}
         className="inline-flex items-center rounded-xl border border-violet-500/40 bg-violet-600/15 px-3.5 py-2 text-sm font-semibold text-violet-200 transition hover:bg-violet-600/25 active:scale-[0.98]"
         title={REGISTER.entityCaptureHint}
       >

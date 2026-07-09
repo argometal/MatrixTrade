@@ -39,24 +39,24 @@ export function AddMenuButton({
   );
 }
 
-/** Primary create entry — opens the unified create & link flow. */
+/** Primary context entry — opens slim Add context flow (not legacy wizard). */
 export function AddCreateButton({
   align = "end",
   className = "",
-  defaultKind = "journal",
-  label = "Capture",
+  label = "Add context",
 }: {
   align?: MenuAlign;
   className?: string;
+  /** @deprecated */
   defaultKind?: CreateItemKind;
   label?: string;
 }) {
-  const { openCreateFlow } = useArgusAdd();
+  const { openAddContext } = useArgusAdd();
 
   return (
     <button
       type="button"
-      onClick={() => openCreateFlow({ pickItemKind: true })}
+      onClick={() => openAddContext()}
       aria-label={label}
       className={`inline-flex items-center rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-violet-900/30 transition hover:bg-violet-500 active:scale-[0.98] ${className}`}
     >

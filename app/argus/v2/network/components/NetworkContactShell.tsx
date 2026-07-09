@@ -329,9 +329,9 @@ export function NetworkContactShell({
             <button
               type="button"
               onClick={() => openCapture({ entityIds: [entity.id] })}
-              className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+              className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-500"
             >
-              + Journal
+              + Register
             </button>
             <a
               href={`/argus/v2/deliver?scopeType=person&scopeId=${entity.id}`}

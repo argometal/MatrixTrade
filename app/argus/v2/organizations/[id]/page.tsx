@@ -166,7 +166,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               <V2SummaryStatCard
                 kind="journal"
                 value={String(page.stats.journalEntries)}
-                label="Journal Entries"
+                label="Evidence"
                 delta={page.stats.journalDelta}
                 href="/argus/v2#stats"
               />

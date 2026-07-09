@@ -75,15 +75,14 @@ Receive → Register → Context → Correlate → Retrieve → Deliver
 
 ---
 
-## Phase 2a — Rename + thin Add context (next build)
+## Phase 2a (shipped — 070901)
 
 | Task | Detail |
 |------|--------|
-| Rename UI copy | Capture → **Add context** (`ux-copy.ts`, top bar, drawer headers) |
-| Top bar | **Register** (teal) + **Add context** (violet outline) |
-| Add context flow | Kind picker → minimal name form → **Link modal** → save entity |
-| Remove from Add context | Journal, Document, 4-column wizard, step rail |
-| Inbox / runbook | Still use `ArgusCreateLinkWindow` until 2b |
+| `AddContextFlow` | Kind picker → minimal form → **Link modal** — replaces heavy wizard on top bar |
+| Top bar | Register + Add context (no legacy `ArgusCreateLinkWindow` for global entry) |
+| Legacy wizard | Inbox, runbook, contextual `openCreateFlow` only |
+| Entity pages | Link + Register; journal vocabulary removed from person/topic/event |
 
 ### Add context flow (target — same elegance as Register)
 
