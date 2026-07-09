@@ -4,12 +4,13 @@ import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 
 export function V2OpenCaptureButton({
   entityIds,
-  entryType = "note",
+  eventDate,
   className,
   children,
 }: {
   entityIds?: string[];
-  entryType?: "log" | "note";
+  /** Pre-fill date when registering on an event anchor */
+  eventDate?: string;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -21,7 +22,7 @@ export function V2OpenCaptureButton({
       onClick={() =>
         openCapture({
           entityIds,
-          entryType,
+          eventDate,
         })
       }
       className={className}

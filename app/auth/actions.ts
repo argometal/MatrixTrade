@@ -1,15 +1,17 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { verifyArgusPassword, verifyArgusPrivatePin, verifyTradingPassword } from "@/lib/auth/passwords";
+import { verifyArgusPassword, verifyArgusPrivatePin, verifyDeletionCode, verifyTradingPassword } from "@/lib/auth/passwords";
 import {
   clearAllSessions,
   clearArgusPrivateUnlock,
+  setArgusDeleteAuthUnlock,
   setArgusDeleteUnlock,
   setArgusPrivateUnlock,
   setArgusSession,
   setTradingSession,
 } from "@/lib/auth/cookies";
+import { verifyArgusTotp } from "@/lib/auth/totp";
 
 export async function loginTradingAction(formData: FormData): Promise<void> {
   const password = String(formData.get("password") ?? "");
@@ -46,15 +48,29 @@ export async function unlockArgusPrivateAction(formData: FormData): Promise<void
 }
 
 export async function unlockArgusDeleteAction(formData: FormData): Promise<void> {
-  const pin = String(formData.get("pin") ?? "");
+  const code = String(formData.get("code") ?? formData.get("pin") ?? "");
   const returnTo = String(formData.get("returnTo") ?? "/argus/v2/inbox");
 
-  if (!verifyArgusPrivatePin(pin)) {
+  if (!verifyDeletionCode(code)) {
     const separator = returnTo.includes("?") ? "&" : "?";
     redirect(`${returnTo}${separator}delete_error=1`);
   }
 
   await setArgusDeleteUnlock();
+  redirect(returnTo.startsWith("/") ? returnTo : "/argus/v2/inbox");
+}
+
+/** Authenticator (TOTP) unlock — required to delete evidence linked to topic/event/org. */
+export async function unlockArgusDeleteAuthAction(formData: FormData): Promise<void> {
+  const totp = String(formData.get("totp") ?? formData.get("code") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/inbox");
+
+  if (!verifyArgusTotp(totp)) {
+    const separator = returnTo.includes("?") ? "&" : "?";
+    redirect(`${returnTo}${separator}delete_auth_error=1`);
+  }
+
+  await setArgusDeleteAuthUnlock();
   redirect(returnTo.startsWith("/") ? returnTo : "/argus/v2/inbox");
 }
 

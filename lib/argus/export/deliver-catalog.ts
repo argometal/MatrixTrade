@@ -29,7 +29,7 @@ export const DELIVER_PACKAGES: DeliverPackageCard[] = [
   {
     id: "quick_package",
     title: "Quick Package",
-    description: "Fast handover summary. Timeline, evidence index, and file metadata — no ZIP bundling.",
+    description: "Fast handover report. HTML timeline + evidence index; Markdown draft also available.",
     badge: "Fast action",
     badgeTone: "green",
     available: true,

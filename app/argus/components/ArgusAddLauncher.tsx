@@ -29,7 +29,7 @@ export function AddMenuButton({
     <div className={`flex flex-col items-center ${className}`}>
       <button
         type="button"
-        onClick={() => openCapture({ entryType: "note" })}
+        onClick={() => openCapture()}
         aria-label={ADD_MENU.fab}
         className={buttonClass}
       >

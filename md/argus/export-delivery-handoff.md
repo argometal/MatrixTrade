@@ -3,8 +3,8 @@
 **Repository:** [MatrixTrade](https://github.com/argometal/MatrixTrade)  
 **Module:** ARGUS at `/argus/*`  
 **Production:** https://matrix-trade-theta.vercel.app  
-**Date:** 2026-07-07  
-**Status:** Evidence Vault v1 implemented (`POST /api/argus/export`) — Relationship Brief and other packages remain review only
+**Date:** 2026-07-09  
+**Status:** Quick Package (HTML + MD) + Evidence Vault v1 implemented — Relationship Brief and other packages remain proposed
 
 Read with [`ai-charter.md`](ai-charter.md), [`correlation-guide.md`](correlation-guide.md), [`v2-design-checklist.md`](v2-design-checklist.md), [`model-alignment-audit.md`](model-alignment-audit.md), and [`README.md`](README.md).
 
@@ -19,11 +19,11 @@ Provide ChatGPT (or another analyst) with enough context to analyze a proposed A
 ## ARGUS product loop (target)
 
 ```text
-Capture → Organize → Retrieve → Deliver
+Receive → Organize → Correlate → Retrieve → Deliver
 ```
 
-Today ARGUS is strong on **Capture**, **Organize**, and **Retrieve**.  
-There is **no Deliver layer** yet.
+Today ARGUS is strong on **Receive**, **Organize**, **Correlate**, and **Retrieve**.  
+**Deliver v1** is live: Quick Package (HTML + Markdown) and Evidence Vault (ZIP). See [`deliver-formats-plan.md`](deliver-formats-plan.md).
 
 ---
 

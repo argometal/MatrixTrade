@@ -180,7 +180,7 @@ export function V2EventDetailPanel({
               {saveNote ? <span className="text-xs text-zinc-500">{saveNote}</span> : null}
             </div>
             <p className="text-xs text-zinc-600">
-              New journal notes from this event use the event date ({selected.eventDate}).
+              Evidence registered on this event uses the event date ({selected.eventDate}).
             </p>
           </div>
         ) : null}
@@ -189,7 +189,7 @@ export function V2EventDetailPanel({
           <div className="space-y-3">
             <p className="text-xs text-zinc-500">Chronological evidence — emails, notes, and photos linked to this event.</p>
             {selected.evidence.length === 0 ? (
-              <p className="text-sm text-zinc-500">No evidence yet. Link an email or add a journal note.</p>
+              <p className="text-sm text-zinc-500">No evidence yet. Link an email or register evidence.</p>
             ) : (
               <ul className="space-y-2">
                 {selected.evidence.map((item) => (
@@ -273,10 +273,10 @@ export function V2EventDetailPanel({
       <div className="shrink-0 border-t border-zinc-800/80 p-5">
         <V2OpenCaptureButton
           entityIds={[selected.id]}
-          entryType="note"
-          className="inline-flex rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"
+          eventDate={selected.eventDate}
+          className="inline-flex rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-500"
         >
-          + Add journal note
+          + Register evidence
         </V2OpenCaptureButton>
       </div>
 

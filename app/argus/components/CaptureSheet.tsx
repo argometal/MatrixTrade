@@ -4,6 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { CAPTURE, REFERENCES, TAGS } from "@/lib/argus/ux-copy";
 import { eventDateFromLinkedEntities } from "@/lib/argus/journal-event-origin";
+import {
+  inferRegisterKindOverride,
+  registerContextHint,
+  registerShowsDateField,
+} from "@/lib/argus/register-infer";
 import { AttachmentField } from "./AttachmentField";
 import type { EntityPickerBuckets } from "./ReferencePickerModal";
 import type { TagBuckets } from "./TagPickerModal";
@@ -13,6 +18,7 @@ export interface CaptureInitial {
   title?: string;
   inboxId?: string;
   entityIds?: string[];
+  /** @deprecated inferred from links — kept for inbox convert compatibility */
   entryType?: "log" | "note";
   eventDate?: string;
   followUpDate?: string;
@@ -77,10 +83,24 @@ export function CaptureSheet({
   const [attachmentOpen, setAttachmentOpen] = useState(false);
   const [protectedOpen, setProtectedOpen] = useState(false);
   const [isProtected, setIsProtected] = useState(false);
-  const [entryType, setEntryType] = useState<"log" | "note">(initial?.entryType ?? "note");
 
   const today = useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const kindOverride = entryType === "note" ? "event" : "log";
+  const kindOverride = useMemo(
+    () =>
+      inferRegisterKindOverride(buckets.alphabetical, selectedIds, {
+        eventDate,
+        followUpDate,
+      }),
+    [buckets.alphabetical, selectedIds, eventDate, followUpDate]
+  );
+  const showDateField = useMemo(
+    () => registerShowsDateField(buckets.alphabetical, selectedIds),
+    [buckets.alphabetical, selectedIds]
+  );
+  const contextHint = useMemo(
+    () => registerContextHint(buckets.alphabetical, selectedIds),
+    [buckets.alphabetical, selectedIds]
+  );
 
   useEffect(() => {
     if (open) {
@@ -91,14 +111,21 @@ export function CaptureSheet({
       setFollowUpDate(initial?.followUpDate?.slice(0, 10) ?? "");
       setIsProtected(false);
       setProtectedOpen(false);
-      setEntryType(initial?.entryType ?? "note");
-      const noteDate =
-        initial?.eventDate?.slice(0, 10) ||
-        eventDateFromLinkedEntities(buckets.alphabetical, initial?.entityIds ?? []) ||
-        today;
-      setEventDate((initial?.entryType ?? "note") === "note" ? noteDate : "");
+      const linkedDate = eventDateFromLinkedEntities(buckets.alphabetical, initial?.entityIds ?? []);
+      const noteDate = initial?.eventDate?.slice(0, 10) || linkedDate || today;
+      setEventDate(noteDate);
     }
-  }, [open, initial?.body, initial?.title, initial?.entityIds, initial?.entryType, initial?.eventDate, initial?.followUpDate, initial?.topics, today, buckets.alphabetical]);
+  }, [
+    open,
+    initial?.body,
+    initial?.title,
+    initial?.entityIds,
+    initial?.eventDate,
+    initial?.followUpDate,
+    initial?.topics,
+    today,
+    buckets.alphabetical,
+  ]);
 
   const autoOpenedRef = useRef(false);
 
@@ -120,22 +147,11 @@ export function CaptureSheet({
     });
   }, [open, autoOpenReference, initial?.entityIds, initial?.topics, openLinkModal]);
 
-  function selectEntryType(type: "log" | "note") {
-    setEntryType(type);
-    if (type === "note") {
-      const linkedDate = eventDateFromLinkedEntities(buckets.alphabetical, selectedIds);
-      setEventDate(linkedDate || today);
-    } else {
-      setEventDate("");
-      setDateOpen(false);
-    }
-  }
-
   useEffect(() => {
-    if (!open || entryType !== "note") return;
+    if (!open) return;
     const linkedDate = eventDateFromLinkedEntities(buckets.alphabetical, selectedIds);
     if (linkedDate) setEventDate(linkedDate);
-  }, [open, entryType, selectedIds, buckets.alphabetical]);
+  }, [open, selectedIds, buckets.alphabetical]);
 
   useEffect(() => {
     if (open) {
@@ -163,6 +179,7 @@ export function CaptureSheet({
     .map((id) => buckets.alphabetical.find((e) => e.id === id)?.name)
     .filter(Boolean);
   const linkedLabel = selectedNames.join(", ");
+  const resolvedEventDate = showDateField ? eventDate || today : eventDate || today;
 
   const formContent = (
     <form action={action} className="flex min-h-0 flex-1 flex-col">
@@ -174,38 +191,13 @@ export function CaptureSheet({
         <input key={id} type="hidden" name="entityIds" value={id} />
       ))}
       <input type="hidden" name="kindOverride" value={kindOverride} />
-      <input type="hidden" name="eventDate" value={entryType === "note" ? eventDate || today : eventDate} />
+      <input type="hidden" name="eventDate" value={resolvedEventDate} />
       <input type="hidden" name="followUpDate" value={followUpDate} />
       <input type="hidden" name="topics" value={selectedTags.join(", ")} />
       {isProtected ? <input type="hidden" name="private" value="on" /> : null}
       <input type="hidden" name="source" value={initial?.inboxId ? "inbox" : "manual"} />
 
-      <div className="mb-3 flex gap-2 rounded-xl bg-zinc-900/80 p-1">
-        <button
-          type="button"
-          onClick={() => selectEntryType("log")}
-          className={`flex-1 rounded-lg px-3 py-2 text-left transition ${
-            entryType === "log"
-              ? "bg-teal-600/20 text-teal-200 ring-1 ring-teal-700/50"
-              : "text-zinc-400 hover:bg-zinc-800"
-          }`}
-        >
-          <span className="block text-[14px] font-medium">{CAPTURE.log}</span>
-          <span className="mt-0.5 block text-[11px] leading-snug text-zinc-500">{CAPTURE.logHint}</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => selectEntryType("note")}
-          className={`flex-1 rounded-lg px-3 py-2 text-left transition ${
-            entryType === "note"
-              ? "bg-teal-600/20 text-teal-200 ring-1 ring-teal-700/50"
-              : "text-zinc-400 hover:bg-zinc-800"
-          }`}
-        >
-          <span className="block text-[14px] font-medium">{CAPTURE.note}</span>
-          <span className="mt-0.5 block text-[11px] leading-snug text-zinc-500">{CAPTURE.noteHint}</span>
-        </button>
-      </div>
+      <p className="mb-3 text-[11px] leading-snug text-zinc-500">{contextHint}</p>
 
       <input
         value={title}
@@ -242,7 +234,7 @@ export function CaptureSheet({
         >
           {CAPTURE.reference}
         </MetaButton>
-        {entryType === "note" ? (
+        {showDateField ? (
           <MetaButton active={Boolean(eventDate) || dateOpen} onClick={() => setDateOpen((v) => !v)}>
             {CAPTURE.date}
           </MetaButton>
@@ -270,7 +262,7 @@ export function CaptureSheet({
         </label>
       ) : null}
 
-      {dateOpen && (
+      {dateOpen && showDateField && (
         <label className="mt-3 block">
           <input
             type="date"

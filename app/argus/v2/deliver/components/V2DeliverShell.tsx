@@ -70,7 +70,7 @@ export function V2DeliverShell({
   const [previewLoading, setPreviewLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const [quickMarkdown, setQuickMarkdown] = useState<string | null>(null);
+  const [quickHtml, setQuickHtml] = useState<string | null>(null);
 
   const scopeEntities = entityOptions[scopeType] ?? [];
   const filteredEntities = useMemo(() => {
@@ -134,7 +134,7 @@ export function V2DeliverShell({
 
   const refreshQuickPreview = useCallback(async () => {
     if (!scopeId || packageKind !== "quick_package") {
-      setQuickMarkdown(null);
+      setQuickHtml(null);
       return;
     }
     try {
@@ -150,13 +150,13 @@ export function V2DeliverShell({
       if (toDate) params.set("toDate", toDate);
       const response = await fetch(`/api/argus/deliver/quick?${params.toString()}`);
       if (!response.ok) {
-        setQuickMarkdown(null);
+        setQuickHtml(null);
         return;
       }
-      const payload = (await response.json()) as { markdown?: string };
-      setQuickMarkdown(payload.markdown ?? null);
+      const payload = (await response.json()) as { html?: string };
+      setQuickHtml(payload.html ?? null);
     } catch {
-      setQuickMarkdown(null);
+      setQuickHtml(null);
     }
   }, [
     packageKind,
@@ -211,7 +211,7 @@ export function V2DeliverShell({
         const nameToken = (selectedEntity?.name ?? "export").replace(/[^a-zA-Z0-9._-]+/g, "-");
         const anchor = document.createElement("a");
         anchor.href = URL.createObjectURL(blob);
-        anchor.download = `argus-quick-${scopeType}-${nameToken}-${stamp}.md`;
+        anchor.download = `argus-quick-${scopeType}-${nameToken}-${stamp}.html`;
         anchor.click();
         URL.revokeObjectURL(anchor.href);
         setStatusMessage("Quick package downloaded.");
@@ -490,13 +490,15 @@ export function V2DeliverShell({
         </V2Card>
       </div>
 
-      {packageKind === "quick_package" && quickMarkdown ? (
+      {packageKind === "quick_package" && quickHtml ? (
         <section className="mb-8">
           <h2 className="mb-3 text-sm font-semibold text-zinc-100">Preview</h2>
-          <pre className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-2xl border border-zinc-800 bg-zinc-950/80 p-4 font-mono text-[11px] leading-relaxed text-zinc-400">
-            {quickMarkdown.slice(0, 4000)}
-            {quickMarkdown.length > 4000 ? "\n\n… (truncated in preview)" : ""}
-          </pre>
+          <iframe
+            title="Quick package preview"
+            srcDoc={quickHtml}
+            className="h-72 w-full rounded-2xl border border-zinc-800 bg-white"
+            sandbox=""
+          />
         </section>
       ) : null}
 
@@ -505,7 +507,7 @@ export function V2DeliverShell({
           <p>Your data stays private. Only you can generate and access these packages.</p>
           <p className="mt-1">
             {packageKind === "quick_package"
-              ? "Output format: Markdown summary (.md) — fast handover, no file bundling."
+              ? "Output format: HTML report (.html) — print to PDF from browser. Markdown (.md) available in entity modal."
               : "Output format: ZIP package with JSON manifest (v1)."}
           </p>
           {statusMessage ? <p className="mt-2 text-zinc-400">{statusMessage}</p> : null}

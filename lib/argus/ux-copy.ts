@@ -43,10 +43,10 @@ export const JOURNAL_BEHAVIOR = {
 } as const;
 
 export const CAPTURE = {
-  fab: "Journal",
-  title: "Journal",
+  fab: "Register",
+  title: "Register",
   titlePlaceholder: "Title (optional)",
-  bodyPlaceholder: "What do you need to remember?",
+  bodyPlaceholder: "What happened?",
   log: "Log",
   note: "Note",
   logHint: "Ongoing sequence on linked people, projects, topics, or events",
@@ -60,6 +60,22 @@ export const CAPTURE = {
   cancel: "Cancel",
   save: "Save",
   done: "Done",
+  contextHintDefault: "Link to a topic, event, or project — or save and link later.",
+} as const;
+
+export const REGISTER = {
+  action: "Register",
+  entityCapture: "Add context",
+  entityCaptureHint: "New topic, event, project… then link to what exists",
+} as const;
+
+/** Extend the graph — not evidence intake. */
+export const ADD_CONTEXT = {
+  action: "Add context",
+  title: "Add context",
+  pickKind: "What context do you need?",
+  hint: "Use Register for evidence — this adds a person, topic, event, or other lens to the graph.",
+  useRegisterHint: "Use Register for evidence notes",
 } as const;
 
 export const ADD_MENU = {
@@ -378,6 +394,26 @@ export const TOPIC_ALIASES = {
   add: "Add",
   save: "Save aliases",
   empty: "No aliases yet — add words from emails that should suggest this topic.",
+} as const;
+
+export const DELETE_AUTH = {
+  deleteInbox: "Delete email",
+  deleteInboxConfirm: "Delete this inbox item permanently? Attachments will be removed.",
+  deleteLinkedConfirm:
+    "This email is linked to a topic, event, or organization. Delete permanently? Recoverable from backup only.",
+  unlockCode: "Unlock delete (5 min)",
+  unlockAuthenticator: "Unlock with authenticator",
+  codeTitle: "Enter deletion code",
+  codeHint: "Unlinked items only need your deletion code — valid for 5 minutes.",
+  codePlaceholder: "Deletion code",
+  authenticatorTitle: "Enter authenticator code",
+  authenticatorHint:
+    "Linked evidence requires your authenticator app (Google Authenticator / Authy). Valid for 5 minutes.",
+  unlockButton: "Unlock",
+  wrongCode: "Wrong deletion code",
+  wrongAuthenticator: "Wrong authenticator code",
+  totpNotConfigured: "Set ARGUS_TOTP_SECRET to delete linked evidence.",
+  linkedRequiresAuth: "Linked to topic, event, or organization — authenticator required.",
 } as const;
 
 /** Temporary testing controls — protect before production */

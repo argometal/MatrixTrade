@@ -19,7 +19,6 @@ import { CaptureSheet, type CaptureInitial } from "./CaptureSheet";
 export type CaptureOpenOptions = {
   openReference?: boolean;
   entityIds?: string[];
-  entryType?: "log" | "note";
   eventDate?: string;
 };
 
@@ -71,7 +70,6 @@ function CaptureDeepLinkSync({
     onOpen({
       openReference: searchParams.get("reference") === "1",
       entityIds: eventId ? [eventId] : undefined,
-      entryType: "note",
     });
   }, [onOpen, searchParams]);
 
@@ -127,7 +125,6 @@ export function ArgusAddProvider({
   const openCapture = useCallback((options?: CaptureOpenOptions) => {
     setCaptureInitial({
       entityIds: options?.entityIds,
-      entryType: options?.entryType ?? "note",
       eventDate: options?.eventDate,
     });
     setAutoOpenReference(Boolean(options?.openReference));

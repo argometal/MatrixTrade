@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { hasArgusDeleteUnlock, hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured, verifyArgusPrivatePin } from "@/lib/auth/passwords";
+import { assertDeleteAllowed } from "@/lib/argus/delete-gate";
 import { requireArgusSession } from "@/lib/auth/require-session";
 import {
   appendLogAttachment,
@@ -456,16 +457,24 @@ export async function bulkMergeInboxTopicsAction(
   return { ok: true, count };
 }
 
-/** Soft-delete multiple inbox items — same PIN window as single delete. */
+/** Soft-delete multiple inbox items — code unlock for unlinked; authenticator for linked evidence. */
 export async function bulkDeleteInboxAction(
   inboxIds: string[]
-): Promise<{ ok: true; count: number } | { error: "delete_locked" }> {
+): Promise<
+  | { ok: true; count: number }
+  | { error: "delete_code_locked" | "delete_auth_locked" | "totp_not_configured" }
+> {
   await requireArgusSession();
-  if (argusPrivateConfigured() && !(await hasArgusDeleteUnlock())) {
-    return { error: "delete_locked" };
+  const data = await readArgus();
+  const ids = [...new Set(inboxIds.filter(Boolean))];
+
+  for (const id of ids) {
+    const item = await getInboxItem(id, true);
+    if (!item) continue;
+    const gate = await assertDeleteAllowed(data.entities, item.linkedEntityIds);
+    if ("error" in gate) return { error: gate.error };
   }
 
-  const ids = [...new Set(inboxIds.filter(Boolean))];
   let count = 0;
   for (const id of ids) {
     const deleted = await deleteInboxItem(id);
@@ -1162,10 +1171,31 @@ export async function updateTopicAliasesAction(formData: FormData): Promise<void
 }
 
 export async function deleteLogAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
   const logId = String(formData.get("logId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
+
+  const data = await readArgus();
+  const log = await getLog(logId, true);
+  if (!log) {
+    redirect(returnTo.startsWith("/argus/") ? returnTo : "/argus/v2");
+  }
+
+  const gate = await assertDeleteAllowed(data.entities, log.entityIds);
+  if ("error" in gate) {
+    const param =
+      gate.error === "delete_auth_locked"
+        ? "delete_auth_error=1"
+        : gate.error === "totp_not_configured"
+          ? "totp_required=1"
+          : "delete_error=1";
+    const separator = returnTo.includes("?") ? "&" : "?";
+    redirect(`${returnTo}${separator}${param}`);
+  }
+
   await deleteLog(logId);
   revalidateArgus();
-  redirect("/argus/v2");
+  redirect(returnTo.startsWith("/argus/") ? returnTo : "/argus/v2");
 }
 
 export async function deleteEntityAction(formData: FormData): Promise<void> {
@@ -1181,9 +1211,22 @@ export async function deleteInboxAction(formData: FormData): Promise<void> {
   const inboxId = String(formData.get("inboxId") ?? "");
   const returnTo = String(formData.get("returnTo") ?? "/argus/v2/inbox");
 
-  if (argusPrivateConfigured() && !(await hasArgusDeleteUnlock())) {
+  const data = await readArgus();
+  const item = await getInboxItem(inboxId, true);
+  if (!item) {
+    redirect(returnTo.startsWith("/argus/") ? returnTo : "/argus/v2/inbox");
+  }
+
+  const gate = await assertDeleteAllowed(data.entities, item.linkedEntityIds);
+  if ("error" in gate) {
+    const param =
+      gate.error === "delete_auth_locked"
+        ? "delete_auth_error=1"
+        : gate.error === "totp_not_configured"
+          ? "totp_required=1"
+          : "delete_error=1";
     const separator = returnTo.includes("?") ? "&" : "?";
-    redirect(`${returnTo}${separator}delete_error=1`);
+    redirect(`${returnTo}${separator}${param}`);
   }
 
   await deleteInboxItem(inboxId);

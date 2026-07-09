@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { AddCreateButton } from "@/app/argus/components/ArgusAddLauncher";
+import { AddRegisterCaptureButtons } from "@/app/argus/components/AddRegisterCaptureButtons";
 import { PrivateLockMenu } from "@/app/argus/components/PrivateLockMenu";
 import { useV2SidebarCollapse } from "@/app/argus/v2/components/V2DesktopShell";
 import { useV2MobileMenu } from "@/app/argus/v2/components/V2MobileMenuProvider";
@@ -109,7 +109,7 @@ export function V2TopBar({
               <span aria-hidden>🛡</span> PIN
             </span>
           )}
-          <AddCreateButton className="shrink-0" />
+          <AddRegisterCaptureButtons className="shrink-0" />
           <Link
             href="/argus/v2/inbox"
             className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 sm:flex"

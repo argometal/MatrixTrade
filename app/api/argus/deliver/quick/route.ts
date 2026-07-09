@@ -7,6 +7,7 @@ import {
   buildQuickDeliverSummary,
   buildQuickPackageMarkdown,
 } from "@/lib/argus/export/packages/quick-package";
+import { buildQuickPackageHtml } from "@/lib/argus/export/packages/quick-package-html";
 import type { ExportCollectionOptions, ExportScopeType } from "@/lib/argus/export/types";
 import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
 
@@ -83,9 +84,17 @@ async function buildQuickDeliver(searchParams: URLSearchParams) {
     today,
     generatedAt,
   });
+  const html = buildQuickPackageHtml({
+    data,
+    inboxItems,
+    collected,
+    includePrivate,
+    today,
+    generatedAt,
+  });
   const summary = buildQuickDeliverSummary(collected, generatedAt);
 
-  return { markdown, summary, scopeType, scopeName: collected.scope.name };
+  return { markdown, html, summary, scopeType, scopeName: collected.scope.name };
 }
 
 export async function GET(request: Request) {
@@ -94,22 +103,28 @@ export async function GET(request: Request) {
   if ("error" in result && result.error) return result.error;
 
   const download = url.searchParams.get("download") === "1";
+  const format = url.searchParams.get("format") === "md" ? "md" : "html";
   if (download) {
     const stamp = result.summary!.generatedAt.slice(0, 10);
-    const filename = `argus-quick-${result.summary!.scopeType}-${safeFileToken(result.summary!.scopeName)}-${stamp}.md`;
-    return new NextResponse(result.markdown!, {
+    const filename = `argus-quick-${result.summary!.scopeType}-${safeFileToken(result.summary!.scopeName)}-${stamp}.${format === "md" ? "md" : "html"}`;
+    const body = format === "md" ? result.markdown! : result.html!;
+    const contentType =
+      format === "md" ? "text/markdown; charset=utf-8" : "text/html; charset=utf-8";
+    return new NextResponse(body, {
       status: 200,
       headers: {
-        "Content-Type": "text/markdown; charset=utf-8",
+        "Content-Type": contentType,
         "Content-Disposition": `attachment; filename="${filename}"`,
         "Cache-Control": "no-store",
         "X-Argus-Package": "quick_package",
+        "X-Argus-Format": format,
       },
     });
   }
 
   return NextResponse.json({
     markdown: result.markdown,
+    html: result.html,
     summary: result.summary,
   });
 }
@@ -135,16 +150,21 @@ export async function POST(request: Request) {
   const result = await buildQuickDeliver(params);
   if ("error" in result && result.error) return result.error;
 
+  const format = body.format === "md" ? "md" : "html";
   const stamp = result.summary!.generatedAt.slice(0, 10);
-  const filename = `argus-quick-${result.summary!.scopeType}-${safeFileToken(result.summary!.scopeName)}-${stamp}.md`;
+  const filename = `argus-quick-${result.summary!.scopeType}-${safeFileToken(result.summary!.scopeName)}-${stamp}.${format === "md" ? "md" : "html"}`;
+  const payload = format === "md" ? result.markdown! : result.html!;
+  const contentType =
+    format === "md" ? "text/markdown; charset=utf-8" : "text/html; charset=utf-8";
 
-  return new NextResponse(result.markdown!, {
+  return new NextResponse(payload, {
     status: 200,
     headers: {
-      "Content-Type": "text/markdown; charset=utf-8",
+      "Content-Type": contentType,
       "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
       "X-Argus-Package": "quick_package",
+      "X-Argus-Format": format,
     },
   });
 }

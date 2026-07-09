@@ -149,7 +149,7 @@ export function V2TopicDetailPanel({
               Chronological evidence linked to this topic — emails, journal entries, and files.
             </p>
             {filteredEvidence.length === 0 ? (
-              <p className="text-sm text-zinc-500">No evidence yet. Link emails from inbox or add journal entries.</p>
+              <p className="text-sm text-zinc-500">No evidence yet. Link emails from inbox or register evidence.</p>
             ) : (
               <ul className="space-y-2">
                 {filteredEvidence.map((item) => (
@@ -222,10 +222,9 @@ export function V2TopicDetailPanel({
         <div className="mt-8 flex flex-wrap gap-3 border-t border-zinc-800/80 pt-6">
           <V2OpenCaptureButton
             entityIds={[selected.id]}
-            entryType="note"
-            className="inline-flex rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"
+            className="inline-flex rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-500"
           >
-            + Journal about this topic
+            + Register evidence
           </V2OpenCaptureButton>
         </div>
       </div>

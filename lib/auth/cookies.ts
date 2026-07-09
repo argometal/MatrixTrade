@@ -4,6 +4,7 @@ export const MT_AUTH = "mt-auth";
 export const ARGUS_AUTH = "argus-auth";
 export const ARGUS_PRIVATE = "argus-private";
 export const ARGUS_DELETE = "argus-delete";
+export const ARGUS_DELETE_AUTH = "argus-delete-auth";
 
 const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 const PRIVATE_MAX_AGE = 60 * 60;
@@ -58,6 +59,22 @@ export async function setArgusDeleteUnlock(): Promise<void> {
   });
 }
 
+export async function setArgusDeleteAuthUnlock(): Promise<void> {
+  const jar = await cookies();
+  jar.set(ARGUS_DELETE_AUTH, "1", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: DELETE_MAX_AGE,
+    path: "/",
+  });
+}
+
+export async function clearArgusDeleteAuthUnlock(): Promise<void> {
+  const jar = await cookies();
+  jar.delete(ARGUS_DELETE_AUTH);
+}
+
 export async function clearArgusDeleteUnlock(): Promise<void> {
   const jar = await cookies();
   jar.delete(ARGUS_DELETE);
@@ -70,6 +87,7 @@ export async function clearAllSessions(): Promise<void> {
   jar.delete(ARGUS_AUTH);
   jar.delete(ARGUS_PRIVATE);
   jar.delete(ARGUS_DELETE);
+  jar.delete(ARGUS_DELETE_AUTH);
 }
 
 export async function hasTradingSession(): Promise<boolean> {
@@ -90,4 +108,9 @@ export async function hasArgusPrivateUnlock(): Promise<boolean> {
 export async function hasArgusDeleteUnlock(): Promise<boolean> {
   const jar = await cookies();
   return jar.get(ARGUS_DELETE)?.value === "1";
+}
+
+export async function hasArgusDeleteAuthUnlock(): Promise<boolean> {
+  const jar = await cookies();
+  return jar.get(ARGUS_DELETE_AUTH)?.value === "1";
 }

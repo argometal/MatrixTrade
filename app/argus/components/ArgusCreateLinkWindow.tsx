@@ -29,6 +29,7 @@ import {
   TAB_ICONS,
   createItemDisplayLabel,
 } from "@/app/argus/components/create-link-shared";
+import { ADD_CONTEXT } from "@/lib/argus/ux-copy";
 
 const STEPS = [
   { key: "create", label: "Capture", sub: "Fill in your new item" },
@@ -97,6 +98,7 @@ export function ArgusCreateLinkWindow({
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const flow = useCreateLinkFlowState({ open, options, buckets, journalRows, onClose, onSaved });
+  const entityCaptureOnly = Boolean(options.entityCaptureOnly);
   const needsKindPicker = flow.needsItemKindPicker;
   const drawerOpen = menuOpen || needsKindPicker;
   const drawerDismissible = !needsKindPicker;
@@ -196,18 +198,24 @@ export function ArgusCreateLinkWindow({
           />
           <div className="flex min-w-0 items-center gap-3">
             <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-violet-400">Capture</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-violet-400">{ADD_CONTEXT.title}</p>
               <h1 className="truncate text-sm font-bold text-zinc-50">
                 {needsKindPicker
-                  ? "Choose what to capture"
+                  ? entityCaptureOnly
+                    ? ADD_CONTEXT.pickKind
+                    : "Choose what to add"
                   : flow.mode === "link"
                     ? "Link & Connect"
                     : createItemDisplayLabel(flow.itemKind)}
               </h1>
+              {entityCaptureOnly && needsKindPicker ? (
+                <p className="text-[11px] text-zinc-500">{ADD_CONTEXT.useRegisterHint}</p>
+              ) : null}
             </div>
           </div>
 
           <div className="hidden flex-1 items-center justify-center lg:flex">
+            {!entityCaptureOnly ? (
             <div className="flex items-center gap-2 rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-2">
               {STEPS.map((step, index) => (
                 <span key={step.key} className="flex items-center gap-2">
@@ -222,6 +230,9 @@ export function ArgusCreateLinkWindow({
                 </span>
               ))}
             </div>
+            ) : (
+              <p className="text-xs text-zinc-500">Create one thing · search and link what already exists</p>
+            )}
           </div>
 
           <div className="ml-auto flex items-center gap-2">
@@ -322,7 +333,7 @@ export function ArgusCreateLinkWindow({
                       placeholder="Record what matters — evidence for later retrieval…"
                     />
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="grid gap-4 sm:grid-cols-1">
                     <label className="block">
                       <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Date</span>
                       <input
@@ -331,17 +342,6 @@ export function ArgusCreateLinkWindow({
                         value={flow.eventDate}
                         onChange={(event) => flow.setEventDate(event.target.value)}
                       />
-                    </label>
-                    <label className="block">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Entry type</span>
-                      <select
-                        className={`${inputClass} mt-1.5`}
-                        value={flow.entryType}
-                        onChange={(event) => flow.setEntryType(event.target.value as "log" | "note")}
-                      >
-                        <option value="log">Log</option>
-                        <option value="note">Note</option>
-                      </select>
                     </label>
                   </div>
                   <div>
@@ -629,6 +629,7 @@ export function ArgusCreateLinkWindow({
         flow={flow}
         suggestedTopics={suggestedTopics}
         orgOptions={orgOptions}
+        entityCaptureOnly={entityCaptureOnly}
       />
 
       {/* Bottom actions */}

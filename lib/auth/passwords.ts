@@ -28,6 +28,25 @@ export function verifyArgusPrivatePin(input: string): boolean {
   return safeEqual(input, expected);
 }
 
+/** Shorter code for deleting unlinked inbox items (falls back to private PIN). */
+export function verifyDeletionCode(input: string): boolean {
+  const expected =
+    process.env.ARGUS_DELETE_CODE ??
+    process.env.ARGUS_PRIVATE_PIN ??
+    process.env.HEALTH_VAULT_SECRET ??
+    "";
+  if (!expected) return false;
+  return safeEqual(input, expected);
+}
+
+export function argusDeleteCodeConfigured(): boolean {
+  return Boolean(
+    process.env.ARGUS_DELETE_CODE ??
+      process.env.ARGUS_PRIVATE_PIN ??
+      process.env.HEALTH_VAULT_SECRET
+  );
+}
+
 export function tradingAuthRequired(): boolean {
   return Boolean(process.env.MATRIXTRADE_PASSWORD);
 }

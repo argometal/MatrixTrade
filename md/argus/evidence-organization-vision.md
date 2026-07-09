@@ -41,7 +41,7 @@ If a feature asks the user to “write a document inside ARGUS,” question whet
 ## What ARGUS does
 
 ```text
-Receive → Organize → Correlate → Retrieve → Deliver
+Receive → Register → Context → Correlate → Retrieve → Deliver
 ```
 
 ### Receive (from anywhere)
@@ -53,18 +53,20 @@ Evidence can enter from any channel:
 - Word document
 - Photo
 - Teams / chat conversation (future intake)
-- Journal note (short registration, not long-form authoring)
+- Short registered note (not long-form authoring)
 - Report
 - Technical document
 
-### Then
+### User verbs
 
-| Verb | Meaning |
-|------|---------|
-| **Organize** | Place evidence under the right anchors and contexts |
-| **Correlate** | Link people, projects, orgs, topics, events, time |
-| **Retrieve** | Find everything related to a subject quickly |
-| **Deliver** | Export a coherent, defensible evidence package on demand |
+| Verb | Meaning | User experience |
+|------|---------|-----------------|
+| **Receive** | Evidence arrives without user authoring | Inbox, file import, API |
+| **Register** | “I have something” — record what happened | Register sheet |
+| **Context** | Extend the graph with a named lens | Add context — person, topic, event… |
+| **Correlate** | Assign relationships | **Link** modal — sacred; ARGUS is Link |
+| **Retrieve** | Find everything for a subject | Browse, search, entity pages — ~95% of daily use |
+| **Deliver** | Package evidence for someone else | Quick Package, Evidence Vault |
 
 That is a different mission from “help me write better notes.”
 
@@ -90,7 +92,7 @@ Deliver                     ← Recognition · Incident · Knowledge · Relation
 |-------|------|----------|
 | **Evidence** | Raw artifacts — the only permanent asset | Inbox email, attachment, one-line note, photo, imported PDF |
 | **Anchor** | A dated occurrence everything can hang from | Rig move, incident, handover meeting, HR case opening |
-| **Context** | Lenses that give evidence meaning over time | Who, which company, which engagement, which knowledge binder |
+| **Context** | Lenses that give evidence meaning over time | Who, which company, which engagement, which long-term subject |
 | **Deliver** | Purpose-specific export / presentation | Evidence Vault ZIP, incident package, relationship dossier |
 
 Notice: **no “create document” step.** The user registers reality; ARGUS connects it.
@@ -102,7 +104,7 @@ Notice: **no “create document” step.** The user registers reality; ARGUS con
 | Entity | Role | User question answered |
 |--------|------|------------------------|
 | **Event** | **Case anchor** — not “just a meeting” | “What happened here, and what evidence belongs to this occurrence?” |
-| **Topic** | **Knowledge binder** — years of correlated evidence | “Everything we know about this subject across time.” |
+| **Topic** | **Long-term context** that groups related evidence across years | “Everything we know about this subject across time.” |
 | **Project** | **Business context** — bounded engagement | “What happened during this work?” |
 | **Organization** | **Institutional context** — forever | “What is our history with this institution?” |
 | **Person** | **Relationship context** — lifetime | “What is the evidence trail for this relationship?” |
@@ -120,9 +122,9 @@ Notice: **no “create document” step.** The user registers reality; ARGUS con
 
 Everything hangs from the event. The event is not the notes — the event is the **anchor**; notes and files are **evidence**.
 
-### Topic as knowledge binder
+### Topic as long-term context
 
-A Topic collects evidence across years — handovers, incidents, technical themes, HR subjects. It is a **graph binder**, not a folder and not an authoring workspace.
+A Topic groups evidence across years — handovers, incidents, technical themes, HR subjects. It **organizes** evidence; it is not where you author documents. Optional description text is metadata, not the product’s center of gravity.
 
 ---
 
@@ -144,12 +146,12 @@ Valid journal entries are often **one sentence**:
 
 That is enough. ARGUS does not require paragraphs. It requires **faithful registration** of what occurred, with links to the artifacts that prove it.
 
-**Terminology direction (UI, not yet mandatory rename):**
+**Terminology direction (UI):**
 
-- Prefer **Register** · **Capture** · **Add evidence** · **Record**
-- Avoid **Create** as the primary verb when the action is evidence intake
+- Prefer **Register** · **Add context** · **Link** · **Record**
+- Avoid **Create** · **Capture** · **Journal** · **New document** as primary verbs
 
-See [`knowledge-execution-model.md`](knowledge-execution-model.md) § Capture verbs.
+See [`register-capture-redesign.md`](register-capture-redesign.md) · [`knowledge-execution-model.md`](knowledge-execution-model.md)
 
 ---
 
@@ -164,7 +166,7 @@ They are **registering reality** — something that already happened or already 
 | Create | Register |
 | New document | Add evidence |
 | Write | Record |
-| Compose | Capture |
+| Compose | Add context (extend the graph) |
 
 The main intake action should feel like **evidence registration**, not **content authoring**.
 
@@ -207,8 +209,8 @@ The value is in being able to produce the **right evidence package** when someon
 
 Deliver is not an afterthought — it is the **output layer** of an Evidence Organization System.
 
-Implemented today: **Evidence Vault v1** (`POST /api/argus/export`, `/argus/v2/deliver`).  
-Future packages: incident, recognition, relationship, knowledge — see [`export-delivery-handoff.md`](export-delivery-handoff.md).
+Implemented today: **Quick Package** (HTML handover + Markdown draft, `GET /api/argus/deliver/quick`) and **Evidence Vault v1** (`POST /api/argus/export`, `/argus/v2/deliver`).  
+Format roadmap: [`deliver-formats-plan.md`](deliver-formats-plan.md). Future packages: incident, recognition, relationship, knowledge.
 
 ---
 

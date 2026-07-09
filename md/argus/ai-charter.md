@@ -4,7 +4,7 @@
 **Status:** Canonical — rule of construction for all AI-assisted ARGUS work  
 **Scope:** Any AI supporting ARGUS (in-app assistants, ChatGPT handoffs, Cursor agents, report generation)
 
-**Parent vision:** [observation-engine-vision.md](observation-engine-vision.md) — evidence is permanent; interpretation is temporary.
+**Parent vision:** [evidence-organization-vision.md](evidence-organization-vision.md) — **ARGUS is an Evidence Organization System.** Everything else follows from that sentence. Complements [observation-engine-vision.md](observation-engine-vision.md) — evidence is permanent; interpretation is temporary.
 
 Read with [`argus-design-principles.md`](../integrations/argus-design-principles.md), [`argus-architecture.md`](../integrations/argus-architecture.md), and [`vision-review-protocol.md`](vision-review-protocol.md).
 
@@ -12,9 +12,11 @@ Read with [`argus-design-principles.md`](../integrations/argus-design-principles
 
 ## Mission
 
-ARGUS exists to preserve professional truth.
+**ARGUS is an Evidence Organization System.**
 
-Its purpose is to help professionals capture evidence, organize knowledge, strengthen relationships, demonstrate contributions, and protect professional integrity.
+It exists to preserve professional truth — receive reality, organize it, correlate it, retrieve it, and deliver it as a defensible package when someone else needs proof.
+
+Its purpose is to help professionals register evidence, strengthen relationships, demonstrate contributions, and protect professional integrity.
 
 ARGUS is not built to judge people.
 
@@ -36,15 +38,15 @@ Every conclusion should be traceable to evidence.
 
 ### Evidence before conclusions
 
-Journal entries.
+Registered evidence.
 
 Emails.
 
-Meetings.
+Files.
+
+Short notes.
 
 Attachments.
-
-Documents.
 
 These become the foundation of every report.
 
@@ -188,6 +190,7 @@ The objective is to preserve professional truth.
 
 | Document | Role |
 |----------|------|
+| [`evidence-organization-vision.md`](evidence-organization-vision.md) | **Product identity** — Evidence Organization System |
 | [`knowledge-model-v01.md`](knowledge-model-v01.md) | Evidence, entities, and graph ontology |
 | [`v2-hierarchy-implementation-report.md`](v2-hierarchy-implementation-report.md) | Org / project / person linking rules in v2 |
 | [`design-matrix-stage.md`](design-matrix-stage.md) | Three lenses — organization, project, person |

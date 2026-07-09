@@ -22,11 +22,11 @@ Receive → Organize → Correlate → Retrieve → Deliver
 
 | Stage | Status (2026-07-09) |
 |-------|---------------------|
-| **Receive** | Inbox API, email intake, journal (evidence registration), Create & Link |
+| **Receive** | Inbox API, email intake, journal (evidence registration), Capture & Link |
 | **Organize** | Entity graph, v2 browsers, topic/event evidence panels |
 | **Correlate** | Link once, entity neighborhoods, topic binders |
 | **Retrieve** | v2 timelines, evidence streams, search, detail pages |
-| **Deliver** | **Evidence Vault v1** (`POST /api/argus/export`) — other packages proposed |
+| **Deliver** | **Quick Package** (HTML + MD, `GET /api/argus/deliver/quick`) · **Evidence Vault** (ZIP, `POST /api/argus/export`) — see [`deliver-formats-plan.md`](deliver-formats-plan.md) |
 
 ---
 
@@ -72,8 +72,9 @@ Use these labels in docs and checklists. Update when reality changes.
 
 13. [`v2-design-checklist.md`](v2-design-checklist.md) + [`checklist-protocol.md`](checklist-protocol.md)
 14. [`v2-checklist-solutions.md`](v2-checklist-solutions.md) — fixed vs deferred
-15. [`export-delivery-handoff.md`](export-delivery-handoff.md) — delivery layer analysis + vault v1
-16. [`model-alignment-audit.md`](model-alignment-audit.md) — v3 runtime vs v01 target gaps
+15. [`deliver-formats-plan.md`](deliver-formats-plan.md) — **canonical** output ladder (MD → HTML → PDF → link → ZIP)
+16. [`export-delivery-handoff.md`](export-delivery-handoff.md) — delivery layer analysis + package catalog
+17. [`model-alignment-audit.md`](model-alignment-audit.md) — v3 runtime vs v01 target gaps
 
 ---
 
@@ -163,8 +164,10 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 
 | Doc | Status |
 |-----|--------|
-| [deliver-export-checklist.md](deliver-export-checklist.md) | **Deliver / Export QA** — Evidence Vault v1 testing |
-| `lib/argus/export/` | Evidence Vault v1 code |
+| [deliver-formats-plan.md](deliver-formats-plan.md) | **Canonical** — Quick Package HTML + format roadmap |
+| [deliver-export-checklist.md](deliver-export-checklist.md) | **Deliver / Export QA** |
+| [export-delivery-handoff.md](export-delivery-handoff.md) | Package analysis + handoff |
+| `lib/argus/export/` | Collector + Quick Package + Evidence Vault |
 
 ### Ops & handoffs
 

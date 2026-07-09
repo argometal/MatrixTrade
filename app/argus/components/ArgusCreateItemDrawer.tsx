@@ -10,6 +10,7 @@ import {
 import type { ReferenceKind } from "@/lib/argus/reference-types";
 import type { useCreateLinkFlowState } from "@/lib/argus/create-link-flow-state";
 import { createItemDisplayLabel, KindIcon } from "@/app/argus/components/create-link-shared";
+import { ADD_CONTEXT } from "@/lib/argus/ux-copy";
 
 const MISSING_KINDS: Array<{ kind: ReferenceKind | "document"; title: string; fields: string[] }> = [
   { kind: "person", title: "Person", fields: ["Full name", "Role", "Organization"] },
@@ -31,6 +32,7 @@ export function ArgusCreateItemDrawer({
   flow,
   suggestedTopics,
   orgOptions,
+  entityCaptureOnly = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -40,8 +42,13 @@ export function ArgusCreateItemDrawer({
   flow: FlowState;
   suggestedTopics: string[];
   orgOptions: Entity[];
+  entityCaptureOnly?: boolean;
 }) {
   if (!open) return null;
+
+  const menuSections = entityCaptureOnly
+    ? CREATE_MENU_SECTIONS.filter((section) => section.id !== "knowledge")
+    : CREATE_MENU_SECTIONS;
 
   return (
     <>
@@ -66,7 +73,9 @@ export function ArgusCreateItemDrawer({
               ◉
             </span>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400">Capture</p>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400">
+                {entityCaptureOnly ? ADD_CONTEXT.title : "Capture"}
+              </p>
               <h2 className="text-sm font-bold text-zinc-50">ARGUS</h2>
             </div>
           </div>
@@ -85,7 +94,7 @@ export function ArgusCreateItemDrawer({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
-          {CREATE_MENU_SECTIONS.map((section) => (
+          {menuSections.map((section) => (
             <div key={section.id} className="mb-5">
               <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
                 {section.label}

@@ -29,6 +29,7 @@ import {
   createItemDisplayLabel,
 } from "./create-link-shared";
 import { ArgusCreateItemDrawer } from "@/app/argus/components/ArgusCreateItemDrawer";
+import { ADD_CONTEXT } from "@/lib/argus/ux-copy";
 
 type MobileStep =
   | "choose-type"
@@ -104,22 +105,35 @@ function ChooseTypeStep({
   onSelect,
   onLinkOnly,
   onClose,
+  entityCaptureOnly = false,
 }: {
   flow: FlowState;
   onSelect: (kind: CreateItemKind) => void;
   onLinkOnly: () => void;
   onClose: () => void;
+  entityCaptureOnly?: boolean;
 }) {
+  const menuSections = entityCaptureOnly
+    ? CREATE_MENU_SECTIONS.filter((section) => section.id !== "knowledge")
+    : CREATE_MENU_SECTIONS;
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-zinc-800/80 px-4 py-4">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">
-            {flow.isInboxEvidence ? "Email evidence" : "Capture"}
+            {flow.isInboxEvidence ? "Email evidence" : entityCaptureOnly ? ADD_CONTEXT.title : "Capture"}
           </p>
           <h2 className="text-lg font-bold text-zinc-50">
-            {flow.isInboxEvidence ? "Capture or link this email" : "What do you want to capture?"}
+            {flow.isInboxEvidence
+              ? "Capture or link this email"
+              : entityCaptureOnly
+                ? ADD_CONTEXT.pickKind
+                : "What do you want to capture?"}
           </h2>
+          {entityCaptureOnly && !flow.isInboxEvidence ? (
+            <p className="mt-0.5 text-xs text-zinc-500">{ADD_CONTEXT.useRegisterHint}</p>
+          ) : null}
         </div>
         <button type="button" onClick={onClose} className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-800">
           ✕
@@ -149,7 +163,7 @@ function ChooseTypeStep({
               <span className="text-zinc-600">›</span>
             </button>
           ) : null}
-          {CREATE_MENU_SECTIONS.map((section) => (
+          {menuSections.map((section) => (
             <div key={section.id} className="mb-4">
               <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">{section.label}</p>
               <div className="space-y-2">
@@ -733,6 +747,7 @@ export function ArgusCreateLinkMobile({
 }) {
   const router = useRouter();
   const flow = useCreateLinkFlowState({ open, options, buckets, journalRows, onClose, onSaved });
+  const entityCaptureOnly = Boolean(options.entityCaptureOnly);
   const [step, setStep] = useState<MobileStep>("details");
   const [menuOpen, setMenuOpen] = useState(false);
   const [saveResult, setSaveResult] = useState<UnifiedCreateResult | null>(null);
@@ -833,6 +848,7 @@ export function ArgusCreateLinkMobile({
           onSelect={() => setStep("details")}
           onLinkOnly={() => setStep("link")}
           onClose={onClose}
+          entityCaptureOnly={entityCaptureOnly}
         />
       ) : null}
 
@@ -920,6 +936,7 @@ export function ArgusCreateLinkMobile({
         flow={flow}
         suggestedTopics={suggestedTopics}
         orgOptions={orgOptions}
+        entityCaptureOnly={entityCaptureOnly}
       />
     </div>
   );

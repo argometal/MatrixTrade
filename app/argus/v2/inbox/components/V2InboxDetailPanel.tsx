@@ -87,8 +87,14 @@ export function V2InboxDetailPanel({
   topicContext,
   onBack,
   deleteUnlocked,
-  privateConfigured,
+  deleteAuthUnlocked,
+  deleteCodeConfigured,
+  totpConfigured,
+  deleteAuthConfigured,
+  requiresAuthenticator,
   deleteError,
+  deleteAuthError,
+  totpRequired,
 }: {
   detail: DetailBundle;
   buckets: EntityPickerBuckets;
@@ -97,8 +103,14 @@ export function V2InboxDetailPanel({
   topicContext: InboxTopicContext;
   onBack?: () => void;
   deleteUnlocked: boolean;
-  privateConfigured: boolean;
+  deleteAuthUnlocked: boolean;
+  deleteCodeConfigured: boolean;
+  totpConfigured: boolean;
+  deleteAuthConfigured: boolean;
+  requiresAuthenticator: boolean;
   deleteError?: boolean;
+  deleteAuthError?: boolean;
+  totpRequired?: boolean;
 }) {
   const searchParams = useSearchParams();
   const returnTo = useMemo(() => {
@@ -473,9 +485,15 @@ export function V2InboxDetailPanel({
             <V2InboxDeleteControl
               inboxId={item.id}
               returnTo={returnTo}
+              requiresAuthenticator={requiresAuthenticator}
               deleteUnlocked={deleteUnlocked}
-              privateConfigured={privateConfigured}
+              deleteAuthUnlocked={deleteAuthUnlocked}
+              deleteCodeConfigured={deleteCodeConfigured}
+              totpConfigured={totpConfigured}
+              deleteAuthConfigured={deleteAuthConfigured}
               deleteError={deleteError}
+              deleteAuthError={deleteAuthError}
+              totpRequired={totpRequired}
             />
           </div>
         </div>

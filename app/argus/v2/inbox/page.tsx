@@ -1,6 +1,8 @@
 import { Suspense } from "react";
-import { hasArgusDeleteUnlock, hasArgusPrivateUnlock } from "@/lib/auth/cookies";
-import { argusPrivateConfigured } from "@/lib/auth/passwords";
+import { hasArgusDeleteAuthUnlock, hasArgusDeleteUnlock, hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { argusDeleteCodeConfigured } from "@/lib/auth/passwords";
+import { argusTotpConfigured } from "@/lib/auth/totp";
+import { deleteAuthConfigured } from "@/lib/argus/delete-link-check";
 import { buildEmailView, parseStoredEmailPayload, attachmentSizeFromStored, type AttachmentViewModel } from "@/lib/argus/email-view";
 import { enrichInboxItems } from "@/lib/argus/inbox-enrich";
 import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
@@ -23,14 +25,29 @@ import { V2InboxShell } from "./components/V2InboxShell";
 export default async function V2InboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ selected?: string; tab?: string; delete_error?: string }>;
+  searchParams: Promise<{
+    selected?: string;
+    tab?: string;
+    delete_error?: string;
+    delete_auth_error?: string;
+    totp_required?: string;
+  }>;
 }) {
-  const { selected, tab: tabParam, delete_error: deleteError } = await searchParams;
-  const [includePrivate, deleteUnlocked] = await Promise.all([
+  const {
+    selected,
+    tab: tabParam,
+    delete_error: deleteError,
+    delete_auth_error: deleteAuthError,
+    totp_required: totpRequired,
+  } = await searchParams;
+  const [includePrivate, deleteUnlocked, deleteAuthUnlocked] = await Promise.all([
     hasArgusPrivateUnlock(),
     hasArgusDeleteUnlock(),
+    hasArgusDeleteAuthUnlock(),
   ]);
-  const privateConfigured = argusPrivateConfigured();
+  const deleteCodeConfigured = argusDeleteCodeConfigured();
+  const totpConfigured = argusTotpConfigured();
+  const deleteAuthConfiguredFlag = deleteAuthConfigured();
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, includePrivate)]);
   const enriched = await enrichInboxItems(inboxItems);
   const today = new Date().toISOString().slice(0, 10);
@@ -90,8 +107,13 @@ export default async function V2InboxPage({
         initialSelectedId={selected}
         initialTab={tab}
         deleteUnlocked={deleteUnlocked}
-        privateConfigured={privateConfigured}
+        deleteAuthUnlocked={deleteAuthUnlocked}
+        deleteCodeConfigured={deleteCodeConfigured}
+        totpConfigured={totpConfigured}
+        deleteAuthConfigured={deleteAuthConfiguredFlag}
         deleteError={deleteError === "1"}
+        deleteAuthError={deleteAuthError === "1"}
+        totpRequired={totpRequired === "1"}
       />
     </Suspense>
   );

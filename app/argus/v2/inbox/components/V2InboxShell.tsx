@@ -31,6 +31,7 @@ import {
   type InboxTopicContext,
 } from "@/lib/argus/v2/inbox-loaders";
 import { V2InboxBulkBar } from "./V2InboxBulkBar";
+import { linkedEntityIdsRequireAuthenticator } from "@/lib/argus/delete-link-check";
 import { V2InboxDetailPanel } from "./V2InboxDetailPanel";
 import { V2InboxEntityLinkModal } from "./V2InboxEntityLinkModal";
 import { V2InboxSwipeRow } from "./V2InboxSwipeRow";
@@ -126,8 +127,13 @@ export function V2InboxShell({
   initialSelectedId,
   initialTab,
   deleteUnlocked,
-  privateConfigured,
+  deleteAuthUnlocked,
+  deleteCodeConfigured,
+  totpConfigured,
+  deleteAuthConfigured,
   deleteError,
+  deleteAuthError,
+  totpRequired,
 }: {
   rows: V2InboxRow[];
   details: DetailBundle[];
@@ -138,8 +144,13 @@ export function V2InboxShell({
   initialSelectedId?: string;
   initialTab?: string;
   deleteUnlocked: boolean;
-  privateConfigured: boolean;
+  deleteAuthUnlocked: boolean;
+  deleteCodeConfigured: boolean;
+  totpConfigured: boolean;
+  deleteAuthConfigured: boolean;
   deleteError?: boolean;
+  deleteAuthError?: boolean;
+  totpRequired?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -361,9 +372,21 @@ export function V2InboxShell({
             count={checked.size}
             inboxIds={checkedIds}
             tagBuckets={tagBuckets}
+            requiresAuthenticator={checkedIds.some((id) => {
+              const detail = details.find((d) => d.item.id === id);
+              return (
+                !!detail &&
+                linkedEntityIdsRequireAuthenticator(linkedEntityRecords, detail.item.linkedEntityIds)
+              );
+            })}
             deleteUnlocked={deleteUnlocked}
-            privateConfigured={privateConfigured}
+            deleteAuthUnlocked={deleteAuthUnlocked}
+            deleteCodeConfigured={deleteCodeConfigured}
+            totpConfigured={totpConfigured}
+            deleteAuthConfigured={deleteAuthConfigured}
             returnTo={bulkReturnTo}
+            deleteAuthError={deleteAuthError}
+            deleteError={deleteError}
             onClear={clearSelection}
             onDone={finishBulkAction}
           />
@@ -629,8 +652,17 @@ export function V2InboxShell({
             topicContext={topicContext}
             onBack={mobileDetailOpen ? backToList : undefined}
             deleteUnlocked={deleteUnlocked}
-            privateConfigured={privateConfigured}
+            deleteAuthUnlocked={deleteAuthUnlocked}
+            deleteCodeConfigured={deleteCodeConfigured}
+            totpConfigured={totpConfigured}
+            deleteAuthConfigured={deleteAuthConfigured}
             deleteError={deleteError}
+            deleteAuthError={deleteAuthError}
+            totpRequired={totpRequired}
+            requiresAuthenticator={linkedEntityIdsRequireAuthenticator(
+              linkedEntityRecords,
+              selectedDetail.item.linkedEntityIds
+            )}
           />
         ) : (
           <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">

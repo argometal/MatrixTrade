@@ -5,6 +5,7 @@ import type { ExportScopeType, QuickDeliverSummary } from "@/lib/argus/export/ty
 
 type QuickDeliverResponse = {
   markdown: string;
+  html: string;
   summary: QuickDeliverSummary;
 };
 
@@ -103,6 +104,19 @@ export function V2QuickDeliverModal({
     }
   }
 
+  function downloadHtml() {
+    if (!payload?.html) return;
+    const stamp = payload.summary.generatedAt.slice(0, 10);
+    const token = scopeName.replace(/[^a-zA-Z0-9._-]+/g, "-");
+    const blob = new Blob([payload.html], { type: "text/html;charset=utf-8" });
+    const anchor = document.createElement("a");
+    anchor.href = URL.createObjectURL(blob);
+    anchor.download = `argus-quick-${scopeType}-${token}-${stamp}.html`;
+    anchor.click();
+    URL.revokeObjectURL(anchor.href);
+    setStatusMessage("HTML report downloaded.");
+  }
+
   function downloadMarkdown() {
     if (!payload?.markdown) return;
     const stamp = payload.summary.generatedAt.slice(0, 10);
@@ -164,7 +178,7 @@ export function V2QuickDeliverModal({
         <div className="border-b border-zinc-800 px-5 py-4">
           <h3 className="text-[15px] font-semibold text-zinc-100">Quick Package — {scopeName}</h3>
           <p className="mt-1 text-xs text-zinc-500">
-            Human-readable handover summary · timeline, evidence index, file metadata (no bundling).
+            HTML handover report · timeline, evidence index, file metadata (no bundling).
           </p>
         </div>
 
@@ -189,10 +203,13 @@ export function V2QuickDeliverModal({
             <p className="py-12 text-center text-sm text-zinc-500">Building quick package…</p>
           ) : error ? (
             <p className="py-12 text-center text-sm text-red-400">{error}</p>
-          ) : payload?.markdown ? (
-            <pre className="whitespace-pre-wrap rounded-xl border border-zinc-800 bg-zinc-950/80 p-4 font-mono text-[11px] leading-relaxed text-zinc-300">
-              {payload.markdown}
-            </pre>
+          ) : payload?.html ? (
+            <iframe
+              title="Quick package preview"
+              srcDoc={payload.html}
+              className="h-[min(420px,50vh)] w-full rounded-xl border border-zinc-800 bg-white"
+              sandbox=""
+            />
           ) : null}
         </div>
 
@@ -203,17 +220,25 @@ export function V2QuickDeliverModal({
         <div className="flex flex-wrap items-center gap-2 border-t border-zinc-800 p-4">
           <button
             type="button"
-            disabled={!payload?.markdown || loading}
-            onClick={() => void copyMarkdown()}
+            disabled={!payload?.html || loading}
+            onClick={downloadHtml}
             className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
           >
-            {copied ? "Copied ✓" : "Copy"}
+            Download .html
+          </button>
+          <button
+            type="button"
+            disabled={!payload?.markdown || loading}
+            onClick={() => void copyMarkdown()}
+            className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+          >
+            {copied ? "Copied ✓" : "Copy .md"}
           </button>
           <button
             type="button"
             disabled={!payload?.markdown || loading}
             onClick={downloadMarkdown}
-            className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+            className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 disabled:opacity-40"
           >
             Download .md
           </button>
