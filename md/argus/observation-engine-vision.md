@@ -2,9 +2,20 @@
 
 **Status:** Vision Document (Canonical)  
 **Purpose:** Product philosophy and long-term architectural direction.  
+**Product identity:** [`evidence-organization-vision.md`](evidence-organization-vision.md) — ARGUS is an **Evidence Organization System** (receive → organize → correlate → retrieve → deliver). This document explains *how* that system behaves.  
 **Related:** [`ai-charter.md`](ai-charter.md) · [`knowledge-model-v01.md`](knowledge-model-v01.md) · [`knowledge-execution-model.md`](knowledge-execution-model.md) · [`vision-review-protocol.md`](vision-review-protocol.md)
 
 **AI rule:** Re-read this document at the cadence defined in [`vision-review-protocol.md`](vision-review-protocol.md) before proposing product direction, new object types, or features that ask users for subjective input.
+
+---
+
+## Product identity (read first)
+
+ARGUS is not a note-taking application. It does not compete with Word, OneNote, Evernote, or Obsidian — those are **authoring** tools.
+
+ARGUS is an **Evidence Organization System**: receive information from anywhere, organize and correlate it, retrieve it by context, and deliver defensible packages. Authoring happens elsewhere; registration and connection happen in ARGUS.
+
+Full framing: [`evidence-organization-vision.md`](evidence-organization-vision.md).
 
 ---
 
@@ -391,10 +402,11 @@ All without requiring users to manually rate themselves, justify themselves, or 
 
 | Doc | Role |
 |-----|------|
+| [evidence-organization-vision.md](evidence-organization-vision.md) | **Product identity** — Evidence Organization System; not authoring |
 | [ai-charter.md](ai-charter.md) | Operational rules for AI-assisted work |
 | [knowledge-model-v01.md](knowledge-model-v01.md) | Target data ontology (Evidence graph) |
-| [knowledge-execution-model.md](knowledge-execution-model.md) | Knowledge vs Execution domains (Runbook, etc.) |
+| [knowledge-execution-model.md](knowledge-execution-model.md) | Evidence registration; entities; Execution |
 | [timeline-vision.md](timeline-vision.md) | Timeline UX — evidence stream, not inbox clone |
 | [correlation-guide.md](correlation-guide.md) | Capture once, link everywhere |
 
-This document defines **why** ARGUS exists. Implementation docs define **how** (today and target).
+**Evidence Organization System** (what ARGUS is) and **Observation Engine** (how it behaves) are complementary. This document defines **how**. [`evidence-organization-vision.md`](evidence-organization-vision.md) defines **what**. Implementation docs define **build** (today and target).

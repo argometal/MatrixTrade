@@ -90,17 +90,23 @@ export function PreviewDashboard({ data }: { data: DashboardData }) {
                 value={`${experiment.closedTrades}/${experiment.maxTrades}`}
               />
               <StatusTile
-                label="Allowance this month"
-                value={formatMonthlyLossRoom(monthly.monthlyAllowance)}
+                label="Monthly budget"
+                value={formatMonthlyLossRoom(monthly.baseCap)}
+                sub="Base cap this month"
               />
               <StatusTile
                 label="Carryover"
                 value={formatMonthlyLossRoom(monthly.carryoverIn)}
                 sub={
                   monthly.carryoverIn > 0
-                    ? `$300 − $${monthly.previousMonthLossUsed.toFixed(0)} last month`
+                    ? `$300 − $${monthly.previousMonthLossUsed.toFixed(2)} last month`
                     : "No unused cap from prior month"
                 }
+              />
+              <StatusTile
+                label="Spent this month"
+                value={formatMonthlyLossRoom(monthly.lossUsedThisMonth)}
+                sub="Gross losses only (this calendar month)"
               />
               <StatusTile
                 label="This month P/L"
@@ -110,6 +116,7 @@ export function PreviewDashboard({ data }: { data: DashboardData }) {
               <StatusTile
                 label="Monthly room left"
                 value={formatMonthlyLossRoom(monthly.monthlyLossRoom)}
+                sub={`$${monthly.baseCap.toFixed(0)} + $${monthly.carryoverIn.toFixed(2)} − $${monthly.lossUsedThisMonth.toFixed(2)}`}
                 valueClass={monthly.monthlyLossRoom > 0 ? "text-zinc-200" : "text-red-400"}
               />
               <StatusTile
@@ -130,6 +137,17 @@ export function PreviewDashboard({ data }: { data: DashboardData }) {
               />
               <StatusTile label="Active playbooks" value={String(data.activePlaybooks)} />
               <StatusTile label="Playbooks testing" value={String(data.testingPlaybooks)} />
+              <StatusTile
+                label="Active plans"
+                value={String(data.activePlans)}
+                sub="Watching or ready to enter"
+              />
+              <StatusTile
+                label="Plans to evaluate"
+                value={String(data.plansNeedingReview)}
+                highlight={data.plansNeedingReview > 0}
+                sub="Failed or expired — strategy review"
+              />
             </div>
           </section>
 

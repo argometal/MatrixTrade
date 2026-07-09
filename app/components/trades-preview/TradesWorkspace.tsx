@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import type { ImportAiBlockActionResult } from "@/app/actions";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import {
@@ -44,9 +44,18 @@ function statusLabel(row: TradesWorkspaceRow): string {
 export function TradesWorkspace({
   data,
   importAction,
+  prefill,
 }: {
   data: TradesWorkspaceData;
   importAction: (formData: FormData) => Promise<ImportAiBlockActionResult>;
+  prefill?: {
+    ticker?: string;
+    playbookId?: string;
+    entry?: string;
+    stop?: string;
+    target?: string;
+    planId?: string;
+  };
 }) {
   const [tab, setTab] = useState<TabId>("new");
   const [search, setSearch] = useState("");
@@ -59,15 +68,29 @@ export function TradesWorkspace({
 
   const [form, setForm] = useState({
     id: data.suggestedTradeId,
-    ticker: "",
+    ticker: prefill?.ticker ?? "",
     direction: "long" as "long" | "short",
-    entry: "",
-    stop: "",
-    target: "",
+    entry: prefill?.entry ?? "",
+    stop: prefill?.stop ?? "",
+    target: prefill?.target ?? "",
     shares: "10",
-    playbookId: "",
-    notes: "",
+    playbookId: prefill?.playbookId ?? "",
+    notes: prefill?.planId ? `From plan ${prefill.planId}` : "",
   });
+
+  useEffect(() => {
+    if (!prefill) return;
+    setTab("new");
+    setForm((current) => ({
+      ...current,
+      ticker: prefill.ticker ?? current.ticker,
+      entry: prefill.entry ?? current.entry,
+      stop: prefill.stop ?? current.stop,
+      target: prefill.target ?? current.target,
+      playbookId: prefill.playbookId ?? current.playbookId,
+      notes: prefill.planId ? `From plan ${prefill.planId}` : current.notes,
+    }));
+  }, [prefill]);
 
   const parsed = useMemo(() => {
     if (!proposalJson.trim()) return null;
@@ -188,12 +211,6 @@ export function TradesWorkspace({
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:border-zinc-600"
               >
                 Import / Add Trade
-              </Link>
-              <Link
-                href="/trades/new"
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
-              >
-                + New Trade (classic)
               </Link>
             </div>
           </div>

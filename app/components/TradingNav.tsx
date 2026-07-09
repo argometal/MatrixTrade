@@ -40,12 +40,6 @@ export function TradingNav() {
       <Link href="/connect" className="hover:text-zinc-600">
         Connect
       </Link>
-      <Link
-        href="/trades/new"
-        className="rounded-md bg-zinc-900 px-3 py-1.5 text-white hover:bg-zinc-800"
-      >
-        New trade (classic)
-      </Link>
       <SignOutButton className="ml-auto text-sm font-medium text-zinc-500 hover:text-zinc-800" />
     </nav>
   );

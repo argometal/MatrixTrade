@@ -16,8 +16,11 @@ import {
   type EquityPoint,
   type MistakeStat,
 } from "./review";
-import { listAllPendingInboxItems } from "./trading-inbox-storage";
+import { buildPlanAttentionItems } from "./plan-attention";
+import { countActivePlans, countPlansNeedingReview } from "./plan-helpers";
+import { getPlans } from "./plans";
 import { getExperiment, getMonthlyRisk, getTrades } from "./storage";
+import { listAllPendingInboxItems } from "./trading-inbox-storage";
 import type { AttentionItem } from "./dashboard-attention";
 import type { Experiment } from "./types";
 import type { MonthlyRisk } from "./monthly-risk";
@@ -30,6 +33,8 @@ export type DashboardData = {
   pendingReviews: number;
   activePlaybooks: number;
   testingPlaybooks: number;
+  activePlans: number;
+  plansNeedingReview: number;
   attentionItems: AttentionItem[];
   mistakeStats: MistakeStat[];
   equityPoints: EquityPoint[];
@@ -42,15 +47,20 @@ export type DashboardData = {
 };
 
 export async function loadDashboardData(): Promise<DashboardData> {
-  const [experiment, monthly, trades, playbooks, workerInbox] = await Promise.all([
+  const [experiment, monthly, trades, playbooks, workerInbox, plans] = await Promise.all([
     getExperiment(),
     getMonthlyRisk(),
     getTrades(),
     getPlaybooks(),
     fetchBridgeInbox(),
+    getPlans(),
   ]);
 
   const pendingInbox = await listAllPendingInboxItems(workerInbox);
+  const attentionItems = [
+    ...buildAttentionItems(trades, pendingInbox, playbooks, monthly),
+    ...buildPlanAttentionItems(plans),
+  ].sort((a, b) => a.priority - b.priority);
   const playbookStats = computeAllPlaybookStats(playbooks, trades).filter(
     (p) => p.playbookId !== null && p.closedCount > 0
   );
@@ -63,7 +73,9 @@ export async function loadDashboardData(): Promise<DashboardData> {
     pendingReviews: trades.filter((t) => t.status === "closed" && !t.reviewedAt).length,
     activePlaybooks: playbooks.filter((p) => p.status === "ACTIVE").length,
     testingPlaybooks: playbooks.filter((p) => p.status === "TESTING").length,
-    attentionItems: buildAttentionItems(trades, pendingInbox, playbooks, monthly),
+    activePlans: countActivePlans(plans),
+    plansNeedingReview: countPlansNeedingReview(plans),
+    attentionItems,
     mistakeStats: computeMistakeStats(trades),
     equityPoints: buildEquityCurve(trades),
     winRate: winRate(experiment),

@@ -12,6 +12,7 @@ Functional verification lists for preview and major UI surfaces. **User checks e
 | Home preview (Situation Room) | `/home-preview` | [home-preview-checklist.md](home-preview-checklist.md) · [solutions](home-preview-solutions.md) | `PreviewShell` · `PreviewDashboard` |
 | New Trade | `/trades-preview` | [trades-preview-checklist.md](trades-preview-checklist.md) | `PreviewShell` · `TradesWorkspace` |
 | Journal | `/journal` | [journal-preview-checklist.md](journal-preview-checklist.md) | `PreviewShell` · `PreviewJournal` |
+| **Planning** (proposed) | `/planning` | [planning-module-proposal.md](planning-module-proposal.md) | Phase 0 — `PreviewPlanning` |
 
 Template for new screens: [DESIGN-CHECKLIST-TEMPLATE.md](DESIGN-CHECKLIST-TEMPLATE.md)
 

@@ -13,9 +13,11 @@ export type MonthlyRisk = {
   monthlyAllowance: number;
   /** Total loss allowed this month as negative USD (e.g. -398). */
   effectiveLossCap: number;
-  /** Closed-trade P/L in the current calendar month only. */
+  /** Closed-trade net P/L in the current calendar month only (signed USD). */
   monthlyRealizedPnL: number;
-  /** Losses used in the previous calendar month (positive USD). */
+  /** Gross losses consumed this month (positive USD, wins do not offset). */
+  lossUsedThisMonth: number;
+  /** Gross losses consumed in the previous calendar month (positive USD). */
   previousMonthLossUsed: number;
   /** Positive USD remaining before hitting the monthly allowance. */
   monthlyLossRoom: number;
@@ -66,6 +68,17 @@ export function sumClosedPnLInMonth(trades: Trade[], monthKey: string): number {
   return total;
 }
 
+/** Sum of absolute losing trade results in a month (loss budget consumed). */
+export function sumGrossLossesInMonth(trades: Trade[], monthKey: string): number {
+  let total = 0;
+  for (const trade of trades) {
+    if (!isTradeInMonth(trade, monthKey)) continue;
+    const result = calculateTradeResult(trade);
+    if (result !== null && result < 0) total += Math.abs(result);
+  }
+  return total;
+}
+
 /**
  * Carryover from the immediately previous calendar month only.
  * If that month had no closed trades → $0 carryover (no free $300 rollover).
@@ -81,8 +94,7 @@ export function carryoverFromPreviousMonth(
     return { carryoverIn: 0, previousMonthLossUsed: 0, closedTrades: 0 };
   }
 
-  const monthlyPnL = sumClosedPnLInMonth(trades, previousMonthKey);
-  const previousMonthLossUsed = Math.abs(Math.min(monthlyPnL, 0));
+  const previousMonthLossUsed = sumGrossLossesInMonth(trades, previousMonthKey);
   const carryoverIn = Math.max(0, baseCap - previousMonthLossUsed);
   return { carryoverIn, previousMonthLossUsed, closedTrades };
 }
@@ -101,9 +113,9 @@ export function computeMonthlyRisk(
   const effectiveLossCap = -monthlyAllowance;
 
   const monthlyRealizedPnL = sumClosedPnLInMonth(trades, key);
-  const lossUsedThisMonth = Math.abs(Math.min(monthlyRealizedPnL, 0));
+  const lossUsedThisMonth = sumGrossLossesInMonth(trades, key);
   const monthlyLossRoom = Math.max(0, monthlyAllowance - lossUsedThisMonth);
-  const monthlyCapBreached = monthlyRealizedPnL <= effectiveLossCap;
+  const monthlyCapBreached = lossUsedThisMonth >= monthlyAllowance;
 
   return {
     monthKey: key,
@@ -113,6 +125,7 @@ export function computeMonthlyRisk(
     monthlyAllowance,
     effectiveLossCap,
     monthlyRealizedPnL,
+    lossUsedThisMonth,
     previousMonthLossUsed: prev.previousMonthLossUsed,
     monthlyLossRoom,
     monthlyCapBreached,
@@ -143,16 +156,20 @@ export function formatMonthlyLossRoom(room: number): string {
   return `$${room.toFixed(2)}`;
 }
 
-export function isMonthlyCapBreached(monthlyRealizedPnL: number, effectiveLossCap: number): boolean {
-  return monthlyRealizedPnL <= effectiveLossCap;
+export function isMonthlyCapBreached(
+  lossUsedThisMonth: number,
+  monthlyAllowance: number
+): boolean {
+  return lossUsedThisMonth >= monthlyAllowance;
 }
 
 export function wouldExceedMonthlyCap(
-  monthlyRealizedPnL: number,
+  lossUsedThisMonth: number,
   additionalResult: number,
-  effectiveLossCap: number
+  monthlyAllowance: number
 ): boolean {
-  return isMonthlyCapBreached(monthlyRealizedPnL + additionalResult, effectiveLossCap);
+  const additionalLoss = additionalResult < 0 ? Math.abs(additionalResult) : 0;
+  return isMonthlyCapBreached(lossUsedThisMonth + additionalLoss, monthlyAllowance);
 }
 
 export function wouldExceedTickerCap(

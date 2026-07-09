@@ -79,8 +79,16 @@ export default async function StatsPage() {
         <StatCard label="Total losses" value={formatUsd(experiment.grossLoss)} />
         <StatCard label="This month P/L" value={formatUsd(monthly.monthlyRealizedPnL)} />
         <StatCard
-          label="Allowance this month"
-          value={formatMonthlyLossRoom(monthly.monthlyAllowance)}
+          label="Monthly budget"
+          value={formatMonthlyLossRoom(monthly.baseCap)}
+        />
+        <StatCard
+          label="Carryover"
+          value={formatMonthlyLossRoom(monthly.carryoverIn)}
+        />
+        <StatCard
+          label="Spent this month"
+          value={formatMonthlyLossRoom(monthly.lossUsedThisMonth)}
         />
         <StatCard
           label="Monthly room left"

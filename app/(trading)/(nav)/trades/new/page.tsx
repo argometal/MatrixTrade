@@ -1,3 +1,4 @@
+/** Classic direct create form — dormant on web nav; kept for phone/LAN infrastructure. */
 import Link from "next/link";
 import { createTradeAction } from "@/app/actions";
 import { getPlaybooks } from "@/lib/playbooks";

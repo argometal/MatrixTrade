@@ -193,7 +193,7 @@ export function getNextAction(
     !monthly.monthlyCapBreached &&
     monthly.monthlyLossRoom > 0
   ) {
-    return { label: "Log next trade", href: "/trades/new", kind: "new" };
+    return { label: "Log next trade", href: "/trades-preview", kind: "new" };
   }
 
   return null;

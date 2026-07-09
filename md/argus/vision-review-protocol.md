@@ -9,7 +9,8 @@
 
 | # | Document | Role |
 |---|----------|------|
-| 1 | [observation-engine-vision.md](observation-engine-vision.md) | **Why** — observation engine, four verbs, layers |
+| 0 | [evidence-organization-vision.md](evidence-organization-vision.md) | **What** — Evidence Organization System; not authoring |
+| 1 | [observation-engine-vision.md](observation-engine-vision.md) | **How** — observation engine, four verbs, layers |
 | 2 | [ai-charter.md](ai-charter.md) | **AI rules** — evidence before conclusions |
 | 3 | [knowledge-model-v01.md](knowledge-model-v01.md) | **Target ontology** — Evidence graph |
 | 4 | [knowledge-execution-model.md](knowledge-execution-model.md) | **Knowledge vs Execution** — Runbook, entities |
@@ -58,6 +59,8 @@ Answer **yes** or explain exception:
 | 6 | If Execution (Runbook, etc.): optional, no forced compliance, no task ownership theater? |
 | 7 | If Timeline-related: entity-scoped depth, not inbox clone on Home? |
 | 8 | Are **entities** (lenses) the primary navigation — not activity feeds? |
+| 9 | Does this treat ARGUS as **evidence registration**, not document authoring? ([evidence-organization-vision.md](evidence-organization-vision.md)) |
+| 10 | Does UI copy prefer **Register / Capture / Record** over “Create document / Write”? |
 
 If **three or more** answers are “no” or unclear → stop and revise design before coding.
 
@@ -69,7 +72,7 @@ If **three or more** answers are “no” or unclear → stop and revise design 
 |------|----------|-----|--------|
 | 2026-07-07 | Product + AI | Home Timeline feels inbox-only | See [timeline-vision.md](timeline-vision.md) §7 |
 | 2026-07-07 | Product + AI | Recent Activity duplicated Timeline | Removed from Home; Entities primary |
-| 2026-07-07 | Product + AI | Observation Engine vision not in repo | Added observation-engine-vision.md |
+| 2026-07-09 | Product + AI | Product framed as “knowledge capture” | Added evidence-organization-vision.md |
 
 ---
 
@@ -90,4 +93,4 @@ Agent response should cite: four verbs, evidence permanence, and specific doc se
 
 | Date | Change |
 |------|--------|
-| 2026-07-07 | Initial protocol + gap log |
+| 2026-07-09 | EOS identity doc, vision checklist items 9–10 |

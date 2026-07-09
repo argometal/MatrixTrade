@@ -1,8 +1,9 @@
 # ARGUS Product Flow Proposal
 
-**Date:** 2026-07-04  
+**Date:** 2026-07-04 (updated 2026-07-09)  
 **Scope:** Flow reset proposal only — no schema changes, no new features, no code in this pass.  
-**Canonical lens:** Evidence → Relations → Narrative views ([`knowledge-model-v01.md`](knowledge-model-v01.md))  
+**Product identity:** [`evidence-organization-vision.md`](evidence-organization-vision.md) — ARGUS is an Evidence Organization System; receive → organize → correlate → retrieve → deliver.  
+**Canonical lens:** Evidence → Anchor (Event) → Context (entities) → Deliver ([`knowledge-model-v01.md`](knowledge-model-v01.md))  
 **AI rule of construction:** [`ai-charter.md`](ai-charter.md) — reconstruct reality from evidence; nothing invented.  
 **Product pain:** *“Reconstruct a professional story I can defend.”*
 
@@ -12,9 +13,9 @@
 
 ARGUS should help a professional answer, quickly and credibly:
 
-> *What happened with [Person / Project / Topic]? Show me the evidence.*
+> *What happened with [Person / Project / Topic / Event]? Show me the evidence.*
 
-That is a **narrative reconstruction** problem — not a filing problem. The user needs one chronological, linkable trail of notes, emails, and files they can stand behind in a meeting, email, or review.
+That is **evidence retrieval and delivery** — not authoring. The user registers reality (email, file, short note); ARGUS organizes and correlates it; Deliver produces a defensible package when asked.
 
 **Success = one path to all evidence for a subject in under 30 seconds.**
 

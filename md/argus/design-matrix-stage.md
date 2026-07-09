@@ -2,23 +2,29 @@
 
 **Status:** Locked for implementation. Current production UI unchanged; new shells live under `/argus/v2/*`.
 
+**Product identity:** [`evidence-organization-vision.md`](evidence-organization-vision.md) — entities are **context lenses** on one evidence graph; Event is the **case anchor**.
+
 **Index:** [`README.md`](README.md) · **QA checklist:** [`v2-design-checklist.md`](v2-design-checklist.md) · **Update rule:** [`checklist-protocol.md`](checklist-protocol.md)
 
 **AI rule of construction:** [`ai-charter.md`](ai-charter.md) — metrics prioritize attention; people are never reduced to scores.
 
-## Three lenses (one evidence graph)
+## Three lenses + anchor (one evidence graph)
 
-| Lens | Time | Question | Evidence scope |
-|------|------|----------|----------------|
-| **Organization** | Forever | What happened with this company? | Direct org links; people as roster, not proxy |
-| **Project** | Start → end | What did we deliver in this engagement? | Direct + via project contacts within dates |
-| **Person** | Relationship lifetime | Behavior, potential, risk, recognition, performance | Direct person links; HR/liability via protected entries |
+| Role | Entity | Time | Question | Evidence scope |
+|------|--------|------|----------|----------------|
+| **Institutional context** | Organization | Forever | What happened with this company? | Direct org links; people as roster, not proxy |
+| **Business context** | Project | Start → end | What did we deliver in this engagement? | Direct + via project contacts within dates |
+| **Relationship context** | Person | Relationship lifetime | What is the evidence trail for this relationship? | Direct person links; HR/liability via protected entries |
+| **Knowledge binder** | Topic | Years | Everything on this subject across time | Direct links + correlated evidence stream |
+| **Case anchor** | Event | Occurrence | What happened here; what evidence belongs? | Emails, files, notes hung from the event |
 
-## Journal duality
+## Journal — evidence registration
+
+Journal is **not** long-form authoring. It is **register evidence** — often one sentence plus a link to the real artifact (report, email, file).
 
 | Type | Meaning | Storage (today) |
 |------|---------|-----------------|
-| **Note** | One-time entry | `kind: event` |
+| **Note** | One-time evidence registration | `kind: event` |
 | **Log** | Recurring / continue thread | `kind: log` |
 
 Applies on org, project, and person pages. Migration adds “Continue log” UX without schema change first.

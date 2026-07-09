@@ -2,6 +2,7 @@ import { buildAiBridgeOverview } from "@/lib/ai-bridge-overview";
 import { buildAiBlockSnapshot } from "@/lib/ai-block-snapshot";
 import { listAiNotes } from "@/lib/ai-notes";
 import { fetchBridgeInbox, getBridgeConfig } from "@/lib/bridge";
+import { getPlans } from "@/lib/plans";
 import { getPlaybooks } from "@/lib/playbooks";
 import { getSetups } from "@/lib/setups";
 import { getSnapshotRevisionState } from "@/lib/snapshot-revision-read";
@@ -27,6 +28,7 @@ export async function loadHomeExchangePageData() {
     workerInbox,
     syncHistory,
     aiNotes,
+    plans,
   ] = await Promise.all([
     getExperiment(),
     getMonthlyRisk(),
@@ -38,6 +40,7 @@ export async function loadHomeExchangePageData() {
     fetchBridgeInbox(),
     getSyncHistory(),
     listAiNotes(20),
+    getPlans(),
   ]);
 
   const snapshotRevision = workerStatus.snapshotRevision ?? revision?.revision ?? 0;
@@ -51,6 +54,7 @@ export async function loadHomeExchangePageData() {
     playbooks,
     snapshotRevision,
     priorAiNotes: aiNotes,
+    plans,
     systemNotes: {
       tradesStore: getTradesStoreMode(),
       bridgeConfigured: bridge.configured,

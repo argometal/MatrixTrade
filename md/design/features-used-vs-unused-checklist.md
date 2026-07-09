@@ -9,6 +9,7 @@
 
 | Date | Change |
 |------|--------|
+| 2026-07-09 | Planning `/planning` Phase 0 — storage, dashboard, AI snapshot |
 | 2026-07-08 | Initial used-vs-unused feature audit |
 
 ---
@@ -26,6 +27,7 @@ Verify each item in production or local.
 | Trades list | `/trades` | Preview dark* | Sidebar | Used* | *Preview conversion in progress locally |
 | Journal | `/journal` | Preview dark* | Sidebar | Used* | *Preview conversion in progress locally |
 | Playbook | `/playbook` | Preview dark* | Sidebar | Used* | *Preview conversion in progress locally |
+| Planning | `/planning` | Preview dark | Sidebar | Used | Pre-trade plans, auto-expire, strategy evaluation |
 | System | `/system` | Preview dark* | Sidebar | Used* | *Preview conversion in progress locally |
 | Inbox list | `/inbox` | Classic light | Sidebar + mobile tab | Used | Apply/reject on detail |
 | Inbox detail | `/inbox/[id]` | Classic light | From inbox | Used | |

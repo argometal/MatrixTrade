@@ -55,7 +55,7 @@ Private repo: `github.com/argometal/MatrixTrade`
 | [design/new-mode-parity-checklist.md](design/new-mode-parity-checklist.md) | **Parity audit** — legacy features to add in preview mode |
 | [design/home-preview-checklist.md](design/home-preview-checklist.md) | Situation Room `/home-preview` — functional checklist |
 | [design/trades-preview-checklist.md](design/trades-preview-checklist.md) | Trades workspace `/trades-preview` — functional checklist |
-| [design/DESIGN-CHECKLIST-TEMPLATE.md](design/DESIGN-CHECKLIST-TEMPLATE.md) | Template for new screens |
+| [design/planning-module-proposal.md](design/planning-module-proposal.md) | **Planning** `/planning` — Phase 0 implemented |
 
 **Rule:** Update the matching checklist in the same change whenever preview UI code changes (see `.cursor/rules/design-checklists.mdc`).
 
@@ -65,12 +65,13 @@ Private repo: `github.com/argometal/MatrixTrade`
 
 **Start here:** [`argus/README.md`](argus/README.md) — index, reading order, runtime truth, known weaknesses.
 
-**Rule of construction for AI:** [`argus/observation-engine-vision.md`](argus/observation-engine-vision.md) — product philosophy; then [`argus/ai-charter.md`](argus/ai-charter.md) for operational AI rules. Periodic review: [`argus/vision-review-protocol.md`](argus/vision-review-protocol.md).
+**Rule of construction for AI:** [`argus/evidence-organization-vision.md`](argus/evidence-organization-vision.md) — product identity; then [`argus/observation-engine-vision.md`](argus/observation-engine-vision.md) for engine behavior; [`argus/ai-charter.md`](argus/ai-charter.md) for operational AI rules. Periodic review: [`argus/vision-review-protocol.md`](argus/vision-review-protocol.md).
 
 | Document | Contents |
 |----------|----------|
 | [README.md](argus/README.md) | **ARGUS doc index** — product loop, status legend, routes, mobile QA |
-| [observation-engine-vision.md](argus/observation-engine-vision.md) | **Observation Engine** — canonical product philosophy |
+| [evidence-organization-vision.md](argus/evidence-organization-vision.md) | **Evidence Organization System** — product identity; not authoring |
+| [observation-engine-vision.md](argus/observation-engine-vision.md) | **Observation Engine** — how the system behaves |
 | [ai-charter.md](argus/ai-charter.md) | **AI Charter v1.0** — preserve professional truth; evidence before conclusions |
 | [vision-review-protocol.md](argus/vision-review-protocol.md) | **Vision review** — cadence + alignment checklist |
 | [knowledge-model-v01.md](argus/knowledge-model-v01.md) | **Canonical ontology** — Evidence, Project, Topic, Person, Organization, linking graph |

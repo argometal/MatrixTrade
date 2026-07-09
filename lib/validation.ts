@@ -44,10 +44,10 @@ export function validateCreateTrade(
     });
   }
 
-  if (isMonthlyCapBreached(monthly.monthlyRealizedPnL, monthly.effectiveLossCap)) {
+  if (isMonthlyCapBreached(monthly.lossUsedThisMonth, monthly.monthlyAllowance)) {
     errors.push({
       field: "monthly",
-      message: `Monthly loss cap reached ($${Math.abs(monthly.effectiveLossCap).toFixed(2)} including $${monthly.carryoverIn.toFixed(2)} carryover).`,
+      message: `Monthly loss cap reached ($${monthly.monthlyAllowance.toFixed(2)} including $${monthly.carryoverIn.toFixed(2)} carryover).`,
     });
   }
 
@@ -115,14 +115,14 @@ export function validateCloseTrade(
 
   if (
     wouldExceedMonthlyCap(
-      monthly.monthlyRealizedPnL,
+      monthly.lossUsedThisMonth,
       result,
-      monthly.effectiveLossCap
+      monthly.monthlyAllowance
     )
   ) {
     errors.push({
       field: "monthly",
-      message: `Closing at this exit would exceed the monthly cap ($${Math.abs(monthly.effectiveLossCap).toFixed(2)}).`,
+      message: `Closing at this exit would exceed the monthly cap ($${monthly.monthlyAllowance.toFixed(2)}).`,
     });
   }
 

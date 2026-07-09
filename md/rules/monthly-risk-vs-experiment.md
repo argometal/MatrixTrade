@@ -19,12 +19,13 @@ MatrixTrade tracks **two independent risk dimensions**. They must not be conflat
 ### Formulas
 
 ```
-monthlyRealizedPnL = sum(closed trade results where closedAt is in current calendar month)
-unusedPrevMonth    = max(0, baseCap - losses_in_previous_calendar_month)
-carryoverIn        = unusedPrevMonth
-effectiveCap       = baseCap + carryoverIn          (e.g. 300 + 98 = 398)
-monthlyLossRoom    = effectiveCap - losses_this_month
-monthlyCapBreached = monthlyRealizedPnL <= -effectiveCap
+monthlyRealizedPnL = sum(closed trade results where closedAt is in current calendar month)  [net, for display]
+lossUsedThisMonth  = sum(|result|) for losing trades closed this month only  [gross, for cap]
+previousMonthLoss  = sum(|result|) for losing trades closed in previous calendar month
+carryoverIn        = max(0, baseCap - previousMonthLoss)   if prior month had closed trades, else 0
+monthlyAllowance   = baseCap + carryoverIn                 (e.g. 300 + 98 = 398)
+monthlyLossRoom    = monthlyAllowance - lossUsedThisMonth
+monthlyCapBreached = lossUsedThisMonth >= monthlyAllowance
 
 perTickerPnL       = sum(closed results for same ticker, all experiment)
 tickerCapBreached    = perTickerPnL <= maxLossPerTicker (-250)

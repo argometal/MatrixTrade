@@ -36,6 +36,16 @@ import { createQrDataUrl } from "@/lib/qr";
 import { getTradesStoreMode } from "@/lib/trades-json";
 import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules, saveRules } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
+import { parsePlanTimeframes, savePlan, updatePlanStatus, recordPlanOutcome } from "@/lib/plans";
+import {
+  PLAN_EXTERNAL_FACTORS,
+  PLAN_FAIL_REASON_LABELS,
+  PLAN_STATUS_LABELS,
+  PLAN_TIMEFRAMES,
+  type PlanFailReason,
+  type PlanTimeframe,
+  type TradePlan,
+} from "@/lib/plan-types";
 
 // DISABLED BY DESIGN — see lib/ai-session-disabled.ts (AI Session server actions)
 
@@ -59,6 +69,7 @@ function revalidateTradingPaths() {
   revalidatePath("/playbook");
   revalidatePath("/review");
   revalidatePath("/journal");
+  revalidatePath("/planning");
   revalidatePath("/exchange");
   revalidatePath("/ai-workspace");
   revalidatePath("/inbox");
@@ -434,4 +445,85 @@ export async function saveRulesAction(
 
   revalidateTradingPaths();
   return { ok: true };
+}
+
+export type SavePlanActionResult = { ok: true; planId: string } | { error: string };
+
+export async function savePlanAction(formData: FormData): Promise<SavePlanActionResult> {
+  await requireTradingSession();
+
+  const analysisTimeframes = parsePlanTimeframes(formData.getAll("analysisTimeframes"));
+  const entryRaw = String(formData.get("entryTimeframe") ?? "5m").trim();
+  const entryTimeframe = (PLAN_TIMEFRAMES as readonly string[]).includes(entryRaw)
+    ? (entryRaw as PlanTimeframe)
+    : "5m";
+
+  const result = await savePlan({
+    id: String(formData.get("id") ?? "").trim() || undefined,
+    ticker: String(formData.get("ticker") ?? ""),
+    playbookId: String(formData.get("playbookId") ?? "").trim() || undefined,
+    analysisTimeframes,
+    entryTimeframe,
+    plannedEntry: Number(formData.get("plannedEntry")),
+    supportLevel: Number(formData.get("supportLevel")),
+    stopPrice: Number(formData.get("stopPrice")),
+    targetPrice: Number(formData.get("targetPrice")),
+    plannedRR: Number(formData.get("plannedRR")),
+    validFrom: String(formData.get("validFrom") ?? "").trim() || undefined,
+    validUntil: String(formData.get("validUntil") ?? "").trim() || undefined,
+    thesis: String(formData.get("thesis") ?? ""),
+    chatNotes: String(formData.get("chatNotes") ?? ""),
+  });
+
+  if (result.errors?.length) {
+    return { error: result.errors.join(" ") };
+  }
+
+  revalidateTradingPaths();
+  return { ok: true, planId: result.plan!.id };
+}
+
+export async function updatePlanStatusAction(
+  planId: string,
+  status: TradePlan["status"],
+  linkedTradeId?: string
+): Promise<{ error?: string }> {
+  await requireTradingSession();
+  const result = await updatePlanStatus(planId, status, linkedTradeId);
+  if (result.errors?.length) return { error: result.errors.join(" ") };
+  revalidateTradingPaths();
+  revalidatePath("/planning");
+  return {};
+}
+
+export async function recordPlanOutcomeAction(
+  planId: string,
+  formData: FormData
+): Promise<{ error?: string }> {
+  await requireTradingSession();
+
+  const reasonRaw = String(formData.get("reason") ?? "").trim();
+  const reason = (Object.keys(PLAN_FAIL_REASON_LABELS) as PlanFailReason[]).includes(
+    reasonRaw as PlanFailReason
+  )
+    ? (reasonRaw as PlanFailReason)
+    : undefined;
+
+  const strategyStillValid = formData.get("strategyStillValid") === "yes";
+  const externalFactors = formData
+    .getAll("externalFactors")
+    .map((v) => String(v).trim())
+    .filter((v) => (PLAN_EXTERNAL_FACTORS as readonly string[]).includes(v));
+
+  const result = await recordPlanOutcome(planId, {
+    reason,
+    strategyStillValid,
+    externalFactors,
+    lesson: String(formData.get("lesson") ?? ""),
+  });
+
+  if (result.errors?.length) return { error: result.errors.join(" ") };
+  revalidateTradingPaths();
+  revalidatePath("/planning");
+  return {};
 }

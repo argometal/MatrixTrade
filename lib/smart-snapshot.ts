@@ -7,6 +7,7 @@ import {
   formatPriorAiNotesSection,
   formatTradeSection,
 } from "./sectioned-snapshot";
+import { formatPlansSnapshotSection } from "./plan-snapshot";
 import { selectSnapshotTrades, type SnapshotOptions } from "./snapshot";
 import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment, Trade } from "./types";
@@ -154,6 +155,7 @@ export interface SmartSnapshotInput {
   playbooks?: Playbook[];
   snapshotRevision?: number | null;
   priorAiNotes?: AiNote[];
+  plans?: import("./plan-types").TradePlan[];
   options?: SnapshotOptions;
   requestText?: string;
 }
@@ -167,6 +169,7 @@ export function buildSmartSnapshot(input: SmartSnapshotInput): string {
     playbooks = [],
     snapshotRevision,
     priorAiNotes = [],
+    plans = [],
     options = {},
     requestText,
   } = input;
@@ -209,6 +212,8 @@ export function buildSmartSnapshot(input: SmartSnapshotInput): string {
     formatTradeSection("=== PENDING REVIEWS ===", unreviewedClosed, setups),
     "",
     formatPlaybookSection(playbooks, trades).replace("=== PLAYBOOK ===", "=== PLAYBOOK SUMMARY ==="),
+    "",
+    formatPlansSnapshotSection(plans),
     "",
     formatRelevantAiNotesSection(relevantNotes),
     "",

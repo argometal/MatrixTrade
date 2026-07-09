@@ -53,6 +53,7 @@ export function buildBridgeSnapshot(
       baseCap: monthly.baseCap,
       carryoverIn: monthly.carryoverIn,
       monthlyAllowance: monthly.monthlyAllowance,
+      lossUsedThisMonth: monthly.lossUsedThisMonth,
       effectiveCap: monthly.effectiveLossCap,
       previousMonthLossUsed: monthly.previousMonthLossUsed,
       realizedPnL: monthly.monthlyRealizedPnL,

@@ -1,6 +1,6 @@
 # MatrixTrade — Legacy vs Preview Mode Map
 
-**Last updated:** 2026-07-08  
+**Last updated:** 2026-07-09  
 **Purpose:** Single source for which routes belong to legacy (classic), preview (new visual), or shared.
 
 ---
@@ -26,6 +26,7 @@ Parent layout `app/(trading)/layout.tsx` wraps **all** trading routes.
 | `/trades` | ✓ | — | Trades list (`PreviewTradesList`) |
 | `/journal` | ✓ | — | Closed trades log |
 | `/playbook` | ✓ | — | Playbook Lab |
+| `/planning` | ✓ | — | **Planning** — pre-trade plans |
 | `/system` | ✓ | — | Bridge sync, vault, connect |
 | `/` | redirect | — | → `/home-preview` |
 | `/inbox`, `/inbox/[id]` | — | ✓ | Pipeline; preview conversion pending |

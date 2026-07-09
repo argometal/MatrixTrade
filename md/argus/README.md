@@ -15,15 +15,18 @@
 ## Product loop
 
 ```text
-Capture → Organize → Retrieve → Deliver
+Receive → Organize → Correlate → Retrieve → Deliver
 ```
 
-| Stage | Status (2026-07-07) |
+**Identity:** ARGUS is an **Evidence Organization System** — not a note-taking or document-authoring app. See [`evidence-organization-vision.md`](evidence-organization-vision.md).
+
+| Stage | Status (2026-07-09) |
 |-------|---------------------|
-| **Capture** | Inbox API, email intake, journal, Create & Link |
-| **Organize** | Entity graph, v2 browsers, inbox Process tab (in progress) |
-| **Retrieve** | v2 timelines, network browse, search, detail pages |
-| **Deliver** | **Evidence Vault v1** (`POST /api/argus/export`) — other packages proposed only |
+| **Receive** | Inbox API, email intake, journal (evidence registration), Create & Link |
+| **Organize** | Entity graph, v2 browsers, topic/event evidence panels |
+| **Correlate** | Link once, entity neighborhoods, topic binders |
+| **Retrieve** | v2 timelines, evidence streams, search, detail pages |
+| **Deliver** | **Evidence Vault v1** (`POST /api/argus/export`) — other packages proposed |
 
 ---
 
@@ -48,7 +51,8 @@ Use these labels in docs and checklists. Update when reality changes.
 
 ### Track A — Principles & architecture (read first)
 
-1. [`observation-engine-vision.md`](observation-engine-vision.md) — **why** ARGUS exists (observation engine)
+0. [`evidence-organization-vision.md`](evidence-organization-vision.md) — **what** ARGUS is (Evidence Organization System; not authoring)
+1. [`observation-engine-vision.md`](observation-engine-vision.md) — **how** ARGUS behaves (observation engine)
 2. [`../integrations/argus-design-principles.md`](../integrations/argus-design-principles.md) — 10 design rules
 3. [`../integrations/argus-architecture.md`](../integrations/argus-architecture.md) — objects, information flow
 4. [`ai-charter.md`](ai-charter.md) — AI must trace to evidence; never fabricate
@@ -58,7 +62,7 @@ Use these labels in docs and checklists. Update when reality changes.
 ### Track B — Product & lenses
 
 7. [`knowledge-model-v01.md`](knowledge-model-v01.md) — **target** ontology (Evidence graph)
-8. [`knowledge-execution-model.md`](knowledge-execution-model.md) — Knowledge vs Execution (Runbook, etc.)
+8. [`knowledge-execution-model.md`](knowledge-execution-model.md) — Evidence registration, entities, Execution
 9. [`timeline-vision.md`](timeline-vision.md) — Timeline scope and placement
 10. [`design-matrix-stage.md`](design-matrix-stage.md) — org / project / person lenses
 11. [`product-flow-proposal.md`](product-flow-proposal.md) — evidence → relations → narrative
@@ -124,6 +128,7 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 
 | Doc | Status |
 |-----|--------|
+| [evidence-organization-vision.md](evidence-organization-vision.md) | Canonical (product identity) |
 | [observation-engine-vision.md](observation-engine-vision.md) | Canonical |
 | [ai-charter.md](ai-charter.md) | Canonical |
 | [vision-review-protocol.md](vision-review-protocol.md) | Canonical |
@@ -240,4 +245,4 @@ Cookie: argus-auth=1
 
 ---
 
-*Last updated: 2026-07-07 — Observation Engine vision, timeline vision, vision review protocol.*
+*Last updated: 2026-07-09 — Evidence Organization System identity; topic evidence panel.*
