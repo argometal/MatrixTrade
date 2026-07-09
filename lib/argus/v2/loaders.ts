@@ -1,7 +1,7 @@
 import type { ArgusData, Entity, InboxItem, Log } from "../types";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import { buildEntityIntelligence } from "../network-intelligence";
-import { getUpcomingFollowUps } from "../network";
+import { getNeedsClassificationLogs } from "../journal-helpers";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import {
   entitiesByKind,
@@ -383,26 +383,37 @@ export function buildV2TagCloud(data: ArgusData, inboxItems: InboxItem[], includ
   }));
 }
 
-export function buildV2NavCounts(data: ArgusData, inboxItems: InboxItem[], includePrivate: boolean) {
-  const kinds = entitiesByKind(data);
+/** Action-only nav signals — never entity totals. */
+export type V2NavCounts = {
+  /** Unprocessed inbox evidence (pending + linked awaiting triage). */
+  inbox: number;
+  /** Follow-ups due today or overdue — relationship attention. */
+  network: number;
+  /** Evidence rows still needing classification. */
+  topics: number;
+};
+
+export function buildV2NavCounts(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  includePrivate: boolean
+): V2NavCounts {
+  const today = new Date().toISOString().slice(0, 10);
+  const visibleLogs = includePrivate ? data.logs : data.logs.filter((l) => !l.private);
   const inbox = visibleInbox(inboxItems, includePrivate).filter(
     (i) => i.status === "pending" || i.status === "linked"
   );
-  const followUps = getUpcomingFollowUps(data, includePrivate, 100).length;
-  return {
-    inbox: inbox.length,
-    organizations: kinds.organizations.length,
-    projects: kinds.projects.length,
-    people: kinds.people.length,
-    topics: kinds.topics.length,
-    events: kinds.events.length,
-    network: kinds.people.length + kinds.organizations.length,
-    followUps,
-    reminders: followUps,
-  };
-}
 
-export type V2NavCounts = ReturnType<typeof buildV2NavCounts>;
+  const network = visibleLogs.filter((log) => {
+    if (!log.followUpDate && log.kind !== "follow_up") return false;
+    const dueIso = (log.followUpDate ?? log.date).slice(0, 10);
+    return dueIso <= today;
+  }).length;
+
+  const topics = getNeedsClassificationLogs(visibleLogs).length;
+
+  return { inbox: inbox.length, network, topics };
+}
 
 export function loadOrganizationPageData(
   data: ArgusData,

@@ -33,12 +33,13 @@ export function V2DesktopShell({
   privateConfigured: boolean;
   privateUnlocked: boolean;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     try {
-      setCollapsed(localStorage.getItem(STORAGE_KEY) === "1");
+      const stored = localStorage.getItem(STORAGE_KEY);
+      setCollapsed(stored === null ? true : stored === "1");
     } catch {
       /* ignore */
     }
@@ -58,9 +59,9 @@ export function V2DesktopShell({
   }, []);
 
   const paddingClass = !ready
-    ? "lg:pl-56 xl:pl-60"
+    ? "lg:pl-[4.5rem]"
     : collapsed
-      ? "lg:pl-16"
+      ? "lg:pl-[4.5rem]"
       : "lg:pl-56 xl:pl-60";
 
   return (

@@ -45,16 +45,12 @@ function NavRow({
       }`}
     >
       <span className="flex items-center gap-2">
+        {item.icon ? <span aria-hidden>{item.icon}</span> : null}
         <span>{item.label}</span>
-        {item.badge ? (
-          <span className="rounded-full bg-sky-500/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-300">
-            {item.badge}
-          </span>
-        ) : null}
       </span>
-      {item.count !== undefined ? (
-        <span className={`text-xs tabular-nums ${active ? "text-violet-300/80" : "text-zinc-600"}`}>
-          {item.count}
+      {item.signal !== undefined && item.signal > 0 ? (
+        <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-violet-600 px-1.5 text-[10px] font-bold tabular-nums text-white">
+          {item.signal > 99 ? "99+" : item.signal}
         </span>
       ) : null}
     </Link>
