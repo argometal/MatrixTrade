@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 import type { V2EntityRow, V2EntityTab } from "@/lib/argus/v2/loaders";
 import type { V2TagCloudItem } from "./V2TagCloud";
-import { V2EntityTable } from "./V2EntityTable";
+import { V2EntityViewer } from "./V2EntityViewer";
 import { V2HomeIntelligencePanel } from "./V2HomeIntelligencePanel";
 import { V2TabBar } from "./V2TabBar";
 import {
@@ -83,7 +83,7 @@ export function V2HomeMainShell({
           <p className="mb-4 text-sm text-zinc-500">
             Open an organization, project, or person — your main entry points into Argus.
           </p>
-          <V2EntityTable tab={tab} rows={rows} primary />
+          <V2EntityViewer tab={tab} rows={rows} primary />
         </>
       ) : (
         <V2HomeIntelligencePanel

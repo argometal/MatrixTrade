@@ -63,7 +63,8 @@ export default async function V2HomePage({
   ).length;
 
   return (
-    <div className="px-4 py-6 lg:px-8">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="argus-v2-scroll flex-1 overflow-y-auto overscroll-y-contain px-4 py-6 lg:px-8">
       <div className="mb-2">
         <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Home</h1>
         <p className="mt-1 text-sm text-zinc-500">Entities first — intelligence when you need the full picture</p>
@@ -177,6 +178,7 @@ export default async function V2HomePage({
           <V2Timeline entries={homeTimeline} compact />
         </V2Card>
       ) : null}
+      </div>
     </div>
   );
 }
