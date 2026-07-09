@@ -63,17 +63,24 @@ export interface SaveReviewInput {
 }
 
 export interface ExperimentRules {
-  cycleLossLimit: number;
+  /** Max loss allowed per calendar month before carryover (negative USD). */
+  monthlyLossLimit: number;
+  /** Max cumulative loss per ticker across the experiment (negative USD). */
+  maxLossPerTicker: number;
+  /** Sample size for the active experiment cycle (editable). */
   maxTrades: number;
   obsidianVault: string;
   obsidianVaultPath: string;
   tradesFolder: string;
+  /** @deprecated Use monthlyLossLimit. Kept for rules.json migration only. */
+  cycleLossLimit?: number;
 }
 
 export interface Experiment {
-  cycleLossLimit: number;
+  /** Net realized P/L — sum of every closed trade result in the experiment. */
   realizedPnL: number;
-  remainingLossBudget: number;
+  /** Sum of all losing trade results only (negative or zero). */
+  grossLoss: number;
   maxTrades: number;
   closedTrades: number;
   wins: number;

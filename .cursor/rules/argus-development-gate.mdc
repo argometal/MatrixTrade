@@ -23,6 +23,7 @@ A checkbox is complete only when it **works end-to-end** (user action → persis
 2. If it completes **none**, defer it.
 3. Prefer the **smallest** change that closes one checkbox.
 4. Do not start Phase 2.
+5. If the change affects product direction or UX paradigm, run [`md/argus/vision-review-protocol.md`](md/argus/vision-review-protocol.md) (see also [`argus-vision-review.mdc`](argus-vision-review.mdc)).
 
 ## Current blockers (see gate doc for full audit)
 

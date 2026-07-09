@@ -17,7 +17,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   if (!entity || entity.type !== "project") {
     return (
       <>
-        <PageHeader title="Not found" backHref="/argus/journal" />
+        <PageHeader title="Not found" backHref="/argus/v2" />
         <EmptyState message="Project not found." />
       </>
     );
@@ -31,7 +31,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
   return (
     <>
-      <PageHeader title={entity.name} backHref="/argus/journal" />
+      <PageHeader title={entity.name} backHref="/argus/v2" />
 
       <div className="mb-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-400">
         <p className="mb-4 text-[13px] leading-relaxed text-zinc-500">{KIND_GUIDE.project}</p>

@@ -3,7 +3,11 @@ import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { loadOrganizationPageData } from "@/lib/argus/v2/loaders";
+import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
+import { V2QuickDeliverButton } from "../../components/V2QuickDeliverModal";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
+import { V2EntityNeighborhoodPanel } from "../../components/V2EntityNeighborhoodPanel";
+import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
 import { V2OrgTabs } from "../../components/V2OrgTabs";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
 import { V2RelationshipChart } from "../../components/V2RelationshipChart";
@@ -43,9 +47,13 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
 
   if (!entity || entity.type !== "company") {
     return (
-      <div className="px-4 py-6 lg:px-8">
-        <V2BackLink href="/argus/v2/browse/organizations">Back to Organizations</V2BackLink>
-        <EmptyState message="Organization not found." />
+      <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+          <div className="px-4 py-6 lg:px-8">
+            <V2BackLink href="/argus/v2/browse/organizations">Back to Organizations</V2BackLink>
+            <EmptyState message="Organization not found." />
+          </div>
+        </div>
       </div>
     );
   }
@@ -53,6 +61,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
   const today = new Date().toISOString().slice(0, 10);
   const page = loadOrganizationPageData(data, inboxItems, entity, includePrivate, today);
+  const neighborhood = buildV2EntityNeighborhoodGraph(data, inboxItems, entity.id, includePrivate, today);
   const notes = entityNotesForDisplay(entity.notes ?? "");
   const sinceYear = entity.createdAt?.slice(0, 4) ?? "—";
   const website = extractWebsite(entity.notes ?? "");
@@ -61,7 +70,9 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
   const moreProjects = Math.max(0, page.orgProjects.length - 3);
 
   return (
-    <div className="px-4 py-6 lg:px-8">
+    <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+        <div className="px-4 py-6 lg:px-8">
       <div className="mb-5">
         <V2BackLink href="/argus/v2/browse/organizations">Back to Organizations</V2BackLink>
       </div>
@@ -76,11 +87,29 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               </span>
               <h1 className="text-2xl font-bold tracking-tight text-zinc-50">{entity.name}</h1>
               <Link
-                href={`/argus/network/${entity.id}`}
+                href={`/argus/v2/network/${entity.id}`}
                 className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-zinc-800 hover:text-zinc-300"
                 aria-label="Edit organization"
               >
                 ✎
+              </Link>
+              <V2EntityLinkButton
+                entityId={entity.id}
+                linkedIds={entity.linkedEntityIds ?? []}
+                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+              />
+              <V2QuickDeliverButton
+                scopeType="organization"
+                scopeId={entity.id}
+                scopeName={entity.name}
+                label="Deliver"
+                className="rounded-lg border border-emerald-500/40 bg-emerald-600/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/25"
+              />
+              <Link
+                href={`/argus/v2/deliver?scopeType=organization&scopeId=${entity.id}&package=evidence_vault`}
+                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800"
+              >
+                Full ZIP
               </Link>
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-400">
@@ -139,7 +168,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                 value={String(page.stats.journalEntries)}
                 label="Journal Entries"
                 delta={page.stats.journalDelta}
-                href="/argus/journal"
+                href="/argus/v2#stats"
               />
               <V2SummaryStatCard
                 kind="email"
@@ -152,7 +181,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                 kind="people"
                 value={String(page.stats.people)}
                 label="People"
-                href={`/argus/network/${entity.id}`}
+                href={`/argus/v2/network/${entity.id}`}
                 linkLabel="View all"
               />
               <V2SummaryStatCard
@@ -195,6 +224,10 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
             </div>
             <V2OrgTimeline entries={page.timeline} limit={TIMELINE_PREVIEW} />
           </V2Card>
+
+          <V2Card className="p-5 sm:p-6">
+            <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entity.name} />
+          </V2Card>
         </div>
 
         {/* Right sidebar — org mockup */}
@@ -227,7 +260,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               title="Key People"
               action={
                 page.linkedPeople.length > 0 ? (
-                  <V2PanelLinkAction href={`/argus/network/${entity.id}`}>View all</V2PanelLinkAction>
+                  <V2PanelLinkAction href={`/argus/v2/network/${entity.id}`}>View all</V2PanelLinkAction>
                 ) : undefined
               }
             />
@@ -239,7 +272,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                   {page.linkedPeople.slice(0, 4).map((person, index) => (
                     <V2PersonListItem
                       key={person.id}
-                      href={`/argus/network/${person.id}`}
+                      href={`/argus/v2/network/${person.id}`}
                       name={person.name}
                       subtitle={person.alias || "Contact"}
                       initials={initials(person.name)}
@@ -295,8 +328,10 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
             )}
           </V2PanelCard>
 
-          <V2LegacyLink href={`/argus/network/${entity.id}`}>Open legacy network view →</V2LegacyLink>
+          <V2LegacyLink href={`/argus/v2/network/${entity.id}`}>Open legacy network view →</V2LegacyLink>
         </aside>
+      </div>
+        </div>
       </div>
     </div>
   );

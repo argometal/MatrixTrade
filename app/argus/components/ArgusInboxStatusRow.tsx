@@ -50,10 +50,13 @@ export function ArgusInboxStatusRow({
   }
 
   return (
-    <li className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-3 py-2">
+    <li className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3 transition hover:border-zinc-700/80">
       <div className="flex items-start justify-between gap-3">
-        <span className="text-sm text-zinc-200">
-          {icon} {label}
+        <span className="text-sm font-medium text-zinc-200">
+          <span className="mr-1.5" aria-hidden>
+            {icon}
+          </span>
+          {label}
         </span>
         <div className="flex shrink-0 items-center gap-2">
           <button
@@ -61,19 +64,29 @@ export function ArgusInboxStatusRow({
             onClick={refresh}
             disabled={pending}
             title="Reload inbox from the database. New messages arrive via email routing."
-            className="rounded-lg border border-zinc-700/80 px-2 py-0.5 text-[11px] text-zinc-400 transition hover:border-zinc-600 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-lg border border-violet-800/50 bg-violet-950/30 px-2.5 py-1 text-[11px] font-medium text-violet-300 transition hover:bg-violet-900/30 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {pending ? "Refreshing…" : "Refresh from emails"}
           </button>
-          <span className="text-[11px] capitalize text-zinc-500">{levelLabel(level)}</span>
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+              level === "healthy"
+                ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30"
+                : level === "degraded"
+                  ? "bg-amber-500/15 text-amber-300 ring-1 ring-amber-500/30"
+                  : "bg-red-500/15 text-red-300 ring-1 ring-red-500/30"
+            }`}
+          >
+            {levelLabel(level)}
+          </span>
         </div>
       </div>
-      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-zinc-600">
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-zinc-500">
         <span>Last checked {lastCheckedLabel}</span>
         {count !== undefined ? <span>{count.toLocaleString()} records</span> : null}
-        {reason ? <span className="text-amber-400/90">{reason}</span> : null}
+        {reason ? <span className="text-amber-300/90">{reason}</span> : null}
         {feedback ? (
-          <span className={feedback.includes("failed") ? "text-red-400/90" : "text-teal-400/90"}>
+          <span className={feedback.includes("failed") ? "text-red-400/90" : "text-violet-300/90"}>
             {feedback}
           </span>
         ) : null}

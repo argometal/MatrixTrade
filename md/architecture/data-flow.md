@@ -3,11 +3,10 @@
 ## Create a trade
 
 ```
-User fills /trades/new
-  → validateCreateTrade() (H001–H030, cycle limit)
-  → writeTradeFile() → vault/Trades/H00x-TICKER.md
-  → frontmatter written by app
-  → body template for Obsidian (Tesis, Psicología, …)
+Planning (/planning)     → optional pre-trade plan (levels, MTF, window)
+User fills /trades-preview or /trades/new
+  → validateCreateTrade() (H001–H030, monthly cap, per-ticker)
+  → write trade → Supabase or vault/Trades/H00x-TICKER.md
 ```
 
 ## Daily use

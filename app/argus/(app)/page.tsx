@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
-export default function ArgusRootPage() {
-  redirect("/argus/journal");
+export default async function ArgusRootPage() {
+  redirect("/argus/v2");
 }

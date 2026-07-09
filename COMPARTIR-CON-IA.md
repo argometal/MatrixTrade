@@ -50,4 +50,16 @@ Opción B — pestaña **AICOMM**:
 
 ---
 
-**Importante:** Copilot en la web no ve tu disco. Git Panel **transporta** el repo como texto pegable. Cursor local sí ve la carpeta directamente.
+## 6. ChatGPT sin copiar desde Cursor
+
+Cursor Cloud **no deja copiar** respuestas del agente. Usa archivos locales:
+
+1. `git pull` en `c:\Tools\MatrixTrade`
+2. Abre en **Notepad** (ahí sí Ctrl+C funciona):
+   - **`CHATGPT-PROMPT.txt`** — prompt listo para pegar
+   - **`md/research/ai-bridge-human-actions-review.md`** — revisión completa AI Bridge
+3. En ChatGPT: pega el prompt **o** adjunta el `.md` con el clip 📎
+
+No uses links de GitHub en ChatGPT si el repo es **privado** — no los puede leer.
+
+---

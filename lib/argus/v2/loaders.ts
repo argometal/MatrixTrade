@@ -1,8 +1,8 @@
 import type { ArgusData, Entity, InboxItem, Log } from "../types";
-import { entityNotesForDisplay } from "../reference-types";
+import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import { buildEntityIntelligence } from "../network-intelligence";
 import { getUpcomingFollowUps } from "../network";
-import { getLinkedInboxForEntity } from "../entity-evidence";
+import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import {
   entitiesByKind,
   getProjectEvidenceScope,
@@ -10,9 +10,10 @@ import {
   organizationEvidenceScope,
   projectsForOrganization,
 } from "./hierarchy";
-import { getAllProjectScopeInbox } from "../project-evidence";
+import { getAllProjectScopeInbox } from "../project-evidence-scope";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
+import { collectProjectLinkIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
 
 import {
   buildTimelineFromLogsAndInbox,
@@ -65,7 +66,7 @@ export function buildV2HomeStats(data: ArgusData, inboxItems: InboxItem[], today
       value: String(logs.length),
       delta: `+${countThisWeek(logDates, today)} this week`,
       icon: "journal",
-      href: "/argus/journal",
+      href: "/argus/v2#stats",
     },
     {
       label: "Emails",
@@ -79,7 +80,7 @@ export function buildV2HomeStats(data: ArgusData, inboxItems: InboxItem[], today
       value: String(kinds.people.length),
       delta: kinds.people.length ? "Active roster" : "None yet",
       icon: "people",
-      href: "/argus/network",
+      href: "/argus/v2/browse/network",
     },
     {
       label: "Organizations",
@@ -183,12 +184,60 @@ function addDays(iso: string, days: number): string {
 }
 
 export function buildV2HomeTimeline(data: ArgusData, inboxItems: InboxItem[], includePrivate: boolean, limit = 8) {
-  const logs = visibleLogs(data, includePrivate).slice(0, limit);
-  const inbox = visibleInbox(inboxItems, includePrivate).slice(0, limit);
-  return mergeTimelineEntries([
-    ...logs.map(logToTimelineEntry),
-    ...inbox.map(inboxToTimelineEntry),
+  const logs = visibleLogs(data, includePrivate);
+  const inbox = visibleInbox(inboxItems, includePrivate);
+  const entityMap = new Map(data.entities.filter((e) => !e.deletedAt).map((e) => [e.id, e]));
+
+  const enriched = mergeTimelineEntries([
+    ...logs.map((log) => {
+      const entry = logToTimelineEntry(log);
+      const linked = log.entityIds.map((id) => entityMap.get(id)).filter((e): e is Entity => Boolean(e));
+      const topic = linked.find(
+        (entity) => entity.type === "other" && referenceKindFromNotes(entity.notes ?? "") === "topic"
+      );
+      const href =
+        topic && linked.length === 1
+          ? `/argus/v2/browse/topics?selected=${topic.id}`
+          : `/argus/logs/${log.id}`;
+
+      const kindLabel =
+        entry.kind === "email"
+          ? "Email"
+          : entry.journalSubtype === "note"
+            ? "Note"
+            : entry.journalSubtype === "log"
+              ? "Log"
+              : entry.kind === "meeting"
+                ? "Meeting"
+                : "Journal";
+
+      const metaParts = [
+        kindLabel,
+        ...linked.slice(0, 2).map((entity) => entity.name),
+        ...(log.topics.slice(0, 2).map((tag) => `#${tag}`) ?? []),
+      ].filter(Boolean);
+
+      return {
+        ...entry,
+        href,
+        meta: metaParts.join(" · "),
+        author: linked[0]?.name ?? entry.author,
+      };
+    }),
+    ...inbox.map((item) => {
+      const entry = inboxToTimelineEntry(item);
+      const from = item.from?.replace(/<.*>/, "").trim();
+      const metaParts = [item.subject?.trim(), from].filter(Boolean);
+      return {
+        ...entry,
+        href: `/argus/v2/inbox?selected=${item.id}`,
+        meta: metaParts.join(" · ") || "Email",
+        author: from ?? entry.author,
+      };
+    }),
   ]).slice(0, limit);
+
+  return enriched;
 }
 
 export interface V2EntityRow {
@@ -224,7 +273,8 @@ export function buildV2EntityRows(
   inboxItems: InboxItem[],
   includePrivate: boolean,
   today: string,
-  tab: V2EntityTab
+  tab: V2EntityTab,
+  limit = 8
 ): V2EntityRow[] {
   const kinds = entitiesByKind(data);
   const list =
@@ -276,7 +326,7 @@ export function buildV2EntityRows(
               ? `/argus/v2/browse/topics?selected=${entity.id}`
               : tab === "events"
                 ? `/argus/v2/browse/events?selected=${entity.id}`
-                : `/argus/network/${entity.id}`;
+                : `/argus/v2/network/${entity.id}`;
 
       const typeLabel =
         tab === "organizations"
@@ -301,10 +351,10 @@ export function buildV2EntityRows(
       };
     })
     .sort((a, b) => b.lastSort.localeCompare(a.lastSort))
-    .slice(0, 8);
+    .slice(0, limit);
 }
 
-export function buildV2TagCloud(data: ArgusData, includePrivate: boolean, limit = 12) {
+export function buildV2TagCloud(data: ArgusData, inboxItems: InboxItem[], includePrivate: boolean, limit = 24) {
   const counts = new Map<string, number>();
   for (const log of visibleLogs(data, includePrivate)) {
     for (const t of log.topics) {
@@ -312,15 +362,25 @@ export function buildV2TagCloud(data: ArgusData, includePrivate: boolean, limit 
       if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
     }
   }
+  for (const item of visibleInbox(inboxItems, includePrivate)) {
+    for (const t of item.topics ?? []) {
+      const key = t.trim().toLowerCase();
+      if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+  }
+  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+  if (sorted.length === 0) return [];
+
+  const max = sorted[0][1];
+  const min = sorted[sorted.length - 1][1];
   const colors = ["violet", "emerald", "amber", "sky", "orange"] as const;
-  return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, limit)
-    .map(([name, count], i) => ({
-      name,
-      count,
-      color: colors[i % colors.length],
-    }));
+
+  return sorted.map(([name, count], i) => ({
+    name,
+    count,
+    color: colors[i % colors.length],
+    weight: max === min ? 1 : (count - min) / (max - min),
+  }));
 }
 
 export function buildV2NavCounts(data: ArgusData, inboxItems: InboxItem[], includePrivate: boolean) {
@@ -484,8 +544,11 @@ export function loadProjectPageData(
   let timeline = buildTimelineFromLogsAndInbox(allLogs, allInbox);
   timeline = enrichTimelineMeta(timeline, allLogs, allInbox, data.entities);
 
-  const linkedPeople = (project.linkedPersonIds ?? [])
-    .map((id) => data.entities.find((e) => e.id === id))
+  const linkIds = collectProjectLinkIds(project);
+  const linkCounts = countLinkKinds(data, linkIds);
+
+  const linkedPeople = linkIds
+    .map((id) => data.entities.find((e) => e.id === id && e.type === "person"))
     .filter((e): e is Entity => Boolean(e));
 
   const peopleWithRoles = linkedPeople.map((person, index) => ({
@@ -506,19 +569,13 @@ export function loadProjectPageData(
         )
       : undefined;
 
-  const org = (project.linkedEntityIds ?? [])
+  const org = linkIds
     .map((id) => data.entities.find((e) => e.id === id && e.type === "company"))
     .find(Boolean);
 
-  const topicNames = [
-    ...(project.linkedTopicIds ?? [])
-      .map((id) => data.entities.find((e) => e.id === id))
-      .filter((e): e is Entity => Boolean(e))
-      .map((e) => e.name),
-    ...(project.linkedTags ?? []),
-  ].filter(Boolean);
+  const topicNames = linkedTopicNames(data, linkIds, project.linkedTags ?? []);
 
-  const linkedEventsCount = (project.linkedEventIds ?? []).length;
+  const linkedEventsCount = linkCounts.eventCount;
   const attachmentCount = allLogs.reduce((n, l) => n + l.attachmentIds.length, 0);
   const status = projectStatus(project, today);
   const dateRangeLabel = formatProjectDateRange(project);
@@ -539,7 +596,7 @@ export function loadProjectPageData(
     linkedEventsCount,
     keyMetrics: buildProjectKeyMetrics(scope, attachmentCount, directCount),
     stats: {
-      people: linkedPeople.length,
+      people: linkCounts.peopleCount,
       journalEntries: scope.logCount,
       emails: scope.emailCount,
       files: attachmentCount,

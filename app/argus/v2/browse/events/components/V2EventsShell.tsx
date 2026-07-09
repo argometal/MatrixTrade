@@ -1,18 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import { V2OpenCaptureButton } from "@/app/argus/v2/components/V2OpenCaptureButton";
+import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import {
   buildV2EventTabCounts,
   filterV2EventRows,
   groupV2EventRows,
   parseV2EventTab,
   type V2EventDetail,
+  type V2EventInboxOption,
   type V2EventRow,
   type V2EventTab,
 } from "@/lib/argus/v2/event-browse-utils";
+import { resolveV2SelectedId, v2ActiveListItemClass } from "@/lib/argus/v2/selection";
+import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
+import { V2EventDetailPanel } from "./V2EventDetailPanel";
 
 const TABS: { id: V2EventTab; label: string }[] = [
   { id: "all", label: "All" },
@@ -23,22 +26,26 @@ const TABS: { id: V2EventTab; label: string }[] = [
 export function V2EventsShell({
   rows,
   details,
+  inboxOptionsByEvent,
   initialSelectedId,
   initialTab,
 }: {
   rows: V2EventRow[];
   details: V2EventDetail[];
+  inboxOptionsByEvent: Record<string, V2EventInboxOption[]>;
   initialSelectedId?: string;
   initialTab?: string;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseV2EventTab(searchParams.get("tab") ?? initialTab);
-  const selectedId = searchParams.get("selected") ?? initialSelectedId ?? rows.find((r) => r.isUpcoming)?.id ?? rows[0]?.id;
+  const selectedId = resolveV2SelectedId(searchParams.get("selected"), initialSelectedId);
   const counts = useMemo(() => buildV2EventTabCounts(rows), [rows]);
   const filtered = useMemo(() => filterV2EventRows(rows, tab), [rows, tab]);
   const groups = useMemo(() => groupV2EventRows(filtered), [filtered]);
-  const selected = details.find((d) => d.id === selectedId);
+  const selected = selectedId ? details.find((d) => d.id === selectedId) : undefined;
+
+  useScrollToSelected(selectedId);
 
   function setTab(next: V2EventTab) {
     const params = new URLSearchParams(searchParams.toString());
@@ -53,8 +60,8 @@ export function V2EventsShell({
   }
 
   return (
-    <div className="v2-browse-shell -mx-4 flex min-h-[calc(100vh-4.5rem)] flex-col lg:-mx-8 lg:min-h-[calc(100vh-4rem)] lg:flex-row">
-      <section className="flex w-full flex-col border-b border-zinc-800/80 lg:w-[min(480px,44%)] lg:border-b-0 lg:border-r">
+    <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
+      <section className="flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:w-[min(480px,44%)] lg:flex-none lg:border-b-0 lg:border-r">
         <div className="border-b border-zinc-800/80 px-4 py-4 lg:px-5">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
@@ -62,12 +69,11 @@ export function V2EventsShell({
               <p className="mt-0.5 text-xs text-zinc-500">Meetings, calls, milestones and occurrences</p>
             </div>
             <div className="flex shrink-0 gap-2">
-              <Link
-                href="/argus/journal?capture=1"
+              <V2CreateEntityButton
+                kind="event"
+                label="+ Event"
                 className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
-              >
-                + New Event
-              </Link>
+              />
               <button type="button" className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400">
                 Filters
               </button>
@@ -90,24 +96,32 @@ export function V2EventsShell({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-3 lg:px-5">
+        <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto px-4 py-3 lg:px-5">
           {filtered.length === 0 ? (
-            <p className="py-10 text-center text-sm text-zinc-500">No events yet. Create one with + New Event.</p>
+            <div className="py-16 text-center">
+              <p className="text-sm text-zinc-500">No events yet.</p>
+              <p className="mt-1 text-xs text-zinc-600">Capture an event and link it to projects, orgs, people, or topics.</p>
+              <div className="mt-4">
+                <V2CreateEntityButton
+                  kind="event"
+                  label="+ Event"
+                  className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+                />
+              </div>
+            </div>
           ) : (
             groups.map((group) => (
               <div key={group.label} className="mb-6">
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">{group.label}</p>
                 <ul className="space-y-2">
                   {group.rows.map((row) => (
-                    <li key={row.id}>
+                    <li key={row.id} data-v2-selected-id={row.id}>
                       <button
                         type="button"
                         onClick={() => selectItem(row.id)}
-                        className={`flex w-full gap-3 rounded-xl border px-3 py-3 text-left transition hover:border-zinc-700 ${
+                        className={`flex w-full gap-3 rounded-xl border px-3 py-3 text-left transition hover:border-zinc-700 ${v2ActiveListItemClass(
                           selectedId === row.id
-                            ? "border-violet-500/40 bg-violet-500/10"
-                            : "border-zinc-800/80 bg-zinc-900/20"
-                        }`}
+                        )}`}
                       >
                         <div className="w-12 shrink-0 text-center">
                           <p className="text-[10px] font-bold tracking-wide text-violet-400">{row.dateLabel}</p>
@@ -143,130 +157,15 @@ export function V2EventsShell({
         </div>
       </section>
 
-      <section className="min-w-0 flex-1 overflow-y-auto bg-zinc-950/50">
+      <section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-950/50">
         {selected ? (
-          <div className="flex h-full flex-col p-5">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
-              <div className="flex gap-2 text-zinc-600">
-                <Link href={`/argus/network/${selected.id}`} className="hover:text-zinc-300">
-                  ✎
-                </Link>
-                <span>✉</span>
-                <span>🗑</span>
-                <span>···</span>
-              </div>
-            </div>
-
-            <p className="mb-4 text-sm text-zinc-400">{selected.dateTimeLabel}</p>
-
-            {selected.meetingUrl ? (
-              <a
-                href={selected.meetingUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="mb-4 inline-flex rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-300 hover:bg-sky-500/15"
-              >
-                Webex · Join meeting ↗
-              </a>
-            ) : null}
-
-            {selected.projectName && selected.projectHref ? (
-              <Link href={selected.projectHref} className="mb-4 block text-sm text-violet-400 hover:text-violet-300">
-                📁 {selected.projectName}
-              </Link>
-            ) : null}
-
-            {selected.topicTags.length > 0 ? (
-              <div className="mb-4 flex flex-wrap gap-1.5">
-                {selected.topicTags.map((tag) => (
-                  <span key={tag} className="rounded-md bg-zinc-800 px-2 py-1 text-[11px] text-zinc-400">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            ) : null}
-
-            <div className="mb-5 rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">Description</h3>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-400">{selected.description}</p>
-            </div>
-
-            {selected.attendeeCount > 0 ? (
-              <div className="mb-5">
-                <h3 className="mb-2 text-sm font-semibold text-zinc-100">Attendees</h3>
-                <div className="flex -space-x-2">
-                  {selected.attendeeInitials.map((initials, i) => (
-                    <span
-                      key={`${selected.id}-att-${i}`}
-                      className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-700 text-[10px] font-bold text-zinc-200"
-                    >
-                      {initials}
-                    </span>
-                  ))}
-                  {selected.attendeeCount > selected.attendeeInitials.length ? (
-                    <span className="flex h-9 w-9 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-800 text-[10px] text-zinc-400">
-                      +{selected.attendeeCount - selected.attendeeInitials.length}
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            ) : null}
-
-            <h3 className="mb-2 text-sm font-semibold text-zinc-100">Linked entries</h3>
-            {selected.linkedEntries.length === 0 ? (
-              <p className="mb-5 text-sm text-zinc-500">No linked journal entries.</p>
-            ) : (
-              <ul className="mb-5 space-y-2">
-                {selected.linkedEntries.map((entry) => (
-                  <li key={entry.id}>
-                    <Link href={entry.href} className="text-sm text-violet-400 hover:text-violet-300">
-                      {entry.kind}: {entry.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <h3 className="mb-2 text-sm font-semibold text-zinc-100">
-              Related emails ({selected.relatedEmails.length})
-            </h3>
-            {selected.relatedEmails.length === 0 ? (
-              <p className="text-sm text-zinc-500">No linked emails.</p>
-            ) : (
-              <ul className="space-y-2">
-                {selected.relatedEmails.map((email) => (
-                  <li key={email.id}>
-                    <Link
-                      href={email.href}
-                      className="block rounded-xl border border-zinc-800/80 px-3 py-2 transition hover:border-zinc-700"
-                    >
-                      <p className="text-sm font-medium text-zinc-200">{email.subject}</p>
-                      <p className="text-xs text-zinc-600">
-                        {email.from} · {email.date}
-                      </p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="mt-6 border-t border-zinc-800/80 pt-6">
-              <V2OpenCaptureButton
-                entityIds={[selected.id]}
-                entryType="note"
-                className="inline-flex rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"
-              >
-                + Journal about this event
-              </V2OpenCaptureButton>
-              <p className="mt-2 text-xs text-zinc-600">
-                Event notes use the event date. Link a topic, then convert to a log sequence.
-              </p>
-            </div>
-          </div>
+          <V2EventDetailPanel
+            selected={selected}
+            inboxOptions={inboxOptionsByEvent[selected.id] ?? []}
+          />
         ) : (
           <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">
-            Select an event to view details.
+            Select an event to document and review evidence.
           </div>
         )}
       </section>

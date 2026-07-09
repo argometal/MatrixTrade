@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { computeExperiment } from "./calculate";
+import { computeMonthlyRisk, type MonthlyRisk } from "./monthly-risk";
 import { readNoteBody, resolveVaultPath } from "./obsidian";
 import { syncObsidianTradeIfLocal } from "./obsidian-local";
 import { enrichTrade, absoluteNotePath } from "./trade-links";
@@ -27,8 +28,56 @@ async function readJson<T>(filename: string): Promise<T> {
   return JSON.parse(raw) as T;
 }
 
+function normalizeRules(raw: ExperimentRules): ExperimentRules {
+  const monthlyLossLimit = raw.monthlyLossLimit ?? raw.cycleLossLimit ?? -300;
+  return {
+    monthlyLossLimit,
+    maxLossPerTicker: raw.maxLossPerTicker ?? -250,
+    maxTrades: raw.maxTrades ?? 30,
+    obsidianVault: raw.obsidianVault,
+    obsidianVaultPath: raw.obsidianVaultPath,
+    tradesFolder: raw.tradesFolder,
+  };
+}
+
+async function writeJson<T>(filename: string, data: T): Promise<void> {
+  const filePath = path.join(DATA_DIR, filename);
+  await fs.writeFile(filePath, `${JSON.stringify(data, null, 2)}\n`, "utf-8");
+}
+
 export async function getRules(): Promise<ExperimentRules> {
-  return readJson<ExperimentRules>("rules.json");
+  const raw = await readJson<ExperimentRules>("rules.json");
+  return normalizeRules(raw);
+}
+
+export async function saveRules(input: {
+  monthlyLossLimit: number;
+  maxLossPerTicker: number;
+  maxTrades: number;
+}): Promise<{ rules?: ExperimentRules; errors?: string[] }> {
+  const current = await getRules();
+  const errors: string[] = [];
+
+  if (!Number.isFinite(input.monthlyLossLimit) || input.monthlyLossLimit >= 0) {
+    errors.push("Monthly loss limit must be a negative number (e.g. -300).");
+  }
+  if (!Number.isFinite(input.maxLossPerTicker) || input.maxLossPerTicker >= 0) {
+    errors.push("Per-stock loss limit must be a negative number (e.g. -250).");
+  }
+  if (!Number.isInteger(input.maxTrades) || input.maxTrades < 1 || input.maxTrades > 999) {
+    errors.push("Max trades must be an integer between 1 and 999.");
+  }
+
+  if (errors.length > 0) return { errors };
+
+  const rules: ExperimentRules = {
+    ...current,
+    monthlyLossLimit: input.monthlyLossLimit,
+    maxLossPerTicker: input.maxLossPerTicker,
+    maxTrades: input.maxTrades,
+  };
+  await writeJson("rules.json", rules);
+  return { rules };
 }
 
 export async function getTrades(): Promise<Trade[]> {
@@ -43,7 +92,12 @@ export async function getTradeById(id: string): Promise<Trade | undefined> {
 
 export async function getExperiment(): Promise<Experiment> {
   const [trades, rules] = await Promise.all([getTrades(), getRules()]);
-  return computeExperiment(trades, rules.cycleLossLimit, rules.maxTrades);
+  return computeExperiment(trades, rules.maxTrades);
+}
+
+export async function getMonthlyRisk(monthKey?: string): Promise<MonthlyRisk> {
+  const [trades, rules] = await Promise.all([getTrades(), getRules()]);
+  return computeMonthlyRisk(trades, rules.monthlyLossLimit, monthKey);
 }
 
 export async function getVaultStatus(): Promise<{
@@ -94,9 +148,9 @@ export async function getTradeNotes(): Promise<Map<string, string>> {
 export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Trade; errors?: string[] }> {
   const rules = await getRules();
   const trades = await getTrades();
-  const experiment = computeExperiment(trades, rules.cycleLossLimit, rules.maxTrades);
+  const monthly = computeMonthlyRisk(trades, rules.monthlyLossLimit);
 
-  const validationErrors = validateCreateTrade(input, trades, rules, experiment.realizedPnL);
+  const validationErrors = validateCreateTrade(input, trades, rules, monthly);
   if (validationErrors.length > 0) {
     return { errors: validationErrors.map((e) => e.message) };
   }
@@ -143,8 +197,9 @@ export async function closeTrade(
   const rules = await getRules();
   const trades = await getTrades();
   const trade = trades.find((t) => t.id === id.toUpperCase());
+  const monthly = computeMonthlyRisk(trades, rules.monthlyLossLimit);
 
-  const validationErrors = validateCloseTrade(trade, input);
+  const validationErrors = validateCloseTrade(trade, input, rules, monthly, trades);
   if (validationErrors.length > 0) {
     return { errors: validationErrors.map((e) => e.message) };
   }

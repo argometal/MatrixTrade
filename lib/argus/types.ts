@@ -1,3 +1,10 @@
+import type {
+  ContactValueKey,
+  MyValueKey,
+  RelationshipReasonKey,
+  RelationshipStatusKey,
+} from "./network-relationship-metrics";
+
 export type EntityType = "person" | "company" | "project" | "other";
 
 export type JournalKind = "log" | "event" | "follow_up";
@@ -14,14 +21,24 @@ export type AttachmentParentType = "inbox" | "journal";
 
 export type StrategicValue = 1 | 2 | 3 | 4 | 5;
 
+export type { ContactValueKey, MyValueKey, RelationshipReasonKey, RelationshipStatusKey };
+
 export interface Entity {
   id: string;
   type: EntityType;
   name: string;
   alias?: string;
   notes: string;
-  /** 1=low … 5=strategic. Default 3. Only user-editable network field besides alias/notes. */
+  /** @deprecated Legacy 1–5 rating; use contactValue / myValue instead. */
   strategicValue: StrategicValue;
+  /** What this contact consistently brings to me. */
+  contactValue?: ContactValueKey[];
+  /** What I consistently bring to this contact. */
+  myValue?: MyValueKey[];
+  /** @deprecated Derived at read time — not persisted. */
+  relationshipStatus?: RelationshipStatusKey;
+  /** @deprecated Derived at read time — not persisted. */
+  relationshipReason?: RelationshipReasonKey;
   /** Project date range (YYYY-MM-DD) — relations only, not duplicate evidence */
   startDate?: string;
   endDate?: string;
@@ -90,8 +107,35 @@ export interface InboxItem {
   /** When true, hidden until ARGUS private PIN unlock. */
   private?: boolean;
   status: InboxStatus;
+  /** User-set revisit date while triaging (YYYY-MM-DD). */
+  followUpDate?: string;
+  /** User-selected tags only — suggestions are not auto-saved here. */
+  topics?: string[];
   convertedLogId?: string;
   createdAt: string;
+  /** Soft delete — never hard-remove user data (Rule 0). */
+  deletedAt?: string;
+}
+
+export type RunbookItemType = "item" | "sep";
+
+export interface RunbookItem {
+  id: string;
+  text: string;
+  done: boolean;
+  doneAt: string;
+  type: RunbookItemType;
+}
+
+/** Execution domain — procedure with checkable steps (checklist is one UI view). */
+export interface Runbook {
+  id: string;
+  title: string;
+  items: RunbookItem[];
+  /** Project, organization, or other entity this runbook supports. */
+  linkedEntityIds: string[];
+  createdAt: string;
+  updatedAt: string;
   /** Soft delete — never hard-remove user data (Rule 0). */
   deletedAt?: string;
 }
@@ -101,12 +145,14 @@ export interface ArgusData {
   logs: Log[];
   inboxItems: InboxItem[];
   attachments: Attachment[];
+  runbooks: Runbook[];
   version: 3;
 }
 
 export type EntityInput = Omit<Entity, "id" | "createdAt" | "updatedAt">;
 export type LogInput = Omit<Log, "id" | "createdAt" | "updatedAt">;
 export type InboxItemInput = Omit<InboxItem, "id" | "receivedAt" | "status" | "createdAt" | "convertedLogId">;
+export type RunbookInput = Omit<Runbook, "id" | "createdAt" | "updatedAt">;
 
 export interface EntityNetworkView {
   entity: Entity;

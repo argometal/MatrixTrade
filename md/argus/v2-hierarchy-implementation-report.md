@@ -1,5 +1,7 @@
 # ARGUS v2 hierarchy — implementation report
 
+**AI rule of construction:** [`ai-charter.md`](ai-charter.md)
+
 **Date:** 2026-07-05  
 **Branch:** `main`  
 **Emergency revert:** `git checkout change-114-revert` (state before v2 UI)  

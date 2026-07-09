@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { argusLegacyRedirectUrl } from "@/lib/argus/argus-legacy-redirects";
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/login" || pathname === "/argus/login") return true;
@@ -10,14 +11,25 @@ function isPublicPath(pathname: string): boolean {
 }
 
 function isTradingRoute(pathname: string): boolean {
-  return (
-    pathname === "/" ||
-    pathname.startsWith("/trades") ||
-    pathname.startsWith("/connect") ||
-    pathname.startsWith("/inbox") ||
-    pathname === "/stats" ||
-    pathname === "/mistakes"
-  );
+  if (pathname === "/") return true;
+
+  const prefixes = [
+    "/home-preview",
+    "/trades-preview",
+    "/trades",
+    "/connect",
+    "/inbox",
+    "/exchange",
+    "/ai-workspace",
+    "/playbook",
+    "/review",
+    "/journal",
+    "/system",
+    "/stats",
+    "/mistakes",
+  ];
+
+  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
 export function middleware(request: NextRequest) {
@@ -34,6 +46,15 @@ export function middleware(request: NextRequest) {
 
   if (isPublicPath(pathname)) {
     return NextResponse.next();
+  }
+
+  const argusLegacy = argusLegacyRedirectUrl(request);
+  if (argusLegacy) {
+    return NextResponse.redirect(argusLegacy);
+  }
+
+  if (pathname === "/") {
+    return NextResponse.redirect(new URL("/home-preview", request.url));
   }
 
   const tradingPasswordSet = Boolean(process.env.MATRIXTRADE_PASSWORD);

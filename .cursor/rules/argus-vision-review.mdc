@@ -1,0 +1,45 @@
+---
+description: ARGUS vision alignment — re-read Evidence Organization System and Observation Engine docs before product direction or significant feature work
+globs: app/argus/**,lib/argus/**,md/argus/evidence-organization-vision.md,md/argus/observation-engine-vision.md,md/argus/timeline-vision.md,md/argus/knowledge-execution-model.md,md/argus/vision-review-protocol.md,md/argus/ai-charter.md
+alwaysApply: false
+---
+
+# ARGUS vision review
+
+Before proposing or implementing **product direction**, new object types, Timeline/Home layout changes, or features that collect user subjective input:
+
+## 1. Read (in order)
+
+1. `md/argus/evidence-organization-vision.md` — **product identity**; not authoring; Receive → Deliver
+2. `md/argus/observation-engine-vision.md` — Observation Engine; four verbs; layers
+3. `md/argus/ai-charter.md` — evidence before conclusions
+4. `md/argus/knowledge-execution-model.md` — evidence registration; entities; Execution
+5. `md/argus/timeline-vision.md` — Timeline scope (if UI/timeline touched)
+6. `md/argus/vision-review-protocol.md` — checklist and cadence
+
+## 2. Run the alignment checklist
+
+From `vision-review-protocol.md`:
+
+- ARGUS is an **Evidence Organization System** — not Word/OneNote/Evernote/Obsidian
+- Register reality; prefer **Register / Capture / Record** over “Create document”
+- Observe objective reality; avoid questionnaires and productivity scores
+- Evidence permanent; interpretations temporary
+- Feature maps to: **Observe · Correlate · Hypothesize · Reconstruct**
+- Entities (lenses) primary; Timeline secondary — not a second inbox
+- Execution (Runbook, etc.) optional — no forced workflow
+
+If 3+ checks fail → revise design; do not code until aligned.
+
+## 3. Cadence reminders
+
+- **Start of multi-step ARGUS product sessions** — skim observation-engine-vision
+- **User says "review vision"** — full stack + gap log update
+- **Monthly / ~4 deploys** — re-read timeline-vision + update gap table in vision-review-protocol.md
+
+## 4. Do not confuse
+
+- `v2-design-checklist.md` = UI/design QA only (not product philosophy)
+- `checklist_local.html` / Runbooks = Execution procedures (not design QA)
+
+Reference implementation truth: `md/argus/README.md` runtime section.

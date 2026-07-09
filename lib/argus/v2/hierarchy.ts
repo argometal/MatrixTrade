@@ -7,13 +7,13 @@
  */
 
 import type { Entity, InboxItem, Log } from "../types";
-import { getLinkedInboxForEntity } from "../entity-evidence";
+import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import { getEntityHistory } from "../network";
 import {
   getAllProjectScopeInbox,
   getProjectEvidenceScope,
   getProjectHomeCounts,
-} from "../project-evidence";
+} from "../project-evidence-scope";
 import type { ArgusData } from "../types";
 import { referenceKindFromNotes } from "../reference-types";
 

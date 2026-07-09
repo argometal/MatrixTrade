@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Entity } from "@/lib/argus/types";
-import { formatArgusError } from "@/lib/argus/persistence/errors";
-import { createEntityInlineAction } from "@/app/argus/actions";
+import type { CreatedEntityResult } from "@/app/argus/actions";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import {
-  REFERENCE_KINDS,
   REFERENCE_KIND_LABELS,
   entityKindLabel,
-  entityNotesForDisplay,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
 import { REFERENCES, REFERENCE_PICKER } from "@/lib/argus/ux-copy";
@@ -96,17 +94,29 @@ export function EntityPicker({
   onQuickCreateNotesChange,
   defaultShowCreate = false,
 }: EntityPickerProps) {
+  const { openCreateFlow } = useArgusAdd();
   const [tab, setTab] = useState<Tab>("recent");
   const [query, setQuery] = useState("");
   const [favorites, setFavorites] = useState<string[]>(() => loadFavorites());
-  const [showCreate, setShowCreate] = useState(defaultShowCreate);
 
   useEffect(() => {
     onValidityChange?.(selectedIds.length > 0);
   }, [selectedIds, onValidityChange]);
 
-  const [, startCreate] = useTransition();
-  const [createError, setCreateError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!defaultShowCreate) return;
+    openCreateFlow({
+      itemKind: quickCreateKind,
+      lockItemKind: true,
+      onSaved: (result) => {
+        onChange(selectedIds.includes(result.id) ? selectedIds : [...selectedIds, result.id]);
+        onQuickCreateNameChange("");
+        onQuickCreateNotesChange("");
+      },
+    });
+    // Only auto-open once when the picker mounts with defaultShowCreate.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultShowCreate]);
 
   const allEntities = buckets.alphabetical;
 
@@ -145,6 +155,20 @@ export function EntityPicker({
     const next = favorites.includes(id) ? favorites.filter((x) => x !== id) : [...favorites, id];
     setFavorites(next);
     saveFavorites(next);
+  }
+
+  function handleEntityCreated(entity: CreatedEntityResult) {
+    onChange(selectedIds.includes(entity.id) ? selectedIds : [...selectedIds, entity.id]);
+    onQuickCreateNameChange("");
+    onQuickCreateNotesChange("");
+  }
+
+  function openInlineCreate() {
+    openCreateFlow({
+      itemKind: quickCreateKind,
+      lockItemKind: true,
+      onSaved: (result) => handleEntityCreated(result),
+    });
   }
 
   const tabs: { id: Tab; label: string }[] = [
@@ -219,66 +243,11 @@ export function EntityPicker({
 
       <button
         type="button"
-        onClick={() => setShowCreate((v) => !v)}
+        onClick={openInlineCreate}
         className="text-sm font-medium text-teal-500/90 hover:text-teal-400"
       >
-        {showCreate ? REFERENCES.hideCreate : REFERENCES.createNew}
+        {REFERENCES.createNew}
       </button>
-
-      {showCreate && (
-        <div className="space-y-3 rounded-xl border border-zinc-800 p-3">
-          <input
-            className={inputClass}
-            placeholder="Name"
-            value={quickCreateName}
-            onChange={(e) => onQuickCreateNameChange(e.target.value)}
-          />
-          <select
-            className={inputClass}
-            value={quickCreateKind}
-            onChange={(e) => onQuickCreateKindChange(e.target.value as ReferenceKind)}
-          >
-            {REFERENCE_KINDS.map((k) => (
-              <option key={k} value={k}>
-                {REFERENCE_KIND_LABELS[k]}
-              </option>
-            ))}
-          </select>
-          <input
-            className={inputClass}
-            placeholder="Notes (optional)"
-            value={quickCreateNotes}
-            onChange={(e) => onQuickCreateNotesChange(e.target.value)}
-          />
-          {createError ? <p className="text-xs text-amber-400">{createError}</p> : null}
-          <button
-            type="button"
-            disabled={!quickCreateName.trim()}
-            onClick={() => {
-              setCreateError(null);
-              startCreate(async () => {
-                try {
-                  const entity = await createEntityInlineAction(
-                    quickCreateKind,
-                    quickCreateName.trim(),
-                    entityNotesForDisplay(quickCreateNotes)
-                  );
-                  onChange([...selectedIds, entity.id]);
-                  onQuickCreateNameChange("");
-                  onQuickCreateNotesChange("");
-                  setShowCreate(false);
-                } catch (err) {
-                  const { layer, message } = formatArgusError(err);
-                  setCreateError(`${layer.toUpperCase()}: ${message}`);
-                }
-              });
-            }}
-            className="w-full rounded-lg bg-teal-700 py-2 text-sm font-medium text-white hover:bg-teal-600 disabled:opacity-40"
-          >
-            Create
-          </button>
-        </div>
-      )}
     </div>
   );
 }

@@ -1,12 +1,15 @@
 import { Suspense } from "react";
-import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { hasArgusDeleteUnlock, hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { buildEmailView, parseStoredEmailPayload, attachmentSizeFromStored, type AttachmentViewModel } from "@/lib/argus/email-view";
 import { enrichInboxItems } from "@/lib/argus/inbox-enrich";
 import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
 import {
+  buildInboxTopicContext,
   buildV2InboxDetailEntities,
   buildV2InboxRows,
   parseV2InboxTab,
+  type InboxTopicContext,
 } from "@/lib/argus/v2/inbox-loaders";
 import {
   getAttachment,
@@ -20,16 +23,20 @@ import { V2InboxShell } from "./components/V2InboxShell";
 export default async function V2InboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ selected?: string; tab?: string }>;
+  searchParams: Promise<{ selected?: string; tab?: string; delete_error?: string }>;
 }) {
-  const { selected, tab: tabParam } = await searchParams;
-  const includePrivate = await hasArgusPrivateUnlock();
+  const { selected, tab: tabParam, delete_error: deleteError } = await searchParams;
+  const [includePrivate, deleteUnlocked] = await Promise.all([
+    hasArgusPrivateUnlock(),
+    hasArgusDeleteUnlock(),
+  ]);
+  const privateConfigured = argusPrivateConfigured();
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, includePrivate)]);
   const enriched = await enrichInboxItems(inboxItems);
   const today = new Date().toISOString().slice(0, 10);
-  const rows = buildV2InboxRows(enriched, data.entities, today);
+  const topicContext = buildInboxTopicContext(data);
+  const rows = buildV2InboxRows(enriched, data.entities, today, topicContext);
   const tab = parseV2InboxTab(tabParam);
-  const selectedId = selected ?? rows[0]?.id;
 
   const buckets = buildEntityPickerBuckets(data, includePrivate);
   const tagBuckets = buildTagBuckets(data, includePrivate);
@@ -79,8 +86,12 @@ export default async function V2InboxPage({
         buckets={buckets}
         tagBuckets={tagBuckets}
         linkedEntityRecords={data.entities.filter((e) => !e.deletedAt)}
-        initialSelectedId={selectedId}
+        topicContext={topicContext}
+        initialSelectedId={selected}
         initialTab={tab}
+        deleteUnlocked={deleteUnlocked}
+        privateConfigured={privateConfigured}
+        deleteError={deleteError === "1"}
       />
     </Suspense>
   );

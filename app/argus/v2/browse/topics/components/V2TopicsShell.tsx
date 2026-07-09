@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
-import { V2OpenCaptureButton } from "@/app/argus/v2/components/V2OpenCaptureButton";
+import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import {
   buildV2TopicTabCounts,
   filterV2TopicRows,
@@ -13,6 +12,10 @@ import {
   type V2TopicTab,
   type V2TopicTagChip,
 } from "@/lib/argus/v2/topic-browse-utils";
+import { resolveV2SelectedId, v2ActiveTableRowClass } from "@/lib/argus/v2/selection";
+import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
+import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
+import { V2TopicDetailPanel } from "./V2TopicDetailPanel";
 
 const TABS: { id: V2TopicTab; label: string }[] = [
   { id: "all", label: "All" },
@@ -26,20 +29,24 @@ export function V2TopicsShell({
   tagChips,
   initialSelectedId,
   initialTab,
+  neighborhood,
 }: {
   rows: V2TopicRow[];
   details: V2TopicDetail[];
   tagChips: V2TopicTagChip[];
   initialSelectedId?: string;
   initialTab?: string;
+  neighborhood?: V2EntityNeighborhoodGraph | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseV2TopicTab(searchParams.get("tab") ?? initialTab);
-  const selectedId = searchParams.get("selected") ?? initialSelectedId ?? rows[0]?.id;
+  const selectedId = resolveV2SelectedId(searchParams.get("selected"), initialSelectedId);
   const counts = useMemo(() => buildV2TopicTabCounts(rows), [rows]);
   const filtered = useMemo(() => filterV2TopicRows(rows, tab), [rows, tab]);
-  const selected = details.find((d) => d.id === selectedId);
+  const selected = selectedId ? details.find((d) => d.id === selectedId) : undefined;
+
+  useScrollToSelected(selectedId);
 
   function setTab(next: V2TopicTab) {
     const params = new URLSearchParams(searchParams.toString());
@@ -53,25 +60,25 @@ export function V2TopicsShell({
     router.replace(`/argus/v2/browse/topics?${params.toString()}`);
   }
 
+  const returnTo = selected
+    ? `/argus/v2/browse/topics?selected=${selected.id}${tab !== "all" ? `&tab=${tab}` : ""}`
+    : `/argus/v2/browse/topics`;
+
   return (
-    <div className="v2-browse-shell -mx-4 flex min-h-[calc(100vh-4.5rem)] flex-col lg:-mx-8 lg:min-h-[calc(100vh-4rem)] lg:flex-row">
-      <section className="flex w-full flex-col border-b border-zinc-800/80 lg:w-[min(520px,48%)] lg:border-b-0 lg:border-r">
+    <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
+      <section className="flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:w-[min(420px,42%)] lg:flex-none lg:border-b-0 lg:border-r">
         <div className="border-b border-zinc-800/80 px-4 py-4 lg:px-5">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-zinc-50">Topics</h1>
-              <p className="mt-0.5 text-xs text-zinc-500">Knowledge areas and themes</p>
+              <p className="mt-0.5 text-xs text-zinc-500">Knowledge binders — pick one to review evidence</p>
             </div>
             <div className="flex shrink-0 gap-2">
-              <Link
-                href="/argus/journal?capture=1"
+              <V2CreateEntityButton
+                kind="topic"
+                label="+ Topic"
                 className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
-              >
-                + New Topic
-              </Link>
-              <button type="button" className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400">
-                Filters
-              </button>
+              />
             </div>
           </div>
 
@@ -104,45 +111,37 @@ export function V2TopicsShell({
           ) : null}
         </div>
 
-        <div className="flex-1 overflow-auto">
+        <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
           {filtered.length === 0 ? (
-            <p className="px-5 py-10 text-center text-sm text-zinc-500">No topics yet. Create one with + New Topic.</p>
+            <div className="px-5 py-16 text-center">
+              <p className="text-sm text-zinc-500">No topics yet.</p>
+              <p className="mt-1 text-xs text-zinc-600">Capture a topic and link emails or journal entries to it.</p>
+            </div>
           ) : (
             <table className="w-full text-left text-sm">
               <thead className="sticky top-0 bg-zinc-950/95 text-[10px] uppercase tracking-wide text-zinc-600">
                 <tr className="border-b border-zinc-800">
                   <th className="px-4 py-2 font-medium lg:px-5">Topic</th>
-                  <th className="hidden px-2 py-2 font-medium sm:table-cell">Category</th>
-                  <th className="hidden px-2 py-2 font-medium md:table-cell">Linked to</th>
-                  <th className="px-2 py-2 font-medium">Last activity</th>
-                  <th className="px-4 py-2 font-medium lg:px-5">Entries</th>
+                  <th className="px-2 py-2 font-medium">Last</th>
+                  <th className="px-4 py-2 font-medium lg:px-5">Evidence</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((row) => (
                   <tr
                     key={row.id}
+                    data-v2-selected-id={row.id}
                     onClick={() => selectItem(row.id)}
-                    className={`cursor-pointer border-b border-zinc-800/60 transition hover:bg-zinc-900/40 ${
-                      selectedId === row.id ? "bg-violet-500/10" : ""
-                    }`}
+                    className={`cursor-pointer border-b border-zinc-800/60 transition hover:bg-zinc-900/40 ${v2ActiveTableRowClass(
+                      selectedId === row.id
+                    )}`}
                   >
                     <td className="px-4 py-3 lg:px-5">
-                      <div className="flex items-center gap-2">
-                        <input type="checkbox" readOnly className="rounded border-zinc-700" onClick={(e) => e.stopPropagation()} />
-                        <span className="font-medium text-zinc-100">{row.name}</span>
-                      </div>
-                    </td>
-                    <td className="hidden px-2 py-3 text-zinc-500 sm:table-cell">{row.category}</td>
-                    <td className="hidden px-2 py-3 text-[11px] text-zinc-500 md:table-cell">
-                      <span title="Organizations">🏢 {row.orgCount}</span>{" "}
-                      <span title="Projects">📁 {row.projectCount}</span>{" "}
-                      <span title="People">👤 {row.peopleCount}</span>
+                      <span className="font-medium text-zinc-100">{row.name}</span>
                     </td>
                     <td className="px-2 py-3 text-zinc-500">{row.lastActivity}</td>
                     <td className="px-4 py-3 lg:px-5">
-                      <span className="text-zinc-400">★</span>{" "}
-                      <span className="tabular-nums text-zinc-500">{row.entryCount}</span>
+                      <EvidenceCountCell row={row} />
                     </td>
                   </tr>
                 ))}
@@ -152,66 +151,12 @@ export function V2TopicsShell({
         </div>
       </section>
 
-      <section className="min-w-0 flex-1 overflow-y-auto bg-zinc-950/50">
+      <section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-950/50">
         {selected ? (
-          <div className="flex h-full flex-col p-5">
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
-                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] text-amber-300 ring-1 ring-amber-500/25">
-                    {selected.category}
-                  </span>
-                  <span className="text-zinc-600">★</span>
-                </div>
-                <p className="max-w-xl text-sm leading-relaxed text-zinc-400">{selected.description}</p>
-              </div>
-              <Link href={`/argus/network/${selected.id}`} className="text-zinc-600 hover:text-zinc-400">
-                ↗
-              </Link>
-            </div>
-
-            <div className="mb-6 grid grid-cols-3 gap-3">
-              <LinkCountCard icon="🏢" label="Organizations" count={selected.orgCount} />
-              <LinkCountCard icon="📁" label="Projects" count={selected.projectCount} />
-              <LinkCountCard icon="👤" label="People" count={selected.peopleCount} />
-            </div>
-
-            <h3 className="mb-3 text-sm font-semibold text-zinc-100">Recent entries</h3>
-            {selected.recentEntries.length === 0 ? (
-              <p className="text-sm text-zinc-500">No journal entries linked yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {selected.recentEntries.map((entry) => (
-                  <li key={entry.id}>
-                    <Link
-                      href={entry.href}
-                      className="block rounded-xl border border-zinc-800/80 px-3 py-2.5 transition hover:border-zinc-700"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-zinc-200">{entry.title}</span>
-                        <span className="text-[10px] text-violet-400">{entry.kind}</span>
-                      </div>
-                      <p className="mt-0.5 text-xs text-zinc-600">{entry.meta}</p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <div className="mt-auto pt-6">
-              <V2OpenCaptureButton
-                entityIds={selected ? [selected.id] : undefined}
-                entryType="note"
-                className="inline-flex rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"
-              >
-                + Journal about this topic
-              </V2OpenCaptureButton>
-            </div>
-          </div>
+          <V2TopicDetailPanel selected={selected} neighborhood={neighborhood} returnTo={returnTo} />
         ) : (
           <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">
-            Select a topic to view details.
+            Select a topic to review linked evidence.
           </div>
         )}
       </section>
@@ -219,12 +164,15 @@ export function V2TopicsShell({
   );
 }
 
-function LinkCountCard({ icon, label, count }: { icon: string; label: string; count: number }) {
+function EvidenceCountCell({ row }: { row: V2TopicRow }) {
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4 text-center">
-      <div className="text-2xl">{icon}</div>
-      <p className="mt-2 text-2xl font-bold tabular-nums text-zinc-50">{count}</p>
-      <p className="mt-1 text-[11px] text-zinc-500">{label}</p>
+    <div className="flex items-center gap-2">
+      <span className="font-semibold tabular-nums text-violet-300">{row.evidenceCount}</span>
+      <span className="text-[10px] text-zinc-600">
+        {row.journalCount > 0 ? `📓${row.journalCount}` : null}
+        {row.emailCount > 0 ? ` ✉${row.emailCount}` : null}
+        {row.fileCount > 0 ? ` 📎${row.fileCount}` : null}
+      </span>
     </div>
   );
 }

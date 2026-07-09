@@ -1,4 +1,5 @@
 import { calculateTradeResult } from "./calculate";
+import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment, MistakeType, Trade } from "./types";
 
 export const MISTAKE_TYPES: readonly MistakeType[] = [
@@ -154,7 +155,11 @@ export interface NextAction {
   kind: "review" | "open" | "close" | "new";
 }
 
-export function getNextAction(trades: Trade[], experiment: Experiment): NextAction | null {
+export function getNextAction(
+  trades: Trade[],
+  experiment: Experiment,
+  monthly: MonthlyRisk
+): NextAction | null {
   const unreviewed = getUnreviewedTrades(trades);
   if (unreviewed.length > 0) {
     const t = unreviewed[0];
@@ -183,18 +188,20 @@ export function getNextAction(trades: Trade[], experiment: Experiment): NextActi
     };
   }
 
-  if (experiment.closedTrades < experiment.maxTrades && experiment.remainingLossBudget > 0) {
-    return { label: "Log next trade", href: "/trades/new", kind: "new" };
+  if (
+    experiment.closedTrades < experiment.maxTrades &&
+    !monthly.monthlyCapBreached &&
+    monthly.monthlyLossRoom > 0
+  ) {
+    return { label: "Log next trade", href: "/trades-preview", kind: "new" };
   }
 
   return null;
 }
 
-export function isBudgetWarning(experiment: Experiment): boolean {
-  const used = experiment.realizedPnL - experiment.cycleLossLimit;
-  const total = -experiment.cycleLossLimit;
-  if (total <= 0) return false;
-  return used / total >= 0.7;
+export function isBudgetWarning(monthly: MonthlyRisk): boolean {
+  if (monthly.monthlyAllowance <= 0) return false;
+  return monthly.monthlyLossRoom <= monthly.monthlyAllowance * 0.25;
 }
 
 export function suggestExportQuestion(

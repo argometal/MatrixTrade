@@ -1,5 +1,9 @@
 # Experiment cycle H001–H030
 
+> **Risk model updated (2026-07-09):** Monthly loss cap and experiment cycle are separate.
+> See [monthly-risk-vs-experiment.md](monthly-risk-vs-experiment.md). The `cycleLossLimit` field
+> is deprecated; use `monthlyLossLimit` for the -$300/month account cap.
+
 Technical contract for the MatrixTrade experiment engine.
 
 ## Objective
@@ -14,7 +18,7 @@ Technical contract for the MatrixTrade experiment engine.
 
 1. Only H001–H030 belong to the experiment
 2. Maximum 30 trades per cycle
-3. `cycleLossLimit = -300 USD`
+3. `monthlyLossLimit = -300 USD` per calendar month (see [monthly-risk-vs-experiment.md](monthly-risk-vs-experiment.md))
 4. Required fields: id, ticker, entry, stop, shares, status
 5. No external trades, no manual P/L editing in Obsidian frontmatter
 

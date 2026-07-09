@@ -1,11 +1,20 @@
 import Link from "next/link";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
+import { runbooksForEntity } from "@/lib/argus/runbook-helpers";
 import { loadProjectPageData } from "@/lib/argus/v2/loaders";
+import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
+import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
+import { V2QuickDeliverButton } from "../../components/V2QuickDeliverModal";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
+import { V2EntityNeighborhoodPanel } from "../../components/V2EntityNeighborhoodPanel";
+import { V2ProjectActions } from "../../components/V2ProjectActions";
+import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
 import { V2ProjectTabs } from "../../components/V2ProjectTabs";
+import { V2ProjectRunbooksPanel } from "../../components/V2ProjectRunbooksPanel";
 import {
   V2LegacyLink,
   V2LinkedEntityRow,
@@ -27,9 +36,13 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
 
   if (!entity || entity.type !== "project") {
     return (
-      <div className="px-4 py-6 lg:px-8">
-        <V2BackLink href="/argus/v2/browse/projects">Back to Projects</V2BackLink>
-        <EmptyState message="Project not found." />
+      <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+        <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+          <div className="px-4 py-6 lg:px-8">
+            <V2BackLink href="/argus/v2/browse/projects">Back to Projects</V2BackLink>
+            <EmptyState message="Project not found." />
+          </div>
+        </div>
       </div>
     );
   }
@@ -37,13 +50,18 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
   const today = new Date().toISOString().slice(0, 10);
   const page = loadProjectPageData(data, inboxItems, entity, includePrivate, today);
+  const neighborhood = buildV2EntityNeighborhoodGraph(data, inboxItems, entity.id, includePrivate, today);
+  const projectRunbooks = runbooksForEntity(data.runbooks ?? [], entity.id);
+  const hasPrivateEvidence = projectHasPrivateEvidence(data, inboxItems, entity);
   const notes = entityNotesForDisplay(entity.notes ?? "");
   const morePeople = Math.max(0, page.peopleWithRoles.length - 4);
   const statusTone =
     page.status === "Completed" ? "green" : page.status === "In Progress" ? "blue" : "amber";
 
   return (
-    <div className="px-4 py-6 lg:px-8">
+    <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
+        <div className="px-4 py-6 lg:px-8">
       <div className="mb-5">
         <V2BackLink href="/argus/v2/browse/projects">Back to Projects</V2BackLink>
       </div>
@@ -54,13 +72,6 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
           <div className="min-w-0 flex-1">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <h1 className="text-2xl font-bold tracking-tight text-zinc-50">{entity.name}</h1>
-              <Link
-                href={`/argus/projects/${entity.id}`}
-                className="rounded-lg p-1.5 text-zinc-600 hover:bg-zinc-800 hover:text-zinc-400"
-                aria-label="Edit project"
-              >
-                ✎
-              </Link>
             </div>
             <div className="flex flex-wrap gap-2">
               <V2Badge tone={statusTone}>{page.status}</V2Badge>
@@ -73,7 +84,35 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
               {entity.alias ? <V2Badge tone="blue">{entity.alias}</V2Badge> : null}
             </div>
           </div>
-          <div className="flex shrink-0 gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <V2ProjectActions
+              projectId={entity.id}
+              projectName={entity.name}
+              href={`/argus/v2/projects/${entity.id}`}
+              hasPrivateEvidence={hasPrivateEvidence}
+              privateConfigured={argusPrivateConfigured()}
+              privateUnlocked={includePrivate}
+              returnTo={`/argus/v2/projects/${entity.id}`}
+              variant="inline"
+            />
+            <V2EntityLinkButton
+              entityId={entity.id}
+              linkedIds={entity.linkedEntityIds ?? []}
+              className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+            />
+            <V2QuickDeliverButton
+              scopeType="project"
+              scopeId={entity.id}
+              scopeName={entity.name}
+              label="Deliver"
+              className="rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-2 text-sm font-medium text-emerald-300 hover:bg-emerald-600/25"
+            />
+            <Link
+              href={`/argus/v2/deliver?scopeType=project&scopeId=${entity.id}&package=evidence_vault`}
+              className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-300 hover:border-zinc-600 hover:text-zinc-200"
+            >
+              Full ZIP
+            </Link>
             <button
               type="button"
               className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
@@ -155,6 +194,12 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
             </div>
             <V2OrgTimeline entries={page.timeline} limit={TIMELINE_PREVIEW} />
           </V2Card>
+
+          <V2Card className="p-5 sm:p-6">
+            <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entity.name} />
+          </V2Card>
+
+          <V2ProjectRunbooksPanel runbooks={projectRunbooks} projectId={entity.id} />
         </div>
 
         {/* Right sidebar — mockup layout */}
@@ -185,7 +230,7 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
                   {page.peopleWithRoles.slice(0, 4).map((person) => (
                     <V2PersonListItem
                       key={person.id}
-                      href={`/argus/network/${person.id}`}
+                      href={`/argus/v2/network/${person.id}`}
                       name={person.name}
                       subtitle={person.role}
                       initials={person.initials}
@@ -231,6 +276,8 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
 
           <V2LegacyLink href={`/argus/projects/${entity.id}`}>Open legacy project view →</V2LegacyLink>
         </aside>
+      </div>
+        </div>
       </div>
     </div>
   );

@@ -1,53 +1,81 @@
 # MatrixTrade app
 
-Local Next.js application. Experiment control H001–H030.
+Next.js application — experiment control H001–H030, preview shell, cloud-ready.
 
 ## Stack
 
 - Next.js 15, React 19, TypeScript, Tailwind
-- Portable Node in `runtime/node/` (or shared `c:\Tools\runtime\env.bat`)
-- No external database — files on disk
+- **Production:** Vercel — https://matrix-trade-theta.vercel.app
+- **Data:** `TRADES_STORE=supabase` (trades, playbooks, trade plans) or local JSON in `data/`
+- Obsidian vault sync (optional, local paths)
 
-## Pages
+## Preview routes (dark `PreviewShell`)
 
 | Route | Purpose |
 |-------|---------|
-| `/` | Dashboard: P/L, budget, win rate, ChatGPT Handoff |
-| `/trades` | List all trades |
-| `/trades/new` | Create trade (validated) |
-| `/trades/[id]` | Open, close, Obsidian link |
-| `/connect` | QR codes for mobile access (all local IPs) |
+| `/` → `/home-preview` | Dashboard — monthly risk, experiment P/L, attention queue |
+| `/home-preview` | Same dashboard |
+| `/trades-preview` | New Trade workspace — proposals → Inbox |
+| `/planning` | **Pre-trade plans** — entries, MTF, failed/expired tracking |
+| `/trades` | Trades list |
+| `/journal` | Closed trades log |
+| `/playbook` | Playbook Lab |
+| `/system` | Rules, bridge sync, connect QR |
+
+## Classic routes (light shell — parity migration pending)
+
+| Route | Purpose |
+|-------|---------|
+| `/inbox` | Apply/reject proposals |
+| `/exchange` | Assistant + snapshot copy |
+| `/stats`, `/review`, `/mistakes` | Analytics |
+| `/trades/[id]` | Open, close, meta |
+| `/trades/new` | Dormant on web nav — phone/LAN only |
 
 ## Key lib modules
 
 | File | Role |
 |------|------|
-| `lib/storage.ts` | CRUD trades, experiment summary |
-| `lib/obsidian.ts` | Read/write markdown + frontmatter |
-| `lib/validation.ts` | H001–H030 rules, cycle limit |
-| `lib/calculate.ts` | P/L, win rate, budget |
-| `lib/snapshot.ts` | Export Full Context for ChatGPT |
-| `lib/network.ts` | Local IPs for mobile |
-| `lib/qr.ts` | QR generation for /connect |
+| `lib/storage.ts` | CRUD trades, experiment, rules |
+| `lib/monthly-risk.ts` | Monthly cap + carryover (gross losses per month) |
+| `lib/plans.ts` | Trade plans CRUD, auto-expire |
+| `lib/validation.ts` | H001–H030, monthly + per-ticker caps |
+| `lib/smart-snapshot.ts` | Export for ChatGPT (includes plans) |
+| `lib/bridge.ts` | Worker snapshot publish |
 
-## Server actions
+## Risk model (two dimensions)
 
-`app/actions.ts` — createTrade, openTrade, closeTrade
+See `md/rules/monthly-risk-vs-experiment.md`:
+
+- **Monthly:** $300 base + carryover from prior month; gross losses consume budget
+- **Experiment:** H001–H030 sample; net P/L informational
+- **Per ticker:** `maxLossPerTicker` (e.g. -$250)
+
+## Planning module
+
+See `md/design/planning-module-proposal.md` — Phase 0 implemented:
+
+- `data/plans.json` or Supabase `trade_plans`
+- Auto-expire when `validUntil` passes
+- Dashboard attention + AI snapshot section
+
+## Supabase migrations
+
+Run in SQL Editor when using cloud store:
+
+- `supabase/schema.sql` — playbooks, trades
+- `supabase/trade-plans.sql` — trade plans table
 
 ## Scripts
 
 | Script | Use |
 |--------|-----|
-| `start.bat` | Dev server on `0.0.0.0:3000` |
-| `start-prod.bat` | Production build |
-| `stop.bat` | Free port |
-| `publish-github.bat` | Push to GitHub |
+| `npm run dev` | Dev server (port 3002) |
+| `npm run build` | Production build |
+| `npm run seed:supabase` | Seed playbooks + trades from JSON |
 
-## MVP contract
+## Docs
 
-Full experiment rules: `md/rules/experiment-cycle.md`  
-Original: `MatrixTrade-IP01.md` at repo root.
-
-## Out of scope (MVP)
-
-Charts, auth, external DB, automatic AI calls, public hosting.
+- Rules: `md/rules/experiment-cycle.md`
+- Design QA: `md/design/README.md`
+- Architecture: `md/architecture/system-overview.md`

@@ -26,7 +26,7 @@ export async function ArgusStatusAlert() {
         <span className="font-medium uppercase text-amber-300/90">System:</span> {summary}
       </p>
       <p className="mt-1 text-[12px] text-amber-200/80">
-        <Link href="/argus/diagnostics" className="underline hover:text-amber-100">
+        <Link href="/argus/v2/diagnostics" className="underline hover:text-amber-100">
           View diagnostics
         </Link>
       </p>

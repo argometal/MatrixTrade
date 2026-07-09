@@ -15,7 +15,7 @@ export default async function LogDetailPage({ params }: { params: Promise<{ id: 
   if (!log) {
     return (
       <>
-        <PageHeader title="Not found" backHref="/argus/journal" />
+        <PageHeader title="Not found" backHref="/argus/v2" />
         <EmptyState message="Not found or requires private unlock." />
       </>
     );
@@ -38,7 +38,7 @@ export default async function LogDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <>
-      <PageHeader title={log.title} backHref="/argus/journal" />
+      <PageHeader title={log.title} backHref="/argus/v2" />
       <ActivityEditPanel
         log={log}
         buckets={buckets}

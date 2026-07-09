@@ -34,8 +34,18 @@ import {
 } from "@/lib/ai-session";
 import { createQrDataUrl } from "@/lib/qr";
 import { getTradesStoreMode } from "@/lib/trades-json";
-import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules } from "@/lib/storage";
+import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules, saveRules } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
+import { parsePlanTimeframes, savePlan, updatePlanStatus, recordPlanOutcome } from "@/lib/plans";
+import {
+  PLAN_EXTERNAL_FACTORS,
+  PLAN_FAIL_REASON_LABELS,
+  PLAN_STATUS_LABELS,
+  PLAN_TIMEFRAMES,
+  type PlanFailReason,
+  type PlanTimeframe,
+  type TradePlan,
+} from "@/lib/plan-types";
 
 // DISABLED BY DESIGN — see lib/ai-session-disabled.ts (AI Session server actions)
 
@@ -51,12 +61,16 @@ export type CreateAiSessionActionResult =
 
 function revalidateTradingPaths() {
   revalidatePath("/");
+  revalidatePath("/home-preview");
   revalidatePath("/trades");
+  revalidatePath("/trades-preview");
   revalidatePath("/stats");
   revalidatePath("/mistakes");
   revalidatePath("/playbook");
   revalidatePath("/review");
   revalidatePath("/journal");
+  revalidatePath("/planning");
+  revalidatePath("/exchange");
   revalidatePath("/ai-workspace");
   revalidatePath("/inbox");
   revalidatePath("/system");
@@ -111,7 +125,7 @@ export async function saveAiNotesAction(formData: FormData): Promise<SaveAiNotes
         proposalJson: note.proposalJson,
       }))
     );
-    revalidatePath("/ai-workspace");
+    revalidateTradingPaths();
     return { count: parsed.notes.length };
   } catch (err) {
     return {
@@ -135,7 +149,7 @@ export async function createAiSessionAction(
     const { token } = await createAiSession({ ttlMinutes, label });
     const connectUrl = buildAiConnectUrl(token);
     const qrDataUrl = await createQrDataUrl(connectUrl);
-    revalidatePath("/ai-workspace");
+    revalidateTradingPaths();
     return { token, connectUrl, qrDataUrl };
   } catch (err) {
     return {
@@ -151,7 +165,7 @@ export async function revokeAiSessionAction(formData: FormData): Promise<void> {
   if (sessionId) {
     await revokeAiSession(sessionId);
   }
-  revalidatePath("/ai-workspace");
+  revalidateTradingPaths();
 }
 
 export async function syncBridgeFormAction(): Promise<void> {
@@ -413,4 +427,103 @@ export async function updateTradeMetaAction(id: string, formData: FormData): Pro
   revalidateTradingPaths();
   revalidatePath(`/trades/${id}`);
   redirect(`/trades/${id}?metaOk=${encodeURIComponent("Trade updated")}`);
+}
+
+export async function saveRulesAction(
+  formData: FormData
+): Promise<{ ok: true } | { error: string }> {
+  await requireTradingSession();
+
+  const monthlyLossLimit = Number(formData.get("monthlyLossLimit"));
+  const maxLossPerTicker = Number(formData.get("maxLossPerTicker"));
+  const maxTrades = Number(formData.get("maxTrades"));
+
+  const result = await saveRules({ monthlyLossLimit, maxLossPerTicker, maxTrades });
+  if (result.errors?.length) {
+    return { error: result.errors.join(" ") };
+  }
+
+  revalidateTradingPaths();
+  return { ok: true };
+}
+
+export type SavePlanActionResult = { ok: true; planId: string } | { error: string };
+
+export async function savePlanAction(formData: FormData): Promise<SavePlanActionResult> {
+  await requireTradingSession();
+
+  const analysisTimeframes = parsePlanTimeframes(formData.getAll("analysisTimeframes"));
+  const entryRaw = String(formData.get("entryTimeframe") ?? "5m").trim();
+  const entryTimeframe = (PLAN_TIMEFRAMES as readonly string[]).includes(entryRaw)
+    ? (entryRaw as PlanTimeframe)
+    : "5m";
+
+  const result = await savePlan({
+    id: String(formData.get("id") ?? "").trim() || undefined,
+    ticker: String(formData.get("ticker") ?? ""),
+    playbookId: String(formData.get("playbookId") ?? "").trim() || undefined,
+    analysisTimeframes,
+    entryTimeframe,
+    plannedEntry: Number(formData.get("plannedEntry")),
+    supportLevel: Number(formData.get("supportLevel")),
+    stopPrice: Number(formData.get("stopPrice")),
+    targetPrice: Number(formData.get("targetPrice")),
+    plannedRR: Number(formData.get("plannedRR")),
+    validFrom: String(formData.get("validFrom") ?? "").trim() || undefined,
+    validUntil: String(formData.get("validUntil") ?? "").trim() || undefined,
+    thesis: String(formData.get("thesis") ?? ""),
+    chatNotes: String(formData.get("chatNotes") ?? ""),
+  });
+
+  if (result.errors?.length) {
+    return { error: result.errors.join(" ") };
+  }
+
+  revalidateTradingPaths();
+  return { ok: true, planId: result.plan!.id };
+}
+
+export async function updatePlanStatusAction(
+  planId: string,
+  status: TradePlan["status"],
+  linkedTradeId?: string
+): Promise<{ error?: string }> {
+  await requireTradingSession();
+  const result = await updatePlanStatus(planId, status, linkedTradeId);
+  if (result.errors?.length) return { error: result.errors.join(" ") };
+  revalidateTradingPaths();
+  revalidatePath("/planning");
+  return {};
+}
+
+export async function recordPlanOutcomeAction(
+  planId: string,
+  formData: FormData
+): Promise<{ error?: string }> {
+  await requireTradingSession();
+
+  const reasonRaw = String(formData.get("reason") ?? "").trim();
+  const reason = (Object.keys(PLAN_FAIL_REASON_LABELS) as PlanFailReason[]).includes(
+    reasonRaw as PlanFailReason
+  )
+    ? (reasonRaw as PlanFailReason)
+    : undefined;
+
+  const strategyStillValid = formData.get("strategyStillValid") === "yes";
+  const externalFactors = formData
+    .getAll("externalFactors")
+    .map((v) => String(v).trim())
+    .filter((v) => (PLAN_EXTERNAL_FACTORS as readonly string[]).includes(v));
+
+  const result = await recordPlanOutcome(planId, {
+    reason,
+    strategyStillValid,
+    externalFactors,
+    lesson: String(formData.get("lesson") ?? ""),
+  });
+
+  if (result.errors?.length) return { error: result.errors.join(" ") };
+  revalidateTradingPaths();
+  revalidatePath("/planning");
+  return {};
 }

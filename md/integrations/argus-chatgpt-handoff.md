@@ -1,11 +1,13 @@
 # ARGUS — ChatGPT handoff
 
-**Read first:** [`argus-architecture.md`](argus-architecture.md) · [`argus-design-principles.md`](argus-design-principles.md)  
+**Read first:** [`ai-charter.md`](../argus/ai-charter.md) · [`argus-architecture.md`](argus-architecture.md) · [`argus-design-principles.md`](argus-design-principles.md)  
+**Doc index:** [`README.md`](../argus/README.md) — reading order, runtime truth, mobile QA  
+**Export / delivery:** [`export-delivery-handoff.md`](../argus/export-delivery-handoff.md)  
 **Then:** [`CHATGPT.md`](../../CHATGPT.md) (repo root).
 
 ARGUS is the private professional journal inside MatrixTrade. Trading and ARGUS share only auth infrastructure — **do not mix business logic**.
 
-**UX implementation is frozen** until architecture documents are complete.
+**UX implementation follows** [`argus-architecture.md`](argus-architecture.md) and [`argus-design-principles.md`](argus-design-principles.md). See [`README.md`](../argus/README.md) for current routes and status.
 
 ---
 

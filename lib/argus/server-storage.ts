@@ -19,8 +19,11 @@ import type {
   InboxItemInput,
   Log,
   LogInput,
+  Runbook,
+  RunbookInput,
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
+import { inboxStatusAfterLinkChange } from "./v2/inbox-loaders";
 import {
   filterLinkIdsForSource,
   linkSourceKindFromEntity,
@@ -53,7 +56,7 @@ function generateId(): string {
 }
 
 function emptyArgus(): ArgusData {
-  return { entities: [], logs: [], inboxItems: [], attachments: [], version: 3 };
+  return { entities: [], logs: [], inboxItems: [], attachments: [], runbooks: [], version: 3 };
 }
 
 async function ensureFilesDir(): Promise<void> {
@@ -163,6 +166,8 @@ export async function createEntity(input: EntityInput): Promise<Entity> {
     ...input,
     alias: input.alias ?? "",
     strategicValue: input.strategicValue ?? 3,
+    contactValue: input.contactValue ?? [],
+    myValue: input.myValue ?? [],
     linkedPersonIds: input.linkedPersonIds ?? [],
     linkedTopicIds: input.linkedTopicIds ?? [],
     linkedEventIds: input.linkedEventIds ?? [],
@@ -200,6 +205,8 @@ export type EntityUpdatePatch = Partial<
   Pick<
     Entity,
     | "strategicValue"
+    | "contactValue"
+    | "myValue"
     | "alias"
     | "notes"
     | "name"
@@ -248,8 +255,8 @@ function normalizeLinkedEventIds(
 }
 
 function normalizeLinkedEntityIds(data: ArgusData, entity: Entity, ids: string[] | undefined): string[] {
-  const source = linkSourceKindFromEntity(entity);
-  return filterLinkIdsForSource(data.entities.filter(isActiveRecord), source, ids);
+  void entity;
+  return filterLinkIdsForSource(data.entities.filter(isActiveRecord), "create", ids);
 }
 
 function normalizeLinkedTags(tags: string[] | undefined): string[] {
@@ -286,6 +293,8 @@ export async function updateEntity(id: string, patch: EntityUpdatePatch): Promis
     ...current,
     name: name || current.name,
     strategicValue,
+    contactValue: patch.contactValue !== undefined ? patch.contactValue : current.contactValue ?? [],
+    myValue: patch.myValue !== undefined ? patch.myValue : current.myValue ?? [],
     alias: patch.alias ?? current.alias ?? "",
     notes: patch.notes ?? current.notes ?? "",
     startDate: patch.startDate !== undefined ? normalizeOptionalDate(patch.startDate) : current.startDate,
@@ -551,6 +560,77 @@ export async function appendInboxAttachment(inboxId: string, attachmentId: strin
   }
 }
 
+// --- Runbooks (Execution domain) ---
+
+export async function getRunbook(id: string): Promise<Runbook | undefined> {
+  const data = await readArgus();
+  const runbook = data.runbooks.find((entry) => entry.id === id);
+  if (!runbook || !isActiveRecord(runbook)) return undefined;
+  return runbook;
+}
+
+export async function listRunbooks(): Promise<Runbook[]> {
+  const data = await readArgus();
+  return data.runbooks
+    .filter(isActiveRecord)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.title.localeCompare(b.title));
+}
+
+export async function createRunbook(input: RunbookInput): Promise<Runbook> {
+  const data = await readArgus();
+  const now = new Date().toISOString();
+  const validIds = filterLinkIdsForSource(data.entities, "create", input.linkedEntityIds ?? []);
+
+  const runbook: Runbook = {
+    id: generateId(),
+    title: input.title.trim(),
+    items: input.items ?? [],
+    linkedEntityIds: validIds,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  data.runbooks.push(runbook);
+  for (const entityId of validIds) {
+    const entity = data.entities.find((entry) => entry.id === entityId);
+    if (entity) entity.updatedAt = now;
+  }
+
+  await writeArgus(data);
+  return runbook;
+}
+
+export async function updateRunbook(
+  id: string,
+  patch: Partial<Pick<Runbook, "title" | "items" | "linkedEntityIds">>
+): Promise<Runbook> {
+  const data = await readArgus();
+  const runbook = data.runbooks.find((entry) => entry.id === id);
+  if (!runbook || !isActiveRecord(runbook)) {
+    throw new Error("Runbook not found");
+  }
+
+  const now = new Date().toISOString();
+  if (patch.title !== undefined) runbook.title = patch.title.trim();
+  if (patch.items !== undefined) runbook.items = patch.items;
+  if (patch.linkedEntityIds !== undefined) {
+    runbook.linkedEntityIds = filterLinkIdsForSource(data.entities, "create", patch.linkedEntityIds);
+  }
+  runbook.updatedAt = now;
+
+  await writeArgus(data);
+  return runbook;
+}
+
+export async function softDeleteRunbook(id: string): Promise<void> {
+  const data = await readArgus();
+  const runbook = data.runbooks.find((entry) => entry.id === id);
+  if (!runbook || !isActiveRecord(runbook)) return;
+  runbook.deletedAt = new Date().toISOString();
+  runbook.updatedAt = runbook.deletedAt;
+  await writeArgus(data);
+}
+
 // --- Inbox ---
 
 export async function getInboxItems(
@@ -645,7 +725,6 @@ export async function linkInboxToEntities(inboxId: string, entityIds: string[]):
   data.inboxItems[idx] = {
     ...inbox,
     linkedEntityIds: merged,
-    status: inbox.status === "converted" ? "converted" : "linked",
   };
 
   for (const eid of unique) {
@@ -657,12 +736,81 @@ export async function linkInboxToEntities(inboxId: string, entityIds: string[]):
   return data.inboxItems[idx];
 }
 
+/** Replace inbox entity links exactly (supports unlink all). Used by v2 link UI. */
+export async function setInboxLinkedEntities(inboxId: string, entityIds: string[]): Promise<InboxItem> {
+  if (isCloudInboxStore()) return cloudInbox.setInboxLinkedEntities(inboxId, entityIds);
+  const unique = [...new Set(entityIds.filter(Boolean))];
+
+  const data = await readArgus();
+  const idx = data.inboxItems.findIndex((i) => i.id === inboxId);
+  if (idx === -1) throw new Error("Inbox item not found");
+  const inbox = data.inboxItems[idx];
+  if (inbox.status === "archived") throw new Error("Inbox item is archived");
+
+  const now = new Date().toISOString();
+  const nextStatus = inboxStatusAfterLinkChange(inbox.status, unique.length);
+  data.inboxItems[idx] = {
+    ...inbox,
+    linkedEntityIds: unique,
+    ...(nextStatus ? { status: nextStatus } : {}),
+  };
+
+  for (const eid of unique) {
+    const entity = data.entities.find((e) => e.id === eid);
+    if (entity) entity.updatedAt = now;
+  }
+
+  await writeArgus(data);
+  return data.inboxItems[idx];
+}
+
+/** Link inbox email to entities; keep email in inbox (pending/linked, not converted). */
+export async function saveInboxEvidenceLinks(
+  inboxId: string,
+  entityIds: string[]
+): Promise<InboxItem> {
+  return setInboxLinkedEntities(inboxId, entityIds);
+}
+
 export async function archiveInboxItem(id: string): Promise<InboxItem | undefined> {
   if (isCloudInboxStore()) return cloudInbox.archiveInboxItem(id);
   const data = await readArgus();
   const idx = data.inboxItems.findIndex((i) => i.id === id);
   if (idx === -1) return undefined;
   data.inboxItems[idx] = { ...data.inboxItems[idx], status: "archived" };
+  await writeArgus(data);
+  return data.inboxItems[idx];
+}
+
+export type InboxTriagePatch = {
+  status?: InboxItem["status"];
+  followUpDate?: string | null;
+  topics?: string[];
+};
+
+export async function updateInboxTriage(inboxId: string, patch: InboxTriagePatch): Promise<InboxItem> {
+  if (isCloudInboxStore()) return cloudInbox.updateInboxTriage(inboxId, patch);
+
+  const data = await readArgus();
+  const idx = data.inboxItems.findIndex((i) => i.id === inboxId);
+  if (idx === -1) throw new Error("Inbox item not found");
+  const inbox = data.inboxItems[idx];
+  if (inbox.status === "archived") throw new Error("Inbox item is archived");
+
+  data.inboxItems[idx] = {
+    ...inbox,
+    status: patch.status ?? inbox.status,
+    followUpDate:
+      patch.followUpDate === null
+        ? undefined
+        : patch.followUpDate !== undefined
+          ? patch.followUpDate.slice(0, 10)
+          : inbox.followUpDate,
+    topics:
+      patch.topics !== undefined
+        ? [...new Set(patch.topics.map((tag) => tag.trim()).filter(Boolean))]
+        : inbox.topics,
+  };
   await writeArgus(data);
   return data.inboxItems[idx];
 }
@@ -693,6 +841,8 @@ export async function convertInboxToLog(
   const classificationStatus = resolveClassificationStatus(entityIds);
   const now = new Date().toISOString();
   const isPrivate = input.private || Boolean(inbox.private);
+  const followUpDate = input.followUpDate ?? inbox.followUpDate;
+  const topics = input.topics ?? inbox.topics ?? [];
   const log: Log = {
     id: generateId(),
     kind: input.kind,
@@ -705,8 +855,8 @@ export async function convertInboxToLog(
     source: inbox.source === "email" ? "email" : "inbox",
     attachmentIds: [...inbox.attachmentIds],
     inboxItemId: inbox.id,
-    followUpDate: input.followUpDate,
-    topics: input.topics ?? [],
+    followUpDate,
+    topics,
     createdAt: now,
     updatedAt: now,
   };

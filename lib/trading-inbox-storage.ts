@@ -1,8 +1,7 @@
 import type { BridgeInboxItem } from "./bridge";
 import { getLocalInboxItem } from "./trading-inbox-storage-local";
 import { getSupabaseInboxItem } from "./trading-inbox-store/supabase";
-import { listSupabasePendingInboxItems } from "./trading-inbox-submit";
-import { listLocalInboxItems } from "./trading-inbox-storage-local";
+import { listPendingInboxForRuntime } from "./trading-inbox-submit";
 
 export {
   createLocalInboxItem,
@@ -14,13 +13,7 @@ export {
 export async function listAllPendingInboxItems(
   workerItems: BridgeInboxItem[]
 ): Promise<BridgeInboxItem[]> {
-  const [local, supabase] = await Promise.all([
-    listLocalInboxItems(),
-    listSupabasePendingInboxItems(),
-  ]);
-  return [...workerItems, ...supabase, ...local].sort((a, b) =>
-    b.receivedAt.localeCompare(a.receivedAt)
-  );
+  return listPendingInboxForRuntime(workerItems);
 }
 
 export async function getInboxItemById(

@@ -7,22 +7,39 @@ import {
 import type { EntityPickerBuckets } from "./journal-helpers";
 
 /** Where the link picker is opened from — drives allowed targets and time rules. */
-export type LinkSourceKind = "inbox" | "log" | "project" | "topic" | "event" | "organization" | "person";
+export type LinkSourceKind =
+  | "inbox"
+  | "log"
+  | "project"
+  | "topic"
+  | "event"
+  | "organization"
+  | "person"
+  | "create";
 
 export type LinkContext = {
   projectStart?: string;
   projectEnd?: string;
 };
 
+export const REFERENCE_KINDS_ALL: ReferenceKind[] = [
+  "person",
+  "organization",
+  "project",
+  "topic",
+  "event",
+];
+
 export const ALLOWED_LINK_TARGETS: Record<LinkSourceKind, ReferenceKind[]> = {
-  inbox: ["person", "organization", "project", "topic", "event"],
-  /** Notes and captures can gain any reference link over time. */
-  log: ["person", "organization", "project", "topic", "event"],
-  project: ["person", "topic", "event"],
-  topic: ["person", "event"],
-  event: ["person"],
-  organization: ["person"],
-  person: ["person"],
+  inbox: REFERENCE_KINDS_ALL,
+  log: REFERENCE_KINDS_ALL,
+  project: REFERENCE_KINDS_ALL,
+  topic: REFERENCE_KINDS_ALL,
+  event: REFERENCE_KINDS_ALL,
+  organization: REFERENCE_KINDS_ALL,
+  person: REFERENCE_KINDS_ALL,
+  /** All create / link flows — any reference type. */
+  create: REFERENCE_KINDS_ALL,
 };
 
 export function linkSourceKindFromEntity(entity: Entity): LinkSourceKind {
@@ -37,9 +54,18 @@ export function linkSourceKindFromEntity(entity: Entity): LinkSourceKind {
 
 export function entityReferenceKind(entity: Entity): ReferenceKind | null {
   const kind = entityTypeToReferenceKind(entity.type, entity.notes ?? "");
-  if (kind === "person" || kind === "organization" || kind === "project" || kind === "topic" || kind === "event") {
+  if (
+    kind === "person" ||
+    kind === "organization" ||
+    kind === "project" ||
+    kind === "topic" ||
+    kind === "event"
+  ) {
     return kind;
   }
+  if (entity.type === "person") return "person";
+  if (entity.type === "company") return "organization";
+  if (entity.type === "project") return "project";
   return null;
 }
 
@@ -66,15 +92,13 @@ export function isEntityLinkableTarget(
   source: LinkSourceKind,
   context: LinkContext = {}
 ): boolean {
+  if (referenceKindFromNotes(target.notes ?? "") === "document") {
+    return source === "create";
+  }
+
   const targetKind = entityReferenceKind(target);
   if (!targetKind) return false;
   if (!ALLOWED_LINK_TARGETS[source].includes(targetKind)) return false;
-
-  if (source === "project" && targetKind === "event") {
-    if (context.projectStart || context.projectEnd) {
-      return isDateWithinRange(entityEventDate(target), context.projectStart, context.projectEnd);
-    }
-  }
 
   return true;
 }

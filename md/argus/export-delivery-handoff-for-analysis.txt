@@ -1,0 +1,328 @@
+ARGUS EXPORT / DELIVERY LAYER — HANDOFF FOR ANALYSIS
+====================================================
+Repository: MatrixTrade (github.com/argometal/MatrixTrade)
+Module: ARGUS at /argus/*
+Production: https://matrix-trade-theta.vercel.app
+Date: 2026-07-07
+Status: REVIEW ONLY — NOT IMPLEMENTED
+
+PURPOSE OF THIS DOCUMENT
+------------------------
+Provide ChatGPT (or another analyst) with enough context to analyze a proposed
+ARGUS "delivery/export" layer. The web app is the workspace; the final output
+should be an evidence package.
+
+ARGUS PRODUCT LOOP (TARGET)
+---------------------------
+Capture → Organize → Retrieve → Deliver
+
+Today ARGUS is strong on Capture, Organize, and Retrieve.
+There is NO Deliver layer yet.
+
+
+WHAT ARGUS IS
+-------------
+ARGUS is a private professional journal / knowledge system:
+- Capture evidence (emails, notes, files, journal entries)
+- Link evidence to People, Organizations, Projects, Events, Topics
+- Retrieve via v2 browsers, timelines, inbox, search
+- AI Charter: every conclusion must trace to evidence; never fabricate
+
+Design docs in repo:
+- md/argus/ai-charter.md
+- md/argus/correlation-guide.md
+- md/argus/v2-design-checklist.md
+- md/argus/model-alignment-audit.md (notes future unified evidence table)
+
+
+CURRENT DATA MODEL (v3)
+-----------------------
+Single graph stored in ArgusData (journal.json locally OR Supabase):
+
+OBJECT TYPES:
+1. Entity — person | company (org) | project | other (topic/event/document via notes prefix)
+2. Log — journal entry (kind: log | event | follow_up)
+3. InboxItem — email/intake evidence (status: pending | linked | converted | archived)
+4. Attachment — file metadata + bytes (parent: inbox or journal)
+
+PRIMARY LINKS:
+- Log.entityIds[]           → Entity (many-to-many)
+- InboxItem.linkedEntityIds[] → Entity (many-to-many)
+- Log.inboxItemId           → InboxItem (journal provenance from email)
+- InboxItem.convertedLogId  → Log (when inbox converted to journal)
+- Log.attachmentIds[]       → Attachment
+- InboxItem.attachmentIds[] → Attachment
+- Attachment.parentType + parentId → inbox or journal parent
+
+KEY METADATA:
+- Timestamps: createdAt, updatedAt, receivedAt, log.date, deletedAt (soft delete)
+- Sources: log.source (manual|inbox|email|file), inbox.source (manual|api|email|file)
+- Privacy: log.private, inbox.private (PIN-gated)
+- Topics: log.topics[] (free-form tags)
+- Classification: log.classificationStatus (classified | needs_classification)
+- Email: rawEmail JSON (from, to, subject, text, html, receivedAt)
+
+NO FIRST-CLASS TYPES FOR:
+- Decision
+- Lesson learned
+- Recognition / achievement
+- Legal hold / chain of custody
+- Export audit record
+
+
+EXISTING RETRIEVAL CODE (REUSABLE FOR EXPORT)
+----------------------------------------------
+lib/argus/entity-evidence.ts          — entity-scoped logs + inbox
+lib/argus/inbox-entity-links.ts       — inbox linked to entity, evidence counts
+lib/argus/project-evidence.ts         — project evidence loaders
+lib/argus/project-evidence-scope.ts   — direct + via-contact project scope, date-bounded
+lib/argus/v2/hierarchy.ts             — LENS RULES (critical):
+  - Organization: direct links only, all dates
+  - Person: direct links only, all dates
+  - Project: direct + via linkedPersonIds, bounded by project startDate/endDate
+lib/argus/v2/timeline-builders.ts     — merge logs + inbox into chronology
+lib/argus/inbox-enrich.ts             — enrich inbox with email view model
+lib/argus/email-view.ts               — parse StoredEmailPayload, attachment URLs
+lib/argus/network.ts                  — getEntityHistory, follow-ups, related entities
+lib/argus/network-intelligence.ts     — outcomeScore (regex heuristics), relationship health
+lib/argus/context.ts                  — co-mention / related entity graph
+lib/argus/server-storage.ts           — readArgus(), readAttachmentBytes(), getLog(), etc.
+app/api/argus/files/[id]/route.ts     — authenticated single-file download
+
+EXISTING EXPORT / BACKUP (LIMITED)
+----------------------------------
+lib/argus/supabase-protection/export.ts — exportArgusSupabaseTables()
+  → timestamped JSON of inbox + attachments metadata + journal blob
+  → does NOT bundle attachment file bytes in one package
+lib/argus/data-safety/backup.ts         — rotating local journal.json backups
+tools/backup-argus-supabase.ts          — CLI Supabase export
+GET /api/argus/files/{id}               — per-file download only
+
+NOT IMPLEMENTED:
+- ZIP export packages
+- PDF report generation (only inline preview for images/PDF)
+- Entity-scoped export bundles
+- Import format for portable archives
+- Tamper-evident manifests / hashes
+- Redaction workflow
+
+
+PROPOSED EXPORT MODES (5 PACKAGES)
+----------------------------------
+
+1. RECOGNITION REPORT
+   Audience: promotion / review / management
+   Contents: projects, contributions, timeline, evidence references, attachments
+   Use case: demonstrate professional achievements from evidence
+
+2. INCIDENT PACKAGE
+   Audience: HR / legal / investigation
+   Contents: chronology, emails, journal, decisions, people, documents
+   Requirements: timestamped, read-only, high integrity
+
+3. KNOWLEDGE PACKAGE
+   Audience: handover / technical learning
+   Contents: topic/project lessons, timeline, documents, related evidence
+   Use case: transfer knowledge when leaving a project or role
+
+4. RELATIONSHIP BRIEF
+   Audience: meeting preparation
+   Contents: person timeline, prior interactions, projects, orgs, topics, follow-ups
+   Use case: prepare for a call or meeting with context
+
+5. EVIDENCE VAULT
+   Audience: backup / portable archive / future import
+   Contents: linked data + files + metadata
+   Use case: portable backup; future re-import into ARGUS
+
+
+PACKAGE-BY-PACKAGE: DATA AVAILABLE vs MISSING
+-----------------------------------------------
+
+1. RECOGNITION REPORT
+   AVAILABLE:
+   - Projects linked to person via entityIds / linkedEntityIds
+   - Timeline: buildTimelineFromLogsAndInbox()
+   - Evidence refs: log IDs, inbox IDs, attachment IDs
+   - Attachments via readAttachmentBytes()
+   - Heuristic outcomeScore from network-intelligence.ts (regex on journal text)
+   MISSING:
+   - Formal "contribution" or "achievement" taxonomy
+   - Curated narrative sections (must not fabricate per AI Charter)
+   - Multi-project roll-up for one person with review-period filter
+   - Manager-safe redaction
+   - PDF layout / polished report template
+   RISK: Medium-high (HR sensitivity, narrative temptation)
+
+2. INCIDENT PACKAGE
+   AVAILABLE:
+   - Full chronology with timestamps
+   - Emails: rawEmail, headers, receivedAt
+   - Journal logs with entity links
+   - People, orgs, projects via entity graph
+   - Documents: attachment files + document entities
+   - "Decisions" only inferable from journal text (no Decision type)
+   MISSING:
+   - Chain of custody
+   - Export audit log (who exported what when)
+   - Cryptographic manifest / tamper evidence
+   - Legal hold flags
+   - Redaction workflow
+   - Dedup when same email exists as inbox item AND converted journal
+   RISK: Highest (legal-grade requirements not met)
+
+3. KNOWLEDGE PACKAGE
+   AVAILABLE:
+   - Project-scoped evidence: getProjectEvidenceScope() (best join logic in repo)
+   - Topic entities + log.topics
+   - Timeline + attachments
+   - Related people/orgs via linkedEntityIds, linkedPersonIds
+   MISSING:
+   - Structured "lessons learned" field
+   - Handover document template
+   - Clear separation: interpretation vs raw evidence
+   RISK: Low-medium
+
+4. RELATIONSHIP BRIEF
+   AVAILABLE:
+   - Person timeline: personEvidenceScope() + getEntityHistory
+   - Prior interactions: EntityNetworkView, network-intelligence
+   - Linked projects, orgs, topics
+   - Follow-ups: log.kind === "follow_up"
+   MISSING:
+   - Meeting agenda template
+   - AI-generated talking points (would need strict evidence citations)
+   - Calendar integration
+   RISK: Lowest (single entity, read-only, factual assembly)
+
+5. EVIDENCE VAULT
+   AVAILABLE:
+   - Full metadata: readArgus() or exportArgusSupabaseTables()
+   - Attachment metadata in ArgusData / argus_attachments
+   - Attachment bytes: local files/ or Supabase argus-files bucket
+   - Partial restore path for Supabase JSON
+   MISSING:
+   - Unified .argus archive format
+   - ZIP bundling metadata + all file bytes
+   - Versioned manifest schema
+   - Scoped export (person/project/org) vs full vault
+   - Import validation for portable packages
+   RISK: Low (foundation layer)
+
+
+RECOMMENDED BUILD ORDER (LOWEST RISK FIRST)
+-------------------------------------------
+1. Evidence Vault (scoped ARGUS Archive) — foundation for all others
+2. Relationship Brief — smallest lens, high value, read-only
+3. Knowledge Package — project-scoped; reuses project-evidence-scope
+4. Recognition Report — needs period selection + careful presentation
+5. Incident Package — needs legal-grade manifest, dedup, redaction, audit trail
+
+
+SUGGESTED OUTPUT FORMATS
+------------------------
+PRIMARY (Phase 1):
+  - ARGUS Archive JSON manifest (versioned schema, source of truth)
+  - ZIP container: manifest.json + evidence/ + files/{attachmentId}
+
+SECONDARY (Phase 2):
+  - HTML read-only views (print to PDF via browser — avoid server PDF initially)
+
+TERTIARY (Phase 3):
+  - Server-generated PDF for polished Recognition / Incident packages
+
+AVOID PDF-first: no PDF library in repo today; PDF is presentation, not evidence.
+
+JSON = truth. ZIP = delivery. HTML = human view. PDF = external polish.
+
+
+PROPOSED ARCHITECTURE (ALIGNED WITH CURRENT REPO)
+-------------------------------------------------
+Do NOT put export logic in React components.
+Add server-side delivery layer reusing existing retrieval primitives:
+
+lib/argus/export/                    (NEW)
+  types.ts                           ExportPackageKind, ExportManifest, ExportScope
+  collect-evidence.ts                Single collector: hierarchy + dedup + private filter
+  dedup.ts                           inbox ↔ journal via inboxItemId / convertedLogId
+  manifest.ts                        Versioned manifest + SHA-256 file hashes
+  packages/
+    vault.ts
+    relationship-brief.ts
+    knowledge-package.ts
+    recognition-report.ts            (later)
+    incident-package.ts                (later)
+  writers/
+    json-writer.ts
+    zip-writer.ts                    streams from readAttachmentBytes()
+    html-writer.ts                     (phase 2)
+
+app/api/argus/export/route.ts        POST { package, anchorId?, from?, to?, includePrivate }
+
+PRINCIPLES:
+1. One collector, many assemblers (package types differ in scope + presentation only)
+2. Lens rules stay in hierarchy.ts — do not duplicate
+3. Manifest-first: every ZIP has exportedAt, exportedBy, packageType, scope, evidenceIndex, hashes
+4. Dedup before deliver (inbox + converted journal = one canonical row + cross-refs)
+5. Private gate via private-access.ts
+6. No new DB schema for v1 (stateless export generation)
+7. UI entry: Export button on v2 person / project / org detail (later)
+
+
+CRITICAL GAPS (ALL PACKAGES)
+----------------------------
+- No Decision entity type
+- Email duplicate: inbox item may also exist as journal (inboxItemId / convertedLogId)
+- Attachments split: local FS vs Supabase bucket (abstract via readAttachmentBytes)
+- No export audit trail
+- No redaction for HR/legal
+- outcomeScore is heuristic regex — not factual scoring
+
+
+RECENT RELATED WORK (CONTEXT)
+-----------------------------
+Change 140 (in progress): Inbox → unified Create/Link flow
+  - Email stays in inbox as evidence (pending/linked, not converted)
+  - Optional journal created with inboxItemId cross-ref
+  - Relevant because export must handle dual inbox+journal evidence correctly
+
+v2 UI: browsers for org/project/network/topics/events, inbox v2, Create/Link window
+Checklist v1.2: coded vs user-reviewed audit (md/argus/v2-design-checklist.md)
+
+
+QUESTIONS FOR CHATGPT TO ANALYZE
+--------------------------------
+1. Is the proposed 5-package taxonomy complete, or should packages be merged/split?
+2. What should the manifest.json schema contain for v1 (fields, versioning, integrity)?
+3. How should deduplication work when email exists as both InboxItem and Log?
+4. What is the minimum viable Evidence Vault for import/export round-trip?
+5. Which package delivers the most user value per engineering effort?
+6. What legal/HR requirements must Incident Package meet before it is safe to ship?
+7. Should Recognition Report use AI summarization, and if so, what guardrails?
+8. HTML+print vs server PDF — tradeoffs for this stack (Next.js 15, Vercel)?
+9. How to handle private/PIN-gated records in exports?
+10. Does this architecture conflict with model-alignment-audit.md future argus_evidence table?
+11. Suggested API design: sync vs async export for large ZIPs?
+12. Redaction strategy: pre-export filter vs post-export tooling?
+
+
+KEY FILE PATHS (REPO)
+---------------------
+lib/argus/types.ts
+lib/argus/server-storage.ts
+lib/argus/entity-evidence.ts
+lib/argus/inbox-entity-links.ts
+lib/argus/project-evidence-scope.ts
+lib/argus/v2/hierarchy.ts
+lib/argus/v2/timeline-builders.ts
+lib/argus/network-intelligence.ts
+lib/argus/supabase-protection/export.ts
+lib/argus/inbox-enrich.ts
+lib/argus/email-view.ts
+app/api/argus/files/[id]/route.ts
+md/argus/ai-charter.md
+md/argus/model-alignment-audit.md
+
+
+END OF HANDOFF
+==============

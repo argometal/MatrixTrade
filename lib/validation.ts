@@ -1,4 +1,10 @@
-import { isCycleLossLimitBreached } from "./calculate";
+import {
+  isMonthlyCapBreached,
+  sumTickerRealizedPnL,
+  type MonthlyRisk,
+  wouldExceedMonthlyCap,
+  wouldExceedTickerCap,
+} from "./monthly-risk";
 import type { CloseTradeInput, CreateTradeInput, ExperimentRules, Trade } from "./types";
 
 export type ValidationError = { field: string; message: string };
@@ -13,7 +19,7 @@ export function validateCreateTrade(
   input: CreateTradeInput,
   existingTrades: Trade[],
   rules: ExperimentRules,
-  realizedPnL: number
+  monthly: MonthlyRisk
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
@@ -38,11 +44,22 @@ export function validateCreateTrade(
     });
   }
 
-  if (isCycleLossLimitBreached(realizedPnL, rules.cycleLossLimit)) {
+  if (isMonthlyCapBreached(monthly.lossUsedThisMonth, monthly.monthlyAllowance)) {
     errors.push({
-      field: "cycle",
-      message: `Cycle loss limit reached (${rules.cycleLossLimit} USD). No new trades allowed.`,
+      field: "monthly",
+      message: `Monthly loss cap reached ($${monthly.monthlyAllowance.toFixed(2)} including $${monthly.carryoverIn.toFixed(2)} carryover).`,
     });
+  }
+
+  const ticker = input.ticker?.trim().toUpperCase();
+  if (ticker) {
+    const tickerPnL = sumTickerRealizedPnL(existingTrades, ticker);
+    if (tickerPnL <= rules.maxLossPerTicker) {
+      errors.push({
+        field: "ticker",
+        message: `${ticker} already hit the per-stock loss limit (${rules.maxLossPerTicker} USD).`,
+      });
+    }
   }
 
   if (!input.ticker?.trim()) {
@@ -97,7 +114,10 @@ export function validateTradeCloseProposal(
 
 export function validateCloseTrade(
   trade: Trade | undefined,
-  input: CloseTradeInput
+  input: CloseTradeInput,
+  rules: ExperimentRules,
+  monthly: MonthlyRisk,
+  allTrades: Trade[]
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
@@ -112,6 +132,30 @@ export function validateCloseTrade(
 
   if (input.exit === undefined || input.exit <= 0) {
     errors.push({ field: "exit", message: "Exit price is required to close a trade." });
+    return errors;
+  }
+
+  const result = (input.exit - trade.entry) * trade.shares;
+
+  if (
+    wouldExceedMonthlyCap(
+      monthly.lossUsedThisMonth,
+      result,
+      monthly.monthlyAllowance
+    )
+  ) {
+    errors.push({
+      field: "monthly",
+      message: `Closing at this exit would exceed the monthly cap ($${monthly.monthlyAllowance.toFixed(2)}).`,
+    });
+  }
+
+  const tickerPnL = sumTickerRealizedPnL(allTrades, trade.ticker, trade.id);
+  if (wouldExceedTickerCap(tickerPnL, result, rules.maxLossPerTicker)) {
+    errors.push({
+      field: "ticker",
+      message: `Closing at this exit would exceed the ${trade.ticker} per-stock limit (${rules.maxLossPerTicker} USD).`,
+    });
   }
 
   return errors;

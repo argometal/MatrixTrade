@@ -40,8 +40,8 @@ Plain JSON or a single fenced block:
 {
   "type": "trade-proposal",
   "proposal": {
-    "id": "H002",
-    "ticker": "GOOGL",
+    "id": "H00X",
+    "ticker": "TICKER",
     "entry": 175.5,
     "stop": 170,
     "shares": 10
@@ -138,7 +138,7 @@ Also run `supabase/ai-notes.sql` if using prior AI notes in snapshots.
 
 ## Done criteria
 
-User can paste one `trade-proposal` AI Block (e.g. GOOGL H002) → see it in `/inbox` → Apply → trade in Supabase.
+User can paste one valid `trade-proposal` AI Block → see it in `/inbox` → Apply → trade in Supabase.
 
 ---
 

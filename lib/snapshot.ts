@@ -1,6 +1,7 @@
 import { calculateTradeResult } from "./calculate";
 import { MISTAKE_LABELS } from "./review";
 import { getSetupName, type Setup } from "./setup-types";
+import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment, Trade } from "./types";
 
 function formatSigned(value: number): string {
@@ -91,6 +92,7 @@ export function selectSnapshotTrades(
 
 export function buildSnapshot(
   experiment: Experiment,
+  monthly: MonthlyRisk,
   trades: Trade[],
   options: SnapshotOptions = {}
 ): string {
@@ -111,9 +113,14 @@ export function buildSnapshot(
     `Date: ${today}`,
     "Cycle: 1",
     "",
-    `Loss limit: ${formatSigned(experiment.cycleLossLimit)}`,
-    `Realized P/L: ${formatSigned(experiment.realizedPnL)}`,
-    `Remaining risk: ${formatSigned(experiment.remainingLossBudget)}`,
+    `Monthly budget: $${monthly.baseCap.toFixed(2)}`,
+    `Carryover from prior month: $${monthly.carryoverIn.toFixed(2)}`,
+    `Spent this month (gross): $${monthly.lossUsedThisMonth.toFixed(2)}`,
+    `This month P/L (net): ${formatSigned(monthly.monthlyRealizedPnL)}`,
+    `Monthly room left: $${monthly.monthlyLossRoom.toFixed(2)}`,
+    "",
+    `Experiment net P/L: ${formatSigned(experiment.realizedPnL)}`,
+    `Total losses (gross): ${formatSigned(experiment.grossLoss)}`,
     "",
     `Closed trades: ${experiment.closedTrades} / ${experiment.maxTrades}`,
     `Wins: ${experiment.wins}`,
@@ -165,11 +172,12 @@ export function buildAnalysisSection(
 
 export function buildFullContext(
   experiment: Experiment,
+  monthly: MonthlyRisk,
   trades: Trade[],
   notes: Map<string, string>,
   options: SnapshotOptions = {}
 ): string {
-  const snapshot = buildSnapshot(experiment, trades, options);
+  const snapshot = buildSnapshot(experiment, monthly, trades, options);
   const { open, pending, closed } = selectSnapshotTrades(trades, options);
   const withNotes = [...open, ...pending, ...closed];
   const analysis = buildAnalysisSection(withNotes, notes);

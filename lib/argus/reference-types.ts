@@ -86,6 +86,15 @@ export function buildReferenceNotes(kind: ReferenceKind, notes: string): string 
   return trimmed;
 }
 
+export function buildDocumentNotes(notes: string): string {
+  const trimmed = notes.trim();
+  return trimmed ? `Kind: Document\n${trimmed}` : "Kind: Document";
+}
+
+export function isDocumentEntity(entity: { type: EntityType; notes?: string }): boolean {
+  return referenceKindFromNotes(entity.notes ?? "") === "document";
+}
+
 export function referenceKindToCreateInput(
   kind: ReferenceKind,
   name: string,
@@ -112,7 +121,8 @@ export function createInputToReferenceKind(entityType: EntityType, notes: string
 
 export function entityDetailHref(entity: { id: string; type: EntityType }): string {
   if (entity.type === "project") return `/argus/projects/${entity.id}`;
-  return `/argus/network/${entity.id}`;
+  if (entity.type === "company") return `/argus/v2/organizations/${entity.id}`;
+  return `/argus/v2/network/${entity.id}`;
 }
 
 export function entityNotesForDisplay(notes: string): string {

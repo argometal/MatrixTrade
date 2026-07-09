@@ -1,0 +1,156 @@
+ARGUS MOBILE (PHONE) CHANGES — HANDOFF
+======================================
+Repository: MatrixTrade (github.com/argometal/MatrixTrade)
+Date: 2026-07-07
+Breakpoint: below 1024px (Tailwind `lg` — phones and small tablets)
+
+PURPOSE
+-------
+Summary of mobile/phone UI changes discussed and implemented for ARGUS v2.
+Copy this file or upload to ChatGPT for analysis.
+
+
+CHANGE 139 — MOBILE CREATE & LINK WIZARD
+----------------------------------------
+Component: app/argus/components/ArgusCreateLinkMobile.tsx
+Desktop:   app/argus/components/ArgusCreateLinkWindow.tsx (lg+ only)
+Shared:    lib/argus/create-link-flow-state.ts, create-link-shared.tsx
+
+DESIGN
+------
+Desktop = 4 columns visible at once (Create | Form | Link | Review)
+Phone   = full-screen step-by-step wizard
+
+MOBILE STEPS
+------------
+1. choose-type    — What to create? (Journal, Person, Org, Project, Event, Topic, Document)
+2. details        — Fill form (progress bar: step 1)
+3. link           — Search & link entities (progress bar: step 2)
+4. missing        — Create missing inline (Person, Org, Project, Event, Topic, Document)
+5. review-links   — Review all links (progress bar: step 4)
+6. review-item    — Final preview before save
+7. processing     — Saving animation + checklist
+8. success        — "All done!" → View Item or Go to Home
+
+ENTRY POINTS (PHONE)
+--------------------
+- Top bar + Create button (ArgusAddProvider)
+- V2 Create buttons on browse pages
+- Same flow state hook as desktop
+
+LINK-ONLY MODE (mode: "link")
+-----------------------------
+- Skips choose-type and details
+- Starts directly at link step
+- Save label: "Save & Link"
+- Used when linking from an existing entity context
+
+RECOVERY
+--------
+Git tag before mobile wizard: source-3
+Rollback: git checkout source-3
+
+DOCS IN REPO
+------------
+md/argus/create-link-mobile-checklist.md
+md/argus/correlation-guide.md
+md/argus/create-link-correlation-review.md
+
+
+CHANGE 140 — INBOX EMAIL → CREATE/LINK ON PHONE
+------------------------------------------------
+Component: app/argus/v2/inbox/components/V2InboxDetailPanel.tsx
+Flow:      mode "inbox-evidence" via openCreateFlow()
+
+FROM V2 INBOX EMAIL DETAIL
+--------------------------
+Button: "Create / Link" (next to "+ Link")
+
+WHAT IT DOES
+------------
+- Opens unified Create & Link flow (mobile wizard on phone)
+- Preloads email subject + body as evidence
+- Journal is NOT required first
+- Email stays in inbox after save (status pending/linked, NOT converted)
+
+PHONE-SPECIFIC INBOX-EVIDENCE BEHAVIOR
+--------------------------------------
+- choose-type screen title: "Create or link this email"
+- Email evidence banner shows subject + preview
+- "Link only" option at top of choose-type:
+  - Assign email to existing records
+  - No new journal or entity required
+  - Goes straight to link step
+- Or pick Journal / Person / Org / Project / Event / Topic / Document as usual
+- Inline "create missing" still works (auto-links to email)
+- After save: returns to inbox (returnTo URL), not auto-navigate to new page
+- Success screen: View Item or back to inbox / home
+
+SAVE BEHAVIOR (SERVER)
+----------------------
+- linkOnly: saveInboxEvidenceLinks() — email linked to entities only
+- journal: createLog with inboxItemId + link inbox to same entities
+- entity: create entity + link email to it
+- Email NOT marked converted (no convertedLogId)
+
+STATUS
+------
+Branch: cursor/inbox-evidence-create-link-e1a0
+PR: #8
+User QA on phone: NOT DONE YET
+
+
+V2 INBOX LAYOUT ON PHONE
+------------------------
+File: app/argus/v2/inbox/components/V2InboxShell.tsx
+
+- Narrow screen: list stacks above detail (not side-by-side)
+- Tabs: All, Unread, In Progress, Processed, Archived
+- Select email → detail panel below
+- Create / Link + + Link in email header
+- Bottom floating nav: Home, Network, Inbox, Search (V2MobileNav)
+
+
+GLOBAL V2 SHELL ON PHONE
+------------------------
+- Left sidebar hidden below lg
+- Top bar: compact Argus title + search hidden on small screens
+- Bottom dock navigation
+- Inbox badge shows pending count
+
+
+NOT MOBILE-ONLY (SAME ON PHONE + DESKTOP)
+-----------------------------------------
+- CaptureSheet convert-to-journal (older flow, still in inbox panel menu)
+- Entity link modal (+ Link)
+- Archive inbox
+- Suggest entities / tags on convert
+- Live data from readArgus + inbox store
+
+
+WEB VS MOBILE QUICK TABLE
+-------------------------
+| Feature              | Desktop (lg+)        | Phone (< lg)           |
+|----------------------|----------------------|--------------------------|
+| Create & Link        | 4-column window      | Step wizard              |
+| Inbox layout         | List + detail side   | List then detail stack   |
+| Navigation           | Left sidebar         | Bottom dock              |
+| Inbox Create/Link    | Same flow            | Same flow, wizard UI     |
+| Post-save (inbox)    | returnTo inbox       | returnTo inbox           |
+
+
+FILES TO READ IN REPO
+---------------------
+app/argus/components/ArgusCreateLinkMobile.tsx
+app/argus/components/ArgusCreateLinkWindow.tsx
+app/argus/components/ArgusAddProvider.tsx
+app/argus/v2/inbox/components/V2InboxDetailPanel.tsx
+app/argus/v2/inbox/components/V2InboxShell.tsx
+app/argus/v2/components/V2Sidebar.tsx (V2MobileNav)
+lib/argus/create-link-flow-state.ts
+lib/argus/create-flow-types.ts
+app/argus/actions.ts (saveUnifiedCreateFlowAction, inbox-evidence mode)
+
+
+END OF HANDOFF
+==============
