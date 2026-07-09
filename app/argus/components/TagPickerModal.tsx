@@ -16,6 +16,9 @@ interface TagPickerModalProps {
   selectedTags: string[];
   onChange: (tags: string[]) => void;
   onClose: () => void;
+  /** When set, Done applies tags through this callback instead of only closing. */
+  onConfirm?: (tags: string[]) => void;
+  confirmLabel?: string;
 }
 
 function normalizeTag(raw: string): string {
@@ -35,7 +38,15 @@ function TagRow({ tag, checked, onToggle }: { tag: string; checked: boolean; onT
   );
 }
 
-export function TagPickerModal({ open, buckets, selectedTags, onChange, onClose }: TagPickerModalProps) {
+export function TagPickerModal({
+  open,
+  buckets,
+  selectedTags,
+  onChange,
+  onClose,
+  onConfirm,
+  confirmLabel,
+}: TagPickerModalProps) {
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [newTagName, setNewTagName] = useState("");
@@ -196,10 +207,14 @@ export function TagPickerModal({ open, buckets, selectedTags, onChange, onClose 
           </button>
           <button
             type="button"
-            onClick={onClose}
-            className="flex-1 rounded-lg bg-teal-700 py-2.5 text-sm font-medium text-white hover:bg-teal-600"
+            onClick={() => {
+              if (onConfirm) onConfirm(selectedTags);
+              else onClose();
+            }}
+            disabled={onConfirm ? selectedTags.length === 0 : false}
+            className="flex-1 rounded-lg bg-teal-700 py-2.5 text-sm font-medium text-white hover:bg-teal-600 disabled:opacity-40"
           >
-            {CAPTURE.done}
+            {confirmLabel ?? CAPTURE.done}
           </button>
         </div>
       </div>

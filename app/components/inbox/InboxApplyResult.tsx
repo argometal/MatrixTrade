@@ -34,37 +34,41 @@ export async function InboxApplyResult({
   const isPlaybookType = type.startsWith("playbook-");
 
   return (
-    <section className="space-y-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
-      <h2 className="text-base font-semibold">Applied successfully</h2>
+    <section className="space-y-4 rounded-lg border border-emerald-500/30 bg-emerald-950/40 p-4 text-sm text-emerald-100">
+      <h2 className="text-base font-semibold text-emerald-200">Applied successfully</h2>
       <dl className="grid gap-2 sm:grid-cols-2">
         <div>
-          <dt className="text-xs uppercase tracking-wide text-emerald-800">Proposal type</dt>
-          <dd className="font-mono">{type}</dd>
+          <dt className="text-xs uppercase tracking-wide text-emerald-400/80">Proposal type</dt>
+          <dd className="font-mono text-emerald-100">{type}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-emerald-800">
+          <dt className="text-xs uppercase tracking-wide text-emerald-400/80">
             {isPlaybookType ? "Affected playbook" : "Affected trade"}
           </dt>
-          <dd className="font-mono">{isPlaybookType ? playbookId || "—" : tradeId || "—"}</dd>
+          <dd className="font-mono text-emerald-100">
+            {isPlaybookType ? playbookId || "—" : tradeId || "—"}
+          </dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-emerald-800">Persistence target</dt>
-          <dd>{persistenceTarget}</dd>
+          <dt className="text-xs uppercase tracking-wide text-emerald-400/80">Persistence target</dt>
+          <dd className="text-emerald-100">{persistenceTarget}</dd>
         </div>
         <div>
-          <dt className="text-xs uppercase tracking-wide text-emerald-800">Store verification</dt>
-          <dd>{verified ? "Confirmed in active store" : "Apply executed but persistence not verified."}</dd>
+          <dt className="text-xs uppercase tracking-wide text-emerald-400/80">Store verification</dt>
+          <dd className="text-emerald-100">
+            {verified ? "Confirmed in active store" : "Apply executed but persistence not verified."}
+          </dd>
         </div>
       </dl>
-      <p>{message}</p>
+      <p className="text-emerald-100">{message}</p>
       {verifyDetail && (
-        <p className={verified ? "text-emerald-900" : "font-medium text-amber-900"}>{verifyDetail}</p>
+        <p className={verified ? "text-emerald-200" : "font-medium text-amber-300"}>{verifyDetail}</p>
       )}
       {evidence && (
-        <p className="rounded-md bg-white/70 px-3 py-2 font-mono text-xs text-zinc-800">{evidence}</p>
+        <p className="rounded-md bg-zinc-950/60 px-3 py-2 font-mono text-xs text-zinc-300">{evidence}</p>
       )}
       {inboxError && (
-        <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-amber-950">
+        <p className="rounded-md border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-amber-200">
           Inbox update warning: {inboxError}
         </p>
       )}
@@ -72,7 +76,7 @@ export async function InboxApplyResult({
         {tradeId && !isPlaybookType && (
           <Link
             href={`/trades/${tradeId}`}
-            className="rounded-md bg-emerald-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
+            className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-500"
           >
             Open trade {tradeId}
           </Link>
@@ -80,18 +84,21 @@ export async function InboxApplyResult({
         {playbookId && isPlaybookType && (
           <Link
             href="/playbook"
-            className="rounded-md bg-emerald-800 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
+            className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-500"
           >
             Open Playbooks
           </Link>
         )}
         <Link
-          href="/ai-bridge"
-          className="rounded-md border border-emerald-800 px-3 py-1.5 text-sm font-medium text-emerald-900 hover:bg-white/60"
+          href="/home-preview"
+          className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:bg-zinc-900"
         >
-          Back to AI Bridge
+          Back to Dashboard
         </Link>
-        <Link href="/inbox" className="text-sm font-medium underline text-emerald-900">
+        <Link
+          href="/inbox"
+          className="text-sm font-medium text-violet-400 hover:text-violet-300 hover:underline"
+        >
           Inbox list
         </Link>
       </div>

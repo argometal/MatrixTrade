@@ -1,6 +1,7 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
-import { isArgusInboxPrivateColumnReady, isArgusSoftDeleteSchemaReady } from "../supabase-protection/schema-ready";
+import { isArgusInboxPrivateColumnReady, isArgusInboxTriageColumnsReady, isArgusSoftDeleteSchemaReady } from "../supabase-protection/schema-ready";
 import type { Attachment, AttachmentParentType, InboxItem, InboxItemInput } from "../types";
+import { inboxStatusAfterLinkChange } from "../v2/inbox-loaders";
 import { ARGUS_FILES_BUCKET } from "./config";
 
 function generateId(): string {
@@ -20,6 +21,8 @@ type InboxRow = {
   linked_entity_ids: string[] | null;
   private?: boolean | null;
   status: InboxItem["status"];
+  follow_up_date?: string | null;
+  topics?: string[] | null;
   converted_log_id: string | null;
   created_at: string;
   deleted_at?: string | null;
@@ -50,6 +53,8 @@ function rowToInboxItem(row: InboxRow): InboxItem {
     linkedEntityIds: row.linked_entity_ids ?? [],
     private: row.private ?? false,
     status: row.status,
+    followUpDate: row.follow_up_date ? String(row.follow_up_date).slice(0, 10) : undefined,
+    topics: row.topics ?? [],
     convertedLogId: row.converted_log_id ?? undefined,
     createdAt: row.created_at,
     deletedAt: row.deleted_at ?? undefined,
@@ -75,7 +80,8 @@ function isRowActive(row: { deleted_at?: string | null }): boolean {
 function inboxToInsertRow(
   item: InboxItem,
   softDeleteReady: boolean,
-  privateReady: boolean
+  privateReady: boolean,
+  triageReady: boolean
 ): Record<string, unknown> {
   const row: Record<string, unknown> = {
     id: item.id,
@@ -93,6 +99,10 @@ function inboxToInsertRow(
     created_at: item.createdAt,
   };
   if (privateReady) row.private = item.private ?? false;
+  if (triageReady) {
+    row.follow_up_date = item.followUpDate?.slice(0, 10) ?? null;
+    row.topics = item.topics ?? [];
+  }
   if (softDeleteReady) row.deleted_at = null;
   return row;
 }
@@ -156,10 +166,11 @@ export async function createInboxItem(
 
   const softDeleteReady = await isArgusSoftDeleteSchemaReady();
   const privateReady = await isArgusInboxPrivateColumnReady();
+  const triageReady = await isArgusInboxTriageColumnsReady();
   const supabase = createSupabaseAdmin();
   const { error } = await supabase
     .from("argus_inbox_items")
-    .insert(inboxToInsertRow(item, softDeleteReady, privateReady));
+    .insert(inboxToInsertRow(item, softDeleteReady, privateReady, triageReady));
   if (error) throw new Error(`Supabase inbox create failed: ${error.message}`);
   return item;
 }
@@ -234,17 +245,38 @@ export async function linkInboxToEntities(inboxId: string, entityIds: string[]):
   if (item.status === "archived") throw new Error("Inbox item is archived");
 
   const merged = [...new Set([...(item.linkedEntityIds ?? []), ...unique])];
-  const status = item.status === "converted" ? "converted" : "linked";
 
   const softDeleteReady = await isArgusSoftDeleteSchemaReady();
   const supabase = createSupabaseAdmin();
   let query = supabase
     .from("argus_inbox_items")
-    .update({ linked_entity_ids: merged, status })
+    .update({ linked_entity_ids: merged })
     .eq("id", inboxId);
   if (softDeleteReady) query = query.is("deleted_at", null);
   const { data, error } = await query.select("*").single();
   if (error) throw new Error(`Supabase inbox link failed: ${error.message}`);
+  return rowToInboxItem(data as InboxRow);
+}
+
+export async function setInboxLinkedEntities(inboxId: string, entityIds: string[]): Promise<InboxItem> {
+  const unique = [...new Set(entityIds.filter(Boolean))];
+
+  const item = await getInboxItem(inboxId);
+  if (!item) throw new Error("Inbox item not found");
+  if (item.status === "archived") throw new Error("Inbox item is archived");
+
+  const softDeleteReady = await isArgusSoftDeleteSchemaReady();
+  const supabase = createSupabaseAdmin();
+  const nextStatus = inboxStatusAfterLinkChange(item.status, unique.length);
+  const updatePayload: Record<string, unknown> = { linked_entity_ids: unique };
+  if (nextStatus) updatePayload.status = nextStatus;
+  let query = supabase
+    .from("argus_inbox_items")
+    .update(updatePayload)
+    .eq("id", inboxId);
+  if (softDeleteReady) query = query.is("deleted_at", null);
+  const { data, error } = await query.select("*").single();
+  if (error) throw new Error(`Supabase inbox set links failed: ${error.message}`);
   return rowToInboxItem(data as InboxRow);
 }
 
@@ -273,6 +305,47 @@ export async function archiveInboxItem(id: string): Promise<InboxItem | undefine
   const { data, error } = await query.select("*").maybeSingle();
   if (error) throw new Error(`Supabase inbox archive failed: ${error.message}`);
   return data ? rowToInboxItem(data as InboxRow) : undefined;
+}
+
+export type InboxTriagePatch = {
+  status?: InboxItem["status"];
+  followUpDate?: string | null;
+  topics?: string[];
+};
+
+export async function updateInboxTriage(inboxId: string, patch: InboxTriagePatch): Promise<InboxItem> {
+  const item = await getInboxItem(inboxId);
+  if (!item) throw new Error("Inbox item not found");
+  if (item.status === "archived") throw new Error("Inbox item is archived");
+
+  const next: InboxItem = {
+    ...item,
+    status: patch.status ?? item.status,
+    followUpDate:
+      patch.followUpDate === null
+        ? undefined
+        : patch.followUpDate !== undefined
+          ? patch.followUpDate.slice(0, 10)
+          : item.followUpDate,
+    topics: patch.topics !== undefined ? [...new Set(patch.topics.map((tag) => tag.trim()).filter(Boolean))] : item.topics,
+  };
+
+  const softDeleteReady = await isArgusSoftDeleteSchemaReady();
+  const triageReady = await isArgusInboxTriageColumnsReady();
+  const supabase = createSupabaseAdmin();
+  const updatePayload: Record<string, unknown> = {};
+  if (patch.status !== undefined) updatePayload.status = next.status;
+  if (triageReady) {
+    if (patch.followUpDate !== undefined) updatePayload.follow_up_date = next.followUpDate ?? null;
+    if (patch.topics !== undefined) updatePayload.topics = next.topics ?? [];
+  }
+  if (Object.keys(updatePayload).length === 0) return item;
+
+  let query = supabase.from("argus_inbox_items").update(updatePayload).eq("id", inboxId);
+  if (softDeleteReady) query = query.is("deleted_at", null);
+  const { data, error } = await query.select("*").single();
+  if (error) throw new Error(`Supabase inbox triage update failed: ${error.message}`);
+  return rowToInboxItem(data as InboxRow);
 }
 
 export async function saveInboxAttachment(

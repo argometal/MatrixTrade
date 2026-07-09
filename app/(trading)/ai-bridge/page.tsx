@@ -5,6 +5,7 @@ import { buildAiBridgeLiveSnapshot } from "@/lib/ai-bridge-live-snapshot";
 import { buildAiBlockSnapshot } from "@/lib/ai-block-snapshot";
 import { listAiNotes } from "@/lib/ai-notes";
 import { describeProposal, fetchBridgeInbox, getBridgeConfig, parseTradingInboxPayload } from "@/lib/bridge";
+import { getPlans } from "@/lib/plans";
 import { getPlaybooks } from "@/lib/playbooks";
 import { getTradesStoreMode } from "@/lib/trades-json";
 import { resolveInboxBackendLabel } from "@/lib/trading-inbox-submit";
@@ -13,7 +14,7 @@ import { getSyncHistory } from "@/lib/sync-history";
 import { checkWorkerReachable } from "@/lib/system-status";
 import { getSetups } from "@/lib/setups";
 import { listPendingInboxForRuntime } from "@/lib/trading-inbox-submit";
-import { getExperiment, getTrades } from "@/lib/storage";
+import { getExperiment, getMonthlyRisk, getTrades } from "@/lib/storage";
 
 function parseInitialView(value: string | undefined): AiBridgeView {
   return value === "classic" ? "classic" : "v2";
@@ -28,6 +29,7 @@ export default async function AiBridgePage({
   const bridge = getBridgeConfig();
   const [
     experiment,
+    monthly,
     trades,
     setups,
     playbooks,
@@ -36,8 +38,10 @@ export default async function AiBridgePage({
     workerInbox,
     syncHistory,
     aiNotes,
+    plans,
   ] = await Promise.all([
     getExperiment(),
+    getMonthlyRisk(),
     getTrades(),
     getSetups(),
     getPlaybooks(),
@@ -46,6 +50,7 @@ export default async function AiBridgePage({
     fetchBridgeInbox(),
     getSyncHistory(),
     listAiNotes(20),
+    getPlans(),
   ]);
 
   const snapshotRevision = workerStatus.snapshotRevision ?? revision?.revision ?? 0;
@@ -53,11 +58,13 @@ export default async function AiBridgePage({
 
   const snapshotText = buildAiBlockSnapshot({
     experiment,
+    monthly,
     trades,
     setups,
     playbooks,
     snapshotRevision,
     priorAiNotes: aiNotes,
+    plans,
     systemNotes: {
       tradesStore: getTradesStoreMode(),
       bridgeConfigured: bridge.configured,

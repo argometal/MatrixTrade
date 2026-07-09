@@ -1,19 +1,16 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import type { Entity, EntityType } from "@/lib/argus/types";
+import type { Entity } from "@/lib/argus/types";
 import { createEntityInlineAction, type CreatedEntityResult } from "@/app/argus/actions";
-import { formatArgusError } from "@/lib/argus/persistence/errors";
+import { ReferenceCreateModal } from "@/app/argus/components/ReferenceCreateModal";
 import {
-  createInputToReferenceKind,
   entityKindLabel,
-  entityNotesForDisplay,
   REFERENCE_KINDS,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
 import { CAPTURE, REFERENCES, REFERENCE_PICKER } from "@/lib/argus/ux-copy";
 import { inputClass } from "./ui";
-import { ReferenceCreateModal } from "./ReferenceCreateModal";
 
 export interface EntityPickerBuckets {
   recent: Entity[];
@@ -74,8 +71,7 @@ export function ReferencePickerModal({
     : creatableKinds[0] ?? "person";
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [isCreating, startCreate] = useTransition();
+  const [pending, startTransition] = useTransition();
 
   const allEntities = buckets.alphabetical;
   const hasReferences = allEntities.length > 0;
@@ -113,29 +109,23 @@ export function ReferencePickerModal({
     onChange(selectedIds.includes(id) ? selectedIds.filter((x) => x !== id) : [...selectedIds, id]);
   }
 
-  function handleCreateSave(data: { name: string; entityType: EntityType; notes: string }) {
-    setCreateError(null);
-    startCreate(async () => {
-      try {
-        const kind = createInputToReferenceKind(data.entityType, data.notes);
-        const entity = await createEntityInlineAction(kind, data.name, entityNotesForDisplay(data.notes));
-        setCreateOpen(false);
-        onClose();
+  function handleEntityCreated(entity: CreatedEntityResult) {
+    onClose();
 
-        if (onEntityCreated) {
-          const handled = await onEntityCreated(entity);
-          if (handled === false) return;
-        }
-
-        if (!selectedIds.includes(entity.id)) {
-          onChange([...selectedIds, entity.id]);
-        }
-      } catch (err) {
-        const { layer, message } = formatArgusError(err);
-        setCreateError(`${layer.toUpperCase()}: ${message}`);
-        setCreateOpen(true);
+    void (async () => {
+      if (onEntityCreated) {
+        const handled = await onEntityCreated(entity);
+        if (handled === false) return;
       }
-    });
+
+      if (!selectedIds.includes(entity.id)) {
+        onChange([...selectedIds, entity.id]);
+      }
+    })();
+  }
+
+  function openInlineCreate() {
+    setCreateOpen(true);
   }
 
   if (!open) return null;
@@ -166,10 +156,7 @@ export function ReferencePickerModal({
 
             <button
               type="button"
-              onClick={() => {
-                setCreateError(null);
-                setCreateOpen(true);
-              }}
+              onClick={openInlineCreate}
               className="mt-3 w-full rounded-xl border border-teal-800/60 bg-teal-950/40 py-2 text-sm font-medium text-teal-300 hover:bg-teal-900/40"
             >
               {createLabel}
@@ -228,17 +215,18 @@ export function ReferencePickerModal({
           </div>
         </div>
       </div>
-
       <ReferenceCreateModal
         open={createOpen}
         defaultKind={resolvedDefaultKind}
         allowedKinds={creatableKinds}
-        onCancel={() => {
-          if (!isCreating) setCreateOpen(false);
+        onCancel={() => setCreateOpen(false)}
+        onSave={(data) => {
+          startTransition(async () => {
+            const entity = await createEntityInlineAction(resolvedDefaultKind, data.name, data.notes);
+            setCreateOpen(false);
+            handleEntityCreated(entity);
+          });
         }}
-        onSave={handleCreateSave}
-        saveLabel={isCreating ? "Saving…" : undefined}
-        error={createError ?? undefined}
       />
     </>
   );

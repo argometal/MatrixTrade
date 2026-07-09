@@ -18,7 +18,12 @@ export function V2OpenCaptureButton({
   return (
     <button
       type="button"
-      onClick={() => openCapture({ entityIds, entryType })}
+      onClick={() =>
+        openCapture({
+          entityIds,
+          entryType,
+        })
+      }
       className={className}
     >
       {children}

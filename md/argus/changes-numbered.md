@@ -2,6 +2,8 @@
 
 Use git tags to restore any point.
 
+**Checklist rule:** Every numbered change that touches `/argus/v2` UI must update [`v2-design-checklist.md`](v2-design-checklist.md) in the same commit — see [`checklist-protocol.md`](checklist-protocol.md).
+
 | Change | Tag | Description |
 |--------|-----|-------------|
 | **99** | `change-99` | Unified **+** Add menu — capture note plus Person, Organization, Project, Topic, Event |
@@ -23,6 +25,20 @@ Use git tags to restore any point.
 | **114** | `change-114` | v2 design preview shells at `/argus/v2` (layout + mock structure) |
 | **115** | `change-115` | Wire v2 to live data with org/project hierarchy rules + implementation report |
 | **116** | `change-116` | v2 Home side-by-side panels, org/project mockup layouts, legacy journal link to v2 |
+| **124** | — | v2 inbox entity linking (multi-select link modal) |
+| **125** | — | Fix v2 sidebar overlap on inbox / browse layouts |
+| **126** | `change-126` | Enlarge inbox link modal; fix scroll overlap |
+| **127** | `change-127` | Move **+ Link** to email header |
+| **128** | `change-128` | v2 Projects Browser portfolio cards |
+| **129** | `change-129` | v2 Organization Browser portfolio cards |
+| **130** | — | v2 Network Browser (relationship intelligence cards) — checklist § Network browser |
+| **132** | `second-origin` | v2 checkpoint: Network browser, AI Charter, checklist v1.1, inbox unlink fix, search/PIN/filters |
+| **138** | — | Desktop Create & Link 4-column mockup (`ArgusCreateLinkWindow`) |
+| **139** | `source-3` | Mobile Create & Link step wizard; correlation guide + QA checklists; recovery tag `source-3` |
+| **140** | `change-140` | Topic tag aliases (`linkedTags` on topics); ranked inbox suggestions via topic signals; inbox **Process** tab; filter chip labels; project rename/delete on v2 browse; inbox email → unified Create/Link (`inbox-evidence` mode) |
+| **141** | `change-141` | Home timeline hover preview + click-through navigation; frequency-sized tag cloud (journal + inbox tags) |
+| **142** | `change-142` | CREATE flow simplification — hamburger item menu, top-bar-only entry, Create Tag, lighter inline creates elsewhere |
+| **143** | `change-143` | Unified **Link** modal (`ArgusLinkModal`) across ARGUS — inbox-style tabs incl. **Tags**; top **Create** stays full workspace; inline + New via `ReferenceCreateModal` |
 
 ## Restore
 

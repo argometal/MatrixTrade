@@ -1,7 +1,7 @@
 import type { ArgusData, Entity, InboxItem, Log } from "./types";
 import { referenceKindFromNotes } from "./reference-types";
-import { getLinkedInboxForEntity } from "./entity-evidence";
-import { getProjectHomeCounts } from "./project-evidence";
+import { getLinkedInboxForEntity } from "./inbox-entity-links";
+import { getProjectHomeCounts } from "./project-evidence-scope";
 import { buildEntityIntelligence, type EntityIntelligence } from "./network-intelligence";
 
 export type HomeActivityItem =

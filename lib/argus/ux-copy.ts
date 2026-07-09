@@ -175,33 +175,33 @@ export const HOME_INBOX_ACTIONS = {
 } as const;
 
 export const ENTITY_CREATE = {
-  fab: "Create",
-  title: "Create",
-  save: "Create",
-  emptyProjects: "No projects yet. Tap Create to add one.",
-  emptyNetwork: "Nothing here yet. Tap Create to add a person, organization, topic, or event.",
-  emptySearch: "No records yet. Tap Create to add one.",
+  fab: "Capture",
+  title: "Capture",
+  save: "Capture",
+  emptyProjects: "No projects yet. Tap Capture to add one.",
+  emptyNetwork: "Nothing here yet. Tap Capture to add a person, organization, topic, or event.",
+  emptySearch: "No records yet. Tap Capture to add one.",
 } as const;
 
 export const NETWORKING = {
-  createFirst: "Create",
+  createFirst: "Capture",
   createPerson: "Add person",
   createOrganization: "Add organization",
   search: "Search network",
   link: "Link to",
   linkLabel: "Linked to",
-  createNew: "Create new",
+  createNew: "Capture new",
   hideCreate: "Hide",
   select: "Select",
   cancel: "Cancel",
   save: "Save",
   empty: "No records yet.",
-  emptyHint: "Tap Create (+) to add a person, organization, project, topic, or event.",
+  emptyHint: "Tap Capture (+) to add a person, organization, project, topic, or event.",
   emptyPicker: "No records yet.",
   emptySearch: "Type to search",
   emptyFavorites: "Star contacts to pin them here",
   emptyNetwork: "No records yet.",
-  emptyNetworkHint: "Tap Create (+) to add one — no note or inbox item required.",
+  emptyNetworkHint: "Tap Capture (+) to add one — no note or inbox item required.",
   emptyActivity: "No evidence linked yet.",
   addDocumentFor: (name: string) => `Attach evidence for ${name}`,
   pendingNew: (name: string) => `New: ${name}`,
@@ -240,7 +240,7 @@ export const INBOX = {
   linkReference: "Link to reference",
   multiLinkHint: "Select multiple — e.g. link the contact and the project together.",
   tapToRead: "Tap to read email",
-  createReference: "Create reference",
+  createReference: "Capture reference",
   createPerson: "+ New Person",
   createProject: "+ New Project",
   convertRecord: "Convert to record",
@@ -300,7 +300,7 @@ export const REFERENCE_PICKER = {
   searchPlaceholder: "Search…",
   typeToSearch: "Type to search",
   starToPin: "Star contacts to pin them here",
-  noReferences: "No records yet. Create one first.",
+  noReferences: "No records yet. Capture one first.",
   allReferences: "All references",
   inboxBrowseHint: "Projects, topics, events, and organizations appear here — search if the list is long.",
   selected: (n: number, names: string) => `${n} selected · ${names}`,
@@ -370,6 +370,16 @@ export const ENTITY_DETAIL = {
   noteCount: "Notes",
 } as const;
 
+/** Topic tag aliases — bridge inbox/journal tags to topic entities */
+export const TOPIC_ALIASES = {
+  heading: "Tag aliases",
+  hint: "Synonyms that match this topic in inbox suggestions and filters (e.g. handover for HO).",
+  placeholder: "Add alias…",
+  add: "Add",
+  save: "Save aliases",
+  empty: "No aliases yet — add words from emails that should suggest this topic.",
+} as const;
+
 /** Temporary testing controls — protect before production */
 export const TESTING = {
   sectionLabel: "Testing",
@@ -380,6 +390,11 @@ export const TESTING = {
   deleteEntityConfirm: "Delete this reference permanently? It will be unlinked from all records.",
   deleteInbox: "Delete email",
   deleteInboxConfirm: "Delete this inbox item permanently? Attachments will be removed.",
+  deleteProject: "Delete project",
+  deleteProjectConfirmHint:
+    "This removes the project from your knowledge base and unlinks it from journal entries and emails. Evidence is kept.",
+  deleteProjectTypeName: "Type the project name to confirm",
+  deleteProjectPinHint: "This project includes protected evidence. Enter your PIN to delete.",
   clearAll: "Clear all ARGUS data",
   clearAllHint: "Removes all logs, inbox items, references, attachments, and files. For testing only.",
   clearAllConfirm:

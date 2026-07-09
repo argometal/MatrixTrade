@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import type { Entity, InboxItem } from "@/lib/argus/types";
 import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import { entityDetailHref, referenceDisplayLabel } from "@/lib/argus/reference-types";
@@ -11,12 +12,12 @@ import {
   type EmailViewModel,
 } from "@/lib/argus/email-view";
 import { HOME_INBOX_ACTIONS, INBOX, TESTING } from "@/lib/argus/ux-copy";
-import { allowedCreateKinds, filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
-import { archiveInboxAction, convertInboxAction, deleteInboxAction, linkInboxAction, setInboxPrivateAction, type CreatedEntityResult } from "@/app/argus/actions";
+import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
+import { convertInboxAction, deleteInboxAction, linkInboxAction, setInboxPrivateAction, type CreatedEntityResult } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "./ArgusDeleteForm";
 import { CaptureSheet } from "./CaptureSheet";
 import { InboxAttachmentList } from "./InboxAttachmentList";
-import { ReferencePickerModal, type EntityPickerBuckets } from "./ReferencePickerModal";
+import type { EntityPickerBuckets } from "./ReferencePickerModal";
 import type { TagBuckets } from "./TagPickerModal";
 
 function formatReceived(iso: string): string {
@@ -54,9 +55,7 @@ export function HomeInboxCard({
   buckets: EntityPickerBuckets;
   tagBuckets: TagBuckets;
 }) {
-  const linkFormRef = useRef<HTMLFormElement>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [linkIds, setLinkIds] = useState<string[]>([]);
+  const { openLinkModal } = useArgusAdd();
   const [showConvert, setShowConvert] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
 
@@ -64,24 +63,31 @@ export function HomeInboxCard({
   const preview = view.textBody.replace(/\s+/g, " ").trim().slice(0, 120);
   const primaryAttachment = attachments[0];
   const inboxBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "inbox"), [buckets]);
-  const inboxCreateKinds = allowedCreateKinds("inbox");
 
-  function submitLinkForm() {
-    linkFormRef.current?.requestSubmit();
-  }
-
-  function openLinkPicker() {
-    setLinkIds(item.linkedEntityIds ?? []);
-    setPickerOpen(true);
+  async function persistLinks(ids: string[]) {
+    const formData = new FormData();
+    formData.set("inboxId", item.id);
+    formData.set("returnTo", "journal");
+    for (const id of ids) formData.append("entityIds", id);
+    await linkInboxAction(formData);
   }
 
   async function linkCreatedEntity(entity: CreatedEntityResult): Promise<false> {
-    const formData = new FormData();
-    formData.set("inboxId", item.id);
-    formData.set("entityIds", entity.id);
-    formData.set("returnTo", "journal");
-    await linkInboxAction(formData);
+    await persistLinks([entity.id]);
     return false;
+  }
+
+  function openLinkPicker() {
+    openLinkModal({
+      title: "Link email",
+      linkedEntityIds: item.linkedEntityIds ?? [],
+      buckets: inboxBuckets,
+      showTags: false,
+      onConfirm: (result) => {
+        if (result.entityIds.length > 0) void persistLinks(result.entityIds);
+      },
+      onEntityCreated: linkCreatedEntity,
+    });
   }
 
   const cardPreview = (
@@ -231,37 +237,6 @@ export function HomeInboxCard({
           </div>
         ) : null}
       </div>
-
-      {canTriage ? (
-        <>
-          <form ref={linkFormRef} action={linkInboxAction} className="hidden">
-            <input type="hidden" name="inboxId" value={item.id} />
-            <input type="hidden" name="returnTo" value="journal" />
-            {linkIds.map((id) => (
-              <input key={id} type="hidden" name="entityIds" value={id} />
-            ))}
-          </form>
-
-          <ReferencePickerModal
-            open={pickerOpen}
-            buckets={inboxBuckets}
-            selectedIds={linkIds}
-            onChange={setLinkIds}
-            onClose={() => setPickerOpen(false)}
-            onConfirm={() => {
-              if (linkIds.length > 0) submitLinkForm();
-            }}
-            onEntityCreated={linkCreatedEntity}
-            allowedCreateKinds={inboxCreateKinds}
-            listMode="all"
-            createButtonLabel={INBOX.createReference}
-          />
-
-          <form action={archiveInboxAction} className="hidden" aria-hidden>
-            <input type="hidden" name="inboxId" value={item.id} />
-          </form>
-        </>
-      ) : null}
     </>
   );
 }

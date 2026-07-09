@@ -19,7 +19,7 @@ export default async function SearchPage({
 
   return (
     <>
-      <PageHeader title={SEARCH.title} subtitle={SEARCH.subtitle} backHref="/argus/journal" />
+      <PageHeader title={SEARCH.title} subtitle={SEARCH.subtitle} backHref="/argus/v2" />
       <form action="/argus/search" method="get" className="mb-6 flex gap-2">
         <input
           name="q"

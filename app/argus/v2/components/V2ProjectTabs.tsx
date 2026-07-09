@@ -1,6 +1,6 @@
 "use client";
 
-const PROJECT_TABS = ["Overview", "Timeline", "People", "Files", "Notes", "Settings"] as const;
+const PROJECT_TABS = ["Overview", "Runbooks", "Timeline", "People", "Files", "Notes", "Settings"] as const;
 
 export function V2ProjectTabs({ active = "Overview" }: { active?: (typeof PROJECT_TABS)[number] }) {
   return (

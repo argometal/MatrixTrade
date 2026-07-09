@@ -129,7 +129,7 @@ export function EntityEvidenceSection({
       )}
 
       <p className="mt-6 text-center">
-        <Link href="/argus/journal?capture=1" className="text-sm text-teal-500 underline">
+        <Link href="/argus/v2?capture=1" className="text-sm text-teal-500 underline">
           + {ENTITY_PAGE.addDocumentFor(entityName)}
         </Link>
       </p>

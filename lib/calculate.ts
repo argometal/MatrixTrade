@@ -27,14 +27,11 @@ export function buildObsidianLink(
   return `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(file)}`;
 }
 
-export function computeExperiment(
-  trades: Trade[],
-  cycleLossLimit: number,
-  maxTrades: number
-): Experiment {
+export function computeExperiment(trades: Trade[], maxTrades: number): Experiment {
   const closed = trades.filter((t) => t.status === "closed");
 
   let realizedPnL = 0;
+  let grossLoss = 0;
   let wins = 0;
   let losses = 0;
 
@@ -43,14 +40,14 @@ export function computeExperiment(
     if (result === null) continue;
 
     realizedPnL += result;
+    if (result < 0) grossLoss += result;
     if (isWin(result)) wins += 1;
     else if (isLoss(result)) losses += 1;
   }
 
   return {
-    cycleLossLimit,
     realizedPnL,
-    remainingLossBudget: cycleLossLimit - realizedPnL,
+    grossLoss,
     maxTrades,
     closedTrades: closed.length,
     wins,

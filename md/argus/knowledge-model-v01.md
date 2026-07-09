@@ -2,7 +2,10 @@
 
 **Status:** Canonical design brief — **schema locked** (2026-07-04). Phase 1 DDL draft for review.
 
-**Objective:** Refactor the current data model into a single, consistent knowledge architecture that behaves like a graph, not a folder hierarchy.
+**Product identity:** [`evidence-organization-vision.md`](evidence-organization-vision.md) — Evidence → Anchor (Event) → Context → Deliver; no document-creation layer.  
+**AI rule of construction:** [`ai-charter.md`](ai-charter.md) — facts before opinions; evidence before conclusions.
+
+**Objective:** Refactor the current data model into a single, consistent evidence architecture that behaves like a graph, not a folder hierarchy.
 
 ---
 
@@ -21,11 +24,11 @@
 | Entity | Responsibility | Never |
 |--------|----------------|-------|
 | **Evidence** | Stored artifact (note, email, file, photo, document, …); editable in v01 | Owns or duplicates domain objects |
-| **Project** | Temporary work with objective and lifecycle | Owns Evidence |
-| **Topic** | Permanent knowledge domain | Contains copies of Evidence |
-| **Event** | Something that happened at a point in time | Stores note body (generates Evidence instead) |
-| **Person** | A human | Be a tag or topic |
-| **Organization** | A company, institution, team | Be a tag or topic |
+| **Project** | Temporary work with objective and lifecycle (business context) | Owns Evidence |
+| **Topic** | Permanent knowledge binder — years of correlated evidence | Contains copies of Evidence |
+| **Event** | Case anchor — occurrence; evidence hangs here (not the note body) | Stores note body (generates Evidence instead) |
+| **Person** | Relationship context | Be a tag or topic |
+| **Organization** | Institutional context | Be a tag or topic |
 | **Tag** | Lightweight workflow/filter metadata | Be knowledge or a category |
 
 ### Tags vs Topics

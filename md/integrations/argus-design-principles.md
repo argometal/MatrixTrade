@@ -1,7 +1,9 @@
 # ARGUS — Design Principles
 
-**Status:** Accepted — architecture constitution  
-**Implementation:** Frozen until architecture documents are complete.
+**Status:** Canonical — architecture constitution  
+**Implementation:** Active — v2 UX and export layers must conform to these principles.
+
+**Index:** [`md/argus/README.md`](../argus/README.md) · **AI rule:** [`ai-charter.md`](../argus/ai-charter.md)
 
 Read with [`argus-architecture.md`](argus-architecture.md).
 
@@ -55,6 +57,8 @@ AI may summarize, tag, suggest entities, or surface patterns as **annotations** 
 
 AI must not replace `body`, `rawEmail`, or user-authored content. Annotations are overlays, not canonical history.
 
+See also: [`md/argus/ai-charter.md`](../argus/ai-charter.md) — evidence-backed reports, neutrality, no fabrication.
+
 ---
 
 ## 7. Search spans every module
@@ -94,6 +98,7 @@ Pause and redesign the feature — or reject it.
 **Do not continue implementing UX** until:
 
 - [`argus-architecture.md`](argus-architecture.md) reflects accepted decisions
+- [`md/argus/ai-charter.md`](../argus/ai-charter.md) is understood by anyone using AI on ARGUS
 - This document is referenced from [`CHATGPT.md`](../../CHATGPT.md)
 
 New work (email ingestion, persistent storage, AI) builds on these principles — not around them.

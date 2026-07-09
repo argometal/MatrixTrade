@@ -43,7 +43,7 @@ export function EntityCreateForm({
         </label>
       </div>
       <button type="submit" className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-600">
-        Create
+        {ENTITY_CREATE.save}
       </button>
     </form>
   );

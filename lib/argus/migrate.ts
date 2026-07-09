@@ -60,6 +60,7 @@ export function migrateToV3(raw: unknown): ArgusData {
       logs: (data.logs ?? []).map(normalizeLog),
       inboxItems: data.inboxItems ?? [],
       attachments: data.attachments ?? [],
+      runbooks: data.runbooks ?? [],
       version: 3,
     });
   }
@@ -127,6 +128,7 @@ export function migrateToV3(raw: unknown): ArgusData {
         parentType: "journal" as const,
         parentId: e.entryId ?? e.id,
       })),
+    runbooks: [],
     version: 3,
   });
 }

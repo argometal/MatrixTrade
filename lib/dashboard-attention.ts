@@ -1,4 +1,5 @@
 import type { BridgeInboxItem } from "./bridge";
+import type { MonthlyRisk } from "./monthly-risk";
 import type { Playbook } from "./playbook-types";
 import type { Trade } from "./types";
 
@@ -14,9 +15,29 @@ const MIN_PLAYBOOK_SAMPLES = 3;
 export function buildAttentionItems(
   trades: Trade[],
   pendingInbox: BridgeInboxItem[],
-  playbooks: Playbook[]
+  playbooks: Playbook[],
+  monthly?: MonthlyRisk
 ): AttentionItem[] {
   const items: AttentionItem[] = [];
+
+  if (monthly?.monthlyCapBreached) {
+    items.push({
+      id: "monthly-loss-limit",
+      label: `Monthly loss limit reached (${monthly.monthKey})`,
+      href: "/stats",
+      priority: 0,
+    });
+  } else if (
+    monthly &&
+    monthly.monthlyLossRoom <= monthly.monthlyAllowance * 0.25
+  ) {
+    items.push({
+      id: "monthly-loss-warning",
+      label: "Monthly loss room running low",
+      href: "/stats",
+      priority: 0,
+    });
+  }
 
   for (const trade of trades.filter((t) => t.status === "closed" && !t.reviewedAt)) {
     items.push({
