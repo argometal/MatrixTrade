@@ -19,23 +19,40 @@ Parent layout `app/(trading)/layout.tsx` wraps **all** trading routes.
 
 ## Route table
 
-| Route | Preview | Classic | Notes |
-|-------|:-------:|:-------:|-------|
+| Route | Preview | Classic UI preserved | Notes |
+|-------|:-------:|:--------------------:|-------|
 | `/home-preview` | ✓ | — | **Dashboard** — primary home |
 | `/trades-preview` | ✓ | — | **New Trade** workspace |
 | `/trades` | ✓ | — | Trades list (`PreviewTradesList`) |
 | `/journal` | ✓ | — | Closed trades log |
+| `/mistakes` | ✓ | — | Mistake cost breakdown |
 | `/playbook` | ✓ | — | Playbook Lab |
 | `/planning` | ✓ | — | **Planning** — pre-trade plans |
 | `/system` | ✓ | — | Bridge sync, vault, connect |
+| `/inbox`, `/inbox/[id]` | ✓ | — | Pipeline inbox |
+| `/stats` | ✓ | `LegacyStatsPage` | `PreviewStats` |
+| `/review` | ✓ | `LegacyReviewPage` | `PreviewReview` |
+| `/exchange` | ✓ | `LegacyExchangePage` | `PreviewExchange` + dark `HomeDashboard*` |
+| `/trades/new` | ✓ | `LegacyTradeNewPage` | `PreviewTradeNew` |
+| `/trades/[id]` | ✓ | `LegacyTradeDetailPage` | `PreviewTradeDetail` |
+| `/trades/[id]/review` | ✓ | `LegacyTradeReviewPage` | `PreviewTradeReview` |
 | `/` | redirect | — | → `/home-preview` |
-| `/inbox`, `/inbox/[id]` | — | ✓ | Pipeline; preview conversion pending |
-| `/exchange` | — | ✓ | Assistant + snapshot |
-| `/stats`, `/review`, `/mistakes` | — | ✓ | Analytics — preview TBD |
-| `/trades/new` | — | ✓ | Direct create form |
-| `/trades/[id]`, `/trades/[id]/review` | — | ✓ | Detail + review wizard |
 | `/connect` | redirect | — | → `/system#connect` |
 | `/ai-workspace` | redirect | — | → `/exchange` |
+
+---
+
+## Legacy component locations
+
+| Legacy component | Path |
+|------------------|------|
+| Stats | `app/components/legacy/LegacyStatsPage.tsx` |
+| Review | `app/components/legacy/LegacyReviewPage.tsx` |
+| Exchange | `app/components/legacy/LegacyExchangePage.tsx` |
+| Trade detail | `app/components/legacy/LegacyTradeDetailPage.tsx` |
+| Trade review | `app/components/legacy/LegacyTradeReviewPage.tsx` |
+| New trade | `app/components/legacy/LegacyTradeNewPage.tsx` |
+| Nav layout | `app/(trading)/(nav)/layout.legacy.tsx` |
 
 ---
 

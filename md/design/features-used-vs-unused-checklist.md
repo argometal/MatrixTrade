@@ -34,7 +34,7 @@ Verify each item in production or local.
 | Assistant | `/exchange` | Classic light | Sidebar | Used | Snapshot copy + AI block import |
 | Stats | `/stats` | Classic light | Sidebar | Used | No preview variant |
 | Review hub | `/review` | Classic light | Sidebar | Used | Attention queue |
-| Mistakes | `/mistakes` | Classic light | Sidebar | Used | No preview variant |
+| Mistakes | `/mistakes` | Preview dark | Sidebar | Used | Mistake tags from reviews |
 | Trade detail | `/trades/[id]` | Classic light | Link only | Used | Open/close/meta |
 | Trade review | `/trades/[id]/review` | Classic light | Link only | Used | |
 | Classic create | `/trades/new` | Classic light | Sidebar | Used | Direct `createTradeAction` |
@@ -82,7 +82,8 @@ Verify each item in production or local.
 | Playbook | ✓* | `/playbook` |
 | System | ✓* | `/system` |
 | Inbox | — | `/inbox` |
-| Stats / Review / Mistakes / Exchange | — | classic |
+| Stats / Review / Exchange | — | classic |
+| Mistakes | ✓ | `/mistakes` preview |
 | Trade detail / review / new form | — | classic |
 
 \* Local preview components exist; may not be on production until committed/deployed.
@@ -140,7 +141,7 @@ Verify each item in production or local.
 |-----|--------|-------|
 | Snapshot copy on New Trade | **Missing** | Full copy only on `/exchange` |
 | AI notes save UI | **Missing** | Notes read into snapshot only |
-| Preview shell for Inbox / Stats / Review / Mistakes / Exchange | **Missing** | Still classic |
+| Preview shell for Stats / Review / Exchange | **Missing** | Still classic |
 | Trade open/close in preview | **Missing** | Classic detail only |
 | Direct create in preview | **By design** | Proposals → Inbox only |
 | Classic dashboard `/?classic=1` | **Retire candidate** | User requested removal; Dashboard is `/home-preview` |

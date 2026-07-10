@@ -61,7 +61,7 @@
 | 3.2 | `/review` | Attention queue + unreviewed trades | Overlap with home alerts — dedicated preview TBD | - [ ] |
 | 3.3 | `/stats` | Full cycle analytics, equity, playbook table | Partial on home — full stats preview TBD | - [ ] |
 | 3.4 | `/journal` | Closed trades + lessons | No preview | - [ ] |
-| 3.5 | `/mistakes` | Mistake P/L impact | No preview | - [ ] |
+| 3.5 | `/mistakes` | Mistake P/L impact | ✓ `PreviewMistakes` | - [ ] |
 
 ---
 

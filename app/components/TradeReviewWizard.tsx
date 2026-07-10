@@ -17,11 +17,14 @@ function StarRating({
   name,
   value,
   onChange,
+  theme = "light",
 }: {
   name: string;
   value: number;
   onChange: (n: number) => void;
+  theme?: "light" | "dark";
 }) {
+  const dark = theme === "dark";
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((n) => (
@@ -32,8 +35,12 @@ function StarRating({
           onClick={() => onChange(n)}
           className={`h-9 w-9 rounded-md text-sm font-medium ${
             n <= value
-              ? "bg-zinc-900 text-white"
-              : "border border-zinc-200 bg-white text-zinc-400 hover:border-zinc-400"
+              ? dark
+                ? "bg-violet-600 text-white"
+                : "bg-zinc-900 text-white"
+              : dark
+                ? "border border-zinc-700 bg-zinc-900 text-zinc-500 hover:border-zinc-500"
+                : "border border-zinc-200 bg-white text-zinc-400 hover:border-zinc-400"
           }`}
         >
           {n}
@@ -47,11 +54,17 @@ export function TradeReviewWizard({
   trade,
   result,
   rMultiple,
+  theme = "light",
 }: {
   trade: Trade;
   result: number | null;
   rMultiple: number | null;
+  theme?: "light" | "dark";
 }) {
+  const dark = theme === "dark";
+  const inputClass = dark
+    ? "w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-zinc-100 focus:border-violet-500 focus:outline-none"
+    : "w-full rounded-md border border-zinc-300 px-3 py-2 focus:border-zinc-500 focus:outline-none";
   const [step, setStep] = useState(0);
   const [mistakes, setMistakes] = useState<MistakeType[]>(
     trade.mistakes?.length ? trade.mistakes : ["none"]
@@ -84,7 +97,9 @@ export function TradeReviewWizard({
         {STEPS.map((label, i) => (
           <div
             key={label}
-            className={`h-1 flex-1 rounded-full ${i <= step ? "bg-zinc-900" : "bg-zinc-200"}`}
+            className={`h-1 flex-1 rounded-full ${
+              i <= step ? (dark ? "bg-violet-600" : "bg-zinc-900") : dark ? "bg-zinc-800" : "bg-zinc-200"
+            }`}
             title={label}
           />
         ))}
@@ -95,21 +110,40 @@ export function TradeReviewWizard({
       </p>
 
       {step === 0 && (
-        <div className="space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm">
+        <div
+          className={
+            dark
+              ? "space-y-3 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4 text-sm text-zinc-300"
+              : "space-y-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-sm"
+          }
+        >
           <p>
             <span className="font-medium">{trade.id}</span> · {trade.ticker} closed at{" "}
             {trade.exit?.toFixed(2)}
           </p>
           <p>
             Result:{" "}
-            <span className={result !== null && result < 0 ? "text-red-600" : "text-emerald-600"}>
+            <span
+              className={
+                result !== null && result < 0
+                  ? dark
+                    ? "text-red-400"
+                    : "text-red-600"
+                  : dark
+                    ? "text-emerald-400"
+                    : "text-emerald-600"
+              }
+            >
               {result !== null ? `${result >= 0 ? "+" : ""}$${result.toFixed(2)}` : "—"}
             </span>
             {rMultiple !== null && (
-              <span className="ml-2 text-zinc-500">({rMultiple >= 0 ? "+" : ""}{rMultiple.toFixed(2)}R)</span>
+              <span className="ml-2 text-zinc-500">
+                ({rMultiple >= 0 ? "+" : ""}
+                {rMultiple.toFixed(2)}R)
+              </span>
             )}
           </p>
-          <p className="text-zinc-600">
+          <p className={dark ? "text-zinc-400" : "text-zinc-600"}>
             Take 30 seconds: what actually happened? Details go in Obsidian — here we capture what
             matters for patterns.
           </p>
@@ -118,15 +152,21 @@ export function TradeReviewWizard({
 
       {step === 1 && (
         <div className="space-y-3">
-          <p className="text-sm text-zinc-600">Tap all that apply (max 3).</p>
+          <p className={`text-sm ${dark ? "text-zinc-400" : "text-zinc-600"}`}>
+            Tap all that apply (max 3).
+          </p>
           <div className="flex flex-wrap gap-2">
             {MISTAKE_TYPES.map((id) => (
               <label
                 key={id}
                 className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm ${
                   mistakes.includes(id)
-                    ? "border-zinc-900 bg-zinc-900 text-white"
-                    : "border-zinc-200 bg-white hover:border-zinc-400"
+                    ? dark
+                      ? "border-violet-600 bg-violet-600 text-white"
+                      : "border-zinc-900 bg-zinc-900 text-white"
+                    : dark
+                      ? "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-500"
+                      : "border-zinc-200 bg-white hover:border-zinc-400"
                 }`}
               >
                 <input
@@ -147,29 +187,35 @@ export function TradeReviewWizard({
       {step === 2 && (
         <div className="space-y-4">
           <div>
-            <p className="mb-2 text-sm font-medium">Entry quality</p>
-            <StarRating name="qualityEntry" value={qualityEntry} onChange={setQualityEntry} />
+            <p className={`mb-2 text-sm font-medium ${dark ? "text-zinc-200" : ""}`}>
+              Entry quality
+            </p>
+            <StarRating name="qualityEntry" value={qualityEntry} onChange={setQualityEntry} theme={theme} />
           </div>
           <div>
-            <p className="mb-2 text-sm font-medium">Exit quality</p>
-            <StarRating name="qualityExit" value={qualityExit} onChange={setQualityExit} />
+            <p className={`mb-2 text-sm font-medium ${dark ? "text-zinc-200" : ""}`}>
+              Exit quality
+            </p>
+            <StarRating name="qualityExit" value={qualityExit} onChange={setQualityExit} theme={theme} />
           </div>
           <div>
-            <p className="mb-2 text-sm font-medium">Management quality</p>
-            <StarRating name="qualityMgmt" value={qualityMgmt} onChange={setQualityMgmt} />
+            <p className={`mb-2 text-sm font-medium ${dark ? "text-zinc-200" : ""}`}>
+              Management quality
+            </p>
+            <StarRating name="qualityMgmt" value={qualityMgmt} onChange={setQualityMgmt} theme={theme} />
           </div>
         </div>
       )}
 
       {step === 3 && (
         <label className="block space-y-2 text-sm">
-          <span className="font-medium">One lesson (optional)</span>
+          <span className={`font-medium ${dark ? "text-zinc-200" : ""}`}>One lesson (optional)</span>
           <textarea
             name="lesson"
             rows={3}
             defaultValue={trade.lesson ?? ""}
             placeholder="What will you remember from this trade?"
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 focus:border-zinc-500 focus:outline-none"
+            className={inputClass}
             maxLength={280}
           />
         </label>
@@ -177,13 +223,15 @@ export function TradeReviewWizard({
 
       {step === 4 && (
         <label className="block space-y-2 text-sm">
-          <span className="font-medium">One action for next session (optional)</span>
+          <span className={`font-medium ${dark ? "text-zinc-200" : ""}`}>
+            One action for next session (optional)
+          </span>
           <textarea
             name="actionItem"
             rows={3}
             defaultValue={trade.actionItem ?? ""}
             placeholder="Concrete rule or behavior to try next time"
-            className="w-full rounded-md border border-zinc-300 px-3 py-2 focus:border-zinc-500 focus:outline-none"
+            className={inputClass}
             maxLength={280}
           />
         </label>
@@ -194,7 +242,11 @@ export function TradeReviewWizard({
           <button
             type="button"
             onClick={() => setStep((s) => s - 1)}
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"
+            className={
+              dark
+                ? "rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 hover:border-zinc-600"
+                : "rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"
+            }
           >
             Back
           </button>
@@ -203,14 +255,18 @@ export function TradeReviewWizard({
           <button
             type="button"
             onClick={() => setStep((s) => s + 1)}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+            className={
+              dark
+                ? "rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
+                : "rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+            }
           >
             Continue
           </button>
         ) : (
           <button
             type="submit"
-            className="rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600"
+            className="rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600"
           >
             Save review
           </button>
