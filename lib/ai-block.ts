@@ -5,6 +5,30 @@ import type { TradingInboxPayload } from "./bridge";
 export { AI_BRIDGE_BLOCK_TYPES as AI_BLOCK_TYPES };
 export type AiBlockType = (typeof AI_BRIDGE_BLOCK_TYPES)[number];
 
+export const SCOUTING_AI_BLOCK_REQUEST = `Return ONE AI Block only — plain JSON or a single \`\`\`json fenced block.
+Required shape:
+{
+  "type": "<block-type>",
+  "proposal": { ... }
+}
+PRIORITY — Scouting (validate thesis; do not rubber-stamp):
+- scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear
+- file-update: propose Stock File change — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis
+
+Trade layer (use only when scouting approves):
+- trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId
+- trade-close: close trade — id, exit required
+- trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
+- analysis: notes on existing trade — id required; at least one of thesis, psychology, lessons, notes
+- trade-update: id required; at least one field to change
+- playbook-create / playbook-update: playbook CRUD
+
+Rules:
+- Challenge the thesis — challengesToThesis must list real risks or contradictions.
+- Return exactly one block. No arrays of blocks.
+- Do not apply changes — human imports in Inbox → Apply.
+- If context is insufficient, ask ONE clarifying question.`;
+
 export const DEFAULT_AI_BLOCK_REQUEST = `Return ONE AI Block only — plain JSON or a single \`\`\`json fenced block.
 Required shape:
 {
@@ -12,6 +36,8 @@ Required shape:
   "proposal": { ... }
 }
 Block types (all Apply ready):
+- scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no), reasons[], challengesToThesis[] required
+- file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId
 - trade-close: close trade — id, exit required
 - trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
@@ -78,6 +104,16 @@ export interface AiBlockSampleOption {
 
 export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
   {
+    type: "scout-assessment",
+    label: "scout-assessment — validate thesis",
+    hint: "go/wait/no + reasons + challenges (required)",
+  },
+  {
+    type: "file-update",
+    label: "file-update — update Stock File",
+    hint: "status, hypothesis, notes on suspect file",
+  },
+  {
     type: "trade-proposal",
     label: "trade-proposal — create trade",
     hint: "New trade: id, ticker, entry, stop, shares",
@@ -115,6 +151,32 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
 ];
 
 const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
+  "scout-assessment": {
+    type: "scout-assessment",
+    source: "ai-block",
+    proposal: {
+      stockFileId: "ST-TSLA-001",
+      ticker: "TSLA",
+      verdict: "wait",
+      reasons: ["Price above primary zone 340-355", "Planned R:R below minimum 3"],
+      challengesToThesis: [
+        "Pullback thesis may be late if structure breaks before zone",
+        "Monthly invalidation not tested but momentum extended",
+      ],
+      conditionsToAdvance: ["Pullback to 340-355 with stop below 320 and R:R >= 3"],
+      minimumRRMet: false,
+      invalidationClear: true,
+    },
+  },
+  "file-update": {
+    type: "file-update",
+    source: "ai-block",
+    proposal: {
+      id: "ST-TSLA-001",
+      currentHypothesis: "Wait for 340-355; reject chase entries above primary zone",
+      status: "watching",
+    },
+  },
   "trade-proposal": {
     type: "trade-proposal",
     source: "ai-block",

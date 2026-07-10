@@ -285,6 +285,7 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
 
   revalidateTradingPaths();
   if (result.tradeId) revalidatePath(`/trades/${result.tradeId}`);
+  if (result.stockFileId) revalidatePath(`/stock-theses/${result.stockFileId}`);
   redirect(`/inbox/${id}?${params.toString()}`);
 }
 

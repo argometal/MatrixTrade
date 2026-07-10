@@ -48,7 +48,7 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 2. **What ships today?** `architecture/matrixtrade-app.md` + `rules/`
 3. **What to build next?** `phases/roadmap.md` + `concepts/README.md`
 4. **Working on ARGUS?** [`argus/README.md`](argus/README.md)
-5. **Verifying MatrixTrade UI?** [`design/README.md`](design/README.md) — update checklists with every UI change
+5. **Matrix product + AI?** [`matrix/README.md`](matrix/README.md) → [`matrix/ai-engineering.md`](matrix/ai-engineering.md)
 6. **Integrations** → `integrations/` · **Protocols** → `protocols/`
 7. **New topic** → `topics/your-topic.md` + one row in this index
 
@@ -61,8 +61,9 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 | Document | Contents |
 |----------|----------|
 | [matrix/README.md](matrix/README.md) | **Index** — reading order, code vs vision map |
-| [matrix/strategic-planning-vision.md](matrix/strategic-planning-vision.md) | **Identity** — Playbook → Stock File → Decision Lab → Trade |
-| [matrix/library-alignment-backlog.md](matrix/library-alignment-backlog.md) | **Pending** — older library docs to align with vision |
+| [matrix/strategic-planning-vision.md](matrix/strategic-planning-vision.md) | **Identity** — Playbook → Stock File → Scouting Desk → Trade |
+| [matrix/ai-engineering.md](matrix/ai-engineering.md) | **AI fleet** — unified context + scout-assessment / file-update |
+| [matrix/library-alignment-backlog.md](matrix/library-alignment-backlog.md) | **Pending** — older library docs to align |
 
 ---
 
@@ -88,19 +89,14 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 
 ---
 
-## Design (MatrixTrade preview QA)
+## Design (MatrixTrade)
 
 | Document | Contents |
 |----------|----------|
-| [design/README.md](design/README.md) | **Index** — workflow + agent update rule |
-| [design/features-used-vs-unused-checklist.md](design/features-used-vs-unused-checklist.md) | **Runtime audit** — used vs built-but-unused |
-| [design/legacy-vs-preview-map.md](design/legacy-vs-preview-map.md) | **Route map** — preview active, legacy preserved |
-| [design/new-mode-parity-checklist.md](design/new-mode-parity-checklist.md) | Parity audit — migration complete; sign-off pending |
-| [design/home-preview-checklist.md](design/home-preview-checklist.md) | Situation Room `/home-preview` |
-| [design/trades-preview-checklist.md](design/trades-preview-checklist.md) | Trades workspace `/trades-preview` |
-| [design/planning-module-proposal.md](design/planning-module-proposal.md) | Planning Phase 0 **shipped**; Phase 1+ in concepts |
-
-**Rule:** Update the matching checklist in the same change whenever preview UI code changes (see `.cursor/rules/design-checklists.mdc`).
+| [design/README.md](design/README.md) | Design index — checklists removed; see `matrix/` |
+| [design/legacy-vs-preview-map.md](design/legacy-vs-preview-map.md) | Route map |
+| [design/planning-module-proposal.md](design/planning-module-proposal.md) | Scouting Desk Phase 0 |
+| [design/stock-thesis-proposal.md](design/stock-thesis-proposal.md) | Stock File Phase 0 |
 
 ---
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { saveStockThesisAction } from "@/app/actions";
-import { buildStockFileTrainingContext } from "@/lib/matrix-mechanics-brief";
+import { buildAiContextPackage } from "@/lib/ai-context";
 import type { Playbook } from "@/lib/playbook-types";
 import {
   formatStockThesisZone,
@@ -37,7 +37,12 @@ export function PreviewStockThesis({
   const [pending, startTransition] = useTransition();
 
   const contextText = useMemo(
-    () => buildStockFileTrainingContext({ thesis, playbooks }),
+    () =>
+      buildAiContextPackage({
+        scope: "stock-file",
+        focusThesis: thesis,
+        playbooks,
+      }),
     [thesis, playbooks]
   );
 

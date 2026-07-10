@@ -36,8 +36,8 @@ When a concept ships, move its description into the runtime tier and mark the co
 | Classic ↔ preview runtime toggle | [deferred-matrixtrade.md](deferred-matrixtrade.md) §8 | P4 | Legacy components preserved; no toggle |
 | Planning Phase 1+ | [planning-module-proposal.md](../design/planning-module-proposal.md) §Phase 1 | P2 | Charts, alerts, AI batch on failures |
 | Library vision alignment | [library-alignment-backlog.md](../matrix/library-alignment-backlog.md) | P1 | Older docs → `matrix/strategic-planning-vision.md` |
-| Decision Lab gatekeeper | [strategic-planning-vision.md](../matrix/strategic-planning-vision.md) §Decision Lab | P1 | Go/no-go UI; not only tactical PLAN-xxx |
-| AI mechanics brief | [strategic-planning-vision.md](../matrix/strategic-planning-vision.md) §AI mechanics | P1 | `buildMatrixMechanicsBrief()` — **shipped**; copy on Scouting Desk + Stock File |
+| Decision Lab gatekeeper | [strategic-planning-vision.md](../matrix/strategic-planning-vision.md) | **Done** | Scouting Desk + inbox apply |
+| AI mechanics brief | [ai-engineering.md](../matrix/ai-engineering.md) | **Done** | `lib/ai-context.ts` + scout-assessment / file-update |
 | MATRIX v2 data folders | [deferred-matrixtrade.md](deferred-matrixtrade.md) §9 | P3 | `portfolio/`, `journal/`, `lessons/` population |
 
 ---

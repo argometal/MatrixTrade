@@ -29,17 +29,26 @@
 | Carryover toggle + `closedAt` edit | **Done** |
 | Retire classic nav from active routes | **Done** (legacy code kept) |
 
-## Phase 3 — Next (knowledge + import)
+## Phase 3 — Active (Scouting + AI fleet)
+
+| Item | Status | Doc |
+|------|--------|-----|
+| Stock File + Scouting Desk Phase 0 | **Done** | `matrix/strategic-planning-vision.md` |
+| Unified `lib/ai-context.ts` (Exchange + Scouting) | **Done** | `matrix/ai-engineering.md` |
+| AI Block: `scout-assessment`, `file-update` + Inbox Apply | **Done** | `matrix/ai-engineering.md` |
+| TSLA pilot loop (copy → chat → inbox) | **Validate** | user QA |
+| Trade layer redesign | **Frozen** | after scouting loop proven |
+| Design UI checklists | **Removed** | `design/README.md` |
+
+## Phase 4 — Next (knowledge + import)
 
 | Item | Status | Doc |
 |------|--------|-----|
 | Populate `companies/AMZN/` with H001 example | Pending | `topics/companies-model.md` |
 | `MT-IMPORT:v1` parser + `/import` confirm | Pending | `protocols/import-handoff-v1.md` |
-| `MT-PLAN:v1` structured blocks → Planning | Pending | `concepts/deferred-matrixtrade.md` |
-| Selective export by ticker | Pending | `concepts/deferred-matrixtrade.md` |
-| Planning Phase 1 (charts, plan alerts) | Pending | `design/planning-module-proposal.md` |
+| Library alignment backlog P1–P3 | Pending | `matrix/library-alignment-backlog.md` |
 
-## Phase 4 — Planned (metrics)
+## Phase 5 — Planned (metrics)
 
 Deferred concepts — see `md/concepts/deferred-matrixtrade.md`:
 

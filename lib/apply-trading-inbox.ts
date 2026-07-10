@@ -1,3 +1,7 @@
+import {
+  appendScoutAssessment,
+  applyStockFileInboxUpdate,
+} from "./stock-theses";
 import { readNoteBody } from "./obsidian";
 import { syncObsidianTradeIfLocal } from "./obsidian-local";
 import type { Playbook } from "./playbook-types";
@@ -33,6 +37,7 @@ export type ApplyTradingProposalResult =
       type: TradingProposalType;
       tradeId?: string;
       playbookId?: string;
+      stockFileId?: string;
       trade?: Trade;
       playbook?: Playbook;
     }
@@ -47,6 +52,10 @@ export async function applyTradingProposal(
   }
 
   switch (parsed.type) {
+    case "scout-assessment":
+      return applyScoutAssessment(parsed);
+    case "file-update":
+      return applyFileUpdate(parsed);
     case "trade-proposal":
       return applyTradeProposal(parsed);
     case "trade-close":
@@ -64,6 +73,35 @@ export async function applyTradingProposal(
     default:
       return { ok: false, errors: ["Unsupported proposal type."] };
   }
+}
+
+async function applyScoutAssessment(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const p = parsed.proposal;
+  const stockFileId = String(p.stockFileId).toUpperCase();
+  const result = await appendScoutAssessment(stockFileId, p);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  return {
+    ok: true,
+    message: `Scout assessment saved on ${stockFileId} · verdict ${p.verdict}`,
+    type: "scout-assessment",
+    stockFileId,
+  };
+}
+
+async function applyFileUpdate(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const id = String(parsed.proposal.id).toUpperCase();
+  const result = await applyStockFileInboxUpdate(id, parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  return {
+    ok: true,
+    message: `Updated Stock File ${id} · v${result.thesis?.version}`,
+    type: "file-update",
+    stockFileId: id,
+  };
 }
 
 async function applyTradeProposal(

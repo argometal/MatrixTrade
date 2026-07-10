@@ -118,6 +118,88 @@ export async function updateStockThesisStatus(
   return { thesis: updated };
 }
 
+export async function applyStockFileInboxUpdate(
+  id: string,
+  proposal: Record<string, unknown>
+): Promise<{ thesis?: StockThesis; errors?: string[] }> {
+  const thesis = await getStockThesisById(id);
+  if (!thesis) return { errors: ["Stock file not found."] };
+
+  const now = new Date().toISOString();
+  const stamp = now.slice(0, 16).replace("T", " ");
+  let notes = thesis.notes;
+
+  if (proposal.notes !== undefined) {
+    const incoming = String(proposal.notes).trim();
+    const block = `### AI import · ${stamp}\n${incoming}`;
+    notes = notes ? `${notes}\n\n${block}` : block;
+  }
+
+  const statusRaw = proposal.status;
+  const status =
+    statusRaw !== undefined &&
+    ["draft", "watching", "actionable", "invalidated", "archived"].includes(String(statusRaw))
+      ? (String(statusRaw) as StockThesisStatus)
+      : undefined;
+
+  const updated: StockThesis = {
+    ...thesis,
+    status: status ?? thesis.status,
+    thesis: proposal.thesis !== undefined ? String(proposal.thesis).trim() : thesis.thesis,
+    currentHypothesis:
+      proposal.currentHypothesis !== undefined
+        ? String(proposal.currentHypothesis).trim()
+        : thesis.currentHypothesis,
+    notes,
+    version: thesis.version + 1,
+    updatedAt: now,
+  };
+
+  await getStockThesesStore().upsert(updated);
+  return { thesis: updated };
+}
+
+export async function appendScoutAssessment(
+  id: string,
+  proposal: Record<string, unknown>
+): Promise<{ thesis?: StockThesis; errors?: string[] }> {
+  const thesis = await getStockThesisById(id);
+  if (!thesis) return { errors: ["Stock file not found."] };
+
+  const stamp = new Date().toISOString().slice(0, 16).replace("T", " ");
+  const reasons = Array.isArray(proposal.reasons)
+    ? proposal.reasons.map((r) => String(r)).join("\n- ")
+    : "";
+  const challenges = Array.isArray(proposal.challengesToThesis)
+    ? proposal.challengesToThesis.map((c) => String(c)).join("\n- ")
+    : "";
+  const conditions = Array.isArray(proposal.conditionsToAdvance)
+    ? proposal.conditionsToAdvance.map((c) => String(c)).join("\n- ")
+    : "";
+
+  const block = [
+    `## Scout assessment · ${stamp}`,
+    `Verdict: **${String(proposal.verdict)}**`,
+    reasons ? `Reasons:\n- ${reasons}` : null,
+    challenges ? `Challenges to thesis:\n- ${challenges}` : null,
+    conditions ? `Conditions to advance:\n- ${conditions}` : null,
+    proposal.minimumRRMet !== undefined ? `minimumRRMet: ${proposal.minimumRRMet}` : null,
+    proposal.invalidationClear !== undefined ? `invalidationClear: ${proposal.invalidationClear}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const notes = thesis.notes ? `${thesis.notes}\n\n${block}` : block;
+  const updated: StockThesis = {
+    ...thesis,
+    notes,
+    version: thesis.version + 1,
+    updatedAt: new Date().toISOString(),
+  };
+  await getStockThesesStore().upsert(updated);
+  return { thesis: updated };
+}
+
 export async function updateStockThesisFields(
   id: string,
   input: UpdateStockThesisFieldsInput

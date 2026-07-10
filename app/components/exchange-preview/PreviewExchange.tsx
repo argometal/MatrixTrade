@@ -22,7 +22,7 @@ export function PreviewExchange({
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <h1 className="text-xl font-semibold text-zinc-100">Exchange</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
-            Assistant workspace — snapshot, request, import.
+            Same AI engine as Scouting — snapshot, import scout-assessment / file-update, Apply in Inbox.
           </p>
         </header>
 

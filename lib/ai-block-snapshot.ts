@@ -1,9 +1,8 @@
 import type { AiNote } from "./ai-notes-types";
+import { buildAiContextPackage } from "./ai-context";
 import type { Playbook } from "./playbook-types";
-import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
-import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
-import { buildSmartSnapshot, type SmartSnapshotInput } from "./smart-snapshot";
 import type { Experiment, Trade } from "./types";
+import type { SmartSnapshotInput } from "./smart-snapshot";
 
 export interface AiBlockSnapshotSystemNotes {
   tradesStore: string;
@@ -13,41 +12,15 @@ export interface AiBlockSnapshotSystemNotes {
   lastSyncAt?: string | null;
 }
 
-function formatSystemNotesSection(notes: AiBlockSnapshotSystemNotes): string {
-  const lines = [
-    "=== SYSTEM ===",
-    `trades_store:${notes.tradesStore}`,
-    `bridge:${notes.bridgeConfigured ? "configured" : "missing"}`,
-    `worker:${notes.workerReachable ? "reachable" : "offline"}`,
-    `inbox:${notes.inboxBackend}`,
-  ];
-  if (notes.lastSyncAt) {
-    lines.push(`last_sync:${notes.lastSyncAt}`);
-  }
-  return lines.join("\n");
-}
-
 export interface AiBlockSnapshotInput extends SmartSnapshotInput {
   systemNotes: AiBlockSnapshotSystemNotes;
 }
 
 export function buildAiBlockSnapshot(input: AiBlockSnapshotInput): string {
-  const base = buildSmartSnapshot({
-    ...input,
-    options: input.options ?? { setups: input.setups },
+  return buildAiContextPackage({
+    scope: "exchange",
+    exchange: input,
   });
-
-  const systemSection = formatSystemNotesSection(input.systemNotes);
-  return [
-    buildMatrixMechanicsBrief(),
-    "",
-    base,
-    "",
-    systemSection,
-    "",
-    "=== REQUEST ===",
-    DEFAULT_AI_BLOCK_REQUEST.trim(),
-  ].join("\n");
 }
 
 export function buildAiBlockSnapshotFromParts(

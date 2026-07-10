@@ -205,6 +205,8 @@ export function getSnapshotReadUrl(): string | null {
 }
 
 export type TradingProposalType =
+  | "scout-assessment"
+  | "file-update"
   | "trade-proposal"
   | "trade-close"
   | "trade-review"
@@ -225,6 +227,8 @@ export function parseTradingInboxPayload(
   const type = payload.type;
   const proposal = payload.proposal;
   if (
+    type !== "scout-assessment" &&
+    type !== "file-update" &&
     type !== "trade-proposal" &&
     type !== "trade-close" &&
     type !== "trade-review" &&
@@ -248,6 +252,10 @@ export function parseTradingInboxPayload(
 export function describeProposal(payload: TradingInboxPayload): string {
   const p = payload.proposal;
   switch (payload.type) {
+    case "scout-assessment":
+      return `Scout ${p.ticker} ${p.stockFileId} · verdict ${p.verdict}`;
+    case "file-update":
+      return `Update Stock File ${p.id}`;
     case "trade-proposal":
       return `New trade ${p.id} ${p.ticker} · entry ${p.entry} · stop ${p.stop} · ${p.shares} sh`;
     case "trade-close":
@@ -272,6 +280,39 @@ export function validateProposalPayload(
 ): { ok: true } | { ok: false; errors: string[] } {
   const p = parsed.proposal;
   const errors: string[] = [];
+
+  if (parsed.type === "scout-assessment") {
+    if (!p.stockFileId) errors.push("proposal.stockFileId required");
+    if (!p.ticker) errors.push("proposal.ticker required");
+    const verdict = p.verdict;
+    if (verdict !== "go" && verdict !== "wait" && verdict !== "no") {
+      errors.push("proposal.verdict must be go, wait, or no");
+    }
+    if (!Array.isArray(p.reasons) || p.reasons.length === 0) {
+      errors.push("proposal.reasons[] required (min 1)");
+    }
+    if (!Array.isArray(p.challengesToThesis) || p.challengesToThesis.length === 0) {
+      errors.push("proposal.challengesToThesis[] required (min 1) — AI must challenge thesis");
+    }
+  }
+
+  if (parsed.type === "file-update") {
+    if (!p.id) errors.push("proposal.id required");
+    const hasField =
+      p.status !== undefined ||
+      p.currentHypothesis !== undefined ||
+      p.notes !== undefined ||
+      p.thesis !== undefined;
+    if (!hasField) {
+      errors.push("At least one of status, currentHypothesis, notes, thesis required");
+    }
+    if (p.status !== undefined) {
+      const allowed = ["draft", "watching", "actionable", "invalidated", "archived"];
+      if (!allowed.includes(String(p.status))) {
+        errors.push(`proposal.status must be one of: ${allowed.join(", ")}`);
+      }
+    }
+  }
 
   if (parsed.type === "trade-proposal") {
     if (!p.id) errors.push("proposal.id required");

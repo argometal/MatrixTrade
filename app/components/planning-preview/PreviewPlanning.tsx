@@ -8,11 +8,8 @@ import {
   updatePlanStatusAction,
 } from "@/app/actions";
 import { buildPlanEnterHref, planNeedsStrategyReview } from "@/lib/plan-helpers";
-import {
-  buildMatrixTrainingContext,
-  buildScoutingContextText,
-  scoutingVerdictStyle,
-} from "@/lib/matrix-mechanics-brief";
+import { buildAiContextPackage } from "@/lib/ai-context";
+import { scoutingVerdictStyle } from "@/lib/matrix-mechanics-brief";
 import type { MonthlyRisk } from "@/lib/monthly-risk";
 import {
   PLAN_EXTERNAL_FACTORS,
@@ -149,7 +146,8 @@ export function PreviewPlanning({
 
   const trainingBlockText = useMemo(
     () =>
-      buildMatrixTrainingContext({
+      buildAiContextPackage({
+        scope: "scouting",
         playbooks,
         stockTheses: activeTheses,
         plans,
@@ -161,8 +159,9 @@ export function PreviewPlanning({
 
   const scoutingContextText = useMemo(() => {
     if (!scoutThesis) return "";
-    return buildScoutingContextText({
-      thesis: scoutThesis,
+    return buildAiContextPackage({
+      scope: "scouting-ticker",
+      focusThesis: scoutThesis,
       plans,
       playbooks,
       monthly,
@@ -324,7 +323,18 @@ export function PreviewPlanning({
                 <Link href="/playbook" className="text-violet-400 hover:text-violet-300">
                   Playbook
                 </Link>{" "}
-                = HOW · Stock File = WHO · Scouting Desk = go / wait / no + risk
+                = HOW · Stock File = WHO · Scouting = go / wait / no + risk
+              </p>
+              <p className="mt-1 text-xs text-zinc-600">
+                Copy package → ChatGPT →{" "}
+                <Link href="/exchange" className="text-violet-400 hover:underline">
+                  Assistant
+                </Link>{" "}
+                import →{" "}
+                <Link href="/inbox" className="text-violet-400 hover:underline">
+                  Inbox
+                </Link>{" "}
+                Apply (`scout-assessment` / `file-update`)
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

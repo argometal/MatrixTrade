@@ -1,6 +1,8 @@
 import type { TradingProposalType } from "./bridge";
 
 export const AI_BRIDGE_BLOCK_TYPES = [
+  "scout-assessment",
+  "file-update",
   "analysis",
   "trade-proposal",
   "trade-close",
@@ -25,7 +27,7 @@ export function getApplyStatusLabel(type: TradingProposalType): string {
 }
 
 export const AI_BRIDGE_CAPABILITIES =
-  "Analyze trades, create trades, update trades, close trades, review trades, add notes, and manage playbooks — via AI Blocks imported through Inbox (human Apply only).";
+  "Validate Stock Files (scout-assessment, file-update), analyze trades, manage playbooks — via AI Blocks imported through Inbox (human Apply only). Trade proposals when scouting approves.";
 
 export const AI_BRIDGE_FLOW =
   "MatrixTrade → Copy Snapshot → your AI → AI Block → Import → Inbox → Apply → Supabase";

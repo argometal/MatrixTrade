@@ -1,4 +1,5 @@
 import type { TradingInboxPayload } from "./bridge";
+import { getStockThesisById } from "./stock-theses";
 import { getPlaybookById, slugifyPlaybookId } from "./playbooks";
 import { getTradeById } from "./storage";
 import type { Trade } from "./types";
@@ -22,9 +23,10 @@ function numMatch(stored: number | undefined, expected: unknown): boolean {
 export async function verifyApplyPersistence(
   parsed: TradingInboxPayload
 ): Promise<ApplyVerifyResult> {
-  const p = parsed.proposal;
-
   switch (parsed.type) {
+    case "scout-assessment":
+    case "file-update":
+      return verifyStockFilePersistence(parsed);
     case "trade-proposal":
     case "trade-close":
     case "trade-review":
@@ -37,6 +39,34 @@ export async function verifyApplyPersistence(
     default:
       return { ok: false, detail: "Unsupported proposal type for verification." };
   }
+}
+
+async function verifyStockFilePersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const p = parsed.proposal;
+  const id =
+    parsed.type === "scout-assessment"
+      ? String(p.stockFileId).toUpperCase()
+      : String(p.id).toUpperCase();
+  const reloaded = await getStockThesisById(id);
+  if (!reloaded) {
+    return { ok: false, detail: `Stock File ${id} not found after apply.` };
+  }
+  if (parsed.type === "scout-assessment") {
+    const verdict = String(p.verdict);
+    if (!reloaded.notes?.includes(verdict)) {
+      return { ok: false, detail: `Assessment verdict not found in ${id} notes.` };
+    }
+    return { ok: true, detail: `Scout assessment on ${id} · v${reloaded.version}` };
+  }
+  if (p.currentHypothesis !== undefined && reloaded.currentHypothesis !== String(p.currentHypothesis).trim()) {
+    return { ok: false, detail: `Hypothesis not updated on ${id}.` };
+  }
+  if (p.status !== undefined && reloaded.status !== String(p.status)) {
+    return { ok: false, detail: `Status not updated on ${id}.` };
+  }
+  return { ok: true, detail: `Stock File ${id} · v${reloaded.version} verified.` };
 }
 
 async function verifyTradePersistence(parsed: TradingInboxPayload): Promise<ApplyVerifyResult> {
