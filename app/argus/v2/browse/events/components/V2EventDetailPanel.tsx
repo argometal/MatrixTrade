@@ -14,6 +14,7 @@ import {
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
 import { V2EventLinkEmailModal } from "./V2EventLinkEmailModal";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
+import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
 import { V2TagPatternBadges } from "@/app/argus/v2/components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 
@@ -100,6 +101,14 @@ export function V2EventDetailPanel({
               scopeType="event"
               scopeId={selected.id}
               scopeName={selected.name}
+            />
+            <V2EntityLifecycleActions
+              entityId={selected.id}
+              entityName={selected.name}
+              entityKind="event"
+              lifecycleStatus={selected.lifecycleStatus}
+              returnTo={`/argus/v2/browse/events?selected=${selected.id}`}
+              variant="menu"
             />
             <button
               type="button"

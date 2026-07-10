@@ -181,6 +181,7 @@ export function buildV2TopicDetails(
       linkedEntityIds: topic.linkedEntityIds ?? [],
       linkedEntities,
       aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
+      lifecycleStatus: topic.lifecycleStatus,
       evidence,
       timeline: buildTimelineFromLogsAndInbox(history, inbox),
       tagPatterns: buildTagPatternsForScope(history, inbox, today),

@@ -8,12 +8,13 @@ import { effectiveInboxStatus } from "./inbox-loaders";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import {
   entitiesByKind,
+  getAllProjectScopeInbox,
   getProjectEvidenceScope,
   getProjectHomeCounts,
   organizationEvidenceScope,
   projectsForOrganization,
 } from "./hierarchy";
-import { getAllProjectScopeInbox } from "../project-evidence-scope";
+import type { ProjectScopeOptions } from "../project-evidence-scope";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
 import { collectProjectLinkIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
@@ -559,10 +560,11 @@ export function loadProjectPageData(
   inboxItems: InboxItem[],
   project: Entity,
   includePrivate: boolean,
-  today: string
+  today: string,
+  scopeOptions?: ProjectScopeOptions
 ) {
-  const scope = getProjectEvidenceScope(data, inboxItems, project, includePrivate);
-  const allInbox = getAllProjectScopeInbox(inboxItems, project, includePrivate);
+  const scope = getProjectEvidenceScope(data, inboxItems, project, includePrivate, scopeOptions);
+  const allInbox = getAllProjectScopeInbox(inboxItems, project, includePrivate, scopeOptions);
   const allLogs = [...scope.directLogs, ...scope.viaContactLogs];
   let timeline = buildTimelineFromLogsAndInbox(allLogs, allInbox);
   timeline = enrichTimelineMeta(timeline, allLogs, allInbox, data.entities);

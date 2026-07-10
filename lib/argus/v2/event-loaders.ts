@@ -241,6 +241,7 @@ export function buildV2EventDetails(
       linkedEntries,
       relatedEmails,
       evidence,
+      lifecycleStatus: event.lifecycleStatus,
       tagPatterns: buildTagPatternsForScope(history, inbox, today),
     };
   });

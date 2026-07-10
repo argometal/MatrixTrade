@@ -5,6 +5,8 @@ import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage"
 import { loadOrganizationPageData } from "@/lib/argus/v2/loaders";
 import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { V2QuickDeliverButton } from "../../components/V2QuickDeliverModal";
+import { resolveEntityLifecycleStatus } from "@/lib/argus/entity-lifecycle";
+import { V2EntityLifecycleActions } from "../../components/V2EntityLifecycleActions";
 import { V2TagPatternBadges } from "../../components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "../../components/V2RecordRecentEntity";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
@@ -70,6 +72,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
   const location = extractLocation(entity.notes ?? "");
   const morePeople = Math.max(0, page.linkedPeople.length - 4);
   const moreProjects = Math.max(0, page.orgProjects.length - 3);
+  const lifecycleStatus = resolveEntityLifecycleStatus(entity, today);
 
   return (
     <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
@@ -150,6 +153,14 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
             ) : null}
           </div>
           <div className="flex shrink-0 gap-2">
+            <V2EntityLifecycleActions
+              entityId={entity.id}
+              entityName={entity.name}
+              entityKind="organization"
+              lifecycleStatus={lifecycleStatus}
+              returnTo={`/argus/v2/organizations/${entity.id}`}
+              variant="inline"
+            />
             <button
               type="button"
               className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-400 transition hover:border-zinc-600 hover:text-zinc-200"

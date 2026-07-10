@@ -1,4 +1,5 @@
 import type { V2EvidenceStreamItem } from "./evidence-stream";
+import type { EntityLifecycleStatus } from "../types";
 import type { V2TimelineEntry } from "./mock-data";
 import type { TagPattern } from "./tag-patterns";
 
@@ -38,6 +39,7 @@ export interface V2TopicDetail {
   linkedEntityIds: string[];
   linkedEntities: V2TopicLinkedEntity[];
   aliases: string[];
+  lifecycleStatus?: EntityLifecycleStatus;
   evidence: V2EvidenceStreamItem[];
   timeline: V2TimelineEntry[];
   tagPatterns: TagPattern[];

@@ -1,4 +1,5 @@
 import type { ArgusData, Entity, InboxItem } from "../types";
+import { isEntityArchived } from "../entity-lifecycle";
 import { entityNotesForDisplay } from "../reference-types";
 import { getAllProjectScopeInbox, getProjectEvidenceScope } from "../project-evidence-scope";
 import { entitiesByKind } from "./hierarchy";
@@ -79,10 +80,10 @@ function deriveProjectBrowseStatus(
   today: string,
   lastActivityIso: string
 ): V2ProjectBrowseStatus {
+  if (isEntityArchived(project, today)) return "Archived";
   if (project.deletedAt) return "Archived";
 
   const notes = project.notes ?? "";
-  if (/status:\s*archived/i.test(notes)) return "Archived";
   if (/status:\s*on hold|on hold/i.test(notes)) return "On Hold";
 
   const end = project.endDate?.slice(0, 10);

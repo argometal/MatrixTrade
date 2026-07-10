@@ -217,6 +217,7 @@ export type EntityUpdatePatch = Partial<
     | "linkedEventIds"
     | "linkedEntityIds"
     | "linkedTags"
+    | "lifecycleStatus"
   >
 >;
 
@@ -317,6 +318,8 @@ export async function updateEntity(id: string, patch: EntityUpdatePatch): Promis
         : current.linkedEntityIds ?? [],
     linkedTags:
       patch.linkedTags !== undefined ? normalizeLinkedTags(patch.linkedTags) : current.linkedTags ?? [],
+    lifecycleStatus:
+      patch.lifecycleStatus !== undefined ? patch.lifecycleStatus : current.lifecycleStatus,
     updatedAt: new Date().toISOString(),
   };
   await writeArgus(data);
@@ -786,6 +789,7 @@ export type InboxTriagePatch = {
   status?: InboxItem["status"];
   followUpDate?: string | null;
   topics?: string[];
+  subject?: string;
 };
 
 export async function updateInboxTriage(inboxId: string, patch: InboxTriagePatch): Promise<InboxItem> {
@@ -810,6 +814,7 @@ export async function updateInboxTriage(inboxId: string, patch: InboxTriagePatch
       patch.topics !== undefined
         ? [...new Set(patch.topics.map((tag) => tag.trim()).filter(Boolean))]
         : inbox.topics,
+    subject: patch.subject !== undefined ? patch.subject.trim() || undefined : inbox.subject,
   };
   await writeArgus(data);
   return data.inboxItems[idx];
@@ -1009,6 +1014,50 @@ export async function clearAllArgusData(): Promise<void> {
   await Promise.all(files.map((file) => removeLocalAttachmentFile(file)));
 
   await writeArgus(emptyArgus(), "destructive");
+}
+
+/** Rename a tag string across all register entries and inbox rows. */
+export async function renameTagGlobally(oldTag: string, newTag: string): Promise<number> {
+  const oldKey = oldTag.trim().toLowerCase();
+  const newDisplay = newTag.trim().replace(/\s+/g, " ");
+  if (!oldKey || !newDisplay) return 0;
+
+  const data = await readArgus();
+  let touched = 0;
+
+  for (let i = 0; i < data.logs.length; i++) {
+    const log = data.logs[i];
+    const topics = log.topics ?? [];
+    let changed = false;
+    const next = topics.map((tag) => {
+      if (tag.trim().toLowerCase() !== oldKey) return tag;
+      changed = true;
+      return newDisplay;
+    });
+    if (changed) {
+      data.logs[i] = { ...log, topics: [...new Set(next)] };
+      touched += 1;
+    }
+  }
+
+  for (let i = 0; i < data.inboxItems.length; i++) {
+    const item = data.inboxItems[i];
+    const topics = item.topics ?? [];
+    if (topics.length === 0) continue;
+    let changed = false;
+    const next = topics.map((tag) => {
+      if (tag.trim().toLowerCase() !== oldKey) return tag;
+      changed = true;
+      return newDisplay;
+    });
+    if (changed) {
+      data.inboxItems[i] = { ...item, topics: [...new Set(next)] };
+      touched += 1;
+    }
+  }
+
+  if (touched > 0) await writeArgus(data);
+  return touched;
 }
 
 export { ArgusWriteBlockedError } from "./data-safety";

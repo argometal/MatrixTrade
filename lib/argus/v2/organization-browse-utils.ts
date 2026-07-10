@@ -1,4 +1,5 @@
 import type { ArgusData, Entity, InboxItem, Log } from "../types";
+import { isEntityArchived } from "../entity-lifecycle";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import {
   entitiesByKind,
@@ -90,7 +91,8 @@ function deriveOrganizationStatus(
   today: string,
   totalEvidence: number
 ): V2OrganizationBrowseStatus {
-  if (org.deletedAt || /status:\s*archived/i.test(org.notes ?? "")) return "Archived";
+  if (isEntityArchived(org, today)) return "Archived";
+  if (org.deletedAt) return "Archived";
   if (/status:\s*prospect/i.test(org.notes ?? "")) return "Prospect";
 
   if (totalEvidence === 0) return "Prospect";

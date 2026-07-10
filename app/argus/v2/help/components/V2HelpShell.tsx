@@ -135,6 +135,28 @@ const SECTIONS: HelpSection[] = [
     tip: "Use Filters to narrow by status when your portfolio grows.",
   },
   {
+    id: "lifecycle",
+    title: "Rename & archive",
+    items: [
+      {
+        title: "Rename",
+        body: "Fix the display name on organizations, projects, topics, events, and contacts — links and evidence stay intact.",
+      },
+      {
+        title: "Archive",
+        body: "Archived entities disappear from metrics, treemap, and default browse. Evidence remains — use Deliver or restore later.",
+      },
+      {
+        title: "Project dates",
+        body: "Project views default to evidence within start/end dates. Use All dates on the project page to include older or later items.",
+      },
+      {
+        title: "Topics on organizations",
+        body: "Org-linked topics have no expiry. Link a topic to a project when you want bounded monitoring inside project dates.",
+      },
+    ],
+  },
+  {
     id: "tags-patterns",
     title: "Tags & patterns",
     items: [

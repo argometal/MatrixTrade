@@ -3,6 +3,7 @@ import { referenceKindFromNotes } from "../reference-types";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import { buildTagPatternsForScope, tagPatternCount } from "./tag-patterns";
 import { entitiesByKind } from "./hierarchy";
+import { isEntityArchived } from "../entity-lifecycle";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
 
@@ -245,6 +246,7 @@ export function buildV2KnowledgeNodes(
   for (const entity of entities) {
     const kind = entityKind(entity);
     if (!kind || kind === "person" || kind === "event") continue;
+    if (isEntityArchived(entity, today)) continue;
 
     const evidence =
       kind === "topic"

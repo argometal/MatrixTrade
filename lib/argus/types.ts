@@ -21,6 +21,9 @@ export type AttachmentParentType = "inbox" | "journal";
 
 export type StrategicValue = 1 | 2 | 3 | 4 | 5;
 
+/** Entity visibility — archived excludes from metrics and default browse. */
+export type EntityLifecycleStatus = "active" | "completed" | "archived";
+
 export type { ContactValueKey, MyValueKey, RelationshipReasonKey, RelationshipStatusKey };
 
 export interface Entity {
@@ -52,6 +55,8 @@ export interface Entity {
   linkedEntityIds?: string[];
   /** Tag strings linked to this project — same canonical form as log.topics */
   linkedTags?: string[];
+  /** active | completed (project past end) | archived (hidden from metrics) */
+  lifecycleStatus?: EntityLifecycleStatus;
   createdAt: string;
   updatedAt: string;
   /** Soft delete — never hard-remove user data (Rule 0). */

@@ -12,7 +12,8 @@ import { V2TagPatternBadges } from "../../components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "../../components/V2RecordRecentEntity";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
 import { V2EntityNeighborhoodPanel } from "../../components/V2EntityNeighborhoodPanel";
-import { V2ProjectActions } from "../../components/V2ProjectActions";
+import { V2EntityLifecycleActions } from "../../components/V2EntityLifecycleActions";
+import { V2ProjectScopeToggle } from "../../components/V2ProjectScopeToggle";
 import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
 import { V2ProjectTabs } from "../../components/V2ProjectTabs";
@@ -31,8 +32,16 @@ import { EmptyState, formatDate } from "@/app/argus/components/ui";
 
 const TIMELINE_PREVIEW = 8;
 
-export default async function V2ProjectPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function V2ProjectPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ scope?: string }>;
+}) {
   const { id } = await params;
+  const { scope } = await searchParams;
+  const respectProjectDates = scope !== "all";
   const includePrivate = await hasArgusPrivateUnlock();
   const entity = await getEntity(id);
 
@@ -51,7 +60,9 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
 
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
   const today = new Date().toISOString().slice(0, 10);
-  const page = loadProjectPageData(data, inboxItems, entity, includePrivate, today);
+  const page = loadProjectPageData(data, inboxItems, entity, includePrivate, today, {
+    respectProjectDates,
+  });
   const neighborhood = buildV2EntityNeighborhoodGraph(data, inboxItems, entity.id, includePrivate, today);
   const projectRunbooks = runbooksForEntity(data.runbooks ?? [], entity.id);
   const hasPrivateEvidence = projectHasPrivateEvidence(data, inboxItems, entity);
@@ -96,14 +107,16 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
             ) : null}
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <V2ProjectActions
-              projectId={entity.id}
-              projectName={entity.name}
-              href={`/argus/v2/projects/${entity.id}`}
+            <V2EntityLifecycleActions
+              entityId={entity.id}
+              entityName={entity.name}
+              entityKind="project"
+              lifecycleStatus={entity.lifecycleStatus}
+              returnTo={`/argus/v2/projects/${entity.id}${respectProjectDates ? "" : "?scope=all"}`}
               hasPrivateEvidence={hasPrivateEvidence}
               privateConfigured={argusPrivateConfigured()}
               privateUnlocked={includePrivate}
-              returnTo={`/argus/v2/projects/${entity.id}`}
+              showDelete
               variant="inline"
             />
             <V2EntityLinkButton
@@ -185,23 +198,12 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
               <div>
                 <h2 className="text-base font-semibold text-zinc-100">Project Timeline</h2>
                 <p className="mt-1 text-xs text-zinc-500">
-                  Bounded by project dates · direct links + via project contacts
+                  {respectProjectDates
+                    ? "Bounded by project dates · direct links + via project contacts"
+                    : "All dates · includes evidence outside the project window"}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  className="rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-400"
-                >
-                  All types ▾
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg border border-zinc-700/80 bg-zinc-900/80 px-3 py-1.5 text-xs text-zinc-400"
-                >
-                  Filters
-                </button>
-              </div>
+              <V2ProjectScopeToggle projectId={entity.id} respectDates={respectProjectDates} />
             </div>
             <V2OrgTimeline entries={page.timeline} limit={TIMELINE_PREVIEW} />
           </V2Card>

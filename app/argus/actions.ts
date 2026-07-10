@@ -33,6 +33,7 @@ import {
   updateEntity,
   updateLog,
   updateRunbook,
+  renameTagGlobally,
 } from "@/lib/argus/server-storage";
 import type { EntityType, JournalKind, LogSource, StrategicValue } from "@/lib/argus/types";
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
@@ -1115,6 +1116,91 @@ export async function renameProjectAction(formData: FormData): Promise<void> {
   revalidatePath("/argus/v2/browse/projects");
   revalidatePath(`/argus/v2/projects/${entityId}`);
   revalidatePath(`/argus/projects/${entityId}`);
+  redirect(returnTo);
+}
+
+export async function renameEntityAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
+
+  if (!name) {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=name`);
+  }
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.deletedAt) redirect(returnTo);
+
+  await updateEntity(entityId, { name });
+  revalidateArgus();
+  revalidatePath("/argus/v2");
+  revalidatePath("/argus/v2/browse/organizations");
+  revalidatePath("/argus/v2/browse/projects");
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/browse/events");
+  revalidatePath(`/argus/v2/organizations/${entityId}`);
+  revalidatePath(`/argus/v2/projects/${entityId}`);
+  revalidatePath(`/argus/v2/network/${entityId}`);
+  redirect(returnTo);
+}
+
+export async function archiveEntityAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.deletedAt) redirect(returnTo);
+
+  await updateEntity(entityId, { lifecycleStatus: "archived" });
+  revalidateArgus();
+  revalidatePath("/argus/v2");
+  redirect(returnTo);
+}
+
+export async function restoreEntityAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.deletedAt) redirect(returnTo);
+
+  await updateEntity(entityId, { lifecycleStatus: "active" });
+  revalidateArgus();
+  revalidatePath("/argus/v2");
+  redirect(returnTo);
+}
+
+export async function renameTagAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const oldTag = String(formData.get("oldTag") ?? "").trim();
+  const newTag = String(formData.get("newTag") ?? "").trim();
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
+
+  if (!oldTag || !newTag) {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=tag`);
+  }
+
+  await renameTagGlobally(oldTag, newTag);
+  revalidateArgus();
+  revalidatePath("/argus/v2");
+  revalidatePath("/argus/v2/inbox");
+  redirect(returnTo);
+}
+
+export async function updateInboxSubjectAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const inboxId = String(formData.get("inboxId") ?? "");
+  const subject = String(formData.get("subject") ?? "").trim();
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/inbox");
+
+  if (!inboxId) redirect(returnTo);
+
+  await updateInboxTriage(inboxId, { subject });
+  revalidateArgus();
+  revalidatePath("/argus/v2/inbox");
   redirect(returnTo);
 }
 

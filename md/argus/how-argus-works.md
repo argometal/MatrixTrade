@@ -64,6 +64,17 @@ Full rules: [`tag-patterns-vision.md`](tag-patterns-vision.md).
 
 ---
 
+## Entity lifecycle
+
+- **Rename** — fix names without losing links or history.
+- **Archive** — `lifecycleStatus: archived` hides from metrics and default browse; evidence remains for Deliver.
+- **Projects** — default evidence view respects start/end dates; toggle **All dates** on the project page.
+- **Organizations & org-linked topics** — no date expiry; archive when the subject is retired.
+
+Full rules: [`entity-lifecycle-vision.md`](entity-lifecycle-vision.md).
+
+---
+
 ## Browse views
 
 See the in-app help at `/argus/v2/help` for Organizations, Projects, Network, Topics, and Events browse copy.

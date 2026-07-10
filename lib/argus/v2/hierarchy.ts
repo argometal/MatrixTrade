@@ -7,6 +7,7 @@
  */
 
 import type { Entity, InboxItem, Log } from "../types";
+import { isEntityActiveForMetrics, isEntityArchived } from "../entity-lifecycle";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import { getEntityHistory } from "../network";
 import {
@@ -40,8 +41,9 @@ export function organizationLinkedPersonIds(entity: Entity): string[] {
 /** Projects associated with an org via project.linkedEntityIds or org.linkedEntityIds. */
 export function projectsForOrganization(data: ArgusData, org: Entity): Entity[] {
   if (!isOrganizationEntity(org)) return [];
+  const today = new Date().toISOString().slice(0, 10);
   return data.entities
-    .filter((e) => e.type === "project" && !e.deletedAt)
+    .filter((e) => e.type === "project" && isEntityActiveForMetrics(e, today))
     .filter(
       (project) =>
         (project.linkedEntityIds ?? []).includes(org.id) ||
@@ -83,17 +85,23 @@ export function personEvidenceScope(
 
 /** Re-export project scope for v2 — bounded dates + via contacts. */
 export {
+  getAllProjectScopeInbox,
   getProjectEvidenceScope,
   getProjectHomeCounts,
-  getAllProjectScopeInbox,
 };
 
-export function activeEntities(data: ArgusData): Entity[] {
-  return data.entities.filter((e) => !e.deletedAt);
+export function activeEntities(data: ArgusData, today?: string): Entity[] {
+  const day = today ?? new Date().toISOString().slice(0, 10);
+  return data.entities.filter((e) => isEntityActiveForMetrics(e, day));
 }
 
-export function entitiesByKind(data: ArgusData) {
-  const entities = activeEntities(data);
+export function archivedEntities(data: ArgusData, today?: string): Entity[] {
+  const day = today ?? new Date().toISOString().slice(0, 10);
+  return data.entities.filter((e) => !e.deletedAt && isEntityArchived(e, day));
+}
+
+export function entitiesByKind(data: ArgusData, today?: string) {
+  const entities = activeEntities(data, today);
   return {
     organizations: entities.filter(isOrganizationEntity),
     projects: entities.filter(isProjectEntity),

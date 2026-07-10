@@ -1,5 +1,9 @@
 import type { ArgusData, Attachment, ClassificationStatus, Entity, InboxItem, Log, Runbook } from "./types";
 import {
+  legacyArchivedFromNotes,
+  resolveEntityLifecycleStatus,
+} from "./entity-lifecycle";
+import {
   normalizeContactValueKeys,
   normalizeMyValueKeys,
 } from "./network-relationship-metrics";
@@ -37,7 +41,7 @@ export function normalizeAttachment(att: Attachment): Attachment {
 export function normalizeEntity(entity: Entity): Entity {
   const raw = entity.strategicValue ?? 3;
   const strategicValue = (raw >= 1 && raw <= 5 ? raw : 3) as Entity["strategicValue"];
-  return {
+  const normalized: Entity = {
     ...entity,
     alias: entity.alias ?? "",
     notes: entity.notes ?? "",
@@ -51,8 +55,16 @@ export function normalizeEntity(entity: Entity): Entity {
     linkedTags: entity.linkedTags ?? [],
     startDate: entity.startDate?.slice(0, 10),
     endDate: entity.endDate?.slice(0, 10),
+    lifecycleStatus: entity.lifecycleStatus,
     deletedAt: entity.deletedAt,
   };
+  if (!normalized.lifecycleStatus && legacyArchivedFromNotes(normalized.notes)) {
+    normalized.lifecycleStatus = "archived";
+  }
+  if (!normalized.lifecycleStatus) {
+    normalized.lifecycleStatus = resolveEntityLifecycleStatus(normalized);
+  }
+  return normalized;
 }
 
 export function normalizeInboxItem(item: InboxItem): InboxItem {
