@@ -27,11 +27,16 @@
 
 ---
 
-## Phase B (pending)
+## Phase B (shipped — 070903)
 
-- Home default `?view=intelligence` — stop entity browser duplication
-- Pulse strip action-only (align with sidebar signals)
-- Remove `#follow-ups` / `#tags` anchor dependency from old sidebar links
+| Change | Detail |
+|--------|--------|
+| Home default | Intelligence view (no `?view=` param) |
+| Entities tab | Replaced with **Browse** quick-links to dedicated browsers |
+| Pulse strip | Action-only — inbox, follow-ups, classification (matches sidebar signals) |
+| Home copy | *"Activity, intelligence, and what needs attention"* |
+| Timeline | Stays on Home; removed legacy `/argus/journal` links |
+| `?view=entities` | Still works → maps to Browse tab (backward compatible) |
 
 ---
 
