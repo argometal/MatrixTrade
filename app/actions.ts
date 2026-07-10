@@ -419,6 +419,14 @@ export async function updateTradeMetaAction(id: string, formData: FormData): Pro
     input.riskRewardActual = Number(rrActual);
   }
 
+  const closedAtRaw = String(formData.get("closedAt") ?? "").trim();
+  if (closedAtRaw) {
+    const parsed = Date.parse(`${closedAtRaw}T12:00:00`);
+    if (Number.isFinite(parsed)) {
+      input.closedAt = new Date(parsed).toISOString();
+    }
+  }
+
   const result = await updateTradeMeta(id, input);
   if (result.errors) {
     return;
@@ -437,8 +445,9 @@ export async function saveRulesAction(
   const monthlyLossLimit = Number(formData.get("monthlyLossLimit"));
   const maxLossPerTicker = Number(formData.get("maxLossPerTicker"));
   const maxTrades = Number(formData.get("maxTrades"));
+  const carryoverEnabled = formData.get("carryoverEnabled") === "on";
 
-  const result = await saveRules({ monthlyLossLimit, maxLossPerTicker, maxTrades });
+  const result = await saveRules({ monthlyLossLimit, maxLossPerTicker, maxTrades, carryoverEnabled });
   if (result.errors?.length) {
     return { error: result.errors.join(" ") };
   }

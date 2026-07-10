@@ -151,6 +151,7 @@ export function buildSectionedSnapshot(input: SectionedSnapshotInput): string {
     `carryover_in:${monthly.carryoverIn.toFixed(2)}`,
     `allowance:${monthly.monthlyAllowance.toFixed(2)}`,
     `month_pnl:${formatSigned(monthly.monthlyRealizedPnL)}`,
+    `room_cap:${monthly.monthlyRoomCap.toFixed(2)}`,
     `room:${monthly.monthlyLossRoom.toFixed(2)}`,
     "",
     "=== EXPERIMENT ===",

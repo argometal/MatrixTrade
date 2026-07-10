@@ -200,6 +200,7 @@ function buildTradeUpdateInput(proposal: Record<string, unknown>): UpdateTradeIn
   if (proposal.notes !== undefined) input.notes = String(proposal.notes);
   if (proposal.playbookId !== undefined) input.playbookId = String(proposal.playbookId);
   if (proposal.setupId !== undefined) input.setupId = String(proposal.setupId);
+  if (proposal.closedAt !== undefined) input.closedAt = String(proposal.closedAt);
   return input;
 }
 

@@ -35,6 +35,7 @@ function formatOverviewSection(
     `carryover_in:${monthly.carryoverIn.toFixed(2)}`,
     `monthly_allowance:${monthly.monthlyAllowance.toFixed(2)}`,
     `monthly_pnl:${formatSigned(monthly.monthlyRealizedPnL)}`,
+    `monthly_room_cap:${monthly.monthlyRoomCap.toFixed(2)}`,
     `monthly_room:${monthly.monthlyLossRoom.toFixed(2)}`,
     `experiment_net_pnl:${formatSigned(experiment.realizedPnL)}`,
     `experiment_gross_loss:${formatSigned(experiment.grossLoss)}`,

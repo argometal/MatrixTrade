@@ -38,7 +38,7 @@ export function LegacyStatsPage({ data }: { data: PreviewStatsData }) {
         <StatCard label="Monthly budget" value={formatMonthlyLossRoom(monthly.baseCap)} />
         <StatCard label="Carryover" value={formatMonthlyLossRoom(monthly.carryoverIn)} />
         <StatCard label="Spent this month" value={formatMonthlyLossRoom(monthly.lossUsedThisMonth)} />
-        <StatCard label="Monthly room left" value={formatMonthlyLossRoom(monthly.monthlyLossRoom)} />
+        <StatCard label="Monthly room left" value={formatMonthlyLossRoom(monthly.monthlyRoomCap)} />
         <StatCard
           label="Avg winner"
           value={data.avgWinner !== null ? formatUsd(data.avgWinner) : "—"}

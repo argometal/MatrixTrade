@@ -93,6 +93,12 @@ export function PreviewTradeDetail({
             {holdDays !== null && trade.status === "closed" && (
               <Detail label="Hold" value={`${holdDays}d`} />
             )}
+            {trade.status === "closed" && trade.closedAt && (
+              <Detail
+                label="Closed"
+                value={new Date(trade.closedAt).toLocaleDateString()}
+              />
+            )}
             {setupName && <Detail label="Setup" value={setupName} />}
             <Detail label="Playbook" value={playbookName ?? "Unassigned"} />
             {trade.direction && <Detail label="Direction" value={trade.direction} />}
@@ -164,6 +170,20 @@ export function PreviewTradeDetail({
                 <OptionalField label="R:R planned" name="riskRewardPlanned" defaultValue={trade.riskRewardPlanned} />
                 <OptionalField label="R:R actual" name="riskRewardActual" defaultValue={trade.riskRewardActual} />
               </div>
+              {trade.status === "closed" && (
+                <label className="block text-sm">
+                  <span className="font-medium text-zinc-300">Close date</span>
+                  <input
+                    name="closedAt"
+                    type="date"
+                    defaultValue={(trade.closedAt ?? trade.createdAt).slice(0, 10)}
+                    className={inputClass}
+                  />
+                  <span className="mt-1 block text-xs text-zinc-500">
+                    Drives monthly risk bucketing — fix if a trade landed in the wrong month.
+                  </span>
+                </label>
+              )}
               <button
                 type="submit"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"

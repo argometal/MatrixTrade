@@ -123,7 +123,7 @@ export function PreviewStats({ data }: { data: PreviewStatsData }) {
             <StatCard label="Monthly budget" value={`$${monthly.baseCap.toFixed(2)}`} />
             <StatCard label="Carryover" value={`$${monthly.carryoverIn.toFixed(2)}`} />
             <StatCard label="Spent this month" value={`$${monthly.lossUsedThisMonth.toFixed(2)}`} />
-            <StatCard label="Monthly room left" value={`$${monthly.monthlyLossRoom.toFixed(2)}`} />
+            <StatCard label="Monthly room left" value={`$${monthly.monthlyRoomCap.toFixed(2)}`} />
             <StatCard
               label="Avg winner"
               value={data.avgWinner !== null ? formatUsd(data.avgWinner) : "—"}

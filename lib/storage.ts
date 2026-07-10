@@ -32,6 +32,7 @@ function normalizeRules(raw: ExperimentRules): ExperimentRules {
   const monthlyLossLimit = raw.monthlyLossLimit ?? raw.cycleLossLimit ?? -300;
   return {
     monthlyLossLimit,
+    carryoverEnabled: raw.carryoverEnabled !== false,
     maxLossPerTicker: raw.maxLossPerTicker ?? -250,
     maxTrades: raw.maxTrades ?? 30,
     obsidianVault: raw.obsidianVault,
@@ -54,6 +55,7 @@ export async function saveRules(input: {
   monthlyLossLimit: number;
   maxLossPerTicker: number;
   maxTrades: number;
+  carryoverEnabled?: boolean;
 }): Promise<{ rules?: ExperimentRules; errors?: string[] }> {
   const current = await getRules();
   const errors: string[] = [];
@@ -75,6 +77,7 @@ export async function saveRules(input: {
     monthlyLossLimit: input.monthlyLossLimit,
     maxLossPerTicker: input.maxLossPerTicker,
     maxTrades: input.maxTrades,
+    carryoverEnabled: input.carryoverEnabled !== false,
   };
   await writeJson("rules.json", rules);
   return { rules };
@@ -97,7 +100,9 @@ export async function getExperiment(): Promise<Experiment> {
 
 export async function getMonthlyRisk(monthKey?: string): Promise<MonthlyRisk> {
   const [trades, rules] = await Promise.all([getTrades(), getRules()]);
-  return computeMonthlyRisk(trades, rules.monthlyLossLimit, monthKey);
+  return computeMonthlyRisk(trades, rules.monthlyLossLimit, monthKey, {
+    carryoverEnabled: rules.carryoverEnabled,
+  });
 }
 
 export async function getVaultStatus(): Promise<{
@@ -148,7 +153,9 @@ export async function getTradeNotes(): Promise<Map<string, string>> {
 export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Trade; errors?: string[] }> {
   const rules = await getRules();
   const trades = await getTrades();
-  const monthly = computeMonthlyRisk(trades, rules.monthlyLossLimit);
+  const monthly = computeMonthlyRisk(trades, rules.monthlyLossLimit, undefined, {
+    carryoverEnabled: rules.carryoverEnabled,
+  });
 
   const validationErrors = validateCreateTrade(input, trades, rules, monthly);
   if (validationErrors.length > 0) {
@@ -197,7 +204,9 @@ export async function closeTrade(
   const rules = await getRules();
   const trades = await getTrades();
   const trade = trades.find((t) => t.id === id.toUpperCase());
-  const monthly = computeMonthlyRisk(trades, rules.monthlyLossLimit);
+  const monthly = computeMonthlyRisk(trades, rules.monthlyLossLimit, undefined, {
+    carryoverEnabled: rules.carryoverEnabled,
+  });
 
   const validationErrors = validateCloseTrade(trade, input, rules, monthly, trades);
   if (validationErrors.length > 0) {
@@ -330,6 +339,10 @@ export async function updateTradeMeta(
       actualRisk: input.actualRisk ?? trade.actualRisk,
       riskRewardPlanned: input.riskRewardPlanned ?? trade.riskRewardPlanned,
       riskRewardActual: input.riskRewardActual ?? trade.riskRewardActual,
+      closedAt:
+        input.closedAt !== undefined
+          ? input.closedAt.trim() || undefined
+          : trade.closedAt,
     },
     rules
   );
@@ -394,6 +407,10 @@ export async function updateTrade(
       actualRisk: input.actualRisk ?? trade.actualRisk,
       riskRewardPlanned: input.riskRewardPlanned ?? trade.riskRewardPlanned,
       riskRewardActual: input.riskRewardActual ?? trade.riskRewardActual,
+      closedAt:
+        input.closedAt !== undefined
+          ? input.closedAt.trim() || undefined
+          : trade.closedAt,
     },
     rules
   );

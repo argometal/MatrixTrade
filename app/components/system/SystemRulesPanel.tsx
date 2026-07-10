@@ -8,6 +8,7 @@ export function SystemRulesPanel({ rules }: { rules: ExperimentRules }) {
   const [monthlyLimit, setMonthlyLimit] = useState(String(rules.monthlyLossLimit));
   const [perStockLimit, setPerStockLimit] = useState(String(rules.maxLossPerTicker));
   const [maxTrades, setMaxTrades] = useState(String(rules.maxTrades));
+  const [carryoverEnabled, setCarryoverEnabled] = useState(rules.carryoverEnabled !== false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -22,6 +23,9 @@ export function SystemRulesPanel({ rules }: { rules: ExperimentRules }) {
     formData.set("monthlyLossLimit", monthlyLimit);
     formData.set("maxLossPerTicker", perStockLimit);
     formData.set("maxTrades", maxTrades);
+    if (carryoverEnabled) {
+      formData.set("carryoverEnabled", "on");
+    }
 
     const result = await saveRulesAction(formData);
     setSaving(false);
@@ -36,9 +40,26 @@ export function SystemRulesPanel({ rules }: { rules: ExperimentRules }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <p className="text-sm text-zinc-400">
-        Monthly base cap rolls unused room from the previous calendar month. Per-stock cap applies
-        to cumulative loss per ticker across the experiment. Max trades is the sample size.
+        Monthly base cap rolls unused room from the previous calendar month when carryover is
+        enabled. Per-stock cap applies to cumulative loss per ticker across the experiment. Max
+        trades is the sample size.
       </p>
+
+      <label className="flex items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 px-4 py-3">
+        <input
+          type="checkbox"
+          checked={carryoverEnabled}
+          onChange={(e) => setCarryoverEnabled(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border-zinc-600 bg-zinc-900 text-violet-600 focus:ring-violet-500"
+        />
+        <span className="text-sm">
+          <span className="font-medium text-zinc-200">Enable monthly carryover</span>
+          <span className="mt-0.5 block text-xs text-zinc-500">
+            When on, unused budget from the prior month adds to this month&apos;s room. When off,
+            monthly room is the base cap only.
+          </span>
+        </span>
+      </label>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <label className="block text-sm">

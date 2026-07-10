@@ -36,7 +36,9 @@ export function buildBridgeSnapshot(
   snapshotRevision = 0
 ): Record<string, unknown> {
   const closed = trades.filter((t) => t.status === "closed");
-  const monthly = computeMonthlyRisk(trades, rules.monthlyLossLimit);
+  const monthly = computeMonthlyRisk(trades, rules.monthlyLossLimit, undefined, {
+    carryoverEnabled: rules.carryoverEnabled,
+  });
 
   return {
     schemaVersion: BRIDGE_SCHEMA_VERSION,
@@ -46,13 +48,16 @@ export function buildBridgeSnapshot(
       monthlyLossLimit: rules.monthlyLossLimit,
       maxLossPerTicker: rules.maxLossPerTicker,
       maxTrades: rules.maxTrades,
+      carryoverEnabled: rules.carryoverEnabled !== false,
     },
     monthly: {
       monthKey: monthly.monthKey,
       baseLimit: monthly.monthlyLossLimit,
       baseCap: monthly.baseCap,
       carryoverIn: monthly.carryoverIn,
+      carryoverEnabled: monthly.carryoverEnabled,
       monthlyAllowance: monthly.monthlyAllowance,
+      monthlyRoomCap: monthly.monthlyRoomCap,
       lossUsedThisMonth: monthly.lossUsedThisMonth,
       effectiveCap: monthly.effectiveLossCap,
       previousMonthLossUsed: monthly.previousMonthLossUsed,

@@ -98,9 +98,11 @@ export function PreviewDashboard({ data }: { data: DashboardData }) {
                 label="Carryover"
                 value={formatMonthlyLossRoom(monthly.carryoverIn)}
                 sub={
-                  monthly.carryoverIn > 0
-                    ? `$300 − $${monthly.previousMonthLossUsed.toFixed(2)} last month`
-                    : "No unused cap from prior month"
+                  !monthly.carryoverEnabled
+                    ? "Carryover disabled in System settings"
+                    : monthly.carryoverIn > 0
+                      ? `$${monthly.baseCap.toFixed(0)} − $${monthly.previousMonthLossUsed.toFixed(2)} last month`
+                      : "No unused cap from prior month"
                 }
               />
               <StatusTile
@@ -115,8 +117,12 @@ export function PreviewDashboard({ data }: { data: DashboardData }) {
               />
               <StatusTile
                 label="Monthly room left"
-                value={formatMonthlyLossRoom(monthly.monthlyLossRoom)}
-                sub={`$${monthly.baseCap.toFixed(0)} + $${monthly.carryoverIn.toFixed(2)} − $${monthly.lossUsedThisMonth.toFixed(2)}`}
+                value={formatMonthlyLossRoom(monthly.monthlyRoomCap)}
+                sub={
+                  monthly.carryoverEnabled
+                    ? `$${monthly.baseCap.toFixed(0)} + $${monthly.carryoverIn.toFixed(2)}`
+                    : `$${monthly.baseCap.toFixed(0)} base cap (carryover off)`
+                }
                 valueClass={monthly.monthlyLossRoom > 0 ? "text-zinc-200" : "text-red-400"}
               />
               <StatusTile

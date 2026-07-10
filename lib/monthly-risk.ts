@@ -19,8 +19,12 @@ export type MonthlyRisk = {
   lossUsedThisMonth: number;
   /** Gross losses consumed in the previous calendar month (positive USD). */
   previousMonthLossUsed: number;
+  /** Display cap: base budget + carryover when enabled (excludes spent). */
+  monthlyRoomCap: number;
   /** Positive USD remaining before hitting the monthly allowance. */
   monthlyLossRoom: number;
+  /** Whether unused prior-month budget rolls into this month's allowance. */
+  carryoverEnabled: boolean;
   monthlyCapBreached: boolean;
   closedTradesThisMonth: number;
   closedTradesPreviousMonth: number;
@@ -102,14 +106,17 @@ export function carryoverFromPreviousMonth(
 export function computeMonthlyRisk(
   trades: Trade[],
   monthlyLossLimit: number,
-  monthKey?: string
+  monthKey?: string,
+  options?: { carryoverEnabled?: boolean }
 ): MonthlyRisk {
   const key = monthKey ?? currentMonthKey();
   const baseCap = Math.abs(monthlyLossLimit);
+  const carryoverEnabled = options?.carryoverEnabled !== false;
   const prevKey = previousMonthKey(key);
   const prev = carryoverFromPreviousMonth(trades, prevKey, baseCap);
-  const carryoverIn = prev.carryoverIn;
+  const carryoverIn = carryoverEnabled ? prev.carryoverIn : 0;
   const monthlyAllowance = baseCap + carryoverIn;
+  const monthlyRoomCap = monthlyAllowance;
   const effectiveLossCap = -monthlyAllowance;
 
   const monthlyRealizedPnL = sumClosedPnLInMonth(trades, key);
@@ -127,7 +134,9 @@ export function computeMonthlyRisk(
     monthlyRealizedPnL,
     lossUsedThisMonth,
     previousMonthLossUsed: prev.previousMonthLossUsed,
+    monthlyRoomCap,
     monthlyLossRoom,
+    carryoverEnabled,
     monthlyCapBreached,
     closedTradesThisMonth: countClosedTradesInMonth(trades, key),
     closedTradesPreviousMonth: prev.closedTrades,

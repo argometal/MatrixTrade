@@ -117,7 +117,7 @@ export function buildSnapshot(
     `Carryover from prior month: $${monthly.carryoverIn.toFixed(2)}`,
     `Spent this month (gross): $${monthly.lossUsedThisMonth.toFixed(2)}`,
     `This month P/L (net): ${formatSigned(monthly.monthlyRealizedPnL)}`,
-    `Monthly room left: $${monthly.monthlyLossRoom.toFixed(2)}`,
+    `Monthly room left: $${monthly.monthlyRoomCap.toFixed(2)}`,
     "",
     `Experiment net P/L: ${formatSigned(experiment.realizedPnL)}`,
     `Total losses (gross): ${formatSigned(experiment.grossLoss)}`,

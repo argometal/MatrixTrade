@@ -65,6 +65,8 @@ export interface SaveReviewInput {
 export interface ExperimentRules {
   /** Max loss allowed per calendar month before carryover (negative USD). */
   monthlyLossLimit: number;
+  /** Roll unused prior-month budget into this month's allowance. */
+  carryoverEnabled?: boolean;
   /** Max cumulative loss per ticker across the experiment (negative USD). */
   maxLossPerTicker: number;
   /** Sample size for the active experiment cycle (editable). */
@@ -96,6 +98,8 @@ export interface TradeMetaInput {
   riskRewardPlanned?: number;
   riskRewardActual?: number;
   setupId?: string;
+  /** ISO timestamp — drives monthly risk bucketing for closed trades. */
+  closedAt?: string;
 }
 
 export interface CreateTradeInput {
@@ -132,6 +136,7 @@ export interface UpdateTradeInput extends TradeMetaInput {
   psychology?: string;
   lessons?: string;
   notes?: string;
+  closedAt?: string;
 }
 
 export interface CloseTradeInput {
