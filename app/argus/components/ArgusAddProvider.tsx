@@ -2,20 +2,20 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createContext, Suspense, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { createLogAction, setEntityLinkedIdsAction } from "@/app/argus/actions";
+import { createLogAction } from "@/app/argus/actions";
 import { ArgusCreateLinkWindow } from "@/app/argus/components/ArgusCreateLinkWindow";
-import {
-  ArgusLinkModal,
-  type ArgusLinkFilter,
-  type ArgusLinkResult,
-} from "@/app/argus/components/ArgusLinkModal";
 import type { CreatedEntityResult } from "@/app/argus/actions";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
-import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 import type { CreateFlowOpenOptions, JournalLinkRow, UnifiedCreateResult } from "@/lib/argus/create-flow-types";
+import {
+  mapLinkModalToCreateFlow,
+  type LinkModalOpenOptions,
+} from "@/lib/argus/link-modal-adapter";
 import { CaptureSheet, type CaptureInitial } from "./CaptureSheet";
 import { AddContextFlow } from "./AddContextFlow";
+
+export type { LinkModalOpenOptions };
 
 export type CaptureOpenOptions = {
   openReference?: boolean;
@@ -25,19 +25,6 @@ export type CaptureOpenOptions = {
 
 type CreateFlowState = CreateFlowOpenOptions & {
   onSaved?: (result: UnifiedCreateResult) => void;
-};
-
-export type LinkModalOpenOptions = {
-  title?: string;
-  subtitle?: string;
-  entityId?: string;
-  linkedEntityIds?: string[];
-  selectedTags?: string[];
-  showTags?: boolean;
-  buckets?: EntityPickerBuckets;
-  initialFilter?: ArgusLinkFilter;
-  onConfirm?: (result: ArgusLinkResult) => void | Promise<void>;
-  onEntityCreated?: (entity: CreatedEntityResult) => void | Promise<void | false>;
 };
 
 type ArgusAddContextValue = {
@@ -97,19 +84,16 @@ export function ArgusAddProvider({
   const [captureInitial, setCaptureInitial] = useState<CaptureInitial | undefined>();
   const [createFlowOpen, setCreateFlowOpen] = useState(false);
   const [createFlowState, setCreateFlowState] = useState<CreateFlowState>({});
-  const [linkModalOpen, setLinkModalOpen] = useState(false);
-  const [linkModalState, setLinkModalState] = useState<LinkModalOpenOptions>({});
   const onSavedRef = useRef<CreateFlowState["onSaved"]>(undefined);
-  const onLinkConfirmRef = useRef<LinkModalOpenOptions["onConfirm"]>(undefined);
 
   useEffect(() => {
-    if (!createFlowOpen && !linkModalOpen && !addContextOpen) return;
+    if (!createFlowOpen && !addContextOpen) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [createFlowOpen, linkModalOpen, addContextOpen]);
+  }, [createFlowOpen, addContextOpen]);
 
   const closeCapture = useCallback(() => {
     setCaptureOpen(false);
@@ -149,21 +133,17 @@ export function ArgusAddProvider({
 
   const openCreateFlow = useCallback((options: CreateFlowState = {}) => {
     onSavedRef.current = options.onSaved;
-    setCreateFlowState(options);
+    const { onSaved: _onSaved, ...flowOptions } = options;
+    setCreateFlowState(flowOptions);
     setCreateFlowOpen(true);
   }, []);
 
-  const closeLinkModal = useCallback(() => {
-    setLinkModalOpen(false);
-    setLinkModalState({});
-    onLinkConfirmRef.current = undefined;
-  }, []);
-
-  const openLinkModal = useCallback((options: LinkModalOpenOptions = {}) => {
-    onLinkConfirmRef.current = options.onConfirm;
-    setLinkModalState(options);
-    setLinkModalOpen(true);
-  }, []);
+  const openLinkModal = useCallback(
+    (options: LinkModalOpenOptions = {}) => {
+      openCreateFlow(mapLinkModalToCreateFlow(options));
+    },
+    [openCreateFlow]
+  );
 
   const handleContextCreated = useCallback(
     (result: CreatedEntityResult) => {
@@ -178,20 +158,6 @@ export function ArgusAddProvider({
     [openLinkModal]
   );
 
-  const handleLinkConfirm = useCallback(
-    async (result: ArgusLinkResult) => {
-      const custom = onLinkConfirmRef.current ?? linkModalState.onConfirm;
-      if (custom) {
-        await custom(result);
-      } else if (linkModalState.entityId) {
-        await setEntityLinkedIdsAction(linkModalState.entityId, result.entityIds);
-        router.refresh();
-      }
-      closeLinkModal();
-    },
-    [closeLinkModal, linkModalState, router]
-  );
-
   return (
     <ArgusAddContext.Provider value={{ openCapture, openAddContext, openCreateFlow, openLinkModal, buckets, tagBuckets }}>
       {children}
@@ -201,23 +167,9 @@ export function ArgusAddProvider({
         onClose={closeCreateFlow}
         options={createFlowState}
         buckets={buckets}
+        tagBuckets={tagBuckets}
         journalRows={journalRows}
         onSaved={(result) => onSavedRef.current?.(result)}
-      />
-      <ArgusLinkModal
-        open={linkModalOpen}
-        buckets={linkModalState.buckets ?? buckets}
-        tagBuckets={tagBuckets}
-        title={linkModalState.title ?? "Link"}
-        subtitle={linkModalState.subtitle ?? LINK_HIERARCHY.inboxLinkHint}
-        selectedEntityIds={linkModalState.linkedEntityIds ?? []}
-        selectedTags={linkModalState.selectedTags ?? []}
-        showTags={linkModalState.showTags ?? true}
-        initialFilter={linkModalState.initialFilter ?? "all"}
-        excludeEntityIds={linkModalState.entityId ? [linkModalState.entityId] : []}
-        onConfirm={handleLinkConfirm}
-        onClose={closeLinkModal}
-        onEntityCreated={linkModalState.onEntityCreated}
       />
       <CaptureSheet
         open={captureOpen}

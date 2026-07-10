@@ -9,9 +9,8 @@ import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePicker
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 import { CaptureSheet } from "@/app/argus/components/CaptureSheet";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
-import { V2InboxEntityLinkModal } from "@/app/argus/v2/inbox/components/V2InboxEntityLinkModal";
 import type { ArgusLinkFilter, ArgusLinkResult } from "@/app/argus/components/ArgusLinkModal";
-import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
+import type { CreateFlowOpenOptions } from "@/lib/argus/create-flow-types";
 import { INBOX, LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 import {
   archiveInboxAction,
@@ -119,8 +118,6 @@ export function V2InboxDetailPanel({
     return `/argus/v2/inbox?${params.toString()}`;
   }, [detail.item.id, searchParams]);
   const [panelTab, setPanelTabState] = useState<PanelTab>("email");
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [linkModalFilter, setLinkModalFilter] = useState<ArgusLinkFilter>("all");
   const [showConvert, setShowConvert] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [linkIds, setLinkIds] = useState<string[]>(detail.item.linkedEntityIds ?? []);
@@ -158,7 +155,6 @@ export function V2InboxDetailPanel({
 
   const { item, view, attachments, linkedEntities, convertedLog, defaultTitle, defaultBody } = detail;
   const canTriage = item.status === "pending" || item.status === "linked";
-  const inboxBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "inbox"), [buckets]);
 
   const suggestedEntities = useMemo(
     () => suggestInboxEntities(view.subject ?? "", view.textBody, linkedEntityRecords, linkIds, topicContext),
@@ -277,9 +273,33 @@ export function V2InboxDetailPanel({
     await persistTriage({ topics: result.tags });
   }
 
-  function openLinkModal(filter: ArgusLinkFilter = "all") {
-    setLinkModalFilter(filter);
-    setPickerOpen(true);
+  function buildInboxConnectOptions(
+    filter: ArgusLinkFilter = "all",
+    linkOnly = false
+  ): CreateFlowOpenOptions {
+    const base: CreateFlowOpenOptions = {
+      mode: "inbox-evidence",
+      linkOnly,
+      inboxId: item.id,
+      prefillTitle: defaultTitle,
+      prefillBody: defaultBody,
+      prefillTags: selectedTags,
+      prefillDate: view.receivedAt,
+      linkedEntityIds: linkIds,
+      returnTo,
+      initialLinkFilter: filter,
+      showTags: true,
+      linkTitle: "Link email",
+      onEntityCreated: linkCreatedEntity,
+    };
+    if (linkOnly) {
+      base.onLinkConfirm = confirmEntityLinks;
+    }
+    return base;
+  }
+
+  function openInboxConnect(filter: ArgusLinkFilter = "all", linkOnly = false) {
+    openCreateFlow(buildInboxConnectOptions(filter, linkOnly));
   }
 
   const detailTabs = [
@@ -337,7 +357,7 @@ export function V2InboxDetailPanel({
           {canTriage ? (
             <button
               type="button"
-              onClick={() => openLinkModal("all")}
+              onClick={() => openInboxConnect("all", true)}
               className="rounded-xl border border-dashed border-zinc-700 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
             >
               + Link
@@ -401,7 +421,7 @@ export function V2InboxDetailPanel({
           {canTriage ? (
             <button
               type="button"
-              onClick={() => openLinkModal("tags")}
+              onClick={() => openInboxConnect("tags", true)}
               className="rounded-md border border-dashed border-zinc-700 px-2 py-1 text-[11px] text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
             >
               + Add tag
@@ -542,33 +562,13 @@ export function V2InboxDetailPanel({
           <h2 className="text-lg font-semibold leading-snug text-zinc-50">{view.subject || "(No subject)"}</h2>
           <div className="relative hidden shrink-0 items-center gap-2 lg:flex">
             {canTriage ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() =>
-                    openCreateFlow({
-                      mode: "inbox-evidence",
-                      inboxId: item.id,
-                      prefillTitle: defaultTitle,
-                      prefillBody: defaultBody,
-                      prefillTags: selectedTags,
-                      prefillDate: view.receivedAt,
-                      linkedEntityIds: linkIds,
-                      returnTo,
-                    })
-                  }
-                  className="rounded-lg border border-emerald-500/40 bg-emerald-600/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/25"
-                >
-                  Capture / Link
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openLinkModal("all")}
-                  className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
-                >
-                  + Link
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => openInboxConnect("all", false)}
+                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+              >
+                Connect
+              </button>
             ) : null}
             <button type="button" className="text-zinc-600 hover:text-zinc-400" title="Share">
               ↗
@@ -702,44 +702,14 @@ export function V2InboxDetailPanel({
         ✨ Created for you by Argus AI
       </div>
 
-      <V2InboxEntityLinkModal
-        open={pickerOpen}
-        buckets={inboxBuckets}
-        tagBuckets={tagBuckets}
-        selectedIds={linkIds}
-        selectedTags={selectedTags}
-        initialFilter={linkModalFilter}
-        onClose={() => setPickerOpen(false)}
-        onConfirm={(result) => void confirmEntityLinks(result)}
-        onEntityCreated={linkCreatedEntity}
-      />
-
       {canTriage ? (
-        <div className="fixed inset-x-0 bottom-0 z-50 flex gap-2 border-t border-zinc-800/80 bg-zinc-950/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
+        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-800/80 bg-zinc-950/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
           <button
             type="button"
-            onClick={() =>
-              openCreateFlow({
-                mode: "inbox-evidence",
-                inboxId: item.id,
-                prefillTitle: defaultTitle,
-                prefillBody: defaultBody,
-                prefillTags: selectedTags,
-                prefillDate: view.receivedAt,
-                linkedEntityIds: linkIds,
-                returnTo,
-              })
-            }
-            className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-600/20 py-3 text-sm font-semibold text-emerald-300"
+            onClick={() => openInboxConnect("all", false)}
+            className="w-full rounded-xl border border-violet-500/40 bg-violet-600/20 py-3 text-sm font-semibold text-violet-300"
           >
-            Capture / Link
-          </button>
-          <button
-            type="button"
-            onClick={() => openLinkModal("all")}
-            className="flex-1 rounded-xl border border-violet-500/40 bg-violet-600/20 py-3 text-sm font-semibold text-violet-300"
-          >
-            + Link
+            Connect
           </button>
         </div>
       ) : null}

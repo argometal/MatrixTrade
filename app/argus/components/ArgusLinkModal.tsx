@@ -20,12 +20,11 @@ import { CAPTURE, LINK_HIERARCHY, REFERENCE_PICKER, REFERENCES } from "@/lib/arg
 
 const LINK_KINDS: ReferenceKind[] = ["person", "organization", "project", "topic", "event"];
 
-export type ArgusLinkFilter = ReferenceKind | "all" | "tags";
+import type { LinkPanelFilter, LinkPanelResult } from "@/lib/argus/create-flow-types";
 
-export type ArgusLinkResult = {
-  entityIds: string[];
-  tags: string[];
-};
+export type ArgusLinkFilter = LinkPanelFilter;
+
+export type ArgusLinkResult = LinkPanelResult;
 
 export type ArgusLinkModalProps = {
   open: boolean;

@@ -1,4 +1,12 @@
 import type { ReferenceKind } from "./reference-types";
+import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
+
+export type LinkPanelFilter = ReferenceKind | "all" | "tags";
+
+export type LinkPanelResult = {
+  entityIds: string[];
+  tags: string[];
+};
 
 /** Items the unified + Create flow can create (email stays separate). */
 export type CreateItemKind =
@@ -44,6 +52,16 @@ export type CreateFlowOpenOptions = {
   linkOnly?: boolean;
   /** Entity capture only — Register uses CaptureSheet; hides journal from capture menu. */
   entityCaptureOnly?: boolean;
+  /** Open the link picker shell (ArgusLinkModal) instead of the full create workspace. */
+  linkPanelOnly?: boolean;
+  linkTitle?: string;
+  linkSubtitle?: string;
+  showTags?: boolean;
+  initialLinkFilter?: LinkPanelFilter;
+  /** Override picker buckets for link-only shell (e.g. project people/topics). */
+  linkBuckets?: EntityPickerBuckets;
+  onLinkConfirm?: (result: LinkPanelResult) => void | Promise<void>;
+  onEntityCreated?: (entity: { id: string; href: string; name: string }) => void | Promise<void | false>;
 };
 
 export type UnifiedCreatePayload = {
