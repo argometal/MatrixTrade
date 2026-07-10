@@ -1,8 +1,10 @@
 import type { ArgusData, Attachment, InboxItem, Log } from "../../types";
 import { buildEntityEvidenceStream } from "../../v2/evidence-stream";
 import { buildTimelineFromLogsAndInbox } from "../../v2/timeline-builders";
+import type { DeliverBranding } from "../deliver-branding";
 import { evidenceRecordCount } from "../dedup";
 import type { CollectedVaultEvidence, ExportScopeType, QuickDeliverSummary } from "../types";
+import { emailSnippet, logSnippet } from "./deliver-html-shared";
 
 const SCOPE_LABELS: Record<ExportScopeType, string> = {
   person: "Person",
@@ -57,33 +59,36 @@ export function buildQuickDeliverSummary(
   };
 }
 
-export function buildQuickPackageMarkdown(input: {
+export function buildActivitySummaryMarkdown(input: {
   data: ArgusData;
   inboxItems: InboxItem[];
   collected: CollectedVaultEvidence;
   includePrivate: boolean;
   today: string;
   generatedAt: string;
+  branding: DeliverBranding;
 }): string {
-  const { data, inboxItems, collected, includePrivate, today, generatedAt } = input;
+  const { data, inboxItems, collected, includePrivate, today, generatedAt, branding } = input;
   const { scope, logs, inbox, attachments, relatedEntityIds } = collected;
   const scopeLabel = SCOPE_LABELS[scope.type];
   const lines: string[] = [];
 
-  lines.push(`# Quick Evidence Package: ${scope.name}`);
+  lines.push(`# Activity Summary: ${scope.name}`);
   lines.push("");
   lines.push("| Field | Value |");
   lines.push("| --- | --- |");
   lines.push(`| Scope type | ${scopeLabel} |`);
-  lines.push(`| Entity | ${mdEscape(scope.name)} |`);
+  lines.push(`| Subject | ${mdEscape(scope.name)} |`);
+  lines.push(`| Prepared by | ${mdEscape(branding.preparerName)} |`);
   lines.push(`| Generated | ${generatedAt.slice(0, 10)} |`);
   lines.push(`| Evidence items | ${evidenceRecordCount(logs, inbox)} |`);
   lines.push(`| Emails | ${inbox.length} |`);
   lines.push(`| Journal entries | ${logs.length} |`);
   lines.push(`| Files (metadata) | ${attachments.length} |`);
   lines.push("");
+  lines.push("_Chronological index of recorded activity. For full artifacts, use the Evidence Dossier export._");
+  lines.push("");
 
-  // Timeline — chronological (oldest first for narrative reading)
   const timeline = buildTimelineFromLogsAndInbox(logs, inbox).reverse();
   lines.push("## Timeline");
   lines.push("");
@@ -96,9 +101,16 @@ export function buildQuickPackageMarkdown(input: {
       lines.push(`### ${datePart} — ${timelineKindLabel(entry.kind)}${privateTag}`);
       lines.push("");
       lines.push(`**${mdEscape(entry.title)}**`);
-      if (entry.body) {
+      const body =
+        entry.body?.trim() ||
+        (entry.kind === "email"
+          ? emailSnippet(inbox.find((e) => e.id === entry.id) ?? ({ rawText: "" } as InboxItem), 400)
+          : entry.kind === "journal" || entry.kind === "meeting"
+            ? logSnippet(logs.find((l) => l.id === entry.id) ?? ({ title: "", body: "" } as Log), 400)
+            : "");
+      if (body) {
         lines.push("");
-        lines.push(`> ${entry.body.split("\n").join("\n> ")}`);
+        lines.push(`> ${body.split("\n").join("\n> ")}`);
       }
       if (entry.tags?.length) {
         lines.push("");
@@ -108,40 +120,45 @@ export function buildQuickPackageMarkdown(input: {
     }
   }
 
-  // Evidence index — aligned with v2 evidence stream UI
   const stream = buildEntityEvidenceStream(data, scope.id, inboxItems, includePrivate, today);
   lines.push("## Evidence Index");
   lines.push("");
   if (stream.length === 0) {
     lines.push("_No linked evidence._");
   } else {
-    lines.push("| Date | Kind | Title | Reference |");
+    lines.push("| Date | Kind | Title | Detail |");
     lines.push("| --- | --- | --- | --- |");
     for (const item of stream) {
+      let detail = item.title;
+      if (item.kind === "email") {
+        const email = inbox.find((e) => e.id === item.id.replace(/^email-/, ""));
+        detail = email ? emailSnippet(email, 200) : item.title;
+      } else if (item.kind === "journal") {
+        const log = logs.find((l) => l.id === item.id.replace(/^journal-/, ""));
+        detail = log ? logSnippet(log, 200) : item.title;
+      }
       lines.push(
-        `| ${item.sortIso.slice(0, 10)} | ${item.kind} | ${mdEscape(item.title)} | \`${item.href}\` |`
+        `| ${item.sortIso.slice(0, 10)} | ${item.kind} | ${mdEscape(item.title)} | ${mdEscape(detail)} |`
       );
     }
   }
   lines.push("");
 
-  // Files — metadata only, no bundling
   lines.push("## Files (metadata only)");
   lines.push("");
   if (attachments.length === 0) {
     lines.push("_No attachments in scope._");
   } else {
-    lines.push("| File | Type | Source | Reference |");
-    lines.push("| --- | --- | --- | --- |");
+    lines.push("| File | Type | Source |");
+    lines.push("| --- | --- | --- |");
     for (const att of attachments) {
       lines.push(
-        `| ${mdEscape(att.fileName)} | ${att.mimeType} | ${mdEscape(attachmentSourceLabel(att, logs, inbox))} | \`files/${att.id}\` |`
+        `| ${mdEscape(att.fileName)} | ${att.mimeType} | ${mdEscape(attachmentSourceLabel(att, logs, inbox))} |`
       );
     }
   }
   lines.push("");
 
-  // Linked entities
   lines.push("## Linked Entities");
   lines.push("");
   if (relatedEntityIds.length === 0) {
@@ -154,7 +171,10 @@ export function buildQuickPackageMarkdown(input: {
   lines.push("");
 
   lines.push("---");
-  lines.push(`_Generated by ARGUS Quick Package · ${generatedAt}_`);
+  lines.push(`_Delivered by ${branding.preparerName} · Activity Summary · ${generatedAt}_`);
 
   return lines.join("\n");
 }
+
+/** @deprecated Use buildActivitySummaryMarkdown */
+export const buildQuickPackageMarkdown = buildActivitySummaryMarkdown;

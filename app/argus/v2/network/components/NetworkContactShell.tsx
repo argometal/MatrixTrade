@@ -28,6 +28,7 @@ import type {
 } from "@/lib/argus/v2/network-contact-loaders";
 import { initialsFromName } from "@/lib/argus/v2/network-contact-loaders";
 import { V2Badge, V2Card } from "@/app/argus/v2/components/v2-ui";
+import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 
 const TABS = ["Overview", "Timeline", "Projects", "Organizations", "Topics", "Files", "Journal"] as const;
 type ContactTab = (typeof TABS)[number];
@@ -276,6 +277,12 @@ export function NetworkContactShell({
 
   return (
     <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <V2RecordRecentEntity
+        id={entity.id}
+        kind="contact"
+        label={entity.name}
+        href={`/argus/v2/network/${entity.id}`}
+      />
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         <div className="network-contact-shell px-4 py-6 lg:px-8">
       <div className="mb-4 text-xs text-zinc-600">

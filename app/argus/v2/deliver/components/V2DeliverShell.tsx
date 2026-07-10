@@ -71,6 +71,9 @@ export function V2DeliverShell({
   const [generating, setGenerating] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [quickHtml, setQuickHtml] = useState<string | null>(null);
+  const [dossierHtml, setDossierHtml] = useState<string | null>(null);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
 
   const scopeEntities = entityOptions[scopeType] ?? [];
   const filteredEntities = useMemo(() => {
@@ -133,8 +136,9 @@ export function V2DeliverShell({
   }, [refreshPreview]);
 
   const refreshQuickPreview = useCallback(async () => {
-    if (!scopeId || packageKind !== "quick_package") {
+    if (!scopeId || (packageKind !== "quick_package" && packageKind !== "evidence_dossier")) {
       setQuickHtml(null);
+      setDossierHtml(null);
       return;
     }
     try {
@@ -148,15 +152,30 @@ export function V2DeliverShell({
       });
       if (fromDate) params.set("fromDate", fromDate);
       if (toDate) params.set("toDate", toDate);
-      const response = await fetch(`/api/argus/deliver/quick?${params.toString()}`);
+
+      if (packageKind === "quick_package") {
+        const response = await fetch(`/api/argus/deliver/quick?${params.toString()}`);
+        if (!response.ok) {
+          setQuickHtml(null);
+          return;
+        }
+        const payload = (await response.json()) as { html?: string };
+        setQuickHtml(payload.html ?? null);
+        setDossierHtml(null);
+        return;
+      }
+
+      const response = await fetch(`/api/argus/deliver/dossier?${params.toString()}`);
       if (!response.ok) {
-        setQuickHtml(null);
+        setDossierHtml(null);
         return;
       }
       const payload = (await response.json()) as { html?: string };
-      setQuickHtml(payload.html ?? null);
+      setDossierHtml(payload.html ?? null);
+      setQuickHtml(null);
     } catch {
       setQuickHtml(null);
+      setDossierHtml(null);
     }
   }, [
     packageKind,
@@ -186,6 +205,7 @@ export function V2DeliverShell({
     }
     setGenerating(true);
     setStatusMessage(null);
+    setShareUrl(null);
     try {
       if (packageKind === "quick_package") {
         const response = await fetch("/api/argus/deliver/quick", {
@@ -204,17 +224,48 @@ export function V2DeliverShell({
         });
         if (!response.ok) {
           const payload = (await response.json().catch(() => ({}))) as { error?: string };
-          throw new Error(payload.error ?? "Quick package failed");
+          throw new Error(payload.error ?? "Activity summary failed");
         }
         const blob = await response.blob();
         const stamp = new Date().toISOString().slice(0, 10);
         const nameToken = (selectedEntity?.name ?? "export").replace(/[^a-zA-Z0-9._-]+/g, "-");
         const anchor = document.createElement("a");
         anchor.href = URL.createObjectURL(blob);
-        anchor.download = `argus-quick-${scopeType}-${nameToken}-${stamp}.html`;
+        anchor.download = `activity-summary-${scopeType}-${nameToken}-${stamp}.html`;
         anchor.click();
         URL.revokeObjectURL(anchor.href);
-        setStatusMessage("Quick package downloaded.");
+        setStatusMessage("Activity summary downloaded.");
+        return;
+      }
+
+      if (packageKind === "evidence_dossier") {
+        const response = await fetch("/api/argus/deliver/dossier", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scopeType,
+            scopeId,
+            includePrivate,
+            fromDate: fromDate || undefined,
+            toDate: toDate || undefined,
+            includeLogs,
+            includeInbox,
+            includeAttachments,
+          }),
+        });
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => ({}))) as { error?: string };
+          throw new Error(payload.error ?? "Evidence dossier failed");
+        }
+        const blob = await response.blob();
+        const stamp = new Date().toISOString().slice(0, 10);
+        const nameToken = (selectedEntity?.name ?? "export").replace(/[^a-zA-Z0-9._-]+/g, "-");
+        const anchor = document.createElement("a");
+        anchor.href = URL.createObjectURL(blob);
+        anchor.download = `evidence-dossier-${scopeType}-${nameToken}-${stamp}.zip`;
+        anchor.click();
+        URL.revokeObjectURL(anchor.href);
+        setStatusMessage("Evidence dossier ZIP downloaded (report.html + files + manifest).");
         return;
       }
 
@@ -242,7 +293,7 @@ export function V2DeliverShell({
       const nameToken = (selectedEntity?.name ?? "export").replace(/[^a-zA-Z0-9._-]+/g, "-");
       const anchor = document.createElement("a");
       anchor.href = URL.createObjectURL(blob);
-      anchor.download = `argus-vault-${scopeType}-${nameToken}-${stamp}.zip`;
+      anchor.download = `evidence-vault-${scopeType}-${nameToken}-${stamp}.zip`;
       anchor.click();
       URL.revokeObjectURL(anchor.href);
       setStatusMessage("Package generated and downloaded.");
@@ -250,6 +301,45 @@ export function V2DeliverShell({
       setStatusMessage(error instanceof Error ? error.message : "Export failed");
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function createShareLink() {
+    if (!scopeId || packageKind !== "evidence_dossier") return;
+    if (includePrivate && !privateUnlocked) {
+      setStatusMessage("Unlock protected records with your PIN in the top bar first.");
+      return;
+    }
+    setSharing(true);
+    setStatusMessage(null);
+    try {
+      const response = await fetch("/api/argus/deliver/share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scopeType,
+          scopeId,
+          includePrivate,
+          fromDate: fromDate || undefined,
+          toDate: toDate || undefined,
+          includeLogs,
+          includeInbox,
+          includeAttachments,
+        }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+        throw new Error(payload.error ?? "Share link failed");
+      }
+      const payload = (await response.json()) as { shareUrl?: string };
+      if (payload.shareUrl) {
+        setShareUrl(payload.shareUrl);
+        setStatusMessage("Share link created (expires in 30 days).");
+      }
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "Share link failed");
+    } finally {
+      setSharing(false);
     }
   }
 
@@ -272,7 +362,7 @@ export function V2DeliverShell({
             <V2Badge tone="blue">BETA</V2Badge>
           </div>
           <p className="max-w-2xl text-sm text-zinc-400">
-            Turn your ARGUS data into evidence packages for different purposes.
+            Turn scoped evidence into generic reports for handover. No product branding in exports during testing.
           </p>
           <div className="mt-3 flex flex-wrap gap-4 text-xs text-zinc-500">
             <span>✓ Evidence-based</span>
@@ -490,12 +580,12 @@ export function V2DeliverShell({
         </V2Card>
       </div>
 
-      {packageKind === "quick_package" && quickHtml ? (
+      {(packageKind === "quick_package" && quickHtml) || (packageKind === "evidence_dossier" && dossierHtml) ? (
         <section className="mb-8">
           <h2 className="mb-3 text-sm font-semibold text-zinc-100">Preview</h2>
           <iframe
-            title="Quick package preview"
-            srcDoc={quickHtml}
+            title="Deliver preview"
+            srcDoc={packageKind === "evidence_dossier" ? dossierHtml ?? "" : quickHtml ?? ""}
             className="h-72 w-full rounded-2xl border border-zinc-800 bg-white"
             sandbox=""
           />
@@ -507,23 +597,47 @@ export function V2DeliverShell({
           <p>Your data stays private. Only you can generate and access these packages.</p>
           <p className="mt-1">
             {packageKind === "quick_package"
-              ? "Output format: HTML report (.html) — print to PDF from browser. Markdown (.md) available in entity modal."
-              : "Output format: ZIP package with JSON manifest (v1)."}
+              ? "Output: Activity Summary HTML (.html) — generic report, no product watermark. Markdown in entity modal."
+              : packageKind === "evidence_dossier"
+                ? "Output: Evidence Dossier ZIP — report.html + files/ + manifest.json. Share link available."
+                : "Output format: ZIP package with JSON manifest (v1)."}
           </p>
+          {shareUrl ? (
+            <p className="mt-2 break-all text-violet-300">
+              Share:{" "}
+              <a href={shareUrl} target="_blank" rel="noreferrer" className="underline">
+                {shareUrl}
+              </a>
+            </p>
+          ) : null}
           {statusMessage ? <p className="mt-2 text-zinc-400">{statusMessage}</p> : null}
         </div>
-        <button
-          type="button"
-          disabled={!canGenerate}
-          onClick={() => void generatePackage()}
-          className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {generating
-            ? "Generating…"
-            : packageKind === "quick_package"
-              ? "⬇ Download Quick Package"
-              : "⬇ Generate Package"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {packageKind === "evidence_dossier" ? (
+            <button
+              type="button"
+              disabled={!canGenerate || sharing}
+              onClick={() => void createShareLink()}
+              className="inline-flex items-center gap-2 rounded-xl border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {sharing ? "Creating link…" : "Create share link"}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            disabled={!canGenerate}
+            onClick={() => void generatePackage()}
+            className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {generating
+              ? "Generating…"
+              : packageKind === "quick_package"
+                ? "⬇ Download Activity Summary"
+                : packageKind === "evidence_dossier"
+                  ? "⬇ Download Evidence Dossier"
+                  : "⬇ Generate Package"}
+          </button>
+        </div>
       </footer>
         </div>
       </div>

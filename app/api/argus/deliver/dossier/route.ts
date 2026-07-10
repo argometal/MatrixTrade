@@ -4,11 +4,9 @@ import { ARGUS_AUTH, hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { collectVaultEvidence } from "@/lib/argus/export/collect-evidence";
 import { deliverFilenamePrefix, resolveDeliverBranding } from "@/lib/argus/export/deliver-branding";
-import {
-  buildQuickDeliverSummary,
-  buildActivitySummaryMarkdown,
-} from "@/lib/argus/export/packages/quick-package";
-import { buildActivitySummaryHtml } from "@/lib/argus/export/packages/quick-package-html";
+import { buildEvidenceDossierZip } from "@/lib/argus/export/packages/evidence-dossier";
+import { buildEvidenceDossierHtml } from "@/lib/argus/export/packages/evidence-dossier-html";
+import { buildQuickDeliverSummary } from "@/lib/argus/export/packages/quick-package";
 import type { ExportCollectionOptions, ExportScopeType } from "@/lib/argus/export/types";
 import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
 
@@ -34,7 +32,7 @@ function parseOptions(searchParams: URLSearchParams): ExportCollectionOptions {
   };
 }
 
-async function buildQuickDeliver(searchParams: URLSearchParams) {
+async function buildDossier(searchParams: URLSearchParams) {
   const jar = await cookies();
   if (jar.get(ARGUS_AUTH)?.value !== "1") {
     return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
@@ -75,60 +73,45 @@ async function buildQuickDeliver(searchParams: URLSearchParams) {
   }
 
   const generatedAt = new Date().toISOString();
-  const today = generatedAt.slice(0, 10);
   const branding = resolveDeliverBranding();
-  const markdown = buildActivitySummaryMarkdown({
-    data,
-    inboxItems,
-    collected,
-    includePrivate,
-    today,
-    generatedAt,
-    branding,
-  });
-  const html = buildActivitySummaryHtml({
-    data,
-    inboxItems,
-    collected,
-    includePrivate,
-    today,
-    generatedAt,
-    branding,
-  });
+  const previewHtml = buildEvidenceDossierHtml({ data, collected, generatedAt, branding, zipMode: false });
   const summary = buildQuickDeliverSummary(collected, generatedAt);
+  const zip = await buildEvidenceDossierZip({
+    data,
+    collected,
+    includePrivate,
+    generatedAt,
+    branding,
+    options,
+  });
 
-  return { markdown, html, summary, scopeType, scopeName: collected.scope.name };
+  return { previewHtml, summary, zip, scopeName: collected.scope.name, scopeType };
 }
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const result = await buildQuickDeliver(url.searchParams);
+  const result = await buildDossier(url.searchParams);
   if ("error" in result && result.error) return result.error;
 
-  const download = url.searchParams.get("download") === "1";
-  const format = url.searchParams.get("format") === "md" ? "md" : "html";
+  const download = url.searchParams.get("download") === "zip";
   if (download) {
     const stamp = result.summary!.generatedAt.slice(0, 10);
-    const prefix = deliverFilenamePrefix("activity");
-    const filename = `${prefix}-${result.summary!.scopeType}-${safeFileToken(result.summary!.scopeName)}-${stamp}.${format === "md" ? "md" : "html"}`;
-    const body = format === "md" ? result.markdown! : result.html!;
-    const contentType =
-      format === "md" ? "text/markdown; charset=utf-8" : "text/html; charset=utf-8";
-    return new NextResponse(body, {
+    const prefix = deliverFilenamePrefix("dossier");
+    const filename = `${prefix}-${result.summary!.scopeType}-${safeFileToken(result.summary!.scopeName)}-${stamp}.zip`;
+    return new NextResponse(new Uint8Array(result.zip!.buffer), {
       status: 200,
       headers: {
-        "Content-Type": contentType,
+        "Content-Type": "application/zip",
         "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Length": String(result.zip!.buffer.length),
         "Cache-Control": "no-store",
-        "X-Deliver-Package": "activity_summary",
-        "X-Deliver-Format": format,
+        "X-Deliver-Package": "evidence_dossier",
       },
     });
   }
 
   return NextResponse.json({
-    markdown: result.markdown,
-    html: result.html,
+    html: result.previewHtml,
     summary: result.summary,
   });
 }
@@ -150,26 +133,23 @@ export async function POST(request: Request) {
   params.set("includeLogs", body.includeLogs === false ? "0" : "1");
   params.set("includeInbox", body.includeInbox === false ? "0" : "1");
   params.set("includeAttachments", body.includeAttachments === false ? "0" : "1");
+  params.set("download", "zip");
 
-  const result = await buildQuickDeliver(params);
+  const result = await buildDossier(params);
   if ("error" in result && result.error) return result.error;
 
-  const format = body.format === "md" ? "md" : "html";
   const stamp = result.summary!.generatedAt.slice(0, 10);
-  const prefix = deliverFilenamePrefix("activity");
-  const filename = `${prefix}-${result.summary!.scopeType}-${safeFileToken(result.summary!.scopeName)}-${stamp}.${format === "md" ? "md" : "html"}`;
-  const payload = format === "md" ? result.markdown! : result.html!;
-  const contentType =
-    format === "md" ? "text/markdown; charset=utf-8" : "text/html; charset=utf-8";
+  const prefix = deliverFilenamePrefix("dossier");
+  const filename = `${prefix}-${result.summary!.scopeType}-${safeFileToken(result.summary!.scopeName)}-${stamp}.zip`;
 
-  return new NextResponse(payload, {
+  return new NextResponse(new Uint8Array(result.zip!.buffer), {
     status: 200,
     headers: {
-      "Content-Type": contentType,
+      "Content-Type": "application/zip",
       "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Length": String(result.zip!.buffer.length),
       "Cache-Control": "no-store",
-      "X-Deliver-Package": "activity_summary",
-      "X-Deliver-Format": format,
+      "X-Deliver-Package": "evidence_dossier",
     },
   });
 }

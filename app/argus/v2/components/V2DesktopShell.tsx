@@ -34,6 +34,7 @@ export function V2DesktopShell({
   privateUnlocked: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(true);
+  const [hoverExpanded, setHoverExpanded] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -67,7 +68,16 @@ export function V2DesktopShell({
   return (
     <V2SidebarCollapseContext.Provider value={{ collapsed, toggle }}>
       <div className="argus-v2 min-h-screen bg-zinc-950">
-        <V2Sidebar counts={counts} collapsed={ready && collapsed} onToggle={toggle} />
+        <V2Sidebar
+          counts={counts}
+          collapsed={ready && collapsed}
+          hoverExpanded={ready && collapsed && hoverExpanded}
+          onToggle={toggle}
+          onMouseEnter={() => {
+            if (ready && collapsed) setHoverExpanded(true);
+          }}
+          onMouseLeave={() => setHoverExpanded(false)}
+        />
         <div
           className={`flex h-dvh min-h-0 flex-col overflow-hidden transition-[padding] duration-200 ease-out ${paddingClass}`}
         >

@@ -1,6 +1,6 @@
 # ARGUS — Sidebar Evolution
 
-**Status:** Phase A shipped (070902)  
+**Status:** Phase C shipped (070904)  
 **Principle:** Sidebar navigates · Home intelligence · Browsers retrieve
 
 ---
@@ -40,8 +40,11 @@
 
 ---
 
-## Phase C (optional)
+## Phase C (shipped — 070904)
 
-- Hover-expand collapsed sidebar (desktop)
-- Recent entities in expanded sidebar (`localStorage`)
-- Knowledge map stays on Home only
+| Change | Detail |
+|--------|--------|
+| Hover-expand | Collapsed sidebar expands on hover (desktop); overlays content, does not shift layout |
+| Recent entities | Last 6 visited entities in expanded sidebar; `localStorage` `argus-v2-recent-entities` |
+| Recorder | `V2RecordRecentEntity` on org, project, topic, event, contact, runbook detail views |
+| Knowledge map | Stays on Home only (unchanged) |

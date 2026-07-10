@@ -8,6 +8,7 @@ import { loadProjectPageData } from "@/lib/argus/v2/loaders";
 import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
 import { V2QuickDeliverButton } from "../../components/V2QuickDeliverModal";
+import { V2RecordRecentEntity } from "../../components/V2RecordRecentEntity";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
 import { V2EntityNeighborhoodPanel } from "../../components/V2EntityNeighborhoodPanel";
 import { V2ProjectActions } from "../../components/V2ProjectActions";
@@ -60,6 +61,12 @@ export default async function V2ProjectPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <V2RecordRecentEntity
+        id={entity.id}
+        kind="project"
+        label={entity.name}
+        href={`/argus/v2/projects/${entity.id}`}
+      />
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         <div className="px-4 py-6 lg:px-8">
       <div className="mb-5">

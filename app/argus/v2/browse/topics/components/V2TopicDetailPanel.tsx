@@ -14,6 +14,7 @@ import type {
 import type { V2TopicDetail } from "@/lib/argus/v2/topic-browse-utils";
 import { V2TopicAliasEditor } from "./V2TopicAliasEditor";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
+import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 
 type PanelTab = "evidence" | "timeline" | "connections" | "aliases";
 type EvidenceFilter = "all" | V2EvidenceStreamKind;
@@ -74,6 +75,12 @@ export function V2TopicDetailPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <V2RecordRecentEntity
+        id={selected.id}
+        kind="topic"
+        label={selected.name}
+        href={`/argus/v2/browse/topics?selected=${selected.id}`}
+      />
       <div className="shrink-0 border-b border-zinc-800/80 p-5">
         <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">

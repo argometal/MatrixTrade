@@ -11,6 +11,7 @@ export type DeliverPackageKind =
   | "knowledge_package"
   | "relationship_brief"
   | "quick_package"
+  | "evidence_dossier"
   | "evidence_vault";
 
 export type QuickDeliverSummary = {

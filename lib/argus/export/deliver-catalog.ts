@@ -28,10 +28,18 @@ export const DELIVER_PACKAGES: DeliverPackageCard[] = [
   },
   {
     id: "quick_package",
-    title: "Quick Package",
-    description: "Fast handover report. HTML timeline + evidence index; Markdown draft also available.",
-    badge: "Fast action",
+    title: "Activity Summary",
+    description: "Chronological index — what was recorded, when. HTML or Markdown. For skim and orientation.",
+    badge: "Fast index",
     badgeTone: "green",
+    available: true,
+  },
+  {
+    id: "evidence_dossier",
+    title: "Evidence Dossier",
+    description: "Full handover — email bodies, journal text, event sections, files in ZIP. For sharing proof.",
+    badge: "Full story",
+    badgeTone: "blue",
     available: true,
   },
   {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getEntity, getRunbook, readArgus } from "@/lib/argus/server-storage";
 import { runbookProgress } from "@/lib/argus/runbook-helpers";
 import { V2BackLink, V2Badge } from "../../components/v2-ui";
+import { V2RecordRecentEntity } from "../../components/V2RecordRecentEntity";
 import { V2RunbookWorkPanel } from "../../components/V2RunbookWorkPanel";
 import { EmptyState } from "@/app/argus/components/ui";
 
@@ -36,6 +37,12 @@ export default async function V2RunbookPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
+      <V2RecordRecentEntity
+        id={runbook.id}
+        kind="runbook"
+        label={runbook.title}
+        href={`/argus/v2/runbooks/${runbook.id}`}
+      />
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         <div className="px-4 py-6 lg:px-8">
       <div className="mb-5">

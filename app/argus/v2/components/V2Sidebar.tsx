@@ -8,35 +8,45 @@ import {
   isV2NavItemActive,
   type V2NavLinkItem,
 } from "@/lib/argus/v2/nav-items";
+import { V2SidebarRecent } from "./V2SidebarRecent";
 
 const DEFAULT_SIGNALS: V2NavCounts = { inbox: 0, network: 0, topics: 0 };
 
 export function V2Sidebar({
   counts = DEFAULT_SIGNALS,
   collapsed = false,
+  hoverExpanded = false,
   onToggle,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   counts?: V2NavCounts;
   collapsed?: boolean;
+  hoverExpanded?: boolean;
   onToggle?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }) {
   const pathname = usePathname();
   const sections = buildV2NavSections(counts);
+  const visuallyCollapsed = collapsed && !hoverExpanded;
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-zinc-800/80 bg-zinc-950 transition-[width] duration-200 ease-out lg:flex ${
-        collapsed ? "w-[4.5rem]" : "w-56 xl:w-60"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-zinc-800/80 bg-zinc-950 shadow-none transition-[width,box-shadow] duration-200 ease-out lg:flex ${
+        visuallyCollapsed ? "w-[4.5rem]" : "w-56 shadow-2xl shadow-black/40 xl:w-60"
       }`}
     >
-      <div className={`shrink-0 border-b border-zinc-800/80 ${collapsed ? "px-2 py-4" : "px-5 py-5"}`}>
-        <div className={`flex items-start ${collapsed ? "flex-col items-center gap-2" : "justify-between gap-2"}`}>
+      <div className={`shrink-0 border-b border-zinc-800/80 ${visuallyCollapsed ? "px-2 py-4" : "px-5 py-5"}`}>
+        <div className={`flex items-start ${visuallyCollapsed ? "flex-col items-center gap-2" : "justify-between gap-2"}`}>
           <Link
             href="/argus/v2"
-            className={collapsed ? "flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600/20 text-lg ring-1 ring-violet-500/30" : "block min-w-0 flex-1"}
+            className={visuallyCollapsed ? "flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600/20 text-lg ring-1 ring-violet-500/30" : "block min-w-0 flex-1"}
             title="Argus Home"
           >
-            {collapsed ? (
+            {visuallyCollapsed ? (
               <span aria-hidden>🌐</span>
             ) : (
               <>
@@ -50,21 +60,21 @@ export function V2Sidebar({
               type="button"
               onClick={onToggle}
               className="shrink-0 rounded-lg border border-zinc-800 p-1.5 text-zinc-500 transition hover:border-zinc-700 hover:bg-zinc-900 hover:text-zinc-300"
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-label={visuallyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={visuallyCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
               <span aria-hidden className="text-sm">
-                {collapsed ? "»" : "«"}
+                {visuallyCollapsed ? "»" : "«"}
               </span>
             </button>
           ) : null}
         </div>
       </div>
 
-      <nav className={`argus-v2-scroll min-h-0 flex-1 overflow-y-auto py-4 ${collapsed ? "px-1.5" : "px-3"}`}>
+      <nav className={`argus-v2-scroll min-h-0 flex-1 overflow-y-auto py-4 ${visuallyCollapsed ? "px-1.5" : "px-3"}`}>
         {sections.map((section, sectionIndex) => (
           <div key={section.title} className={sectionIndex > 0 ? "mt-3" : ""}>
-            {!collapsed ? (
+            {!visuallyCollapsed ? (
               <p className="mb-2 px-2 text-[10px] font-bold uppercase tracking-wider text-zinc-600">
                 {section.title}
               </p>
@@ -77,12 +87,13 @@ export function V2Sidebar({
                   key={`${section.title}-${item.href}`}
                   item={item}
                   active={isV2NavItemActive(pathname, item)}
-                  collapsed={collapsed}
+                  collapsed={visuallyCollapsed}
                 />
               ))}
             </div>
           </div>
         ))}
+        <V2SidebarRecent show={!visuallyCollapsed} />
       </nav>
     </aside>
   );
