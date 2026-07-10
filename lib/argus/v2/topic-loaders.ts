@@ -20,15 +20,23 @@ import type {
 } from "./topic-browse-utils";
 export type {
   V2TopicDetail,
+  V2TopicFilterOptions,
+  V2TopicFilters,
   V2TopicLinkedEntity,
   V2TopicRow,
   V2TopicTab,
   V2TopicTagChip,
 } from "./topic-browse-utils";
 export {
+  buildV2TopicFilterOptions,
   buildV2TopicTabCounts,
   filterV2TopicRows,
+  hasActiveV2TopicFilters,
+  paginateV2TopicRows,
+  parseV2TopicFilters,
   parseV2TopicTab,
+  v2TopicPageCount,
+  V2_TOPIC_PAGE_SIZE,
 } from "./topic-browse-utils";
 
 function visibleLogs(data: ArgusData, includePrivate: boolean): Log[] {
@@ -123,6 +131,51 @@ function topicEvidenceBundle(
   return { history, inbox, evidence, counts, lastIso };
 }
 
+function topicRowFilterMeta(
+  data: ArgusData,
+  topic: Entity,
+  history: Log[],
+  inbox: InboxItem[],
+  today: string
+) {
+  const evidenceTags = new Set<string>();
+  for (const log of history) {
+    for (const tag of log.topics) {
+      const key = tag.trim().toLowerCase();
+      if (key) evidenceTags.add(key);
+    }
+  }
+  for (const item of inbox) {
+    for (const tag of item.topics ?? []) {
+      const key = tag.trim().toLowerCase();
+      if (key) evidenceTags.add(key);
+    }
+  }
+
+  const tagPatterns = buildTagPatternsForScope(history, inbox, today);
+  const linkedEntities = collectLinkedEntities(data, topic, history);
+  const linkedOrgIds: string[] = [];
+  const linkedProjectIds: string[] = [];
+  const linkedEntityIds = [
+    ...new Set([...(topic.linkedEntityIds ?? []), ...linkedEntities.map((entity) => entity.id)]),
+  ];
+
+  for (const entity of linkedEntities) {
+    if (entity.icon === "🏢") linkedOrgIds.push(entity.id);
+    else if (entity.icon === "📁") linkedProjectIds.push(entity.id);
+  }
+
+  return {
+    aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
+    evidenceTags: [...evidenceTags],
+    patternCount: tagPatterns.length,
+    linkedOrgIds,
+    linkedProjectIds,
+    linkedEntityIds,
+    searchText: entityNotesForDisplay(topic.notes ?? ""),
+  };
+}
+
 export function buildV2TopicRows(
   data: ArgusData,
   inboxItems: InboxItem[],
@@ -133,7 +186,14 @@ export function buildV2TopicRows(
 
   return topics
     .map((topic) => {
-      const { counts, lastIso } = topicEvidenceBundle(data, topic.id, inboxItems, includePrivate, today);
+      const { history, inbox, counts, lastIso } = topicEvidenceBundle(
+        data,
+        topic.id,
+        inboxItems,
+        includePrivate,
+        today
+      );
+      const filterMeta = topicRowFilterMeta(data, topic, history, inbox, today);
       return {
         id: topic.id,
         name: topic.name,
@@ -143,6 +203,7 @@ export function buildV2TopicRows(
         emailCount: counts.emailCount,
         fileCount: counts.fileCount + counts.photoCount,
         evidenceCount: counts.evidenceCount,
+        ...filterMeta,
       };
     })
     .sort((a, b) => b.lastSort.localeCompare(a.lastSort) || a.name.localeCompare(b.name));

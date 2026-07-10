@@ -5,11 +5,16 @@ import { TAG_PATTERN_BADGE_LIMIT } from "@/lib/argus/tag-limits";
 export function V2TagPatternBadges({
   patterns,
   className = "",
+  tagHref,
 }: {
   patterns: TagPattern[];
   className?: string;
+  /** Default drills to inbox tag filter. */
+  tagHref?: (tag: string) => string;
 }) {
   if (patterns.length === 0) return null;
+
+  const hrefFor = tagHref ?? ((tag: string) => `/argus/v2/inbox?tag=${encodeURIComponent(tag)}`);
 
   const visible = patterns.slice(0, TAG_PATTERN_BADGE_LIMIT);
   const overflow = patterns.length - visible.length;
@@ -19,7 +24,7 @@ export function V2TagPatternBadges({
       {visible.map((pattern) => (
         <Link
           key={pattern.tag}
-          href={`/argus/v2/inbox?tag=${encodeURIComponent(pattern.tag)}`}
+          href={hrefFor(pattern.tag)}
           role="listitem"
           className="inline-flex items-center gap-1 rounded-full bg-red-950/40 px-2.5 py-1 text-[11px] font-medium text-red-300/95 ring-1 ring-red-500/35 transition hover:bg-red-950/55 hover:text-red-200"
           title={`#${pattern.tag} — ${pattern.count} evidence items in scope (${pattern.recentCount} recent)`}

@@ -13,7 +13,17 @@ import { V2TopicsShell } from "./components/V2TopicsShell";
 export default async function V2BrowseTopicsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ selected?: string; tab?: string }>;
+  searchParams: Promise<{
+    selected?: string;
+    tab?: string;
+    q?: string;
+    tag?: string;
+    org?: string;
+    project?: string;
+    entity?: string;
+    kind?: string;
+    page?: string;
+  }>;
 }) {
   const { selected, tab: tabParam } = await searchParams;
   const includePrivate = await hasArgusPrivateUnlock();

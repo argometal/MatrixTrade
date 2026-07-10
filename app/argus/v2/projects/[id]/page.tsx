@@ -103,7 +103,13 @@ export default async function V2ProjectPage({
               {entity.alias ? <V2Badge tone="blue">{entity.alias}</V2Badge> : null}
             </div>
             {page.tagPatterns.length > 0 ? (
-              <V2TagPatternBadges patterns={page.tagPatterns} className="mt-3" />
+              <V2TagPatternBadges
+                patterns={page.tagPatterns}
+                className="mt-3"
+                tagHref={(tag) =>
+                  `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&project=${entity.id}`
+                }
+              />
             ) : null}
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">

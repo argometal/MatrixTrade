@@ -117,7 +117,13 @@ export function V2TopicDetailPanel({
         </div>
 
         {selected.tagPatterns.length > 0 ? (
-          <V2TagPatternBadges patterns={selected.tagPatterns} className="mb-3" />
+          <V2TagPatternBadges
+            patterns={selected.tagPatterns}
+            className="mb-3"
+            tagHref={(tag) =>
+              `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&selected=${selected.id}`
+            }
+          />
         ) : null}
 
         <div className="mb-3 inline-grid grid-cols-3 gap-1.5 sm:grid-cols-6">

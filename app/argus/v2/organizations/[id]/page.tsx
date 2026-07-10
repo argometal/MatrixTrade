@@ -149,7 +149,13 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               </span>
             </div>
             {page.tagPatterns.length > 0 ? (
-              <V2TagPatternBadges patterns={page.tagPatterns} className="mt-3" />
+              <V2TagPatternBadges
+                patterns={page.tagPatterns}
+                className="mt-3"
+                tagHref={(tag) =>
+                  `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`
+                }
+              />
             ) : null}
           </div>
           <div className="flex shrink-0 gap-2">

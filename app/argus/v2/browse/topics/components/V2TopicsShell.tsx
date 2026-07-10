@@ -1,13 +1,21 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import {
+  buildV2TopicFilterOptions,
   buildV2TopicTabCounts,
   filterV2TopicRows,
+  hasActiveV2TopicFilters,
+  paginateV2TopicRows,
+  parseV2TopicFilters,
   parseV2TopicTab,
+  v2TopicPageCount,
+  V2_TOPIC_PAGE_SIZE,
   type V2TopicDetail,
+  type V2TopicEvidenceKind,
+  type V2TopicFilters,
   type V2TopicRow,
   type V2TopicTab,
   type V2TopicTagChip,
@@ -19,9 +27,72 @@ import { V2TopicDetailPanel } from "./V2TopicDetailPanel";
 
 const TABS: { id: V2TopicTab; label: string }[] = [
   { id: "all", label: "All" },
-  { id: "mine", label: "My topics" },
-  { id: "followed", label: "Followed" },
+  { id: "active", label: "Active" },
+  { id: "empty", label: "Empty" },
+  { id: "patterns", label: "Patterns" },
 ];
+
+const KIND_OPTIONS: { id: V2TopicEvidenceKind; label: string }[] = [
+  { id: "email", label: "Has email" },
+  { id: "journal", label: "Has journal" },
+  { id: "file", label: "Has files" },
+];
+
+type FilterMenu = "org" | "project" | "kind" | null;
+
+function FilterMenuPanel({
+  open,
+  children,
+  onClose,
+}: {
+  open: boolean;
+  children: ReactNode;
+  onClose: () => void;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handlePointerDown(event: MouseEvent) {
+      if (!panelRef.current?.contains(event.target as Node)) onClose();
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      ref={panelRef}
+      className="absolute left-0 top-full z-30 mt-1 max-h-56 min-w-[180px] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl"
+    >
+      {children}
+    </div>
+  );
+}
+
+function FilterOption({
+  active,
+  onClick,
+  children,
+}: {
+  active?: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`block w-full rounded-lg px-3 py-2 text-left text-[11px] ${
+        active ? "bg-violet-500/15 text-violet-200" : "text-zinc-300 hover:bg-zinc-800"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function V2TopicsShell({
   rows,
@@ -41,28 +112,124 @@ export function V2TopicsShell({
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseV2TopicTab(searchParams.get("tab") ?? initialTab);
+  const filters = useMemo(
+    () =>
+      parseV2TopicFilters({
+        q: searchParams.get("q"),
+        tag: searchParams.get("tag"),
+        org: searchParams.get("org"),
+        project: searchParams.get("project"),
+        entity: searchParams.get("entity"),
+        kind: searchParams.get("kind"),
+      }),
+    [searchParams]
+  );
+  const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
   const selectedId = resolveV2SelectedId(searchParams.get("selected"), initialSelectedId);
   const counts = useMemo(() => buildV2TopicTabCounts(rows), [rows]);
-  const filtered = useMemo(() => filterV2TopicRows(rows, tab), [rows, tab]);
+  const filterOptions = useMemo(() => buildV2TopicFilterOptions(details), [details]);
+  const filtered = useMemo(() => filterV2TopicRows(rows, tab, filters), [rows, tab, filters]);
+  const pageCount = useMemo(() => v2TopicPageCount(filtered.length), [filtered.length]);
+  const safePage = Math.min(page, pageCount);
+  const pageRows = useMemo(
+    () => paginateV2TopicRows(filtered, safePage),
+    [filtered, safePage]
+  );
   const selected = selectedId ? details.find((d) => d.id === selectedId) : undefined;
+  const filtersActive = hasActiveV2TopicFilters(filters);
+  const [openFilter, setOpenFilter] = useState<FilterMenu>(null);
+  const [searchDraft, setSearchDraft] = useState(filters.q ?? "");
 
   useScrollToSelected(selectedId);
 
+  useEffect(() => {
+    setSearchDraft(filters.q ?? "");
+  }, [filters.q]);
+
+  const replaceTopicParams = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const params = new URLSearchParams(searchParams.toString());
+      mutate(params);
+      const query = params.toString();
+      router.replace(query ? `/argus/v2/browse/topics?${query}` : "/argus/v2/browse/topics");
+    },
+    [router, searchParams]
+  );
+
+  useEffect(() => {
+    const handle = window.setTimeout(() => {
+      const next = searchDraft.trim();
+      const current = filters.q?.trim() ?? "";
+      if (next === current) return;
+      replaceTopicParams((params) => {
+        if (next) params.set("q", next);
+        else params.delete("q");
+        params.delete("page");
+      });
+    }, 300);
+    return () => window.clearTimeout(handle);
+  }, [searchDraft, filters.q, replaceTopicParams]);
+
   function setTab(next: V2TopicTab) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", next);
-    router.replace(`/argus/v2/browse/topics?${params.toString()}`);
+    replaceTopicParams((params) => {
+      if (next === "all") params.delete("tab");
+      else params.set("tab", next);
+      params.delete("page");
+    });
+  }
+
+  function setFilter(key: keyof V2TopicFilters, value?: string) {
+    replaceTopicParams((params) => {
+      const paramKey =
+        key === "entity" ? "entity" : key === "org" ? "org" : key === "project" ? "project" : key;
+      if (!value) params.delete(paramKey);
+      else params.set(paramKey, value);
+      params.delete("page");
+    });
+    setOpenFilter(null);
+  }
+
+  function setTagFilter(tag?: string) {
+    replaceTopicParams((params) => {
+      if (!tag) params.delete("tag");
+      else params.set("tag", tag);
+      params.delete("page");
+    });
+  }
+
+  function clearFilters() {
+    replaceTopicParams((params) => {
+      params.delete("q");
+      params.delete("tag");
+      params.delete("org");
+      params.delete("project");
+      params.delete("entity");
+      params.delete("kind");
+      params.delete("page");
+    });
+    setSearchDraft("");
+    setOpenFilter(null);
   }
 
   function selectItem(id: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("selected", id);
-    router.replace(`/argus/v2/browse/topics?${params.toString()}`);
+    replaceTopicParams((params) => {
+      params.set("selected", id);
+    });
+  }
+
+  function setPage(next: number) {
+    replaceTopicParams((params) => {
+      if (next <= 1) params.delete("page");
+      else params.set("page", String(next));
+    });
   }
 
   const returnTo = selected
-    ? `/argus/v2/browse/topics?selected=${selected.id}${tab !== "all" ? `&tab=${tab}` : ""}`
+    ? `/argus/v2/browse/topics?${searchParams.toString()}`
     : `/argus/v2/browse/topics`;
+
+  const rangeStart = filtered.length === 0 ? 0 : (safePage - 1) * V2_TOPIC_PAGE_SIZE + 1;
+  const rangeEnd = Math.min(safePage * V2_TOPIC_PAGE_SIZE, filtered.length);
 
   return (
     <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
@@ -82,6 +249,16 @@ export function V2TopicsShell({
             </div>
           </div>
 
+          <div className="mb-3">
+            <input
+              type="search"
+              value={searchDraft}
+              onChange={(event) => setSearchDraft(event.target.value)}
+              placeholder="Search topics, aliases, notes…"
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none"
+            />
+          </div>
+
           <div className="mb-3 flex gap-1 overflow-x-auto">
             {TABS.map((t) => (
               <button
@@ -98,24 +275,132 @@ export function V2TopicsShell({
           </div>
 
           {tagChips.length > 0 ? (
-            <div className="flex flex-wrap gap-1.5">
-              {tagChips.map((chip) => (
-                <span
-                  key={chip.name}
-                  className="rounded-full bg-zinc-800/80 px-2 py-0.5 text-[10px] text-zinc-400"
-                >
-                  {chip.name} {chip.count}
-                </span>
-              ))}
+            <div className="mb-3 flex flex-wrap gap-1.5">
+              {tagChips.map((chip) => {
+                const active = filters.tag?.toLowerCase() === chip.name.toLowerCase();
+                return (
+                  <button
+                    key={chip.name}
+                    type="button"
+                    onClick={() => setTagFilter(active ? undefined : chip.name)}
+                    className={`rounded-full px-2 py-0.5 text-[10px] transition ${
+                      active
+                        ? "bg-violet-500/20 text-violet-200 ring-1 ring-violet-500/40"
+                        : "bg-zinc-800/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300"
+                    }`}
+                  >
+                    {chip.name} {chip.count}
+                  </button>
+                );
+              })}
             </div>
           ) : null}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setOpenFilter(openFilter === "org" ? null : "org")}
+                className={`rounded-lg px-2.5 py-1 text-[10px] font-medium ${
+                  filters.org ? "bg-violet-500/15 text-violet-300" : "bg-zinc-800/80 text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                Org{filters.org ? " ✓" : ""}
+              </button>
+              <FilterMenuPanel open={openFilter === "org"} onClose={() => setOpenFilter(null)}>
+                {filterOptions.organizations.length === 0 ? (
+                  <p className="px-3 py-2 text-[10px] text-zinc-600">No linked organizations</p>
+                ) : (
+                  filterOptions.organizations.map((org) => (
+                    <FilterOption
+                      key={org.id}
+                      active={filters.org === org.id}
+                      onClick={() => setFilter("org", filters.org === org.id ? undefined : org.id)}
+                    >
+                      {org.name}
+                    </FilterOption>
+                  ))
+                )}
+              </FilterMenuPanel>
+            </div>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setOpenFilter(openFilter === "project" ? null : "project")}
+                className={`rounded-lg px-2.5 py-1 text-[10px] font-medium ${
+                  filters.project
+                    ? "bg-violet-500/15 text-violet-300"
+                    : "bg-zinc-800/80 text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                Project{filters.project ? " ✓" : ""}
+              </button>
+              <FilterMenuPanel open={openFilter === "project"} onClose={() => setOpenFilter(null)}>
+                {filterOptions.projects.length === 0 ? (
+                  <p className="px-3 py-2 text-[10px] text-zinc-600">No linked projects</p>
+                ) : (
+                  filterOptions.projects.map((project) => (
+                    <FilterOption
+                      key={project.id}
+                      active={filters.project === project.id}
+                      onClick={() =>
+                        setFilter("project", filters.project === project.id ? undefined : project.id)
+                      }
+                    >
+                      {project.name}
+                    </FilterOption>
+                  ))
+                )}
+              </FilterMenuPanel>
+            </div>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setOpenFilter(openFilter === "kind" ? null : "kind")}
+                className={`rounded-lg px-2.5 py-1 text-[10px] font-medium ${
+                  filters.kind ? "bg-violet-500/15 text-violet-300" : "bg-zinc-800/80 text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                Evidence{filters.kind ? " ✓" : ""}
+              </button>
+              <FilterMenuPanel open={openFilter === "kind"} onClose={() => setOpenFilter(null)}>
+                {KIND_OPTIONS.map((option) => (
+                  <FilterOption
+                    key={option.id}
+                    active={filters.kind === option.id}
+                    onClick={() => setFilter("kind", filters.kind === option.id ? undefined : option.id)}
+                  >
+                    {option.label}
+                  </FilterOption>
+                ))}
+              </FilterMenuPanel>
+            </div>
+
+            {filtersActive ? (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="rounded-lg px-2.5 py-1 text-[10px] font-medium text-amber-300/90 hover:text-amber-200"
+              >
+                Clear filters
+              </button>
+            ) : null}
+          </div>
         </div>
 
         <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
           {filtered.length === 0 ? (
             <div className="px-5 py-16 text-center">
-              <p className="text-sm text-zinc-500">No topics yet.</p>
-              <p className="mt-1 text-xs text-zinc-600">Capture a topic and link emails or journal entries to it.</p>
+              <p className="text-sm text-zinc-500">
+                {rows.length === 0 ? "No topics yet." : "No topics match these filters."}
+              </p>
+              <p className="mt-1 text-xs text-zinc-600">
+                {rows.length === 0
+                  ? "Capture a topic and link emails or journal entries to it."
+                  : "Try a different view, tag, or clear filters."}
+              </p>
             </div>
           ) : (
             <table className="w-full text-left text-sm">
@@ -127,7 +412,7 @@ export function V2TopicsShell({
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((row) => (
+                {pageRows.map((row) => (
                   <tr
                     key={row.id}
                     data-v2-selected-id={row.id}
@@ -137,7 +422,17 @@ export function V2TopicsShell({
                     )}`}
                   >
                     <td className="px-4 py-3 lg:px-5">
-                      <span className="font-medium text-zinc-100">{row.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-zinc-100">{row.name}</span>
+                        {row.patternCount > 0 ? (
+                          <span
+                            className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-medium text-amber-300"
+                            title={`${row.patternCount} recurring tag pattern(s)`}
+                          >
+                            🔁 {row.patternCount}
+                          </span>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="px-2 py-3 text-zinc-500">{row.lastActivity}</td>
                     <td className="px-4 py-3 lg:px-5">
@@ -149,6 +444,35 @@ export function V2TopicsShell({
             </table>
           )}
         </div>
+
+        {filtered.length > V2_TOPIC_PAGE_SIZE ? (
+          <div className="flex items-center justify-between border-t border-zinc-800/80 px-4 py-2.5 text-[11px] text-zinc-500 lg:px-5">
+            <span>
+              {rangeStart}–{rangeEnd} of {filtered.length}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={safePage <= 1}
+                onClick={() => setPage(safePage - 1)}
+                className="rounded-lg px-2 py-1 text-zinc-400 hover:bg-zinc-800 disabled:opacity-40"
+              >
+                Prev
+              </button>
+              <span className="tabular-nums text-zinc-600">
+                {safePage}/{pageCount}
+              </span>
+              <button
+                type="button"
+                disabled={safePage >= pageCount}
+                onClick={() => setPage(safePage + 1)}
+                className="rounded-lg px-2 py-1 text-zinc-400 hover:bg-zinc-800 disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-950/50">
