@@ -112,7 +112,7 @@ export function AddContextFlow({
         ) : null}
 
         {step === "pick" ? (
-          <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto">
+          <nav className="argus-overlay-scroll min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
             {CONTEXT_KINDS.map((k) => (
               <button
                 key={k}
@@ -131,7 +131,7 @@ export function AddContextFlow({
             ))}
           </nav>
         ) : (
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto">
+          <div className="argus-overlay-scroll min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain">
             <label className="block">
               <span className="text-xs font-medium text-zinc-500">Name</span>
               <input

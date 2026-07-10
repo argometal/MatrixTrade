@@ -69,7 +69,7 @@ export function V2EventLinkEmailModal({
             autoFocus
           />
         </div>
-        <div className="min-h-0 flex-1 space-y-1 overflow-y-auto px-4 pb-4">
+        <div className="argus-overlay-scroll min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain px-4 pb-4">
           {filtered.length === 0 ? (
             <p className="py-8 text-center text-sm text-zinc-500">No emails found.</p>
           ) : (

@@ -486,7 +486,7 @@ export function ArgusCreateLinkWindow({
           </div>
 
           <div
-            className={`min-h-0 flex-1 overflow-y-auto px-4 py-4 ${needsKindPicker ? "pointer-events-none" : ""}`}
+            className={`argus-overlay-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 ${needsKindPicker ? "pointer-events-none" : ""}`}
           >
             {linkedEntities.length > 0 || linkedJournalRows.length > 0 ? (
               <div className="mb-4">

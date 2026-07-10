@@ -251,7 +251,7 @@ export function CreateAndLinkModal({
           </div>
         ) : null}
 
-        <div className="flex min-h-0 flex-1 flex-col px-5 py-4">
+        <div className="flex min-h-0 flex-1 flex-col px-5 py-4 overflow-hidden">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">Link to</p>
           <input
             className={`${inputClass} mb-3`}
@@ -338,7 +338,7 @@ export function CreateAndLinkModal({
             </div>
           ) : null}
 
-          <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-zinc-800">
+          <div className="argus-overlay-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border border-zinc-800">
             {filteredEntities.length === 0 ? (
               <p className="px-4 py-8 text-center text-sm text-zinc-500">No matches.</p>
             ) : (

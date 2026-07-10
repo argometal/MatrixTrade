@@ -113,6 +113,7 @@ export function ArgusLinkModal({
   const [draftTags, setDraftTags] = useState<string[]>(selectedTags);
   const [tagInput, setTagInput] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const [mounted, setMounted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -206,17 +207,22 @@ export function ArgusLinkModal({
 
   function handleEntityCreated(entity: CreatedEntityResult) {
     void (async () => {
-      if (onEntityCreated) {
-        const handled = await onEntityCreated(entity);
-        if (handled === false) {
-          if (!draftIds.includes(entity.id)) {
-            setDraftIds((current) => [...current, entity.id]);
+      try {
+        if (onEntityCreated) {
+          const handled = await onEntityCreated(entity);
+          if (handled === false) {
+            if (!draftIds.includes(entity.id)) {
+              setDraftIds((current) => [...current, entity.id]);
+            }
+            return;
           }
-          return;
         }
-      }
-      if (!draftIds.includes(entity.id)) {
-        setDraftIds((current) => [...current, entity.id]);
+        if (!draftIds.includes(entity.id)) {
+          setDraftIds((current) => [...current, entity.id]);
+        }
+      } catch (err) {
+        const { message } = formatArgusError(err);
+        setSaveError(message);
       }
     })();
   }
@@ -285,7 +291,7 @@ export function ArgusLinkModal({
             </p>
           ) : null}
 
-          <div className="flex min-h-0 flex-1 flex-col gap-4 p-5">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-5">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -297,7 +303,10 @@ export function ArgusLinkModal({
             {!onTagsTab ? (
               <button
                 type="button"
-                onClick={() => setCreateOpen(true)}
+                onClick={() => {
+                  setCreateError(null);
+                  setCreateOpen(true);
+                }}
                 className="w-full rounded-xl border border-violet-800/50 bg-violet-950/30 py-2.5 text-sm font-medium text-violet-300 hover:bg-violet-900/30"
               >
                 {createLabelForKind(activeCreateKind)}
@@ -331,7 +340,7 @@ export function ArgusLinkModal({
               {onTagsTab ? "Select tags to classify this item." : LINK_HIERARCHY.multiLinkHint}
             </p>
 
-            <div className="min-h-[240px] flex-1 overflow-y-auto overscroll-contain rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-2 [scrollbar-gutter:stable] sm:min-h-[320px]">
+            <div className="argus-overlay-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-2 [scrollbar-gutter:stable]">
               {onTagsTab ? (
                 tagOptions.length === 0 ? (
                   <p className="px-2 py-8 text-center text-sm text-zinc-500">
@@ -408,12 +417,22 @@ export function ArgusLinkModal({
         open={createOpen}
         defaultKind={activeCreateKind}
         allowedKinds={[activeCreateKind]}
-        onCancel={() => setCreateOpen(false)}
+        error={createError ?? undefined}
+        onCancel={() => {
+          setCreateOpen(false);
+          setCreateError(null);
+        }}
         onSave={(data) => {
           startTransition(async () => {
-            const entity = await createEntityInlineAction(activeCreateKind, data.name, data.notes);
-            setCreateOpen(false);
-            handleEntityCreated(entity);
+            try {
+              const entity = await createEntityInlineAction(activeCreateKind, data.name, data.notes);
+              setCreateOpen(false);
+              setCreateError(null);
+              handleEntityCreated(entity);
+            } catch (err) {
+              const { message } = formatArgusError(err);
+              setCreateError(message);
+            }
           });
         }}
       />

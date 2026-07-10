@@ -9,6 +9,7 @@ import {
   REFERENCE_KINDS,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
+import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { CAPTURE, REFERENCES, REFERENCE_PICKER } from "@/lib/argus/ux-copy";
 import { inputClass } from "./ui";
 
@@ -71,6 +72,7 @@ export function ReferencePickerModal({
     : creatableKinds[0] ?? "person";
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const allEntities = buckets.alphabetical;
@@ -170,7 +172,7 @@ export function ReferencePickerModal({
               <p className="mt-1 text-[11px] leading-snug text-zinc-600">{REFERENCE_PICKER.inboxBrowseHint}</p>
             ) : null}
 
-            <div className="mt-2 min-h-0 flex-1 space-y-0.5 overflow-y-auto">
+            <div className="argus-overlay-scroll mt-2 min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain">
               {!hasReferences && !query.trim() ? (
                 <div className="py-8 text-center">
                   <p className="text-sm text-zinc-500">{REFERENCES.empty}</p>
@@ -219,12 +221,23 @@ export function ReferencePickerModal({
         open={createOpen}
         defaultKind={resolvedDefaultKind}
         allowedKinds={creatableKinds}
-        onCancel={() => setCreateOpen(false)}
+        error={createError ?? undefined}
+        overlayZIndexClass="z-[70]"
+        onCancel={() => {
+          setCreateOpen(false);
+          setCreateError(null);
+        }}
         onSave={(data) => {
           startTransition(async () => {
-            const entity = await createEntityInlineAction(resolvedDefaultKind, data.name, data.notes);
-            setCreateOpen(false);
-            handleEntityCreated(entity);
+            try {
+              const entity = await createEntityInlineAction(resolvedDefaultKind, data.name, data.notes);
+              setCreateOpen(false);
+              setCreateError(null);
+              handleEntityCreated(entity);
+            } catch (err) {
+              const { message } = formatArgusError(err);
+              setCreateError(message);
+            }
           });
         }}
       />

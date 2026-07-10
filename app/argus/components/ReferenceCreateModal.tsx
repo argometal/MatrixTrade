@@ -7,7 +7,6 @@ import {
   REFERENCE_KIND_LABELS,
   type ReferenceKind,
   referenceKindToEntityType,
-  buildReferenceNotes,
 } from "@/lib/argus/reference-types";
 import type { EntityType } from "@/lib/argus/types";
 import { REFERENCES } from "@/lib/argus/ux-copy";
@@ -23,6 +22,8 @@ interface ReferenceCreateModalProps {
   saveLabel?: string;
   notesOptional?: boolean;
   error?: string;
+  /** Stacking above parent overlays (e.g. Link modal at z-200). */
+  overlayZIndexClass?: string;
 }
 
 export function ReferenceCreateModal({
@@ -35,6 +36,7 @@ export function ReferenceCreateModal({
   saveLabel,
   notesOptional = false,
   error,
+  overlayZIndexClass = "z-[220]",
 }: ReferenceCreateModalProps) {
   const creatableKinds = useMemo(
     () => REFERENCE_KINDS.filter((kind) => allowedKinds.includes(kind)),
@@ -57,7 +59,7 @@ export function ReferenceCreateModal({
     onSave({
       name: trimmed,
       entityType: referenceKindToEntityType(kind),
-      notes: buildReferenceNotes(kind, notes),
+      notes: notes.trim(),
     });
     setName("");
     setKind(initialKind);
@@ -65,7 +67,7 @@ export function ReferenceCreateModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+    <div className={`fixed inset-0 ${overlayZIndexClass} flex items-center justify-center bg-black/60 p-4`}>
       <div
         className="w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
         role="dialog"
