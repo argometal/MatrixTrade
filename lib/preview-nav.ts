@@ -1,12 +1,10 @@
 export type PreviewNavContext = {
   pendingInboxCount: number;
   cycleLabel: string;
-  tradesUsed: number;
-  tradesMax: number;
+  closedTrades: number;
   monthlyLossRoom: number;
   monthlyLossRoomLabel: string;
 };
-
 /** Full MatrixTrade route audit — single source for desktop sidebar + mobile menu. */
 export const PREVIEW_NAV_SECTIONS = [
   {

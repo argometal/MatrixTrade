@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "MatrixTrade",
-  description: "Experiment control H001–H030",
+  description: "Trading lab — conductual journal and risk control",
 };
 
 export const viewport: Viewport = {

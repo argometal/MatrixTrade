@@ -444,10 +444,9 @@ export async function saveRulesAction(
 
   const monthlyLossLimit = Number(formData.get("monthlyLossLimit"));
   const maxLossPerTicker = Number(formData.get("maxLossPerTicker"));
-  const maxTrades = Number(formData.get("maxTrades"));
   const carryoverEnabled = formData.get("carryoverEnabled") === "on";
 
-  const result = await saveRules({ monthlyLossLimit, maxLossPerTicker, maxTrades, carryoverEnabled });
+  const result = await saveRules({ monthlyLossLimit, maxLossPerTicker, carryoverEnabled });
   if (result.errors?.length) {
     return { error: result.errors.join(" ") };
   }

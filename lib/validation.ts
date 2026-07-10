@@ -9,10 +9,11 @@ import type { CloseTradeInput, CreateTradeInput, ExperimentRules, Trade } from "
 
 export type ValidationError = { field: string; message: string };
 
-const VALID_ID_PATTERN = /^H(0(?:0[1-9]|[12][0-9]|30))$/;
+/** H-prefix trade ids — no fixed upper bound (H001, H031, H999999). */
+const VALID_ID_PATTERN = /^H[0-9]{1,8}$/i;
 
 export function isValidExperimentId(id: string): boolean {
-  return VALID_ID_PATTERN.test(id);
+  return VALID_ID_PATTERN.test(id.trim());
 }
 
 export function validateCreateTrade(
@@ -22,25 +23,19 @@ export function validateCreateTrade(
   monthly: MonthlyRisk
 ): ValidationError[] {
   const errors: ValidationError[] = [];
+  const id = input.id?.trim().toUpperCase();
 
-  if (!isValidExperimentId(input.id)) {
+  if (!id || !isValidExperimentId(id)) {
     errors.push({
       field: "id",
-      message: "ID must be H001 through H030 only.",
+      message: "ID must be H followed by digits (e.g. H001, H031).",
     });
   }
 
-  if (existingTrades.some((t) => t.id === input.id)) {
+  if (existingTrades.some((t) => t.id === id)) {
     errors.push({
       field: "id",
-      message: `Trade ${input.id} already exists.`,
-    });
-  }
-
-  if (existingTrades.length >= rules.maxTrades) {
-    errors.push({
-      field: "id",
-      message: `Maximum ${rules.maxTrades} trades allowed in this cycle.`,
+      message: `Trade ${id} already exists.`,
     });
   }
 

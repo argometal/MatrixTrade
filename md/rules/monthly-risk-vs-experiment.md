@@ -1,6 +1,6 @@
 # Monthly risk vs experiment cycle
 
-**Status:** Proposal + Phase 1 implementation (2026-07-09)
+**Status:** Runtime truth (Phase 1 + carryover toggle, 2026-07-10)
 
 MatrixTrade tracks **two independent risk dimensions**. They must not be conflated.
 
@@ -12,74 +12,95 @@ MatrixTrade tracks **two independent risk dimensions**. They must not be conflat
 
 | Field | Meaning | Example |
 |-------|---------|---------|
-| `monthlyLossLimit` | Max loss allowed this month (negative USD) | `-300` |
-| `monthlyRealizedPnL` | Accrued closed-trade P/L in the current month | `-202.44` |
-| `monthlyLossRoom` | Dollars you can still lose before the cap | `97.56` |
+| `monthlyLossLimit` | Base cap (positive USD in rules; negative in legacy) | `300` |
+| `carryoverEnabled` | Toggle on `/system` — include prior month unused budget | `true` |
+| `carryoverIn` | Unused budget after prior gross losses ($300 − $202 ≈ $98) | `97.56` |
+| `monthlyRoomCap` | **Display:** budget + carryover (not minus spent) | `510.36` |
+| `lossUsedThisMonth` | Gross losses closed this calendar month | `0` |
+| `monthlyLossRoom` | **Risk gate:** allowance minus spent (blocks new trades) | `510.36` |
+| `monthlyRealizedPnL` | Net P/L closed this month (display) | `0` |
 
 ### Formulas
 
 ```
-monthlyRealizedPnL = sum(closed trade results where closedAt is in current calendar month)  [net, for display]
-lossUsedThisMonth  = sum(|result|) for losing trades closed this month only  [gross, for cap]
-previousMonthLoss  = sum(|result|) for losing trades closed in previous calendar month
-carryoverIn        = max(0, baseCap - previousMonthLoss)   if prior month had closed trades, else 0
-monthlyAllowance   = baseCap + carryoverIn                 (e.g. 300 + 98 = 398)
-monthlyLossRoom    = monthlyAllowance - lossUsedThisMonth
-monthlyCapBreached = lossUsedThisMonth >= monthlyAllowance
+monthKey            = YYYY-MM from trade.closedAt (UTC)
+lossUsedThisMonth   = sum(|result|) for losing trades closed this month  [gross]
+priorGrossLosses    = sum(|result|) for losing trades closed in all months before current month
+carryoverIn         = max(0, baseCap - priorGrossLosses)   if any closed trades before this month, else 0
+                      (ignored when carryoverEnabled = false)
+monthlyAllowance    = baseCap + carryoverIn
+monthlyRoomCap      = monthlyAllowance                    [dashboard tile]
+monthlyLossRoom     = monthlyAllowance - lossUsedThisMonth [validation / alerts]
+monthlyCapBreached  = lossUsedThisMonth >= monthlyAllowance
 
-perTickerPnL       = sum(closed results for same ticker, all experiment)
-tickerCapBreached    = perTickerPnL <= maxLossPerTicker (-250)
+perTickerPnL        = sum(closed results for same ticker, all experiment)
+tickerCapBreached   = perTickerPnL <= maxLossPerTicker (-250)
 ```
 
-### Example
+### Carryover toggle
+
+| Setting | Allowance | Dashboard *Monthly room left* |
+|---------|-----------|-------------------------------|
+| **Enabled** | `baseCap + carryoverIn` | Shows budget + carryover |
+| **Disabled** | `baseCap` only | Shows base cap only |
+
+Persisted in `data/rules.json` as `carryoverEnabled` (default `true`).
+
+### Close date (`closedAt`)
+
+Monthly bucketing uses **`closedAt`**, not entry date.  
+Editable on `/trades/[id]` — correct month assignment if a trade was closed on the wrong date.
+
+### Example (July 2026 — H001 Jan + H002 Jun)
 
 | | Amount |
 |---|--------|
 | Base cap | $300 |
-| Spent last month | $202 |
-| Unused → carryover | **$98** |
-| **Allowance this month** | **$398** ($300 + $98) |
+| Prior gross losses (all months before July) | $202.44 |
+| Carryover | **$97.56** ($300 − $202.44 ≈ **$98**) |
+| July gross loss | $0 |
+| **Monthly room left (display)** | **$397.56** ($300 + $97.56) |
 
-If the previous month had **no closed trades**, carryover = **$0** (allowance stays $300).
+If there are **no closed trades before this month**, carryover = **$0**.
 
 ### Rules
 
 - Resets automatically on the **1st of each calendar month** (UTC month key `YYYY-MM`).
 - **Blocks new trades** when `monthlyCapBreached` is true.
-- Closing existing open trades is still allowed (realized P/L must be recorded).
+- Closing existing open trades is still allowed.
 - Does **not** end the experiment.
 
-### Dashboard labels (plain English)
+### Dashboard labels
 
 | Tile | Value |
 |------|-------|
-| Monthly accrued loss | `-$202.44` |
-| Monthly loss room left | `$97.56` (positive — room remaining) |
+| Monthly budget | Base cap |
+| Carryover | `carryoverIn` (or hidden effect when disabled) |
+| Spent this month | Gross losses this month |
+| Monthly room left | `monthlyRoomCap` (budget + carryover) |
+| This month P/L | Net realized P/L this month |
 
 ---
 
-## 2. Experiment cycle (strategy lab)
+## 2. Lab metrics (informational)
 
-**Purpose:** Test a playbook or hypothesis in a bounded sample. Not a monthly risk control.
+**Purpose:** Track performance across all closed trades. No sample-size cap.
 
-| Field | Meaning | Example |
-|-------|---------|---------|
-| `maxLossPerTicker` | Max cumulative loss per ticker in experiment | `-250` |
+| Field | Meaning |
+|-------|---------|
+| `closedTrades` | Total closed in lab |
+| `realizedPnL` | Net P/L all closed trades |
+| `maxLossPerTicker` | Per-symbol cumulative loss gate |
 
 ### Rules
 
-- `maxTrades` is **arbitrary and editable** on `/system` → Experiment rules.
-- Experiment **continues across months** until you complete the sample or start a new cycle.
-- Experiment P/L is **informational** — it does not block trading (monthly cap does).
-- Trade IDs (H001–H030 today) define the active experiment window.
+- Lab **never stops** at a trade count — you use as much history as is useful.
+- P/L and stats are **informational** — monthly cap blocks new risk, not data accumulation.
+- Trade IDs (`H001`, `H031`, …) are labels only.
 
-### When the experiment cycle restarts
+### Optional future: lab segments
 
-User action (future Phase 2): **Start new experiment**
-
-- Assign new ID range (e.g. H031–H060) or `experimentId` tag.
-- Reset `maxTrades` to a new target (e.g. 20, 50).
-- Experiment stats reset; **monthly cap continues** from current month accrued loss.
+See `md/concepts/deferred-matrixtrade.md` — tag subsets (`experimentId`) for inflection reviews without limiting total trades.
 
 ---
 
@@ -96,25 +117,31 @@ Problems:
 1. Treated experiment loss budget as if it were monthly — it never reset.
 2. Conflated “stop losing money this month” with “finish H001–H030 sample”.
 3. `maxTrades = 30` was hard-coded in docs and not editable in UI.
+4. Wrong `closedAt` attributed losses to the wrong month.
+5. Carryover could not be disabled.
 
 ---
 
-## 4. Phase 1 (implemented)
+## 4. Implemented
 
 - [x] `monthlyLossLimit` in `data/rules.json`
+- [x] `carryoverEnabled` toggle on `/system`
 - [x] `computeMonthlyRisk()` — filters by `closedAt` month
+- [x] `monthlyRoomCap` display separate from `monthlyLossRoom` gate
 - [x] Validation blocks on **monthly** cap only
-- [x] Dashboard shows **monthly accrued** + **monthly room** + **experiment progress**
-- [x] `/system` form to edit `monthlyLossLimit` and `maxTrades`
+- [x] Dashboard monthly tiles + experiment progress
+- [x] Close date edit on trade detail
 - [x] Bridge snapshot includes `monthly` block
 
-## 5. Phase 2 (proposed)
+---
 
-- [ ] `experimentId` on trades + “Start new experiment” action
-- [ ] Configurable ID range per experiment (not only H001–H030)
-- [ ] Monthly history chart (last 6 months cap usage)
-- [ ] Optional soft warning when experiment sample is complete but monthly room remains
-- [ ] ChatGPT snapshot section: `=== MONTHLY RISK ===` separate from `=== EXPERIMENT ===`
+## 5. Deferred (concepts)
+
+See `md/concepts/deferred-matrixtrade.md`:
+
+- [ ] `experimentId` + “Start new experiment”
+- [ ] Monthly history chart (last 6 months)
+- [ ] Optional soft warning when experiment sample complete but monthly room remains
 
 ---
 
@@ -125,10 +152,11 @@ Problems:
   "monthlyLossLimit": -300,
   "maxLossPerTicker": -250,
   "maxTrades": 30,
+  "carryoverEnabled": true,
   "obsidianVault": "TradingVault",
   "obsidianVaultPath": "vault",
   "tradesFolder": "Trades"
 }
 ```
 
-`cycleLossLimit` is deprecated; on read it maps to `monthlyLossLimit` for backward compatibility.
+`cycleLossLimit` is deprecated; on read it maps to `monthlyLossLimit`.

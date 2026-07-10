@@ -157,7 +157,7 @@ export function buildSectionedSnapshot(input: SectionedSnapshotInput): string {
     "=== EXPERIMENT ===",
     `net_pnl:${formatSigned(experiment.realizedPnL)}`,
     `gross_loss:${formatSigned(experiment.grossLoss)}`,
-    `closed:${experiment.closedTrades}/${experiment.maxTrades}`,
+    `closed:${experiment.closedTrades}`,
     `wins:${experiment.wins}`,
     `losses:${experiment.losses}`,
     `winrate:${winRate !== null ? Math.round(winRate * 100) : 0}%`,

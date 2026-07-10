@@ -21,7 +21,7 @@ export function AiBlockPanel({
   const fallbackOverview: AiBridgeOverviewData = overview ?? {
     openTrades: 0,
     pendingTrades: 0,
-    closedCycle: { closed: 0, max: 30 },
+    closedCycle: { closed: 0 },
     totalPnL: 0,
     winRate: null,
     expectancyR: null,

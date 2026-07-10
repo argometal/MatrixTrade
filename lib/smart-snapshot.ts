@@ -39,7 +39,7 @@ function formatOverviewSection(
     `monthly_room:${monthly.monthlyLossRoom.toFixed(2)}`,
     `experiment_net_pnl:${formatSigned(experiment.realizedPnL)}`,
     `experiment_gross_loss:${formatSigned(experiment.grossLoss)}`,
-    `closed:${experiment.closedTrades}/${experiment.maxTrades}`,
+    `closed:${experiment.closedTrades}`,
     `wins:${experiment.wins}`,
     `losses:${experiment.losses}`,
     `winrate:${winRate !== null ? Math.round(winRate * 100) : 0}%`,

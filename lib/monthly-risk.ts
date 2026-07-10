@@ -17,7 +17,7 @@ export type MonthlyRisk = {
   monthlyRealizedPnL: number;
   /** Gross losses consumed this month (positive USD, wins do not offset). */
   lossUsedThisMonth: number;
-  /** Gross losses consumed in the previous calendar month (positive USD). */
+  /** Gross losses in all calendar months before the current one (positive USD). */
   previousMonthLossUsed: number;
   /** Display cap: base budget + carryover when enabled (excludes spent). */
   monthlyRoomCap: number;
@@ -83,22 +83,45 @@ export function sumGrossLossesInMonth(trades: Trade[], monthKey: string): number
   return total;
 }
 
+export function countClosedTradesBeforeMonth(trades: Trade[], monthKey: string): number {
+  let count = 0;
+  for (const trade of trades) {
+    if (trade.status !== "closed") continue;
+    const stamp = trade.closedAt ?? trade.createdAt;
+    if (monthKeyFromIso(stamp) < monthKey) count++;
+  }
+  return count;
+}
+
+/** Gross losses from all closed trades in calendar months strictly before monthKey. */
+export function sumGrossLossesBeforeMonth(trades: Trade[], monthKey: string): number {
+  let total = 0;
+  for (const trade of trades) {
+    if (trade.status !== "closed") continue;
+    const stamp = trade.closedAt ?? trade.createdAt;
+    if (monthKeyFromIso(stamp) >= monthKey) continue;
+    const result = calculateTradeResult(trade);
+    if (result !== null && result < 0) total += Math.abs(result);
+  }
+  return total;
+}
+
 /**
- * Carryover from the immediately previous calendar month only.
- * If that month had no closed trades → $0 carryover (no free $300 rollover).
- * If it had losses → unused = baseCap - losses (e.g. 300 - 202 = 98).
+ * Carryover = unused budget after all prior experiment losses against one monthly cap.
+ * Example: base $300, prior gross losses $202 → carryover $98.
+ * No closed trades before this month → $0 carryover.
  */
 export function carryoverFromPreviousMonth(
   trades: Trade[],
-  previousMonthKey: string,
+  monthKey: string,
   baseCap: number
 ): { carryoverIn: number; previousMonthLossUsed: number; closedTrades: number } {
-  const closedTrades = countClosedTradesInMonth(trades, previousMonthKey);
+  const closedTrades = countClosedTradesBeforeMonth(trades, monthKey);
   if (closedTrades === 0) {
     return { carryoverIn: 0, previousMonthLossUsed: 0, closedTrades: 0 };
   }
 
-  const previousMonthLossUsed = sumGrossLossesInMonth(trades, previousMonthKey);
+  const previousMonthLossUsed = sumGrossLossesBeforeMonth(trades, monthKey);
   const carryoverIn = Math.max(0, baseCap - previousMonthLossUsed);
   return { carryoverIn, previousMonthLossUsed, closedTrades };
 }
@@ -113,7 +136,7 @@ export function computeMonthlyRisk(
   const baseCap = Math.abs(monthlyLossLimit);
   const carryoverEnabled = options?.carryoverEnabled !== false;
   const prevKey = previousMonthKey(key);
-  const prev = carryoverFromPreviousMonth(trades, prevKey, baseCap);
+  const prev = carryoverFromPreviousMonth(trades, key, baseCap);
   const carryoverIn = carryoverEnabled ? prev.carryoverIn : 0;
   const monthlyAllowance = baseCap + carryoverIn;
   const monthlyRoomCap = monthlyAllowance;

@@ -90,8 +90,8 @@ function TradeStatusDonut({ data }: { data: SituationRoomData["tradeStatus"] }) 
   const segments = [
     { label: "Open trades", value: data.open, color: "#34d399" },
     { label: "Pending reviews", value: data.underReview, color: "#fbbf24" },
-    { label: "Closed (cycle)", value: data.closed, color: "#a78bfa" },
-    { label: "Remaining", value: data.remaining, color: "#52525b" },
+    { label: "Closed", value: data.closed, color: "#a78bfa" },
+    { label: "Pending orders", value: data.pending, color: "#52525b" },
   ];
   const total = segments.reduce((s, x) => s + x.value, 0) || 1;
   let offset = 0;
@@ -125,7 +125,7 @@ function TradeStatusDonut({ data }: { data: SituationRoomData["tradeStatus"] }) 
           {data.closed}
         </text>
         <text x="70" y="82" textAnchor="middle" className="fill-zinc-500 text-[10px]">
-          / {data.max}
+          closed
         </text>
       </svg>
       <ul className="flex-1 space-y-2 text-sm">
@@ -224,7 +224,7 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
               />
               <KpiCard
                 label="Trades"
-                value={`${data.summary.tradesUsed} / ${data.summary.tradesMax}`}
+                value={String(data.summary.tradesUsed)}
                 sub={`${formatSituationUsd(data.summary.lossBudgetRemaining)} monthly room`}
                 tone="neutral"
               />

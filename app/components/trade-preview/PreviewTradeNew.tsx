@@ -22,7 +22,7 @@ export function PreviewTradeNew({
           </Link>
           <h1 className="mt-2 text-xl font-semibold text-zinc-100">New trade</h1>
           <p className="mt-0.5 text-sm text-zinc-500">
-            H001–H030 only · Obsidian link auto-generated
+            H-prefix ID (e.g. H003) · Obsidian link auto-generated
           </p>
         </header>
 

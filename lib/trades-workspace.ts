@@ -91,7 +91,7 @@ export function buildTradesWorkspaceData(
 
   return {
     cycleLabel: formatCycleLabel(experiment),
-    tradesMax: experiment.maxTrades,
+    closedTrades: experiment.closedTrades,
     rows,
     counts: {
       open: trades.filter((t) => t.status === "open").length,

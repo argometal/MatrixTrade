@@ -239,8 +239,8 @@ export function HomeDashboardMain({
           <MetricCard label="Open trades" value={String(overview.openTrades)} theme={theme} />
           <MetricCard label="Pending" value={String(overview.pendingTrades)} theme={theme} />
           <MetricCard
-            label="Closed (cycle)"
-            value={`${overview.closedCycle.closed} / ${overview.closedCycle.max}`}
+            label="Closed trades"
+            value={String(overview.closedCycle.closed)}
             theme={theme}
           />
           <MetricCard label="Total P/L" value={formatUsd(overview.totalPnL)} tone={pnlTone} theme={theme} />

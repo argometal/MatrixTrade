@@ -41,7 +41,7 @@ export function PreviewTradesList({
             <div>
               <h1 className="text-xl font-semibold text-zinc-100">Trades</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                {trades.length} / {experiment.maxTrades} in cycle
+                {trades.length} closed in lab
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -58,7 +58,7 @@ export function PreviewTradesList({
         <div className="px-4 py-4 lg:px-6">
           {sorted.length === 0 ? (
             <p className="text-sm text-zinc-500">
-              No trades yet. Create H001 to start the experiment.
+              No trades yet. Log your first trade from New Trade.
             </p>
           ) : (
             <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900/50">

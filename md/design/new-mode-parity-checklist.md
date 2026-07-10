@@ -1,10 +1,10 @@
 # MatrixTrade — New Mode Parity Checklist
 
-**Purpose:** Track legacy functionality that must exist (or be linked) in preview mode before classic pages can be retired from nav.  
-**Audience:** Product + dev — user checks boxes after verifying in browser.  
+**Purpose:** Sign-off checklist after preview migration (2026-07-09).  
+**Status:** Migration **complete** — all routes use preview shell. User QA pending.  
 **Companion:** [legacy-vs-preview-map.md](legacy-vs-preview-map.md)
 
-**Process:** Same as [README.md](README.md) — update this file when preview scope changes.
+**Note:** Items marked *classic* below now have preview components. Legacy code preserved in `app/components/legacy/`.
 
 ---
 
@@ -12,7 +12,8 @@
 
 | Date | Change |
 |------|--------|
-| 2026-07-07 | Initial parity audit — legacy vs preview gap analysis |
+| 2026-07-10 | Migration complete — stats, review, exchange, trade detail/review/new on preview |
+| 2026-07-07 | Initial parity audit |
 
 ---
 
@@ -41,10 +42,10 @@
 | 2.3 | Open positions + total risk | Positions panel | - [ ] |
 | 2.4 | Create trade form (`/trades/new`) | Traditional entry → proposal only | - [ ] |
 | 2.5 | Direct create (`createTradeAction`) | **Not in preview** — by design → inbox | - [ ] |
-| 2.6 | Trade detail `/trades/[id]` | Links out to classic detail | - [ ] |
-| 2.7 | Open / close trade | Classic detail only | - [ ] |
-| 2.8 | Assign playbook on trade | Classic detail only | - [ ] |
-| 2.9 | Review wizard `/trades/[id]/review` | Classic only | - [ ] |
+| 2.6 | Trade detail `/trades/[id]` | ✓ `PreviewTradeDetail` — links from tables | - [ ] |
+| 2.7 | Open / close trade | ✓ preview detail | - [ ] |
+| 2.8 | Assign playbook on trade | ✓ preview detail | - [ ] |
+| 2.9 | Review wizard `/trades/[id]/review` | ✓ `PreviewTradeReview` | - [ ] |
 | 2.10 | AI Block import (`importAiBlockAction`) | ✓ Accept → Inbox | - [ ] |
 | 2.11 | Copy snapshot for ChatGPT (`/exchange`) | **Not in trades-preview** | - [ ] |
 | 2.12 | AI notes panel (`/exchange`) | **Not in preview** | - [ ] |
@@ -53,15 +54,15 @@
 
 ---
 
-## 3. Analytics & lab pages (classic only — need preview shell or dark variants)
+## 3. Analytics & lab pages
 
-| # | Legacy route | Core functionality | Preview plan | Box |
-|---|--------------|-------------------|--------------|-----|
-| 3.1 | `/playbook` | Per-strategy stats, status, checklist | Link only — build `/playbook-preview` or embed in Situation Room | - [ ] |
-| 3.2 | `/review` | Attention queue + unreviewed trades | Overlap with home alerts — dedicated preview TBD | - [ ] |
-| 3.3 | `/stats` | Full cycle analytics, equity, playbook table | Partial on home — full stats preview TBD | - [ ] |
-| 3.4 | `/journal` | Closed trades + lessons | No preview | - [ ] |
-| 3.5 | `/mistakes` | Mistake P/L impact | ✓ `PreviewMistakes` | - [ ] |
+| # | Route | Preview status | Box |
+|---|-------|----------------|-----|
+| 3.1 | `/playbook` | ✓ preview shell | - [ ] |
+| 3.2 | `/review` | ✓ `PreviewReview` | - [ ] |
+| 3.3 | `/stats` | ✓ `PreviewStats` | - [ ] |
+| 3.4 | `/journal` | ✓ `PreviewJournal` | - [ ] |
+| 3.5 | `/mistakes` | ✓ `PreviewMistakes` | - [ ] |
 
 ---
 
@@ -73,7 +74,7 @@
 | 4.2 | `/inbox/[id]` | Apply / reject | ✓ from alerts + inbox | - [ ] |
 | 4.3 | `/system` | Sync to Worker, vault paths, tokens | ✓ sidebar | - [ ] |
 | 4.4 | `/connect` | QR / mobile LAN | ✓ via `/system#connect` | - [ ] |
-| 4.5 | `/exchange` | Assistant workspace | ✓ sidebar — not in preview shell | - [ ] |
+| 4.5 | `/exchange` | ✓ `PreviewExchange` — dark shell | - [ ] |
 
 ---
 
@@ -87,28 +88,27 @@
 | 5.4 | Inbox badge on nav | - [ ] |
 | 5.5 | Cycle progress in sidebar / drawer | - [ ] |
 | 5.6 | ARGUS corner on preview routes | - [ ] |
-| 5.7 | Classic routes open in light shell (expected until ported) | - [ ] |
+| 5.7 | All routes use preview shell | - [ ] |
 
 ---
 
-## 6. Safe legacy disable gates (before removing classic links)
-
-Complete **all** before hiding `/` and `/trades` from `TradingNav`:
+## 6. Post-migration sign-off
 
 | Gate | Box |
 |------|-----|
 | G.1 | Home preview data parity verified (section 1) | - [ ] |
-| G.2 | Trades preview covers daily trade workflow (section 2) | - [ ] |
-| G.3 | User can reach inbox, system, exchange from preview without classic nav | - [ ] |
-| G.4 | Trade detail/review reachable from preview tables (links work) | - [ ] |
-| G.5 | Desktop users have preview as opt-in or default (cookie / setting) | - [ ] |
-| G.6 | `md/design/*` checklists signed off for home + trades preview | - [ ] |
+| G.2 | Trades preview covers daily workflow (section 2) | - [ ] |
+| G.3 | Inbox, system, exchange reachable from preview nav | - [ ] |
+| G.4 | Trade detail/review work from preview tables | - [ ] |
+| G.5 | Monthly risk tiles match `/system` rules | - [ ] |
+| G.6 | `md/design/*` checklists signed off | - [ ] |
 
 ---
 
-## Priority order for new visual mode work
+## Remaining concepts (not parity blockers)
 
-1. **P0 — Keep pipeline working:** inbox, system, exchange links from preview nav (done — verify).
-2. **P1 — Parity:** home KPIs/alerts; trades table + assistant proposal flow.
-3. **P2 — Dark variants:** playbook, stats, review (or embed key widgets in Situation Room).
-4. **P3 — Retire classic nav links:** `/`, `/trades` hidden from `TradingNav` after G.1–G.6.
+See `md/concepts/deferred-matrixtrade.md`:
+
+- Snapshot copy on New Trade workspace
+- MT-IMPORT / MT-PLAN parsers
+- AI Session revival

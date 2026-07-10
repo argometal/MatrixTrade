@@ -1,7 +1,6 @@
 # Planning module — proposal (Phase 0)
 
-**Status:** Phase 0 implemented (2026-07-09)  
-**Last updated:** 2026-07-09  
+**Status:** Phase 0 **shipped** (2026-07-09). Phase 1+ → `md/concepts/deferred-matrixtrade.md` and §7 below.
 **Owner intent:** Pre-trade workspace to scout entries, save plans, and follow what failed — before creating H00x trades.
 
 ---

@@ -1,19 +1,18 @@
 # MatrixTrade — Legacy vs Preview Mode Map
 
-**Last updated:** 2026-07-09  
-**Purpose:** Single source for which routes belong to legacy (classic), preview (new visual), or shared.
+**Last updated:** 2026-07-10  
+**Purpose:** Route map for preview shell (active) vs legacy components (preserved).
 
 ---
 
 ## Mode definitions
 
-| Mode | Shell | Desktop nav | Mobile entry |
-|------|-------|-------------|--------------|
-| **Preview (new)** | Dark `PreviewShell`, full viewport | `PreviewSidebar` | Default: `/` → `/home-preview` |
-| **Legacy (classic)** | Light card layout | `TradingNav` (`lg+` only) | Via hamburger |
-| **Shared** | Classic shell; linked from preview nav | Preview sidebar | Same mobile chrome on all trading routes |
+| Mode | Shell | Status |
+|------|-------|--------|
+| **Preview (active)** | Dark `PreviewShell`, full viewport | All trading routes |
+| **Legacy (preserved)** | Light card layout | `app/components/legacy/*` — not mounted |
 
-Parent layout `app/(trading)/layout.tsx` wraps **all** trading routes.
+Parent layout: `PreviewRouteLayout` wraps all `(nav)` and `(preview)` route groups.
 
 ---
 

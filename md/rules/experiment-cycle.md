@@ -1,75 +1,73 @@
-# Experiment cycle H001–H030
+# Trading lab — experiment rules
 
-> **Risk model updated (2026-07-09):** Monthly loss cap and experiment cycle are separate.
-> See [monthly-risk-vs-experiment.md](monthly-risk-vs-experiment.md). The `cycleLossLimit` field
-> is deprecated; use `monthlyLossLimit` for the -$300/month account cap.
+**Status:** Runtime truth (2026-07-10)  
+**Supersedes:** Fixed H001–H030 / max 30 trade cap (removed — was a misinterpretation).
 
-Technical contract for the MatrixTrade experiment engine.
+---
 
-## Objective
+## What the lab is
 
-- Record experiment trades H001 through H030 only
-- Auto-calculate P/L
-- Enforce cycle risk limits
-- Block rule violations
-- Link each trade to Obsidian for qualitative notes
+MatrixTrade is a **conductual trading lab** — not a fixed 30-trade experiment.
 
-## System rules
+- **No trade-count limit.** All closed trades accumulate; use as much data as is useful.
+- **Trade IDs** use `H` + digits (`H001`, `H031`, `H999999`) — labels only, not a hard range.
+- **Monthly cap** and **per-ticker cap** are the real hard gates (account protection).
 
-1. Only H001–H030 belong to the experiment
-2. Maximum 30 trades per cycle
-3. `monthlyLossLimit = -300 USD` per calendar month (see [monthly-risk-vs-experiment.md](monthly-risk-vs-experiment.md))
-4. Required fields: id, ticker, entry, stop, shares, status
-5. No external trades, no manual P/L editing in Obsidian frontmatter
+H001–H030 was a **starting sample** for early inflection analysis — not permanent product truth.
 
-## Nomenclature
+---
 
-Use:
+## Hard rules (persist)
 
-- `realizedPnL`
-- `remainingLossBudget`
-- `cycleLossLimit`
+| Rule | Source | Blocks trading? |
+|------|--------|-----------------|
+| Monthly loss cap + carryover | `data/rules.json` → `/system` | Yes — new trades when monthly cap hit |
+| Per-ticker cumulative loss | `data/rules.json` | Yes — new trades on that ticker |
+| Human inbox approval | Inbox flow | N/A — writes require confirm |
+| Valid trade fields | `lib/validation.ts` | Yes — create/close validation |
 
-Do not use: `currentLoss`
+---
 
-## Formulas
+## Soft metrics (informational)
 
-```
-result = (exit - entry) * shares - fees   // fees = 0 in MVP
-realizedPnL = sum(closed trade results)
-remainingLossBudget = cycleLossLimit - realizedPnL
-```
-
-Win: result > 0 · Loss: result < 0
-
-## Trade statuses
-
-| Status | Meaning |
+| Metric | Purpose |
 |--------|---------|
-| pending | Created, not in market yet |
-| open | In position |
-| closed | Exited; exit price required |
+| Closed trade count | Lab size — grows without limit |
+| Net P/L, win rate, PF | Performance — all closed trades |
+| Mistakes cost | Conductual patterns |
+| Playbook stats | Strategy comparison over available N |
+| Planning outcomes | Pre-trade vs result |
 
-Closed trades cannot reopen.
+Use any subset of history for inflection analysis — you choose N in ChatGPT or stats, not the app.
 
-## Validation highlights
+---
 
-- ID must match `H001`…`H030`
-- Stop must be below entry (long trades)
-- Shares = positive integer
-- New trades blocked when `realizedPnL <= cycleLossLimit`
+## Validation
 
-## Trade file location
+- **ID:** `^H[0-9]{1,8}$` (case-insensitive)
+- **No max trade count** on create
+- Stop below entry (long), positive shares, monthly + ticker caps
 
+---
+
+## Config (`data/rules.json`)
+
+```json
+{
+  "monthlyLossLimit": -300,
+  "maxLossPerTicker": -250,
+  "carryoverEnabled": true,
+  "obsidianVault": "TradingVault",
+  "obsidianVaultPath": "vault",
+  "tradesFolder": "Trades"
+}
 ```
-vault/Trades/H003-MSFT.md
-```
 
-Config: `data/rules.json`
+`maxTrades` in old files is **ignored** if present (legacy).
 
-## Example closed trade (reference)
+---
 
-**H001 · AMZN**
+## Related
 
-- Entry 240.00 · Exit 225.90 · Shares 8 · Result -112.80 USD
-- Stop executed correctly. No immediate re-entry. Maintain discipline.
+- Monthly risk: [monthly-risk-vs-experiment.md](monthly-risk-vs-experiment.md)
+- Deferred: lab segmentation by `experimentId` — [../concepts/deferred-matrixtrade.md](../concepts/deferred-matrixtrade.md)

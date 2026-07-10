@@ -1,8 +1,10 @@
 # System overview
 
+**Library:** `md/` is the architecture documentation — see [`md/README.md`](../README.md).
+
 ## What this system is
 
-A **private investment knowledge base** (MATRIX v2) with a local **experiment engine** (MatrixTrade app) for cycle H001–H030.
+A **private investment knowledge base** (MATRIX v2) with a **MatrixTrade app** for experiment control H001–H030 and pre-trade planning.
 
 ## Four layers
 
@@ -34,7 +36,7 @@ A **private investment knowledge base** (MATRIX v2) with a local **experiment en
 |-------|------|--------------|
 | App | entry, stop, exit, shares, status, P/L | Qualitative analysis |
 | Obsidian body | Tesis, psychology, lessons | Frontmatter numbers |
-| Repo `md/` | Architecture, rules, roadmap | Live trade prices |
+| Repo `md/` | **The Library** — architecture, rules, concepts | Live trade prices |
 | Repo data folders | Portfolio, theses, journal (when populated) | Real-time market data |
 | ChatGPT | Reasoning, recommendations | Source of truth for numbers |
 

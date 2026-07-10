@@ -1,25 +1,55 @@
-# MD Library — Matrix / MatrixTrade
+# The Library — Matrix / MatrixTrade architecture
 
-**Start here.** This folder is the documentation source of truth.  
-If you need architecture, rules, integrations, or roadmap — it lives here.  
+**Start here.** `md/` is **the Library** — the documentation architecture for this project.  
+It is the source of truth for how the system is built, ruled, and evolved.  
 **Enough to reconstruct the entire system** without guessing.
 
-Private repo: `github.com/argometal/MatrixTrade`
+Private repo: `github.com/argometal/MatrixTrade`  
+**Production:** https://matrix-trade-theta.vercel.app
 
-**ChatGPT entry point:** [`CHATGPT.md`](CHATGPT.md) (repo root — read first)
+**ChatGPT entry point:** [`CHATGPT.md`](../CHATGPT.md) (repo root — read first)
+
+---
+
+## Library tiers
+
+| Tier | Path | What it holds |
+|------|------|---------------|
+| **Runtime** | `architecture/`, `rules/`, `design/` | What the app **does today** — must match deployed code |
+| **Phases** | `phases/` | Roadmap status — update when a phase completes |
+| **Integrations** | `integrations/`, `protocols/` | ChatGPT, Obsidian, Worker, Supabase, Vercel |
+| **Concepts** | `concepts/` | Ideas worth keeping — **apply later**, not shipped |
+| **ARGUS** | `argus/` | Separate product — own index and lifecycle |
+| **Topics / Research** | `topics/`, `research/` | Deep dives and product research |
+
+**Rule:** If it is not deployed, it belongs in `concepts/` (or marked *Deferred* in the source doc).  
+Do not treat concept docs as runtime behavior.
+
+---
+
+## Runtime snapshot (2026-07-10)
+
+| Area | State |
+|------|-------|
+| UI shell | **Preview only** — dark `PreviewShell` on all trading routes |
+| Data store | Supabase (`TRADES_STORE=supabase`) or local `data/` |
+| Planning | `/planning` Phase 0 live |
+| Monthly risk | Carryover toggle on `/system`; `closedAt` drives month bucketing |
+| Legacy UI | Preserved in `app/components/legacy/` — not mounted |
+
+See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for routes and modules.
 
 ---
 
 ## How to use
 
-1. **New to the project?** Read in order: `architecture/system-overview.md` → `architecture/repo-structure.md` → `phases/roadmap.md`
-2. **Working on ARGUS?** Start with [`argus/README.md`](argus/README.md) — canonical index, reading order, runtime truth
-3. **Verifying v2 UI?** → [`argus/v2-design-checklist.md`](argus/v2-design-checklist.md) — check each box before sign-off
-4. **Verifying MatrixTrade preview UI?** → [`design/README.md`](design/README.md) — Home & Trades preview functional checklists (update on every UI change)
-5. **Looking for a rule?** → `rules/`
-6. **How does X connect to ChatGPT/Obsidian?** → `integrations/`
-7. **Copy/paste protocols?** → `protocols/`
-8. **Adding a new topic?** Create `topics/your-topic.md` and add a line to this index.
+1. **New to the project?** `architecture/system-overview.md` → `architecture/repo-structure.md` → `phases/roadmap.md`
+2. **What ships today?** `architecture/matrixtrade-app.md` + `rules/`
+3. **What to build next?** `phases/roadmap.md` + `concepts/README.md`
+4. **Working on ARGUS?** [`argus/README.md`](argus/README.md)
+5. **Verifying MatrixTrade UI?** [`design/README.md`](design/README.md) — update checklists with every UI change
+6. **Integrations** → `integrations/` · **Protocols** → `protocols/`
+7. **New topic** → `topics/your-topic.md` + one row in this index
 
 ---
 
@@ -38,7 +68,7 @@ Private repo: `github.com/argometal/MatrixTrade`
 
 | Document | Contents |
 |----------|----------|
-| [experiment-cycle.md](rules/experiment-cycle.md) | H001–H030, P/L, limits, validation |
+| [experiment-cycle.md](rules/experiment-cycle.md) | Trading lab — no trade-count cap |
 | [investment-principles.md](rules/investment-principles.md) | Capital preservation, discipline, framework |
 | [data-ownership.md](rules/data-ownership.md) | App vs Obsidian vs you |
 | [immutability-and-history.md](rules/immutability-and-history.md) | Never delete, version, append |
@@ -50,12 +80,12 @@ Private repo: `github.com/argometal/MatrixTrade`
 | Document | Contents |
 |----------|----------|
 | [design/README.md](design/README.md) | **Index** — workflow + agent update rule |
-| [design/features-used-vs-unused-checklist.md](design/features-used-vs-unused-checklist.md) | **Feature audit** — used vs built-but-unused |
-| [design/legacy-vs-preview-map.md](design/legacy-vs-preview-map.md) | **Legacy vs preview** — route map |
-| [design/new-mode-parity-checklist.md](design/new-mode-parity-checklist.md) | **Parity audit** — legacy features to add in preview mode |
-| [design/home-preview-checklist.md](design/home-preview-checklist.md) | Situation Room `/home-preview` — functional checklist |
-| [design/trades-preview-checklist.md](design/trades-preview-checklist.md) | Trades workspace `/trades-preview` — functional checklist |
-| [design/planning-module-proposal.md](design/planning-module-proposal.md) | **Planning** `/planning` — Phase 0 implemented |
+| [design/features-used-vs-unused-checklist.md](design/features-used-vs-unused-checklist.md) | **Runtime audit** — used vs built-but-unused |
+| [design/legacy-vs-preview-map.md](design/legacy-vs-preview-map.md) | **Route map** — preview active, legacy preserved |
+| [design/new-mode-parity-checklist.md](design/new-mode-parity-checklist.md) | Parity audit — migration complete; sign-off pending |
+| [design/home-preview-checklist.md](design/home-preview-checklist.md) | Situation Room `/home-preview` |
+| [design/trades-preview-checklist.md](design/trades-preview-checklist.md) | Trades workspace `/trades-preview` |
+| [design/planning-module-proposal.md](design/planning-module-proposal.md) | Planning Phase 0 **shipped**; Phase 1+ in concepts |
 
 **Rule:** Update the matching checklist in the same change whenever preview UI code changes (see `.cursor/rules/design-checklists.mdc`).
 
@@ -125,6 +155,15 @@ Private repo: `github.com/argometal/MatrixTrade`
 | Document | Contents |
 |----------|----------|
 | [roadmap.md](phases/roadmap.md) | Phase 0–4 status and next steps |
+
+---
+
+## Concepts (apply later)
+
+| Document | Contents |
+|----------|----------|
+| [concepts/README.md](concepts/README.md) | **Index** — deferred ideas, priority, links |
+| [concepts/deferred-matrixtrade.md](concepts/deferred-matrixtrade.md) | MT-PLAN, experiment restart, metrics, AI session, import |
 
 ---
 

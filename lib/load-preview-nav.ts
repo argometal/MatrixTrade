@@ -9,8 +9,7 @@ import { listAllPendingInboxItems } from "./trading-inbox-storage";
 const FALLBACK_NAV: PreviewNavContext = {
   pendingInboxCount: 0,
   cycleLabel: formatCycleLabel(),
-  tradesUsed: 0,
-  tradesMax: 30,
+  closedTrades: 0,
   monthlyLossRoom: 0,
   monthlyLossRoomLabel: formatMonthlyLossRoom(0),
 };
@@ -27,8 +26,7 @@ export const loadPreviewNavContext = cache(async (): Promise<PreviewNavContext> 
     return {
       pendingInboxCount: pendingInbox.length,
       cycleLabel: formatCycleLabel(experiment),
-      tradesUsed: experiment.closedTrades,
-      tradesMax: experiment.maxTrades,
+      closedTrades: experiment.closedTrades,
       monthlyLossRoom: monthly.monthlyLossRoom,
       monthlyLossRoomLabel: formatMonthlyLossRoom(monthly.monthlyLossRoom),
     };

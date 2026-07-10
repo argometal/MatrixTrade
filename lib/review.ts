@@ -188,11 +188,7 @@ export function getNextAction(
     };
   }
 
-  if (
-    experiment.closedTrades < experiment.maxTrades &&
-    !monthly.monthlyCapBreached &&
-    monthly.monthlyLossRoom > 0
-  ) {
+  if (!monthly.monthlyCapBreached && monthly.monthlyLossRoom > 0) {
     return { label: "Log next trade", href: "/trades-preview", kind: "new" };
   }
 

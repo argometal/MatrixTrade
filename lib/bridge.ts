@@ -47,7 +47,6 @@ export function buildBridgeSnapshot(
     rules: {
       monthlyLossLimit: rules.monthlyLossLimit,
       maxLossPerTicker: rules.maxLossPerTicker,
-      maxTrades: rules.maxTrades,
       carryoverEnabled: rules.carryoverEnabled !== false,
     },
     monthly: {
@@ -72,7 +71,6 @@ export function buildBridgeSnapshot(
       closedTrades: experiment.closedTrades,
       wins: experiment.wins,
       losses: experiment.losses,
-      maxTrades: experiment.maxTrades,
     },
     trades: trades.map((trade) => {
       const result = calculateTradeResult(trade);

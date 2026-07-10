@@ -38,7 +38,6 @@ export interface SituationRoomData {
     losses: number;
     expectancy: number | null;
     tradesUsed: number;
-    tradesMax: number;
     lossBudgetRemaining: number;
     monthlyLossLimit: number;
     monthlyRealizedPnL: number;
@@ -57,8 +56,6 @@ export interface SituationRoomData {
     pendingProposals: number;
     underReview: number;
     closed: number;
-    remaining: number;
-    max: number;
   };
   recentClosed: Array<{
     id: string;
@@ -232,7 +229,6 @@ export function buildSituationRoomData(
   const pending = trades.filter((t) => t.status === "pending").length;
   const underReview = trades.filter((t) => t.status === "closed" && !t.reviewedAt).length;
   const closed = experiment.closedTrades;
-  const remaining = Math.max(0, experiment.maxTrades - experiment.closedTrades);
 
   const playbookStats = computeAllPlaybookStats(playbooks, trades).filter(
     (row) => row.playbookId !== null && row.closedCount > 0
@@ -276,7 +272,6 @@ export function buildSituationRoomData(
       losses: experiment.losses,
       expectancy: computeExpectancy(trades),
       tradesUsed: experiment.closedTrades,
-      tradesMax: experiment.maxTrades,
       lossBudgetRemaining: monthly.monthlyLossRoom,
       monthlyLossLimit: monthly.monthlyLossLimit,
       monthlyRealizedPnL: monthly.monthlyRealizedPnL,
@@ -295,8 +290,6 @@ export function buildSituationRoomData(
       pendingProposals: pendingInboxCount,
       underReview,
       closed,
-      remaining,
-      max: experiment.maxTrades,
     },
     recentClosed,
     recentActivity: buildRecentActivity(trades, playbooks),

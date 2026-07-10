@@ -27,7 +27,7 @@ export function buildObsidianLink(
   return `obsidian://open?vault=${encodeURIComponent(vault)}&file=${encodeURIComponent(file)}`;
 }
 
-export function computeExperiment(trades: Trade[], maxTrades: number): Experiment {
+export function computeExperiment(trades: Trade[]): Experiment {
   const closed = trades.filter((t) => t.status === "closed");
 
   let realizedPnL = 0;
@@ -48,7 +48,6 @@ export function computeExperiment(trades: Trade[], maxTrades: number): Experimen
   return {
     realizedPnL,
     grossLoss,
-    maxTrades,
     closedTrades: closed.length,
     wins,
     losses,

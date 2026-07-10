@@ -6,7 +6,7 @@ import type { Experiment, Trade } from "./types";
 export interface AiBridgeOverviewData {
   openTrades: number;
   pendingTrades: number;
-  closedCycle: { closed: number; max: number };
+  closedCycle: { closed: number };
   totalPnL: number;
   winRate: number | null;
   expectancyR: number | null;
@@ -88,7 +88,7 @@ export function buildAiBridgeOverview(
   return {
     openTrades,
     pendingTrades,
-    closedCycle: { closed: experiment.closedTrades, max: experiment.maxTrades },
+    closedCycle: { closed: experiment.closedTrades },
     totalPnL: experiment.realizedPnL,
     winRate: computeWinRate(trades),
     expectancyR: computeExpectancyR(trades),

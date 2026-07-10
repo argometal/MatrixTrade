@@ -67,10 +67,8 @@ export interface ExperimentRules {
   monthlyLossLimit: number;
   /** Roll unused prior-month budget into this month's allowance. */
   carryoverEnabled?: boolean;
-  /** Max cumulative loss per ticker across the experiment (negative USD). */
+  /** Max cumulative loss per ticker across all trades (negative USD). */
   maxLossPerTicker: number;
-  /** Sample size for the active experiment cycle (editable). */
-  maxTrades: number;
   obsidianVault: string;
   obsidianVaultPath: string;
   tradesFolder: string;
@@ -83,7 +81,6 @@ export interface Experiment {
   realizedPnL: number;
   /** Sum of all losing trade results only (negative or zero). */
   grossLoss: number;
-  maxTrades: number;
   closedTrades: number;
   wins: number;
   losses: number;

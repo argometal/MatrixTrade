@@ -15,7 +15,7 @@ export interface TradesWorkspaceRow {
 
 export interface TradesWorkspaceData {
   cycleLabel: string;
-  tradesMax: number;
+  closedTrades: number;
   rows: TradesWorkspaceRow[];
   counts: { open: number; pending: number; closed: number; all: number };
   openSummary: {

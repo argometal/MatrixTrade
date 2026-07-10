@@ -1,19 +1,21 @@
 # MatrixTrade — Design checklists
 
-Functional verification lists for preview and major UI surfaces. **User checks each box in the browser** after deploy or redesign.
+Functional verification for preview UI surfaces. **User checks each box in the browser** after deploy or redesign.
+
+**Library tier:** Runtime (must match deployed code).  
+**Deferred UI ideas:** `md/concepts/deferred-matrixtrade.md`
 
 ## Index
 
-| Screen | Route | Checklist | Source component |
-|--------|-------|-----------|------------------|
-| **Feature audit** | all | [features-used-vs-unused-checklist.md](features-used-vs-unused-checklist.md) | Used vs built-but-unused inventory |
-| **Mode map** | all | [legacy-vs-preview-map.md](legacy-vs-preview-map.md) | Legacy vs preview routes + disable plan |
-| **Parity audit** | preview | [new-mode-parity-checklist.md](new-mode-parity-checklist.md) | Features to port before retiring classic |
-| Home preview (Situation Room) | `/home-preview` | [home-preview-checklist.md](home-preview-checklist.md) · [solutions](home-preview-solutions.md) | `PreviewShell` · `PreviewDashboard` |
-| New Trade | `/trades-preview` | [trades-preview-checklist.md](trades-preview-checklist.md) | `PreviewShell` · `TradesWorkspace` |
-| Journal | `/journal` | [journal-preview-checklist.md](journal-preview-checklist.md) | `PreviewShell` · `PreviewJournal` |
-| **Planning** (proposed) | `/planning` | [planning-module-proposal.md](planning-module-proposal.md) | Phase 0 — `PreviewPlanning` |
-
+| Screen | Route | Checklist | Component |
+|--------|-------|-----------|-----------|
+| Feature audit | all | [features-used-vs-unused-checklist.md](features-used-vs-unused-checklist.md) | Runtime inventory |
+| Route map | all | [legacy-vs-preview-map.md](legacy-vs-preview-map.md) | Preview active + legacy preserved |
+| Parity sign-off | preview | [new-mode-parity-checklist.md](new-mode-parity-checklist.md) | Migration complete — user QA |
+| Home (Situation Room) | `/home-preview` | [home-preview-checklist.md](home-preview-checklist.md) | `PreviewDashboard` |
+| New Trade | `/trades-preview` | [trades-preview-checklist.md](trades-preview-checklist.md) | `TradesWorkspace` |
+| Journal | `/journal` | [journal-preview-checklist.md](journal-preview-checklist.md) | `PreviewJournal` |
+| Planning | `/planning` | [planning-module-proposal.md](planning-module-proposal.md) | `PreviewPlanning` (Phase 0 shipped) |
 Template for new screens: [DESIGN-CHECKLIST-TEMPLATE.md](DESIGN-CHECKLIST-TEMPLATE.md)
 
 ## Workflow

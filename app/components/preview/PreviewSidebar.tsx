@@ -50,19 +50,9 @@ export function PreviewSidebar({ nav }: { nav: PreviewNavContext }) {
 
       <div className="mt-auto space-y-4 border-t border-zinc-800 pt-4">
         <div>
-          <p className="text-[10px] uppercase tracking-wide text-zinc-600">Current cycle</p>
+          <p className="text-[10px] uppercase tracking-wide text-zinc-600">Trading lab</p>
           <p className="mt-1 text-sm font-medium">{nav.cycleLabel}</p>
-          <p className="text-xs text-zinc-500">
-            {nav.tradesUsed} / {nav.tradesMax} trades
-          </p>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-zinc-800">
-            <div
-              className="h-full rounded-full bg-violet-500"
-              style={{
-                width: `${Math.min(100, (nav.tradesUsed / nav.tradesMax) * 100)}%`,
-              }}
-            />
-          </div>
+          <p className="text-xs text-zinc-500">{nav.closedTrades} closed trades</p>
           <p className="mt-2 text-xs text-zinc-500">Monthly room {nav.monthlyLossRoomLabel}</p>
         </div>
 

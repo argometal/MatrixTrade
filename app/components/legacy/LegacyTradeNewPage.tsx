@@ -18,7 +18,7 @@ export function LegacyTradeNewPage({
           ← Back to trades
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">New trade</h1>
-        <p className="text-sm text-zinc-500">H001–H030 only · Obsidian link auto-generated</p>
+        <p className="text-sm text-zinc-500">H-prefix ID (e.g. H003) · Obsidian link auto-generated</p>
       </header>
 
       <form

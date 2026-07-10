@@ -71,6 +71,6 @@ export async function loadHomeExchangePageData() {
     snapshotText,
     overview,
     pendingInboxCount: pendingInbox.length,
-    cycleLabel: `${experiment.closedTrades} / ${experiment.maxTrades}`,
+    cycleLabel: `${experiment.closedTrades} closed`,
   };
 }

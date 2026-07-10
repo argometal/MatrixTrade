@@ -86,8 +86,8 @@ export function PreviewDashboard({ data }: { data: DashboardData }) {
             </h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <StatusTile
-                label="Cycle"
-                value={`${experiment.closedTrades}/${experiment.maxTrades}`}
+                label="Closed trades"
+                value={String(experiment.closedTrades)}
               />
               <StatusTile
                 label="Monthly budget"
@@ -101,7 +101,7 @@ export function PreviewDashboard({ data }: { data: DashboardData }) {
                   !monthly.carryoverEnabled
                     ? "Carryover disabled in System settings"
                     : monthly.carryoverIn > 0
-                      ? `$${monthly.baseCap.toFixed(0)} − $${monthly.previousMonthLossUsed.toFixed(2)} last month`
+                      ? `$${monthly.baseCap.toFixed(0)} − $${monthly.previousMonthLossUsed.toFixed(2)} prior losses`
                       : "No unused cap from prior month"
                 }
               />

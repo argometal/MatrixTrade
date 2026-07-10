@@ -34,7 +34,6 @@ function normalizeRules(raw: ExperimentRules): ExperimentRules {
     monthlyLossLimit,
     carryoverEnabled: raw.carryoverEnabled !== false,
     maxLossPerTicker: raw.maxLossPerTicker ?? -250,
-    maxTrades: raw.maxTrades ?? 30,
     obsidianVault: raw.obsidianVault,
     obsidianVaultPath: raw.obsidianVaultPath,
     tradesFolder: raw.tradesFolder,
@@ -54,7 +53,6 @@ export async function getRules(): Promise<ExperimentRules> {
 export async function saveRules(input: {
   monthlyLossLimit: number;
   maxLossPerTicker: number;
-  maxTrades: number;
   carryoverEnabled?: boolean;
 }): Promise<{ rules?: ExperimentRules; errors?: string[] }> {
   const current = await getRules();
@@ -66,9 +64,6 @@ export async function saveRules(input: {
   if (!Number.isFinite(input.maxLossPerTicker) || input.maxLossPerTicker >= 0) {
     errors.push("Per-stock loss limit must be a negative number (e.g. -250).");
   }
-  if (!Number.isInteger(input.maxTrades) || input.maxTrades < 1 || input.maxTrades > 999) {
-    errors.push("Max trades must be an integer between 1 and 999.");
-  }
 
   if (errors.length > 0) return { errors };
 
@@ -76,7 +71,6 @@ export async function saveRules(input: {
     ...current,
     monthlyLossLimit: input.monthlyLossLimit,
     maxLossPerTicker: input.maxLossPerTicker,
-    maxTrades: input.maxTrades,
     carryoverEnabled: input.carryoverEnabled !== false,
   };
   await writeJson("rules.json", rules);
@@ -95,7 +89,7 @@ export async function getTradeById(id: string): Promise<Trade | undefined> {
 
 export async function getExperiment(): Promise<Experiment> {
   const [trades, rules] = await Promise.all([getTrades(), getRules()]);
-  return computeExperiment(trades, rules.maxTrades);
+  return computeExperiment(trades);
 }
 
 export async function getMonthlyRisk(monthKey?: string): Promise<MonthlyRisk> {

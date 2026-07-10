@@ -32,6 +32,8 @@ ChatGPT already knows your style. Export adds **current experiment state**.
 
 ## Planned: import from ChatGPT
 
+**Concept (not shipped)** — see `md/concepts/README.md`:
+
 ```
 ChatGPT responds with MT-IMPORT:v1
   → /import page (Phase 3)

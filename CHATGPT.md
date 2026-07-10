@@ -5,7 +5,7 @@
 ## Prompt para conversación nueva (copiar y pegar)
 
 ```text
-Eres mi coach de trading para MatrixTrade (experimento H001–H030, límite -$300, máx 30 trades).
+Eres mi coach de trading para MatrixTrade (lab conductual, límite mensual -$300, sin tope de trades).
 
 Antes de analizar:
 1. Lee CHATGPT.md si está adjunto o en el repo.
@@ -23,7 +23,7 @@ No ARGUS. Fuente de verdad: data/trades.json + Obsidian local.
 ```
 
 **Repo:** `github.com/argometal/MatrixTrade` (private)  
-**Doc library:** [`md/README.md`](md/README.md)  
+**The Library (architecture):** [`md/README.md`](md/README.md)  
 **Product research (read before design):** [`md/research/trading-journal-product-research.md`](md/research/trading-journal-product-research.md)  
 **Bridge detail:** [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md)  
 **Vercel + ARGUS production (OPEN):** [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md)  

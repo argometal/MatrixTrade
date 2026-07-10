@@ -4,7 +4,13 @@
 
 ```
 MatrixTrade/
-├── md/                  ← Documentation library (START HERE)
+├── md/                  ← The Library (architecture docs — START HERE)
+│   ├── architecture/    ← Runtime: app structure, data flow
+│   ├── rules/           ← Runtime: experiment + monthly risk
+│   ├── design/          ← Runtime: UI checklists + shipped proposals
+│   ├── concepts/        ← Deferred ideas — apply later
+│   ├── phases/          ← Roadmap status
+│   └── argus/           ← Separate product track
 ├── app/                 ← Next.js UI + server actions
 ├── lib/                 ← Business logic
 ├── data/rules.json      ← Cycle limits, vault path

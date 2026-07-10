@@ -52,7 +52,6 @@ export async function GET(request: Request): Promise<NextResponse> {
       closedTrades: experiment.closedTrades,
       wins: experiment.wins,
       losses: experiment.losses,
-      maxTrades: experiment.maxTrades,
     },
     monthly: {
       monthKey: monthly.monthKey,
