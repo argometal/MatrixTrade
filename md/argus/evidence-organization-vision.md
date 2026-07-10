@@ -249,7 +249,7 @@ If three or more answers are “no” → revise before building.
 | Inbox | Receive email evidence; link to entities — not an email server |
 | Topics browse | Evidence tab + timeline; topic as binder ([`intelligence-viz-plan.md`](intelligence-viz-plan.md)) |
 | Events | Case anchor + Record/Chronicle/Metrics UI |
-| Intelligence viz | Recency/recurrence from evidence counts — not manual ratings |
+| Intelligence viz | Recency/recurrence from evidence counts — tag pattern overlays per [`tag-patterns-vision.md`](tag-patterns-vision.md) |
 | Export | Evidence Vault — primary deliverable |
 
 ---

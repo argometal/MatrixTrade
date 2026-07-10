@@ -5,6 +5,7 @@ import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage"
 import { loadOrganizationPageData } from "@/lib/argus/v2/loaders";
 import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { V2QuickDeliverButton } from "../../components/V2QuickDeliverModal";
+import { V2TagPatternBadges } from "../../components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "../../components/V2RecordRecentEntity";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
 import { V2EntityNeighborhoodPanel } from "../../components/V2EntityNeighborhoodPanel";
@@ -144,6 +145,9 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                 Since {sinceYear}
               </span>
             </div>
+            {page.tagPatterns.length > 0 ? (
+              <V2TagPatternBadges patterns={page.tagPatterns} className="mt-3" />
+            ) : null}
           </div>
           <div className="flex shrink-0 gap-2">
             <button

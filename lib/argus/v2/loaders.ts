@@ -1,7 +1,10 @@
 import type { ArgusData, Entity, InboxItem, Log } from "../types";
+import { TAG_CLOUD_DISPLAY_LIMIT } from "../tag-limits";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import { buildEntityIntelligence } from "../network-intelligence";
 import { getNeedsClassificationLogs } from "../journal-helpers";
+import { buildTagPatternsForScope } from "./tag-patterns";
+import { effectiveInboxStatus } from "./inbox-loaders";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import {
   entitiesByKind,
@@ -354,7 +357,7 @@ export function buildV2EntityRows(
     .slice(0, limit);
 }
 
-export function buildV2TagCloud(data: ArgusData, inboxItems: InboxItem[], includePrivate: boolean, limit = 24) {
+export function buildV2TagCloud(data: ArgusData, inboxItems: InboxItem[], includePrivate: boolean, limit = TAG_CLOUD_DISPLAY_LIMIT) {
   const counts = new Map<string, number>();
   for (const log of visibleLogs(data, includePrivate)) {
     for (const t of log.topics) {
@@ -393,6 +396,12 @@ export type V2NavCounts = {
   topics: number;
 };
 
+function inboxNeedsAttention(item: InboxItem): boolean {
+  if (item.convertedLogId) return false;
+  const status = effectiveInboxStatus(item);
+  return status === "pending" || status === "linked";
+}
+
 export function buildV2NavCounts(
   data: ArgusData,
   inboxItems: InboxItem[],
@@ -400,14 +409,14 @@ export function buildV2NavCounts(
 ): V2NavCounts {
   const today = new Date().toISOString().slice(0, 10);
   const visibleLogs = includePrivate ? data.logs : data.logs.filter((l) => !l.private);
-  const inbox = visibleInbox(inboxItems, includePrivate).filter(
-    (i) => i.status === "pending" || i.status === "linked"
-  );
+  const inbox = visibleInbox(inboxItems, includePrivate).filter(inboxNeedsAttention);
 
   const network = visibleLogs.filter((log) => {
     if (!log.followUpDate && log.kind !== "follow_up") return false;
     const dueIso = (log.followUpDate ?? log.date).slice(0, 10);
-    return dueIso <= today;
+    if (dueIso > addDays(today, 3)) return false;
+    if (dueIso < addDays(today, -30)) return false;
+    return true;
   }).length;
 
   const topics = getNeedsClassificationLogs(visibleLogs).length;
@@ -456,6 +465,8 @@ export function loadOrganizationPageData(
     year: projectYear(project),
   }));
 
+  const tagPatterns = buildTagPatternsForScope(scope.logs, scope.inbox, today);
+
   return {
     scope,
     timeline,
@@ -469,6 +480,7 @@ export function loadOrganizationPageData(
     relationshipLabel,
     chartStartYear,
     chartEndYear,
+    tagPatterns,
     stats: {
       journalEntries: scope.logCount,
       journalDelta: journalThisMonth > 0 ? `+${journalThisMonth} this month` : "No change",
@@ -593,6 +605,7 @@ export function loadProjectPageData(
 
   const directCount = scope.directLogs.length + scope.directInbox.length;
   const viaCount = scope.viaContactLogs.length + scope.viaContactInbox.length;
+  const tagPatterns = buildTagPatternsForScope(allLogs, allInbox, today);
 
   return {
     scope,
@@ -606,6 +619,7 @@ export function loadProjectPageData(
     linkedTopics: [...new Set(topicNames)],
     linkedEventsCount,
     keyMetrics: buildProjectKeyMetrics(scope, attachmentCount, directCount),
+    tagPatterns,
     stats: {
       people: linkCounts.peopleCount,
       journalEntries: scope.logCount,

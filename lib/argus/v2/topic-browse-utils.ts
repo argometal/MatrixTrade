@@ -1,5 +1,6 @@
 import type { V2EvidenceStreamItem } from "./evidence-stream";
 import type { V2TimelineEntry } from "./mock-data";
+import type { TagPattern } from "./tag-patterns";
 
 export type V2TopicTab = "all" | "mine" | "followed";
 
@@ -39,6 +40,7 @@ export interface V2TopicDetail {
   aliases: string[];
   evidence: V2EvidenceStreamItem[];
   timeline: V2TimelineEntry[];
+  tagPatterns: TagPattern[];
 }
 
 export interface V2TopicTagChip {

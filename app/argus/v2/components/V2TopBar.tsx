@@ -88,6 +88,14 @@ export function V2TopBar({
             ⌕
           </Link>
           <Link
+            href="/argus/v2/help"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400"
+            aria-label="How Argus works"
+            title="How Argus works"
+          >
+            ?
+          </Link>
+          <Link
             href="/argus/v2/inbox"
             className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 lg:hidden"
             aria-label="Inbox"

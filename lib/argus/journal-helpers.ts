@@ -1,4 +1,5 @@
 import type { ArgusData, Entity, JournalKind, Log } from "./types";
+import { TAG_PICKER_SUGGESTION_LIMIT } from "./tag-limits";
 
 const FAVORITES_KEY = "argus-favorite-entities";
 
@@ -101,7 +102,7 @@ export function buildTagBuckets(data: ArgusData, includePrivate: boolean): TagBu
         recent.push(canonical.get(key)!);
       }
     }
-    if (recent.length >= 12) break;
+    if (recent.length >= TAG_PICKER_SUGGESTION_LIMIT) break;
   }
 
   for (const log of visibleLogs) {
@@ -117,7 +118,7 @@ export function buildTagBuckets(data: ArgusData, includePrivate: boolean): TagBu
   const frequent = [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
     .map(([key]) => canonical.get(key)!)
-    .slice(0, 12);
+    .slice(0, TAG_PICKER_SUGGESTION_LIMIT);
 
   const all = [...canonical.values()].sort((a, b) => a.localeCompare(b));
 
@@ -165,9 +166,16 @@ export function getUpcomingReminders(logs: Log[], today: string, limit: number):
   return getUpcomingFollowUps(logs, today, limit);
 }
 
+/** True when a register entry still needs entity or topic classification. */
+export function logNeedsClassificationAttention(log: Log): boolean {
+  if ((log.entityIds ?? []).length > 0) return false;
+  if ((log.topics ?? []).some((tag) => tag.trim().length > 0)) return false;
+  return true;
+}
+
 export function getNeedsClassificationLogs(logs: Log[], limit?: number): Log[] {
   const items = logs
-    .filter((l) => l.classificationStatus === "needs_classification")
+    .filter(logNeedsClassificationAttention)
     .sort((a, b) => b.date.localeCompare(a.date));
   return limit ? items.slice(0, limit) : items;
 }

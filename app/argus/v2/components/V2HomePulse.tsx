@@ -56,7 +56,7 @@ export function V2HomePulse({ signals }: { signals: V2NavCounts }) {
       href: "/argus/v2#follow-ups",
       label: "Follow-ups",
       value: signals.network,
-      detail: "Due today or overdue",
+      detail: "Due within 3 days or recently overdue",
       icon: "↩",
       urgent: true,
     });

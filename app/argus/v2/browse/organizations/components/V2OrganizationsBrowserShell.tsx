@@ -154,59 +154,6 @@ function OrganizationListRow({ card }: { card: V2OrganizationBrowseCard }) {
   );
 }
 
-function HowToReadSidebar() {
-  const items = [
-    {
-      title: "Organization overview",
-      body: "Name, status, and a short description — the health and context of the relationship at a glance.",
-    },
-    {
-      title: "Quick metrics",
-      body: "Projects, people, journal, emails, files, and topics — volume of activity and evidence tied to this institution.",
-    },
-    {
-      title: "Last contact",
-      body: "When the last interaction happened and what form it took — email or journal.",
-    },
-    {
-      title: "Relationship age",
-      body: "How long this organization has existed in your knowledge base — maturity of the relationship.",
-    },
-    {
-      title: "Activity trend",
-      body: "A visual trend of communication and notes over the last year — not financial, but relationship activity.",
-    },
-    {
-      title: "Actionable selection",
-      body: "Open the organization that needs attention — the detail page holds everything across years.",
-    },
-  ];
-
-  return (
-    <aside className="hidden w-72 shrink-0 xl:block">
-      <div className="sticky top-6 rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-        <h2 className="text-sm font-semibold text-zinc-200">How to read this page</h2>
-        <p className="mt-1 text-xs text-zinc-600">
-          Long-term memory — not a CRM. Which organization do you want to analyze?
-        </p>
-        <ul className="mt-4 space-y-4">
-          {items.map((item) => (
-            <li key={item.title}>
-              <p className="text-xs font-medium text-violet-300">{item.title}</p>
-              <p className="mt-1 text-xs leading-relaxed text-zinc-500">{item.body}</p>
-            </li>
-          ))}
-        </ul>
-        <div className="mt-5 rounded-xl border border-amber-500/25 bg-amber-500/5 px-3 py-2.5">
-          <p className="text-xs leading-relaxed text-amber-200/90">
-            Tip: use Filters to narrow by status when your portfolio grows.
-          </p>
-        </div>
-      </div>
-    </aside>
-  );
-}
-
 export function V2OrganizationsBrowserShell({
   cards,
   summary,
@@ -225,8 +172,8 @@ export function V2OrganizationsBrowserShell({
   return (
     <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden">
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
-        <div className="flex gap-8 px-4 py-6 lg:px-8">
-          <div className="min-w-0 flex-1">
+        <div className="px-4 py-6 lg:px-8">
+          <div className="min-w-0">
           <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -318,8 +265,6 @@ export function V2OrganizationsBrowserShell({
             </footer>
           ) : null}
         </div>
-
-        <HowToReadSidebar />
         </div>
       </div>
     </div>

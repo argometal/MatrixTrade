@@ -1,6 +1,7 @@
 import type { ArgusData, Entity, InboxItem, Log } from "../types";
 import { referenceKindFromNotes } from "../reference-types";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
+import { buildTagPatternsForScope, tagPatternCount } from "./tag-patterns";
 import { entitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
@@ -24,6 +25,8 @@ export type V2KnowledgeNode = {
   strategicValue?: number;
   /** @deprecated Portfolio no longer uses completion heuristic. */
   completion?: number;
+  /** Number of recurring tag patterns on scope evidence (≥3 items, fresh within 90d). */
+  tagPatternCount: number;
   href: string;
   group: string;
 };
@@ -64,6 +67,7 @@ export type V2TreemapRect = {
   recentActivity: number;
   href: string;
   group: string;
+  tagPatternCount: number;
 };
 
 function visibleLogs(data: ArgusData, includePrivate: boolean): Log[] {
@@ -259,6 +263,10 @@ export function buildV2KnowledgeNodes(
 
     const recurrence30d = countRecurrence30d(dates, today);
 
+    const entityLogs = logs.filter((l) => l.entityIds.includes(entity.id));
+    const entityInbox = getLinkedInboxForEntity(inboxItems, entity.id, includePrivate);
+    const patterns = buildTagPatternsForScope(entityLogs, entityInbox, today);
+
     nodes.push({
       id: entity.id,
       name: entity.name,
@@ -271,6 +279,7 @@ export function buildV2KnowledgeNodes(
       recurrenceScore: 0,
       href: entityHref(entity),
       group: primaryGroupForEntity(data, entity, logs),
+      tagPatternCount: tagPatternCount(patterns),
     });
   }
 
@@ -312,6 +321,7 @@ export function layoutTreemap(
         recentActivity: item.recentActivity,
         href: item.href,
         group: item.group,
+        tagPatternCount: item.tagPatternCount,
       });
       return;
     }

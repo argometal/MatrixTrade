@@ -10,6 +10,7 @@ import {
   countEvidenceStream,
   latestEvidenceIso,
 } from "./evidence-stream";
+import { buildTagPatternsForScope } from "./tag-patterns";
 import type {
   V2TopicDetail,
   V2TopicLinkedEntity,
@@ -182,6 +183,7 @@ export function buildV2TopicDetails(
       aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
       evidence,
       timeline: buildTimelineFromLogsAndInbox(history, inbox),
+      tagPatterns: buildTagPatternsForScope(history, inbox, today),
     };
   });
 }

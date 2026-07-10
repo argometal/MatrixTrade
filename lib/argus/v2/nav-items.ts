@@ -23,6 +23,7 @@ const NAV_ICONS: Record<string, string> = {
   Events: "📅",
   Deliver: "↗",
   Diagnostics: "⚙",
+  Help: "?",
 };
 
 export function navIcon(label: string): string {
@@ -49,6 +50,7 @@ export function isV2NavItemActive(pathname: string, item: V2NavLinkItem): boolea
   if (item.label === "Diagnostics") {
     return pathname.startsWith("/argus/v2/diagnostics") || pathname.startsWith("/argus/diagnostics");
   }
+  if (item.label === "Help") return pathname.startsWith("/argus/v2/help");
   return isBrowseNavActive(pathname, item.href, item.label);
 }
 
@@ -76,6 +78,7 @@ export function buildV2NavSections(signals: V2NavCounts): V2NavSection[] {
       title: "System",
       items: [
         { href: "/argus/v2/deliver", label: "Deliver", icon: navIcon("Deliver") },
+        { href: "/argus/v2/help", label: "Help", icon: navIcon("Help") },
         { href: "/argus/v2/diagnostics", label: "Diagnostics", icon: navIcon("Diagnostics") },
       ],
     },

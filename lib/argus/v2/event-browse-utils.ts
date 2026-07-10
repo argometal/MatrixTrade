@@ -1,4 +1,5 @@
 import type { EventLegalPurpose } from "./event-record";
+import type { TagPattern } from "./tag-patterns";
 
 export type V2EventTab = "all" | "upcoming" | "past";
 export type { EventLegalPurpose };
@@ -73,6 +74,7 @@ export interface V2EventDetail {
   linkedEntries: V2EventEntry[];
   relatedEmails: V2EventEmail[];
   evidence: V2EventEvidenceItem[];
+  tagPatterns: TagPattern[];
 }
 
 export function buildV2EventTabCounts(rows: V2EventRow[]) {

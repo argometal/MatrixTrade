@@ -10,6 +10,7 @@ import {
   countLinkKinds,
   linkedTopicNames,
 } from "./entity-link-counts";
+import { buildTagPatternsForScope } from "./tag-patterns";
 import type {
   V2EventDetail,
   V2EventEmail,
@@ -240,6 +241,7 @@ export function buildV2EventDetails(
       linkedEntries,
       relatedEmails,
       evidence,
+      tagPatterns: buildTagPatternsForScope(history, inbox, today),
     };
   });
 }

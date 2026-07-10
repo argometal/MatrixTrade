@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { CAPTURE, TAGS } from "@/lib/argus/ux-copy";
+import { TAG_PICKER_SUGGESTION_LIMIT } from "@/lib/argus/tag-limits";
 import { inputClass } from "./ui";
 
 export interface TagBuckets {
@@ -74,7 +75,7 @@ export function TagPickerModal({
   const recentList =
     buckets.recent.length > 0 ? buckets.recent : buckets.frequent.length > 0 ? buckets.frequent : [];
 
-  const visible = query.trim() ? searchResults : recentList.length > 0 ? recentList : allTags.slice(0, 20);
+  const visible = query.trim() ? searchResults : recentList.length > 0 ? recentList : allTags.slice(0, TAG_PICKER_SUGGESTION_LIMIT);
 
   function toggle(tag: string) {
     const key = tagKey(tag);

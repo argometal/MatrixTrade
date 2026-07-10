@@ -14,6 +14,7 @@ import {
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
 import { V2EventLinkEmailModal } from "./V2EventLinkEmailModal";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
+import { V2TagPatternBadges } from "@/app/argus/v2/components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 
 type PanelTab = "record" | "chronicle" | "metrics";
@@ -91,6 +92,9 @@ export function V2EventDetailPanel({
               {eventPurposeLabel(purpose)}
             </span>
           </div>
+          {selected.tagPatterns.length > 0 ? (
+            <V2TagPatternBadges patterns={selected.tagPatterns} className="mt-3" />
+          ) : null}
           <div className="flex shrink-0 flex-wrap gap-2">
             <V2QuickDeliverButton
               scopeType="event"

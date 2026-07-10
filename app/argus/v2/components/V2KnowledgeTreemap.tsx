@@ -53,8 +53,10 @@ export function V2KnowledgeTreemap({
                   height={Math.max(0, rect.h - pad * 2)}
                   rx={0.8}
                   fill={activityColor(rect.recentActivity)}
-                  stroke="rgba(9, 9, 11, 0.9)"
-                  strokeWidth={0.4}
+                  stroke={
+                    rect.tagPatternCount > 0 ? "rgba(248, 113, 113, 0.85)" : "rgba(9, 9, 11, 0.9)"
+                  }
+                  strokeWidth={rect.tagPatternCount > 0 ? 0.65 : 0.4}
                   className="transition hover:brightness-125"
                 />
                 {showLabel ? (

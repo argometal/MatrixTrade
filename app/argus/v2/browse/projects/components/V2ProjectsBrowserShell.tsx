@@ -295,14 +295,6 @@ export function V2ProjectsBrowserShell({
         </div>
       )}
 
-      <section className="mt-10 rounded-2xl border border-zinc-800/80 bg-zinc-900/30 px-5 py-4">
-        <h2 className="text-sm font-semibold text-zinc-200">Why this view helps</h2>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-          The browser is your portfolio — decide which project to open before you dive into evidence. Each card
-          shows status, team, maturity, and recent activity so you can tell in seconds whether a project is alive
-          and worth entering.
-        </p>
-      </section>
         </div>
       </div>
     </div>

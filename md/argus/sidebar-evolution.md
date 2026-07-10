@@ -21,9 +21,9 @@
 
 | Item | Signal when |
 |------|-------------|
-| Inbox | Pending + linked inbox awaiting triage |
-| Network | Follow-ups due today or overdue |
-| Topics | Logs with `needs_classification` |
+| Inbox | Pending + linked inbox awaiting triage (excludes converted / done) |
+| Network | Follow-ups due within 3 days or overdue up to 30 days |
+| Topics | Register entries without entity links or topic tags |
 
 ---
 
