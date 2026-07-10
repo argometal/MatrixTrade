@@ -1,4 +1,6 @@
 import { getPlansStore } from "./plans-store";
+import { computePlannedRR, validatePlanAgainstThesis } from "./plan-risk";
+import { canLinkThesisToPlan, getStockThesisById } from "./stock-theses";
 import {
   PLAN_TIMEFRAME_ORDER,
   PLAN_TIMEFRAMES,
@@ -96,7 +98,11 @@ function parseOptionalIso(value: unknown): string | undefined {
   return new Date(parsed).toISOString();
 }
 
-export async function savePlan(input: SavePlanInput): Promise<{ plan?: TradePlan; errors?: string[] }> {
+export async function savePlan(input: SavePlanInput): Promise<{
+  plan?: TradePlan;
+  errors?: string[];
+  warnings?: string[];
+}> {
   const errors: string[] = [];
   const ticker = input.ticker.trim().toUpperCase();
   if (!ticker) errors.push("Ticker is required.");
@@ -105,24 +111,48 @@ export async function savePlan(input: SavePlanInput): Promise<{ plan?: TradePlan
   const tfError = validatePlanTimeframes(analysisTimeframes, input.entryTimeframe);
   if (tfError) errors.push(tfError);
 
+  let linkedThesis: Awaited<ReturnType<typeof getStockThesisById>> | undefined;
+  if (input.stockThesisId?.trim()) {
+    linkedThesis = await getStockThesisById(input.stockThesisId.trim());
+    if (!linkedThesis) {
+      errors.push("Linked stock thesis not found.");
+    } else {
+      const linkCheck = canLinkThesisToPlan(linkedThesis);
+      if (!linkCheck.allowed) {
+        errors.push(linkCheck.error ?? "Cannot link plan to this stock thesis.");
+      }
+    }
+  }
+
   if (errors.length > 0) return { errors };
 
   const plans = await getPlans();
   const now = new Date().toISOString();
   const existing = input.id ? plans.find((p) => p.id === input.id!.toUpperCase()) : undefined;
 
+  const plannedEntry = parseOptionalNumber(input.plannedEntry);
+  const stopPrice = parseOptionalNumber(input.stopPrice);
+  const targetPrice = parseOptionalNumber(input.targetPrice);
+  let plannedRR = parseOptionalNumber(input.plannedRR);
+
+  if (plannedEntry !== undefined && stopPrice !== undefined && targetPrice !== undefined) {
+    const computed = computePlannedRR(plannedEntry, stopPrice, targetPrice);
+    if (computed) plannedRR = computed.rr;
+  }
+
   const plan: TradePlan = {
     id: existing?.id ?? nextPlanId(plans),
     ticker,
     playbookId: input.playbookId?.trim() || undefined,
+    stockThesisId: input.stockThesisId?.trim().toUpperCase() || existing?.stockThesisId,
     status: existing?.status ?? "watching",
     analysisTimeframes,
     entryTimeframe: input.entryTimeframe,
-    plannedEntry: parseOptionalNumber(input.plannedEntry),
+    plannedEntry,
     supportLevel: parseOptionalNumber(input.supportLevel),
-    stopPrice: parseOptionalNumber(input.stopPrice),
-    targetPrice: parseOptionalNumber(input.targetPrice),
-    plannedRR: parseOptionalNumber(input.plannedRR),
+    stopPrice,
+    targetPrice,
+    plannedRR,
     validFrom: parseOptionalIso(input.validFrom) ?? existing?.validFrom,
     validUntil: parseOptionalIso(input.validUntil) ?? existing?.validUntil,
     thesis: input.thesis?.trim() || undefined,
@@ -134,7 +164,19 @@ export async function savePlan(input: SavePlanInput): Promise<{ plan?: TradePlan
   };
 
   await getPlansStore().upsert(plan);
-  return { plan };
+
+  const warnings: string[] = [];
+  if (linkedThesis) {
+    const linkCheck = canLinkThesisToPlan(linkedThesis);
+    if (linkCheck.warning) warnings.push(linkCheck.warning);
+    const thesisCheck = validatePlanAgainstThesis(
+      { entry: plannedEntry, stop: stopPrice, target: targetPrice },
+      linkedThesis.riskRules
+    );
+    if (thesisCheck.warning) warnings.push(thesisCheck.warning);
+  }
+
+  return { plan, warnings: warnings.length > 0 ? warnings : undefined };
 }
 
 export async function updatePlanStatus(

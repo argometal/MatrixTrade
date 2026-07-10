@@ -76,6 +76,7 @@ export interface TradePlan {
   id: string;
   ticker: string;
   playbookId?: string;
+  stockThesisId?: string;
   status: PlanStatus;
   analysisTimeframes: PlanTimeframe[];
   entryTimeframe: PlanTimeframe;
@@ -98,6 +99,7 @@ export type SavePlanInput = {
   id?: string;
   ticker: string;
   playbookId?: string;
+  stockThesisId?: string;
   analysisTimeframes: PlanTimeframe[];
   entryTimeframe: PlanTimeframe;
   plannedEntry?: number;

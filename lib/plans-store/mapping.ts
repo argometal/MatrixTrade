@@ -5,6 +5,7 @@ interface PlanRow {
   id: string;
   ticker: string;
   playbook_id: string | null;
+  stock_thesis_id: string | null;
   status: TradePlan["status"];
   analysis_timeframes: string[];
   entry_timeframe: string;
@@ -36,6 +37,7 @@ export function planRowToPlan(row: PlanRow): TradePlan {
     id: row.id,
     ticker: row.ticker,
     playbookId: row.playbook_id ?? undefined,
+    stockThesisId: row.stock_thesis_id ?? undefined,
     status: row.status,
     analysisTimeframes: (row.analysis_timeframes ?? []).map(parseTimeframe),
     entryTimeframe: parseTimeframe(row.entry_timeframe),
@@ -60,6 +62,7 @@ export function planToRow(plan: TradePlan): PlanRow {
     id: plan.id,
     ticker: plan.ticker.toUpperCase(),
     playbook_id: plan.playbookId ?? null,
+    stock_thesis_id: plan.stockThesisId ?? null,
     status: plan.status,
     analysis_timeframes: plan.analysisTimeframes,
     entry_timeframe: plan.entryTimeframe,

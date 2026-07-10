@@ -1,6 +1,7 @@
 import type { AiNote } from "./ai-notes-types";
 import type { Playbook } from "./playbook-types";
 import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
+import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 import { buildSmartSnapshot, type SmartSnapshotInput } from "./smart-snapshot";
 import type { Experiment, Trade } from "./types";
 
@@ -38,6 +39,8 @@ export function buildAiBlockSnapshot(input: AiBlockSnapshotInput): string {
 
   const systemSection = formatSystemNotesSection(input.systemNotes);
   return [
+    buildMatrixMechanicsBrief(),
+    "",
     base,
     "",
     systemSection,

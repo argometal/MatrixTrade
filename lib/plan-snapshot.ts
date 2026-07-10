@@ -24,6 +24,7 @@ export function formatPlansSnapshotSection(plans: TradePlan[]): string {
           `ticker:${plan.ticker}`,
           `status:${plan.status}`,
           `playbook:${plan.playbookId ?? "none"}`,
+          `stock_thesis:${plan.stockThesisId ?? "none"}`,
           `analysis_tf:${plan.analysisTimeframes.join(",")}`,
           `entry_tf:${plan.entryTimeframe}`,
           `entry:${plan.plannedEntry ?? "na"}`,

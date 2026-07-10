@@ -15,6 +15,7 @@ Private repo: `github.com/argometal/MatrixTrade`
 
 | Tier | Path | What it holds |
 |------|------|---------------|
+| **Matrix (vision)** | `matrix/` | **Product identity** — strategic planning mission; read before designing features |
 | **Runtime** | `architecture/`, `rules/`, `design/` | What the app **does today** — must match deployed code |
 | **Phases** | `phases/` | Roadmap status — update when a phase completes |
 | **Integrations** | `integrations/`, `protocols/` | ChatGPT, Obsidian, Worker, Supabase, Vercel |
@@ -43,13 +44,25 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 
 ## How to use
 
-1. **New to the project?** `architecture/system-overview.md` → `architecture/repo-structure.md` → `phases/roadmap.md`
+1. **New to the project?** [`matrix/strategic-planning-vision.md`](matrix/strategic-planning-vision.md) → `architecture/system-overview.md` → `phases/roadmap.md`
 2. **What ships today?** `architecture/matrixtrade-app.md` + `rules/`
 3. **What to build next?** `phases/roadmap.md` + `concepts/README.md`
 4. **Working on ARGUS?** [`argus/README.md`](argus/README.md)
 5. **Verifying MatrixTrade UI?** [`design/README.md`](design/README.md) — update checklists with every UI change
 6. **Integrations** → `integrations/` · **Protocols** → `protocols/`
 7. **New topic** → `topics/your-topic.md` + one row in this index
+
+---
+
+## Matrix (product vision)
+
+**Start here for MatrixTrade mission** — not ARGUS.
+
+| Document | Contents |
+|----------|----------|
+| [matrix/README.md](matrix/README.md) | **Index** — reading order, code vs vision map |
+| [matrix/strategic-planning-vision.md](matrix/strategic-planning-vision.md) | **Identity** — Playbook → Stock File → Decision Lab → Trade |
+| [matrix/library-alignment-backlog.md](matrix/library-alignment-backlog.md) | **Pending** — older library docs to align with vision |
 
 ---
 
@@ -146,6 +159,7 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 | Document | Contents |
 |----------|----------|
 | [export-context.md](protocols/export-context.md) | Copy Full Context format |
+| [chat-handoff-trading-book.md](protocols/chat-handoff-trading-book.md) | **Check** — alinear cualquier chat antes de diseñar Stock Playbook |
 | [import-handoff-v1.md](protocols/import-handoff-v1.md) | MT-IMPORT / MT-UPDATE (planned) |
 
 ---

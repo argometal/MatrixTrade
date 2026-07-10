@@ -37,6 +37,11 @@ import { getTradesStoreMode } from "@/lib/trades-json";
 import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules, saveRules } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
 import { parsePlanTimeframes, savePlan, updatePlanStatus, recordPlanOutcome } from "@/lib/plans";
+import { updateStockThesisFields } from "@/lib/stock-theses";
+import {
+  STOCK_THESIS_STATUSES,
+  type StockThesisStatus,
+} from "@/lib/stock-thesis-types";
 import {
   PLAN_EXTERNAL_FACTORS,
   PLAN_FAIL_REASON_LABELS,
@@ -70,6 +75,7 @@ function revalidateTradingPaths() {
   revalidatePath("/review");
   revalidatePath("/journal");
   revalidatePath("/planning");
+  revalidatePath("/stock-theses");
   revalidatePath("/exchange");
   revalidatePath("/ai-workspace");
   revalidatePath("/inbox");
@@ -455,7 +461,9 @@ export async function saveRulesAction(
   return { ok: true };
 }
 
-export type SavePlanActionResult = { ok: true; planId: string } | { error: string };
+export type SavePlanActionResult =
+  | { ok: true; planId: string; warning?: string }
+  | { error: string };
 
 export async function savePlanAction(formData: FormData): Promise<SavePlanActionResult> {
   await requireTradingSession();
@@ -470,6 +478,7 @@ export async function savePlanAction(formData: FormData): Promise<SavePlanAction
     id: String(formData.get("id") ?? "").trim() || undefined,
     ticker: String(formData.get("ticker") ?? ""),
     playbookId: String(formData.get("playbookId") ?? "").trim() || undefined,
+    stockThesisId: String(formData.get("stockThesisId") ?? "").trim() || undefined,
     analysisTimeframes,
     entryTimeframe,
     plannedEntry: Number(formData.get("plannedEntry")),
@@ -488,7 +497,41 @@ export async function savePlanAction(formData: FormData): Promise<SavePlanAction
   }
 
   revalidateTradingPaths();
-  return { ok: true, planId: result.plan!.id };
+  return {
+    ok: true,
+    planId: result.plan!.id,
+    warning: result.warnings?.join(" "),
+  };
+}
+
+export type SaveStockThesisActionResult = { ok: true } | { error: string };
+
+export async function saveStockThesisAction(
+  formData: FormData
+): Promise<SaveStockThesisActionResult> {
+  await requireTradingSession();
+
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return { error: "Stock thesis id is required." };
+
+  const statusRaw = String(formData.get("status") ?? "").trim();
+  const status = (STOCK_THESIS_STATUSES as readonly string[]).includes(statusRaw)
+    ? (statusRaw as StockThesisStatus)
+    : undefined;
+
+  const result = await updateStockThesisFields(id, {
+    status,
+    currentHypothesis: String(formData.get("currentHypothesis") ?? ""),
+    notes: String(formData.get("notes") ?? ""),
+  });
+
+  if (result.errors?.length) {
+    return { error: result.errors.join(" ") };
+  }
+
+  revalidateTradingPaths();
+  revalidatePath(`/stock-theses/${id}`);
+  return { ok: true };
 }
 
 export async function updatePlanStatusAction(

@@ -4,6 +4,7 @@ import { ARGUS_AUTH } from "@/lib/auth/cookies";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { collectVaultEvidence } from "@/lib/argus/export/collect-evidence";
+import { deliverFilenamePrefix } from "@/lib/argus/export/deliver-branding";
 import { isDeliverPackageAvailable } from "@/lib/argus/export/deliver-catalog";
 import { buildEvidenceVaultZip } from "@/lib/argus/export/packages/vault";
 import type { DeliverPackageKind, ExportCollectionOptions, ExportScopeType } from "@/lib/argus/export/types";
@@ -93,7 +94,8 @@ export async function POST(request: Request) {
 
   const { buffer, manifest } = await buildEvidenceVaultZip({ collected, includePrivate, options });
   const stamp = manifest.exportedAt.slice(0, 10);
-  const filename = `argus-vault-${scopeType}-${safeFileToken(collected.scope.name)}-${stamp}.zip`;
+  const prefix = deliverFilenamePrefix("vault");
+  const filename = `${prefix}-${scopeType}-${safeFileToken(collected.scope.name)}-${stamp}.zip`;
 
   return new NextResponse(new Uint8Array(buffer), {
     status: 200,

@@ -2,6 +2,10 @@
 
 **Read this file first** in every new conversation about MatrixTrade.
 
+**Product mission (strategic core):** [`md/matrix/strategic-planning-vision.md`](md/matrix/strategic-planning-vision.md) — Playbook → Stock File → Scouting Desk → Trade.
+
+**AI training block:** In the app, use **Copy AI training block** on `/planning` (Scouting Desk) or `/stock-theses/[id]` (Stock File), or copy the `/exchange` snapshot (mechanics section is prepended). Export order: **MECHANICS → PLAYBOOK → STOCK FILE → SCOUTING STATE → your question.** Source: `lib/matrix-mechanics-brief.ts`.
+
 ## Prompt para conversación nueva (copiar y pegar)
 
 ```text

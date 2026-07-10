@@ -22,7 +22,7 @@ export const PREVIEW_NAV_SECTIONS = [
     items: [
       { href: "/trades", label: "Trades" },
       { href: "/playbook", label: "Playbook" },
-      { href: "/planning", label: "Planning" },
+      { href: "/planning", label: "Scouting Desk" },
       { href: "/review", label: "Review" },
       { href: "/stats", label: "Statistics" },
       { href: "/journal", label: "Journal" },

@@ -1,0 +1,39 @@
+[
+  {
+    "id": "ST-TSLA-001",
+    "ticker": "TSLA",
+    "status": "watching",
+    "version": 1,
+    "style": "swing",
+    "thesis": "Long-term bullish TSLA, buy support not momentum, min 3R entries",
+    "historicalAnalysis": [
+      {
+        "timeframe": "6M",
+        "summary": "Bullish structure — higher highs and higher lows intact"
+      },
+      {
+        "timeframe": "3M",
+        "summary": "Pullback from highs; structure still constructive"
+      },
+      {
+        "timeframe": "1W",
+        "summary": "Deep pullbacks before continuation — buy dips in zones"
+      }
+    ],
+    "levels": {
+      "majorSupport": 350,
+      "majorResistance": 500,
+      "primaryZone": { "low": 340, "high": 355 },
+      "secondaryZone": { "low": 300, "high": 320 },
+      "targets": [430, 450, 500]
+    },
+    "riskRules": {
+      "minimumRR": 3,
+      "invalidation": "Monthly close below 300",
+      "notes": "Ignore setups below 3R; prefer support over momentum chase"
+    },
+    "currentHypothesis": "Wait for pullback to 340-355 zone with 3R+ setup",
+    "createdAt": "2026-07-09T12:00:00.000Z",
+    "updatedAt": "2026-07-09T12:00:00.000Z"
+  }
+]

@@ -1,6 +1,9 @@
 # MATRIX v2 — Private Investment Knowledge Base
 
-North star document. MatrixTrade app = experiment engine (H001–H030). This repo = long-term private memory.
+> **Strategic product mission (2026-07-10):** [`md/matrix/strategic-planning-vision.md`](md/matrix/strategic-planning-vision.md) — Playbook → Stock File → Decision Lab → Trade.  
+> This file remains the **knowledge-base + repo layout** north star. Library alignment backlog: [`md/matrix/library-alignment-backlog.md`](md/matrix/library-alignment-backlog.md).
+
+North star document (repo memory). MatrixTrade app = strategic planning pipeline + trade recording. This repo = long-term private memory.
 
 **Canonical documentation:** [`md/README.md`](md/README.md) — full MD library by topic. Start there to find or rebuild anything.
 

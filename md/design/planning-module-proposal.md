@@ -1,6 +1,6 @@
 # Planning module — proposal (Phase 0)
 
-**Status:** Phase 0 **shipped** (2026-07-09). Phase 1+ → `md/concepts/deferred-matrixtrade.md` and §7 below.
+**Status:** Phase 0 **shipped** (2026-07-09). Scouting Desk MVP + Stock File links (2026-07-10). **UI name:** Scouting Desk (route `/planning`). Phase 1+ → `md/concepts/deferred-matrixtrade.md` and §7 below.
 **Owner intent:** Pre-trade workspace to scout entries, save plans, and follow what failed — before creating H00x trades.
 
 ---
@@ -24,13 +24,14 @@ This is **planning**, not logging closed trades. ChatGPT will help flesh out rul
 ## 2. How it fits MatrixTrade today
 
 ```
-Playbook Lab     →  WHAT strategy (rules, checklist, stats)
-Planning         →  WHERE/WHEN to apply it (ticker + levels + timeframes + watch state)
-New Trade        →  EXECUTE (H00x, shares, inbox proposal)
-Journal / Review →  AFTER close (lessons, mistakes)
+Strategy Playbook  →  HOW to trade (rules, checklist, stats)     [/playbook — unchanged]
+Stock File         →  WHO is this ticker (profile, zones)       [links via stockThesisId]
+Scouting Desk      →  go / wait / no + tactical scouts          [/planning]
+New Trade          →  EXECUTE (H00x, shares, inbox proposal)
+Journal / Review   →  AFTER close (lessons, mistakes)
 ```
 
-Planning sits **between** Playbook and New Trade.
+Scouting Desk sits **between** Stock File and New Trade. Scouts may link both `playbookId` (strategy) and `stockThesisId` (stock file).
 
 ---
 
@@ -54,7 +55,8 @@ Classic `/trades/new` stays dormant; planning does **not** replace it.
 |-------|------|---------|
 | `id` | string | e.g. `PLAN-001` |
 | `ticker` | string | AAPL, MSFT… |
-| `playbookId` | string? | Link to Playbook Lab strategy |
+| `playbookId` | string? | Link to Strategy Playbook (HOW) |
+| `stockThesisId` | string? | Link to Stock Thesis (WHAT) — Phase 0 shipped |
 | `status` | enum | `watching` · `ready` · `entered` · `skipped` · `failed` · `expired` |
 | `analysisTimeframes` | string[] | Frames used to **validate** thesis (subset of catalog below) |
 | `entryTimeframe` | string | **Smallest** frame for trigger (must be in catalog) |
@@ -200,5 +202,6 @@ Phase 0: manual form only; block format documented in Phase 1.
 
 | Date | Change |
 |------|--------|
+| 2026-07-10 | Planning Lab rename + `stockThesisId` linking, thesis R:R validation |
 | 2026-07-09 | Phase 0 implemented — UI, storage, auto-expire, dashboard, AI snapshot |
 | 2026-07-09 | Initial proposal — Phase 0 scope, MTF rule, status flow, failure tracking |

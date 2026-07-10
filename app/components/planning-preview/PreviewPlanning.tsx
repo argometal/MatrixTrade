@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import {
   recordPlanOutcomeAction,
   savePlanAction,
   updatePlanStatusAction,
 } from "@/app/actions";
 import { buildPlanEnterHref, planNeedsStrategyReview } from "@/lib/plan-helpers";
+import {
+  buildMatrixTrainingContext,
+  buildScoutingContextText,
+  scoutingVerdictStyle,
+} from "@/lib/matrix-mechanics-brief";
+import type { MonthlyRisk } from "@/lib/monthly-risk";
 import {
   PLAN_EXTERNAL_FACTORS,
   PLAN_FAIL_REASON_LABELS,
@@ -16,8 +22,19 @@ import {
   type PlanTimeframe,
   type TradePlan,
 } from "@/lib/plan-types";
+import { computePlannedRR, validatePlanAgainstThesis } from "@/lib/plan-risk";
 import type { Playbook } from "@/lib/playbook-types";
 import { getPlaybookName } from "@/lib/playbook-helpers";
+import {
+  computeScoutingVerdictFromThesis,
+  SCOUTING_VERDICT_LABELS,
+} from "@/lib/scouting-types";
+import {
+  isActiveStockThesisStatus,
+  STOCK_THESIS_STATUS_LABELS,
+  type StockThesis,
+} from "@/lib/stock-thesis-types";
+import type { Experiment } from "@/lib/types";
 
 type FilterId = "all" | "active" | "ready" | "failed" | "expired" | "evaluate";
 
@@ -28,6 +45,14 @@ const statusStyles: Record<string, string> = {
   skipped: "bg-zinc-700/50 text-zinc-400",
   failed: "bg-red-500/15 text-red-400",
   expired: "bg-amber-500/15 text-amber-400",
+};
+
+const thesisStatusStyles: Record<string, string> = {
+  draft: "bg-zinc-700/50 text-zinc-400",
+  watching: "bg-sky-500/15 text-sky-300",
+  actionable: "bg-emerald-500/15 text-emerald-400",
+  invalidated: "bg-red-500/15 text-red-400",
+  archived: "bg-zinc-700/50 text-zinc-500",
 };
 
 function formatLevel(value?: number): string {
@@ -42,27 +67,137 @@ function formatWindow(plan: TradePlan): string {
   return `${from} → ${until}`;
 }
 
+function getThesisLabel(theses: StockThesis[], id?: string): string | undefined {
+  if (!id) return undefined;
+  const thesis = theses.find((t) => t.id === id);
+  return thesis ? `${thesis.ticker} · ${thesis.id}` : id;
+}
+
 export function PreviewPlanning({
   plans,
   playbooks,
+  stockTheses,
+  monthly,
+  experiment,
   focusPlanId,
+  focusThesisId,
 }: {
   plans: TradePlan[];
   playbooks: Playbook[];
+  stockTheses: StockThesis[];
+  monthly: MonthlyRisk;
+  experiment: Experiment;
   focusPlanId?: string;
+  focusThesisId?: string;
 }) {
   const [filter, setFilter] = useState<FilterId>("all");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [prefillThesisId, setPrefillThesisId] = useState<string | null>(focusThesisId ?? null);
+  const [scoutThesisId, setScoutThesisId] = useState<string | null>(focusThesisId ?? null);
+  const [copiedTraining, setCopiedTraining] = useState(false);
+  const [copiedScouting, setCopiedScouting] = useState(false);
+  const [formTicker, setFormTicker] = useState("");
+  const [formThesisId, setFormThesisId] = useState("");
+  const [formEntry, setFormEntry] = useState("");
+  const [formSupport, setFormSupport] = useState("");
+  const [formStop, setFormStop] = useState("");
+  const [formTarget, setFormTarget] = useState("");
   const [outcomePlanId, setOutcomePlanId] = useState<string | null>(
     focusPlanId && plans.some((p) => p.id === focusPlanId && planNeedsStrategyReview(p))
       ? focusPlanId
       : null
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [formWarning, setFormWarning] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const editing = editingId ? plans.find((p) => p.id === editingId) : undefined;
+  const activeTheses = useMemo(
+    () => stockTheses.filter((t) => isActiveStockThesisStatus(t.status)),
+    [stockTheses]
+  );
+
+  const filteredThesesForTicker = useMemo(() => {
+    const ticker = formTicker.trim().toUpperCase();
+    if (!ticker) return stockTheses;
+    return stockTheses.filter((t) => t.ticker.toUpperCase() === ticker);
+  }, [stockTheses, formTicker]);
+
+  const selectedThesis = useMemo(() => {
+    const id = formThesisId || editing?.stockThesisId || prefillThesisId || "";
+    return stockTheses.find((t) => t.id === id);
+  }, [stockTheses, formThesisId, editing, prefillThesisId]);
+
+  const scoutThesis = useMemo(() => {
+    const id = scoutThesisId ?? focusThesisId ?? activeTheses[0]?.id ?? "";
+    return stockTheses.find((t) => t.id === id);
+  }, [stockTheses, scoutThesisId, focusThesisId, activeTheses]);
+
+  const scoutVerdict = useMemo(
+    () => (scoutThesis ? computeScoutingVerdictFromThesis(scoutThesis) : null),
+    [scoutThesis]
+  );
+
+  const scoutPlans = useMemo(
+    () =>
+      scoutThesis
+        ? plans.filter((p) => p.stockThesisId === scoutThesis.id)
+        : [],
+    [plans, scoutThesis]
+  );
+
+  const trainingBlockText = useMemo(
+    () =>
+      buildMatrixTrainingContext({
+        playbooks,
+        stockTheses: activeTheses,
+        plans,
+        monthly,
+        experiment,
+      }),
+    [playbooks, activeTheses, plans, monthly, experiment]
+  );
+
+  const scoutingContextText = useMemo(() => {
+    if (!scoutThesis) return "";
+    return buildScoutingContextText({
+      thesis: scoutThesis,
+      plans,
+      playbooks,
+      monthly,
+    });
+  }, [scoutThesis, plans, playbooks, monthly]);
+
+  function copyTrainingBlock() {
+    void navigator.clipboard.writeText(trainingBlockText).then(() => {
+      setCopiedTraining(true);
+      setTimeout(() => setCopiedTraining(false), 2000);
+    });
+  }
+
+  function copyScoutingContext() {
+    if (!scoutingContextText) return;
+    void navigator.clipboard.writeText(scoutingContextText).then(() => {
+      setCopiedScouting(true);
+      setTimeout(() => setCopiedScouting(false), 2000);
+    });
+  }
+
+  const rrPreview = useMemo(() => {
+    const entry = Number(formEntry);
+    const stop = Number(formStop);
+    const target = Number(formTarget);
+    if (!Number.isFinite(entry) || !Number.isFinite(stop) || !Number.isFinite(target)) {
+      return null;
+    }
+    const computed = computePlannedRR(entry, stop, target);
+    if (!computed) return null;
+    const validation = selectedThesis
+      ? validatePlanAgainstThesis({ entry, stop, target }, selectedThesis.riskRules)
+      : {};
+    return { ...computed, warning: validation.warning };
+  }, [formEntry, formStop, formTarget, selectedThesis]);
 
   const filtered = useMemo(() => {
     switch (filter) {
@@ -83,16 +218,58 @@ export function PreviewPlanning({
 
   const defaultFrames: PlanTimeframe[] = ["1D", "1H", "15m", "5m"];
 
+  useEffect(() => {
+    if (!focusThesisId) return;
+    const thesis = stockTheses.find((t) => t.id === focusThesisId);
+    if (!thesis) return;
+    setPrefillThesisId(thesis.id);
+    setScoutThesisId(thesis.id);
+    setFormTicker(thesis.ticker);
+    setFormThesisId(thesis.id);
+    setShowForm(true);
+  }, [focusThesisId, stockTheses]);
+
+  function resetFormLevels() {
+    setFormEntry("");
+    setFormSupport("");
+    setFormStop("");
+    setFormTarget("");
+  }
+
   function openCreate() {
     setEditingId(null);
+    setPrefillThesisId(null);
+    setFormTicker("");
+    setFormThesisId("");
+    resetFormLevels();
     setShowForm(true);
     setFormError(null);
+    setFormWarning(null);
+  }
+
+  function openCreateFromThesis(thesis: StockThesis) {
+    setEditingId(null);
+    setPrefillThesisId(thesis.id);
+    setFormTicker(thesis.ticker);
+    setFormThesisId(thesis.id);
+    resetFormLevels();
+    setShowForm(true);
+    setFormError(null);
+    setFormWarning(null);
   }
 
   function openEdit(plan: TradePlan) {
     setEditingId(plan.id);
+    setPrefillThesisId(null);
+    setFormTicker(plan.ticker);
+    setFormThesisId(plan.stockThesisId ?? "");
+    setFormEntry(plan.plannedEntry !== undefined ? String(plan.plannedEntry) : "");
+    setFormSupport(plan.supportLevel !== undefined ? String(plan.supportLevel) : "");
+    setFormStop(plan.stopPrice !== undefined ? String(plan.stopPrice) : "");
+    setFormTarget(plan.targetPrice !== undefined ? String(plan.targetPrice) : "");
     setShowForm(true);
     setFormError(null);
+    setFormWarning(null);
   }
 
   function runStatus(planId: string, status: TradePlan["status"]) {
@@ -110,7 +287,9 @@ export function PreviewPlanning({
       }
       setShowForm(false);
       setEditingId(null);
+      setPrefillThesisId(null);
       setFormError(null);
+      setFormWarning(result.warning ?? null);
     });
   }
 
@@ -131,25 +310,48 @@ export function PreviewPlanning({
     ? plans.find((p) => p.id === outcomePlanId)
     : undefined;
 
+  const defaultThesisId =
+    editing?.stockThesisId ?? prefillThesisId ?? formThesisId ?? "";
+
   return (
     <div className="flex h-full min-h-0 w-full overflow-hidden">
       <div className="min-w-0 flex-1 overflow-y-auto">
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h1 className="text-xl font-semibold text-zinc-100">Planning</h1>
+              <h1 className="text-xl font-semibold text-zinc-100">Scouting Desk</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                Scout entries, save levels and timeframes, track what failed — data for strategy
-                evaluation and AI analysis.
+                <Link href="/playbook" className="text-violet-400 hover:text-violet-300">
+                  Playbook
+                </Link>{" "}
+                = HOW · Stock File = WHO · Scouting Desk = go / wait / no + risk
               </p>
             </div>
-            <button
-              type="button"
-              onClick={openCreate}
-              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
-            >
-              New plan
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={copyTrainingBlock}
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200"
+              >
+                {copiedTraining ? "Copied" : "Copy AI training block"}
+              </button>
+              {scoutThesis ? (
+                <button
+                  type="button"
+                  onClick={copyScoutingContext}
+                  className="rounded-lg border border-violet-500/30 px-3 py-2 text-xs text-violet-400 hover:bg-violet-500/10"
+                >
+                  {copiedScouting ? "Copied" : "Copy scouting context"}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={openCreate}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
+              >
+                Log setup
+              </button>
+            </div>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -180,10 +382,140 @@ export function PreviewPlanning({
         </header>
 
         <div className="space-y-4 px-4 py-4 lg:px-6">
+          {activeTheses.length > 0 ? (
+            <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-zinc-200">Scouting summary</h2>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Gatekeeper view — verdict from Stock File status + risk room.
+                  </p>
+                </div>
+                {activeTheses.length > 1 ? (
+                  <label className="text-xs text-zinc-500">
+                    Ticker
+                    <select
+                      value={scoutThesis?.id ?? ""}
+                      onChange={(e) => setScoutThesisId(e.target.value || null)}
+                      className="ml-2 rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1 text-xs text-zinc-100"
+                    >
+                      {activeTheses.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.ticker} · {t.id}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+              </div>
+
+              {scoutThesis && scoutVerdict ? (
+                <div
+                  className={`mt-4 rounded-xl border p-4 ${scoutingVerdictStyle(scoutVerdict)}`}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/stock-theses/${scoutThesis.id}`}
+                      className="text-lg font-semibold hover:underline"
+                    >
+                      {scoutThesis.ticker}
+                    </Link>
+                    <span className="text-xs opacity-70">{scoutThesis.id}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${
+                        thesisStatusStyles[scoutThesis.status] ?? "bg-zinc-800 text-zinc-400"
+                      }`}
+                    >
+                      {STOCK_THESIS_STATUS_LABELS[scoutThesis.status]}
+                    </span>
+                    <span className="rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase">
+                      {SCOUTING_VERDICT_LABELS[scoutVerdict]}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm opacity-90">{scoutThesis.currentHypothesis}</p>
+                  <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
+                    <p>Min R:R {scoutThesis.riskRules.minimumRR}R</p>
+                    <p>
+                      Invalidation:{" "}
+                      <span className="opacity-80">
+                        {scoutThesis.riskRules.invalidation.slice(0, 80)}
+                        {scoutThesis.riskRules.invalidation.length > 80 ? "…" : ""}
+                      </span>
+                    </p>
+                    <p>
+                      Monthly room: ${monthly.monthlyLossRoom.toFixed(0)}
+                      {monthly.monthlyCapBreached ? " (cap breached)" : ""}
+                    </p>
+                    <p>
+                      Active scouts:{" "}
+                      {scoutPlans.filter((p) => p.status === "watching" || p.status === "ready").length}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
+          {activeTheses.length > 0 ? (
+            <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+              <h2 className="text-sm font-semibold text-zinc-200">Active stock files</h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                Strategic memory per ticker — link scouts to a file for R:R validation.
+              </p>
+              <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+                {activeTheses.map((thesis) => (
+                  <li
+                    key={thesis.id}
+                    className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/stock-theses/${thesis.id}`}
+                        className="font-semibold text-violet-400 hover:text-violet-300"
+                      >
+                        {thesis.ticker}
+                      </Link>
+                      <span className="text-xs text-zinc-600">{thesis.id}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          thesisStatusStyles[thesis.status] ?? "bg-zinc-800 text-zinc-400"
+                        }`}
+                      >
+                        {STOCK_THESIS_STATUS_LABELS[thesis.status]}
+                      </span>
+                    </div>
+                    <p className="mt-2 line-clamp-2 text-xs text-zinc-500">
+                      {thesis.currentHypothesis}
+                    </p>
+                    <p className="mt-2 text-xs text-zinc-600">
+                      Min {thesis.riskRules.minimumRR}R · {thesis.style}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setScoutThesisId(thesis.id);
+                        openCreateFromThesis(thesis);
+                      }}
+                      className="mt-3 rounded-lg border border-violet-500/30 px-3 py-1.5 text-xs font-medium text-violet-400 hover:bg-violet-500/10"
+                    >
+                      Log setup from file
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          {formWarning && !showForm ? (
+            <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-400">
+              {formWarning}
+            </p>
+          ) : null}
+
           {showForm && (
             <section className="rounded-2xl border border-violet-500/30 bg-zinc-900/80 p-5">
               <h2 className="text-sm font-semibold text-zinc-200">
-                {editing ? `Edit ${editing.id}` : "New trade plan"}
+                {editing ? `Edit ${editing.id}` : "Log scout setup"}
               </h2>
               <form action={submitForm} className="mt-4 space-y-4">
                 {editing ? <input type="hidden" name="id" value={editing.id} /> : null}
@@ -194,12 +526,32 @@ export function PreviewPlanning({
                     <input
                       name="ticker"
                       required
-                      defaultValue={editing?.ticker ?? ""}
+                      value={formTicker}
+                      onChange={(e) => {
+                        setFormTicker(e.target.value);
+                        setFormThesisId("");
+                      }}
                       className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
                     />
                   </label>
                   <label className="block text-xs text-zinc-500">
-                    Playbook
+                    Stock file
+                    <select
+                      name="stockThesisId"
+                      value={formThesisId || defaultThesisId}
+                      onChange={(e) => setFormThesisId(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+                    >
+                      <option value="">—</option>
+                      {filteredThesesForTicker.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.id} · {STOCK_THESIS_STATUS_LABELS[t.status]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-xs text-zinc-500">
+                    Strategy
                     <select
                       name="playbookId"
                       defaultValue={editing?.playbookId ?? ""}
@@ -257,21 +609,20 @@ export function PreviewPlanning({
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   {(
                     [
-                      ["plannedEntry", "Planned entry"],
-                      ["supportLevel", "Support"],
-                      ["stopPrice", "Stop"],
-                      ["targetPrice", "Target"],
+                      ["plannedEntry", "Planned entry", formEntry, setFormEntry],
+                      ["supportLevel", "Support", formSupport, setFormSupport],
+                      ["stopPrice", "Stop", formStop, setFormStop],
+                      ["targetPrice", "Target", formTarget, setFormTarget],
                     ] as const
-                  ).map(([name, label]) => (
+                  ).map(([name, label, value, setter]) => (
                     <label key={name} className="block text-xs text-zinc-500">
                       {label}
                       <input
                         name={name}
                         type="number"
                         step="0.01"
-                        defaultValue={
-                          editing?.[name] !== undefined ? String(editing[name]) : ""
-                        }
+                        value={value}
+                        onChange={(e) => setter(e.target.value)}
                         className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
                       />
                     </label>
@@ -282,13 +633,24 @@ export function PreviewPlanning({
                       name="plannedRR"
                       type="number"
                       step="0.1"
-                      defaultValue={
-                        editing?.plannedRR !== undefined ? String(editing.plannedRR) : ""
-                      }
+                      readOnly
+                      value={rrPreview ? rrPreview.rr.toFixed(1) : editing?.plannedRR !== undefined ? String(editing.plannedRR) : ""}
                       className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
                     />
                   </label>
                 </div>
+
+                {selectedThesis && rrPreview ? (
+                  <p
+                    className={`text-xs ${
+                      rrPreview.warning ? "text-amber-400" : "text-emerald-400"
+                    }`}
+                  >
+                    Computed R:R {rrPreview.rr.toFixed(1)} vs thesis minimum{" "}
+                    {selectedThesis.riskRules.minimumRR}R
+                    {rrPreview.warning ? ` — ${rrPreview.warning}` : ""}
+                  </p>
+                ) : null}
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="block text-xs text-zinc-500">
@@ -346,13 +708,14 @@ export function PreviewPlanning({
                     disabled={pending}
                     className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
                   >
-                    {editing ? "Save plan" : "Create plan"}
+                    {editing ? "Save scout" : "Create scout"}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setShowForm(false);
                       setEditingId(null);
+                      setPrefillThesisId(null);
                       setFormError(null);
                     }}
                     className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400"
@@ -366,7 +729,7 @@ export function PreviewPlanning({
 
           {filtered.length === 0 ? (
             <p className="text-sm text-zinc-500">
-              No plans in this view. Create one to track a setup before it becomes a trade.
+              No scouts in this view. Log a setup to track a candidate before it becomes a trade.
             </p>
           ) : (
             <ul className="space-y-4">
@@ -396,9 +759,20 @@ export function PreviewPlanning({
                         </span>
                       </div>
                       <p className="mt-1 text-xs text-zinc-500">
-                        {getPlaybookName(playbooks, plan.playbookId) ?? "No playbook"} · Entry{" "}
+                        {getPlaybookName(playbooks, plan.playbookId) ?? "No strategy"} · Entry{" "}
                         {plan.entryTimeframe} · Window {formatWindow(plan)}
                       </p>
+                      {plan.stockThesisId ? (
+                        <p className="mt-1 text-xs text-violet-400">
+                          Stock file:{" "}
+                          <Link
+                            href={`/stock-theses/${plan.stockThesisId}`}
+                            className="hover:underline"
+                          >
+                            {getThesisLabel(stockTheses, plan.stockThesisId) ?? plan.stockThesisId}
+                          </Link>
+                        </p>
+                      ) : null}
                       <p className="mt-1 text-xs text-zinc-600">
                         Analyze: {plan.analysisTimeframes.join(", ")}
                       </p>
