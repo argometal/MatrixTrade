@@ -43,6 +43,7 @@ import {
   PlanMapToggleButton,
 } from "./PlanLevelsSidePanel";
 import { scoutDeskSnapshotItems, stockProfileSnapshotItems } from "@/lib/snapshot-packages";
+import { snapshotButtonTitle } from "@/lib/snapshot-verification";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import type { Experiment } from "@/lib/types";
 
@@ -182,6 +183,16 @@ export function PreviewPlanning({
     return scoutLevelsView;
   }, [selectedPlan, stockTheses, scoutLevelsView]);
 
+  const snapshotTitle = useMemo(() => {
+    const focusThesis =
+      scoutThesis ??
+      (focusThesisId ? stockTheses.find((t) => t.id === focusThesisId) : undefined);
+    const focusPlan = selectedPlan ?? (focusPlanId ? plans.find((p) => p.id === focusPlanId) : undefined);
+    if (focusPlan) return snapshotButtonTitle(focusPlan.ticker, `${focusPlan.id} snapshot`);
+    if (focusThesis) return snapshotButtonTitle(focusThesis.ticker, "snapshot");
+    return "Scout snapshot";
+  }, [scoutThesis, focusThesisId, selectedPlan, focusPlanId, stockTheses, plans]);
+
   const snapshotItems = useMemo(() => {
     const focusThesis =
       scoutThesis ??
@@ -279,7 +290,7 @@ export function PreviewPlanning({
                 New stock case
               </Link>
               <SnapshotButton
-                title="Scout snapshot"
+                title={snapshotTitle}
                 description="Desk overview, ticker, scout plan, or mechanics"
                 items={snapshotItems.length > 0 ? snapshotItems : initialSnapshotItems}
               />
@@ -367,7 +378,7 @@ export function PreviewPlanning({
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <SnapshotButton
-                          title={`${thesis.ticker} snapshot`}
+                          title={snapshotButtonTitle(thesis.ticker, "snapshot")}
                           description="Stock profile, evidence, scouts for this ticker"
                           items={stockProfileSnapshotItems({
                             thesis,

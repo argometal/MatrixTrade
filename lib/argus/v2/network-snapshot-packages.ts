@@ -1,4 +1,5 @@
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import { wrapSnapshotText } from "@/lib/snapshot-verification";
 import { buildArgusNetworkBrief } from "../network-ai-brief";
 import { buildNetworkAiSnapshot } from "../network-ai-snapshot";
 import type {
@@ -13,7 +14,7 @@ export function networkCharterSnapshotItem(): SnapshotMenuItem {
     id: "network-charter",
     label: "Network charter brief",
     description: "ARGUS rules, past vs future, human Apply gate",
-    text: buildArgusNetworkBrief(),
+    text: wrapSnapshotText("Network charter brief", buildArgusNetworkBrief()),
   };
 }
 
@@ -27,10 +28,13 @@ export function networkBrowseSnapshotItems(input: {
       id: "network-desk",
       label: "Network desk snapshot",
       description: "Browse summary, status counts, due/dormant highlights",
-      text: buildNetworkAiSnapshot({
-        scope: "network-desk",
-        desk: input,
-      }),
+      text: wrapSnapshotText(
+        "Network desk snapshot",
+        buildNetworkAiSnapshot({
+          scope: "network-desk",
+          desk: input,
+        })
+      ),
     },
     networkCharterSnapshotItem(),
   ];
@@ -40,12 +44,15 @@ export function networkContactSnapshotItems(page: NetworkContactPageData): Snaps
   return [
     {
       id: "network-person",
-      label: `${page.entity.name} snapshot`,
+      label: `${page.entity.name} · contact`,
       description: "Contact context, timeline snippet, dialogue or relationship overview",
-      text: buildNetworkAiSnapshot({
-        scope: "network-person",
-        person: page,
-      }),
+      text: wrapSnapshotText(
+        `${page.entity.name} contact snapshot`,
+        buildNetworkAiSnapshot({
+          scope: "network-person",
+          person: page,
+        })
+      ),
     },
     networkCharterSnapshotItem(),
   ];

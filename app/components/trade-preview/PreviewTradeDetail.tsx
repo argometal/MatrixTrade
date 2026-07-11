@@ -7,6 +7,7 @@ import {
 } from "@/app/actions";
 import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import { snapshotButtonTitle } from "@/lib/snapshot-verification";
 import { calculateTradeResult } from "@/lib/calculate";
 import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
 import type { Playbook } from "@/lib/playbook-types";
@@ -81,7 +82,7 @@ export function PreviewTradeDetail({
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <SnapshotButton
-                title={`${trade.id} trade snapshot`}
+                title={snapshotButtonTitle(trade.ticker, `${trade.id} snapshot`)}
                 description="Entry, stop, target, status, P/L, review state"
                 items={snapshotItems}
               />

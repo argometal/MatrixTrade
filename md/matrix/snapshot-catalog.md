@@ -19,10 +19,14 @@ One control per window: **`{Window} snapshot ▾`**
 ## Package structure (every window snapshot)
 
 ```text
+=== {ENTITY} SNAPSHOT ===              ← verification bookend (start)
 1. MATRIX MECHANICS (brief prefix)     ← automatic unless mechanics-only export
 2. [window data]
 3. === REQUEST ===                     ← allowed block types for this window
+=== END {ENTITY} SNAPSHOT ===          ← verification bookend (end)
 ```
+
+Button titles lead with the entity (`NFLX · snapshot`, `H003 · NFLX snapshot`) so the user confirms the correct target before paste.
 
 **Matrix Mechanics Snapshot** (System / dropdown) = full constitution — paste once per AI session.  
 Does not replace the automatic brief prefix on data snapshots.

@@ -6,6 +6,7 @@ import type { Playbook } from "./playbook-types";
 import type { TradePlan } from "./plan-types";
 import type { StockThesis } from "./stock-thesis-types";
 import type { SnapshotMenuItem } from "./snapshot-types";
+import { wrapSnapshotText } from "./snapshot-verification";
 import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment, Trade } from "./types";
 import type { SmartSnapshotInput } from "./smart-snapshot";
@@ -16,7 +17,7 @@ export function mechanicsSnapshotItem(): SnapshotMenuItem {
     id: "mechanics",
     label: "Matrix Mechanics snapshot",
     description: "Full rules, block types, Apply gate — paste once per AI session",
-    text: buildMatrixMechanicsSnapshot(),
+    text: wrapSnapshotText("Matrix Mechanics snapshot", buildMatrixMechanicsSnapshot()),
   };
 }
 
@@ -28,7 +29,7 @@ export function dashboardSnapshotItems(
       id: "dashboard",
       label: "Dashboard snapshot",
       description: "Budget, experiment, attention queue, trades overview",
-      text: buildAiContextPackage({ scope: "dashboard", exchange }),
+      text: wrapSnapshotText("Dashboard snapshot", buildAiContextPackage({ scope: "dashboard", exchange })),
     },
     mechanicsSnapshotItem(),
   ];
@@ -44,11 +45,14 @@ export function playbookSnapshotItems(
       id: "playbook",
       label: "Playbook snapshot",
       description: "Strategies, checklists, P/L and win rate per playbook",
-      text: buildAiContextPackage({
-        scope: "playbook",
-        playbooks,
-        playbookStats: stats,
-      }),
+      text: wrapSnapshotText(
+        "Playbook snapshot",
+        buildAiContextPackage({
+          scope: "playbook",
+          playbooks,
+          playbookStats: stats,
+        })
+      ),
     },
     mechanicsSnapshotItem(),
   ];
@@ -71,14 +75,17 @@ export function scoutDeskSnapshotItems(input: {
       id: "scout-desk",
       label: "Scout desk overview",
       description: "All playbooks, stock files, scouts, monthly risk room",
-      text: buildAiContextPackage({
-        scope: "scouting",
-        playbooks: input.playbooks,
-        stockTheses: activeTheses,
-        plans: input.plans,
-        monthly: input.monthly,
-        experiment: input.experiment,
-      }),
+      text: wrapSnapshotText(
+        "Scout desk overview",
+        buildAiContextPackage({
+          scope: "scouting",
+          playbooks: input.playbooks,
+          stockTheses: activeTheses,
+          plans: input.plans,
+          monthly: input.monthly,
+          experiment: input.experiment,
+        })
+      ),
     },
   ];
 
@@ -86,16 +93,19 @@ export function scoutDeskSnapshotItems(input: {
   if (thesis) {
     items.push({
       id: "scout-ticker",
-      label: `${thesis.ticker} snapshot`,
+      label: `${thesis.ticker} · stock snapshot`,
       description: "Stock profile, evidence, scouts for this ticker",
-      text: buildAiContextPackage({
-        scope: "scouting-ticker",
-        focusThesis: thesis,
-        playbooks: input.playbooks,
-        plans: input.plans,
-        monthly: input.monthly,
-        activeEvidence: evidenceByProfile.get(thesis.id.toUpperCase()) ?? [],
-      }),
+      text: wrapSnapshotText(
+        `${thesis.ticker} stock snapshot`,
+        buildAiContextPackage({
+          scope: "scouting-ticker",
+          focusThesis: thesis,
+          playbooks: input.playbooks,
+          plans: input.plans,
+          monthly: input.monthly,
+          activeEvidence: evidenceByProfile.get(thesis.id.toUpperCase()) ?? [],
+        })
+      ),
     });
   }
 
@@ -104,14 +114,17 @@ export function scoutDeskSnapshotItems(input: {
     const planThesis = activeTheses.find((t) => t.id === plan.stockThesisId);
     items.push({
       id: "scout-plan",
-      label: `${plan.id} scout snapshot`,
+      label: `${plan.ticker} · ${plan.id} scout`,
       description: "This scout plan — levels, decision, probe, linked profile",
-      text: buildAiContextPackage({
-        scope: "scout-plan",
-        focusPlan: plan,
-        focusThesis: planThesis,
-        playbooks: input.playbooks,
-      }),
+      text: wrapSnapshotText(
+        `${plan.ticker} · ${plan.id} scout snapshot`,
+        buildAiContextPackage({
+          scope: "scout-plan",
+          focusPlan: plan,
+          focusThesis: planThesis,
+          playbooks: input.playbooks,
+        })
+      ),
     });
   }
 
@@ -129,24 +142,30 @@ export function stockProfileSnapshotItems(input: {
   return [
     {
       id: "profile",
-      label: `${input.thesis.ticker} profile snapshot`,
+      label: `${input.thesis.ticker} · profile`,
       description: "Thesis, levels, invalidation, evidence, synthesis",
-      text: buildAiContextPackage({
-        scope: "stock-file",
-        focusThesis: input.thesis,
-        playbooks: input.playbooks,
-        activeEvidence: input.activeEvidence,
-      }),
+      text: wrapSnapshotText(
+        `${input.thesis.ticker} profile snapshot`,
+        buildAiContextPackage({
+          scope: "stock-file",
+          focusThesis: input.thesis,
+          playbooks: input.playbooks,
+          activeEvidence: input.activeEvidence,
+        })
+      ),
     },
     {
       id: "profile-scouts",
-      label: "Linked scouts",
+      label: `${input.thesis.ticker} · linked scouts`,
       description: `Active scout plans for ${input.thesis.ticker}`,
-      text: buildAiContextPackage({
-        scope: "stock-scouts",
-        focusThesis: input.thesis,
-        plans: tickerPlans,
-      }),
+      text: wrapSnapshotText(
+        `${input.thesis.ticker} linked scouts`,
+        buildAiContextPackage({
+          scope: "stock-scouts",
+          focusThesis: input.thesis,
+          plans: tickerPlans,
+        })
+      ),
     },
     mechanicsSnapshotItem(),
   ];
@@ -160,7 +179,10 @@ export function tradesListSnapshotItems(
       id: "trades-list",
       label: "Trades snapshot",
       description: "All trades summary, experiment, monthly room",
-      text: buildAiContextPackage({ scope: "trades-list", exchange }),
+      text: wrapSnapshotText(
+        "Trades snapshot",
+        buildAiContextPackage({ scope: "trades-list", exchange })
+      ),
     },
     mechanicsSnapshotItem(),
   ];

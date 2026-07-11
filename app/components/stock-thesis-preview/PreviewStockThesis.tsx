@@ -8,6 +8,7 @@ import {
 } from "@/app/actions";
 import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import { snapshotButtonTitle } from "@/lib/snapshot-verification";
 import type { MarketEvidence } from "@/lib/market-evidence-types";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
 import type { Playbook } from "@/lib/playbook-types";
@@ -132,7 +133,7 @@ export function PreviewStockThesis({
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <SnapshotButton
-                title={`${thesis.ticker} snapshot`}
+                title={snapshotButtonTitle(thesis.ticker, "snapshot")}
                 description="Thesis, levels, evidence, linked scouts"
                 items={snapshotItems}
               />

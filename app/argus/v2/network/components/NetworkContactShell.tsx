@@ -32,6 +32,7 @@ import { V2Badge, V2Card } from "@/app/argus/v2/components/v2-ui";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 import { NetworkDialogueGuide } from "./NetworkDialogueGuide";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import { snapshotButtonTitle } from "@/lib/snapshot-verification";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import { NetworkAiImportPanel } from "./NetworkAiImportPanel";
 
@@ -404,7 +405,7 @@ export function NetworkContactShell({
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <SnapshotButton
-              title="Contact snapshot"
+              title={snapshotButtonTitle(page.entity.name, "snapshot")}
               description="Copy person context for AI"
               items={snapshotItems}
             />
