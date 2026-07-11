@@ -54,11 +54,7 @@ import {
   createInputToReferenceKind,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
-import {
-  buildEventRecordNotes,
-  EVENT_LEGAL_PURPOSES,
-  type EventLegalPurpose,
-} from "@/lib/argus/v2/event-record";
+import { buildEventRecordNotes } from "@/lib/argus/v2/event-record";
 import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
 import { partitionIdsByEntityKind } from "@/lib/argus/v2/entity-link-counts";
 import type { UnifiedCreatePayload, UnifiedCreateResult } from "@/lib/argus/create-flow-types";
@@ -487,20 +483,21 @@ export async function bulkDeleteInboxAction(
   return { ok: true, count };
 }
 
-/** Update event formal record + legal purpose (no redirect). */
+/** Update event notes + signal tags (no redirect). */
 export async function updateEventRecordAction(
   eventId: string,
-  purpose: EventLegalPurpose,
-  record: string
+  record: string,
+  linkedTags: string[]
 ): Promise<{ ok: true }> {
   await requireArgusSession();
   const entity = await getEntity(eventId);
   if (!entity || referenceKindFromNotes(entity.notes ?? "") !== "event") {
     throw new Error("Event not found");
   }
-  const validPurpose = EVENT_LEGAL_PURPOSES.some((p) => p.id === purpose) ? purpose : "general";
+  const tags = [...new Set(linkedTags.map((tag) => tag.trim()).filter(Boolean))];
   await updateEntity(eventId, {
-    notes: buildEventRecordNotes(validPurpose, record),
+    notes: buildEventRecordNotes(record),
+    linkedTags: tags,
   });
   revalidateArgus();
   revalidatePath("/argus/v2/browse/events");

@@ -2,15 +2,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2OpenCaptureButton } from "@/app/argus/v2/components/V2OpenCaptureButton";
 import { updateEventRecordAction } from "@/app/argus/actions";
-import {
-  EVENT_LEGAL_PURPOSES,
-  eventPurposeLabel,
-  type EventLegalPurpose,
-} from "@/lib/argus/v2/event-record";
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
 import { V2EventLinkEmailModal } from "./V2EventLinkEmailModal";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
@@ -43,6 +38,15 @@ function MetricPill({ icon, label, count }: { icon: string; label: string; count
   );
 }
 
+function normalizeEventTag(value: string): string {
+  return value.trim();
+}
+
+function tagsEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  return a.every((tag, index) => tag === b[index]);
+}
+
 export function V2EventDetailPanel({
   selected,
   inboxOptions,
@@ -59,18 +63,44 @@ export function V2EventDetailPanel({
 } & V2DeleteGateProps) {
   const router = useRouter();
   const [panelTab, setPanelTab] = useState<PanelTab>("record");
-  const [purpose, setPurpose] = useState<EventLegalPurpose>(selected.legalPurpose);
+  const [tags, setTags] = useState<string[]>(selected.linkedTags);
+  const [tagDraft, setTagDraft] = useState("");
   const [record, setRecord] = useState(selected.record);
   const [saving, setSaving] = useState(false);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
 
+  function addTag() {
+    const next = normalizeEventTag(tagDraft);
+    if (!next || tags.some((tag) => tag.toLowerCase() === next.toLowerCase())) {
+      setTagDraft("");
+      return;
+    }
+    setTags((current) => [...current, next]);
+    setTagDraft("");
+  }
+
+  function removeTag(tag: string) {
+    setTags((current) => current.filter((value) => value !== tag));
+  }
+
+  const recordDirty = record !== selected.record;
+  const tagsDirty = !tagsEqual(tags, selected.linkedTags);
+  const dirty = recordDirty || tagsDirty;
+
+  useEffect(() => {
+    setTags(selected.linkedTags);
+    setRecord(selected.record);
+    setTagDraft("");
+    setSaveNote(null);
+  }, [selected.id, selected.record, selected.linkedTags.join("|")]);
+
   async function saveRecord() {
     setSaving(true);
     setSaveNote(null);
     try {
-      await updateEventRecordAction(selected.id, purpose, record);
+      await updateEventRecordAction(selected.id, record, tags);
       setSaveNote("Saved");
       router.refresh();
     } catch {
@@ -99,9 +129,18 @@ export function V2EventDetailPanel({
           <div className="min-w-0">
             <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
             <p className="mt-1 text-sm text-zinc-400">{selected.dateTimeLabel}</p>
-            <span className="mt-2 inline-flex rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-200 ring-1 ring-amber-500/25">
-              {eventPurposeLabel(purpose)}
-            </span>
+            {tags.length > 0 ? (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-200 ring-1 ring-amber-500/25"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
           {selected.tagPatterns.length > 0 ? (
             <V2TagPatternBadges patterns={selected.tagPatterns} className="mt-3" />
@@ -183,27 +222,61 @@ export function V2EventDetailPanel({
         >
         {panelTab === "record" ? (
           <div className="space-y-4">
-            <label className="block text-xs text-zinc-500">
-              Legal purpose
-              <select
-                value={purpose}
-                onChange={(e) => setPurpose(e.target.value as EventLegalPurpose)}
-                className="mt-1 w-full max-w-xs rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-2 text-sm text-zinc-200"
-              >
-                {EVENT_LEGAL_PURPOSES.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.label}
-                  </option>
+            <div>
+              <p className="text-xs font-medium text-zinc-400">Tags</p>
+              <p className="mt-0.5 text-[11px] text-zinc-600">
+                Signal tags for tracking — GAP, CONCERN, follow-up. Repeats surface across events; one-offs can fade.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="text-amber-400/70 hover:text-amber-100"
+                      aria-label={`Remove tag ${tag}`}
+                    >
+                      ×
+                    </button>
+                  </span>
                 ))}
-              </select>
-            </label>
+                {tags.length === 0 ? <p className="text-xs text-zinc-600">No tags yet.</p> : null}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  value={tagDraft}
+                  onChange={(e) => setTagDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTag();
+                    }
+                  }}
+                  placeholder="GAP, CONCERN, decision…"
+                  className="min-w-[10rem] flex-1 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600"
+                />
+                <button
+                  type="button"
+                  onClick={addTag}
+                  disabled={!tagDraft.trim()}
+                  className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+                >
+                  Add tag
+                </button>
+              </div>
+            </div>
 
             <div className="rounded-xl border border-zinc-200/90 bg-white shadow-sm ring-1 ring-black/5">
               <textarea
                 value={record}
                 onChange={(e) => setRecord(e.target.value)}
                 rows={14}
-                placeholder="Formal documentation: what occurred, who was involved, decisions, and facts relevant to HR or management review."
+                placeholder="What happened, who was involved, decisions, and open items worth remembering."
                 className="w-full resize-y rounded-xl border-0 bg-transparent px-5 py-4 text-[15px] leading-[1.7] text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-0"
               />
             </div>
@@ -211,11 +284,11 @@ export function V2EventDetailPanel({
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                disabled={saving}
+                disabled={saving || !dirty}
                 onClick={() => void saveRecord()}
                 className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
               >
-                {saving ? "Saving…" : "Save record"}
+                {saving ? "Saving…" : "Save"}
               </button>
               {saveNote ? <span className="text-xs text-zinc-500">{saveNote}</span> : null}
             </div>

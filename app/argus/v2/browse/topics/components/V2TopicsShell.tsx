@@ -14,7 +14,6 @@ import {
   v2TopicPageCount,
   V2_TOPIC_PAGE_SIZE,
   type V2TopicDetail,
-  type V2TopicEvidenceKind,
   type V2TopicFilters,
   type V2TopicRow,
   type V2TopicTab,
@@ -35,13 +34,7 @@ const TABS: { id: V2TopicTab; label: string }[] = [
   { id: "patterns", label: "Patterns" },
 ];
 
-const KIND_OPTIONS: { id: V2TopicEvidenceKind; label: string }[] = [
-  { id: "email", label: "Has email" },
-  { id: "journal", label: "Has records" },
-  { id: "file", label: "Has files" },
-];
-
-type FilterMenu = "org" | "project" | "kind" | null;
+type FilterMenu = "org" | "project" | null;
 
 function FilterMenuPanel({
   open,
@@ -135,7 +128,6 @@ export function V2TopicsShell({
         org: searchParams.get("org"),
         project: searchParams.get("project"),
         entity: searchParams.get("entity"),
-        kind: searchParams.get("kind"),
       }),
     [searchParams]
   );
@@ -219,7 +211,6 @@ export function V2TopicsShell({
       params.delete("org");
       params.delete("project");
       params.delete("entity");
-      params.delete("kind");
       params.delete("page");
     });
     setSearchDraft("");
@@ -403,29 +394,6 @@ export function V2TopicsShell({
                     </FilterOption>
                   ))
                 )}
-              </FilterMenuPanel>
-            </div>
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setOpenFilter(openFilter === "kind" ? null : "kind")}
-                className={`rounded-lg px-2.5 py-1 text-[10px] font-medium ${
-                  filters.kind ? "bg-violet-500/15 text-violet-300" : "bg-zinc-800/80 text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                Evidence{filters.kind ? " ✓" : ""}
-              </button>
-              <FilterMenuPanel open={openFilter === "kind"} onClose={() => setOpenFilter(null)}>
-                {KIND_OPTIONS.map((option) => (
-                  <FilterOption
-                    key={option.id}
-                    active={filters.kind === option.id}
-                    onClick={() => setFilter("kind", filters.kind === option.id ? undefined : option.id)}
-                  >
-                    {option.label}
-                  </FilterOption>
-                ))}
               </FilterMenuPanel>
             </div>
 

@@ -185,7 +185,7 @@ export function buildV2EventDetails(
   return events.map((event) => {
     const eventDate = event.startDate || event.endDate || event.createdAt.slice(0, 10);
     const rawNotes = event.notes ?? "";
-    const { purpose, record } = parseEventRecord(rawNotes);
+    const { record } = parseEventRecord(rawNotes);
     const displayNotes = entityNotesForDisplay(rawNotes);
     const notes = record || displayNotes;
     const project = linkedProject(data, event);
@@ -229,7 +229,7 @@ export function buildV2EventDetails(
       topicTags,
       linkedTopicNames: linkedTopicNamesList,
       description: notes || "No documentation yet.",
-      legalPurpose: purpose,
+      linkedTags: (event.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
       record: notes,
       attendeeInitials: initials,
       attendeeNames: people,

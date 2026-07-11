@@ -1,9 +1,7 @@
-import type { EventLegalPurpose } from "./event-record";
 import type { EntityLifecycleStatus } from "../types";
 import type { TagPattern } from "./tag-patterns";
 
 export type V2EventTab = "all" | "upcoming" | "past";
-export type { EventLegalPurpose };
 
 export interface V2EventRow {
   id: string;
@@ -62,7 +60,7 @@ export interface V2EventDetail {
   topicTags: string[];
   linkedTopicNames: string[];
   description: string;
-  legalPurpose: EventLegalPurpose;
+  linkedTags: string[];
   record: string;
   attendeeInitials: string[];
   attendeeNames: string[];
