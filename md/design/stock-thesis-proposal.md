@@ -1,8 +1,9 @@
 # Stock File — Phase 0 proposal
 
-**Status:** Phase 0 **shipped** (2026-07-10).  
-**UI name:** Stock File (code IDs: Stock Thesis, `stock-theses`, `ST-TSLA-001`).  
-**Pilot ticker:** TSLA (`ST-TSLA-001`)
+> **Superseded for design by** [../matrix/stock-profile-design.md](../matrix/stock-profile-design.md) and [../matrix/v2-engine-architecture.md](../matrix/v2-engine-architecture.md).  
+> Phase 0 implementation history below.
+
+**Status:** Phase 0 **shipped** (2026-07-10).
 
 ---
 

@@ -40,6 +40,7 @@ export interface TradesWorkspaceData {
   }>;
   playbooks: Array<{ id: string; name: string }>;
   suggestedTradeId: string;
+  monthlyLossRoom: number;
   pendingInboxCount: number;
 }
 

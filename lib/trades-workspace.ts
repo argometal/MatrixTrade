@@ -124,22 +124,25 @@ export function buildTradesWorkspaceData(
     recentClosed,
     playbooks: playbooks.map((p) => ({ id: p.id, name: p.name })),
     suggestedTradeId: suggestNextTradeId(trades),
+    monthlyLossRoom: 0,
     pendingInboxCount,
   };
 }
 
 export async function loadTradesWorkspaceData(): Promise<TradesWorkspaceData> {
   const { fetchBridgeInbox } = await import("./bridge");
-  const { getExperiment, getTrades } = await import("./storage");
+  const { getExperiment, getMonthlyRisk, getTrades } = await import("./storage");
   const { getPlaybooks } = await import("./playbooks");
   const { listAllPendingInboxItems } = await import("./trading-inbox-storage");
 
-  const [experiment, trades, playbooks, workerInbox] = await Promise.all([
+  const [experiment, trades, playbooks, workerInbox, monthly] = await Promise.all([
     getExperiment(),
     getTrades(),
     getPlaybooks(),
     fetchBridgeInbox(),
+    getMonthlyRisk(),
   ]);
   const pendingInbox = await listAllPendingInboxItems(workerInbox);
-  return buildTradesWorkspaceData(experiment, trades, playbooks, pendingInbox.length);
+  const data = buildTradesWorkspaceData(experiment, trades, playbooks, pendingInbox.length);
+  return { ...data, monthlyLossRoom: monthly.monthlyLossRoom };
 }

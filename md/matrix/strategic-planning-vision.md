@@ -1,7 +1,8 @@
 # MatrixTrade — Strategic Planning Vision
 
 **Status:** Canonical product identity (2026-07-10).  
-**Purpose:** Where we are going — so humans, chats, and code align on the same mission.
+**V2 engines:** [v2-engine-architecture.md](v2-engine-architecture.md)  
+**Runtime today:** [runtime-truth.md](runtime-truth.md)
 
 ---
 
@@ -129,12 +130,11 @@ See `MATRIX-v2-VISION.md` for folder-level knowledge-base intent; **product miss
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| **0** | Stock File + tactical plans + thesis link | Shipped (2026-07-10) |
-| **1** | Scouting Desk gatekeeper UI; Stock File in UI; mechanics brief for AI | Shipped (2026-07-10) |
-| **2** | Trade links (`stockFileId`, lab ref); inbox `MT-THESIS` / `MT-LAB` blocks | Planned |
-| **3** | Playbook library populated from proven strategies | Ongoing content |
+| **0** | Stock Profile + Scouting + AI fleet | Shipped (partial) |
+| **A** | V2 library — engines, profile, scout | **Done** 2026-07-10 |
+| **B–E** | Code: Evidence → Decision → Probe → Learning | See [v2-engine-architecture.md](v2-engine-architecture.md) |
 
-Recording features (dashboard, monthly risk, review, journal) continue; they **support** the mission but are not the mission statement.
+Recording features continue; they **support** the mission but are not the mission statement.
 
 ---
 

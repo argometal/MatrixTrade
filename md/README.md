@@ -62,7 +62,11 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 |----------|----------|
 | [matrix/README.md](matrix/README.md) | **Index** — reading order, code vs vision map |
 | [matrix/strategic-planning-vision.md](matrix/strategic-planning-vision.md) | **Identity** — Playbook → Stock File → Scouting Desk → Trade |
-| [matrix/ai-engineering.md](matrix/ai-engineering.md) | **AI fleet** — unified context + scout-assessment / file-update |
+| [matrix/v2-engine-architecture.md](matrix/v2-engine-architecture.md) | **V2** — five engines + Probe |
+| [matrix/stock-profile-design.md](matrix/stock-profile-design.md) | Profile dossier — append, light |
+| [matrix/scout-execution-model.md](matrix/scout-execution-model.md) | Scout vs Trade vs Probe |
+| [matrix/runtime-truth.md](matrix/runtime-truth.md) | What works in prod today |
+| [matrix/ai-engineering.md](matrix/ai-engineering.md) | **AI fleet** — unified context + inbox types |
 | [matrix/library-alignment-backlog.md](matrix/library-alignment-backlog.md) | **Pending** — older library docs to align |
 
 ---
