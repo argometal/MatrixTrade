@@ -1,28 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { AppCornerDock } from "@/app/components/AppCornerDock";
 import { ArgusMark } from "@/app/components/ArgusMark";
 
-function usesTradingMobileHeader(pathname: string): boolean {
-  return (
-    pathname !== "/login" &&
-    !pathname.startsWith("/scout-access") &&
-    !pathname.startsWith("/argus")
-  );
-}
-
 export function ArgusCornerEntry() {
-  const pathname = usePathname();
-  if (pathname.startsWith("/argus")) return null;
-
   return (
-    <AppCornerDock
-      bellHref="/inbox"
-      bellLabel="MatrixTrade inbox"
-      mobileOffset={usesTradingMobileHeader(pathname)}
-    >
+    <AppCornerDock bellHref="/inbox" bellLabel="MatrixTrade inbox" placement="matrix">
       <Link
         href="/argus/v2"
         title="ARGUS"

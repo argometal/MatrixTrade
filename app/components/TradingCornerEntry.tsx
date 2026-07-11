@@ -42,7 +42,7 @@ export function TradingCornerEntry() {
   if (!pathname.startsWith("/argus")) return null;
 
   return (
-    <AppCornerDock bellHref="/argus/v2/inbox" bellLabel="Argus inbox" mobileOffset>
+    <AppCornerDock bellHref="/argus/v2/inbox" bellLabel="Argus inbox" placement="argus">
       <Link
         href="/home-preview"
         title="MatrixTrade"

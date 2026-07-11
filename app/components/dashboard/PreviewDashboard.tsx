@@ -102,7 +102,7 @@ export function PreviewDashboard({
                   {data.cycleLabel} · experiment control
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 pr-24 sm:pr-28 lg:pr-0">
+              <div className="flex flex-wrap items-center gap-2">
                 {exchange ? (
                   <MatrixConnectButton
                     connectOptions={{

@@ -3,28 +3,42 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-/** Fixed top-right cluster: inbox bell + cross-app switch icon. */
+export type CornerDockPlacement = "matrix" | "argus" | "floating";
+
+function dockPositionClass(placement: CornerDockPlacement, mobileOffset: boolean): string {
+  if (placement === "matrix") {
+    return "max-lg:bottom-[calc(4.75rem+env(safe-area-inset-bottom))] max-lg:top-auto lg:top-6";
+  }
+  if (placement === "argus") {
+    // Below Argus v2 top bar on desktop — avoids overlapping + / bell / Matrix icons.
+    return "max-lg:bottom-[calc(1rem+env(safe-area-inset-bottom))] max-lg:top-auto lg:top-[4.5rem]";
+  }
+  return mobileOffset
+    ? "top-[calc(7rem+env(safe-area-inset-top))] sm:top-28 lg:top-6"
+    : "top-20 sm:top-6";
+}
+
+/** Fixed corner cluster: inbox bell + cross-app switch icon. */
 export function AppCornerDock({
   bellHref,
   bellLabel,
   bellCount = 0,
+  placement = "floating",
   mobileOffset = true,
   children,
 }: {
   bellHref: string;
   bellLabel: string;
   bellCount?: number;
-  /** Drop below fixed mobile headers and first action rows. */
+  /** matrix = above MT bottom tabs; argus = bottom-right on phone; floating = legacy top offset */
+  placement?: CornerDockPlacement;
+  /** Used only when placement is floating */
   mobileOffset?: boolean;
   children: ReactNode;
 }) {
-  const topClass = mobileOffset
-    ? "top-[calc(7rem+env(safe-area-inset-top))] sm:top-28 lg:top-6"
-    : "top-20 sm:top-6";
-
   return (
     <div
-      className={`fixed right-3 z-[60] flex items-center gap-2 sm:right-4 lg:right-6 ${topClass}`}
+      className={`fixed right-[max(0.75rem,env(safe-area-inset-right))] z-[45] flex items-center gap-2 sm:right-4 lg:right-6 ${dockPositionClass(placement, mobileOffset)}`}
     >
       <Link
         href={bellHref}
