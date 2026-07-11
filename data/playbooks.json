@@ -20,28 +20,24 @@
     "experimentScope": "playbook",
     "experimentHypothesis": "Emphasizing maximum achievable asymmetry (vs waiting for stronger confirmation) improves long-term capital growth across a large statistical sample.",
     "principles": [
+      "Matrix is a statistical engine, not a prediction engine",
       "Maximize long-term expectancy — not highest probability",
       "Evaluate thesis quality AND opportunity quality — neither alone is sufficient",
       "Confirmation has a cost — stronger thesis can mean weaker opportunity",
-      "Maximum achievable R — not maximum theoretical R",
-      "Losses are normal — average winners must outweigh average losers",
       "One trade never validates or invalidates the Playbook"
     ],
     "methodology": {
-      "philosophy": "Matrix does not seek the highest probability trade. Matrix seeks the highest long-term expectancy. The objective is to maximize capital growth through asymmetric opportunities while keeping losses predefined and repeatable. Every trade is one observation within a large statistical sample. No individual trade validates or invalidates the Playbook.",
-      "corePrinciple": "Expected return is determined by both probability of success and reward relative to risk. Increasing probability is not always beneficial if it significantly reduces available Reward:Risk. Matrix evaluates whether the thesis is improving AND whether the remaining opportunity is still economically attractive.",
-      "asymmetryPrinciple": "The preferred trade is not necessarily the safest trade. It is the one offering the greatest achievable asymmetry while maintaining predefined risk, structural validity, and realistic execution. Maximum theoretical R is not the objective — maximum achievable R is.",
-      "confirmationCost": "Confirmation is not free. Waiting may increase entry price, reduce remaining upside, widen effective risk, and lower Reward:Risk. A stronger thesis can coexist with a weaker investment opportunity. The Scouting Desk must evaluate both Thesis Quality and Opportunity Quality.",
-      "opportunityPreservation": "When price reaches a predefined strategic area, delaying execution should be justified by a measurable improvement in expectancy. If additional confirmation is expected to reduce Reward:Risk below Playbook standards, the opportunity may be deteriorating despite increasing confidence.",
-      "statisticalFramework": "Matrix assumes losses are normal. The objective is not avoiding losses — it is ensuring average winners significantly outweigh average losers. A strategy with larger average Reward:Risk can remain profitable despite a modest win rate. Long-term consistency takes precedence over individual outcomes.",
-      "continuousLearning": "Every completed trade contributes information. Winning trades validate execution. Losing trades provide statistical evidence. Neither should independently modify the Playbook. Playbook evolution requires repeated evidence across multiple qualified trades."
+      "philosophy": "Matrix does not seek the highest probability trade. Matrix seeks the highest long-term expectancy. Every trade is one observation within a large statistical sample.",
+      "corePrinciple": "Expected return = probability of success × reward relative to risk. Matrix evaluates whether the thesis is improving AND whether the remaining opportunity is still economically attractive.",
+      "asymmetryPrinciple": "Maximum achievable R — not maximum theoretical R. Predefined risk, structural validity, realistic execution.",
+      "confirmationCost": "Confirmation is not free. Stronger thesis can coexist with weaker investment opportunity. Evaluate Thesis Quality and Opportunity Quality separately.",
+      "opportunityPreservation": "Delay only when expectancy measurably improves — not when certainty alone increases.",
+      "statisticalFramework": "Losses are normal. Average winners must outweigh average losers. Long-term consistency over individual outcomes.",
+      "continuousLearning": "Playbook evolution requires repeated evidence across multiple qualified trades — never one stock.",
+      "matrixIdentity": "Matrix is a statistical engine, not a prediction engine. Every rule must improve long-term expectancy over a large sample — not make an individual trade feel more certain."
     },
     "scoutingDimensions": {
-      "thesisQuality": [
-        "Evidence strength",
-        "Structural validity",
-        "Invalidation status"
-      ],
+      "thesisQuality": ["Evidence strength", "Structural validity", "Invalidation status"],
       "opportunityQuality": [
         "Current Reward:Risk",
         "Remaining upside",
@@ -58,36 +54,91 @@
       "RemainingUpsidePercent",
       "EntryEfficiency"
     ],
-    "decisionPhilosophy": "GO / WAIT / NO — maximize long-term expectancy rather than maximize certainty.",
+    "decisionPhilosophy": "GO / WAIT / NO — maximize long-term expectancy, not certainty.",
+    "executionExperiments": {
+      "strategyDefinition": "Strategy determines whether a trade deserves capital (support entry, breakout, pullback, trend continuation). Strategy must remain constant during an execution experiment.",
+      "executionDefinition": "Execution determines how an approved trade is entered (single limit, layered limits, market). Execution may evolve independently of strategy.",
+      "experimentalRule": "Only one execution variable may be tested at a time. Everything else identical: thesis, stop, targets, position size, Stock File, Playbook.",
+      "noChaseRule": "If all predefined entry limits fail to execute, the trade is cancelled. Do not replace missed execution with a market order. A missed opportunity is preferable to breaking the experiment.",
+      "executionPrinciple": "Execution optimizes expectancy — average entry, R:R, capital efficiency. It must never rescue a poor thesis, justify chasing, or increase emotional discretion.",
+      "layeredEntryHypothesis": "Systematic layered limit placement improves average R:R without materially reducing participation — compared with single market or single limit entries.",
+      "metrics": [
+        "AverageEntryPrice",
+        "AverageImprovementVsFirstLimit",
+        "FillPercent",
+        "FullFillPercent",
+        "PartialFillPercent",
+        "MissedTradePercent",
+        "AverageRR",
+        "TradeOutcome",
+        "Expectancy"
+      ]
+    },
     "checklist": [
       "Thesis quality scored independently from opportunity quality",
-      "Current R:R meets minimum (Stock File or Playbook)",
-      "Estimated R:R after confirmation still acceptable if waiting",
-      "Predefined risk and structural stop — no manufactured R:R",
-      "Delay justified by measurable expectancy gain, not comfort",
-      "Outcome recorded as one statistical observation"
+      "Current R:R meets minimum",
+      "One execution variable only if running an execution experiment",
+      "No chase if all limits miss",
+      "Outcome = one statistical observation"
+    ]
+  },
+  {
+    "id": "layered-entry",
+    "name": "Layered Entry (Entry Optimization)",
+    "status": "TESTING",
+    "description": "Improve average entry via predefined limit ladder — thesis, stop, targets, and size unchanged.",
+    "appliesMethodology": "expectancy-asymmetry",
+    "experimentScope": "playbook",
+    "experimentHypothesis": "Layered limit entries improve long-term expectancy vs single limit entries — measured by average entry improvement, fill rate, and net expectancy after 20–30 trades.",
+    "principles": [
+      "Entry optimization — not scaling after confirmation",
+      "Thesis already accepted; improve average entry without changing risk plan",
+      "Capital 100% split across predefined limits (e.g. 40% / 35% / 25%)",
+      "No chase — highest limit missed = trade over",
+      "Experiment asks: does systematic limit placement improve R:R without killing participation?"
+    ],
+    "executionExperiments": {
+      "layeredEntryHypothesis": "Can systematic limit placement improve average R:R without materially reducing participation?",
+      "noChaseRule": "Once the highest planned limit is missed, the trade is over. No market order. Emotion must not replace the plan.",
+      "metrics": [
+        "AverageEntryPrice",
+        "AverageImprovementVsFirstLimit",
+        "FillPercent",
+        "FullFillPercent",
+        "PartialFillPercent",
+        "MissedTradePercent",
+        "AverageRR",
+        "TradeOutcome",
+        "Expectancy"
+      ]
+    },
+    "checklist": [
+      "Thesis approved — strategy locked",
+      "Limit ladder defined with allocation % (sum = 100%)",
+      "Stop, targets, total position size unchanged",
+      "No chase rule acknowledged",
+      "Record fill outcome: none / partial / full",
+      "Compare average entry vs first limit"
     ]
   },
   {
     "id": "asymmetric-support-entry",
     "name": "Asymmetric Support Entry",
     "status": "TESTING",
-    "description": "Tactical application of Expectancy & Asymmetry at structural support zones.",
+    "description": "Strategy: enter near structural support. Pair with layered-entry execution when optimizing fills.",
     "appliesMethodology": "expectancy-asymmetry",
     "experimentScope": "playbook",
     "principles": [
-      "Apply expectancy-asymmetry framework at support zones",
-      "Location evidence may justify probe before full confirmation",
+      "Strategy = support zone entry (constant during execution experiments)",
+      "Use layered-entry playbook for execution optimization",
       "Setup stop ≠ thesis invalidation",
-      "Single entry when no meaningful add levels exist"
+      "Location evidence may justify GO before full confirmation — if opportunity quality holds"
     ],
     "checklist": [
-      "Linked to expectancy-asymmetry methodology",
-      "Stock File zone defined with minimum R:R",
-      "Price inside or near planned strategic zone",
+      "Stock File zone + minimum R:R defined",
       "Thesis invalidation not breached",
-      "Current R:R meets minimum",
-      "Setup stop defined — acceptable dollar loss if stopped"
+      "Execution method chosen (single_limit or layered_limits)",
+      "If layered: limits + allocations predefined, no-chase rule set"
     ]
   }
 ]

@@ -1,4 +1,5 @@
 import type { ScoutDecision, ScoutLifecycleStatus } from "./scout-decision-types";
+import type { LayeredEntryPlan } from "./layered-entry-types";
 import type { Probe } from "./scout-probe-types";
 
 export type PlanStatus =
@@ -100,8 +101,12 @@ export interface TradePlan {
   decisionHistory?: ScoutDecision[];
   /** Derived scout lifecycle — updated on decision/probe changes. */
   scoutLifecycle?: ScoutLifecycleStatus;
-  /** Probe authorization artifact — no auto trade creation. */
+  /** Probe authorization artifact — legacy; prefer layeredEntry for entry optimization. */
   probe?: Probe;
+  /** Layered limit entry plan — entry optimization without changing thesis/stop/targets/size. */
+  layeredEntry?: LayeredEntryPlan;
+  /** Which execution experiment is active on this scout (e.g. layered_limits). */
+  executionMethod?: LayeredEntryPlan["executionMethod"];
   createdAt: string;
   updatedAt: string;
 }

@@ -3,6 +3,8 @@
 **Status:** Canonical design (2026-07-10).  
 **Purpose:** One clear picture of what a **Scout** is vs **Trade** vs **Probe** — today and V2.
 
+> **2026-07-11 — Entry optimization:** For improving average entry on an **already-approved** thesis, prefer **Layered Entry** (execution experiment) over Probe. Probe remains in the model for scaling-after-confirmation; layered limits isolate one execution variable with a hard no-chase rule. See [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md).
+
 ---
 
 ## The question you asked

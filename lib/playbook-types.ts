@@ -12,6 +12,19 @@ export interface PlaybookMethodology {
   opportunityPreservation?: string;
   statisticalFramework?: string;
   continuousLearning?: string;
+  /** Matrix identity — statistical engine, not prediction engine. */
+  matrixIdentity?: string;
+}
+
+/** Strategy vs execution — one execution variable per experiment. */
+export interface PlaybookExecutionExperiments {
+  strategyDefinition?: string;
+  executionDefinition?: string;
+  experimentalRule?: string;
+  noChaseRule?: string;
+  executionPrinciple?: string;
+  layeredEntryHypothesis?: string;
+  metrics?: string[];
 }
 
 export interface PlaybookScoutingDimensions {
@@ -29,6 +42,8 @@ export interface Playbook {
   principles?: string[];
   /** Full expectancy & asymmetry framework — applies to every setup using this playbook. */
   methodology?: PlaybookMethodology;
+  /** Execution experiments — strategy constant, execution variable isolated. */
+  executionExperiments?: PlaybookExecutionExperiments;
   /** Independent dimensions the Scouting Desk must score. */
   scoutingDimensions?: PlaybookScoutingDimensions;
   /** Metric names (values come from supplied prices only). */

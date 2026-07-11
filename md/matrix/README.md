@@ -13,6 +13,7 @@
 | 3 | [stock-profile-design.md](stock-profile-design.md) | Suspect dossier — append, light, chat patches |
 | 4 | [scout-execution-model.md](scout-execution-model.md) | Scout vs Trade vs Probe |
 | 4a | [asymmetric-entry-confirmation-cost.md](asymmetric-entry-confirmation-cost.md) | **Expectancy & asymmetry** — Playbook layer only |
+| 4a2 | [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md) | **Layered entry** — strategy vs execution, no chase |
 | 4b | [monday-nflx-experiment.md](monday-nflx-experiment.md) | First live test — ops note, not Stock File |
 | 4b | [adr-0001-trade-lifecycle-v1.md](adr-0001-trade-lifecycle-v1.md) | **ADR** — dual financial + analytical lifecycle |
 | 4c | [external-ai-policy.md](external-ai-policy.md) | **No vendor brands** — external AI + Apply-only mutations |
@@ -28,7 +29,7 @@
 
 ## One sentence
 
-> Expectation database + decision-learning architecture — Playbook → Evidence → Stock Profile → Scout/Decision → Execution (incl. Probe) → Learning.
+> Expectation database + decision-learning architecture — Playbook → Evidence → Stock Profile → Scout/Decision → Execution (layered entry experiments; Probe legacy) → Learning.
 
 Recording trades is necessary; **not the mission**.
 

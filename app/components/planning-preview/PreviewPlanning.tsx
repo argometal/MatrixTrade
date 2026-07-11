@@ -24,6 +24,7 @@ import {
 } from "@/lib/scout-decision-types";
 import { formatProbeRiskMessage } from "@/lib/scout-probe";
 import { PROBE_STATUS_LABELS } from "@/lib/scout-probe-types";
+import { LAYERED_ENTRY_STATUS_LABELS } from "@/lib/layered-entry-types";
 import {
   isActiveStockThesisStatus,
   STOCK_THESIS_STATUS_LABELS,
@@ -614,6 +615,48 @@ export function PreviewPlanning({
                   No stored decision — showing computed verdict from Stock File status.
                 </p>
               )}
+
+              {selectedPlan.layeredEntry ? (
+                <div className="mt-4 rounded-xl border border-teal-500/20 bg-teal-950/10 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-medium text-teal-200">Layered entry</p>
+                    <span className="rounded-full bg-teal-500/20 px-2 py-0.5 text-xs text-teal-300">
+                      {LAYERED_ENTRY_STATUS_LABELS[selectedPlan.layeredEntry.status]}
+                    </span>
+                    <span className="text-xs text-zinc-500">
+                      {selectedPlan.layeredEntry.executionMethod.replace(/_/g, " ")}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-xs text-amber-200/80">
+                    No chase — all limits miss = trade cancelled
+                  </p>
+                  <ul className="mt-3 space-y-1 text-sm text-zinc-400">
+                    {selectedPlan.layeredEntry.limits.map((limit, index) => (
+                      <li key={`${limit.price}-${index}`} className="flex justify-between gap-4">
+                        <span>
+                          Limit {index + 1}: {limit.price}
+                        </span>
+                        <span className="tabular-nums text-zinc-500">
+                          {limit.allocationPercent}%
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {selectedPlan.layeredEntry.averageEntry !== undefined ? (
+                    <p className="mt-2 text-xs text-zinc-400">
+                      Average entry: {selectedPlan.layeredEntry.averageEntry}
+                      {selectedPlan.layeredEntry.entryImprovementVsFirst !== undefined
+                        ? ` · vs first: ${selectedPlan.layeredEntry.entryImprovementVsFirst >= 0 ? "+" : ""}${selectedPlan.layeredEntry.entryImprovementVsFirst}`
+                        : ""}
+                    </p>
+                  ) : null}
+                  {selectedPlan.layeredEntry.fillPercent !== undefined ? (
+                    <p className="text-xs text-zinc-500">
+                      Fill: {selectedPlan.layeredEntry.fillPercent}%
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
 
               {selectedPlan.probe?.enabled ? (
                 <div className="mt-4 rounded-xl border border-violet-500/20 bg-violet-950/10 p-4">

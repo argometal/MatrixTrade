@@ -2,7 +2,12 @@ import Link from "next/link";
 import type { PlaybookStats } from "@/lib/analytics";
 import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
-import { PLAYBOOK_STATUS_LABELS, type Playbook, type PlaybookMethodology } from "@/lib/playbook-types";
+import {
+  PLAYBOOK_STATUS_LABELS,
+  type Playbook,
+  type PlaybookExecutionExperiments,
+  type PlaybookMethodology,
+} from "@/lib/playbook-types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
 function formatUsd(value: number): string {
@@ -49,8 +54,38 @@ const METHODOLOGY_SECTIONS: {
   { key: "opportunityPreservation", label: "Opportunity preservation" },
   { key: "statisticalFramework", label: "Statistical framework" },
   { key: "continuousLearning", label: "Continuous learning" },
+  { key: "matrixIdentity", label: "Matrix identity" },
 ];
 
+function PlaybookExecutionPanel({ execution }: { execution: PlaybookExecutionExperiments }) {
+  const blocks: { key: Exclude<keyof PlaybookExecutionExperiments, "metrics">; label: string }[] = [
+    { key: "strategyDefinition", label: "Strategy (constant)" },
+    { key: "executionDefinition", label: "Execution (variable)" },
+    { key: "experimentalRule", label: "Experimental rule" },
+    { key: "layeredEntryHypothesis", label: "Layered entry hypothesis" },
+    { key: "executionPrinciple", label: "Execution principle" },
+    { key: "noChaseRule", label: "No chase rule" },
+  ];
+  const sections = blocks.filter((b) => execution[b.key]?.trim());
+  if (sections.length === 0 && !execution.metrics?.length) return null;
+
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-violet-500/20 bg-violet-950/20 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-violet-400">
+        Execution experiments
+      </p>
+      {sections.map(({ key, label }) => (
+        <div key={key}>
+          <p className="text-xs font-medium text-violet-300/90">{label}</p>
+          <p className="mt-1 text-sm leading-relaxed text-zinc-300">{execution[key]}</p>
+        </div>
+      ))}
+      {execution.metrics?.length ? (
+        <p className="text-xs text-zinc-500">Metrics: {execution.metrics.join(" · ")}</p>
+      ) : null}
+    </div>
+  );
+}
 function PlaybookMethodologyPanel({ methodology }: { methodology: PlaybookMethodology }) {
   const sections = METHODOLOGY_SECTIONS.filter((s) => methodology[s.key]?.trim());
   if (sections.length === 0) return null;
@@ -177,6 +212,10 @@ export function PreviewPlaybook({
 
                     {row.playbook?.methodology ? (
                       <PlaybookMethodologyPanel methodology={row.playbook.methodology} />
+                    ) : null}
+
+                    {row.playbook?.executionExperiments ? (
+                      <PlaybookExecutionPanel execution={row.playbook.executionExperiments} />
                     ) : null}
 
                     {row.playbook?.scoutingDimensions ? (

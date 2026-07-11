@@ -1,5 +1,6 @@
 import type { PlanOutcome, TradePlan } from "../plan-types";
 import { PLAN_TIMEFRAMES, type PlanTimeframe } from "../plan-types";
+import type { LayeredEntryPlan } from "../layered-entry-types";
 import type { ScoutDecision, ScoutLifecycleStatus } from "../scout-decision-types";
 import type { Probe } from "../scout-probe-types";
 
@@ -26,6 +27,8 @@ interface PlanRow {
   decision_history: ScoutDecision[] | null;
   scout_lifecycle: ScoutLifecycleStatus | null;
   probe: Probe | null;
+  layered_entry: LayeredEntryPlan | null;
+  execution_method: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -62,6 +65,8 @@ export function planRowToPlan(row: PlanRow): TradePlan {
     decisionHistory: row.decision_history ?? undefined,
     scoutLifecycle: row.scout_lifecycle ?? undefined,
     probe: row.probe ?? undefined,
+    layeredEntry: row.layered_entry ?? undefined,
+    executionMethod: (row.execution_method as LayeredEntryPlan["executionMethod"]) ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -91,6 +96,8 @@ export function planToRow(plan: TradePlan): PlanRow {
     decision_history: plan.decisionHistory ?? [],
     scout_lifecycle: plan.scoutLifecycle ?? null,
     probe: plan.probe ?? null,
+    layered_entry: plan.layeredEntry ?? null,
+    execution_method: plan.executionMethod ?? null,
     created_at: plan.createdAt,
     updated_at: plan.updatedAt,
   };

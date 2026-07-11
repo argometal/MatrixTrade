@@ -81,6 +81,12 @@ export function buildMatrixMechanicsBrief(): string {
     "Record whether original targets or invalidation were reached; classify loss after study — not at stop time.",
     "Do not reopen or modify a trade automatically. New entry: Stock File → Scouting Desk → Trade again.",
     "",
+    "EXECUTION EXPERIMENTS",
+    "Strategy (does trade deserve capital?) must stay constant. Execution (how to enter?) may vary.",
+    "Preferred: Layered Entry / Entry Optimization — not Probe (legacy). Thesis accepted; improve average entry via limit ladder.",
+    "Only one execution variable per experiment. No chase: all limits miss = trade cancelled, no market order.",
+    "Playbooks: expectancy-asymmetry (framework), layered-entry (execution hypothesis).",
+    "",
     "EXPORT ORDER (when user pastes context)",
     "1. MATRIX MECHANICS (this block)",
     "2. PLAYBOOK — active method if any",
@@ -139,6 +145,17 @@ export function formatPlaybookTrainingSection(playbooks: Playbook[]): string {
     }
     if (pb.scoutingDimensions?.opportunityQuality?.length) {
       lines.push(`  opportunity_quality_dims:${pb.scoutingDimensions.opportunityQuality.join("|")}`);
+    }
+    if (pb.executionExperiments?.layeredEntryHypothesis) {
+      lines.push(
+        `  execution_hypothesis:${pb.executionExperiments.layeredEntryHypothesis.replace(/\s+/g, " ").slice(0, 200)}`
+      );
+    }
+    if (pb.executionExperiments?.noChaseRule) {
+      lines.push(`  no_chase:${pb.executionExperiments.noChaseRule.replace(/\s+/g, " ").slice(0, 160)}`);
+    }
+    if (pb.methodology?.matrixIdentity) {
+      lines.push(`  matrix_identity:${pb.methodology.matrixIdentity.replace(/\s+/g, " ").slice(0, 200)}`);
     }
   }
   return lines.join("\n");
