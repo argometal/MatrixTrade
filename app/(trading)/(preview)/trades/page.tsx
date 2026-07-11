@@ -1,23 +1,78 @@
 import { Suspense } from "react";
 import { PreviewTradesHub } from "@/app/components/trades-preview/PreviewTradesHub";
+import { listAiNotes } from "@/lib/ai-notes";
+import { getBridgeConfig } from "@/lib/bridge";
 import { loadReviewPageData } from "@/lib/load-review-page-data";
+import { getPlans } from "@/lib/plans";
 import { getPlaybooks } from "@/lib/playbooks";
-import { getExperiment, getTrades } from "@/lib/storage";
+import { getSetups } from "@/lib/setups";
+import { getSnapshotRevisionState } from "@/lib/snapshot-revision-read";
+import { tradesListSnapshotItems } from "@/lib/snapshot-packages";
+import { getStockTheses } from "@/lib/stock-theses";
+import { checkWorkerReachable } from "@/lib/system-status";
+import { getExperiment, getMonthlyRisk, getTrades } from "@/lib/storage";
+import { getTradesStoreMode } from "@/lib/trades-json";
+import { resolveInboxBackendLabel } from "@/lib/trading-inbox-submit";
+import { getSyncHistory } from "@/lib/sync-history";
 
 export default async function TradesPage({
   searchParams,
 }: {
   searchParams: Promise<{ tab?: string }>;
 }) {
-  const [trades, experiment, playbooks, reviewData, params] = await Promise.all([
+  const bridge = getBridgeConfig();
+  const [
+    trades,
+    experiment,
+    monthly,
+    setups,
+    playbooks,
+    plans,
+    stockTheses,
+    revision,
+    workerStatus,
+    syncHistory,
+    aiNotes,
+    reviewData,
+    params,
+  ] = await Promise.all([
     getTrades(),
     getExperiment(),
+    getMonthlyRisk(),
+    getSetups(),
     getPlaybooks(),
+    getPlans(),
+    getStockTheses(),
+    getSnapshotRevisionState(),
+    checkWorkerReachable(),
+    getSyncHistory(),
+    listAiNotes(20),
     loadReviewPageData(),
     searchParams,
   ]);
 
   const tab = params.tab === "review" ? "review" : "all";
+  const snapshotRevision = workerStatus.snapshotRevision ?? revision?.revision ?? 0;
+  const lastSync = syncHistory.find((e) => e.ok);
+  const systemNotes = {
+    tradesStore: getTradesStoreMode(),
+    bridgeConfigured: bridge.configured,
+    workerReachable: workerStatus.reachable,
+    inboxBackend: resolveInboxBackendLabel(),
+    lastSyncAt: lastSync?.at ?? null,
+  };
+  const snapshotItems = tradesListSnapshotItems({
+    experiment,
+    monthly,
+    trades,
+    setups,
+    playbooks,
+    snapshotRevision,
+    priorAiNotes: aiNotes,
+    plans,
+    stockTheses,
+    systemNotes,
+  });
 
   return (
     <Suspense fallback={null}>
@@ -33,6 +88,7 @@ export default async function TradesPage({
           needsPlaybook: reviewData.needsPlaybook,
           reviewedTrades: reviewData.reviewedTrades,
         }}
+        snapshotItems={snapshotItems}
       />
     </Suspense>
   );

@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { ConnectPageContent } from "@/app/components/ConnectPageContent";
 import { CopyUrlButton } from "@/app/components/CopyUrlButton";
+import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { SystemBridgePanel } from "@/app/components/system/SystemBridgePanel";
 import { SystemRulesPanel } from "@/app/components/system/SystemRulesPanel";
 import { SystemSection, SystemRow, StatusBadge } from "@/app/components/system/SystemSection";
 import type { SystemPageData } from "@/lib/system-page-data";
+import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
 const SECTION_LINKS = [
   { id: "rules", label: "Rules" },
@@ -18,10 +21,12 @@ export function PreviewSystem({
   data,
   syncOk,
   syncError,
+  mechanicsSnapshot,
 }: {
   data: SystemPageData;
   syncOk?: string;
   syncError?: string;
+  mechanicsSnapshot: SnapshotMenuItem[];
 }) {
   const {
     bridge,
@@ -56,7 +61,13 @@ export function PreviewSystem({
                 Bridge sync, inbox backend, vault paths, and deployment status.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <SnapshotButton
+                title="Matrix Mechanics snapshot"
+                description="Full rules, block types, Apply gate — paste once per AI session"
+                items={mechanicsSnapshot}
+              />
+              <ImportAiUpdateLink variant="compact" />
               <Link
                 href="/home-preview?panel=assistant"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"

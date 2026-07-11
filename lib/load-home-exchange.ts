@@ -7,6 +7,7 @@ import { getPlaybooks } from "@/lib/playbooks";
 import { getStockTheses } from "@/lib/stock-theses";
 import { getSetups } from "@/lib/setups";
 import { getSnapshotRevisionState } from "@/lib/snapshot-revision-read";
+import { dashboardSnapshotItems } from "@/lib/snapshot-packages";
 import { getSyncHistory } from "@/lib/sync-history";
 import { checkWorkerReachable } from "@/lib/system-status";
 import { getExperiment, getMonthlyRisk, getTrades } from "@/lib/storage";
@@ -71,10 +72,32 @@ export async function loadHomeExchangePageData() {
   const pendingInbox = await listPendingInboxForRuntime(workerInbox);
   const overview = buildAiBridgeOverview(experiment, trades, playbooks);
 
+  const systemNotes = {
+    tradesStore: getTradesStoreMode(),
+    bridgeConfigured: bridge.configured,
+    workerReachable: workerStatus.reachable,
+    inboxBackend: resolveInboxBackendLabel(),
+    lastSyncAt: lastSync?.at ?? null,
+  };
+
+  const dashboardSnapshots = dashboardSnapshotItems({
+    experiment,
+    monthly,
+    trades,
+    setups,
+    playbooks,
+    snapshotRevision,
+    priorAiNotes: aiNotes,
+    plans,
+    stockTheses,
+    systemNotes,
+  });
+
   return {
     snapshotText,
     overview,
     pendingInboxCount: pendingInbox.length,
     cycleLabel: `${experiment.closedTrades} closed`,
+    dashboardSnapshots,
   };
 }

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { PlaybookStats } from "@/lib/analytics";
+import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { PLAYBOOK_STATUS_LABELS } from "@/lib/playbook-types";
+import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
 function formatUsd(value: number): string {
   const sign = value >= 0 ? "+" : "";
@@ -35,7 +38,13 @@ const statusStyles: Record<string, string> = {
   RETIRED: "bg-zinc-700/50 text-zinc-400",
 };
 
-export function PreviewPlaybook({ stats }: { stats: PlaybookStats[] }) {
+export function PreviewPlaybook({
+  stats,
+  snapshotItems,
+}: {
+  stats: PlaybookStats[];
+  snapshotItems: SnapshotMenuItem[];
+}) {
   return (
     <div className="flex h-full min-h-0 w-full overflow-hidden">
       <div className="min-w-0 flex-1 overflow-y-auto">
@@ -47,7 +56,13 @@ export function PreviewPlaybook({ stats }: { stats: PlaybookStats[] }) {
                 Strategy laboratory — assign trades manually, measure what works.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <SnapshotButton
+                title="Playbook snapshot"
+                description="Strategies, checklists, P/L and win rate per playbook"
+                items={snapshotItems}
+              />
+              <ImportAiUpdateLink variant="compact" />
               <Link
                 href="/trades-preview"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"

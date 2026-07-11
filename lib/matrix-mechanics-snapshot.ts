@@ -1,0 +1,57 @@
+import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
+import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
+
+/** Bump when mechanics snapshot content changes materially. */
+export const MATRIX_MECHANICS_REVISION = 1;
+
+/**
+ * Full Matrix Mechanics export — paste once per external AI session to train rules.
+ * Window snapshots use the brief prefix automatically; this is the expanded constitution.
+ */
+export function buildMatrixMechanicsSnapshot(): string {
+  return [
+    "=== MATRIX MECHANICS SNAPSHOT ===",
+    `mechanics_revision:${MATRIX_MECHANICS_REVISION}`,
+    "",
+    buildMatrixMechanicsBrief(),
+    "",
+    "=== APPLY GATE (non-negotiable) ===",
+    "External AI proposes. Matrix never auto-writes.",
+    "Flow: Copy snapshot → AI returns ONE JSON block → Import in Dashboard or Inbox → human Apply → Supabase.",
+    "",
+    "=== AI BLOCK TYPES ===",
+    "Scouting layer:",
+    "- stock-case-create — new Stock Profile (+ optional initialScout)",
+    "- evidence-add — append market evidence row",
+    "- file-update — change profile (status, hypothesis, levels, thesis, notes)",
+    "- scout-assessment — validate dossier (reasons + challenges required)",
+    "- decision-update — scout verdict on PLAN (go|wait|probe|no)",
+    "",
+    "Execution layer:",
+    "- trade-proposal — new trade",
+    "- trade-update — change stop, target, shares, status, notes, etc. (primary mutation)",
+    "- trade-close — close at exit price",
+    "- trade-review — post-close quality + mistakes + lesson",
+    "- analysis — qualitative notes on a trade",
+    "",
+    "Method layer:",
+    "- playbook-create / playbook-update",
+    "",
+    "=== COMMON AI ERRORS TO AVOID ===",
+    "- Inventing trades, prices, or P/L not in the snapshot",
+    "- Skipping Stock Profile before proposing entry",
+    "- Overriding invalidation or minimum R:R without explicit user approval",
+    "- Returning multiple blocks or markdown without a single JSON block",
+    "- Using curly/smart quotes in JSON (use ASCII double quotes only)",
+    "- Applying changes silently — always return a block for Inbox Apply",
+    "",
+    "=== LAYER OWNERSHIP ===",
+    "- Playbook (HOW): reusable method, checklist, horizons",
+    "- Stock Profile (WHO): ticker thesis, levels, invalidation, evidence",
+    "- Scout PLAN: tactical window linked to profile + playbook",
+    "- Trade: execution record — mutate via trade-update / trade-close only",
+    "",
+    "=== REQUEST ===",
+    DEFAULT_AI_BLOCK_REQUEST.trim(),
+  ].join("\n");
+}

@@ -41,7 +41,7 @@ export interface Trade {
   reviewedAt?: string;
   lesson?: string;
   actionItem?: string;
-  /** Qualitative — user or ChatGPT via import */
+  /** Qualitative — user or external AI via import */
   thesis?: string;
   psychology?: string;
   lessons?: string;

@@ -8,10 +8,22 @@ export type PageHelpId =
   | "playbook"
   | "scouting";
 
+export type PageHelpCopyButton = {
+  button: string;
+  copies: string;
+};
+
 export type PageHelpContent = {
   title: string;
   summary: string;
   steps: string[];
+  /** Collapsed tab + section labels (defaults: Spanish). */
+  panelLabel?: string;
+  workflowTitle?: string;
+  /** Optional design principles — shown before workflow steps. */
+  principles?: string[];
+  /** Snapshot / copy buttons reference table. */
+  copyButtons?: PageHelpCopyButton[];
 };
 
 export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
@@ -22,7 +34,8 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
     steps: [
       "Revisa las métricas del día y el margen de pérdida mensual antes de operar.",
       "Atiende los ítems en «Needs attention» (reviews, inbox, playbooks).",
-      "Usa «Copy Snapshot» para dar contexto a tu asistente IA.",
+      "Usa «Dashboard snapshot» para dar contexto a tu asistente IA.",
+      "Importa bloques JSON con «Import AI update» → Inbox → Apply.",
       "Expande «Asistente IA» para copiar solicitudes e importar bloques AI.",
       "Nada se escribe en Supabase hasta que apliques en Inbox.",
     ],
@@ -55,7 +68,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
       "Capa de ejecución: analiza en tu IA, importa un trade-proposal y aplica en Inbox.",
     steps: [
       "Opcional: selecciona un prospecto del Scouting Desk.",
-      "Copia el paquete boot → pégalo en ChatGPT/Claude para sizing y chequeo emocional.",
+      "Copy the boot package → paste in your external AI → final sizing and emotion check.",
       "Pide un bloque JSON trade-proposal cuando estés listo.",
       "Importa el bloque aquí o desde el Asistente IA del Dashboard.",
       "Revisa en Inbox → Apply. Human gate obligatorio antes de Supabase.",
@@ -75,13 +88,35 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
   },
   planning: {
     title: "Scouting Desk",
+    panelLabel: "Help",
+    workflowTitle: "Workflow",
     summary:
-      "Planificación pre-trade: playbook (cómo), stock case (quién) y decisión go/wait/no.",
+      "Read-only command center. You do not analyze here — you visualize state, export a snapshot to your AI, discuss, then bring structured proposals back. Matrix stores outcomes after you Apply in Inbox.",
+    principles: [
+      "Visualization only — external AI does analysis; Matrix stores after Apply.",
+      "Thesis lives on Stock Profile (WHO). Playbook is the method (HOW).",
+      "Trade/scout changes: AI blocks → Inbox → Apply (trade-update, file-update, decision-update).",
+    ],
+    copyButtons: [
+      {
+        button: "Scout snapshot ▾",
+        copies:
+          "Dropdown: Scout desk overview (all profiles + scouts + monthly room), focused ticker, focused scout plan, and optional Matrix Mechanics snapshot.",
+      },
+      {
+        button: "{TICKER} snapshot",
+        copies:
+          "On each stock file card: dossier for that ticker (profile + evidence). Open Stock Profile for linked scouts and full dossier.",
+      },
+    ],
     steps: [
-      "Crea o edita planes vinculados a playbooks y stock theses.",
-      "Copia el paquete de scouting → IA → importa scout-assessment o file-update.",
-      "Apply en Inbox actualiza el caso o la decisión.",
-      "Los prospectos listos aparecen en New Trade para ejecución.",
+      "Pick a ticker in Scouting summary (if you have more than one active stock file).",
+      "Copy the snapshot slice that matches your question — desk overview vs one ticker vs one scout.",
+      "Paste into your external AI. Discuss charts, thesis, go / wait / no. Ask for one JSON block (scout-assessment, file-update, or decision-update).",
+      "Return: Import AI update → Dashboard assistant or Inbox → Apply.",
+      "Review the proposal → Apply. Nothing writes to Supabase until you Apply.",
+      "Trade changes (stop, target, close): same path — ask AI for trade-update or trade-close, then Apply in Inbox.",
+      "Per-ticker: use the card snapshot button or open Stock Profile for the full dossier + evidence.",
     ],
   },
   playbook: {
@@ -97,10 +132,12 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
   },
   scouting: {
     title: "Scouting",
-    summary: "Alias de Scouting Desk — evaluación de oportunidades antes de abrir trade.",
+    panelLabel: "Help",
+    workflowTitle: "Workflow",
+    summary: "Same as Scouting Desk — see planning help for snapshot → AI → Inbox flow.",
     steps: [
-      "Mismo flujo que Scouting Desk: stock case + decisión + riesgo.",
-      "Usa el Asistente IA del Dashboard para importar evaluaciones.",
+      "Visualization only; analysis happens in your external AI.",
+      "Scout snapshot ▾ from header → paste in external AI → Import AI update → Apply.",
     ],
   },
 };

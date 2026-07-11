@@ -135,7 +135,7 @@ Do **not** put 20 top-level fields on Scout in pass 1 — nest under `decision` 
 ## AI loop (unchanged fleet)
 
 ```text
-Copy scouting package → ChatGPT → scout-assessment | file-update
+Copy scouting context → paste in external AI → import scout-assessment | file-update
 → Inbox Apply → append to profile notes / patch hypothesis
 ```
 

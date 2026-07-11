@@ -11,9 +11,9 @@ One communication engine for **Scouting Desk** and **Assistant** (`/exchange`). 
 
 ```text
 Copy AI package (mechanics + context + REQUEST)
-  → paste in ChatGPT
+  → paste in external AI
   → receive ONE AI Block (JSON)
-  → Import in Assistant or Inbox
+  → Import in Dashboard Assistant or Inbox
   → human Apply
   → Stock File / scout / trade updated
 ```
@@ -62,16 +62,18 @@ MATRIX MECHANICS → PLAYBOOK → STOCK FILE → SCOUTING STATE → REQUEST
 | `decision-update` | Scout decision on PLAN — verdict, confidence, risks, challenges | Appends `ScoutDecision` on plan; probe if verdict=probe |
 | `file-update` | Propose changes to Stock File | Updates status, hypothesis, notes (version++) |
 
-### Trade layer (frozen until scouting loop proven)
+### Trade layer
 
 | Type | Purpose |
 |------|---------|
 | `trade-proposal` | New trade |
-| `trade-update` | Edit trade |
+| `trade-update` | Edit trade (stop, target, shares, status, notes, etc.) — **primary mutation path** |
 | `trade-close` | Close trade |
 | `trade-review` | Post-close review |
 | `analysis` | Notes on trade |
 | `playbook-create` / `playbook-update` | Playbook CRUD |
+
+**UI rule:** Prefer `trade-update` / `trade-close` from external AI over per-field buttons in the app. See [external-ai-policy.md](external-ai-policy.md).
 
 ---
 

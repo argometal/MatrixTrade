@@ -20,6 +20,7 @@ export default async function HomePreviewPage() {
           pendingInboxCount: exchange.pendingInboxCount,
           cycleLabel: exchange.cycleLabel,
           importAction: importAiBlockAction,
+          dashboardSnapshots: exchange.dashboardSnapshots,
         }}
       />
     </Suspense>

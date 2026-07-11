@@ -113,7 +113,7 @@ export function PreviewNewStockCase() {
           <section className="rounded-2xl border border-violet-500/40 bg-violet-950/15 p-5">
             <h2 className="text-sm font-semibold text-violet-200">1 · Start in your AI</h2>
             <p className="mt-1 text-xs text-zinc-500">
-              Copy the boot package → paste in ChatGPT / Claude → discuss charts, photos, thesis. Ask for
+              Copy the boot package → paste in your external AI → discuss charts, photos, thesis. Ask for
               one JSON block when ready.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">

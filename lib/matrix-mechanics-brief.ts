@@ -64,7 +64,7 @@ export function buildMatrixMechanicsBrief(): string {
   ].join("\n");
 }
 
-function formatPlaybookTrainingSection(playbooks: Playbook[]): string {
+export function formatPlaybookTrainingSection(playbooks: Playbook[]): string {
   const lines = ["=== PLAYBOOK ==="];
   if (playbooks.length === 0) {
     lines.push("(none loaded)");

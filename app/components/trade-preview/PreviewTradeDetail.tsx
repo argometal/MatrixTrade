@@ -4,6 +4,8 @@ import {
   openTradeAction,
   updateTradeMetaAction,
 } from "@/app/actions";
+import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { calculateTradeResult } from "@/lib/calculate";
 import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
 import type { Playbook } from "@/lib/playbook-types";
@@ -19,6 +21,7 @@ import {
 } from "@/lib/review";
 import type { Experiment, Trade } from "@/lib/types";
 import type { MonthlyRisk } from "@/lib/monthly-risk";
+import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import { formatUsd, pnlTone } from "@/app/components/legacy/LegacyTradeDetailPage";
 
 const inputClass =
@@ -31,6 +34,7 @@ export function PreviewTradeDetail({
   setups,
   playbooks,
   metaOk,
+  snapshotItems,
 }: {
   trade: Trade;
   experiment: Experiment;
@@ -38,6 +42,7 @@ export function PreviewTradeDetail({
   setups: Setup[];
   playbooks: Playbook[];
   metaOk?: string;
+  snapshotItems: SnapshotMenuItem[];
 }) {
   const result = calculateTradeResult(trade);
   const rMultiple = computeRMultiple(trade);
@@ -51,16 +56,28 @@ export function PreviewTradeDetail({
     <div className="flex h-full min-h-0 w-full overflow-hidden">
       <div className="min-w-0 flex-1 overflow-y-auto">
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
-          <Link href="/trades" className="text-sm text-zinc-500 hover:text-violet-400">
-            ← Trades
-          </Link>
-          <h1 className="mt-2 text-xl font-semibold text-zinc-100">
-            {trade.id} · {trade.ticker}
-          </h1>
-          <p className="mt-0.5 text-sm capitalize text-zinc-500">Status: {trade.status}</p>
-          {trade.inconsistent && (
-            <p className="mt-1 text-sm text-amber-400">⚠ inconsistent trade data</p>
-          )}
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <Link href="/trades" className="text-sm text-zinc-500 hover:text-violet-400">
+                ← Trades
+              </Link>
+              <h1 className="mt-2 text-xl font-semibold text-zinc-100">
+                {trade.id} · {trade.ticker}
+              </h1>
+              <p className="mt-0.5 text-sm capitalize text-zinc-500">Status: {trade.status}</p>
+              {trade.inconsistent && (
+                <p className="mt-1 text-sm text-amber-400">⚠ inconsistent trade data</p>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <SnapshotButton
+                title={`${trade.id} trade snapshot`}
+                description="Entry, stop, target, status, P/L, review state"
+                items={snapshotItems}
+              />
+              <ImportAiUpdateLink variant="compact" />
+            </div>
+          </div>
         </header>
 
         <div className="mx-auto max-w-lg space-y-6 px-4 py-4 lg:px-6 lg:py-6">

@@ -8,7 +8,7 @@ export function normalizeAiBlockJson(raw: string): string {
   // Strip BOM / zero-width chars
   text = text.replace(/^\uFEFF/, "").replace(/[\u200B-\u200D\uFEFF]/g, "");
 
-  // Curly / typographic quotes → ASCII (ChatGPT, Word, mobile paste)
+  // Curly / typographic quotes → ASCII (common in AI / Word / mobile paste)
   text = text
     .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')
     .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'");

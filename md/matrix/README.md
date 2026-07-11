@@ -12,6 +12,10 @@
 | 2 | [v2-engine-architecture.md](v2-engine-architecture.md) | **V2 target** — five engines + Probe |
 | 3 | [stock-profile-design.md](stock-profile-design.md) | Suspect dossier — append, light, chat patches |
 | 4 | [scout-execution-model.md](scout-execution-model.md) | Scout vs Trade vs Probe |
+| 4b | [adr-0001-trade-lifecycle-v1.md](adr-0001-trade-lifecycle-v1.md) | **ADR** — dual financial + analytical lifecycle |
+| 4c | [external-ai-policy.md](external-ai-policy.md) | **No vendor brands** — external AI + Apply-only mutations |
+| 4d | [thesis-ownership.md](thesis-ownership.md) | Thesis on Stock Profile, not Playbook |
+| 4e | [snapshot-catalog.md](snapshot-catalog.md) | **Snapshot menu** — one button per window + Apply path |
 | 5 | [runtime-truth.md](runtime-truth.md) | **What works in prod today** |
 | 6 | [ai-engineering.md](ai-engineering.md) | Single AI fleet |
 | 7 | [scoped-ai-access.md](scoped-ai-access.md) | Temporal links for one Stock Profile |

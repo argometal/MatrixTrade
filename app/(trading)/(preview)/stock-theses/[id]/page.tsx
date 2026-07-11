@@ -5,6 +5,7 @@ import {
 } from "@/lib/market-evidence";
 import { getPlans } from "@/lib/plans";
 import { getPlaybooks } from "@/lib/playbooks";
+import { stockProfileSnapshotItems } from "@/lib/snapshot-packages";
 import { buildStockProfileSynthesis } from "@/lib/stock-profile-synthesis";
 import { getStockThesisById } from "@/lib/stock-theses";
 import { notFound } from "next/navigation";
@@ -30,6 +31,12 @@ export default async function StockThesisDetailPage({
       p.stockThesisId === thesis.id &&
       (p.status === "watching" || p.status === "ready")
   );
+  const snapshotItems = stockProfileSnapshotItems({
+    thesis,
+    playbooks,
+    plans,
+    activeEvidence,
+  });
 
   return (
     <PreviewStockThesis
@@ -38,6 +45,7 @@ export default async function StockThesisDetailPage({
       activeEvidence={activeEvidence}
       synthesis={synthesis}
       activePlans={activePlans}
+      snapshotItems={snapshotItems}
     />
   );
 }

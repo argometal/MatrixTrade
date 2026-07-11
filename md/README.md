@@ -7,7 +7,7 @@ It is the source of truth for how the system is built, ruled, and evolved.
 Private repo: `github.com/argometal/MatrixTrade`  
 **Production:** https://matrix-trade-theta.vercel.app
 
-**ChatGPT entry point:** [`CHATGPT.md`](../CHATGPT.md) (repo root — read first)
+**External AI entry (legacy filename):** [`CHATGPT.md`](../CHATGPT.md) — content uses vendor-neutral “external AI” per [matrix/external-ai-policy.md](matrix/external-ai-policy.md)
 
 ---
 

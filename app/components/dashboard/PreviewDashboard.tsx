@@ -4,14 +4,16 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { ImportAiBlockActionResult } from "@/app/actions";
-import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { HomeDashboardMain } from "@/app/components/home-dashboard/HomeDashboardMain";
+import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import type { EquityPoint } from "@/lib/review";
 import type { AiBridgeOverviewData } from "@/lib/ai-bridge-overview";
 import { formatDashboardPf, formatDashboardUsd } from "@/lib/dashboard-display";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
+import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
 function DarkEquityChart({
   points,
@@ -67,6 +69,7 @@ type ExchangeProps = {
   pendingInboxCount: number;
   cycleLabel: string;
   importAction: (formData: FormData) => Promise<ImportAiBlockActionResult>;
+  dashboardSnapshots: SnapshotMenuItem[];
 };
 
 export function PreviewDashboard({
@@ -77,7 +80,6 @@ export function PreviewDashboard({
   exchange?: ExchangeProps;
 }) {
   const searchParams = useSearchParams();
-  const [snapshotCopied, setSnapshotCopied] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
 
   useEffect(() => {
@@ -88,15 +90,6 @@ export function PreviewDashboard({
 
   const { experiment, monthly, mistakeStats } = data;
   const topMistake = mistakeStats[0];
-
-  async function handleCopySnapshot() {
-    if (!exchange?.snapshotText) return;
-    const ok = await copyText(exchange.snapshotText);
-    if (ok) {
-      setSnapshotCopied(true);
-      setTimeout(() => setSnapshotCopied(false), 2000);
-    }
-  }
 
   return (
     <PageHelpPanel pageId="dashboard">
@@ -110,16 +103,17 @@ export function PreviewDashboard({
                   {data.cycleLabel} · experiment control
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {exchange && (
-                  <button
-                    type="button"
-                    onClick={handleCopySnapshot}
-                    className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-violet-300 hover:border-zinc-600 hover:text-violet-200"
-                  >
-                    {snapshotCopied ? "✓ Snapshot copied" : "Copy Snapshot"}
-                  </button>
-                )}
+              <div className="flex flex-wrap items-center gap-2">
+                {exchange ? (
+                  <>
+                    <SnapshotButton
+                      title="Dashboard snapshot"
+                      description="Budget, experiment, attention, trades overview"
+                      items={exchange.dashboardSnapshots}
+                    />
+                    <ImportAiUpdateLink variant="compact" />
+                  </>
+                ) : null}
                 {exchange && exchange.pendingInboxCount > 0 && (
                   <Link
                     href="/inbox"

@@ -6,7 +6,8 @@ import {
   createScopedAiGrantAction,
   saveStockThesisAction,
 } from "@/app/actions";
-import { buildAiContextPackage } from "@/lib/ai-context";
+import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import type { MarketEvidence } from "@/lib/market-evidence-types";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
 import type { Playbook } from "@/lib/playbook-types";
@@ -21,6 +22,7 @@ import {
 } from "@/lib/stock-thesis-types";
 import { PlanLevelsBoard } from "@/app/components/planning-preview/PlanLevelsBoard";
 import { PlanMapSummaryLine, PlanMapToggleButton } from "@/app/components/planning-preview/PlanLevelsSidePanel";
+import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
 type ProfileTab = "snapshot" | "evidence" | "history";
 
@@ -47,17 +49,18 @@ export function PreviewStockThesis({
   activeEvidence = [],
   synthesis,
   activePlans = [],
+  snapshotItems,
 }: {
   thesis: StockThesis;
   playbooks?: Playbook[];
   activeEvidence?: MarketEvidence[];
   synthesis?: StockProfileSynthesis;
   activePlans?: TradePlan[];
+  snapshotItems: SnapshotMenuItem[];
 }) {
   const [tab, setTab] = useState<ProfileTab>("snapshot");
   const [planMapOpen, setPlanMapOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [grantError, setGrantError] = useState<string | null>(null);
   const [grantLinks, setGrantLinks] = useState<{
     grantId: string;
@@ -68,24 +71,6 @@ export function PreviewStockThesis({
   } | null>(null);
   const [pending, startTransition] = useTransition();
   const [grantPending, startGrantTransition] = useTransition();
-
-  const contextText = useMemo(
-    () =>
-      buildAiContextPackage({
-        scope: "stock-file",
-        focusThesis: thesis,
-        playbooks,
-        activeEvidence,
-      }),
-    [thesis, playbooks, activeEvidence]
-  );
-
-  function copyContext() {
-    void navigator.clipboard.writeText(contextText).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }
 
   function submitForm(formData: FormData) {
     startTransition(async () => {
@@ -145,14 +130,13 @@ export function PreviewStockThesis({
                 {synthesis ? ` · confidence ${synthesis.thesisConfidence}` : ""}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={copyContext}
-                className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200"
-              >
-                {copied ? "Copied" : "Copy AI training block"}
-              </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <SnapshotButton
+                title={`${thesis.ticker} snapshot`}
+                description="Thesis, levels, evidence, linked scouts"
+                items={snapshotItems}
+              />
+              <ImportAiUpdateLink variant="compact" />
               <form action={createAiAccessLink}>
                 <input type="hidden" name="stockProfileId" value={thesis.id} />
                 <button

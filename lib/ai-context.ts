@@ -1,15 +1,20 @@
 import type { AiNote } from "./ai-notes-types";
 import { DEFAULT_AI_BLOCK_REQUEST, SCOUTING_AI_BLOCK_REQUEST } from "./ai-block";
+import type { PlaybookStats } from "./analytics";
+import type { Playbook } from "./playbook-types";
 import { formatMarketEvidenceSection } from "./market-evidence-format";
 import type { MarketEvidence } from "./market-evidence-types";
-import type { Playbook } from "./playbook-types";
+import { buildMatrixMechanicsSnapshot } from "./matrix-mechanics-snapshot";
 import {
   buildMatrixMechanicsBrief,
   buildMatrixTrainingContext,
   buildScoutingContextText,
   buildStockFileTrainingContext,
+  formatPlaybookTrainingSection,
   type MatrixTrainingContextInput,
 } from "./matrix-mechanics-brief";
+import { formatPlansSnapshotSection } from "./plan-snapshot";
+import { buildStockThesisContextText } from "./stock-thesis-snapshot";
 import { buildSmartSnapshot, type SmartSnapshotInput } from "./smart-snapshot";
 import {
   buildStockProfileSynthesis,
@@ -20,7 +25,19 @@ import type { TradePlan } from "./plan-types";
 import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment, Trade } from "./types";
 
-export type AiContextScope = "exchange" | "scouting" | "scouting-ticker" | "stock-file";
+export type AiContextScope =
+  | "mechanics"
+  | "dashboard"
+  | "exchange"
+  | "playbook"
+  | "scouting"
+  | "scouting-ticker"
+  | "scout-plan"
+  | "stock-file"
+  | "stock-scouts"
+  | "trade"
+  | "trade-profile"
+  | "trades-list";
 
 export interface AiContextSystemNotes {
   tradesStore: string;
@@ -32,18 +49,18 @@ export interface AiContextSystemNotes {
 
 export interface BuildAiContextInput {
   scope: AiContextScope;
-  /** Full assistant snapshot — trades, experiment, monthly, etc. */
   exchange?: SmartSnapshotInput & { systemNotes?: AiContextSystemNotes };
-  /** Scouting / file scopes */
   playbooks?: Playbook[];
   stockTheses?: StockThesis[];
   plans?: TradePlan[];
   experiment?: Experiment;
   monthly?: MonthlyRisk;
-  /** scouting-ticker scope */
   focusThesis?: StockThesis;
-  /** Active evidence rows for stock-file / scouting-ticker scopes */
+  focusPlan?: TradePlan;
+  focusTrade?: Trade;
   activeEvidence?: MarketEvidence[];
+  playbookStats?: PlaybookStats[];
+  tradeSnapshotText?: string;
 }
 
 function appendProfileEvidenceLayers(parts: string[], input: BuildAiContextInput): void {
@@ -67,8 +84,27 @@ function formatSystemNotesSection(notes: AiContextSystemNotes): string {
 }
 
 function requestBlockForScope(scope: AiContextScope): string {
-  if (scope === "exchange") return DEFAULT_AI_BLOCK_REQUEST.trim();
+  if (
+    scope === "mechanics" ||
+    scope === "dashboard" ||
+    scope === "exchange" ||
+    scope === "trade" ||
+    scope === "trades-list" ||
+    scope === "playbook"
+  ) {
+    return DEFAULT_AI_BLOCK_REQUEST.trim();
+  }
   return SCOUTING_AI_BLOCK_REQUEST.trim();
+}
+
+function ensureMechanicsBrief(body: string, scope: AiContextScope): string {
+  if (scope === "mechanics") return body;
+  if (body.includes("=== MATRIX MECHANICS")) return body;
+  return [buildMatrixMechanicsBrief(), "", body].join("\n");
+}
+
+function buildDashboardBody(input: BuildAiContextInput): string {
+  return buildExchangeBody(input);
 }
 
 function buildExchangeBody(input: BuildAiContextInput): string {
@@ -77,7 +113,7 @@ function buildExchangeBody(input: BuildAiContextInput): string {
     ...ex,
     options: ex.options ?? { setups: ex.setups },
   });
-  const parts = [buildMatrixMechanicsBrief(), "", base];
+  const parts = [base];
   if (ex.systemNotes) {
     parts.push("", formatSystemNotesSection(ex.systemNotes));
   }
@@ -113,7 +149,7 @@ function buildScoutingTickerBody(input: BuildAiContextInput): string {
 
 function buildStockFileBody(input: BuildAiContextInput): string {
   const thesis = input.focusThesis ?? input.stockTheses?.[0];
-  if (!thesis) return buildMatrixMechanicsBrief();
+  if (!thesis) return "(no stock profile)";
   const parts = [
     buildStockFileTrainingContext({
       thesis,
@@ -124,26 +160,122 @@ function buildStockFileBody(input: BuildAiContextInput): string {
   return parts.join("\n");
 }
 
-/** Single AI context builder — same engineering for Exchange and Scouting. */
-export function buildAiContext(input: BuildAiContextInput): string {
-  switch (input.scope) {
-    case "exchange":
-      return buildExchangeBody(input);
-    case "scouting":
-      return buildScoutingBody(input);
-    case "scouting-ticker":
-      return buildScoutingTickerBody(input);
-    case "stock-file":
-      return buildStockFileBody(input);
-    default:
-      return buildMatrixMechanicsBrief();
-  }
+function buildStockScoutsBody(input: BuildAiContextInput): string {
+  const thesis = input.focusThesis;
+  if (!thesis) return "(no stock profile)";
+  const tickerPlans = (input.plans ?? []).filter((p) => p.stockThesisId === thesis.id);
+  return [
+    `=== LINKED SCOUTS · ${thesis.ticker} ===`,
+    formatPlansSnapshotSection(tickerPlans),
+  ].join("\n");
 }
 
-/** Context + REQUEST block for paste into ChatGPT. */
+function buildScoutPlanBody(input: BuildAiContextInput): string {
+  const plan = input.focusPlan;
+  if (!plan) return "(no scout plan)";
+  const lines = [
+    `=== SCOUT PLAN · ${plan.ticker} ===`,
+    formatPlansSnapshotSection([plan]),
+  ];
+  if (input.focusThesis) {
+    lines.push("", buildStockThesisContextText(input.focusThesis));
+  }
+  return lines.join("\n");
+}
+
+function buildPlaybookBody(input: BuildAiContextInput): string {
+  const lines = ["=== PLAYBOOK LAB ==="];
+  if (input.playbooks?.length) {
+    lines.push(formatPlaybookTrainingSection(input.playbooks));
+  }
+  if (input.playbookStats?.length) {
+    lines.push("", "=== PLAYBOOK STATS ===");
+    for (const row of input.playbookStats) {
+      const name = row.playbook?.name ?? "Unassigned";
+      lines.push(
+        `- ${name}: trades=${row.tradeCount} win=${row.winRate !== null ? `${(row.winRate * 100).toFixed(0)}%` : "—"} net=${row.netPnL.toFixed(2)} mistakes=${row.mistakesCount}`
+      );
+    }
+  }
+  return lines.join("\n");
+}
+
+function buildTradeBody(input: BuildAiContextInput): string {
+  if (!input.tradeSnapshotText) return "(no trade)";
+  return ["=== TRADE ===", input.tradeSnapshotText].join("\n");
+}
+
+function buildTradeProfileBody(input: BuildAiContextInput): string {
+  const thesis = input.focusThesis;
+  if (!thesis) return "(no linked stock profile)";
+  return buildStockThesisContextText(thesis);
+}
+
+function buildTradesListBody(input: BuildAiContextInput): string {
+  const ex = input.exchange;
+  if (!ex) return "(no trades)";
+  return buildSmartSnapshot({
+    experiment: ex.experiment,
+    monthly: ex.monthly,
+    trades: ex.trades,
+    options: { setups: ex.setups },
+  });
+}
+
+function buildMechanicsBody(): string {
+  return buildMatrixMechanicsSnapshot();
+}
+
+export function buildAiContext(input: BuildAiContextInput): string {
+  let body: string;
+  switch (input.scope) {
+    case "mechanics":
+      body = buildMechanicsBody();
+      break;
+    case "dashboard":
+    case "exchange":
+      body = buildDashboardBody(input);
+      break;
+    case "playbook":
+      body = buildPlaybookBody(input);
+      break;
+    case "scouting":
+      body = buildScoutingBody(input);
+      break;
+    case "scouting-ticker":
+      body = buildScoutingTickerBody(input);
+      break;
+    case "scout-plan":
+      body = buildScoutPlanBody(input);
+      break;
+    case "stock-file":
+      body = buildStockFileBody(input);
+      break;
+    case "stock-scouts":
+      body = buildStockScoutsBody(input);
+      break;
+    case "trade":
+      body = buildTradeBody(input);
+      break;
+    case "trade-profile":
+      body = buildTradeProfileBody(input);
+      break;
+    case "trades-list":
+      body = buildTradesListBody(input);
+      break;
+    default:
+      body = buildMatrixMechanicsBrief();
+  }
+  return ensureMechanicsBrief(body, input.scope);
+}
+
+/** Context + REQUEST block for paste into external AI. */
 export function buildAiContextPackage(input: BuildAiContextInput): string {
   const body = buildAiContext(input);
   const request = requestBlockForScope(input.scope);
+  if (input.scope === "mechanics") {
+    return body;
+  }
   return [body, "", "=== REQUEST ===", request].join("\n");
 }
 

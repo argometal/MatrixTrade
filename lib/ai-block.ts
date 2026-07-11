@@ -76,7 +76,7 @@ export function parseAiBlock(raw: string):
     return {
       ok: false,
       error:
-        "Invalid JSON. Paste plain JSON or a ```json fenced block. Tip: if ChatGPT used curly quotes, paste again or re-ask for ASCII JSON only.",
+        "Invalid JSON. Paste plain JSON or a ```json fenced block. Tip: if the paste used curly quotes, re-ask your AI for ASCII JSON only.",
     };
   }
 

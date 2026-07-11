@@ -202,7 +202,7 @@ export function NewTradeScoutFlow({
       <section className="rounded-2xl border border-violet-500/40 bg-violet-950/15 p-5">
         <h2 className="text-sm font-semibold text-violet-200">1 · Start in your AI</h2>
         <p className="mt-1 text-xs text-zinc-500">
-          Copy the trade boot package → paste in ChatGPT / Claude → final sizing and emotion check.
+          Copy the trade boot package → paste in your external AI → final sizing and emotion check.
           Ask for one <code className="text-violet-300">trade-proposal</code> JSON block when ready.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
