@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { recordNetworkLastContactAction } from "@/app/argus/actions";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
+import { V2DayPicker } from "@/app/argus/v2/components/V2DayPicker";
 import { V2Badge } from "../../../components/v2-ui";
 import type {
   V2NetworkBrowseCard,
@@ -140,6 +141,7 @@ function NetworkLastContactPicker({
         setError(result.error);
         return;
       }
+      setDate(nextDate);
       setOpen(false);
       router.refresh();
     });
@@ -155,7 +157,8 @@ function NetworkLastContactPicker({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setDate(todayIso());
+          const today = todayIso();
+          setDate(today);
           setOpen((value) => !value);
         }}
         className={`rounded-md text-zinc-500 transition hover:bg-zinc-800 hover:text-violet-300 disabled:opacity-40 ${
@@ -166,28 +169,17 @@ function NetworkLastContactPicker({
       </button>
       {open ? (
         <div
-          className="absolute right-0 top-full z-20 mt-1 w-44 rounded-xl border border-zinc-700 bg-zinc-900 p-3 shadow-xl"
+          className="absolute right-0 top-full z-20 mt-1 w-[15.5rem] rounded-xl border border-zinc-700 bg-zinc-900 p-3 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
           <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-zinc-500">Last contact</p>
-          <input
-            type="date"
+          <V2DayPicker
             value={date}
-            onChange={(event) => setDate(event.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-200"
+            onChange={setDate}
+            onSelectDay={save}
+            disabled={pending}
           />
-          <button
-            type="button"
-            disabled={pending || !date}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              save(date);
-            }}
-            className="mt-2 w-full rounded-lg bg-violet-600 py-1.5 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
-          >
-            {pending ? "Saving…" : "Save"}
-          </button>
+          {pending ? <p className="mt-2 text-center text-[10px] text-zinc-500">Saving…</p> : null}
           {error ? <p className="mt-1 text-[10px] text-red-400">{error}</p> : null}
         </div>
       ) : null}

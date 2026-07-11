@@ -27,8 +27,10 @@ import type {
   NetworkContactTimelineItem,
 } from "@/lib/argus/v2/network-contact-loaders";
 import { initialsFromName } from "@/lib/argus/v2/network-contact-loaders";
+import { personHasContactEvidence } from "@/lib/argus/network-dialogue";
 import { V2Badge, V2Card } from "@/app/argus/v2/components/v2-ui";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
+import { NetworkDialogueGuide } from "./NetworkDialogueGuide";
 
 const TABS = ["Overview", "Timeline", "Projects", "Organizations", "Topics", "Files", "Records"] as const;
 type ContactTab = (typeof TABS)[number];
@@ -267,6 +269,7 @@ export function NetworkContactShell({
   const entity = page.entity;
   const contactValue = entity.contactValue ?? [];
   const myValue = entity.myValue ?? [];
+  const hasContact = personHasContactEvidence(page.timeline.length);
 
   function saveMetrics(formData: FormData) {
     startTransition(async () => {
@@ -376,42 +379,54 @@ export function NetworkContactShell({
       {tab === "Overview" ? (
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
           <div className="space-y-6">
-            <section>
-              <h2 className="mb-4 text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Relationship overview</h2>
-              <form action={saveMetrics}>
-                <input type="hidden" name="entityId" value={entity.id} />
-                <div className="grid gap-4 lg:grid-cols-3">
-                  <ValueCheckboxList
-                    title="Contact Value"
-                    options={CONTACT_VALUE_OPTIONS}
-                    icons={CONTACT_VALUE_ICONS}
-                    fieldName="contactValue"
-                    selected={contactValue}
-                    footerLabel="Strategic Value"
-                    footerTone="blue"
-                  />
-                  <ValueCheckboxList
-                    title="My Value"
-                    options={MY_VALUE_OPTIONS}
-                    icons={MY_VALUE_ICONS}
-                    fieldName="myValue"
-                    selected={myValue}
-                    footerLabel="My Value"
-                    footerTone="green"
-                  />
-                  <AttentionPanel attention={page.attention} />
-                </div>
-                <div className="mt-4 flex justify-end">
-                  <button
-                    type="submit"
-                    disabled={isPending}
-                    className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
-                  >
-                    {isPending ? "Saving…" : "Save relationship outcomes"}
-                  </button>
-                </div>
-              </form>
-            </section>
+            {hasContact ? (
+              <section>
+                <h2 className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
+                  Relationship overview
+                </h2>
+                <p className="mb-4 text-[11px] text-zinc-600">Unlocked after first contact — value exchange over time.</p>
+                <form action={saveMetrics}>
+                  <input type="hidden" name="entityId" value={entity.id} />
+                  <div className="grid gap-4 lg:grid-cols-3">
+                    <ValueCheckboxList
+                      title="Contact Value"
+                      options={CONTACT_VALUE_OPTIONS}
+                      icons={CONTACT_VALUE_ICONS}
+                      fieldName="contactValue"
+                      selected={contactValue}
+                      footerLabel="Strategic Value"
+                      footerTone="blue"
+                    />
+                    <ValueCheckboxList
+                      title="My Value"
+                      options={MY_VALUE_OPTIONS}
+                      icons={MY_VALUE_ICONS}
+                      fieldName="myValue"
+                      selected={myValue}
+                      footerLabel="My Value"
+                      footerTone="green"
+                    />
+                    <AttentionPanel attention={page.attention} />
+                  </div>
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isPending}
+                      className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
+                    >
+                      {isPending ? "Saving…" : "Save relationship outcomes"}
+                    </button>
+                  </div>
+                </form>
+              </section>
+            ) : (
+              <NetworkDialogueGuide
+                entityName={entity.name}
+                email={page.email}
+                linkedIn={page.linkedIn}
+                onRegister={() => openCapture({ entityIds: [entity.id] })}
+              />
+            )}
             <TimelineSection items={page.timeline} />
           </div>
           <ContactAside page={page} />

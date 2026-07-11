@@ -154,6 +154,7 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 | [design-matrix-stage.md](design-matrix-stage.md) | Canonical lenses |
 | [product-flow-proposal.md](product-flow-proposal.md) | Canonical flow |
 | [network-browse-spec.md](network-browse-spec.md) | Spec |
+| [network-intelligence-thesis.md](network-intelligence-thesis.md) | **Design base** — contact-first networking thesis |
 | [v2-design-checklist.md](v2-design-checklist.md) | QA — update every UI change |
 | [v2-checklist-solutions.md](v2-checklist-solutions.md) | QA solutions |
 | [checklist-protocol.md](checklist-protocol.md) | Mandatory process |
