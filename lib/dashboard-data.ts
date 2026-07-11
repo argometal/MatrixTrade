@@ -25,26 +25,10 @@ import type { AttentionItem } from "./dashboard-attention";
 import type { Experiment } from "./types";
 import type { MonthlyRisk } from "./monthly-risk";
 
-export type DashboardData = {
-  experiment: Experiment;
-  monthly: MonthlyRisk;
-  cycleLabel: string;
-  openTrades: number;
-  pendingReviews: number;
-  activePlaybooks: number;
-  testingPlaybooks: number;
-  activePlans: number;
-  plansNeedingReview: number;
-  attentionItems: AttentionItem[];
-  mistakeStats: MistakeStat[];
-  equityPoints: EquityPoint[];
-  winRate: number;
-  profitFactor: number | null;
-  expectancy: number | null;
-  avgR: number | null;
-  bestPlaybook: PlaybookStats | null;
-  worstPlaybook: PlaybookStats | null;
-};
+import type { DashboardData } from "./dashboard-types";
+
+export type { DashboardData } from "./dashboard-types";
+export { formatDashboardUsd, formatDashboardPf } from "./dashboard-display";
 
 export async function loadDashboardData(): Promise<DashboardData> {
   try {
@@ -137,15 +121,4 @@ export async function loadDashboardData(): Promise<DashboardData> {
       worstPlaybook: null,
     };
   }
-}
-
-export function formatDashboardUsd(value: number): string {
-  const sign = value >= 0 ? "+" : "";
-  return `${sign}$${value.toFixed(2)}`;
-}
-
-export function formatDashboardPf(value: number | null): string {
-  if (value === null) return "—";
-  if (value === Infinity) return "∞";
-  return value.toFixed(2);
 }

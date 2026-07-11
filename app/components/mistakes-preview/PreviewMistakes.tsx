@@ -16,46 +16,16 @@ function pnlTone(value: number): string {
 export function PreviewMistakes({
   stats,
   trades,
+  embedded = false,
 }: {
   stats: MistakeStat[];
   trades: Trade[];
+  embedded?: boolean;
 }) {
   const totalCost = stats.reduce((sum, row) => sum + row.totalCost, 0);
 
-  return (
-    <div className="flex h-full min-h-0 w-full overflow-hidden">
-      <div className="min-w-0 flex-1 overflow-y-auto">
-        <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-semibold text-zinc-100">Mistakes</h1>
-              <p className="mt-0.5 text-sm text-zinc-500">
-                What errors cost you money — tagged in trade reviews.
-              </p>
-              {stats.length > 0 && (
-                <p className={`mt-2 text-sm font-medium tabular-nums ${pnlTone(totalCost)}`}>
-                  Total P/L impact: {formatUsd(totalCost)}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Link
-                href="/review"
-                className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-              >
-                Review queue
-              </Link>
-              <Link
-                href="/journal"
-                className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-              >
-                Journal
-              </Link>
-            </div>
-          </div>
-        </header>
-
-        <div className="space-y-6 px-4 py-4 lg:px-6 lg:py-6">
+  const body = (
+    <div className="space-y-6 px-4 py-4 lg:px-6 lg:py-6">
           {stats.length === 0 ? (
             <p className="text-sm text-zinc-500">
               No mistake tags yet. Complete a trade review to start tracking patterns.
@@ -140,6 +110,7 @@ export function PreviewMistakes({
             </>
           )}
 
+          {!embedded && (
           <nav className="flex flex-wrap gap-4 border-t border-zinc-800 pt-4 text-sm">
             <Link href="/stats" className="text-zinc-500 hover:text-zinc-300">
               Statistics →
@@ -148,7 +119,45 @@ export function PreviewMistakes({
               Playbook Lab →
             </Link>
           </nav>
+          )}
         </div>
+  );
+
+  if (embedded) return body;
+
+  return (
+    <div className="flex h-full min-h-0 w-full overflow-hidden">
+      <div className="min-w-0 flex-1 overflow-y-auto">
+        <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-semibold text-zinc-100">Mistakes</h1>
+              <p className="mt-0.5 text-sm text-zinc-500">
+                What errors cost you money — tagged in trade reviews.
+              </p>
+              {stats.length > 0 && (
+                <p className={`mt-2 text-sm font-medium tabular-nums ${pnlTone(totalCost)}`}>
+                  Total P/L impact: {formatUsd(totalCost)}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href="/trades?tab=review"
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+              >
+                Review queue
+              </Link>
+              <Link
+                href="/stats?tab=journal"
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+              >
+                Journal
+              </Link>
+            </div>
+          </div>
+        </header>
+        {body}
       </div>
     </div>
   );

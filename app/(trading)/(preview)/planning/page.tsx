@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { PreviewPlanning } from "@/app/components/planning-preview/PreviewPlanning";
+import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
 import { getPlans } from "@/lib/plans";
 import { getPlaybooks } from "@/lib/playbooks";
 import { getStockTheses } from "@/lib/stock-theses";
@@ -19,14 +21,18 @@ export default async function PlanningPage({
   ]);
 
   return (
-    <PreviewPlanning
-      plans={plans}
-      playbooks={playbooks}
-      stockTheses={stockTheses}
-      monthly={monthly}
-      experiment={experiment}
-      focusPlanId={params.plan?.toUpperCase()}
-      focusThesisId={params.thesis?.toUpperCase()}
-    />
+    <Suspense fallback={null}>
+      <PageHelpPanel pageId="planning">
+        <PreviewPlanning
+          plans={plans}
+          playbooks={playbooks}
+          stockTheses={stockTheses}
+          monthly={monthly}
+          experiment={experiment}
+          focusPlanId={params.plan?.toUpperCase()}
+          focusThesisId={params.thesis?.toUpperCase()}
+        />
+      </PageHelpPanel>
+    </Suspense>
   );
 }

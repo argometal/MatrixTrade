@@ -23,8 +23,12 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      { source: "/ai-bridge", destination: "/exchange", permanent: false },
-      { source: "/ai-workspace", destination: "/exchange", permanent: false },
+      { source: "/ai-bridge", destination: "/home-preview?panel=assistant", permanent: false },
+      { source: "/ai-workspace", destination: "/home-preview?panel=assistant", permanent: false },
+      { source: "/exchange", destination: "/home-preview?panel=assistant", permanent: false },
+      { source: "/review", destination: "/trades?tab=review", permanent: false },
+      { source: "/journal", destination: "/stats?tab=journal", permanent: false },
+      { source: "/mistakes", destination: "/stats?tab=mistakes", permanent: false },
     ];
   },
 };

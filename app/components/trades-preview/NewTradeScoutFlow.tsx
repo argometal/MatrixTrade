@@ -198,17 +198,6 @@ export function NewTradeScoutFlow({
         onSelect={handleProspectSelect}
       />
 
-      <section className="rounded-2xl border border-zinc-800/80 bg-zinc-950/50 p-4 text-xs text-zinc-500">
-        <p className="font-medium text-zinc-400">Execution layer only</p>
-        <ul className="mt-2 list-disc space-y-1 pl-4">
-          <li>
-            <span className="text-violet-300">trade-proposal</span> — entry, stop, shares, optional
-            target
-          </li>
-          <li>Human gate → Inbox → Apply (nothing hits Supabase until you approve)</li>
-          <li>Monthly room: ${data.monthlyLossRoom.toFixed(2)} remaining this cycle</li>
-        </ul>
-      </section>
 
       <section className="rounded-2xl border border-violet-500/40 bg-violet-950/15 p-5">
         <h2 className="text-sm font-semibold text-violet-200">1 · Start in your AI</h2>

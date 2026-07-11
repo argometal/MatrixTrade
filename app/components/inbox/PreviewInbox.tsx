@@ -33,10 +33,10 @@ export function PreviewInbox({
               </p>
             </div>
             <Link
-              href="/exchange"
+              href="/home-preview?panel=assistant"
               className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
             >
-              Assistant workspace
+              Asistente IA
             </Link>
           </div>
         </header>
@@ -57,8 +57,8 @@ export function PreviewInbox({
           {items.length === 0 ? (
             <div className="rounded-xl border border-dashed border-zinc-700 px-4 py-10 text-center text-sm text-zinc-500">
               Inbox empty. Import an AI Block from{" "}
-              <Link href="/exchange" className="text-violet-400 hover:text-violet-300 hover:underline">
-                Assistant workspace
+              <Link href="/home-preview?panel=assistant" className="text-violet-400 hover:text-violet-300 hover:underline">
+                Asistente IA
               </Link>
               .
             </div>

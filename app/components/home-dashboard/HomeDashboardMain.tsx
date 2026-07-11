@@ -107,6 +107,7 @@ export function HomeDashboardMain({
   importAction,
   theme = "light",
   hideHeader = false,
+  variant = "full",
 }: {
   snapshotText: string;
   overview: AiBridgeOverviewData;
@@ -115,8 +116,10 @@ export function HomeDashboardMain({
   importAction: (formData: FormData) => Promise<ImportAiBlockActionResult>;
   theme?: "light" | "dark";
   hideHeader?: boolean;
+  variant?: "full" | "assistant-only";
 }) {
   const dark = theme === "dark";
+  const assistantOnly = variant === "assistant-only";
   const sectionClass = dark
     ? "rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5"
     : "rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm";
@@ -227,6 +230,7 @@ export function HomeDashboardMain({
         </header>
       )}
 
+      {!assistantOnly && (
       <section className={sectionClass}>
         <div className="mb-4 flex items-start gap-3">
           <SectionBadge n={1} />
@@ -297,10 +301,11 @@ export function HomeDashboardMain({
           {snapshotCopied ? "✓ Snapshot copied" : "Copy Snapshot"}
         </button>
       </section>
+      )}
 
       <section className={sectionClass}>
         <div className="mb-4 flex items-start gap-3">
-          <SectionBadge n={2} />
+          <SectionBadge n={assistantOnly ? 1 : 2} />
           <div>
             <h2 className={headingClass}>Send your request to AI</h2>
             <p className={subtextClass}>Write in normal language — no JSON required.</p>
@@ -360,7 +365,7 @@ export function HomeDashboardMain({
 
       <section className={sectionClass}>
         <div className="mb-4 flex items-start gap-3">
-          <SectionBadge n={3} />
+          <SectionBadge n={assistantOnly ? 2 : 3} />
           <div className="flex-1">
             <h2 className={headingClass}>AI will respond with a proposal</h2>
             <p className={subtextClass}>
@@ -488,6 +493,7 @@ export function HomeDashboardMain({
         </form>
       </section>
 
+      {!assistantOnly && (
       <section className={sectionClass}>
         <div className="mb-4 flex items-start gap-3">
           <SectionBadge n={4} />
@@ -516,6 +522,7 @@ export function HomeDashboardMain({
           ))}
         </div>
       </section>
+      )}
     </div>
   );
 }

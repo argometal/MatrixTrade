@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { ImportAiBlockActionResult } from "@/app/actions";
 import { NewTradeScoutFlow } from "@/app/components/trades-preview/NewTradeScoutFlow";
+import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
 import {
   formatTradeUsd,
   type TradesWorkspaceData,
@@ -60,6 +61,7 @@ export function TradesWorkspace({
   }, [data.rows, tab, search]);
 
   return (
+    <PageHelpPanel pageId="new-trade">
     <div className="flex h-full min-h-0 w-full overflow-hidden">
       <div className="min-w-0 flex-1 overflow-y-auto">
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
@@ -317,5 +319,6 @@ export function TradesWorkspace({
         </section>
       </aside>
     </div>
+    </PageHelpPanel>
   );
 }

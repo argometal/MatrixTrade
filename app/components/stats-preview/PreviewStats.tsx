@@ -80,20 +80,11 @@ export type PreviewStatsData = {
   worstTrade: Trade | undefined;
 };
 
-export function PreviewStats({ data }: { data: PreviewStatsData }) {
+export function PreviewStats({ data, embedded = false }: { data: PreviewStatsData; embedded?: boolean }) {
   const { experiment, monthly } = data;
 
-  return (
-    <div className="flex h-full min-h-0 w-full overflow-hidden">
-      <div className="min-w-0 flex-1 overflow-y-auto">
-        <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
-          <h1 className="text-xl font-semibold text-zinc-100">Statistics</h1>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            Cycle metrics — decide what to improve next.
-          </p>
-        </header>
-
-        <div className="space-y-6 px-4 py-4 lg:px-6 lg:py-6">
+  const body = (
+    <div className="space-y-6 px-4 py-4 lg:px-6 lg:py-6">
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
             <h2 className="text-sm font-semibold text-zinc-200">Equity curve</h2>
             <div className="mt-4">
@@ -210,14 +201,28 @@ export function PreviewStats({ data }: { data: PreviewStatsData }) {
             <Link href="/playbook" className="text-zinc-500 hover:text-zinc-300">
               Playbook Lab →
             </Link>
-            <Link href="/mistakes" className="text-zinc-500 hover:text-zinc-300">
+            <Link href="/stats?tab=mistakes" className="text-zinc-500 hover:text-zinc-300">
               Mistakes →
             </Link>
-            <Link href="/journal" className="text-zinc-500 hover:text-zinc-300">
+            <Link href="/stats?tab=journal" className="text-zinc-500 hover:text-zinc-300">
               Journal →
             </Link>
           </nav>
         </div>
+  );
+
+  if (embedded) return body;
+
+  return (
+    <div className="flex h-full min-h-0 w-full overflow-hidden">
+      <div className="min-w-0 flex-1 overflow-y-auto">
+        <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
+          <h1 className="text-xl font-semibold text-zinc-100">Statistics</h1>
+          <p className="mt-0.5 text-sm text-zinc-500">
+            Cycle metrics — decide what to improve next.
+          </p>
+        </header>
+        {body}
       </div>
     </div>
   );

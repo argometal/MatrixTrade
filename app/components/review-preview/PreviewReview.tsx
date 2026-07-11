@@ -11,24 +11,17 @@ export function PreviewReview({
   pendingInbox,
   needsPlaybook,
   reviewedTrades,
+  embedded = false,
 }: {
   attentionItems: AttentionItem[];
   unreviewed: Trade[];
   pendingInbox: BridgeInboxItem[];
   needsPlaybook: Trade[];
   reviewedTrades: Trade[];
+  embedded?: boolean;
 }) {
-  return (
-    <div className="flex h-full min-h-0 w-full overflow-hidden">
-      <div className="min-w-0 flex-1 overflow-y-auto">
-        <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
-          <h1 className="text-xl font-semibold text-zinc-100">Review</h1>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            Close the learning loop — reviews, inbox, and playbook assignment.
-          </p>
-        </header>
-
-        <div className="space-y-6 px-4 py-4 lg:px-6 lg:py-6">
+  const body = (
+    <div className="space-y-6 px-4 py-4 lg:px-6 lg:py-6">
           {attentionItems.length === 0 ? (
             <p className="rounded-2xl border border-emerald-500/30 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
               All caught up. No pending reviews or assignments.
@@ -180,6 +173,20 @@ export function PreviewReview({
             )}
           </section>
         </div>
+  );
+
+  if (embedded) return body;
+
+  return (
+    <div className="flex h-full min-h-0 w-full overflow-hidden">
+      <div className="min-w-0 flex-1 overflow-y-auto">
+        <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
+          <h1 className="text-xl font-semibold text-zinc-100">Review</h1>
+          <p className="mt-0.5 text-sm text-zinc-500">
+            Close the learning loop — reviews, inbox, and playbook assignment.
+          </p>
+        </header>
+        {body}
       </div>
     </div>
   );

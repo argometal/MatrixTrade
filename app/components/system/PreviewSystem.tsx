@@ -58,10 +58,10 @@ export function PreviewSystem({
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
-                href="/exchange"
+                href="/home-preview?panel=assistant"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
               >
-                Assistant workspace
+                Asistente IA
               </Link>
               {pendingInboxCount > 0 && (
                 <Link
@@ -76,8 +76,8 @@ export function PreviewSystem({
 
           <div className="mt-4 rounded-lg border border-violet-500/20 bg-violet-950/30 px-4 py-3 text-sm text-violet-200">
             Sync snapshot to Worker before using{" "}
-            <Link href="/exchange" className="font-medium text-violet-300 underline hover:text-violet-200">
-              Assistant workspace
+            <Link href="/home-preview?panel=assistant" className="font-medium text-violet-300 underline hover:text-violet-200">
+              Asistente IA
             </Link>
             .
           </div>

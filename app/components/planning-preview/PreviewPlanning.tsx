@@ -424,8 +424,8 @@ export function PreviewPlanning({
               </p>
               <p className="mt-1 text-xs text-zinc-600">
                 Copy package → ChatGPT →{" "}
-                <Link href="/exchange" className="text-violet-400 hover:underline">
-                  Assistant
+                <Link href="/home-preview?panel=assistant" className="text-violet-400 hover:underline">
+                  Asistente IA
                 </Link>{" "}
                 import →{" "}
                 <Link href="/inbox" className="text-violet-400 hover:underline">
