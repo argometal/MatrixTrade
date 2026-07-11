@@ -8,7 +8,6 @@ import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 import { CaptureSheet } from "@/app/argus/components/CaptureSheet";
-import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { V2InboxEntityLinkModal } from "@/app/argus/v2/inbox/components/V2InboxEntityLinkModal";
 import type { ArgusLinkFilter, ArgusLinkResult } from "@/app/argus/components/ArgusLinkModal";
 import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
@@ -132,7 +131,6 @@ export function V2InboxDetailPanel({
   const [selectedTags, setSelectedTags] = useState<string[]>(detail.item.topics ?? []);
   const [linkSaving, setLinkSaving] = useState(false);
   const [triageSaving, setTriageSaving] = useState(false);
-  const { openCreateFlow } = useArgusAdd();
   const router = useRouter();
 
   useEffect(() => {
@@ -542,33 +540,13 @@ export function V2InboxDetailPanel({
           <h2 className="text-lg font-semibold leading-snug text-zinc-50">{view.subject || "(No subject)"}</h2>
           <div className="relative hidden shrink-0 items-center gap-2 lg:flex">
             {canTriage ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() =>
-                    openCreateFlow({
-                      mode: "inbox-evidence",
-                      inboxId: item.id,
-                      prefillTitle: defaultTitle,
-                      prefillBody: defaultBody,
-                      prefillTags: selectedTags,
-                      prefillDate: view.receivedAt,
-                      linkedEntityIds: linkIds,
-                      returnTo,
-                    })
-                  }
-                  className="rounded-lg border border-emerald-500/40 bg-emerald-600/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/25"
-                >
-                  Capture / Link
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openLinkModal("all")}
-                  className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
-                >
-                  + Link
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={() => openLinkModal("all")}
+                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+              >
+                {LINK_HIERARCHY.linkEmail}
+              </button>
             ) : null}
             <button type="button" className="text-zinc-600 hover:text-zinc-400" title="Share">
               ↗
@@ -715,31 +693,13 @@ export function V2InboxDetailPanel({
       />
 
       {canTriage ? (
-        <div className="fixed inset-x-0 bottom-0 z-50 flex gap-2 border-t border-zinc-800/80 bg-zinc-950/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
-          <button
-            type="button"
-            onClick={() =>
-              openCreateFlow({
-                mode: "inbox-evidence",
-                inboxId: item.id,
-                prefillTitle: defaultTitle,
-                prefillBody: defaultBody,
-                prefillTags: selectedTags,
-                prefillDate: view.receivedAt,
-                linkedEntityIds: linkIds,
-                returnTo,
-              })
-            }
-            className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-600/20 py-3 text-sm font-semibold text-emerald-300"
-          >
-            Capture / Link
-          </button>
+        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-800/80 bg-zinc-950/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
           <button
             type="button"
             onClick={() => openLinkModal("all")}
-            className="flex-1 rounded-xl border border-violet-500/40 bg-violet-600/20 py-3 text-sm font-semibold text-violet-300"
+            className="w-full rounded-xl border border-violet-500/40 bg-violet-600/20 py-3 text-sm font-semibold text-violet-300"
           >
-            + Link
+            {LINK_HIERARCHY.linkEmail}
           </button>
         </div>
       ) : null}

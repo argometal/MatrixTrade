@@ -287,7 +287,8 @@ export const LINK_HIERARCHY = {
   eventEndDate: "End date (optional)",
   projectEventsHint: "Only events within the project date range can be linked.",
   topicEventsHint: "Topics can link people and dated events.",
-  inboxLinkHint: "Link to people, organizations, projects, topics, or events.",
+  linkEmail: "Link",
+  inboxLinkHint: "Link to people, organizations, projects, topics, or events. Create new from inside Link.",
   multiLinkHint: "Link a person and a project together to file email under both.",
 } as const;
 
