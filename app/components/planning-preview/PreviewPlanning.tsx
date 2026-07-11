@@ -45,7 +45,11 @@ import {
   STOCK_THESIS_STATUS_LABELS,
   type StockThesis,
 } from "@/lib/stock-thesis-types";
-import { PlanLevelsBoard } from "./PlanLevelsBoard";
+import {
+  PlanLevelsSidePanel,
+  PlanMapSummaryLine,
+  PlanMapToggleButton,
+} from "./PlanLevelsSidePanel";
 import type { Experiment } from "@/lib/types";
 
 type FilterId = "all" | "active" | "ready" | "failed" | "expired" | "evaluate";
@@ -130,6 +134,7 @@ export function PreviewPlanning({
     expiresAt: string;
   } | null>(null);
   const [grantError, setGrantError] = useState<string | null>(null);
+  const [planPanelOpen, setPlanPanelOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [formWarning, setFormWarning] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -184,6 +189,14 @@ export function PreviewPlanning({
     () => (selectedPlanId ? plans.find((p) => p.id === selectedPlanId) : undefined),
     [plans, selectedPlanId]
   );
+
+  const panelLevelsView = useMemo(() => {
+    if (selectedPlan?.stockThesisId) {
+      const thesis = stockTheses.find((t) => t.id === selectedPlan.stockThesisId);
+      if (thesis) return buildPlanLevelsView(thesis, selectedPlan);
+    }
+    return scoutLevelsView;
+  }, [selectedPlan, stockTheses, scoutLevelsView]);
 
   const decisionPlan = useMemo(
     () => (decisionPlanId ? plans.find((p) => p.id === decisionPlanId) : undefined),
@@ -397,8 +410,8 @@ export function PreviewPlanning({
     editing?.stockThesisId ?? prefillThesisId ?? formThesisId ?? "";
 
   return (
-    <div className="flex h-full min-h-0 w-full overflow-hidden">
-      <div className="min-w-0 flex-1 overflow-y-auto">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -491,6 +504,14 @@ export function PreviewPlanning({
                     Gatekeeper view — verdict from Stock File status + risk room.
                   </p>
                 </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {scoutLevelsView ? (
+                    <PlanMapToggleButton
+                      open={planPanelOpen}
+                      onClick={() => setPlanPanelOpen((v) => !v)}
+                      view={scoutLevelsView}
+                    />
+                  ) : null}
                 {activeTheses.length > 1 ? (
                   <label className="text-xs text-zinc-500">
                     Ticker
@@ -507,6 +528,7 @@ export function PreviewPlanning({
                     </select>
                   </label>
                 ) : null}
+                </div>
               </div>
 
               {scoutThesis && scoutVerdict ? (
@@ -533,13 +555,15 @@ export function PreviewPlanning({
                     </span>
                   </div>
                   <p className="mt-2 text-sm opacity-90">{scoutThesis.currentHypothesis}</p>
-                  {scoutLevelsView ? (
-                    <div className="mt-4 border-t border-current/10 pt-4">
-                      <PlanLevelsBoard view={scoutLevelsView} compact />
-                    </div>
-                  ) : null}
                   <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
-                    <p>Min R:R {scoutThesis.riskRules.minimumRR}R</p>
+                    {scoutLevelsView ? (
+                      <p className="text-violet-200/90">
+                        <PlanMapSummaryLine view={scoutLevelsView} />
+                      </p>
+                    ) : null}
+                    {!scoutLevelsView?.plannedRR && !scoutLevelsView?.estimatedRR ? (
+                      <p>Min R:R {scoutThesis.riskRules.minimumRR}R</p>
+                    ) : null}
                     <p>
                       Invalidation:{" "}
                       <span className="opacity-80">
@@ -586,6 +610,13 @@ export function PreviewPlanning({
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  {panelLevelsView ? (
+                    <PlanMapToggleButton
+                      open={planPanelOpen}
+                      onClick={() => setPlanPanelOpen((v) => !v)}
+                      view={panelLevelsView}
+                    />
+                  ) : null}
                   <button
                     type="button"
                     onClick={() => {
@@ -609,16 +640,6 @@ export function PreviewPlanning({
                   </form>
                 </div>
               </div>
-
-              {(() => {
-                const thesis = stockTheses.find((t) => t.id === selectedPlan.stockThesisId);
-                if (!thesis) return null;
-                return (
-                  <div className="mt-4">
-                    <PlanLevelsBoard view={buildPlanLevelsView(thesis, selectedPlan)} />
-                  </div>
-                );
-              })()}
 
               {selectedPlan.decision ? (
                 <div className="mt-4 space-y-3">
@@ -1368,6 +1389,19 @@ export function PreviewPlanning({
           </div>
         </div>
       ) : null}
+
+      <PlanLevelsSidePanel
+        view={panelLevelsView}
+        open={planPanelOpen}
+        onClose={() => setPlanPanelOpen(false)}
+        subtitle={
+          selectedPlan
+            ? `${selectedPlan.id} · scout window`
+            : scoutThesis
+              ? `${scoutThesis.id} · profile levels`
+              : undefined
+        }
+      />
     </div>
   );
 }

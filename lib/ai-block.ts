@@ -1,4 +1,5 @@
 import { AI_BRIDGE_BLOCK_TYPES } from "./ai-bridge-types";
+import { normalizeAiBlockJson } from "./normalize-ai-block-json";
 import { parseTradingInboxPayload, validateProposalPayload } from "./bridge";
 import type { TradingInboxPayload } from "./bridge";
 
@@ -57,10 +58,7 @@ Rules:
 - If this snapshot is not enough, ask for ONE next_focus_suggestions item (ticker, playbook, or review trade_id).`;
 
 export function extractJsonFromAiBlock(raw: string): string {
-  const trimmed = raw.trim();
-  const fenced = trimmed.match(/```(?:json|ai-block)?\s*([\s\S]*?)```/i);
-  if (fenced?.[1]) return fenced[1].trim();
-  return trimmed;
+  return normalizeAiBlockJson(raw);
 }
 
 export function parseAiBlock(raw: string):
@@ -77,7 +75,8 @@ export function parseAiBlock(raw: string):
   } catch {
     return {
       ok: false,
-      error: "Invalid JSON. Paste plain JSON or a ```json fenced block from your AI assistant.",
+      error:
+        "Invalid JSON. Paste plain JSON or a ```json fenced block. Tip: if ChatGPT used curly quotes, paste again or re-ask for ASCII JSON only.",
     };
   }
 

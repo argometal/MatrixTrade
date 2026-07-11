@@ -24,6 +24,7 @@ export function buildStockCaseExtractionPrompt(notes?: string): string {
     "- Do not invent prices — use numbers from the notes or omit optional fields",
     "- invalidation = when the thesis is wrong (stop thesis, not just trade stop)",
     "- primaryZone = support / entry area; targets = upside levels",
+    "- Use straight ASCII double quotes only in JSON — never curly “smart” quotes",
     "",
     "Example shape:",
     sample,

@@ -1,4 +1,5 @@
 import type { TradePlan } from "./plan-types";
+import { computePlannedRR } from "./plan-risk";
 import {
   formatStockThesisZone,
   type StockThesis,
@@ -27,6 +28,8 @@ export interface PlanLevelsView {
   source: "plan" | "profile" | "both";
   rows: PlanLevelRow[];
   plannedRR?: number;
+  /** Estimated from profile zones when no scout plan exists */
+  estimatedRR?: number;
   minRR?: number;
   invalidation?: string;
   window?: string;
@@ -132,6 +135,18 @@ function buildRowsFromPlan(plan: TradePlan): PlanLevelRow[] {
   return rows;
 }
 
+function estimateRRFromProfile(levels: StockThesisLevels): number | undefined {
+  if (!levels.primaryZone || !levels.targets?.length) return undefined;
+  const entry = (levels.primaryZone.low + levels.primaryZone.high) / 2;
+  const stop =
+    levels.secondaryZone?.low ??
+    levels.majorSupport ??
+    levels.primaryZone.low * 0.95;
+  const target = levels.targets[0];
+  const computed = computePlannedRR(entry, stop, target);
+  return computed?.rr;
+}
+
 export function buildPlanLevelsView(
   thesis: StockThesis,
   plan?: TradePlan
@@ -179,12 +194,16 @@ export function buildPlanLevelsView(
         ].join(" → ")
       : undefined;
 
+  const estimatedRR =
+    plan?.plannedRR === undefined ? estimateRRFromProfile(thesis.levels) : undefined;
+
   return {
     ticker: thesis.ticker,
     strategy,
     source,
     rows,
     plannedRR: plan?.plannedRR,
+    estimatedRR,
     minRR: thesis.riskRules.minimumRR,
     invalidation: thesis.riskRules.invalidation,
     window,

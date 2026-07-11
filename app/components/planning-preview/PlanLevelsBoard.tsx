@@ -75,7 +75,13 @@ export function PlanLevelsBoard({
       <div className={`grid gap-2 text-xs ${compact ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-4"}`}>
         {view.plannedRR !== undefined ? (
           <p className="rounded-lg bg-zinc-900 px-3 py-2 text-zinc-300">
-            Plan R:R <span className="font-semibold text-emerald-400">{view.plannedRR.toFixed(1)}R</span>
+            Plan R:R{" "}
+            <span className="font-semibold text-emerald-400">{view.plannedRR.toFixed(1)}R</span>
+          </p>
+        ) : view.estimatedRR !== undefined ? (
+          <p className="rounded-lg bg-zinc-900 px-3 py-2 text-zinc-300">
+            Est. R:R at zone{" "}
+            <span className="font-semibold text-amber-400">~{view.estimatedRR.toFixed(1)}R</span>
           </p>
         ) : null}
         {view.minRR !== undefined ? (

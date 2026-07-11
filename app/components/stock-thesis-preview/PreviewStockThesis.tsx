@@ -20,6 +20,7 @@ import {
   type StockThesisStatus,
 } from "@/lib/stock-thesis-types";
 import { PlanLevelsBoard } from "@/app/components/planning-preview/PlanLevelsBoard";
+import { PlanMapSummaryLine, PlanMapToggleButton } from "@/app/components/planning-preview/PlanLevelsSidePanel";
 
 type ProfileTab = "snapshot" | "evidence" | "history";
 
@@ -54,6 +55,7 @@ export function PreviewStockThesis({
   activePlans?: TradePlan[];
 }) {
   const [tab, setTab] = useState<ProfileTab>("snapshot");
+  const [planMapOpen, setPlanMapOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [grantError, setGrantError] = useState<string | null>(null);
@@ -272,10 +274,24 @@ export function PreviewStockThesis({
               </section>
 
               <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-                <h2 className="text-sm font-semibold text-zinc-200">Plan map</h2>
-                <div className="mt-3">
-                  <PlanLevelsBoard view={levelsView} />
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h2 className="text-sm font-semibold text-zinc-200">Plan map</h2>
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      <PlanMapSummaryLine view={levelsView} />
+                    </p>
+                  </div>
+                  <PlanMapToggleButton
+                    open={planMapOpen}
+                    onClick={() => setPlanMapOpen((v) => !v)}
+                    view={levelsView}
+                  />
                 </div>
+                {planMapOpen ? (
+                  <div className="mt-4 border-t border-zinc-800 pt-4">
+                    <PlanLevelsBoard view={levelsView} />
+                  </div>
+                ) : null}
               </section>
 
               <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
