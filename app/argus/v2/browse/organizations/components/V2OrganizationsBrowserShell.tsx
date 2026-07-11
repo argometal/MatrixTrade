@@ -20,7 +20,6 @@ const METRIC_ICONS = {
   projects: "📁",
   people: "👤",
   emails: "✉",
-  files: "📎",
   topics: "🏷",
   events: "📅",
 } as const;

@@ -23,7 +23,6 @@ export interface V2OrganizationBrowseCard {
     projects: number;
     people: number;
     emails: number;
-    files: number;
     topics: number;
     events: number;
   };
@@ -143,17 +142,6 @@ function resolveLastContact(
   };
 }
 
-function countOrgFiles(logs: Log[], inbox: InboxItem[]): number {
-  const ids = new Set<string>();
-  for (const log of logs) {
-    for (const id of log.attachmentIds ?? []) ids.add(id);
-  }
-  for (const item of inbox) {
-    for (const id of item.attachmentIds ?? []) ids.add(id);
-  }
-  return ids.size;
-}
-
 function countOrgTopics(org: Entity, logs: Log[], data: ArgusData): number {
   const topicIds = new Set<string>();
   for (const id of org.linkedEntityIds ?? []) {
@@ -215,7 +203,6 @@ export function buildV2OrganizationBrowseCards(
           projects: orgProjects.length,
           people: peopleIds.length,
           emails: scope.emailCount,
-          files: countOrgFiles(scope.logs, scope.inbox),
           topics: countOrgTopics(org, scope.logs, data),
           events: linkCounts.eventCount,
         },

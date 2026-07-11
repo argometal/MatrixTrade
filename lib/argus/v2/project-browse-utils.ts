@@ -26,7 +26,6 @@ export interface V2ProjectBrowseCard {
   metrics: {
     people: number;
     emails: number;
-    files: number;
     topics: number;
     events: number;
   };
@@ -161,17 +160,6 @@ function resolveLastActivity(
   };
 }
 
-function countProjectFiles(allInbox: InboxItem[], allLogs: { attachmentIds: string[] }[]): number {
-  const ids = new Set<string>();
-  for (const item of allInbox) {
-    for (const id of item.attachmentIds ?? []) ids.add(id);
-  }
-  for (const log of allLogs) {
-    for (const id of log.attachmentIds ?? []) ids.add(id);
-  }
-  return ids.size;
-}
-
 export function buildV2ProjectBrowseCards(
   data: ArgusData,
   inboxItems: InboxItem[],
@@ -209,7 +197,6 @@ export function buildV2ProjectBrowseCards(
         metrics: {
           people: linkCounts.peopleCount,
           emails: allInbox.length,
-          files: countProjectFiles(allInbox, allLogs),
           topics: linkCounts.topicCount + (project.linkedTags ?? []).filter(Boolean).length,
           events: linkCounts.eventCount,
         },

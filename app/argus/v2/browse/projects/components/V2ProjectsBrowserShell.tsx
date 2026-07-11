@@ -20,7 +20,6 @@ function badgeTone(tone: V2ProjectBrowseCard["statusTone"]): "default" | "green"
 const METRIC_ICONS = {
   people: "👤",
   emails: "✉",
-  files: "📎",
   topics: "🏷",
   events: "📅",
 } as const;
@@ -72,7 +71,7 @@ function ProjectCard({
 
       <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-zinc-400">{card.description}</p>
 
-      <div className="mt-4 grid grid-cols-5 gap-2">
+      <div className="mt-4 grid grid-cols-4 gap-2">
         {(Object.keys(METRIC_ICONS) as (keyof typeof METRIC_ICONS)[]).map((key) => (
           <div key={key} className="text-center">
             <div className="text-base" aria-hidden>

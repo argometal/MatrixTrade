@@ -602,12 +602,9 @@ export function loadProjectPageData(
   const topicNames = linkedTopicNames(data, linkIds, project.linkedTags ?? []);
 
   const linkedEventsCount = linkCounts.eventCount;
-  const attachmentCount = allLogs.reduce((n, l) => n + l.attachmentIds.length, 0);
   const status = projectStatus(project, today);
   const dateRangeLabel = formatProjectDateRange(project);
 
-  const directCount = scope.directLogs.length + scope.directInbox.length;
-  const viaCount = scope.viaContactLogs.length + scope.viaContactInbox.length;
   const tagPatterns = buildTagPatternsForScope(allLogs, allInbox, today);
 
   const topicCount = linkCounts.topicCount + (project.linkedTags ?? []).filter(Boolean).length;
@@ -623,9 +620,7 @@ export function loadProjectPageData(
     dateRangeLabel,
     linkedTopics: [...new Set(topicNames)],
     linkedEventsCount,
-    directCount,
-    viaCount,
-    keyMetrics: buildProjectKeyMetrics(scope, attachmentCount, directCount, viaCount, topicCount, linkedEventsCount),
+    keyMetrics: buildProjectKeyMetrics(scope, topicCount, linkedEventsCount),
     tagPatterns,
     stats: {
       people: linkCounts.peopleCount,
@@ -633,9 +628,6 @@ export function loadProjectPageData(
       events: linkedEventsCount,
       organizations: linkCounts.orgCount,
       emails: scope.emailCount,
-      files: attachmentCount,
-      streamDown: directCount,
-      streamUp: viaCount,
     },
   };
 }
@@ -666,9 +658,6 @@ function enrichTimelineMeta(
 
 function buildProjectKeyMetrics(
   scope: ReturnType<typeof getProjectEvidenceScope>,
-  attachments: number,
-  directCount: number,
-  viaCount: number,
   topicCount: number,
   eventCount: number
 ) {
@@ -676,9 +665,6 @@ function buildProjectKeyMetrics(
     { label: "Topics", value: String(topicCount) },
     { label: "Events", value: String(eventCount) },
     { label: "Emails", value: String(scope.emailCount) },
-    { label: "Files", value: String(attachments) },
-    { label: "Stream down", value: String(directCount), detail: "Evidence linked directly to project" },
-    { label: "Stream up", value: String(viaCount), detail: "Evidence via project people" },
   ];
 }
 

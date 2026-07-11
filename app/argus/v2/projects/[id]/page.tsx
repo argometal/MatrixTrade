@@ -205,20 +205,6 @@ export default async function V2ProjectPage({
               linkLabel="View inbox"
               linkHref="/argus/v2/inbox"
             />
-            <ProjectStatCard
-              value={String(page.stats.files)}
-              label="Files"
-            />
-            <ProjectStatCard
-              value={String(page.stats.streamDown)}
-              label="Stream down"
-              sub="Direct on project"
-            />
-            <ProjectStatCard
-              value={String(page.stats.streamUp)}
-              label="Stream up"
-              sub="Via people"
-            />
           </div>
 
           {/* Timeline */}
