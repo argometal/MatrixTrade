@@ -1,4 +1,5 @@
 import type { TradingInboxPayload } from "./bridge";
+import { getActiveEvidenceForProfile } from "./market-evidence";
 import { getStockThesisById } from "./stock-theses";
 import { getPlaybookById, slugifyPlaybookId } from "./playbooks";
 import { getTradeById } from "./storage";
@@ -24,6 +25,8 @@ export async function verifyApplyPersistence(
   parsed: TradingInboxPayload
 ): Promise<ApplyVerifyResult> {
   switch (parsed.type) {
+    case "evidence-add":
+      return verifyEvidenceAddPersistence(parsed);
     case "scout-assessment":
     case "file-update":
       return verifyStockFilePersistence(parsed);
@@ -39,6 +42,23 @@ export async function verifyApplyPersistence(
     default:
       return { ok: false, detail: "Unsupported proposal type for verification." };
   }
+}
+
+async function verifyEvidenceAddPersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const p = parsed.proposal;
+  const profileId = String(p.stockProfileId).toUpperCase();
+  const value = String(p.value ?? "").trim();
+  const rows = await getActiveEvidenceForProfile(profileId);
+  const match = rows.find((row) => row.value.trim() === value);
+  if (!match) {
+    return { ok: false, detail: `Evidence value not found for ${profileId} after apply.` };
+  }
+  return {
+    ok: true,
+    detail: `Evidence ${match.id} · ${match.category} verified for ${profileId}.`,
+  };
 }
 
 async function verifyStockFilePersistence(

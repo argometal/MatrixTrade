@@ -1,5 +1,7 @@
 import type { AiNote } from "./ai-notes-types";
 import { DEFAULT_AI_BLOCK_REQUEST, SCOUTING_AI_BLOCK_REQUEST } from "./ai-block";
+import { formatMarketEvidenceSection } from "./market-evidence-format";
+import type { MarketEvidence } from "./market-evidence-types";
 import type { Playbook } from "./playbook-types";
 import {
   buildMatrixMechanicsBrief,
@@ -9,6 +11,10 @@ import {
   type MatrixTrainingContextInput,
 } from "./matrix-mechanics-brief";
 import { buildSmartSnapshot, type SmartSnapshotInput } from "./smart-snapshot";
+import {
+  buildStockProfileSynthesis,
+  formatSynthesisSection,
+} from "./stock-profile-synthesis";
 import type { StockThesis } from "./stock-thesis-types";
 import type { TradePlan } from "./plan-types";
 import type { MonthlyRisk } from "./monthly-risk";
@@ -36,6 +42,16 @@ export interface BuildAiContextInput {
   monthly?: MonthlyRisk;
   /** scouting-ticker scope */
   focusThesis?: StockThesis;
+  /** Active evidence rows for stock-file / scouting-ticker scopes */
+  activeEvidence?: MarketEvidence[];
+}
+
+function appendProfileEvidenceLayers(parts: string[], input: BuildAiContextInput): void {
+  const thesis = input.focusThesis ?? input.stockTheses?.[0];
+  const evidence = input.activeEvidence;
+  if (!thesis || !evidence || evidence.length === 0) return;
+  const synthesis = buildStockProfileSynthesis(thesis, evidence);
+  parts.push("", formatSynthesisSection(synthesis), "", formatMarketEvidenceSection(evidence));
 }
 
 function formatSystemNotesSection(notes: AiContextSystemNotes): string {
@@ -83,21 +99,29 @@ function buildScoutingTickerBody(input: BuildAiContextInput): string {
   if (!input.focusThesis) {
     return buildScoutingBody(input);
   }
-  return buildScoutingContextText({
-    thesis: input.focusThesis,
-    plans: input.plans ?? [],
-    playbooks: input.playbooks,
-    monthly: input.monthly,
-  });
+  const parts = [
+    buildScoutingContextText({
+      thesis: input.focusThesis,
+      plans: input.plans ?? [],
+      playbooks: input.playbooks,
+      monthly: input.monthly,
+    }),
+  ];
+  appendProfileEvidenceLayers(parts, input);
+  return parts.join("\n");
 }
 
 function buildStockFileBody(input: BuildAiContextInput): string {
   const thesis = input.focusThesis ?? input.stockTheses?.[0];
   if (!thesis) return buildMatrixMechanicsBrief();
-  return buildStockFileTrainingContext({
-    thesis,
-    playbooks: input.playbooks,
-  });
+  const parts = [
+    buildStockFileTrainingContext({
+      thesis,
+      playbooks: input.playbooks,
+    }),
+  ];
+  appendProfileEvidenceLayers(parts, input);
+  return parts.join("\n");
 }
 
 /** Single AI context builder — same engineering for Exchange and Scouting. */

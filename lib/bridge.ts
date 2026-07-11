@@ -205,6 +205,7 @@ export function getSnapshotReadUrl(): string | null {
 }
 
 export type TradingProposalType =
+  | "evidence-add"
   | "scout-assessment"
   | "file-update"
   | "trade-proposal"
@@ -227,6 +228,7 @@ export function parseTradingInboxPayload(
   const type = payload.type;
   const proposal = payload.proposal;
   if (
+    type !== "evidence-add" &&
     type !== "scout-assessment" &&
     type !== "file-update" &&
     type !== "trade-proposal" &&
@@ -252,6 +254,8 @@ export function parseTradingInboxPayload(
 export function describeProposal(payload: TradingInboxPayload): string {
   const p = payload.proposal;
   switch (payload.type) {
+    case "evidence-add":
+      return `Evidence ${p.ticker} ${p.stockProfileId} · ${p.category}`;
     case "scout-assessment":
       return `Scout ${p.ticker} ${p.stockFileId} · verdict ${p.verdict}`;
     case "file-update":
@@ -280,6 +284,14 @@ export function validateProposalPayload(
 ): { ok: true } | { ok: false; errors: string[] } {
   const p = parsed.proposal;
   const errors: string[] = [];
+
+  if (parsed.type === "evidence-add") {
+    if (!p.stockProfileId) errors.push("proposal.stockProfileId required");
+    if (!p.ticker) errors.push("proposal.ticker required");
+    if (!p.timeframe || !String(p.timeframe).trim()) errors.push("proposal.timeframe required");
+    if (!p.value || !String(p.value).trim()) errors.push("proposal.value required");
+    if (p.confidence === undefined) errors.push("proposal.confidence required (0-100)");
+  }
 
   if (parsed.type === "scout-assessment") {
     if (!p.stockFileId) errors.push("proposal.stockFileId required");

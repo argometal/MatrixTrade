@@ -1,6 +1,7 @@
 import type { TradingProposalType } from "./bridge";
 
 export const AI_BRIDGE_BLOCK_TYPES = [
+  "evidence-add",
   "scout-assessment",
   "file-update",
   "analysis",

@@ -1,0 +1,41 @@
+[
+  {
+    "id": "ME-TSLA-001",
+    "stockProfileId": "ST-TSLA-001",
+    "ticker": "TSLA",
+    "timeframe": "6M",
+    "category": "structure",
+    "value": "Bullish structure — higher highs and higher lows intact",
+    "confidence": 65,
+    "source": "migration",
+    "observedAt": "2026-07-10T00:00:00.000Z",
+    "createdAt": "2026-07-10T00:00:00.000Z",
+    "note": "Migrated from historicalAnalysis"
+  },
+  {
+    "id": "ME-TSLA-002",
+    "stockProfileId": "ST-TSLA-001",
+    "ticker": "TSLA",
+    "timeframe": "3M",
+    "category": "structure",
+    "value": "Pullback from highs; structure still constructive",
+    "confidence": 65,
+    "source": "migration",
+    "observedAt": "2026-07-10T00:00:00.000Z",
+    "createdAt": "2026-07-10T00:00:00.000Z",
+    "note": "Migrated from historicalAnalysis"
+  },
+  {
+    "id": "ME-TSLA-003",
+    "stockProfileId": "ST-TSLA-001",
+    "ticker": "TSLA",
+    "timeframe": "1W",
+    "category": "structure",
+    "value": "Deep pullbacks before continuation — buy dips in zones",
+    "confidence": 65,
+    "source": "migration",
+    "observedAt": "2026-07-10T00:00:00.000Z",
+    "createdAt": "2026-07-10T00:00:00.000Z",
+    "note": "Migrated from historicalAnalysis"
+  }
+]

@@ -2,35 +2,39 @@
 
 **Start here for MatrixTrade identity** (not ARGUS).
 
-MatrixTrade is an **expectation database** for trading — fed to ChatGPT via one AI engine. Not a conventional journal.
-
 ---
 
 ## Reading order
 
 | # | Document | Role |
 |---|----------|------|
-| 1 | [strategic-planning-vision.md](strategic-planning-vision.md) | **Product identity** — four layers, mission |
-| 2 | [ai-engineering.md](ai-engineering.md) | **Single AI fleet** — `lib/ai-context.ts`, AI Blocks, inbox |
-| 3 | [library-alignment-backlog.md](library-alignment-backlog.md) | Pending doc alignment |
-| 4 | [../architecture/matrixtrade-app.md](../architecture/matrixtrade-app.md) | Runtime routes |
-
-**ARGUS:** [`../argus/README.md`](../argus/README.md)
+| 1 | [strategic-planning-vision.md](strategic-planning-vision.md) | Mission — four layers |
+| 2 | [v2-engine-architecture.md](v2-engine-architecture.md) | **V2 target** — five engines + Probe |
+| 3 | [stock-profile-design.md](stock-profile-design.md) | Suspect dossier — append, light, chat patches |
+| 4 | [scout-execution-model.md](scout-execution-model.md) | Scout vs Trade vs Probe |
+| 5 | [runtime-truth.md](runtime-truth.md) | **What works in prod today** |
+| 6 | [ai-engineering.md](ai-engineering.md) | Single AI fleet |
+| 7 | [scoped-ai-access.md](scoped-ai-access.md) | Temporal links for one Stock Profile |
+| 8 | [library-alignment-backlog.md](library-alignment-backlog.md) | Remaining doc debt |
 
 ---
 
-## One-sentence identity
+## One sentence
 
-> **Playbook → Stock File → Scouting Desk → Trade** — with one copy/import/apply loop for AI (`scout-assessment`, `file-update`).
+> Expectation database + decision-learning architecture — Playbook → Evidence → Stock Profile → Scout/Decision → Execution (incl. Probe) → Learning.
+
+Recording trades is necessary; **not the mission**.
 
 ---
 
 ## Code vs vision
 
-| Layer | Route | Status |
-|-------|-------|--------|
-| Playbook | `/playbook` | Sparse content |
-| Stock File | `/stock-theses/[id]` | TSLA pilot |
-| Scouting Desk | `/planning` | AI package + inbox types shipped |
-| Assistant | `/exchange` | Same `buildAiContextPackage` engine |
-| Trade | `/trades` | Frozen for redesign |
+| Layer | Route | Today |
+|-------|-------|-------|
+| Playbook | `/playbook` | Sparse |
+| Stock Profile | `/stock-theses/[id]` | TSLA pilot; partial save |
+| Scouting | `/planning` | PLAN + AI package |
+| Assistant | `/exchange` | Same AI engine |
+| Trade | `/trades` | Frozen |
+
+**Coding starts only after library sign-off on V2 docs.**

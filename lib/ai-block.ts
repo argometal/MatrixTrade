@@ -12,6 +12,7 @@ Required shape:
   "proposal": { ... }
 }
 PRIORITY — Scouting (validate thesis; do not rubber-stamp):
+- evidence-add: MarketEvidence row — stockProfileId, ticker, timeframe, category, value, confidence (0-100) required; optional note
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear
 - file-update: propose Stock File change — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis
 
@@ -36,6 +37,7 @@ Required shape:
   "proposal": { ... }
 }
 Block types (all Apply ready):
+- evidence-add: MarketEvidence — stockProfileId, ticker, timeframe, category, value, confidence required
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId
@@ -104,6 +106,11 @@ export interface AiBlockSampleOption {
 
 export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
   {
+    type: "evidence-add",
+    label: "evidence-add — append observation",
+    hint: "structure/volume/regime observation with confidence",
+  },
+  {
     type: "scout-assessment",
     label: "scout-assessment — validate thesis",
     hint: "go/wait/no + reasons + challenges (required)",
@@ -151,6 +158,18 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
 ];
 
 const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
+  "evidence-add": {
+    type: "evidence-add",
+    source: "ai-block",
+    proposal: {
+      stockProfileId: "ST-TSLA-001",
+      ticker: "TSLA",
+      timeframe: "1W",
+      category: "structure",
+      value: "HH/HL intact on weekly",
+      confidence: 72,
+    },
+  },
   "scout-assessment": {
     type: "scout-assessment",
     source: "ai-block",

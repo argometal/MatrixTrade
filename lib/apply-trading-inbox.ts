@@ -1,10 +1,11 @@
+import { appendMarketEvidenceFromProposal } from "./market-evidence";
+import { readNoteBody } from "./obsidian";
+import { syncObsidianTradeIfLocal } from "./obsidian-local";
+import type { Playbook } from "./playbook-types";
 import {
   appendScoutAssessment,
   applyStockFileInboxUpdate,
 } from "./stock-theses";
-import { readNoteBody } from "./obsidian";
-import { syncObsidianTradeIfLocal } from "./obsidian-local";
-import type { Playbook } from "./playbook-types";
 import {
   getPlaybookById,
   parsePlaybookChecklist,
@@ -54,6 +55,8 @@ export async function applyTradingProposal(
   switch (parsed.type) {
     case "scout-assessment":
       return applyScoutAssessment(parsed);
+    case "evidence-add":
+      return applyEvidenceAdd(parsed);
     case "file-update":
       return applyFileUpdate(parsed);
     case "trade-proposal":
@@ -73,6 +76,19 @@ export async function applyTradingProposal(
     default:
       return { ok: false, errors: ["Unsupported proposal type."] };
   }
+}
+
+async function applyEvidenceAdd(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await appendMarketEvidenceFromProposal(parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  return {
+    ok: true,
+    message: `Evidence appended · ${result.evidence?.id} (${result.evidence?.category})`,
+    type: "evidence-add",
+    stockFileId: result.evidence?.stockProfileId,
+  };
 }
 
 async function applyScoutAssessment(

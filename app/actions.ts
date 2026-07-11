@@ -33,6 +33,7 @@ import {
   revokeAiSession,
 } from "@/lib/ai-session";
 import { createQrDataUrl } from "@/lib/qr";
+import { buildScopedAiUrls, createScopedAiGrant } from "@/lib/scoped-ai-grants";
 import { getTradesStoreMode } from "@/lib/trades-json";
 import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules, saveRules } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
@@ -506,6 +507,38 @@ export async function savePlanAction(formData: FormData): Promise<SavePlanAction
 }
 
 export type SaveStockThesisActionResult = { ok: true } | { error: string };
+
+export type CreateScopedAiGrantActionResult =
+  | {
+      grantId: string;
+      humanPageUrl: string;
+      contextUrl: string;
+      inboxUrl: string;
+      expiresAt: string;
+    }
+  | { error: string };
+
+export async function createScopedAiGrantAction(
+  formData: FormData
+): Promise<CreateScopedAiGrantActionResult> {
+  await requireTradingSession();
+
+  const stockProfileId = String(formData.get("stockProfileId") ?? "").trim();
+  if (!stockProfileId) return { error: "Stock profile id is required." };
+
+  const result = await createScopedAiGrant({ stockProfileId });
+  if (result.errors?.length) return { error: result.errors.join(" ") };
+
+  const grant = result.grant!;
+  const urls = buildScopedAiUrls(grant.id);
+  revalidatePath(`/stock-theses/${stockProfileId}`);
+
+  return {
+    grantId: grant.id,
+    expiresAt: grant.expiresAt,
+    ...urls,
+  };
+}
 
 export async function saveStockThesisAction(
   formData: FormData
