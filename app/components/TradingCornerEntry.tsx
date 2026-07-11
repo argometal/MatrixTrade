@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AppCornerDock } from "@/app/components/AppCornerDock";
 
 function TradingMark({ size = 40 }: { size?: number }) {
   return (
@@ -41,16 +42,18 @@ export function TradingCornerEntry() {
   if (!pathname.startsWith("/argus")) return null;
 
   return (
-    <Link
-      href="/home-preview"
-      title="MatrixTrade"
-      aria-label="Back to MatrixTrade"
-      className="group fixed right-4 top-4 z-50 rounded-xl shadow-lg shadow-black/30 transition hover:scale-105 hover:shadow-zinc-400/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 sm:right-6 sm:top-6"
-    >
-      <TradingMark />
-      <span className="pointer-events-none absolute -bottom-7 right-0 whitespace-nowrap rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-medium tracking-wide text-zinc-800 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
-        Trading
-      </span>
-    </Link>
+    <AppCornerDock bellHref="/argus/v2/inbox" bellLabel="Argus inbox" mobileOffset>
+      <Link
+        href="/home-preview"
+        title="MatrixTrade"
+        aria-label="Back to MatrixTrade"
+        className="group relative shrink-0 rounded-xl shadow-lg shadow-black/30 transition hover:scale-105 hover:shadow-zinc-400/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+      >
+        <TradingMark />
+        <span className="pointer-events-none absolute -bottom-7 right-0 whitespace-nowrap rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] font-medium tracking-wide text-zinc-800 opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+          Trading
+        </span>
+      </Link>
+    </AppCornerDock>
   );
 }

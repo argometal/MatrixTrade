@@ -12,7 +12,7 @@ One control per window: **`{Window} snapshot ▾`**
 - Title = window name  
 - Subtitle = what data is included (one line)  
 - Dropdown when more than one slice  
-- Separate control everywhere: **Import AI update** → Inbox Apply  
+- Separate control everywhere: **Connect** wizard → inline Accept  
 
 ---
 
@@ -58,7 +58,7 @@ Does not replace the automatic brief prefix on data snapshots.
 | Brief prefix | `buildMatrixMechanicsBrief()` |
 | Full mechanics | `buildMatrixMechanicsSnapshot()` |
 | Package builder | `buildAiContextPackage()` in `lib/ai-context.ts` |
-| UI | `SnapshotButton`, `ImportAiUpdateLink` |
+| UI | `MatrixConnectButton`, `ProposalSketchCard` |
 | Server helpers | `lib/snapshot-packages.ts` |
 
 ---

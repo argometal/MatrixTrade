@@ -6,8 +6,7 @@ import {
   createScopedAiGrantAction,
   saveStockThesisAction,
 } from "@/app/actions";
-import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
-import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import { MatrixConnectButton } from "@/app/components/matrix-connect/MatrixConnectButton";
 import { snapshotButtonTitle } from "@/lib/snapshot-verification";
 import type { MarketEvidence } from "@/lib/market-evidence-types";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
@@ -132,12 +131,18 @@ export function PreviewStockThesis({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <SnapshotButton
-                title={snapshotButtonTitle(thesis.ticker, "snapshot")}
-                description="Thesis, levels, evidence, linked scouts"
-                items={snapshotItems}
+              <MatrixConnectButton
+                contextLabel={thesis.ticker}
+                connectOptions={{
+                  window: "stock-thesis",
+                  ticker: thesis.ticker,
+                  stockProfileId: thesis.id,
+                  intent: "update-file",
+                  snapshotTitle: snapshotButtonTitle(thesis.ticker, "snapshot"),
+                  snapshotDescription: "Thesis, levels, evidence, linked scouts",
+                  snapshotItems,
+                }}
               />
-              <ImportAiUpdateLink variant="compact" />
               <form action={createAiAccessLink}>
                 <input type="hidden" name="stockProfileId" value={thesis.id} />
                 <button

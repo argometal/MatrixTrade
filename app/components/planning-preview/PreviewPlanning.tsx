@@ -9,8 +9,7 @@ import {
   createScopedAiGrantAction,
   stopProbeAction,
 } from "@/app/actions";
-import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
-import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import { MatrixConnectButton } from "@/app/components/matrix-connect/MatrixConnectButton";
 import { buildPlanEnterHref } from "@/lib/plan-helpers";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
 import { scoutingVerdictStyle } from "@/lib/matrix-mechanics-brief";
@@ -193,6 +192,20 @@ export function PreviewPlanning({
     return "Scout snapshot";
   }, [scoutThesis, focusThesisId, selectedPlan, focusPlanId, stockTheses, plans]);
 
+  const connectContext = useMemo(() => {
+    const focusThesis =
+      scoutThesis ??
+      (focusThesisId ? stockTheses.find((t) => t.id === focusThesisId) : undefined);
+    const focusPlan = selectedPlan ?? (focusPlanId ? plans.find((p) => p.id === focusPlanId) : undefined);
+    return {
+      label: focusPlan?.ticker ?? focusThesis?.ticker,
+      ticker: focusPlan?.ticker ?? focusThesis?.ticker,
+      planId: focusPlan?.id,
+      stockProfileId: focusThesis?.id,
+      intent: focusPlan ? ("validate-scout" as const) : focusThesis ? ("update-file" as const) : ("general" as const),
+    };
+  }, [scoutThesis, focusThesisId, selectedPlan, focusPlanId, stockTheses, plans]);
+
   const snapshotItems = useMemo(() => {
     const focusThesis =
       scoutThesis ??
@@ -271,15 +284,8 @@ export function PreviewPlanning({
                 = HOW · Stock File = WHO · Scouting = go / wait / no + risk
               </p>
               <p className="mt-1 text-xs text-zinc-600">
-                Visualize → copy snapshot (header) → discuss in your AI → import in{" "}
-                <Link href="/home-preview?panel=assistant" className="text-violet-400 hover:underline">
-                  Dashboard
-                </Link>{" "}
-                or{" "}
-                <Link href="/inbox" className="text-violet-400 hover:underline">
-                  Inbox
-                </Link>
-                . Open <span className="text-zinc-500">Help</span> on the right for details.
+                Visualize → <span className="text-zinc-500">Connect</span> → copy snapshot → discuss in your AI → Accept.
+                Open <span className="text-zinc-500">Help</span> on the right for details.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -289,12 +295,19 @@ export function PreviewPlanning({
               >
                 New stock case
               </Link>
-              <SnapshotButton
-                title={snapshotTitle}
-                description="Desk overview, ticker, scout plan, or mechanics"
-                items={snapshotItems.length > 0 ? snapshotItems : initialSnapshotItems}
+              <MatrixConnectButton
+                contextLabel={connectContext.label}
+                connectOptions={{
+                  window: "planning",
+                  intent: connectContext.intent,
+                  ticker: connectContext.ticker,
+                  planId: connectContext.planId,
+                  stockProfileId: connectContext.stockProfileId,
+                  snapshotTitle,
+                  snapshotDescription: "Desk overview, ticker, scout plan, or mechanics",
+                  snapshotItems: snapshotItems.length > 0 ? snapshotItems : initialSnapshotItems,
+                }}
               />
-              <ImportAiUpdateLink variant="compact" />
             </div>
           </div>
 
@@ -377,16 +390,24 @@ export function PreviewPlanning({
                         {evidenceCount > 0 ? ` · ${evidenceCount} evidence` : ""}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <SnapshotButton
-                          title={snapshotButtonTitle(thesis.ticker, "snapshot")}
-                          description="Stock profile, evidence, scouts for this ticker"
-                          items={stockProfileSnapshotItems({
-                            thesis,
-                            playbooks,
-                            plans,
-                            activeEvidence:
-                              activeEvidenceByProfile.get(thesis.id.toUpperCase()) ?? [],
-                          }).filter((item) => item.id !== "mechanics")}
+                        <MatrixConnectButton
+                          contextLabel={thesis.ticker}
+                          className="!px-3 !py-1.5 !text-xs"
+                          connectOptions={{
+                            window: "planning",
+                            ticker: thesis.ticker,
+                            stockProfileId: thesis.id,
+                            intent: "update-file",
+                            snapshotTitle: snapshotButtonTitle(thesis.ticker, "snapshot"),
+                            snapshotDescription: "Stock profile, evidence, scouts for this ticker",
+                            snapshotItems: stockProfileSnapshotItems({
+                              thesis,
+                              playbooks,
+                              plans,
+                              activeEvidence:
+                                activeEvidenceByProfile.get(thesis.id.toUpperCase()) ?? [],
+                            }).filter((item) => item.id !== "mechanics"),
+                          }}
                         />
                         <Link
                           href={`/stock-theses/${thesis.id}`}

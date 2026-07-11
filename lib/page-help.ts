@@ -137,7 +137,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
     summary: "Same as Scouting Desk — see planning help for snapshot → AI → Inbox flow.",
     steps: [
       "Visualization only; analysis happens in your external AI.",
-      "Scout snapshot ▾ from header → paste in external AI → Import AI update → Apply.",
+      "Connect → copy snapshot → external AI → paste → Accept inline.",
     ],
   },
 };

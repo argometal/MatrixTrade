@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { PreviewReview } from "@/app/components/review-preview/PreviewReview";
 import { PreviewTradesList } from "@/app/components/trades-preview/PreviewTradesList";
-import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
+import { MatrixConnectButton } from "@/app/components/matrix-connect/MatrixConnectButton";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
-import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import type { AttentionItem } from "@/lib/dashboard-attention";
 import type { BridgeInboxItem } from "@/lib/bridge";
 import type { Playbook } from "@/lib/playbook-types";
@@ -50,12 +49,14 @@ export function PreviewTradesHub({
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <SnapshotButton
-                  title="Trades snapshot"
-                  description="All trades summary, experiment, monthly room"
-                  items={snapshotItems}
+                <MatrixConnectButton
+                  connectOptions={{
+                    window: "trades-hub",
+                    snapshotTitle: "Trades snapshot",
+                    snapshotDescription: "All trades summary, experiment, monthly room",
+                    snapshotItems,
+                  }}
                 />
-                <ImportAiUpdateLink variant="compact" />
                 <Link
                   href="/trades-preview"
                   className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"

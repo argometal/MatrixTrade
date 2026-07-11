@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { applyTradingProposal } from "@/lib/apply-trading-inbox";
 import { verifyApplyPersistence } from "@/lib/apply-verify";
 import { requireTradingSession } from "@/lib/auth/require-session";
+import { isApplyImplemented } from "@/lib/ai-bridge-types";
 import {
   ackBridgeInboxItem,
   buildBridgeSnapshot,
@@ -63,6 +64,19 @@ export type ImportAiBlockActionResult =
   | { ok: true; inboxItemId: string; origin: string }
   | { error: string; details?: string[] };
 
+export type AcceptAiBlockActionResult =
+  | {
+      ok: true;
+      message: string;
+      type: string;
+      tradeId?: string;
+      playbookId?: string;
+      stockFileId?: string;
+      planId?: string;
+      inboxItemId?: string;
+    }
+  | { ok: false; error: string; details?: string[] };
+
 export type CreateAiSessionActionResult =
   | { token: string; connectUrl: string; qrDataUrl: string }
   | { error: string };
@@ -109,6 +123,67 @@ export async function importAiBlockAction(formData: FormData): Promise<ImportAiB
     ok: true,
     inboxItemId: result.inboxItemId,
     origin: result.origin,
+  };
+}
+
+/** Parse, audit-log to inbox, and apply — inline Accept from Connect wizard. */
+export async function acceptAiBlockAction(formData: FormData): Promise<AcceptAiBlockActionResult> {
+  await requireTradingSession();
+
+  const raw = String(formData.get("aiBlock") ?? "");
+  const parsed = parseAiBlock(raw);
+  if (!parsed.ok) {
+    return { ok: false, error: parsed.error, details: parsed.details };
+  }
+
+  if (!isApplyImplemented(parsed.payload.type)) {
+    return {
+      ok: false,
+      error: `Apply is not implemented for type ${parsed.payload.type}.`,
+    };
+  }
+
+  const inboxResult = await submitToTradingInbox({
+    ...parsed.body,
+    source: "ai-block",
+  });
+
+  let applyResult;
+  try {
+    applyResult = await applyTradingProposal(parsed.body);
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Apply failed unexpectedly.",
+    };
+  }
+
+  if (!applyResult.ok) {
+    return { ok: false, error: applyResult.errors.join("; ") };
+  }
+
+  if (inboxResult.ok) {
+    try {
+      await markInboxItemStatus(inboxResult.inboxItemId, inboxResult.origin, "applied");
+    } catch {
+      /* audit mark best-effort */
+    }
+  }
+
+  revalidateTradingPaths();
+  if (applyResult.tradeId) revalidatePath(`/trades/${applyResult.tradeId}`);
+  if (applyResult.stockFileId) revalidatePath(`/stock-theses/${applyResult.stockFileId}`);
+  if (applyResult.planId) revalidatePath("/planning");
+
+  return {
+    ok: true,
+    message: applyResult.message,
+    type: applyResult.type,
+    tradeId: applyResult.tradeId,
+    playbookId: applyResult.playbookId,
+    stockFileId: applyResult.stockFileId,
+    planId: applyResult.planId,
+    inboxItemId: inboxResult.ok ? inboxResult.inboxItemId : undefined,
   };
 }
 

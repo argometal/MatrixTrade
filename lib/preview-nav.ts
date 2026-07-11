@@ -29,7 +29,7 @@ export const PREVIEW_NAV_SECTIONS = [
     id: "system",
     label: "System",
     items: [
-      { href: "/inbox", label: "Inbox", badge: "inbox" as const },
+      { href: "/inbox", label: "History", badge: "inbox" as const },
       { href: "/system", label: "System" },
       { href: "/connect", label: "Connect" },
     ],
@@ -40,7 +40,7 @@ export const PREVIEW_NAV_SECTIONS = [
 export const PREVIEW_MOBILE_TABS = [
   { href: "/home-preview", label: "Dashboard" },
   { href: "/trades-preview", label: "New Trade" },
-  { href: "/inbox", label: "Inbox" },
+  { href: "/inbox", label: "History" },
 ] as const;
 
 export function isPreviewNavActive(pathname: string, href: string): boolean {

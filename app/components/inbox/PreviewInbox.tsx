@@ -27,9 +27,9 @@ export function PreviewInbox({
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl font-semibold text-zinc-100">Inbox</h1>
+              <h1 className="text-xl font-semibold text-zinc-100">Proposal history</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                Import AI Blocks from Assistant workspace or Worker bridge — preview before Apply.
+                Past AI proposals and Worker bridge items — optional audit trail. Use Connect → Accept on each page for new updates.
               </p>
             </div>
             <Link
@@ -56,11 +56,7 @@ export function PreviewInbox({
 
           {items.length === 0 ? (
             <div className="rounded-xl border border-dashed border-zinc-700 px-4 py-10 text-center text-sm text-zinc-500">
-              Inbox empty. Import an AI Block from{" "}
-              <Link href="/home-preview?panel=assistant" className="text-violet-400 hover:text-violet-300 hover:underline">
-                Asistente IA
-              </Link>
-              .
+              No proposal history yet. Use <span className="text-violet-300">Connect</span> on any workspace page to paste and Accept AI blocks.
             </div>
           ) : (
             <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800 bg-zinc-900/50">

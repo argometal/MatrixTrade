@@ -5,9 +5,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { ImportAiBlockActionResult } from "@/app/actions";
 import { HomeDashboardMain } from "@/app/components/home-dashboard/HomeDashboardMain";
-import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
+import { MatrixConnectButton } from "@/app/components/matrix-connect/MatrixConnectButton";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
-import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import type { EquityPoint } from "@/lib/review";
 import type { AiBridgeOverviewData } from "@/lib/ai-bridge-overview";
 import { formatDashboardPf, formatDashboardUsd } from "@/lib/dashboard-display";
@@ -103,25 +102,17 @@ export function PreviewDashboard({
                   {data.cycleLabel} · experiment control
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 pr-24 sm:pr-28 lg:pr-0">
                 {exchange ? (
-                  <>
-                    <SnapshotButton
-                      title="Dashboard snapshot"
-                      description="Budget, experiment, attention, trades overview"
-                      items={exchange.dashboardSnapshots}
-                    />
-                    <ImportAiUpdateLink variant="compact" />
-                  </>
+                  <MatrixConnectButton
+                    connectOptions={{
+                      window: "dashboard",
+                      snapshotTitle: "Dashboard snapshot",
+                      snapshotDescription: "Budget, experiment, attention, trades overview",
+                      snapshotItems: exchange.dashboardSnapshots,
+                    }}
+                  />
                 ) : null}
-                {exchange && exchange.pendingInboxCount > 0 && (
-                  <Link
-                    href="/inbox"
-                    className="rounded-lg bg-violet-600/20 px-4 py-2 text-sm font-medium text-violet-300 hover:bg-violet-600/30"
-                  >
-                    Inbox ({exchange.pendingInboxCount})
-                  </Link>
-                )}
                 <Link
                   href="/trades-preview"
                   className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
@@ -343,7 +334,7 @@ export function PreviewDashboard({
                   <div>
                     <h2 className="text-sm font-semibold text-zinc-100">Asistente IA</h2>
                     <p className="mt-0.5 text-xs text-zinc-500">
-                      Copiar solicitud e importar bloques AI — revisar en Inbox antes de Apply.
+                      Legacy paste panel — prefer Connect on any workspace page for Accept inline.
                     </p>
                   </div>
                   <span className="text-zinc-500">{assistantOpen ? "▾" : "▸"}</span>

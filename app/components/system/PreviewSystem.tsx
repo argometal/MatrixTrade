@@ -1,8 +1,7 @@
 import Link from "next/link";
 import { ConnectPageContent } from "@/app/components/ConnectPageContent";
 import { CopyUrlButton } from "@/app/components/CopyUrlButton";
-import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
-import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import { MatrixConnectButton } from "@/app/components/matrix-connect/MatrixConnectButton";
 import { SystemBridgePanel } from "@/app/components/system/SystemBridgePanel";
 import { SystemRulesPanel } from "@/app/components/system/SystemRulesPanel";
 import { SystemSection, SystemRow, StatusBadge } from "@/app/components/system/SystemSection";
@@ -62,26 +61,14 @@ export function PreviewSystem({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <SnapshotButton
-                title="Matrix Mechanics snapshot"
-                description="Full rules, block types, Apply gate — paste once per AI session"
-                items={mechanicsSnapshot}
+              <MatrixConnectButton
+                connectOptions={{
+                  window: "system",
+                  snapshotTitle: "Matrix Mechanics snapshot",
+                  snapshotDescription: "Full rules, block types, Apply gate — paste once per AI session",
+                  snapshotItems: mechanicsSnapshot,
+                }}
               />
-              <ImportAiUpdateLink variant="compact" />
-              <Link
-                href="/home-preview?panel=assistant"
-                className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
-              >
-                Asistente IA
-              </Link>
-              {pendingInboxCount > 0 && (
-                <Link
-                  href="/inbox"
-                  className="rounded-lg bg-violet-600/20 px-3 py-2 text-xs font-medium text-violet-300 hover:bg-violet-600/30"
-                >
-                  Inbox ({pendingInboxCount})
-                </Link>
-              )}
             </div>
           </div>
 

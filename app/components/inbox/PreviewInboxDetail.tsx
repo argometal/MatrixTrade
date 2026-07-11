@@ -160,20 +160,31 @@ export function PreviewInboxDetail({
             )}
           </section>
 
+          {parsed && validation.ok ? (
+            <section className="rounded-lg border border-violet-500/25 bg-violet-950/20 p-4">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-violet-300">Human preview</h2>
+              <p className="mt-2 text-sm text-zinc-200">{describeProposal(parsed)}</p>
+              <p className="mt-2 text-xs text-zinc-500">
+                Prefer Connect → Accept on the workspace page for new imports. This screen is for audit and Worker items.
+              </p>
+            </section>
+          ) : null}
+
           {applyPending && (
             <div className="rounded-lg border border-amber-500/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
-              Supported by parser · Apply pending — you can import and review this block, but Apply is
-              not implemented yet for type{" "}
+              Supported by parser · Apply pending — review only for type{" "}
               <span className="font-mono text-amber-100">{parsed?.type}</span>.
             </div>
           )}
 
-          <section className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-4">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Payload</h2>
+          <details className="rounded-lg border border-zinc-800 bg-zinc-950/80 p-4">
+            <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Raw payload (technical)
+            </summary>
             <pre className="mt-2 max-h-96 overflow-auto text-xs leading-relaxed text-zinc-300">
               {parsed ? proposalToPreviewJson(parsed) : JSON.stringify(item.payload, null, 2)}
             </pre>
-          </section>
+          </details>
 
           <div className="flex flex-wrap gap-3">
             <form action={applyInboxItemAction}>

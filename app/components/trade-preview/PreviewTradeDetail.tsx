@@ -5,8 +5,7 @@ import {
   openTradeAction,
   updateTradeMetaAction,
 } from "@/app/actions";
-import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
-import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import { MatrixConnectButton } from "@/app/components/matrix-connect/MatrixConnectButton";
 import { snapshotButtonTitle } from "@/lib/snapshot-verification";
 import { calculateTradeResult } from "@/lib/calculate";
 import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
@@ -81,12 +80,18 @@ export function PreviewTradeDetail({
               )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <SnapshotButton
-                title={snapshotButtonTitle(trade.ticker, `${trade.id} snapshot`)}
-                description="Entry, stop, target, status, P/L, review state"
-                items={snapshotItems}
+              <MatrixConnectButton
+                contextLabel={trade.id}
+                connectOptions={{
+                  window: "trade",
+                  tradeId: trade.id,
+                  ticker: trade.ticker,
+                  intent: "adjust-trade",
+                  snapshotTitle: snapshotButtonTitle(trade.ticker, `${trade.id} snapshot`),
+                  snapshotDescription: "Entry, stop, target, status, P/L, review state",
+                  snapshotItems,
+                }}
               />
-              <ImportAiUpdateLink variant="compact" />
             </div>
           </div>
         </header>
