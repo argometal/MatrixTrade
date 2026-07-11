@@ -7,12 +7,12 @@ import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 import type { ArgusLinkResult } from "@/app/argus/components/ArgusLinkModal";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import {
   saveInboxLinksAction,
   updateInboxTriageAction,
   type CreatedEntityResult,
 } from "@/app/argus/actions";
-import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { resolveV2SelectedId, v2ActiveListItemClass } from "@/lib/argus/v2/selection";
 import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
 import {
@@ -33,7 +33,6 @@ import {
 import { V2InboxBulkBar } from "./V2InboxBulkBar";
 import { linkedEntityIdsRequireAuthenticator } from "@/lib/argus/delete-link-check";
 import { V2InboxDetailPanel } from "./V2InboxDetailPanel";
-import { V2InboxEntityLinkModal } from "./V2InboxEntityLinkModal";
 import { V2InboxSwipeRow } from "./V2InboxSwipeRow";
 
 const TABS: { id: V2InboxTab; label: string }[] = [
@@ -180,7 +179,7 @@ export function V2InboxShell({
   const [selectMode, setSelectMode] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
   const [openFilter, setOpenFilter] = useState<FilterMenu>(null);
-  const [swipeLinkId, setSwipeLinkId] = useState<string | null>(null);
+  const { openCreateFlow } = useArgusAdd();
   const filtersActive = hasActiveV2InboxFilters(filters);
   const bulkReturnTo = useMemo(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -188,32 +187,35 @@ export function V2InboxShell({
     return query ? `/argus/v2/inbox?${query}` : "/argus/v2/inbox";
   }, [searchParams]);
   const checkedIds = useMemo(() => [...checked], [checked]);
-  const inboxBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "inbox"), [buckets]);
 
-  const swipeLinkDetail = useMemo(
-    () => (swipeLinkId ? details.find((d) => d.item.id === swipeLinkId) : undefined),
-    [details, swipeLinkId]
+  const openSwipeLink = useCallback(
+    (id: string) => {
+      const detail = details.find((entry) => entry.item.id === id);
+      if (!detail) return;
+
+      openCreateFlow({
+        mode: "inbox-evidence",
+        linkOnly: true,
+        inboxId: detail.item.id,
+        linkedEntityIds: detail.item.linkedEntityIds ?? [],
+        prefillTags: detail.item.topics ?? [],
+        showTags: true,
+        linkTitle: "Link email",
+        onLinkConfirm: async (result: ArgusLinkResult) => {
+          await saveInboxLinksAction(detail.item.id, result.entityIds);
+          await updateInboxTriageAction(detail.item.id, { topics: result.tags });
+          router.refresh();
+        },
+        onEntityCreated: async (entity: CreatedEntityResult): Promise<false> => {
+          const next = [...new Set([...(detail.item.linkedEntityIds ?? []), entity.id])];
+          await saveInboxLinksAction(detail.item.id, next);
+          router.refresh();
+          return false;
+        },
+      });
+    },
+    [details, openCreateFlow, router]
   );
-
-  const openSwipeLink = useCallback((id: string) => {
-    setSwipeLinkId(id);
-  }, []);
-
-  async function confirmSwipeLinks(result: ArgusLinkResult) {
-    if (!swipeLinkDetail) return;
-    await saveInboxLinksAction(swipeLinkDetail.item.id, result.entityIds);
-    await updateInboxTriageAction(swipeLinkDetail.item.id, { topics: result.tags });
-    router.refresh();
-    setSwipeLinkId(null);
-  }
-
-  async function swipeLinkCreatedEntity(entity: CreatedEntityResult): Promise<false> {
-    if (!swipeLinkDetail) return false;
-    const next = [...new Set([...(swipeLinkDetail.item.linkedEntityIds ?? []), entity.id])];
-    await saveInboxLinksAction(swipeLinkDetail.item.id, next);
-    router.refresh();
-    return false;
-  }
 
   function replaceInboxParams(mutate: (params: URLSearchParams) => void) {
     const params = new URLSearchParams(searchParams.toString());
@@ -670,19 +672,6 @@ export function V2InboxShell({
           </div>
         )}
       </section>
-
-      {swipeLinkDetail ? (
-        <V2InboxEntityLinkModal
-          open={Boolean(swipeLinkId)}
-          buckets={inboxBuckets}
-          tagBuckets={tagBuckets}
-          selectedIds={swipeLinkDetail.item.linkedEntityIds ?? []}
-          selectedTags={swipeLinkDetail.item.topics ?? []}
-          onClose={() => setSwipeLinkId(null)}
-          onConfirm={(result) => void confirmSwipeLinks(result)}
-          onEntityCreated={swipeLinkCreatedEntity}
-        />
-      ) : null}
     </div>
   );
 }

@@ -30,6 +30,9 @@ import {
   createItemDisplayLabel,
 } from "@/app/argus/components/create-link-shared";
 import { ADD_CONTEXT } from "@/lib/argus/ux-copy";
+import { ArgusUnifiedLinkPanel } from "@/app/argus/components/ArgusUnifiedLinkPanel";
+import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
+import { usesLinkModalShell } from "@/lib/argus/link-modal-adapter";
 
 const STEPS = [
   { key: "create", label: "Capture", sub: "Fill in your new item" },
@@ -85,6 +88,57 @@ export function ArgusCreateLinkWindow({
   onClose,
   options,
   buckets,
+  tagBuckets,
+  journalRows,
+  onSaved,
+}: {
+  open: boolean;
+  onClose: () => void;
+  options: CreateFlowOpenOptions;
+  buckets: EntityPickerBuckets;
+  tagBuckets: TagBuckets;
+  journalRows: JournalLinkRow[];
+  onSaved?: (result: UnifiedCreateResult) => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!open || !mounted) return null;
+
+  if (usesLinkModalShell(options)) {
+    return createPortal(
+      <ArgusUnifiedLinkPanel
+        open={open}
+        onClose={onClose}
+        options={options}
+        buckets={buckets}
+        tagBuckets={tagBuckets}
+      />,
+      document.body
+    );
+  }
+
+  return createPortal(
+    <ArgusCreateLinkWindowBody
+      open={open}
+      onClose={onClose}
+      options={options}
+      buckets={buckets}
+      journalRows={journalRows}
+      onSaved={onSaved}
+    />,
+    document.body
+  );
+}
+
+function ArgusCreateLinkWindowBody({
+  open,
+  onClose,
+  options,
+  buckets,
   journalRows,
   onSaved,
 }: {
@@ -95,17 +149,12 @@ export function ArgusCreateLinkWindow({
   journalRows: JournalLinkRow[];
   onSaved?: (result: UnifiedCreateResult) => void;
 }) {
-  const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const flow = useCreateLinkFlowState({ open, options, buckets, journalRows, onClose, onSaved });
   const entityCaptureOnly = Boolean(options.entityCaptureOnly);
   const needsKindPicker = flow.needsItemKindPicker;
   const drawerOpen = menuOpen || needsKindPicker;
   const drawerDismissible = !needsKindPicker;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -145,7 +194,7 @@ export function ArgusCreateLinkWindow({
     return flow.tagList.filter((tag) => !existing.has(tag.toLowerCase()));
   }, [flow.tagList, flow.allEntities]);
 
-  if (!open || !mounted) return null;
+  if (!open) return null;
 
   const saveLabel =
     flow.mode === "link"
@@ -655,7 +704,7 @@ export function ArgusCreateLinkWindow({
     </div>
   );
 
-  return createPortal(
+  return (
     <>
       <ArgusCreateLinkMobile
         open={open}
@@ -666,7 +715,6 @@ export function ArgusCreateLinkWindow({
         onSaved={onSaved}
       />
       {desktop}
-    </>,
-    document.body
+    </>
   );
 }
