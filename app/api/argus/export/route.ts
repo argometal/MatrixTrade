@@ -4,8 +4,9 @@ import { ARGUS_AUTH } from "@/lib/auth/cookies";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { collectVaultEvidence } from "@/lib/argus/export/collect-evidence";
-import { deliverFilenamePrefix } from "@/lib/argus/export/deliver-branding";
+import { deliverFilenamePrefix, resolveDeliverBranding } from "@/lib/argus/export/deliver-branding";
 import { isDeliverPackageAvailable } from "@/lib/argus/export/deliver-catalog";
+import { buildPdfDeliver } from "@/lib/argus/export/packages/pdf-deliver";
 import { buildEvidenceVaultZip } from "@/lib/argus/export/packages/vault";
 import type { DeliverPackageKind, ExportCollectionOptions, ExportScopeType } from "@/lib/argus/export/types";
 import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const packageKind = (body.package ?? "evidence_vault") as DeliverPackageKind;
+  const packageKind = (body.package ?? "pdf_deliver") as DeliverPackageKind;
   if (!isDeliverPackageAvailable(packageKind)) {
     return NextResponse.json({ error: "Package not available yet" }, { status: 400 });
   }
@@ -92,10 +93,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Scope not found or type mismatch" }, { status: 404 });
   }
 
+  const stamp = new Date().toISOString().slice(0, 10);
+  const nameToken = safeFileToken(collected.scope.name);
+
+  if (packageKind === "pdf_deliver") {
+    const generatedAt = new Date().toISOString();
+    const branding = resolveDeliverBranding();
+    const buffer = await buildPdfDeliver({ data, collected, generatedAt, branding });
+    const prefix = deliverFilenamePrefix("pdf");
+    const filename = `${prefix}-${scopeType}-${nameToken}-${stamp}.pdf`;
+
+    return new NextResponse(new Uint8Array(buffer), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Length": String(buffer.length),
+        "Cache-Control": "no-store",
+        "X-Argus-Package": "pdf_deliver",
+        "X-Argus-Evidence-Count": String(collected.logs.length + collected.inbox.length),
+        "X-Argus-File-Count": String(collected.attachments.length),
+      },
+    });
+  }
+
   const { buffer, manifest } = await buildEvidenceVaultZip({ collected, includePrivate, options });
-  const stamp = manifest.exportedAt.slice(0, 10);
   const prefix = deliverFilenamePrefix("vault");
-  const filename = `${prefix}-${scopeType}-${safeFileToken(collected.scope.name)}-${stamp}.zip`;
+  const filename = `${prefix}-${scopeType}-${nameToken}-${manifest.exportedAt.slice(0, 10)}.zip`;
 
   return new NextResponse(new Uint8Array(buffer), {
     status: 200,

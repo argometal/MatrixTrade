@@ -133,14 +133,14 @@ export default async function V2OrganizationPage({
                 scopeType="organization"
                 scopeId={entity.id}
                 scopeName={entity.name}
-                label="Deliver"
+                label="PDF"
                 className="rounded-lg border border-emerald-500/40 bg-emerald-600/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/25"
               />
               <Link
-                href={`/argus/v2/deliver?scopeType=organization&scopeId=${entity.id}&package=evidence_vault`}
+                href={`/argus/v2/deliver?scopeType=organization&scopeId=${entity.id}&package=pdf_deliver`}
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-800"
               >
-                Full ZIP
+                Deliver
               </Link>
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-400">

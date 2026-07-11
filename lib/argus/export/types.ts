@@ -2,14 +2,15 @@ import type { Attachment, Entity, InboxItem, Log } from "../types";
 
 export const EXPORT_MANIFEST_VERSION = "1.0.0";
 
-export type ExportPackageKind = "evidence_vault";
+export type ExportPackageKind = "evidence_vault" | "pdf_deliver";
 
-/** UI package types — quick_package and evidence_vault export today. */
+/** UI package types — pdf_deliver, quick_package, evidence_dossier, evidence_vault export today. */
 export type DeliverPackageKind =
   | "recognition_report"
   | "incident_package"
   | "knowledge_package"
   | "relationship_brief"
+  | "pdf_deliver"
   | "quick_package"
   | "evidence_dossier"
   | "evidence_vault";

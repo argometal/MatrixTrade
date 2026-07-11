@@ -30,8 +30,9 @@ export function resolveDeliverBranding(): DeliverBranding {
   };
 }
 
-export function deliverFilenamePrefix(kind: "activity" | "dossier" | "vault"): string {
+export function deliverFilenamePrefix(kind: "activity" | "dossier" | "vault" | "pdf"): string {
   if (kind === "activity") return "activity-summary";
   if (kind === "dossier") return "evidence-dossier";
+  if (kind === "pdf") return "pdf-deliver";
   return "evidence-vault";
 }

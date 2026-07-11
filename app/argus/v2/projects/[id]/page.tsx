@@ -162,14 +162,14 @@ export default async function V2ProjectPage({
               scopeType="project"
               scopeId={entity.id}
               scopeName={entity.name}
-              label="Deliver"
+              label="PDF"
               className="rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-2 text-sm font-medium text-emerald-300 hover:bg-emerald-600/25"
             />
             <Link
-              href={`/argus/v2/deliver?scopeType=project&scopeId=${entity.id}&package=evidence_vault`}
+              href={`/argus/v2/deliver?scopeType=project&scopeId=${entity.id}&package=pdf_deliver`}
               className="rounded-xl border border-zinc-700/80 bg-zinc-900/60 px-4 py-2 text-sm text-zinc-300 hover:border-zinc-600 hover:text-zinc-200"
             >
-              Full ZIP
+              Deliver
             </Link>
             <button
               type="button"

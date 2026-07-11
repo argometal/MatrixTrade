@@ -11,6 +11,14 @@ export type DeliverPackageCard = {
 
 export const DELIVER_PACKAGES: DeliverPackageCard[] = [
   {
+    id: "pdf_deliver",
+    title: "PDF",
+    description: "Human-readable report — scope, timeline, evidence, and attachment index in one file.",
+    badge: "Primary deliverable",
+    badgeTone: "blue",
+    available: true,
+  },
+  {
     id: "recognition_report",
     title: "Recognition Report",
     description: "For promotion, review or management. Show projects, contributions, timeline and key evidence.",
@@ -61,8 +69,8 @@ export const DELIVER_PACKAGES: DeliverPackageCard[] = [
   {
     id: "evidence_vault",
     title: "Evidence Vault",
-    description: "Portable archive for backup or migration. All your linked data and files in one secure package.",
-    badge: "Your professional memory",
+    description: "Internal backup — machine-readable JSON archive with files. Not for human review.",
+    badge: "Backup only",
     badgeTone: "slate",
     available: true,
   },

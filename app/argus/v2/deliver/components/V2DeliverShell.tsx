@@ -54,7 +54,7 @@ export function V2DeliverShell({
   const validInitialPackage =
     initialPackageKind && DELIVER_PACKAGES.some((p) => p.id === initialPackageKind)
       ? initialPackageKind
-      : "quick_package";
+      : "pdf_deliver";
   const [packageKind, setPackageKind] = useState<DeliverPackageKind>(validInitialPackage);
   const [scopeType, setScopeType] = useState<ExportScopeType>(initialScopeType ?? "person");
   const [scopeId, setScopeId] = useState(initialScopeId ?? "");
@@ -293,6 +293,13 @@ export function V2DeliverShell({
       const nameToken = (selectedEntity?.name ?? "export").replace(/[^a-zA-Z0-9._-]+/g, "-");
       const anchor = document.createElement("a");
       anchor.href = URL.createObjectURL(blob);
+      if (packageKind === "pdf_deliver") {
+        anchor.download = `pdf-deliver-${scopeType}-${nameToken}-${stamp}.pdf`;
+        anchor.click();
+        URL.revokeObjectURL(anchor.href);
+        setStatusMessage("PDF downloaded.");
+        return;
+      }
       anchor.download = `evidence-vault-${scopeType}-${nameToken}-${stamp}.zip`;
       anchor.click();
       URL.revokeObjectURL(anchor.href);
@@ -575,7 +582,7 @@ export function V2DeliverShell({
             <p className="mt-3 text-xs text-amber-400/90">Scope contains private records not included unless toggled on.</p>
           ) : null}
           {!packageAvailable ? (
-            <p className="mt-3 text-xs text-zinc-500">This package type is not available yet. Use Evidence Vault.</p>
+            <p className="mt-3 text-xs text-zinc-500">This package type is not available yet. Use PDF.</p>
           ) : null}
         </V2Card>
       </div>
@@ -597,10 +604,12 @@ export function V2DeliverShell({
           <p>Your data stays private. Only you can generate and access these packages.</p>
           <p className="mt-1">
             {packageKind === "quick_package"
-              ? "Output: Activity Summary HTML (.html) — generic report, no product watermark. Markdown in entity modal."
+              ? "Output: Activity Summary HTML (.html) — internal preview only."
               : packageKind === "evidence_dossier"
-                ? "Output: Evidence Dossier ZIP — report.html + files/ + manifest.json. Share link available."
-                : "Output format: ZIP package with JSON manifest (v1)."}
+                ? "Output: Evidence Dossier ZIP — internal preview/demo."
+                : packageKind === "pdf_deliver"
+                  ? "Output: PDF — one human-readable report file."
+                  : "Output: Evidence Vault ZIP — internal backup, not for human review."}
           </p>
           {shareUrl ? (
             <p className="mt-2 break-all text-violet-300">
@@ -635,7 +644,9 @@ export function V2DeliverShell({
                 ? "⬇ Download Activity Summary"
                 : packageKind === "evidence_dossier"
                   ? "⬇ Download Evidence Dossier"
-                  : "⬇ Generate Package"}
+                  : packageKind === "pdf_deliver"
+                    ? "⬇ Download PDF"
+                    : "⬇ Generate Package"}
           </button>
         </div>
       </footer>
