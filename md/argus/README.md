@@ -64,17 +64,18 @@ Use these labels in docs and checklists. Update when reality changes.
 7. [`knowledge-model-v01.md`](knowledge-model-v01.md) — **target** ontology (Evidence graph)
 8. [`knowledge-execution-model.md`](knowledge-execution-model.md) — Evidence registration, entities, Execution
 9. [`timeline-vision.md`](timeline-vision.md) — Timeline scope and placement
-10. [`design-matrix-stage.md`](design-matrix-stage.md) — org / project / person lenses
-11. [`product-flow-proposal.md`](product-flow-proposal.md) — evidence → relations → narrative
-12. [`v2-hierarchy-implementation-report.md`](v2-hierarchy-implementation-report.md) — **implemented** linking rules + code map
+10. [`event-chronicle-v2.md`](event-chronicle-v2.md) — Event append-only chronicle (Note → Chronicle)
+11. [`design-matrix-stage.md`](design-matrix-stage.md) — org / project / person lenses
+12. [`product-flow-proposal.md`](product-flow-proposal.md) — evidence → relations → narrative
+13. [`v2-hierarchy-implementation-report.md`](v2-hierarchy-implementation-report.md) — **implemented** linking rules + code map
 
 ### Track C — Build, QA, export
 
-13. [`v2-design-checklist.md`](v2-design-checklist.md) + [`checklist-protocol.md`](checklist-protocol.md)
-14. [`v2-checklist-solutions.md`](v2-checklist-solutions.md) — fixed vs deferred
-15. [`deliver-formats-plan.md`](deliver-formats-plan.md) — **canonical** output ladder (MD → HTML → PDF → link → ZIP)
-16. [`export-delivery-handoff.md`](export-delivery-handoff.md) — delivery layer analysis + package catalog
-17. [`model-alignment-audit.md`](model-alignment-audit.md) — v3 runtime vs v01 target gaps
+14. [`v2-design-checklist.md`](v2-design-checklist.md) + [`checklist-protocol.md`](checklist-protocol.md)
+15. [`v2-checklist-solutions.md`](v2-checklist-solutions.md) — fixed vs deferred
+16. [`deliver-formats-plan.md`](deliver-formats-plan.md) — **canonical** output ladder (MD → HTML → PDF → link → ZIP)
+17. [`export-delivery-handoff.md`](export-delivery-handoff.md) — delivery layer analysis + package catalog
+18. [`model-alignment-audit.md`](model-alignment-audit.md) — v3 runtime vs v01 target gaps
 
 ---
 

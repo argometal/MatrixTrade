@@ -61,7 +61,7 @@ export interface V2EventDetail {
   linkedTopicNames: string[];
   description: string;
   linkedTags: string[];
-  record: string;
+  chronicleCount: number;
   attendeeInitials: string[];
   attendeeNames: string[];
   attendeeCount: number;

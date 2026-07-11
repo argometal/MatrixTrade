@@ -54,7 +54,7 @@ import {
   createInputToReferenceKind,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
-import { buildEventRecordNotes } from "@/lib/argus/v2/event-record";
+import { buildEventShellNotes, eventAnchorDate, legacyEventRecordBody, normalizeEventTags } from "@/lib/argus/v2/event-chronicle";
 import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
 import { partitionIdsByEntityKind } from "@/lib/argus/v2/entity-link-counts";
 import type { UnifiedCreatePayload, UnifiedCreateResult } from "@/lib/argus/create-flow-types";
@@ -483,25 +483,84 @@ export async function bulkDeleteInboxAction(
   return { ok: true, count };
 }
 
-/** Update event notes + signal tags (no redirect). */
-export async function updateEventRecordAction(
-  eventId: string,
-  record: string,
-  linkedTags: string[]
-): Promise<{ ok: true }> {
+/** One-time: move legacy narrative from entity.notes into the first chronicle log. */
+export async function migrateLegacyEventRecordIfNeeded(eventId: string): Promise<boolean> {
   await requireArgusSession();
+  const entity = await getEntity(eventId);
+  if (!entity || referenceKindFromNotes(entity.notes ?? "") !== "event") {
+    return false;
+  }
+  const legacyBody = legacyEventRecordBody(entity.notes ?? "");
+  if (!legacyBody) {
+    if (entity.notes?.trim() !== buildEventShellNotes()) {
+      await updateEntity(eventId, { notes: buildEventShellNotes() });
+    }
+    return false;
+  }
+
+  const eventDate = eventAnchorDate(entity);
+  const tags = normalizeEventTags(entity.linkedTags ?? []);
+  await createLog({
+    kind: "log",
+    date: eventDate,
+    title: autoTitleFromBody(legacyBody),
+    body: legacyBody,
+    entityIds: [eventId],
+    topics: tags,
+    source: "manual",
+    private: false,
+    followUpDate: undefined,
+    attachmentIds: [],
+    classificationStatus: "classified",
+  });
+  await updateEntity(eventId, { notes: buildEventShellNotes() });
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/events");
+  return true;
+}
+
+/** Append a chronicle note on an event (tags + optional body). Composer is append-only. */
+export async function appendEventChronicleEntryAction(
+  eventId: string,
+  body: string,
+  linkedTags: string[]
+): Promise<{ ok: true; appended: boolean }> {
+  await requireArgusSession();
+  await migrateLegacyEventRecordIfNeeded(eventId);
+
   const entity = await getEntity(eventId);
   if (!entity || referenceKindFromNotes(entity.notes ?? "") !== "event") {
     throw new Error("Event not found");
   }
-  const tags = [...new Set(linkedTags.map((tag) => tag.trim()).filter(Boolean))];
+
+  const tags = normalizeEventTags(linkedTags);
+  const trimmed = body.trim();
+  const eventDate = eventAnchorDate(entity);
+
   await updateEntity(eventId, {
-    notes: buildEventRecordNotes(record),
+    notes: buildEventShellNotes(),
     linkedTags: tags,
   });
+
+  if (trimmed) {
+    await createLog({
+      kind: "log",
+      date: eventDate,
+      title: autoTitleFromBody(trimmed),
+      body: trimmed,
+      entityIds: [eventId],
+      topics: tags,
+      source: "manual",
+      private: false,
+      followUpDate: undefined,
+      attachmentIds: [],
+      classificationStatus: "classified",
+    });
+  }
+
   revalidateArgus();
   revalidatePath("/argus/v2/browse/events");
-  return { ok: true };
+  return { ok: true, appended: Boolean(trimmed) };
 }
 
 /** Link an inbox email to an event (evidence chain). */

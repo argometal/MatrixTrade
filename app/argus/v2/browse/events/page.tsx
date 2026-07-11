@@ -4,6 +4,7 @@ import { argusDeleteCodeConfigured, argusPrivateConfigured } from "@/lib/auth/pa
 import { argusTotpConfigured } from "@/lib/auth/totp";
 import { deleteAuthConfigured } from "@/lib/argus/delete-link-check";
 import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
+import { migrateLegacyEventRecordIfNeeded } from "@/app/argus/actions";
 import {
   buildV2EventDetails,
   buildV2EventInboxOptions,
@@ -31,6 +32,9 @@ export default async function V2BrowseEventsPage({
     hasArgusDeleteUnlock(),
     hasArgusDeleteAuthUnlock(),
   ]);
+  if (selected) {
+    await migrateLegacyEventRecordIfNeeded(selected);
+  }
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, includePrivate)]);
   const today = new Date().toISOString().slice(0, 10);
   const rows = buildV2EventRows(data, includePrivate, today);

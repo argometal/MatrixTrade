@@ -185,9 +185,9 @@ export function buildV2EventDetails(
   return events.map((event) => {
     const eventDate = event.startDate || event.endDate || event.createdAt.slice(0, 10);
     const rawNotes = event.notes ?? "";
-    const { record } = parseEventRecord(rawNotes);
+    const { record: legacyRecord } = parseEventRecord(rawNotes);
     const displayNotes = entityNotesForDisplay(rawNotes);
-    const notes = record || displayNotes;
+    const notes = legacyRecord || displayNotes;
     const project = linkedProject(data, event);
     const history = getEntityHistory(data, event.id, includePrivate);
     const people = attendeePeople(data, event, history);
@@ -228,9 +228,14 @@ export function buildV2EventDetails(
       projectHref: project?.href,
       topicTags,
       linkedTopicNames: linkedTopicNamesList,
-      description: notes || "No documentation yet.",
+      description:
+        history.length > 0
+          ? `${history.length} chronicle entr${history.length === 1 ? "y" : "ies"}`
+          : legacyRecord
+            ? "Legacy note pending migration"
+            : "No chronicle entries yet.",
       linkedTags: (event.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
-      record: notes,
+      chronicleCount: history.length,
       attendeeInitials: initials,
       attendeeNames: people,
       attendeeCount: people.length,

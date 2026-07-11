@@ -4,8 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
-import { V2OpenCaptureButton } from "@/app/argus/v2/components/V2OpenCaptureButton";
-import { updateEventRecordAction } from "@/app/argus/actions";
+import { appendEventChronicleEntryAction } from "@/app/argus/actions";
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
 import { V2EventLinkEmailModal } from "./V2EventLinkEmailModal";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
@@ -15,7 +14,7 @@ import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
 import { V2TagPatternBadges } from "@/app/argus/v2/components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 
-type PanelTab = "record" | "chronicle" | "metrics";
+type PanelTab = "note" | "chronicle" | "metrics";
 
 function EvidenceIcon({ kind }: { kind: V2EventDetail["evidence"][0]["kind"] }) {
   if (kind === "email") return <>✉</>;
@@ -62,10 +61,10 @@ export function V2EventDetailPanel({
   privateUnlocked?: boolean;
 } & V2DeleteGateProps) {
   const router = useRouter();
-  const [panelTab, setPanelTab] = useState<PanelTab>("record");
+  const [panelTab, setPanelTab] = useState<PanelTab>("note");
   const [tags, setTags] = useState<string[]>(selected.linkedTags);
   const [tagDraft, setTagDraft] = useState("");
-  const [record, setRecord] = useState(selected.record);
+  const [composer, setComposer] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
@@ -85,23 +84,25 @@ export function V2EventDetailPanel({
     setTags((current) => current.filter((value) => value !== tag));
   }
 
-  const recordDirty = record !== selected.record;
   const tagsDirty = !tagsEqual(tags, selected.linkedTags);
-  const dirty = recordDirty || tagsDirty;
+  const canSave = composer.trim().length > 0 || tagsDirty;
 
   useEffect(() => {
     setTags(selected.linkedTags);
-    setRecord(selected.record);
+    setComposer("");
     setTagDraft("");
     setSaveNote(null);
-  }, [selected.id, selected.record, selected.linkedTags.join("|")]);
+  }, [selected.id, selected.linkedTags.join("|")]);
 
-  async function saveRecord() {
+  async function saveEntry() {
+    if (!canSave) return;
     setSaving(true);
     setSaveNote(null);
     try {
-      await updateEventRecordAction(selected.id, record, tags);
-      setSaveNote("Saved");
+      const result = await appendEventChronicleEntryAction(selected.id, composer, tags);
+      setComposer("");
+      setSaveNote(result.appended ? "Added to chronicle" : "Tags saved");
+      if (result.appended) setPanelTab("chronicle");
       router.refresh();
     } catch {
       setSaveNote("Save failed");
@@ -111,7 +112,7 @@ export function V2EventDetailPanel({
   }
 
   const tabs: { id: PanelTab; label: string }[] = [
-    { id: "record", label: "Record" },
+    { id: "note", label: "Note" },
     { id: "chronicle", label: "Chronicle" },
     { id: "metrics", label: "Metrics" },
   ];
@@ -129,9 +130,9 @@ export function V2EventDetailPanel({
           <div className="min-w-0">
             <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
             <p className="mt-1 text-sm text-zinc-400">{selected.dateTimeLabel}</p>
-            {tags.length > 0 ? (
+            {selected.linkedTags.length > 0 ? (
               <div className="mt-2 flex flex-wrap gap-1.5">
-                {tags.map((tag) => (
+                {selected.linkedTags.map((tag) => (
                   <span
                     key={tag}
                     className="inline-flex rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-200 ring-1 ring-amber-500/25"
@@ -141,16 +142,13 @@ export function V2EventDetailPanel({
                 ))}
               </div>
             ) : null}
+            <p className="mt-1.5 text-[11px] text-zinc-600">{selected.description}</p>
           </div>
           {selected.tagPatterns.length > 0 ? (
             <V2TagPatternBadges patterns={selected.tagPatterns} className="mt-3" />
           ) : null}
           <div className="flex shrink-0 flex-wrap gap-2">
-            <V2QuickDeliverButton
-              scopeType="event"
-              scopeId={selected.id}
-              scopeName={selected.name}
-            />
+            <V2QuickDeliverButton scopeType="event" scopeId={selected.id} scopeName={selected.name} />
             <V2EntityLifecycleActions
               entityId={selected.id}
               entityName={selected.name}
@@ -215,183 +213,174 @@ export function V2EventDetailPanel({
       </div>
 
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto p-5">
-        <V2PrivateEvidenceGate
-          locked={privateLocked}
-          privateConfigured={privateConfigured}
-          returnTo={returnTo}
-        >
-        {panelTab === "record" ? (
-          <div className="space-y-4">
-            <div>
-              <p className="text-xs font-medium text-zinc-400">Tags</p>
-              <p className="mt-0.5 text-[11px] text-zinc-600">
-                Signal tags for tracking — GAP, CONCERN, follow-up. Repeats surface across events; one-offs can fade.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200"
+        <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
+          {panelTab === "note" ? (
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium text-zinc-300">Add to chronicle</p>
+                  <p className="mt-0.5 text-[11px] text-zinc-600">
+                    Write and save — entry moves to Chronicle. Composer clears for the next note. Append-only.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={saving || !canSave}
+                    onClick={() => void saveEntry()}
+                    className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
                   >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="text-amber-400/70 hover:text-amber-100"
-                      aria-label={`Remove tag ${tag}`}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-                {tags.length === 0 ? <p className="text-xs text-zinc-600">No tags yet.</p> : null}
+                    {saving ? "Saving…" : "Save"}
+                  </button>
+                  {saveNote ? <span className="text-xs text-zinc-500">{saveNote}</span> : null}
+                </div>
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <input
-                  type="text"
-                  value={tagDraft}
-                  onChange={(e) => setTagDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addTag();
-                    }
-                  }}
-                  placeholder="GAP, CONCERN, decision…"
-                  className="min-w-[10rem] flex-1 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600"
+
+              <div>
+                <p className="text-xs font-medium text-zinc-400">Signal tags</p>
+                <p className="mt-0.5 text-[11px] text-zinc-600">GAP, CONCERN, follow-up — repeats surface across events.</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200"
+                    >
+                      {tag}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(tag)}
+                        className="text-amber-400/70 hover:text-amber-100"
+                        aria-label={`Remove tag ${tag}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                  {tags.length === 0 ? <p className="text-xs text-zinc-600">No tags yet.</p> : null}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <input
+                    type="text"
+                    value={tagDraft}
+                    onChange={(e) => setTagDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addTag();
+                      }
+                    }}
+                    placeholder="GAP, CONCERN, decision…"
+                    className="min-w-[10rem] flex-1 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600"
+                  />
+                  <button
+                    type="button"
+                    onClick={addTag}
+                    disabled={!tagDraft.trim()}
+                    className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+                  >
+                    Add tag
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-zinc-200/90 bg-white shadow-sm ring-1 ring-black/5">
+                <textarea
+                  value={composer}
+                  onChange={(e) => setComposer(e.target.value)}
+                  rows={12}
+                  placeholder="What happened, who was involved, decisions, open items…"
+                  className="w-full resize-y rounded-xl border-0 bg-transparent px-5 py-4 text-[15px] leading-[1.7] text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-0"
                 />
-                <button
-                  type="button"
-                  onClick={addTag}
-                  disabled={!tagDraft.trim()}
-                  className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
-                >
-                  Add tag
-                </button>
               </div>
             </div>
+          ) : null}
 
-            <div className="rounded-xl border border-zinc-200/90 bg-white shadow-sm ring-1 ring-black/5">
-              <textarea
-                value={record}
-                onChange={(e) => setRecord(e.target.value)}
-                rows={14}
-                placeholder="What happened, who was involved, decisions, and open items worth remembering."
-                className="w-full resize-y rounded-xl border-0 bg-transparent px-5 py-4 text-[15px] leading-[1.7] text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-0"
-              />
-            </div>
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                disabled={saving || !dirty}
-                onClick={() => void saveRecord()}
-                className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
-              >
-                {saving ? "Saving…" : "Save"}
-              </button>
-              {saveNote ? <span className="text-xs text-zinc-500">{saveNote}</span> : null}
-            </div>
-            <p className="text-xs text-zinc-600">
-              Evidence registered on this event uses the event date ({selected.eventDate}).
-            </p>
-          </div>
-        ) : null}
-
-        {panelTab === "chronicle" ? (
-          <div className="space-y-3">
-            <p className="text-xs text-zinc-500">Chronological evidence — emails, notes, and photos linked to this event.</p>
-            {selected.evidence.length === 0 ? (
-              <p className="text-sm text-zinc-500">No evidence yet. Link an email or register evidence.</p>
-            ) : (
-              <ul className="space-y-2">
-                {selected.evidence.map((item) => (
-                  <li key={item.id}>
-                    <Link
-                      href={item.href}
-                      target={item.kind === "photo" ? "_blank" : undefined}
-                      className="flex items-start gap-3 rounded-xl border border-zinc-800/80 px-3 py-3 transition hover:border-zinc-700"
-                    >
-                      <span className="mt-0.5 text-sm text-zinc-500">
-                        <EvidenceIcon kind={item.kind} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-medium text-zinc-100">{item.title}</span>
-                        <span className="block text-xs text-zinc-500">{item.meta}</span>
-                      </span>
-                      <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-600">
-                        {item.kind}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ) : null}
-
-        {panelTab === "metrics" ? (
-          <div className="space-y-5">
-            <div>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">Linked entities</h3>
-              <div className="inline-grid w-[14rem] grid-cols-4 gap-1.5">
-                <MetricPill icon="🏢" label="Orgs" count={selected.orgCount} />
-                <MetricPill icon="📁" label="Proj" count={selected.projectCount} />
-                <MetricPill icon="👤" label="People" count={selected.peopleCount} />
-                <MetricPill icon="🏷" label="Topics" count={selected.topicCount} />
-              </div>
-            </div>
-
-            <div>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                Attendees ({selected.attendeeCount})
-              </h3>
-              {selected.attendeeNames.length === 0 ? (
-                <p className="text-sm text-zinc-500">No people linked — link contacts to establish who was present.</p>
+          {panelTab === "chronicle" ? (
+            <div className="space-y-3">
+              <p className="text-xs text-zinc-500">
+                Chronicle — notes, emails, and files linked to this event in chronological order.
+              </p>
+              {selected.evidence.length === 0 ? (
+                <p className="text-sm text-zinc-500">No entries yet. Write a note or link an email.</p>
               ) : (
-                <ul className="space-y-1 text-sm text-zinc-400">
-                  {selected.attendeeNames.map((name) => (
-                    <li key={name} className="flex items-center gap-2">
-                      <span className="h-1 w-1 rounded-full bg-zinc-600" aria-hidden />
-                      {name}
+                <ul className="space-y-2">
+                  {selected.evidence.map((item) => (
+                    <li key={item.id}>
+                      <Link
+                        href={item.href}
+                        target={item.kind === "photo" ? "_blank" : undefined}
+                        className="flex items-start gap-3 rounded-xl border border-zinc-800/80 px-3 py-3 transition hover:border-zinc-700"
+                      >
+                        <span className="mt-0.5 text-sm text-zinc-500">
+                          <EvidenceIcon kind={item.kind} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-medium text-zinc-100">{item.title}</span>
+                          <span className="block text-xs text-zinc-500">{item.meta}</span>
+                        </span>
+                        <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-600">
+                          {item.kind}
+                        </span>
+                      </Link>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
+          ) : null}
 
-            <div>
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">Evidence counts</h3>
-              <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
-                  <dt className="text-xs text-zinc-600">Emails</dt>
-                  <dd className="font-semibold tabular-nums text-zinc-200">{selected.relatedEmails.length}</dd>
+          {panelTab === "metrics" ? (
+            <div className="space-y-5">
+              <div>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">Linked entities</h3>
+                <div className="inline-grid w-[14rem] grid-cols-4 gap-1.5">
+                  <MetricPill icon="🏢" label="Orgs" count={selected.orgCount} />
+                  <MetricPill icon="📁" label="Proj" count={selected.projectCount} />
+                  <MetricPill icon="👤" label="People" count={selected.peopleCount} />
+                  <MetricPill icon="🏷" label="Topics" count={selected.topicCount} />
                 </div>
-                <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
-                  <dt className="text-xs text-zinc-600">Records</dt>
-                  <dd className="font-semibold tabular-nums text-zinc-200">{selected.linkedEntries.length}</dd>
-                </div>
-                <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
-                  <dt className="text-xs text-zinc-600">Photos</dt>
-                  <dd className="font-semibold tabular-nums text-zinc-200">
-                    {selected.evidence.filter((e) => e.kind === "photo").length}
-                  </dd>
-                </div>
-              </dl>
+              </div>
+
+              <div>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                  Attendees ({selected.attendeeCount})
+                </h3>
+                {selected.attendeeNames.length === 0 ? (
+                  <p className="text-sm text-zinc-500">No people linked — link contacts to establish who was present.</p>
+                ) : (
+                  <ul className="space-y-1 text-sm text-zinc-400">
+                    {selected.attendeeNames.map((name) => (
+                      <li key={name} className="flex items-center gap-2">
+                        <span className="h-1 w-1 rounded-full bg-zinc-600" aria-hidden />
+                        {name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">Evidence counts</h3>
+                <dl className="grid gap-2 text-sm sm:grid-cols-2">
+                  <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
+                    <dt className="text-xs text-zinc-600">Emails</dt>
+                    <dd className="font-semibold tabular-nums text-zinc-200">{selected.relatedEmails.length}</dd>
+                  </div>
+                  <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
+                    <dt className="text-xs text-zinc-600">Notes</dt>
+                    <dd className="font-semibold tabular-nums text-zinc-200">{selected.chronicleCount}</dd>
+                  </div>
+                  <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
+                    <dt className="text-xs text-zinc-600">Photos</dt>
+                    <dd className="font-semibold tabular-nums text-zinc-200">
+                      {selected.evidence.filter((e) => e.kind === "photo").length}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
         </V2PrivateEvidenceGate>
-      </div>
-
-      <div className="shrink-0 border-t border-zinc-800/80 p-5">
-        <V2OpenCaptureButton
-          entityIds={[selected.id]}
-          eventDate={selected.eventDate}
-          className="inline-flex rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-500"
-        >
-          + Register evidence
-        </V2OpenCaptureButton>
       </div>
 
       <V2EventLinkEmailModal
