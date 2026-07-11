@@ -24,7 +24,8 @@ import {
 } from "@/lib/scout-decision-types";
 import { formatProbeRiskMessage } from "@/lib/scout-probe";
 import { PROBE_STATUS_LABELS } from "@/lib/scout-probe-types";
-import { LAYERED_ENTRY_STATUS_LABELS } from "@/lib/layered-entry-types";
+import { formatLayeredEntrySummary } from "@/lib/layered-entry";
+import { LayeredEntryBadge, LayeredEntryPanel } from "./LayeredEntryPanel";
 import {
   isActiveStockThesisStatus,
   STOCK_THESIS_STATUS_LABELS,
@@ -617,44 +618,11 @@ export function PreviewPlanning({
               )}
 
               {selectedPlan.layeredEntry ? (
-                <div className="mt-4 rounded-xl border border-teal-500/20 bg-teal-950/10 p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-medium text-teal-200">Layered entry</p>
-                    <span className="rounded-full bg-teal-500/20 px-2 py-0.5 text-xs text-teal-300">
-                      {LAYERED_ENTRY_STATUS_LABELS[selectedPlan.layeredEntry.status]}
-                    </span>
-                    <span className="text-xs text-zinc-500">
-                      {selectedPlan.layeredEntry.executionMethod.replace(/_/g, " ")}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs text-amber-200/80">
-                    No chase — all limits miss = trade cancelled
-                  </p>
-                  <ul className="mt-3 space-y-1 text-sm text-zinc-400">
-                    {selectedPlan.layeredEntry.limits.map((limit, index) => (
-                      <li key={`${limit.price}-${index}`} className="flex justify-between gap-4">
-                        <span>
-                          Limit {index + 1}: {limit.price}
-                        </span>
-                        <span className="tabular-nums text-zinc-500">
-                          {limit.allocationPercent}%
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  {selectedPlan.layeredEntry.averageEntry !== undefined ? (
-                    <p className="mt-2 text-xs text-zinc-400">
-                      Average entry: {selectedPlan.layeredEntry.averageEntry}
-                      {selectedPlan.layeredEntry.entryImprovementVsFirst !== undefined
-                        ? ` · vs first: ${selectedPlan.layeredEntry.entryImprovementVsFirst >= 0 ? "+" : ""}${selectedPlan.layeredEntry.entryImprovementVsFirst}`
-                        : ""}
-                    </p>
-                  ) : null}
-                  {selectedPlan.layeredEntry.fillPercent !== undefined ? (
-                    <p className="text-xs text-zinc-500">
-                      Fill: {selectedPlan.layeredEntry.fillPercent}%
-                    </p>
-                  ) : null}
+                <div className="mt-4">
+                  <LayeredEntryPanel
+                    plan={selectedPlan}
+                    playbook={playbooks.find((p) => p.id === selectedPlan.playbookId)}
+                  />
                 </div>
               ) : null}
 
@@ -743,10 +711,14 @@ export function PreviewPlanning({
                             {SCOUTING_VERDICT_LABELS[computeScoutingVerdictFromThesis(scoutThesis)]}
                           </span>
                         ) : null}
+                        {plan.layeredEntry ? <LayeredEntryBadge entry={plan.layeredEntry} /> : null}
                       </div>
                       <p className="mt-1 text-xs text-zinc-500">
                         {getPlaybookName(playbooks, plan.playbookId) ?? "No strategy"} · Entry{" "}
                         {plan.entryTimeframe} · Window {formatWindow(plan)}
+                        {plan.layeredEntry
+                          ? ` · ${formatLayeredEntrySummary(plan.layeredEntry)}`
+                          : ""}
                       </p>
                       {plan.stockThesisId ? (
                         <p className="mt-1 text-xs text-violet-400">
@@ -764,14 +736,42 @@ export function PreviewPlanning({
                       </p>
                     </div>
                     <div className="text-right text-xs text-zinc-500">
-                      <p>Entry {formatLevel(plan.plannedEntry)}</p>
-                      <p>Stop {formatLevel(plan.stopPrice)} · Target {formatLevel(plan.targetPrice)}</p>
+                      {plan.layeredEntry ? (
+                        <>
+                          <p className="text-teal-400/90">
+                            {plan.layeredEntry.limits.length} limits · L1{" "}
+                            {formatLevel(plan.layeredEntry.limits[0]?.price)}
+                          </p>
+                          <p>
+                            Stop {formatLevel(plan.stopPrice)} · Target{" "}
+                            {formatLevel(plan.targetPrice)}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p>Entry {formatLevel(plan.plannedEntry)}</p>
+                          <p>
+                            Stop {formatLevel(plan.stopPrice)} · Target{" "}
+                            {formatLevel(plan.targetPrice)}
+                          </p>
+                        </>
+                      )}
                       {plan.plannedRR !== undefined ? <p>R:R {plan.plannedRR.toFixed(1)}</p> : null}
                     </div>
                   </div>
 
                   {plan.thesis ? (
                     <p className="mt-3 text-sm text-zinc-400">{plan.thesis}</p>
+                  ) : null}
+
+                  {plan.layeredEntry ? (
+                    <div className="mt-3">
+                      <LayeredEntryPanel
+                        plan={plan}
+                        playbook={playbooks.find((p) => p.id === plan.playbookId)}
+                        compact
+                      />
+                    </div>
                   ) : null}
 
                   {plan.outcome ? (

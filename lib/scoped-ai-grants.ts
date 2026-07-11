@@ -177,6 +177,13 @@ export function validateScopedProposal(
     } else if (grant.planId && grant.planId !== planId) {
       errors.push(`decision-update must target grant plan ${grant.planId}.`);
     }
+  } else if (parsed.type === "layered-entry-update") {
+    const planId = String(p.planId ?? "").trim().toUpperCase();
+    if (!planId) {
+      errors.push("layered-entry-update requires proposal.planId.");
+    } else if (grant.planId && grant.planId !== planId) {
+      errors.push(`layered-entry-update must target grant plan ${grant.planId}.`);
+    }
   }
 
   const validation = validateProposalPayload(parsed);
@@ -194,16 +201,16 @@ export async function validateScopedProposalAsync(
   const base = validateScopedProposal(grant, body);
   if (!base.ok) return base;
 
-  if (base.payload.type === "decision-update") {
+  if (base.payload.type === "decision-update" || base.payload.type === "layered-entry-update") {
     const planId = String(base.payload.proposal.planId ?? "").trim().toUpperCase();
     const plan = await getPlanById(planId);
     if (!plan) {
       return { ok: false, errors: [`Plan ${planId} not found.`] };
     }
-    if (plan.stockThesisId !== grant.stockProfileId) {
+    if (plan.stockThesisId && plan.stockThesisId !== grant.stockProfileId) {
       return {
         ok: false,
-        errors: ["decision-update plan must belong to the granted stock profile."],
+        errors: [`${base.payload.type} plan must belong to the granted stock profile.`],
       };
     }
   }

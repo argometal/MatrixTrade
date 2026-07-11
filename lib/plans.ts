@@ -4,6 +4,7 @@ import {
   appendDecision,
   deriveLifecycleFromPlan,
   parseDecisionInput,
+  parseLayeredEntryInput,
   parseProbeInput,
   type DecisionInput,
 } from "./scout-decision";
@@ -14,6 +15,11 @@ import {
   stopProbe,
 } from "./scout-probe";
 import type { ProbeInput } from "./scout-probe-types";
+import {
+  applyLayeredEntryUpdate,
+  type LayeredEntryInput,
+  type LayeredEntryUpdateInput,
+} from "./layered-entry";
 import { canLinkThesisToPlan, getStockThesisById } from "./stock-theses";
 import {
   PLAN_TIMEFRAME_ORDER,
@@ -173,6 +179,13 @@ export async function savePlan(input: SavePlanInput): Promise<{
     chatNotes: input.chatNotes?.trim() || undefined,
     linkedTradeId: existing?.linkedTradeId,
     outcome: existing?.outcome,
+    decision: existing?.decision,
+    decisionHistory: existing?.decisionHistory,
+    scoutLifecycle: existing?.scoutLifecycle,
+    probe: existing?.probe,
+    layeredEntry: existing?.layeredEntry,
+    executionMethod:
+      existing?.executionMethod ?? existing?.layeredEntry?.executionMethod,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };
@@ -239,12 +252,13 @@ export async function recordPlanOutcome(
 export async function recordScoutDecision(
   planId: string,
   input: DecisionInput,
-  probeInput?: ProbeInput
+  probeInput?: ProbeInput,
+  layeredEntryInput?: LayeredEntryInput
 ): Promise<{ plan?: TradePlan; errors?: string[] }> {
   const plan = await getPlanById(planId);
   if (!plan) return { errors: ["Plan not found."] };
 
-  const result = appendDecision(plan, input, probeInput);
+  const result = appendDecision(plan, input, probeInput, layeredEntryInput);
   if (result.errors?.length) return { errors: result.errors };
 
   const withLifecycle: TradePlan = {
@@ -265,7 +279,44 @@ export async function recordScoutDecisionFromProposal(
   input.decidedBy = (proposal.decidedBy as DecisionInput["decidedBy"]) ?? "ai";
   const probeInput =
     input.verdict === "probe" ? parseProbeInput(proposal.probe) : undefined;
-  return recordScoutDecision(planId, input, probeInput);
+  const layeredEntryInput =
+    input.verdict === "go" ? parseLayeredEntryInput(proposal.layeredEntry) : undefined;
+  return recordScoutDecision(planId, input, probeInput, layeredEntryInput);
+}
+
+function parseLayeredEntryUpdateInput(
+  proposal: Record<string, unknown>
+): LayeredEntryUpdateInput {
+  const input: LayeredEntryUpdateInput = {};
+  if (proposal.filledThroughIndex !== undefined) {
+    input.filledThroughIndex = Number(proposal.filledThroughIndex);
+  }
+  if (proposal.status) {
+    input.status = String(proposal.status) as LayeredEntryUpdateInput["status"];
+  }
+  return input;
+}
+
+export async function recordLayeredEntryFromProposal(
+  proposal: Record<string, unknown>
+): Promise<{ plan?: TradePlan; errors?: string[] }> {
+  const planId = String(proposal.planId ?? "").trim().toUpperCase();
+  if (!planId) return { errors: ["proposal.planId required"] };
+
+  const plan = await getPlanById(planId);
+  if (!plan) return { errors: ["Plan not found."] };
+
+  const input = parseLayeredEntryUpdateInput(proposal);
+  const result = applyLayeredEntryUpdate(plan, input);
+  if (result.errors?.length) return { errors: result.errors };
+
+  const updated: TradePlan = {
+    ...result.plan!,
+    scoutLifecycle: deriveLifecycleFromPlan(result.plan!),
+    updatedAt: new Date().toISOString(),
+  };
+  await getPlansStore().upsert(updated);
+  return { plan: updated };
 }
 
 export async function transitionProbe(

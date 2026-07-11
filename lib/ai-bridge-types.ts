@@ -5,6 +5,7 @@ export const AI_BRIDGE_BLOCK_TYPES = [
   "evidence-add",
   "scout-assessment",
   "decision-update",
+  "layered-entry-update",
   "file-update",
   "analysis",
   "trade-proposal",

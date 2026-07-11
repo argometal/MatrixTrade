@@ -86,8 +86,8 @@ Judge after a **statistically meaningful sample** — not one trade.
 | Artifact | Location |
 |----------|----------|
 | Playbooks | `expectancy-asymmetry`, `layered-entry` in `data/playbooks.json` |
-| Plan field | `TradePlan.layeredEntry` — `lib/layered-entry-types.ts` |
-| Legacy | `probe` retained in code; prefer layered entry in new work |
+| Logic | `lib/layered-entry.ts` — parse, validate, fill metrics, transitions |
+| Inbox | `decision-update` + `layeredEntry{}` on go; `layered-entry-update` for fill outcome |
 
 ---
 

@@ -1,5 +1,6 @@
 import type { TradePlan } from "./plan-types";
 import { formatDecisionSection } from "./scout-decision";
+import { formatLayeredEntrySection } from "./layered-entry-types";
 import { formatProbeSection } from "./scout-probe";
 
 export function formatPlansSnapshotSection(plans: TradePlan[]): string {
@@ -46,6 +47,11 @@ export function formatPlansSnapshotSection(plans: TradePlan[]): string {
       if (plan.probe?.enabled) {
         lines.push(`  probe:${plan.probe.status} risk:${plan.probe.riskPercent ?? 0.1}R`);
       }
+      if (plan.layeredEntry) {
+        lines.push(
+          `  layered_entry:${plan.layeredEntry.status} method:${plan.layeredEntry.executionMethod} limits:${plan.layeredEntry.limits.length}`
+        );
+      }
       const decisionBlock = formatDecisionSection(plan);
       if (decisionBlock) {
         lines.push(decisionBlock.split("\n").map((l) => `  ${l}`).join("\n"));
@@ -53,6 +59,10 @@ export function formatPlansSnapshotSection(plans: TradePlan[]): string {
       const probeBlock = formatProbeSection(plan);
       if (probeBlock) {
         lines.push(probeBlock.split("\n").map((l) => `  ${l}`).join("\n"));
+      }
+      const layeredBlock = formatLayeredEntrySection(plan);
+      if (layeredBlock) {
+        lines.push(layeredBlock.split("\n").map((l) => `  ${l}`).join("\n"));
       }
     }
   }

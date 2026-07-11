@@ -4,6 +4,12 @@ import type { TradePlan } from "./plan-types";
 import { authorizeProbe, parseProbeInput } from "./scout-probe";
 import type { ProbeInput } from "./scout-probe-types";
 import {
+  authorizeLayeredEntry,
+  parseLayeredEntryInput,
+  type LayeredEntryInput,
+  validateLayeredEntry,
+} from "./layered-entry";
+import {
   DECISION_HISTORY_CAP,
   type DecisionVerdict,
   type ExecutionRisk,
@@ -133,6 +139,8 @@ export function deriveLifecycleFromPlan(plan: TradePlan): ScoutLifecycleStatus {
   if (plan.status === "skipped") return "cancelled";
   if (plan.status === "entered" || plan.linkedTradeId) return "executed";
 
+  if (plan.layeredEntry?.status === "missed") return "missed";
+
   if (plan.probe?.enabled) {
     switch (plan.probe.status) {
       case "active":
@@ -166,9 +174,17 @@ export function deriveLifecycleFromPlan(plan: TradePlan): ScoutLifecycleStatus {
 export function appendDecision(
   plan: TradePlan,
   input: DecisionInput,
-  probeInput?: ProbeInput
+  probeInput?: ProbeInput,
+  layeredEntryInput?: LayeredEntryInput
 ): { plan: TradePlan; errors?: string[] } {
-  const errors = validateDecision(input, { probe: probeInput });
+  const layeredErrors =
+    layeredEntryInput && input.verdict === "go"
+      ? validateLayeredEntry(layeredEntryInput)
+      : [];
+  const errors = [
+    ...validateDecision(input, { probe: probeInput }),
+    ...layeredErrors,
+  ];
   if (errors.length) return { plan, errors };
 
   const now = new Date().toISOString();
@@ -207,11 +223,23 @@ export function appendDecision(
     probe = undefined;
   }
 
+  let layeredEntry = plan.layeredEntry;
+  let executionMethod = plan.executionMethod;
+  if (input.verdict === "go" && layeredEntryInput) {
+    layeredEntry = authorizeLayeredEntry(layeredEntryInput);
+    executionMethod = layeredEntry.executionMethod;
+  } else if (input.verdict !== "go") {
+    layeredEntry = undefined;
+    executionMethod = undefined;
+  }
+
   const updated: TradePlan = {
     ...plan,
     decision,
     decisionHistory: history,
     probe,
+    layeredEntry,
+    executionMethod,
     updatedAt: now,
   };
   updated.scoutLifecycle = deriveLifecycleFromPlan(updated);
@@ -274,4 +302,4 @@ export function formatDecisionSection(plan: TradePlan): string {
   return lines.join("\n");
 }
 
-export { parseProbeInput };
+export { parseProbeInput, parseLayeredEntryInput };

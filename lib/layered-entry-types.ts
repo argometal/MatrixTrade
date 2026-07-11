@@ -12,6 +12,8 @@ export interface LayeredEntryLimit {
   price: number;
   /** Percent of total capital for this limit (all limits should sum to 100). */
   allocationPercent: number;
+  /** Whether this limit has executed. */
+  filled?: boolean;
 }
 
 export interface LayeredEntryPlan {
@@ -79,7 +81,8 @@ export function formatLayeredEntrySection(plan: {
     `no_chase:yes`,
   ];
   for (const [i, limit] of entry.limits.entries()) {
-    lines.push(`limit_${i + 1}:${limit.price} alloc:${limit.allocationPercent}%`);
+    const filled = limit.filled ? "yes" : "no";
+    lines.push(`limit_${i + 1}:${limit.price} alloc:${limit.allocationPercent}% filled:${filled}`);
   }
   if (entry.averageEntry !== undefined) lines.push(`average_entry:${entry.averageEntry}`);
   if (entry.fillPercent !== undefined) lines.push(`fill_percent:${entry.fillPercent}`);
