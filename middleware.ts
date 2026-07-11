@@ -27,6 +27,9 @@ function isTradingRoute(pathname: string): boolean {
     "/system",
     "/stats",
     "/mistakes",
+    "/planning",
+    "/stock-theses",
+    "/scout-access",
   ];
 
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));

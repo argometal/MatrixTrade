@@ -22,10 +22,27 @@ import type {
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
+const DEFAULT_RULES: ExperimentRules = {
+  monthlyLossLimit: -300,
+  carryoverEnabled: true,
+  maxLossPerTicker: -250,
+  obsidianVault: "TradingVault",
+  obsidianVaultPath: "vault",
+  tradesFolder: "Trades",
+};
+
 async function readJson<T>(filename: string): Promise<T> {
   const filePath = path.join(DATA_DIR, filename);
-  const raw = await fs.readFile(filePath, "utf-8");
-  return JSON.parse(raw) as T;
+  try {
+    const raw = await fs.readFile(filePath, "utf-8");
+    return JSON.parse(raw) as T;
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (filename === "rules.json" && code === "ENOENT") {
+      return DEFAULT_RULES as T;
+    }
+    throw err;
+  }
 }
 
 function normalizeRules(raw: ExperimentRules): ExperimentRules {

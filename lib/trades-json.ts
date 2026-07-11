@@ -16,9 +16,16 @@ export {
 } from "./trades-store/compare";
 export { readTradesJsonFile } from "./trades-store/json";
 
+function hasSupabaseEnv(): boolean {
+  return Boolean(
+    process.env.SUPABASE_URL?.trim() && process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+  );
+}
+
 export function getTradesStoreMode(): TradesStoreMode {
   const raw = process.env.TRADES_STORE?.trim().toLowerCase();
-  return raw === "supabase" ? "supabase" : "json";
+  if (raw === "supabase" && hasSupabaseEnv()) return "supabase";
+  return "json";
 }
 
 export function isSupabaseTradesStore(): boolean {
