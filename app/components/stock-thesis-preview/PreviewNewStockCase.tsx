@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { importStockCaseBlockAction } from "@/app/actions";
-import { parseAiBlock } from "@/lib/ai-block";
+import { parseAiBlock, sampleAiBlock } from "@/lib/ai-block";
 import { buildStockCaseExtractionPrompt } from "@/lib/stock-case-extraction-prompt";
 
 export function PreviewNewStockCase() {
+  const [showNotesHelper, setShowNotesHelper] = useState(false);
   const [researchNotes, setResearchNotes] = useState("");
   const [aiBlockRaw, setAiBlockRaw] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [copiedSample, setCopiedSample] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -26,8 +28,15 @@ export function PreviewNewStockCase() {
 
   function copyPrompt() {
     void navigator.clipboard.writeText(extractionPrompt).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setCopiedPrompt(true);
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    });
+  }
+
+  function copySample() {
+    void navigator.clipboard.writeText(sampleAiBlock("stock-case-create")).then(() => {
+      setCopiedSample(true);
+      setTimeout(() => setCopiedSample(false), 2000);
     });
   }
 
@@ -52,11 +61,11 @@ export function PreviewNewStockCase() {
             <div>
               <h1 className="text-xl font-semibold text-zinc-100">New stock case</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                Paste research into any AI → get a structured{" "}
-                <code className="text-violet-300">stock-case-create</code> block → Apply here.
+                Analyze in your AI chat — charts, photos, thesis — then paste the{" "}
+                <code className="text-violet-300">stock-case-create</code> block here.
               </p>
               <p className="mt-1 text-xs text-zinc-600">
-                No provider lock-in — ChatGPT, Claude, Gemini, or local models all work the same way.
+                Matrix is the expectation database. The conversation lives in your AI; we store the structured result.
               </p>
             </div>
             <Link
@@ -68,47 +77,28 @@ export function PreviewNewStockCase() {
           </div>
         </header>
 
-        <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 lg:px-6">
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-            <h2 className="text-sm font-semibold text-zinc-200">1 · Your research</h2>
+        <div className="mx-auto max-w-3xl space-y-4 px-4 py-6 lg:px-6">
+          <section className="rounded-2xl border border-emerald-500/30 bg-zinc-900/50 p-5">
+            <h2 className="text-sm font-semibold text-zinc-200">Paste from your AI</h2>
             <p className="mt-1 text-xs text-zinc-500">
-              Chart notes, thesis draft, or a conversation summary — include prices, zones, stop rule, targets.
+              In ChatGPT / Claude / etc.: discuss the setup, share screenshots, ask for one{" "}
+              <code className="text-violet-300">stock-case-create</code> JSON block (ASCII quotes).
+              Paste it below — human Apply, same as Inbox.
             </p>
-            <textarea
-              value={researchNotes}
-              onChange={(e) => setResearchNotes(e.target.value)}
-              rows={6}
-              placeholder="Example: NVDA swing long. Wait pullback 118-125. Stop thesis weekly close below 108. Targets 135, 145. Min 3R..."
-              className="mt-3 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
-            />
-          </section>
-
-          <section className="rounded-2xl border border-violet-500/30 bg-violet-950/10 p-5">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-violet-200">2 · Copy prompt to your AI</h2>
+            <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={copyPrompt}
-                className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
+                onClick={copySample}
+                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
               >
-                {copied ? "Copied" : "Copy extraction prompt"}
+                {copiedSample ? "Copied sample" : "Copy example block"}
               </button>
             </div>
-            <pre className="mt-3 max-h-48 overflow-auto rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-400 whitespace-pre-wrap">
-              {extractionPrompt}
-            </pre>
-          </section>
-
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-            <h2 className="text-sm font-semibold text-zinc-200">3 · Paste AI Block & create</h2>
-            <p className="mt-1 text-xs text-zinc-500">
-              Paste the JSON your AI returns (plain or ```json fenced). Preview validates before create.
-            </p>
             <textarea
               value={aiBlockRaw}
               onChange={(e) => setAiBlockRaw(e.target.value)}
-              rows={10}
-              placeholder='{ "type": "stock-case-create", "proposal": { ... } }'
+              rows={12}
+              placeholder='Paste { "type": "stock-case-create", "proposal": { ... } } from your AI chat'
               className="mt-3 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-xs text-zinc-200"
             />
 
@@ -155,6 +145,52 @@ export function PreviewNewStockCase() {
             >
               {pending ? "Creating…" : "Create stock case"}
             </button>
+          </section>
+
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-950/40">
+            <button
+              type="button"
+              onClick={() => setShowNotesHelper((v) => !v)}
+              className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
+            >
+              <div>
+                <p className="text-sm font-medium text-zinc-400">Notes helper (optional)</p>
+                <p className="mt-0.5 text-xs text-zinc-600">
+                  Only if you want to type notes here instead of chatting in your AI first.
+                </p>
+              </div>
+              <span className="text-xs text-zinc-500">{showNotesHelper ? "Hide" : "Show"}</span>
+            </button>
+
+            {showNotesHelper ? (
+              <div className="space-y-4 border-t border-zinc-800 px-5 pb-5 pt-4">
+                <div>
+                  <p className="text-xs text-zinc-500">
+                    Optional scratch pad — appended to the extraction prompt if you copy it.
+                  </p>
+                  <textarea
+                    value={researchNotes}
+                    onChange={(e) => setResearchNotes(e.target.value)}
+                    rows={4}
+                    placeholder="Optional notes (most people skip this and use the AI chat directly)"
+                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
+                  />
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-zinc-500">Extraction prompt with your notes</p>
+                  <button
+                    type="button"
+                    onClick={copyPrompt}
+                    className="rounded-lg border border-violet-500/40 px-3 py-1.5 text-xs text-violet-300 hover:bg-violet-500/10"
+                  >
+                    {copiedPrompt ? "Copied" : "Copy prompt"}
+                  </button>
+                </div>
+                <pre className="max-h-40 overflow-auto rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-500 whitespace-pre-wrap">
+                  {extractionPrompt}
+                </pre>
+              </div>
+            ) : null}
           </section>
         </div>
       </div>
