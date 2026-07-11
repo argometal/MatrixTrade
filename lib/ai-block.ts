@@ -45,8 +45,8 @@ Block types (all Apply ready):
 - decision-update: scout decision — planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules
-- trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId
-- trade-close: close trade — id, exit required
+- trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId, status ("pending" default | "open" for broker-filled positions)
+- trade-close: close trade — id, exit required; optional confirmExternalClose (true) to close a pending trade that was already executed at the broker
 - trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
 - analysis: notes on existing trade — id required; at least one of thesis, psychology, lessons, notes
 - trade-update: id required; at least one field to change (entry, stop, target, shares, ticker, thesis, notes, playbookId, setupId, status)
@@ -136,7 +136,7 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
   {
     type: "trade-proposal",
     label: "trade-proposal — create trade",
-    hint: "New trade: id, ticker, entry, stop, shares",
+    hint: "New trade: id, ticker, entry, stop, shares; optional status pending|open",
   },
   {
     type: "trade-update",
@@ -146,7 +146,7 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
   {
     type: "trade-close",
     label: "trade-close — close trade",
-    hint: "Close with exit price",
+    hint: "Close with exit price; add confirmExternalClose:true for pending broker fills",
   },
   {
     type: "trade-review",
@@ -271,6 +271,7 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       stop: 95,
       shares: 10,
       target: 110,
+      status: "pending",
       thesis: "Setup per snapshot context.",
     },
   },
@@ -347,4 +348,54 @@ export const AI_BLOCK_SAMPLES = SAMPLE_BLOCKS;
 
 export function sampleTradeAiBlock(): string {
   return sampleAiBlock("trade-proposal");
+}
+
+/** Protocol examples for AI Bridge inbox proposals (human Apply only). */
+export const AI_BRIDGE_PROTOCOL_EXAMPLES: Record<string, Record<string, unknown>> = {
+  "create-pending-trade": {
+    type: "trade-proposal",
+    source: "ai-block",
+    proposal: {
+      id: "H002",
+      ticker: "GOOGL",
+      entry: 175.5,
+      stop: 170,
+      shares: 10,
+      status: "pending",
+    },
+  },
+  "create-open-trade": {
+    type: "trade-proposal",
+    source: "ai-block",
+    proposal: {
+      id: "H002",
+      ticker: "GOOGL",
+      entry: 175.5,
+      stop: 170,
+      shares: 10,
+      status: "open",
+      thesis: "Already filled at broker before MatrixTrade entry.",
+    },
+  },
+  "close-open-trade": {
+    type: "trade-close",
+    source: "ai-block",
+    proposal: {
+      id: "H001",
+      exit: 108.5,
+    },
+  },
+  "close-external-pending-trade": {
+    type: "trade-close",
+    source: "ai-block",
+    proposal: {
+      id: "H002",
+      exit: 172.25,
+      confirmExternalClose: true,
+    },
+  },
+};
+
+export function sampleAiBridgeProtocolExample(key: keyof typeof AI_BRIDGE_PROTOCOL_EXAMPLES): string {
+  return JSON.stringify(AI_BRIDGE_PROTOCOL_EXAMPLES[key], null, 2);
 }

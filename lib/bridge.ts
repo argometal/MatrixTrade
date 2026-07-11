@@ -268,10 +268,16 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return `Decision ${p.planId} · verdict ${p.verdict} · confidence ${p.decisionConfidence}`;
     case "file-update":
       return `Update Stock File ${p.id}`;
-    case "trade-proposal":
-      return `New trade ${p.id} ${p.ticker} · entry ${p.entry} · stop ${p.stop} · ${p.shares} sh`;
-    case "trade-close":
-      return `Close ${p.id} at exit ${p.exit}`;
+    case "trade-proposal": {
+      const status =
+        p.status !== undefined ? String(p.status).toLowerCase() : "pending";
+      return `New trade ${p.id} ${p.ticker} · ${status} · entry ${p.entry} · stop ${p.stop} · ${p.shares} sh`;
+    }
+    case "trade-close": {
+      const external =
+        p.confirmExternalClose === true ? " · external confirm" : "";
+      return `Close ${p.id} at exit ${p.exit}${external}`;
+    }
     case "trade-review":
       return `Review ${p.id} · mistakes ${(p.mistakes as string[] | undefined)?.join(", ") ?? "—"}`;
     case "analysis":
@@ -416,11 +422,23 @@ export function validateProposalPayload(
     if (!p.entry) errors.push("proposal.entry required");
     if (!p.stop) errors.push("proposal.stop required");
     if (!p.shares) errors.push("proposal.shares required");
+    if (p.status !== undefined) {
+      const status = String(p.status).toLowerCase();
+      if (status !== "pending" && status !== "open") {
+        errors.push('proposal.status must be "pending" or "open"');
+      }
+    }
   }
 
   if (parsed.type === "trade-close") {
     if (!p.id) errors.push("proposal.id required");
     if (!p.exit) errors.push("proposal.exit required");
+    if (
+      p.confirmExternalClose !== undefined &&
+      typeof p.confirmExternalClose !== "boolean"
+    ) {
+      errors.push("proposal.confirmExternalClose must be true or false");
+    }
   }
 
   if (parsed.type === "trade-review") {

@@ -23,6 +23,7 @@ export function PreviewInboxDetail({
   item,
   isApplyResult,
   query,
+  tradeCloseError = null,
 }: {
   id: string;
   origin: string;
@@ -39,6 +40,7 @@ export function PreviewInboxDetail({
     verifyDetail?: string;
     inboxError?: string;
   };
+  tradeCloseError?: string | null;
 }) {
   if (item && item.status !== "pending" && !isApplyResult) {
     return (
@@ -109,7 +111,8 @@ export function PreviewInboxDetail({
   const validation = parsed
     ? validateProposalPayload(parsed)
     : { ok: false as const, errors: ["Invalid payload"] };
-  const applyReady = Boolean(parsed && validation.ok && isApplyImplemented(parsed.type));
+  const applyReady =
+    Boolean(parsed && validation.ok && isApplyImplemented(parsed.type)) && !tradeCloseError;
   const applyPending = Boolean(parsed && validation.ok && !isApplyImplemented(parsed.type));
 
   return (
@@ -149,6 +152,11 @@ export function PreviewInboxDetail({
                   <li key={err}>{err}</li>
                 ))}
               </ul>
+            )}
+            {tradeCloseError && (
+              <div className="mt-3 rounded-md border border-red-500/30 bg-red-950/40 px-3 py-2 text-sm text-red-300">
+                {tradeCloseError}
+              </div>
             )}
           </section>
 

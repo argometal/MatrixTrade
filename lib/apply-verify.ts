@@ -148,6 +148,14 @@ async function verifyTradePersistence(parsed: TradingInboxPayload): Promise<Appl
           detail: `Trade ${tradeId} exists but ticker is ${reloaded.ticker}, expected ${ticker}.`,
         };
       }
+      const expectedStatus =
+        p.status !== undefined ? String(p.status).toLowerCase() : "pending";
+      if (reloaded.status !== expectedStatus) {
+        return {
+          ok: false,
+          detail: `Trade ${tradeId} status is ${reloaded.status}, expected ${expectedStatus}.`,
+        };
+      }
       return { ok: true, detail: `Trade ${tradeId} · ${reloaded.ticker} found in store (${reloaded.status}).` };
     }
     case "trade-close": {

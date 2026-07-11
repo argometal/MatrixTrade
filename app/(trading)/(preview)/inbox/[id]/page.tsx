@@ -1,7 +1,13 @@
 import { notFound } from "next/navigation";
 import { PreviewInboxDetail } from "@/app/components/inbox/PreviewInboxDetail";
-import { fetchBridgeInbox } from "@/lib/bridge";
+import {
+  fetchBridgeInbox,
+  parseTradingInboxPayload,
+  validateProposalPayload,
+} from "@/lib/bridge";
 import { getInboxItemById } from "@/lib/trading-inbox-storage";
+import { getTradeById } from "@/lib/storage";
+import { validateTradeCloseProposal } from "@/lib/validation";
 
 type InboxDetailSearchParams = {
   origin?: string;
@@ -40,6 +46,18 @@ export default async function InboxDetailPage({
 
   if (!item && !isApplyResult) notFound();
 
+  const parsed = item ? parseTradingInboxPayload(item.payload) : null;
+  const validation = parsed
+    ? validateProposalPayload(parsed)
+    : { ok: false as const, errors: ["Invalid payload"] };
+  const tradeCloseError =
+    parsed?.type === "trade-close" && validation.ok
+      ? validateTradeCloseProposal(
+          await getTradeById(String(parsed.proposal.id).toUpperCase()),
+          parsed.proposal
+        )
+      : null;
+
   return (
     <PreviewInboxDetail
       id={id}
@@ -47,6 +65,7 @@ export default async function InboxDetailPage({
       item={item}
       isApplyResult={isApplyResult}
       query={query}
+      tradeCloseError={tradeCloseError}
     />
   );
 }

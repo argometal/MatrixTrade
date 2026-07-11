@@ -83,6 +83,30 @@ export function validateCreateTrade(
   return errors;
 }
 
+export function parseTradeProposalStatus(value: unknown): Trade["status"] | null {
+  if (value === undefined) return "pending";
+  const raw = String(value).toLowerCase();
+  if (raw === "pending" || raw === "open") return raw;
+  return null;
+}
+
+export function validateTradeCloseProposal(
+  trade: Trade | undefined,
+  proposal: Record<string, unknown>
+): string | null {
+  const id = String(proposal.id ?? "").toUpperCase();
+  if (!trade) {
+    return `Trade ${id} not found.`;
+  }
+  if (trade.status === "closed") {
+    return `Trade ${id} is already closed.`;
+  }
+  if (trade.status === "pending" && proposal.confirmExternalClose !== true) {
+    return `Trade ${id} is pending, not open. Open it first or use confirmExternalClose.`;
+  }
+  return null;
+}
+
 export function validateCloseTrade(
   trade: Trade | undefined,
   input: CloseTradeInput,

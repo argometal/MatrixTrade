@@ -247,8 +247,8 @@ El experimento H001–H030 es un ciclo acotado: límite -$300, máximo 30 trades
 
 | `type` | `proposal` fields | Apply effect |
 |--------|-------------------|--------------|
-| `trade-proposal` | `id`, `ticker`, `entry`, `stop`, `shares`, optional `target`, `setupId` | Creates pending trade |
-| `trade-close` | `id`, `exit` | Closes trade |
+| `trade-proposal` | `id`, `ticker`, `entry`, `stop`, `shares`, optional `target`, `setupId`, `status` (`pending` default \| `open`) | Creates trade as pending or open |
+| `trade-close` | `id`, `exit`, optional `confirmExternalClose` (`true` to close a pending trade executed at broker) | Closes open trade; pending only with confirm |
 | `trade-review` | `id`, `mistakes[]`, `qualityEntry/Exit/Mgmt`, optional `lesson`, `actionItem` | Saves review |
 | `analysis` | `id`, at least one of `thesis`, `psychology`, `lessons`, `notes` | Appends to Obsidian note |
 
