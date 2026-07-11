@@ -196,8 +196,8 @@ function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
           Emails
         </span>
         <span>
-          <span className="block font-semibold text-violet-300">{card.metrics.journal}</span>
-          Journal
+          <span className="block font-semibold text-violet-300">{card.metrics.topics}</span>
+          Topics
         </span>
         <span>
           <span className="block font-semibold text-violet-300">{card.metrics.events}</span>

@@ -8,6 +8,7 @@ import {
   projectsForOrganization,
 } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
+import { collectRelatedEntityIds, countLinkKinds } from "./entity-link-counts";
 
 export type V2OrganizationBrowseStatus = "Prospect" | "Active" | "Inactive" | "Archived";
 
@@ -21,10 +22,10 @@ export interface V2OrganizationBrowseCard {
   metrics: {
     projects: number;
     people: number;
-    journal: number;
     emails: number;
     files: number;
     topics: number;
+    events: number;
   };
   lastContact: {
     label: string;
@@ -201,6 +202,8 @@ export function buildV2OrganizationBrowseCards(
       const status = deriveOrganizationStatus(org, lastContact.sortIso, today, totalEvidence);
       const sinceIso = relationshipStartIso(org, scope.logs, scope.inbox);
 
+      const linkCounts = countLinkKinds(data, collectRelatedEntityIds(org, scope.logs));
+
       return {
         id: org.id,
         name: org.name,
@@ -211,10 +214,10 @@ export function buildV2OrganizationBrowseCards(
         metrics: {
           projects: orgProjects.length,
           people: peopleIds.length,
-          journal: scope.logCount,
           emails: scope.emailCount,
           files: countOrgFiles(scope.logs, scope.inbox),
           topics: countOrgTopics(org, scope.logs, data),
+          events: linkCounts.eventCount,
         },
         lastContact,
         relationshipAge: relationshipAgeLabel(sinceIso, today),

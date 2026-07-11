@@ -17,7 +17,7 @@ import {
 import type { ProjectScopeOptions } from "../project-evidence-scope";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
-import { collectProjectLinkIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
+import { collectProjectLinkIds, collectRelatedEntityIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
 
 import {
   buildTimelineFromLogsAndInbox,
@@ -448,7 +448,6 @@ export function loadOrganizationPageData(
   const firstContact = [firstLog?.date, firstInbox?.receivedAt].filter(Boolean).sort()[0];
 
   const monthPrefix = today.slice(0, 7);
-  const journalThisMonth = scope.logs.filter((l) => l.date.slice(0, 7) === monthPrefix).length;
   const emailsThisMonth = scope.inbox.filter((i) => i.receivedAt.slice(0, 7) === monthPrefix).length;
 
   const sparkline = buildMonthlyActivitySparkline(scope.logs, scope.inbox, 12);
@@ -467,6 +466,8 @@ export function loadOrganizationPageData(
   }));
 
   const tagPatterns = buildTagPatternsForScope(scope.logs, scope.inbox, today);
+  const relatedIds = collectRelatedEntityIds(org, scope.logs);
+  const linkCounts = countLinkKinds(data, relatedIds);
 
   return {
     scope,
@@ -483,12 +484,12 @@ export function loadOrganizationPageData(
     chartEndYear,
     tagPatterns,
     stats: {
-      journalEntries: scope.logCount,
-      journalDelta: journalThisMonth > 0 ? `+${journalThisMonth} this month` : "No change",
       emails: scope.emailCount,
       emailsDelta: emailsThisMonth > 0 ? `+${emailsThisMonth} this month` : "No change",
       people: linkedPeople.length,
       projects: orgProjects.length,
+      topics: linkCounts.topicCount,
+      events: linkCounts.eventCount,
       firstContact: firstContact ? formatDisplayDate(firstContact) : "—",
       lastActivity: relativeActivityLabel(
         scope.logs[0]?.date || scope.inbox[0]?.receivedAt || org.updatedAt,
@@ -609,6 +610,8 @@ export function loadProjectPageData(
   const viaCount = scope.viaContactLogs.length + scope.viaContactInbox.length;
   const tagPatterns = buildTagPatternsForScope(allLogs, allInbox, today);
 
+  const topicCount = linkCounts.topicCount + (project.linkedTags ?? []).filter(Boolean).length;
+
   return {
     scope,
     timeline,
@@ -620,13 +623,19 @@ export function loadProjectPageData(
     dateRangeLabel,
     linkedTopics: [...new Set(topicNames)],
     linkedEventsCount,
-    keyMetrics: buildProjectKeyMetrics(scope, attachmentCount, directCount),
+    directCount,
+    viaCount,
+    keyMetrics: buildProjectKeyMetrics(scope, attachmentCount, directCount, viaCount, topicCount, linkedEventsCount),
     tagPatterns,
     stats: {
       people: linkCounts.peopleCount,
-      journalEntries: scope.logCount,
+      topics: topicCount,
+      events: linkedEventsCount,
+      organizations: linkCounts.orgCount,
       emails: scope.emailCount,
       files: attachmentCount,
+      streamDown: directCount,
+      streamUp: viaCount,
     },
   };
 }
@@ -658,13 +667,18 @@ function enrichTimelineMeta(
 function buildProjectKeyMetrics(
   scope: ReturnType<typeof getProjectEvidenceScope>,
   attachments: number,
-  directCount: number
+  directCount: number,
+  viaCount: number,
+  topicCount: number,
+  eventCount: number
 ) {
   return [
-    { label: "Journal entries", value: String(scope.logCount) },
+    { label: "Topics", value: String(topicCount) },
+    { label: "Events", value: String(eventCount) },
     { label: "Emails", value: String(scope.emailCount) },
-    { label: "Direct evidence", value: String(directCount) },
-    { label: "Attachments", value: String(attachments), highlight: attachments > 0 },
+    { label: "Files", value: String(attachments) },
+    { label: "Stream down", value: String(directCount), detail: "Evidence linked directly to project" },
+    { label: "Stream up", value: String(viaCount), detail: "Evidence via project people" },
   ];
 }
 

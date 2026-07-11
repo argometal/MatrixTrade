@@ -25,10 +25,10 @@ export interface V2ProjectBrowseCard {
   description: string;
   metrics: {
     people: number;
-    journal: number;
     emails: number;
     files: number;
     topics: number;
+    events: number;
   };
   /** Project has private journal/inbox evidence — delete may require PIN. */
   hasPrivateEvidence: boolean;
@@ -208,10 +208,10 @@ export function buildV2ProjectBrowseCards(
         description: projectDescription(project),
         metrics: {
           people: linkCounts.peopleCount,
-          journal: scope.logCount,
           emails: allInbox.length,
           files: countProjectFiles(allInbox, allLogs),
-          topics: linkCounts.topicCount + (project.linkedTags ?? []).length,
+          topics: linkCounts.topicCount + (project.linkedTags ?? []).filter(Boolean).length,
+          events: linkCounts.eventCount,
         },
         lastActivity,
         progressPercent: durationProgress(project, today),

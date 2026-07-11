@@ -19,10 +19,10 @@ function badgeTone(tone: V2OrganizationBrowseCard["statusTone"]): "default" | "g
 const METRIC_ICONS = {
   projects: "📁",
   people: "👤",
-  journal: "📓",
   emails: "✉",
   files: "📎",
   topics: "🏷",
+  events: "📅",
 } as const;
 
 function SummaryPill({
@@ -83,7 +83,7 @@ function OrganizationCard({ card }: { card: V2OrganizationBrowseCard }) {
 
       <p className="line-clamp-2 text-sm leading-relaxed text-zinc-400">{card.description}</p>
 
-      <div className="mt-4 grid grid-cols-6 gap-1">
+      <div className="mt-4 grid grid-cols-5 gap-1">
         {(Object.keys(METRIC_ICONS) as (keyof typeof METRIC_ICONS)[]).map((key) => (
           <div key={key} className="text-center">
             <div className="text-sm" aria-hidden>

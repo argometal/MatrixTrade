@@ -2,6 +2,7 @@ import type { ArgusData, Entity, InboxItem, Log } from "../types";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import { buildEntityIntelligence } from "../network-intelligence";
 import { entitiesByKind, personEvidenceScope } from "./hierarchy";
+import { collectRelatedEntityIds, countLinkKinds } from "./entity-link-counts";
 import { relativeActivityLabel } from "./timeline-builders";
 
 export type V2NetworkBrowseStatus = "New" | "Active" | "Dormant" | "Lost";
@@ -27,7 +28,7 @@ export interface V2NetworkBrowseCard {
   relationshipSinceIso: string;
   metrics: {
     emails: number;
-    journal: number;
+    topics: number;
     events: number;
     projects: number;
   };
@@ -251,6 +252,8 @@ export function buildV2NetworkBrowseCards(
       const sinceIso = relationshipStartIso(person, scope.logs, scope.inbox);
       const lastInteraction = resolveLastInteraction(person, scope.logs, scope.inbox, today);
 
+      const linkCounts = countLinkKinds(data, collectRelatedEntityIds(person, scope.logs));
+
       return {
         id: person.id,
         name: person.name,
@@ -274,7 +277,7 @@ export function buildV2NetworkBrowseCards(
         relationshipSinceIso: sinceIso,
         metrics: {
           emails: scope.emailCount,
-          journal: scope.logCount,
+          topics: linkCounts.topicCount,
           events,
           projects: sharedProjects.length,
         },
@@ -298,7 +301,7 @@ export function buildV2NetworkBrowseSummary(cards: V2NetworkBrowseCard[]): V2Net
     organizations: orgIds.size,
     projectsTogether: projectTotal,
     emailsExchanged: cards.reduce((n, c) => n + c.metrics.emails, 0),
-    interactionsLogged: cards.reduce((n, c) => n + c.metrics.journal + c.metrics.events, 0),
+    interactionsLogged: cards.reduce((n, c) => n + c.metrics.topics + c.metrics.events, 0),
     averageStrength: cards.length
       ? Math.round(cards.reduce((n, c) => n + c.strength, 0) / cards.length)
       : 0,

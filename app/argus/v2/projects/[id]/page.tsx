@@ -182,19 +182,42 @@ export default async function V2ProjectPage({
               linkHref={`/argus/projects/${entity.id}`}
             />
             <ProjectStatCard
-              value={String(page.stats.journalEntries)}
-              label="Journal Entries"
-              linkLabel="View timeline"
+              value={String(page.stats.topics)}
+              label="Topics"
+              linkLabel="Browse topics"
+              linkHref="/argus/v2/browse/topics"
+            />
+            <ProjectStatCard
+              value={String(page.stats.events)}
+              label="Events"
+              linkLabel="Browse events"
+              linkHref="/argus/v2/browse/events"
+            />
+            <ProjectStatCard
+              value={page.org ? page.org.name : "—"}
+              label="Organization"
+              linkLabel={page.org ? "View org" : undefined}
+              linkHref={page.org ? `/argus/v2/organizations/${page.org.id}` : undefined}
             />
             <ProjectStatCard
               value={String(page.stats.emails)}
               label="Emails"
-              linkLabel="View emails"
+              linkLabel="View inbox"
+              linkHref="/argus/v2/inbox"
             />
             <ProjectStatCard
               value={String(page.stats.files)}
               label="Files"
-              linkLabel="View files"
+            />
+            <ProjectStatCard
+              value={String(page.stats.streamDown)}
+              label="Stream down"
+              sub="Direct on project"
+            />
+            <ProjectStatCard
+              value={String(page.stats.streamUp)}
+              label="Stream up"
+              sub="Via people"
             />
           </div>
 

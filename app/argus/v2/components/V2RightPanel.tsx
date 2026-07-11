@@ -276,10 +276,11 @@ export function V2LegacyLink({ href, children }: { href: string; children: React
 }
 
 const SUMMARY_STAT_ICONS: Record<string, { icon: string; box: string }> = {
-  journal: { icon: "📓", box: "text-violet-400" },
   email: { icon: "✉", box: "text-sky-400" },
   people: { icon: "👤", box: "text-emerald-400" },
   projects: { icon: "📁", box: "text-sky-300" },
+  topics: { icon: "🏷", box: "text-amber-300" },
+  events: { icon: "📅", box: "text-rose-300" },
 };
 
 export function V2SummaryStatCard({

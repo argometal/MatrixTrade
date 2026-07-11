@@ -19,10 +19,10 @@ function badgeTone(tone: V2ProjectBrowseCard["statusTone"]): "default" | "green"
 
 const METRIC_ICONS = {
   people: "👤",
-  journal: "📓",
   emails: "✉",
   files: "📎",
   topics: "🏷",
+  events: "📅",
 } as const;
 
 function SummaryPill({ label, value }: { label: string; value: number }) {
@@ -158,8 +158,8 @@ function ProjectListRow({
           Emails
         </span>
         <span className="text-xs text-zinc-500">
-          <span className="block font-semibold text-violet-300">{card.metrics.journal}</span>
-          Journal
+          <span className="block font-semibold text-violet-300">{card.metrics.topics}</span>
+          Topics
         </span>
       </div>
       </Link>

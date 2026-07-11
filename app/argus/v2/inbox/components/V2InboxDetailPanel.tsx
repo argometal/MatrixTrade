@@ -7,14 +7,12 @@ import type { Entity, InboxItem, InboxStatus, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
-import { CaptureSheet } from "@/app/argus/components/CaptureSheet";
 import { V2InboxEntityLinkModal } from "@/app/argus/v2/inbox/components/V2InboxEntityLinkModal";
 import type { ArgusLinkFilter, ArgusLinkResult } from "@/app/argus/components/ArgusLinkModal";
 import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
 import { INBOX, LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 import {
   archiveInboxAction,
-  convertInboxAction,
   saveInboxLinksAction,
   updateInboxTriageAction,
   type CreatedEntityResult,
@@ -120,7 +118,6 @@ export function V2InboxDetailPanel({
   const [panelTab, setPanelTabState] = useState<PanelTab>("email");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [linkModalFilter, setLinkModalFilter] = useState<ArgusLinkFilter>("all");
-  const [showConvert, setShowConvert] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [linkIds, setLinkIds] = useState<string[]>(detail.item.linkedEntityIds ?? []);
   const [status, setStatus] = useState<InboxStatus>(
@@ -150,7 +147,6 @@ export function V2InboxDetailPanel({
     );
     setFollowUpDate(detail.item.followUpDate ?? "");
     setSelectedTags(detail.item.topics ?? []);
-    setShowConvert(false);
     setMenuOpen(false);
   }, [detail.item.id, detail.item.linkedEntityIds, detail.item.status, detail.item.followUpDate, detail.item.topics]);
 
@@ -473,13 +469,6 @@ export function V2InboxDetailPanel({
                 Done — archive
               </button>
             </form>
-            <button
-              type="button"
-              onClick={() => setShowConvert(true)}
-              className="rounded-xl border border-violet-500/40 bg-violet-600/15 px-4 py-2.5 text-sm font-medium text-violet-300 hover:bg-violet-600/25"
-            >
-              {INBOX.convertRecord}
-            </button>
             <V2InboxDeleteControl
               inboxId={item.id}
               returnTo={returnTo}
@@ -494,29 +483,6 @@ export function V2InboxDetailPanel({
               totpRequired={totpRequired}
             />
           </div>
-        </div>
-      ) : null}
-
-      {showConvert && canTriage ? (
-        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-4">
-          <p className="mb-2 text-sm font-medium text-zinc-200">{INBOX.convertHeading}</p>
-          <p className="mb-3 text-xs text-zinc-500">{INBOX.convertHint}</p>
-          <CaptureSheet
-            open
-            action={convertInboxAction}
-            buckets={buckets}
-            tagBuckets={tagBuckets}
-            mode="embedded"
-            onClose={() => setShowConvert(false)}
-            initial={{
-              title: defaultTitle,
-              body: defaultBody,
-              inboxId: item.id,
-              entityIds: linkIds,
-              topics: selectedTags,
-              followUpDate,
-            }}
-          />
         </div>
       ) : null}
     </div>
@@ -561,18 +527,6 @@ export function V2InboxDetailPanel({
             </button>
             {menuOpen ? (
               <div className="absolute right-0 top-full z-20 mt-1 min-w-[180px] rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl">
-                {canTriage ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMenuOpen(false);
-                      setShowConvert(true);
-                    }}
-                    className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-                  >
-                    {INBOX.convertRecord}
-                  </button>
-                ) : null}
                 {convertedLog ? (
                   <Link
                     href={`/argus/logs/${convertedLog.id}`}

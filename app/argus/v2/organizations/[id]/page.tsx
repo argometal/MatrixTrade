@@ -190,14 +190,7 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
         <div className="space-y-6">
           {/* Summary stat cards + contact pills */}
           <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
-            <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
-              <V2SummaryStatCard
-                kind="journal"
-                value={String(page.stats.journalEntries)}
-                label="Evidence"
-                delta={page.stats.journalDelta}
-                href="/argus/v2#stats"
-              />
+            <div className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
               <V2SummaryStatCard
                 kind="email"
                 value={String(page.stats.emails)}
@@ -218,6 +211,20 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                 label="Projects"
                 href="/argus/v2/browse/projects"
                 linkLabel="View all"
+              />
+              <V2SummaryStatCard
+                kind="topics"
+                value={String(page.stats.topics)}
+                label="Topics"
+                href="/argus/v2/browse/topics"
+                linkLabel="Browse"
+              />
+              <V2SummaryStatCard
+                kind="events"
+                value={String(page.stats.events)}
+                label="Events"
+                href="/argus/v2/browse/events"
+                linkLabel="Browse"
               />
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:flex-row lg:w-44 lg:flex-col">
