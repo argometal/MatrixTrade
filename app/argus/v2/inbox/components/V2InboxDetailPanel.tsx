@@ -7,6 +7,7 @@ import type { Entity, InboxItem, InboxStatus, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { V2InboxEntityLinkModal } from "@/app/argus/v2/inbox/components/V2InboxEntityLinkModal";
 import type { ArgusLinkFilter, ArgusLinkResult } from "@/app/argus/components/ArgusLinkModal";
 import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
@@ -129,6 +130,7 @@ export function V2InboxDetailPanel({
   const [selectedTags, setSelectedTags] = useState<string[]>(detail.item.topics ?? []);
   const [linkSaving, setLinkSaving] = useState(false);
   const [triageSaving, setTriageSaving] = useState(false);
+  const { openCreateFlow } = useArgusAdd();
   const router = useRouter();
 
   useEffect(() => {
@@ -293,6 +295,19 @@ export function V2InboxDetailPanel({
   function openLinkModal(filter: ArgusLinkFilter = "all") {
     setLinkModalFilter(filter);
     setPickerOpen(true);
+  }
+
+  function openInboxCreateLink() {
+    openCreateFlow({
+      mode: "inbox-evidence",
+      inboxId: item.id,
+      prefillTitle: defaultTitle,
+      prefillBody: defaultBody,
+      prefillTags: selectedTags,
+      prefillDate: view.receivedAt,
+      linkedEntityIds: linkIds,
+      returnTo,
+    });
   }
 
   const detailTabs = [
@@ -525,13 +540,22 @@ export function V2InboxDetailPanel({
           <h2 className="text-lg font-semibold leading-snug text-zinc-50">{view.subject || "(No subject)"}</h2>
           <div ref={menuRef} className="relative hidden shrink-0 items-center gap-2 lg:flex">
             {canTriage ? (
-              <button
-                type="button"
-                onClick={() => openLinkModal("all")}
-                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
-              >
-                {LINK_HIERARCHY.linkEmail}
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={openInboxCreateLink}
+                  className="rounded-lg border border-emerald-500/40 bg-emerald-600/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/25"
+                >
+                  Create / Link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openLinkModal("all")}
+                  className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+                >
+                  + Link
+                </button>
+              </>
             ) : null}
             <button type="button" className="text-zinc-600 hover:text-zinc-400" title="Share">
               ↗
@@ -666,13 +690,20 @@ export function V2InboxDetailPanel({
       />
 
       {canTriage ? (
-        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-800/80 bg-zinc-950/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
+        <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex gap-2 border-t border-zinc-800/80 bg-zinc-950/95 px-4 py-3 backdrop-blur-md lg:hidden">
+          <button
+            type="button"
+            onClick={openInboxCreateLink}
+            className="flex-1 rounded-xl border border-emerald-500/40 bg-emerald-600/20 py-3 text-sm font-semibold text-emerald-300"
+          >
+            Create / Link
+          </button>
           <button
             type="button"
             onClick={() => openLinkModal("all")}
-            className="w-full rounded-xl border border-violet-500/40 bg-violet-600/20 py-3 text-sm font-semibold text-violet-300"
+            className="flex-1 rounded-xl border border-violet-500/40 bg-violet-600/20 py-3 text-sm font-semibold text-violet-300"
           >
-            {LINK_HIERARCHY.linkEmail}
+            + Link
           </button>
         </div>
       ) : null}
