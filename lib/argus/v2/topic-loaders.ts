@@ -2,6 +2,7 @@ import type { ArgusData, Entity, InboxItem, Log } from "../types";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import { getEntityHistory } from "../network";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
+import { entityHasPrivateEvidence } from "../entity-private-evidence";
 import { entitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { relativeActivityLabel, buildTimelineFromLogsAndInbox } from "./timeline-builders";
@@ -243,6 +244,7 @@ export function buildV2TopicDetails(
       linkedEntities,
       aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
       lifecycleStatus: topic.lifecycleStatus,
+      hasPrivateEvidence: entityHasPrivateEvidence(data, inboxItems, topic.id),
       evidence,
       timeline: buildTimelineFromLogsAndInbox(history, inbox),
       tagPatterns: buildTagPatternsForScope(history, inbox, today),

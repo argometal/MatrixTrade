@@ -1,9 +1,13 @@
 import Link from "next/link";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
+import { entityHasPrivateEvidence } from "@/lib/argus/entity-private-evidence";
 import { loadOrganizationPageData } from "@/lib/argus/v2/loaders";
+import { buildV2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
 import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
+import { V2PrivateEvidenceGate } from "../../components/V2PrivateEvidenceGate";
 import { V2QuickDeliverButton } from "../../components/V2QuickDeliverModal";
 import { resolveEntityLifecycleStatus } from "@/lib/argus/entity-lifecycle";
 import { V2EntityLifecycleActions } from "../../components/V2EntityLifecycleActions";
@@ -44,8 +48,20 @@ function extractLocation(notes: string): string | null {
   return candidate;
 }
 
-export default async function V2OrganizationPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function V2OrganizationPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{
+    delete_error?: string;
+    delete_auth_error?: string;
+    totp_required?: string;
+    error?: string;
+  }>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
   const includePrivate = await hasArgusPrivateUnlock();
   const entity = await getEntity(id);
 
@@ -73,6 +89,10 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
   const morePeople = Math.max(0, page.linkedPeople.length - 4);
   const moreProjects = Math.max(0, page.orgProjects.length - 3);
   const lifecycleStatus = resolveEntityLifecycleStatus(entity, today);
+  const hasPrivateEvidence = entityHasPrivateEvidence(data, inboxItems, entity.id);
+  const deleteGate = await buildV2DeleteGateProps(entity, sp);
+  const privateLocked = hasPrivateEvidence && !includePrivate;
+  const returnTo = `/argus/v2/organizations/${entity.id}`;
 
   return (
     <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
@@ -164,8 +184,13 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
               entityName={entity.name}
               entityKind="organization"
               lifecycleStatus={lifecycleStatus}
-              returnTo={`/argus/v2/organizations/${entity.id}`}
+              returnTo={returnTo}
+              hasPrivateEvidence={hasPrivateEvidence}
+              privateConfigured={argusPrivateConfigured()}
+              privateUnlocked={includePrivate}
+              showDelete
               variant="inline"
+              {...deleteGate}
             />
             <button
               type="button"
@@ -257,11 +282,23 @@ export default async function V2OrganizationPage({ params }: { params: Promise<{
                 </button>
               </div>
             </div>
-            <V2OrgTimeline entries={page.timeline} limit={TIMELINE_PREVIEW} />
+            <V2PrivateEvidenceGate
+              locked={privateLocked}
+              privateConfigured={argusPrivateConfigured()}
+              returnTo={returnTo}
+            >
+              <V2OrgTimeline entries={page.timeline} limit={TIMELINE_PREVIEW} />
+            </V2PrivateEvidenceGate>
           </V2Card>
 
           <V2Card className="p-5 sm:p-6">
-            <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entity.name} />
+            <V2PrivateEvidenceGate
+              locked={privateLocked}
+              privateConfigured={argusPrivateConfigured()}
+              returnTo={returnTo}
+            >
+              <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entity.name} />
+            </V2PrivateEvidenceGate>
           </V2Card>
         </div>
 

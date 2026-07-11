@@ -432,6 +432,10 @@ export const TESTING = {
     "This removes the project from your knowledge base and unlinks it from journal entries and emails. Evidence is kept.",
   deleteProjectTypeName: "Type the project name to confirm",
   deleteProjectPinHint: "This project includes protected evidence. Enter your PIN to delete.",
+  deleteEntityConfirmHint:
+    "This removes the record from your knowledge base and unlinks it from evidence. Linked entries and emails are kept.",
+  deleteEntityTypeName: "Type the name to confirm",
+  deleteEntityPinHint: "This record includes protected evidence. Enter your PIN to delete.",
   clearAll: "Clear all ARGUS data",
   clearAllHint: "Removes all logs, inbox items, references, attachments, and files. For testing only.",
   clearAllConfirm:

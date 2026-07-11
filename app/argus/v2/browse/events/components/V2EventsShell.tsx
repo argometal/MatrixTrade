@@ -13,6 +13,7 @@ import {
   type V2EventRow,
   type V2EventTab,
 } from "@/lib/argus/v2/event-browse-utils";
+import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
 import { resolveV2SelectedId, v2ActiveListItemClass } from "@/lib/argus/v2/selection";
 import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
 import { V2EventDetailPanel } from "./V2EventDetailPanel";
@@ -29,13 +30,25 @@ export function V2EventsShell({
   inboxOptionsByEvent,
   initialSelectedId,
   initialTab,
+  privateConfigured = false,
+  privateUnlocked = false,
+  deleteUnlocked = false,
+  deleteAuthUnlocked = false,
+  deleteCodeConfigured = false,
+  totpConfigured = false,
+  deleteAuthConfigured = false,
+  deleteError = false,
+  deleteAuthError = false,
+  totpRequired = false,
 }: {
   rows: V2EventRow[];
   details: V2EventDetail[];
   inboxOptionsByEvent: Record<string, V2EventInboxOption[]>;
   initialSelectedId?: string;
   initialTab?: string;
-}) {
+  privateConfigured?: boolean;
+  privateUnlocked?: boolean;
+} & Omit<V2DeleteGateProps, "requiresAuthenticator">) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseV2EventTab(searchParams.get("tab") ?? initialTab);
@@ -162,6 +175,18 @@ export function V2EventsShell({
           <V2EventDetailPanel
             selected={selected}
             inboxOptions={inboxOptionsByEvent[selected.id] ?? []}
+            returnTo={`/argus/v2/browse/events?${searchParams.toString()}`}
+            privateConfigured={privateConfigured}
+            privateUnlocked={privateUnlocked}
+            requiresAuthenticator
+            deleteUnlocked={deleteUnlocked}
+            deleteAuthUnlocked={deleteAuthUnlocked}
+            deleteCodeConfigured={deleteCodeConfigured}
+            totpConfigured={totpConfigured}
+            deleteAuthConfigured={deleteAuthConfigured}
+            deleteError={deleteError}
+            deleteAuthError={deleteAuthError}
+            totpRequired={totpRequired}
           />
         ) : (
           <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">

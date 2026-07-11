@@ -15,6 +15,8 @@ import type { V2TopicDetail } from "@/lib/argus/v2/topic-browse-utils";
 import { V2TopicAliasEditor } from "./V2TopicAliasEditor";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
 import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
+import { V2PrivateEvidenceGate } from "@/app/argus/v2/components/V2PrivateEvidenceGate";
+import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
 import { V2TagPatternBadges } from "@/app/argus/v2/components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 
@@ -61,14 +63,20 @@ export function V2TopicDetailPanel({
   selected,
   neighborhood,
   returnTo,
+  privateConfigured = false,
+  privateUnlocked = false,
+  ...deleteGate
 }: {
   selected: V2TopicDetail;
   neighborhood?: V2EntityNeighborhoodGraph | null;
   returnTo: string;
-}) {
+  privateConfigured?: boolean;
+  privateUnlocked?: boolean;
+} & V2DeleteGateProps) {
   const [panelTab, setPanelTab] = useState<PanelTab>("evidence");
   const [evidenceFilter, setEvidenceFilter] = useState<EvidenceFilter>("all");
   const [showGraph, setShowGraph] = useState(false);
+  const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
 
   const filteredEvidence = useMemo(() => {
     if (evidenceFilter === "all") return selected.evidence;
@@ -106,7 +114,12 @@ export function V2TopicDetailPanel({
               entityKind="topic"
               lifecycleStatus={selected.lifecycleStatus}
               returnTo={returnTo}
+              hasPrivateEvidence={selected.hasPrivateEvidence}
+              privateConfigured={privateConfigured}
+              privateUnlocked={privateUnlocked}
+              showDelete
               variant="menu"
+              {...deleteGate}
             />
             <V2EntityLinkButton
               entityId={selected.id}
@@ -126,6 +139,11 @@ export function V2TopicDetailPanel({
           />
         ) : null}
 
+        {privateLocked ? (
+          <p className="mb-3 rounded-lg border border-amber-500/25 bg-amber-950/20 px-3 py-2 text-xs text-amber-200/90">
+            Protected evidence on this topic — unlock with PIN to view counts and linked data.
+          </p>
+        ) : (
         <div className="mb-3 inline-grid grid-cols-3 gap-1.5 sm:grid-cols-6">
           <MetricPill icon="📓" label="Journal" count={selected.journalCount} />
           <MetricPill icon="✉" label="Email" count={selected.emailCount} />
@@ -134,6 +152,7 @@ export function V2TopicDetailPanel({
           <MetricPill icon="📁" label="Projects" count={selected.projectCount} />
           <MetricPill icon="👤" label="People" count={selected.peopleCount} />
         </div>
+        )}
 
         <div className="flex gap-1 border-b border-zinc-800/80">
           {PANEL_TABS.map((t) => (
@@ -154,6 +173,11 @@ export function V2TopicDetailPanel({
       </div>
 
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto p-5">
+        <V2PrivateEvidenceGate
+          locked={privateLocked}
+          privateConfigured={privateConfigured}
+          returnTo={returnTo}
+        >
         {panelTab === "evidence" ? (
           <div className="space-y-3">
             <div className="flex flex-wrap gap-1">
@@ -254,6 +278,7 @@ export function V2TopicDetailPanel({
             + Register evidence
           </V2OpenCaptureButton>
         </div>
+        </V2PrivateEvidenceGate>
       </div>
     </div>
   );

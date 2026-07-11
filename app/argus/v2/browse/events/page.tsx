@@ -1,5 +1,8 @@
 import { Suspense } from "react";
-import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { hasArgusDeleteAuthUnlock, hasArgusDeleteUnlock, hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import { argusDeleteCodeConfigured, argusPrivateConfigured } from "@/lib/auth/passwords";
+import { argusTotpConfigured } from "@/lib/auth/totp";
+import { deleteAuthConfigured } from "@/lib/argus/delete-link-check";
 import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import {
   buildV2EventDetails,
@@ -12,10 +15,22 @@ import { V2EventsShell } from "./components/V2EventsShell";
 export default async function V2BrowseEventsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ selected?: string; tab?: string }>;
+  searchParams: Promise<{
+    selected?: string;
+    tab?: string;
+    delete_error?: string;
+    delete_auth_error?: string;
+    totp_required?: string;
+    error?: string;
+  }>;
 }) {
-  const { selected, tab: tabParam } = await searchParams;
-  const includePrivate = await hasArgusPrivateUnlock();
+  const sp = await searchParams;
+  const { selected, tab: tabParam } = sp;
+  const [includePrivate, deleteUnlocked, deleteAuthUnlocked] = await Promise.all([
+    hasArgusPrivateUnlock(),
+    hasArgusDeleteUnlock(),
+    hasArgusDeleteAuthUnlock(),
+  ]);
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, includePrivate)]);
   const today = new Date().toISOString().slice(0, 10);
   const rows = buildV2EventRows(data, includePrivate, today);
@@ -33,6 +48,16 @@ export default async function V2BrowseEventsPage({
         inboxOptionsByEvent={inboxOptionsByEvent}
         initialSelectedId={selected}
         initialTab={tab}
+        privateConfigured={argusPrivateConfigured()}
+        privateUnlocked={includePrivate}
+        deleteUnlocked={deleteUnlocked}
+        deleteAuthUnlocked={deleteAuthUnlocked}
+        deleteCodeConfigured={argusDeleteCodeConfigured()}
+        totpConfigured={argusTotpConfigured()}
+        deleteAuthConfigured={deleteAuthConfigured()}
+        deleteError={sp.delete_error === "1" || sp.error === "pin"}
+        deleteAuthError={sp.delete_auth_error === "1"}
+        totpRequired={sp.totp_required === "1"}
       />
     </Suspense>
   );

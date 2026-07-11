@@ -60,6 +60,7 @@ export interface V2TopicDetail {
   linkedEntities: V2TopicLinkedEntity[];
   aliases: string[];
   lifecycleStatus?: EntityLifecycleStatus;
+  hasPrivateEvidence: boolean;
   evidence: V2EvidenceStreamItem[];
   timeline: V2TimelineEntry[];
   tagPatterns: TagPattern[];

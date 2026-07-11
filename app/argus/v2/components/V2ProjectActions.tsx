@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { deleteProjectAction, renameProjectAction } from "@/app/argus/actions";
+import { deleteEntityV2Action, renameProjectAction } from "@/app/argus/actions";
 import { TESTING } from "@/lib/argus/ux-copy";
 
 type ProjectActionsProps = {
@@ -80,7 +80,7 @@ export function V2ProjectActions({
     formData.set("confirmName", confirmName.trim());
     formData.set("pin", pin);
     formData.set("returnTo", "/argus/v2/browse/projects");
-    await deleteProjectAction(formData);
+    await deleteEntityV2Action(formData);
   }
 
   function openRename() {

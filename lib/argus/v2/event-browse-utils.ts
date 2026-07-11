@@ -76,6 +76,7 @@ export interface V2EventDetail {
   relatedEmails: V2EventEmail[];
   evidence: V2EventEvidenceItem[];
   lifecycleStatus?: EntityLifecycleStatus;
+  hasPrivateEvidence: boolean;
   tagPatterns: TagPattern[];
 }
 

@@ -7,6 +7,8 @@ import { runbooksForEntity } from "@/lib/argus/runbook-helpers";
 import { loadProjectPageData } from "@/lib/argus/v2/loaders";
 import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
+import { buildV2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
+import { V2PrivateEvidenceGate } from "../../components/V2PrivateEvidenceGate";
 import { V2QuickDeliverButton } from "../../components/V2QuickDeliverModal";
 import { V2TagPatternBadges } from "../../components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "../../components/V2RecordRecentEntity";
@@ -37,10 +39,11 @@ export default async function V2ProjectPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ scope?: string }>;
+  searchParams: Promise<{ scope?: string; delete_error?: string; delete_auth_error?: string; totp_required?: string; error?: string }>;
 }) {
   const { id } = await params;
-  const { scope } = await searchParams;
+  const sp = await searchParams;
+  const { scope } = sp;
   const respectProjectDates = scope !== "all";
   const includePrivate = await hasArgusPrivateUnlock();
   const entity = await getEntity(id);
@@ -66,6 +69,9 @@ export default async function V2ProjectPage({
   const neighborhood = buildV2EntityNeighborhoodGraph(data, inboxItems, entity.id, includePrivate, today);
   const projectRunbooks = runbooksForEntity(data.runbooks ?? [], entity.id);
   const hasPrivateEvidence = projectHasPrivateEvidence(data, inboxItems, entity);
+  const deleteGate = await buildV2DeleteGateProps(entity, sp);
+  const privateLocked = hasPrivateEvidence && !includePrivate;
+  const returnTo = `/argus/v2/projects/${entity.id}${respectProjectDates ? "" : "?scope=all"}`;
   const notes = entityNotesForDisplay(entity.notes ?? "");
   const morePeople = Math.max(0, page.peopleWithRoles.length - 4);
   const statusTone =
@@ -118,12 +124,13 @@ export default async function V2ProjectPage({
               entityName={entity.name}
               entityKind="project"
               lifecycleStatus={entity.lifecycleStatus}
-              returnTo={`/argus/v2/projects/${entity.id}${respectProjectDates ? "" : "?scope=all"}`}
+              returnTo={returnTo}
               hasPrivateEvidence={hasPrivateEvidence}
               privateConfigured={argusPrivateConfigured()}
               privateUnlocked={includePrivate}
               showDelete
               variant="inline"
+              {...deleteGate}
             />
             <V2EntityLinkButton
               entityId={entity.id}
@@ -220,11 +227,23 @@ export default async function V2ProjectPage({
               </div>
               <V2ProjectScopeToggle projectId={entity.id} respectDates={respectProjectDates} />
             </div>
-            <V2OrgTimeline entries={page.timeline} limit={TIMELINE_PREVIEW} />
+            <V2PrivateEvidenceGate
+              locked={privateLocked}
+              privateConfigured={argusPrivateConfigured()}
+              returnTo={returnTo}
+            >
+              <V2OrgTimeline entries={page.timeline} limit={TIMELINE_PREVIEW} />
+            </V2PrivateEvidenceGate>
           </V2Card>
 
           <V2Card className="p-5 sm:p-6">
-            <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entity.name} />
+            <V2PrivateEvidenceGate
+              locked={privateLocked}
+              privateConfigured={argusPrivateConfigured()}
+              returnTo={returnTo}
+            >
+              <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entity.name} />
+            </V2PrivateEvidenceGate>
           </V2Card>
 
           <V2ProjectRunbooksPanel runbooks={projectRunbooks} projectId={entity.id} />

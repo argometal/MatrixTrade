@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured, verifyArgusPrivatePin } from "@/lib/auth/passwords";
-import { assertDeleteAllowed } from "@/lib/argus/delete-gate";
+import { assertDeleteAllowed, assertEntityDeleteAllowed } from "@/lib/argus/delete-gate";
+import { resolveEntityPrivateEvidence } from "@/lib/argus/entity-private-evidence";
 import { requireArgusSession } from "@/lib/auth/require-session";
 import {
   appendLogAttachment,
@@ -47,6 +48,7 @@ import {
   buildReferenceNotes,
   entityDetailHref,
   isCreatableReferenceKind,
+  entityTypeToReferenceKind,
   referenceKindFromNotes,
   referenceKindToCreateInput,
   createInputToReferenceKind,
@@ -75,7 +77,6 @@ import {
   argusErrorQueryParams,
   formatArgusError,
 } from "@/lib/argus/persistence/errors";
-import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
 
 function revalidateArgus(): void {
   revalidatePath("/argus");
@@ -1204,15 +1205,20 @@ export async function updateInboxSubjectAction(formData: FormData): Promise<void
   redirect(returnTo);
 }
 
-export async function deleteProjectAction(formData: FormData): Promise<void> {
+export async function deleteEntityV2Action(formData: FormData): Promise<void> {
   await requireArgusSession();
   const entityId = String(formData.get("entityId") ?? "");
   const confirmName = String(formData.get("confirmName") ?? "").trim();
   const pin = String(formData.get("pin") ?? "");
-  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/browse/projects");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
 
   const entity = await getEntity(entityId);
-  if (!entity || entity.type !== "project") {
+  if (!entity || entity.deletedAt) {
+    redirect(returnTo);
+  }
+
+  const kind = entityTypeToReferenceKind(entity.type, entity.notes ?? "");
+  if (!["project", "organization", "topic", "event"].includes(kind)) {
     redirect(returnTo);
   }
 
@@ -1220,10 +1226,22 @@ export async function deleteProjectAction(formData: FormData): Promise<void> {
     redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=confirm`);
   }
 
+  const gate = await assertEntityDeleteAllowed(entity);
+  if ("error" in gate) {
+    const param =
+      gate.error === "delete_auth_locked"
+        ? "delete_auth_error=1"
+        : gate.error === "totp_not_configured"
+          ? "totp_required=1"
+          : "delete_error=1";
+    const separator = returnTo.includes("?") ? "&" : "?";
+    redirect(`${returnTo}${separator}${param}`);
+  }
+
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
   const needsPin =
     argusPrivateConfigured() &&
-    projectHasPrivateEvidence(data, inboxItems, entity) &&
+    resolveEntityPrivateEvidence(data, inboxItems, entity) &&
     !(await hasArgusPrivateUnlock());
 
   if (needsPin && !verifyArgusPrivatePin(pin)) {
@@ -1232,9 +1250,18 @@ export async function deleteProjectAction(formData: FormData): Promise<void> {
 
   await deleteEntity(entityId);
   revalidateArgus();
+  revalidatePath("/argus/v2");
   revalidatePath("/argus/v2/browse/projects");
+  revalidatePath("/argus/v2/browse/organizations");
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/browse/events");
   revalidatePath(`/argus/v2/projects/${entityId}`);
+  revalidatePath(`/argus/v2/organizations/${entityId}`);
   redirect(returnTo);
+}
+
+export async function deleteProjectAction(formData: FormData): Promise<void> {
+  await deleteEntityV2Action(formData);
 }
 
 export async function updateTopicAliasesAction(formData: FormData): Promise<void> {
@@ -1285,11 +1312,7 @@ export async function deleteLogAction(formData: FormData): Promise<void> {
 }
 
 export async function deleteEntityAction(formData: FormData): Promise<void> {
-  const entityId = String(formData.get("entityId") ?? "");
-  await deleteEntity(entityId);
-  revalidateArgus();
-  revalidatePath(`/argus/projects/${entityId}`);
-  redirect("/argus/network");
+  await deleteEntityV2Action(formData);
 }
 
 export async function deleteInboxAction(formData: FormData): Promise<void> {

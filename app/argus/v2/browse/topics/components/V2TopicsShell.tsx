@@ -20,6 +20,7 @@ import {
   type V2TopicTab,
   type V2TopicTagChip,
 } from "@/lib/argus/v2/topic-browse-utils";
+import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
 import { resolveV2SelectedId, v2ActiveTableRowClass } from "@/lib/argus/v2/selection";
 import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
@@ -101,6 +102,16 @@ export function V2TopicsShell({
   initialSelectedId,
   initialTab,
   neighborhood,
+  privateConfigured = false,
+  privateUnlocked = false,
+  deleteUnlocked = false,
+  deleteAuthUnlocked = false,
+  deleteCodeConfigured = false,
+  totpConfigured = false,
+  deleteAuthConfigured = false,
+  deleteError = false,
+  deleteAuthError = false,
+  totpRequired = false,
 }: {
   rows: V2TopicRow[];
   details: V2TopicDetail[];
@@ -108,7 +119,9 @@ export function V2TopicsShell({
   initialSelectedId?: string;
   initialTab?: string;
   neighborhood?: V2EntityNeighborhoodGraph | null;
-}) {
+  privateConfigured?: boolean;
+  privateUnlocked?: boolean;
+} & Omit<V2DeleteGateProps, "requiresAuthenticator">) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseV2TopicTab(searchParams.get("tab") ?? initialTab);
@@ -477,7 +490,22 @@ export function V2TopicsShell({
 
       <section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-950/50">
         {selected ? (
-          <V2TopicDetailPanel selected={selected} neighborhood={neighborhood} returnTo={returnTo} />
+          <V2TopicDetailPanel
+            selected={selected}
+            neighborhood={neighborhood}
+            returnTo={returnTo}
+            privateConfigured={privateConfigured}
+            privateUnlocked={privateUnlocked}
+            requiresAuthenticator
+            deleteUnlocked={deleteUnlocked}
+            deleteAuthUnlocked={deleteAuthUnlocked}
+            deleteCodeConfigured={deleteCodeConfigured}
+            totpConfigured={totpConfigured}
+            deleteAuthConfigured={deleteAuthConfigured}
+            deleteError={deleteError}
+            deleteAuthError={deleteAuthError}
+            totpRequired={totpRequired}
+          />
         ) : (
           <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">
             Select a topic to review linked evidence.

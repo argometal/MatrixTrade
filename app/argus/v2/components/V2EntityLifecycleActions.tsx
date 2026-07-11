@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { unlockArgusDeleteAction, unlockArgusDeleteAuthAction } from "@/app/auth/actions";
 import {
   archiveEntityAction,
-  deleteProjectAction,
+  deleteEntityV2Action,
   restoreEntityAction,
   renameEntityAction,
 } from "@/app/argus/actions";
 import type { EntityLifecycleStatus } from "@/lib/argus/types";
-import { TESTING } from "@/lib/argus/ux-copy";
+import { DELETE_AUTH, TESTING } from "@/lib/argus/ux-copy";
 
 type EntityKind = "project" | "organization" | "topic" | "event" | "person";
 
@@ -25,6 +26,15 @@ type Props = {
   hasPrivateEvidence?: boolean;
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
+  requiresAuthenticator?: boolean;
+  deleteUnlocked?: boolean;
+  deleteAuthUnlocked?: boolean;
+  deleteCodeConfigured?: boolean;
+  totpConfigured?: boolean;
+  deleteAuthConfigured?: boolean;
+  deleteError?: boolean;
+  deleteAuthError?: boolean;
+  totpRequired?: boolean;
 };
 
 export function V2EntityLifecycleActions({
@@ -39,17 +49,36 @@ export function V2EntityLifecycleActions({
   hasPrivateEvidence = false,
   privateConfigured = false,
   privateUnlocked = false,
+  requiresAuthenticator = false,
+  deleteUnlocked = false,
+  deleteAuthUnlocked = false,
+  deleteCodeConfigured = false,
+  totpConfigured = false,
+  deleteAuthConfigured = false,
+  deleteError = false,
+  deleteAuthError = false,
+  totpRequired = false,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [unlockOpen, setUnlockOpen] = useState(false);
   const [draftName, setDraftName] = useState(entityName);
   const [confirmName, setConfirmName] = useState("");
   const [pin, setPin] = useState("");
+  const [unlockCode, setUnlockCode] = useState("");
+  const [unlockTotp, setUnlockTotp] = useState("");
   const [busy, setBusy] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isArchived = lifecycleStatus === "archived";
+  const deleteLabel = entityKind === "project" ? TESTING.deleteProject : TESTING.deleteEntity;
+  const deleteHint =
+    entityKind === "project" ? TESTING.deleteProjectConfirmHint : TESTING.deleteEntityConfirmHint;
+  const typeNameLabel =
+    entityKind === "project" ? TESTING.deleteProjectTypeName : TESTING.deleteEntityTypeName;
+  const pinHint =
+    entityKind === "project" ? TESTING.deleteProjectPinHint : TESTING.deleteEntityPinHint;
 
   useEffect(() => {
     setDraftName(entityName);
@@ -66,9 +95,30 @@ export function V2EntityLifecycleActions({
     return () => document.removeEventListener("mousedown", onPointerDown);
   }, [menuOpen]);
 
-  const needsPin = hasPrivateEvidence && privateConfigured && !privateUnlocked;
+  const needsPrivatePin = hasPrivateEvidence && privateConfigured && !privateUnlocked;
   const nameMatches = confirmName.trim().toLowerCase() === entityName.trim().toLowerCase();
-  const canDelete = showDelete && nameMatches && (!needsPin || pin.length > 0);
+  const canSubmitDelete = showDelete && nameMatches && (!needsPrivatePin || pin.length > 0);
+
+  const deleteBlockedNoTotp = Boolean(
+    showDelete && deleteAuthConfigured && requiresAuthenticator && !totpConfigured
+  );
+  const needsDeleteUnlock = Boolean(
+    showDelete &&
+      deleteAuthConfigured &&
+      !deleteBlockedNoTotp &&
+      (requiresAuthenticator ? !deleteAuthUnlocked : deleteCodeConfigured && !deleteUnlocked)
+  );
+
+  function openDeleteFlow() {
+    setMenuOpen(false);
+    if (needsDeleteUnlock) {
+      setUnlockOpen(true);
+      return;
+    }
+    setConfirmName("");
+    setPin("");
+    setDeleteOpen(true);
+  }
 
   async function submitRename(event: React.FormEvent) {
     event.preventDefault();
@@ -102,17 +152,36 @@ export function V2EntityLifecycleActions({
 
   async function submitDelete(event: React.FormEvent) {
     event.preventDefault();
-    if (!canDelete) return;
+    if (!canSubmitDelete) return;
     setBusy(true);
     const formData = new FormData();
     formData.set("entityId", entityId);
     formData.set("confirmName", confirmName.trim());
     formData.set("pin", pin);
     formData.set("returnTo", returnTo);
-    await deleteProjectAction(formData);
+    await deleteEntityV2Action(formData);
   }
 
   const archiveLabel = entityKind === "project" ? "Archive project" : "Archive";
+
+  const deleteControl =
+    showDelete && deleteBlockedNoTotp ? (
+      <span className="rounded-xl border border-amber-900/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-200/90">
+        {DELETE_AUTH.totpNotConfigured}
+      </span>
+    ) : showDelete ? (
+      <button
+        type="button"
+        onClick={openDeleteFlow}
+        className="rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-2 text-sm text-red-300 hover:bg-red-950/40"
+      >
+        {needsDeleteUnlock
+          ? requiresAuthenticator
+            ? DELETE_AUTH.unlockAuthenticator
+            : DELETE_AUTH.unlockCode
+          : deleteLabel}
+      </button>
+    ) : null;
 
   const inlineButtons = (
     <div className="flex flex-wrap gap-2">
@@ -142,15 +211,7 @@ export function V2EntityLifecycleActions({
           {archiveLabel}
         </button>
       )}
-      {showDelete ? (
-        <button
-          type="button"
-          onClick={() => setDeleteOpen(true)}
-          className="rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-2 text-sm text-red-300 hover:bg-red-950/40"
-        >
-          {TESTING.deleteProject}
-        </button>
-      ) : null}
+      {deleteControl}
     </div>
   );
 
@@ -215,16 +276,17 @@ export function V2EntityLifecycleActions({
               {archiveLabel}
             </button>
           )}
-          {showDelete ? (
+          {showDelete && !deleteBlockedNoTotp ? (
             <button
               type="button"
-              onClick={() => {
-                setMenuOpen(false);
-                setDeleteOpen(true);
-              }}
+              onClick={openDeleteFlow}
               className="block w-full rounded-lg px-3 py-2 text-left text-sm text-red-300 hover:bg-red-950/40"
             >
-              {TESTING.deleteProject}
+              {needsDeleteUnlock
+                ? requiresAuthenticator
+                  ? DELETE_AUTH.unlockAuthenticator
+                  : DELETE_AUTH.unlockCode
+                : deleteLabel}
             </button>
           ) : null}
         </div>
@@ -270,12 +332,74 @@ export function V2EntityLifecycleActions({
         </Modal>
       ) : null}
 
-      {deleteOpen && showDelete ? (
-        <Modal title={TESTING.deleteProject} onClose={() => !busy && setDeleteOpen(false)}>
+      {unlockOpen && needsDeleteUnlock ? (
+        <Modal
+          title={requiresAuthenticator ? DELETE_AUTH.authenticatorTitle : DELETE_AUTH.codeTitle}
+          onClose={() => setUnlockOpen(false)}
+        >
+          <form
+            action={requiresAuthenticator ? unlockArgusDeleteAuthAction : unlockArgusDeleteAction}
+            className="space-y-4"
+          >
+            <p className="text-sm text-zinc-400">
+              {requiresAuthenticator ? DELETE_AUTH.authenticatorHint : DELETE_AUTH.codeHint}
+            </p>
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <input
+              name={requiresAuthenticator ? "totp" : "code"}
+              type={requiresAuthenticator ? "text" : "password"}
+              inputMode={requiresAuthenticator ? "numeric" : undefined}
+              autoComplete={requiresAuthenticator ? "one-time-code" : "off"}
+              placeholder={requiresAuthenticator ? "000000" : DELETE_AUTH.codePlaceholder}
+              value={requiresAuthenticator ? unlockTotp : unlockCode}
+              onChange={(event) =>
+                requiresAuthenticator
+                  ? setUnlockTotp(event.target.value)
+                  : setUnlockCode(event.target.value)
+              }
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 focus:border-red-500/40 focus:outline-none"
+              autoFocus
+              required
+            />
+            {deleteAuthError && requiresAuthenticator ? (
+              <p className="text-xs text-red-400">{DELETE_AUTH.wrongAuthenticator}</p>
+            ) : null}
+            {deleteError && !requiresAuthenticator ? (
+              <p className="text-xs text-red-400">{DELETE_AUTH.wrongCode}</p>
+            ) : null}
+            {totpRequired && requiresAuthenticator ? (
+              <p className="text-xs text-amber-400">{DELETE_AUTH.linkedRequiresAuth}</p>
+            ) : null}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setUnlockOpen(false)}
+                className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="rounded-xl border border-red-800 bg-red-950/50 px-4 py-2 text-sm font-medium text-red-200 hover:bg-red-950"
+              >
+                {DELETE_AUTH.unlockButton}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      ) : null}
+
+      {deleteOpen && showDelete && !needsDeleteUnlock ? (
+        <Modal title={deleteLabel} onClose={() => !busy && setDeleteOpen(false)}>
           <form onSubmit={(event) => void submitDelete(event)} className="space-y-4">
-            <p className="text-sm leading-relaxed text-zinc-400">{TESTING.deleteProjectConfirmHint}</p>
+            <p className="text-sm leading-relaxed text-zinc-400">{deleteHint}</p>
+            {hasPrivateEvidence ? (
+              <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+                🔒 {needsPrivatePin ? pinHint : "This record includes protected evidence."}
+              </p>
+            ) : null}
             <label className="block text-sm text-zinc-400">
-              {TESTING.deleteProjectTypeName}: <span className="font-medium text-zinc-200">{entityName}</span>
+              {typeNameLabel}: <span className="font-medium text-zinc-200">{entityName}</span>
               <input
                 value={confirmName}
                 onChange={(event) => setConfirmName(event.target.value)}
@@ -285,7 +409,7 @@ export function V2EntityLifecycleActions({
                 required
               />
             </label>
-            {needsPin ? (
+            {needsPrivatePin ? (
               <label className="block text-sm text-zinc-400">
                 PIN
                 <input
@@ -309,10 +433,10 @@ export function V2EntityLifecycleActions({
               </button>
               <button
                 type="submit"
-                disabled={busy || !canDelete}
+                disabled={busy || !canSubmitDelete}
                 className="rounded-xl border border-red-800 bg-red-950/50 px-4 py-2 text-sm font-medium text-red-200 hover:bg-red-950 disabled:opacity-50"
               >
-                {TESTING.deleteProject}
+                {deleteLabel}
               </button>
             </div>
           </form>

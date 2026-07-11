@@ -15,6 +15,8 @@ import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-bro
 import { V2EventLinkEmailModal } from "./V2EventLinkEmailModal";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
 import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
+import { V2PrivateEvidenceGate } from "@/app/argus/v2/components/V2PrivateEvidenceGate";
+import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
 import { V2TagPatternBadges } from "@/app/argus/v2/components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 
@@ -44,10 +46,17 @@ function MetricPill({ icon, label, count }: { icon: string; label: string; count
 export function V2EventDetailPanel({
   selected,
   inboxOptions,
+  returnTo,
+  privateConfigured = false,
+  privateUnlocked = false,
+  ...deleteGate
 }: {
   selected: V2EventDetail;
   inboxOptions: V2EventInboxOption[];
-}) {
+  returnTo: string;
+  privateConfigured?: boolean;
+  privateUnlocked?: boolean;
+} & V2DeleteGateProps) {
   const router = useRouter();
   const [panelTab, setPanelTab] = useState<PanelTab>("record");
   const [purpose, setPurpose] = useState<EventLegalPurpose>(selected.legalPurpose);
@@ -55,6 +64,7 @@ export function V2EventDetailPanel({
   const [saving, setSaving] = useState(false);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
+  const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
 
   async function saveRecord() {
     setSaving(true);
@@ -107,8 +117,13 @@ export function V2EventDetailPanel({
               entityName={selected.name}
               entityKind="event"
               lifecycleStatus={selected.lifecycleStatus}
-              returnTo={`/argus/v2/browse/events?selected=${selected.id}`}
+              returnTo={returnTo}
+              hasPrivateEvidence={selected.hasPrivateEvidence}
+              privateConfigured={privateConfigured}
+              privateUnlocked={privateUnlocked}
+              showDelete
               variant="menu"
+              {...deleteGate}
             />
             <button
               type="button"
@@ -161,6 +176,11 @@ export function V2EventDetailPanel({
       </div>
 
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto p-5">
+        <V2PrivateEvidenceGate
+          locked={privateLocked}
+          privateConfigured={privateConfigured}
+          returnTo={returnTo}
+        >
         {panelTab === "record" ? (
           <div className="space-y-4">
             <label className="block text-xs text-zinc-500">
@@ -288,6 +308,7 @@ export function V2EventDetailPanel({
             </div>
           </div>
         ) : null}
+        </V2PrivateEvidenceGate>
       </div>
 
       <div className="shrink-0 border-t border-zinc-800/80 p-5">
