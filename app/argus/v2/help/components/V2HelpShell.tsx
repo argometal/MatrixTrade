@@ -76,7 +76,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Runbooks / procedures",
-        body: "Execution guides with steps and progress — checklists are one view of a runbook.",
+        body: "Execution checklist — cards with optional subtasks and progress.",
       },
     ],
   },

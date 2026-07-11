@@ -95,6 +95,14 @@ export function normalizeRunbook(runbook: Runbook): Runbook {
       done: !!item.done,
       doneAt: item.doneAt ?? "",
       type: item.type === "sep" ? "sep" : "item",
+      subtasks: Array.isArray(item.subtasks)
+        ? item.subtasks.map((subtask) => ({
+            id: subtask.id,
+            text: subtask.text ?? "",
+            done: !!subtask.done,
+            doneAt: subtask.doneAt ?? "",
+          }))
+        : [],
     })),
     linkedEntityIds: runbook.linkedEntityIds ?? [],
     deletedAt: runbook.deletedAt,

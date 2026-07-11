@@ -124,15 +124,25 @@ export interface InboxItem {
 
 export type RunbookItemType = "item" | "sep";
 
+/** Checklist row under a runbook card. */
+export interface RunbookSubtask {
+  id: string;
+  text: string;
+  done: boolean;
+  doneAt: string;
+}
+
 export interface RunbookItem {
   id: string;
   text: string;
   done: boolean;
   doneAt: string;
   type: RunbookItemType;
+  /** Optional checklist under this card (Execution tool UI). */
+  subtasks?: RunbookSubtask[];
 }
 
-/** Execution domain — procedure with checkable steps (checklist is one UI view). */
+/** Execution domain — procedure with checkable cards (checklist is the product). */
 export interface Runbook {
   id: string;
   title: string;

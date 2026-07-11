@@ -118,7 +118,7 @@ export const CREATE_ITEM_HINTS: Record<CreateItemKind, string> = {
   topic: "Permanent subject — ongoing knowledge",
   tag: "Short label for grouping and search",
   document: "Reference file or note",
-  runbook: "Procedure to follow — steps and progress",
+  runbook: "Procedure checklist — one line becomes one card",
 };
 
 export const LINK_FILTER_LABELS: Record<LinkFilterKind, string> = {

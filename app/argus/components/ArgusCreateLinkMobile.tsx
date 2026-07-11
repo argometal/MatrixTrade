@@ -333,7 +333,9 @@ function DetailsStep({
               />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Steps</span>
+              <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Cards (one line = one card)
+              </span>
               <textarea
                 className={`${textareaClass} mt-1.5 min-h-[180px] font-mono text-sm`}
                 value={flow.body}

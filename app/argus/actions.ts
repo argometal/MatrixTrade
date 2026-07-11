@@ -60,7 +60,12 @@ import { attachFilesToLog, attachmentSummaryNames, filesFromFormData } from "@/l
 import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
 import { partitionIdsByEntityKind } from "@/lib/argus/v2/entity-link-counts";
 import type { UnifiedCreatePayload, UnifiedCreateResult } from "@/lib/argus/create-flow-types";
-import { buildRunbookItemsFromText, runbookStamp } from "@/lib/argus/runbook-helpers";
+import {
+  buildRunbookItemsFromText,
+  createRunbookCard,
+  createRunbookSubtask,
+  runbookStamp,
+} from "@/lib/argus/runbook-helpers";
 import { buildDocumentNotes } from "@/lib/argus/reference-types";
 import {
   assertJournalKindTransition,
@@ -733,7 +738,7 @@ async function persistRunbookFromPayload(
   }
   const items = buildRunbookItemsFromText(stepsText);
   if (items.filter((item) => item.type === "item").length === 0) {
-    throw new ArgusPersistenceError("validation", "Add at least one step.");
+    throw new ArgusPersistenceError("validation", "Add at least one card.");
   }
 
   const runbook = await createRunbook({
@@ -1478,6 +1483,15 @@ export async function deleteInboxAction(formData: FormData): Promise<void> {
   redirect(returnTo.startsWith("/argus/") ? returnTo : "/argus/v2/inbox");
 }
 
+async function revalidateRunbookSurfaces(runbookId: string, linkedEntityIds: string[]): Promise<void> {
+  revalidateArgus();
+  revalidatePath(`/argus/v2/runbooks/${runbookId}`);
+  for (const entityId of linkedEntityIds) {
+    revalidatePath(`/argus/v2/projects/${entityId}`);
+    revalidatePath(`/argus/v2/organizations/${entityId}`);
+  }
+}
+
 export async function toggleRunbookItemAction(
   runbookId: string,
   itemId: string,
@@ -1496,12 +1510,88 @@ export async function toggleRunbookItemAction(
   );
 
   await updateRunbook(runbookId, { items });
-  revalidateArgus();
-  revalidatePath(`/argus/v2/runbooks/${runbookId}`);
-  for (const entityId of runbook.linkedEntityIds) {
-    revalidatePath(`/argus/v2/projects/${entityId}`);
-    revalidatePath(`/argus/v2/organizations/${entityId}`);
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function addRunbookCardAction(runbookId: string, text: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
   }
+
+  const card = createRunbookCard(text);
+  if (!card.text) {
+    throw new ArgusPersistenceError("validation", "Card text is required.");
+  }
+
+  await updateRunbook(runbookId, { items: [...runbook.items, card] });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function addRunbookSubtaskAction(
+  runbookId: string,
+  itemId: string,
+  text: string
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const subtask = createRunbookSubtask(text);
+  if (!subtask.text) {
+    throw new ArgusPersistenceError("validation", "Subtask text is required.");
+  }
+
+  let found = false;
+  const items = runbook.items.map((item) => {
+    if (item.id !== itemId || item.type === "sep") return item;
+    found = true;
+    return {
+      ...item,
+      subtasks: [...(item.subtasks ?? []), subtask],
+    };
+  });
+
+  if (!found) {
+    throw new ArgusPersistenceError("validation", "Card not found.");
+  }
+
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function toggleRunbookSubtaskAction(
+  runbookId: string,
+  itemId: string,
+  subtaskId: string,
+  done: boolean
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  let found = false;
+  const items = runbook.items.map((item) => {
+    if (item.id !== itemId) return item;
+    const subtasks = (item.subtasks ?? []).map((subtask) => {
+      if (subtask.id !== subtaskId) return subtask;
+      found = true;
+      return { ...subtask, done, doneAt: done ? runbookStamp() : "" };
+    });
+    return { ...item, subtasks };
+  });
+
+  if (!found) {
+    throw new ArgusPersistenceError("validation", "Subtask not found.");
+  }
+
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
 }
 
 export async function clearAllArgusDataAction(): Promise<void> {

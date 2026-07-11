@@ -441,7 +441,7 @@ function ArgusCreateLinkWindowBody({
                   </label>
                   <label className="block">
                     <span className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                      Steps (one line = one step)
+                      Cards (one line = one card)
                     </span>
                     <textarea
                       className={`${textareaClass} mt-1.5 min-h-[220px] font-mono text-sm`}
@@ -449,7 +449,9 @@ function ArgusCreateLinkWindowBody({
                       onChange={(event) => flow.setBody(event.target.value)}
                       placeholder={"Confirm permits\nCheck equipment\n\nSafety briefing"}
                     />
-                    <p className="mt-1.5 text-[11px] text-zinc-600">Blank line = section break. Bullet prefixes are stripped.</p>
+                    <p className="mt-1.5 text-[11px] text-zinc-600">
+                      Blank line = section break. Add subtasks on the runbook page after create.
+                    </p>
                   </label>
                 </div>
               ) : (

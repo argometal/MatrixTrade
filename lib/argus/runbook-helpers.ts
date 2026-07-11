@@ -1,4 +1,4 @@
-import type { Runbook, RunbookItem } from "./types";
+import type { Runbook, RunbookItem, RunbookSubtask } from "./types";
 
 export function normRunbookLine(line: string): string {
   return String(line || "")
@@ -14,7 +14,39 @@ export function newRunbookItemId(prefix = "i"): string {
   return `${prefix}${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
 }
 
-/** One line = item; blank line = section separator. */
+export function normalizeRunbookSubtasks(subtasks: RunbookSubtask[] | undefined): RunbookSubtask[] {
+  if (!Array.isArray(subtasks)) return [];
+  return subtasks
+    .map((subtask) => ({
+      id: subtask.id || newRunbookItemId("st_"),
+      text: String(subtask.text ?? "").trim(),
+      done: !!subtask.done,
+      doneAt: subtask.doneAt ?? "",
+    }))
+    .filter((subtask) => subtask.text.length > 0 || subtask.done);
+}
+
+export function createRunbookCard(text: string): RunbookItem {
+  return {
+    id: newRunbookItemId("c_"),
+    text: normRunbookLine(text),
+    done: false,
+    doneAt: "",
+    type: "item",
+    subtasks: [],
+  };
+}
+
+export function createRunbookSubtask(text: string): RunbookSubtask {
+  return {
+    id: newRunbookItemId("st_"),
+    text: normRunbookLine(text),
+    done: false,
+    doneAt: "",
+  };
+}
+
+/** One line = card; blank line = section separator. */
 export function buildRunbookItemsFromText(raw: string): RunbookItem[] {
   const lines = String(raw || "").split("\n");
   const items: RunbookItem[] = [];
@@ -28,6 +60,7 @@ export function buildRunbookItemsFromText(raw: string): RunbookItem[] {
         done: false,
         doneAt: "",
         type: "sep",
+        subtasks: [],
       });
       return;
     }
@@ -39,10 +72,17 @@ export function buildRunbookItemsFromText(raw: string): RunbookItem[] {
       done: false,
       doneAt: "",
       type: "item",
+      subtasks: [],
     });
   });
 
   return items;
+}
+
+export function runbookCardProgress(item: RunbookItem): { total: number; done: number; open: number } {
+  const subtasks = item.subtasks ?? [];
+  const done = subtasks.filter((subtask) => subtask.done).length;
+  return { total: subtasks.length, done, open: subtasks.length - done };
 }
 
 export function runbookProgress(items: RunbookItem[]): { total: number; done: number; open: number } {
