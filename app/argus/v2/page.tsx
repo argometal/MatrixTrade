@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
@@ -9,27 +8,7 @@ import {
   buildV2TagCloud,
 } from "@/lib/argus/v2/loaders";
 import { buildV2KnowledgeNodes } from "@/lib/argus/v2/intelligence-viz";
-import { V2Card, V2SectionTitle } from "./components/v2-ui";
-import { V2Timeline, V2TimelineRail } from "./components/V2Timeline";
-import { V2TagCloud } from "./components/V2TagCloud";
-import { V2HomeMainShell } from "./components/V2HomeMainShell";
-
-const FOLLOW_UP_ICON_STYLES: Record<string, { icon: string; box: string }> = {
-  danger: { icon: "↩", box: "bg-red-500/15 text-red-400" },
-  warning: { icon: "🏷", box: "bg-amber-500/15 text-amber-400" },
-  muted: { icon: "📄", box: "bg-zinc-800 text-zinc-500" },
-};
-
-function IconBox({ icon, boxClass }: { icon: string; boxClass: string }) {
-  return (
-    <span
-      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base ${boxClass}`}
-      aria-hidden
-    >
-      {icon}
-    </span>
-  );
-}
+import { V2HomeClient } from "./components/V2HomeClient";
 
 export default async function V2HomePage({
   searchParams,
@@ -57,85 +36,16 @@ export default async function V2HomePage({
           <p className="mt-1 text-sm text-zinc-500">Activity, intelligence, and what needs attention</p>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
-          <div className="space-y-6">
-            <V2Card className="p-5 sm:p-6">
-              <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
-                <V2HomeMainShell
-                  nodes={knowledgeNodes}
-                  tags={tags}
-                  signals={navSignals}
-                  initialView={viewParam}
-                />
-              </Suspense>
-            </V2Card>
-          </div>
-
-          <aside className="space-y-6">
-            <div id="follow-ups">
-              <V2Card className="flex flex-col p-5">
-                <V2SectionTitle>Follow Ups</V2SectionTitle>
-                {followUps.length === 0 ? (
-                  <p className="text-sm text-zinc-500">No pending follow-ups.</p>
-                ) : (
-                  <ul className="divide-y divide-zinc-800/80">
-                    {followUps.map((item) => {
-                      const style = FOLLOW_UP_ICON_STYLES[item.tone];
-                      return (
-                        <li key={item.id} className="flex gap-3 py-3 first:pt-0 last:pb-0">
-                          <IconBox icon={style.icon} boxClass={style.box} />
-                          <div className="min-w-0 flex-1">
-                            <Link
-                              href={item.href}
-                              className="text-sm font-medium text-zinc-200 hover:text-violet-300"
-                            >
-                              {item.title}
-                            </Link>
-                            <p className="mt-0.5 text-xs text-zinc-500">{item.meta}</p>
-                          </div>
-                          <span
-                            className={`shrink-0 self-start rounded-full px-2 py-0.5 text-[10px] font-medium ring-1 ${
-                              item.tone === "danger"
-                                ? "bg-red-500/10 text-red-300 ring-red-500/30"
-                                : item.tone === "warning"
-                                  ? "bg-amber-500/10 text-amber-300 ring-amber-500/30"
-                                  : "bg-zinc-800 text-zinc-400 ring-zinc-700"
-                            }`}
-                          >
-                            {item.due}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </V2Card>
-            </div>
-
-            <div id="tags">
-              <V2Card className="p-5">
-                <V2SectionTitle>Tags</V2SectionTitle>
-                <V2TagCloud tags={tags.slice(0, 16)} />
-              </V2Card>
-            </div>
-
-            <V2Card className="hidden p-5 xl:block">
-              <V2SectionTitle>Recent activity</V2SectionTitle>
-              {homeTimeline.length === 0 ? (
-                <p className="text-sm text-zinc-500">No timeline entries yet.</p>
-              ) : (
-                <V2TimelineRail entries={homeTimeline} />
-              )}
-            </V2Card>
-          </aside>
-        </div>
-
-        {homeTimeline.length > 0 ? (
-          <V2Card className="mt-6 p-5 xl:hidden">
-            <V2SectionTitle>Recent activity</V2SectionTitle>
-            <V2Timeline entries={homeTimeline} compact />
-          </V2Card>
-        ) : null}
+        <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
+          <V2HomeClient
+            nodes={knowledgeNodes}
+            tags={tags}
+            signals={navSignals}
+            initialView={viewParam}
+            followUps={followUps}
+            homeTimeline={homeTimeline}
+          />
+        </Suspense>
       </div>
     </div>
   );
