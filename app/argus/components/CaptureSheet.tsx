@@ -14,7 +14,7 @@ import {
   registerContextHint,
   registerShowsDateField,
 } from "@/lib/argus/register-infer";
-import { AttachmentField } from "./AttachmentField";
+import { V2AttachmentComposer } from "@/app/argus/v2/components/V2AttachmentComposer";
 import type { EntityPickerBuckets } from "./ReferencePickerModal";
 import type { TagBuckets } from "./TagPickerModal";
 
@@ -86,6 +86,7 @@ export function CaptureSheet({
   const [dateOpen, setDateOpen] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
   const [attachmentOpen, setAttachmentOpen] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [protectedOpen, setProtectedOpen] = useState(false);
   const [isProtected, setIsProtected] = useState(false);
 
@@ -116,6 +117,7 @@ export function CaptureSheet({
       setFollowUpDate(initial?.followUpDate?.slice(0, 10) ?? "");
       setIsProtected(false);
       setProtectedOpen(false);
+      setPendingFiles([]);
       const linkedDate = eventDateFromLinkedEntities(buckets.alphabetical, initial?.entityIds ?? []);
       const noteDate = initial?.eventDate?.slice(0, 10) || linkedDate || today;
       setEventDate(noteDate);
@@ -179,7 +181,7 @@ export function CaptureSheet({
 
   if (!open && mode === "modal") return null;
 
-  const canSave = body.trim().length > 0;
+  const canSave = body.trim().length > 0 || pendingFiles.length > 0;
   const selectedNames = selectedIds
     .map((id) => buckets.alphabetical.find((e) => e.id === id)?.name)
     .filter(Boolean);
@@ -192,8 +194,19 @@ export function CaptureSheet({
       )?.name
     : undefined;
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    for (const file of pendingFiles) {
+      formData.append("attachments", file);
+    }
+    await action(formData);
+    setPendingFiles([]);
+    onClose();
+  }
+
   const formContent = (
-    <form action={action} className="flex min-h-0 flex-1 flex-col">
+    <form onSubmit={(e) => void handleSubmit(e)} className="flex min-h-0 flex-1 flex-col">
       {initial?.inboxId && <input type="hidden" name="inboxId" value={initial.inboxId} />}
       <input type="hidden" name="body" value={body} />
       <input type="hidden" name="title" value={title} />
@@ -266,7 +279,7 @@ export function CaptureSheet({
         <MetaButton active={Boolean(followUpDate) || reminderOpen} onClick={() => setReminderOpen((v) => !v)}>
           {CAPTURE.reminder}
         </MetaButton>
-        <MetaButton active={attachmentOpen} onClick={() => setAttachmentOpen((v) => !v)}>
+        <MetaButton active={attachmentOpen || pendingFiles.length > 0} onClick={() => setAttachmentOpen((v) => !v)}>
           {CAPTURE.attachment}
         </MetaButton>
         <MetaButton active={isProtected || protectedOpen} onClick={() => setProtectedOpen((v) => !v)}>
@@ -308,11 +321,11 @@ export function CaptureSheet({
         </label>
       )}
 
-      {attachmentOpen && (
+      {attachmentOpen ? (
         <div className="mt-3">
-          <AttachmentField />
+          <V2AttachmentComposer files={pendingFiles} onChange={setPendingFiles} enablePaste />
         </div>
-      )}
+      ) : null}
 
       <div className="mt-4 flex gap-3 border-t border-zinc-800 pt-4">
         <button

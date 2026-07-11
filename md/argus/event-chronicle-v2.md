@@ -59,10 +59,17 @@ Chronicle entries are not edited or deleted from the event UI. Corrections are n
 - **Chronicle**: chronological evidence stream
 - **Metrics**: unchanged counts
 - Footer **Register evidence** removed from event detail
+- **Files** dropdown on Note tab: choose files or **Ctrl+V** paste; saved with chronicle entry
+- Chronicle filter: All · Notes · Emails · Photos · Files
+- Global **Register** sheet: same Files dropdown + paste (topics, orgs, projects via entity links)
 
 ---
 
-## Code
+## Attachments (events + Register)
+
+- `V2AttachmentComposer` — collapsible file queue, multi-select, paste
+- `attachFilesToLog` — reuses `saveAttachment` + `appendLogAttachment`
+- File-only save allowed (body auto: `Attached: filename…`)
 
 - `lib/argus/v2/event-chronicle.ts` — shell notes, migration helpers
 - `appendEventChronicleEntryAction` — append log + tags

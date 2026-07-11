@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { appendEventChronicleEntryAction } from "@/app/argus/actions";
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
+import { V2AttachmentComposer } from "@/app/argus/v2/components/V2AttachmentComposer";
 import { V2EventLinkEmailModal } from "./V2EventLinkEmailModal";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
 import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
@@ -15,6 +16,7 @@ import { V2TagPatternBadges } from "@/app/argus/v2/components/V2TagPatternBadges
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 
 type PanelTab = "note" | "chronicle" | "metrics";
+type ChronicleFilter = "all" | "photo" | "file" | "email" | "journal";
 
 function EvidenceIcon({ kind }: { kind: V2EventDetail["evidence"][0]["kind"] }) {
   if (kind === "email") return <>✉</>;
@@ -65,6 +67,8 @@ export function V2EventDetailPanel({
   const [tags, setTags] = useState<string[]>(selected.linkedTags);
   const [tagDraft, setTagDraft] = useState("");
   const [composer, setComposer] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [chronicleFilter, setChronicleFilter] = useState<ChronicleFilter>("all");
   const [saving, setSaving] = useState(false);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
@@ -85,11 +89,12 @@ export function V2EventDetailPanel({
   }
 
   const tagsDirty = !tagsEqual(tags, selected.linkedTags);
-  const canSave = composer.trim().length > 0 || tagsDirty;
+  const canSave = composer.trim().length > 0 || tagsDirty || pendingFiles.length > 0;
 
   useEffect(() => {
     setTags(selected.linkedTags);
     setComposer("");
+    setPendingFiles([]);
     setTagDraft("");
     setSaveNote(null);
   }, [selected.id, selected.linkedTags.join("|")]);
@@ -99,8 +104,16 @@ export function V2EventDetailPanel({
     setSaving(true);
     setSaveNote(null);
     try {
-      const result = await appendEventChronicleEntryAction(selected.id, composer, tags);
+      const formData = new FormData();
+      formData.set("eventId", selected.id);
+      formData.set("body", composer);
+      formData.set("linkedTags", tags.join(", "));
+      for (const file of pendingFiles) {
+        formData.append("attachments", file);
+      }
+      const result = await appendEventChronicleEntryAction(formData);
       setComposer("");
+      setPendingFiles([]);
       setSaveNote(result.appended ? "Added to chronicle" : "Tags saved");
       if (result.appended) setPanelTab("chronicle");
       router.refresh();
@@ -110,6 +123,22 @@ export function V2EventDetailPanel({
       setSaving(false);
     }
   }
+
+  const filteredEvidence = selected.evidence.filter((item) => {
+    if (chronicleFilter === "all") return true;
+    if (chronicleFilter === "photo") return item.kind === "photo";
+    if (chronicleFilter === "file") return item.kind === "file";
+    if (chronicleFilter === "email") return item.kind === "email";
+    return item.kind === "journal";
+  });
+
+  const chronicleFilters: { id: ChronicleFilter; label: string }[] = [
+    { id: "all", label: "All" },
+    { id: "journal", label: "Notes" },
+    { id: "email", label: "Emails" },
+    { id: "photo", label: "Photos" },
+    { id: "file", label: "Files" },
+  ];
 
   const tabs: { id: PanelTab; label: string }[] = [
     { id: "note", label: "Note" },
@@ -292,19 +321,43 @@ export function V2EventDetailPanel({
                   className="w-full resize-y rounded-xl border-0 bg-transparent px-5 py-4 text-[15px] leading-[1.7] text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-0"
                 />
               </div>
+
+              <V2AttachmentComposer files={pendingFiles} onChange={setPendingFiles} enablePaste />
             </div>
           ) : null}
 
           {panelTab === "chronicle" ? (
             <div className="space-y-3">
-              <p className="text-xs text-zinc-500">
-                Chronicle — notes, emails, and files linked to this event in chronological order.
-              </p>
-              {selected.evidence.length === 0 ? (
-                <p className="text-sm text-zinc-500">No entries yet. Write a note or link an email.</p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-zinc-500">
+                  Chronicle — notes, emails, photos, and files in chronological order.
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  {chronicleFilters.map((filter) => (
+                    <button
+                      key={filter.id}
+                      type="button"
+                      onClick={() => setChronicleFilter(filter.id)}
+                      className={`rounded-full px-2 py-0.5 text-[10px] ${
+                        chronicleFilter === filter.id
+                          ? "bg-violet-500/15 text-violet-300"
+                          : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
+                      }`}
+                    >
+                      {filter.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {filteredEvidence.length === 0 ? (
+                <p className="text-sm text-zinc-500">
+                  {selected.evidence.length === 0
+                    ? "No entries yet. Write a note, attach files, or link an email."
+                    : "No items match this filter."}
+                </p>
               ) : (
                 <ul className="space-y-2">
-                  {selected.evidence.map((item) => (
+                  {filteredEvidence.map((item) => (
                     <li key={item.id}>
                       <Link
                         href={item.href}

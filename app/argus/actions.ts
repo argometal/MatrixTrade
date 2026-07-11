@@ -56,6 +56,7 @@ import {
 } from "@/lib/argus/reference-types";
 import { buildEventShellNotes, eventAnchorDate, normalizeEventTags } from "@/lib/argus/v2/event-chronicle";
 import { migrateLegacyEventRecordIfNeeded } from "@/lib/argus/v2/migrate-event-chronicle";
+import { attachFilesToLog, attachmentSummaryNames, filesFromFormData } from "@/lib/argus/attachment-log";
 import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
 import { partitionIdsByEntityKind } from "@/lib/argus/v2/entity-link-counts";
 import type { UnifiedCreatePayload, UnifiedCreateResult } from "@/lib/argus/create-flow-types";
@@ -179,32 +180,29 @@ export async function createLogAction(formData: FormData): Promise<void> {
   try {
     const entityIds = await resolveEntityIds(formData);
     const input = parseJournalInput(formData);
-    if (!input.body) {
+    const files = filesFromFormData(formData);
+    const legacyFile = formData.get("attachment");
+    if (legacyFile instanceof File && legacyFile.size > 0) {
+      files.push(legacyFile);
+    }
+
+    if (!input.body.trim() && files.length === 0) {
       redirect("/argus/v2?capture=1&error=content");
     }
 
-    const title = input.title || autoTitleFromBody(input.body);
+    const body = input.body.trim() || `Attached: ${attachmentSummaryNames(files)}`;
+    const title = input.title || autoTitleFromBody(body);
 
     const log = await createLog({
       ...input,
+      body,
       title,
       entityIds,
       classificationStatus: resolveClassificationStatus(entityIds),
       attachmentIds: [],
     });
 
-    const file = formData.get("attachment");
-    if (file instanceof File && file.size > 0) {
-      const bytes = Buffer.from(await file.arrayBuffer());
-      const att = await saveAttachment(
-        file.name,
-        file.type || "application/octet-stream",
-        bytes,
-        "journal",
-        log.id
-      );
-      await appendLogAttachment(log.id, att.id);
-    }
+    await attachFilesToLog(log.id, files);
 
     revalidateArgus();
     revalidatePath("/argus/v2/inbox");
@@ -484,13 +482,18 @@ export async function bulkDeleteInboxAction(
   return { ok: true, count };
 }
 
-/** Append a chronicle note on an event (tags + optional body). Composer is append-only. */
+/** Append a chronicle note on an event (tags, text, optional file attachments). */
 export async function appendEventChronicleEntryAction(
-  eventId: string,
-  body: string,
-  linkedTags: string[]
+  formData: FormData
 ): Promise<{ ok: true; appended: boolean }> {
   await requireArgusSession();
+  const eventId = String(formData.get("eventId") ?? "").trim();
+  const body = String(formData.get("body") ?? "");
+  const linkedTags = parseTopics(String(formData.get("linkedTags") ?? ""));
+  const files = filesFromFormData(formData);
+
+  if (!eventId) throw new Error("Event not found");
+
   await migrateLegacyEventRecordIfNeeded(eventId);
 
   const entity = await getEntity(eventId);
@@ -501,31 +504,33 @@ export async function appendEventChronicleEntryAction(
   const tags = normalizeEventTags(linkedTags);
   const trimmed = body.trim();
   const eventDate = eventAnchorDate(entity);
+  const hasFiles = files.length > 0;
 
   await updateEntity(eventId, {
     notes: buildEventShellNotes(),
     linkedTags: tags,
   });
 
-  if (trimmed) {
-    await createLog({
+  if (trimmed || hasFiles) {
+    const logBody = trimmed || `Attached: ${attachmentSummaryNames(files)}`;
+    const log = await createLog({
       kind: "log",
       date: eventDate,
-      title: autoTitleFromBody(trimmed),
-      body: trimmed,
+      title: autoTitleFromBody(logBody),
+      body: logBody,
       entityIds: [eventId],
       topics: tags,
       source: "manual",
       private: false,
-      followUpDate: undefined,
       attachmentIds: [],
       classificationStatus: "classified",
     });
+    await attachFilesToLog(log.id, files);
   }
 
   revalidateArgus();
   revalidatePath("/argus/v2/browse/events");
-  return { ok: true, appended: Boolean(trimmed) };
+  return { ok: true, appended: Boolean(trimmed || hasFiles) };
 }
 
 /** Link an inbox email to an event (evidence chain). */
