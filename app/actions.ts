@@ -80,6 +80,7 @@ function revalidateTradingPaths() {
   revalidatePath("/planning");
   revalidatePath("/stock-theses");
   revalidatePath("/exchange");
+  revalidatePath("/ai-bridge");
   revalidatePath("/ai-workspace");
   revalidatePath("/inbox");
   revalidatePath("/system");

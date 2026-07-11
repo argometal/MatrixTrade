@@ -7,6 +7,9 @@ export function TradingNav() {
       <Link href="/home-preview" className="font-medium text-violet-700 hover:text-violet-800">
         Dashboard
       </Link>
+      <Link href="/ai-bridge" className="hover:text-zinc-600">
+        AI Bridge
+      </Link>
       <Link href="/exchange" className="hover:text-zinc-600">
         Assistant
       </Link>
