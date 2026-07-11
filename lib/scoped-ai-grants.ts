@@ -5,6 +5,8 @@ import {
   type TradingInboxPayload,
 } from "./bridge";
 import {
+  BOOTSTRAP_AI_ALLOWED_PROPOSAL_TYPES,
+  isBootstrapGrant,
   SCOPED_AI_ALLOWED_PROPOSAL_TYPES,
   SCOPED_AI_DEFAULT_TTL_HOURS,
   type ScopedAiGrant,
@@ -55,6 +57,26 @@ export async function createScopedAiGrant(input: {
     label: input.label?.trim() || undefined,
   };
 
+  await upsertScopedAiGrant(grant);
+  return { grant };
+}
+
+export async function createBootstrapAiGrant(input?: {
+  ttlHours?: number;
+  label?: string;
+}): Promise<{ grant?: ScopedAiGrant; errors?: string[] }> {
+  const ttlHours = input?.ttlHours ?? SCOPED_AI_DEFAULT_TTL_HOURS;
+  const now = Date.now();
+  const grant: ScopedAiGrant = {
+    id: newScopedGrantId(),
+    kind: "bootstrap",
+    stockProfileId: "BOOTSTRAP",
+    ticker: "*",
+    scopes: ["read", "propose"],
+    expiresAt: new Date(now + ttlHours * 60 * 60 * 1000).toISOString(),
+    createdAt: new Date(now).toISOString(),
+    label: input?.label?.trim() || "New stock case",
+  };
   await upsertScopedAiGrant(grant);
   return { grant };
 }
@@ -121,16 +143,22 @@ export function validateScopedProposal(
   }
 
   const errors: string[] = [];
-  if (
-    !(SCOPED_AI_ALLOWED_PROPOSAL_TYPES as readonly string[]).includes(parsed.type)
-  ) {
+  const allowed = isBootstrapGrant(grant)
+    ? BOOTSTRAP_AI_ALLOWED_PROPOSAL_TYPES
+    : SCOPED_AI_ALLOWED_PROPOSAL_TYPES;
+
+  if (!(allowed as readonly string[]).includes(parsed.type)) {
     errors.push(
-      `Type "${parsed.type}" not allowed. Allowed: ${SCOPED_AI_ALLOWED_PROPOSAL_TYPES.join(", ")}`
+      `Type "${parsed.type}" not allowed. Allowed: ${allowed.join(", ")}`
     );
   }
 
   const p = parsed.proposal;
-  if (parsed.type === "evidence-add") {
+  if (isBootstrapGrant(grant)) {
+    if (parsed.type !== "stock-case-create") {
+      errors.push("Bootstrap grants only accept stock-case-create.");
+    }
+  } else if (parsed.type === "evidence-add") {
     if (!scopedGrantTargetsProfile(grant, String(p.stockProfileId ?? ""), String(p.ticker ?? ""))) {
       errors.push("evidence-add must target the granted stock profile and ticker only.");
     }

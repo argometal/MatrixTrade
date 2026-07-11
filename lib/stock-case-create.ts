@@ -1,5 +1,11 @@
-import type { SaveStockThesisInput } from "./stock-thesis-types";
+import {
+  createInitialScoutPlan,
+  parseInitialScout,
+  validateInitialScout,
+} from "./stock-case-initial-scout";
+import { seedEvidenceFromHistoricalAnalysis } from "./seed-evidence-from-analysis";
 import { saveStockThesis } from "./stock-theses";
+import type { SaveStockThesisInput, StockThesis } from "./stock-thesis-types";
 
 function parseZone(raw: unknown): { low: number; high: number } | undefined {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
@@ -67,21 +73,43 @@ function parseHistoricalAnalysis(raw: unknown): SaveStockThesisInput["historical
     .filter((row): row is { timeframe: string; summary: string } => row !== null);
 }
 
+function hasLevels(levels: SaveStockThesisInput["levels"]): boolean {
+  if (!levels) return false;
+  return Boolean(
+    levels.primaryZone ||
+      levels.secondaryZone ||
+      levels.majorSupport !== undefined ||
+      levels.targets?.length
+  );
+}
+
 export function proposalToStockCaseInput(
   proposal: Record<string, unknown>
-): { input?: SaveStockThesisInput; errors?: string[] } {
+): { input?: SaveStockThesisInput; initialScout?: ReturnType<typeof parseInitialScout>; errors?: string[] } {
   const errors: string[] = [];
   const ticker = String(proposal.ticker ?? "").trim().toUpperCase();
   if (!ticker) errors.push("proposal.ticker required");
 
-  const thesis = String(proposal.thesis ?? "").trim();
-  if (!thesis) errors.push("proposal.thesis required");
-
   const currentHypothesis = String(proposal.currentHypothesis ?? "").trim();
   if (!currentHypothesis) errors.push("proposal.currentHypothesis required");
 
+  const thesisRaw = String(proposal.thesis ?? "").trim();
+  const notesRaw = String(proposal.notes ?? "").trim();
+  const thesis = thesisRaw || currentHypothesis;
+
   const riskParsed = parseRiskRules(proposal.riskRules);
   if (!riskParsed.ok) return { errors: riskParsed.errors };
+
+  const levels = parseLevels(proposal.levels);
+  if (!hasLevels(levels)) {
+    errors.push("proposal.levels required (primaryZone, secondaryZone, majorSupport, or targets)");
+  }
+
+  const initialScout = parseInitialScout(proposal.initialScout);
+  if (initialScout) {
+    const scoutCheck = validateInitialScout(initialScout);
+    if (!scoutCheck.ok) errors.push(...scoutCheck.errors);
+  }
 
   if (errors.length) return { errors };
 
@@ -99,18 +127,60 @@ export function proposalToStockCaseInput(
       thesis,
       currentHypothesis,
       status,
-      levels: parseLevels(proposal.levels),
+      levels,
       riskRules: riskParsed.value,
       historicalAnalysis: parseHistoricalAnalysis(proposal.historicalAnalysis),
-      notes: proposal.notes !== undefined ? String(proposal.notes).trim() || undefined : undefined,
+      notes: notesRaw || undefined,
     },
+    initialScout,
   };
 }
 
+export type StockCaseCreateResult = {
+  thesis?: StockThesis;
+  planId?: string;
+  evidenceSeeded?: number;
+  errors?: string[];
+  warnings?: string[];
+};
+
 export async function createStockCaseFromProposal(
   proposal: Record<string, unknown>
-): Promise<{ thesis?: Awaited<ReturnType<typeof saveStockThesis>>["thesis"]; errors?: string[] }> {
+): Promise<StockCaseCreateResult> {
   const parsed = proposalToStockCaseInput(proposal);
   if (parsed.errors?.length) return { errors: parsed.errors };
-  return saveStockThesis(parsed.input!);
+
+  const saveResult = await saveStockThesis(parsed.input!);
+  if (saveResult.errors?.length) return { errors: saveResult.errors };
+
+  const thesis = saveResult.thesis!;
+  const warnings: string[] = [];
+
+  let evidenceSeeded = 0;
+  const historical = parsed.input!.historicalAnalysis ?? [];
+  if (historical.length > 0) {
+    const seed = await seedEvidenceFromHistoricalAnalysis(thesis.id, thesis.ticker, historical);
+    evidenceSeeded = seed.count;
+    if (seed.errors.length) warnings.push(...seed.errors);
+  }
+
+  let planId: string | undefined;
+  if (parsed.initialScout) {
+    const planResult = await createInitialScoutPlan(
+      thesis.id,
+      thesis.ticker,
+      parsed.initialScout,
+      thesis.currentHypothesis
+    );
+    if (planResult.errors?.length) return { errors: planResult.errors, thesis, evidenceSeeded };
+    planId = planResult.planId;
+    if (planResult.warnings?.length) warnings.push(...planResult.warnings);
+  }
+
+  return {
+    thesis,
+    planId,
+    evidenceSeeded,
+    warnings: warnings.length ? warnings : undefined,
+  };
 }

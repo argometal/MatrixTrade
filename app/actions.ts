@@ -33,7 +33,7 @@ import {
   revokeAiSession,
 } from "@/lib/ai-session";
 import { createQrDataUrl } from "@/lib/qr";
-import { buildScopedAiUrls, createScopedAiGrant } from "@/lib/scoped-ai-grants";
+import { buildScopedAiUrls, createBootstrapAiGrant, createScopedAiGrant } from "@/lib/scoped-ai-grants";
 import { getTradesStoreMode } from "@/lib/trades-json";
 import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules, saveRules } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
@@ -113,7 +113,7 @@ export async function importAiBlockAction(formData: FormData): Promise<ImportAiB
 
 export async function importStockCaseBlockAction(
   raw: string
-): Promise<{ error?: string; details?: string[]; thesisId?: string }> {
+): Promise<{ error?: string; details?: string[]; thesisId?: string; planId?: string }> {
   await requireTradingSession();
 
   const parsed = parseAiBlock(raw);
@@ -130,10 +130,11 @@ export async function importStockCaseBlockAction(
   }
 
   revalidateTradingPaths();
+  revalidatePath("/planning");
   if (result.stockFileId) {
     revalidatePath(`/stock-theses/${result.stockFileId}`);
   }
-  return { thesisId: result.stockFileId };
+  return { thesisId: result.stockFileId, planId: result.planId };
 }
 
 export async function saveAiNotesAction(formData: FormData): Promise<SaveAiNotesActionResult> {
@@ -564,6 +565,23 @@ export async function createScopedAiGrantAction(
   const grant = result.grant!;
   const urls = buildScopedAiUrls(grant.id);
   revalidatePath(`/stock-theses/${stockProfileId}`);
+
+  return {
+    grantId: grant.id,
+    expiresAt: grant.expiresAt,
+    ...urls,
+  };
+}
+
+export async function createBootstrapAiGrantAction(): Promise<CreateScopedAiGrantActionResult> {
+  await requireTradingSession();
+
+  const result = await createBootstrapAiGrant({ label: "New stock case boot" });
+  if (result.errors?.length) return { error: result.errors.join(" ") };
+
+  const grant = result.grant!;
+  const urls = buildScopedAiUrls(grant.id);
+  revalidatePath("/stock-theses/new");
 
   return {
     grantId: grant.id,

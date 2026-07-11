@@ -18,6 +18,23 @@ Stock Profile page → Create AI access link (24h TTL)
 
 Grant id format: `GRANT-{24-byte-hex}`. Optional `planId` binds one scout episode (still one stock).
 
+### Bootstrap grants (new stock case)
+
+```text
+/stock-theses/new → Create AI access link (bootstrap, 24h)
+  → GET /api/matrix/scout/{grantId}  (boot package + mechanics)
+  → AI discusses setup → stock-case-create block
+  → POST /api/matrix/scout/{grantId}/inbox
+  → human Apply in /inbox
+```
+
+Bootstrap grants (`kind: bootstrap`) accept **only** `stock-case-create`. On Apply:
+- Profile created
+- `historicalAnalysis[]` → Evidence rows (migration source)
+- optional `initialScout` → PLAN-xxx
+
+Public read (no grant): `GET /api/matrix/stock-case/boot`
+
 ---
 
 ## Allowed proposal types
@@ -53,7 +70,8 @@ Grants are validated on every API call. Expired grants return HTTP 401.
 | Context API | `app/api/matrix/scout/[grantId]/route.ts` |
 | Inbox API | `app/api/matrix/scout/[grantId]/inbox/route.ts` |
 | Human page | `app/scout-access/[grantId]/page.tsx` |
-| Create link action | `createScopedAiGrantAction` in `app/actions.ts` |
+| Create link action | `createScopedAiGrantAction`, `createBootstrapAiGrantAction` in `app/actions.ts` |
+| Boot package | `lib/stock-case-boot.ts`, `GET /api/matrix/stock-case/boot` |
 
 Reuses `lib/ai-context.ts`, `lib/bridge.ts`, and `lib/apply-trading-inbox.ts` — no parallel pipeline.
 

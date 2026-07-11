@@ -1,7 +1,11 @@
+export type ScopedAiGrantKind = "profile" | "bootstrap";
+
 export type ScopedAiGrantScope = "read" | "propose";
 
 export interface ScopedAiGrant {
   id: string;
+  /** profile = one stock; bootstrap = new stock-case-create only */
+  kind?: ScopedAiGrantKind;
   stockProfileId: string;
   ticker: string;
   /** Optional scout episode binding — one PLAN per grant. */
@@ -22,3 +26,13 @@ export const SCOPED_AI_ALLOWED_PROPOSAL_TYPES = [
 ] as const;
 
 export type ScopedAiAllowedProposalType = (typeof SCOPED_AI_ALLOWED_PROPOSAL_TYPES)[number];
+
+export const BOOTSTRAP_AI_ALLOWED_PROPOSAL_TYPES = ["stock-case-create"] as const;
+
+export function grantKind(grant: ScopedAiGrant): ScopedAiGrantKind {
+  return grant.kind ?? "profile";
+}
+
+export function isBootstrapGrant(grant: ScopedAiGrant): boolean {
+  return grantKind(grant) === "bootstrap";
+}

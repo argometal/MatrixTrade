@@ -2,34 +2,42 @@
 
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
-import { importStockCaseBlockAction } from "@/app/actions";
+import {
+  createBootstrapAiGrantAction,
+  importStockCaseBlockAction,
+} from "@/app/actions";
 import { parseAiBlock, sampleAiBlock } from "@/lib/ai-block";
-import { buildStockCaseExtractionPrompt } from "@/lib/stock-case-extraction-prompt";
+import { buildStockCaseBootPackage } from "@/lib/stock-case-boot";
 
 export function PreviewNewStockCase() {
   const [showNotesHelper, setShowNotesHelper] = useState(false);
-  const [researchNotes, setResearchNotes] = useState("");
   const [aiBlockRaw, setAiBlockRaw] = useState("");
-  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [copiedBoot, setCopiedBoot] = useState(false);
   const [copiedSample, setCopiedSample] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [createdId, setCreatedId] = useState<string | null>(null);
+  const [createdPlanId, setCreatedPlanId] = useState<string | null>(null);
+  const [grantLinks, setGrantLinks] = useState<{
+    grantId: string;
+    humanPageUrl: string;
+    contextUrl: string;
+    inboxUrl: string;
+    expiresAt: string;
+  } | null>(null);
   const [pending, startTransition] = useTransition();
+  const [grantPending, startGrantTransition] = useTransition();
 
-  const extractionPrompt = useMemo(
-    () => buildStockCaseExtractionPrompt(researchNotes),
-    [researchNotes]
-  );
+  const bootPackage = useMemo(() => buildStockCaseBootPackage(), []);
 
   const preview = useMemo(() => {
     if (!aiBlockRaw.trim()) return null;
     return parseAiBlock(aiBlockRaw);
   }, [aiBlockRaw]);
 
-  function copyPrompt() {
-    void navigator.clipboard.writeText(extractionPrompt).then(() => {
-      setCopiedPrompt(true);
-      setTimeout(() => setCopiedPrompt(false), 2000);
+  function copyBoot() {
+    void navigator.clipboard.writeText(bootPackage).then(() => {
+      setCopiedBoot(true);
+      setTimeout(() => setCopiedBoot(false), 2000);
     });
   }
 
@@ -40,16 +48,31 @@ export function PreviewNewStockCase() {
     });
   }
 
+  function createGrant() {
+    startGrantTransition(async () => {
+      const result = await createBootstrapAiGrantAction();
+      if ("error" in result) {
+        setError(result.error);
+        setGrantLinks(null);
+        return;
+      }
+      setError(null);
+      setGrantLinks(result);
+    });
+  }
+
   function applyBlock() {
     startTransition(async () => {
       setError(null);
       setCreatedId(null);
+      setCreatedPlanId(null);
       const result = await importStockCaseBlockAction(aiBlockRaw);
       if (result.error) {
         setError(result.error);
         return;
       }
       setCreatedId(result.thesisId ?? null);
+      setCreatedPlanId(result.planId ?? null);
     });
   }
 
@@ -61,11 +84,8 @@ export function PreviewNewStockCase() {
             <div>
               <h1 className="text-xl font-semibold text-zinc-100">New stock case</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                Analyze in your AI chat — charts, photos, thesis — then paste the{" "}
-                <code className="text-violet-300">stock-case-create</code> block here.
-              </p>
-              <p className="mt-1 text-xs text-zinc-600">
-                Matrix is the expectation database. The conversation lives in your AI; we store the structured result.
+                Analyze in your AI chat → one <code className="text-violet-300">stock-case-create</code>{" "}
+                block → Matrix stores Profile + Evidence + optional Scout.
               </p>
             </div>
             <Link
@@ -78,27 +98,83 @@ export function PreviewNewStockCase() {
         </header>
 
         <div className="mx-auto max-w-3xl space-y-4 px-4 py-6 lg:px-6">
-          <section className="rounded-2xl border border-emerald-500/30 bg-zinc-900/50 p-5">
-            <h2 className="text-sm font-semibold text-zinc-200">Paste from your AI</h2>
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-950/50 p-4 text-xs text-zinc-500">
+            <p className="font-medium text-zinc-400">Two layers in one paste</p>
+            <ul className="mt-2 list-disc space-y-1 pl-4">
+              <li>
+                <span className="text-violet-300">Stock Profile</span> — zones, invalidation, hypothesis,
+                historicalAnalysis → Evidence rows
+              </li>
+              <li>
+                <span className="text-emerald-300">initialScout</span> (optional) — entry, stop, target,
+                window → PLAN-xxx
+              </li>
+            </ul>
+          </section>
+
+          <section className="rounded-2xl border border-violet-500/40 bg-violet-950/15 p-5">
+            <h2 className="text-sm font-semibold text-violet-200">1 · Start in your AI</h2>
             <p className="mt-1 text-xs text-zinc-500">
-              In ChatGPT / Claude / etc.: discuss the setup, share screenshots, ask for one{" "}
-              <code className="text-violet-300">stock-case-create</code> JSON block (ASCII quotes).
-              Paste it below — human Apply, same as Inbox.
+              Copy the boot package → paste in ChatGPT / Claude → discuss charts, photos, thesis. Ask for
+              one JSON block when ready.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={copySample}
-                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
+                onClick={copyBoot}
+                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
               >
-                {copiedSample ? "Copied sample" : "Copy example block"}
+                {copiedBoot ? "Copied boot package" : "Copy boot package"}
+              </button>
+              <button
+                type="button"
+                onClick={copySample}
+                className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200"
+              >
+                {copiedSample ? "Copied" : "Example block"}
+              </button>
+              <button
+                type="button"
+                onClick={createGrant}
+                disabled={grantPending}
+                className="rounded-lg border border-violet-500/40 px-3 py-2 text-xs text-violet-300 hover:bg-violet-500/10 disabled:opacity-50"
+              >
+                {grantPending ? "Creating…" : "Create AI access link (24h)"}
               </button>
             </div>
+            {grantLinks ? (
+              <dl className="mt-4 space-y-2 rounded-xl border border-violet-500/30 bg-zinc-950/60 p-4 text-xs">
+                <div>
+                  <dt className="text-zinc-500">Human page (share with AI user)</dt>
+                  <dd>
+                    <a href={grantLinks.humanPageUrl} className="break-all text-violet-300 hover:underline">
+                      {grantLinks.humanPageUrl}
+                    </a>
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-500">Context API — GET for your AI</dt>
+                  <dd className="break-all font-mono text-zinc-400">{grantLinks.contextUrl}</dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-500">Inbox API — POST stock-case-create</dt>
+                  <dd className="break-all font-mono text-zinc-400">{grantLinks.inboxUrl}</dd>
+                </div>
+              </dl>
+            ) : null}
+          </section>
+
+          <section className="rounded-2xl border border-emerald-500/30 bg-zinc-900/50 p-5">
+            <h2 className="text-sm font-semibold text-zinc-200">2 · Paste AI output & create</h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              The JSON from your chat includes thesis, zones, history, and optional initialScout. Apply
+              here or via Inbox / grant inbox URL.
+            </p>
             <textarea
               value={aiBlockRaw}
               onChange={(e) => setAiBlockRaw(e.target.value)}
               rows={12}
-              placeholder='Paste { "type": "stock-case-create", "proposal": { ... } } from your AI chat'
+              placeholder='Paste stock-case-create JSON from your AI chat'
               className="mt-3 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 font-mono text-xs text-zinc-200"
             />
 
@@ -117,8 +193,8 @@ export function PreviewNewStockCase() {
 
             {preview?.ok ? (
               <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-950/20 px-3 py-2 text-xs text-emerald-200">
-                Valid · {String(preview.payload.proposal.ticker)} ·{" "}
-                {String(preview.payload.proposal.currentHypothesis).slice(0, 80)}
+                Valid · {String(preview.payload.proposal.ticker)}
+                {preview.payload.proposal.initialScout ? " · includes initialScout" : ""}
               </div>
             ) : null}
 
@@ -130,9 +206,18 @@ export function PreviewNewStockCase() {
                 <Link href={`/stock-theses/${createdId}`} className="font-semibold underline">
                   {createdId}
                 </Link>
+                {createdPlanId ? (
+                  <>
+                    {" "}
+                    · scout{" "}
+                    <Link href={`/planning?plan=${createdPlanId}`} className="underline">
+                      {createdPlanId}
+                    </Link>
+                  </>
+                ) : null}
                 {" · "}
                 <Link href={`/planning?thesis=${createdId}`} className="underline">
-                  Open in Scouting Desk
+                  Scouting Desk
                 </Link>
               </div>
             ) : null}
@@ -154,42 +239,15 @@ export function PreviewNewStockCase() {
               className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
             >
               <div>
-                <p className="text-sm font-medium text-zinc-400">Notes helper (optional)</p>
-                <p className="mt-0.5 text-xs text-zinc-600">
-                  Only if you want to type notes here instead of chatting in your AI first.
-                </p>
+                <p className="text-sm font-medium text-zinc-400">Boot package preview (optional)</p>
+                <p className="mt-0.5 text-xs text-zinc-600">What Copy boot package sends to your AI.</p>
               </div>
               <span className="text-xs text-zinc-500">{showNotesHelper ? "Hide" : "Show"}</span>
             </button>
-
             {showNotesHelper ? (
-              <div className="space-y-4 border-t border-zinc-800 px-5 pb-5 pt-4">
-                <div>
-                  <p className="text-xs text-zinc-500">
-                    Optional scratch pad — appended to the extraction prompt if you copy it.
-                  </p>
-                  <textarea
-                    value={researchNotes}
-                    onChange={(e) => setResearchNotes(e.target.value)}
-                    rows={4}
-                    placeholder="Optional notes (most people skip this and use the AI chat directly)"
-                    className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
-                  />
-                </div>
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="text-xs text-zinc-500">Extraction prompt with your notes</p>
-                  <button
-                    type="button"
-                    onClick={copyPrompt}
-                    className="rounded-lg border border-violet-500/40 px-3 py-1.5 text-xs text-violet-300 hover:bg-violet-500/10"
-                  >
-                    {copiedPrompt ? "Copied" : "Copy prompt"}
-                  </button>
-                </div>
-                <pre className="max-h-40 overflow-auto rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-xs text-zinc-500 whitespace-pre-wrap">
-                  {extractionPrompt}
-                </pre>
-              </div>
+              <pre className="max-h-64 overflow-auto border-t border-zinc-800 px-5 pb-5 pt-2 text-xs text-zinc-500 whitespace-pre-wrap">
+                {bootPackage}
+              </pre>
             ) : null}
           </section>
         </div>

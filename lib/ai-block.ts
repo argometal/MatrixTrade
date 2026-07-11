@@ -13,7 +13,7 @@ Required shape:
   "proposal": { ... }
 }
 PRIORITY — Scouting (validate thesis; do not rubber-stamp):
-- stock-case-create: NEW Stock Profile from research — ticker, thesis, currentHypothesis, levels{}, riskRules{minimumRR, invalidation} required; optional style, historicalAnalysis[], status
+- stock-case-create: NEW Stock Profile — ticker, currentHypothesis, levels{}, riskRules{minimumRR, invalidation}; optional thesis, notes, historicalAnalysis[], initialScout{plannedEntry, stopPrice, targetPrice}
 - evidence-add: MarketEvidence row — stockProfileId, ticker, timeframe, category, value, confidence (0-100) required; optional note
 - decision-update: scout decision on PLAN — planId, verdict (go|wait|probe|no), decisionConfidence (0-100), challenges[] (min 1) required; optional reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe (trigger + expires required)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
@@ -196,6 +196,15 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
         { timeframe: "1W", summary: "HH/HL intact; prior breakout holding as support" },
         { timeframe: "1D", summary: "Pullback from highs; volume contracting near zone" },
       ],
+      notes: "AI reasoning snapshot — optional long-form conclusions from the chat.",
+      initialScout: {
+        plannedEntry: 122,
+        supportLevel: 118,
+        stopPrice: 112,
+        targetPrice: 145,
+        validUntil: "2026-07-17T23:59:59.000Z",
+        thesis: "Pullback to 118-125; 3R+ to stop at 112",
+      },
     },
   },
   "evidence-add": {

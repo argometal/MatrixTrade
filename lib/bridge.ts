@@ -295,7 +295,6 @@ export function validateProposalPayload(
 
   if (parsed.type === "stock-case-create") {
     if (!p.ticker) errors.push("proposal.ticker required");
-    if (!p.thesis || !String(p.thesis).trim()) errors.push("proposal.thesis required");
     if (!p.currentHypothesis || !String(p.currentHypothesis).trim()) {
       errors.push("proposal.currentHypothesis required");
     }
@@ -309,6 +308,32 @@ export function validateProposalPayload(
       }
       if (!r.invalidation || !String(r.invalidation).trim()) {
         errors.push("proposal.riskRules.invalidation required");
+      }
+    }
+    const levels = p.levels;
+    const hasLevels =
+      levels &&
+      typeof levels === "object" &&
+      !Array.isArray(levels) &&
+      (Boolean((levels as Record<string, unknown>).primaryZone) ||
+        Boolean((levels as Record<string, unknown>).secondaryZone) ||
+        (levels as Record<string, unknown>).majorSupport !== undefined ||
+        (Array.isArray((levels as Record<string, unknown>).targets) &&
+          ((levels as Record<string, unknown>).targets as unknown[]).length > 0));
+    if (!hasLevels) {
+      errors.push("proposal.levels required (primaryZone, majorSupport, or targets)");
+    }
+    if (p.initialScout !== undefined) {
+      const scout = p.initialScout;
+      if (!scout || typeof scout !== "object" || Array.isArray(scout)) {
+        errors.push("proposal.initialScout must be an object");
+      } else {
+        const s = scout as Record<string, unknown>;
+        if (s.stopPrice === undefined) errors.push("initialScout.stopPrice required");
+        if (s.targetPrice === undefined) errors.push("initialScout.targetPrice required");
+        if (s.plannedEntry === undefined && s.supportLevel === undefined) {
+          errors.push("initialScout needs plannedEntry or supportLevel");
+        }
       }
     }
   }

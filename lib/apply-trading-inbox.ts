@@ -90,11 +90,17 @@ async function applyStockCaseCreate(
 ): Promise<ApplyTradingProposalResult> {
   const result = await createStockCaseFromProposal(parsed.proposal);
   if (result.errors?.length) return { ok: false, errors: result.errors };
+  const parts = [
+    `Created Stock Profile ${result.thesis?.id} · ${result.thesis?.ticker}`,
+    result.evidenceSeeded ? `${result.evidenceSeeded} evidence rows` : null,
+    result.planId ? `scout ${result.planId}` : null,
+  ].filter(Boolean);
   return {
     ok: true,
-    message: `Created Stock Profile ${result.thesis?.id} · ${result.thesis?.ticker}`,
+    message: parts.join(" · "),
     type: "stock-case-create",
     stockFileId: result.thesis?.id,
+    planId: result.planId,
   };
 }
 

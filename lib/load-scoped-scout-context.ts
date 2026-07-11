@@ -15,6 +15,8 @@ import {
 } from "./stock-profile-synthesis";
 import { getStockThesisById } from "./stock-theses";
 import type { ScopedAiGrant } from "./scoped-ai-grant-types";
+import { isBootstrapGrant } from "./scoped-ai-grant-types";
+import { loadBootstrapCreateContext } from "./load-bootstrap-create-context";
 
 const SCOPED_AI_REQUEST = `Return ONE AI Block only — plain JSON or a single \`\`\`json fenced block.
 SCOPED ACCESS — you may ONLY act on the stock profile in this package.
@@ -32,6 +34,10 @@ export async function loadScopedScoutContext(grant: ScopedAiGrant): Promise<{
   text: string;
   meta: Record<string, unknown>;
 }> {
+  if (isBootstrapGrant(grant)) {
+    return loadBootstrapCreateContext(grant);
+  }
+
   await ensureProfileEvidenceSeeded(grant.stockProfileId);
 
   const [profile, evidence, plans, playbooks, monthly, experiment] = await Promise.all([
