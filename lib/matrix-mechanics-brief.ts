@@ -57,7 +57,8 @@ export function buildMatrixMechanicsBrief(): string {
     "- Invent prices for confirmationCost or R:R — use only user-supplied numbers.",
     "",
     "ASYMMETRY RULE",
-    "Matrix does not maximize confirmation. It maximizes expected value under predefined risk.",
+    "Matrix does not maximize confirmation or highest probability. It maximizes long-term expectancy.",
+    "Playbook 'expectancy-asymmetry' defines how EVERY setup is evaluated — never put this philosophy in a Stock File.",
     "Confirmation has a cost: higher entry, reduced reward, wider structural risk, lower R:R.",
     "A setup may become more probable while becoming less profitable.",
     "Scouting Desk must evaluate BOTH:",
@@ -120,6 +121,24 @@ export function formatPlaybookTrainingSection(playbooks: Playbook[]): string {
       lines.push(
         `  experiment:${pb.experimentHypothesis.replace(/\s+/g, " ").slice(0, 200)}`
       );
+    }
+    if (pb.appliesMethodology) {
+      lines.push(`  applies_methodology:${pb.appliesMethodology}`);
+    }
+    if (pb.methodology?.philosophy) {
+      lines.push(`  methodology_philosophy:${pb.methodology.philosophy.replace(/\s+/g, " ").slice(0, 240)}`);
+    }
+    if (pb.decisionPhilosophy) {
+      lines.push(`  decision_philosophy:${pb.decisionPhilosophy}`);
+    }
+    if (pb.scoutingMetrics?.length) {
+      lines.push(`  scouting_metrics:${pb.scoutingMetrics.join(",")}`);
+    }
+    if (pb.scoutingDimensions?.thesisQuality?.length) {
+      lines.push(`  thesis_quality_dims:${pb.scoutingDimensions.thesisQuality.join("|")}`);
+    }
+    if (pb.scoutingDimensions?.opportunityQuality?.length) {
+      lines.push(`  opportunity_quality_dims:${pb.scoutingDimensions.opportunityQuality.join("|")}`);
     }
   }
   return lines.join("\n");

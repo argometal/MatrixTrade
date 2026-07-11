@@ -1,7 +1,10 @@
-# Asymmetric entry before full confirmation
+# Expectancy & asymmetry (Playbook layer)
 
-**Status:** Adopted into Matrix Mechanics (2026-07-11)  
-**Layer:** Playbook methodology → Scouting Desk → Learning
+**Status:** Adopted into Playbook `expectancy-asymmetry` (2026-07-11)  
+**Layer:** **Playbook only** — defines how every setup is evaluated. **Not** Stock File content.
+
+> Stock File = ticker facts (zones, hypothesis, invalidation).  
+> Playbook = reusable evaluation philosophy across all future setups.
 
 ---
 
@@ -118,11 +121,9 @@ Classifications: `thesis_failure`, `entry_too_early`, `entry_too_late`, `stop_to
 
 | Artifact | Location |
 |----------|----------|
+| **Canonical playbook** | `data/playbooks.json` → `expectancy-asymmetry` |
 | Mechanics primer | `lib/matrix-mechanics-brief.ts` |
-| Decision fields | `lib/scout-decision-types.ts`, `decision-update` inbox |
-| Playbook principles | `data/playbooks.json` → `asymmetric-support-entry` |
-| Post-stop study | `lib/post-stop-study.ts`, `Trade.postStopStudy` |
-| Stock File setup stop | `StockThesisRiskRules.setupInvalidation` |
+| Monday NFLX test (ops) | `md/matrix/monday-nflx-experiment.md` — not in Stock File |
 
 ---
 

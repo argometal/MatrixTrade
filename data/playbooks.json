@@ -13,29 +13,81 @@
     ]
   },
   {
+    "id": "expectancy-asymmetry",
+    "name": "Expectancy & Asymmetry",
+    "status": "TESTING",
+    "description": "How Matrix evaluates every setup — maximize long-term expectancy, not highest probability.",
+    "experimentScope": "playbook",
+    "experimentHypothesis": "Emphasizing maximum achievable asymmetry (vs waiting for stronger confirmation) improves long-term capital growth across a large statistical sample.",
+    "principles": [
+      "Maximize long-term expectancy — not highest probability",
+      "Evaluate thesis quality AND opportunity quality — neither alone is sufficient",
+      "Confirmation has a cost — stronger thesis can mean weaker opportunity",
+      "Maximum achievable R — not maximum theoretical R",
+      "Losses are normal — average winners must outweigh average losers",
+      "One trade never validates or invalidates the Playbook"
+    ],
+    "methodology": {
+      "philosophy": "Matrix does not seek the highest probability trade. Matrix seeks the highest long-term expectancy. The objective is to maximize capital growth through asymmetric opportunities while keeping losses predefined and repeatable. Every trade is one observation within a large statistical sample. No individual trade validates or invalidates the Playbook.",
+      "corePrinciple": "Expected return is determined by both probability of success and reward relative to risk. Increasing probability is not always beneficial if it significantly reduces available Reward:Risk. Matrix evaluates whether the thesis is improving AND whether the remaining opportunity is still economically attractive.",
+      "asymmetryPrinciple": "The preferred trade is not necessarily the safest trade. It is the one offering the greatest achievable asymmetry while maintaining predefined risk, structural validity, and realistic execution. Maximum theoretical R is not the objective — maximum achievable R is.",
+      "confirmationCost": "Confirmation is not free. Waiting may increase entry price, reduce remaining upside, widen effective risk, and lower Reward:Risk. A stronger thesis can coexist with a weaker investment opportunity. The Scouting Desk must evaluate both Thesis Quality and Opportunity Quality.",
+      "opportunityPreservation": "When price reaches a predefined strategic area, delaying execution should be justified by a measurable improvement in expectancy. If additional confirmation is expected to reduce Reward:Risk below Playbook standards, the opportunity may be deteriorating despite increasing confidence.",
+      "statisticalFramework": "Matrix assumes losses are normal. The objective is not avoiding losses — it is ensuring average winners significantly outweigh average losers. A strategy with larger average Reward:Risk can remain profitable despite a modest win rate. Long-term consistency takes precedence over individual outcomes.",
+      "continuousLearning": "Every completed trade contributes information. Winning trades validate execution. Losing trades provide statistical evidence. Neither should independently modify the Playbook. Playbook evolution requires repeated evidence across multiple qualified trades."
+    },
+    "scoutingDimensions": {
+      "thesisQuality": [
+        "Evidence strength",
+        "Structural validity",
+        "Invalidation status"
+      ],
+      "opportunityQuality": [
+        "Current Reward:Risk",
+        "Remaining upside",
+        "Entry deterioration",
+        "Estimated cost of waiting"
+      ]
+    },
+    "scoutingMetrics": [
+      "CurrentRR",
+      "MinimumRR",
+      "EstimatedRRAfterConfirmation",
+      "OpportunityQuality",
+      "ConfirmationCost",
+      "RemainingUpsidePercent",
+      "EntryEfficiency"
+    ],
+    "decisionPhilosophy": "GO / WAIT / NO — maximize long-term expectancy rather than maximize certainty.",
+    "checklist": [
+      "Thesis quality scored independently from opportunity quality",
+      "Current R:R meets minimum (Stock File or Playbook)",
+      "Estimated R:R after confirmation still acceptable if waiting",
+      "Predefined risk and structural stop — no manufactured R:R",
+      "Delay justified by measurable expectancy gain, not comfort",
+      "Outcome recorded as one statistical observation"
+    ]
+  },
+  {
     "id": "asymmetric-support-entry",
     "name": "Asymmetric Support Entry",
     "status": "TESTING",
-    "description": "Enter near structural support before full confirmation when location + R:R justify controlled risk.",
+    "description": "Tactical application of Expectancy & Asymmetry at structural support zones.",
+    "appliesMethodology": "expectancy-asymmetry",
     "experimentScope": "playbook",
-    "experimentHypothesis": "Entering near structural support before full confirmation produces better expectancy than waiting for confirmation — when confirmation cost would push R:R below Stock File minimum.",
     "principles": [
-      "Confirmation has an economic cost — not free",
-      "Evaluate thesis quality AND opportunity quality separately",
-      "More confirmation ≠ better trade if R:R deteriorates",
-      "Location evidence may justify probe before full confirmation evidence",
-      "Setup stop ≠ thesis invalidation — do not manufacture R:R with tight stops",
-      "Single stock outcome does not prove or disprove this playbook"
+      "Apply expectancy-asymmetry framework at support zones",
+      "Location evidence may justify probe before full confirmation",
+      "Setup stop ≠ thesis invalidation",
+      "Single entry when no meaningful add levels exist"
     ],
     "checklist": [
+      "Linked to expectancy-asymmetry methodology",
       "Stock File zone defined with minimum R:R",
       "Price inside or near planned strategic zone",
       "Thesis invalidation not breached",
-      "Current R:R meets Stock File minimum",
-      "Estimated R:R after confirmation still acceptable OR probe authorized",
-      "Setup stop defined (not thesis invalidation unless intentional)",
-      "Acceptable dollar loss if stopped",
-      "Probe or single entry — no false add ladder unless levels exist"
+      "Current R:R meets minimum",
+      "Setup stop defined — acceptable dollar loss if stopped"
     ]
   }
 ]
