@@ -200,7 +200,7 @@ export function V2DeliverShell({
   async function generatePackage() {
     if (!canGenerate) return;
     if (includePrivate && !privateUnlocked) {
-      setStatusMessage("Unlock protected records with your PIN in the top bar first.");
+      setStatusMessage("Unlock protected records from the 🔒 menu (valid 1 hour), then refresh this page.");
       return;
     }
     setGenerating(true);
@@ -314,7 +314,7 @@ export function V2DeliverShell({
   async function createShareLink() {
     if (!scopeId || packageKind !== "evidence_dossier") return;
     if (includePrivate && !privateUnlocked) {
-      setStatusMessage("Unlock protected records with your PIN in the top bar first.");
+      setStatusMessage("Unlock protected records from the 🔒 menu (valid 1 hour), then refresh this page.");
       return;
     }
     setSharing(true);
@@ -523,7 +523,9 @@ export function V2DeliverShell({
           {!privateConfigured ? (
             <p className="mt-2 text-[11px] text-zinc-600">Set ARGUS_PRIVATE_PIN to enable private export.</p>
           ) : includePrivate && !privateUnlocked ? (
-            <p className="mt-2 text-[11px] text-amber-400/90">Unlock protected records from the top bar before generating.</p>
+            <p className="mt-2 text-[11px] text-amber-400/90">
+              Unlock protected records from the 🔒 menu in the top bar (valid 1 hour), then refresh this page.
+            </p>
           ) : null}
         </V2Card>
 

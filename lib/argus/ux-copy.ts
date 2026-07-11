@@ -231,7 +231,7 @@ export const CONTACTS = NETWORKING;
 
 export const PRIVATE = {
   unlock: "Unlock protected",
-  unlockHint: "Enter PIN to show protected emails and records",
+  unlockHint: "Enter PIN to show protected emails and records (stays unlocked for 1 hour)",
   visible: "Protected items visible",
   hide: "Hide protected items",
   protectedLabel: "Protected",

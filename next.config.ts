@@ -17,6 +17,7 @@ function resolveBuildSha(): string {
 const buildSha = resolveBuildSha();
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["pdfkit"],
   env: {
     NEXT_PUBLIC_ARGUS_BUILD_SHA: buildSha,
   },

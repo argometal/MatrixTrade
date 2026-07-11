@@ -97,24 +97,30 @@ export async function POST(request: Request) {
   const nameToken = safeFileToken(collected.scope.name);
 
   if (packageKind === "pdf_deliver") {
-    const generatedAt = new Date().toISOString();
-    const branding = resolveDeliverBranding();
-    const buffer = await buildPdfDeliver({ data, collected, generatedAt, branding });
-    const prefix = deliverFilenamePrefix("pdf");
-    const filename = `${prefix}-${scopeType}-${nameToken}-${stamp}.pdf`;
+    try {
+      const generatedAt = new Date().toISOString();
+      const branding = resolveDeliverBranding();
+      const buffer = await buildPdfDeliver({ data, collected, generatedAt, branding });
+      const prefix = deliverFilenamePrefix("pdf");
+      const filename = `${prefix}-${scopeType}-${nameToken}-${stamp}.pdf`;
 
-    return new NextResponse(new Uint8Array(buffer), {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": String(buffer.length),
-        "Cache-Control": "no-store",
-        "X-Argus-Package": "pdf_deliver",
-        "X-Argus-Evidence-Count": String(collected.logs.length + collected.inbox.length),
-        "X-Argus-File-Count": String(collected.attachments.length),
-      },
-    });
+      return new NextResponse(new Uint8Array(buffer), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+          "Content-Length": String(buffer.length),
+          "Cache-Control": "no-store",
+          "X-Argus-Package": "pdf_deliver",
+          "X-Argus-Evidence-Count": String(collected.logs.length + collected.inbox.length),
+          "X-Argus-File-Count": String(collected.attachments.length),
+        },
+      });
+    } catch (error) {
+      console.error("[argus/export] PDF deliver failed", error);
+      const message = error instanceof Error ? error.message : "PDF generation failed";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
   }
 
   const { buffer, manifest } = await buildEvidenceVaultZip({ collected, includePrivate, options });
