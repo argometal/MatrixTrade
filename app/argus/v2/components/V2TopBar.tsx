@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AddRegisterCaptureButtons } from "@/app/argus/components/AddRegisterCaptureButtons";
 import { PrivateLockMenu } from "@/app/argus/components/PrivateLockMenu";
+import { V2BuildBadge } from "@/app/argus/v2/components/V2BuildBadge";
 import { useV2SidebarCollapse } from "@/app/argus/v2/components/V2DesktopShell";
 import { useV2MobileMenu } from "@/app/argus/v2/components/V2MobileMenuProvider";
 
@@ -117,6 +118,7 @@ export function V2TopBar({
               <span aria-hidden>🛡</span> PIN
             </span>
           )}
+          <V2BuildBadge />
           <AddRegisterCaptureButtons className="shrink-0" />
           <Link
             href="/argus/v2/inbox"
