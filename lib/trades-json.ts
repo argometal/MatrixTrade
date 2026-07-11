@@ -24,12 +24,20 @@ function hasSupabaseEnv(): boolean {
 
 export function getTradesStoreMode(): TradesStoreMode {
   const raw = process.env.TRADES_STORE?.trim().toLowerCase();
-  if (raw === "supabase" && hasSupabaseEnv()) return "supabase";
+  if (raw === "json") return "json";
+  if (!hasSupabaseEnv()) return "json";
+  if (raw === "supabase") return "supabase";
+  if (process.env.VERCEL_ENV === "production") return "supabase";
   return "json";
 }
 
 export function isSupabaseTradesStore(): boolean {
   return getTradesStoreMode() === "supabase";
+}
+
+/** Cloud persistence for stock profiles, evidence, grants — same gate as trades. */
+export function isSupabaseMatrixStore(): boolean {
+  return isSupabaseTradesStore();
 }
 
 let cachedStore: TradesStore | null = null;

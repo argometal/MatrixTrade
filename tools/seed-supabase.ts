@@ -2,7 +2,7 @@
  * One-shot seed: data/playbooks.json + data/trades.json → Supabase
  *
  * Prerequisites:
- *   1. Run supabase/schema.sql in your Supabase project
+ *   1. Run supabase/schema.sql and supabase/stock-case-cloud.sql in your Supabase project
  *   2. Set env vars (see md/integrations/supabase-cloud-first.md)
  *
  * Usage:
@@ -12,8 +12,14 @@ import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { createClient } from "@supabase/supabase-js";
+import { evidenceToRow } from "../lib/market-evidence-store/mapping";
+import { thesisToRow } from "../lib/stock-theses-store/mapping";
+import { planToRow } from "../lib/plans-store/mapping";
 import { tradeToRow } from "../lib/trades-store/mapping";
+import type { MarketEvidence } from "../lib/market-evidence-types";
+import type { TradePlan } from "../lib/plan-types";
 import type { Playbook } from "../lib/playbook-types";
+import type { StockThesis } from "../lib/stock-thesis-types";
 import type { Trade } from "../lib/types";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,6 +64,12 @@ function parseTrades(raw: unknown): Trade[] {
   return [];
 }
 
+function readJsonFileOptional<T>(relativePath: string): T | null {
+  const filePath = join(ROOT, relativePath);
+  if (!existsSync(filePath)) return null;
+  return JSON.parse(readFileSync(filePath, "utf-8")) as T;
+}
+
 async function main() {
   loadEnvLocal();
 
@@ -74,8 +86,13 @@ async function main() {
 
   const playbooks = readJsonFile<Playbook[]>("data/playbooks.json");
   const trades = parseTrades(readJsonFile<unknown>("data/trades.json"));
+  const theses = readJsonFileOptional<StockThesis[]>("data/stock-theses.json") ?? [];
+  const evidence = readJsonFileOptional<MarketEvidence[]>("data/market-evidence.json") ?? [];
+  const plans = readJsonFileOptional<TradePlan[]>("data/plans.json") ?? [];
 
-  console.log(`Seeding ${playbooks.length} playbook(s), ${trades.length} trade(s)...`);
+  console.log(
+    `Seeding ${playbooks.length} playbook(s), ${trades.length} trade(s), ${theses.length} stock profile(s), ${evidence.length} evidence row(s), ${plans.length} plan(s)...`
+  );
 
   if (playbooks.length > 0) {
     const { error } = await supabase.from("playbooks").upsert(
@@ -105,6 +122,39 @@ async function main() {
       process.exit(1);
     }
     console.log("Trades: OK");
+  }
+
+  if (theses.length > 0) {
+    const { error } = await supabase
+      .from("stock_theses")
+      .upsert(theses.map(thesisToRow), { onConflict: "id" });
+    if (error) {
+      console.error("Stock theses seed failed:", error.message);
+      process.exit(1);
+    }
+    console.log("Stock theses: OK");
+  }
+
+  if (plans.length > 0) {
+    const { error } = await supabase.from("trade_plans").upsert(plans.map(planToRow), {
+      onConflict: "id",
+    });
+    if (error) {
+      console.error("Trade plans seed failed:", error.message);
+      process.exit(1);
+    }
+    console.log("Trade plans: OK");
+  }
+
+  if (evidence.length > 0) {
+    const { error } = await supabase
+      .from("market_evidence")
+      .upsert(evidence.map(evidenceToRow), { onConflict: "id" });
+    if (error) {
+      console.error("Market evidence seed failed:", error.message);
+      process.exit(1);
+    }
+    console.log("Market evidence: OK");
   }
 
   console.log("Seed complete.");

@@ -1,5 +1,7 @@
 import type { PlanOutcome, TradePlan } from "../plan-types";
 import { PLAN_TIMEFRAMES, type PlanTimeframe } from "../plan-types";
+import type { ScoutDecision, ScoutLifecycleStatus } from "../scout-decision-types";
+import type { Probe } from "../scout-probe-types";
 
 interface PlanRow {
   id: string;
@@ -20,6 +22,10 @@ interface PlanRow {
   chat_notes: string | null;
   linked_trade_id: string | null;
   outcome: PlanOutcome | null;
+  decision: ScoutDecision | null;
+  decision_history: ScoutDecision[] | null;
+  scout_lifecycle: ScoutLifecycleStatus | null;
+  probe: Probe | null;
   created_at: string;
   updated_at: string;
 }
@@ -52,6 +58,10 @@ export function planRowToPlan(row: PlanRow): TradePlan {
     chatNotes: row.chat_notes ?? undefined,
     linkedTradeId: row.linked_trade_id ?? undefined,
     outcome: row.outcome ?? undefined,
+    decision: row.decision ?? undefined,
+    decisionHistory: row.decision_history ?? undefined,
+    scoutLifecycle: row.scout_lifecycle ?? undefined,
+    probe: row.probe ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -77,6 +87,10 @@ export function planToRow(plan: TradePlan): PlanRow {
     chat_notes: plan.chatNotes ?? null,
     linked_trade_id: plan.linkedTradeId ?? null,
     outcome: plan.outcome ?? null,
+    decision: plan.decision ?? null,
+    decision_history: plan.decisionHistory ?? [],
+    scout_lifecycle: plan.scoutLifecycle ?? null,
+    probe: plan.probe ?? null,
     created_at: plan.createdAt,
     updated_at: plan.updatedAt,
   };
