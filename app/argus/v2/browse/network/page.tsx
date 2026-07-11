@@ -6,6 +6,7 @@ import {
   buildV2NetworkBrowseInsights,
   buildV2NetworkBrowseSummary,
 } from "@/lib/argus/v2/network-browse-utils";
+import { networkBrowseSnapshotItems } from "@/lib/argus/v2/network-snapshot-packages";
 import { V2NetworkBrowserShell } from "./components/V2NetworkBrowserShell";
 
 export default async function V2BrowseNetworkPage() {
@@ -15,10 +16,16 @@ export default async function V2BrowseNetworkPage() {
   const cards = buildV2NetworkBrowseCards(data, inboxItems, includePrivate, today);
   const summary = buildV2NetworkBrowseSummary(cards);
   const insights = buildV2NetworkBrowseInsights(cards);
+  const snapshotItems = networkBrowseSnapshotItems({ cards, summary, insights });
 
   return (
     <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-500">Loading network…</div>}>
-      <V2NetworkBrowserShell cards={cards} summary={summary} insights={insights} />
+      <V2NetworkBrowserShell
+        cards={cards}
+        summary={summary}
+        insights={insights}
+        snapshotItems={snapshotItems}
+      />
     </Suspense>
   );
 }

@@ -75,6 +75,8 @@ import {
   argusErrorQueryParams,
   formatArgusError,
 } from "@/lib/argus/persistence/errors";
+import { applyNetworkAiBlock } from "@/lib/argus/apply-network-ai-block";
+import { parseNetworkAiBlock } from "@/lib/argus/network-ai-block";
 
 function revalidateArgus(): void {
   revalidatePath("/argus");
@@ -1156,6 +1158,47 @@ export async function recordNetworkLastContactAction(
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "Update failed" };
+  }
+}
+
+export type ImportNetworkAiBlockResult =
+  | { ok: true; message: string; logId?: string }
+  | { ok: false; error: string; details?: string[] };
+
+/** Parse and apply a network AI block — only from explicit human Apply. */
+export async function importNetworkAiBlockAction(
+  formData: FormData
+): Promise<ImportNetworkAiBlockResult> {
+  try {
+    await requireArgusSession();
+    const raw = String(formData.get("aiBlock") ?? "").trim();
+    const parsed = parseNetworkAiBlock(raw);
+    if (!parsed.ok) {
+      return { ok: false, error: parsed.error, details: parsed.details };
+    }
+
+    const result = await applyNetworkAiBlock(
+      { getEntity, createLog, updateEntity },
+      parsed.payload
+    );
+    if (!result.ok) {
+      return { ok: false, error: result.error };
+    }
+
+    const entityId = String(parsed.payload.proposal.entityId ?? "");
+    revalidateArgus();
+    revalidatePath("/argus/v2/browse/network");
+    if (entityId) {
+      revalidatePath(`/argus/v2/network/${entityId}`);
+      revalidatePath(`/argus/network/${entityId}`);
+    }
+
+    return { ok: true, message: result.message, logId: result.logId };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Import failed",
+    };
   }
 }
 

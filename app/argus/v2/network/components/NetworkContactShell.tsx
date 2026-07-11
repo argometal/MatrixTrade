@@ -31,6 +31,9 @@ import { personHasContactEvidence, networkConversationNoteTemplate } from "@/lib
 import { V2Badge, V2Card } from "@/app/argus/v2/components/v2-ui";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 import { NetworkDialogueGuide } from "./NetworkDialogueGuide";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import { NetworkAiImportPanel } from "./NetworkAiImportPanel";
 
 const TABS = ["Overview", "Timeline", "Projects", "Organizations", "Topics", "Tags"] as const;
 type ContactTab = (typeof TABS)[number];
@@ -326,9 +329,11 @@ function TimelineSection({ items }: { items: NetworkContactTimelineItem[] }) {
 export function NetworkContactShell({
   page,
   buckets,
+  snapshotItems,
 }: {
   page: NetworkContactPageData;
   buckets: EntityPickerBuckets;
+  snapshotItems: SnapshotMenuItem[];
 }) {
   const router = useRouter();
   const { openCapture } = useArgusAdd();
@@ -397,7 +402,12 @@ export function NetworkContactShell({
               </div>
             </div>
           </div>
-          <div className="flex shrink-0 gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <SnapshotButton
+              title="Contact snapshot"
+              description="Copy person context for AI"
+              items={snapshotItems}
+            />
             <button
               type="button"
               onClick={() => setShowEdit((value) => !value)}
@@ -421,6 +431,8 @@ export function NetworkContactShell({
           </div>
         </div>
       </header>
+
+      <NetworkAiImportPanel defaultEntityId={entity.id} />
 
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-zinc-800/80 pb-px">
         {TABS.map((entry) => (

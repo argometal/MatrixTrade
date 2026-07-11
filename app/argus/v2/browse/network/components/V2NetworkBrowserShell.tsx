@@ -18,6 +18,9 @@ import {
   applyNetworkSmartView,
   smartViewCount,
 } from "@/lib/argus/v2/network-browse-utils";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import { NetworkAiImportPanel } from "@/app/argus/v2/network/components/NetworkAiImportPanel";
 
 const PAGE_SIZE = 8;
 
@@ -406,10 +409,12 @@ export function V2NetworkBrowserShell({
   cards,
   summary,
   insights,
+  snapshotItems,
 }: {
   cards: V2NetworkBrowseCard[];
   summary: V2NetworkBrowseSummary;
   insights: V2NetworkBrowseInsight;
+  snapshotItems: SnapshotMenuItem[];
 }) {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [statusTab, setStatusTab] = useState<V2NetworkBrowseStatus | "all">("all");
@@ -460,6 +465,11 @@ export function V2NetworkBrowserShell({
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <SnapshotButton
+                title="Network snapshot"
+                description="Copy context for external AI"
+                items={snapshotItems}
+              />
               <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5">
                 <button
                   type="button"
@@ -495,6 +505,8 @@ export function V2NetworkBrowserShell({
               />
             </div>
           </header>
+
+          <NetworkAiImportPanel />
 
           <div className="mb-3">
             <input
