@@ -113,7 +113,7 @@ export async function importAiBlockAction(formData: FormData): Promise<ImportAiB
 
 export async function importStockCaseBlockAction(
   raw: string
-): Promise<{ error?: string; details?: string[]; thesisId?: string; planId?: string }> {
+): Promise<ImportAiBlockActionResult> {
   await requireTradingSession();
 
   const parsed = parseAiBlock(raw);
@@ -124,17 +124,25 @@ export async function importStockCaseBlockAction(
     return { error: "Expected a stock-case-create block." };
   }
 
-  const result = await applyTradingProposal(parsed.body as Record<string, unknown>);
-  if (!result.ok) {
-    return { error: result.errors.join(" ") };
+  try {
+    const result = await submitToTradingInbox({
+      ...parsed.body,
+      source: "stock-case-ui",
+    });
+    if (!result.ok) {
+      return { error: result.error };
+    }
+    revalidateTradingPaths();
+    return {
+      ok: true,
+      inboxItemId: result.inboxItemId,
+      origin: result.origin,
+    };
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Failed to submit stock case to Inbox.",
+    };
   }
-
-  revalidateTradingPaths();
-  revalidatePath("/planning");
-  if (result.stockFileId) {
-    revalidatePath(`/stock-theses/${result.stockFileId}`);
-  }
-  return { thesisId: result.stockFileId, planId: result.planId };
 }
 
 export async function saveAiNotesAction(formData: FormData): Promise<SaveAiNotesActionResult> {
@@ -276,7 +284,16 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
     );
   }
 
-  const result = await applyTradingProposal(payload);
+  let result;
+  try {
+    result = await applyTradingProposal(payload);
+  } catch (err) {
+    const msg =
+      err instanceof Error
+        ? err.message
+        : "Apply failed unexpectedly.";
+    redirect(`/inbox/${id}?origin=${origin}&error=${encodeURIComponent(msg)}`);
+  }
   if (!result.ok) {
     redirect(`/inbox/${id}?origin=${origin}&error=${encodeURIComponent(result.errors.join("; "))}`);
   }
@@ -556,38 +573,64 @@ export async function createScopedAiGrantAction(
   if (!stockProfileId) return { error: "Stock profile id is required." };
 
   const planIdRaw = String(formData.get("planId") ?? "").trim();
-  const result = await createScopedAiGrant({
-    stockProfileId,
-    planId: planIdRaw || undefined,
-  });
-  if (result.errors?.length) return { error: result.errors.join(" ") };
+  try {
+    const result = await createScopedAiGrant({
+      stockProfileId,
+      planId: planIdRaw || undefined,
+    });
+    if (result.errors?.length) return { error: result.errors.join(" ") };
 
-  const grant = result.grant!;
-  const urls = buildScopedAiUrls(grant.id);
-  revalidatePath(`/stock-theses/${stockProfileId}`);
+    const grant = result.grant!;
+    const urls = buildScopedAiUrls(grant.id);
+    revalidatePath(`/stock-theses/${stockProfileId}`);
 
-  return {
-    grantId: grant.id,
-    expiresAt: grant.expiresAt,
-    ...urls,
-  };
+    return {
+      grantId: grant.id,
+      expiresAt: grant.expiresAt,
+      ...urls,
+    };
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code === "EROFS") {
+      return {
+        error:
+          "AI access links need durable storage on Vercel. Use Copy boot package + Inbox paste for now.",
+      };
+    }
+    return {
+      error: err instanceof Error ? err.message : "Failed to create AI access link.",
+    };
+  }
 }
 
 export async function createBootstrapAiGrantAction(): Promise<CreateScopedAiGrantActionResult> {
   await requireTradingSession();
 
-  const result = await createBootstrapAiGrant({ label: "New stock case boot" });
-  if (result.errors?.length) return { error: result.errors.join(" ") };
+  try {
+    const result = await createBootstrapAiGrant({ label: "New stock case boot" });
+    if (result.errors?.length) return { error: result.errors.join(" ") };
 
-  const grant = result.grant!;
-  const urls = buildScopedAiUrls(grant.id);
-  revalidatePath("/stock-theses/new");
+    const grant = result.grant!;
+    const urls = buildScopedAiUrls(grant.id);
+    revalidatePath("/stock-theses/new");
 
-  return {
-    grantId: grant.id,
-    expiresAt: grant.expiresAt,
-    ...urls,
-  };
+    return {
+      grantId: grant.id,
+      expiresAt: grant.expiresAt,
+      ...urls,
+    };
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code === "EROFS") {
+      return {
+        error:
+          "AI access links need durable storage on Vercel. Use Copy boot package + paste in Inbox for now.",
+      };
+    }
+    return {
+      error: err instanceof Error ? err.message : "Failed to create AI access link.",
+    };
+  }
 }
 
 export async function saveStockThesisAction(

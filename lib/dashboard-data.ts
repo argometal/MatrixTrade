@@ -47,48 +47,96 @@ export type DashboardData = {
 };
 
 export async function loadDashboardData(): Promise<DashboardData> {
-  const [experiment, monthly, trades, playbooks, workerInbox, plans] = await Promise.all([
-    getExperiment(),
-    getMonthlyRisk(),
-    getTrades(),
-    getPlaybooks(),
-    fetchBridgeInbox(),
-    getPlans(),
-  ]);
+  try {
+    const [experiment, monthly, trades, playbooks, workerInbox, plans] = await Promise.all([
+      getExperiment(),
+      getMonthlyRisk(),
+      getTrades(),
+      getPlaybooks(),
+      fetchBridgeInbox(),
+      getPlans(),
+    ]);
 
-  const pendingInbox = await listAllPendingInboxItems(workerInbox);
-  const attentionItems = [
-    ...buildAttentionItems(trades, pendingInbox, playbooks, monthly),
-    ...buildPlanAttentionItems(plans),
-  ].sort((a, b) => a.priority - b.priority);
-  const playbookStats = computeAllPlaybookStats(playbooks, trades).filter(
-    (p) => p.playbookId !== null && p.closedCount > 0
-  );
+    const pendingInbox = await listAllPendingInboxItems(workerInbox);
+    const attentionItems = [
+      ...buildAttentionItems(trades, pendingInbox, playbooks, monthly),
+      ...buildPlanAttentionItems(plans),
+    ].sort((a, b) => a.priority - b.priority);
+    const playbookStats = computeAllPlaybookStats(playbooks, trades).filter(
+      (p) => p.playbookId !== null && p.closedCount > 0
+    );
 
-  return {
-    experiment,
-    monthly,
-    cycleLabel: formatCycleLabel(experiment),
-    openTrades: trades.filter((t) => t.status === "open").length,
-    pendingReviews: trades.filter((t) => t.status === "closed" && !t.reviewedAt).length,
-    activePlaybooks: playbooks.filter((p) => p.status === "ACTIVE").length,
-    testingPlaybooks: playbooks.filter((p) => p.status === "TESTING").length,
-    activePlans: countActivePlans(plans),
-    plansNeedingReview: countPlansNeedingReview(plans),
-    attentionItems,
-    mistakeStats: computeMistakeStats(trades),
-    equityPoints: buildEquityCurve(trades),
-    winRate: winRate(experiment),
-    profitFactor: computeProfitFactor(trades),
-    expectancy: computeExpectancy(trades),
-    avgR: computeAvgR(trades),
-    bestPlaybook: playbookStats.length
-      ? [...playbookStats].sort((a, b) => b.netPnL - a.netPnL)[0]
-      : null,
-    worstPlaybook: playbookStats.length
-      ? [...playbookStats].sort((a, b) => a.netPnL - b.netPnL)[0]
-      : null,
-  };
+    return {
+      experiment,
+      monthly,
+      cycleLabel: formatCycleLabel(experiment),
+      openTrades: trades.filter((t) => t.status === "open").length,
+      pendingReviews: trades.filter((t) => t.status === "closed" && !t.reviewedAt).length,
+      activePlaybooks: playbooks.filter((p) => p.status === "ACTIVE").length,
+      testingPlaybooks: playbooks.filter((p) => p.status === "TESTING").length,
+      activePlans: countActivePlans(plans),
+      plansNeedingReview: countPlansNeedingReview(plans),
+      attentionItems,
+      mistakeStats: computeMistakeStats(trades),
+      equityPoints: buildEquityCurve(trades),
+      winRate: winRate(experiment),
+      profitFactor: computeProfitFactor(trades),
+      expectancy: computeExpectancy(trades),
+      avgR: computeAvgR(trades),
+      bestPlaybook: playbookStats.length
+        ? [...playbookStats].sort((a, b) => b.netPnL - a.netPnL)[0]
+        : null,
+      worstPlaybook: playbookStats.length
+        ? [...playbookStats].sort((a, b) => a.netPnL - b.netPnL)[0]
+        : null,
+    };
+  } catch (err) {
+    console.error("loadDashboardData failed:", err);
+    const emptyExperiment = {
+      realizedPnL: 0,
+      grossLoss: 0,
+      closedTrades: 0,
+      wins: 0,
+      losses: 0,
+    };
+    return {
+      experiment: emptyExperiment,
+      monthly: {
+        monthKey: new Date().toISOString().slice(0, 7),
+        monthlyLossLimit: -300,
+        baseCap: 300,
+        carryoverIn: 0,
+        carryoverEnabled: true,
+        monthlyAllowance: 300,
+        monthlyRoomCap: 300,
+        lossUsedThisMonth: 0,
+        effectiveLossCap: -300,
+        previousMonthLossUsed: 0,
+        monthlyRealizedPnL: 0,
+        monthlyLossRoom: 0,
+        monthlyCapBreached: false,
+        closedTradesThisMonth: 0,
+        closedTradesPreviousMonth: 0,
+        previousMonthKey: "",
+      },
+      cycleLabel: formatCycleLabel(),
+      openTrades: 0,
+      pendingReviews: 0,
+      activePlaybooks: 0,
+      testingPlaybooks: 0,
+      activePlans: 0,
+      plansNeedingReview: 0,
+      attentionItems: [],
+      mistakeStats: [],
+      equityPoints: [],
+      winRate: 0,
+      profitFactor: null,
+      expectancy: null,
+      avgR: null,
+      bestPlaybook: null,
+      worstPlaybook: null,
+    };
+  }
 }
 
 export function formatDashboardUsd(value: number): string {

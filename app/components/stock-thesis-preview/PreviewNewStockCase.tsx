@@ -15,8 +15,7 @@ export function PreviewNewStockCase() {
   const [copiedBoot, setCopiedBoot] = useState(false);
   const [copiedSample, setCopiedSample] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [createdId, setCreatedId] = useState<string | null>(null);
-  const [createdPlanId, setCreatedPlanId] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState<{ id: string } | null>(null);
   const [grantLinks, setGrantLinks] = useState<{
     grantId: string;
     humanPageUrl: string;
@@ -64,15 +63,14 @@ export function PreviewNewStockCase() {
   function applyBlock() {
     startTransition(async () => {
       setError(null);
-      setCreatedId(null);
-      setCreatedPlanId(null);
+      setImportSuccess(null);
       const result = await importStockCaseBlockAction(aiBlockRaw);
-      if (result.error) {
+      if ("error" in result) {
         setError(result.error);
         return;
       }
-      setCreatedId(result.thesisId ?? null);
-      setCreatedPlanId(result.planId ?? null);
+      setImportSuccess({ id: result.inboxItemId });
+      setAiBlockRaw("");
     });
   }
 
@@ -85,7 +83,7 @@ export function PreviewNewStockCase() {
               <h1 className="text-xl font-semibold text-zinc-100">New stock case</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
                 Analyze in your AI chat → one <code className="text-violet-300">stock-case-create</code>{" "}
-                block → Matrix stores Profile + Evidence + optional Scout.
+                block → Inbox Apply (Profile + Evidence + optional Scout).
               </p>
             </div>
             <Link
@@ -165,10 +163,10 @@ export function PreviewNewStockCase() {
           </section>
 
           <section className="rounded-2xl border border-emerald-500/30 bg-zinc-900/50 p-5">
-            <h2 className="text-sm font-semibold text-zinc-200">2 · Paste AI output & create</h2>
+            <h2 className="text-sm font-semibold text-zinc-200">2 · Paste AI output & send to Inbox</h2>
             <p className="mt-1 text-xs text-zinc-500">
-              The JSON from your chat includes thesis, zones, history, and optional initialScout. Apply
-              here or via Inbox / grant inbox URL.
+              The JSON from your chat includes thesis, zones, history, and optional initialScout. Human
+              Apply in Inbox — same gate as trades.
             </p>
             <textarea
               value={aiBlockRaw}
@@ -200,23 +198,14 @@ export function PreviewNewStockCase() {
 
             {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
 
-            {createdId ? (
+            {importSuccess ? (
               <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">
-                Created{" "}
-                <Link href={`/stock-theses/${createdId}`} className="font-semibold underline">
-                  {createdId}
+                Sent to Inbox ·{" "}
+                <Link href={`/inbox/${importSuccess.id}`} className="font-semibold underline">
+                  Review & Apply →
                 </Link>
-                {createdPlanId ? (
-                  <>
-                    {" "}
-                    · scout{" "}
-                    <Link href={`/planning?plan=${createdPlanId}`} className="underline">
-                      {createdPlanId}
-                    </Link>
-                  </>
-                ) : null}
                 {" · "}
-                <Link href={`/planning?thesis=${createdId}`} className="underline">
+                <Link href="/planning" className="underline">
                   Scouting Desk
                 </Link>
               </div>
@@ -228,7 +217,7 @@ export function PreviewNewStockCase() {
               disabled={pending || !preview?.ok}
               className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
             >
-              {pending ? "Creating…" : "Create stock case"}
+              {pending ? "Sending…" : "Accept proposal → Inbox"}
             </button>
           </section>
 

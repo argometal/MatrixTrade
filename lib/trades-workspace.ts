@@ -130,19 +130,30 @@ export function buildTradesWorkspaceData(
 }
 
 export async function loadTradesWorkspaceData(): Promise<TradesWorkspaceData> {
-  const { fetchBridgeInbox } = await import("./bridge");
-  const { getExperiment, getMonthlyRisk, getTrades } = await import("./storage");
-  const { getPlaybooks } = await import("./playbooks");
-  const { listAllPendingInboxItems } = await import("./trading-inbox-storage");
+  try {
+    const { fetchBridgeInbox } = await import("./bridge");
+    const { getExperiment, getMonthlyRisk, getTrades } = await import("./storage");
+    const { getPlaybooks } = await import("./playbooks");
+    const { listAllPendingInboxItems } = await import("./trading-inbox-storage");
 
-  const [experiment, trades, playbooks, workerInbox, monthly] = await Promise.all([
-    getExperiment(),
-    getTrades(),
-    getPlaybooks(),
-    fetchBridgeInbox(),
-    getMonthlyRisk(),
-  ]);
-  const pendingInbox = await listAllPendingInboxItems(workerInbox);
-  const data = buildTradesWorkspaceData(experiment, trades, playbooks, pendingInbox.length);
-  return { ...data, monthlyLossRoom: monthly.monthlyLossRoom };
+    const [experiment, trades, playbooks, workerInbox, monthly] = await Promise.all([
+      getExperiment(),
+      getTrades(),
+      getPlaybooks(),
+      fetchBridgeInbox(),
+      getMonthlyRisk(),
+    ]);
+    const pendingInbox = await listAllPendingInboxItems(workerInbox);
+    const data = buildTradesWorkspaceData(experiment, trades, playbooks, pendingInbox.length);
+    return { ...data, monthlyLossRoom: monthly.monthlyLossRoom };
+  } catch (err) {
+    console.error("loadTradesWorkspaceData failed:", err);
+    const data = buildTradesWorkspaceData(
+      { realizedPnL: 0, grossLoss: 0, closedTrades: 0, wins: 0, losses: 0 },
+      [],
+      [],
+      0
+    );
+    return { ...data, monthlyLossRoom: 0 };
+  }
 }
