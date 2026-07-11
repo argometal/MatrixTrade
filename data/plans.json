@@ -1,1 +1,52 @@
-[]
+[
+  {
+    "id": "PLAN-001",
+    "ticker": "TSLA",
+    "playbookId": "weekly-breakout",
+    "stockThesisId": "ST-TSLA-001",
+    "status": "watching",
+    "analysisTimeframes": ["1W", "1D", "1H", "15m", "5m"],
+    "entryTimeframe": "5m",
+    "plannedEntry": 348,
+    "supportLevel": 340,
+    "stopPrice": 320,
+    "targetPrice": 430,
+    "plannedRR": 4.1,
+    "validFrom": "2026-07-10T00:00:00.000Z",
+    "validUntil": "2026-07-17T23:59:59.000Z",
+    "thesis": "Pullback to 340-355 primary zone; 3R+ to stop below 320",
+    "decision": {
+      "id": "DEC-tsla-pilot-wait",
+      "verdict": "wait",
+      "decisionConfidence": 62,
+      "expectedValue": 3.2,
+      "expectedProbability": 0.45,
+      "opportunityQuality": 58,
+      "planningRisk": {
+        "structure": "Weekly HH/HL intact",
+        "support": "340-355 zone not tested",
+        "stop": "320 monthly invalidation buffer",
+        "rr": "3R+ available at zone, not at spot"
+      },
+      "executionRisk": {
+        "gap": "low",
+        "earnings": "none this week",
+        "emotion": "avoid chase above zone",
+        "late": "price still extended"
+      },
+      "reasoning": "Structure constructive but price above primary zone — wait for pullback with documented trigger.",
+      "challenges": [
+        "Pullback may not reach 340-355 before momentum breaks",
+        "Extended price increases chase risk if discipline slips"
+      ],
+      "decidedAt": "2026-07-10T18:00:00.000Z",
+      "decidedBy": "human",
+      "priorConfidence": 55,
+      "posteriorConfidence": 62
+    },
+    "decisionHistory": [],
+    "scoutLifecycle": "decided_wait",
+    "createdAt": "2026-07-10T12:00:00.000Z",
+    "updatedAt": "2026-07-10T18:00:00.000Z"
+  }
+]

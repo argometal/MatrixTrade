@@ -1,4 +1,6 @@
 import { formatPlansSnapshotSection } from "./plan-snapshot";
+import { formatDecisionSection } from "./scout-decision";
+import { formatProbeSection } from "./scout-probe";
 import type { Playbook } from "./playbook-types";
 import { PLAYBOOK_STATUS_LABELS } from "./playbook-types";
 import {
@@ -221,6 +223,8 @@ export function scoutingVerdictStyle(verdict: ScoutingVerdict): string {
       return "bg-emerald-500/15 text-emerald-400 border-emerald-500/30";
     case "wait":
       return "bg-amber-500/15 text-amber-400 border-amber-500/30";
+    case "probe":
+      return "bg-violet-500/15 text-violet-300 border-violet-500/30";
     case "no":
       return "bg-red-500/15 text-red-400 border-red-500/30";
   }

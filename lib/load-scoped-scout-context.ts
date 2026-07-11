@@ -1,4 +1,6 @@
 import { buildAiContextPackage } from "./ai-context";
+import { formatDecisionSection } from "./scout-decision";
+import { formatProbeSection } from "./scout-probe";
 import {
   ensureProfileEvidenceSeeded,
   formatMarketEvidenceSection,
@@ -20,7 +22,8 @@ SCOPED ACCESS — you may ONLY act on the stock profile in this package.
 Allowed types:
 - evidence-add: stockProfileId, ticker, timeframe, category, value, confidence required
 - file-update: id (stock profile), at least one of status, currentHypothesis, notes, thesis
-- scout-assessment: stockProfileId, ticker, verdict (go|wait|no), reasons[], challengesToThesis[]
+- decision-update: planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required; optional reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe
+- scout-assessment: stockProfileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[]
 
 Forbidden: trade-proposal, trade-close, playbook changes, other tickers.
 Submit proposals via POST to the inboxUrl in meta — human Apply required.`;
@@ -46,15 +49,26 @@ export async function loadScopedScoutContext(grant: ScopedAiGrant): Promise<{
 
   const synthesis = buildStockProfileSynthesis(profile, evidence);
   const tickerPlans = plans.filter((p) => p.stockThesisId === profile.id);
+  const focusPlan = grant.planId
+    ? tickerPlans.find((p) => p.id === grant.planId)
+    : tickerPlans.find((p) => p.status === "watching" || p.status === "ready");
 
   const body = buildAiContextPackage({
     scope: "scouting-ticker",
     focusThesis: profile,
-    plans: tickerPlans,
+    plans: grant.planId && focusPlan ? [focusPlan] : tickerPlans,
     playbooks,
     monthly,
     experiment,
   });
+
+  const decisionProbeSections: string[] = [];
+  if (focusPlan) {
+    const decisionSection = formatDecisionSection(focusPlan);
+    if (decisionSection) decisionProbeSections.push(decisionSection);
+    const probeSection = formatProbeSection(focusPlan);
+    if (probeSection) decisionProbeSections.push(probeSection);
+  }
 
   const text = [
     body,
@@ -62,11 +76,13 @@ export async function loadScopedScoutContext(grant: ScopedAiGrant): Promise<{
     formatSynthesisSection(synthesis),
     "",
     formatMarketEvidenceSection(evidence),
+    ...(decisionProbeSections.length ? ["", ...decisionProbeSections] : []),
     "",
     "=== SCOPED AI ACCESS ===",
     `grant_id:${grant.id}`,
     `stock_profile_id:${grant.stockProfileId}`,
     `ticker:${grant.ticker}`,
+    grant.planId ? `plan_id:${grant.planId}` : "plan_id:unbound",
     `expires_at:${grant.expiresAt}`,
     `scopes:${grant.scopes.join(",")}`,
     "",
@@ -89,7 +105,11 @@ export async function loadScopedScoutContext(grant: ScopedAiGrant): Promise<{
       contextUrl: urls.contextUrl,
       inboxUrl: urls.inboxUrl,
       humanPageUrl: urls.humanPageUrl,
-      allowedProposalTypes: ["evidence-add", "file-update", "scout-assessment"],
+      allowedProposalTypes: ["evidence-add", "file-update", "scout-assessment", "decision-update"],
+      planId: grant.planId ?? focusPlan?.id ?? null,
+      scoutLifecycle: focusPlan?.scoutLifecycle ?? null,
+      decisionVerdict: focusPlan?.decision?.verdict ?? null,
+      probeStatus: focusPlan?.probe?.status ?? null,
     },
   };
 }

@@ -13,7 +13,8 @@ Required shape:
 }
 PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - evidence-add: MarketEvidence row — stockProfileId, ticker, timeframe, category, value, confidence (0-100) required; optional note
-- scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear
+- decision-update: scout decision on PLAN — planId, verdict (go|wait|probe|no), decisionConfidence (0-100), challenges[] (min 1) required; optional reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe (trigger + expires required)
+- scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: propose Stock File change — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis
 
 Trade layer (use only when scouting approves):
@@ -38,7 +39,8 @@ Required shape:
 }
 Block types (all Apply ready):
 - evidence-add: MarketEvidence — stockProfileId, ticker, timeframe, category, value, confidence required
-- scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no), reasons[], challengesToThesis[] required
+- decision-update: scout decision — planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required
+- scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId
 - trade-close: close trade — id, exit required
@@ -111,6 +113,11 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
     hint: "structure/volume/regime observation with confidence",
   },
   {
+    type: "decision-update",
+    label: "decision-update — scout decision on PLAN",
+    hint: "verdict + confidence + challenges; probe{} when verdict=probe",
+  },
+  {
     type: "scout-assessment",
     label: "scout-assessment — validate thesis",
     hint: "go/wait/no + reasons + challenges (required)",
@@ -168,6 +175,22 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       category: "structure",
       value: "HH/HL intact on weekly",
       confidence: 72,
+    },
+  },
+  "decision-update": {
+    type: "decision-update",
+    source: "ai-block",
+    proposal: {
+      planId: "PLAN-001",
+      verdict: "wait",
+      decisionConfidence: 68,
+      challenges: [
+        "Price still above primary zone — chase risk elevated",
+        "Weekly structure intact but no trigger at planned entry",
+      ],
+      reasoning: "Wait for pullback to 340-355 with R:R >= 3 before probe or full entry.",
+      planningRisk: { structure: "HH/HL intact", stop: "below 320", rr: "3R min not met at spot" },
+      executionRisk: { earnings: "none this week", emotion: "avoid FOMO chase" },
     },
   },
   "scout-assessment": {

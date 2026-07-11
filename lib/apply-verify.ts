@@ -1,4 +1,5 @@
 import type { TradingInboxPayload } from "./bridge";
+import { getPlanById } from "./plans";
 import { getActiveEvidenceForProfile } from "./market-evidence";
 import { getStockThesisById } from "./stock-theses";
 import { getPlaybookById, slugifyPlaybookId } from "./playbooks";
@@ -27,6 +28,8 @@ export async function verifyApplyPersistence(
   switch (parsed.type) {
     case "evidence-add":
       return verifyEvidenceAddPersistence(parsed);
+    case "decision-update":
+      return verifyDecisionUpdatePersistence(parsed);
     case "scout-assessment":
     case "file-update":
       return verifyStockFilePersistence(parsed);
@@ -42,6 +45,29 @@ export async function verifyApplyPersistence(
     default:
       return { ok: false, detail: "Unsupported proposal type for verification." };
   }
+}
+
+async function verifyDecisionUpdatePersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const p = parsed.proposal;
+  const planId = String(p.planId).toUpperCase();
+  const reloaded = await getPlanById(planId);
+  if (!reloaded) {
+    return { ok: false, detail: `Plan ${planId} not found after apply.` };
+  }
+  const verdict = String(p.verdict);
+  if (!reloaded.decision || reloaded.decision.verdict !== verdict) {
+    return { ok: false, detail: `Decision verdict not persisted on ${planId}.` };
+  }
+  const confidence = Number(p.decisionConfidence);
+  if (reloaded.decision.decisionConfidence !== confidence) {
+    return { ok: false, detail: `Decision confidence mismatch on ${planId}.` };
+  }
+  return {
+    ok: true,
+    detail: `Decision on ${planId} · ${reloaded.decision.verdict} · confidence ${reloaded.decision.decisionConfidence}`,
+  };
 }
 
 async function verifyEvidenceAddPersistence(

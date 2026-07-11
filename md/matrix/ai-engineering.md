@@ -58,7 +58,8 @@ MATRIX MECHANICS → PLAYBOOK → STOCK FILE → SCOUTING STATE → REQUEST
 
 | Type | Purpose | Apply |
 |------|---------|-------|
-| `scout-assessment` | Validate thesis — verdict go/wait/no, reasons, **challenges** | Appends assessment to Stock File notes |
+| `scout-assessment` | Validate thesis — verdict go/wait/no/probe, reasons, **challenges** | Appends assessment to Stock File notes |
+| `decision-update` | Scout decision on PLAN — verdict, confidence, risks, challenges | Appends `ScoutDecision` on plan; probe if verdict=probe |
 | `file-update` | Propose changes to Stock File | Updates status, hypothesis, notes (version++) |
 
 ### Trade layer (frozen until scouting loop proven)
@@ -92,8 +93,36 @@ MATRIX MECHANICS → PLAYBOOK → STOCK FILE → SCOUTING STATE → REQUEST
 }
 ```
 
-`verdict`: `go` | `wait` | `no`  
+`verdict`: `go` | `wait` | `no` | `probe`  
 `challengesToThesis` required — AI must contradict, not rubber-stamp.
+
+**Note:** For scout **plan** decisions, use `decision-update` (canonical). `scout-assessment` appends to profile notes only.
+
+---
+
+## decision-update shape
+
+```json
+{
+  "type": "decision-update",
+  "proposal": {
+    "planId": "PLAN-001",
+    "verdict": "wait",
+    "decisionConfidence": 68,
+    "challenges": ["Price above zone", "R:R not met at spot"],
+    "reasoning": "Wait for pullback to primary zone.",
+    "planningRisk": { "structure": "HH/HL intact", "rr": "3R min not met" },
+    "executionRisk": { "emotion": "avoid chase" },
+    "probe": {
+      "trigger": "Close above 355 on 1D",
+      "expires": "2026-07-17T23:59:59.000Z",
+      "riskPercent": 0.1
+    }
+  }
+}
+```
+
+`probe` required when `verdict` is `probe` (`trigger` + `expires`).
 
 ---
 

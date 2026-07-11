@@ -1,5 +1,19 @@
 import { getPlansStore } from "./plans-store";
 import { computePlannedRR, validatePlanAgainstThesis } from "./plan-risk";
+import {
+  appendDecision,
+  deriveLifecycleFromPlan,
+  parseDecisionInput,
+  parseProbeInput,
+  type DecisionInput,
+} from "./scout-decision";
+import {
+  activateProbe,
+  cancelProbe,
+  convertProbe,
+  stopProbe,
+} from "./scout-probe";
+import type { ProbeInput } from "./scout-probe-types";
 import { canLinkThesisToPlan, getStockThesisById } from "./stock-theses";
 import {
   PLAN_TIMEFRAME_ORDER,
@@ -216,6 +230,71 @@ export async function recordPlanOutcome(
       externalFactors: input.externalFactors?.filter(Boolean),
       lesson: input.lesson?.trim() || undefined,
     },
+    updatedAt: new Date().toISOString(),
+  };
+  await getPlansStore().upsert(updated);
+  return { plan: updated };
+}
+
+export async function recordScoutDecision(
+  planId: string,
+  input: DecisionInput,
+  probeInput?: ProbeInput
+): Promise<{ plan?: TradePlan; errors?: string[] }> {
+  const plan = await getPlanById(planId);
+  if (!plan) return { errors: ["Plan not found."] };
+
+  const result = appendDecision(plan, input, probeInput);
+  if (result.errors?.length) return { errors: result.errors };
+
+  const withLifecycle: TradePlan = {
+    ...result.plan,
+    scoutLifecycle: deriveLifecycleFromPlan(result.plan),
+  };
+  await getPlansStore().upsert(withLifecycle);
+  return { plan: withLifecycle };
+}
+
+export async function recordScoutDecisionFromProposal(
+  proposal: Record<string, unknown>
+): Promise<{ plan?: TradePlan; errors?: string[] }> {
+  const planId = String(proposal.planId ?? "").trim().toUpperCase();
+  if (!planId) return { errors: ["proposal.planId required"] };
+
+  const input = parseDecisionInput(proposal);
+  input.decidedBy = (proposal.decidedBy as DecisionInput["decidedBy"]) ?? "ai";
+  const probeInput =
+    input.verdict === "probe" ? parseProbeInput(proposal.probe) : undefined;
+  return recordScoutDecision(planId, input, probeInput);
+}
+
+export async function transitionProbe(
+  planId: string,
+  action: "activate" | "convert" | "cancel" | "stop"
+): Promise<{ plan?: TradePlan; errors?: string[] }> {
+  const plan = await getPlanById(planId);
+  if (!plan) return { errors: ["Plan not found."] };
+
+  let result: { plan?: TradePlan; errors?: string[] };
+  switch (action) {
+    case "activate":
+      result = activateProbe(plan);
+      break;
+    case "convert":
+      result = convertProbe(plan);
+      break;
+    case "cancel":
+      result = cancelProbe(plan);
+      break;
+    case "stop":
+      result = stopProbe(plan);
+      break;
+  }
+
+  if (result.errors?.length) return result;
+  const updated: TradePlan = {
+    ...result.plan!,
+    scoutLifecycle: deriveLifecycleFromPlan(result.plan!),
     updatedAt: new Date().toISOString(),
   };
   await getPlansStore().upsert(updated);

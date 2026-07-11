@@ -10,6 +10,8 @@ import { buildAiContextPackage } from "@/lib/ai-context";
 import type { MarketEvidence } from "@/lib/market-evidence-types";
 import type { Playbook } from "@/lib/playbook-types";
 import type { StockProfileSynthesis } from "@/lib/stock-profile-synthesis";
+import type { TradePlan } from "@/lib/plan-types";
+import { DECISION_VERDICT_LABELS } from "@/lib/scout-decision-types";
 import {
   formatStockThesisZone,
   STOCK_THESIS_STATUS_LABELS,
@@ -41,11 +43,13 @@ export function PreviewStockThesis({
   playbooks = [],
   activeEvidence = [],
   synthesis,
+  activePlans = [],
 }: {
   thesis: StockThesis;
   playbooks?: Playbook[];
   activeEvidence?: MarketEvidence[];
   synthesis?: StockProfileSynthesis;
+  activePlans?: TradePlan[];
 }) {
   const [tab, setTab] = useState<ProfileTab>("snapshot");
   const [formError, setFormError] = useState<string | null>(null);
@@ -158,6 +162,32 @@ export function PreviewStockThesis({
               </Link>
             </div>
           </div>
+
+          {activePlans.length > 0 ? (
+            <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 text-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Active scouts
+              </p>
+              <ul className="mt-2 space-y-2">
+                {activePlans.map((plan) => (
+                  <li key={plan.id} className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/planning?plan=${plan.id}`}
+                      className="font-medium text-violet-400 hover:text-violet-300"
+                    >
+                      {plan.id}
+                    </Link>
+                    <span className="text-xs text-zinc-500">{plan.ticker}</span>
+                    {plan.decision ? (
+                      <span className="rounded-full border border-violet-500/30 px-2 py-0.5 text-xs text-violet-300">
+                        {DECISION_VERDICT_LABELS[plan.decision.verdict]} · {plan.decision.decisionConfidence}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           {grantError ? <p className="mt-3 text-sm text-red-400">{grantError}</p> : null}
           {grantLinks ? (

@@ -207,6 +207,7 @@ export function getSnapshotReadUrl(): string | null {
 export type TradingProposalType =
   | "evidence-add"
   | "scout-assessment"
+  | "decision-update"
   | "file-update"
   | "trade-proposal"
   | "trade-close"
@@ -230,6 +231,7 @@ export function parseTradingInboxPayload(
   if (
     type !== "evidence-add" &&
     type !== "scout-assessment" &&
+    type !== "decision-update" &&
     type !== "file-update" &&
     type !== "trade-proposal" &&
     type !== "trade-close" &&
@@ -258,6 +260,8 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return `Evidence ${p.ticker} ${p.stockProfileId} · ${p.category}`;
     case "scout-assessment":
       return `Scout ${p.ticker} ${p.stockFileId} · verdict ${p.verdict}`;
+    case "decision-update":
+      return `Decision ${p.planId} · verdict ${p.verdict} · confidence ${p.decisionConfidence}`;
     case "file-update":
       return `Update Stock File ${p.id}`;
     case "trade-proposal":
@@ -297,14 +301,43 @@ export function validateProposalPayload(
     if (!p.stockFileId) errors.push("proposal.stockFileId required");
     if (!p.ticker) errors.push("proposal.ticker required");
     const verdict = p.verdict;
-    if (verdict !== "go" && verdict !== "wait" && verdict !== "no") {
-      errors.push("proposal.verdict must be go, wait, or no");
+    if (verdict !== "go" && verdict !== "wait" && verdict !== "no" && verdict !== "probe") {
+      errors.push("proposal.verdict must be go, wait, probe, or no");
     }
     if (!Array.isArray(p.reasons) || p.reasons.length === 0) {
       errors.push("proposal.reasons[] required (min 1)");
     }
     if (!Array.isArray(p.challengesToThesis) || p.challengesToThesis.length === 0) {
       errors.push("proposal.challengesToThesis[] required (min 1) — AI must challenge thesis");
+    }
+  }
+
+  if (parsed.type === "decision-update") {
+    if (!p.planId) errors.push("proposal.planId required");
+    const verdict = p.verdict;
+    if (verdict !== "go" && verdict !== "wait" && verdict !== "no" && verdict !== "probe") {
+      errors.push("proposal.verdict must be go, wait, probe, or no");
+    }
+    const confidence = Number(p.decisionConfidence);
+    if (!Number.isFinite(confidence) || confidence < 0 || confidence > 100) {
+      errors.push("proposal.decisionConfidence required (0-100)");
+    }
+    if (!Array.isArray(p.challenges) || p.challenges.length === 0) {
+      errors.push("proposal.challenges[] required (min 1)");
+    }
+    if (verdict === "probe") {
+      const probe = p.probe;
+      if (!probe || typeof probe !== "object" || Array.isArray(probe)) {
+        errors.push("proposal.probe required when verdict is probe");
+      } else {
+        const probeObj = probe as Record<string, unknown>;
+        if (!probeObj.trigger || !String(probeObj.trigger).trim()) {
+          errors.push("proposal.probe.trigger required when verdict is probe");
+        }
+        if (!probeObj.expires) {
+          errors.push("proposal.probe.expires required when verdict is probe");
+        }
+      }
     }
   }
 

@@ -37,7 +37,9 @@ import { buildScopedAiUrls, createScopedAiGrant } from "@/lib/scoped-ai-grants";
 import { getTradesStoreMode } from "@/lib/trades-json";
 import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules, saveRules } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
-import { parsePlanTimeframes, savePlan, updatePlanStatus, recordPlanOutcome } from "@/lib/plans";
+import { parsePlanTimeframes, savePlan, updatePlanStatus, recordPlanOutcome, recordScoutDecision, transitionProbe } from "@/lib/plans";
+import type { DecisionVerdict } from "@/lib/scout-decision-types";
+import { parseProbeInput } from "@/lib/scout-probe";
 import { updateStockThesisFields } from "@/lib/stock-theses";
 import {
   STOCK_THESIS_STATUSES,
@@ -287,6 +289,7 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
   revalidateTradingPaths();
   if (result.tradeId) revalidatePath(`/trades/${result.tradeId}`);
   if (result.stockFileId) revalidatePath(`/stock-theses/${result.stockFileId}`);
+  if (result.planId) revalidatePath("/planning");
   redirect(`/inbox/${id}?${params.toString()}`);
 }
 
@@ -526,7 +529,11 @@ export async function createScopedAiGrantAction(
   const stockProfileId = String(formData.get("stockProfileId") ?? "").trim();
   if (!stockProfileId) return { error: "Stock profile id is required." };
 
-  const result = await createScopedAiGrant({ stockProfileId });
+  const planIdRaw = String(formData.get("planId") ?? "").trim();
+  const result = await createScopedAiGrant({
+    stockProfileId,
+    planId: planIdRaw || undefined,
+  });
   if (result.errors?.length) return { error: result.errors.join(" ") };
 
   const grant = result.grant!;
@@ -610,5 +617,95 @@ export async function recordPlanOutcomeAction(
   if (result.errors?.length) return { error: result.errors.join(" ") };
   revalidateTradingPaths();
   revalidatePath("/planning");
+  return {};
+}
+
+export type RecordScoutDecisionActionResult = { ok: true; planId: string } | { error: string };
+
+export async function recordScoutDecisionAction(
+  formData: FormData
+): Promise<RecordScoutDecisionActionResult> {
+  await requireTradingSession();
+
+  const planId = String(formData.get("planId") ?? "").trim();
+  if (!planId) return { error: "Plan id is required." };
+
+  const verdictRaw = String(formData.get("verdict") ?? "").trim();
+  const verdicts: DecisionVerdict[] = ["wait", "probe", "go", "no"];
+  if (!verdicts.includes(verdictRaw as DecisionVerdict)) {
+    return { error: "Invalid verdict." };
+  }
+  const verdict = verdictRaw as DecisionVerdict;
+
+  const confidence = Number(formData.get("decisionConfidence"));
+  const challenges = formData
+    .getAll("challenges")
+    .map((c) => String(c).trim())
+    .filter(Boolean);
+  if (!challenges.length) {
+    const challengeText = String(formData.get("challengeText") ?? "").trim();
+    if (challengeText) challenges.push(challengeText);
+  }
+
+  const probeInput =
+    verdict === "probe"
+      ? parseProbeInput({
+          trigger: formData.get("probeTrigger"),
+          expires: formData.get("probeExpires"),
+          riskPercent: formData.get("probeRiskPercent") || 0.1,
+          allocationPercent: formData.get("probeAllocationPercent"),
+          reason: formData.get("probeReason"),
+        })
+      : undefined;
+
+  const result = await recordScoutDecision(
+    planId,
+    {
+      verdict,
+      decisionConfidence: confidence,
+      challenges,
+      reasoning: String(formData.get("reasoning") ?? "").trim() || undefined,
+      decidedBy: "human",
+    },
+    probeInput
+  );
+
+  if (result.errors?.length) return { error: result.errors.join(" ") };
+
+  revalidateTradingPaths();
+  revalidatePath("/planning");
+  if (result.plan?.stockThesisId) {
+    revalidatePath(`/stock-theses/${result.plan.stockThesisId}`);
+  }
+  return { ok: true, planId: result.plan!.id };
+}
+
+export async function activateProbeAction(planId: string): Promise<{ error?: string }> {
+  await requireTradingSession();
+  const result = await transitionProbe(planId, "activate");
+  if (result.errors?.length) return { error: result.errors.join(" ") };
+  revalidateTradingPaths();
+  revalidatePath("/planning");
+  if (result.plan?.stockThesisId) revalidatePath(`/stock-theses/${result.plan.stockThesisId}`);
+  return {};
+}
+
+export async function cancelProbeAction(planId: string): Promise<{ error?: string }> {
+  await requireTradingSession();
+  const result = await transitionProbe(planId, "cancel");
+  if (result.errors?.length) return { error: result.errors.join(" ") };
+  revalidateTradingPaths();
+  revalidatePath("/planning");
+  if (result.plan?.stockThesisId) revalidatePath(`/stock-theses/${result.plan.stockThesisId}`);
+  return {};
+}
+
+export async function stopProbeAction(planId: string): Promise<{ error?: string }> {
+  await requireTradingSession();
+  const result = await transitionProbe(planId, "stop");
+  if (result.errors?.length) return { error: result.errors.join(" ") };
+  revalidateTradingPaths();
+  revalidatePath("/planning");
+  if (result.plan?.stockThesisId) revalidatePath(`/stock-theses/${result.plan.stockThesisId}`);
   return {};
 }

@@ -15,7 +15,8 @@
 | 5 | [runtime-truth.md](runtime-truth.md) | **What works in prod today** |
 | 6 | [ai-engineering.md](ai-engineering.md) | Single AI fleet |
 | 7 | [scoped-ai-access.md](scoped-ai-access.md) | Temporal links for one Stock Profile |
-| 8 | [library-alignment-backlog.md](library-alignment-backlog.md) | Remaining doc debt |
+| 8 | [ai-evolution.md](ai-evolution.md) | Protocol over provider; low-budget rules |
+| 9 | [library-alignment-backlog.md](library-alignment-backlog.md) | Remaining doc debt |
 
 ---
 
@@ -33,7 +34,7 @@ Recording trades is necessary; **not the mission**.
 |-------|-------|-------|
 | Playbook | `/playbook` | Sparse |
 | Stock Profile | `/stock-theses/[id]` | TSLA pilot; partial save |
-| Scouting | `/planning` | PLAN + AI package |
+| Scouting | `/planning` | PLAN + Decision + Probe + AI package |
 | Assistant | `/exchange` | Same AI engine |
 | Trade | `/trades` | Frozen |
 

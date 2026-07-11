@@ -29,18 +29,29 @@
 | Carryover toggle + `closedAt` edit | **Done** |
 | Retire classic nav from active routes | **Done** (legacy code kept) |
 
-## Phase 3 — Active (Scouting + AI fleet)
+## Phase 3 — Active (V2 architecture documented)
 
 | Item | Status | Doc |
 |------|--------|-----|
-| Stock File + Scouting Desk Phase 0 | **Done** | `matrix/strategic-planning-vision.md` |
-| Unified `lib/ai-context.ts` (Exchange + Scouting) | **Done** | `matrix/ai-engineering.md` |
-| AI Block: `scout-assessment`, `file-update` + Inbox Apply | **Done** | `matrix/ai-engineering.md` |
-| TSLA pilot loop (copy → chat → inbox) | **Validate** | user QA |
-| Trade layer redesign | **Frozen** | after scouting loop proven |
-| Design UI checklists | **Removed** | `design/README.md` |
+| V2 engine architecture (5 engines + Probe) | **Done** | `matrix/v2-engine-architecture.md` |
+| Stock Profile design (append, light) | **Done** | `matrix/stock-profile-design.md` |
+| Scout / execution model | **Done** | `matrix/scout-execution-model.md` |
+| Runtime truth | **Done** | `matrix/runtime-truth.md` |
+| Unified AI fleet | **Done** | `matrix/ai-engineering.md` |
+| **Code Phase B** — Evidence + Profile synthesis | **Done** | `dbf87a6` |
+| **Code Phase C** — Decision on Scout + Probe state | **Done** | Decision + Probe |
+| **Code Phase D** — Learning + missed scout | **Next** | after TSLA loop sign-off |
 
-## Phase 4 — Next (knowledge + import)
+## Phase 4 — Code (learning stack)
+
+| Item | Status |
+|------|--------|
+| Decision fields on Scout | **Done** |
+| Probe state machine | **Done** |
+| Missed scout outcomes | Pending |
+| Attribution + Statistics | Pending |
+
+## Phase 5 — Knowledge import
 
 | Item | Status | Doc |
 |------|--------|-----|

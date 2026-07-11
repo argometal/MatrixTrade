@@ -14,6 +14,7 @@ import {
   getScopedAiGrantById,
   upsertScopedAiGrant,
 } from "./scoped-ai-grants-store";
+import { getPlanById } from "./plans";
 import { getStockThesisById } from "./stock-theses";
 
 export function newScopedGrantId(): string {
@@ -22,6 +23,7 @@ export function newScopedGrantId(): string {
 
 export async function createScopedAiGrant(input: {
   stockProfileId: string;
+  planId?: string;
   ttlHours?: number;
   scopes?: ScopedAiGrantScope[];
   label?: string;
@@ -30,12 +32,23 @@ export async function createScopedAiGrant(input: {
   const profile = await getStockThesisById(stockProfileId);
   if (!profile) return { errors: ["Stock profile not found."] };
 
+  let planId: string | undefined;
+  if (input.planId?.trim()) {
+    const plan = await getPlanById(input.planId.trim());
+    if (!plan) return { errors: ["Plan not found."] };
+    if (plan.stockThesisId !== stockProfileId) {
+      return { errors: ["Plan must belong to the granted stock profile."] };
+    }
+    planId = plan.id;
+  }
+
   const ttlHours = input.ttlHours ?? SCOPED_AI_DEFAULT_TTL_HOURS;
   const now = Date.now();
   const grant: ScopedAiGrant = {
     id: newScopedGrantId(),
     stockProfileId,
     ticker: profile.ticker,
+    planId,
     scopes: input.scopes ?? ["read", "propose"],
     expiresAt: new Date(now + ttlHours * 60 * 60 * 1000).toISOString(),
     createdAt: new Date(now).toISOString(),
@@ -129,6 +142,13 @@ export function validateScopedProposal(
     if (!scopedGrantTargetsProfile(grant, String(p.stockFileId ?? ""), String(p.ticker ?? ""))) {
       errors.push("scout-assessment must target the granted stock profile and ticker only.");
     }
+  } else if (parsed.type === "decision-update") {
+    const planId = String(p.planId ?? "").trim().toUpperCase();
+    if (!planId) {
+      errors.push("decision-update requires proposal.planId.");
+    } else if (grant.planId && grant.planId !== planId) {
+      errors.push(`decision-update must target grant plan ${grant.planId}.`);
+    }
   }
 
   const validation = validateProposalPayload(parsed);
@@ -137,4 +157,28 @@ export function validateScopedProposal(
   return errors.length
     ? { ok: false, errors }
     : { ok: true, payload: parsed };
+}
+
+export async function validateScopedProposalAsync(
+  grant: ScopedAiGrant,
+  body: Record<string, unknown>
+): Promise<{ ok: true; payload: TradingInboxPayload } | { ok: false; errors: string[] }> {
+  const base = validateScopedProposal(grant, body);
+  if (!base.ok) return base;
+
+  if (base.payload.type === "decision-update") {
+    const planId = String(base.payload.proposal.planId ?? "").trim().toUpperCase();
+    const plan = await getPlanById(planId);
+    if (!plan) {
+      return { ok: false, errors: [`Plan ${planId} not found.`] };
+    }
+    if (plan.stockThesisId !== grant.stockProfileId) {
+      return {
+        ok: false,
+        errors: ["decision-update plan must belong to the granted stock profile."],
+      };
+    }
+  }
+
+  return base;
 }

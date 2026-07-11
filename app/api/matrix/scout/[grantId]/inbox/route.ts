@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { validateScopedAiGrant, validateScopedProposal } from "@/lib/scoped-ai-grants";
+import { validateScopedAiGrant, validateScopedProposalAsync } from "@/lib/scoped-ai-grants";
 import { submitToTradingInbox } from "@/lib/trading-inbox-submit";
 
 export async function POST(
@@ -23,7 +23,7 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const scoped = validateScopedProposal(validation.grant, body);
+  const scoped = await validateScopedProposalAsync(validation.grant, body);
   if (!scoped.ok) {
     return NextResponse.json({ error: "Validation failed", details: scoped.errors }, { status: 400 });
   }

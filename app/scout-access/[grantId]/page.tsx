@@ -55,7 +55,8 @@ export default async function ScoutAccessPage({
           <li>
             Ask the AI to return ONE block: <code className="text-violet-300">evidence-add</code>,{" "}
             <code className="text-violet-300">file-update</code>, or{" "}
-            <code className="text-violet-300">scout-assessment</code> for this ticker only.
+            <code className="text-violet-300">scout-assessment</code>, or{" "}
+            <code className="text-violet-300">decision-update</code> for this ticker only.
           </li>
           <li>
             POST the block to{" "}
@@ -84,7 +85,7 @@ export default async function ScoutAccessPage({
         <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-4">
           <p className="text-xs uppercase tracking-wide text-zinc-500">Allowed types</p>
           <p className="mt-1 text-xs text-zinc-300">
-            evidence-add · file-update · scout-assessment
+            evidence-add · file-update · scout-assessment · decision-update
           </p>
         </div>
       </section>

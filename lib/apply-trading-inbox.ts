@@ -20,6 +20,7 @@ import {
   type TradingInboxPayload,
   type TradingProposalType,
 } from "./bridge";
+import { recordScoutDecisionFromProposal } from "./plans";
 import {
   closeTrade,
   createTrade,
@@ -39,6 +40,7 @@ export type ApplyTradingProposalResult =
       tradeId?: string;
       playbookId?: string;
       stockFileId?: string;
+      planId?: string;
       trade?: Trade;
       playbook?: Playbook;
     }
@@ -55,6 +57,8 @@ export async function applyTradingProposal(
   switch (parsed.type) {
     case "scout-assessment":
       return applyScoutAssessment(parsed);
+    case "decision-update":
+      return applyDecisionUpdate(parsed);
     case "evidence-add":
       return applyEvidenceAdd(parsed);
     case "file-update":
@@ -103,6 +107,21 @@ async function applyScoutAssessment(
     message: `Scout assessment saved on ${stockFileId} · verdict ${p.verdict}`,
     type: "scout-assessment",
     stockFileId,
+  };
+}
+
+async function applyDecisionUpdate(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await recordScoutDecisionFromProposal(parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  const plan = result.plan!;
+  return {
+    ok: true,
+    message: `Decision recorded on ${plan.id} · ${plan.decision?.verdict} · confidence ${plan.decision?.decisionConfidence}`,
+    type: "decision-update",
+    planId: plan.id,
+    stockFileId: plan.stockThesisId,
   };
 }
 

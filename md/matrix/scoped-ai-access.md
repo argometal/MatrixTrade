@@ -11,12 +11,12 @@
 Stock Profile page → Create AI access link (24h TTL)
   → human shares /scout-access/{grantId} or context URL
   → AI fetches GET /api/matrix/scout/{grantId}
-  → AI returns ONE block (evidence-add | file-update | scout-assessment)
+  → AI returns ONE block (evidence-add | file-update | scout-assessment | decision-update)
   → AI POSTs to /api/matrix/scout/{grantId}/inbox
   → human Apply in /inbox
 ```
 
-Grant id format: `GRANT-{24-byte-hex}`.
+Grant id format: `GRANT-{24-byte-hex}`. Optional `planId` binds one scout episode (still one stock).
 
 ---
 
@@ -27,6 +27,7 @@ Grant id format: `GRANT-{24-byte-hex}`.
 | `evidence-add` | Yes — `stockProfileId` + `ticker` must match grant |
 | `file-update` | Yes — `id` must match grant `stockProfileId` |
 | `scout-assessment` | Yes — `stockFileId` + `ticker` must match grant |
+| `decision-update` | Yes — `planId` must match grant `planId` if set; plan must belong to grant profile |
 
 **Forbidden:** `trade-proposal`, `trade-close`, `trade-review`, `trade-update`, `analysis`, playbook changes, other tickers.
 

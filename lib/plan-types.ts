@@ -1,3 +1,6 @@
+import type { ScoutDecision, ScoutLifecycleStatus } from "./scout-decision-types";
+import type { Probe } from "./scout-probe-types";
+
 export type PlanStatus =
   | "watching"
   | "ready"
@@ -91,6 +94,14 @@ export interface TradePlan {
   chatNotes?: string;
   linkedTradeId?: string;
   outcome?: PlanOutcome;
+  /** Latest decision snapshot (V2 Decision Engine). */
+  decision?: ScoutDecision;
+  /** Append-only decision chain. */
+  decisionHistory?: ScoutDecision[];
+  /** Derived scout lifecycle — updated on decision/probe changes. */
+  scoutLifecycle?: ScoutLifecycleStatus;
+  /** Probe authorization artifact — no auto trade creation. */
+  probe?: Probe;
   createdAt: string;
   updatedAt: string;
 }

@@ -3,8 +3,13 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import {
+  activateProbeAction,
+  cancelProbeAction,
+  createScopedAiGrantAction,
   recordPlanOutcomeAction,
+  recordScoutDecisionAction,
   savePlanAction,
+  stopProbeAction,
   updatePlanStatusAction,
 } from "@/app/actions";
 import { buildPlanEnterHref, planNeedsStrategyReview } from "@/lib/plan-helpers";
@@ -24,8 +29,16 @@ import type { Playbook } from "@/lib/playbook-types";
 import { getPlaybookName } from "@/lib/playbook-helpers";
 import {
   computeScoutingVerdictFromThesis,
+  resolveScoutingVerdict,
   SCOUTING_VERDICT_LABELS,
 } from "@/lib/scouting-types";
+import {
+  DECISION_VERDICT_LABELS,
+  SCOUT_LIFECYCLE_LABELS,
+  type DecisionVerdict,
+} from "@/lib/scout-decision-types";
+import { formatProbeRiskMessage } from "@/lib/scout-probe";
+import { PROBE_STATUS_LABELS } from "@/lib/scout-probe-types";
 import {
   isActiveStockThesisStatus,
   STOCK_THESIS_STATUS_LABELS,
@@ -105,6 +118,16 @@ export function PreviewPlanning({
       ? focusPlanId
       : null
   );
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(focusPlanId ?? null);
+  const [decisionPlanId, setDecisionPlanId] = useState<string | null>(null);
+  const [grantLinks, setGrantLinks] = useState<{
+    grantId: string;
+    humanPageUrl: string;
+    contextUrl: string;
+    inboxUrl: string;
+    expiresAt: string;
+  } | null>(null);
+  const [grantError, setGrantError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [formWarning, setFormWarning] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -131,17 +154,28 @@ export function PreviewPlanning({
     return stockTheses.find((t) => t.id === id);
   }, [stockTheses, scoutThesisId, focusThesisId, activeTheses]);
 
-  const scoutVerdict = useMemo(
-    () => (scoutThesis ? computeScoutingVerdictFromThesis(scoutThesis) : null),
-    [scoutThesis]
-  );
-
   const scoutPlans = useMemo(
     () =>
       scoutThesis
         ? plans.filter((p) => p.stockThesisId === scoutThesis.id)
         : [],
     [plans, scoutThesis]
+  );
+
+  const scoutVerdict = useMemo(() => {
+    if (!scoutThesis) return null;
+    const primaryPlan = scoutPlans.find((p) => p.decision) ?? scoutPlans[0];
+    return resolveScoutingVerdict(scoutThesis, primaryPlan);
+  }, [scoutThesis, scoutPlans]);
+
+  const selectedPlan = useMemo(
+    () => (selectedPlanId ? plans.find((p) => p.id === selectedPlanId) : undefined),
+    [plans, selectedPlanId]
+  );
+
+  const decisionPlan = useMemo(
+    () => (decisionPlanId ? plans.find((p) => p.id === decisionPlanId) : undefined),
+    [plans, decisionPlanId]
   );
 
   const trainingBlockText = useMemo(
@@ -305,6 +339,44 @@ export function PreviewPlanning({
     });
   }
 
+  function submitDecision(formData: FormData) {
+    startTransition(async () => {
+      const result = await recordScoutDecisionAction(formData);
+      if ("error" in result) {
+        setFormError(result.error);
+        return;
+      }
+      setDecisionPlanId(null);
+      setFormError(null);
+    });
+  }
+
+  function createScoutAiLink(formData: FormData) {
+    startTransition(async () => {
+      const result = await createScopedAiGrantAction(formData);
+      if ("error" in result) {
+        setGrantError(result.error);
+        setGrantLinks(null);
+        return;
+      }
+      setGrantError(null);
+      setGrantLinks(result);
+    });
+  }
+
+  function runProbeAction(planId: string, action: "activate" | "cancel" | "stop") {
+    startTransition(async () => {
+      const fn =
+        action === "activate"
+          ? activateProbeAction
+          : action === "cancel"
+            ? cancelProbeAction
+            : stopProbeAction;
+      const result = await fn(planId);
+      if (result.error) setFormError(result.error);
+    });
+  }
+
   const outcomePlan = outcomePlanId
     ? plans.find((p) => p.id === outcomePlanId)
     : undefined;
@@ -334,7 +406,7 @@ export function PreviewPlanning({
                 <Link href="/inbox" className="text-violet-400 hover:underline">
                   Inbox
                 </Link>{" "}
-                Apply (`scout-assessment` / `file-update`)
+                Apply (`scout-assessment` / `decision-update` / `file-update`)
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -461,6 +533,171 @@ export function PreviewPlanning({
                       {scoutPlans.filter((p) => p.status === "watching" || p.status === "ready").length}
                     </p>
                   </div>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
+          {selectedPlan ? (
+            <section className="rounded-2xl border border-violet-500/30 bg-zinc-900/80 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-semibold text-zinc-200">
+                    Decision · {selectedPlan.ticker} ({selectedPlan.id})
+                  </h2>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Stored scout decision — fallback to Stock File status when absent.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDecisionPlanId(selectedPlan.id);
+                      setFormError(null);
+                    }}
+                    className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-300 hover:text-zinc-100"
+                  >
+                    Record decision
+                  </button>
+                  <form action={createScoutAiLink}>
+                    <input type="hidden" name="stockProfileId" value={selectedPlan.stockThesisId ?? ""} />
+                    <input type="hidden" name="planId" value={selectedPlan.id} />
+                    <button
+                      type="submit"
+                      disabled={pending || !selectedPlan.stockThesisId}
+                      className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-300 hover:bg-violet-500/20 disabled:opacity-50"
+                    >
+                      Create scout AI link
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              {selectedPlan.decision ? (
+                <div className="mt-4 space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-xs font-bold uppercase ${scoutingVerdictStyle(selectedPlan.decision.verdict)}`}
+                    >
+                      {DECISION_VERDICT_LABELS[selectedPlan.decision.verdict]}
+                    </span>
+                    <span className="text-xs text-zinc-500">
+                      Confidence {selectedPlan.decision.decisionConfidence}
+                    </span>
+                    {selectedPlan.scoutLifecycle ? (
+                      <span className="text-xs text-zinc-600">
+                        {SCOUT_LIFECYCLE_LABELS[selectedPlan.scoutLifecycle]}
+                      </span>
+                    ) : null}
+                  </div>
+                  {selectedPlan.decision.reasoning ? (
+                    <p className="text-sm text-zinc-400">{selectedPlan.decision.reasoning}</p>
+                  ) : null}
+                  {selectedPlan.decision.challenges.length ? (
+                    <ul className="list-disc space-y-1 pl-5 text-xs text-zinc-500">
+                      {selectedPlan.decision.challenges.map((c) => (
+                        <li key={c}>{c}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {(selectedPlan.decision.planningRisk || selectedPlan.decision.executionRisk) && (
+                    <div className="grid gap-2 text-xs sm:grid-cols-2">
+                      {selectedPlan.decision.planningRisk ? (
+                        <div className="rounded-lg bg-zinc-950/60 p-3">
+                          <p className="font-medium text-zinc-400">Planning risk</p>
+                          <pre className="mt-1 whitespace-pre-wrap text-zinc-500">
+                            {JSON.stringify(selectedPlan.decision.planningRisk, null, 2)}
+                          </pre>
+                        </div>
+                      ) : null}
+                      {selectedPlan.decision.executionRisk ? (
+                        <div className="rounded-lg bg-zinc-950/60 p-3">
+                          <p className="font-medium text-zinc-400">Execution risk</p>
+                          <pre className="mt-1 whitespace-pre-wrap text-zinc-500">
+                            {JSON.stringify(selectedPlan.decision.executionRisk, null, 2)}
+                          </pre>
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-zinc-500">
+                  No stored decision — showing computed verdict from Stock File status.
+                </p>
+              )}
+
+              {selectedPlan.probe?.enabled ? (
+                <div className="mt-4 rounded-xl border border-violet-500/20 bg-violet-950/10 p-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-medium text-violet-200">Probe</p>
+                    <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-xs text-violet-300">
+                      {PROBE_STATUS_LABELS[selectedPlan.probe.status]}
+                    </span>
+                    <span className="text-xs text-zinc-500">
+                      {formatProbeRiskMessage(selectedPlan.probe)}
+                    </span>
+                  </div>
+                  {selectedPlan.probe.trigger ? (
+                    <p className="mt-2 text-xs text-zinc-400">
+                      Trigger: {selectedPlan.probe.trigger}
+                    </p>
+                  ) : null}
+                  {selectedPlan.probe.expires ? (
+                    <p className="text-xs text-zinc-500">
+                      Expires: {new Date(selectedPlan.probe.expires).toLocaleString()}
+                    </p>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedPlan.probe.status === "authorized" ? (
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => runProbeAction(selectedPlan.id, "activate")}
+                        className="rounded-lg bg-violet-600/30 px-3 py-1.5 text-xs text-violet-300"
+                      >
+                        Activate probe
+                      </button>
+                    ) : null}
+                    {selectedPlan.probe.status === "active" ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={pending}
+                          onClick={() => runProbeAction(selectedPlan.id, "stop")}
+                          className="rounded-lg border border-amber-500/30 px-3 py-1.5 text-xs text-amber-400"
+                        >
+                          Stop probe (-0.10R)
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pending}
+                          onClick={() => runProbeAction(selectedPlan.id, "cancel")}
+                          className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400"
+                        >
+                          Cancel probe
+                        </button>
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              {grantError ? <p className="mt-3 text-sm text-red-400">{grantError}</p> : null}
+              {grantLinks ? (
+                <div className="mt-3 rounded-xl border border-violet-500/30 bg-violet-950/20 p-3 text-xs">
+                  <p className="font-medium text-violet-200">
+                    AI link · expires {new Date(grantLinks.expiresAt).toLocaleString()}
+                  </p>
+                  <a
+                    href={grantLinks.humanPageUrl}
+                    className="mt-1 block break-all text-violet-300 hover:underline"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {grantLinks.humanPageUrl}
+                  </a>
                 </div>
               ) : null}
             </section>
@@ -767,6 +1004,17 @@ export function PreviewPlanning({
                         >
                           {PLAN_STATUS_LABELS[plan.status]}
                         </span>
+                        {plan.decision ? (
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-xs font-semibold uppercase ${scoutingVerdictStyle(plan.decision.verdict)}`}
+                          >
+                            {DECISION_VERDICT_LABELS[plan.decision.verdict]}
+                          </span>
+                        ) : scoutThesis && plan.stockThesisId === scoutThesis.id ? (
+                          <span className="rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-500">
+                            {SCOUTING_VERDICT_LABELS[computeScoutingVerdictFromThesis(scoutThesis)]}
+                          </span>
+                        ) : null}
                       </div>
                       <p className="mt-1 text-xs text-zinc-500">
                         {getPlaybookName(playbooks, plan.playbookId) ?? "No strategy"} · Entry{" "}
@@ -806,6 +1054,17 @@ export function PreviewPlanning({
                   ) : null}
 
                   <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPlanId(plan.id)}
+                      className={`rounded-lg border px-3 py-1.5 text-xs ${
+                        selectedPlanId === plan.id
+                          ? "border-violet-500/50 text-violet-300"
+                          : "border-zinc-700 text-zinc-400 hover:text-zinc-200"
+                      }`}
+                    >
+                      Decision
+                    </button>
                     <button
                       type="button"
                       onClick={() => openEdit(plan)}
@@ -875,6 +1134,113 @@ export function PreviewPlanning({
           )}
         </div>
       </div>
+
+      {decisionPlan ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-zinc-700 bg-zinc-900 p-5">
+            <h3 className="text-lg font-semibold text-zinc-100">
+              Record decision · {decisionPlan.ticker} ({decisionPlan.id})
+            </h3>
+            <p className="mt-1 text-sm text-zinc-500">
+              Appends to decision history — does not create a trade.
+            </p>
+            <form action={submitDecision} className="mt-4 space-y-4">
+              <input type="hidden" name="planId" value={decisionPlan.id} />
+              <label className="block text-xs text-zinc-500">
+                Verdict
+                <select
+                  name="verdict"
+                  defaultValue={decisionPlan.decision?.verdict ?? "wait"}
+                  className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+                >
+                  {(["wait", "probe", "go", "no"] as DecisionVerdict[]).map((v) => (
+                    <option key={v} value={v}>
+                      {DECISION_VERDICT_LABELS[v]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-xs text-zinc-500">
+                Confidence (0-100)
+                <input
+                  name="decisionConfidence"
+                  type="number"
+                  min={0}
+                  max={100}
+                  required
+                  defaultValue={decisionPlan.decision?.decisionConfidence ?? 50}
+                  className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+                />
+              </label>
+              <label className="block text-xs text-zinc-500">
+                Challenge (required)
+                <input
+                  name="challengeText"
+                  required
+                  placeholder="One real contradiction or risk"
+                  className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+                />
+              </label>
+              <label className="block text-xs text-zinc-500">
+                Reasoning
+                <textarea
+                  name="reasoning"
+                  rows={2}
+                  defaultValue={decisionPlan.decision?.reasoning ?? ""}
+                  className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+                />
+              </label>
+              <fieldset className="rounded-lg border border-violet-500/20 p-3">
+                <legend className="px-1 text-xs text-violet-300">Probe fields (when verdict = probe)</legend>
+                <div className="mt-2 space-y-3">
+                  <label className="block text-xs text-zinc-500">
+                    Trigger
+                    <input
+                      name="probeTrigger"
+                      className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+                    />
+                  </label>
+                  <label className="block text-xs text-zinc-500">
+                    Expires
+                    <input
+                      name="probeExpires"
+                      type="datetime-local"
+                      className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+                    />
+                  </label>
+                  <label className="block text-xs text-zinc-500">
+                    Risk (R units, default 0.10)
+                    <input
+                      name="probeRiskPercent"
+                      type="number"
+                      step="0.01"
+                      defaultValue={0.1}
+                      className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+                    />
+                  </label>
+                </div>
+              </fieldset>
+              {formError ? <p className="text-sm text-red-400">{formError}</p> : null}
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={pending}
+                  className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
+                >
+                  Save decision
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDecisionPlanId(null)}
+                  className="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
 
       {outcomePlan ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">

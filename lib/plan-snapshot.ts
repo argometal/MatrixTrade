@@ -1,4 +1,6 @@
 import type { TradePlan } from "./plan-types";
+import { formatDecisionSection } from "./scout-decision";
+import { formatProbeSection } from "./scout-probe";
 
 export function formatPlansSnapshotSection(plans: TradePlan[]): string {
   const active = plans.filter((p) => p.status === "watching" || p.status === "ready");
@@ -36,6 +38,22 @@ export function formatPlansSnapshotSection(plans: TradePlan[]): string {
         ].join(" ")
       );
       if (plan.thesis) lines.push(`  thesis:${plan.thesis.replace(/\s+/g, " ").slice(0, 200)}`);
+      if (plan.decision) {
+        lines.push(
+          `  decision:${plan.decision.verdict} confidence:${plan.decision.decisionConfidence} lifecycle:${plan.scoutLifecycle ?? "open"}`
+        );
+      }
+      if (plan.probe?.enabled) {
+        lines.push(`  probe:${plan.probe.status} risk:${plan.probe.riskPercent ?? 0.1}R`);
+      }
+      const decisionBlock = formatDecisionSection(plan);
+      if (decisionBlock) {
+        lines.push(decisionBlock.split("\n").map((l) => `  ${l}`).join("\n"));
+      }
+      const probeBlock = formatProbeSection(plan);
+      if (probeBlock) {
+        lines.push(probeBlock.split("\n").map((l) => `  ${l}`).join("\n"));
+      }
     }
   }
 
