@@ -1,5 +1,6 @@
 import type { InboxItem, Log } from "../../types";
 import type { DeliverBranding } from "../deliver-branding";
+import { parseStoredEmailPayload } from "../../email-view";
 
 export function htmlEscape(text: string): string {
   return text
@@ -16,8 +17,31 @@ export function textSnippet(text: string, maxLen = 240): string {
   return `${trimmed.slice(0, maxLen - 1)}…`;
 }
 
+export function htmlToPlainText(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export function emailBodyText(item: InboxItem): string {
-  return item.rawText?.trim() || item.subject?.trim() || "";
+  const stored = parseStoredEmailPayload(item.rawEmail);
+  const storedText = stored?.text?.trim();
+  if (storedText) return storedText;
+  if (item.rawText?.trim()) return item.rawText.trim();
+  const storedHtml = stored?.html?.trim();
+  if (storedHtml) return htmlToPlainText(storedHtml);
+  return item.subject?.trim() || "";
 }
 
 export function emailSnippet(item: InboxItem, maxLen = 240): string {

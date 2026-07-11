@@ -4,7 +4,8 @@ import { buildTimelineFromLogsAndInbox } from "../../v2/timeline-builders";
 import type { DeliverBranding } from "../deliver-branding";
 import { evidenceRecordCount } from "../dedup";
 import type { CollectedVaultEvidence, ExportScopeType } from "../types";
-import { emailSnippet, logSnippet, textSnippet } from "./deliver-html-shared";
+import { buildDossierNarrativeSections, type DossierNarrativeSection } from "./dossier-narrative";
+import { emailBodyText } from "./deliver-html-shared";
 
 const SCOPE_LABELS: Record<ExportScopeType, string> = {
   person: "Person",
@@ -27,49 +28,10 @@ function entityLabel(data: ArgusData, entityId: string): string {
 function attachmentSourceLabel(att: Attachment, logs: Log[], inbox: InboxItem[]): string {
   if (att.parentType === "journal") {
     const log = logs.find((l) => l.id === att.parentId);
-    return log ? `journal: ${log.title || log.id}` : "journal";
+    return log ? `record: ${log.title || log.id}` : "record";
   }
   const item = inbox.find((i) => i.id === att.parentId);
   return item ? `email: ${item.subject || item.id}` : "email";
-}
-
-function timelineKindLabel(kind: string): string {
-  if (kind === "email") return "Email";
-  if (kind === "meeting") return "Meeting";
-  if (kind === "journal") return "Journal";
-  return kind;
-}
-
-function whoForEntry(
-  data: ArgusData,
-  entry: { id: string; kind: string },
-  logs: Log[],
-  inbox: InboxItem[]
-): string | undefined {
-  if (entry.kind === "email") {
-    const item = inbox.find((e) => e.id === entry.id);
-    return item?.from?.replace(/<.*>/, "").trim() || undefined;
-  }
-  const log = logs.find((l) => l.id === entry.id);
-  if (!log) return undefined;
-  const names = log.entityIds
-    .map((id) => data.entities.find((e) => e.id === id && !e.deletedAt)?.name)
-    .filter(Boolean);
-  return names.length ? names.join(", ") : undefined;
-}
-
-function notesForEntry(
-  entry: { id: string; kind: string; body?: string; title: string },
-  logs: Log[],
-  inbox: InboxItem[]
-): string {
-  if (entry.body?.trim()) return textSnippet(entry.body.trim(), 500);
-  if (entry.kind === "email") {
-    const item = inbox.find((e) => e.id === entry.id);
-    return item ? emailSnippet(item, 500) : textSnippet(entry.title, 500);
-  }
-  const log = logs.find((l) => l.id === entry.id);
-  return log ? logSnippet(log, 500) : textSnippet(entry.title, 500);
 }
 
 function ensureSpace(doc: PDFKit.PDFDocument, needed = 72): void {
@@ -92,6 +54,15 @@ function sectionHeading(doc: PDFKit.PDFDocument, title: string): void {
   doc.moveDown(0.5);
 }
 
+function subsectionHeading(doc: PDFKit.PDFDocument, title: string, subtitle?: string): void {
+  ensureSpace(doc, 40);
+  doc.font("Helvetica-Bold").fontSize(11).fillColor("#0f172a").text(title, { width: CONTENT_WIDTH });
+  if (subtitle) {
+    doc.font("Helvetica").fontSize(9).fillColor("#64748b").text(subtitle, { width: CONTENT_WIDTH });
+  }
+  doc.moveDown(0.45);
+}
+
 function metaRow(doc: PDFKit.PDFDocument, label: string, value: string): void {
   ensureSpace(doc, 20);
   doc.font("Helvetica").fontSize(9).fillColor("#64748b").text(label, { continued: true, width: 120 });
@@ -112,6 +83,65 @@ function writeWrapped(
   doc.text(text, PAGE_MARGIN + indent, doc.y, { width: CONTENT_WIDTH - indent, lineGap: 2 });
 }
 
+function renderEmailBlock(doc: PDFKit.PDFDocument, item: InboxItem): void {
+  const subject = item.subject?.trim() || "(No subject)";
+  const from = item.from?.trim();
+  const to = item.to?.trim();
+  const body = emailBodyText(item);
+
+  ensureSpace(doc, 100);
+  doc.font("Helvetica-Bold").fontSize(10.5).fillColor("#0f172a").text(subject, { width: CONTENT_WIDTH });
+  doc.font("Helvetica").fontSize(8.5).fillColor("#64748b");
+  const meta = [item.receivedAt.slice(0, 10), "Email"];
+  if (item.private) meta.push("protected");
+  doc.text(meta.join(" · "));
+  if (from) doc.text(`From: ${from}`);
+  if (to) doc.text(`To: ${to}`);
+  if (item.topics?.length) doc.text(`Tags: ${item.topics.join(", ")}`);
+  doc.moveDown(0.35);
+
+  if (body) {
+    writeWrapped(doc, body, { size: 9.5, color: "#1e293b" });
+  } else {
+    writeWrapped(doc, "No body text stored.", { size: 9, color: "#64748b" });
+  }
+  doc.moveDown(0.75);
+}
+
+function renderLogBlock(doc: PDFKit.PDFDocument, log: Log): void {
+  ensureSpace(doc, 80);
+  const title = log.title?.trim() || "Record";
+  doc.font("Helvetica-Bold").fontSize(10.5).fillColor("#0f172a").text(title, { width: CONTENT_WIDTH });
+  doc.font("Helvetica").fontSize(8.5).fillColor("#64748b");
+  const meta = [log.date, "Record"];
+  if (log.private) meta.push("protected");
+  doc.text(meta.join(" · "));
+  doc.moveDown(0.35);
+
+  if (log.body?.trim()) {
+    writeWrapped(doc, log.body.trim(), { size: 9.5, color: "#1e293b" });
+  }
+  doc.moveDown(0.75);
+}
+
+function renderNarrativeSection(doc: PDFKit.PDFDocument, section: DossierNarrativeSection): void {
+  const entries = buildTimelineFromLogsAndInbox(section.logs, section.inbox).reverse();
+  if (entries.length === 0) return;
+
+  const subtitle = section.subtitle ? `${section.subtitle}` : undefined;
+  subsectionHeading(doc, section.title, subtitle);
+
+  for (const entry of entries) {
+    if (entry.kind === "email") {
+      const item = section.inbox.find((e) => e.id === entry.id);
+      if (item) renderEmailBlock(doc, item);
+      continue;
+    }
+    const log = section.logs.find((l) => l.id === entry.id);
+    if (log) renderLogBlock(doc, log);
+  }
+}
+
 export async function buildPdfDeliver(input: {
   data: ArgusData;
   collected: CollectedVaultEvidence;
@@ -121,7 +151,7 @@ export async function buildPdfDeliver(input: {
   const { data, collected, generatedAt, branding } = input;
   const { scope, logs, inbox, attachments, relatedEntityIds } = collected;
   const scopeLabel = SCOPE_LABELS[scope.type];
-  const timeline = buildTimelineFromLogsAndInbox(logs, inbox).reverse();
+  const narrative = buildDossierNarrativeSections(data, collected);
   const evidenceTotal = evidenceRecordCount(logs, inbox);
 
   const dates = [
@@ -139,7 +169,6 @@ export async function buildPdfDeliver(input: {
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    // Cover
     doc.font("Helvetica-Bold").fontSize(22).fillColor("#0f172a").text(scope.name, { width: CONTENT_WIDTH });
     doc.moveDown(0.4);
     doc.font("Helvetica").fontSize(11).fillColor("#64748b").text(`PDF · ${scopeLabel} · ${generatedAt.slice(0, 10)}`);
@@ -153,57 +182,27 @@ export async function buildPdfDeliver(input: {
     doc.moveDown(0.8);
     writeWrapped(
       doc,
-      `${evidenceTotal} evidence items · ${inbox.length} emails · ${logs.length} journal entries · ${attachments.length} files`
+      `${evidenceTotal} evidence items · ${inbox.length} emails · ${logs.length} records · ${attachments.length} files`
     );
+    writeWrapped(doc, "Full email bodies and record text included below.", { size: 9, color: "#64748b" });
 
-    // Timeline
-    sectionHeading(doc, "Timeline");
-    if (timeline.length === 0) {
-      writeWrapped(doc, "No evidence in scope.", { color: "#64748b" });
+    sectionHeading(doc, "Chronology by Event");
+    if (narrative.eventSections.length === 0) {
+      writeWrapped(doc, "No event anchors with linked evidence.", { color: "#64748b" });
     } else {
-      for (const entry of timeline) {
-        ensureSpace(doc, 90);
-        const datePart = entry.time ? `${entry.date} ${entry.time}` : entry.date;
-        const who = whoForEntry(data, entry, logs, inbox);
-        doc.font("Helvetica-Bold").fontSize(10).fillColor("#0f172a").text(entry.title, { width: CONTENT_WIDTH });
-        doc.font("Helvetica").fontSize(8.5).fillColor("#64748b");
-        const metaParts = [datePart, timelineKindLabel(entry.kind)];
-        if (who) metaParts.push(who);
-        if (entry.protected) metaParts.push("protected");
-        doc.text(metaParts.join(" · "));
-        const notes = notesForEntry(entry, logs, inbox);
-        if (notes) writeWrapped(doc, notes, { size: 9, color: "#475569" });
-        if (entry.tags?.length) {
-          writeWrapped(doc, `Tags: ${entry.tags.join(", ")}`, { size: 8.5, color: "#64748b" });
-        }
-        doc.moveDown(0.6);
+      for (const section of narrative.eventSections) {
+        renderNarrativeSection(doc, section);
       }
     }
 
-    // Evidence items
-    sectionHeading(doc, "Evidence Items");
-    if (timeline.length === 0) {
-      writeWrapped(doc, "No evidence in scope.", { color: "#64748b" });
+    sectionHeading(doc, "General Chronology");
+    if (narrative.general.logs.length === 0 && narrative.general.inbox.length === 0) {
+      writeWrapped(doc, "All evidence grouped under event anchors.", { color: "#64748b" });
     } else {
-      for (const entry of timeline) {
-        ensureSpace(doc, 70);
-        const who = whoForEntry(data, entry, logs, inbox);
-        doc.font("Helvetica-Bold").fontSize(9.5).fillColor("#0f172a").text(entry.title, { width: CONTENT_WIDTH });
-        const detailParts = [
-          entry.time ? `${entry.date} ${entry.time}` : entry.date,
-          timelineKindLabel(entry.kind),
-        ];
-        if (who) detailParts.push(`Who: ${who}`);
-        if (entry.tags?.length) detailParts.push(`Tags: ${entry.tags.join(", ")}`);
-        writeWrapped(doc, detailParts.join(" · "), { size: 8.5, color: "#64748b" });
-        const notes = notesForEntry(entry, logs, inbox);
-        if (notes) writeWrapped(doc, notes, { size: 9, color: "#334155", indent: 8 });
-        doc.moveDown(0.45);
-      }
+      renderNarrativeSection(doc, narrative.general);
     }
 
-    // Attachment index
-    sectionHeading(doc, "Attachment Index");
+    sectionHeading(doc, "Files");
     if (attachments.length === 0) {
       writeWrapped(doc, "No attachments in scope.", { color: "#64748b" });
     } else {
@@ -219,7 +218,6 @@ export async function buildPdfDeliver(input: {
       }
     }
 
-    // Related entities
     if (relatedEntityIds.length > 0) {
       sectionHeading(doc, "Related Entities");
       for (const id of relatedEntityIds) {
