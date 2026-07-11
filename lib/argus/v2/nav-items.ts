@@ -84,3 +84,31 @@ export function buildV2NavSections(signals: V2NavCounts): V2NavSection[] {
     },
   ];
 }
+
+/** Short label for the mobile top-bar menu button (current section). */
+export function getV2NavPageLabel(pathname: string): string {
+  if (pathname === "/argus/v2") return "Home";
+  if (pathname.startsWith("/argus/v2/inbox")) return "Inbox";
+  if (pathname.startsWith("/argus/search")) return "Search";
+  if (
+    pathname.startsWith("/argus/v2/browse/organizations") ||
+    pathname.startsWith("/argus/v2/organizations/")
+  ) {
+    return "Organizations";
+  }
+  if (pathname.startsWith("/argus/v2/browse/projects") || pathname.startsWith("/argus/v2/projects/")) {
+    return "Projects";
+  }
+  if (pathname.startsWith("/argus/v2/browse/network") || pathname.startsWith("/argus/v2/network/")) {
+    return "Network";
+  }
+  if (pathname.startsWith("/argus/v2/browse/topics")) return "Topics";
+  if (pathname.startsWith("/argus/v2/browse/events")) return "Events";
+  if (pathname.startsWith("/argus/v2/deliver")) return "Deliver";
+  if (pathname.startsWith("/argus/v2/diagnostics") || pathname.startsWith("/argus/diagnostics")) {
+    return "Diagnostics";
+  }
+  if (pathname.startsWith("/argus/v2/help")) return "Help";
+  if (pathname.startsWith("/argus/v2/runbooks")) return "Runbooks";
+  return "Navigate";
+}
