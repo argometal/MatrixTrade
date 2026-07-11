@@ -3,8 +3,8 @@ import { hasArgusDeleteAuthUnlock, hasArgusDeleteUnlock, hasArgusPrivateUnlock }
 import { argusDeleteCodeConfigured, argusPrivateConfigured } from "@/lib/auth/passwords";
 import { argusTotpConfigured } from "@/lib/auth/totp";
 import { deleteAuthConfigured } from "@/lib/argus/delete-link-check";
-import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
-import { migrateLegacyEventRecordIfNeeded } from "@/app/argus/actions";
+import { getInboxItems } from "@/lib/argus/server-storage";
+import { readArgusAfterEventMigration } from "@/lib/argus/v2/migrate-event-chronicle";
 import {
   buildV2EventDetails,
   buildV2EventInboxOptions,
@@ -32,10 +32,8 @@ export default async function V2BrowseEventsPage({
     hasArgusDeleteUnlock(),
     hasArgusDeleteAuthUnlock(),
   ]);
-  if (selected) {
-    await migrateLegacyEventRecordIfNeeded(selected);
-  }
-  const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, includePrivate)]);
+  const data = await readArgusAfterEventMigration(selected);
+  const inboxItems = await getInboxItems(undefined, includePrivate);
   const today = new Date().toISOString().slice(0, 10);
   const rows = buildV2EventRows(data, includePrivate, today);
   const details = buildV2EventDetails(data, inboxItems, includePrivate, today);

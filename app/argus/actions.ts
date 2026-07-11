@@ -54,7 +54,8 @@ import {
   createInputToReferenceKind,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
-import { buildEventShellNotes, eventAnchorDate, legacyEventRecordBody, normalizeEventTags } from "@/lib/argus/v2/event-chronicle";
+import { buildEventShellNotes, eventAnchorDate, normalizeEventTags } from "@/lib/argus/v2/event-chronicle";
+import { migrateLegacyEventRecordIfNeeded } from "@/lib/argus/v2/migrate-event-chronicle";
 import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
 import { partitionIdsByEntityKind } from "@/lib/argus/v2/entity-link-counts";
 import type { UnifiedCreatePayload, UnifiedCreateResult } from "@/lib/argus/create-flow-types";
@@ -481,42 +482,6 @@ export async function bulkDeleteInboxAction(
   revalidateArgus();
   revalidatePath("/argus/v2/inbox");
   return { ok: true, count };
-}
-
-/** One-time: move legacy narrative from entity.notes into the first chronicle log. */
-export async function migrateLegacyEventRecordIfNeeded(eventId: string): Promise<boolean> {
-  await requireArgusSession();
-  const entity = await getEntity(eventId);
-  if (!entity || referenceKindFromNotes(entity.notes ?? "") !== "event") {
-    return false;
-  }
-  const legacyBody = legacyEventRecordBody(entity.notes ?? "");
-  if (!legacyBody) {
-    if (entity.notes?.trim() !== buildEventShellNotes()) {
-      await updateEntity(eventId, { notes: buildEventShellNotes() });
-    }
-    return false;
-  }
-
-  const eventDate = eventAnchorDate(entity);
-  const tags = normalizeEventTags(entity.linkedTags ?? []);
-  await createLog({
-    kind: "log",
-    date: eventDate,
-    title: autoTitleFromBody(legacyBody),
-    body: legacyBody,
-    entityIds: [eventId],
-    topics: tags,
-    source: "manual",
-    private: false,
-    followUpDate: undefined,
-    attachmentIds: [],
-    classificationStatus: "classified",
-  });
-  await updateEntity(eventId, { notes: buildEventShellNotes() });
-  revalidateArgus();
-  revalidatePath("/argus/v2/browse/events");
-  return true;
 }
 
 /** Append a chronicle note on an event (tags + optional body). Composer is append-only. */
