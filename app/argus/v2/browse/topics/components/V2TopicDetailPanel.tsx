@@ -33,7 +33,7 @@ const PANEL_TABS: { id: PanelTab; label: string }[] = [
 const EVIDENCE_FILTERS: { id: EvidenceFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "email", label: "Email" },
-  { id: "journal", label: "Journal" },
+  { id: "journal", label: "Records" },
   { id: "file", label: "Files" },
   { id: "photo", label: "Photos" },
 ];
@@ -145,7 +145,7 @@ export function V2TopicDetailPanel({
           </p>
         ) : (
         <div className="mb-3 inline-grid grid-cols-3 gap-1.5 sm:grid-cols-6">
-          <MetricPill icon="📓" label="Journal" count={selected.journalCount} />
+          <MetricPill icon="📓" label="Records" count={selected.journalCount} />
           <MetricPill icon="✉" label="Email" count={selected.emailCount} />
           <MetricPill icon="📎" label="Files" count={selected.fileCount} />
           <MetricPill icon="🏢" label="Orgs" count={selected.orgCount} />
@@ -197,7 +197,7 @@ export function V2TopicDetailPanel({
               ))}
             </div>
             <p className="text-xs text-zinc-500">
-              Chronological evidence linked to this topic — emails, journal entries, and files.
+              Chronological evidence linked to this topic — emails, records, and files.
             </p>
             {filteredEvidence.length === 0 ? (
               <p className="text-sm text-zinc-500">No evidence yet. Link emails from inbox or register evidence.</p>
@@ -213,7 +213,7 @@ export function V2TopicDetailPanel({
 
         {panelTab === "timeline" ? (
           <div>
-            <p className="mb-4 text-xs text-zinc-500">Activity over time — journal and inbox evidence on this topic.</p>
+            <p className="mb-4 text-xs text-zinc-500">Activity over time — records and inbox evidence on this topic.</p>
             <V2OrgTimeline entries={selected.timeline} />
           </div>
         ) : null}

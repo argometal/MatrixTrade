@@ -3,7 +3,7 @@ import { V2Badge, V2LockIcon, groupTimelineByDate } from "./v2-ui";
 
 function kindLabel(entry: V2TimelineEntry): string {
   if (entry.kind === "journal") {
-    return entry.journalSubtype === "note" ? "Journal · Note" : "Journal · Log";
+    return entry.journalSubtype === "note" ? "Note" : "Log";
   }
   if (entry.kind === "email") return "Email";
   if (entry.kind === "meeting") return "Meeting";
@@ -46,7 +46,7 @@ export function V2OrgTimeline({
   const hasMore = limit ? entries.length > limit : false;
 
   if (shown.length === 0) {
-    return <p className="py-8 text-center text-sm text-zinc-500">No linked journal entries or emails yet.</p>;
+    return <p className="py-8 text-center text-sm text-zinc-500">No linked records or emails yet.</p>;
   }
 
   return (

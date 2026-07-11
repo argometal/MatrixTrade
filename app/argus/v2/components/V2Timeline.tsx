@@ -4,7 +4,7 @@ import { V2Badge, V2LockIcon, formatV2Date, groupTimelineByDate } from "./v2-ui"
 
 function kindLabel(entry: V2TimelineEntry): string {
   if (entry.kind === "journal") {
-    return entry.journalSubtype === "note" ? "Journal · Note" : "Journal · Log";
+    return entry.journalSubtype === "note" ? "Note" : "Log";
   }
   if (entry.kind === "email") return "Email";
   if (entry.kind === "meeting") return "Meeting";

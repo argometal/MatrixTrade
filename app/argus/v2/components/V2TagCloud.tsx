@@ -25,7 +25,7 @@ function tagFontSize(weight: number): string {
 
 export function V2TagCloud({ tags }: { tags: V2TagCloudItem[] }) {
   if (tags.length === 0) {
-    return <p className="text-sm text-zinc-500">Tags appear on journal entries and inbox items.</p>;
+    return <p className="text-sm text-zinc-500">Tags appear on registered records and inbox items.</p>;
   }
 
   return (

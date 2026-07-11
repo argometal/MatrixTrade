@@ -295,7 +295,7 @@ export function V2EventDetailPanel({
                   <dd className="font-semibold tabular-nums text-zinc-200">{selected.relatedEmails.length}</dd>
                 </div>
                 <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
-                  <dt className="text-xs text-zinc-600">Journal entries</dt>
+                  <dt className="text-xs text-zinc-600">Records</dt>
                   <dd className="font-semibold tabular-nums text-zinc-200">{selected.linkedEntries.length}</dd>
                 </div>
                 <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Entity, InboxItem, InboxStatus, Log } from "@/lib/argus/types";
 import type { AttachmentViewModel, EmailViewModel } from "@/lib/argus/email-view";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
@@ -119,6 +119,7 @@ export function V2InboxDetailPanel({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [linkModalFilter, setLinkModalFilter] = useState<ArgusLinkFilter>("all");
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [linkIds, setLinkIds] = useState<string[]>(detail.item.linkedEntityIds ?? []);
   const [status, setStatus] = useState<InboxStatus>(
     inboxStatusAfterLinkChange(detail.item.status, (detail.item.linkedEntityIds ?? []).length) ??
@@ -138,6 +139,24 @@ export function V2InboxDetailPanel({
     setPanelTabState(tab);
     sessionStorage.setItem(PANEL_TAB_STORAGE_KEY, tab);
   }
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onPointerDown(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     setLinkIds(detail.item.linkedEntityIds ?? []);
@@ -293,7 +312,7 @@ export function V2InboxDetailPanel({
 
       {convertedLog ? (
         <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-zinc-600">Converted to journal</p>
+          <p className="text-[11px] uppercase tracking-wide text-zinc-600">Converted to record</p>
           <Link href={`/argus/logs/${convertedLog.id}`} className="text-sm text-violet-400 hover:text-violet-300">
             {convertedLog.title}
           </Link>
@@ -504,7 +523,7 @@ export function V2InboxDetailPanel({
       <div className="border-b border-zinc-800/80 px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold leading-snug text-zinc-50">{view.subject || "(No subject)"}</h2>
-          <div className="relative hidden shrink-0 items-center gap-2 lg:flex">
+          <div ref={menuRef} className="relative hidden shrink-0 items-center gap-2 lg:flex">
             {canTriage ? (
               <button
                 type="button"
@@ -533,7 +552,7 @@ export function V2InboxDetailPanel({
                     className="block rounded-lg px-3 py-2 text-sm text-violet-400 hover:bg-zinc-800"
                     onClick={() => setMenuOpen(false)}
                   >
-                    View journal record
+                    View record
                   </Link>
                 ) : null}
                 <Link

@@ -18,6 +18,7 @@ export function V2CreateEntityButton({
   className?: string;
 }) {
   const router = useRouter();
+  const { openLinkModal } = useArgusAdd();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -33,8 +34,15 @@ export function V2CreateEntityButton({
         onCancel={() => setOpen(false)}
         onSave={(data) => {
           startTransition(async () => {
-            await createEntityInlineAction(kind, data.name, data.notes);
+            const created = await createEntityInlineAction(kind, data.name, data.notes);
             setOpen(false);
+            openLinkModal({
+              entityId: created.id,
+              linkedEntityIds: [],
+              title: "Link",
+              subtitle: `Connect ${created.name} to related people, projects, topics, and events.`,
+              showTags: false,
+            });
             router.refresh();
           });
         }}

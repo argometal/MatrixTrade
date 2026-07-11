@@ -148,7 +148,7 @@ export function V2QuickDeliverModal({
             {[
               { label: "Evidence", value: payload.summary.evidenceCount },
               { label: "Emails", value: payload.summary.inboxCount },
-              { label: "Journal", value: payload.summary.logCount },
+              { label: "Records", value: payload.summary.logCount },
               { label: "Files", value: payload.summary.fileCount },
             ].map((stat) => (
               <div key={stat.label} className="rounded-lg bg-zinc-950/60 px-2 py-2 text-center">

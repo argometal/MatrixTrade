@@ -30,10 +30,10 @@ import { initialsFromName } from "@/lib/argus/v2/network-contact-loaders";
 import { V2Badge, V2Card } from "@/app/argus/v2/components/v2-ui";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 
-const TABS = ["Overview", "Timeline", "Projects", "Organizations", "Topics", "Files", "Journal"] as const;
+const TABS = ["Overview", "Timeline", "Projects", "Organizations", "Topics", "Files", "Records"] as const;
 type ContactTab = (typeof TABS)[number];
 
-const TIMELINE_FILTERS = ["All", "Journal", "Email", "Project", "Event"] as const;
+const TIMELINE_FILTERS = ["All", "Records", "Email", "Project", "Event"] as const;
 
 function ValueCheckboxList({
   title,
@@ -201,7 +201,7 @@ function TimelineSection({ items }: { items: NetworkContactTimelineItem[] }) {
   const [filter, setFilter] = useState<(typeof TIMELINE_FILTERS)[number]>("All");
   const filtered = useMemo(() => {
     if (filter === "All") return items;
-    if (filter === "Journal") return items.filter((item) => item.kind === "journal");
+    if (filter === "Records") return items.filter((item) => item.kind === "journal");
     if (filter === "Email") return items.filter((item) => item.kind === "email");
     return items;
   }, [items, filter]);
@@ -235,7 +235,7 @@ function TimelineSection({ items }: { items: NetworkContactTimelineItem[] }) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="mb-1 flex items-center gap-2">
-                      <V2Badge tone={item.kind === "journal" ? "purple" : "blue"}>{item.kind === "journal" ? "Journal" : "Email"}</V2Badge>
+                      <V2Badge tone={item.kind === "journal" ? "purple" : "blue"}>{item.kind === "journal" ? "Record" : "Email"}</V2Badge>
                       <span className="text-[11px] text-zinc-600">{formatDate(item.date)}</span>
                     </div>
                     <p className="font-medium text-zinc-100">{item.title}</p>
@@ -471,13 +471,13 @@ export function NetworkContactShell({
         <V2Card className="p-4">
           <p className="text-sm text-zinc-400">
             {page.fileCount > 0
-              ? `${page.fileCount} attachment${page.fileCount === 1 ? "" : "s"} linked through journal and email evidence.`
+              ? `${page.fileCount} attachment${page.fileCount === 1 ? "" : "s"} linked through records and email evidence.`
               : "No files linked yet."}
           </p>
         </V2Card>
       ) : null}
 
-      {tab === "Journal" ? (
+      {tab === "Records" ? (
         <V2Card className="p-4">
           <ul className="space-y-2">
             {page.timeline

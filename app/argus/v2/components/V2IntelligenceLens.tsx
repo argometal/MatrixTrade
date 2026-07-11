@@ -67,12 +67,6 @@ export function V2IntelligenceLens({
         >
           Open focused view
         </Link>
-        <Link
-          href={openHref}
-          className="rounded-xl border border-zinc-700 px-4 py-2.5 text-sm text-zinc-300 hover:border-zinc-600"
-        >
-          Work on {node.name}
-        </Link>
       </div>
     </div>
   );

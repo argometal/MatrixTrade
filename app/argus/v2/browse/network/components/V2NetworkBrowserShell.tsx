@@ -159,7 +159,7 @@ function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
           ))}
         </div>
       ) : (
-        <p className="mb-3 text-[10px] text-zinc-600">Expertise will emerge from journal topics</p>
+        <p className="mb-3 text-[10px] text-zinc-600">Expertise will emerge from tagged topics</p>
       )}
 
       <div className="mb-3 flex items-center justify-between text-xs">

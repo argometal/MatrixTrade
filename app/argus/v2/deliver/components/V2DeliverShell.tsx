@@ -492,7 +492,7 @@ export function V2DeliverShell({
           <div className="mb-5 space-y-2">
             <p className="text-xs font-medium text-zinc-500">Include</p>
             {[
-              { id: "logs", label: "Journal / Logs", checked: includeLogs, set: setIncludeLogs },
+              { id: "logs", label: "Records / Logs", checked: includeLogs, set: setIncludeLogs },
               { id: "inbox", label: "Inbox / Emails", checked: includeInbox, set: setIncludeInbox },
               { id: "files", label: "Attachments / Files", checked: includeAttachments, set: setIncludeAttachments },
             ].map((item) => (

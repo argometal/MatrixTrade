@@ -37,7 +37,7 @@ const TABS: { id: V2TopicTab; label: string }[] = [
 
 const KIND_OPTIONS: { id: V2TopicEvidenceKind; label: string }[] = [
   { id: "email", label: "Has email" },
-  { id: "journal", label: "Has journal" },
+  { id: "journal", label: "Has records" },
   { id: "file", label: "Has files" },
 ];
 
@@ -449,7 +449,7 @@ export function V2TopicsShell({
               </p>
               <p className="mt-1 text-xs text-zinc-600">
                 {rows.length === 0
-                  ? "Capture a topic and link emails or journal entries to it."
+                  ? "Capture a topic and link emails or records to it."
                   : "Try a different view, tag, or clear filters."}
               </p>
             </div>
