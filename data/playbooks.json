@@ -11,5 +11,31 @@
       "Entry on daily trigger",
       "Stop defined before entry"
     ]
+  },
+  {
+    "id": "asymmetric-support-entry",
+    "name": "Asymmetric Support Entry",
+    "status": "TESTING",
+    "description": "Enter near structural support before full confirmation when location + R:R justify controlled risk.",
+    "experimentScope": "playbook",
+    "experimentHypothesis": "Entering near structural support before full confirmation produces better expectancy than waiting for confirmation — when confirmation cost would push R:R below Stock File minimum.",
+    "principles": [
+      "Confirmation has an economic cost — not free",
+      "Evaluate thesis quality AND opportunity quality separately",
+      "More confirmation ≠ better trade if R:R deteriorates",
+      "Location evidence may justify probe before full confirmation evidence",
+      "Setup stop ≠ thesis invalidation — do not manufacture R:R with tight stops",
+      "Single stock outcome does not prove or disprove this playbook"
+    ],
+    "checklist": [
+      "Stock File zone defined with minimum R:R",
+      "Price inside or near planned strategic zone",
+      "Thesis invalidation not breached",
+      "Current R:R meets Stock File minimum",
+      "Estimated R:R after confirmation still acceptable OR probe authorized",
+      "Setup stop defined (not thesis invalidation unless intentional)",
+      "Acceptable dollar loss if stopped",
+      "Probe or single entry — no false add ladder unless levels exist"
+    ]
   }
 ]

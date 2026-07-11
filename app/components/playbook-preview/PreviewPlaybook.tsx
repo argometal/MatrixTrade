@@ -121,6 +121,28 @@ export function PreviewPlaybook({
                       <p className="mt-3 text-sm text-zinc-400">{row.playbook.description}</p>
                     )}
 
+                    {row.playbook?.experimentHypothesis ? (
+                      <p className="mt-3 rounded-lg bg-violet-500/10 px-3 py-2 text-xs text-violet-200">
+                        <span className="font-semibold uppercase tracking-wide text-violet-400">
+                          Playbook experiment
+                        </span>
+                        <span className="mt-1 block text-zinc-300">
+                          {row.playbook.experimentHypothesis}
+                        </span>
+                      </p>
+                    ) : null}
+
+                    {row.playbook?.principles && row.playbook.principles.length > 0 ? (
+                      <ul className="mt-3 space-y-1 text-sm text-zinc-400">
+                        {row.playbook.principles.map((item) => (
+                          <li key={item} className="flex items-start gap-2">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+
                     {row.playbook?.checklist && row.playbook.checklist.length > 0 && (
                       <ul className="mt-3 space-y-1 text-sm text-zinc-400">
                         {row.playbook.checklist.map((item) => (

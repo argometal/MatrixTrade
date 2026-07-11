@@ -41,7 +41,10 @@ export interface StockThesisLevels {
 
 export interface StockThesisRiskRules {
   minimumRR: number;
+  /** Thesis invalidation — broader Stock File case no longer valid. */
   invalidation: string;
+  /** Setup invalidation — this specific entry setup failed (may be tighter). */
+  setupInvalidation?: string;
   notes?: string;
 }
 

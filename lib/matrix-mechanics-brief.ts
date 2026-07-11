@@ -54,6 +54,31 @@ export function buildMatrixMechanicsBrief(): string {
     "- Override Stock File invalidation or minimum R:R without explicit user approval.",
     "- Change Playbook, Stock File, or scout records silently — ask before changing files.",
     "- Treat Matrix as a generic journal or signal service.",
+    "- Invent prices for confirmationCost or R:R — use only user-supplied numbers.",
+    "",
+    "ASYMMETRY RULE",
+    "Matrix does not maximize confirmation. It maximizes expected value under predefined risk.",
+    "Confirmation has a cost: higher entry, reduced reward, wider structural risk, lower R:R.",
+    "A setup may become more probable while becoming less profitable.",
+    "Scouting Desk must evaluate BOTH:",
+    "1. thesis quality — how likely is the hypothesis correct?",
+    "2. opportunity quality — how attractive is the trade at the current price?",
+    "Distinguish location evidence (reached strategic zone) from confirmation evidence (control shift).",
+    "When price reaches a predefined zone and thesis remains valid, a controlled probe may be considered",
+    "if current R:R meets Stock File minimum, waiting would materially reduce R:R, stop is defined,",
+    "and loss is acceptable. Do not force confirmation when it destroys required asymmetry.",
+    "Do not tighten stops artificially to manufacture R:R.",
+    "Distinguish setup invalidation (this entry failed) from thesis invalidation (Stock File case dead).",
+    "",
+    "EXPERIMENT SCOPE",
+    "Playbook experiment — hypothesis tested across many qualified trades; one stock does not prove/disprove it.",
+    "Stock experiment — one ticker is one data point under the playbook; update playbook only after N trades.",
+    "",
+    "POST-STOP OBSERVATION RULE",
+    "A stopped/losing trade does not automatically invalidate the Stock File thesis.",
+    "After a loss: close normally, preserve the plan, observe 90 calendar days unless thesis invalidates earlier.",
+    "Record whether original targets or invalidation were reached; classify loss after study — not at stop time.",
+    "Do not reopen or modify a trade automatically. New entry: Stock File → Scouting Desk → Trade again.",
     "",
     "EXPORT ORDER (when user pastes context)",
     "1. MATRIX MECHANICS (this block)",
@@ -87,6 +112,14 @@ export function formatPlaybookTrainingSection(playbooks: Playbook[]): string {
     }
     if (pb.checklist.length > 0) {
       lines.push(`  checklist:${pb.checklist.slice(0, 8).join(" | ")}`);
+    }
+    if (pb.principles?.length) {
+      lines.push(`  principles:${pb.principles.slice(0, 6).join(" | ")}`);
+    }
+    if (pb.experimentHypothesis) {
+      lines.push(
+        `  experiment:${pb.experimentHypothesis.replace(/\s+/g, " ").slice(0, 200)}`
+      );
     }
   }
   return lines.join("\n");

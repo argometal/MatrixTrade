@@ -24,7 +24,7 @@ SCOPED ACCESS — you may ONLY act on the stock profile in this package.
 Allowed types:
 - evidence-add: stockProfileId, ticker, timeframe, category, value, confidence required
 - file-update: id (stock profile), at least one of status, currentHypothesis, notes, thesis
-- decision-update: planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required; optional reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe
+- decision-update: planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required; optional thesisQuality, opportunityQuality, confirmationCost (supplied prices only), locationEvidence, confirmationEvidence, singleEntryOnly, reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe
 - scout-assessment: stockProfileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[]
 
 Forbidden: trade-proposal, trade-close, playbook changes, other tickers.

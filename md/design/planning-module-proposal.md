@@ -1,6 +1,6 @@
 # Planning module — proposal (Phase 0)
 
-**Status:** Phase 0 **shipped** (2026-07-09). Scouting Desk MVP + Stock File links (2026-07-10). **UI name:** Scouting Desk (route `/planning`). Phase 1+ → `md/concepts/deferred-matrixtrade.md` and §7 below.
+**Status:** Phase 0 **shipped** (2026-07-09). Scouting Desk MVP + Stock File links (2026-07-10). **Asymmetry rule** (thesis vs opportunity, confirmation cost) — 2026-07-11 → `md/matrix/asymmetric-entry-confirmation-cost.md`. **UI name:** Scouting Desk (route `/planning`).
 **Owner intent:** Pre-trade workspace to scout entries, save plans, and follow what failed — before creating H00x trades.
 
 ---

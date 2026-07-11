@@ -93,6 +93,13 @@ export function TradeReviewWizard({
 
   return (
     <form action={saveReviewAction.bind(null, trade.id)} className="space-y-6">
+      {trade.postStopStudy?.enabled ? (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-950/40 px-4 py-3 text-sm text-amber-200">
+          90-day post-stop study active until{" "}
+          {new Date(trade.postStopStudy.endsAt).toLocaleDateString()}. Prefer classifying the loss
+          after observing whether the original thesis/target played out.
+        </div>
+      ) : null}
       <div className="flex gap-2">
         {STEPS.map((label, i) => (
           <div

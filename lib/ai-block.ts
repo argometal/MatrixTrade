@@ -15,7 +15,7 @@ Required shape:
 PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - stock-case-create: NEW Stock Profile — ticker, currentHypothesis, levels{}, riskRules{minimumRR, invalidation}; optional thesis, notes, historicalAnalysis[], initialScout{plannedEntry, stopPrice, targetPrice}
 - evidence-add: MarketEvidence row — stockProfileId, ticker, timeframe, category, value, confidence (0-100) required; optional note
-- decision-update: scout decision on PLAN — planId, verdict (go|wait|probe|no), decisionConfidence (0-100), challenges[] (min 1) required; optional reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe (trigger + expires required)
+- decision-update: scout decision on PLAN — planId, verdict (go|wait|probe|no), decisionConfidence (0-100), challenges[] (min 1) required; optional thesisQuality, opportunityQuality (0-100), confirmationCost{currentRR,estimatedConfirmedRR,rewardConsumedPercent,assessment} (supplied prices only), locationEvidence, confirmationEvidence, singleEntryOnly, reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: propose Stock File change — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}
 
@@ -231,6 +231,16 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
         "Weekly structure intact but no trigger at planned entry",
       ],
       reasoning: "Wait for pullback to 340-355 with R:R >= 3 before probe or full entry.",
+      thesisQuality: 72,
+      opportunityQuality: 41,
+      confirmationCost: {
+        currentRR: 3.8,
+        estimatedConfirmedRR: 2.1,
+        rewardConsumedPercent: 35,
+        assessment: "Waiting for daily reclaim may push R:R below Stock File minimum 3.",
+      },
+      locationEvidence: "Price touched lower edge of primary zone once",
+      confirmationEvidence: "No reclaim or higher low yet",
       planningRisk: { structure: "HH/HL intact", stop: "below 320", rr: "3R min not met at spot" },
       executionRisk: { earnings: "none this week", emotion: "avoid FOMO chase" },
     },

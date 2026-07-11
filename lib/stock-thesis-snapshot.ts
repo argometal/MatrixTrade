@@ -74,8 +74,12 @@ export function buildStockThesisContextText(thesis: StockThesis): string {
     "",
     "=== RISK RULES ===",
     `minimum_rr:${thesis.riskRules.minimumRR}`,
-    `invalidation:${thesis.riskRules.invalidation}`
+    `thesis_invalidation:${thesis.riskRules.invalidation}`
   );
+
+  if (thesis.riskRules.setupInvalidation) {
+    lines.push(`setup_invalidation:${thesis.riskRules.setupInvalidation}`);
+  }
 
   if (thesis.riskRules.notes) {
     lines.push(`notes:${thesis.riskRules.notes}`);

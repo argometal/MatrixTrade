@@ -1,3 +1,5 @@
+import type { ConfirmationCost } from "./asymmetry-types";
+
 /** Stored scout decision verdict — extends display-only ScoutingVerdict with probe. */
 export type DecisionVerdict = "wait" | "probe" | "go" | "no";
 
@@ -25,7 +27,18 @@ export interface ScoutDecision {
   decisionConfidence: number;
   expectedValue?: number;
   expectedProbability?: number;
+  /** 0–100 — how likely the hypothesis is correct. */
+  thesisQuality?: number;
+  /** 0–100 — how attractive the trade is at the current price. */
   opportunityQuality?: number;
+  /** Cost of waiting for more confirmation — use supplied prices only. */
+  confirmationCost?: ConfirmationCost;
+  /** Location evidence — price reached strategic zone. */
+  locationEvidence?: string;
+  /** Confirmation evidence — buyers/sellers taking control. */
+  confirmationEvidence?: string;
+  /** When true, no meaningful add before thesis resolves (single-entry setup). */
+  singleEntryOnly?: boolean;
   planningRisk?: PlanningRisk;
   executionRisk?: ExecutionRisk;
   reasoning?: string;
