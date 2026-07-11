@@ -27,7 +27,7 @@ import type {
   NetworkContactTimelineItem,
 } from "@/lib/argus/v2/network-contact-loaders";
 import { initialsFromName } from "@/lib/argus/v2/network-contact-loaders";
-import { personHasContactEvidence } from "@/lib/argus/network-dialogue";
+import { personHasContactEvidence, networkConversationNoteTemplate } from "@/lib/argus/network-dialogue";
 import { V2Badge, V2Card } from "@/app/argus/v2/components/v2-ui";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 import { NetworkDialogueGuide } from "./NetworkDialogueGuide";
@@ -425,6 +425,12 @@ export function NetworkContactShell({
                 email={page.email}
                 linkedIn={page.linkedIn}
                 onRegister={() => openCapture({ entityIds: [entity.id] })}
+                onRegisterWithTemplate={() =>
+                  openCapture({
+                    entityIds: [entity.id],
+                    body: networkConversationNoteTemplate(entity.name),
+                  })
+                }
               />
             )}
             <TimelineSection items={page.timeline} />

@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { CAPTURE, REFERENCES, TAGS } from "@/lib/argus/ux-copy";
+import {
+  networkConversationNoteTemplate,
+  selectedIncludesPerson,
+} from "@/lib/argus/network-dialogue";
+import { NetworkConversationPlaybook } from "@/app/argus/v2/network/components/NetworkConversationPlaybook";
 import { eventDateFromLinkedEntities } from "@/lib/argus/journal-event-origin";
 import {
   inferRegisterKindOverride,
@@ -180,6 +185,12 @@ export function CaptureSheet({
     .filter(Boolean);
   const linkedLabel = selectedNames.join(", ");
   const resolvedEventDate = showDateField ? eventDate || today : eventDate || today;
+  const linkedPerson = selectedIncludesPerson(buckets.alphabetical, selectedIds);
+  const linkedPersonName = linkedPerson
+    ? buckets.alphabetical.find(
+        (e) => e.type === "person" && selectedIds.includes(e.id)
+      )?.name
+    : undefined;
 
   const formContent = (
     <form action={action} className="flex min-h-0 flex-1 flex-col">
@@ -198,6 +209,19 @@ export function CaptureSheet({
       <input type="hidden" name="source" value={initial?.inboxId ? "inbox" : "manual"} />
 
       <p className="mb-3 text-[11px] leading-snug text-zinc-500">{contextHint}</p>
+
+      {linkedPerson ? (
+        <div className="mb-3">
+          <NetworkConversationPlaybook
+            compact
+            personName={linkedPersonName}
+            onUseTemplate={() => {
+              const template = networkConversationNoteTemplate(linkedPersonName);
+              setBody((current) => (current.trim() ? current : template));
+            }}
+          />
+        </div>
+      ) : null}
 
       <input
         value={title}

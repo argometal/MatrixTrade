@@ -1,7 +1,18 @@
 # Network intelligence thesis
 
 **Status:** Design base — evidence from dozens of real networking conversations (human + AI synthesis).  
-**Rule:** Network in Argus is **not a CRM**. It is a **distributed intelligence engine** that promotes contact first, evaluation later.
+**Rule:** Network in Argus is **not a CRM**. It is the **future lens** of the same engine — conversations, prospects, and co-creation. See [network-future-architecture.md](network-future-architecture.md).
+
+---
+
+## Past vs future
+
+| Argus | Network |
+|-------|---------|
+| Evidence of what happened | Conversations and what we may build |
+| Register · Deliver · Timeline | People · Playbook · Projects together |
+
+Network does not ask “what did they do to me?” It asks: **what are we discussing, what prospects do we see, what are we creating?**
 
 ---
 
@@ -127,10 +138,20 @@ Not spontaneous — **technique with respect**, like customer care. Systematized
 | Piece | Status |
 |-------|--------|
 | Thesis doc | This file |
-| Contact page: dialogue-first | Shipped in `NetworkDialogueGuide` |
+| Contact page: dialogue-first | Shipped |
 | Relationship overview gated | After `timeline.length > 0` |
-| Pattern engine across network | Future — observation engine |
-| Question prompts in Register | Future — prefill tags / template |
+| Conversation playbook (collapsible) | Shipped — technique cheat sheet, not interrogation |
+| Register note template | Shipped — 4 blank lines, optional |
+| Auto-tags from answers | **Not planned** — grades are enough |
+| Cross-network pattern engine | **Not planned** — observation stays manual |
+
+### Playbook design rules
+
+- **Optional** — collapsed by default; you open it if you forgot what to ask.
+- **One question at a time** — ideas, not a checklist to run through.
+- **Situations** — open dialogue, busy contact, when to help, when to connect, graceful close.
+- **No pressure** — if they do not want to talk, the playbook says how to leave well.
+- **Register template** — memory scaffold after the fact, not a form they fill during the chat.
 
 ---
 

@@ -21,6 +21,8 @@ export type CaptureOpenOptions = {
   openReference?: boolean;
   entityIds?: string[];
   eventDate?: string;
+  body?: string;
+  title?: string;
 };
 
 type CreateFlowState = CreateFlowOpenOptions & {
@@ -129,6 +131,8 @@ export function ArgusAddProvider({
     setCaptureInitial({
       entityIds: options?.entityIds,
       eventDate: options?.eventDate,
+      body: options?.body,
+      title: options?.title,
     });
     setAutoOpenReference(Boolean(options?.openReference));
     setCaptureOpen(true);

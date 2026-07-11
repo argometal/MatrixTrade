@@ -155,6 +155,7 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 | [product-flow-proposal.md](product-flow-proposal.md) | Canonical flow |
 | [network-browse-spec.md](network-browse-spec.md) | Spec |
 | [network-intelligence-thesis.md](network-intelligence-thesis.md) | **Design base** — contact-first networking thesis |
+| [network-future-architecture.md](network-future-architecture.md) | **Design base** — Network as Argus of the future |
 | [v2-design-checklist.md](v2-design-checklist.md) | QA — update every UI change |
 | [v2-checklist-solutions.md](v2-checklist-solutions.md) | QA solutions |
 | [checklist-protocol.md](checklist-protocol.md) | Mandatory process |
