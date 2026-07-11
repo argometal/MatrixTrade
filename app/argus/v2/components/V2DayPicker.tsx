@@ -86,6 +86,11 @@ export function V2DayPicker({
     onSelectDay?.(iso);
   }
 
+  function stopLinkNavigation(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+
   const navBtn =
     "flex h-7 w-7 items-center justify-center rounded-md border border-zinc-700 text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-40";
 
@@ -96,7 +101,10 @@ export function V2DayPicker({
           <button
             type="button"
             disabled={disabled}
-            onClick={() => setViewYear((y) => y - 1)}
+            onClick={(e) => {
+              stopLinkNavigation(e);
+              setViewYear((y) => y - 1);
+            }}
             className={navBtn}
             aria-label="Previous year"
             title="Previous year"
@@ -106,7 +114,10 @@ export function V2DayPicker({
           <button
             type="button"
             disabled={disabled}
-            onClick={() => shiftMonth(-1)}
+            onClick={(e) => {
+              stopLinkNavigation(e);
+              shiftMonth(-1);
+            }}
             className={navBtn}
             aria-label="Previous month"
             title="Previous month"
@@ -121,7 +132,10 @@ export function V2DayPicker({
           <button
             type="button"
             disabled={disabled}
-            onClick={() => shiftMonth(1)}
+            onClick={(e) => {
+              stopLinkNavigation(e);
+              shiftMonth(1);
+            }}
             className={navBtn}
             aria-label="Next month"
             title="Next month"
@@ -131,7 +145,10 @@ export function V2DayPicker({
           <button
             type="button"
             disabled={disabled}
-            onClick={() => setViewYear((y) => y + 1)}
+            onClick={(e) => {
+              stopLinkNavigation(e);
+              setViewYear((y) => y + 1);
+            }}
             className={navBtn}
             aria-label="Next year"
             title="Next year"
@@ -162,7 +179,10 @@ export function V2DayPicker({
               key={iso}
               type="button"
               disabled={disabled}
-              onClick={() => pickDay(day)}
+              onClick={(e) => {
+                stopLinkNavigation(e);
+                pickDay(day);
+              }}
               className={`flex h-8 items-center justify-center rounded-md text-xs font-medium transition ${
                 selected
                   ? "bg-violet-600 text-white"

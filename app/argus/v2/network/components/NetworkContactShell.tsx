@@ -32,7 +32,7 @@ import { V2Badge, V2Card } from "@/app/argus/v2/components/v2-ui";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 import { NetworkDialogueGuide } from "./NetworkDialogueGuide";
 
-const TABS = ["Overview", "Timeline", "Projects", "Organizations", "Topics", "Files", "Records"] as const;
+const TABS = ["Overview", "Timeline", "Projects", "Organizations", "Topics", "Tags"] as const;
 type ContactTab = (typeof TABS)[number];
 
 const TIMELINE_FILTERS = ["All", "Records", "Email", "Project", "Event"] as const;
@@ -196,6 +196,75 @@ function ContactAside({
         )}
       </V2Card>
     </div>
+  );
+}
+
+function TagsSection({
+  page,
+}: {
+  page: Pick<NetworkContactPageData, "tags" | "relatedTopics" | "entity" | "intel">;
+}) {
+  const manualTags = (page.entity.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean);
+  const evidenceTags = [...new Set(page.intel.topics.map((tag) => tag.trim()).filter(Boolean))];
+
+  return (
+    <V2Card className="p-4">
+      <h3 className="mb-1 text-sm font-semibold text-zinc-100">Associated tags</h3>
+      <p className="mb-4 text-[11px] text-zinc-600">Labels and topics tied to this contact through links and evidence.</p>
+
+      {page.tags.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {page.tags.map((tag, index) => (
+            <V2Badge key={tag} tone={index % 3 === 0 ? "blue" : index % 3 === 1 ? "green" : "purple"}>
+              {tag}
+            </V2Badge>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-zinc-600">No tags yet. Link topics or add labels on the contact to build context.</p>
+      )}
+
+      {manualTags.length > 0 ? (
+        <div className="mt-5">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Manual labels</p>
+          <div className="flex flex-wrap gap-2">
+            {manualTags.map((tag) => (
+              <V2Badge key={`manual-${tag}`} tone="blue">
+                {tag}
+              </V2Badge>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {evidenceTags.length > 0 ? (
+        <div className="mt-5">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500">From evidence</p>
+          <div className="flex flex-wrap gap-2">
+            {evidenceTags.map((tag) => (
+              <V2Badge key={`evidence-${tag}`} tone="purple">
+                {tag}
+              </V2Badge>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {page.relatedTopics.length > 0 ? (
+        <div className="mt-5">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Linked topics</p>
+          <ul className="space-y-2">
+            {page.relatedTopics.map((topic) => (
+              <li key={topic.id}>
+                <a href={topic.href} className="text-sm text-violet-400 hover:text-violet-300">
+                  {topic.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </V2Card>
   );
 }
 
@@ -488,32 +557,7 @@ export function NetworkContactShell({
         </V2Card>
       ) : null}
 
-      {tab === "Files" ? (
-        <V2Card className="p-4">
-          <p className="text-sm text-zinc-400">
-            {page.fileCount > 0
-              ? `${page.fileCount} attachment${page.fileCount === 1 ? "" : "s"} linked through records and email evidence.`
-              : "No files linked yet."}
-          </p>
-        </V2Card>
-      ) : null}
-
-      {tab === "Records" ? (
-        <V2Card className="p-4">
-          <ul className="space-y-2">
-            {page.timeline
-              .filter((item) => item.kind === "journal")
-              .map((item) => (
-                <li key={item.id}>
-                  <a href={item.href} className="block rounded-xl border border-zinc-800/80 px-3 py-2 text-sm text-zinc-300 hover:border-zinc-700">
-                    <span className="font-medium text-zinc-100">{item.title}</span>
-                    <span className="mt-1 block text-xs text-zinc-600">{formatDate(item.date)}</span>
-                  </a>
-                </li>
-              ))}
-          </ul>
-        </V2Card>
-      ) : null}
+      {tab === "Tags" ? <TagsSection page={page} /> : null}
         </div>
       </div>
     </div>

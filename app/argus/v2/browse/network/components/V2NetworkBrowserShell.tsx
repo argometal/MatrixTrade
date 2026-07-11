@@ -148,12 +148,22 @@ function NetworkLastContactPicker({
   }
 
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
       <button
         type="button"
         title="Update last contact"
         aria-label="Update last contact date"
         disabled={pending}
+        onMouseDown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -169,7 +179,11 @@ function NetworkLastContactPicker({
       </button>
       {open ? (
         <div
-          className="absolute right-0 top-full z-20 mt-1 w-[15.5rem] rounded-xl border border-zinc-700 bg-zinc-900 p-3 shadow-xl"
+          className="absolute right-0 top-full z-50 mt-1 w-[15.5rem] rounded-xl border border-zinc-700 bg-zinc-900 p-3 shadow-xl"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-zinc-500">Last contact</p>
@@ -189,10 +203,13 @@ function NetworkLastContactPicker({
 
 function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
   return (
-    <Link
-      href={card.href}
-      className="group block rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-4 transition hover:border-violet-500/40 hover:bg-zinc-900/80"
-    >
+    <div className="group relative rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-4 transition hover:border-violet-500/40 hover:bg-zinc-900/80">
+      <Link
+        href={card.href}
+        className="absolute inset-0 z-0 rounded-2xl"
+        aria-label={`View ${card.name}`}
+      />
+      <div className="relative z-10 pointer-events-none">
       <div className="mb-3 flex items-start gap-3">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/50 to-zinc-800 text-sm font-bold text-violet-100 ring-2 ring-zinc-900">
           {card.initials}
@@ -240,7 +257,9 @@ function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
         <span className="text-zinc-600">Last interaction</span>
         <div className="flex items-center gap-1">
           <span className="text-zinc-400">{card.lastInteraction.timeLabel}</span>
-          <NetworkLastContactPicker personId={card.id} />
+          <div className="relative z-20 pointer-events-auto">
+            <NetworkLastContactPicker personId={card.id} />
+          </div>
         </div>
       </div>
       <p className="mb-3 truncate text-xs text-zinc-500">{card.lastInteraction.label}</p>
@@ -281,20 +300,23 @@ function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
           Events
         </span>
       </div>
-    </Link>
+      </div>
+    </div>
   );
 }
 
 function PersonListRow({ card }: { card: V2NetworkBrowseCard }) {
   return (
-    <Link
-      href={card.href}
-      className="flex items-center gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 transition hover:border-violet-500/30 hover:bg-zinc-900/70"
-    >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-xs font-bold text-violet-200">
+    <div className="relative flex items-center gap-4 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 transition hover:border-violet-500/30 hover:bg-zinc-900/70">
+      <Link
+        href={card.href}
+        className="absolute inset-0 z-0 rounded-xl"
+        aria-label={`View ${card.name}`}
+      />
+      <span className="relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-xs font-bold text-violet-200 pointer-events-none">
         {card.initials}
       </span>
-      <div className="min-w-0 flex-1">
+      <div className="relative z-10 min-w-0 flex-1 pointer-events-none">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-semibold text-zinc-100">{card.name}</p>
           <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
@@ -304,11 +326,13 @@ function PersonListRow({ card }: { card: V2NetworkBrowseCard }) {
           {card.organization ? ` · ${card.organization}` : ""} · {card.lastInteraction.timeLabel}
         </p>
       </div>
-      <span className="hidden shrink-0 text-sm font-semibold tabular-nums text-violet-300 sm:block">
+      <span className="relative z-10 hidden shrink-0 text-sm font-semibold tabular-nums text-violet-300 pointer-events-none sm:block">
         {card.strength}%
       </span>
-      <NetworkLastContactPicker personId={card.id} compact />
-    </Link>
+      <div className="relative z-20 shrink-0 pointer-events-auto">
+        <NetworkLastContactPicker personId={card.id} compact />
+      </div>
+    </div>
   );
 }
 
@@ -393,6 +417,7 @@ export function V2NetworkBrowserShell({
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [smartOpen, setSmartOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let rows = cards;
@@ -425,7 +450,7 @@ export function V2NetworkBrowserShell({
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         <div className="flex gap-8 px-4 py-6 lg:px-8">
           <div className="min-w-0 flex-1">
-          <header className="mb-5 flex flex-wrap items-start justify-between gap-4">
+          <header className="mb-4 flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/15 text-lg ring-1 ring-violet-500/30">
@@ -433,9 +458,6 @@ export function V2NetworkBrowserShell({
                 </span>
                 <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Network</h1>
               </div>
-              <p className="mt-1 text-sm text-zinc-500">
-                Your professional network · relationships that create opportunities.
-              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5">
@@ -474,7 +496,7 @@ export function V2NetworkBrowserShell({
             </div>
           </header>
 
-          <div className="mb-5">
+          <div className="mb-3">
             <input
               value={searchQuery}
               onChange={(event) => {
@@ -486,7 +508,7 @@ export function V2NetworkBrowserShell({
             />
           </div>
 
-          <div className="mb-5 flex flex-wrap gap-2">
+          <div className="mb-3 flex flex-wrap gap-2">
             {STATUS_TABS.map((tab) => (
               <button
                 key={tab.key}
@@ -507,39 +529,37 @@ export function V2NetworkBrowserShell({
             ))}
           </div>
 
-          <section className="mb-6">
+          <div className="mb-3">
             <button
               type="button"
               onClick={() => setSummaryOpen((open) => !open)}
-              className="flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3 text-left transition hover:border-zinc-700 hover:bg-zinc-900/70"
+              className="inline-flex max-w-full items-center gap-2 rounded-md px-1 py-0.5 text-left text-xs text-zinc-500 transition hover:text-zinc-300"
               aria-expanded={summaryOpen}
             >
-              <div className="min-w-0">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Network summary</p>
-                <p className="mt-1 truncate text-sm text-zinc-300">
-                  {summary.total} people · {summary.active} active · {summary.organizations} orgs ·{" "}
-                  {summary.projectsTogether} projects · {summary.emailsExchanged} emails
-                </p>
-              </div>
-              <span className="shrink-0 text-xs font-medium text-violet-300">
-                {summaryOpen ? "Hide ▲" : "Show ▼"}
+              <span className="shrink-0 font-medium text-zinc-600">Summary</span>
+              <span className="truncate">
+                {summary.total} people · {summary.active} active · {summary.organizations} orgs ·{" "}
+                {summary.projectsTogether} projects · {summary.emailsExchanged} emails
               </span>
+              <span className="shrink-0 text-[10px] text-violet-400/90">{summaryOpen ? "▲" : "▼"}</span>
             </button>
             {summaryOpen ? (
-              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-                <SummaryPill label="Total People" value={summary.total} />
-                <SummaryPill label="Active Relationships" value={summary.active} sub={`${summary.activePercent}%`} />
-                <SummaryPill label="Organizations" value={summary.organizations} />
-                <SummaryPill label="Projects Together" value={summary.projectsTogether} />
-                <SummaryPill label="Emails Exchanged" value={summary.emailsExchanged} />
-                <SummaryPill label="Interactions Logged" value={summary.interactionsLogged} />
+              <div className="mt-2 space-y-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+                  <SummaryPill label="Total People" value={summary.total} />
+                  <SummaryPill label="Active Relationships" value={summary.active} sub={`${summary.activePercent}%`} />
+                  <SummaryPill label="Organizations" value={summary.organizations} />
+                  <SummaryPill label="Projects Together" value={summary.projectsTogether} />
+                  <SummaryPill label="Emails Exchanged" value={summary.emailsExchanged} />
+                  <SummaryPill label="Interactions Logged" value={summary.interactionsLogged} />
+                </div>
+                <p className="text-[10px] leading-relaxed text-zinc-600">
+                  Status and strength come from linked emails, records, and projects. Use 📅 on a card to log last
+                  contact.
+                </p>
               </div>
             ) : null}
-            <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
-              Status and strength are calculated from linked emails, records, and projects — not entered manually.
-              Use 📅 on a card to log last contact; the page refreshes to re-sort.
-            </p>
-          </section>
+          </div>
 
           {cards.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
@@ -620,33 +640,44 @@ export function V2NetworkBrowserShell({
         </div>
       </div>
 
-      <section className="shrink-0 border-t border-zinc-800/90 bg-zinc-950/95 px-4 py-3 backdrop-blur-md">
-        <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
-          Smart filters (quick views)
-        </p>
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {SMART_VIEWS.map((preset) => (
-            <button
-              key={preset.key}
-              type="button"
-              onClick={() => {
-                setSmartView(preset.key);
-                setStatusTab("all");
-                setPage(1);
-              }}
-              className={`min-w-[140px] shrink-0 rounded-xl border px-3 py-2 text-left transition ${
-                smartView === preset.key
-                  ? "border-violet-500/40 bg-violet-500/10"
-                  : "border-zinc-800 bg-zinc-900/60 hover:border-zinc-700"
-              }`}
-            >
-              <p className="text-xs font-medium text-zinc-200">{preset.label}</p>
-              <p className="text-[10px] tabular-nums text-violet-300">
-                {smartViewCount(cards, preset.key)} people
-              </p>
-            </button>
-          ))}
-        </div>
+      <section className="shrink-0 border-t border-zinc-800/90 bg-zinc-950/95 px-4 py-2 backdrop-blur-md">
+        <button
+          type="button"
+          onClick={() => setSmartOpen((open) => !open)}
+          className="inline-flex w-full items-center gap-2 text-left text-xs text-zinc-500 transition hover:text-zinc-300"
+          aria-expanded={smartOpen}
+        >
+          <span className="shrink-0 font-medium text-zinc-600">Quick views</span>
+          <span className="truncate text-zinc-500">
+            {SMART_VIEWS.map((preset) => preset.label).join(" · ")}
+          </span>
+          <span className="ml-auto shrink-0 text-[10px] text-violet-400/90">{smartOpen ? "▲" : "▼"}</span>
+        </button>
+        {smartOpen ? (
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+            {SMART_VIEWS.map((preset) => (
+              <button
+                key={preset.key}
+                type="button"
+                onClick={() => {
+                  setSmartView(preset.key);
+                  setStatusTab("all");
+                  setPage(1);
+                }}
+                className={`min-w-[140px] shrink-0 rounded-xl border px-3 py-2 text-left transition ${
+                  smartView === preset.key
+                    ? "border-violet-500/40 bg-violet-500/10"
+                    : "border-zinc-800 bg-zinc-900/60 hover:border-zinc-700"
+                }`}
+              >
+                <p className="text-xs font-medium text-zinc-200">{preset.label}</p>
+                <p className="text-[10px] tabular-nums text-violet-300">
+                  {smartViewCount(cards, preset.key)} people
+                </p>
+              </button>
+            ))}
+          </div>
+        ) : null}
       </section>
     </div>
   );
