@@ -203,6 +203,13 @@ function resolveLastInteraction(
   }
 
   if (latestLog) {
+    if (latestLog.title.trim() === "Last contact") {
+      return {
+        label: "Last contact logged",
+        timeLabel: relativeActivityLabel(latestLog.date, today),
+        sortIso: latestLog.date,
+      };
+    }
     const kind =
       latestLog.kind === "follow_up" ? "Follow-up" : latestLog.kind === "event" ? "Meeting" : "Journal";
     return {

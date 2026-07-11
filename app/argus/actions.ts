@@ -1068,6 +1068,71 @@ export async function updateRelationshipMetricsAction(formData: FormData): Promi
   revalidatePath("/argus/v2/browse/network");
 }
 
+const NETWORK_LAST_CONTACT_TITLE = "Last contact";
+
+/** Quick touch date from Network browse — upserts one follow-up record per person. */
+export async function recordNetworkLastContactAction(
+  personId: string,
+  contactDate: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await requireArgusSession();
+    const date = contactDate.trim().slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return { ok: false, error: "Invalid date" };
+    }
+
+    const person = await getEntity(personId);
+    if (!person || person.type !== "person" || person.deletedAt) {
+      return { ok: false, error: "Person not found" };
+    }
+
+    const data = await readArgus();
+    const existing = data.logs.find(
+      (log) =>
+        !log.deletedAt &&
+        log.kind === "follow_up" &&
+        log.source === "manual" &&
+        log.title === NETWORK_LAST_CONTACT_TITLE &&
+        log.entityIds.includes(personId)
+    );
+
+    if (existing) {
+      await updateLog(existing.id, {
+        title: NETWORK_LAST_CONTACT_TITLE,
+        body: existing.body || "Logged from Network.",
+        kind: "follow_up",
+        date,
+        followUpDate: date,
+        entityIds: existing.entityIds,
+        topics: existing.topics ?? [],
+        private: existing.private,
+      });
+    } else {
+      await createLog({
+        kind: "follow_up",
+        date,
+        followUpDate: date,
+        title: NETWORK_LAST_CONTACT_TITLE,
+        body: "Logged from Network.",
+        entityIds: [personId],
+        classificationStatus: "classified",
+        private: false,
+        source: "manual",
+        attachmentIds: [],
+        topics: [],
+      });
+    }
+
+    revalidateArgus();
+    revalidatePath("/argus/v2/browse/network");
+    revalidatePath(`/argus/v2/network/${personId}`);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "Update failed" };
+  }
+}
+
 export async function updateProjectAction(formData: FormData): Promise<void> {
   const entityId = String(formData.get("entityId") ?? "");
   const name = String(formData.get("name") ?? "").trim();

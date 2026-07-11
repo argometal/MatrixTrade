@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState, useTransition } from "react";
+import { recordNetworkLastContactAction } from "@/app/argus/actions";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2Badge } from "../../../components/v2-ui";
 import type {
@@ -113,6 +115,86 @@ function StatusDonut({ counts, total }: { counts: Record<V2NetworkBrowseStatus, 
   );
 }
 
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function NetworkLastContactPicker({
+  personId,
+  compact = false,
+}: {
+  personId: string;
+  compact?: boolean;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [open, setOpen] = useState(false);
+  const [date, setDate] = useState(todayIso);
+  const [error, setError] = useState<string | null>(null);
+
+  function save(nextDate: string) {
+    setError(null);
+    startTransition(async () => {
+      const result = await recordNetworkLastContactAction(personId, nextDate);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setOpen(false);
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        title="Update last contact"
+        aria-label="Update last contact date"
+        disabled={pending}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setDate(todayIso());
+          setOpen((value) => !value);
+        }}
+        className={`rounded-md text-zinc-500 transition hover:bg-zinc-800 hover:text-violet-300 disabled:opacity-40 ${
+          compact ? "p-1 text-sm" : "p-1 text-base"
+        }`}
+      >
+        📅
+      </button>
+      {open ? (
+        <div
+          className="absolute right-0 top-full z-20 mt-1 w-44 rounded-xl border border-zinc-700 bg-zinc-900 p-3 shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="mb-2 text-[10px] font-medium uppercase tracking-wide text-zinc-500">Last contact</p>
+          <input
+            type="date"
+            value={date}
+            onChange={(event) => setDate(event.target.value)}
+            className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-200"
+          />
+          <button
+            type="button"
+            disabled={pending || !date}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              save(date);
+            }}
+            className="mt-2 w-full rounded-lg bg-violet-600 py-1.5 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
+          >
+            {pending ? "Saving…" : "Save"}
+          </button>
+          {error ? <p className="mt-1 text-[10px] text-red-400">{error}</p> : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
   return (
     <Link
@@ -164,7 +246,10 @@ function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
 
       <div className="mb-3 flex items-center justify-between text-xs">
         <span className="text-zinc-600">Last interaction</span>
-        <span className="text-zinc-400">{card.lastInteraction.timeLabel}</span>
+        <div className="flex items-center gap-1">
+          <span className="text-zinc-400">{card.lastInteraction.timeLabel}</span>
+          <NetworkLastContactPicker personId={card.id} />
+        </div>
       </div>
       <p className="mb-3 truncate text-xs text-zinc-500">{card.lastInteraction.label}</p>
 
@@ -230,6 +315,7 @@ function PersonListRow({ card }: { card: V2NetworkBrowseCard }) {
       <span className="hidden shrink-0 text-sm font-semibold tabular-nums text-violet-300 sm:block">
         {card.strength}%
       </span>
+      <NetworkLastContactPicker personId={card.id} compact />
     </Link>
   );
 }
@@ -314,6 +400,7 @@ export function V2NetworkBrowserShell({
   const [smartView, setSmartView] = useState<V2NetworkSmartView>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
+  const [summaryOpen, setSummaryOpen] = useState(false);
 
   const filtered = useMemo(() => {
     let rows = cards;
@@ -428,14 +515,39 @@ export function V2NetworkBrowserShell({
             ))}
           </div>
 
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-            <SummaryPill label="Total People" value={summary.total} />
-            <SummaryPill label="Active Relationships" value={summary.active} sub={`${summary.activePercent}%`} />
-            <SummaryPill label="Organizations" value={summary.organizations} />
-            <SummaryPill label="Projects Together" value={summary.projectsTogether} />
-            <SummaryPill label="Emails Exchanged" value={summary.emailsExchanged} />
-            <SummaryPill label="Interactions Logged" value={summary.interactionsLogged} />
-          </div>
+          <section className="mb-6">
+            <button
+              type="button"
+              onClick={() => setSummaryOpen((open) => !open)}
+              className="flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3 text-left transition hover:border-zinc-700 hover:bg-zinc-900/70"
+              aria-expanded={summaryOpen}
+            >
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Network summary</p>
+                <p className="mt-1 truncate text-sm text-zinc-300">
+                  {summary.total} people · {summary.active} active · {summary.organizations} orgs ·{" "}
+                  {summary.projectsTogether} projects · {summary.emailsExchanged} emails
+                </p>
+              </div>
+              <span className="shrink-0 text-xs font-medium text-violet-300">
+                {summaryOpen ? "Hide ▲" : "Show ▼"}
+              </span>
+            </button>
+            {summaryOpen ? (
+              <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+                <SummaryPill label="Total People" value={summary.total} />
+                <SummaryPill label="Active Relationships" value={summary.active} sub={`${summary.activePercent}%`} />
+                <SummaryPill label="Organizations" value={summary.organizations} />
+                <SummaryPill label="Projects Together" value={summary.projectsTogether} />
+                <SummaryPill label="Emails Exchanged" value={summary.emailsExchanged} />
+                <SummaryPill label="Interactions Logged" value={summary.interactionsLogged} />
+              </div>
+            ) : null}
+            <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
+              Status and strength are calculated from linked emails, records, and projects — not entered manually.
+              Use 📅 on a card to log last contact; the page refreshes to re-sort.
+            </p>
+          </section>
 
           {cards.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
