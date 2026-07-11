@@ -2,7 +2,7 @@
 
 | Field | Value |
 |-------|-------|
-| **Status** | Accepted |
+| **Status** | Accepted — **conceptual**; implementation follows [ADR-0002](adr-0002-trade-evaluation.md) (`TradeEvaluation` entity, not fields on `Trade`) |
 | **Date** | 2026-07-11 |
 | **Deciders** | Product / architecture |
 | **Scope** | MatrixTrade `Trade` + `Playbook` domain model |

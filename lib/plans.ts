@@ -1,4 +1,5 @@
 import { getPlansStore } from "./plans-store";
+import { createTradeFromProbePlan } from "./probe-to-trade";
 import { computePlannedRR, validatePlanAgainstThesis } from "./plan-risk";
 import {
   appendDecision,
@@ -271,17 +272,20 @@ export async function recordScoutDecisionFromProposal(
 export async function transitionProbe(
   planId: string,
   action: "activate" | "convert" | "cancel" | "stop"
-): Promise<{ plan?: TradePlan; errors?: string[] }> {
+): Promise<{ plan?: TradePlan; tradeId?: string; errors?: string[] }> {
   const plan = await getPlanById(planId);
   if (!plan) return { errors: ["Plan not found."] };
+
+  if (action === "convert") {
+    const tradeResult = await createTradeFromProbePlan(plan);
+    if (tradeResult.errors?.length) return { errors: tradeResult.errors };
+    return { plan: tradeResult.plan, tradeId: tradeResult.trade?.id };
+  }
 
   let result: { plan?: TradePlan; errors?: string[] };
   switch (action) {
     case "activate":
       result = activateProbe(plan);
-      break;
-    case "convert":
-      result = convertProbe(plan);
       break;
     case "cancel":
       result = cancelProbe(plan);
@@ -289,6 +293,8 @@ export async function transitionProbe(
     case "stop":
       result = stopProbe(plan);
       break;
+    default:
+      return { errors: ["Unknown probe action."] };
   }
 
   if (result.errors?.length) return result;

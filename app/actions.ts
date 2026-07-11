@@ -394,8 +394,15 @@ export async function createTradeAction(formData: FormData): Promise<void> {
 
 export async function closeTradeAction(id: string, formData: FormData): Promise<void> {
   await requireTradingSession();
+  const exitReasonRaw = String(formData.get("exitReason") ?? "").trim();
+  const exitReasons = ["target", "stop", "manual", "time", "discipline", "other"] as const;
+  const exitReason = exitReasons.includes(exitReasonRaw as (typeof exitReasons)[number])
+    ? (exitReasonRaw as CloseTradeInput["exitReason"])
+    : undefined;
+
   const input: CloseTradeInput = {
     exit: Number(formData.get("exit")),
+    exitReason,
   };
 
   const result = await closeTrade(id, input);
@@ -766,32 +773,80 @@ export async function recordScoutDecisionAction(
   return { ok: true, planId: result.plan!.id };
 }
 
-export async function activateProbeAction(planId: string): Promise<{ error?: string }> {
+export async function activateProbeAction(planId: string): Promise<void> {
   await requireTradingSession();
   const result = await transitionProbe(planId, "activate");
-  if (result.errors?.length) return { error: result.errors.join(" ") };
+  if (result.errors?.length) return;
   revalidateTradingPaths();
   revalidatePath("/planning");
   if (result.plan?.stockThesisId) revalidatePath(`/stock-theses/${result.plan.stockThesisId}`);
-  return {};
 }
 
-export async function cancelProbeAction(planId: string): Promise<{ error?: string }> {
+export async function cancelProbeAction(planId: string): Promise<void> {
   await requireTradingSession();
   const result = await transitionProbe(planId, "cancel");
-  if (result.errors?.length) return { error: result.errors.join(" ") };
+  if (result.errors?.length) return;
   revalidateTradingPaths();
   revalidatePath("/planning");
   if (result.plan?.stockThesisId) revalidatePath(`/stock-theses/${result.plan.stockThesisId}`);
-  return {};
 }
 
-export async function stopProbeAction(planId: string): Promise<{ error?: string }> {
+export async function stopProbeAction(planId: string): Promise<void> {
   await requireTradingSession();
   const result = await transitionProbe(planId, "stop");
-  if (result.errors?.length) return { error: result.errors.join(" ") };
+  if (result.errors?.length) return;
   revalidateTradingPaths();
   revalidatePath("/planning");
   if (result.plan?.stockThesisId) revalidatePath(`/stock-theses/${result.plan.stockThesisId}`);
-  return {};
+}
+
+export async function convertProbeAction(planId: string): Promise<void> {
+  await requireTradingSession();
+  const result = await transitionProbe(planId, "convert");
+  if (result.errors?.length) return;
+  revalidateTradingPaths();
+  revalidatePath("/planning");
+  if (result.plan?.stockThesisId) revalidatePath(`/stock-theses/${result.plan.stockThesisId}`);
+  if (result.tradeId) {
+    revalidatePath(`/trades/${result.tradeId}`);
+    redirect(`/trades/${result.tradeId}`);
+  }
+}
+
+export async function concludeTradeEvaluationAction(
+  tradeId: string,
+  formData: FormData
+): Promise<void> {
+  await requireTradingSession();
+  const { concludeTradeEvaluation } = await import("@/lib/trade-evaluation");
+  const thesisRaw = String(formData.get("thesisOutcome") ?? "").trim();
+  const thesisOutcomes = ["validated", "invalidated", "inconclusive"] as const;
+  if (!thesisOutcomes.includes(thesisRaw as (typeof thesisOutcomes)[number])) {
+    return;
+  }
+
+  const timingRaw = String(formData.get("timingOutcome") ?? "").trim();
+  const timingOutcomes = ["on_time", "early", "late", "inconclusive"] as const;
+  const timingOutcome = timingOutcomes.includes(timingRaw as (typeof timingOutcomes)[number])
+    ? (timingRaw as (typeof timingOutcomes)[number])
+    : undefined;
+
+  const executionRaw = String(formData.get("executionOutcome") ?? "").trim();
+  const executionOutcomes = ["clean", "acceptable", "poor", "inconclusive"] as const;
+  const executionOutcome = executionOutcomes.includes(
+    executionRaw as (typeof executionOutcomes)[number]
+  )
+    ? (executionRaw as (typeof executionOutcomes)[number])
+    : undefined;
+
+  const result = await concludeTradeEvaluation(tradeId, {
+    thesisOutcome: thesisRaw as (typeof thesisOutcomes)[number],
+    timingOutcome,
+    executionOutcome,
+    finalLesson: String(formData.get("finalLesson") ?? ""),
+  });
+
+  if (result.errors?.length) return;
+  revalidateTradingPaths();
+  revalidatePath(`/trades/${tradeId}`);
 }

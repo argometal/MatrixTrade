@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { createScopedAiGrantAction } from "@/app/actions";
+import {
+  activateProbeAction,
+  cancelProbeAction,
+  convertProbeAction,
+  createScopedAiGrantAction,
+  stopProbeAction,
+} from "@/app/actions";
 import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { buildPlanEnterHref } from "@/lib/plan-helpers";
@@ -594,6 +600,57 @@ export function PreviewPlanning({
                       Expires: {new Date(selectedPlan.probe.expires).toLocaleString()}
                     </p>
                   ) : null}
+                  {selectedPlan.linkedTradeId ? (
+                    <p className="mt-2 text-xs text-emerald-400">
+                      Linked trade:{" "}
+                      <Link
+                        href={`/trades/${selectedPlan.linkedTradeId}`}
+                        className="font-medium hover:underline"
+                      >
+                        {selectedPlan.linkedTradeId}
+                      </Link>
+                    </p>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {selectedPlan.probe.status === "authorized" ? (
+                      <form action={activateProbeAction.bind(null, selectedPlan.id)}>
+                        <button
+                          type="submit"
+                          className="rounded-lg border border-violet-500/40 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-500/10"
+                        >
+                          Activate probe
+                        </button>
+                      </form>
+                    ) : null}
+                    {selectedPlan.probe.status === "active" ? (
+                      <>
+                        <form action={convertProbeAction.bind(null, selectedPlan.id)}>
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
+                          >
+                            Convert → trade
+                          </button>
+                        </form>
+                        <form action={stopProbeAction.bind(null, selectedPlan.id)}>
+                          <button
+                            type="submit"
+                            className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-600"
+                          >
+                            Stop probe
+                          </button>
+                        </form>
+                        <form action={cancelProbeAction.bind(null, selectedPlan.id)}>
+                          <button
+                            type="submit"
+                            className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:border-zinc-600"
+                          >
+                            Cancel
+                          </button>
+                        </form>
+                      </>
+                    ) : null}
+                  </div>
                 </div>
               ) : null}
 

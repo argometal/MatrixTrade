@@ -6,6 +6,10 @@ export interface Playbook {
   status: PlaybookStatus;
   description: string;
   checklist: string[];
+  /** Normal thesis evaluation window (days). Default 90. */
+  expectedHorizonDays?: number;
+  /** Max observation after position close (days). Default 120. */
+  maximumObservationDays?: number;
 }
 
 export const PLAYBOOK_STATUS_LABELS: Record<PlaybookStatus, string> = {

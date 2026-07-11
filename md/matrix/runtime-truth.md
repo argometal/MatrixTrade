@@ -63,7 +63,19 @@ Expectation database → train chat → validate thesis → scout decision → (
 | Probe state machine | authorize → activate → convert \| cancel \| stop |
 | Human record decision | `/planning` form + server actions |
 | AI `decision-update` block | Inbox Apply → `appendDecision` |
-| Trade creation from probe | **Not built** (execution frozen) |
+| Trade creation from probe | **Built** — see Phase D |
+
+---
+
+## Phase D — Execution bridge + evaluation (shipped)
+
+| Piece | Status |
+|-------|--------|
+| Probe → Trade | `lib/probe-to-trade.ts` — convert active probe creates open trade + `linkedTradeId` |
+| `TradeEvaluation` | `data/trade-evaluations.json` — observing window after close |
+| Auto observation on close | `closeTrade` → `startObservationForTrade` |
+| Manual conclude | Trade detail form — thesis / timing / execution outcomes |
+| Playbook horizons | `expectedHorizonDays`, `maximumObservationDays` on `Playbook` |
 
 ---
 
@@ -86,7 +98,7 @@ Expectation database → train chat → validate thesis → scout decision → (
 |----------|---------|
 | Full dossier sections | Only status, hypothesis, notes save |
 | Go / Wait / No badge (thesis summary) | Stored plan decision when present; else computed from `status` |
-| Probe panel | Planning artifact only — no position/trade link |
+| Probe panel | Activate / convert→trade / stop / cancel when probe enabled |
 | “Scouting Desk” | `TradePlan` CRUD + Decision + AI copy |
 
 See [stock-profile-design.md](stock-profile-design.md) for save matrix.

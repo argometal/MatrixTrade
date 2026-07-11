@@ -81,7 +81,9 @@ WAIT ──(Decision: probe)──► PROBE ──(confirm)──► FULL
 | Scout | `TradePlan` in `data/plans.json` (`PLAN-xxx`) |
 | Decision | `ScoutDecision` on plan — `decision`, `decisionHistory`, `scoutLifecycle` |
 | Verdict | `wait` \| `probe` \| `go` \| `no` — stored; UI falls back to thesis.status when absent |
-| Probe | `probe` object — authorize / active / converted / cancelled / stopped (no trade creation) |
+| Probe | `probe` object — authorize / active / converted / cancelled / stopped |
+| Probe → trade | **Built** — convert active probe creates trade + `linkedTradeId` |
+| Trade evaluation | **Built** — `TradeEvaluation` after close (ADR-0002) |
 | Missed opportunity | **Does not exist** as outcome |
 | Link to trade | `linkedTradeId` optional on plan |
 | AI decision path | `decision-update` inbox block → Apply on plan |

@@ -12,7 +12,8 @@
 | 2 | [v2-engine-architecture.md](v2-engine-architecture.md) | **V2 target** — five engines + Probe |
 | 3 | [stock-profile-design.md](stock-profile-design.md) | Suspect dossier — append, light, chat patches |
 | 4 | [scout-execution-model.md](scout-execution-model.md) | Scout vs Trade vs Probe |
-| 4b | [adr-0001-trade-lifecycle-v1.md](adr-0001-trade-lifecycle-v1.md) | **ADR** — dual financial + analytical lifecycle |
+| 4b | [adr-0001-trade-lifecycle-v1.md](adr-0001-trade-lifecycle-v1.md) | **ADR** — dual financial + analytical lifecycle (concept) |
+| 4b2 | [adr-0002-trade-evaluation.md](adr-0002-trade-evaluation.md) | **ADR** — `TradeEvaluation` entity (**implemented**) |
 | 4c | [external-ai-policy.md](external-ai-policy.md) | **No vendor brands** — external AI + Apply-only mutations |
 | 4d | [thesis-ownership.md](thesis-ownership.md) | Thesis on Stock Profile, not Playbook |
 | 4e | [snapshot-catalog.md](snapshot-catalog.md) | **Snapshot menu** — one button per window + Apply path |
@@ -40,6 +41,6 @@ Recording trades is necessary; **not the mission**.
 | Stock Profile | `/stock-theses/[id]` | TSLA pilot; partial save |
 | Scouting | `/planning` | PLAN + Decision + Probe + AI package |
 | Assistant | `/exchange` | Same AI engine |
-| Trade | `/trades` | Frozen |
+| Trade | `/trades` | Execution + **TradeEvaluation** on close |
 
-**Coding starts only after library sign-off on V2 docs.**
+**Coding:** Probe→Trade and TradeEvaluation shipped 2026-07-11 (ADR-0002). Missed-opportunity / Learning Engine still pending.

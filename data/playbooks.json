@@ -4,6 +4,8 @@
     "name": "Weekly Breakout",
     "status": "TESTING",
     "description": "Breakout with higher timeframe confirmation.",
+    "expectedHorizonDays": 90,
+    "maximumObservationDays": 120,
     "checklist": [
       "3M trend supports direction",
       "1M trend supports direction",

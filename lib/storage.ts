@@ -6,6 +6,7 @@ import { readNoteBody, resolveVaultPath } from "./obsidian";
 import { syncObsidianTradeIfLocal } from "./obsidian-local";
 import { enrichTrade, absoluteNotePath } from "./trade-links";
 import { isSupabaseTradesStore, readTradesJson, upsertTradeInJson } from "./trades-json";
+import { startObservationForTrade } from "./trade-evaluation";
 import { validateCloseTrade, validateCreateTrade } from "./validation";
 import type {
   CloseTradeInput,
@@ -176,6 +177,9 @@ export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Tr
   const id = input.id.toUpperCase();
   const ticker = input.ticker.trim().toUpperCase();
 
+  const status = input.status ?? "pending";
+  const now = new Date().toISOString();
+
   const trade: Trade = enrichTrade(
     {
       id,
@@ -184,7 +188,7 @@ export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Tr
       stop: input.stop,
       target: input.target,
       shares: input.shares,
-      status: input.status ?? "pending",
+      status,
       setupId: input.setupId?.trim() || undefined,
       playbookId: input.playbookId?.trim() || undefined,
       setup: input.setup?.trim() || undefined,
@@ -197,7 +201,9 @@ export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Tr
       psychology: input.psychology,
       lessons: input.lessons,
       notes: input.notes,
-      createdAt: new Date().toISOString(),
+      planId: input.planId?.trim().toUpperCase() || undefined,
+      openedAt: status === "open" ? now : undefined,
+      createdAt: now,
     },
     rules
   );
@@ -224,18 +230,21 @@ export async function closeTrade(
     return { errors: validationErrors.map((e) => e.message) };
   }
 
+  const closedAt = new Date().toISOString();
   const updated = enrichTrade(
     {
       ...trade!,
       exit: input.exit,
       status: "closed",
-      closedAt: new Date().toISOString(),
+      closedAt,
+      exitReason: input.exitReason,
     },
     rules
   );
 
   await upsertTradeInJson(updated);
   await syncObsidianTradeIfLocal(updated, rules);
+  await startObservationForTrade(updated);
 
   return { trade: updated };
 }
@@ -255,7 +264,11 @@ export async function openTrade(id: string): Promise<{ trade?: Trade; errors?: s
     return { trade };
   }
 
-  const updated = enrichTrade({ ...trade, status: "open" }, rules);
+  const now = new Date().toISOString();
+  const updated = enrichTrade(
+    { ...trade, status: "open", openedAt: trade.openedAt ?? now },
+    rules
+  );
   await upsertTradeInJson(updated);
   await syncObsidianTradeIfLocal(updated, rules);
 

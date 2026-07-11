@@ -11,6 +11,14 @@ export type MistakeType =
 
 export type TradeDirection = "long" | "short";
 
+export type TradeExitReason =
+  | "target"
+  | "stop"
+  | "manual"
+  | "time"
+  | "discipline"
+  | "other";
+
 export interface Trade {
   id: string;
   ticker: string;
@@ -21,7 +29,12 @@ export interface Trade {
   shares: number;
   status: TradeStatus;
   createdAt: string;
+  /** When position became open (status → open). */
+  openedAt?: string;
   closedAt?: string;
+  exitReason?: TradeExitReason;
+  /** Linked scout plan (PLAN-xxx) when spawned from scouting. */
+  planId?: string;
   /** Legacy setup tag — data/setups.json */
   setupId?: string;
   /** Playbook lab — data/playbooks.json */
@@ -115,6 +128,7 @@ export interface CreateTradeInput {
   riskRewardPlanned?: number;
   riskRewardActual?: number;
   status?: TradeStatus;
+  planId?: string;
   thesis?: string;
   psychology?: string;
   lessons?: string;
@@ -133,11 +147,13 @@ export interface UpdateTradeInput extends TradeMetaInput {
   psychology?: string;
   lessons?: string;
   notes?: string;
+  planId?: string;
   closedAt?: string;
 }
 
 export interface CloseTradeInput {
   exit: number;
+  exitReason?: TradeExitReason;
 }
 
 export interface TradesExport {

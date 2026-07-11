@@ -1,6 +1,7 @@
 import Link from "next/link";
 import {
   closeTradeAction,
+  concludeTradeEvaluationAction,
   openTradeAction,
   updateTradeMetaAction,
 } from "@/app/actions";
@@ -22,6 +23,13 @@ import {
 import type { Experiment, Trade } from "@/lib/types";
 import type { MonthlyRisk } from "@/lib/monthly-risk";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import {
+  EVALUATION_STATUS_LABELS,
+  EXECUTION_OUTCOME_LABELS,
+  THESIS_OUTCOME_LABELS,
+  TIMING_OUTCOME_LABELS,
+  type TradeEvaluation,
+} from "@/lib/trade-evaluation-types";
 import { formatUsd, pnlTone } from "@/app/components/legacy/LegacyTradeDetailPage";
 
 const inputClass =
@@ -35,6 +43,7 @@ export function PreviewTradeDetail({
   playbooks,
   metaOk,
   snapshotItems,
+  evaluation,
 }: {
   trade: Trade;
   experiment: Experiment;
@@ -43,6 +52,7 @@ export function PreviewTradeDetail({
   playbooks: Playbook[];
   metaOk?: string;
   snapshotItems: SnapshotMenuItem[];
+  evaluation?: TradeEvaluation | null;
 }) {
   const result = calculateTradeResult(trade);
   const rMultiple = computeRMultiple(trade);
@@ -115,6 +125,22 @@ export function PreviewTradeDetail({
                 label="Closed"
                 value={new Date(trade.closedAt).toLocaleDateString()}
               />
+            )}
+            {trade.exitReason && (
+              <Detail label="Exit reason" value={trade.exitReason.replace("_", " ")} />
+            )}
+            {trade.planId && (
+              <div>
+                <dt className="text-xs uppercase tracking-wide text-zinc-500">Scout</dt>
+                <dd className="mt-0.5">
+                  <Link
+                    href={`/planning?plan=${trade.planId}`}
+                    className="font-medium text-violet-400 hover:underline"
+                  >
+                    {trade.planId}
+                  </Link>
+                </dd>
+              </div>
             )}
             {setupName && <Detail label="Setup" value={setupName} />}
             <Detail label="Playbook" value={playbookName ?? "Unassigned"} />
@@ -284,6 +310,111 @@ export function PreviewTradeDetail({
             </form>
           )}
 
+          {trade.status === "closed" && evaluation ? (
+            <section className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-6">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-zinc-200">Trade evaluation</h2>
+                <span className="rounded-full bg-violet-500/20 px-2.5 py-0.5 text-xs font-medium text-violet-300">
+                  {EVALUATION_STATUS_LABELS[evaluation.status]}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-500">
+                Analytical lifecycle — separate from financial close. Observation window from
+                playbook horizons.
+              </p>
+              <dl className="grid grid-cols-2 gap-3 text-sm">
+                <Detail
+                  label="Expected horizon"
+                  value={`${evaluation.expectedHorizonDays}d`}
+                />
+                <Detail
+                  label="Observation ends"
+                  value={new Date(evaluation.observationEndsAt).toLocaleDateString()}
+                />
+                {evaluation.thesisOutcome ? (
+                  <Detail
+                    label="Thesis"
+                    value={THESIS_OUTCOME_LABELS[evaluation.thesisOutcome]}
+                  />
+                ) : null}
+                {evaluation.timingOutcome ? (
+                  <Detail
+                    label="Timing"
+                    value={TIMING_OUTCOME_LABELS[evaluation.timingOutcome]}
+                  />
+                ) : null}
+                {evaluation.executionOutcome ? (
+                  <Detail
+                    label="Execution"
+                    value={EXECUTION_OUTCOME_LABELS[evaluation.executionOutcome]}
+                  />
+                ) : null}
+              </dl>
+              {evaluation.finalLesson ? (
+                <p className="text-sm text-zinc-400">{evaluation.finalLesson}</p>
+              ) : null}
+              {evaluation.status === "observing" ? (
+                <form
+                  action={concludeTradeEvaluationAction.bind(null, trade.id)}
+                  className="space-y-3 border-t border-zinc-800 pt-4"
+                >
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                    Conclude evaluation
+                  </h3>
+                  <label className="block text-sm">
+                    <span className="font-medium text-zinc-300">Thesis outcome</span>
+                    <select name="thesisOutcome" required className={inputClass}>
+                      <option value="">Select…</option>
+                      {Object.entries(THESIS_OUTCOME_LABELS).map(([k, label]) => (
+                        <option key={k} value={k}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-sm">
+                    <span className="font-medium text-zinc-300">Timing outcome</span>
+                    <select name="timingOutcome" className={inputClass}>
+                      <option value="">—</option>
+                      {Object.entries(TIMING_OUTCOME_LABELS).map(([k, label]) => (
+                        <option key={k} value={k}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-sm">
+                    <span className="font-medium text-zinc-300">Execution outcome</span>
+                    <select name="executionOutcome" className={inputClass}>
+                      <option value="">—</option>
+                      {Object.entries(EXECUTION_OUTCOME_LABELS).map(([k, label]) => (
+                        <option key={k} value={k}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-sm">
+                    <span className="font-medium text-zinc-300">Final lesson</span>
+                    <textarea
+                      name="finalLesson"
+                      rows={3}
+                      maxLength={500}
+                      className={inputClass}
+                      placeholder="What did this case teach?"
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
+                  >
+                    Conclude case
+                  </button>
+                </form>
+              ) : null}
+            </section>
+          ) : null}
+
           {trade.status !== "closed" && (
             <form
               action={closeTradeAction.bind(null, trade.id)}
@@ -297,6 +428,17 @@ export function PreviewTradeDetail({
               <label className="block text-sm">
                 <span className="font-medium text-zinc-300">Exit price</span>
                 <input name="exit" type="number" step="0.01" min="0" required className={inputClass} />
+              </label>
+              <label className="block text-sm">
+                <span className="font-medium text-zinc-300">Exit reason</span>
+                <select name="exitReason" defaultValue="manual" className={inputClass}>
+                  <option value="manual">Manual</option>
+                  <option value="target">Target</option>
+                  <option value="stop">Stop</option>
+                  <option value="time">Time</option>
+                  <option value="discipline">Discipline</option>
+                  <option value="other">Other</option>
+                </select>
               </label>
               <button
                 type="submit"
