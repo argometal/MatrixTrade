@@ -18,6 +18,7 @@ import type { ProjectScopeOptions } from "../project-evidence-scope";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
 import { collectProjectLinkIds, collectRelatedEntityIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
+import { findTopicEntityIdForTag, intelligenceTagHref } from "./intelligence-nav";
 
 import {
   buildTimelineFromLogsAndInbox,
@@ -379,12 +380,18 @@ export function buildV2TagCloud(data: ArgusData, inboxItems: InboxItem[], includ
   const min = sorted[sorted.length - 1][1];
   const colors = ["violet", "emerald", "amber", "sky", "orange"] as const;
 
-  return sorted.map(([name, count], i) => ({
-    name,
-    count,
-    color: colors[i % colors.length],
-    weight: max === min ? 1 : (count - min) / (max - min),
-  }));
+  const topics = entitiesByKind(data).topics;
+
+  return sorted.map(([name, count], i) => {
+    const topicId = findTopicEntityIdForTag(topics, name);
+    return {
+      name,
+      count,
+      color: colors[i % colors.length],
+      weight: max === min ? 1 : (count - min) / (max - min),
+      href: intelligenceTagHref(name, topicId),
+    };
+  });
 }
 
 /** Action-only nav signals — never entity totals. */

@@ -5,6 +5,7 @@ export type V2TagCloudItem = {
   count: number;
   color: string;
   weight: number;
+  href: string;
 };
 
 const TAG_COLORS: Record<string, string> = {
@@ -32,7 +33,7 @@ export function V2TagCloud({ tags }: { tags: V2TagCloudItem[] }) {
       {tags.map((tag) => (
         <Link
           key={tag.name}
-          href={`/argus/v2/inbox?tag=${encodeURIComponent(tag.name)}`}
+          href={tag.href}
           role="listitem"
           className={`font-medium transition hover:underline ${TAG_COLORS[tag.color] ?? "text-zinc-300 hover:text-zinc-100"}`}
           style={{ fontSize: tagFontSize(tag.weight) }}

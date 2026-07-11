@@ -24,6 +24,8 @@ import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
 import { resolveV2SelectedId, v2ActiveTableRowClass } from "@/lib/argus/v2/selection";
 import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
+import { parseIntelligenceFocus, intelligenceBrowseAllHref } from "@/lib/argus/v2/intelligence-nav";
+import { V2IntelligenceFocusBanner } from "@/app/argus/v2/components/V2IntelligenceFocusBanner";
 import { V2TopicDetailPanel } from "./V2TopicDetailPanel";
 
 const TABS: { id: V2TopicTab; label: string }[] = [
@@ -243,6 +245,42 @@ export function V2TopicsShell({
 
   const rangeStart = filtered.length === 0 ? 0 : (safePage - 1) * V2_TOPIC_PAGE_SIZE + 1;
   const rangeEnd = Math.min(safePage * V2_TOPIC_PAGE_SIZE, filtered.length);
+  const { focus, from } = parseIntelligenceFocus(searchParams);
+
+  if (focus && selected) {
+    return (
+      <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden">
+        <section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-950/50">
+          <div className="border-b border-zinc-800/80 px-4 py-3 lg:px-5">
+            <V2IntelligenceFocusBanner
+              entityName={selected.name}
+              from={from}
+              pathname="/argus/v2/browse/topics"
+              searchParams={new URLSearchParams(searchParams.toString())}
+              browseAllHref={intelligenceBrowseAllHref("topics")}
+              browseAllLabel="Browse all topics"
+            />
+          </div>
+          <V2TopicDetailPanel
+            selected={selected}
+            neighborhood={neighborhood}
+            returnTo={returnTo}
+            privateConfigured={privateConfigured}
+            privateUnlocked={privateUnlocked}
+            requiresAuthenticator
+            deleteUnlocked={deleteUnlocked}
+            deleteAuthUnlocked={deleteAuthUnlocked}
+            deleteCodeConfigured={deleteCodeConfigured}
+            totpConfigured={totpConfigured}
+            deleteAuthConfigured={deleteAuthConfigured}
+            deleteError={deleteError}
+            deleteAuthError={deleteAuthError}
+            totpRequired={totpRequired}
+          />
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">

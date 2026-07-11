@@ -6,6 +6,7 @@ import { entitiesByKind } from "./hierarchy";
 import { isEntityArchived } from "../entity-lifecycle";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
+import { intelligenceEntityHref } from "./intelligence-nav";
 
 export type V2KnowledgeNodeKind = "topic" | "project" | "organization";
 
@@ -93,13 +94,13 @@ function entityKind(entity: Entity): V2KnowledgeNodeKind | "person" | "event" | 
   return null;
 }
 
-function entityHref(entity: Entity): string {
-  if (entity.type === "company") return `/argus/v2/organizations/${entity.id}`;
-  if (entity.type === "project") return `/argus/v2/projects/${entity.id}`;
-  if (entity.type === "person") return `/argus/v2/network/${entity.id}`;
+function entityHref(entity: Entity, from: "intelligence" | "treemap" | "portfolio" = "intelligence"): string {
+  if (entity.type === "company") return intelligenceEntityHref("organization", entity.id, from);
+  if (entity.type === "project") return intelligenceEntityHref("project", entity.id, from);
   const ref = referenceKindFromNotes(entity.notes ?? "");
-  if (ref === "topic") return `/argus/v2/browse/topics?selected=${entity.id}`;
-  if (ref === "event") return `/argus/v2/browse/events?selected=${entity.id}`;
+  if (ref === "topic") return intelligenceEntityHref("topic", entity.id, from);
+  if (ref === "event") return `/argus/v2/browse/events?selected=${entity.id}&focus=1&from=${from}`;
+  if (entity.type === "person") return `/argus/v2/network/${entity.id}`;
   return `/argus/v2/network/${entity.id}`;
 }
 

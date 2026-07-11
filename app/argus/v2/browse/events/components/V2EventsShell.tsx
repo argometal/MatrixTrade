@@ -14,6 +14,8 @@ import {
   type V2EventTab,
 } from "@/lib/argus/v2/event-browse-utils";
 import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
+import { parseIntelligenceFocus, intelligenceBrowseAllHref } from "@/lib/argus/v2/intelligence-nav";
+import { V2IntelligenceFocusBanner } from "@/app/argus/v2/components/V2IntelligenceFocusBanner";
 import { resolveV2SelectedId, v2ActiveListItemClass } from "@/lib/argus/v2/selection";
 import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
 import { V2EventDetailPanel } from "./V2EventDetailPanel";
@@ -70,6 +72,44 @@ export function V2EventsShell({
     const params = new URLSearchParams(searchParams.toString());
     params.set("selected", id);
     router.replace(`/argus/v2/browse/events?${params.toString()}`);
+  }
+
+  const returnTo = `/argus/v2/browse/events?${searchParams.toString()}`;
+  const { focus, from } = parseIntelligenceFocus(searchParams);
+
+  if (focus && selected) {
+    return (
+      <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden">
+        <section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-950/50">
+          <div className="border-b border-zinc-800/80 px-4 py-3 lg:px-5">
+            <V2IntelligenceFocusBanner
+              entityName={selected.name}
+              from={from}
+              pathname="/argus/v2/browse/events"
+              searchParams={new URLSearchParams(searchParams.toString())}
+              browseAllHref={intelligenceBrowseAllHref("events")}
+              browseAllLabel="Browse all events"
+            />
+          </div>
+          <V2EventDetailPanel
+            selected={selected}
+            inboxOptions={inboxOptionsByEvent[selected.id] ?? []}
+            returnTo={returnTo}
+            privateConfigured={privateConfigured}
+            privateUnlocked={privateUnlocked}
+            requiresAuthenticator
+            deleteUnlocked={deleteUnlocked}
+            deleteAuthUnlocked={deleteAuthUnlocked}
+            deleteCodeConfigured={deleteCodeConfigured}
+            totpConfigured={totpConfigured}
+            deleteAuthConfigured={deleteAuthConfigured}
+            deleteError={deleteError}
+            deleteAuthError={deleteAuthError}
+            totpRequired={totpRequired}
+          />
+        </section>
+      </div>
+    );
   }
 
   return (
@@ -175,7 +215,7 @@ export function V2EventsShell({
           <V2EventDetailPanel
             selected={selected}
             inboxOptions={inboxOptionsByEvent[selected.id] ?? []}
-            returnTo={`/argus/v2/browse/events?${searchParams.toString()}`}
+            returnTo={returnTo}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
             requiresAuthenticator

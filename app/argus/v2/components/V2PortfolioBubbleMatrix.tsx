@@ -13,9 +13,11 @@ const GRID_LINES = [0.25, 0.5, 0.75];
 export function V2PortfolioBubbleMatrix({
   nodes,
   size = "compact",
+  onSelect,
 }: {
   nodes: V2KnowledgeNode[];
   size?: "compact" | "full";
+  onSelect?: (id: string) => void;
 }) {
   const portfolio = nodes.filter(
     (n) => n.kind === "topic" || n.kind === "project" || n.kind === "organization"
@@ -39,6 +41,14 @@ export function V2PortfolioBubbleMatrix({
   const plotBottom = 92;
   const plotWidth = plotRight - plotLeft;
   const plotHeight = plotBottom - plotTop;
+
+  function handleActivate(node: V2KnowledgeNode, metaKey: boolean) {
+    if (metaKey) {
+      window.open(node.href, "_blank", "noopener,noreferrer");
+      return;
+    }
+    onSelect?.(node.id);
+  }
 
   return (
     <div>
@@ -99,23 +109,34 @@ export function V2PortfolioBubbleMatrix({
           const cy = plotBottom - node.recencyScore * plotHeight;
           const r = 2 + Math.sqrt(node.evidenceCount / maxEvidence) * 5;
           return (
-            <g key={node.id}>
-              <a href={node.href}>
-                <circle
-                  cx={cx}
-                  cy={cy}
-                  r={r}
-                  fill={KIND_COLORS[node.kind]}
-                  fillOpacity={0.55}
-                  stroke={KIND_COLORS[node.kind]}
-                  strokeWidth={0.4}
-                  className="transition hover:fill-opacity-90"
-                />
-                <title>
-                  {node.name} — {node.recurrence30d} evidence in 30d, recency{" "}
-                  {Math.round(node.recencyScore * 100)}%, {node.evidenceCount} total evidence
-                </title>
-              </a>
+            <g
+              key={node.id}
+              className="cursor-pointer"
+              role="button"
+              tabIndex={0}
+              aria-label={`${node.name}, ${node.evidenceCount} evidence`}
+              onClick={(event) => handleActivate(node, event.metaKey)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleActivate(node, event.metaKey);
+                }
+              }}
+            >
+              <circle
+                cx={cx}
+                cy={cy}
+                r={r}
+                fill={KIND_COLORS[node.kind]}
+                fillOpacity={0.55}
+                stroke={KIND_COLORS[node.kind]}
+                strokeWidth={0.4}
+                className="transition hover:fill-opacity-90"
+              />
+              <title>
+                {node.name} — {node.recurrence30d} evidence in 30d, recency{" "}
+                {Math.round(node.recencyScore * 100)}%, {node.evidenceCount} total evidence
+              </title>
               {r >= 3.5 ? (
                 <text
                   x={cx}
@@ -134,6 +155,7 @@ export function V2PortfolioBubbleMatrix({
         })}
       </svg>
       <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-zinc-500">
+        <span>Click = lens below · ⌘/Ctrl+click = open focused view</span>
         <span>Y = recency</span>
         <span>X = recurrence (30d)</span>
         <span>Size = evidence</span>

@@ -7,7 +7,9 @@ import { runbooksForEntity } from "@/lib/argus/runbook-helpers";
 import { loadProjectPageData } from "@/lib/argus/v2/loaders";
 import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
+import { parseIntelligenceFocus } from "@/lib/argus/v2/intelligence-nav";
 import { buildV2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
+import { V2IntelligenceFocusBanner } from "../../components/V2IntelligenceFocusBanner";
 import { V2PrivateEvidenceGate } from "../../components/V2PrivateEvidenceGate";
 import { V2QuickDeliverButton } from "../../components/V2QuickDeliverModal";
 import { V2TagPatternBadges } from "../../components/V2TagPatternBadges";
@@ -39,11 +41,14 @@ export default async function V2ProjectPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ scope?: string; delete_error?: string; delete_auth_error?: string; totp_required?: string; error?: string }>;
+  searchParams: Promise<{ scope?: string; delete_error?: string; delete_auth_error?: string; totp_required?: string; error?: string; from?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
   const { scope } = sp;
+  const intelligenceFocus = parseIntelligenceFocus({
+    get: (key) => sp[key as keyof typeof sp] ?? null,
+  });
   const respectProjectDates = scope !== "all";
   const includePrivate = await hasArgusPrivateUnlock();
   const entity = await getEntity(id);
@@ -89,6 +94,22 @@ export default async function V2ProjectPage({
         <div className="px-4 py-6 lg:px-8">
       <div className="mb-5">
         <V2BackLink href="/argus/v2/browse/projects">Back to Projects</V2BackLink>
+        {intelligenceFocus.from ? (
+          <div className="mt-3">
+            <V2IntelligenceFocusBanner
+              entityName={entity.name}
+              from={intelligenceFocus.from}
+              pathname={`/argus/v2/projects/${entity.id}`}
+              searchParams={new URLSearchParams(
+                Object.entries(sp)
+                  .filter(([, v]) => v != null)
+                  .map(([k, v]) => [k, String(v)])
+              )}
+              browseAllHref="/argus/v2/browse/projects"
+              browseAllLabel="Browse all projects"
+            />
+          </div>
+        ) : null}
       </div>
 
       {/* Header */}
