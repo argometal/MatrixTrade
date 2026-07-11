@@ -68,7 +68,14 @@ export function TradesWorkspace({
               <h1 className="text-xl font-semibold text-zinc-100">New Trade</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
                 Analyze in your AI chat → one <code className="text-violet-300">trade-proposal</code>{" "}
-                block → Inbox Apply. Scout methodology, execution layer.
+                block → Inbox Apply.
+                {data.prospects.length > 0 ? (
+                  <span className="text-sky-400">
+                    {" "}
+                    · {data.prospects.length} scout prospect
+                    {data.prospects.length === 1 ? "" : "s"}
+                  </span>
+                ) : null}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

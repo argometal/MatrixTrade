@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import type { ImportAiBlockActionResult } from "@/app/actions";
+import { TradeProspectPicker } from "@/app/components/trades-preview/TradeProspectPicker";
 import { parseAiBlock, sampleAiBlock } from "@/lib/ai-block";
 import {
   buildTradeProposalBlock,
@@ -11,6 +12,11 @@ import {
 } from "@/lib/build-trade-proposal-block";
 import { buildTradeBootPackage } from "@/lib/trade-boot";
 import { buildTradeLevelsView } from "@/lib/trade-levels-preview";
+import {
+  findTradeProspect,
+  prospectToPrefill,
+  type TradeProspect,
+} from "@/lib/trade-prospects";
 import type { TradesWorkspaceData } from "@/lib/trades-workspace-types";
 
 const rowEmphasis: Record<string, string> = {
@@ -44,6 +50,14 @@ export function NewTradeScoutFlow({
   const [proposalError, setProposalError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<{ id: string } | null>(null);
   const [pending, startTransition] = useTransition();
+  const [selectedPlanId, setSelectedPlanId] = useState(prefill?.planId ?? "");
+
+  const activePrefill = useMemo(() => {
+    const fromProspect = findTradeProspect(data.prospects, selectedPlanId);
+    if (fromProspect) return prospectToPrefill(fromProspect);
+    if (prefill?.planId || prefill?.ticker) return prefill;
+    return undefined;
+  }, [data.prospects, selectedPlanId, prefill]);
 
   const [form, setForm] = useState({
     id: data.suggestedTradeId,
@@ -57,25 +71,50 @@ export function NewTradeScoutFlow({
     notes: prefill?.planId ? `From plan ${prefill.planId}` : "",
   });
 
+  useEffect(() => {
+    setSelectedPlanId(prefill?.planId ?? "");
+  }, [prefill?.planId]);
+
+  useEffect(() => {
+    if (!activePrefill) return;
+    setForm((current) => ({
+      ...current,
+      ticker: activePrefill.ticker ?? current.ticker,
+      entry: activePrefill.entry ?? current.entry,
+      stop: activePrefill.stop ?? current.stop,
+      target: activePrefill.target ?? current.target,
+      playbookId: activePrefill.playbookId ?? current.playbookId,
+      notes: activePrefill.planId ? `From plan ${activePrefill.planId}` : current.notes,
+    }));
+  }, [activePrefill]);
+
   const bootPackage = useMemo(
     () =>
       buildTradeBootPackage({
         suggestedTradeId: data.suggestedTradeId,
         playbooks: data.playbooks,
         monthlyLossRoom: data.monthlyLossRoom,
-        scoutPrefill: prefill?.planId || prefill?.ticker
-          ? {
-              planId: prefill.planId,
-              ticker: prefill.ticker,
-              entry: prefill.entry,
-              stop: prefill.stop,
-              target: prefill.target,
-              playbookId: prefill.playbookId,
-            }
-          : undefined,
+        prospects: data.prospects,
+        scoutPrefill:
+          activePrefill?.planId || activePrefill?.ticker
+            ? {
+                planId: activePrefill.planId,
+                ticker: activePrefill.ticker,
+                entry: activePrefill.entry,
+                stop: activePrefill.stop,
+                target: activePrefill.target,
+                playbookId: activePrefill.playbookId,
+              }
+            : undefined,
       }),
-    [data, prefill]
+    [data, activePrefill]
   );
+
+  function handleProspectSelect(prospect: TradeProspect | null) {
+    setSelectedPlanId(prospect?.planId ?? "");
+    setProposalError(null);
+    setImportSuccess(null);
+  }
 
   const preview = useMemo(() => {
     if (!aiBlockRaw.trim()) return null;
@@ -153,15 +192,11 @@ export function NewTradeScoutFlow({
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 px-4 py-6 lg:px-6">
-      {prefill?.planId ? (
-        <section className="rounded-2xl border border-sky-500/30 bg-sky-950/20 p-4 text-xs text-sky-200">
-          Prefilled from scout{" "}
-          <Link href={`/planning?plan=${prefill.planId}`} className="font-medium underline">
-            {prefill.planId}
-          </Link>
-          {prefill.ticker ? ` · ${prefill.ticker}` : ""}
-        </section>
-      ) : null}
+      <TradeProspectPicker
+        prospects={data.prospects}
+        selectedPlanId={selectedPlanId}
+        onSelect={handleProspectSelect}
+      />
 
       <section className="rounded-2xl border border-zinc-800/80 bg-zinc-950/50 p-4 text-xs text-zinc-500">
         <p className="font-medium text-zinc-400">Execution layer only</p>

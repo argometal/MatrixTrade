@@ -6,7 +6,9 @@ import { computeExpectancy, computeRMultiple, computeRiskAmount } from "./review
 import type { Playbook } from "./playbook-types";
 import type { Experiment, Trade } from "./types";
 
+import type { TradeProspect } from "./trade-prospects";
 import type { TradesWorkspaceData, TradesWorkspaceRow } from "./trades-workspace-types";
+import { buildTradeProspects } from "./trade-prospects";
 export type { TradesWorkspaceData, TradesWorkspaceRow } from "./trades-workspace-types";
 export { formatTradeUsd } from "./trades-workspace-types";
 
@@ -40,7 +42,8 @@ export function buildTradesWorkspaceData(
   experiment: Experiment,
   trades: Trade[],
   playbooks: Playbook[],
-  pendingInboxCount: number
+  pendingInboxCount: number,
+  prospects: TradeProspect[] = []
 ): TradesWorkspaceData {
   const rows = [...trades]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -126,6 +129,7 @@ export function buildTradesWorkspaceData(
     suggestedTradeId: suggestNextTradeId(trades),
     monthlyLossRoom: 0,
     pendingInboxCount,
+    prospects,
   };
 }
 
@@ -134,17 +138,26 @@ export async function loadTradesWorkspaceData(): Promise<TradesWorkspaceData> {
     const { fetchBridgeInbox } = await import("./bridge");
     const { getExperiment, getMonthlyRisk, getTrades } = await import("./storage");
     const { getPlaybooks } = await import("./playbooks");
+    const { getPlans } = await import("./plans");
     const { listAllPendingInboxItems } = await import("./trading-inbox-storage");
 
-    const [experiment, trades, playbooks, workerInbox, monthly] = await Promise.all([
+    const [experiment, trades, playbooks, workerInbox, monthly, plans] = await Promise.all([
       getExperiment(),
       getTrades(),
       getPlaybooks(),
       fetchBridgeInbox(),
       getMonthlyRisk(),
+      getPlans(),
     ]);
     const pendingInbox = await listAllPendingInboxItems(workerInbox);
-    const data = buildTradesWorkspaceData(experiment, trades, playbooks, pendingInbox.length);
+    const prospects = buildTradeProspects(plans);
+    const data = buildTradesWorkspaceData(
+      experiment,
+      trades,
+      playbooks,
+      pendingInbox.length,
+      prospects
+    );
     return { ...data, monthlyLossRoom: monthly.monthlyLossRoom };
   } catch (err) {
     console.error("loadTradesWorkspaceData failed:", err);
@@ -152,7 +165,8 @@ export async function loadTradesWorkspaceData(): Promise<TradesWorkspaceData> {
       { realizedPnL: 0, grossLoss: 0, closedTrades: 0, wins: 0, losses: 0 },
       [],
       [],
-      0
+      0,
+      []
     );
     return { ...data, monthlyLossRoom: 0 };
   }

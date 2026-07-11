@@ -1,3 +1,5 @@
+import type { TradeProspect } from "./trade-prospects";
+
 export interface TradesWorkspaceRow {
   id: string;
   ticker: string;
@@ -42,6 +44,7 @@ export interface TradesWorkspaceData {
   suggestedTradeId: string;
   monthlyLossRoom: number;
   pendingInboxCount: number;
+  prospects: TradeProspect[];
 }
 
 export function formatTradeUsd(value: number): string {

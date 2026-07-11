@@ -1,6 +1,8 @@
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 import { sampleAiBlock } from "./ai-block";
 
+import { formatTradeProspectLabel, type TradeProspect } from "./trade-prospects";
+
 export const TRADE_BOOT_REQUEST = `Return ONE AI Block only — plain JSON or a single \`\`\`json fenced block.
 Use straight ASCII double quotes only — never curly “smart” quotes.
 
@@ -29,6 +31,8 @@ export interface TradeBootContext {
     target?: string;
     playbookId?: string;
   };
+  /** All active scouts — user may execute any one. */
+  prospects?: TradeProspect[];
 }
 
 function formatPlaybookHint(playbooks: TradeBootContext["playbooks"]): string {
@@ -46,6 +50,16 @@ function formatScoutPrefill(prefill: NonNullable<TradeBootContext["scoutPrefill"
   if (prefill.playbookId) lines.push(`playbookId: ${prefill.playbookId}`);
   lines.push("");
   lines.push("Use these levels unless the user explicitly changes them in chat.");
+  return lines.join("\n");
+}
+
+function formatProspectsRoster(prospects: TradeProspect[]): string {
+  const lines = ["=== ACTIVE SCOUT PROSPECTS (pick one to execute) ==="];
+  for (const p of prospects) {
+    lines.push(`- ${formatTradeProspectLabel(p)}`);
+  }
+  lines.push("");
+  lines.push("User may switch prospect in MatrixTrade before pasting trade-proposal.");
   return lines.join("\n");
 }
 
@@ -71,6 +85,10 @@ export function buildTradeBootPackage(ctx: TradeBootContext): string {
     "Playbooks:",
     formatPlaybookHint(ctx.playbooks),
   ];
+
+  if (ctx.prospects && ctx.prospects.length > 0) {
+    sections.push("", formatProspectsRoster(ctx.prospects));
+  }
 
   if (ctx.scoutPrefill?.planId || ctx.scoutPrefill?.ticker) {
     sections.push("", formatScoutPrefill(ctx.scoutPrefill));
