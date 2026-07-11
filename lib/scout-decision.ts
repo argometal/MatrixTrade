@@ -1,7 +1,14 @@
 import { randomBytes } from "crypto";
+import { parseConfirmationCost, type ConfirmationCost } from "./asymmetry-types";
 import type { TradePlan } from "./plan-types";
 import { authorizeProbe, parseProbeInput } from "./scout-probe";
 import type { ProbeInput } from "./scout-probe-types";
+import {
+  authorizeLayeredEntry,
+  parseLayeredEntryInput,
+  type LayeredEntryInput,
+  validateLayeredEntry,
+} from "./layered-entry";
 import {
   DECISION_HISTORY_CAP,
   type DecisionVerdict,
@@ -23,7 +30,12 @@ export type DecisionInput = {
   reasoning?: string;
   expectedValue?: number;
   expectedProbability?: number;
+  thesisQuality?: number;
   opportunityQuality?: number;
+  confirmationCost?: ConfirmationCost;
+  locationEvidence?: string;
+  confirmationEvidence?: string;
+  singleEntryOnly?: boolean;
   planningRisk?: PlanningRisk;
   executionRisk?: ExecutionRisk;
   decidedBy?: ScoutDecisionSource;
@@ -62,6 +74,21 @@ export function parseDecisionInput(raw: Record<string, unknown>): DecisionInput 
       raw.opportunityQuality !== undefined
         ? Number(raw.opportunityQuality)
         : undefined,
+    thesisQuality:
+      raw.thesisQuality !== undefined ? Number(raw.thesisQuality) : undefined,
+    confirmationCost: parseConfirmationCost(raw.confirmationCost),
+    locationEvidence: raw.locationEvidence
+      ? String(raw.locationEvidence).trim()
+      : undefined,
+    confirmationEvidence: raw.confirmationEvidence
+      ? String(raw.confirmationEvidence).trim()
+      : undefined,
+    singleEntryOnly:
+      raw.singleEntryOnly === true || raw.singleEntryOnly === "true"
+        ? true
+        : raw.singleEntryOnly === false || raw.singleEntryOnly === "false"
+          ? false
+          : undefined,
     planningRisk: parseRiskStruct(raw.planningRisk) as PlanningRisk | undefined,
     executionRisk: parseRiskStruct(raw.executionRisk) as ExecutionRisk | undefined,
     decidedBy: raw.decidedBy as ScoutDecisionSource | undefined,
@@ -112,6 +139,8 @@ export function deriveLifecycleFromPlan(plan: TradePlan): ScoutLifecycleStatus {
   if (plan.status === "skipped") return "cancelled";
   if (plan.status === "entered" || plan.linkedTradeId) return "executed";
 
+  if (plan.layeredEntry?.status === "missed") return "missed";
+
   if (plan.probe?.enabled) {
     switch (plan.probe.status) {
       case "active":
@@ -145,9 +174,17 @@ export function deriveLifecycleFromPlan(plan: TradePlan): ScoutLifecycleStatus {
 export function appendDecision(
   plan: TradePlan,
   input: DecisionInput,
-  probeInput?: ProbeInput
+  probeInput?: ProbeInput,
+  layeredEntryInput?: LayeredEntryInput
 ): { plan: TradePlan; errors?: string[] } {
-  const errors = validateDecision(input, { probe: probeInput });
+  const layeredErrors =
+    layeredEntryInput && input.verdict === "go"
+      ? validateLayeredEntry(layeredEntryInput)
+      : [];
+  const errors = [
+    ...validateDecision(input, { probe: probeInput }),
+    ...layeredErrors,
+  ];
   if (errors.length) return { plan, errors };
 
   const now = new Date().toISOString();
@@ -160,6 +197,11 @@ export function appendDecision(
     expectedValue: input.expectedValue,
     expectedProbability: input.expectedProbability,
     opportunityQuality: input.opportunityQuality,
+    thesisQuality: input.thesisQuality,
+    confirmationCost: input.confirmationCost,
+    locationEvidence: input.locationEvidence,
+    confirmationEvidence: input.confirmationEvidence,
+    singleEntryOnly: input.singleEntryOnly,
     planningRisk: input.planningRisk,
     executionRisk: input.executionRisk,
     priorDecisionId: plan.decision?.id,
@@ -181,11 +223,23 @@ export function appendDecision(
     probe = undefined;
   }
 
+  let layeredEntry = plan.layeredEntry;
+  let executionMethod = plan.executionMethod;
+  if (input.verdict === "go" && layeredEntryInput) {
+    layeredEntry = authorizeLayeredEntry(layeredEntryInput);
+    executionMethod = layeredEntry.executionMethod;
+  } else if (input.verdict !== "go") {
+    layeredEntry = undefined;
+    executionMethod = undefined;
+  }
+
   const updated: TradePlan = {
     ...plan,
     decision,
     decisionHistory: history,
     probe,
+    layeredEntry,
+    executionMethod,
     updatedAt: now,
   };
   updated.scoutLifecycle = deriveLifecycleFromPlan(updated);
@@ -215,6 +269,31 @@ export function formatDecisionSection(plan: TradePlan): string {
   if (d.opportunityQuality !== undefined) {
     lines.push(`opportunity_quality:${d.opportunityQuality}`);
   }
+  if (d.thesisQuality !== undefined) {
+    lines.push(`thesis_quality:${d.thesisQuality}`);
+  }
+  if (d.confirmationCost) {
+    const c = d.confirmationCost;
+    if (c.currentRR !== undefined) lines.push(`confirmation_current_rr:${c.currentRR}`);
+    if (c.estimatedConfirmedRR !== undefined) {
+      lines.push(`confirmation_estimated_rr:${c.estimatedConfirmedRR}`);
+    }
+    if (c.rewardConsumedPercent !== undefined) {
+      lines.push(`confirmation_reward_consumed_pct:${c.rewardConsumedPercent}`);
+    }
+    if (c.assessment) {
+      lines.push(`confirmation_assessment:${c.assessment.replace(/\s+/g, " ").slice(0, 160)}`);
+    }
+  }
+  if (d.locationEvidence) {
+    lines.push(`location_evidence:${d.locationEvidence.replace(/\s+/g, " ").slice(0, 160)}`);
+  }
+  if (d.confirmationEvidence) {
+    lines.push(
+      `confirmation_evidence:${d.confirmationEvidence.replace(/\s+/g, " ").slice(0, 160)}`
+    );
+  }
+  if (d.singleEntryOnly) lines.push("single_entry_only:yes");
   if (d.priorConfidence !== undefined) lines.push(`prior_confidence:${d.priorConfidence}`);
   if (d.posteriorConfidence !== undefined) {
     lines.push(`posterior_confidence:${d.posteriorConfidence}`);
@@ -223,4 +302,4 @@ export function formatDecisionSection(plan: TradePlan): string {
   return lines.join("\n");
 }
 
-export { parseProbeInput };
+export { parseProbeInput, parseLayeredEntryInput };

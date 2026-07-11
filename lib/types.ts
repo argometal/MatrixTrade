@@ -1,3 +1,7 @@
+import type { LossClassification, PostStopStudy } from "./asymmetry-types";
+
+export type { LossClassification, PostStopStudy, ConfirmationCost } from "./asymmetry-types";
+
 export type TradeStatus = "pending" | "open" | "closed";
 
 export type MistakeType =
@@ -54,6 +58,10 @@ export interface Trade {
   reviewedAt?: string;
   lesson?: string;
   actionItem?: string;
+  /** Classified after post-stop study when applicable. */
+  lossClassification?: LossClassification;
+  /** 90-day shadow follow-up after a losing close. */
+  postStopStudy?: PostStopStudy;
   /** Qualitative — user or external AI via import */
   thesis?: string;
   psychology?: string;
@@ -73,6 +81,7 @@ export interface SaveReviewInput {
   qualityMgmt: number;
   lesson?: string;
   actionItem?: string;
+  lossClassification?: LossClassification;
 }
 
 export interface ExperimentRules {

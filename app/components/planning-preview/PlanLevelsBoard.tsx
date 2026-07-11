@@ -68,9 +68,38 @@ export function PlanLevelsBoard({
 
       <div className="space-y-1 rounded-xl border border-zinc-800 bg-zinc-950/40 p-4">
         {view.rows.map((row) => (
-          <LevelRow key={`${row.kind}-${row.label}`} row={row} />
+          <LevelRow key={`${row.kind}-${row.label}-${row.value}`} row={row} />
         ))}
       </div>
+
+      {view.layeredEntry ? (
+        <div className="rounded-xl border border-teal-500/20 bg-teal-950/20 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-teal-400">
+            Entry ladder · no chase
+          </p>
+          {view.layeredEntry.highestLimit !== undefined ? (
+            <p className="mt-1 text-xs text-amber-200/80">
+              Miss {`$${view.layeredEntry.highestLimit.toFixed(2)}`} (highest limit) = trade cancelled
+            </p>
+          ) : null}
+          <ul className="mt-3 space-y-1 text-xs text-zinc-400">
+            {view.layeredEntry.scenarios.map((scenario) => {
+              const rrRow = view.layeredEntry?.scenarioRR?.find((r) => r.label === scenario.label);
+              return (
+                <li key={scenario.label} className="flex justify-between gap-3">
+                  <span>{scenario.label}</span>
+                  <span className="font-mono text-zinc-500">
+                    {scenario.limitsFilled > 0
+                      ? `≈ $${scenario.averageEntry.toFixed(2)}`
+                      : "—"}
+                    {rrRow?.rr !== undefined ? ` · ${rrRow.rr.toFixed(1)}R` : ""}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
 
       <div className={`grid gap-2 text-xs ${compact ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-4"}`}>
         {view.plannedRR !== undefined ? (

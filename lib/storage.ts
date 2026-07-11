@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { computeExperiment } from "./calculate";
+import { createPostStopStudyFromTrade } from "./post-stop-study";
 import { computeMonthlyRisk, type MonthlyRisk } from "./monthly-risk";
 import { readNoteBody, resolveVaultPath } from "./obsidian";
 import { syncObsidianTradeIfLocal } from "./obsidian-local";
@@ -242,11 +243,16 @@ export async function closeTrade(
     rules
   );
 
-  await upsertTradeInJson(updated);
-  await syncObsidianTradeIfLocal(updated, rules);
-  await startObservationForTrade(updated);
+  const postStopStudy = createPostStopStudyFromTrade(updated);
+  const withStudy: Trade = postStopStudy
+    ? { ...updated, postStopStudy, lossClassification: "pending_study" }
+    : updated;
 
-  return { trade: updated };
+  await upsertTradeInJson(withStudy);
+  await syncObsidianTradeIfLocal(withStudy, rules);
+  await startObservationForTrade(withStudy);
+
+  return { trade: withStudy };
 }
 
 export async function openTrade(id: string): Promise<{ trade?: Trade; errors?: string[] }> {
@@ -322,6 +328,7 @@ export async function saveTradeReview(
       qualityMgmt: input.qualityMgmt,
       lesson: input.lesson?.trim().slice(0, 280) || undefined,
       actionItem: input.actionItem?.trim().slice(0, 280) || undefined,
+      lossClassification: input.lossClassification ?? trade.lossClassification,
       reviewedAt: new Date().toISOString(),
     },
     rules

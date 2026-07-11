@@ -21,7 +21,7 @@ import {
   type TradingInboxPayload,
   type TradingProposalType,
 } from "./bridge";
-import { recordScoutDecisionFromProposal } from "./plans";
+import { recordScoutDecisionFromProposal, recordLayeredEntryFromProposal } from "./plans";
 import {
   parseTradeProposalStatus,
   validateTradeCloseProposal,
@@ -66,6 +66,8 @@ export async function applyTradingProposal(
       return applyScoutAssessment(parsed);
     case "decision-update":
       return applyDecisionUpdate(parsed);
+    case "layered-entry-update":
+      return applyLayeredEntryUpdate(parsed);
     case "evidence-add":
       return applyEvidenceAdd(parsed);
     case "file-update":
@@ -146,6 +148,21 @@ async function applyDecisionUpdate(
     ok: true,
     message: `Decision recorded on ${plan.id} · ${plan.decision?.verdict} · confidence ${plan.decision?.decisionConfidence}`,
     type: "decision-update",
+    planId: plan.id,
+    stockFileId: plan.stockThesisId,
+  };
+}
+
+async function applyLayeredEntryUpdate(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await recordLayeredEntryFromProposal(parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  const plan = result.plan!;
+  return {
+    ok: true,
+    message: `Layered entry updated on ${plan.id} · ${plan.layeredEntry?.status} · fill ${plan.layeredEntry?.fillPercent ?? 0}%`,
+    type: "layered-entry-update",
     planId: plan.id,
     stockFileId: plan.stockThesisId,
   };

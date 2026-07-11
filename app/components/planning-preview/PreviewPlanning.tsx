@@ -30,6 +30,8 @@ import {
 } from "@/lib/scout-decision-types";
 import { formatProbeRiskMessage } from "@/lib/scout-probe";
 import { PROBE_STATUS_LABELS } from "@/lib/scout-probe-types";
+import { formatLayeredEntrySummary } from "@/lib/layered-entry";
+import { LayeredEntryBadge, LayeredEntryPanel } from "./LayeredEntryPanel";
 import {
   isActiveStockThesisStatus,
   STOCK_THESIS_STATUS_LABELS,
@@ -552,6 +554,48 @@ export function PreviewPlanning({
                       ))}
                     </ul>
                   ) : null}
+                  {(selectedPlan.decision.thesisQuality !== undefined ||
+                    selectedPlan.decision.opportunityQuality !== undefined) && (
+                    <p className="text-xs text-zinc-500">
+                      Thesis quality {selectedPlan.decision.thesisQuality ?? "—"} · Opportunity
+                      quality {selectedPlan.decision.opportunityQuality ?? "—"}
+                    </p>
+                  )}
+                  {selectedPlan.decision.confirmationCost ? (
+                    <div className="rounded-lg border border-amber-500/20 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
+                      <p className="font-medium text-amber-400">Confirmation cost</p>
+                      {selectedPlan.decision.confirmationCost.currentRR !== undefined ? (
+                        <p>Current R:R {selectedPlan.decision.confirmationCost.currentRR}</p>
+                      ) : null}
+                      {selectedPlan.decision.confirmationCost.estimatedConfirmedRR !==
+                      undefined ? (
+                        <p>
+                          Est. after confirm{" "}
+                          {selectedPlan.decision.confirmationCost.estimatedConfirmedRR}
+                        </p>
+                      ) : null}
+                      {selectedPlan.decision.confirmationCost.assessment ? (
+                        <p className="mt-1 text-amber-100/90">
+                          {selectedPlan.decision.confirmationCost.assessment}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {selectedPlan.decision.locationEvidence ? (
+                    <p className="text-xs text-zinc-500">
+                      <span className="text-zinc-400">Location:</span>{" "}
+                      {selectedPlan.decision.locationEvidence}
+                    </p>
+                  ) : null}
+                  {selectedPlan.decision.confirmationEvidence ? (
+                    <p className="text-xs text-zinc-500">
+                      <span className="text-zinc-400">Confirmation:</span>{" "}
+                      {selectedPlan.decision.confirmationEvidence}
+                    </p>
+                  ) : null}
+                  {selectedPlan.decision.singleEntryOnly ? (
+                    <p className="text-xs text-violet-300">Single entry — no add ladder planned</p>
+                  ) : null}
                   {(selectedPlan.decision.planningRisk || selectedPlan.decision.executionRisk) && (
                     <div className="grid gap-2 text-xs sm:grid-cols-2">
                       {selectedPlan.decision.planningRisk ? (
@@ -578,6 +622,15 @@ export function PreviewPlanning({
                   No stored decision — showing computed verdict from Stock File status.
                 </p>
               )}
+
+              {selectedPlan.layeredEntry ? (
+                <div className="mt-4">
+                  <LayeredEntryPanel
+                    plan={selectedPlan}
+                    playbook={playbooks.find((p) => p.id === selectedPlan.playbookId)}
+                  />
+                </div>
+              ) : null}
 
               {selectedPlan.probe?.enabled ? (
                 <div className="mt-4 rounded-xl border border-violet-500/20 bg-violet-950/10 p-4">
@@ -715,10 +768,14 @@ export function PreviewPlanning({
                             {SCOUTING_VERDICT_LABELS[computeScoutingVerdictFromThesis(scoutThesis)]}
                           </span>
                         ) : null}
+                        {plan.layeredEntry ? <LayeredEntryBadge entry={plan.layeredEntry} /> : null}
                       </div>
                       <p className="mt-1 text-xs text-zinc-500">
                         {getPlaybookName(playbooks, plan.playbookId) ?? "No strategy"} · Entry{" "}
                         {plan.entryTimeframe} · Window {formatWindow(plan)}
+                        {plan.layeredEntry
+                          ? ` · ${formatLayeredEntrySummary(plan.layeredEntry)}`
+                          : ""}
                       </p>
                       {plan.stockThesisId ? (
                         <p className="mt-1 text-xs text-violet-400">
@@ -736,14 +793,42 @@ export function PreviewPlanning({
                       </p>
                     </div>
                     <div className="text-right text-xs text-zinc-500">
-                      <p>Entry {formatLevel(plan.plannedEntry)}</p>
-                      <p>Stop {formatLevel(plan.stopPrice)} · Target {formatLevel(plan.targetPrice)}</p>
+                      {plan.layeredEntry ? (
+                        <>
+                          <p className="text-teal-400/90">
+                            {plan.layeredEntry.limits.length} limits · L1{" "}
+                            {formatLevel(plan.layeredEntry.limits[0]?.price)}
+                          </p>
+                          <p>
+                            Stop {formatLevel(plan.stopPrice)} · Target{" "}
+                            {formatLevel(plan.targetPrice)}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p>Entry {formatLevel(plan.plannedEntry)}</p>
+                          <p>
+                            Stop {formatLevel(plan.stopPrice)} · Target{" "}
+                            {formatLevel(plan.targetPrice)}
+                          </p>
+                        </>
+                      )}
                       {plan.plannedRR !== undefined ? <p>R:R {plan.plannedRR.toFixed(1)}</p> : null}
                     </div>
                   </div>
 
                   {plan.thesis ? (
                     <p className="mt-3 text-sm text-zinc-400">{plan.thesis}</p>
+                  ) : null}
+
+                  {plan.layeredEntry ? (
+                    <div className="mt-3">
+                      <LayeredEntryPanel
+                        plan={plan}
+                        playbook={playbooks.find((p) => p.id === plan.playbookId)}
+                        compact
+                      />
+                    </div>
                   ) : null}
 
                   {plan.outcome ? (

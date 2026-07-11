@@ -79,6 +79,12 @@ export function PlanMapToggleButton({
 
 export function PlanMapSummaryLine({ view }: { view: PlanLevelsView }) {
   const parts: string[] = [];
+  if (view.layeredEntry) {
+    parts.push(`${view.layeredEntry.plan.limits.length} limits`);
+    if (view.layeredEntry.highestLimit !== undefined) {
+      parts.push(`no chase above $${view.layeredEntry.highestLimit.toFixed(2)}`);
+    }
+  }
   if (view.plannedRR !== undefined) {
     parts.push(`Plan ${view.plannedRR.toFixed(1)}R`);
   } else if (view.estimatedRR !== undefined) {

@@ -1,3 +1,4 @@
+import type { PostStopStudy, LossClassification } from "../asymmetry-types";
 import type { MistakeType, Trade, TradeDirection, TradeStatus } from "../types";
 
 /** Fields computed at load time — never persisted. */
@@ -36,6 +37,8 @@ export interface TradeRow {
   psychology: string | null;
   lessons: string | null;
   notes: string | null;
+  loss_classification: string | null;
+  post_stop_study: PostStopStudy | null;
 }
 
 function num(value: number | string | null | undefined): number | undefined {
@@ -81,6 +84,8 @@ export function tradeRowToTrade(row: TradeRow): Trade {
     psychology: str(row.psychology),
     lessons: str(row.lessons),
     notes: str(row.notes),
+    lossClassification: str(row.loss_classification) as LossClassification | undefined,
+    postStopStudy: row.post_stop_study ?? undefined,
   };
 }
 
@@ -116,5 +121,7 @@ export function tradeToRow(trade: Trade): TradeRow {
     psychology: stored.psychology ?? null,
     lessons: stored.lessons ?? null,
     notes: stored.notes ?? null,
+    loss_classification: stored.lossClassification ?? null,
+    post_stop_study: stored.postStopStudy ?? null,
   };
 }

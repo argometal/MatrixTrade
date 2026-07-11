@@ -209,6 +209,7 @@ export type TradingProposalType =
   | "evidence-add"
   | "scout-assessment"
   | "decision-update"
+  | "layered-entry-update"
   | "file-update"
   | "trade-proposal"
   | "trade-close"
@@ -234,6 +235,7 @@ export function parseTradingInboxPayload(
     type !== "evidence-add" &&
     type !== "scout-assessment" &&
     type !== "decision-update" &&
+    type !== "layered-entry-update" &&
     type !== "file-update" &&
     type !== "trade-proposal" &&
     type !== "trade-close" &&
@@ -266,6 +268,8 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return `Scout ${p.ticker} ${p.stockFileId} · verdict ${p.verdict}`;
     case "decision-update":
       return `Decision ${p.planId} · verdict ${p.verdict} · confidence ${p.decisionConfidence}`;
+    case "layered-entry-update":
+      return `Layered entry ${p.planId} · fill ${p.filledThroughIndex ?? p.status ?? "update"}`;
     case "file-update":
       return `Update Stock File ${p.id}`;
     case "trade-proposal": {
@@ -392,6 +396,25 @@ export function validateProposalPayload(
         if (!probeObj.expires) {
           errors.push("proposal.probe.expires required when verdict is probe");
         }
+      }
+    }
+  }
+
+  if (parsed.type === "layered-entry-update") {
+    if (!p.planId) errors.push("proposal.planId required");
+    const hasUpdate =
+      p.filledThroughIndex !== undefined ||
+      (p.status &&
+        ["missed", "partial", "full", "active", "planned", "cancelled"].includes(
+          String(p.status)
+        ));
+    if (!hasUpdate) {
+      errors.push("proposal.filledThroughIndex or proposal.status required");
+    }
+    if (p.filledThroughIndex !== undefined) {
+      const idx = Number(p.filledThroughIndex);
+      if (!Number.isFinite(idx) || idx < -1) {
+        errors.push("proposal.filledThroughIndex must be >= -1");
       }
     }
   }

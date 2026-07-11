@@ -1,5 +1,6 @@
 import { buildAiContextPackage } from "./ai-context";
 import { formatDecisionSection } from "./scout-decision";
+import { formatLayeredEntrySection } from "./layered-entry-types";
 import { formatProbeSection } from "./scout-probe";
 import {
   ensureProfileEvidenceSeeded,
@@ -24,7 +25,8 @@ SCOPED ACCESS — you may ONLY act on the stock profile in this package.
 Allowed types:
 - evidence-add: stockProfileId, ticker, timeframe, category, value, confidence required
 - file-update: id (stock profile), at least one of status, currentHypothesis, notes, thesis
-- decision-update: planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required; optional reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe
+- decision-update: planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required; optional thesisQuality, opportunityQuality, confirmationCost (supplied prices only), locationEvidence, confirmationEvidence, singleEntryOnly, reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe, layeredEntry{executionMethod,limits[{price,allocationPercent}]} when verdict=go
+- layered-entry-update: planId, filledThroughIndex (0-based) or status (missed|partial|full|active) — record fill outcome without changing thesis
 - scout-assessment: stockProfileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[]
 
 Forbidden: trade-proposal, trade-close, playbook changes, other tickers.
@@ -74,6 +76,8 @@ export async function loadScopedScoutContext(grant: ScopedAiGrant): Promise<{
     if (decisionSection) decisionProbeSections.push(decisionSection);
     const probeSection = formatProbeSection(focusPlan);
     if (probeSection) decisionProbeSections.push(probeSection);
+    const layeredSection = formatLayeredEntrySection(focusPlan);
+    if (layeredSection) decisionProbeSections.push(layeredSection);
   }
 
   const text = [
@@ -111,11 +115,18 @@ export async function loadScopedScoutContext(grant: ScopedAiGrant): Promise<{
       contextUrl: urls.contextUrl,
       inboxUrl: urls.inboxUrl,
       humanPageUrl: urls.humanPageUrl,
-      allowedProposalTypes: ["evidence-add", "file-update", "scout-assessment", "decision-update"],
+      allowedProposalTypes: [
+        "evidence-add",
+        "file-update",
+        "scout-assessment",
+        "decision-update",
+        "layered-entry-update",
+      ],
       planId: grant.planId ?? focusPlan?.id ?? null,
       scoutLifecycle: focusPlan?.scoutLifecycle ?? null,
       decisionVerdict: focusPlan?.decision?.verdict ?? null,
       probeStatus: focusPlan?.probe?.status ?? null,
+      layeredEntryStatus: focusPlan?.layeredEntry?.status ?? null,
     },
   };
 }

@@ -32,6 +32,8 @@ export async function verifyApplyPersistence(
       return verifyEvidenceAddPersistence(parsed);
     case "decision-update":
       return verifyDecisionUpdatePersistence(parsed);
+    case "layered-entry-update":
+      return verifyLayeredEntryUpdatePersistence(parsed);
     case "scout-assessment":
     case "file-update":
       return verifyStockFilePersistence(parsed);
@@ -83,6 +85,35 @@ async function verifyDecisionUpdatePersistence(
   return {
     ok: true,
     detail: `Decision on ${planId} · ${reloaded.decision.verdict} · confidence ${reloaded.decision.decisionConfidence}`,
+  };
+}
+
+async function verifyLayeredEntryUpdatePersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const p = parsed.proposal;
+  const planId = String(p.planId).toUpperCase();
+  const reloaded = await getPlanById(planId);
+  if (!reloaded?.layeredEntry) {
+    return { ok: false, detail: `Layered entry not found on ${planId} after apply.` };
+  }
+  if (p.status !== undefined && reloaded.layeredEntry.status !== String(p.status)) {
+    return { ok: false, detail: `Layered entry status mismatch on ${planId}.` };
+  }
+  if (p.filledThroughIndex !== undefined) {
+    const idx = Number(p.filledThroughIndex);
+    const filledCount = reloaded.layeredEntry.limits.filter((l) => l.filled).length;
+    const expected = idx < 0 ? 0 : idx + 1;
+    if (filledCount !== expected) {
+      return {
+        ok: false,
+        detail: `Filled limits count mismatch on ${planId} (expected ${expected}, got ${filledCount}).`,
+      };
+    }
+  }
+  return {
+    ok: true,
+    detail: `Layered entry on ${planId} · ${reloaded.layeredEntry.status} verified.`,
   };
 }
 

@@ -48,5 +48,55 @@
     "scoutLifecycle": "decided_wait",
     "createdAt": "2026-07-10T12:00:00.000Z",
     "updatedAt": "2026-07-10T18:00:00.000Z"
+  },
+  {
+    "id": "PLAN-002",
+    "ticker": "NFLX",
+    "playbookId": "layered-entry",
+    "status": "ready",
+    "analysisTimeframes": ["1W", "1D", "1H"],
+    "entryTimeframe": "1H",
+    "plannedEntry": 73,
+    "supportLevel": 71,
+    "stopPrice": 68,
+    "targetPrice": 88,
+    "plannedRR": 5,
+    "validFrom": "2026-07-11T00:00:00.000Z",
+    "validUntil": "2026-07-18T23:59:59.000Z",
+    "thesis": "Support entry — thesis accepted; execution experiment via layered limits only.",
+    "executionMethod": "layered_limits",
+    "layeredEntry": {
+      "executionMethod": "layered_limits",
+      "limits": [
+        { "price": 73, "allocationPercent": 40 },
+        { "price": 72.2, "allocationPercent": 35 },
+        { "price": 71.4, "allocationPercent": 25 }
+      ],
+      "noChase": true,
+      "status": "planned",
+      "firstLimitPrice": 73
+    },
+    "decision": {
+      "id": "DEC-nflx-layered-go",
+      "verdict": "go",
+      "decisionConfidence": 71,
+      "thesisQuality": 78,
+      "opportunityQuality": 72,
+      "reasoning": "Thesis accepted at support — run layered limit execution experiment. Stop, target, size unchanged.",
+      "challenges": [
+        "Limits may not fill if price gaps through ladder",
+        "Partial fill changes avg entry but not thesis validity"
+      ],
+      "decidedAt": "2026-07-11T10:00:00.000Z",
+      "decidedBy": "human",
+      "executionRisk": {
+        "emotion": "no chase if all limits miss",
+        "late": "highest limit 73.00 is hard ceiling"
+      }
+    },
+    "decisionHistory": [],
+    "scoutLifecycle": "decided_go",
+    "createdAt": "2026-07-11T09:00:00.000Z",
+    "updatedAt": "2026-07-11T10:00:00.000Z"
   }
 ]

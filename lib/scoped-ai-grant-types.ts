@@ -23,6 +23,7 @@ export const SCOPED_AI_ALLOWED_PROPOSAL_TYPES = [
   "file-update",
   "scout-assessment",
   "decision-update",
+  "layered-entry-update",
 ] as const;
 
 export type ScopedAiAllowedProposalType = (typeof SCOPED_AI_ALLOWED_PROPOSAL_TYPES)[number];

@@ -115,6 +115,17 @@ MATRIX MECHANICS → PLAYBOOK → STOCK FILE → SCOUTING STATE → REQUEST
     "reasoning": "Wait for pullback to primary zone.",
     "planningRisk": { "structure": "HH/HL intact", "rr": "3R min not met" },
     "executionRisk": { "emotion": "avoid chase" },
+    "thesisQuality": 70,
+    "opportunityQuality": 45,
+    "confirmationCost": {
+      "currentRR": 4.2,
+      "estimatedConfirmedRR": 2.6,
+      "rewardConsumedPercent": 38,
+      "assessment": "Waiting may push setup below Stock File minimum R:R."
+    },
+    "locationEvidence": "Entered primary support zone",
+    "confirmationEvidence": "No higher low yet",
+    "singleEntryOnly": true,
     "probe": {
       "trigger": "Close above 355 on 1D",
       "expires": "2026-07-17T23:59:59.000Z",

@@ -54,6 +54,38 @@ export function buildMatrixMechanicsBrief(): string {
     "- Override Stock File invalidation or minimum R:R without explicit user approval.",
     "- Change Playbook, Stock File, or scout records silently — ask before changing files.",
     "- Treat Matrix as a generic journal or signal service.",
+    "- Invent prices for confirmationCost or R:R — use only user-supplied numbers.",
+    "",
+    "ASYMMETRY RULE",
+    "Matrix does not maximize confirmation or highest probability. It maximizes long-term expectancy.",
+    "Playbook 'expectancy-asymmetry' defines how EVERY setup is evaluated — never put this philosophy in a Stock File.",
+    "Confirmation has a cost: higher entry, reduced reward, wider structural risk, lower R:R.",
+    "A setup may become more probable while becoming less profitable.",
+    "Scouting Desk must evaluate BOTH:",
+    "1. thesis quality — how likely is the hypothesis correct?",
+    "2. opportunity quality — how attractive is the trade at the current price?",
+    "Distinguish location evidence (reached strategic zone) from confirmation evidence (control shift).",
+    "When price reaches a predefined zone and thesis remains valid, a controlled probe may be considered",
+    "if current R:R meets Stock File minimum, waiting would materially reduce R:R, stop is defined,",
+    "and loss is acceptable. Do not force confirmation when it destroys required asymmetry.",
+    "Do not tighten stops artificially to manufacture R:R.",
+    "Distinguish setup invalidation (this entry failed) from thesis invalidation (Stock File case dead).",
+    "",
+    "EXPERIMENT SCOPE",
+    "Playbook experiment — hypothesis tested across many qualified trades; one stock does not prove/disprove it.",
+    "Stock experiment — one ticker is one data point under the playbook; update playbook only after N trades.",
+    "",
+    "POST-STOP OBSERVATION RULE",
+    "A stopped/losing trade does not automatically invalidate the Stock File thesis.",
+    "After a loss: close normally, preserve the plan, observe 90 calendar days unless thesis invalidates earlier.",
+    "Record whether original targets or invalidation were reached; classify loss after study — not at stop time.",
+    "Do not reopen or modify a trade automatically. New entry: Stock File → Scouting Desk → Trade again.",
+    "",
+    "EXECUTION EXPERIMENTS",
+    "Strategy (does trade deserve capital?) must stay constant. Execution (how to enter?) may vary.",
+    "Preferred: Layered Entry / Entry Optimization — not Probe (legacy). Thesis accepted; improve average entry via limit ladder.",
+    "Only one execution variable per experiment. No chase: all limits miss = trade cancelled, no market order.",
+    "Playbooks: expectancy-asymmetry (framework), layered-entry (execution hypothesis).",
     "",
     "EXPORT ORDER (when user pastes context)",
     "1. MATRIX MECHANICS (this block)",
@@ -87,6 +119,43 @@ export function formatPlaybookTrainingSection(playbooks: Playbook[]): string {
     }
     if (pb.checklist.length > 0) {
       lines.push(`  checklist:${pb.checklist.slice(0, 8).join(" | ")}`);
+    }
+    if (pb.principles?.length) {
+      lines.push(`  principles:${pb.principles.slice(0, 6).join(" | ")}`);
+    }
+    if (pb.experimentHypothesis) {
+      lines.push(
+        `  experiment:${pb.experimentHypothesis.replace(/\s+/g, " ").slice(0, 200)}`
+      );
+    }
+    if (pb.appliesMethodology) {
+      lines.push(`  applies_methodology:${pb.appliesMethodology}`);
+    }
+    if (pb.methodology?.philosophy) {
+      lines.push(`  methodology_philosophy:${pb.methodology.philosophy.replace(/\s+/g, " ").slice(0, 240)}`);
+    }
+    if (pb.decisionPhilosophy) {
+      lines.push(`  decision_philosophy:${pb.decisionPhilosophy}`);
+    }
+    if (pb.scoutingMetrics?.length) {
+      lines.push(`  scouting_metrics:${pb.scoutingMetrics.join(",")}`);
+    }
+    if (pb.scoutingDimensions?.thesisQuality?.length) {
+      lines.push(`  thesis_quality_dims:${pb.scoutingDimensions.thesisQuality.join("|")}`);
+    }
+    if (pb.scoutingDimensions?.opportunityQuality?.length) {
+      lines.push(`  opportunity_quality_dims:${pb.scoutingDimensions.opportunityQuality.join("|")}`);
+    }
+    if (pb.executionExperiments?.layeredEntryHypothesis) {
+      lines.push(
+        `  execution_hypothesis:${pb.executionExperiments.layeredEntryHypothesis.replace(/\s+/g, " ").slice(0, 200)}`
+      );
+    }
+    if (pb.executionExperiments?.noChaseRule) {
+      lines.push(`  no_chase:${pb.executionExperiments.noChaseRule.replace(/\s+/g, " ").slice(0, 160)}`);
+    }
+    if (pb.methodology?.matrixIdentity) {
+      lines.push(`  matrix_identity:${pb.methodology.matrixIdentity.replace(/\s+/g, " ").slice(0, 200)}`);
     }
   }
   return lines.join("\n");

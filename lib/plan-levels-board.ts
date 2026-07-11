@@ -1,6 +1,12 @@
 import type { TradePlan } from "./plan-types";
 import { computePlannedRR } from "./plan-risk";
 import {
+  buildLayeredEntryScenarios,
+  getHighestLimitPrice,
+  type LayeredEntryScenario,
+} from "./layered-entry";
+import type { LayeredEntryPlan } from "./layered-entry-types";
+import {
   formatStockThesisZone,
   type StockThesis,
   type StockThesisLevels,
@@ -9,6 +15,7 @@ import {
 export type PlanLevelRowKind =
   | "target"
   | "entry"
+  | "limit"
   | "zone"
   | "support"
   | "stop"
@@ -33,6 +40,13 @@ export interface PlanLevelsView {
   minRR?: number;
   invalidation?: string;
   window?: string;
+  layeredEntry?: {
+    plan: LayeredEntryPlan;
+    scenarios: LayeredEntryScenario[];
+    highestLimit?: number;
+    /** R:R at each scenario when stop/target known */
+    scenarioRR?: Array<{ label: string; rr?: number }>;
+  };
 }
 
 function formatPrice(value?: number): string {
@@ -105,7 +119,18 @@ function buildRowsFromPlan(plan: TradePlan): PlanLevelRow[] {
     });
   }
 
-  if (plan.plannedEntry !== undefined) {
+  if (plan.layeredEntry?.limits.length) {
+    for (const [index, limit] of plan.layeredEntry.limits.entries()) {
+      const filled = limit.filled ? " · filled" : "";
+      rows.push({
+        kind: "limit",
+        label: `Limit ${index + 1}`,
+        value: formatPrice(limit.price),
+        detail: `${limit.allocationPercent}% capital${filled}`,
+        emphasis: limit.filled ? "success" : index === 0 ? "primary" : "muted",
+      });
+    }
+  } else if (plan.plannedEntry !== undefined) {
     rows.push({
       kind: "entry",
       label: "Planned entry",
@@ -197,6 +222,26 @@ export function buildPlanLevelsView(
   const estimatedRR =
     plan?.plannedRR === undefined ? estimateRRFromProfile(thesis.levels) : undefined;
 
+  let layeredEntry: PlanLevelsView["layeredEntry"];
+  if (plan?.layeredEntry) {
+    const scenarios = buildLayeredEntryScenarios(plan.layeredEntry.limits);
+    const scenarioRR =
+      plan.stopPrice !== undefined && plan.targetPrice !== undefined
+        ? scenarios
+            .filter((s) => s.limitsFilled > 0)
+            .map((s) => {
+              const computed = computePlannedRR(s.averageEntry, plan.stopPrice!, plan.targetPrice!);
+              return { label: s.label, rr: computed?.rr };
+            })
+        : undefined;
+    layeredEntry = {
+      plan: plan.layeredEntry,
+      scenarios,
+      highestLimit: getHighestLimitPrice(plan.layeredEntry),
+      scenarioRR,
+    };
+  }
+
   return {
     ticker: thesis.ticker,
     strategy,
@@ -207,5 +252,6 @@ export function buildPlanLevelsView(
     minRR: thesis.riskRules.minimumRR,
     invalidation: thesis.riskRules.invalidation,
     window,
+    layeredEntry,
   };
 }

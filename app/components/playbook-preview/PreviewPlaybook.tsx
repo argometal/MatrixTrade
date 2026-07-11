@@ -2,7 +2,12 @@ import Link from "next/link";
 import type { PlaybookStats } from "@/lib/analytics";
 import { ImportAiUpdateLink } from "@/app/components/preview/ImportAiUpdateLink";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
-import { PLAYBOOK_STATUS_LABELS } from "@/lib/playbook-types";
+import {
+  PLAYBOOK_STATUS_LABELS,
+  type Playbook,
+  type PlaybookExecutionExperiments,
+  type PlaybookMethodology,
+} from "@/lib/playbook-types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
 function formatUsd(value: number): string {
@@ -37,6 +42,68 @@ const statusStyles: Record<string, string> = {
   ACTIVE: "bg-emerald-500/15 text-emerald-400",
   RETIRED: "bg-zinc-700/50 text-zinc-400",
 };
+
+const METHODOLOGY_SECTIONS: {
+  key: keyof PlaybookMethodology;
+  label: string;
+}[] = [
+  { key: "philosophy", label: "Philosophy" },
+  { key: "corePrinciple", label: "Core principle" },
+  { key: "asymmetryPrinciple", label: "Asymmetry" },
+  { key: "confirmationCost", label: "Confirmation cost" },
+  { key: "opportunityPreservation", label: "Opportunity preservation" },
+  { key: "statisticalFramework", label: "Statistical framework" },
+  { key: "continuousLearning", label: "Continuous learning" },
+  { key: "matrixIdentity", label: "Matrix identity" },
+];
+
+function PlaybookExecutionPanel({ execution }: { execution: PlaybookExecutionExperiments }) {
+  const blocks: { key: Exclude<keyof PlaybookExecutionExperiments, "metrics">; label: string }[] = [
+    { key: "strategyDefinition", label: "Strategy (constant)" },
+    { key: "executionDefinition", label: "Execution (variable)" },
+    { key: "experimentalRule", label: "Experimental rule" },
+    { key: "layeredEntryHypothesis", label: "Layered entry hypothesis" },
+    { key: "executionPrinciple", label: "Execution principle" },
+    { key: "noChaseRule", label: "No chase rule" },
+  ];
+  const sections = blocks.filter((b) => execution[b.key]?.trim());
+  if (sections.length === 0 && !execution.metrics?.length) return null;
+
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-violet-500/20 bg-violet-950/20 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-violet-400">
+        Execution experiments
+      </p>
+      {sections.map(({ key, label }) => (
+        <div key={key}>
+          <p className="text-xs font-medium text-violet-300/90">{label}</p>
+          <p className="mt-1 text-sm leading-relaxed text-zinc-300">{execution[key]}</p>
+        </div>
+      ))}
+      {execution.metrics?.length ? (
+        <p className="text-xs text-zinc-500">Metrics: {execution.metrics.join(" · ")}</p>
+      ) : null}
+    </div>
+  );
+}
+function PlaybookMethodologyPanel({ methodology }: { methodology: PlaybookMethodology }) {
+  const sections = METHODOLOGY_SECTIONS.filter((s) => methodology[s.key]?.trim());
+  if (sections.length === 0) return null;
+
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-teal-500/20 bg-teal-950/20 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-teal-400">
+        Expectancy &amp; asymmetry framework
+      </p>
+      {sections.map(({ key, label }) => (
+        <div key={key}>
+          <p className="text-xs font-medium text-teal-300/90">{label}</p>
+          <p className="mt-1 text-sm leading-relaxed text-zinc-300">{methodology[key]}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function PreviewPlaybook({
   stats,
@@ -120,6 +187,80 @@ export function PreviewPlaybook({
                     {row.playbook?.description && (
                       <p className="mt-3 text-sm text-zinc-400">{row.playbook.description}</p>
                     )}
+
+                    {row.playbook?.experimentHypothesis ? (
+                      <p className="mt-3 rounded-lg bg-violet-500/10 px-3 py-2 text-xs text-violet-200">
+                        <span className="font-semibold uppercase tracking-wide text-violet-400">
+                          Playbook experiment
+                        </span>
+                        <span className="mt-1 block text-zinc-300">
+                          {row.playbook.experimentHypothesis}
+                        </span>
+                      </p>
+                    ) : null}
+
+                    {row.playbook?.principles && row.playbook.principles.length > 0 ? (
+                      <ul className="mt-3 space-y-1 text-sm text-zinc-400">
+                        {row.playbook.principles.map((item) => (
+                          <li key={item} className="flex items-start gap-2">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-500" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+
+                    {row.playbook?.methodology ? (
+                      <PlaybookMethodologyPanel methodology={row.playbook.methodology} />
+                    ) : null}
+
+                    {row.playbook?.executionExperiments ? (
+                      <PlaybookExecutionPanel execution={row.playbook.executionExperiments} />
+                    ) : null}
+
+                    {row.playbook?.scoutingDimensions ? (
+                      <div className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                        {row.playbook.scoutingDimensions.thesisQuality?.length ? (
+                          <div className="rounded-lg bg-zinc-950/60 p-3">
+                            <p className="text-xs font-medium text-zinc-400">Thesis quality</p>
+                            <ul className="mt-2 space-y-1 text-zinc-500">
+                              {row.playbook.scoutingDimensions.thesisQuality.map((item) => (
+                                <li key={item}>· {item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                        {row.playbook.scoutingDimensions.opportunityQuality?.length ? (
+                          <div className="rounded-lg bg-zinc-950/60 p-3">
+                            <p className="text-xs font-medium text-zinc-400">Opportunity quality</p>
+                            <ul className="mt-2 space-y-1 text-zinc-500">
+                              {row.playbook.scoutingDimensions.opportunityQuality.map((item) => (
+                                <li key={item}>· {item}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+
+                    {row.playbook?.scoutingMetrics?.length ? (
+                      <p className="mt-3 text-xs text-zinc-600">
+                        Metrics: {row.playbook.scoutingMetrics.join(" · ")}
+                      </p>
+                    ) : null}
+
+                    {row.playbook?.decisionPhilosophy ? (
+                      <p className="mt-2 text-xs text-violet-300">{row.playbook.decisionPhilosophy}</p>
+                    ) : null}
+
+                    {row.playbook?.appliesMethodology ? (
+                      <p className="mt-2 text-xs text-zinc-500">
+                        Methodology:{" "}
+                        <span className="font-mono text-zinc-400">
+                          {row.playbook.appliesMethodology}
+                        </span>
+                      </p>
+                    ) : null}
 
                     {row.playbook?.checklist && row.playbook.checklist.length > 0 && (
                       <ul className="mt-3 space-y-1 text-sm text-zinc-400">
