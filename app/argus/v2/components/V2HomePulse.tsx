@@ -38,7 +38,13 @@ function PulseChipCard({ chip }: { chip: PulseChip }) {
 }
 
 /** Action-only attention strip — aligns with sidebar nav signals. */
-export function V2HomePulse({ signals }: { signals: V2NavCounts }) {
+export function V2HomePulse({
+  signals,
+  className = "",
+}: {
+  signals: V2NavCounts;
+  className?: string;
+}) {
   const chips: PulseChip[] = [];
 
   if (signals.inbox > 0) {
@@ -74,7 +80,9 @@ export function V2HomePulse({ signals }: { signals: V2NavCounts }) {
 
   if (chips.length === 0) {
     return (
-      <p className="mb-6 rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-4 py-3 text-sm text-zinc-500">
+      <p
+        className={`rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-4 py-3 text-sm text-zinc-500 ${className}`}
+      >
         Nothing needs attention — use{" "}
         <Link href="/argus/v2/inbox" className="text-violet-400 hover:text-violet-300">
           Inbox
@@ -90,12 +98,12 @@ export function V2HomePulse({ signals }: { signals: V2NavCounts }) {
 
   return (
     <div
-      className="mb-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
+      className={`flex flex-wrap gap-2.5 ${className}`}
       role="list"
       aria-label="Items needing attention"
     >
       {chips.map((chip) => (
-        <div key={chip.label} role="listitem">
+        <div key={chip.label} role="listitem" className="w-full min-w-[10.5rem] max-w-[13rem] flex-1 sm:w-auto sm:flex-none">
           <PulseChipCard chip={chip} />
         </div>
       ))}

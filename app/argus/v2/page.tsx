@@ -12,7 +12,6 @@ import { buildV2KnowledgeNodes } from "@/lib/argus/v2/intelligence-viz";
 import { V2Card, V2SectionTitle } from "./components/v2-ui";
 import { V2Timeline, V2TimelineRail } from "./components/V2Timeline";
 import { V2TagCloud } from "./components/V2TagCloud";
-import { V2HomePulse } from "./components/V2HomePulse";
 import { V2HomeMainShell } from "./components/V2HomeMainShell";
 
 const FOLLOW_UP_ICON_STYLES: Record<string, { icon: string; box: string }> = {
@@ -55,18 +54,19 @@ export default async function V2HomePage({
       <div className="argus-v2-scroll flex-1 overflow-y-auto overscroll-y-contain px-4 py-6 lg:px-8">
         <div className="mb-2">
           <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Home</h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            Activity, intelligence, and what needs attention
-          </p>
+          <p className="mt-1 text-sm text-zinc-500">Activity, intelligence, and what needs attention</p>
         </div>
-
-        <V2HomePulse signals={navSignals} />
 
         <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
           <div className="space-y-6">
-            <V2Card className="p-6">
+            <V2Card className="p-5 sm:p-6">
               <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
-                <V2HomeMainShell nodes={knowledgeNodes} tags={tags} initialView={viewParam} />
+                <V2HomeMainShell
+                  nodes={knowledgeNodes}
+                  tags={tags}
+                  signals={navSignals}
+                  initialView={viewParam}
+                />
               </Suspense>
             </V2Card>
           </div>
