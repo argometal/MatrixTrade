@@ -112,7 +112,7 @@ export function buildAiBridgeLiveSnapshot(
     openCount,
     pendingCount,
     closedCount: closed.length,
-    maxTrades: experiment.maxTrades,
+    maxTrades: trades.length,
     totalPnL: experiment.realizedPnL,
     winRatePercent: winRate !== null ? Math.round(winRate * 100) : null,
     expectancyPerTrade:
