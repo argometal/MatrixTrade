@@ -12,10 +12,11 @@ Required shape:
   "proposal": { ... }
 }
 PRIORITY — Scouting (validate thesis; do not rubber-stamp):
+- stock-case-create: NEW Stock Profile from research — ticker, thesis, currentHypothesis, levels{}, riskRules{minimumRR, invalidation} required; optional style, historicalAnalysis[], status
 - evidence-add: MarketEvidence row — stockProfileId, ticker, timeframe, category, value, confidence (0-100) required; optional note
 - decision-update: scout decision on PLAN — planId, verdict (go|wait|probe|no), decisionConfidence (0-100), challenges[] (min 1) required; optional reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe (trigger + expires required)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
-- file-update: propose Stock File change — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis
+- file-update: propose Stock File change — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}
 
 Trade layer (use only when scouting approves):
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId
@@ -38,10 +39,11 @@ Required shape:
   "proposal": { ... }
 }
 Block types (all Apply ready):
+- stock-case-create: NEW Stock Profile — ticker, thesis, currentHypothesis, levels{}, riskRules{minimumRR, invalidation} required
 - evidence-add: MarketEvidence — stockProfileId, ticker, timeframe, category, value, confidence required
 - decision-update: scout decision — planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
-- file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis
+- file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId
 - trade-close: close trade — id, exit required
 - trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
@@ -108,6 +110,11 @@ export interface AiBlockSampleOption {
 
 export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
   {
+    type: "stock-case-create",
+    label: "stock-case-create — new Stock Profile",
+    hint: "Extract ticker, thesis, zones, stop rule from research",
+  },
+  {
     type: "evidence-add",
     label: "evidence-add — append observation",
     hint: "structure/volume/regime observation with confidence",
@@ -165,6 +172,33 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
 ];
 
 const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
+  "stock-case-create": {
+    type: "stock-case-create",
+    source: "ai-block",
+    proposal: {
+      ticker: "NVDA",
+      style: "swing",
+      status: "watching",
+      thesis: "Leader in AI infrastructure; buy pullbacks to rising weekly support, not extended momentum.",
+      currentHypothesis: "Wait for pullback to 118-125 zone with 3R+ to stop below 112",
+      levels: {
+        majorSupport: 112,
+        majorResistance: 145,
+        primaryZone: { low: 118, high: 125 },
+        secondaryZone: { low: 108, high: 112 },
+        targets: [135, 145, 160],
+      },
+      riskRules: {
+        minimumRR: 3,
+        invalidation: "Weekly close below 108",
+        notes: "Skip chase entries above primary zone",
+      },
+      historicalAnalysis: [
+        { timeframe: "1W", summary: "HH/HL intact; prior breakout holding as support" },
+        { timeframe: "1D", summary: "Pullback from highs; volume contracting near zone" },
+      ],
+    },
+  },
   "evidence-add": {
     type: "evidence-add",
     source: "ai-block",
@@ -300,6 +334,8 @@ export function sampleAiBlock(type: AiBlockType): string {
   const block = SAMPLE_BLOCKS[type];
   return JSON.stringify(block, null, 2);
 }
+
+export const AI_BLOCK_SAMPLES = SAMPLE_BLOCKS;
 
 export function sampleTradeAiBlock(): string {
   return sampleAiBlock("trade-proposal");

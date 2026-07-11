@@ -142,6 +142,51 @@ export async function applyStockFileInboxUpdate(
       ? (String(statusRaw) as StockThesisStatus)
       : undefined;
 
+  let levels = thesis.levels;
+  if (proposal.levels !== undefined && typeof proposal.levels === "object" && !Array.isArray(proposal.levels)) {
+    const l = proposal.levels as Record<string, unknown>;
+    const parseZone = (raw: unknown) => {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+      const z = raw as Record<string, unknown>;
+      const low = Number(z.low);
+      const high = Number(z.high);
+      if (!Number.isFinite(low) || !Number.isFinite(high)) return undefined;
+      return { low, high };
+    };
+    const targets = Array.isArray(l.targets)
+      ? l.targets.map((t) => Number(t)).filter((n) => Number.isFinite(n))
+      : undefined;
+    levels = {
+      ...levels,
+      majorSupport:
+        l.majorSupport !== undefined && Number.isFinite(Number(l.majorSupport))
+          ? Number(l.majorSupport)
+          : levels.majorSupport,
+      majorResistance:
+        l.majorResistance !== undefined && Number.isFinite(Number(l.majorResistance))
+          ? Number(l.majorResistance)
+          : levels.majorResistance,
+      primaryZone: l.primaryZone !== undefined ? parseZone(l.primaryZone) ?? levels.primaryZone : levels.primaryZone,
+      secondaryZone:
+        l.secondaryZone !== undefined ? parseZone(l.secondaryZone) ?? levels.secondaryZone : levels.secondaryZone,
+      targets: targets?.length ? targets : levels.targets,
+    };
+  }
+
+  let riskRules = thesis.riskRules;
+  if (proposal.riskRules !== undefined && typeof proposal.riskRules === "object" && !Array.isArray(proposal.riskRules)) {
+    const r = proposal.riskRules as Record<string, unknown>;
+    riskRules = {
+      minimumRR:
+        r.minimumRR !== undefined && Number.isFinite(Number(r.minimumRR))
+          ? Number(r.minimumRR)
+          : riskRules.minimumRR,
+      invalidation:
+        r.invalidation !== undefined ? String(r.invalidation).trim() : riskRules.invalidation,
+      notes: r.notes !== undefined ? String(r.notes).trim() || undefined : riskRules.notes,
+    };
+  }
+
   const updated: StockThesis = {
     ...thesis,
     status: status ?? thesis.status,
@@ -150,6 +195,8 @@ export async function applyStockFileInboxUpdate(
       proposal.currentHypothesis !== undefined
         ? String(proposal.currentHypothesis).trim()
         : thesis.currentHypothesis,
+    levels,
+    riskRules,
     notes,
     version: thesis.version + 1,
     updatedAt: now,

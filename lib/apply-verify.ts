@@ -1,7 +1,7 @@
 import type { TradingInboxPayload } from "./bridge";
 import { getPlanById } from "./plans";
 import { getActiveEvidenceForProfile } from "./market-evidence";
-import { getStockThesisById } from "./stock-theses";
+import { getStockThesesByTicker, getStockThesisById } from "./stock-theses";
 import { getPlaybookById, slugifyPlaybookId } from "./playbooks";
 import { getTradeById } from "./storage";
 import type { Trade } from "./types";
@@ -26,6 +26,8 @@ export async function verifyApplyPersistence(
   parsed: TradingInboxPayload
 ): Promise<ApplyVerifyResult> {
   switch (parsed.type) {
+    case "stock-case-create":
+      return verifyStockCaseCreatePersistence(parsed);
     case "evidence-add":
       return verifyEvidenceAddPersistence(parsed);
     case "decision-update":
@@ -45,6 +47,20 @@ export async function verifyApplyPersistence(
     default:
       return { ok: false, detail: "Unsupported proposal type for verification." };
   }
+}
+
+async function verifyStockCaseCreatePersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const p = parsed.proposal;
+  const ticker = String(p.ticker).toUpperCase();
+  const hypothesis = String(p.currentHypothesis ?? "").trim();
+  const theses = await getStockThesesByTicker(ticker);
+  const match = theses.find((t) => t.currentHypothesis.trim() === hypothesis);
+  if (!match) {
+    return { ok: false, detail: `Stock Profile for ${ticker} with matching hypothesis not found.` };
+  }
+  return { ok: true, detail: `Stock Profile ${match.id} · ${match.ticker} verified.` };
 }
 
 async function verifyDecisionUpdatePersistence(

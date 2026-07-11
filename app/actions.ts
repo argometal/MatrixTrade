@@ -111,6 +111,31 @@ export async function importAiBlockAction(formData: FormData): Promise<ImportAiB
   };
 }
 
+export async function importStockCaseBlockAction(
+  raw: string
+): Promise<{ error?: string; details?: string[]; thesisId?: string }> {
+  await requireTradingSession();
+
+  const parsed = parseAiBlock(raw);
+  if (!parsed.ok) {
+    return { error: parsed.error, details: parsed.details };
+  }
+  if (parsed.payload.type !== "stock-case-create") {
+    return { error: "Expected a stock-case-create block." };
+  }
+
+  const result = await applyTradingProposal(parsed.body as Record<string, unknown>);
+  if (!result.ok) {
+    return { error: result.errors.join(" ") };
+  }
+
+  revalidateTradingPaths();
+  if (result.stockFileId) {
+    revalidatePath(`/stock-theses/${result.stockFileId}`);
+  }
+  return { thesisId: result.stockFileId };
+}
+
 export async function saveAiNotesAction(formData: FormData): Promise<SaveAiNotesActionResult> {
   await requireTradingSession();
 

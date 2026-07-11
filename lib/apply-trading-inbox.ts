@@ -1,4 +1,5 @@
 import { appendMarketEvidenceFromProposal } from "./market-evidence";
+import { createStockCaseFromProposal } from "./stock-case-create";
 import { readNoteBody } from "./obsidian";
 import { syncObsidianTradeIfLocal } from "./obsidian-local";
 import type { Playbook } from "./playbook-types";
@@ -55,6 +56,8 @@ export async function applyTradingProposal(
   }
 
   switch (parsed.type) {
+    case "stock-case-create":
+      return applyStockCaseCreate(parsed);
     case "scout-assessment":
       return applyScoutAssessment(parsed);
     case "decision-update":
@@ -80,6 +83,19 @@ export async function applyTradingProposal(
     default:
       return { ok: false, errors: ["Unsupported proposal type."] };
   }
+}
+
+async function applyStockCaseCreate(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await createStockCaseFromProposal(parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  return {
+    ok: true,
+    message: `Created Stock Profile ${result.thesis?.id} · ${result.thesis?.ticker}`,
+    type: "stock-case-create",
+    stockFileId: result.thesis?.id,
+  };
 }
 
 async function applyEvidenceAdd(

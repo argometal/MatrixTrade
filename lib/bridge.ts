@@ -205,6 +205,7 @@ export function getSnapshotReadUrl(): string | null {
 }
 
 export type TradingProposalType =
+  | "stock-case-create"
   | "evidence-add"
   | "scout-assessment"
   | "decision-update"
@@ -229,6 +230,7 @@ export function parseTradingInboxPayload(
   const type = payload.type;
   const proposal = payload.proposal;
   if (
+    type !== "stock-case-create" &&
     type !== "evidence-add" &&
     type !== "scout-assessment" &&
     type !== "decision-update" &&
@@ -256,6 +258,8 @@ export function parseTradingInboxPayload(
 export function describeProposal(payload: TradingInboxPayload): string {
   const p = payload.proposal;
   switch (payload.type) {
+    case "stock-case-create":
+      return `New Stock Profile ${p.ticker} · ${p.currentHypothesis ?? p.thesis ?? ""}`;
     case "evidence-add":
       return `Evidence ${p.ticker} ${p.stockProfileId} · ${p.category}`;
     case "scout-assessment":
@@ -288,6 +292,26 @@ export function validateProposalPayload(
 ): { ok: true } | { ok: false; errors: string[] } {
   const p = parsed.proposal;
   const errors: string[] = [];
+
+  if (parsed.type === "stock-case-create") {
+    if (!p.ticker) errors.push("proposal.ticker required");
+    if (!p.thesis || !String(p.thesis).trim()) errors.push("proposal.thesis required");
+    if (!p.currentHypothesis || !String(p.currentHypothesis).trim()) {
+      errors.push("proposal.currentHypothesis required");
+    }
+    if (!p.riskRules || typeof p.riskRules !== "object" || Array.isArray(p.riskRules)) {
+      errors.push("proposal.riskRules required");
+    } else {
+      const r = p.riskRules as Record<string, unknown>;
+      const minimumRR = Number(r.minimumRR);
+      if (!Number.isFinite(minimumRR) || minimumRR <= 0) {
+        errors.push("proposal.riskRules.minimumRR required (positive number)");
+      }
+      if (!r.invalidation || !String(r.invalidation).trim()) {
+        errors.push("proposal.riskRules.invalidation required");
+      }
+    }
+  }
 
   if (parsed.type === "evidence-add") {
     if (!p.stockProfileId) errors.push("proposal.stockProfileId required");
@@ -347,9 +371,11 @@ export function validateProposalPayload(
       p.status !== undefined ||
       p.currentHypothesis !== undefined ||
       p.notes !== undefined ||
-      p.thesis !== undefined;
+      p.thesis !== undefined ||
+      p.levels !== undefined ||
+      p.riskRules !== undefined;
     if (!hasField) {
-      errors.push("At least one of status, currentHypothesis, notes, thesis required");
+      errors.push("At least one of status, currentHypothesis, notes, thesis, levels, riskRules required");
     }
     if (p.status !== undefined) {
       const allowed = ["draft", "watching", "actionable", "invalidated", "archived"];

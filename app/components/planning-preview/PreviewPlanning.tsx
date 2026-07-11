@@ -14,6 +14,7 @@ import {
 } from "@/app/actions";
 import { buildPlanEnterHref, planNeedsStrategyReview } from "@/lib/plan-helpers";
 import { buildAiContextPackage } from "@/lib/ai-context";
+import { buildPlanLevelsView } from "@/lib/plan-levels-board";
 import { scoutingVerdictStyle } from "@/lib/matrix-mechanics-brief";
 import type { MonthlyRisk } from "@/lib/monthly-risk";
 import {
@@ -44,6 +45,7 @@ import {
   STOCK_THESIS_STATUS_LABELS,
   type StockThesis,
 } from "@/lib/stock-thesis-types";
+import { PlanLevelsBoard } from "./PlanLevelsBoard";
 import type { Experiment } from "@/lib/types";
 
 type FilterId = "all" | "active" | "ready" | "failed" | "expired" | "evaluate";
@@ -161,6 +163,16 @@ export function PreviewPlanning({
         : [],
     [plans, scoutThesis]
   );
+
+  const scoutPrimaryPlan = useMemo(() => {
+    const active = scoutPlans.filter((p) => p.status === "watching" || p.status === "ready");
+    return active[0] ?? scoutPlans[0];
+  }, [scoutPlans]);
+
+  const scoutLevelsView = useMemo(() => {
+    if (!scoutThesis) return null;
+    return buildPlanLevelsView(scoutThesis, scoutPrimaryPlan);
+  }, [scoutThesis, scoutPrimaryPlan]);
 
   const scoutVerdict = useMemo(() => {
     if (!scoutThesis) return null;
@@ -406,10 +418,16 @@ export function PreviewPlanning({
                 <Link href="/inbox" className="text-violet-400 hover:underline">
                   Inbox
                 </Link>{" "}
-                Apply (`scout-assessment` / `decision-update` / `file-update`)
+                Apply (`stock-case-create` / `scout-assessment` / `decision-update` / `file-update`)
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              <Link
+                href="/stock-theses/new"
+                className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"
+              >
+                New stock case
+              </Link>
               <button
                 type="button"
                 onClick={copyTrainingBlock}
@@ -515,6 +533,11 @@ export function PreviewPlanning({
                     </span>
                   </div>
                   <p className="mt-2 text-sm opacity-90">{scoutThesis.currentHypothesis}</p>
+                  {scoutLevelsView ? (
+                    <div className="mt-4 border-t border-current/10 pt-4">
+                      <PlanLevelsBoard view={scoutLevelsView} compact />
+                    </div>
+                  ) : null}
                   <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
                     <p>Min R:R {scoutThesis.riskRules.minimumRR}R</p>
                     <p>
@@ -531,6 +554,19 @@ export function PreviewPlanning({
                     <p>
                       Active scouts:{" "}
                       {scoutPlans.filter((p) => p.status === "watching" || p.status === "ready").length}
+                      {scoutPrimaryPlan ? (
+                        <>
+                          {" "}
+                          ·{" "}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedPlanId(scoutPrimaryPlan.id)}
+                            className="underline opacity-80 hover:opacity-100"
+                          >
+                            {scoutPrimaryPlan.id}
+                          </button>
+                        </>
+                      ) : null}
                     </p>
                   </div>
                 </div>
@@ -573,6 +609,16 @@ export function PreviewPlanning({
                   </form>
                 </div>
               </div>
+
+              {(() => {
+                const thesis = stockTheses.find((t) => t.id === selectedPlan.stockThesisId);
+                if (!thesis) return null;
+                return (
+                  <div className="mt-4">
+                    <PlanLevelsBoard view={buildPlanLevelsView(thesis, selectedPlan)} />
+                  </div>
+                );
+              })()}
 
               {selectedPlan.decision ? (
                 <div className="mt-4 space-y-3">

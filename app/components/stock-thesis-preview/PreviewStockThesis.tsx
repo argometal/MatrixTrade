@@ -8,6 +8,7 @@ import {
 } from "@/app/actions";
 import { buildAiContextPackage } from "@/lib/ai-context";
 import type { MarketEvidence } from "@/lib/market-evidence-types";
+import { buildPlanLevelsView } from "@/lib/plan-levels-board";
 import type { Playbook } from "@/lib/playbook-types";
 import type { StockProfileSynthesis } from "@/lib/stock-profile-synthesis";
 import type { TradePlan } from "@/lib/plan-types";
@@ -18,6 +19,7 @@ import {
   type StockThesis,
   type StockThesisStatus,
 } from "@/lib/stock-thesis-types";
+import { PlanLevelsBoard } from "@/app/components/planning-preview/PlanLevelsBoard";
 
 type ProfileTab = "snapshot" | "evidence" | "history";
 
@@ -106,6 +108,11 @@ export function PreviewStockThesis({
       setGrantLinks(result);
     });
   }
+
+  const levelsView = useMemo(
+    () => buildPlanLevelsView(thesis, activePlans[0]),
+    [thesis, activePlans]
+  );
 
   const levels = thesis.levels;
   const tabs: { id: ProfileTab; label: string }[] = [
@@ -265,7 +272,14 @@ export function PreviewStockThesis({
               </section>
 
               <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-                <h2 className="text-sm font-semibold text-zinc-200">Levels</h2>
+                <h2 className="text-sm font-semibold text-zinc-200">Plan map</h2>
+                <div className="mt-3">
+                  <PlanLevelsBoard view={levelsView} />
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+                <h2 className="text-sm font-semibold text-zinc-200">Levels (raw)</h2>
                 <div className="mt-3 grid gap-3 text-sm text-zinc-400 sm:grid-cols-2 lg:grid-cols-3">
                   <p>Major support: {formatLevel(levels.majorSupport)}</p>
                   <p>Major resistance: {formatLevel(levels.majorResistance)}</p>
