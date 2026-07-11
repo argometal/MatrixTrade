@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { TradingMark } from "@/app/components/TradingMark";
 import { V2TopBarAddMenu } from "@/app/argus/v2/components/V2TopBarAddMenu";
 import { PrivateLockMenu } from "@/app/argus/components/PrivateLockMenu";
 import { V2BuildBadge } from "@/app/argus/v2/components/V2BuildBadge";
@@ -107,6 +108,14 @@ export function V2TopBar({
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <Link
+            href="/home-preview"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 lg:hidden"
+            aria-label="MatrixTrade"
+            title="MatrixTrade"
+          >
+            <TradingMark size={28} />
+          </Link>
+          <Link
             href="/argus/search"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 lg:hidden"
             aria-label="Search"
@@ -143,11 +152,11 @@ export function V2TopBar({
               <span aria-hidden>🛡</span> PIN
             </span>
           )}
-          <V2BuildBadge />
+          <V2BuildBadge className="hidden min-[420px]:inline" />
           <V2TopBarAddMenu className="shrink-0" />
           <Link
             href="/argus/v2/inbox"
-            className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 sm:flex"
+            className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 lg:flex"
             aria-label="Inbox"
           >
             🔔

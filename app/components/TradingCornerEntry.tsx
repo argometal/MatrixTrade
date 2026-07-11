@@ -3,46 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AppCornerDock } from "@/app/components/AppCornerDock";
-
-function TradingMark({ size = 40 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden
-    >
-      <defs>
-        <linearGradient id="mt-ring" x1="4" y1="4" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#a1a1aa" />
-          <stop offset="1" stopColor="#52525b" />
-        </linearGradient>
-        <linearGradient id="mt-line" x1="10" y1="28" x2="30" y2="12" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#fafafa" />
-          <stop offset="1" stopColor="#a1a1aa" />
-        </linearGradient>
-      </defs>
-      <rect x="1" y="1" width="38" height="38" rx="11" fill="#18181b" stroke="url(#mt-ring)" strokeWidth="1.25" />
-      <path
-        d="M11 27L17 20L22 24L29 13"
-        stroke="url(#mt-line)"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="29" cy="13" r="2" fill="#fafafa" />
-    </svg>
-  );
-}
+import { TradingMark } from "@/app/components/TradingMark";
 
 export function TradingCornerEntry() {
   const pathname = usePathname();
   if (!pathname.startsWith("/argus")) return null;
 
   return (
-    <AppCornerDock bellHref="/argus/v2/inbox" bellLabel="Argus inbox" placement="argus">
+    <AppCornerDock bellHref="/argus/v2/inbox" bellLabel="Argus inbox" placement="argus" showBell={false}>
       <Link
         href="/home-preview"
         title="MatrixTrade"
