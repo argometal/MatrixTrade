@@ -1,4 +1,5 @@
 import type { PreviewNavContext } from "@/lib/preview-nav";
+import { MatrixAppChromeActions } from "@/app/components/AppChromeActions";
 import { PreviewSidebar } from "./PreviewSidebar";
 
 export function PreviewShell({
@@ -11,7 +12,14 @@ export function PreviewShell({
   return (
     <div className="relative flex h-full min-h-0 w-full overflow-hidden bg-zinc-950 text-zinc-100">
       <PreviewSidebar nav={nav} />
-      <div className="min-w-0 flex-1 overflow-hidden">{children}</div>
+      <div className="relative min-w-0 flex-1 overflow-hidden">
+        <div className="pointer-events-none absolute right-4 top-4 z-30 hidden items-center lg:flex xl:right-6">
+          <div className="pointer-events-auto flex items-center gap-1.5">
+            <MatrixAppChromeActions pendingInboxCount={nav.pendingInboxCount} />
+          </div>
+        </div>
+        {children}
+      </div>
     </div>
   );
 }
