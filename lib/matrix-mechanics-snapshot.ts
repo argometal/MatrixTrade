@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 1;
+export const MATRIX_MECHANICS_REVISION = 2;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -16,8 +16,10 @@ export function buildMatrixMechanicsSnapshot(): string {
     buildMatrixMechanicsBrief(),
     "",
     "=== APPLY GATE (non-negotiable) ===",
+    "Default: Analysis Mode — natural discussion, no JSON, no persistence.",
+    "Apply Mode: only after explicit intent (Save, Create, Update, Record, Apply, Import, Propose JSON, Persist to Matrix).",
     "External AI proposes. Matrix never auto-writes.",
-    "Flow: Copy snapshot → AI returns ONE JSON block → Import in Dashboard or Inbox → human Apply → Supabase.",
+    "Flow: Copy snapshot → discuss in Analysis Mode → user requests Apply → ONE JSON block → Import in Inbox → human Apply.",
     "",
     "=== AI BLOCK TYPES ===",
     "Scouting layer:",
@@ -38,6 +40,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- playbook-create / playbook-update",
     "",
     "=== COMMON AI ERRORS TO AVOID ===",
+    "- Generating JSON during Analysis Mode or before explicit Apply intent",
     "- Inventing trades, prices, or P/L not in the snapshot",
     "- Skipping Stock Profile before proposing entry",
     "- Overriding invalidation or minimum R:R without explicit user approval",

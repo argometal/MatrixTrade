@@ -22,9 +22,12 @@
     "experimentScope": "playbook",
     "experimentHypothesis": "Emphasizing maximum achievable asymmetry (vs waiting for stronger confirmation) improves long-term capital growth across a large statistical sample.",
     "principles": [
+      "Analysis Mode default — no JSON until explicit Apply intent",
       "Matrix is a statistical engine, not a prediction engine",
       "Maximize long-term expectancy — not highest probability",
-      "Maximize initial R — not win rate; 3R minimum target, 4R+ optimal",
+      "Maximize initial R — not win rate; 3R minimum target, 4R+ optimal when achievable",
+      "Entry Optimization: find structurally valid entries that maximize initial R",
+      "Prefer patience over premature entries; explain wait vs miss-move trade-offs",
       "Layered entry improves average entry without changing the risk plan",
       "Asymmetry over frequency — fewer high-R trades beat many low-R wins",
       "Evaluate thesis quality AND opportunity quality — neither alone is sufficient",
