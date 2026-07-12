@@ -1,5 +1,5 @@
 import { createSupabaseAdmin } from "../supabase/server";
-import { planRowToPlan, planToRow } from "./mapping";
+import { planRowToPlan, planToSupabaseRow } from "./mapping";
 import type { TradePlan } from "../plan-types";
 import type { PlansStore } from "./types";
 
@@ -17,7 +17,7 @@ export function createSupabasePlansStore(): PlansStore {
       const supabase = createSupabaseAdmin();
       const { error } = await supabase
         .from("trade_plans")
-        .upsert(planToRow(plan), { onConflict: "id" });
+        .upsert(planToSupabaseRow(plan), { onConflict: "id" });
       if (error) {
         throw new Error(`Supabase trade_plans upsert failed: ${error.message}`);
       }
@@ -27,7 +27,7 @@ export function createSupabasePlansStore(): PlansStore {
       const supabase = createSupabaseAdmin();
       const { error } = await supabase
         .from("trade_plans")
-        .upsert(plans.map(planToRow), { onConflict: "id" });
+        .upsert(plans.map(planToSupabaseRow), { onConflict: "id" });
       if (error) {
         throw new Error(`Supabase trade_plans bulk upsert failed: ${error.message}`);
       }

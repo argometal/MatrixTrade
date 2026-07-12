@@ -66,10 +66,20 @@ export function planRowToPlan(row: PlanRow): TradePlan {
     scoutLifecycle: row.scout_lifecycle ?? undefined,
     probe: row.probe ?? undefined,
     layeredEntry: row.layered_entry ?? undefined,
-    executionMethod: (row.execution_method as LayeredEntryPlan["executionMethod"]) ?? undefined,
+    executionMethod:
+      (row.execution_method as LayeredEntryPlan["executionMethod"] | null) ??
+      row.layered_entry?.executionMethod ??
+      undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+/** Supabase row for upsert — omits columns not yet on all prod schemas. */
+export function planToSupabaseRow(plan: TradePlan): Omit<PlanRow, "execution_method"> {
+  const row = planToRow(plan);
+  const { execution_method: _omit, ...rest } = row;
+  return rest;
 }
 
 export function planToRow(plan: TradePlan): PlanRow {

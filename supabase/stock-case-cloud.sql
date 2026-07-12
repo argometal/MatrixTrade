@@ -34,7 +34,9 @@ alter table public.trade_plans
   add column if not exists decision jsonb,
   add column if not exists decision_history jsonb not null default '[]'::jsonb,
   add column if not exists scout_lifecycle text,
-  add column if not exists probe jsonb;
+  add column if not exists probe jsonb,
+  add column if not exists layered_entry jsonb,
+  add column if not exists execution_method text;
 
 create index if not exists trade_plans_stock_thesis_id_idx on public.trade_plans (stock_thesis_id);
 

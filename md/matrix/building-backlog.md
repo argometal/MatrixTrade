@@ -32,7 +32,8 @@ Execute in order when resuming. No code changes required if checklist passes.
 
 - [ ] In **Supabase → SQL Editor**, run `supabase/stock-case-cloud.sql` (after `supabase/schema.sql`).
 - Creates: `stock_theses`, `market_evidence`, `scoped_ai_grants`
-- Alters: `trade_plans` — `stock_thesis_id`, `decision`, `decision_history`, `scout_lifecycle`, `probe`
+- Alters: `trade_plans` — `stock_thesis_id`, `decision`, `decision_history`, `scout_lifecycle`, `probe`, `layered_entry`, `execution_method`
+- Or run `supabase/trade-plans-layered-entry.sql` if `stock-case-cloud.sql` was applied before layered-entry columns were added.
 
 ### 2. Vercel environment
 
