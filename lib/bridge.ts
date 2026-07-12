@@ -1,5 +1,6 @@
 import { calculateTradeResult } from "./calculate";
 import { computeMonthlyRisk } from "./monthly-risk";
+import { LOSS_CLASSIFICATIONS } from "./asymmetry-types";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
 import { getSetupName } from "./setup-types";
@@ -271,7 +272,9 @@ export function describeProposal(payload: TradingInboxPayload): string {
     case "layered-entry-update":
       return `Layered entry ${p.planId} · fill ${p.filledThroughIndex ?? p.status ?? "update"}`;
     case "file-update":
-      return `Update Stock File ${p.id}`;
+      return p.initialScout
+        ? `Backfill scout on ${p.id}`
+        : `Update Stock File ${p.id}`;
     case "trade-proposal": {
       const status =
         p.status !== undefined ? String(p.status).toLowerCase() : "pending";
@@ -373,28 +376,71 @@ export function validateProposalPayload(
 
   if (parsed.type === "decision-update") {
     if (!p.planId) errors.push("proposal.planId required");
-    const verdict = p.verdict;
-    if (verdict !== "go" && verdict !== "wait" && verdict !== "no" && verdict !== "probe") {
-      errors.push("proposal.verdict must be go, wait, probe, or no");
+
+    const tacticalFields = [
+      "plannedEntry",
+      "stopPrice",
+      "targetPrice",
+      "minimumRR",
+      "thesis",
+      "notes",
+      "validUntil",
+      "status",
+      "layeredEntry",
+    ];
+    const hasTactical = tacticalFields.some((field) => p[field] !== undefined);
+    const hasDecisionMutation =
+      p.verdict !== undefined &&
+      p.decisionConfidence !== undefined &&
+      Array.isArray(p.challenges) &&
+      p.challenges.length > 0;
+
+    if (!hasTactical && !hasDecisionMutation) {
+      errors.push(
+        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry)"
+      );
     }
-    const confidence = Number(p.decisionConfidence);
-    if (!Number.isFinite(confidence) || confidence < 0 || confidence > 100) {
-      errors.push("proposal.decisionConfidence required (0-100)");
-    }
-    if (!Array.isArray(p.challenges) || p.challenges.length === 0) {
-      errors.push("proposal.challenges[] required (min 1)");
-    }
-    if (verdict === "probe") {
-      const probe = p.probe;
-      if (!probe || typeof probe !== "object" || Array.isArray(probe)) {
-        errors.push("proposal.probe required when verdict is probe");
-      } else {
-        const probeObj = probe as Record<string, unknown>;
-        if (!probeObj.trigger || !String(probeObj.trigger).trim()) {
-          errors.push("proposal.probe.trigger required when verdict is probe");
+
+    if (hasDecisionMutation) {
+      const verdict = p.verdict;
+      if (verdict !== "go" && verdict !== "wait" && verdict !== "no" && verdict !== "probe") {
+        errors.push("proposal.verdict must be go, wait, probe, or no");
+      }
+      const confidence = Number(p.decisionConfidence);
+      if (!Number.isFinite(confidence) || confidence < 0 || confidence > 100) {
+        errors.push("proposal.decisionConfidence required (0-100)");
+      }
+      if (verdict === "probe") {
+        const probe = p.probe;
+        if (!probe || typeof probe !== "object" || Array.isArray(probe)) {
+          errors.push("proposal.probe required when verdict is probe");
+        } else {
+          const probeObj = probe as Record<string, unknown>;
+          if (!probeObj.trigger || !String(probeObj.trigger).trim()) {
+            errors.push("proposal.probe.trigger required when verdict is probe");
+          }
+          if (!probeObj.expires) {
+            errors.push("proposal.probe.expires required when verdict is probe");
+          }
         }
-        if (!probeObj.expires) {
-          errors.push("proposal.probe.expires required when verdict is probe");
+      }
+    }
+
+    if (hasTactical) {
+      for (const field of ["plannedEntry", "stopPrice", "targetPrice", "minimumRR"] as const) {
+        if (p[field] !== undefined && !Number.isFinite(Number(p[field]))) {
+          errors.push(`proposal.${field} must be a finite number`);
+        }
+      }
+      if (p.status !== undefined) {
+        const allowed = ["watching", "ready", "entered", "skipped", "failed", "expired"];
+        if (!allowed.includes(String(p.status))) {
+          errors.push(`proposal.status must be one of: ${allowed.join(", ")}`);
+        }
+      }
+      if (p.layeredEntry !== undefined) {
+        if (!p.layeredEntry || typeof p.layeredEntry !== "object" || Array.isArray(p.layeredEntry)) {
+          errors.push("proposal.layeredEntry must be an object");
         }
       }
     }
@@ -427,14 +473,45 @@ export function validateProposalPayload(
       p.notes !== undefined ||
       p.thesis !== undefined ||
       p.levels !== undefined ||
-      p.riskRules !== undefined;
+      p.riskRules !== undefined ||
+      p.initialScout !== undefined;
     if (!hasField) {
-      errors.push("At least one of status, currentHypothesis, notes, thesis, levels, riskRules required");
+      errors.push(
+        "At least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout required"
+      );
     }
     if (p.status !== undefined) {
       const allowed = ["draft", "watching", "actionable", "invalidated", "archived"];
       if (!allowed.includes(String(p.status))) {
         errors.push(`proposal.status must be one of: ${allowed.join(", ")}`);
+      }
+    }
+    if (p.initialScout !== undefined) {
+      const scout = p.initialScout;
+      if (!scout || typeof scout !== "object" || Array.isArray(scout)) {
+        errors.push("proposal.initialScout must be an object");
+      } else {
+        const s = scout as Record<string, unknown>;
+        if (s.stopPrice === undefined) errors.push("initialScout.stopPrice required");
+        if (s.targetPrice === undefined) errors.push("initialScout.targetPrice required");
+        if (s.plannedEntry === undefined && s.supportLevel === undefined) {
+          errors.push("initialScout needs plannedEntry or supportLevel");
+        }
+        if (s.verdict !== undefined) {
+          const verdict = String(s.verdict);
+          if (verdict !== "go" && verdict !== "wait" && verdict !== "probe" && verdict !== "no") {
+            errors.push("initialScout.verdict must be go, wait, probe, or no");
+          }
+        }
+        if (s.minimumRR !== undefined && (!Number.isFinite(Number(s.minimumRR)) || Number(s.minimumRR) <= 0)) {
+          errors.push("initialScout.minimumRR must be a positive number");
+        }
+        if (s.status !== undefined) {
+          const allowed = ["watching", "ready", "entered", "skipped", "failed", "expired"];
+          if (!allowed.includes(String(s.status))) {
+            errors.push(`initialScout.status must be one of: ${allowed.join(", ")}`);
+          }
+        }
       }
     }
   }
@@ -482,6 +559,7 @@ export function validateProposalPayload(
     if (!p.id) errors.push("proposal.id required");
     const hasField =
       p.entry !== undefined ||
+      p.exit !== undefined ||
       p.stop !== undefined ||
       p.target !== undefined ||
       p.shares !== undefined ||
@@ -492,11 +570,43 @@ export function validateProposalPayload(
       p.notes !== undefined ||
       p.playbookId !== undefined ||
       p.setupId !== undefined ||
-      p.status !== undefined;
+      p.status !== undefined ||
+      p.closedAt !== undefined ||
+      p.planId !== undefined ||
+      p.plannedRisk !== undefined ||
+      p.actualRisk !== undefined ||
+      p.riskRewardPlanned !== undefined ||
+      p.riskRewardActual !== undefined ||
+      p.lossClassification !== undefined ||
+      p.postStopStudy !== undefined ||
+      p.exitReason !== undefined;
     if (!hasField) {
       errors.push(
-        "At least one field to update required (entry, stop, target, shares, ticker, thesis, notes, playbookId, setupId, status)"
+        "At least one field to update required (entry, stop, target, shares, ticker, thesis, notes, playbookId, setupId, status, closedAt, planId, plannedRisk, actualRisk, riskRewardPlanned, riskRewardActual, lossClassification, postStopStudy, exitReason)"
       );
+    }
+    if (p.lossClassification !== undefined) {
+      const classification = String(p.lossClassification).trim();
+      if (!LOSS_CLASSIFICATIONS.includes(classification as (typeof LOSS_CLASSIFICATIONS)[number])) {
+        errors.push("proposal.lossClassification is not a valid classification");
+      }
+    }
+    if (p.exitReason !== undefined) {
+      const exitReason = String(p.exitReason).trim().toLowerCase();
+      const allowed = ["target", "stop", "manual", "time", "discipline", "other"] as const;
+      if (!allowed.includes(exitReason as (typeof allowed)[number])) {
+        errors.push("proposal.exitReason must be target, stop, manual, time, discipline, or other");
+      }
+    }
+    for (const field of ["entry", "exit", "stop", "target", "shares", "plannedRisk", "actualRisk", "riskRewardPlanned", "riskRewardActual"] as const) {
+      if (p[field] !== undefined && !Number.isFinite(Number(p[field]))) {
+        errors.push(`proposal.${field} must be a finite number`);
+      }
+    }
+    if (p.postStopStudy !== undefined) {
+      if (!p.postStopStudy || typeof p.postStopStudy !== "object" || Array.isArray(p.postStopStudy)) {
+        errors.push("proposal.postStopStudy must be an object");
+      }
     }
   }
 

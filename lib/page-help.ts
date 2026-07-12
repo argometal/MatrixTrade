@@ -110,7 +110,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
       },
     ],
     steps: [
-      "Pick a ticker in Scouting summary (if you have more than one active stock file).",
+      "Scouting summary lists every active stock file as a vertical gatekeeper card.",
       "Copy the snapshot slice that matches your question — desk overview vs one ticker vs one scout.",
       "Paste into your external AI. Discuss charts, thesis, go / wait / no. Ask for one JSON block (scout-assessment, file-update, or decision-update).",
       "Return: Import AI update → Dashboard assistant or Inbox → Apply.",

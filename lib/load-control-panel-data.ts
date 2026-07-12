@@ -19,6 +19,7 @@ import { checkWorkerReachable } from "./system-status";
 import { getExperiment, getMonthlyRisk, getTrades } from "./storage";
 import { getStockTheses } from "./stock-theses";
 import { isActiveStockThesisStatus } from "./stock-thesis-types";
+import { tradeForensicSnapshotItem } from "./snapshot-trade-packages";
 import { getTradesStoreMode } from "./trades-json";
 import { listAllPendingInboxItems } from "./trading-inbox-storage";
 import { resolveInboxBackendLabel } from "./trading-inbox-submit";
@@ -132,6 +133,15 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     marketEvidence,
   }).filter((item) => item.id === "scout-desk" || item.id === "mechanics");
 
+  const closedTrades = trades
+    .filter((t) => t.status === "closed")
+    .sort((a, b) => (b.closedAt ?? "").localeCompare(a.closedAt ?? ""));
+
+  const tradeEntries = closedTrades.map((trade) => ({
+    trade,
+    snapshotItems: [tradeForensicSnapshotItem({ trade, playbooks, plans, theses: stockTheses })],
+  }));
+
   return {
     playbooks,
     activeThesisCount: activeTheses.length,
@@ -152,6 +162,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     },
     trade: {
       snapshotItems: tradesListSnapshotItems(exchangeInput),
+      closedTrades: tradeEntries,
     },
   };
 });

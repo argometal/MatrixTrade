@@ -14,13 +14,17 @@ import type {
   CreateTradeInput,
   Experiment,
   ExperimentRules,
+  LossClassification,
   MistakeType,
+  PostStopStudy,
   SaveReviewInput,
   Trade,
+  TradeExitReason,
   TradeMetaInput,
   TradeStatus,
   UpdateTradeInput,
 } from "./types";
+import { LOSS_CLASSIFICATIONS } from "./asymmetry-types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -390,6 +394,34 @@ function parseTradeStatus(value: unknown): TradeStatus | undefined {
   return undefined;
 }
 
+const TRADE_EXIT_REASONS: TradeExitReason[] = [
+  "target",
+  "stop",
+  "manual",
+  "time",
+  "discipline",
+  "other",
+];
+
+function parseTradeExitReason(value: unknown): TradeExitReason | undefined {
+  const raw = String(value ?? "").trim().toLowerCase();
+  return TRADE_EXIT_REASONS.includes(raw as TradeExitReason)
+    ? (raw as TradeExitReason)
+    : undefined;
+}
+
+function parseLossClassification(value: unknown): LossClassification | undefined {
+  const raw = String(value ?? "").trim();
+  return LOSS_CLASSIFICATIONS.includes(raw as LossClassification)
+    ? (raw as LossClassification)
+    : undefined;
+}
+
+function parsePostStopStudy(value: unknown): PostStopStudy | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  return value as PostStopStudy;
+}
+
 export async function updateTrade(
   id: string,
   input: UpdateTradeInput
@@ -406,6 +438,27 @@ export async function updateTrade(
     return { errors: ["status must be pending, open, or closed."] };
   }
 
+  if (input.exitReason !== undefined) {
+    const exitReason = parseTradeExitReason(input.exitReason);
+    if (!exitReason) {
+      return { errors: ["exitReason must be target, stop, manual, time, discipline, or other."] };
+    }
+  }
+
+  if (input.lossClassification !== undefined) {
+    const lossClassification = parseLossClassification(input.lossClassification);
+    if (!lossClassification) {
+      return { errors: ["lossClassification is not a valid classification."] };
+    }
+  }
+
+  if (input.postStopStudy !== undefined) {
+    const postStopStudy = parsePostStopStudy(input.postStopStudy);
+    if (!postStopStudy) {
+      return { errors: ["postStopStudy must be an object."] };
+    }
+  }
+
   const updated = enrichTrade(
     {
       ...trade,
@@ -420,6 +473,12 @@ export async function updateTrade(
       psychology: input.psychology !== undefined ? String(input.psychology) : trade.psychology,
       lessons: input.lessons !== undefined ? String(input.lessons) : trade.lessons,
       notes: input.notes !== undefined ? String(input.notes) : trade.notes,
+      planId:
+        input.planId === "" || input.planId === "__none__"
+          ? undefined
+          : input.planId !== undefined
+            ? String(input.planId).trim().toUpperCase() || undefined
+            : trade.planId,
       playbookId:
         input.playbookId === "" || input.playbookId === "__none__"
           ? undefined
@@ -438,6 +497,18 @@ export async function updateTrade(
       actualRisk: input.actualRisk ?? trade.actualRisk,
       riskRewardPlanned: input.riskRewardPlanned ?? trade.riskRewardPlanned,
       riskRewardActual: input.riskRewardActual ?? trade.riskRewardActual,
+      exitReason:
+        input.exitReason !== undefined
+          ? parseTradeExitReason(input.exitReason)
+          : trade.exitReason,
+      lossClassification:
+        input.lossClassification !== undefined
+          ? parseLossClassification(input.lossClassification)
+          : trade.lossClassification,
+      postStopStudy:
+        input.postStopStudy !== undefined
+          ? parsePostStopStudy(input.postStopStudy)
+          : trade.postStopStudy,
       closedAt:
         input.closedAt !== undefined
           ? input.closedAt.trim() || undefined

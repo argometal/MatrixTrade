@@ -1,4 +1,5 @@
 import type { TradePlan } from "./plan-types";
+import { resolvePlannedRRFromPlan } from "./plan-risk";
 import { formatDecisionSection } from "./scout-decision";
 import { formatLayeredEntrySection } from "./layered-entry-types";
 import { formatProbeSection } from "./scout-probe";
@@ -14,13 +15,14 @@ export function formatPlansSnapshotSection(plans: TradePlan[]): string {
     (p) => (p.status === "failed" || p.status === "expired") && !p.outcome?.recordedAt
   );
 
-  const lines = ["=== TRADE PLANS (AI) ==="];
+  const lines = ["=== TRADE PLANS (AI) ===", "rr_rule:planned_rr = (target-entry)/(entry-strategy_stop) — never structural invalidation"];
 
   if (active.length === 0) {
     lines.push("active_plans:0");
   } else {
     lines.push(`active_plans:${active.length}`);
     for (const plan of active) {
+      const rr = resolvePlannedRRFromPlan(plan);
       lines.push(
         [
           `- id:${plan.id}`,
@@ -32,9 +34,9 @@ export function formatPlansSnapshotSection(plans: TradePlan[]): string {
           `entry_tf:${plan.entryTimeframe}`,
           `entry:${plan.plannedEntry ?? "na"}`,
           `support:${plan.supportLevel ?? "na"}`,
-          `stop:${plan.stopPrice ?? "na"}`,
+          `strategy_stop:${plan.stopPrice ?? "na"}`,
           `target:${plan.targetPrice ?? "na"}`,
-          `rr:${plan.plannedRR ?? "na"}`,
+          `planned_rr:${rr !== undefined ? rr.toFixed(2) : "na"}`,
           `valid_until:${plan.validUntil ?? "na"}`,
         ].join(" ")
       );

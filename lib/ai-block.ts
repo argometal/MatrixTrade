@@ -13,12 +13,12 @@ Required shape:
   "proposal": { ... }
 }
 PRIORITY — Scouting (validate thesis; do not rubber-stamp):
-- stock-case-create: NEW Stock Profile — ticker, currentHypothesis, levels{}, riskRules{minimumRR, invalidation}; optional thesis, notes, historicalAnalysis[], initialScout{plannedEntry, stopPrice, targetPrice}
+- stock-case-create: NEW Stock Profile — ticker, currentHypothesis, levels{}, riskRules{minimumRR, invalidation}; optional thesis, notes, historicalAnalysis[], initialScout{plannedEntry, stopPrice (strategy stop for R — not structural invalidation by default), targetPrice}
 - evidence-add: MarketEvidence row — stockProfileId, ticker, timeframe, category, value, confidence (0-100) required; optional note
-- decision-update: scout decision on PLAN — planId, verdict (go|wait|probe|no), decisionConfidence (0-100), challenges[] (min 1) required; optional thesisQuality, opportunityQuality (0-100), confirmationCost{currentRR,estimatedConfirmedRR,rewardConsumedPercent,assessment} (supplied prices only), locationEvidence, confirmationEvidence, singleEntryOnly, reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe, layeredEntry{executionMethod,limits[{price,allocationPercent}]} when verdict=go (allocations sum 100%)
+- decision-update: scout decision on PLAN — planId required; decision mode: verdict (go|wait|probe|no), decisionConfidence (0-100), challenges[] (min 1); tactical mode: at least one of plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry (verdict optional); optional thesisQuality, opportunityQuality (0-100), confirmationCost{...}, locationEvidence, confirmationEvidence, singleEntryOnly, reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe, layeredEntry when verdict=go
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex (0-based, -1=none) or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
-- file-update: propose Stock File change — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}
+- file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
 
 Trade layer (use only when scouting approves):
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId, status
@@ -58,10 +58,10 @@ Human action → internal type (choose automatically — never ask the human to 
 All Apply-ready block types:
 - stock-case-create: NEW Stock Profile — ticker, thesis, currentHypothesis, levels{}, riskRules{minimumRR, invalidation} required
 - evidence-add: MarketEvidence — stockProfileId, ticker, timeframe, category, value, confidence required
-- decision-update: scout decision — planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required
+- decision-update: scout decision or tactical correction — planId required; decision mode needs verdict, decisionConfidence, challenges[]; tactical mode needs at least one of plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
-- file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules
+- file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout (backfill missing Scout Plan only)
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId, status
 - trade-close: close trade — id, exit required; optional confirmExternalClose (true)
 - trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
@@ -298,9 +298,16 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
     type: "file-update",
     source: "ai-block",
     proposal: {
-      id: "ST-TSLA-001",
-      currentHypothesis: "Wait for 340-355; reject chase entries above primary zone",
-      status: "watching",
+      id: "ST-SHOP-001",
+      initialScout: {
+        plannedEntry: 138.75,
+        stopPrice: 125,
+        targetPrice: 180,
+        verdict: "wait",
+        minimumRR: 3,
+        thesis: "Only enter if SHOP reaches the maximum admissible entry while the bullish thesis remains valid.",
+        notes: "Target 180 is the probable three-month objective. Target 200 is extended upside only.",
+      },
     },
   },
   "trade-proposal": {
@@ -322,9 +329,12 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
     source: "ai-block",
     proposal: {
       id: "H001",
-      stop: 95,
-      target: 110,
-      thesis: "Updated stop and target after review.",
+      playbookId: "weekly-breakout",
+      planId: "PLAN-AMZN-001",
+      plannedRisk: 100,
+      exitReason: "stop",
+      lossClassification: "pending_study",
+      thesis: "Weekly breakout attempt; chased entry above planned zone.",
     },
   },
   "trade-close": {

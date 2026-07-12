@@ -74,7 +74,8 @@ export function buildStockThesisContextText(thesis: StockThesis): string {
     "",
     "=== RISK RULES ===",
     `minimum_rr:${thesis.riskRules.minimumRR}`,
-    `thesis_invalidation:${thesis.riskRules.invalidation}`
+    `thesis_invalidation:${thesis.riskRules.invalidation}`,
+    "rr_stop_rule:planned R:R uses scout plan strategy_stop only — never substitute structural zones or invalidation as stop unless explicitly set on PLAN"
   );
 
   if (thesis.riskRules.setupInvalidation) {

@@ -82,34 +82,33 @@ export function PreviewPlanning({
     return map;
   }, [marketEvidence]);
 
-  const scoutThesis = useMemo(() => {
+  const scoutCards = useMemo(() => {
+    return activeTheses.map((thesis) => {
+      const thesisPlans = plans.filter((p) => p.stockThesisId === thesis.id);
+      const activePlans = thesisPlans.filter((p) => p.status === "watching" || p.status === "ready");
+      const primaryPlan = activePlans[0] ?? thesisPlans[0];
+      const levelsView = buildPlanLevelsView(thesis, primaryPlan);
+      const decisionPlan = thesisPlans.find((p) => p.decision) ?? primaryPlan;
+      const verdict = resolveScoutingVerdict(thesis, decisionPlan);
+      return {
+        thesis,
+        thesisPlans,
+        primaryPlan,
+        levelsView,
+        verdict,
+        activeScoutCount: activePlans.length,
+      };
+    });
+  }, [activeTheses, plans]);
+
+  const focusedScoutCard = useMemo(() => {
     const id = scoutThesisId ?? focusThesisId ?? activeTheses[0]?.id ?? "";
-    return stockTheses.find((t) => t.id === id);
-  }, [stockTheses, scoutThesisId, focusThesisId, activeTheses]);
+    return scoutCards.find((card) => card.thesis.id === id) ?? scoutCards[0] ?? null;
+  }, [scoutCards, scoutThesisId, focusThesisId, activeTheses]);
 
-  const scoutPlans = useMemo(
-    () =>
-      scoutThesis
-        ? plans.filter((p) => p.stockThesisId === scoutThesis.id)
-        : [],
-    [plans, scoutThesis]
-  );
-
-  const scoutPrimaryPlan = useMemo(() => {
-    const active = scoutPlans.filter((p) => p.status === "watching" || p.status === "ready");
-    return active[0] ?? scoutPlans[0];
-  }, [scoutPlans]);
-
-  const scoutLevelsView = useMemo(() => {
-    if (!scoutThesis) return null;
-    return buildPlanLevelsView(scoutThesis, scoutPrimaryPlan);
-  }, [scoutThesis, scoutPrimaryPlan]);
-
-  const scoutVerdict = useMemo(() => {
-    if (!scoutThesis) return null;
-    const primaryPlan = scoutPlans.find((p) => p.decision) ?? scoutPlans[0];
-    return resolveScoutingVerdict(scoutThesis, primaryPlan);
-  }, [scoutThesis, scoutPlans]);
+  const scoutThesis = focusedScoutCard?.thesis;
+  const scoutPrimaryPlan = focusedScoutCard?.primaryPlan;
+  const scoutLevelsView = focusedScoutCard?.levelsView ?? null;
 
   const focusPlan = useMemo(() => {
     if (focusPlanId) return plans.find((p) => p.id === focusPlanId);
@@ -293,89 +292,83 @@ export function PreviewPlanning({
                       view={scoutLevelsView}
                     />
                   ) : null}
-                {activeTheses.length > 1 ? (
-                  <label className="text-xs text-zinc-500">
-                    Ticker
-                    <select
-                      value={scoutThesis?.id ?? ""}
-                      onChange={(e) => setScoutThesisId(e.target.value || null)}
-                      className="ml-2 rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1 text-xs text-zinc-100"
-                    >
-                      {activeTheses.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.ticker} · {t.id}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ) : null}
                 </div>
               </div>
 
-              {scoutThesis && scoutVerdict ? (
-                <div
-                  className={`mt-4 rounded-xl border p-4 ${scoutingVerdictStyle(scoutVerdict)}`}
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      href={`/stock-theses/${scoutThesis.id}`}
-                      className="text-lg font-semibold hover:underline"
-                    >
-                      {scoutThesis.ticker}
-                    </Link>
-                    <span className="text-xs opacity-70">{scoutThesis.id}</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${
-                        thesisStatusStyles[scoutThesis.status] ?? "bg-zinc-800 text-zinc-400"
+              <div className="mt-4 space-y-3">
+                {scoutCards.map((card) => {
+                  const focused = card.thesis.id === (scoutThesisId ?? focusThesisId ?? activeTheses[0]?.id);
+                  return (
+                    <div
+                      key={card.thesis.id}
+                      className={`rounded-xl border p-4 transition-opacity ${scoutingVerdictStyle(card.verdict)} ${
+                        focused ? "ring-1 ring-current/30" : "opacity-95"
                       }`}
                     >
-                      {STOCK_THESIS_STATUS_LABELS[scoutThesis.status]}
-                    </span>
-                    <span className="rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase">
-                      {SCOUTING_VERDICT_LABELS[scoutVerdict]}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm opacity-90">{scoutThesis.currentHypothesis}</p>
-                  <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
-                    {scoutLevelsView ? (
-                      <p className="text-violet-200/90">
-                        <PlanMapSummaryLine view={scoutLevelsView} />
-                      </p>
-                    ) : null}
-                    {!scoutLevelsView?.plannedRR && !scoutLevelsView?.estimatedRR ? (
-                      <p>Min R:R {scoutThesis.riskRules.minimumRR}R</p>
-                    ) : null}
-                    <p>
-                      Invalidation:{" "}
-                      <span className="opacity-80">
-                        {scoutThesis.riskRules.invalidation.slice(0, 80)}
-                        {scoutThesis.riskRules.invalidation.length > 80 ? "…" : ""}
-                      </span>
-                    </p>
-                    <p>
-                      Monthly room: ${monthly.monthlyLossRoom.toFixed(0)}
-                      {monthly.monthlyCapBreached ? " (cap breached)" : ""}
-                    </p>
-                    <p>
-                      Active scouts:{" "}
-                      {scoutPlans.filter((p) => p.status === "watching" || p.status === "ready").length}
-                      {scoutPrimaryPlan ? (
-                        <>
-                          {" "}
-                          ·{" "}
-                          <button
-                            type="button"
-                            onClick={() => setPlanPanelOpen(true)}
-                            className="underline opacity-80 hover:opacity-100"
-                          >
-                            {scoutPrimaryPlan.id}
-                          </button>
-                        </>
-                      ) : null}
-                    </p>
-                  </div>
-                </div>
-              ) : null}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          href={`/stock-theses/${card.thesis.id}`}
+                          className="text-lg font-semibold hover:underline"
+                        >
+                          {card.thesis.ticker}
+                        </Link>
+                        <span className="text-xs opacity-70">{card.thesis.id}</span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${
+                            thesisStatusStyles[card.thesis.status] ?? "bg-zinc-800 text-zinc-400"
+                          }`}
+                        >
+                          {STOCK_THESIS_STATUS_LABELS[card.thesis.status]}
+                        </span>
+                        <span className="rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase">
+                          {SCOUTING_VERDICT_LABELS[card.verdict]}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm opacity-90">{card.thesis.currentHypothesis}</p>
+                      <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
+                        {card.levelsView ? (
+                          <p className="text-violet-200/90">
+                            <PlanMapSummaryLine view={card.levelsView} />
+                          </p>
+                        ) : null}
+                        {!card.levelsView?.plannedRR ? (
+                          <p>Min R:R {card.thesis.riskRules.minimumRR}R — set strategy stop on plan for R</p>
+                        ) : null}
+                        <p>
+                          Invalidation:{" "}
+                          <span className="opacity-80">
+                            {card.thesis.riskRules.invalidation.slice(0, 80)}
+                            {card.thesis.riskRules.invalidation.length > 80 ? "…" : ""}
+                          </span>
+                        </p>
+                        <p>
+                          Monthly room: ${monthly.monthlyLossRoom.toFixed(0)}
+                          {monthly.monthlyCapBreached ? " (cap breached)" : ""}
+                        </p>
+                        <p>
+                          Active scouts: {card.activeScoutCount}
+                          {card.primaryPlan ? (
+                            <>
+                              {" "}
+                              ·{" "}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setScoutThesisId(card.thesis.id);
+                                  setPlanPanelOpen(true);
+                                }}
+                                className="underline opacity-80 hover:opacity-100"
+                              >
+                                {card.primaryPlan.id}
+                              </button>
+                            </>
+                          ) : null}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </section>
           ) : null}
 

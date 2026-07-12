@@ -105,14 +105,22 @@ export function PlanLevelsBoard({
         {view.plannedRR !== undefined ? (
           <p className="rounded-lg bg-zinc-900 px-3 py-2 text-zinc-300">
             Plan R:R{" "}
-            <span className="font-semibold text-emerald-400">{view.plannedRR.toFixed(1)}R</span>
+            <span
+              className={`font-semibold ${
+                view.minRR !== undefined && view.plannedRR < view.minRR
+                  ? "text-red-400"
+                  : "text-emerald-400"
+              }`}
+            >
+              {view.plannedRR.toFixed(1)}R
+            </span>
+            <span className="text-zinc-500"> · strategy stop</span>
           </p>
-        ) : view.estimatedRR !== undefined ? (
-          <p className="rounded-lg bg-zinc-900 px-3 py-2 text-zinc-300">
-            Est. R:R at zone{" "}
-            <span className="font-semibold text-amber-400">~{view.estimatedRR.toFixed(1)}R</span>
+        ) : (
+          <p className="rounded-lg bg-zinc-900 px-3 py-2 text-amber-400/90">
+            R:R pending — set entry, strategy stop, and target on the scout plan.
           </p>
-        ) : null}
+        )}
         {view.minRR !== undefined ? (
           <p className="rounded-lg bg-zinc-900 px-3 py-2 text-zinc-300">
             Min R:R <span className="font-semibold">{view.minRR}R</span>

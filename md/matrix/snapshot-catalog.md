@@ -42,12 +42,13 @@ Does not replace the automatic brief prefix on data snapshots.
 | Playbook | Playbook snapshot | Strategies + stats | playbook-update |
 | Scouting Desk | Scout desk overview | All profiles + scouts + monthly room | scouting blocks |
 | Scouting Desk | This ticker | Profile + scouts + evidence | file-update, decision-update |
-| Scouting Desk | This scout (PLAN) | Single plan + decision + levels | decision-update |
-| Stock Profile | `{TICKER}` profile | Dossier + evidence | file-update, scout-assessment |
+| Scouting Desk | This scout (PLAN) | Single plan + strategy stop + planned_rr + decision | decision-update |
+| Stock Profile | `{TICKER}` profile | Dossier + evidence + thesis_invalidation (structural — not R stop) | file-update, scout-assessment |
 | Stock Profile | Linked scouts | Active PLANs for ticker | decision-update |
 | Trade | `{ID}` this trade | Trade fields + review state | trade-update, trade-close |
 | Trade | Stock profile (compact) | Linked dossier summary | file-update |
 | Trades list | Trades snapshot | All trades summary + experiment | trade-update, trade-proposal |
+| Control → Trade | `{ID}` forensic | Closed trade — legacy tier, R, review, post-stop | analysis, trade-update |
 
 ---
 

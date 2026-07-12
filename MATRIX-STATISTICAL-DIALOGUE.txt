@@ -1,0 +1,247 @@
+MatrixTrade — Statistical Dialogue (for ChatGPT)
+================================================
+Last updated: 2026-07-12
+Purpose: Practical limits on what Matrix builds vs what stays outside.
+
+---
+
+THE PRACTICAL RULE
+------------------
+Matrix is NOT an inferential engine. It is a disciplined counter.
+
+If you need p-values, regression, or Bayesian analysis → that is "something bigger."
+Until then, inside the app is enough:
+- means
+- percentages
+- counts
+- one simple A vs B comparison
+
+That is fast and does not break the workflow.
+Export to JASP/Colab only when the experiment already has enough trades and the decision truly matters.
+
+---
+
+THREE LAYERS (conceptual model)
+-------------------------------
+Layer          What it is                              Example ID
+Thesis         Versioned hypothesis on a ticker        THESIS-NFLX-003
+Scout / Plan   Does it deserve capital now?            PLAN-002
+Trade          One measurable execution                H0042
+
+Thesis = slow, versioned document. If it fails, do not delete — create v+1 or THESIS-xxx-004 with supersedes: THESIS-xxx-003.
+
+Trade = one row in the statistical base:
+  trade_id, thesis_id, thesis_version, playbook_id, execution_method,
+  fill_pct, avg_entry, planned_rr, realized_r, outcome, loss_class, ...
+
+The statistical question is NOT "was the thesis true?" but:
+  Given playbook X and execution Y, does expectancy improve over N observations?
+
+That is stratified analysis (by playbook, by execution method), not prediction.
+
+---
+
+MATRIX (system) vs EXTERNAL AI
+------------------------------
+Matrix (system)                    | AI (external)
+-----------------------------------|----------------------------------
+IDs, versions, timestamps          | Reason, draft, propose
+Save only what is approved (Apply) | Never writes directly to DB
+Objective metrics (fill %, R, P/L) | Interpret patterns in text
+Hard rules (no chase, 1 variable)  | Challenges, WAIT/GO, ladder suggestions
+Export CSV / snapshot for analysis | Read context, return JSON blocks
+
+Rule: AI proposes; Matrix records facts. Statistics come from facts, not narrative.
+
+---
+
+THESIS IDs (keep simple for now)
+--------------------------------
+THESIS-TSLA-001 — ticker + sequence
+Fields (future): version, status (active / invalidated / superseded), parent_id,
+invalidation_rule, created_at
+
+Stock File = ticker container; Thesis = concrete hypothesis inside (can be several over time).
+A trade always points to thesis_id + thesis_version at entry — snapshot, not current text.
+
+Formal thesis versioning → only when multiple simultaneous hypotheses on the same ticker
+require attributing trades to version. Until then: overkill.
+
+Today:
+- Stock File = WHO (ticker, zones, invalidation)
+- Playbook = HOW (strategy + execution experiment)
+- Plan = decision in a window
+- Trade = observation
+- Thesis "update" = new version in Stock File notes + decision-update block
+
+---
+
+STANDING ON GIANTS (external tools — optional)
+------------------------------------------------
+Matrix does not need to be SPSS. It needs:
+1. Clean observations stored
+2. Export capability
+3. Let JASP/Colab do inference
+
+Tools (when needed):
+- JASP — t-tests, proportions, Bayesian, CIs — free GUI
+- jamovi — similar, very usable — free
+- Google Colab + pandas/statsmodels — regression, power — free
+- Evan Miller calculators — sample size, A/B — free web
+- G*Power — formal sample size — free desktop
+
+For 20–30 trades comparing single limit vs layered:
+- Proportions: fill %, missed % → two-proportion test (JASP)
+- Expectancy: mean R by method → t-test or Mann-Whitney
+- Sample size: Evan Miller or G*Power before declaring winner
+
+---
+
+WHAT TO BUILD (fast, inside Matrix)
+------------------------------------
+Metric                              | Purpose
+------------------------------------|----------------------------------
+n (closed trades per playbook/method)| Can we speak yet?
+Win rate                            | Reference, not sole decision
+Avg R (winners / losers)            | Expectancy core
+Expectancy (R)                      | win% × avg_win_R − loss% × avg_loss_R
+Profit factor                       | Sanity check
+Fill % / missed % / partial %       | Execution experiments
+Avg entry vs L1                     | Does layered entry help?
+n per stratum                       | playbook + execution_method
+A vs B comparison (no formal inference):
+
+  Method A: n=12, expectancy=+0.4R, fill=67%
+  Method B: n=11, expectancy=+0.9R, fill=58%
+  → "B better on expectancy; similar participation. n≈23 — observation, not verdict."
+
+That is the minimum viable statistical engine. Fast. Enough for 20–40 trades.
+
+---
+
+WHAT NOT TO BUILD (now)
+-----------------------
+- p-values, confidence intervals, Bayesian inside the app
+- multivariable regression
+- automatic "significance"
+- mandatory export to another website
+- quant dashboards
+- academic thesis object with fine versioning (can wait)
+
+Do not build = do not leave Matrix for day-to-day operation.
+
+---
+
+WHEN TO USE EXTERNAL TOOLS ("standing on giants")
+-------------------------------------------------
+Only if ALL three:
+1. n ≥ 30 in one stratum (playbook + execution method), AND
+2. the decision is to change a Playbook rule (not one trade), AND
+3. the internal difference is ambiguous (e.g. +0.3R vs +0.35R with n=35)
+
+Then: export CSV once → JASP 10 minutes → documented decision.
+
+If all three are not met → stay in Matrix.
+
+---
+
+STATISTICAL ENGINE LEVELS (in Matrix)
+-------------------------------------
+Level 1 — fits philosophy (build this):
+- rollup by playbook
+- rollup by execution_method
+- layered entry metrics per plan/trade
+- panel: "Experiment A vs B — n, expectancy, fill%, avg entry"
+- visual threshold: green ≥30 trades, amber 15–29, grey <15
+
+Level 2 — useful but optional:
+- rolling expectancy (last 10 / 20 trades)
+- aggregated loss classification (confirmation_consumed_rr, etc.)
+- "missed opportunity" as counter
+
+Level 3 — not now:
+- statistical tests
+- ML
+- prediction
+
+---
+
+SAMPLE THRESHOLDS (proposed)
+----------------------------
+Trades in stratum | Matrix does                          | Human does
+------------------|--------------------------------------|---------------------------
+< 15              | metrics + "insufficient sample"      | keep operating the rule
+15–29             | compare A vs B, trend                | qualitative judgment
+≥ 30              | soft recommendation                  | retire method or scale
+≥ 50 + playbook   | suggest CSV export                   | JASP once, note the decision
+
+---
+
+PASTE BLOCK FOR CHATGPT
+-----------------------
+MatrixTrade = statistical engine, NOT prediction engine.
+
+DATA MODEL (practical):
+- Stock File: ticker facts, zones, invalidation (WHO)
+- Playbook: strategy + optional execution experiment (HOW)
+- Plan/Scout: go/wait/no + optional layeredEntry ladder (WHEN)
+- Trade: one closed observation with R, fill outcome, execution_method
+
+STATISTICAL UNIT:
+One trade = one observation. Stratify by: playbook_id + execution_method.
+Do NOT judge thesis statistically yet. Judge execution method and playbook expectancy.
+
+INTERNAL METRICS ONLY (no external stats engine for daily use):
+n, win_rate, avg_winner_R, avg_loser_R, expectancy_R, profit_factor,
+fill_percent, partial_percent, missed_percent, avg_entry_improvement_vs_L1.
+
+COMPARISON:
+Simple A vs B table when running execution experiments (single_limit vs layered_limits).
+One execution variable per experiment. Fixed dollar risk per trade — shares adjust to stop distance.
+No chase rule: all limits miss = no trade.
+
+STRATEGY STOP vs STRUCTURAL INVALIDATION
+- Planned R:R uses scout/trade strategy stop (plan.stopPrice) only — never secondary zone, major support, or thesis invalidation unless that price is explicitly the strategy stop on the PLAN.
+- Structural invalidation = when the thesis dies. Strategy stop = entry-risk choice for this trade; may differ intentionally.
+
+SAMPLE THRESHOLDS:
+<15 trades: display only, label "insufficient sample"
+15-29: directional comparison, human decides
+≥30: soft recommendation to adopt/retire execution method
+≥50 + playbook rule change: optional CSV export to JASP (not required for operation)
+
+DO NOT BUILD:
+p-values, regression, ML, mandatory export workflows, academic thesis versioning.
+
+AI ROLE:
+Propose (JSON blocks → Inbox → human Apply). Never write DB directly.
+Matrix stores facts. AI interprets. Statistics = aggregates on closed trades.
+
+CURRENT EXPERIMENT:
+Layered entry (40/35/25 limits) vs single limit. Same thesis, stop, targets, size.
+Measure: avg entry improvement, fill%, missed%, net expectancy after 20-30 trades.
+
+---
+
+SHORT ANSWERS
+-------------
+What can we do fast inside Matrix?
+  Counters + expectancy + A/B comparison by stratum, with n threshold.
+
+Do we need an external statistical engine to operate?
+  No. Only to certify a Playbook rule change with large n.
+
+Build or not build?
+  Build internal rollup. Do not build inference or export as routine.
+
+Debate worth having (no code):
+  Is 30 trades the right threshold for layered entry, or 20?
+
+---
+
+ONE-LINE SUMMARY
+----------------
+Matrix = ledger of observations with experiment rules.
+Thesis = hypothetical version linked to each trade (keep simple for now).
+AI = lens that reads and proposes.
+Serious statistics = export + JASP/Colab when the decision is big — not reinvented in the app.

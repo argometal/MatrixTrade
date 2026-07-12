@@ -113,15 +113,22 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
       if (p.entry !== undefined) fields.push({ label: "Entry", value: `$${p.entry}` });
       if (p.shares !== undefined) fields.push({ label: "Shares", value: String(p.shares) });
       if (p.status !== undefined) fields.push({ label: "Status", value: String(p.status) });
+      if (p.playbookId !== undefined) fields.push({ label: "Playbook", value: String(p.playbookId) });
+      if (p.planId !== undefined) fields.push({ label: "Plan", value: String(p.planId) });
+      if (p.plannedRisk !== undefined) fields.push({ label: "Planned risk", value: `$${p.plannedRisk}` });
+      if (p.exitReason !== undefined) fields.push({ label: "Exit reason", value: String(p.exitReason) });
+      if (p.lossClassification !== undefined) {
+        fields.push({ label: "Loss class", value: String(p.lossClassification) });
+      }
       break;
     }
     case "decision-update": {
       const verdict = String(p.verdict ?? "—");
       fields.push({ label: "Plan", value: String(p.planId ?? "—"), tone: "accent" });
-      fields.push({ label: "Verdict", value: verdict, tone: "accent" });
-      if (p.decisionConfidence !== undefined) {
-        fields.push({ label: "Confidence", value: `${p.decisionConfidence}%` });
-      }
+      if (p.verdict !== undefined) fields.push({ label: "Verdict", value: verdict, tone: "accent" });
+      if (p.plannedEntry !== undefined) fields.push({ label: "Entry", value: `$${p.plannedEntry}` });
+      if (p.stopPrice !== undefined) fields.push({ label: "Stop", value: `$${p.stopPrice}`, tone: "risk" });
+      if (p.targetPrice !== undefined) fields.push({ label: "Target", value: `$${p.targetPrice}`, tone: "reward" });
       if (verdict === "go" || verdict === "probe") expectation = "up";
       if (verdict === "no") expectation = "down";
       break;
@@ -133,11 +140,18 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
     }
     case "file-update":
     case "stock-case-create": {
-      fields.push({ label: "Ticker", value: String(p.ticker ?? p.id ?? "—").toUpperCase(), tone: "accent" });
+      fields.push({ label: "Profile", value: String(p.ticker ?? p.id ?? "—").toUpperCase(), tone: "accent" });
       if (p.currentHypothesis) {
         fields.push({ label: "Hypothesis", value: String(p.currentHypothesis) });
       }
       if (p.status) fields.push({ label: "Status", value: String(p.status) });
+      if (p.initialScout && typeof p.initialScout === "object" && !Array.isArray(p.initialScout)) {
+        const scout = p.initialScout as Record<string, unknown>;
+        fields.push({ label: "Repair", value: "Backfill Scout Plan", tone: "accent" });
+        if (scout.plannedEntry !== undefined) fields.push({ label: "Entry", value: `$${scout.plannedEntry}` });
+        if (scout.stopPrice !== undefined) fields.push({ label: "Stop", value: `$${scout.stopPrice}`, tone: "risk" });
+        if (scout.targetPrice !== undefined) fields.push({ label: "Target", value: `$${scout.targetPrice}`, tone: "reward" });
+      }
       break;
     }
     case "evidence-add": {

@@ -32,7 +32,8 @@
       "Asymmetry over frequency — fewer high-R trades beat many low-R wins",
       "Evaluate thesis quality AND opportunity quality — neither alone is sufficient",
       "Confirmation has a cost — stronger thesis can mean weaker opportunity",
-      "One trade never validates or invalidates the Playbook"
+      "One trade never validates or invalidates the Playbook",
+      "Experimental Control: during playbook validation, each qualified trade risks the same fixed capital amount — position size adjusts to stop distance so Entry Optimization remains the primary variable"
     ],
     "methodology": {
       "philosophy": "Matrix does not seek the highest probability trade. Matrix seeks the highest long-term expectancy. Every trade is one observation within a large statistical sample.",
@@ -41,6 +42,7 @@
       "confirmationCost": "Confirmation is not free. Stronger thesis can coexist with weaker investment opportunity. Evaluate Thesis Quality and Opportunity Quality separately.",
       "opportunityPreservation": "Delay only when expectancy measurably improves — not when certainty alone increases.",
       "statisticalFramework": "Losses are normal. Average winners must outweigh average losers. Long-term consistency over individual outcomes.",
+      "experimentalControl": "During playbook validation, each qualified trade should risk the same fixed capital amount (e.g. USD 100). Wider stop → fewer shares; tighter stop → more shares. Same dollar cost if wrong — only entry quality and R vary. Otherwise you cannot tell whether results come from entry quality or bet size.",
       "continuousLearning": "Playbook evolution requires repeated evidence across multiple qualified trades — never one stock.",
       "matrixIdentity": "Matrix is a statistical engine, not a prediction engine. Every rule must improve long-term expectancy over a large sample — not make an individual trade feel more certain."
     },
@@ -66,7 +68,7 @@
     "executionExperiments": {
       "strategyDefinition": "Strategy determines whether a trade deserves capital (support entry, breakout, pullback, trend continuation). Strategy must remain constant during an execution experiment.",
       "executionDefinition": "Execution determines how an approved trade is entered (single limit, layered limits, market). Execution may evolve independently of strategy.",
-      "experimentalRule": "Only one execution variable may be tested at a time. Everything else identical: thesis, stop, targets, position size, Stock File, Playbook.",
+      "experimentalRule": "Only one execution variable may be tested at a time. Everything else identical: thesis, stop, targets, fixed dollar risk per trade (shares adjust to stop distance), Stock File, Playbook.",
       "noChaseRule": "If all predefined entry limits fail to execute, the trade is cancelled. Do not replace missed execution with a market order. A missed opportunity is preferable to breaking the experiment.",
       "executionPrinciple": "Execution optimizes expectancy — average entry, R:R, capital efficiency. It must never rescue a poor thesis, justify chasing, or increase emotional discretion.",
       "layeredEntryHypothesis": "Systematic layered limit placement improves average R:R without materially reducing participation — compared with single market or single limit entries.",
@@ -101,6 +103,7 @@
     "principles": [
       "Entry optimization — not scaling after confirmation",
       "Thesis already accepted; improve average entry without changing risk plan",
+      "Fixed dollar risk per trade — shares adjust to stop distance (experimental control)",
       "Capital 100% split across predefined limits (e.g. 40% / 35% / 25%)",
       "No chase — highest limit missed = trade over",
       "Experiment asks: does systematic limit placement improve R:R without killing participation?"
@@ -122,8 +125,9 @@
     },
     "checklist": [
       "Thesis approved — strategy locked",
+      "Fixed dollar risk per trade — shares sized to stop distance",
       "Limit ladder defined with allocation % (sum = 100%)",
-      "Stop, targets, total position size unchanged",
+      "Stop, targets, total dollar risk unchanged across experiment trades",
       "No chase rule acknowledged",
       "Record fill outcome: none / partial / full",
       "Compare average entry vs first limit"

@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 2;
+export const MATRIX_MECHANICS_REVISION = 7;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -25,9 +25,9 @@ export function buildMatrixMechanicsSnapshot(): string {
     "Scouting layer:",
     "- stock-case-create — new Stock Profile (+ optional initialScout)",
     "- evidence-add — append market evidence row",
-    "- file-update — change profile (status, hypothesis, levels, thesis, notes)",
+    "- file-update — update an existing Stock File; may include initialScout to backfill a missing Scout Plan when no linked active plan exists",
     "- scout-assessment — validate dossier (reasons + challenges required)",
-    "- decision-update — scout verdict on PLAN (go|wait|probe|no)",
+    "- decision-update — update verdict and/or tactical parameters (entry, stop, target) on an existing Scout Plan",
     "",
     "Execution layer:",
     "- trade-proposal — new trade",
@@ -42,17 +42,32 @@ export function buildMatrixMechanicsSnapshot(): string {
     "=== COMMON AI ERRORS TO AVOID ===",
     "- Generating JSON during Analysis Mode or before explicit Apply intent",
     "- Inventing trades, prices, or P/L not in the snapshot",
+    "- Using structural invalidation or zone lows as stop for R:R when plan.strategy_stop differs",
     "- Skipping Stock Profile before proposing entry",
     "- Overriding invalidation or minimum R:R without explicit user approval",
     "- Returning multiple blocks or markdown without a single JSON block",
     "- Using curly/smart quotes in JSON (use ASCII double quotes only)",
     "- Applying changes silently — always return a block for Inbox Apply",
+    "- Encouraging entry merely because the thesis is bullish",
+    "- Treating minimum 3R as automatic approval",
+    "- Evaluating trades independently without considering scarce monthly risk capacity",
+    "- Using extended targets to make a mediocre opportunity appear attractive",
+    "- Treating a missed trade as a negative outcome",
+    "- Recreating a Stock File merely because initialScout was omitted",
+    "- Using trade-update before a Scout Plan and Trade exist",
+    "- Creating duplicate Scout Plans during a repair",
+    "- Rejecting a valid repair when the Stock File exists but the linked Scout Plan is missing",
     "",
     "=== LAYER OWNERSHIP ===",
     "- Playbook (HOW): reusable method, checklist, horizons",
     "- Stock Profile (WHO): ticker thesis, levels, invalidation, evidence",
     "- Scout PLAN: tactical window linked to profile + playbook",
     "- Trade: execution record — mutate via trade-update / trade-close only",
+    "",
+    "=== SNAPSHOT MENU ===",
+    "Ask the human to copy a named snapshot from Control panel when you need depth.",
+    "Scout PLAN snapshot includes strategy_stop + planned_rr (never structural stop for R).",
+    "Stock profile snapshot includes thesis_invalidation (structural) — do not substitute for strategy stop.",
     "",
     "=== REQUEST ===",
     DEFAULT_AI_BLOCK_REQUEST.trim(),

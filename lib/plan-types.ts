@@ -116,6 +116,7 @@ export type SavePlanInput = {
   ticker: string;
   playbookId?: string;
   stockThesisId?: string;
+  status?: PlanStatus;
   analysisTimeframes: PlanTimeframe[];
   entryTimeframe: PlanTimeframe;
   plannedEntry?: number;

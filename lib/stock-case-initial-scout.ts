@@ -1,7 +1,9 @@
 import { computePlannedRR } from "./plan-risk";
 import { savePlan } from "./plans";
+import type { DecisionVerdict } from "./scout-decision-types";
 import {
   PLAN_TIMEFRAMES,
+  type PlanStatus,
   type PlanTimeframe,
   type SavePlanInput,
 } from "./plan-types";
@@ -17,6 +19,10 @@ export type InitialScoutInput = {
   playbookId?: string;
   analysisTimeframes?: PlanTimeframe[];
   entryTimeframe?: PlanTimeframe;
+  verdict?: DecisionVerdict;
+  minimumRR?: number;
+  notes?: string;
+  status?: PlanStatus;
 };
 
 const DEFAULT_ANALYSIS: PlanTimeframe[] = ["1W", "1D", "1H", "15m", "5m"];
@@ -98,6 +104,7 @@ export async function createInitialScoutPlan(
     ticker,
     stockThesisId,
     playbookId: scout.playbookId,
+    status: scout.status,
     analysisTimeframes,
     entryTimeframe,
     plannedEntry: scout.plannedEntry,
@@ -107,6 +114,7 @@ export async function createInitialScoutPlan(
     validFrom: scout.validFrom,
     validUntil: scout.validUntil,
     thesis: scout.thesis ?? profileHypothesis,
+    chatNotes: scout.notes,
   };
 
   if (

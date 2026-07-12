@@ -1,5 +1,5 @@
 import type { TradePlan } from "./plan-types";
-import { computePlannedRR } from "./plan-risk";
+import { computePlannedRR, resolvePlannedRRFromPlan } from "./plan-risk";
 import {
   buildLayeredEntryScenarios,
   getHighestLimitPrice,
@@ -34,9 +34,8 @@ export interface PlanLevelsView {
   strategy: string;
   source: "plan" | "profile" | "both";
   rows: PlanLevelRow[];
+  /** R:R from plan entry + strategy stop + target — never structural invalidation */
   plannedRR?: number;
-  /** Estimated from profile zones when no scout plan exists */
-  estimatedRR?: number;
   minRR?: number;
   invalidation?: string;
   window?: string;
@@ -151,25 +150,14 @@ function buildRowsFromPlan(plan: TradePlan): PlanLevelRow[] {
   if (plan.stopPrice !== undefined) {
     rows.push({
       kind: "stop",
-      label: "Stop",
+      label: "Strategy stop",
       value: formatPrice(plan.stopPrice),
+      detail: "Entry strategy stop — used for planned R:R",
       emphasis: "danger",
     });
   }
 
   return rows;
-}
-
-function estimateRRFromProfile(levels: StockThesisLevels): number | undefined {
-  if (!levels.primaryZone || !levels.targets?.length) return undefined;
-  const entry = (levels.primaryZone.low + levels.primaryZone.high) / 2;
-  const stop =
-    levels.secondaryZone?.low ??
-    levels.majorSupport ??
-    levels.primaryZone.low * 0.95;
-  const target = levels.targets[0];
-  const computed = computePlannedRR(entry, stop, target);
-  return computed?.rr;
 }
 
 export function buildPlanLevelsView(
@@ -219,8 +207,7 @@ export function buildPlanLevelsView(
         ].join(" → ")
       : undefined;
 
-  const estimatedRR =
-    plan?.plannedRR === undefined ? estimateRRFromProfile(thesis.levels) : undefined;
+  const plannedRR = plan ? resolvePlannedRRFromPlan(plan) : undefined;
 
   let layeredEntry: PlanLevelsView["layeredEntry"];
   if (plan?.layeredEntry) {
@@ -247,8 +234,7 @@ export function buildPlanLevelsView(
     strategy,
     source,
     rows,
-    plannedRR: plan?.plannedRR,
-    estimatedRR,
+    plannedRR,
     minRR: thesis.riskRules.minimumRR,
     invalidation: thesis.riskRules.invalidation,
     window,

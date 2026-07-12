@@ -158,6 +158,9 @@ export interface UpdateTradeInput extends TradeMetaInput {
   notes?: string;
   planId?: string;
   closedAt?: string;
+  lossClassification?: LossClassification;
+  postStopStudy?: PostStopStudy;
+  exitReason?: TradeExitReason;
 }
 
 export interface CloseTradeInput {

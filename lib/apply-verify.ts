@@ -1,5 +1,5 @@
 import type { TradingInboxPayload } from "./bridge";
-import { getPlanById } from "./plans";
+import { getPlanById, getPlans } from "./plans";
 import { getActiveEvidenceForProfile } from "./market-evidence";
 import { getStockThesesByTicker, getStockThesisById } from "./stock-theses";
 import { getPlaybookById, slugifyPlaybookId } from "./playbooks";
@@ -74,17 +74,68 @@ async function verifyDecisionUpdatePersistence(
   if (!reloaded) {
     return { ok: false, detail: `Plan ${planId} not found after apply.` };
   }
-  const verdict = String(p.verdict);
-  if (!reloaded.decision || reloaded.decision.verdict !== verdict) {
-    return { ok: false, detail: `Decision verdict not persisted on ${planId}.` };
+
+  const tacticalFields = [
+    "plannedEntry",
+    "stopPrice",
+    "targetPrice",
+    "minimumRR",
+    "thesis",
+    "notes",
+    "validUntil",
+    "status",
+  ] as const;
+  const hasTactical = tacticalFields.some((field) => p[field] !== undefined);
+  const hasDecision =
+    p.verdict !== undefined &&
+    p.decisionConfidence !== undefined &&
+    Array.isArray(p.challenges) &&
+    p.challenges.length > 0;
+
+  if (hasTactical) {
+    const failures: string[] = [];
+    if (p.plannedEntry !== undefined && !numMatch(reloaded.plannedEntry, p.plannedEntry)) {
+      failures.push("plannedEntry");
+    }
+    if (p.stopPrice !== undefined && !numMatch(reloaded.stopPrice, p.stopPrice)) {
+      failures.push("stopPrice");
+    }
+    if (p.targetPrice !== undefined && !numMatch(reloaded.targetPrice, p.targetPrice)) {
+      failures.push("targetPrice");
+    }
+    if (p.thesis !== undefined && reloaded.thesis !== String(p.thesis).trim()) {
+      failures.push("thesis");
+    }
+    if (p.notes !== undefined && reloaded.chatNotes !== String(p.notes).trim()) {
+      failures.push("notes");
+    }
+    if (p.status !== undefined && reloaded.status !== String(p.status)) {
+      failures.push("status");
+    }
+    if (failures.length > 0) {
+      return {
+        ok: false,
+        detail: `Tactical fields not persisted on ${planId}: ${failures.join(", ")}.`,
+      };
+    }
   }
-  const confidence = Number(p.decisionConfidence);
-  if (reloaded.decision.decisionConfidence !== confidence) {
-    return { ok: false, detail: `Decision confidence mismatch on ${planId}.` };
+
+  if (hasDecision) {
+    const verdict = String(p.verdict);
+    if (!reloaded.decision || reloaded.decision.verdict !== verdict) {
+      return { ok: false, detail: `Decision verdict not persisted on ${planId}.` };
+    }
+    const confidence = Number(p.decisionConfidence);
+    if (reloaded.decision.decisionConfidence !== confidence) {
+      return { ok: false, detail: `Decision confidence mismatch on ${planId}.` };
+    }
   }
+
   return {
     ok: true,
-    detail: `Decision on ${planId} · ${reloaded.decision.verdict} · confidence ${reloaded.decision.decisionConfidence}`,
+    detail: hasDecision
+      ? `Decision on ${planId} · ${reloaded.decision?.verdict} · confidence ${reloaded.decision?.decisionConfidence}`
+      : `Tactical fields updated on ${planId}.`,
   };
 }
 
@@ -158,6 +209,31 @@ async function verifyStockFilePersistence(
   }
   if (p.status !== undefined && reloaded.status !== String(p.status)) {
     return { ok: false, detail: `Status not updated on ${id}.` };
+  }
+  if (p.initialScout !== undefined) {
+    const scout = p.initialScout as Record<string, unknown>;
+    const allPlans = await getPlans();
+    const activePlan = allPlans.find(
+      (plan) =>
+        plan.stockThesisId?.toUpperCase() === id &&
+        (plan.status === "watching" || plan.status === "ready" || plan.status === "entered")
+    );
+    if (!activePlan) {
+      return { ok: false, detail: `No linked Scout Plan found for ${id} after initialScout backfill.` };
+    }
+    if (scout.plannedEntry !== undefined && !numMatch(activePlan.plannedEntry, scout.plannedEntry)) {
+      return { ok: false, detail: `Backfilled plan entry mismatch on ${activePlan.id}.` };
+    }
+    if (scout.stopPrice !== undefined && !numMatch(activePlan.stopPrice, scout.stopPrice)) {
+      return { ok: false, detail: `Backfilled plan stop mismatch on ${activePlan.id}.` };
+    }
+    if (scout.targetPrice !== undefined && !numMatch(activePlan.targetPrice, scout.targetPrice)) {
+      return { ok: false, detail: `Backfilled plan target mismatch on ${activePlan.id}.` };
+    }
+    return {
+      ok: true,
+      detail: `Stock File ${id} · backfilled scout ${activePlan.id} · planned R ${activePlan.plannedRR ?? "—"}`,
+    };
   }
   return { ok: true, detail: `Stock File ${id} · v${reloaded.version} verified.` };
 }

@@ -144,9 +144,14 @@ async function applyDecisionUpdate(
   const result = await recordScoutDecisionFromProposal(parsed.proposal);
   if (result.errors?.length) return { ok: false, errors: result.errors };
   const plan = result.plan!;
+  const parts = [`Updated scout ${plan.id}`];
+  if (plan.decision?.verdict) parts.push(`verdict ${plan.decision.verdict}`);
+  if (plan.plannedEntry !== undefined) parts.push(`entry ${plan.plannedEntry}`);
+  if (plan.stopPrice !== undefined) parts.push(`stop ${plan.stopPrice}`);
+  if (plan.targetPrice !== undefined) parts.push(`target ${plan.targetPrice}`);
   return {
     ok: true,
-    message: `Decision recorded on ${plan.id} · ${plan.decision?.verdict} · confidence ${plan.decision?.decisionConfidence}`,
+    message: parts.join(" · "),
     type: "decision-update",
     planId: plan.id,
     stockFileId: plan.stockThesisId,
@@ -174,11 +179,15 @@ async function applyFileUpdate(
   const id = String(parsed.proposal.id).toUpperCase();
   const result = await applyStockFileInboxUpdate(id, parsed.proposal);
   if (result.errors?.length) return { ok: false, errors: result.errors };
+  const parts = [`Updated Stock File ${id}`];
+  if (result.thesis && result.thesis.version) parts.push(`v${result.thesis.version}`);
+  if (result.planId) parts.push(`backfilled scout ${result.planId}`);
   return {
     ok: true,
-    message: `Updated Stock File ${id} · v${result.thesis?.version}`,
+    message: parts.join(" · "),
     type: "file-update",
     stockFileId: id,
+    planId: result.planId,
   };
 }
 
@@ -330,7 +339,25 @@ function buildTradeUpdateInput(proposal: Record<string, unknown>): UpdateTradeIn
   if (proposal.notes !== undefined) input.notes = String(proposal.notes);
   if (proposal.playbookId !== undefined) input.playbookId = String(proposal.playbookId);
   if (proposal.setupId !== undefined) input.setupId = String(proposal.setupId);
+  if (proposal.planId !== undefined) input.planId = String(proposal.planId);
   if (proposal.closedAt !== undefined) input.closedAt = String(proposal.closedAt);
+  if (proposal.plannedRisk !== undefined) input.plannedRisk = Number(proposal.plannedRisk);
+  if (proposal.actualRisk !== undefined) input.actualRisk = Number(proposal.actualRisk);
+  if (proposal.riskRewardPlanned !== undefined) {
+    input.riskRewardPlanned = Number(proposal.riskRewardPlanned);
+  }
+  if (proposal.riskRewardActual !== undefined) {
+    input.riskRewardActual = Number(proposal.riskRewardActual);
+  }
+  if (proposal.exitReason !== undefined) {
+    input.exitReason = String(proposal.exitReason) as UpdateTradeInput["exitReason"];
+  }
+  if (proposal.lossClassification !== undefined) {
+    input.lossClassification = String(proposal.lossClassification) as UpdateTradeInput["lossClassification"];
+  }
+  if (proposal.postStopStudy !== undefined) {
+    input.postStopStudy = proposal.postStopStudy as UpdateTradeInput["postStopStudy"];
+  }
   return input;
 }
 

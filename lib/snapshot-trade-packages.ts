@@ -5,8 +5,14 @@ import type { SnapshotMenuItem } from "./snapshot-types";
 import { mechanicsSnapshotItem } from "./snapshot-packages";
 import { wrapSnapshotText } from "./snapshot-verification";
 import type { Setup } from "./setup-types";
+import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 import { formatTradeForSnapshot } from "./trade-snapshot-format";
+import {
+  formatTradeForensicSnapshot,
+  TRADE_FORENSIC_AI_REQUEST,
+} from "./trade-forensic-snapshot";
 import type { Trade } from "./types";
+import type { TradePlan } from "./plan-types";
 
 export function tradeSnapshotItems(input: {
   trade: Trade;
@@ -46,4 +52,41 @@ export function tradeSnapshotItems(input: {
   }
   items.push(mechanicsSnapshotItem());
   return items;
+}
+
+export function tradeForensicSnapshotItem(input: {
+  trade: Trade;
+  playbooks: Playbook[];
+  plans?: TradePlan[];
+  theses?: StockThesis[];
+}): SnapshotMenuItem {
+  const linkedPlan =
+    input.plans?.find((p) => p.id === input.trade.planId) ??
+    input.plans?.find((p) => p.ticker === input.trade.ticker && p.linkedTradeId === input.trade.id);
+  const linkedThesis =
+    input.theses?.find((t) => t.id === linkedPlan?.stockThesisId) ??
+    input.theses?.find((t) => t.ticker === input.trade.ticker);
+
+  const forensicBody = formatTradeForensicSnapshot({
+    trade: input.trade,
+    playbooks: input.playbooks,
+    linkedPlan,
+    linkedThesis,
+  });
+
+  const text = [
+    buildMatrixMechanicsBrief(),
+    "",
+    forensicBody,
+    "",
+    "=== REQUEST ===",
+    TRADE_FORENSIC_AI_REQUEST,
+  ].join("\n");
+
+  return {
+    id: "trade-forensic",
+    label: `${input.trade.ticker} · ${input.trade.id} forensic`,
+    description: "Closed trade deep export — legacy gaps, R, review, post-stop study",
+    text: wrapSnapshotText(`${input.trade.ticker} · ${input.trade.id} forensic`, text),
+  };
 }

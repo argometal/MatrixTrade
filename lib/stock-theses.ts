@@ -121,89 +121,110 @@ export async function updateStockThesisStatus(
 export async function applyStockFileInboxUpdate(
   id: string,
   proposal: Record<string, unknown>
-): Promise<{ thesis?: StockThesis; errors?: string[] }> {
+): Promise<{ thesis?: StockThesis; planId?: string; errors?: string[] }> {
   const thesis = await getStockThesisById(id);
   if (!thesis) return { errors: ["Stock file not found."] };
 
-  const now = new Date().toISOString();
-  const stamp = now.slice(0, 16).replace("T", " ");
-  let notes = thesis.notes;
+  const hasThesisUpdate =
+    proposal.status !== undefined ||
+    proposal.currentHypothesis !== undefined ||
+    proposal.notes !== undefined ||
+    proposal.thesis !== undefined ||
+    proposal.levels !== undefined ||
+    proposal.riskRules !== undefined;
 
-  if (proposal.notes !== undefined) {
-    const incoming = String(proposal.notes).trim();
-    const block = `### AI import · ${stamp}\n${incoming}`;
-    notes = notes ? `${notes}\n\n${block}` : block;
+  let currentThesis = thesis;
+  if (hasThesisUpdate) {
+    const now = new Date().toISOString();
+    const stamp = now.slice(0, 16).replace("T", " ");
+    let notes = thesis.notes;
+
+    if (proposal.notes !== undefined) {
+      const incoming = String(proposal.notes).trim();
+      const block = `### AI import · ${stamp}\n${incoming}`;
+      notes = notes ? `${notes}\n\n${block}` : block;
+    }
+
+    const statusRaw = proposal.status;
+    const status =
+      statusRaw !== undefined &&
+      ["draft", "watching", "actionable", "invalidated", "archived"].includes(String(statusRaw))
+        ? (String(statusRaw) as StockThesisStatus)
+        : undefined;
+
+    let levels = thesis.levels;
+    if (proposal.levels !== undefined && typeof proposal.levels === "object" && !Array.isArray(proposal.levels)) {
+      const l = proposal.levels as Record<string, unknown>;
+      const parseZone = (raw: unknown) => {
+        if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+        const z = raw as Record<string, unknown>;
+        const low = Number(z.low);
+        const high = Number(z.high);
+        if (!Number.isFinite(low) || !Number.isFinite(high)) return undefined;
+        return { low, high };
+      };
+      const targets = Array.isArray(l.targets)
+        ? l.targets.map((t) => Number(t)).filter((n) => Number.isFinite(n))
+        : undefined;
+      levels = {
+        ...levels,
+        majorSupport:
+          l.majorSupport !== undefined && Number.isFinite(Number(l.majorSupport))
+            ? Number(l.majorSupport)
+            : levels.majorSupport,
+        majorResistance:
+          l.majorResistance !== undefined && Number.isFinite(Number(l.majorResistance))
+            ? Number(l.majorResistance)
+            : levels.majorResistance,
+        primaryZone: l.primaryZone !== undefined ? parseZone(l.primaryZone) ?? levels.primaryZone : levels.primaryZone,
+        secondaryZone:
+          l.secondaryZone !== undefined ? parseZone(l.secondaryZone) ?? levels.secondaryZone : levels.secondaryZone,
+        targets: targets?.length ? targets : levels.targets,
+      };
+    }
+
+    let riskRules = thesis.riskRules;
+    if (proposal.riskRules !== undefined && typeof proposal.riskRules === "object" && !Array.isArray(proposal.riskRules)) {
+      const r = proposal.riskRules as Record<string, unknown>;
+      riskRules = {
+        minimumRR:
+          r.minimumRR !== undefined && Number.isFinite(Number(r.minimumRR))
+            ? Number(r.minimumRR)
+            : riskRules.minimumRR,
+        invalidation:
+          r.invalidation !== undefined ? String(r.invalidation).trim() : riskRules.invalidation,
+        notes: r.notes !== undefined ? String(r.notes).trim() || undefined : riskRules.notes,
+      };
+    }
+
+    const updated: StockThesis = {
+      ...thesis,
+      status: status ?? thesis.status,
+      thesis: proposal.thesis !== undefined ? String(proposal.thesis).trim() : thesis.thesis,
+      currentHypothesis:
+        proposal.currentHypothesis !== undefined
+          ? String(proposal.currentHypothesis).trim()
+          : thesis.currentHypothesis,
+      levels,
+      riskRules,
+      notes,
+      version: thesis.version + 1,
+      updatedAt: now,
+    };
+
+    await getStockThesesStore().upsert(updated);
+    currentThesis = updated;
   }
 
-  const statusRaw = proposal.status;
-  const status =
-    statusRaw !== undefined &&
-    ["draft", "watching", "actionable", "invalidated", "archived"].includes(String(statusRaw))
-      ? (String(statusRaw) as StockThesisStatus)
-      : undefined;
-
-  let levels = thesis.levels;
-  if (proposal.levels !== undefined && typeof proposal.levels === "object" && !Array.isArray(proposal.levels)) {
-    const l = proposal.levels as Record<string, unknown>;
-    const parseZone = (raw: unknown) => {
-      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
-      const z = raw as Record<string, unknown>;
-      const low = Number(z.low);
-      const high = Number(z.high);
-      if (!Number.isFinite(low) || !Number.isFinite(high)) return undefined;
-      return { low, high };
-    };
-    const targets = Array.isArray(l.targets)
-      ? l.targets.map((t) => Number(t)).filter((n) => Number.isFinite(n))
-      : undefined;
-    levels = {
-      ...levels,
-      majorSupport:
-        l.majorSupport !== undefined && Number.isFinite(Number(l.majorSupport))
-          ? Number(l.majorSupport)
-          : levels.majorSupport,
-      majorResistance:
-        l.majorResistance !== undefined && Number.isFinite(Number(l.majorResistance))
-          ? Number(l.majorResistance)
-          : levels.majorResistance,
-      primaryZone: l.primaryZone !== undefined ? parseZone(l.primaryZone) ?? levels.primaryZone : levels.primaryZone,
-      secondaryZone:
-        l.secondaryZone !== undefined ? parseZone(l.secondaryZone) ?? levels.secondaryZone : levels.secondaryZone,
-      targets: targets?.length ? targets : levels.targets,
-    };
+  let planId: string | undefined;
+  if (proposal.initialScout !== undefined) {
+    const { repairMissingScoutPlan } = await import("./scout-plan-repair");
+    const repair = await repairMissingScoutPlan(currentThesis, proposal.initialScout);
+    if (repair.errors?.length) return { errors: repair.errors, thesis: currentThesis };
+    planId = repair.planId;
   }
 
-  let riskRules = thesis.riskRules;
-  if (proposal.riskRules !== undefined && typeof proposal.riskRules === "object" && !Array.isArray(proposal.riskRules)) {
-    const r = proposal.riskRules as Record<string, unknown>;
-    riskRules = {
-      minimumRR:
-        r.minimumRR !== undefined && Number.isFinite(Number(r.minimumRR))
-          ? Number(r.minimumRR)
-          : riskRules.minimumRR,
-      invalidation:
-        r.invalidation !== undefined ? String(r.invalidation).trim() : riskRules.invalidation,
-      notes: r.notes !== undefined ? String(r.notes).trim() || undefined : riskRules.notes,
-    };
-  }
-
-  const updated: StockThesis = {
-    ...thesis,
-    status: status ?? thesis.status,
-    thesis: proposal.thesis !== undefined ? String(proposal.thesis).trim() : thesis.thesis,
-    currentHypothesis:
-      proposal.currentHypothesis !== undefined
-        ? String(proposal.currentHypothesis).trim()
-        : thesis.currentHypothesis,
-    levels,
-    riskRules,
-    notes,
-    version: thesis.version + 1,
-    updatedAt: now,
-  };
-
-  await getStockThesesStore().upsert(updated);
-  return { thesis: updated };
+  return { thesis: currentThesis, planId };
 }
 
 export async function appendScoutAssessment(

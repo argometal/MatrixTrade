@@ -166,7 +166,7 @@ export async function savePlan(input: SavePlanInput): Promise<{
     ticker,
     playbookId: input.playbookId?.trim() || undefined,
     stockThesisId: input.stockThesisId?.trim().toUpperCase() || existing?.stockThesisId,
-    status: existing?.status ?? "watching",
+    status: input.status ?? existing?.status ?? "watching",
     analysisTimeframes,
     entryTimeframe: input.entryTimeframe,
     plannedEntry,
@@ -273,16 +273,8 @@ export async function recordScoutDecision(
 export async function recordScoutDecisionFromProposal(
   proposal: Record<string, unknown>
 ): Promise<{ plan?: TradePlan; errors?: string[] }> {
-  const planId = String(proposal.planId ?? "").trim().toUpperCase();
-  if (!planId) return { errors: ["proposal.planId required"] };
-
-  const input = parseDecisionInput(proposal);
-  input.decidedBy = (proposal.decidedBy as DecisionInput["decidedBy"]) ?? "ai";
-  const probeInput =
-    input.verdict === "probe" ? parseProbeInput(proposal.probe) : undefined;
-  const layeredEntryInput =
-    input.verdict === "go" ? parseLayeredEntryInput(proposal.layeredEntry) : undefined;
-  return recordScoutDecision(planId, input, probeInput, layeredEntryInput);
+  const { applyDecisionUpdateFromProposal } = await import("./scout-plan-repair");
+  return applyDecisionUpdateFromProposal(proposal);
 }
 
 function parseLayeredEntryUpdateInput(

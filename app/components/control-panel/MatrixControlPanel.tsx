@@ -7,7 +7,7 @@ import { useControlPanel } from "@/app/components/control-panel/MatrixControlPan
 import type { ControlPanelSectionId } from "@/lib/control-panel-types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
-type Step = "pick" | "update" | "stock-pick" | "detail";
+type Step = "pick" | "update" | "stock-pick" | "trade-pick" | "detail";
 
 const SECTIONS: {
   id: ControlPanelSectionId;
@@ -37,7 +37,7 @@ const SECTIONS: {
   {
     id: "trade",
     label: "Trade",
-    hint: "Trades lab summary and experiment state",
+    hint: "Pick a closed trade — forensic export for AI analysis",
   },
 ];
 
@@ -120,6 +120,8 @@ export function MatrixControlPanel() {
   const [section, setSection] = useState<ControlPanelSectionId | null>(null);
   const [stockThesisId, setStockThesisId] = useState<string | null>(null);
   const [stockQuery, setStockQuery] = useState("");
+  const [tradeId, setTradeId] = useState<string | null>(null);
+  const [tradeQuery, setTradeQuery] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -127,6 +129,8 @@ export function MatrixControlPanel() {
     setSection(null);
     setStockThesisId(null);
     setStockQuery("");
+    setTradeId(null);
+    setTradeQuery("");
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -150,6 +154,21 @@ export function MatrixControlPanel() {
     );
   }, [data.stockFile.theses, stockQuery]);
 
+  const selectedTrade = useMemo(
+    () => data.trade.closedTrades.find((entry) => entry.trade.id === tradeId) ?? null,
+    [data.trade.closedTrades, tradeId]
+  );
+
+  const filteredTrades = useMemo(() => {
+    const query = tradeQuery.trim().toLowerCase();
+    if (!query) return data.trade.closedTrades;
+    return data.trade.closedTrades.filter(
+      (entry) =>
+        entry.trade.ticker.toLowerCase().includes(query) ||
+        entry.trade.id.toLowerCase().includes(query)
+    );
+  }, [data.trade.closedTrades, tradeQuery]);
+
   const detailSnapshots = useMemo((): SnapshotMenuItem[] => {
     if (!section) return [];
     switch (section) {
@@ -162,16 +181,22 @@ export function MatrixControlPanel() {
       case "scouting":
         return data.scouting.snapshotItems;
       case "trade":
-        return data.trade.snapshotItems;
+        return selectedTrade
+          ? selectedTrade.snapshotItems
+          : data.trade.snapshotItems.filter((item) => item.id === "trades-list");
       default:
         return [];
     }
-  }, [data, section, selectedStock]);
+  }, [data, section, selectedStock, selectedTrade]);
 
   function pickSection(id: ControlPanelSectionId) {
     setSection(id);
     if (id === "stock-file") {
       setStep("stock-pick");
+      return;
+    }
+    if (id === "trade") {
+      setStep("trade-pick");
       return;
     }
     setStep("detail");
@@ -187,11 +212,18 @@ export function MatrixControlPanel() {
       setStockThesisId(null);
       return;
     }
-    if (step === "stock-pick" || step === "detail") {
+    if (step === "detail" && section === "trade") {
+      setStep("trade-pick");
+      setTradeId(null);
+      return;
+    }
+    if (step === "stock-pick" || step === "trade-pick" || step === "detail") {
       setStep("pick");
       setSection(null);
       setStockThesisId(null);
       setStockQuery("");
+      setTradeId(null);
+      setTradeQuery("");
       return;
     }
     closePanel();
@@ -204,16 +236,22 @@ export function MatrixControlPanel() {
       ? "Update"
       : step === "stock-pick"
         ? "Pick a stock file"
-        : section === "stock-file" && selectedStock
-          ? `${selectedStock.thesis.ticker} · ${selectedStock.thesis.id}`
-          : sectionMeta?.label ?? "Control panel";
+        : step === "trade-pick"
+          ? "Pick a closed trade"
+          : section === "stock-file" && selectedStock
+            ? `${selectedStock.thesis.ticker} · ${selectedStock.thesis.id}`
+            : section === "trade" && selectedTrade
+              ? `${selectedTrade.trade.ticker} · ${selectedTrade.trade.id} forensic`
+              : sectionMeta?.label ?? "Control panel";
 
   const detailHint =
     step === "update"
       ? "Listening — paste what your AI returned and Matrix updates what it understands"
       : step === "stock-pick"
         ? `${data.activeThesisCount} active profile${data.activeThesisCount === 1 ? "" : "s"} — choose one to copy context`
-        : sectionMeta?.hint ?? "Copy snapshot text for your external AI";
+        : step === "trade-pick"
+          ? `${data.trade.closedTrades.length} closed trade${data.trade.closedTrades.length === 1 ? "" : "s"} — forensic export for AI`
+          : sectionMeta?.hint ?? "Copy snapshot text for your external AI";
 
   return (
     <div
@@ -318,6 +356,49 @@ export function MatrixControlPanel() {
           </div>
         ) : null}
 
+        {step === "trade-pick" ? (
+          <div className="flex min-h-0 flex-1 flex-col gap-2">
+            <input
+              type="search"
+              value={tradeQuery}
+              onChange={(event) => setTradeQuery(event.target.value)}
+              placeholder="Search ticker or trade id (H001)"
+              className="shrink-0 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none"
+            />
+            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
+              {filteredTrades.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
+                  No closed trades yet — forensic export appears after close + review.
+                </p>
+              ) : (
+                filteredTrades.map((entry) => (
+                  <button
+                    key={entry.trade.id}
+                    type="button"
+                    onClick={() => {
+                      setTradeId(entry.trade.id);
+                      setStep("detail");
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 text-left transition hover:border-violet-500/30 hover:bg-zinc-900"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-600/15 text-sm font-bold text-amber-300">
+                      {entry.trade.id.slice(0, 3)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-zinc-100">
+                        {entry.trade.ticker} · {entry.trade.id}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs text-zinc-500">
+                        Forensic export · closed {entry.trade.closedAt?.slice(0, 10) ?? "—"}
+                      </span>
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+        ) : null}
+
         {step === "detail" ? (
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
             {section === "train-ai" ? (
@@ -330,6 +411,15 @@ export function MatrixControlPanel() {
             {detailSnapshots.map((item) => (
               <SnapshotCopyRow key={item.id} item={item} />
             ))}
+            {section === "trade" && selectedTrade ? (
+              <>
+                {data.trade.snapshotItems
+                  .filter((item) => item.id === "trades-list")
+                  .map((item) => (
+                    <SnapshotCopyRow key={item.id} item={item} />
+                  ))}
+              </>
+            ) : null}
             {section === "stock-file" && selectedStock
               ? (() => {
                   const mechanics = selectedStock.snapshotItems.find((item) => item.id === "mechanics");

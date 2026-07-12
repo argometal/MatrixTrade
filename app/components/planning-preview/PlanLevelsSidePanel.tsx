@@ -55,11 +55,7 @@ export function PlanMapToggleButton({
   if (!view || view.rows.length === 0) return null;
 
   const rr =
-    view.plannedRR !== undefined
-      ? `${view.plannedRR.toFixed(1)}R plan`
-      : view.estimatedRR !== undefined
-        ? `~${view.estimatedRR.toFixed(1)}R est.`
-        : null;
+    view.plannedRR !== undefined ? `${view.plannedRR.toFixed(1)}R plan` : null;
 
   return (
     <button
@@ -86,9 +82,7 @@ export function PlanMapSummaryLine({ view }: { view: PlanLevelsView }) {
     }
   }
   if (view.plannedRR !== undefined) {
-    parts.push(`Plan ${view.plannedRR.toFixed(1)}R`);
-  } else if (view.estimatedRR !== undefined) {
-    parts.push(`Est. ${view.estimatedRR.toFixed(1)}R at zone`);
+    parts.push(`Plan ${view.plannedRR.toFixed(1)}R (strategy stop)`);
   }
   if (view.minRR !== undefined) parts.push(`min ${view.minRR}R`);
   if (parts.length === 0) return null;

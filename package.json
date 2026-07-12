@@ -8,7 +8,8 @@
     "start": "next start --hostname 0.0.0.0",
     "lint": "next lint",
     "seed:supabase": "tsx tools/seed-supabase.ts",
-    "validate:supabase": "tsx tools/validate-supabase-trades.ts"
+    "validate:supabase": "tsx tools/validate-supabase-trades.ts",
+    "test:scout-repair": "tsx tools/test-scout-repair-path.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",
