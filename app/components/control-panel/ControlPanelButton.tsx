@@ -15,7 +15,7 @@ export function ControlPanelButton({
       type="button"
       onClick={openPanel}
       className={`inline-flex h-9 shrink-0 items-center rounded-xl bg-violet-600 px-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-950/30 transition hover:bg-violet-500 active:scale-[0.98] ${className}`}
-      title="Copy AI context — train, playbook, stock file, scouting, trade"
+      title="Control — update Matrix or copy AI context"
     >
       Control
     </button>

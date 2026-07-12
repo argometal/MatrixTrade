@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
+import { ControlPanelUpdate } from "@/app/components/control-panel/ControlPanelUpdate";
 import { useControlPanel } from "@/app/components/control-panel/MatrixControlPanelProvider";
 import type { ControlPanelSectionId } from "@/lib/control-panel-types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
-type Step = "pick" | "stock-pick" | "detail";
+type Step = "pick" | "update" | "stock-pick" | "detail";
 
 const SECTIONS: {
   id: ControlPanelSectionId;
@@ -177,6 +178,10 @@ export function MatrixControlPanel() {
   }
 
   function handleBack() {
+    if (step === "update") {
+      setStep("pick");
+      return;
+    }
     if (step === "detail" && section === "stock-file") {
       setStep("stock-pick");
       setStockThesisId(null);
@@ -195,16 +200,20 @@ export function MatrixControlPanel() {
   if (!open) return null;
 
   const detailTitle =
-    step === "stock-pick"
-      ? "Pick a stock file"
-      : section === "stock-file" && selectedStock
-        ? `${selectedStock.thesis.ticker} · ${selectedStock.thesis.id}`
-        : sectionMeta?.label ?? "Control panel";
+    step === "update"
+      ? "Update"
+      : step === "stock-pick"
+        ? "Pick a stock file"
+        : section === "stock-file" && selectedStock
+          ? `${selectedStock.thesis.ticker} · ${selectedStock.thesis.id}`
+          : sectionMeta?.label ?? "Control panel";
 
   const detailHint =
-    step === "stock-pick"
-      ? `${data.activeThesisCount} active profile${data.activeThesisCount === 1 ? "" : "s"} — choose one to copy context`
-      : sectionMeta?.hint ?? "Copy snapshot text for your external AI";
+    step === "update"
+      ? "Listening — paste what your AI returned and Matrix updates what it understands"
+      : step === "stock-pick"
+        ? `${data.activeThesisCount} active profile${data.activeThesisCount === 1 ? "" : "s"} — choose one to copy context`
+        : sectionMeta?.hint ?? "Copy snapshot text for your external AI";
 
   return (
     <div
@@ -227,7 +236,23 @@ export function MatrixControlPanel() {
         </header>
 
         {step === "pick" ? (
-          <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => setStep("update")}
+              className="flex w-full shrink-0 items-center gap-3 rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-600/25"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600/25 text-sm font-bold text-emerald-200">
+                ↑
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-emerald-100">Update</span>
+                <span className="mt-0.5 block text-xs text-emerald-200/70">
+                  Paste AI response — trades, files, scouts, playbooks
+                </span>
+              </span>
+            </button>
+            <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
             {SECTIONS.map((entry) => (
               <button
                 key={entry.id}
@@ -244,8 +269,11 @@ export function MatrixControlPanel() {
                 </span>
               </button>
             ))}
-          </nav>
+            </nav>
+          </div>
         ) : null}
+
+        {step === "update" ? <ControlPanelUpdate onBack={handleBack} /> : null}
 
         {step === "stock-pick" ? (
           <div className="flex min-h-0 flex-1 flex-col gap-2">
@@ -311,15 +339,17 @@ export function MatrixControlPanel() {
           </div>
         ) : null}
 
-        <footer className="mt-4 flex gap-3 border-t border-zinc-800 pt-4">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="flex-1 rounded-xl border border-zinc-700 py-2.5 text-sm text-zinc-400 hover:bg-zinc-800"
-          >
-            {step === "pick" ? "Close" : "Back"}
-          </button>
-        </footer>
+        {step !== "update" ? (
+          <footer className="mt-4 flex gap-3 border-t border-zinc-800 pt-4">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="flex-1 rounded-xl border border-zinc-700 py-2.5 text-sm text-zinc-400 hover:bg-zinc-800"
+            >
+              {step === "pick" ? "Close" : "Back"}
+            </button>
+          </footer>
+        ) : null}
       </div>
     </div>
   );
