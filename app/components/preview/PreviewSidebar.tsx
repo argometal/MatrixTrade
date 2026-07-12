@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AppExchangeActions } from "@/app/components/AppExchangeActions";
 import { SignOutButton } from "@/app/components/SignOutButton";
 import {
   isPreviewNavActive,
@@ -49,6 +50,10 @@ export function PreviewSidebar({ nav }: { nav: PreviewNavContext }) {
       ))}
 
       <div className="mt-auto space-y-4 border-t border-zinc-800 pt-4">
+        <div>
+          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Apps</p>
+          <AppExchangeActions app="matrix" inboxCount={nav.pendingInboxCount} className="px-1" />
+        </div>
         <div>
           <p className="text-[10px] uppercase tracking-wide text-zinc-600">Trading lab</p>
           <p className="mt-1 text-sm font-medium">{nav.cycleLabel}</p>

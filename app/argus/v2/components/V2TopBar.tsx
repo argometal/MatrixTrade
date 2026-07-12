@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { TradingMark } from "@/app/components/TradingMark";
-import { MobileMenuButton } from "@/app/components/preview/MobileMenuButton";
+import { AppExchangeActions } from "@/app/components/AppExchangeActions";
 import { V2TopBarAddMenu } from "@/app/argus/v2/components/V2TopBarAddMenu";
 import { PrivateLockMenu } from "@/app/argus/components/PrivateLockMenu";
 import { V2BuildBadge } from "@/app/argus/v2/components/V2BuildBadge";
@@ -90,10 +89,10 @@ export function V2TopBar({
           </div>
         </form>
 
-        <div className="ml-auto hidden items-center gap-1.5 sm:gap-2 lg:flex">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <Link
             href="/argus/v2/help"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400"
+            className="hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 lg:flex"
             aria-label="How Argus works"
             title="How Argus works"
           >
@@ -103,7 +102,7 @@ export function V2TopBar({
             <PrivateLockMenu configured={privateConfigured} unlocked={privateUnlocked} />
           ) : (
             <span
-              className="hidden items-center gap-1.5 rounded-xl border border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-600 sm:inline-flex"
+              className="hidden items-center gap-1.5 rounded-xl border border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-600 lg:inline-flex"
               title="Set ARGUS_PRIVATE_PIN to enable protected records"
             >
               <span aria-hidden>🛡</span> PIN
@@ -111,54 +110,12 @@ export function V2TopBar({
           )}
           <V2BuildBadge className="hidden min-[420px]:inline" />
           <V2TopBarAddMenu className="shrink-0" />
-          <Link
-            href="/argus/v2/inbox"
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400"
-            aria-label="Inbox"
-          >
-            🔔
-            {inboxCount > 0 ? (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
-                {inboxCount > 99 ? "99+" : inboxCount}
-              </span>
-            ) : null}
-          </Link>
+          <AppExchangeActions app="argus" inboxCount={inboxCount} />
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600/30 text-xs font-bold text-violet-200 ring-1 ring-violet-500/40"
+            className="hidden h-9 w-9 items-center justify-center rounded-full bg-violet-600/30 text-xs font-bold text-violet-200 ring-1 ring-violet-500/40 sm:flex"
             title="Profile"
           >
             VA
-          </div>
-        </div>
-
-        {/* Phone: two rows — Create + Close on top; Inbox + Matrix below */}
-        <div className="ml-auto flex flex-col items-end gap-1.5 lg:hidden">
-          <div className="flex items-center gap-1.5">
-            <V2TopBarAddMenu className="shrink-0" />
-            <MobileMenuButton open={open} onClick={toggle} />
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Link
-              href="/argus/v2/inbox"
-              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-base text-zinc-400"
-              aria-label="Inbox"
-              title="Inbox"
-            >
-              🔔
-              {inboxCount > 0 ? (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
-                  {inboxCount > 99 ? "99+" : inboxCount}
-                </span>
-              ) : null}
-            </Link>
-            <Link
-              href="/home-preview"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80"
-              aria-label="MatrixTrade"
-              title="MatrixTrade"
-            >
-              <TradingMark size={28} />
-            </Link>
           </div>
         </div>
       </div>

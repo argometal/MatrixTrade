@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { AppExchangeActions } from "@/app/components/AppExchangeActions";
 import { MobileMenuButton } from "@/app/components/preview/MobileMenuButton";
 import { useMobileMenu } from "@/app/components/preview/MobileMenuContext";
 
-export function PreviewMobileHeader() {
+export function PreviewMobileHeader({ pendingInboxCount = 0 }: { pendingInboxCount?: number }) {
   const { open, toggle } = useMobileMenu();
 
   return (
@@ -17,6 +18,7 @@ export function PreviewMobileHeader() {
       </Link>
 
       <div className="flex shrink-0 items-center gap-1.5">
+        <AppExchangeActions app="matrix" inboxCount={pendingInboxCount} />
         <MobileMenuButton open={open} onClick={toggle} />
       </div>
     </header>

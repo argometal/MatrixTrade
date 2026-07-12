@@ -1,4 +1,5 @@
 import { loginTradingAction } from "@/app/auth/actions";
+import { MatrixPublicTopBar } from "@/app/components/MatrixPublicTopBar";
 
 export default async function LoginPage({
   searchParams,
@@ -9,7 +10,9 @@ export default async function LoginPage({
   const defaultNext = "/home-preview";
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
+    <>
+      <MatrixPublicTopBar />
+      <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4 pt-16">
       <h1 className="text-2xl font-semibold">MatrixTrade</h1>
       <p className="mt-1 text-sm text-zinc-500">Trading access</p>
       <form action={loginTradingAction} className="mt-8 space-y-4">
@@ -32,6 +35,7 @@ export default async function LoginPage({
           Sign in
         </button>
       </form>
-    </div>
+      </div>
+    </>
   );
 }

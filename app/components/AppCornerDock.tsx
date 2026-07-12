@@ -5,19 +5,11 @@ import type { ReactNode } from "react";
 
 export type CornerDockPlacement = "matrix" | "argus" | "floating";
 
-function dockPositionClass(placement: CornerDockPlacement, mobileOffset: boolean): string {
-  // Below mobile header + page action row so bell/switch do not cover titles or Connect.
-  const mobileLower =
-    "max-lg:top-[calc(9.5rem+env(safe-area-inset-top))] max-lg:bottom-auto";
-  if (placement === "matrix") {
-    return `${mobileLower} lg:top-6`;
-  }
+function dockPositionClass(placement: CornerDockPlacement): string {
   if (placement === "argus") {
-    return `${mobileLower} lg:top-[4.5rem]`;
+    return "top-[4.5rem]";
   }
-  return mobileOffset
-    ? `${mobileLower} lg:top-6`
-    : "top-20 sm:top-6";
+  return "top-6";
 }
 
 /** Fixed corner cluster: optional inbox bell + cross-app switch icon. */
@@ -26,7 +18,6 @@ export function AppCornerDock({
   bellLabel,
   bellCount = 0,
   placement = "floating",
-  mobileOffset = true,
   showBell = true,
   children,
 }: {
@@ -41,7 +32,7 @@ export function AppCornerDock({
 }) {
   return (
     <div
-      className={`fixed right-[max(0.75rem,env(safe-area-inset-right))] z-[45] flex items-center gap-3 sm:right-4 lg:right-6 ${dockPositionClass(placement, mobileOffset)}`}
+      className={`fixed right-[max(0.75rem,env(safe-area-inset-right))] z-[45] hidden items-center gap-3 sm:right-4 lg:flex lg:right-6 ${dockPositionClass(placement)}`}
     >
       {showBell ? (
         <Link
