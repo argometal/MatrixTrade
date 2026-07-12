@@ -198,6 +198,132 @@ export function PreviewPlanning({
         </header>
 
         <div className="space-y-4 px-4 py-4 lg:px-6">
+          {activeTheses.length > 0 ? (
+            <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-semibold text-zinc-200">Scouting summary</h2>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    Gatekeeper view — verdict from Stock File status + risk room.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {scoutLevelsView ? (
+                    <PlanMapToggleButton
+                      open={planPanelOpen}
+                      onClick={() => setPlanPanelOpen((v) => !v)}
+                      view={scoutLevelsView}
+                    />
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <label htmlFor="scout-summary-select" className="text-xs font-medium text-zinc-500">
+                  Stock file
+                </label>
+                <select
+                  id="scout-summary-select"
+                  value={focusedScoutCard?.thesis.id ?? ""}
+                  onChange={(event) => setScoutThesisId(event.target.value)}
+                  className="min-w-[12rem] rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 focus:border-violet-500/50 focus:outline-none"
+                >
+                  {scoutCards.map((card) => (
+                    <option key={card.thesis.id} value={card.thesis.id}>
+                      {card.thesis.ticker} · {card.thesis.id} · {SCOUTING_VERDICT_LABELS[card.verdict]}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex flex-wrap gap-1.5">
+                  {scoutCards.map((card) => {
+                    const selected = card.thesis.id === focusedScoutCard?.thesis.id;
+                    return (
+                      <button
+                        key={card.thesis.id}
+                        type="button"
+                        onClick={() => setScoutThesisId(card.thesis.id)}
+                        className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                          selected
+                            ? "bg-violet-600 text-white"
+                            : "border border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+                        }`}
+                      >
+                        {card.thesis.ticker}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {focusedScoutCard ? (
+                <div
+                  className={`mt-4 rounded-xl border p-4 ${scoutingVerdictStyle(focusedScoutCard.verdict)}`}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                      href={`/stock-theses/${focusedScoutCard.thesis.id}`}
+                      className="text-lg font-semibold hover:underline"
+                    >
+                      {focusedScoutCard.thesis.ticker}
+                    </Link>
+                    <span className="text-xs opacity-70">{focusedScoutCard.thesis.id}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${
+                        thesisStatusStyles[focusedScoutCard.thesis.status] ?? "bg-zinc-800 text-zinc-400"
+                      }`}
+                    >
+                      {STOCK_THESIS_STATUS_LABELS[focusedScoutCard.thesis.status]}
+                    </span>
+                    <span className="rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase">
+                      {SCOUTING_VERDICT_LABELS[focusedScoutCard.verdict]}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm opacity-90">{focusedScoutCard.thesis.currentHypothesis}</p>
+                  <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
+                    {focusedScoutCard.levelsView ? (
+                      <p className="text-violet-200/90">
+                        <PlanMapSummaryLine view={focusedScoutCard.levelsView} />
+                      </p>
+                    ) : null}
+                    {!focusedScoutCard.levelsView?.plannedRR ? (
+                      <p>
+                        Min R:R {focusedScoutCard.thesis.riskRules.minimumRR}R — set strategy stop on plan
+                        for R
+                      </p>
+                    ) : null}
+                    <p>
+                      Invalidation:{" "}
+                      <span className="opacity-80">
+                        {focusedScoutCard.thesis.riskRules.invalidation.slice(0, 80)}
+                        {focusedScoutCard.thesis.riskRules.invalidation.length > 80 ? "…" : ""}
+                      </span>
+                    </p>
+                    <p>
+                      Monthly room: ${monthly.monthlyLossRoom.toFixed(0)}
+                      {monthly.monthlyCapBreached ? " (cap breached)" : ""}
+                    </p>
+                    <p>
+                      Active scouts: {focusedScoutCard.activeScoutCount}
+                      {focusedScoutCard.primaryPlan ? (
+                        <>
+                          {" "}
+                          ·{" "}
+                          <button
+                            type="button"
+                            onClick={() => setPlanPanelOpen(true)}
+                            className="underline opacity-80 hover:opacity-100"
+                          >
+                            {focusedScoutCard.primaryPlan.id}
+                          </button>
+                        </>
+                      ) : null}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
           <section className="rounded-2xl border border-violet-500/30 bg-violet-950/10 p-5">
             <h2 className="text-sm font-semibold text-violet-200">Stock profiles — start here</h2>
             <p className="mt-1 text-xs text-zinc-500">
@@ -274,103 +400,6 @@ export function PreviewPlanning({
               </ul>
             )}
           </section>
-
-          {activeTheses.length > 0 ? (
-            <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-semibold text-zinc-200">Scouting summary</h2>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    Gatekeeper view — verdict from Stock File status + risk room.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  {scoutLevelsView ? (
-                    <PlanMapToggleButton
-                      open={planPanelOpen}
-                      onClick={() => setPlanPanelOpen((v) => !v)}
-                      view={scoutLevelsView}
-                    />
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="mt-4 space-y-3">
-                {scoutCards.map((card) => {
-                  const focused = card.thesis.id === (scoutThesisId ?? focusThesisId ?? activeTheses[0]?.id);
-                  return (
-                    <div
-                      key={card.thesis.id}
-                      className={`rounded-xl border p-4 transition-opacity ${scoutingVerdictStyle(card.verdict)} ${
-                        focused ? "ring-1 ring-current/30" : "opacity-95"
-                      }`}
-                    >
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Link
-                          href={`/stock-theses/${card.thesis.id}`}
-                          className="text-lg font-semibold hover:underline"
-                        >
-                          {card.thesis.ticker}
-                        </Link>
-                        <span className="text-xs opacity-70">{card.thesis.id}</span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${
-                            thesisStatusStyles[card.thesis.status] ?? "bg-zinc-800 text-zinc-400"
-                          }`}
-                        >
-                          {STOCK_THESIS_STATUS_LABELS[card.thesis.status]}
-                        </span>
-                        <span className="rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase">
-                          {SCOUTING_VERDICT_LABELS[card.verdict]}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm opacity-90">{card.thesis.currentHypothesis}</p>
-                      <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-4">
-                        {card.levelsView ? (
-                          <p className="text-violet-200/90">
-                            <PlanMapSummaryLine view={card.levelsView} />
-                          </p>
-                        ) : null}
-                        {!card.levelsView?.plannedRR ? (
-                          <p>Min R:R {card.thesis.riskRules.minimumRR}R — set strategy stop on plan for R</p>
-                        ) : null}
-                        <p>
-                          Invalidation:{" "}
-                          <span className="opacity-80">
-                            {card.thesis.riskRules.invalidation.slice(0, 80)}
-                            {card.thesis.riskRules.invalidation.length > 80 ? "…" : ""}
-                          </span>
-                        </p>
-                        <p>
-                          Monthly room: ${monthly.monthlyLossRoom.toFixed(0)}
-                          {monthly.monthlyCapBreached ? " (cap breached)" : ""}
-                        </p>
-                        <p>
-                          Active scouts: {card.activeScoutCount}
-                          {card.primaryPlan ? (
-                            <>
-                              {" "}
-                              ·{" "}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setScoutThesisId(card.thesis.id);
-                                  setPlanPanelOpen(true);
-                                }}
-                                className="underline opacity-80 hover:opacity-100"
-                              >
-                                {card.primaryPlan.id}
-                              </button>
-                            </>
-                          ) : null}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          ) : null}
 
         </div>
       </div>
