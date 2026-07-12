@@ -2,24 +2,26 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import type { Runbook, RunbookItem, RunbookSubtask } from "@/lib/argus/types";
+import type { Runbook, RunbookItem } from "@/lib/argus/types";
 import {
   addRunbookCardAction,
-  addRunbookSubtaskAction,
   appendRunbookCardsFromTextAction,
   checkAllRunbookItemsAction,
+  flattenRunbookSubtasksAction,
   importRunbookJsonAction,
+  moveRunbookItemAction,
   rebuildRunbookFromTextAction,
   removeDoneRunbookItemsAction,
   renameRunbookItemAction,
   renameRunbookTitleAction,
   toggleRunbookItemAction,
-  toggleRunbookSubtaskAction,
   uncheckAllRunbookItemsAction,
 } from "@/app/argus/actions";
-import { runbookCardProgress, runbookProgress } from "@/lib/argus/runbook-helpers";
+import { runbookHasNestedSubtasks, runbookProgress } from "@/lib/argus/runbook-helpers";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { RunbookAiBulkPanel } from "./RunbookAiBulkPanel";
+
+type ViewMode = "board" | "list";
 
 function runbookItemsToText(items: RunbookItem[]): string {
   return items.map((item) => (item.type === "sep" ? "" : item.text)).join("\n");
@@ -35,28 +37,41 @@ function toolbarButtonClass(variant: "default" | "danger" | "primary" = "default
   return "rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-zinc-300 hover:border-lime-500/30 hover:text-lime-300 disabled:opacity-40";
 }
 
-function RunbookCard({
+function viewToggleClass(active: boolean) {
+  return `rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+    active
+      ? "bg-lime-500/15 text-lime-300 ring-1 ring-lime-500/30"
+      : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+  }`;
+}
+
+function RunbookCardExpanded({
   runbookId,
   item,
   disabled,
-  hiddenOnScreen,
+  onClose,
   onError,
+  onMove,
+  canMoveLeft,
+  canMoveRight,
 }: {
   runbookId: string;
   item: RunbookItem;
   disabled: boolean;
-  hiddenOnScreen: boolean;
+  onClose: () => void;
   onError: (message: string | null) => void;
+  onMove: (direction: -1 | 1) => void;
+  canMoveLeft: boolean;
+  canMoveRight: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [subtaskDraft, setSubtaskDraft] = useState("");
-  const [addingSubtask, setAddingSubtask] = useState(false);
-  const [editing, setEditing] = useState(false);
   const [editDraft, setEditDraft] = useState(item.text);
-  const progress = useMemo(() => runbookCardProgress(item), [item]);
-  const subtasks = item.subtasks ?? [];
   const busy = disabled || isPending;
+
+  useEffect(() => {
+    setEditDraft(item.text);
+  }, [item.id, item.text]);
 
   function run(action: () => Promise<void>) {
     onError(null);
@@ -71,193 +86,214 @@ function RunbookCard({
     });
   }
 
-  function handleToggleCard(nextDone: boolean) {
-    run(() => toggleRunbookItemAction(runbookId, item.id, nextDone));
-  }
-
-  function handleToggleSubtask(subtask: RunbookSubtask, nextDone: boolean) {
-    run(() => toggleRunbookSubtaskAction(runbookId, item.id, subtask.id, nextDone));
-  }
-
-  function handleAddSubtask(event: FormEvent) {
-    event.preventDefault();
-    const text = subtaskDraft.trim();
-    if (!text) return;
-    run(async () => {
-      await addRunbookSubtaskAction(runbookId, item.id, text);
-      setSubtaskDraft("");
-      setAddingSubtask(false);
-    });
-  }
-
   function handleSaveRename(event: FormEvent) {
     event.preventDefault();
     const text = editDraft.trim();
     if (!text || text === item.text) {
-      setEditing(false);
-      setEditDraft(item.text);
+      onClose();
       return;
     }
     run(async () => {
       await renameRunbookItemAction(runbookId, item.id, text);
-      setEditing(false);
+      onClose();
     });
   }
 
   return (
-    <article
-      className={`rounded-2xl border px-3.5 py-3 shadow-sm transition ${
-        hiddenOnScreen ? "hidden print:block" : ""
-      } ${
-        item.done
-          ? "border-zinc-800/70 bg-zinc-950/50 opacity-80 print:opacity-100"
-          : "border-zinc-800/90 bg-zinc-900/70 hover:border-lime-500/25"
-      }`}
-    >
-      <div className="flex items-start gap-3">
+    <div className="runbook-no-print rounded-2xl border border-lime-500/30 bg-zinc-900/90 p-4 shadow-lg ring-1 ring-lime-500/10">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Edit card</span>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            disabled={busy || !canMoveLeft}
+            onClick={() => onMove(-1)}
+            className={toolbarButtonClass()}
+            aria-label="Move left"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            disabled={busy || !canMoveRight}
+            onClick={() => onMove(1)}
+            className={toolbarButtonClass()}
+            aria-label="Move right"
+          >
+            →
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onClose}
+            className="rounded-lg px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
+      <label className="mb-3 flex items-start gap-3">
         <input
           type="checkbox"
           checked={item.done}
           disabled={busy}
-          onChange={(event) => handleToggleCard(event.target.checked)}
-          className="runbook-no-print mt-1 shrink-0"
-          aria-label={item.done ? "Mark card open" : "Mark card done"}
+          onChange={(event) => run(() => toggleRunbookItemAction(runbookId, item.id, event.target.checked))}
+          className="mt-1 shrink-0"
+          aria-label={item.done ? "Mark open" : "Mark done"}
         />
-        <span className="mt-1 hidden shrink-0 text-sm print:inline">{item.done ? "☑" : "☐"}</span>
+        <span className="text-xs text-zinc-500">{item.done ? "Done" : "Open"}</span>
+      </label>
+
+      <form onSubmit={handleSaveRename} className="space-y-3">
+        <textarea
+          autoFocus
+          value={editDraft}
+          onChange={(event) => setEditDraft(event.target.value)}
+          disabled={busy}
+          rows={4}
+          className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-lime-500/40 focus:outline-none"
+        />
+        <div className="flex flex-wrap gap-2">
+          <button type="submit" disabled={busy || !editDraft.trim()} className={toolbarButtonClass("primary")}>
+            Save
+          </button>
+          <button type="button" disabled={busy} onClick={onClose} className={toolbarButtonClass()}>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function RunbookBoardTile({
+  item,
+  hiddenOnScreen,
+  selected,
+  disabled,
+  onSelect,
+  onToggle,
+}: {
+  item: RunbookItem;
+  hiddenOnScreen: boolean;
+  selected: boolean;
+  disabled: boolean;
+  onSelect: () => void;
+  onToggle: (done: boolean) => void;
+}) {
+  const subtaskCount = item.subtasks?.length ?? 0;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-52 shrink-0 rounded-2xl border px-3 py-3 text-left shadow-sm transition ${
+        hiddenOnScreen ? "hidden print:block" : ""
+      } ${
+        selected
+          ? "border-lime-500/50 bg-lime-500/10 ring-1 ring-lime-500/20"
+          : item.done
+            ? "border-zinc-800/70 bg-zinc-950/50 opacity-75 hover:opacity-90"
+            : "border-zinc-800/90 bg-zinc-900/70 hover:border-lime-500/25"
+      }`}
+    >
+      <div className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          checked={item.done}
+          disabled={disabled}
+          onClick={(event) => event.stopPropagation()}
+          onChange={(event) => onToggle(event.target.checked)}
+          className="runbook-no-print mt-0.5 shrink-0"
+          aria-label={item.done ? "Mark open" : "Mark done"}
+        />
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            {editing ? (
-              <form onSubmit={handleSaveRename} className="flex min-w-0 flex-1 gap-2">
-                <input
-                  autoFocus
-                  value={editDraft}
-                  onChange={(event) => setEditDraft(event.target.value)}
-                  disabled={busy}
-                  className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1 text-sm text-zinc-100 focus:border-lime-500/40 focus:outline-none"
-                />
-                <button type="submit" disabled={busy || !editDraft.trim()} className={toolbarButtonClass("primary")}>
-                  Save
-                </button>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setEditing(false);
-                    setEditDraft(item.text);
-                  }}
-                  className="rounded-lg px-2 py-1 text-xs text-zinc-500 hover:text-zinc-300"
-                >
-                  Cancel
-                </button>
-              </form>
-            ) : (
-              <>
-                <p
-                  className={`text-sm font-medium leading-relaxed ${
-                    item.done ? "text-zinc-500 line-through print:text-zinc-900 print:no-underline" : "text-zinc-100 print:text-zinc-900"
-                  }`}
-                >
-                  {item.text}
-                </p>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => {
-                    setEditDraft(item.text);
-                    setEditing(true);
-                  }}
-                  className="runbook-no-print shrink-0 rounded-md px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
-                  aria-label="Rename card"
-                >
-                  Edit
-                </button>
-              </>
-            )}
-            {progress.total > 0 ? (
-              <span className="shrink-0 rounded-md bg-zinc-950/80 px-1.5 py-0.5 text-[10px] tabular-nums text-zinc-400 ring-1 ring-zinc-800 print:hidden">
-                {progress.done}/{progress.total}
-              </span>
-            ) : null}
-          </div>
-
-          {subtasks.length > 0 ? (
-            <ul className="mt-3 space-y-1.5 border-t border-zinc-800/80 pt-3">
-              {subtasks.map((subtask) => (
-                <li key={subtask.id}>
-                  <label className="flex items-start gap-2 rounded-lg px-1 py-0.5 hover:bg-zinc-950/40 print:hover:bg-transparent">
-                    <input
-                      type="checkbox"
-                      checked={subtask.done}
-                      disabled={busy}
-                      onChange={(event) => handleToggleSubtask(subtask, event.target.checked)}
-                      className="runbook-no-print mt-0.5 shrink-0"
-                    />
-                    <span className="mt-0.5 hidden shrink-0 text-xs print:inline">
-                      {subtask.done ? "☑" : "☐"}
-                    </span>
-                    <span
-                      className={`text-xs leading-relaxed ${
-                        subtask.done ? "text-zinc-600 line-through print:text-zinc-700" : "text-zinc-300 print:text-zinc-800"
-                      }`}
-                    >
-                      {subtask.text}
-                    </span>
-                  </label>
-                </li>
-              ))}
-            </ul>
+          <p
+            className={`line-clamp-4 text-sm font-medium leading-snug ${
+              item.done ? "text-zinc-500 line-through" : "text-zinc-100"
+            }`}
+          >
+            {item.text}
+          </p>
+          {subtaskCount > 0 ? (
+            <span className="mt-2 inline-block rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-200 ring-1 ring-amber-500/20">
+              {subtaskCount} nested — convert to flat
+            </span>
           ) : null}
-
-          {addingSubtask ? (
-            <form onSubmit={handleAddSubtask} className="runbook-no-print mt-3 flex gap-2">
-              <input
-                autoFocus
-                value={subtaskDraft}
-                onChange={(event) => setSubtaskDraft(event.target.value)}
-                disabled={busy}
-                placeholder="Checklist item…"
-                className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-2.5 py-1.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
-              />
-              <button
-                type="submit"
-                disabled={busy || !subtaskDraft.trim()}
-                className={toolbarButtonClass("primary")}
-              >
-                Add
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  setAddingSubtask(false);
-                  setSubtaskDraft("");
-                }}
-                className="rounded-lg px-2 py-1.5 text-xs text-zinc-500 hover:text-zinc-300"
-              >
-                Cancel
-              </button>
-            </form>
-          ) : (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => setAddingSubtask(true)}
-              className="runbook-no-print mt-3 text-left text-[11px] font-medium text-zinc-500 hover:text-lime-300"
-            >
-              + Add subtask
-            </button>
-          )}
         </div>
       </div>
-    </article>
+    </button>
+  );
+}
+
+function RunbookListRow({
+  item,
+  hiddenOnScreen,
+  expanded,
+  disabled,
+  onSelect,
+  onToggle,
+}: {
+  item: RunbookItem;
+  hiddenOnScreen: boolean;
+  expanded: boolean;
+  disabled: boolean;
+  onSelect: () => void;
+  onToggle: (done: boolean) => void;
+}) {
+  const subtaskCount = item.subtasks?.length ?? 0;
+
+  return (
+    <div className={hiddenOnScreen ? "hidden print:block" : ""}>
+      <div
+        className={`flex items-start gap-3 rounded-2xl border px-3.5 py-3 transition ${
+          expanded
+            ? "border-lime-500/40 bg-lime-500/5"
+            : item.done
+              ? "border-zinc-800/70 bg-zinc-950/50 opacity-80"
+              : "border-zinc-800/90 bg-zinc-900/70 hover:border-lime-500/25"
+        }`}
+      >
+        <input
+          type="checkbox"
+          checked={item.done}
+          disabled={disabled}
+          onChange={(event) => onToggle(event.target.checked)}
+          className="runbook-no-print mt-1 shrink-0"
+        />
+        <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
+          <p
+            className={`text-sm font-medium leading-relaxed ${
+              item.done ? "text-zinc-500 line-through" : "text-zinc-100"
+            }`}
+          >
+            {item.text}
+          </p>
+          {subtaskCount > 0 ? (
+            <span className="mt-1 inline-block text-[10px] text-amber-300">
+              {subtaskCount} nested subtask{subtaskCount === 1 ? "" : "s"}
+            </span>
+          ) : null}
+        </button>
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={onSelect}
+          className="runbook-no-print shrink-0 rounded-md px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
+        >
+          {expanded ? "Close" : "Edit"}
+        </button>
+      </div>
+    </div>
   );
 }
 
 export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
   const router = useRouter();
   const importRef = useRef<HTMLInputElement>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("board");
   const [showDone, setShowDone] = useState(false);
-  const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkText, setBulkText] = useState("");
   const [appendText, setAppendText] = useState("");
   const [status, setStatus] = useState<string | null>(null);
@@ -265,6 +301,7 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
   const [cardDraft, setCardDraft] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(runbook.title);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -272,11 +309,22 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
   }, [runbook.title, editingTitle]);
 
   const progress = useMemo(() => runbookProgress(runbook.items), [runbook.items]);
+  const hasNestedSubtasks = useMemo(() => runbookHasNestedSubtasks(runbook.items), [runbook.items]);
 
   const hasVisibleCards = useMemo(() => {
     if (showDone) return runbook.items.some((item) => item.type === "item");
     return runbook.items.some((item) => item.type === "item" && !item.done);
   }, [runbook.items, showDone]);
+
+  const expandedItem = useMemo(
+    () => runbook.items.find((item) => item.id === expandedId && item.type === "item"),
+    [runbook.items, expandedId]
+  );
+
+  const expandedIndex = useMemo(
+    () => (expandedId ? runbook.items.findIndex((item) => item.id === expandedId) : -1),
+    [runbook.items, expandedId]
+  );
 
   function run(action: () => Promise<void>, successMessage?: string) {
     setError(null);
@@ -290,6 +338,14 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
         setError(`${layer.toUpperCase()}: ${message}`);
       }
     });
+  }
+
+  function handleToggle(itemId: string, done: boolean) {
+    run(() => toggleRunbookItemAction(runbook.id, itemId, done));
+  }
+
+  function handleMove(itemId: string, direction: -1 | 1) {
+    run(() => moveRunbookItemAction(runbook.id, itemId, direction));
   }
 
   function handleAddCard(event: FormEvent) {
@@ -308,7 +364,6 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
       return;
     }
     setBulkText(runbookItemsToText(runbook.items));
-    setBulkOpen(true);
     setStatus("Loaded to bulk input — edit and Build to rebuild (resets checkmarks).");
   }
 
@@ -316,6 +371,7 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
     if (!window.confirm("Build replaces all cards and resets checkmarks. Continue?")) return;
     run(async () => {
       await rebuildRunbookFromTextAction(runbook.id, bulkText);
+      setExpandedId(null);
       setStatus("Built from bulk input.");
     });
   }
@@ -331,6 +387,11 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
       setAppendText("");
       setStatus("Appended cards from text.");
     });
+  }
+
+  function handleFlattenSubtasks() {
+    if (!window.confirm("Convert nested subtasks into separate cards?")) return;
+    run(() => flattenRunbookSubtasksAction(runbook.id), "Converted subtasks to flat cards.");
   }
 
   function handleRemoveDone() {
@@ -383,6 +444,7 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
       startTransition(async () => {
         try {
           await importRunbookJsonAction(text, runbook.id);
+          setExpandedId(null);
           setStatus(`Imported: ${file.name}`);
           router.refresh();
         } catch (err) {
@@ -478,15 +540,62 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
             </button>
           </div>
         )}
-        <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400">
-          {progress.total} cards
-        </span>
-        <span className="rounded-full bg-lime-500/10 px-3 py-1 text-xs text-lime-300">
-          {progress.open} open
-        </span>
-        <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-500">
-          {progress.done} done
-        </span>
+        <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400">{progress.total} cards</span>
+        <span className="rounded-full bg-lime-500/10 px-3 py-1 text-xs text-lime-300">{progress.open} open</span>
+        <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-500">{progress.done} done</span>
+      </div>
+
+      <div className="runbook-no-print rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">Bulk input</span>
+          <div className="flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-950/60 p-0.5">
+            <button type="button" onClick={() => setViewMode("board")} className={viewToggleClass(viewMode === "board")}>
+              Board
+            </button>
+            <button type="button" onClick={() => setViewMode("list")} className={viewToggleClass(viewMode === "list")}>
+              List
+            </button>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1.5 block text-[11px] text-zinc-500">
+              Input (1 line = 1 card, blank line = separator)
+            </label>
+            <textarea
+              value={bulkText}
+              onChange={(event) => setBulkText(event.target.value)}
+              rows={8}
+              disabled={isPending}
+              placeholder={"• Item 1\n• Item 2\n\n(section break above)"}
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
+            />
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <div className="min-w-0 flex-1">
+              <label className="mb-1.5 block text-[11px] text-zinc-500">Append only (keeps checkmarks)</label>
+              <textarea
+                value={appendText}
+                onChange={(event) => setAppendText(event.target.value)}
+                rows={3}
+                disabled={isPending}
+                placeholder="One line = one new card"
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
+              />
+            </div>
+            <button type="button" disabled={isPending} onClick={handleAppendFromText} className={toolbarButtonClass("primary")}>
+              Append
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={isPending} onClick={handleBuildFromText} className={toolbarButtonClass("primary")}>
+              Build
+            </button>
+            <button type="button" disabled={isPending} onClick={handleLoadItemsToInput} className={toolbarButtonClass()}>
+              Load items → Input
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="runbook-no-print flex flex-wrap items-center gap-2">
@@ -524,61 +633,21 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
         </button>
       </div>
 
-      <details
-        open={bulkOpen}
-        onToggle={(event) => setBulkOpen((event.currentTarget as HTMLDetailsElement).open)}
-        className="runbook-no-print rounded-2xl border border-zinc-800/80 bg-zinc-900/50"
-      >
-        <summary className="cursor-pointer px-4 py-3 text-xs font-medium uppercase tracking-wide text-zinc-500 hover:text-lime-300">
-          Bulk input
-        </summary>
-        <div className="space-y-3 border-t border-zinc-800/80 px-4 py-3">
-          <div>
-            <label className="mb-1.5 block text-[11px] text-zinc-500">Input (1 line = 1 card, blank line = separator)</label>
-            <textarea
-              value={bulkText}
-              onChange={(event) => setBulkText(event.target.value)}
-              rows={10}
-              disabled={isPending}
-              placeholder={"• Item 1\n• Item 2\n\n(section break above)"}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
-            />
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-            <div className="min-w-0 flex-1">
-              <label className="mb-1.5 block text-[11px] text-zinc-500">Append only (keeps checkmarks)</label>
-              <textarea
-                value={appendText}
-                onChange={(event) => setAppendText(event.target.value)}
-                rows={3}
-                disabled={isPending}
-                placeholder="One line = one new card"
-                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
-              />
-            </div>
-            <button type="button" disabled={isPending} onClick={handleAppendFromText} className={toolbarButtonClass("primary")}>
-              Append
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={isPending} onClick={handleBuildFromText} className={toolbarButtonClass("primary")}>
-              Build (replaces all)
-            </button>
-            <button type="button" disabled={isPending} onClick={handleLoadItemsToInput} className={toolbarButtonClass()}>
-              Load items → Input
-            </button>
-          </div>
-        </div>
-      </details>
-
       <div className="runbook-no-print">
         <RunbookAiBulkPanel runbookId={runbook.id} />
       </div>
 
+      {hasNestedSubtasks ? (
+        <div className="runbook-no-print flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-950/20 px-4 py-3">
+          <p className="text-xs text-amber-100">This runbook still has nested subtasks. Convert them to flat cards.</p>
+          <button type="button" disabled={isPending} onClick={handleFlattenSubtasks} className={toolbarButtonClass("primary")}>
+            Convert to flat cards
+          </button>
+        </div>
+      ) : null}
+
       {error ? (
-        <p className="rounded-xl border border-rose-500/30 bg-rose-950/20 px-3 py-2 text-xs text-rose-200">
-          {error}
-        </p>
+        <p className="rounded-xl border border-rose-500/30 bg-rose-950/20 px-3 py-2 text-xs text-rose-200">{error}</p>
       ) : null}
 
       {status ? (
@@ -587,13 +656,53 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
         </p>
       ) : null}
 
-      <div className="space-y-3">
-        {!hasVisibleCards ? (
-          <p className="rounded-2xl border border-dashed border-zinc-800 px-4 py-10 text-center text-sm text-zinc-500">
-            {showDone ? "No cards yet." : "All cards done — or nothing to show."}
-          </p>
-        ) : (
-          runbook.items.map((item) => {
+      {!hasVisibleCards ? (
+        <p className="rounded-2xl border border-dashed border-zinc-800 px-4 py-10 text-center text-sm text-zinc-500">
+          {showDone ? "No cards yet." : "All cards done — or nothing to show."}
+        </p>
+      ) : viewMode === "board" ? (
+        <div className="space-y-3">
+          <div className="flex gap-3 overflow-x-auto pb-2 print:block print:overflow-visible">
+            {runbook.items.map((item, index) => {
+              const hiddenOnScreen = !showDone && item.type === "item" && item.done;
+              if (item.type === "sep") {
+                return (
+                  <div
+                    key={item.id}
+                    className={`w-px shrink-0 self-stretch bg-zinc-700/70 print:hidden ${hiddenOnScreen ? "hidden" : ""}`}
+                    aria-hidden
+                  />
+                );
+              }
+              return (
+                <RunbookBoardTile
+                  key={item.id}
+                  item={item}
+                  hiddenOnScreen={hiddenOnScreen}
+                  selected={expandedId === item.id}
+                  disabled={isPending}
+                  onSelect={() => setExpandedId((current) => (current === item.id ? null : item.id))}
+                  onToggle={(done) => handleToggle(item.id, done)}
+                />
+              );
+            })}
+          </div>
+          {expandedItem ? (
+            <RunbookCardExpanded
+              runbookId={runbook.id}
+              item={expandedItem}
+              disabled={isPending}
+              onClose={() => setExpandedId(null)}
+              onError={setError}
+              onMove={(direction) => handleMove(expandedItem.id, direction)}
+              canMoveLeft={expandedIndex > 0}
+              canMoveRight={expandedIndex >= 0 && expandedIndex < runbook.items.length - 1}
+            />
+          ) : null}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {runbook.items.map((item) => {
             const hiddenOnScreen = !showDone && item.type === "item" && item.done;
             if (item.type === "sep") {
               return (
@@ -605,26 +714,40 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
               );
             }
             return (
-              <RunbookCard
-                key={item.id}
-                runbookId={runbook.id}
-                item={item}
-                disabled={isPending}
-                hiddenOnScreen={hiddenOnScreen}
-                onError={setError}
-              />
+              <div key={item.id} className="space-y-2">
+                <RunbookListRow
+                  item={item}
+                  hiddenOnScreen={hiddenOnScreen}
+                  expanded={expandedId === item.id}
+                  disabled={isPending}
+                  onSelect={() => setExpandedId((current) => (current === item.id ? null : item.id))}
+                  onToggle={(done) => handleToggle(item.id, done)}
+                />
+                {expandedId === item.id ? (
+                  <RunbookCardExpanded
+                    runbookId={runbook.id}
+                    item={item}
+                    disabled={isPending}
+                    onClose={() => setExpandedId(null)}
+                    onError={setError}
+                    onMove={(direction) => handleMove(item.id, direction)}
+                    canMoveLeft={runbook.items.findIndex((entry) => entry.id === item.id) > 0}
+                    canMoveRight={
+                      runbook.items.findIndex((entry) => entry.id === item.id) < runbook.items.length - 1
+                    }
+                  />
+                ) : null}
+              </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
 
       <form
         onSubmit={handleAddCard}
         className="runbook-no-print rounded-2xl border border-dashed border-zinc-700/80 bg-zinc-950/40 p-3"
       >
-        <label className="mb-2 block text-[11px] font-medium uppercase tracking-wide text-zinc-500">
-          New card
-        </label>
+        <label className="mb-2 block text-[11px] font-medium uppercase tracking-wide text-zinc-500">New card</label>
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
             value={cardDraft}
@@ -644,8 +767,7 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
       </form>
 
       <p className="text-[11px] text-zinc-600 print:text-zinc-500">
-        Updated {runbook.updatedAt.slice(0, 19).replace("T", " ")} · Execution checklist — not timeline
-        evidence
+        Updated {runbook.updatedAt.slice(0, 19).replace("T", " ")} · Execution checklist — not timeline evidence
       </p>
     </div>
   );

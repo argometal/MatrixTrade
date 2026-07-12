@@ -64,6 +64,7 @@ import {
   buildRunbookItemsFromText,
   createRunbookCard,
   createRunbookSubtask,
+  flattenRunbookSubtasks,
   newRunbookItemId,
   normalizeRunbookSubtasks,
   runbookStamp,
@@ -1712,6 +1713,41 @@ export async function rebuildRunbookFromTextAction(runbookId: string, text: stri
     throw new ArgusPersistenceError("validation", "Add at least one card.");
   }
 
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function flattenRunbookSubtasksAction(runbookId: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const items = flattenRunbookSubtasks(runbook.items);
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function moveRunbookItemAction(
+  runbookId: string,
+  itemId: string,
+  direction: -1 | 1
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const index = runbook.items.findIndex((item) => item.id === itemId);
+  const nextIndex = index + direction;
+  if (index < 0 || nextIndex < 0 || nextIndex >= runbook.items.length) {
+    return;
+  }
+
+  const items = [...runbook.items];
+  [items[index], items[nextIndex]] = [items[nextIndex], items[index]];
   await updateRunbook(runbookId, { items });
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
 }
