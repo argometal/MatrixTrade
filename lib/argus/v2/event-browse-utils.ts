@@ -75,6 +75,7 @@ export interface V2EventDetail {
   evidence: V2EventEvidenceItem[];
   lifecycleStatus?: EntityLifecycleStatus;
   hasPrivateEvidence: boolean;
+  deleteRequiresAuthenticator: boolean;
   tagPatterns: TagPattern[];
 }
 

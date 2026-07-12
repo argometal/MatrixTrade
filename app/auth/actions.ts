@@ -38,13 +38,16 @@ export async function loginArgusAction(formData: FormData): Promise<void> {
 
 export async function unlockArgusPrivateAction(formData: FormData): Promise<void> {
   const pin = String(formData.get("pin") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
 
   if (!verifyArgusPrivatePin(pin)) {
-    redirect("/argus/v2?private_error=1");
+    const separator = returnTo.includes("?") ? "&" : "?";
+    redirect(`${returnTo}${separator}private_error=1`);
   }
 
   await setArgusPrivateUnlock();
-  redirect("/argus/v2");
+  await setArgusDeleteUnlock();
+  redirect(returnTo.startsWith("/") ? returnTo : "/argus/v2");
 }
 
 export async function unlockArgusDeleteAction(formData: FormData): Promise<void> {

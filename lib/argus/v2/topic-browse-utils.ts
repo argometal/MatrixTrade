@@ -61,6 +61,7 @@ export interface V2TopicDetail {
   aliases: string[];
   lifecycleStatus?: EntityLifecycleStatus;
   hasPrivateEvidence: boolean;
+  deleteRequiresAuthenticator: boolean;
   evidence: V2EvidenceStreamItem[];
   timeline: V2TimelineEntry[];
   tagPatterns: TagPattern[];

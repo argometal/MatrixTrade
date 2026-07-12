@@ -258,7 +258,7 @@ export function V2TopicsShell({
             returnTo={returnTo}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
-            requiresAuthenticator
+            requiresAuthenticator={selected.deleteRequiresAuthenticator}
             deleteUnlocked={deleteUnlocked}
             deleteAuthUnlocked={deleteAuthUnlocked}
             deleteCodeConfigured={deleteCodeConfigured}
@@ -502,7 +502,7 @@ export function V2TopicsShell({
             returnTo={returnTo}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
-            requiresAuthenticator
+            requiresAuthenticator={selected.deleteRequiresAuthenticator}
             deleteUnlocked={deleteUnlocked}
             deleteAuthUnlocked={deleteAuthUnlocked}
             deleteCodeConfigured={deleteCodeConfigured}

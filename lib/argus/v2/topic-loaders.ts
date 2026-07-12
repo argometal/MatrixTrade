@@ -3,6 +3,7 @@ import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-type
 import { getEntityHistory } from "../network";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import { entityHasPrivateEvidence } from "../entity-private-evidence";
+import { entityDeleteRequiresAuthenticator } from "../delete-link-check";
 import { entitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { relativeActivityLabel, buildTimelineFromLogsAndInbox } from "./timeline-builders";
@@ -245,6 +246,7 @@ export function buildV2TopicDetails(
       aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
       lifecycleStatus: topic.lifecycleStatus,
       hasPrivateEvidence: entityHasPrivateEvidence(data, inboxItems, topic.id),
+      deleteRequiresAuthenticator: entityDeleteRequiresAuthenticator(topic),
       evidence,
       timeline: buildTimelineFromLogsAndInbox(history, inbox),
       tagPatterns: buildTagPatternsForScope(history, inbox, today),

@@ -405,8 +405,8 @@ export const DELETE_AUTH = {
   unlockCode: "Unlock delete (5 min)",
   unlockAuthenticator: "Unlock with authenticator",
   codeTitle: "Enter deletion code",
-  codeHint: "Unlinked items only need your deletion code — valid for 5 minutes.",
-  codePlaceholder: "Deletion code",
+  codeHint: "Enter your PIN — delete stays enabled for 5 minutes.",
+  codePlaceholder: "PIN",
   authenticatorTitle: "Enter authenticator code",
   authenticatorHint:
     "Linked evidence requires your authenticator app (Google Authenticator / Authy). Valid for 5 minutes.",

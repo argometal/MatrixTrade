@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent } f
 import { useRouter } from "next/navigation";
 import type { Runbook, RunbookItem } from "@/lib/argus/types";
 import {
-  addRunbookCardAction,
   appendRunbookCardsFromTextAction,
   checkAllRunbookItemsAction,
   flattenRunbookSubtasksAction,
@@ -21,8 +20,6 @@ import { runbookHasNestedSubtasks, runbookProgress } from "@/lib/argus/runbook-h
 import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { RunbookAiBulkPanel } from "./RunbookAiBulkPanel";
 
-type ViewMode = "board" | "list";
-
 function runbookItemsToText(items: RunbookItem[]): string {
   return items.map((item) => (item.type === "sep" ? "" : item.text)).join("\n");
 }
@@ -37,14 +34,6 @@ function toolbarButtonClass(variant: "default" | "danger" | "primary" = "default
   return "rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-zinc-300 hover:border-lime-500/30 hover:text-lime-300 disabled:opacity-40";
 }
 
-function viewToggleClass(active: boolean) {
-  return `rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
-    active
-      ? "bg-lime-500/15 text-lime-300 ring-1 ring-lime-500/30"
-      : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
-  }`;
-}
-
 function RunbookCardExpanded({
   runbookId,
   item,
@@ -52,8 +41,8 @@ function RunbookCardExpanded({
   onClose,
   onError,
   onMove,
-  canMoveLeft,
-  canMoveRight,
+  canMoveUp,
+  canMoveDown,
 }: {
   runbookId: string;
   item: RunbookItem;
@@ -61,8 +50,8 @@ function RunbookCardExpanded({
   onClose: () => void;
   onError: (message: string | null) => void;
   onMove: (direction: -1 | 1) => void;
-  canMoveLeft: boolean;
-  canMoveRight: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -106,21 +95,21 @@ function RunbookCardExpanded({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            disabled={busy || !canMoveLeft}
+            disabled={busy || !canMoveUp}
             onClick={() => onMove(-1)}
             className={toolbarButtonClass()}
-            aria-label="Move left"
+            aria-label="Move up"
           >
-            ←
+            ↑
           </button>
           <button
             type="button"
-            disabled={busy || !canMoveRight}
+            disabled={busy || !canMoveDown}
             onClick={() => onMove(1)}
             className={toolbarButtonClass()}
-            aria-label="Move right"
+            aria-label="Move down"
           >
-            →
+            ↓
           </button>
           <button
             type="button"
@@ -164,66 +153,6 @@ function RunbookCardExpanded({
         </div>
       </form>
     </div>
-  );
-}
-
-function RunbookBoardTile({
-  item,
-  hiddenOnScreen,
-  selected,
-  disabled,
-  onSelect,
-  onToggle,
-}: {
-  item: RunbookItem;
-  hiddenOnScreen: boolean;
-  selected: boolean;
-  disabled: boolean;
-  onSelect: () => void;
-  onToggle: (done: boolean) => void;
-}) {
-  const subtaskCount = item.subtasks?.length ?? 0;
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`w-52 shrink-0 rounded-2xl border px-3 py-3 text-left shadow-sm transition ${
-        hiddenOnScreen ? "hidden print:block" : ""
-      } ${
-        selected
-          ? "border-lime-500/50 bg-lime-500/10 ring-1 ring-lime-500/20"
-          : item.done
-            ? "border-zinc-800/70 bg-zinc-950/50 opacity-75 hover:opacity-90"
-            : "border-zinc-800/90 bg-zinc-900/70 hover:border-lime-500/25"
-      }`}
-    >
-      <div className="flex items-start gap-2">
-        <input
-          type="checkbox"
-          checked={item.done}
-          disabled={disabled}
-          onClick={(event) => event.stopPropagation()}
-          onChange={(event) => onToggle(event.target.checked)}
-          className="runbook-no-print mt-0.5 shrink-0"
-          aria-label={item.done ? "Mark open" : "Mark done"}
-        />
-        <div className="min-w-0 flex-1">
-          <p
-            className={`line-clamp-4 text-sm font-medium leading-snug ${
-              item.done ? "text-zinc-500 line-through" : "text-zinc-100"
-            }`}
-          >
-            {item.text}
-          </p>
-          {subtaskCount > 0 ? (
-            <span className="mt-2 inline-block rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-200 ring-1 ring-amber-500/20">
-              {subtaskCount} nested — convert to flat
-            </span>
-          ) : null}
-        </div>
-      </div>
-    </button>
   );
 }
 
@@ -289,16 +218,21 @@ function RunbookListRow({
   );
 }
 
-export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
+export function V2RunbookWorkPanel({
+  runbook,
+  onBack,
+  backLabel = "Back",
+}: {
+  runbook: Runbook;
+  onBack?: () => void;
+  backLabel?: string;
+}) {
   const router = useRouter();
   const importRef = useRef<HTMLInputElement>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("board");
   const [showDone, setShowDone] = useState(false);
   const [bulkText, setBulkText] = useState("");
-  const [appendText, setAppendText] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [cardDraft, setCardDraft] = useState("");
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(runbook.title);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -315,16 +249,6 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
     if (showDone) return runbook.items.some((item) => item.type === "item");
     return runbook.items.some((item) => item.type === "item" && !item.done);
   }, [runbook.items, showDone]);
-
-  const expandedItem = useMemo(
-    () => runbook.items.find((item) => item.id === expandedId && item.type === "item"),
-    [runbook.items, expandedId]
-  );
-
-  const expandedIndex = useMemo(
-    () => (expandedId ? runbook.items.findIndex((item) => item.id === expandedId) : -1),
-    [runbook.items, expandedId]
-  );
 
   function run(action: () => Promise<void>, successMessage?: string) {
     setError(null);
@@ -348,16 +272,6 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
     run(() => moveRunbookItemAction(runbook.id, itemId, direction));
   }
 
-  function handleAddCard(event: FormEvent) {
-    event.preventDefault();
-    const text = cardDraft.trim();
-    if (!text) return;
-    run(async () => {
-      await addRunbookCardAction(runbook.id, text);
-      setCardDraft("");
-    });
-  }
-
   function handleLoadItemsToInput() {
     if (runbook.items.length === 0) {
       setStatus("Nothing to load.");
@@ -376,16 +290,14 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
     });
   }
 
-  function handleAppendFromText() {
-    const text = appendText.trim() ? appendText : bulkText;
-    if (!text.trim()) {
-      setError("No lines to append.");
+  function handleAppendFromBulk() {
+    if (!bulkText.trim()) {
+      setError("Add lines to the input first.");
       return;
     }
     run(async () => {
-      await appendRunbookCardsFromTextAction(runbook.id, text);
-      setAppendText("");
-      setStatus("Appended cards from text.");
+      await appendRunbookCardsFromTextAction(runbook.id, bulkText);
+      setStatus("Appended new cards from input (checkmarks kept).");
     });
   }
 
@@ -503,6 +415,17 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
         </p>
       </div>
 
+      {onBack ? (
+        <button
+          type="button"
+          onClick={onBack}
+          className="runbook-no-print flex items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-lime-300"
+        >
+          <span aria-hidden>←</span>
+          {backLabel}
+        </button>
+      ) : null}
+
       <div className="runbook-no-print flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
         {editingTitle ? (
           <form onSubmit={handleSaveTitle} className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
@@ -546,17 +469,7 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
       </div>
 
       <div className="runbook-no-print rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">Bulk input</span>
-          <div className="flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-950/60 p-0.5">
-            <button type="button" onClick={() => setViewMode("board")} className={viewToggleClass(viewMode === "board")}>
-              Board
-            </button>
-            <button type="button" onClick={() => setViewMode("list")} className={viewToggleClass(viewMode === "list")}>
-              List
-            </button>
-          </div>
-        </div>
+        <span className="mb-3 block text-xs font-medium uppercase tracking-wide text-zinc-500">Bulk input</span>
         <div className="space-y-3">
           <div>
             <label className="mb-1.5 block text-[11px] text-zinc-500">
@@ -571,25 +484,12 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
               className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
             />
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-            <div className="min-w-0 flex-1">
-              <label className="mb-1.5 block text-[11px] text-zinc-500">Append only (keeps checkmarks)</label>
-              <textarea
-                value={appendText}
-                onChange={(event) => setAppendText(event.target.value)}
-                rows={3}
-                disabled={isPending}
-                placeholder="One line = one new card"
-                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
-              />
-            </div>
-            <button type="button" disabled={isPending} onClick={handleAppendFromText} className={toolbarButtonClass("primary")}>
-              Append
-            </button>
-          </div>
           <div className="flex flex-wrap gap-2">
             <button type="button" disabled={isPending} onClick={handleBuildFromText} className={toolbarButtonClass("primary")}>
               Build
+            </button>
+            <button type="button" disabled={isPending} onClick={handleAppendFromBulk} className={toolbarButtonClass()}>
+              Append
             </button>
             <button type="button" disabled={isPending} onClick={handleLoadItemsToInput} className={toolbarButtonClass()}>
               Load items → Input
@@ -658,48 +558,8 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
 
       {!hasVisibleCards ? (
         <p className="rounded-2xl border border-dashed border-zinc-800 px-4 py-10 text-center text-sm text-zinc-500">
-          {showDone ? "No cards yet." : "All cards done — or nothing to show."}
+          {showDone ? "No cards yet — use bulk input above to add items." : "All cards done — or nothing to show."}
         </p>
-      ) : viewMode === "board" ? (
-        <div className="space-y-3">
-          <div className="flex gap-3 overflow-x-auto pb-2 print:block print:overflow-visible">
-            {runbook.items.map((item, index) => {
-              const hiddenOnScreen = !showDone && item.type === "item" && item.done;
-              if (item.type === "sep") {
-                return (
-                  <div
-                    key={item.id}
-                    className={`w-px shrink-0 self-stretch bg-zinc-700/70 print:hidden ${hiddenOnScreen ? "hidden" : ""}`}
-                    aria-hidden
-                  />
-                );
-              }
-              return (
-                <RunbookBoardTile
-                  key={item.id}
-                  item={item}
-                  hiddenOnScreen={hiddenOnScreen}
-                  selected={expandedId === item.id}
-                  disabled={isPending}
-                  onSelect={() => setExpandedId((current) => (current === item.id ? null : item.id))}
-                  onToggle={(done) => handleToggle(item.id, done)}
-                />
-              );
-            })}
-          </div>
-          {expandedItem ? (
-            <RunbookCardExpanded
-              runbookId={runbook.id}
-              item={expandedItem}
-              disabled={isPending}
-              onClose={() => setExpandedId(null)}
-              onError={setError}
-              onMove={(direction) => handleMove(expandedItem.id, direction)}
-              canMoveLeft={expandedIndex > 0}
-              canMoveRight={expandedIndex >= 0 && expandedIndex < runbook.items.length - 1}
-            />
-          ) : null}
-        </div>
       ) : (
         <div className="space-y-2">
           {runbook.items.map((item) => {
@@ -713,6 +573,7 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
                 />
               );
             }
+            const itemIndex = runbook.items.findIndex((entry) => entry.id === item.id);
             return (
               <div key={item.id} className="space-y-2">
                 <RunbookListRow
@@ -731,10 +592,8 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
                     onClose={() => setExpandedId(null)}
                     onError={setError}
                     onMove={(direction) => handleMove(item.id, direction)}
-                    canMoveLeft={runbook.items.findIndex((entry) => entry.id === item.id) > 0}
-                    canMoveRight={
-                      runbook.items.findIndex((entry) => entry.id === item.id) < runbook.items.length - 1
-                    }
+                    canMoveUp={itemIndex > 0}
+                    canMoveDown={itemIndex < runbook.items.length - 1}
                   />
                 ) : null}
               </div>
@@ -742,29 +601,6 @@ export function V2RunbookWorkPanel({ runbook }: { runbook: Runbook }) {
           })}
         </div>
       )}
-
-      <form
-        onSubmit={handleAddCard}
-        className="runbook-no-print rounded-2xl border border-dashed border-zinc-700/80 bg-zinc-950/40 p-3"
-      >
-        <label className="mb-2 block text-[11px] font-medium uppercase tracking-wide text-zinc-500">New card</label>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <input
-            value={cardDraft}
-            onChange={(event) => setCardDraft(event.target.value)}
-            disabled={isPending}
-            placeholder="What needs to be done…"
-            className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={isPending || !cardDraft.trim()}
-            className="rounded-xl bg-lime-500/15 px-4 py-2.5 text-sm font-medium text-lime-300 ring-1 ring-lime-500/30 hover:bg-lime-500/25 disabled:opacity-40"
-          >
-            Add card
-          </button>
-        </div>
-      </form>
 
       <p className="text-[11px] text-zinc-600 print:text-zinc-500">
         Updated {runbook.updatedAt.slice(0, 19).replace("T", " ")} · Execution checklist — not timeline evidence

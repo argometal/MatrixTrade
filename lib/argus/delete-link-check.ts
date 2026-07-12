@@ -24,9 +24,9 @@ export function deleteAuthConfigured(): boolean {
   return argusDeleteCodeConfigured() || argusTotpConfigured();
 }
 
-/** Topic, event, and organization deletes preserve institutional memory — TOTP required. */
+/** Organization deletes preserve institutional memory — TOTP required. Topics/events use PIN (5 min). */
 export function entityDeleteRequiresAuthenticator(entity: Entity): boolean {
   if (entity.type === "company") return true;
   const kind = referenceKindFromNotes(entity.notes ?? "");
-  return kind === "topic" || kind === "event" || kind === "organization";
+  return kind === "organization";
 }

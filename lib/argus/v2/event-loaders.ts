@@ -3,6 +3,7 @@ import { entityNotesForDisplay } from "../reference-types";
 import { getEntityHistory } from "../network";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import { entityHasPrivateEvidence } from "../entity-private-evidence";
+import { entityDeleteRequiresAuthenticator } from "../delete-link-check";
 import { entitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { relativeActivityLabel } from "./timeline-builders";
@@ -249,6 +250,7 @@ export function buildV2EventDetails(
       evidence,
       lifecycleStatus: event.lifecycleStatus,
       hasPrivateEvidence: entityHasPrivateEvidence(data, inboxItems, event.id),
+      deleteRequiresAuthenticator: entityDeleteRequiresAuthenticator(event),
       tagPatterns: buildTagPatternsForScope(history, inbox, today),
     };
   });
