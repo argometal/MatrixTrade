@@ -11,7 +11,16 @@ import { getInboxCardsForEntity } from "../inbox-entity-links";
 import { entitiesByKind } from "./hierarchy";
 
 export type NetworkContactTimelineItem =
-  | { kind: "journal"; id: string; title: string; preview: string; date: string; sortIso: string; href: string }
+  | {
+      kind: "journal";
+      id: string;
+      title: string;
+      preview: string;
+      date: string;
+      sortIso: string;
+      href: string;
+      topics?: string[];
+    }
   | { kind: "email"; id: string; title: string; preview: string; date: string; sortIso: string; href: string };
 
 export type NetworkContactRelatedOrg = {
@@ -148,6 +157,7 @@ function buildTimeline(logs: Log[], enrichedInbox: EnrichedInboxItem[]): Network
       date: log.date,
       sortIso: log.date,
       href: `/argus/logs/${log.id}`,
+      topics: log.topics.length > 0 ? log.topics : undefined,
     });
   }
   for (const { item, view } of enrichedInbox) {

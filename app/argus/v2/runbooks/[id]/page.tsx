@@ -45,11 +45,11 @@ export default async function V2RunbookPage({ params }: { params: Promise<{ id: 
       />
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         <div className="px-4 py-6 lg:px-8">
-      <div className="mb-5">
+      <div className="runbook-no-print mb-5">
         <V2BackLink href={backHref}>Back</V2BackLink>
       </div>
 
-      <header className="mb-6">
+      <header className="runbook-no-print mb-6">
         <div className="flex flex-wrap items-start gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-lime-500/15 text-xl ring-1 ring-lime-500/30">
             ☑

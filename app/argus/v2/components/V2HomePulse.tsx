@@ -7,44 +7,9 @@ type PulseChip = {
   value: number;
   detail: string;
   icon: string;
-  urgent?: boolean;
 };
 
-function PulseChipCard({ chip }: { chip: PulseChip }) {
-  return (
-    <Link
-      href={chip.href}
-      className={`group flex min-h-[4.25rem] flex-col justify-between rounded-xl border px-3.5 py-3 transition ${
-        chip.urgent
-          ? "border-violet-500/35 bg-violet-950/25 hover:border-violet-500/50 hover:bg-violet-950/35"
-          : "border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700 hover:bg-zinc-900"
-      }`}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-base opacity-80" aria-hidden>
-          {chip.icon}
-        </span>
-        <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold text-white">
-          Action
-        </span>
-      </div>
-      <div>
-        <p className="text-2xl font-bold tabular-nums leading-none text-zinc-50">{chip.value}</p>
-        <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500">{chip.label}</p>
-        <p className="mt-0.5 text-[10px] text-zinc-600">{chip.detail}</p>
-      </div>
-    </Link>
-  );
-}
-
-/** Action-only attention strip — aligns with sidebar nav signals. */
-export function V2HomePulse({
-  signals,
-  className = "",
-}: {
-  signals: V2NavCounts;
-  className?: string;
-}) {
+function buildPulseChips(signals: V2NavCounts): PulseChip[] {
   const chips: PulseChip[] = [];
 
   if (signals.inbox > 0) {
@@ -54,7 +19,6 @@ export function V2HomePulse({
       value: signals.inbox,
       detail: "Unprocessed evidence",
       icon: "✉",
-      urgent: true,
     });
   }
   if (signals.network > 0) {
@@ -64,7 +28,6 @@ export function V2HomePulse({
       value: signals.network,
       detail: "Due within 3 days or recently overdue",
       icon: "↩",
-      urgent: true,
     });
   }
   if (signals.topics > 0) {
@@ -74,39 +37,66 @@ export function V2HomePulse({
       value: signals.topics,
       detail: "Needs classification",
       icon: "🏷",
-      urgent: true,
     });
   }
 
+  return chips;
+}
+
+function V2HomeAttentionActions({ signals }: { signals: V2NavCounts }) {
+  const chips = buildPulseChips(signals);
+
   if (chips.length === 0) {
     return (
-      <p
-        className={`rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-4 py-3 text-sm text-zinc-500 ${className}`}
-      >
-        Nothing needs attention — use{" "}
+      <p className="text-right text-xs text-zinc-600 sm:max-w-[14rem]">
+        Nothing needs attention —{" "}
         <Link href="/argus/v2/inbox" className="text-violet-400 hover:text-violet-300">
           Inbox
         </Link>{" "}
         or{" "}
         <Link href="/argus/v2/browse/topics" className="text-violet-400 hover:text-violet-300">
           Browse
-        </Link>{" "}
-        to retrieve evidence.
+        </Link>
       </p>
     );
   }
 
   return (
-    <div
-      className={`flex flex-wrap gap-2.5 ${className}`}
-      role="list"
-      aria-label="Items needing attention"
-    >
+    <div className="flex flex-wrap items-center justify-end gap-2" role="list" aria-label="Items needing attention">
       {chips.map((chip) => (
-        <div key={chip.label} role="listitem" className="w-full min-w-[10.5rem] max-w-[13rem] flex-1 sm:w-auto sm:flex-none">
-          <PulseChipCard chip={chip} />
-        </div>
+        <Link
+          key={chip.label}
+          href={chip.href}
+          role="listitem"
+          title={chip.detail}
+          className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-medium text-violet-200 transition hover:border-violet-500/60 hover:bg-violet-600/25"
+        >
+          <span aria-hidden>{chip.icon}</span>
+          <span>{chip.label}</span>
+          <span className="tabular-nums font-bold text-violet-50">{chip.value}</span>
+        </Link>
       ))}
+    </div>
+  );
+}
+
+/** Home title row — action chips live on the right, not inside metric cards. */
+export function V2HomePageHeader({
+  signals,
+  className = "",
+}: {
+  signals: V2NavCounts;
+  className?: string;
+}) {
+  return (
+    <div className={`flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between ${className}`}>
+      <div className="min-w-0">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Home</h1>
+        <p className="mt-1 text-sm text-zinc-500">Activity, intelligence, and what needs attention</p>
+      </div>
+      <div className="shrink-0 sm:pt-1">
+        <V2HomeAttentionActions signals={signals} />
+      </div>
     </div>
   );
 }

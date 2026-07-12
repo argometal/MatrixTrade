@@ -36,7 +36,7 @@ import {
   updateRunbook,
   renameTagGlobally,
 } from "@/lib/argus/server-storage";
-import type { EntityType, JournalKind, LogSource, StrategicValue } from "@/lib/argus/types";
+import type { EntityType, JournalKind, LogSource, RunbookItem, StrategicValue } from "@/lib/argus/types";
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
 import { inferJournalKind, resolveLogDate, autoTitleFromBody } from "@/lib/argus/journal-helpers";
 import { resolveClassificationStatus } from "@/lib/argus/normalize";
@@ -64,6 +64,8 @@ import {
   buildRunbookItemsFromText,
   createRunbookCard,
   createRunbookSubtask,
+  newRunbookItemId,
+  normalizeRunbookSubtasks,
   runbookStamp,
 } from "@/lib/argus/runbook-helpers";
 import { buildDocumentNotes } from "@/lib/argus/reference-types";
@@ -1592,6 +1594,206 @@ export async function toggleRunbookSubtaskAction(
 
   await updateRunbook(runbookId, { items });
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function removeDoneRunbookItemsAction(runbookId: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const items = runbook.items.filter((item) => item.type === "sep" || !item.done);
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function uncheckAllRunbookItemsAction(runbookId: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const items = runbook.items.map((item) =>
+    item.type === "sep" ? item : { ...item, done: false, doneAt: "" }
+  );
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function checkAllRunbookItemsAction(runbookId: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const stamp = runbookStamp();
+  const items = runbook.items.map((item) =>
+    item.type === "sep" ? item : { ...item, done: true, doneAt: stamp }
+  );
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function renameRunbookItemAction(
+  runbookId: string,
+  itemId: string,
+  text: string
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new ArgusPersistenceError("validation", "Card text is required.");
+  }
+
+  let found = false;
+  const items = runbook.items.map((item) => {
+    if (item.id !== itemId || item.type === "sep") return item;
+    found = true;
+    return { ...item, text: trimmed };
+  });
+
+  if (!found) {
+    throw new ArgusPersistenceError("validation", "Card not found.");
+  }
+
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function renameRunbookTitleAction(runbookId: string, title: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const trimmed = title.trim();
+  if (!trimmed) {
+    throw new ArgusPersistenceError("validation", "Title is required.");
+  }
+
+  await updateRunbook(runbookId, { title: trimmed });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function appendRunbookCardsFromTextAction(runbookId: string, text: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const newItems = buildRunbookItemsFromText(text);
+  if (newItems.length === 0) {
+    throw new ArgusPersistenceError("validation", "No lines to append.");
+  }
+
+  await updateRunbook(runbookId, { items: [...runbook.items, ...newItems] });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function rebuildRunbookFromTextAction(runbookId: string, text: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const items = buildRunbookItemsFromText(text);
+  if (items.filter((item) => item.type === "item").length === 0) {
+    throw new ArgusPersistenceError("validation", "Add at least one card.");
+  }
+
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+function normalizeImportedRunbookItems(raw: unknown): RunbookItem[] {
+  if (!Array.isArray(raw)) {
+    throw new ArgusPersistenceError("validation", "Import error: items must be an array.");
+  }
+
+  return raw.map((entry, index) => {
+    const item = entry as Record<string, unknown>;
+    const type = item.type === "sep" ? "sep" : "item";
+    const text = String(item.text ?? "").trim();
+    return {
+      id: String(item.id || newRunbookItemId(`imp${index}_`)),
+      text,
+      done: !!item.done,
+      doneAt: String(item.doneAt ?? ""),
+      type,
+      subtasks: normalizeRunbookSubtasks(item.subtasks as RunbookItem["subtasks"]),
+    };
+  });
+}
+
+export async function importRunbookJsonAction(
+  json: string,
+  targetRunbookId?: string
+): Promise<{ id: string; href: string; title: string }> {
+  await requireArgusSession();
+
+  let data: Record<string, unknown>;
+  try {
+    data = JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    throw new ArgusPersistenceError("validation", "Import error: invalid JSON.");
+  }
+
+  const payload = (data.runbook ?? data.checklist ?? data) as Record<string, unknown>;
+  if (!payload || typeof payload !== "object") {
+    throw new ArgusPersistenceError("validation", "Import error: missing runbook data.");
+  }
+
+  const title = String(payload.title ?? "").trim();
+  if (!title) {
+    throw new ArgusPersistenceError("validation", "Import error: title is required.");
+  }
+
+  const items = normalizeImportedRunbookItems(payload.items);
+  if (items.filter((item) => item.type === "item").length === 0) {
+    throw new ArgusPersistenceError("validation", "Import error: at least one card is required.");
+  }
+
+  const linkedEntityIds = Array.isArray(payload.linkedEntityIds)
+    ? payload.linkedEntityIds.map((id) => String(id).trim()).filter(Boolean)
+    : [];
+
+  if (targetRunbookId) {
+    const runbook = await getRunbook(targetRunbookId);
+    if (!runbook) {
+      throw new ArgusPersistenceError("validation", "Runbook not found.");
+    }
+
+    await updateRunbook(targetRunbookId, { title, items });
+    await revalidateRunbookSurfaces(targetRunbookId, runbook.linkedEntityIds);
+    return {
+      id: targetRunbookId,
+      href: `/argus/v2/runbooks/${targetRunbookId}`,
+      title,
+    };
+  }
+
+  const runbook = await createRunbook({
+    title,
+    items,
+    linkedEntityIds,
+  });
+  await revalidateRunbookSurfaces(runbook.id, runbook.linkedEntityIds);
+  return {
+    id: runbook.id,
+    href: `/argus/v2/runbooks/${runbook.id}`,
+    title: runbook.title,
+  };
 }
 
 export async function clearAllArgusDataAction(): Promise<void> {

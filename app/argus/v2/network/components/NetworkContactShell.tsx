@@ -36,10 +36,10 @@ import { snapshotButtonTitle } from "@/lib/snapshot-verification";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import { NetworkAiImportPanel } from "./NetworkAiImportPanel";
 
-const TABS = ["Overview", "Timeline", "Projects", "Organizations", "Topics", "Tags"] as const;
+const TABS = ["Overview", "Relationship", "Links"] as const;
 type ContactTab = (typeof TABS)[number];
 
-const TIMELINE_FILTERS = ["All", "Records", "Email", "Project", "Event"] as const;
+const CHRONICLE_FILTERS = ["All", "Records", "Email", "Topics"] as const;
 
 function ValueCheckboxList({
   title,
@@ -132,74 +132,50 @@ function ContactAside({
 }: {
   page: Pick<
     NetworkContactPageData,
-    "entity" | "organization" | "location" | "email" | "linkedIn" | "role" | "industry" | "tags" | "relatedOrganizations"
+    "entity" | "organization" | "location" | "email" | "linkedIn" | "role" | "industry"
   >;
 }) {
   return (
-    <div className="space-y-4">
-      <V2Card className="p-4">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-100">About</h3>
-        <dl className="space-y-2.5 text-sm">
-          <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">Company</dt>
-            <dd className="text-right text-zinc-200">{page.organization?.name ?? "—"}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">Role</dt>
-            <dd className="text-right text-zinc-200">{page.role}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">Location</dt>
-            <dd className="text-right text-zinc-200">{page.location ?? "—"}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">Industry</dt>
-            <dd className="text-right text-zinc-200">{page.industry ?? "—"}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">Date added</dt>
-            <dd className="text-right text-zinc-200">{formatDate(page.entity.createdAt)}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt className="text-zinc-500">By</dt>
-            <dd className="text-right text-zinc-200">You</dd>
-          </div>
-        </dl>
-      </V2Card>
-
-      <V2Card className="p-4">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-100">Tags</h3>
-        {page.tags.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {page.tags.map((tag, index) => (
-              <V2Badge key={tag} tone={index % 3 === 0 ? "blue" : index % 3 === 1 ? "green" : "purple"}>
-                {tag}
-              </V2Badge>
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-zinc-600">No tags yet.</p>
-        )}
-      </V2Card>
-
-      <V2Card className="p-4">
-        <h3 className="mb-3 text-sm font-semibold text-zinc-100">Related organizations</h3>
-        {page.relatedOrganizations.length > 0 ? (
-          <ul className="space-y-2">
-            {page.relatedOrganizations.map((org) => (
-              <li key={org.id}>
-                <a href={org.href} className="flex items-center justify-between gap-2 text-sm text-zinc-300 hover:text-violet-300">
-                  <span>{org.name}</span>
-                  <span className="text-[11px] text-zinc-600">{org.relation}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-zinc-600">No linked organizations.</p>
-        )}
-      </V2Card>
-    </div>
+    <V2Card className="p-4">
+      <h3 className="mb-1 text-sm font-semibold text-zinc-100">Contact</h3>
+      <p className="mb-3 text-[11px] text-zinc-600">General details — edit to update role, company, and notes.</p>
+      <dl className="grid gap-2.5 text-sm sm:grid-cols-2">
+        <div className="flex justify-between gap-3 sm:flex-col sm:justify-start">
+          <dt className="text-zinc-500">Company</dt>
+          <dd className="text-zinc-200">{page.organization?.name ?? "—"}</dd>
+        </div>
+        <div className="flex justify-between gap-3 sm:flex-col sm:justify-start">
+          <dt className="text-zinc-500">Role</dt>
+          <dd className="text-zinc-200">{page.role}</dd>
+        </div>
+        <div className="flex justify-between gap-3 sm:flex-col sm:justify-start">
+          <dt className="text-zinc-500">Location</dt>
+          <dd className="text-zinc-200">{page.location ?? "—"}</dd>
+        </div>
+        <div className="flex justify-between gap-3 sm:flex-col sm:justify-start">
+          <dt className="text-zinc-500">Industry</dt>
+          <dd className="text-zinc-200">{page.industry ?? "—"}</dd>
+        </div>
+        <div className="flex justify-between gap-3 sm:flex-col sm:justify-start">
+          <dt className="text-zinc-500">Email</dt>
+          <dd className="text-zinc-200">{page.email ?? "—"}</dd>
+        </div>
+        <div className="flex justify-between gap-3 sm:flex-col sm:justify-start">
+          <dt className="text-zinc-500">Added</dt>
+          <dd className="text-zinc-200">{formatDate(page.entity.createdAt)}</dd>
+        </div>
+      </dl>
+      {page.linkedIn ? (
+        <a
+          href={page.linkedIn}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-3 inline-block text-sm text-sky-400 hover:text-sky-300"
+        >
+          LinkedIn profile →
+        </a>
+      ) : null}
+    </V2Card>
   );
 }
 
@@ -272,21 +248,32 @@ function TagsSection({
   );
 }
 
-function TimelineSection({ items }: { items: NetworkContactTimelineItem[] }) {
-  const [filter, setFilter] = useState<(typeof TIMELINE_FILTERS)[number]>("All");
+function ContactChronicleSection({
+  items,
+  relatedTopics,
+}: {
+  items: NetworkContactTimelineItem[];
+  relatedTopics: NetworkContactPageData["relatedTopics"];
+}) {
+  const [filter, setFilter] = useState<(typeof CHRONICLE_FILTERS)[number]>("All");
   const filtered = useMemo(() => {
     if (filter === "All") return items;
     if (filter === "Records") return items.filter((item) => item.kind === "journal");
     if (filter === "Email") return items.filter((item) => item.kind === "email");
-    return items;
+    return items.filter((item) => item.kind === "journal" && (item.topics?.length ?? 0) > 0);
   }, [items, filter]);
 
   return (
     <V2Card className="p-4">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold text-zinc-100">Timeline</h3>
+      <div className="mb-1 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-zinc-100">Chronicle</h3>
+          <p className="mt-0.5 text-[11px] text-zinc-600">
+            What happened, when — records, emails, and topic threads as they accumulate.
+          </p>
+        </div>
         <div className="flex flex-wrap gap-1.5">
-          {TIMELINE_FILTERS.map((entry) => (
+          {CHRONICLE_FILTERS.map((entry) => (
             <button
               key={entry}
               type="button"
@@ -300,21 +287,51 @@ function TimelineSection({ items }: { items: NetworkContactTimelineItem[] }) {
           ))}
         </div>
       </div>
+
+      {relatedTopics.length > 0 ? (
+        <div className="mb-4 mt-3 flex flex-wrap items-center gap-2 border-b border-zinc-800/80 pb-4">
+          <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-600">Linked subjects</span>
+          {relatedTopics.map((topic) => (
+            <a
+              key={topic.id}
+              href={topic.href}
+              className="rounded-full border border-zinc-700/80 bg-zinc-900/60 px-2.5 py-0.5 text-[11px] text-violet-300 hover:border-violet-500/40"
+            >
+              {topic.name}
+            </a>
+          ))}
+        </div>
+      ) : null}
+
       {filtered.length === 0 ? (
-        <p className="text-sm text-zinc-600">No timeline items yet.</p>
+        <p className="text-sm text-zinc-600">Nothing in the chronicle yet — Register after your next conversation.</p>
       ) : (
         <ul className="space-y-3">
-          {filtered.slice(0, 12).map((item) => (
+          {filtered.map((item) => (
             <li key={`${item.kind}-${item.id}`}>
-              <a href={item.href} className="block rounded-xl border border-zinc-800/80 px-4 py-3 transition hover:border-zinc-700 hover:bg-zinc-900/60">
+              <a
+                href={item.href}
+                className="block rounded-xl border border-zinc-800/80 px-4 py-3 transition hover:border-zinc-700 hover:bg-zinc-900/60"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="mb-1 flex items-center gap-2">
-                      <V2Badge tone={item.kind === "journal" ? "purple" : "blue"}>{item.kind === "journal" ? "Record" : "Email"}</V2Badge>
+                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                      <V2Badge tone={item.kind === "journal" ? "purple" : "blue"}>
+                        {item.kind === "journal" ? "Record" : "Email"}
+                      </V2Badge>
                       <span className="text-[11px] text-zinc-600">{formatDate(item.date)}</span>
                     </div>
                     <p className="font-medium text-zinc-100">{item.title}</p>
                     <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{item.preview}</p>
+                    {item.kind === "journal" && item.topics && item.topics.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {item.topics.map((topic) => (
+                          <V2Badge key={topic} tone="green">
+                            {topic}
+                          </V2Badge>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                   <span className="text-zinc-600">›</span>
                 </div>
@@ -324,6 +341,120 @@ function TimelineSection({ items }: { items: NetworkContactTimelineItem[] }) {
         </ul>
       )}
     </V2Card>
+  );
+}
+
+function RelationshipTab({
+  entity,
+  contactValue,
+  myValue,
+  attention,
+  hasContact,
+  isPending,
+  onSave,
+}: {
+  entity: Entity;
+  contactValue: string[];
+  myValue: string[];
+  attention: DerivedRelationshipAttention;
+  hasContact: boolean;
+  isPending: boolean;
+  onSave: (formData: FormData) => void;
+}) {
+  if (!hasContact) {
+    return (
+      <V2Card className="p-5">
+        <h3 className="text-sm font-semibold text-zinc-100">Relationship</h3>
+        <p className="mt-2 text-sm text-zinc-500">
+          Unlocks after first contact — register a conversation, email, or meaningful touch on Overview.
+        </p>
+      </V2Card>
+    );
+  }
+
+  return (
+    <section>
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Relationship</h2>
+          <p className="mt-1 text-[11px] text-zinc-600">Post-hoc value exchange — not a pre-contact scorecard.</p>
+        </div>
+        <p className="text-xs tabular-nums text-zinc-500">
+          Strategic {countOfFive(contactValue)}/5 · Yours {countOfFive(myValue)}/5
+        </p>
+      </div>
+      <form action={onSave}>
+        <input type="hidden" name="entityId" value={entity.id} />
+        <div className="grid gap-4 lg:grid-cols-3">
+          <ValueCheckboxList
+            title="Contact Value"
+            options={CONTACT_VALUE_OPTIONS}
+            icons={CONTACT_VALUE_ICONS}
+            fieldName="contactValue"
+            selected={contactValue}
+            footerLabel="Strategic Value"
+            footerTone="blue"
+          />
+          <ValueCheckboxList
+            title="My Value"
+            options={MY_VALUE_OPTIONS}
+            icons={MY_VALUE_ICONS}
+            fieldName="myValue"
+            selected={myValue}
+            footerLabel="My Value"
+            footerTone="green"
+          />
+          <AttentionPanel attention={attention} />
+        </div>
+        <div className="mt-4 flex justify-end">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
+          >
+            {isPending ? "Saving…" : "Save relationship outcomes"}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+function LinksTab({ page }: { page: NetworkContactPageData }) {
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      <V2Card className="p-4">
+        <h3 className="mb-3 text-sm font-semibold text-zinc-100">Projects</h3>
+        <ul className="space-y-2">
+          {page.relatedProjects.map((project) => (
+            <li key={project.id}>
+              <a href={project.href} className="text-sm text-violet-400 hover:text-violet-300">
+                {project.name}
+              </a>
+            </li>
+          ))}
+          {page.relatedProjects.length === 0 ? <li className="text-sm text-zinc-600">No linked projects.</li> : null}
+        </ul>
+      </V2Card>
+
+      <V2Card className="p-4">
+        <h3 className="mb-3 text-sm font-semibold text-zinc-100">Organizations</h3>
+        <ul className="space-y-2">
+          {page.relatedOrganizations.map((org: NetworkContactRelatedOrg) => (
+            <li key={org.id}>
+              <a href={org.href} className="text-sm text-violet-400 hover:text-violet-300">
+                {org.name} <span className="text-zinc-600">({org.relation})</span>
+              </a>
+            </li>
+          ))}
+          {page.relatedOrganizations.length === 0 ? (
+            <li className="text-sm text-zinc-600">No linked organizations.</li>
+          ) : null}
+        </ul>
+      </V2Card>
+
+      <TagsSection page={page} />
+    </div>
   );
 }
 
@@ -436,20 +567,29 @@ export function NetworkContactShell({
       <NetworkAiImportPanel defaultEntityId={entity.id} />
 
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-zinc-800/80 pb-px">
-        {TABS.map((entry) => (
-          <button
-            key={entry}
-            type="button"
-            onClick={() => setTab(entry)}
-            className={`shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition ${
-              tab === entry
-                ? "border-violet-500 text-violet-300"
-                : "border-transparent text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            {entry}
-          </button>
-        ))}
+        {TABS.map((entry) => {
+          const relationshipHint =
+            entry === "Relationship" && hasContact
+              ? ` · ${contactValue.length}/${myValue.length}`
+              : "";
+          return (
+            <button
+              key={entry}
+              type="button"
+              onClick={() => setTab(entry)}
+              className={`shrink-0 border-b-2 px-4 py-2.5 text-sm font-medium transition ${
+                tab === entry
+                  ? "border-violet-500 text-violet-300"
+                  : "border-transparent text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {entry}
+              {relationshipHint ? (
+                <span className="ml-1 text-[11px] tabular-nums text-zinc-600">{relationshipHint}</span>
+              ) : null}
+            </button>
+          );
+        })}
       </div>
 
       {showEdit ? (
@@ -459,118 +599,41 @@ export function NetworkContactShell({
       ) : null}
 
       {tab === "Overview" ? (
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
-          <div className="space-y-6">
-            {hasContact ? (
-              <section>
-                <h2 className="mb-1 text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">
-                  Relationship overview
-                </h2>
-                <p className="mb-4 text-[11px] text-zinc-600">Unlocked after first contact — value exchange over time.</p>
-                <form action={saveMetrics}>
-                  <input type="hidden" name="entityId" value={entity.id} />
-                  <div className="grid gap-4 lg:grid-cols-3">
-                    <ValueCheckboxList
-                      title="Contact Value"
-                      options={CONTACT_VALUE_OPTIONS}
-                      icons={CONTACT_VALUE_ICONS}
-                      fieldName="contactValue"
-                      selected={contactValue}
-                      footerLabel="Strategic Value"
-                      footerTone="blue"
-                    />
-                    <ValueCheckboxList
-                      title="My Value"
-                      options={MY_VALUE_OPTIONS}
-                      icons={MY_VALUE_ICONS}
-                      fieldName="myValue"
-                      selected={myValue}
-                      footerLabel="My Value"
-                      footerTone="green"
-                    />
-                    <AttentionPanel attention={page.attention} />
-                  </div>
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={isPending}
-                      className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
-                    >
-                      {isPending ? "Saving…" : "Save relationship outcomes"}
-                    </button>
-                  </div>
-                </form>
-              </section>
-            ) : (
-              <NetworkDialogueGuide
-                entityName={entity.name}
-                email={page.email}
-                linkedIn={page.linkedIn}
-                onRegister={() => openCapture({ entityIds: [entity.id] })}
-                onRegisterWithTemplate={() =>
-                  openCapture({
-                    entityIds: [entity.id],
-                    body: networkConversationNoteTemplate(entity.name),
-                  })
-                }
-              />
-            )}
-            <TimelineSection items={page.timeline} />
-          </div>
+        <div className="space-y-6">
+          {!hasContact ? (
+            <NetworkDialogueGuide
+              entityName={entity.name}
+              email={page.email}
+              linkedIn={page.linkedIn}
+              onRegister={() => openCapture({ entityIds: [entity.id] })}
+              onRegisterWithTemplate={() =>
+                openCapture({
+                  entityIds: [entity.id],
+                  body: networkConversationNoteTemplate(entity.name),
+                })
+              }
+            />
+          ) : null}
           <ContactAside page={page} />
+          {hasContact ? (
+            <ContactChronicleSection items={page.timeline} relatedTopics={page.relatedTopics} />
+          ) : null}
         </div>
       ) : null}
 
-      {tab === "Timeline" ? <TimelineSection items={page.timeline} /> : null}
-
-      {tab === "Projects" ? (
-        <V2Card className="p-4">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-100">Projects</h3>
-          <ul className="space-y-2">
-            {page.relatedProjects.map((project) => (
-              <li key={project.id}>
-                <a href={project.href} className="text-sm text-violet-400 hover:text-violet-300">
-                  {project.name}
-                </a>
-              </li>
-            ))}
-            {page.relatedProjects.length === 0 ? <li className="text-sm text-zinc-600">No linked projects.</li> : null}
-          </ul>
-        </V2Card>
+      {tab === "Relationship" ? (
+        <RelationshipTab
+          entity={entity}
+          contactValue={contactValue}
+          myValue={myValue}
+          attention={page.attention}
+          hasContact={hasContact}
+          isPending={isPending}
+          onSave={saveMetrics}
+        />
       ) : null}
 
-      {tab === "Organizations" ? (
-        <V2Card className="p-4">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-100">Organizations</h3>
-          <ul className="space-y-2">
-            {page.relatedOrganizations.map((org: NetworkContactRelatedOrg) => (
-              <li key={org.id}>
-                <a href={org.href} className="text-sm text-violet-400 hover:text-violet-300">
-                  {org.name} <span className="text-zinc-600">({org.relation})</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </V2Card>
-      ) : null}
-
-      {tab === "Topics" ? (
-        <V2Card className="p-4">
-          <h3 className="mb-3 text-sm font-semibold text-zinc-100">Topics</h3>
-          <ul className="space-y-2">
-            {page.relatedTopics.map((topic) => (
-              <li key={topic.id}>
-                <a href={topic.href} className="text-sm text-violet-400 hover:text-violet-300">
-                  {topic.name}
-                </a>
-              </li>
-            ))}
-            {page.relatedTopics.length === 0 ? <li className="text-sm text-zinc-600">No linked topics.</li> : null}
-          </ul>
-        </V2Card>
-      ) : null}
-
-      {tab === "Tags" ? <TagsSection page={page} /> : null}
+      {tab === "Links" ? <LinksTab page={page} /> : null}
         </div>
       </div>
     </div>

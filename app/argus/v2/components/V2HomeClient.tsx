@@ -9,7 +9,7 @@ import type { IntelligenceFrom } from "@/lib/argus/v2/intelligence-nav";
 import { type V2KnowledgeNode } from "@/lib/argus/v2/intelligence-viz";
 import { V2Card, V2SectionTitle } from "./v2-ui";
 import { V2HomeIntelligencePanel, type IntelligenceTab } from "./V2HomeIntelligencePanel";
-import { V2HomePulse } from "./V2HomePulse";
+import { V2HomePageHeader } from "./V2HomePulse";
 import { V2IntelligenceLens, V2IntelligenceLensEmpty } from "./V2IntelligenceLens";
 import { V2TabBar } from "./V2TabBar";
 import { V2TagCloud, type V2TagCloudItem } from "./V2TagCloud";
@@ -109,14 +109,12 @@ export function V2HomeClient({
 
   return (
     <>
+      <V2HomePageHeader signals={signals} className="mb-4" />
+
       <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
         <div className="space-y-6">
           <V2Card className="p-5 sm:p-6">
             <div id="intelligence">
-              <div className="mb-4">
-                <V2HomePulse signals={signals} />
-              </div>
-
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <V2TabBar tabs={HOME_VIEW_TABS} active={view} onChange={setView} size="md" />
                 {view === "intelligence" ? (

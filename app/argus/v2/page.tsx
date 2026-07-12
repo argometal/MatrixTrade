@@ -31,11 +31,6 @@ export default async function V2HomePage({
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="argus-v2-scroll flex-1 overflow-y-auto overscroll-y-contain px-4 py-6 lg:px-8">
-        <div className="mb-2">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Home</h1>
-          <p className="mt-1 text-sm text-zinc-500">Activity, intelligence, and what needs attention</p>
-        </div>
-
         <Suspense fallback={<p className="text-sm text-zinc-500">Loading…</p>}>
           <V2HomeClient
             nodes={knowledgeNodes}
