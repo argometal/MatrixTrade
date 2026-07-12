@@ -1170,7 +1170,7 @@ export async function recordNetworkLastContactAction(
 }
 
 export type ImportNetworkAiBlockResult =
-  | { ok: true; message: string; logId?: string }
+  | { ok: true; message: string; logId?: string; entityId?: string }
   | { ok: false; error: string; details?: string[] };
 
 /** Parse and apply a network AI block — only from explicit human Apply. */
@@ -1185,15 +1185,30 @@ export async function importNetworkAiBlockAction(
       return { ok: false, error: parsed.error, details: parsed.details };
     }
 
+    const data = await readArgus();
     const result = await applyNetworkAiBlock(
-      { getEntity, createLog, updateEntity },
+      {
+        getEntity,
+        createLog,
+        updateEntity,
+        createEntity,
+        resolveOrganizationId: async (name) => {
+          const org = data.entities.find(
+            (entity) =>
+              entity.type === "company" &&
+              !entity.deletedAt &&
+              entity.name.trim().toLowerCase() === name.trim().toLowerCase()
+          );
+          return org?.id;
+        },
+      },
       parsed.payload
     );
     if (!result.ok) {
       return { ok: false, error: result.error };
     }
 
-    const entityId = String(parsed.payload.proposal.entityId ?? "");
+    const entityId = result.entityId ?? String(parsed.payload.proposal.entityId ?? "");
     revalidateArgus();
     revalidatePath("/argus/v2/browse/network");
     if (entityId) {
@@ -1201,7 +1216,7 @@ export async function importNetworkAiBlockAction(
       revalidatePath(`/argus/network/${entityId}`);
     }
 
-    return { ok: true, message: result.message, logId: result.logId };
+    return { ok: true, message: result.message, logId: result.logId, entityId: result.entityId };
   } catch (err) {
     return {
       ok: false,

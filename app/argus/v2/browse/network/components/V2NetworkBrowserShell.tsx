@@ -18,9 +18,9 @@ import {
   applyNetworkSmartView,
   smartViewCount,
 } from "@/lib/argus/v2/network-browse-utils";
-import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import { NetworkPanelProvider } from "@/app/argus/v2/network/components/NetworkPanelProvider";
+import { NetworkPanelButton } from "@/app/argus/v2/network/components/NetworkPanelButton";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
-import { NetworkAiImportPanel } from "@/app/argus/v2/network/components/NetworkAiImportPanel";
 
 const PAGE_SIZE = 8;
 
@@ -451,6 +451,7 @@ export function V2NetworkBrowserShell({
   };
 
   return (
+    <NetworkPanelProvider snapshotItems={snapshotItems} panelTitle="Network desk">
     <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden">
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         <div className="flex gap-8 px-4 py-6 lg:px-8">
@@ -465,11 +466,7 @@ export function V2NetworkBrowserShell({
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <SnapshotButton
-                title="Network snapshot"
-                description="Copy context for external AI"
-                items={snapshotItems}
-              />
+              <NetworkPanelButton />
               <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5">
                 <button
                   type="button"
@@ -505,8 +502,6 @@ export function V2NetworkBrowserShell({
               />
             </div>
           </header>
-
-          <NetworkAiImportPanel />
 
           <div className="mb-3">
             <input
@@ -692,5 +687,6 @@ export function V2NetworkBrowserShell({
         ) : null}
       </section>
     </div>
+    </NetworkPanelProvider>
   );
 }

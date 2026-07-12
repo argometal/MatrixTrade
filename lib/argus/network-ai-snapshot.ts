@@ -21,7 +21,23 @@ import type { NetworkContactPageData } from "./v2/network-contact-loaders";
 export type NetworkAiSnapshotScope = "network-desk" | "network-person";
 
 function appendRequest(body: string): string {
-  return [body, "", "=== REQUEST ===", NETWORK_AI_BLOCK_REQUEST].join("\n");
+  const templates = [
+    "",
+    "=== CONTACT CREATE TEMPLATE ===",
+    "name:",
+    "role:",
+    "organization:",
+    "email:",
+    "notes:",
+    "tags:",
+    "",
+    "=== AFTER CONVERSATION (existing person) ===",
+    "entityId:",
+    "what happened:",
+    "follow-up date:",
+    "tags:",
+  ].join("\n");
+  return [body, "", templates, "", "=== REQUEST ===", NETWORK_AI_BLOCK_REQUEST].join("\n");
 }
 
 function formatDeskHighlights(cards: V2NetworkBrowseCard[]): string {

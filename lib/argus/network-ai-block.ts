@@ -6,7 +6,13 @@ import {
   normalizeMyValueKeys,
 } from "./network-relationship-metrics";
 
+export const NETWORK_AI_PRIMARY_BLOCK_TYPES = [
+  "network-create-person",
+  "network-capture",
+] as const;
+
 export const NETWORK_AI_BLOCK_TYPES = [
+  ...NETWORK_AI_PRIMARY_BLOCK_TYPES,
   "network-register",
   "network-follow-up",
   "network-tags",
@@ -27,21 +33,30 @@ Required shape:
   "type": "<block-type>",
   "proposal": { ... }
 }
-Block types (Apply ready — human must click Apply in Argus):
-- network-register: append journal log — entityId (required), title, body required; optional topics[]
-- network-follow-up: follow_up log — entityId (required), title, body, followUpDate (YYYY-MM-DD) required
-- network-tags: update linkedTags on person — entityId (required), tags[] (min 1) required
-- network-analysis: append note log only (no entity mutation) — entityId (required), body required; optional title
-- network-metrics: update contactValue / myValue arrays — entityId (required); at least one of contactValue[], myValue[]
+
+Primary block types (Network panel — human must click Apply):
+- network-create-person: NEW contact from desk — name (required); optional role, organization, email, notes, tags[]
+- network-capture: AFTER conversation on existing person — entityId (required), body (required); optional title, followUpDate (YYYY-MM-DD), tags[]
+
+Legacy types (still supported):
+- network-register: append journal log — entityId, title/body
+- network-follow-up: follow_up log — entityId, body, followUpDate
+- network-tags: merge linkedTags — entityId, tags[]
+- network-analysis: note log only — entityId, body
+- network-metrics: contactValue / myValue arrays — entityId
 
 Rules:
 - Return exactly one block. No arrays of blocks.
-- Do not apply changes — human imports in Network → Apply.
-- entityId must match a person in the snapshot context.
+- Do not apply changes — human imports in Network panel → Apply.
+- For network-capture, entityId must match a person in the snapshot.
 - If context is insufficient, ask ONE clarifying question.`;
 
 function isBlockType(value: unknown): value is NetworkAiBlockType {
   return typeof value === "string" && (NETWORK_AI_BLOCK_TYPES as readonly string[]).includes(value);
+}
+
+function requiresEntityId(type: NetworkAiBlockType): boolean {
+  return type !== "network-create-person";
 }
 
 function str(value: unknown): string {
@@ -63,9 +78,32 @@ export function validateNetworkAiBlockProposal(
 ): { ok: true } | { ok: false; errors: string[] } {
   const errors: string[] = [];
   const entityId = str(proposal.entityId);
-  if (!entityId) errors.push("proposal.entityId is required");
+
+  if (requiresEntityId(type) && !entityId) {
+    errors.push("proposal.entityId is required");
+  }
 
   switch (type) {
+    case "network-create-person": {
+      if (!str(proposal.name)) errors.push("network-create-person requires name");
+      if (
+        !str(proposal.role) &&
+        !str(proposal.notes) &&
+        !str(proposal.email) &&
+        !str(proposal.organization)
+      ) {
+        errors.push("network-create-person needs at least one of role, organization, email, or notes");
+      }
+      break;
+    }
+    case "network-capture": {
+      if (!str(proposal.body)) errors.push("network-capture requires body");
+      const followUpDate = str(proposal.followUpDate).slice(0, 10);
+      if (followUpDate && !/^\d{4}-\d{2}-\d{2}$/.test(followUpDate)) {
+        errors.push("network-capture followUpDate must be YYYY-MM-DD when provided");
+      }
+      break;
+    }
     case "network-register": {
       if (!str(proposal.title) && !str(proposal.body)) {
         errors.push("network-register requires title or body");
@@ -153,40 +191,81 @@ export function parseNetworkAiBlock(raw: string):
 
 export function previewNetworkAiBlock(payload: NetworkAiBlockPayload): string {
   const { type, proposal } = payload;
-  const lines = [`Type: ${type}`, `Person: ${str(proposal.entityId)}`];
+  const lines = [`Type: ${type}`];
+
   switch (type) {
-    case "network-register":
-    case "network-follow-up":
-    case "network-analysis":
+    case "network-create-person":
+      lines.push(`Name: ${str(proposal.name)}`);
+      if (str(proposal.role)) lines.push(`Role: ${str(proposal.role)}`);
+      if (str(proposal.organization)) lines.push(`Organization: ${str(proposal.organization)}`);
+      if (str(proposal.email)) lines.push(`Email: ${str(proposal.email)}`);
+      if (str(proposal.notes)) {
+        lines.push(`Notes: ${str(proposal.notes).slice(0, 200)}${str(proposal.notes).length > 200 ? "…" : ""}`);
+      }
+      if (strArray(proposal.tags).length) lines.push(`Tags: ${strArray(proposal.tags).join(", ")}`);
+      break;
+    case "network-capture":
+      lines.push(`Person: ${str(proposal.entityId)}`);
       lines.push(`Title: ${str(proposal.title) || "(auto)"}`);
       lines.push(`Body: ${str(proposal.body).slice(0, 200)}${str(proposal.body).length > 200 ? "…" : ""}`);
-      if (type === "network-follow-up") lines.push(`Follow-up: ${str(proposal.followUpDate)}`);
-      if (type === "network-register" && strArray(proposal.topics).length) {
-        lines.push(`Topics: ${strArray(proposal.topics).join(", ")}`);
-      }
+      if (str(proposal.followUpDate)) lines.push(`Follow-up: ${str(proposal.followUpDate)}`);
+      if (strArray(proposal.tags).length) lines.push(`Tags: ${strArray(proposal.tags).join(", ")}`);
       break;
-    case "network-tags":
-      lines.push(`Tags: ${strArray(proposal.tags).join(", ")}`);
-      break;
-    case "network-metrics":
-      if (strArray(proposal.contactValue).length) {
-        lines.push(`Contact value: ${normalizeContactValueKeys(strArray(proposal.contactValue)).join(", ")}`);
+    default:
+      lines.push(`Person: ${str(proposal.entityId)}`);
+      if (type === "network-register" || type === "network-follow-up" || type === "network-analysis") {
+        lines.push(`Title: ${str(proposal.title) || "(auto)"}`);
+        lines.push(`Body: ${str(proposal.body).slice(0, 200)}${str(proposal.body).length > 200 ? "…" : ""}`);
+        if (type === "network-follow-up") lines.push(`Follow-up: ${str(proposal.followUpDate)}`);
       }
-      if (strArray(proposal.myValue).length) {
-        lines.push(`My value: ${normalizeMyValueKeys(strArray(proposal.myValue)).join(", ")}`);
+      if (type === "network-tags") lines.push(`Tags: ${strArray(proposal.tags).join(", ")}`);
+      if (type === "network-metrics") {
+        if (strArray(proposal.contactValue).length) {
+          lines.push(`Contact value: ${normalizeContactValueKeys(strArray(proposal.contactValue)).join(", ")}`);
+        }
+        if (strArray(proposal.myValue).length) {
+          lines.push(`My value: ${normalizeMyValueKeys(strArray(proposal.myValue)).join(", ")}`);
+        }
       }
       break;
   }
   return lines.join("\n");
 }
 
-export const NETWORK_AI_BLOCK_SAMPLE_OPTIONS = NETWORK_AI_BLOCK_TYPES.map((type) => ({
-  type,
-  label: type,
-  hint: type.replace("network-", ""),
-}));
+export const NETWORK_AI_BLOCK_SAMPLE_OPTIONS = [
+  { type: "network-create-person" as const, label: "Create person", hint: "new contact" },
+  { type: "network-capture" as const, label: "Capture conversation", hint: "after chat" },
+  ...NETWORK_AI_BLOCK_TYPES.filter(
+    (type) => type !== "network-create-person" && type !== "network-capture"
+  ).map((type) => ({
+    type,
+    label: type,
+    hint: type.replace("network-", ""),
+  })),
+];
 
 const SAMPLE_BLOCKS: Record<NetworkAiBlockType, NetworkAiBlockPayload> = {
+  "network-create-person": {
+    type: "network-create-person",
+    proposal: {
+      name: "Jane Doe",
+      role: "Drilling engineer",
+      organization: "SLB",
+      email: "jane.doe@example.com",
+      notes: "Met at RIG RUN prejob — discussed BHA and permits.",
+      tags: ["technical", "decision-maker"],
+    },
+  },
+  "network-capture": {
+    type: "network-capture",
+    proposal: {
+      entityId: "PERSON_ID",
+      title: "RIG RUN prejob call",
+      body: "Discussed BHA match, permits timeline, and follow-up on PD2 flows.",
+      followUpDate: "2026-07-20",
+      tags: ["gap", "follow-up"],
+    },
+  },
   "network-register": {
     type: "network-register",
     proposal: {
