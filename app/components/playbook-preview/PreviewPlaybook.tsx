@@ -8,6 +8,7 @@ import {
   type PlaybookExecutionExperiments,
   type PlaybookMethodology,
   type PlaybookMultiTimeframeHierarchy,
+  type PlaybookRiskWeightedLayeredEntryExperiment,
   type PlaybookScoutStatistics,
   type PlaybookStructuralPullbackExperiment,
   type PlaybookZoneSelectionFlow,
@@ -230,6 +231,85 @@ function PlaybookStructuralPullbackPanel({
   );
 }
 
+function PlaybookRiskWeightedLayeredEntryPanel({
+  experiment,
+}: {
+  experiment: PlaybookRiskWeightedLayeredEntryExperiment;
+}) {
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-amber-400">
+        Risk-Weighted Layered Entry experiment
+      </p>
+      {experiment.experimentNote ? (
+        <p className="text-xs leading-relaxed text-amber-200/80">{experiment.experimentNote}</p>
+      ) : null}
+      <p className="text-sm text-zinc-300">{experiment.objective}</p>
+      <p className="text-xs leading-relaxed text-zinc-400">{experiment.hypothesis}</p>
+      {experiment.differentiationFromLayeredEntry ? (
+        <p className="text-xs font-medium text-amber-300/90">
+          vs layered-entry: {experiment.differentiationFromLayeredEntry}
+        </p>
+      ) : null}
+      {experiment.commonStopRule ? (
+        <p className="text-sm leading-relaxed text-zinc-300">
+          <span className="font-medium text-amber-300">Stop común:</span> {experiment.commonStopRule}
+        </p>
+      ) : null}
+      {experiment.sizingFormula ? (
+        <p className="rounded-lg bg-zinc-950/50 px-3 py-2 font-mono text-xs text-amber-200">
+          {experiment.sizingFormula}
+        </p>
+      ) : null}
+      {experiment.layers.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-zinc-400">Layers (risk allocation)</p>
+          {experiment.layers.map((layer) => (
+            <div key={layer.layer} className="rounded-lg bg-zinc-950/50 p-3 text-xs">
+              <p className="font-medium text-zinc-200">
+                L{layer.layer} — {layer.label} · ${layer.price}
+              </p>
+              <p className="mt-1 text-zinc-500">
+                {layer.role ? `${layer.role} · ` : ""}
+                {(layer.riskAllocation * 100).toFixed(0)}% of 1R budget
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {experiment.commonStopExample ? (
+        <p className="text-xs text-zinc-500">
+          Example stop: {experiment.commonStopExample.label} · $
+          {experiment.commonStopExample.low}–${experiment.commonStopExample.high}
+        </p>
+      ) : null}
+      {experiment.outcomes.length > 0 ? (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-zinc-400">Three outcomes</p>
+          {experiment.outcomes.map((outcome) => (
+            <div key={outcome.id} className="rounded-lg bg-zinc-950/50 p-3 text-xs">
+              <p className="font-medium text-zinc-200">
+                {outcome.label} · max {outcome.maxRiskR}R
+              </p>
+              <p className="mt-1 text-zinc-500">{outcome.description}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {experiment.sizingMath.length > 0 ? (
+        <ul className="space-y-1 text-xs text-zinc-500">
+          {experiment.sizingMath.map((line) => (
+            <li key={line}>· {line}</li>
+          ))}
+        </ul>
+      ) : null}
+      {experiment.partialFillRule ? (
+        <p className="text-xs text-zinc-400">{experiment.partialFillRule}</p>
+      ) : null}
+    </div>
+  );
+}
+
 function PlaybookScoutStatisticsPanel({ stats }: { stats: PlaybookScoutStatistics }) {
   return (
     <div className="mt-4 space-y-3 rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4">
@@ -393,6 +473,12 @@ export function PreviewPlaybook({
                     {row.playbook?.structuralPullbackExperiment ? (
                       <PlaybookStructuralPullbackPanel
                         experiment={row.playbook.structuralPullbackExperiment}
+                      />
+                    ) : null}
+
+                    {row.playbook?.riskWeightedLayeredEntryExperiment ? (
+                      <PlaybookRiskWeightedLayeredEntryPanel
+                        experiment={row.playbook.riskWeightedLayeredEntryExperiment}
                       />
                     ) : null}
 

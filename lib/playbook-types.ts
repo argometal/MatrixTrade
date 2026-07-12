@@ -116,6 +116,11 @@ export interface Playbook {
   structuralPullbackExperiment?: PlaybookStructuralPullbackExperiment;
   /** Ordered flow: thesis → zones → rank → select → Entry Solver → layered entry. */
   zoneSelectionFlow?: PlaybookZoneSelectionFlow;
+  /**
+   * Playbook experiment — risk-weighted layered entry (R allocation, not capital split).
+   * Execution only; does not change Scout contract or engine sizing.
+   */
+  riskWeightedLayeredEntryExperiment?: PlaybookRiskWeightedLayeredEntryExperiment;
 }
 
 export type ReachProbability = "high" | "medium" | "low";
@@ -138,6 +143,47 @@ export interface PlaybookZoneSelectionFlow {
   experimentNote: string;
   steps: string[];
   doesNotReplaceEntrySolver: string;
+}
+
+/** One layer in the risk-weighted layered entry experiment — allocation in R units. */
+export interface PlaybookRiskWeightedLayer {
+  layer: number;
+  label: string;
+  price: number;
+  /** Risk allocation in R units (e.g. 0.30 = 30% of total 1R budget). Sum across layers = 1.0. */
+  riskAllocation: number;
+  /** e.g. "operational support" | "structural support" */
+  role?: string;
+}
+
+/** Observable outcome for risk-weighted layered entry statistics. */
+export interface PlaybookRiskWeightedOutcome {
+  id: string;
+  label: string;
+  description: string;
+  /** Maximum R consumed if this outcome occurs and common stop is hit. */
+  maxRiskR: number;
+}
+
+/**
+ * Playbook experiment — allocate fixed 1R across layers by expectancy weight.
+ * Differs from capital-split layered-entry (entry optimization).
+ */
+export interface PlaybookRiskWeightedLayeredEntryExperiment {
+  experimentNote: string;
+  objective: string;
+  hypothesis: string;
+  differentiationFromLayeredEntry: string;
+  riskBudgetRules: string[];
+  commonStopRule: string;
+  sizingMath: string[];
+  sizingFormula: string;
+  layers: PlaybookRiskWeightedLayer[];
+  commonStopExample: { low: number; high: number; label: string };
+  outcomes: PlaybookRiskWeightedOutcome[];
+  partialFillRule: string;
+  scoutVsTradeState: string;
+  metrics: string[];
 }
 
 export interface PlaybookStructuralPullbackExperiment {

@@ -140,7 +140,7 @@ export function buildMatrixMechanicsBrief(): string {
     "Fixed dollar risk per qualified trade during validation — shares adjust to stop; never mix bet sizes across the sample.",
     "Preferred: Layered Entry / Entry Optimization — not Probe (legacy). Thesis accepted; improve average entry via limit ladder.",
     "Only one execution variable per experiment. No chase: all limits miss = trade cancelled, no market order.",
-    "Playbooks: expectancy-asymmetry (framework), layered-entry (execution hypothesis), multi-timeframe-hierarchy (decision experiment), structural-pullback-entry (zone selection experiment).",
+    "Playbooks: expectancy-asymmetry (framework), layered-entry (execution hypothesis), multi-timeframe-hierarchy (decision experiment), structural-pullback-entry (zone selection experiment), risk-weighted-layered-entry (R-budget execution experiment).",
     "",
     "PLAYBOOK EXPERIMENTS (not mandatory engine rules)",
     "Multi-Timeframe Decision Hierarchy (playbook: multi-timeframe-hierarchy):",
@@ -165,6 +165,15 @@ export function buildMatrixMechanicsBrief(): string {
     "- Battle zones are not automatic entries; Fibonacci/extension levels = reaction zones, not targets.",
     "- Universe: secular uptrend, high liquidity, institutional-quality assets only.",
     "- Hypothesis refuted after 30–50 trades if pullbacks underperform momentum entries.",
+    "",
+    "Risk-Weighted Layered Entry (playbook: risk-weighted-layered-entry):",
+    "- Playbook experiment — execution only; NOT stock-specific, NOT engine rule.",
+    "- Fixed 1R risk budget split by expectancy weight (e.g. 0.30R operational + 0.70R structural).",
+    "- Single common stop (structural invalidation) — NOT independent stops per layer.",
+    "- Sizing: shares_i = (r_i × R$) / (E_i − S). Full build stopped = 1R loss; L1 only = 0.30R.",
+    "- Differs from layered-entry: that splits capital % for average entry improvement.",
+    "- Partial fills first-class: Scout tracks fill; Trade reflects actual shares at risk.",
+    "- Scout contract (plannedEntry, stopPrice, targetPrice) unchanged.",
     "",
     "ENTRY OPTIMIZATION PRINCIPLE",
     "Matrix maximizes initial R — not win rate. A lower hit rate with larger average winners beats many small wins.",
@@ -363,6 +372,15 @@ export function formatPlaybookTrainingSection(playbooks: Playbook[]): string {
         .map((z) => `${z.id}:${z.low}-${z.high}(${z.reachProbability}/${z.asymmetryQuality})`)
         .join("|");
       lines.push(`  example_battle_zones:${zones}`);
+    }
+    if (pb.riskWeightedLayeredEntryExperiment?.sizingFormula) {
+      lines.push(
+        `  risk_weighted_sizing:${pb.riskWeightedLayeredEntryExperiment.sizingFormula.replace(/\s+/g, " ")}`
+      );
+      const layers = pb.riskWeightedLayeredEntryExperiment.layers
+        .map((l) => `L${l.layer}:${l.price}@${l.riskAllocation}R`)
+        .join("|");
+      if (layers) lines.push(`  risk_weighted_layers:${layers}`);
     }
     if (pb.methodology?.matrixIdentity) {
       lines.push(`  matrix_identity:${pb.methodology.matrixIdentity.replace(/\s+/g, " ").slice(0, 200)}`);

@@ -403,5 +403,126 @@
       "No chase if all limits miss",
       "Outcome feeds Structural Pullback experiment metrics"
     ]
+  },
+  {
+    "id": "risk-weighted-layered-entry",
+    "name": "Risk-Weighted Layered Entry",
+    "status": "TESTING",
+    "description": "Playbook experiment — allocate fixed 1R across entry layers by expectancy weight (not equal capital split). Single common stop. Execution only.",
+    "experimentScope": "playbook",
+    "experimentHypothesis": "Allocating more risk (R budget) to higher-expectancy entry locations — with a single structural stop — improves long-term expectancy vs equal 50/50 or capital-split layered entry.",
+    "appliesMethodology": "expectancy-asymmetry",
+    "principles": [
+      "Playbook experiment — hypothesis to refute with data, not a permanent engine rule",
+      "Total risk budget = 1R fixed per trade — shares per layer sized from stop distance",
+      "Layer 1 (operational support): 0.30R · Layer 2 (structural support): 0.70R",
+      "One common stop (structural invalidation) — NOT independent stops per layer",
+      "If only Layer 1 fills: trade risks 0.30R only — partial fill is first-class",
+      "Objective: allocate MORE risk to higher-expectancy locations — NOT improve average price",
+      "Differs from layered-entry: that experiment splits capital % for entry optimization",
+      "Does NOT modify: Stock File, Thesis, Structural invalidation, Scout decision, Trade review",
+      "No chase — if predefined limits miss, trade cancelled"
+    ],
+    "executionExperiments": {
+      "strategyDefinition": "Strategy constant — support entry, pullback, or zone-selected battle (pair with structural-pullback-entry or asymmetric-support-entry).",
+      "executionDefinition": "Execution variable — risk-weighted limit layers (0.30R / 0.70R) vs equal capital split or single limit.",
+      "experimentalRule": "Only one execution variable per experiment. Thesis, common stop, target, Stock File, Playbook strategy unchanged.",
+      "noChaseRule": "If all predefined entry limits fail to execute, trade is cancelled. No market order substitute.",
+      "layeredEntryHypothesis": "Risk-weighted R allocation to deeper structural support improves expectancy vs equal money or 50/50 R split — measured after 20–30 trades.",
+      "executionPrinciple": "Execution allocates risk budget by location quality — not average entry price. Deeper layers receive more R because expectancy is higher.",
+      "metrics": [
+        "RiskAllocationEfficiency",
+        "PartialFillPercent",
+        "FullBuildPercent",
+        "AverageRiskConsumed",
+        "ExpectancyByOutcome",
+        "MissedTradePercent",
+        "AverageRR",
+        "TradeOutcome",
+        "Expectancy"
+      ]
+    },
+    "riskWeightedLayeredEntryExperiment": {
+      "experimentNote": "Experimento de Playbook — ejecución con asignación de riesgo en R, no regla del motor. Ver md/matrix/risk-weighted-layered-entry.md.",
+      "objective": "Determine whether allocating a fixed 1R budget across layers by expectancy weight (30/70) outperforms equal capital split or 50/50 R layering.",
+      "hypothesis": "Higher-expectancy locations (structural support) deserve more of the risk budget. A single common stop with per-layer share sizing preserves deterministic total loss = 1R on full build, 0.30R on L1-only.",
+      "differentiationFromLayeredEntry": "layered-entry splits 100% capital to improve average entry (entry optimization). risk-weighted-layered-entry splits 1R by location quality — average price is NOT the goal.",
+      "riskBudgetRules": [
+        "Total risk budget = 1R per trade (fixed dollar R$ during experimental control)",
+        "Layer risk allocations must sum to 1.0 (e.g. 0.30 + 0.70)",
+        "Common stop S applies to ALL layers — structural invalidation, not per-layer stops",
+        "Shares per layer: shares_i = (r_i × R$) / (E_i − S) for long setups",
+        "Actual risk at stop = sum of filled layer losses — partial fill caps exposure"
+      ],
+      "commonStopRule": "Un solo stop común — invalidación estructural (ej. 228–230). Todas las capas comparten el mismo stop. No stops independientes por capa.",
+      "sizingMath": [
+        "Given R$ (dollar value of 1R), r_i (risk allocation), E_i (entry), S (common stop)",
+        "Stop distance per share: d_i = E_i − S (long)",
+        "Shares: shares_i = (r_i × R$) / d_i",
+        "Full build stopped: loss = Σ shares_i × d_i = R$ × Σ r_i = 1R",
+        "L1 only stopped: loss = shares_1 × d_1 = 0.30R"
+      ],
+      "sizingFormula": "shares_i = (r_i × R$) / (E_i − S)",
+      "layers": [
+        {
+          "layer": 1,
+          "label": "Operational support",
+          "role": "operational support",
+          "price": 260,
+          "riskAllocation": 0.3
+        },
+        {
+          "layer": 2,
+          "label": "Structural support",
+          "role": "structural support",
+          "price": 240,
+          "riskAllocation": 0.7
+        }
+      ],
+      "commonStopExample": {
+        "label": "Structural invalidation",
+        "low": 228,
+        "high": 230
+      },
+      "outcomes": [
+        {
+          "id": "bounce-l1",
+          "label": "Rebote solo L1 — capa operativa",
+          "description": "Only Layer 1 (operational support) fills. Trade active with 0.30R at risk if common stop hit.",
+          "maxRiskR": 0.3
+        },
+        {
+          "id": "full-build",
+          "label": "Construcción completa L1+L2",
+          "description": "Both layers fill. Full 1R at risk if common structural stop hit.",
+          "maxRiskR": 1
+        },
+        {
+          "id": "structural-break",
+          "label": "Ruptura estructural — stop común",
+          "description": "Common stop hit. Loss = 0.30R to 1.00R depending on which layers had filled.",
+          "maxRiskR": 1
+        }
+      ],
+      "partialFillRule": "Partial fill is first-class: Scout tracks layeredEntry status (partial/full). Trade shares = sum of filled layers only. Monthly risk consumes actual loss, not planned 1R, until L2 fills.",
+      "scoutVsTradeState": "Scout/Plan owns fill tracking via layered-entry-update. Trade owns executed shares and common stop. Scout contract (plannedEntry, stopPrice, targetPrice) unchanged.",
+      "metrics": [
+        "RiskAllocationEfficiency",
+        "PartialFillPercent",
+        "FullBuildPercent",
+        "AverageRiskConsumed",
+        "ExpectancyByOutcome"
+      ]
+    },
+    "checklist": [
+      "Thesis approved — strategy locked (pair with zone/support playbook if applicable)",
+      "Common structural stop defined — single stop for all layers",
+      "Layer entries + risk allocations defined (sum = 1.0R)",
+      "Shares sized per formula: shares_i = (r_i × R$) / (E_i − S)",
+      "Scout contract: plannedEntry, stopPrice, targetPrice present",
+      "layeredEntry on GO documents limits — allocation % = R weight during this experiment",
+      "Record outcome: bounce L1 (0.30R) / full build (1R) / structural break",
+      "No chase if limits miss"
+    ]
   }
 ]
