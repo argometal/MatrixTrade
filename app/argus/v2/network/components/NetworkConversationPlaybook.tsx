@@ -8,12 +8,9 @@ import {
 
 export function NetworkConversationPlaybook({
   personName,
-  onUseTemplate,
   compact = false,
 }: {
   personName?: string;
-  /** Inserts a short note scaffold into Register — not a questionnaire. */
-  onUseTemplate?: () => void;
   compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
@@ -42,16 +39,6 @@ export function NetworkConversationPlaybook({
 
       {open ? (
         <div className="border-t border-zinc-800/80 px-3.5 pb-3.5 pt-2">
-          {onUseTemplate ? (
-            <button
-              type="button"
-              onClick={onUseTemplate}
-              className="mb-3 w-full rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-[11px] font-medium text-violet-200 hover:bg-violet-500/15"
-            >
-              Use note template in Register
-            </button>
-          ) : null}
-
           <div className="space-y-1">
             {NETWORK_CONVERSATION_PLAYBOOK.map((phase) => {
               const isExpanded = expanded === phase.id;

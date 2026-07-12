@@ -43,7 +43,7 @@ export function AddMenuButton({
 export function AddCreateButton({
   align = "end",
   className = "",
-  label = "Add context",
+  label = "Create",
 }: {
   align?: MenuAlign;
   className?: string;

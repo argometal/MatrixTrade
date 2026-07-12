@@ -3,10 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { CAPTURE, REFERENCES, TAGS } from "@/lib/argus/ux-copy";
-import {
-  networkConversationNoteTemplate,
-  selectedIncludesPerson,
-} from "@/lib/argus/network-dialogue";
+import { selectedIncludesPerson } from "@/lib/argus/network-dialogue";
 import { NetworkConversationPlaybook } from "@/app/argus/v2/network/components/NetworkConversationPlaybook";
 import { eventDateFromLinkedEntities } from "@/lib/argus/journal-event-origin";
 import {
@@ -225,14 +222,7 @@ export function CaptureSheet({
 
       {linkedPerson ? (
         <div className="mb-3">
-          <NetworkConversationPlaybook
-            compact
-            personName={linkedPersonName}
-            onUseTemplate={() => {
-              const template = networkConversationNoteTemplate(linkedPersonName);
-              setBody((current) => (current.trim() ? current : template));
-            }}
-          />
+          <NetworkConversationPlaybook compact personName={linkedPersonName} />
         </div>
       ) : null}
 

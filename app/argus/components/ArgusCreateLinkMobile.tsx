@@ -122,7 +122,7 @@ function ChooseTypeStep({
       <header className="flex items-center justify-between border-b border-zinc-800/80 px-4 py-4">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">
-            {flow.isInboxEvidence ? "Email evidence" : entityCaptureOnly ? ADD_CONTEXT.title : "Capture"}
+            {flow.isInboxEvidence ? "Email evidence" : entityCaptureOnly ? ADD_CONTEXT.title : "Create"}
           </p>
           <h2 className="text-lg font-bold text-zinc-50">
             {flow.isInboxEvidence
@@ -131,7 +131,7 @@ function ChooseTypeStep({
                 ? ADD_CONTEXT.pickKind
                 : "What do you want to capture?"}
           </h2>
-          {entityCaptureOnly && !flow.isInboxEvidence ? (
+          {entityCaptureOnly && !flow.isInboxEvidence && ADD_CONTEXT.useRegisterHint ? (
             <p className="mt-0.5 text-xs text-zinc-500">{ADD_CONTEXT.useRegisterHint}</p>
           ) : null}
         </div>

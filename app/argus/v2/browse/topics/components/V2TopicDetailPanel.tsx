@@ -2,8 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
-import { V2OpenCaptureButton } from "@/app/argus/v2/components/V2OpenCaptureButton";
+import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
 import { V2OrgTimeline } from "@/app/argus/v2/components/V2OrgTimeline";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
@@ -126,6 +125,7 @@ export function V2TopicDetailPanel({
               linkedIds={selected.linkedEntityIds}
               className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
             />
+            <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
           </div>
         </div>
 
@@ -270,14 +270,6 @@ export function V2TopicDetailPanel({
           />
         ) : null}
 
-        <div className="mt-8 flex flex-wrap gap-3 border-t border-zinc-800/80 pt-6">
-          <V2OpenCaptureButton
-            entityIds={[selected.id]}
-            className="inline-flex rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-500"
-          >
-            + Register evidence
-          </V2OpenCaptureButton>
-        </div>
         </V2PrivateEvidenceGate>
       </div>
     </div>

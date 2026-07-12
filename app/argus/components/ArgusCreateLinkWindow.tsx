@@ -35,7 +35,7 @@ import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 import { usesLinkModalShell } from "@/lib/argus/link-modal-adapter";
 
 const STEPS = [
-  { key: "create", label: "Capture", sub: "Fill in your new item" },
+  { key: "create", label: "Create", sub: "Fill in your new item" },
   { key: "link", label: "Link", sub: "Connect to existing ARGUS records" },
   { key: "save", label: "Save", sub: "Review and save" },
 ] as const;
@@ -78,7 +78,7 @@ function SearchResultRow({
         <p className="truncate text-sm text-zinc-200">{entity.name}</p>
         <p className="truncate text-[11px] text-zinc-600">{subtitle}</p>
       </div>
-      <span className="text-xs font-medium text-violet-400">+ Link</span>
+      <span className="text-xs font-medium text-violet-400">Link</span>
     </button>
   );
 }
@@ -257,7 +257,7 @@ function ArgusCreateLinkWindowBody({
                     ? "Link & Connect"
                     : createItemDisplayLabel(flow.itemKind)}
               </h1>
-              {entityCaptureOnly && needsKindPicker ? (
+              {entityCaptureOnly && needsKindPicker && ADD_CONTEXT.useRegisterHint ? (
                 <p className="text-[11px] text-zinc-500">{ADD_CONTEXT.useRegisterHint}</p>
               ) : null}
             </div>
@@ -600,7 +600,7 @@ function ArgusCreateLinkWindowBody({
                     >
                       <KindIcon kind="journal" className="!h-8 !w-8 !text-xs" />
                       <span className="min-w-0 flex-1 truncate text-sm text-zinc-300">{row.title}</span>
-                      <span className="text-xs text-violet-400">+ Link</span>
+                      <span className="text-xs text-violet-400">Link</span>
                     </button>
                   ))
               ) : searchResults.length === 0 ? (

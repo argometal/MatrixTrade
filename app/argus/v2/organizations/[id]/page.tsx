@@ -15,7 +15,7 @@ import { V2TagPatternBadges } from "../../components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "../../components/V2RecordRecentEntity";
 import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
 import { V2EntityNeighborhoodPanel } from "../../components/V2EntityNeighborhoodPanel";
-import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
+import { V2EntityCreateButton, V2EntityLinkButton } from "../../components/V2CreateEntityButton";
 import { V2OrgTabs } from "../../components/V2OrgTabs";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
 import { V2RelationshipChart } from "../../components/V2RelationshipChart";
@@ -129,6 +129,7 @@ export default async function V2OrganizationPage({
                 linkedIds={entity.linkedEntityIds ?? []}
                 className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
               />
+              <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
               <V2QuickDeliverButton
                 scopeType="organization"
                 scopeId={entity.id}

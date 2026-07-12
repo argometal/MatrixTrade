@@ -64,18 +64,18 @@ export const CAPTURE = {
 } as const;
 
 export const REGISTER = {
-  action: "Register",
-  entityCapture: "Add context",
-  entityCaptureHint: "New topic, event, project… then link to what exists",
+  action: "Create",
+  entityCapture: "Create",
+  entityCaptureHint: "New person, topic, event, project, or organization",
 } as const;
 
-/** Extend the graph — not evidence intake. */
+/** Extend the graph — new entity types. */
 export const ADD_CONTEXT = {
-  action: "Add context",
-  title: "Add context",
-  pickKind: "What context do you need?",
-  hint: "Use Register for evidence — this adds a person, topic, event, or other lens to the graph.",
-  useRegisterHint: "Use Register for evidence notes",
+  action: "Create",
+  title: "Create",
+  pickKind: "What do you want to create?",
+  hint: "Add a person, topic, event, project, or organization to the graph.",
+  useRegisterHint: "",
 } as const;
 
 export const ADD_MENU = {

@@ -375,7 +375,7 @@ export function V2InboxDetailPanel({
               onClick={() => openInboxConnect("all", true)}
               className="rounded-xl border border-dashed border-zinc-700 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
             >
-              + Link
+              Link
             </button>
           ) : null}
           {canTriage && suggestedEntities.length > 0 ? (

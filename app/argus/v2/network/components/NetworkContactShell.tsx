@@ -5,7 +5,6 @@ import { useMemo, useState, useTransition } from "react";
 import type { Entity } from "@/lib/argus/types";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import { updateRelationshipMetricsAction } from "@/app/argus/actions";
-import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { EntityEditForm } from "@/app/argus/components/EntityEditForm";
 import { formatDate } from "@/app/argus/components/ui";
 import {
@@ -27,8 +26,9 @@ import type {
   NetworkContactTimelineItem,
 } from "@/lib/argus/v2/network-contact-loaders";
 import { initialsFromName } from "@/lib/argus/v2/network-contact-loaders";
-import { personHasContactEvidence, networkConversationNoteTemplate } from "@/lib/argus/network-dialogue";
+import { personHasContactEvidence } from "@/lib/argus/network-dialogue";
 import { V2Badge, V2Card } from "@/app/argus/v2/components/v2-ui";
+import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 import { NetworkDialogueGuide } from "./NetworkDialogueGuide";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
@@ -304,7 +304,7 @@ function ContactChronicleSection({
       ) : null}
 
       {filtered.length === 0 ? (
-        <p className="text-sm text-zinc-600">Nothing in the chronicle yet — Register after your next conversation.</p>
+        <p className="text-sm text-zinc-600">Nothing in the chronicle yet.</p>
       ) : (
         <ul className="space-y-3">
           {filtered.map((item) => (
@@ -468,7 +468,6 @@ export function NetworkContactShell({
   snapshotItems: SnapshotMenuItem[];
 }) {
   const router = useRouter();
-  const { openCapture } = useArgusAdd();
   const [tab, setTab] = useState<ContactTab>("Overview");
   const [showEdit, setShowEdit] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -547,13 +546,12 @@ export function NetworkContactShell({
             >
               Edit
             </button>
-            <button
-              type="button"
-              onClick={() => openCapture({ entityIds: [entity.id] })}
-              className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-500"
-            >
-              + Register
-            </button>
+            <V2EntityLinkButton
+              entityId={entity.id}
+              linkedIds={entity.linkedEntityIds ?? []}
+              className="rounded-xl border border-violet-500/40 bg-violet-600/15 px-4 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-600/25"
+            />
+            <V2EntityCreateButton className="rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-800" />
             <a
               href={`/argus/v2/deliver?scopeType=person&scopeId=${entity.id}`}
               className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
@@ -605,13 +603,6 @@ export function NetworkContactShell({
               entityName={entity.name}
               email={page.email}
               linkedIn={page.linkedIn}
-              onRegister={() => openCapture({ entityIds: [entity.id] })}
-              onRegisterWithTemplate={() =>
-                openCapture({
-                  entityIds: [entity.id],
-                  body: networkConversationNoteTemplate(entity.name),
-                })
-              }
             />
           ) : null}
           <ContactAside page={page} />

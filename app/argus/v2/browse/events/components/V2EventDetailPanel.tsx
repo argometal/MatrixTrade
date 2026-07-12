@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
+import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { appendEventChronicleEntryAction } from "@/app/argus/actions";
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
 import { V2AttachmentComposer } from "@/app/argus/v2/components/V2AttachmentComposer";
@@ -203,6 +203,7 @@ export function V2EventDetailPanel({
               linkedIds={selected.linkedEntityIds}
               className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
             />
+            <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
           </div>
         </div>
 

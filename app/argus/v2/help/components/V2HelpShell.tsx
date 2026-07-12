@@ -19,7 +19,7 @@ const SECTIONS: HelpSection[] = [
       "Argus is an evidence organization system — not a CRM or note-taking app. You register what happened, link it to context, browse when you need the full picture, and deliver packages when someone else needs proof.",
     items: [
       {
-        title: "Receive → Register → Link → Retrieve → Deliver",
+        title: "Receive → Create → Link → Retrieve → Deliver",
         body: "Evidence arrives (email, file, short register entry). You link it to people, projects, organizations, topics, or events. Browse and search retrieve everything for a subject. Deliver packages evidence for handoff.",
       },
       {
@@ -33,16 +33,12 @@ const SECTIONS: HelpSection[] = [
     title: "Core verbs",
     items: [
       {
-        title: "Register",
-        body: "Record what happened — a sentence is enough. Use the Register button in the top bar. Link to topics, events, or projects as you save, or classify later.",
+        title: "Create",
+        body: "Add a person, project, topic, event, or organization from the top bar. Pick a type, name it, then link it to what already exists.",
       },
       {
         title: "Link",
-        body: "Connect evidence to entities in the graph. Link is sacred — it is how Argus correlates email, files, and register entries across years.",
-      },
-      {
-        title: "Add context",
-        body: "Extend the graph with a new person, organization, project, topic, event, or runbook — then link evidence to it. Use for structure, not for writing long documents.",
+        body: "Connect records to people, projects, topics, events, and organizations. Link is how Argus ties email, files, and notes together.",
       },
       {
         title: "Deliver",

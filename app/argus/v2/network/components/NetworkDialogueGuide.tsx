@@ -1,8 +1,5 @@
 "use client";
 
-import {
-  networkConversationNoteTemplate,
-} from "@/lib/argus/network-dialogue";
 import { V2Card } from "@/app/argus/v2/components/v2-ui";
 import { NetworkConversationPlaybook } from "./NetworkConversationPlaybook";
 
@@ -10,14 +7,10 @@ export function NetworkDialogueGuide({
   entityName,
   email,
   linkedIn,
-  onRegister,
-  onRegisterWithTemplate,
 }: {
   entityName: string;
   email: string | null;
   linkedIn: string | null;
-  onRegister: () => void;
-  onRegisterWithTemplate: () => void;
 }) {
   return (
     <section className="space-y-4">
@@ -29,13 +22,6 @@ export function NetworkDialogueGuide({
           conversation when you can; use the playbook below if you need a discreet cheat sheet.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={onRegister}
-            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
-          >
-            + Register conversation
-          </button>
           {email ? (
             <a
               href={`mailto:${email}`}
@@ -57,12 +43,9 @@ export function NetworkDialogueGuide({
         </div>
       </V2Card>
 
-      <NetworkConversationPlaybook
-        personName={entityName}
-        onUseTemplate={onRegisterWithTemplate}
-      />
+      <NetworkConversationPlaybook personName={entityName} />
     </section>
   );
 }
 
-export { networkConversationNoteTemplate };
+export { networkConversationNoteTemplate } from "@/lib/argus/network-dialogue";

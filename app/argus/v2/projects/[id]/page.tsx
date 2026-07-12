@@ -18,7 +18,7 @@ import { V2Badge, V2BackLink, V2Card } from "../../components/v2-ui";
 import { V2EntityNeighborhoodPanel } from "../../components/V2EntityNeighborhoodPanel";
 import { V2EntityLifecycleActions } from "../../components/V2EntityLifecycleActions";
 import { V2ProjectScopeToggle } from "../../components/V2ProjectScopeToggle";
-import { V2EntityLinkButton } from "../../components/V2CreateEntityButton";
+import { V2EntityCreateButton, V2EntityLinkButton } from "../../components/V2CreateEntityButton";
 import { V2OrgTimeline } from "../../components/V2OrgTimeline";
 import { V2ProjectTabs } from "../../components/V2ProjectTabs";
 import { V2ProjectRunbooksPanel } from "../../components/V2ProjectRunbooksPanel";
@@ -158,6 +158,7 @@ export default async function V2ProjectPage({
               linkedIds={entity.linkedEntityIds ?? []}
               className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
             />
+            <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
             <V2QuickDeliverButton
               scopeType="project"
               scopeId={entity.id}

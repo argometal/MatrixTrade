@@ -54,7 +54,7 @@ export function V2CreateEntityButton({
 export function V2EntityLinkButton({
   entityId,
   linkedIds,
-  label = "+ Link",
+  label = "Link",
   className,
 }: {
   entityId: string;
@@ -77,6 +77,28 @@ export function V2EntityLinkButton({
         })
       }
       className={className}
+      title="Link to people, projects, topics, or events"
+    >
+      {label}
+    </button>
+  );
+}
+
+export function V2EntityCreateButton({
+  label = "Create",
+  className,
+}: {
+  label?: string;
+  className?: string;
+}) {
+  const { openAddContext } = useArgusAdd();
+
+  return (
+    <button
+      type="button"
+      onClick={() => openAddContext()}
+      className={className}
+      title="Create a person, project, topic, event, or organization"
     >
       {label}
     </button>
