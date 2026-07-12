@@ -24,6 +24,9 @@
     "principles": [
       "Matrix is a statistical engine, not a prediction engine",
       "Maximize long-term expectancy — not highest probability",
+      "Maximize initial R — not win rate; 3R minimum target, 4R+ optimal",
+      "Layered entry improves average entry without changing the risk plan",
+      "Asymmetry over frequency — fewer high-R trades beat many low-R wins",
       "Evaluate thesis quality AND opportunity quality — neither alone is sufficient",
       "Confirmation has a cost — stronger thesis can mean weaker opportunity",
       "One trade never validates or invalidates the Playbook"
