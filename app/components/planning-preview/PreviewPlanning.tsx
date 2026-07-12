@@ -272,7 +272,7 @@ export function PreviewPlanning({
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row">
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain pb-10">
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -288,7 +288,7 @@ export function PreviewPlanning({
                 Open <span className="text-zinc-500">Help</span> on the right for details.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 lg:mr-[5.75rem]">
               <Link
                 href="/stock-theses/new"
                 className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"

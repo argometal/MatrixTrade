@@ -17,7 +17,7 @@ export function PlanLevelsSidePanel({
   if (!open || !view) return null;
 
   return (
-    <aside className="flex min-h-0 w-full shrink-0 flex-col border-t border-zinc-800 bg-zinc-950/90 lg:w-[min(400px,38%)] lg:border-l lg:border-t-0">
+    <aside className="flex max-h-[min(42vh,22rem)] min-h-0 w-full shrink-0 flex-col border-t border-zinc-800 bg-zinc-950/90 lg:max-h-none lg:w-[min(400px,38%)] lg:border-l lg:border-t-0">
       <div className="flex items-start justify-between gap-3 border-b border-zinc-800 px-4 py-3">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
