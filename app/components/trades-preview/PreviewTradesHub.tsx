@@ -48,7 +48,7 @@ export function PreviewTradesHub({
                     : "Close the learning loop — reviews, inbox, and playbook assignment."}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 lg:mr-[5.75rem]">
                 <MatrixConnectButton
                   connectOptions={{
                     window: "trades-hub",

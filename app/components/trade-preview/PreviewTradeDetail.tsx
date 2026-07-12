@@ -79,7 +79,7 @@ export function PreviewTradeDetail({
                 <p className="mt-1 text-sm text-amber-400">⚠ inconsistent trade data</p>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 lg:mr-[5.75rem]">
               <MatrixConnectButton
                 contextLabel={trade.id}
                 connectOptions={{

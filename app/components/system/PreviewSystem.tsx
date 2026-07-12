@@ -60,7 +60,7 @@ export function PreviewSystem({
                 Bridge sync, inbox backend, vault paths, and deployment status.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 lg:mr-[5.75rem]">
               <MatrixConnectButton
                 connectOptions={{
                   window: "system",

@@ -130,7 +130,7 @@ export function PreviewStockThesis({
                 {synthesis ? ` · confidence ${synthesis.thesisConfidence}` : ""}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 lg:mr-[5.75rem]">
               <MatrixConnectButton
                 contextLabel={thesis.ticker}
                 connectOptions={{

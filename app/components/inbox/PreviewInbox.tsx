@@ -34,7 +34,7 @@ export function PreviewInbox({
             </div>
             <Link
               href="/home-preview?panel=assistant"
-              className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200 lg:mr-[5.75rem]"
             >
               Asistente IA
             </Link>
