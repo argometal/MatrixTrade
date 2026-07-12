@@ -1,5 +1,6 @@
 import { appendMarketEvidenceFromProposal } from "./market-evidence";
 import { createStockCaseFromProposal } from "./stock-case-create";
+import { deleteStockCaseFromProposal } from "./stock-case-delete";
 import { getAppliedImportStore } from "./applied-import-store";
 import { computeImportFingerprint } from "./import-fingerprint";
 import { readNoteBody } from "./obsidian";
@@ -105,6 +106,8 @@ async function applyTradingProposalInner(
   switch (parsed.type) {
     case "stock-case-create":
       return applyStockCaseCreate(parsed);
+    case "stock-case-delete":
+      return applyStockCaseDelete(parsed);
     case "scout-assessment":
       return applyScoutAssessment(parsed);
     case "decision-update":
@@ -132,6 +135,19 @@ async function applyTradingProposalInner(
     default:
       return { ok: false, errors: ["Unsupported proposal type."] };
   }
+}
+
+async function applyStockCaseDelete(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await deleteStockCaseFromProposal(parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  return {
+    ok: true,
+    message: `Deleted Stock Profile ${result.deletedId}`,
+    type: "stock-case-delete",
+    stockFileId: result.deletedId,
+  };
 }
 
 async function applyStockCaseCreate(

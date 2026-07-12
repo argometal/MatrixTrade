@@ -109,6 +109,55 @@ export interface Playbook {
   multiTimeframeHierarchy?: PlaybookMultiTimeframeHierarchy;
   /** Playbook-level scout outcome taxonomy and missed-scout definitions. */
   scoutStatistics?: PlaybookScoutStatistics;
+  /**
+   * Playbook experiment — structural pullback / battle zones / Zone Solver.
+   * Runs BEFORE Entry Solver; does not replace it.
+   */
+  structuralPullbackExperiment?: PlaybookStructuralPullbackExperiment;
+  /** Ordered flow: thesis → zones → rank → select → Entry Solver → layered entry. */
+  zoneSelectionFlow?: PlaybookZoneSelectionFlow;
+}
+
+export type ReachProbability = "high" | "medium" | "low";
+export type AsymmetryQuality = "acceptable" | "good" | "excellent";
+export type BattleZoneStatus = "watching" | "selected" | "invalidated";
+
+/** Illustrative battle zone — Playbook schema, not Stock File storage. */
+export interface PlaybookBattleZone {
+  id: string;
+  label: string;
+  low: number;
+  high: number;
+  basis: string[];
+  reachProbability: ReachProbability;
+  asymmetryQuality: AsymmetryQuality;
+  status: BattleZoneStatus;
+}
+
+export interface PlaybookZoneSelectionFlow {
+  experimentNote: string;
+  steps: string[];
+  doesNotReplaceEntrySolver: string;
+}
+
+export interface PlaybookStructuralPullbackExperiment {
+  objective: string;
+  hypothesis: string;
+  universe: string[];
+  candidateZoneSources: string[];
+  expectedReachProbabilityNote: string;
+  entryProcess: string[];
+  corePrinciple: string;
+  experimentalVariable: string;
+  constantVariables: string[];
+  successMetrics: string[];
+  failureConditions: string[];
+  guidingPrinciple: string;
+  zoneSolverNote: string;
+  battleZoneRules: string[];
+  layeredEntryRules: string[];
+  exampleBattleZones?: PlaybookBattleZone[];
+  exampleLayeredEntry?: { price: number; allocationPercent: number }[];
 }
 
 export const PLAYBOOK_STATUS_LABELS: Record<PlaybookStatus, string> = {

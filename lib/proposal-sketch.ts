@@ -50,6 +50,8 @@ function actionLabel(type: TradingInboxPayload["type"]): string {
       return "Update stock file";
     case "stock-case-create":
       return "New stock profile";
+    case "stock-case-delete":
+      return "Delete stock profile";
     case "evidence-add":
       return "Add evidence";
     case "layered-entry-update":
@@ -162,6 +164,16 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
           fields.push({ label: "Scout", value: "No initialScout (optional)" });
         }
       }
+      break;
+    }
+    case "stock-case-delete": {
+      fields.push({ label: "Profile", value: String(p.id ?? "—").toUpperCase(), tone: "accent" });
+      fields.push({
+        label: "Confirm",
+        value: p.confirmDelete === true ? "DELETE confirmed" : "Missing confirmDelete",
+        tone: p.confirmDelete === true ? "risk" : "risk",
+      });
+      if (p.reason) fields.push({ label: "Reason", value: String(p.reason) });
       break;
     }
     case "evidence-add": {

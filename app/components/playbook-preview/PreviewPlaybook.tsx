@@ -9,6 +9,8 @@ import {
   type PlaybookMethodology,
   type PlaybookMultiTimeframeHierarchy,
   type PlaybookScoutStatistics,
+  type PlaybookStructuralPullbackExperiment,
+  type PlaybookZoneSelectionFlow,
 } from "@/lib/playbook-types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
@@ -149,6 +151,78 @@ function PlaybookMultiTimeframePanel({ hierarchy }: { hierarchy: PlaybookMultiTi
               <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
               {rule}
             </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function PlaybookZoneSelectionPanel({ flow }: { flow: PlaybookZoneSelectionFlow }) {
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-violet-500/20 bg-violet-950/20 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-violet-400">
+        Zone selection flow (before Entry Solver)
+      </p>
+      {flow.experimentNote ? (
+        <p className="text-xs leading-relaxed text-violet-200/80">{flow.experimentNote}</p>
+      ) : null}
+      <ol className="space-y-1 text-sm text-zinc-300">
+        {flow.steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+      {flow.doesNotReplaceEntrySolver ? (
+        <p className="text-xs font-medium text-violet-300/90">{flow.doesNotReplaceEntrySolver}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function PlaybookStructuralPullbackPanel({
+  experiment,
+}: {
+  experiment: PlaybookStructuralPullbackExperiment;
+}) {
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-teal-500/20 bg-teal-950/20 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-teal-400">
+        Structural Pullback experiment
+      </p>
+      <p className="text-sm text-zinc-300">{experiment.objective}</p>
+      <p className="text-xs leading-relaxed text-zinc-400">{experiment.hypothesis}</p>
+      <p className="text-sm leading-relaxed text-teal-200/90">{experiment.corePrinciple}</p>
+      {experiment.expectedReachProbabilityNote ? (
+        <p className="text-xs text-zinc-500">{experiment.expectedReachProbabilityNote}</p>
+      ) : null}
+      {experiment.exampleBattleZones?.length ? (
+        <div className="space-y-2">
+          <p className="text-xs font-medium text-zinc-400">Example battle zones (VGT)</p>
+          {experiment.exampleBattleZones.map((zone) => (
+            <div key={zone.id} className="rounded-lg bg-zinc-950/50 p-3 text-xs">
+              <p className="font-medium text-zinc-200">
+                {zone.label} · ${zone.low}–${zone.high}
+              </p>
+              <p className="mt-1 text-zinc-500">
+                Reach: {zone.reachProbability} · Asymmetry: {zone.asymmetryQuality} ·{" "}
+                {zone.basis.join(", ")}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      {experiment.exampleLayeredEntry?.length ? (
+        <p className="text-xs text-zinc-500">
+          Example layered entry:{" "}
+          {experiment.exampleLayeredEntry
+            .map((l) => `$${l.price} (${l.allocationPercent}%)`)
+            .join(" · ")}
+        </p>
+      ) : null}
+      {experiment.failureConditions?.length ? (
+        <ul className="space-y-1 text-xs text-zinc-500">
+          {experiment.failureConditions.map((item) => (
+            <li key={item}>· Reject if: {item}</li>
           ))}
         </ul>
       ) : null}
@@ -310,6 +384,16 @@ export function PreviewPlaybook({
 
                     {row.playbook?.scoutStatistics ? (
                       <PlaybookScoutStatisticsPanel stats={row.playbook.scoutStatistics} />
+                    ) : null}
+
+                    {row.playbook?.zoneSelectionFlow ? (
+                      <PlaybookZoneSelectionPanel flow={row.playbook.zoneSelectionFlow} />
+                    ) : null}
+
+                    {row.playbook?.structuralPullbackExperiment ? (
+                      <PlaybookStructuralPullbackPanel
+                        experiment={row.playbook.structuralPullbackExperiment}
+                      />
                     ) : null}
 
                     {row.playbook?.scoutingDimensions ? (

@@ -70,6 +70,23 @@ Task: preview MSFT stock-case duplicates in MatrixTrade Supabase.
 5. Output SQL preview only — do NOT delete until user confirms.
 ```
 
+## IA delete (after deploy)
+
+For a single duplicate profile, IA can propose:
+
+```json
+{
+  "type": "stock-case-delete",
+  "proposal": {
+    "id": "ST-MSFT-002",
+    "confirmDelete": true,
+    "reason": "Duplicate from repeated import"
+  }
+}
+```
+
+Human must Validate → Accept in Connect. `confirmDelete: true` is mandatory.
+
 ## After cleanup
 
 - Re-run scouting from the canonical profile only.

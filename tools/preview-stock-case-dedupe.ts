@@ -4,9 +4,39 @@
  * Preview:  npx tsx tools/preview-stock-case-dedupe.ts --ticker MSFT
  * Execute:  npx tsx tools/preview-stock-case-dedupe.ts --ticker MSFT --keep ST-MSFT-001 --execute --confirm YES_DELETE_DUPLICATES
  */
+import { existsSync, readFileSync } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { getPlans } from "../lib/plans";
 import { getStockTheses } from "../lib/stock-theses";
 import { isSupabaseMatrixStore } from "../lib/trades-json";
 import { rollbackStockCaseCreate } from "../lib/stock-case-rollback";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, "..");
+
+function loadEnvLocal(): void {
+  const envPath = join(ROOT, ".env.local");
+  if (!existsSync(envPath)) return;
+  const raw = readFileSync(envPath, "utf-8");
+  for (const line of raw.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[key]) process.env[key] = value;
+  }
+}
+
+loadEnvLocal();
 
 function parseArgs(argv: string[]) {
   const ticker = (argv.find((a) => a.startsWith("--ticker="))?.split("=")[1] ?? "MSFT")
@@ -80,7 +110,7 @@ async function main() {
   if (!execute) {
     console.log("\nPreview only. To delete duplicates:");
     console.log(
-      `  npx tsx tools/preview-stock-case-dedupe.ts --ticker ${ticker} --keep ${canonical} --execute --confirm YES_DELETE_DUPLICATES`
+      `  npx tsx tools/preview-stock-case-dedupe.ts --ticker ${ticker} --keep ${canonical} --execute --confirm=YES_DELETE_DUPLICATES`
     );
     process.exit(0);
   }

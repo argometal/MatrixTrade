@@ -19,6 +19,7 @@ PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex (0-based, -1=none) or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
+- stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason. Deletes linked evidence and scout plans. Irreversible — human Apply only.
 
 Trade layer (use only when scouting approves):
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId, status
@@ -62,6 +63,7 @@ All Apply-ready block types:
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout (backfill missing Scout Plan only)
+- stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason (duplicate cleanup)
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId, status
 - trade-close: close trade — id, exit required; optional confirmExternalClose (true)
 - trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
@@ -308,6 +310,15 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
         thesis: "Only enter if SHOP reaches the maximum admissible entry while the bullish thesis remains valid.",
         notes: "Target 180 is the probable three-month objective. Target 200 is extended upside only.",
       },
+    },
+  },
+  "stock-case-delete": {
+    type: "stock-case-delete",
+    source: "ai-block",
+    proposal: {
+      id: "ST-MSFT-002",
+      confirmDelete: true,
+      reason: "Duplicate profile from repeated import — keeping ST-MSFT-001",
     },
   },
   "trade-proposal": {

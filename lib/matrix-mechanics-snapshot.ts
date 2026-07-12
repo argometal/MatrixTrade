@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 9;
+export const MATRIX_MECHANICS_REVISION = 10;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -24,6 +24,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "=== AI BLOCK TYPES ===",
     "Scouting layer:",
     "- stock-case-create — new Stock Profile (+ optional initialScout)",
+    "- stock-case-delete — remove Stock Profile (confirmDelete: true required)",
     "- evidence-add — append market evidence row",
     "- file-update — update an existing Stock File; may include initialScout to backfill a missing Scout Plan when no linked active plan exists",
     "- scout-assessment — validate dossier (reasons + challenges required)",

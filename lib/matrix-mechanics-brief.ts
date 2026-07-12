@@ -140,7 +140,7 @@ export function buildMatrixMechanicsBrief(): string {
     "Fixed dollar risk per qualified trade during validation — shares adjust to stop; never mix bet sizes across the sample.",
     "Preferred: Layered Entry / Entry Optimization — not Probe (legacy). Thesis accepted; improve average entry via limit ladder.",
     "Only one execution variable per experiment. No chase: all limits miss = trade cancelled, no market order.",
-    "Playbooks: expectancy-asymmetry (framework), layered-entry (execution hypothesis), multi-timeframe-hierarchy (decision experiment).",
+    "Playbooks: expectancy-asymmetry (framework), layered-entry (execution hypothesis), multi-timeframe-hierarchy (decision experiment), structural-pullback-entry (zone selection experiment).",
     "",
     "PLAYBOOK EXPERIMENTS (not mandatory engine rules)",
     "Multi-Timeframe Decision Hierarchy (playbook: multi-timeframe-hierarchy):",
@@ -157,6 +157,14 @@ export function buildMatrixMechanicsBrief(): string {
     "- Missed = predefined entry zone reached while thesis remained valid, but no execution occurred.",
     "- Missed Scouts are NOT Trades — track for opportunity cost and Entry Optimization validation.",
     "- Do not count missed scouts as wins, losses, or closed trades.",
+    "",
+    "Structural Pullback Entry (playbook: structural-pullback-entry):",
+    "- Zone Solver BEFORE Entry Solver — do NOT replace Entry Solver.",
+    "- Compare battle zones by expected reach probability vs asymmetry quality — not price prediction.",
+    "- Flow: thesis valid → detect zones → rank → select zone → Entry Solver → layered entry → Scout → trade.",
+    "- Battle zones are not automatic entries; Fibonacci/extension levels = reaction zones, not targets.",
+    "- Universe: secular uptrend, high liquidity, institutional-quality assets only.",
+    "- Hypothesis refuted after 30–50 trades if pullbacks underperform momentum entries.",
     "",
     "ENTRY OPTIMIZATION PRINCIPLE",
     "Matrix maximizes initial R — not win rate. A lower hit rate with larger average winners beats many small wins.",
@@ -341,6 +349,20 @@ export function formatPlaybookTrainingSection(playbooks: Playbook[]): string {
           `  missed_not_trades:${pb.scoutStatistics.notTradesRule.replace(/\s+/g, " ").slice(0, 160)}`
         );
       }
+    }
+    if (pb.structuralPullbackExperiment?.zoneSolverNote) {
+      lines.push(
+        `  zone_solver:${pb.structuralPullbackExperiment.zoneSolverNote.replace(/\s+/g, " ").slice(0, 200)}`
+      );
+    }
+    if (pb.zoneSelectionFlow?.steps?.length) {
+      lines.push(`  zone_flow_steps:${pb.zoneSelectionFlow.steps.length}`);
+    }
+    if (pb.structuralPullbackExperiment?.exampleBattleZones?.length) {
+      const zones = pb.structuralPullbackExperiment.exampleBattleZones
+        .map((z) => `${z.id}:${z.low}-${z.high}(${z.reachProbability}/${z.asymmetryQuality})`)
+        .join("|");
+      lines.push(`  example_battle_zones:${zones}`);
     }
     if (pb.methodology?.matrixIdentity) {
       lines.push(`  matrix_identity:${pb.methodology.matrixIdentity.replace(/\s+/g, " ").slice(0, 200)}`);

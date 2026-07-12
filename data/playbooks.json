@@ -259,5 +259,149 @@
       "Grade D — execution level, stop, entry refinement set (1W)",
       "All grades pass top-down — otherwise stop, no trade"
     ]
+  },
+  {
+    "id": "structural-pullback-entry",
+    "name": "Structural Pullback Entry",
+    "status": "TESTING",
+    "description": "Playbook experiment — compare battle zones by expected reach vs asymmetry before Entry Solver. Not a validated rule.",
+    "experimentScope": "playbook",
+    "experimentHypothesis": "In secular uptrends, waiting for structural pullback zones improves long-term expectancy vs buying momentum at extended prices.",
+    "appliesMethodology": "expectancy-asymmetry",
+    "principles": [
+      "Playbook experiment — hypothesis to refute with data, not a permanent engine rule",
+      "Objective: where does the market offer greatest asymmetry — not where price will reverse",
+      "Zone Solver precedes Entry Solver — two separate problems",
+      "Battle zones are not automatic entries",
+      "Expected Reach Probability compares execution likelihood vs R quality — not prediction",
+      "Fibonacci and crowd-observed levels = reaction zones, not targets",
+      "Universe: secular uptrend, high liquidity, institutional-quality assets only",
+      "Reject hypothesis after 30–50 observations if pullbacks underperform momentum entries"
+    ],
+    "zoneSelectionFlow": {
+      "experimentNote": "Zone Selection runs BEFORE Entry Solver. Entry Solver is unchanged — it resolves target, stop, maximum entry within the selected zone.",
+      "steps": [
+        "1. Thesis valid (secular uptrend intact)",
+        "2. Detect Battle Zones",
+        "3. Rank zones by expected expectancy (reach × asymmetry)",
+        "4. Human or Scout selects preferred zone",
+        "5. Entry Solver (target → stop → maximum entry)",
+        "6. Layered Entry within zone",
+        "7. Scout decision",
+        "8. Trade"
+      ],
+      "doesNotReplaceEntrySolver": "Do not merge Zone Selection with Entry Solver. First decide WHERE battle is worth fighting; then solve HOW to enter."
+    },
+    "structuralPullbackExperiment": {
+      "objective": "Determine whether waiting for structural pullbacks in secular uptrends produces higher long-term expectancy than participating during momentum.",
+      "hypothesis": "Entering only after price reaches predefined structural retracement zones improves expectancy by increasing initial R while preserving sufficient participation.",
+      "universe": [
+        "Multi-year secular uptrend",
+        "Higher highs and higher lows intact",
+        "No structural thesis invalidation",
+        "High liquidity",
+        "Institutional-quality ETFs or large-cap leaders (e.g. VGT, VOO, SPY, QQQ, MSFT, AAPL)"
+      ],
+      "candidateZoneSources": [
+        "Previous structural support",
+        "Major breakout retest",
+        "Fibonacci retracement clusters",
+        "High-volume demand zones"
+      ],
+      "expectedReachProbabilityNote": "Not a prediction — compare balance between probability of execution and asymmetry quality (e.g. 118 high reach/low R vs 80 low reach/excellent R).",
+      "entryProcess": [
+        "Confirm secular thesis remains valid",
+        "Identify structural battle zones",
+        "Rank zones by expected expectancy",
+        "Select preferred zone",
+        "Apply Entry Solver: probable target, strategy stop, maximum entry, minimum R",
+        "Execute only if all Playbook rules satisfied"
+      ],
+      "corePrinciple": "Identify where the market offers the greatest asymmetry relative to risk — not where price will reverse.",
+      "experimentalVariable": "Entry location (which battle zone)",
+      "constantVariables": [
+        "Fixed dollar risk",
+        "Same Playbook",
+        "Same minimum R",
+        "Same execution protocol",
+        "Same asset-quality requirements"
+      ],
+      "successMetrics": [
+        "Average initial R",
+        "Realized expectancy",
+        "Win rate",
+        "Average holding time",
+        "Missed trade frequency",
+        "Capital utilization efficiency",
+        "Maximum drawdown",
+        "Opportunity cost"
+      ],
+      "failureConditions": [
+        "Lower expectancy than momentum entries",
+        "Misses too many successful trends",
+        "Materially worse capital efficiency",
+        "Underperforms after adequate sample (30–50 trades)"
+      ],
+      "guidingPrinciple": "Maximize expected value per unit of risk consumed — not participation rate.",
+      "zoneSolverNote": "Zone Solver compares candidate zones (reach probability × asymmetry). Only the selected zone receives Entry Solver and Scout Plan.",
+      "battleZoneRules": [
+        "Zones do not create trades automatically",
+        "One zone selected → one Scout Plan",
+        "Zones can be invalidated without deleting thesis"
+      ],
+      "layeredEntryRules": [
+        "Single strategy stop for entire plan",
+        "Fixed total dollar risk — shares per layer from stop distance",
+        "Probable target defined before entries",
+        "All layers must meet minimum R",
+        "If no limit fills, trade cancelled — no market chase"
+      ],
+      "exampleBattleZones": [
+        {
+          "id": "VGT-Z1",
+          "label": "Breakout retest",
+          "low": 99,
+          "high": 103,
+          "basis": ["monthly breakout", "0.786 retracement"],
+          "reachProbability": "high",
+          "asymmetryQuality": "good",
+          "status": "watching"
+        },
+        {
+          "id": "VGT-Z2",
+          "label": "Intermediate demand",
+          "low": 90,
+          "high": 96,
+          "basis": ["monthly support", "prior demand"],
+          "reachProbability": "medium",
+          "asymmetryQuality": "excellent",
+          "status": "watching"
+        },
+        {
+          "id": "VGT-Z3",
+          "label": "Structural support",
+          "low": 79,
+          "high": 84,
+          "basis": ["major breakout base", "0.618 long-term retracement"],
+          "reachProbability": "low",
+          "asymmetryQuality": "excellent",
+          "status": "watching"
+        }
+      ],
+      "exampleLayeredEntry": [
+        { "price": 103, "allocationPercent": 25 },
+        { "price": 100, "allocationPercent": 35 },
+        { "price": 97, "allocationPercent": 40 }
+      ]
+    },
+    "checklist": [
+      "Secular thesis valid — no structural invalidation",
+      "Battle zones identified and ranked (reach × asymmetry)",
+      "Preferred zone selected — not buying at extended momentum by default",
+      "Entry Solver applied only inside selected zone",
+      "Layered limits + fixed dollar risk if using execution experiment",
+      "No chase if all limits miss",
+      "Outcome feeds Structural Pullback experiment metrics"
+    ]
   }
 ]

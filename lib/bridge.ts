@@ -208,6 +208,7 @@ export function getSnapshotReadUrl(): string | null {
 
 export type TradingProposalType =
   | "stock-case-create"
+  | "stock-case-delete"
   | "evidence-add"
   | "scout-assessment"
   | "decision-update"
@@ -234,6 +235,7 @@ export function parseTradingInboxPayload(
   const proposal = payload.proposal;
   if (
     type !== "stock-case-create" &&
+    type !== "stock-case-delete" &&
     type !== "evidence-add" &&
     type !== "scout-assessment" &&
     type !== "decision-update" &&
@@ -264,6 +266,8 @@ export function describeProposal(payload: TradingInboxPayload): string {
   switch (payload.type) {
     case "stock-case-create":
       return `New Stock Profile ${p.ticker} · ${p.currentHypothesis ?? p.thesis ?? ""}`;
+    case "stock-case-delete":
+      return `Delete Stock Profile ${p.id}${p.reason ? ` · ${p.reason}` : ""}`;
     case "evidence-add":
       return `Evidence ${p.ticker} ${p.stockProfileId} · ${p.category}`;
     case "scout-assessment":
@@ -345,6 +349,15 @@ export function validateProposalPayload(
         const scoutCheck = validateOptionalInitialScoutContract(scout as Record<string, unknown>);
         if (!scoutCheck.ok) errors.push(...scoutCheck.errors);
       }
+    }
+  }
+
+  if (parsed.type === "stock-case-delete") {
+    if (!p.id || !String(p.id).trim()) {
+      errors.push("proposal.id required");
+    }
+    if (p.confirmDelete !== true) {
+      errors.push("proposal.confirmDelete must be true");
     }
   }
 

@@ -28,6 +28,8 @@ export async function verifyApplyPersistence(
   switch (parsed.type) {
     case "stock-case-create":
       return verifyStockCaseCreatePersistence(parsed);
+    case "stock-case-delete":
+      return verifyStockCaseDeletePersistence(parsed);
     case "evidence-add":
       return verifyEvidenceAddPersistence(parsed);
     case "decision-update":
@@ -63,6 +65,17 @@ async function verifyStockCaseCreatePersistence(
     return { ok: false, detail: `Stock Profile for ${ticker} with matching hypothesis not found.` };
   }
   return { ok: true, detail: `Stock Profile ${match.id} · ${match.ticker} verified.` };
+}
+
+async function verifyStockCaseDeletePersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const id = String(parsed.proposal.id ?? "").trim().toUpperCase();
+  const remaining = await getStockThesisById(id);
+  if (remaining) {
+    return { ok: false, detail: `Stock Profile ${id} still exists after delete.` };
+  }
+  return { ok: true, detail: `Stock Profile ${id} removed.` };
 }
 
 async function verifyDecisionUpdatePersistence(

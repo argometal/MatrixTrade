@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { validateScoutContract, validateOptionalInitialScoutContract } from "../lib/scout-contract";
 import { computeImportFingerprint } from "../lib/import-fingerprint";
 import { validateProposalPayload } from "../lib/bridge";
+import { validateStockCaseDeleteProposal } from "../lib/stock-case-delete";
 import { proposalToStockCaseInput } from "../lib/stock-case-create";
 import { getAppliedImportStore } from "../lib/applied-import-store";
 import { promises as fs } from "fs";
@@ -113,11 +114,24 @@ async function testIdempotentApply() {
   assert.ok(again);
 }
 
+function testStockCaseDelete() {
+  const noConfirm = validateStockCaseDeleteProposal({ id: "ST-MSFT-002" });
+  assert.equal(noConfirm.ok, false);
+  const ok = validateStockCaseDeleteProposal({ id: "ST-MSFT-002", confirmDelete: true });
+  assert.equal(ok.ok, true);
+  const bridge = validateProposalPayload({
+    type: "stock-case-delete",
+    proposal: { id: "ST-MSFT-002", confirmDelete: true },
+  } as never);
+  assert.equal(bridge.ok, true);
+}
+
 async function main() {
   testContract();
   testBridgeValidation();
   testProposalInput();
   testFingerprintStable();
+  testStockCaseDelete();
   await testIdempotentApply();
   console.log("test-scout-contract: all passed");
 }
