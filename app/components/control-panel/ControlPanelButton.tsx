@@ -2,27 +2,22 @@
 
 import { useControlPanel } from "./MatrixControlPanelProvider";
 
+/** Top-bar entry — same placement pattern as Argus Create. */
 export function ControlPanelButton({
-  compact = false,
   className = "",
-  onClick,
 }: {
-  compact?: boolean;
   className?: string;
-  onClick?: () => void;
 }) {
   const { openPanel } = useControlPanel();
 
   return (
     <button
       type="button"
-      onClick={() => {
-        onClick?.();
-        openPanel();
-      }}
-      className={`w-full rounded-lg border border-violet-500/50 bg-violet-600/20 px-3 py-2.5 text-sm font-semibold text-violet-200 transition hover:bg-violet-600/30 ${className}`}
+      onClick={openPanel}
+      className={`inline-flex h-9 shrink-0 items-center rounded-xl bg-violet-600 px-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-950/30 transition hover:bg-violet-500 active:scale-[0.98] ${className}`}
+      title="Copy AI context — train, playbook, stock file, scouting, trade"
     >
-      {compact ? "Control" : "Control panel"}
+      Control
     </button>
   );
 }

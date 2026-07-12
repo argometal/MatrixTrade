@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { ImportAiBlockActionResult } from "@/app/actions";
 import { HomeDashboardMain } from "@/app/components/home-dashboard/HomeDashboardMain";
-import { MatrixConnectButton } from "@/app/components/matrix-connect/MatrixConnectButton";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
 import type { EquityPoint } from "@/lib/review";
 import type { AiBridgeOverviewData } from "@/lib/ai-bridge-overview";
@@ -102,15 +102,12 @@ export function PreviewDashboard({
                   {data.cycleLabel} · experiment control
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 lg:mr-[5.75rem]">
+              <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
                 {exchange ? (
-                  <MatrixConnectButton
-                    connectOptions={{
-                      window: "dashboard",
-                      snapshotTitle: "Dashboard snapshot",
-                      snapshotDescription: "Budget, experiment, attention, trades overview",
-                      snapshotItems: exchange.dashboardSnapshots,
-                    }}
+                  <SnapshotButton
+                    title="Dashboard snapshot"
+                    description="Budget, experiment, attention, trades overview"
+                    items={exchange.dashboardSnapshots}
                   />
                 ) : null}
                 <Link

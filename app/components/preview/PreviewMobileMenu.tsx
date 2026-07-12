@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ControlPanelButton } from "@/app/components/control-panel/ControlPanelButton";
 import { SignOutButton } from "@/app/components/SignOutButton";
 import { MobileMenuButton } from "@/app/components/preview/MobileMenuButton";
 import { useMobileMenu } from "@/app/components/preview/MobileMenuContext";
@@ -44,10 +43,6 @@ export function PreviewMobileMenu({ nav }: { nav: PreviewNavContext }) {
         </div>
 
         <div className="flex-1 overflow-y-auto px-3 py-4">
-          <div className="mb-6">
-            <ControlPanelButton onClick={() => setOpen(false)} />
-          </div>
-
           {PREVIEW_NAV_SECTIONS.map((section) => (
             <nav key={section.id} className="mb-6">
               <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">

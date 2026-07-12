@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PreviewReview } from "@/app/components/review-preview/PreviewReview";
 import { PreviewTradesList } from "@/app/components/trades-preview/PreviewTradesList";
-import { MatrixConnectButton } from "@/app/components/matrix-connect/MatrixConnectButton";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
 import type { AttentionItem } from "@/lib/dashboard-attention";
 import type { BridgeInboxItem } from "@/lib/bridge";
@@ -48,14 +48,11 @@ export function PreviewTradesHub({
                     : "Close the learning loop — reviews, inbox, and playbook assignment."}
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 lg:mr-[5.75rem]">
-                <MatrixConnectButton
-                  connectOptions={{
-                    window: "trades-hub",
-                    snapshotTitle: "Trades snapshot",
-                    snapshotDescription: "All trades summary, experiment, monthly room",
-                    snapshotItems,
-                  }}
+              <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
+                <SnapshotButton
+                  title="Trades snapshot"
+                  description="All trades summary, experiment, monthly room"
+                  items={snapshotItems}
                 />
                 <Link
                   href="/trades-preview"

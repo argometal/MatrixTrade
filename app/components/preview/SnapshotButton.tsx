@@ -8,10 +8,12 @@ export function SnapshotButton({
   title,
   description,
   items,
+  className = "",
 }: {
   title: string;
   description: string;
   items: SnapshotMenuItem[];
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export function SnapshotButton({
       <button
         type="button"
         onClick={() => copyItem(item)}
-        className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-left hover:bg-violet-500/20"
+        className={`rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-left hover:bg-violet-500/20 ${className}`}
       >
         <span className="block text-xs font-medium text-violet-200">
           {copiedId === item.id ? "Copied ✓" : title}
@@ -58,7 +60,7 @@ export function SnapshotButton({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-left hover:bg-violet-500/20"
+        className={`rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-left hover:bg-violet-500/20 ${className}`}
       >
         <span className="flex items-center gap-2 text-xs font-medium text-violet-200">
           {title}

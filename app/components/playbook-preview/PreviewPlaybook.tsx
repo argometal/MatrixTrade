@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { PlaybookStats } from "@/lib/analytics";
-import { MatrixConnectButton } from "@/app/components/matrix-connect/MatrixConnectButton";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import {
   PLAYBOOK_STATUS_LABELS,
   type Playbook,
@@ -122,14 +122,11 @@ export function PreviewPlaybook({
                 Strategy laboratory — assign trades manually, measure what works.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:mr-[5.75rem]">
-              <MatrixConnectButton
-                connectOptions={{
-                  window: "playbook",
-                  snapshotTitle: "Playbook snapshot",
-                  snapshotDescription: "Strategies, checklists, P/L and win rate per playbook",
-                  snapshotItems,
-                }}
+            <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
+              <SnapshotButton
+                title="Playbook snapshot"
+                description="Strategies, checklists, P/L and win rate per playbook"
+                items={snapshotItems}
               />
               <Link
                 href="/trades-preview"

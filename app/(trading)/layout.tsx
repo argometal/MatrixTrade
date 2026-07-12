@@ -19,13 +19,13 @@ export default async function TradingLayout({ children }: { children: React.Reac
     <MatrixConnectProvider>
       <MatrixControlPanelProvider data={controlPanel}>
         <MobileMenuProvider>
-          <PreviewMobileHeader pendingInboxCount={nav.pendingInboxCount} />
-          <PreviewMobileMenu nav={nav} />
-          <div className="pt-14 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pt-0 lg:pb-0">
-            {children}
-          </div>
-          <PreviewMobileNav nav={nav} />
-        </MobileMenuProvider>
+        <PreviewMobileHeader pendingInboxCount={nav.pendingInboxCount} />
+        <PreviewMobileMenu nav={nav} />
+        <div className="pt-14 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pt-0 lg:pb-0">
+          {children}
+        </div>
+        <PreviewMobileNav nav={nav} />
+      </MobileMenuProvider>
       </MatrixControlPanelProvider>
     </MatrixConnectProvider>
   );

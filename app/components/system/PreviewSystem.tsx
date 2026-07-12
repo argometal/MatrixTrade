@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ConnectPageContent } from "@/app/components/ConnectPageContent";
 import { CopyUrlButton } from "@/app/components/CopyUrlButton";
-import { MatrixConnectButton } from "@/app/components/matrix-connect/MatrixConnectButton";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { SystemBridgePanel } from "@/app/components/system/SystemBridgePanel";
 import { SystemRulesPanel } from "@/app/components/system/SystemRulesPanel";
 import { SystemSection, SystemRow, StatusBadge } from "@/app/components/system/SystemSection";
@@ -60,14 +60,11 @@ export function PreviewSystem({
                 Bridge sync, inbox backend, vault paths, and deployment status.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:mr-[5.75rem]">
-              <MatrixConnectButton
-                connectOptions={{
-                  window: "system",
-                  snapshotTitle: "Matrix Mechanics snapshot",
-                  snapshotDescription: "Full rules, block types, Apply gate — paste once per AI session",
-                  snapshotItems: mechanicsSnapshot,
-                }}
+            <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
+              <SnapshotButton
+                title="Matrix Mechanics snapshot"
+                description="Full rules, block types, Apply gate — paste once per AI session"
+                items={mechanicsSnapshot}
               />
             </div>
           </div>

@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/app/components/SignOutButton";
-import { ControlPanelButton } from "@/app/components/control-panel/ControlPanelButton";
 import {
   isPreviewNavActive,
   PREVIEW_NAV_SECTIONS,
@@ -26,11 +25,6 @@ export function PreviewSidebar({ nav }: { nav: PreviewNavContext }) {
         </span>
         <span className="font-semibold">MatrixTrade</span>
       </Link>
-
-      <div className="mb-6">
-        <ControlPanelButton className="xl:hidden" compact />
-        <ControlPanelButton className="hidden xl:block" />
-      </div>
 
       {PREVIEW_NAV_SECTIONS.map((section) => (
         <nav key={section.id} className={section.id === "system" ? "mt-6 space-y-1" : "space-y-1"}>

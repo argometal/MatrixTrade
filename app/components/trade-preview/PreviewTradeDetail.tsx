@@ -5,7 +5,7 @@ import {
   openTradeAction,
   updateTradeMetaAction,
 } from "@/app/actions";
-import { MatrixConnectButton } from "@/app/components/matrix-connect/MatrixConnectButton";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { snapshotButtonTitle } from "@/lib/snapshot-verification";
 import { calculateTradeResult } from "@/lib/calculate";
 import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
@@ -79,18 +79,11 @@ export function PreviewTradeDetail({
                 <p className="mt-1 text-sm text-amber-400">⚠ inconsistent trade data</p>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:mr-[5.75rem]">
-              <MatrixConnectButton
-                contextLabel={trade.id}
-                connectOptions={{
-                  window: "trade",
-                  tradeId: trade.id,
-                  ticker: trade.ticker,
-                  intent: "adjust-trade",
-                  snapshotTitle: snapshotButtonTitle(trade.ticker, `${trade.id} snapshot`),
-                  snapshotDescription: "Entry, stop, target, status, P/L, review state",
-                  snapshotItems,
-                }}
+            <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
+              <SnapshotButton
+                title={snapshotButtonTitle(trade.ticker, `${trade.id} snapshot`)}
+                description="Entry, stop, target, status, P/L, review state"
+                items={snapshotItems}
               />
             </div>
           </div>

@@ -1,6 +1,4 @@
 import { cache } from "react";
-import { listAiNotes } from "./ai-notes";
-import { fetchBridgeInbox, getBridgeConfig } from "./bridge";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 import { getMarketEvidence } from "./market-evidence";
 import type { MarketEvidence } from "./market-evidence-types";
@@ -26,6 +24,8 @@ import { listAllPendingInboxItems } from "./trading-inbox-storage";
 import { resolveInboxBackendLabel } from "./trading-inbox-submit";
 import type { TradePlan } from "./plan-types";
 import type { StockThesis } from "./stock-thesis-types";
+import { fetchBridgeInbox, getBridgeConfig } from "./bridge";
+import { listAiNotes } from "./ai-notes";
 
 function groupActiveEvidence(rows: MarketEvidence[]): Map<string, MarketEvidence[]> {
   const superseded = new Set(rows.map((row) => row.supersededBy).filter(Boolean) as string[]);
@@ -59,32 +59,6 @@ function buildThesisEntries(
       activeEvidence: evidenceByProfile.get(thesis.id.toUpperCase()) ?? [],
     }),
   }));
-}
-
-function buildPlanEntries(
-  activePlans: TradePlan[],
-  playbooks: Awaited<ReturnType<typeof getPlaybooks>>,
-  activeTheses: StockThesis[],
-  monthly: Awaited<ReturnType<typeof getMonthlyRisk>>,
-  experiment: Awaited<ReturnType<typeof getExperiment>>,
-  marketEvidence: MarketEvidence[]
-): ControlPanelData["scouting"]["planEntries"] {
-  return activePlans.map((plan) => {
-    const focusThesis = activeTheses.find((t) => t.id === plan.stockThesisId);
-    return {
-      plan,
-      snapshotItems: scoutDeskSnapshotItems({
-        playbooks,
-        stockTheses: activeTheses,
-        plans: activePlans,
-        monthly,
-        experiment,
-        marketEvidence,
-        focusThesis,
-        focusPlan: plan,
-      }).filter((item) => item.id === "scout-plan" || item.id === "mechanics"),
-    };
-  });
 }
 
 export const loadControlPanelData = cache(async (): Promise<ControlPanelData> => {
@@ -149,116 +123,35 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     systemNotes,
   };
 
-  const scoutingOverview = scoutDeskSnapshotItems({
+  const scoutingSnapshots = scoutDeskSnapshotItems({
     playbooks,
     stockTheses: activeTheses,
     plans,
     monthly,
     experiment,
     marketEvidence,
-    focusThesis: activeTheses[0],
-    focusPlan: activePlans[0],
-  });
-
-  const stockThesesEntries = buildThesisEntries(
-    activeTheses,
-    playbooks,
-    plans,
-    evidenceByProfile
-  );
-
-  const scoutingThesisEntries = activeTheses.map((thesis) => ({
-    thesis,
-    snapshotItems: scoutDeskSnapshotItems({
-      playbooks,
-      stockTheses: activeTheses,
-      plans,
-      monthly,
-      experiment,
-      marketEvidence,
-      focusThesis: thesis,
-    }).filter((item) => item.id === "scout-ticker" || item.id === "mechanics"),
-  }));
-
-  const scoutingPlanEntries = buildPlanEntries(
-    activePlans,
-    playbooks,
-    activeTheses,
-    monthly,
-    experiment,
-    marketEvidence
-  );
-
-  const tradeSnapshots = tradesListSnapshotItems(exchangeInput);
-  const focusThesis = activeTheses[0];
+  }).filter((item) => item.id === "scout-desk" || item.id === "mechanics");
 
   return {
     playbooks,
-    activeTheses,
-    activePlans,
+    activeThesisCount: activeTheses.length,
+    activePlanCount: activePlans.length,
     pendingInboxCount: pendingInbox.length,
     trainAi: {
       mechanicsBrief: buildMatrixMechanicsBrief(),
-      mechanicsSnapshot,
-      playbookSnapshotItems: playbookSnapshots,
-      connectOptions: {
-        window: "system",
-        intent: "general",
-        snapshotTitle: "Matrix Mechanics snapshot",
-        snapshotDescription: "Full rules, block types, Apply gate — paste once per AI session",
-        snapshotItems: [mechanicsSnapshot, ...playbookSnapshots],
-      },
+      snapshotItems: [mechanicsSnapshot, ...playbookSnapshots.filter((item) => item.id === "playbook")],
     },
     playbook: {
       snapshotItems: playbookSnapshots,
-      connectOptions: {
-        window: "playbook",
-        intent: "general",
-        snapshotTitle: "Playbook snapshot",
-        snapshotDescription: "Strategies, checklists, P/L and win rate per playbook",
-        snapshotItems: playbookSnapshots,
-      },
     },
     stockFile: {
-      theses: stockThesesEntries,
-      connectOptions: {
-        window: "stock-thesis",
-        intent: "update-file",
-        ticker: focusThesis?.ticker,
-        stockProfileId: focusThesis?.id,
-        snapshotTitle: focusThesis
-          ? `${focusThesis.ticker} · profile`
-          : "Stock file snapshot",
-        snapshotDescription: "Thesis, levels, invalidation, evidence",
-        snapshotItems: focusThesis
-          ? stockThesesEntries.find((entry) => entry.thesis.id === focusThesis.id)?.snapshotItems ??
-            []
-          : [],
-      },
+      theses: buildThesisEntries(activeTheses, playbooks, plans, evidenceByProfile),
     },
     scouting: {
-      overviewSnapshotItems: scoutingOverview,
-      planEntries: scoutingPlanEntries,
-      thesisEntries: scoutingThesisEntries,
-      connectOptions: {
-        window: "planning",
-        intent: "validate-scout",
-        ticker: activePlans[0]?.ticker ?? focusThesis?.ticker,
-        planId: activePlans[0]?.id,
-        snapshotTitle: "Scout desk overview",
-        snapshotDescription: "All playbooks, stock files, scouts, monthly risk room",
-        snapshotItems: scoutingOverview,
-      },
+      snapshotItems: scoutingSnapshots,
     },
     trade: {
-      snapshotItems: tradeSnapshots,
-      connectOptions: {
-        window: "trades-hub",
-        intent: "open-trade",
-        snapshotTitle: "Trades snapshot",
-        snapshotDescription: "All trades summary, experiment, monthly room",
-        snapshotItems: tradeSnapshots,
-      },
+      snapshotItems: tradesListSnapshotItems(exchangeInput),
     },
   };
 });
