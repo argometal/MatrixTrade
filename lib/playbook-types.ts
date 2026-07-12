@@ -32,6 +32,52 @@ export interface PlaybookScoutingDimensions {
   opportunityQuality?: string[];
 }
 
+/** Playbook-level scout outcome taxonomy for statistics — not the same as ScoutLifecycleStatus. */
+export type PlaybookScoutStatus = "active" | "filled" | "missed" | "expired" | "cancelled";
+
+export const PLAYBOOK_SCOUT_STATUS_LABELS: Record<PlaybookScoutStatus, string> = {
+  active: "Active",
+  filled: "Filled",
+  missed: "Missed",
+  expired: "Expired",
+  cancelled: "Cancelled",
+};
+
+/** One grade in the Multi-Timeframe Decision Hierarchy experiment. */
+export interface PlaybookTimeframeGrade {
+  grade: "A" | "B" | "C" | "D";
+  label: string;
+  horizon: string;
+  question: string;
+  outputs: string[];
+  /** e.g. "NEVER decides execution" */
+  constraint?: string;
+}
+
+/**
+ * Playbook experiment — top-down timeframe layers for decision quality.
+ * NOT a mandatory engine rule; may evolve with the ~3-month swing experiment.
+ */
+export interface PlaybookMultiTimeframeHierarchy {
+  experimentNote: string;
+  grades: PlaybookTimeframeGrade[];
+  decisionRule: string;
+  importantRules: string[];
+}
+
+/**
+ * Playbook-level scout statistics — missed scouts are NOT trades.
+ * Supports opportunity-cost tracking and Entry Optimization experiment validation.
+ */
+export interface PlaybookScoutStatistics {
+  statuses: PlaybookScoutStatus[];
+  statusDefinitions: Partial<Record<PlaybookScoutStatus, string>>;
+  missedDefinition: string;
+  notTradesRule: string;
+  purpose: string;
+  metrics?: string[];
+}
+
 export interface Playbook {
   id: string;
   name: string;
@@ -59,6 +105,10 @@ export interface Playbook {
   experimentScope?: PlaybookExperimentScope;
   /** Optional link to parent methodology playbook id. */
   appliesMethodology?: string;
+  /** Playbook experiment — multi-timeframe decision hierarchy (not an engine rule). */
+  multiTimeframeHierarchy?: PlaybookMultiTimeframeHierarchy;
+  /** Playbook-level scout outcome taxonomy and missed-scout definitions. */
+  scoutStatistics?: PlaybookScoutStatistics;
 }
 
 export const PLAYBOOK_STATUS_LABELS: Record<PlaybookStatus, string> = {

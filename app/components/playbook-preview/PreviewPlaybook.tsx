@@ -3,9 +3,12 @@ import type { PlaybookStats } from "@/lib/analytics";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import {
   PLAYBOOK_STATUS_LABELS,
+  PLAYBOOK_SCOUT_STATUS_LABELS,
   type Playbook,
   type PlaybookExecutionExperiments,
   type PlaybookMethodology,
+  type PlaybookMultiTimeframeHierarchy,
+  type PlaybookScoutStatistics,
 } from "@/lib/playbook-types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
@@ -100,6 +103,91 @@ function PlaybookMethodologyPanel({ methodology }: { methodology: PlaybookMethod
           <p className="mt-1 text-sm leading-relaxed text-zinc-300">{methodology[key]}</p>
         </div>
       ))}
+    </div>
+  );
+}
+
+function PlaybookMultiTimeframePanel({ hierarchy }: { hierarchy: PlaybookMultiTimeframeHierarchy }) {
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-sky-500/20 bg-sky-950/20 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-sky-400">
+        Playbook experiment — multi-timeframe hierarchy
+      </p>
+      {hierarchy.experimentNote ? (
+        <p className="text-xs leading-relaxed text-sky-200/80">{hierarchy.experimentNote}</p>
+      ) : null}
+      <div className="space-y-3">
+        {hierarchy.grades.map((grade) => (
+          <div key={grade.grade} className="rounded-lg bg-zinc-950/50 p-3">
+            <p className="text-sm font-medium text-zinc-200">
+              Grade {grade.grade} — {grade.label}{" "}
+              <span className="font-normal text-zinc-500">({grade.horizon})</span>
+            </p>
+            <p className="mt-1 text-xs text-zinc-400">{grade.question}</p>
+            {grade.outputs.length > 0 ? (
+              <ul className="mt-2 space-y-0.5 text-xs text-zinc-500">
+                {grade.outputs.map((item) => (
+                  <li key={item}>· {item}</li>
+                ))}
+              </ul>
+            ) : null}
+            {grade.constraint ? (
+              <p className="mt-2 text-xs font-medium text-sky-300/90">{grade.constraint}</p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+      {hierarchy.decisionRule ? (
+        <p className="text-sm leading-relaxed text-zinc-300">
+          <span className="font-medium text-sky-300">Decision rule:</span> {hierarchy.decisionRule}
+        </p>
+      ) : null}
+      {hierarchy.importantRules.length > 0 ? (
+        <ul className="space-y-1 text-xs text-zinc-400">
+          {hierarchy.importantRules.map((rule) => (
+            <li key={rule} className="flex items-start gap-2">
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
+              {rule}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function PlaybookScoutStatisticsPanel({ stats }: { stats: PlaybookScoutStatistics }) {
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-amber-500/20 bg-amber-950/20 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-amber-400">
+        Scout statistics (Playbook level)
+      </p>
+      {stats.purpose ? <p className="text-xs leading-relaxed text-zinc-400">{stats.purpose}</p> : null}
+      {stats.statuses.length > 0 ? (
+        <dl className="grid gap-2 sm:grid-cols-2">
+          {stats.statuses.map((status) => (
+            <div key={status} className="rounded-lg bg-zinc-950/50 p-3">
+              <dt className="text-xs font-medium text-amber-300">
+                {PLAYBOOK_SCOUT_STATUS_LABELS[status]}
+              </dt>
+              <dd className="mt-1 text-xs leading-relaxed text-zinc-500">
+                {stats.statusDefinitions[status] ?? "—"}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+      {stats.missedDefinition ? (
+        <p className="text-sm leading-relaxed text-zinc-300">
+          <span className="font-medium text-amber-300">Missed:</span> {stats.missedDefinition}
+        </p>
+      ) : null}
+      {stats.notTradesRule ? (
+        <p className="text-xs font-medium text-amber-200/90">{stats.notTradesRule}</p>
+      ) : null}
+      {stats.metrics?.length ? (
+        <p className="text-xs text-zinc-500">Metrics: {stats.metrics.join(" · ")}</p>
+      ) : null}
     </div>
   );
 }
@@ -214,6 +302,14 @@ export function PreviewPlaybook({
 
                     {row.playbook?.executionExperiments ? (
                       <PlaybookExecutionPanel execution={row.playbook.executionExperiments} />
+                    ) : null}
+
+                    {row.playbook?.multiTimeframeHierarchy ? (
+                      <PlaybookMultiTimeframePanel hierarchy={row.playbook.multiTimeframeHierarchy} />
+                    ) : null}
+
+                    {row.playbook?.scoutStatistics ? (
+                      <PlaybookScoutStatisticsPanel stats={row.playbook.scoutStatistics} />
                     ) : null}
 
                     {row.playbook?.scoutingDimensions ? (

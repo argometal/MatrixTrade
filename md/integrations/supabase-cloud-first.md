@@ -44,7 +44,10 @@ In Supabase → **SQL Editor**, run:
 
 ```
 supabase/schema.sql
+supabase/stock-case-cloud.sql   # stock profiles, evidence, scoped AI grants
 ```
+
+`stock-case-cloud.sql` is required for Stock Profile Apply and **Scoped AI Grant API** on Vercel. See [building-backlog.md](../matrix/building-backlog.md).
 
 ### 2. Seed from local JSON
 

@@ -90,7 +90,28 @@
       "One execution variable only if running an execution experiment",
       "No chase if all limits miss",
       "Outcome = one statistical observation"
-    ]
+    ],
+    "scoutStatistics": {
+      "statuses": ["active", "filled", "missed", "expired", "cancelled"],
+      "statusDefinitions": {
+        "active": "Scout exists and is being monitored — entry zone not yet reached or decision pending.",
+        "filled": "Predefined entry executed — scout converted to trade (full or partial fill per execution experiment).",
+        "missed": "Predefined entry zone reached while thesis remained valid, but no execution occurred.",
+        "expired": "Scout observation window ended without fill or explicit cancellation.",
+        "cancelled": "Scout closed by user decision before fill — thesis may still be valid."
+      },
+      "missedDefinition": "Predefined entry zone reached while thesis remained valid, but no execution occurred.",
+      "notTradesRule": "Missed Scouts remain part of Playbook statistics. They are NOT Trades. Do not count missed scouts as losses, wins, or closed trades.",
+      "purpose": "Track opportunity cost and validate Entry Optimization experiments — measure how often valid setups pass without execution.",
+      "metrics": [
+        "MissedScoutCount",
+        "MissedScoutPercent",
+        "ActiveScoutCount",
+        "FilledScoutCount",
+        "ExpiredScoutCount",
+        "CancelledScoutCount"
+      ]
+    }
   },
   {
     "id": "layered-entry",
@@ -151,6 +172,92 @@
       "Thesis invalidation not breached",
       "Execution method chosen (single_limit or layered_limits)",
       "If layered: limits + allocations predefined, no-chase rule set"
+    ]
+  },
+  {
+    "id": "multi-timeframe-hierarchy",
+    "name": "Multi-Timeframe Decision Hierarchy",
+    "status": "TESTING",
+    "description": "Playbook experiment — top-down decision layers for the current ~3-month swing experiment. Hypothesis for analysis; not a mandatory engine rule.",
+    "experimentScope": "playbook",
+    "experimentHypothesis": "A strict A→B→C→D timeframe hierarchy reduces premature entries and clarifies when a Scout should exist — without lower frames invalidating the strategic thesis.",
+    "appliesMethodology": "expectancy-asymmetry",
+    "principles": [
+      "Playbook experiment — may evolve; not hardcoded as engine rule",
+      "Top-down only: A before B before C before D",
+      "Lower timeframes cannot invalidate higher-timeframe thesis",
+      "Higher timeframes cannot justify buying regardless of price",
+      "Each timeframe answers a different question",
+      "If any grade fails, process stops — no trade proposed"
+    ],
+    "multiTimeframeHierarchy": {
+      "experimentNote": "Playbook Experiment: Multi-Timeframe Decision Hierarchy — hypothesis for the current ~3-month swing experiment. Belongs in Playbook only; not duplicated in Stock Files.",
+      "grades": [
+        {
+          "grade": "A",
+          "label": "Strategic",
+          "horizon": "6 Months",
+          "question": "Is the thesis still valid?",
+          "outputs": [
+            "Structural trend",
+            "Major support / resistance",
+            "Strategic targets",
+            "Thesis alive or broken"
+          ],
+          "constraint": "NEVER decides execution"
+        },
+        {
+          "grade": "B",
+          "label": "Opportunity",
+          "horizon": "3 Months",
+          "question": "Is there sufficient asymmetry?",
+          "outputs": [
+            "Preferred accumulation zone",
+            "Expected reward:risk",
+            "Strategic scout zone"
+          ],
+          "constraint": "Decides whether a Scout should exist"
+        },
+        {
+          "grade": "C",
+          "label": "Tactical",
+          "horizon": "1 Month",
+          "question": "Has price reached the planned area?",
+          "outputs": [
+            "Active support",
+            "Resistance",
+            "Pullback quality",
+            "Retest probability"
+          ],
+          "constraint": "Refines the Scout"
+        },
+        {
+          "grade": "D",
+          "label": "Execution",
+          "horizon": "1 Week",
+          "question": "Where to execute?",
+          "outputs": [
+            "Execution level",
+            "Stop",
+            "Entry refinement"
+          ],
+          "constraint": "NEVER changes the strategic thesis"
+        }
+      ],
+      "decisionRule": "Top-down. A before B before C before D. If any grade fails, the process stops — no trade proposed.",
+      "importantRules": [
+        "Lower timeframes cannot invalidate higher-timeframe thesis",
+        "Higher timeframes cannot justify buying regardless of price",
+        "Each timeframe answers a different question",
+        "This is a Playbook experiment and may evolve"
+      ]
+    },
+    "checklist": [
+      "Grade A — strategic thesis still valid (6M)",
+      "Grade B — sufficient asymmetry; scout zone defined (3M)",
+      "Grade C — price reached planned tactical area (1M)",
+      "Grade D — execution level, stop, entry refinement set (1W)",
+      "All grades pass top-down — otherwise stop, no trade"
     ]
   }
 ]

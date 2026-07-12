@@ -1,6 +1,6 @@
 # Roadmap
 
-**Last updated:** 2026-07-10
+**Last updated:** 2026-07-12
 
 ## Phase 0 — Done
 
@@ -41,6 +41,7 @@
 | **Code Phase B** — Evidence + Profile synthesis | **Done** | `dbf87a6` |
 | **Code Phase C** — Decision on Scout + Probe state | **Done** | Decision + Probe |
 | **Code Phase D** — Learning + missed scout | **Next** | after TSLA loop sign-off |
+| **Scoped AI Grant API** (GET link for external IA) | **ON HOLD — HIGH** | `matrix/building-backlog.md` — resume ~Aug 2026 |
 
 ## Phase 4 — Code (learning stack)
 

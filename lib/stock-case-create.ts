@@ -4,6 +4,8 @@ import {
   validateInitialScout,
 } from "./stock-case-initial-scout";
 import { seedEvidenceFromHistoricalAnalysis } from "./seed-evidence-from-analysis";
+import { rollbackStockCaseCreate } from "./stock-case-rollback";
+import { validateOptionalInitialScoutContract } from "./scout-contract";
 import { saveStockThesis } from "./stock-theses";
 import type { SaveStockThesisInput, StockThesis } from "./stock-thesis-types";
 
@@ -107,7 +109,7 @@ export function proposalToStockCaseInput(
 
   const initialScout = parseInitialScout(proposal.initialScout);
   if (initialScout) {
-    const scoutCheck = validateInitialScout(initialScout);
+    const scoutCheck = validateOptionalInitialScoutContract(initialScout);
     if (!scoutCheck.ok) errors.push(...scoutCheck.errors);
   }
 
@@ -150,6 +152,11 @@ export async function createStockCaseFromProposal(
   const parsed = proposalToStockCaseInput(proposal);
   if (parsed.errors?.length) return { errors: parsed.errors };
 
+  if (parsed.initialScout) {
+    const scoutCheck = validateInitialScout(parsed.initialScout);
+    if (!scoutCheck.ok) return { errors: scoutCheck.errors };
+  }
+
   const saveResult = await saveStockThesis(parsed.input!);
   if (saveResult.errors?.length) return { errors: saveResult.errors };
 
@@ -161,7 +168,10 @@ export async function createStockCaseFromProposal(
   if (historical.length > 0) {
     const seed = await seedEvidenceFromHistoricalAnalysis(thesis.id, thesis.ticker, historical);
     evidenceSeeded = seed.count;
-    if (seed.errors.length) warnings.push(...seed.errors);
+    if (seed.errors.length) {
+      await rollbackStockCaseCreate(thesis.id);
+      return { errors: seed.errors };
+    }
   }
 
   let planId: string | undefined;
@@ -172,7 +182,10 @@ export async function createStockCaseFromProposal(
       parsed.initialScout,
       thesis.currentHypothesis
     );
-    if (planResult.errors?.length) return { errors: planResult.errors, thesis, evidenceSeeded };
+    if (planResult.errors?.length) {
+      await rollbackStockCaseCreate(thesis.id);
+      return { errors: planResult.errors };
+    }
     planId = planResult.planId;
     if (planResult.warnings?.length) warnings.push(...planResult.warnings);
   }

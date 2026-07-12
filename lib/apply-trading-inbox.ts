@@ -1,5 +1,7 @@
 import { appendMarketEvidenceFromProposal } from "./market-evidence";
 import { createStockCaseFromProposal } from "./stock-case-create";
+import { getAppliedImportStore } from "./applied-import-store";
+import { computeImportFingerprint } from "./import-fingerprint";
 import { readNoteBody } from "./obsidian";
 import { syncObsidianTradeIfLocal } from "./obsidian-local";
 import type { Playbook } from "./playbook-types";
@@ -48,8 +50,25 @@ export type ApplyTradingProposalResult =
       planId?: string;
       trade?: Trade;
       playbook?: Playbook;
+      alreadyApplied?: boolean;
     }
   | { ok: false; errors: string[] };
+
+function resultFromAppliedRecord(
+  record: { result: { message: string; type: string; tradeId?: string; playbookId?: string; stockFileId?: string; planId?: string } },
+  type: TradingProposalType
+): ApplyTradingProposalResult {
+  return {
+    ok: true,
+    alreadyApplied: true,
+    message: `Already applied. ${record.result.message}`,
+    type,
+    tradeId: record.result.tradeId,
+    playbookId: record.result.playbookId,
+    stockFileId: record.result.stockFileId,
+    planId: record.result.planId,
+  };
+}
 
 export async function applyTradingProposal(
   payload: Record<string, unknown>
@@ -59,6 +78,30 @@ export async function applyTradingProposal(
     return { ok: false, errors: ["Invalid inbox payload shape."] };
   }
 
+  const fingerprint = computeImportFingerprint(payload);
+  const store = getAppliedImportStore();
+  const existing = await store.findByFingerprint(fingerprint);
+  if (existing) {
+    return resultFromAppliedRecord(existing, parsed.type);
+  }
+
+  const result = await applyTradingProposalInner(parsed);
+  if (!result.ok) return result;
+
+  await store.record(fingerprint, {
+    message: result.message,
+    type: result.type,
+    tradeId: result.tradeId,
+    playbookId: result.playbookId,
+    stockFileId: result.stockFileId,
+    planId: result.planId,
+  });
+  return result;
+}
+
+async function applyTradingProposalInner(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
   switch (parsed.type) {
     case "stock-case-create":
       return applyStockCaseCreate(parsed);

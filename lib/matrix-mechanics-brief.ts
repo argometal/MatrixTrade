@@ -140,7 +140,23 @@ export function buildMatrixMechanicsBrief(): string {
     "Fixed dollar risk per qualified trade during validation — shares adjust to stop; never mix bet sizes across the sample.",
     "Preferred: Layered Entry / Entry Optimization — not Probe (legacy). Thesis accepted; improve average entry via limit ladder.",
     "Only one execution variable per experiment. No chase: all limits miss = trade cancelled, no market order.",
-    "Playbooks: expectancy-asymmetry (framework), layered-entry (execution hypothesis).",
+    "Playbooks: expectancy-asymmetry (framework), layered-entry (execution hypothesis), multi-timeframe-hierarchy (decision experiment).",
+    "",
+    "PLAYBOOK EXPERIMENTS (not mandatory engine rules)",
+    "Multi-Timeframe Decision Hierarchy (playbook: multi-timeframe-hierarchy):",
+    "- Grade A Strategic (6M) — thesis valid? NEVER decides execution.",
+    "- Grade B Opportunity (3M) — sufficient asymmetry? Decides whether Scout should exist.",
+    "- Grade C Tactical (1M) — price reached planned area? Refines Scout.",
+    "- Grade D Execution (1W) — where to execute? NEVER changes strategic thesis.",
+    "- Top-down: A before B before C before D. Any grade fails → stop, no trade proposed.",
+    "- Lower frames cannot invalidate higher-timeframe thesis; higher frames cannot justify buying regardless of price.",
+    "- Lives in Playbook only — do NOT duplicate in Stock Files.",
+    "",
+    "Missed Scouts (playbook: expectancy-asymmetry scoutStatistics):",
+    "- Scout statuses for Playbook statistics: active, filled, missed, expired, cancelled.",
+    "- Missed = predefined entry zone reached while thesis remained valid, but no execution occurred.",
+    "- Missed Scouts are NOT Trades — track for opportunity cost and Entry Optimization validation.",
+    "- Do not count missed scouts as wins, losses, or closed trades.",
     "",
     "ENTRY OPTIMIZATION PRINCIPLE",
     "Matrix maximizes initial R — not win rate. A lower hit rate with larger average winners beats many small wins.",
@@ -172,6 +188,17 @@ export function buildMatrixMechanicsBrief(): string {
     "Target → Stop → Maximum Entry → Technical Validation",
     "Never reason:",
     "Entry → Stop → Calculate R.",
+    "",
+    "SCOUT EXECUTABILITY CONTRACT",
+    "A Scout Plan is a quantified tactical plan — not a narrative zone.",
+    "Every Scout must contain exactly:",
+    "- one plannedEntry (exact operational entry — not a profile zone)",
+    "- one strategy stopPrice",
+    "- one probable targetPrice",
+    "Profile zones (e.g. 350–355) belong to the Stock File. The Scout must select one exact entry (e.g. 352).",
+    "For long setups: stopPrice < plannedEntry < targetPrice.",
+    "Without all three fields Matrix cannot calculate R:R, position size, or capital allocation.",
+    "Never generate or accept an incomplete Scout. Matrix rejects the block before any database write.",
     "",
     "BATTLE SELECTION PRINCIPLE (mandatory)",
     "Matrix does not seek participation in every valid setup.",
@@ -292,6 +319,28 @@ export function formatPlaybookTrainingSection(playbooks: Playbook[]): string {
     }
     if (pb.executionExperiments?.noChaseRule) {
       lines.push(`  no_chase:${pb.executionExperiments.noChaseRule.replace(/\s+/g, " ").slice(0, 160)}`);
+    }
+    if (pb.multiTimeframeHierarchy?.decisionRule) {
+      lines.push(
+        `  mtf_decision_rule:${pb.multiTimeframeHierarchy.decisionRule.replace(/\s+/g, " ").slice(0, 200)}`
+      );
+      const grades = pb.multiTimeframeHierarchy.grades
+        .map((g) => `${g.grade}:${g.label}(${g.horizon})`)
+        .join("|");
+      if (grades) lines.push(`  mtf_grades:${grades}`);
+    }
+    if (pb.scoutStatistics?.missedDefinition) {
+      lines.push(
+        `  missed_scout:${pb.scoutStatistics.missedDefinition.replace(/\s+/g, " ").slice(0, 160)}`
+      );
+      if (pb.scoutStatistics.statuses?.length) {
+        lines.push(`  scout_statuses:${pb.scoutStatistics.statuses.join(",")}`);
+      }
+      if (pb.scoutStatistics.notTradesRule) {
+        lines.push(
+          `  missed_not_trades:${pb.scoutStatistics.notTradesRule.replace(/\s+/g, " ").slice(0, 160)}`
+        );
+      }
     }
     if (pb.methodology?.matrixIdentity) {
       lines.push(`  matrix_identity:${pb.methodology.matrixIdentity.replace(/\s+/g, " ").slice(0, 200)}`);

@@ -175,10 +175,11 @@ export async function getInboxItemFromStore(
 export async function markInboxItemStatus(
   id: string,
   origin: string,
-  status: "applied" | "rejected"
+  status: "applied" | "rejected",
+  options?: { onlyIfPending?: boolean }
 ): Promise<boolean> {
   if (origin === "local") return setLocalInboxStatus(id, status);
-  if (origin === "supabase") return setSupabaseInboxStatus(id, status);
+  if (origin === "supabase") return setSupabaseInboxStatus(id, status, options);
   return false;
 }
 

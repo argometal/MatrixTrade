@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { applyInboxItemAction, rejectInboxItemAction } from "@/app/actions";
+import { InboxApplyActions } from "@/app/components/inbox/InboxApplyActions";
 import { InboxApplyResult } from "@/app/components/inbox/InboxApplyResult";
 import {
   describeProposal,
@@ -39,6 +39,7 @@ export function PreviewInboxDetail({
     message?: string;
     verifyDetail?: string;
     inboxError?: string;
+    alreadyApplied?: string;
   };
   tradeCloseError?: string | null;
 }) {
@@ -95,7 +96,11 @@ export function PreviewInboxDetail({
               type={query.type ?? "unknown"}
               store={query.store ?? "json"}
               verified={query.verified === "1"}
-              message={query.message ?? "Apply completed."}
+              message={
+                query.alreadyApplied === "1"
+                  ? `Already applied. ${query.message ?? ""}`
+                  : query.message ?? "Apply completed."
+              }
               verifyDetail={query.verifyDetail}
               inboxError={query.inboxError}
             />
@@ -186,29 +191,7 @@ export function PreviewInboxDetail({
             </pre>
           </details>
 
-          <div className="flex flex-wrap gap-3">
-            <form action={applyInboxItemAction}>
-              <input type="hidden" name="id" value={item.id} />
-              <input type="hidden" name="origin" value={item.origin} />
-              <button
-                type="submit"
-                disabled={!applyReady}
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Apply to MatrixTrade
-              </button>
-            </form>
-            <form action={rejectInboxItemAction}>
-              <input type="hidden" name="id" value={item.id} />
-              <input type="hidden" name="origin" value={item.origin} />
-              <button
-                type="submit"
-                className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:bg-zinc-900"
-              >
-                Reject
-              </button>
-            </form>
-          </div>
+          <InboxApplyActions id={item.id} origin={item.origin} applyReady={applyReady} />
 
           <p className="text-xs text-zinc-600">
             Apply writes to the active trades store (Supabase or local JSON). You will see verification

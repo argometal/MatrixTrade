@@ -5,6 +5,22 @@
 
 ---
 
+## Production status / blocked
+
+| Field | Value |
+|-------|-------|
+| **Priority** | **HIGH** |
+| **Status** | **ON HOLD / PENDIENTE** — resume ~early August 2026 |
+| **Backlog entry** | [building-backlog.md](building-backlog.md) § Scoped AI Grant API |
+| **Root cause** | Grant **persistence** on Vercel (Supabase `scoped_ai_grants`) — not API routing/auth |
+| **Feature freeze** | Frozen until `stock-case-cloud.sql` confirmed + end-to-end GET verified; still wanted |
+
+**Blocked because:** durable grant storage + manual Supabase/Vercel ops + user-attention testing. No active coding until user break (~3 weeks).
+
+**When resuming:** follow the checklist in [building-backlog.md](building-backlog.md) — SQL → env → seed → create grant (`contextUrl`) → `curl GET /api/matrix/scout/GRANT-xxx`.
+
+---
+
 ## Model
 
 ```text

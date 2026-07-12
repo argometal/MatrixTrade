@@ -71,12 +71,17 @@ export async function getSupabaseInboxItem(id: string): Promise<BridgeInboxItem 
 
 export async function setSupabaseInboxStatus(
   id: string,
-  status: "applied" | "rejected"
+  status: "applied" | "rejected",
+  options?: { onlyIfPending?: boolean }
 ): Promise<boolean> {
   const supabase = createSupabaseAdmin();
-  const { error } = await supabase.from("trading_inbox").update({ status }).eq("id", id);
+  let query = supabase.from("trading_inbox").update({ status }).eq("id", id);
+  if (options?.onlyIfPending) {
+    query = query.eq("status", "pending");
+  }
+  const { data, error } = await query.select("id").maybeSingle();
   if (error) {
     throw new Error(`Supabase trading_inbox update failed: ${error.message}`);
   }
-  return true;
+  return Boolean(data);
 }

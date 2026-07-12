@@ -1,6 +1,7 @@
 import { calculateTradeResult } from "./calculate";
 import { computeMonthlyRisk } from "./monthly-risk";
 import { LOSS_CLASSIFICATIONS } from "./asymmetry-types";
+import { validateOptionalInitialScoutContract } from "./scout-contract";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
 import { getSetupName } from "./setup-types";
@@ -341,12 +342,8 @@ export function validateProposalPayload(
       if (!scout || typeof scout !== "object" || Array.isArray(scout)) {
         errors.push("proposal.initialScout must be an object");
       } else {
-        const s = scout as Record<string, unknown>;
-        if (s.stopPrice === undefined) errors.push("initialScout.stopPrice required");
-        if (s.targetPrice === undefined) errors.push("initialScout.targetPrice required");
-        if (s.plannedEntry === undefined && s.supportLevel === undefined) {
-          errors.push("initialScout needs plannedEntry or supportLevel");
-        }
+        const scoutCheck = validateOptionalInitialScoutContract(scout as Record<string, unknown>);
+        if (!scoutCheck.ok) errors.push(...scoutCheck.errors);
       }
     }
   }
@@ -492,11 +489,8 @@ export function validateProposalPayload(
         errors.push("proposal.initialScout must be an object");
       } else {
         const s = scout as Record<string, unknown>;
-        if (s.stopPrice === undefined) errors.push("initialScout.stopPrice required");
-        if (s.targetPrice === undefined) errors.push("initialScout.targetPrice required");
-        if (s.plannedEntry === undefined && s.supportLevel === undefined) {
-          errors.push("initialScout needs plannedEntry or supportLevel");
-        }
+        const scoutCheck = validateOptionalInitialScoutContract(s);
+        if (!scoutCheck.ok) errors.push(...scoutCheck.errors);
         if (s.verdict !== undefined) {
           const verdict = String(s.verdict);
           if (verdict !== "go" && verdict !== "wait" && verdict !== "probe" && verdict !== "no") {

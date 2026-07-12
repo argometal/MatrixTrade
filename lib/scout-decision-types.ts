@@ -1,4 +1,5 @@
 import type { ConfirmationCost } from "./asymmetry-types";
+import type { PlaybookScoutStatus } from "./playbook-types";
 
 /** Stored scout decision verdict — extends display-only ScoutingVerdict with probe. */
 export type DecisionVerdict = "wait" | "probe" | "go" | "no";
@@ -75,6 +76,22 @@ export const SCOUT_LIFECYCLE_LABELS: Record<ScoutLifecycleStatus, string> = {
   missed: "Missed",
   expired: "Expired",
   cancelled: "Cancelled",
+};
+
+/** Maps detailed engine lifecycle states to Playbook-level scout statistics statuses. */
+export const SCOUT_LIFECYCLE_TO_PLAYBOOK_STATUS: Partial<
+  Record<ScoutLifecycleStatus, PlaybookScoutStatus>
+> = {
+  open: "active",
+  decided_wait: "active",
+  decided_probe: "active",
+  decided_go: "active",
+  probe_active: "active",
+  executed: "filled",
+  converted: "filled",
+  missed: "missed",
+  expired: "expired",
+  cancelled: "cancelled",
 };
 
 export const DECISION_VERDICT_LABELS: Record<DecisionVerdict, string> = {

@@ -9,7 +9,9 @@
     "lint": "next lint",
     "seed:supabase": "tsx tools/seed-supabase.ts",
     "validate:supabase": "tsx tools/validate-supabase-trades.ts",
-    "test:scout-repair": "tsx tools/test-scout-repair-path.ts"
+    "test:scout-repair": "tsx tools/test-scout-repair-path.ts",
+    "test:scout-contract": "tsx tools/test-scout-contract.ts",
+    "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",

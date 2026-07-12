@@ -74,6 +74,7 @@ export type AcceptAiBlockActionResult =
       stockFileId?: string;
       planId?: string;
       inboxItemId?: string;
+      alreadyApplied?: boolean;
     }
   | { ok: false; error: string; details?: string[] };
 
@@ -184,6 +185,7 @@ export async function acceptAiBlockAction(formData: FormData): Promise<AcceptAiB
     stockFileId: applyResult.stockFileId,
     planId: applyResult.planId,
     inboxItemId: inboxResult.ok ? inboxResult.inboxItemId : undefined,
+    alreadyApplied: applyResult.alreadyApplied,
   };
 }
 
@@ -341,16 +343,27 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
   const origin = String(formData.get("origin") ?? "worker");
 
   let payload: Record<string, unknown> | undefined;
+  let inboxStatus: string | undefined;
+
   if (origin === "worker") {
     const workerItems = await fetchBridgeInbox();
-    payload = workerItems.find((item) => item.id === id)?.payload;
+    const workerItem = workerItems.find((item) => item.id === id);
+    payload = workerItem?.payload;
+    inboxStatus = workerItem?.status;
   } else {
     const item = await getInboxItemFromStore(id, origin);
     payload = item?.payload;
+    inboxStatus = item?.status;
   }
 
   if (!payload) {
     redirect("/inbox?error=notfound");
+  }
+
+  if (inboxStatus && inboxStatus !== "pending") {
+    redirect(
+      `/inbox/${id}?origin=${origin}&applied=1&message=${encodeURIComponent("Already processed.")}`
+    );
   }
 
   const parsed = parseTradingInboxPayload(payload);
@@ -382,7 +395,7 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
     }
   } else {
     try {
-      const marked = await markInboxItemStatus(id, origin, "applied");
+      const marked = await markInboxItemStatus(id, origin, "applied", { onlyIfPending: true });
       if (!marked) {
         inboxError = `Inbox item was not marked applied (${origin}).`;
       }
@@ -402,6 +415,7 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
     verified: verify.ok ? "1" : "0",
     message: result.message,
   });
+  if (result.alreadyApplied) params.set("alreadyApplied", "1");
   if (verify.detail) params.set("verifyDetail", verify.detail);
   if (inboxError) params.set("inboxError", inboxError);
 

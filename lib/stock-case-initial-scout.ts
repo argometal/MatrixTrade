@@ -72,20 +72,14 @@ export function parseInitialScout(raw: unknown): InitialScoutInput | undefined {
   };
 }
 
+import { validateOptionalInitialScoutContract } from "./scout-contract";
+
 export function validateInitialScout(
   scout: InitialScoutInput
 ): { ok: true } | { ok: false; errors: string[] } {
-  const errors: string[] = [];
-  if (scout.stopPrice === undefined) {
-    errors.push("initialScout.stopPrice required when initialScout is provided");
-  }
-  if (scout.targetPrice === undefined) {
-    errors.push("initialScout.targetPrice required when initialScout is provided");
-  }
-  if (scout.plannedEntry === undefined && scout.supportLevel === undefined) {
-    errors.push("initialScout needs plannedEntry or supportLevel");
-  }
-  return errors.length ? { ok: false, errors } : { ok: true };
+  const result = validateOptionalInitialScoutContract(scout);
+  if (!result.ok) return result;
+  return { ok: true };
 }
 
 export async function createInitialScoutPlan(

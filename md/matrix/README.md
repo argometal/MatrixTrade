@@ -24,7 +24,8 @@
 | 6 | [ai-engineering.md](ai-engineering.md) | Single AI fleet |
 | 7 | [scoped-ai-access.md](scoped-ai-access.md) | Temporal links for one Stock Profile |
 | 8 | [ai-evolution.md](ai-evolution.md) | Protocol over provider; low-budget rules |
-| 9 | [library-alignment-backlog.md](library-alignment-backlog.md) | Remaining doc debt |
+| 9 | [building-backlog.md](building-backlog.md) | **Active build queue** — priorities, ON HOLD items |
+| 10 | [library-alignment-backlog.md](library-alignment-backlog.md) | Remaining doc debt |
 
 ---
 

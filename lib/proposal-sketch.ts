@@ -1,4 +1,5 @@
-import { describeProposal, type TradingInboxPayload } from "@/lib/bridge";
+import { describeProposal, validateProposalPayload, type TradingInboxPayload } from "@/lib/bridge";
+import { validateOptionalInitialScoutContract } from "@/lib/scout-contract";
 
 export type ProposalSketchField = {
   label: string;
@@ -147,10 +148,19 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
       if (p.status) fields.push({ label: "Status", value: String(p.status) });
       if (p.initialScout && typeof p.initialScout === "object" && !Array.isArray(p.initialScout)) {
         const scout = p.initialScout as Record<string, unknown>;
-        fields.push({ label: "Repair", value: "Backfill Scout Plan", tone: "accent" });
-        if (scout.plannedEntry !== undefined) fields.push({ label: "Entry", value: `$${scout.plannedEntry}` });
-        if (scout.stopPrice !== undefined) fields.push({ label: "Stop", value: `$${scout.stopPrice}`, tone: "risk" });
-        if (scout.targetPrice !== undefined) fields.push({ label: "Target", value: `$${scout.targetPrice}`, tone: "reward" });
+        const scoutCheck = validateOptionalInitialScoutContract(scout);
+        if (!scoutCheck.ok) {
+          fields.push({ label: "Scout contract", value: scoutCheck.errors[0] ?? "Incomplete", tone: "risk" });
+        } else if (scoutCheck.plannedEntry !== undefined) {
+          fields.push({ label: "Entry", value: `$${scoutCheck.plannedEntry}` });
+          fields.push({ label: "Stop", value: `$${scoutCheck.stopPrice}`, tone: "risk" });
+          fields.push({ label: "Target", value: `$${scoutCheck.targetPrice}`, tone: "reward" });
+          if (scoutCheck.rr !== undefined) {
+            fields.push({ label: "R:R", value: scoutCheck.rr.toFixed(2) });
+          }
+        } else {
+          fields.push({ label: "Scout", value: "No initialScout (optional)" });
+        }
       }
       break;
     }

@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { acceptAiBlockAction } from "@/app/actions";
 import { ProposalSketchCard } from "@/app/components/matrix-connect/ProposalSketchCard";
 import { parseAiBlock } from "@/lib/ai-block";
 import { isApplyImplemented } from "@/lib/ai-bridge-types";
 import { buildProposalSketch } from "@/lib/proposal-sketch";
-import type { TradingInboxPayload } from "@/lib/bridge";
+import { validateProposalPayload, type TradingInboxPayload } from "@/lib/bridge";
 
 type UpdatePhase = "paste" | "success";
 
@@ -20,10 +20,17 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
   const [parseError, setParseError] = useState<string | null>(null);
   const [acceptError, setAcceptError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [alreadyApplied, setAlreadyApplied] = useState(false);
+  const [accepting, setAccepting] = useState(false);
+  const acceptingRef = useRef(false);
   const [pending, startTransition] = useTransition();
 
   const sketch = useMemo(() => (preview ? buildProposalSketch(preview) : null), [preview]);
-  const applyReady = Boolean(preview && isApplyImplemented(preview.type));
+  const validation = useMemo(
+    () => (preview ? validateProposalPayload(preview) : { ok: false as const, errors: ["Validate first"] }),
+    [preview]
+  );
+  const applyReady = Boolean(preview && validation.ok && isApplyImplemented(preview.type));
 
   function handleValidate() {
     setParseError(null);
@@ -40,21 +47,29 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
   }
 
   function handleAccept() {
-    if (!pasteValue.trim() || !applyReady) return;
+    if (!pasteValue.trim() || !applyReady || pending || accepting || acceptingRef.current) return;
+    acceptingRef.current = true;
+    setAccepting(true);
     setAcceptError(null);
     startTransition(async () => {
-      const formData = new FormData();
-      formData.set("aiBlock", pasteValue);
-      const result = await acceptAiBlockAction(formData);
-      if (!result.ok) {
-        setAcceptError(
-          result.details?.length ? `${result.error}\n${result.details.join("\n")}` : result.error
-        );
-        return;
+      try {
+        const formData = new FormData();
+        formData.set("aiBlock", pasteValue);
+        const result = await acceptAiBlockAction(formData);
+        if (!result.ok) {
+          setAcceptError(
+            result.details?.length ? `${result.error}\n${result.details.join("\n")}` : result.error
+          );
+          return;
+        }
+        setSuccessMessage(result.message);
+        setAlreadyApplied(Boolean(result.alreadyApplied));
+        setPhase("success");
+        router.refresh();
+      } finally {
+        acceptingRef.current = false;
+        setAccepting(false);
       }
-      setSuccessMessage(result.message);
-      setPhase("success");
-      router.refresh();
     });
   }
 
@@ -62,9 +77,27 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain">
-          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/30 px-4 py-4">
-            <p className="text-sm font-semibold text-emerald-200">Updated</p>
-            <p className="mt-1 text-sm text-emerald-100/90">{successMessage}</p>
+          <div
+            className={`rounded-2xl border px-4 py-4 ${
+              alreadyApplied
+                ? "border-amber-500/30 bg-amber-950/30"
+                : "border-emerald-500/30 bg-emerald-950/30"
+            }`}
+          >
+            <p
+              className={`text-sm font-semibold ${
+                alreadyApplied ? "text-amber-200" : "text-emerald-200"
+              }`}
+            >
+              {alreadyApplied ? "Already applied" : "Updated"}
+            </p>
+            <p
+              className={`mt-1 text-sm ${
+                alreadyApplied ? "text-amber-100/90" : "text-emerald-100/90"
+              }`}
+            >
+              {successMessage}
+            </p>
           </div>
           <p className="text-xs text-zinc-500">
             Saved to proposal history.{" "}
@@ -141,11 +174,11 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
         </button>
         <button
           type="button"
-          disabled={pending || !applyReady}
+          disabled={pending || accepting || !applyReady}
           onClick={handleAccept}
           className="flex-[2] rounded-xl bg-emerald-600 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40"
         >
-          {pending ? "Applying…" : "Accept"}
+          {pending || accepting ? "Applying…" : "Accept"}
         </button>
       </footer>
     </div>
