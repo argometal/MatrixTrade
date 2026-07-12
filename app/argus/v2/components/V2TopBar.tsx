@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { TradingMark } from "@/app/components/TradingMark";
+import { MobileMenuButton } from "@/app/components/preview/MobileMenuButton";
 import { V2TopBarAddMenu } from "@/app/argus/v2/components/V2TopBarAddMenu";
 import { PrivateLockMenu } from "@/app/argus/components/PrivateLockMenu";
 import { V2BuildBadge } from "@/app/argus/v2/components/V2BuildBadge";
@@ -60,25 +61,8 @@ export function V2TopBar({
             <span
               className={`block truncate text-[10px] leading-tight ${open ? "text-violet-300/90" : "text-zinc-500"}`}
             >
-              {open ? "Close menu" : pageLabel}
+              {pageLabel}
             </span>
-          </span>
-          <span
-            className={`flex shrink-0 flex-col items-center justify-center gap-0.5 rounded-md px-1.5 py-1 ${
-              open ? "text-violet-300" : "text-zinc-500"
-            }`}
-            aria-hidden
-          >
-            <span className="flex flex-col gap-[3px]">
-              <span
-                className={`block h-0.5 w-3.5 rounded-full bg-current transition ${open ? "translate-y-[5px] rotate-45" : ""}`}
-              />
-              <span className={`block h-0.5 w-3.5 rounded-full bg-current transition ${open ? "opacity-0" : ""}`} />
-              <span
-                className={`block h-0.5 w-3.5 rounded-full bg-current transition ${open ? "-translate-y-[5px] -rotate-45" : ""}`}
-              />
-            </span>
-            <span className="text-[8px] font-semibold uppercase tracking-wide">{open ? "Close" : "Menu"}</span>
           </span>
         </button>
 
@@ -106,22 +90,7 @@ export function V2TopBar({
           </div>
         </form>
 
-        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-          <Link
-            href="/home-preview"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 lg:hidden"
-            aria-label="MatrixTrade"
-            title="MatrixTrade"
-          >
-            <TradingMark size={28} />
-          </Link>
-          <Link
-            href="/argus/search"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 lg:hidden"
-            aria-label="Search"
-          >
-            ⌕
-          </Link>
+        <div className="ml-auto hidden items-center gap-1.5 sm:gap-2 lg:flex">
           <Link
             href="/argus/v2/help"
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400"
@@ -129,18 +98,6 @@ export function V2TopBar({
             title="How Argus works"
           >
             ?
-          </Link>
-          <Link
-            href="/argus/v2/inbox"
-            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 lg:hidden"
-            aria-label="Inbox"
-          >
-            ✉
-            {inboxCount > 0 ? (
-              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
-                {inboxCount > 99 ? "99+" : inboxCount}
-              </span>
-            ) : null}
           </Link>
           {privateConfigured ? (
             <PrivateLockMenu configured={privateConfigured} unlocked={privateUnlocked} />
@@ -156,7 +113,7 @@ export function V2TopBar({
           <V2TopBarAddMenu className="shrink-0" />
           <Link
             href="/argus/v2/inbox"
-            className="relative hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400 lg:flex"
+            className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-400"
             aria-label="Inbox"
           >
             🔔
@@ -167,10 +124,41 @@ export function V2TopBar({
             ) : null}
           </Link>
           <div
-            className="hidden h-9 w-9 items-center justify-center rounded-full bg-violet-600/30 text-xs font-bold text-violet-200 ring-1 ring-violet-500/40 sm:flex"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-violet-600/30 text-xs font-bold text-violet-200 ring-1 ring-violet-500/40"
             title="Profile"
           >
             VA
+          </div>
+        </div>
+
+        {/* Phone: two rows — Create + Close on top; Inbox + Matrix below */}
+        <div className="ml-auto flex flex-col items-end gap-1.5 lg:hidden">
+          <div className="flex items-center gap-1.5">
+            <V2TopBarAddMenu className="shrink-0" />
+            <MobileMenuButton open={open} onClick={toggle} />
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Link
+              href="/argus/v2/inbox"
+              className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-base text-zinc-400"
+              aria-label="Inbox"
+              title="Inbox"
+            >
+              🔔
+              {inboxCount > 0 ? (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                  {inboxCount > 99 ? "99+" : inboxCount}
+                </span>
+              ) : null}
+            </Link>
+            <Link
+              href="/home-preview"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80"
+              aria-label="MatrixTrade"
+              title="MatrixTrade"
+            >
+              <TradingMark size={28} />
+            </Link>
           </div>
         </div>
       </div>

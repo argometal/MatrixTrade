@@ -6,14 +6,17 @@ import type { ReactNode } from "react";
 export type CornerDockPlacement = "matrix" | "argus" | "floating";
 
 function dockPositionClass(placement: CornerDockPlacement, mobileOffset: boolean): string {
+  // Below mobile header + page action row so bell/switch do not cover titles or Connect.
+  const mobileLower =
+    "max-lg:top-[calc(9.5rem+env(safe-area-inset-top))] max-lg:bottom-auto";
   if (placement === "matrix") {
-    return "max-lg:bottom-[calc(4.75rem+env(safe-area-inset-bottom))] max-lg:top-auto lg:top-6";
+    return `${mobileLower} lg:top-6`;
   }
   if (placement === "argus") {
-    return "top-[calc(3.25rem+env(safe-area-inset-top))] sm:top-14 lg:top-[4.5rem]";
+    return `${mobileLower} lg:top-[4.5rem]`;
   }
   return mobileOffset
-    ? "top-[calc(7rem+env(safe-area-inset-top))] sm:top-28 lg:top-6"
+    ? `${mobileLower} lg:top-6`
     : "top-20 sm:top-6";
 }
 
