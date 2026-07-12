@@ -180,10 +180,42 @@ export function MatrixConnectWindow({
       return;
     }
     setPreview(result.payload);
+    const payloadCheck = validateProposalPayload(result.payload);
+    if (!payloadCheck.ok) {
+      setAcceptError(payloadCheck.errors.join("\n"));
+    }
+  }
+
+  function resolvePreviewForAccept(): TradingInboxPayload | null {
+    if (preview) return preview;
+    const result = parseAiBlock(pasteValue);
+    if (!result.ok) {
+      setParseError(
+        result.details?.length ? `${result.error}\n${result.details.join("\n")}` : result.error
+      );
+      return null;
+    }
+    setPreview(result.payload);
+    return result.payload;
   }
 
   function handleAccept() {
-    if (!pasteValue.trim() || !applyReady || pending || accepting || acceptingRef.current) return;
+    const isBusy = pending || accepting;
+    if (!pasteValue.trim() || isBusy || acceptingRef.current) return;
+
+    const payload = resolvePreviewForAccept();
+    if (!payload) return;
+
+    const payloadCheck = validateProposalPayload(payload);
+    if (!payloadCheck.ok) {
+      setAcceptError(payloadCheck.errors.join("\n"));
+      return;
+    }
+    if (!isApplyImplemented(payload.type)) {
+      setAcceptError(`Apply is not implemented for type ${payload.type}.`);
+      return;
+    }
+
     acceptingRef.current = true;
     setAccepting(true);
     setAcceptError(null);
@@ -281,14 +313,33 @@ export function MatrixConnectWindow({
                   </p>
                 ) : null}
 
+                {pending || accepting ? (
+                  <div className="rounded-xl border border-violet-500/30 bg-violet-950/30 px-3 py-2 text-xs text-violet-200">
+                    Applying… do not click again until this finishes.
+                  </div>
+                ) : null}
+
+                {preview && !validation.ok ? (
+                  <div className="rounded-xl border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
+                    <p className="font-medium">Fix before Accept:</p>
+                    <ul className="mt-1 list-inside list-disc">
+                      {validation.errors.map((err) => (
+                        <li key={err}>{err}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
                 <textarea
                   value={pasteValue}
                   onChange={(event) => {
+                    if (pending || accepting) return;
                     setPasteValue(event.target.value);
                     setPreview(null);
                     setParseError(null);
                     setAcceptError(null);
                   }}
+                  disabled={pending || accepting}
                   rows={12}
                   placeholder='{ "type": "decision-update", "proposal": { ... } }'
                   className="w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-3 font-mono text-xs text-zinc-300 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none"
@@ -391,11 +442,11 @@ export function MatrixConnectWindow({
                 </button>
                 <button
                   type="button"
-                  disabled={pending || accepting || !applyReady}
+                  disabled={pending || accepting || !pasteValue.trim()}
                   onClick={handleAccept}
                   className="flex-[2] rounded-2xl bg-emerald-600 py-3.5 text-sm font-bold text-white disabled:opacity-40"
                 >
-                  {pending || accepting ? "Applying…" : "Accept"}
+                  {pending || accepting ? "Applying…" : applyReady ? "Accept" : "Accept (validate first)"}
                 </button>
               </div>
             ) : null}

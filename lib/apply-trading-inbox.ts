@@ -81,22 +81,30 @@ export async function applyTradingProposal(
 
   const fingerprint = computeImportFingerprint(payload);
   const store = getAppliedImportStore();
-  const existing = await store.findByFingerprint(fingerprint);
-  if (existing) {
-    return resultFromAppliedRecord(existing, parsed.type);
+  try {
+    const existing = await store.findByFingerprint(fingerprint);
+    if (existing) {
+      return resultFromAppliedRecord(existing, parsed.type);
+    }
+  } catch {
+    /* fingerprint store unavailable — proceed with apply */
   }
 
   const result = await applyTradingProposalInner(parsed);
   if (!result.ok) return result;
 
-  await store.record(fingerprint, {
-    message: result.message,
-    type: result.type,
-    tradeId: result.tradeId,
-    playbookId: result.playbookId,
-    stockFileId: result.stockFileId,
-    planId: result.planId,
-  });
+  try {
+    await store.record(fingerprint, {
+      message: result.message,
+      type: result.type,
+      tradeId: result.tradeId,
+      playbookId: result.playbookId,
+      stockFileId: result.stockFileId,
+      planId: result.planId,
+    });
+  } catch {
+    /* fingerprint audit best-effort — apply already succeeded */
+  }
   return result;
 }
 
