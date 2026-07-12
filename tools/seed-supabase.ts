@@ -7,6 +7,9 @@
  *
  * Usage:
  *   npx tsx tools/seed-supabase.ts
+ *
+ * SQL-only alternative (Supabase SQL Editor):
+ *   supabase/seed-playbooks.sql
  */
 import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
@@ -14,7 +17,7 @@ import { fileURLToPath } from "url";
 import { createClient } from "@supabase/supabase-js";
 import { evidenceToRow } from "../lib/market-evidence-store/mapping";
 import { thesisToRow } from "../lib/stock-theses-store/mapping";
-import { planToRow } from "../lib/plans-store/mapping";
+import { planToSupabaseRow } from "../lib/plans-store/mapping";
 import { tradeToRow } from "../lib/trades-store/mapping";
 import type { MarketEvidence } from "../lib/market-evidence-types";
 import type { TradePlan } from "../lib/plan-types";
@@ -118,10 +121,11 @@ async function main() {
       { onConflict: "id" }
     );
     if (error) {
-      console.error("Trades seed failed:", error.message);
-      process.exit(1);
+      console.warn("Trades seed skipped:", error.message);
+      console.warn("  → Run supabase/trade-learning-extensions.sql if loss_classification is missing.");
+    } else {
+      console.log("Trades: OK");
     }
-    console.log("Trades: OK");
   }
 
   if (theses.length > 0) {
@@ -136,14 +140,15 @@ async function main() {
   }
 
   if (plans.length > 0) {
-    const { error } = await supabase.from("trade_plans").upsert(plans.map(planToRow), {
+    const { error } = await supabase.from("trade_plans").upsert(plans.map(planToSupabaseRow), {
       onConflict: "id",
     });
     if (error) {
-      console.error("Trade plans seed failed:", error.message);
-      process.exit(1);
+      console.warn("Trade plans seed skipped:", error.message);
+      console.warn("  → Run supabase/stock-case-cloud.sql and trade-plans-layered-entry.sql if needed.");
+    } else {
+      console.log("Trade plans: OK");
     }
-    console.log("Trade plans: OK");
   }
 
   if (evidence.length > 0) {
