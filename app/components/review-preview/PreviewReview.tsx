@@ -79,7 +79,7 @@ export function PreviewReview({
           {pendingInbox.length > 0 && (
             <section className="space-y-3">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Inbox proposals
+                Pending in History
               </h2>
               <ul className="divide-y divide-zinc-800 rounded-2xl border border-zinc-800 bg-zinc-900/50">
                 {pendingInbox.map((item) => {

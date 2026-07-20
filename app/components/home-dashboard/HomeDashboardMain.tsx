@@ -368,9 +368,7 @@ export function HomeDashboardMain({
           <SectionBadge n={assistantOnly ? 2 : 3} />
           <div className="flex-1">
             <h2 className={headingClass}>AI will respond with a proposal</h2>
-            <p className={subtextClass}>
-              Paste the AI Block here. Review in Inbox before Apply.
-            </p>
+            <p className={subtextClass}>Paste AI Block. Validate in Control or review in History.</p>
           </div>
           {pendingInboxCount > 0 && (
             <Link
@@ -381,7 +379,7 @@ export function HomeDashboardMain({
                   : "rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-800 hover:bg-violet-200"
               }
             >
-              {pendingInboxCount} in Inbox
+              {pendingInboxCount} in History
             </Link>
           )}
         </div>
@@ -396,7 +394,7 @@ export function HomeDashboardMain({
           >
             <p className="font-medium">AI Block will appear here</p>
             <p className={`mt-1 text-xs ${dark ? "text-violet-300/70" : "text-violet-800/70"}`}>
-              Review the proposal → Inbox → Apply → Supabase. Nothing writes until you apply.
+              Or use Control → Update on any page.
             </p>
           </div>
         )}
@@ -421,7 +419,7 @@ export function HomeDashboardMain({
                 : "mb-4 space-y-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
             }
           >
-            <p className="font-medium">Imported to Inbox — next: Review → Apply</p>
+            <p className="font-medium">Sent to History — Review → Apply</p>
             <dl className="grid gap-2 font-mono text-xs sm:grid-cols-2">
               <div>
                 <dt className={dark ? "text-emerald-400" : "text-emerald-800"}>inboxItemId</dt>
@@ -440,7 +438,7 @@ export function HomeDashboardMain({
                   : "inline-block rounded-md bg-emerald-800 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
               }
             >
-              Open Inbox
+              Open History
             </Link>
           </div>
         )}
@@ -489,7 +487,7 @@ export function HomeDashboardMain({
               </select>
             </label>
           </div>
-          <p className="text-xs text-zinc-500">🔒 Nothing is written to Supabase until you apply in Inbox.</p>
+          <p className="text-xs text-zinc-500">Nothing writes until you Accept or Apply in History.</p>
         </form>
       </section>
 

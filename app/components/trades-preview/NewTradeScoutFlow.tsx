@@ -224,10 +224,9 @@ export function NewTradeScoutFlow({
       </section>
 
       <section className="rounded-2xl border border-emerald-500/30 bg-zinc-900/50 p-5">
-        <h2 className="text-sm font-semibold text-zinc-200">2 · Paste AI output & send to Inbox</h2>
+        <h2 className="text-sm font-semibold text-zinc-200">2 · AI Block → History</h2>
         <p className="mt-1 text-xs text-zinc-500">
-          Validate levels and R:R before Accept. Same pipeline as Scout — proposal only until you
-          Apply.
+          Validate R:R, then send to History or use Control → Update → Accept.
         </p>
         <textarea
           value={aiBlockRaw}
@@ -304,7 +303,7 @@ export function NewTradeScoutFlow({
 
         {importSuccess ? (
           <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">
-            Sent to Inbox ·{" "}
+            Sent to History ·{" "}
             <Link href={`/inbox/${importSuccess.id}`} className="font-semibold underline">
               Review proposal →
             </Link>
@@ -317,10 +316,10 @@ export function NewTradeScoutFlow({
           disabled={pending || !preview?.ok}
           className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
         >
-          {pending ? "Sending…" : "Accept proposal → Inbox"}
+          {pending ? "Sending…" : "Send to History"}
         </button>
         <p className="mt-2 text-xs text-zinc-600">
-          AI proposes. You decide. Nothing is applied until Inbox → Apply.
+          You review in History → Apply before Supabase updates.
         </p>
       </section>
 

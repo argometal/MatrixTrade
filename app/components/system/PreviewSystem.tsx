@@ -71,10 +71,7 @@ export function PreviewSystem({
 
           <div className="mt-4 rounded-lg border border-violet-500/20 bg-violet-950/30 px-4 py-3 text-sm text-violet-200">
             Sync snapshot to Worker before using{" "}
-            <Link href="/home-preview?panel=assistant" className="font-medium text-violet-300 underline hover:text-violet-200">
-              Asistente IA
-            </Link>
-            .
+            <span className="font-medium text-violet-300">Control → Update</span>.
           </div>
 
           <nav className="mt-4 flex flex-wrap gap-2">
@@ -102,7 +99,7 @@ export function PreviewSystem({
           <SystemSection
             id="bridge"
             title="Bridge"
-            description="Cloudflare Worker — publish experiment snapshot for Assistant and mobile."
+            description="Cloudflare Worker — publish experiment snapshot for Control panel and mobile."
           >
             <SystemBridgePanel
               syncOk={syncOk}
@@ -153,13 +150,13 @@ export function PreviewSystem({
               value={<span className="font-mono text-xs text-zinc-300">{inboxBackend}</span>}
             />
             <SystemRow
-              label="Inbox (pending)"
+              label="History (pending)"
               value={
                 pendingInboxCount === 0 ? (
                   "None"
                 ) : (
                   <Link href="/inbox" className="text-violet-400 hover:text-violet-300 hover:underline">
-                    {pendingInboxCount} pending · open Inbox
+                    {pendingInboxCount} pending · open History
                   </Link>
                 )
               }

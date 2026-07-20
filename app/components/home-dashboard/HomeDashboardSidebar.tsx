@@ -3,12 +3,10 @@ import { formatPct, formatUsd, type AiBridgeOverviewData } from "@/lib/ai-bridge
 import { sampleAiBlock } from "@/lib/ai-block";
 
 const ASSISTANT_RULES = [
-  "You speak in actions, not JSON.",
-  "AI chooses the internal action type.",
   "One response = one AI Block.",
-  "You review every proposal in Inbox.",
-  "You apply manually — never auto-apply.",
-  "Supabase is the source of truth.",
+  "Control → Update → Validate → Accept.",
+  "History holds imports that need review.",
+  "Nothing auto-writes to Supabase.",
 ] as const;
 
 const EXAMPLE_TYPES = [
@@ -43,11 +41,10 @@ export function HomeDashboardSidebar({
       <section className={sectionClass}>
         <h2 className={headingClass}>How it works</h2>
         <ol className={`mt-3 space-y-2 ${bodyClass}`}>
-          <li>1. Copy Snapshot</li>
-          <li>2. AI analyzes + responds</li>
-          <li>3. Paste AI Block on Dashboard</li>
-          <li>4. Review in Inbox</li>
-          <li>5. Apply to Supabase</li>
+          <li>1. Copy snapshot (Control panel)</li>
+          <li>2. Discuss in your AI chat</li>
+          <li>3. Control → Update → paste AI Block</li>
+          <li>4. Validate → Accept (or History → Apply)</li>
         </ol>
       </section>
 
@@ -78,7 +75,7 @@ export function HomeDashboardSidebar({
         <div className="flex items-center justify-between gap-2">
           <h2 className={headingClass}>Quick overview</h2>
           <Link href="/inbox" className={linkClass}>
-            Inbox{pendingInboxCount > 0 ? ` (${pendingInboxCount})` : ""}
+            History{pendingInboxCount > 0 ? ` (${pendingInboxCount})` : ""}
           </Link>
         </div>
 

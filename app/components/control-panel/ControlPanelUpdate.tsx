@@ -229,13 +229,12 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain">
         <p className="text-xs text-zinc-500">
-          Paste any AI Block — trades, stock files, scouts, playbooks, evidence. Validate to preview,
-          then Accept writes to MatrixTrade.
+          Paste AI Block. Validate, then Accept writes to MatrixTrade.
         </p>
 
         {isBusy ? (
           <div className="rounded-xl border border-violet-500/30 bg-violet-950/30 px-3 py-2 text-xs text-violet-200">
-            Applying… do not click again until this finishes.
+            Applying… wait until finished.
           </div>
         ) : null}
 

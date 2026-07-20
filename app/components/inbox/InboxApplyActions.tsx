@@ -42,7 +42,7 @@ export function InboxApplyActions({
     return (
       <div className="space-y-3">
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">
-          Apply submitted. If the page did not redirect, refresh Inbox — duplicate applies are blocked
+          Apply submitted. Refresh History if needed — duplicates are blocked.
           server-side.
         </div>
       </div>

@@ -329,9 +329,9 @@ export function PreviewDashboard({
                   className="flex w-full items-center justify-between px-5 py-4 text-left"
                 >
                   <div>
-                    <h2 className="text-sm font-semibold text-zinc-100">Asistente IA</h2>
+                    <h2 className="text-sm font-semibold text-zinc-100">Paste AI Block (legacy)</h2>
                     <p className="mt-0.5 text-xs text-zinc-500">
-                      Legacy paste panel — prefer Connect on any workspace page for Accept inline.
+                      Prefer Control → Update. This imports to History for review.
                     </p>
                   </div>
                   <span className="text-zinc-500">{assistantOpen ? "▾" : "▸"}</span>
