@@ -13,7 +13,7 @@ import {
 
 const QUICK_ACTIONS = [
   { label: "Scouting Desk", href: "/planning" },
-  { label: "Review Inbox", href: "/inbox" },
+  { label: "History", href: "/inbox" },
   { label: "New stock case", href: "/stock-theses/new" },
 ] as const;
 
@@ -69,8 +69,7 @@ export function TradesWorkspace({
             <div>
               <h1 className="text-xl font-semibold text-zinc-100">New Trade</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                Analyze in your AI chat → one <code className="text-violet-300">trade-proposal</code>{" "}
-                block → Inbox Apply.
+                AI chat → <code className="text-violet-300">trade-proposal</code> → Control → Update or History.
                 {data.prospects.length > 0 ? (
                   <span className="text-sky-400">
                     {" "}
@@ -97,7 +96,7 @@ export function TradesWorkspace({
                 href="/inbox"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:border-zinc-600"
               >
-                Inbox{data.pendingInboxCount > 0 ? ` (${data.pendingInboxCount})` : ""}
+                History{data.pendingInboxCount > 0 ? ` (${data.pendingInboxCount})` : ""}
               </Link>
             </div>
           </div>
@@ -206,7 +205,7 @@ export function TradesWorkspace({
         )}
 
         <footer className="border-t border-zinc-800 px-4 py-3 text-[10px] text-zinc-600 lg:px-6">
-          Live data · Scout-style new trade · Human Apply in Inbox · Supabase is source of truth.
+          Live data · Control → Update to apply AI Blocks.
         </footer>
       </div>
 

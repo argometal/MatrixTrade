@@ -328,7 +328,7 @@ export function PreviewPlanning({
             <h2 className="text-sm font-semibold text-violet-200">Stock profiles — start here</h2>
             <p className="mt-1 text-xs text-zinc-500">
               Visualization only. Copy a snapshot → discuss in external AI → import result in Dashboard or
-              Inbox → Apply. Thesis lives on the profile (WHO); playbook is the method (HOW).
+              History → Apply. Thesis on profile (WHO); playbook = method (HOW).
             </p>
             {activeTheses.length === 0 ? (
               <div className="mt-4 flex flex-wrap items-center gap-3">

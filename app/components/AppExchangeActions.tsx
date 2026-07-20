@@ -18,7 +18,7 @@ export function AppExchangeActions({
   className?: string;
 }) {
   const inboxHref = app === "matrix" ? "/inbox" : "/argus/v2/inbox";
-  const inboxLabel = app === "matrix" ? "Proposal history" : "Inbox";
+  const inboxLabel = app === "matrix" ? "History" : "Inbox";
 
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>

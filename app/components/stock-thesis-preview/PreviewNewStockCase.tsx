@@ -83,7 +83,7 @@ export function PreviewNewStockCase() {
               <h1 className="text-xl font-semibold text-zinc-100">New stock case</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
                 Analyze in your AI chat → one <code className="text-violet-300">stock-case-create</code>{" "}
-                block → Inbox Apply (Profile + Evidence + optional Scout).
+                block → Control → Update or History Apply.
               </p>
             </div>
             <Link
@@ -155,7 +155,7 @@ export function PreviewNewStockCase() {
                   <dd className="break-all font-mono text-zinc-400">{grantLinks.contextUrl}</dd>
                 </div>
                 <div>
-                  <dt className="text-zinc-500">Inbox API — POST stock-case-create</dt>
+                  <dt className="text-zinc-500">History API — POST stock-case-create</dt>
                   <dd className="break-all font-mono text-zinc-400">{grantLinks.inboxUrl}</dd>
                 </div>
               </dl>
@@ -163,10 +163,9 @@ export function PreviewNewStockCase() {
           </section>
 
           <section className="rounded-2xl border border-emerald-500/30 bg-zinc-900/50 p-5">
-            <h2 className="text-sm font-semibold text-zinc-200">2 · Paste AI output & send to Inbox</h2>
+            <h2 className="text-sm font-semibold text-zinc-200">2 · Paste AI Block</h2>
             <p className="mt-1 text-xs text-zinc-500">
-              The JSON from your chat includes thesis, zones, history, and optional initialScout. Human
-              Apply in Inbox — same gate as trades.
+              Validate, then History → Apply or Control → Update → Accept.
             </p>
             <textarea
               value={aiBlockRaw}
@@ -200,7 +199,7 @@ export function PreviewNewStockCase() {
 
             {importSuccess ? (
               <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">
-                Sent to Inbox ·{" "}
+                Sent to History ·{" "}
                 <Link href={`/inbox/${importSuccess.id}`} className="font-semibold underline">
                   Review & Apply →
                 </Link>
@@ -217,7 +216,7 @@ export function PreviewNewStockCase() {
               disabled={pending || !preview?.ok}
               className="mt-4 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500 disabled:opacity-50"
             >
-              {pending ? "Sending…" : "Accept proposal → Inbox"}
+              {pending ? "Sending…" : "Send to History"}
             </button>
           </section>
 

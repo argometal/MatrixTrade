@@ -192,8 +192,7 @@ export function AiBridgeV2Panel({
             <div className="mb-6 grid gap-3 sm:grid-cols-2">
               {showHelp && (
                 <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
-                  Copy snapshot → tell your AI in plain language → paste AI Block → Inbox → Apply.
-                  Nothing writes to Supabase until you apply.
+                  Control → Update, or paste AI Block → History → Apply.
                 </div>
               )}
               {showExamples && (
@@ -346,11 +345,11 @@ export function AiBridgeV2Panel({
                 <div className="mb-3 py-2 text-center text-sm text-violet-900/80">
                   <p className="font-medium">AI Block will appear here</p>
                   <p className="mt-1 text-xs">
-                    Review the proposal → Inbox → Apply → Supabase
+                    Control → Update, or History → Apply
                   </p>
                   <p className="mt-2 flex items-center justify-center gap-1 text-xs text-violet-700/70">
                     <span aria-hidden>🔒</span>
-                    Nothing is written to Supabase until you apply.
+                    Nothing writes until Accept/Apply.
                   </p>
                 </div>
               )}
@@ -374,12 +373,12 @@ export function AiBridgeV2Panel({
               )}
               {importResult && (
                 <div className="mt-2 space-y-2 rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-950">
-                  <p className="font-medium">Imported to Inbox</p>
+                  <p className="font-medium">Sent to History</p>
                   <Link
                     href={`/inbox/${importResult.inboxItemId}?origin=${importResult.origin}`}
                     className="inline-block rounded-md bg-emerald-800 px-3 py-1.5 text-xs font-medium text-white"
                   >
-                    Review in Inbox →
+                    Review in History →
                   </Link>
                 </div>
               )}
@@ -390,7 +389,7 @@ export function AiBridgeV2Panel({
                   disabled={pending || !proposalText.trim()}
                   className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                 >
-                  {pending ? "Importing…" : "Import to Inbox"}
+                  {pending ? "Importing…" : "Import to History"}
                 </button>
               </div>
             </div>

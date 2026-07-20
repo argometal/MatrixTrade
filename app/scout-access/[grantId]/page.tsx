@@ -79,7 +79,7 @@ export default async function ScoutAccessPage({
               {urls.inboxUrl}
             </code>
           </li>
-          <li>Apply in MatrixTrade Inbox — never auto-applied.</li>
+          Apply in History — never auto-applied.
         </ol>
       </section>
 

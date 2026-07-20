@@ -17,27 +17,27 @@ const SECTIONS: {
   {
     id: "train-ai",
     label: "Train AI",
-    hint: "Mechanics brief and playbook context for a new AI session",
+    hint: "Mechanics brief for a new AI session",
   },
   {
     id: "playbook",
     label: "Playbook",
-    hint: "Strategy rules, checklists, and performance stats",
+    hint: "Rules, checklists, stats",
   },
   {
     id: "stock-file",
     label: "Stock File",
-    hint: "Pick one active profile — copy thesis and linked scouts",
+    hint: "One profile — copy thesis and scouts",
   },
   {
     id: "scouting",
     label: "Scouting",
-    hint: "Scout desk overview — playbooks, files, and risk room",
+    hint: "Desk overview and risk room",
   },
   {
     id: "trade",
     label: "Trade",
-    hint: "Pick a closed trade — forensic export for AI analysis",
+    hint: "Closed trade — copy for AI review",
   },
 ];
 
@@ -246,12 +246,12 @@ export function MatrixControlPanel() {
 
   const detailHint =
     step === "update"
-      ? "Listening — paste what your AI returned and Matrix updates what it understands"
+      ? "Paste AI Block — Validate, then Accept"
       : step === "stock-pick"
-        ? `${data.activeThesisCount} active profile${data.activeThesisCount === 1 ? "" : "s"} — choose one to copy context`
+        ? `${data.activeThesisCount} active — pick one`
         : step === "trade-pick"
-          ? `${data.trade.closedTrades.length} closed trade${data.trade.closedTrades.length === 1 ? "" : "s"} — forensic export for AI`
-          : sectionMeta?.hint ?? "Copy snapshot text for your external AI";
+          ? `${data.trade.closedTrades.length} closed — pick one`
+          : sectionMeta?.hint ?? "Copy snapshot for your AI";
 
   return (
     <div
@@ -286,7 +286,7 @@ export function MatrixControlPanel() {
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-emerald-100">Update</span>
                 <span className="mt-0.5 block text-xs text-emerald-200/70">
-                  Paste AI response — trades, files, scouts, playbooks
+                  Paste AI Block → Validate → Accept
                 </span>
               </span>
             </button>
