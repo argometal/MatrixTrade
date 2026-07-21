@@ -22,7 +22,7 @@
 | 4e | [thesis-ownership.md](thesis-ownership.md) | Thesis on Stock Profile, not Playbook |
 | 4f | [snapshot-catalog.md](snapshot-catalog.md) | **Snapshot menu** — one button per window + Apply path |
 | 4g | [control-panel-ia.md](control-panel-ia.md) | **Control IA** — descriptive labels; forensic on trade only |
-| 5 | [runtime-truth.md](runtime-truth.md) | **What works in prod today** |
+| 5 | [runtime-truth.md](runtime-truth.md) | **What works in prod today** (refreshed 2026-07-21) |
 | 6 | [ai-engineering.md](ai-engineering.md) | Single AI fleet |
 | 7 | [scoped-ai-access.md](scoped-ai-access.md) | Temporal links for one Stock Profile |
 | 8 | [ai-evolution.md](ai-evolution.md) | Protocol over provider; low-budget rules |

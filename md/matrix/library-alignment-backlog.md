@@ -5,6 +5,14 @@
 
 ---
 
+## Done (2026-07-21)
+
+- `md/matrix/runtime-truth.md` refreshed to Scout war room / Trades ledger / Control IA
+- `md/matrix/control-panel-ia.md` + `md/rules/ui-naming.md` (descriptive Control labels; forensic on trade only)
+- `md/matrix/snapshot-catalog.md` aligned with Control + trade forensic home
+
+---
+
 ## Done (2026-07-10)
 
 - `md/matrix/v2-engine-architecture.md`
