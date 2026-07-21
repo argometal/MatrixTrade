@@ -24,6 +24,7 @@ export interface V2ProjectBrowseCard {
   statusTone: "green" | "blue" | "amber" | "zinc" | "orange";
   dateRangeLabel: string | undefined;
   description: string;
+  linkedOrgIds: string[];
   metrics: {
     people: number;
     emails: number;
@@ -177,6 +178,10 @@ export function buildV2ProjectBrowseCards(
       const lastActivity = resolveLastActivity(project, allInbox, allLogs, today);
       const status = deriveProjectBrowseStatus(project, today, lastActivity.sortIso);
       const linkIds = collectProjectLinkIds(project);
+      const linkedOrgIds = linkIds.filter((id) => {
+        const e = data.entities.find((ent) => ent.id === id);
+        return e?.type === "company";
+      });
       const linkCounts = countLinkKinds(data, linkIds);
       const nodeCounts = countTopicsAndEventsInScope(data, project, allLogs);
       const linkedPeople = linkIds
@@ -196,6 +201,7 @@ export function buildV2ProjectBrowseCards(
         statusTone: statusTone(status),
         dateRangeLabel: formatProjectDateRange(project),
         description: projectDescription(project),
+        linkedOrgIds,
         metrics: {
           people: linkCounts.peopleCount,
           emails: allInbox.length,
@@ -210,6 +216,11 @@ export function buildV2ProjectBrowseCards(
       };
     })
     .sort((a, b) => b.lastActivity.sortIso.localeCompare(a.lastActivity.sortIso));
+}
+
+export function filterV2ProjectBrowseCards(cards: V2ProjectBrowseCard[], orgId?: string): V2ProjectBrowseCard[] {
+  if (!orgId) return cards;
+  return cards.filter((c) => c.linkedOrgIds.includes(orgId));
 }
 
 export function buildV2ProjectBrowseSummary(cards: V2ProjectBrowseCard[]): V2ProjectBrowseSummary {

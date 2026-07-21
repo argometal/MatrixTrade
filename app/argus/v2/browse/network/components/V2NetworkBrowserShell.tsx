@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { recordNetworkLastContactAction } from "@/app/argus/actions";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
@@ -416,6 +416,12 @@ export function V2NetworkBrowserShell({
   insights: V2NetworkBrowseInsight;
   snapshotItems: SnapshotMenuItem[];
 }) {
+  const searchParams = useSearchParams();
+  const orgScope = searchParams.get("org")?.trim() || undefined;
+  const scopedCards = useMemo(
+    () => (orgScope ? cards.filter((c) => c.organizationId === orgScope) : cards),
+    [cards, orgScope]
+  );
   const [view, setView] = useState<"grid" | "list">("grid");
   const [statusTab, setStatusTab] = useState<V2NetworkBrowseStatus | "all">("all");
   const [smartView, setSmartView] = useState<V2NetworkSmartView>("all");
@@ -425,7 +431,7 @@ export function V2NetworkBrowserShell({
   const [smartOpen, setSmartOpen] = useState(false);
 
   const filtered = useMemo(() => {
-    let rows = cards;
+    let rows = scopedCards;
     if (statusTab !== "all") rows = rows.filter((c) => c.status === statusTab);
     if (smartView !== "all") rows = applyNetworkSmartView(rows, smartView);
     const q = searchQuery.trim().toLowerCase();
@@ -439,15 +445,15 @@ export function V2NetworkBrowserShell({
       );
     }
     return rows;
-  }, [cards, statusTab, smartView, searchQuery]);
+  }, [scopedCards, statusTab, smartView, searchQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   const tabCount = (key: V2NetworkBrowseStatus | "all") => {
-    if (key === "all") return cards.length;
-    return cards.filter((c) => c.status === key).length;
+    if (key === "all") return scopedCards.length;
+    return scopedCards.filter((c) => c.status === key).length;
   };
 
   return (

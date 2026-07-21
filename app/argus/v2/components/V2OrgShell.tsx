@@ -9,7 +9,7 @@ import type { TagPattern } from "@/lib/argus/v2/tag-patterns";
 import { V2Badge, V2Card } from "./v2-ui";
 import { V2EntityNeighborhoodPanel } from "./V2EntityNeighborhoodPanel";
 import { V2PrivateEvidenceGate } from "./V2PrivateEvidenceGate";
-import { V2EntityChronicleSection } from "./V2EntityChronicleSection";
+import { V2EntityTimelineSection } from "./V2EntityTimelineSection";
 import { V2EntityChronicleRail } from "./V2EntityChronicleRail";
 import { V2EntityLinksTab } from "./V2EntityLinksTab";
 import { V2RelationshipChart } from "./V2RelationshipChart";
@@ -26,7 +26,7 @@ import {
   V2SummaryStatCard,
 } from "./V2RightPanel";
 
-const TABS = ["Overview", "Chronicle", "Links"] as const;
+const TABS = ["Overview", "Timeline", "Links"] as const;
 type OrgTab = (typeof TABS)[number];
 
 export type V2OrgShellProps = {
@@ -99,7 +99,7 @@ export function V2OrgShell(props: V2OrgShellProps) {
     <>
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-zinc-800/80 pb-px">
         {TABS.map((entry) => {
-          const hint = entry === "Chronicle" && timeline.length > 0 ? ` · ${timeline.length}` : "";
+          const hint = entry === "Timeline" && timeline.length > 0 ? ` · ${timeline.length}` : "";
           return (
             <button
               key={entry}
@@ -128,34 +128,34 @@ export function V2OrgShell(props: V2OrgShellProps) {
                   value={String(stats.emails)}
                   label="Emails"
                   delta={stats.emailsDelta}
-                  href="/argus/v2/inbox"
+                  href={`/argus/v2/inbox?entity=${entity.id}`}
                 />
                 <V2SummaryStatCard
                   kind="people"
                   value={String(stats.people)}
                   label="People"
-                  href={`/argus/v2/network/${entity.id}`}
+                  href={`/argus/v2/browse/network?org=${entity.id}`}
                   linkLabel="View all"
                 />
                 <V2SummaryStatCard
                   kind="projects"
                   value={String(stats.projects)}
                   label="Projects"
-                  href="/argus/v2/browse/projects"
+                  href={`/argus/v2/browse/projects?org=${entity.id}`}
                   linkLabel="View all"
                 />
                 <V2SummaryStatCard
                   kind="topics"
                   value={String(stats.topics)}
                   label="Topics"
-                  href="/argus/v2/browse/topics"
+                  href={`/argus/v2/browse/topics?org=${entity.id}`}
                   linkLabel="Browse"
                 />
                 <V2SummaryStatCard
                   kind="events"
                   value={String(stats.events)}
                   label="Events"
-                  href="/argus/v2/browse/events"
+                  href={`/argus/v2/browse/events?entity=${entity.id}`}
                   linkLabel="Browse"
                 />
               </div>
@@ -197,7 +197,7 @@ export function V2OrgShell(props: V2OrgShellProps) {
             </V2PanelCard>
 
             <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
-              <V2EntityChronicleRail entries={timeline} onOpenChronicle={() => setTab("Chronicle")} />
+              <V2EntityChronicleRail entries={timeline} onOpenChronicle={() => setTab("Timeline")} />
             </V2PrivateEvidenceGate>
 
             <V2PanelCard>
@@ -278,11 +278,11 @@ export function V2OrgShell(props: V2OrgShellProps) {
         </div>
       ) : null}
 
-      {tab === "Chronicle" ? (
+      {tab === "Timeline" ? (
         <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
-          <V2EntityChronicleSection
+          <V2EntityTimelineSection
             entries={timeline}
-            subtitle="All time · Chronological view of interactions and knowledge"
+            subtitle="All time · Quick scan of activity on this organization"
           />
         </V2PrivateEvidenceGate>
       ) : null}

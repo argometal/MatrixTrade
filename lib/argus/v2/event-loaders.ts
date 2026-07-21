@@ -152,6 +152,7 @@ export function buildV2EventRows(data: ArgusData, includePrivate: boolean, today
       const project = linkedProject(data, event);
       const history = getEntityHistory(data, event.id, includePrivate);
       const people = attendeePeople(data, event, history);
+      const scopeLinkIds = [...collectRelatedEntityIds(event, history)];
 
       return {
         id: event.id,
@@ -165,6 +166,7 @@ export function buildV2EventRows(data: ArgusData, includePrivate: boolean, today
         attendeeInitials: attendeeInitials(people),
         isUpcoming,
         sortDate,
+        scopeLinkIds,
       };
     })
     .sort((a, b) => {

@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2ProjectActions } from "@/app/argus/v2/components/V2ProjectActions";
 import { V2BrowseStatusFilter } from "@/app/argus/v2/components/V2BrowseStatusFilter";
 import { V2Badge } from "../../../components/v2-ui";
-import type {
-  V2ProjectBrowseCard,
-  V2ProjectBrowseStatus,
-  V2ProjectBrowseSummary,
+import {
+  filterV2ProjectBrowseCards,
+  type V2ProjectBrowseCard,
+  type V2ProjectBrowseStatus,
+  type V2ProjectBrowseSummary,
 } from "@/lib/argus/v2/project-browse-utils";
 
 function badgeTone(tone: V2ProjectBrowseCard["statusTone"]): "default" | "green" | "blue" | "amber" | "orange" {
@@ -187,10 +189,13 @@ export function V2ProjectsBrowserShell({
   privateConfigured: boolean;
   privateUnlocked: boolean;
 }) {
+  const searchParams = useSearchParams();
+  const orgScope = searchParams.get("org")?.trim() || undefined;
   const [view, setView] = useState<"grid" | "list">("grid");
   const [statusFilter, setStatusFilter] = useState<V2ProjectBrowseStatus | "all">("all");
 
-  const sorted = useMemo(() => cards, [cards]);
+  const scopedCards = useMemo(() => filterV2ProjectBrowseCards(cards, orgScope), [cards, orgScope]);
+  const sorted = useMemo(() => scopedCards, [scopedCards]);
   const filtered = useMemo(
     () => (statusFilter === "all" ? sorted : sorted.filter((c) => c.status === statusFilter)),
     [sorted, statusFilter]

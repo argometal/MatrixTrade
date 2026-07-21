@@ -14,7 +14,7 @@ export function V2EntityChronicleRail({
   return (
     <V2PanelCard>
       <V2PanelHeader
-        title="Chronicle"
+        title="Timeline"
         action={
           onOpenChronicle ? (
             <button

@@ -15,6 +15,8 @@ export interface V2EventRow {
   attendeeInitials: string[];
   isUpcoming: boolean;
   sortDate: string;
+  /** Org/project/people/topic ids linked to this event — for scoped browse filters. */
+  scopeLinkIds: string[];
 }
 
 export interface V2EventEntry {
@@ -87,10 +89,14 @@ export function buildV2EventTabCounts(rows: V2EventRow[]) {
   };
 }
 
-export function filterV2EventRows(rows: V2EventRow[], tab: V2EventTab): V2EventRow[] {
-  if (tab === "all") return rows;
-  if (tab === "upcoming") return rows.filter((r) => r.isUpcoming);
-  return rows.filter((r) => !r.isUpcoming);
+export function filterV2EventRows(rows: V2EventRow[], tab: V2EventTab, entityId?: string): V2EventRow[] {
+  let result = rows;
+  if (entityId) {
+    result = result.filter((row) => row.scopeLinkIds.includes(entityId));
+  }
+  if (tab === "all") return result;
+  if (tab === "upcoming") return result.filter((r) => r.isUpcoming);
+  return result.filter((r) => !r.isUpcoming);
 }
 
 export function parseV2EventTab(value: string | undefined): V2EventTab {

@@ -57,11 +57,15 @@ export function V2EventsShell({
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseV2EventTab(searchParams.get("tab") ?? initialTab);
+  const entityScope = searchParams.get("entity")?.trim() || undefined;
   const urlSelected = searchParams.get("selected");
   const mobileDetailOpen = Boolean(urlSelected);
   const selectedId = resolveV2SelectedId(urlSelected, initialSelectedId);
-  const counts = useMemo(() => buildV2EventTabCounts(rows), [rows]);
-  const filtered = useMemo(() => filterV2EventRows(rows, tab), [rows, tab]);
+  const counts = useMemo(
+    () => buildV2EventTabCounts(filterV2EventRows(rows, "all", entityScope)),
+    [rows, entityScope]
+  );
+  const filtered = useMemo(() => filterV2EventRows(rows, tab, entityScope), [rows, tab, entityScope]);
   const groups = useMemo(() => groupV2EventRows(filtered), [filtered]);
   const selected = selectedId ? details.find((d) => d.id === selectedId) : undefined;
 

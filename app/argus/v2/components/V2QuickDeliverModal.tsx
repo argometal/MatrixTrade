@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import type { ExportScopeType, QuickDeliverSummary } from "@/lib/argus/export/types";
 
@@ -91,6 +92,15 @@ export function V2QuickDeliverModal({
     void loadPreview();
   }, [open, loadPreview]);
 
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
   async function downloadPdf() {
     setDownloadingPdf(true);
     setStatusMessage(null);
@@ -125,22 +135,40 @@ export function V2QuickDeliverModal({
     }
   }
 
+  const fullDossierHref = `/argus/v2/deliver?scopeType=${encodeURIComponent(scopeType)}&scopeId=${encodeURIComponent(scopeId)}&package=evidence_dossier`;
+
   if (!open) return null;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-2 sm:items-center sm:p-4"
       onClick={onClose}
+      role="presentation"
     >
       <div
-        className="flex max-h-[min(720px,90vh)] w-full max-w-3xl flex-col rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl"
+        className="flex max-h-[min(720px,92dvh)] w-full max-w-3xl flex-col rounded-2xl border border-zinc-700 bg-zinc-900 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quick-deliver-title"
       >
-        <div className="border-b border-zinc-800 px-5 py-4">
-          <h3 className="text-[15px] font-semibold text-zinc-100">PDF — {scopeName}</h3>
-          <p className="mt-1 text-xs text-zinc-500">
-            Human-readable report with timeline, evidence, and attachment index.
-          </p>
+        <div className="flex items-start justify-between gap-3 border-b border-zinc-800 px-5 py-4">
+          <div>
+            <h3 id="quick-deliver-title" className="text-[15px] font-semibold text-zinc-100">
+              Deliver — {scopeName}
+            </h3>
+            <p className="mt-1 text-xs text-zinc-500">
+              Quick PDF for scanning · Full dossier includes ZIP and complete evidence options.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 rounded-lg border border-zinc-700 px-2.5 py-1 text-sm text-zinc-400 hover:bg-zinc-800"
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
 
         {payload?.summary ? (
@@ -148,8 +176,8 @@ export function V2QuickDeliverModal({
             {[
               { label: "Evidence", value: payload.summary.evidenceCount },
               { label: "Emails", value: payload.summary.inboxCount },
-              { label: "Records", value: payload.summary.logCount },
-              { label: "Files", value: payload.summary.fileCount },
+              { label: "Notes", value: payload.summary.logCount },
+              { label: "Attachments", value: payload.summary.fileCount },
             ].map((stat) => (
               <div key={stat.label} className="rounded-lg bg-zinc-950/60 px-2 py-2 text-center">
                 <p className="text-lg font-bold tabular-nums text-zinc-100">{stat.value}</p>
@@ -168,7 +196,7 @@ export function V2QuickDeliverModal({
             <iframe
               title="PDF preview"
               srcDoc={payload.html}
-              className="h-[min(420px,50vh)] w-full rounded-xl border border-zinc-800 bg-white"
+              className="h-[min(280px,38dvh)] w-full rounded-xl border border-zinc-800 bg-white sm:h-[min(420px,50vh)]"
               sandbox=""
             />
           ) : null}
@@ -185,8 +213,15 @@ export function V2QuickDeliverModal({
             onClick={() => void downloadPdf()}
             className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
           >
-            {downloadingPdf ? "Generating PDF…" : "Download PDF"}
+            {downloadingPdf ? "Generating…" : "Quick PDF"}
           </button>
+          <Link
+            href={fullDossierHref}
+            onClick={onClose}
+            className="rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-600/25"
+          >
+            Full dossier
+          </Link>
           <button
             type="button"
             onClick={onClose}
