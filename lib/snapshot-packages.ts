@@ -128,7 +128,8 @@ export function scoutDeskSnapshotItems(input: {
     });
   }
 
-  items.push(mechanicsSnapshotItem());
+  // No separate Mechanics menu item here — desk packages already prefix the brief,
+  // and Control → Mechanics brief is the one place for the full constitution.
   return items;
 }
 

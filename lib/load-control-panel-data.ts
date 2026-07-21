@@ -89,9 +89,10 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     monthly,
     experiment,
     marketEvidence,
-  }).filter((item) => item.id === "scout-desk" || item.id === "mechanics");
+  }).filter((item) => item.id === "scout-desk");
 
   // Forensic closed-trade export is NOT loaded here — only on `/trades/[id]`.
+  // Mechanics is Control → Mechanics brief only — not duplicated under Scout desk.
   return {
     playbooks,
     activeThesisCount: activeTheses.length,
