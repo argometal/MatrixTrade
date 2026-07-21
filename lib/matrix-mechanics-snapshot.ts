@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 11;
+export const MATRIX_MECHANICS_REVISION = 12;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -50,7 +50,8 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- Using curly/smart quotes in JSON (use ASCII double quotes only)",
     "- Applying changes silently — always return a block for Inbox Apply",
     "- Encouraging entry merely because the thesis is bullish",
-    "- Treating minimum 3R as automatic approval",
+    "- Treating minimum 3R / maximumEntry as the recommended entry",
+    "- Stopping the Entry Solver at feasibility without Entry Optimization",
     "- Evaluating trades independently without considering scarce monthly risk capacity",
     "- Using extended targets to make a mediocre opportunity appear attractive",
     "- Treating a missed trade as a negative outcome",

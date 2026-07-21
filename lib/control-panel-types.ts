@@ -15,7 +15,6 @@ export type ControlPanelTradeEntry = {
 
 export type ControlPanelSectionId =
   | "train-ai"
-  | "playbook"
   | "stock-file"
   | "scouting"
   | "trade";
