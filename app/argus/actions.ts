@@ -744,7 +744,7 @@ async function persistRunbookFromPayload(
   }
   const items = buildRunbookItemsFromText(stepsText);
   if (items.filter((item) => item.type === "item").length === 0) {
-    throw new ArgusPersistenceError("validation", "Add at least one card.");
+    throw new ArgusPersistenceError("validation", "Add at least one check.");
   }
 
   const runbook = await createRunbook({
@@ -1667,7 +1667,7 @@ export async function addRunbookCardAction(runbookId: string, text: string): Pro
 
   const card = createRunbookCard(text);
   if (!card.text) {
-    throw new ArgusPersistenceError("validation", "Card text is required.");
+    throw new ArgusPersistenceError("validation", "Check text is required.");
   }
 
   await updateRunbook(runbookId, { items: [...runbook.items, card] });
@@ -1701,7 +1701,7 @@ export async function addRunbookSubtaskAction(
   });
 
   if (!found) {
-    throw new ArgusPersistenceError("validation", "Card not found.");
+    throw new ArgusPersistenceError("validation", "Check not found.");
   }
 
   await updateRunbook(runbookId, { items });
@@ -1793,7 +1793,7 @@ export async function renameRunbookItemAction(
 
   const trimmed = text.trim();
   if (!trimmed) {
-    throw new ArgusPersistenceError("validation", "Card text is required.");
+    throw new ArgusPersistenceError("validation", "Check text is required.");
   }
 
   let found = false;
@@ -1804,7 +1804,7 @@ export async function renameRunbookItemAction(
   });
 
   if (!found) {
-    throw new ArgusPersistenceError("validation", "Card not found.");
+    throw new ArgusPersistenceError("validation", "Check not found.");
   }
 
   await updateRunbook(runbookId, { items });
@@ -1852,7 +1852,7 @@ export async function rebuildRunbookFromTextAction(runbookId: string, text: stri
 
   const items = buildRunbookItemsFromText(text);
   if (items.filter((item) => item.type === "item").length === 0) {
-    throw new ArgusPersistenceError("validation", "Add at least one card.");
+    throw new ArgusPersistenceError("validation", "Add at least one check.");
   }
 
   await updateRunbook(runbookId, { items });
@@ -1939,7 +1939,7 @@ export async function importRunbookJsonAction(
 
   const items = normalizeImportedRunbookItems(payload.items);
   if (items.filter((item) => item.type === "item").length === 0) {
-    throw new ArgusPersistenceError("validation", "Import error: at least one card is required.");
+    throw new ArgusPersistenceError("validation", "Import error: at least one check is required.");
   }
 
   const linkedEntityIds = Array.isArray(payload.linkedEntityIds)
