@@ -16,28 +16,23 @@ const SECTIONS: {
 }[] = [
   {
     id: "train-ai",
-    label: "Train AI",
-    hint: "Mechanics brief for a new AI session",
-  },
-  {
-    id: "playbook",
-    label: "Playbook",
-    hint: "Rules, checklists, stats",
+    label: "Session",
+    hint: "Copy once — mechanics + playbook for a new AI chat",
   },
   {
     id: "stock-file",
-    label: "Stock File",
-    hint: "One profile — copy thesis and scouts",
+    label: "Case",
+    hint: "One ticker — thesis, zones, linked scouts",
   },
   {
     id: "scouting",
-    label: "Scouting",
-    hint: "Desk overview and risk room",
+    label: "Scout desk",
+    hint: "Overview of active cases and risk room",
   },
   {
     id: "trade",
-    label: "Trade",
-    hint: "Closed trade — copy for AI review",
+    label: "Closed trade",
+    hint: "Forensic copy for a finished fill",
   },
 ];
 
@@ -173,9 +168,8 @@ export function MatrixControlPanel() {
     if (!section) return [];
     switch (section) {
       case "train-ai":
-        return data.trainAi.snapshotItems;
-      case "playbook":
-        return data.playbook.snapshotItems;
+        // Session: mechanics is PlainCopyRow; only playbook rules as second copy
+        return data.trainAi.snapshotItems.filter((item) => item.id === "playbook");
       case "stock-file":
         return selectedStock?.snapshotItems.filter((item) => item.id !== "mechanics") ?? [];
       case "scouting":
@@ -267,10 +261,14 @@ export function MatrixControlPanel() {
       >
         <header className="mb-3 shrink-0">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400">
-            Control panel
+            Control
           </p>
           <h2 className="text-base font-bold text-zinc-50">{detailTitle}</h2>
-          <p className="mt-1 text-[11px] text-zinc-500">{detailHint}</p>
+          <p className="mt-1 text-[11px] text-zinc-500">
+            {step === "pick"
+              ? "Update writes. Session / Case / Scout / Trade = copy context for AI."
+              : detailHint}
+          </p>
         </header>
 
         {step === "pick" ? (
@@ -403,13 +401,24 @@ export function MatrixControlPanel() {
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
             {section === "train-ai" ? (
               <PlainCopyRow
-                label="Matrix Mechanics brief"
-                description="Stable primer — paste once per AI session"
+                label="1 · Session brief (copy first)"
+                description="Mechanics — paste once at the start of the AI chat"
                 text={data.trainAi.mechanicsBrief}
               />
             ) : null}
             {detailSnapshots.map((item) => (
-              <SnapshotCopyRow key={item.id} item={item} />
+              <SnapshotCopyRow
+                key={item.id}
+                item={
+                  section === "train-ai"
+                    ? {
+                        ...item,
+                        label: "2 · Playbook rules",
+                        description: "Optional — only if discussing method / HOW",
+                      }
+                    : item
+                }
+              />
             ))}
             {section === "trade" && selectedTrade ? (
               <>

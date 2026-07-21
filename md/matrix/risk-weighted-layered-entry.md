@@ -191,7 +191,7 @@ Common stop S = 229. If both fill and stop: $30 + $70 = $100 = 1R.
 
 ## What this does NOT do
 
-- Does not change Entry Solver order (Target → Stop → Max Entry)  
+- Does not change Entry Solver order (Target → Stop → Max Entry ceiling → Technical → Entry Optimization)  
 - Does not merge zone selection with execution  
 - Does not add independent stops per layer  
 - Does not justify chasing if limits miss  
