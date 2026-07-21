@@ -19,6 +19,7 @@ PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex (0-based, -1=none) or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
+- scout-plan-create: NEW Scout Plan window on an EXISTING Stock File — stockFileId (or stockThesisId), ticker, plannedEntry, stopPrice, targetPrice required; optional verdict+decisionConfidence+challenges, playbookId/playbookIds, status (watching|ready|active), thesis, notes, reasoning. Allocates a NEW PLAN-xxx. Do NOT use stock-case-create for same ticker. Do NOT reuse an old planId.
 - technical-assessment: MTAE technical JSON only — stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[], integrated{}, technicalSummary{} (trend, zones, probableTarget vs extendedTarget, structuralInvalidation, contradictions, confidence). FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict. Optional patchStockFile (default true).
 - technical-calibration: human procedure correction — assessmentId, stockProfileId, ticker, errorType, fieldPath, aiValue, humanValue, reason; optional magnitude, confidenceAdjustment
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason. Deletes linked evidence and scout plans. Irreversible — human Apply only.
@@ -47,6 +48,10 @@ Required shape:
 }
 
 Human action → internal type (choose automatically — never ask the human to pick a type):
+- New Scout Plan / new window on existing Stock File → scout-plan-create
+  · stockFileId (or stockThesisId), ticker, plannedEntry, stopPrice, targetPrice required
+  · optional verdict + decisionConfidence + challenges (creates plan + initial decision)
+  · NEVER stock-case-create when the Stock File already exists
 - Open Trade → trade-proposal
   · status "pending" (default) or "open" if already filled at the broker
   · required: id, ticker, entry, stop, shares
@@ -57,7 +62,7 @@ Human action → internal type (choose automatically — never ask the human to 
   · confirmExternalClose: true only when closing a pending trade already executed at the broker
 - Analyze Trade → analysis (notes: thesis, psychology, lessons, notes)
   · or trade-review when post-close review with qualityEntry/Exit/Mgmt (1-5), mistakes, lesson
-
+- Adjust existing Scout Plan → decision-update (planId required)
 All Apply-ready block types:
 - stock-case-create: NEW Stock Profile — ticker, thesis, currentHypothesis, levels{}, riskRules{minimumRR, invalidation} required
 - evidence-add: MarketEvidence — stockProfileId, ticker, timeframe, category, value, confidence required
@@ -65,6 +70,7 @@ All Apply-ready block types:
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout (backfill missing Scout Plan only)
+- scout-plan-create: NEW PLAN on existing Stock File — stockFileId, ticker, plannedEntry, stopPrice, targetPrice; optional verdict+challenges; allocates NEW PLAN-xxx (same-ticker new window)
 - technical-assessment: MTAE technical-only multi-TF JSON — stockProfileId, ticker, timeframeRoles, perTimeframe[], integrated{}, technicalSummary{} (no Entry Solver / RR / Scout verdict)
 - technical-calibration: MTAE human procedure correction — assessmentId, errorType, fieldPath, aiValue, humanValue, reason
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason (duplicate cleanup)
@@ -114,7 +120,7 @@ export function parseAiBlock(raw: string):
     return {
       ok: false,
       error:
-        "Could not read this proposal. Ask your AI to return one JSON block for Open, Adjust, Close, or Analyze.",
+        "Could not read this proposal. Return ONE AI Block JSON with a known type (e.g. scout-plan-create, decision-update, trade-proposal, file-update, technical-assessment). Not Open/Adjust/Close alone — those are trade intents mapped to trade-* blocks.",
     };
   }
 
@@ -147,6 +153,11 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
     type: "decision-update",
     label: "decision-update — scout decision on PLAN",
     hint: "verdict + confidence + challenges; probe{} when verdict=probe; layeredEntry{} when verdict=go",
+  },
+  {
+    type: "scout-plan-create",
+    label: "scout-plan-create — new PLAN on existing Stock File",
+    hint: "Same-ticker new window: stockFileId + entry/stop/target → NEW PLAN-xxx (not stock-case-create)",
   },
   {
     type: "layered-entry-update",
@@ -291,6 +302,30 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
     proposal: {
       planId: "PLAN-002",
       filledThroughIndex: 1,
+    },
+  },
+  "scout-plan-create": {
+    type: "scout-plan-create",
+    source: "ai-block",
+    proposal: {
+      stockFileId: "ST-AMZN-001",
+      ticker: "AMZN",
+      status: "watching",
+      verdict: "wait",
+      decisionConfidence: 82,
+      plannedEntry: 215,
+      stopPrice: 200,
+      targetPrice: 260,
+      minimumRR: 3,
+      playbookIds: ["expectancy-asymmetry", "structural-pullback-entry"],
+      thesis:
+        "New tactical window on existing Stock File. Wait for structural pullback; probable target 260.",
+      reasoning: "Entry 215 / stop 200 / target 260 ≈ 3R inside preferred battle zone.",
+      challenges: [
+        "Price may defend higher and never reach 215",
+        "Deterioration into 215 may require re-check before fill",
+      ],
+      notes: "Create NEW PLAN linked to ST-AMZN-001. Do not reuse finished plans or closed H00x ids.",
     },
   },
   "scout-assessment": {

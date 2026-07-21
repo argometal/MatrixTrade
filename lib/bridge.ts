@@ -6,6 +6,7 @@ import {
   validateTechnicalAssessmentProposal,
   validateTechnicalCalibrationProposal,
 } from "./mtae-validate";
+import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
 import { getSetupName } from "./setup-types";
@@ -218,6 +219,7 @@ export type TradingProposalType =
   | "decision-update"
   | "layered-entry-update"
   | "file-update"
+  | "scout-plan-create"
   | "technical-assessment"
   | "technical-calibration"
   | "trade-proposal"
@@ -247,6 +249,7 @@ export function parseTradingInboxPayload(
     type !== "decision-update" &&
     type !== "layered-entry-update" &&
     type !== "file-update" &&
+    type !== "scout-plan-create" &&
     type !== "technical-assessment" &&
     type !== "technical-calibration" &&
     type !== "trade-proposal" &&
@@ -288,6 +291,8 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return p.initialScout
         ? `Backfill scout on ${p.id}`
         : `Update Stock File ${p.id}`;
+    case "scout-plan-create":
+      return `New Scout Plan ${p.ticker ?? ""} · ${p.stockFileId ?? p.stockThesisId ?? ""}`;
     case "technical-assessment":
       return `MTAE ${p.ticker ?? ""} ${p.stockProfileId ?? p.id ?? ""} · technical assessment`;
     case "technical-calibration":
@@ -533,6 +538,11 @@ export function validateProposalPayload(
         }
       }
     }
+  }
+
+  if (parsed.type === "scout-plan-create") {
+    const check = validateScoutPlanCreateProposal(p);
+    if (!check.ok) errors.push(...check.errors);
   }
 
   if (parsed.type === "technical-assessment") {
