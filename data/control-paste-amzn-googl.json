@@ -1,0 +1,64 @@
+{
+  "_readme": "Paste each block in MatrixTrade Control → Update → Validate → Accept. Adjust trade ids / planIds to match your book. Targets: AMZN 260–280 (mid 270), GOOGL 380–400 (mid 390). GOOGL note: structure retracting — wait, do not chase.",
+  "blocks": [
+    {
+      "label": "AMZN — set target zone 260-280 on fill (replace H00x)",
+      "block": {
+        "type": "trade-update",
+        "proposal": {
+          "id": "H001",
+          "target": 270,
+          "notes": "Target zone 260-280 (primary 270). Keep war-room case open until review completed."
+        }
+      }
+    },
+    {
+      "label": "GOOGL — set target zone 380-400 on fill (replace H00x)",
+      "block": {
+        "type": "trade-update",
+        "proposal": {
+          "id": "H002",
+          "target": 390,
+          "notes": "Target zone 380-400 (primary 390). Price looks retracting — do not chase; reassess entry/stop in Scout."
+        }
+      }
+    },
+    {
+      "label": "Revive expired scout + refresh strategy (replace PLAN-xxx)",
+      "block": {
+        "type": "decision-update",
+        "proposal": {
+          "planId": "PLAN-xxx",
+          "status": "watching",
+          "validUntil": "2026-08-15T23:59:59.000Z",
+          "targetPrice": 270,
+          "thesis": "Strategy refresh after expiry. AMZN target zone 260-280.",
+          "verdict": "wait",
+          "decisionConfidence": 55,
+          "challenges": [
+            "Prior window expired — levels must be revalidated",
+            "Do not treat expiry as thesis invalidation"
+          ]
+        }
+      }
+    },
+    {
+      "label": "GOOGL scout note — retracting (replace PLAN-xxx)",
+      "block": {
+        "type": "decision-update",
+        "proposal": {
+          "planId": "PLAN-xxx",
+          "status": "watching",
+          "targetPrice": 390,
+          "notes": "GOOGL retracting from highs. Target zone 380-400. Prefer wait/pullback over chase.",
+          "verdict": "wait",
+          "decisionConfidence": 58,
+          "challenges": [
+            "Retracement may deepen before zone",
+            "Late entry risk if chasing bounce"
+          ]
+        }
+      }
+    }
+  ]
+}
