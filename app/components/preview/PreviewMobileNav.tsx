@@ -31,11 +31,6 @@ export function PreviewMobileNav({ nav }: { nav: PreviewNavContext }) {
           className={`relative flex flex-col items-center gap-0.5 rounded-lg px-1 py-1.5 text-[10px] font-medium ${tabClass(tab.href)}`}
         >
           {tab.label}
-          {tab.href === "/inbox" && nav.pendingInboxCount > 0 && (
-            <span className="absolute right-1 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-600 px-1 text-[9px] text-white">
-              {nav.pendingInboxCount}
-            </span>
-          )}
         </Link>
       ))}
       <div className="flex flex-col items-center">

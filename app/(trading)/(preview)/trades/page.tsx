@@ -1,5 +1,8 @@
 import { Suspense } from "react";
-import { PreviewTradesHub } from "@/app/components/trades-preview/PreviewTradesHub";
+import {
+  PreviewTradesHub,
+  type TradesHubTab,
+} from "@/app/components/trades-preview/PreviewTradesHub";
 import { listAiNotes } from "@/lib/ai-notes";
 import { getBridgeConfig } from "@/lib/bridge";
 import { loadReviewPageData } from "@/lib/load-review-page-data";
@@ -14,6 +17,22 @@ import { getExperiment, getMonthlyRisk, getTrades } from "@/lib/storage";
 import { getTradesStoreMode } from "@/lib/trades-json";
 import { resolveInboxBackendLabel } from "@/lib/trading-inbox-submit";
 import { getSyncHistory } from "@/lib/sync-history";
+
+const TAB_IDS: TradesHubTab[] = [
+  "historico",
+  "completed_win",
+  "completed_loss",
+  "late_entry_miss",
+  "never_executed",
+  "incomplete",
+  "review",
+];
+
+function resolveTab(raw?: string): TradesHubTab {
+  if (raw && TAB_IDS.includes(raw as TradesHubTab)) return raw as TradesHubTab;
+  if (raw === "all" || raw === "open" || raw === "closed") return "historico";
+  return "historico";
+}
 
 export default async function TradesPage({
   searchParams,
@@ -51,7 +70,7 @@ export default async function TradesPage({
     searchParams,
   ]);
 
-  const tab = params.tab === "review" ? "review" : "all";
+  const tab = resolveTab(params.tab);
   const snapshotRevision = workerStatus.snapshotRevision ?? revision?.revision ?? 0;
   const lastSync = syncHistory.find((e) => e.ok);
   const systemNotes = {
@@ -79,8 +98,7 @@ export default async function TradesPage({
       <PreviewTradesHub
         tab={tab}
         trades={trades}
-        experiment={experiment}
-        playbooks={playbooks}
+        plans={plans}
         reviewData={{
           attentionItems: reviewData.attentionItems,
           unreviewed: reviewData.unreviewed,

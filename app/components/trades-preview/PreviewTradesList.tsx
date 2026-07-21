@@ -39,7 +39,7 @@ export function PreviewTradesList({
     <>
       {sorted.length === 0 ? (
         <p className="text-sm text-zinc-500">
-          No trades yet. Log your first trade from New Trade.
+          No trades yet. Open Scout war room when a case is ready.
         </p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900/50">
@@ -155,10 +155,10 @@ export function PreviewTradesList({
             </div>
             <div className="flex flex-wrap gap-2 lg:mr-[11rem]">
               <Link
-                href="/trades-preview"
+                href="/planning"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
               >
-                New Trade
+                Scout
               </Link>
             </div>
           </div>

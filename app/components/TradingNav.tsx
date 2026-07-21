@@ -13,8 +13,8 @@ export function TradingNav() {
       <Link href="/exchange" className="hover:text-zinc-600">
         Assistant
       </Link>
-      <Link href="/trades-preview" className="hover:text-zinc-600">
-        New Trade
+      <Link href="/planning" className="hover:text-zinc-600">
+        Scout
       </Link>
       <Link href="/trades" className="hover:text-zinc-600">
         Trades

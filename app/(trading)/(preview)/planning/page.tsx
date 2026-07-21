@@ -7,14 +7,15 @@ import { getPlaybooks } from "@/lib/playbooks";
 import { scoutDeskSnapshotItems } from "@/lib/snapshot-packages";
 import { getStockTheses } from "@/lib/stock-theses";
 import { isActiveStockThesisStatus } from "@/lib/stock-thesis-types";
-import { getExperiment, getMonthlyRisk } from "@/lib/storage";
+import { getExperiment, getMonthlyRisk, getTrades } from "@/lib/storage";
+import { suggestNextTradeId } from "@/lib/trades-workspace";
 
 export default async function PlanningPage({
   searchParams,
 }: {
   searchParams: Promise<{ plan?: string; thesis?: string }>;
 }) {
-  const [plans, playbooks, stockTheses, monthly, experiment, marketEvidence, params] =
+  const [plans, playbooks, stockTheses, monthly, experiment, marketEvidence, trades, params] =
     await Promise.all([
       getPlans(),
       getPlaybooks(),
@@ -22,6 +23,7 @@ export default async function PlanningPage({
       getMonthlyRisk(),
       getExperiment(),
       getMarketEvidence(),
+      getTrades(),
       searchParams,
     ]);
 
@@ -32,6 +34,7 @@ export default async function PlanningPage({
   const focusThesis =
     (focusThesisId ? stockTheses.find((t) => t.id === focusThesisId) : undefined) ??
     activeTheses[0];
+  const suggestedTradeId = suggestNextTradeId(trades);
 
   const snapshotItems = scoutDeskSnapshotItems({
     playbooks,
@@ -54,6 +57,8 @@ export default async function PlanningPage({
           marketEvidence={marketEvidence}
           monthly={monthly}
           experiment={experiment}
+          trades={trades}
+          suggestedTradeId={suggestedTradeId}
           focusPlanId={focusPlanId}
           focusThesisId={focusThesisId}
           snapshotItems={snapshotItems}
