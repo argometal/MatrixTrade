@@ -77,9 +77,16 @@ export function relativeActivityLabel(iso: string | undefined, today: string): s
   const y = yesterday.toISOString().slice(0, 10);
   if (day === y) return "Yesterday";
   const diff = Math.floor(
-    (Date.parse(`${today}T12:00:00`) - Date.parse(`${day}T12:00:00`)) / (86400000)
+    (Date.parse(`${today}T12:00:00`) - Date.parse(`${day}T12:00:00`)) / 86400000
   );
-  if (diff < 7) return `${diff}d ago`;
-  if (diff < 30) return `${Math.floor(diff / 7)}w ago`;
-  return new Date(`${day}T12:00:00`).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  // ≤7 days: relative; after that: calendar date (best practice for scanability)
+  if (diff > 0 && diff < 7) return `${diff}d ago`;
+  const d = new Date(`${day}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return day;
+  const sameYear = d.getFullYear() === new Date(`${today}T12:00:00`).getFullYear();
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "numeric" }),
+  });
 }

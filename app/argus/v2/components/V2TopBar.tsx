@@ -7,6 +7,7 @@ import { AppExchangeActions } from "@/app/components/AppExchangeActions";
 import { V2TopBarAddMenu } from "@/app/argus/v2/components/V2TopBarAddMenu";
 import { PrivateLockMenu } from "@/app/argus/components/PrivateLockMenu";
 import { V2BuildBadge } from "@/app/argus/v2/components/V2BuildBadge";
+import { V2PageIdBadge } from "@/app/argus/v2/components/V2PageIdBadge";
 import { useV2SidebarCollapse } from "@/app/argus/v2/components/V2DesktopShell";
 import { useV2MobileMenu } from "@/app/argus/v2/components/V2MobileMenuProvider";
 import { getV2NavPageLabel } from "@/lib/argus/v2/nav-items";
@@ -108,6 +109,7 @@ export function V2TopBar({
               <span aria-hidden>🛡</span> PIN
             </span>
           )}
+          <V2PageIdBadge />
           <V2BuildBadge className="hidden min-[420px]:inline" />
           <V2TopBarAddMenu className="shrink-0" />
           <AppExchangeActions app="argus" inboxCount={inboxCount} />

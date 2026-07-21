@@ -9,6 +9,8 @@ export type V2TopicTab = "all" | "active" | "empty" | "patterns";
 
 export type V2TopicEvidenceKind = "email" | "journal" | "file";
 
+export type V2TopicActivityFilter = "7d" | "30d" | "90d" | "older";
+
 export interface V2TopicFilters {
   q?: string;
   tag?: string;
@@ -16,6 +18,8 @@ export interface V2TopicFilters {
   project?: string;
   entity?: string;
   kind?: V2TopicEvidenceKind;
+  /** Last activity window (calendar days from today). */
+  activity?: V2TopicActivityFilter;
 }
 
 export interface V2TopicRow {
@@ -138,6 +142,32 @@ export function filterV2TopicRows(
     result = result.filter((row) => row.fileCount > 0);
   }
 
+  if (filters.activity) {
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    const dayIso = (offset: number) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() - offset);
+      return d.toISOString().slice(0, 10);
+    };
+    if (filters.activity === "7d") {
+      const from = dayIso(7);
+      result = result.filter((row) => row.lastSort.slice(0, 10) >= from);
+    } else if (filters.activity === "30d") {
+      const from = dayIso(30);
+      result = result.filter((row) => row.lastSort.slice(0, 10) >= from);
+    } else if (filters.activity === "90d") {
+      const from = dayIso(90);
+      result = result.filter((row) => row.lastSort.slice(0, 10) >= from);
+    } else if (filters.activity === "older") {
+      const before = dayIso(90);
+      result = result.filter((row) => {
+        const day = row.lastSort.slice(0, 10);
+        return day && day < before;
+      });
+    }
+  }
+
   return result;
 }
 
@@ -154,6 +184,7 @@ export function parseV2TopicFilters(params: {
   project?: string | null;
   entity?: string | null;
   kind?: string | null;
+  activity?: string | null;
 }): V2TopicFilters {
   const filters: V2TopicFilters = {};
   const q = params.q?.trim();
@@ -176,11 +207,18 @@ export function parseV2TopicFilters(params: {
     filters.kind = kind;
   }
 
+  const activity = params.activity?.trim();
+  if (activity === "7d" || activity === "30d" || activity === "90d" || activity === "older") {
+    filters.activity = activity;
+  }
+
   return filters;
 }
 
 export function hasActiveV2TopicFilters(filters: V2TopicFilters): boolean {
-  return Boolean(filters.q || filters.tag || filters.org || filters.project || filters.entity || filters.kind);
+  return Boolean(
+    filters.q || filters.tag || filters.org || filters.project || filters.entity || filters.kind || filters.activity
+  );
 }
 
 export function buildV2TopicFilterOptions(details: V2TopicDetail[]): V2TopicFilterOptions {
