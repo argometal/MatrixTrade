@@ -318,6 +318,8 @@ MTAE does **not** overwrite Playbook or Scout plans.
 
 | Piece | Location |
 |-------|----------|
+| Control section | Control → **Technical analysis** (`MatrixControlPanel`) |
+| Protocol / TF map copies | `lib/mtae-brief.ts`, `lib/mtae-snapshot.ts` |
 | Types | `lib/mtae-types.ts` |
 | Validate | `lib/mtae-validate.ts` |
 | Apply | `lib/mtae-apply.ts` |

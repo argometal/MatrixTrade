@@ -47,13 +47,14 @@ External AI proposes; human **Accept** via **Control → Update** (preferred) or
 |-------|-----|
 | **Update** | Paste AI Block → Validate → Accept |
 | **Mechanics brief** | Copy Matrix rules once for a new AI chat |
+| **Technical analysis** | MTAE protocol + TF role maps (no capital) |
 | **Playbook** | Copy method rules / checklists / stats |
-| **Stock file** | Pick one ticker → thesis + linked scouts |
+| **Stock file** | Pick one ticker → MTAE request + thesis + linked scouts |
 | **Scout desk** | Desk overview + monthly risk room |
 
 **Not in Control:** Closed-trade forensic picker. Forensic lives on `/trades/{id}` when `status === closed`.
 
-Canonical rules: [control-panel-ia.md](control-panel-ia.md) · [ui-naming.md](../rules/ui-naming.md).
+Canonical rules: [control-panel-ia.md](control-panel-ia.md) · [ui-naming.md](../rules/ui-naming.md) · [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md).
 
 ---
 
@@ -124,8 +125,8 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | Piece | Status |
 |-------|--------|
 | Control → Update | Primary write path |
-| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 14** |
-| **MTAE** | `technical-assessment` / `technical-calibration` Apply → `data/mtae-*.json` + Stock File patch |
+| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 15** |
+| **MTAE** | Control → **Technical analysis** + `technical-assessment` / `technical-calibration` Apply → `data/mtae-*.json` + Stock File patch |
 | TF role presets | `data/mtae-timeframe-maps.json` (swing-6m, swing-3m, day-active) |
 | `lib/ai-context.ts` | Unified export builders |
 | Entry Solver vs Entry Optimization | Feasibility ceiling (`maximumEntry`) ≠ recommended entry |

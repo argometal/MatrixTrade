@@ -50,11 +50,12 @@ Does not replace the automatic brief prefix on data snapshots.
 | Trade | Stock profile (compact) | Linked dossier summary | file-update |
 | Trades list | Trades snapshot | All trades summary + experiment | trade-update, trade-proposal |
 | Control → Mechanics brief | Matrix Mechanics brief | Rules primer for a new AI chat | (context only) |
+| Control → Technical analysis | MTAE protocol + TF maps | Charts → `technical-assessment` (no capital) | technical-assessment, technical-calibration |
 | Control → Playbook | Playbook snapshot | Strategies + stats | playbook-update |
-| Control → Stock file | `{TICKER}` profile / linked scouts | One ticker dossier | file-update, decision-update |
+| Control → Stock file | `{TICKER}` MTAE request + profile / scouts | One ticker dossier (+ MTAE request first) | technical-assessment, file-update, decision-update |
 | Control → Scout desk | Scout desk overview | All profiles + scouts + monthly room (**no** separate Mechanics row — brief is already prefixed; full rules = Control → Mechanics brief) | scouting blocks |
 
-**Retired (do not restore):** Control → Closed trade / Trade forensic picker; Control labels “Session” or “Case”; Scout desk menu item that only duplicates Mechanics. See [control-panel-ia.md](control-panel-ia.md).
+**Retired (do not restore):** Control → Closed trade / Trade forensic picker; Control labels “Session” or “Case”; Scout desk menu item that only duplicates Mechanics; folding MTAE into Mechanics or Playbook. See [control-panel-ia.md](control-panel-ia.md).
 
 ---
 
