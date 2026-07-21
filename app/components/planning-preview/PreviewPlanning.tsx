@@ -13,6 +13,7 @@ import type { Playbook } from "@/lib/playbook-types";
 import {
   resolveScoutingVerdict,
   SCOUTING_VERDICT_LABELS,
+  type ScoutingVerdict,
 } from "@/lib/scouting-types";
 import {
   isActiveStockThesisStatus,
@@ -29,6 +30,11 @@ import { snapshotButtonTitle } from "@/lib/snapshot-verification";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import type { Experiment, Trade } from "@/lib/types";
 import {
+  incompleteTradesForTicker,
+  orphanIncompleteTradeTickers,
+  tradesForScoutCase,
+} from "@/lib/scout-case-trades";
+import {
   buildTradeProspects,
   findTradeProspect,
   type TradeProspect,
@@ -40,6 +46,19 @@ const thesisStatusStyles: Record<string, string> = {
   actionable: "bg-emerald-500/15 text-emerald-400",
   invalidated: "bg-red-500/15 text-red-400",
   archived: "bg-zinc-700/50 text-zinc-500",
+};
+
+type ScoutCard = {
+  key: string;
+  thesis: StockThesis | null;
+  ticker: string;
+  thesisPlans: TradePlan[];
+  primaryPlan: TradePlan | undefined;
+  levelsView: ReturnType<typeof buildPlanLevelsView> | null;
+  verdict: ScoutingVerdict | null;
+  activeScoutCount: number;
+  linkedTrades: Trade[];
+  orphan: boolean;
 };
 
 /**
@@ -71,7 +90,7 @@ export function PreviewPlanning({
   focusThesisId?: string;
   snapshotItems: SnapshotMenuItem[];
 }) {
-  const [scoutThesisId, setScoutThesisId] = useState<string | null>(focusThesisId ?? null);
+  const [scoutCaseKey, setScoutCaseKey] = useState<string | null>(focusThesisId ?? null);
   const [planPanelOpen, setPlanPanelOpen] = useState(false);
 
   const activeTheses = useMemo(
@@ -81,37 +100,62 @@ export function PreviewPlanning({
 
   const prospects = useMemo(() => buildTradeProspects(plans), [plans]);
 
-  const scoutCards = useMemo(() => {
-    return activeTheses.map((thesis) => {
+  const scoutCards = useMemo((): ScoutCard[] => {
+    const fromTheses: ScoutCard[] = activeTheses.map((thesis) => {
       const thesisPlans = plans.filter((p) => p.stockThesisId === thesis.id);
       const activePlans = thesisPlans.filter((p) => p.status === "watching" || p.status === "ready");
-      const primaryPlan = activePlans[0] ?? thesisPlans[0];
+      // Prefer live plan; expired still usable (revive via Control) if no active
+      const primaryPlan =
+        activePlans[0] ??
+        thesisPlans.find((p) => p.status === "entered") ??
+        thesisPlans.find((p) => p.status === "expired") ??
+        thesisPlans[0];
       const levelsView = buildPlanLevelsView(thesis, primaryPlan);
       const decisionPlan = thesisPlans.find((p) => p.decision) ?? primaryPlan;
       const verdict = resolveScoutingVerdict(thesis, decisionPlan);
-      const linkedTrades = trades.filter(
-        (t) =>
-          t.planId === primaryPlan?.id ||
-          thesisPlans.some((p) => p.linkedTradeId === t.id || p.id === t.planId)
-      );
+      const linkedTrades = tradesForScoutCase({ thesis, thesisPlans, trades });
       return {
+        key: thesis.id,
         thesis,
+        ticker: thesis.ticker,
         thesisPlans,
         primaryPlan,
         levelsView,
         verdict,
         activeScoutCount: activePlans.length,
         linkedTrades,
+        orphan: false,
       };
     });
+
+    const orphanTickers = orphanIncompleteTradeTickers(trades, activeTheses);
+    const orphans: ScoutCard[] = orphanTickers.map((ticker) => {
+      const tickerPlans = plans.filter((p) => p.ticker.toUpperCase() === ticker);
+      const primaryPlan = tickerPlans[0];
+      return {
+        key: `orphan:${ticker}`,
+        thesis: null,
+        ticker,
+        thesisPlans: tickerPlans,
+        primaryPlan,
+        levelsView: null,
+        verdict: null,
+        activeScoutCount: tickerPlans.filter((p) => p.status === "watching" || p.status === "ready")
+          .length,
+        linkedTrades: incompleteTradesForTicker(trades, ticker),
+        orphan: true,
+      };
+    });
+
+    return [...fromTheses, ...orphans];
   }, [activeTheses, plans, trades]);
 
   const focusedScoutCard = useMemo(() => {
-    const id = scoutThesisId ?? focusThesisId ?? activeTheses[0]?.id ?? "";
-    return scoutCards.find((card) => card.thesis.id === id) ?? scoutCards[0] ?? null;
-  }, [scoutCards, scoutThesisId, focusThesisId, activeTheses]);
+    const id = scoutCaseKey ?? focusThesisId ?? scoutCards[0]?.key ?? "";
+    return scoutCards.find((card) => card.key === id) ?? scoutCards[0] ?? null;
+  }, [scoutCards, scoutCaseKey, focusThesisId]);
 
-  const scoutThesis = focusedScoutCard?.thesis;
+  const scoutThesis = focusedScoutCard?.thesis ?? null;
   const scoutPrimaryPlan = focusedScoutCard?.primaryPlan ?? null;
 
   const focusPlan = useMemo(() => {
@@ -140,7 +184,7 @@ export function PreviewPlanning({
       monthly,
       experiment,
       marketEvidence,
-      focusThesis: scoutThesis,
+      focusThesis: scoutThesis ?? undefined,
       focusPlan: focusPlan ?? undefined,
     });
   }, [
@@ -156,13 +200,17 @@ export function PreviewPlanning({
 
   useEffect(() => {
     if (!focusThesisId) return;
-    setScoutThesisId(focusThesisId);
+    setScoutCaseKey(focusThesisId);
   }, [focusThesisId]);
 
   useEffect(() => {
     if (!focusPlanId) return;
     const plan = plans.find((p) => p.id === focusPlanId);
-    if (plan?.stockThesisId) setScoutThesisId(plan.stockThesisId);
+    if (plan?.stockThesisId) {
+      setScoutCaseKey(plan.stockThesisId);
+      return;
+    }
+    if (plan?.ticker) setScoutCaseKey(`orphan:${plan.ticker.toUpperCase()}`);
   }, [focusPlanId, plans]);
 
   const activeEvidence =
@@ -173,6 +221,8 @@ export function PreviewPlanning({
         )
       : [];
 
+  const hasCases = scoutCards.length > 0;
+
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row">
       <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain pb-10">
@@ -181,7 +231,7 @@ export function PreviewPlanning({
             <div>
               <h1 className="text-xl font-semibold text-zinc-100">Scout</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                War room — one case at a time. Radiografía + execute via Control.
+                War room — fills stay until completados (closed + review). Closed alone is not enough.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
@@ -201,9 +251,9 @@ export function PreviewPlanning({
         </header>
 
         <div className="space-y-4 px-4 py-4 lg:px-6">
-          {activeTheses.length === 0 ? (
+          {!hasCases ? (
             <section className="rounded-2xl border border-dashed border-zinc-700 px-4 py-10 text-center">
-              <p className="text-sm text-zinc-500">No active stock files.</p>
+              <p className="text-sm text-zinc-500">No scout cases yet.</p>
               <Link
                 href="/stock-theses/new"
                 className="mt-3 inline-block text-sm text-violet-300 hover:underline"
@@ -220,13 +270,18 @@ export function PreviewPlanning({
                   </label>
                   <select
                     id="scout-case"
-                    value={focusedScoutCard?.thesis.id ?? ""}
-                    onChange={(e) => setScoutThesisId(e.target.value)}
+                    value={focusedScoutCard?.key ?? ""}
+                    onChange={(e) => setScoutCaseKey(e.target.value)}
                     className="min-w-[14rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
                   >
                     {scoutCards.map((card) => (
-                      <option key={card.thesis.id} value={card.thesis.id}>
-                        {card.thesis.ticker} · {SCOUTING_VERDICT_LABELS[card.verdict]}
+                      <option key={card.key} value={card.key}>
+                        {card.ticker}
+                        {card.orphan ? " · orphan fill" : ""}
+                        {card.verdict ? ` · ${SCOUTING_VERDICT_LABELS[card.verdict]}` : ""}
+                        {card.linkedTrades.length
+                          ? ` · ${card.linkedTrades.length} open loop`
+                          : ""}
                         {card.primaryPlan ? ` · ${card.primaryPlan.id}` : ""}
                       </option>
                     ))}
@@ -241,28 +296,64 @@ export function PreviewPlanning({
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {scoutCards.map((card) => {
-                    const selected = card.thesis.id === focusedScoutCard?.thesis.id;
+                    const selected = card.key === focusedScoutCard?.key;
                     return (
                       <button
-                        key={card.thesis.id}
+                        key={card.key}
                         type="button"
-                        onClick={() => setScoutThesisId(card.thesis.id)}
+                        onClick={() => setScoutCaseKey(card.key)}
                         className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
                           selected
                             ? "bg-violet-600 text-white"
                             : "border border-zinc-700 text-zinc-500 hover:text-zinc-300"
                         }`}
                       >
-                        {card.thesis.ticker}
+                        {card.ticker}
+                        {card.linkedTrades.length > 0 ? ` ·${card.linkedTrades.length}` : ""}
                       </button>
                     );
                   })}
                 </div>
               </section>
 
-              {focusedScoutCard ? (
+              {focusedScoutCard?.orphan ? (
+                <section className="rounded-2xl border border-amber-500/30 bg-amber-950/20 p-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-xl font-semibold text-amber-100">{focusedScoutCard.ticker}</h2>
+                    <span className="rounded-full border border-amber-400/40 px-2 py-0.5 text-xs font-bold uppercase text-amber-200">
+                      Orphan fills
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-amber-100/80">
+                    Incomplete fills without a stock file. Create a stock case to attach thesis + targets,
+                    or open the fill and finish review to complete.
+                  </p>
+                  <ul className="mt-4 space-y-2 text-sm">
+                    {focusedScoutCard.linkedTrades.map((t) => (
+                      <li key={t.id} className="flex justify-between gap-3">
+                        <Link href={`/trades/${t.id}`} className="text-violet-300 hover:underline">
+                          {t.id} · {t.status}
+                          {t.status === "closed" ? " · needs review" : ""}
+                        </Link>
+                        <span className="text-xs text-zinc-500">
+                          entry {t.entry}
+                          {t.target !== undefined ? ` → ${t.target}` : ""}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/stock-theses/new"
+                    className="mt-4 inline-block rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300"
+                  >
+                    New stock case for {focusedScoutCard.ticker}
+                  </Link>
+                </section>
+              ) : null}
+
+              {focusedScoutCard && !focusedScoutCard.orphan && focusedScoutCard.thesis ? (
                 <section
-                  className={`rounded-2xl border p-5 ${scoutingVerdictStyle(focusedScoutCard.verdict)}`}
+                  className={`rounded-2xl border p-5 ${scoutingVerdictStyle(focusedScoutCard.verdict ?? "wait")}`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
@@ -279,9 +370,16 @@ export function PreviewPlanning({
                     >
                       {STOCK_THESIS_STATUS_LABELS[focusedScoutCard.thesis.status]}
                     </span>
-                    <span className="rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase">
-                      {SCOUTING_VERDICT_LABELS[focusedScoutCard.verdict]}
-                    </span>
+                    {focusedScoutCard.verdict ? (
+                      <span className="rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase">
+                        {SCOUTING_VERDICT_LABELS[focusedScoutCard.verdict]}
+                      </span>
+                    ) : null}
+                    {focusedScoutCard.primaryPlan?.status === "expired" ? (
+                      <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-amber-200">
+                        Plan expired — revive via Control
+                      </span>
+                    ) : null}
                   </div>
                   <p className="mt-3 text-sm opacity-95">{focusedScoutCard.thesis.currentHypothesis}</p>
                   {focusedScoutCard.thesis.thesis ? (
@@ -316,6 +414,7 @@ export function PreviewPlanning({
                           className="underline opacity-90 hover:opacity-100"
                         >
                           {focusedScoutCard.primaryPlan.id}
+                          {focusedScoutCard.primaryPlan.status === "expired" ? " (expired)" : ""}
                         </button>
                       ) : (
                         "— none —"
@@ -326,22 +425,32 @@ export function PreviewPlanning({
                     </p>
                   </div>
 
-                  {focusedScoutCard.linkedTrades.length > 0 ? (
-                    <div className="mt-4 border-t border-current/20 pt-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-                        Linked fills (this case)
-                      </p>
+                  <div className="mt-4 border-t border-current/20 pt-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
+                      Fills in war room (until completed)
+                    </p>
+                    {focusedScoutCard.linkedTrades.length === 0 ? (
+                      <p className="mt-2 text-xs opacity-70">No open-loop fills for this ticker.</p>
+                    ) : (
                       <ul className="mt-2 space-y-1 text-xs">
                         {focusedScoutCard.linkedTrades.map((t) => (
-                          <li key={t.id}>
-                            <Link href={`/trades/${t.id}`} className="underline opacity-90 hover:opacity-100">
+                          <li key={t.id} className="flex flex-wrap justify-between gap-2">
+                            <Link
+                              href={`/trades/${t.id}`}
+                              className="underline opacity-90 hover:opacity-100"
+                            >
                               {t.id} · {t.status}
+                              {t.status === "closed" ? " · review pending" : ""}
                             </Link>
+                            <span className="opacity-70">
+                              {t.entry}
+                              {t.target !== undefined ? ` → ${t.target}` : ""}
+                            </span>
                           </li>
                         ))}
                       </ul>
-                    </div>
-                  ) : null}
+                    )}
+                  </div>
 
                   <div className="mt-4 flex flex-wrap gap-2">
                     <SnapshotButton
@@ -365,14 +474,16 @@ export function PreviewPlanning({
                 </section>
               ) : null}
 
-              <ScoutExecutePanel
-                plan={focusPlan}
-                prospect={selectedProspect}
-                prospects={prospects}
-                playbooks={playbooks}
-                suggestedTradeId={suggestedTradeId}
-                monthlyLossRoom={monthly.monthlyLossRoom}
-              />
+              {!focusedScoutCard?.orphan ? (
+                <ScoutExecutePanel
+                  plan={focusPlan}
+                  prospect={selectedProspect}
+                  prospects={prospects}
+                  playbooks={playbooks}
+                  suggestedTradeId={suggestedTradeId}
+                  monthlyLossRoom={monthly.monthlyLossRoom}
+                />
+              ) : null}
             </>
           )}
         </div>

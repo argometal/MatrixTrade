@@ -169,8 +169,14 @@ export function ScoutExecutePanel({
       <h2 className="text-sm font-semibold text-emerald-200">Execute · {plan.id}</h2>
       <p className="mt-1 text-xs text-zinc-500">
         Copy boot → AI → <span className="text-emerald-300/90">Control → Update → Accept</span>.
-        Enter Trade page removed — Control is the write path.
       </p>
+      {plan.status === "expired" ? (
+        <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
+          Plan expired — still valid to update. Paste a decision-update with{" "}
+          <code className="text-amber-100">status: &quot;watching&quot;</code>, new{" "}
+          <code className="text-amber-100">validUntil</code>, and strategy levels (target/stop/entry).
+        </p>
+      ) : null}
 
       {levelsView ? (
         <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
