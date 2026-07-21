@@ -316,7 +316,7 @@ function ContactChronicleSection({
                   <div className="min-w-0">
                     <div className="mb-1 flex flex-wrap items-center gap-2">
                       <V2Badge tone={item.kind === "journal" ? "purple" : "blue"}>
-                        {item.kind === "journal" ? "Record" : "Email"}
+                        {item.kind === "journal" ? "Note" : "Email"}
                       </V2Badge>
                       <span className="text-[11px] text-zinc-600">{formatDate(item.date)}</span>
                     </div>

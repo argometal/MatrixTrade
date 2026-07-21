@@ -37,3 +37,18 @@ Evidence item types in filters: **Email · Notes · Files · Photos** (files and
 | Chronicle tab on org/project | Timeline |
 
 Internal code may keep `journal` as a stream kind until a later refactor.
+
+---
+
+## Click-through (required)
+
+Timeline and Chronicle rows are **not decorative**. Every entry must open the source object:
+
+| Kind | Destination |
+|------|-------------|
+| Email | `/argus/v2/inbox?selected={inboxId}` |
+| Note (journal/log) | `/argus/logs/{logId}` |
+| Attachment | `/api/argus/files/{attachmentId}` (inline for photos) |
+
+Builders set `href` on `V2TimelineEntry` (`timeline-builders.ts`). UI components (`V2OrgTimeline`, `V2Timeline`, rails) wrap cards in links when `href` is present.
+
