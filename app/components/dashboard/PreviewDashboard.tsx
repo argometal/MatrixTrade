@@ -9,7 +9,7 @@ import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
 import type { EquityPoint } from "@/lib/review";
 import type { AiBridgeOverviewData } from "@/lib/ai-bridge-overview";
-import { formatDashboardPf, formatDashboardUsd } from "@/lib/dashboard-display";
+import { formatDashboardUsd } from "@/lib/dashboard-display";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
@@ -87,8 +87,7 @@ export function PreviewDashboard({
     }
   }, [searchParams]);
 
-  const { experiment, monthly, mistakeStats } = data;
-  const topMistake = mistakeStats[0];
+  const { experiment, monthly } = data;
 
   return (
     <PageHelpPanel pageId="dashboard">
@@ -99,22 +98,28 @@ export function PreviewDashboard({
               <div>
                 <h1 className="text-xl font-semibold text-zinc-100">Dashboard</h1>
                 <p className="mt-0.5 text-sm text-zinc-500">
-                  {data.cycleLabel} · experiment control
+                  {data.cycleLabel} · risk & attention today
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
                 {exchange ? (
                   <SnapshotButton
                     title="Dashboard snapshot"
-                    description="Budget, experiment, attention, trades overview"
+                    description="Budget, experiment, attention"
                     items={exchange.dashboardSnapshots}
                   />
                 ) : null}
                 <Link
+                  href="/stats"
+                  className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200"
+                >
+                  Insights
+                </Link>
+                <Link
                   href="/trades-preview"
                   className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
                 >
-                  New trade
+                  Enter Trade
                 </Link>
               </div>
             </div>
@@ -123,74 +128,40 @@ export function PreviewDashboard({
           <div className="space-y-6 p-4 lg:p-6">
             <section>
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Today&apos;s status
+                Today
               </h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <StatusTile label="Closed trades" value={String(experiment.closedTrades)} />
                 <StatusTile
-                  label="Monthly budget"
-                  value={formatMonthlyLossRoom(monthly.baseCap)}
-                  sub="Base cap this month"
-                />
-                <StatusTile
-                  label="Carryover"
-                  value={formatMonthlyLossRoom(monthly.carryoverIn)}
-                  sub={
-                    !monthly.carryoverEnabled
-                      ? "Carryover disabled in System settings"
-                      : monthly.carryoverIn > 0
-                        ? `$${monthly.baseCap.toFixed(0)} − $${monthly.previousMonthLossUsed.toFixed(2)} prior losses`
-                        : "No unused cap from prior month"
-                  }
-                />
-                <StatusTile
-                  label="Spent this month"
-                  value={formatMonthlyLossRoom(monthly.lossUsedThisMonth)}
-                  sub="Gross losses only (this calendar month)"
+                  label="Monthly room"
+                  value={formatMonthlyLossRoom(monthly.monthlyLossRoom)}
+                  valueClass={monthly.monthlyLossRoom > 0 ? "text-zinc-200" : "text-red-400"}
                 />
                 <StatusTile
                   label="This month P/L"
                   value={formatDashboardUsd(monthly.monthlyRealizedPnL)}
                   valueClass={pnlTone(monthly.monthlyRealizedPnL)}
                 />
-                <StatusTile
-                  label="Monthly room left"
-                  value={formatMonthlyLossRoom(monthly.monthlyRoomCap)}
-                  sub={
-                    monthly.carryoverEnabled
-                      ? `$${monthly.baseCap.toFixed(0)} + $${monthly.carryoverIn.toFixed(2)}`
-                      : `$${monthly.baseCap.toFixed(0)} base cap (carryover off)`
-                  }
-                  valueClass={monthly.monthlyLossRoom > 0 ? "text-zinc-200" : "text-red-400"}
-                />
-                <StatusTile
-                  label="Experiment net P/L"
-                  value={formatDashboardUsd(experiment.realizedPnL)}
-                  valueClass={pnlTone(experiment.realizedPnL)}
-                />
-                <StatusTile
-                  label="Total losses"
-                  value={formatDashboardUsd(experiment.grossLoss)}
-                  valueClass="text-red-400"
-                />
-                <StatusTile label="Open trades" value={String(data.openTrades)} />
+                <StatusTile label="Open" value={String(data.openTrades)} />
                 <StatusTile
                   label="Pending reviews"
                   value={String(data.pendingReviews)}
                   highlight={data.pendingReviews > 0}
                 />
-                <StatusTile label="Active playbooks" value={String(data.activePlaybooks)} />
-                <StatusTile label="Playbooks testing" value={String(data.testingPlaybooks)} />
                 <StatusTile
-                  label="Active plans"
+                  label="Active scouts"
                   value={String(data.activePlans)}
-                  sub="Watching or ready to enter"
+                  sub="Watching or ready"
                 />
                 <StatusTile
-                  label="Plans to evaluate"
+                  label="Scouts to evaluate"
                   value={String(data.plansNeedingReview)}
                   highlight={data.plansNeedingReview > 0}
-                  sub="Failed or expired — strategy review"
+                />
+                <StatusTile label="Closed (cycle)" value={String(experiment.closedTrades)} />
+                <StatusTile
+                  label="Cycle net"
+                  value={formatDashboardUsd(experiment.realizedPnL)}
+                  valueClass={pnlTone(experiment.realizedPnL)}
                 />
               </div>
             </section>
@@ -200,7 +171,7 @@ export function PreviewDashboard({
                 Needs attention
               </h2>
               {data.attentionItems.length === 0 ? (
-                <p className="mt-3 text-sm text-zinc-500">Nothing pending — cycle is on track.</p>
+                <p className="mt-3 text-sm text-zinc-500">Nothing pending.</p>
               ) : (
                 <ul className="mt-4 divide-y divide-zinc-800">
                   {data.attentionItems.map((item) => (
@@ -221,39 +192,13 @@ export function PreviewDashboard({
               )}
             </section>
 
-            {(data.bestPlaybook || data.worstPlaybook || topMistake) && (
-              <section className="grid gap-4 sm:grid-cols-3">
-                {data.bestPlaybook && (
-                  <InsightCard
-                    label="Best strategy"
-                    title={data.bestPlaybook.playbook?.name ?? "—"}
-                    value={formatDashboardUsd(data.bestPlaybook.netPnL)}
-                    href="/playbook"
-                  />
-                )}
-                {data.worstPlaybook &&
-                  data.worstPlaybook.playbookId !== data.bestPlaybook?.playbookId && (
-                    <InsightCard
-                      label="Weakest strategy"
-                      title={data.worstPlaybook.playbook?.name ?? "—"}
-                      value={formatDashboardUsd(data.worstPlaybook.netPnL)}
-                      href="/playbook"
-                    />
-                  )}
-                {topMistake && (
-                  <InsightCard
-                    label="Costliest mistake"
-                    title={topMistake.label}
-                    value={formatDashboardUsd(topMistake.totalCost)}
-                    sub={`${topMistake.count} trade${topMistake.count === 1 ? "" : "s"}`}
-                    href="/stats?tab=mistakes"
-                  />
-                )}
-              </section>
-            )}
-
             <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
-              <h2 className="text-sm font-semibold text-zinc-200">Equity curve</h2>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-semibold text-zinc-200">Equity</h2>
+                <Link href="/stats" className="text-xs text-violet-400 hover:text-violet-300">
+                  Full Insights →
+                </Link>
+              </div>
               <div className="mt-4">
                 <DarkEquityChart
                   points={data.equityPoints}
@@ -261,65 +206,6 @@ export function PreviewDashboard({
                 />
               </div>
             </section>
-
-            <section>
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Performance
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <PerfCard label="Win rate" value={`${(data.winRate * 100).toFixed(1)}%`} />
-                <PerfCard label="Profit factor" value={formatDashboardPf(data.profitFactor)} />
-                <PerfCard
-                  label="Expectancy"
-                  value={
-                    data.expectancy !== null ? `${formatDashboardUsd(data.expectancy)}/trade` : "—"
-                  }
-                />
-                <PerfCard
-                  label="Average R"
-                  value={
-                    data.avgR !== null ? `${data.avgR >= 0 ? "+" : ""}${data.avgR.toFixed(2)}R` : "—"
-                  }
-                />
-              </div>
-            </section>
-
-            {topMistake && (
-              <section className="rounded-2xl border border-red-500/30 bg-red-950/20 p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-sm font-semibold uppercase tracking-wide text-red-300">
-                      Most expensive mistake
-                    </h2>
-                    <p className="mt-2 text-xl font-semibold text-zinc-100">{topMistake.label}</p>
-                    <p className="mt-1 text-2xl font-bold tabular-nums text-red-400">
-                      {formatDashboardUsd(topMistake.totalCost)}
-                    </p>
-                    <p className="mt-1 text-sm text-zinc-400">
-                      {topMistake.count} trade{topMistake.count === 1 ? "" : "s"}
-                      {topMistake.worstTrade && (
-                        <>
-                          {" "}
-                          · worst{" "}
-                          <Link
-                            href={`/trades/${topMistake.worstTrade.id}`}
-                            className="font-medium text-violet-300 hover:text-violet-200"
-                          >
-                            {topMistake.worstTrade.id} {topMistake.worstTrade.ticker}
-                          </Link>
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <Link
-                    href="/stats?tab=mistakes"
-                    className="text-sm text-red-300 hover:text-red-200"
-                  >
-                    Details →
-                  </Link>
-                </div>
-              </section>
-            )}
 
             {exchange && (
               <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50">
@@ -331,7 +217,7 @@ export function PreviewDashboard({
                   <div>
                     <h2 className="text-sm font-semibold text-zinc-100">Paste AI Block (legacy)</h2>
                     <p className="mt-0.5 text-xs text-zinc-500">
-                      Prefer Control → Update. This imports to History for review.
+                      Prefer Control → Update.
                     </p>
                   </div>
                   <span className="text-zinc-500">{assistantOpen ? "▾" : "▸"}</span>
@@ -382,40 +268,5 @@ function StatusTile({
       <p className={`mt-1 text-lg font-semibold tabular-nums ${valueClass}`}>{value}</p>
       {sub ? <p className="mt-1 text-xs text-zinc-500">{sub}</p> : null}
     </div>
-  );
-}
-
-function PerfCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4">
-      <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</p>
-      <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-100">{value}</p>
-    </div>
-  );
-}
-
-function InsightCard({
-  label,
-  title,
-  value,
-  sub,
-  href,
-}: {
-  label: string;
-  title: string;
-  value: string;
-  sub?: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-2xl border border-zinc-800 bg-zinc-900/80 p-4 hover:border-zinc-700"
-    >
-      <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">{label}</p>
-      <p className="mt-1 font-semibold text-zinc-100">{title}</p>
-      <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-200">{value}</p>
-      {sub && <p className="mt-0.5 text-xs text-zinc-500">{sub}</p>}
-    </Link>
   );
 }

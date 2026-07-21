@@ -8,7 +8,7 @@ export function TradesViewSwitch({ mode }: { mode: "classic" | "preview" }) {
         className="inline-flex items-center gap-2 rounded-xl border border-violet-500/40 bg-violet-500/10 px-4 py-2 text-sm font-medium text-violet-800 transition hover:border-violet-400/60 hover:bg-violet-500/15"
       >
         <span aria-hidden>✦</span>
-        Open New Trade
+        Enter Trade
       </Link>
     );
   }

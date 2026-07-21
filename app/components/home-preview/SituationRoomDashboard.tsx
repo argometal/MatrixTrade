@@ -8,7 +8,7 @@ import {
 } from "@/lib/situation-room";
 
 const QUICK_NAV = [
-  { href: "/trades-preview", label: "New Trade" },
+  { href: "/trades-preview", label: "Enter Trade" },
   { href: "/review", label: "Review" },
   { href: "/inbox", label: "History" },
   { href: "/stats", label: "Statistics" },
@@ -186,7 +186,7 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
                 href="/trades-preview"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
               >
-                + New Trade
+                + Enter Trade
               </Link>
             </div>
           </div>

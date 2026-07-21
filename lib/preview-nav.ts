@@ -5,23 +5,28 @@ export type PreviewNavContext = {
   monthlyLossRoom: number;
   monthlyLossRoomLabel: string;
 };
-/** Full MatrixTrade route audit — single source for desktop sidebar + mobile menu. */
+
+/**
+ * Single source for desktop sidebar + mobile menu.
+ * Pipeline order: Dashboard (today) → Scouting (decide) → Enter Trade (execute).
+ * Book: Trades (positions) → Playbook (how) → Insights (learn).
+ */
 export const PREVIEW_NAV_SECTIONS = [
   {
-    id: "workspace",
-    label: "Workspace",
+    id: "pipeline",
+    label: "Pipeline",
     items: [
       { href: "/home-preview", label: "Dashboard" },
-      { href: "/trades-preview", label: "New Trade" },
+      { href: "/planning", label: "Scouting Desk" },
+      { href: "/trades-preview", label: "Enter Trade" },
     ],
   },
   {
-    id: "trading",
-    label: "Trading",
+    id: "book",
+    label: "Book",
     items: [
       { href: "/trades", label: "Trades" },
       { href: "/playbook", label: "Playbook" },
-      { href: "/planning", label: "Scouting Desk" },
       { href: "/stats", label: "Insights" },
     ],
   },
@@ -36,10 +41,10 @@ export const PREVIEW_NAV_SECTIONS = [
   },
 ] as const;
 
-/** Bottom tab bar — quick access on phone. */
+/** Bottom tab bar — today + book + history (Enter Trade lives in Pipeline menu). */
 export const PREVIEW_MOBILE_TABS = [
   { href: "/home-preview", label: "Dashboard" },
-  { href: "/trades-preview", label: "New Trade" },
+  { href: "/trades", label: "Trades" },
   { href: "/inbox", label: "History" },
 ] as const;
 

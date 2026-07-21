@@ -172,13 +172,10 @@ export function PreviewPlanning({
             <div>
               <h1 className="text-xl font-semibold text-zinc-100">Scouting Desk</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                <Link href="/playbook" className="text-violet-400 hover:text-violet-300">
-                  Playbook
-                </Link>{" "}
-                = HOW · Stock File = WHO · Scouting = go / wait / no + risk
+                Decide go / wait / no — before Enter Trade.
               </p>
               <p className="mt-1 text-xs text-zinc-600">
-                Visualize → <span className="text-zinc-500">Control</span> or page snapshot → copy → discuss in your AI.
+                Playbook = HOW · Stock File = WHO · snapshot → AI → Control → Update
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">

@@ -34,9 +34,9 @@ export function PreviewInsightsHub({
   trades: Trade[];
 }) {
   const subtitles: Record<TabId, string> = {
-    stats: "Cycle metrics — decide what to improve next.",
-    journal: "Closed trades, lessons, and review notes — your trading log.",
-    mistakes: "What errors cost you money — tagged in trade reviews.",
+    stats: "Learn from the cycle — not today’s risk board.",
+    journal: "Closed trades and lessons.",
+    mistakes: "What tagged errors cost.",
   };
 
   return (

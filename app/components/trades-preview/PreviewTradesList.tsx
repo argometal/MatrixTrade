@@ -24,23 +24,23 @@ function pnlTone(value: number): string {
 
 export function PreviewTradesList({
   trades,
-  experiment,
+  experiment: _experiment,
   playbooks,
   embedded = false,
+  emptyHint = "No trades yet. Enter Trade when a scout is ready.",
 }: {
   trades: Trade[];
   experiment: Experiment;
   playbooks: Playbook[];
   embedded?: boolean;
+  emptyHint?: string;
 }) {
   const sorted = [...trades].sort((a, b) => a.id.localeCompare(b.id));
 
   const tableContent = (
     <>
       {sorted.length === 0 ? (
-        <p className="text-sm text-zinc-500">
-          No trades yet. Log your first trade from New Trade.
-        </p>
+        <p className="text-sm text-zinc-500">{emptyHint}</p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-900/50">
           <table className="min-w-full text-left text-sm">
@@ -158,7 +158,7 @@ export function PreviewTradesList({
                 href="/trades-preview"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
               >
-                New Trade
+                Enter Trade
               </Link>
             </div>
           </div>

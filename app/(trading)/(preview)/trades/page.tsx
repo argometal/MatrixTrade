@@ -51,7 +51,9 @@ export default async function TradesPage({
     searchParams,
   ]);
 
-  const tab = params.tab === "review" ? "review" : "all";
+  const tabParam = params.tab;
+  const tab =
+    tabParam === "review" || tabParam === "open" || tabParam === "closed" ? tabParam : "all";
   const snapshotRevision = workerStatus.snapshotRevision ?? revision?.revision ?? 0;
   const lastSync = syncHistory.find((e) => e.ok);
   const systemNotes = {
