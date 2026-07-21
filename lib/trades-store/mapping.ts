@@ -125,3 +125,21 @@ export function tradeToRow(trade: Trade): TradeRow {
     post_stop_study: stored.postStopStudy ?? null,
   };
 }
+
+/** Base trade row without asymmetry learning columns (pre-migration schema). */
+export function tradeToRowWithoutLearningExtensions(
+  trade: Trade
+): Omit<TradeRow, "loss_classification" | "post_stop_study"> {
+  const row = tradeToRow(trade);
+  const { loss_classification: _l, post_stop_study: _p, ...base } = row;
+  return base;
+}
+
+export function isMissingLearningColumnError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("loss_classification") ||
+    lower.includes("post_stop_study") ||
+    (lower.includes("schema cache") && lower.includes("column"))
+  );
+}
