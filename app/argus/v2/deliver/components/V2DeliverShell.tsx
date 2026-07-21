@@ -608,7 +608,7 @@ export function V2DeliverShell({
             {packageKind === "quick_package"
               ? "Output: Activity Summary HTML (.html) — internal preview only."
               : packageKind === "evidence_dossier"
-                ? "Output: Evidence Dossier ZIP — internal preview/demo."
+                ? "Output: Portable Archive ZIP — report.html, emails (.eml), notes (.md), original files."
                 : packageKind === "pdf_deliver"
                   ? "Output: PDF — one human-readable report file."
                   : "Output: Evidence Vault ZIP — internal backup, not for human review."}
@@ -645,7 +645,7 @@ export function V2DeliverShell({
               : packageKind === "quick_package"
                 ? "⬇ Download Activity Summary"
                 : packageKind === "evidence_dossier"
-                  ? "⬇ Download Evidence Dossier"
+                  ? "⬇ Download Portable Archive"
                   : packageKind === "pdf_deliver"
                     ? "⬇ Download PDF"
                     : "⬇ Generate Package"}

@@ -1,7 +1,7 @@
 # Storage growth, archive, and human exports
 
 **Status:** Product guidance (2026-07-21)  
-**Related:** Diagnostics A13 · Deliver packages · [`timeline-chronicle-model.md`](timeline-chronicle-model.md)
+**Related:** Diagnostics A13 · Deliver · [`timeline-chronicle-model.md`](timeline-chronicle-model.md)
 
 ---
 
@@ -15,61 +15,55 @@
 
 Local disk on Vercel is **not** authoritative. Cold survival = Supabase (and whatever you export off-platform).
 
-The DB meter is **estimated from row payloads** (indexes/overhead not included). Treat ~70–80% as a soft planning line, not a cliff.
+Treat ~70–80% DB usage as a soft planning line.
 
 ---
 
-## When the database fills — what happens
+## Portable Archive (primary cold copy)
 
-Without action: inserts/updates start failing; ARGUS cannot grow new evidence. Attachments may still fit in the files bucket while DB text is full (or the reverse).
+Deliver package **`evidence_dossier`** — UI label **Portable Archive**.
 
-**Product rule:** never leave the user with only a computer dump. Archive must be **readable by a human** years later without ARGUS.
+Designed so a person can use it **without Argus**, with everyday tools:
 
----
+| Path | Format | Open with |
+|------|--------|-----------|
+| `report.html` | HTML | Any browser |
+| `emails/*.eml` | RFC 822 email | Outlook, Apple Mail, Thunderbird, Gmail import |
+| `notes/*.md` | Markdown | Text editor, Obsidian, VS Code, Notion import |
+| `attachments/*` | Original binaries | PDF readers, Photos, Office — **PDF stays PDF** |
+| `files/{id}` | Same binaries (id keys) | Linked from `report.html` |
+| `README.txt` | Plain text | Any editor |
+| `argus/*.json` + `manifest.json` | Structured | Future Argus re-import / integrity |
 
-## What you can do today (no new UI required)
+**Principles:** human-first, industry-standard, not obscure. Prefer formats people already know over proprietary dumps.
 
-Use **Deliver** on an org / project / topic / event / person:
+### Workflow
 
-| Package | Human result | Regenerable? |
-|---------|--------------|--------------|
-| **Quick PDF** | Printable scan of activity | Yes, from live data |
-| **Full dossier (ZIP)** | HTML report + original files under `files/` | Yes; keep the ZIP offline |
-| **Evidence vault** | Same idea: files + manifest hashes | Yes |
+1. Pick a closed scope (project / topic / org / person / event).  
+2. Deliver → **Portable Archive** → download ZIP.  
+3. Spot-check: open `report.html`, one `.eml`, one attachment.  
+4. Store the ZIP offline (drive / another cloud).  
+5. Only then soft-delete or archive live records if you need DB space.
 
-Prefer **dossier ZIP** for cold storage: open the HTML in any browser; open PDFs/images with normal apps.
-
-Emails today export as **readable text inside the HTML report**, not always as `.eml` message files. Attachments export as **original binaries** (PDF stays PDF, photo stays image) — that part already matches “human before computerized.”
-
----
-
-## Recommended archive workflow (simple)
-
-1. **Choose a closed scope** — e.g. finished project or quiet topic.  
-2. **Full dossier** → download ZIP to disk / drive / another cloud folder.  
-3. **Spot-check** — open report HTML; open 1–2 attachments.  
-4. **Only then** soft-delete or archive entities in ARGUS (when lifecycle tools allow), so the DB sheds payload you no longer need online.  
-5. Keep the ZIP as the **source of truth for cold history**; ARGUS stays the working set.
-
-Do **not** depend on Vercel or a JSON API dump as the only copy.
+Quick PDF remains a **scan** deliverable, not the cold archive.
 
 ---
 
-## Desired next exports (product backlog — not built yet)
+## If Argus disappears
 
-Ordered for human usefulness:
+Keep the ZIP. You still have:
 
-1. **Email as email** — `.eml` (or `.mbox`) per message so Outlook/Apple Mail can re-open threads.  
-2. **One-click “Archive & download”** on a scope — dossier ZIP + optional mark-as-archived.  
-3. **Cold shelf** — second Supabase project / S3 / external drive policy documented in Diagnostics (“Export before purge”).  
-4. **Quota warnings** in A13 when DB estimate crosses ~70%.
+- A readable story (`report.html`)
+- Real emails (`.eml`)
+- Notes as Markdown
+- Original files
 
-Principle: **PDF as PDF, photo as photo, email as email, notes as readable text** — formats a person can open without ARGUS.
+No Argus runtime required.
 
 ---
 
-## What not to do
+## Backlog
 
-- Dump only opaque DB SQL or proprietary blobs as the archive.  
-- Delete from ARGUS before a verified human package exists.  
-- Assume Regenerable forever if the only copy is the live DB.
+- One-click “Archive & download” with optional mark-as-archived  
+- A13 warning at ~70% DB estimate  
+- Import tool that reads `argus/evidence.json` back into a live workspace

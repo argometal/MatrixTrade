@@ -19,6 +19,7 @@ import {
 } from "@/app/argus/actions";
 import { V2InboxDeleteControl } from "@/app/argus/v2/inbox/components/V2InboxDeleteControl";
 import { V2InboxEmailBody } from "@/app/argus/v2/inbox/components/V2InboxEmailBody";
+import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import {
   entityToV2InboxDetail,
   effectiveInboxStatus,
@@ -324,6 +325,53 @@ export function V2InboxDetailPanel({
   ];
 
   const statusDisplay = inboxStatusDisplay(status);
+  const mobileDetail = Boolean(onBack);
+  const compactChrome = mobileDetail && panelTab === "email";
+
+  const desktopActions = (
+    <div ref={menuRef} className="relative hidden shrink-0 items-center gap-2 lg:flex">
+      {canTriage ? (
+        <button
+          type="button"
+          onClick={() => openInboxConnect("all", false)}
+          className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+        >
+          Connect
+        </button>
+      ) : null}
+      <button type="button" className="text-zinc-600 hover:text-zinc-400" title="Share">
+        ↗
+      </button>
+      <button
+        type="button"
+        onClick={() => setMenuOpen((open) => !open)}
+        className="text-zinc-600 hover:text-zinc-400"
+        aria-label="More actions"
+      >
+        ···
+      </button>
+      {menuOpen ? (
+        <div className="absolute right-0 top-full z-20 mt-1 min-w-[180px] rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl">
+          {convertedLog ? (
+            <Link
+              href={`/argus/logs/${convertedLog.id}`}
+              className="block rounded-lg px-3 py-2 text-sm text-violet-400 hover:bg-zinc-800"
+              onClick={() => setMenuOpen(false)}
+            >
+              View record
+            </Link>
+          ) : null}
+          <Link
+            href={`/argus/inbox/${item.id}`}
+            className="block rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800"
+            onClick={() => setMenuOpen(false)}
+          >
+            Open legacy view
+          </Link>
+        </div>
+      ) : null}
+    </div>
+  );
 
   const linksWorkspace = (
     <div className="space-y-5">
@@ -542,70 +590,50 @@ export function V2InboxDetailPanel({
           </button>
         </div>
       ) : null}
-      <div className="border-b border-zinc-800/80 px-5 py-4">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="text-lg font-semibold leading-snug text-zinc-50">{view.subject || "(No subject)"}</h2>
-          <div ref={menuRef} className="relative hidden shrink-0 items-center gap-2 lg:flex">
-            {canTriage ? (
+      <div className="shrink-0 border-b border-zinc-800/80 px-5 py-4">
+        <V2DetailCompactHeader
+          mobileDetail={mobileDetail}
+          compact={compactChrome}
+          title={view.subject || "(No subject)"}
+          subtitle={view.from.replace(/<.*>/, "").trim() || view.from}
+          collapsedExtra={
+            canTriage ? (
               <button
                 type="button"
                 onClick={() => openInboxConnect("all", false)}
-                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-2.5 py-1 text-[11px] font-semibold text-violet-300"
               >
                 Connect
               </button>
-            ) : null}
-            <button type="button" className="text-zinc-600 hover:text-zinc-400" title="Share">
-              ↗
-            </button>
-            <button
-              type="button"
-              onClick={() => setMenuOpen((open) => !open)}
-              className="text-zinc-600 hover:text-zinc-400"
-              aria-label="More actions"
-            >
-              ···
-            </button>
-            {menuOpen ? (
-              <div className="absolute right-0 top-full z-20 mt-1 min-w-[180px] rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl">
-                {convertedLog ? (
-                  <Link
-                    href={`/argus/logs/${convertedLog.id}`}
-                    className="block rounded-lg px-3 py-2 text-sm text-violet-400 hover:bg-zinc-800"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    View record
-                  </Link>
-                ) : null}
-                <Link
-                  href={`/argus/inbox/${item.id}`}
-                  className="block rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Open legacy view
-                </Link>
+            ) : undefined
+          }
+          expanded={
+            <>
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-lg font-semibold leading-snug text-zinc-50">{view.subject || "(No subject)"}</h2>
+                {desktopActions}
               </div>
-            ) : null}
-          </div>
-        </div>
 
-        <div className="mt-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/50 to-zinc-700 text-xs font-bold text-violet-100">
-            {senderInitials(view.from)}
-          </div>
-          <div className="min-w-0 flex-1 text-sm">
-            <p className="font-medium text-zinc-200">{view.from.replace(/<.*>/, "").trim() || view.from}</p>
-            {view.to ? <p className="text-xs text-zinc-500">To {view.to}</p> : null}
-            <p className="text-xs text-zinc-600">
-              {new Date(view.receivedAt).toLocaleString(undefined, {
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          </div>
-        </div>
+              <div className="mt-4 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/50 to-zinc-700 text-xs font-bold text-violet-100">
+                  {senderInitials(view.from)}
+                </div>
+                <div className="min-w-0 flex-1 text-sm">
+                  <p className="font-medium text-zinc-200">{view.from.replace(/<.*>/, "").trim() || view.from}</p>
+                  {view.to ? <p className="text-xs text-zinc-500">To {view.to}</p> : null}
+                  <p className="text-xs text-zinc-600">
+                    {new Date(view.receivedAt).toLocaleString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </div>
+              </div>
+            </>
+          }
+        />
 
         <div className="mt-4 flex gap-1 border-b border-zinc-800/80">
           {detailTabs.map((t) => (

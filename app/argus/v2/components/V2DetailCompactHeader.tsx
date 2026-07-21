@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 /** Collapses heavy detail chrome on small screens when a content tab is active. */
 export function V2DetailCompactHeader({
@@ -19,18 +19,23 @@ export function V2DetailCompactHeader({
   collapsedExtra?: ReactNode;
 }) {
   const [expandedManual, setExpandedManual] = useState(false);
+
+  useEffect(() => {
+    if (!compact) setExpandedManual(false);
+  }, [compact]);
+
   const showCompact = mobileDetail && compact && !expandedManual;
 
   if (!showCompact) {
     return (
       <div>
-        {mobileDetail && compact ? (
+        {mobileDetail && compact && expandedManual ? (
           <button
             type="button"
-            onClick={() => setExpandedManual(true)}
+            onClick={() => setExpandedManual(false)}
             className="mb-2 text-[11px] font-medium text-violet-400 lg:hidden"
           >
-            Show header details
+            Hide header · more room to read
           </button>
         ) : null}
         {expanded}

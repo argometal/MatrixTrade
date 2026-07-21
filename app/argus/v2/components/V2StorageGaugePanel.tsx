@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { V2Badge, V2Card, V2SectionTitle } from "@/app/argus/v2/components/v2-ui";
 import { formatFileSize } from "@/lib/argus/email-view";
 import {
@@ -103,6 +104,14 @@ export async function V2StorageGaugePanel() {
           <GaugeRow gauge={report.supabaseDb} />
           <GaugeRow gauge={report.supabaseStorage} />
         </ul>
+        <p className="mt-4 text-xs leading-relaxed text-zinc-500">
+          Before the database fills, download a{" "}
+          <Link href="/argus/v2/deliver?package=evidence_dossier" className="text-violet-400 hover:text-violet-300">
+            Portable Archive
+          </Link>{" "}
+          (openable offline: HTML + emails as .eml + Markdown notes + original files). See{" "}
+          <span className="text-zinc-400">md/argus/storage-archive-export.md</span>.
+        </p>
       </V2Card>
 
       <V2Card className="p-5">

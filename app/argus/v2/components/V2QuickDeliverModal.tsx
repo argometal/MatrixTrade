@@ -158,7 +158,7 @@ export function V2QuickDeliverModal({
               Deliver — {scopeName}
             </h3>
             <p className="mt-1 text-xs text-zinc-500">
-              Quick PDF for scanning · Full dossier includes ZIP and complete evidence options.
+              Quick PDF for scanning · Portable Archive ZIP opens offline (emails as .eml, notes as Markdown).
             </p>
           </div>
           <button
@@ -220,7 +220,7 @@ export function V2QuickDeliverModal({
             onClick={onClose}
             className="rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-600/25"
           >
-            Full dossier
+            Portable Archive
           </Link>
           <button
             type="button"
