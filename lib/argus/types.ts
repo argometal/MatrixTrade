@@ -124,7 +124,7 @@ export interface InboxItem {
 
 export type RunbookItemType = "item" | "sep";
 
-/** Checklist row under a runbook card. */
+/** Optional nested check under a checklist item (legacy; prefer flat checks). */
 export interface RunbookSubtask {
   id: string;
   text: string;
@@ -132,27 +132,42 @@ export interface RunbookSubtask {
   doneAt: string;
 }
 
+/** One checklist row in a Runbook template (not a “card” / task board unit). */
 export interface RunbookItem {
   id: string;
   text: string;
+  /** Template default only — execution progress lives in RunbookProgress per entity. */
   done: boolean;
   doneAt: string;
   type: RunbookItemType;
-  /** Optional checklist under this card (Execution tool UI). */
   subtasks?: RunbookSubtask[];
 }
 
-/** Execution domain — procedure with checkable cards (checklist is the product). */
+/**
+ * Shared checklist template (Execution).
+ * Link to Organization / Project / Topic / Event via linkedEntityIds.
+ * Per-level check state is RunbookProgress — not stored on items when executing in scope.
+ */
 export interface Runbook {
   id: string;
   title: string;
   items: RunbookItem[];
-  /** Project, organization, or other entity this runbook supports. */
   linkedEntityIds: string[];
   createdAt: string;
   updatedAt: string;
-  /** Soft delete — never hard-remove user data (Rule 0). */
   deletedAt?: string;
+}
+
+/** Check + closed state for one Runbook at one entity level (Project / Topic / Event / Org). */
+export interface RunbookProgress {
+  id: string;
+  runbookId: string;
+  entityId: string;
+  /** checkId (item id) → done state */
+  checks: Record<string, { done: boolean; doneAt: string }>;
+  /** Runbook marked complete/closed at this level */
+  closed: boolean;
+  updatedAt: string;
 }
 
 export interface ArgusData {
@@ -161,6 +176,8 @@ export interface ArgusData {
   inboxItems: InboxItem[];
   attachments: Attachment[];
   runbooks: Runbook[];
+  /** Execution progress per (runbook × entity). */
+  runbookProgress?: RunbookProgress[];
   version: 3;
 }
 

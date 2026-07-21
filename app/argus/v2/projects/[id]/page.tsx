@@ -3,7 +3,7 @@ import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
-import { runbooksForEntity } from "@/lib/argus/runbook-helpers";
+import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 import { loadProjectPageData } from "@/lib/argus/v2/loaders";
 import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
@@ -56,6 +56,11 @@ export default async function V2ProjectPage({
   });
   const neighborhood = buildV2EntityNeighborhoodGraph(data, inboxItems, entity.id, includePrivate, today);
   const projectRunbooks = runbooksForEntity(data.runbooks ?? [], entity.id);
+  const libraryRunbooks = libraryRunbooksForRelated(
+    data.runbooks ?? [],
+    page.org ? [page.org.id] : []
+  );
+  const progressRecords = progressForEntity(data.runbookProgress, entity.id);
   const hasPrivateEvidence = projectHasPrivateEvidence(data, inboxItems, entity);
   const deleteGate = await buildV2DeleteGateProps(entity, sp);
   const privateLocked = hasPrivateEvidence && !includePrivate;
@@ -167,6 +172,8 @@ export default async function V2ProjectPage({
             timeline={page.timeline}
             neighborhood={neighborhood}
             runbooks={projectRunbooks}
+            libraryRunbooks={libraryRunbooks}
+            progressRecords={progressRecords}
             durationDays={page.durationDays}
             dateRangeLabel={page.dateRangeLabel}
             peopleWithRoles={page.peopleWithRoles}

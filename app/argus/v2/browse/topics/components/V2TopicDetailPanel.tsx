@@ -20,13 +20,17 @@ import { V2TagPatternBadges } from "@/app/argus/v2/components/V2TagPatternBadges
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
+import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
+import type { Runbook, RunbookProgress } from "@/lib/argus/types";
+import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
-type PanelTab = "chronicle" | "timeline" | "connections" | "aliases";
+type PanelTab = "chronicle" | "timeline" | "runbooks" | "connections" | "aliases";
 type ChronicleFilter = "all" | V2EvidenceStreamKind | "attachments";
 
 const PANEL_TABS: { id: PanelTab; label: string }[] = [
   { id: "chronicle", label: "Chronicle" },
   { id: "timeline", label: "Timeline" },
+  { id: "runbooks", label: "Runbooks" },
   { id: "connections", label: "Connections" },
   { id: "aliases", label: "Aliases" },
 ];
@@ -92,6 +96,8 @@ export function V2TopicDetailPanel({
   onBack,
   privateConfigured = false,
   privateUnlocked = false,
+  allRunbooks = [],
+  allProgress = [],
   ...deleteGate
 }: {
   selected: V2TopicDetail;
@@ -100,6 +106,8 @@ export function V2TopicDetailPanel({
   onBack?: () => void;
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
+  allRunbooks?: Runbook[];
+  allProgress?: RunbookProgress[];
 } & V2DeleteGateProps) {
   const [panelTab, setPanelTab] = useState<PanelTab>("chronicle");
   const [chronicleFilter, setChronicleFilter] = useState<ChronicleFilter>("all");
@@ -109,6 +117,19 @@ export function V2TopicDetailPanel({
   const compactChrome = mobileDetail && panelTab !== "aliases";
   const showMobileManageBar = mobileDetail && privateUnlocked;
   const attachmentCount = selected.fileCount + selected.photoCount;
+
+  const linkedRunbooks = useMemo(
+    () => runbooksForEntity(allRunbooks, selected.id),
+    [allRunbooks, selected.id]
+  );
+  const libraryRunbooks = useMemo(
+    () => libraryRunbooksForRelated(allRunbooks, selected.linkedEntityIds),
+    [allRunbooks, selected.linkedEntityIds]
+  );
+  const progressRecords = useMemo(
+    () => progressForEntity(allProgress, selected.id),
+    [allProgress, selected.id]
+  );
 
   const filteredChronicle = useMemo(() => {
     if (chronicleFilter === "all") return selected.evidence;
@@ -326,6 +347,16 @@ export function V2TopicDetailPanel({
               <p className="mb-4 text-xs text-zinc-500">Quick scan — activity on this topic over time.</p>
               <V2OrgTimeline entries={selected.timeline} />
             </div>
+          ) : null}
+
+          {panelTab === "runbooks" ? (
+            <V2EntityRunbooksTab
+              level="topic"
+              entityId={selected.id}
+              linkedRunbooks={linkedRunbooks}
+              libraryRunbooks={libraryRunbooks}
+              progressRecords={progressRecords}
+            />
           ) : null}
 
           {panelTab === "connections" ? (

@@ -61,6 +61,7 @@ export function migrateToV3(raw: unknown): ArgusData {
       inboxItems: data.inboxItems ?? [],
       attachments: data.attachments ?? [],
       runbooks: data.runbooks ?? [],
+      runbookProgress: data.runbookProgress ?? [],
       version: 3,
     });
   }
@@ -129,6 +130,7 @@ export function migrateToV3(raw: unknown): ArgusData {
         parentId: e.entryId ?? e.id,
       })),
     runbooks: [],
+    runbookProgress: [],
     version: 3,
   });
 }

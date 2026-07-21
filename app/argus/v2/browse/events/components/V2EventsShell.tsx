@@ -19,6 +19,7 @@ import { V2IntelligenceFocusBanner } from "@/app/argus/v2/components/V2Intellige
 import { resolveV2SelectedId, v2ActiveListItemClass } from "@/lib/argus/v2/selection";
 import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
+import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { V2EventDetailPanel } from "./V2EventDetailPanel";
 
 const TABS: { id: V2EventTab; label: string }[] = [
@@ -34,6 +35,8 @@ export function V2EventsShell({
   initialSelectedId,
   initialTab,
   neighborhood,
+  allRunbooks = [],
+  allProgress = [],
   privateConfigured = false,
   privateUnlocked = false,
   deleteUnlocked = false,
@@ -51,6 +54,8 @@ export function V2EventsShell({
   initialSelectedId?: string;
   initialTab?: string;
   neighborhood?: V2EntityNeighborhoodGraph | null;
+  allRunbooks?: Runbook[];
+  allProgress?: RunbookProgress[];
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
 } & Omit<V2DeleteGateProps, "requiresAuthenticator">) {
@@ -125,6 +130,8 @@ export function V2EventsShell({
             neighborhood={neighborhood}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
+            allRunbooks={allRunbooks}
+            allProgress={allProgress}
             requiresAuthenticator={selected.deleteRequiresAuthenticator}
             deleteUnlocked={deleteUnlocked}
             deleteAuthUnlocked={deleteAuthUnlocked}
@@ -258,6 +265,8 @@ export function V2EventsShell({
             onBack={mobileDetailOpen ? backToList : undefined}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
+            allRunbooks={allRunbooks}
+            allProgress={allProgress}
             requiresAuthenticator={selected.deleteRequiresAuthenticator}
             deleteUnlocked={deleteUnlocked}
             deleteAuthUnlocked={deleteAuthUnlocked}

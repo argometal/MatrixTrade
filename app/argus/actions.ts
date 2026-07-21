@@ -23,6 +23,9 @@ import {
   getInboxItems,
   getLog,
   getRunbook,
+  getRunbookProgress,
+  upsertRunbookProgress,
+  copyRunbook,
   getInboxItem,
   linkInboxToEntities,
   saveInboxEvidenceLinks,
@@ -1526,18 +1529,47 @@ async function revalidateRunbookSurfaces(runbookId: string, linkedEntityIds: str
   for (const entityId of linkedEntityIds) {
     revalidatePath(`/argus/v2/projects/${entityId}`);
     revalidatePath(`/argus/v2/organizations/${entityId}`);
+    revalidatePath(`/argus/v2/browse/topics`);
+    revalidatePath(`/argus/v2/browse/events`);
+    revalidatePath(`/argus/v2/network/${entityId}`);
   }
+}
+
+async function loadOrSeedProgress(runbookId: string, entityId: string) {
+  const { findRunbookProgress, seedProgressFromTemplateItems } = await import(
+    "@/lib/argus/runbook-helpers"
+  );
+  const data = await readArgus();
+  const runbook = data.runbooks.find((r) => r.id === runbookId);
+  if (!runbook) return null;
+  const existing = findRunbookProgress(data.runbookProgress, runbookId, entityId);
+  if (existing) return existing;
+  const seeded = seedProgressFromTemplateItems(runbook, entityId);
+  await upsertRunbookProgress(seeded);
+  return seeded;
 }
 
 export async function toggleRunbookItemAction(
   runbookId: string,
   itemId: string,
-  done: boolean
+  done: boolean,
+  scopeEntityId?: string
 ): Promise<void> {
   await requireArgusSession();
   const runbook = await getRunbook(runbookId);
   if (!runbook) {
     throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  if (scopeEntityId) {
+    const progress = await loadOrSeedProgress(runbookId, scopeEntityId);
+    if (!progress) throw new ArgusPersistenceError("validation", "Runbook not found.");
+    const checks = { ...progress.checks };
+    if (done) checks[itemId] = { done: true, doneAt: runbookStamp() };
+    else delete checks[itemId];
+    await upsertRunbookProgress({ ...progress, checks, closed: false });
+    await revalidateRunbookSurfaces(runbookId, [...runbook.linkedEntityIds, scopeEntityId]);
+    return;
   }
 
   const items = runbook.items.map((item) =>
@@ -1548,6 +1580,82 @@ export async function toggleRunbookItemAction(
 
   await updateRunbook(runbookId, { items });
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function setRunbookScopeClosedAction(
+  runbookId: string,
+  scopeEntityId: string,
+  closed: boolean
+): Promise<void> {
+  await requireArgusSession();
+  const progress = await loadOrSeedProgress(runbookId, scopeEntityId);
+  if (!progress) throw new ArgusPersistenceError("validation", "Runbook not found.");
+  await upsertRunbookProgress({ ...progress, closed });
+  const runbook = await getRunbook(runbookId);
+  await revalidateRunbookSurfaces(runbookId, [...(runbook?.linkedEntityIds ?? []), scopeEntityId]);
+}
+
+export async function linkRunbookToEntityAction(runbookId: string, entityId: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) throw new ArgusPersistenceError("validation", "Runbook not found.");
+  if (runbook.linkedEntityIds.includes(entityId)) return;
+  await updateRunbook(runbookId, {
+    linkedEntityIds: [...runbook.linkedEntityIds, entityId],
+  });
+  await revalidateRunbookSurfaces(runbookId, [...runbook.linkedEntityIds, entityId]);
+}
+
+export async function unlinkRunbookFromEntityAction(runbookId: string, entityId: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) throw new ArgusPersistenceError("validation", "Runbook not found.");
+  await updateRunbook(runbookId, {
+    linkedEntityIds: runbook.linkedEntityIds.filter((id) => id !== entityId),
+  });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function copyRunbookToEntityAction(
+  sourceRunbookId: string,
+  entityId: string
+): Promise<{ id: string }> {
+  await requireArgusSession();
+  const copied = await copyRunbook(sourceRunbookId, [entityId]);
+  await revalidateRunbookSurfaces(copied.id, copied.linkedEntityIds);
+  return { id: copied.id };
+}
+
+export async function checkAllRunbookItemsScopedAction(
+  runbookId: string,
+  scopeEntityId: string
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) throw new ArgusPersistenceError("validation", "Runbook not found.");
+  const progress = await loadOrSeedProgress(runbookId, scopeEntityId);
+  if (!progress) throw new ArgusPersistenceError("validation", "Runbook not found.");
+  const stamp = runbookStamp();
+  const checks = { ...progress.checks };
+  for (const item of runbook.items) {
+    if (item.type === "sep") continue;
+    checks[item.id] = { done: true, doneAt: stamp };
+  }
+  await upsertRunbookProgress({ ...progress, checks, closed: true });
+  await revalidateRunbookSurfaces(runbookId, [...runbook.linkedEntityIds, scopeEntityId]);
+}
+
+export async function uncheckAllRunbookItemsScopedAction(
+  runbookId: string,
+  scopeEntityId: string
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) throw new ArgusPersistenceError("validation", "Runbook not found.");
+  const progress = await loadOrSeedProgress(runbookId, scopeEntityId);
+  if (!progress) throw new ArgusPersistenceError("validation", "Runbook not found.");
+  await upsertRunbookProgress({ ...progress, checks: {}, closed: false });
+  await revalidateRunbookSurfaces(runbookId, [...runbook.linkedEntityIds, scopeEntityId]);
 }
 
 export async function addRunbookCardAction(runbookId: string, text: string): Promise<void> {

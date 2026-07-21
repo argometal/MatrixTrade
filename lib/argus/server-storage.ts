@@ -56,7 +56,7 @@ function generateId(): string {
 }
 
 function emptyArgus(): ArgusData {
-  return { entities: [], logs: [], inboxItems: [], attachments: [], runbooks: [], version: 3 };
+  return { entities: [], logs: [], inboxItems: [], attachments: [], runbooks: [], runbookProgress: [], version: 3 };
 }
 
 async function ensureFilesDir(): Promise<void> {
@@ -632,6 +632,53 @@ export async function softDeleteRunbook(id: string): Promise<void> {
   runbook.deletedAt = new Date().toISOString();
   runbook.updatedAt = runbook.deletedAt;
   await writeArgus(data);
+}
+
+export async function getRunbookProgress(
+  runbookId: string,
+  entityId: string
+): Promise<import("./types").RunbookProgress | undefined> {
+  const data = await readArgus();
+  const id = `${runbookId}::${entityId}`;
+  return (data.runbookProgress ?? []).find((row) => row.id === id);
+}
+
+export async function upsertRunbookProgress(
+  progress: import("./types").RunbookProgress
+): Promise<import("./types").RunbookProgress> {
+  const data = await readArgus();
+  if (!data.runbookProgress) data.runbookProgress = [];
+  const idx = data.runbookProgress.findIndex((row) => row.id === progress.id);
+  const next = { ...progress, updatedAt: new Date().toISOString() };
+  if (idx >= 0) data.runbookProgress[idx] = next;
+  else data.runbookProgress.push(next);
+  await writeArgus(data);
+  return next;
+}
+
+export async function copyRunbook(
+  sourceId: string,
+  linkedEntityIds: string[]
+): Promise<Runbook> {
+  const source = await getRunbook(sourceId);
+  if (!source) throw new Error("Runbook not found");
+  const items = source.items.map((item) => ({
+    ...item,
+    id: `${item.id}_c${Date.now().toString(36)}`,
+    done: false,
+    doneAt: "",
+    subtasks: (item.subtasks ?? []).map((subtask) => ({
+      ...subtask,
+      id: `${subtask.id}_c${Date.now().toString(36)}`,
+      done: false,
+      doneAt: "",
+    })),
+  }));
+  return createRunbook({
+    title: `${source.title} (copy)`,
+    items,
+    linkedEntityIds,
+  });
 }
 
 // --- Inbox ---

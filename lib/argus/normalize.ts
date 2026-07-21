@@ -125,6 +125,7 @@ export function normalizeArgusData(data: ArgusData): ArgusData {
     inboxItems,
     attachments,
     runbooks: (data.runbooks ?? []).map(normalizeRunbook),
+    runbookProgress: Array.isArray(data.runbookProgress) ? data.runbookProgress : [],
     version: 3,
   };
 }

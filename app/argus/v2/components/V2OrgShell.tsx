@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { Entity } from "@/lib/argus/types";
+import type { Entity, Runbook, RunbookProgress } from "@/lib/argus/types";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import type { TagPattern } from "@/lib/argus/v2/tag-patterns";
@@ -12,6 +12,7 @@ import { V2PrivateEvidenceGate } from "./V2PrivateEvidenceGate";
 import { V2EntityTimelineSection } from "./V2EntityTimelineSection";
 import { V2EntityChronicleRail } from "./V2EntityChronicleRail";
 import { V2EntityLinksTab } from "./V2EntityLinksTab";
+import { V2EntityRunbooksTab } from "./V2EntityRunbooksTab";
 import { V2RelationshipChart } from "./V2RelationshipChart";
 import {
   V2ContactPill,
@@ -26,7 +27,7 @@ import {
   V2SummaryStatCard,
 } from "./V2RightPanel";
 
-const TABS = ["Overview", "Timeline", "Links"] as const;
+const TABS = ["Overview", "Timeline", "Runbooks", "Links"] as const;
 type OrgTab = (typeof TABS)[number];
 
 export type V2OrgShellProps = {
@@ -58,6 +59,8 @@ export type V2OrgShellProps = {
   chartEndYear: number;
   relationshipMetrics: Array<{ label: string; value: string }>;
   linkedTopics: string[];
+  runbooks?: Runbook[];
+  progressRecords?: RunbookProgress[];
 };
 
 function initials(name: string): string {
@@ -90,6 +93,8 @@ export function V2OrgShell(props: V2OrgShellProps) {
     chartEndYear,
     relationshipMetrics,
     linkedTopics,
+    runbooks = [],
+    progressRecords = [],
   } = props;
 
   const morePeople = Math.max(0, linkedPeople.length - 4);
@@ -99,7 +104,12 @@ export function V2OrgShell(props: V2OrgShellProps) {
     <>
       <div className="mb-6 flex gap-1 overflow-x-auto border-b border-zinc-800/80 pb-px">
         {TABS.map((entry) => {
-          const hint = entry === "Timeline" && timeline.length > 0 ? ` · ${timeline.length}` : "";
+          const hint =
+            entry === "Timeline" && timeline.length > 0
+              ? ` · ${timeline.length}`
+              : entry === "Runbooks" && runbooks.length > 0
+                ? ` · ${runbooks.length}`
+                : "";
           return (
             <button
               key={entry}
@@ -285,6 +295,15 @@ export function V2OrgShell(props: V2OrgShellProps) {
             subtitle="All time · Quick scan of activity on this organization"
           />
         </V2PrivateEvidenceGate>
+      ) : null}
+
+      {tab === "Runbooks" ? (
+        <V2EntityRunbooksTab
+          level="organization"
+          entityId={entity.id}
+          linkedRunbooks={runbooks}
+          progressRecords={progressRecords}
+        />
       ) : null}
 
       {tab === "Links" ? (

@@ -6,6 +6,7 @@ import type { Runbook, RunbookItem } from "@/lib/argus/types";
 import {
   appendRunbookCardsFromTextAction,
   checkAllRunbookItemsAction,
+  checkAllRunbookItemsScopedAction,
   flattenRunbookSubtasksAction,
   importRunbookJsonAction,
   moveRunbookItemAction,
@@ -13,8 +14,10 @@ import {
   removeDoneRunbookItemsAction,
   renameRunbookItemAction,
   renameRunbookTitleAction,
+  setRunbookScopeClosedAction,
   toggleRunbookItemAction,
   uncheckAllRunbookItemsAction,
+  uncheckAllRunbookItemsScopedAction,
 } from "@/app/argus/actions";
 import { runbookHasNestedSubtasks, runbookProgress } from "@/lib/argus/runbook-helpers";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
@@ -91,7 +94,7 @@ function RunbookCardExpanded({
   return (
     <div className="runbook-no-print rounded-2xl border border-lime-500/30 bg-zinc-900/90 p-4 shadow-lg ring-1 ring-lime-500/10">
       <div className="mb-3 flex items-center justify-between gap-2">
-        <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Edit card</span>
+        <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Edit check</span>
         <div className="flex items-center gap-1">
           <button
             type="button"
@@ -161,6 +164,7 @@ function RunbookListRow({
   hiddenOnScreen,
   expanded,
   disabled,
+  editable,
   onSelect,
   onToggle,
 }: {
@@ -168,6 +172,7 @@ function RunbookListRow({
   hiddenOnScreen: boolean;
   expanded: boolean;
   disabled: boolean;
+  editable: boolean;
   onSelect: () => void;
   onToggle: (done: boolean) => void;
 }) {
@@ -191,7 +196,7 @@ function RunbookListRow({
           onChange={(event) => onToggle(event.target.checked)}
           className="runbook-no-print mt-1 shrink-0"
         />
-        <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
+        <div className="min-w-0 flex-1 text-left">
           <p
             className={`text-sm font-medium leading-relaxed ${
               item.done ? "text-zinc-500 line-through" : "text-zinc-100"
@@ -204,15 +209,17 @@ function RunbookListRow({
               {subtaskCount} nested subtask{subtaskCount === 1 ? "" : "s"}
             </span>
           ) : null}
-        </button>
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={onSelect}
-          className="runbook-no-print shrink-0 rounded-md px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
-        >
-          {expanded ? "Close" : "Edit"}
-        </button>
+        </div>
+        {editable ? (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={onSelect}
+            className="runbook-no-print shrink-0 rounded-md px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
+          >
+            {expanded ? "Close" : "Edit"}
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -222,10 +229,18 @@ export function V2RunbookWorkPanel({
   runbook,
   onBack,
   backLabel = "Back",
+  scopeEntityId,
+  closed = false,
+  executeMode = false,
 }: {
   runbook: Runbook;
   onBack?: () => void;
   backLabel?: string;
+  /** When set, check/uncheck persists per this entity (Project / Topic / Event / Org). */
+  scopeEntityId?: string;
+  closed?: boolean;
+  /** Hide template rebuild tools — focus on executing checks. */
+  executeMode?: boolean;
 }) {
   const router = useRouter();
   const importRef = useRef<HTMLInputElement>(null);
@@ -265,7 +280,7 @@ export function V2RunbookWorkPanel({
   }
 
   function handleToggle(itemId: string, done: boolean) {
-    run(() => toggleRunbookItemAction(runbook.id, itemId, done));
+    run(() => toggleRunbookItemAction(runbook.id, itemId, done, scopeEntityId));
   }
 
   function handleMove(itemId: string, direction: -1 | 1) {
@@ -278,11 +293,11 @@ export function V2RunbookWorkPanel({
       return;
     }
     setBulkText(runbookItemsToText(runbook.items));
-    setStatus("Loaded to bulk input — edit and Build to rebuild (resets checkmarks).");
+    setStatus("Loaded to bulk input — edit and Build to rebuild (resets checks).");
   }
 
   function handleBuildFromText() {
-    if (!window.confirm("Build replaces all cards and resets checkmarks. Continue?")) return;
+    if (!window.confirm("Build replaces all checks and resets progress. Continue?")) return;
     run(async () => {
       await rebuildRunbookFromTextAction(runbook.id, bulkText);
       setExpandedId(null);
@@ -297,18 +312,34 @@ export function V2RunbookWorkPanel({
     }
     run(async () => {
       await appendRunbookCardsFromTextAction(runbook.id, bulkText);
-      setStatus("Appended new cards from input (checkmarks kept).");
+      setStatus("Appended new checks from input.");
     });
   }
 
   function handleFlattenSubtasks() {
-    if (!window.confirm("Convert nested subtasks into separate cards?")) return;
-    run(() => flattenRunbookSubtasksAction(runbook.id), "Converted subtasks to flat cards.");
+    if (!window.confirm("Convert nested subtasks into separate checks?")) return;
+    run(() => flattenRunbookSubtasksAction(runbook.id), "Converted subtasks to flat checks.");
   }
 
   function handleRemoveDone() {
-    if (!window.confirm("Remove all accomplished cards?")) return;
-    run(() => removeDoneRunbookItemsAction(runbook.id), "Removed accomplished cards.");
+    if (!window.confirm("Remove all accomplished checks from the template?")) return;
+    run(() => removeDoneRunbookItemsAction(runbook.id), "Removed accomplished checks from template.");
+  }
+
+  function handleCheckAll() {
+    if (scopeEntityId) {
+      run(() => checkAllRunbookItemsScopedAction(runbook.id, scopeEntityId), "All checks done.");
+      return;
+    }
+    run(() => checkAllRunbookItemsAction(runbook.id));
+  }
+
+  function handleUncheckAll() {
+    if (scopeEntityId) {
+      run(() => uncheckAllRunbookItemsScopedAction(runbook.id, scopeEntityId), "All checks cleared.");
+      return;
+    }
+    run(() => uncheckAllRunbookItemsAction(runbook.id));
   }
 
   function handleExportJson() {
@@ -348,7 +379,7 @@ export function V2RunbookWorkPanel({
 
     try {
       const text = await file.text();
-      if (!window.confirm("Import will replace this runbook's title and cards. Continue?")) {
+      if (!window.confirm("Import will replace this runbook's title and checks. Continue?")) {
         setStatus("Import cancelled.");
         return;
       }
@@ -376,7 +407,7 @@ export function V2RunbookWorkPanel({
   function handleEmailLink() {
     const subject = encodeURIComponent(`Runbook: ${runbook.title}`);
     const body = encodeURIComponent(
-      `Runbook: ${runbook.title}\n\nOpen in Argus:\n${window.location.href}\n\n${progress.open} open / ${progress.total} cards`
+      `Runbook: ${runbook.title}\n\nOpen in Argus:\n${window.location.href}\n\n${progress.open} open / ${progress.total} checks`
     );
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
   }
@@ -410,7 +441,7 @@ export function V2RunbookWorkPanel({
       <div className="runbook-print-header mb-4 hidden">
         <h2 className="text-xl font-bold text-zinc-900">{runbook.title}</h2>
         <p className="text-sm text-zinc-600">
-          {progress.total} cards · {progress.open} open · {progress.done} done · Updated{" "}
+          {progress.total} checks · {progress.open} open · {progress.done} done · Updated{" "}
           {runbook.updatedAt.slice(0, 19).replace("T", " ")}
         </p>
       </div>
@@ -427,7 +458,7 @@ export function V2RunbookWorkPanel({
       ) : null}
 
       <div className="runbook-no-print flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
-        {editingTitle ? (
+        {editingTitle && !executeMode ? (
           <form onSubmit={handleSaveTitle} className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <input
               autoFocus
@@ -454,26 +485,32 @@ export function V2RunbookWorkPanel({
         ) : (
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="truncate text-sm font-semibold text-zinc-200">{runbook.title}</span>
-            <button
-              type="button"
-              onClick={() => setEditingTitle(true)}
-              className="rounded-md px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
-            >
-              Rename
-            </button>
+            {!executeMode ? (
+              <button
+                type="button"
+                onClick={() => setEditingTitle(true)}
+                className="rounded-md px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
+              >
+                Rename
+              </button>
+            ) : null}
+            {closed ? (
+              <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-[10px] font-medium text-sky-300">Closed</span>
+            ) : null}
           </div>
         )}
-        <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400">{progress.total} cards</span>
+        <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-400">{progress.total} checks</span>
         <span className="rounded-full bg-lime-500/10 px-3 py-1 text-xs text-lime-300">{progress.open} open</span>
         <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-500">{progress.done} done</span>
       </div>
 
+      {!executeMode ? (
       <div className="runbook-no-print rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
         <span className="mb-3 block text-xs font-medium uppercase tracking-wide text-zinc-500">Bulk input</span>
         <div className="space-y-3">
           <div>
             <label className="mb-1.5 block text-[11px] text-zinc-500">
-              Input (1 line = 1 card, blank line = separator)
+              Input (1 line = 1 check, blank line = separator)
             </label>
             <textarea
               value={bulkText}
@@ -497,6 +534,7 @@ export function V2RunbookWorkPanel({
           </div>
         </div>
       </div>
+      ) : null}
 
       <div className="runbook-no-print flex flex-wrap items-center gap-2">
         <label className="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-400">
@@ -508,23 +546,44 @@ export function V2RunbookWorkPanel({
           />
           Show accomplished
         </label>
-        <button type="button" disabled={isPending} onClick={() => run(() => checkAllRunbookItemsAction(runbook.id))} className={toolbarButtonClass()}>
+        <button type="button" disabled={isPending} onClick={handleCheckAll} className={toolbarButtonClass()}>
           Check all
         </button>
-        <button type="button" disabled={isPending} onClick={() => run(() => uncheckAllRunbookItemsAction(runbook.id))} className={toolbarButtonClass()}>
+        <button type="button" disabled={isPending} onClick={handleUncheckAll} className={toolbarButtonClass()}>
           Uncheck all
         </button>
-        <button type="button" disabled={isPending} onClick={handleRemoveDone} className={toolbarButtonClass("danger")}>
-          Remove accomplished
-        </button>
+        {scopeEntityId ? (
+          <button
+            type="button"
+            disabled={isPending}
+            onClick={() =>
+              run(
+                () => setRunbookScopeClosedAction(runbook.id, scopeEntityId, !closed),
+                closed ? "Reopened at this level." : "Marked closed at this level."
+              )
+            }
+            className={toolbarButtonClass(closed ? "default" : "primary")}
+          >
+            {closed ? "Reopen" : "Mark closed"}
+          </button>
+        ) : null}
+        {!executeMode ? (
+          <button type="button" disabled={isPending} onClick={handleRemoveDone} className={toolbarButtonClass("danger")}>
+            Remove accomplished
+          </button>
+        ) : null}
         <span className="mx-1 hidden h-4 w-px bg-zinc-800 sm:inline" />
         <button type="button" disabled={isPending} onClick={handleExportJson} className={toolbarButtonClass()}>
           Export JSON
         </button>
-        <button type="button" disabled={isPending} onClick={handleImportClick} className={toolbarButtonClass()}>
-          Import JSON
-        </button>
-        <input ref={importRef} type="file" accept="application/json,.json" className="hidden" onChange={handleImportFile} />
+        {!executeMode ? (
+          <>
+            <button type="button" disabled={isPending} onClick={handleImportClick} className={toolbarButtonClass()}>
+              Import JSON
+            </button>
+            <input ref={importRef} type="file" accept="application/json,.json" className="hidden" onChange={handleImportFile} />
+          </>
+        ) : null}
         <button type="button" onClick={handlePrint} className={toolbarButtonClass()}>
           Print / PDF
         </button>
@@ -533,15 +592,17 @@ export function V2RunbookWorkPanel({
         </button>
       </div>
 
-      <div className="runbook-no-print">
-        <RunbookAiBulkPanel runbookId={runbook.id} />
-      </div>
+      {!executeMode ? (
+        <div className="runbook-no-print">
+          <RunbookAiBulkPanel runbookId={runbook.id} />
+        </div>
+      ) : null}
 
-      {hasNestedSubtasks ? (
+      {!executeMode && hasNestedSubtasks ? (
         <div className="runbook-no-print flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-950/20 px-4 py-3">
-          <p className="text-xs text-amber-100">This runbook still has nested subtasks. Convert them to flat cards.</p>
+          <p className="text-xs text-amber-100">This runbook still has nested subtasks. Convert them to flat checks.</p>
           <button type="button" disabled={isPending} onClick={handleFlattenSubtasks} className={toolbarButtonClass("primary")}>
-            Convert to flat cards
+            Convert to flat checks
           </button>
         </div>
       ) : null}
@@ -558,7 +619,11 @@ export function V2RunbookWorkPanel({
 
       {!hasVisibleCards ? (
         <p className="rounded-2xl border border-dashed border-zinc-800 px-4 py-10 text-center text-sm text-zinc-500">
-          {showDone ? "No cards yet — use bulk input above to add items." : "All cards done — or nothing to show."}
+          {showDone
+            ? executeMode
+              ? "No checks in this runbook."
+              : "No checks yet — use bulk input above to add items."
+            : "All checks done — or nothing to show."}
         </p>
       ) : (
         <div className="space-y-2">
@@ -574,17 +639,19 @@ export function V2RunbookWorkPanel({
               );
             }
             const itemIndex = runbook.items.findIndex((entry) => entry.id === item.id);
+            const canEdit = !executeMode;
             return (
               <div key={item.id} className="space-y-2">
                 <RunbookListRow
                   item={item}
                   hiddenOnScreen={hiddenOnScreen}
-                  expanded={expandedId === item.id}
+                  expanded={canEdit && expandedId === item.id}
                   disabled={isPending}
+                  editable={canEdit}
                   onSelect={() => setExpandedId((current) => (current === item.id ? null : item.id))}
                   onToggle={(done) => handleToggle(item.id, done)}
                 />
-                {expandedId === item.id ? (
+                {canEdit && expandedId === item.id ? (
                   <RunbookCardExpanded
                     runbookId={runbook.id}
                     item={item}

@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { Entity } from "@/lib/argus/types";
-import type { Runbook } from "@/lib/argus/types";
+import type { Entity, Runbook, RunbookProgress } from "@/lib/argus/types";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import type { TagPattern } from "@/lib/argus/v2/tag-patterns";
+import { applyRunbookProgress, findRunbookProgress, runbookProgress } from "@/lib/argus/runbook-helpers";
 import { formatDate } from "@/app/argus/components/ui";
 import { V2Card } from "./v2-ui";
 import { V2EntityNeighborhoodPanel } from "./V2EntityNeighborhoodPanel";
@@ -39,6 +39,8 @@ export type V2ProjectShellProps = {
   timeline: V2TimelineEntry[];
   neighborhood: V2EntityNeighborhoodGraph;
   runbooks: Runbook[];
+  libraryRunbooks?: Runbook[];
+  progressRecords?: RunbookProgress[];
   durationDays?: number;
   dateRangeLabel?: string;
   peopleWithRoles: Array<{ id: string; name: string; initials: string; role: string }>;
@@ -67,6 +69,8 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
     timeline,
     neighborhood,
     runbooks,
+    libraryRunbooks = [],
+    progressRecords = [],
     durationDays,
     peopleWithRoles,
     linkedTopics,
@@ -82,8 +86,9 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
     ? "Bounded by project dates · direct links + via project contacts"
     : "All dates · includes evidence outside the project window";
   const runbookOpen = runbooks.reduce((sum, rb) => {
-    const open = rb.items.filter((i) => i.type !== "sep" && !i.done).length;
-    return sum + open;
+    const prog = findRunbookProgress(progressRecords, rb.id, entity.id);
+    const items = applyRunbookProgress(rb, prog ?? null);
+    return sum + runbookProgress(items).open;
   }, 0);
 
   return (
@@ -215,7 +220,12 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
       ) : null}
 
       {tab === "Runbooks" ? (
-        <V2ProjectRunbooksTab runbooks={runbooks} projectId={entity.id} />
+        <V2ProjectRunbooksTab
+          runbooks={runbooks}
+          projectId={entity.id}
+          libraryRunbooks={libraryRunbooks}
+          progressRecords={progressRecords}
+        />
       ) : null}
 
       {tab === "Links" ? (

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { appendEventChronicleEntryAction } from "@/app/argus/actions";
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
@@ -19,8 +19,11 @@ import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz"
 import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EventSignalEditor } from "./V2EventSignalEditor";
+import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
+import type { Runbook, RunbookProgress } from "@/lib/argus/types";
+import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
-type PanelTab = "note" | "chronicle" | "metrics" | "signals";
+type PanelTab = "note" | "chronicle" | "runbooks" | "metrics" | "signals";
 type ChronicleFilter = "all" | "photo" | "file" | "email" | "journal";
 
 function EvidenceIcon({ kind }: { kind: V2EventDetail["evidence"][0]["kind"] }) {
@@ -61,6 +64,8 @@ export function V2EventDetailPanel({
   onBack,
   privateConfigured = false,
   privateUnlocked = false,
+  allRunbooks = [],
+  allProgress = [],
   ...deleteGate
 }: {
   selected: V2EventDetail;
@@ -70,6 +75,8 @@ export function V2EventDetailPanel({
   onBack?: () => void;
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
+  allRunbooks?: Runbook[];
+  allProgress?: RunbookProgress[];
 } & V2DeleteGateProps) {
   const router = useRouter();
   const [panelTab, setPanelTab] = useState<PanelTab>("note");
@@ -84,6 +91,19 @@ export function V2EventDetailPanel({
   const mobileDetail = Boolean(onBack);
   const compactChrome = mobileDetail && panelTab !== "note";
   const showMobileManageBar = mobileDetail && privateUnlocked;
+
+  const linkedRunbooks = useMemo(
+    () => runbooksForEntity(allRunbooks, selected.id),
+    [allRunbooks, selected.id]
+  );
+  const libraryRunbooks = useMemo(
+    () => libraryRunbooksForRelated(allRunbooks, selected.linkedEntityIds),
+    [allRunbooks, selected.linkedEntityIds]
+  );
+  const progressRecords = useMemo(
+    () => progressForEntity(allProgress, selected.id),
+    [allProgress, selected.id]
+  );
 
   const canSave = composer.trim().length > 0 || pendingFiles.length > 0;
 
@@ -137,6 +157,7 @@ export function V2EventDetailPanel({
   const tabs: { id: PanelTab; label: string }[] = [
     { id: "note", label: "Note" },
     { id: "chronicle", label: "Chronicle" },
+    { id: "runbooks", label: "Runbooks" },
     { id: "signals", label: "Signals" },
     { id: "metrics", label: "Metrics" },
   ];
@@ -365,6 +386,16 @@ export function V2EventDetailPanel({
               eventName={selected.name}
               initialSignals={selected.linkedTags}
               returnTo={returnTo}
+            />
+          ) : null}
+
+          {panelTab === "runbooks" ? (
+            <V2EntityRunbooksTab
+              level="event"
+              entityId={selected.id}
+              linkedRunbooks={linkedRunbooks}
+              libraryRunbooks={libraryRunbooks}
+              progressRecords={progressRecords}
             />
           ) : null}
 

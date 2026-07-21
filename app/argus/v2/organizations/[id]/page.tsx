@@ -3,6 +3,7 @@ import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
+import { progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 import { entityHasPrivateEvidence } from "@/lib/argus/entity-private-evidence";
 import { loadOrganizationPageData } from "@/lib/argus/v2/loaders";
 import { buildV2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
@@ -74,6 +75,8 @@ export default async function V2OrganizationPage({
   const privateLocked = hasPrivateEvidence && !includePrivate;
   const returnTo = `/argus/v2/organizations/${entity.id}`;
   const linkedTopics = page.tagPatterns.map((pattern) => pattern.tag);
+  const orgRunbooks = runbooksForEntity(data.runbooks ?? [], entity.id);
+  const progressRecords = progressForEntity(data.runbookProgress, entity.id);
 
   return (
     <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
@@ -196,6 +199,8 @@ export default async function V2OrganizationPage({
             chartEndYear={page.chartEndYear}
             relationshipMetrics={page.relationshipMetrics}
             linkedTopics={linkedTopics}
+            runbooks={orgRunbooks}
+            progressRecords={progressRecords}
           />
         </div>
       </div>

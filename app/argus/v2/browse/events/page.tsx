@@ -55,6 +55,8 @@ export default async function V2BrowseEventsPage({
         initialSelectedId={selected}
         initialTab={tab}
         neighborhood={neighborhood}
+        allRunbooks={data.runbooks ?? []}
+        allProgress={data.runbookProgress ?? []}
         privateConfigured={argusPrivateConfigured()}
         privateUnlocked={includePrivate}
         deleteUnlocked={deleteUnlocked}
