@@ -124,7 +124,9 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | Piece | Status |
 |-------|--------|
 | Control → Update | Primary write path |
-| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 13** |
+| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 14** |
+| **MTAE** | `technical-assessment` / `technical-calibration` Apply → `data/mtae-*.json` + Stock File patch |
+| TF role presets | `data/mtae-timeframe-maps.json` (swing-6m, swing-3m, day-active) |
 | `lib/ai-context.ts` | Unified export builders |
 | Entry Solver vs Entry Optimization | Feasibility ceiling (`maximumEntry`) ≠ recommended entry |
 | Scout trade boot package | `lib/trade-boot.ts` + Scout execute panel |
@@ -133,9 +135,11 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 
 ### Apply-ready AI Block types
 
-Scouting: `stock-case-create`, `stock-case-delete`, `evidence-add`, `file-update`, `scout-assessment`, `decision-update`  
+Scouting: `stock-case-create`, `stock-case-delete`, `evidence-add`, `file-update`, `technical-assessment`, `technical-calibration`, `scout-assessment`, `decision-update`  
 Execution: `trade-proposal`, `trade-update`, `trade-close`, `trade-review`, `analysis`  
 Method: `playbook-create`, `playbook-update`
+
+**Boundary:** MTAE = technical only. Scout = capital. See [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md).
 
 ---
 
