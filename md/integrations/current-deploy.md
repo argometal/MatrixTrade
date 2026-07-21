@@ -5,7 +5,7 @@
 | Field | Value |
 |--------|--------|
 | **Tag** | `main0721d` |
-| **Commit** | `e89076b` (includes deploy pointer doc; same tree as merge PR #15 at `b962516` + docs) |
+| **Commit** | `77b866c` — run `git rev-parse main0721d` after fetch |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-07-21 |
 
