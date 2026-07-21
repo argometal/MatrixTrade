@@ -46,6 +46,9 @@ create table if not exists public.trades (
   updated_at timestamptz not null default now()
 );
 
+-- After create: also run trade-learning-extensions.sql
+-- (loss_classification + post_stop_study) or Control Accept will hit schema-cache errors.
+
 create index if not exists trades_status_idx on public.trades (status);
 create index if not exists trades_playbook_id_idx on public.trades (playbook_id);
 create index if not exists trades_reviewed_at_idx on public.trades (reviewed_at);
