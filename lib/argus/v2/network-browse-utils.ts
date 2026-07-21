@@ -2,8 +2,8 @@ import type { ArgusData, Entity, InboxItem, Log } from "../types";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import { buildEntityIntelligence } from "../network-intelligence";
 import { entitiesByKind, personEvidenceScope } from "./hierarchy";
-import { collectRelatedEntityIds, countLinkKinds } from "./entity-link-counts";
 import { relativeActivityLabel } from "./timeline-builders";
+import { countTopicsAndEventsInScope } from "./scope-node-counts";
 
 export type V2NetworkBrowseStatus = "New" | "Active" | "Dormant" | "Lost";
 
@@ -246,7 +246,8 @@ export function buildV2NetworkBrowseCards(
       const scope = personEvidenceScope(data, inboxItems, person, includePrivate);
       const intel = buildEntityIntelligence(data, person, includePrivate, today);
       const sharedProjects = projectsWithPerson(data, person.id);
-      const events = eventCountForPerson(scope.logs);
+      const journalEvents = eventCountForPerson(scope.logs);
+      const nodeCounts = countTopicsAndEventsInScope(data, person, scope.logs);
       const org = personOrganization(data, person);
       const daysSinceLast = intel.daysSinceLastInteraction;
       const status = deriveNetworkStatus(
@@ -258,8 +259,6 @@ export function buildV2NetworkBrowseCards(
       );
       const sinceIso = relationshipStartIso(person, scope.logs, scope.inbox);
       const lastInteraction = resolveLastInteraction(person, scope.logs, scope.inbox, today);
-
-      const linkCounts = countLinkKinds(data, collectRelatedEntityIds(person, scope.logs));
 
       return {
         id: person.id,
@@ -276,7 +275,7 @@ export function buildV2NetworkBrowseCards(
           scope.emailCount,
           scope.logCount,
           sharedProjects.length,
-          events,
+          journalEvents,
           daysSinceLast
         ),
         lastInteraction,
@@ -284,8 +283,8 @@ export function buildV2NetworkBrowseCards(
         relationshipSinceIso: sinceIso,
         metrics: {
           emails: scope.emailCount,
-          topics: linkCounts.topicCount,
-          events,
+          topics: nodeCounts.topicCount,
+          events: nodeCounts.eventCount,
           projects: sharedProjects.length,
         },
       };

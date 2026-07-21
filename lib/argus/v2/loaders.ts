@@ -18,6 +18,7 @@ import type { ProjectScopeOptions } from "../project-evidence-scope";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
 import { collectProjectLinkIds, collectRelatedEntityIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
+import { countTopicsAndEventsInScope } from "./scope-node-counts";
 import { findTopicEntityIdForTag, intelligenceTagHref } from "./intelligence-nav";
 
 import {
@@ -473,8 +474,7 @@ export function loadOrganizationPageData(
   }));
 
   const tagPatterns = buildTagPatternsForScope(scope.logs, scope.inbox, today);
-  const relatedIds = collectRelatedEntityIds(org, scope.logs);
-  const linkCounts = countLinkKinds(data, relatedIds);
+  const nodeCounts = countTopicsAndEventsInScope(data, org, scope.logs);
 
   return {
     scope,
@@ -495,8 +495,8 @@ export function loadOrganizationPageData(
       emailsDelta: emailsThisMonth > 0 ? `+${emailsThisMonth} this month` : "No change",
       people: linkedPeople.length,
       projects: orgProjects.length,
-      topics: linkCounts.topicCount,
-      events: linkCounts.eventCount,
+      topics: nodeCounts.topicCount,
+      events: nodeCounts.eventCount,
       firstContact: firstContact ? formatDisplayDate(firstContact) : "—",
       lastActivity: relativeActivityLabel(
         scope.logs[0]?.date || scope.inbox[0]?.receivedAt || org.updatedAt,
@@ -579,6 +579,7 @@ export function loadProjectPageData(
 
   const linkIds = collectProjectLinkIds(project);
   const linkCounts = countLinkKinds(data, linkIds);
+  const nodeCounts = countTopicsAndEventsInScope(data, project, allLogs);
 
   const linkedPeople = linkIds
     .map((id) => data.entities.find((e) => e.id === id && e.type === "person"))
@@ -606,15 +607,15 @@ export function loadProjectPageData(
     .map((id) => data.entities.find((e) => e.id === id && e.type === "company"))
     .find(Boolean);
 
-  const topicNames = linkedTopicNames(data, linkIds, project.linkedTags ?? []);
+  const topicNames = linkedTopicNames(data, nodeCounts.topicIds, []);
 
-  const linkedEventsCount = linkCounts.eventCount;
+  const linkedEventsCount = nodeCounts.eventCount;
   const status = projectStatus(project, today);
   const dateRangeLabel = formatProjectDateRange(project);
 
   const tagPatterns = buildTagPatternsForScope(allLogs, allInbox, today);
 
-  const topicCount = linkCounts.topicCount + (project.linkedTags ?? []).filter(Boolean).length;
+  const topicCount = nodeCounts.topicCount;
 
   return {
     scope,

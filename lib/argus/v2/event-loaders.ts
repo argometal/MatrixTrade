@@ -12,6 +12,7 @@ import {
   countLinkKinds,
   linkedTopicNames,
 } from "./entity-link-counts";
+import { countTopicsAndEventsInScope } from "./scope-node-counts";
 import { buildTagPatternsForScope } from "./tag-patterns";
 import type {
   V2EventDetail,
@@ -198,6 +199,7 @@ export function buildV2EventDetails(
     const topicTags = [...new Set(history.flatMap((l) => l.topics).filter(Boolean))].slice(0, 6);
     const relatedIds = collectRelatedEntityIds(event, history);
     const linkCounts = countLinkKinds(data, relatedIds);
+    const nodeCounts = countTopicsAndEventsInScope(data, event, history);
     const linkedTopicNamesList = linkedTopicNames(data, relatedIds, topicTags);
 
     const linkedEntries = history.slice(0, 5).map((log) => ({
@@ -243,7 +245,7 @@ export function buildV2EventDetails(
       orgCount: linkCounts.orgCount,
       projectCount: linkCounts.projectCount,
       peopleCount: linkCounts.peopleCount,
-      topicCount: linkCounts.topicCount,
+      topicCount: nodeCounts.topicCount,
       linkedEntityIds: event.linkedEntityIds ?? [],
       linkedEntries,
       relatedEmails,

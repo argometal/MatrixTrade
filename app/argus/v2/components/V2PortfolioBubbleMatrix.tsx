@@ -35,6 +35,7 @@ export function V2PortfolioBubbleMatrix({
   }
 
   const maxEvidence = Math.max(...portfolio.map((n) => n.evidenceCount), 1);
+  const maxPatterns = Math.max(...portfolio.map((n) => n.tagPatternCount), 1);
   const plotLeft = 8;
   const plotRight = 92;
   const plotTop = 8;
@@ -108,13 +109,21 @@ export function V2PortfolioBubbleMatrix({
           const cx = plotLeft + node.recurrenceScore * plotWidth;
           const cy = plotBottom - node.recencyScore * plotHeight;
           const r = 2 + Math.sqrt(node.evidenceCount / maxEvidence) * 5;
+          const patternIntensity = node.tagPatternCount / maxPatterns;
+          const hasPatterns = node.tagPatternCount > 0;
+          const stroke = hasPatterns
+            ? `rgba(245, 158, 11, ${0.4 + patternIntensity * 0.55})`
+            : KIND_COLORS[node.kind];
+          const strokeWidth = hasPatterns ? 0.45 + patternIntensity * 0.55 : 0.4;
           return (
             <g
               key={node.id}
               className="cursor-pointer"
               role="button"
               tabIndex={0}
-              aria-label={`${node.name}, ${node.evidenceCount} evidence`}
+              aria-label={`${node.name}, ${node.evidenceCount} evidence${
+                hasPatterns ? `, ${node.tagPatternCount} tag patterns` : ""
+              }`}
               onClick={(event) => handleActivate(node, event.metaKey)}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
@@ -129,13 +138,14 @@ export function V2PortfolioBubbleMatrix({
                 r={r}
                 fill={KIND_COLORS[node.kind]}
                 fillOpacity={0.55}
-                stroke={KIND_COLORS[node.kind]}
-                strokeWidth={0.4}
+                stroke={stroke}
+                strokeWidth={strokeWidth}
                 className="transition hover:fill-opacity-90"
               />
               <title>
                 {node.name} — {node.recurrence30d} evidence in 30d, recency{" "}
                 {Math.round(node.recencyScore * 100)}%, {node.evidenceCount} total evidence
+                {hasPatterns ? `, ${node.tagPatternCount} tag patterns` : ""}
               </title>
               {r >= 3.5 ? (
                 <text
@@ -159,6 +169,7 @@ export function V2PortfolioBubbleMatrix({
         <span>Y = recency</span>
         <span>X = recurrence (30d)</span>
         <span>Size = evidence</span>
+        <span>Amber ring = tag-pattern intensity</span>
       </div>
     </div>
   );

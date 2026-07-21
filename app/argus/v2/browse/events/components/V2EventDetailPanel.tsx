@@ -14,6 +14,8 @@ import { V2PrivateEvidenceGate } from "@/app/argus/v2/components/V2PrivateEviden
 import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
 import { V2TagPatternBadges } from "@/app/argus/v2/components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
+import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
+import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 
 type PanelTab = "note" | "chronicle" | "metrics";
 type ChronicleFilter = "all" | "photo" | "file" | "email" | "journal";
@@ -52,6 +54,7 @@ export function V2EventDetailPanel({
   selected,
   inboxOptions,
   returnTo,
+  neighborhood,
   privateConfigured = false,
   privateUnlocked = false,
   ...deleteGate
@@ -59,11 +62,13 @@ export function V2EventDetailPanel({
   selected: V2EventDetail;
   inboxOptions: V2EventInboxOption[];
   returnTo: string;
+  neighborhood?: V2EntityNeighborhoodGraph | null;
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
 } & V2DeleteGateProps) {
   const router = useRouter();
   const [panelTab, setPanelTab] = useState<PanelTab>("note");
+  const [showGraph, setShowGraph] = useState(true);
   const [tags, setTags] = useState<string[]>(selected.linkedTags);
   const [tagDraft, setTagDraft] = useState("");
   const [composer, setComposer] = useState("");
@@ -432,6 +437,26 @@ export function V2EventDetailPanel({
                   </div>
                 </dl>
               </div>
+
+              {neighborhood ? (
+                <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-xs text-zinc-500">
+                      Local graph — 1–2 hops from co-mentions and explicit links.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowGraph((v) => !v)}
+                      className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-400 hover:text-zinc-200"
+                    >
+                      {showGraph ? "Hide graph" : "Show graph"}
+                    </button>
+                  </div>
+                  {showGraph ? (
+                    <V2EntityNeighborhoodPanel graph={neighborhood} entityName={selected.name} />
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </V2PrivateEvidenceGate>

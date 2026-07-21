@@ -18,6 +18,7 @@ import { parseIntelligenceFocus, intelligenceBrowseAllHref } from "@/lib/argus/v
 import { V2IntelligenceFocusBanner } from "@/app/argus/v2/components/V2IntelligenceFocusBanner";
 import { resolveV2SelectedId, v2ActiveListItemClass } from "@/lib/argus/v2/selection";
 import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
+import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { V2EventDetailPanel } from "./V2EventDetailPanel";
 
 const TABS: { id: V2EventTab; label: string }[] = [
@@ -32,6 +33,7 @@ export function V2EventsShell({
   inboxOptionsByEvent,
   initialSelectedId,
   initialTab,
+  neighborhood,
   privateConfigured = false,
   privateUnlocked = false,
   deleteUnlocked = false,
@@ -48,6 +50,7 @@ export function V2EventsShell({
   inboxOptionsByEvent: Record<string, V2EventInboxOption[]>;
   initialSelectedId?: string;
   initialTab?: string;
+  neighborhood?: V2EntityNeighborhoodGraph | null;
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
 } & Omit<V2DeleteGateProps, "requiresAuthenticator">) {
@@ -95,6 +98,7 @@ export function V2EventsShell({
             selected={selected}
             inboxOptions={inboxOptionsByEvent[selected.id] ?? []}
             returnTo={returnTo}
+            neighborhood={neighborhood}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
             requiresAuthenticator={selected.deleteRequiresAuthenticator}
@@ -216,6 +220,7 @@ export function V2EventsShell({
             selected={selected}
             inboxOptions={inboxOptionsByEvent[selected.id] ?? []}
             returnTo={returnTo}
+            neighborhood={neighborhood}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
             requiresAuthenticator={selected.deleteRequiresAuthenticator}

@@ -6,6 +6,7 @@ import { entitiesByKind } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
 import { collectProjectLinkIds, countLinkKinds } from "./entity-link-counts";
 import { projectHasPrivateEvidence } from "./project-private";
+import { countTopicsAndEventsInScope } from "./scope-node-counts";
 
 export type V2ProjectBrowseStatus = "Planning" | "Active" | "On Hold" | "Completed" | "Archived";
 
@@ -177,6 +178,7 @@ export function buildV2ProjectBrowseCards(
       const status = deriveProjectBrowseStatus(project, today, lastActivity.sortIso);
       const linkIds = collectProjectLinkIds(project);
       const linkCounts = countLinkKinds(data, linkIds);
+      const nodeCounts = countTopicsAndEventsInScope(data, project, allLogs);
       const linkedPeople = linkIds
         .map((id) => data.entities.find((e) => e.id === id && e.type === "person"))
         .filter((e): e is Entity => Boolean(e));
@@ -197,8 +199,8 @@ export function buildV2ProjectBrowseCards(
         metrics: {
           people: linkCounts.peopleCount,
           emails: allInbox.length,
-          topics: linkCounts.topicCount + (project.linkedTags ?? []).filter(Boolean).length,
-          events: linkCounts.eventCount,
+          topics: nodeCounts.topicCount,
+          events: nodeCounts.eventCount,
         },
         lastActivity,
         progressPercent: durationProgress(project, today),
