@@ -1,5 +1,5 @@
 import { TAG_PATTERN_FRESHNESS_DAYS } from "../tag-limits";
-import { evidenceTagsMatchFilter, textMatchesBrowseQuery } from "./browse-filter-utils";
+import { textMatchesBrowseQuery, topicBrowseTagMatch } from "./browse-filter-utils";
 import type { V2EvidenceStreamItem } from "./evidence-stream";
 import type { EntityLifecycleStatus } from "../types";
 import type { V2TimelineEntry } from "./mock-data";
@@ -122,7 +122,7 @@ export function filterV2TopicRows(
   }
   if (filters.tag) {
     result = result.filter((row) =>
-      evidenceTagsMatchFilter(row.evidenceTags, row.aliases, row.name, filters.tag!)
+      topicBrowseTagMatch(row.evidenceTags, row.name, filters.tag!)
     );
   }
   if (filters.org) {

@@ -254,10 +254,7 @@ export function inboxEntityKindLabel(kind: V2InboxEntityKind): string {
   return ENTITY_KIND_LABELS[kind];
 }
 
-export function buildV2InboxFilterOptions(
-  rows: V2InboxRow[],
-  topicContext?: InboxTopicContext
-): V2InboxFilterOptions {
+export function buildV2InboxFilterOptions(rows: V2InboxRow[]): V2InboxFilterOptions {
   const sources = [...new Set(rows.map((row) => row.source))].sort();
   const senderMap = new Map<string, string>();
   for (const row of rows) senderMap.set(row.senderKey, row.sender);
@@ -275,9 +272,6 @@ export function buildV2InboxFilterOptions(
   const tags = [
     ...new Set([
       ...rows.flatMap((row) => [...row.topicTags, ...row.tags.map((tag) => tag.name)]),
-      ...rows.flatMap((row) => row.linkedTopicAliases),
-      ...rows.flatMap((row) => row.contextTopicMatches),
-      ...(topicContext?.topicEntries.flatMap((entry) => entry.aliases) ?? []),
     ]),
   ].sort((a, b) => a.localeCompare(b));
 

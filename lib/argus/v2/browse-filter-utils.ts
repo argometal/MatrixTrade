@@ -17,21 +17,29 @@ export function textMatchesBrowseQuery(
   return false;
 }
 
-/** Match evidence tags, topic aliases, or topic name — same rules as inbox tag filter. */
+/** Topics browse: tag chips come from evidence only — Aliases do not inflate tag filters. */
+export function topicBrowseTagMatch(evidenceTags: string[], name: string, tag: string): boolean {
+  const normalized = tag.trim().toLowerCase();
+  const normCompact = normalizeSignalToken(normalized);
+  if (evidenceTags.some((value) => value.toLowerCase() === normalized)) return true;
+  if (normalizeSignalToken(name) === normCompact) return true;
+  if (evidenceTags.some((value) => normalizeSignalToken(value) === normCompact)) return true;
+  return false;
+}
+
+/** Inbox row filter — may match Aliases / context for finding linked mail. */
 export function evidenceTagsMatchFilter(
   evidenceTags: string[],
   aliases: string[],
   name: string,
   tag: string
 ): boolean {
+  if (topicBrowseTagMatch(evidenceTags, name, tag)) return true;
   const normalized = tag.trim().toLowerCase();
   const normCompact = normalizeSignalToken(normalized);
-  if (evidenceTags.some((value) => value.toLowerCase() === normalized)) return true;
   if (aliases.some((value) => value.toLowerCase() === normalized)) return true;
-  if (normalizeSignalToken(name) === normCompact) return true;
   if (
-    aliases.some((value) => normalizeSignalToken(value) === normCompact) ||
-    evidenceTags.some((value) => normalizeSignalToken(value) === normCompact)
+    aliases.some((value) => normalizeSignalToken(value) === normCompact)
   ) {
     return true;
   }

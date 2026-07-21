@@ -171,8 +171,8 @@ export function V2InboxShell({
   const counts = useMemo(() => buildV2InboxTabCounts(rows), [rows]);
   const tabRows = useMemo(() => filterV2InboxRows(rows, tab), [rows, tab]);
   const filterOptions = useMemo(
-    () => buildV2InboxFilterOptions(tabRows, topicContext),
-    [tabRows, topicContext]
+    () => buildV2InboxFilterOptions(tabRows),
+    [tabRows]
   );
   const filtered = useMemo(() => filterV2InboxRows(rows, tab, filters), [rows, tab, filters]);
   const selectedDetail = selectedId ? details.find((d) => d.item.id === selectedId) : undefined;
