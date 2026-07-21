@@ -1,7 +1,7 @@
 # Control panel IA
 
 **Status:** Canonical (2026-07-21).  
-**Parent:** [snapshot-catalog.md](snapshot-catalog.md) · [external-ai-policy.md](external-ai-policy.md)
+**Parent:** [snapshot-catalog.md](snapshot-catalog.md) · [external-ai-policy.md](external-ai-policy.md) · [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md)
 
 ---
 
@@ -13,13 +13,26 @@
 |-------|-----|
 | **Update** | Paste AI Block → Validate → Accept |
 | **Mechanics brief** | Copy Matrix rules once for a new AI chat |
+| **Technical analysis** | MTAE protocol + TF role maps — charts → `technical-assessment` (no capital) |
 | **Playbook** | Copy method rules / checklists / stats |
-| **Stock file** | Pick one ticker → copy thesis + linked scouts |
+| **Stock file** | Pick one ticker → MTAE request for ticker + thesis/scouts |
 | **Scout desk** | Copy desk overview + risk room (not a second Mechanics button) |
 
-That is the full home menu. Nothing else.
-
 Window packages (Scout desk overview, Stock file, etc.) already **prefix** the Mechanics brief in the copied text. Do not add a second “Matrix Mechanics snapshot” row under Scout desk — that duplicates Control → Mechanics brief.
+
+**MTAE is not Playbook and not Mechanics.** See [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md).
+
+---
+
+## Process order (copy)
+
+```text
+1. Mechanics brief          (once per chat)
+2. Technical analysis       (MTAE protocol + optional TF map)
+3. Charts → AI → technical-assessment
+4. Update → Accept          (patches Stock file)
+5. Stock file / Scout desk  (capital / execution next)
+```
 
 ---
 
@@ -30,6 +43,7 @@ Labels must **name the payload** the human copies or the action they take.
 | Allowed | Forbidden (examples of past mistakes) |
 |---------|----------------------------------------|
 | Mechanics brief | Session, Train session, AI session |
+| Technical analysis | Analysis (too vague), Chart AI, MTAE alone without “Technical” |
 | Playbook | Method (ambiguous), Policies (vague) |
 | Stock file | Case (ambiguous vs legal/support case) |
 | Scout desk | Scouting (ok only if desk is clear) |
@@ -37,7 +51,7 @@ Labels must **name the payload** the human copies or the action they take.
 
 **Do not rename for “simplicity”** if the new word is vaguer than the old one.
 
-Folding Playbook under Mechanics brief is also forbidden — Playbook is its own Control section and its own nav route (`/playbook`).
+Folding Playbook or MTAE under Mechanics brief is forbidden — each is its own Control section.
 
 ---
 
@@ -63,7 +77,7 @@ Rationale: Trades is the histórico; Scout is the war room; Control is context +
 Before merging Control UI or mechanics copy changes:
 
 1. Section labels still match the table above (descriptive).
-2. No new peer under Control that belongs to Trades, Scout, or History.
+2. No new peer under Control that belongs to Trades, Scout, or History (MTAE / Technical analysis is allowed).
 3. Forensic still only on trade detail.
 4. `md/matrix/snapshot-catalog.md` updated if snapshot homes change.
 5. Bump `MATRIX_MECHANICS_REVISION` when brief/snapshot text changes.
@@ -77,6 +91,7 @@ Before merging Control UI or mechanics copy changes:
 | Control UI | `app/components/control-panel/MatrixControlPanel.tsx` |
 | Section ids | `lib/control-panel-types.ts` |
 | Loader | `lib/load-control-panel-data.ts` |
+| MTAE protocol copy | `lib/mtae-brief.ts`, `lib/mtae-snapshot.ts` |
 | Forensic item | `lib/snapshot-trade-packages.ts` → `tradeForensicSnapshotItem` |
 | Trade page | `app/(trading)/(nav)/trades/[id]/page.tsx` |
 
@@ -84,6 +99,7 @@ Before merging Control UI or mechanics copy changes:
 
 ## Related
 
+- [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md)
 - [snapshot-catalog.md](snapshot-catalog.md)
 - [external-ai-policy.md](external-ai-policy.md)
 - [scout-execution-model.md](scout-execution-model.md)

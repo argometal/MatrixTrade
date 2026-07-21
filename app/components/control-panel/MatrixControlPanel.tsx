@@ -24,6 +24,11 @@ const SECTIONS: {
     hint: "Matrix rules — copy once for a new AI chat",
   },
   {
+    id: "mtae",
+    label: "Technical analysis",
+    hint: "MTAE protocol — charts → technical-assessment (no capital)",
+  },
+  {
     id: "playbook",
     label: "Playbook",
     hint: "Method rules, checklists, and stats",
@@ -155,6 +160,8 @@ export function MatrixControlPanel() {
       case "train-ai":
         // Mechanics brief is PlainCopyRow only — Playbook is its own section.
         return [];
+      case "mtae":
+        return data.mtae.snapshotItems.filter((item) => item.id !== "mtae-protocol");
       case "playbook":
         return data.playbook.snapshotItems;
       case "stock-file":
@@ -232,7 +239,7 @@ export function MatrixControlPanel() {
           <h2 className="text-base font-bold text-zinc-50">{detailTitle}</h2>
           <p className="mt-1 text-[11px] text-zinc-500">
             {step === "pick"
-              ? "Update writes. Mechanics / Playbook / Stock file / Scout desk = copy context. Forensic lives on the trade."
+              ? "Update writes. Mechanics / Technical analysis / Playbook / Stock file / Scout desk = copy context."
               : detailHint}
           </p>
         </header>
@@ -327,6 +334,13 @@ export function MatrixControlPanel() {
                 label="Matrix Mechanics brief"
                 description="Stable primer — paste once at the start of the AI chat"
                 text={data.trainAi.mechanicsBrief}
+              />
+            ) : null}
+            {section === "mtae" ? (
+              <PlainCopyRow
+                label="1 · MTAE protocol (copy first)"
+                description="Technical procedure — not Mechanics, not Playbook, not Scout"
+                text={data.mtae.protocolBrief}
               />
             ) : null}
             {detailSnapshots.map((item) => (

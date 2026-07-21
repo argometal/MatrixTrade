@@ -3,6 +3,9 @@ import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 import { getMarketEvidence } from "./market-evidence";
 import type { MarketEvidence } from "./market-evidence-types";
 import type { ControlPanelData } from "./control-panel-types";
+import { buildMtaeProtocolBrief } from "./mtae-brief";
+import { mtaeControlSnapshotItems, mtaeTickerRequestItem } from "./mtae-snapshot";
+import { getMtaeTimeframeMaps } from "./mtae-store";
 import { getPlans } from "./plans";
 import { getPlaybooks } from "./playbooks";
 import {
@@ -17,6 +20,7 @@ import { isActiveStockThesisStatus } from "./stock-thesis-types";
 import { listAllPendingInboxItems } from "./trading-inbox-storage";
 import type { TradePlan } from "./plan-types";
 import type { StockThesis } from "./stock-thesis-types";
+import type { MtaeTimeframeMapPreset } from "./mtae-types";
 import { fetchBridgeInbox } from "./bridge";
 
 function groupActiveEvidence(rows: MarketEvidence[]): Map<string, MarketEvidence[]> {
@@ -40,16 +44,24 @@ function buildThesisEntries(
   theses: StockThesis[],
   playbooks: Awaited<ReturnType<typeof getPlaybooks>>,
   plans: TradePlan[],
-  evidenceByProfile: Map<string, MarketEvidence[]>
+  evidenceByProfile: Map<string, MarketEvidence[]>,
+  mtaePresets: MtaeTimeframeMapPreset[]
 ): ControlPanelData["stockFile"]["theses"] {
   return theses.map((thesis) => ({
     thesis,
-    snapshotItems: stockProfileSnapshotItems({
-      thesis,
-      playbooks,
-      plans,
-      activeEvidence: evidenceByProfile.get(thesis.id.toUpperCase()) ?? [],
-    }),
+    snapshotItems: [
+      mtaeTickerRequestItem({
+        stockProfileId: thesis.id,
+        ticker: thesis.ticker,
+        presets: mtaePresets,
+      }),
+      ...stockProfileSnapshotItems({
+        thesis,
+        playbooks,
+        plans,
+        activeEvidence: evidenceByProfile.get(thesis.id.toUpperCase()) ?? [],
+      }),
+    ],
   }));
 }
 
@@ -63,6 +75,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     stockTheses,
     marketEvidence,
     workerInbox,
+    mtaePresets,
   ] = await Promise.all([
     getExperiment(),
     getMonthlyRisk(),
@@ -72,6 +85,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     getStockTheses(),
     getMarketEvidence(),
     fetchBridgeInbox(),
+    getMtaeTimeframeMaps(),
   ]);
 
   const pendingInbox = await listAllPendingInboxItems(workerInbox);
@@ -81,6 +95,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
 
   const mechanicsSnapshot = mechanicsSnapshotItem();
   const playbookSnapshots = playbookSnapshotItems(playbooks, trades);
+  const mtaeSnapshots = mtaeControlSnapshotItems(mtaePresets);
 
   const scoutingSnapshots = scoutDeskSnapshotItems({
     playbooks,
@@ -91,8 +106,6 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     marketEvidence,
   }).filter((item) => item.id === "scout-desk");
 
-  // Forensic closed-trade export is NOT loaded here — only on `/trades/[id]`.
-  // Mechanics is Control → Mechanics brief only — not duplicated under Scout desk.
   return {
     playbooks,
     activeThesisCount: activeTheses.length,
@@ -102,11 +115,15 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
       mechanicsBrief: buildMatrixMechanicsBrief(),
       snapshotItems: [mechanicsSnapshot],
     },
+    mtae: {
+      protocolBrief: buildMtaeProtocolBrief(mtaePresets),
+      snapshotItems: mtaeSnapshots,
+    },
     playbook: {
       snapshotItems: playbookSnapshots,
     },
     stockFile: {
-      theses: buildThesisEntries(activeTheses, playbooks, plans, evidenceByProfile),
+      theses: buildThesisEntries(activeTheses, playbooks, plans, evidenceByProfile, mtaePresets),
     },
     scouting: {
       snapshotItems: scoutingSnapshots,
