@@ -20,6 +20,6 @@ export async function GET(): Promise<NextResponse> {
       monthlyLossRoom: monthly.monthlyLossRoom,
     }),
     allowedProposalTypes: ["trade-proposal"],
-    hint: "Paste AI output in /trades-preview or Apply via /inbox.",
+    hint: "Paste AI output in Control → Update, or Scout war room boot package.",
   });
 }

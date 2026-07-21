@@ -19,11 +19,7 @@ export function countPlansNeedingReview(plans: TradePlan[]): number {
 
 export function buildPlanEnterHref(plan: TradePlan): string {
   const params = new URLSearchParams();
-  params.set("ticker", plan.ticker);
-  if (plan.playbookId) params.set("playbook", plan.playbookId);
-  if (plan.plannedEntry !== undefined) params.set("entry", String(plan.plannedEntry));
-  if (plan.stopPrice !== undefined) params.set("stop", String(plan.stopPrice));
-  if (plan.targetPrice !== undefined) params.set("target", String(plan.targetPrice));
   params.set("plan", plan.id);
-  return `/trades-preview?${params.toString()}`;
+  if (plan.stockThesisId) params.set("thesis", plan.stockThesisId);
+  return `/planning?${params.toString()}`;
 }

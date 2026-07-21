@@ -16,7 +16,7 @@ EXECUTION LAYER — only after Scouting Desk approves (go / probe converted):
 Rules:
 - Respect monthly loss room and Stock File invalidation from context.
 - Do not invent a trade without scout approval when a PLAN is linked.
-- Return exactly one block. Human Apply in MatrixTrade /inbox — never auto-apply.
+- Return exactly one block. Paste in MatrixTrade Control → Update → Accept — never auto-apply.
 - If context is insufficient, ask ONE clarifying question.`;
 
 export interface TradeBootContext {
@@ -59,7 +59,7 @@ function formatProspectsRoster(prospects: TradeProspect[]): string {
     lines.push(`- ${formatTradeProspectLabel(p)}`);
   }
   lines.push("");
-  lines.push("User may switch prospect in MatrixTrade before pasting trade-proposal.");
+  lines.push("Paste trade-proposal in Control → Update (Scout war room has boot package).");
   return lines.join("\n");
 }
 

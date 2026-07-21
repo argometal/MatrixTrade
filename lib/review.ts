@@ -189,7 +189,7 @@ export function getNextAction(
   }
 
   if (!monthly.monthlyCapBreached && monthly.monthlyLossRoom > 0) {
-    return { label: "Log next trade", href: "/trades-preview", kind: "new" };
+    return { label: "Open Scout war room", href: "/planning", kind: "new" };
   }
 
   return null;

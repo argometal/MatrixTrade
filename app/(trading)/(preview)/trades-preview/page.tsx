@@ -1,26 +1,23 @@
-import { importAiBlockAction } from "@/app/actions";
-import { TradesWorkspace } from "@/app/components/trades-preview/TradesWorkspace";
-import { loadTradesWorkspaceData } from "@/lib/trades-workspace";
+import { redirect } from "next/navigation";
 
-export default async function TradesPreviewPage({
+/**
+ * Enter Trade deprecated — execution lives in Scout war room + Control → Update.
+ * Preserve query (plan / ticker / thesis) onto /planning.
+ */
+export default async function TradesPreviewRedirectPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const [data, sp] = await Promise.all([loadTradesWorkspaceData(), searchParams]);
-  const prefill = {
-    ticker: typeof sp.ticker === "string" ? sp.ticker : undefined,
-    playbookId: typeof sp.playbook === "string" ? sp.playbook : undefined,
-    entry: typeof sp.entry === "string" ? sp.entry : undefined,
-    stop: typeof sp.stop === "string" ? sp.stop : undefined,
-    target: typeof sp.target === "string" ? sp.target : undefined,
-    planId: typeof sp.plan === "string" ? sp.plan : undefined,
-  };
-  return (
-    <TradesWorkspace
-      data={data}
-      importAction={importAiBlockAction}
-      prefill={prefill}
-    />
-  );
+  const sp = await searchParams;
+  const params = new URLSearchParams();
+  const plan = typeof sp.plan === "string" ? sp.plan : undefined;
+  const ticker = typeof sp.ticker === "string" ? sp.ticker : undefined;
+  const thesis = typeof sp.thesis === "string" ? sp.thesis : undefined;
+  if (plan) params.set("plan", plan);
+  if (thesis) params.set("thesis", thesis);
+  // ticker alone: planning focuses via plan; keep as hint unused for now
+  void ticker;
+  const qs = params.toString();
+  redirect(qs ? `/planning?${qs}` : "/planning");
 }
