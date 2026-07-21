@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 15;
+export const MATRIX_MECHANICS_REVISION = 16;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -57,16 +57,19 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- Evaluating trades independently without considering scarce monthly risk capacity",
     "- Using extended targets to make a mediocre opportunity appear attractive",
     "- Treating a missed trade as a negative outcome",
-    "- Recreating a Stock File merely because initialScout was omitted",
+    "- Recreate a Stock File because initialScout was omitted — use file-update.initialScout backfill instead.",
+    "- stock-case-create for a ticker that already has a Stock File just to open a new trade or plan",
+    "- Reuse a closed trade id (H00x) or pretend a finished PLAN is a blank new window",
+    "- Tell the human to delete prior trades/plans/Stock File so a new same-ticker idea can be saved",
     "- Using trade-update before a Scout Plan and Trade exist",
     "- Creating duplicate Scout Plans during a repair",
     "- Rejecting a valid repair when the Stock File exists but the linked Scout Plan is missing",
     "",
     "=== LAYER OWNERSHIP ===",
     "- Playbook (HOW): reusable method, checklist, horizons",
-    "- Stock Profile (WHO): ticker thesis, levels, invalidation, evidence",
-    "- Scout PLAN: tactical window linked to profile + playbook",
-    "- Trade: execution record — mutate via trade-update / trade-close only",
+    "- Stock Profile (WHO): ONE dossier per ticker — update, do not recreate for each trade",
+    "- Scout PLAN: ONE tactical window — new opportunity → new PLAN id linked to same Stock File",
+    "- Trade (H00x): ONE fill — new execution → new trade id; closed trades stay in history",
     "",
     "=== SNAPSHOT MENU ===",
     "Ask the human to copy a named snapshot from Control (Mechanics brief, Technical analysis / MTAE, Playbook, Stock file, Scout desk) or from the Trade window.",

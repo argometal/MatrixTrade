@@ -66,7 +66,10 @@ Canonical rules: [control-panel-ia.md](control-panel-ia.md) · [ui-naming.md](..
 | **Completed** | Closed fill **+** review/analysis done — leaves war room for Trades histórico. |
 | **Closed alone** | Still incomplete for Scout purposes — stays in war room. |
 | **Trades ledger** | Filtrable: éxito / perdido / entrada tardía / jamás ejecutado / sin veredicto. |
-| **Orphans** | Incomplete fills whose ticker has no stock file — still listed in Scout. |
+| Scout Plan (PLAN-xxx) | One tactical WINDOW (this setup / this period). NEW opportunity on same ticker → NEW PLAN id. |
+| Trade (H00x) | One fill. NEW execution → NEW trade id. Closed trades stay in Trades histórico. |
+
+**Same ticker ≠ recreate Stock File.** See Mechanics brief section `SAME TICKER LIFECYCLE` (rev 16+).
 
 Code: `lib/scout-case-trades.ts`, `lib/trades-ledger.ts`, `ScoutExecutePanel`.
 
@@ -125,7 +128,7 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | Piece | Status |
 |-------|--------|
 | Control → Update | Primary write path |
-| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 15** |
+| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 16** (same-ticker ST / PLAN / H00x lifecycle explicit) |
 | **MTAE** | Control → **Technical analysis** + `technical-assessment` / `technical-calibration` Apply → `data/mtae-*.json` + Stock File patch |
 | TF role presets | `data/mtae-timeframe-maps.json` (swing-6m, swing-3m, day-active) |
 | `lib/ai-context.ts` | Unified export builders |
