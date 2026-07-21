@@ -19,6 +19,8 @@
 | 4b2 | [adr-0002-trade-evaluation.md](adr-0002-trade-evaluation.md) | **ADR** — `TradeEvaluation` entity (**implemented**) |
 | 4b3 | [adr-0003-mtae.md](adr-0003-mtae.md) | **ADR** — Matrix Technical Analysis Engine |
 | 4b4 | [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) | **MTAE** — multi-TF technical module (not Scout) |
+| 4b5 | [adr-0004-maf.md](adr-0004-maf.md) | **ADR** — Matrix Attribution Framework |
+| 4b6 | [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md) | **MAF** — component attribution after Trade |
 | 4c | [monday-nflx-experiment.md](monday-nflx-experiment.md) | First live test — ops note, not Stock File |
 | 4d | [external-ai-policy.md](external-ai-policy.md) | **No vendor brands** — external AI + Apply-only mutations |
 | 4e | [thesis-ownership.md](thesis-ownership.md) | Thesis on Stock Profile, not Playbook |
@@ -35,7 +37,7 @@
 
 ## One sentence
 
-> Expectation database + decision-learning architecture — Playbook → Evidence → Stock Profile → Scout/Decision → Execution (layered entry experiments; Probe legacy) → Learning.
+> Expectation database + decision-learning architecture — Playbook → Evidence → Stock Profile → Scout/Decision → Execution → MAF Attribution.
 
 Recording trades is necessary; **not the mission**.
 

@@ -40,6 +40,8 @@ function actionLabel(type: TradingInboxPayload["type"]): string {
       return "Close trade";
     case "trade-review":
       return "Review trade";
+    case "attribution":
+      return "Attribute experiment";
     case "analysis":
       return "Add analysis";
     case "decision-update":
@@ -180,6 +182,24 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
       fields.push({ label: "Ticker", value: String(p.ticker ?? "—").toUpperCase(), tone: "accent" });
       fields.push({ label: "Category", value: String(p.category ?? "—") });
       if (p.confidence !== undefined) fields.push({ label: "Confidence", value: `${p.confidence}%` });
+      break;
+    }
+    case "attribution": {
+      fields.push({
+        label: "Trade",
+        value: String(p.tradeId ?? p.experimentId ?? "—").toUpperCase(),
+        tone: "accent",
+      });
+      if (p.planId) fields.push({ label: "Plan", value: String(p.planId).toUpperCase() });
+      const comps = Array.isArray(p.components) ? p.components.length : 0;
+      fields.push({ label: "Components", value: String(comps) });
+      if (p.primaryDragComponent) {
+        fields.push({
+          label: "Primary drag",
+          value: String(p.primaryDragComponent),
+          tone: "risk",
+        });
+      }
       break;
     }
     default:

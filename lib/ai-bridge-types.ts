@@ -16,6 +16,7 @@ export const AI_BRIDGE_BLOCK_TYPES = [
   "trade-close",
   "trade-review",
   "trade-update",
+  "attribution",
   "playbook-create",
   "playbook-update",
 ] as const satisfies readonly TradingProposalType[];

@@ -30,6 +30,7 @@ Trade layer (use only when scouting approves):
 - trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
 - analysis: notes on existing trade — id required; at least one of thesis, psychology, lessons, notes
 - trade-update: id required; at least one field to change
+- attribution: MAF component attribution — tradeId and/or planId (or experimentId); components[] with component, classification, aiInterpretationConfidence (0-100), reasoning; optional tag, suggestedImprovement, summary, primaryDragComponent, observation{mfe,mae,…}. NEVER invent prices — only supply observation numbers the human stated.
 - playbook-create / playbook-update: playbook CRUD
 
 Rules:
@@ -62,6 +63,7 @@ Human action → internal type (choose automatically — never ask the human to 
   · confirmExternalClose: true only when closing a pending trade already executed at the broker
 - Analyze Trade → analysis (notes: thesis, psychology, lessons, notes)
   · or trade-review when post-close review with qualityEntry/Exit/Mgmt (1-5), mistakes, lesson
+  · or attribution when attributing expectancy to pipeline components (MAF)
 - Adjust existing Scout Plan → decision-update (planId required)
 All Apply-ready block types:
 - stock-case-create: NEW Stock Profile — ticker, thesis, currentHypothesis, levels{}, riskRules{minimumRR, invalidation} required
@@ -79,6 +81,7 @@ All Apply-ready block types:
 - trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
 - analysis: notes on existing trade — id required; at least one of thesis, psychology, lessons, notes
 - trade-update: id required; at least one field to change
+- attribution: MAF — tradeId/planId/experimentId; components[{component, classification, aiInterpretationConfidence, reasoning}]; optional observation{} (never invent prices)
 - playbook-create / playbook-update: playbook CRUD
 
 Rules:
@@ -203,6 +206,11 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
     type: "trade-review",
     label: "trade-review — post-close review",
     hint: "Quality scores 1–5 + optional lesson",
+  },
+  {
+    type: "attribution",
+    label: "attribution — MAF component attribution",
+    hint: "Which pipeline component dragged expectancy — not a journal",
   },
   {
     type: "analysis",
@@ -563,6 +571,50 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       mistakes: ["none"],
       lesson: "Waited for confirmation; exit was early.",
       actionItem: "Hold to target when trend intact.",
+    },
+  },
+  attribution: {
+    type: "attribution",
+    source: "ai-block",
+    proposal: {
+      tradeId: "H001",
+      planId: "PLAN-AMZN-001",
+      primaryDragComponent: "stop_quality",
+      summary:
+        "Thesis later worked in post-stop study; primary drag was stop tightness, not thesis failure.",
+      components: [
+        {
+          component: "thesis_quality",
+          classification: "good",
+          tag: "thesis_later_validated",
+          aiInterpretationConfidence: 78,
+          reasoning: "Post-stop study shows target reached after stop; structural thesis held.",
+          suggestedImprovement: "Keep thesis gate; do not invalidate solely because stop hit.",
+          evidenceRefs: ["targetReachedAfterStop", "thesisOutcome"],
+        },
+        {
+          component: "stop_quality",
+          classification: "weak",
+          tag: "stop_too_tight",
+          aiInterpretationConfidence: 82,
+          reasoning: "Stop hit then price recovered to target — stop likely inside normal noise.",
+          suggestedImprovement: "Widen strategy stop toward structural invalidation when R still qualifies.",
+          evidenceRefs: ["exitReason", "targetReachedAfterStop", "rAchieved"],
+        },
+        {
+          component: "entry_quality",
+          classification: "acceptable",
+          aiInterpretationConfidence: 60,
+          reasoning: "Fill near plan; limited evidence of a materially better entry in observation.",
+          evidenceRefs: ["plannedEntry", "executedEntry", "slippageVsPlan"],
+        },
+      ],
+      observation: {
+        mfe: 14.2,
+        mae: 4.1,
+        mfeMaeUnit: "price",
+        betterEntryAvailable: false,
+      },
     },
   },
   analysis: {

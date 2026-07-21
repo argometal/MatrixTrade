@@ -51,6 +51,7 @@ export const TRADE_FORENSIC_AI_REQUEST = [
   "- analysis — qualitative forensic notes (psychology, lessons, post-stop observations)",
   "- trade-update — attach planId, playbookId, lossClassification, postStopStudy, riskRewardPlanned",
   "- trade-review — supplement review fields if incomplete",
+  "- attribution — MAF component attribution (evidence → which pipeline component dragged expectancy)",
   "Flag legacy gaps explicitly; suggest manual links only when human confirms.",
 ].join("\n");
 

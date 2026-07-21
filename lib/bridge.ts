@@ -6,6 +6,7 @@ import {
   validateTechnicalAssessmentProposal,
   validateTechnicalCalibrationProposal,
 } from "./mtae-validate";
+import { validateAttributionProposal } from "./maf-validate";
 import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
@@ -227,6 +228,7 @@ export type TradingProposalType =
   | "trade-review"
   | "analysis"
   | "trade-update"
+  | "attribution"
   | "playbook-create"
   | "playbook-update";
 
@@ -257,6 +259,7 @@ export function parseTradingInboxPayload(
     type !== "trade-review" &&
     type !== "analysis" &&
     type !== "trade-update" &&
+    type !== "attribution" &&
     type !== "playbook-create" &&
     type !== "playbook-update"
   ) {
@@ -313,6 +316,8 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return `Analysis for ${p.id} · notes on trade`;
     case "trade-update":
       return `Update trade ${p.id}`;
+    case "attribution":
+      return `MAF attribution ${p.tradeId ?? p.planId ?? p.experimentId ?? ""} · ${(p.components as unknown[] | undefined)?.length ?? 0} components`;
     case "playbook-create":
       return `New playbook · ${p.name ?? "unnamed"}`;
     case "playbook-update":
@@ -552,6 +557,11 @@ export function validateProposalPayload(
 
   if (parsed.type === "technical-calibration") {
     const check = validateTechnicalCalibrationProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+
+  if (parsed.type === "attribution") {
+    const check = validateAttributionProposal(p);
     if (!check.ok) errors.push(...check.errors);
   }
 

@@ -46,7 +46,7 @@ Does not replace the automatic brief prefix on data snapshots.
 | Stock Profile | `{TICKER}` profile | Dossier + evidence + thesis_invalidation (structural — not R stop) | file-update, scout-assessment |
 | Stock Profile | Linked scouts | Active PLANs for ticker | decision-update |
 | Trade | `{ID}` this trade | Trade fields + review state | trade-update, trade-close |
-| Trade | `{ID}` forensic | Closed trade only — legacy tier, R, review, post-stop (**Trade window**, never Control) | analysis, trade-update |
+| Trade | `{ID}` forensic | Closed trade only — legacy tier, R, review, post-stop (**Trade window**, never Control) | analysis, trade-update, attribution |
 | Trade | Stock profile (compact) | Linked dossier summary | file-update |
 | Trades list | Trades snapshot | All trades summary + experiment | trade-update, trade-proposal |
 | Control → Mechanics brief | Matrix Mechanics brief | Rules primer for a new AI chat | (context only) |

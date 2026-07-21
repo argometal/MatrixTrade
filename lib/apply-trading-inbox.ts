@@ -11,6 +11,7 @@ import {
   applyStockFileInboxUpdate,
 } from "./stock-theses";
 import { applyTechnicalAssessment, applyTechnicalCalibration } from "./mtae-apply";
+import { applyAttribution } from "./maf-apply";
 import { applyScoutPlanCreate } from "./scout-plan-create";
 import {
   getPlaybookById,
@@ -134,6 +135,8 @@ async function applyTradingProposalInner(
       return applyTechnicalAssessmentBlock(parsed);
     case "technical-calibration":
       return applyTechnicalCalibrationBlock(parsed);
+    case "attribution":
+      return applyAttributionBlock(parsed);
     case "trade-proposal":
       return applyTradeProposal(parsed);
     case "trade-close":
@@ -312,6 +315,26 @@ async function applyTechnicalCalibrationBlock(
     message: `Stored MTAE calibration ${result.calibration?.id ?? ""}`,
     type: "technical-calibration",
     stockFileId: result.calibration?.stockProfileId,
+  };
+}
+
+async function applyAttributionBlock(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await applyAttribution(parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  const exp = result.experiment;
+  const parts = [
+    `Stored MAF ${exp?.id ?? ""}`,
+    exp?.primaryDragComponent ? `primary drag: ${exp.primaryDragComponent}` : null,
+    `${exp?.attributions.length ?? 0} components`,
+  ].filter(Boolean);
+  return {
+    ok: true,
+    message: parts.join(" · "),
+    type: "attribution",
+    tradeId: exp?.tradeId,
+    planId: exp?.planId,
   };
 }
 

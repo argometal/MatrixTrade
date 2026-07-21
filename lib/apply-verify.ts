@@ -46,6 +46,8 @@ export async function verifyApplyPersistence(
       return verifyTechnicalAssessmentPersistence(parsed);
     case "technical-calibration":
       return verifyTechnicalCalibrationPersistence(parsed);
+    case "attribution":
+      return verifyAttributionPersistence(parsed);
     case "trade-proposal":
     case "trade-close":
     case "trade-review":
@@ -279,6 +281,44 @@ async function verifyTechnicalCalibrationPersistence(
     return { ok: false, detail: `Calibration for ${assessmentId} not found.` };
   }
   return { ok: true, detail: `MTAE calibration ${match.id} verified.` };
+}
+
+async function verifyAttributionPersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const p = parsed.proposal;
+  const { getMafExperiments, getMafExperimentById, getMafExperimentByTradeId } = await import(
+    "./maf-store"
+  );
+  if (p.experimentId) {
+    const row = await getMafExperimentById(String(p.experimentId));
+    if (!row) {
+      return { ok: false, detail: `MAF experiment ${p.experimentId} not found after apply.` };
+    }
+    return {
+      ok: true,
+      detail: `MAF ${row.id} verified · ${row.attributions.length} components · ${row.status}`,
+    };
+  }
+  if (p.tradeId) {
+    const row = await getMafExperimentByTradeId(String(p.tradeId));
+    if (!row) {
+      return { ok: false, detail: `No MAF experiment for trade ${p.tradeId}.` };
+    }
+    return {
+      ok: true,
+      detail: `MAF ${row.id} verified · trade ${row.tradeId} · ${row.attributions.length} components`,
+    };
+  }
+  const rows = await getMafExperiments();
+  if (!rows.length) {
+    return { ok: false, detail: "No MAF experiments stored after apply." };
+  }
+  const latest = rows[rows.length - 1];
+  return {
+    ok: true,
+    detail: `MAF ${latest.id} verified · ${latest.attributions.length} components`,
+  };
 }
 
 async function verifyStockFilePersistence(
