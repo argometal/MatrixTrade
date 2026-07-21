@@ -15,9 +15,11 @@
 | **Mechanics brief** | Copy Matrix rules once for a new AI chat |
 | **Playbook** | Copy method rules / checklists / stats |
 | **Stock file** | Pick one ticker → copy thesis + linked scouts |
-| **Scout desk** | Copy desk overview + risk room |
+| **Scout desk** | Copy desk overview + risk room (not a second Mechanics button) |
 
 That is the full home menu. Nothing else.
+
+Window packages (Scout desk overview, Stock file, etc.) already **prefix** the Mechanics brief in the copied text. Do not add a second “Matrix Mechanics snapshot” row under Scout desk — that duplicates Control → Mechanics brief.
 
 ---
 

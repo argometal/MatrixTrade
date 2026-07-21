@@ -52,9 +52,9 @@ Does not replace the automatic brief prefix on data snapshots.
 | Control → Mechanics brief | Matrix Mechanics brief | Rules primer for a new AI chat | (context only) |
 | Control → Playbook | Playbook snapshot | Strategies + stats | playbook-update |
 | Control → Stock file | `{TICKER}` profile / linked scouts | One ticker dossier | file-update, decision-update |
-| Control → Scout desk | Scout desk overview | All profiles + scouts + monthly room | scouting blocks |
+| Control → Scout desk | Scout desk overview | All profiles + scouts + monthly room (**no** separate Mechanics row — brief is already prefixed; full rules = Control → Mechanics brief) | scouting blocks |
 
-**Retired (do not restore):** Control → Closed trade / Trade forensic picker; Control labels “Session” or “Case”. See [control-panel-ia.md](control-panel-ia.md).
+**Retired (do not restore):** Control → Closed trade / Trade forensic picker; Control labels “Session” or “Case”; Scout desk menu item that only duplicates Mechanics. See [control-panel-ia.md](control-panel-ia.md).
 
 ---
 
