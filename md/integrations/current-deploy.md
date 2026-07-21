@@ -5,7 +5,7 @@
 | Field | Value |
 |--------|--------|
 | **Tag** | `main0721d` |
-| **Commit** | `77b866c` — run `git rev-parse main0721d` after fetch |
+| **Commit** | `85436d5` — or `git rev-parse main0721d` after fetch |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-07-21 |
 
