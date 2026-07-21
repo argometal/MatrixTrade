@@ -40,6 +40,8 @@ export async function verifyApplyPersistence(
     case "scout-assessment":
     case "file-update":
       return verifyStockFilePersistence(parsed);
+    case "scout-plan-create":
+      return verifyScoutPlanCreatePersistence(parsed);
     case "technical-assessment":
       return verifyTechnicalAssessmentPersistence(parsed);
     case "technical-calibration":
@@ -200,6 +202,32 @@ async function verifyEvidenceAddPersistence(
   return {
     ok: true,
     detail: `Evidence ${match.id} · ${match.category} verified for ${profileId}.`,
+  };
+}
+
+async function verifyScoutPlanCreatePersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const stockFileId = String(parsed.proposal.stockFileId ?? parsed.proposal.stockThesisId ?? "")
+    .trim()
+    .toUpperCase();
+  const ticker = String(parsed.proposal.ticker ?? "").toUpperCase();
+  const entry = Number(parsed.proposal.plannedEntry);
+  const allPlans = await getPlans();
+  const match = [...allPlans]
+    .reverse()
+    .find(
+      (plan) =>
+        plan.stockThesisId?.toUpperCase() === stockFileId &&
+        plan.ticker === ticker &&
+        plan.plannedEntry === entry
+    );
+  if (!match) {
+    return { ok: false, detail: `No new Scout Plan found for ${stockFileId} @ entry ${entry}.` };
+  }
+  return {
+    ok: true,
+    detail: `Scout Plan ${match.id} verified · linked ${match.stockThesisId} · status ${match.status}`,
   };
 }
 

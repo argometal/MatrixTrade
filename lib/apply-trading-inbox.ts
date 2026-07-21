@@ -11,6 +11,7 @@ import {
   applyStockFileInboxUpdate,
 } from "./stock-theses";
 import { applyTechnicalAssessment, applyTechnicalCalibration } from "./mtae-apply";
+import { applyScoutPlanCreate } from "./scout-plan-create";
 import {
   getPlaybookById,
   parsePlaybookChecklist,
@@ -127,6 +128,8 @@ async function applyTradingProposalInner(
       return applyEvidenceAdd(parsed);
     case "file-update":
       return applyFileUpdate(parsed);
+    case "scout-plan-create":
+      return applyScoutPlanCreateBlock(parsed);
     case "technical-assessment":
       return applyTechnicalAssessmentBlock(parsed);
     case "technical-calibration":
@@ -260,6 +263,25 @@ async function applyFileUpdate(
     type: "file-update",
     stockFileId: id,
     planId: result.planId,
+  };
+}
+
+async function applyScoutPlanCreateBlock(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await applyScoutPlanCreate(parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  const plan = result.plan;
+  const parts = [`Created Scout Plan ${plan?.id ?? ""} · ${plan?.ticker ?? ""}`];
+  if (plan?.stockThesisId) parts.push(`linked ${plan.stockThesisId}`);
+  if (plan?.decision?.verdict) parts.push(`verdict ${plan.decision.verdict}`);
+  if (result.warnings?.length) parts.push(result.warnings.join(" · "));
+  return {
+    ok: true,
+    message: parts.join(" · "),
+    type: "scout-plan-create",
+    planId: plan?.id,
+    stockFileId: plan?.stockThesisId,
   };
 }
 

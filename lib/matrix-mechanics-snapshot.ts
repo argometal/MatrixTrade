@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 16;
+export const MATRIX_MECHANICS_REVISION = 17;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -27,10 +27,11 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- stock-case-delete — remove Stock Profile (confirmDelete: true required)",
     "- evidence-add — append market evidence row",
     "- file-update — update an existing Stock File; may include initialScout to backfill a missing Scout Plan when no linked active plan exists",
+    "- scout-plan-create — NEW Scout Plan window on an existing Stock File (same ticker; allocates NEW PLAN-xxx; optional initial verdict)",
     "- technical-assessment — MTAE multi-TF technical JSON (structure/zones/targets/invalidation) — NEVER includes Entry Solver or capital",
     "- technical-calibration — human correction to MTAE procedure (support rank, targets, etc.)",
     "- scout-assessment — validate dossier (reasons + challenges required)",
-    "- decision-update — update verdict and/or tactical parameters (entry, stop, target) on an existing Scout Plan",
+    "- decision-update — update verdict and/or tactical parameters (entry, stop, target) on an EXISTING Scout Plan",
     "",
     "Execution layer:",
     "- trade-proposal — new trade",
@@ -58,6 +59,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- Using extended targets to make a mediocre opportunity appear attractive",
     "- Treating a missed trade as a negative outcome",
     "- Recreate a Stock File because initialScout was omitted — use file-update.initialScout backfill instead.",
+    "- Use decision-update or file-update.initialScout when the human asked for a NEW plan window — use scout-plan-create instead",
     "- stock-case-create for a ticker that already has a Stock File just to open a new trade or plan",
     "- Reuse a closed trade id (H00x) or pretend a finished PLAN is a blank new window",
     "- Tell the human to delete prior trades/plans/Stock File so a new same-ticker idea can be saved",
@@ -68,7 +70,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "=== LAYER OWNERSHIP ===",
     "- Playbook (HOW): reusable method, checklist, horizons",
     "- Stock Profile (WHO): ONE dossier per ticker — update, do not recreate for each trade",
-    "- Scout PLAN: ONE tactical window — new opportunity → new PLAN id linked to same Stock File",
+    "- Scout PLAN: ONE tactical window — new opportunity → scout-plan-create → NEW PLAN id",
     "- Trade (H00x): ONE fill — new execution → new trade id; closed trades stay in history",
     "",
     "=== SNAPSHOT MENU ===",
