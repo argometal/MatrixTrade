@@ -5,7 +5,7 @@
 | Field | Value |
 |--------|--------|
 | **Tag** | `main0721c` |
-| **Commit** | `f6f42a9` (merge PR #14 — Topics/Events metrics + neighborhood) |
+| **Commit** | `aa1d6f5` (PR #14 metrics/neighborhood + this deploy pointer) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-07-21 |
 
