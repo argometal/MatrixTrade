@@ -5,7 +5,7 @@
 | Field | Value |
 |--------|--------|
 | **Tag** | `main0721c` |
-| **Commit** | `aa1d6f5` (PR #14 metrics/neighborhood + this deploy pointer) |
+| **Commit** | tip of `origin/main` — run `git rev-parse main0721c` (do not use old PR branches) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-07-21 |
 
@@ -26,6 +26,6 @@ If you have local uncommitted work you care about: `git stash -u` first, then re
 - Neighborhood reverse links; graph on Topics/Events detail (not Home)
 - Portfolio amber tag-pattern intensity; Home treemap unchanged
 
-## Stale open PRs
+## Stale PRs (closed)
 
-PRs #1–#4, #9, #10 are obsolete vs current `main` (hundreds of commits behind / conflicting). Do not merge them. Close locally if still open.
+PRs #1–#4, #9, #10 were obsolete vs current `main` (hundreds of commits behind / conflicting). Do not reopen or merge them.
