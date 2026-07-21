@@ -19,6 +19,8 @@ PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex (0-based, -1=none) or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
+- technical-assessment: MTAE technical JSON only — stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[], integrated{}, technicalSummary{} (trend, zones, probableTarget vs extendedTarget, structuralInvalidation, contradictions, confidence). FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict. Optional patchStockFile (default true).
+- technical-calibration: human procedure correction — assessmentId, stockProfileId, ticker, errorType, fieldPath, aiValue, humanValue, reason; optional magnitude, confidenceAdjustment
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason. Deletes linked evidence and scout plans. Irreversible — human Apply only.
 
 Trade layer (use only when scouting approves):
@@ -63,6 +65,8 @@ All Apply-ready block types:
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout (backfill missing Scout Plan only)
+- technical-assessment: MTAE technical-only multi-TF JSON — stockProfileId, ticker, timeframeRoles, perTimeframe[], integrated{}, technicalSummary{} (no Entry Solver / RR / Scout verdict)
+- technical-calibration: MTAE human procedure correction — assessmentId, errorType, fieldPath, aiValue, humanValue, reason
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason (duplicate cleanup)
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId, status
 - trade-close: close trade — id, exit required; optional confirmExternalClose (true)
@@ -158,6 +162,16 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
     type: "file-update",
     label: "file-update — update Stock File",
     hint: "status, hypothesis, notes on suspect file",
+  },
+  {
+    type: "technical-assessment",
+    label: "technical-assessment — MTAE technical JSON",
+    hint: "Multi-TF structure/zones/targets/invalidation — no Entry Solver / capital",
+  },
+  {
+    type: "technical-calibration",
+    label: "technical-calibration — MTAE human correction",
+    hint: "Procedure error (e.g. support 220→225) — trains Matrix, not P/L",
   },
   {
     type: "trade-proposal",
@@ -310,6 +324,153 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
         thesis: "Only enter if SHOP reaches the maximum admissible entry while the bullish thesis remains valid.",
         notes: "Target 180 is the probable three-month objective. Target 200 is extended upside only.",
       },
+    },
+  },
+  "technical-assessment": {
+    type: "technical-assessment",
+    source: "ai-block",
+    proposal: {
+      stockProfileId: "ST-TSLA-001",
+      ticker: "TSLA",
+      asOfPrice: 248,
+      timeframeMapId: "swing-6m",
+      timeframeRoles: {
+        strategic_tf: "6M",
+        opportunity_tf: "3M",
+        refinement_tf: "1M",
+        execution_tf: "1W",
+      },
+      perTimeframe: [
+        {
+          timeframe: "6M",
+          role: "strategic_tf",
+          trend: "bullish",
+          trendConfidence: 74,
+          structure: { higherHighs: true, higherLows: true, channel: true },
+          supports: [
+            {
+              rank: 1,
+              price: 180,
+              strength: 80,
+              reason: "Multi-touch demand shelf on 6M",
+              confidence: 78,
+            },
+          ],
+          resistances: [
+            {
+              rank: 1,
+              price: 280,
+              strength: 70,
+              reason: "Prior distribution high",
+              confidence: 65,
+            },
+          ],
+          battleZones: [
+            {
+              id: "bz-6m-1",
+              low: 200,
+              high: 215,
+              reachProbability: "medium",
+              asymmetryQuality: "good",
+              technicalImportance: 72,
+              reason: "Mid-channel reaccumulation band",
+            },
+          ],
+          probableTarget: 260,
+          extendedTarget: 300,
+          structuralInvalidation: "Monthly close below 180",
+          contradictions: ["Momentum cooler than structure"],
+          summary: "Secular uptrend intact; channel support still defining structure.",
+        },
+        {
+          timeframe: "1M",
+          role: "refinement_tf",
+          trend: "neutral",
+          trendConfidence: 55,
+          structure: { range: true, compression: true },
+          supports: [
+            {
+              rank: 1,
+              zone: { low: 220, high: 228 },
+              strength: 68,
+              reason: "1M pivot demand",
+              confidence: 70,
+            },
+          ],
+          resistances: [
+            {
+              rank: 1,
+              price: 255,
+              strength: 60,
+              reason: "Range high supply",
+              confidence: 62,
+            },
+          ],
+          battleZones: [
+            {
+              id: "bz-1m-1",
+              low: 220,
+              high: 228,
+              reachProbability: "high",
+              asymmetryQuality: "good",
+              technicalImportance: 80,
+              reason: "Primary fight for continuation vs failed swing",
+            },
+          ],
+          probableTarget: 255,
+          extendedTarget: 280,
+          structuralInvalidation: "Monthly close below 210",
+          contradictions: [],
+          summary: "Compression under resistance; battle zone 220–228 is the refinement fight.",
+        },
+      ],
+      integrated: {
+        structureSpine: "6M channel bullish; 1M compressing into mid-channel.",
+        opportunityNote: "Asymmetry improves only inside 220–228 battle zone.",
+        battleZoneRanking: [
+          {
+            id: "bz-1m-1",
+            low: 220,
+            high: 228,
+            reachProbability: "high",
+            asymmetryQuality: "good",
+            technicalImportance: 80,
+            reason: "Primary fight for continuation vs failed swing",
+          },
+        ],
+        executionContext: "1W timing only — wait for zone interaction; do not chase.",
+        contradictions: ["Structure bullish while 1M momentum soft"],
+      },
+      technicalSummary: {
+        trend: "bullish",
+        structureNote: "Higher-timeframe channel intact; refine entries only in 220–228.",
+        majorSupport: 180,
+        majorResistance: 280,
+        primaryBattleZone: { low: 220, high: 228 },
+        secondaryBattleZone: { low: 200, high: 215 },
+        probableTarget: 255,
+        extendedTarget: 300,
+        structuralInvalidation: "Monthly close below 180",
+        contradictions: ["Structure bullish while 1M momentum soft"],
+        confidence: 70,
+      },
+      patchStockFile: true,
+    },
+  },
+  "technical-calibration": {
+    type: "technical-calibration",
+    source: "ai-block",
+    proposal: {
+      assessmentId: "MTAE-TSLA-001",
+      stockProfileId: "ST-TSLA-001",
+      ticker: "TSLA",
+      errorType: "support_hierarchy",
+      fieldPath: "technicalSummary.majorSupport",
+      aiValue: 180,
+      humanValue: 190,
+      magnitude: "+10 dollars",
+      confidenceAdjustment: -8,
+      reason: "180 was wick liquidity; true demand shelf is 190 on 6M closes",
     },
   },
   "stock-case-delete": {

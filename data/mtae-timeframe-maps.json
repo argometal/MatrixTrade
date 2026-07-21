@@ -1,0 +1,36 @@
+[
+  {
+    "id": "swing-6m",
+    "label": "Swing / position — 6M spine",
+    "description": "Strategic structure on 6M; opportunity on 3M; battle zones on 1M; execution on 1W.",
+    "roles": {
+      "strategic_tf": "6M",
+      "opportunity_tf": "3M",
+      "refinement_tf": "1M",
+      "execution_tf": "1W"
+    }
+  },
+  {
+    "id": "swing-3m",
+    "label": "Faster swing — 3M spine",
+    "description": "Same MTAE procedure with compressed role map.",
+    "roles": {
+      "strategic_tf": "3M",
+      "opportunity_tf": "1M",
+      "refinement_tf": "1W",
+      "execution_tf": "1D"
+    }
+  },
+  {
+    "id": "day-active",
+    "label": "Active / day — Daily spine",
+    "description": "Intraday execution detail; still never lets lower TF invalidate strategic.",
+    "roles": {
+      "strategic_tf": "1D",
+      "opportunity_tf": "4H",
+      "refinement_tf": "1H",
+      "execution_tf": "15m",
+      "execution_detail_tf": "15m"
+    }
+  }
+]

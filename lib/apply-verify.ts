@@ -3,6 +3,7 @@ import { getPlanById, getPlans } from "./plans";
 import { getActiveEvidenceForProfile } from "./market-evidence";
 import { getStockThesesByTicker, getStockThesisById } from "./stock-theses";
 import { getPlaybookById, slugifyPlaybookId } from "./playbooks";
+import { getMtaeAssessmentById, getMtaeCalibrations } from "./mtae-store";
 import { getTradeById } from "./storage";
 import type { Trade } from "./types";
 
@@ -39,6 +40,10 @@ export async function verifyApplyPersistence(
     case "scout-assessment":
     case "file-update":
       return verifyStockFilePersistence(parsed);
+    case "technical-assessment":
+      return verifyTechnicalAssessmentPersistence(parsed);
+    case "technical-calibration":
+      return verifyTechnicalCalibrationPersistence(parsed);
     case "trade-proposal":
     case "trade-close":
     case "trade-review":
@@ -196,6 +201,56 @@ async function verifyEvidenceAddPersistence(
     ok: true,
     detail: `Evidence ${match.id} · ${match.category} verified for ${profileId}.`,
   };
+}
+
+async function verifyTechnicalAssessmentPersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const p = parsed.proposal;
+  const stockProfileId = String(p.stockProfileId ?? p.id ?? "").toUpperCase();
+  const ticker = String(p.ticker ?? "").toUpperCase();
+  const thesis = await getStockThesisById(stockProfileId);
+  if (!thesis) {
+    return { ok: false, detail: `Stock File ${stockProfileId} not found after MTAE apply.` };
+  }
+  if (p.patchStockFile !== false) {
+    const inv = String((p.technicalSummary as Record<string, unknown> | undefined)?.structuralInvalidation ?? "");
+    if (inv && thesis.riskRules.invalidation !== inv.trim()) {
+      return { ok: false, detail: `Invalidation not patched on ${stockProfileId}.` };
+    }
+    if (!thesis.notes?.includes("MTAE ·")) {
+      return { ok: false, detail: `MTAE stamp missing in ${stockProfileId} notes.` };
+    }
+  }
+  // Latest assessment for ticker should exist
+  const { getMtaeAssessments } = await import("./mtae-store");
+  const rows = await getMtaeAssessments();
+  const match = [...rows].reverse().find((row) => row.ticker === ticker && row.stockProfileId === stockProfileId);
+  if (!match) {
+    return { ok: false, detail: `No MTAE assessment stored for ${ticker}.` };
+  }
+  return {
+    ok: true,
+    detail: `MTAE ${match.id} verified · Stock File ${stockProfileId} v${thesis.version}`,
+  };
+}
+
+async function verifyTechnicalCalibrationPersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const assessmentId = String(parsed.proposal.assessmentId ?? "").toUpperCase();
+  const assessment = await getMtaeAssessmentById(assessmentId);
+  if (!assessment) {
+    return { ok: false, detail: `Assessment ${assessmentId} missing.` };
+  }
+  const rows = await getMtaeCalibrations();
+  const match = [...rows]
+    .reverse()
+    .find((row) => row.assessmentId === assessmentId && row.fieldPath === String(parsed.proposal.fieldPath));
+  if (!match) {
+    return { ok: false, detail: `Calibration for ${assessmentId} not found.` };
+  }
+  return { ok: true, detail: `MTAE calibration ${match.id} verified.` };
 }
 
 async function verifyStockFilePersistence(

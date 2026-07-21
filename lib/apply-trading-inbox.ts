@@ -10,6 +10,7 @@ import {
   appendScoutAssessment,
   applyStockFileInboxUpdate,
 } from "./stock-theses";
+import { applyTechnicalAssessment, applyTechnicalCalibration } from "./mtae-apply";
 import {
   getPlaybookById,
   parsePlaybookChecklist,
@@ -126,6 +127,10 @@ async function applyTradingProposalInner(
       return applyEvidenceAdd(parsed);
     case "file-update":
       return applyFileUpdate(parsed);
+    case "technical-assessment":
+      return applyTechnicalAssessmentBlock(parsed);
+    case "technical-calibration":
+      return applyTechnicalCalibrationBlock(parsed);
     case "trade-proposal":
       return applyTradeProposal(parsed);
     case "trade-close":
@@ -255,6 +260,36 @@ async function applyFileUpdate(
     type: "file-update",
     stockFileId: id,
     planId: result.planId,
+  };
+}
+
+async function applyTechnicalAssessmentBlock(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await applyTechnicalAssessment(parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  const id = result.assessment?.id ?? "MTAE";
+  const stockFileId = result.assessment?.stockProfileId;
+  const parts = [`Stored technical assessment ${id}`];
+  if (result.thesis) parts.push(`Stock File ${result.thesis.id} v${result.thesis.version}`);
+  return {
+    ok: true,
+    message: parts.join(" · "),
+    type: "technical-assessment",
+    stockFileId,
+  };
+}
+
+async function applyTechnicalCalibrationBlock(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await applyTechnicalCalibration(parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  return {
+    ok: true,
+    message: `Stored MTAE calibration ${result.calibration?.id ?? ""}`,
+    type: "technical-calibration",
+    stockFileId: result.calibration?.stockProfileId,
   };
 }
 

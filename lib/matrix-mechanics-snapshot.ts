@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 13;
+export const MATRIX_MECHANICS_REVISION = 14;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -27,6 +27,8 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- stock-case-delete — remove Stock Profile (confirmDelete: true required)",
     "- evidence-add — append market evidence row",
     "- file-update — update an existing Stock File; may include initialScout to backfill a missing Scout Plan when no linked active plan exists",
+    "- technical-assessment — MTAE multi-TF technical JSON (structure/zones/targets/invalidation) — NEVER includes Entry Solver or capital",
+    "- technical-calibration — human correction to MTAE procedure (support rank, targets, etc.)",
     "- scout-assessment — validate dossier (reasons + challenges required)",
     "- decision-update — update verdict and/or tactical parameters (entry, stop, target) on an existing Scout Plan",
     "",

@@ -61,6 +61,10 @@ MATRIX MECHANICS → PLAYBOOK → STOCK FILE → SCOUTING STATE → REQUEST
 | `scout-assessment` | Validate thesis — verdict go/wait/no/probe, reasons, **challenges** | Appends assessment to Stock File notes |
 | `decision-update` | Scout decision on PLAN — verdict, confidence, risks, challenges | Appends `ScoutDecision` on plan; probe if verdict=probe |
 | `file-update` | Propose changes to Stock File | Updates status, hypothesis, notes (version++) |
+| `technical-assessment` | MTAE multi-TF technical JSON | Stores assessment + patches Stock File levels/invalidation |
+| `technical-calibration` | Human MTAE procedure correction | Append-only calibration store |
+
+See [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md).
 
 ### Trade layer
 

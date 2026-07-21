@@ -1,7 +1,19 @@
 # MatrixTrade — building backlog
 
-**Last updated:** 2026-07-12  
+**Last updated:** 2026-07-21  
 **Purpose:** Active product/ops work — priorities, blockers, resume targets. Not library doc debt (see [library-alignment-backlog.md](library-alignment-backlog.md)).
+
+---
+
+## Active — MTAE (Technical Analysis Engine)
+
+| Field | Value |
+|-------|-------|
+| **Priority** | HIGH |
+| **Status** | **Foundation shipped** (schema + Apply + docs) |
+| **Doc** | [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) · [adr-0003-mtae.md](adr-0003-mtae.md) |
+| **Shipped** | `technical-assessment` / `technical-calibration` blocks; JSON stores; Stock File patch; TF role presets |
+| **Next** | Live chart-pack loops + calibration samples; optional Supabase table; never fold Entry Solver into MTAE |
 
 ---
 

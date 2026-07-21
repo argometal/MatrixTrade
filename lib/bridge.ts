@@ -2,6 +2,10 @@ import { calculateTradeResult } from "./calculate";
 import { computeMonthlyRisk } from "./monthly-risk";
 import { LOSS_CLASSIFICATIONS } from "./asymmetry-types";
 import { validateOptionalInitialScoutContract } from "./scout-contract";
+import {
+  validateTechnicalAssessmentProposal,
+  validateTechnicalCalibrationProposal,
+} from "./mtae-validate";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
 import { getSetupName } from "./setup-types";
@@ -214,6 +218,8 @@ export type TradingProposalType =
   | "decision-update"
   | "layered-entry-update"
   | "file-update"
+  | "technical-assessment"
+  | "technical-calibration"
   | "trade-proposal"
   | "trade-close"
   | "trade-review"
@@ -241,6 +247,8 @@ export function parseTradingInboxPayload(
     type !== "decision-update" &&
     type !== "layered-entry-update" &&
     type !== "file-update" &&
+    type !== "technical-assessment" &&
+    type !== "technical-calibration" &&
     type !== "trade-proposal" &&
     type !== "trade-close" &&
     type !== "trade-review" &&
@@ -280,6 +288,10 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return p.initialScout
         ? `Backfill scout on ${p.id}`
         : `Update Stock File ${p.id}`;
+    case "technical-assessment":
+      return `MTAE ${p.ticker ?? ""} ${p.stockProfileId ?? p.id ?? ""} · technical assessment`;
+    case "technical-calibration":
+      return `MTAE calibration ${p.assessmentId ?? ""} · ${p.errorType ?? "correction"}`;
     case "trade-proposal": {
       const status =
         p.status !== undefined ? String(p.status).toLowerCase() : "pending";
@@ -521,6 +533,16 @@ export function validateProposalPayload(
         }
       }
     }
+  }
+
+  if (parsed.type === "technical-assessment") {
+    const check = validateTechnicalAssessmentProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+
+  if (parsed.type === "technical-calibration") {
+    const check = validateTechnicalCalibrationProposal(p);
+    if (!check.ok) errors.push(...check.errors);
   }
 
   if (parsed.type === "trade-proposal") {
