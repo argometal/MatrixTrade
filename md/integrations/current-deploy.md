@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0721c` |
-| **Commit** | tip of `origin/main` — run `git rev-parse main0721c` (do not use old PR branches) |
+| **Tag** | `main0721d` |
+| **Commit** | `git rev-parse main0721d` → tip of `origin/main` |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-07-21 |
 
@@ -15,17 +15,15 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0721c
+# optional pin: git checkout main0721d
 ```
-
-If you have local uncommitted work you care about: `git stash -u` first, then reset, then re-apply carefully.
 
 ## What this deploy includes
 
-- Canonical Topics/Events entity counts (org → project → network → events)
-- Neighborhood reverse links; graph on Topics/Events detail (not Home)
-- Portfolio amber tag-pattern intensity; Home treemap unchanged
+- PR #14: Topics/Events metrics homologation, neighborhood, portfolio intensity
+- PR #15: Vocabulary (Topic / Tag / Alias / Signal), mobile Topics & Events detail, tag filter depuration
+- See `md/argus/vocabulary-policy.md`
 
 ## Stale PRs (closed)
 
-PRs #1–#4, #9, #10 were obsolete vs current `main` (hundreds of commits behind / conflicting). Do not reopen or merge them.
+PRs #1–#4, #9, #10 were obsolete vs current `main`. Do not reopen or merge them.
