@@ -625,7 +625,7 @@ export function V2InboxDetailPanel({
         </div>
       </div>
 
-      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4 pb-36 lg:pb-4">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4">
         {panelTab === "email" ? (
           <div className="space-y-4">
             <dl className="grid gap-1.5 rounded-xl border border-zinc-800/60 bg-zinc-900/20 px-4 py-3 text-xs sm:grid-cols-[5rem_1fr]">
@@ -669,14 +669,11 @@ export function V2InboxDetailPanel({
           )
         ) : null}
         {panelTab === "links" ? linksWorkspace : null}
-      </div>
-
-      <div className="border-t border-zinc-800/80 px-5 py-3 text-center text-[11px] text-zinc-600">
-        ✨ Created for you by Argus AI
+        <p className="mt-6 text-center text-[11px] text-zinc-600">✨ Created for you by Argus AI</p>
       </div>
 
       {canTriage ? (
-        <div className="fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 border-t border-zinc-800/80 bg-zinc-950/95 px-4 py-3 backdrop-blur-md lg:hidden">
+        <div className="shrink-0 border-t border-zinc-800/80 bg-zinc-950 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
           <button
             type="button"
             onClick={() => openInboxConnect("all", false)}
