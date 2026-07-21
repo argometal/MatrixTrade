@@ -1440,6 +1440,25 @@ export async function updateTopicAliasesAction(formData: FormData): Promise<void
   redirect(returnTo);
 }
 
+export async function updateEventSignalsAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const linkedTags = normalizeEventTags(parseTopics(String(formData.get("linkedTags") ?? "")));
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/browse/events");
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.type !== "other" || referenceKindFromNotes(entity.notes ?? "") !== "event") {
+    redirect(returnTo);
+  }
+
+  await updateEntity(entityId, { linkedTags });
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/events");
+  revalidatePath("/argus/v2/inbox");
+  revalidatePath("/argus/v2");
+  redirect(returnTo);
+}
+
 export async function deleteLogAction(formData: FormData): Promise<void> {
   await requireArgusSession();
   const logId = String(formData.get("logId") ?? "");

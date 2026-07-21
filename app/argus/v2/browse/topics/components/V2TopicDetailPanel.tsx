@@ -62,6 +62,7 @@ export function V2TopicDetailPanel({
   selected,
   neighborhood,
   returnTo,
+  onBack,
   privateConfigured = false,
   privateUnlocked = false,
   ...deleteGate
@@ -69,6 +70,7 @@ export function V2TopicDetailPanel({
   selected: V2TopicDetail;
   neighborhood?: V2EntityNeighborhoodGraph | null;
   returnTo: string;
+  onBack?: () => void;
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
 } & V2DeleteGateProps) {
@@ -84,6 +86,17 @@ export function V2TopicDetailPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      {onBack ? (
+        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-3 lg:hidden">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-sm font-medium text-violet-400 hover:text-violet-300"
+          >
+            ← Topics
+          </button>
+        </div>
+      ) : null}
       <V2RecordRecentEntity
         id={selected.id}
         kind="topic"

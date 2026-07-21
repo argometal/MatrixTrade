@@ -387,14 +387,25 @@ export const ENTITY_DETAIL = {
   noteCount: "Notes",
 } as const;
 
-/** Topic tag aliases — bridge inbox/journal tags to topic entities */
+/** Topic aliases — bridge inbox text to topic entities (not evidence Tags). */
 export const TOPIC_ALIASES = {
-  heading: "Tag aliases",
-  hint: "Synonyms that match this topic in inbox suggestions and filters (e.g. handover for HO).",
+  heading: "Aliases",
+  hint: "Synonyms that help match this topic in inbox suggestions and search — not Tags on evidence.",
   placeholder: "Add alias…",
   add: "Add",
   save: "Save aliases",
   empty: "No aliases yet — add words from emails that should suggest this topic.",
+  removeAria: (item: string) => `Remove alias ${item}`,
+} as const;
+
+/** Event signals — user-defined markers; copied to evidence on chronicle save. */
+export const EVENT_SIGNALS = {
+  heading: "Signals",
+  hint: "Your markers for this event — gaps, quality, follow-ups, or anything you track. Repeats surface as patterns in evidence.",
+  placeholder: "Add signal…",
+  add: "Add",
+  empty: "No signals yet.",
+  removeAria: (item: string) => `Remove signal ${item}`,
 } as const;
 
 export const DELETE_AUTH = {

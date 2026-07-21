@@ -141,7 +141,9 @@ export function V2TopicsShell({
     [searchParams]
   );
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
-  const selectedId = resolveV2SelectedId(searchParams.get("selected"), initialSelectedId);
+  const urlSelected = searchParams.get("selected");
+  const mobileDetailOpen = Boolean(urlSelected);
+  const selectedId = resolveV2SelectedId(urlSelected, initialSelectedId);
   const counts = useMemo(() => buildV2TopicTabCounts(rows), [rows]);
   const filterOptions = useMemo(() => buildV2TopicFilterOptions(details), [details]);
   const filtered = useMemo(() => filterV2TopicRows(rows, tab, filters), [rows, tab, filters]);
@@ -231,7 +233,29 @@ export function V2TopicsShell({
     replaceTopicParams((params) => {
       params.set("selected", id);
     });
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  function backToList() {
+    replaceTopicParams((params) => {
+      params.delete("selected");
+    });
+  }
+
+  useEffect(() => {
+    if (!urlSelected) return;
+    if (filtered.length === 0) {
+      replaceTopicParams((params) => {
+        params.delete("selected");
+      });
+      return;
+    }
+    if (!filtered.some((row) => row.id === urlSelected)) {
+      replaceTopicParams((params) => {
+        params.delete("selected");
+      });
+    }
+  }, [filtered, urlSelected, replaceTopicParams]);
 
   function setPage(next: number) {
     replaceTopicParams((params) => {
@@ -266,6 +290,7 @@ export function V2TopicsShell({
             selected={selected}
             neighborhood={neighborhood}
             returnTo={returnTo}
+            onBack={mobileDetailOpen ? backToList : undefined}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
             requiresAuthenticator={selected.deleteRequiresAuthenticator}
@@ -285,7 +310,11 @@ export function V2TopicsShell({
 
   return (
     <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
-      <section className="flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:w-[min(420px,42%)] lg:flex-none lg:border-b-0 lg:border-r">
+      <section
+        className={`flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:w-[min(420px,42%)] lg:flex-none lg:border-b-0 lg:border-r ${
+          mobileDetailOpen ? "hidden lg:flex" : "flex"
+        }`}
+      >
         <div className="border-b border-zinc-800/80 px-4 py-4 lg:px-5">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
@@ -531,12 +560,19 @@ export function V2TopicsShell({
         ) : null}
       </section>
 
-      <section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-950/50">
+      <section
+        className={`min-h-0 min-w-0 flex-1 bg-zinc-950/50 ${
+          mobileDetailOpen
+            ? "fixed inset-x-0 bottom-0 top-14 z-40 flex min-h-0 flex-col overflow-hidden lg:static lg:z-auto"
+            : "hidden min-h-0 flex-col overflow-hidden lg:flex"
+        }`}
+      >
         {selected ? (
           <V2TopicDetailPanel
             selected={selected}
             neighborhood={neighborhood}
             returnTo={returnTo}
+            onBack={mobileDetailOpen ? backToList : undefined}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
             requiresAuthenticator={selected.deleteRequiresAuthenticator}

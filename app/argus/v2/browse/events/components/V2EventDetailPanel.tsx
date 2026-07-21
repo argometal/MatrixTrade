@@ -16,8 +16,9 @@ import { V2TagPatternBadges } from "@/app/argus/v2/components/V2TagPatternBadges
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
+import { V2EventSignalEditor } from "./V2EventSignalEditor";
 
-type PanelTab = "note" | "chronicle" | "metrics";
+type PanelTab = "note" | "chronicle" | "metrics" | "signals";
 type ChronicleFilter = "all" | "photo" | "file" | "email" | "journal";
 
 function EvidenceIcon({ kind }: { kind: V2EventDetail["evidence"][0]["kind"] }) {
@@ -55,6 +56,7 @@ export function V2EventDetailPanel({
   inboxOptions,
   returnTo,
   neighborhood,
+  onBack,
   privateConfigured = false,
   privateUnlocked = false,
   ...deleteGate
@@ -63,14 +65,13 @@ export function V2EventDetailPanel({
   inboxOptions: V2EventInboxOption[];
   returnTo: string;
   neighborhood?: V2EntityNeighborhoodGraph | null;
+  onBack?: () => void;
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
 } & V2DeleteGateProps) {
   const router = useRouter();
   const [panelTab, setPanelTab] = useState<PanelTab>("note");
   const [showGraph, setShowGraph] = useState(true);
-  const [tags, setTags] = useState<string[]>(selected.linkedTags);
-  const [tagDraft, setTagDraft] = useState("");
   const [composer, setComposer] = useState("");
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [chronicleFilter, setChronicleFilter] = useState<ChronicleFilter>("all");
@@ -79,28 +80,11 @@ export function V2EventDetailPanel({
   const [emailOpen, setEmailOpen] = useState(false);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
 
-  function addTag() {
-    const next = normalizeEventTag(tagDraft);
-    if (!next || tags.some((tag) => tag.toLowerCase() === next.toLowerCase())) {
-      setTagDraft("");
-      return;
-    }
-    setTags((current) => [...current, next]);
-    setTagDraft("");
-  }
-
-  function removeTag(tag: string) {
-    setTags((current) => current.filter((value) => value !== tag));
-  }
-
-  const tagsDirty = !tagsEqual(tags, selected.linkedTags);
-  const canSave = composer.trim().length > 0 || tagsDirty || pendingFiles.length > 0;
+  const canSave = composer.trim().length > 0 || pendingFiles.length > 0;
 
   useEffect(() => {
-    setTags(selected.linkedTags);
     setComposer("");
     setPendingFiles([]);
-    setTagDraft("");
     setSaveNote(null);
   }, [selected.id, selected.linkedTags.join("|")]);
 
@@ -112,7 +96,7 @@ export function V2EventDetailPanel({
       const formData = new FormData();
       formData.set("eventId", selected.id);
       formData.set("body", composer);
-      formData.set("linkedTags", tags.join(", "));
+      formData.set("linkedTags", selected.linkedTags.join(", "));
       for (const file of pendingFiles) {
         formData.append("attachments", file);
       }
@@ -148,11 +132,23 @@ export function V2EventDetailPanel({
   const tabs: { id: PanelTab; label: string }[] = [
     { id: "note", label: "Note" },
     { id: "chronicle", label: "Chronicle" },
+    { id: "signals", label: "Signals" },
     { id: "metrics", label: "Metrics" },
   ];
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      {onBack ? (
+        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-3 lg:hidden">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-sm font-medium text-violet-400 hover:text-violet-300"
+          >
+            ← Events
+          </button>
+        </div>
+      ) : null}
       <V2RecordRecentEntity
         id={selected.id}
         kind="event"
@@ -165,13 +161,13 @@ export function V2EventDetailPanel({
             <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
             <p className="mt-1 text-sm text-zinc-400">{selected.dateTimeLabel}</p>
             {selected.linkedTags.length > 0 ? (
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {selected.linkedTags.map((tag) => (
+              <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Signals">
+                {selected.linkedTags.map((signal) => (
                   <span
-                    key={tag}
+                    key={signal}
                     className="inline-flex rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-200 ring-1 ring-amber-500/25"
                   >
-                    {tag}
+                    {signal}
                   </span>
                 ))}
               </div>
@@ -271,53 +267,6 @@ export function V2EventDetailPanel({
                 </div>
               </div>
 
-              <div>
-                <p className="text-xs font-medium text-zinc-400">Signal tags</p>
-                <p className="mt-0.5 text-[11px] text-zinc-600">GAP, CONCERN, follow-up — repeats surface across events.</p>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200"
-                    >
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeTag(tag)}
-                        className="text-amber-400/70 hover:text-amber-100"
-                        aria-label={`Remove tag ${tag}`}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                  {tags.length === 0 ? <p className="text-xs text-zinc-600">No tags yet.</p> : null}
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <input
-                    type="text"
-                    value={tagDraft}
-                    onChange={(e) => setTagDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addTag();
-                      }
-                    }}
-                    placeholder="GAP, CONCERN, decision…"
-                    className="min-w-[10rem] flex-1 rounded-lg border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600"
-                  />
-                  <button
-                    type="button"
-                    onClick={addTag}
-                    disabled={!tagDraft.trim()}
-                    className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
-                  >
-                    Add tag
-                  </button>
-                </div>
-              </div>
-
               <div className="rounded-xl border border-zinc-200/90 bg-white shadow-sm ring-1 ring-black/5">
                 <textarea
                   value={composer}
@@ -386,6 +335,15 @@ export function V2EventDetailPanel({
                 </ul>
               )}
             </div>
+          ) : null}
+
+          {panelTab === "signals" ? (
+            <V2EventSignalEditor
+              eventId={selected.id}
+              eventName={selected.name}
+              initialSignals={selected.linkedTags}
+              returnTo={returnTo}
+            />
           ) : null}
 
           {panelTab === "metrics" ? (

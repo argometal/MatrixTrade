@@ -32,7 +32,7 @@ Chronicle tab    = buildEntityEvidenceStream (notes, emails, files, photos)
 
 1. **Append-only** — Save creates a `Log` with `entityIds: [eventId]`, dated to the event anchor date. No overwrite of prior entries.
 2. **Composer clears** — After Save, textarea resets; next write is a new chronicle line.
-3. **Tags on event** — `entity.linkedTags` holds signal tags (GAP, CONCERN, …). Copied into each appended log's `topics` for pattern detection.
+ 3. **Signals on event** — `entity.linkedTags` holds user-defined Signals (any label). Copied into each appended log's `topics` for pattern detection.
 4. **No Register on event page** — Link email / inbox still adds evidence to Chronicle. Attachments arrive via linked emails or inbox flow.
 5. **Migration** — Legacy text in `entity.notes` is converted once to the first chronicle log; notes reduced to `Kind: Event` shell.
 
@@ -47,7 +47,7 @@ Chronicle entries are not edited or deleted from the event UI. Corrections are n
 | Field | Role |
 |-------|------|
 | `Entity.notes` | `Kind: Event\n---` only (metadata shell) |
-| `Entity.linkedTags` | User-defined signal tags |
+| `Entity.linkedTags` | User-defined Signals |
 | `Log` (linked) | Each composer Save = one chronicle entry |
 | Inbox (linked) | Email evidence in Chronicle |
 

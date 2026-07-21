@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import {
   buildV2EventTabCounts,
@@ -57,7 +57,9 @@ export function V2EventsShell({
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseV2EventTab(searchParams.get("tab") ?? initialTab);
-  const selectedId = resolveV2SelectedId(searchParams.get("selected"), initialSelectedId);
+  const urlSelected = searchParams.get("selected");
+  const mobileDetailOpen = Boolean(urlSelected);
+  const selectedId = resolveV2SelectedId(urlSelected, initialSelectedId);
   const counts = useMemo(() => buildV2EventTabCounts(rows), [rows]);
   const filtered = useMemo(() => filterV2EventRows(rows, tab), [rows, tab]);
   const groups = useMemo(() => groupV2EventRows(filtered), [filtered]);
@@ -75,7 +77,25 @@ export function V2EventsShell({
     const params = new URLSearchParams(searchParams.toString());
     params.set("selected", id);
     router.replace(`/argus/v2/browse/events?${params.toString()}`);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
+
+  function backToList() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("selected");
+    router.replace(`/argus/v2/browse/events?${params.toString()}`);
+  }
+
+  useEffect(() => {
+    if (!urlSelected) return;
+    if (filtered.length === 0) {
+      backToList();
+      return;
+    }
+    if (!filtered.some((row) => row.id === urlSelected)) {
+      backToList();
+    }
+  }, [filtered, urlSelected]);
 
   const returnTo = `/argus/v2/browse/events?${searchParams.toString()}`;
   const { focus, from } = parseIntelligenceFocus(searchParams);
@@ -118,7 +138,11 @@ export function V2EventsShell({
 
   return (
     <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
-      <section className="flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:w-[min(480px,44%)] lg:flex-none lg:border-b-0 lg:border-r">
+      <section
+        className={`flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:w-[min(480px,44%)] lg:flex-none lg:border-b-0 lg:border-r ${
+          mobileDetailOpen ? "hidden lg:flex" : "flex"
+        }`}
+      >
         <div className="border-b border-zinc-800/80 px-4 py-4 lg:px-5">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
@@ -214,13 +238,20 @@ export function V2EventsShell({
         </div>
       </section>
 
-      <section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-950/50">
+      <section
+        className={`min-h-0 min-w-0 flex-1 bg-zinc-950/50 ${
+          mobileDetailOpen
+            ? "fixed inset-x-0 bottom-0 top-14 z-40 flex min-h-0 flex-col overflow-hidden lg:static lg:z-auto"
+            : "hidden min-h-0 flex-col overflow-hidden lg:flex"
+        }`}
+      >
         {selected ? (
           <V2EventDetailPanel
             selected={selected}
             inboxOptions={inboxOptionsByEvent[selected.id] ?? []}
             returnTo={returnTo}
             neighborhood={neighborhood}
+            onBack={mobileDetailOpen ? backToList : undefined}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
             requiresAuthenticator={selected.deleteRequiresAuthenticator}
