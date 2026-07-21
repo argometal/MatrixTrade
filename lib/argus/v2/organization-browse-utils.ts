@@ -8,7 +8,7 @@ import {
   projectsForOrganization,
 } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
-import { collectRelatedEntityIds, countLinkKinds } from "./entity-link-counts";
+import { countTopicsAndEventsInScope } from "./scope-node-counts";
 
 export type V2OrganizationBrowseStatus = "Prospect" | "Active" | "Inactive" | "Archived";
 
@@ -142,24 +142,6 @@ function resolveLastContact(
   };
 }
 
-function countOrgTopics(org: Entity, logs: Log[], data: ArgusData): number {
-  const topicIds = new Set<string>();
-  for (const id of org.linkedEntityIds ?? []) {
-    const entity = data.entities.find((e) => e.id === id);
-    if (entity?.type === "other" && referenceKindFromNotes(entity.notes ?? "") === "topic") {
-      topicIds.add(id);
-    }
-  }
-  const tagKeys = new Set<string>();
-  for (const log of logs) {
-    for (const topic of log.topics) {
-      const key = topic.trim().toLowerCase();
-      if (key) tagKeys.add(key);
-    }
-  }
-  return topicIds.size + tagKeys.size;
-}
-
 function relationshipStartIso(org: Entity, logs: Log[], inbox: InboxItem[]): string {
   const candidates = [org.createdAt, ...logs.map((l) => l.date), ...inbox.map((i) => i.receivedAt)].filter(
     Boolean
@@ -190,7 +172,7 @@ export function buildV2OrganizationBrowseCards(
       const status = deriveOrganizationStatus(org, lastContact.sortIso, today, totalEvidence);
       const sinceIso = relationshipStartIso(org, scope.logs, scope.inbox);
 
-      const linkCounts = countLinkKinds(data, collectRelatedEntityIds(org, scope.logs));
+      const nodeCounts = countTopicsAndEventsInScope(data, org, scope.logs);
 
       return {
         id: org.id,
@@ -203,8 +185,8 @@ export function buildV2OrganizationBrowseCards(
           projects: orgProjects.length,
           people: peopleIds.length,
           emails: scope.emailCount,
-          topics: countOrgTopics(org, scope.logs, data),
-          events: linkCounts.eventCount,
+          topics: nodeCounts.topicCount,
+          events: nodeCounts.eventCount,
         },
         lastContact,
         relationshipAge: relationshipAgeLabel(sinceIso, today),

@@ -7,6 +7,7 @@ import { isEntityArchived } from "../entity-lifecycle";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
 import { intelligenceEntityHref } from "./intelligence-nav";
+import { outboundStructuralIds } from "./scope-node-counts";
 
 export type V2KnowledgeNodeKind = "topic" | "project" | "organization";
 
@@ -443,22 +444,19 @@ function graphKindForEntity(entity: Entity): V2GraphNode["kind"] {
 }
 
 function collectLinkedNeighborIds(entity: Entity, entityMap: Map<string, Entity>): string[] {
-  const ids: string[] = [];
-  for (const id of entity.linkedEntityIds ?? []) {
-    if (entityMap.has(id)) ids.push(id);
+  const ids = new Set<string>();
+
+  for (const id of outboundStructuralIds(entity)) {
+    if (entityMap.has(id)) ids.add(id);
   }
-  if (entity.type === "project") {
-    for (const id of entity.linkedPersonIds ?? []) {
-      if (entityMap.has(id)) ids.push(id);
-    }
-    for (const id of entity.linkedTopicIds ?? []) {
-      if (entityMap.has(id)) ids.push(id);
-    }
-    for (const id of entity.linkedEventIds ?? []) {
-      if (entityMap.has(id)) ids.push(id);
-    }
+
+  // Reverse links — entities that point at this one (projects → topics, orgs → people, etc.)
+  for (const other of entityMap.values()) {
+    if (other.id === entity.id) continue;
+    if (outboundStructuralIds(other).includes(entity.id)) ids.add(other.id);
   }
-  return ids;
+
+  return [...ids];
 }
 
 /** Local 1–2 hop subgraph from one entity — Kumu / Obsidian neighborhood pattern. */

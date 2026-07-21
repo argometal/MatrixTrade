@@ -5,6 +5,7 @@ import { argusTotpConfigured } from "@/lib/auth/totp";
 import { deleteAuthConfigured } from "@/lib/argus/delete-link-check";
 import { getInboxItems } from "@/lib/argus/server-storage";
 import { readArgusAfterEventMigration } from "@/lib/argus/v2/migrate-event-chronicle";
+import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import {
   buildV2EventDetails,
   buildV2EventInboxOptions,
@@ -41,6 +42,9 @@ export default async function V2BrowseEventsPage({
     details.map((d) => [d.id, buildV2EventInboxOptions(inboxItems, d.id, includePrivate, today)])
   );
   const tab = parseV2EventTab(tabParam);
+  const neighborhood = selected
+    ? buildV2EntityNeighborhoodGraph(data, inboxItems, selected, includePrivate, today)
+    : null;
 
   return (
     <Suspense fallback={<div className="px-6 py-10 text-sm text-zinc-500">Loading events…</div>}>
@@ -50,6 +54,7 @@ export default async function V2BrowseEventsPage({
         inboxOptionsByEvent={inboxOptionsByEvent}
         initialSelectedId={selected}
         initialTab={tab}
+        neighborhood={neighborhood}
         privateConfigured={argusPrivateConfigured()}
         privateUnlocked={includePrivate}
         deleteUnlocked={deleteUnlocked}

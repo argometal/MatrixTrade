@@ -74,7 +74,7 @@ export function V2TopicDetailPanel({
 } & V2DeleteGateProps) {
   const [panelTab, setPanelTab] = useState<PanelTab>("evidence");
   const [evidenceFilter, setEvidenceFilter] = useState<EvidenceFilter>("all");
-  const [showGraph, setShowGraph] = useState(false);
+  const [showGraph, setShowGraph] = useState(true);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
 
   const filteredEvidence = useMemo(() => {
