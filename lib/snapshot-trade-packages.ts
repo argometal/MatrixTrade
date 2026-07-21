@@ -19,6 +19,8 @@ export function tradeSnapshotItems(input: {
   setups: Setup[];
   playbooks: Playbook[];
   linkedThesis?: StockThesis;
+  plans?: TradePlan[];
+  theses?: StockThesis[];
 }): SnapshotMenuItem[] {
   const tradeText = formatTradeForSnapshot(input.trade, input.setups, input.playbooks);
   const items: SnapshotMenuItem[] = [
@@ -49,6 +51,16 @@ export function tradeSnapshotItems(input: {
         })
       ),
     });
+  }
+  if (input.trade.status === "closed") {
+    items.push(
+      tradeForensicSnapshotItem({
+        trade: input.trade,
+        playbooks: input.playbooks,
+        plans: input.plans,
+        theses: input.theses,
+      })
+    );
   }
   items.push(mechanicsSnapshotItem());
   return items;

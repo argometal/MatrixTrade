@@ -1,6 +1,6 @@
 # Snapshot catalog
 
-**Status:** Canonical (2026-07-11).  
+**Status:** Canonical (2026-07-21).  
 **Parent:** [external-ai-policy.md](external-ai-policy.md)
 
 ---
@@ -46,9 +46,15 @@ Does not replace the automatic brief prefix on data snapshots.
 | Stock Profile | `{TICKER}` profile | Dossier + evidence + thesis_invalidation (structural — not R stop) | file-update, scout-assessment |
 | Stock Profile | Linked scouts | Active PLANs for ticker | decision-update |
 | Trade | `{ID}` this trade | Trade fields + review state | trade-update, trade-close |
+| Trade | `{ID}` forensic | Closed trade only — legacy tier, R, review, post-stop (**Trade window**, never Control) | analysis, trade-update |
 | Trade | Stock profile (compact) | Linked dossier summary | file-update |
 | Trades list | Trades snapshot | All trades summary + experiment | trade-update, trade-proposal |
-| Control → Trade | `{ID}` forensic | Closed trade — legacy tier, R, review, post-stop | analysis, trade-update |
+| Control → Mechanics brief | Matrix Mechanics brief | Rules primer for a new AI chat | (context only) |
+| Control → Playbook | Playbook snapshot | Strategies + stats | playbook-update |
+| Control → Stock file | `{TICKER}` profile / linked scouts | One ticker dossier | file-update, decision-update |
+| Control → Scout desk | Scout desk overview | All profiles + scouts + monthly room | scouting blocks |
+
+**Retired (do not restore):** Control → Closed trade / Trade forensic picker; Control labels “Session” or “Case”. See [control-panel-ia.md](control-panel-ia.md).
 
 ---
 

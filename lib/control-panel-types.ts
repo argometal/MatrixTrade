@@ -1,23 +1,21 @@
 import type { Playbook } from "./playbook-types";
 import type { SnapshotMenuItem } from "./snapshot-types";
 import type { StockThesis } from "./stock-thesis-types";
-import type { Trade } from "./types";
 
 export type ControlPanelThesisEntry = {
   thesis: StockThesis;
   snapshotItems: SnapshotMenuItem[];
 };
 
-export type ControlPanelTradeEntry = {
-  trade: Trade;
-  snapshotItems: SnapshotMenuItem[];
-};
-
+/**
+ * Control copy layers — descriptive labels only.
+ * Forensic closed-trade export lives on `/trades/[id]`, never here.
+ */
 export type ControlPanelSectionId =
   | "train-ai"
+  | "playbook"
   | "stock-file"
-  | "scouting"
-  | "trade";
+  | "scouting";
 
 export type ControlPanelData = {
   playbooks: Playbook[];
@@ -36,9 +34,5 @@ export type ControlPanelData = {
   };
   scouting: {
     snapshotItems: SnapshotMenuItem[];
-  };
-  trade: {
-    snapshotItems: SnapshotMenuItem[];
-    closedTrades: ControlPanelTradeEntry[];
   };
 };
