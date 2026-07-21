@@ -82,7 +82,11 @@ export function PreviewTradeDetail({
             <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
               <SnapshotButton
                 title={snapshotButtonTitle(trade.ticker, `${trade.id} snapshot`)}
-                description="Entry, stop, target, status, P/L, review state"
+                description={
+                  trade.status === "closed"
+                    ? "Trade fields, forensic export, linked profile"
+                    : "Entry, stop, target, status, P/L, review state"
+                }
                 items={snapshotItems}
               />
             </div>

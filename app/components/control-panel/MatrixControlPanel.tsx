@@ -7,8 +7,12 @@ import { useControlPanel } from "@/app/components/control-panel/MatrixControlPan
 import type { ControlPanelSectionId } from "@/lib/control-panel-types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
-type Step = "pick" | "update" | "stock-pick" | "trade-pick" | "detail";
+type Step = "pick" | "update" | "stock-pick" | "detail";
 
+/**
+ * Labels must name the payload. Forbidden: Session, Case, Closed trade, and other
+ * vague renames — see md/matrix/control-panel-ia.md.
+ */
 const SECTIONS: {
   id: ControlPanelSectionId;
   label: string;
@@ -16,23 +20,23 @@ const SECTIONS: {
 }[] = [
   {
     id: "train-ai",
-    label: "Session",
-    hint: "Copy once — mechanics + playbook for a new AI chat",
+    label: "Mechanics brief",
+    hint: "Matrix rules — copy once for a new AI chat",
+  },
+  {
+    id: "playbook",
+    label: "Playbook",
+    hint: "Method rules, checklists, and stats",
   },
   {
     id: "stock-file",
-    label: "Case",
+    label: "Stock file",
     hint: "One ticker — thesis, zones, linked scouts",
   },
   {
     id: "scouting",
     label: "Scout desk",
-    hint: "Overview of active cases and risk room",
-  },
-  {
-    id: "trade",
-    label: "Closed trade",
-    hint: "Forensic copy for a finished fill",
+    hint: "Active cases and monthly risk room",
   },
 ];
 
@@ -115,8 +119,6 @@ export function MatrixControlPanel() {
   const [section, setSection] = useState<ControlPanelSectionId | null>(null);
   const [stockThesisId, setStockThesisId] = useState<string | null>(null);
   const [stockQuery, setStockQuery] = useState("");
-  const [tradeId, setTradeId] = useState<string | null>(null);
-  const [tradeQuery, setTradeQuery] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -124,8 +126,6 @@ export function MatrixControlPanel() {
     setSection(null);
     setStockThesisId(null);
     setStockQuery("");
-    setTradeId(null);
-    setTradeQuery("");
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -149,48 +149,27 @@ export function MatrixControlPanel() {
     );
   }, [data.stockFile.theses, stockQuery]);
 
-  const selectedTrade = useMemo(
-    () => data.trade.closedTrades.find((entry) => entry.trade.id === tradeId) ?? null,
-    [data.trade.closedTrades, tradeId]
-  );
-
-  const filteredTrades = useMemo(() => {
-    const query = tradeQuery.trim().toLowerCase();
-    if (!query) return data.trade.closedTrades;
-    return data.trade.closedTrades.filter(
-      (entry) =>
-        entry.trade.ticker.toLowerCase().includes(query) ||
-        entry.trade.id.toLowerCase().includes(query)
-    );
-  }, [data.trade.closedTrades, tradeQuery]);
-
   const detailSnapshots = useMemo((): SnapshotMenuItem[] => {
     if (!section) return [];
     switch (section) {
       case "train-ai":
-        // Session: mechanics is PlainCopyRow; only playbook rules as second copy
-        return data.trainAi.snapshotItems.filter((item) => item.id === "playbook");
+        // Mechanics brief is PlainCopyRow only — Playbook is its own section.
+        return [];
+      case "playbook":
+        return data.playbook.snapshotItems;
       case "stock-file":
         return selectedStock?.snapshotItems.filter((item) => item.id !== "mechanics") ?? [];
       case "scouting":
         return data.scouting.snapshotItems;
-      case "trade":
-        return selectedTrade
-          ? selectedTrade.snapshotItems
-          : data.trade.snapshotItems.filter((item) => item.id === "trades-list");
       default:
         return [];
     }
-  }, [data, section, selectedStock, selectedTrade]);
+  }, [data, section, selectedStock]);
 
   function pickSection(id: ControlPanelSectionId) {
     setSection(id);
     if (id === "stock-file") {
       setStep("stock-pick");
-      return;
-    }
-    if (id === "trade") {
-      setStep("trade-pick");
       return;
     }
     setStep("detail");
@@ -206,18 +185,11 @@ export function MatrixControlPanel() {
       setStockThesisId(null);
       return;
     }
-    if (step === "detail" && section === "trade") {
-      setStep("trade-pick");
-      setTradeId(null);
-      return;
-    }
-    if (step === "stock-pick" || step === "trade-pick" || step === "detail") {
+    if (step === "stock-pick" || step === "detail") {
       setStep("pick");
       setSection(null);
       setStockThesisId(null);
       setStockQuery("");
-      setTradeId(null);
-      setTradeQuery("");
       return;
     }
     closePanel();
@@ -230,22 +202,16 @@ export function MatrixControlPanel() {
       ? "Update"
       : step === "stock-pick"
         ? "Pick a stock file"
-        : step === "trade-pick"
-          ? "Pick a closed trade"
-          : section === "stock-file" && selectedStock
-            ? `${selectedStock.thesis.ticker} · ${selectedStock.thesis.id}`
-            : section === "trade" && selectedTrade
-              ? `${selectedTrade.trade.ticker} · ${selectedTrade.trade.id} forensic`
-              : sectionMeta?.label ?? "Control panel";
+        : section === "stock-file" && selectedStock
+          ? `${selectedStock.thesis.ticker} · ${selectedStock.thesis.id}`
+          : sectionMeta?.label ?? "Control panel";
 
   const detailHint =
     step === "update"
       ? "Paste AI Block — Validate, then Accept"
       : step === "stock-pick"
         ? `${data.activeThesisCount} active — pick one`
-        : step === "trade-pick"
-          ? `${data.trade.closedTrades.length} closed — pick one`
-          : sectionMeta?.hint ?? "Copy snapshot for your AI";
+        : sectionMeta?.hint ?? "Copy snapshot for your AI";
 
   return (
     <div
@@ -266,7 +232,7 @@ export function MatrixControlPanel() {
           <h2 className="text-base font-bold text-zinc-50">{detailTitle}</h2>
           <p className="mt-1 text-[11px] text-zinc-500">
             {step === "pick"
-              ? "Update writes. Session / Case / Scout / Trade = copy context for AI."
+              ? "Update writes. Mechanics / Playbook / Stock file / Scout desk = copy context. Forensic lives on the trade."
               : detailHint}
           </p>
         </header>
@@ -289,22 +255,22 @@ export function MatrixControlPanel() {
               </span>
             </button>
             <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
-            {SECTIONS.map((entry) => (
-              <button
-                key={entry.id}
-                type="button"
-                onClick={() => pickSection(entry.id)}
-                className="flex w-full items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 text-left transition hover:border-violet-500/30 hover:bg-zinc-900"
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold uppercase text-violet-300">
-                  {entry.label.slice(0, 2)}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-semibold text-zinc-100">{entry.label}</span>
-                  <span className="mt-0.5 block text-xs text-zinc-500">{entry.hint}</span>
-                </span>
-              </button>
-            ))}
+              {SECTIONS.map((entry) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => pickSection(entry.id)}
+                  className="flex w-full items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 text-left transition hover:border-violet-500/30 hover:bg-zinc-900"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold uppercase text-violet-300">
+                    {entry.label.slice(0, 2)}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-zinc-100">{entry.label}</span>
+                    <span className="mt-0.5 block text-xs text-zinc-500">{entry.hint}</span>
+                  </span>
+                </button>
+              ))}
             </nav>
           </div>
         ) : null}
@@ -354,81 +320,18 @@ export function MatrixControlPanel() {
           </div>
         ) : null}
 
-        {step === "trade-pick" ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-2">
-            <input
-              type="search"
-              value={tradeQuery}
-              onChange={(event) => setTradeQuery(event.target.value)}
-              placeholder="Search ticker or trade id (H001)"
-              className="shrink-0 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none"
-            />
-            <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
-              {filteredTrades.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
-                  No closed trades yet — forensic export appears after close + review.
-                </p>
-              ) : (
-                filteredTrades.map((entry) => (
-                  <button
-                    key={entry.trade.id}
-                    type="button"
-                    onClick={() => {
-                      setTradeId(entry.trade.id);
-                      setStep("detail");
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 text-left transition hover:border-violet-500/30 hover:bg-zinc-900"
-                  >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-600/15 text-sm font-bold text-amber-300">
-                      {entry.trade.id.slice(0, 3)}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-zinc-100">
-                        {entry.trade.ticker} · {entry.trade.id}
-                      </span>
-                      <span className="mt-0.5 block truncate text-xs text-zinc-500">
-                        Forensic export · closed {entry.trade.closedAt?.slice(0, 10) ?? "—"}
-                      </span>
-                    </span>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        ) : null}
-
         {step === "detail" ? (
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
             {section === "train-ai" ? (
               <PlainCopyRow
-                label="1 · Session brief (copy first)"
-                description="Mechanics — paste once at the start of the AI chat"
+                label="Matrix Mechanics brief"
+                description="Stable primer — paste once at the start of the AI chat"
                 text={data.trainAi.mechanicsBrief}
               />
             ) : null}
             {detailSnapshots.map((item) => (
-              <SnapshotCopyRow
-                key={item.id}
-                item={
-                  section === "train-ai"
-                    ? {
-                        ...item,
-                        label: "2 · Playbook rules",
-                        description: "Optional — only if discussing method / HOW",
-                      }
-                    : item
-                }
-              />
+              <SnapshotCopyRow key={item.id} item={item} />
             ))}
-            {section === "trade" && selectedTrade ? (
-              <>
-                {data.trade.snapshotItems
-                  .filter((item) => item.id === "trades-list")
-                  .map((item) => (
-                    <SnapshotCopyRow key={item.id} item={item} />
-                  ))}
-              </>
-            ) : null}
             {section === "stock-file" && selectedStock
               ? (() => {
                   const mechanics = selectedStock.snapshotItems.find((item) => item.id === "mechanics");
