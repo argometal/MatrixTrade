@@ -26,6 +26,7 @@ import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { parseIntelligenceFocus, intelligenceBrowseAllHref } from "@/lib/argus/v2/intelligence-nav";
 import { V2IntelligenceFocusBanner } from "@/app/argus/v2/components/V2IntelligenceFocusBanner";
+import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { V2TopicDetailPanel } from "./V2TopicDetailPanel";
 
 const TABS: { id: V2TopicTab; label: string }[] = [
@@ -105,6 +106,8 @@ export function V2TopicsShell({
   initialSelectedId,
   initialTab,
   neighborhood,
+  allRunbooks = [],
+  allProgress = [],
   privateConfigured = false,
   privateUnlocked = false,
   deleteUnlocked = false,
@@ -122,6 +125,8 @@ export function V2TopicsShell({
   initialSelectedId?: string;
   initialTab?: string;
   neighborhood?: V2EntityNeighborhoodGraph | null;
+  allRunbooks?: Runbook[];
+  allProgress?: RunbookProgress[];
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
 } & Omit<V2DeleteGateProps, "requiresAuthenticator">) {
@@ -293,6 +298,8 @@ export function V2TopicsShell({
             onBack={mobileDetailOpen ? backToList : undefined}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
+            allRunbooks={allRunbooks}
+            allProgress={allProgress}
             requiresAuthenticator={selected.deleteRequiresAuthenticator}
             deleteUnlocked={deleteUnlocked}
             deleteAuthUnlocked={deleteAuthUnlocked}
@@ -575,6 +582,8 @@ export function V2TopicsShell({
             onBack={mobileDetailOpen ? backToList : undefined}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
+            allRunbooks={allRunbooks}
+            allProgress={allProgress}
             requiresAuthenticator={selected.deleteRequiresAuthenticator}
             deleteUnlocked={deleteUnlocked}
             deleteAuthUnlocked={deleteAuthUnlocked}

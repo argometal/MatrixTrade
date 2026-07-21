@@ -1,10 +1,9 @@
+import Link from "next/link";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import { V2Badge, V2LockIcon, groupTimelineByDate } from "./v2-ui";
 
 function kindLabel(entry: V2TimelineEntry): string {
-  if (entry.kind === "journal") {
-    return entry.journalSubtype === "note" ? "Note" : "Log";
-  }
+  if (entry.kind === "journal") return "Note";
   if (entry.kind === "email") return "Email";
   if (entry.kind === "meeting") return "Meeting";
   return "Event";
@@ -33,7 +32,37 @@ function formatTimelineDate(iso: string): { month: string; day: string; year: st
   };
 }
 
-/** Organization timeline — date column left, mockup-style cards. */
+function TimelineCardBody({ entry }: { entry: V2TimelineEntry }) {
+  return (
+    <>
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800/80 text-sm">
+          {kindIcon(entry)}
+        </span>
+        <V2Badge tone={kindTone(entry)}>{kindLabel(entry)}</V2Badge>
+        {entry.tags?.slice(0, 3).map((tag) => (
+          <V2Badge key={tag} tone="default">
+            {tag}
+          </V2Badge>
+        ))}
+        <span className="ml-auto flex items-center gap-2 text-[11px] tabular-nums text-zinc-600">
+          {entry.time}
+          <V2LockIcon protected={entry.protected} />
+        </span>
+      </div>
+      <h3 className="text-[15px] font-semibold leading-snug text-zinc-100">{entry.title}</h3>
+      {entry.body ? (
+        <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-zinc-500">{entry.body}</p>
+      ) : null}
+      {entry.author ? <p className="mt-3 text-xs text-zinc-600">{entry.author}</p> : null}
+      {entry.href ? (
+        <p className="mt-2 text-[11px] font-medium text-violet-400/90">Open →</p>
+      ) : null}
+    </>
+  );
+}
+
+/** Organization / topic / project timeline — date column left; cards open source when `href` is set. */
 export function V2OrgTimeline({
   entries,
   limit,
@@ -46,7 +75,7 @@ export function V2OrgTimeline({
   const hasMore = limit ? entries.length > limit : false;
 
   if (shown.length === 0) {
-    return <p className="py-8 text-center text-sm text-zinc-500">No linked records or emails yet.</p>;
+    return <p className="py-8 text-center text-sm text-zinc-500">No linked notes or emails yet.</p>;
   }
 
   return (
@@ -55,6 +84,8 @@ export function V2OrgTimeline({
         {groups.map(([date, items]) =>
           items.map((entry) => {
             const parts = formatTimelineDate(date);
+            const cardClass =
+              "min-w-0 flex-1 rounded-2xl border border-zinc-800/80 bg-zinc-950/50 p-4 transition hover:border-violet-500/40";
             return (
               <article key={entry.id} className="flex gap-4 sm:gap-6">
                 <div className="hidden w-16 shrink-0 text-right sm:block">
@@ -63,30 +94,18 @@ export function V2OrgTimeline({
                   <p className="text-[10px] text-zinc-600">{parts.year}</p>
                 </div>
 
-                <div className="min-w-0 flex-1 rounded-2xl border border-zinc-800/80 bg-zinc-950/50 p-4 transition hover:border-zinc-700/80">
-                  <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-800/80 text-sm">
-                      {kindIcon(entry)}
-                    </span>
-                    <V2Badge tone={kindTone(entry)}>{kindLabel(entry)}</V2Badge>
-                    {entry.tags?.slice(0, 3).map((tag) => (
-                      <V2Badge key={tag} tone="default">
-                        {tag}
-                      </V2Badge>
-                    ))}
-                    <span className="ml-auto flex items-center gap-2 text-[11px] tabular-nums text-zinc-600">
-                      {entry.time}
-                      <V2LockIcon protected={entry.protected} />
-                    </span>
+                {entry.href ? (
+                  <Link
+                    href={entry.href}
+                    className={`${cardClass} block focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-500/50`}
+                  >
+                    <TimelineCardBody entry={entry} />
+                  </Link>
+                ) : (
+                  <div className={cardClass}>
+                    <TimelineCardBody entry={entry} />
                   </div>
-                  <h3 className="text-[15px] font-semibold leading-snug text-zinc-100">{entry.title}</h3>
-                  {entry.body ? (
-                    <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-zinc-500">{entry.body}</p>
-                  ) : null}
-                  {entry.author ? (
-                    <p className="mt-3 text-xs text-zinc-600">{entry.author}</p>
-                  ) : null}
-                </div>
+                )}
               </article>
             );
           })

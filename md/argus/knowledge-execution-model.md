@@ -97,12 +97,16 @@ Capture (quick note) stays separate from the full Create workspace.
 
 ---
 
-## Runbook (v1 implementation)
+## Runbook (implementation)
 
-- Stored in `ArgusData.runbooks[]` — separate from entities and logs.
-- Fields: `title`, `items[]` (`text`, `done`, `doneAt`, `type: item|sep`), `linkedEntityIds`.
-- Create: paste steps (one line = one item; blank line = section).
-- Work: checkbox UI on `/argus/v2/runbooks/[id]`; optional link to project/org.
+- Stored in `ArgusData.runbooks[]` — shared checklist **templates** (Execution), separate from entities and logs.
+- Fields: `title`, `items[]` (`text`, `done` = template default only, `doneAt`, `type: item|sep`), `linkedEntityIds`.
+- Vocabulary: each checklist row is a **check** (not a “card”).
+- **Organization** = Runbooks library (create/edit templates). Templates are assigned by linking (`linkedEntityIds`) to Project / Topic / Event (and may stay linked to the org).
+- **Project / Topic / Event** = Runbooks tab — assign or copy from library, then execute.
+- Per-level state lives in `ArgusData.runbookProgress[]`: `{ runbookId, entityId, checks, closed }` — only check done/open + closed for that entity; the checklist text is not copied unless the user explicitly **Copy**.
+- Create: paste steps (one line = one check; blank line = section).
+- Work panel: execute checks at a scope; template rebuild / AI bulk stay on the org library (or non-execute mode).
 - No assignees, due dates, or forced completion.
 
 ---
@@ -113,3 +117,4 @@ Capture (quick note) stays separate from the full Create workspace.
 - Full Capture → Knowledge → Entity → Execution top-level launcher redesign
 - Migrating `Log.kind = follow_up` to Execution table
 - Replacing Document entity with evidence type (v01 migration track)
+- Parallel Trello boards / `Runproject` / `Runtopic` entity types — evolve existing list↔card viewers instead

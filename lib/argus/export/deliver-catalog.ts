@@ -44,9 +44,10 @@ export const DELIVER_PACKAGES: DeliverPackageCard[] = [
   },
   {
     id: "evidence_dossier",
-    title: "Evidence Dossier",
-    description: "Full handover — email bodies, journal text, event sections, files in ZIP. For sharing proof.",
-    badge: "Full story",
+    title: "Portable Archive",
+    description:
+      "ZIP you can open without Argus — report.html, emails as .eml (Outlook/Mail), notes as Markdown, original files, plus argus/ JSON for re-import.",
+    badge: "Human + backup",
     badgeTone: "blue",
     available: true,
   },

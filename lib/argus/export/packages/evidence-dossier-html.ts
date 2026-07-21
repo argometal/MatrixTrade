@@ -142,7 +142,7 @@ export function buildEvidenceDossierHtml(input: {
   <div class="wrap">
     <header class="hero">
       <h1>${htmlEscape(scope.name)}</h1>
-      <p>Evidence Dossier · ${htmlEscape(scopeLabel)} · ${htmlEscape(generatedAt.slice(0, 10))}</p>
+      <p>Portable Archive · ${htmlEscape(scopeLabel)} · ${htmlEscape(generatedAt.slice(0, 10))}</p>
     </header>
 
     <div class="stats">
@@ -185,7 +185,7 @@ export function buildEvidenceDossierHtml(input: {
       ${collected.containsPrivate ? `<p class="muted" style="margin-top:0.75rem;">This package may include protected records.</p>` : ""}
     </section>
 
-    ${deliverFooterHtml(branding, generatedAt, "Evidence Dossier")}
+    ${deliverFooterHtml(branding, generatedAt, "Portable Archive")}
   </div>
 </body>
 </html>`;

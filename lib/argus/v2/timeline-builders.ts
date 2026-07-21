@@ -25,6 +25,8 @@ export function logToTimelineEntry(log: Log): V2TimelineEntry {
     body: log.body?.trim() || undefined,
     tags: log.topics.length ? log.topics : undefined,
     protected: log.private,
+    /** Open the note/log detail (legacy reader until v2 note surface exists). */
+    href: `/argus/logs/${log.id}`,
   };
 }
 
@@ -39,6 +41,8 @@ export function inboxToTimelineEntry(item: InboxItem): V2TimelineEntry {
     title: from ? `Email from ${from}` : subject,
     body: item.subject ? item.rawText?.slice(0, 200)?.trim() : undefined,
     protected: item.private,
+    /** Open inbox with this message selected (scoped to the email object). */
+    href: `/argus/v2/inbox?selected=${item.id}`,
   };
 }
 

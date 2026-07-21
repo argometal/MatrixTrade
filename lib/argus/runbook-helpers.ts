@@ -1,4 +1,4 @@
-import type { Runbook, RunbookItem, RunbookSubtask } from "./types";
+import type { Runbook, RunbookItem, RunbookProgress, RunbookSubtask } from "./types";
 
 export function normRunbookLine(line: string): string {
   return String(line || "")
@@ -91,10 +91,38 @@ export function runbookProgress(items: RunbookItem[]): { total: number; done: nu
   return { total: actionable.length, done, open: actionable.length - done };
 }
 
-export function runbooksForEntity(runbooks: Runbook[], entityId: string): Runbook[] {
+export function activeRunbooks(runbooks: Runbook[]): Runbook[] {
   return runbooks
-    .filter((runbook) => !runbook.deletedAt && runbook.linkedEntityIds.includes(entityId))
+    .filter((runbook) => !runbook.deletedAt)
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.title.localeCompare(b.title));
+}
+
+export function runbooksForEntity(runbooks: Runbook[], entityId: string): Runbook[] {
+  return activeRunbooks(runbooks).filter((runbook) => runbook.linkedEntityIds.includes(entityId));
+}
+
+/**
+ * Templates available to assign at Project / Topic / Event.
+ * Prefer runbooks already linked to related orgs/projects; fall back to full library.
+ */
+export function libraryRunbooksForRelated(
+  runbooks: Runbook[],
+  relatedEntityIds: string[]
+): Runbook[] {
+  const related = new Set(relatedEntityIds.filter(Boolean));
+  const active = activeRunbooks(runbooks);
+  if (related.size === 0) return active;
+  const fromRelated = active.filter((runbook) =>
+    runbook.linkedEntityIds.some((id) => related.has(id))
+  );
+  return fromRelated.length > 0 ? fromRelated : active;
+}
+
+export function progressForEntity(
+  records: RunbookProgress[] | undefined,
+  entityId: string
+): RunbookProgress[] {
+  return (records ?? []).filter((row) => row.entityId === entityId);
 }
 
 export function runbookHasNestedSubtasks(items: RunbookItem[]): boolean {
@@ -128,4 +156,89 @@ export function flattenRunbookSubtasks(items: RunbookItem[]): RunbookItem[] {
   }
 
   return flat;
+}
+
+export function runbookProgressRecordId(runbookId: string, entityId: string): string {
+  return `${runbookId}::${entityId}`;
+}
+
+export function findRunbookProgress(
+  records: RunbookProgress[] | undefined,
+  runbookId: string,
+  entityId: string
+): RunbookProgress | undefined {
+  const id = runbookProgressRecordId(runbookId, entityId);
+  return (records ?? []).find((row) => row.id === id);
+}
+
+/** Merge template checklist with per-entity progress for execution UI. */
+export function applyRunbookProgress(
+  runbook: Runbook,
+  progress: RunbookProgress | null | undefined
+): RunbookItem[] {
+  if (!progress) {
+    return runbook.items.map((item) => ({
+      ...item,
+      done: false,
+      doneAt: "",
+      subtasks: (item.subtasks ?? []).map((subtask) => ({ ...subtask, done: false, doneAt: "" })),
+    }));
+  }
+
+  return runbook.items.map((item) => {
+    const check = progress.checks[item.id];
+    return {
+      ...item,
+      done: check?.done ?? false,
+      doneAt: check?.doneAt ?? "",
+      subtasks: (item.subtasks ?? []).map((subtask) => {
+        const key = `${item.id}:${subtask.id}`;
+        const st = progress.checks[key];
+        return {
+          ...subtask,
+          done: st?.done ?? false,
+          doneAt: st?.doneAt ?? "",
+        };
+      }),
+    };
+  });
+}
+
+/** Seed progress from legacy item.done flags (one-time migration aid). */
+export function seedProgressFromTemplateItems(
+  runbook: Runbook,
+  entityId: string
+): RunbookProgress {
+  const checks: RunbookProgress["checks"] = {};
+  for (const item of runbook.items) {
+    if (item.type === "sep") continue;
+    if (item.done) {
+      checks[item.id] = { done: true, doneAt: item.doneAt || runbookStamp() };
+    }
+    for (const subtask of item.subtasks ?? []) {
+      if (subtask.done) {
+        checks[`${item.id}:${subtask.id}`] = {
+          done: true,
+          doneAt: subtask.doneAt || runbookStamp(),
+        };
+      }
+    }
+  }
+  const actionable = runbook.items.filter((item) => item.type !== "sep");
+  const allDone =
+    actionable.length > 0 && actionable.every((item) => checks[item.id]?.done);
+  return {
+    id: runbookProgressRecordId(runbook.id, entityId),
+    runbookId: runbook.id,
+    entityId,
+    checks,
+    closed: allDone,
+    updatedAt: runbookStamp(),
+  };
+}
+
+export function scopedRunbookProgress(
+  items: RunbookItem[]
+): { total: number; done: number; open: number } {
+  return runbookProgress(items);
 }

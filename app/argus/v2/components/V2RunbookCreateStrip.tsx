@@ -6,11 +6,15 @@ import { saveUnifiedCreateFlowAction } from "@/app/argus/actions";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
 
 export function V2RunbookCreateStrip({
+  entityId,
   projectId,
   onCreated,
   onCancel,
 }: {
-  projectId: string;
+  /** Preferred — org / project / topic / event to link on create. */
+  entityId?: string;
+  /** @deprecated use entityId */
+  projectId?: string;
   onCreated?: (runbookId: string) => void;
   onCancel?: () => void;
 }) {
@@ -19,10 +23,15 @@ export function V2RunbookCreateStrip({
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const linkId = entityId ?? projectId ?? "";
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    if (!linkId) {
+      setError("Missing entity to link.");
+      return;
+    }
     startTransition(async () => {
       try {
         const result = await saveUnifiedCreateFlowAction({
@@ -35,7 +44,7 @@ export function V2RunbookCreateStrip({
           eventDate: "",
           tags: [],
           entryType: "log",
-          linkedEntityIds: [projectId],
+          linkedEntityIds: [linkId],
           linkedLogIds: [],
         });
         setTitle("");
@@ -66,7 +75,7 @@ export function V2RunbookCreateStrip({
         />
       </label>
       <label className="mb-3 block">
-        <span className="mb-1 block text-[11px] text-zinc-500">Cards (one line = one card)</span>
+        <span className="mb-1 block text-[11px] text-zinc-500">Checks (one line = one check)</span>
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}

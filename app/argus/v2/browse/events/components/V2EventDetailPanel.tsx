@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { appendEventChronicleEntryAction } from "@/app/argus/actions";
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
@@ -16,9 +16,14 @@ import { V2TagPatternBadges } from "@/app/argus/v2/components/V2TagPatternBadges
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
+import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
+import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EventSignalEditor } from "./V2EventSignalEditor";
+import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
+import type { Runbook, RunbookProgress } from "@/lib/argus/types";
+import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
-type PanelTab = "note" | "chronicle" | "metrics" | "signals";
+type PanelTab = "note" | "chronicle" | "runbooks" | "metrics" | "signals";
 type ChronicleFilter = "all" | "photo" | "file" | "email" | "journal";
 
 function EvidenceIcon({ kind }: { kind: V2EventDetail["evidence"][0]["kind"] }) {
@@ -59,6 +64,8 @@ export function V2EventDetailPanel({
   onBack,
   privateConfigured = false,
   privateUnlocked = false,
+  allRunbooks = [],
+  allProgress = [],
   ...deleteGate
 }: {
   selected: V2EventDetail;
@@ -68,6 +75,8 @@ export function V2EventDetailPanel({
   onBack?: () => void;
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
+  allRunbooks?: Runbook[];
+  allProgress?: RunbookProgress[];
 } & V2DeleteGateProps) {
   const router = useRouter();
   const [panelTab, setPanelTab] = useState<PanelTab>("note");
@@ -79,6 +88,22 @@ export function V2EventDetailPanel({
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
+  const mobileDetail = Boolean(onBack);
+  const compactChrome = mobileDetail && panelTab !== "note";
+  const showMobileManageBar = mobileDetail && privateUnlocked;
+
+  const linkedRunbooks = useMemo(
+    () => runbooksForEntity(allRunbooks, selected.id),
+    [allRunbooks, selected.id]
+  );
+  const libraryRunbooks = useMemo(
+    () => libraryRunbooksForRelated(allRunbooks, selected.linkedEntityIds),
+    [allRunbooks, selected.linkedEntityIds]
+  );
+  const progressRecords = useMemo(
+    () => progressForEntity(allProgress, selected.id),
+    [allProgress, selected.id]
+  );
 
   const canSave = composer.trim().length > 0 || pendingFiles.length > 0;
 
@@ -132,6 +157,7 @@ export function V2EventDetailPanel({
   const tabs: { id: PanelTab; label: string }[] = [
     { id: "note", label: "Note" },
     { id: "chronicle", label: "Chronicle" },
+    { id: "runbooks", label: "Runbooks" },
     { id: "signals", label: "Signals" },
     { id: "metrics", label: "Metrics" },
   ];
@@ -156,74 +182,89 @@ export function V2EventDetailPanel({
         href={`/argus/v2/browse/events?selected=${selected.id}`}
       />
       <div className="shrink-0 border-b border-zinc-800/80 p-5">
-        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
-            <p className="mt-1 text-sm text-zinc-400">{selected.dateTimeLabel}</p>
-            {selected.linkedTags.length > 0 ? (
-              <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Signals">
-                {selected.linkedTags.map((signal) => (
-                  <span
-                    key={signal}
-                    className="inline-flex rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-200 ring-1 ring-amber-500/25"
+        <V2DetailCompactHeader
+          mobileDetail={mobileDetail}
+          compact={compactChrome}
+          title={selected.name}
+          subtitle={selected.dateTimeLabel}
+          collapsedExtra={
+            <V2QuickDeliverButton scopeType="event" scopeId={selected.id} scopeName={selected.name} label="PDF" />
+          }
+          expanded={
+            <>
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
+                  <p className="mt-1 text-sm text-zinc-400">{selected.dateTimeLabel}</p>
+                  {selected.linkedTags.length > 0 ? (
+                    <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Signals">
+                      {selected.linkedTags.map((signal) => (
+                        <span
+                          key={signal}
+                          className="inline-flex rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-200 ring-1 ring-amber-500/25"
+                        >
+                          {signal}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                  <p className="mt-1.5 text-[11px] text-zinc-600">{selected.description}</p>
+                </div>
+                {selected.tagPatterns.length > 0 ? (
+                  <V2TagPatternBadges patterns={selected.tagPatterns} className="mt-3" />
+                ) : null}
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <V2QuickDeliverButton scopeType="event" scopeId={selected.id} scopeName={selected.name} />
+                  <div className={showMobileManageBar ? "hidden lg:block" : undefined}>
+                    <V2EntityLifecycleActions
+                      entityId={selected.id}
+                      entityName={selected.name}
+                      entityKind="event"
+                      lifecycleStatus={selected.lifecycleStatus}
+                      returnTo={returnTo}
+                      hasPrivateEvidence={selected.hasPrivateEvidence}
+                      privateConfigured={privateConfigured}
+                      privateUnlocked={privateUnlocked}
+                      showDelete
+                      variant="menu"
+                      {...deleteGate}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEmailOpen(true)}
+                    className="rounded-lg border border-sky-500/40 bg-sky-600/15 px-3 py-1.5 text-xs font-semibold text-sky-300 hover:bg-sky-600/25"
                   >
-                    {signal}
-                  </span>
-                ))}
+                    Link email
+                  </button>
+                  <V2EntityLinkButton
+                    entityId={selected.id}
+                    linkedIds={selected.linkedEntityIds}
+                    className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+                  />
+                  <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
+                </div>
               </div>
-            ) : null}
-            <p className="mt-1.5 text-[11px] text-zinc-600">{selected.description}</p>
-          </div>
-          {selected.tagPatterns.length > 0 ? (
-            <V2TagPatternBadges patterns={selected.tagPatterns} className="mt-3" />
-          ) : null}
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <V2QuickDeliverButton scopeType="event" scopeId={selected.id} scopeName={selected.name} />
-            <V2EntityLifecycleActions
-              entityId={selected.id}
-              entityName={selected.name}
-              entityKind="event"
-              lifecycleStatus={selected.lifecycleStatus}
-              returnTo={returnTo}
-              hasPrivateEvidence={selected.hasPrivateEvidence}
-              privateConfigured={privateConfigured}
-              privateUnlocked={privateUnlocked}
-              showDelete
-              variant="menu"
-              {...deleteGate}
-            />
-            <button
-              type="button"
-              onClick={() => setEmailOpen(true)}
-              className="rounded-lg border border-sky-500/40 bg-sky-600/15 px-3 py-1.5 text-xs font-semibold text-sky-300 hover:bg-sky-600/25"
-            >
-              Link email
-            </button>
-            <V2EntityLinkButton
-              entityId={selected.id}
-              linkedIds={selected.linkedEntityIds}
-              className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
-            />
-            <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
-          </div>
-        </div>
 
-        {selected.meetingUrl ? (
-          <a
-            href={selected.meetingUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="mb-3 inline-flex rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-300 hover:bg-sky-500/15"
-          >
-            Meeting link ↗
-          </a>
-        ) : null}
+              {selected.meetingUrl ? (
+                <a
+                  href={selected.meetingUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mb-3 inline-flex rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-sm text-sky-300 hover:bg-sky-500/15"
+                >
+                  Meeting link ↗
+                </a>
+              ) : null}
 
-        {selected.projectName && selected.projectHref ? (
-          <Link href={selected.projectHref} className="mb-3 block text-sm text-violet-400 hover:text-violet-300">
-            📁 {selected.projectName}
-          </Link>
-        ) : null}
+              {selected.projectName && selected.projectHref ? (
+                <Link href={selected.projectHref} className="mb-3 block text-sm text-violet-400 hover:text-violet-300">
+                  📁 {selected.projectName}
+                </Link>
+              ) : null}
+            </>
+          }
+        />
 
         <div className="flex gap-1 border-b border-zinc-800/80">
           {tabs.map((t) => (
@@ -243,7 +284,9 @@ export function V2EventDetailPanel({
         </div>
       </div>
 
-      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto p-5">
+      <div
+        className={`argus-v2-scroll min-h-0 flex-1 overflow-y-auto p-5 ${showMobileManageBar ? "pb-24 lg:pb-5" : ""}`}
+      >
         <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
           {panelTab === "note" ? (
             <div className="space-y-4">
@@ -346,6 +389,16 @@ export function V2EventDetailPanel({
             />
           ) : null}
 
+          {panelTab === "runbooks" ? (
+            <V2EntityRunbooksTab
+              level="event"
+              entityId={selected.id}
+              linkedRunbooks={linkedRunbooks}
+              libraryRunbooks={libraryRunbooks}
+              progressRecords={progressRecords}
+            />
+          ) : null}
+
           {panelTab === "metrics" ? (
             <div className="space-y-5">
               <div>
@@ -419,6 +472,20 @@ export function V2EventDetailPanel({
           ) : null}
         </V2PrivateEvidenceGate>
       </div>
+
+      <V2MobileUnlockedManageBar
+        visible={showMobileManageBar}
+        entityId={selected.id}
+        entityName={selected.name}
+        entityKind="event"
+        lifecycleStatus={selected.lifecycleStatus}
+        returnTo={returnTo}
+        hasPrivateEvidence={selected.hasPrivateEvidence}
+        privateConfigured={privateConfigured}
+        privateUnlocked={privateUnlocked}
+        showDelete
+        {...deleteGate}
+      />
 
       <V2EventLinkEmailModal
         open={emailOpen}

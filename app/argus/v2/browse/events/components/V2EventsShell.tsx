@@ -19,6 +19,7 @@ import { V2IntelligenceFocusBanner } from "@/app/argus/v2/components/V2Intellige
 import { resolveV2SelectedId, v2ActiveListItemClass } from "@/lib/argus/v2/selection";
 import { useScrollToSelected } from "@/lib/argus/v2/use-scroll-to-selected";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
+import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { V2EventDetailPanel } from "./V2EventDetailPanel";
 
 const TABS: { id: V2EventTab; label: string }[] = [
@@ -34,6 +35,8 @@ export function V2EventsShell({
   initialSelectedId,
   initialTab,
   neighborhood,
+  allRunbooks = [],
+  allProgress = [],
   privateConfigured = false,
   privateUnlocked = false,
   deleteUnlocked = false,
@@ -51,17 +54,23 @@ export function V2EventsShell({
   initialSelectedId?: string;
   initialTab?: string;
   neighborhood?: V2EntityNeighborhoodGraph | null;
+  allRunbooks?: Runbook[];
+  allProgress?: RunbookProgress[];
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
 } & Omit<V2DeleteGateProps, "requiresAuthenticator">) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseV2EventTab(searchParams.get("tab") ?? initialTab);
+  const entityScope = searchParams.get("entity")?.trim() || undefined;
   const urlSelected = searchParams.get("selected");
   const mobileDetailOpen = Boolean(urlSelected);
   const selectedId = resolveV2SelectedId(urlSelected, initialSelectedId);
-  const counts = useMemo(() => buildV2EventTabCounts(rows), [rows]);
-  const filtered = useMemo(() => filterV2EventRows(rows, tab), [rows, tab]);
+  const counts = useMemo(
+    () => buildV2EventTabCounts(filterV2EventRows(rows, "all", entityScope)),
+    [rows, entityScope]
+  );
+  const filtered = useMemo(() => filterV2EventRows(rows, tab, entityScope), [rows, tab, entityScope]);
   const groups = useMemo(() => groupV2EventRows(filtered), [filtered]);
   const selected = selectedId ? details.find((d) => d.id === selectedId) : undefined;
 
@@ -121,6 +130,8 @@ export function V2EventsShell({
             neighborhood={neighborhood}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
+            allRunbooks={allRunbooks}
+            allProgress={allProgress}
             requiresAuthenticator={selected.deleteRequiresAuthenticator}
             deleteUnlocked={deleteUnlocked}
             deleteAuthUnlocked={deleteAuthUnlocked}
@@ -254,6 +265,8 @@ export function V2EventsShell({
             onBack={mobileDetailOpen ? backToList : undefined}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
+            allRunbooks={allRunbooks}
+            allProgress={allProgress}
             requiresAuthenticator={selected.deleteRequiresAuthenticator}
             deleteUnlocked={deleteUnlocked}
             deleteAuthUnlocked={deleteAuthUnlocked}

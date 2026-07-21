@@ -2,17 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { Entity } from "@/lib/argus/types";
-import type { Runbook } from "@/lib/argus/types";
+import type { Entity, Runbook, RunbookProgress } from "@/lib/argus/types";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import type { TagPattern } from "@/lib/argus/v2/tag-patterns";
+import { applyRunbookProgress, findRunbookProgress, runbookProgress } from "@/lib/argus/runbook-helpers";
 import { formatDate } from "@/app/argus/components/ui";
 import { V2Card } from "./v2-ui";
 import { V2EntityNeighborhoodPanel } from "./V2EntityNeighborhoodPanel";
 import { V2PrivateEvidenceGate } from "./V2PrivateEvidenceGate";
 import { V2ProjectScopeToggle } from "./V2ProjectScopeToggle";
-import { V2EntityChronicleSection } from "./V2EntityChronicleSection";
+import { V2EntityTimelineSection } from "./V2EntityTimelineSection";
 import { V2EntityChronicleRail } from "./V2EntityChronicleRail";
 import { V2EntityLinksTab } from "./V2EntityLinksTab";
 import { V2ProjectRunbooksTab } from "./V2ProjectRunbooksTab";
@@ -26,7 +26,7 @@ import {
   V2PersonListItem,
 } from "./V2RightPanel";
 
-const TABS = ["Overview", "Chronicle", "Runbooks", "Links"] as const;
+const TABS = ["Overview", "Timeline", "Runbooks", "Links"] as const;
 type ProjectTab = (typeof TABS)[number];
 
 export type V2ProjectShellProps = {
@@ -39,6 +39,8 @@ export type V2ProjectShellProps = {
   timeline: V2TimelineEntry[];
   neighborhood: V2EntityNeighborhoodGraph;
   runbooks: Runbook[];
+  libraryRunbooks?: Runbook[];
+  progressRecords?: RunbookProgress[];
   durationDays?: number;
   dateRangeLabel?: string;
   peopleWithRoles: Array<{ id: string; name: string; initials: string; role: string }>;
@@ -67,6 +69,8 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
     timeline,
     neighborhood,
     runbooks,
+    libraryRunbooks = [],
+    progressRecords = [],
     durationDays,
     peopleWithRoles,
     linkedTopics,
@@ -82,8 +86,9 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
     ? "Bounded by project dates · direct links + via project contacts"
     : "All dates · includes evidence outside the project window";
   const runbookOpen = runbooks.reduce((sum, rb) => {
-    const open = rb.items.filter((i) => i.type !== "sep" && !i.done).length;
-    return sum + open;
+    const prog = findRunbookProgress(progressRecords, rb.id, entity.id);
+    const items = applyRunbookProgress(rb, prog ?? null);
+    return sum + runbookProgress(items).open;
   }, 0);
 
   return (
@@ -93,7 +98,7 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
           const hint =
             entry === "Runbooks" && runbooks.length > 0
               ? ` · ${runbooks.length}`
-              : entry === "Chronicle" && timeline.length > 0
+              : entry === "Timeline" && timeline.length > 0
                 ? ` · ${timeline.length}`
                 : "";
           return (
@@ -128,9 +133,9 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
                 }
               />
               <StatChip value={String(stats.people)} label="People" href={`/argus/projects/${entity.id}`} />
-              <StatChip value={String(stats.emails)} label="Emails" href="/argus/v2/inbox" />
-              <StatChip value={String(stats.topics)} label="Topics" href="/argus/v2/browse/topics" />
-              <StatChip value={String(stats.events)} label="Events" href="/argus/v2/browse/events" />
+              <StatChip value={String(stats.emails)} label="Emails" href={`/argus/v2/inbox?entity=${entity.id}`} />
+              <StatChip value={String(stats.topics)} label="Topics" href={`/argus/v2/browse/topics?project=${entity.id}`} />
+              <StatChip value={String(stats.events)} label="Events" href={`/argus/v2/browse/events?entity=${entity.id}`} />
               <StatChip
                 value={runbooks.length > 0 ? `${runbooks.length} · ${runbookOpen} open` : "0"}
                 label="Runbooks"
@@ -160,7 +165,7 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
             </V2PanelCard>
 
             <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
-              <V2EntityChronicleRail entries={timeline} onOpenChronicle={() => setTab("Chronicle")} />
+              <V2EntityChronicleRail entries={timeline} onOpenChronicle={() => setTab("Timeline")} />
             </V2PrivateEvidenceGate>
 
             <V2PanelCard>
@@ -202,9 +207,9 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
         </div>
       ) : null}
 
-      {tab === "Chronicle" ? (
+      {tab === "Timeline" ? (
         <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
-          <V2EntityChronicleSection
+          <V2EntityTimelineSection
             entries={timeline}
             subtitle={chronicleSubtitle}
             headerExtra={
@@ -215,7 +220,12 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
       ) : null}
 
       {tab === "Runbooks" ? (
-        <V2ProjectRunbooksTab runbooks={runbooks} projectId={entity.id} />
+        <V2ProjectRunbooksTab
+          runbooks={runbooks}
+          projectId={entity.id}
+          libraryRunbooks={libraryRunbooks}
+          progressRecords={progressRecords}
+        />
       ) : null}
 
       {tab === "Links" ? (

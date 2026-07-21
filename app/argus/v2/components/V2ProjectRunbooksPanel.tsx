@@ -37,7 +37,7 @@ export function V2ProjectRunbooksPanel({
       />
       {runbooks.length === 0 ? (
         <p className="text-sm text-zinc-500">
-          Procedures for this engagement — cards with optional subtasks.
+          Procedures for this engagement — checklists linked from the organization library.
         </p>
       ) : (
         <ul className="space-y-2">
