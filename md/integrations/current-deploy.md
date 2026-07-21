@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0721d` |
-| **Commit** | Always `git rev-parse main0721d` after fetch (must match `origin/main`) |
+| **Tag** | `main0721e` |
+| **Commit** | Always `git rev-parse main0721e` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-07-21 |
 
@@ -15,14 +15,14 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0721d
+# optional pin: git checkout main0721e
 ```
 
 ## What this deploy includes
 
+- PR #16: Runbooks redesign (org library, linked Project/Topic/Event tabs, per-entity progress), scoped drill-down, Timeline/Chronicle UX, portable archive, inbox compact header
 - PR #14: Topics/Events metrics homologation, neighborhood, portfolio intensity
 - PR #15: Vocabulary (Topic / Tag / Alias / Signal), mobile Topics & Events detail, tag filter depuration
-- See `md/argus/vocabulary-policy.md`
 
 ## Stale PRs (closed)
 
