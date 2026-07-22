@@ -217,8 +217,10 @@ Method: `playbook-create`, `playbook-update`
 
 | Status | Item |
 |--------|------|
-| **NEXT** | Closed-trade Observation UX reusing existing `observation-update` + Observation store (no new schema) |
+| **NORTH STAR** | **[MTA-002 Operability](mta-002-operability-plan.md)** — master prompt + Stock File 3-action loop; not another engine |
+| **NEXT (P1)** | Closed-trade Observation UX / incomplete-fill alert on **Trades** (reuse `observation-update`) — not Scout war room |
+| **NEXT (P2–P3)** | MTA-002B prompt validation log · MTA-002C Secular Trend Continuation Playbook |
 | **EVALUATION** | MAF expectancy aggregation by component/Playbook — only if enough attributed rows exist |
-| **OUT OF SCOPE now** | Request layer, Library schema, Volume profile / AVWAP, L2 / heatmap, empty dashboards |
+| **OUT OF SCOPE now** | Request layer, Library schema, Volume profile / AVWAP, L2 / heatmap, empty dashboards, Coach, broker automation |
 
 Do not reintroduce Control → Closed trade, Session, Case, or Update labels. Do not bury Stock Files under Library.

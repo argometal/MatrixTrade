@@ -35,6 +35,11 @@ import {
   tradesForScoutCase,
 } from "@/lib/scout-case-trades";
 import {
+  formatScoutCasePlannedRR,
+  sortScoutCasesByPlannedRR,
+} from "@/lib/scout-case-sort";
+import { resolvePlannedRRFromPlan } from "@/lib/plan-risk";
+import {
   buildTradeProspects,
   findTradeProspect,
   type TradeProspect,
@@ -55,11 +60,29 @@ type ScoutCard = {
   thesisPlans: TradePlan[];
   primaryPlan: TradePlan | undefined;
   levelsView: ReturnType<typeof buildPlanLevelsView> | null;
+  plannedRR?: number;
   verdict: ScoutingVerdict | null;
   activeScoutCount: number;
   linkedTrades: Trade[];
   orphan: boolean;
 };
+
+function resolveScoutCardPlannedRR(
+  primaryPlan: TradePlan | undefined,
+  levelsView: ReturnType<typeof buildPlanLevelsView> | null
+): number | undefined {
+  if (primaryPlan?.plannedRR !== undefined && Number.isFinite(primaryPlan.plannedRR)) {
+    return primaryPlan.plannedRR;
+  }
+  if (primaryPlan) {
+    const fromLevels = resolvePlannedRRFromPlan(primaryPlan);
+    if (fromLevels !== undefined) return fromLevels;
+  }
+  if (levelsView?.plannedRR !== undefined && Number.isFinite(levelsView.plannedRR)) {
+    return levelsView.plannedRR;
+  }
+  return undefined;
+}
 
 /**
  * Scout war room — one selected case in detail (radiografía + execute).
@@ -121,6 +144,7 @@ export function PreviewPlanning({
         thesisPlans,
         primaryPlan,
         levelsView,
+        plannedRR: resolveScoutCardPlannedRR(primaryPlan, levelsView),
         verdict,
         activeScoutCount: activePlans.length,
         linkedTrades,
@@ -139,6 +163,7 @@ export function PreviewPlanning({
         thesisPlans: tickerPlans,
         primaryPlan,
         levelsView: null,
+        plannedRR: resolveScoutCardPlannedRR(primaryPlan, null),
         verdict: null,
         activeScoutCount: tickerPlans.filter((p) => p.status === "watching" || p.status === "ready")
           .length,
@@ -147,7 +172,8 @@ export function PreviewPlanning({
       };
     });
 
-    return [...fromTheses, ...orphans];
+    // Highest planned R first — watch strongest asymmetry; orphans last.
+    return sortScoutCasesByPlannedRR([...fromTheses, ...orphans]);
   }, [activeTheses, plans, trades]);
 
   const focusedScoutCard = useMemo(() => {
@@ -231,7 +257,8 @@ export function PreviewPlanning({
             <div>
               <h1 className="text-xl font-semibold text-zinc-100">Scout</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                War room — fills stay until completados (closed + review). Closed alone is not enough.
+                War room — cases to watch / re-enter, highest planned R first. Incomplete closed
+                fills belong on Trades (not this list’s mission).
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
@@ -274,17 +301,21 @@ export function PreviewPlanning({
                     onChange={(e) => setScoutCaseKey(e.target.value)}
                     className="min-w-[14rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
                   >
-                    {scoutCards.map((card) => (
-                      <option key={card.key} value={card.key}>
-                        {card.ticker}
-                        {card.orphan ? " · orphan fill" : ""}
-                        {card.verdict ? ` · ${SCOUTING_VERDICT_LABELS[card.verdict]}` : ""}
-                        {card.linkedTrades.length
-                          ? ` · ${card.linkedTrades.length} open loop`
-                          : ""}
-                        {card.primaryPlan ? ` · ${card.primaryPlan.id}` : ""}
-                      </option>
-                    ))}
+                    {scoutCards.map((card) => {
+                      const rrLabel = formatScoutCasePlannedRR(card.plannedRR);
+                      return (
+                        <option key={card.key} value={card.key}>
+                          {card.ticker}
+                          {rrLabel ? ` · ${rrLabel}` : " · —R"}
+                          {card.orphan ? " · orphan fill" : ""}
+                          {card.verdict ? ` · ${SCOUTING_VERDICT_LABELS[card.verdict]}` : ""}
+                          {card.linkedTrades.length
+                            ? ` · ${card.linkedTrades.length} open loop`
+                            : ""}
+                          {card.primaryPlan ? ` · ${card.primaryPlan.id}` : ""}
+                        </option>
+                      );
+                    })}
                   </select>
                   {panelLevelsView ? (
                     <PlanMapToggleButton
@@ -297,6 +328,7 @@ export function PreviewPlanning({
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {scoutCards.map((card) => {
                     const selected = card.key === focusedScoutCard?.key;
+                    const rrChip = formatScoutCasePlannedRR(card.plannedRR);
                     return (
                       <button
                         key={card.key}
@@ -309,6 +341,7 @@ export function PreviewPlanning({
                         }`}
                       >
                         {card.ticker}
+                        {rrChip ? ` ·${rrChip}` : ""}
                         {card.linkedTrades.length > 0 ? ` ·${card.linkedTrades.length}` : ""}
                       </button>
                     );
