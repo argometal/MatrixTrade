@@ -13,7 +13,7 @@ function SnapshotCopyRow({
   tone = "default",
 }: {
   item: SnapshotMenuItem;
-  tone?: "default" | "primary" | "request";
+  tone?: "default" | "primary";
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -27,27 +27,10 @@ function SnapshotCopyRow({
   const shell =
     tone === "primary"
       ? "border-violet-500/40 bg-violet-600/15 hover:border-violet-500/60 hover:bg-violet-600/25"
-      : tone === "request"
-        ? "border-sky-500/40 bg-sky-600/15 hover:border-sky-500/60 hover:bg-sky-600/25"
-        : "border-zinc-800/80 bg-zinc-900/40 hover:border-violet-500/30 hover:bg-zinc-900";
-  const icon =
-    tone === "primary"
-      ? "bg-violet-600/25 text-violet-200"
-      : tone === "request"
-        ? "bg-sky-600/25 text-sky-200"
-        : "bg-violet-600/20 text-violet-300";
-  const title =
-    tone === "primary"
-      ? "text-violet-50"
-      : tone === "request"
-        ? "text-sky-50"
-        : "text-zinc-100";
-  const desc =
-    tone === "primary"
-      ? "text-violet-200/70"
-      : tone === "request"
-        ? "text-sky-200/70"
-        : "text-zinc-500";
+      : "border-zinc-800/80 bg-zinc-900/40 hover:border-violet-500/30 hover:bg-zinc-900";
+  const icon = tone === "primary" ? "bg-violet-600/25 text-violet-200" : "bg-violet-600/20 text-violet-300";
+  const title = tone === "primary" ? "text-violet-50" : "text-zinc-100";
+  const desc = tone === "primary" ? "text-violet-200/70" : "text-zinc-500";
 
   return (
     <button
@@ -68,13 +51,32 @@ function SnapshotCopyRow({
   );
 }
 
+function ApplyButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex w-full shrink-0 items-center gap-3 rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-600/25"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600/25 text-sm font-bold text-emerald-200">
+        ↑
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-semibold text-emerald-100">Apply</span>
+        <span className="mt-0.5 block text-xs text-emerald-200/70">
+          Paste AI JSON — create or capture after human review
+        </span>
+      </span>
+    </button>
+  );
+}
+
 export function NetworkPanel() {
   const {
     open,
     closePanel,
     mechanics,
-    request,
-    additionalItems,
+    libraryGroups,
     snapshotItems,
     defaultEntityId,
     panelTitle,
@@ -101,12 +103,12 @@ export function NetworkPanel() {
     closePanel();
   }
 
-  const hasPackage = Boolean(mechanics && request);
+  const hasPackage = Boolean(mechanics);
   const title = step === "apply" ? "Apply AI response" : panelTitle;
   const hint =
     step === "apply"
       ? "Paste the Apply JSON your AI returned — validate, then Apply"
-      : "Mechanics orients the AI · Request starts work · copy extra blocks only when asked";
+      : "Copy Mechanics · write naturally in chat · copy Library blocks only when the AI asks";
 
   return (
     <div
@@ -131,31 +133,26 @@ export function NetworkPanel() {
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
               {hasPackage ? (
                 <>
-                  {mechanics ? <SnapshotCopyRow item={mechanics} tone="primary" /> : null}
-                  {request ? <SnapshotCopyRow item={request} tone="request" /> : null}
-                  <button
-                    type="button"
-                    onClick={() => setStep("apply")}
-                    className="flex w-full shrink-0 items-center gap-3 rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-600/25"
-                  >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600/25 text-sm font-bold text-emerald-200">
-                      ↑
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-emerald-100">Apply</span>
-                      <span className="mt-0.5 block text-xs text-emerald-200/70">
-                        Paste AI JSON — create or capture after human review
-                      </span>
-                    </span>
-                  </button>
-                  {additionalItems.length > 0 ? (
+                  <SnapshotCopyRow item={mechanics!} tone="primary" />
+                  <ApplyButton onClick={() => setStep("apply")} />
+                  {libraryGroups.length > 0 ? (
                     <div className="pt-2">
                       <p className="mb-2 px-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
-                        Additional context
+                        Library
                       </p>
-                      <div className="space-y-2">
-                        {additionalItems.map((item) => (
-                          <SnapshotCopyRow key={item.id} item={item} />
+                      <p className="mb-2 px-0.5 text-[10px] text-zinc-600">
+                        Evidence catalog — copy only the block the AI names by exact label.
+                      </p>
+                      <div className="space-y-3">
+                        {libraryGroups.map((group) => (
+                          <div key={group.category} className="space-y-2">
+                            {libraryGroups.length > 1 ? (
+                              <p className="px-0.5 text-[10px] font-medium text-zinc-500">{group.category}</p>
+                            ) : null}
+                            {group.items.map((item) => (
+                              <SnapshotCopyRow key={item.id} item={item} />
+                            ))}
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -163,21 +160,7 @@ export function NetworkPanel() {
                 </>
               ) : (
                 <>
-                  <button
-                    type="button"
-                    onClick={() => setStep("apply")}
-                    className="flex w-full shrink-0 items-center gap-3 rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-600/25"
-                  >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600/25 text-sm font-bold text-emerald-200">
-                      ↑
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-semibold text-emerald-100">Apply</span>
-                      <span className="mt-0.5 block text-xs text-emerald-200/70">
-                        Paste AI JSON — create or capture after human review
-                      </span>
-                    </span>
-                  </button>
+                  <ApplyButton onClick={() => setStep("apply")} />
                   {snapshotItems.map((item) => (
                     <SnapshotCopyRow key={item.id} item={item} />
                   ))}

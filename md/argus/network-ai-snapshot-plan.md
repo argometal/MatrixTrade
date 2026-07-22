@@ -1,18 +1,16 @@
 # Network AI snapshot + JSON import (pilot)
 
 **Status:** Pilot — Network browse + contact pages  
-**Pattern:** Matrix Mechanics orientation + universal Request + human Apply (copy/paste external AI)
+**Pattern:** Network Mechanics orientation + natural-language chat + Library blocks on demand + human Apply
 
 ---
 
 ## Flow
 
-1. **Network Mechanics** — User copies one consolidated orientation prompt (charter, record state, capabilities, context index, Apply contract, AI behavior).
-2. **Request** — User copies the universal work prompt to start create / capture / analyze / plan / finish JSON.
-3. **Additional context** — AI asks for exact UI labels (e.g. `Julio · Contact`); user copies only those blocks.
+1. **Network Mechanics** — User copies one consolidated orientation prompt (charter, record state, dialogue behavior, Library index, Apply contract, AI behavior).
+2. **Chat** — Human writes the task naturally (“Review this contact”, “Create a person”). No copied Request prompt.
+3. **Library** — AI asks for exact UI labels; user copies only those blocks.
 4. **Apply** — User pastes JSON in Network Panel → Validate → **Apply** (human gate).
-
-Do **not** make the human choose which combination of prompts to load before starting.
 
 ---
 
@@ -21,11 +19,9 @@ Do **not** make the human choose which combination of prompts to load before sta
 ```
 NETWORK PANEL
 [ Network Mechanics ]   ← copy
-[ Request ]             ← copy
 [ Apply ]               ← paste JSON import
-Additional context
-[ {Person} · Contact ]  ← or desk snapshot
-[ Network charter brief ]
+Library
+  Contact / Desk / Rules / …
 [ Close ]
 ```
 
@@ -35,12 +31,12 @@ Additional context
 
 | Scope | Page | Mechanics focus |
 |-------|------|-----------------|
-| `network-desk` | `/argus/v2/browse/network` | Desk counts; index includes desk snapshot |
-| `network-person` | `/argus/v2/network/[id]` | Person id + CURRENT_RECORD_STATE; index includes Contact |
+| `network-desk` | `/argus/v2/browse/network` | Desk; Library includes desk snapshot |
+| `network-person` | `/argus/v2/network/[id]` | Person + CURRENT_RECORD_STATE; Library includes Contact |
 
-Builders: `buildNetworkMechanicsPrompt`, `buildNetworkRequestPrompt`, `buildNetworkContactPanelPackage`, `buildNetworkBrowsePanelPackage` in `lib/argus/network-ai-mechanics.ts`.
+Builders: `buildNetworkMechanicsPrompt`, `buildNetworkContactPanelPackage`, `buildNetworkBrowsePanelPackage` in `lib/argus/network-ai-mechanics.ts`.
 
-Context index is derived from the same `NetworkContextBlockDef[]` that become Additional context rows — not a second hard-coded menu.
+Library index is derived from the same `NetworkContextBlockDef[]` that render Library rows — not a second hard-coded menu.
 
 ---
 
@@ -63,13 +59,12 @@ Context index is derived from the same `NetworkContextBlockDef[]` that become Ad
 | File | Role |
 |------|------|
 | `lib/argus/network-ai-brief.ts` | Charter primer (embedded in Mechanics) |
-| `lib/argus/network-ai-mechanics.ts` | Mechanics / Request / panel packages / record state / index |
+| `lib/argus/network-ai-mechanics.ts` | Mechanics / Library packages / record state / index |
 | `lib/argus/network-ai-snapshot.ts` | Desk/person data slices + legacy full snapshot |
 | `lib/argus/network-ai-block.ts` | Parse, validate, preview, samples |
+| `lib/argus/network-dialogue.ts` | Dialogue pillars / flow (embedded summary in Mechanics) |
 | `lib/argus/apply-network-ai-block.ts` | Apply handlers |
-| `lib/argus/v2/network-snapshot-packages.ts` | Panel packages + legacy flat lists |
 | `app/argus/v2/network/components/NetworkPanel.tsx` | UI hierarchy |
-| `app/argus/v2/network/components/NetworkPanelUpdate.tsx` | Apply paste step |
 
 ---
 
