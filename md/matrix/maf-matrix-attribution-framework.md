@@ -1,8 +1,8 @@
 # Matrix Attribution Framework (MAF)
 
-**Status:** Canonical (2026-07-21)  
+**Status:** Canonical — **V1 + Learning Outcome + Observation shipped** (2026-07-21; refreshed 2026-07-22)  
 **ADR:** [adr-0004-maf.md](adr-0004-maf.md)  
-**Code:** `lib/maf-types.ts`, `lib/maf-evidence.ts`, `lib/maf-validate.ts`, `lib/maf-store.ts`, `lib/maf-apply.ts`, `data/maf-experiments.json`
+**Code:** `lib/maf-*.ts`, `lib/learning-outcome*.ts`, `lib/observation*.ts`, `data/maf-experiments.json`, `data/learning-outcomes.json`, `data/observations.json`
 
 ---
 

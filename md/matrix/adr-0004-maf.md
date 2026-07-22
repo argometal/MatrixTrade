@@ -1,6 +1,6 @@
 # ADR-0004 — Matrix Attribution Framework (MAF)
 
-**Status:** Accepted (2026-07-21)  
+**Status:** Accepted — **V1 foundation + Learning Outcome + Observation coded** (2026-07-21; refreshed 2026-07-22)  
 **Decision date:** 2026-07-21  
 **Parent:** [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md)
 

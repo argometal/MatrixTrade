@@ -1,14 +1,23 @@
 # Library alignment backlog — Matrix strategic vision
 
-**Status:** Partial (2026-07-10).  
-**V2 docs:** **Done** — see [v2-engine-architecture.md](v2-engine-architecture.md).
+**Status:** Partial (updated 2026-07-22).  
+**V2 docs:** **Done** as target architecture — see [v2-engine-architecture.md](v2-engine-architecture.md).  
+**Program truth:** [runtime-truth.md](runtime-truth.md) · **Queue:** [building-backlog.md](building-backlog.md).
+
+---
+
+## Done (2026-07-22)
+
+- `md/matrix/README.md` — Participation Phase A, MAF/LO/OBS, Control IA status (no longer “docs first” / “Learning pending”)
+- `md/matrix/v2-engine-architecture.md` — program progress on Learning / Attribution / phased build (no “late Phase 0”)
+- Control IA primary labels + forensic evidence-only already in `control-panel-ia.md` / `runtime-truth.md` / `snapshot-catalog.md`
 
 ---
 
 ## Done (2026-07-21)
 
 - `md/matrix/runtime-truth.md` refreshed to Scout war room / Trades ledger / Control IA
-- `md/matrix/control-panel-ia.md` + `md/rules/ui-naming.md` (descriptive Control labels; forensic on trade only)
+- `md/matrix/control-panel-ia.md` + `md/rules/ui-naming.md` (Mechanics · Stock Files · Apply · Library; forensic on trade only)
 - `md/matrix/snapshot-catalog.md` aligned with Control + trade forensic home
 
 ---
@@ -32,7 +41,7 @@
 | [`MATRIX-v2-VISION.md`](../../MATRIX-v2-VISION.md) | Point to V2 engines; demote journal framing |
 | [`md/architecture/system-overview.md`](../architecture/system-overview.md) | Evidence → Profile → Scout → Trade diagram |
 | [`md/architecture/matrixtrade-app.md`](../architecture/matrixtrade-app.md) | Map routes to engines |
-| [`md/architecture/data-flow.md`](../architecture/data-flow.md) | Inbox patch flow for profile |
+| [`md/architecture/data-flow.md`](../architecture/data-flow.md) | Inbox / Control → Apply patch flow for profile |
 
 ---
 
@@ -46,11 +55,13 @@
 
 ---
 
-## Code phases (documented in V2 — implement after sign-off)
+## Code phases (V2 labels — status vs program)
 
-| Phase | Item |
-|-------|------|
-| B | `MarketEvidence` append + profile synthesis read |
-| C | `Decision` on Scout + Probe |
-| D | Learning outcomes + missed |
-| E | Attribution + Statistics |
+| Phase | Item | Program |
+|-------|------|---------|
+| B | `MarketEvidence` append + profile synthesis read | Partial |
+| C | `Decision` on Scout + Probe | **Shipped** |
+| D | Learning outcomes + missed | **Foundation shipped** (`LO-xxx`); Observation UX NEXT |
+| E | Attribution + Statistics | **MAF V1 shipped**; Statistics/Coach **not** built |
+
+Also shipped: MTAE + Participation Phase A; Control IA. Do not re-open “docs first” for those.
