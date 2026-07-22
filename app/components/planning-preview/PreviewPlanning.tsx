@@ -249,19 +249,52 @@ export function PreviewPlanning({
 
   const hasCases = scoutCards.length > 0;
 
+  const focusedRr = formatScoutCasePlannedRR(focusedScoutCard?.plannedRR);
+  const mapFocusCompact = planPanelOpen;
+
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row">
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain pb-10">
-        <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
+      <div
+        className={`min-h-0 min-w-0 overflow-y-auto overscroll-y-contain ${
+          mapFocusCompact
+            ? "shrink-0 pb-2 lg:flex-1 lg:pb-10"
+            : "flex-1 pb-10"
+        }`}
+      >
+        <header
+          className={`border-b border-zinc-800 px-4 lg:px-6 ${
+            mapFocusCompact ? "py-2 lg:py-4" : "py-4"
+          }`}
+        >
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-semibold text-zinc-100">Scout</h1>
-              <p className="mt-0.5 text-sm text-zinc-500">
+            <div className={mapFocusCompact ? "lg:block" : undefined}>
+              <h1
+                className={`font-semibold text-zinc-100 ${
+                  mapFocusCompact ? "text-base lg:text-xl" : "text-xl"
+                }`}
+              >
+                Scout
+                {mapFocusCompact && focusedScoutCard ? (
+                  <span className="ml-2 text-sm font-medium text-zinc-400 lg:hidden">
+                    · {focusedScoutCard.ticker}
+                    {focusedRr ? ` · ${focusedRr}` : ""}
+                  </span>
+                ) : null}
+              </h1>
+              <p
+                className={`mt-0.5 text-sm text-zinc-500 ${
+                  mapFocusCompact ? "hidden lg:block" : ""
+                }`}
+              >
                 War room — cases to watch / re-enter, highest planned R first. Incomplete closed
                 fills belong on Trades (not this list’s mission).
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
+            <div
+              className={`flex flex-wrap items-center gap-2 lg:mr-[11rem] ${
+                mapFocusCompact ? "hidden lg:flex" : ""
+              }`}
+            >
               <Link
                 href="/stock-theses/new"
                 className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"
@@ -277,7 +310,9 @@ export function PreviewPlanning({
           </div>
         </header>
 
-        <div className="space-y-4 px-4 py-4 lg:px-6">
+        <div
+          className={`space-y-4 px-4 lg:px-6 ${mapFocusCompact ? "py-2 lg:py-4" : "py-4"}`}
+        >
           {!hasCases ? (
             <section className="rounded-2xl border border-dashed border-zinc-700 px-4 py-10 text-center">
               <p className="text-sm text-zinc-500">No scout cases yet.</p>
@@ -290,16 +325,25 @@ export function PreviewPlanning({
             </section>
           ) : (
             <>
-              <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+              <section
+                className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 ${
+                  mapFocusCompact ? "p-2.5 lg:p-4" : "p-4"
+                }`}
+              >
                 <div className="flex flex-wrap items-center gap-2">
-                  <label htmlFor="scout-case" className="text-xs font-medium text-zinc-500">
+                  <label
+                    htmlFor="scout-case"
+                    className={`text-xs font-medium text-zinc-500 ${
+                      mapFocusCompact ? "sr-only lg:not-sr-only" : ""
+                    }`}
+                  >
                     Case
                   </label>
                   <select
                     id="scout-case"
                     value={focusedScoutCard?.key ?? ""}
                     onChange={(e) => setScoutCaseKey(e.target.value)}
-                    className="min-w-[14rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
+                    className="min-w-[10rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
                   >
                     {scoutCards.map((card) => {
                       const rrLabel = formatScoutCasePlannedRR(card.plannedRR);
@@ -325,7 +369,11 @@ export function PreviewPlanning({
                     />
                   ) : null}
                 </div>
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div
+                  className={`mt-2 flex flex-wrap gap-1.5 ${
+                    mapFocusCompact ? "hidden lg:flex" : ""
+                  }`}
+                >
                   {scoutCards.map((card) => {
                     const selected = card.key === focusedScoutCard?.key;
                     const rrChip = formatScoutCasePlannedRR(card.plannedRR);
@@ -350,7 +398,11 @@ export function PreviewPlanning({
               </section>
 
               {focusedScoutCard?.orphan ? (
-                <section className="rounded-2xl border border-amber-500/30 bg-amber-950/20 p-5">
+                <section
+                  className={`rounded-2xl border border-amber-500/30 bg-amber-950/20 p-5 ${
+                    mapFocusCompact ? "hidden lg:block" : ""
+                  }`}
+                >
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl font-semibold text-amber-100">{focusedScoutCard.ticker}</h2>
                     <span className="rounded-full border border-amber-400/40 px-2 py-0.5 text-xs font-bold uppercase text-amber-200">
@@ -386,7 +438,9 @@ export function PreviewPlanning({
 
               {focusedScoutCard && !focusedScoutCard.orphan && focusedScoutCard.thesis ? (
                 <section
-                  className={`rounded-2xl border p-5 ${scoutingVerdictStyle(focusedScoutCard.verdict ?? "wait")}`}
+                  className={`rounded-2xl border p-5 ${scoutingVerdictStyle(focusedScoutCard.verdict ?? "wait")} ${
+                    mapFocusCompact ? "hidden lg:block" : ""
+                  }`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <Link
@@ -508,15 +562,17 @@ export function PreviewPlanning({
               ) : null}
 
               {!focusedScoutCard?.orphan ? (
-                <ScoutExecutePanel
-                  key={focusPlan?.id ?? scoutThesis?.id ?? "execute"}
-                  plan={focusPlan}
-                  prospect={selectedProspect}
-                  prospects={prospects}
-                  playbooks={playbooks}
-                  suggestedTradeId={suggestedTradeId}
-                  monthlyLossRoom={monthly.monthlyLossRoom}
-                />
+                <div className={mapFocusCompact ? "hidden lg:block" : undefined}>
+                  <ScoutExecutePanel
+                    key={focusPlan?.id ?? scoutThesis?.id ?? "execute"}
+                    plan={focusPlan}
+                    prospect={selectedProspect}
+                    prospects={prospects}
+                    playbooks={playbooks}
+                    suggestedTradeId={suggestedTradeId}
+                    monthlyLossRoom={monthly.monthlyLossRoom}
+                  />
+                </div>
               ) : null}
             </>
           )}
