@@ -87,9 +87,15 @@ export function ScoutExecutePanel({
             ? {
                 planId: plan?.id ?? prefill?.planId,
                 ticker: prefill?.ticker ?? plan?.ticker,
-                entry: prefill?.entry,
-                stop: prefill?.stop,
-                target: prefill?.target,
+                entry:
+                  prefill?.entry ??
+                  (plan?.plannedEntry !== undefined ? String(plan.plannedEntry) : undefined),
+                stop:
+                  prefill?.stop ??
+                  (plan?.stopPrice !== undefined ? String(plan.stopPrice) : undefined),
+                target:
+                  prefill?.target ??
+                  (plan?.targetPrice !== undefined ? String(plan.targetPrice) : undefined),
                 playbookId: prefill?.playbookId ?? plan?.playbookId,
               }
             : undefined,
@@ -97,8 +103,13 @@ export function ScoutExecutePanel({
     [suggestedTradeId, playbooks, monthlyLossRoom, prospects, plan, prefill]
   );
 
+  // Prefer live plan levels when form ticker drifted (stale-form guard).
+  const formMatchesPlan =
+    !plan?.ticker ||
+    !form.ticker ||
+    form.ticker.toUpperCase() === plan.ticker.toUpperCase();
   const levelsView =
-    form.entry && form.stop
+    formMatchesPlan && form.entry && form.stop
       ? buildTradeLevelsView({
           id: form.id || "—",
           ticker: form.ticker || plan?.ticker || "",
