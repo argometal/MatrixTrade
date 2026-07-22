@@ -42,6 +42,8 @@ export interface PlanLevelsView {
   minRR?: number;
   invalidation?: string;
   window?: string;
+  /** Optional last/reference price for the trade map — never invent. */
+  currentPrice?: number;
   layeredEntry?: {
     plan: LayeredEntryPlan;
     scenarios: LayeredEntryScenario[];
@@ -52,6 +54,213 @@ export interface PlanLevelsView {
     sizingModeLabel?: string;
     stopModelLabel?: string;
   };
+}
+
+/** Visual trade-map node — derived from PlanLevelsView (no parallel data model). */
+export type TradeMapTone =
+  | "target"
+  | "stretch"
+  | "entry"
+  | "preferred"
+  | "deep"
+  | "stop"
+  | "current";
+
+export type TradeMapNode = {
+  kind: "target" | "entry" | "stop" | "current";
+  label: string;
+  price: number;
+  allocationPercent?: number;
+  rr?: number;
+  tone: TradeMapTone;
+  ariaLabel: string;
+};
+
+export type TradeMapIntentStep = {
+  label: string;
+  tone: TradeMapTone | "intent";
+};
+
+function parsePriceFromValue(value: string): number | undefined {
+  const match = value.replace(/,/g, "").match(/-?\d+(\.\d+)?/);
+  if (!match) return undefined;
+  const n = Number(match[0]);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function toneForEntryLabel(label: string): TradeMapTone {
+  const lower = label.toLowerCase();
+  if (lower.includes("preferred")) return "preferred";
+  if (lower.includes("deep")) return "deep";
+  if (lower.includes("starter")) return "entry";
+  return "entry";
+}
+
+/** Derive proportional ladder nodes from existing PlanLevelsView fields. */
+export function deriveTradeMapNodes(view: PlanLevelsView): TradeMapNode[] {
+  const nodes: TradeMapNode[] = [];
+  const le = view.layeredEntry?.plan;
+
+  const targetRows = view.rows.filter((r) => r.kind === "target");
+  if (le?.primaryTargetPrice !== undefined) {
+    nodes.push({
+      kind: "target",
+      label: "Primary Target",
+      price: le.primaryTargetPrice,
+      tone: "target",
+      ariaLabel: `Primary target ${le.primaryTargetPrice}`,
+    });
+  } else if (targetRows.length) {
+    for (const [i, row] of targetRows.entries()) {
+      const prices = [...row.value.matchAll(/\$?(\d+(?:\.\d+)?)/g)].map((m) => Number(m[1]));
+      if (prices.length > 1) {
+        prices.forEach((price, j) => {
+          nodes.push({
+            kind: "target",
+            label: j === 0 ? "Primary Target" : `Stretch Target`,
+            price,
+            tone: j === 0 ? "target" : "stretch",
+            ariaLabel: `${j === 0 ? "Primary" : "Stretch"} target ${price}`,
+          });
+        });
+      } else {
+        const price = parsePriceFromValue(row.value);
+        if (price !== undefined) {
+          nodes.push({
+            kind: "target",
+            label: i === 0 ? "Primary Target" : row.label,
+            price,
+            tone: i === 0 ? "target" : "stretch",
+            ariaLabel: `${row.label} ${price}`,
+          });
+        }
+      }
+    }
+  }
+
+  if (le?.limits?.length) {
+    for (const limit of le.limits) {
+      const roleLabel = limit.role
+        ? LAYER_ROLE_LABELS[limit.role]
+        : "Entry";
+      const tone = toneForEntryLabel(roleLabel);
+      nodes.push({
+        kind: "entry",
+        label: roleLabel,
+        price: limit.price,
+        allocationPercent: limit.allocationPercent,
+        rr: limit.derived?.rr,
+        tone,
+        ariaLabel: `${roleLabel} entry ${limit.price}`,
+      });
+    }
+  } else {
+    const entryRow = view.rows.find((r) => r.kind === "entry" || r.kind === "limit");
+    if (entryRow) {
+      const price = parsePriceFromValue(entryRow.value);
+      if (price !== undefined) {
+        nodes.push({
+          kind: "entry",
+          label: entryRow.label,
+          price,
+          tone: "entry",
+          ariaLabel: `${entryRow.label} ${price}`,
+        });
+      }
+    }
+  }
+
+  const stopPrice =
+    le?.commonStopPrice ??
+    (() => {
+      const stopRow = view.rows.find((r) => r.kind === "stop");
+      return stopRow ? parsePriceFromValue(stopRow.value) : undefined;
+    })();
+  if (stopPrice !== undefined) {
+    nodes.push({
+      kind: "stop",
+      label: "Stop",
+      price: stopPrice,
+      tone: "stop",
+      ariaLabel: `Stop ${stopPrice}`,
+    });
+  }
+
+  if (view.currentPrice !== undefined && Number.isFinite(view.currentPrice)) {
+    nodes.push({
+      kind: "current",
+      label: "Current Price",
+      price: view.currentPrice,
+      tone: "current",
+      ariaLabel: `Current price ${view.currentPrice}`,
+    });
+  }
+
+  // Deduplicate by kind+price (keep first), then sort high → low
+  const seen = new Set<string>();
+  const unique = nodes.filter((n) => {
+    const key = `${n.kind}:${n.price}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return unique.sort((a, b) => b.price - a.price);
+}
+
+export function deriveTradeMapIntent(view: PlanLevelsView): TradeMapIntentStep[] {
+  const steps: TradeMapIntentStep[] = [];
+  const le = view.layeredEntry?.plan;
+  if (le?.limits?.length) {
+    for (const limit of [...le.limits].sort((a, b) => b.price - a.price)) {
+      const label = limit.role ? LAYER_ROLE_LABELS[limit.role] : "Entry";
+      steps.push({ label, tone: toneForEntryLabel(label) });
+    }
+  } else if (view.rows.some((r) => r.kind === "entry" || r.kind === "limit")) {
+    steps.push({ label: "Entry", tone: "entry" });
+  }
+  steps.push({ label: "Primary Target", tone: "target" });
+  return steps;
+}
+
+export function deriveTradeMapWarnings(view: PlanLevelsView): string[] {
+  const warnings: string[] = [];
+  const nodes = deriveTradeMapNodes(view);
+  const hasStop = nodes.some((n) => n.kind === "stop");
+  const hasTarget = nodes.some((n) => n.kind === "target");
+  const entries = nodes.filter((n) => n.kind === "entry");
+
+  if (!hasStop) warnings.push("Missing stop");
+  if (!hasTarget) warnings.push("No target");
+  if (view.plannedRR !== undefined && view.minRR !== undefined && view.plannedRR < view.minRR) {
+    warnings.push(`Plan below minimum R (${view.plannedRR.toFixed(1)}R < ${view.minRR}R)`);
+  }
+  const starter = entries.find((e) => e.label.toLowerCase().includes("starter"));
+  if (starter?.allocationPercent !== undefined && starter.allocationPercent > 30) {
+    warnings.push("Starter exceeds 30% allocation");
+  }
+  const highestEntry = entries[0]?.price;
+  if (
+    view.currentPrice !== undefined &&
+    highestEntry !== undefined &&
+    view.currentPrice > highestEntry
+  ) {
+    warnings.push("Current price above highest limit");
+  }
+  if (view.layeredEntry?.plan.noChase) {
+    // informational — not a warning
+  }
+  return warnings;
+}
+
+/** Map price → top% within [0,100] for absolute positioning (high price = top). */
+export function normalizeTradeMapY(
+  price: number,
+  high: number,
+  low: number
+): number {
+  if (!(high > low)) return 50;
+  const t = (high - price) / (high - low);
+  return Math.min(100, Math.max(0, t * 100));
 }
 
 function formatPrice(value?: number): string {
