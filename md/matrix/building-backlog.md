@@ -10,11 +10,12 @@
 | Field | Value |
 |-------|-------|
 | **Priority** | **HIGH** — important while still polishing; **not** a new engine |
-| **Status** | Plan accepted — coding starts with prompt audit + Stock File 3-action design |
+| **Status** | **002A partial shipped** — master operative prompt + Analyze package + Stock File 3 actions |
 | **Doc** | [mta-002-operability-plan.md](mta-002-operability-plan.md) |
-| **Phases** | **002A** master prompt + Analyze/Apply/Open Scout · **002B** 10–20 chat consistency log · **002C** Secular Trend Continuation Playbook |
+| **Shipped (002A)** | `lib/stock-file-analyze.ts`; Stock File → Analyze with AI / Apply AI Result / Open Scout; `openPanel({ step: "apply" })`; Mechanics **rev 22** |
+| **Phases left** | **002A polish** (demote more chrome if needed) · **002B** 10–20 chat consistency log · **002C** Secular Trend Continuation Playbook |
 | **Do not build now** | Coach, wide MAF dashboards, VP/AVWAP, more Control categories, parallel prompt systems |
-| **Shipped micro** | Scout Case list ordered by planned R high→low (`lib/scout-case-sort.ts`) |
+| **Also shipped** | Scout Case list ordered by planned R high→low (`lib/scout-case-sort.ts`) |
 | **Brainstorm (not Scout)** | Alert closed-but-incomplete fills on Trades / Dashboard |
 
 ---

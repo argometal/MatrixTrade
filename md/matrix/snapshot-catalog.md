@@ -15,6 +15,8 @@ One control per window: **`{Window} snapshot ▾`**
 
 **Control** (global drawer) is separate: Matrix Mechanics · Stock Files · Apply · Library.
 
+**Stock File primary loop (MTA-002A):** **Analyze with AI** (one package) · **Apply AI Result** (opens Control → Apply) · **Open Scout**. Slice snapshots stay under Advanced.
+
 There is **no Request layer** in Control. Window packages may still append `=== REQUEST ===` for standalone portability; forensic does **not**.
 
 ---
@@ -42,14 +44,15 @@ Primary Control copy of Mechanics = brief (no REQUEST).
 | System | Matrix Mechanics snapshot | Full rules + block catalog | |
 | Playbook | Playbook snapshot | Strategies + stats | Control Library filters Mechanics row |
 | Scouting Desk | Scout desk overview | All profiles + scouts + monthly room | No Mechanics row in Control |
-| Stock Profile | `{TICKER}` profile / linked scouts | Dossier + evidence | Control Stock Files filters Mechanics row |
+| Stock Profile | `{TICKER}` Analyze with AI | Operative + Mechanics + MTAE + dossier + Scout | Primary Stock File action (`buildStockFileAnalyzePackage`) |
+| Stock Profile | `{TICKER}` profile / linked scouts | Dossier + evidence | Advanced slice menu |
 | Trade | `{ID}` this trade | Trade fields + review | |
 | Trade | `{ID}` forensic | Closed trade **evidence only** (no Mechanics, no Request) | Trade window only |
 | Trade | Stock profile (compact) | Linked dossier summary | |
 | Trades list | Trades snapshot | All trades summary + experiment | |
 | Control → Matrix Mechanics | Matrix Mechanics | Rules primer for a new AI chat | Primary |
 | Control → Stock Files | `{TICKER}` MTAE request + profile / scouts | Direct access | Primary |
-| Control → Apply | — | Paste → Validate → Accept | Primary write path |
+| Control → Apply | — | Paste → Validate → Accept | Primary write path; also opened from Stock File → Apply AI Result |
 | Control → Library → Technical Analysis | MTAE protocol + TF maps | No capital | |
 | Control → Library → Playbook | Playbook snapshot | No Mechanics row | |
 | Control → Library → Scout Desk | Scout desk overview | | |
@@ -65,8 +68,9 @@ Primary Control copy of Mechanics = brief (no REQUEST).
 |-------|----------|
 | Brief prefix | `buildMatrixMechanicsBrief()` |
 | Full mechanics | `buildMatrixMechanicsSnapshot()` |
+| Stock File Analyze | `buildStockFileAnalyzePackage()` in `lib/stock-file-analyze.ts` |
 | Package builder | `buildAiContextPackage()` in `lib/ai-context.ts` |
-| UI | `MatrixConnectButton`, `ProposalSketchCard` |
+| UI | Stock File 3-action header; Control Apply via `openPanel({ step: "apply" })` |
 | Server helpers | `lib/snapshot-packages.ts` |
 
 ---

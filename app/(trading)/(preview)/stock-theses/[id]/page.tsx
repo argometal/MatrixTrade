@@ -3,9 +3,11 @@ import {
   ensureProfileEvidenceSeeded,
   getActiveEvidenceForProfile,
 } from "@/lib/market-evidence";
+import { getMtaeTimeframeMaps } from "@/lib/mtae-store";
 import { getPlans } from "@/lib/plans";
 import { getPlaybooks } from "@/lib/playbooks";
 import { stockProfileSnapshotItems } from "@/lib/snapshot-packages";
+import { buildStockFileAnalyzePackage } from "@/lib/stock-file-analyze";
 import { buildStockProfileSynthesis } from "@/lib/stock-profile-synthesis";
 import { getStockThesisById } from "@/lib/stock-theses";
 import { notFound } from "next/navigation";
@@ -16,10 +18,11 @@ export default async function StockThesisDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [thesis, playbooks, plans] = await Promise.all([
+  const [thesis, playbooks, plans, mtaePresets] = await Promise.all([
     getStockThesisById(id),
     getPlaybooks(),
     getPlans(),
+    getMtaeTimeframeMaps(),
   ]);
   if (!thesis) notFound();
 
@@ -37,6 +40,13 @@ export default async function StockThesisDetailPage({
     plans,
     activeEvidence,
   });
+  const analyzePackage = buildStockFileAnalyzePackage({
+    thesis,
+    playbooks,
+    plans,
+    activeEvidence,
+    mtaePresets,
+  });
 
   return (
     <PreviewStockThesis
@@ -46,6 +56,7 @@ export default async function StockThesisDetailPage({
       synthesis={synthesis}
       activePlans={activePlans}
       snapshotItems={snapshotItems}
+      analyzePackage={analyzePackage}
     />
   );
 }

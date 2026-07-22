@@ -183,7 +183,7 @@ function NavRow({
 }
 
 export function MatrixControlPanel() {
-  const { open, closePanel, data } = useControlPanel();
+  const { open, closePanel, data, requestedStep } = useControlPanel();
   const [step, setStep] = useState<Step>("pick");
   const [section, setSection] = useState<ControlPanelSectionId | null>(null);
   const [stockThesisId, setStockThesisId] = useState<string | null>(null);
@@ -191,7 +191,7 @@ export function MatrixControlPanel() {
 
   useEffect(() => {
     if (!open) return;
-    setStep("pick");
+    setStep(requestedStep);
     setSection(null);
     setStockThesisId(null);
     setStockQuery("");
@@ -200,7 +200,7 @@ export function MatrixControlPanel() {
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [open]);
+  }, [open, requestedStep]);
 
   const allMeta = [...PRIMARY.filter((p) => p.id !== "apply"), ...LIBRARY];
   const sectionMeta = allMeta.find((entry) => entry.id === section);

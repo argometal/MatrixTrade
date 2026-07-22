@@ -6,6 +6,8 @@ import {
   createScopedAiGrantAction,
   saveStockThesisAction,
 } from "@/app/actions";
+import { copyText } from "@/app/components/ai-bridge/copy-text";
+import { useControlPanel } from "@/app/components/control-panel/MatrixControlPanelProvider";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { snapshotButtonTitle } from "@/lib/snapshot-verification";
 import type { MarketEvidence } from "@/lib/market-evidence-types";
@@ -50,6 +52,7 @@ export function PreviewStockThesis({
   synthesis,
   activePlans = [],
   snapshotItems,
+  analyzePackage,
 }: {
   thesis: StockThesis;
   playbooks?: Playbook[];
@@ -57,9 +60,14 @@ export function PreviewStockThesis({
   synthesis?: StockProfileSynthesis;
   activePlans?: TradePlan[];
   snapshotItems: SnapshotMenuItem[];
+  /** MTA-002A one-copy Analyze package (Mechanics + MTAE + dossier + Scout). */
+  analyzePackage: string;
 }) {
+  const { openPanel } = useControlPanel();
   const [tab, setTab] = useState<ProfileTab>("snapshot");
   const [planMapOpen, setPlanMapOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [analyzeCopied, setAnalyzeCopied] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [grantError, setGrantError] = useState<string | null>(null);
   const [grantLinks, setGrantLinks] = useState<{
@@ -96,17 +104,28 @@ export function PreviewStockThesis({
     });
   }
 
+  async function handleAnalyzeWithAi() {
+    const ok = await copyText(analyzePackage);
+    if (!ok) return;
+    setAnalyzeCopied(true);
+    setTimeout(() => setAnalyzeCopied(false), 2500);
+  }
+
   const levelsView = useMemo(
     () => buildPlanLevelsView(thesis, activePlans[0]),
     [thesis, activePlans]
   );
 
+  const primaryPlan = activePlans[0];
   const levels = thesis.levels;
   const tabs: { id: ProfileTab; label: string }[] = [
     { id: "snapshot", label: "Snapshot" },
     { id: "evidence", label: `Evidence (${activeEvidence.length})` },
     { id: "history", label: "History" },
   ];
+  const scoutHref = primaryPlan
+    ? `/planning?plan=${primaryPlan.id}`
+    : `/planning?thesis=${thesis.id}`;
 
   return (
     <div className="flex h-full min-h-0 w-full overflow-hidden">
@@ -130,56 +149,155 @@ export function PreviewStockThesis({
                 {synthesis ? ` · confidence ${synthesis.thesisConfidence}` : ""}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
-              <SnapshotButton
-                title={snapshotButtonTitle(thesis.ticker, "snapshot")}
-                description="Thesis, levels, evidence, linked scouts"
-                items={snapshotItems}
-              />
-              <form action={createAiAccessLink}>
-                <input type="hidden" name="stockProfileId" value={thesis.id} />
-                <button
-                  type="submit"
-                  disabled={grantPending}
-                  className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-300 hover:bg-violet-500/20 disabled:opacity-50"
-                >
-                  {grantPending ? "Creating…" : "Create AI access link"}
-                </button>
-              </form>
-              <Link
-                href={`/planning?thesis=${thesis.id}`}
-                className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
-              >
-                Create scout →
-              </Link>
-            </div>
           </div>
 
-          {activePlans.length > 0 ? (
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => void handleAnalyzeWithAi()}
+              className="rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-600/25"
+            >
+              <span className="block text-sm font-semibold text-emerald-100">
+                {analyzeCopied ? "Copied ✓" : "Analyze with AI"}
+              </span>
+              <span className="mt-0.5 block text-xs text-emerald-200/70">
+                One package — Mechanics · MTAE · dossier · Scout
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => openPanel({ step: "apply" })}
+              className="rounded-xl border border-violet-500/40 bg-violet-600/15 px-4 py-3 text-left transition hover:border-violet-500/60 hover:bg-violet-600/25"
+            >
+              <span className="block text-sm font-semibold text-violet-100">Apply AI Result</span>
+              <span className="mt-0.5 block text-xs text-violet-200/70">
+                Paste → Validate → Accept
+              </span>
+            </button>
+            <Link
+              href={scoutHref}
+              className="rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-3 text-left transition hover:border-zinc-500 hover:bg-zinc-900"
+            >
+              <span className="block text-sm font-semibold text-zinc-100">Open Scout</span>
+              <span className="mt-0.5 block text-xs text-zinc-500">
+                Decision · entry · stop · targets · R
+              </span>
+            </Link>
+          </div>
+
+          {primaryPlan ? (
             <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 text-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Active scouts
+                Active scout
               </p>
-              <ul className="mt-2 space-y-2">
-                {activePlans.map((plan) => (
-                  <li key={plan.id} className="flex flex-wrap items-center gap-2">
-                    <Link
-                      href={`/planning?plan=${plan.id}`}
-                      className="font-medium text-violet-400 hover:text-violet-300"
-                    >
-                      {plan.id}
-                    </Link>
-                    <span className="text-xs text-zinc-500">{plan.ticker}</span>
-                    {plan.decision ? (
-                      <span className="rounded-full border border-violet-500/30 px-2 py-0.5 text-xs text-violet-300">
-                        {DECISION_VERDICT_LABELS[plan.decision.verdict]} · {plan.decision.decisionConfidence}
-                      </span>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/planning?plan=${primaryPlan.id}`}
+                  className="font-medium text-violet-400 hover:text-violet-300"
+                >
+                  {primaryPlan.id}
+                </Link>
+                {primaryPlan.decision ? (
+                  <span className="rounded-full border border-violet-500/30 px-2 py-0.5 text-xs text-violet-300">
+                    {DECISION_VERDICT_LABELS[primaryPlan.decision.verdict]} ·{" "}
+                    {primaryPlan.decision.decisionConfidence}
+                  </span>
+                ) : (
+                  <span className="text-xs text-zinc-500">No decision yet</span>
+                )}
+              </div>
+              <dl className="mt-3 grid gap-2 text-xs text-zinc-400 sm:grid-cols-2 lg:grid-cols-4">
+                <div>
+                  <dt className="text-zinc-600">Entry</dt>
+                  <dd className="font-medium text-zinc-200">
+                    {primaryPlan.plannedEntry !== undefined
+                      ? `$${primaryPlan.plannedEntry}`
+                      : "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-600">Stop</dt>
+                  <dd className="font-medium text-zinc-200">
+                    {primaryPlan.stopPrice !== undefined ? `$${primaryPlan.stopPrice}` : "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-600">Target</dt>
+                  <dd className="font-medium text-zinc-200">
+                    {primaryPlan.targetPrice !== undefined
+                      ? `$${primaryPlan.targetPrice}`
+                      : "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-600">Planned R</dt>
+                  <dd className="font-medium text-emerald-400">
+                    {levelsView.plannedRR !== undefined
+                      ? `${levelsView.plannedRR.toFixed(1)}R`
+                      : primaryPlan.plannedRR !== undefined
+                        ? `${primaryPlan.plannedRR.toFixed(1)}R`
+                        : "—"}
+                  </dd>
+                </div>
+              </dl>
+              {primaryPlan.decision?.reasoning ? (
+                <p className="mt-2 text-xs text-zinc-500 line-clamp-2">
+                  {primaryPlan.decision.reasoning}
+                </p>
+              ) : null}
+              {activePlans.length > 1 ? (
+                <ul className="mt-3 space-y-1 border-t border-zinc-800 pt-2 text-xs text-zinc-500">
+                  {activePlans.slice(1).map((plan) => (
+                    <li key={plan.id}>
+                      <Link
+                        href={`/planning?plan=${plan.id}`}
+                        className="text-violet-400 hover:underline"
+                      >
+                        {plan.id}
+                      </Link>
+                      {plan.decision
+                        ? ` · ${DECISION_VERDICT_LABELS[plan.decision.verdict]}`
+                        : ""}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
-          ) : null}
+          ) : (
+            <div className="mt-3 rounded-xl border border-dashed border-zinc-700 px-4 py-3 text-sm text-zinc-500">
+              No active scout — Analyze with AI can propose{" "}
+              <code className="text-zinc-400">scout-plan-create</code> after technical Accept.
+            </div>
+          )}
+
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => setAdvancedOpen((v) => !v)}
+              className="text-xs font-medium text-zinc-500 hover:text-zinc-300"
+            >
+              {advancedOpen ? "Hide advanced ▴" : "Advanced · History · System ▾"}
+            </button>
+            {advancedOpen ? (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <SnapshotButton
+                  title={snapshotButtonTitle(thesis.ticker, "snapshot")}
+                  description="Thesis, levels, evidence, linked scouts"
+                  items={snapshotItems}
+                />
+                <form action={createAiAccessLink}>
+                  <input type="hidden" name="stockProfileId" value={thesis.id} />
+                  <button
+                    type="submit"
+                    disabled={grantPending}
+                    className="rounded-lg border border-zinc-700 px-3 py-2 text-xs font-medium text-zinc-400 hover:border-zinc-500 hover:text-zinc-200 disabled:opacity-50"
+                  >
+                    {grantPending ? "Creating…" : "Create AI access link"}
+                  </button>
+                </form>
+              </div>
+            ) : null}
+          </div>
 
           {grantError ? <p className="mt-3 text-sm text-red-400">{grantError}</p> : null}
           {grantLinks ? (

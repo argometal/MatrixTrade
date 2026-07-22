@@ -1,8 +1,18 @@
 # MTA-002 — Operability plan (forward)
 
-**Status:** Forward plan (2026-07-22) — **important, not emergency**. Still polishing the loop; do **not** start another large engine.  
+**Status:** Forward plan (2026-07-22) — **002A partial shipped**. Still polishing; do **not** start another large engine.  
 **Parent contract:** [runtime-truth.md](runtime-truth.md) · [building-backlog.md](building-backlog.md) · [v2-engine-architecture.md](v2-engine-architecture.md)  
 **Rule:** Convert what is already built into a **fast, repeatable, usable** operating cycle.
+
+### Shipped in 002A (this pass)
+
+| Deliverable | Location |
+|-------------|----------|
+| Operative master prompt (5 lanes) | `buildStockFileOperativePrompt()` |
+| One Analyze package | `buildStockFileAnalyzePackage()` |
+| Stock File 3 primary actions | Analyze with AI · Apply AI Result · Open Scout |
+| Apply deep-open | `openPanel({ step: "apply" })` |
+| Scout decision strip on Stock File | entry / stop / target / R / verdict |
 
 ---
 
