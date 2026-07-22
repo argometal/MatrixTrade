@@ -6,9 +6,15 @@ import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import { useNetworkPanel } from "./NetworkPanelProvider";
 import { NetworkPanelUpdate } from "./NetworkPanelUpdate";
 
-type Step = "pick" | "update";
+type Step = "pick" | "apply";
 
-function SnapshotCopyRow({ item }: { item: SnapshotMenuItem }) {
+function SnapshotCopyRow({
+  item,
+  tone = "default",
+}: {
+  item: SnapshotMenuItem;
+  tone?: "default" | "primary" | "request";
+}) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -18,27 +24,61 @@ function SnapshotCopyRow({ item }: { item: SnapshotMenuItem }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
+  const shell =
+    tone === "primary"
+      ? "border-violet-500/40 bg-violet-600/15 hover:border-violet-500/60 hover:bg-violet-600/25"
+      : tone === "request"
+        ? "border-sky-500/40 bg-sky-600/15 hover:border-sky-500/60 hover:bg-sky-600/25"
+        : "border-zinc-800/80 bg-zinc-900/40 hover:border-violet-500/30 hover:bg-zinc-900";
+  const icon =
+    tone === "primary"
+      ? "bg-violet-600/25 text-violet-200"
+      : tone === "request"
+        ? "bg-sky-600/25 text-sky-200"
+        : "bg-violet-600/20 text-violet-300";
+  const title =
+    tone === "primary"
+      ? "text-violet-50"
+      : tone === "request"
+        ? "text-sky-50"
+        : "text-zinc-100";
+  const desc =
+    tone === "primary"
+      ? "text-violet-200/70"
+      : tone === "request"
+        ? "text-sky-200/70"
+        : "text-zinc-500";
+
   return (
     <button
       type="button"
       onClick={() => void handleCopy()}
-      className="flex w-full items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 text-left transition hover:border-violet-500/30 hover:bg-zinc-900"
+      className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${shell}`}
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-sm font-bold text-violet-300">
+      <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${icon}`}>
         ⎘
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-zinc-100">
+        <span className={`block text-sm font-semibold ${title}`}>
           {copied ? "Copied ✓" : item.label}
         </span>
-        <span className="mt-0.5 block text-xs text-zinc-500">{item.description}</span>
+        <span className={`mt-0.5 block text-xs ${desc}`}>{item.description}</span>
       </span>
     </button>
   );
 }
 
 export function NetworkPanel() {
-  const { open, closePanel, snapshotItems, defaultEntityId, panelTitle } = useNetworkPanel();
+  const {
+    open,
+    closePanel,
+    mechanics,
+    request,
+    additionalItems,
+    snapshotItems,
+    defaultEntityId,
+    panelTitle,
+  } = useNetworkPanel();
   const [step, setStep] = useState<Step>("pick");
 
   useEffect(() => {
@@ -54,18 +94,19 @@ export function NetworkPanel() {
   if (!open) return null;
 
   function handleBack() {
-    if (step === "update") {
+    if (step === "apply") {
       setStep("pick");
       return;
     }
     closePanel();
   }
 
-  const title = step === "update" ? "Update contact" : panelTitle;
+  const hasPackage = Boolean(mechanics && request);
+  const title = step === "apply" ? "Apply AI response" : panelTitle;
   const hint =
-    step === "update"
-      ? "Paste what your AI returned — create person or capture conversation"
-      : "Copy snapshot for external AI, then paste the JSON response";
+    step === "apply"
+      ? "Paste the Apply JSON your AI returned — validate, then Apply"
+      : "Mechanics orients the AI · Request starts work · copy extra blocks only when asked";
 
   return (
     <div
@@ -87,25 +128,61 @@ export function NetworkPanel() {
 
         {step === "pick" ? (
           <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => setStep("update")}
-              className="flex w-full shrink-0 items-center gap-3 rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-600/25"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600/25 text-sm font-bold text-emerald-200">
-                ↑
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold text-emerald-100">Update</span>
-                <span className="mt-0.5 block text-xs text-emerald-200/70">
-                  Create contact or capture conversation from AI JSON
-                </span>
-              </span>
-            </button>
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
-              {snapshotItems.map((item) => (
-                <SnapshotCopyRow key={item.id} item={item} />
-              ))}
+              {hasPackage ? (
+                <>
+                  {mechanics ? <SnapshotCopyRow item={mechanics} tone="primary" /> : null}
+                  {request ? <SnapshotCopyRow item={request} tone="request" /> : null}
+                  <button
+                    type="button"
+                    onClick={() => setStep("apply")}
+                    className="flex w-full shrink-0 items-center gap-3 rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-600/25"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600/25 text-sm font-bold text-emerald-200">
+                      ↑
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-emerald-100">Apply</span>
+                      <span className="mt-0.5 block text-xs text-emerald-200/70">
+                        Paste AI JSON — create or capture after human review
+                      </span>
+                    </span>
+                  </button>
+                  {additionalItems.length > 0 ? (
+                    <div className="pt-2">
+                      <p className="mb-2 px-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
+                        Additional context
+                      </p>
+                      <div className="space-y-2">
+                        {additionalItems.map((item) => (
+                          <SnapshotCopyRow key={item.id} item={item} />
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setStep("apply")}
+                    className="flex w-full shrink-0 items-center gap-3 rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-600/25"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600/25 text-sm font-bold text-emerald-200">
+                      ↑
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-emerald-100">Apply</span>
+                      <span className="mt-0.5 block text-xs text-emerald-200/70">
+                        Paste AI JSON — create or capture after human review
+                      </span>
+                    </span>
+                  </button>
+                  {snapshotItems.map((item) => (
+                    <SnapshotCopyRow key={item.id} item={item} />
+                  ))}
+                </>
+              )}
             </div>
             <footer className="shrink-0 border-t border-zinc-800 pt-4">
               <button
@@ -119,7 +196,7 @@ export function NetworkPanel() {
           </div>
         ) : null}
 
-        {step === "update" ? (
+        {step === "apply" ? (
           <NetworkPanelUpdate onBack={handleBack} defaultEntityId={defaultEntityId} />
         ) : null}
       </div>

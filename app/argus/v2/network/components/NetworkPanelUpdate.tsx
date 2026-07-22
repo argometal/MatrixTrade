@@ -116,21 +116,26 @@ export function NetworkPanelUpdate({
           className="w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 font-mono text-xs text-zinc-300 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none"
         />
 
-        <label className="block space-y-1">
-          <span className="text-[11px] text-zinc-500">Load sample</span>
-          <select
-            value={sampleType}
-            onChange={(event) => handleSampleSelect(event.target.value)}
-            className="w-full rounded-lg border border-zinc-800 bg-zinc-950/80 px-2 py-1.5 text-xs text-zinc-300"
-          >
-            <option value="">Choose block type…</option>
-            {NETWORK_AI_BLOCK_SAMPLE_OPTIONS.map((option) => (
-              <option key={option.type} value={option.type}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <details className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
+          <summary className="cursor-pointer text-[11px] text-zinc-500">
+            Sample JSON shapes (debug — AI should produce these)
+          </summary>
+          <label className="mt-2 block space-y-1">
+            <span className="text-[11px] text-zinc-600">Load sample</span>
+            <select
+              value={sampleType}
+              onChange={(event) => handleSampleSelect(event.target.value)}
+              className="w-full rounded-lg border border-zinc-800 bg-zinc-950/80 px-2 py-1.5 text-xs text-zinc-300"
+            >
+              <option value="">Choose block type…</option>
+              {NETWORK_AI_BLOCK_SAMPLE_OPTIONS.map((option) => (
+                <option key={option.type} value={option.type}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </details>
 
         {preview ? (
           <div className="rounded-xl border border-violet-500/25 bg-violet-500/5 px-3 py-3">

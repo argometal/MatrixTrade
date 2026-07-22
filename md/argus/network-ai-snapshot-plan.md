@@ -1,52 +1,60 @@
 # Network AI snapshot + JSON import (pilot)
 
-**Status:** Pilot — Network browse + contact pages only  
-**Pattern:** Matrix Trade scouting desk (snapshot copy + human Apply JSON import)
+**Status:** Pilot — Network browse + contact pages  
+**Pattern:** Matrix Mechanics orientation + universal Request + human Apply (copy/paste external AI)
 
 ---
 
 ## Flow
 
-1. **Snapshot** — User copies text from Network header (`SnapshotButton`): ARGUS charter brief + network state + `=== REQUEST ===` block types.
-2. **External AI** — User pastes snapshot into ChatGPT or similar; AI returns one JSON block.
-3. **Import** — User pastes JSON in `NetworkAiImportPanel` → Validate → Preview → **Apply**.
-4. **Apply** — Server action writes via existing Argus storage (`createLog`, `updateEntity`). No silent mutations.
+1. **Network Mechanics** — User copies one consolidated orientation prompt (charter, record state, capabilities, context index, Apply contract, AI behavior).
+2. **Request** — User copies the universal work prompt to start create / capture / analyze / plan / finish JSON.
+3. **Additional context** — AI asks for exact UI labels (e.g. `Julio · Contact`); user copies only those blocks.
+4. **Apply** — User pastes JSON in Network Panel → Validate → **Apply** (human gate).
+
+Do **not** make the human choose which combination of prompts to load before starting.
+
+---
+
+## Panel hierarchy
+
+```
+NETWORK PANEL
+[ Network Mechanics ]   ← copy
+[ Request ]             ← copy
+[ Apply ]               ← paste JSON import
+Additional context
+[ {Person} · Contact ]  ← or desk snapshot
+[ Network charter brief ]
+[ Close ]
+```
 
 ---
 
 ## Scopes
 
-| Scope | Page | Content |
-|-------|------|---------|
-| `network-desk` | `/argus/v2/browse/network` | Summary counts, status breakdown, recent interactions, due/dormant highlights |
-| `network-person` | `/argus/v2/network/[id]` | Entity, org, role, tags; dialogue guide (no contact evidence) OR relationship overview + timeline snippet |
+| Scope | Page | Mechanics focus |
+|-------|------|-----------------|
+| `network-desk` | `/argus/v2/browse/network` | Desk counts; index includes desk snapshot |
+| `network-person` | `/argus/v2/network/[id]` | Person id + CURRENT_RECORD_STATE; index includes Contact |
 
-Both scopes prepend `buildArgusNetworkBrief()` and append `NETWORK_AI_BLOCK_REQUEST`.
+Builders: `buildNetworkMechanicsPrompt`, `buildNetworkRequestPrompt`, `buildNetworkContactPanelPackage`, `buildNetworkBrowsePanelPackage` in `lib/argus/network-ai-mechanics.ts`.
+
+Context index is derived from the same `NetworkContextBlockDef[]` that become Additional context rows — not a second hard-coded menu.
 
 ---
 
-## Block types
+## Block types (Apply JSON — unchanged)
 
 | Type | Effect |
 |------|--------|
-| `network-register` | Append `log` journal entry linked to person |
-| `network-follow-up` | Append `follow_up` log with `followUpDate` |
-| `network-tags` | Merge `linkedTags` on person entity |
-| `network-analysis` | Append note log only — no entity field mutation |
-| `network-metrics` | Update `contactValue` / `myValue` arrays |
-
-Required shape:
-
-```json
-{
-  "type": "network-register",
-  "proposal": {
-    "entityId": "<person-id>",
-    "title": "...",
-    "body": "..."
-  }
-}
-```
+| `network-create-person` | Create person entity |
+| `network-capture` | Conversation capture on existing person |
+| `network-register` | Append journal log |
+| `network-follow-up` | Follow-up log |
+| `network-tags` | Merge tags |
+| `network-analysis` | Note only |
+| `network-metrics` | contactValue / myValue |
 
 ---
 
@@ -54,29 +62,28 @@ Required shape:
 
 | File | Role |
 |------|------|
-| `lib/argus/network-ai-brief.ts` | Charter primer for AI |
-| `lib/argus/network-ai-snapshot.ts` | Scope builders + REQUEST append |
+| `lib/argus/network-ai-brief.ts` | Charter primer (embedded in Mechanics) |
+| `lib/argus/network-ai-mechanics.ts` | Mechanics / Request / panel packages / record state / index |
+| `lib/argus/network-ai-snapshot.ts` | Desk/person data slices + legacy full snapshot |
 | `lib/argus/network-ai-block.ts` | Parse, validate, preview, samples |
-| `lib/argus/apply-network-ai-block.ts` | Apply handlers (explicit call only) |
-| `lib/argus/v2/network-snapshot-packages.ts` | `SnapshotMenuItem[]` for pages |
-| `app/argus/v2/network/components/NetworkAiImportPanel.tsx` | Paste → validate → preview → Apply UI |
-| `app/argus/actions.ts` | `importNetworkAiBlockAction` |
-| `app/argus/v2/browse/network/page.tsx` | Desk snapshot items |
-| `app/argus/v2/network/[id]/page.tsx` | Person snapshot items |
-| `app/components/preview/SnapshotButton.tsx` | Reused copy-to-clipboard control |
+| `lib/argus/apply-network-ai-block.ts` | Apply handlers |
+| `lib/argus/v2/network-snapshot-packages.ts` | Panel packages + legacy flat lists |
+| `app/argus/v2/network/components/NetworkPanel.tsx` | UI hierarchy |
+| `app/argus/v2/network/components/NetworkPanelUpdate.tsx` | Apply paste step |
 
 ---
 
-## Constraints (pilot)
+## Constraints
 
 - Network only — not events, topics, or orgs
-- Human Apply always
+- Human Apply always — no AI API integration
 - Analysis blocks append logs only
-- Not a CRM — no pipeline/deal semantics
+- Not a sales CRM — no pipeline/deal semantics
 
 ---
 
 ## Related docs
 
-- [`ai-charter.md`](ai-charter.md) — ARGUS AI behavior rules
-- [`network-intelligence-thesis.md`](network-intelligence-thesis.md) — Past vs future, dialogue thesis
+- [network-intelligence-thesis.md](network-intelligence-thesis.md)
+- [ai-charter.md](ai-charter.md)
+- Matrix parallel: [../matrix/snapshot-catalog.md](../matrix/snapshot-catalog.md)

@@ -2,6 +2,11 @@ import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import { wrapSnapshotText } from "@/lib/snapshot-verification";
 import { buildArgusNetworkBrief } from "../network-ai-brief";
 import { buildNetworkAiSnapshot } from "../network-ai-snapshot";
+import {
+  buildNetworkBrowsePanelPackage,
+  buildNetworkContactPanelPackage,
+  type NetworkPanelPackage,
+} from "../network-ai-mechanics";
 import type {
   V2NetworkBrowseCard,
   V2NetworkBrowseInsight,
@@ -9,6 +14,9 @@ import type {
 } from "./network-browse-utils";
 import type { NetworkContactPageData } from "./network-contact-loaders";
 
+export type { NetworkPanelPackage };
+
+/** @deprecated Prefer Network Mechanics — retained for explicit Additional context / debugging. */
 export function networkCharterSnapshotItem(): SnapshotMenuItem {
   return {
     id: "network-charter",
@@ -18,6 +26,10 @@ export function networkCharterSnapshotItem(): SnapshotMenuItem {
   };
 }
 
+/**
+ * Legacy flat list (desk + charter). Prefer `buildNetworkBrowsePanelPackage`.
+ * Kept so any older callers still receive copyable blocks.
+ */
 export function networkBrowseSnapshotItems(input: {
   cards: V2NetworkBrowseCard[];
   summary: V2NetworkBrowseSummary;
@@ -40,6 +52,9 @@ export function networkBrowseSnapshotItems(input: {
   ];
 }
 
+/**
+ * Legacy flat list (person + charter). Prefer `buildNetworkContactPanelPackage`.
+ */
 export function networkContactSnapshotItems(page: NetworkContactPageData): SnapshotMenuItem[] {
   return [
     {
@@ -57,3 +72,5 @@ export function networkContactSnapshotItems(page: NetworkContactPageData): Snaps
     networkCharterSnapshotItem(),
   ];
 }
+
+export { buildNetworkBrowsePanelPackage, buildNetworkContactPanelPackage };

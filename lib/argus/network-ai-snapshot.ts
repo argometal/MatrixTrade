@@ -20,26 +20,6 @@ import type { NetworkContactPageData } from "./v2/network-contact-loaders";
 
 export type NetworkAiSnapshotScope = "network-desk" | "network-person";
 
-function appendRequest(body: string): string {
-  const templates = [
-    "",
-    "=== CONTACT CREATE TEMPLATE ===",
-    "name:",
-    "role:",
-    "organization:",
-    "email:",
-    "notes:",
-    "tags:",
-    "",
-    "=== AFTER CONVERSATION (existing person) ===",
-    "entityId:",
-    "what happened:",
-    "follow-up date:",
-    "tags:",
-  ].join("\n");
-  return [body, "", templates, "", "=== REQUEST ===", NETWORK_AI_BLOCK_REQUEST].join("\n");
-}
-
 function formatDeskHighlights(cards: V2NetworkBrowseCard[]): string {
   const dormant = cards.filter((c) => c.status === "Dormant" || c.status === "Lost").slice(0, 5);
   const due = cards
@@ -63,7 +43,7 @@ function formatDeskHighlights(cards: V2NetworkBrowseCard[]): string {
   return lines.join("\n");
 }
 
-function buildNetworkDeskBody(input: {
+export function buildNetworkDeskBody(input: {
   summary: V2NetworkBrowseSummary;
   insights: V2NetworkBrowseInsight;
   cards: V2NetworkBrowseCard[];
@@ -132,7 +112,7 @@ function relationshipOverviewSection(page: NetworkContactPageData): string {
   ].join("\n");
 }
 
-function buildNetworkPersonBody(page: NetworkContactPageData): string {
+export function buildNetworkPersonBody(page: NetworkContactPageData): string {
   const { entity, role, organization, intel, tags } = page;
   const hasContact = personHasContactEvidence(page.timeline.length);
 
@@ -171,5 +151,21 @@ export function buildNetworkAiSnapshot(input: {
     default:
       body = "(unknown scope)";
   }
-  return appendRequest([brief, "", body].join("\n"));
+  const templates = [
+    "",
+    "=== CONTACT CREATE TEMPLATE ===",
+    "name:",
+    "role:",
+    "organization:",
+    "email:",
+    "notes:",
+    "tags:",
+    "",
+    "=== AFTER CONVERSATION (existing person) ===",
+    "entityId:",
+    "what happened:",
+    "follow-up date:",
+    "tags:",
+  ].join("\n");
+  return [brief, "", body, "", templates, "", "=== REQUEST ===", NETWORK_AI_BLOCK_REQUEST].join("\n");
 }

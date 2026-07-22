@@ -6,7 +6,7 @@ import { loadEnrichedEntityEvidence } from "@/lib/argus/entity-evidence";
 import { referenceKindFromNotes } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { buildNetworkContactPageData } from "@/lib/argus/v2/network-contact-loaders";
-import { networkContactSnapshotItems } from "@/lib/argus/v2/network-snapshot-packages";
+import { buildNetworkContactPanelPackage } from "@/lib/argus/v2/network-snapshot-packages";
 import { NetworkContactShell } from "../components/NetworkContactShell";
 
 export default async function V2NetworkContactPage({ params }: { params: Promise<{ id: string }> }) {
@@ -58,7 +58,7 @@ export default async function V2NetworkContactPage({ params }: { params: Promise
     today,
   });
   const buckets = buildEntityPickerBuckets(data, includePrivate);
-  const snapshotItems = networkContactSnapshotItems(page);
+  const panelPackage = buildNetworkContactPanelPackage(page);
 
-  return <NetworkContactShell page={page} buckets={buckets} snapshotItems={snapshotItems} />;
+  return <NetworkContactShell page={page} buckets={buckets} panelPackage={panelPackage} />;
 }
