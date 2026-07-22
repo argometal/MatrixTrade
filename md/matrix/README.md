@@ -30,6 +30,7 @@
 | 4f | [snapshot-catalog.md](snapshot-catalog.md) | **Snapshot menu** — one button per window + Apply path |
 | 4g | [control-panel-ia.md](control-panel-ia.md) | **Control IA** — Mechanics · Stock Files · Apply · Library; forensic evidence-only |
 | 4h | [mta-002-operability-plan.md](mta-002-operability-plan.md) | **FORWARD** — operability (master prompt · 3-action UI · trend playbook); not a new engine |
+| 4i | [needs-attention-ai-workflow.md](needs-attention-ai-workflow.md) | **Needs Attention AI** — task snapshots · readiness · Apply-only completion |
 | 5 | [runtime-truth.md](runtime-truth.md) | **What works in prod today** (refreshed 2026-07-22) |
 | 6 | [ai-engineering.md](ai-engineering.md) | Single AI fleet |
 | 7 | [scoped-ai-access.md](scoped-ai-access.md) | Temporal links for one Stock Profile |
