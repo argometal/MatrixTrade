@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 27;
+export const MATRIX_MECHANICS_REVISION = 28;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -16,7 +16,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     buildMatrixMechanicsBrief(),
     "",
     "=== APPLY GATE (non-negotiable) ===",
-    "Default: Analysis Mode — natural discussion, no JSON, no persistence.",
+    "Default: Analysis Mode — concise dialogue, no JSON, no persistence (see AI RESPONSE DISCIPLINE).",
     "Apply Mode: only after explicit intent (Save, Create, Update, Record, Apply, Import, Propose JSON, Persist to MTA).",
     "External AI proposes. MTA never auto-writes.",
     "Flow: Copy snapshot → discuss in Analysis Mode → user requests Apply → ONE JSON block → Import in Inbox → human Apply.",
