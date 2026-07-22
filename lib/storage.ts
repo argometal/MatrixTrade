@@ -24,7 +24,10 @@ import type {
   TradeStatus,
   UpdateTradeInput,
 } from "./types";
-import { LOSS_CLASSIFICATIONS } from "./asymmetry-types";
+import {
+  LOSS_CLASSIFICATIONS,
+} from "./asymmetry-types";
+import { DEFAULT_RISK_BUDGET_USD } from "./layered-entry-risk";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -32,6 +35,7 @@ const DEFAULT_RULES: ExperimentRules = {
   monthlyLossLimit: -300,
   carryoverEnabled: true,
   maxLossPerTicker: -250,
+  defaultRiskBudget: DEFAULT_RISK_BUDGET_USD,
   obsidianVault: "TradingVault",
   obsidianVaultPath: "vault",
   tradesFolder: "Trades",
@@ -57,6 +61,10 @@ function normalizeRules(raw: ExperimentRules): ExperimentRules {
     monthlyLossLimit,
     carryoverEnabled: raw.carryoverEnabled !== false,
     maxLossPerTicker: raw.maxLossPerTicker ?? -250,
+    defaultRiskBudget:
+      raw.defaultRiskBudget !== undefined && Number.isFinite(raw.defaultRiskBudget)
+        ? raw.defaultRiskBudget
+        : DEFAULT_RISK_BUDGET_USD,
     obsidianVault: raw.obsidianVault,
     obsidianVaultPath: raw.obsidianVaultPath,
     tradesFolder: raw.tradesFolder,
@@ -77,6 +85,7 @@ export async function saveRules(input: {
   monthlyLossLimit: number;
   maxLossPerTicker: number;
   carryoverEnabled?: boolean;
+  defaultRiskBudget?: number;
 }): Promise<{ rules?: ExperimentRules; errors?: string[] }> {
   const current = await getRules();
   const errors: string[] = [];
@@ -87,6 +96,12 @@ export async function saveRules(input: {
   if (!Number.isFinite(input.maxLossPerTicker) || input.maxLossPerTicker >= 0) {
     errors.push("Per-stock loss limit must be a negative number (e.g. -250).");
   }
+  if (
+    input.defaultRiskBudget !== undefined &&
+    (!Number.isFinite(input.defaultRiskBudget) || input.defaultRiskBudget <= 0)
+  ) {
+    errors.push("Default risk budget must be a positive number (e.g. 100).");
+  }
 
   if (errors.length > 0) return { errors };
 
@@ -95,6 +110,10 @@ export async function saveRules(input: {
     monthlyLossLimit: input.monthlyLossLimit,
     maxLossPerTicker: input.maxLossPerTicker,
     carryoverEnabled: input.carryoverEnabled !== false,
+    defaultRiskBudget:
+      input.defaultRiskBudget !== undefined
+        ? input.defaultRiskBudget
+        : (current.defaultRiskBudget ?? DEFAULT_RISK_BUDGET_USD),
   };
   await writeJson("rules.json", rules);
   return { rules };

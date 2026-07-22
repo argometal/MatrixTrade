@@ -226,7 +226,11 @@ export function appendDecision(
   let layeredEntry = plan.layeredEntry;
   let executionMethod = plan.executionMethod;
   if (input.verdict === "go" && layeredEntryInput) {
-    layeredEntry = authorizeLayeredEntry(layeredEntryInput);
+    layeredEntry = authorizeLayeredEntry(layeredEntryInput, {
+      primaryTargetPrice:
+        layeredEntryInput.primaryTargetPrice ?? plan.targetPrice,
+      planStopPrice: layeredEntryInput.commonStopPrice ?? plan.stopPrice,
+    });
     executionMethod = layeredEntry.executionMethod;
   } else if (input.verdict !== "go") {
     layeredEntry = undefined;

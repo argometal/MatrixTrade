@@ -1,14 +1,30 @@
 # Execution experiments — layered entry
 
-**Status:** Adopted (2026-07-11)  
-**Layer:** Playbook — `expectancy-asymmetry` + `layered-entry`  
-**Replaces (conceptually):** Probe as scaling-after-confirmation
+**Status:** Adopted (2026-07-11) · **Engine risk extension (2026-07-22)**  
+**Layer:** Playbook — `expectancy-asymmetry` + `layered-entry` + Scout `layeredEntry`  
+**Replaces (conceptually):** Probe as scaling-after-confirmation  
+**Related:** [risk-weighted-layered-entry.md](risk-weighted-layered-entry.md)
 
 ---
 
 ## Matrix identity
 
 > Matrix is a **statistical engine**, not a prediction engine. Every rule must improve long-term expectancy over a large sample — not make an individual trade feel more certain.
+
+**Authorship split:** Human and AI propose entry prices, stops, target, roles, and allocation %. Matrix calculates R, monetary risk, quantities, and fill-state projections — and never invents technical levels.
+
+---
+
+## Allocation % vs monetary risk
+
+| Concept | Meaning |
+|---------|---------|
+| `allocationPercent` | Share of the **complete planned position** — must sum to **100%** |
+| `authorizedRiskAmount` | Monetary risk budget for the full plan (USD) |
+| `sizingMode=risk_percent` | Preferred — allocation % is share of authorized risk |
+| `sizingMode=position_percent` | Legacy — % is position/capital share; resulting risk share may differ |
+
+`rules.defaultRiskBudget` (migration default **100**) is an editable default, not a hard market law. Monthly loss cap remains separate (`monthlyLossLimit`).
 
 ---
 
@@ -24,9 +40,9 @@
 
 ## Layered entry (entry optimization)
 
-Thesis is **already accepted**. Goal: improve **average entry** without changing stop, targets, or total size.
+Thesis is **already accepted**. Goal: improve **average entry** / risk placement without changing thesis or chasing.
 
-Example (100% capital):
+Example (100% capital / risk weights):
 
 | Limit | Price | Allocation |
 |-------|-------|------------|

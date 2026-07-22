@@ -57,13 +57,19 @@ export function LayeredEntryPanel({
     >
       <div className="flex flex-wrap items-center gap-2">
         <p className={`font-medium text-teal-200 ${compact ? "text-xs" : "text-sm"}`}>
-          Layered entry · entry optimization
+          Layered entry · R / risk
         </p>
         <LayeredEntryBadge entry={entry} />
         <span className="text-xs text-zinc-500">
           {entry.executionMethod.replace(/_/g, " ")}
+          {entry.authorizedRiskAmount !== undefined
+            ? ` · risk $${entry.authorizedRiskAmount}`
+            : ""}
         </span>
       </div>
+      <p className="mt-1 text-[11px] text-zinc-500">
+        Proposed by human/AI · Matrix-calculated R and risk · Final human approval required
+      </p>
 
       {isMissed ? (
         <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
@@ -85,18 +91,40 @@ export function LayeredEntryPanel({
         <table className="w-full min-w-[280px] text-left text-xs">
           <thead>
             <tr className="text-zinc-500">
-              <th className="pb-2 pr-3 font-medium">Limit</th>
-              <th className="pb-2 pr-3 font-medium">Price</th>
+              <th className="pb-2 pr-3 font-medium">Role</th>
+              <th className="pb-2 pr-3 font-medium">Entry</th>
+              <th className="pb-2 pr-3 font-medium">Stop</th>
               <th className="pb-2 pr-3 font-medium">Alloc</th>
+              <th className="pb-2 pr-3 font-medium">Risk $</th>
+              <th className="pb-2 pr-3 font-medium">R</th>
               <th className="pb-2 font-medium">Fill</th>
             </tr>
           </thead>
           <tbody className="text-zinc-300">
             {entry.limits.map((limit, index) => (
               <tr key={`${limit.price}-${index}`} className="border-t border-zinc-800/80">
-                <td className="py-2 pr-3 tabular-nums">L{index + 1}</td>
+                <td className="py-2 pr-3">
+                  {limit.role ?? `L${index + 1}`}
+                  {limit.confidence ? (
+                    <span className="ml-1 text-zinc-600">{limit.confidence}</span>
+                  ) : null}
+                </td>
                 <td className="py-2 pr-3 font-mono">{formatPrice(limit.price)}</td>
-                <td className="py-2 pr-3 tabular-nums text-zinc-500">{limit.allocationPercent}%</td>
+                <td className="py-2 pr-3 font-mono">
+                  {formatPrice(limit.stopPrice ?? entry.commonStopPrice ?? plan.stopPrice)}
+                </td>
+                <td className="py-2 pr-3 tabular-nums text-zinc-500">
+                  {limit.allocationPercent}%
+                  {entry.sizingMode === "risk_percent" ? " risk" : " pos"}
+                </td>
+                <td className="py-2 pr-3 tabular-nums text-zinc-500">
+                  {limit.derived?.plannedRiskAmount !== undefined
+                    ? `$${limit.derived.plannedRiskAmount.toFixed(0)}`
+                    : "—"}
+                </td>
+                <td className="py-2 pr-3 font-mono text-teal-300/90">
+                  {limit.derived?.rr !== undefined ? `${limit.derived.rr.toFixed(2)}R` : "—"}
+                </td>
                 <td className="py-2">
                   {limit.filled ? (
                     <span className="text-emerald-400">Filled</span>

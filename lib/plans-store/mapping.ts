@@ -1,8 +1,13 @@
 import type { PlanOutcome, TradePlan } from "../plan-types";
 import { PLAN_TIMEFRAMES, type PlanTimeframe } from "../plan-types";
 import type { LayeredEntryPlan } from "../layered-entry-types";
+import type { FamilyBEntryAssessment } from "../family-b-types";
 import type { ScoutDecision, ScoutLifecycleStatus } from "../scout-decision-types";
 import type { Probe } from "../scout-probe-types";
+
+type LayeredEntryRow = LayeredEntryPlan & {
+  familyBAssessment?: FamilyBEntryAssessment;
+};
 
 interface PlanRow {
   id: string;
@@ -27,7 +32,7 @@ interface PlanRow {
   decision_history: ScoutDecision[] | null;
   scout_lifecycle: ScoutLifecycleStatus | null;
   probe: Probe | null;
-  layered_entry: LayeredEntryPlan | null;
+  layered_entry: LayeredEntryRow | null;
   execution_method: string | null;
   created_at: string;
   updated_at: string;
@@ -42,6 +47,14 @@ function parseTimeframe(value: string): PlanTimeframe {
 }
 
 export function planRowToPlan(row: PlanRow): TradePlan {
+  const layeredRaw = row.layered_entry ?? undefined;
+  let layeredEntry: LayeredEntryPlan | undefined;
+  let familyBAssessment: FamilyBEntryAssessment | undefined;
+  if (layeredRaw) {
+    const { familyBAssessment: nested, ...rest } = layeredRaw;
+    layeredEntry = rest;
+    familyBAssessment = nested;
+  }
   return {
     id: row.id,
     ticker: row.ticker,
@@ -65,10 +78,11 @@ export function planRowToPlan(row: PlanRow): TradePlan {
     decisionHistory: row.decision_history ?? undefined,
     scoutLifecycle: row.scout_lifecycle ?? undefined,
     probe: row.probe ?? undefined,
-    layeredEntry: row.layered_entry ?? undefined,
+    layeredEntry,
+    familyBAssessment,
     executionMethod:
       (row.execution_method as LayeredEntryPlan["executionMethod"] | null) ??
-      row.layered_entry?.executionMethod ??
+      layeredEntry?.executionMethod ??
       undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -106,7 +120,14 @@ export function planToRow(plan: TradePlan): PlanRow {
     decision_history: plan.decisionHistory ?? [],
     scout_lifecycle: plan.scoutLifecycle ?? null,
     probe: plan.probe ?? null,
-    layered_entry: plan.layeredEntry ?? null,
+    layered_entry: plan.layeredEntry
+      ? {
+          ...plan.layeredEntry,
+          ...(plan.familyBAssessment
+            ? { familyBAssessment: plan.familyBAssessment }
+            : {}),
+        }
+      : null,
     execution_method: plan.executionMethod ?? null,
     created_at: plan.createdAt,
     updated_at: plan.updatedAt,

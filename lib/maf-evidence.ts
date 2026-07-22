@@ -116,6 +116,38 @@ export function buildMafEvidence(input: {
     }
   }
 
+  if (plan?.layeredEntry) {
+    const le = plan.layeredEntry;
+    evidence.layeredEntryStatus = le.status;
+    evidence.layeredFillPercent = le.fillPercent;
+    evidence.layeredAverageEntry = le.averageEntry;
+    evidence.layeredEntryImprovementVsFirst = le.entryImprovementVsFirst;
+    evidence.layeredRiskUsedAmount = le.riskUsedAmount;
+    evidence.layeredAuthorizedRiskAmount = le.authorizedRiskAmount;
+    evidence.layeredBlendedRR = le.blendedRR;
+    evidence.layeredCombinedRR = le.combinedRR;
+    evidence.layeredSizingMode = le.sizingMode;
+    evidence.layeredStopModel = le.stopModel;
+    evidence.layeredLimitsFilled = le.limits.filter((l) => l.filled).length;
+    if (
+      evidence.slippageVsPlan === undefined &&
+      le.averageEntry !== undefined &&
+      trade &&
+      Number.isFinite(trade.entry)
+    ) {
+      evidence.slippageVsPlan = Math.round((trade.entry - le.averageEntry) * 100) / 100;
+    }
+  }
+
+  if (plan?.familyBAssessment) {
+    const fb = plan.familyBAssessment;
+    evidence.familyBEntryState = fb.state;
+    evidence.familyBTrendIntegrity = fb.trendIntegrity;
+    evidence.familyBExtension = fb.extension;
+    evidence.familyBPullbackQuality = fb.pullbackQuality;
+    evidence.familyBParticipationCase = fb.participationCase;
+  }
+
   if (observationRecord?.targetReachedAt && observationRecord.startedAt) {
     evidence.timeUntilTargetHours =
       evidence.timeUntilTargetHours ??

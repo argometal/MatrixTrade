@@ -3,7 +3,9 @@
 **Status:** Canonical design (2026-07-10).  
 **Purpose:** One clear picture of what a **Scout** is vs **Trade** vs **Probe** — today and V2.
 
-> **2026-07-11 — Entry optimization:** For improving average entry on an **already-approved** thesis, prefer **Layered Entry** (execution experiment) over Probe. Probe remains in the model for scaling-after-confirmation; layered limits isolate one execution variable with a hard no-chase rule. See [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md).
+> **2026-07-22 — R / risk layered participation:** Scout `layeredEntry` supports `stopModel`, `sizingMode`, `authorizedRiskAmount`, per-layer R, and fill-state projections. Human/AI propose levels; Matrix calculates. Prefer `risk_percent` so allocation % is risk share. See [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md) · [risk-weighted-layered-entry.md](risk-weighted-layered-entry.md).
+>
+> **2026-07-11 — Entry optimization:** For improving average entry on an **already-approved** thesis, prefer **Layered Entry** (execution experiment) over Probe. Probe remains in the model for scaling-after-confirmation; layered limits isolate one execution variable with a hard no-chase rule.
 
 ---
 

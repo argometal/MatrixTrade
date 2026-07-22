@@ -5,6 +5,8 @@ import type { DecisionVerdict } from "./scout-decision-types";
 import {
   authorizeLayeredEntry,
   parseLayeredEntryInput,
+  recomputeLayeredEntryPlan,
+  validateLayeredEntry,
 } from "./layered-entry";
 import {
   createInitialScoutPlan,
@@ -209,8 +211,71 @@ export async function updatePlanTacticsFromProposal(
     const layered = parseLayeredEntryInput(proposal.layeredEntry);
     if (!layered) errors.push("proposal.layeredEntry must be a valid layered entry object");
     else {
-      updated.layeredEntry = authorizeLayeredEntry(layered);
-      updated.executionMethod = layered.executionMethod;
+      const structureErrors = validateLayeredEntry(layered);
+      if (structureErrors.length) {
+        errors.push(...structureErrors);
+      } else {
+        const authorized = authorizeLayeredEntry(layered, {
+          primaryTargetPrice: layered.primaryTargetPrice ?? updated.targetPrice ?? plan.targetPrice,
+          planStopPrice: layered.commonStopPrice ?? updated.stopPrice ?? plan.stopPrice,
+        });
+        // When risk authorization present, reject plans that fail hard risk validation
+        if (authorized.authorizedRiskAmount !== undefined && authorized.primaryTargetPrice !== undefined) {
+          const { errors: riskErrors } = recomputeLayeredEntryPlan(authorized, {
+            primaryTargetPrice: authorized.primaryTargetPrice,
+            planStopPrice: authorized.commonStopPrice ?? updated.stopPrice ?? plan.stopPrice,
+            authorizedRiskAmount: authorized.authorizedRiskAmount,
+          });
+          if (riskErrors.length) errors.push(...riskErrors.map((e) => `layeredEntry: ${e}`));
+        }
+        // Reject forged client R: always persist recomputed derived (authorize already recomputes)
+        updated.layeredEntry = authorized;
+        updated.executionMethod = layered.executionMethod;
+        if (authorized.primaryTargetPrice !== undefined) {
+          // Preserve existing target unless explicitly provided — do not silently change target
+          if (proposal.targetPrice !== undefined || layered.primaryTargetPrice !== undefined) {
+            updated.targetPrice = authorized.primaryTargetPrice;
+          }
+        }
+        if (authorized.commonStopPrice !== undefined && (authorized.stopModel ?? "common") === "common") {
+          if (proposal.stopPrice !== undefined || layered.commonStopPrice !== undefined) {
+            // Reject widening stop vs prior without explicit proposal.stopPrice
+            if (
+              plan.stopPrice !== undefined &&
+              authorized.commonStopPrice < plan.stopPrice &&
+              proposal.stopPrice === undefined
+            ) {
+              errors.push(
+                "layeredEntry: common stop widened vs prior plan stop — provide explicit stopPrice to confirm"
+              );
+            } else {
+              updated.stopPrice = authorized.commonStopPrice;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (proposal.familyBAssessment !== undefined) {
+    const { normalizeFamilyBAssessment, validateFamilyBPlan, synthesizeFamilyBAssessment } =
+      await import("./family-b-assessment");
+    const parsed = normalizeFamilyBAssessment(proposal.familyBAssessment);
+    if (!parsed) {
+      errors.push("proposal.familyBAssessment must be a valid Family B assessment object");
+    } else {
+      const synthesized = synthesizeFamilyBAssessment({
+        playbookId: updated.playbookId ?? plan.playbookId,
+        assessment: parsed,
+        plan: updated,
+      });
+      const fb = validateFamilyBPlan({
+        playbookId: updated.playbookId ?? plan.playbookId,
+        plan: updated,
+        assessment: synthesized,
+      });
+      if (fb.errors.length) errors.push(...fb.errors.map((e) => `familyBAssessment: ${e}`));
+      updated.familyBAssessment = synthesized;
     }
   }
 

@@ -14,6 +14,14 @@ export function FamilyBChecklist({
 }) {
   if (!isSecularTrendContinuationPlaybook(playbookId)) return null;
 
+  const groups = new Map<string, typeof FAMILY_B_CHECKLIST>();
+  for (const item of FAMILY_B_CHECKLIST) {
+    const g = item.group ?? "GENERAL";
+    const list = groups.get(g) ?? [];
+    list.push(item);
+    groups.set(g, list);
+  }
+
   return (
     <section
       className={
@@ -34,18 +42,29 @@ export function FamilyBChecklist({
         </Link>
       </div>
       <p className="mt-1 text-xs text-sky-100/60">
-        Do not force deep-rebound depth. Dual stop · extension limits · stated min R.
+        Starter ≠ full entry · preferred usually largest · Fib context only · no chase.
       </p>
-      <ul className="mt-3 space-y-1.5">
-        {FAMILY_B_CHECKLIST.map((item) => (
-          <li key={item.id} className="flex gap-2 text-xs text-sky-100/85">
-            <span className="mt-0.5 text-sky-400/70" aria-hidden>
-              ○
-            </span>
-            <span>{item.label}</span>
-          </li>
+      <div className="mt-3 space-y-3">
+        {[...groups.entries()].map(([group, items]) => (
+          <div key={group}>
+            {!compact ? (
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-wider text-sky-500/70">
+                {group}
+              </p>
+            ) : null}
+            <ul className="space-y-1.5">
+              {items.map((item) => (
+                <li key={item.id} className="flex gap-2 text-xs text-sky-100/85">
+                  <span className="mt-0.5 text-sky-400/70" aria-hidden>
+                    ○
+                  </span>
+                  <span>{item.label}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
     </section>
   );
 }

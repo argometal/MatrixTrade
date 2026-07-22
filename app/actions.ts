@@ -675,8 +675,18 @@ export async function saveRulesAction(
   const monthlyLossLimit = Number(formData.get("monthlyLossLimit"));
   const maxLossPerTicker = Number(formData.get("maxLossPerTicker"));
   const carryoverEnabled = formData.get("carryoverEnabled") === "on";
+  const defaultRiskRaw = formData.get("defaultRiskBudget");
+  const defaultRiskBudget =
+    defaultRiskRaw !== null && String(defaultRiskRaw).trim() !== ""
+      ? Number(defaultRiskRaw)
+      : undefined;
 
-  const result = await saveRules({ monthlyLossLimit, maxLossPerTicker, carryoverEnabled });
+  const result = await saveRules({
+    monthlyLossLimit,
+    maxLossPerTicker,
+    carryoverEnabled,
+    ...(defaultRiskBudget !== undefined ? { defaultRiskBudget } : {}),
+  });
   if (result.errors?.length) {
     return { error: result.errors.join(" ") };
   }

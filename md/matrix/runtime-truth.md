@@ -142,7 +142,8 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | Piece | Status |
 |-------|--------|
 | Control → Apply | Primary write path (user-facing; internal component may still be named ControlPanelUpdate) |
-| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 23** (Family A/B playbooks + Stock File Analyze) |
+| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 25** (Family B bull-trend + layered R/risk) |
+| **Family B bull-trend entry** | `familyBAssessment` + layered roles; Scout panel; Analyze package; MAF fields — [secular-trend-continuation.md](secular-trend-continuation.md) |
 | **Stock File Analyze (MTA-002A)** | `buildStockFileAnalyzePackage` — one copy: operative prompt + Mechanics + MTAE + dossier + Scout → Apply |
 | **Needs Attention AI (task snapshots)** | Dashboard rows: **Copy for AI** · **Apply** · **Go** — `lib/needs-attention-ai.ts`; derived queue; readiness diagnosis before JSON; [needs-attention-ai-workflow.md](needs-attention-ai-workflow.md) |
 | **Dashboard snapshot** | Global context only (`dashboardSnapshotItems`) — **not** embedded inside each task snapshot |
@@ -180,7 +181,8 @@ Method: `playbook-create`, `playbook-update`
 | Probe state machine | authorize → activate → convert \| cancel \| stop |
 | Probe → Trade | `lib/probe-to-trade.ts` |
 | `TradeEvaluation` | ADR-0002 — observing window after close |
-| Layered entry experiments | Playbook-level (preferred over Probe for entry optimization) |
+| Layered entry experiments | Scout `layeredEntry` + `lib/layered-entry-risk.ts` — R per layer, risk sizing, fill-state projections; human/AI propose levels |
+| Default risk budget | `rules.defaultRiskBudget` (migration default **100** USD) — editable in System rules; not a hard market law |
 
 ---
 
@@ -223,8 +225,13 @@ Method: `playbook-create`, `playbook-update`
 
 | Status | Item |
 |--------|------|
+<<<<<<< HEAD
+| **NORTH STAR** | **[MTA-002](mta-002-operability-plan.md)** + layered R/risk engine; **002B postponed** |
+| **NEXT** | Live risk_percent ladders · starter samples for MAF · optional Scout layer editor UI polish |
+=======
 | **NORTH STAR** | **[MTA-002](mta-002-operability-plan.md)** — 002A + P1 + Observation UX + 002C + Needs Attention AI; **002B postponed** |
 | **NEXT** | Live Needs Attention Copy-for-AI loops · optional smallest `plan-outcome` Apply block · Family B calibration |
+>>>>>>> origin/main
 | **POSTPONED** | MTA-002B prompt validation log (10–20 chats) — until dedicated test sessions |
 | **EVALUATION** | MAF expectancy aggregation by component/Playbook — only if enough attributed rows exist |
 | **OUT OF SCOPE now** | Request layer, Library schema, Volume profile / AVWAP, L2 / heatmap, empty dashboards, Coach, broker automation |

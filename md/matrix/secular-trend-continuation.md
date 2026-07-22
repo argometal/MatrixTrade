@@ -49,6 +49,36 @@ Out of universe: late-stage parabolic melt-ups without structure; broken secular
 
 ---
 
+## Bull-trend entry framework (operational)
+
+**Human/AI propose** entries, stops, target, roles, %. **Matrix** calculates R, validates, projects fill states, and learns via Observation/MAF.
+
+### Entry states
+
+`watch` · `starter_available` · `preferred_entry_available` · `deep_entry_available` · `extended_no_chase` · `structure_damaged` · `invalidated`
+
+### Layer roles
+
+`starter` · `preferred_pullback` (alias `preferred`) · `deep_pullback` · `reclaim_confirmation` (alias `confirmation`) · `custom`
+
+### Starter policy
+
+Controlled exception — not full conviction. Default max **30%** of planned allocation. Requires rationale + reserved better zones. Does not convert NO → GO.
+
+### Fibonacci
+
+Optional context only. Never standalone authorization.
+
+### Code
+
+- Types: `lib/family-b-types.ts`
+- Classify / validate / snapshot: `lib/family-b-assessment.ts`
+- Scout UI: `FamilyBBullTrendPanel`
+- Apply: `decision-update` → `familyBAssessment` + `layeredEntry`
+- Analyze package includes Family B section when playbook matches
+
+---
+
 ## Allowed entry methods (pick one per Scout window)
 
 | Method | When |
