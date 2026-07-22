@@ -220,6 +220,21 @@ AI Block: `technical-calibration` → append-only store `data/mtae-calibrations.
 
 ---
 
+## Participation Layer (Phase A — optional schema)
+
+V1 geometry remains required. Phase A adds **participation** when volume/candles support it.
+
+Canonical design: [mtae-participation-layer.md](mtae-participation-layer.md) · ADR [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md).
+
+Additive schema (optional; validated when present):
+
+- per TF: `participation.{volumeBehavior, wickAnalysis, candleSignals, movementCharacter, historicalReactionZones, largeParticipantFootprint}`
+- integrated: `participationSynthesis`
+
+Still forbidden in MTAE: Entry Solver, RR, Scout verdict, `whalesAreBuying`, Level 2 / heatmap (separate future Execution Microstructure Engine).
+
+---
+
 ## AI Block shapes
 
 ### `technical-assessment`
@@ -335,12 +350,15 @@ MTAE does **not** overwrite Playbook or Scout plans.
 - Auto-running Scout Entry Solver after Accept
 - Supabase table for assessments (JSON file first; cloud later)
 - Replacing Playbook structural-pullback experiment docs (MTAE feeds zones; Playbook still owns HOW)
+- Heatmap / Level 2 inside MTAE (future Execution Microstructure Engine)
+- Volume profile / Anchored VWAP (Phase B)
 
 ---
 
 ## Related
 
 - [adr-0003-mtae.md](adr-0003-mtae.md)
+- [mtae-participation-layer.md](mtae-participation-layer.md) · [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md)
 - [stock-profile-design.md](stock-profile-design.md)
 - [scout-execution-model.md](scout-execution-model.md)
 - [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md)

@@ -1,6 +1,6 @@
 # MatrixTrade — building backlog
 
-**Last updated:** 2026-07-21  
+**Last updated:** 2026-07-22  
 **Purpose:** Active product/ops work — priorities, blockers, resume targets. Not library doc debt (see [library-alignment-backlog.md](library-alignment-backlog.md)).
 
 ---
@@ -10,10 +10,10 @@
 | Field | Value |
 |-------|-------|
 | **Priority** | HIGH |
-| **Status** | **Foundation shipped** (schema + Apply + docs) |
-| **Doc** | [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) · [adr-0003-mtae.md](adr-0003-mtae.md) |
-| **Shipped** | `technical-assessment` / `technical-calibration` blocks; JSON stores; Stock File patch; TF role presets; **Control → Technical analysis** section |
-| **Next** | Live chart-pack loops + calibration samples; optional Supabase table; never fold Entry Solver into MTAE |
+| **Status** | **Foundation + Participation Phase A shipped** |
+| **Doc** | [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) · [mtae-participation-layer.md](mtae-participation-layer.md) · [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md) |
+| **Shipped** | Geometry assessment + optional `participation` / `participationSynthesis`; validate + protocol; Mechanics **rev 20**; calibration errorTypes for overclaims |
+| **Next** | Live chart-pack loops with volume; Phase B (volume profile / AVWAP) only after calibration samples |
 
 ---
 

@@ -132,8 +132,8 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | Piece | Status |
 |-------|--------|
 | Control → Update | Primary write path |
-| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 19** (Learning Outcome + Observation + MAF) |
-| **MTAE** | Control → **Technical analysis** + `technical-assessment` / `technical-calibration` Apply → `data/mtae-*.json` + Stock File patch |
+| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 20** (MTAE Participation Phase A) |
+| **MTAE** | Control → **Technical analysis** + `technical-assessment` / `technical-calibration`; optional per-TF `participation` + `participationSynthesis` |
 | **MAF** | `attribution` Apply → `data/maf-experiments.json`; evidence from Trade+Plan+Observation+LearningOutcome; rule hints |
 | **Learning Outcome** | Auto on trade close / plan outcome → `data/learning-outcomes.json` (`LO-xxx`) |
 | **Observation** | Auto seed + `observation-update` Apply → `data/observations.json` (`OBS-xxx`) |
@@ -151,7 +151,7 @@ Execution: `trade-proposal`, `trade-update`, `trade-close`, `trade-review`, `ana
 Method: `playbook-create`, `playbook-update`
 
 **Same-ticker new window:** `scout-plan-create` (not `stock-case-create`).  
-**Boundary:** MTAE = technical only. Scout = capital. MAF = post-experiment component attribution (not journal). See [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) · [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md).
+**Boundary:** MTAE = technical only (geometry + optional participation). Scout = capital. MAF = post-experiment component attribution (not journal). See [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) · [mtae-participation-layer.md](mtae-participation-layer.md) · [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md).
 
 ---
 

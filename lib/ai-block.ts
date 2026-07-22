@@ -20,7 +20,7 @@ PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
 - scout-plan-create: NEW Scout Plan window on an EXISTING Stock File — stockFileId (or stockThesisId), ticker, plannedEntry, stopPrice, targetPrice required; optional verdict+decisionConfidence+challenges, playbookId/playbookIds, status (watching|ready|active), thesis, notes, reasoning. Allocates a NEW PLAN-xxx. Do NOT use stock-case-create for same ticker. Do NOT reuse an old planId.
-- technical-assessment: MTAE technical JSON only — stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[], integrated{}, technicalSummary{} (trend, zones, probableTarget vs extendedTarget, structuralInvalidation, contradictions, confidence). FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict. Optional patchStockFile (default true).
+- technical-assessment: MTAE technical JSON only — stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[] (optional participation{volumeBehavior,wickAnalysis,candleSignals,movementCharacter,historicalReactionZones,largeParticipantFootprint}), integrated{} (optional participationSynthesis), technicalSummary{} (trend, zones, probableTarget vs extendedTarget, structuralInvalidation, contradictions, confidence). FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict, whalesAreBuying. Optional patchStockFile (default true).
 - technical-calibration: human procedure correction — assessmentId, stockProfileId, ticker, errorType, fieldPath, aiValue, humanValue, reason; optional magnitude, confidenceAdjustment
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason. Deletes linked evidence and scout plans. Irreversible — human Apply only.
 
@@ -74,7 +74,7 @@ All Apply-ready block types:
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout (backfill missing Scout Plan only)
 - scout-plan-create: NEW PLAN on existing Stock File — stockFileId, ticker, plannedEntry, stopPrice, targetPrice; optional verdict+challenges; allocates NEW PLAN-xxx (same-ticker new window)
-- technical-assessment: MTAE technical-only multi-TF JSON — stockProfileId, ticker, timeframeRoles, perTimeframe[], integrated{}, technicalSummary{} (no Entry Solver / RR / Scout verdict)
+- technical-assessment: MTAE technical-only multi-TF JSON — stockProfileId, ticker, timeframeRoles, perTimeframe[] (+ optional participation), integrated{} (+ optional participationSynthesis), technicalSummary{} (no Entry Solver / RR / Scout verdict / whalesAreBuying)
 - technical-calibration: MTAE human procedure correction — assessmentId, errorType, fieldPath, aiValue, humanValue, reason
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason (duplicate cleanup)
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId, status
@@ -182,7 +182,7 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
   {
     type: "technical-assessment",
     label: "technical-assessment — MTAE technical JSON",
-    hint: "Multi-TF structure/zones/targets/invalidation — no Entry Solver / capital",
+    hint: "Multi-TF structure/zones/targets/invalidation + optional Phase A participation — no Entry Solver / capital",
   },
   {
     type: "technical-calibration",
@@ -431,6 +431,80 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
           structuralInvalidation: "Monthly close below 180",
           contradictions: ["Momentum cooler than structure"],
           summary: "Secular uptrend intact; channel support still defining structure.",
+          participation: {
+            volumeBehavior: {
+              state: "expanding",
+              directionalBias: "buying",
+              priceVolumeRelationship: "confirming",
+              relativeVolume: "high",
+              interpretation: "Advances on expanding volume; pullbacks quieter.",
+              confidence: 74,
+            },
+            wickAnalysis: {
+              upperRejections: [
+                {
+                  zone: { low: 270, high: 280 },
+                  frequency: 2,
+                  strength: 68,
+                  volumeConfirmation: "present",
+                  interpretation: "Repeated supply near prior high",
+                },
+              ],
+              lowerRejections: [
+                {
+                  zone: { low: 178, high: 185 },
+                  frequency: 3,
+                  strength: 80,
+                  volumeConfirmation: "present",
+                  interpretation: "Repeated demand defense",
+                },
+              ],
+              liquiditySweeps: [],
+              netMessage: "buyer_rejection",
+            },
+            candleSignals: [
+              {
+                pattern: "hammer",
+                location: "major_support",
+                context: "after_orderly_pullback",
+                confirmation: "confirmed",
+                symbolicMeaning: "demand_response_at_shelf",
+                confidence: 70,
+              },
+            ],
+            movementCharacter: {
+              primary: "orderly_correction",
+              secondary: ["volatility_compression"],
+              evidence: [
+                "higher-TF channel intact",
+                "slow pullback",
+                "contracting volume on dips",
+                "support shelf held",
+              ],
+              confidence: 72,
+              caveat: "Visual/probabilistic — not proof of positioning.",
+            },
+            historicalReactionZones: [
+              {
+                zone: { low: 180, high: 185 },
+                reactionCount: 4,
+                successfulDefenses: 3,
+                averageReactionPercent: 12.0,
+                volumeCharacter: "expanding_on_rebound",
+                confidence: 84,
+                interpretation: "Repeated demand response",
+              },
+            ],
+            largeParticipantFootprint: {
+              signal: "possible_accumulation",
+              evidence: [
+                "high volume with limited downside at 180–185",
+                "repeated lower-wick defense",
+                "quieter pullbacks after thrusts",
+              ],
+              confidence: 71,
+            },
+          },
         },
         {
           timeframe: "1M",
@@ -472,6 +546,51 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
           structuralInvalidation: "Monthly close below 210",
           contradictions: [],
           summary: "Compression under resistance; battle zone 220–228 is the refinement fight.",
+          participation: {
+            volumeBehavior: {
+              state: "muted",
+              directionalBias: "neutral",
+              priceVolumeRelationship: "inconclusive",
+              relativeVolume: "low",
+              interpretation: "Compression with muted volume — participation undecided.",
+              confidence: 60,
+            },
+            movementCharacter: {
+              primary: "volatility_compression",
+              evidence: ["overlapping candles", "shrinking ranges", "volume muted"],
+              confidence: 68,
+            },
+            wickAnalysis: {
+              upperRejections: [],
+              lowerRejections: [],
+              liquiditySweeps: [],
+              netMessage: "inconclusive",
+            },
+            candleSignals: [
+              {
+                pattern: "inside_bar",
+                location: "mid_range",
+                context: "into_resistance",
+                confirmation: "pending",
+                symbolicMeaning: "pause_before_resolution",
+                confidence: 58,
+              },
+            ],
+            historicalReactionZones: [
+              {
+                zone: { low: 220, high: 228 },
+                reactionCount: 2,
+                successfulDefenses: 2,
+                confidence: 70,
+                interpretation: "Recent demand pivot",
+              },
+            ],
+            largeParticipantFootprint: {
+              signal: "indeterminate",
+              evidence: ["muted volume; no clear absorption signature on 1M"],
+              confidence: 45,
+            },
+          },
         },
       ],
       integrated: {
@@ -490,6 +609,17 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
         ],
         executionContext: "1W timing only — wait for zone interaction; do not chase.",
         contradictions: ["Structure bullish while 1M momentum soft"],
+        participationSynthesis: {
+          dominantCondition: "correction",
+          buyingEvidence: [
+            "6M expanding volume on advances",
+            "repeated defense 180–185",
+            "possible_accumulation footprint at shelf",
+          ],
+          sellingEvidence: ["upper rejection near 270–280", "1M muted into resistance"],
+          unresolvedSignals: ["1M compression resolution pending"],
+          confidence: 68,
+        },
       },
       technicalSummary: {
         trend: "bullish",

@@ -19,6 +19,8 @@
 | 4b2 | [adr-0002-trade-evaluation.md](adr-0002-trade-evaluation.md) | **ADR** — `TradeEvaluation` entity (**implemented**) |
 | 4b3 | [adr-0003-mtae.md](adr-0003-mtae.md) | **ADR** — Matrix Technical Analysis Engine |
 | 4b4 | [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) | **MTAE** — multi-TF technical module (not Scout) |
+| 4b4a | [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md) | **ADR** — MTAE Participation Layer (design) |
+| 4b4b | [mtae-participation-layer.md](mtae-participation-layer.md) | **MTAE** — structure + participation (volume/wicks/character) — **docs first** |
 | 4b5 | [adr-0004-maf.md](adr-0004-maf.md) | **ADR** — Matrix Attribution Framework |
 | 4b6 | [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md) | **MAF** — component attribution after Trade |
 | 4c | [monday-nflx-experiment.md](monday-nflx-experiment.md) | First live test — ops note, not Stock File |
