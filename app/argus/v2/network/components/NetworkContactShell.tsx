@@ -34,6 +34,7 @@ import { NetworkDialogueGuide } from "./NetworkDialogueGuide";
 import { NetworkPanelProvider } from "./NetworkPanelProvider";
 import { NetworkPanelButton } from "./NetworkPanelButton";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import type { NetworkPanelPackage } from "@/lib/argus/network-ai-mechanics";
 
 const TABS = ["Overview", "Relationship", "Links"] as const;
 type ContactTab = (typeof TABS)[number];
@@ -460,11 +461,14 @@ function LinksTab({ page }: { page: NetworkContactPageData }) {
 export function NetworkContactShell({
   page,
   buckets,
+  panelPackage,
   snapshotItems,
 }: {
   page: NetworkContactPageData;
   buckets: EntityPickerBuckets;
-  snapshotItems: SnapshotMenuItem[];
+  panelPackage?: NetworkPanelPackage;
+  /** @deprecated Prefer panelPackage */
+  snapshotItems?: SnapshotMenuItem[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<ContactTab>("Overview");
@@ -484,6 +488,7 @@ export function NetworkContactShell({
 
   return (
     <NetworkPanelProvider
+      panelPackage={panelPackage}
       snapshotItems={snapshotItems}
       defaultEntityId={entity.id}
       panelTitle={entity.name}

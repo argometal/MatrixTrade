@@ -21,6 +21,7 @@ import {
 import { NetworkPanelProvider } from "@/app/argus/v2/network/components/NetworkPanelProvider";
 import { NetworkPanelButton } from "@/app/argus/v2/network/components/NetworkPanelButton";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import type { NetworkPanelPackage } from "@/lib/argus/network-ai-mechanics";
 
 const PAGE_SIZE = 8;
 
@@ -409,12 +410,15 @@ export function V2NetworkBrowserShell({
   cards,
   summary,
   insights,
+  panelPackage,
   snapshotItems,
 }: {
   cards: V2NetworkBrowseCard[];
   summary: V2NetworkBrowseSummary;
   insights: V2NetworkBrowseInsight;
-  snapshotItems: SnapshotMenuItem[];
+  panelPackage?: NetworkPanelPackage;
+  /** @deprecated Prefer panelPackage */
+  snapshotItems?: SnapshotMenuItem[];
 }) {
   const searchParams = useSearchParams();
   const orgScope = searchParams.get("org")?.trim() || undefined;
@@ -457,7 +461,7 @@ export function V2NetworkBrowserShell({
   };
 
   return (
-    <NetworkPanelProvider snapshotItems={snapshotItems} panelTitle="Network desk">
+    <NetworkPanelProvider panelPackage={panelPackage} snapshotItems={snapshotItems} panelTitle="Network desk">
     <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden">
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         <div className="flex gap-8 px-4 py-6 lg:px-8">
