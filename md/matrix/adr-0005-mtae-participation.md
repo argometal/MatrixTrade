@@ -1,6 +1,6 @@
 # ADR-0005 — MTAE Participation Layer
 
-**Status:** Accepted — **design / library only** (2026-07-22)  
+**Status:** Accepted — Phase A **coded** (optional schema fields + validation) (2026-07-22)  
 **Decision date:** 2026-07-22  
 **Parent:** [mtae-participation-layer.md](mtae-participation-layer.md)  
 **Extends:** [adr-0003-mtae.md](adr-0003-mtae.md)
@@ -19,11 +19,11 @@ We need a second MTAE dimension — **participation** — without collapsing MTA
 
 ## Decision
 
-1. Document **Participation Layer** as an additive MTAE schema: per-TF `participation{}` + integrated `participationSynthesis{}`.
+1. Add **Participation Layer** as additive optional MTAE schema: per-TF `participation{}` + integrated `participationSynthesis{}`.
 2. Keep language probabilistic and anti-overclaim: no `whalesAreBuying`, no absolute candle rules, squeeze/correction as classifications with confidence.
-3. Phase A coding (later) covers: volume, wicks, movement character, historical reaction zones, small candle-signal set, large-participant footprint.
-4. Heatmap and Level 2 are **deferred to a future Execution Microstructure Engine**, not mixed into strategic MTAE TF roles.
-5. **No schema/code change in this ADR turn** — library and backlog only; coding follows explicit implementation task.
+3. **Phase A coded:** volume, wicks, movement character, historical reaction zones, small candle-signal set, large-participant footprint — validate + protocol + sample block.
+4. Heatmap and Level 2 remain **deferred to a future Execution Microstructure Engine**.
+5. Participation fields are **optional** for backward compatibility; when present they must validate.
 
 ---
 
@@ -31,10 +31,10 @@ We need a second MTAE dimension — **participation** — without collapsing MTA
 
 | Change | Effect |
 |--------|--------|
-| New library docs | `mtae-participation-layer.md`, this ADR |
-| Future types | Optional fields on `MtaeTimeframeReport` / `MtaeIntegratedView` |
-| Calibration | New errorTypes for participation overclaims |
-| Boundary | MTAE still forbids Entry Solver / RR / Scout verdict |
+| Types / validate | `lib/mtae-types.ts`, `lib/mtae-validate.ts` |
+| Protocol / Mechanics | `lib/mtae-brief.ts`, Mechanics **rev 20** |
+| Calibration errorTypes | volume_behavior, movement_character, wick_hierarchy, candle_signal_context, historical_reaction_rank, participant_footprint_overclaim |
+| Boundary | MTAE still forbids Entry Solver / RR / Scout verdict / whale identity |
 | Scope deferred | Volume profile, AVWAP, heatmap, L2 |
 
 ---

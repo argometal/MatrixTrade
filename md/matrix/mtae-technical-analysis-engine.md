@@ -220,13 +220,13 @@ AI Block: `technical-calibration` → append-only store `data/mtae-calibrations.
 
 ---
 
-## Participation Layer (design — coding deferred)
+## Participation Layer (Phase A — optional schema)
 
-V1 is strong on **geometry** (structure, levels, battle zones, invalidation) and weak on **participation** (volume behavior, wicks, movement character, historical reaction).
+V1 geometry remains required. Phase A adds **participation** when volume/candles support it.
 
 Canonical design: [mtae-participation-layer.md](mtae-participation-layer.md) · ADR [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md).
 
-Planned additive schema (optional until coded):
+Additive schema (optional; validated when present):
 
 - per TF: `participation.{volumeBehavior, wickAnalysis, candleSignals, movementCharacter, historicalReactionZones, largeParticipantFootprint}`
 - integrated: `participationSynthesis`
@@ -350,8 +350,8 @@ MTAE does **not** overwrite Playbook or Scout plans.
 - Auto-running Scout Entry Solver after Accept
 - Supabase table for assessments (JSON file first; cloud later)
 - Replacing Playbook structural-pullback experiment docs (MTAE feeds zones; Playbook still owns HOW)
-- **Participation Layer coding** — design accepted in [mtae-participation-layer.md](mtae-participation-layer.md); implement only on explicit coding task
 - Heatmap / Level 2 inside MTAE (future Execution Microstructure Engine)
+- Volume profile / Anchored VWAP (Phase B)
 
 ---
 

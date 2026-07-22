@@ -10,24 +10,10 @@
 | Field | Value |
 |-------|-------|
 | **Priority** | HIGH |
-| **Status** | **Foundation shipped** (schema + Apply + docs) |
-| **Doc** | [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) · [adr-0003-mtae.md](adr-0003-mtae.md) |
-| **Shipped** | `technical-assessment` / `technical-calibration` blocks; JSON stores; Stock File patch; TF role presets; **Control → Technical analysis** section |
-| **Next** | Live chart-pack loops + calibration samples; then **Participation Layer coding** (docs already accepted) |
-
----
-
-## Design accepted — MTAE Participation Layer (no coding yet)
-
-| Field | Value |
-|-------|-------|
-| **Priority** | HIGH |
-| **Status** | **Library / ADR only** — do not code until explicit implementation task |
-| **Doc** | [mtae-participation-layer.md](mtae-participation-layer.md) · [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md) |
-| **Intent** | Add `participation` per TF + `participationSynthesis` — volume, wicks, movement character, historical reaction, small candle set, large-participant footprint |
-| **Phase A coding (later)** | volume → wicks → character → reaction zones → candles → footprint |
-| **Deferred modules** | Volume profile / AVWAP; Heatmap + Level 2 → Execution Microstructure Engine (not MTAE) |
-| **Hard rules** | No `whalesAreBuying`; no absolute candle rules; no capital / Entry Solver inside MTAE |
+| **Status** | **Foundation + Participation Phase A shipped** |
+| **Doc** | [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) · [mtae-participation-layer.md](mtae-participation-layer.md) · [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md) |
+| **Shipped** | Geometry assessment + optional `participation` / `participationSynthesis`; validate + protocol; Mechanics **rev 20**; calibration errorTypes for overclaims |
+| **Next** | Live chart-pack loops with volume; Phase B (volume profile / AVWAP) only after calibration samples |
 
 ---
 

@@ -1,8 +1,9 @@
 # MTAE — Participation Layer (structure + participation)
 
-**Status:** Design accepted — **docs only** (2026-07-22). Coding deferred.  
+**Status:** Phase A **implemented** in schema/validate/protocol (2026-07-22). Heatmap/L2 still deferred.  
 **ADR:** [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md)  
 **Parent:** [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md)
+**Code:** `lib/mtae-types.ts`, `lib/mtae-validate.ts`, `lib/mtae-brief.ts`
 
 ---
 
