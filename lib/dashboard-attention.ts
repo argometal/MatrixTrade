@@ -1,4 +1,8 @@
 import type { BridgeInboxItem } from "./bridge";
+import {
+  formatIncompleteClosedSummary,
+  listIncompleteClosedTrades,
+} from "./incomplete-closed-trades";
 import type { MonthlyRisk } from "./monthly-risk";
 import type { Playbook } from "./playbook-types";
 import type { Trade } from "./types";
@@ -39,11 +43,25 @@ export function buildAttentionItems(
     });
   }
 
-  for (const trade of trades.filter((t) => t.status === "closed" && !t.reviewedAt)) {
+  const incompleteClosed = listIncompleteClosedTrades(trades);
+  if (incompleteClosed.length > 0) {
     items.push({
-      id: `review-${trade.id}`,
-      label: `Review ${trade.id} · ${trade.ticker}`,
-      href: `/trades/${trade.id}/review`,
+      id: "incomplete-closed",
+      label:
+        incompleteClosed.length === 1
+          ? `Closed incomplete · ${incompleteClosed[0].trade.id} ${incompleteClosed[0].trade.ticker} (${formatIncompleteClosedSummary(incompleteClosed[0])})`
+          : `Closed ≠ complete · ${incompleteClosed.length} trades need finishing`,
+      href: "/trades",
+      priority: 1,
+    });
+  }
+
+  for (const row of incompleteClosed) {
+    if (!row.gaps.includes("needs_review")) continue;
+    items.push({
+      id: `review-${row.trade.id}`,
+      label: `Review ${row.trade.id} · ${row.trade.ticker}`,
+      href: `/trades/${row.trade.id}/review`,
       priority: 1,
     });
   }

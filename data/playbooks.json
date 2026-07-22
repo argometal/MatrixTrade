@@ -524,5 +524,73 @@
       "Record outcome: bounce L1 (0.30R) / full build (1R) / structural break",
       "No chase if limits miss"
     ]
+  },
+  {
+    "id": "secular-trend-continuation",
+    "name": "Secular Trend Continuation",
+    "status": "TESTING",
+    "description": "Family B playbook — orderly pullback / retest / compression continuation in secular uptrends. Separate from deep Correction/Rebound entries.",
+    "experimentScope": "playbook",
+    "experimentHypothesis": "On persistent secular uptrends, continuation methods (orderly pullback, breakout retest, compression, layered/probe) improve fill rate and expectancy vs forcing deep-discount rebound entries that rarely fill.",
+    "appliesMethodology": "expectancy-asymmetry",
+    "principles": [
+      "Playbook experiment — separate method family from structural-pullback-entry (Family A)",
+      "Do not require deep correction depth on names that rarely discount that far",
+      "Good secular thesis can still be a bad buy when extended",
+      "Structural stop (thesis invalidation) ≠ tactical strategy stop (R)",
+      "Prefer orderly pullback, breakout retest, compression continuation, layered entry, or probe",
+      "Forbidden default: chase extended candles or inflate R with extended targets",
+      "Minimum R floor may be lower than deep-rebound playbooks — state it on the Scout",
+      "Refute after 30–50 qualified observations if continuation underperforms deep-pullback waiting on this universe"
+    ],
+    "trendContinuationExperiment": {
+      "objective": "Validate a continuation entry family for secular uptrends without mixing deep-rebound rules.",
+      "hypothesis": "Orderly pullback / retest / compression entries with explicit extension limits and dual stop model improve participation and expectancy vs waiting for Family A depth.",
+      "universe": [
+        "Multi-year or clear multi-quarter secular uptrend",
+        "Higher highs and higher lows on strategic TF",
+        "No structural thesis invalidation",
+        "High liquidity / institutional-quality preferred"
+      ],
+      "allowedEntryMethods": [
+        "Orderly pullback (slow, quieter volume, HTF held)",
+        "Breakout retest",
+        "Compression continuation",
+        "Layered entry (pair with layered-entry / risk-weighted-layered-entry)",
+        "Probe when continuity likely but confirmation incomplete"
+      ],
+      "extensionRules": [
+        "Define max acceptable extension from last structural base before GO",
+        "Choose wait-for-pullback vs retest/breakout explicitly",
+        "NO when stretched, participation weak, or monthly room scarce — even if thesis is bullish"
+      ],
+      "stopModel": {
+        "structural": "Stock File thesis invalidation — not default planned R stop",
+        "tactical": "Plan strategy stopPrice for R:R and risk sizing"
+      },
+      "successMetrics": [
+        "Fill rate vs Family A on same universe",
+        "Realized expectancy",
+        "Average initial R",
+        "Missed scout frequency",
+        "Time in market",
+        "Chase/extension loss share"
+      ],
+      "failureConditions": [
+        "Continuation entries underperform deep-pullback waiting on this universe",
+        "Chase / extension entries dominate losses",
+        "Min R floor routinely violated to avoid missing the trend"
+      ]
+    },
+    "checklist": [
+      "Confirm Family B (continuation) — not forcing Family A deep discount",
+      "Secular thesis intact on strategic TF (MTAE + Stock File)",
+      "Entry method chosen: pullback | retest | compression | layered | probe",
+      "Max extension / wait rules stated",
+      "Structural invalidation and strategy stop both defined and distinct if needed",
+      "Minimum R for this family stated on Scout",
+      "Entry Solver: probable target, strategy stop, max admissible entry",
+      "No chase if limits miss; no extended-target cosmetics"
+    ]
   }
 ]

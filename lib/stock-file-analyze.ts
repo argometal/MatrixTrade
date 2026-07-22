@@ -53,7 +53,8 @@ export function buildStockFileOperativePrompt(): string {
     "- Strategy stop for R ≠ structural invalidation unless they intentionally match.",
     "- High-quality thesis can still be wait/no if entry asymmetry is poor.",
     "- Do not force deep-rebate entries on secular uptrends that rarely discount that far",
-    "  (use Playbook family logic when present; otherwise state the mismatch).",
+    "  (prefer playbook secular-trend-continuation / Family B; use structural-pullback-entry / Family A for deep discounts;",
+    "  otherwise state the family mismatch explicitly).",
     "- Return exactly ONE JSON block when Apply is requested — ASCII quotes only.",
   ].join("\n");
 }

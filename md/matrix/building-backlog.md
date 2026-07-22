@@ -10,13 +10,14 @@
 | Field | Value |
 |-------|-------|
 | **Priority** | **HIGH** — important while still polishing; **not** a new engine |
-| **Status** | **002A partial shipped** — master operative prompt + Analyze package + Stock File 3 actions |
-| **Doc** | [mta-002-operability-plan.md](mta-002-operability-plan.md) |
-| **Shipped (002A)** | `lib/stock-file-analyze.ts`; Stock File → Analyze with AI / Apply AI Result / Open Scout; `openPanel({ step: "apply" })`; Mechanics **rev 22** |
-| **Phases left** | **002A polish** (demote more chrome if needed) · **002B** 10–20 chat consistency log · **002C** Secular Trend Continuation Playbook |
+| **Status** | **002A partial shipped** · **P1 incomplete-closed alert shipped** · **002C Trend playbook seeded** · **002B postponed** (until live prompt tests) |
+| **Doc** | [mta-002-operability-plan.md](mta-002-operability-plan.md) · [secular-trend-continuation.md](secular-trend-continuation.md) |
+| **Shipped (002A)** | `lib/stock-file-analyze.ts`; Stock File → Analyze with AI / Apply AI Result / Open Scout; `openPanel({ step: "apply" })`; Mechanics **rev 23** |
+| **Shipped (P1)** | Trades banner + Dashboard attention for closed≠complete (`lib/incomplete-closed-trades.ts`) |
+| **Shipped (002C seed)** | Playbook `secular-trend-continuation` (TESTING) + MD — Family B vs `structural-pullback-entry` Family A |
+| **Phases left** | **002B** postponed · live calibration of Family B · Observation UX depth optional |
 | **Do not build now** | Coach, wide MAF dashboards, VP/AVWAP, more Control categories, parallel prompt systems |
 | **Also shipped** | Scout Case list ordered by planned R high→low (`lib/scout-case-sort.ts`) |
-| **Brainstorm (not Scout)** | Alert closed-but-incomplete fills on Trades / Dashboard |
 
 ---
 
@@ -27,7 +28,7 @@
 | **Priority** | HIGH |
 | **Status** | **Shipped** — Matrix Mechanics · Stock Files · Apply · Library |
 | **Doc** | [control-panel-ia.md](control-panel-ia.md) |
-| **Next** | Feeds **MTA-002A** (collapse Stock File usage to ≤3 primary actions). Contract NEXT Observation UX stays on **Trades**, not Scout |
+| **Next** | Feeds **MTA-002A** (collapse Stock File usage to ≤3 primary actions). Closed≠complete alert lives on **Trades** (P1 shipped) |
 
 ---
 
@@ -52,7 +53,7 @@
 | **Doc** | [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md) · [adr-0004-maf.md](adr-0004-maf.md) |
 | **Shipped** | `attribution` + `observation-update`; `LO-xxx` / `OBS-xxx` stores; auto hooks on trade close / plan outcome; deterministic rule hints; Mechanics **rev 19** |
 | **Components** | thesis · zone · entry · stop · execution · trade management · timing · capital allocation |
-| **Next** | Observation UX on closed trades (**P1** beside operability — closes “closed ≠ complete”); expectancy aggregation remains **EVALUATION / defer** |
+| **Next** | Observation UX depth optional; expectancy aggregation remains **EVALUATION / defer** |
 
 ---
 

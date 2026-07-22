@@ -5,6 +5,11 @@ import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
 import type { AttentionItem } from "@/lib/dashboard-attention";
 import type { BridgeInboxItem } from "@/lib/bridge";
 import {
+  formatIncompleteClosedSummary,
+  incompleteClosedHref,
+  listIncompleteClosedTrades,
+} from "@/lib/incomplete-closed-trades";
+import {
   buildTradesLedger,
   countLedgerByVerdict,
   filterLedgerRows,
@@ -52,6 +57,7 @@ export function PreviewTradesHub({
   const ledger = buildTradesLedger(trades, plans);
   const counts = countLedgerByVerdict(ledger);
   const pendingReviewCount = reviewData.unreviewed.length;
+  const incompleteClosed = listIncompleteClosedTrades(trades);
 
   const filter: LedgerVerdict | "historico" | "all" =
     tab === "review"
@@ -127,6 +133,45 @@ export function PreviewTradesHub({
                 </Link>
               </div>
             </div>
+
+            {incompleteClosed.length > 0 ? (
+              <section
+                className="mt-4 rounded-xl border border-amber-500/35 bg-amber-950/25 p-4"
+                aria-label="Closed trades incomplete"
+              >
+                <p className="text-sm font-semibold text-amber-100">
+                  Closed ≠ complete · {incompleteClosed.length} trade
+                  {incompleteClosed.length === 1 ? "" : "s"} need finishing
+                </p>
+                <p className="mt-1 text-xs text-amber-100/70">
+                  Review and missing fields stay on Trades — not Scout war room.
+                </p>
+                <ul className="mt-3 space-y-2">
+                  {incompleteClosed.map((row) => (
+                    <li key={row.trade.id}>
+                      <Link
+                        href={incompleteClosedHref(row)}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-500/20 bg-zinc-950/40 px-3 py-2 text-sm hover:border-amber-400/40"
+                      >
+                        <span className="font-medium text-amber-50">
+                          {row.trade.id} · {row.trade.ticker}
+                        </span>
+                        <span className="text-xs text-amber-200/80">
+                          {formatIncompleteClosedSummary(row)}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/trades?tab=review"
+                  className="mt-3 inline-block text-xs font-medium text-amber-200 hover:underline"
+                >
+                  Open Review queue →
+                </Link>
+              </section>
+            ) : null}
+
             <div className="mt-4 flex flex-wrap gap-2">
               {tabs.map((entry) => (
                 <Link

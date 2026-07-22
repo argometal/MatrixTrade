@@ -94,7 +94,7 @@ Code: `lib/scout-case-trades.ts`, `lib/trades-ledger.ts`, `ScoutExecutePanel`.
 | `/planning` | Scout war room | Yes — case pick, snapshot, boot package, execute panel |
 | `/trades` | Histórico | Yes — ledger filters |
 | `/trades/[id]` | Trade detail + snapshots (incl. forensic if closed) | Yes |
-| `/playbook` | Method lab | Yes — 7 playbooks in `data/playbooks.json` |
+| `/playbook` | Method lab | Yes — 8 playbooks in `data/playbooks.json` |
 | `/stats` | Insights | Yes |
 | `/inbox` | History / Apply gate | Yes — Control → Apply preferred for new pastes |
 | `/stock-theses/[id]` | Stock profile | Yes — dossier + AI packages; UI save still partial |
@@ -114,7 +114,7 @@ Code: `lib/scout-case-trades.ts`, `lib/trades-ledger.ts`, `ScoutExecutePanel`.
 |------|----------------------|
 | `data/stock-theses.json` | Stock profiles (seed: TSLA) |
 | `data/plans.json` | Scouts `PLAN-xxx` (seed: TSLA wait, NFLX go) |
-| `data/playbooks.json` | 7 playbooks — all `TESTING` (expectancy, layered entry, MTF, pullback, risk-weighted, …) |
+| `data/playbooks.json` | 8 playbooks — all `TESTING` (incl. secular-trend-continuation Family B) |
 | `data/market-evidence.json` | Evidence stream (`ME-xxx`) |
 | `data/scoped-ai-grants.json` | Temporal AI grants |
 | `data/trade-evaluations.json` | Post-close evaluation records |
@@ -142,8 +142,9 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | Piece | Status |
 |-------|--------|
 | Control → Apply | Primary write path (user-facing; internal component may still be named ControlPanelUpdate) |
-| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 22** (Stock File Analyze loop + Control IA) |
+| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 23** (Family A/B playbooks + Stock File Analyze) |
 | **Stock File Analyze (MTA-002A)** | `buildStockFileAnalyzePackage` — one copy: operative prompt + Mechanics + MTAE + dossier + Scout → Apply |
+| **Closed ≠ complete (P1)** | Trades banner + Dashboard attention via `listIncompleteClosedTrades` (review + missing learning fields) |
 | **MTAE** | Control → Library → **Technical Analysis**; optional per-TF `participation` + `participationSynthesis` |
 | **MAF** | `attribution` Apply → `data/maf-experiments.json`; evidence from Trade+Plan+Observation+LearningOutcome; rule hints |
 | **Learning Outcome** | Auto on trade close / plan outcome → `data/learning-outcomes.json` (`LO-xxx`) |
@@ -218,9 +219,9 @@ Method: `playbook-create`, `playbook-update`
 
 | Status | Item |
 |--------|------|
-| **NORTH STAR** | **[MTA-002 Operability](mta-002-operability-plan.md)** — **002A partial shipped** (Analyze / Apply / Open Scout); next 002B validation + Trades incomplete alert |
-| **NEXT (P1)** | Closed-trade Observation UX / incomplete-fill alert on **Trades** (reuse `observation-update`) — not Scout war room |
-| **NEXT (P2–P3)** | MTA-002B prompt validation log · MTA-002C Secular Trend Continuation Playbook |
+| **NORTH STAR** | **[MTA-002](mta-002-operability-plan.md)** — 002A + P1 shipped; **002B postponed**; **002C** Trend playbook seeded |
+| **NEXT** | Live use of Analyze loop · calibrate Family B (`secular-trend-continuation`) · optional Observation UX depth |
+| **POSTPONED** | MTA-002B prompt validation log (10–20 chats) — until dedicated test sessions |
 | **EVALUATION** | MAF expectancy aggregation by component/Playbook — only if enough attributed rows exist |
 | **OUT OF SCOPE now** | Request layer, Library schema, Volume profile / AVWAP, L2 / heatmap, empty dashboards, Coach, broker automation |
 

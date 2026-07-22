@@ -1,18 +1,25 @@
 # MTA-002 — Operability plan (forward)
 
-**Status:** Forward plan (2026-07-22) — **002A partial shipped**. Still polishing; do **not** start another large engine.  
+**Status:** Forward plan (2026-07-22) — **002A + P1 shipped**; **002C seeded**; **002B postponed** until live prompt tests.  
 **Parent contract:** [runtime-truth.md](runtime-truth.md) · [building-backlog.md](building-backlog.md) · [v2-engine-architecture.md](v2-engine-architecture.md)  
 **Rule:** Convert what is already built into a **fast, repeatable, usable** operating cycle.
 
-### Shipped in 002A (this pass)
+### Shipped
 
-| Deliverable | Location |
-|-------------|----------|
+| Item | Location |
+|------|----------|
 | Operative master prompt (5 lanes) | `buildStockFileOperativePrompt()` |
 | One Analyze package | `buildStockFileAnalyzePackage()` |
 | Stock File 3 primary actions | Analyze with AI · Apply AI Result · Open Scout |
 | Apply deep-open | `openPanel({ step: "apply" })` |
-| Scout decision strip on Stock File | entry / stop / target / R / verdict |
+| Closed ≠ complete alert (P1) | Trades banner + Dashboard — `lib/incomplete-closed-trades.ts` |
+| Family B Trend playbook (002C seed) | `secular-trend-continuation` + [secular-trend-continuation.md](secular-trend-continuation.md) |
+
+### Postponed
+
+| Item | Note |
+|------|------|
+| **MTA-002B** prompt validation (10–20 chats) | Wait for dedicated test sessions — not blocking product use |
 
 ---
 

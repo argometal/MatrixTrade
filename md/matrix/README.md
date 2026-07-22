@@ -15,6 +15,7 @@
 | 4a | [asymmetric-entry-confirmation-cost.md](asymmetric-entry-confirmation-cost.md) | **Expectancy & asymmetry** — Playbook layer only |
 | 4a2 | [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md) | **Layered entry** — strategy vs execution, no chase |
 | 4a3 | [risk-weighted-layered-entry.md](risk-weighted-layered-entry.md) | **Risk-weighted layered entry** — R budget by expectancy, common stop |
+| 4a4 | [secular-trend-continuation.md](secular-trend-continuation.md) | **Family B Playbook** — secular trend continuation (vs deep rebound) |
 | 4b | [adr-0001-trade-lifecycle-v1.md](adr-0001-trade-lifecycle-v1.md) | **ADR** — dual financial + analytical lifecycle (concept) |
 | 4b2 | [adr-0002-trade-evaluation.md](adr-0002-trade-evaluation.md) | **ADR** — `TradeEvaluation` entity (**implemented**) |
 | 4b3 | [adr-0003-mtae.md](adr-0003-mtae.md) | **ADR** — Matrix Technical Analysis Engine (**foundation shipped**) |
