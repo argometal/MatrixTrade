@@ -36,10 +36,10 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
   trades: {
     title: "Trades",
     summary:
-      "Histórico filtrable: éxito, perdido, entrada tardía, jamás ejecutado. Sin veredicto = aún en Scout.",
+      "Histórico filtrable. Closed ≠ complete — alerta cuando falta review o campos de aprendizaje.",
     steps: [
+      "Si hay banner ámbar: cierra el loop (review / playbook / PLAN / R / post-stop).",
       "Filtra por veredicto para mejorar data.",
-      "Review cierra el loop de fills cerrados.",
       "Hipótesis incompletas siguen en data (filtro Sin veredicto).",
     ],
   },
