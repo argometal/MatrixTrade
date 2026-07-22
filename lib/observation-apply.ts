@@ -3,12 +3,13 @@ import {
   getObservationByPlanId,
   getObservationByTradeId,
 } from "./observation-store";
-import { applyObservationUpdate, updateObservationById } from "./observation";
+import { applyObservationUpdate, ensureObservationForClosedTrade } from "./observation";
 import { validateObservationUpdateProposal } from "./observation-validate";
 import { upsertObservation } from "./observation-store";
 import type { ObservationRecord } from "./observation-types";
 import { getLearningOutcomeByTradeId, getLearningOutcomeByPlanId } from "./learning-outcome-store";
 import { upsertLearningOutcome } from "./learning-outcome-store";
+import { getTradeById } from "./storage";
 
 export async function applyObservationUpdateProposal(
   proposal: Record<string, unknown>
@@ -22,10 +23,20 @@ export async function applyObservationUpdateProposal(
     (tradeId ? await getObservationByTradeId(tradeId) : undefined) ??
     (planId ? await getObservationByPlanId(planId) : undefined);
 
+  if (!existing && tradeId) {
+    const trade = await getTradeById(tradeId);
+    if (trade?.status === "closed") {
+      const lo = await getLearningOutcomeByTradeId(trade.id);
+      existing = await ensureObservationForClosedTrade(trade, {
+        learningOutcomeId: lo?.id,
+      });
+    }
+  }
+
   if (!existing) {
     return {
       errors: [
-        `No observation found for ${observationId ?? tradeId ?? planId}. Close a losing trade or record a plan miss first.`,
+        `No observation found for ${observationId ?? tradeId ?? planId}. Close the trade first, or paste tradeId on a closed fill.`,
       ],
     };
   }
@@ -55,4 +66,4 @@ export async function applyObservationUpdateProposal(
   return { observation: updated };
 }
 
-export { updateObservationById };
+export { updateObservationById } from "./observation";

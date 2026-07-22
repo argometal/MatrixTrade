@@ -15,7 +15,9 @@
 | **Shipped (002A)** | `lib/stock-file-analyze.ts`; Stock File → Analyze with AI / Apply AI Result / Open Scout; `openPanel({ step: "apply" })`; Mechanics **rev 23** |
 | **Shipped (P1)** | Trades banner + Dashboard attention for closed≠complete (`lib/incomplete-closed-trades.ts`) |
 | **Shipped (002C seed)** | Playbook `secular-trend-continuation` (TESTING) + MD — Family B vs `structural-pullback-entry` Family A |
-| **Phases left** | **002B** postponed · live calibration of Family B · Observation UX depth optional |
+| **Phases left** | **002B** postponed · Observation UX shipped (this pass) · live Family B calibration |
+| **Shipped (Observation UX)** | Closed-trade Observation form on `/trades/[id]`; ensure OBS on save; Apply path can seed OBS for closed fills |
+| **Shipped (002C UI)** | Family B checklist on Scout / Stock File / Trade when playbook = `secular-trend-continuation` |
 | **Do not build now** | Coach, wide MAF dashboards, VP/AVWAP, more Control categories, parallel prompt systems |
 | **Also shipped** | Scout Case list ordered by planned R high→low (`lib/scout-case-sort.ts`) |
 
@@ -53,7 +55,7 @@
 | **Doc** | [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md) · [adr-0004-maf.md](adr-0004-maf.md) |
 | **Shipped** | `attribution` + `observation-update`; `LO-xxx` / `OBS-xxx` stores; auto hooks on trade close / plan outcome; deterministic rule hints; Mechanics **rev 19** |
 | **Components** | thesis · zone · entry · stop · execution · trade management · timing · capital allocation |
-| **Next** | Observation UX depth optional; expectancy aggregation remains **EVALUATION / defer** |
+| **Next** | Live Family B use; expectancy aggregation remains **EVALUATION / defer** |
 
 ---
 

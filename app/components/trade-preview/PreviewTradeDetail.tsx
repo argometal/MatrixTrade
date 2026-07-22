@@ -31,6 +31,9 @@ import {
   type TradeEvaluation,
 } from "@/lib/trade-evaluation-types";
 import { formatUsd, pnlTone } from "@/app/components/legacy/LegacyTradeDetailPage";
+import { TradeObservationPanel } from "@/app/components/trade-preview/TradeObservationPanel";
+import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
+import type { ObservationRecord } from "@/lib/observation-types";
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500";
@@ -44,6 +47,7 @@ export function PreviewTradeDetail({
   metaOk,
   snapshotItems,
   evaluation,
+  observation = null,
 }: {
   trade: Trade;
   experiment: Experiment;
@@ -53,6 +57,7 @@ export function PreviewTradeDetail({
   metaOk?: string;
   snapshotItems: SnapshotMenuItem[];
   evaluation?: TradeEvaluation | null;
+  observation?: ObservationRecord | null;
 }) {
   const result = calculateTradeResult(trade);
   const rMultiple = computeRMultiple(trade);
@@ -286,6 +291,12 @@ export function PreviewTradeDetail({
               )}
             </section>
           )}
+
+          {trade.status === "closed" ? (
+            <TradeObservationPanel tradeId={trade.id} observation={observation} />
+          ) : null}
+
+          <FamilyBChecklist playbookId={trade.playbookId} />
 
           <a
             href={trade.obsidianNote}

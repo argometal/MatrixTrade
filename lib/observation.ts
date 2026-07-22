@@ -119,6 +119,17 @@ export async function startObservationForTradeClose(
   return row;
 }
 
+/**
+ * Ensure an Observation row exists for any closed trade (wins included).
+ * Used by Trades Observation UX and observation-update Apply when OBS was never seeded.
+ */
+export async function ensureObservationForClosedTrade(
+  trade: Trade,
+  options?: { learningOutcomeId?: string; durationDays?: number }
+): Promise<ObservationRecord | undefined> {
+  return startObservationForTradeClose(trade, options);
+}
+
 /** Start Observation for a missed/expired scout (thesis path without fill). */
 export async function startObservationForPlanMiss(
   plan: TradePlan,

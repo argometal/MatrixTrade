@@ -36,7 +36,7 @@ import {
 import { createQrDataUrl } from "@/lib/qr";
 import { buildScopedAiUrls, createBootstrapAiGrant, createScopedAiGrant } from "@/lib/scoped-ai-grants";
 import { getTradesStoreMode } from "@/lib/trades-json";
-import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getRules, saveRules } from "@/lib/storage";
+import { createTrade, closeTrade, openTrade, saveTradeReview, updateTradeMeta, getExperiment, getTrades, getTradeById, getRules, saveRules } from "@/lib/storage";
 import type { CloseTradeInput, CreateTradeInput, MistakeType, SaveReviewInput, TradeMetaInput } from "@/lib/types";
 import { parsePlanTimeframes, savePlan, updatePlanStatus, recordPlanOutcome, recordScoutDecision, transitionProbe } from "@/lib/plans";
 import type { DecisionVerdict } from "@/lib/scout-decision-types";
@@ -540,6 +540,85 @@ export async function saveReviewAction(id: string, formData: FormData): Promise<
   revalidateTradingPaths();
   revalidatePath(`/trades/${id}`);
   redirect(`/trades/${id}`);
+}
+
+export async function saveTradeObservationAction(
+  id: string,
+  formData: FormData
+): Promise<void> {
+  await requireTradingSession();
+  const tradeId = id.toUpperCase();
+  const trade = await getTradeById(tradeId);
+  if (!trade || trade.status !== "closed") {
+    redirect(`/trades/${tradeId}?metaOk=${encodeURIComponent("Observation requires a closed trade")}`);
+  }
+
+  const { ensureObservationForClosedTrade } = await import("@/lib/observation");
+  const { getLearningOutcomeByTradeId } = await import("@/lib/learning-outcome-store");
+  const { applyObservationUpdateProposal } = await import("@/lib/observation-apply");
+
+  const lo = await getLearningOutcomeByTradeId(tradeId);
+  await ensureObservationForClosedTrade(trade, { learningOutcomeId: lo?.id });
+
+  function optBool(name: string): boolean | undefined {
+    const raw = String(formData.get(name) ?? "").trim();
+    if (raw === "true") return true;
+    if (raw === "false") return false;
+    return undefined;
+  }
+  function optNum(name: string): number | undefined {
+    const raw = String(formData.get(name) ?? "").trim();
+    if (!raw) return undefined;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : undefined;
+  }
+  function optDate(name: string): string | undefined {
+    const raw = String(formData.get(name) ?? "").trim();
+    if (!raw) return undefined;
+    // date input → ISO noon UTC for stable storage
+    return `${raw}T12:00:00.000Z`;
+  }
+  function optStr(name: string): string | undefined {
+    const raw = String(formData.get(name) ?? "").trim();
+    return raw || undefined;
+  }
+
+  const proposal: Record<string, unknown> = {
+    tradeId,
+    targetReached: optBool("targetReached"),
+    thesisInvalidated: optBool("thesisInvalidated"),
+    betterEntryAvailable: optBool("betterEntryAvailable"),
+    targetReachedAt: optDate("targetReachedAt"),
+    invalidationReachedAt: optDate("invalidationReachedAt"),
+    maxPrice: optNum("maxPrice"),
+    minPrice: optNum("minPrice"),
+    mfe: optNum("mfe"),
+    mae: optNum("mae"),
+    betterEntryPrice: optNum("betterEntryPrice"),
+    mfeMaeUnit: optStr("mfeMaeUnit"),
+    firstTerminalEvent: optStr("firstTerminalEvent"),
+    status: optStr("status"),
+    notes: optStr("notes"),
+    dataSource: "manual",
+  };
+
+  // Drop undefined so validate sees only supplied fields
+  for (const key of Object.keys(proposal)) {
+    if (proposal[key] === undefined) delete proposal[key];
+  }
+
+  const result = await applyObservationUpdateProposal(proposal);
+  if (result.errors?.length) {
+    redirect(
+      `/trades/${tradeId}?metaOk=${encodeURIComponent(result.errors[0] ?? "Observation save failed")}`
+    );
+  }
+
+  revalidateTradingPaths();
+  revalidatePath(`/trades/${tradeId}`);
+  redirect(
+    `/trades/${tradeId}?metaOk=${encodeURIComponent(`Observation ${result.observation?.id ?? ""} saved`)}`
+  );
 }
 
 export async function updateTradeMetaAction(id: string, formData: FormData): Promise<void> {
