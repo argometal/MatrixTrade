@@ -1,5 +1,7 @@
 import { cache } from "react";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
+import { buildApplySchemaContractText } from "./apply-schema-contract";
+import { wrapSnapshotText } from "./snapshot-verification";
 import { getMarketEvidence } from "./market-evidence";
 import type { MarketEvidence } from "./market-evidence-types";
 import type { ControlPanelData } from "./control-panel-types";
@@ -115,7 +117,16 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     pendingInboxCount: pendingInbox.length,
     trainAi: {
       mechanicsBrief: buildMatrixMechanicsBrief(),
-      snapshotItems: [mechanicsSnapshot],
+      schemaContractBrief: buildApplySchemaContractText(),
+      snapshotItems: [
+        mechanicsSnapshot,
+        {
+          id: "apply-schema-contract",
+          label: "Apply schema contract",
+          description: "Schema-first handshake — required fields, allowed keys, examples",
+          text: wrapSnapshotText("MtA Apply schema contract", buildApplySchemaContractText()),
+        },
+      ],
     },
     mtae: {
       protocolBrief: buildMtaeProtocolBrief(mtaePresets),

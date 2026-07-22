@@ -16,6 +16,7 @@
     "test:family-b-bull-trend": "tsx tools/test-family-b-bull-trend.ts",
     "test:plan-trade-map": "tsx tools/test-plan-trade-map.ts",
     "test:mtae-participation": "tsx tools/test-mtae-participation.ts",
+    "test:schema-discipline": "tsx tools/test-schema-discipline.ts",
     "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"
   },
   "dependencies": {

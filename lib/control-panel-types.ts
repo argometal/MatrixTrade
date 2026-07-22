@@ -29,6 +29,7 @@ export type ControlPanelData = {
   pendingInboxCount: number;
   trainAi: {
     mechanicsBrief: string;
+    schemaContractBrief: string;
     snapshotItems: SnapshotMenuItem[];
   };
   mtae: {
