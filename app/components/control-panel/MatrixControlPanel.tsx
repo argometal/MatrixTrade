@@ -6,6 +6,8 @@ import { ControlPanelUpdate } from "@/app/components/control-panel/ControlPanelU
 import { useControlPanel } from "@/app/components/control-panel/MatrixControlPanelProvider";
 import type { ControlPanelSectionId } from "@/lib/control-panel-types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import { buildLibraryIndexBrief } from "@/lib/library-index";
+import { wrapSnapshotText } from "@/lib/snapshot-verification";
 
 /** Local step machine — "apply" is user-facing; internal ControlPanelUpdate unchanged. */
 type Step = "pick" | "apply" | "stock-pick" | "detail";
@@ -338,6 +340,13 @@ export function MatrixControlPanel() {
               <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">
                 Library
               </p>
+              <div className="mb-2 space-y-2">
+                <PlainCopyRow
+                  label="Library Index"
+                  description="Labels only — then request one section"
+                  text={wrapSnapshotText("Library Index", buildLibraryIndexBrief())}
+                />
+              </div>
               <nav className="space-y-2">
                 {LIBRARY.map((entry) => (
                   <NavRow

@@ -11,6 +11,7 @@
     "validate:supabase": "tsx tools/validate-supabase-trades.ts",
     "test:scout-repair": "tsx tools/test-scout-repair-path.ts",
     "test:scout-contract": "tsx tools/test-scout-contract.ts",
+    "test:needs-attention-ai": "tsx tools/test-needs-attention-ai.ts",
     "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"
   },
   "dependencies": {

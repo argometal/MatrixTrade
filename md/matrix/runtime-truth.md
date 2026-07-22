@@ -144,6 +144,9 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | Control → Apply | Primary write path (user-facing; internal component may still be named ControlPanelUpdate) |
 | `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 23** (Family A/B playbooks + Stock File Analyze) |
 | **Stock File Analyze (MTA-002A)** | `buildStockFileAnalyzePackage` — one copy: operative prompt + Mechanics + MTAE + dossier + Scout → Apply |
+| **Needs Attention AI (task snapshots)** | Dashboard rows: **Copy for AI** · **Apply** · **Go** — `lib/needs-attention-ai.ts`; derived queue; readiness diagnosis before JSON; [needs-attention-ai-workflow.md](needs-attention-ai-workflow.md) |
+| **Dashboard snapshot** | Global context only (`dashboardSnapshotItems`) — **not** embedded inside each task snapshot |
+| **Library Index** | Control → Library → copyable index (`lib/library-index.ts`) — then one section |
 | **Closed ≠ complete (P1)** | Trades banner + Dashboard attention via `listIncompleteClosedTrades` (review + missing learning fields) |
 | **Observation UX** | `/trades/[id]` form → `saveTradeObservationAction` / `observation-update` (ensure OBS on closed fills) |
 | **MTAE** | Control → Library → **Technical Analysis**; optional per-TF `participation` + `participationSynthesis` |
@@ -220,8 +223,8 @@ Method: `playbook-create`, `playbook-update`
 
 | Status | Item |
 |--------|------|
-| **NORTH STAR** | **[MTA-002](mta-002-operability-plan.md)** — 002A + P1 + Observation UX + 002C seed; **002B postponed** |
-| **NEXT** | Live use of Analyze loop · assign Family B on continuation setups · finish incomplete closed fills |
+| **NORTH STAR** | **[MTA-002](mta-002-operability-plan.md)** — 002A + P1 + Observation UX + 002C + Needs Attention AI; **002B postponed** |
+| **NEXT** | Live Needs Attention Copy-for-AI loops · optional smallest `plan-outcome` Apply block · Family B calibration |
 | **POSTPONED** | MTA-002B prompt validation log (10–20 chats) — until dedicated test sessions |
 | **EVALUATION** | MAF expectancy aggregation by component/Playbook — only if enough attributed rows exist |
 | **OUT OF SCOPE now** | Request layer, Library schema, Volume profile / AVWAP, L2 / heatmap, empty dashboards, Coach, broker automation |
