@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { sampleAiBlock } from "@/lib/ai-block";
 import {
   buildTradeProposalBlock,
@@ -15,6 +15,24 @@ import type { Playbook } from "@/lib/playbook-types";
 import type { TradePlan } from "@/lib/plan-types";
 import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 import { FamilyBBullTrendPanel } from "@/app/components/planning-preview/FamilyBBullTrendPanel";
+
+function buildExecuteFormState(
+  plan: TradePlan | null,
+  prefill: ReturnType<typeof prospectToPrefill> | undefined,
+  suggestedTradeId: string
+) {
+  return {
+    id: suggestedTradeId,
+    ticker: prefill?.ticker ?? plan?.ticker ?? "",
+    direction: "long" as "long" | "short",
+    entry: prefill?.entry ?? (plan?.plannedEntry !== undefined ? String(plan.plannedEntry) : ""),
+    stop: prefill?.stop ?? (plan?.stopPrice !== undefined ? String(plan.stopPrice) : ""),
+    target: prefill?.target ?? (plan?.targetPrice !== undefined ? String(plan.targetPrice) : ""),
+    shares: "10",
+    playbookId: prefill?.playbookId ?? plan?.playbookId ?? "",
+    notes: plan ? `From plan ${plan.id}` : "",
+  };
+}
 
 /**
  * Execution strip migrated from Enter Trade / NewTradeScoutFlow.
@@ -42,19 +60,20 @@ export function ScoutExecutePanel({
   const [showManual, setShowManual] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const prefill = prospect ? prospectToPrefill(prospect) : undefined;
+  const prefill = useMemo(
+    () => (prospect ? prospectToPrefill(prospect) : undefined),
+    [prospect]
+  );
 
-  const [form, setForm] = useState({
-    id: suggestedTradeId,
-    ticker: prefill?.ticker ?? plan?.ticker ?? "",
-    direction: "long" as "long" | "short",
-    entry: prefill?.entry ?? (plan?.plannedEntry !== undefined ? String(plan.plannedEntry) : ""),
-    stop: prefill?.stop ?? (plan?.stopPrice !== undefined ? String(plan.stopPrice) : ""),
-    target: prefill?.target ?? (plan?.targetPrice !== undefined ? String(plan.targetPrice) : ""),
-    shares: "10",
-    playbookId: prefill?.playbookId ?? plan?.playbookId ?? "",
-    notes: plan ? `From plan ${plan.id}` : "",
-  });
+  const [form, setForm] = useState(() =>
+    buildExecuteFormState(plan, prefill, suggestedTradeId)
+  );
+
+  // Mirror NewTradeScoutFlow: useState init alone is not enough —
+  // PreviewPlanning keeps this panel mounted while Case/ticker changes.
+  useEffect(() => {
+    setForm(buildExecuteFormState(plan, prefill, suggestedTradeId));
+  }, [plan?.id, prospect?.planId, suggestedTradeId, plan, prefill]);
 
   const bootPackage = useMemo(
     () =>
