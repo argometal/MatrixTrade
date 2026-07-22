@@ -48,7 +48,7 @@ export const APPLY_LAYER_OWNERSHIP = {
 
 export type ApplySchemaContract = {
   schemaVersion: string;
-  product: "MtA";
+  product: "MTA";
   rules: string[];
   acceptedTypes: AiBlockType[];
   requiredFields: Record<string, string[]>;
@@ -68,12 +68,12 @@ export type ApplySchemaContract = {
 export function buildApplySchemaContract(): ApplySchemaContract {
   return {
     schemaVersion: "2026-07-22.schema-discipline",
-    product: "MtA",
+    product: "MTA",
     rules: [
       "SCHEMA-FIRST: before any Apply JSON, read this contract (or an accepted export example).",
       "Never invent JSON keys, enum values, nesting, or field formats.",
       "If the exact contract is unavailable, stop and request schema or a valid example — do not guess.",
-      "Separate analysis (conceptual levels) from serialization (exact MtA keys).",
+      "Separate analysis (conceptual levels) from serialization (exact MTA keys).",
       "A validator error on one field does not validate the rest of the object.",
       "stock-case-create REQUIRES initialScout.plannedEntry + stopPrice + targetPrice.",
       "scout-plan-create REQUIRES plannedEntry + stopPrice + targetPrice.",
@@ -170,7 +170,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
 export function buildApplySchemaContractText(): string {
   const contract = buildApplySchemaContract();
   return [
-    "=== MtA APPLY SCHEMA CONTRACT (schema-first handshake) ===",
+    "=== MTA APPLY SCHEMA CONTRACT (schema-first handshake) ===",
     `schemaVersion: ${contract.schemaVersion}`,
     "",
     "RULES",

@@ -15,7 +15,7 @@ export function PreviewMobileHeader({ pendingInboxCount = 0 }: { pendingInboxCou
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold text-white">
           M
         </span>
-        <span className="truncate font-semibold text-zinc-100">MtA</span>
+        <span className="truncate font-semibold text-zinc-100">MTA</span>
       </Link>
 
       <div className="flex shrink-0 items-center gap-1.5">

@@ -16,7 +16,7 @@ EXECUTION LAYER — only after Scouting Desk approves (go / probe converted):
 Rules:
 - Respect monthly loss room and Stock File invalidation from context.
 - Do not invent a trade without scout approval when a PLAN is linked.
-- Return exactly one block. Paste in MtA Control → Apply → Accept — never auto-apply.
+- Return exactly one block. Paste in MTA Control → Apply → Accept — never auto-apply.
 - If context is insufficient, ask ONE clarifying question.`;
 
 export interface TradeBootContext {

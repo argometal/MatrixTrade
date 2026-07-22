@@ -68,7 +68,7 @@ export function LayeredEntryPanel({
         </span>
       </div>
       <p className="mt-1 text-[11px] text-zinc-500">
-        Proposed by human/AI · MtA-calculated R and risk · Final human approval required
+        Proposed by human/AI · MTA-calculated R and risk · Final human approval required
       </p>
 
       {isMissed ? (

@@ -31,7 +31,7 @@ import { wrapSnapshotText } from "./snapshot-verification";
 export function buildStockFileOperativePrompt(): string {
   return [
     "=== MATRIX OPERATIVE PROMPT (MTA-002A) ===",
-    "You are operating MtA for ONE ticker in this package.",
+    "You are operating MTA for ONE ticker in this package.",
     "Do NOT ask the human to re-explain Matrix architecture.",
     "",
     "KEEP FIVE LANES SEPARATE (never collapse them):",

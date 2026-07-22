@@ -1,4 +1,4 @@
-# MtA — Runtime truth (what works today)
+# MTA — Runtime truth (what works today)
 
 **Status:** Updated 2026-07-22.  
 **Rule:** This doc must match deployed code. V2 target lives in [v2-engine-architecture.md](v2-engine-architecture.md). Control naming lives in [control-panel-ia.md](control-panel-ia.md).

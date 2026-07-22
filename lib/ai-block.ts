@@ -88,7 +88,7 @@ All Apply-ready block types:
 
 Rules:
 - Return exactly one block. No arrays of blocks.
-- Do not apply changes — human imports in MtA AI Bridge → Inbox → Apply.
+- Do not apply changes — human imports in MTA AI Bridge → Inbox → Apply.
 - Reply to the human in trading language, not internal type names.
 - If the snapshot is not enough, ask for ONE missing detail (ticker, trade id, or exit price).`;
 
@@ -864,7 +864,7 @@ export const AI_BRIDGE_PROTOCOL_EXAMPLES: Record<string, Record<string, unknown>
       stop: 170,
       shares: 10,
       status: "open",
-      thesis: "Already filled at broker before MtA entry.",
+      thesis: "Already filled at broker before MTA entry.",
     },
   },
   "close-open-trade": {

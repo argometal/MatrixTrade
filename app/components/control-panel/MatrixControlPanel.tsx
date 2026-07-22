@@ -20,7 +20,7 @@ const PRIMARY: {
 }[] = [
   {
     id: "train-ai",
-    label: "MtA Mechanics",
+    label: "MTA Mechanics",
     hint: "Constitution — copy once for a new AI chat",
   },
   {
@@ -411,7 +411,7 @@ export function MatrixControlPanel() {
             {section === "train-ai" ? (
               <>
                 <PlainCopyRow
-                  label="MtA Mechanics"
+                  label="MTA Mechanics"
                   description="Stable constitution — paste once at the start of the AI chat"
                   text={data.trainAi.mechanicsBrief}
                 />

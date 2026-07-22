@@ -42,7 +42,7 @@ export function AiBridgeV2Sidebar({
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold text-white">
           M
         </span>
-        <span className="font-semibold text-zinc-900">MtA</span>
+        <span className="font-semibold text-zinc-900">MTA</span>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-4">

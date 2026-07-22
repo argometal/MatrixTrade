@@ -192,7 +192,7 @@ export function buildAiBridgeHandoffText(
     "=== INSTRUCTIONS FOR AI ===",
     "Return exactly ONE AI Block as plain JSON or a single ```json fenced block.",
     "Infer the internal type from the user's intent.",
-    "Do not auto-apply — the human will Import → Inbox → Apply in MtA.",
+    "Do not auto-apply — the human will Import → Inbox → Apply in MTA.",
     "",
     "=== SNAPSHOT ===",
     snapshotText,

@@ -1,4 +1,4 @@
-# MtA — Schema-first Apply discipline
+# MTA — Schema-first Apply discipline
 
 ## Why
 
