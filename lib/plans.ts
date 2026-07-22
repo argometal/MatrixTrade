@@ -247,6 +247,23 @@ export async function recordPlanOutcome(
     updatedAt: new Date().toISOString(),
   };
   await getPlansStore().upsert(updated);
+
+  try {
+    const { upsertLearningOutcomeFromPlan } = await import("./learning-outcome");
+    const { startObservationForPlanMiss } = await import("./observation");
+    const learning = await upsertLearningOutcomeFromPlan(updated);
+    if (
+      learning &&
+      (learning.kind === "missed_opportunity" ||
+        learning.kind === "expired" ||
+        learning.kind === "cancelled")
+    ) {
+      await startObservationForPlanMiss(updated, { learningOutcomeId: learning.id });
+    }
+  } catch {
+    // Best-effort learning path.
+  }
+
   return { plan: updated };
 }
 

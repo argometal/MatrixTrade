@@ -17,6 +17,19 @@
 
 ---
 
+## Active — MAF (Matrix Attribution Framework)
+
+| Field | Value |
+|-------|-------|
+| **Priority** | HIGH |
+| **Status** | **V1 foundation + Learning Outcome + Observation shipped** |
+| **Doc** | [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md) · [adr-0004-maf.md](adr-0004-maf.md) |
+| **Shipped** | `attribution` + `observation-update`; `LO-xxx` / `OBS-xxx` stores; auto hooks on trade close / plan outcome; deterministic rule hints; Mechanics **rev 19** |
+| **Components** | thesis · zone · entry · stop · execution · trade management · timing · capital allocation |
+| **Next** | Observation UX on closed trades; expectancy aggregation by component/Playbook; market-feed MFE/MAE optional later |
+
+---
+
 ## ON HOLD — high priority
 
 ### Scoped AI Grant API (GET link for external IA)
