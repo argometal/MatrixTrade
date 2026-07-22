@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 21;
+export const MATRIX_MECHANICS_REVISION = 22;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -77,7 +77,10 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- MAF experiment: ONE learning record after close/observation — component attribution, not a journal",
     "",
     "=== SNAPSHOT MENU ===",
-    "Ask the human to copy a named snapshot from Control (Mechanics brief, Technical analysis / MTAE, Playbook, Stock file, Scout desk) or from the Trade window.",
+    "Preferred Stock File loop (MTA-002A): Analyze with AI → chat → Apply AI Result → Open Scout.",
+    "Analyze with AI copies one package: operative prompt + Mechanics + MTAE + dossier + active Scout.",
+    "Ask the human to copy named snapshots from Control when they need a slice only",
+    "(Mechanics brief, Technical analysis / MTAE, Playbook, Stock file, Scout desk) or Trade window.",
     "Closed-trade forensic export lives ONLY on /trades/{ID} — never as a Control home section.",
     "MTAE is Control → Technical analysis — not Playbook, not Mechanics.",
     "Scout PLAN snapshot includes strategy_stop + planned_rr (never structural stop for R).",

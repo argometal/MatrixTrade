@@ -142,7 +142,8 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | Piece | Status |
 |-------|--------|
 | Control → Apply | Primary write path (user-facing; internal component may still be named ControlPanelUpdate) |
-| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 21** (Control IA: Apply + Library; forensic evidence-only) |
+| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 22** (Stock File Analyze loop + Control IA) |
+| **Stock File Analyze (MTA-002A)** | `buildStockFileAnalyzePackage` — one copy: operative prompt + Mechanics + MTAE + dossier + Scout → Apply |
 | **MTAE** | Control → Library → **Technical Analysis**; optional per-TF `participation` + `participationSynthesis` |
 | **MAF** | `attribution` Apply → `data/maf-experiments.json`; evidence from Trade+Plan+Observation+LearningOutcome; rule hints |
 | **Learning Outcome** | Auto on trade close / plan outcome → `data/learning-outcomes.json` (`LO-xxx`) |
@@ -217,7 +218,7 @@ Method: `playbook-create`, `playbook-update`
 
 | Status | Item |
 |--------|------|
-| **NORTH STAR** | **[MTA-002 Operability](mta-002-operability-plan.md)** — master prompt + Stock File 3-action loop; not another engine |
+| **NORTH STAR** | **[MTA-002 Operability](mta-002-operability-plan.md)** — **002A partial shipped** (Analyze / Apply / Open Scout); next 002B validation + Trades incomplete alert |
 | **NEXT (P1)** | Closed-trade Observation UX / incomplete-fill alert on **Trades** (reuse `observation-update`) — not Scout war room |
 | **NEXT (P2–P3)** | MTA-002B prompt validation log · MTA-002C Secular Trend Continuation Playbook |
 | **EVALUATION** | MAF expectancy aggregation by component/Playbook — only if enough attributed rows exist |

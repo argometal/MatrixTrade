@@ -37,13 +37,16 @@ There is **no Request / Universal Request / Start Work** layer in Control. The h
 ## Interaction model
 
 ```text
-1. Copy Matrix Mechanics once into a new AI chat
-2. Write the task naturally
-3. AI requests the exact visible Control / window label if needed
-4. Human copies only that block
-5. AI returns ONE Apply-ready AI Block
-6. Human pastes into Control → Apply → Validate → Accept
+1. Prefer Stock File → Analyze with AI (one package) for a ticker loop
+2. Or copy Matrix Mechanics once into a new AI chat, then named Control slices as needed
+3. Attach charts; discuss in Analysis Mode
+4. AI returns ONE Apply-ready AI Block
+5. Human: Stock File → Apply AI Result (or Control → Apply) → Validate → Accept
+6. Open Scout to read decision / entry / R
 ```
+
+Stock File Analyze package = operative prompt (5 lanes) + Mechanics + MTAE + dossier + active Scout + REQUEST.  
+Code: `lib/stock-file-analyze.ts`. `openPanel({ step: "apply" })` lands Control on Apply.
 
 ---
 

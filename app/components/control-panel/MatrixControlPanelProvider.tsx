@@ -4,9 +4,18 @@ import { createContext, useCallback, useContext, useState, type ReactNode } from
 import type { ControlPanelData } from "@/lib/control-panel-types";
 import { MatrixControlPanel } from "./MatrixControlPanel";
 
+/** Steps that can be requested when opening Control from another surface. */
+export type ControlPanelOpenStep = "pick" | "apply";
+
+export type OpenControlPanelOptions = {
+  step?: ControlPanelOpenStep;
+};
+
 type MatrixControlPanelContextValue = {
   open: boolean;
-  openPanel: () => void;
+  /** Step to land on when the drawer opens (defaults to pick). */
+  requestedStep: ControlPanelOpenStep;
+  openPanel: (options?: OpenControlPanelOptions) => void;
   closePanel: () => void;
   togglePanel: () => void;
   data: ControlPanelData;
@@ -30,13 +39,32 @@ export function MatrixControlPanelProvider({
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
-  const openPanel = useCallback(() => setOpen(true), []);
-  const closePanel = useCallback(() => setOpen(false), []);
-  const togglePanel = useCallback(() => setOpen((value) => !value), []);
+  const [requestedStep, setRequestedStep] = useState<ControlPanelOpenStep>("pick");
+
+  const openPanel = useCallback((options?: OpenControlPanelOptions) => {
+    setRequestedStep(options?.step === "apply" ? "apply" : "pick");
+    setOpen(true);
+  }, []);
+
+  const closePanel = useCallback(() => {
+    setOpen(false);
+    setRequestedStep("pick");
+  }, []);
+
+  const togglePanel = useCallback(() => {
+    setOpen((value) => {
+      if (value) {
+        setRequestedStep("pick");
+        return false;
+      }
+      setRequestedStep("pick");
+      return true;
+    });
+  }, []);
 
   return (
     <MatrixControlPanelContext.Provider
-      value={{ open, openPanel, closePanel, togglePanel, data }}
+      value={{ open, requestedStep, openPanel, closePanel, togglePanel, data }}
     >
       {children}
       <MatrixControlPanel />
