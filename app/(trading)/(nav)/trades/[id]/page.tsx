@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { PreviewTradeDetail } from "@/app/components/trade-preview/PreviewTradeDetail";
+import { getObservationByTradeId } from "@/lib/observation-store";
 import { getPlans } from "@/lib/plans";
 import { getPlaybooks } from "@/lib/playbooks";
 import { getSetups } from "@/lib/setups";
@@ -19,7 +20,7 @@ export default async function TradeDetailPage({
   const { id } = await params;
   const query = await searchParams;
   const tradeId = id.toUpperCase();
-  const [trades, experiment, monthly, setups, playbooks, stockTheses, plans, evaluation] =
+  const [trades, experiment, monthly, setups, playbooks, stockTheses, plans, evaluation, observation] =
     await Promise.all([
       getTrades(),
       getExperiment(),
@@ -29,6 +30,7 @@ export default async function TradeDetailPage({
       getStockTheses(),
       getPlans(),
       getEvaluationByTradeId(tradeId),
+      getObservationByTradeId(tradeId),
     ]);
   const trade = trades.find((t) => t.id === tradeId);
 
@@ -59,6 +61,7 @@ export default async function TradeDetailPage({
       metaOk={query.metaOk}
       snapshotItems={snapshotItems}
       evaluation={evaluation}
+      observation={observation ?? null}
     />
   );
 }

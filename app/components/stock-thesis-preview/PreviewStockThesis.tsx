@@ -24,6 +24,7 @@ import {
 } from "@/lib/stock-thesis-types";
 import { PlanLevelsBoard } from "@/app/components/planning-preview/PlanLevelsBoard";
 import { PlanMapSummaryLine, PlanMapToggleButton } from "@/app/components/planning-preview/PlanLevelsSidePanel";
+import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
 type ProfileTab = "snapshot" | "evidence" | "history";
@@ -269,6 +270,10 @@ export function PreviewStockThesis({
               <code className="text-zinc-400">scout-plan-create</code> after technical Accept.
             </div>
           )}
+
+          <div className="mt-3">
+            <FamilyBChecklist playbookId={primaryPlan?.playbookId} compact />
+          </div>
 
           <div className="mt-3">
             <button

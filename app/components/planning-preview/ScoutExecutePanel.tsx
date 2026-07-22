@@ -13,6 +13,7 @@ import type { TradeProspect } from "@/lib/trade-prospects";
 import { prospectToPrefill } from "@/lib/trade-prospects";
 import type { Playbook } from "@/lib/playbook-types";
 import type { TradePlan } from "@/lib/plan-types";
+import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 
 /**
  * Execution strip migrated from Enter Trade / NewTradeScoutFlow.
@@ -196,6 +197,10 @@ export function ScoutExecutePanel({
       ) : (
         <p className="mt-3 text-xs text-amber-400/90">Set entry + stop on this scout for R map.</p>
       )}
+
+      <div className="mt-3">
+        <FamilyBChecklist playbookId={plan.playbookId ?? form.playbookId} compact />
+      </div>
 
       {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}
 
