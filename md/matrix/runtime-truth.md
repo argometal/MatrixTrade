@@ -225,13 +225,8 @@ Method: `playbook-create`, `playbook-update`
 
 | Status | Item |
 |--------|------|
-<<<<<<< HEAD
-| **NORTH STAR** | **[MTA-002](mta-002-operability-plan.md)** + layered R/risk engine; **002B postponed** |
-| **NEXT** | Live risk_percent ladders · starter samples for MAF · optional Scout layer editor UI polish |
-=======
-| **NORTH STAR** | **[MTA-002](mta-002-operability-plan.md)** — 002A + P1 + Observation UX + 002C + Needs Attention AI; **002B postponed** |
-| **NEXT** | Live Needs Attention Copy-for-AI loops · optional smallest `plan-outcome` Apply block · Family B calibration |
->>>>>>> origin/main
+| **NORTH STAR** | **[MTA-002](mta-002-operability-plan.md)** + Needs Attention AI + layered R/risk + Family B + Trade Map; **002B postponed** |
+| **NEXT** | Live Copy-for-AI / risk_percent ladders · Family B calibration · optional `plan-outcome` Apply block |
 | **POSTPONED** | MTA-002B prompt validation log (10–20 chats) — until dedicated test sessions |
 | **EVALUATION** | MAF expectancy aggregation by component/Playbook — only if enough attributed rows exist |
 | **OUT OF SCOPE now** | Request layer, Library schema, Volume profile / AVWAP, L2 / heatmap, empty dashboards, Coach, broker automation |
