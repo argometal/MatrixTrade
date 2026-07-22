@@ -62,11 +62,12 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
     title: "Scout",
     panelLabel: "Help",
     workflowTitle: "Workflow",
-    summary: "War room de un caso: radiografía + execute. No es el histórico.",
+    summary: "War room: casos a vigilar/reentrar ordenados por R planificado (mayor→menor).",
     principles: [
+      "Casos ordenados por planned R alto → bajo.",
       "Un caso seleccionado a la vez.",
       "Copy boot → AI → Control → Apply → Accept.",
-      "Trades = veredictos filtrables.",
+      "Fills cerrados incompletos → Trades, no misión de Scout.",
     ],
     copyButtons: [
       {
