@@ -4,6 +4,7 @@ import { getMarketEvidence } from "./market-evidence";
 import type { MarketEvidence } from "./market-evidence-types";
 import type { ControlPanelData } from "./control-panel-types";
 import { buildMtaeProtocolBrief } from "./mtae-brief";
+import { buildMafProtocolBrief } from "./maf-brief";
 import { mtaeControlSnapshotItems, mtaeTickerRequestItem } from "./mtae-snapshot";
 import { getMtaeTimeframeMaps } from "./mtae-store";
 import { getPlans } from "./plans";
@@ -96,6 +97,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
   const mechanicsSnapshot = mechanicsSnapshotItem();
   const playbookSnapshots = playbookSnapshotItems(playbooks, trades);
   const mtaeSnapshots = mtaeControlSnapshotItems(mtaePresets);
+  const mafProtocolBrief = buildMafProtocolBrief();
 
   const scoutingSnapshots = scoutDeskSnapshotItems({
     playbooks,
@@ -120,6 +122,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
       snapshotItems: mtaeSnapshots,
     },
     playbook: {
+      // Control Library filters mechanics at display time; keep builder intact for other surfaces.
       snapshotItems: playbookSnapshots,
     },
     stockFile: {
@@ -127,6 +130,10 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     },
     scouting: {
       snapshotItems: scoutingSnapshots,
+    },
+    learning: {
+      mafProtocolBrief,
+      snapshotItems: [],
     },
   };
 });

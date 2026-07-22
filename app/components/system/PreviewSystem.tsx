@@ -71,7 +71,7 @@ export function PreviewSystem({
 
           <div className="mt-4 rounded-lg border border-violet-500/20 bg-violet-950/30 px-4 py-3 text-sm text-violet-200">
             Sync snapshot to Worker before using{" "}
-            <span className="font-medium text-violet-300">Control → Update</span>.
+            <span className="font-medium text-violet-300">Control → Apply</span>.
           </div>
 
           <nav className="mt-4 flex flex-wrap gap-2">

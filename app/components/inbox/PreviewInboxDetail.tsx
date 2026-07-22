@@ -170,7 +170,7 @@ export function PreviewInboxDetail({
               <h2 className="text-xs font-semibold uppercase tracking-wide text-violet-300">Human preview</h2>
               <p className="mt-2 text-sm text-zinc-200">{describeProposal(parsed)}</p>
               <p className="mt-2 text-xs text-zinc-500">
-                For new AI Blocks use Control → Update. This page is for review and Worker items.
+                For new AI Blocks use Control → Apply. This page is for review and Worker items.
               </p>
             </section>
           ) : null}

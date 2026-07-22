@@ -226,7 +226,7 @@ export function NewTradeScoutFlow({
       <section className="rounded-2xl border border-emerald-500/30 bg-zinc-900/50 p-5">
         <h2 className="text-sm font-semibold text-zinc-200">2 · AI Block → History</h2>
         <p className="mt-1 text-xs text-zinc-500">
-          Validate R:R, then send to History or use Control → Update → Accept.
+          Validate R:R, then send to History or use Control → Apply → Accept.
         </p>
         <textarea
           value={aiBlockRaw}

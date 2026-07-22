@@ -69,7 +69,7 @@ export function TradesWorkspace({
             <div>
               <h1 className="text-xl font-semibold text-zinc-100">New Trade</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                AI chat → <code className="text-violet-300">trade-proposal</code> → Control → Update or History.
+                AI chat → <code className="text-violet-300">trade-proposal</code> → Control → Apply or History.
                 {data.prospects.length > 0 ? (
                   <span className="text-sky-400">
                     {" "}
@@ -205,7 +205,7 @@ export function TradesWorkspace({
         )}
 
         <footer className="border-t border-zinc-800 px-4 py-3 text-[10px] text-zinc-600 lg:px-6">
-          Live data · Control → Update to apply AI Blocks.
+          Live data · Control → Apply to apply AI Blocks.
         </footer>
       </div>
 

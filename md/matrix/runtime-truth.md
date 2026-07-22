@@ -1,10 +1,10 @@
 # MatrixTrade — Runtime truth (what works today)
 
-**Status:** Updated 2026-07-21.  
+**Status:** Updated 2026-07-22.  
 **Rule:** This doc must match deployed code. V2 target lives in [v2-engine-architecture.md](v2-engine-architecture.md). Control naming lives in [control-panel-ia.md](control-panel-ia.md).
 
 **Production:** https://matrix-trade-theta.vercel.app  
-**Branch of truth for this refresh:** `main` + Control IA fix (Mechanics brief / Playbook / Stock file / Scout desk; forensic on trade only).
+**Branch of truth for this refresh:** `main` + Control IA (Matrix Mechanics · Stock Files · Apply · Library).
 
 ---
 
@@ -19,7 +19,9 @@ Playbook (HOW)
   → MAF attribution (component expectancy — V1 foundation)
 ```
 
-External AI proposes; human **Accept** via **Control → Update** (preferred) or History Apply. Matrix never auto-writes.
+External AI proposes; human **Accept** via **Control → Apply** (preferred) or History Apply. Matrix never auto-writes.
+
+There is **no Request layer** in Control — the human states the task in chat; AI asks for the exact visible block label when needed.
 
 ---
 
@@ -32,30 +34,38 @@ External AI proposes; human **Accept** via **Control → Update** (preferred) or
 | Trades | `/trades` | **Histórico** filtrable por veredicto |
 | Playbook | `/playbook` | Policies / method experiments |
 | Insights | `/stats` | Stats / journal / mistakes |
-| History | `/inbox` | Past proposals; prefer Control → Update for new blocks |
+| History | `/inbox` | Past proposals; prefer Control → Apply for new blocks |
 | System | `/system` | Mechanics snapshot + system status |
 | Connect | `/connect` | Bridge / connect helpers |
 
 **Mobile tabs:** Dashboard · Scout · Trades.
 
-**Deprecated:** Enter Trade (`/trades-preview`) → redirects to `/planning`. Execution = Scout boot package → Control → Update → Accept.
+**Deprecated:** Enter Trade (`/trades-preview`) → redirects to `/planning`. Execution = Scout boot package → Control → Apply → Accept.
 
 ---
 
 ## Control panel (global)
 
+### Primary
+
 | Entry | Job |
 |-------|-----|
-| **Update** | Paste AI Block → Validate → Accept |
-| **Mechanics brief** | Copy Matrix rules once for a new AI chat |
-| **Technical analysis** | MTAE protocol + TF role maps (no capital) |
-| **Playbook** | Copy method rules / checklists / stats |
-| **Stock file** | Pick one ticker → MTAE request + thesis + linked scouts |
-| **Scout desk** | Desk overview + monthly risk room |
+| **Matrix Mechanics** | Copy Matrix constitution once for a new AI chat |
+| **Stock Files** | Pick one ticker → MTAE request + profile + linked scouts (direct access) |
+| **Apply** | Paste AI Block → Validate → Accept |
 
-**Not in Control:** Closed-trade forensic picker. Forensic lives on `/trades/{id}` when `status === closed`.
+### Library
 
-Canonical rules: [control-panel-ia.md](control-panel-ia.md) · [ui-naming.md](../rules/ui-naming.md) · [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md).
+| Entry | Job |
+|-------|-----|
+| **Technical Analysis** | MTAE protocol + TF role maps (no capital) |
+| **Playbook** | Method rules / checklists / stats |
+| **Scout Desk** | Desk overview + monthly risk room |
+| **Learning** | MAF attribution protocol (existing `buildMafProtocolBrief`) |
+
+**Not in Control:** Closed-trade forensic picker. Forensic lives on `/trades/{id}` (evidence only — no embedded Mechanics / Request).
+
+Canonical rules: [control-panel-ia.md](control-panel-ia.md) · [ui-naming.md](../rules/ui-naming.md).
 
 ---
 
@@ -86,12 +96,12 @@ Code: `lib/scout-case-trades.ts`, `lib/trades-ledger.ts`, `ScoutExecutePanel`.
 | `/trades/[id]` | Trade detail + snapshots (incl. forensic if closed) | Yes |
 | `/playbook` | Method lab | Yes — 7 playbooks in `data/playbooks.json` |
 | `/stats` | Insights | Yes |
-| `/inbox` | History / Apply gate | Yes — Control Update preferred for new pastes |
+| `/inbox` | History / Apply gate | Yes — Control → Apply preferred for new pastes |
 | `/stock-theses/[id]` | Stock profile | Yes — dossier + AI packages; UI save still partial |
-| `/stock-theses/new` | New stock case UI | Yes (also `stock-case-create` via Update) |
+| `/stock-theses/new` | New stock case UI | Yes (also `stock-case-create` via Apply) |
 | `/system` | Mechanics + status | Yes |
 | `/scout-access/[grantId]` | Scoped AI grant | Yes |
-| `/exchange` | Legacy assistant paste | Prefer Control → Update |
+| `/exchange` | Legacy assistant paste | Prefer Control → Apply |
 | `/trades-preview` | Deprecated Enter Trade | Redirect → `/planning` |
 
 ---
@@ -131,9 +141,9 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 
 | Piece | Status |
 |-------|--------|
-| Control → Update | Primary write path |
-| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 20** (MTAE Participation Phase A) |
-| **MTAE** | Control → **Technical analysis** + `technical-assessment` / `technical-calibration`; optional per-TF `participation` + `participationSynthesis` |
+| Control → Apply | Primary write path (user-facing; internal component may still be named ControlPanelUpdate) |
+| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 21** (Control IA: Apply + Library; forensic evidence-only) |
+| **MTAE** | Control → Library → **Technical Analysis**; optional per-TF `participation` + `participationSynthesis` |
 | **MAF** | `attribution` Apply → `data/maf-experiments.json`; evidence from Trade+Plan+Observation+LearningOutcome; rule hints |
 | **Learning Outcome** | Auto on trade close / plan outcome → `data/learning-outcomes.json` (`LO-xxx`) |
 | **Observation** | Auto seed + `observation-update` Apply → `data/observations.json` (`OBS-xxx`) |
@@ -205,6 +215,10 @@ Method: `playbook-create`, `playbook-update`
 
 ## Next coding phase
 
-Order: **expectancy aggregation by component/Playbook** + Observation UX on closed trades (foundation LO/OBS/MAF shipped).
+| Status | Item |
+|--------|------|
+| **NEXT** | Closed-trade Observation UX reusing existing `observation-update` + Observation store (no new schema) |
+| **EVALUATION** | MAF expectancy aggregation by component/Playbook — only if enough attributed rows exist |
+| **OUT OF SCOPE now** | Request layer, Library schema, Volume profile / AVWAP, L2 / heatmap, empty dashboards |
 
-Do not reintroduce Control → Closed trade, Session, or Case labels. Do not bury Playbook under Mechanics brief.
+Do not reintroduce Control → Closed trade, Session, Case, or Update labels. Do not bury Stock Files under Library.

@@ -331,7 +331,7 @@ export function PreviewDashboard({
                   <div>
                     <h2 className="text-sm font-semibold text-zinc-100">Paste AI Block (legacy)</h2>
                     <p className="mt-0.5 text-xs text-zinc-500">
-                      Prefer Control → Update. This imports to History for review.
+                      Prefer Control → Apply. This imports to History for review.
                     </p>
                   </div>
                   <span className="text-zinc-500">{assistantOpen ? "▾" : "▸"}</span>

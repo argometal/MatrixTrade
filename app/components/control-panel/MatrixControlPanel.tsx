@@ -7,26 +7,42 @@ import { useControlPanel } from "@/app/components/control-panel/MatrixControlPan
 import type { ControlPanelSectionId } from "@/lib/control-panel-types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
-type Step = "pick" | "update" | "stock-pick" | "detail";
+/** Local step machine — "apply" is user-facing; internal ControlPanelUpdate unchanged. */
+type Step = "pick" | "apply" | "stock-pick" | "detail";
 
-/**
- * Labels must name the payload. Forbidden: Session, Case, Closed trade, and other
- * vague renames — see md/matrix/control-panel-ia.md.
- */
-const SECTIONS: {
-  id: ControlPanelSectionId;
+/** Primary Control actions — Stock Files stay direct-access (not under Library). */
+const PRIMARY: {
+  id: "train-ai" | "stock-file" | "apply";
   label: string;
   hint: string;
 }[] = [
   {
     id: "train-ai",
-    label: "Mechanics brief",
-    hint: "Matrix rules — copy once for a new AI chat",
+    label: "Matrix Mechanics",
+    hint: "Constitution — copy once for a new AI chat",
   },
   {
+    id: "stock-file",
+    label: "Stock Files",
+    hint: "One ticker — MTAE request, profile, linked scouts",
+  },
+  {
+    id: "apply",
+    label: "Apply",
+    hint: "Paste AI Block → Validate → Accept",
+  },
+];
+
+/** Library catalog — reusable context only (no Stock Files). */
+const LIBRARY: {
+  id: Exclude<ControlPanelSectionId, "train-ai" | "stock-file">;
+  label: string;
+  hint: string;
+}[] = [
+  {
     id: "mtae",
-    label: "Technical analysis",
-    hint: "MTAE protocol — charts → technical-assessment (no capital)",
+    label: "Technical Analysis",
+    hint: "MTAE protocol + TF role maps (no capital)",
   },
   {
     id: "playbook",
@@ -34,31 +50,24 @@ const SECTIONS: {
     hint: "Method rules, checklists, and stats",
   },
   {
-    id: "stock-file",
-    label: "Stock file",
-    hint: "One ticker — thesis, zones, linked scouts",
+    id: "scouting",
+    label: "Scout Desk",
+    hint: "Active cases and monthly risk room",
   },
   {
-    id: "scouting",
-    label: "Scout desk",
-    hint: "Active cases and monthly risk room",
+    id: "learning",
+    label: "Learning",
+    hint: "MAF attribution protocol (existing)",
   },
 ];
 
-function SnapshotCopyRow({
-  item,
-  onCopied,
-}: {
-  item: SnapshotMenuItem;
-  onCopied?: () => void;
-}) {
+function SnapshotCopyRow({ item }: { item: SnapshotMenuItem }) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
     const ok = await copyText(item.text);
     if (!ok) return;
     setCopied(true);
-    onCopied?.();
     setTimeout(() => setCopied(false), 2000);
   }
 
@@ -118,6 +127,61 @@ function PlainCopyRow({
   );
 }
 
+function NavRow({
+  label,
+  hint,
+  accent,
+  onClick,
+}: {
+  label: string;
+  hint: string;
+  accent?: "emerald" | "violet";
+  onClick: () => void;
+}) {
+  const emerald = accent === "emerald";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        emerald
+          ? "flex w-full items-center gap-3 rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-600/25"
+          : "flex w-full items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 text-left transition hover:border-violet-500/30 hover:bg-zinc-900"
+      }
+    >
+      <span
+        className={
+          emerald
+            ? "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600/25 text-sm font-bold text-emerald-200"
+            : "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold uppercase text-violet-300"
+        }
+      >
+        {emerald ? "↑" : label.slice(0, 2)}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span
+          className={
+            emerald
+              ? "block text-sm font-semibold text-emerald-100"
+              : "block text-sm font-semibold text-zinc-100"
+          }
+        >
+          {label}
+        </span>
+        <span
+          className={
+            emerald
+              ? "mt-0.5 block text-xs text-emerald-200/70"
+              : "mt-0.5 block text-xs text-zinc-500"
+          }
+        >
+          {hint}
+        </span>
+      </span>
+    </button>
+  );
+}
+
 export function MatrixControlPanel() {
   const { open, closePanel, data } = useControlPanel();
   const [step, setStep] = useState<Step>("pick");
@@ -138,7 +202,9 @@ export function MatrixControlPanel() {
     };
   }, [open]);
 
-  const sectionMeta = SECTIONS.find((entry) => entry.id === section);
+  const allMeta = [...PRIMARY.filter((p) => p.id !== "apply"), ...LIBRARY];
+  const sectionMeta = allMeta.find((entry) => entry.id === section);
+
   const selectedStock = useMemo(
     () => data.stockFile.theses.find((entry) => entry.thesis.id === stockThesisId) ?? null,
     [data.stockFile.theses, stockThesisId]
@@ -154,20 +220,22 @@ export function MatrixControlPanel() {
     );
   }, [data.stockFile.theses, stockQuery]);
 
+  /** Control filters duplicate Mechanics rows — builders may still include them for other surfaces. */
   const detailSnapshots = useMemo((): SnapshotMenuItem[] => {
     if (!section) return [];
     switch (section) {
       case "train-ai":
-        // Mechanics brief is PlainCopyRow only — Playbook is its own section.
         return [];
       case "mtae":
         return data.mtae.snapshotItems.filter((item) => item.id !== "mtae-protocol");
       case "playbook":
-        return data.playbook.snapshotItems;
+        return data.playbook.snapshotItems.filter((item) => item.id !== "mechanics");
       case "stock-file":
         return selectedStock?.snapshotItems.filter((item) => item.id !== "mechanics") ?? [];
       case "scouting":
         return data.scouting.snapshotItems;
+      case "learning":
+        return data.learning.snapshotItems;
       default:
         return [];
     }
@@ -182,8 +250,17 @@ export function MatrixControlPanel() {
     setStep("detail");
   }
 
+  function handlePrimary(id: (typeof PRIMARY)[number]["id"]) {
+    if (id === "apply") {
+      setStep("apply");
+      setSection(null);
+      return;
+    }
+    pickSection(id);
+  }
+
   function handleBack() {
-    if (step === "update") {
+    if (step === "apply") {
       setStep("pick");
       return;
     }
@@ -205,20 +282,20 @@ export function MatrixControlPanel() {
   if (!open) return null;
 
   const detailTitle =
-    step === "update"
-      ? "Update"
+    step === "apply"
+      ? "Apply"
       : step === "stock-pick"
-        ? "Pick a stock file"
+        ? "Pick a Stock File"
         : section === "stock-file" && selectedStock
           ? `${selectedStock.thesis.ticker} · ${selectedStock.thesis.id}`
-          : sectionMeta?.label ?? "Control panel";
+          : sectionMeta?.label ?? "Control";
 
   const detailHint =
-    step === "update"
+    step === "apply"
       ? "Paste AI Block — Validate, then Accept"
       : step === "stock-pick"
         ? `${data.activeThesisCount} active — pick one`
-        : sectionMeta?.hint ?? "Copy snapshot for your AI";
+        : sectionMeta?.hint ?? "Copy context for your AI";
 
   return (
     <div
@@ -229,7 +306,7 @@ export function MatrixControlPanel() {
       onClick={closePanel}
     >
       <div
-        className="flex max-h-[min(520px,88vh)] w-full max-w-lg flex-col rounded-2xl border border-zinc-700/80 bg-zinc-950 p-4 shadow-2xl"
+        className="flex max-h-[min(560px,90vh)] w-full max-w-lg flex-col rounded-2xl border border-zinc-700/80 bg-zinc-950 p-4 shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
         <header className="mb-3 shrink-0">
@@ -239,50 +316,43 @@ export function MatrixControlPanel() {
           <h2 className="text-base font-bold text-zinc-50">{detailTitle}</h2>
           <p className="mt-1 text-[11px] text-zinc-500">
             {step === "pick"
-              ? "Update writes. Mechanics / Technical analysis / Playbook / Stock file / Scout desk = copy context."
+              ? "Mechanics once per chat → task in natural language → copy only the block AI asks for → Apply."
               : detailHint}
           </p>
         </header>
 
         {step === "pick" ? (
-          <div className="flex min-h-0 flex-1 flex-col gap-3">
-            <button
-              type="button"
-              onClick={() => setStep("update")}
-              className="flex w-full shrink-0 items-center gap-3 rounded-xl border border-emerald-500/40 bg-emerald-600/15 px-4 py-3 text-left transition hover:border-emerald-500/60 hover:bg-emerald-600/25"
-            >
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600/25 text-sm font-bold text-emerald-200">
-                ↑
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold text-emerald-100">Update</span>
-                <span className="mt-0.5 block text-xs text-emerald-200/70">
-                  Paste AI Block → Validate → Accept
-                </span>
-              </span>
-            </button>
-            <nav className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
-              {SECTIONS.map((entry) => (
-                <button
+          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain">
+            <nav className="space-y-2">
+              {PRIMARY.map((entry) => (
+                <NavRow
                   key={entry.id}
-                  type="button"
-                  onClick={() => pickSection(entry.id)}
-                  className="flex w-full items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 text-left transition hover:border-violet-500/30 hover:bg-zinc-900"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold uppercase text-violet-300">
-                    {entry.label.slice(0, 2)}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-zinc-100">{entry.label}</span>
-                    <span className="mt-0.5 block text-xs text-zinc-500">{entry.hint}</span>
-                  </span>
-                </button>
+                  label={entry.label}
+                  hint={entry.hint}
+                  accent={entry.id === "apply" ? "emerald" : "violet"}
+                  onClick={() => handlePrimary(entry.id)}
+                />
               ))}
             </nav>
+            <div className="pt-1">
+              <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">
+                Library
+              </p>
+              <nav className="space-y-2">
+                {LIBRARY.map((entry) => (
+                  <NavRow
+                    key={entry.id}
+                    label={entry.label}
+                    hint={entry.hint}
+                    onClick={() => pickSection(entry.id)}
+                  />
+                ))}
+              </nav>
+            </div>
           </div>
         ) : null}
 
-        {step === "update" ? <ControlPanelUpdate onBack={handleBack} /> : null}
+        {step === "apply" ? <ControlPanelUpdate onBack={handleBack} /> : null}
 
         {step === "stock-pick" ? (
           <div className="flex min-h-0 flex-1 flex-col gap-2">
@@ -296,7 +366,7 @@ export function MatrixControlPanel() {
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
               {filteredStocks.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
-                  No active stock files match.
+                  No active Stock Files match.
                 </p>
               ) : (
                 filteredStocks.map((entry) => (
@@ -331,31 +401,40 @@ export function MatrixControlPanel() {
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
             {section === "train-ai" ? (
               <PlainCopyRow
-                label="Matrix Mechanics brief"
-                description="Stable primer — paste once at the start of the AI chat"
+                label="Matrix Mechanics"
+                description="Stable constitution — paste once at the start of the AI chat"
                 text={data.trainAi.mechanicsBrief}
               />
             ) : null}
             {section === "mtae" ? (
               <PlainCopyRow
-                label="1 · MTAE protocol (copy first)"
+                label="MTAE protocol"
                 description="Technical procedure — not Mechanics, not Playbook, not Scout"
                 text={data.mtae.protocolBrief}
+              />
+            ) : null}
+            {section === "learning" && data.learning.mafProtocolBrief ? (
+              <PlainCopyRow
+                label="MAF attribution protocol"
+                description="Component attribution — not a journal; never invent prices"
+                text={data.learning.mafProtocolBrief}
               />
             ) : null}
             {detailSnapshots.map((item) => (
               <SnapshotCopyRow key={item.id} item={item} />
             ))}
-            {section === "stock-file" && selectedStock
-              ? (() => {
-                  const mechanics = selectedStock.snapshotItems.find((item) => item.id === "mechanics");
-                  return mechanics ? <SnapshotCopyRow key={mechanics.id} item={mechanics} /> : null;
-                })()
-              : null}
+            {detailSnapshots.length === 0 &&
+            section !== "train-ai" &&
+            section !== "mtae" &&
+            section !== "learning" ? (
+              <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
+                No copy items for this section.
+              </p>
+            ) : null}
           </div>
         ) : null}
 
-        {step !== "update" ? (
+        {step !== "apply" ? (
           <footer className="mt-4 flex gap-3 border-t border-zinc-800 pt-4">
             <button
               type="button"

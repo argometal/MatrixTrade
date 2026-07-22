@@ -1,37 +1,48 @@
 # Control panel IA
 
-**Status:** Canonical (2026-07-21).  
+**Status:** Canonical (2026-07-22).  
 **Parent:** [snapshot-catalog.md](snapshot-catalog.md) · [external-ai-policy.md](external-ai-policy.md) · [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md)
 
 ---
 
 ## Purpose
 
-**Control** is the global write + context-copy drawer:
+**Control** is the global write + context-copy drawer.
+
+### Primary (direct access)
 
 | Entry | Job |
 |-------|-----|
-| **Update** | Paste AI Block → Validate → Accept |
-| **Mechanics brief** | Copy Matrix rules once for a new AI chat |
-| **Technical analysis** | MTAE protocol + TF role maps — charts → `technical-assessment` (no capital) |
-| **Playbook** | Copy method rules / checklists / stats |
-| **Stock file** | Pick one ticker → MTAE request for ticker + thesis/scouts |
-| **Scout desk** | Copy desk overview + risk room (not a second Mechanics button) |
+| **Matrix Mechanics** | Copy Matrix constitution once for a new AI chat |
+| **Stock Files** | Pick one ticker → MTAE request + profile + linked scouts |
+| **Apply** | Paste AI Block → Validate → Accept |
 
-Window packages (Scout desk overview, Stock file, etc.) already **prefix** the Mechanics brief in the copied text. Do not add a second “Matrix Mechanics snapshot” row under Scout desk — that duplicates Control → Mechanics brief.
+Stock Files stay **top-level**. They are not under Library.
+
+### Library (reusable context catalog)
+
+| Entry | Job |
+|-------|-----|
+| **Technical Analysis** | MTAE protocol + TF role maps — charts → `technical-assessment` (no capital) |
+| **Playbook** | Method rules / checklists / stats |
+| **Scout Desk** | Desk overview + monthly risk room |
+| **Learning** | Existing MAF attribution protocol (`buildMafProtocolBrief`) — no mega Learning package |
+
+There is **no Request / Universal Request / Start Work** layer in Control. The human states the task in natural language; the AI asks for the exact visible block label when more context is needed.
 
 **MTAE is not Playbook and not Mechanics.** See [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md).
 
 ---
 
-## Process order (copy)
+## Interaction model
 
 ```text
-1. Mechanics brief          (once per chat)
-2. Technical analysis       (MTAE protocol + optional TF map)
-3. Charts → AI → technical-assessment
-4. Update → Accept          (patches Stock file)
-5. Stock file / Scout desk  (capital / execution next)
+1. Copy Matrix Mechanics once into a new AI chat
+2. Write the task naturally
+3. AI requests the exact visible Control / window label if needed
+4. Human copies only that block
+5. AI returns ONE Apply-ready AI Block
+6. Human pastes into Control → Apply → Validate → Accept
 ```
 
 ---
@@ -40,47 +51,63 @@ Window packages (Scout desk overview, Stock file, etc.) already **prefix** the M
 
 Labels must **name the payload** the human copies or the action they take.
 
-| Allowed | Forbidden (examples of past mistakes) |
-|---------|----------------------------------------|
-| Mechanics brief | Session, Train session, AI session |
-| Technical analysis | Analysis (too vague), Chart AI, MTAE alone without “Technical” |
-| Playbook | Method (ambiguous), Policies (vague) |
-| Stock file | Case (ambiguous vs legal/support case) |
-| Scout desk | Scouting (ok only if desk is clear) |
-| Update | Import, Connect (legacy) |
+| Allowed | Forbidden (examples) |
+|---------|----------------------|
+| Matrix Mechanics | Session, Train session, AI session |
+| Stock Files | Case (ambiguous) |
+| Apply | Update (legacy Control label), Import, Connect |
+| Technical Analysis | Analysis (vague), Chart AI alone |
+| Playbook | Method (ambiguous) under Mechanics |
+| Scout Desk | Scouting without desk clarity |
+| Learning | Coach, Attribution Engine (unless naming the MAF protocol row) |
 
-**Do not rename for “simplicity”** if the new word is vaguer than the old one.
+**Do not rename for “simplicity”** if the new word is vaguer.
 
-Folding Playbook or MTAE under Mechanics brief is forbidden — each is its own Control section.
+Folding Playbook or MTAE under Mechanics is forbidden. Folding Stock Files under Library is forbidden.
+
+---
+
+## Duplicate Mechanics policy
+
+- Mechanics is the **primary** Control action.
+- Control **filters** duplicate `mechanics` rows from Library → Playbook and from Stock File detail.
+- Shared builders (`playbookSnapshotItems`, `stockProfileSnapshotItems`, trade window menu) may still include Mechanics for **standalone package portability** outside Control.
+- Prefer presentation filtering over deleting shared builders.
 
 ---
 
 ## Forensic export — trade only
 
-`{ID} forensic` (legacy gaps, R, review, post-stop) ships **only** on:
+`{ID} forensic` ships **only** on `/trades/{ID}` when closed.
 
-- Route: `/trades/{ID}`
-- UI: Trade snapshot menu when `status === closed`
+Copied forensic payload = **evidence only**:
 
-**Forbidden:**
+- no embedded `buildMatrixMechanicsBrief()`
+- no embedded `TRADE_FORENSIC_AI_REQUEST` / universal Request
 
-- Control home section “Closed trade” / “Trade” / forensic picker
-- Loading all closed-trade forensics into Control panel data
-- Asking the AI (via mechanics brief) to request Control → Closed trade
+**Forbidden:** Control closed-trade / forensic picker.
 
-Rationale: Trades is the histórico; Scout is the war room; Control is context + Update. A second closed-trade browser in Control duplicates Trades and confuses IA.
+---
+
+## Learning / MAF in Control
+
+| Exposed | Not exposed in Control Library |
+|---------|--------------------------------|
+| MAF attribution protocol brief | Per-trade MAF experiments list |
+| | Observation UX form (NEXT — evaluate after this IA) |
+| | Expectancy aggregation dashboards (EVALUATION) |
 
 ---
 
 ## Agent / PR checklist
 
-Before merging Control UI or mechanics copy changes:
-
-1. Section labels still match the table above (descriptive).
-2. No new peer under Control that belongs to Trades, Scout, or History (MTAE / Technical analysis is allowed).
-3. Forensic still only on trade detail.
-4. `md/matrix/snapshot-catalog.md` updated if snapshot homes change.
-5. Bump `MATRIX_MECHANICS_REVISION` when brief/snapshot text changes.
+1. Primary order: Matrix Mechanics · Stock Files · Apply · Library.
+2. Stock Files remain direct-access.
+3. User-facing write label is **Apply** (internal `ControlPanelUpdate` may keep its name).
+4. No Request layer.
+5. Forensic evidence-only on trade detail.
+6. Update `snapshot-catalog.md` / `runtime-truth.md` when homes change.
+7. Bump `MATRIX_MECHANICS_REVISION` when brief/snapshot text changes.
 
 ---
 
@@ -89,17 +116,18 @@ Before merging Control UI or mechanics copy changes:
 | Piece | Location |
 |-------|----------|
 | Control UI | `app/components/control-panel/MatrixControlPanel.tsx` |
+| Apply UI (internal name) | `ControlPanelUpdate.tsx` |
 | Section ids | `lib/control-panel-types.ts` |
 | Loader | `lib/load-control-panel-data.ts` |
-| MTAE protocol copy | `lib/mtae-brief.ts`, `lib/mtae-snapshot.ts` |
+| MTAE protocol | `lib/mtae-brief.ts`, `lib/mtae-snapshot.ts` |
+| MAF protocol | `lib/maf-brief.ts` |
 | Forensic item | `lib/snapshot-trade-packages.ts` → `tradeForensicSnapshotItem` |
-| Trade page | `app/(trading)/(nav)/trades/[id]/page.tsx` |
 
 ---
 
 ## Related
 
 - [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md)
+- [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md)
 - [snapshot-catalog.md](snapshot-catalog.md)
-- [external-ai-policy.md](external-ai-policy.md)
-- [scout-execution-model.md](scout-execution-model.md)
+- [runtime-truth.md](runtime-truth.md)

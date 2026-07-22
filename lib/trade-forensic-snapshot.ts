@@ -44,6 +44,11 @@ function formatSignedUsd(value: number): string {
   return `${sign}$${Math.abs(value).toFixed(2)}`;
 }
 
+/**
+ * Legacy Apply-hint text for forensic workflows.
+ * Not embedded in the forensic copy payload (Control interaction model: natural language task).
+ * Kept for docs / optional consumers.
+ */
 export const TRADE_FORENSIC_AI_REQUEST = [
   "Analysis Mode default — forensic discussion only, no JSON until explicit Apply.",
   "Study this closed trade as one statistical observation. Do not invent prices or fills.",

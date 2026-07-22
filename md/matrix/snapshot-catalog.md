@@ -1,6 +1,6 @@
 # Snapshot catalog
 
-**Status:** Canonical (2026-07-21).  
+**Status:** Canonical (2026-07-22).  
 **Parent:** [external-ai-policy.md](external-ai-policy.md)
 
 ---
@@ -12,50 +12,50 @@ One control per window: **`{Window} snapshot ▾`**
 - Title = window name  
 - Subtitle = what data is included (one line)  
 - Dropdown when more than one slice  
-- Separate control everywhere: **Connect** wizard → inline Accept  
+
+**Control** (global drawer) is separate: Matrix Mechanics · Stock Files · Apply · Library.
+
+There is **no Request layer** in Control. Window packages may still append `=== REQUEST ===` for standalone portability; forensic does **not**.
 
 ---
 
-## Package structure (every window snapshot)
+## Package structure (window snapshots)
 
 ```text
 === {ENTITY} SNAPSHOT ===              ← verification bookend (start)
-1. MATRIX MECHANICS (brief prefix)     ← automatic unless mechanics-only export
+1. MATRIX MECHANICS (brief prefix)     ← automatic unless mechanics-only / forensic
 2. [window data]
-3. === REQUEST ===                     ← allowed block types for this window
+3. === REQUEST ===                     ← allowed block types (most windows; not forensic)
 === END {ENTITY} SNAPSHOT ===          ← verification bookend (end)
 ```
 
-Button titles lead with the entity (`NFLX · snapshot`, `H003 · NFLX snapshot`) so the user confirms the correct target before paste.
-
 **Matrix Mechanics Snapshot** (System / dropdown) = full constitution — paste once per AI session.  
-Does not replace the automatic brief prefix on data snapshots.
+Primary Control copy of Mechanics = brief (no REQUEST).
 
 ---
 
 ## Catalog
 
-| Window | Menu label | Data slice | REQUEST emphasis |
-|--------|------------|------------|------------------|
-| Dashboard | Dashboard snapshot | Budget, experiment, attention, trades overview | trade-update, trade-close, analysis |
-| System | Matrix Mechanics snapshot | Full rules + block catalog | all types |
-| Playbook | Playbook snapshot | Strategies + stats | playbook-update |
-| Scouting Desk | Scout desk overview | All profiles + scouts + monthly room | scouting blocks |
-| Scouting Desk | This ticker | Profile + scouts + evidence | file-update, decision-update |
-| Scouting Desk | This scout (PLAN) | Single plan + strategy stop + planned_rr + decision | decision-update |
-| Stock Profile | `{TICKER}` profile | Dossier + evidence + thesis_invalidation (structural — not R stop) | file-update, scout-assessment |
-| Stock Profile | Linked scouts | Active PLANs for ticker | decision-update |
-| Trade | `{ID}` this trade | Trade fields + review state | trade-update, trade-close |
-| Trade | `{ID}` forensic | Closed trade only — legacy tier, R, review, post-stop (**Trade window**, never Control) | analysis, trade-update, attribution |
-| Trade | Stock profile (compact) | Linked dossier summary | file-update |
-| Trades list | Trades snapshot | All trades summary + experiment | trade-update, trade-proposal |
-| Control → Mechanics brief | Matrix Mechanics brief | Rules primer for a new AI chat | (context only) |
-| Control → Technical analysis | MTAE protocol + TF maps | Charts → `technical-assessment` (no capital) | technical-assessment, technical-calibration |
-| Control → Playbook | Playbook snapshot | Strategies + stats | playbook-update |
-| Control → Stock file | `{TICKER}` MTAE request + profile / scouts | One ticker dossier (+ MTAE request first) | technical-assessment, file-update, decision-update |
-| Control → Scout desk | Scout desk overview | All profiles + scouts + monthly room (**no** separate Mechanics row — brief is already prefixed; full rules = Control → Mechanics brief) | scouting blocks |
+| Window | Menu label | Data slice | Notes |
+|--------|------------|------------|-------|
+| Dashboard | Dashboard snapshot | Budget, experiment, attention, trades overview | May include Mechanics menu row for portability |
+| System | Matrix Mechanics snapshot | Full rules + block catalog | |
+| Playbook | Playbook snapshot | Strategies + stats | Control Library filters Mechanics row |
+| Scouting Desk | Scout desk overview | All profiles + scouts + monthly room | No Mechanics row in Control |
+| Stock Profile | `{TICKER}` profile / linked scouts | Dossier + evidence | Control Stock Files filters Mechanics row |
+| Trade | `{ID}` this trade | Trade fields + review | |
+| Trade | `{ID}` forensic | Closed trade **evidence only** (no Mechanics, no Request) | Trade window only |
+| Trade | Stock profile (compact) | Linked dossier summary | |
+| Trades list | Trades snapshot | All trades summary + experiment | |
+| Control → Matrix Mechanics | Matrix Mechanics | Rules primer for a new AI chat | Primary |
+| Control → Stock Files | `{TICKER}` MTAE request + profile / scouts | Direct access | Primary |
+| Control → Apply | — | Paste → Validate → Accept | Primary write path |
+| Control → Library → Technical Analysis | MTAE protocol + TF maps | No capital | |
+| Control → Library → Playbook | Playbook snapshot | No Mechanics row | |
+| Control → Library → Scout Desk | Scout desk overview | | |
+| Control → Library → Learning | MAF attribution protocol | Existing brief only | |
 
-**Retired (do not restore):** Control → Closed trade / Trade forensic picker; Control labels “Session” or “Case”; Scout desk menu item that only duplicates Mechanics; folding MTAE into Mechanics or Playbook. See [control-panel-ia.md](control-panel-ia.md).
+**Retired:** Control → Update (renamed Apply); Control → Closed trade; Session / Case; Request layer; folding MTAE into Mechanics; burying Stock Files under Library. See [control-panel-ia.md](control-panel-ia.md).
 
 ---
 
