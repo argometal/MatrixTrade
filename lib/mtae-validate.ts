@@ -5,10 +5,15 @@ import type {
   MtaeCandleConfirmation,
   MtaeCandlePattern,
   MtaeCandleSignal,
+  MtaeDirectionalEfficiency,
   MtaeDominantCondition,
+  MtaeExpansionPotential,
+  MtaeExpansionState,
   MtaeHistoricalReactionZone,
   MtaeIntegratedView,
   MtaeLargeParticipantFootprint,
+  MtaeMomentumAssessment,
+  MtaeMomentumCurrentState,
   MtaeMovementCharacter,
   MtaeMovementCharacterLabel,
   MtaeParticipantSignal,
@@ -16,9 +21,11 @@ import type {
   MtaeParticipationSynthesis,
   MtaePriceVolumeRelationship,
   MtaePriceZone,
+  MtaeRangeProgression,
   MtaeRankedLevel,
   MtaeReachProbability,
   MtaeRelativeVolume,
+  MtaeScoutImplication,
   MtaeTechnicalSummary,
   MtaeTimeframeReport,
   MtaeTimeframeRoles,
@@ -34,11 +41,17 @@ import type {
 import {
   MTAE_CANDLE_CONFIRMATIONS,
   MTAE_CANDLE_PATTERNS,
+  MTAE_DIRECTIONAL_EFFICIENCIES,
   MTAE_DOMINANT_CONDITIONS,
+  MTAE_EXPANSION_POTENTIALS,
+  MTAE_EXPANSION_STATES,
+  MTAE_MOMENTUM_CURRENT_STATES,
   MTAE_MOVEMENT_CHARACTERS,
   MTAE_PARTICIPANT_SIGNALS,
   MTAE_PRICE_VOLUME_RELATIONSHIPS,
+  MTAE_RANGE_PROGRESSIONS,
   MTAE_RELATIVE_VOLUMES,
+  MTAE_SCOUT_IMPLICATIONS,
   MTAE_VOLUME_CONFIRMATIONS,
   MTAE_VOLUME_DIRECTIONAL_BIASES,
   MTAE_VOLUME_STATES,
@@ -59,6 +72,7 @@ const ERROR_TYPES: MtaeCalibrationErrorType[] = [
   "structure",
   "volume_behavior",
   "movement_character",
+  "momentum_assessment",
   "wick_hierarchy",
   "candle_signal_context",
   "historical_reaction_rank",
@@ -415,8 +429,14 @@ function parseMovementCharacter(
     return undefined;
   }
   const row = raw as Record<string, unknown>;
-  const primary = enumOne(row.primary, MTAE_MOVEMENT_CHARACTERS, `${label}.primary`, errors);
-  if (!primary) return undefined;
+
+  let primary: MtaeMovementCharacterLabel | undefined;
+  if (row.primary !== undefined && row.primary !== null && String(row.primary).trim() !== "") {
+    primary = enumOne(row.primary, MTAE_MOVEMENT_CHARACTERS, `${label}.primary`, errors) as
+      | MtaeMovementCharacterLabel
+      | undefined;
+  }
+
   let secondary: MtaeMovementCharacterLabel[] | undefined;
   if (row.secondary !== undefined) {
     if (!Array.isArray(row.secondary)) {
@@ -429,15 +449,145 @@ function parseMovementCharacter(
       });
     }
   }
+
+  const statePresent = row.state !== undefined && row.state !== null && String(row.state).trim() !== "";
+  let expansionState: MtaeExpansionState | undefined = statePresent
+    ? (enumOne(row.state, MTAE_EXPANSION_STATES, `${label}.state`, errors) as
+        | MtaeExpansionState
+        | undefined)
+    : undefined;
+
+  let directionalEfficiency: MtaeDirectionalEfficiency | undefined;
+  if (
+    row.directionalEfficiency !== undefined &&
+    row.directionalEfficiency !== null &&
+    String(row.directionalEfficiency).trim() !== ""
+  ) {
+    directionalEfficiency = enumOne(
+      row.directionalEfficiency,
+      MTAE_DIRECTIONAL_EFFICIENCIES,
+      `${label}.directionalEfficiency`,
+      errors
+    ) as MtaeDirectionalEfficiency | undefined;
+  }
+
+  let rangeProgression: MtaeRangeProgression | undefined;
+  if (
+    row.rangeProgression !== undefined &&
+    row.rangeProgression !== null &&
+    String(row.rangeProgression).trim() !== ""
+  ) {
+    rangeProgression = enumOne(
+      row.rangeProgression,
+      MTAE_RANGE_PROGRESSIONS,
+      `${label}.rangeProgression`,
+      errors
+    ) as MtaeRangeProgression | undefined;
+  }
+
+  if (expansionState) {
+    if (!directionalEfficiency) {
+      errors.push(`${label}.directionalEfficiency required when state is set`);
+    }
+    if (!rangeProgression) {
+      errors.push(`${label}.rangeProgression required when state is set`);
+    }
+  }
+
+  if (!primary && !expansionState) {
+    errors.push(
+      `${label} requires either primary (legacy pattern) or state (expansion assessment)`
+    );
+    return undefined;
+  }
+
   const evidence = stringList(row.evidence, `${label}.evidence`, errors);
-  if (!evidence.length) errors.push(`${label}.evidence must be a non-empty array`);
-  if (!evidence.length) return undefined;
+  if (!evidence.length) {
+    errors.push(`${label}.evidence must be a non-empty array`);
+    return undefined;
+  }
+
   return {
-    primary: primary as MtaeMovementCharacterLabel,
+    primary,
     secondary,
+    state: expansionState,
+    directionalEfficiency,
+    rangeProgression,
     evidence,
     confidence: clampConfidence(Number(row.confidence ?? 50)),
     caveat: row.caveat !== undefined ? String(row.caveat).trim() || undefined : undefined,
+  };
+}
+
+function parseMomentumAssessment(
+  raw: unknown,
+  label: string,
+  errors: string[]
+): MtaeMomentumAssessment | undefined {
+  if (raw === undefined || raw === null) return undefined;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    errors.push(`${label} must be an object`);
+    return undefined;
+  }
+  const row = raw as Record<string, unknown>;
+
+  // Forbidden Scout / capital fields inside momentum assessment
+  for (const banned of [
+    "verdict",
+    "scoutVerdict",
+    "maximumEntry",
+    "recommendedEntry",
+    "minimumRR",
+    "shares",
+    "positionSize",
+  ]) {
+    if (row[banned] !== undefined) {
+      errors.push(
+        `${label} must not include ${banned} — Momentum Assessment is technical context only`
+      );
+    }
+  }
+
+  const expansionPotential = enumOne(
+    row.expansionPotential,
+    MTAE_EXPANSION_POTENTIALS,
+    `${label}.expansionPotential`,
+    errors
+  ) as MtaeExpansionPotential | undefined;
+  const currentState = enumOne(
+    row.currentState,
+    MTAE_MOMENTUM_CURRENT_STATES,
+    `${label}.currentState`,
+    errors
+  ) as MtaeMomentumCurrentState | undefined;
+  const scoutImplication = enumOne(
+    row.scoutImplication,
+    MTAE_SCOUT_IMPLICATIONS,
+    `${label}.scoutImplication`,
+    errors
+  ) as MtaeScoutImplication | undefined;
+
+  if (typeof row.capitalEfficiencyConcern !== "boolean") {
+    errors.push(`${label}.capitalEfficiencyConcern must be boolean`);
+  }
+
+  const rationale = stringList(row.rationale, `${label}.rationale`, errors);
+  if (!rationale.length) {
+    errors.push(`${label}.rationale must be a non-empty array`);
+  }
+
+  if (!expansionPotential || !currentState || !scoutImplication || !rationale.length) {
+    return undefined;
+  }
+  if (typeof row.capitalEfficiencyConcern !== "boolean") return undefined;
+
+  return {
+    expansionPotential,
+    currentState,
+    capitalEfficiencyConcern: row.capitalEfficiencyConcern,
+    rationale,
+    scoutImplication,
+    confidence: clampConfidence(Number(row.confidence ?? 50)),
   };
 }
 
@@ -700,6 +850,11 @@ function parseIntegrated(raw: unknown, errors: string[]): MtaeIntegratedView | n
     participationSynthesis: parseParticipationSynthesis(
       row.participationSynthesis,
       "integrated.participationSynthesis",
+      errors
+    ),
+    momentumAssessment: parseMomentumAssessment(
+      row.momentumAssessment,
+      "integrated.momentumAssessment",
       errors
     ),
   };

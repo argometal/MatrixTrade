@@ -7,7 +7,7 @@ import { TradingMark } from "@/app/components/TradingMark";
 const iconBtn =
   "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200";
 
-/** MatrixTrade chrome: inbox + switch to Argus (never Matrix). */
+/** MtA chrome: inbox + switch to Argus (never Matrix). */
 export function MatrixAppChromeActions({ pendingInboxCount = 0 }: { pendingInboxCount?: number }) {
   return (
     <>
@@ -26,7 +26,7 @@ export function MatrixAppChromeActions({ pendingInboxCount = 0 }: { pendingInbox
   );
 }
 
-/** Argus chrome: inbox + switch to MatrixTrade (never Argus). */
+/** Argus chrome: inbox + switch to MtA (never Argus). */
 export function ArgusAppChromeActions({ inboxCount = 0 }: { inboxCount?: number }) {
   return (
     <>
@@ -38,7 +38,7 @@ export function ArgusAppChromeActions({ inboxCount = 0 }: { inboxCount?: number 
           </span>
         ) : null}
       </Link>
-      <Link href="/home-preview" aria-label="MatrixTrade" title="MatrixTrade" className={`${iconBtn} p-0`}>
+      <Link href="/home-preview" aria-label="MtA" title="MtA" className={`${iconBtn} p-0`}>
         <TradingMark size={28} />
       </Link>
     </>

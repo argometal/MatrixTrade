@@ -21,7 +21,7 @@ export default async function ScoutAccessPage({
         <h1 className="text-xl font-semibold">Scoped AI access</h1>
         <p className="mt-3 text-sm text-red-400">{validation.error}</p>
         <p className="mt-4 text-sm text-zinc-500">
-          Create a new link from Stock Profile or New stock case in MatrixTrade.
+          Create a new link from Stock Profile or New stock case in MtA.
         </p>
       </main>
     );

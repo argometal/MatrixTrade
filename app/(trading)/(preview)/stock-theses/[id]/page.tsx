@@ -3,7 +3,7 @@ import {
   ensureProfileEvidenceSeeded,
   getActiveEvidenceForProfile,
 } from "@/lib/market-evidence";
-import { getMtaeTimeframeMaps } from "@/lib/mtae-store";
+import { getLatestMtaeAssessmentForProfile, getMtaeTimeframeMaps } from "@/lib/mtae-store";
 import { getPlans } from "@/lib/plans";
 import { getPlaybooks } from "@/lib/playbooks";
 import { stockProfileSnapshotItems } from "@/lib/snapshot-packages";
@@ -26,6 +26,8 @@ export default async function StockThesisDetailPage({
   ]);
   if (!thesis) notFound();
 
+  const latestMtaeAssessment = await getLatestMtaeAssessmentForProfile(thesis.id);
+
   await ensureProfileEvidenceSeeded(thesis.id);
   const activeEvidence = await getActiveEvidenceForProfile(thesis.id);
   const synthesis = buildStockProfileSynthesis(thesis, activeEvidence);
@@ -39,6 +41,7 @@ export default async function StockThesisDetailPage({
     playbooks,
     plans,
     activeEvidence,
+    latestMtaeAssessment,
   });
   const analyzePackage = buildStockFileAnalyzePackage({
     thesis,
@@ -57,6 +60,7 @@ export default async function StockThesisDetailPage({
       activePlans={activePlans}
       snapshotItems={snapshotItems}
       analyzePackage={analyzePackage}
+      latestMtaeAssessment={latestMtaeAssessment ?? null}
     />
   );
 }

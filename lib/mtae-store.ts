@@ -34,6 +34,22 @@ export async function getMtaeAssessmentById(id: string): Promise<MtaeAssessment 
   return all.find((row) => row.id.toUpperCase() === needle);
 }
 
+/** Latest assessment for a Stock File — by createdAt, then id. */
+export async function getLatestMtaeAssessmentForProfile(
+  stockProfileId: string
+): Promise<MtaeAssessment | undefined> {
+  const needle = stockProfileId.trim().toUpperCase();
+  const all = await getMtaeAssessments();
+  const matched = all.filter((row) => row.stockProfileId.toUpperCase() === needle);
+  if (matched.length === 0) return undefined;
+  matched.sort((a, b) => {
+    const byTime = b.createdAt.localeCompare(a.createdAt);
+    if (byTime !== 0) return byTime;
+    return b.id.localeCompare(a.id);
+  });
+  return matched[0];
+}
+
 export async function appendMtaeAssessment(row: MtaeAssessment): Promise<void> {
   const all = await getMtaeAssessments();
   all.push(row);

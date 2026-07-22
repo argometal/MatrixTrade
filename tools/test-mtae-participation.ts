@@ -23,6 +23,11 @@ if (ok.ok) {
     "possible_accumulation"
   );
   assert.equal(ok.value.integrated.participationSynthesis?.dominantCondition, "correction");
+
+assert.equal(ok.value.integrated.momentumAssessment?.expansionPotential, "moderate");
+assert.equal(ok.value.integrated.momentumAssessment?.scoutImplication, "require_better_entry");
+assert.equal(ok.value.perTimeframe[0].participation?.movementCharacter?.state, "contracting");
+
 }
 
 const legacy = validateTechnicalAssessmentProposal({
@@ -74,6 +79,9 @@ const legacy = validateTechnicalAssessmentProposal({
   },
 });
 assert.equal(legacy.ok, true, legacy.ok ? "" : legacy.errors.join("; "));
+if (legacy.ok) {
+  assert.equal(legacy.value.integrated.momentumAssessment, undefined);
+}
 
 const banned = validateTechnicalAssessmentProposal({
   ...sample.proposal,
@@ -154,4 +162,96 @@ const footprintBan = validateTechnicalAssessmentProposal({
 });
 assert.equal(footprintBan.ok, false);
 
-console.log("mtae participation Phase A smoke OK");
+
+const expansionOnly = validateTechnicalAssessmentProposal({
+  stockProfileId: "ST-PG-001",
+  ticker: "PG",
+  asOfPrice: 149,
+  timeframeRoles: {
+    strategic_tf: "6M",
+    opportunity_tf: "3M",
+    refinement_tf: "1M",
+    execution_tf: "1W",
+  },
+  perTimeframe: [
+    {
+      timeframe: "1W",
+      trend: "neutral",
+      trendConfidence: 55,
+      structure: { range: true },
+      supports: [{ rank: 1, price: 140, reason: "shelf", confidence: 60 }],
+      resistances: [{ rank: 1, price: 160, reason: "supply", confidence: 58 }],
+      battleZones: [
+        {
+          id: "bz-pg-1",
+          low: 140,
+          high: 145,
+          reachProbability: "medium",
+          asymmetryQuality: "good",
+          technicalImportance: 70,
+          reason: "Support band",
+        },
+      ],
+      structuralInvalidation: "Weekly close below 125",
+      contradictions: [],
+      summary: "Range rotation with limited expansion; structure not invalidated.",
+      participation: {
+        movementCharacter: {
+          state: "stagnant",
+          directionalEfficiency: "low",
+          rangeProgression: "stable",
+          evidence: [
+            "substantial weekly candle overlap",
+            "limited directional follow-through",
+            "time spent without meaningful price progress",
+          ],
+          confidence: 70,
+        },
+      },
+    },
+  ],
+  integrated: {
+    structureSpine: "Higher-TF structure broadly valid; major supports ~125 and 140–145",
+    opportunityNote: "Targets ~160 / 170 / 180 remain technical references only",
+    executionContext: "Do not chase; wait for optimized asymmetry if capital is considered",
+    battleZoneRanking: [],
+    contradictions: [],
+    momentumAssessment: {
+      expansionPotential: "low",
+      currentState: "range_rotation",
+      capitalEfficiencyConcern: true,
+      rationale: [
+        "Weekly overlap and limited expansion near 149",
+        "Structure valid but capital may stagnate without a deeper optimized entry",
+      ],
+      scoutImplication: "require_better_entry",
+      confidence: 72,
+    },
+  },
+  technicalSummary: {
+    trend: "bullish",
+    structureNote: "Structure intact; expansion capacity currently low/uncertain",
+    majorSupport: 125,
+    majorResistance: 160,
+    primaryBattleZone: { low: 140, high: 145 },
+    probableTarget: 160,
+    extendedTarget: 180,
+    structuralInvalidation: "Weekly close below 125",
+    contradictions: ["Valid structure with stagnant expansion"],
+    confidence: 65,
+  },
+});
+assert.equal(
+  expansionOnly.ok,
+  true,
+  expansionOnly.ok ? "" : expansionOnly.errors.join("; ")
+);
+if (expansionOnly.ok) {
+  assert.equal(expansionOnly.value.integrated.momentumAssessment?.currentState, "range_rotation");
+  assert.equal(
+    expansionOnly.value.perTimeframe[0].participation?.movementCharacter?.primary,
+    undefined
+  );
+}
+
+console.log("mtae participation + momentum: ok");

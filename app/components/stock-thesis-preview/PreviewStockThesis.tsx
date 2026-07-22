@@ -26,6 +26,8 @@ import { PlanLevelsBoard } from "@/app/components/planning-preview/PlanLevelsBoa
 import { PlanMapSummaryLine, PlanMapToggleButton } from "@/app/components/planning-preview/PlanLevelsSidePanel";
 import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import type { MtaeAssessment } from "@/lib/mtae-types";
+import { MtaeMomentumPanel } from "@/app/components/mtae/MtaeMomentumPanel";
 
 type ProfileTab = "snapshot" | "evidence" | "history";
 
@@ -54,6 +56,7 @@ export function PreviewStockThesis({
   activePlans = [],
   snapshotItems,
   analyzePackage,
+  latestMtaeAssessment,
 }: {
   thesis: StockThesis;
   playbooks?: Playbook[];
@@ -63,6 +66,7 @@ export function PreviewStockThesis({
   snapshotItems: SnapshotMenuItem[];
   /** MTA-002A one-copy Analyze package (Mechanics + MTAE + dossier + Scout). */
   analyzePackage: string;
+  latestMtaeAssessment?: MtaeAssessment | null;
 }) {
   const { openPanel } = useControlPanel();
   const [tab, setTab] = useState<ProfileTab>("snapshot");
@@ -378,6 +382,8 @@ export function PreviewStockThesis({
                 <h2 className="text-sm font-semibold text-zinc-200">Current hypothesis</h2>
                 <p className="mt-2 text-sm text-violet-300">{thesis.currentHypothesis}</p>
               </section>
+
+              <MtaeMomentumPanel assessment={latestMtaeAssessment} />
 
               <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2">

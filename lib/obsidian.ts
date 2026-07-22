@@ -72,7 +72,7 @@ export function parseTradeFile(filePath: string, content: string, rules: Experim
 
   const raw = parseFrontmatterLines(match[1]);
   if (raw.matrixtrade !== "true") {
-    throw new Error(`Not a MatrixTrade note: ${filePath}`);
+    throw new Error(`Not an MtA note: ${filePath}`);
   }
 
   const id = (raw.id ?? "").toUpperCase();
@@ -121,7 +121,7 @@ function serializeValue(value: string | number | undefined): string {
 export function defaultNoteBody(trade: Trade): string {
   return `# ${trade.id} · ${trade.ticker}
 
-> MatrixTrade manages the frontmatter above. Write your analysis below.
+> MtA manages the frontmatter above. Write your analysis below.
 
 ## Tesis
 
@@ -235,11 +235,11 @@ export async function readAllTrades(rules: ExperimentRules): Promise<Trade[]> {
       valid++;
     } catch (err) {
       invalid++;
-      console.warn(`[MatrixTrade] Skipped invalid file: ${filePath}`, err);
+      console.warn(`[MtA] Skipped invalid file: ${filePath}`, err);
     }
   }
 
-  console.log(`[MatrixTrade] Loaded ${valid} trades, skipped ${invalid}`);
+  console.log(`[MtA] Loaded ${valid} trades, skipped ${invalid}`);
 
   return trades.sort((a, b) => a.id.localeCompare(b.id));
 }

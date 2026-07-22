@@ -210,7 +210,7 @@ export function HomeDashboardMain({
                 Home preview · Cycle {cycleLabel} trades
               </p>
               <h1 className={`mt-1 text-2xl font-semibold ${dark ? "text-zinc-100" : "text-zinc-900"}`}>
-                MatrixTrade
+                MtA
               </h1>
               <p className={`mt-2 max-w-2xl text-sm ${dark ? "text-zinc-400" : "text-zinc-600"}`}>
                 Your bridge to any AI. You think in actions. AI handles the rest.
@@ -236,7 +236,7 @@ export function HomeDashboardMain({
           <SectionBadge n={1} />
           <div>
             <h2 className={headingClass}>Give AI context</h2>
-            <p className={subtextClass}>Snapshot — current MatrixTrade state for your assistant.</p>
+            <p className={subtextClass}>Snapshot — current MtA state for your assistant.</p>
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -359,7 +359,7 @@ export function HomeDashboardMain({
           >
             {requestCopied ? "✓ Request copied" : "Copy Request"}
           </button>
-          <p className="text-xs text-zinc-500">Paste into your assistant — no API call from MatrixTrade.</p>
+          <p className="text-xs text-zinc-500">Paste into your assistant — no API call from MtA.</p>
         </div>
       </section>
 

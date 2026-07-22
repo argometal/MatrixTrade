@@ -52,7 +52,7 @@ export function FamilyBBullTrendPanel({
         Family B · Bull trend continuation
       </p>
       <p className="mt-1 text-[11px] text-sky-100/55">
-        Levels proposed by human/AI · Matrix calculates R · Scout GO/WAIT/NO unchanged
+        Levels proposed by human/AI · MtA calculates R · Scout GO/WAIT/NO unchanged
       </p>
 
       <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">

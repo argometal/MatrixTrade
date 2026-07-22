@@ -6,7 +6,7 @@ import { AppExchangeActions } from "@/app/components/AppExchangeActions";
 export function MatrixPublicTopBar() {
   return (
     <header className="fixed inset-x-0 top-0 z-30 flex items-center justify-between gap-3 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur">
-      <span className="text-sm font-semibold text-zinc-900">MatrixTrade</span>
+      <span className="text-sm font-semibold text-zinc-900">MtA</span>
       <AppExchangeActions app="matrix" />
     </header>
   );

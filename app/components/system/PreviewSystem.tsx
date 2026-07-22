@@ -62,7 +62,7 @@ export function PreviewSystem({
             </div>
             <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
               <SnapshotButton
-                title="Matrix Mechanics snapshot"
+                title="MtA Mechanics snapshot"
                 description="Full rules, block types, Apply gate — paste once per AI session"
                 items={mechanicsSnapshot}
               />
@@ -141,8 +141,8 @@ export function PreviewSystem({
             title="Connect"
             description={
               isVercel
-                ? "Phone LAN access — available when running MatrixTrade locally."
-                : "Local WiFi access to full MatrixTrade UI."
+                ? "Phone LAN access — available when running MtA locally."
+                : "Local WiFi access to full MtA UI."
             }
           >
             <SystemRow
@@ -246,7 +246,7 @@ export function PreviewSystem({
 
           <SystemSection id="meta" title="System" description="Version, environment, tokens.">
             <dl className="space-y-3">
-              <SystemRow label="Version" value={`MatrixTrade v${version}`} />
+              <SystemRow label="Version" value={`MtA v${version}`} />
               <SystemRow label="Build" value={buildLabel} mono />
               <SystemRow label="Environment" value={env} />
               <SystemRow label="Worker URL" value={bridge.url} mono />

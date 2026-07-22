@@ -13,8 +13,8 @@ export function TradingCornerEntry() {
     <AppCornerDock bellHref="/argus/v2/inbox" bellLabel="Argus inbox" placement="argus" showBell={false}>
       <Link
         href="/home-preview"
-        title="MatrixTrade"
-        aria-label="Back to MatrixTrade"
+        title="MtA"
+        aria-label="Back to MtA"
         className="group relative shrink-0 rounded-xl shadow-lg shadow-black/30 transition hover:scale-105 hover:shadow-zinc-400/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
       >
         <TradingMark />

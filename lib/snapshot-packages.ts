@@ -7,6 +7,8 @@ import type { TradePlan } from "./plan-types";
 import type { StockThesis } from "./stock-thesis-types";
 import type { SnapshotMenuItem } from "./snapshot-types";
 import { wrapSnapshotText } from "./snapshot-verification";
+import type { MtaeAssessment } from "./mtae-types";
+import { formatMtaeAssessmentSnapshot } from "./mtae-momentum-format";
 import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment, Trade } from "./types";
 import type { SmartSnapshotInput } from "./smart-snapshot";
@@ -15,9 +17,9 @@ import type { AiContextSystemNotes } from "./ai-context";
 export function mechanicsSnapshotItem(): SnapshotMenuItem {
   return {
     id: "mechanics",
-    label: "Matrix Mechanics snapshot",
+    label: "MtA Mechanics snapshot",
     description: "Full rules, block types, Apply gate — paste once per AI session",
-    text: wrapSnapshotText("Matrix Mechanics snapshot", buildMatrixMechanicsSnapshot()),
+    text: wrapSnapshotText("MtA Mechanics snapshot", buildMatrixMechanicsSnapshot()),
   };
 }
 
@@ -138,9 +140,10 @@ export function stockProfileSnapshotItems(input: {
   playbooks: Playbook[];
   plans: TradePlan[];
   activeEvidence: MarketEvidence[];
+  latestMtaeAssessment?: MtaeAssessment | null;
 }): SnapshotMenuItem[] {
   const tickerPlans = input.plans.filter((p) => p.stockThesisId === input.thesis.id);
-  return [
+  const items: SnapshotMenuItem[] = [
     {
       id: "profile",
       label: `${input.thesis.ticker} · profile`,
@@ -168,8 +171,30 @@ export function stockProfileSnapshotItems(input: {
         })
       ),
     },
-    mechanicsSnapshotItem(),
   ];
+  if (input.latestMtaeAssessment) {
+    items.push({
+      id: "profile-mtae",
+      label: `${input.thesis.ticker} · MTAE assessment`,
+      description: "Structure + Momentum / Expansion (technical context only)",
+      text: wrapSnapshotText(
+        `${input.thesis.ticker} MTAE assessment`,
+        formatMtaeAssessmentSnapshot(input.latestMtaeAssessment)
+      ),
+    });
+  } else {
+    items.push({
+      id: "profile-mtae",
+      label: `${input.thesis.ticker} · MTAE assessment`,
+      description: "Momentum / Expansion — Not assessed",
+      text: wrapSnapshotText(
+        `${input.thesis.ticker} MTAE assessment`,
+        `=== MTAE ASSESSMENT · ${input.thesis.ticker} ===\nNot assessed — run technical-assessment to populate momentumAssessment.`
+      ),
+    });
+  }
+  items.push(mechanicsSnapshotItem());
+  return items;
 }
 
 export function tradesListSnapshotItems(

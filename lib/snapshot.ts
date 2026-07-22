@@ -139,7 +139,7 @@ export function buildSnapshot(
 
 function cleanNoteBody(body: string): string {
   let text = body.trim();
-  text = text.replace(/^> MatrixTrade manages[^\n]*\n*/i, "");
+  text = text.replace(/^> MtA manages[^\n]*\n*/i, "");
   text = text.replace(/^#\s+H\d{3}\s*·[^\n]*\n*/i, "");
   return text.replace(/\n{3,}/g, "\n\n").trim();
 }

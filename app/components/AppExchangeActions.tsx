@@ -37,7 +37,7 @@ export function AppExchangeActions({
           <ArgusMark size={32} className="block h-full w-full" />
         </Link>
       ) : (
-        <Link href="/home-preview" aria-label="MatrixTrade" title="MatrixTrade" className={actionClass}>
+        <Link href="/home-preview" aria-label="MtA" title="MtA" className={actionClass}>
           <TradingMark size={28} />
         </Link>
       )}

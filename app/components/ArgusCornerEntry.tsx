@@ -5,13 +5,13 @@ import { usePathname } from "next/navigation";
 import { AppCornerDock } from "@/app/components/AppCornerDock";
 import { ArgusMark } from "@/app/components/ArgusMark";
 
-/** MatrixTrade routes only — hidden while already inside Argus. */
+/** MtA routes only — hidden while already inside Argus. */
 export function ArgusCornerEntry() {
   const pathname = usePathname();
   if (pathname.startsWith("/argus")) return null;
 
   return (
-    <AppCornerDock bellHref="/inbox" bellLabel="MatrixTrade inbox" placement="matrix">
+    <AppCornerDock bellHref="/inbox" bellLabel="MtA inbox" placement="matrix">
       <Link
         href="/argus/v2"
         title="ARGUS"

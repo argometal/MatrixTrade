@@ -20,7 +20,7 @@ PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
 - scout-plan-create: NEW Scout Plan window on an EXISTING Stock File — stockFileId (or stockThesisId), ticker, plannedEntry, stopPrice, targetPrice required; optional verdict+decisionConfidence+challenges, playbookId/playbookIds, status (watching|ready|active), thesis, notes, reasoning. Allocates a NEW PLAN-xxx. Do NOT use stock-case-create for same ticker. Do NOT reuse an old planId.
-- technical-assessment: MTAE technical JSON only — stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[] (optional participation{volumeBehavior,wickAnalysis,candleSignals,movementCharacter,historicalReactionZones,largeParticipantFootprint}), integrated{} (optional participationSynthesis), technicalSummary{} (trend, zones, probableTarget vs extendedTarget, structuralInvalidation, contradictions, confidence). FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict, whalesAreBuying. Optional patchStockFile (default true).
+- technical-assessment: MTAE technical JSON only — stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[] (optional participation{volumeBehavior,wickAnalysis,candleSignals,movementCharacter{primary?|state+directionalEfficiency+rangeProgression,evidence,confidence},historicalReactionZones,largeParticipantFootprint}), integrated{} (optional participationSynthesis, optional momentumAssessment{expansionPotential,currentState,capitalEfficiencyConcern,rationale,scoutImplication,confidence}), technicalSummary{} (trend, zones, probableTarget vs extendedTarget, structuralInvalidation, contradictions, confidence). FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict, whalesAreBuying. Optional patchStockFile (default true).
 - technical-calibration: human procedure correction — assessmentId, stockProfileId, ticker, errorType, fieldPath, aiValue, humanValue, reason; optional magnitude, confidenceAdjustment
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason. Deletes linked evidence and scout plans. Irreversible — human Apply only.
 
@@ -74,7 +74,7 @@ All Apply-ready block types:
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout (backfill missing Scout Plan only)
 - scout-plan-create: NEW PLAN on existing Stock File — stockFileId, ticker, plannedEntry, stopPrice, targetPrice; optional verdict+challenges; allocates NEW PLAN-xxx (same-ticker new window)
-- technical-assessment: MTAE technical-only multi-TF JSON — stockProfileId, ticker, timeframeRoles, perTimeframe[] (+ optional participation), integrated{} (+ optional participationSynthesis), technicalSummary{} (no Entry Solver / RR / Scout verdict / whalesAreBuying)
+- technical-assessment: MTAE technical-only multi-TF JSON — stockProfileId, ticker, timeframeRoles, perTimeframe[] (+ optional participation / movementCharacter expansion fields), integrated{} (+ optional participationSynthesis, momentumAssessment), technicalSummary{} (no Entry Solver / RR / Scout verdict / whalesAreBuying)
 - technical-calibration: MTAE human procedure correction — assessmentId, errorType, fieldPath, aiValue, humanValue, reason
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason (duplicate cleanup)
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId, status
@@ -88,7 +88,7 @@ All Apply-ready block types:
 
 Rules:
 - Return exactly one block. No arrays of blocks.
-- Do not apply changes — human imports in MatrixTrade AI Bridge → Inbox → Apply.
+- Do not apply changes — human imports in MtA AI Bridge → Inbox → Apply.
 - Reply to the human in trading language, not internal type names.
 - If the snapshot is not enough, ask for ONE missing detail (ticker, trade id, or exit price).`;
 
@@ -475,6 +475,9 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
             movementCharacter: {
               primary: "orderly_correction",
               secondary: ["volatility_compression"],
+              state: "contracting",
+              directionalEfficiency: "medium",
+              rangeProgression: "compressing",
               evidence: [
                 "higher-TF channel intact",
                 "slow pullback",
@@ -557,7 +560,15 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
             },
             movementCharacter: {
               primary: "volatility_compression",
-              evidence: ["overlapping candles", "shrinking ranges", "volume muted"],
+              state: "stagnant",
+              directionalEfficiency: "low",
+              rangeProgression: "compressing",
+              evidence: [
+                "overlapping candles",
+                "shrinking ranges",
+                "volume muted",
+                "repeated range rotation under resistance",
+              ],
               confidence: 68,
             },
             wickAnalysis: {
@@ -619,6 +630,18 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
           sellingEvidence: ["upper rejection near 270–280", "1M muted into resistance"],
           unresolvedSignals: ["1M compression resolution pending"],
           confidence: 68,
+        },
+        momentumAssessment: {
+          expansionPotential: "moderate",
+          currentState: "constructive_compression",
+          capitalEfficiencyConcern: true,
+          rationale: [
+            "Higher-TF structure intact but 1M shows muted directional efficiency",
+            "Compression under resistance — expansion not yet confirmed",
+            "Capital may stagnate until zone resolution; Scout should demand stronger asymmetry",
+          ],
+          scoutImplication: "require_better_entry",
+          confidence: 66,
         },
       },
       technicalSummary: {
@@ -841,7 +864,7 @@ export const AI_BRIDGE_PROTOCOL_EXAMPLES: Record<string, Record<string, unknown>
       stop: 170,
       shares: 10,
       status: "open",
-      thesis: "Already filled at broker before MatrixTrade entry.",
+      thesis: "Already filled at broker before MtA entry.",
     },
   },
   "close-open-trade": {

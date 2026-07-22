@@ -1,4 +1,4 @@
-# MatrixTrade — Runtime truth (what works today)
+# MtA — Runtime truth (what works today)
 
 **Status:** Updated 2026-07-22.  
 **Rule:** This doc must match deployed code. V2 target lives in [v2-engine-architecture.md](v2-engine-architecture.md). Control naming lives in [control-panel-ia.md](control-panel-ia.md).
@@ -225,6 +225,7 @@ Method: `playbook-create`, `playbook-update`
 
 | Status | Item |
 |--------|------|
+| **MTAE** | Momentum / Expansion Assessment (`momentumAssessment`) optional on technical-assessment |
 | **NORTH STAR** | **[MTA-002](mta-002-operability-plan.md)** + Needs Attention AI + layered R/risk + Family B + Trade Map; **002B postponed** |
 | **NEXT** | Live Copy-for-AI / risk_percent ladders · Family B calibration · optional `plan-outcome` Apply block |
 | **POSTPONED** | MTA-002B prompt validation log (10–20 chats) — until dedicated test sessions |
