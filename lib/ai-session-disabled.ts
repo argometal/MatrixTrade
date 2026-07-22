@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
  * DISABLED BY DESIGN
  *
  * This feature was implemented to allow ChatGPT to authenticate
- * directly against MatrixTrade using temporary AI session tokens.
+ * directly against MtA using temporary AI session tokens.
  *
  * After validation we confirmed that the current ChatGPT client
  * cannot initiate authenticated HTTP requests to custom APIs from
@@ -20,7 +20,7 @@ import { NextResponse } from "next/server";
  *
  * Current supported workflow:
  *
- * MatrixTrade
+ * MtA
  * → Copy Snapshot
  * → ChatGPT
  * → Proposal JSON
@@ -31,14 +31,14 @@ import { NextResponse } from "next/server";
  * Do not continue implementing AI Session features until this
  * platform limitation changes.
  *
- * Status: Blocked by ChatGPT platform capability, not by MatrixTrade.
+ * Status: Blocked by ChatGPT platform capability, not by MtA.
  * ------------------------------------------------------------
  */
 
 export const AI_SESSION_DISABLED = true;
 
 export const AI_SESSION_DISABLED_MESSAGE =
-  "AI Session / QR workflow is disabled — blocked by ChatGPT platform capability, not by MatrixTrade.";
+  "AI Session / QR workflow is disabled — blocked by ChatGPT platform capability, not by MtA.";
 
 export const AI_SESSION_DISABLED_DETAIL =
   "Supported workflow: Copy Snapshot → your AI → AI Block → Import → Inbox → Apply.";

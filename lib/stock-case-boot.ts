@@ -16,7 +16,7 @@ initialScout creates PLAN-xxx linked to the new profile (entry/stop/target/R:R).
 Required: ticker, currentHypothesis, levels (primaryZone or majorSupport), riskRules { minimumRR, invalidation }
 Optional: thesis, notes, historicalAnalysis[], initialScout, status
 
-POST result to inboxUrl — human Apply in MatrixTrade /inbox.`;
+POST result to inboxUrl — human Apply in MtA /inbox.`;
 
 export function buildStockCaseBootPackage(): string {
   const mechanics = buildMatrixMechanicsBrief();

@@ -363,3 +363,13 @@ MTAE does **not** overwrite Playbook or Scout plans.
 - [scout-execution-model.md](scout-execution-model.md)
 - [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md)
 - [runtime-truth.md](runtime-truth.md)
+
+## Momentum / Expansion Assessment
+
+MTAE distinguishes **structural quality** from **expansion capacity**.
+
+- Per-TF `participation.movementCharacter` may include expansion fields: `state`, `directionalEfficiency`, `rangeProgression` (legacy `primary` pattern labels remain valid).
+- Integrated optional `momentumAssessment` (`expansionPotential`, `currentState`, `capitalEfficiencyConcern`, `rationale`, `scoutImplication`, `confidence`).
+- Technical context only — never Scout verdicts, Entry Solver, R:R, or sizing.
+- Low expansion does **not** invalidate structure; Scout may require better entry / standby.
+- Legacy assessments may omit `momentumAssessment` → UI shows **Not assessed**.

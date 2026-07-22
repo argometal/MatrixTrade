@@ -126,12 +126,78 @@ export const MTAE_MOVEMENT_CHARACTERS = [
 ] as const;
 export type MtaeMovementCharacterLabel = (typeof MTAE_MOVEMENT_CHARACTERS)[number];
 
+/** Expansion / momentum quality at a timeframe (distinct from structural thesis). */
+export const MTAE_EXPANSION_STATES = [
+  "expanding",
+  "contracting",
+  "balanced",
+  "stagnant",
+  "volatile_without_direction",
+] as const;
+export type MtaeExpansionState = (typeof MTAE_EXPANSION_STATES)[number];
+
+export const MTAE_DIRECTIONAL_EFFICIENCIES = ["high", "medium", "low"] as const;
+export type MtaeDirectionalEfficiency = (typeof MTAE_DIRECTIONAL_EFFICIENCIES)[number];
+
+export const MTAE_RANGE_PROGRESSIONS = ["expanding", "stable", "compressing"] as const;
+export type MtaeRangeProgression = (typeof MTAE_RANGE_PROGRESSIONS)[number];
+
+/**
+ * Per-TF movement character.
+ * Legacy Phase A used `primary` pattern labels.
+ * Momentum / Expansion Assessment adds `state` + efficiency + rangeProgression.
+ * Either shape (or both) is valid; evidence is always required when present.
+ */
 export type MtaeMovementCharacter = {
-  primary: MtaeMovementCharacterLabel;
+  /** Legacy pattern label (Phase A) — optional when expansion fields are present. */
+  primary?: MtaeMovementCharacterLabel;
   secondary?: MtaeMovementCharacterLabel[];
+  /** Expansion capacity state. */
+  state?: MtaeExpansionState;
+  directionalEfficiency?: MtaeDirectionalEfficiency;
+  rangeProgression?: MtaeRangeProgression;
   evidence: string[];
   confidence: number;
   caveat?: string;
+};
+
+export const MTAE_EXPANSION_POTENTIALS = [
+  "high",
+  "moderate",
+  "low",
+  "uncertain",
+] as const;
+export type MtaeExpansionPotential = (typeof MTAE_EXPANSION_POTENTIALS)[number];
+
+export const MTAE_MOMENTUM_CURRENT_STATES = [
+  "directional_expansion",
+  "constructive_compression",
+  "range_rotation",
+  "stagnation",
+  "unstable_volatility",
+] as const;
+export type MtaeMomentumCurrentState = (typeof MTAE_MOMENTUM_CURRENT_STATES)[number];
+
+export const MTAE_SCOUT_IMPLICATIONS = [
+  "normal_entry_standard",
+  "require_better_entry",
+  "require_momentum_improvement",
+  "standby",
+] as const;
+export type MtaeScoutImplication = (typeof MTAE_SCOUT_IMPLICATIONS)[number];
+
+/**
+ * Integrated Momentum / Expansion Assessment.
+ * Technical context only — never a Scout go/wait/probe/no verdict,
+ * never maximumEntry / R:R / sizing. Low expansion ≠ structural invalidation.
+ */
+export type MtaeMomentumAssessment = {
+  expansionPotential: MtaeExpansionPotential;
+  currentState: MtaeMomentumCurrentState;
+  capitalEfficiencyConcern: boolean;
+  rationale: string[];
+  scoutImplication: MtaeScoutImplication;
+  confidence: number;
 };
 
 export const MTAE_VOLUME_CONFIRMATIONS = ["present", "absent", "unknown"] as const;
@@ -269,6 +335,8 @@ export type MtaeIntegratedView = {
   contradictions: string[];
   /** Phase A optional. */
   participationSynthesis?: MtaeParticipationSynthesis;
+  /** Momentum / Expansion Assessment — optional; absent = Not assessed. */
+  momentumAssessment?: MtaeMomentumAssessment;
 };
 
 export type MtaeTechnicalSummary = {
@@ -310,6 +378,7 @@ export type MtaeCalibrationErrorType =
   | "structure"
   | "volume_behavior"
   | "movement_character"
+  | "momentum_assessment"
   | "wick_hierarchy"
   | "candle_signal_context"
   | "historical_reaction_rank"

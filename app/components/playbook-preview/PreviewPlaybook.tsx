@@ -59,7 +59,7 @@ const METHODOLOGY_SECTIONS: {
   { key: "opportunityPreservation", label: "Opportunity preservation" },
   { key: "statisticalFramework", label: "Statistical framework" },
   { key: "continuousLearning", label: "Continuous learning" },
-  { key: "matrixIdentity", label: "Matrix identity" },
+  { key: "matrixIdentity", label: "MtA identity" },
 ];
 
 function PlaybookExecutionPanel({ execution }: { execution: PlaybookExecutionExperiments }) {

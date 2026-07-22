@@ -23,7 +23,7 @@ export function PreviewSidebar({ nav }: { nav: PreviewNavContext }) {
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold">
           M
         </span>
-        <span className="font-semibold">MatrixTrade</span>
+        <span className="font-semibold">MtA</span>
       </Link>
 
       {PREVIEW_NAV_SECTIONS.map((section) => (
