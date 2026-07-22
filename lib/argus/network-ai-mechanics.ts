@@ -2,7 +2,13 @@ import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import { wrapSnapshotText } from "@/lib/snapshot-verification";
 import { buildArgusNetworkBrief } from "./network-ai-brief";
 import { NETWORK_AI_BLOCK_REQUEST } from "./network-ai-block";
-import { personHasContactEvidence } from "./network-dialogue";
+import {
+  NETWORK_CAPTURE_LENSES,
+  NETWORK_CONTACT_FLOW,
+  NETWORK_DIALOGUE_PILLARS,
+  NETWORK_OPENING_QUESTIONS,
+  personHasContactEvidence,
+} from "./network-dialogue";
 import {
   buildNetworkDeskBody,
   buildNetworkPersonBody,
@@ -14,12 +20,14 @@ import type {
   V2NetworkBrowseSummary,
 } from "./v2/network-browse-utils";
 
-/** One copyable context block — registry entry built with the same label/text as the UI. */
+/** One copyable Library block — registry entry; label must match the Network Panel UI. */
 export type NetworkContextBlockDef = {
   id: string;
-  /** Exact label shown in the Network Panel (AI must request by this string). */
+  /** Exact label shown in the Library (AI must request by this string). */
   label: string;
   description: string;
+  /** Library category header (Contact, Desk, Rules, …). */
+  category: string;
   contains: string[];
   requestWhen: string[];
   scope: "person" | "desk" | "global";
@@ -40,8 +48,10 @@ export type NetworkRecordState = {
 
 export type NetworkPanelPackage = {
   mechanics: SnapshotMenuItem;
-  request: SnapshotMenuItem;
-  additional: SnapshotMenuItem[];
+  /** Catalog of evidence/context blocks the AI may request by exact label. */
+  library: SnapshotMenuItem[];
+  /** Grouped Library rows for UI (category → items). */
+  libraryGroups: Array<{ category: string; items: SnapshotMenuItem[] }>;
   defaultEntityId?: string;
   panelTitle: string;
 };
@@ -52,22 +62,65 @@ const NETWORK_CAPABILITIES = [
   "Register a journal note / follow-up / tags / metrics (legacy block types still supported)",
   "Analyze relationship context from supplied evidence only",
   "Build a networking action plan as analysis — never invent events",
-  "Identify missing information and name the exact UI block to copy next",
+  "Identify missing information and name the exact Library block to copy next",
 ].join("\n- ");
+
+const FIELD_TEMPLATES = [
+  "FIELD TEMPLATES (for analysis — final output must still be Apply JSON)",
+  "=== CONTACT CREATE ===",
+  "name:",
+  "role:",
+  "organization:",
+  "email:",
+  "notes:",
+  "tags:",
+  "",
+  "=== AFTER CONVERSATION (existing person) ===",
+  "entityId:",
+  "what happened:",
+  "follow-up date:",
+  "tags:",
+].join("\n");
+
+function dialogueBehaviorSection(): string {
+  const pillars = NETWORK_DIALOGUE_PILLARS.map((p) => `- ${p.label}: ${p.hint}`).join("\n");
+  const flow = NETWORK_CONTACT_FLOW.map((s) => `${s.step}. ${s.label}: ${s.detail}`).join("\n");
+  const questions = NETWORK_OPENING_QUESTIONS.slice(0, 4)
+    .map((q) => `- ${q}`)
+    .join("\n");
+  const lenses = NETWORK_CAPTURE_LENSES.map((l) => `- ${l}`).join("\n");
+  return [
+    "DIALOGUE BEHAVIOR",
+    "Network is dialogue-first — not pipeline scoring.",
+    "",
+    "Pillars:",
+    pillars,
+    "",
+    "Contact flow:",
+    flow,
+    "",
+    "Opening questions (pick one that fits):",
+    questions,
+    "",
+    "Capture lenses after conversation:",
+    lenses,
+  ].join("\n");
+}
 
 const AI_BEHAVIOR_CONTRACT = [
   "AI BEHAVIOR CONTRACT (follow in order)",
   "1. Understand Network Mechanics and CURRENT_RECORD_STATE.",
-  "2. Ask what the human wants to accomplish, unless the Request already states it.",
-  "3. Classify the task: create | update | analyze | conversation capture | relationship planning | information review | other supported operation.",
-  "4. Decide whether current context is sufficient.",
-  "5. If not sufficient: name the exact ARGUS context block by its visible UI label from AVAILABLE_CONTEXT_BLOCKS; explain briefly why; request only that minimum block; STOP.",
-  "6. Continue after the human pastes that block.",
-  "7. Separate known historical facts | interpretation | proposed future actions.",
-  "8. Never invent contact facts, meetings, emails, or outcomes.",
-  "9. Do not generate Apply JSON until enough information exists.",
-  "10. When ready, say information is sufficient and return ONE valid Apply JSON block.",
-  "11. Applying JSON is a human action in Network Panel → Apply.",
+  "2. The human’s task is stated naturally in chat after Mechanics (e.g. “Review this contact”, “Create a person”, “Analyze this relationship”). There is no separate Request prompt — treat their message as the work intent.",
+  "3. If intent is unclear, ask what they want to accomplish.",
+  "4. Classify the task: create | update | analyze | conversation capture | relationship planning | information review | other supported operation.",
+  "5. Decide whether current context is sufficient.",
+  "6. If not sufficient: name the exact Library block by its visible UI label from AVAILABLE_CONTEXT_BLOCKS; explain briefly why; request only that minimum block; STOP.",
+  "7. Continue after the human pastes that block.",
+  "8. Separate known historical facts | interpretation | proposed future actions.",
+  "9. Never invent contact facts, meetings, emails, or outcomes.",
+  "10. Do not generate Apply JSON until enough information exists.",
+  "11. When ready, say information is sufficient and return ONE valid Apply JSON block.",
+  "12. Applying JSON is a human action in Network Panel → Apply.",
 ].join("\n");
 
 function formatRecordState(state: NetworkRecordState): string {
@@ -86,13 +139,14 @@ function formatRecordState(state: NetworkRecordState): string {
 
 function formatContextIndex(blocks: NetworkContextBlockDef[]): string {
   const parts = [
-    "AVAILABLE_CONTEXT_BLOCKS",
-    "Request blocks by exact visible UI label (quote the label). Do not invent labels.",
+    "AVAILABLE_CONTEXT_BLOCKS (Library)",
+    "These live under Network Panel → Library. Request by exact visible UI label (quote the label). Do not invent labels.",
   ];
   blocks.forEach((block, index) => {
     parts.push("");
     parts.push(`${index + 1}. "${block.label}"`);
     parts.push(`   id: ${block.id}`);
+    parts.push(`   category: ${block.category}`);
     parts.push(`   scope: ${block.scope}`);
     parts.push(`   sensitive: ${block.sensitive}`);
     parts.push(`   required_before_apply: ${block.requiredBeforeApply}`);
@@ -111,6 +165,19 @@ function toMenuItem(block: NetworkContextBlockDef): SnapshotMenuItem {
     description: block.description,
     text: block.text,
   };
+}
+
+function groupLibrary(blocks: NetworkContextBlockDef[]): Array<{ category: string; items: SnapshotMenuItem[] }> {
+  const order: string[] = [];
+  const map = new Map<string, SnapshotMenuItem[]>();
+  for (const block of blocks) {
+    if (!map.has(block.category)) {
+      map.set(block.category, []);
+      order.push(block.category);
+    }
+    map.get(block.category)!.push(toMenuItem(block));
+  }
+  return order.map((category) => ({ category, items: map.get(category)! }));
 }
 
 export function buildNetworkPersonRecordState(page: NetworkContactPageData): NetworkRecordState {
@@ -151,6 +218,7 @@ function charterBlock(): NetworkContextBlockDef {
     id: "network-charter",
     label: "Network charter brief",
     description: "ARGUS rules, past vs future, human Apply gate",
+    category: "Rules",
     contains: [
       "Network identity (not CRM)",
       "Past vs future lens",
@@ -174,6 +242,7 @@ function personContactBlock(page: NetworkContactPageData): NetworkContextBlockDe
     id: "network-person",
     label,
     description: "Contact context, timeline snippet, dialogue or relationship overview",
+    category: "Contact",
     contains: [
       "Profile fields (id, role, org, tags)",
       "Timeline snippet (titles only)",
@@ -201,6 +270,7 @@ function deskSnapshotBlock(input: {
     id: "network-desk",
     label: "Network desk snapshot",
     description: "Browse summary, status counts, due/dormant highlights",
+    category: "Desk",
     contains: [
       "People counts and status breakdown",
       "Recent interactions",
@@ -247,15 +317,25 @@ export function buildNetworkMechanicsPrompt(input: {
     "",
     formatRecordState(state),
     "",
+    "HOW WORK STARTS",
+    "After Mechanics is pasted, the human writes naturally in chat — there is no separate Request prompt.",
+    "Examples: “Review this contact.” · “Create a new person.” · “Analyze this relationship.” · “Capture what we discussed.”",
+    "Decide create vs update from CURRENT_RECORD_STATE — do not guess from the name alone.",
+    "If evidence is missing, stop and ask for one Library block by exact UI label.",
+    "",
     "SUPPORTED_OPERATIONS",
     `- ${NETWORK_CAPABILITIES}`,
     "",
     "AVAILABLE_OUTPUTS",
     "- Natural-language analysis and next-step guidance",
-    "- Clarifying question naming one exact UI block to copy",
+    "- Clarifying question naming one exact Library block to copy",
     "- ONE Apply JSON block when evidence is sufficient (see APPLY_CONTRACT)",
     "",
+    dialogueBehaviorSection(),
+    "",
     formatContextIndex(contextBlocks),
+    "",
+    FIELD_TEMPLATES,
     "",
     "APPLY_CONTRACT",
     NETWORK_AI_BLOCK_REQUEST,
@@ -263,89 +343,52 @@ export function buildNetworkMechanicsPrompt(input: {
     AI_BEHAVIOR_CONTRACT,
     "",
     "SESSION START",
-    "After reading Mechanics, greet with record state awareness and ask what the human wants — or request the next exact context block if work already requires it.",
+    "After reading Mechanics, greet with record state awareness.",
+    "If the human has not yet stated a task, ask what they want to do.",
+    "If they already stated a task, proceed — or request the next exact Library block if context is insufficient.",
   ].join("\n");
 }
 
-export function buildNetworkRequestPrompt(input: {
+function buildPackage(input: {
   state: NetworkRecordState;
   contextBlocks: NetworkContextBlockDef[];
-}): string {
-  const { state, contextBlocks } = input;
-  const labels = contextBlocks.map((b) => `"${b.label}"`).join(", ");
-  const who = state.person_name
-    ? `Person: ${state.person_name}\nentityId: ${state.person_id}`
-    : "Scope: Network desk (no person selected)";
-
-  return [
-    "=== ARGUS NETWORK REQUEST ===",
-    "",
-    who,
-    "",
-    formatRecordState(state),
-    "",
-    "=== REQUEST ===",
-    "This is the universal Network work prompt. Use it to:",
-    "- create or update a contact",
-    "- capture a conversation",
-    "- analyze a relationship",
-    "- build a networking plan",
-    "- assess available information / identify gaps",
-    "- produce final Apply JSON when ready",
-    "",
-    "Rules:",
-    "- Read Network Mechanics first in this AI session (copy button: Network Mechanics).",
-    "- Use AVAILABLE_CONTEXT_BLOCKS from Mechanics; request missing blocks by exact UI label.",
-    `- Labels available here: ${labels}`,
-    "- Decide create vs update from CURRENT_RECORD_STATE — do not guess from the name alone.",
-    "- Never invent facts. If evidence is missing, stop and ask for one labeled block.",
-    "- Produce Apply JSON only when sufficient evidence exists; then say you are ready to finish.",
-    "- Human applies JSON in Network Panel → Apply.",
-    "",
-    "APPLY_CONTRACT (reminder)",
-    NETWORK_AI_BLOCK_REQUEST,
-    "",
-    "Human task (fill or discuss):",
-    "(state what you want to do with this Network contact or desk)",
-  ].join("\n");
-}
-
-export function buildNetworkContactPanelPackage(page: NetworkContactPageData): NetworkPanelPackage {
-  const state = buildNetworkPersonRecordState(page);
-  const contact = personContactBlock(page);
-  const charter = charterBlock();
-  const contextBlocks = [contact, charter];
-
+  focusLine: string;
+  panelTitle: string;
+  defaultEntityId?: string;
+}): NetworkPanelPackage {
   const mechanicsText = wrapSnapshotText(
     "Network Mechanics",
     buildNetworkMechanicsPrompt({
-      state,
-      contextBlocks,
-      focusLine: `Current person: ${page.entity.name} (${page.entity.id})`,
+      state: input.state,
+      contextBlocks: input.contextBlocks,
+      focusLine: input.focusLine,
     })
-  );
-  const requestText = wrapSnapshotText(
-    "Network Request",
-    buildNetworkRequestPrompt({ state, contextBlocks })
   );
 
   return {
     mechanics: {
       id: "network-mechanics",
       label: "Network Mechanics",
-      description: "Give the AI the Network rules, capabilities and context index.",
+      description: "Orient the AI — rules, capabilities, record state, and Library index.",
       text: mechanicsText,
     },
-    request: {
-      id: "network-request",
-      label: "Request",
-      description: "Start or continue any Network task.",
-      text: requestText,
-    },
-    additional: contextBlocks.map(toMenuItem),
-    defaultEntityId: page.entity.id,
-    panelTitle: page.entity.name,
+    library: input.contextBlocks.map(toMenuItem),
+    libraryGroups: groupLibrary(input.contextBlocks),
+    defaultEntityId: input.defaultEntityId,
+    panelTitle: input.panelTitle,
   };
+}
+
+export function buildNetworkContactPanelPackage(page: NetworkContactPageData): NetworkPanelPackage {
+  const state = buildNetworkPersonRecordState(page);
+  const contextBlocks = [personContactBlock(page), charterBlock()];
+  return buildPackage({
+    state,
+    contextBlocks,
+    focusLine: `Current person: ${page.entity.name} (${page.entity.id})`,
+    panelTitle: page.entity.name,
+    defaultEntityId: page.entity.id,
+  });
 }
 
 export function buildNetworkBrowsePanelPackage(input: {
@@ -354,34 +397,11 @@ export function buildNetworkBrowsePanelPackage(input: {
   insights: V2NetworkBrowseInsight;
 }): NetworkPanelPackage {
   const state = buildNetworkDeskRecordState(input.summary);
-  const desk = deskSnapshotBlock(input);
-  const charter = charterBlock();
-  const contextBlocks = [desk, charter];
-
-  return {
-    mechanics: {
-      id: "network-mechanics",
-      label: "Network Mechanics",
-      description: "Give the AI the Network rules, capabilities and context index.",
-      text: wrapSnapshotText(
-        "Network Mechanics",
-        buildNetworkMechanicsPrompt({
-          state,
-          contextBlocks,
-          focusLine: "Network desk — no person selected.",
-        })
-      ),
-    },
-    request: {
-      id: "network-request",
-      label: "Request",
-      description: "Start or continue any Network task.",
-      text: wrapSnapshotText(
-        "Network Request",
-        buildNetworkRequestPrompt({ state, contextBlocks })
-      ),
-    },
-    additional: contextBlocks.map(toMenuItem),
+  const contextBlocks = [deskSnapshotBlock(input), charterBlock()];
+  return buildPackage({
+    state,
+    contextBlocks,
+    focusLine: "Network desk — no person selected.",
     panelTitle: "Network desk",
-  };
+  });
 }

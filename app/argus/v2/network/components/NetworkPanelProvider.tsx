@@ -10,9 +10,9 @@ type NetworkPanelContextValue = {
   openPanel: () => void;
   closePanel: () => void;
   mechanics: SnapshotMenuItem | null;
-  request: SnapshotMenuItem | null;
-  additionalItems: SnapshotMenuItem[];
-  /** @deprecated Use additionalItems + mechanics/request */
+  libraryItems: SnapshotMenuItem[];
+  libraryGroups: Array<{ category: string; items: SnapshotMenuItem[] }>;
+  /** @deprecated Prefer mechanics + libraryItems */
   snapshotItems: SnapshotMenuItem[];
   defaultEntityId?: string;
   panelTitle: string;
@@ -35,7 +35,7 @@ export function NetworkPanelProvider({
   panelTitle = "Network",
   children,
 }: {
-  /** Preferred: Mechanics + Request + Additional context. */
+  /** Preferred: Mechanics + Apply + Library. */
   panelPackage?: NetworkPanelPackage;
   /** Legacy flat list — used only when panelPackage is omitted. */
   snapshotItems?: SnapshotMenuItem[];
@@ -48,13 +48,11 @@ export function NetworkPanelProvider({
   const closePanel = useCallback(() => setOpen(false), []);
 
   const mechanics = panelPackage?.mechanics ?? null;
-  const request = panelPackage?.request ?? null;
-  const additionalItems = panelPackage?.additional ?? snapshotItems ?? [];
-  const flatFallback = snapshotItems ?? [
-    ...(mechanics ? [mechanics] : []),
-    ...(request ? [request] : []),
-    ...additionalItems,
-  ];
+  const libraryItems = panelPackage?.library ?? snapshotItems ?? [];
+  const libraryGroups =
+    panelPackage?.libraryGroups ??
+    (libraryItems.length > 0 ? [{ category: "Library", items: libraryItems }] : []);
+  const flatFallback = snapshotItems ?? [...(mechanics ? [mechanics] : []), ...libraryItems];
 
   return (
     <NetworkPanelContext.Provider
@@ -63,8 +61,8 @@ export function NetworkPanelProvider({
         openPanel,
         closePanel,
         mechanics,
-        request,
-        additionalItems,
+        libraryItems,
+        libraryGroups,
         snapshotItems: flatFallback,
         defaultEntityId: panelPackage?.defaultEntityId ?? defaultEntityId,
         panelTitle: panelPackage?.panelTitle ?? panelTitle,

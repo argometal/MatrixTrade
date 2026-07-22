@@ -49,7 +49,7 @@ Rules:
 - Return exactly one block. No arrays of blocks.
 - Do not apply changes — human imports in Network Panel → Apply.
 - For network-capture, entityId must match a person in the snapshot.
-- If context is insufficient, name the exact Network Panel UI label to copy next (from AVAILABLE_CONTEXT_BLOCKS), then stop. Do not invent.`;
+- If context is insufficient, name the exact Library UI label to copy next (from AVAILABLE_CONTEXT_BLOCKS), then stop. Do not invent.`;
 
 function isBlockType(value: unknown): value is NetworkAiBlockType {
   return typeof value === "string" && (NETWORK_AI_BLOCK_TYPES as readonly string[]).includes(value);
