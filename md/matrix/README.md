@@ -28,11 +28,12 @@
 | 4e | [thesis-ownership.md](thesis-ownership.md) | Thesis on Stock Profile, not Playbook |
 | 4f | [snapshot-catalog.md](snapshot-catalog.md) | **Snapshot menu** — one button per window + Apply path |
 | 4g | [control-panel-ia.md](control-panel-ia.md) | **Control IA** — Mechanics · Stock Files · Apply · Library; forensic evidence-only |
+| 4h | [mta-002-operability-plan.md](mta-002-operability-plan.md) | **FORWARD** — operability (master prompt · 3-action UI · trend playbook); not a new engine |
 | 5 | [runtime-truth.md](runtime-truth.md) | **What works in prod today** (refreshed 2026-07-22) |
 | 6 | [ai-engineering.md](ai-engineering.md) | Single AI fleet |
 | 7 | [scoped-ai-access.md](scoped-ai-access.md) | Temporal links for one Stock Profile |
 | 8 | [ai-evolution.md](ai-evolution.md) | Protocol over provider; low-budget rules |
-| 9 | [building-backlog.md](building-backlog.md) | **Active build queue** — priorities, ON HOLD items |
+| 9 | [building-backlog.md](building-backlog.md) | **Active build queue** — MTA-002 north star, ON HOLD items |
 | 10 | [library-alignment-backlog.md](library-alignment-backlog.md) | Remaining doc debt |
 
 ---

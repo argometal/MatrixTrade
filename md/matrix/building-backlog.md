@@ -5,6 +5,20 @@
 
 ---
 
+## FORWARD — MTA-002 Operability (priority north star)
+
+| Field | Value |
+|-------|-------|
+| **Priority** | **HIGH** — important while still polishing; **not** a new engine |
+| **Status** | Plan accepted — coding starts with prompt audit + Stock File 3-action design |
+| **Doc** | [mta-002-operability-plan.md](mta-002-operability-plan.md) |
+| **Phases** | **002A** master prompt + Analyze/Apply/Open Scout · **002B** 10–20 chat consistency log · **002C** Secular Trend Continuation Playbook |
+| **Do not build now** | Coach, wide MAF dashboards, VP/AVWAP, more Control categories, parallel prompt systems |
+| **Shipped micro** | Scout Case list ordered by planned R high→low (`lib/scout-case-sort.ts`) |
+| **Brainstorm (not Scout)** | Alert closed-but-incomplete fills on Trades / Dashboard |
+
+---
+
 ## Active — Control IA
 
 | Field | Value |
@@ -12,7 +26,7 @@
 | **Priority** | HIGH |
 | **Status** | **Shipped** — Matrix Mechanics · Stock Files · Apply · Library |
 | **Doc** | [control-panel-ia.md](control-panel-ia.md) |
-| **Next (EVALUATION / NEXT)** | Closed-trade Observation UX reusing `observation-update`; MAF expectancy aggregation only when sample rows justify a real consumer |
+| **Next** | Feeds **MTA-002A** (collapse Stock File usage to ≤3 primary actions). Contract NEXT Observation UX stays on **Trades**, not Scout |
 
 ---
 
@@ -24,7 +38,7 @@
 | **Status** | **Foundation + Participation Phase A shipped** |
 | **Doc** | [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) · [mtae-participation-layer.md](mtae-participation-layer.md) · [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md) |
 | **Shipped** | Geometry assessment + optional `participation` / `participationSynthesis`; validate + protocol; Mechanics **rev 20**; calibration errorTypes for overclaims |
-| **Next** | Live chart-pack loops with volume; Phase B (volume profile / AVWAP) only after calibration samples |
+| **Next** | Include participation lane in **MTA-002** master prompt; live chart-pack loops. Phase B (VP / AVWAP) still deferred |
 
 ---
 
@@ -37,7 +51,7 @@
 | **Doc** | [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md) · [adr-0004-maf.md](adr-0004-maf.md) |
 | **Shipped** | `attribution` + `observation-update`; `LO-xxx` / `OBS-xxx` stores; auto hooks on trade close / plan outcome; deterministic rule hints; Mechanics **rev 19** |
 | **Components** | thesis · zone · entry · stop · execution · trade management · timing · capital allocation |
-| **Next** | Observation UX on closed trades; expectancy aggregation by component/Playbook; market-feed MFE/MAE optional later |
+| **Next** | Observation UX on closed trades (**P1** beside operability — closes “closed ≠ complete”); expectancy aggregation remains **EVALUATION / defer** |
 
 ---
 
