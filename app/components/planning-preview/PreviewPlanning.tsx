@@ -509,6 +509,7 @@ export function PreviewPlanning({
 
               {!focusedScoutCard?.orphan ? (
                 <ScoutExecutePanel
+                  key={focusPlan?.id ?? scoutThesis?.id ?? "execute"}
                   plan={focusPlan}
                   prospect={selectedProspect}
                   prospects={prospects}
