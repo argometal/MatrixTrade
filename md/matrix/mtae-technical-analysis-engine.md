@@ -373,3 +373,17 @@ MTAE distinguishes **structural quality** from **expansion capacity**.
 - Technical context only — never Scout verdicts, Entry Solver, R:R, or sizing.
 - Low expansion does **not** invalidate structure; Scout may require better entry / standby.
 - Legacy assessments may omit `momentumAssessment` → UI shows **Not assessed**.
+
+## Evidence First presentation (default)
+
+Human and AI-facing MTAE output must follow this order:
+
+1. **Every timeframe** (exact order): Supports → Resistances / Targets → Bias → Confidence  
+   Optional: one short sentence max. No narrative, psychology, capital, or trade management in TF blocks.
+2. **Integrated** (only after all TFs): Overall Technical Thesis · Momentum Assessment · Structural Risks · Important Notes  
+   Momentum summarizes expansion quality — not trading decisions.
+3. **Profile Notes** last — observations / educational text never interrupt TF evidence.
+
+MTAE never outputs Go / Wait / No Trade / entry optimization / sizing / capital allocation (Scout only).
+
+Goal: compare many tickers quickly; first screen is almost entirely technical evidence.

@@ -151,6 +151,7 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | **Closed ≠ complete (P1)** | Trades banner + Dashboard attention via `listIncompleteClosedTrades` (review + missing learning fields) |
 | **Observation UX** | `/trades/[id]` form → `saveTradeObservationAction` / `observation-update` (ensure OBS on closed fills) |
 | **APPLY** | Schema-first contract; stock-case-create requires entry+stop+target; bare-price invalidation rejected |
+| **MTAE UI** | Evidence First default: TF Supports→Targets→Bias→Conf; Integrated; Profile Notes last |
 | **MTAE** | Control → Library → **Technical Analysis**; optional per-TF `participation` + `participationSynthesis` |
 | **MAF** | `attribution` Apply → `data/maf-experiments.json`; evidence from Trade+Plan+Observation+LearningOutcome; rule hints |
 | **Learning Outcome** | Auto on trade close / plan outcome → `data/learning-outcomes.json` (`LO-xxx`) |

@@ -8,7 +8,7 @@ import type { StockThesis } from "./stock-thesis-types";
 import type { SnapshotMenuItem } from "./snapshot-types";
 import { wrapSnapshotText } from "./snapshot-verification";
 import type { MtaeAssessment } from "./mtae-types";
-import { formatMtaeAssessmentSnapshot } from "./mtae-momentum-format";
+import { formatMtaeEvidenceFirstView } from "./mtae-evidence-format";
 import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment, Trade } from "./types";
 import type { SmartSnapshotInput } from "./smart-snapshot";
@@ -179,7 +179,7 @@ export function stockProfileSnapshotItems(input: {
       description: "Structure + Momentum / Expansion (technical context only)",
       text: wrapSnapshotText(
         `${input.thesis.ticker} MTAE assessment`,
-        formatMtaeAssessmentSnapshot(input.latestMtaeAssessment)
+        formatMtaeEvidenceFirstView(input.latestMtaeAssessment, { profileNotes: input.thesis.notes ?? input.thesis.thesis })
       ),
     });
   } else {
