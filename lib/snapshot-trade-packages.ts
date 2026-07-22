@@ -5,12 +5,8 @@ import type { SnapshotMenuItem } from "./snapshot-types";
 import { mechanicsSnapshotItem } from "./snapshot-packages";
 import { wrapSnapshotText } from "./snapshot-verification";
 import type { Setup } from "./setup-types";
-import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 import { formatTradeForSnapshot } from "./trade-snapshot-format";
-import {
-  formatTradeForensicSnapshot,
-  TRADE_FORENSIC_AI_REQUEST,
-} from "./trade-forensic-snapshot";
+import { formatTradeForensicSnapshot } from "./trade-forensic-snapshot";
 import type { Trade } from "./types";
 import type { TradePlan } from "./plan-types";
 
@@ -62,10 +58,15 @@ export function tradeSnapshotItems(input: {
       })
     );
   }
+  // Mechanics remains available via Control → Matrix Mechanics; keep row for standalone trade window portability.
   items.push(mechanicsSnapshotItem());
   return items;
 }
 
+/**
+ * Closed-trade evidence only — no embedded Mechanics brief, no universal REQUEST.
+ * Human states the task in chat; AI asks for this block by visible label when needed.
+ */
 export function tradeForensicSnapshotItem(input: {
   trade: Trade;
   playbooks: Playbook[];
@@ -86,19 +87,10 @@ export function tradeForensicSnapshotItem(input: {
     linkedThesis,
   });
 
-  const text = [
-    buildMatrixMechanicsBrief(),
-    "",
-    forensicBody,
-    "",
-    "=== REQUEST ===",
-    TRADE_FORENSIC_AI_REQUEST,
-  ].join("\n");
-
   return {
     id: "trade-forensic",
     label: `${input.trade.ticker} · ${input.trade.id} forensic`,
-    description: "Closed trade deep export — legacy gaps, R, review, post-stop study",
-    text: wrapSnapshotText(`${input.trade.ticker} · ${input.trade.id} forensic`, text),
+    description: "Closed trade evidence — legacy gaps, R, review, post-stop (no Mechanics / Request)",
+    text: wrapSnapshotText(`${input.trade.ticker} · ${input.trade.id} forensic`, forensicBody),
   };
 }

@@ -16,7 +16,7 @@ import type { TradePlan } from "@/lib/plan-types";
 
 /**
  * Execution strip migrated from Enter Trade / NewTradeScoutFlow.
- * Primary path: copy boot → AI → Control → Update → Accept.
+ * Primary path: copy boot → AI → Control → Apply → Accept.
  * Manual form kept (collapsed) so no capability is lost.
  */
 export function ScoutExecutePanel({
@@ -168,7 +168,7 @@ export function ScoutExecutePanel({
     <section className="rounded-2xl border border-emerald-500/30 bg-emerald-950/10 p-4">
       <h2 className="text-sm font-semibold text-emerald-200">Execute · {plan.id}</h2>
       <p className="mt-1 text-xs text-zinc-500">
-        Copy boot → AI → <span className="text-emerald-300/90">Control → Update → Accept</span>.
+        Copy boot → AI → <span className="text-emerald-300/90">Control → Apply → Accept</span>.
       </p>
       {plan.status === "expired" ? (
         <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
@@ -277,7 +277,7 @@ export function ScoutExecutePanel({
               onClick={handleCopyProposal}
               className="mt-3 w-full rounded-lg border border-emerald-500/40 py-2 text-sm font-medium text-emerald-300 hover:bg-emerald-600/10"
             >
-              {copiedProposal ? "Copied — paste in Control → Update" : "Copy trade-proposal JSON"}
+              {copiedProposal ? "Copied — paste in Control → Apply" : "Copy trade-proposal JSON"}
             </button>
           </div>
         ) : null}

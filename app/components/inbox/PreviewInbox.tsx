@@ -29,7 +29,7 @@ export function PreviewInbox({
             <div>
               <h1 className="text-xl font-semibold text-zinc-100">History</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                Past AI Blocks and bridge items. New updates: Control → Update → Validate → Accept.
+                Past AI Blocks and bridge items. New updates: Control → Apply → Validate → Accept.
               </p>
             </div>
           </div>
@@ -50,7 +50,7 @@ export function PreviewInbox({
 
           {items.length === 0 ? (
             <div className="rounded-xl border border-dashed border-zinc-700 px-4 py-10 text-center text-sm text-zinc-500">
-              No items yet. Use <span className="text-violet-300">Control → Update</span> to paste an AI Block.
+              No items yet. Use <span className="text-violet-300">Control → Apply</span> to paste an AI Block.
             </div>
           ) : (
             <ul className="divide-y divide-zinc-800 rounded-lg border border-zinc-800 bg-zinc-900/50">

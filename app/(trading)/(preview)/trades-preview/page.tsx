@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 /**
- * Enter Trade deprecated — execution lives in Scout war room + Control → Update.
+ * Enter Trade deprecated — execution lives in Scout war room + Control → Apply.
  * Preserve query (plan / ticker / thesis) onto /planning.
  */
 export default async function TradesPreviewRedirectPage({

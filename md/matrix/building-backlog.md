@@ -5,6 +5,17 @@
 
 ---
 
+## Active — Control IA
+
+| Field | Value |
+|-------|-------|
+| **Priority** | HIGH |
+| **Status** | **Shipped** — Matrix Mechanics · Stock Files · Apply · Library |
+| **Doc** | [control-panel-ia.md](control-panel-ia.md) |
+| **Next (EVALUATION / NEXT)** | Closed-trade Observation UX reusing `observation-update`; MAF expectancy aggregation only when sample rows justify a real consumer |
+
+---
+
 ## Active — MTAE (Technical Analysis Engine)
 
 | Field | Value |

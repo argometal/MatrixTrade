@@ -389,7 +389,7 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
         <section className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-950/80 to-zinc-900 p-4">
           <h2 className="text-sm font-semibold text-violet-200">AI Blocks</h2>
           <p className="mt-2 text-xs text-zinc-400">
-            Control → Update on any page. Copy context from the Control panel.
+            Control → Apply on any page. Copy context from the Control panel.
           </p>
           <Link
             href="/exchange"

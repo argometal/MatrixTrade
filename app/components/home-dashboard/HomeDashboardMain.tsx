@@ -394,7 +394,7 @@ export function HomeDashboardMain({
           >
             <p className="font-medium">AI Block will appear here</p>
             <p className={`mt-1 text-xs ${dark ? "text-violet-300/70" : "text-violet-800/70"}`}>
-              Or use Control → Update on any page.
+              Or use Control → Apply on any page.
             </p>
           </div>
         )}

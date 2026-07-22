@@ -4,7 +4,7 @@ import { sampleAiBlock } from "@/lib/ai-block";
 
 const ASSISTANT_RULES = [
   "One response = one AI Block.",
-  "Control → Update → Validate → Accept.",
+  "Control → Apply → Validate → Accept.",
   "History holds imports that need review.",
   "Nothing auto-writes to Supabase.",
 ] as const;
@@ -43,7 +43,7 @@ export function HomeDashboardSidebar({
         <ol className={`mt-3 space-y-2 ${bodyClass}`}>
           <li>1. Copy snapshot (Control panel)</li>
           <li>2. Discuss in your AI chat</li>
-          <li>3. Control → Update → paste AI Block</li>
+          <li>3. Control → Apply → paste AI Block</li>
           <li>4. Validate → Accept (or History → Apply)</li>
         </ol>
       </section>

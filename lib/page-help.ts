@@ -29,7 +29,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
     summary: "Hoy: riesgo y atención. Insights = aprender.",
     steps: [
       "Revisa room y Needs attention.",
-      "AI Blocks: Control → Update.",
+      "AI Blocks: Control → Apply.",
       "Casos vivos: Scout. Histórico: Trades.",
     ],
   },
@@ -50,12 +50,12 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
   },
   "new-trade": {
     title: "Enter Trade (deprecated)",
-    summary: "Redirige a Scout. Ejecución: boot package → Control → Update.",
+    summary: "Redirige a Scout. Ejecución: boot package → Control → Apply.",
     steps: ["Usa Scout war room."],
   },
   inbox: {
     title: "History",
-    summary: "Propuestas. Preferir Control → Update.",
+    summary: "Propuestas. Preferir Control → Apply.",
     steps: ["Apply / Reject en pendientes."],
   },
   planning: {
@@ -65,7 +65,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
     summary: "War room de un caso: radiografía + execute. No es el histórico.",
     principles: [
       "Un caso seleccionado a la vez.",
-      "Copy boot → AI → Control → Update → Accept.",
+      "Copy boot → AI → Control → Apply → Accept.",
       "Trades = veredictos filtrables.",
     ],
     copyButtons: [
@@ -95,7 +95,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
     panelLabel: "Help",
     workflowTitle: "Workflow",
     summary: "Igual que Scout war room.",
-    steps: ["Snapshot → IA → Control → Update."],
+    steps: ["Snapshot → IA → Control → Apply."],
   },
 };
 

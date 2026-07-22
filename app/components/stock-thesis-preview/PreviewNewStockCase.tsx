@@ -83,7 +83,7 @@ export function PreviewNewStockCase() {
               <h1 className="text-xl font-semibold text-zinc-100">New stock case</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
                 Analyze in your AI chat → one <code className="text-violet-300">stock-case-create</code>{" "}
-                block → Control → Update or History Apply.
+                block → Control → Apply or History Apply.
               </p>
             </div>
             <Link
@@ -165,7 +165,7 @@ export function PreviewNewStockCase() {
           <section className="rounded-2xl border border-emerald-500/30 bg-zinc-900/50 p-5">
             <h2 className="text-sm font-semibold text-zinc-200">2 · Paste AI Block</h2>
             <p className="mt-1 text-xs text-zinc-500">
-              Validate, then History → Apply or Control → Update → Accept.
+              Validate, then History → Apply or Control → Apply → Accept.
             </p>
             <textarea
               value={aiBlockRaw}

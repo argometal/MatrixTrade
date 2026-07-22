@@ -39,7 +39,7 @@ Charts + ticker + TF role map
 │  MTAE (this doc)      │  structure, zones, targets, invalidation
 │  technical JSON only  │  no RR, no sizing, no Scout verdict
 └───────────┬───────────┘
-            │ Accept (Control → Update)
+            │ Accept (Control → Apply)
             ▼
 ┌───────────────────────┐
 │  Stock File synthesis │  levels, invalidation, historicalAnalysis

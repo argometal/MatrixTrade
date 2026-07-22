@@ -1,6 +1,6 @@
 import type { MtaeTimeframeMapPreset } from "./mtae-types";
 
-/** Protocol primer for Control → Technical analysis (not Mechanics, not Playbook). */
+/** Protocol primer for Control → Library → Technical Analysis (not Mechanics, not Playbook). */
 export function buildMtaeProtocolBrief(presets: MtaeTimeframeMapPreset[]): string {
   const presetLines =
     presets.length === 0
@@ -64,7 +64,7 @@ export function buildMtaeProtocolBrief(presets: MtaeTimeframeMapPreset[]): strin
     "APPLY",
     "Return type technical-assessment with stockProfileId, ticker, timeframeRoles,",
     "perTimeframe[], integrated{}, technicalSummary{}, patchStockFile true.",
-    "Human pastes in MatrixTrade Control → Update → Validate → Accept.",
+    "Human pastes in MatrixTrade Control → Apply → Validate → Accept.",
     "Accept stores the assessment and patches Stock File levels/invalidation/historicalAnalysis.",
     "",
     "CALIBRATION",

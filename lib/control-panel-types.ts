@@ -8,16 +8,19 @@ export type ControlPanelThesisEntry = {
 };
 
 /**
- * Control copy layers — descriptive labels only.
+ * Control section ids.
+ * Primary: train-ai (Matrix Mechanics), stock-file (direct access).
+ * Library: mtae, playbook, scouting, learning.
+ * Apply is a step, not a section id.
  * Forensic closed-trade export lives on `/trades/[id]`, never here.
- * MTAE (Technical analysis) is its own section — not Mechanics, not Playbook.
  */
 export type ControlPanelSectionId =
   | "train-ai"
   | "mtae"
   | "playbook"
   | "stock-file"
-  | "scouting";
+  | "scouting"
+  | "learning";
 
 export type ControlPanelData = {
   playbooks: Playbook[];
@@ -39,6 +42,11 @@ export type ControlPanelData = {
     theses: ControlPanelThesisEntry[];
   };
   scouting: {
+    snapshotItems: SnapshotMenuItem[];
+  };
+  /** Existing MAF protocol only — no invented Learning mega-package. */
+  learning: {
+    mafProtocolBrief: string;
     snapshotItems: SnapshotMenuItem[];
   };
 };

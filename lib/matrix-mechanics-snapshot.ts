@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 20;
+export const MATRIX_MECHANICS_REVISION = 21;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
