@@ -220,6 +220,21 @@ AI Block: `technical-calibration` → append-only store `data/mtae-calibrations.
 
 ---
 
+## Participation Layer (design — coding deferred)
+
+V1 is strong on **geometry** (structure, levels, battle zones, invalidation) and weak on **participation** (volume behavior, wicks, movement character, historical reaction).
+
+Canonical design: [mtae-participation-layer.md](mtae-participation-layer.md) · ADR [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md).
+
+Planned additive schema (optional until coded):
+
+- per TF: `participation.{volumeBehavior, wickAnalysis, candleSignals, movementCharacter, historicalReactionZones, largeParticipantFootprint}`
+- integrated: `participationSynthesis`
+
+Still forbidden in MTAE: Entry Solver, RR, Scout verdict, `whalesAreBuying`, Level 2 / heatmap (separate future Execution Microstructure Engine).
+
+---
+
 ## AI Block shapes
 
 ### `technical-assessment`

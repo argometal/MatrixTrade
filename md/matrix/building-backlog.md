@@ -1,6 +1,6 @@
 # MatrixTrade — building backlog
 
-**Last updated:** 2026-07-21  
+**Last updated:** 2026-07-22  
 **Purpose:** Active product/ops work — priorities, blockers, resume targets. Not library doc debt (see [library-alignment-backlog.md](library-alignment-backlog.md)).
 
 ---
@@ -13,7 +13,21 @@
 | **Status** | **Foundation shipped** (schema + Apply + docs) |
 | **Doc** | [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) · [adr-0003-mtae.md](adr-0003-mtae.md) |
 | **Shipped** | `technical-assessment` / `technical-calibration` blocks; JSON stores; Stock File patch; TF role presets; **Control → Technical analysis** section |
-| **Next** | Live chart-pack loops + calibration samples; optional Supabase table; never fold Entry Solver into MTAE |
+| **Next** | Live chart-pack loops + calibration samples; then **Participation Layer coding** (docs already accepted) |
+
+---
+
+## Design accepted — MTAE Participation Layer (no coding yet)
+
+| Field | Value |
+|-------|-------|
+| **Priority** | HIGH |
+| **Status** | **Library / ADR only** — do not code until explicit implementation task |
+| **Doc** | [mtae-participation-layer.md](mtae-participation-layer.md) · [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md) |
+| **Intent** | Add `participation` per TF + `participationSynthesis` — volume, wicks, movement character, historical reaction, small candle set, large-participant footprint |
+| **Phase A coding (later)** | volume → wicks → character → reaction zones → candles → footprint |
+| **Deferred modules** | Volume profile / AVWAP; Heatmap + Level 2 → Execution Microstructure Engine (not MTAE) |
+| **Hard rules** | No `whalesAreBuying`; no absolute candle rules; no capital / Entry Solver inside MTAE |
 
 ---
 

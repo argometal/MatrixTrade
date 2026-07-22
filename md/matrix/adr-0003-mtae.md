@@ -49,6 +49,7 @@ We need a **reproducible technical procedure** that any external AI can execute,
 ## Related
 
 - [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md)
+- [mtae-participation-layer.md](mtae-participation-layer.md) · [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md)
 - [stock-profile-design.md](stock-profile-design.md)
 - [scout-execution-model.md](scout-execution-model.md)
 - [control-panel-ia.md](control-panel-ia.md)
