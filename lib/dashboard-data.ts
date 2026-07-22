@@ -1,9 +1,8 @@
 import {
   computeAllPlaybookStats,
   computeProfitFactor,
-  type PlaybookStats,
 } from "./analytics";
-import { calculateTradeResult, winRate } from "./calculate";
+import { winRate } from "./calculate";
 import { buildAttentionItems } from "./dashboard-attention";
 import { fetchBridgeInbox } from "./bridge";
 import { formatCycleLabel } from "./experiment-label";
@@ -13,18 +12,17 @@ import {
   computeAvgR,
   computeExpectancy,
   computeMistakeStats,
-  type EquityPoint,
-  type MistakeStat,
 } from "./review";
 import { buildPlanAttentionItems } from "./plan-attention";
+import { buildLearningAttentionItems } from "./learning-attention";
+import { enrichAttentionItemsWithAiSnapshots } from "./needs-attention-ai";
 import { countActivePlans, countPlansNeedingReview } from "./plan-helpers";
 import { getPlans } from "./plans";
 import { getExperiment, getMonthlyRisk, getTrades } from "./storage";
+import { getStockTheses } from "./stock-theses";
+import { getObservations } from "./observation-store";
+import { getLearningOutcomes } from "./learning-outcome-store";
 import { listAllPendingInboxItems } from "./trading-inbox-storage";
-import type { AttentionItem } from "./dashboard-attention";
-import type { Experiment } from "./types";
-import type { MonthlyRisk } from "./monthly-risk";
-
 import type { DashboardData } from "./dashboard-types";
 
 export type { DashboardData } from "./dashboard-types";
@@ -32,20 +30,47 @@ export { formatDashboardUsd, formatDashboardPf } from "./dashboard-display";
 
 export async function loadDashboardData(): Promise<DashboardData> {
   try {
-    const [experiment, monthly, trades, playbooks, workerInbox, plans] = await Promise.all([
+    const [
+      experiment,
+      monthly,
+      trades,
+      playbooks,
+      workerInbox,
+      plans,
+      stockTheses,
+      observations,
+      learningOutcomes,
+    ] = await Promise.all([
       getExperiment(),
       getMonthlyRisk(),
       getTrades(),
       getPlaybooks(),
       fetchBridgeInbox(),
       getPlans(),
+      getStockTheses(),
+      getObservations(),
+      getLearningOutcomes(),
     ]);
 
     const pendingInbox = await listAllPendingInboxItems(workerInbox);
-    const attentionItems = [
+    const rawItems = [
       ...buildAttentionItems(trades, pendingInbox, playbooks, monthly),
       ...buildPlanAttentionItems(plans),
+      ...buildLearningAttentionItems(trades, observations, learningOutcomes),
     ].sort((a, b) => a.priority - b.priority);
+
+    const attentionItems = enrichAttentionItemsWithAiSnapshots(rawItems, {
+      trades,
+      plans,
+      playbooks,
+      stockTheses,
+      observations,
+      learningOutcomes,
+      pendingInbox,
+      monthly,
+      experiment,
+    });
+
     const playbookStats = computeAllPlaybookStats(playbooks, trades).filter(
       (p) => p.playbookId !== null && p.closedCount > 0
     );

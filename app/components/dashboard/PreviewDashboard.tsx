@@ -13,6 +13,7 @@ import { formatDashboardPf, formatDashboardUsd } from "@/lib/dashboard-display";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import { NeedsAttentionRow } from "@/app/components/dashboard/NeedsAttentionRow";
 
 function DarkEquityChart({
   points,
@@ -199,23 +200,16 @@ export function PreviewDashboard({
               <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
                 Needs attention
               </h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                Copy for AI → diagnose → one Apply block → Control → Apply. Global context: Dashboard
+                snapshot.
+              </p>
               {data.attentionItems.length === 0 ? (
                 <p className="mt-3 text-sm text-zinc-500">Nothing pending — cycle is on track.</p>
               ) : (
                 <ul className="mt-4 divide-y divide-zinc-800">
                   {data.attentionItems.map((item) => (
-                    <li
-                      key={item.id}
-                      className="flex items-center justify-between gap-4 py-3 first:pt-0"
-                    >
-                      <span className="text-sm font-medium text-zinc-200">{item.label}</span>
-                      <Link
-                        href={item.href}
-                        className="shrink-0 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
-                      >
-                        Go →
-                      </Link>
-                    </li>
+                    <NeedsAttentionRow key={item.id} item={item} />
                   ))}
                 </ul>
               )}

@@ -10,15 +10,16 @@
 | Field | Value |
 |-------|-------|
 | **Priority** | **HIGH** — important while still polishing; **not** a new engine |
-| **Status** | **002A partial shipped** · **P1 incomplete-closed alert shipped** · **002C Trend playbook seeded** · **002B postponed** (until live prompt tests) |
-| **Doc** | [mta-002-operability-plan.md](mta-002-operability-plan.md) · [secular-trend-continuation.md](secular-trend-continuation.md) |
+| **Status** | **002A shipped** · **P1 incomplete-closed alert shipped** · **002C Trend playbook seeded** · **Needs Attention AI shipped** · **002B postponed** (until live prompt tests) |
+| **Doc** | [mta-002-operability-plan.md](mta-002-operability-plan.md) · [needs-attention-ai-workflow.md](needs-attention-ai-workflow.md) · [secular-trend-continuation.md](secular-trend-continuation.md) |
 | **Shipped (002A)** | `lib/stock-file-analyze.ts`; Stock File → Analyze with AI / Apply AI Result / Open Scout; `openPanel({ step: "apply" })`; Mechanics **rev 23** |
 | **Shipped (P1)** | Trades banner + Dashboard attention for closed≠complete (`lib/incomplete-closed-trades.ts`) |
 | **Shipped (002C seed)** | Playbook `secular-trend-continuation` (TESTING) + MD — Family B vs `structural-pullback-entry` Family A |
-| **Phases left** | **002B** postponed · Observation UX shipped (this pass) · live Family B calibration |
+| **Shipped (Needs Attention AI)** | Task snapshots + Copy for AI / Apply / Go; Library Index; learning attention (OBS + attribution); `tools/test-needs-attention-ai.ts` |
+| **Phases left** | **002B** postponed · live Family B calibration · optional `plan-outcome` Apply block (gap documented) |
 | **Shipped (Observation UX)** | Closed-trade Observation form on `/trades/[id]`; ensure OBS on save; Apply path can seed OBS for closed fills |
 | **Shipped (002C UI)** | Family B checklist on Scout / Stock File / Trade when playbook = `secular-trend-continuation` |
-| **Do not build now** | Coach, wide MAF dashboards, VP/AVWAP, more Control categories, parallel prompt systems |
+| **Do not build now** | Coach, wide MAF dashboards, VP/AVWAP, more Control categories, parallel prompt systems, parallel AI workflow DB |
 | **Also shipped** | Scout Case list ordered by planned R high→low (`lib/scout-case-sort.ts`) |
 | **Shipped (layered R/risk)** | `lib/layered-entry-risk.ts`; `rules.defaultRiskBudget`; Plan map R/risk fill states; MAF layered fill fields; Mechanics rev **24→25** |
 | **Shipped (Family B bull-trend)** | `lib/family-b-assessment.ts`; Scout `FamilyBBullTrendPanel`; `familyBAssessment` on decision-update; Analyze package section |

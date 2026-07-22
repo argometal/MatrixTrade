@@ -6,12 +6,18 @@ import {
 import type { MonthlyRisk } from "./monthly-risk";
 import type { Playbook } from "./playbook-types";
 import type { Trade } from "./types";
+import type { NeedsAttentionTaskType } from "./needs-attention-types";
 
 export interface AttentionItem {
   id: string;
   label: string;
   href: string;
   priority: number;
+  /** Stable derived AI task id (ATTN-…). */
+  taskId?: string;
+  taskType?: NeedsAttentionTaskType;
+  /** Prebuilt Needs Attention task snapshot for Copy for AI. */
+  taskSnapshotText?: string;
 }
 
 const MIN_PLAYBOOK_SAMPLES = 3;

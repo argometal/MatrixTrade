@@ -40,7 +40,9 @@ Primary Control copy of Mechanics = brief (no REQUEST).
 
 | Window | Menu label | Data slice | Notes |
 |--------|------------|------------|-------|
-| Dashboard | Dashboard snapshot | Budget, experiment, attention, trades overview | May include Mechanics menu row for portability |
+| Dashboard | Dashboard snapshot | Budget, experiment, attention **summary**, trades overview | Global context only — do not embed inside every task paste |
+| Dashboard → Needs Attention | Copy for AI (per row) | One derived task: entities, evidence, allowed blocks, completion | `lib/needs-attention-ai.ts`; references Dashboard snapshot label |
+| Control → Library | Library Index | Labels for Technical Analysis / Playbook / Scout Desk / Learning | Then copy one section — `lib/library-index.ts` |
 | System | Matrix Mechanics snapshot | Full rules + block catalog | |
 | Playbook | Playbook snapshot | Strategies + stats | Control Library filters Mechanics row |
 | Scouting Desk | Scout desk overview | All profiles + scouts + monthly room | No Mechanics row in Control |
@@ -69,8 +71,10 @@ Primary Control copy of Mechanics = brief (no REQUEST).
 | Brief prefix | `buildMatrixMechanicsBrief()` |
 | Full mechanics | `buildMatrixMechanicsSnapshot()` |
 | Stock File Analyze | `buildStockFileAnalyzePackage()` in `lib/stock-file-analyze.ts` |
+| Needs Attention task | `buildNeedsAttentionTaskSnapshot()` / `buildNeedsAttentionSnapshotText()` in `lib/needs-attention-ai.ts` |
+| Library Index | `buildLibraryIndexBrief()` in `lib/library-index.ts` |
 | Package builder | `buildAiContextPackage()` in `lib/ai-context.ts` |
-| UI | Stock File 3-action header; Control Apply via `openPanel({ step: "apply" })` |
+| UI | Stock File 3-action header; Needs Attention Copy for AI; Control Apply via `openPanel({ step: "apply" })` |
 | Server helpers | `lib/snapshot-packages.ts` |
 
 ---
