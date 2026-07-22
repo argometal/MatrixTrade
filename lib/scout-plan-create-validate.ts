@@ -1,5 +1,5 @@
 import type { PlanStatus } from "./plan-types";
-import { validateOptionalInitialScoutContract } from "./scout-contract";
+import { validateScoutContract } from "./scout-contract";
 import type { DecisionVerdict } from "./scout-decision-types";
 
 export function parseOptionalNumber(value: unknown): number | undefined {
@@ -57,12 +57,15 @@ export function validateScoutPlanCreateProposal(
   if (!stockFileId) errors.push("proposal.stockFileId (or stockThesisId) required");
   if (!ticker) errors.push("proposal.ticker required");
 
-  const scoutCheck = validateOptionalInitialScoutContract({
-    plannedEntry: parseOptionalNumber(proposal.plannedEntry),
-    stopPrice: parseOptionalNumber(proposal.stopPrice),
-    targetPrice: parseOptionalNumber(proposal.targetPrice),
-    supportLevel: parseOptionalNumber(proposal.supportLevel),
-  });
+  const scoutCheck = validateScoutContract(
+    {
+      plannedEntry: parseOptionalNumber(proposal.plannedEntry),
+      stopPrice: parseOptionalNumber(proposal.stopPrice),
+      targetPrice: parseOptionalNumber(proposal.targetPrice),
+      supportLevel: parseOptionalNumber(proposal.supportLevel),
+    },
+    { prefix: "proposal", requirePresent: true }
+  );
   if (!scoutCheck.ok) errors.push(...scoutCheck.errors);
 
   if (proposal.status !== undefined && !parseScoutPlanCreateStatus(proposal.status)) {

@@ -409,11 +409,18 @@ export function MatrixControlPanel() {
         {step === "detail" ? (
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
             {section === "train-ai" ? (
-              <PlainCopyRow
-                label="MtA Mechanics"
-                description="Stable constitution — paste once at the start of the AI chat"
-                text={data.trainAi.mechanicsBrief}
-              />
+              <>
+                <PlainCopyRow
+                  label="MtA Mechanics"
+                  description="Stable constitution — paste once at the start of the AI chat"
+                  text={data.trainAi.mechanicsBrief}
+                />
+                <PlainCopyRow
+                  label="Apply schema contract"
+                  description="Schema-first — required fields, allowed keys, layer ownership, examples"
+                  text={data.trainAi.schemaContractBrief}
+                />
+              </>
             ) : null}
             {section === "mtae" ? (
               <PlainCopyRow

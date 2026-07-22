@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 25;
+export const MATRIX_MECHANICS_REVISION = 26;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -17,13 +17,14 @@ export function buildMatrixMechanicsSnapshot(): string {
     "",
     "=== APPLY GATE (non-negotiable) ===",
     "Default: Analysis Mode — natural discussion, no JSON, no persistence.",
-    "Apply Mode: only after explicit intent (Save, Create, Update, Record, Apply, Import, Propose JSON, Persist to Matrix).",
-    "External AI proposes. Matrix never auto-writes.",
+    "Apply Mode: only after explicit intent (Save, Create, Update, Record, Apply, Import, Propose JSON, Persist to MtA).",
+    "External AI proposes. MtA never auto-writes.",
     "Flow: Copy snapshot → discuss in Analysis Mode → user requests Apply → ONE JSON block → Import in Inbox → human Apply.",
+    "SCHEMA-FIRST: before Apply JSON, read Apply Schema Contract. Never invent keys. stock-case-create requires entry+stop+target.",
     "",
     "=== AI BLOCK TYPES ===",
     "Scouting layer:",
-    "- stock-case-create — new Stock Profile (+ optional initialScout)",
+    "- stock-case-create — new Stock Profile (+ REQUIRED initialScout plannedEntry/stopPrice/targetPrice)",
     "- stock-case-delete — remove Stock Profile (confirmDelete: true required)",
     "- evidence-add — append market evidence row",
     "- file-update — update an existing Stock File; may include initialScout to backfill a missing Scout Plan when no linked active plan exists",

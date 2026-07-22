@@ -1,7 +1,17 @@
 import { calculateTradeResult } from "./calculate";
 import { computeMonthlyRisk } from "./monthly-risk";
 import { LOSS_CLASSIFICATIONS } from "./asymmetry-types";
-import { validateOptionalInitialScoutContract } from "./scout-contract";
+import {
+  validateOptionalInitialScoutContract,
+  validateScoutContract,
+} from "./scout-contract";
+import {
+  STOCK_CASE_CREATE_ALLOWED_KEYS,
+  STOCK_CASE_LEVELS_ALLOWED_KEYS,
+  STOCK_CASE_RISK_ALLOWED_KEYS,
+  STOCK_CASE_SCOUT_ALLOWED_KEYS,
+  listUnknownStockCaseCreateKeys,
+} from "./stock-case-schema";
 import {
   validateTechnicalAssessmentProposal,
   validateTechnicalCalibrationProposal,
@@ -339,6 +349,12 @@ export function validateProposalPayload(
   const errors: string[] = [];
 
   if (parsed.type === "stock-case-create") {
+    const unknown = listUnknownStockCaseCreateKeys(p);
+    if (unknown.length) {
+      errors.push(
+        `proposal has unknown keys (schema-first — do not invent fields): ${unknown.join(", ")}. Allowed: ${STOCK_CASE_CREATE_ALLOWED_KEYS.join(", ")}`
+      );
+    }
     if (!p.ticker) errors.push("proposal.ticker required");
     if (!p.currentHypothesis || !String(p.currentHypothesis).trim()) {
       errors.push("proposal.currentHypothesis required");
@@ -347,15 +363,38 @@ export function validateProposalPayload(
       errors.push("proposal.riskRules required");
     } else {
       const r = p.riskRules as Record<string, unknown>;
+      const riskUnknown = Object.keys(r).filter(
+        (k) => !STOCK_CASE_RISK_ALLOWED_KEYS.includes(k as (typeof STOCK_CASE_RISK_ALLOWED_KEYS)[number])
+      );
+      if (riskUnknown.length) {
+        errors.push(
+          `proposal.riskRules unknown keys: ${riskUnknown.join(", ")}. Allowed: ${STOCK_CASE_RISK_ALLOWED_KEYS.join(", ")}`
+        );
+      }
       const minimumRR = Number(r.minimumRR);
       if (!Number.isFinite(minimumRR) || minimumRR <= 0) {
         errors.push("proposal.riskRules.minimumRR required (positive number)");
       }
-      if (!r.invalidation || !String(r.invalidation).trim()) {
+      const invalidation = String(r.invalidation ?? "").trim();
+      if (!invalidation) {
         errors.push("proposal.riskRules.invalidation required");
+      } else if (/^\d+(\.\d+)?$/.test(invalidation)) {
+        errors.push(
+          'proposal.riskRules.invalidation must be an observable event (e.g. "Weekly close below 130"), not a bare price'
+        );
       }
     }
     const levels = p.levels;
+    if (levels && typeof levels === "object" && !Array.isArray(levels)) {
+      const levelUnknown = Object.keys(levels as Record<string, unknown>).filter(
+        (k) => !STOCK_CASE_LEVELS_ALLOWED_KEYS.includes(k as (typeof STOCK_CASE_LEVELS_ALLOWED_KEYS)[number])
+      );
+      if (levelUnknown.length) {
+        errors.push(
+          `proposal.levels unknown keys: ${levelUnknown.join(", ")}. Allowed: ${STOCK_CASE_LEVELS_ALLOWED_KEYS.join(", ")}`
+        );
+      }
+    }
     const hasLevels =
       levels &&
       typeof levels === "object" &&
@@ -366,14 +405,37 @@ export function validateProposalPayload(
         (Array.isArray((levels as Record<string, unknown>).targets) &&
           ((levels as Record<string, unknown>).targets as unknown[]).length > 0));
     if (!hasLevels) {
-      errors.push("proposal.levels required (primaryZone, majorSupport, or targets)");
+      errors.push("proposal.levels required (primaryZone, secondaryZone, majorSupport, or targets)");
     }
-    if (p.initialScout !== undefined) {
+    // Creation JSON must include a Scout window with entry + stop + target
+    if (p.initialScout === undefined || p.initialScout === null) {
+      errors.push(
+        "proposal.initialScout required on stock-case-create — plannedEntry, stopPrice, and targetPrice are mandatory (no creation without a Scout contract)"
+      );
+    } else {
       const scout = p.initialScout;
       if (!scout || typeof scout !== "object" || Array.isArray(scout)) {
         errors.push("proposal.initialScout must be an object");
       } else {
-        const scoutCheck = validateOptionalInitialScoutContract(scout as Record<string, unknown>);
+        const scoutObj = scout as Record<string, unknown>;
+        const scoutUnknown = Object.keys(scoutObj).filter(
+          (k) =>
+            !STOCK_CASE_SCOUT_ALLOWED_KEYS.includes(k as (typeof STOCK_CASE_SCOUT_ALLOWED_KEYS)[number])
+        );
+        if (scoutUnknown.length) {
+          errors.push(
+            `proposal.initialScout unknown keys: ${scoutUnknown.join(", ")}. Allowed: ${STOCK_CASE_SCOUT_ALLOWED_KEYS.join(", ")}`
+          );
+        }
+        const scoutCheck = validateScoutContract(
+          {
+            plannedEntry: scoutObj.plannedEntry as number | undefined,
+            stopPrice: scoutObj.stopPrice as number | undefined,
+            targetPrice: scoutObj.targetPrice as number | undefined,
+            supportLevel: scoutObj.supportLevel as number | undefined,
+          },
+          { prefix: "initialScout", requirePresent: true }
+        );
         if (!scoutCheck.ok) errors.push(...scoutCheck.errors);
       }
     }

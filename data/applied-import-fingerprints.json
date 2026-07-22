@@ -1,7 +1,7 @@
 [
   {
     "fingerprint": "0f8875ce32e3d23f3542962dfc502fcabb9960b0514944b4f369391b1b531240",
-    "appliedAt": "2026-07-12T07:40:08.782Z",
+    "appliedAt": "2026-07-22T16:00:51.872Z",
     "result": {
       "message": "test",
       "type": "stock-case-create",

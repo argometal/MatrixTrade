@@ -13,7 +13,7 @@ Required shape:
   "proposal": { ... }
 }
 PRIORITY — Scouting (validate thesis; do not rubber-stamp):
-- stock-case-create: NEW Stock Profile — ticker, currentHypothesis, levels{}, riskRules{minimumRR, invalidation}; optional thesis, notes, historicalAnalysis[], initialScout{plannedEntry, stopPrice (strategy stop for R — not structural invalidation by default), targetPrice}
+- stock-case-create: NEW Stock Profile — ticker, currentHypothesis, levels{}, riskRules{minimumRR, invalidation EVENT string}, REQUIRED initialScout{plannedEntry, stopPrice, targetPrice}; optional thesis, notes, historicalAnalysis[]. Creation WITHOUT entry+stop+target is REJECTED. Never invent keys outside schema contract.
 - evidence-add: MarketEvidence row — stockProfileId, ticker, timeframe, category, value, confidence (0-100) required; optional note
 - decision-update: scout decision on PLAN — planId required; decision mode: verdict (go|wait|probe|no), decisionConfidence (0-100), challenges[] (min 1); tactical mode: at least one of plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, familyBAssessment (verdict optional); layeredEntry may include stopModel, sizingMode, authorizedRiskAmount, primaryTargetPrice, commonStopPrice, limits[{price,allocationPercent,role?,stopPrice?,rationale?,confidence?}]; Family B may include familyBAssessment{state,trendIntegrity,extension,pullbackQuality,participationCase,evidenceFor[],evidenceAgainst[],unresolved[]}; Matrix recomputes R/risk derived fields server-side — do not forge rr; optional thesisQuality, opportunityQuality (0-100), confirmationCost{...}, locationEvidence, confirmationEvidence, singleEntryOnly, reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe, layeredEntry when verdict=go
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex (0-based, -1=none) or status (missed|partial|full|active)
@@ -67,7 +67,7 @@ Human action → internal type (choose automatically — never ask the human to 
   · or attribution when attributing expectancy to pipeline components (MAF)
 - Adjust existing Scout Plan → decision-update (planId required)
 All Apply-ready block types:
-- stock-case-create: NEW Stock Profile — ticker, thesis, currentHypothesis, levels{}, riskRules{minimumRR, invalidation} required
+- stock-case-create: NEW Stock Profile — ticker, currentHypothesis, levels{}, riskRules, REQUIRED initialScout{plannedEntry,stopPrice,targetPrice}
 - evidence-add: MarketEvidence — stockProfileId, ticker, timeframe, category, value, confidence required
 - decision-update: scout decision or tactical correction — planId required; decision mode needs verdict, decisionConfidence, challenges[]; tactical mode needs at least one of plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex or status (missed|partial|full|active)
@@ -146,8 +146,8 @@ export interface AiBlockSampleOption {
 export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
   {
     type: "stock-case-create",
-    label: "stock-case-create — new Stock Profile",
-    hint: "Extract ticker, thesis, zones, stop rule from research",
+    label: "stock-case-create — new Stock Profile + required Scout window",
+    hint: "Profile + REQUIRED initialScout plannedEntry/stopPrice/targetPrice — schema-first, no invented keys",
   },
   {
     type: "evidence-add",

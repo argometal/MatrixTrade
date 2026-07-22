@@ -72,12 +72,15 @@ export function parseInitialScout(raw: unknown): InitialScoutInput | undefined {
   };
 }
 
-import { validateOptionalInitialScoutContract } from "./scout-contract";
+import { validateScoutContract } from "./scout-contract";
 
 export function validateInitialScout(
   scout: InitialScoutInput
 ): { ok: true } | { ok: false; errors: string[] } {
-  const result = validateOptionalInitialScoutContract(scout);
+  const result = validateScoutContract(scout, {
+    prefix: "initialScout",
+    requirePresent: true,
+  });
   if (!result.ok) return result;
   return { ok: true };
 }

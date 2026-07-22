@@ -5,7 +5,8 @@ import {
 } from "./stock-case-initial-scout";
 import { seedEvidenceFromHistoricalAnalysis } from "./seed-evidence-from-analysis";
 import { rollbackStockCaseCreate } from "./stock-case-rollback";
-import { validateOptionalInitialScoutContract } from "./scout-contract";
+import { validateScoutContract } from "./scout-contract";
+import { listUnknownStockCaseCreateKeys } from "./stock-case-schema";
 import { saveStockThesis } from "./stock-theses";
 import type { SaveStockThesisInput, StockThesis } from "./stock-thesis-types";
 
@@ -107,10 +108,40 @@ export function proposalToStockCaseInput(
     errors.push("proposal.levels required (primaryZone, secondaryZone, majorSupport, or targets)");
   }
 
+  const unknown = listUnknownStockCaseCreateKeys(proposal);
+  if (unknown.length) {
+    errors.push(
+      `proposal has unknown keys (schema-first): ${unknown.join(", ")}`
+    );
+  }
+
+  if (proposal.initialScout === undefined || proposal.initialScout === null) {
+    errors.push(
+      "proposal.initialScout required — plannedEntry, stopPrice, and targetPrice are mandatory on stock-case-create"
+    );
+  }
+
   const initialScout = parseInitialScout(proposal.initialScout);
-  if (initialScout) {
-    const scoutCheck = validateOptionalInitialScoutContract(initialScout);
+  if (!initialScout) {
+    errors.push(
+      "proposal.initialScout must include plannedEntry, stopPrice, and targetPrice"
+    );
+  } else {
+    const scoutCheck = validateScoutContract(initialScout, {
+      prefix: "initialScout",
+      requirePresent: true,
+    });
     if (!scoutCheck.ok) errors.push(...scoutCheck.errors);
+  }
+
+  // Bare-price invalidation rejected
+  const inv = String(
+    (proposal.riskRules as Record<string, unknown> | undefined)?.invalidation ?? ""
+  ).trim();
+  if (inv && /^\d+(\.\d+)?$/.test(inv)) {
+    errors.push(
+      'proposal.riskRules.invalidation must be an observable event (e.g. "Weekly close below 130"), not a bare price'
+    );
   }
 
   if (errors.length) return { errors };
@@ -152,10 +183,15 @@ export async function createStockCaseFromProposal(
   const parsed = proposalToStockCaseInput(proposal);
   if (parsed.errors?.length) return { errors: parsed.errors };
 
-  if (parsed.initialScout) {
-    const scoutCheck = validateInitialScout(parsed.initialScout);
-    if (!scoutCheck.ok) return { errors: scoutCheck.errors };
+  if (!parsed.initialScout) {
+    return {
+      errors: [
+        "proposal.initialScout required — plannedEntry, stopPrice, and targetPrice are mandatory on stock-case-create",
+      ],
+    };
   }
+  const scoutCheck = validateInitialScout(parsed.initialScout);
+  if (!scoutCheck.ok) return { errors: scoutCheck.errors };
 
   const saveResult = await saveStockThesis(parsed.input!);
   if (saveResult.errors?.length) return { errors: saveResult.errors };
