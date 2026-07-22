@@ -31,6 +31,7 @@ Trade layer (use only when scouting approves):
 - analysis: notes on existing trade — id required; at least one of thesis, psychology, lessons, notes
 - trade-update: id required; at least one field to change
 - attribution: MAF component attribution — tradeId and/or planId (or experimentId); components[] with component, classification, aiInterpretationConfidence (0-100), reasoning; optional tag, suggestedImprovement, summary, primaryDragComponent, observation{mfe,mae,…}. NEVER invent prices — only supply observation numbers the human stated.
+- observation-update: Observation Engine — observationId or tradeId or planId; at least one of targetReached, targetReachedAt, thesisInvalidated, invalidationReachedAt, firstTerminalEvent, maxPrice, minPrice, mfe, mae, betterEntryAvailable, status (observing|concluded). Never invent prices.
 - playbook-create / playbook-update: playbook CRUD
 
 Rules:
@@ -82,6 +83,7 @@ All Apply-ready block types:
 - analysis: notes on existing trade — id required; at least one of thesis, psychology, lessons, notes
 - trade-update: id required; at least one field to change
 - attribution: MAF — tradeId/planId/experimentId; components[{component, classification, aiInterpretationConfidence, reasoning}]; optional observation{} (never invent prices)
+- observation-update: Observation Engine — observationId|tradeId|planId + measurable fields (targetReached, mfe/mae, …)
 - playbook-create / playbook-update: playbook CRUD
 
 Rules:
@@ -211,6 +213,11 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
     type: "attribution",
     label: "attribution — MAF component attribution",
     hint: "Which pipeline component dragged expectancy — not a journal",
+  },
+  {
+    type: "observation-update",
+    label: "observation-update — post-trade/scout observation",
+    hint: "Target/invalidation timestamps, MFE/MAE — never invent prices",
   },
   {
     type: "analysis",
@@ -615,6 +622,25 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
         mfeMaeUnit: "price",
         betterEntryAvailable: false,
       },
+    },
+  },
+  "observation-update": {
+    type: "observation-update",
+    source: "ai-block",
+    proposal: {
+      tradeId: "H001",
+      targetReached: true,
+      targetReachedAt: "2026-02-10T15:30:00.000Z",
+      thesisInvalidated: false,
+      firstTerminalEvent: "target",
+      maxPrice: 128.4,
+      minPrice: 93.1,
+      mfe: 14.2,
+      mae: 4.1,
+      mfeMaeUnit: "price",
+      status: "concluded",
+      dataSource: "ai",
+      notes: "Target hit 36 days after stop; thesis invalidation never reached.",
     },
   },
   analysis: {

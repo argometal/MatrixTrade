@@ -1,6 +1,8 @@
 import type { Trade } from "./types";
 import type { TradePlan } from "./plan-types";
 import type { TradeEvaluation } from "./trade-evaluation-types";
+import type { ObservationRecord } from "./observation-types";
+import type { LearningOutcome } from "./learning-outcome-types";
 import { computeRMultiple } from "./review";
 import type {
   MafFillStatus,
@@ -29,22 +31,25 @@ function resolveFillStatus(trade?: Trade, plan?: TradePlan): MafFillStatus {
       if (reason === "discipline" || reason === "other") return "cancelled";
       return "missed";
     }
+    if (plan.status === "expired") return "missed";
     if (plan.layeredEntry?.status === "missed") return "missed";
   }
   return "unknown";
 }
 
 /**
- * Assemble V1 measurable evidence from Trade + Plan + evaluation + post-stop study.
+ * Assemble measurable evidence from Trade + Plan + evaluation + observation + learning outcome.
  * Does not invent prices. Observation supplement only merges explicitly provided fields.
  */
 export function buildMafEvidence(input: {
   trade?: Trade;
   plan?: TradePlan;
   evaluation?: TradeEvaluation;
+  observationRecord?: ObservationRecord;
+  learningOutcome?: LearningOutcome;
   observation?: MafObservationSupplement;
 }): MafObservableEvidence {
-  const { trade, plan, evaluation, observation } = input;
+  const { trade, plan, evaluation, observationRecord, learningOutcome, observation } = input;
   const study = trade?.postStopStudy;
 
   const evidence: MafObservableEvidence = {
@@ -55,19 +60,35 @@ export function buildMafEvidence(input: {
     executedStop: trade?.stop,
     plannedTarget: plan?.targetPrice,
     executedTarget: trade?.target,
-    targetReachedAfterStop: study?.targetReached,
-    thesisInvalidated: study?.thesisInvalidated,
+    targetReachedAfterStop:
+      observationRecord?.targetReached ?? study?.targetReached,
+    thesisInvalidated:
+      observationRecord?.thesisInvalidated ?? study?.thesisInvalidated,
+    targetReachedAt: observationRecord?.targetReachedAt ?? study?.targetReachedAt,
+    invalidationReachedAt:
+      observationRecord?.invalidationReachedAt ?? study?.invalidationReachedAt,
+    firstTerminalEvent:
+      observationRecord?.firstTerminalEvent ?? study?.firstTerminalEvent,
+    mfe: observationRecord?.mfe ?? study?.mfe,
+    mae: observationRecord?.mae ?? study?.mae,
+    mfeMaeUnit: observationRecord?.mfeMaeUnit ?? study?.mfeMaeUnit,
+    betterEntryAvailable: observationRecord?.betterEntryAvailable,
+    betterEntryPrice: observationRecord?.betterEntryPrice,
     exitReason: trade?.exitReason,
     lossClassification: trade?.lossClassification,
     thesisOutcome: evaluation?.thesisOutcome,
     timingOutcome: evaluation?.timingOutcome,
     executionOutcome: evaluation?.executionOutcome,
+    learningOutcomeKind: learningOutcome?.kind,
+    observationId: observationRecord?.id,
     sources: {
       trade: Boolean(trade),
       plan: Boolean(plan),
       postStopStudy: Boolean(study),
       evaluation: Boolean(evaluation),
+      observationRecord: Boolean(observationRecord),
       observationSupplement: false,
+      learningOutcome: Boolean(learningOutcome),
     },
   };
 
@@ -95,9 +116,20 @@ export function buildMafEvidence(input: {
     }
   }
 
+  if (observationRecord?.targetReachedAt && observationRecord.startedAt) {
+    evidence.timeUntilTargetHours =
+      evidence.timeUntilTargetHours ??
+      hoursBetween(observationRecord.startedAt, observationRecord.targetReachedAt);
+  }
+  if (observationRecord?.invalidationReachedAt && observationRecord.startedAt) {
+    evidence.timeUntilInvalidationHours = hoursBetween(
+      observationRecord.startedAt,
+      observationRecord.invalidationReachedAt
+    );
+  }
+
   if (observation) {
-    const merged = mergeObservationSupplement(evidence, observation);
-    return merged;
+    return mergeObservationSupplement(evidence, observation);
   }
 
   return evidence;

@@ -100,16 +100,38 @@ V1 prioritizes fields that can be derived or explicitly supplied (never invented
 | `plannedEntry` / `executedEntry` | Plan + Trade |
 | `plannedStop` / `executedStop` | Plan + Trade |
 | `plannedTarget` / `executedTarget` | Plan + Trade |
-| `targetReachedAfterStop` | `PostStopStudy` |
-| `thesisInvalidated` | `PostStopStudy` / evaluation |
-| `timeUntilTargetHours` | Opened → close when exitReason=target (or supplied) |
-| `timeUntilInvalidationHours` | Supplied or observation |
+| `targetReachedAfterStop` | Observation / `PostStopStudy` |
+| `thesisInvalidated` | Observation / evaluation |
+| `targetReachedAt` / `invalidationReachedAt` | Observation (`observation-update`) |
+| `firstTerminalEvent` | Observation (deterministic when timestamps present) |
+| `timeUntilTargetHours` | Opened → close when exitReason=target (or observation) |
+| `timeUntilInvalidationHours` | Observation |
 | `mfe` / `mae` | Observation supplement (required if claimed) |
 | `rAchieved` | `computeRMultiple(trade)` |
 | `exitReason` | Trade close |
 | `betterEntryAvailable` | Observation (boolean + optional price) |
+| `learningOutcomeKind` | Learning Outcome (`LO-xxx`) |
 
 This is enough to begin component attribution.
+
+---
+
+## Learning Outcome + Observation (foundation)
+
+| Entity | Id | Role |
+|--------|-----|------|
+| **Learning Outcome** | `LO-{TICKER}-NNN` | `executed_win` \| `executed_loss` \| `missed_opportunity` \| `cancelled` \| `expired` |
+| **Observation** | `OBS-{TICKER}-NNN` | Post-fill or post-miss window — timestamps, MFE/MAE, first terminal event |
+| **MAF Experiment** | `MAF-{TICKER}-NNN` | Component attributions + rule hints |
+
+Auto hooks:
+
+- Trade close → Learning Outcome (+ Observation when loss / post-stop study)
+- Plan outcome (failed/expired/skipped) → Learning Outcome + Observation for miss path
+- `observation-update` Accept → patch Observation; conclude → ready_for_attribution
+- `attribution` Accept → link `mafExperimentId` on Learning Outcome
+
+Deterministic **rule hints** (e.g. stop hit ∧ target later ∧ thesis alive → `stop_too_tight`) are stored on the experiment as suggestions — not accepted attribution until human Accept.
 
 ---
 
@@ -160,7 +182,28 @@ This is enough to begin component attribution.
 }
 ```
 
-Apply stores/updates `data/maf-experiments.json`. Deterministic evidence is rebuilt from Trade + Plan + PostStopStudy + TradeEvaluation; `observation` only merges explicitly supplied numeric/boolean fields.
+Apply stores/updates `data/maf-experiments.json`. Deterministic evidence is rebuilt from Trade + Plan + Observation + Learning Outcome + PostStopStudy + TradeEvaluation; `observation` only merges explicitly supplied numeric/boolean fields.
+
+## AI Block — `observation-update`
+
+```json
+{
+  "type": "observation-update",
+  "proposal": {
+    "tradeId": "H001",
+    "targetReached": true,
+    "targetReachedAt": "2026-02-10T15:30:00.000Z",
+    "thesisInvalidated": false,
+    "firstTerminalEvent": "target",
+    "mfe": 14.2,
+    "mae": 4.1,
+    "mfeMaeUnit": "price",
+    "status": "concluded"
+  }
+}
+```
+
+Apply patches `data/observations.json`. Never invent timestamps or prices.
 
 ---
 
@@ -171,8 +214,10 @@ Apply stores/updates `data/maf-experiments.json`. Deterministic evidence is rebu
 | `Trade` | Financial truth (P/L, fill) |
 | `trade-review` | Human journal scores / mistakes — **not** MAF |
 | `TradeEvaluation` | Observation window / coarse outcomes (ADR-0002) |
-| `PostStopStudy` | Shadow path after stop — feeds MAF evidence |
-| **MAF** | Component attribution + improvement suggestions |
+| `PostStopStudy` | Shadow path after stop — seeds Observation |
+| **Learning Outcome** | Scout/Trade result kind (`LO-xxx`) including missed/cancelled/expired |
+| **Observation** | Measurable post-event path (`OBS-xxx`) |
+| **MAF** | Component attribution + rule hints + improvement suggestions |
 
 ---
 
@@ -195,6 +240,6 @@ Matrix should optimize the **decision pipeline**, not merely report historical t
 
 - Aggregated expectancy dashboards / Coach UI
 - Automatic Playbook mutation
-- Scout-only missed-opportunity object without a plan/trade link
-- Supabase persistence for MAF rows
+- Automatic market-feed MFE/MAE (manual/AI supply only for now)
+- Supabase persistence for MAF / Learning / Observation rows
 - Confidence calibration curves

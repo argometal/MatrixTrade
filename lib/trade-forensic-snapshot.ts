@@ -52,6 +52,7 @@ export const TRADE_FORENSIC_AI_REQUEST = [
   "- trade-update — attach planId, playbookId, lossClassification, postStopStudy, riskRewardPlanned",
   "- trade-review — supplement review fields if incomplete",
   "- attribution — MAF component attribution (evidence → which pipeline component dragged expectancy)",
+  "- observation-update — Observation Engine fields (targetReachedAt, MFE/MAE) — never invent prices",
   "Flag legacy gaps explicitly; suggest manual links only when human confirms.",
 ].join("\n");
 

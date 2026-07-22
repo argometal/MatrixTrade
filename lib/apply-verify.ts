@@ -48,6 +48,8 @@ export async function verifyApplyPersistence(
       return verifyTechnicalCalibrationPersistence(parsed);
     case "attribution":
       return verifyAttributionPersistence(parsed);
+    case "observation-update":
+      return verifyObservationUpdatePersistence(parsed);
     case "trade-proposal":
     case "trade-close":
     case "trade-review":
@@ -318,6 +320,28 @@ async function verifyAttributionPersistence(
   return {
     ok: true,
     detail: `MAF ${latest.id} verified · ${latest.attributions.length} components`,
+  };
+}
+
+async function verifyObservationUpdatePersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const p = parsed.proposal;
+  const { getObservationById, getObservationByTradeId, getObservationByPlanId } = await import(
+    "./observation-store"
+  );
+  const row =
+    (p.observationId || p.id
+      ? await getObservationById(String(p.observationId ?? p.id))
+      : undefined) ??
+    (p.tradeId ? await getObservationByTradeId(String(p.tradeId)) : undefined) ??
+    (p.planId ? await getObservationByPlanId(String(p.planId)) : undefined);
+  if (!row) {
+    return { ok: false, detail: "Observation not found after apply." };
+  }
+  return {
+    ok: true,
+    detail: `Observation ${row.id} verified · ${row.status}`,
   };
 }
 

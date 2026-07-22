@@ -22,11 +22,11 @@
 | Field | Value |
 |-------|-------|
 | **Priority** | HIGH |
-| **Status** | **V1 foundation shipped** (PR branch — merge pending) |
+| **Status** | **V1 foundation + Learning Outcome + Observation shipped** |
 | **Doc** | [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md) · [adr-0004-maf.md](adr-0004-maf.md) |
-| **Shipped** | `attribution` AI Block; deterministic evidence (`lib/maf-evidence.ts`); `data/maf-experiments.json`; Mechanics **rev 18**; forensic REQUEST allows attribution |
+| **Shipped** | `attribution` + `observation-update`; `LO-xxx` / `OBS-xxx` stores; auto hooks on trade close / plan outcome; deterministic rule hints; Mechanics **rev 19** |
 | **Components** | thesis · zone · entry · stop · execution · trade management · timing · capital allocation |
-| **Next** | Observation UX on closed trades; expectancy aggregation by component/Playbook; never invent prices in AI; keep `trade-review` separate from MAF |
+| **Next** | Observation UX on closed trades; expectancy aggregation by component/Playbook; market-feed MFE/MAE optional later |
 
 ---
 

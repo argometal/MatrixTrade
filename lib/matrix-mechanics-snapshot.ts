@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 18;
+export const MATRIX_MECHANICS_REVISION = 19;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -40,6 +40,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- trade-review — post-close quality + mistakes + lesson",
     "- analysis — qualitative notes on a trade",
     "- attribution — MAF component attribution (process quality ≠ P/L; never invent prices)",
+    "- observation-update — Observation Engine (target/invalidation timestamps, MFE/MAE)",
     "",
     "Method layer:",
     "- playbook-create / playbook-update",

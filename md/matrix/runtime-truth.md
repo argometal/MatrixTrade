@@ -108,7 +108,9 @@ Code: `lib/scout-case-trades.ts`, `lib/trades-ledger.ts`, `ScoutExecutePanel`.
 | `data/market-evidence.json` | Evidence stream (`ME-xxx`) |
 | `data/scoped-ai-grants.json` | Temporal AI grants |
 | `data/trade-evaluations.json` | Post-close evaluation records |
-| `data/maf-experiments.json` | MAF attribution experiments (V1) |
+| `data/maf-experiments.json` | MAF attribution experiments |
+| `data/learning-outcomes.json` | Learning Outcome (`LO-xxx`) — win/loss/miss/cancel/expire |
+| `data/observations.json` | Observation Engine (`OBS-xxx`) |
 | `data/setups.json` | Setup catalog |
 | `data/trades.json` | Used when not on Supabase |
 
@@ -130,9 +132,11 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | Piece | Status |
 |-------|--------|
 | Control → Update | Primary write path |
-| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 18** (MAF + `attribution` block) |
+| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 19** (Learning Outcome + Observation + MAF) |
 | **MTAE** | Control → **Technical analysis** + `technical-assessment` / `technical-calibration` Apply → `data/mtae-*.json` + Stock File patch |
-| **MAF** | Foundation — `attribution` Apply → `data/maf-experiments.json`; deterministic evidence from Trade+Plan+PostStopStudy+TradeEvaluation |
+| **MAF** | `attribution` Apply → `data/maf-experiments.json`; evidence from Trade+Plan+Observation+LearningOutcome; rule hints |
+| **Learning Outcome** | Auto on trade close / plan outcome → `data/learning-outcomes.json` (`LO-xxx`) |
+| **Observation** | Auto seed + `observation-update` Apply → `data/observations.json` (`OBS-xxx`) |
 | TF role presets | `data/mtae-timeframe-maps.json` (swing-6m, swing-3m, day-active) |
 | `lib/ai-context.ts` | Unified export builders |
 | Entry Solver vs Entry Optimization | Feasibility ceiling (`maximumEntry`) ≠ recommended entry |
@@ -143,7 +147,7 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 ### Apply-ready AI Block types
 
 Scouting: `stock-case-create`, `stock-case-delete`, `evidence-add`, `file-update`, `scout-plan-create`, `technical-assessment`, `technical-calibration`, `scout-assessment`, `decision-update`  
-Execution: `trade-proposal`, `trade-update`, `trade-close`, `trade-review`, `analysis`, `attribution`  
+Execution: `trade-proposal`, `trade-update`, `trade-close`, `trade-review`, `analysis`, `attribution`, `observation-update`  
 Method: `playbook-create`, `playbook-update`
 
 **Same-ticker new window:** `scout-plan-create` (not `stock-case-create`).  
@@ -166,13 +170,13 @@ Method: `playbook-create`, `playbook-update`
 
 ## What does NOT work / not built
 
-- Missed-opportunity outcome as first-class Learning Engine object (plan-linked miss via MAF evidence only)
 - Aggregated attribution dashboards / dimensional statistics Coach UI
+- Automatic market-feed MFE/MAE (supply via `observation-update` / forensic)
 - Bayesian automation (optional prior/posterior fields only)
 - Automatic Coach
 - Paid AI API integration
 - AI Session + QR path (disabled — see `lib/ai-session-disabled.ts`)
-- MAF confidence calibration / Supabase persistence for MAF rows
+- MAF confidence calibration / Supabase persistence for MAF / LO / OBS rows
 
 ---
 
@@ -201,6 +205,6 @@ Method: `playbook-create`, `playbook-update`
 
 ## Next coding phase
 
-Order per [v2-engine-architecture.md](v2-engine-architecture.md) / [building-backlog.md](building-backlog.md): **MAF observation UX + expectancy aggregation** (foundation shipped; dashboards next).
+Order: **expectancy aggregation by component/Playbook** + Observation UX on closed trades (foundation LO/OBS/MAF shipped).
 
 Do not reintroduce Control → Closed trade, Session, or Case labels. Do not bury Playbook under Mechanics brief.

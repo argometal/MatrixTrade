@@ -57,13 +57,20 @@ export type MafObservableEvidence = {
   thesisOutcome?: string;
   timingOutcome?: string;
   executionOutcome?: string;
+  learningOutcomeKind?: string;
+  observationId?: string;
+  firstTerminalEvent?: string;
+  targetReachedAt?: string;
+  invalidationReachedAt?: string;
   /** Keys present from deterministic code vs observation supplement. */
   sources: {
     trade?: boolean;
     plan?: boolean;
     postStopStudy?: boolean;
     evaluation?: boolean;
+    observationRecord?: boolean;
     observationSupplement?: boolean;
+    learningOutcome?: boolean;
   };
 };
 
@@ -99,10 +106,14 @@ export type MafExperiment = {
   planId?: string;
   playbookId?: string;
   evaluationId?: string;
+  learningOutcomeId?: string;
+  observationId?: string;
   ticker: string;
   status: MafExperimentStatus;
   evidence: MafObservableEvidence;
   attributions: MafComponentAttribution[];
+  /** Deterministic rule hints (not accepted attribution). */
+  ruleHints?: MafComponentAttribution[];
   summary?: string;
   primaryDragComponent?: MafComponentId;
   humanApproved?: boolean;

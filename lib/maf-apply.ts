@@ -2,6 +2,7 @@ import { getTradeById } from "./storage";
 import { getPlanById } from "./plans";
 import { getEvaluationByTradeId } from "./trade-evaluation";
 import { buildMafEvidence } from "./maf-evidence";
+import { inferMafRuleHints } from "./maf-inference";
 import {
   getMafExperimentById,
   getMafExperimentByTradeId,
@@ -11,6 +12,12 @@ import {
 } from "./maf-store";
 import { validateAttributionProposal } from "./maf-validate";
 import type { MafExperiment } from "./maf-types";
+import { getObservationByTradeId, getObservationByPlanId } from "./observation-store";
+import {
+  getLearningOutcomeByTradeId,
+  getLearningOutcomeByPlanId,
+} from "./learning-outcome-store";
+import { markLearningOutcomeAttributed } from "./learning-outcome";
 
 export async function applyAttribution(
   proposal: Record<string, unknown>
@@ -53,6 +60,13 @@ export async function applyAttribution(
   }
 
   const evaluation = tradeId ? await getEvaluationByTradeId(tradeId) : undefined;
+  const observationRecord =
+    (tradeId ? await getObservationByTradeId(tradeId) : undefined) ??
+    (plan?.id ? await getObservationByPlanId(plan.id) : undefined);
+  const learningOutcome =
+    (tradeId ? await getLearningOutcomeByTradeId(tradeId) : undefined) ??
+    (plan?.id ? await getLearningOutcomeByPlanId(plan.id) : undefined);
+
   const ticker = (
     trade?.ticker ??
     plan?.ticker ??
@@ -64,9 +78,12 @@ export async function applyAttribution(
     trade,
     plan,
     evaluation,
+    observationRecord,
+    learningOutcome,
     observation: value.observation,
   });
 
+  const ruleHints = inferMafRuleHints(evidence);
   const now = new Date().toISOString();
   const all = await getMafExperiments();
 
@@ -76,10 +93,13 @@ export async function applyAttribution(
     planId: plan?.id ?? trade?.planId ?? existing?.planId,
     playbookId: trade?.playbookId ?? plan?.playbookId ?? existing?.playbookId,
     evaluationId: evaluation?.id ?? existing?.evaluationId,
+    learningOutcomeId: learningOutcome?.id ?? existing?.learningOutcomeId,
+    observationId: observationRecord?.id ?? existing?.observationId,
     ticker,
     status: value.humanApproved ? "concluded" : "attributed",
     evidence,
     attributions: value.components,
+    ruleHints,
     summary: value.summary ?? existing?.summary,
     primaryDragComponent: value.primaryDragComponent ?? existing?.primaryDragComponent,
     humanApproved: value.humanApproved ?? existing?.humanApproved,
@@ -90,5 +110,10 @@ export async function applyAttribution(
   };
 
   await upsertMafExperiment(experiment);
+
+  if (learningOutcome?.id) {
+    await markLearningOutcomeAttributed(learningOutcome.id, experiment.id);
+  }
+
   return { experiment };
 }

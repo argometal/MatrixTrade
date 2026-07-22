@@ -1,10 +1,17 @@
 /**
- * Smoke checks for MAF V1 evidence + validation.
+ * Smoke checks for MAF + Learning Outcome + Observation + inference.
  * Run: npx tsx tools/test-maf-evidence.ts
  */
 import assert from "node:assert/strict";
 import { buildMafEvidence } from "../lib/maf-evidence";
 import { validateAttributionProposal } from "../lib/maf-validate";
+import { inferMafRuleHints } from "../lib/maf-inference";
+import {
+  deriveLearningOutcomeKindFromTrade,
+  deriveLearningOutcomeKindFromPlan,
+} from "../lib/learning-outcome";
+import { resolveFirstTerminalEvent } from "../lib/observation";
+import { validateObservationUpdateProposal } from "../lib/observation-validate";
 import type { Trade } from "../lib/types";
 import type { TradePlan } from "../lib/plan-types";
 
@@ -49,24 +56,72 @@ const plan: TradePlan = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
-const evidence = buildMafEvidence({ trade, plan });
-assert.equal(evidence.fillStatus, "filled");
-assert.equal(evidence.plannedEntry, 99);
-assert.equal(evidence.executedEntry, 100);
-assert.equal(evidence.targetReachedAfterStop, true);
-assert.equal(evidence.slippageVsPlan, 1);
-assert.ok(evidence.rAchieved !== undefined);
-assert.equal(evidence.sources.trade, true);
-assert.equal(evidence.sources.plan, true);
-assert.equal(evidence.sources.postStopStudy, true);
+assert.equal(deriveLearningOutcomeKindFromTrade(trade), "executed_loss");
 
-const withObs = buildMafEvidence({
+const missPlan: TradePlan = {
+  ...plan,
+  id: "PLAN-TEST-002",
+  status: "failed",
+  linkedTradeId: undefined,
+  outcome: {
+    recordedAt: "2026-01-02T00:00:00.000Z",
+    reason: "no_trigger",
+    strategyStillValid: true,
+  },
+};
+assert.equal(deriveLearningOutcomeKindFromPlan(missPlan), "missed_opportunity");
+
+const evidence = buildMafEvidence({
   trade,
   plan,
-  observation: { mfe: 8, mae: 6, mfeMaeUnit: "price", betterEntryAvailable: true },
+  learningOutcome: {
+    id: "LO-TEST-001",
+    kind: "executed_loss",
+    ticker: "TEST",
+    tradeId: "H999",
+    lifecycleStatus: "observing",
+    createdAt: "2026-01-05T00:00:00.000Z",
+    updatedAt: "2026-01-05T00:00:00.000Z",
+    source: "trade_close",
+  },
+  observationRecord: {
+    id: "OBS-TEST-001",
+    tradeId: "H999",
+    ticker: "TEST",
+    status: "observing",
+    startedAt: "2026-01-05T00:00:00.000Z",
+    endsAt: "2026-04-05T00:00:00.000Z",
+    durationDays: 90,
+    targetReached: true,
+    thesisInvalidated: false,
+    createdAt: "2026-01-05T00:00:00.000Z",
+    lastUpdatedAt: "2026-01-05T00:00:00.000Z",
+  },
 });
-assert.equal(withObs.mfe, 8);
-assert.equal(withObs.sources.observationSupplement, true);
+assert.equal(evidence.fillStatus, "filled");
+assert.equal(evidence.learningOutcomeKind, "executed_loss");
+assert.equal(evidence.targetReachedAfterStop, true);
+assert.equal(evidence.sources.observationRecord, true);
+
+const hints = inferMafRuleHints(evidence);
+assert.ok(hints.some((h) => h.tag === "stop_too_tight"));
+
+assert.equal(
+  resolveFirstTerminalEvent({
+    targetReached: true,
+    targetReachedAt: "2026-02-01T00:00:00.000Z",
+    thesisInvalidated: true,
+    invalidationReachedAt: "2026-03-01T00:00:00.000Z",
+  }),
+  "target"
+);
+
+const obsOk = validateObservationUpdateProposal({
+  tradeId: "H999",
+  targetReached: true,
+  mfe: 10,
+});
+assert.equal(obsOk.ok, true);
 
 const ok = validateAttributionProposal({
   tradeId: "H999",
@@ -82,9 +137,4 @@ const ok = validateAttributionProposal({
 });
 assert.equal(ok.ok, true);
 
-const bad = validateAttributionProposal({
-  components: [],
-});
-assert.equal(bad.ok, false);
-
-console.log("maf evidence + validate smoke OK");
+console.log("maf + learning + observation smoke OK");

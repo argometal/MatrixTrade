@@ -42,6 +42,8 @@ function actionLabel(type: TradingInboxPayload["type"]): string {
       return "Review trade";
     case "attribution":
       return "Attribute experiment";
+    case "observation-update":
+      return "Update observation";
     case "analysis":
       return "Add analysis";
     case "decision-update":
@@ -200,6 +202,20 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
           tone: "risk",
         });
       }
+      break;
+    }
+    case "observation-update": {
+      fields.push({
+        label: "Target",
+        value: String(p.observationId ?? p.tradeId ?? p.planId ?? p.id ?? "—").toUpperCase(),
+        tone: "accent",
+      });
+      if (p.targetReached !== undefined) {
+        fields.push({ label: "Target reached", value: String(p.targetReached) });
+      }
+      if (p.mfe !== undefined) fields.push({ label: "MFE", value: String(p.mfe) });
+      if (p.mae !== undefined) fields.push({ label: "MAE", value: String(p.mae), tone: "risk" });
+      if (p.status) fields.push({ label: "Status", value: String(p.status) });
       break;
     }
     default:

@@ -256,6 +256,17 @@ export async function closeTrade(
   await syncObsidianTradeIfLocal(withStudy, rules);
   await startObservationForTrade(withStudy);
 
+  try {
+    const { upsertLearningOutcomeFromTradeClose } = await import("./learning-outcome");
+    const { startObservationForTradeClose } = await import("./observation");
+    const learning = await upsertLearningOutcomeFromTradeClose(withStudy);
+    if (learning && (learning.kind === "executed_loss" || withStudy.postStopStudy)) {
+      await startObservationForTradeClose(withStudy, { learningOutcomeId: learning.id });
+    }
+  } catch {
+    // Learning/observation stores are best-effort — never block trade close.
+  }
+
   return { trade: withStudy };
 }
 

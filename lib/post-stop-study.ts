@@ -68,9 +68,16 @@ export function formatPostStopStudySection(study: PostStopStudy): string {
   if (study.targetReached !== undefined) {
     lines.push(`target_reached:${study.targetReached ? "yes" : "no"}`);
   }
+  if (study.targetReachedAt) lines.push(`target_reached_at:${study.targetReachedAt}`);
   if (study.thesisInvalidated !== undefined) {
     lines.push(`thesis_invalidated:${study.thesisInvalidated ? "yes" : "no"}`);
   }
+  if (study.invalidationReachedAt) {
+    lines.push(`invalidation_reached_at:${study.invalidationReachedAt}`);
+  }
+  if (study.firstTerminalEvent) lines.push(`first_terminal:${study.firstTerminalEvent}`);
+  if (study.mfe !== undefined) lines.push(`mfe:${study.mfe}${study.mfeMaeUnit ? `_${study.mfeMaeUnit}` : ""}`);
+  if (study.mae !== undefined) lines.push(`mae:${study.mae}${study.mfeMaeUnit ? `_${study.mfeMaeUnit}` : ""}`);
   if (study.notes) lines.push(`notes:${study.notes.replace(/\s+/g, " ").slice(0, 200)}`);
   return lines.join("\n");
 }

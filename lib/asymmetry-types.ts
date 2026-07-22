@@ -73,7 +73,17 @@ export interface PostStopStudy {
   maxPriceAfterStop?: number;
   minPriceAfterStop?: number;
   targetReached?: boolean;
+  /** ISO timestamp when target was observed after stop. */
+  targetReachedAt?: string;
   thesisInvalidated?: boolean;
+  /** ISO timestamp when invalidation was observed. */
+  invalidationReachedAt?: string;
+  /** Which terminal event happened first in the observation window. */
+  firstTerminalEvent?: "target" | "invalidation" | "window_end" | "none" | "inconclusive";
+  /** Max favorable / adverse excursion (optional; unit in mfeMaeUnit). */
+  mfe?: number;
+  mae?: number;
+  mfeMaeUnit?: "price" | "r";
   classifiedAt?: string;
   notes?: string;
 }
