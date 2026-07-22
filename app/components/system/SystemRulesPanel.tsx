@@ -7,6 +7,9 @@ import type { ExperimentRules } from "@/lib/types";
 export function SystemRulesPanel({ rules }: { rules: ExperimentRules }) {
   const [monthlyLimit, setMonthlyLimit] = useState(String(rules.monthlyLossLimit));
   const [perStockLimit, setPerStockLimit] = useState(String(rules.maxLossPerTicker));
+  const [defaultRiskBudget, setDefaultRiskBudget] = useState(
+    String(rules.defaultRiskBudget ?? 100)
+  );
   const [carryoverEnabled, setCarryoverEnabled] = useState(rules.carryoverEnabled !== false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -21,6 +24,7 @@ export function SystemRulesPanel({ rules }: { rules: ExperimentRules }) {
     const formData = new FormData();
     formData.set("monthlyLossLimit", monthlyLimit);
     formData.set("maxLossPerTicker", perStockLimit);
+    formData.set("defaultRiskBudget", defaultRiskBudget);
     if (carryoverEnabled) {
       formData.set("carryoverEnabled", "on");
     }
@@ -39,8 +43,9 @@ export function SystemRulesPanel({ rules }: { rules: ExperimentRules }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <p className="text-sm text-zinc-400">
         Monthly base cap rolls unused room from prior calendar months when carryover is enabled.
-        Per-stock cap applies to cumulative loss per ticker. There is no trade-count limit — the
-        lab accumulates all useful data.
+        Per-stock cap applies to cumulative loss per ticker. Default risk budget is the usual
+        monetary risk for one full trade / layered plan (editable default — not a hard market
+        rule). There is no trade-count limit — the lab accumulates all useful data.
       </p>
 
       <label className="flex items-start gap-3 rounded-lg border border-zinc-800 bg-zinc-950/50 px-4 py-3">
@@ -84,6 +89,22 @@ export function SystemRulesPanel({ rules }: { rules: ExperimentRules }) {
             className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
           />
           <span className="mt-1 block text-xs text-zinc-500">Negative, e.g. -250</span>
+        </label>
+
+        <label className="block text-sm sm:col-span-2">
+          <span className="font-medium text-zinc-300">Default risk budget per trade (USD)</span>
+          <input
+            type="number"
+            step="1"
+            min="1"
+            value={defaultRiskBudget}
+            onChange={(e) => setDefaultRiskBudget(e.target.value)}
+            className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+          />
+          <span className="mt-1 block text-xs text-zinc-500">
+            Positive USD — migration default 100. Used when a layered plan sets risk_percent sizing
+            without an explicit authorizedRiskAmount. Does not replace monthly caps.
+          </span>
         </label>
       </div>
 

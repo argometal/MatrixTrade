@@ -2,6 +2,7 @@
   "monthlyLossLimit": -300,
   "carryoverEnabled": true,
   "maxLossPerTicker": -250,
+  "defaultRiskBudget": 100,
   "obsidianVault": "TradingVault",
   "obsidianVaultPath": "vault",
   "tradesFolder": "Trades"

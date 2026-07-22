@@ -3,9 +3,12 @@ import { computePlannedRR, resolvePlannedRRFromPlan } from "./plan-risk";
 import {
   buildLayeredEntryScenarios,
   getHighestLimitPrice,
+  projectFillStates,
   type LayeredEntryScenario,
 } from "./layered-entry";
 import type { LayeredEntryPlan } from "./layered-entry-types";
+import { LAYER_ROLE_LABELS } from "./layered-entry-types";
+import type { LayeredFillStateProjection } from "./layered-entry-risk";
 import {
   formatStockThesisZone,
   type StockThesis,
@@ -45,6 +48,9 @@ export interface PlanLevelsView {
     highestLimit?: number;
     /** R:R at each scenario when stop/target known */
     scenarioRR?: Array<{ label: string; rr?: number }>;
+    fillStates?: LayeredFillStateProjection[];
+    sizingModeLabel?: string;
+    stopModelLabel?: string;
   };
 }
 
@@ -106,26 +112,54 @@ function buildRowsFromLevels(levels: StockThesisLevels): PlanLevelRow[] {
   return rows;
 }
 
+function allocLabel(plan: LayeredEntryPlan, percent: number): string {
+  const mode = plan.sizingMode ?? "position_percent";
+  return mode === "risk_percent" ? `${percent}% risk` : `${percent}% position`;
+}
+
 function buildRowsFromPlan(plan: TradePlan): PlanLevelRow[] {
   const rows: PlanLevelRow[] = [];
 
-  if (plan.targetPrice !== undefined) {
+  if (plan.targetPrice !== undefined || plan.layeredEntry?.primaryTargetPrice !== undefined) {
     rows.push({
       kind: "target",
-      label: "Target",
-      value: formatPrice(plan.targetPrice),
+      label: "Primary target",
+      value: formatPrice(plan.layeredEntry?.primaryTargetPrice ?? plan.targetPrice),
       emphasis: "success",
+    });
+  }
+
+  if (plan.layeredEntry?.authorizedRiskAmount !== undefined) {
+    rows.push({
+      kind: "entry",
+      label: "Authorized risk",
+      value: `$${plan.layeredEntry.authorizedRiskAmount.toFixed(0)}`,
+      detail: `Sizing: ${plan.layeredEntry.sizingMode ?? "position_percent"} · Stop: ${plan.layeredEntry.stopModel ?? "common"}`,
+      emphasis: "muted",
     });
   }
 
   if (plan.layeredEntry?.limits.length) {
     for (const [index, limit] of plan.layeredEntry.limits.entries()) {
       const filled = limit.filled ? " · filled" : "";
+      const role = limit.role ? LAYER_ROLE_LABELS[limit.role] : `Limit ${index + 1}`;
+      const rr = limit.derived?.rr;
+      const risk$ = limit.derived?.plannedRiskAmount;
+      const stop = limit.stopPrice ?? plan.layeredEntry.commonStopPrice ?? plan.stopPrice;
       rows.push({
         kind: "limit",
-        label: `Limit ${index + 1}`,
+        label: role,
         value: formatPrice(limit.price),
-        detail: `${limit.allocationPercent}% capital${filled}`,
+        detail: [
+          allocLabel(plan.layeredEntry, limit.allocationPercent),
+          stop !== undefined ? `stop ${formatPrice(stop)}` : null,
+          rr !== undefined ? `${rr.toFixed(2)}R` : null,
+          risk$ !== undefined ? `risk $${risk$.toFixed(0)}` : null,
+          limit.confidence ? limit.confidence : null,
+          filled.trim() || null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
         emphasis: limit.filled ? "success" : index === 0 ? "primary" : "muted",
       });
     }
@@ -147,12 +181,15 @@ function buildRowsFromPlan(plan: TradePlan): PlanLevelRow[] {
     });
   }
 
-  if (plan.stopPrice !== undefined) {
+  if (plan.stopPrice !== undefined || plan.layeredEntry?.commonStopPrice !== undefined) {
     rows.push({
       kind: "stop",
-      label: "Strategy stop",
-      value: formatPrice(plan.stopPrice),
-      detail: "Entry strategy stop — used for planned R:R",
+      label:
+        (plan.layeredEntry?.stopModel ?? "common") === "common"
+          ? "Common stop"
+          : "Strategy stop",
+      value: formatPrice(plan.layeredEntry?.commonStopPrice ?? plan.stopPrice),
+      detail: "Human/AI structural proposal — used for planned R:R",
       emphasis: "danger",
     });
   }
@@ -221,11 +258,33 @@ export function buildPlanLevelsView(
               return { label: s.label, rr: computed?.rr };
             })
         : undefined;
+
+    let fillStates: LayeredFillStateProjection[] | undefined;
+    const le = plan.layeredEntry;
+    if (
+      le.authorizedRiskAmount !== undefined &&
+      (le.primaryTargetPrice ?? plan.targetPrice) !== undefined &&
+      (le.commonStopPrice ?? plan.stopPrice) !== undefined
+    ) {
+      fillStates = projectFillStates({
+        limits: le.limits,
+        primaryTargetPrice: le.primaryTargetPrice ?? plan.targetPrice!,
+        authorizedRiskAmount: le.authorizedRiskAmount,
+        stopModel: le.stopModel ?? "common",
+        commonStopPrice: le.commonStopPrice ?? plan.stopPrice,
+        sizingMode: le.sizingMode ?? "position_percent",
+        noChase: true,
+      });
+    }
+
     layeredEntry = {
       plan: plan.layeredEntry,
       scenarios,
       highestLimit: getHighestLimitPrice(plan.layeredEntry),
       scenarioRR,
+      fillStates,
+      sizingModeLabel: le.sizingMode ?? "position_percent",
+      stopModelLabel: le.stopModel ?? "common",
     };
   }
 

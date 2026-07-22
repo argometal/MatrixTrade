@@ -1,6 +1,5 @@
 import type { StockThesisRiskRules } from "./stock-thesis-types";
 import type { TradePlan } from "./plan-types";
-import { computeLayeredAverageEntry } from "./layered-entry-types";
 
 export interface PlannedRRResult {
   risk: number;

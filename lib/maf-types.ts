@@ -38,6 +38,18 @@ export type MafObservableEvidence = {
   executedStop?: number;
   plannedTarget?: number;
   executedTarget?: number;
+  /** Layered entry fill state for execution attribution. */
+  layeredEntryStatus?: string;
+  layeredFillPercent?: number;
+  layeredAverageEntry?: number;
+  layeredEntryImprovementVsFirst?: number;
+  layeredRiskUsedAmount?: number;
+  layeredAuthorizedRiskAmount?: number;
+  layeredBlendedRR?: number;
+  layeredCombinedRR?: number;
+  layeredSizingMode?: string;
+  layeredStopModel?: string;
+  layeredLimitsFilled?: number;
   /** Target reached after stop (post-stop study). */
   targetReachedAfterStop?: boolean;
   thesisInvalidated?: boolean;

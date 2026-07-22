@@ -1,20 +1,19 @@
 # Risk-Weighted Layered Entry — architectural proposal
 
-**Status:** Playbook experiment (2026-07-12)  
-**Layer:** Playbook — `risk-weighted-layered-entry`  
-**Scope:** Execution only — NOT stock-specific, NOT engine rule  
-**Related:** [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md) (capital-split layered entry)
+**Status:** Engine-supported (2026-07-22) — use `sizingMode: "risk_percent"` + `authorizedRiskAmount` on Scout `layeredEntry`  
+**Layer:** Playbook — `risk-weighted-layered-entry` + Scout risk calc (`lib/layered-entry-risk.ts`)  
+**Scope:** Execution only — NOT stock-specific thesis generation  
+**Related:** [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md)
 
-> **Experimento de Playbook — no regla del motor.**  
-> Esta hipótesis vive solo en el Playbook Lab. No modifica Stock File, Tesis, invalidación estructural, decisión Scout ni Trade review.
+> Human/AI propose levels. Matrix sizes by authorized monetary risk. Default budget = `rules.defaultRiskBudget` (migration default USD 100 — editable).
 
 ---
 
 ## Executive summary
 
-**Risk-Weighted Layered Entry** allocates a fixed **1R risk budget** across multiple entry layers by **expectancy weight**, not equal capital split. A **single common stop** (structural invalidation) governs all layers. Position sizing per layer is computed so that, if stopped with all layers filled, total loss equals exactly **1R**. If only Layer 1 fills, realized risk is only **0.30R**.
+**Risk-Weighted Layered Entry** allocates a fixed **monetary risk budget** across multiple entry layers by **expectancy weight**, not equal capital split. A **single common stop** (preferred) or explicit **per-layer stops** govern risk. Position sizing per layer is computed so that, if stopped with all layers filled, total loss stays inside **authorizedRiskAmount**. If only Layer 1 fills, realized risk is only that layer’s share.
 
-This differs from the existing `layered-entry` experiment, which splits **100% capital** across limits to improve **average entry price** while keeping total dollar risk constant. Risk-weighted entry optimizes **where risk is consumed** — more R at higher-expectancy locations — not average price.
+This extends the capital-split `layered-entry` experiment: `allocationPercent` still sums to 100%, but under `risk_percent` it means **risk share**, not blindly capital share.
 
 ---
 

@@ -5,6 +5,8 @@ import type { DecisionVerdict } from "./scout-decision-types";
 import {
   authorizeLayeredEntry,
   parseLayeredEntryInput,
+  recomputeLayeredEntryPlan,
+  validateLayeredEntry,
 } from "./layered-entry";
 import {
   createInitialScoutPlan,
@@ -209,8 +211,33 @@ export async function updatePlanTacticsFromProposal(
     const layered = parseLayeredEntryInput(proposal.layeredEntry);
     if (!layered) errors.push("proposal.layeredEntry must be a valid layered entry object");
     else {
-      updated.layeredEntry = authorizeLayeredEntry(layered);
-      updated.executionMethod = layered.executionMethod;
+      const structureErrors = validateLayeredEntry(layered);
+      if (structureErrors.length) {
+        errors.push(...structureErrors);
+      } else {
+        const authorized = authorizeLayeredEntry(layered, {
+          primaryTargetPrice: layered.primaryTargetPrice ?? updated.targetPrice ?? plan.targetPrice,
+          planStopPrice: layered.commonStopPrice ?? updated.stopPrice ?? plan.stopPrice,
+        });
+        // When risk authorization present, reject plans that fail hard risk validation
+        if (authorized.authorizedRiskAmount !== undefined && authorized.primaryTargetPrice !== undefined) {
+          const { errors: riskErrors } = recomputeLayeredEntryPlan(authorized, {
+            primaryTargetPrice: authorized.primaryTargetPrice,
+            planStopPrice: authorized.commonStopPrice ?? updated.stopPrice ?? plan.stopPrice,
+            authorizedRiskAmount: authorized.authorizedRiskAmount,
+          });
+          if (riskErrors.length) errors.push(...riskErrors.map((e) => `layeredEntry: ${e}`));
+        }
+        // Reject forged client R: always persist recomputed derived (authorize already recomputes)
+        updated.layeredEntry = authorized;
+        updated.executionMethod = layered.executionMethod;
+        if (authorized.primaryTargetPrice !== undefined) {
+          updated.targetPrice = authorized.primaryTargetPrice;
+        }
+        if (authorized.commonStopPrice !== undefined && (authorized.stopModel ?? "common") === "common") {
+          updated.stopPrice = authorized.commonStopPrice;
+        }
+      }
     }
   }
 

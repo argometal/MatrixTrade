@@ -91,6 +91,12 @@ export interface ExperimentRules {
   carryoverEnabled?: boolean;
   /** Max cumulative loss per ticker across all trades (negative USD). */
   maxLossPerTicker: number;
+  /**
+   * Default monetary risk budget for a full trade / layered plan (USD).
+   * Migration default 100 — editable; not a permanent hard rule.
+   * Does not replace monthlyLossLimit.
+   */
+  defaultRiskBudget?: number;
   obsidianVault: string;
   obsidianVaultPath: string;
   tradesFolder: string;

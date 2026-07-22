@@ -77,27 +77,59 @@ export function PlanLevelsBoard({
           <p className="text-xs font-semibold uppercase tracking-wide text-teal-400">
             Entry ladder · no chase
           </p>
+          <p className="mt-1 text-[11px] text-zinc-500">
+            Levels proposed by human/AI · Matrix calculates R and risk only
+            {view.layeredEntry.stopModelLabel
+              ? ` · stop ${view.layeredEntry.stopModelLabel}`
+              : ""}
+            {view.layeredEntry.sizingModeLabel
+              ? ` · ${view.layeredEntry.sizingModeLabel}`
+              : ""}
+          </p>
           {view.layeredEntry.highestLimit !== undefined ? (
             <p className="mt-1 text-xs text-amber-200/80">
-              Miss {`$${view.layeredEntry.highestLimit.toFixed(2)}`} (highest limit) = trade cancelled
+              Miss {`$${view.layeredEntry.highestLimit.toFixed(2)}`} (highest limit) = trade
+              cancelled
             </p>
           ) : null}
-          <ul className="mt-3 space-y-1 text-xs text-zinc-400">
-            {view.layeredEntry.scenarios.map((scenario) => {
-              const rrRow = view.layeredEntry?.scenarioRR?.find((r) => r.label === scenario.label);
-              return (
-                <li key={scenario.label} className="flex justify-between gap-3">
-                  <span>{scenario.label}</span>
+          {view.layeredEntry.fillStates && view.layeredEntry.fillStates.length > 0 ? (
+            <ul className="mt-3 space-y-1 text-xs text-zinc-400">
+              {view.layeredEntry.fillStates.map((state) => (
+                <li key={state.label} className="flex justify-between gap-3">
+                  <span>{state.label}</span>
                   <span className="font-mono text-zinc-500">
-                    {scenario.limitsFilled > 0
-                      ? `≈ $${scenario.averageEntry.toFixed(2)}`
+                    {state.limitsFilled > 0
+                      ? `avg $${state.averageEntry.toFixed(2)} · risk $${state.monetaryRisk.toFixed(0)}`
                       : "—"}
-                    {rrRow?.rr !== undefined ? ` · ${rrRow.rr.toFixed(1)}R` : ""}
+                    {state.blendedRR !== undefined
+                      ? ` · ${state.blendedRR.toFixed(1)}R`
+                      : state.combinedRR !== undefined || state.portfolioRR !== undefined
+                        ? ` · ${(state.combinedRR ?? state.portfolioRR)!.toFixed(1)}R combined`
+                        : ""}
                   </span>
                 </li>
-              );
-            })}
-          </ul>
+              ))}
+            </ul>
+          ) : (
+            <ul className="mt-3 space-y-1 text-xs text-zinc-400">
+              {view.layeredEntry.scenarios.map((scenario) => {
+                const rrRow = view.layeredEntry?.scenarioRR?.find(
+                  (r) => r.label === scenario.label
+                );
+                return (
+                  <li key={scenario.label} className="flex justify-between gap-3">
+                    <span>{scenario.label}</span>
+                    <span className="font-mono text-zinc-500">
+                      {scenario.limitsFilled > 0
+                        ? `≈ $${scenario.averageEntry.toFixed(2)}`
+                        : "—"}
+                      {rrRow?.rr !== undefined ? ` · ${rrRow.rr.toFixed(1)}R` : ""}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       ) : null}
 

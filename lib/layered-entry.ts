@@ -2,14 +2,31 @@ import type { TradePlan } from "./plan-types";
 import type { Playbook } from "./playbook-types";
 import {
   computeLayeredAverageEntry,
+  type EntryConfidence,
+  type LayerRole,
+  type LayerSizingMode,
   type LayeredEntryLimit,
   type LayeredEntryPlan,
+  type LayeredEntryProposalSource,
   type LayeredEntryStatus,
+  type StopModel,
 } from "./layered-entry-types";
+import {
+  DEFAULT_RISK_BUDGET_USD,
+  recomputeLayeredEntryPlan,
+} from "./layered-entry-risk";
 
 export type LayeredEntryInput = {
   executionMethod: LayeredEntryPlan["executionMethod"];
   limits: LayeredEntryLimit[];
+  stopModel?: StopModel;
+  commonStopPrice?: number;
+  primaryTargetPrice?: number;
+  authorizedRiskAmount?: number;
+  currency?: "USD";
+  sizingMode?: LayerSizingMode;
+  cancelConditions?: string[];
+  proposalSource?: LayeredEntryProposalSource;
 };
 
 export type LayeredEntryUpdateInput = {
@@ -33,6 +50,15 @@ const VALID_TRANSITIONS: Record<LayeredEntryStatus, LayeredEntryStatus[]> = {
   cancelled: [],
 };
 
+const LAYER_ROLES: LayerRole[] = [
+  "starter",
+  "preferred",
+  "deep_pullback",
+  "confirmation",
+  "custom",
+];
+const CONFIDENCES: EntryConfidence[] = ["low", "medium", "high"];
+
 function parseLimit(raw: unknown): LayeredEntryLimit | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
   const obj = raw as Record<string, unknown>;
@@ -41,8 +67,44 @@ function parseLimit(raw: unknown): LayeredEntryLimit | null {
   if (!Number.isFinite(price) || price <= 0) return null;
   if (!Number.isFinite(allocationPercent) || allocationPercent <= 0) return null;
   const limit: LayeredEntryLimit = { price, allocationPercent };
+  if (typeof obj.id === "string" && obj.id.trim()) limit.id = obj.id.trim();
   if (obj.filled === true || obj.filled === "true") limit.filled = true;
+  if (obj.stopPrice !== undefined) {
+    const stop = Number(obj.stopPrice);
+    if (Number.isFinite(stop)) limit.stopPrice = stop;
+  }
+  if (typeof obj.role === "string" && LAYER_ROLES.includes(obj.role as LayerRole)) {
+    limit.role = obj.role as LayerRole;
+  }
+  if (
+    typeof obj.confidence === "string" &&
+    CONFIDENCES.includes(obj.confidence as EntryConfidence)
+  ) {
+    limit.confidence = obj.confidence as EntryConfidence;
+  }
+  if (typeof obj.rationale === "string") limit.rationale = obj.rationale;
+  if (typeof obj.structuralBasis === "string") limit.structuralBasis = obj.structuralBasis;
+  if (typeof obj.uncertaintyNote === "string") limit.uncertaintyNote = obj.uncertaintyNote;
+  if (obj.fillPrice !== undefined) {
+    const fp = Number(obj.fillPrice);
+    if (Number.isFinite(fp)) limit.fillPrice = fp;
+  }
+  if (obj.filledQuantity !== undefined) {
+    const fq = Number(obj.filledQuantity);
+    if (Number.isFinite(fq)) limit.filledQuantity = fq;
+  }
+  // Intentionally ignore client `derived` — recomputed server-side.
   return limit;
+}
+
+function parseProposalSource(raw: unknown): LayeredEntryProposalSource | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const obj = raw as Record<string, unknown>;
+  return {
+    human: obj.human === true,
+    ai: obj.ai === true,
+    validatedByHuman: obj.validatedByHuman === true,
+  };
 }
 
 export function parseLayeredEntryInput(raw: unknown): LayeredEntryInput | undefined {
@@ -57,10 +119,37 @@ export function parseLayeredEntryInput(raw: unknown): LayeredEntryInput | undefi
   const limits = limitsRaw.map(parseLimit).filter((l): l is LayeredEntryLimit => l !== null);
   if (limits.length === 0) return undefined;
 
-  return {
+  const input: LayeredEntryInput = {
     executionMethod: method as LayeredEntryPlan["executionMethod"],
     limits,
   };
+
+  if (obj.stopModel === "common" || obj.stopModel === "per_layer") {
+    input.stopModel = obj.stopModel;
+  }
+  if (obj.sizingMode === "position_percent" || obj.sizingMode === "risk_percent") {
+    input.sizingMode = obj.sizingMode;
+  }
+  if (obj.commonStopPrice !== undefined) {
+    const v = Number(obj.commonStopPrice);
+    if (Number.isFinite(v)) input.commonStopPrice = v;
+  }
+  if (obj.primaryTargetPrice !== undefined) {
+    const v = Number(obj.primaryTargetPrice);
+    if (Number.isFinite(v)) input.primaryTargetPrice = v;
+  }
+  if (obj.authorizedRiskAmount !== undefined) {
+    const v = Number(obj.authorizedRiskAmount);
+    if (Number.isFinite(v)) input.authorizedRiskAmount = v;
+  }
+  if (obj.currency === "USD") input.currency = "USD";
+  if (Array.isArray(obj.cancelConditions)) {
+    input.cancelConditions = obj.cancelConditions.filter((c): c is string => typeof c === "string");
+  }
+  const source = parseProposalSource(obj.proposalSource);
+  if (source) input.proposalSource = source;
+
+  return input;
 }
 
 export function validateLayeredEntry(input: LayeredEntryInput): string[] {
@@ -84,15 +173,60 @@ export function validateLayeredEntry(input: LayeredEntryInput): string[] {
   return errors;
 }
 
-export function authorizeLayeredEntry(input: LayeredEntryInput): LayeredEntryPlan {
+export function authorizeLayeredEntry(
+  input: LayeredEntryInput,
+  ctx?: {
+    primaryTargetPrice?: number;
+    planStopPrice?: number;
+    defaultRiskBudget?: number;
+  }
+): LayeredEntryPlan {
   const firstLimitPrice = input.limits[0]?.price;
-  return {
+  const hasExplicitRisk =
+    input.authorizedRiskAmount !== undefined || input.sizingMode === "risk_percent";
+  const stopModel = input.stopModel ?? "common";
+  const sizingMode = input.sizingMode ?? "position_percent";
+
+  const base: LayeredEntryPlan = {
     executionMethod: input.executionMethod,
     limits: input.limits.map((l) => ({ ...l })),
     noChase: true,
     status: "planned",
     firstLimitPrice,
+    stopModel,
+    sizingMode,
+    commonStopPrice: input.commonStopPrice ?? ctx?.planStopPrice,
+    primaryTargetPrice: input.primaryTargetPrice ?? ctx?.primaryTargetPrice,
+    currency: input.currency ?? "USD",
+    cancelConditions: input.cancelConditions,
+    proposalSource: input.proposalSource,
   };
+
+  // Do not infer authorized risk on legacy capital-split plans.
+  if (hasExplicitRisk) {
+    base.authorizedRiskAmount =
+      input.authorizedRiskAmount ?? ctx?.defaultRiskBudget ?? DEFAULT_RISK_BUDGET_USD;
+  } else if (input.authorizedRiskAmount !== undefined) {
+    base.authorizedRiskAmount = input.authorizedRiskAmount;
+  }
+
+  if (
+    base.primaryTargetPrice !== undefined &&
+    base.authorizedRiskAmount !== undefined &&
+    (base.commonStopPrice !== undefined ||
+      base.stopModel === "per_layer" ||
+      base.limits.some((l) => l.stopPrice !== undefined))
+  ) {
+    const { plan } = recomputeLayeredEntryPlan(base, {
+      primaryTargetPrice: base.primaryTargetPrice,
+      planStopPrice: base.commonStopPrice ?? ctx?.planStopPrice,
+      authorizedRiskAmount: base.authorizedRiskAmount,
+      defaultRiskBudget: ctx?.defaultRiskBudget,
+    });
+    return plan;
+  }
+
+  return base;
 }
 
 export function applyFilledThroughIndex(
@@ -155,13 +289,44 @@ export function enrichLayeredEntryMetrics(entry: LayeredEntryPlan): LayeredEntry
     entryImprovementVsFirst = firstLimitPrice - averageEntry;
   }
 
-  return {
+  let enriched: LayeredEntryPlan = {
     ...entry,
     firstLimitPrice,
     averageEntry,
     fillPercent,
     entryImprovementVsFirst,
+    filled: (fillPercent ?? 0) > 0,
   };
+
+  if (
+    enriched.primaryTargetPrice !== undefined &&
+    enriched.authorizedRiskAmount !== undefined &&
+    (enriched.commonStopPrice !== undefined ||
+      enriched.limits.some((l) => l.stopPrice !== undefined))
+  ) {
+    const { plan } = recomputeLayeredEntryPlan(enriched, {
+      primaryTargetPrice: enriched.primaryTargetPrice,
+      planStopPrice: enriched.commonStopPrice,
+      authorizedRiskAmount: enriched.authorizedRiskAmount,
+    });
+    enriched = {
+      ...plan,
+      status: enriched.status,
+      averageEntry,
+      fillPercent,
+      entryImprovementVsFirst,
+      firstLimitPrice,
+      filled: enriched.filled,
+      limits: plan.limits.map((l, i) => ({
+        ...l,
+        filled: enriched.limits[i]?.filled,
+        fillPrice: enriched.limits[i]?.fillPrice,
+        filledQuantity: enriched.limits[i]?.filledQuantity,
+      })),
+    };
+  }
+
+  return enriched;
 }
 
 export function buildLayeredEntryScenarios(limits: LayeredEntryLimit[]): LayeredEntryScenario[] {
@@ -250,8 +415,12 @@ export function formatLayeredEntrySummary(entry: LayeredEntryPlan): string {
     `${entry.executionMethod.replace(/_/g, " ")}`,
     `${filled}/${total} limits`,
   ];
-  if (entry.fillPercent !== undefined) parts.push(`${entry.fillPercent}% capital`);
+  if (entry.fillPercent !== undefined) parts.push(`${entry.fillPercent}% alloc`);
   if (entry.averageEntry !== undefined) parts.push(`avg $${entry.averageEntry.toFixed(2)}`);
+  if (entry.authorizedRiskAmount !== undefined) {
+    parts.push(`risk $${entry.authorizedRiskAmount}`);
+  }
+  if (entry.blendedRR !== undefined) parts.push(`${entry.blendedRR.toFixed(1)}R`);
   return parts.join(" · ");
 }
 
@@ -275,3 +444,9 @@ export function getExecutionExperimentContext(playbook?: Playbook): {
 }
 
 export { formatLayeredEntrySection } from "./layered-entry-types";
+export {
+  DEFAULT_RISK_BUDGET_USD,
+  projectFillStates,
+  recomputeLayeredEntryPlan,
+  validateLayeredRiskPlan,
+} from "./layered-entry-risk";
