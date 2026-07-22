@@ -27,7 +27,7 @@ import { PlanMapSummaryLine, PlanMapToggleButton } from "@/app/components/planni
 import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import type { MtaeAssessment } from "@/lib/mtae-types";
-import { MtaeMomentumPanel } from "@/app/components/mtae/MtaeMomentumPanel";
+import { MtaeEvidenceFirstPanel } from "@/app/components/mtae/MtaeEvidenceFirstPanel";
 
 type ProfileTab = "snapshot" | "evidence" | "history";
 
@@ -383,7 +383,10 @@ export function PreviewStockThesis({
                 <p className="mt-2 text-sm text-violet-300">{thesis.currentHypothesis}</p>
               </section>
 
-              <MtaeMomentumPanel assessment={latestMtaeAssessment} />
+              <MtaeEvidenceFirstPanel
+                assessment={latestMtaeAssessment}
+                profileNotes={thesis.notes ?? thesis.thesis}
+              />
 
               <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2">

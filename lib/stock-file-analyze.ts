@@ -35,7 +35,10 @@ export function buildStockFileOperativePrompt(): string {
     "Do NOT ask the human to re-explain Matrix architecture.",
     "",
     "KEEP FIVE LANES SEPARATE (never collapse them):",
-    "1. TECHNICAL (MTAE) — structure, zones, targets, invalidation, participation.",
+    "1. TECHNICAL (MTAE) — Evidence First by default.",
+    "   Per TF only: Supports → Resistances/Targets → Bias → Confidence (≤1 sentence).",
+    "   Then Integrated: Overall Thesis · Momentum Assessment · Structural Risks · Important Notes.",
+    "   Profile Notes ONLY after Integrated. No Go/Wait/No, entry opt, sizing, capital.",
     "   Output block when asked to Apply technical: technical-assessment ONLY.",
     "   Forbidden in technicalSummary: maximumEntry, recommendedEntry, minimumRR,",
     "   shares, scoutVerdict, whalesAreBuying.",
@@ -72,7 +75,7 @@ export function buildStockFileOperativePrompt(): string {
 export const STOCK_FILE_ANALYZE_REQUEST = `Attach charts for the MTAE role timeframes (include volume when possible).
 
 Then:
-1. TECHNICAL — if Stock File levels/invalidation need refresh from charts, prepare technical-assessment.
+1. TECHNICAL — Evidence First per TF, then Integrated, then Profile Notes. If levels/invalidation need refresh, prepare technical-assessment.
 2. OPPORTUNITY + ENTRY + DECISION — using updated technical + this dossier + active Scout.
 3. When the human says Apply / Save / Propose JSON: return ONE AI Block only.
 
