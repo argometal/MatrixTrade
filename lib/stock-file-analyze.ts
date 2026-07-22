@@ -14,6 +14,13 @@ import { formatDecisionSection } from "./scout-decision";
 import { formatProbeSection } from "./scout-probe";
 import { formatLayeredEntrySection } from "./layered-entry-types";
 import {
+  buildFamilyBFillProjections,
+  formatFamilyBAssessmentSection,
+  isFamilyBPlaybook,
+  synthesizeFamilyBAssessment,
+  validateFamilyBPlan,
+} from "./family-b-assessment";
+import {
   buildStockProfileSynthesis,
   formatSynthesisSection,
 } from "./stock-profile-synthesis";
@@ -55,6 +62,9 @@ export function buildStockFileOperativePrompt(): string {
     "- Do not force deep-rebate entries on secular uptrends that rarely discount that far",
     "  (prefer playbook secular-trend-continuation / Family B; use structural-pullback-entry / Family A for deep discounts;",
     "  otherwise state the family mismatch explicitly).",
+    "- Family B: propose starter / preferred_pullback / deep_pullback layers only with visible structure.",
+    "  Starter ≠ full conviction. Prefer largest allocation on preferred pullback. No chase. Fib is context only.",
+    "  Do not widen invalidation or raise target to force R. Return familyBAssessment + layeredEntry on decision-update when Apply.",
     "- Return exactly ONE JSON block when Apply is requested — ASCII quotes only.",
   ].join("\n");
 }
@@ -138,6 +148,38 @@ export function buildStockFileAnalyzePackage(input: StockFileAnalyzeInput): stri
     if (probe) parts.push("", probe);
     const layered = formatLayeredEntrySection(focusPlan);
     if (layered) parts.push("", layered);
+    if (isFamilyBPlaybook(focusPlan.playbookId)) {
+      const assessment = synthesizeFamilyBAssessment({
+        playbookId: focusPlan.playbookId,
+        assessment: focusPlan.familyBAssessment,
+        plan: focusPlan,
+        thesis,
+      });
+      const fillStates = buildFamilyBFillProjections(focusPlan);
+      const { warnings } = validateFamilyBPlan({
+        playbookId: focusPlan.playbookId,
+        plan: focusPlan,
+        thesis,
+        assessment,
+        minimumRR: thesis.riskRules.minimumRR,
+      });
+      parts.push(
+        "",
+        formatFamilyBAssessmentSection({
+          assessment,
+          plan: focusPlan,
+          minimumRR: thesis.riskRules.minimumRR,
+          fillStates,
+        })
+      );
+      if (warnings.length) {
+        parts.push("FAMILY B WARNINGS");
+        for (const w of warnings) parts.push(`- ${w}`);
+      }
+      parts.push(
+        "FAMILY B CHECKLIST: propose familyBAssessment + layeredEntry roles on decision-update; Scout verdict via existing go|wait|probe|no."
+      );
+    }
   } else {
     parts.push(
       "",

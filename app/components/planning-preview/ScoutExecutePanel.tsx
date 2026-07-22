@@ -14,6 +14,7 @@ import { prospectToPrefill } from "@/lib/trade-prospects";
 import type { Playbook } from "@/lib/playbook-types";
 import type { TradePlan } from "@/lib/plan-types";
 import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
+import { FamilyBBullTrendPanel } from "@/app/components/planning-preview/FamilyBBullTrendPanel";
 
 /**
  * Execution strip migrated from Enter Trade / NewTradeScoutFlow.
@@ -199,7 +200,11 @@ export function ScoutExecutePanel({
       )}
 
       <div className="mt-3">
-        <FamilyBChecklist playbookId={plan.playbookId ?? form.playbookId} compact />
+        {plan ? (
+          <FamilyBBullTrendPanel plan={plan} compact />
+        ) : (
+          <FamilyBChecklist playbookId={form.playbookId} compact />
+        )}
       </div>
 
       {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}

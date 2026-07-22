@@ -11,8 +11,10 @@ export type LayeredEntryStatus =
 export type LayerRole =
   | "starter"
   | "preferred"
+  | "preferred_pullback"
   | "deep_pullback"
   | "confirmation"
+  | "reclaim_confirmation"
   | "custom";
 
 export type EntryConfidence = "low" | "medium" | "high";
@@ -112,8 +114,10 @@ export const LAYERED_ENTRY_STATUS_LABELS: Record<LayeredEntryStatus, string> = {
 export const LAYER_ROLE_LABELS: Record<LayerRole, string> = {
   starter: "Starter",
   preferred: "Preferred",
+  preferred_pullback: "Preferred pullback",
   deep_pullback: "Deep pullback",
   confirmation: "Confirmation",
+  reclaim_confirmation: "Reclaim confirmation",
   custom: "Custom",
 };
 

@@ -53,8 +53,10 @@ const VALID_TRANSITIONS: Record<LayeredEntryStatus, LayeredEntryStatus[]> = {
 const LAYER_ROLES: LayerRole[] = [
   "starter",
   "preferred",
+  "preferred_pullback",
   "deep_pullback",
   "confirmation",
+  "reclaim_confirmation",
   "custom",
 ];
 const CONFIDENCES: EntryConfidence[] = ["low", "medium", "high"];

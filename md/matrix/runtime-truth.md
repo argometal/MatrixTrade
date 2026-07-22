@@ -142,7 +142,8 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | Piece | Status |
 |-------|--------|
 | Control → Apply | Primary write path (user-facing; internal component may still be named ControlPanelUpdate) |
-| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 24** (layered R/risk + Stock File Analyze) |
+| `buildMatrixMechanicsBrief` / snapshot | Primer in packages — **mechanics_revision: 25** (Family B bull-trend + layered R/risk) |
+| **Family B bull-trend entry** | `familyBAssessment` + layered roles; Scout panel; Analyze package; MAF fields — [secular-trend-continuation.md](secular-trend-continuation.md) |
 | **Stock File Analyze (MTA-002A)** | `buildStockFileAnalyzePackage` — one copy: operative prompt + Mechanics + MTAE + dossier + Scout → Apply |
 | **Closed ≠ complete (P1)** | Trades banner + Dashboard attention via `listIncompleteClosedTrades` (review + missing learning fields) |
 | **Observation UX** | `/trades/[id]` form → `saveTradeObservationAction` / `observation-update` (ensure OBS on closed fills) |

@@ -50,6 +50,12 @@ export type MafObservableEvidence = {
   layeredSizingMode?: string;
   layeredStopModel?: string;
   layeredLimitsFilled?: number;
+  /** Family B bull-trend assessment snapshot for attribution. */
+  familyBEntryState?: string;
+  familyBTrendIntegrity?: string;
+  familyBExtension?: string;
+  familyBPullbackQuality?: string;
+  familyBParticipationCase?: string;
   /** Target reached after stop (post-stop study). */
   targetReachedAfterStop?: boolean;
   thesisInvalidated?: boolean;

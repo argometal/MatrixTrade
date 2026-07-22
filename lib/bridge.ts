@@ -424,6 +424,7 @@ export function validateProposalPayload(
       "validUntil",
       "status",
       "layeredEntry",
+      "familyBAssessment",
     ];
     const hasTactical = tacticalFields.some((field) => p[field] !== undefined);
     const hasDecisionMutation =
@@ -434,7 +435,7 @@ export function validateProposalPayload(
 
     if (!hasTactical && !hasDecisionMutation) {
       errors.push(
-        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry)"
+        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, familyBAssessment)"
       );
     }
 

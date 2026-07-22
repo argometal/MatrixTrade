@@ -1,5 +1,6 @@
 import type { ScoutDecision, ScoutLifecycleStatus } from "./scout-decision-types";
 import type { LayeredEntryPlan } from "./layered-entry-types";
+import type { FamilyBEntryAssessment } from "./family-b-types";
 import type { Probe } from "./scout-probe-types";
 
 export type PlanStatus =
@@ -107,6 +108,11 @@ export interface TradePlan {
   layeredEntry?: LayeredEntryPlan;
   /** Which execution experiment is active on this scout (e.g. layered_limits). */
   executionMethod?: LayeredEntryPlan["executionMethod"];
+  /**
+   * Family B bull-trend entry assessment (optional).
+   * Human/AI propose; Matrix synthesizes/validates. Not required for Family A plans.
+   */
+  familyBAssessment?: FamilyBEntryAssessment;
   createdAt: string;
   updatedAt: string;
 }

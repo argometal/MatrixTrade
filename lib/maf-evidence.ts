@@ -139,6 +139,15 @@ export function buildMafEvidence(input: {
     }
   }
 
+  if (plan?.familyBAssessment) {
+    const fb = plan.familyBAssessment;
+    evidence.familyBEntryState = fb.state;
+    evidence.familyBTrendIntegrity = fb.trendIntegrity;
+    evidence.familyBExtension = fb.extension;
+    evidence.familyBPullbackQuality = fb.pullbackQuality;
+    evidence.familyBParticipationCase = fb.participationCase;
+  }
+
   if (observationRecord?.targetReachedAt && observationRecord.startedAt) {
     evidence.timeUntilTargetHours =
       evidence.timeUntilTargetHours ??
