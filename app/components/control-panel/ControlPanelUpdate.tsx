@@ -229,7 +229,7 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain">
         <p className="text-xs text-zinc-500">
-          Paste AI Block. Validate, then Accept writes to MtA.
+          Paste AI Block. Validate, then Accept writes to MTA.
         </p>
 
         {isBusy ? (

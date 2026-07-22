@@ -118,7 +118,7 @@ Return a JSON object with a "notes" array. Each note:
   trade_id: optional (e.g. H001)
   body: string (required)
   proposal_json: optional inbox proposal object
-Do not apply changes — human saves notes in MtA.`;
+Do not apply changes — human saves notes in MTA.`;
 
 export function buildSectionedSnapshot(input: SectionedSnapshotInput): string {
   const {

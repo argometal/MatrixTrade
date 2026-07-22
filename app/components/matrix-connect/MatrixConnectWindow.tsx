@@ -297,7 +297,7 @@ export function MatrixConnectWindow({
                 <div>
                   <h3 className="text-sm font-semibold text-zinc-100">Paste AI response</h3>
                   <p className="mt-1 text-xs text-zinc-500">
-                    Validate to preview. Accept writes to MtA — no Inbox trip required.
+                    Validate to preview. Accept writes to MTA — no Inbox trip required.
                   </p>
                 </div>
 

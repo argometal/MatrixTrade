@@ -17,9 +17,9 @@ import type { AiContextSystemNotes } from "./ai-context";
 export function mechanicsSnapshotItem(): SnapshotMenuItem {
   return {
     id: "mechanics",
-    label: "MtA Mechanics snapshot",
+    label: "MTA Mechanics snapshot",
     description: "Full rules, block types, Apply gate — paste once per AI session",
-    text: wrapSnapshotText("MtA Mechanics snapshot", buildMatrixMechanicsSnapshot()),
+    text: wrapSnapshotText("MTA Mechanics snapshot", buildMatrixMechanicsSnapshot()),
   };
 }
 

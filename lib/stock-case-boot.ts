@@ -9,7 +9,7 @@ export const STOCK_CASE_BOOT_REQUEST = [
   "Block type: stock-case-create",
   "",
   "SCHEMA-FIRST:",
-  "- Read the MtA Apply Schema Contract before serializing.",
+  "- Read the MTA Apply Schema Contract before serializing.",
   "- Never invent keys (no primarySupportZone, probableTarget, technicalNotes, etc.).",
   "- Use only allowed levels keys: majorSupport, majorResistance, primaryZone, secondaryZone, targets.",
   '- riskRules.invalidation must be an observable EVENT string (e.g. "Weekly close below 130"), not a bare price.',
@@ -28,7 +28,7 @@ export const STOCK_CASE_BOOT_REQUEST = [
   "",
   "Separate conceptual analysis from serialization. Keep Scout entry/stop/target distinct from Stock File zones and structural targets.",
   "",
-  "POST result to inboxUrl — human Apply in MtA /inbox.",
+  "POST result to inboxUrl — human Apply in MTA /inbox.",
 ].join("\n");
 
 export function buildStockCaseBootPackage(): string {

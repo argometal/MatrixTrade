@@ -124,7 +124,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
           id: "apply-schema-contract",
           label: "Apply schema contract",
           description: "Schema-first handshake — required fields, allowed keys, examples",
-          text: wrapSnapshotText("MtA Apply schema contract", buildApplySchemaContractText()),
+          text: wrapSnapshotText("MTA Apply schema contract", buildApplySchemaContractText()),
         },
       ],
     },
