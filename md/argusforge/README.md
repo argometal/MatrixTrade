@@ -6,6 +6,7 @@
 | Document | Status | Contents |
 |----------|--------|----------|
 | [phase-0-architecture.md](phase-0-architecture.md) | **Canonical proposal** | Map, **Memory Registry** decision, isolation, contracts, migration, risks |
+| [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria out of scope; preserve; no Forge merge; reopen only after study |
 
 ## Locked names
 
@@ -18,7 +19,7 @@
 | **MTA Engine** | Recurrence, metrics, temporality, attention / Focus signals |
 | **ARGUS** | Private evidence product — owns **Argus Store** |
 | **MTA** | Trading product — owns **MTA Store** |
-| **Alexandria** | Human KB / output — owns **Alexandria Store** |
+| **Alexandria** | 3D knowledge product — **FROZEN** external; see frozen contract |
 | **Vault** | AI output interface (future) |
 | **Focus / Active / Archive** | Calculated **registry views** — not folders |
 
@@ -29,7 +30,8 @@ Products own data. Memory owns identity. Engines enrich. Chaos registers the new
 ## Reading order
 
 1. [phase-0-architecture.md](phase-0-architecture.md) — especially §0.1 Memory Registry
-2. Existing islands: [`../argus/README.md`](../argus/README.md) · [`../matrix/README.md`](../matrix/README.md)
-3. Chaos Coordination (today): [`../../tools/Chaos/README.md`](../../tools/Chaos/README.md)
+2. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — Alexandria FROZEN; do not implement
+3. Existing islands: [`../argus/README.md`](../argus/README.md) · [`../matrix/README.md`](../matrix/README.md)
+4. Chaos Coordination (today): [`../../tools/Chaos/README.md`](../../tools/Chaos/README.md)
 
 **Phase rule:** Architecture before implementation. No code until a later phase cites a contract from the Phase 0 map.

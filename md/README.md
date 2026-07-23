@@ -113,10 +113,12 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 | Document | Contents |
 |----------|----------|
 | [README.md](argusforge/README.md) | Index — locked names, reading order |
-| [phase-0-architecture.md](argusforge/phase-0-architecture.md) | **Canonical map** — placement, Chaos, engines, contracts, migration, risks |
+| [phase-0-architecture.md](argusforge/phase-0-architecture.md) | **Canonical map** — placement, Chaos, engines, Memory Registry, risks |
+| [alexandria-frozen-contract.md](argusforge/alexandria-frozen-contract.md) | **FROZEN** — Alexandria / Gatekeeper out of implementation scope |
 
 **Naming lock:** Argus Engine · MTA Engine — not “Intelligence”, “Core”, or “Shared Engine”.  
-**Critical lock:** Memory = **Registry** (identity + pointers) — not a Forge database. Products own stores.
+**Critical lock:** Memory = **Registry** (identity + pointers) — not a Forge database. Products own stores.  
+**Alexandria lock:** FROZEN external product — preserve; do not merge into Forge; reopen only after dedicated study.
 
 ---
 

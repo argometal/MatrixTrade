@@ -21,7 +21,7 @@
 | **Chaos** | General entry — capture first, organize later | First public module of ArgusForge. May own a **Capture staging store** for unowned raw bytes — never “Memory”. |
 | **Memory Registry** | Unified identity + context contract | **Not storage.** Registers the known universe via pointers. Also called **Memory** for short. |
 | **Vault** | AI output interface | Future product surface. |
-| **Alexandria** | Human knowledge / output product | Owns **Alexandria Store** (e.g. SQLite today). Future human output interface also fits here. |
+| **Alexandria** | Complete 3D knowledge product — **FROZEN** external | Not in Forge. See [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md). Future human spatial knowledge; Gatekeeper = traversal only. |
 | **Focus / Active / Archive** | Calculated states over the Registry | **Not folders.** Views over registry entries (+ product metadata via adapters). |
 
 **Forbidden names for this architecture:** Intelligence, Core, Shared Engine, MTA Intelligence, or any second artificial identity for MTA.
@@ -56,7 +56,7 @@ Today knowledge already lives in many stores:
 |---------|--------------------------|
 | MTA / MatrixTrade | Markdown / Obsidian, JSON, future Postgres / Supabase |
 | ARGUS | Own journal / inbox data (`data/argus/`, Supabase `argus_*`, …) |
-| Alexandria | SQLite (and may change format later) |
+| Alexandria | Own store (e.g. SQLite historically) — **product FROZEN**; do not integrate now |
 | Future | Graph DB, object store, anything |
 
 If Memory “lives” inside ArgusForge as storage, every product migration becomes a Forge migration. That violates the rescue principle.
@@ -101,13 +101,15 @@ Memory Entry
   pointer  = argus://…
 ```
 
-A Locus exists in Alexandria:
+A Locus may exist in Alexandria (frozen product — pointer reserved for later):
 
 ```text
 Memory Entry
   source   = Alexandria
-  pointer  = alex://…
+  pointer  = alex://…          ← scheme reserved; no adapter until reopen study
 ```
+
+**Do not implement `alex://` resolvers, packages, or schemas now.** See [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md).
 
 **Memory never owns the datum. Memory owns the common identity.**
 
@@ -123,7 +125,8 @@ Memory Entry
 
 | Owner | Owns |
 |-------|------|
-| **Products** (ARGUS, MTA, Alexandria, …) | Their data (bytes, schemas, migrations) |
+| **Products** (ARGUS, MTA, …) | Their data (bytes, schemas, migrations) |
+| **Alexandria** (frozen) | Its own store when reopened; **not** a Forge dependency now |
 | **Memory Registry** | Shared identity + context + pointers |
 | **Argus Engine / MTA Engine** | Enrichment of that identity (relations / metrics) |
 | **Chaos** | Creation of **new identities** when no product owns them yet; optional **Capture staging** for raw bytes until promotion |
@@ -210,10 +213,10 @@ Chaos
   → register Memory Entry (identity)
   → hold raw in Capture staging (if unowned) OR point at existing product object
   → later decide:
-        belongs to MTA?
         belongs to ARGUS?
-        belongs to Alexandria?
+        belongs to MTA?
         remains capture-only?
+        (Alexandria — later only; product FROZEN)
 ```
 
 Promotion copies or writes **into the product store** (via existing Apply gates). The Registry updates the pointer / source. It does **not** become a second copy-of-record forever.
@@ -223,7 +226,7 @@ Promotion copies or writes **into the product store** (via existing Apply gates)
 1. **Capture first** — no type/entity/folder required at write time (same spirit as ARGUS design principle #1).
 2. **Always register** a Memory Entry via the Memory API (identity + pointer).
 3. **Do not treat Forge as the product store** — do not replace `data/trades.json`, `vault/Trades/` frontmatter, or `data/argus/journal.json`.
-4. **Promotion is explicit** — adapters may *propose* placement into ARGUS, MTA, or Alexandria; humans (or existing Apply gates) accept.
+4. **Promotion is explicit** — adapters may *propose* placement into ARGUS or MTA; humans (or existing Apply gates) accept. **Alexandria promotion is out of scope** while FROZEN.
 5. **UI island** — if/when UI exists, mount at `/forge/chaos` (or `/forge`) with its own layout; no changes to MTA preview shell or ARGUS v2 shell required.
 6. **Phone-first** — capture path must work with the same friction constraints as mobile ARGUS/MTA (short form, append, done).
 
@@ -233,7 +236,7 @@ Promotion copies or writes **into the product store** (via existing Apply gates)
 |---------------|--------------------|-----------|
 | MTA routes / inbox Apply | Register pointer `matrix://…`; propose Apply later | Alter trade Apply pipeline; shadow-store trades in Forge |
 | ARGUS inbox / journal | Register pointer `argus://…`; propose links via Argus Engine | Bypass ARGUS immutability / ownership |
-| Alexandria store | Register pointer `alex://…` when available | Force Alexandria schema into Forge |
+| Alexandria (frozen) | Acknowledge future exchange boundary only | Define packages/schemas/adapters/APIs; depend on Alexandria; block Forge on Alexandria |
 | `middleware.ts` auth | Add `/forge` to an auth bucket when UI exists | Change MTA or ARGUS password semantics |
 | Product DBs | — | Create a universal `forge_memory_blobs` product database |
 
@@ -248,11 +251,13 @@ PRODUCTS (UX + owned stores)     ENGINES (logic)        HUB + REGISTRY
 ────────────────────────────     ───────────────        ────────────────
 ARGUS Store  ◄── ARGUS ──uses──► Argus Engine ──► ArgusForge
 MTA Store    ◄── MTA   ──uses──► MTA Engine   ──► ArgusForge
-Alexandria Store ◄── Alexandria ─────────────────► ArgusForge
+Alexandria   ──── FROZEN external ──────────────► (future exchange boundary only)
 Chaos staging (unowned raw only) ───────────────► Memory API
-Vault / Alexandria outputs ◄──── read via Registry pointers + adapters
+Vault outputs ◄──── read via Registry pointers + adapters
 ```
 
+**Alexandria must not block ArgusForge. ArgusForge must not depend on Alexandria.**  
+Contract: [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md).
 ### Isolation rules
 
 1. **Engines have no UI.** They are libraries behind contracts.
@@ -293,7 +298,7 @@ md/argusforge/
     argus-engine.md
     mta-engine.md
     vault-output.md
-    alexandria-output.md
+    # alexandria — deferred; see alexandria-frozen-contract.md
   adapters/
     existing-systems-map.md      ← maps today’s files → URI schemes + contracts
 
@@ -303,7 +308,7 @@ lib/argusforge/
   adapters/
     argus/                       ← resolve argus:// → Argus Store
     mta/                         ← resolve matrix:// → MTA Store
-    alexandria/                  ← resolve alex:// → Alexandria Store
+    # alexandria/                ← FORBIDDEN until reopen study
     chaos-coordination/          ← optional bridge to tools/Chaos
   chaos/                         ← capture helpers + staging adapter (unowned raw)
 
@@ -323,7 +328,8 @@ app/forge/                       ← hub UI island (Chaos first)
 | `app/(trading)/**` | Stay |
 | Trading `lib/*` | Stay; MTA Engine *adapts* |
 | `tools/Chaos/**` | Stay as Chaos Coordination until a separate ADR merges capture + coordination |
-| `data/argus/**`, trades stores, Alexandria DB | Stay owned by products |
+| `data/argus/**`, trades stores | Stay owned by products |
+| Alexandria repository / product | **FROZEN** — preserve; do not modify or merge into Forge |
 | Product bytes inside `lib/argusforge/memory` | **Forbidden** |
 
 ---
@@ -369,8 +375,8 @@ MemoryEntry
 |--------|-------------------------|
 | `matrix://` | MTA Store |
 | `argus://` | Argus Store |
-| `alex://` | Alexandria Store |
 | `chaos://` | Capture staging (unowned raw) |
+| `alex://` | **Reserved** — Alexandria FROZEN; no resolver until reopen study |
 
 **Calculated states (views over Registry entries — not storage folders):**
 
@@ -420,21 +426,24 @@ VaultExportRequest
 
 Resolves pointers through adapters; assembles a temporary export. Does **not** become a second journal.
 
-### 5.6 Alexandria (human output / store)
+### 5.6 Alexandria (frozen — acknowledgment only)
 
-Alexandria is both:
+Alexandria is a **frozen external product**. See [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md).
 
-- a **product store** for human knowledge (Locus, etc.), and  
-- a natural home for **human-facing packages** (export ladder).
+ArgusForge may only acknowledge that Alexandria will **eventually** consume structured knowledge via a future **exchange boundary**.
 
-```text
-AlexandriaPackageRequest
-  scope
-  format             ← md | html | pdf | zip
-  narrative          ← human-facing package
-```
+**Do not** define now:
 
-Reuse ARGUS deliver ladder where applicable; do not fork a parallel export stack until necessary.
+- Alexandria packages;
+- schemas;
+- adapters;
+- APIs;
+- Gatekeeper expansions;
+- 3D engine choices.
+
+**Vault** is the AI output interface for current Forge work. Human spatial product work waits for Alexandria reopen.
+
+Gatekeeper is traversal only — not Alexandria-as-a-whole and not in Forge scope.
 
 ### 5.7 Hub orchestration (ArgusForge)
 
@@ -445,16 +454,16 @@ Forge does:
   ask Argus Engine for placement/links (suggestions)
   ask MTA Engine for attention/recurrence (signals)
   expose Focus / Active / Archive as registry views
-  later: feed Vault / Alexandria packages by resolving pointers
+  later: feed Vault by resolving pointers
 
 Forge does not:
   own trade numbers
   own ARGUS journal truth
-  own Alexandria loci
+  depend on Alexandria
+  implement Alexandria adapters/packages while FROZEN
   become the universal blob store
   auto-apply into products without existing human gates
 ```
-
 ---
 
 ## 6. Migration strategy
@@ -468,7 +477,7 @@ Forge does not:
 | **2 — Adapters** | `matrix://`, `argus://` resolvers + Argus/MTA Engine facades | Existing stores and helpers | Moving folders; renaming products |
 | **3 — Views** | Focus / Active / Archive as registry queries | MTA Engine attentionScore + recency | Physical archive folders; relocating bytes |
 | **4 — Hub UI** | `/forge` island | Same nesting as `/argus` | Merging sidebars with ARGUS/MTA |
-| **5 — Outputs** | Vault + Alexandria packages via pointer resolution | Scoped grants, deliver packages | New standalone apps; Forge-owned content lakes |
+| **5 — Outputs** | Vault packages via pointer resolution | Scoped grants, sectioned snapshots | Alexandria integration; Forge-owned content lakes |
 | **6 — Optional peel** | Extract helpers behind engine facades only under pain | Copy-on-write extraction | Big-bang shared storage rewrite |
 
 ### Adapter-first rule
@@ -524,6 +533,7 @@ Phase 0 is done when:
 - No extraction of `lib/argus` into a package.
 - No merge of Chaos Coordination into Capture.
 - No Forge-owned universal content database.
+- No Alexandria implementation, UI polish, adapters, or Forge merge (FROZEN).
 - No RAZ/Vault egg that bypasses this map (Vault = output interface via Registry).
 - No “Shared Engine” / “Intelligence” layer.
 
@@ -538,7 +548,8 @@ Phase 0 is done when:
 | Trading inbox Apply gate | Promotion into MTA Store |
 | Product-owned data (ARGUS / MTA) | Proof that Memory must not absorb stores |
 | Scoped AI grants / sectioned snapshots | Vault output via resolved pointers |
-| ARGUS deliver ladder | Alexandria / human packages |
+| ARGUS deliver ladder | Possible future human packages — **not** Alexandria work now |
+| [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md) | Binding freeze for Alexandria / Gatekeeper |
 | `tools/Chaos` STATUS/log ritual | Chaos Coordination (unchanged) |
 | `md/` Library tiers | Home for `md/argusforge/` |
 
@@ -549,10 +560,11 @@ Phase 0 is done when:
 **ArgusForge** = integration hub inside the existing MatrixTrade repository — not a database.  
 **Chaos** = creates identities (and optional unowned staging); does not decide final ownership up front.  
 **Memory Registry** = common identity + pointers + shared context; **never** product bytes.  
-**Products** = sole owners of their stores (Argus / MTA / Alexandria / …).  
+**Products** = sole owners of their stores (Argus / MTA / …).  
 **Argus Engine** / **MTA Engine** = enrich identity (relations / quantification) via adapters.  
 **Focus / Active / Archive** = calculated registry views.  
-**Vault** / **Alexandria** = outputs (and Alexandria also a store) resolved through pointers.  
+**Vault** = AI output interface via Registry pointers.  
+**Alexandria** = **FROZEN** external 3D knowledge product — preserve; study later; no Forge dependency.  
 
 Nothing existing stops working. Nothing moves. Contracts before code.  
 **Rescue property:** product storage can change; the Registry stays stable.
