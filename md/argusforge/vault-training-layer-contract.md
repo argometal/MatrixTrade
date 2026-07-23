@@ -2,10 +2,10 @@
 
 **Status:** Canonical — architecture / documentation only  
 **Date:** 2026-07-23  
-**Parent:** [`phase-0-architecture.md`](phase-0-architecture.md)  
-**Rule:** Do not implement tables, endpoints, components, migrations, automatic prompts, agents, or executable pipelines from this document.
+**Parent:** [`argusforge-contract.md`](argusforge-contract.md) (sealed vision §11) · [`phase-0-architecture.md`](phase-0-architecture.md)  
+**Rule:** Do not implement tables, endpoints, components, migrations, automatic prompts, agents, or executable pipelines from this document. Do not treat Vault as Memory.
 
-This file is the **single canonical Vault contract**. Other AF docs link here; they must not restate a contradictory definition.
+This file is the **detail contract for Vault**. The sealed ArgusForge Contract prevails for overall mission: Vault **prepares formation** for a task or recipient (AI, person, family transfer, continuity guide, etc.).
 
 ---
 
@@ -37,17 +37,18 @@ May include:
 
 Vault is **not** the general knowledge store.
 
-Vault is the **interface and training layer** used to improve collaboration between:
+Vault is the layer that **prepares formation and operational context** for collaboration between:
 
 - user;
 - AI;
 - Cursor;
 - architecture process;
-- implementation process.
+- implementation process;
+- and, when relevant, another person or family recipient.
 
 Answers:
 
-> *What context does the AI need to continue our work correctly without the user retraining it from scratch?*
+> *What context and formation does this recipient need for this concrete task — without retraining from zero or dumping the entire system?*
 
 ---
 
@@ -302,12 +303,13 @@ OPEN QUESTIONS
 
 **Official (EN):**
 
-> Vault is not project memory. Vault is the training interface that prepares the AI to work correctly with the project’s existing knowledge, architecture, history, constraints, and research.
+> Vault is not project memory. Vault prepares formation: the selected context a recipient needs to work correctly with the project’s knowledge, architecture, history, constraints, and research.
 
 **Official (ES):**
 
-> Vault no es la memoria general del proyecto. Vault es la interfaz de entrenamiento que prepara a la IA para trabajar correctamente con el conocimiento, arquitectura, historial, restricciones e investigación ya acumulados.
+> Vault no es la memoria general del proyecto. Vault prepara formación: el contexto seleccionado que un receptor necesita para trabajar correctamente con el conocimiento, arquitectura, historial, restricciones e investigación ya acumulados.
 
+Parent sealed vision: [`argusforge-contract.md`](argusforge-contract.md) §11.
 ---
 
 ## 14. Phase boundary

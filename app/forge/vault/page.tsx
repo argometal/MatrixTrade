@@ -9,8 +9,8 @@ export default function ForgeVaultPlaceholderPage() {
       </h2>
       <p className="rounded-lg border border-zinc-800 bg-zinc-900/60 px-4 py-4 text-sm leading-relaxed text-zinc-300">
         Vault is <strong className="font-semibold text-zinc-100">not implemented</strong> in this vertical slice.
-        Per contract, Vault is the AI <em>training interface</em> — not Memory, not a knowledge dump, and not Chaos.
-        No Training Pack generation, agents, or pipelines here.
+        Per sealed contract, Vault <em>prepares formation</em> for a task or recipient — not Memory, not a knowledge dump,
+        and not Chaos. No Training Pack generation, agents, or pipelines here.
       </p>
       <p className="text-xs text-zinc-500">
         Canonical doc: <code className="text-zinc-400">md/argusforge/vault-training-layer-contract.md</code>

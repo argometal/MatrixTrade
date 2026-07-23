@@ -30,9 +30,11 @@ Memory owns identity.
 Argus relates.
 MTA observes time.
 Chaos captures.
+Vault prepares formation.
 ArgusForge coordinates.
 ```
 
+**Vision (prevails):** [`argusforge-contract.md`](argusforge-contract.md) — sealed ArgusForge Contract. This Phase 0 file is the technical map; it must not contradict the sealed vision.
 ---
 
 ## Official names (locked)
@@ -46,7 +48,7 @@ ArgusForge coordinates.
 | **MTA Engine** | Temporal behavior — *what happens over time?* |
 | **ARGUS** | Private evidence product (unchanged) |
 | **MTA** | Trading product (unchanged) |
-| **Vault** | **AI training interface** — *what context does the AI need to continue correctly?* — see [`vault-training-layer-contract.md`](vault-training-layer-contract.md) |
+| **Vault** | Prepares formation / context for a recipient or task — see [`vault-training-layer-contract.md`](vault-training-layer-contract.md) and sealed [`argusforge-contract.md`](argusforge-contract.md) §11 |
 | **Alexandria** | 3D knowledge product — **FROZEN** |
 
 **Forbidden names:** MTA Intelligence · Argus Core · Shared Engine · Forge Database · Memory Database.
@@ -60,11 +62,10 @@ Chaos captures
 Memory Registry identifies
 Argus Engine relates
 MTA Engine observes time and patterns
-Vault trains the AI for correct continuation
+Vault prepares formation
 Products own and use their data
 ArgusForge coordinates the ecosystem
-```
----
+```---
 
 ## 1. Chaos — canonical definition
 
@@ -396,7 +397,8 @@ Do not modify product trees (`app/(trading)`, `app/argus`, `lib/argus`, `tools/C
 | Document | Role vs this contract |
 |----------|------------------------|
 | [README.md](README.md) | Index only — links here |
-| [vault-training-layer-contract.md](vault-training-layer-contract.md) | **Canonical Vault** — AI training layer ≠ Memory |
+| [argusforge-contract.md](argusforge-contract.md) | **Sealed vision** — prevails for mission and identity |
+| [vault-training-layer-contract.md](vault-training-layer-contract.md) | **Canonical Vault** — prepares formation ≠ Memory |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | Binding Alexandria freeze |
 | [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | Deferred non-binding research |
 | [external-repo-patterns-research.md](external-repo-patterns-research.md) | External pattern references |

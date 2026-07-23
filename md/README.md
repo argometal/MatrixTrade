@@ -21,7 +21,7 @@ Private repo: `github.com/argometal/MatrixTrade`
 | **Integrations** | `integrations/`, `protocols/` | ChatGPT, Obsidian, Worker, Supabase, Vercel |
 | **Concepts** | `concepts/` | Ideas worth keeping — **apply later**, not shipped |
 | **ARGUS** | `argus/` | Separate product — own index and lifecycle |
-| **ArgusForge** | `argusforge/` | Coordination environment (AF) — Phase 0 architecture contract |
+| **ArgusForge** | `argusforge/` | Sealed vision + Phase 0 technical map (formation transfer) |
 | **Topics / Research** | `topics/`, `research/` | Deep dives and product research |
 
 **Rule:** If it is not deployed, it belongs in `concepts/` (or marked *Deferred* in the source doc).  
@@ -49,7 +49,7 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 2. **What ships today?** `architecture/matrixtrade-app.md` + `rules/`
 3. **What to build next?** `phases/roadmap.md` + `concepts/README.md`
 4. **Working on ARGUS?** [`argus/README.md`](argus/README.md)
-5. **ArgusForge / Chaos / engines map?** [`argusforge/phase-0-architecture.md`](argusforge/phase-0-architecture.md)
+5. **ArgusForge vision / Chaos / engines?** [`argusforge/argusforge-contract.md`](argusforge/argusforge-contract.md) → [`argusforge/phase-0-architecture.md`](argusforge/phase-0-architecture.md)
 6. **Matrix product + AI?** [`matrix/README.md`](matrix/README.md) → [`matrix/ai-engineering.md`](matrix/ai-engineering.md)
 7. **Integrations** → `integrations/` · **Protocols** → `protocols/`
 8. **New topic** → `topics/your-topic.md` + one row in this index
@@ -108,18 +108,20 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 
 ## ArgusForge
 
-**Phase 0 CLOSED (architecture only):** [`argusforge/phase-0-architecture.md`](argusforge/phase-0-architecture.md)
+**Sealed vision:** [`argusforge/argusforge-contract.md`](argusforge/argusforge-contract.md)  
+**Phase 0 technical map:** [`argusforge/phase-0-architecture.md`](argusforge/phase-0-architecture.md)
 
 | Document | Contents |
 |----------|----------|
 | [README.md](argusforge/README.md) | Index — links only |
-| [phase-0-architecture.md](argusforge/phase-0-architecture.md) | **Canonical Phase 0 contract** |
-| [vault-training-layer-contract.md](argusforge/vault-training-layer-contract.md) | **Canonical Vault** — AI training interface ≠ Memory |
+| [argusforge-contract.md](argusforge/argusforge-contract.md) | **SEALED** — vision, formation transfer, component duties |
+| [phase-0-architecture.md](argusforge/phase-0-architecture.md) | **Canonical Phase 0** — technical boundaries |
+| [vault-training-layer-contract.md](argusforge/vault-training-layer-contract.md) | Vault prepares formation ≠ Memory |
 | [external-repo-patterns-research.md](argusforge/external-repo-patterns-research.md) | Research — external patterns (no copy) |
 | [alexandria-frozen-contract.md](argusforge/alexandria-frozen-contract.md) | **FROZEN** — Alexandria / Gatekeeper |
 | [alexandria-spatial-bottleneck-research.md](argusforge/alexandria-spatial-bottleneck-research.md) | Deferred non-binding research |
 
-**Canonical rule:** Products own data. Memory owns identity. Argus relates. MTA observes time. Chaos captures. Vault trains the AI. ArgusForge coordinates.  
+**Canonical rule:** Products own data. Memory owns identity. Argus relates. MTA observes time. Chaos captures. Vault prepares formation. ArgusForge coordinates.  
 **Alexandria lock:** FROZEN — AF must not depend on Alexandria; Alexandria must not block AF.
 
 ---
