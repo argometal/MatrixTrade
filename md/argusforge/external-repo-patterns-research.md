@@ -3,7 +3,10 @@
 **Status:** Research  
 **Date:** 2026-07-23  
 **Canonical AF contract:** [`phase-0-architecture.md`](phase-0-architecture.md)  
-**Rule:** Patterns only. Do **not** copy code. Do **not** add dependencies. Do **not** reshape Phase 0.
+**Rule:** Patterns and candidates only until an **explicit reuse decision**.  
+Do **not** adopt automatically. Do **not** forbid automatically.  
+Before reuse, review: license, security, maintenance, activity, compatibility, dependency, portability, isolation, future cost, reversibility.  
+Do **not** reshape sealed vision or Phase 0 without human approval.
 
 ---
 
@@ -79,9 +82,7 @@ openship (deploy) · awesome-claude-skills (catalog later) · pi-web (agent UI t
 | Relation visualization | likec4 |
 | Mature ingest / correlation | worldmonitor |
 
-Copy none.
-
-Extracted patterns may later feed **Vault** training context (not Chaos dumps, not Memory copies) — see [`vault-training-layer-contract.md`](vault-training-layer-contract.md).
+Reuse requires an explicit decision after evaluation (see Rule above). Patterns may feed Vault formation context — not Chaos dumps, not Memory copies — see [`vault-training-layer-contract.md`](vault-training-layer-contract.md).
 
 ---
 
@@ -90,5 +91,6 @@ Extracted patterns may later feed **Vault** training context (not Chaos dumps, n
 | Document | Role |
 |----------|------|
 | [phase-0-architecture.md](phase-0-architecture.md) | Canonical Phase 0 |
-| [vault-training-layer-contract.md](vault-training-layer-contract.md) | AI training layer |
+| [af03-chaos-interface-contract.md](af03-chaos-interface-contract.md) | Interface checklist |
+| [vault-training-layer-contract.md](vault-training-layer-contract.md) | Formation prep layer |
 | [README.md](README.md) | Index |

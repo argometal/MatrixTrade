@@ -383,10 +383,10 @@ No code, schemas, endpoints, or UI on this closure.
 md/argusforge/                    ← AF library (this contract + linked notes)
 ```
 
-Future implementation islands (not opened by Phase 0):
+Future implementation islands:
 
-- `lib/argusforge/` — deferred
-- `app/forge/` — deferred
+- `lib/argusforge/` — deferred until an authorized slice
+- `app/forge/` — **exists as UI prototype only** (not functional Chaos; see [`af03-chaos-interface-contract.md`](af03-chaos-interface-contract.md) §14). Subject to rebuild under AF03 delivery order. Not Phase 0 fulfillment.
 
 Do not modify product trees (`app/(trading)`, `app/argus`, `lib/argus`, `tools/Chaos`) for AF Phase 0.
 
@@ -398,6 +398,8 @@ Do not modify product trees (`app/(trading)`, `app/argus`, `lib/argus`, `tools/C
 |----------|------------------------|
 | [README.md](README.md) | Index only — links here |
 | [argusforge-contract.md](argusforge-contract.md) | **Sealed vision** — prevails for mission and identity |
+| [perpetual-evolution-contract.md](perpetual-evolution-contract.md) | **Sealed addendum** — perpetual evolution |
+| [af03-chaos-interface-contract.md](af03-chaos-interface-contract.md) | Working Chaos interface checklist (Active/Archive → Vault boundary) |
 | [vault-training-layer-contract.md](vault-training-layer-contract.md) | **Canonical Vault** — prepares formation ≠ Memory |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | Binding Alexandria freeze |
 | [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | Deferred non-binding research |

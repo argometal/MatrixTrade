@@ -330,4 +330,5 @@ This contract is documentation only.
 | [phase-0-architecture.md](phase-0-architecture.md) | AF Phase 0 — links Vault definition here |
 | [external-repo-patterns-research.md](external-repo-patterns-research.md) | Research that may feed Vault training context |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | Alexandria freeze |
+| [af03-chaos-interface-contract.md](af03-chaos-interface-contract.md) | Chaos UI checklist — Vault prep boundary only when authorized |
 | [README.md](README.md) | Index |

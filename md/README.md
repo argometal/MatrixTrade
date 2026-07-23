@@ -116,6 +116,7 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 | [README.md](argusforge/README.md) | Index — links only |
 | [argusforge-contract.md](argusforge/argusforge-contract.md) | **SEALED** — vision, formation transfer, component duties |
 | [perpetual-evolution-contract.md](argusforge/perpetual-evolution-contract.md) | **SEALED addendum** — perpetual evolution; evidence; user agency |
+| [af03-chaos-interface-contract.md](argusforge/af03-chaos-interface-contract.md) | **Working checklist** — Chaos interfaces → Vault boundary |
 | [phase-0-architecture.md](argusforge/phase-0-architecture.md) | **Canonical Phase 0** — technical boundaries |
 | [vault-training-layer-contract.md](argusforge/vault-training-layer-contract.md) | Vault prepares formation ≠ Memory |
 | [external-repo-patterns-research.md](argusforge/external-repo-patterns-research.md) | Research — external patterns (no copy) |
