@@ -5,7 +5,8 @@
 
 | Document | Status | Contents |
 |----------|--------|----------|
-| [phase-0-architecture.md](phase-0-architecture.md) | **Canonical proposal** | Map, **Memory Registry** decision, isolation, contracts, migration, risks |
+| [phase-0-architecture.md](phase-0-architecture.md) | **Sealed** | Map, **Memory Registry**, isolation, migration, risks |
+| [phase-1-infrastructure.md](phase-1-infrastructure.md) | **Active** | Models/contracts start — Chaos, org, Argus, MTA reserved, AI proposals |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria out of scope; preserve; no Forge merge; reopen only after study |
 | [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | **Research** | Bottleneck = spatial construction; AI = semantic→spatial (not graphics); deferred |
 
@@ -14,26 +15,31 @@
 | Name | One-line |
 |------|----------|
 | **ArgusForge** | Hub — integrates products and engines (**not** a data store) |
-| **Chaos** | General entry (capture first); creates identities |
+| **Chaos** | Capture unit (unbounded parts); creates identities |
 | **Memory Registry** | Identity + pointers + shared context — **not** Database / Archive / Storage |
-| **Argus Engine** | Relations, entities, evidence, placement |
-| **MTA Engine** | Recurrence, metrics, temporality, attention / Focus signals |
+| **Argus Engine** | *What is related to what?* — relations, discovery, enrichment |
+| **MTA Engine** | *What happens over time?* — temporal behavior of knowledge (**reserved** in Phase 1) |
 | **ARGUS** | Private evidence product — owns **Argus Store** |
 | **MTA** | Trading product — owns **MTA Store** |
 | **Alexandria** | 3D knowledge product — **FROZEN** external; see frozen contract |
 | **Vault** | AI output interface (future) |
-| **Focus / Active / Archive** | Calculated **registry views** — not folders |
+| **Focus / Active / Archive** | Operational states; folders = user org only; never replace relations |
 
-## Critical rule
+## Critical rules
 
-Products own data. Memory owns identity. Engines enrich. Chaos registers the new.
+1. Products own data. Memory owns identity. Engines enrich. Chaos registers the new.  
+2. **Argus ≠ MTA Engine** — relations vs temporal behavior; never mix.  
+3. Alexandria FROZEN — no spatial / renderer work in Forge.
+
+## Code (Phase 1)
+
+`lib/argusforge/` — contracts + thin JSON registry index (`data/forge/`, gitignored).
 
 ## Reading order
 
-1. [phase-0-architecture.md](phase-0-architecture.md) — especially §0.1 Memory Registry
-2. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — Alexandria FROZEN; do not implement
-3. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) — future direction (deferred)
-4. Existing islands: [`../argus/README.md`](../argus/README.md) · [`../matrix/README.md`](../matrix/README.md)
-5. Chaos Coordination (today): [`../../tools/Chaos/README.md`](../../tools/Chaos/README.md)
-
-**Phase rule:** Architecture before implementation. No code until a later phase cites a contract from the Phase 0 map.
+1. [phase-0-architecture.md](phase-0-architecture.md) — sealed map (§0.1 Memory Registry)
+2. [phase-1-infrastructure.md](phase-1-infrastructure.md) — current build rules
+3. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — do not implement Alexandria
+4. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) — deferred
+5. Existing islands: [`../argus/README.md`](../argus/README.md) · [`../matrix/README.md`](../matrix/README.md)
+6. Chaos Coordination (today): [`../../tools/Chaos/README.md`](../../tools/Chaos/README.md)

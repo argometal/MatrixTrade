@@ -16,13 +16,13 @@
 | **ARGUS** | Product — private evidence / legal / relationships | Remains at `/argus/*`. Does not move. Owns **Argus Store**. |
 | **Argus Engine** | Reusable relationship logic | *What is it, where does it fit, what does it relate to?* |
 | **MTA** | Product — trading / experiment control | Remains on trading routes. Does not move. Owns **MTA Store**. |
-| **MTA Engine** | Reusable recurrence & quantification logic | *How often, how it evolves, why it deserves attention?* |
+| **MTA Engine** | Reusable temporal behavior of knowledge | *How often, how it evolves, why it deserves attention?* — not merely spaced repetition |
 | **ArgusForge** | Hub — integration environment | Not another application. **Not a database.** |
 | **Chaos** | General entry — capture first, organize later | First public module of ArgusForge. May own a **Capture staging store** for unowned raw bytes — never “Memory”. |
 | **Memory Registry** | Unified identity + context contract | **Not storage.** Registers the known universe via pointers. Also called **Memory** for short. |
 | **Vault** | AI output interface | Future product surface. |
 | **Alexandria** | Complete 3D knowledge product — **FROZEN** external | Not in Forge. See [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md). Future human spatial knowledge; Gatekeeper = traversal only. |
-| **Focus / Active / Archive** | Calculated states over the Registry | **Not folders.** Views over registry entries (+ product metadata via adapters). |
+| **Focus / Active / Archive** | Operational organization over Registry entries | Phase 1: states + user folders (org only). Focus may be manual or later calculated via MTA Engine. **Not** semantic relations. |
 
 **Forbidden names for this architecture:** Intelligence, Core, Shared Engine, MTA Intelligence, or any second artificial identity for MTA.
 
@@ -36,7 +36,8 @@ Entities, evidence, links, placement, grouping, contextual location.
 
 **MTA Engine**  
 Answers: *How many times does it occur, how does it evolve, and why does it deserve attention?*  
-Usage, recurrence, temporal behavior, hypotheses, attention / Focus calculation.
+**Temporal behavior engine of knowledge** — usage, recurrence, temporal patterns, hypotheses, attention / Focus signals, longitudinal analysis.  
+**Not** a simple spaced-repetition motor. **Not** relation discovery (that is Argus Engine).
 
 **Memory Registry**  
 Answers: *What identities exist in the universe, and where does the real data live?*  
@@ -553,6 +554,7 @@ Phase 0 is done when:
 | Scoped AI grants / sectioned snapshots | Vault output via resolved pointers |
 | ARGUS deliver ladder | Possible future human packages — **not** Alexandria work now |
 | [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md) | Binding freeze for Alexandria / Gatekeeper |
+| [`alexandria-spatial-bottleneck-research.md`](alexandria-spatial-bottleneck-research.md) | Deferred research: AI semantic→spatial (not graphics); Forge supplies structure |
 | `tools/Chaos` STATUS/log ritual | Chaos Coordination (unchanged) |
 | `md/` Library tiers | Home for `md/argusforge/` |
 
