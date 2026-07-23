@@ -685,6 +685,50 @@ export function archivedDeckCount(state: Af03RepoState): number {
   return state.decks.filter((d) => d.view === "archive").length;
 }
 
+/** Global home dashboard counts — real stored data only (no due/grades/SRS). */
+export function homeOverview(state: Af03RepoState): {
+  folders: number;
+  decks: number;
+  activeDecks: number;
+  archivedDecks: number;
+  items: number;
+  recentItems: number;
+  markedLater: number;
+  stubs: number;
+  text: number;
+  links: number;
+  images: number;
+  lastModified: string | null;
+  recentDecks: Af03ChaosDeck[];
+} {
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const activeDecks = state.decks.filter((d) => d.view === "active");
+  const archivedDecks = state.decks.filter((d) => d.view === "archive");
+  const dates = [
+    ...state.folders.map((f) => f.updatedAt),
+    ...state.decks.map((d) => d.updatedAt),
+    ...state.items.map((i) => i.updatedAt),
+  ].sort();
+  const recentDecks = [...state.decks]
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, 5);
+  return {
+    folders: state.folders.length,
+    decks: state.decks.length,
+    activeDecks: activeDecks.length,
+    archivedDecks: archivedDecks.length,
+    items: state.items.length,
+    recentItems: state.items.filter((i) => new Date(i.createdAt).getTime() >= weekAgo).length,
+    markedLater: state.items.filter((i) => i.markedForLater).length,
+    stubs: state.items.filter((i) => i.unsupported).length,
+    text: state.items.filter((i) => i.kind === "text" || i.kind === "mixed").length,
+    links: state.items.filter((i) => i.kind === "link").length,
+    images: state.items.filter((i) => i.kind === "image").length,
+    lastModified: dates.length ? dates[dates.length - 1]! : null,
+    recentDecks,
+  };
+}
+
 export function setDeckListLayout(state: Af03RepoState, layout: Af03LayoutMode): Af03RepoState {
   return setPrefs(state, { deckListLayout: layout });
 }

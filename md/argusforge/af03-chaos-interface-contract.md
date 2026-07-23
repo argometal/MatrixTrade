@@ -76,13 +76,14 @@ Repository (one interface)
 
 ## 1. ARGUSFORGE HOME
 
-**STATUS:** Minimal home shipped (not final architecture)
+**STATUS:** Overview dashboard shipped (not final architecture)
 
 - [x] Do not invent final Home architecture.
 - [x] Do not block the rest of the interface work.
-- [x] Provide navigation access to Active and Archive. *(interim dual entry — see DEBT-AF03-01)*
+- [x] Provide navigation access to Active and Archive. *(via Library + filter chips on Home; interim dual routes — DEBT-AF03-01)*
 - [x] Keep Focus visible only if clearly marked as pending.
 - [x] Do not implement system-trigger logic for Focus yet.
+- [x] Home is an **overview dashboard**, not a duplicate Active/Focus list.
 
 ---
 
