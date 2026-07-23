@@ -51,8 +51,8 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 4. **Working on ARGUS?** [`argus/README.md`](argus/README.md)
 5. **Umbrella / engines / Chaos Capture map?** [`argusforge/README.md`](argusforge/README.md) → Phase 0 architecture
 6. **Matrix product + AI?** [`matrix/README.md`](matrix/README.md) → [`matrix/ai-engineering.md`](matrix/ai-engineering.md)
-6. **Integrations** → `integrations/` · **Protocols** → `protocols/`
-7. **New topic** → `topics/your-topic.md` + one row in this index
+7. **Integrations** → `integrations/` · **Protocols** → `protocols/`
+8. **New topic** → `topics/your-topic.md` + one row in this index
 
 ---
 
