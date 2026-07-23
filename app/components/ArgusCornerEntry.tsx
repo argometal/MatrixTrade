@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import { AppCornerDock } from "@/app/components/AppCornerDock";
 import { ArgusMark } from "@/app/components/ArgusMark";
 
-/** MTA routes only — hidden while already inside Argus. */
+/** MTA routes only — hidden while already inside Argus or ArgusForge. */
 export function ArgusCornerEntry() {
   const pathname = usePathname();
-  if (pathname.startsWith("/argus")) return null;
+  if (pathname.startsWith("/argus") || pathname.startsWith("/forge")) return null;
 
   return (
     <AppCornerDock bellHref="/inbox" bellLabel="MTA inbox" placement="matrix">

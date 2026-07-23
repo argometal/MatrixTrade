@@ -22,6 +22,14 @@ export function MatrixAppChromeActions({ pendingInboxCount = 0 }: { pendingInbox
       <Link href="/argus/v2" aria-label="Open ARGUS" title="ARGUS" className={`${iconBtn} p-0`}>
         <ArgusMark size={28} />
       </Link>
+      <Link
+        href="/forge"
+        aria-label="Open ArgusForge"
+        title="ArgusForge"
+        className={`${iconBtn} text-[10px] font-bold tracking-wide text-zinc-300`}
+      >
+        AF
+      </Link>
     </>
   );
 }

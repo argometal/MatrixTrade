@@ -34,4 +34,14 @@ Full Vault: [`vault-training-layer-contract.md`](vault-training-layer-contract.m
 
 ## Out of scope here
 
-Implementation, Phase 1 code, product changes (MTA / ARGUS / tools Chaos / Alexandria).
+Phase 1 engines, persistence APIs, agents, Alexandria.
+
+## Prototype route (UI slice only)
+
+| Route | Status |
+|-------|--------|
+| `/forge` → `/forge/chaos` | Chaos Inbox prototype (session-local captures) |
+| `/forge/task` | Placeholder — not implemented |
+| `/forge/vault` | Placeholder — not implemented |
+
+Does **not** implement Memory, Argus Engine, MTA Engine, or Vault training packs.

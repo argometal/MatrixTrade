@@ -33,9 +33,19 @@ export function AppExchangeActions({
         ) : null}
       </Link>
       {app === "matrix" ? (
-        <Link href="/argus/v2" aria-label="Open ARGUS" title="ARGUS" className={`${actionClass} p-0.5`}>
-          <ArgusMark size={32} className="block h-full w-full" />
-        </Link>
+        <>
+          <Link
+            href="/forge"
+            aria-label="Open ArgusForge"
+            title="ArgusForge"
+            className={`${actionClass} text-[10px] font-bold tracking-wide text-zinc-300`}
+          >
+            AF
+          </Link>
+          <Link href="/argus/v2" aria-label="Open ARGUS" title="ARGUS" className={`${actionClass} p-0.5`}>
+            <ArgusMark size={32} className="block h-full w-full" />
+          </Link>
+        </>
       ) : (
         <Link href="/home-preview" aria-label="MTA" title="MTA" className={actionClass}>
           <TradingMark size={28} />
