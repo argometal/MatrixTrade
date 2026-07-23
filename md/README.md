@@ -21,6 +21,7 @@ Private repo: `github.com/argometal/MatrixTrade`
 | **Integrations** | `integrations/`, `protocols/` | ChatGPT, Obsidian, Worker, Supabase, Vercel |
 | **Concepts** | `concepts/` | Ideas worth keeping — **apply later**, not shipped |
 | **ARGUS** | `argus/` | Separate product — own index and lifecycle |
+| **ArgusForge** | `argusforge/` | Umbrella hub — products + engines map (Phase 0 architecture) |
 | **Topics / Research** | `topics/`, `research/` | Deep dives and product research |
 
 **Rule:** If it is not deployed, it belongs in `concepts/` (or marked *Deferred* in the source doc).  
@@ -48,7 +49,8 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 2. **What ships today?** `architecture/matrixtrade-app.md` + `rules/`
 3. **What to build next?** `phases/roadmap.md` + `concepts/README.md`
 4. **Working on ARGUS?** [`argus/README.md`](argus/README.md)
-5. **Matrix product + AI?** [`matrix/README.md`](matrix/README.md) → [`matrix/ai-engineering.md`](matrix/ai-engineering.md)
+5. **Umbrella / engines / Chaos Capture map?** [`argusforge/README.md`](argusforge/README.md) → Phase 0 architecture
+6. **Matrix product + AI?** [`matrix/README.md`](matrix/README.md) → [`matrix/ai-engineering.md`](matrix/ai-engineering.md)
 6. **Integrations** → `integrations/` · **Protocols** → `protocols/`
 7. **New topic** → `topics/your-topic.md` + one row in this index
 
@@ -101,6 +103,19 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 | [design/legacy-vs-preview-map.md](design/legacy-vs-preview-map.md) | Route map |
 | [design/planning-module-proposal.md](design/planning-module-proposal.md) | Scouting Desk Phase 0 |
 | [design/stock-thesis-proposal.md](design/stock-thesis-proposal.md) | Stock File Phase 0 |
+
+---
+
+## ArgusForge
+
+**Umbrella hub (Phase 0 — architecture only):** [`argusforge/README.md`](argusforge/README.md)
+
+| Document | Contents |
+|----------|----------|
+| [README.md](argusforge/README.md) | Index — locked names, reading order |
+| [phase-0-architecture.md](argusforge/phase-0-architecture.md) | **Canonical map** — placement, Chaos, engines, contracts, migration, risks |
+
+**Naming lock:** Argus Engine · MTA Engine — not “Intelligence”, “Core”, or “Shared Engine”.
 
 ---
 
