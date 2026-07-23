@@ -115,6 +115,7 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 | [README.md](argusforge/README.md) | Index — locked names, reading order |
 | [phase-0-architecture.md](argusforge/phase-0-architecture.md) | **Sealed map** — placement, Chaos, engines, Memory Registry, risks |
 | [phase-1-infrastructure.md](argusforge/phase-1-infrastructure.md) | **Active** — contracts/models start; MTA Engine reserved |
+| [external-repo-patterns-research.md](argusforge/external-repo-patterns-research.md) | **Research** — code-review-graph, likec4, worldmonitor, … (patterns, not copies) |
 | [alexandria-frozen-contract.md](argusforge/alexandria-frozen-contract.md) | **FROZEN** — Alexandria / Gatekeeper out of implementation scope |
 | [alexandria-spatial-bottleneck-research.md](argusforge/alexandria-spatial-bottleneck-research.md) | **Research** — bottleneck is spatial construction; AI = semantic→spatial |
 

@@ -7,6 +7,7 @@
 |----------|--------|----------|
 | [phase-0-architecture.md](phase-0-architecture.md) | **Sealed** | Map, **Memory Registry**, isolation, migration, risks |
 | [phase-1-infrastructure.md](phase-1-infrastructure.md) | **Active** | Models/contracts start — Chaos, org, Argus, MTA reserved, AI proposals |
+| [external-repo-patterns-research.md](external-repo-patterns-research.md) | **Research** | Captured repos: code-review-graph (soon), likec4, worldmonitor, … |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria out of scope; preserve; no Forge merge; reopen only after study |
 | [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | **Research** | Bottleneck = spatial construction; AI = semantic→spatial (not graphics); deferred |
 
@@ -40,6 +41,7 @@
 1. [phase-0-architecture.md](phase-0-architecture.md) — sealed map (§0.1 Memory Registry)
 2. [phase-1-infrastructure.md](phase-1-infrastructure.md) — current build rules
 3. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — do not implement Alexandria
-4. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) — deferred
-5. Existing islands: [`../argus/README.md`](../argus/README.md) · [`../matrix/README.md`](../matrix/README.md)
-6. Chaos Coordination (today): [`../../tools/Chaos/README.md`](../../tools/Chaos/README.md)
+4. [external-repo-patterns-research.md](external-repo-patterns-research.md) — external pattern references (not copy)
+5. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) — deferred
+6. Existing islands: [`../argus/README.md`](../argus/README.md) · [`../matrix/README.md`](../matrix/README.md)
+7. Chaos Coordination (today): [`../../tools/Chaos/README.md`](../../tools/Chaos/README.md)

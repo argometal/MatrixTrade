@@ -141,6 +141,8 @@ Example relation types (extensible):
 
 Phase 1: contract + types only; facades over product stores come later.
 
+**Action:** Dedicated technical analysis of [external-repo-patterns-research.md](external-repo-patterns-research.md) (**code-review-graph**) before designing Argus Engine storage.
+
 Code: `lib/argusforge/contracts/argus-engine.ts`
 
 ---
