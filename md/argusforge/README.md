@@ -1,47 +1,33 @@
 # ArgusForge — Library index
 
-**Role:** Umbrella integration environment inside the MatrixTrade repository.  
-**Not:** Another application, another database, or a rewrite of MTA / ARGUS.
+**Role:** Index for ArgusForge (AF) documentation inside MatrixTrade.  
+**Canonical Phase 0 contract:** [`phase-0-architecture.md`](phase-0-architecture.md)  
+**Rule:** Do not duplicate or contradict the Phase 0 contract in this file.
 
-| Document | Status | Contents |
-|----------|--------|----------|
-| [phase-0-architecture.md](phase-0-architecture.md) | **Sealed** | Map, **Memory Registry**, isolation, migration, risks |
-| [phase-1-infrastructure.md](phase-1-infrastructure.md) | **Active** | Models/contracts start — Chaos, org, Argus, MTA reserved, AI proposals |
-| [external-repo-patterns-research.md](external-repo-patterns-research.md) | **Research** | Captured repos: code-review-graph (soon), likec4, worldmonitor, … |
-| [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria out of scope; preserve; no Forge merge; reopen only after study |
-| [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | **Research** | Bottleneck = spatial construction; AI = semantic→spatial (not graphics); deferred |
+## Documents
 
-## Locked names
+| Document | Status | Responsibility |
+|----------|--------|----------------|
+| [phase-0-architecture.md](phase-0-architecture.md) | **Canonical — Phase 0 CLOSED** | AF identity, Chaos, org, Registry, engines, names, limits |
+| [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria / Gatekeeper freeze |
+| [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | **Research — deferred, non-binding** | Historical spatial notes; not AF architecture |
+| [external-repo-patterns-research.md](external-repo-patterns-research.md) | **Research** | External pattern references (no copy) |
 
-| Name | One-line |
-|------|----------|
-| **ArgusForge** | Hub — integrates products and engines (**not** a data store) |
-| **Chaos** | Capture unit (unbounded parts); creates identities |
-| **Memory Registry** | Identity + pointers + shared context — **not** Database / Archive / Storage |
-| **Argus Engine** | *What is related to what?* — relations, discovery, enrichment |
-| **MTA Engine** | *What happens over time?* — temporal behavior of knowledge (**reserved** in Phase 1) |
-| **ARGUS** | Private evidence product — owns **Argus Store** |
-| **MTA** | Trading product — owns **MTA Store** |
-| **Alexandria** | 3D knowledge product — **FROZEN** external; see frozen contract |
-| **Vault** | AI output interface (future) |
-| **Focus / Active / Archive** | Operational states; folders = user org only; never replace relations |
+## Canonical principle (pointer)
 
-## Critical rules
+```text
+Products own data. Memory owns identity. Argus relates. MTA observes time. Chaos captures. ArgusForge coordinates.
+```
 
-1. Products own data. Memory owns identity. Engines enrich. Chaos registers the new.  
-2. **Argus ≠ MTA Engine** — relations vs temporal behavior; never mix.  
-3. Alexandria FROZEN — no spatial / renderer work in Forge.
-
-## Code (Phase 1)
-
-`lib/argusforge/` — contracts + thin JSON registry index (`data/forge/`, gitignored).
+Full text: [`phase-0-architecture.md`](phase-0-architecture.md).
 
 ## Reading order
 
-1. [phase-0-architecture.md](phase-0-architecture.md) — sealed map (§0.1 Memory Registry)
-2. [phase-1-infrastructure.md](phase-1-infrastructure.md) — current build rules
-3. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — do not implement Alexandria
-4. [external-repo-patterns-research.md](external-repo-patterns-research.md) — external pattern references (not copy)
-5. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) — deferred
-6. Existing islands: [`../argus/README.md`](../argus/README.md) · [`../matrix/README.md`](../matrix/README.md)
-7. Chaos Coordination (today): [`../../tools/Chaos/README.md`](../../tools/Chaos/README.md)
+1. [phase-0-architecture.md](phase-0-architecture.md)
+2. [alexandria-frozen-contract.md](alexandria-frozen-contract.md)
+3. [external-repo-patterns-research.md](external-repo-patterns-research.md)
+4. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
+
+## Out of scope here
+
+Implementation, Phase 1 code, product changes (MTA / ARGUS / tools Chaos / Alexandria).

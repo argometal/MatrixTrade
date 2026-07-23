@@ -2,193 +2,84 @@
 
 **Status:** Research  
 **Date:** 2026-07-23  
-**Scope:** Patterns from captured external repos that may serve ArgusForge.  
-**Method:** Not an exhaustive audit — searched for reusable patterns and what to defer.  
-**Rule:** Do **not** copy these projects. Extract principles. Do **not** let mature-phase references reshape the Phase 1 minimum model.
+**Canonical AF contract:** [`phase-0-architecture.md`](phase-0-architecture.md)  
+**Rule:** Patterns only. Do **not** copy code. Do **not** add dependencies. Do **not** reshape Phase 0.
 
 ---
 
 ## Priority table
 
-| Repository | When | Theme to study |
-|------------|------|----------------|
-| [tirth8205/code-review-graph](https://github.com/tirth8205/code-review-graph) | **Before Argus Engine storage design** | Incremental graph, SQLite, minimal AI context, MCP |
-| [likec4/likec4](https://github.com/likec4/likec4) | When designing relationship visualization | Declarative model, views, hierarchies |
-| [koala73/worldmonitor](https://github.com/koala73/worldmonitor) | Advanced ingest phase | Normalization, correlation, freshness, multiple surfaces |
-| [rohitg00/ai-engineering-from-scratch](https://github.com/rohitg00/ai-engineering-from-scratch) | When formalizing IA discipline | Skills, artifacts, reproducible experiments |
-| [schollz/croc](https://github.com/schollz/croc) | Bridge / Data-transfer only | Secure resumable transfer |
+| Repository | When | Theme | Priority |
+|------------|------|-------|----------|
+| [tirth8205/code-review-graph](https://github.com/tirth8205/code-review-graph) | Before designing Argus Engine | Incremental graph, SQLite, source≠graph, minimal context, neighborhood, dependencies, blast radius, MCP | **High** |
+| [likec4/likec4](https://github.com/likec4/likec4) | When designing relational visualization / navigation | Declarative model, configurable types, derived views, nested levels, model≠representation | Medium (after relation model) |
+| [koala73/worldmonitor](https://github.com/koala73/worldmonitor) | When AF has multi-source ingest | Normalization, stream correlation, freshness, synthesis, multiple products on shared architecture, human + agent access | Future |
+| [rohitg00/ai-engineering-from-scratch](https://github.com/rohitg00/ai-engineering-from-scratch) | When formalizing AI workflows | Reusable artifacts, skills, prompts, agents, MCP, reproducible experiments | Future |
+| [schollz/croc](https://github.com/schollz/croc) | Bridge / Data-transfer only | Secure resumable transfer | Outside AF core |
 
 ---
 
 ## Retomar pronto
 
-### 1. tirth8205/code-review-graph
+### 1. tirth8205/code-review-graph — high
 
-**Most directly useful for Argus Engine.**
+Useful for **Argus Engine** pattern study (not for code-review product features).
 
-What matters is **not** code review — it is the architectural pattern:
-
-- turns a complex source into a graph;
-- stores nodes and relationships;
-- updates only what changed;
-- computes dependencies and “blast radius”;
-- gives the AI only the minimum necessary context;
-- exposes that context via MCP.
-
-Especially interesting pipeline:
+Pipeline of interest:
 
 ```text
-source
-  → parser
-  → graph in SQLite
-  → relational query
-  → minimal context for AI
+source content
+  → extraction / parser
+  → graph
+  → incremental update
+  → targeted / minimal context
 ```
 
-In their domain, nodes are functions, classes, and imports.  
-In ArgusForge they would be Chaos, entities, fragments, syntheses, and relations.  
-**The principle is reusable.**
+Study: incremental graph; SQLite as pragmatic store; separation of source and graph; neighborhood; dependencies; blast radius; MCP exposure.
 
-#### What we could take
+In AF terms, nodes would later map to Chaos, entities, fragments, syntheses, relations — principle reusable; **no schema designed in Phase 0**.
 
-- incremental graph updates;
-- separation between original data and relational map;
-- neighborhood / dependency queries;
-- “impact radius” of modifying, splitting, or archiving a Chaos;
-- AI context selection without sending the whole library;
-- future MCP integration;
-- local SQLite as a pragmatic graph **before** a specialized graph DB.
+### 2. likec4/likec4 — medium, later
 
-**Action:** Dedicated technical analysis **before** designing Argus Engine storage.
+Useful for a future **relationship viewer**, not for Chaos ingest. Declarative relations, configurable types, derived views, nested levels without treating visual hierarchy as identity.
 
 ---
 
-### 2. likec4/likec4
+## Retomar después
 
-Useful to understand how to represent a relational model via:
+### 3. koala73/worldmonitor — future
 
-- declarative language;
-- configurable node types;
-- relation types;
-- nested levels;
-- multiple views generated from one source.
+Too large to copy. Reference for mature multi-ingest and situational awareness once Chaos already accepts pages, PDFs, email, images, events, and external product data.
 
-**Do not use as ArgusForge’s engine.** Its domain is software architecture, not general knowledge.
+### 4. rohitg00/ai-engineering-from-scratch — future
 
-#### What we could take
-
-- readable declarative definition of relations;
-- separate model from visualizations;
-- generate different views without duplicating data;
-- allow visual hierarchies without making them real identity;
-- study nested levels and customizable notation.
-
-**Action:** Useful for a future **relationship viewer**, not for the first Chaos CRUD.
+Curriculum / discipline reference (`problem → concept → build → use → reusable artifact`). No code extraction now.
 
 ---
 
-## Retomar en una fase posterior
+## Otra necesidad
 
-### 3. koala73/worldmonitor
+### 5. schollz/croc — Bridge only
 
-Very large; too much scope to copy now. Contains patterns for a **mature** ArgusForge stage.
-
-Integrates hundreds of sources, AI synthesis, correlation across streams, and different products/views from one codebase. Also offers multiple surfaces over a shared architecture: web, desktop, API, CLI, MCP, SDK.
-
-#### What we could take
-
-- ingest from multiple providers;
-- normalize before enrichment;
-- correlate different streams;
-- indicators derived from multiple signals;
-- source freshness monitoring;
-- one base feeding distinct products;
-- architecture ready for humans and agents.
-
-**Relevant when Chaos already ingests:** pages, PDFs, email, images, events, external product data.
-
-**Must not** influence the Phase 1 minimum model. Reference for multi-ingest and situational awareness later.
+Not AF core. Possible reference for secure device-to-device transfer. Keep separate from Chaos and Argus Engine.
 
 ---
 
-### 4. rohitg00/ai-engineering-from-scratch
+## No priorizar
 
-Not a product comparable to ArgusForge. Structured curriculum (~503 lessons), each producing reusable artifacts: prompts, skills, agents, or MCP servers.
-
-Interesting discipline:
-
-```text
-problem → concept → build → use → reusable artifact
-```
-
-Each unit keeps a repeatable folder/result structure.
-
-#### What we could take
-
-- each ArgusForge phase produces a verifiable artifact;
-- Cursor / agent-specific skills;
-- evaluations for what context the user needs;
-- uniform structure for AI experiments;
-- eventual library of prompts and segmentation operations.
-
-**Do not extract code now.** Keep as reference for AI engineering discipline.
+openship (deploy) · awesome-claude-skills (catalog later) · pi-web (agent UI too early) · cloudflare_temp_email (unrelated).
 
 ---
 
-## Útil, pero para otra necesidad
-
-### 5. schollz/croc
-
-Solves simple secure transfer between machines:
-
-- end-to-end encryption;
-- relay;
-- cross-platform;
-- resume;
-- multiple files.
-
-**Does not contribute to ArgusForge’s core.**
-
-May reference the earlier Bridge / Data-transfer problem:
-
-- file transport between devices;
-- operation without opening ports;
-- simple pairing codes;
-- robust resumable transfer.
-
-**Separate completely** from Chaos and Argus Engine.
-
----
-
-## No priorizar ahora
-
-| Capture | Why defer |
-|---------|-----------|
-| openship | Deployment; does not solve the knowledge model |
-| awesome-claude-skills | Idea catalog; revisit when defining our own skills |
-| pi-web | Agent UI; irrelevant until a stable backend exists |
-| cloudflare_temp_email | Unrelated to the project |
-
----
-
-## Main conclusion
+## Conclusion
 
 | Need | Best reference |
 |------|----------------|
-| **ArgusForge core / Argus Engine** | **code-review-graph** |
-| **Visualize relations** | likec4 |
-| **Mature ingest + correlation** | worldmonitor |
+| Argus Engine core patterns | **code-review-graph** |
+| Relation visualization | likec4 |
+| Mature ingest / correlation | worldmonitor |
 
-Copy none. Use their patterns so ArgusForge does not re-solve problems that are already well bounded.
-
----
-
-## Relation to Phase 1
-
-Phase 1 builds Chaos contracts, operational org, Argus relation **types**, and a reserved MTA Engine.  
-This note does **not** authorize adopting SQLite graphs, MCP, or viewers yet.
-
-Next dedicated study (when opening Argus Engine storage): **code-review-graph** incremental graph + minimal AI context.
+Copy none.
 
 ---
 
@@ -196,7 +87,5 @@ Next dedicated study (when opening Argus Engine storage): **code-review-graph** 
 
 | Document | Role |
 |----------|------|
-| [phase-0-architecture.md](phase-0-architecture.md) | Sealed map |
-| [phase-1-infrastructure.md](phase-1-infrastructure.md) | Active contracts phase |
-| [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | Alexandria FROZEN |
+| [phase-0-architecture.md](phase-0-architecture.md) | Canonical Phase 0 |
 | [README.md](README.md) | Index |

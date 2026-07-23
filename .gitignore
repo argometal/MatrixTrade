@@ -40,9 +40,6 @@ Chaos.bundle
 /data/trading-inbox.json
 /data/health-vault/
 
-# ArgusForge — registry index + chaos staging metadata (not product truth)
-/data/forge/
-
 # Trading live data (seed to Supabase — see md/integrations/supabase-cloud-first.md)
 /data/trades.json
 /data/ai-notes.json

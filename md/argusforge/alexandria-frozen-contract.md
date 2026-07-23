@@ -129,7 +129,7 @@ That phase must include:
 4. Evaluation of desktop, mobile, web, VR, and spatial-computing constraints.
 5. Redesign of the authoring experience.
 6. Redesign of the Parcour and memory-palace construction workflow.
-7. Definition of the relationship between Alexandria and ArgusForge (including any AI semantic→spatial pipeline — see [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md)).
+7. Definition of the relationship between Alexandria and ArgusForge (exchange boundary only after study — no pipeline chosen in advance).
 8. Migration or reuse plan.
 9. Explicit decision on what survives from the current implementation.
 
@@ -170,6 +170,6 @@ This contract remains active until explicitly replaced.
 
 | Document | Role |
 |----------|------|
-| [phase-0-architecture.md](phase-0-architecture.md) | ArgusForge umbrella map — must respect this freeze |
-| [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | Research direction when reopened — semantic→spatial pipeline (not “AI graphics”) |
+| [phase-0-architecture.md](phase-0-architecture.md) | Canonical AF Phase 0 — must respect this freeze |
+| [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | Deferred non-binding research — not AF architecture |
 | [README.md](README.md) | ArgusForge library index |
