@@ -11,6 +11,7 @@ Related technical maps (must not contradict this contract):
 | Document | Role |
 |----------|------|
 | [perpetual-evolution-contract.md](perpetual-evolution-contract.md) | **Sealed addendum** — perpetual evolution |
+| [af03-chaos-interface-contract.md](af03-chaos-interface-contract.md) | Working Chaos interface checklist (does not reopen Alexandria) |
 | [phase-0-architecture.md](phase-0-architecture.md) | Technical Phase 0 boundaries |
 | [vault-training-layer-contract.md](vault-training-layer-contract.md) | Vault ≠ Memory (formation prep) |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | Alexandria FROZEN |
