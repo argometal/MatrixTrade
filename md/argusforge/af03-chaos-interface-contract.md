@@ -94,22 +94,22 @@ Active / Archive
 
 The creation menu may provide:
 
-- [ ] New Folder.
-- [ ] New Chaos Deck.
-- [ ] New content inside a Chaos Deck.
-- [ ] Import content.
-- [ ] Add image.
-- [ ] Add file or PDF when supported.
-- [ ] Add link.
-- [ ] Add text.
+- [x] New Folder.
+- [x] New Chaos Deck.
+- [x] New content inside a Chaos Deck.
+- [ ] Import content. *(placeholder — not presented as functional)*
+- [ ] Add image. *(placeholder — not presented as functional)*
+- [ ] Add file or PDF when supported. *(placeholder — not presented as functional)*
+- [x] Add link.
+- [x] Add text.
 
 ### Rules
 
-- [ ] Do not require complete classification during capture.
-- [ ] Do not require semantic relations during capture.
-- [ ] Do not force the user to explain why material matters.
-- [ ] Optional context fields must remain optional.
-- [ ] Do not present unavailable features as functional.
+- [x] Do not require complete classification during capture.
+- [x] Do not require semantic relations during capture.
+- [x] Do not force the user to explain why material matters.
+- [x] Optional context fields must remain optional.
+- [x] Do not present unavailable features as functional.
 
 ---
 
@@ -117,16 +117,16 @@ The creation menu may provide:
 
 A folder may display Chaos Decks similarly to a repository or deck list.
 
-- [ ] Display Chaos Deck title.
-- [ ] Display a thumbnail or content preview.
-- [ ] Display a basic content count.
-- [ ] Display simple recent activity information.
-- [ ] Display simple status information where applicable.
-- [ ] Permit card/grid view.
-- [ ] Permit list view.
-- [ ] Permit opening the Chaos Deck.
-- [ ] Provide a contextual menu for the Chaos Deck.
-- [ ] Do not add learning grades or Alexandria evaluation logic.
+- [x] Display Chaos Deck title.
+- [x] Display a thumbnail or content preview.
+- [x] Display a basic content count.
+- [x] Display simple recent activity information.
+- [x] Display simple status information where applicable.
+- [x] Permit card/grid view.
+- [x] Permit list view.
+- [x] Permit opening the Chaos Deck.
+- [x] Provide a contextual menu for the Chaos Deck.
+- [x] Do not add learning grades or Alexandria evaluation logic.
 
 ---
 
@@ -134,16 +134,16 @@ A folder may display Chaos Decks similarly to a repository or deck list.
 
 A Chaos Deck is a cumulative content container.
 
-- [ ] Permit the deck to accumulate content over time.
-- [ ] Do not model the entire Chaos Deck as one fixed note card.
-- [ ] Display contained items as previews or mini cards.
-- [ ] Permit list and card/grid presentation.
-- [ ] Permit opening individual content.
-- [ ] Provide simple deck statistics.
-- [ ] Provide a deck-level contextual menu.
-- [ ] Preserve content order when relevant.
-- [ ] Permit basic reordering when explicitly implemented.
-- [ ] Avoid final semantic segmentation at this stage.
+- [x] Permit the deck to accumulate content over time.
+- [x] Do not model the entire Chaos Deck as one fixed note card.
+- [x] Display contained items as previews or mini cards.
+- [x] Permit list and card/grid presentation.
+- [x] Permit opening individual content.
+- [x] Provide simple deck statistics.
+- [x] Provide a deck-level contextual menu.
+- [x] Preserve content order when relevant.
+- [x] Permit basic reordering when explicitly implemented.
+- [x] Avoid final semantic segmentation at this stage.
 
 ---
 
@@ -151,12 +151,12 @@ A Chaos Deck is a cumulative content container.
 
 The Chaos Deck must be prepared to receive:
 
-- [ ] Text.
-- [ ] Links.
-- [ ] Images.
-- [ ] Files.
-- [ ] PDF.
-- [ ] Mixed content.
+- [x] Text.
+- [x] Links.
+- [ ] Images. *(menu placeholder; editor supports image URL markdown)*
+- [ ] Files. *(menu placeholder; editor supports file-ref insert)*
+- [ ] PDF. *(menu placeholder)*
+- [x] Mixed content. *(via markdown body in editor)*
 
 Future-compatible, but not required in this first slice:
 
@@ -168,12 +168,12 @@ Future-compatible, but not required in this first slice:
 
 ### Rules
 
-- [ ] Capture must prioritize avoiding data loss.
-- [ ] Production capture must not depend only on sessionStorage.
-- [ ] Clearly distinguish prototype storage from persistent storage.
-- [ ] Do not silently discard unsupported material.
-- [ ] Preserve the original source or source reference.
-- [ ] Do not automatically rewrite raw content.
+- [x] Capture must prioritize avoiding data loss.
+- [x] Production capture must not depend only on sessionStorage. *(localStorage prototype; still not server)*
+- [x] Clearly distinguish prototype storage from persistent storage.
+- [x] Do not silently discard unsupported material.
+- [x] Preserve the original source or source reference.
+- [x] Do not automatically rewrite raw content.
 
 ---
 
@@ -181,21 +181,21 @@ Future-compatible, but not required in this first slice:
 
 The editor should resemble a clear content editor without reproducing Alexandria Library.
 
-- [ ] Edit text.
-- [ ] Add headings.
-- [ ] Add paragraphs.
-- [ ] Add lists.
-- [ ] Add images.
-- [ ] Add links.
-- [ ] Add files or references.
-- [ ] Support mixed text and visual content.
-- [ ] Save changes.
-- [ ] Close without accidental loss.
-- [ ] Display basic creation and modification information.
-- [ ] Do not implement advanced Locus segmentation.
-- [ ] Do not implement Parcour.
-- [ ] Do not implement Alexandria evaluation.
-- [ ] Do not implement spatial or Godot logic.
+- [x] Edit text.
+- [x] Add headings.
+- [x] Add paragraphs.
+- [x] Add lists.
+- [x] Add images. *(URL / markdown insert — not binary upload)*
+- [x] Add links.
+- [x] Add files or references. *(reference insert — binary not stored)*
+- [x] Support mixed text and visual content.
+- [x] Save changes.
+- [x] Close without accidental loss.
+- [x] Display basic creation and modification information.
+- [x] Do not implement advanced Locus segmentation.
+- [x] Do not implement Parcour.
+- [x] Do not implement Alexandria evaluation.
+- [x] Do not implement spatial or Godot logic.
 
 ---
 
@@ -327,18 +327,18 @@ Every prototype must state:
 
 ### Current known prototypes
 
-#### `/forge` Active / Archive repository (§1–3)
+#### `/forge` Active / Archive + Chaos Deck + editor (§1–8 partial)
 
 | Field | Statement |
 |-------|-----------|
-| Demonstrates | Home links; Active/Archive roots; nested folders; Chaos Deck list placeholders; search; menus; level stats |
-| Does not demonstrate | Deck internal content, persistent server ingest, editor, Viewer, Vault prep, Focus triggers |
-| Storage | `localStorage` key `argusforge-af03-repo-v1` |
+| Demonstrates | Home; Active/Archive folders; Chaos Deck list/grid; deck internal accumulate; text/link ingest; basic markdown editor; reorder; level/deck stats |
+| Does not demonstrate | Binary image/file/PDF ingest, dedicated Viewer, Vault prep, Focus triggers, server persistence |
+| Storage | `localStorage` key `argusforge-af03-repo-v1` (schema version 2) |
 | Data loss | Yes — browser-local only |
-| Real actions | Open/navigate, New Folder, New Chaos Deck, Rename, Archive (from Active) |
-| Placeholders | Deck open/content, Move, Prepare for Vault |
-| Incomplete | AF03 §4–12 mostly |
-| Evolve or rebuild | May evolve for §4–7; not contract-complete Chaos |
+| Real actions | Open/navigate, New Folder/Deck, Add text/link, Edit/Save, Rename, Archive, List/Grid, Reorder |
+| Placeholders | Import, Add image/file/PDF (menu), Prepare for Vault, Move |
+| Incomplete | AF03 §7 binary types; §9 Viewer; §10–13 mostly |
+| Evolve or rebuild | May evolve for Viewer/Vault; not contract-complete Chaos |
 
 #### `/forge/chaos` (legacy capture)
 
@@ -350,7 +350,7 @@ Every prototype must state:
 | Data loss | Yes — cleared with session / browser data |
 | Real inputs | Text, Link |
 | Placeholders | Image, File; Task; Vault |
-| Incomplete vs this contract | Nearly all checklist sections beyond early capture |
+| Incomplete vs this contract | Prefer `/forge/deck/[id]` for Chaos Deck work |
 | Evolve or rebuild | Treat as **rebuild candidate** into Chaos Deck ingest; must not redefine the Chaos contract |
 
 ---
@@ -386,13 +386,13 @@ Recommended interface sequence:
 
 - [x] 1. Active / Archive repository view.
 - [x] 2. Folder navigation.
-- [ ] 3. Chaos Deck list/grid. *(list present at folder level; dedicated deck UI later)*
-- [ ] 4. Chaos Deck internal content view.
-- [ ] 5. Basic content creation and ingestion.
-- [ ] 6. Basic editor.
+- [x] 3. Chaos Deck list/grid.
+- [x] 4. Chaos Deck internal content view.
+- [x] 5. Basic content creation and ingestion. *(text/link; binary types deferred)*
+- [x] 6. Basic editor.
 - [ ] 7. Clear Viewer.
-- [ ] 8. Simple statistics. *(level stats in §3 shipped; richer stats later)*
-- [ ] 9. Contextual menus. *(basic folder/deck menus in §3 shipped)*
+- [x] 8. Simple statistics. *(level + deck stats; richer later)*
+- [x] 9. Contextual menus. *(folder/deck/content; Move/Vault still placeholders)*
 - [ ] 10. Vault preparation boundary.
 - [ ] 11. Focus design — later.
 - [ ] 12. Alexandria integration — separate future phase.
@@ -403,17 +403,17 @@ Recommended interface sequence:
 
 This interface phase is complete when the user can:
 
-- [ ] Enter Active or Archive.
-- [ ] Navigate folders.
-- [ ] Create or open a Chaos Deck.
-- [ ] Ingest persistent content.
-- [ ] View its items as cards or a list.
-- [ ] Edit supported content.
+- [x] Enter Active or Archive.
+- [x] Navigate folders.
+- [x] Create or open a Chaos Deck.
+- [x] Ingest persistent content. *(browser-local text/link; not server)*
+- [x] View its items as cards or a list.
+- [x] Edit supported content.
 - [ ] Open a clean Viewer.
-- [ ] See simple truthful statistics.
-- [ ] Use contextual menus appropriate to each level.
+- [x] See simple truthful statistics.
+- [x] Use contextual menus appropriate to each level.
 - [ ] Preserve a future path toward Vault.
-- [ ] Do all this without reopening Alexandria.
+- [x] Do all this without reopening Alexandria.
 
 ---
 

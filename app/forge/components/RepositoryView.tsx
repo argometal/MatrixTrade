@@ -15,9 +15,12 @@ import {
   listDecksAt,
   renameDeck,
   renameFolder,
+  setDeckListLayout,
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03RepoState, OperationalView } from "@/lib/argusforge/af03-repo-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import { ChaosDeckList } from "./ChaosDeckList";
+import { CreationMenu, type CreateAction } from "./CreationMenu";
 
 type Props = {
   view: OperationalView;
@@ -81,6 +84,24 @@ export function RepositoryView({ view, folderId }: Props) {
     if (value === null) return null;
     const trimmed = value.trim();
     return trimmed || null;
+  }
+
+  function handleCreate(action: CreateAction) {
+    if (!state) return;
+    if (action === "folder") {
+      const name = promptTitle("New folder name", "New folder");
+      if (!name) return;
+      const { state: next } = createFolder(state, { title: name, parentId: folderId, view });
+      setState(next);
+      return;
+    }
+    if (action === "deck") {
+      const name = promptTitle("New Chaos Deck name", "New Chaos Deck");
+      if (!name) return;
+      const { state: next, deck } = createDeck(state, { title: name, folderId, view });
+      setState(next);
+      window.location.href = `/forge/deck/${deck.id}`;
+    }
   }
 
   if (!state) {
@@ -183,32 +204,7 @@ export function RepositoryView({ view, folderId }: Props) {
         />
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-          onClick={() => {
-            const title = promptTitle("New folder name", "New folder");
-            if (!title) return;
-            const { state: next } = createFolder(state, { title, parentId: folderId, view });
-            setState(next);
-          }}
-        >
-          New Folder
-        </button>
-        <button
-          type="button"
-          className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-          onClick={() => {
-            const title = promptTitle("New Chaos Deck name", "New Chaos Deck");
-            if (!title) return;
-            const { state: next } = createDeck(state, { title, folderId, view });
-            setState(next);
-          }}
-        >
-          New Chaos Deck
-        </button>
-      </div>
+      <CreationMenu scope="folder" onAction={handleCreate} />
 
       <section aria-labelledby={`${view}-folders-heading`} className="space-y-2">
         <h3 id={`${view}-folders-heading`} className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
@@ -250,9 +246,9 @@ export function RepositoryView({ view, folderId }: Props) {
                         role="menuitem"
                         className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
                         onClick={() => {
-                          const title = promptTitle("Rename folder", f.title);
-                          if (!title) return;
-                          setState(renameFolder(state, f.id, title));
+                          const name = promptTitle("Rename folder", f.title);
+                          if (!name) return;
+                          setState(renameFolder(state, f.id, name));
                           setMenuId(null);
                         }}
                       >
@@ -263,10 +259,10 @@ export function RepositoryView({ view, folderId }: Props) {
                         role="menuitem"
                         className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
                         onClick={() => {
-                          const title = promptTitle("Child folder name", "New folder");
-                          if (!title) return;
+                          const name = promptTitle("Child folder name", "New folder");
+                          if (!name) return;
                           const { state: next } = createFolder(state, {
-                            title,
+                            title: name,
                             parentId: f.id,
                             view,
                           });
@@ -281,15 +277,16 @@ export function RepositoryView({ view, folderId }: Props) {
                         role="menuitem"
                         className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
                         onClick={() => {
-                          const title = promptTitle("Chaos Deck name", "New Chaos Deck");
-                          if (!title) return;
-                          const { state: next } = createDeck(state, {
-                            title,
+                          const name = promptTitle("Chaos Deck name", "New Chaos Deck");
+                          if (!name) return;
+                          const { state: next, deck } = createDeck(state, {
+                            title: name,
                             folderId: f.id,
                             view,
                           });
                           setState(next);
                           setMenuId(null);
+                          window.location.href = `/forge/deck/${deck.id}`;
                         }}
                       >
                         Create Chaos Deck
@@ -316,75 +313,24 @@ export function RepositoryView({ view, folderId }: Props) {
         )}
       </section>
 
-      <section aria-labelledby={`${view}-decks-heading`} className="space-y-2">
-        <h3 id={`${view}-decks-heading`} className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Chaos Decks
-        </h3>
-        {decks.length === 0 ? (
-          <p className="text-sm text-zinc-600">No Chaos Decks at this level.</p>
-        ) : (
-          <ul className="divide-y divide-zinc-800 overflow-hidden rounded-lg border border-zinc-800">
-            {decks.map((d) => (
-              <li key={d.id} className="flex items-stretch bg-zinc-950">
-                <div className="min-w-0 flex-1 px-3 py-3">
-                  <p className="font-medium text-zinc-100">{d.title}</p>
-                  <p className="truncate text-xs text-zinc-500">
-                    {d.contentCount} items · {formatTime(d.updatedAt)}
-                  </p>
-                  <p className="mt-1 truncate text-xs text-zinc-600">{d.preview}</p>
-                  <p className="mt-2 text-xs text-zinc-500">
-                    Deck open / content view — later AF03 slice (not this one).
-                  </p>
-                </div>
-                <div className="relative border-l border-zinc-800">
-                  <button
-                    type="button"
-                    aria-label={`Menu for deck ${d.title}`}
-                    aria-expanded={menuId === d.id}
-                    className="flex h-full min-w-11 items-center justify-center px-3 text-zinc-400 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-                    onClick={() => setMenuId(menuId === d.id ? null : d.id)}
-                  >
-                    ⋯
-                  </button>
-                  {menuId === d.id ? (
-                    <div
-                      role="menu"
-                      className="absolute right-0 z-10 mt-1 w-40 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg"
-                    >
-                      <button
-                        type="button"
-                        role="menuitem"
-                        className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-                        onClick={() => {
-                          const title = promptTitle("Rename Chaos Deck", d.title);
-                          if (!title) return;
-                          setState(renameDeck(state, d.id, title));
-                          setMenuId(null);
-                        }}
-                      >
-                        Rename
-                      </button>
-                      {view === "active" ? (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-                          onClick={() => {
-                            setState(archiveDeck(state, d.id));
-                            setMenuId(null);
-                          }}
-                        >
-                          Archive
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <ChaosDeckList
+        decks={decks}
+        layout={state.prefs.deckListLayout}
+        view={view}
+        menuId={menuId}
+        onToggleMenu={setMenuId}
+        onRename={(d) => {
+          const name = promptTitle("Rename Chaos Deck", d.title);
+          if (!name) return;
+          setState(renameDeck(state, d.id, name));
+          setMenuId(null);
+        }}
+        onArchive={(d) => {
+          setState(archiveDeck(state, d.id));
+          setMenuId(null);
+        }}
+        onLayoutChange={(layout) => setState(setDeckListLayout(state, layout))}
+      />
     </div>
   );
 }

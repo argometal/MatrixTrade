@@ -13,6 +13,8 @@ const NAV = [
 
 function sectionTitle(pathname: string): string {
   if (pathname === "/forge" || pathname === "/forge/") return "Home";
+  if (pathname.includes("/item/")) return "Editor";
+  if (pathname.startsWith("/forge/deck/")) return "Chaos Deck";
   if (pathname.startsWith("/forge/archive")) return "Archive";
   if (pathname.startsWith("/forge/focus")) return "Focus";
   if (pathname.startsWith("/forge/chaos")) return "Capture (proto)";
