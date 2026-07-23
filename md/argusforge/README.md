@@ -51,11 +51,13 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 | Route | Status |
 |-------|--------|
 | `/forge` | Minimal Home — links to Active / Archive; Focus pending |
-| `/forge/active`, `/forge/active/f/[id]` | Active repository view (§2–5) |
-| `/forge/archive`, `/forge/archive/f/[id]` | Archive repository view (§2–5) |
+| `/forge/active`, `/forge/active/f/[id]` | Active repository view (§2–5) — **interim**; see DEBT-AF03-01 |
+| `/forge/archive`, `/forge/archive/f/[id]` | Archive repository view (§2–5) — **interim**; see DEBT-AF03-01 |
 | `/forge/deck/[deckId]` | Chaos Deck internal view (§6) |
 | `/forge/deck/[deckId]/item/[itemId]` | Basic content editor (§8) |
 | `/forge/focus` | Focus pending disclosure |
 | `/forge/chaos` | Legacy capture prototype (sessionStorage) — not Chaos Deck |
 
 Storage for §1–8 prototype: browser `localStorage` (`argusforge-af03-repo-v1`, schema v2). Not server persistence.
+
+**Open debt:** [DEBT-AF03-01](af03-chaos-interface-contract.md#debt-af03-01--active--archive-are-filters-not-twin-creation-surfaces) — Active/Archive must become **filters on one repository UI** (create births Active; reorganize allowed; Focus still out). Dual create surfaces are not final.

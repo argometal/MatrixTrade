@@ -23,14 +23,54 @@ Cursor must complete checklist items **without expanding architecture** and **wi
 ## Core pipeline
 
 ```text
-Active / Archive
-  → folders
+Repository (one interface)
+  → filter: Active | Archive   (Focus later — out of scope now)
+  → folders (reorganize)
   → Chaos Decks
   → content ingestion
   → basic management
   → clear Viewer
   → preparation toward Vault
 ```
+
+**Correction (agreed, not yet shipped):** Active and Archive are **lifecycle filters on one repository UI**, not two places to create content. See **DEBT-AF03-01** below.
+
+---
+
+## DEBT-AF03-01 — Active / Archive are filters, not twin creation surfaces
+
+**Status:** OPEN — documented debt; do not pretend the current dual routes are the sealed model  
+**Agreed direction (user + Phase 0):**
+
+| Layer | Meaning |
+|-------|---------|
+| Operational state | **Active / Archive** (and later **Focus**) = filters / lifecycle views |
+| Manual location | Folders = where I browse — **reorganization is allowed** |
+| Identity | Path and filter do not create a new KEY |
+
+**Current prototype mistake:** `/forge/active` and `/forge/archive` behave like **two repository roots** with create actions in both. That incorrectly implies two birth places for folders/decks.
+
+**Target (when this debt is paid):**
+
+1. **One repository interface** (single tree / list chrome).
+2. **Active | Archive** = filter chips (or equivalent), not separate nav destinations that fork creation.
+3. **Create** (folder / deck / content) is **not** “create in Active” vs “create in Archive”. New work **births as Active**. Archive is preserve-state, not a birth place — hide or disable create while Archive filter is on (or always birth Active if create remains visible).
+4. **Reorganize** (rename, move folder hierarchy when implemented, open/navigate) remains valid on the shared interface; archiving/restoring is a **state action**, not “move to another app”.
+5. **Focus** stays out of this debt slice — still pending; later another filter, not a third root.
+6. Routes like `/forge/active` and `/forge/archive` may redirect to one hub + filter; deck routes stay id-based (`/forge/deck/[id]`).
+
+**Allowed until solved:** keep shipping other AF03 slices; **reorganization** of folders/decks in the existing UI is fine; do **not** expand Archive into a second full creation product surface.
+
+**Not allowed while debt is open:** claiming Active/Archive dual trees are final ontology; inventing Focus as a manual folder twin.
+
+**Checklist when closing this debt:**
+
+- [ ] Single repo UI with Active | Archive filter
+- [ ] Create births Active only; Archive filter does not offer twin create-world
+- [ ] Archive / Restore = state change, not second tree
+- [ ] Home / shell nav no longer present Active and Archive as two creation homes
+- [ ] AF03 §2 wording and prototype disclosure updated to “paid”
+- [ ] Focus still excluded unless separately approved
 
 ---
 
@@ -40,7 +80,7 @@ Active / Archive
 
 - [x] Do not invent final Home architecture.
 - [x] Do not block the rest of the interface work.
-- [x] Provide navigation access to Active and Archive.
+- [x] Provide navigation access to Active and Archive. *(interim dual entry — see DEBT-AF03-01)*
 - [x] Keep Focus visible only if clearly marked as pending.
 - [x] Do not implement system-trigger logic for Focus yet.
 
@@ -48,9 +88,11 @@ Active / Archive
 
 ## 2. OPERATIONAL VIEWS
 
+> **DEBT-AF03-01:** Treat checklist items below as **interim dual-route prototype**, not as approval of two creation surfaces. Target = one interface + filters.
+
 ### ACTIVE
 
-- [x] Active is available as a principal operational view.
+- [x] Active is available as a principal operational view. *(interim: separate route; target: filter)*
 - [x] Active may contain folders.
 - [x] Active may contain Chaos Decks.
 - [x] Active may contain nested folders.
@@ -58,7 +100,7 @@ Active / Archive
 
 ### ARCHIVE
 
-- [x] Archive is available as a principal operational view.
+- [x] Archive is available as a principal operational view. *(interim: separate route; target: filter)*
 - [x] Archive preserves content.
 - [x] Archive is not deletion.
 - [x] Archive may contain folders.
@@ -332,13 +374,13 @@ Every prototype must state:
 | Field | Statement |
 |-------|-----------|
 | Demonstrates | Home; Active/Archive folders; Chaos Deck list/grid; deck internal accumulate; text/link ingest; basic markdown editor; reorder; level/deck stats |
-| Does not demonstrate | Binary image/file/PDF ingest, dedicated Viewer, Vault prep, Focus triggers, server persistence |
+| Does not demonstrate | Binary image/file/PDF ingest, dedicated Viewer, Vault prep, Focus triggers, server persistence; **unified Active/Archive filter UI (DEBT-AF03-01)** |
 | Storage | `localStorage` key `argusforge-af03-repo-v1` (schema version 2) |
 | Data loss | Yes — browser-local only |
 | Real actions | Open/navigate, New Folder/Deck, Add text/link, Edit/Save, Rename, Archive, List/Grid, Reorder |
 | Placeholders | Import, Add image/file/PDF (menu), Prepare for Vault, Move |
-| Incomplete | AF03 §7 binary types; §9 Viewer; §10–13 mostly |
-| Evolve or rebuild | May evolve for Viewer/Vault; not contract-complete Chaos |
+| Incomplete | AF03 §7 binary types; §9 Viewer; §10–13 mostly; **DEBT-AF03-01** |
+| Evolve or rebuild | May evolve for Viewer/Vault; dual Active/Archive roots must be collapsed per DEBT-AF03-01 |
 
 #### `/forge/chaos` (legacy capture)
 
