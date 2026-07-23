@@ -1,10 +1,15 @@
+import { SystemScopedSection } from "../../../components/SystemScopedSection";
 import { RepositoryView } from "../../../components/RepositoryView";
 
-export default async function ForgeActiveFolderPage({
-  params,
-}: {
+type Props = {
   params: Promise<{ folderId: string }>;
-}) {
+};
+
+export default async function ForgeActiveFolderPage({ params }: Props) {
   const { folderId } = await params;
-  return <RepositoryView view="active" folderId={folderId} />;
+  return (
+    <SystemScopedSection section="active">
+      <RepositoryView view="active" folderId={folderId} />
+    </SystemScopedSection>
+  );
 }

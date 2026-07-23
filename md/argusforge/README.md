@@ -50,16 +50,19 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 
 | Route | Status |
 |-------|--------|
-| `/forge` | **Home overview** — Argus-inspired pulse chips + browse links + Overview/Recent tabs; AF metrics only |
-| `/forge/active`, `/forge/active/f/[id]` | Library · Active filter — **interim**; see DEBT-AF03-01 |
-| `/forge/archive`, `/forge/archive/f/[id]` | Library · Archive filter — **interim**; see DEBT-AF03-01 |
-| `/forge/deck/[deckId]` | Chaos Deck internal view (§6) |
-| `/forge/deck/[deckId]/item/[itemId]/view` | Content Viewer (§9) |
-| `/forge/deck/[deckId]/item/[itemId]` | Basic content editor (§8) |
-| `/forge/vault` | Vault preparation review queue (§12) |
-| `/forge/focus` | Focus pending disclosure |
-| `/forge/chaos` | Legacy capture prototype (sessionStorage) — not Chaos Deck |
+| `/forge` | Home overview (ArgusForge) or MTA overview when system=MTA |
+| `/forge/library` | Library — AF repository browse / MTA library links |
+| `/forge/active` | Active — AF active repo / MTA active deep-links |
+| `/forge/archive` | Archive — AF archive repo / MTA archive deep-links |
+| `/forge/vault` | Vault shell + **Vault \| Alexandria** selector (Alexandria frozen disclosure) |
+| `/forge/deck/[deckId]` | Chaos Deck internal view |
+| `/forge/deck/[deckId]/item/[itemId]/view` | Content Viewer |
+| `/forge/deck/[deckId]/item/[itemId]` | Basic content editor |
+| `/forge/focus` | **Hidden** from nav — deprecated/pending signals only |
+| `/forge/chaos` | Legacy capture prototype |
 
-Storage: `localStorage` `argusforge-af03-repo-v1` + `argusforge-af03-vault-prep-v1`. Not server persistence.
+**Shell:** bottom nav `Home | Library | Vault | Active | Archive`. Header system selector `ArgusForge | MTA` (persisted). Focus removed from nav.
 
-**Open debt:** [DEBT-AF03-01](af03-chaos-interface-contract.md#debt-af03-01--active--archive-are-filters-not-twin-creation-surfaces) — Active/Archive filter unification. Focus & Alexandria integration remain later.
+Storage: `localStorage` repo + vault-prep + `argusforge-selected-system-v1` + `argusforge-vault-mode-v1`.
+
+**Open debt:** [DEBT-AF03-01](af03-chaos-interface-contract.md#debt-af03-01--active--archive-are-filters-not-twin-creation-surfaces) — create still should not be twin birth worlds; Focus design later.

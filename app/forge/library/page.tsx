@@ -1,9 +1,10 @@
 import { SystemScopedSection } from "../components/SystemScopedSection";
 import { RepositoryView } from "../components/RepositoryView";
 
-export default function ForgeActiveRootPage() {
+/** Library — organizational repository browse (AF). MTA uses scoped links. */
+export default function ForgeLibraryPage() {
   return (
-    <SystemScopedSection section="active">
+    <SystemScopedSection section="library">
       <RepositoryView view="active" folderId={null} />
     </SystemScopedSection>
   );

@@ -119,15 +119,21 @@ export function ForgeHomeDashboard() {
         <p className="text-xs text-zinc-500">Where to go next — not Argus entity browsers.</p>
         <div className="grid gap-2 sm:grid-cols-2">
           <BrowseLink
+            href="/forge/library"
+            title="Library"
+            hint={`${o.activeDecks} active decks · organization`}
+            icon="library"
+          />
+          <BrowseLink
             href="/forge/active"
-            title="Library · Active"
-            hint={`${o.activeDecks} decks · working set`}
+            title="Active"
+            hint="Working operational set"
             icon="library"
           />
           <BrowseLink
             href="/forge/archive"
-            title="Library · Archive"
-            hint={`${o.archivedDecks} decks · preserved`}
+            title="Archive"
+            hint={`${o.archivedDecks} preserved · not deletion`}
             icon="archive"
           />
           <BrowseLink
@@ -139,12 +145,6 @@ export function ForgeHomeDashboard() {
                 : "Selection → review queue"
             }
             icon="vault"
-          />
-          <BrowseLink
-            href="/forge/chaos"
-            title="Capture (proto)"
-            hint="Legacy sessionStorage — rebuild candidate"
-            icon="capture"
           />
         </div>
       </section>
@@ -231,17 +231,16 @@ export function ForgeHomeDashboard() {
 
           <section aria-labelledby="filters-heading" className="space-y-2">
             <h3 id="filters-heading" className="text-base font-semibold text-zinc-100">
-              Library filters
+              Destinations
             </h3>
             <p className="text-[11px] text-zinc-600">
-              Interim dual routes until DEBT-AF03-01.
+              Active / Archive are bottom-nav destinations. Focus is hidden (pending signals).
+              Dual-tree create debt: DEBT-AF03-01.
             </p>
             <div className="flex flex-wrap gap-2">
+              <FilterChip href="/forge/library" label="Library" count={o.decks} />
               <FilterChip href="/forge/active" label="Active" count={o.activeDecks} />
               <FilterChip href="/forge/archive" label="Archive" count={o.archivedDecks} />
-              <span className="inline-flex min-h-10 items-center rounded-full border border-dashed border-zinc-800 px-3 text-xs text-zinc-600">
-                Focus · Pending
-              </span>
             </div>
           </section>
         </div>
@@ -388,7 +387,7 @@ function RecentRail({ decks }: { decks: Af03ChaosDeck[] }) {
         <h3 id="recent-rail-heading" className="text-base font-semibold text-zinc-100">
           Recent Chaos Decks
         </h3>
-        <Link href="/forge/active" className="text-xs font-semibold text-sky-400 hover:text-sky-300">
+        <Link href="/forge/library" className="text-xs font-semibold text-sky-400 hover:text-sky-300">
           Open library ›
         </Link>
       </div>

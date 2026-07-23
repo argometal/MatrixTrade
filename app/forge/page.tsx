@@ -1,9 +1,15 @@
+"use client";
+
+import { SystemScopedSection } from "./components/SystemScopedSection";
 import { ForgeHomeDashboard } from "./components/ForgeHomeDashboard";
 
 /**
- * AF03 §1 — Home is the overview dashboard.
- * Not a duplicate of Active / Focus lists.
+ * AF03 Home — overview when ArgusForge is selected; MTA overview when MTA is selected.
  */
 export default function ForgeHomePage() {
-  return <ForgeHomeDashboard />;
+  return (
+    <SystemScopedSection section="home">
+      <ForgeHomeDashboard />
+    </SystemScopedSection>
+  );
 }

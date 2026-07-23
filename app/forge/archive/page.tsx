@@ -1,5 +1,10 @@
+import { SystemScopedSection } from "../components/SystemScopedSection";
 import { RepositoryView } from "../components/RepositoryView";
 
 export default function ForgeArchiveRootPage() {
-  return <RepositoryView view="archive" folderId={null} />;
+  return (
+    <SystemScopedSection section="archive">
+      <RepositoryView view="archive" folderId={null} />
+    </SystemScopedSection>
+  );
 }
