@@ -114,11 +114,12 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 |----------|----------|
 | [README.md](argusforge/README.md) | Index — links only |
 | [phase-0-architecture.md](argusforge/phase-0-architecture.md) | **Canonical Phase 0 contract** |
+| [vault-training-layer-contract.md](argusforge/vault-training-layer-contract.md) | **Canonical Vault** — AI training interface ≠ Memory |
 | [external-repo-patterns-research.md](argusforge/external-repo-patterns-research.md) | Research — external patterns (no copy) |
 | [alexandria-frozen-contract.md](argusforge/alexandria-frozen-contract.md) | **FROZEN** — Alexandria / Gatekeeper |
 | [alexandria-spatial-bottleneck-research.md](argusforge/alexandria-spatial-bottleneck-research.md) | Deferred non-binding research |
 
-**Canonical rule:** Products own data. Memory owns identity. Argus relates. MTA observes time. Chaos captures. ArgusForge coordinates.  
+**Canonical rule:** Products own data. Memory owns identity. Argus relates. MTA observes time. Chaos captures. Vault trains the AI. ArgusForge coordinates.  
 **Alexandria lock:** FROZEN — AF must not depend on Alexandria; Alexandria must not block AF.
 
 ---

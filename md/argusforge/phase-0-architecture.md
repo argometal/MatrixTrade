@@ -396,6 +396,7 @@ Do not modify product trees (`app/(trading)`, `app/argus`, `lib/argus`, `tools/C
 | Document | Role vs this contract |
 |----------|------------------------|
 | [README.md](README.md) | Index only — links here |
+| [vault-training-layer-contract.md](vault-training-layer-contract.md) | **Canonical Vault** — AI training layer ≠ Memory |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | Binding Alexandria freeze |
 | [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | Deferred non-binding research |
 | [external-repo-patterns-research.md](external-repo-patterns-research.md) | External pattern references |

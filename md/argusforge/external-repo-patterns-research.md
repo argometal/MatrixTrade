@@ -81,6 +81,8 @@ openship (deploy) · awesome-claude-skills (catalog later) · pi-web (agent UI t
 
 Copy none.
 
+Extracted patterns may later feed **Vault** training context (not Chaos dumps, not Memory copies) — see [`vault-training-layer-contract.md`](vault-training-layer-contract.md).
+
 ---
 
 ## Related
@@ -88,4 +90,5 @@ Copy none.
 | Document | Role |
 |----------|------|
 | [phase-0-architecture.md](phase-0-architecture.md) | Canonical Phase 0 |
+| [vault-training-layer-contract.md](vault-training-layer-contract.md) | AI training layer |
 | [README.md](README.md) | Index |
