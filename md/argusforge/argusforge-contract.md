@@ -10,8 +10,9 @@ Related technical maps (must not contradict this contract):
 
 | Document | Role |
 |----------|------|
+| [perpetual-evolution-contract.md](perpetual-evolution-contract.md) | **Sealed addendum** — perpetual evolution |
 | [phase-0-architecture.md](phase-0-architecture.md) | Technical Phase 0 boundaries |
-| [vault-training-layer-contract.md](vault-training-layer-contract.md) | Vault ≠ Memory (training / formation prep) |
+| [vault-training-layer-contract.md](vault-training-layer-contract.md) | Vault ≠ Memory (formation prep) |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | Alexandria FROZEN |
 | [README.md](README.md) | Library index |
 
@@ -405,6 +406,8 @@ It must allow that knowledge to be recovered, understood, and transferred effici
 
 **ArgusForge Contract is SEALED.**
 
+**Binding addendum:** [`perpetual-evolution-contract.md`](perpetual-evolution-contract.md) — no implementation is final; evolution requires evidence and must serve the user while preserving formation.
+
 All future implementation must respect:
 
 - separation of responsibilities;
@@ -414,4 +417,5 @@ All future implementation must respect:
 - preservation of uncertainty;
 - human judgment;
 - technological independence;
-- personal and family purpose as a primary valid case.
+- personal and family purpose as a primary valid case;
+- perpetual evolution under the sealed addendum.

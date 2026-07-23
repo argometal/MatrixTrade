@@ -2,15 +2,17 @@
 
 **Role:** Index for ArgusForge (AF) documentation inside MatrixTrade.  
 **Sealed vision contract (prevails):** [`argusforge-contract.md`](argusforge-contract.md)  
+**Sealed evolution addendum:** [`perpetual-evolution-contract.md`](perpetual-evolution-contract.md)  
 **Technical Phase 0:** [`phase-0-architecture.md`](phase-0-architecture.md)  
 **Vault detail:** [`vault-training-layer-contract.md`](vault-training-layer-contract.md)  
-**Rule:** Do not contradict the sealed contract. Do not reduce AF to a notes app, universal memory, or a single-AI chat wrapper.
+**Rule:** Do not contradict the sealed contracts. No AF implementation is final. Do not reduce AF to a notes app, universal memory, or a single-AI chat wrapper.
 
 ## Documents
 
 | Document | Status | Responsibility |
 |----------|--------|----------------|
 | [argusforge-contract.md](argusforge-contract.md) | **Canonical — SEALED** | Vision, mission, formation transfer, component duties, success criteria |
+| [perpetual-evolution-contract.md](perpetual-evolution-contract.md) | **Canonical — SEALED addendum** | Perpetual evolution; evidence; reversible change; user agency |
 | [phase-0-architecture.md](phase-0-architecture.md) | **Canonical — Phase 0 CLOSED** | Technical boundaries, names, Chaos/org/Registry, engine limits |
 | [vault-training-layer-contract.md](vault-training-layer-contract.md) | **Canonical — Vault** | Vault prepares formation ≠ Memory |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria / Gatekeeper freeze |
@@ -34,11 +36,12 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 ## Reading order
 
 1. [argusforge-contract.md](argusforge-contract.md) — vision (sealed)
-2. [phase-0-architecture.md](phase-0-architecture.md) — technical Phase 0
-3. [vault-training-layer-contract.md](vault-training-layer-contract.md)
-4. [alexandria-frozen-contract.md](alexandria-frozen-contract.md)
-5. [external-repo-patterns-research.md](external-repo-patterns-research.md)
-6. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
+2. [perpetual-evolution-contract.md](perpetual-evolution-contract.md) — evolution addendum (sealed)
+3. [phase-0-architecture.md](phase-0-architecture.md) — technical Phase 0
+4. [vault-training-layer-contract.md](vault-training-layer-contract.md)
+5. [alexandria-frozen-contract.md](alexandria-frozen-contract.md)
+6. [external-repo-patterns-research.md](external-repo-patterns-research.md)
+7. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
 
 ## Prototype route (UI slice only)
 
