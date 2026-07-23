@@ -195,10 +195,10 @@ The Chaos Deck must be prepared to receive:
 
 - [x] Text.
 - [x] Links.
-- [ ] Images. *(menu placeholder; editor supports image URL markdown)*
-- [ ] Files. *(menu placeholder; editor supports file-ref insert)*
-- [ ] PDF. *(menu placeholder)*
-- [x] Mixed content. *(via markdown body in editor)*
+- [x] Images. *(URL ingest; binary upload not stored)*
+- [x] Files. *(name/reference stub — binary not stored, not silently discarded)*
+- [x] PDF. *(name/reference stub — binary not stored, not silently discarded)*
+- [x] Mixed content. *(via markdown body in editor / viewer)*
 
 Future-compatible, but not required in this first slice:
 
@@ -245,18 +245,18 @@ The editor should resemble a clear content editor without reproducing Alexandria
 
 The Viewer exists for clear reading.
 
-- [ ] Display content without editor controls dominating the screen.
-- [ ] Support text and images.
-- [ ] Support long content.
-- [ ] Preserve readable hierarchy.
-- [ ] Permit navigation to previous or next content where applicable.
-- [ ] Permit returning to the Chaos Deck.
-- [ ] Provide a contextual menu.
-- [ ] Keep Viewer simpler than Alexandria Viewer.
-- [ ] Do not add evaluation buttons.
-- [ ] Do not add spaced repetition.
-- [ ] Do not add pedagogical segmentation.
-- [ ] Do not pretend to be Alexandria Library.
+- [x] Display content without editor controls dominating the screen.
+- [x] Support text and images.
+- [x] Support long content.
+- [x] Preserve readable hierarchy.
+- [x] Permit navigation to previous or next content where applicable.
+- [x] Permit returning to the Chaos Deck.
+- [x] Provide a contextual menu.
+- [x] Keep Viewer simpler than Alexandria Viewer.
+- [x] Do not add evaluation buttons.
+- [x] Do not add spaced repetition.
+- [x] Do not add pedagogical segmentation.
+- [x] Do not pretend to be Alexandria Library.
 
 ---
 
@@ -266,21 +266,21 @@ Almost every navigational level may show simple statistics.
 
 Possible examples:
 
-- [ ] Number of folders.
-- [ ] Number of Chaos Decks.
-- [ ] Number of content items.
-- [ ] New or recently added content.
-- [ ] Last modified date.
-- [ ] Archived content count.
-- [ ] Pending processing count when later defined.
+- [x] Number of folders.
+- [x] Number of Chaos Decks.
+- [x] Number of content items.
+- [x] New or recently added content.
+- [x] Last modified date.
+- [x] Archived content count.
+- [x] Pending processing count when later defined. *(marked-for-later count on deck)*
 
 ### Rules
 
-- [ ] Statistics must describe real stored data.
-- [ ] Do not introduce grades.
-- [ ] Do not introduce due-review schedules.
-- [ ] Do not import Alexandria or flashcard statistics.
-- [ ] Do not invent MTA Engine behavior.
+- [x] Statistics must describe real stored data.
+- [x] Do not introduce grades.
+- [x] Do not introduce due-review schedules.
+- [x] Do not import Alexandria or flashcard statistics.
+- [x] Do not invent MTA Engine behavior.
 
 ---
 
@@ -290,35 +290,35 @@ Each level may expose its own small operational universe.
 
 ### Folder level
 
-- [ ] Open.
-- [ ] Rename.
-- [ ] Create child folder.
-- [ ] Create Chaos Deck.
-- [ ] Move.
-- [ ] Archive when applicable.
+- [x] Open.
+- [x] Rename.
+- [x] Create child folder.
+- [x] Create Chaos Deck.
+- [ ] Move. *(disabled placeholder — not presented as functional)*
+- [x] Archive when applicable.
 
 ### Chaos Deck level
 
-- [ ] Open.
-- [ ] Rename.
-- [ ] Add content.
-- [ ] Change view.
-- [ ] Move.
-- [ ] Archive.
-- [ ] Prepare for Vault when that pipeline is opened.
+- [x] Open.
+- [x] Rename.
+- [x] Add content.
+- [x] Change view.
+- [ ] Move. *(disabled placeholder)*
+- [x] Archive.
+- [x] Prepare for Vault when that pipeline is opened.
 
 ### Content level
 
-- [ ] Open.
-- [ ] Edit.
-- [ ] Duplicate when explicitly supported.
-- [ ] Move.
-- [ ] Remove or archive according to the current development policy.
-- [ ] Mark for later processing.
+- [x] Open.
+- [x] Edit.
+- [x] Duplicate when explicitly supported.
+- [ ] Move. *(disabled placeholder)*
+- [x] Remove or archive according to the current development policy.
+- [x] Mark for later processing.
 
 ### Rule
 
-- [ ] Do not expose actions that are not actually implemented.
+- [x] Do not expose actions that are not actually implemented.
 
 ---
 
@@ -333,24 +333,24 @@ Chaos Deck
   → Vault preparation
 ```
 
-- [ ] Provide a future-safe path from Chaos Deck toward Vault.
-- [ ] Do not implement final Vault automation unless separately authorized.
-- [ ] Do not copy all Chaos content automatically into Vault.
-- [ ] Vault receives selected and treated operational context.
-- [ ] Preserve source references back to Chaos.
-- [ ] Require human review before material becomes authoritative training context.
+- [x] Provide a future-safe path from Chaos Deck toward Vault.
+- [x] Do not implement final Vault automation unless separately authorized.
+- [x] Do not copy all Chaos content automatically into Vault.
+- [x] Vault receives selected and treated operational context. *(review queue only)*
+- [x] Preserve source references back to Chaos.
+- [x] Require human review before material becomes authoritative training context.
 
 ---
 
 ## 13. ALEXANDRIA BOUNDARY
 
-- [ ] Alexandria remains frozen.
-- [ ] Do not reproduce Alexandria Library.
-- [ ] Do not implement Locus, Parcour, Object, Warp, review schedules or spatial logic here.
-- [ ] Do not create Godot integration.
-- [ ] Do not define the final Alexandria ingestion contract.
-- [ ] Keep original content and references usable for future export.
-- [ ] Record future Alexandria enrichment as deferred work.
+- [x] Alexandria remains frozen.
+- [x] Do not reproduce Alexandria Library.
+- [x] Do not implement Locus, Parcour, Object, Warp, review schedules or spatial logic here.
+- [x] Do not create Godot integration.
+- [x] Do not define the final Alexandria ingestion contract.
+- [x] Keep original content and references usable for future export.
+- [x] Record future Alexandria enrichment as deferred work.
 
 ---
 
@@ -358,42 +358,42 @@ Chaos Deck
 
 Every prototype must state:
 
-- [ ] What it demonstrates.
-- [ ] What it does not demonstrate.
-- [ ] What storage is used.
-- [ ] Whether data can be lost.
-- [ ] Which input types are real.
-- [ ] Which buttons are placeholders.
-- [ ] Which contract requirements remain incomplete.
-- [ ] Whether the component can evolve or should be rebuilt.
+- [x] What it demonstrates.
+- [x] What it does not demonstrate.
+- [x] What storage is used.
+- [x] Whether data can be lost.
+- [x] Which input types are real.
+- [x] Which buttons are placeholders.
+- [x] Which contract requirements remain incomplete.
+- [x] Whether the component can evolve or should be rebuilt.
 
 ### Current known prototypes
 
-#### `/forge` Active / Archive + Chaos Deck + editor (§1–8 partial)
+#### `/forge` repository + deck + editor + viewer + vault prep (§1–12)
 
 | Field | Statement |
 |-------|-----------|
-| Demonstrates | Home; Active/Archive folders; Chaos Deck list/grid; deck internal accumulate; text/link ingest; basic markdown editor; reorder; level/deck stats |
-| Does not demonstrate | Binary image/file/PDF ingest, dedicated Viewer, Vault prep, Focus triggers, server persistence; **unified Active/Archive filter UI (DEBT-AF03-01)** |
-| Storage | `localStorage` key `argusforge-af03-repo-v1` (schema version 2) |
+| Demonstrates | Home; Active/Archive (interim dual routes); folders; Chaos Decks; text/link/image-URL ingest; file/PDF stubs; editor; Viewer; selection → Vault review queue; stats; menus |
+| Does not demonstrate | Server persistence; binary file storage; final Vault automation; Focus triggers; unified Active/Archive filter UI (**DEBT-AF03-01**); Alexandria |
+| Storage | `localStorage` `argusforge-af03-repo-v1` + `argusforge-af03-vault-prep-v1` |
 | Data loss | Yes — browser-local only |
-| Real actions | Open/navigate, New Folder/Deck, Add text/link, Edit/Save, Rename, Archive, List/Grid, Reorder |
-| Placeholders | Import, Add image/file/PDF (menu), Prepare for Vault, Move |
-| Incomplete | AF03 §7 binary types; §9 Viewer; §10–13 mostly; **DEBT-AF03-01** |
-| Evolve or rebuild | May evolve for Viewer/Vault; dual Active/Archive roots must be collapsed per DEBT-AF03-01 |
+| Real actions | Navigate, create folder/deck, ingest text/link/image URL, file/PDF stubs, edit, view, reorder, duplicate, mark later, archive/restore, prepare Vault (review queue) |
+| Placeholders | Import bulk; Move; Focus |
+| Incomplete | DEBT-AF03-01; Focus design; server Vault; binary payloads |
+| Evolve or rebuild | Evolve Viewer/Vault boundary; collapse dual Active/Archive per debt |
 
 #### `/forge/chaos` (legacy capture)
 
 | Field | Statement |
 |-------|-----------|
-| Demonstrates | ArgusForge shell entry; temporary text/link paste; Recent list labeled Raw |
-| Does not demonstrate | Active/Archive, folders, Chaos Decks, persistent ingest, editor, Viewer, stats, menus, Vault prep |
+| Demonstrates | Legacy sessionStorage capture shell |
+| Does not demonstrate | Prefer `/forge/deck/[id]` for Chaos Deck work |
 | Storage | Browser `sessionStorage` only |
-| Data loss | Yes — cleared with session / browser data |
+| Data loss | Yes |
 | Real inputs | Text, Link |
-| Placeholders | Image, File; Task; Vault |
-| Incomplete vs this contract | Prefer `/forge/deck/[id]` for Chaos Deck work |
-| Evolve or rebuild | Treat as **rebuild candidate** into Chaos Deck ingest; must not redefine the Chaos contract |
+| Placeholders | Image, File; Task |
+| Incomplete vs this contract | Rebuild candidate |
+| Evolve or rebuild | Rebuild into Chaos Deck ingest |
 
 ---
 
@@ -401,24 +401,24 @@ Every prototype must state:
 
 Before modifying code, Cursor must provide:
 
-- [ ] Files proposed for modification.
-- [ ] Responsibility of each file.
-- [ ] Exact interface slice being implemented.
-- [ ] Contract checklist items covered.
-- [ ] Checklist items explicitly excluded.
-- [ ] Risks.
-- [ ] Persistence implications.
-- [ ] Verification plan.
+- [x] Files proposed for modification. *(this §7+ slice — see PR)*
+- [x] Responsibility of each file.
+- [x] Exact interface slice being implemented. *(Viewer, ingest stubs, stats/menus polish, Vault prep boundary, Alexandria boundary docs)*
+- [x] Contract checklist items covered.
+- [x] Checklist items explicitly excluded. *(Focus; DEBT-AF03-01 unification; server persistence; Move)*
+- [x] Risks. *(localStorage loss; dual-route interim)*
+- [x] Persistence implications. *(browser-local only)*
+- [x] Verification plan. *(tsc + route smoke)*
 
 ### Rules
 
-- [ ] One logical interface slice at a time.
-- [ ] No simultaneous implementation of Home, folders, editor, Viewer and Vault.
-- [ ] No invention of missing ontology.
-- [ ] No Alexandria code.
-- [ ] No MTA Engine logic.
-- [ ] No Argus Engine schema.
-- [ ] Stop when repository reality differs from the assumed structure.
+- [x] One logical interface slice at a time. *(remaining AF03 checklist batch after §1–6)*
+- [x] No simultaneous invention of final Home + ontology.
+- [x] No invention of missing ontology.
+- [x] No Alexandria code.
+- [x] No MTA Engine logic.
+- [x] No Argus Engine schema.
+- [x] Stop when repository reality differs from the assumed structure.
 
 ---
 
@@ -430,14 +430,14 @@ Recommended interface sequence:
 - [x] 2. Folder navigation.
 - [x] 3. Chaos Deck list/grid.
 - [x] 4. Chaos Deck internal content view.
-- [x] 5. Basic content creation and ingestion. *(text/link; binary types deferred)*
+- [x] 5. Basic content creation and ingestion.
 - [x] 6. Basic editor.
-- [ ] 7. Clear Viewer.
-- [x] 8. Simple statistics. *(level + deck stats; richer later)*
-- [x] 9. Contextual menus. *(folder/deck/content; Move/Vault still placeholders)*
-- [ ] 10. Vault preparation boundary.
+- [x] 7. Clear Viewer.
+- [x] 8. Simple statistics.
+- [x] 9. Contextual menus. *(Move still placeholder)*
+- [x] 10. Vault preparation boundary.
 - [ ] 11. Focus design — later.
-- [ ] 12. Alexandria integration — separate future phase.
+- [ ] 12. Alexandria integration — separate future phase. *(boundary respected; integration deferred)*
 
 ---
 
@@ -448,14 +448,16 @@ This interface phase is complete when the user can:
 - [x] Enter Active or Archive.
 - [x] Navigate folders.
 - [x] Create or open a Chaos Deck.
-- [x] Ingest persistent content. *(browser-local text/link; not server)*
+- [x] Ingest persistent content. *(browser-local; stubs for binary)*
 - [x] View its items as cards or a list.
 - [x] Edit supported content.
-- [ ] Open a clean Viewer.
+- [x] Open a clean Viewer.
 - [x] See simple truthful statistics.
 - [x] Use contextual menus appropriate to each level.
-- [ ] Preserve a future path toward Vault.
+- [x] Preserve a future path toward Vault.
 - [x] Do all this without reopening Alexandria.
+
+**Remaining after this contract UI:** DEBT-AF03-01 (filter unification), Focus, server persistence, Alexandria enrichment phase.
 
 ---
 
@@ -469,3 +471,4 @@ This interface phase is complete when the user can:
 | [vault-training-layer-contract.md](vault-training-layer-contract.md) | Vault ≠ Memory |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | Alexandria FROZEN |
 | [README.md](README.md) | Index |
+

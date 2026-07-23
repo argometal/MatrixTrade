@@ -50,6 +50,8 @@ export type Af03ContentItem = {
    */
   unsupported: boolean;
   unsupportedReason: string | null;
+  /** AF03 §11 — mark for later processing (not Alexandria SRS) */
+  markedForLater: boolean;
 };
 
 export type Af03RepoPrefs = {

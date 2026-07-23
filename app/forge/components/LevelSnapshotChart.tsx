@@ -5,7 +5,10 @@ import type { levelSnapshot } from "@/lib/argusforge/af03-repo-store";
 type Snapshot = ReturnType<typeof levelSnapshot>;
 
 type Bar = {
-  key: keyof Snapshot;
+  key: keyof Pick<
+    Snapshot,
+    "folders" | "decks" | "items" | "emptyDecks" | "fresh" | "recentItems"
+  >;
   label: string;
   color: string;
 };
@@ -16,12 +19,11 @@ const BARS: Bar[] = [
   { key: "items", label: "Items", color: "bg-amber-500" },
   { key: "emptyDecks", label: "Empty", color: "bg-zinc-500" },
   { key: "fresh", label: "<7d", color: "bg-emerald-500" },
-  { key: "older", label: "Older", color: "bg-indigo-400" },
+  { key: "recentItems", label: "New", color: "bg-cyan-400" },
 ];
 
 /**
- * AF-safe level snapshot chart (visual cousin of Anki "Cards Due",
- * but counts real folders/decks/items — no due/grades/SRS).
+ * AF-safe level snapshot chart — real counts only, no due/grades/SRS.
  */
 export function LevelSnapshotChart({ snapshot }: { snapshot: Snapshot }) {
   const max = Math.max(1, ...BARS.map((b) => snapshot[b.key]));
@@ -59,6 +61,10 @@ export function LevelSnapshotChart({ snapshot }: { snapshot: Snapshot }) {
           );
         })}
       </div>
+      <p className="text-[11px] text-zinc-600">
+        Archived decks (global): {snapshot.archivedDecksGlobal} · Older entities at level:{" "}
+        {snapshot.older}
+      </p>
     </section>
   );
 }

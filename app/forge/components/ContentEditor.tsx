@@ -8,6 +8,7 @@ import {
   getDeck,
   getItem,
   updateContent,
+  viewHref,
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
@@ -158,9 +159,24 @@ export function ContentEditor({ deckId, itemId }: Props) {
         >
           ← {deck?.title ?? "Chaos Deck"}
         </Link>
-        <p className="text-[10px] uppercase tracking-wide text-zinc-600">
-          Basic editor · not Alexandria
-        </p>
+        <div className="flex items-center gap-3">
+          <Link
+            href={viewHref(deckId, itemId)}
+            className="text-xs font-medium text-sky-400 hover:text-sky-300"
+            onClick={(e) => {
+              if (dirty.current && !window.confirm("Discard unsaved changes and open Viewer?")) {
+                e.preventDefault();
+              } else {
+                dirty.current = false;
+              }
+            }}
+          >
+            Viewer
+          </Link>
+          <p className="text-[10px] uppercase tracking-wide text-zinc-600">
+            Basic editor · not Alexandria
+          </p>
+        </div>
       </div>
 
       {item.unsupported ? (

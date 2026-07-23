@@ -12,6 +12,7 @@ type Props = {
   onToggleMenu: (id: string | null) => void;
   onRename: (deck: Af03ChaosDeck) => void;
   onArchive: (deck: Af03ChaosDeck) => void;
+  onRestore?: (deck: Af03ChaosDeck) => void;
   onLayoutChange: (layout: Af03LayoutMode) => void;
 };
 
@@ -45,6 +46,7 @@ export function ChaosDeckList({
   onToggleMenu,
   onRename,
   onArchive,
+  onRestore,
   onLayoutChange,
 }: Props) {
   return (
@@ -104,6 +106,7 @@ export function ChaosDeckList({
                   onToggle={() => onToggleMenu(menuId === d.id ? null : d.id)}
                   onRename={() => onRename(d)}
                   onArchive={() => onArchive(d)}
+                  onRestore={() => onRestore?.(d)}
                 />
               </div>
             </li>
@@ -136,6 +139,7 @@ export function ChaosDeckList({
                   onToggle={() => onToggleMenu(menuId === d.id ? null : d.id)}
                   onRename={() => onRename(d)}
                   onArchive={() => onArchive(d)}
+                  onRestore={() => onRestore?.(d)}
                 />
               </div>
             </li>
@@ -153,6 +157,7 @@ function DeckMenu({
   onToggle,
   onRename,
   onArchive,
+  onRestore,
 }: {
   deck: Af03ChaosDeck;
   view: OperationalView;
@@ -160,6 +165,7 @@ function DeckMenu({
   onToggle: () => void;
   onRename: () => void;
   onArchive: () => void;
+  onRestore: () => void;
 }) {
   return (
     <>
@@ -198,7 +204,16 @@ function DeckMenu({
             >
               Archive
             </button>
-          ) : null}
+          ) : (
+            <button
+              type="button"
+              role="menuitem"
+              className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
+              onClick={onRestore}
+            >
+              Restore
+            </button>
+          )}
         </div>
       ) : null}
     </>

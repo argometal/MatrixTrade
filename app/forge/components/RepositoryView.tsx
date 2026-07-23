@@ -19,6 +19,7 @@ import {
   listDecksAt,
   renameDeck,
   renameFolder,
+  restoreDeck,
   setDeckListLayout,
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03ChaosDeck, Af03Folder, Af03RepoState, OperationalView } from "@/lib/argusforge/af03-repo-types";
@@ -92,7 +93,16 @@ export function RepositoryView({ view, folderId }: Props) {
 
   const snapshot = state
     ? levelSnapshot(state, view, folderId)
-    : { folders: 0, decks: 0, items: 0, emptyDecks: 0, fresh: 0, older: 0 };
+    : {
+        folders: 0,
+        decks: 0,
+        items: 0,
+        emptyDecks: 0,
+        fresh: 0,
+        older: 0,
+        recentItems: 0,
+        archivedDecksGlobal: 0,
+      };
 
   function promptTitle(label: string, initial: string): string | null {
     const value = window.prompt(label, initial);
@@ -289,6 +299,10 @@ export function RepositoryView({ view, folderId }: Props) {
                 setState(archiveDeck(state, d.id));
                 setMenuId(null);
               }}
+              onRestore={(d) => {
+                setState(restoreDeck(state, d.id));
+                setMenuId(null);
+              }}
               onLayoutChange={(layout) => setState(setDeckListLayout(state, layout))}
             />
           </div>
@@ -354,6 +368,10 @@ export function RepositoryView({ view, folderId }: Props) {
                 }}
                 onArchive={() => {
                   setState(archiveDeck(state, d.id));
+                  setMenuId(null);
+                }}
+                onRestore={() => {
+                  setState(restoreDeck(state, d.id));
                   setMenuId(null);
                 }}
                 onToggleLayout={() =>
@@ -469,6 +487,7 @@ function DeckRow({
   onToggleMenu,
   onRename,
   onArchive,
+  onRestore,
   onToggleLayout,
 }: {
   deck: Af03ChaosDeck;
@@ -478,6 +497,7 @@ function DeckRow({
   onToggleMenu: () => void;
   onRename: () => void;
   onArchive: () => void;
+  onRestore: () => void;
   onToggleLayout: () => void;
 }) {
   const meta = deckRowMeta(state, deck.id);
@@ -522,11 +542,23 @@ function DeckRow({
               <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800" onClick={onToggleLayout}>
                 Toggle list/grid pref
               </button>
+              <button
+                type="button"
+                role="menuitem"
+                disabled
+                className="block w-full cursor-not-allowed px-3 py-2 text-left text-sm text-zinc-600"
+              >
+                Move (soon)
+              </button>
               {view === "active" ? (
                 <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800" onClick={onArchive}>
                   Archive
                 </button>
-              ) : null}
+              ) : (
+                <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800" onClick={onRestore}>
+                  Restore
+                </button>
+              )}
             </div>
           ) : null}
         </>

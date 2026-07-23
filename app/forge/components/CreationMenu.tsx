@@ -3,6 +3,7 @@
 /**
  * AF03 §4 Creation menu — real actions vs clearly labeled placeholders.
  * No classification / relations required at capture.
+ * Image URL + file/PDF stubs are available (§7 — no silent discard).
  */
 
 type CreateAction =
@@ -24,16 +25,14 @@ const FOLDER_ACTIONS: { id: CreateAction; label: string; available: boolean }[] 
   { id: "folder", label: "New Folder", available: true },
   { id: "deck", label: "New Chaos Deck", available: true },
   { id: "import", label: "Import content", available: false },
-  { id: "image", label: "Add image", available: false },
-  { id: "file", label: "Add file / PDF", available: false },
 ];
 
 const DECK_ACTIONS: { id: CreateAction; label: string; available: boolean }[] = [
   { id: "text", label: "Add text", available: true },
   { id: "link", label: "Add link", available: true },
-  { id: "image", label: "Add image", available: false },
-  { id: "file", label: "Add file", available: false },
-  { id: "pdf", label: "Add PDF", available: false },
+  { id: "image", label: "Add image URL", available: true },
+  { id: "file", label: "Add file ref", available: true },
+  { id: "pdf", label: "Add PDF ref", available: true },
   { id: "import", label: "Import content", available: false },
 ];
 
@@ -43,7 +42,7 @@ export function CreationMenu({ scope, onAction }: Props) {
   return (
     <div className="space-y-2" role="group" aria-label="Creation menu">
       <p className="text-xs text-zinc-500">
-        Capture only — no classification or relations required. Optional context stays optional.
+        Capture only — no classification or relations required. File/PDF store a visible stub (not binary).
       </p>
       <div className="flex flex-wrap gap-2">
         {actions.map((a) =>

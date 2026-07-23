@@ -72,6 +72,7 @@ function seedState(): Af03RepoState {
       updatedAt: t,
       unsupported: false,
       unsupportedReason: null,
+      markedForLater: false,
     },
     {
       id: "item_seed_link",
@@ -85,6 +86,7 @@ function seedState(): Af03RepoState {
       updatedAt: t,
       unsupported: false,
       unsupportedReason: null,
+      markedForLater: false,
     },
   ];
 
@@ -163,11 +165,15 @@ function migrateToV2(raw: unknown): Af03RepoState | null {
       o.prefs && typeof o.prefs === "object"
         ? { ...DEFAULT_PREFS, ...(o.prefs as Af03RepoPrefs) }
         : { ...DEFAULT_PREFS };
+    const items = (o.items as Af03ContentItem[]).map((i) => ({
+      ...i,
+      markedForLater: Boolean(i.markedForLater),
+    }));
     return {
       version: 2,
       folders: o.folders as Af03Folder[],
       decks: o.decks as Af03ChaosDeck[],
-      items: o.items as Af03ContentItem[],
+      items,
       prefs,
     };
   }
@@ -279,10 +285,26 @@ export function itemHref(deckId: string, itemId: string): string {
   return `/forge/deck/${deckId}/item/${itemId}`;
 }
 
+export function viewHref(deckId: string, itemId: string): string {
+  return `/forge/deck/${deckId}/item/${itemId}/view`;
+}
+
 export function deckStatus(deck: Af03ChaosDeck): "archived" | "empty" | "active" {
   if (deck.view === "archive") return "archived";
   if (deck.contentCount === 0) return "empty";
   return "active";
+}
+
+export function restoreDeck(state: Af03RepoState, id: string): Af03RepoState {
+  const t = nowIso();
+  const next = {
+    ...state,
+    decks: state.decks.map((d) =>
+      d.id === id ? { ...d, view: "active" as const, updatedAt: t } : d
+    ),
+  };
+  writeRepo(next);
+  return next;
 }
 
 export function createFolder(
@@ -409,6 +431,7 @@ export function createContent(
     updatedAt: t,
     unsupported: Boolean(input.unsupported),
     unsupportedReason: input.unsupportedReason ?? null,
+    markedForLater: false,
   };
   let next: Af03RepoState = { ...state, items: [...state.items, item] };
   next = syncDeckDerived(next, input.deckId);
@@ -436,7 +459,7 @@ function defaultTitle(kind: Af03ContentKind): string {
 export function updateContent(
   state: Af03RepoState,
   id: string,
-  patch: Partial<Pick<Af03ContentItem, "title" | "body" | "kind" | "sourceRef">>
+  patch: Partial<Pick<Af03ContentItem, "title" | "body" | "kind" | "sourceRef" | "markedForLater">>
 ): Af03RepoState {
   const existing = getItem(state, id);
   if (!existing) return state;
@@ -524,6 +547,8 @@ export function levelSnapshot(
   emptyDecks: number;
   fresh: number;
   older: number;
+  recentItems: number;
+  archivedDecksGlobal: number;
 } {
   const folders = listChildFolders(state, view, folderId);
   const decks = listDecksAt(state, view, folderId);
@@ -536,6 +561,10 @@ export function levelSnapshot(
   ];
   const fresh = entities.filter((iso) => new Date(iso).getTime() >= weekAgo).length;
   const older = entities.length - fresh;
+  const deckIds = new Set(decks.map((d) => d.id));
+  const recentItems = state.items.filter(
+    (i) => deckIds.has(i.deckId) && new Date(i.createdAt).getTime() >= weekAgo
+  ).length;
   return {
     folders: folders.length,
     decks: decks.length,
@@ -543,6 +572,8 @@ export function levelSnapshot(
     emptyDecks,
     fresh,
     older,
+    recentItems,
+    archivedDecksGlobal: archivedDeckCount(state),
   };
 }
 
@@ -595,6 +626,31 @@ export function formatRelativeAgo(iso: string | null): string {
   return `${Math.floor(days / 365)}y ago`;
 }
 
+export function duplicateContent(
+  state: Af03RepoState,
+  id: string
+): { state: Af03RepoState; item: Af03ContentItem } | null {
+  const existing = getItem(state, id);
+  if (!existing) return null;
+  return createContent(state, {
+    deckId: existing.deckId,
+    kind: existing.kind,
+    title: `${existing.title} (copy)`,
+    body: existing.body,
+    sourceRef: existing.sourceRef,
+    unsupported: existing.unsupported,
+    unsupportedReason: existing.unsupportedReason,
+  });
+}
+
+export function setMarkedForLater(
+  state: Af03RepoState,
+  id: string,
+  marked: boolean
+): Af03RepoState {
+  return updateContent(state, id, { markedForLater: marked });
+}
+
 export function deckStats(
   state: Af03RepoState,
   deckId: string
@@ -602,19 +658,31 @@ export function deckStats(
   items: number;
   text: number;
   links: number;
+  images: number;
   stubs: number;
+  recent: number;
+  markedLater: number;
   lastModified: string | null;
 } {
   const items = listItemsInDeck(state, deckId);
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const dates = items.map((i) => i.updatedAt);
   dates.sort();
   return {
     items: items.length,
     text: items.filter((i) => i.kind === "text" || i.kind === "mixed").length,
     links: items.filter((i) => i.kind === "link").length,
+    images: items.filter((i) => i.kind === "image").length,
     stubs: items.filter((i) => i.unsupported).length,
+    recent: items.filter((i) => new Date(i.createdAt).getTime() >= weekAgo).length,
+    markedLater: items.filter((i) => i.markedForLater).length,
     lastModified: dates.length ? dates[dates.length - 1]! : null,
   };
+}
+
+/** Global archived deck count — truthful stored data only. */
+export function archivedDeckCount(state: Af03RepoState): number {
+  return state.decks.filter((d) => d.view === "archive").length;
 }
 
 export function setDeckListLayout(state: Af03RepoState, layout: Af03LayoutMode): Af03RepoState {

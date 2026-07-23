@@ -7,12 +7,13 @@ import type { ReactNode } from "react";
 const NAV = [
   { href: "/forge/active", label: "Active", kind: "live" as const },
   { href: "/forge/archive", label: "Archive", kind: "live" as const },
+  { href: "/forge/vault", label: "Vault", kind: "live" as const },
   { href: "/forge/focus", label: "Focus", kind: "pending" as const },
-  { href: "/forge/chaos", label: "Capture", kind: "proto" as const },
 ] as const;
 
 function sectionTitle(pathname: string): string {
   if (pathname === "/forge" || pathname === "/forge/") return "Home";
+  if (pathname.endsWith("/view") || pathname.includes("/view")) return "Viewer";
   if (pathname.includes("/item/")) return "Editor";
   if (pathname.startsWith("/forge/deck/")) return "Chaos Deck";
   if (pathname.startsWith("/forge/archive")) return "Archive";
@@ -71,7 +72,7 @@ export function ForgeShell({ children }: { children: ReactNode }) {
                 >
                   <span>{item.label}</span>
                   <span className="text-[10px] font-normal uppercase tracking-wide text-zinc-600">
-                    {item.kind === "pending" ? "Pending" : item.kind === "proto" ? "Proto" : "Live"}
+                    {item.kind === "pending" ? "Pending" : "Live"}
                   </span>
                 </Link>
               </li>
