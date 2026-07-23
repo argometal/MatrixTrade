@@ -50,7 +50,7 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 
 | Route | Status |
 |-------|--------|
-| `/forge` | **Home overview dashboard** — library/activity metrics, content mix, recent decks; filter chips to Active/Archive |
+| `/forge` | **Home overview** — Argus-inspired pulse chips + browse links + Overview/Recent tabs; AF metrics only |
 | `/forge/active`, `/forge/active/f/[id]` | Library · Active filter — **interim**; see DEBT-AF03-01 |
 | `/forge/archive`, `/forge/archive/f/[id]` | Library · Archive filter — **interim**; see DEBT-AF03-01 |
 | `/forge/deck/[deckId]` | Chaos Deck internal view (§6) |
