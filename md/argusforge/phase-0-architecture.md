@@ -41,15 +41,17 @@ ArgusForge coordinates.
 |------|------|
 | **ArgusForge** (AF) | Coordination environment |
 | **Chaos** | Initial ingest / cumulative capture unit |
-| **Memory Registry** | Stable identity + pointers + necessary shared context |
+| **Memory Registry** | Stable identity + pointers + necessary shared context — *what does the system know?* |
 | **Argus Engine** | Relations — *what is related to what?* |
 | **MTA Engine** | Temporal behavior — *what happens over time?* |
 | **ARGUS** | Private evidence product (unchanged) |
 | **MTA** | Trading product (unchanged) |
-| **Vault** | AI output interface (future) |
+| **Vault** | **AI training interface** — *what context does the AI need to continue correctly?* — see [`vault-training-layer-contract.md`](vault-training-layer-contract.md) |
 | **Alexandria** | 3D knowledge product — **FROZEN** |
 
 **Forbidden names:** MTA Intelligence · Argus Core · Shared Engine · Forge Database · Memory Database.
+
+**Do not confuse:** Memory Registry (system knowledge identity) ≠ Vault (AI training interface). Full Vault contract: [`vault-training-layer-contract.md`](vault-training-layer-contract.md).
 
 ### Ecosystem model
 
@@ -58,10 +60,10 @@ Chaos captures
 Memory Registry identifies
 Argus Engine relates
 MTA Engine observes time and patterns
+Vault trains the AI for correct continuation
 Products own and use their data
 ArgusForge coordinates the ecosystem
 ```
-
 ---
 
 ## 1. Chaos — canonical definition
@@ -206,6 +208,9 @@ Memory Registry must **not**:
 - absorb MTA or ARGUS stores.
 
 **Products remain owners of their data.**
+
+Memory answers *what the system knows* (identity + pointers + necessary context).  
+It is **not** Vault. Vault answers *what context the AI needs to continue correctly* — [`vault-training-layer-contract.md`](vault-training-layer-contract.md).
 
 ---
 
