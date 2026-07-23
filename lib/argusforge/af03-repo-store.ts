@@ -512,6 +512,89 @@ export function levelStats(
   };
 }
 
+/** Direct-child snapshot for Active/Archive summary bars — real counts only, no due/grades. */
+export function levelSnapshot(
+  state: Af03RepoState,
+  view: OperationalView,
+  folderId: string | null
+): {
+  folders: number;
+  decks: number;
+  items: number;
+  emptyDecks: number;
+  fresh: number;
+  older: number;
+} {
+  const folders = listChildFolders(state, view, folderId);
+  const decks = listDecksAt(state, view, folderId);
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const items = decks.reduce((n, d) => n + d.contentCount, 0);
+  const emptyDecks = decks.filter((d) => d.contentCount === 0).length;
+  const entities = [
+    ...folders.map((f) => f.updatedAt),
+    ...decks.map((d) => d.updatedAt),
+  ];
+  const fresh = entities.filter((iso) => new Date(iso).getTime() >= weekAgo).length;
+  const older = entities.length - fresh;
+  return {
+    folders: folders.length,
+    decks: decks.length,
+    items,
+    emptyDecks,
+    fresh,
+    older,
+  };
+}
+
+/** Direct children under a folder (for list-row metadata). */
+export function folderRowMeta(
+  state: Af03RepoState,
+  folderId: string
+): { childFolders: number; decks: number; items: number; recentItems: number } {
+  const folder = getFolder(state, folderId);
+  if (!folder) return { childFolders: 0, decks: 0, items: 0, recentItems: 0 };
+  const childFolders = listChildFolders(state, folder.view, folderId).length;
+  const decks = listDecksAt(state, folder.view, folderId);
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const items = decks.reduce((n, d) => n + d.contentCount, 0);
+  const recentItems = state.items.filter((i) => {
+    const deck = getDeck(state, i.deckId);
+    return (
+      deck &&
+      deck.folderId === folderId &&
+      deck.view === folder.view &&
+      new Date(i.createdAt).getTime() >= weekAgo
+    );
+  }).length;
+  return { childFolders, decks: decks.length, items, recentItems };
+}
+
+export function deckRowMeta(
+  state: Af03RepoState,
+  deckId: string
+): { items: number; recentItems: number } {
+  const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const items = listItemsInDeck(state, deckId);
+  return {
+    items: items.length,
+    recentItems: items.filter((i) => new Date(i.createdAt).getTime() >= weekAgo).length,
+  };
+}
+
+export function formatRelativeAgo(iso: string | null): string {
+  if (!iso) return "—";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (Number.isNaN(ms)) return "—";
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 365) return `${days}d ago`;
+  return `${Math.floor(days / 365)}y ago`;
+}
+
 export function deckStats(
   state: Af03RepoState,
   deckId: string
