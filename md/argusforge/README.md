@@ -7,6 +7,7 @@
 |----------|--------|----------|
 | [phase-0-architecture.md](phase-0-architecture.md) | **Canonical proposal** | Map, **Memory Registry** decision, isolation, contracts, migration, risks |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria out of scope; preserve; no Forge merge; reopen only after study |
+| [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | **Research** | Bottleneck = spatial construction; AI = semantic→spatial (not graphics); deferred |
 
 ## Locked names
 
@@ -31,7 +32,8 @@ Products own data. Memory owns identity. Engines enrich. Chaos registers the new
 
 1. [phase-0-architecture.md](phase-0-architecture.md) — especially §0.1 Memory Registry
 2. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — Alexandria FROZEN; do not implement
-3. Existing islands: [`../argus/README.md`](../argus/README.md) · [`../matrix/README.md`](../matrix/README.md)
-4. Chaos Coordination (today): [`../../tools/Chaos/README.md`](../../tools/Chaos/README.md)
+3. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) — future direction (deferred)
+4. Existing islands: [`../argus/README.md`](../argus/README.md) · [`../matrix/README.md`](../matrix/README.md)
+5. Chaos Coordination (today): [`../../tools/Chaos/README.md`](../../tools/Chaos/README.md)
 
 **Phase rule:** Architecture before implementation. No code until a later phase cites a contract from the Phase 0 map.

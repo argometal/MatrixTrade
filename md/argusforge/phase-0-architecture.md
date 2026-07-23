@@ -74,8 +74,8 @@ If Memory “lives” inside ArgusForge as storage, every product migration beco
                     │
         ┌───────────┼───────────┐
         ▼           ▼           ▼
-   Argus Store  MTA Store  Alexandria Store
-   (evidence)   (trades…)  (loci / human KB)
+   Argus Store  MTA Store  Alexandria Store*
+   (evidence)   (trades…)  (*FROZEN — future only)
         …           …            …
 ```
 
@@ -511,6 +511,8 @@ If an adapter is hard to write, the contract is wrong — fix the contract, do n
 | **Auto-write into ARGUS/MTA** | Convenience | Reuse human Apply gates |
 | **URI scheme drift** | Ad-hoc pointers | Lock schemes in Memory Registry ADR before Phase 2 |
 | **Orphan staging forever** | Capture without promotion | Views + attention (MTA Engine) surface unowned Chaos entries |
+| **Alexandria scope creep** | Treating frozen product as active Forge work | [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md); stop and report if a task requires Alexandria changes |
+| **Superficial Forge↔Alexandria glue** | Early packages/APIs without study | Exchange boundary acknowledgment only; no adapters until reopen |
 | **Docs drift** | Code without map | Phase gate: cite contract (Registry vs Store vs Engine) |
 | **Breaking existing islands** | Middleware edits | Additive route buckets only |
 
@@ -522,8 +524,9 @@ Phase 0 is done when:
 
 1. This document is accepted as the umbrella map.
 2. Names above are treated as locked — including **Memory Registry ≠ storage**.
-3. No implementation PR starts without citing: product store vs registry entry vs engine vs view.
-4. Next phase opens with ADRs for **Chaos Capture** and **Memory Registry** (pointers + URI schemes) — still adapter-first, still no product moves.
+3. [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md) is accepted: Alexandria out of implementation scope.
+4. No implementation PR starts without citing: product store vs registry entry vs engine vs view.
+5. Next phase opens with ADRs for **Chaos Capture** and **Memory Registry** (pointers + URI schemes for MTA/ARGUS/Chaos only) — still adapter-first, still no product moves, still no Alexandria adapters.
 
 ---
 
