@@ -36,13 +36,13 @@ Active / Archive
 
 ## 1. ARGUSFORGE HOME
 
-**STATUS:** PENDING
+**STATUS:** Minimal home shipped (not final architecture)
 
-- [ ] Do not invent final Home architecture.
-- [ ] Do not block the rest of the interface work.
-- [ ] Provide navigation access to Active and Archive.
-- [ ] Keep Focus visible only if clearly marked as pending.
-- [ ] Do not implement system-trigger logic for Focus yet.
+- [x] Do not invent final Home architecture.
+- [x] Do not block the rest of the interface work.
+- [x] Provide navigation access to Active and Archive.
+- [x] Keep Focus visible only if clearly marked as pending.
+- [x] Do not implement system-trigger logic for Focus yet.
 
 ---
 
@@ -50,43 +50,43 @@ Active / Archive
 
 ### ACTIVE
 
-- [ ] Active is available as a principal operational view.
-- [ ] Active may contain folders.
-- [ ] Active may contain Chaos Decks.
-- [ ] Active may contain nested folders.
-- [ ] Opening Active displays its internal repository-style view.
+- [x] Active is available as a principal operational view.
+- [x] Active may contain folders.
+- [x] Active may contain Chaos Decks.
+- [x] Active may contain nested folders.
+- [x] Opening Active displays its internal repository-style view.
 
 ### ARCHIVE
 
-- [ ] Archive is available as a principal operational view.
-- [ ] Archive preserves content.
-- [ ] Archive is not deletion.
-- [ ] Archive may contain folders.
-- [ ] Archive may contain Chaos Decks.
-- [ ] Opening Archive displays its internal repository-style view.
+- [x] Archive is available as a principal operational view.
+- [x] Archive preserves content.
+- [x] Archive is not deletion.
+- [x] Archive may contain folders.
+- [x] Archive may contain Chaos Decks.
+- [x] Opening Archive displays its internal repository-style view.
 
 ### FOCUS
 
-- [ ] Focus remains pending.
-- [ ] Do not treat Focus as a manual folder equivalent to Active or Archive.
-- [ ] Do not implement Focus triggers yet.
-- [ ] Record that Focus will later be activated or proposed by system signals.
+- [x] Focus remains pending.
+- [x] Do not treat Focus as a manual folder equivalent to Active or Archive.
+- [x] Do not implement Focus triggers yet.
+- [x] Record that Focus will later be activated or proposed by system signals.
 
 ---
 
 ## 3. REPOSITORY / FOLDER VIEW
 
-- [ ] Display current level title.
-- [ ] Display child folders.
-- [ ] Display Chaos Decks.
-- [ ] Permit navigation into nested folders.
-- [ ] Permit navigation back to the parent level.
-- [ ] Provide search at the current level.
-- [ ] Provide a simple contextual menu.
-- [ ] Provide simple statistics for the current level.
-- [ ] Do not finalize the ontology name for every level unless explicitly approved.
-- [ ] Do not confuse folders with semantic relations.
-- [ ] Do not make folder location part of identity.
+- [x] Display current level title.
+- [x] Display child folders.
+- [x] Display Chaos Decks.
+- [x] Permit navigation into nested folders.
+- [x] Permit navigation back to the parent level.
+- [x] Provide search at the current level.
+- [x] Provide a simple contextual menu.
+- [x] Provide simple statistics for the current level.
+- [x] Do not finalize the ontology name for every level unless explicitly approved.
+- [x] Do not confuse folders with semantic relations.
+- [x] Do not make folder location part of identity.
 
 ---
 
@@ -325,7 +325,22 @@ Every prototype must state:
 - [ ] Which contract requirements remain incomplete.
 - [ ] Whether the component can evolve or should be rebuilt.
 
-### Current known prototype — `/forge/chaos` (debt)
+### Current known prototypes
+
+#### `/forge` Active / Archive repository (§1–3)
+
+| Field | Statement |
+|-------|-----------|
+| Demonstrates | Home links; Active/Archive roots; nested folders; Chaos Deck list placeholders; search; menus; level stats |
+| Does not demonstrate | Deck internal content, persistent server ingest, editor, Viewer, Vault prep, Focus triggers |
+| Storage | `localStorage` key `argusforge-af03-repo-v1` |
+| Data loss | Yes — browser-local only |
+| Real actions | Open/navigate, New Folder, New Chaos Deck, Rename, Archive (from Active) |
+| Placeholders | Deck open/content, Move, Prepare for Vault |
+| Incomplete | AF03 §4–12 mostly |
+| Evolve or rebuild | May evolve for §4–7; not contract-complete Chaos |
+
+#### `/forge/chaos` (legacy capture)
 
 | Field | Statement |
 |-------|-----------|
@@ -335,8 +350,8 @@ Every prototype must state:
 | Data loss | Yes — cleared with session / browser data |
 | Real inputs | Text, Link |
 | Placeholders | Image, File; Task; Vault |
-| Incomplete vs this contract | Nearly all checklist sections §1–12 |
-| Evolve or rebuild | Treat as **rebuild candidate**; must not redefine the Chaos contract |
+| Incomplete vs this contract | Nearly all checklist sections beyond early capture |
+| Evolve or rebuild | Treat as **rebuild candidate** into Chaos Deck ingest; must not redefine the Chaos contract |
 
 ---
 
@@ -369,15 +384,15 @@ Before modifying code, Cursor must provide:
 
 Recommended interface sequence:
 
-- [ ] 1. Active / Archive repository view.
-- [ ] 2. Folder navigation.
-- [ ] 3. Chaos Deck list/grid.
+- [x] 1. Active / Archive repository view.
+- [x] 2. Folder navigation.
+- [ ] 3. Chaos Deck list/grid. *(list present at folder level; dedicated deck UI later)*
 - [ ] 4. Chaos Deck internal content view.
 - [ ] 5. Basic content creation and ingestion.
 - [ ] 6. Basic editor.
 - [ ] 7. Clear Viewer.
-- [ ] 8. Simple statistics.
-- [ ] 9. Contextual menus.
+- [ ] 8. Simple statistics. *(level stats in §3 shipped; richer stats later)*
+- [ ] 9. Contextual menus. *(basic folder/deck menus in §3 shipped)*
 - [ ] 10. Vault preparation boundary.
 - [ ] 11. Focus design — later.
 - [ ] 12. Alexandria integration — separate future phase.

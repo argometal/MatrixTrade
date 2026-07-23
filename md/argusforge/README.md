@@ -46,12 +46,14 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 7. [external-repo-patterns-research.md](external-repo-patterns-research.md)
 8. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
 
-## Current UI debt (not contract fulfillment)
+## Current UI (AF03 progress)
 
-| Route | Status per AF03 |
-|-------|-----------------|
-| `/forge` → `/forge/chaos` | **Visual prototype only** — see AF03 §14 disclosure |
-| `/forge/task` | Placeholder |
-| `/forge/vault` | Placeholder |
+| Route | Status |
+|-------|--------|
+| `/forge` | Minimal Home — links to Active / Archive; Focus pending |
+| `/forge/active`, `/forge/active/f/[id]` | Active repository view (§2–3) |
+| `/forge/archive`, `/forge/archive/f/[id]` | Archive repository view (§2–3) |
+| `/forge/focus` | Focus pending disclosure |
+| `/forge/chaos` | Legacy capture prototype (sessionStorage) — not Chaos Deck |
 
-Sharing the name “Chaos” does **not** prove AF03 completion. Persistent Active/Archive, folders, Chaos Decks, editor, Viewer, and truthful stats remain **unchecked** on the AF03 checklist.
+Storage for §1–3: browser `localStorage` (`argusforge-af03-repo-v1`). Not server persistence.

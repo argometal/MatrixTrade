@@ -5,19 +5,25 @@ import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 const NAV = [
-  { href: "/forge/chaos", label: "Chaos", implemented: true },
-  { href: "/forge/task", label: "Task", implemented: false },
-  { href: "/forge/vault", label: "Vault", implemented: false },
+  { href: "/forge/active", label: "Active", kind: "live" as const },
+  { href: "/forge/archive", label: "Archive", kind: "live" as const },
+  { href: "/forge/focus", label: "Focus", kind: "pending" as const },
+  { href: "/forge/chaos", label: "Capture", kind: "proto" as const },
 ] as const;
 
 function sectionTitle(pathname: string): string {
+  if (pathname === "/forge" || pathname === "/forge/") return "Home";
+  if (pathname.startsWith("/forge/archive")) return "Archive";
+  if (pathname.startsWith("/forge/focus")) return "Focus";
+  if (pathname.startsWith("/forge/chaos")) return "Capture (proto)";
   if (pathname.startsWith("/forge/task")) return "Task";
   if (pathname.startsWith("/forge/vault")) return "Vault";
-  return "Chaos Inbox";
+  if (pathname.startsWith("/forge/active")) return "Active";
+  return "ArgusForge";
 }
 
 export function ForgeShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname() || "/forge/chaos";
+  const pathname = usePathname() || "/forge";
   const title = sectionTitle(pathname);
 
   return (
@@ -25,7 +31,12 @@ export function ForgeShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-20 border-b border-zinc-800 bg-zinc-950/95 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-500">ArgusForge</p>
+            <Link
+              href="/forge"
+              className="text-[11px] font-medium uppercase tracking-[0.14em] text-zinc-500 hover:text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            >
+              ArgusForge
+            </Link>
             <h1 className="truncate text-lg font-semibold text-zinc-100">{title}</h1>
           </div>
           <Link
@@ -45,22 +56,21 @@ export function ForgeShell({ children }: { children: ReactNode }) {
       >
         <ul className="mx-auto flex max-w-lg items-stretch lg:max-w-3xl">
           {NAV.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const active =
+              pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <li key={item.href} className="flex-1">
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`flex min-h-14 flex-col items-center justify-center gap-0.5 px-2 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400 ${
+                  className={`flex min-h-14 flex-col items-center justify-center gap-0.5 px-1 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400 ${
                     active ? "text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
                   }`}
                 >
                   <span>{item.label}</span>
-                  {!item.implemented ? (
-                    <span className="text-[10px] font-normal uppercase tracking-wide text-zinc-600">Soon</span>
-                  ) : (
-                    <span className="text-[10px] font-normal uppercase tracking-wide text-zinc-500">Live</span>
-                  )}
+                  <span className="text-[10px] font-normal uppercase tracking-wide text-zinc-600">
+                    {item.kind === "pending" ? "Pending" : item.kind === "proto" ? "Proto" : "Live"}
+                  </span>
                 </Link>
               </li>
             );
