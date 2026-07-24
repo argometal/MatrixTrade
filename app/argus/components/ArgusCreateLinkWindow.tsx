@@ -435,7 +435,7 @@ function ArgusCreateLinkWindowBody({
                       className={`${inputClass} mt-1.5`}
                       value={flow.name}
                       onChange={(event) => flow.setName(event.target.value)}
-                      placeholder="RIG RUN — Prejob"
+                      placeholder="Weekly checklist"
                       autoFocus
                     />
                   </label>
@@ -447,7 +447,7 @@ function ArgusCreateLinkWindowBody({
                       className={`${textareaClass} mt-1.5 min-h-[220px] font-mono text-sm`}
                       value={flow.body}
                       onChange={(event) => flow.setBody(event.target.value)}
-                      placeholder={"Confirm permits\nCheck equipment\n\nSafety briefing"}
+                      placeholder={"Confirm stakeholders\nReview scope\n\n# Follow-up\nSend summary"}
                     />
                     <p className="mt-1.5 text-[11px] text-zinc-600">
                       Blank line = section break. Add subtasks on the runbook page after create.

@@ -1,31 +1,37 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Runbook, RunbookItem } from "@/lib/argus/types";
 import {
+  addRunbookSectionAction,
   appendRunbookCardsFromTextAction,
   checkAllRunbookItemsAction,
   checkAllRunbookItemsScopedAction,
   flattenRunbookSubtasksAction,
   importRunbookJsonAction,
   moveRunbookItemAction,
+  moveRunbookSectionAction,
   rebuildRunbookFromTextAction,
   removeDoneRunbookItemsAction,
   renameRunbookItemAction,
   renameRunbookTitleAction,
+  setRunbookItemTypeAction,
   setRunbookScopeClosedAction,
   toggleRunbookItemAction,
   uncheckAllRunbookItemsAction,
   uncheckAllRunbookItemsScopedAction,
 } from "@/app/argus/actions";
-import { runbookHasNestedSubtasks, runbookProgress } from "@/lib/argus/runbook-helpers";
+import {
+  canMoveRunbookSection,
+  isRunbookCheck,
+  runbookHasNestedSubtasks,
+  runbookItemSectionId,
+  runbookItemsToText,
+  runbookProgress,
+} from "@/lib/argus/runbook-helpers";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { RunbookAiBulkPanel } from "./RunbookAiBulkPanel";
-
-function runbookItemsToText(items: RunbookItem[]): string {
-  return items.map((item) => (item.type === "sep" ? "" : item.text)).join("\n");
-}
 
 function toolbarButtonClass(variant: "default" | "danger" | "primary" = "default") {
   if (variant === "danger") {
@@ -37,173 +43,215 @@ function toolbarButtonClass(variant: "default" | "danger" | "primary" = "default
   return "rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs font-medium text-zinc-300 hover:border-lime-500/30 hover:text-lime-300 disabled:opacity-40";
 }
 
-function RunbookCardExpanded({
-  runbookId,
-  item,
+function InlineRename({
+  value,
   disabled,
-  onClose,
-  onError,
-  onMove,
-  canMoveUp,
-  canMoveDown,
+  className,
+  onSave,
 }: {
-  runbookId: string;
-  item: RunbookItem;
+  value: string;
   disabled: boolean;
-  onClose: () => void;
-  onError: (message: string | null) => void;
-  onMove: (direction: -1 | 1) => void;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
+  className: string;
+  onSave: (next: string) => void;
 }) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [editDraft, setEditDraft] = useState(item.text);
-  const busy = disabled || isPending;
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setEditDraft(item.text);
-  }, [item.id, item.text]);
+    if (!editing) setDraft(value);
+  }, [value, editing]);
 
-  function run(action: () => Promise<void>) {
-    onError(null);
-    startTransition(async () => {
-      try {
-        await action();
-        router.refresh();
-      } catch (err) {
-        const { layer, message } = formatArgusError(err);
-        onError(`${layer.toUpperCase()}: ${message}`);
-      }
-    });
-  }
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
 
-  function handleSaveRename(event: FormEvent) {
-    event.preventDefault();
-    const text = editDraft.trim();
-    if (!text || text === item.text) {
-      onClose();
+  function commit() {
+    const next = draft.trim();
+    setEditing(false);
+    if (!next || next === value) {
+      setDraft(value);
       return;
     }
-    run(async () => {
-      await renameRunbookItemAction(runbookId, item.id, text);
-      onClose();
-    });
+    onSave(next);
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      commit();
+    }
+    if (event.key === "Escape") {
+      event.preventDefault();
+      setDraft(value);
+      setEditing(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={draft}
+        disabled={disabled}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={onKeyDown}
+        className={`w-full rounded-md border border-lime-500/40 bg-zinc-950 px-1.5 py-0.5 focus:outline-none ${className}`}
+      />
+    );
   }
 
   return (
-    <div className="runbook-no-print rounded-2xl border border-lime-500/30 bg-zinc-900/90 p-4 shadow-lg ring-1 ring-lime-500/10">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">Edit check</span>
-        <div className="flex items-center gap-1">
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => setEditing(true)}
+      className={`w-full truncate text-left hover:text-lime-200 disabled:opacity-50 ${className}`}
+      title="Click to rename"
+    >
+      {value || "Untitled"}
+    </button>
+  );
+}
+
+function SectionHeaderRow({
+  item,
+  collapsed,
+  disabled,
+  editable,
+  canMoveUp,
+  canMoveDown,
+  onToggleCollapse,
+  onRename,
+  onMove,
+  onMakeCheck,
+}: {
+  item: RunbookItem;
+  collapsed: boolean;
+  disabled: boolean;
+  editable: boolean;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+  onToggleCollapse: () => void;
+  onRename: (text: string) => void;
+  onMove: (direction: -1 | 1) => void;
+  onMakeCheck: () => void;
+}) {
+  return (
+    <div className="group flex items-center gap-2 border-b border-zinc-800/80 py-2">
+      <button
+        type="button"
+        onClick={onToggleCollapse}
+        className="runbook-no-print shrink-0 rounded px-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+        aria-label={collapsed ? "Expand section" : "Collapse section"}
+        aria-expanded={!collapsed}
+      >
+        {collapsed ? "▶" : "▼"}
+      </button>
+      <div className="min-w-0 flex-1">
+        {editable ? (
+          <InlineRename
+            value={item.text}
+            disabled={disabled}
+            onSave={onRename}
+            className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
+          />
+        ) : (
+          <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+            {item.text}
+          </p>
+        )}
+      </div>
+      {editable ? (
+        <div className="runbook-no-print flex shrink-0 items-center gap-0.5 opacity-70 transition group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
           <button
             type="button"
-            disabled={busy || !canMoveUp}
+            disabled={disabled || !canMoveUp}
             onClick={() => onMove(-1)}
-            className={toolbarButtonClass()}
-            aria-label="Move up"
+            className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300 disabled:opacity-30"
+            aria-label="Move section up"
           >
             ↑
           </button>
           <button
             type="button"
-            disabled={busy || !canMoveDown}
+            disabled={disabled || !canMoveDown}
             onClick={() => onMove(1)}
-            className={toolbarButtonClass()}
-            aria-label="Move down"
+            className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300 disabled:opacity-30"
+            aria-label="Move section down"
           >
             ↓
           </button>
           <button
             type="button"
-            disabled={busy}
-            onClick={onClose}
-            className="rounded-lg px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+            disabled={disabled}
+            onClick={onMakeCheck}
+            className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
+            title="Convert to check"
           >
-            Close
+            Check
           </button>
         </div>
-      </div>
-
-      <label className="mb-3 flex items-start gap-3">
-        <input
-          type="checkbox"
-          checked={item.done}
-          disabled={busy}
-          onChange={(event) => run(() => toggleRunbookItemAction(runbookId, item.id, event.target.checked))}
-          className="mt-1 shrink-0"
-          aria-label={item.done ? "Mark open" : "Mark done"}
-        />
-        <span className="text-xs text-zinc-500">{item.done ? "Done" : "Open"}</span>
-      </label>
-
-      <form onSubmit={handleSaveRename} className="space-y-3">
-        <textarea
-          autoFocus
-          value={editDraft}
-          onChange={(event) => setEditDraft(event.target.value)}
-          disabled={busy}
-          rows={4}
-          className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-lime-500/40 focus:outline-none"
-        />
-        <div className="flex flex-wrap gap-2">
-          <button type="submit" disabled={busy || !editDraft.trim()} className={toolbarButtonClass("primary")}>
-            Save
-          </button>
-          <button type="button" disabled={busy} onClick={onClose} className={toolbarButtonClass()}>
-            Cancel
-          </button>
-        </div>
-      </form>
+      ) : null}
     </div>
   );
 }
 
-function RunbookListRow({
+function CheckRow({
   item,
   hiddenOnScreen,
-  expanded,
   disabled,
   editable,
-  onSelect,
+  canMoveUp,
+  canMoveDown,
   onToggle,
+  onRename,
+  onMove,
+  onMakeSection,
 }: {
   item: RunbookItem;
   hiddenOnScreen: boolean;
-  expanded: boolean;
   disabled: boolean;
   editable: boolean;
-  onSelect: () => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
   onToggle: (done: boolean) => void;
+  onRename: (text: string) => void;
+  onMove: (direction: -1 | 1) => void;
+  onMakeSection: () => void;
 }) {
   const subtaskCount = item.subtasks?.length ?? 0;
 
   return (
     <div className={hiddenOnScreen ? "hidden print:block" : ""}>
-      <div
-        className={`flex items-start gap-3 rounded-2xl border px-3.5 py-3 transition ${
-          expanded
-            ? "border-lime-500/40 bg-lime-500/5"
-            : item.done
-              ? "border-zinc-800/70 bg-zinc-950/50 opacity-80"
-              : "border-zinc-800/90 bg-zinc-900/70 hover:border-lime-500/25"
-        }`}
-      >
+      <div className="group flex items-start gap-3 border-b border-zinc-900/80 py-2.5">
         <input
           type="checkbox"
           checked={item.done}
           disabled={disabled}
           onChange={(event) => onToggle(event.target.checked)}
-          className="runbook-no-print mt-1 shrink-0"
+          className="runbook-no-print mt-0.5 shrink-0"
         />
         <div className="min-w-0 flex-1 text-left">
-          <p
-            className={`text-sm font-medium leading-relaxed ${
-              item.done ? "text-zinc-500 line-through" : "text-zinc-100"
-            }`}
-          >
-            {item.text}
-          </p>
+          {editable ? (
+            <InlineRename
+              value={item.text}
+              disabled={disabled}
+              onSave={onRename}
+              className={`text-sm leading-relaxed ${
+                item.done ? "text-zinc-500 line-through" : "text-zinc-100"
+              }`}
+            />
+          ) : (
+            <p
+              className={`text-sm leading-relaxed ${
+                item.done ? "text-zinc-500 line-through" : "text-zinc-100"
+              }`}
+            >
+              {item.text}
+            </p>
+          )}
           {subtaskCount > 0 ? (
             <span className="mt-1 inline-block text-[10px] text-amber-300">
               {subtaskCount} nested subtask{subtaskCount === 1 ? "" : "s"}
@@ -211,14 +259,35 @@ function RunbookListRow({
           ) : null}
         </div>
         {editable ? (
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={onSelect}
-            className="runbook-no-print shrink-0 rounded-md px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
-          >
-            {expanded ? "Close" : "Edit"}
-          </button>
+          <div className="runbook-no-print flex shrink-0 items-center gap-0.5 opacity-70 transition group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
+            <button
+              type="button"
+              disabled={disabled || !canMoveUp}
+              onClick={() => onMove(-1)}
+              className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300 disabled:opacity-30"
+              aria-label="Move up"
+            >
+              ↑
+            </button>
+            <button
+              type="button"
+              disabled={disabled || !canMoveDown}
+              onClick={() => onMove(1)}
+              className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300 disabled:opacity-30"
+              aria-label="Move down"
+            >
+              ↓
+            </button>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={onMakeSection}
+              className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
+              title="Make section header"
+            >
+              Section
+            </button>
+          </div>
         ) : null}
       </div>
     </div>
@@ -250,7 +319,7 @@ export function V2RunbookWorkPanel({
   const [error, setError] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(runbook.title);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -261,8 +330,8 @@ export function V2RunbookWorkPanel({
   const hasNestedSubtasks = useMemo(() => runbookHasNestedSubtasks(runbook.items), [runbook.items]);
 
   const hasVisibleCards = useMemo(() => {
-    if (showDone) return runbook.items.some((item) => item.type === "item");
-    return runbook.items.some((item) => item.type === "item" && !item.done);
+    if (showDone) return runbook.items.some(isRunbookCheck);
+    return runbook.items.some((item) => isRunbookCheck(item) && !item.done);
   }, [runbook.items, showDone]);
 
   function run(action: () => Promise<void>, successMessage?: string) {
@@ -287,6 +356,24 @@ export function V2RunbookWorkPanel({
     run(() => moveRunbookItemAction(runbook.id, itemId, direction));
   }
 
+  function handleMoveSection(sectionId: string, direction: -1 | 1) {
+    run(() => moveRunbookSectionAction(runbook.id, sectionId, direction));
+  }
+
+  function handleRenameItem(itemId: string, text: string) {
+    run(() => renameRunbookItemAction(runbook.id, itemId, text));
+  }
+
+  function handleSetType(itemId: string, type: "item" | "section") {
+    run(() => setRunbookItemTypeAction(runbook.id, itemId, type));
+  }
+
+  function handleAddSection() {
+    const title = window.prompt("Section title", "New section");
+    if (!title?.trim()) return;
+    run(() => addRunbookSectionAction(runbook.id, title), "Section added.");
+  }
+
   function handleLoadItemsToInput() {
     if (runbook.items.length === 0) {
       setStatus("Nothing to load.");
@@ -300,7 +387,6 @@ export function V2RunbookWorkPanel({
     if (!window.confirm("Build replaces all checks and resets progress. Continue?")) return;
     run(async () => {
       await rebuildRunbookFromTextAction(runbook.id, bulkText);
-      setExpandedId(null);
       setStatus("Built from bulk input.");
     });
   }
@@ -312,7 +398,7 @@ export function V2RunbookWorkPanel({
     }
     run(async () => {
       await appendRunbookCardsFromTextAction(runbook.id, bulkText);
-      setStatus("Appended new checks from input.");
+      setStatus("Appended from input.");
     });
   }
 
@@ -322,7 +408,9 @@ export function V2RunbookWorkPanel({
   }
 
   function handleRemoveDone() {
-    if (!window.confirm("Remove all accomplished checks from the template?")) return;
+    if (!window.confirm("Remove all accomplished checks from the template? This cannot be undone.")) {
+      return;
+    }
     run(() => removeDoneRunbookItemsAction(runbook.id), "Removed accomplished checks from template.");
   }
 
@@ -387,7 +475,6 @@ export function V2RunbookWorkPanel({
       startTransition(async () => {
         try {
           await importRunbookJsonAction(text, runbook.id);
-          setExpandedId(null);
           setStatus(`Imported: ${file.name}`);
           router.refresh();
         } catch (err) {
@@ -424,6 +511,13 @@ export function V2RunbookWorkPanel({
       await renameRunbookTitleAction(runbook.id, title);
       setEditingTitle(false);
     }, "Title updated.");
+  }
+
+  function isCollapsedUnderSection(item: RunbookItem): boolean {
+    if (item.type !== "item") return false;
+    const sectionId = runbookItemSectionId(runbook.items, item.id);
+    if (!sectionId) return false;
+    return !!collapsedSections[sectionId];
   }
 
   return (
@@ -505,35 +599,38 @@ export function V2RunbookWorkPanel({
       </div>
 
       {!executeMode ? (
-      <div className="runbook-no-print rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
-        <span className="mb-3 block text-xs font-medium uppercase tracking-wide text-zinc-500">Bulk input</span>
-        <div className="space-y-3">
-          <div>
-            <label className="mb-1.5 block text-[11px] text-zinc-500">
-              Input (1 line = 1 check, blank line = separator)
-            </label>
-            <textarea
-              value={bulkText}
-              onChange={(event) => setBulkText(event.target.value)}
-              rows={8}
-              disabled={isPending}
-              placeholder={"• Item 1\n• Item 2\n\n(section break above)"}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" disabled={isPending} onClick={handleBuildFromText} className={toolbarButtonClass("primary")}>
-              Build
-            </button>
-            <button type="button" disabled={isPending} onClick={handleAppendFromBulk} className={toolbarButtonClass()}>
-              Append
-            </button>
-            <button type="button" disabled={isPending} onClick={handleLoadItemsToInput} className={toolbarButtonClass()}>
-              Load items → Input
-            </button>
+        <div className="runbook-no-print rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
+          <span className="mb-3 block text-xs font-medium uppercase tracking-wide text-zinc-500">Bulk input</span>
+          <div className="space-y-3">
+            <div>
+              <label className="mb-1.5 block text-[11px] text-zinc-500">
+                Input (1 line = 1 check, blank line = separator, # Title = section)
+              </label>
+              <textarea
+                value={bulkText}
+                onChange={(event) => setBulkText(event.target.value)}
+                rows={8}
+                disabled={isPending}
+                placeholder={"Confirm stakeholders\nReview scope\n\n# Follow-up\nSend summary"}
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" disabled={isPending} onClick={handleBuildFromText} className={toolbarButtonClass("primary")}>
+                Build
+              </button>
+              <button type="button" disabled={isPending} onClick={handleAppendFromBulk} className={toolbarButtonClass()}>
+                Append
+              </button>
+              <button type="button" disabled={isPending} onClick={handleLoadItemsToInput} className={toolbarButtonClass()}>
+                Load items → Input
+              </button>
+              <button type="button" disabled={isPending} onClick={handleAddSection} className={toolbarButtonClass()}>
+                Add section
+              </button>
+            </div>
           </div>
         </div>
-      </div>
       ) : null}
 
       <div className="runbook-no-print flex flex-wrap items-center gap-2">
@@ -626,44 +723,60 @@ export function V2RunbookWorkPanel({
             : "All checks done — or nothing to show."}
         </p>
       ) : (
-        <div className="space-y-2">
-          {runbook.items.map((item) => {
-            const hiddenOnScreen = !showDone && item.type === "item" && item.done;
+        <div className="rounded-xl border border-zinc-800/60 bg-zinc-950/40 px-3 sm:px-4">
+          {runbook.items.map((item, itemIndex) => {
             if (item.type === "sep") {
               return (
                 <div
                   key={item.id}
-                  className={`border-t border-zinc-700/70 pt-1 print:border-zinc-400 ${hiddenOnScreen ? "hidden print:block" : ""}`}
+                  className="border-t border-zinc-700/50 my-1 print:border-zinc-400"
                   aria-hidden
                 />
               );
             }
-            const itemIndex = runbook.items.findIndex((entry) => entry.id === item.id);
-            const canEdit = !executeMode;
-            return (
-              <div key={item.id} className="space-y-2">
-                <RunbookListRow
+
+            if (item.type === "section") {
+              const collapsed = !!collapsedSections[item.id];
+              return (
+                <SectionHeaderRow
+                  key={item.id}
                   item={item}
-                  hiddenOnScreen={hiddenOnScreen}
-                  expanded={canEdit && expandedId === item.id}
+                  collapsed={collapsed}
                   disabled={isPending}
-                  editable={canEdit}
-                  onSelect={() => setExpandedId((current) => (current === item.id ? null : item.id))}
-                  onToggle={(done) => handleToggle(item.id, done)}
+                  editable={!executeMode}
+                  canMoveUp={canMoveRunbookSection(runbook.items, item.id, -1)}
+                  canMoveDown={canMoveRunbookSection(runbook.items, item.id, 1)}
+                  onToggleCollapse={() =>
+                    setCollapsedSections((current) => ({
+                      ...current,
+                      [item.id]: !current[item.id],
+                    }))
+                  }
+                  onRename={(text) => handleRenameItem(item.id, text)}
+                  onMove={(direction) => handleMoveSection(item.id, direction)}
+                  onMakeCheck={() => handleSetType(item.id, "item")}
                 />
-                {canEdit && expandedId === item.id ? (
-                  <RunbookCardExpanded
-                    runbookId={runbook.id}
-                    item={item}
-                    disabled={isPending}
-                    onClose={() => setExpandedId(null)}
-                    onError={setError}
-                    onMove={(direction) => handleMove(item.id, direction)}
-                    canMoveUp={itemIndex > 0}
-                    canMoveDown={itemIndex < runbook.items.length - 1}
-                  />
-                ) : null}
-              </div>
+              );
+            }
+
+            const collapsedAway = isCollapsedUnderSection(item);
+            const hiddenOnScreen =
+              collapsedAway || (!showDone && item.done);
+
+            return (
+              <CheckRow
+                key={item.id}
+                item={item}
+                hiddenOnScreen={hiddenOnScreen}
+                disabled={isPending}
+                editable={!executeMode}
+                canMoveUp={itemIndex > 0}
+                canMoveDown={itemIndex < runbook.items.length - 1}
+                onToggle={(done) => handleToggle(item.id, done)}
+                onRename={(text) => handleRenameItem(item.id, text)}
+                onMove={(direction) => handleMove(item.id, direction)}
+                onMakeSection={() => handleSetType(item.id, "section")}
+              />
             );
           })}
         </div>

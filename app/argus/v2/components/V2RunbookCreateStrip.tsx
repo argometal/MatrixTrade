@@ -70,7 +70,7 @@ export function V2RunbookCreateStrip({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={isPending}
-          placeholder="RIG RUN — Prejob"
+          placeholder="Weekly checklist"
           className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
         />
       </label>
@@ -81,7 +81,7 @@ export function V2RunbookCreateStrip({
           onChange={(e) => setBody(e.target.value)}
           disabled={isPending}
           rows={5}
-          placeholder={"Confirm permits\nCheck equipment\n\nSafety briefing"}
+          placeholder={"Confirm stakeholders\nReview scope\n\n# Follow-up\nSend summary"}
           className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
         />
       </label>

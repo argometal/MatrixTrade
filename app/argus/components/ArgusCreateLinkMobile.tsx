@@ -329,7 +329,7 @@ function DetailsStep({
                 className={`${inputClass} mt-1.5`}
                 value={flow.name}
                 onChange={(e) => flow.setName(e.target.value)}
-                placeholder="RIG RUN — Prejob"
+                placeholder="Weekly checklist"
               />
             </label>
             <label className="block">
@@ -340,7 +340,7 @@ function DetailsStep({
                 className={`${textareaClass} mt-1.5 min-h-[180px] font-mono text-sm`}
                 value={flow.body}
                 onChange={(e) => flow.setBody(e.target.value)}
-                placeholder={"Confirm permits\nCheck equipment"}
+                placeholder={"Confirm stakeholders\nReview scope\n\n# Follow-up\nSend summary"}
               />
             </label>
           </div>
