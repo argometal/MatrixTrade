@@ -297,7 +297,10 @@ export function scopedRunbookProgress(
   return runbookProgress(items);
 }
 
-/** [start, end) covering a section header and its following checks. */
+/**
+ * [start, end) covering a section header and everything until the next section.
+ * Blank seps do not end ownership — Notion-style heading owns following rows.
+ */
 export function runbookSectionBlockRange(
   items: RunbookItem[],
   sectionId: string
@@ -305,7 +308,7 @@ export function runbookSectionBlockRange(
   const start = items.findIndex((item) => item.id === sectionId && item.type === "section");
   if (start < 0) return null;
   let end = start + 1;
-  while (end < items.length && items[end].type === "item") {
+  while (end < items.length && items[end].type !== "section") {
     end += 1;
   }
   return { start, end };
@@ -358,15 +361,67 @@ export function moveRunbookSectionBlock(
   ];
 }
 
-/** Owning section id for a check (nearest preceding section), or null. */
+/** Owning section id for a row (nearest preceding section). Seps do not break ownership. */
 export function runbookItemSectionId(items: RunbookItem[], itemId: string): string | null {
   const index = items.findIndex((item) => item.id === itemId);
   if (index < 0) return null;
   for (let i = index; i >= 0; i -= 1) {
     if (items[i].type === "section") return items[i].id;
-    if (items[i].type === "sep" && i < index) return null;
   }
   return null;
+}
+
+/** Count checks under a section (for collapsed header badge). */
+export function runbookSectionChildStats(
+  items: RunbookItem[],
+  sectionId: string
+): { total: number; open: number } {
+  const range = runbookSectionBlockRange(items, sectionId);
+  if (!range) return { total: 0, open: 0 };
+  const children = items.slice(range.start + 1, range.end).filter(isRunbookCheck);
+  const open = children.filter((item) => !item.done).length;
+  return { total: children.length, open };
+}
+
+/**
+ * Drag-and-drop placement: move a row (or section block) so it starts at targetIndex.
+ */
+export function placeRunbookBlockAt(
+  items: RunbookItem[],
+  sourceId: string,
+  targetIndex: number
+): RunbookItem[] {
+  const sourceIndex = items.findIndex((item) => item.id === sourceId);
+  if (sourceIndex < 0) return items;
+
+  const source = items[sourceIndex];
+  let start = sourceIndex;
+  let end = sourceIndex + 1;
+  if (source.type === "section") {
+    const range = runbookSectionBlockRange(items, sourceId);
+    if (!range) return items;
+    start = range.start;
+    end = range.end;
+  }
+
+  if (targetIndex >= start && targetIndex < end) return items;
+
+  const block = items.slice(start, end);
+  const without = [...items.slice(0, start), ...items.slice(end)];
+  let insertAt = targetIndex;
+  if (targetIndex > start) insertAt = targetIndex - (end - start);
+  insertAt = Math.max(0, Math.min(insertAt, without.length));
+  return [...without.slice(0, insertAt), ...block, ...without.slice(insertAt)];
+}
+
+/** Ids to copy/move with a row — section includes its owned children. */
+export function runbookTransferIds(items: RunbookItem[], itemId: string): string[] {
+  const item = items.find((entry) => entry.id === itemId);
+  if (!item) return [];
+  if (item.type !== "section") return [itemId];
+  const range = runbookSectionBlockRange(items, itemId);
+  if (!range) return [itemId];
+  return items.slice(range.start, range.end).map((entry) => entry.id);
 }
 
 export function canMoveRunbookSection(
