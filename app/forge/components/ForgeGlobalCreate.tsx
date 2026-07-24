@@ -41,7 +41,7 @@ export function ForgeGlobalCreate({ pathname, onClose }: Props) {
     const state = emptyOrSeedRepo();
     const parentId = onArchive ? null : folderId;
     const { deck } = createDeck(state, {
-      title: "New Chaos Deck",
+      title: "New Theke",
       folderId: parentId,
       view: "active",
     });
@@ -53,7 +53,7 @@ export function ForgeGlobalCreate({ pathname, onClose }: Props) {
     <div className="space-y-3 p-3" role="dialog" aria-label="Create">
       <p className="text-sm font-semibold text-zinc-100">Create</p>
       <p className="text-xs leading-relaxed text-zinc-500">
-        Global action — separate from Active/Archive. New work starts as Active.
+        Global action — separate from Active/Archive. New Theke / folder starts as Active.
       </p>
       <div className="flex flex-col gap-2">
         <button
@@ -61,7 +61,7 @@ export function ForgeGlobalCreate({ pathname, onClose }: Props) {
           onClick={birthDeck}
           className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-900 px-3 text-sm font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
         >
-          New Chaos Deck
+          New Theke
         </button>
         <button
           type="button"

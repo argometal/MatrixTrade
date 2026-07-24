@@ -68,7 +68,7 @@ export function ChaosCaptureSurface({
       <header className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-800 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="min-w-0">
           <p className="truncate text-[11px] uppercase tracking-wide text-zinc-500">
-            Chaos · capture
+            Chaos · Θήκη · dump
           </p>
           <p className="truncate text-sm text-zinc-300">{deckTitle}</p>
         </div>

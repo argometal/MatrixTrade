@@ -44,7 +44,7 @@ const ARGUS_SECONDARY: {
 function sectionTitle(pathname: string, systemLabel: string): string {
   if (pathname.endsWith("/view") || pathname.includes("/view")) return "Viewer";
   if (pathname.includes("/item/")) return "Editor";
-  if (pathname.startsWith("/forge/deck/")) return "Chaos Deck";
+  if (pathname.startsWith("/forge/deck/")) return "Theke";
   if (pathname.startsWith("/forge/argus")) return "Argus";
   if (pathname.startsWith("/forge/focus")) return "Focus";
   if (pathname.startsWith("/forge/chaos")) return "Capture (proto)";

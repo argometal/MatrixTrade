@@ -494,6 +494,31 @@ export function removeContent(state: Af03RepoState, id: string): Af03RepoState {
   return next;
 }
 
+/** Move a dump (content item) into another Theke (deck). Reorders to end of target. */
+export function moveContentToDeck(
+  state: Af03RepoState,
+  itemId: string,
+  targetDeckId: string
+): Af03RepoState {
+  const existing = getItem(state, itemId);
+  const target = getDeck(state, targetDeckId);
+  if (!existing || !target || existing.deckId === targetDeckId) return state;
+  const fromId = existing.deckId;
+  const siblings = listItemsInDeck(state, targetDeckId);
+  const t = nowIso();
+  const order = siblings.length === 0 ? 0 : Math.max(...siblings.map((s) => s.order)) + 1;
+  let next: Af03RepoState = {
+    ...state,
+    items: state.items.map((i) =>
+      i.id === itemId ? { ...i, deckId: targetDeckId, order, updatedAt: t } : i
+    ),
+  };
+  next = syncDeckDerived(next, fromId);
+  next = syncDeckDerived(next, targetDeckId);
+  writeRepo(next);
+  return next;
+}
+
 export function moveContentOrder(
   state: Af03RepoState,
   id: string,
