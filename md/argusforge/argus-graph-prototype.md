@@ -29,3 +29,9 @@ Chaos source remains `argusforge-af03-repo-v1`.
 - **No design ceiling** on Chaos → Argus units. Sync takes all Chaos items.
 - Demo fill (~24) is optional practice only, not a product max.
 - UI may later page/filter for performance; that is not an ontological limit.
+
+## CHANGE 24-08 (minimal Argus Engine core)
+
+- Evidence types, tags, confirmation, typed relations, recurrence scan, JSON/MD export
+- Local state migrates → v3 (safe defaults; `link`/`belongs_to` → `related_to`)
+- Manual evidence/type/tags survive Chaos sync; no AI; no unit ceiling
