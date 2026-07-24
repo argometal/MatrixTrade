@@ -36,9 +36,11 @@ import {
 import {
   emptyOrSeedRepo,
   formatRelativeAgo,
+  moveDeckToFolder,
   recordRealmOpen,
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
+import { UNASSIGNED_REALM_ID } from "@/lib/argusforge/af03-repo-types";
 import { readArgusGraph } from "@/lib/argusforge/argus-graph-store";
 import type { ArgusGraphState } from "@/lib/argusforge/argus-graph-types";
 import { readMolecularOverlay } from "@/lib/argusforge/af03-realm-molecular";
@@ -153,6 +155,34 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
 
   const selectedDeck = decks.find((d) => d.id === selectedId) ?? null;
   const selectedMetrics = selectedId ? metricsByDeck.get(selectedId) ?? null : null;
+
+  const realmMoveTargets = useMemo(() => {
+    if (!state) return [] as Array<{ id: string | null; label: string; view: string }>;
+    const folders = [...state.folders].sort((a, b) => a.title.localeCompare(b.title));
+    return [
+      { id: null as string | null, label: "Unassigned", view: "active" },
+      ...folders.map((f) => ({
+        id: f.id as string | null,
+        label: `${f.title}${f.view === "archive" ? " (archive)" : ""}`,
+        view: f.view,
+      })),
+    ];
+  }, [state]);
+
+  function handleMoveDeck(targetFolderId: string) {
+    if (!selectedDeck) return;
+    const folderId =
+      targetFolderId === UNASSIGNED_REALM_ID || targetFolderId === ""
+        ? null
+        : targetFolderId;
+    const staysInRealm =
+      (isUnassignedRealm(realmId) && folderId === null) || folderId === realmId;
+    setState((prev) => {
+      const base = prev ?? emptyOrSeedRepo();
+      return moveDeckToFolder(base, selectedDeck.id, folderId);
+    });
+    if (!staysInRealm) setSelectedId(null);
+  }
 
   useEffect(() => {
     if (!ready || !state) return;
@@ -362,6 +392,35 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
                     Affinity: {selectedMetrics.affinityReason}
                   </p>
                 ) : null}
+                <label className="block space-y-1">
+                  <span className="text-[10px] uppercase tracking-wide text-zinc-500">
+                    Move to Realm
+                  </span>
+                  <select
+                    className="min-h-11 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-200"
+                    defaultValue=""
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (!value) return;
+                      handleMoveDeck(value === "unassigned" ? "" : value);
+                      e.target.value = "";
+                    }}
+                  >
+                    <option value="">Choose realm…</option>
+                    {realmMoveTargets.map((target) => (
+                      <option
+                        key={target.id ?? "unassigned"}
+                        value={target.id ?? "unassigned"}
+                        disabled={
+                          (target.id === null && isUnassignedRealm(realmId)) ||
+                          target.id === realmId
+                        }
+                      >
+                        {target.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <button
                   type="button"
                   className="min-h-11 w-full rounded-lg border border-zinc-600 bg-zinc-100 text-sm font-semibold text-zinc-900"

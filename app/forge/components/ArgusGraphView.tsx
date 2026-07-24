@@ -17,7 +17,7 @@ import {
 import "@xyflow/react/dist/style.css";
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { emptyOrSeedRepo } from "@/lib/argusforge/af03-repo-store";
+import { emptyOrSeedRepo, moveFragmentToDeck } from "@/lib/argusforge/af03-repo-store";
 import {
   addRelation,
   addTagToUnit,
@@ -101,6 +101,7 @@ function ArgusGraphCanvas() {
   const [filters, setFilters] = useState<ArgusGraphFilters>(DEFAULT_FILTERS);
   const [viewMode, setViewMode] = useState<GraphViewMode>("2d");
   const [ready, setReady] = useState(false);
+  const [repoEpoch, setRepoEpoch] = useState(0);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
@@ -118,12 +119,23 @@ function ArgusGraphCanvas() {
       id,
       title: repo?.decks.find((d) => d.id === id)?.title ?? id,
     }));
-  }, [graph.units]);
+  }, [graph.units, repoEpoch]);
 
   const chaosRepo = useMemo(() => {
     if (typeof window === "undefined") return null;
     return emptyOrSeedRepo();
-  }, [ready, viewMode]);
+  }, [ready, viewMode, repoEpoch, graph.updatedAt]);
+
+  const deckMoveTargets = useMemo(() => {
+    if (typeof window === "undefined") return [] as Array<{ id: string; label: string }>;
+    const repo = emptyOrSeedRepo();
+    return [...repo.decks]
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .map((d) => ({
+        id: d.id,
+        label: d.view === "archive" ? `${d.title} (archive)` : d.title,
+      }));
+  }, [repoEpoch, ready, graph.updatedAt]);
 
   const tags = useMemo(() => allTags(graph), [graph]);
   const filteredUnits = useMemo(() => filterUnits(graph, filters), [graph, filters]);
@@ -214,6 +226,12 @@ function ArgusGraphCanvas() {
         "text/markdown"
       );
     }
+  }
+
+  function handleMoveFragmentToDeck(chaosItemId: string, targetDeckId: string) {
+    const nextRepo = moveFragmentToDeck(emptyOrSeedRepo(), chaosItemId, targetDeckId);
+    setRepoEpoch((n) => n + 1);
+    setGraph((g) => syncUnitsFromChaos(g, nextRepo));
   }
 
   if (!ready) return <p className="text-sm text-zinc-500">Loading Argus…</p>;
@@ -502,6 +520,8 @@ function ArgusGraphCanvas() {
           onRemoveGroup={(id) => setGraph((g) => removeGroup(g, id))}
           onConfirmRecurrence={(id) => setGraph((g) => confirmRecurrence(g, id))}
           onDismissRecurrence={(id) => setGraph((g) => dismissRecurrence(g, id))}
+          deckMoveTargets={deckMoveTargets}
+          onMoveFragmentToDeck={handleMoveFragmentToDeck}
         />
       </div>
     </div>
