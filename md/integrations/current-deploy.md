@@ -4,10 +4,10 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0722b` |
-| **Commit** | Always `git rev-parse main0722b` after fetch (must match `origin/main`) |
+| **Tag** | `main0724a` |
+| **Commit** | Always `git rev-parse main0724a` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
-| **Date** | 2026-07-22 |
+| **Date** | 2026-07-24 |
 
 ## Sync local (avoid conflicts / lost work)
 
@@ -15,11 +15,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0722b
+# optional pin: git checkout main0724a
 ```
 
 ## What this deploy includes
 
+- PR #61: Runbook sections, inline rename, Reminders-style list
 - PR #33: Network Mechanics + Apply + Library (removed Request layer)
 - PR #31: ARGUS Network Mechanics orientation (superseded UI by #33)
 - PR #16: Runbooks redesign, scoped drill-down, Timeline/Chronicle UX
