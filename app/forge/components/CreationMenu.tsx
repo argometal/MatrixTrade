@@ -23,16 +23,16 @@ type Props = {
 
 const FOLDER_ACTIONS: { id: CreateAction; label: string; available: boolean }[] = [
   { id: "folder", label: "New Folder", available: true },
-  { id: "deck", label: "New Theke", available: true },
+  { id: "deck", label: "New Chaos Deck", available: true },
   { id: "import", label: "Import content", available: false },
 ];
 
 const DECK_ACTIONS: { id: CreateAction; label: string; available: boolean }[] = [
-  { id: "text", label: "Dump text", available: true },
-  { id: "link", label: "Dump link", available: true },
-  { id: "image", label: "Dump image URL", available: true },
-  { id: "file", label: "Dump file ref", available: true },
-  { id: "pdf", label: "Dump PDF ref", available: true },
+  { id: "text", label: "Add fragment (text)", available: true },
+  { id: "link", label: "Add fragment (link)", available: true },
+  { id: "image", label: "Add fragment (image URL)", available: true },
+  { id: "file", label: "Add fragment (file ref)", available: true },
+  { id: "pdf", label: "Add fragment (PDF ref)", available: true },
   { id: "import", label: "Import content", available: false },
 ];
 
@@ -42,7 +42,7 @@ export function CreationMenu({ scope, onAction }: Props) {
   return (
     <div className="space-y-2" role="group" aria-label="Creation menu">
       <p className="text-xs text-zinc-500">
-        Capture only — no classification. Dumps go into this Theke (θήκη).
+        Capture only — no classification. Fragments go into this Chaos Deck.
       </p>
       <div className="flex flex-wrap gap-2">
         {actions.map((a) =>

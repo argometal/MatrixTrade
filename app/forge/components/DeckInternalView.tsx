@@ -33,8 +33,8 @@ type Props = {
 };
 
 /**
- * Chaos Θήκη (Theke) — binder of dumps.
- * Route ids still use `deck` for storage compatibility; UI says Theke / Dump.
+ * Chaos Deck — binder of fragments.
+ * Route/storage ids use `deck` / item; UI says Chaos Deck / Fragment.
  */
 
 function formatTime(iso: string | null): string {
@@ -81,7 +81,7 @@ export function DeckInternalView({ deckId }: Props) {
   const items = useMemo(() => (state ? listItemsInDeck(state, deckId) : []), [state, deckId]);
   const stats = state ? deckStats(state, deckId) : null;
   const layout = state?.prefs.deckInternalLayout ?? "list";
-  const otherThekes = useMemo(
+  const otherDecks = useMemo(
     () => (state ? state.decks.filter((d) => d.id !== deckId) : []),
     [state, deckId]
   );
@@ -162,7 +162,7 @@ export function DeckInternalView({ deckId }: Props) {
     if (!state || !deck) return;
     const chosen = items.filter((i) => selected.has(i.id));
     if (chosen.length === 0) {
-      window.alert("Select one or more dumps first.");
+      window.alert("Select one or more fragments first.");
       return;
     }
     const note =
@@ -184,14 +184,14 @@ export function DeckInternalView({ deckId }: Props) {
   }
 
   if (!state) {
-    return <p className="text-sm text-zinc-500">Loading Theke…</p>;
+    return <p className="text-sm text-zinc-500">Loading Chaos Deck…</p>;
   }
 
   if (!deck) {
     return (
       <div className="space-y-3">
         <p role="alert" className="text-sm text-rose-300">
-          Theke not found (id is identity).
+          Chaos Deck not found (id is identity).
         </p>
         <Link href="/forge/active" className="text-sm text-zinc-300 underline">
           Back to Active
@@ -224,7 +224,7 @@ export function DeckInternalView({ deckId }: Props) {
       ) : null}
       <Af03RepoDisclosure />
 
-      <nav aria-label="Theke location" className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+      <nav aria-label="Deck location" className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
         <Link
           href={parentHref()}
           className="rounded px-1 py-0.5 hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
@@ -238,17 +238,17 @@ export function DeckInternalView({ deckId }: Props) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-500/90">
-            Θήκη · Theke
+            Chaos Deck
           </p>
           <h2 className="truncate text-lg font-semibold text-zinc-100">{deck.title}</h2>
           <p className="text-xs text-zinc-500">
-            Binder of dumps — pour capture in; not a topic ontology.
+            Binder of fragments — capture freely; not a topic ontology.
           </p>
         </div>
         <div className="relative shrink-0">
           <button
             type="button"
-            aria-label="Theke menu"
+            aria-label="Deck menu"
             aria-expanded={deckMenuOpen}
             className="min-h-11 min-w-11 rounded-lg border border-zinc-800 text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
             onClick={() => setDeckMenuOpen(!deckMenuOpen)}
@@ -265,13 +265,13 @@ export function DeckInternalView({ deckId }: Props) {
                 role="menuitem"
                 className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
                 onClick={() => {
-                  const title = promptTitle("Rename Theke", deck.title);
+                  const title = promptTitle("Rename Chaos Deck", deck.title);
                   if (!title) return;
                   setState(renameDeck(state, deck.id, title));
                   setDeckMenuOpen(false);
                 }}
               >
-                Rename Theke
+                Rename Chaos Deck
               </button>
               <button
                 type="button"
@@ -293,7 +293,7 @@ export function DeckInternalView({ deckId }: Props) {
                   setDeckMenuOpen(false);
                 }}
               >
-                Dump text
+                Add fragment (text)
               </button>
               <button
                 type="button"
@@ -314,7 +314,7 @@ export function DeckInternalView({ deckId }: Props) {
                     window.location.href = "/forge/archive";
                   }}
                 >
-                  Archive Theke
+                  Archive Chaos Deck
                 </button>
               ) : (
                 <button
@@ -327,7 +327,7 @@ export function DeckInternalView({ deckId }: Props) {
                     window.location.href = "/forge/active";
                   }}
                 >
-                  Restore Theke
+                  Restore Chaos Deck
                 </button>
               )}
             </div>
@@ -338,7 +338,7 @@ export function DeckInternalView({ deckId }: Props) {
       {stats ? (
         <dl className="grid grid-cols-3 gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2 text-center text-xs sm:grid-cols-6">
           <div>
-            <dt className="text-zinc-600">Dumps</dt>
+            <dt className="text-zinc-600">Fragments</dt>
             <dd className="font-semibold text-zinc-100">{stats.items}</dd>
           </div>
           <div>
@@ -361,9 +361,9 @@ export function DeckInternalView({ deckId }: Props) {
           className="flex min-h-12 w-full items-center justify-between gap-2 px-3 text-left"
         >
           <span>
-            <span className="block text-sm font-semibold text-zinc-100">Dump into Theke</span>
+            <span className="block text-sm font-semibold text-zinc-100">Add to Chaos Deck</span>
             <span className="block text-[11px] text-zinc-500">
-              {ingestOpen ? "Capture actions" : "Collapsed — tap to add dumps"}
+              {ingestOpen ? "Capture actions" : "Collapsed — tap to add fragments"}
             </span>
           </span>
           <span className="text-zinc-500">{ingestOpen ? "▾" : "▸"}</span>
@@ -376,7 +376,7 @@ export function DeckInternalView({ deckId }: Props) {
       </section>
 
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Dumps</h3>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Fragments</h3>
         <div className="inline-flex rounded-lg border border-zinc-800 p-0.5 text-xs">
           <button
             type="button"
@@ -402,7 +402,7 @@ export function DeckInternalView({ deckId }: Props) {
       </div>
 
       {items.length === 0 ? (
-        <p className="text-sm text-zinc-600">Empty Theke — dump text, link, image URL, or a stub.</p>
+        <p className="text-sm text-zinc-600">Empty Chaos Deck — add a fragment (text, link, image URL, or stub).</p>
       ) : layout === "grid" ? (
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {items.map((item) => (
@@ -421,20 +421,20 @@ export function DeckInternalView({ deckId }: Props) {
                 className="block min-h-[6.5rem] px-3 py-3 pl-9 pr-12 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400"
               >
                 <span className="text-[10px] uppercase tracking-wide text-zinc-500">
-                  Dump · {kindLabel(item)}
+                  Fragment · {kindLabel(item)}
                 </span>
                 <p className="mt-1 font-medium text-zinc-100">{item.title}</p>
                 <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{item.body || "—"}</p>
               </Link>
-              <DumpMenu
+              <FragmentMenu
                 item={item}
-                otherThekes={otherThekes}
+                otherDecks={otherDecks}
                 floating
                 open={menuId === item.id}
                 onToggle={() => setMenuId(menuId === item.id ? null : item.id)}
                 onClose={() => setMenuId(null)}
                 onRename={() => {
-                  const title = promptTitle("Rename dump", item.title);
+                  const title = promptTitle("Rename fragment", item.title);
                   if (!title) return;
                   setState(updateContent(state, item.id, { title }));
                   setMenuId(null);
@@ -461,7 +461,7 @@ export function DeckInternalView({ deckId }: Props) {
                   setMenuId(null);
                 }}
                 onRemove={() => {
-                  if (!window.confirm("Remove this dump from the Theke?")) return;
+                  if (!window.confirm("Remove this fragment from the Chaos Deck?")) return;
                   setState(removeContent(state, item.id));
                   setMenuId(null);
                 }}
@@ -489,7 +489,7 @@ export function DeckInternalView({ deckId }: Props) {
                 <div className="flex items-center gap-2">
                   <p className="truncate font-medium text-zinc-100">{item.title}</p>
                   <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-500">
-                    Dump · {kindLabel(item)}
+                    Fragment · {kindLabel(item)}
                   </span>
                 </div>
                 <p className="mt-0.5 truncate text-xs text-zinc-500">
@@ -499,14 +499,14 @@ export function DeckInternalView({ deckId }: Props) {
                 <p className="mt-1 truncate text-xs text-zinc-600">{item.body || "—"}</p>
               </Link>
               <div className="relative shrink-0 border-l border-zinc-800">
-                <DumpMenu
+                <FragmentMenu
                   item={item}
-                  otherThekes={otherThekes}
+                  otherDecks={otherDecks}
                   open={menuId === item.id}
                   onToggle={() => setMenuId(menuId === item.id ? null : item.id)}
                   onClose={() => setMenuId(null)}
                   onRename={() => {
-                    const title = promptTitle("Rename dump", item.title);
+                    const title = promptTitle("Rename fragment", item.title);
                     if (!title) return;
                     setState(updateContent(state, item.id, { title }));
                     setMenuId(null);
@@ -533,7 +533,7 @@ export function DeckInternalView({ deckId }: Props) {
                     setMenuId(null);
                   }}
                   onRemove={() => {
-                    if (!window.confirm("Remove this dump from the Theke?")) return;
+                    if (!window.confirm("Remove this fragment from the Chaos Deck?")) return;
                     setState(removeContent(state, item.id));
                     setMenuId(null);
                   }}
@@ -545,7 +545,7 @@ export function DeckInternalView({ deckId }: Props) {
       )}
 
       <p className="text-[11px] text-zinc-600">
-        Theke id <code className="text-zinc-500">{deck.id}</code> ·{" "}
+        Deck id <code className="text-zinc-500">{deck.id}</code> ·{" "}
         <Link href="/forge/vault" className="underline">
           Vault prep queue
         </Link>
@@ -554,9 +554,9 @@ export function DeckInternalView({ deckId }: Props) {
   );
 }
 
-function DumpMenu({
+function FragmentMenu({
   item,
-  otherThekes,
+  otherDecks,
   open,
   onToggle,
   onClose,
@@ -570,12 +570,12 @@ function DumpMenu({
   floating = false,
 }: {
   item: Af03ContentItem;
-  otherThekes: Af03ChaosDeck[];
+  otherDecks: Af03ChaosDeck[];
   open: boolean;
   onToggle: () => void;
   onClose: () => void;
   onRename: () => void;
-  onMoveTo: (thekeId: string) => void;
+  onMoveTo: (targetDeckId: string) => void;
   onDuplicate: () => void;
   onMarkLater: () => void;
   onMoveUp: () => void;
@@ -607,7 +607,7 @@ function DumpMenu({
     const onDoc = (e: MouseEvent) => {
       const t = e.target as Node;
       if (btnRef.current?.contains(t)) return;
-      const menu = document.getElementById(`dump-menu-${item.id}`);
+      const menu = document.getElementById(`fragment-menu-${item.id}`);
       if (menu?.contains(t)) return;
       onClose();
     };
@@ -625,7 +625,7 @@ function DumpMenu({
       <button
         ref={btnRef}
         type="button"
-        aria-label={`Menu for dump ${item.title}`}
+        aria-label={`Menu for fragment ${item.title}`}
         aria-expanded={open}
         className="flex h-full min-h-11 min-w-11 items-center justify-center px-3 text-zinc-400 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
         onClick={onToggle}
@@ -634,7 +634,7 @@ function DumpMenu({
       </button>
       {open && pos ? (
         <div
-          id={`dump-menu-${item.id}`}
+          id={`fragment-menu-${item.id}`}
           role="menu"
           style={{
             position: "fixed",
@@ -665,14 +665,14 @@ function DumpMenu({
             className="block w-full px-3 py-2.5 text-left text-sm text-zinc-200 hover:bg-zinc-800"
             onClick={onRename}
           >
-            Rename dump
+            Rename fragment
           </button>
-          {otherThekes.length > 0 ? (
+          {otherDecks.length > 0 ? (
             <div className="border-t border-zinc-800 py-1">
               <p className="px-3 py-1 text-[10px] uppercase tracking-wide text-zinc-600">
-                Move to Theke
+                Move to Chaos Deck
               </p>
-              {otherThekes.map((t) => (
+              {otherDecks.map((t) => (
                 <button
                   key={t.id}
                   type="button"
@@ -686,7 +686,7 @@ function DumpMenu({
             </div>
           ) : (
             <p className="border-t border-zinc-800 px-3 py-2 text-[11px] text-zinc-600">
-              No other Theke to move into
+              No other Chaos Deck to move into
             </p>
           )}
           <button

@@ -38,7 +38,7 @@ function formatTime(iso: string): string {
 
 /**
  * AF03 §8 — Basic content editor (not Alexandria).
- * Ingest-first: plain body dump, no decorative structure toolbar.
+ * Ingest-first: plain fragment body, no decorative structure toolbar.
  */
 export function ContentEditor({ deckId, itemId }: Props) {
   const [state, setState] = useState<Af03RepoState | null>(null);

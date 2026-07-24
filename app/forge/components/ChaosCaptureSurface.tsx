@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Chaos capture surface — raw ingest, Word-like dump, not design.
+ * Chaos capture surface — raw ingest into a Chaos Deck fragment.
  * Typography: Lexend 18px / ~1.55 lh (fluency + screen reading research).
  * No headings toolbar, no decorative chrome.
  */
@@ -48,7 +48,7 @@ export function ChaosCaptureSurface({
       if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
         e.preventDefault();
         onSave({
-          title: title.trim() || "Untitled note",
+          title: title.trim() || "Untitled fragment",
           body,
         });
       }
@@ -68,7 +68,7 @@ export function ChaosCaptureSurface({
       <header className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-800 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="min-w-0">
           <p className="truncate text-[11px] uppercase tracking-wide text-zinc-500">
-            Chaos · Θήκη · dump
+            Chaos Deck · Fragment
           </p>
           <p className="truncate text-sm text-zinc-300">{deckTitle}</p>
         </div>
@@ -84,13 +84,13 @@ export function ChaosCaptureSurface({
             type="button"
             onClick={() =>
               onSave({
-                title: title.trim() || "Untitled note",
+                title: title.trim() || "Untitled fragment",
                 body,
               })
             }
             className="min-h-11 rounded-lg border border-zinc-600 bg-zinc-100 px-4 text-sm font-semibold text-zinc-900"
           >
-            Save
+            Save Fragment
           </button>
         </div>
       </header>
@@ -107,8 +107,8 @@ export function ChaosCaptureSurface({
           ref={bodyRef}
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Dump here — two lines or a whole chapter. No classification."
-          aria-label="Capture body"
+          placeholder="Write a fragment — two lines or a whole chapter. No classification."
+          aria-label="Fragment body"
           className="min-h-0 w-full flex-1 resize-none border-0 bg-transparent text-[18px] leading-[1.55] text-zinc-100 outline-none placeholder:text-zinc-600"
         />
         <p className="shrink-0 text-[11px] text-zinc-600">

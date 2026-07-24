@@ -494,7 +494,7 @@ export function removeContent(state: Af03RepoState, id: string): Af03RepoState {
   return next;
 }
 
-/** Move a dump (content item) into another Theke (deck). Reorders to end of target. */
+/** Move a fragment (content item) into another Chaos Deck. Reorders to end of target. */
 export function moveContentToDeck(
   state: Af03RepoState,
   itemId: string,
