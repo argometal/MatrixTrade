@@ -50,11 +50,13 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 
 | Route | Status |
 |-------|--------|
-| `/forge` | **Home MapTree of Realms** (CHANGE 24-0F) — folders as Realms; tap → Realm graph |
-| `/forge/realm/[realmId]` | Realm graph — Chaos Deck nodes (React Flow); `unassigned` for root decks |
+| `/forge` | Home — operational summary/dashboard (not Treemap) |
+| `/forge/argus` | **Argus Realm Treemap** (24-17) — `?filter=focus\|active\|archive` |
+| `/forge/argus/units` | Unit engine graph prototype (Fragments as nodes) |
+| `/forge/realm/[realmId]` | Molecular graph — Chaos Deck bodies; `unassigned` for root decks |
 | `/forge/library` | Library — AF repository browse / MTA library links |
-| `/forge/active` | Active — AF active repo / MTA active deep-links |
-| `/forge/archive` | Archive — AF archive repo / MTA archive deep-links |
+| `/forge/active` | Active **list** — administrative folder/deck management (secondary) |
+| `/forge/archive` | Archive **list** — administrative (secondary) |
 | `/forge/vault` | Vault shell + **Vault \| Alexandria** selector (Alexandria frozen disclosure) |
 | `/forge/deck/[deckId]` | Chaos Deck internal view |
 | `/forge/deck/[deckId]/item/[itemId]/view` | Content Viewer |

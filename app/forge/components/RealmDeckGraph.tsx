@@ -1,12 +1,13 @@
 "use client";
 
 /**
- * CHANGE 24-0F — Realm graph: Chaos Deck nodes (React Flow).
+ * CHANGE 24-17 — Realm molecular graph: Chaos Deck bodies (React Flow).
  */
 
 import {
   Background,
   Controls,
+  MarkerType,
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
@@ -28,6 +29,8 @@ import {
   getRealmTitle,
   isUnassignedRealm,
   listDecksForRealm,
+  molecularDefaultPosition,
+  structuralAffinitiesForRealm,
   type DeckNodeMetrics,
 } from "@/lib/argusforge/af03-realm-map";
 import {
@@ -38,11 +41,11 @@ import {
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { readArgusGraph } from "@/lib/argusforge/argus-graph-store";
 import type { ArgusGraphState } from "@/lib/argusforge/argus-graph-types";
+import { readMolecularOverlay } from "@/lib/argusforge/af03-realm-molecular";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
 import { RealmDeckNode, type RealmDeckNodeData } from "./RealmDeckNode";
 
 const nodeTypes = { realmDeck: RealmDeckNode };
-
 const LAYOUT_KEY = "argusforge-realm-deck-layout-v1";
 
 type LayoutMap = Record<string, Record<string, { x: number; y: number }>>;
@@ -66,15 +69,30 @@ function writeLayout(map: LayoutMap) {
   }
 }
 
-function defaultPosition(
-  index: number,
-  clusterIndex: number,
-  withinCluster: number
-): { x: number; y: number } {
-  return {
-    x: 40 + clusterIndex * 280 + (withinCluster % 2) * 40,
-    y: 40 + withinCluster * 130 + (index % 3) * 8,
-  };
+function MolecularLegend({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-zinc-950/90 text-[10px] text-zinc-400">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex min-h-9 w-full items-center justify-between px-2.5 font-medium text-zinc-300"
+        aria-expanded={open}
+      >
+        Legend
+        <span>{open ? "▾" : "▸"}</span>
+      </button>
+      {open ? (
+        <ul className="space-y-1 border-t border-zinc-800 px-2.5 py-2">
+          <li>Size = importance / mass</li>
+          <li>Color = recent use</li>
+          <li>Pulse = current activity</li>
+          <li>Solid link = confirmed relation</li>
+          <li>Dashed link = suggested relation</li>
+          <li>Orbit / halo = detected affinity</li>
+        </ul>
+      ) : null}
+    </div>
+  );
 }
 
 function RealmGraphCanvas({ realmId }: { realmId: string }) {
@@ -83,6 +101,7 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
   const [graph, setGraph] = useState<ArgusGraphState | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [legendOpen, setLegendOpen] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [ready, setReady] = useState(false);
@@ -100,11 +119,17 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
     repo = recordRealmOpen(repo, realmId);
     setState(repo);
     setGraph(readArgusGraph());
+    readMolecularOverlay();
     setReady(true);
   }, [realmId]);
 
   const decks = useMemo(
     () => (state ? listDecksForRealm(state, realmId) : []),
+    [state, realmId]
+  );
+
+  const affinities = useMemo(
+    () => (state ? structuralAffinitiesForRealm(state, realmId) : []),
     [state, realmId]
   );
 
@@ -116,10 +141,10 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
     const map = new Map<string, DeckNodeMetrics>();
     if (!state) return map;
     for (const d of decks) {
-      map.set(d.id, deckMetrics(d, state, graph));
+      map.set(d.id, deckMetrics(d, state, graph, affinities));
     }
     return map;
-  }, [state, decks, graph]);
+  }, [state, decks, graph, affinities]);
 
   const links = useMemo(
     () => (state ? deckLinksForRealm(state, realmId, graph) : []),
@@ -141,13 +166,13 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
     }
     const clusterIds = [...clusters.keys()];
     const nextNodes: Node<RealmDeckNodeData>[] = [];
-    let globalIndex = 0;
     clusterIds.forEach((cid, clusterIndex) => {
       const group = clusters.get(cid)!;
       group.forEach((deck, within) => {
         const { label } = deckClusterKey(state, realmId, deck);
         const metrics = metricsByDeck.get(deck.id)!;
-        const pos = layout[deck.id] ?? defaultPosition(globalIndex, clusterIndex, within);
+        const pos =
+          layout[deck.id] ?? molecularDefaultPosition(clusterIndex, within, metrics.affinityCount);
         nextNodes.push({
           id: deck.id,
           type: "realmDeck",
@@ -157,25 +182,40 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
             metrics,
             selected: selectedId === deck.id,
             clusterLabel: label,
+            hasAffinityHalo: metrics.affinityCount > 0,
             reduceMotion,
           },
           selected: selectedId === deck.id,
         });
-        globalIndex += 1;
       });
     });
     setNodes(nextNodes);
     setEdges(
-      links.map((l) => ({
-        id: l.id,
-        source: l.sourceDeckId,
-        target: l.targetDeckId,
-        label: l.confirmed ? l.type : `${l.type}?`,
-        style: { stroke: l.confirmed ? "#a1a1aa" : "#52525b" },
-        labelStyle: { fill: "#a1a1aa", fontSize: 10 },
-        labelBgStyle: { fill: "#09090b" },
-        labelBgPadding: [4, 2] as [number, number],
-      }))
+      links.map((l) => {
+        const confirmed = l.confirmationState === "confirmed";
+        const width = 1 + l.relationStrength * 0.55;
+        return {
+          id: l.id,
+          source: l.sourceDeckId,
+          target: l.targetDeckId,
+          label: confirmed ? l.type : `${l.type}?`,
+          animated: false,
+          style: {
+            stroke: confirmed ? "#a1a1aa" : "#71717a",
+            strokeWidth: width,
+            strokeDasharray: confirmed ? undefined : "5 4",
+          },
+          labelStyle: { fill: "#a1a1aa", fontSize: 10 },
+          labelBgStyle: { fill: "#09090b" },
+          labelBgPadding: [4, 2] as [number, number],
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 16,
+            height: 16,
+            color: confirmed ? "#a1a1aa" : "#71717a",
+          },
+        };
+      })
     );
   }, [
     ready,
@@ -200,8 +240,7 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
   );
 
   const onSelectionChange = useCallback((params: OnSelectionChangeParams) => {
-    const id = params.nodes[0]?.id ?? null;
-    setSelectedId(id);
+    setSelectedId(params.nodes[0]?.id ?? null);
   }, []);
 
   if (!ready || !state) {
@@ -214,8 +253,8 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
         <p role="alert" className="text-sm text-rose-300">
           Realm not found.
         </p>
-        <Link href="/forge" className="text-sm text-zinc-300 underline">
-          Back to Home MapTree
+        <Link href="/forge/argus" className="text-sm text-zinc-300 underline">
+          Back to Argus Treemap
         </Link>
       </div>
     );
@@ -228,18 +267,18 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
       <header className="flex shrink-0 flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-500/90">
-            Realm
+            Argus · Molecular
           </p>
           <h2 className="truncate text-lg font-semibold text-zinc-100">{title}</h2>
           <p className="text-xs text-zinc-500">
-            Chaos Deck graph — nodes are decks, not fragments. Drag to arrange.
+            Chaos Deck bodies — Fragments stay inside. Halo ≠ confirmed link.
           </p>
         </div>
         <Link
-          href="/forge"
+          href="/forge/argus"
           className="min-h-11 rounded-lg border border-zinc-800 px-3 py-2 text-sm text-zinc-300 hover:border-zinc-600"
         >
-          ← MapTree
+          ← Treemap
         </Link>
       </header>
 
@@ -249,8 +288,11 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
           <p className="text-xs text-zinc-600">Use + to create a Chaos Deck, then return here.</p>
         </div>
       ) : (
-        <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_16rem]">
-          <div className="h-[min(70dvh,560px)] min-h-[320px] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 lg:h-auto lg:min-h-[420px]">
+        <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_15.5rem]">
+          <div className="relative h-[min(70dvh,560px)] min-h-[320px] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 lg:h-auto lg:min-h-[420px]">
+            <div className="absolute left-2 top-2 z-10 w-40">
+              <MolecularLegend open={legendOpen} onToggle={() => setLegendOpen((v) => !v)} />
+            </div>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -279,9 +321,7 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
                 <div>
                   <p className="text-[10px] uppercase tracking-wide text-zinc-500">Chaos Deck</p>
                   <p className="font-semibold text-zinc-100">{selectedDeck.title}</p>
-                  <p className="mt-1 text-xs text-zinc-500">
-                    Source Realm: {title}
-                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">Realm: {title}</p>
                 </div>
                 <dl className="grid grid-cols-2 gap-2 text-xs">
                   <div>
@@ -289,22 +329,39 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
                     <dd className="font-medium text-zinc-200">{selectedMetrics.fragmentCount}</dd>
                   </div>
                   <div>
+                    <dt className="text-zinc-600">Mass</dt>
+                    <dd className="font-medium text-zinc-200">
+                      {selectedMetrics.massScore.toFixed(2)}
+                    </dd>
+                  </div>
+                  <div>
                     <dt className="text-zinc-600">Relations</dt>
                     <dd className="font-medium text-zinc-200">{selectedMetrics.relationCount}</dd>
                   </div>
                   <div>
-                    <dt className="text-zinc-600">Opens</dt>
-                    <dd className="font-medium text-zinc-200">{selectedMetrics.openCount}</dd>
+                    <dt className="text-zinc-600">Affinity</dt>
+                    <dd className="font-medium text-zinc-200">{selectedMetrics.affinityCount}</dd>
                   </div>
                   <div>
                     <dt className="text-zinc-600">Activity</dt>
+                    <dd className="font-medium capitalize text-zinc-200">
+                      {selectedMetrics.activityLevel}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-zinc-600">Last used</dt>
                     <dd className="font-medium text-zinc-200">
-                      {selectedMetrics.lastActivityAt
-                        ? formatRelativeAgo(selectedMetrics.lastActivityAt)
+                      {selectedMetrics.lastUsedAt
+                        ? formatRelativeAgo(selectedMetrics.lastUsedAt)
                         : "—"}
                     </dd>
                   </div>
                 </dl>
+                {selectedMetrics.affinityReason ? (
+                  <p className="text-[10px] leading-relaxed text-zinc-500">
+                    Affinity: {selectedMetrics.affinityReason}
+                  </p>
+                ) : null}
                 <button
                   type="button"
                   className="min-h-11 w-full rounded-lg border border-zinc-600 bg-zinc-100 text-sm font-semibold text-zinc-900"
@@ -315,8 +372,7 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
               </div>
             ) : (
               <p className="text-xs text-zinc-500">
-                Select a Chaos Deck node for details. Size ≈ mass; color ≈ freshness
-                (provisional).
+                Select a Chaos Deck. Size = mass; color = use; halo = affinity placeholder.
               </p>
             )}
           </aside>

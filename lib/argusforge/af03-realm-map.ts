@@ -1,6 +1,7 @@
 /**
- * CHANGE 24-0F — Realm MapTree metrics + treemap layout + deck-graph helpers.
- * Provisional formulas only — not final recurrence / MTA scoring.
+ * CHANGE 24-17 — Argus Realm Treemap + molecular graph helpers.
+ * Provisional formulas only — not final MTA / recurrence scoring.
+ * Replaces 24-0F Home placement and 24-12 assumptions.
  */
 
 import {
@@ -11,27 +12,31 @@ import {
   type OperationalView,
 } from "./af03-repo-types";
 import type { ArgusGraphState } from "./argus-graph-types";
+import type { ActivityLevel, MolecularAffinity } from "./af03-realm-molecular";
 
 const DAY_MS = 86_400_000;
+
+/** Focus | Active | Archive — filters over the same Realm set (no copies). */
+export type RealmLifecycleFilter = "focus" | "active" | "archive";
 
 export type RealmMetrics = {
   fragmentCount: number;
   deckCount: number;
   relationCount: number;
   recurrenceCount: number;
-  /** Raw mass before visual normalization */
+  /** Provisional mass before visual normalization */
   rawWeight: number;
-  /** sqrt-normalized visual weight (min 1) */
+  /** log/sqrt visual weight */
   visualWeight: number;
-  /** 0..1 freshness — recent activity → stronger */
+  /** 0..1 freshness — color channel only */
   freshness: number;
   lastActivityAt: string | null;
+  massScore: number;
 };
 
 export type RealmTreeNode = {
   id: string;
   title: string;
-  /** true for provisional Unassigned */
   synthetic: boolean;
   view: OperationalView;
   folder: Af03Folder | null;
@@ -56,51 +61,68 @@ export type DeckGraphLink = {
   targetDeckId: string;
   type: string;
   confirmed: boolean;
+  /** Thicker edge = stronger / more recurrent (provisional). */
+  relationStrength: number;
+  confirmationState: "confirmed" | "suggested";
 };
 
 export type DeckNodeMetrics = {
   fragmentCount: number;
   relationCount: number;
   recurrenceCount: number;
+  confirmedRecurrenceCount: number;
+  inboundReferenceCount: number;
+  confirmedEvidenceCount: number;
+  /** Provisional importance/mass — not raw Fragment count. */
+  massScore: number;
   rawWeight: number;
   visualWeight: number;
   freshness: number;
   lastActivityAt: string | null;
+  lastUsedAt: string | null;
   openCount: number;
+  activityLevel: ActivityLevel;
+  affinityIds: string[];
+  affinityScore: number | null;
+  affinityReason: string | null;
+  affinityCount: number;
+  /** Future MTA placeholders (safe null defaults). */
+  recurrenceScore: number | null;
+  decayScore: number | null;
+  suggestedClusterId: string | null;
+  suggestionState: "none" | "suggested" | "confirmed" | "rejected";
 };
 
-/** Provisional size: fragments + relations + recurrence; floor 1. */
-export function deckRawWeight(
-  deck: Af03ChaosDeck,
-  state: Af03RepoState,
-  graph: ArgusGraphState | null
-): number {
-  const fragments = state.items.filter((i) => i.deckId === deck.id).length;
-  let relations = 0;
-  let recurrence = 0;
-  if (graph) {
-    const unitIds = new Set(
-      graph.units.filter((u) => u.chaosDeckId === deck.id).map((u) => u.id)
-    );
-    relations = graph.relations.filter(
-      (r) => unitIds.has(r.sourceUnitId) || unitIds.has(r.targetUnitId)
-    ).length;
-    recurrence = graph.recurrence.filter(
-      (c) => c.status === "open" && c.unitIds.some((id) => unitIds.has(id))
-    ).length;
-  }
-  // Provisional — not final recurrence scoring (24-0F).
-  return Math.max(1, fragments + relations + recurrence);
+/**
+ * CHANGE 24-17 provisional mass — importance, not raw dump volume.
+ * Low weight on Fragment count; higher on recurrence, relations, inbound refs, confirmed evidence.
+ * log1p so 500 low-value fragments cannot dominate.
+ */
+export function computeMassScore(input: {
+  fragmentCount: number;
+  relationCount: number;
+  openRecurrence: number;
+  confirmedRecurrence: number;
+  inboundReferences: number;
+  confirmedEvidence: number;
+}): number {
+  const fragmentTerm = Math.log1p(input.fragmentCount) * 0.35;
+  const recurrenceTerm = input.confirmedRecurrence * 2.2 + input.openRecurrence * 1.0;
+  const relationTerm = input.relationCount * 1.5;
+  const inboundTerm = input.inboundReferences * 1.8;
+  const evidenceTerm = input.confirmedEvidence * 0.8;
+  const raw =
+    fragmentTerm + recurrenceTerm + relationTerm + inboundTerm + evidenceTerm;
+  return Math.max(1, Math.log1p(raw) * 3.2);
 }
 
-/** Cap dominance: sqrt so one junk deck cannot own the plane. */
 export function visualWeightFromRaw(raw: number): number {
   return Math.max(1, Math.sqrt(Math.max(0, raw)));
 }
 
 /**
- * Provisional freshness 0..1 from ISO timestamps (edit/open/capture proxies).
- * Half-life ~14 days. Not final color semantics.
+ * Freshness 0..1 — color = recent use only (not type/importance).
+ * Half-life ~14 days. Provisional.
  */
 export function freshnessFromTimestamps(isos: Array<string | null | undefined>): number {
   const times = isos
@@ -110,51 +132,113 @@ export function freshnessFromTimestamps(isos: Array<string | null | undefined>):
   if (times.length === 0) return 0.15;
   const latest = Math.max(...times);
   const ageDays = Math.max(0, (Date.now() - latest) / DAY_MS);
-  const score = Math.exp(-ageDays / 14);
-  return Math.min(1, Math.max(0.12, score));
+  return Math.min(1, Math.max(0.12, Math.exp(-ageDays / 14)));
+}
+
+export function activityLevelFromFreshness(freshness: number): ActivityLevel {
+  if (freshness >= 0.72) return "active";
+  if (freshness >= 0.45) return "breathing";
+  return "still";
+}
+
+function unitIdsForDeck(graph: ArgusGraphState, deckId: string): Set<string> {
+  return new Set(graph.units.filter((u) => u.chaosDeckId === deckId).map((u) => u.id));
 }
 
 export function deckMetrics(
   deck: Af03ChaosDeck,
   state: Af03RepoState,
-  graph: ArgusGraphState | null
+  graph: ArgusGraphState | null,
+  affinities: MolecularAffinity[] = []
 ): DeckNodeMetrics {
   const fragmentCount = state.items.filter((i) => i.deckId === deck.id).length;
-  const rawWeight = deckRawWeight(deck, state, graph);
   let relationCount = 0;
-  let recurrenceCount = 0;
+  let openRecurrence = 0;
+  let confirmedRecurrence = 0;
+  let inboundReferences = 0;
+  let confirmedEvidence = 0;
+
   if (graph) {
-    const unitIds = new Set(
-      graph.units.filter((u) => u.chaosDeckId === deck.id).map((u) => u.id)
-    );
+    const unitIds = unitIdsForDeck(graph, deck.id);
     relationCount = graph.relations.filter(
       (r) => unitIds.has(r.sourceUnitId) || unitIds.has(r.targetUnitId)
     ).length;
-    recurrenceCount = graph.recurrence.filter(
-      (c) => c.status === "open" && c.unitIds.some((id) => unitIds.has(id))
+    for (const c of graph.recurrence) {
+      if (!c.unitIds.some((id) => unitIds.has(id))) continue;
+      if (c.status === "confirmed") confirmedRecurrence += 1;
+      else if (c.status === "open") openRecurrence += 1;
+    }
+    for (const r of graph.relations) {
+      const targetDeck = graph.units.find((u) => u.id === r.targetUnitId)?.chaosDeckId;
+      const sourceDeck = graph.units.find((u) => u.id === r.sourceUnitId)?.chaosDeckId;
+      if (targetDeck === deck.id && sourceDeck && sourceDeck !== deck.id) {
+        inboundReferences += 1;
+      }
+    }
+    confirmedEvidence = graph.units.filter(
+      (u) => u.chaosDeckId === deck.id && u.confirmed
     ).length;
   }
+
+  const massScore = computeMassScore({
+    fragmentCount,
+    relationCount,
+    openRecurrence,
+    confirmedRecurrence,
+    inboundReferences,
+    confirmedEvidence,
+  });
+
   const itemLatest = state.items
     .filter((i) => i.deckId === deck.id)
     .map((i) => i.updatedAt);
-  const lastActivityAt =
+  const lastUsedAt =
     [deck.lastOpenedAt, deck.updatedAt, ...itemLatest]
       .filter((s): s is string => !!s)
       .sort()
       .at(-1) ?? null;
+  const freshness = freshnessFromTimestamps([
+    deck.lastOpenedAt,
+    deck.updatedAt,
+    ...itemLatest,
+  ]);
+  const myAffinities = affinities.filter(
+    (a) =>
+      a.confirmationState !== "rejected" &&
+      a.deckIds.includes(deck.id)
+  );
+  const primary = myAffinities[0] ?? null;
+
   return {
     fragmentCount,
     relationCount,
-    recurrenceCount,
-    rawWeight,
-    visualWeight: visualWeightFromRaw(rawWeight),
-    freshness: freshnessFromTimestamps([
-      deck.lastOpenedAt,
-      deck.updatedAt,
-      ...itemLatest,
-    ]),
-    lastActivityAt,
+    recurrenceCount: openRecurrence + confirmedRecurrence,
+    confirmedRecurrenceCount: confirmedRecurrence,
+    inboundReferenceCount: inboundReferences,
+    confirmedEvidenceCount: confirmedEvidence,
+    massScore,
+    rawWeight: massScore,
+    visualWeight: visualWeightFromRaw(massScore),
+    freshness,
+    lastActivityAt: lastUsedAt,
+    lastUsedAt,
     openCount: deck.openCount ?? 0,
+    activityLevel: activityLevelFromFreshness(freshness),
+    affinityIds: myAffinities.map((a) => a.id),
+    affinityScore: primary?.affinityScore ?? null,
+    affinityReason: primary?.affinityReason ?? null,
+    affinityCount: myAffinities.length,
+    recurrenceScore: null,
+    decayScore: null,
+    suggestedClusterId: primary?.id ?? null,
+    suggestionState:
+      primary?.confirmationState === "confirmed"
+        ? "confirmed"
+        : primary?.confirmationState === "rejected"
+          ? "rejected"
+          : primary
+            ? "suggested"
+            : "none",
   };
 }
 
@@ -181,6 +265,44 @@ function decksInFolderSubtree(
   return state.decks.filter((d) => d.view === view && d.folderId && ids.has(d.folderId));
 }
 
+function aggregateRealmMetrics(
+  decks: Af03ChaosDeck[],
+  state: Af03RepoState,
+  graph: ArgusGraphState | null,
+  extraTimestamps: Array<string | null | undefined>
+): RealmMetrics {
+  let fragmentCount = 0;
+  let relationCount = 0;
+  let recurrenceCount = 0;
+  let massSum = 0;
+  const activity: Array<string | null | undefined> = [...extraTimestamps];
+  for (const deck of decks) {
+    const m = deckMetrics(deck, state, graph);
+    fragmentCount += m.fragmentCount;
+    relationCount += m.relationCount;
+    recurrenceCount += m.recurrenceCount;
+    massSum += m.massScore;
+    activity.push(m.lastActivityAt);
+  }
+  const massScore = Math.max(1, massSum);
+  const lastActivityAt =
+    activity
+      .filter((s): s is string => !!s)
+      .sort()
+      .at(-1) ?? null;
+  return {
+    fragmentCount,
+    deckCount: decks.length,
+    relationCount,
+    recurrenceCount,
+    rawWeight: massScore,
+    visualWeight: visualWeightFromRaw(massScore),
+    freshness: freshnessFromTimestamps(activity),
+    lastActivityAt,
+    massScore,
+  };
+}
+
 function realmMetricsForFolder(
   state: Af03RepoState,
   folder: Af03Folder,
@@ -193,42 +315,6 @@ function realmMetricsForFolder(
     ...decks.map((d) => d.lastOpenedAt),
     ...decks.map((d) => d.updatedAt),
   ]);
-}
-
-function aggregateRealmMetrics(
-  decks: Af03ChaosDeck[],
-  state: Af03RepoState,
-  graph: ArgusGraphState | null,
-  extraTimestamps: Array<string | null | undefined>
-): RealmMetrics {
-  let fragmentCount = 0;
-  let relationCount = 0;
-  let recurrenceCount = 0;
-  const activity: Array<string | null | undefined> = [...extraTimestamps];
-  for (const deck of decks) {
-    const m = deckMetrics(deck, state, graph);
-    fragmentCount += m.fragmentCount;
-    relationCount += m.relationCount;
-    recurrenceCount += m.recurrenceCount;
-    activity.push(m.lastActivityAt);
-  }
-  // Provisional realm mass — fragments + relations + recurrence.
-  const rawWeight = Math.max(1, fragmentCount + relationCount + recurrenceCount);
-  const lastActivityAt =
-    activity
-      .filter((s): s is string => !!s)
-      .sort()
-      .at(-1) ?? null;
-  return {
-    fragmentCount,
-    deckCount: decks.length,
-    relationCount,
-    recurrenceCount,
-    rawWeight,
-    visualWeight: visualWeightFromRaw(rawWeight),
-    freshness: freshnessFromTimestamps(activity),
-    lastActivityAt,
-  };
 }
 
 function buildChildTree(
@@ -252,34 +338,37 @@ function buildChildTree(
 }
 
 /**
- * Home MapTree roots: top-level folders as Realms + Unassigned for root decks.
- * Includes active and archive roots (filter hooks later for Focus/Active/Archive).
+ * Build Realm forest for one operational slice (active | archive).
+ * Focus filter currently shows active Realms (pending Focus intelligence).
  */
-export function buildHomeRealmForest(
+export function buildRealmForest(
   state: Af03RepoState,
-  graph: ArgusGraphState | null
+  graph: ArgusGraphState | null,
+  filter: RealmLifecycleFilter
 ): RealmTreeNode[] {
+  const view: OperationalView = filter === "archive" ? "archive" : "active";
   const roots: RealmTreeNode[] = [];
 
-  for (const view of ["active", "archive"] as OperationalView[]) {
-    const top = state.folders
-      .filter((f) => f.view === view && f.parentId === null)
-      .sort((a, b) => a.title.localeCompare(b.title));
-    for (const folder of top) {
-      roots.push({
-        id: folder.id,
-        title: folder.title,
-        synthetic: false,
-        view: folder.view,
-        folder,
-        metrics: realmMetricsForFolder(state, folder, graph),
-        children: buildChildTree(state, folder.id, view, graph),
-      });
-    }
+  const top = state.folders
+    .filter((f) => f.view === view && f.parentId === null)
+    .sort((a, b) => a.title.localeCompare(b.title));
+
+  for (const folder of top) {
+    roots.push({
+      id: folder.id,
+      title: folder.title,
+      synthetic: false,
+      view: folder.view,
+      folder,
+      metrics: realmMetricsForFolder(state, folder, graph),
+      children: buildChildTree(state, folder.id, view, graph),
+    });
   }
 
-  const unassignedDecks = state.decks.filter((d) => d.folderId === null);
-  if (unassignedDecks.length > 0 || roots.length === 0) {
+  const unassignedDecks = state.decks.filter(
+    (d) => d.folderId === null && d.view === view
+  );
+  if (unassignedDecks.length > 0 || (roots.length === 0 && filter !== "focus")) {
     const metrics = aggregateRealmMetrics(unassignedDecks, state, graph, [
       ...unassignedDecks.map((d) => d.lastOpenedAt),
       ...unassignedDecks.map((d) => d.updatedAt),
@@ -288,17 +377,26 @@ export function buildHomeRealmForest(
       id: UNASSIGNED_REALM_ID,
       title: "Unassigned",
       synthetic: true,
-      view: "active",
+      view,
       folder: null,
       metrics,
       children: [],
     });
   }
 
+  // Focus: same Active Realms for now (pending Focus layer) — no duplication.
   return roots;
 }
 
-/** Nested treemap via alternating slice (simple, stable). */
+/** @deprecated use buildRealmForest — kept for transitional imports. */
+export function buildHomeRealmForest(
+  state: Af03RepoState,
+  graph: ArgusGraphState | null
+): RealmTreeNode[] {
+  return buildRealmForest(state, graph, "active");
+}
+
+/** Nested treemap via alternating slice. */
 export function layoutTreemap(
   nodes: RealmTreeNode[],
   x: number,
@@ -344,7 +442,6 @@ export function layoutTreemap(
 
     if (n.children.length > 0) {
       const header = Math.min(30, Math.max(20, ih * 0.16));
-      // Header strip = this Realm (clickable); children fill remainder.
       out.push({
         id: n.id,
         title: n.title,
@@ -383,14 +480,12 @@ export function layoutTreemap(
   return out;
 }
 
-/** Freshness → CSS-ish color (provisional palette). */
 export function freshnessToFill(freshness: number, archived: boolean): string {
   const t = Math.min(1, Math.max(0, freshness));
   if (archived) {
     const g = Math.round(30 + t * 40);
     return `rgb(${g}, ${g}, ${Math.round(g * 1.05)})`;
   }
-  // Muted zinc → warm amber intensity
   const r = Math.round(24 + t * 160);
   const g = Math.round(24 + t * 90);
   const b = Math.round(28 + t * 20);
@@ -411,7 +506,6 @@ export function isUnassignedRealm(realmId: string): boolean {
   return realmId === UNASSIGNED_REALM_ID;
 }
 
-/** Decks shown in a Realm graph (direct + nested under folder; Unassigned = root). */
 export function listDecksForRealm(
   state: Af03RepoState,
   realmId: string
@@ -428,7 +522,6 @@ export function listDecksForRealm(
   );
 }
 
-/** Cluster key for sub-Realm grouping (immediate folder under opened realm, or self). */
 export function deckClusterKey(
   state: Af03RepoState,
   realmId: string,
@@ -440,7 +533,6 @@ export function deckClusterKey(
   if (deck.folderId === realmId) {
     return { clusterId: "direct", label: "In this Realm" };
   }
-  // Walk up to child of opened realm
   let cur = state.folders.find((f) => f.id === deck.folderId);
   let childOfRealm: Af03Folder | undefined;
   while (cur) {
@@ -461,7 +553,7 @@ export function deckClusterKey(
   };
 }
 
-/** Aggregate unit-level Argus relations into Chaos Deck ↔ Chaos Deck links. */
+/** Explicit Chaos Deck ↔ Chaos Deck links from Argus unit relations. */
 export function deckLinksForRealm(
   state: Af03RepoState,
   realmId: string,
@@ -474,24 +566,105 @@ export function deckLinksForRealm(
       .filter((u) => u.chaosDeckId && decks.has(u.chaosDeckId))
       .map((u) => [u.id, u.chaosDeckId!] as const)
   );
-  const seen = new Set<string>();
-  const links: DeckGraphLink[] = [];
+
+  type Acc = {
+    id: string;
+    sourceDeckId: string;
+    targetDeckId: string;
+    type: string;
+    confirmedCount: number;
+    total: number;
+  };
+  const acc = new Map<string, Acc>();
+
   for (const r of graph.relations) {
     const a = unitToDeck.get(r.sourceUnitId);
     const b = unitToDeck.get(r.targetUnitId);
     if (!a || !b || a === b) continue;
     const key = `${a}->${b}:${r.type}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    links.push({
-      id: `decklink_${r.id}`,
+    const cur = acc.get(key) ?? {
+      id: `decklink_${a}_${b}_${r.type}`,
       sourceDeckId: a,
       targetDeckId: b,
       type: r.type,
-      confirmed: r.confirmed,
+      confirmedCount: 0,
+      total: 0,
+    };
+    cur.total += 1;
+    if (r.confirmed) cur.confirmedCount += 1;
+    acc.set(key, cur);
+  }
+
+  return [...acc.values()].map((l) => {
+    const confirmed = l.confirmedCount > 0 && l.confirmedCount === l.total;
+    return {
+      id: l.id,
+      sourceDeckId: l.sourceDeckId,
+      targetDeckId: l.targetDeckId,
+      type: l.type,
+      confirmed,
+      relationStrength: Math.min(8, l.total),
+      confirmationState: confirmed ? ("confirmed" as const) : ("suggested" as const),
+    };
+  });
+}
+
+/**
+ * Structural affinity placeholders from nested sub-Realms (not formal relations).
+ * Does not invent MTA scores. Does not write Argus edges.
+ */
+export function structuralAffinitiesForRealm(
+  state: Af03RepoState,
+  realmId: string
+): MolecularAffinity[] {
+  if (isUnassignedRealm(realmId)) return [];
+  const decks = listDecksForRealm(state, realmId);
+  const byCluster = new Map<string, string[]>();
+  const labels = new Map<string, string>();
+  for (const d of decks) {
+    const { clusterId, label } = deckClusterKey(state, realmId, d);
+    if (clusterId === "direct") continue;
+    const list = byCluster.get(clusterId) ?? [];
+    list.push(d.id);
+    byCluster.set(clusterId, list);
+    labels.set(clusterId, label);
+  }
+  const t = new Date().toISOString();
+  const out: MolecularAffinity[] = [];
+  for (const [cid, ids] of byCluster) {
+    if (ids.length < 2) continue;
+    out.push({
+      id: `aff_struct_${realmId}_${cid}`,
+      realmId,
+      deckIds: ids,
+      affinityScore: null,
+      affinityReason: `Nested under sub-Realm “${labels.get(cid) ?? cid}” — affinity placeholder, not a confirmed relation`,
+      confirmationState: "provisional",
+      source: "structural",
+      createdAt: t,
+      recurrenceScore: null,
+      decayScore: null,
+      suggestedClusterId: cid,
+      suggestionState: "suggested",
     });
   }
-  return links;
+  return out;
+}
+
+/** Deterministic proximity layout: clusters as local molecules. */
+export function molecularDefaultPosition(
+  clusterIndex: number,
+  withinCluster: number,
+  affinityMateOffset = 0
+): { x: number; y: number } {
+  const cx = 80 + clusterIndex * 320;
+  const cy = 80 + Math.floor(withinCluster / 3) * 200;
+  const angle = (withinCluster + affinityMateOffset) * 1.1;
+  const radius = 36 + withinCluster * 8;
+  return {
+    x: cx + Math.cos(angle) * radius,
+    y: cy + withinCluster * 110 + Math.sin(angle) * (radius * 0.35),
+  };
 }
 
 export function getRealmTitle(state: Af03RepoState, realmId: string): string {

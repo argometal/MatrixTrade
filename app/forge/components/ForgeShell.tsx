@@ -1,14 +1,15 @@
 "use client";
 
 /**
- * CHANGE 24-01 — primary bottom bar only:
+ * CHANGE 24-01 / 24-17 — primary bottom bar:
  * [home icon] | Argus | + | [Prepared output icon]
- * Argus secondary: Focus | Active | Archive (order fixed).
+ * Argus secondary: Focus | Active | Archive — filters Realm Treemap (same Realms, no copies).
+ * Administrative lists remain at /forge/active and /forge/archive.
  */
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { ForgeGlobalCreate } from "./ForgeGlobalCreate";
 import { useForgeSystem } from "./ForgeSystemProvider";
 
@@ -17,28 +18,24 @@ type SheetId = "create" | null;
 const ARGUS_SECONDARY: {
   href: string;
   label: string;
+  filter: "focus" | "active" | "archive";
   pending?: boolean;
-  match: (pathname: string) => boolean;
 }[] = [
   {
-    href: "/forge/focus",
+    href: "/forge/argus?filter=focus",
     label: "Focus",
+    filter: "focus",
     pending: true,
-    match: (p) => p.startsWith("/forge/focus"),
   },
   {
-    href: "/forge/active",
+    href: "/forge/argus?filter=active",
     label: "Active",
-    match: (p) =>
-      p.startsWith("/forge/active") ||
-      p.startsWith("/forge/library") ||
-      p.startsWith("/forge/deck") ||
-      p.startsWith("/forge/realm"),
+    filter: "active",
   },
   {
-    href: "/forge/archive",
+    href: "/forge/argus?filter=archive",
     label: "Archive",
-    match: (p) => p.startsWith("/forge/archive"),
+    filter: "archive",
   },
 ];
 
@@ -47,14 +44,15 @@ function sectionTitle(pathname: string, systemLabel: string): string {
   if (pathname.includes("/item/")) return "Editor";
   if (pathname.startsWith("/forge/deck/")) return "Chaos Deck";
   if (pathname.startsWith("/forge/realm/")) return "Realm";
+  if (pathname.startsWith("/forge/argus/units")) return "Argus units";
   if (pathname.startsWith("/forge/argus")) return "Argus";
   if (pathname.startsWith("/forge/focus")) return "Focus";
   if (pathname.startsWith("/forge/chaos")) return "Capture (proto)";
   if (pathname.startsWith("/forge/task")) return "Task";
   if (pathname.startsWith("/forge/vault")) return "Prepared output";
-  if (pathname.startsWith("/forge/archive")) return "Archive";
-  if (pathname.startsWith("/forge/active")) return "Active";
-  if (pathname.startsWith("/forge/library")) return "Active";
+  if (pathname.startsWith("/forge/archive")) return "Archive list";
+  if (pathname.startsWith("/forge/active")) return "Active list";
+  if (pathname.startsWith("/forge/library")) return "Active list";
   if (pathname === "/forge" || pathname === "/forge/") return "Home";
   return systemLabel;
 }
@@ -108,8 +106,9 @@ function PreparedOutputIcon({ active }: { active: boolean }) {
   );
 }
 
-export function ForgeShell({ children }: { children: ReactNode }) {
+function ForgeShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname() || "/forge";
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { system, setSystem, ready } = useForgeSystem();
   const [sheet, setSheet] = useState<SheetId>(null);
@@ -121,7 +120,10 @@ export function ForgeShell({ children }: { children: ReactNode }) {
   const onHome = pathname === "/forge" || pathname === "/forge/";
   const onOutput = pathname.startsWith("/forge/vault");
   const onArgus = isArgusSurface(pathname);
+  const onArgusTreemap =
+    pathname.startsWith("/forge/argus") && !pathname.startsWith("/forge/argus/units");
   const showArgusSecondary = argusOpen || onArgus;
+  const treemapFilter = searchParams.get("filter") || (onArgusTreemap ? "active" : null);
 
   useEffect(() => {
     setSheet(null);
@@ -197,35 +199,39 @@ export function ForgeShell({ children }: { children: ReactNode }) {
               : "bottom-[calc(3.5rem+env(safe-area-inset-bottom))]"
           }`}
           role="region"
-          aria-label="Create"
+          aria-label="Create sheet"
         >
           <ForgeGlobalCreate pathname={pathname} onClose={() => setSheet(null)} />
         </div>
       ) : null}
 
-      <div className="fixed inset-x-0 bottom-0 z-40">
-        {/* CHANGE 24-01 — Argus secondary (does not replace primary bar) */}
+      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg lg:max-w-3xl">
         {showArgusSecondary ? (
           <nav
-            aria-label="Argus secondary"
-            className="border-t border-zinc-800 bg-zinc-950/98 backdrop-blur"
+            aria-label="Argus lifecycle filter"
+            className="border-t border-zinc-800 bg-zinc-900/95 px-2 py-1.5 backdrop-blur"
           >
-            <ul className="mx-auto flex max-w-lg items-stretch lg:max-w-3xl">
+            <ul className="flex items-stretch gap-1">
               {ARGUS_SECONDARY.map((item) => {
-                const active = item.match(pathname);
+                const active =
+                  onArgusTreemap &&
+                  (treemapFilter === item.filter ||
+                    (!searchParams.get("filter") && item.filter === "active"));
                 return (
-                  <li key={item.href} className="min-w-0 flex-1">
+                  <li key={item.filter} className="min-w-0 flex-1">
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}
-                      className={`flex min-h-11 flex-col items-center justify-center gap-0.5 px-1 text-[12px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400 ${
-                        active ? "text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
+                      className={`flex min-h-10 items-center justify-center rounded-md text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
+                        active
+                          ? "bg-zinc-800 text-zinc-50"
+                          : "text-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-300"
                       }`}
                     >
-                      <span>{item.label}</span>
+                      {item.label}
                       {item.pending ? (
-                        <span className="text-[9px] font-medium uppercase tracking-wide text-amber-500">
-                          Pending
+                        <span className="ml-1 text-[9px] font-normal uppercase text-amber-500/90">
+                          soon
                         </span>
                       ) : null}
                     </Link>
@@ -259,13 +265,13 @@ export function ForgeShell({ children }: { children: ReactNode }) {
                 aria-label="Argus"
                 aria-expanded={showArgusSecondary}
                 onClick={() => {
-                  if (showArgusSecondary && onArgus) {
+                  if (showArgusSecondary && onArgusTreemap) {
                     setArgusOpen(false);
                     return;
                   }
                   setArgusOpen(true);
                   setSheet(null);
-                  if (!onArgus) router.push("/forge/active");
+                  if (!onArgusTreemap) router.push("/forge/argus?filter=active");
                 }}
                 className={`${itemClass} text-[13px] font-semibold ${
                   showArgusSecondary || onArgus
@@ -307,5 +313,19 @@ export function ForgeShell({ children }: { children: ReactNode }) {
         </nav>
       </div>
     </div>
+  );
+}
+
+export function ForgeShell({ children }: { children: ReactNode }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto min-h-screen w-full max-w-lg bg-zinc-950 px-3 py-4 text-sm text-zinc-500 lg:max-w-3xl">
+          Loading shell…
+        </div>
+      }
+    >
+      <ForgeShellInner>{children}</ForgeShellInner>
+    </Suspense>
   );
 }

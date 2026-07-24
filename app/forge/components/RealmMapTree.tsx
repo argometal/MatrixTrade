@@ -1,18 +1,20 @@
 "use client";
 
 /**
- * CHANGE 24-0F — Home MapTree of Realms (folders as provisional Realms).
+ * CHANGE 24-17 — Argus Realm Treemap (macro view).
+ * Not Home. Filters: Focus | Active | Archive over the same Realms.
  */
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import {
-  buildHomeRealmForest,
+  buildRealmForest,
   freshnessToBorder,
   freshnessToFill,
   layoutTreemap,
   realmHref,
+  type RealmLifecycleFilter,
   type RealmTreeNode,
   type TreemapRect,
 } from "@/lib/argusforge/af03-realm-map";
@@ -43,7 +45,11 @@ function useMapSize(ref: RefObject<HTMLDivElement | null>) {
   return size;
 }
 
-export function RealmMapTree() {
+type Props = {
+  filter: RealmLifecycleFilter;
+};
+
+export function RealmMapTree({ filter }: Props) {
   const router = useRouter();
   const [state, setState] = useState<Af03RepoState | null>(null);
   const [graph, setGraph] = useState<ArgusGraphState | null>(null);
@@ -57,8 +63,8 @@ export function RealmMapTree() {
   }, []);
 
   const forest = useMemo(
-    () => (state ? buildHomeRealmForest(state, graph) : []),
-    [state, graph]
+    () => (state ? buildRealmForest(state, graph, filter) : []),
+    [state, graph, filter]
   );
 
   const rects = useMemo(() => {
@@ -91,7 +97,7 @@ export function RealmMapTree() {
     const { folder, state: next } = createFolder(s, {
       title: "New Realm",
       parentId: null,
-      view: "active",
+      view: filter === "archive" ? "archive" : "active",
     });
     setState(next);
     router.push(realmHref(folder.id));
@@ -102,17 +108,19 @@ export function RealmMapTree() {
     const { deck, state: next } = createDeck(s, {
       title: "New Chaos Deck",
       folderId: null,
-      view: "active",
+      view: filter === "archive" ? "archive" : "active",
     });
     setState(next);
     router.push(`/forge/deck/${deck.id}`);
   }
 
   if (!state) {
-    return <p className="text-sm text-zinc-500">Loading MapTree…</p>;
+    return <p className="text-sm text-zinc-500">Loading Argus Realms…</p>;
   }
 
-  const empty = state.folders.length === 0 && state.decks.length === 0;
+  const listHref = filter === "archive" ? "/forge/archive" : "/forge/active";
+  const filterLabel =
+    filter === "focus" ? "Focus" : filter === "archive" ? "Archive" : "Active";
 
   return (
     <div className="flex min-h-[calc(100dvh-8.5rem)] flex-col gap-3">
@@ -120,16 +128,22 @@ export function RealmMapTree() {
 
       <header className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold tracking-tight text-zinc-50">Realms</h2>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-500/90">
+            Argus · Realms
+          </p>
+          <h2 className="text-xl font-semibold tracking-tight text-zinc-50">
+            {filterLabel} Treemap
+          </h2>
           <p className="text-xs text-zinc-500">
-            MapTree — size is mass, color is activity. Tap a Realm to open its Chaos Deck graph.
+            Macro view — size is mass, color is recent use. Tap a Realm for its molecular graph.
           </p>
         </div>
         {selected ? (
           <div className="rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-xs text-zinc-300">
             <p className="font-medium text-zinc-100">{selected.title}</p>
             <p className="mt-0.5 text-zinc-500">
-              {selected.metrics.deckCount} decks · {selected.metrics.fragmentCount} fragments
+              mass {selected.metrics.massScore.toFixed(1)} · {selected.metrics.deckCount} decks ·{" "}
+              {selected.metrics.fragmentCount} fragments
               {selected.metrics.lastActivityAt
                 ? ` · ${formatRelativeAgo(selected.metrics.lastActivityAt)}`
                 : ""}
@@ -138,9 +152,18 @@ export function RealmMapTree() {
         ) : null}
       </header>
 
-      {empty ? (
+      {filter === "focus" ? (
+        <p className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2 text-xs text-zinc-500">
+          Focus is pending — showing the same Active Realms (no copies). Later Focus will apply
+          attention signals without duplicating Realms.
+        </p>
+      ) : null}
+
+      {forest.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-zinc-800 px-4 py-16 text-center">
-          <p className="text-sm text-zinc-400">No Realms yet. Create the first Realm or Chaos Deck.</p>
+          <p className="text-sm text-zinc-400">
+            No Realms in {filterLabel}. Create a Realm or Chaos Deck.
+          </p>
           <div className="flex flex-wrap justify-center gap-2">
             <button
               type="button"
@@ -163,7 +186,7 @@ export function RealmMapTree() {
           ref={mapRef}
           className="relative min-h-[420px] flex-1 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950"
           role="tree"
-          aria-label="MapTree of Realms"
+          aria-label={`${filterLabel} Realm Treemap`}
         >
           {rects.map((r) => {
             const isHeader = r.node.children.length > 0;
@@ -175,7 +198,7 @@ export function RealmMapTree() {
                 key={`${r.id}-${r.depth}-${Math.round(r.x)}-${Math.round(r.y)}-${Math.round(r.w)}`}
                 type="button"
                 role="treeitem"
-                title={`${r.title} · ${r.node.metrics.fragmentCount} fragments · ${r.node.metrics.deckCount} decks`}
+                title={`${r.title} · mass ${r.node.metrics.massScore.toFixed(1)}`}
                 aria-label={`Realm ${r.title}`}
                 onClick={() => {
                   setSelectedId(r.id);
@@ -208,7 +231,7 @@ export function RealmMapTree() {
                 )}
                 {!isHeader && r.h > 52 && r.w > 72 ? (
                   <span className="block px-2 text-[10px] text-zinc-300/80">
-                    {r.node.metrics.deckCount}d · {r.node.metrics.fragmentCount}f
+                    {r.node.metrics.deckCount}d · m{r.node.metrics.massScore.toFixed(0)}
                   </span>
                 ) : null}
               </button>
@@ -218,11 +241,14 @@ export function RealmMapTree() {
       )}
 
       <p className="shrink-0 text-[11px] text-zinc-600">
-        Metrics are provisional (sqrt mass, recency freshness).{" "}
-        <Link href="/forge/active" className="underline hover:text-zinc-400">
-          Active list
-        </Link>{" "}
-        still available.
+        Metrics provisional (log mass, recency color).{" "}
+        <Link href={listHref} className="underline hover:text-zinc-400">
+          Administrative list
+        </Link>
+        {" · "}
+        <Link href="/forge/argus/units" className="underline hover:text-zinc-400">
+          Unit graph
+        </Link>
       </p>
     </div>
   );
