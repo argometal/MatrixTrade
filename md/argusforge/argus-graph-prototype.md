@@ -29,3 +29,9 @@ Chaos source remains `argusforge-af03-repo-v1`.
 - **No design ceiling** on Chaos → Argus units. Sync takes all Chaos items.
 - Demo fill (~24) is optional practice only, not a product max.
 - UI may later page/filter for performance; that is not an ontological limit.
+
+## CHANGE 24-02 (typed modular controls)
+
+- Provisional unit types + named relations + basic groups + multi-select + filters
+- Local state migrates v1→v2 (defaults; `link`→`related_to`); does not clear user data
+- Sync preserves manually edited types; deterministic initial type only (Source/Event/Unknown)
