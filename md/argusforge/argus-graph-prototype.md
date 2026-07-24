@@ -26,5 +26,6 @@ Chaos source remains `argusforge-af03-repo-v1`.
 
 ## Caps
 
-- Max **50** units from Chaos sync
-- Demo fill targets **24** units for field practice when Chaos is thin
+- **No design ceiling** on Chaos → Argus units. Sync takes all Chaos items.
+- Demo fill (~24) is optional practice only, not a product max.
+- UI may later page/filter for performance; that is not an ontological limit.

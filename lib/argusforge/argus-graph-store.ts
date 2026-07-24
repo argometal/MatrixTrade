@@ -6,8 +6,7 @@
 import { emptyOrSeedRepo } from "./af03-repo-store";
 import type { Af03ContentItem, Af03RepoState } from "./af03-repo-types";
 import {
-  ARGUS_GRAPH_DEMO_TARGET,
-  ARGUS_GRAPH_MAX_UNITS,
+  ARGUS_GRAPH_DEMO_FILL,
   ARGUS_GRAPH_STORAGE_KEY,
   type ArgusGraphState,
   type ArgusRelation,
@@ -70,12 +69,10 @@ export function writeArgusGraph(state: ArgusGraphState): void {
   }
 }
 
-/** Pull Chaos items into units (max 50). Keeps positions/relations for existing chaos ids. */
+/** Pull all Chaos items into units. Keeps positions/relations for existing chaos ids. No design ceiling. */
 export function syncUnitsFromChaos(graph: ArgusGraphState, repo?: Af03RepoState): ArgusGraphState {
   const state = repo ?? emptyOrSeedRepo();
-  const items = [...state.items]
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-    .slice(0, ARGUS_GRAPH_MAX_UNITS);
+  const items = [...state.items].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 
   const byChaos = new Map(
     graph.units.filter((u) => u.chaosItemId).map((u) => [u.chaosItemId!, u])
@@ -98,7 +95,7 @@ export function syncUnitsFromChaos(graph: ArgusGraphState, repo?: Af03RepoState)
 
   const chaosIds = new Set(chaosUnits.map((u) => u.id));
   const keptDemo = demoUnits.filter((d) => !chaosIds.has(d.id));
-  const units = [...chaosUnits, ...keptDemo].slice(0, ARGUS_GRAPH_MAX_UNITS);
+  const units = [...chaosUnits, ...keptDemo];
   const unitIds = new Set(units.map((u) => u.id));
   const relations = graph.relations.filter(
     (r) => unitIds.has(r.sourceUnitId) && unitIds.has(r.targetUnitId)
@@ -109,12 +106,12 @@ export function syncUnitsFromChaos(graph: ArgusGraphState, repo?: Af03RepoState)
   return next;
 }
 
-/** Fill with demo units up to DEMO_TARGET when Chaos alone is too thin for a field test. */
+/** Optional demo units for field practice when Chaos is empty — not a product ceiling. */
 export function ensureDemoUnits(graph: ArgusGraphState): ArgusGraphState {
-  if (graph.units.length >= ARGUS_GRAPH_DEMO_TARGET) return graph;
+  if (graph.units.length >= ARGUS_GRAPH_DEMO_FILL) return graph;
   const units = [...graph.units];
   let i = units.length;
-  while (units.length < ARGUS_GRAPH_DEMO_TARGET) {
+  while (units.length < ARGUS_GRAPH_DEMO_FILL) {
     units.push({
       id: newId("unit_demo"),
       chaosItemId: null,

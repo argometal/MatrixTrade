@@ -37,5 +37,5 @@ export type ArgusGraphState = {
 };
 
 export const ARGUS_GRAPH_STORAGE_KEY = "argusforge-argus-graph-v1";
-export const ARGUS_GRAPH_MAX_UNITS = 50;
-export const ARGUS_GRAPH_DEMO_TARGET = 24;
+/** Optional demo fill only — not a Chaos/Argus ceiling. */
+export const ARGUS_GRAPH_DEMO_FILL = 24;
