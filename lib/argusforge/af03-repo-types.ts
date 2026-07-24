@@ -1,7 +1,8 @@
 /**
- * AF03 UI-only repository shapes (§3–6 / delivery 3–6).
+ * AF03 repository shapes (§3–6 / delivery 3–6).
  * NOT final ArgusForge persistence / ontology.
  * Folder path is NOT identity — `id` is identity.
+ * UI label for folder containers: Realm (CHANGE 24-0F). Internal type remains Af03Folder.
  */
 
 export type OperationalView = "active" | "archive";
@@ -18,6 +19,10 @@ export type Af03Folder = {
   view: OperationalView;
   createdAt: string;
   updatedAt: string;
+  /** CHANGE 24-0F — provisional usage; safe default null */
+  lastOpenedAt: string | null;
+  /** CHANGE 24-0F — provisional usage; safe default 0 */
+  openCount: number;
 };
 
 export type Af03ChaosDeck = {
@@ -30,6 +35,10 @@ export type Af03ChaosDeck = {
   preview: string;
   createdAt: string;
   updatedAt: string;
+  /** CHANGE 24-0F — provisional usage; safe default null */
+  lastOpenedAt: string | null;
+  /** CHANGE 24-0F — provisional usage; safe default 0 */
+  openCount: number;
 };
 
 export type Af03ContentItem = {
@@ -68,6 +77,9 @@ export type Af03RepoState = {
 };
 
 export const AF03_REPO_STORAGE_KEY = "argusforge-af03-repo-v1";
+
+/** Provisional Unassigned Realm for root Chaos Decks (folderId null). Not a stored folder. */
+export const UNASSIGNED_REALM_ID = "unassigned";
 
 export const DEFAULT_PREFS: Af03RepoPrefs = {
   deckListLayout: "list",

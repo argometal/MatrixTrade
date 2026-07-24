@@ -7,6 +7,7 @@
 import {
   AF03_REPO_STORAGE_KEY,
   DEFAULT_PREFS,
+  UNASSIGNED_REALM_ID,
   type Af03ChaosDeck,
   type Af03ContentItem,
   type Af03ContentKind,
@@ -100,6 +101,8 @@ function seedState(): Af03RepoState {
         view: "active",
         createdAt: t,
         updatedAt: t,
+        lastOpenedAt: null,
+        openCount: 0,
       },
       {
         id: ideasId,
@@ -108,6 +111,8 @@ function seedState(): Af03RepoState {
         view: "active",
         createdAt: t,
         updatedAt: t,
+        lastOpenedAt: null,
+        openCount: 0,
       },
       {
         id: archivedOldId,
@@ -116,6 +121,8 @@ function seedState(): Af03RepoState {
         view: "archive",
         createdAt: t,
         updatedAt: t,
+        lastOpenedAt: null,
+        openCount: 0,
       },
     ],
     decks: [
@@ -128,6 +135,8 @@ function seedState(): Af03RepoState {
         preview: "Welcome scrap",
         createdAt: t,
         updatedAt: t,
+        lastOpenedAt: null,
+        openCount: 0,
       },
       {
         id: afId,
@@ -138,6 +147,8 @@ function seedState(): Af03RepoState {
         preview: "AF03 contract",
         createdAt: t,
         updatedAt: t,
+        lastOpenedAt: null,
+        openCount: 0,
       },
       {
         id: oldId,
@@ -148,10 +159,30 @@ function seedState(): Af03RepoState {
         preview: "Empty Chaos Deck",
         createdAt: t,
         updatedAt: t,
+        lastOpenedAt: null,
+        openCount: 0,
       },
     ],
     items,
     prefs: { ...DEFAULT_PREFS },
+  };
+}
+
+function normalizeFolder(f: Af03Folder): Af03Folder {
+  return {
+    ...f,
+    lastOpenedAt: f.lastOpenedAt ?? null,
+    openCount: typeof f.openCount === "number" ? f.openCount : 0,
+  };
+}
+
+function normalizeDeck(d: Af03ChaosDeck): Af03ChaosDeck {
+  return {
+    ...d,
+    contentCount: d.contentCount ?? 0,
+    preview: d.preview || "Empty Chaos Deck",
+    lastOpenedAt: d.lastOpenedAt ?? null,
+    openCount: typeof d.openCount === "number" ? d.openCount : 0,
   };
 }
 
@@ -171,8 +202,8 @@ function migrateToV2(raw: unknown): Af03RepoState | null {
     }));
     return {
       version: 2,
-      folders: o.folders as Af03Folder[],
-      decks: o.decks as Af03ChaosDeck[],
+      folders: (o.folders as Af03Folder[]).map(normalizeFolder),
+      decks: (o.decks as Af03ChaosDeck[]).map(normalizeDeck),
       items,
       prefs,
     };
@@ -182,12 +213,8 @@ function migrateToV2(raw: unknown): Af03RepoState | null {
     const decks = o.decks as Af03ChaosDeck[];
     return {
       version: 2,
-      folders: o.folders as Af03Folder[],
-      decks: decks.map((d) => ({
-        ...d,
-        contentCount: d.contentCount ?? 0,
-        preview: d.preview || "Empty Chaos Deck",
-      })),
+      folders: (o.folders as Af03Folder[]).map(normalizeFolder),
+      decks: decks.map(normalizeDeck),
       items: [],
       prefs: { ...DEFAULT_PREFS },
     };
@@ -281,6 +308,37 @@ export function deckHref(deckId: string): string {
   return `/forge/deck/${deckId}`;
 }
 
+/** CHANGE 24-0F — record Realm open (folders only; Unassigned is synthetic). */
+export function recordRealmOpen(state: Af03RepoState, realmId: string): Af03RepoState {
+  if (realmId === UNASSIGNED_REALM_ID) return state;
+  const t = nowIso();
+  const next = {
+    ...state,
+    folders: state.folders.map((f) =>
+      f.id === realmId
+        ? { ...f, lastOpenedAt: t, openCount: (f.openCount ?? 0) + 1, updatedAt: f.updatedAt }
+        : f
+    ),
+  };
+  writeRepo(next);
+  return next;
+}
+
+/** CHANGE 24-0F — record Chaos Deck open for provisional freshness. */
+export function recordDeckOpen(state: Af03RepoState, deckId: string): Af03RepoState {
+  const t = nowIso();
+  const next = {
+    ...state,
+    decks: state.decks.map((d) =>
+      d.id === deckId
+        ? { ...d, lastOpenedAt: t, openCount: (d.openCount ?? 0) + 1 }
+        : d
+    ),
+  };
+  writeRepo(next);
+  return next;
+}
+
 export function itemHref(deckId: string, itemId: string): string {
   return `/forge/deck/${deckId}/item/${itemId}`;
 }
@@ -314,11 +372,13 @@ export function createFolder(
   const t = nowIso();
   const folder: Af03Folder = {
     id: newId("fld"),
-    title: input.title.trim() || "Untitled folder",
+    title: input.title.trim() || "Untitled Realm",
     parentId: input.parentId,
     view: input.view,
     createdAt: t,
     updatedAt: t,
+    lastOpenedAt: null,
+    openCount: 0,
   };
   const next = { ...state, folders: [...state.folders, folder] };
   writeRepo(next);
@@ -339,6 +399,8 @@ export function createDeck(
     preview: "Empty Chaos Deck",
     createdAt: t,
     updatedAt: t,
+    lastOpenedAt: null,
+    openCount: 0,
   };
   const next = { ...state, decks: [...state.decks, deck] };
   writeRepo(next);

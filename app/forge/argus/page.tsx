@@ -1,15 +1,29 @@
-import { ArgusGraphView } from "../components/ArgusGraphView";
-import { Af03RepoDisclosure } from "../components/Af03RepoDisclosure";
+"use client";
+
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import type { RealmLifecycleFilter } from "@/lib/argusforge/af03-realm-map";
+import { RealmMapTree } from "../components/RealmMapTree";
+
+function parseFilter(raw: string | null): RealmLifecycleFilter {
+  if (raw === "archive" || raw === "focus" || raw === "active") return raw;
+  return "active";
+}
+
+function ArgusTreemapInner() {
+  const params = useSearchParams();
+  const filter = parseFilter(params.get("filter"));
+  return <RealmMapTree filter={filter} />;
+}
 
 /**
- * Argus graph prototype — operable units/relations over Chaos source.
- * Not Alexandria. Not definitive Argus Engine schema.
+ * CHANGE 24-17 — Argus macro view = Realm Treemap.
+ * Unit engine graph lives at /forge/argus/units.
  */
 export default function ForgeArgusPage() {
   return (
-    <div className="space-y-4">
-      <Af03RepoDisclosure />
-      <ArgusGraphView />
-    </div>
+    <Suspense fallback={<p className="text-sm text-zinc-500">Loading Argus…</p>}>
+      <ArgusTreemapInner />
+    </Suspense>
   );
 }

@@ -119,15 +119,15 @@ export function ForgeHomeDashboard() {
         <p className="text-xs text-zinc-500">Where to go next — not Argus entity browsers.</p>
         <div className="grid gap-2 sm:grid-cols-2">
           <BrowseLink
-            href="/forge/argus"
+            href="/forge/argus?filter=active"
             title="Argus"
-            hint="Units · relations · selection (proto)"
+            hint="Realm Treemap · molecular graphs"
             icon="library"
           />
           <BrowseLink
             href="/forge/active"
-            title="Active"
-            hint="Working operational set"
+            title="Active list"
+            hint="Administrative folder/deck list"
             icon="library"
           />
           <BrowseLink
