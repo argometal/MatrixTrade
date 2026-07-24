@@ -37,6 +37,9 @@ type Props = {
   onRemoveGroup: (groupId: string) => void;
   onConfirmRecurrence: (id: string) => void;
   onDismissRecurrence: (id: string) => void;
+  /** Chaos decks available as move targets for a Chaos-backed fragment unit. */
+  deckMoveTargets?: Array<{ id: string; label: string }>;
+  onMoveFragmentToDeck?: (chaosItemId: string, targetDeckId: string) => void;
 };
 
 export function ArgusSelectionPanel(props: Props) {
@@ -301,6 +304,40 @@ export function ArgusSelectionPanel(props: Props) {
         >
           Open in Chaos
         </Link>
+      ) : null}
+
+      {unit.source === "chaos" &&
+      unit.chaosItemId &&
+      props.deckMoveTargets &&
+      props.deckMoveTargets.length > 0 &&
+      props.onMoveFragmentToDeck ? (
+        <label className="block space-y-1">
+          <span className="text-[10px] uppercase tracking-wide text-zinc-500">
+            Move fragment to deck
+          </span>
+          <select
+            className="min-h-10 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-200"
+            defaultValue=""
+            onChange={(e) => {
+              const targetDeckId = e.target.value;
+              if (!targetDeckId || !unit.chaosItemId) return;
+              props.onMoveFragmentToDeck?.(unit.chaosItemId, targetDeckId);
+              e.target.value = "";
+            }}
+          >
+            <option value="">Choose deck…</option>
+            {props.deckMoveTargets.map((deck) => (
+              <option
+                key={deck.id}
+                value={deck.id}
+                disabled={deck.id === unit.chaosDeckId}
+              >
+                {deck.label}
+                {deck.id === unit.chaosDeckId ? " (current)" : ""}
+              </option>
+            ))}
+          </select>
+        </label>
       ) : null}
 
       <div className="space-y-2">

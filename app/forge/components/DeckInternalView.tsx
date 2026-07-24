@@ -272,7 +272,7 @@ export function DeckInternalView({ deckId }: Props) {
                   setDeckMenuOpen(false);
                 }}
               >
-                Add content (text)
+                Add fragment (text)
               </button>
               <button
                 type="button"
@@ -282,15 +282,22 @@ export function DeckInternalView({ deckId }: Props) {
               >
                 Prepare for Vault ({selected.size})
               </button>
-              <button
-                type="button"
+              <Link
                 role="menuitem"
-                disabled
-                className="block w-full cursor-not-allowed px-3 py-2 text-left text-sm text-zinc-600"
-                title="Move between folders not implemented — DEBT / not exposed as functional"
+                href={realmHref(deck.folderId ?? UNASSIGNED_REALM_ID, { deckId: deck.id })}
+                className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
+                onClick={() => setDeckMenuOpen(false)}
               >
-                Move (soon)
-              </button>
+                Move deck in Argus…
+              </Link>
+              <Link
+                role="menuitem"
+                href="/forge/argus/units"
+                className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
+                onClick={() => setDeckMenuOpen(false)}
+              >
+                Regroup fragments in Argus…
+              </Link>
               {deck.view === "active" ? (
                 <button
                   type="button"
@@ -375,7 +382,9 @@ export function DeckInternalView({ deckId }: Props) {
       <CreationMenu scope="deck" onAction={handleCreate} />
 
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">Contents</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
+          Fragments ({items.length})
+        </h3>
         <div className="flex rounded-lg border border-zinc-800 p-0.5 text-xs" role="group" aria-label="Content layout">
           <button
             type="button"
@@ -401,7 +410,9 @@ export function DeckInternalView({ deckId }: Props) {
       </div>
 
       {items.length === 0 ? (
-        <p className="text-sm text-zinc-600">No content yet — add text, link, image URL, or a file/PDF stub.</p>
+        <p className="text-sm text-zinc-600">
+          No fragments yet — a deck can hold many. Add text, link, image URL, or a file/PDF stub.
+        </p>
       ) : layout === "grid" ? (
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {items.map((item) => (
@@ -445,8 +456,12 @@ export function DeckInternalView({ deckId }: Props) {
                   setState(moveContentOrder(state, item.id, "down"));
                   setMenuId(null);
                 }}
+                onRegroupInArgus={() => {
+                  setMenuId(null);
+                  window.location.href = "/forge/argus/units";
+                }}
                 onRemove={() => {
-                  if (!window.confirm("Remove this content from the deck?")) return;
+                  if (!window.confirm("Remove this fragment from the deck?")) return;
                   setState(removeContent(state, item.id));
                   setMenuId(null);
                 }}
@@ -505,8 +520,12 @@ export function DeckInternalView({ deckId }: Props) {
                     setState(moveContentOrder(state, item.id, "down"));
                     setMenuId(null);
                   }}
+                  onRegroupInArgus={() => {
+                    setMenuId(null);
+                    window.location.href = "/forge/argus/units";
+                  }}
                   onRemove={() => {
-                    if (!window.confirm("Remove this content from the deck?")) return;
+                    if (!window.confirm("Remove this fragment from the deck?")) return;
                     setState(removeContent(state, item.id));
                     setMenuId(null);
                   }}
@@ -518,7 +537,7 @@ export function DeckInternalView({ deckId }: Props) {
       )}
 
       <p className="text-[11px] text-zinc-600">
-        Deck id <code className="text-zinc-500">{deck.id}</code> ·{" "}
+        Deck id <code className="text-zinc-500">{deck.id}</code> · multiple fragments OK ·{" "}
         <Link href="/forge/vault" className="underline">
           Vault prep queue
         </Link>
@@ -535,6 +554,7 @@ function ItemMenu({
   onMarkLater,
   onMoveUp,
   onMoveDown,
+  onRegroupInArgus,
   onRemove,
   floating = false,
 }: {
@@ -545,6 +565,7 @@ function ItemMenu({
   onMarkLater: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  onRegroupInArgus: () => void;
   onRemove: () => void;
   floating?: boolean;
 }) {
@@ -562,7 +583,7 @@ function ItemMenu({
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-10 mt-1 w-44 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg"
+          className="absolute right-0 z-10 mt-1 w-48 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg"
         >
           <Link
             role="menuitem"
@@ -597,10 +618,10 @@ function ItemMenu({
           <button
             type="button"
             role="menuitem"
-            disabled
-            className="block w-full cursor-not-allowed px-3 py-2 text-left text-sm text-zinc-600"
+            className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
+            onClick={onRegroupInArgus}
           >
-            Move (soon)
+            Regroup in Argus…
           </button>
           <button
             type="button"

@@ -467,6 +467,77 @@ export function archiveDeck(state: Af03RepoState, id: string): Af03RepoState {
   return next;
 }
 
+/**
+ * Move a Chaos Deck into a Realm folder (or Unassigned when folderId is null).
+ * View follows the target folder (or stays Active for Unassigned).
+ */
+export function moveDeckToFolder(
+  state: Af03RepoState,
+  deckId: string,
+  folderId: string | null
+): Af03RepoState {
+  const deck = getDeck(state, deckId);
+  if (!deck) return state;
+
+  let nextView: OperationalView = "active";
+  if (folderId) {
+    const folder = getFolder(state, folderId);
+    if (!folder) return state;
+    nextView = folder.view;
+  }
+
+  if (deck.folderId === folderId && deck.view === nextView) return state;
+
+  const t = nowIso();
+  const next: Af03RepoState = {
+    ...state,
+    decks: state.decks.map((d) =>
+      d.id === deckId
+        ? {
+            ...d,
+            folderId,
+            view: nextView,
+            updatedAt: t,
+          }
+        : d
+    ),
+  };
+  writeRepo(next);
+  return next;
+}
+
+/**
+ * Move a fragment (content item) into another Chaos Deck.
+ * Syncs contentCount/preview on both source and target decks.
+ */
+export function moveFragmentToDeck(
+  state: Af03RepoState,
+  itemId: string,
+  targetDeckId: string
+): Af03RepoState {
+  const item = state.items.find((i) => i.id === itemId);
+  const target = getDeck(state, targetDeckId);
+  if (!item || !target) return state;
+  if (item.deckId === targetDeckId) return state;
+
+  const sourceDeckId = item.deckId;
+  const siblings = listItemsInDeck(state, targetDeckId);
+  const nextOrder =
+    siblings.length === 0 ? 0 : Math.max(...siblings.map((s) => s.order)) + 1;
+  const t = nowIso();
+
+  let next: Af03RepoState = {
+    ...state,
+    items: state.items.map((i) =>
+      i.id === itemId ? { ...i, deckId: targetDeckId, order: nextOrder, updatedAt: t } : i
+    ),
+  };
+  next = syncDeckDerived(next, sourceDeckId);
+  next = syncDeckDerived(next, targetDeckId);
+  writeRepo(next);
+  return next;
+}
+
 export function createContent(
   state: Af03RepoState,
   input: {
