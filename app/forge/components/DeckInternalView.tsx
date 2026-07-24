@@ -23,6 +23,7 @@ import {
 import { createVaultPrep } from "@/lib/argusforge/af03-vault-prep-store";
 import type { Af03ContentItem, Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import { ChaosCaptureSurface } from "./ChaosCaptureSurface";
 import { CreationMenu, type CreateAction } from "./CreationMenu";
 
 type Props = {
@@ -63,6 +64,7 @@ export function DeckInternalView({ deckId }: Props) {
   const [menuId, setMenuId] = useState<string | null>(null);
   const [deckMenuOpen, setDeckMenuOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [captureOpen, setCaptureOpen] = useState(false);
 
   useEffect(() => {
     setState(emptyOrSeedRepo());
@@ -91,17 +93,8 @@ export function DeckInternalView({ deckId }: Props) {
   function handleCreate(action: CreateAction) {
     if (!state || !deck) return;
     if (action === "text") {
-      const title = promptTitle("Text title (optional context)", "Untitled note");
-      if (title === null) return;
-      const body = window.prompt("Text body — raw capture, no classification required", "") ?? "";
-      const { state: next, item } = createContent(state, {
-        deckId,
-        kind: "text",
-        title: title || "Untitled note",
-        body,
-      });
-      setState(next);
-      window.location.href = viewHref(deckId, item.id);
+      setDeckMenuOpen(false);
+      setCaptureOpen(true);
       return;
     }
     if (action === "link") {
@@ -199,8 +192,28 @@ export function DeckInternalView({ deckId }: Props) {
     );
   }
 
+  function saveCapture(payload: { title: string; body: string }) {
+    if (!state) return;
+    const { state: next, item } = createContent(state, {
+      deckId,
+      kind: "text",
+      title: payload.title,
+      body: payload.body,
+    });
+    setState(next);
+    setCaptureOpen(false);
+    window.location.href = viewHref(deckId, item.id);
+  }
+
   return (
     <div className="space-y-4">
+      {captureOpen ? (
+        <ChaosCaptureSurface
+          deckTitle={deck.title}
+          onCancel={() => setCaptureOpen(false)}
+          onSave={saveCapture}
+        />
+      ) : null}
       <Af03RepoDisclosure />
 
       <nav aria-label="Deck location" className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
