@@ -13,6 +13,7 @@ import {
   freshnessToBorder,
   freshnessToFill,
   layoutTreemap,
+  realmHeaderFill,
   realmHref,
   type RealmLifecycleFilter,
   type RealmTreeNode,
@@ -128,7 +129,7 @@ export function RealmMapTree({ filter }: Props) {
 
       <header className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-500/90">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-400/90">
             Argus · Realms
           </p>
           <h2 className="text-xl font-semibold tracking-tight text-zinc-50">
@@ -209,20 +210,24 @@ export function RealmMapTree({ filter }: Props) {
                   top: r.y,
                   width: r.w,
                   height: r.h,
-                  background: freshnessToFill(r.node.metrics.freshness, archived),
-                  borderColor: isSel ? "#38bdf8" : freshnessToBorder(r.node.metrics.freshness),
+                  background: isHeader
+                    ? realmHeaderFill(r.node.metrics.freshness, archived)
+                    : freshnessToFill(r.node.metrics.freshness, archived, r.depth),
+                  borderColor: isSel
+                    ? "#34d399"
+                    : freshnessToBorder(r.node.metrics.freshness, r.depth),
                 }}
-                className={`absolute box-border overflow-hidden border text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
-                  isSel ? "ring-1 ring-sky-400" : ""
+                className={`absolute box-border overflow-hidden border text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+                  isSel ? "ring-1 ring-emerald-400" : ""
                 } ${isHeader ? "rounded-md" : "rounded-lg"}`}
               >
                 {showTitle ? (
                   <span
                     className={`block truncate ${
                       isHeader
-                        ? "px-1.5 py-1 text-[10px] font-semibold uppercase tracking-wide"
+                        ? "px-1.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-50"
                         : "px-2 py-2 text-xs font-semibold"
-                    } ${archived ? "text-zinc-400" : "text-zinc-100"}`}
+                    } ${archived && !isHeader ? "text-zinc-400" : isHeader ? "" : "text-zinc-100"}`}
                   >
                     {r.title}
                   </span>
@@ -230,7 +235,7 @@ export function RealmMapTree({ filter }: Props) {
                   <span className="sr-only">{r.title}</span>
                 )}
                 {!isHeader && r.h > 52 && r.w > 72 ? (
-                  <span className="block px-2 text-[10px] text-zinc-300/80">
+                  <span className="block px-2 text-[10px] text-emerald-100/70">
                     {r.node.metrics.deckCount}d · m{r.node.metrics.massScore.toFixed(0)}
                   </span>
                 ) : null}

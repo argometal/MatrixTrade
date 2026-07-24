@@ -15,12 +15,14 @@ export type RealmDeckNodeData = {
 
 /**
  * Chaos Deck molecular body — size=mass, color=use, pulse=activity, halo=affinity (24-17).
+ * Palette: Argus emerald (sub-cluster labels + borders included).
  */
 export function RealmDeckNode({ data }: NodeProps & { data: RealmDeckNodeData }) {
   const { title, metrics, selected, clusterLabel, hasAffinityHalo, reduceMotion } = data;
   const size = Math.round(108 + Math.min(96, metrics.visualWeight * 22));
-  const fill = freshnessToFill(metrics.freshness, false);
-  const border = selected ? "#38bdf8" : freshnessToBorder(metrics.freshness);
+  // depth=1 → nested/sub-capa emerald cast for deck bodies inside a Realm
+  const fill = freshnessToFill(metrics.freshness, false, 1);
+  const border = selected ? "#34d399" : freshnessToBorder(metrics.freshness, 1);
   const motion =
     !reduceMotion && metrics.activityLevel !== "still"
       ? metrics.activityLevel === "active"
@@ -33,17 +35,17 @@ export function RealmDeckNode({ data }: NodeProps & { data: RealmDeckNodeData })
       {hasAffinityHalo ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-full border border-dashed border-amber-500/35"
+          className="pointer-events-none absolute inset-0 rounded-full border border-dashed border-emerald-400/40"
           style={{
             margin: -8,
-            boxShadow: "0 0 18px rgba(245, 158, 11, 0.12)",
+            boxShadow: "0 0 18px rgba(16, 185, 129, 0.18)",
           }}
           title="Detected affinity — not a confirmed relation"
         />
       ) : null}
       <div
         className={`relative rounded-full border-2 px-3 py-3 text-center shadow-md ${
-          selected ? "ring-2 ring-sky-400/50" : ""
+          selected ? "ring-2 ring-emerald-400/50" : ""
         }`}
         style={{
           width: size,
@@ -57,15 +59,15 @@ export function RealmDeckNode({ data }: NodeProps & { data: RealmDeckNodeData })
           justifyContent: "center",
         }}
       >
-        <Handle type="target" position={Position.Left} className="!h-2 !w-2 !bg-zinc-400" />
-        <p className="text-[8px] uppercase tracking-wide text-zinc-400">{clusterLabel}</p>
+        <Handle type="target" position={Position.Left} className="!h-2 !w-2 !bg-emerald-400" />
+        <p className="text-[8px] uppercase tracking-wide text-emerald-200/70">{clusterLabel}</p>
         <p className="mt-0.5 line-clamp-2 text-[12px] font-semibold leading-snug text-zinc-50">
           {title}
         </p>
-        <p className="mt-1 text-[9px] text-zinc-300">
+        <p className="mt-1 text-[9px] text-emerald-100/80">
           m{metrics.massScore.toFixed(1)} · {metrics.fragmentCount}f
         </p>
-        <Handle type="source" position={Position.Right} className="!h-2 !w-2 !bg-zinc-400" />
+        <Handle type="source" position={Position.Right} className="!h-2 !w-2 !bg-emerald-400" />
       </div>
     </div>
   );
