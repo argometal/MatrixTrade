@@ -15,6 +15,7 @@ import {
   type OnSelectionChangeParams,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { emptyOrSeedRepo } from "@/lib/argusforge/af03-repo-store";
 import {
@@ -61,6 +62,18 @@ import { ArgusGroupNode, type ArgusGroupNodeData } from "./ArgusGroupNode";
 import { ArgusSelectionPanel } from "./ArgusSelectionPanel";
 import { ArgusUnitNode, type ArgusNodeData } from "./ArgusUnitNode";
 
+const ArgusGraph3DView = dynamic(
+  () => import("./ArgusGraph3DView").then((mod) => mod.ArgusGraph3DView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full min-h-[280px] items-center justify-center bg-zinc-950 text-sm text-zinc-500">
+        Loading 3D…
+      </div>
+    ),
+  }
+);
+
 const nodeTypes = { argusUnit: ArgusUnitNode, argusGroup: ArgusGroupNode };
 
 const DEFAULT_FILTERS: ArgusGraphFilters = {
@@ -73,6 +86,8 @@ const DEFAULT_FILTERS: ArgusGraphFilters = {
   relationPresence: "all",
 };
 
+type GraphViewMode = "2d" | "3d";
+
 function ArgusGraphCanvas() {
   const [graph, setGraph] = useState<ArgusGraphState>(() => ({
     version: 3,
@@ -84,6 +99,7 @@ function ArgusGraphCanvas() {
   }));
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filters, setFilters] = useState<ArgusGraphFilters>(DEFAULT_FILTERS);
+  const [viewMode, setViewMode] = useState<GraphViewMode>("2d");
   const [ready, setReady] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
@@ -104,6 +120,11 @@ function ArgusGraphCanvas() {
     }));
   }, [graph.units]);
 
+  const chaosRepo = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    return emptyOrSeedRepo();
+  }, [ready, viewMode]);
+
   const tags = useMemo(() => allTags(graph), [graph]);
   const filteredUnits = useMemo(() => filterUnits(graph, filters), [graph, filters]);
   const hiddenCollapsed = useMemo(() => collapsedHiddenUnitIds(graph), [graph]);
@@ -121,7 +142,7 @@ function ArgusGraphCanvas() {
   }, [visibleIds]);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || viewMode !== "2d") return;
     const selectedSet = new Set(selectedIds);
     const unitNodes: Node<ArgusNodeData>[] = visibleUnits.map((unit) => ({
       id: unit.id,
@@ -156,11 +177,12 @@ function ArgusGraphCanvas() {
           labelBgPadding: [4, 2] as [number, number],
         }))
     );
-  }, [graph, visibleUnits, visibleIds, selectedIds, ready, setNodes, setEdges]);
+  }, [graph, visibleUnits, visibleIds, selectedIds, ready, viewMode, setNodes, setEdges]);
 
   const unitsById = useMemo(() => new Map(graph.units.map((u) => [u.id, u])), [graph.units]);
   const singleUnit: ArgusUnit | null =
     selectedIds.length === 1 ? unitsById.get(selectedIds[0]!) ?? null : null;
+  const selectedId3d = selectedIds[0] ?? null;
 
   const onConnect = useCallback((connection: Connection) => {
     if (!connection.source || !connection.target) return;
@@ -198,11 +220,49 @@ function ArgusGraphCanvas() {
 
   return (
     <div className="space-y-3">
-      <header className="space-y-1">
-        <h2 className="text-xl font-bold text-zinc-50">Argus</h2>
-        <p className="text-xs text-zinc-500">
-          Evidence · tags · typed relations · recurrence · export. Chaos owns source. No AI.
-        </p>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold text-zinc-50">Argus</h2>
+          <p className="text-xs text-zinc-500">
+            Evidence · tags · typed relations · recurrence · export. Chaos owns source. No AI.
+          </p>
+        </div>
+        <div
+          className="flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-950/80 p-1"
+          role="group"
+          aria-label="Graph view mode"
+        >
+          <span className="px-2 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+            View
+          </span>
+          <button
+            type="button"
+            onClick={() => setViewMode("2d")}
+            className={`min-h-10 min-w-10 rounded-lg px-3 text-xs font-semibold transition ${
+              viewMode === "2d"
+                ? "bg-zinc-800 text-zinc-50"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+            aria-pressed={viewMode === "2d"}
+          >
+            2D
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setViewMode("3d");
+              setSelectedIds((ids) => (ids.length > 1 ? [ids[0]!] : ids));
+            }}
+            className={`min-h-10 min-w-10 rounded-lg px-3 text-xs font-semibold transition ${
+              viewMode === "3d"
+                ? "bg-zinc-800 text-zinc-50"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+            aria-pressed={viewMode === "3d"}
+          >
+            3D
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-wrap gap-2">
@@ -366,31 +426,41 @@ function ArgusGraphCanvas() {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[1fr_240px]">
-        <div className="h-[min(58vh,440px)] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onSelectionChange={onSelectionChange}
-            onPaneClick={() => setSelectedIds([])}
-            onNodeDragStop={onNodeDragStop}
-            nodeTypes={nodeTypes}
-            selectionOnDrag
-            multiSelectionKeyCode={["Meta", "Control", "Shift"]}
-            fitView
-            proOptions={{ hideAttribution: true }}
-            className="bg-zinc-950"
-          >
-            <Background gap={18} color="#27272a" />
-            <Controls className="!border-zinc-700 !bg-zinc-900 !fill-zinc-300" />
-            <MiniMap
-              className="!border-zinc-700 !bg-zinc-900"
-              nodeColor="#3f3f46"
-              maskColor="rgba(9,9,11,0.7)"
+        <div className="h-[min(58vh,440px)] min-h-[280px] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950">
+          {viewMode === "2d" ? (
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onConnect={onConnect}
+              onSelectionChange={onSelectionChange}
+              onPaneClick={() => setSelectedIds([])}
+              onNodeDragStop={onNodeDragStop}
+              nodeTypes={nodeTypes}
+              selectionOnDrag
+              multiSelectionKeyCode={["Meta", "Control", "Shift"]}
+              fitView
+              proOptions={{ hideAttribution: true }}
+              className="bg-zinc-950"
+            >
+              <Background gap={18} color="#27272a" />
+              <Controls className="!border-zinc-700 !bg-zinc-900 !fill-zinc-300" />
+              <MiniMap
+                className="!border-zinc-700 !bg-zinc-900"
+                nodeColor="#3f3f46"
+                maskColor="rgba(9,9,11,0.7)"
+              />
+            </ReactFlow>
+          ) : (
+            <ArgusGraph3DView
+              units={visibleUnits}
+              relations={graph.relations}
+              repo={chaosRepo}
+              selectedId={selectedId3d}
+              onSelect={(id) => setSelectedIds(id ? [id] : [])}
             />
-          </ReactFlow>
+          )}
         </div>
 
         <ArgusSelectionPanel

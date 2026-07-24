@@ -61,6 +61,7 @@ export type V2OrgShellProps = {
   linkedTopics: string[];
   runbooks?: Runbook[];
   progressRecords?: RunbookProgress[];
+  peerOrganizations?: Array<{ id: string; name: string }>;
 };
 
 function initials(name: string): string {
@@ -95,6 +96,7 @@ export function V2OrgShell(props: V2OrgShellProps) {
     linkedTopics,
     runbooks = [],
     progressRecords = [],
+    peerOrganizations = [],
   } = props;
 
   const morePeople = Math.max(0, linkedPeople.length - 4);
@@ -303,6 +305,7 @@ export function V2OrgShell(props: V2OrgShellProps) {
           entityId={entity.id}
           linkedRunbooks={runbooks}
           progressRecords={progressRecords}
+          peerOrganizations={peerOrganizations}
         />
       ) : null}
 

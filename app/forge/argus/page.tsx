@@ -18,7 +18,7 @@ function ArgusTreemapInner() {
 
 /**
  * CHANGE 24-17 — Argus macro view = Realm Treemap.
- * Unit engine graph lives at /forge/argus/units.
+ * Unit engine graph (2D + 3D) lives at /forge/argus/units.
  */
 export default function ForgeArgusPage() {
   return (

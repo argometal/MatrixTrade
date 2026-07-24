@@ -15,7 +15,7 @@ export default function ForgeArgusUnitsPage() {
           ← Realm Treemap
         </Link>
         {" · "}
-        Unit graph (engine prototype) — Fragments as nodes, not Chaos Decks.
+        Unit graph (2D + 3D) — Fragments as nodes, not Chaos Decks.
       </p>
       <ArgusGraphView />
     </div>
