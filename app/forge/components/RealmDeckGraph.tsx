@@ -402,7 +402,7 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
                     onChange={(e) => {
                       const value = e.target.value;
                       if (!value) return;
-                      handleMoveDeck(value === "unassigned" ? "" : value);
+                      handleMoveDeck(value);
                       e.target.value = "";
                     }}
                   >
