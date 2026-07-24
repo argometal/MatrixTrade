@@ -50,7 +50,8 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 
 | Route | Status |
 |-------|--------|
-| `/forge` | Home overview (ArgusForge) or MTA overview when system=MTA |
+| `/forge` | **Home MapTree of Realms** (CHANGE 24-0F) — folders as Realms; tap → Realm graph |
+| `/forge/realm/[realmId]` | Realm graph — Chaos Deck nodes (React Flow); `unassigned` for root decks |
 | `/forge/library` | Library — AF repository browse / MTA library links |
 | `/forge/active` | Active — AF active repo / MTA active deep-links |
 | `/forge/archive` | Archive — AF archive repo / MTA archive deep-links |

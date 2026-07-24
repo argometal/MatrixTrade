@@ -13,6 +13,7 @@ import {
   itemHref,
   listItemsInDeck,
   moveContentOrder,
+  recordDeckOpen,
   removeContent,
   renameDeck,
   restoreDeck,
@@ -20,8 +21,10 @@ import {
   setMarkedForLater,
   viewHref,
 } from "@/lib/argusforge/af03-repo-store";
+import { UNASSIGNED_REALM_ID } from "@/lib/argusforge/af03-repo-types";
 import { createVaultPrep } from "@/lib/argusforge/af03-vault-prep-store";
 import type { Af03ContentItem, Af03RepoState } from "@/lib/argusforge/af03-repo-types";
+import { realmHref } from "@/lib/argusforge/af03-realm-map";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
 import { CreationMenu, type CreateAction } from "./CreationMenu";
 
@@ -65,8 +68,9 @@ export function DeckInternalView({ deckId }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    setState(emptyOrSeedRepo());
-  }, []);
+    const repo = recordDeckOpen(emptyOrSeedRepo(), deckId);
+    setState(repo);
+  }, [deckId]);
 
   const deck = state ? getDeck(state, deckId) : undefined;
   const items = useMemo(() => (state ? listItemsInDeck(state, deckId) : []), [state, deckId]);
@@ -74,9 +78,8 @@ export function DeckInternalView({ deckId }: Props) {
   const layout = state?.prefs.deckInternalLayout ?? "list";
 
   function parentHref(): string {
-    if (!deck) return "/forge/active";
-    const base = deck.view === "active" ? "/forge/active" : "/forge/archive";
-    return deck.folderId ? `${base}/f/${deck.folderId}` : base;
+    if (!deck) return "/forge";
+    return realmHref(deck.folderId ?? UNASSIGNED_REALM_ID);
   }
 
   function toggleSelect(id: string) {

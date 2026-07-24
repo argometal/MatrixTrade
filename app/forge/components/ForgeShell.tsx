@@ -32,7 +32,8 @@ const ARGUS_SECONDARY: {
     match: (p) =>
       p.startsWith("/forge/active") ||
       p.startsWith("/forge/library") ||
-      p.startsWith("/forge/deck"),
+      p.startsWith("/forge/deck") ||
+      p.startsWith("/forge/realm"),
   },
   {
     href: "/forge/archive",
@@ -45,6 +46,7 @@ function sectionTitle(pathname: string, systemLabel: string): string {
   if (pathname.endsWith("/view") || pathname.includes("/view")) return "Viewer";
   if (pathname.includes("/item/")) return "Editor";
   if (pathname.startsWith("/forge/deck/")) return "Chaos Deck";
+  if (pathname.startsWith("/forge/realm/")) return "Realm";
   if (pathname.startsWith("/forge/argus")) return "Argus";
   if (pathname.startsWith("/forge/focus")) return "Focus";
   if (pathname.startsWith("/forge/chaos")) return "Capture (proto)";
@@ -64,6 +66,7 @@ function isArgusSurface(pathname: string): boolean {
     pathname.startsWith("/forge/archive") ||
     pathname.startsWith("/forge/library") ||
     pathname.startsWith("/forge/deck") ||
+    pathname.startsWith("/forge/realm") ||
     pathname.startsWith("/forge/argus")
   );
 }

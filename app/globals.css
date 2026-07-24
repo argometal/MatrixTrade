@@ -11,6 +11,25 @@ body {
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
 
+/* CHANGE 24-0F — subtle activity pulse for Realm graph deck nodes */
+@keyframes realmDeckPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.03);
+    filter: brightness(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ARGUS v2 — thin dark scrollbars (Gmail / Linear pattern) */
 .argus-v2 .argus-v2-scroll,
 .argus-v2.argus-v2-scroll,
