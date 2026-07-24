@@ -6,12 +6,30 @@ export function normRunbookLine(line: string): string {
     .trim();
 }
 
+/** `# Section` / `## Section` → section title; otherwise null. */
+export function parseRunbookSectionTitle(line: string): string | null {
+  const match = String(line || "")
+    .trim()
+    .match(/^#{1,6}\s+(.+)$/);
+  if (!match) return null;
+  const title = normRunbookLine(match[1]);
+  return title || null;
+}
+
 export function runbookStamp(): string {
   return new Date().toISOString().slice(0, 19);
 }
 
 export function newRunbookItemId(prefix = "i"): string {
   return `${prefix}${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+}
+
+export function isRunbookCheck(item: RunbookItem): boolean {
+  return item.type === "item";
+}
+
+export function isRunbookSection(item: RunbookItem): boolean {
+  return item.type === "section";
 }
 
 export function normalizeRunbookSubtasks(subtasks: RunbookSubtask[] | undefined): RunbookSubtask[] {
@@ -37,6 +55,17 @@ export function createRunbookCard(text: string): RunbookItem {
   };
 }
 
+export function createRunbookSection(text: string): RunbookItem {
+  return {
+    id: newRunbookItemId("sec_"),
+    text: normRunbookLine(text),
+    done: false,
+    doneAt: "",
+    type: "section",
+    subtasks: [],
+  };
+}
+
 export function createRunbookSubtask(text: string): RunbookSubtask {
   return {
     id: newRunbookItemId("st_"),
@@ -46,7 +75,9 @@ export function createRunbookSubtask(text: string): RunbookSubtask {
   };
 }
 
-/** One line = card; blank line = section separator. */
+/**
+ * One line = check; blank line = separator; `# Title` = section header.
+ */
 export function buildRunbookItemsFromText(raw: string): RunbookItem[] {
   const lines = String(raw || "").split("\n");
   const items: RunbookItem[] = [];
@@ -60,6 +91,18 @@ export function buildRunbookItemsFromText(raw: string): RunbookItem[] {
         done: false,
         doneAt: "",
         type: "sep",
+        subtasks: [],
+      });
+      return;
+    }
+    const sectionTitle = parseRunbookSectionTitle(trimmed);
+    if (sectionTitle) {
+      items.push({
+        id: newRunbookItemId(`sec${index}_`),
+        text: sectionTitle,
+        done: false,
+        doneAt: "",
+        type: "section",
         subtasks: [],
       });
       return;
@@ -79,6 +122,17 @@ export function buildRunbookItemsFromText(raw: string): RunbookItem[] {
   return items;
 }
 
+/** Serialize items back to bulk text (`#` for sections, blank for seps). */
+export function runbookItemsToText(items: RunbookItem[]): string {
+  return items
+    .map((item) => {
+      if (item.type === "sep") return "";
+      if (item.type === "section") return `# ${item.text}`;
+      return item.text;
+    })
+    .join("\n");
+}
+
 export function runbookCardProgress(item: RunbookItem): { total: number; done: number; open: number } {
   const subtasks = item.subtasks ?? [];
   const done = subtasks.filter((subtask) => subtask.done).length;
@@ -86,7 +140,7 @@ export function runbookCardProgress(item: RunbookItem): { total: number; done: n
 }
 
 export function runbookProgress(items: RunbookItem[]): { total: number; done: number; open: number } {
-  const actionable = items.filter((item) => item.type !== "sep");
+  const actionable = items.filter(isRunbookCheck);
   const done = actionable.filter((item) => item.done).length;
   return { total: actionable.length, done, open: actionable.length - done };
 }
@@ -134,7 +188,7 @@ export function flattenRunbookSubtasks(items: RunbookItem[]): RunbookItem[] {
   const flat: RunbookItem[] = [];
 
   for (const item of items) {
-    if (item.type === "sep") {
+    if (item.type !== "item") {
       flat.push({ ...item, subtasks: [] });
       continue;
     }
@@ -211,7 +265,7 @@ export function seedProgressFromTemplateItems(
 ): RunbookProgress {
   const checks: RunbookProgress["checks"] = {};
   for (const item of runbook.items) {
-    if (item.type === "sep") continue;
+    if (!isRunbookCheck(item)) continue;
     if (item.done) {
       checks[item.id] = { done: true, doneAt: item.doneAt || runbookStamp() };
     }
@@ -224,7 +278,7 @@ export function seedProgressFromTemplateItems(
       }
     }
   }
-  const actionable = runbook.items.filter((item) => item.type !== "sep");
+  const actionable = runbook.items.filter(isRunbookCheck);
   const allDone =
     actionable.length > 0 && actionable.every((item) => checks[item.id]?.done);
   return {
@@ -241,4 +295,95 @@ export function scopedRunbookProgress(
   items: RunbookItem[]
 ): { total: number; done: number; open: number } {
   return runbookProgress(items);
+}
+
+/** [start, end) covering a section header and its following checks. */
+export function runbookSectionBlockRange(
+  items: RunbookItem[],
+  sectionId: string
+): { start: number; end: number } | null {
+  const start = items.findIndex((item) => item.id === sectionId && item.type === "section");
+  if (start < 0) return null;
+  let end = start + 1;
+  while (end < items.length && items[end].type === "item") {
+    end += 1;
+  }
+  return { start, end };
+}
+
+/** Move a section header together with its following checks. */
+export function moveRunbookSectionBlock(
+  items: RunbookItem[],
+  sectionId: string,
+  direction: -1 | 1
+): RunbookItem[] {
+  const range = runbookSectionBlockRange(items, sectionId);
+  if (!range) return items;
+  const block = items.slice(range.start, range.end);
+
+  if (direction === -1) {
+    let prevSectionIdx = -1;
+    for (let i = range.start - 1; i >= 0; i -= 1) {
+      if (items[i].type === "section") {
+        prevSectionIdx = i;
+        break;
+      }
+    }
+    if (prevSectionIdx < 0) return items;
+    const prevRange = runbookSectionBlockRange(items, items[prevSectionIdx].id);
+    if (!prevRange) return items;
+    return [
+      ...items.slice(0, prevRange.start),
+      ...block,
+      ...items.slice(prevRange.start, range.start),
+      ...items.slice(range.end),
+    ];
+  }
+
+  let nextSectionIdx = -1;
+  for (let i = range.end; i < items.length; i += 1) {
+    if (items[i].type === "section") {
+      nextSectionIdx = i;
+      break;
+    }
+  }
+  if (nextSectionIdx < 0) return items;
+  const nextRange = runbookSectionBlockRange(items, items[nextSectionIdx].id);
+  if (!nextRange) return items;
+  return [
+    ...items.slice(0, range.start),
+    ...items.slice(range.end, nextRange.end),
+    ...block,
+    ...items.slice(nextRange.end),
+  ];
+}
+
+/** Owning section id for a check (nearest preceding section), or null. */
+export function runbookItemSectionId(items: RunbookItem[], itemId: string): string | null {
+  const index = items.findIndex((item) => item.id === itemId);
+  if (index < 0) return null;
+  for (let i = index; i >= 0; i -= 1) {
+    if (items[i].type === "section") return items[i].id;
+    if (items[i].type === "sep" && i < index) return null;
+  }
+  return null;
+}
+
+export function canMoveRunbookSection(
+  items: RunbookItem[],
+  sectionId: string,
+  direction: -1 | 1
+): boolean {
+  const range = runbookSectionBlockRange(items, sectionId);
+  if (!range) return false;
+  if (direction === -1) {
+    for (let i = range.start - 1; i >= 0; i -= 1) {
+      if (items[i].type === "section") return true;
+    }
+    return false;
+  }
+  for (let i = range.end; i < items.length; i += 1) {
+    if (items[i].type === "section") return true;
+  }
+  return false;
 }

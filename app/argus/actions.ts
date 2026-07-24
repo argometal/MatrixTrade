@@ -66,8 +66,11 @@ import type { UnifiedCreatePayload, UnifiedCreateResult } from "@/lib/argus/crea
 import {
   buildRunbookItemsFromText,
   createRunbookCard,
+  createRunbookSection,
   createRunbookSubtask,
   flattenRunbookSubtasks,
+  isRunbookCheck,
+  moveRunbookSectionBlock,
   newRunbookItemId,
   normalizeRunbookSubtasks,
   runbookStamp,
@@ -1638,7 +1641,7 @@ export async function checkAllRunbookItemsScopedAction(
   const stamp = runbookStamp();
   const checks = { ...progress.checks };
   for (const item of runbook.items) {
-    if (item.type === "sep") continue;
+    if (!isRunbookCheck(item)) continue;
     checks[item.id] = { done: true, doneAt: stamp };
   }
   await upsertRunbookProgress({ ...progress, checks, closed: true });
@@ -1692,7 +1695,7 @@ export async function addRunbookSubtaskAction(
 
   let found = false;
   const items = runbook.items.map((item) => {
-    if (item.id !== itemId || item.type === "sep") return item;
+    if (item.id !== itemId || !isRunbookCheck(item)) return item;
     found = true;
     return {
       ...item,
@@ -1746,7 +1749,7 @@ export async function removeDoneRunbookItemsAction(runbookId: string): Promise<v
     throw new ArgusPersistenceError("validation", "Runbook not found.");
   }
 
-  const items = runbook.items.filter((item) => item.type === "sep" || !item.done);
+  const items = runbook.items.filter((item) => !isRunbookCheck(item) || !item.done);
   await updateRunbook(runbookId, { items });
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
 }
@@ -1759,7 +1762,7 @@ export async function uncheckAllRunbookItemsAction(runbookId: string): Promise<v
   }
 
   const items = runbook.items.map((item) =>
-    item.type === "sep" ? item : { ...item, done: false, doneAt: "" }
+    isRunbookCheck(item) ? { ...item, done: false, doneAt: "" } : item
   );
   await updateRunbook(runbookId, { items });
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
@@ -1774,7 +1777,7 @@ export async function checkAllRunbookItemsAction(runbookId: string): Promise<voi
 
   const stamp = runbookStamp();
   const items = runbook.items.map((item) =>
-    item.type === "sep" ? item : { ...item, done: true, doneAt: stamp }
+    isRunbookCheck(item) ? { ...item, done: true, doneAt: stamp } : item
   );
   await updateRunbook(runbookId, { items });
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
@@ -1793,7 +1796,7 @@ export async function renameRunbookItemAction(
 
   const trimmed = text.trim();
   if (!trimmed) {
-    throw new ArgusPersistenceError("validation", "Check text is required.");
+    throw new ArgusPersistenceError("validation", "Text is required.");
   }
 
   let found = false;
@@ -1804,10 +1807,69 @@ export async function renameRunbookItemAction(
   });
 
   if (!found) {
-    throw new ArgusPersistenceError("validation", "Check not found.");
+    throw new ArgusPersistenceError("validation", "Row not found.");
   }
 
   await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+/** Convert a check ↔ section header (or insert a new section). */
+export async function setRunbookItemTypeAction(
+  runbookId: string,
+  itemId: string,
+  type: "item" | "section"
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  let found = false;
+  const items = runbook.items.map((item) => {
+    if (item.id !== itemId || item.type === "sep") return item;
+    found = true;
+    if (type === "section") {
+      return {
+        ...item,
+        type: "section" as const,
+        done: false,
+        doneAt: "",
+        subtasks: [],
+        text: item.text.trim() || "Section",
+      };
+    }
+    return {
+      ...item,
+      type: "item" as const,
+      done: false,
+      doneAt: "",
+      subtasks: [],
+    };
+  });
+
+  if (!found) {
+    throw new ArgusPersistenceError("validation", "Row not found.");
+  }
+
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+export async function addRunbookSectionAction(runbookId: string, text: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const section = createRunbookSection(text);
+  if (!section.text) {
+    throw new ArgusPersistenceError("validation", "Section title is required.");
+  }
+
+  await updateRunbook(runbookId, { items: [...runbook.items, section] });
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
 }
 
@@ -1894,6 +1956,24 @@ export async function moveRunbookItemAction(
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
 }
 
+/** Move a section header and its following checks as one block. */
+export async function moveRunbookSectionAction(
+  runbookId: string,
+  sectionId: string,
+  direction: -1 | 1
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const items = moveRunbookSectionBlock(runbook.items, sectionId, direction);
+  if (items === runbook.items) return;
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
 function normalizeImportedRunbookItems(raw: unknown): RunbookItem[] {
   if (!Array.isArray(raw)) {
     throw new ArgusPersistenceError("validation", "Import error: items must be an array.");
@@ -1901,15 +1981,16 @@ function normalizeImportedRunbookItems(raw: unknown): RunbookItem[] {
 
   return raw.map((entry, index) => {
     const item = entry as Record<string, unknown>;
-    const type = item.type === "sep" ? "sep" : "item";
+    const type =
+      item.type === "section" ? "section" : item.type === "sep" ? "sep" : "item";
     const text = String(item.text ?? "").trim();
     return {
       id: String(item.id || newRunbookItemId(`imp${index}_`)),
       text,
-      done: !!item.done,
-      doneAt: String(item.doneAt ?? ""),
+      done: type === "item" ? !!item.done : false,
+      doneAt: type === "item" ? String(item.doneAt ?? "") : "",
       type,
-      subtasks: normalizeRunbookSubtasks(item.subtasks as RunbookItem["subtasks"]),
+      subtasks: type === "item" ? normalizeRunbookSubtasks(item.subtasks as RunbookItem["subtasks"]) : [],
     };
   });
 }

@@ -1,4 +1,4 @@
-import { normRunbookLine } from "./runbook-helpers";
+import { normRunbookLine, parseRunbookSectionTitle } from "./runbook-helpers";
 import type { RunbookItemType } from "./types";
 
 export type RunbookBulkPreviewLine = {
@@ -6,7 +6,7 @@ export type RunbookBulkPreviewLine = {
   type: RunbookItemType;
 };
 
-/** Parse pasted AI/list text into preview lines (1 line = card, blank = separator). */
+/** Parse pasted AI/list text into preview lines (1 line = check, `#` = section, blank = sep). */
 export function parseRunbookBulkText(raw: string): RunbookBulkPreviewLine[] {
   const lines = String(raw || "").split("\n");
   const result: RunbookBulkPreviewLine[] = [];
@@ -15,6 +15,11 @@ export function parseRunbookBulkText(raw: string): RunbookBulkPreviewLine[] {
     const trimmed = line.trim();
     if (!trimmed) {
       result.push({ text: "", type: "sep" });
+      return;
+    }
+    const sectionTitle = parseRunbookSectionTitle(trimmed);
+    if (sectionTitle) {
+      result.push({ text: sectionTitle, type: "section" });
       return;
     }
     const text = normRunbookLine(line);
@@ -27,5 +32,11 @@ export function parseRunbookBulkText(raw: string): RunbookBulkPreviewLine[] {
 }
 
 export function runbookBulkPreviewToText(lines: RunbookBulkPreviewLine[]): string {
-  return lines.map((line) => (line.type === "sep" ? "" : line.text)).join("\n");
+  return lines
+    .map((line) => {
+      if (line.type === "sep") return "";
+      if (line.type === "section") return `# ${line.text}`;
+      return line.text;
+    })
+    .join("\n");
 }

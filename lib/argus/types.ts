@@ -122,7 +122,8 @@ export interface InboxItem {
   deletedAt?: string;
 }
 
-export type RunbookItemType = "item" | "sep";
+/** item = check; section = named category header; sep = blank divider (legacy). */
+export type RunbookItemType = "item" | "section" | "sep";
 
 /** Optional nested check under a checklist item (legacy; prefer flat checks). */
 export interface RunbookSubtask {

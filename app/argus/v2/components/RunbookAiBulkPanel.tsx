@@ -78,8 +78,8 @@ export function RunbookAiBulkPanel({ runbookId }: { runbookId: string }) {
       {open ? (
         <div className="mt-3 rounded-2xl border border-zinc-800/80 bg-zinc-900/50 p-4">
           <p className="mb-3 text-xs text-zinc-500">
-            Paste AI-generated list output (one line per card). Preview all lines, then append or
-            replace — nothing writes until you confirm.
+            Paste AI-generated list output (one line per check; <code className="text-zinc-400"># Title</code> for
+            sections). Preview all lines, then append or replace — nothing writes until you confirm.
           </p>
 
           {error ? (
@@ -103,7 +103,7 @@ export function RunbookAiBulkPanel({ runbookId }: { runbookId: string }) {
               setMessage(null);
             }}
             rows={8}
-            placeholder={"• Rig up BOP\n• Pressure test\n• (blank line = section break)"}
+            placeholder={"• Confirm stakeholders\n• Review scope\n\n# Follow-up\n• Send summary"}
             className="w-full rounded-xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 text-xs text-zinc-300 placeholder:text-zinc-600 focus:border-lime-500/40 focus:outline-none"
           />
 
@@ -143,6 +143,13 @@ export function RunbookAiBulkPanel({ runbookId }: { runbookId: string }) {
               {preview.map((line, index) =>
                 line.type === "sep" ? (
                   <li key={`sep-${index}`} className="border-t border-zinc-700/70 pt-1" aria-hidden />
+                ) : line.type === "section" ? (
+                  <li
+                    key={`sec-${index}`}
+                    className="pt-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-500"
+                  >
+                    {line.text}
+                  </li>
                 ) : (
                   <li key={`item-${index}`} className="text-xs text-zinc-300">
                     {line.text}
