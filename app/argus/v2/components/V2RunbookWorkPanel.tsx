@@ -1,6 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition, type FormEvent, type KeyboardEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+  type DragEvent,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import { useRouter } from "next/navigation";
 import type { Runbook, RunbookItem } from "@/lib/argus/types";
 import {
@@ -8,10 +17,11 @@ import {
   appendRunbookCardsFromTextAction,
   checkAllRunbookItemsAction,
   checkAllRunbookItemsScopedAction,
+  copyRunbookItemsToRunbookAction,
   flattenRunbookSubtasksAction,
   importRunbookJsonAction,
-  moveRunbookItemAction,
-  moveRunbookSectionAction,
+  moveRunbookItemsToRunbookAction,
+  placeRunbookItemAtAction,
   rebuildRunbookFromTextAction,
   removeDoneRunbookItemsAction,
   renameRunbookItemAction,
@@ -23,15 +33,17 @@ import {
   uncheckAllRunbookItemsScopedAction,
 } from "@/app/argus/actions";
 import {
-  canMoveRunbookSection,
   isRunbookCheck,
   runbookHasNestedSubtasks,
   runbookItemSectionId,
   runbookItemsToText,
   runbookProgress,
+  runbookSectionChildStats,
 } from "@/lib/argus/runbook-helpers";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { RunbookAiBulkPanel } from "./RunbookAiBulkPanel";
+
+export type RunbookPeerList = { id: string; title: string };
 
 function toolbarButtonClass(variant: "default" | "danger" | "primary" = "default") {
   if (variant === "danger") {
@@ -115,181 +127,134 @@ function InlineRename({
   );
 }
 
-function SectionHeaderRow({
-  item,
-  collapsed,
+function RowActionMenu({
+  open,
+  onToggle,
   disabled,
-  editable,
-  canMoveUp,
-  canMoveDown,
-  onToggleCollapse,
-  onRename,
-  onMove,
-  onMakeCheck,
+  isSection,
+  peerLists,
+  onTurnIntoSection,
+  onTurnIntoCheck,
+  onCopyToList,
+  onMoveToList,
 }: {
-  item: RunbookItem;
-  collapsed: boolean;
+  open: boolean;
+  onToggle: () => void;
   disabled: boolean;
-  editable: boolean;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-  onToggleCollapse: () => void;
-  onRename: (text: string) => void;
-  onMove: (direction: -1 | 1) => void;
-  onMakeCheck: () => void;
+  isSection: boolean;
+  peerLists: RunbookPeerList[];
+  onTurnIntoSection: () => void;
+  onTurnIntoCheck: () => void;
+  onCopyToList: (targetId: string) => void;
+  onMoveToList: (targetId: string) => void;
 }) {
+  const [submenu, setSubmenu] = useState<"copy" | "move" | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) setSubmenu(null);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDoc(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) onToggle();
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [open, onToggle]);
+
   return (
-    <div className="group flex items-center gap-2 border-b border-zinc-800/80 py-2">
+    <div ref={rootRef} className="relative shrink-0">
       <button
         type="button"
-        onClick={onToggleCollapse}
-        className="runbook-no-print shrink-0 rounded px-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
-        aria-label={collapsed ? "Expand section" : "Collapse section"}
-        aria-expanded={!collapsed}
+        disabled={disabled}
+        onClick={onToggle}
+        className="runbook-no-print rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200 disabled:opacity-40"
+        aria-label="Row actions"
+        aria-expanded={open}
       >
-        {collapsed ? "▶" : "▼"}
+        ···
       </button>
-      <div className="min-w-0 flex-1">
-        {editable ? (
-          <InlineRename
-            value={item.text}
-            disabled={disabled}
-            onSave={onRename}
-            className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
-          />
-        ) : (
-          <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-            {item.text}
-          </p>
-        )}
-      </div>
-      {editable ? (
-        <div className="runbook-no-print flex shrink-0 items-center gap-0.5 opacity-70 transition group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
-          <button
-            type="button"
-            disabled={disabled || !canMoveUp}
-            onClick={() => onMove(-1)}
-            className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300 disabled:opacity-30"
-            aria-label="Move section up"
-          >
-            ↑
-          </button>
-          <button
-            type="button"
-            disabled={disabled || !canMoveDown}
-            onClick={() => onMove(1)}
-            className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300 disabled:opacity-30"
-            aria-label="Move section down"
-          >
-            ↓
-          </button>
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={onMakeCheck}
-            className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
-            title="Convert to check"
-          >
-            Check
-          </button>
+      {open ? (
+        <div className="absolute right-0 z-30 mt-1 min-w-[11rem] rounded-xl border border-zinc-700 bg-zinc-950 py-1 shadow-xl">
+          {submenu === null ? (
+            <>
+              {isSection ? (
+                <button
+                  type="button"
+                  className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+                  onClick={() => {
+                    onTurnIntoCheck();
+                    onToggle();
+                  }}
+                >
+                  Turn into check
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+                  onClick={() => {
+                    onTurnIntoSection();
+                    onToggle();
+                  }}
+                >
+                  Turn into section
+                </button>
+              )}
+              <button
+                type="button"
+                className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40"
+                disabled={peerLists.length === 0}
+                onClick={() => setSubmenu("copy")}
+              >
+                Copy to list…
+              </button>
+              <button
+                type="button"
+                className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40"
+                disabled={peerLists.length === 0}
+                onClick={() => setSubmenu("move")}
+              >
+                Move to list…
+              </button>
+              {peerLists.length === 0 ? (
+                <p className="border-t border-zinc-800 px-3 py-2 text-[10px] text-zinc-600">
+                  No other lists linked here.
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="block w-full px-3 py-1.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 hover:bg-zinc-800"
+                onClick={() => setSubmenu(null)}
+              >
+                ← Back
+              </button>
+              <p className="px-3 pb-1 text-[10px] text-zinc-500">
+                {submenu === "copy" ? "Copy to" : "Move to"}
+              </p>
+              {peerLists.map((list) => (
+                <button
+                  key={list.id}
+                  type="button"
+                  className="block w-full truncate px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+                  onClick={() => {
+                    if (submenu === "copy") onCopyToList(list.id);
+                    else onMoveToList(list.id);
+                    onToggle();
+                  }}
+                >
+                  {list.title}
+                </button>
+              ))}
+            </>
+          )}
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function CheckRow({
-  item,
-  hiddenOnScreen,
-  disabled,
-  editable,
-  canMoveUp,
-  canMoveDown,
-  onToggle,
-  onRename,
-  onMove,
-  onMakeSection,
-}: {
-  item: RunbookItem;
-  hiddenOnScreen: boolean;
-  disabled: boolean;
-  editable: boolean;
-  canMoveUp: boolean;
-  canMoveDown: boolean;
-  onToggle: (done: boolean) => void;
-  onRename: (text: string) => void;
-  onMove: (direction: -1 | 1) => void;
-  onMakeSection: () => void;
-}) {
-  const subtaskCount = item.subtasks?.length ?? 0;
-
-  return (
-    <div className={hiddenOnScreen ? "hidden print:block" : ""}>
-      <div className="group flex items-start gap-3 border-b border-zinc-900/80 py-2.5">
-        <input
-          type="checkbox"
-          checked={item.done}
-          disabled={disabled}
-          onChange={(event) => onToggle(event.target.checked)}
-          className="runbook-no-print mt-0.5 shrink-0"
-        />
-        <div className="min-w-0 flex-1 text-left">
-          {editable ? (
-            <InlineRename
-              value={item.text}
-              disabled={disabled}
-              onSave={onRename}
-              className={`text-sm leading-relaxed ${
-                item.done ? "text-zinc-500 line-through" : "text-zinc-100"
-              }`}
-            />
-          ) : (
-            <p
-              className={`text-sm leading-relaxed ${
-                item.done ? "text-zinc-500 line-through" : "text-zinc-100"
-              }`}
-            >
-              {item.text}
-            </p>
-          )}
-          {subtaskCount > 0 ? (
-            <span className="mt-1 inline-block text-[10px] text-amber-300">
-              {subtaskCount} nested subtask{subtaskCount === 1 ? "" : "s"}
-            </span>
-          ) : null}
-        </div>
-        {editable ? (
-          <div className="runbook-no-print flex shrink-0 items-center gap-0.5 opacity-70 transition group-hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
-            <button
-              type="button"
-              disabled={disabled || !canMoveUp}
-              onClick={() => onMove(-1)}
-              className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300 disabled:opacity-30"
-              aria-label="Move up"
-            >
-              ↑
-            </button>
-            <button
-              type="button"
-              disabled={disabled || !canMoveDown}
-              onClick={() => onMove(1)}
-              className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300 disabled:opacity-30"
-              aria-label="Move down"
-            >
-              ↓
-            </button>
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={onMakeSection}
-              className="rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
-              title="Make section header"
-            >
-              Section
-            </button>
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }
@@ -301,15 +266,16 @@ export function V2RunbookWorkPanel({
   scopeEntityId,
   closed = false,
   executeMode = false,
+  peerLists = [],
 }: {
   runbook: Runbook;
   onBack?: () => void;
   backLabel?: string;
-  /** When set, check/uncheck persists per this entity (Project / Topic / Event / Org). */
   scopeEntityId?: string;
   closed?: boolean;
-  /** Hide template rebuild tools — focus on executing checks. */
   executeMode?: boolean;
+  /** Other runbooks available for Copy/Move to list. */
+  peerLists?: RunbookPeerList[];
 }) {
   const router = useRouter();
   const importRef = useRef<HTMLInputElement>(null);
@@ -320,6 +286,9 @@ export function V2RunbookWorkPanel({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(runbook.title);
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -328,6 +297,10 @@ export function V2RunbookWorkPanel({
 
   const progress = useMemo(() => runbookProgress(runbook.items), [runbook.items]);
   const hasNestedSubtasks = useMemo(() => runbookHasNestedSubtasks(runbook.items), [runbook.items]);
+  const peers = useMemo(
+    () => peerLists.filter((list) => list.id !== runbook.id),
+    [peerLists, runbook.id]
+  );
 
   const hasVisibleCards = useMemo(() => {
     if (showDone) return runbook.items.some(isRunbookCheck);
@@ -352,20 +325,21 @@ export function V2RunbookWorkPanel({
     run(() => toggleRunbookItemAction(runbook.id, itemId, done, scopeEntityId));
   }
 
-  function handleMove(itemId: string, direction: -1 | 1) {
-    run(() => moveRunbookItemAction(runbook.id, itemId, direction));
-  }
-
-  function handleMoveSection(sectionId: string, direction: -1 | 1) {
-    run(() => moveRunbookSectionAction(runbook.id, sectionId, direction));
-  }
-
   function handleRenameItem(itemId: string, text: string) {
     run(() => renameRunbookItemAction(runbook.id, itemId, text));
   }
 
   function handleSetType(itemId: string, type: "item" | "section") {
     run(() => setRunbookItemTypeAction(runbook.id, itemId, type));
+  }
+
+  function handleCopyToList(itemId: string, targetId: string) {
+    run(() => copyRunbookItemsToRunbookAction(runbook.id, itemId, targetId), "Copied to list.");
+  }
+
+  function handleMoveToList(itemId: string, targetId: string) {
+    if (!window.confirm("Move this row (and section children, if any) to the other list?")) return;
+    run(() => moveRunbookItemsToRunbookAction(runbook.id, itemId, targetId), "Moved to list.");
   }
 
   function handleAddSection() {
@@ -513,12 +487,44 @@ export function V2RunbookWorkPanel({
     }, "Title updated.");
   }
 
-  function isCollapsedUnderSection(item: RunbookItem): boolean {
-    if (item.type !== "item") return false;
+  function isCollapsedAway(item: RunbookItem): boolean {
+    if (item.type === "section") return false;
     const sectionId = runbookItemSectionId(runbook.items, item.id);
     if (!sectionId) return false;
     return !!collapsedSections[sectionId];
   }
+
+  function onDragStart(event: DragEvent, itemId: string) {
+    if (executeMode) return;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", itemId);
+    setDraggingId(itemId);
+    setMenuId(null);
+  }
+
+  function onDragOverRow(event: DragEvent, index: number) {
+    if (executeMode || !draggingId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    setDropIndex(index);
+  }
+
+  function onDropRow(event: DragEvent, index: number) {
+    if (executeMode) return;
+    event.preventDefault();
+    const sourceId = event.dataTransfer.getData("text/plain") || draggingId;
+    setDraggingId(null);
+    setDropIndex(null);
+    if (!sourceId) return;
+    run(() => placeRunbookItemAtAction(runbook.id, sourceId, index));
+  }
+
+  function onDragEnd() {
+    setDraggingId(null);
+    setDropIndex(null);
+  }
+
+  const canEdit = !executeMode;
 
   return (
     <div className="runbook-work-panel space-y-4">
@@ -552,7 +558,7 @@ export function V2RunbookWorkPanel({
       ) : null}
 
       <div className="runbook-no-print flex flex-wrap items-center gap-2 rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
-        {editingTitle && !executeMode ? (
+        {editingTitle && canEdit ? (
           <form onSubmit={handleSaveTitle} className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <input
               autoFocus
@@ -579,7 +585,7 @@ export function V2RunbookWorkPanel({
         ) : (
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="truncate text-sm font-semibold text-zinc-200">{runbook.title}</span>
-            {!executeMode ? (
+            {canEdit ? (
               <button
                 type="button"
                 onClick={() => setEditingTitle(true)}
@@ -598,7 +604,7 @@ export function V2RunbookWorkPanel({
         <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-500">{progress.done} done</span>
       </div>
 
-      {!executeMode ? (
+      {canEdit ? (
         <div className="runbook-no-print rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
           <span className="mb-3 block text-xs font-medium uppercase tracking-wide text-zinc-500">Bulk input</span>
           <div className="space-y-3">
@@ -664,7 +670,7 @@ export function V2RunbookWorkPanel({
             {closed ? "Reopen" : "Mark closed"}
           </button>
         ) : null}
-        {!executeMode ? (
+        {canEdit ? (
           <button type="button" disabled={isPending} onClick={handleRemoveDone} className={toolbarButtonClass("danger")}>
             Remove accomplished
           </button>
@@ -673,7 +679,7 @@ export function V2RunbookWorkPanel({
         <button type="button" disabled={isPending} onClick={handleExportJson} className={toolbarButtonClass()}>
           Export JSON
         </button>
-        {!executeMode ? (
+        {canEdit ? (
           <>
             <button type="button" disabled={isPending} onClick={handleImportClick} className={toolbarButtonClass()}>
               Import JSON
@@ -689,13 +695,13 @@ export function V2RunbookWorkPanel({
         </button>
       </div>
 
-      {!executeMode ? (
+      {canEdit ? (
         <div className="runbook-no-print">
           <RunbookAiBulkPanel runbookId={runbook.id} />
         </div>
       ) : null}
 
-      {!executeMode && hasNestedSubtasks ? (
+      {canEdit && hasNestedSubtasks ? (
         <div className="runbook-no-print flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/25 bg-amber-950/20 px-4 py-3">
           <p className="text-xs text-amber-100">This runbook still has nested subtasks. Convert them to flat checks.</p>
           <button type="button" disabled={isPending} onClick={handleFlattenSubtasks} className={toolbarButtonClass("primary")}>
@@ -714,6 +720,12 @@ export function V2RunbookWorkPanel({
         </p>
       ) : null}
 
+      {canEdit ? (
+        <p className="runbook-no-print text-[11px] text-zinc-600">
+          Drag the handle to reorder. Sections collapse all rows below until the next section.
+        </p>
+      ) : null}
+
       {!hasVisibleCards ? (
         <p className="rounded-2xl border border-dashed border-zinc-800 px-4 py-10 text-center text-sm text-zinc-500">
           {showDone
@@ -723,13 +735,23 @@ export function V2RunbookWorkPanel({
             : "All checks done — or nothing to show."}
         </p>
       ) : (
-        <div className="rounded-xl border border-zinc-800/60 bg-zinc-950/40 px-3 sm:px-4">
+        <div className="rounded-xl border border-zinc-800/60 bg-zinc-950/40 px-2 sm:px-3">
           {runbook.items.map((item, itemIndex) => {
+            const collapsedAway = isCollapsedAway(item);
+            const hideDone = !showDone && item.type === "item" && item.done;
+            const hiddenOnScreen = collapsedAway || hideDone;
+            const isDropTarget = dropIndex === itemIndex && draggingId && draggingId !== item.id;
+
             if (item.type === "sep") {
+              if (collapsedAway) return null;
               return (
                 <div
                   key={item.id}
-                  className="border-t border-zinc-700/50 my-1 print:border-zinc-400"
+                  className={`border-t border-zinc-700/50 my-1 print:border-zinc-400 ${
+                    isDropTarget ? "border-t-2 border-t-lime-400/70" : ""
+                  }`}
+                  onDragOver={(event) => onDragOverRow(event, itemIndex)}
+                  onDrop={(event) => onDropRow(event, itemIndex)}
                   aria-hidden
                 />
               );
@@ -737,48 +759,170 @@ export function V2RunbookWorkPanel({
 
             if (item.type === "section") {
               const collapsed = !!collapsedSections[item.id];
+              const stats = runbookSectionChildStats(runbook.items, item.id);
               return (
-                <SectionHeaderRow
+                <div
                   key={item.id}
-                  item={item}
-                  collapsed={collapsed}
-                  disabled={isPending}
-                  editable={!executeMode}
-                  canMoveUp={canMoveRunbookSection(runbook.items, item.id, -1)}
-                  canMoveDown={canMoveRunbookSection(runbook.items, item.id, 1)}
-                  onToggleCollapse={() =>
-                    setCollapsedSections((current) => ({
-                      ...current,
-                      [item.id]: !current[item.id],
-                    }))
-                  }
-                  onRename={(text) => handleRenameItem(item.id, text)}
-                  onMove={(direction) => handleMoveSection(item.id, direction)}
-                  onMakeCheck={() => handleSetType(item.id, "item")}
-                />
+                  className={`group flex items-center gap-1.5 border-b border-zinc-800/80 py-2 ${
+                    draggingId === item.id ? "opacity-50" : ""
+                  } ${isDropTarget ? "border-t-2 border-t-lime-400/70" : ""}`}
+                  onDragOver={(event) => onDragOverRow(event, itemIndex)}
+                  onDrop={(event) => onDropRow(event, itemIndex)}
+                >
+                  {canEdit ? (
+                    <button
+                      type="button"
+                      draggable
+                      onDragStart={(event) => onDragStart(event, item.id)}
+                      onDragEnd={onDragEnd}
+                      className="runbook-no-print cursor-grab touch-none px-1 text-zinc-600 hover:text-zinc-300 active:cursor-grabbing"
+                      aria-label="Drag section"
+                      title="Drag to reorder"
+                    >
+                      ⠿
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCollapsedSections((current) => ({
+                        ...current,
+                        [item.id]: !current[item.id],
+                      }))
+                    }
+                    className="runbook-no-print shrink-0 rounded px-1 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+                    aria-label={collapsed ? "Expand section" : "Collapse section"}
+                    aria-expanded={!collapsed}
+                  >
+                    {collapsed ? "▶" : "▼"}
+                  </button>
+                  <div className="min-w-0 flex-1">
+                    {canEdit ? (
+                      <InlineRename
+                        value={item.text}
+                        disabled={isPending}
+                        onSave={(text) => handleRenameItem(item.id, text)}
+                        className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400"
+                      />
+                    ) : (
+                      <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
+                        {item.text}
+                      </p>
+                    )}
+                  </div>
+                  {collapsed && stats.total > 0 ? (
+                    <span className="runbook-no-print shrink-0 text-[10px] tabular-nums text-zinc-600">
+                      {stats.open}/{stats.total}
+                    </span>
+                  ) : null}
+                  {canEdit ? (
+                    <RowActionMenu
+                      open={menuId === item.id}
+                      onToggle={() => setMenuId((current) => (current === item.id ? null : item.id))}
+                      disabled={isPending}
+                      isSection
+                      peerLists={peers}
+                      onTurnIntoSection={() => handleSetType(item.id, "section")}
+                      onTurnIntoCheck={() => handleSetType(item.id, "item")}
+                      onCopyToList={(targetId) => handleCopyToList(item.id, targetId)}
+                      onMoveToList={(targetId) => handleMoveToList(item.id, targetId)}
+                    />
+                  ) : null}
+                </div>
               );
             }
 
-            const collapsedAway = isCollapsedUnderSection(item);
-            const hiddenOnScreen =
-              collapsedAway || (!showDone && item.done);
+            if (hiddenOnScreen) {
+              return (
+                <div key={item.id} className="hidden print:block">
+                  <p className={`text-sm ${item.done ? "line-through text-zinc-500" : ""}`}>{item.text}</p>
+                </div>
+              );
+            }
+
+            const subtaskCount = item.subtasks?.length ?? 0;
 
             return (
-              <CheckRow
+              <div
                 key={item.id}
-                item={item}
-                hiddenOnScreen={hiddenOnScreen}
-                disabled={isPending}
-                editable={!executeMode}
-                canMoveUp={itemIndex > 0}
-                canMoveDown={itemIndex < runbook.items.length - 1}
-                onToggle={(done) => handleToggle(item.id, done)}
-                onRename={(text) => handleRenameItem(item.id, text)}
-                onMove={(direction) => handleMove(item.id, direction)}
-                onMakeSection={() => handleSetType(item.id, "section")}
-              />
+                className={`group flex items-start gap-1.5 border-b border-zinc-900/80 py-2.5 ${
+                  draggingId === item.id ? "opacity-50" : ""
+                } ${isDropTarget ? "border-t-2 border-t-lime-400/70" : ""}`}
+                onDragOver={(event) => onDragOverRow(event, itemIndex)}
+                onDrop={(event) => onDropRow(event, itemIndex)}
+              >
+                {canEdit ? (
+                  <button
+                    type="button"
+                    draggable
+                    onDragStart={(event) => onDragStart(event, item.id)}
+                    onDragEnd={onDragEnd}
+                    className="runbook-no-print mt-0.5 cursor-grab touch-none px-1 text-zinc-600 hover:text-zinc-300 active:cursor-grabbing"
+                    aria-label="Drag check"
+                    title="Drag to reorder"
+                  >
+                    ⠿
+                  </button>
+                ) : null}
+                <input
+                  type="checkbox"
+                  checked={item.done}
+                  disabled={isPending}
+                  onChange={(event) => handleToggle(item.id, event.target.checked)}
+                  className="runbook-no-print mt-0.5 shrink-0"
+                />
+                <div className="min-w-0 flex-1 text-left">
+                  {canEdit ? (
+                    <InlineRename
+                      value={item.text}
+                      disabled={isPending}
+                      onSave={(text) => handleRenameItem(item.id, text)}
+                      className={`text-sm leading-relaxed ${
+                        item.done ? "text-zinc-500 line-through" : "text-zinc-100"
+                      }`}
+                    />
+                  ) : (
+                    <p
+                      className={`text-sm leading-relaxed ${
+                        item.done ? "text-zinc-500 line-through" : "text-zinc-100"
+                      }`}
+                    >
+                      {item.text}
+                    </p>
+                  )}
+                  {subtaskCount > 0 ? (
+                    <span className="mt-1 inline-block text-[10px] text-amber-300">
+                      {subtaskCount} nested subtask{subtaskCount === 1 ? "" : "s"}
+                    </span>
+                  ) : null}
+                </div>
+                {canEdit ? (
+                  <RowActionMenu
+                    open={menuId === item.id}
+                    onToggle={() => setMenuId((current) => (current === item.id ? null : item.id))}
+                    disabled={isPending}
+                    isSection={false}
+                    peerLists={peers}
+                    onTurnIntoSection={() => handleSetType(item.id, "section")}
+                    onTurnIntoCheck={() => handleSetType(item.id, "item")}
+                    onCopyToList={(targetId) => handleCopyToList(item.id, targetId)}
+                    onMoveToList={(targetId) => handleMoveToList(item.id, targetId)}
+                  />
+                ) : null}
+              </div>
             );
           })}
+          {canEdit ? (
+            <div
+              className={`h-6 ${dropIndex === runbook.items.length ? "border-t-2 border-t-lime-400/70" : ""}`}
+              onDragOver={(event) => {
+                if (!draggingId) return;
+                event.preventDefault();
+                setDropIndex(runbook.items.length);
+              }}
+              onDrop={(event) => onDropRow(event, runbook.items.length)}
+            />
+          ) : null}
         </div>
       )}
 

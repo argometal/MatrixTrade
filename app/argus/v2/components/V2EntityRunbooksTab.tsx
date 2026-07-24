@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import {
@@ -11,13 +11,16 @@ import {
 import {
   copyRunbookToEntityAction,
   linkRunbookToEntityAction,
+  moveRunbookToEntityAction,
   unlinkRunbookFromEntityAction,
 } from "@/app/argus/actions";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
-import { V2RunbookWorkPanel } from "./V2RunbookWorkPanel";
+import { V2RunbookWorkPanel, type RunbookPeerList } from "./V2RunbookWorkPanel";
 import { V2RunbookCreateStrip } from "./V2RunbookCreateStrip";
 
 type Level = "organization" | "project" | "topic" | "event";
+
+export type RunbookPeerOrg = { id: string; name: string };
 
 /**
  * Runbooks tab for Org (library + admin) or Project/Topic/Event (linked + execute with per-level progress).
@@ -28,6 +31,7 @@ export function V2EntityRunbooksTab({
   linkedRunbooks,
   libraryRunbooks = [],
   progressRecords = [],
+  peerOrganizations = [],
 }: {
   level: Level;
   entityId: string;
@@ -35,6 +39,8 @@ export function V2EntityRunbooksTab({
   /** Org library / other runbooks available to link (not yet linked here). */
   libraryRunbooks?: Runbook[];
   progressRecords?: RunbookProgress[];
+  /** Other orgs — used on organization library for copy/move runbook. */
+  peerOrganizations?: RunbookPeerOrg[];
 }) {
   const router = useRouter();
   const [screen, setScreen] = useState<"home" | "runbook">("home");
@@ -42,8 +48,11 @@ export function V2EntityRunbooksTab({
   const [showCreate, setShowCreate] = useState(level === "organization" && linkedRunbooks.length === 0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [assignOpen, setAssignOpen] = useState(false);
+  const [cardMenuId, setCardMenuId] = useState<string | null>(null);
+  const [cardSubmenu, setCardSubmenu] = useState<"copy" | "move" | null>(null);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const isLibrary = level === "organization";
   const selected = useMemo(
@@ -69,10 +78,35 @@ export function V2EntityRunbooksTab({
     [libraryRunbooks, entityId]
   );
 
+  const peerLists: RunbookPeerList[] = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const rb of [...linkedRunbooks, ...libraryRunbooks]) {
+      if (rb.id === selectedId) continue;
+      map.set(rb.id, rb.title);
+    }
+    return [...map.entries()].map(([id, title]) => ({ id, title }));
+  }, [linkedRunbooks, libraryRunbooks, selectedId]);
+
+  useEffect(() => {
+    if (!cardMenuId) {
+      setCardSubmenu(null);
+      return;
+    }
+    function onDoc(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setCardMenuId(null);
+        setCardSubmenu(null);
+      }
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [cardMenuId]);
+
   function openRunbook(id: string) {
     setSelectedId(id);
     setScreen("runbook");
     setShowCreate(false);
+    setCardMenuId(null);
   }
 
   function toggleSelect(id: string) {
@@ -101,6 +135,7 @@ export function V2EntityRunbooksTab({
         scopeEntityId={entityId}
         closed={progressForSelected?.closed ?? false}
         executeMode={!isLibrary}
+        peerLists={peerLists}
       />
     );
   }
@@ -112,7 +147,7 @@ export function V2EntityRunbooksTab({
           <h2 className="text-base font-semibold text-zinc-100">Runbooks</h2>
           <p className="mt-1 text-xs text-zinc-500">
             {isLibrary
-              ? "Organization library — create checklists, then link them to projects, topics, or events. Progress is stored at each level."
+              ? "Organization library — create checklists, then link them to projects, topics, or events. Copy or move lists between organizations."
               : "Checklists linked here. Progress (checks / closed) is saved only for this level."}
           </p>
         </div>
@@ -223,25 +258,116 @@ export function V2EntityRunbooksTab({
             const items = applyRunbookProgress(runbook, prog ?? null);
             const stats = calcProgress(items);
             const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
+            const menuOpen = cardMenuId === runbook.id;
             return (
               <div
                 key={runbook.id}
-                className="flex flex-col gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 transition hover:border-lime-500/30"
+                className="relative flex flex-col gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 transition hover:border-lime-500/30"
               >
-                <button type="button" onClick={() => openRunbook(runbook.id)} className="text-left">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-semibold text-zinc-100">{runbook.title}</span>
-                    {prog?.closed ? (
-                      <span className="shrink-0 text-[10px] font-medium text-sky-300">Closed</span>
-                    ) : null}
-                  </div>
-                  <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-zinc-800">
-                    <span className="block h-full rounded-full bg-lime-500/60" style={{ width: `${pct}%` }} />
-                  </span>
-                  <span className="mt-2 block text-[10px] tabular-nums text-zinc-500">
-                    {stats.open} open · {stats.done}/{stats.total} checks
-                  </span>
-                </button>
+                <div className="flex items-start justify-between gap-2">
+                  <button type="button" onClick={() => openRunbook(runbook.id)} className="min-w-0 flex-1 text-left">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-sm font-semibold text-zinc-100">{runbook.title}</span>
+                      {prog?.closed ? (
+                        <span className="shrink-0 text-[10px] font-medium text-sky-300">Closed</span>
+                      ) : null}
+                    </div>
+                    <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-zinc-800">
+                      <span className="block h-full rounded-full bg-lime-500/60" style={{ width: `${pct}%` }} />
+                    </span>
+                    <span className="mt-2 block text-[10px] tabular-nums text-zinc-500">
+                      {stats.open} open · {stats.done}/{stats.total} checks
+                    </span>
+                  </button>
+                  {isLibrary ? (
+                    <div ref={menuOpen ? menuRef : undefined} className="relative shrink-0">
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => {
+                          setCardMenuId((current) => (current === runbook.id ? null : runbook.id));
+                          setCardSubmenu(null);
+                        }}
+                        className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+                        aria-label="Runbook actions"
+                      >
+                        ···
+                      </button>
+                      {menuOpen ? (
+                        <div className="absolute right-0 z-20 mt-1 min-w-[12rem] rounded-xl border border-zinc-700 bg-zinc-950 py-1 shadow-xl">
+                          {cardSubmenu === null ? (
+                            <>
+                              <button
+                                type="button"
+                                className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40"
+                                disabled={peerOrganizations.length === 0}
+                                onClick={() => setCardSubmenu("copy")}
+                              >
+                                Copy to organization…
+                              </button>
+                              <button
+                                type="button"
+                                className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40"
+                                disabled={peerOrganizations.length === 0}
+                                onClick={() => setCardSubmenu("move")}
+                              >
+                                Move to organization…
+                              </button>
+                              {peerOrganizations.length === 0 ? (
+                                <p className="border-t border-zinc-800 px-3 py-2 text-[10px] text-zinc-600">
+                                  No other organizations available.
+                                </p>
+                              ) : null}
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                className="block w-full px-3 py-1.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 hover:bg-zinc-800"
+                                onClick={() => setCardSubmenu(null)}
+                              >
+                                ← Back
+                              </button>
+                              <p className="px-3 pb-1 text-[10px] text-zinc-500">
+                                {cardSubmenu === "copy" ? "Copy to" : "Move to"}
+                              </p>
+                              <ul className="max-h-48 overflow-y-auto">
+                                {peerOrganizations.map((org) => (
+                                  <li key={org.id}>
+                                    <button
+                                      type="button"
+                                      className="block w-full truncate px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+                                      onClick={() =>
+                                        run(async () => {
+                                          if (cardSubmenu === "copy") {
+                                            await copyRunbookToEntityAction(runbook.id, org.id);
+                                          } else {
+                                            if (
+                                              !window.confirm(
+                                                `Move “${runbook.title}” to ${org.name}? It will leave this organization library.`
+                                              )
+                                            ) {
+                                              return;
+                                            }
+                                            await moveRunbookToEntityAction(runbook.id, entityId, org.id);
+                                          }
+                                          setCardMenuId(null);
+                                          setCardSubmenu(null);
+                                        })
+                                      }
+                                    >
+                                      {org.name}
+                                    </button>
+                                  </li>
+                                ))}
+                              </ul>
+                            </>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
                 {!isLibrary ? (
                   <button
                     type="button"

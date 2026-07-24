@@ -77,6 +77,10 @@ export default async function V2OrganizationPage({
   const linkedTopics = page.tagPatterns.map((pattern) => pattern.tag);
   const orgRunbooks = runbooksForEntity(data.runbooks ?? [], entity.id);
   const progressRecords = progressForEntity(data.runbookProgress, entity.id);
+  const peerOrganizations = data.entities
+    .filter((row) => row.type === "company" && !row.deletedAt && row.id !== entity.id)
+    .map((row) => ({ id: row.id, name: row.name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="v2-page-shell flex h-full min-h-0 flex-col overflow-hidden">
@@ -201,6 +205,7 @@ export default async function V2OrganizationPage({
             linkedTopics={linkedTopics}
             runbooks={orgRunbooks}
             progressRecords={progressRecords}
+            peerOrganizations={peerOrganizations}
           />
         </div>
       </div>

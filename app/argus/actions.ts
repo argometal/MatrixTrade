@@ -73,7 +73,9 @@ import {
   moveRunbookSectionBlock,
   newRunbookItemId,
   normalizeRunbookSubtasks,
+  placeRunbookBlockAt,
   runbookStamp,
+  runbookTransferIds,
 } from "@/lib/argus/runbook-helpers";
 import { buildDocumentNotes } from "@/lib/argus/reference-types";
 import {
@@ -1972,6 +1974,133 @@ export async function moveRunbookSectionAction(
   if (items === runbook.items) return;
   await updateRunbook(runbookId, { items });
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+/** Drag-and-drop: place a row (or section block) at targetIndex. */
+export async function placeRunbookItemAtAction(
+  runbookId: string,
+  itemId: string,
+  targetIndex: number
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const items = placeRunbookBlockAt(runbook.items, itemId, targetIndex);
+  if (items === runbook.items) return;
+  const changed =
+    items.length !== runbook.items.length ||
+    items.some((item, index) => item.id !== runbook.items[index]?.id);
+  if (!changed) return;
+
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+/** Copy row(s) into another runbook (section copies its children). */
+export async function copyRunbookItemsToRunbookAction(
+  sourceRunbookId: string,
+  itemId: string,
+  targetRunbookId: string
+): Promise<void> {
+  await requireArgusSession();
+  if (sourceRunbookId === targetRunbookId) {
+    throw new ArgusPersistenceError("validation", "Pick a different list.");
+  }
+  const [source, target] = await Promise.all([
+    getRunbook(sourceRunbookId),
+    getRunbook(targetRunbookId),
+  ]);
+  if (!source || !target) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const ids = new Set(runbookTransferIds(source.items, itemId));
+  if (ids.size === 0) {
+    throw new ArgusPersistenceError("validation", "Row not found.");
+  }
+
+  const stamp = Date.now().toString(36);
+  const cloned = source.items
+    .filter((item) => ids.has(item.id))
+    .map((item) => ({
+      ...item,
+      id: `${item.id}_x${stamp}`,
+      done: false,
+      doneAt: "",
+      subtasks: (item.subtasks ?? []).map((subtask) => ({
+        ...subtask,
+        id: `${subtask.id}_x${stamp}`,
+        done: false,
+        doneAt: "",
+      })),
+    }));
+
+  await updateRunbook(targetRunbookId, { items: [...target.items, ...cloned] });
+  await revalidateRunbookSurfaces(targetRunbookId, target.linkedEntityIds);
+}
+
+/** Move row(s) into another runbook (removes from source). */
+export async function moveRunbookItemsToRunbookAction(
+  sourceRunbookId: string,
+  itemId: string,
+  targetRunbookId: string
+): Promise<void> {
+  await requireArgusSession();
+  if (sourceRunbookId === targetRunbookId) {
+    throw new ArgusPersistenceError("validation", "Pick a different list.");
+  }
+  const [source, target] = await Promise.all([
+    getRunbook(sourceRunbookId),
+    getRunbook(targetRunbookId),
+  ]);
+  if (!source || !target) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const ids = new Set(runbookTransferIds(source.items, itemId));
+  if (ids.size === 0) {
+    throw new ArgusPersistenceError("validation", "Row not found.");
+  }
+
+  const moving = source.items.filter((item) => ids.has(item.id));
+  const remaining = source.items.filter((item) => !ids.has(item.id));
+  const stamp = Date.now().toString(36);
+  const cloned = moving.map((item) => ({
+    ...item,
+    id: `${item.id}_m${stamp}`,
+  }));
+
+  await updateRunbook(sourceRunbookId, { items: remaining });
+  await updateRunbook(targetRunbookId, { items: [...target.items, ...cloned] });
+  await revalidateRunbookSurfaces(sourceRunbookId, source.linkedEntityIds);
+  await revalidateRunbookSurfaces(targetRunbookId, target.linkedEntityIds);
+}
+
+/** Move a whole runbook from one entity (e.g. org) to another. */
+export async function moveRunbookToEntityAction(
+  runbookId: string,
+  fromEntityId: string,
+  toEntityId: string
+): Promise<void> {
+  await requireArgusSession();
+  if (fromEntityId === toEntityId) {
+    throw new ArgusPersistenceError("validation", "Pick a different organization.");
+  }
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const linked = runbook.linkedEntityIds.filter((id) => id !== fromEntityId);
+  if (!linked.includes(toEntityId)) linked.push(toEntityId);
+
+  await updateRunbook(runbookId, { linkedEntityIds: linked });
+  await revalidateRunbookSurfaces(runbookId, [
+    ...new Set([...runbook.linkedEntityIds, toEntityId, fromEntityId]),
+  ]);
 }
 
 function normalizeImportedRunbookItems(raw: unknown): RunbookItem[] {
