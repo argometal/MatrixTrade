@@ -62,7 +62,8 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 | `/forge/focus` | **Hidden** from nav — deprecated/pending signals only |
 | `/forge/chaos` | Legacy capture prototype |
 
-**Shell:** bottom nav `Home | Library | Vault | Active | Archive`. Header system selector `ArgusForge | MTA` (persisted). Focus removed from nav.
+**Shell (CHANGE 24-01):** `[home icon] | Argus | + | [Prepared output icon]`.
+Argus secondary: **Focus | Active | Archive** (Focus may be pending). Create is global `+`. Output icon → `/forge/vault` (no Vault/Transfer text on the bar).
 
 Storage: `localStorage` repo + vault-prep + `argusforge-selected-system-v1` + `argusforge-vault-mode-v1` + `argusforge-argus-graph-v1`.
 
