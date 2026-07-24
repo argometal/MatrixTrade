@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0724c` |
-| **Commit** | Always `git rev-parse main0724c` after fetch (must match `origin/main`) |
+| **Tag** | `main0724d` |
+| **Commit** | Always `git rev-parse main0724d` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-07-24 |
 
@@ -15,11 +15,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0724c
+# optional pin: git checkout main0724d
 ```
 
 ## What this deploy includes
 
+- PR #74: Argus organize — move decks between Realms + regroup fragments between decks; multi-fragment deck UX
 - PR #72: Runbooks 24-a1 (sections, ··· menu, DnD, org copy/move) + units 3D molecular graph
 - PR #60 / #59: Argusforge evidence recurrence engine + typed modular graph controls
 - Realm Treemap 24-17 on `/forge/argus` (units graph at `/forge/argus/units`)
