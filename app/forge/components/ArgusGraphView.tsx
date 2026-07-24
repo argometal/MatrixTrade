@@ -109,8 +109,8 @@ function ArgusGraphCanvas() {
       <header className="space-y-1">
         <h2 className="text-xl font-bold text-zinc-50">Argus</h2>
         <p className="text-xs leading-relaxed text-zinc-500">
-          Prototype — identifiable unit · visible relation · operable selection. Chaos owns content;
-          this graph relates. Not definitive Engine schema. No AI.
+          Prototype — identifiable unit · visible relation · operable selection. Chaos owns content
+          (unbounded); this graph relates. Not definitive Engine schema. No AI.
         </p>
       </header>
 
