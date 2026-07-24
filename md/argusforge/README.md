@@ -58,11 +58,15 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 | `/forge/deck/[deckId]` | Chaos Deck internal view |
 | `/forge/deck/[deckId]/item/[itemId]/view` | Content Viewer |
 | `/forge/deck/[deckId]/item/[itemId]` | Basic content editor |
-| `/forge/focus` | **Hidden** from nav — deprecated/pending signals only |
+| `/forge/focus` | **View → Focus** (first in selector; blocked / pending signals) |
 | `/forge/chaos` | Legacy capture prototype |
 
-**Shell:** bottom nav `Home | Library | Vault | Active | Archive`. Header system selector `ArgusForge | MTA` (persisted). Focus removed from nav.
+**Shell:** bottom bar `Home | Engine | Create | View | Output`.
+- **Engine:** Argus Engine | MTA Engine (in-place selector; replaces header system toggle)
+- **Create:** global action (births Active; not twin Active/Archive worlds)
+- **View:** Focus → Active → Archive (Focus stays first even when blocked)
+- **Output:** Vault | Alexandria (Alexandria may remain locked / FROZEN)
 
-Storage: `localStorage` repo + vault-prep + `argusforge-selected-system-v1` + `argusforge-vault-mode-v1`.
+Storage: `localStorage` repo + vault-prep + `argusforge-selected-system-v1` + `argusforge-vault-mode-v1` + `argusforge-operational-view-v1`.
 
-**Open debt:** [DEBT-AF03-01](af03-chaos-interface-contract.md#debt-af03-01--active--archive-are-filters-not-twin-creation-surfaces) — create still should not be twin birth worlds; Focus design later.
+**Open debt:** [DEBT-AF03-01](af03-chaos-interface-contract.md#debt-af03-01--active--archive-are-filters-not-twin-creation-surfaces) — unify Active/Archive as filters on one repo UI; Focus design later.

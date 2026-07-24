@@ -33,7 +33,9 @@ Repository (one interface)
   → preparation toward Vault
 ```
 
-**Correction (agreed, not yet shipped):** Active and Archive are **lifecycle filters on one repository UI**, not two places to create content. See **DEBT-AF03-01** below.
+**Correction (agreed, shipped in shell):** Bottom bar roles are `Home | Engine | Create | View | Output` — not Active/Archive as twin tabs. Engine ≠ View ≠ Create. Focus remains first in View (may be blocked). Create is a global action that births Active.
+
+**Correction (agreed, not yet shipped for repo UI):** Active and Archive are **lifecycle filters on one repository UI**, not two places to create content. See **DEBT-AF03-01** below.
 
 ---
 

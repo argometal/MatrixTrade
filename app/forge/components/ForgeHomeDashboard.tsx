@@ -119,16 +119,16 @@ export function ForgeHomeDashboard() {
         <p className="text-xs text-zinc-500">Where to go next — not Argus entity browsers.</p>
         <div className="grid gap-2 sm:grid-cols-2">
           <BrowseLink
-            href="/forge/library"
-            title="Library"
-            hint={`${o.activeDecks} active decks · organization`}
+            href="/forge/focus"
+            title="Focus"
+            hint="View · first · blocked until signals"
             icon="library"
           />
           <BrowseLink
             href="/forge/active"
             title="Active"
             hint="Working operational set"
-            icon="library"
+            icon="capture"
           />
           <BrowseLink
             href="/forge/archive"
@@ -138,11 +138,11 @@ export function ForgeHomeDashboard() {
           />
           <BrowseLink
             href="/forge/vault"
-            title="Vault prep"
+            title="Output · Vault"
             hint={
               vaultAwaiting > 0
                 ? `${vaultAwaiting} awaiting human review`
-                : "Selection → review queue"
+                : "Prep queue · Alexandria via Output"
             }
             icon="vault"
           />
@@ -234,11 +234,11 @@ export function ForgeHomeDashboard() {
               Destinations
             </h3>
             <p className="text-[11px] text-zinc-600">
-              Active / Archive are bottom-nav destinations. Focus is hidden (pending signals).
-              Dual-tree create debt: DEBT-AF03-01.
+              Use bottom <strong className="font-medium text-zinc-500">View</strong> (Focus → Active →
+              Archive). Create is a global action (births Active). Dual-tree debt: DEBT-AF03-01.
             </p>
             <div className="flex flex-wrap gap-2">
-              <FilterChip href="/forge/library" label="Library" count={o.decks} />
+              <FilterChip href="/forge/focus" label="Focus" count={null} />
               <FilterChip href="/forge/active" label="Active" count={o.activeDecks} />
               <FilterChip href="/forge/archive" label="Archive" count={o.archivedDecks} />
             </div>
@@ -471,14 +471,22 @@ function StatTile({
   return <div className={className}>{inner}</div>;
 }
 
-function FilterChip({ href, label, count }: { href: string; label: string; count: number }) {
+function FilterChip({
+  href,
+  label,
+  count,
+}: {
+  href: string;
+  label: string;
+  count: number | null;
+}) {
   return (
     <Link
       href={href}
       className="inline-flex min-h-10 items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900 px-3 text-xs font-semibold text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
     >
       {label}
-      <span className="tabular-nums text-zinc-500">{count}</span>
+      {count !== null ? <span className="tabular-nums text-zinc-500">{count}</span> : null}
     </Link>
   );
 }
