@@ -53,7 +53,7 @@ export function ForgeGlobalCreate({ pathname, onClose }: Props) {
     <div className="space-y-3 p-3" role="dialog" aria-label="Create">
       <p className="text-sm font-semibold text-zinc-100">Create</p>
       <p className="text-xs leading-relaxed text-zinc-500">
-        Global action — separate from Active/Archive. New work starts as Active.
+        Global action — separate from Active/Archive. New Chaos Deck / folder starts as Active.
       </p>
       <div className="flex flex-col gap-2">
         <button

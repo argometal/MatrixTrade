@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Lexend } from "next/font/google";
 import { useEffect, useRef, useState } from "react";
 import {
   deckHref,
@@ -12,6 +13,12 @@ import {
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+
+const editorFont = Lexend({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  display: "swap",
+});
 
 type Props = {
   deckId: string;
@@ -31,7 +38,7 @@ function formatTime(iso: string): string {
 
 /**
  * AF03 §8 — Basic content editor (not Alexandria).
- * Markdown-friendly body: headings, paragraphs, lists, links, image URLs.
+ * Ingest-first: plain fragment body, no decorative structure toolbar.
  */
 export function ContentEditor({ deckId, itemId }: Props) {
   const [state, setState] = useState<Af03RepoState | null>(null);
@@ -70,36 +77,6 @@ export function ContentEditor({ deckId, itemId }: Props) {
   function markDirty(nextTitle: string, nextBody: string) {
     dirty.current =
       nextTitle !== baseline.current.title || nextBody !== baseline.current.body;
-  }
-
-  function insertAtCursor(snippet: string, selectPlaceholder?: string) {
-    const el = textareaRef.current;
-    if (!el) {
-      setBody((b) => {
-        const next = `${b}${b.endsWith("\n") || !b ? "" : "\n"}${snippet}`;
-        markDirty(title, next);
-        return next;
-      });
-      return;
-    }
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const next = body.slice(0, start) + snippet + body.slice(end);
-    setBody(next);
-    markDirty(title, next);
-    requestAnimationFrame(() => {
-      el.focus();
-      if (selectPlaceholder) {
-        const idx = snippet.indexOf(selectPlaceholder);
-        if (idx >= 0) {
-          const s = start + idx;
-          el.setSelectionRange(s, s + selectPlaceholder.length);
-          return;
-        }
-      }
-      const pos = start + snippet.length;
-      el.setSelectionRange(pos, pos);
-    });
   }
 
   function save() {
@@ -144,7 +121,7 @@ export function ContentEditor({ deckId, itemId }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className={`${editorFont.className} space-y-4`}>
       <Af03RepoDisclosure />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -174,7 +151,7 @@ export function ContentEditor({ deckId, itemId }: Props) {
             Viewer
           </Link>
           <p className="text-[10px] uppercase tracking-wide text-zinc-600">
-            Basic editor · not Alexandria
+            Edit · ingest · not Alexandria
           </p>
         </div>
       </div>
@@ -188,7 +165,7 @@ export function ContentEditor({ deckId, itemId }: Props) {
 
       <div className="space-y-1">
         <label htmlFor="af03-title" className="text-sm font-medium text-zinc-300">
-          Title
+          Title (optional)
         </label>
         <input
           id="af03-title"
@@ -197,34 +174,13 @@ export function ContentEditor({ deckId, itemId }: Props) {
             setTitle(e.target.value);
             markDirty(e.target.value, body);
           }}
-          className="min-h-11 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-base text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-        />
-      </div>
-
-      <div className="flex flex-wrap gap-1.5" role="toolbar" aria-label="Insert structure">
-        <ToolbarBtn label="H1" onClick={() => insertAtCursor("# Heading\n", "Heading")} />
-        <ToolbarBtn label="H2" onClick={() => insertAtCursor("## Heading\n", "Heading")} />
-        <ToolbarBtn label="¶" title="Paragraph" onClick={() => insertAtCursor("\n\n")} />
-        <ToolbarBtn label="List" onClick={() => insertAtCursor("- item\n", "item")} />
-        <ToolbarBtn
-          label="Link"
-          onClick={() => insertAtCursor("[label](https://example.com)", "https://example.com")}
-        />
-        <ToolbarBtn
-          label="Image URL"
-          onClick={() => insertAtCursor("![alt](https://example.com/image.png)\n", "https://example.com/image.png")}
-        />
-        <ToolbarBtn
-          label="File ref"
-          onClick={() =>
-            insertAtCursor("\n[File reference: name.ext](file://local-ref)\n", "name.ext")
-          }
+          className="min-h-11 w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 text-lg font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
         />
       </div>
 
       <div className="space-y-1">
         <label htmlFor="af03-body" className="text-sm font-medium text-zinc-300">
-          Body ({item.kind})
+          Body
         </label>
         <textarea
           id="af03-body"
@@ -234,9 +190,9 @@ export function ContentEditor({ deckId, itemId }: Props) {
             setBody(e.target.value);
             markDirty(title, e.target.value);
           }}
-          rows={14}
-          className="w-full rounded-lg border border-zinc-800 bg-zinc-900 px-3 py-3 font-mono text-sm leading-relaxed text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-          placeholder="Write freely. Mixed text and visual refs via markdown. No Locus / Parcour / grades."
+          rows={18}
+          className="min-h-[50vh] w-full rounded-lg border border-zinc-800 bg-zinc-900 px-4 py-4 text-[18px] leading-[1.55] text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+          placeholder="Write freely — two lines or a chapter. No classification."
         />
       </div>
 
@@ -282,26 +238,5 @@ export function ContentEditor({ deckId, itemId }: Props) {
         {savedFlash ? <span className="self-center text-xs text-emerald-400">Saved</span> : null}
       </div>
     </div>
-  );
-}
-
-function ToolbarBtn({
-  label,
-  onClick,
-  title,
-}: {
-  label: string;
-  onClick: () => void;
-  title?: string;
-}) {
-  return (
-    <button
-      type="button"
-      title={title ?? label}
-      onClick={onClick}
-      className="min-h-9 rounded-md border border-zinc-800 bg-zinc-950 px-2.5 text-xs font-medium text-zinc-300 hover:border-zinc-600 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-    >
-      {label}
-    </button>
   );
 }

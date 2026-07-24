@@ -28,11 +28,11 @@ const FOLDER_ACTIONS: { id: CreateAction; label: string; available: boolean }[] 
 ];
 
 const DECK_ACTIONS: { id: CreateAction; label: string; available: boolean }[] = [
-  { id: "text", label: "Add text", available: true },
-  { id: "link", label: "Add link", available: true },
-  { id: "image", label: "Add image URL", available: true },
-  { id: "file", label: "Add file ref", available: true },
-  { id: "pdf", label: "Add PDF ref", available: true },
+  { id: "text", label: "Add fragment (text)", available: true },
+  { id: "link", label: "Add fragment (link)", available: true },
+  { id: "image", label: "Add fragment (image URL)", available: true },
+  { id: "file", label: "Add fragment (file ref)", available: true },
+  { id: "pdf", label: "Add fragment (PDF ref)", available: true },
   { id: "import", label: "Import content", available: false },
 ];
 
@@ -42,7 +42,7 @@ export function CreationMenu({ scope, onAction }: Props) {
   return (
     <div className="space-y-2" role="group" aria-label="Creation menu">
       <p className="text-xs text-zinc-500">
-        Capture only — no classification or relations required. File/PDF store a visible stub (not binary).
+        Capture only — no classification. Fragments go into this Chaos Deck.
       </p>
       <div className="flex flex-wrap gap-2">
         {actions.map((a) =>
