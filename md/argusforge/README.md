@@ -17,6 +17,8 @@
 | [af03-chaos-interface-contract.md](af03-chaos-interface-contract.md) | **Working contract — checklist** | Minimal Chaos interfaces → Vault boundary; completion Definition of Done |
 | [phase-0-architecture.md](phase-0-architecture.md) | **Canonical — Phase 0 CLOSED** | Technical boundaries, names, Chaos/org/Registry, engine limits |
 | [vault-training-layer-contract.md](vault-training-layer-contract.md) | **Canonical — Vault** | Vault prepares formation ≠ Memory |
+| [argus-graph-prototype.md](argus-graph-prototype.md) | **Prototype note** | Field Argus graph (`/forge/argus`); not Engine schema |
+| [argus-home-heat-graph-concept.md](argus-home-heat-graph-concept.md) | **Discussion — non-binding** | Argus home as Chaos Deck heat-graph (size=volume, glow=use) |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria / Gatekeeper freeze |
 | [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | **Research — deferred, non-binding** | Historical spatial notes; not AF architecture |
 | [external-repo-patterns-research.md](external-repo-patterns-research.md) | **Research** | External pattern references (evaluate before reuse) |
