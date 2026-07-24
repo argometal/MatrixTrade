@@ -55,7 +55,7 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 | `/forge/active` | Active — AF active repo / MTA active deep-links |
 | `/forge/archive` | Archive — AF archive repo / MTA archive deep-links |
 | `/forge/vault` | Vault shell + **Vault \| Alexandria** selector (Alexandria frozen disclosure) |
-| `/forge/deck/[deckId]` | Chaos Deck internal view |
+| `/forge/deck/[deckId]` | Chaos Deck — **Add text** opens full-viewport capture surface (Lexend 18px) |
 | `/forge/deck/[deckId]/item/[itemId]/view` | Content Viewer |
 | `/forge/deck/[deckId]/item/[itemId]` | Basic content editor |
 | `/forge/argus` | Argus graph prototype — Chaos units + manual links (React Flow); not Engine schema |
