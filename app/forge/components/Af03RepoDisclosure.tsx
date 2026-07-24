@@ -9,7 +9,8 @@ export function Af03RepoDisclosure() {
     >
       AF03 prototype — browser <code className="text-amber-50/80">localStorage</code> (repo + vault prep
       queue). Not server persistence; data can be lost. Viewer/editor/Vault prep are local-only. Dual
-      Active/Archive roots remain interim (DEBT-AF03-01). Not Alexandria. Focus triggers not implemented.
+      Dual Active/Archive roots remain interim (DEBT-AF03-01). Not Alexandria. Focus is first in View
+      (blocked until signals).
     </p>
   );
 }

@@ -160,8 +160,8 @@ export default function ForgeVaultPage() {
             </h2>
             <p className="text-sm leading-relaxed text-zinc-400">
               Consolidated knowledge · learning structures · curated references · retrieval-ready
-              content. Shares this Vault destination shell — not a bottom-nav item. Content models
-              are not merged with Vault.
+              content. Reached via bottom <strong className="text-zinc-300">Output</strong> (Vault |
+              Alexandria). Content models are not merged with Vault.
             </p>
           </header>
           <p

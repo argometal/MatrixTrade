@@ -1,19 +1,19 @@
 /**
- * ArgusForge shell navigation state (system + vault mode).
+ * ArgusForge shell navigation state.
+ * Roles: Engine (logic) · Create (action) · View (Focus/Active/Archive) · Output (Vault/Alexandria).
  * localStorage persistence — not server session.
  */
 
 export type ForgeSystemId = "argusforge" | "mta";
 export type VaultModeId = "vault" | "alexandria";
-export type ForgeBottomSection =
-  | "home"
-  | "library"
-  | "vault"
-  | "active"
-  | "archive";
+export type OperationalViewId = "focus" | "active" | "archive";
+
+/** Bottom-bar roles (Create is an action, not a route). */
+export type ForgeBottomRole = "home" | "engine" | "create" | "view" | "output";
 
 export const AF03_SYSTEM_KEY = "argusforge-selected-system-v1";
 export const AF03_VAULT_MODE_KEY = "argusforge-vault-mode-v1";
+export const AF03_VIEW_KEY = "argusforge-operational-view-v1";
 
 export function readSelectedSystem(): ForgeSystemId {
   if (typeof window === "undefined") return "argusforge";
@@ -53,28 +53,93 @@ export function writeVaultMode(mode: VaultModeId): void {
   }
 }
 
-/** Map pathname → bottom section (Focus is not a nav section). */
-export function sectionFromPathname(pathname: string): ForgeBottomSection {
-  if (pathname.startsWith("/forge/archive")) return "archive";
-  if (pathname.startsWith("/forge/active")) return "active";
-  if (pathname.startsWith("/forge/library")) return "library";
-  if (pathname.startsWith("/forge/vault")) return "vault";
+export function readOperationalView(): OperationalViewId {
+  if (typeof window === "undefined") return "active";
+  try {
+    const v = localStorage.getItem(AF03_VIEW_KEY);
+    if (v === "focus" || v === "archive" || v === "active") return v;
+    return "active";
+  } catch {
+    return "active";
+  }
+}
+
+export function writeOperationalView(view: OperationalViewId): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(AF03_VIEW_KEY, view);
+  } catch {
+    /* quota */
+  }
+}
+
+/** Map pathname → which bottom role is “current” for highlight. */
+export function roleFromPathname(pathname: string): ForgeBottomRole {
+  if (pathname.startsWith("/forge/vault")) return "output";
+  if (
+    pathname.startsWith("/forge/focus") ||
+    pathname.startsWith("/forge/active") ||
+    pathname.startsWith("/forge/archive") ||
+    pathname.startsWith("/forge/library") ||
+    pathname.startsWith("/forge/deck") ||
+    pathname.startsWith("/forge/chaos")
+  ) {
+    return "view";
+  }
   if (pathname === "/forge" || pathname === "/forge/") return "home";
-  // Decks / chaos / task live under AF library family for highlight purposes
-  if (pathname.startsWith("/forge/deck") || pathname.startsWith("/forge/chaos")) return "library";
   return "home";
+}
+
+export function viewFromPathname(pathname: string): OperationalViewId | null {
+  if (pathname.startsWith("/forge/focus")) return "focus";
+  if (pathname.startsWith("/forge/archive")) return "archive";
+  if (
+    pathname.startsWith("/forge/active") ||
+    pathname.startsWith("/forge/library") ||
+    pathname.startsWith("/forge/deck")
+  ) {
+    return "active";
+  }
+  return null;
+}
+
+export function hrefForView(view: OperationalViewId): string {
+  switch (view) {
+    case "focus":
+      return "/forge/focus";
+    case "archive":
+      return "/forge/archive";
+    default:
+      return "/forge/active";
+  }
+}
+
+export function hrefForOutput(mode: VaultModeId): string {
+  return "/forge/vault";
+}
+
+/** @deprecated Prefer roleFromPathname — kept for interim call sites. */
+export type ForgeBottomSection = ForgeBottomRole | "library" | "vault" | "active" | "archive";
+
+export function sectionFromPathname(pathname: string): ForgeBottomSection {
+  return roleFromPathname(pathname);
 }
 
 export function hrefForSection(section: ForgeBottomSection): string {
   switch (section) {
     case "library":
-      return "/forge/library";
+    case "view":
+      return "/forge/active";
     case "vault":
+    case "output":
       return "/forge/vault";
     case "active":
       return "/forge/active";
     case "archive":
       return "/forge/archive";
+    case "engine":
+    case "create":
+    case "home":
     default:
       return "/forge";
   }
