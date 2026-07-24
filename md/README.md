@@ -49,7 +49,7 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 2. **What ships today?** `architecture/matrixtrade-app.md` + `rules/`
 3. **What to build next?** `phases/roadmap.md` + `concepts/README.md`
 4. **Working on ARGUS?** [`argus/README.md`](argus/README.md)
-5. **ArgusForge vision / Chaos / engines?** [`argusforge/argusforge-contract.md`](argusforge/argusforge-contract.md) → [`argusforge/phase-0-architecture.md`](argusforge/phase-0-architecture.md)
+5. **ArgusForge vision / Chaos / engines?** [`argusforge/README.md`](argusforge/README.md) → [`argusforge/vision-and-direction.md`](argusforge/vision-and-direction.md) → sealed [`argusforge/argusforge-contract.md`](argusforge/argusforge-contract.md)
 6. **Matrix product + AI?** [`matrix/README.md`](matrix/README.md) → [`matrix/ai-engineering.md`](matrix/ai-engineering.md)
 7. **Integrations** → `integrations/` · **Protocols** → `protocols/`
 8. **New topic** → `topics/your-topic.md` + one row in this index
@@ -108,23 +108,34 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 
 ## ArgusForge
 
+**Start here:** [`argusforge/README.md`](argusforge/README.md) — index, status legend, reading order, runtime truth (same library schema as ARGUS / Matrix).
+
 **Sealed vision:** [`argusforge/argusforge-contract.md`](argusforge/argusforge-contract.md)  
+**Direction (Home vs Argus lab):** [`argusforge/vision-and-direction.md`](argusforge/vision-and-direction.md)  
 **Phase 0 technical map:** [`argusforge/phase-0-architecture.md`](argusforge/phase-0-architecture.md)
 
 | Document | Contents |
 |----------|----------|
-| [README.md](argusforge/README.md) | Index — links only |
-| [argusforge-contract.md](argusforge/argusforge-contract.md) | **SEALED** — vision, formation transfer, component duties |
-| [perpetual-evolution-contract.md](argusforge/perpetual-evolution-contract.md) | **SEALED addendum** — perpetual evolution; evidence; user agency |
-| [af03-chaos-interface-contract.md](argusforge/af03-chaos-interface-contract.md) | **Working checklist** — Chaos interfaces → Vault boundary |
-| [phase-0-architecture.md](argusforge/phase-0-architecture.md) | **Canonical Phase 0** — technical boundaries |
-| [vault-training-layer-contract.md](argusforge/vault-training-layer-contract.md) | Vault prepares formation ≠ Memory |
-| [external-repo-patterns-research.md](argusforge/external-repo-patterns-research.md) | Research — external patterns (no copy) |
-| [alexandria-frozen-contract.md](argusforge/alexandria-frozen-contract.md) | **FROZEN** — Alexandria / Gatekeeper |
-| [alexandria-spatial-bottleneck-research.md](argusforge/alexandria-spatial-bottleneck-research.md) | Deferred non-binding research |
+| [argusforge/README.md](argusforge/README.md) | **AF doc index** — loop, legend, routes, weaknesses |
+| [argusforge/vision-and-direction.md](argusforge/vision-and-direction.md) | **Where we are / where we go** — Home stable, Argus experimental |
+| [argusforge/how-argusforge-works.md](argusforge/how-argusforge-works.md) | UI guide — when to open what |
+| [argusforge/ontology-working.md](argusforge/ontology-working.md) | Realm · Chaos Deck · Fragment · Molecule |
+| [argusforge/runtime-truth.md](argusforge/runtime-truth.md) | What ships in `/forge` today |
+| [argusforge/building-backlog.md](argusforge/building-backlog.md) | Active build queue |
+| [argusforge/changes-numbered.md](argusforge/changes-numbered.md) | CHANGE 24-xx log |
+| [argusforge/argusforge-contract.md](argusforge/argusforge-contract.md) | **SEALED** — vision, formation transfer, component duties |
+| [argusforge/perpetual-evolution-contract.md](argusforge/perpetual-evolution-contract.md) | **SEALED addendum** — perpetual evolution; evidence; user agency |
+| [argusforge/af03-chaos-interface-contract.md](argusforge/af03-chaos-interface-contract.md) | **Working checklist** — Chaos interfaces → Vault boundary |
+| [argusforge/phase-0-architecture.md](argusforge/phase-0-architecture.md) | **Canonical Phase 0** — technical boundaries |
+| [argusforge/vault-training-layer-contract.md](argusforge/vault-training-layer-contract.md) | Vault prepares formation ≠ Memory |
+| [argusforge/external-repo-patterns-research.md](argusforge/external-repo-patterns-research.md) | Research — external patterns (no copy) |
+| [argusforge/alexandria-frozen-contract.md](argusforge/alexandria-frozen-contract.md) | **FROZEN** — Alexandria / Gatekeeper |
+| [argusforge/alexandria-spatial-bottleneck-research.md](argusforge/alexandria-spatial-bottleneck-research.md) | Deferred non-binding research |
+| [argusforge/argus-graph-prototype.md](argusforge/argus-graph-prototype.md) | Unit graph field note |
 
 **Canonical rule:** Products own data. Memory owns identity. Argus relates. MTA observes time. Chaos captures. Vault prepares formation. ArgusForge coordinates.  
-**Alexandria lock:** FROZEN — AF must not depend on Alexandria; Alexandria must not block AF.
+**Alexandria lock:** FROZEN — AF must not depend on Alexandria; Alexandria must not block AF.  
+**UI split:** Home + Active/Archive lists = traditional ops; Argus = experimental Treemap / molecular lab.
 
 ---
 
