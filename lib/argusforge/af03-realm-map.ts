@@ -483,12 +483,19 @@ export function layoutTreemap(
 /**
  * Freshness → fill (Argus V2KnowledgeTreemap palette).
  * Active ≈ emerald-500 (#10b981); idle → zinc. Color = recent use only.
+ * `depth` tints nested Realm layers toward emerald so sub-capas match Argus greens.
  */
-export function freshnessToFill(freshness: number, archived: boolean): string {
+export function freshnessToFill(
+  freshness: number,
+  archived: boolean,
+  depth = 0
+): string {
   const t = Math.min(1, Math.max(0, freshness));
   if (archived) {
     const g = Math.round(36 + t * 28);
-    return `rgb(${g}, ${Math.round(g + 4)}, ${Math.round(g + 6)})`;
+    // Nested archive: slight cool-green cast
+    const nest = Math.min(2, depth) * 4;
+    return `rgb(${g}, ${Math.round(g + 4 + nest)}, ${Math.round(g + 6 + nest * 0.5)})`;
   }
   // Match Argus activityColor: high = rgba(16,185,129), mid = rgba(52,211,153), low = zinc
   if (t >= 0.55) {
@@ -500,22 +507,38 @@ export function freshnessToFill(freshness: number, archived: boolean): string {
   }
   if (t >= 0.25) {
     const u = (t - 0.25) / 0.3;
-    // zinc-600 → emerald-400 soft
     const r = Math.round(63 + (52 - 63) * u);
     const g = Math.round(63 + (211 - 63) * u);
     const b = Math.round(70 + (153 - 70) * u);
     return `rgb(${r}, ${g}, ${b})`;
   }
+  // Idle nested layers: zinc → muted emerald-950 (sub-capa readable as green family)
+  const nest = Math.min(3, depth);
   const u = t / 0.25;
-  const g = Math.round(39 + (63 - 39) * u);
-  return `rgb(${g}, ${g}, ${Math.round(g + 4)})`;
+  const base = 39 + (63 - 39) * u;
+  const r = Math.round(base - nest * 2);
+  const g = Math.round(base + 6 + nest * 10 + t * 20);
+  const b = Math.round(base + 8 + nest * 6);
+  return `rgb(${Math.max(24, r)}, ${Math.min(120, g)}, ${Math.min(100, b)})`;
 }
 
-/** Freshness → border (emerald, not ochre). */
-export function freshnessToBorder(freshness: number): string {
+/**
+ * Freshness → border (emerald). Nested depths get stronger emerald edge.
+ */
+export function freshnessToBorder(freshness: number, depth = 0): string {
   const t = Math.min(1, Math.max(0, freshness));
-  const a = 0.28 + t * 0.55;
+  const nestBoost = Math.min(0.2, depth * 0.06);
+  const a = Math.min(0.95, 0.28 + t * 0.55 + nestBoost);
   return `rgba(16, 185, 129, ${a.toFixed(2)})`;
+}
+
+/** Parent Realm header chrome (sub-capa strip) — Argus emerald, not ochre. */
+export function realmHeaderFill(freshness: number, archived: boolean): string {
+  const t = Math.min(1, Math.max(0, freshness));
+  if (archived) return "rgba(63, 63, 70, 0.92)";
+  if (t >= 0.45) return "rgba(16, 185, 129, 0.72)";
+  if (t >= 0.2) return "rgba(52, 211, 153, 0.45)";
+  return "rgba(6, 78, 59, 0.75)"; // emerald-950-ish nested header
 }
 
 export function realmHref(realmId: string): string {

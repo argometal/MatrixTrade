@@ -201,18 +201,18 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
           label: confirmed ? l.type : `${l.type}?`,
           animated: false,
           style: {
-            stroke: confirmed ? "#a1a1aa" : "#71717a",
+            stroke: confirmed ? "#34d399" : "#6ee7b7",
             strokeWidth: width,
             strokeDasharray: confirmed ? undefined : "5 4",
           },
-          labelStyle: { fill: "#a1a1aa", fontSize: 10 },
+          labelStyle: { fill: "#a7f3d0", fontSize: 10 },
           labelBgStyle: { fill: "#09090b" },
           labelBgPadding: [4, 2] as [number, number],
           markerEnd: {
             type: MarkerType.ArrowClosed,
             width: 16,
             height: 16,
-            color: confirmed ? "#a1a1aa" : "#71717a",
+            color: confirmed ? "#34d399" : "#6ee7b7",
           },
         };
       })
