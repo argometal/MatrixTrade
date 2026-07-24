@@ -61,11 +61,11 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 | `/forge/focus` | **View → Focus** (first in selector; blocked / pending signals) |
 | `/forge/chaos` | Legacy capture prototype |
 
-**Shell:** bottom bar `Home | Engine | Create | View | Output`.
-- **Engine:** Argus Engine | MTA Engine (in-place selector; replaces header system toggle)
-- **Create:** global action (births Active; not twin Active/Archive worlds)
-- **View:** Focus → Active → Archive (Focus stays first even when blocked)
-- **Output:** Vault | Alexandria (Alexandria may remain locked / FROZEN)
+**Shell (CHANGE 24-01):** bottom bar `[home icon] | Argus | + | [handoff icon]`.
+- **Home:** icon only → `/forge`
+- **Argus:** expands secondary **Focus → Active → Archive** (Focus first; may be pending)
+- **+:** global Create (New Chaos Deck, New Folder) — not inside Active/Archive
+- **Handoff:** icon only (`title`/`aria`: Prepared output / Handoff) → provisional `/forge/vault` (no “Vault” label on the bar)
 
 Storage: `localStorage` repo + vault-prep + `argusforge-selected-system-v1` + `argusforge-vault-mode-v1` + `argusforge-operational-view-v1`.
 

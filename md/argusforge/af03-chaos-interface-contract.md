@@ -33,7 +33,7 @@ Repository (one interface)
   → preparation toward Vault
 ```
 
-**Correction (agreed, shipped in shell):** Bottom bar roles are `Home | Engine | Create | View | Output` — not Active/Archive as twin tabs. Engine ≠ View ≠ Create. Focus remains first in View (may be blocked). Create is a global action that births Active.
+**Correction (CHANGE 24-01, shell):** Primary bar is `[home icon] | Argus | + | [handoff icon]`. Focus / Active / Archive live under Argus secondary only. Create is global `+`. Handoff icon keeps provisional Vault route without “Vault” as bar label.
 
 **Correction (agreed, not yet shipped for repo UI):** Active and Archive are **lifecycle filters on one repository UI**, not two places to create content. See **DEBT-AF03-01** below.
 
