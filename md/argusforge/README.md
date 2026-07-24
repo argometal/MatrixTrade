@@ -58,11 +58,12 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 | `/forge/deck/[deckId]` | Chaos Deck internal view |
 | `/forge/deck/[deckId]/item/[itemId]/view` | Content Viewer |
 | `/forge/deck/[deckId]/item/[itemId]` | Basic content editor |
+| `/forge/argus` | Argus graph prototype — Chaos units + manual links (React Flow); not Engine schema |
 | `/forge/focus` | **Hidden** from nav — deprecated/pending signals only |
 | `/forge/chaos` | Legacy capture prototype |
 
 **Shell:** bottom nav `Home | Library | Vault | Active | Archive`. Header system selector `ArgusForge | MTA` (persisted). Focus removed from nav.
 
-Storage: `localStorage` repo + vault-prep + `argusforge-selected-system-v1` + `argusforge-vault-mode-v1`.
+Storage: `localStorage` repo + vault-prep + `argusforge-selected-system-v1` + `argusforge-vault-mode-v1` + `argusforge-argus-graph-v1`.
 
 **Open debt:** [DEBT-AF03-01](af03-chaos-interface-contract.md#debt-af03-01--active--archive-are-filters-not-twin-creation-surfaces) — create still should not be twin birth worlds; Focus design later.
