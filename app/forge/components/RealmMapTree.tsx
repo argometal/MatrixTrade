@@ -128,7 +128,7 @@ export function RealmMapTree({ filter }: Props) {
 
       <header className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-500/90">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-400/90">
             Argus · Realms
           </p>
           <h2 className="text-xl font-semibold tracking-tight text-zinc-50">

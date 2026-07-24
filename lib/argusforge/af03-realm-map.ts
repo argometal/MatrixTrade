@@ -480,22 +480,42 @@ export function layoutTreemap(
   return out;
 }
 
+/**
+ * Freshness → fill (Argus V2KnowledgeTreemap palette).
+ * Active ≈ emerald-500 (#10b981); idle → zinc. Color = recent use only.
+ */
 export function freshnessToFill(freshness: number, archived: boolean): string {
   const t = Math.min(1, Math.max(0, freshness));
   if (archived) {
-    const g = Math.round(30 + t * 40);
-    return `rgb(${g}, ${g}, ${Math.round(g * 1.05)})`;
+    const g = Math.round(36 + t * 28);
+    return `rgb(${g}, ${Math.round(g + 4)}, ${Math.round(g + 6)})`;
   }
-  const r = Math.round(24 + t * 160);
-  const g = Math.round(24 + t * 90);
-  const b = Math.round(28 + t * 20);
-  return `rgb(${r}, ${g}, ${b})`;
+  // Match Argus activityColor: high = rgba(16,185,129), mid = rgba(52,211,153), low = zinc
+  if (t >= 0.55) {
+    const u = (t - 0.55) / 0.45;
+    const r = Math.round(16 + (52 - 16) * (1 - u));
+    const g = Math.round(185 + (211 - 185) * (1 - u) * 0.35);
+    const b = Math.round(129 + (153 - 129) * (1 - u) * 0.35);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+  if (t >= 0.25) {
+    const u = (t - 0.25) / 0.3;
+    // zinc-600 → emerald-400 soft
+    const r = Math.round(63 + (52 - 63) * u);
+    const g = Math.round(63 + (211 - 63) * u);
+    const b = Math.round(70 + (153 - 70) * u);
+    return `rgb(${r}, ${g}, ${b})`;
+  }
+  const u = t / 0.25;
+  const g = Math.round(39 + (63 - 39) * u);
+  return `rgb(${g}, ${g}, ${Math.round(g + 4)})`;
 }
 
+/** Freshness → border (emerald, not ochre). */
 export function freshnessToBorder(freshness: number): string {
   const t = Math.min(1, Math.max(0, freshness));
-  const a = 0.25 + t * 0.55;
-  return `rgba(251, 191, 36, ${a.toFixed(2)})`;
+  const a = 0.28 + t * 0.55;
+  return `rgba(16, 185, 129, ${a.toFixed(2)})`;
 }
 
 export function realmHref(realmId: string): string {

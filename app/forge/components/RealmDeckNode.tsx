@@ -33,10 +33,10 @@ export function RealmDeckNode({ data }: NodeProps & { data: RealmDeckNodeData })
       {hasAffinityHalo ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-full border border-dashed border-amber-500/35"
+          className="pointer-events-none absolute inset-0 rounded-full border border-dashed border-emerald-400/40"
           style={{
             margin: -8,
-            boxShadow: "0 0 18px rgba(245, 158, 11, 0.12)",
+            boxShadow: "0 0 18px rgba(16, 185, 129, 0.18)",
           }}
           title="Detected affinity — not a confirmed relation"
         />
