@@ -498,8 +498,10 @@ export function freshnessToBorder(freshness: number): string {
   return `rgba(251, 191, 36, ${a.toFixed(2)})`;
 }
 
-export function realmHref(realmId: string): string {
-  return `/forge/realm/${realmId}`;
+export function realmHref(realmId: string, opts?: { deckId?: string }): string {
+  const base = `/forge/realm/${encodeURIComponent(realmId)}`;
+  if (!opts?.deckId) return base;
+  return `${base}?deck=${encodeURIComponent(opts.deckId)}`;
 }
 
 export function isUnassignedRealm(realmId: string): boolean {

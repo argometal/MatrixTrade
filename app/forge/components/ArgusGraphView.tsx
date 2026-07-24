@@ -242,7 +242,8 @@ function ArgusGraphCanvas() {
         <div className="space-y-1">
           <h2 className="text-xl font-bold text-zinc-50">Argus</h2>
           <p className="text-xs text-zinc-500">
-            Evidence · tags · typed relations · recurrence · export. Chaos owns source. No AI.
+            Evidence · tags · relations. Select a Chaos unit →{" "}
+            <span className="text-zinc-400">Move fragment to deck</span>. Chaos owns source.
           </p>
         </div>
         <div

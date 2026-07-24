@@ -135,7 +135,12 @@ export function RealmMapTree({ filter }: Props) {
             {filterLabel} Treemap
           </h2>
           <p className="text-xs text-zinc-500">
-            Macro view — size is mass, color is recent use. Tap a Realm for its molecular graph.
+            Macro view — size is mass, color is recent use. Open a Realm → select a deck →{" "}
+            <span className="text-zinc-400">Move to Realm</span>. Regroup fragments on{" "}
+            <Link href="/forge/argus/units" className="underline hover:text-zinc-300">
+              Unit graph
+            </Link>
+            .
           </p>
         </div>
         {selected ? (
@@ -241,7 +246,7 @@ export function RealmMapTree({ filter }: Props) {
       )}
 
       <p className="shrink-0 text-[11px] text-zinc-600">
-        Metrics provisional (log mass, recency color).{" "}
+        Organize in Argus: move decks between Realms; move fragments between decks on Units.{" "}
         <Link href={listHref} className="underline hover:text-zinc-400">
           Administrative list
         </Link>

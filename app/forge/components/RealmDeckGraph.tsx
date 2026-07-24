@@ -20,8 +20,8 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import {
   deckClusterKey,
   deckLinksForRealm,
@@ -99,9 +99,11 @@ function MolecularLegend({ open, onToggle }: { open: boolean; onToggle: () => vo
 
 function RealmGraphCanvas({ realmId }: { realmId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectDeckId = searchParams.get("deck");
   const [state, setState] = useState<Af03RepoState | null>(null);
   const [graph, setGraph] = useState<ArgusGraphState | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(preselectDeckId);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [legendOpen, setLegendOpen] = useState(false);
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -124,6 +126,10 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
     readMolecularOverlay();
     setReady(true);
   }, [realmId]);
+
+  useEffect(() => {
+    if (preselectDeckId) setSelectedId(preselectDeckId);
+  }, [preselectDeckId, realmId]);
 
   const decks = useMemo(
     () => (state ? listDecksForRealm(state, realmId) : []),
@@ -301,7 +307,8 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
           </p>
           <h2 className="truncate text-lg font-semibold text-zinc-100">{title}</h2>
           <p className="text-xs text-zinc-500">
-            Chaos Deck bodies — Fragments stay inside. Halo ≠ confirmed link.
+            Chaos Deck bodies — each deck holds multiple fragments. Select a deck → Move to
+            Realm to reparent.
           </p>
         </div>
         <Link
@@ -444,7 +451,9 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
 export function RealmDeckGraph({ realmId }: { realmId: string }) {
   return (
     <ReactFlowProvider>
-      <RealmGraphCanvas realmId={realmId} />
+      <Suspense fallback={<p className="text-sm text-zinc-500">Loading Realm…</p>}>
+        <RealmGraphCanvas realmId={realmId} />
+      </Suspense>
     </ReactFlowProvider>
   );
 }
