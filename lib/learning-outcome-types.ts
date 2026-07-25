@@ -45,9 +45,14 @@ export type LearningOutcome = {
   realizedR?: number;
   /** Counterfactual / theoretical R from plan outcome evidence. */
   counterfactualR?: number;
+  /** Realized account P/L (0 when no trade). */
+  realizedPnL?: number;
+  /** Dollar counterfactual — only when authorizedRiskAmount persisted; else null. */
+  counterfactualDollarResult?: number | null;
   entryReached?: boolean;
   stopReachedBeforeTarget?: boolean;
   targetReachedBeforeStop?: boolean;
+  nonExecutionReason?: string;
   excludedFromMetrics?: boolean;
   lifecycleStatus: LearningOutcomeLifecycle;
   notes?: string;
@@ -65,3 +70,11 @@ export const LEARNING_OUTCOME_KIND_LABELS: Record<LearningOutcomeKind, string> =
   unexecuted_plan_loss: "Unexecuted Plan Loss",
   duplicate_creation: "Duplicate Creation",
 };
+
+/** Scout LO kinds that count toward evaluatedScoutCount (when not excluded). */
+export const SCOUT_EVALUATED_LO_KINDS: ReadonlySet<LearningOutcomeKind> = new Set([
+  "unexecuted_plan_loss",
+  "missed_opportunity",
+  "cancelled",
+  "expired",
+]);

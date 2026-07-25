@@ -4,7 +4,9 @@ import type { FamilyBEntryAssessment } from "./family-b-types";
 import type { Probe } from "./scout-probe-types";
 import type {
   ExecutionReadinessState,
+  NonExecutionReason,
   PlanOutcomeEvidenceStatus,
+  PlanOutcomeKind,
   PlanOutcomeSource,
   PlanOutcomeStatus,
 } from "./plan-outcome-types";
@@ -84,12 +86,19 @@ export interface PlanOutcome {
   recordedAt: string;
   /** New classification (preferred). */
   status?: PlanOutcomeStatus;
+  outcomeKind?: PlanOutcomeKind;
   tradeExecuted?: boolean;
   entryTriggered?: boolean | null;
   stopTriggered?: boolean | null;
   targetTriggered?: boolean | null;
+  entryReached?: boolean | null;
+  stopReachedBeforeTarget?: boolean | null;
+  targetReachedBeforeStop?: boolean | null;
+  nonExecutionReason?: NonExecutionReason;
   theoreticalResultR?: number | null;
   realizedResultR?: number;
+  realizedPnL?: number;
+  counterfactualDollarResult?: number | null;
   outcomeSource?: PlanOutcomeSource;
   evidenceStatus?: PlanOutcomeEvidenceStatus;
   notes?: string;
@@ -168,12 +177,18 @@ export type SavePlanInput = {
 };
 
 export type RecordPlanOutcomeInput = {
-  /** Expanded counterfactual outcome (preferred). */
+  /** UPL Apply kind (preferred). */
+  outcomeKind?: PlanOutcomeKind;
+  /** Expanded counterfactual outcome (legacy LEARNING-001). */
   status?: PlanOutcomeStatus;
   tradeExecuted?: boolean;
   entryTriggered?: boolean | null;
   stopTriggered?: boolean | null;
   targetTriggered?: boolean | null;
+  entryReached?: boolean;
+  stopReachedBeforeTarget?: boolean;
+  targetReachedBeforeStop?: boolean;
+  nonExecutionReason?: NonExecutionReason;
   theoreticalResultR?: number | null;
   realizedResultR?: number;
   outcomeSource?: PlanOutcomeSource;

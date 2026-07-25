@@ -42,7 +42,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- analysis — qualitative notes on a trade",
     "- attribution — MAF component attribution (process quality ≠ P/L; never invent prices)",
     "- observation-update — Observation Engine (target/invalidation timestamps, MFE/MAE; partial OK; ≠ attribution)",
-    "- plan-outcome — terminal/expired plan result (theoretical vs realized R; no fictitious Trade)",
+    "- plan-outcome — Unexecuted Plan Loss (Scout outcome; server-derived counterfactualR; no Trade; MAF separate)",
     "- trade-update (legacy dates) — datesReconstructed + dateCorrectionNote on closed legacy fills only",
     "",
     "Method layer:",

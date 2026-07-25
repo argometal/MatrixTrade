@@ -367,7 +367,7 @@ async function applyPlanOutcomeBlock(
   const plan = result.plan;
   return {
     ok: true,
-    message: `Recorded plan outcome ${plan?.id ?? ""} · ${plan?.outcome?.status ?? "recorded"} · realizedR ${plan?.outcome?.realizedResultR ?? 0}`,
+    message: `Recorded plan outcome ${plan?.id ?? ""} · ${plan?.outcome?.outcomeKind ?? plan?.outcome?.status ?? "recorded"} · realizedR ${plan?.outcome?.realizedResultR ?? 0} · counterfactualR ${plan?.outcome?.theoreticalResultR ?? "—"}`,
     type: "plan-outcome",
     planId: plan?.id,
   };

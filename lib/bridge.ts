@@ -337,7 +337,7 @@ export function describeProposal(payload: TradingInboxPayload): string {
     case "observation-update":
       return `Observation ${p.observationId ?? p.tradeId ?? p.planId ?? p.id ?? ""} · update`;
     case "plan-outcome":
-      return `Plan outcome ${p.planId ?? ""} · ${p.status ?? "record"} · tradeExecuted ${String(p.tradeExecuted)}`;
+      return `Plan outcome ${p.planId ?? ""} · ${p.outcomeKind ?? p.status ?? "record"} · entryReached ${String(p.entryReached ?? p.entryTriggered ?? "—")}`;
     case "playbook-create":
       return `New playbook · ${p.name ?? "unnamed"}`;
     case "playbook-update":

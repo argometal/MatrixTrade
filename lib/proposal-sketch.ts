@@ -220,6 +220,41 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
       if (p.status) fields.push({ label: "Status", value: String(p.status) });
       break;
     }
+    case "plan-outcome": {
+      fields.push({
+        label: "Plan",
+        value: String(p.planId ?? "—").toUpperCase(),
+        tone: "accent",
+      });
+      fields.push({
+        label: "Kind",
+        value: String(p.outcomeKind ?? p.status ?? "—"),
+      });
+      if (p.entryReached !== undefined || p.entryTriggered !== undefined) {
+        fields.push({
+          label: "Entry reached",
+          value: String(p.entryReached ?? p.entryTriggered),
+        });
+      }
+      if (p.stopReachedBeforeTarget !== undefined || p.stopTriggered !== undefined) {
+        fields.push({
+          label: "Stop before target",
+          value: String(p.stopReachedBeforeTarget ?? p.stopTriggered),
+          tone: "risk",
+        });
+      }
+      if (p.nonExecutionReason) {
+        fields.push({ label: "Non-execution", value: String(p.nonExecutionReason) });
+      }
+      fields.push({ label: "Realized R (server)", value: "0" });
+      fields.push({ label: "Counterfactual R (server)", value: "−1", tone: "risk" });
+      fields.push({
+        label: "Note",
+        value: "Counterfactual ≠ account P/L; no Trade created",
+      });
+      expectation = "down";
+      break;
+    }
     default:
       break;
   }

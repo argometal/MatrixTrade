@@ -229,7 +229,26 @@ export async function recordPlanOutcome(
   id: string,
   input: RecordPlanOutcomeInput
 ): Promise<{ plan?: TradePlan; errors?: string[] }> {
-  // Expanded counterfactual path (preferred when status provided).
+  // UPL preferred path — outcomeKind drives server-derived R.
+  if (input.outcomeKind) {
+    const { applyPlanOutcomeProposal } = await import("./plan-outcome");
+    const result = await applyPlanOutcomeProposal({
+      planId: id.toUpperCase(),
+      outcomeKind: input.outcomeKind,
+      entryReached: input.entryReached ?? input.entryTriggered,
+      stopReachedBeforeTarget:
+        input.stopReachedBeforeTarget ?? input.stopTriggered,
+      targetReachedBeforeStop:
+        input.targetReachedBeforeStop ?? input.targetTriggered,
+      nonExecutionReason: input.nonExecutionReason,
+      notes: input.notes ?? input.lesson,
+      evidenceRefs: input.evidenceRefs ?? [],
+      createdBy: input.createdBy,
+    });
+    return { plan: result.plan, errors: result.errors };
+  }
+
+  // Expanded counterfactual path (LEARNING-001 when status provided).
   if (input.status) {
     const { persistPlanOutcome } = await import("./plan-outcome");
     const result = await persistPlanOutcome({

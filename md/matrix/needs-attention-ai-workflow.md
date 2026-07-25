@@ -120,15 +120,15 @@ Sequential dependencies: one block at a time; recalculate between steps.
 | `playbook_samples` | Needs more closed trades — Apply cannot invent samples |
 | `monthly_loss_limit` / `monthly_loss_warning` | Calendar / risk room — not an Apply mutation |
 
-### `evaluate_expired_plan` — resolved (CURSOR-MTA-PLAN-OUTCOME-LEARNING-001)
+### `evaluate_expired_plan` — resolved (CURSOR-MTA-PLAN-OUTCOME-UPL-25-29)
 
 | Field | Value |
 |-------|-------|
 | **Entity** | `TradePlan` (`plan.outcome`) |
-| **Apply block** | `plan-outcome` |
+| **Apply block** | `plan-outcome` (`outcomeKind: unexecuted_plan_loss`) |
 | **UI** | Planning → Record Outcome (`PlanRecordOutcomePanel`) |
-| **Persistence** | Expanded PlanOutcome + optional counterfactual OBS; closes evaluate_expired_plan when `outcome.recordedAt` set |
-| **Docs** | `md/matrix/plan-outcome-learning-001.md` |
+| **Persistence** | PlanOutcome + LO `unexecuted_plan_loss` (server-derived R); closes when `outcome.recordedAt` set; MAF separate |
+| **Docs** | `md/matrix/plan-outcome-upl-25-29.md` |
 
 ---
 

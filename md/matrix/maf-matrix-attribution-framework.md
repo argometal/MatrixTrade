@@ -120,16 +120,18 @@ This is enough to begin component attribution.
 
 | Entity | Id | Role |
 |--------|-----|------|
-| **Learning Outcome** | `LO-{TICKER}-NNN` | `executed_win` \| `executed_loss` \| `missed_opportunity` \| `cancelled` \| `expired` |
+| **Learning Outcome** | `LO-{TICKER}-NNN` | `executed_win` \| `executed_loss` \| `missed_opportunity` \| `cancelled` \| `expired` \| `unexecuted_plan_loss` \| `duplicate_creation` |
 | **Observation** | `OBS-{TICKER}-NNN` | Post-fill or post-miss window — timestamps, MFE/MAE, first terminal event |
 | **MAF Experiment** | `MAF-{TICKER}-NNN` | Component attributions + rule hints |
 
 Auto hooks:
 
 - Trade close → Learning Outcome (+ Observation when loss / post-stop study)
-- Plan outcome (failed/expired/skipped) → Learning Outcome + Observation for miss path
+- Plan outcome / UPL (`plan-outcome` Apply) → Learning Outcome `unexecuted_plan_loss` (concluded; no Trade); Observation may seed; **MAF is not automatic**
 - `observation-update` Accept → patch Observation; conclude → ready_for_attribution
-- `attribution` Accept → link `mafExperimentId` on Learning Outcome
+- `attribution` Accept → link `mafExperimentId` on Learning Outcome; may link by **`planId` alone** when no Trade/fill exists
+
+Canonical layers: Trade = financial truth · Scout outcome = tactical plan truth · LO = normalized result · Observation = measurable evidence · MAF = accepted component attribution. One Scout loss does **not** invalidate the Stock File thesis.
 
 Deterministic **rule hints** (e.g. stop hit ∧ target later ∧ thesis alive → `stop_too_tight`) are stored on the experiment as suggestions — not accepted attribution until human Accept.
 
@@ -215,7 +217,7 @@ Apply patches `data/observations.json`. Never invent timestamps or prices.
 | `trade-review` | Human journal scores / mistakes — **not** MAF |
 | `TradeEvaluation` | Observation window / coarse outcomes (ADR-0002) |
 | `PostStopStudy` | Shadow path after stop — seeds Observation |
-| **Learning Outcome** | Scout/Trade result kind (`LO-xxx`) including missed/cancelled/expired |
+| **Learning Outcome** | Scout/Trade result kind (`LO-xxx`) including UPL / duplicate_creation |
 | **Observation** | Measurable post-event path (`OBS-xxx`) |
 | **MAF** | Component attribution + rule hints + improvement suggestions |
 

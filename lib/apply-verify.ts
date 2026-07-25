@@ -358,7 +358,7 @@ async function verifyPlanOutcomePersistence(
   }
   return {
     ok: true,
-    detail: `Plan ${plan.id} outcome verified · ${plan.outcome.status ?? "recorded"} · realizedR ${plan.outcome.realizedResultR ?? 0}`,
+    detail: `Plan ${plan.id} outcome verified · ${plan.outcome.outcomeKind ?? plan.outcome.status ?? "recorded"} · recordedAt set · realizedR ${plan.outcome.realizedResultR ?? 0}`,
   };
 }
 
