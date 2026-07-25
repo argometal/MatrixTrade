@@ -13,6 +13,7 @@ import {
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
 import { SimpleMarkdown } from "./SimpleMarkdown";
 
 type Props = {
@@ -94,34 +95,29 @@ export function ContentViewer({ deckId, itemId }: Props) {
             {item.markedForLater ? " · marked later" : ""} · not Alexandria
           </p>
         </div>
-        <div className="relative shrink-0">
-          <button
-            type="button"
-            aria-label="Viewer menu"
-            aria-expanded={menuOpen}
-            className="min-h-10 min-w-10 rounded-lg border border-zinc-800 text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            ⋯
-          </button>
-          {menuOpen ? (
-            <div role="menu" className="absolute right-0 z-10 mt-1 w-40 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg">
-              <Link
-                role="menuitem"
-                href={itemHref(deckId, itemId)}
-                className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-              >
-                Edit
-              </Link>
-              <Link
-                role="menuitem"
-                href={deckHref(deckId)}
-                className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-              >
-                Back to deck
-              </Link>
-            </div>
-          ) : null}
+        <div className="shrink-0">
+          <ForgeOverflowMenu
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+            label="Viewer menu"
+            triggerClassName="min-h-10 min-w-10 rounded-lg border border-zinc-800 text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            items={[
+              {
+                id: "edit",
+                label: "Edit",
+                onClick: () => {
+                  window.location.href = itemHref(deckId, itemId);
+                },
+              },
+              {
+                id: "back",
+                label: "Back to deck",
+                onClick: () => {
+                  window.location.href = deckHref(deckId);
+                },
+              },
+            ]}
+          />
         </div>
       </div>
 

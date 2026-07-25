@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Af03ChaosDeck, Af03LayoutMode, OperationalView } from "@/lib/argusforge/af03-repo-types";
 import { deckHref, deckStatus } from "@/lib/argusforge/af03-repo-store";
+import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
 
 type Props = {
   decks: Af03ChaosDeck[];
@@ -103,7 +104,7 @@ export function ChaosDeckList({
                   deck={d}
                   view={view}
                   open={menuId === d.id}
-                  onToggle={() => onToggleMenu(menuId === d.id ? null : d.id)}
+                  onOpenChange={(open) => onToggleMenu(open ? d.id : null)}
                   onRename={() => onRename(d)}
                   onArchive={() => onArchive(d)}
                   onRestore={() => onRestore?.(d)}
@@ -131,12 +132,12 @@ export function ChaosDeckList({
                 </p>
                 <p className="mt-1 truncate text-xs text-zinc-600">{d.preview}</p>
               </Link>
-              <div className="relative border-l border-zinc-800">
+              <div className="border-l border-zinc-800">
                 <DeckMenu
                   deck={d}
                   view={view}
                   open={menuId === d.id}
-                  onToggle={() => onToggleMenu(menuId === d.id ? null : d.id)}
+                  onOpenChange={(open) => onToggleMenu(open ? d.id : null)}
                   onRename={() => onRename(d)}
                   onArchive={() => onArchive(d)}
                   onRestore={() => onRestore?.(d)}
@@ -154,7 +155,7 @@ function DeckMenu({
   deck,
   view,
   open,
-  onToggle,
+  onOpenChange,
   onRename,
   onArchive,
   onRestore,
@@ -162,60 +163,30 @@ function DeckMenu({
   deck: Af03ChaosDeck;
   view: OperationalView;
   open: boolean;
-  onToggle: () => void;
+  onOpenChange: (open: boolean) => void;
   onRename: () => void;
   onArchive: () => void;
   onRestore: () => void;
 }) {
   return (
-    <>
-      <button
-        type="button"
-        aria-label={`Menu for deck ${deck.title}`}
-        aria-expanded={open}
-        className="flex h-full min-h-11 min-w-11 items-center justify-center px-3 text-zinc-400 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-        onClick={onToggle}
-      >
-        ⋯
-      </button>
-      {open ? (
-        <div role="menu" className="absolute right-0 z-10 mt-1 w-40 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg">
-          <Link
-            role="menuitem"
-            href={deckHref(deck.id)}
-            className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-          >
-            Open
-          </Link>
-          <button
-            type="button"
-            role="menuitem"
-            className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-            onClick={onRename}
-          >
-            Rename
-          </button>
-          {view === "active" ? (
-            <button
-              type="button"
-              role="menuitem"
-              className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-              onClick={onArchive}
-            >
-              Archive
-            </button>
-          ) : (
-            <button
-              type="button"
-              role="menuitem"
-              className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-              onClick={onRestore}
-            >
-              Restore
-            </button>
-          )}
-        </div>
-      ) : null}
-    </>
+    <ForgeOverflowMenu
+      open={open}
+      onOpenChange={onOpenChange}
+      label={`Menu for deck ${deck.title}`}
+      triggerClassName="flex h-full min-h-11 min-w-11 items-center justify-center px-3 text-zinc-400 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+      items={[
+        {
+          id: "open",
+          label: "Open",
+          onClick: () => {
+            window.location.href = deckHref(deck.id);
+          },
+        },
+        { id: "rename", label: "Rename", onClick: onRename },
+        view === "active"
+          ? { id: "archive", label: "Archive", onClick: onArchive }
+          : { id: "restore", label: "Restore", onClick: onRestore },
+      ]}
+    />
   );
 }

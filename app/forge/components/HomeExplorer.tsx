@@ -44,6 +44,7 @@ import {
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03ChaosDeck, Af03Folder, Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
 import { LevelSnapshotChart } from "./LevelSnapshotChart";
 
 function promptTitle(label: string, initial: string): string | null {
@@ -385,7 +386,7 @@ export function HomeExplorer() {
                   folder={folder}
                   chaosDeckCount={realmChaosDeckCount(state, folder.id)}
                   menuOpen={menuId === folder.id}
-                  onToggleMenu={() => setMenuId(menuId === folder.id ? null : folder.id)}
+                  onMenuOpenChange={(open) => setMenuId(open ? folder.id : null)}
                   onOpen={() => pushParams({ realmId: folder.id })}
                   onRename={() => {
                     const name = promptTitle("Rename Realm", folder.title);
@@ -437,7 +438,7 @@ export function HomeExplorer() {
                   state={state}
                   deck={deck}
                   menuOpen={menuId === deck.id}
-                  onToggleMenu={() => setMenuId(menuId === deck.id ? null : deck.id)}
+                  onMenuOpenChange={(open) => setMenuId(open ? deck.id : null)}
                   onRename={() => {
                     const name = promptTitle("Rename Chaos Deck", deck.title);
                     if (!name) return;
@@ -520,7 +521,7 @@ function RealmRow(props: {
   folder: Af03Folder;
   chaosDeckCount: number;
   menuOpen: boolean;
-  onToggleMenu: () => void;
+  onMenuOpenChange: (open: boolean) => void;
   onOpen: () => void;
   onRename: () => void;
   onChildRealm: () => void;
@@ -548,31 +549,22 @@ function RealmRow(props: {
           </p>
         </div>
       </button>
-      <div className="relative border-l border-zinc-800">
-        <button
-          type="button"
-          aria-label={`Realm menu ${folder.title}`}
-          aria-expanded={props.menuOpen}
-          className="flex min-h-14 min-w-11 items-center justify-center text-zinc-400"
-          onClick={props.onToggleMenu}
-        >
-          ⋯
-        </button>
-        {props.menuOpen ? (
-          <div
-            role="menu"
-            className="absolute right-0 z-20 mt-0 w-48 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg"
-          >
-            <MenuItem label="Open" onClick={props.onOpen} />
-            <MenuItem label="Rename" onClick={props.onRename} />
-            <MenuItem label="New child Realm" onClick={props.onChildRealm} />
-            <MenuItem label="New Chaos Deck" onClick={props.onChildDeck} />
-            {folder.view === "active" ? (
-              <MenuItem label="Archive" onClick={props.onArchive} />
-            ) : null}
-            <MenuItem label="Delete…" onClick={props.onDelete} danger />
-          </div>
-        ) : null}
+      <div className="border-l border-zinc-800">
+        <ForgeOverflowMenu
+          open={props.menuOpen}
+          onOpenChange={props.onMenuOpenChange}
+          label={`Realm menu ${folder.title}`}
+          items={[
+            { id: "open", label: "Open", onClick: props.onOpen },
+            { id: "rename", label: "Rename", onClick: props.onRename },
+            { id: "child-realm", label: "New child Realm", onClick: props.onChildRealm },
+            { id: "child-deck", label: "New Chaos Deck", onClick: props.onChildDeck },
+            ...(folder.view === "active"
+              ? [{ id: "archive", label: "Archive", onClick: props.onArchive }]
+              : []),
+            { id: "delete", label: "Delete…", onClick: props.onDelete, danger: true },
+          ]}
+        />
       </div>
     </li>
   );
@@ -582,7 +574,7 @@ function DeckExplorerRow(props: {
   state: Af03RepoState;
   deck: Af03ChaosDeck;
   menuOpen: boolean;
-  onToggleMenu: () => void;
+  onMenuOpenChange: (open: boolean) => void;
   onRename: () => void;
   onArchive: () => void;
   onRestore: () => void;
@@ -613,61 +605,28 @@ function DeckExplorerRow(props: {
           </p>
         </div>
       </Link>
-      <div className="relative border-l border-zinc-800">
-        <button
-          type="button"
-          aria-label={`Deck menu ${props.deck.title}`}
-          aria-expanded={props.menuOpen}
-          className="flex min-h-14 min-w-11 items-center justify-center text-zinc-400"
-          onClick={props.onToggleMenu}
-        >
-          ⋯
-        </button>
-        {props.menuOpen ? (
-          <div
-            role="menu"
-            className="absolute right-0 z-20 mt-0 w-48 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg"
-          >
-            <MenuItem
-              label="Open builder"
-              onClick={() => {
+      <div className="border-l border-zinc-800">
+        <ForgeOverflowMenu
+          open={props.menuOpen}
+          onOpenChange={props.onMenuOpenChange}
+          label={`Deck menu ${props.deck.title}`}
+          items={[
+            {
+              id: "open",
+              label: "Open builder",
+              onClick: () => {
                 window.location.href = `/forge/deck/${props.deck.id}`;
-              }}
-            />
-            <MenuItem label="Rename" onClick={props.onRename} />
-            <MenuItem label="Move…" onClick={props.onMove} />
-            {props.deck.view === "active" ? (
-              <MenuItem label="Archive" onClick={props.onArchive} />
-            ) : (
-              <MenuItem label="Restore to Active" onClick={props.onRestore} />
-            )}
-            <MenuItem label="Delete…" onClick={props.onDelete} danger />
-          </div>
-        ) : null}
+              },
+            },
+            { id: "rename", label: "Rename", onClick: props.onRename },
+            { id: "move", label: "Move…", onClick: props.onMove },
+            props.deck.view === "active"
+              ? { id: "archive", label: "Archive", onClick: props.onArchive }
+              : { id: "restore", label: "Restore to Active", onClick: props.onRestore },
+            { id: "delete", label: "Delete…", onClick: props.onDelete, danger: true },
+          ]}
+        />
       </div>
     </li>
-  );
-}
-
-function MenuItem({
-  label,
-  onClick,
-  danger,
-}: {
-  label: string;
-  onClick: () => void;
-  danger?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      role="menuitem"
-      className={`block w-full px-3 py-2.5 text-left text-sm hover:bg-zinc-800 ${
-        danger ? "text-rose-300" : "text-zinc-200"
-      }`}
-      onClick={onClick}
-    >
-      {label}
-    </button>
   );
 }

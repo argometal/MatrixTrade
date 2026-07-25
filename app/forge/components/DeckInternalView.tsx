@@ -33,6 +33,7 @@ import { UNASSIGNED_REALM_ID } from "@/lib/argusforge/af03-repo-types";
 import { realmHref } from "@/lib/argusforge/af03-realm-map";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
 import { CreationMenu, type CreateAction } from "./CreationMenu";
+import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
 
 type Props = {
   deckId: string;
@@ -261,125 +262,85 @@ export function DeckInternalView({ deckId }: Props) {
             Cumulative container — select items to prepare toward Vault (human review).
           </p>
         </div>
-        <div className="relative shrink-0">
-          <button
-            type="button"
-            aria-label="Deck menu"
-            aria-expanded={deckMenuOpen}
-            className="min-h-11 min-w-11 rounded-lg border border-zinc-800 text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-            onClick={() => setDeckMenuOpen(!deckMenuOpen)}
-          >
-            ⋯
-          </button>
-          {deckMenuOpen ? (
-            <div
-              role="menu"
-              className="absolute right-0 z-10 mt-1 w-52 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg"
-            >
-              <button
-                type="button"
-                role="menuitem"
-                className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-                onClick={() => {
+        <div className="shrink-0">
+          <ForgeOverflowMenu
+            open={deckMenuOpen}
+            onOpenChange={setDeckMenuOpen}
+            label="Deck menu"
+            menuWidthPx={208}
+            triggerClassName="min-h-11 min-w-11 rounded-lg border border-zinc-800 text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            items={[
+              {
+                id: "rename",
+                label: "Rename",
+                onClick: () => {
                   const title = promptTitle("Rename Chaos Deck", deck.title);
                   if (!title) return;
                   setState(renameDeck(state, deck.id, title));
-                  setDeckMenuOpen(false);
-                }}
-              >
-                Rename
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-                onClick={() => {
+                },
+              },
+              {
+                id: "layout",
+                label: `Change view (${layout === "list" ? "→ grid" : "→ list"})`,
+                onClick: () => {
                   setState(setDeckInternalLayout(state, layout === "list" ? "grid" : "list"));
-                  setDeckMenuOpen(false);
-                }}
-              >
-                Change view ({layout === "list" ? "→ grid" : "→ list"})
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-                onClick={createBuilderFragment}
-              >
-                New Fragment (builder)
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-                onClick={() => {
-                  handleCreate("text");
-                  setDeckMenuOpen(false);
-                }}
-              >
-                Add fragment (text)
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-                onClick={exportNeutralPackage}
-              >
-                Export exchange JSON
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-                onClick={prepareVault}
-              >
-                Prepare for Vault ({selected.size})
-              </button>
-              <Link
-                role="menuitem"
-                href={realmHref(deck.folderId ?? UNASSIGNED_REALM_ID, { deckId: deck.id })}
-                className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-                onClick={() => setDeckMenuOpen(false)}
-              >
-                Move deck in Argus…
-              </Link>
-              <Link
-                role="menuitem"
-                href="/forge/argus/units"
-                className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-                onClick={() => setDeckMenuOpen(false)}
-              >
-                Regroup fragments in Argus…
-              </Link>
-              {deck.view === "active" ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-                  onClick={() => {
-                    setState(archiveDeck(state, deck.id));
-                    setDeckMenuOpen(false);
-                    window.location.href = "/forge/archive";
-                  }}
-                >
-                  Archive
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-                  onClick={() => {
-                    setState(restoreDeck(state, deck.id));
-                    setDeckMenuOpen(false);
-                    window.location.href = "/forge/active";
-                  }}
-                >
-                  Restore to Active
-                </button>
-              )}
-            </div>
-          ) : null}
+                },
+              },
+              {
+                id: "new-builder",
+                label: "New Fragment (builder)",
+                onClick: createBuilderFragment,
+              },
+              {
+                id: "add-text",
+                label: "Add fragment (text)",
+                onClick: () => handleCreate("text"),
+              },
+              {
+                id: "export",
+                label: "Export exchange JSON",
+                onClick: exportNeutralPackage,
+              },
+              {
+                id: "vault",
+                label: `Prepare for Vault (${selected.size})`,
+                onClick: prepareVault,
+              },
+              {
+                id: "argus-move",
+                label: "Move deck in Argus…",
+                onClick: () => {
+                  window.location.href = realmHref(deck.folderId ?? UNASSIGNED_REALM_ID, {
+                    deckId: deck.id,
+                  });
+                },
+              },
+              {
+                id: "argus-units",
+                label: "Regroup fragments in Argus…",
+                onClick: () => {
+                  window.location.href = "/forge/argus/units";
+                },
+              },
+              deck.view === "active"
+                ? {
+                    id: "archive",
+                    label: "Archive",
+                    onClick: () => {
+                      setState(archiveDeck(state, deck.id));
+                      window.location.href = "/forge/archive";
+                    },
+                  }
+                : {
+                    id: "restore",
+                    label: "Restore to Active",
+                    onClick: () => {
+                      setState(restoreDeck(state, deck.id));
+                      window.location.href = "/forge/active";
+                    },
+                  },
+            ]}
+          />
         </div>
       </div>
 
@@ -652,85 +613,41 @@ function ItemMenu({
   floating?: boolean;
 }) {
   return (
-    <div className={floating ? "absolute right-1 top-1" : "relative h-full"}>
-      <button
-        type="button"
-        aria-label={`Menu for ${item.title}`}
-        aria-expanded={open}
-        className="flex h-full min-h-11 min-w-11 items-center justify-center px-3 text-zinc-400 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-        onClick={onToggle}
-      >
-        ⋯
-      </button>
-      {open ? (
-        <div
-          role="menu"
-          className="absolute right-0 z-10 mt-1 w-48 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg"
-        >
-          <Link
-            role="menuitem"
-            href={viewHref(item.deckId, item.id)}
-            className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-          >
-            Open (Viewer)
-          </Link>
-          <Link
-            role="menuitem"
-            href={itemHref(item.deckId, item.id)}
-            className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800"
-          >
-            Edit
-          </Link>
-          <button
-            type="button"
-            role="menuitem"
-            className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-            onClick={onDuplicate}
-          >
-            Duplicate
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-            onClick={onMarkLater}
-          >
-            {item.markedForLater ? "Unmark later" : "Mark for later"}
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-            onClick={onRegroupInArgus}
-          >
-            Regroup in Argus…
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-            onClick={onMoveUp}
-          >
-            Reorder up
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
-            onClick={onMoveDown}
-          >
-            Reorder down
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="block w-full px-3 py-2 text-left text-sm text-rose-300 hover:bg-zinc-800"
-            onClick={onRemove}
-          >
-            Delete…
-          </button>
-        </div>
-      ) : null}
+    <div className={floating ? "absolute right-1 top-1 z-[2]" : "relative h-full border-l border-zinc-800"}>
+      <ForgeOverflowMenu
+        open={open}
+        onOpenChange={(next) => {
+          if (next !== open) onToggle();
+        }}
+        label={`Menu for ${item.title}`}
+        triggerClassName="flex h-full min-h-11 min-w-11 items-center justify-center px-3 text-zinc-400 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+        items={[
+          {
+            id: "view",
+            label: "Open (Viewer)",
+            onClick: () => {
+              window.location.href = viewHref(item.deckId, item.id);
+            },
+          },
+          {
+            id: "edit",
+            label: "Edit",
+            onClick: () => {
+              window.location.href = itemHref(item.deckId, item.id);
+            },
+          },
+          { id: "dup", label: "Duplicate", onClick: onDuplicate },
+          {
+            id: "later",
+            label: item.markedForLater ? "Unmark later" : "Mark for later",
+            onClick: onMarkLater,
+          },
+          { id: "regroup", label: "Regroup in Argus…", onClick: onRegroupInArgus },
+          { id: "up", label: "Reorder up", onClick: onMoveUp },
+          { id: "down", label: "Reorder down", onClick: onMoveDown },
+          { id: "delete", label: "Delete…", onClick: onRemove, danger: true },
+        ]}
+      />
     </div>
   );
 }
