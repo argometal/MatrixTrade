@@ -85,14 +85,22 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
     handleClear();
   }
 
-  function recordFailure(input: {
-    submittedJson: string;
-    kind: "parse" | "validation" | "server" | "unexpected";
-    errorMessage: string;
-    details?: string[];
-    blockType?: string;
-    technicalNote?: string;
-  }) {
+  /**
+   * Capture Snap Failure payload. Apply path clears the editor; Validate keeps it
+   * so the user can fix bad JSON without losing the paste.
+   */
+  function recordFailure(
+    input: {
+      submittedJson: string;
+      kind: "parse" | "validation" | "server" | "unexpected";
+      errorMessage: string;
+      details?: string[];
+      blockType?: string;
+      technicalNote?: string;
+    },
+    options?: { clearEditor?: boolean }
+  ) {
+    const clearEditor = options?.clearEditor !== false;
     const record = buildApplyFailureRecord(input);
     setLastFailedPayload(input.submittedJson);
     setLastFailureSnapshot(record);
@@ -101,9 +109,11 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
         ? `${record.errorMessage}\n${record.validatorDetails.join("\n")}`
         : record.errorMessage
     );
-    setApplyStatus("failure");
-    setApplyInput("");
-    setPreview(null);
+    setApplyStatus(clearEditor ? "failure" : "idle");
+    if (clearEditor) {
+      setApplyInput("");
+      setPreview(null);
+    }
     setSnapCopied(false);
   }
 
@@ -113,21 +123,37 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
     const submitted = applyInput;
     const result = parseAiBlock(submitted);
     if (!result.ok) {
-      // Validate-only: show error but keep editor so the user can fix before Apply.
+      // Keep editor; still enable Snap Failure (incl. invalid JSON).
       setPreview(null);
-      setApplyError(
-        result.details?.length ? `${result.error}\n${result.details.join("\n")}` : result.error
+      recordFailure(
+        {
+          submittedJson: submitted,
+          kind: "parse",
+          errorMessage: result.error,
+          details: result.details,
+        },
+        { clearEditor: false }
       );
-      setApplyStatus("idle");
       return;
     }
     setPreview(result.payload);
-    setApplyError(null);
     setApplyStatus("idle");
     const payloadCheck = validateProposalPayload(result.payload);
     if (!payloadCheck.ok) {
-      setApplyError(payloadCheck.errors.join("\n"));
+      recordFailure(
+        {
+          submittedJson: submitted,
+          kind: "validation",
+          errorMessage: "Validation failed",
+          details: payloadCheck.errors,
+          blockType: result.payload.type,
+        },
+        { clearEditor: false }
+      );
+      return;
     }
+    clearFailureState();
+    setApplyError(null);
   }
 
   function handleAccept() {
@@ -328,7 +354,7 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain">
         <p className="text-xs text-zinc-500">
           Paste AI Block. Validate, then Accept writes to MTA. Editor clears after every Apply
-          attempt.
+          attempt. On invalid JSON or validation errors, use Snap Failure to copy the report.
         </p>
 
         {isBusy ? (
