@@ -60,7 +60,7 @@ function sampleObs(
   return {
     id: "OBS-TEST-001",
     ticker: "TEST",
-    status: "open",
+    status: "observing",
     startedAt: "2026-07-20T00:00:00.000Z",
     endsAt: "2026-07-27T00:00:00.000Z",
     durationDays: 7,
@@ -68,6 +68,12 @@ function sampleObs(
     lastUpdatedAt: "2026-07-20T00:00:00.000Z",
     ...overrides,
   };
+}
+
+function setNodeEnv(value: string | undefined) {
+  const env = process.env as { NODE_ENV?: string };
+  if (value === undefined) delete env.NODE_ENV;
+  else env.NODE_ENV = value;
 }
 
 assert.equal(AUTOMATIC_EXECUTION_ENABLED, false);
@@ -484,20 +490,20 @@ async function main() {
     delete process.env.VERCEL;
     delete process.env.VERCEL_ENV;
     process.env.LEARNING_OUTCOMES_STORE = "memory";
-    process.env.NODE_ENV = "development";
+    setNodeEnv("development");
     assert.throws(
       () => getLearningOutcomesStoreMode(),
       /allowed only in tests/
     );
 
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     assert.throws(
       () => getLearningOutcomesStoreMode(),
       /forbidden in production|allowed only in tests/
     );
 
     process.env.VERCEL = "1";
-    process.env.NODE_ENV = "production";
+    setNodeEnv("production");
     assert.throws(
       () => getLearningOutcomesStoreMode(),
       /forbidden on Vercel/
@@ -509,6 +515,10 @@ async function main() {
     assert.equal((await getLearningOutcomesStore().readAll()).length, 1);
 
     for (const [k, v] of Object.entries(prev)) {
+      if (k === "NODE_ENV") {
+        setNodeEnv(v);
+        continue;
+      }
       if (v === undefined) delete process.env[k];
       else process.env[k] = v;
     }
