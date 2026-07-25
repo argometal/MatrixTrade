@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import { withLeadingAggregateSnapshot } from "@/lib/snapshot-aggregate";
 
 export function SnapshotButton({
   title,
@@ -18,6 +19,12 @@ export function SnapshotButton({
   const [open, setOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+
+  /** Snapshot general first — read-only projection; children unchanged (Prompt ID 24-30). */
+  const menuItems = useMemo(
+    () => withLeadingAggregateSnapshot("menu", title, items),
+    [title, items]
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -37,10 +44,10 @@ export function SnapshotButton({
     }
   }
 
-  const single = items.length === 1;
+  const single = menuItems.length === 1;
 
   if (single) {
-    const item = items[0]!;
+    const item = menuItems[0]!;
     return (
       <button
         type="button"
@@ -70,7 +77,7 @@ export function SnapshotButton({
       </button>
       {open ? (
         <div className="absolute right-0 z-30 mt-1 w-72 rounded-xl border border-zinc-700 bg-zinc-900 py-1 shadow-xl">
-          {items.map((item) => (
+          {menuItems.map((item) => (
             <button
               key={item.id}
               type="button"

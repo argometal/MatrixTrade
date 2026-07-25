@@ -8,6 +8,10 @@ import type { ControlPanelSectionId } from "@/lib/control-panel-types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import { buildLibraryIndexBrief } from "@/lib/library-index";
 import { wrapSnapshotText } from "@/lib/snapshot-verification";
+import {
+  buildAggregateSnapshotItem,
+  collectEligibleSnapshotItems,
+} from "@/lib/snapshot-aggregate";
 
 /** Local step machine — "apply" is user-facing; internal ControlPanelUpdate unchanged. */
 type Step = "pick" | "apply" | "stock-pick" | "detail";
@@ -222,26 +226,86 @@ export function MatrixControlPanel() {
     );
   }, [data.stockFile.theses, stockQuery]);
 
-  /** Control filters duplicate Mechanics rows — builders may still include them for other surfaces. */
+  /**
+   * Modular child snapshots for this Control level (canonical sources).
+   * Control filters duplicate Mechanics / protocol rows — builders may still include them elsewhere.
+   * Prompt ID 24-30: aggregate is projected separately; children stay unchanged.
+   */
   const detailSnapshots = useMemo((): SnapshotMenuItem[] => {
     if (!section) return [];
     switch (section) {
       case "train-ai":
+        // PlainCopyRows remain the modular buttons; aggregate uses those texts only.
         return [];
       case "mtae":
-        return data.mtae.snapshotItems.filter((item) => item.id !== "mtae-protocol");
+        return collectEligibleSnapshotItems(
+          data.mtae.snapshotItems.filter((item) => item.id !== "mtae-protocol")
+        );
       case "playbook":
-        return data.playbook.snapshotItems.filter((item) => item.id !== "mechanics");
+        return collectEligibleSnapshotItems(
+          data.playbook.snapshotItems.filter((item) => item.id !== "mechanics")
+        );
       case "stock-file":
-        return selectedStock?.snapshotItems.filter((item) => item.id !== "mechanics") ?? [];
+        return collectEligibleSnapshotItems(
+          selectedStock?.snapshotItems.filter((item) => item.id !== "mechanics") ?? []
+        );
       case "scouting":
-        return data.scouting.snapshotItems;
+        return collectEligibleSnapshotItems(data.scouting.snapshotItems);
       case "learning":
-        return data.learning.snapshotItems;
+        return collectEligibleSnapshotItems(data.learning.snapshotItems);
       default:
         return [];
     }
   }, [data, section, selectedStock]);
+
+  /** Read-only Snapshot general — first button; assembled from PlainCopy + child snapshot texts. */
+  const sectionGeneralSnapshot = useMemo((): SnapshotMenuItem | null => {
+    if (!section || step !== "detail") return null;
+
+    const plainSources: SnapshotMenuItem[] = [];
+    if (section === "train-ai") {
+      plainSources.push(
+        {
+          id: "train-ai-mechanics-brief",
+          label: "MTA Mechanics",
+          description: "Stable constitution — paste once at the start of the AI chat",
+          text: data.trainAi.mechanicsBrief,
+        },
+        {
+          id: "train-ai-schema-contract-brief",
+          label: "Apply schema contract",
+          description: "Schema-first — required fields, allowed keys, layer ownership, examples",
+          text: data.trainAi.schemaContractBrief,
+        }
+      );
+    }
+    if (section === "mtae") {
+      plainSources.push({
+        id: "mtae-protocol-brief",
+        label: "MTAE protocol",
+        description: "Technical procedure — not Mechanics, not Playbook, not Scout",
+        text: data.mtae.protocolBrief,
+      });
+    }
+    if (section === "learning" && data.learning.mafProtocolBrief) {
+      plainSources.push({
+        id: "learning-maf-protocol-brief",
+        label: "MAF attribution protocol",
+        description: "Component attribution — not a journal; never invent prices",
+        text: data.learning.mafProtocolBrief,
+      });
+    }
+
+    const levelLabel =
+      section === "stock-file" && selectedStock
+        ? `${selectedStock.thesis.ticker} · ${selectedStock.thesis.id}`
+        : sectionMeta?.label ?? section;
+
+    return buildAggregateSnapshotItem(section, levelLabel, [
+      ...plainSources,
+      ...detailSnapshots,
+    ]);
+  }, [section, step, data, detailSnapshots, selectedStock, sectionMeta?.label]);
 
   function pickSection(id: ControlPanelSectionId) {
     setSection(id);
@@ -408,6 +472,9 @@ export function MatrixControlPanel() {
 
         {step === "detail" ? (
           <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
+            {sectionGeneralSnapshot ? (
+              <SnapshotCopyRow item={sectionGeneralSnapshot} />
+            ) : null}
             {section === "train-ai" ? (
               <>
                 <PlainCopyRow
@@ -439,7 +506,8 @@ export function MatrixControlPanel() {
             {detailSnapshots.map((item) => (
               <SnapshotCopyRow key={item.id} item={item} />
             ))}
-            {detailSnapshots.length === 0 &&
+            {!sectionGeneralSnapshot &&
+            detailSnapshots.length === 0 &&
             section !== "train-ai" &&
             section !== "mtae" &&
             section !== "learning" ? (
