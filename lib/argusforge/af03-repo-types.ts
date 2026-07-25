@@ -3,7 +3,10 @@
  * NOT final ArgusForge persistence / ontology.
  * Folder path is NOT identity — `id` is identity.
  * UI label for folder containers: Realm (CHANGE 24-0F). Internal type remains Af03Folder.
+ * CHANGE 24-1C — version 3 adds builder blocks + asset metadata.
  */
+
+import type { Af03AssetMeta, Af03Block, Af03StructuralHints } from "./af03-builder-types";
 
 export type OperationalView = "active" | "archive";
 
@@ -61,6 +64,10 @@ export type Af03ContentItem = {
   unsupportedReason: string | null;
   /** AF03 §11 — mark for later processing (not Alexandria SRS) */
   markedForLater: boolean;
+  /** CHANGE 24-1C — one-time legacy → blocks projection done */
+  builderMigrated?: boolean;
+  tags?: string[];
+  structuralHints?: Af03StructuralHints | null;
 };
 
 export type Af03RepoPrefs = {
@@ -69,10 +76,15 @@ export type Af03RepoPrefs = {
 };
 
 export type Af03RepoState = {
-  version: 2;
+  version: 3;
   folders: Af03Folder[];
   decks: Af03ChaosDeck[];
+  /** Fragments (content items) */
   items: Af03ContentItem[];
+  /** CHANGE 24-1C — ordered blocks across fragments */
+  blocks: Af03Block[];
+  /** CHANGE 24-1C — asset metadata (bytes in IndexedDB) */
+  assets: Af03AssetMeta[];
   prefs: Af03RepoPrefs;
 };
 
@@ -85,3 +97,5 @@ export const DEFAULT_PREFS: Af03RepoPrefs = {
   deckListLayout: "list",
   deckInternalLayout: "list",
 };
+
+export type { Af03AssetMeta, Af03Block, Af03StructuralHints };

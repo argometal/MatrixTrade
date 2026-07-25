@@ -10,12 +10,19 @@ export default function ForgeArgusUnitsPage() {
   return (
     <div className="space-y-4">
       <Af03RepoDisclosure />
+      <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-500/90">
+        Argus · Experimental · Preview
+      </p>
       <p className="text-xs text-zinc-500">
         <Link href="/forge/argus" className="underline hover:text-zinc-300">
           ← Realm Treemap
         </Link>
         {" · "}
-        Unit graph (2D + 3D) — Fragments as nodes, not Chaos Decks.
+        <Link href="/forge" className="underline hover:text-zinc-300">
+          Home Explorer
+        </Link>
+        {" · "}
+        Unit graph (2D + 3D) — Fragments as nodes. Not primary management.
       </p>
       <ArgusGraphView />
     </div>

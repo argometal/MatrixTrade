@@ -13,6 +13,7 @@ import {
   freshnessToBorder,
   freshnessToFill,
   layoutTreemap,
+  realmHeaderFill,
   realmHref,
   type RealmLifecycleFilter,
   type RealmTreeNode,
@@ -128,17 +129,25 @@ export function RealmMapTree({ filter }: Props) {
 
       <header className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-500/90">
-            Argus · Realms
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-500/90">
+              Argus · Experimental
+            </p>
+            <span className="rounded border border-amber-700/50 bg-amber-950/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-200/90">
+              Preview
+            </span>
+          </div>
           <h2 className="text-xl font-semibold tracking-tight text-zinc-50">
             {filterLabel} Treemap
           </h2>
           <p className="text-xs text-zinc-500">
-            Macro view — size is mass, color is recent use. Open a Realm → select a deck →{" "}
-            <span className="text-zinc-400">Move to Realm</span>. Regroup fragments on{" "}
+            Relational laboratory — not the primary Explorer. Manage knowledge on{" "}
+            <Link href="/forge" className="underline hover:text-zinc-300">
+              Home
+            </Link>
+            . Open a Realm → select a deck → Move. Units:{" "}
             <Link href="/forge/argus/units" className="underline hover:text-zinc-300">
-              Unit graph
+              graph
             </Link>
             .
           </p>
@@ -214,20 +223,24 @@ export function RealmMapTree({ filter }: Props) {
                   top: r.y,
                   width: r.w,
                   height: r.h,
-                  background: freshnessToFill(r.node.metrics.freshness, archived),
-                  borderColor: isSel ? "#38bdf8" : freshnessToBorder(r.node.metrics.freshness),
+                  background: isHeader
+                    ? realmHeaderFill(r.node.metrics.freshness, archived)
+                    : freshnessToFill(r.node.metrics.freshness, archived, r.depth),
+                  borderColor: isSel
+                    ? "#34d399"
+                    : freshnessToBorder(r.node.metrics.freshness, r.depth),
                 }}
-                className={`absolute box-border overflow-hidden border text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
-                  isSel ? "ring-1 ring-sky-400" : ""
+                className={`absolute box-border overflow-hidden border text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${
+                  isSel ? "ring-1 ring-emerald-400" : ""
                 } ${isHeader ? "rounded-md" : "rounded-lg"}`}
               >
                 {showTitle ? (
                   <span
                     className={`block truncate ${
                       isHeader
-                        ? "px-1.5 py-1 text-[10px] font-semibold uppercase tracking-wide"
+                        ? "px-1.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-50"
                         : "px-2 py-2 text-xs font-semibold"
-                    } ${archived ? "text-zinc-400" : "text-zinc-100"}`}
+                    } ${archived && !isHeader ? "text-zinc-400" : isHeader ? "" : "text-zinc-100"}`}
                   >
                     {r.title}
                   </span>
@@ -235,7 +248,7 @@ export function RealmMapTree({ filter }: Props) {
                   <span className="sr-only">{r.title}</span>
                 )}
                 {!isHeader && r.h > 52 && r.w > 72 ? (
-                  <span className="block px-2 text-[10px] text-zinc-300/80">
+                  <span className="block px-2 text-[10px] text-emerald-100/70">
                     {r.node.metrics.deckCount}d · m{r.node.metrics.massScore.toFixed(0)}
                   </span>
                 ) : null}

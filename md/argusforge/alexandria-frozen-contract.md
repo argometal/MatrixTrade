@@ -1,33 +1,58 @@
-# Alexandria — Frozen Architecture Contract
+# Alexandria — Frozen Repository Contract
 
-**Status:** Canonical — **FROZEN**  
-**Date:** 2026-07-23  
-**Scope:** Binding rules for how MatrixTrade / ArgusForge treat Alexandria until an explicit reopen.  
-**Rule:** Do not implement changes. Do not redesign Alexandria. Do not refactor the current UI. Do not migrate Alexandria into ArgusForge.
+**Status:** Canonical — **FROZEN** (repository / implementation scope)  
+**Date:** 2026-07-23 · clarified 2026-07-25  
+**Scope:** Binding rules for how MatrixTrade / ArgusForge treat the Alexandria **repository** until an explicit reopen.  
+**Rule:** Do not implement changes in that repo. Do not redesign its current UI. Do not refactor it in place. Do not migrate that codebase into ArgusForge until reopen.
 
 This contract remains active until explicitly replaced.
 
 ---
 
+## 0. Clarification — freeze the repo, not the destination
+
+**What is frozen:** the Alexandria **repository** against **uncontrolled redesign** (the historical product line that already found a working path — ~LibraryBuild + GateKeeper + ORM-16 era). That artifact is preserved; it is not the place for incremental “final product” UI work.
+
+**Freeze does not forbid:** inspection, execution, testing, or an **isolated compatibility adapter** (CHANGE 24-1C). AF must not import Alexandria domain classes, copy its DB schema into AF core, or write directly into Alexandria internal storage.
+
+**What is not frozen forever:** the **architecture destination**. Integration that comes next evolves into a **new Alexandria** — not a forever-dead design sealed inside the old repo. Historical Alexandria remains a **legacy validation runtime** until replacement capabilities exist.
+
+**Intended successor framing (product intent, not implementation authorization):**
+
+```text
+Alexandria (frozen repo)  =  proven path / reusable mechanics baseline
+Argus                     =  Alexandria + 1
+Alexandria (evolved)      =  I. Motor  inside Argus
+```
+
+- **Argus** is the next generation of that line (Alexandria +1).  
+- Historical Alexandria does not stay a separate forever-product beside Argus; what is worth keeping becomes the **motor / engine** under Argus.  
+- AF may continue Chaos, Vault, and Argus surfaces **without** depending on the frozen repo today.  
+- Reopen still required before any code merge, API coupling, or “Alexandria motor” implementation in MatrixTrade.
+
+This section clarifies destination. Sections below still bind **current** work: out of scope until reopen.
+
+---
+
 ## 1. Status
 
-Alexandria is officially:
+The Alexandria **repository** is officially:
 
 **FROZEN**
 
-Frozen does not mean abandoned.
+Frozen does not mean abandoned, and does **not** mean the architecture idea is dead.
 
-Alexandria remains part of the long-term ecosystem, but its current interface is **not** considered the final product.
+Alexandria remains part of the long-term ecosystem. Its current interface is **not** the final product. The destination is evolution under Argus (Alexandria +1), with Alexandria as motor — see §0.
 
-No incremental UI evolution should be treated as the path toward the final Alexandria.
+No incremental UI evolution **inside the frozen repo** should be treated as the path toward that destination.
 
 ---
 
 ## 2. Long-term identity
 
-Alexandria is the complete **3D knowledge product**.
+Alexandria (as capability / motor line) is the **spatial–structural knowledge engine** that Argus will host as **I. Motor** after reopen and redesign.
 
-Its future purpose is to provide:
+That line’s purpose remains:
 
 - spatial representation of knowledge;
 - 3D memory palaces;
@@ -36,9 +61,9 @@ Its future purpose is to provide:
 - visual and spatial analysis of relationships;
 - human traversal of structured knowledge.
 
-Alexandria is **not** merely a viewer, note application, or list-based knowledge manager.
+It is **not** merely a viewer, note application, or list-based knowledge manager.
 
-Its final form requires technology study and architectural redesign.
+The frozen repo proved a path; the **new Alexandria** (under Argus) requires technology study and architectural redesign — not polish of the frozen UI.
 
 ---
 
@@ -104,16 +129,16 @@ Do not:
 
 ## 6. ArgusForge boundary
 
-ArgusForge must treat Alexandria as a **frozen external product**.
+Until reopen, ArgusForge must treat the Alexandria **repository** as a **frozen external product**.
 
-At this stage, ArgusForge may only acknowledge that Alexandria will eventually consume structured knowledge.
+At this stage, ArgusForge may only acknowledge the destination: Chaos/Library material → evolved Alexandria as **motor under Argus** (Alexandria +1). Prep and research notes may sketch exchange; they do not authorize coupling.
 
-No implementation contract should be forced yet beyond the future need for an **exchange boundary**.
+No **binding** implementation contract should be forced yet beyond the future need for an **exchange / motor boundary**.
 
-Do not define detailed Alexandria packages, schemas, adapters, or APIs until the Alexandria repository and technologies are studied.
+Do not ship detailed Alexandria packages, schemas, adapters, or APIs in product code until the Alexandria repository and technologies are studied and reopen is authorized.
 
-**ArgusForge must not depend on Alexandria.**  
-**Alexandria must not block ArgusForge development.**
+**ArgusForge must not depend on the frozen Alexandria repo today.**  
+**The frozen Alexandria repo must not block ArgusForge development.**
 
 ---
 
@@ -129,11 +154,11 @@ That phase must include:
 4. Evaluation of desktop, mobile, web, VR, and spatial-computing constraints.
 5. Redesign of the authoring experience.
 6. Redesign of the Parcour and memory-palace construction workflow.
-7. Definition of the relationship between Alexandria and ArgusForge (exchange boundary only after study — no pipeline chosen in advance).
-8. Migration or reuse plan.
+7. Definition of the relationship: **Argus = Alexandria +1**; evolved Alexandria as **I. Motor** of Argus; exchange / ownership boundaries after study.
+8. Migration or reuse plan from the frozen repo into that motor (what is reused, adapted, or replaced).
 9. Explicit decision on what survives from the current implementation.
 
-No technology or architecture should be selected before this study.
+No technology stack for the new motor should be locked before this study. Destination framing (§0) is allowed; premature engine selection is not.
 
 ---
 
@@ -156,11 +181,11 @@ If any current task appears to require changing Alexandria, **stop and report th
 
 ## 9. Official interpretation
 
-Alexandria is a valid concept whose ambition has exceeded its current interface and engine.
+Alexandria is a valid concept whose ambition exceeded the frozen repo’s current interface and engine — and that repo already marked a workable path.
 
-The correct response is not incremental patching.
+The correct response is not incremental patching of the frozen UI.
 
-The correct response is **preservation, freezing, study, and later reconstruction** at the required level.
+The correct response is **preserve the repo, freeze implementation there, study, then reconstruct** as the **new Alexandria motor inside Argus** (Alexandria +1).
 
 This contract remains active until explicitly replaced.
 
@@ -171,5 +196,6 @@ This contract remains active until explicitly replaced.
 | Document | Role |
 |----------|------|
 | [phase-0-architecture.md](phase-0-architecture.md) | Canonical AF Phase 0 — must respect this freeze |
+| [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) | Non-binding Chaos → Library → Argus/motor pipeline research |
 | [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | Deferred non-binding research — not AF architecture |
 | [README.md](README.md) | ArgusForge library index |

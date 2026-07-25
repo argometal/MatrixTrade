@@ -354,11 +354,13 @@ Engines and products may connect through clear boundaries.
 
 ## 21. Alexandria
 
-Alexandria remains frozen as an independent product.
+The Alexandria **repository** remains frozen as an independent product (implementation out of scope).
 
-ArgusForge does not depend on Alexandria.
+Destination framing (non-implementing): **Argus = Alexandria +1**; evolved Alexandria becomes **I. Motor** under Argus. Binding detail: [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md) §0.
 
-Alexandria does not block ArgusForge.
+ArgusForge does not depend on the frozen Alexandria repo today.
+
+The frozen Alexandria repo does not block ArgusForge.
 
 Future integration only after specific study.
 

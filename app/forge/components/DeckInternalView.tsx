@@ -2,6 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { createFragment } from "@/lib/argusforge/af03-builder-store";
+import {
+  buildExchangePackage,
+  downloadExchangePackage,
+} from "@/lib/argusforge/af03-exchange-export";
+import { homeExplorerHref } from "@/lib/argusforge/af03-home-explorer";
 import {
   archiveDeck,
   createContent,
@@ -21,9 +27,9 @@ import {
   setMarkedForLater,
   viewHref,
 } from "@/lib/argusforge/af03-repo-store";
-import { UNASSIGNED_REALM_ID } from "@/lib/argusforge/af03-repo-types";
 import { createVaultPrep } from "@/lib/argusforge/af03-vault-prep-store";
 import type { Af03ContentItem, Af03RepoState } from "@/lib/argusforge/af03-repo-types";
+import { UNASSIGNED_REALM_ID } from "@/lib/argusforge/af03-repo-types";
 import { realmHref } from "@/lib/argusforge/af03-realm-map";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
 import { CreationMenu, type CreateAction } from "./CreationMenu";
@@ -79,7 +85,8 @@ export function DeckInternalView({ deckId }: Props) {
 
   function parentHref(): string {
     if (!deck) return "/forge";
-    return realmHref(deck.folderId ?? UNASSIGNED_REALM_ID);
+    // CHANGE 24-1E — return to Home Explorer Realm context (Argus molecular remains at realmHref)
+    return homeExplorerHref({ realmId: deck.folderId });
   }
 
   function toggleSelect(id: string) {
@@ -185,6 +192,25 @@ export function DeckInternalView({ deckId }: Props) {
     window.location.href = "/forge/vault";
   }
 
+  function createBuilderFragment() {
+    if (!state || !deck) return;
+    const { state: next, fragment } = createFragment(state, deck.id);
+    setState(next);
+    setDeckMenuOpen(false);
+    window.location.href = itemHref(deck.id, fragment.id);
+  }
+
+  function exportNeutralPackage() {
+    if (!state || !deck) return;
+    const pkg = buildExchangePackage(state, deck.id);
+    if (!pkg) {
+      window.alert("Could not build exchange package for this deck.");
+      return;
+    }
+    downloadExchangePackage(pkg);
+    setDeckMenuOpen(false);
+  }
+
   if (!state) {
     return <p className="text-sm text-zinc-500">Loading Chaos Deck…</p>;
   }
@@ -211,8 +237,19 @@ export function DeckInternalView({ deckId }: Props) {
           href={parentHref()}
           className="rounded px-1 py-0.5 hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
         >
-          ← Folder
+          ← Explorer
         </Link>
+        {deck.folderId ? (
+          <>
+            <span aria-hidden>·</span>
+            <Link
+              href={realmHref(deck.folderId)}
+              className="rounded px-1 py-0.5 hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            >
+              Argus Realm
+            </Link>
+          </>
+        ) : null}
         <span aria-hidden>/</span>
         <span className="text-zinc-400">{deck.view === "active" ? "Active" : "Archive"}</span>
       </nav>
@@ -267,12 +304,28 @@ export function DeckInternalView({ deckId }: Props) {
                 type="button"
                 role="menuitem"
                 className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
+                onClick={createBuilderFragment}
+              >
+                New Fragment (builder)
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
                 onClick={() => {
                   handleCreate("text");
                   setDeckMenuOpen(false);
                 }}
               >
                 Add fragment (text)
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
+                onClick={exportNeutralPackage}
+              >
+                Export exchange JSON
               </button>
               <button
                 type="button"
@@ -379,6 +432,23 @@ export function DeckInternalView({ deckId }: Props) {
         </div>
       ) : null}
 
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="min-h-11 rounded-lg border border-emerald-800/60 bg-emerald-950/40 px-3 text-sm font-medium text-emerald-100"
+          onClick={createBuilderFragment}
+        >
+          New Fragment (builder)
+        </button>
+        <button
+          type="button"
+          className="min-h-11 rounded-lg border border-zinc-700 px-3 text-sm font-medium text-zinc-200"
+          onClick={exportNeutralPackage}
+        >
+          Export exchange JSON
+        </button>
+      </div>
+
       <CreationMenu scope="deck" onAction={handleCreate} />
 
       <div className="flex items-center justify-between gap-2">
@@ -427,7 +497,7 @@ export function DeckInternalView({ deckId }: Props) {
                 />
               </div>
               <Link
-                href={viewHref(deckId, item.id)}
+                href={itemHref(deckId, item.id)}
                 className="block min-h-[6.5rem] px-3 py-3 pl-9 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400"
               >
                 <span className="text-[10px] uppercase tracking-wide text-zinc-500">{kindLabel(item)}</span>
@@ -483,7 +553,7 @@ export function DeckInternalView({ deckId }: Props) {
                 />
               </label>
               <Link
-                href={viewHref(deckId, item.id)}
+                href={itemHref(deckId, item.id)}
                 className="min-w-0 flex-1 px-2 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400"
               >
                 <div className="flex items-center gap-2">
