@@ -1,43 +1,34 @@
-import { promises as fs } from "fs";
-import path from "path";
+/**
+ * Observation Engine persistence facade.
+ * Durable backend: Supabase `public.observations` when Matrix store is cloud/Vercel.
+ * Local JSON only off-Vercel — never write observations.json in production (25-115).
+ */
+import {
+  getObservationsStore,
+  OBSERVATIONS_JSON_PATH,
+} from "./observations-store";
 import type { ObservationRecord } from "./observation-types";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const FILE = path.join(DATA_DIR, "observations.json");
-
-async function readArray(): Promise<ObservationRecord[]> {
-  try {
-    const raw = await fs.readFile(FILE, "utf-8");
-    const parsed = JSON.parse(raw) as ObservationRecord[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code;
-    if (code === "ENOENT") return [];
-    throw err;
-  }
-}
-
-async function writeArray(rows: ObservationRecord[]): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(FILE, `${JSON.stringify(rows, null, 2)}\n`, "utf-8");
-}
+export { OBSERVATIONS_JSON_PATH };
 
 export async function getObservations(): Promise<ObservationRecord[]> {
-  return readArray();
+  return getObservationsStore().readAll();
 }
 
 export async function getObservationById(
   id: string
 ): Promise<ObservationRecord | undefined> {
   const needle = id.toUpperCase();
-  return (await readArray()).find((row) => row.id.toUpperCase() === needle);
+  return (await getObservations()).find((row) => row.id.toUpperCase() === needle);
 }
 
 export async function getObservationsByTradeId(
   tradeId: string
 ): Promise<ObservationRecord[]> {
   const needle = tradeId.toUpperCase();
-  return (await readArray()).filter((row) => row.tradeId?.toUpperCase() === needle);
+  return (await getObservations()).filter(
+    (row) => row.tradeId?.toUpperCase() === needle
+  );
 }
 
 export async function getObservationByTradeId(
@@ -51,21 +42,19 @@ export async function getObservationByPlanId(
   planId: string
 ): Promise<ObservationRecord | undefined> {
   const needle = planId.toUpperCase();
-  return (await readArray()).find(
+  return (await getObservations()).find(
     (row) => row.planId?.toUpperCase() === needle && !row.tradeId
   );
 }
 
 export async function upsertObservation(row: ObservationRecord): Promise<void> {
-  const all = await readArray();
-  const idx = all.findIndex((x) => x.id.toUpperCase() === row.id.toUpperCase());
-  if (idx >= 0) all[idx] = row;
-  else all.push(row);
-  all.sort((a, b) => a.id.localeCompare(b.id));
-  await writeArray(all);
+  await getObservationsStore().upsert(row);
 }
 
-export function nextObservationId(rows: ObservationRecord[], ticker: string): string {
+export function nextObservationId(
+  rows: ObservationRecord[],
+  ticker: string
+): string {
   const normalized = ticker.trim().toUpperCase();
   const prefix = `OBS-${normalized}-`;
   let max = 0;

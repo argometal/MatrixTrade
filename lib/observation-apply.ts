@@ -88,9 +88,18 @@ export function resolveObservationApplyTarget(input: {
   };
 }
 
+export type ApplyObservationDeps = {
+  getTradeById?: typeof getTradeById;
+  getPlanById?: typeof getPlanById;
+};
+
 export async function applyObservationUpdateProposal(
-  proposal: Record<string, unknown>
+  proposal: Record<string, unknown>,
+  deps: ApplyObservationDeps = {}
 ): Promise<{ observation?: ObservationRecord; errors?: string[] }> {
+  const loadTrade = deps.getTradeById ?? getTradeById;
+  const loadPlan = deps.getPlanById ?? getPlanById;
+
   const identityParsed = validateObservationUpdateProposal(proposal);
   if (!identityParsed.ok) return { errors: identityParsed.errors };
 
@@ -120,7 +129,7 @@ export async function applyObservationUpdateProposal(
   }
 
   if (!existing && resolved.createVia === "trade" && tradeId) {
-    const trade = await getTradeById(tradeId);
+    const trade = await loadTrade(tradeId);
     if (!trade) {
       return { errors: [`Trade ${tradeId} not found.`] };
     }
@@ -138,7 +147,7 @@ export async function applyObservationUpdateProposal(
   }
 
   if (!existing && resolved.createVia === "plan" && planId) {
-    const plan = await getPlanById(planId);
+    const plan = await loadPlan(planId);
     if (!plan) {
       return { errors: [`Plan ${planId} not found.`] };
     }
