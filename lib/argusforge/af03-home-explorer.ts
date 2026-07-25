@@ -8,7 +8,6 @@ import { UNASSIGNED_REALM_ID } from "./af03-repo-types";
 import { folderBreadcrumb, getFolder, listChildFolders, listDecksAt } from "./af03-repo-store";
 
 export type ExplorerStatusFilter = "all" | "active" | "archive";
-export type ExplorerContentFilter = "all" | "has_content" | "empty" | "recent";
 export type ExplorerSortKey = "name" | "updated" | "opened" | "fragments" | "status";
 
 /** Placeholder only — never invent success. */
@@ -41,19 +40,15 @@ export type ExplorerSearchHit = {
   href: string;
 };
 
-const RECENT_MS = 7 * 24 * 60 * 60 * 1000;
-
 export function homeExplorerHref(opts: {
   realmId?: string | null;
   status?: ExplorerStatusFilter;
-  content?: ExplorerContentFilter;
   sort?: ExplorerSortKey;
   q?: string;
 }): string {
   const params = new URLSearchParams();
   if (opts.realmId) params.set("realm", opts.realmId);
   if (opts.status && opts.status !== "all") params.set("status", opts.status);
-  if (opts.content && opts.content !== "all") params.set("content", opts.content);
   if (opts.sort && opts.sort !== "updated") params.set("sort", opts.sort);
   if (opts.q?.trim()) params.set("q", opts.q.trim());
   const qs = params.toString();
@@ -62,11 +57,6 @@ export function homeExplorerHref(opts: {
 
 export function parseExplorerStatus(raw: string | null): ExplorerStatusFilter {
   if (raw === "active" || raw === "archive" || raw === "all") return raw;
-  return "all";
-}
-
-export function parseExplorerContent(raw: string | null): ExplorerContentFilter {
-  if (raw === "has_content" || raw === "empty" || raw === "recent" || raw === "all") return raw;
   return "all";
 }
 
@@ -143,30 +133,17 @@ export function listDecksForExplorer(
   return listDecksAt(state, status === "archive" ? "archive" : "active", realmId);
 }
 
-function matchesContentFilter(
-  state: Af03RepoState,
-  deck: Af03ChaosDeck,
-  content: ExplorerContentFilter
-): boolean {
-  if (content === "all") return true;
-  const count = state.items.filter((i) => i.deckId === deck.id).length;
-  if (content === "has_content") return count > 0;
-  if (content === "empty") return count === 0;
-  if (content === "recent") {
-    const t = new Date(deck.lastOpenedAt ?? deck.updatedAt).getTime();
-    return Date.now() - t <= RECENT_MS;
-  }
-  return true;
+/** Direct Chaos Decks inside a Realm (not nested child-Realm decks). */
+export function realmChaosDeckCount(state: Af03RepoState, folderId: string): number {
+  return state.decks.filter((d) => d.folderId === folderId).length;
 }
 
 export function filterAndSortDecks(
   state: Af03RepoState,
   decks: Af03ChaosDeck[],
-  content: ExplorerContentFilter,
   sort: ExplorerSortKey
 ): Af03ChaosDeck[] {
-  const filtered = decks.filter((d) => matchesContentFilter(state, d, content));
-  return [...filtered].sort((a, b) => {
+  return [...decks].sort((a, b) => {
     switch (sort) {
       case "name":
         return a.title.localeCompare(b.title);
