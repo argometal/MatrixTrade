@@ -72,6 +72,11 @@ export const PLAN_COUNTERFACTUAL_OBSERVATION_KIND =
 
 export const TRIGGERED_UNEXECUTED_PLAN_UNIT = "triggered_unexecuted_plan" as const;
 
+/** Learning LO/OBS synchronization after plan.outcome.recordedAt. */
+export const LEARNING_SYNC_STATUSES = ["pending", "complete", "failed"] as const;
+
+export type LearningSyncStatus = (typeof LEARNING_SYNC_STATUSES)[number];
+
 export type PlanOutcomeRecord = {
   planId: string;
   recordedAt: string;
@@ -97,6 +102,12 @@ export type PlanOutcomeRecord = {
   evidenceRefs: string[];
   createdBy?: string;
   updatedAt: string;
+  /** Learning sync durability (plan → LO → OBS). */
+  learningSyncStatus?: LearningSyncStatus;
+  learningSyncError?: string;
+  learningSyncAttemptedAt?: string;
+  learningOutcomeId?: string;
+  observationId?: string;
   /** Legacy UI fields (optional, preserved). */
   reason?: string;
   strategyStillValid?: boolean;

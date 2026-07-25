@@ -46,9 +46,17 @@
 ### After Accept
 
 - `plan.outcome.recordedAt` set → closes `evaluate_expired_plan`
+- `learningSyncStatus` starts `pending`; `syncPlanOutcomeLearning` must reach `complete`
 - LO `unexecuted_plan_loss`, `concluded`, `planId` only (no `tradeId`)
 - No fictitious Trade; Trade metrics unchanged
-- Observation may seed; **MAF is a separate later action**
+- Observation linked; **MAF is a separate later action**
+- If sync fails: Apply reports partial failure; Needs Attention `sync_plan_outcome_learning` + Planning **Retry Learning Sync**
+
+### Execution readiness (unchanged)
+
+`approved → armed → alert → human confirmation → submitted`  
+Armed = parameters + alert prepared, **not transmitted**.  
+`automaticExecutionEnabled = false`.
 
 ## Scout metrics (`lib/learning-scout-aggregates.ts`)
 

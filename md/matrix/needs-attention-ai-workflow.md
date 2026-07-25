@@ -54,6 +54,7 @@ No Apply JSON until READY (protocol understood + evidence sufficient + zero unve
 | `incomplete_closed_aggregate` | Any incomplete closed gaps | Trades list | `/trades` | Per-trade blocks | All gaps cleared | Summary only | **SUPPORTED** (multi) |
 | `apply_inbox` | pendingInbox.length > 0 | Inbox items | `/inbox` | Existing proposal types via Control | No unapplied proposals | Yes (operational) | **SUPPORTED** |
 | `evaluate_expired_plan` | Plan failed/expired/skipped + !outcome.recordedAt | Plan, Stock File | `/planning?plan=` | `plan-outcome` (also Planning UI Record Outcome) | outcome.recordedAt (then LO/OBS/MAF as derived tasks) | Yes (diagnostic) | **SUPPORTED** |
+| `sync_plan_outcome_learning` | `outcome.recordedAt` exists but learning sync pending/failed or LO/OBS links broken | Plan, LO, OBS | `/planning?plan=` | none — Planning **Retry Learning Sync** | `learningSyncStatus=complete` + LO/OBS verify | Yes (diagnostic) | **SUPPORTED** (repair action, not Apply) |
 | `plan_ready_enter` | Plan status = ready | Plan | Scout enter href | `trade-proposal` | Trade opened / plan entered | Yes | **SUPPORTED** |
 | `plan_window_closing` | Watching + validUntil ≤ 48h | Plan | `/planning?plan=` | `decision-update` | Window extended, entered, or terminal | Yes | **SUPPORTED** |
 | `closed_missing_observation` | Closed trade with no ObservationRecord | Trade, LO? | `/trades/{id}` | `observation-update` (ensure OBS) | Observation exists with required evidence fields as needed | Yes | **SUPPORTED** (new attention row) |

@@ -566,7 +566,10 @@ export function PreviewPlanning({
                 </section>
               ) : null}
 
-              {scoutPrimaryPlan && planNeedsStrategyReview(scoutPrimaryPlan) ? (
+              {scoutPrimaryPlan &&
+              (planNeedsStrategyReview(scoutPrimaryPlan) ||
+                scoutPrimaryPlan.outcome?.learningSyncStatus === "pending" ||
+                scoutPrimaryPlan.outcome?.learningSyncStatus === "failed") ? (
                 <div className="mt-4">
                   <PlanRecordOutcomePanel plan={scoutPrimaryPlan} />
                 </div>

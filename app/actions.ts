@@ -860,6 +860,24 @@ export async function updatePlanStatusAction(
   return {};
 }
 
+export async function retryPlanOutcomeLearningSyncAction(
+  planId: string
+): Promise<{ error?: string; ok?: boolean }> {
+  await requireTradingSession();
+  const { syncPlanOutcomeLearning } = await import("@/lib/plan-outcome-learning-sync");
+  const result = await syncPlanOutcomeLearning(planId);
+  if (!result.ok) {
+    return {
+      error:
+        result.errors?.join(" ") ||
+        "Plan outcome persisted; Learning synchronization failed and requires repair.",
+    };
+  }
+  revalidateTradingPaths();
+  revalidatePath("/planning");
+  return { ok: true };
+}
+
 export async function recordPlanOutcomeAction(
   planId: string,
   formData: FormData
@@ -887,9 +905,9 @@ export async function recordPlanOutcomeAction(
       evidenceRefs,
       createdBy: "planning-ui",
     });
-    if (result.errors?.length) return { error: result.errors.join(" ") };
     revalidateTradingPaths();
     revalidatePath("/planning");
+    if (result.errors?.length) return { error: result.errors.join(" ") };
     return {};
   }
 
@@ -912,9 +930,9 @@ export async function recordPlanOutcomeAction(
       evidenceRefs,
       createdBy: "planning-ui",
     });
-    if (result.errors?.length) return { error: result.errors.join(" ") };
     revalidateTradingPaths();
     revalidatePath("/planning");
+    if (result.errors?.length) return { error: result.errors.join(" ") };
     return {};
   }
 

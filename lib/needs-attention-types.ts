@@ -19,6 +19,7 @@ export const NEEDS_ATTENTION_TASK_TYPES = [
   "incomplete_closed_aggregate",
   "apply_inbox",
   "evaluate_expired_plan",
+  "sync_plan_outcome_learning",
   "plan_ready_enter",
   "plan_window_closing",
   "closed_missing_observation",

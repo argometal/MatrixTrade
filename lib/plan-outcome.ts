@@ -1,13 +1,9 @@
 /**
- * Persist Plan Outcome + Learning Outcome (no fictitious Trade).
+ * Persist Plan Outcome, then durable Learning sync (no fictitious Trade).
  * UPL: unexecuted_plan_loss — server-derived realized/counterfactual R.
  */
 import type { TradePlan } from "./plan-types";
 import type { PlanOutcomeProposalInput } from "./plan-outcome-types";
-import {
-  PLAN_COUNTERFACTUAL_OBSERVATION_KIND,
-  TRIGGERED_UNEXECUTED_PLAN_UNIT,
-} from "./plan-outcome-types";
 import { validatePlanOutcomeProposal } from "./plan-outcome-validate";
 import {
   deriveUnexecutedPlanLossServerValues,
@@ -15,19 +11,10 @@ import {
   planHasCounterfactualGeometry,
   validateUnexecutedPlanLossEligibility,
 } from "./plan-outcome-derive";
+import { syncPlanOutcomeLearning } from "./plan-outcome-learning-sync";
 import { getPlanById } from "./plans";
 import { getPlansStore } from "./plans-store";
-import {
-  getObservationByPlanId,
-  getObservations,
-  nextObservationId,
-  upsertObservation,
-} from "./observation-store";
 import type { ObservationRecord } from "./observation-types";
-import {
-  upsertLearningOutcomeFromPlan,
-  linkObservationToLearningOutcome,
-} from "./learning-outcome";
 import { getLearningOutcomeByPlanId } from "./learning-outcome-store";
 import { getTrades } from "./storage";
 import type { LearningOutcome } from "./learning-outcome-types";
@@ -54,15 +41,20 @@ async function tradesLinkedToPlan(planId: string): Promise<string[]> {
     .map((t) => t.id);
 }
 
-export async function applyPlanOutcomeProposal(
-  proposal: Record<string, unknown>
-): Promise<{
+export type PersistPlanOutcomeResult = {
   plan?: TradePlan;
   observation?: ObservationRecord;
   learningOutcome?: LearningOutcome;
   errors?: string[];
   idempotent?: boolean;
-}> {
+  /** Outcome persisted but LO/OBS sync failed — Needs Attention repair. */
+  partialFailure?: boolean;
+  learningSyncComplete?: boolean;
+};
+
+export async function applyPlanOutcomeProposal(
+  proposal: Record<string, unknown>
+): Promise<PersistPlanOutcomeResult> {
   const parsed = validatePlanOutcomeProposal(proposal);
   if (!parsed.ok) return { errors: parsed.errors };
   return persistPlanOutcome(parsed.value);
@@ -70,19 +62,13 @@ export async function applyPlanOutcomeProposal(
 
 export async function persistPlanOutcome(
   input: PlanOutcomeProposalInput
-): Promise<{
-  plan?: TradePlan;
-  observation?: ObservationRecord;
-  learningOutcome?: LearningOutcome;
-  errors?: string[];
-  idempotent?: boolean;
-}> {
+): Promise<PersistPlanOutcomeResult> {
   const plan = await getPlanById(input.planId);
   if (!plan) return { errors: [`Plan ${input.planId} not found.`] };
 
   const linkedTradeIds = await tradesLinkedToPlan(plan.id);
 
-  // Idempotent re-Accept of the same UPL outcome.
+  // Idempotent re-Accept of the same UPL outcome — still sync learning if needed.
   if (
     plan.outcome?.recordedAt &&
     (plan.outcome.outcomeKind === input.outcomeKind ||
@@ -90,11 +76,27 @@ export async function persistPlanOutcome(
         plan.outcome.status === "theoretical_loss" &&
         plan.outcome.tradeExecuted === false))
   ) {
-    const existingLo = await getLearningOutcomeByPlanId(plan.id);
+    const sync = await syncPlanOutcomeLearning(plan.id);
+    if (!sync.ok) {
+      return {
+        plan: sync.plan ?? plan,
+        learningOutcome: sync.learningOutcome,
+        observation: sync.observation,
+        idempotent: true,
+        partialFailure: true,
+        learningSyncComplete: false,
+        errors: [
+          "Plan outcome persisted; Learning synchronization failed and requires repair.",
+          ...(sync.errors ?? []),
+        ],
+      };
+    }
     return {
-      plan,
-      learningOutcome: existingLo,
+      plan: sync.plan ?? plan,
+      learningOutcome: sync.learningOutcome,
+      observation: sync.observation,
       idempotent: true,
+      learningSyncComplete: true,
     };
   }
 
@@ -113,7 +115,7 @@ export async function persistPlanOutcome(
         {
           entryReached: input.entryReached === true,
           stopReachedBeforeTarget: input.stopReachedBeforeTarget === true,
-          targetReachedBeforeStop: input.targetReachedBeforeStop === false,
+          targetReachedBeforeStop: input.targetReachedBeforeStop === true,
           nonExecutionReason: input.nonExecutionReason,
         },
         { linkedTradeIds }
@@ -144,18 +146,8 @@ export async function persistPlanOutcome(
     }
   }
 
-  // duplicate_creation: close THIS plan only; never touch other ticker plans.
-  if (input.outcomeKind === "duplicate_creation") {
-    if (!planEligibleForOutcomeClosure(plan) && plan.status !== "watching" && plan.status !== "ready") {
-      // Still allow marking a clone as duplicate even if active.
-    }
-  }
-
   const now = new Date().toISOString();
-  const nextStatus =
-    input.outcomeKind === "duplicate_creation"
-      ? resolveTerminalStatus(plan)
-      : resolveTerminalStatus(plan);
+  const nextStatus = resolveTerminalStatus(plan);
 
   const server =
     input.outcomeKind === "unexecuted_plan_loss" ||
@@ -171,7 +163,9 @@ export async function persistPlanOutcome(
     : input.tradeExecuted
       ? input.realizedResultR
       : 0;
-  const realizedPnL = server ? server.realizedPnL : input.realizedPnL ?? (input.tradeExecuted ? undefined : 0);
+  const realizedPnL = server
+    ? server.realizedPnL
+    : input.realizedPnL ?? (input.tradeExecuted ? undefined : 0);
   const counterfactualDollarResult = server
     ? server.counterfactualDollarResult
     : input.counterfactualDollarResult;
@@ -210,6 +204,7 @@ export async function persistPlanOutcome(
     strategyStillValid: input.strategyStillValid,
     externalFactors: input.externalFactors,
     lesson: input.lesson ?? input.notes,
+    learningSyncStatus: "pending",
   };
   if (input.reason) {
     outcome.reason = input.reason as NonNullable<TradePlan["outcome"]>["reason"];
@@ -224,145 +219,30 @@ export async function persistPlanOutcome(
 
   await getPlansStore().upsert(updated);
 
-  let observation: ObservationRecord | undefined;
-  let learningOutcome: LearningOutcome | undefined;
-  try {
-    learningOutcome = await upsertLearningOutcomeFromPlan(updated);
-    if (
-      !input.tradeExecuted &&
-      input.outcomeKind !== "duplicate_creation"
-    ) {
-      observation = await ensureCounterfactualObservation(
-        updated,
-        input,
-        learningOutcome?.id
-      );
-      if (learningOutcome && observation) {
-        await linkObservationToLearningOutcome(
-          learningOutcome.id,
-          observation.id
-        );
-        // Keep UPL LO concluded even after OBS link.
-        if (learningOutcome.kind === "unexecuted_plan_loss") {
-          const { upsertLearningOutcome } = await import("./learning-outcome-store");
-          learningOutcome = {
-            ...learningOutcome,
-            observationId: observation.id,
-            lifecycleStatus: "concluded",
-            updatedAt: new Date().toISOString(),
-          };
-          await upsertLearningOutcome(learningOutcome);
-        }
-      }
-    }
-  } catch {
-    // Learning/OBS path is best-effort after durable plan outcome write.
+  const sync = await syncPlanOutcomeLearning(updated.id);
+  if (!sync.ok) {
+    return {
+      plan: sync.plan ?? updated,
+      learningOutcome: sync.learningOutcome,
+      observation: sync.observation,
+      partialFailure: true,
+      learningSyncComplete: false,
+      errors: [
+        "Plan outcome persisted; Learning synchronization failed and requires repair.",
+        ...(sync.errors ?? []),
+      ],
+    };
   }
 
-  return { plan: updated, observation, learningOutcome };
+  return {
+    plan: sync.plan ?? updated,
+    learningOutcome: sync.learningOutcome,
+    observation: sync.observation,
+    learningSyncComplete: true,
+  };
 }
 
-async function ensureCounterfactualObservation(
-  plan: TradePlan,
-  input: PlanOutcomeProposalInput,
-  learningOutcomeId?: string
-): Promise<ObservationRecord> {
-  const existing = await getObservationByPlanId(plan.id);
-  const now = new Date().toISOString();
-  const concluded =
-    input.status === "inconclusive"
-      ? "inconclusive"
-      : input.evidenceStatus === "inconclusive"
-        ? "inconclusive"
-        : "concluded";
-
-  // Do not mark Stock File thesis invalidated — observation is Scout-path evidence only.
-  if (existing) {
-    const patched: ObservationRecord = {
-      ...existing,
-      learningOutcomeId: learningOutcomeId ?? existing.learningOutcomeId,
-      observationKind: PLAN_COUNTERFACTUAL_OBSERVATION_KIND,
-      learningUnitKind:
-        input.entryTriggered === true && input.tradeExecuted === false
-          ? TRIGGERED_UNEXECUTED_PLAN_UNIT
-          : existing.learningUnitKind,
-      entryTriggered: input.entryTriggered ?? existing.entryTriggered,
-      stopTriggered: input.stopTriggered ?? existing.stopTriggered,
-      targetTriggered: input.targetTriggered ?? existing.targetTriggered,
-      theoreticalResultR:
-        input.theoreticalResultR ?? existing.theoreticalResultR,
-      realizedResultR: 0,
-      evidenceRefs: input.evidenceRefs?.length
-        ? input.evidenceRefs
-        : existing.evidenceRefs,
-      conclusionReason: input.notes ?? existing.conclusionReason,
-      concludedAt: now,
-      status: concluded === "inconclusive" ? "observing" : "concluded",
-      firstTerminalEvent:
-        input.targetTriggered === true
-          ? "target"
-          : input.stopTriggered === true
-            ? "invalidation"
-            : existing.firstTerminalEvent,
-      lastUpdatedAt: now,
-      notes: input.notes ?? existing.notes,
-    };
-    await upsertObservation(patched);
-    return patched;
-  }
-
-  const all = await getObservations();
-  const startedAt = plan.outcome?.recordedAt ?? plan.updatedAt ?? now;
-  const durationDays = 90;
-  const endsAt = new Date(
-    Date.parse(startedAt) + durationDays * 24 * 60 * 60 * 1000
-  ).toISOString();
-
-  const row: ObservationRecord = {
-    id: nextObservationId(all, plan.ticker),
-    learningOutcomeId,
-    planId: plan.id,
-    ticker: plan.ticker.toUpperCase(),
-    status: concluded === "inconclusive" ? "observing" : "concluded",
-    startedAt,
-    endsAt,
-    durationDays,
-    referenceEntry: plan.plannedEntry,
-    referenceStop: plan.stopPrice,
-    referenceTargets:
-      plan.targetPrice !== undefined ? [plan.targetPrice] : undefined,
-    observationKind: PLAN_COUNTERFACTUAL_OBSERVATION_KIND,
-    learningUnitKind:
-      input.entryTriggered === true && input.tradeExecuted === false
-        ? TRIGGERED_UNEXECUTED_PLAN_UNIT
-        : undefined,
-    entryTriggered: input.entryTriggered,
-    stopTriggered: input.stopTriggered,
-    targetTriggered: input.targetTriggered,
-    theoreticalResultR: input.theoreticalResultR,
-    realizedResultR: 0,
-    evidenceRefs: input.evidenceRefs ?? [],
-    conclusionReason: input.notes,
-    concludedAt: now,
-    // Scout path evidence — does not mutate Stock File.
-    thesisInvalidated: undefined,
-    targetReached:
-      input.targetTriggered === true
-        ? true
-        : input.targetTriggered === false
-          ? false
-          : undefined,
-    firstTerminalEvent:
-      input.targetTriggered === true
-        ? "target"
-        : input.stopTriggered === true
-          ? "invalidation"
-          : undefined,
-    dataSource: "manual",
-    notes: input.notes,
-    createdAt: now,
-    lastUpdatedAt: now,
-  };
-  await upsertObservation(row);
-  return row;
+/** @deprecated Prefer syncPlanOutcomeLearning — kept for callers that only need LO lookup after persist. */
+export async function getPlanLearningOutcome(planId: string) {
+  return getLearningOutcomeByPlanId(planId);
 }

@@ -5,7 +5,33 @@ import type { LearningOutcome } from "./learning-outcome-types";
 const DATA_DIR = path.join(process.cwd(), "data");
 const FILE = path.join(DATA_DIR, "learning-outcomes.json");
 
+type LoStore = {
+  readAll(): Promise<LearningOutcome[]>;
+  writeAll(rows: LearningOutcome[]): Promise<void>;
+};
+
+let testOverride: LoStore | null = null;
+
+function createMemoryLoStore(seed: LearningOutcome[] = []): LoStore {
+  let rows = [...seed];
+  return {
+    async readAll() {
+      return [...rows];
+    },
+    async writeAll(next) {
+      rows = [...next];
+    },
+  };
+}
+
+export function __setLearningOutcomeStoreForTests(
+  seed: LearningOutcome[] | null
+): void {
+  testOverride = seed === null ? null : createMemoryLoStore(seed);
+}
+
 async function readArray(): Promise<LearningOutcome[]> {
+  if (testOverride) return testOverride.readAll();
   try {
     const raw = await fs.readFile(FILE, "utf-8");
     const parsed = JSON.parse(raw) as LearningOutcome[];
@@ -18,6 +44,10 @@ async function readArray(): Promise<LearningOutcome[]> {
 }
 
 async function writeArray(rows: LearningOutcome[]): Promise<void> {
+  if (testOverride) {
+    await testOverride.writeAll(rows);
+    return;
+  }
   await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.writeFile(FILE, `${JSON.stringify(rows, null, 2)}\n`, "utf-8");
 }

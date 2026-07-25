@@ -55,7 +55,7 @@ export async function loadDashboardData(): Promise<DashboardData> {
     const pendingInbox = await listAllPendingInboxItems(workerInbox);
     const rawItems = [
       ...buildAttentionItems(trades, pendingInbox, playbooks, monthly),
-      ...buildPlanAttentionItems(plans),
+      ...buildPlanAttentionItems(plans, learningOutcomes, observations),
       ...buildLearningAttentionItems(trades, observations, learningOutcomes),
     ].sort((a, b) => a.priority - b.priority);
 

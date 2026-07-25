@@ -352,13 +352,54 @@ async function verifyPlanOutcomePersistence(
 ): Promise<ApplyVerifyResult> {
   const planId = String(parsed.proposal.planId ?? "").trim().toUpperCase();
   const { getPlanById } = await import("./plans");
+  const { loadAndVerifyPlanOutcomeLearning } = await import(
+    "./plan-outcome-learning-sync"
+  );
   const plan = await getPlanById(planId);
   if (!plan?.outcome?.recordedAt) {
     return { ok: false, detail: `Plan ${planId} outcome.recordedAt missing after apply.` };
   }
+
+  const verify = await loadAndVerifyPlanOutcomeLearning(plan);
+  if (plan.outcome.learningSyncStatus !== "complete" || !verify.ok) {
+    const issues = verify.issues.map((i) => i.message).join("; ");
+    return {
+      ok: false,
+      detail: `Plan ${plan.id} outcome recorded but Learning sync incomplete (${plan.outcome.learningSyncStatus ?? "legacy/pending"})${issues ? `: ${issues}` : ""}. Repair via Planning → Retry Learning Sync.`,
+    };
+  }
+
+  const kind = plan.outcome.outcomeKind;
+  if (kind === "unexecuted_plan_loss" || plan.outcome.status === "theoretical_loss") {
+    const lo = verify.learningOutcome;
+    const obs = verify.observation;
+    if (!lo || lo.kind !== "unexecuted_plan_loss") {
+      return { ok: false, detail: `Plan ${plan.id}: LO unexecuted_plan_loss missing after apply.` };
+    }
+    if (lo.tradeId) {
+      return { ok: false, detail: `Plan ${plan.id}: LO must not have tradeId.` };
+    }
+    if (lo.realizedR !== 0 || lo.counterfactualR !== -1) {
+      return { ok: false, detail: `Plan ${plan.id}: LO R fields not server-derived (0 / -1).` };
+    }
+    if (!obs || obs.learningOutcomeId !== lo.id || lo.observationId !== obs.id) {
+      return { ok: false, detail: `Plan ${plan.id}: LO↔OBS links inconsistent.` };
+    }
+  }
+
+  if (kind === "duplicate_creation") {
+    const lo = verify.learningOutcome;
+    if (!lo || lo.kind !== "duplicate_creation" || lo.excludedFromMetrics !== true) {
+      return {
+        ok: false,
+        detail: `Plan ${plan.id}: duplicate_creation LO missing or not excludedFromMetrics.`,
+      };
+    }
+  }
+
   return {
     ok: true,
-    detail: `Plan ${plan.id} outcome verified · ${plan.outcome.outcomeKind ?? plan.outcome.status ?? "recorded"} · recordedAt set · realizedR ${plan.outcome.realizedResultR ?? 0}`,
+    detail: `Plan ${plan.id} outcome + learning sync verified · ${plan.outcome.outcomeKind ?? plan.outcome.status ?? "recorded"} · LO ${verify.learningOutcome?.id ?? "—"}`,
   };
 }
 
