@@ -159,36 +159,17 @@ This design **does not** reproduce Library-the-product; it **does** take the **l
 
 ---
 
-## 7. Design slices (order to discuss — still no coding)
+## 7. Design slices → architecture
 
-### Slice A — Chaos block body model
+**Authoritative build proposal:** [`chaos-builder-architecture.md`](chaos-builder-architecture.md).
 
-- Fragment stores `blocks[]` (ORM-aligned) + `assets[]` refs.  
-- Deck still holds many Fragments.  
-- Migration: wrap legacy `kind/body` into one `p` or one `img` block.
-
-### Slice B — Chaos builder UI (capture parity)
-
-- Block chrome: add `p` / `img` / `link`.  
-- Ingest triad for images.  
-- Reorder + thumbnail.  
-- Keyboard paste on deck and on fragment surface.
-
-### Slice C — Ship out
-
-- “Send to Vault” uses block-aware package.  
-- “Export Alexandria handoff” writes `af.chaos.library_handoff.v0` (+ asset folder or zip).  
-- No live Alexandria API while repo freeze holds.
-
-### Slice D — Argus castillos / parcour-like (separate)
-
-- Structure only: which Fragments belong to which castle/path.  
-- No locus body editor inside Argus (link out to Chaos).  
-- Placement hints for future motor.
-
-### Slice E — Motor / Godot (reopen)
-
-- Out of this discussion’s build order; destination only.
+| Slice | When |
+|-------|------|
+| A–B + progressive tiers + IDB | **Now** — complete through builder |
+| Vault compat | **Now** — no regression |
+| C Alexandria handoff export | **Deferred** — research only; leave as-is |
+| D Argus Parcour / Castle / Realm structure | **After** builder |
+| E Motor / Godot | **Later** reopen |
 
 ---
 

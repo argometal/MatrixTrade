@@ -18,8 +18,9 @@
 | [phase-0-architecture.md](phase-0-architecture.md) | **Canonical — Phase 0 CLOSED** | Technical boundaries, names, Chaos/org/Registry, engine limits |
 | [vault-training-layer-contract.md](vault-training-layer-contract.md) | **Canonical — Vault** | Vault prepares formation ≠ Memory |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria **repo** freeze; destination = Argus as Alexandria +1 / motor (§0) |
-| [chaos-locus-capture-design.md](chaos-locus-capture-design.md) | **Design discussion — non-binding** | Chaos = locus builder only; Argus = Library hybrid (castillos / Parcour) |
-| [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) | **Research — non-binding** | Chaos → Vault / Alexandria handoff package research |
+| [chaos-locus-capture-design.md](chaos-locus-capture-design.md) | **Design discussion — non-binding** | Chaos = locus builder only; Argus = Library hybrid (Castle / Parcour) |
+| [chaos-builder-architecture.md](chaos-builder-architecture.md) | **Architecture proposal — builder now** | Chaos progressive builder; Argus/Alexandria later; pipeline deferred |
+| [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) | **Research — deferred** | Alexandria handoff (leave as-is; not current build) |
 | [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | **Research — deferred, non-binding** | Historical spatial notes; not AF architecture |
 | [external-repo-patterns-research.md](external-repo-patterns-research.md) | **Research** | External pattern references (evaluate before reuse) |
 
@@ -46,9 +47,10 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 5. [vault-training-layer-contract.md](vault-training-layer-contract.md)
 6. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — repo freeze + Argus = Alexandria +1
 7. [chaos-locus-capture-design.md](chaos-locus-capture-design.md) (discussion — Chaos vs Argus Library split)
-8. [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) (optional, non-binding)
-9. [external-repo-patterns-research.md](external-repo-patterns-research.md)
-10. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
+8. [chaos-builder-architecture.md](chaos-builder-architecture.md) (builder architecture — current build target)
+9. [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) (deferred research)
+10. [external-repo-patterns-research.md](external-repo-patterns-research.md)
+11. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
 
 ## Current UI (AF03 progress)
 
