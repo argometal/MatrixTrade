@@ -114,8 +114,8 @@ Argus absorbs the “assembly” half of Library, using Alexandria ontology (§8
 | Term | Intent in Argus |
 |------|-----------------|
 | **Parcour** | Topic path **under construction** — loci being assembled |
-| **Castle** | **Culminated** topic product (completion), not a synonym of Realm |
-| **Realm** | Theme world — accumulates parcours (and their Castle graduations) |
+| **Castle** | **Content** of a Realm — culminated topic product |
+| **Realm** | **Exportable / archivable structure** — theme package holding castles (+ WIP parcours) |
 | **Treemap / molecular / units** | Operational + relational views already on that path |
 | **Future I. Motor** | Evolved Alexandria under Argus; Godot candidate for runtime |
 
@@ -226,29 +226,30 @@ Alexandria already separates these ([`LAYERS_REALM_PARCOUR_OBJECT.md`](https://g
 | Term | Role | State |
 |------|------|--------|
 | **Object / Locus** | One content unit (← AF **Fragment** body candidate) | authored in Chaos |
-| **Parcour** | Path / topic run **under construction** — DB/path being filled with loci | work-in-progress |
-| **Castle** | **Culminated product** of a topic — used loci with the full authored series (objects, hints, questions / ridiculous-stories bar, etc.) | completion phase, not a fourth tree layer |
-| **Realm** | Structural container for **one theme** — holds many parcours; completed ones qualify as (or contribute to) Castle | accumulation / world root |
+| **Parcour** | Path / topic run **under construction** — being filled with loci | work-in-progress content |
+| **Castle** | **Content of a Realm** — culminated topic product (objects, hints, questions / ridiculous-stories bar, etc.) | completed content unit inside a Realm |
+| **Realm** | **Exportable / archivable structure** for one theme — the package/world that holds castles (and parcours still in progress) | structural container + transfer unit |
 
 **Coherence check**
 
 | Claim | Verdict |
 |-------|---------|
 | Parcour = en construcción | **Yes** — working path |
-| Castle = producto final de un tópico | **Yes** — completion status / graduated topic product (Alexandria: Castle ≠ synonym of Realm) |
-| Realm = acumulación de castles del mismo tema | **Mostly yes** — Realm accumulates **parcours** of a theme; those that culminate are Castles (or the Realm reaches Castle when the used-frame bar is met). A Realm may still hold unfinished parcours. |
-| “Castle = un realm culminado” | **Too loose** — prefer: Castle = **culminación de un tópico/parcour (o fase)**; Realm = **contenedor del tema**. A whole Realm can *qualify Castle* as a phase, but Castle is not “another name for Realm.” |
+| Castle = contenido de un Realm (tópico culminado) | **Yes** — content living inside the Realm structure |
+| Realm = estructura exportable / archivable | **Yes** — the unit you ship, archive, or restore as a whole |
+| Realm acumula castles del mismo tema | **Yes** — plus unfinished parcours of that theme |
+| “Castle = un realm culminado” | **No** — Castle is **content**; Realm is the **structure/package** |
 
-**AF working rule (follow Alexandria ontology):**
+**AF working rule (follow Alexandria ontology + this packaging rule):**
 
 ```text
-Realm (theme world)
-  └── Parcour (under construction)
+Realm          ← structure (export / archive / restore)
+  ├── Parcour  ← content under construction
+  └── Castle   ← content culminated (topic product)
         └── Objects / Fragments (loci)
-              └── … when topic qualifies → Castle (completion of that product)
 ```
 
-UI may say “Castillo” for the completed product; internal/type language keeps **Parcour** + **Castle (completion)** + **Realm** as in Alexandria. AF folder “Realm” (Chaos org) remains a **different namespace** until an explicit merge contract.
+UI may say “Castillo” for culminated content; **Realm** is what you export or archive. AF folder “Realm” (Chaos org) remains a **different namespace** until an explicit merge contract.
 
 ### 8.4 Still open (lighter)
 
@@ -271,7 +272,7 @@ UI may say “Castillo” for the completed product; internal/type language keep
 ## 10. One-line summary
 
 **Chaos = progressive locus builder (grows with use; full text+image construction when earned).  
-Parcour = topic path under construction; Castle = culminated topic product; Realm = theme container of parcours/castles.  
+Realm = exportable/archivable structure; Castle = culminated content inside a Realm; Parcour = that content while still under construction.  
 Argus owns that structure; Chaos may feed it but need not.  
 IndexedDB for image binaries when builder ships.**
 
