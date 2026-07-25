@@ -18,11 +18,10 @@ import {
   homeExplorerHref,
   listDecksForExplorer,
   listRealmsAt,
-  parseExplorerContent,
   parseExplorerSort,
   parseExplorerStatus,
+  realmChaosDeckCount,
   searchExplorer,
-  type ExplorerContentFilter,
   type ExplorerSortKey,
   type ExplorerStatusFilter,
 } from "@/lib/argusforge/af03-home-explorer";
@@ -31,6 +30,8 @@ import {
   archiveFolder,
   createDeck,
   createFolder,
+  deleteDeck,
+  deleteFolder,
   emptyOrSeedRepo,
   formatRelativeAgo,
   getFolder,
@@ -91,7 +92,6 @@ export function HomeExplorer() {
 
   const realmId = searchParams.get("realm");
   const status = parseExplorerStatus(searchParams.get("status"));
-  const content = parseExplorerContent(searchParams.get("content"));
   const sort = parseExplorerSort(searchParams.get("sort"));
   const q = searchParams.get("q") ?? "";
 
@@ -106,7 +106,6 @@ export function HomeExplorer() {
   function pushParams(patch: {
     realmId?: string | null;
     status?: ExplorerStatusFilter;
-    content?: ExplorerContentFilter;
     sort?: ExplorerSortKey;
     q?: string;
   }) {
@@ -114,7 +113,6 @@ export function HomeExplorer() {
       homeExplorerHref({
         realmId: patch.realmId !== undefined ? patch.realmId : realmId,
         status: patch.status ?? status,
-        content: patch.content ?? content,
         sort: patch.sort ?? sort,
         q: patch.q !== undefined ? patch.q : q,
       })
@@ -134,13 +132,8 @@ export function HomeExplorer() {
 
   const decks = useMemo(() => {
     if (!state || q.trim()) return [];
-    return filterAndSortDecks(
-      state,
-      listDecksForExplorer(state, realmId, status),
-      content,
-      sort
-    );
-  }, [state, realmId, status, content, sort, q]);
+    return filterAndSortDecks(state, listDecksForExplorer(state, realmId, status), sort);
+  }, [state, realmId, status, sort, q]);
 
   const searchHits = useMemo(
     () => (state && q.trim() ? searchExplorer(state, q) : []),
@@ -285,7 +278,7 @@ export function HomeExplorer() {
         </button>
       </form>
 
-      {/* 3. Filter + sort */}
+      {/* 3. Status + sort */}
       <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <label className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/60 px-2 text-xs text-zinc-400">
           Status
@@ -299,21 +292,6 @@ export function HomeExplorer() {
             <option value="all">All</option>
             <option value="active">Active</option>
             <option value="archive">Archive</option>
-          </select>
-        </label>
-        <label className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/60 px-2 text-xs text-zinc-400">
-          Filter
-          <select
-            className="min-h-9 flex-1 rounded-md border-0 bg-transparent text-sm text-zinc-100 focus:outline-none"
-            value={content}
-            onChange={(e) =>
-              pushParams({ content: e.target.value as ExplorerContentFilter })
-            }
-          >
-            <option value="all">All decks</option>
-            <option value="has_content">Has content</option>
-            <option value="empty">Empty</option>
-            <option value="recent">Recently used</option>
           </select>
         </label>
         <label className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/60 px-2 text-xs text-zinc-400">
@@ -405,6 +383,7 @@ export function HomeExplorer() {
                 <RealmRow
                   key={folder.id}
                   folder={folder}
+                  chaosDeckCount={realmChaosDeckCount(state, folder.id)}
                   menuOpen={menuId === folder.id}
                   onToggleMenu={() => setMenuId(menuId === folder.id ? null : folder.id)}
                   onOpen={() => pushParams({ realmId: folder.id })}
@@ -441,6 +420,15 @@ export function HomeExplorer() {
                     setState(archiveFolder(state, folder.id));
                     setMenuId(null);
                   }}
+                  onDelete={() => {
+                    const ok = window.confirm(
+                      `Delete Realm “${folder.title}” and everything inside (child Realms, Decks, Fragments)? This cannot be undone.`
+                    );
+                    if (!ok) return;
+                    setState(deleteFolder(state, folder.id));
+                    setMenuId(null);
+                    if (realmId === folder.id) pushParams({ realmId: null });
+                  }}
                 />
               ))}
               {decks.map((deck) => (
@@ -465,6 +453,14 @@ export function HomeExplorer() {
                     setMenuId(null);
                   }}
                   onMove={() => moveDeck(deck)}
+                  onDelete={() => {
+                    const ok = window.confirm(
+                      `Delete Chaos Deck “${deck.title}” and all its Fragments/Blocks? This cannot be undone.`
+                    );
+                    if (!ok) return;
+                    setState(deleteDeck(state, deck.id));
+                    setMenuId(null);
+                  }}
                 />
               ))}
             </ul>
@@ -522,6 +518,7 @@ export function HomeExplorer() {
 
 function RealmRow(props: {
   folder: Af03Folder;
+  chaosDeckCount: number;
   menuOpen: boolean;
   onToggleMenu: () => void;
   onOpen: () => void;
@@ -529,8 +526,9 @@ function RealmRow(props: {
   onChildRealm: () => void;
   onChildDeck: () => void;
   onArchive: () => void;
+  onDelete: () => void;
 }) {
-  const { folder } = props;
+  const { folder, chaosDeckCount } = props;
   return (
     <li className="relative flex items-stretch bg-zinc-950">
       <button
@@ -545,7 +543,8 @@ function RealmRow(props: {
             <StatusBadge status={folder.view === "archive" ? "archive" : "active"} />
           </div>
           <p className="truncate text-xs text-zinc-500">
-            Realm · updated {formatRelativeAgo(folder.updatedAt)}
+            Realm · {chaosDeckCount} Chaos Deck{chaosDeckCount === 1 ? "" : "s"} · updated{" "}
+            {formatRelativeAgo(folder.updatedAt)}
           </p>
         </div>
       </button>
@@ -571,6 +570,7 @@ function RealmRow(props: {
             {folder.view === "active" ? (
               <MenuItem label="Archive" onClick={props.onArchive} />
             ) : null}
+            <MenuItem label="Delete…" onClick={props.onDelete} danger />
           </div>
         ) : null}
       </div>
@@ -587,6 +587,7 @@ function DeckExplorerRow(props: {
   onArchive: () => void;
   onRestore: () => void;
   onMove: () => void;
+  onDelete: () => void;
 }) {
   const signals = deckBuilderSignals(props.state, props.deck);
   const alex = alexandriaStatusLabel(signals.alexandriaStatus);
@@ -640,6 +641,7 @@ function DeckExplorerRow(props: {
             ) : (
               <MenuItem label="Restore to Active" onClick={props.onRestore} />
             )}
+            <MenuItem label="Delete…" onClick={props.onDelete} danger />
           </div>
         ) : null}
       </div>
@@ -647,12 +649,22 @@ function DeckExplorerRow(props: {
   );
 }
 
-function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
+function MenuItem({
+  label,
+  onClick,
+  danger,
+}: {
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
   return (
     <button
       type="button"
       role="menuitem"
-      className="block w-full px-3 py-2.5 text-left text-sm text-zinc-200 hover:bg-zinc-800"
+      className={`block w-full px-3 py-2.5 text-left text-sm hover:bg-zinc-800 ${
+        danger ? "text-rose-300" : "text-zinc-200"
+      }`}
       onClick={onClick}
     >
       {label}
