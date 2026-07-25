@@ -109,18 +109,17 @@ Chaos Fragment (or Fragment body) must support construction equivalent to Librar
 
 ## 4. Argus scope — Library hybrid (structure)
 
-Argus absorbs the “assembly” half of Library:
+Argus absorbs the “assembly” half of Library, using Alexandria ontology (§8.3):
 
-| Capability (working name) | Intent |
-|---------------------------|--------|
-| **Castillos** | Human/structural grouping of formed loci into palace-like wholes — Parcour spirit anchored in Argus, not in Chaos |
-| **Parcour-like paths** | Ordered or related sequences across Fragments/Decks — relation + placement hints, not 3D editing |
-| **Realm Treemap / molecular / units** | Operational + relational views already on that path |
+| Term | Intent in Argus |
+|------|-----------------|
+| **Parcour** | Topic path **under construction** — loci being assembled |
+| **Castle** | **Culminated** topic product (completion), not a synonym of Realm |
+| **Realm** | Theme world — accumulates parcours (and their Castle graduations) |
+| **Treemap / molecular / units** | Operational + relational views already on that path |
 | **Future I. Motor** | Evolved Alexandria under Argus; Godot candidate for runtime |
 
-Argus does **not** become the dump inbox. It consumes (or points at) Chaos-built bodies and organizes them.
-
-**Open naming:** “Castillo” vs reuse “Parcour” vs new AF term — decide later; do not invent sealed ontology here.
+Argus does **not** become the dump inbox. It consumes (or points at) Chaos-built bodies and organizes them. Fragments join structure only when earned / chosen — never mandatory.
 
 ---
 
