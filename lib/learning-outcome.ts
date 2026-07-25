@@ -37,6 +37,7 @@ export function deriveLearningOutcomeKindFromPlan(plan: TradePlan): LearningOutc
 }
 
 function initialLifecycle(kind: LearningOutcomeKind): LearningOutcomeLifecycle {
+  if (kind === "unexecuted_plan_loss" || kind === "duplicate_creation") return "concluded";
   if (kind === "executed_loss" || kind === "missed_opportunity") return "observing";
   return "ready_for_attribution";
 }

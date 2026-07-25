@@ -9,6 +9,7 @@ export const AI_BRIDGE_BLOCK_TYPES = [
   "layered-entry-update",
   "file-update",
   "scout-plan-create",
+  "plan-outcome",
   "technical-assessment",
   "technical-calibration",
   "analysis",

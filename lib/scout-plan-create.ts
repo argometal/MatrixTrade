@@ -94,6 +94,30 @@ export async function applyScoutPlanCreate(
   }
 
   const active = await getLinkedActiveScoutPlans(stockFileId);
+  const thesisNorm = (proposal.thesis !== undefined
+    ? String(proposal.thesis).trim()
+    : ""
+  ).toLowerCase();
+  const identical = active.find((p) => {
+    const sameLevels =
+      p.plannedEntry === plannedEntry &&
+      p.stopPrice === stopPrice &&
+      p.targetPrice === targetPrice;
+    const pThesis = (p.thesis ?? "").trim().toLowerCase();
+    const sameThesis = !thesisNorm || !pThesis || pThesis === thesisNorm;
+    return sameLevels && sameThesis;
+  });
+  const allowDuplicate =
+    proposal.allowDuplicateWindow === true || proposal.confirmNewWindow === true;
+  if (identical && !allowDuplicate) {
+    return {
+      errors: [
+        `Identical active Scout already exists (${identical.id}) with same entry/stop/target` +
+          (thesisNorm ? " and thesis" : "") +
+          `. Set allowDuplicateWindow:true only if the human confirms a new window.`,
+      ],
+    };
+  }
   if (active.length > 0) {
     warnings.push(
       `Stock File already has active plan(s): ${active.map((p) => p.id).join(", ")}. Creating an additional NEW window (not reusing them).`

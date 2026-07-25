@@ -107,9 +107,7 @@ export function getAllowedApplyBlocksForNeedsAttentionTask(
     case "apply_inbox":
       return []; // review existing proposals in Control — do not invent a bulk block
     case "evaluate_expired_plan":
-      // Gap: plan.outcome is persisted only via recordPlanOutcome (Planning UI).
-      // No Apply block sets outcome.recordedAt — do not force-fit decision-update.
-      return [];
+      return ["plan-outcome"];
     case "plan_ready_enter":
       return ["trade-proposal"];
     case "plan_window_closing":
@@ -138,7 +136,7 @@ export function getNeedsAttentionCompletionCondition(type: NeedsAttentionTaskTyp
     case "apply_inbox":
       return "No unapplied inbox proposals remain.";
     case "evaluate_expired_plan":
-      return "UNSUPPORTED via Apply today — Plan.outcome.recordedAt must be set (Planning UI recordPlanOutcome). After that, LO/OBS/MAF gaps appear as separate derived tasks.";
+      return "Plan.outcome.recordedAt set via plan-outcome Apply (or Planning UI). LO/OBS/MAF gaps appear as separate derived tasks.";
     case "plan_ready_enter":
       return "Plan left ready (entered) or trade-proposal accepted for this plan.";
     case "plan_window_closing":
@@ -161,7 +159,6 @@ export function getNeedsAttentionSnapshotSupport(
   type: NeedsAttentionTaskType
 ): "SUPPORTED" | "UNSUPPORTED" | "SUMMARY" {
   switch (type) {
-    case "evaluate_expired_plan":
     case "playbook_samples":
     case "monthly_loss_limit":
     case "monthly_loss_warning":
@@ -369,19 +366,10 @@ export function buildNeedsAttentionTaskSnapshot(
     });
     if (planNeedsStrategyReview(plan)) {
       missing.push({
-        field: "plan.outcome",
+        field: "plan.outcome.recordedAt",
         reason:
-          "Terminal plan without recorded outcome — no Apply block persists outcome.recordedAt (use Planning UI until plan-outcome exists)",
+          "Terminal plan without recorded outcome — use Apply type plan-outcome (or Planning UI recordPlanOutcome)",
         requiredFor: "evaluate_expired_plan",
-      });
-      ambiguities.push({
-        field: "capability",
-        alternatives: [
-          "Planning UI → recordPlanOutcomeAction",
-          "Future Apply block: plan-outcome (not shipped)",
-        ],
-        clarificationNeeded:
-          "Do not invent a JSON workaround. STATUS must be UNSUPPORTED for Apply until plan-outcome ships.",
       });
     }
   }

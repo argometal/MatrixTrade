@@ -14,6 +14,7 @@ import { applyTechnicalAssessment, applyTechnicalCalibration } from "./mtae-appl
 import { applyAttribution } from "./maf-apply";
 import { applyObservationUpdateProposal } from "./observation-apply";
 import { applyScoutPlanCreate } from "./scout-plan-create";
+import { applyPlanOutcomeFromProposal } from "./plan-outcome";
 import {
   getPlaybookById,
   parsePlaybookChecklist,
@@ -132,6 +133,8 @@ async function applyTradingProposalInner(
       return applyFileUpdate(parsed);
     case "scout-plan-create":
       return applyScoutPlanCreateBlock(parsed);
+    case "plan-outcome":
+      return applyPlanOutcomeBlock(parsed);
     case "technical-assessment":
       return applyTechnicalAssessmentBlock(parsed);
     case "technical-calibration":
@@ -286,6 +289,28 @@ async function applyScoutPlanCreateBlock(
     ok: true,
     message: parts.join(" · "),
     type: "scout-plan-create",
+    planId: plan?.id,
+    stockFileId: plan?.stockThesisId,
+  };
+}
+
+async function applyPlanOutcomeBlock(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await applyPlanOutcomeFromProposal(parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  const plan = result.plan;
+  const lo = result.learning;
+  const parts = [
+    `Recorded plan outcome ${plan?.id ?? ""}`,
+    lo?.kind ? String(lo.kind) : null,
+    lo?.counterfactualR !== undefined ? `counterfactual ${lo.counterfactualR}R` : null,
+    lo?.excludedFromMetrics ? "excluded from metrics" : null,
+  ].filter(Boolean);
+  return {
+    ok: true,
+    message: parts.join(" · "),
+    type: "plan-outcome",
     planId: plan?.id,
     stockFileId: plan?.stockThesisId,
   };

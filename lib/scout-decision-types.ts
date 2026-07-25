@@ -62,7 +62,9 @@ export type ScoutLifecycleStatus =
   | "executed"
   | "missed"
   | "expired"
-  | "cancelled";
+  | "cancelled"
+  /** Tactical Scout result recorded via plan-outcome — not a Trade "completed". */
+  | "outcome_recorded";
 
 export const SCOUT_LIFECYCLE_LABELS: Record<ScoutLifecycleStatus, string> = {
   open: "Open",
@@ -76,6 +78,7 @@ export const SCOUT_LIFECYCLE_LABELS: Record<ScoutLifecycleStatus, string> = {
   missed: "Missed",
   expired: "Expired",
   cancelled: "Cancelled",
+  outcome_recorded: "Outcome recorded",
 };
 
 /** Maps detailed engine lifecycle states to Playbook-level scout statistics statuses. */
@@ -92,6 +95,7 @@ export const SCOUT_LIFECYCLE_TO_PLAYBOOK_STATUS: Partial<
   missed: "missed",
   expired: "expired",
   cancelled: "cancelled",
+  outcome_recorded: "missed",
 };
 
 export const DECISION_VERDICT_LABELS: Record<DecisionVerdict, string> = {

@@ -21,6 +21,7 @@
     "test:mtae-evidence-first": "tsx tools/test-mtae-evidence-first.ts",
     "test:control-sanity-snapshots": "tsx tools/test-control-sanity-snapshots.ts",
     "test:apply-failure-snapshot": "tsx tools/test-apply-failure-snapshot.ts",
+    "test:plan-outcome": "tsx tools/test-plan-outcome.ts",
     "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"
   },
   "dependencies": {

@@ -113,9 +113,11 @@ assert.deepEqual(getAllowedApplyBlocksForNeedsAttentionTask("closed_missing_obse
 assert.deepEqual(getAllowedApplyBlocksForNeedsAttentionTask("missing_attribution"), [
   "attribution",
 ]);
-assert.deepEqual(getAllowedApplyBlocksForNeedsAttentionTask("evaluate_expired_plan"), []);
+assert.deepEqual(getAllowedApplyBlocksForNeedsAttentionTask("evaluate_expired_plan"), [
+  "plan-outcome",
+]);
 assert.deepEqual(getAllowedApplyBlocksForNeedsAttentionTask("playbook_samples"), []);
-assert.equal(getNeedsAttentionSnapshotSupport("evaluate_expired_plan"), "UNSUPPORTED");
+assert.equal(getNeedsAttentionSnapshotSupport("evaluate_expired_plan"), "SUPPORTED");
 assert.equal(getNeedsAttentionSnapshotSupport("monthly_loss_limit"), "UNSUPPORTED");
 assert.equal(getNeedsAttentionSnapshotSupport("assign_playbook"), "SUPPORTED");
 
@@ -194,7 +196,7 @@ function snap(item: AttentionItem, extra?: Partial<Parameters<typeof buildNeedsA
   assert.deepEqual(snapshot.aiContract.allowedApplyBlockTypes, []);
 }
 
-// --- evaluate_expired_plan (UNSUPPORTED Apply) ---
+// --- evaluate_expired_plan (plan-outcome Apply) ---
 {
   const snapshot = snap({
     id: "plan-review-PLAN-001",
@@ -202,11 +204,11 @@ function snap(item: AttentionItem, extra?: Partial<Parameters<typeof buildNeedsA
     href: "/planning?plan=PLAN-001",
     priority: 16,
   });
-  assert.equal(snapshot.aiContract.snapshotSupport, "UNSUPPORTED");
-  assert.deepEqual(snapshot.aiContract.allowedApplyBlockTypes, []);
+  assert.equal(snapshot.aiContract.snapshotSupport, "SUPPORTED");
+  assert.deepEqual(snapshot.aiContract.allowedApplyBlockTypes, ["plan-outcome"]);
   assert.equal(snapshot.linkedEntities.planId, "PLAN-001");
-  assert.ok(snapshot.evidence.missing.some((m) => m.field === "plan.outcome"));
-  assert.match(snapshot.aiContract.completionCondition, /UNSUPPORTED/);
+  assert.ok(snapshot.evidence.missing.some((m) => m.field.includes("outcome")));
+  assert.match(snapshot.aiContract.completionCondition, /plan-outcome/i);
 }
 
 // --- plan_ready / window ---

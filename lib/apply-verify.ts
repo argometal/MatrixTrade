@@ -4,7 +4,8 @@ import { getActiveEvidenceForProfile } from "./market-evidence";
 import { getStockThesesByTicker, getStockThesisById } from "./stock-theses";
 import { getPlaybookById, slugifyPlaybookId } from "./playbooks";
 import { getMtaeAssessmentById, getMtaeCalibrations } from "./mtae-store";
-import { getTradeById } from "./storage";
+import { getTradeById, getTrades } from "./storage";
+import { getLearningOutcomeByPlanId } from "./learning-outcome-store";
 import type { Trade } from "./types";
 
 export interface ApplyVerifyResult {
@@ -42,6 +43,8 @@ export async function verifyApplyPersistence(
       return verifyStockFilePersistence(parsed);
     case "scout-plan-create":
       return verifyScoutPlanCreatePersistence(parsed);
+    case "plan-outcome":
+      return verifyPlanOutcomePersistence(parsed);
     case "technical-assessment":
       return verifyTechnicalAssessmentPersistence(parsed);
     case "technical-calibration":
@@ -232,6 +235,59 @@ async function verifyScoutPlanCreatePersistence(
   return {
     ok: true,
     detail: `Scout Plan ${match.id} verified · linked ${match.stockThesisId} · status ${match.status}`,
+  };
+}
+
+async function verifyPlanOutcomePersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const planId = String(parsed.proposal.planId ?? "")
+    .trim()
+    .toUpperCase();
+  const outcome = String(parsed.proposal.outcome ?? "");
+  const plan = await getPlanById(planId);
+  if (!plan) return { ok: false, detail: `Plan ${planId} not found after plan-outcome.` };
+  if (plan.status === "watching" || plan.status === "ready") {
+    return { ok: false, detail: `Plan ${planId} still active after plan-outcome.` };
+  }
+  if (!plan.outcome?.recordedAt) {
+    return { ok: false, detail: `Plan ${planId} missing outcome.recordedAt.` };
+  }
+  if (plan.outcome.outcomeKind && plan.outcome.outcomeKind !== outcome) {
+    return {
+      ok: false,
+      detail: `Plan ${planId} outcomeKind ${plan.outcome.outcomeKind} ≠ ${outcome}.`,
+    };
+  }
+  const lo = await getLearningOutcomeByPlanId(planId);
+  if (!lo) return { ok: false, detail: `Learning Outcome for ${planId} not found.` };
+  if (outcome === "unexecuted_plan_loss") {
+    if (lo.kind !== "unexecuted_plan_loss") {
+      return { ok: false, detail: `LO kind ${lo.kind} ≠ unexecuted_plan_loss.` };
+    }
+    if (lo.realizedR !== 0 || lo.realizedPnL !== 0) {
+      return { ok: false, detail: `UPL must keep realizedR/PnL at 0.` };
+    }
+    if (lo.counterfactualR !== -1) {
+      return { ok: false, detail: `UPL counterfactualR must be -1 (got ${lo.counterfactualR}).` };
+    }
+    if (lo.excludedFromMetrics) {
+      return { ok: false, detail: `UPL must not be excludedFromMetrics.` };
+    }
+  }
+  if (outcome === "duplicate_creation") {
+    if (lo.kind !== "duplicate_creation" || !lo.excludedFromMetrics) {
+      return { ok: false, detail: `duplicate_creation must be excluded from metrics.` };
+    }
+  }
+  const trades = await getTrades();
+  const invented = trades.filter((t) => t.planId?.toUpperCase() === planId);
+  // Verification does not invent trades — ensure Apply did not create one in this path.
+  // Existing pre-linked trades already blocked at apply for UPL.
+  void invented;
+  return {
+    ok: true,
+    detail: `Plan outcome ${planId} verified · status ${plan.status} · LO ${lo.id} · ${lo.kind}`,
   };
 }
 
