@@ -15,7 +15,7 @@ import {
 // Success path: Apply attempt always clears input (contract)
 assert.equal(applyAttemptClearsInput(), true);
 
-// Parse failure
+// Parse failure (Validate or Accept — same snapshot; UI keeps editor on Validate)
 {
   const record = buildApplyFailureRecord({
     submittedJson: "{ not json",
@@ -29,6 +29,7 @@ assert.equal(applyAttemptClearsInput(), true);
   assert.ok(snap.includes("=== MTA APPLY FAILURE SNAPSHOT ==="));
   assert.ok(snap.includes("validationStage: parse"));
   assert.ok(snap.includes("{ not json"));
+  assert.ok(snap.includes("Invalid JSON"));
   assert.ok(snap.includes("=== END FAILURE SNAPSHOT ==="));
 }
 
