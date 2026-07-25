@@ -29,6 +29,7 @@
 | 4d | [external-ai-policy.md](external-ai-policy.md) | **No vendor brands** — external AI + Apply-only mutations |
 | 4e | [thesis-ownership.md](thesis-ownership.md) | Thesis on Stock Profile, not Playbook |
 | 4f | [snapshot-catalog.md](snapshot-catalog.md) | **Snapshot menu** — one button per window + Apply path |
+| 4f2 | [snapshot-menu-debt-25-07.md](snapshot-menu-debt-25-07.md) | **Debt** — obsolete Train AI / Schema Contract paths vs visible Control labels |
 | 4g | [control-panel-ia.md](control-panel-ia.md) | **Control IA** — Mechanics · Stock Files · Apply · Library; forensic evidence-only |
 | 4h | [mta-002-operability-plan.md](mta-002-operability-plan.md) | **FORWARD** — operability (master prompt · 3-action UI · trend playbook); not a new engine |
 | 4i | [needs-attention-ai-workflow.md](needs-attention-ai-workflow.md) | **Needs Attention AI** — task snapshots · readiness · Apply-only completion |
