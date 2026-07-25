@@ -1,3 +1,8 @@
+import { TECHNICAL_ASSESSMENT_MIN_EXAMPLE } from "./ai-block";
+import {
+  buildApplySchemaContract,
+  buildTechnicalAssessmentContractSection,
+} from "./apply-schema-contract";
 import { buildMtaeProtocolBrief, buildMtaeTickerRequest } from "./mtae-brief";
 import type { MtaeTimeframeMapPreset } from "./mtae-types";
 import type { SnapshotMenuItem } from "./snapshot-types";
@@ -5,12 +10,33 @@ import { wrapSnapshotText } from "./snapshot-verification";
 
 export function mtaeControlSnapshotItems(presets: MtaeTimeframeMapPreset[]): SnapshotMenuItem[] {
   const protocol = buildMtaeProtocolBrief(presets);
+  const contract = buildApplySchemaContract();
+  const schemaSnapshotBody = [
+    buildTechnicalAssessmentContractSection(),
+    "",
+    "=== CONTRACT technicalAssessment DETAIL (from apply-schema-contract) ===",
+    JSON.stringify(contract.technicalAssessment, null, 2),
+    "",
+    "=== CONTRACT examples[\"technical-assessment\"] (minimum valid) ===",
+    JSON.stringify(contract.examples["technical-assessment"] ?? TECHNICAL_ASSESSMENT_MIN_EXAMPLE, null, 2),
+  ].join("\n");
+
   const items: SnapshotMenuItem[] = [
     {
       id: "mtae-protocol",
       label: "MTAE protocol",
       description: "Technical analysis procedure — charts → technical-assessment JSON",
       text: wrapSnapshotText("MTAE protocol", protocol),
+    },
+    {
+      id: "mtae-technical-assessment-contract",
+      label: "technical-assessment schema + min example",
+      description:
+        "Apply contract nested required paths, enums, and minimum valid JSON (from apply-schema-contract)",
+      text: wrapSnapshotText(
+        "MTAE technical-assessment schema + minimum valid example",
+        schemaSnapshotBody
+      ),
     },
   ];
 
