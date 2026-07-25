@@ -25,7 +25,24 @@ function hasSupabaseEnv(): boolean {
  */
 export function getLearningOutcomesStoreMode(): LearningOutcomesStoreMode {
   const forced = process.env.LEARNING_OUTCOMES_STORE?.trim().toLowerCase();
-  if (forced === "memory") return "memory";
+  if (forced === "memory") {
+    if (process.env.VERCEL || process.env.VERCEL_ENV) {
+      throw new Error(
+        "LEARNING_OUTCOMES_STORE=memory is forbidden on Vercel."
+      );
+    }
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "LEARNING_OUTCOMES_STORE=memory is forbidden in production."
+      );
+    }
+    if (process.env.NODE_ENV !== "test") {
+      throw new Error(
+        "LEARNING_OUTCOMES_STORE=memory is allowed only in tests."
+      );
+    }
+    return "memory";
+  }
   if (forced === "json") {
     if (process.env.VERCEL || process.env.VERCEL_ENV) {
       throw new Error(
@@ -103,3 +120,16 @@ export {
   learningOutcomeToRow,
   type LearningOutcomeRow,
 } from "./mapping";
+export {
+  compareLearningOutcomeFreshness,
+  mergeCanonicalLearningOutcome,
+  mergeEqualTimestampLinks,
+} from "./merge";
+export {
+  decideMigrationAction,
+  matchRemoteCanonical,
+  type MigrateAction,
+  type MigrateMatchType,
+  type MigrationDecision,
+  type RemoteCanonicalMatch,
+} from "./migrate-policy";

@@ -1,34 +1,28 @@
 import type { LearningOutcome } from "../learning-outcome-types";
+import {
+  compareLearningOutcomeFreshness,
+  mergeCanonicalLearningOutcome,
+  mergeEqualTimestampLinks,
+} from "./merge";
 import type { LearningOutcomesStore } from "./types";
 
-function enforceCanonicalUniqueness(
+function findCanonical(
   rows: LearningOutcome[],
   row: LearningOutcome
-): void {
+): LearningOutcome | undefined {
   if (row.tradeId) {
-    const clash = rows.find(
-      (x) =>
-        x.tradeId?.toUpperCase() === row.tradeId!.toUpperCase() &&
-        x.id.toUpperCase() !== row.id.toUpperCase()
+    return rows.find(
+      (x) => x.tradeId?.toUpperCase() === row.tradeId!.toUpperCase()
     );
-    if (clash) {
-      throw new Error(
-        `Duplicate Learning Outcome for tradeId ${row.tradeId}: ${clash.id} vs ${row.id}`
-      );
-    }
-  } else if (row.planId) {
-    const clash = rows.find(
+  }
+  if (row.planId) {
+    return rows.find(
       (x) =>
         !x.tradeId &&
-        x.planId?.toUpperCase() === row.planId!.toUpperCase() &&
-        x.id.toUpperCase() !== row.id.toUpperCase()
+        x.planId?.toUpperCase() === row.planId!.toUpperCase()
     );
-    if (clash) {
-      throw new Error(
-        `Duplicate Learning Outcome for planId ${row.planId}: ${clash.id} vs ${row.id}`
-      );
-    }
   }
+  return rows.find((x) => x.id.toUpperCase() === row.id.toUpperCase());
 }
 
 /** In-memory store for focused tests — no disk / Supabase. */
@@ -42,16 +36,52 @@ export function createMemoryLearningOutcomesStore(
       return rows.map((r) => ({ ...r }));
     },
     async upsert(row) {
-      enforceCanonicalUniqueness(rows, row);
-      const idx = rows.findIndex(
-        (x) => x.id.toUpperCase() === row.id.toUpperCase()
-      );
-      if (idx >= 0) rows[idx] = { ...row };
-      else rows.push({ ...row });
+      const byId = rows.find((x) => x.id.toUpperCase() === row.id.toUpperCase());
+      const byIdentity = findCanonical(rows, row);
+      const existing =
+        byIdentity ??
+        byId ??
+        undefined;
+
+      if (existing) {
+        const freshness = compareLearningOutcomeFreshness(existing, row);
+        if (freshness === "existing_newer") {
+          return { ...existing };
+        }
+        const merged =
+          freshness === "equal"
+            ? mergeEqualTimestampLinks(existing, row)
+            : mergeCanonicalLearningOutcome(existing, row);
+        const idx = rows.findIndex(
+          (x) => x.id.toUpperCase() === existing.id.toUpperCase()
+        );
+        // Drop any duplicate id that matched differently
+        for (let i = rows.length - 1; i >= 0; i--) {
+          if (
+            i !== idx &&
+            rows[i].id.toUpperCase() === row.id.toUpperCase() &&
+            rows[i].id.toUpperCase() !== existing.id.toUpperCase()
+          ) {
+            rows.splice(i, 1);
+          }
+        }
+        const writeIdx = rows.findIndex(
+          (x) => x.id.toUpperCase() === existing.id.toUpperCase()
+        );
+        if (writeIdx >= 0) rows[writeIdx] = { ...merged };
+        else rows.push({ ...merged });
+        rows.sort((a, b) => a.id.localeCompare(b.id));
+        return { ...merged };
+      }
+
+      rows.push({ ...row });
       rows.sort((a, b) => a.id.localeCompare(b.id));
+      return { ...row };
     },
     async upsertMany(list) {
-      for (const row of list) await store.upsert(row);
+      const out: LearningOutcome[] = [];
+      for (const row of list) out.push(await store.upsert(row));
+      return out;
     },
   };
   return store;

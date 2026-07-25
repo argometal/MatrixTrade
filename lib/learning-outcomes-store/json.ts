@@ -1,6 +1,11 @@
 import { promises as fs } from "fs";
 import path from "path";
 import type { LearningOutcome } from "../learning-outcome-types";
+import {
+  compareLearningOutcomeFreshness,
+  mergeCanonicalLearningOutcome,
+  mergeEqualTimestampLinks,
+} from "./merge";
 import type { LearningOutcomesStore } from "./types";
 
 function learningOutcomesJsonPath(): string {
@@ -29,34 +34,30 @@ export async function readLearningOutcomesJsonFile(): Promise<LearningOutcome[]>
   }
 }
 
-function enforceCanonicalUniqueness(
+function findCanonical(
   all: LearningOutcome[],
   row: LearningOutcome
-): void {
+): LearningOutcome | undefined {
   if (row.tradeId) {
-    const clash = all.find(
-      (x) =>
-        x.tradeId?.toUpperCase() === row.tradeId!.toUpperCase() &&
-        x.id.toUpperCase() !== row.id.toUpperCase()
+    return all.find(
+      (x) => x.tradeId?.toUpperCase() === row.tradeId!.toUpperCase()
     );
-    if (clash) {
-      throw new Error(
-        `Duplicate Learning Outcome for tradeId ${row.tradeId}: ${clash.id} vs ${row.id}`
-      );
-    }
-  } else if (row.planId) {
-    const clash = all.find(
+  }
+  if (row.planId) {
+    return all.find(
       (x) =>
         !x.tradeId &&
-        x.planId?.toUpperCase() === row.planId!.toUpperCase() &&
-        x.id.toUpperCase() !== row.id.toUpperCase()
+        x.planId?.toUpperCase() === row.planId!.toUpperCase()
     );
-    if (clash) {
-      throw new Error(
-        `Duplicate Learning Outcome for planId ${row.planId}: ${clash.id} vs ${row.id}`
-      );
-    }
   }
+  return all.find((x) => x.id.toUpperCase() === row.id.toUpperCase());
+}
+
+async function writeAll(all: LearningOutcome[]): Promise<void> {
+  const file = learningOutcomesJsonPath();
+  all.sort((a, b) => a.id.localeCompare(b.id));
+  await fs.mkdir(path.dirname(file), { recursive: true });
+  await fs.writeFile(file, `${JSON.stringify(all, null, 2)}\n`, "utf-8");
 }
 
 export function createJsonLearningOutcomesStore(): LearningOutcomesStore {
@@ -64,29 +65,42 @@ export function createJsonLearningOutcomesStore(): LearningOutcomesStore {
     readAll: readLearningOutcomesJsonFile,
     async upsert(row) {
       assertJsonLearningOutcomeWritesAllowed();
-      const file = learningOutcomesJsonPath();
       const all = await readLearningOutcomesJsonFile();
-      enforceCanonicalUniqueness(all, row);
-      const idx = all.findIndex((x) => x.id.toUpperCase() === row.id.toUpperCase());
-      if (idx >= 0) all[idx] = row;
-      else all.push(row);
-      all.sort((a, b) => a.id.localeCompare(b.id));
-      await fs.mkdir(path.dirname(file), { recursive: true });
-      await fs.writeFile(file, `${JSON.stringify(all, null, 2)}\n`, "utf-8");
+      const existing = findCanonical(all, row);
+      if (existing) {
+        const freshness = compareLearningOutcomeFreshness(existing, row);
+        if (freshness === "existing_newer") {
+          return { ...existing };
+        }
+        const merged =
+          freshness === "equal"
+            ? mergeEqualTimestampLinks(existing, row)
+            : mergeCanonicalLearningOutcome(existing, row);
+        const idx = all.findIndex(
+          (x) => x.id.toUpperCase() === existing.id.toUpperCase()
+        );
+        if (idx >= 0) all[idx] = merged;
+        // Remove non-canonical duplicate id if present
+        for (let i = all.length - 1; i >= 0; i--) {
+          if (
+            all[i].id.toUpperCase() === row.id.toUpperCase() &&
+            all[i].id.toUpperCase() !== existing.id.toUpperCase()
+          ) {
+            all.splice(i, 1);
+          }
+        }
+        await writeAll(all);
+        return { ...merged };
+      }
+
+      all.push(row);
+      await writeAll(all);
+      return { ...row };
     },
     async upsertMany(rows) {
-      assertJsonLearningOutcomeWritesAllowed();
-      const file = learningOutcomesJsonPath();
-      const all = await readLearningOutcomesJsonFile();
-      for (const row of rows) {
-        enforceCanonicalUniqueness(all, row);
-        const idx = all.findIndex((x) => x.id.toUpperCase() === row.id.toUpperCase());
-        if (idx >= 0) all[idx] = row;
-        else all.push(row);
-      }
-      all.sort((a, b) => a.id.localeCompare(b.id));
-      await fs.mkdir(path.dirname(file), { recursive: true });
-      await fs.writeFile(file, `${JSON.stringify(all, null, 2)}\n`, "utf-8");
+      const out: LearningOutcome[] = [];
+      for (const row of rows) out.push(await this.upsert(row));
+      return out;
     },
   };
 }

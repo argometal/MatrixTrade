@@ -18,8 +18,30 @@ import {
   learningOutcomeRowToRecord,
   learningOutcomeToRow,
 } from "../lib/learning-outcomes-store/mapping";
+import {
+  decideMigrationAction,
+  type MigrateAction,
+  type MigrateMatchType,
+} from "../lib/learning-outcomes-store/migrate-policy";
 import { createSupabaseAdmin } from "../lib/supabase/server";
 import { sanitizeLearningSyncError } from "../lib/plan-outcome-learning-sync";
+
+type RemoteCanonical = {
+  matchType: MigrateMatchType;
+  row?: LearningOutcome;
+};
+
+type ConflictRow = {
+  localId: string;
+  remoteId?: string;
+  matchType: MigrateMatchType;
+  planId?: string | null;
+  tradeId?: string | null;
+  localUpdatedAt?: string;
+  remoteUpdatedAt?: string;
+  action: MigrateAction;
+  detail?: string;
+};
 
 type Report = {
   total: number;
@@ -30,7 +52,7 @@ type Report = {
   skipped: number;
   conflicts: number;
   invalidRows: Array<{ id: string; reason: string }>;
-  conflictRows: Array<{ id: string; reason: string }>;
+  conflictRows: ConflictRow[];
   dryRun: boolean;
 };
 
@@ -51,22 +73,57 @@ function validateRow(row: LearningOutcome): string | null {
   return null;
 }
 
-function parseUpdatedAt(iso: string): number {
-  const t = Date.parse(iso);
-  return Number.isFinite(t) ? t : 0;
-}
-
-async function loadRemoteById(id: string): Promise<LearningOutcome | undefined> {
+/** Lookup: id → trade_id → plan_id (Scout-only). */
+async function loadRemoteCanonical(row: LearningOutcome): Promise<RemoteCanonical> {
   const supabase = createSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("learning_outcomes")
-    .select("*")
-    .eq("id", id.toUpperCase())
-    .maybeSingle();
-  if (error) {
-    throw new Error(`Supabase read failed: ${error.message}`);
+
+  {
+    const { data, error } = await supabase
+      .from("learning_outcomes")
+      .select("*")
+      .eq("id", row.id.toUpperCase())
+      .maybeSingle();
+    if (error) throw new Error(`Supabase read failed: ${error.message}`);
+    if (data) {
+      return {
+        matchType: "id",
+        row: learningOutcomeRowToRecord(data as never),
+      };
+    }
   }
-  return data ? learningOutcomeRowToRecord(data as never) : undefined;
+
+  if (row.tradeId) {
+    const { data, error } = await supabase
+      .from("learning_outcomes")
+      .select("*")
+      .eq("trade_id", row.tradeId.toUpperCase())
+      .maybeSingle();
+    if (error) throw new Error(`Supabase read failed: ${error.message}`);
+    if (data) {
+      return {
+        matchType: "trade_id",
+        row: learningOutcomeRowToRecord(data as never),
+      };
+    }
+  }
+
+  if (row.planId && !row.tradeId) {
+    const { data, error } = await supabase
+      .from("learning_outcomes")
+      .select("*")
+      .eq("plan_id", row.planId.toUpperCase())
+      .is("trade_id", null)
+      .maybeSingle();
+    if (error) throw new Error(`Supabase read failed: ${error.message}`);
+    if (data) {
+      return {
+        matchType: "plan_id",
+        row: learningOutcomeRowToRecord(data as never),
+      };
+    }
+  }
+
+  return { matchType: "none" };
 }
 
 async function main() {
@@ -86,7 +143,6 @@ async function main() {
 
   const rows = await readLearningOutcomesJsonFile();
   report.total = rows.length;
-
   const store = apply ? createSupabaseLearningOutcomesStore() : null;
 
   for (const row of rows) {
@@ -98,9 +154,9 @@ async function main() {
     }
     report.valid += 1;
 
-    let remote: LearningOutcome | undefined;
+    let remoteMatch: RemoteCanonical;
     try {
-      remote = await loadRemoteById(row.id);
+      remoteMatch = await loadRemoteCanonical(row);
     } catch (err) {
       console.error(
         `Failed reading remote ${row.id}: ${sanitizeLearningSyncError(err)}`
@@ -109,30 +165,78 @@ async function main() {
       return;
     }
 
-    if (!remote) {
-      if (apply && store) {
-        await store.upsert(row);
+    const decision = decideMigrationAction({
+      local: row,
+      remote: remoteMatch.row,
+      matchType: remoteMatch.matchType,
+    });
+
+    if (decision.action === "invalid") {
+      report.invalid += 1;
+      report.invalidRows.push({
+        id: row.id,
+        reason: decision.detail ?? "invalid",
+      });
+      if (decision.conflicts) {
+        report.conflicts += 1;
+        report.conflictRows.push({
+          localId: row.id,
+          remoteId: remoteMatch.row?.id,
+          matchType: remoteMatch.matchType,
+          planId: row.planId ?? remoteMatch.row?.planId ?? null,
+          tradeId: row.tradeId ?? remoteMatch.row?.tradeId ?? null,
+          localUpdatedAt: row.updatedAt,
+          remoteUpdatedAt: remoteMatch.row?.updatedAt,
+          action: decision.action,
+          detail: decision.detail,
+        });
       }
+      continue;
+    }
+
+    if (decision.conflicts) {
+      report.conflicts += 1;
+      report.conflictRows.push({
+        localId: row.id,
+        remoteId: remoteMatch.row?.id,
+        matchType: remoteMatch.matchType,
+        planId: row.planId ?? remoteMatch.row?.planId ?? null,
+        tradeId: row.tradeId ?? remoteMatch.row?.tradeId ?? null,
+        localUpdatedAt: row.updatedAt,
+        remoteUpdatedAt: remoteMatch.row?.updatedAt,
+        action: decision.action,
+        detail: decision.detail,
+      });
+    }
+
+    if (decision.action === "insert_new") {
+      if (apply && store) await store.upsert(row);
       report.inserted += 1;
       continue;
     }
 
-    const localTs = parseUpdatedAt(row.updatedAt);
-    const remoteTs = parseUpdatedAt(remote.updatedAt);
-    if (localTs <= remoteTs) {
+    if (decision.skipped) {
       report.skipped += 1;
       continue;
     }
 
-    // JSON newer than Supabase — report conflict and update only with --apply.
-    report.conflicts += 1;
-    report.conflictRows.push({
-      id: row.id,
-      reason: `JSON updatedAt ${row.updatedAt} > remote ${remote.updatedAt}`,
-    });
-    if (apply && store) {
-      await store.upsert(row);
-      report.updated += 1;
+    // Local newer / safe link fill → update canonical remote id (never insert).
+    if (decision.action === "update_canonical_remote") {
+      if (!decision.merged) {
+        report.invalid += 1;
+        report.invalidRows.push({
+          id: row.id,
+          reason: "missing merged canonical row",
+        });
+        continue;
+      }
+      if (apply && store) {
+        await store.upsert(decision.merged);
+        report.updated += 1;
+      } else {
+        // Dry-run: report intended update without writing.
+        report.updated += 1;
+      }
     }
   }
 
@@ -143,7 +247,6 @@ async function main() {
         note: apply
           ? "Applied upserts to Supabase. JSON file was not deleted."
           : "Dry-run only — pass --apply to persist.",
-        // Prove mapping still includes zeros/false for sample shape
         sampleRowShape: learningOutcomeToRow({
           id: "LO-SAMPLE-001",
           kind: "unexecuted_plan_loss",

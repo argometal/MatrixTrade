@@ -4,6 +4,7 @@ export type LearningOutcomesStoreMode = "supabase" | "json" | "memory";
 
 export type LearningOutcomesStore = {
   readAll(): Promise<LearningOutcome[]>;
-  upsert(row: LearningOutcome): Promise<void>;
-  upsertMany?(rows: LearningOutcome[]): Promise<void>;
+  /** Persist and return the canonical row (may differ in id after identity conflict). */
+  upsert(row: LearningOutcome): Promise<LearningOutcome>;
+  upsertMany?(rows: LearningOutcome[]): Promise<LearningOutcome[]>;
 };

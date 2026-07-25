@@ -104,9 +104,9 @@ export async function upsertLearningOutcomeFromTradeClose(
     source: "trade_close",
   };
 
-  await upsertLearningOutcome(row);
-  // Prefer canonical row (unique trade_id may have won a concurrent race).
-  return (await getLearningOutcomeByTradeId(trade.id)) ?? row;
+  const canonical = await upsertLearningOutcome(row);
+  // Prefer canonical row (unique trade_id / identity merge may keep another id).
+  return (await getLearningOutcomeByTradeId(trade.id)) ?? canonical;
 }
 
 /** Upsert Learning Outcome for a terminal plan without a fill. */
@@ -175,9 +175,9 @@ export async function upsertLearningOutcomeFromPlan(
     source: "plan_outcome",
   };
 
-  await upsertLearningOutcome(row);
-  // Prefer canonical Scout-only row (unique plan_id may have won a concurrent race).
-  return (await getLearningOutcomeByPlanId(plan.id)) ?? row;
+  const canonical = await upsertLearningOutcome(row);
+  // Prefer canonical Scout-only row (unique plan_id / identity merge may keep another id).
+  return (await getLearningOutcomeByPlanId(plan.id)) ?? canonical;
 }
 
 export async function linkObservationToLearningOutcome(

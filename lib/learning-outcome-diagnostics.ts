@@ -6,6 +6,7 @@ import type { LearningOutcome } from "./learning-outcome-types";
 import type { TradePlan } from "./plan-types";
 import type { ObservationRecord } from "./observation-types";
 import type { Trade } from "./types";
+import { compareLearningOutcomeFreshness } from "./learning-outcomes-store/merge";
 
 export type LearningOutcomeDiagnosticIssue = {
   code: string;
@@ -14,6 +15,8 @@ export type LearningOutcomeDiagnosticIssue = {
   tradeId?: string;
   learningOutcomeId?: string;
   observationId?: string;
+  localId?: string;
+  remoteId?: string;
 };
 
 function isUplPlan(plan: TradePlan): boolean {
@@ -28,6 +31,8 @@ export function diagnoseLearningOutcomeDurability(input: {
   trades: Trade[];
   learningOutcomes: LearningOutcome[];
   observations: ObservationRecord[];
+  /** Optional local/JSON rows to compare against durable/canonical set. */
+  localLearningOutcomes?: LearningOutcome[];
 }): LearningOutcomeDiagnosticIssue[] {
   const issues: LearningOutcomeDiagnosticIssue[] = [];
   const loById = new Map(
@@ -39,10 +44,17 @@ export function diagnoseLearningOutcomeDurability(input: {
   const tradeById = new Map(
     input.trades.map((t) => [t.id.toUpperCase(), t])
   );
+  const obsById = new Map(
+    input.observations.map((o) => [o.id.toUpperCase(), o])
+  );
   const obsByPlan = new Map<string, ObservationRecord>();
+  const obsByLo = new Map<string, ObservationRecord>();
   for (const obs of input.observations) {
     if (obs.planId && !obs.tradeId) {
       obsByPlan.set(obs.planId.toUpperCase(), obs);
+    }
+    if (obs.learningOutcomeId) {
+      obsByLo.set(obs.learningOutcomeId.toUpperCase(), obs);
     }
   }
 
@@ -84,7 +96,8 @@ export function diagnoseLearningOutcomeDurability(input: {
 
   for (const plan of input.plans) {
     if (!plan.outcome?.recordedAt) continue;
-    const lo = byPlan.get(plan.id.toUpperCase())?.[0];
+    const loList = byPlan.get(plan.id.toUpperCase()) ?? [];
+    const lo = loList[0];
     if (!lo) {
       issues.push({
         code: "plan_outcome_missing_lo",
@@ -108,6 +121,20 @@ export function diagnoseLearningOutcomeDurability(input: {
         message: `Plan ${plan.id} learningOutcomeId ${plan.outcome.learningOutcomeId} does not exist`,
         planId: plan.id,
         learningOutcomeId: plan.outcome.learningOutcomeId,
+      });
+    }
+    if (
+      lo &&
+      plan.outcome.learningOutcomeId &&
+      plan.outcome.learningOutcomeId.toUpperCase() !== lo.id.toUpperCase()
+    ) {
+      issues.push({
+        code: "plan_outcome_lo_id_mismatch",
+        message: `Plan ${plan.id} learningOutcomeId ${plan.outcome.learningOutcomeId} differs from canonical LO ${lo.id}`,
+        planId: plan.id,
+        learningOutcomeId: lo.id,
+        localId: plan.outcome.learningOutcomeId,
+        remoteId: lo.id,
       });
     }
     if (isUplPlan(plan) || lo?.kind === "unexecuted_plan_loss") {
@@ -140,7 +167,79 @@ export function diagnoseLearningOutcomeDurability(input: {
         tradeId: lo.tradeId,
       });
     }
+    if (lo.observationId && !obsById.has(lo.observationId.toUpperCase())) {
+      issues.push({
+        code: "lo_stale_observation_id",
+        message: `LO ${lo.id} observationId ${lo.observationId} points to no Observation`,
+        learningOutcomeId: lo.id,
+        observationId: lo.observationId,
+      });
+    }
+    const obsLinked = obsByLo.get(lo.id.toUpperCase());
+    if (
+      obsLinked &&
+      lo.observationId &&
+      obsLinked.id.toUpperCase() !== lo.observationId.toUpperCase()
+    ) {
+      issues.push({
+        code: "obs_lo_bidirectional_mismatch",
+        message: `Observation ${obsLinked.id} links LO ${lo.id} but LO.observationId is ${lo.observationId}`,
+        learningOutcomeId: lo.id,
+        observationId: obsLinked.id,
+      });
+    }
+  }
+
+  if (input.localLearningOutcomes?.length) {
+    for (const local of input.localLearningOutcomes) {
+      let remote: LearningOutcome | undefined;
+      if (local.tradeId) {
+        remote = byTrade.get(local.tradeId.toUpperCase())?.[0];
+      } else if (local.planId) {
+        remote = byPlan.get(local.planId.toUpperCase())?.[0];
+      } else {
+        remote = loById.get(local.id.toUpperCase());
+      }
+      if (!remote) continue;
+      if (remote.id.toUpperCase() !== local.id.toUpperCase()) {
+        issues.push({
+          code: "local_remote_identity_conflict",
+          message: `Local LO ${local.id} shares identity with remote LO ${remote.id}`,
+          localId: local.id,
+          remoteId: remote.id,
+          planId: local.planId ?? remote.planId,
+          tradeId: local.tradeId ?? remote.tradeId,
+        });
+      }
+      const freshness = compareLearningOutcomeFreshness(remote, local);
+      if (freshness === "existing_newer") {
+        issues.push({
+          code: "stale_local_json_row",
+          message: `Local LO ${local.id} is older than canonical ${remote.id}`,
+          localId: local.id,
+          remoteId: remote.id,
+        });
+      }
+    }
   }
 
   return issues;
+}
+
+/** Detect MAF link regression between two LO snapshots (same id). */
+export function diagnoseMafLinkRegression(
+  before: LearningOutcome,
+  after: LearningOutcome
+): LearningOutcomeDiagnosticIssue | null {
+  if (
+    before.mafExperimentId &&
+    before.mafExperimentId !== after.mafExperimentId
+  ) {
+    return {
+      code: "maf_link_lost",
+      message: `LO ${before.id} lost mafExperimentId ${before.mafExperimentId} after sync (now ${after.mafExperimentId ?? "none"})`,
+      learningOutcomeId: before.id,
+    };
+  }
+  return null;
 }

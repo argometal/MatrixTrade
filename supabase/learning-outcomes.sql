@@ -1,6 +1,10 @@
 -- Learning Outcome durable store (CURSOR-MTA-LEARNING-OUTCOME-DURABLE-STORE-001).
 -- Run in Supabase → SQL Editor (idempotent).
 -- Replaces ephemeral /var/task/data/learning-outcomes.json on Vercel.
+--
+-- SAFETY: If the table already has data, run supabase/learning-outcomes-preflight.sql
+-- FIRST. Unique index creation below WILL FAIL when duplicates exist.
+-- Do not automatically delete/merge duplicates — resolve manually, then re-run.
 
 create table if not exists public.learning_outcomes (
   id text primary key,
@@ -50,6 +54,7 @@ create table if not exists public.learning_outcomes (
   updated_at timestamptz not null default now()
 );
 
+-- Unique indexes (fail if duplicates exist — see learning-outcomes-preflight.sql).
 -- One Scout-only Learning Outcome per plan (no trade fill).
 create unique index if not exists learning_outcomes_plan_id_uidx
   on public.learning_outcomes (plan_id)

@@ -44,8 +44,10 @@ export async function getLearningOutcomeByPlanId(
   );
 }
 
-export async function upsertLearningOutcome(row: LearningOutcome): Promise<void> {
-  await getLearningOutcomesStore().upsert(row);
+export async function upsertLearningOutcome(
+  row: LearningOutcome
+): Promise<LearningOutcome> {
+  return getLearningOutcomesStore().upsert(row);
 }
 
 export function nextLearningOutcomeId(
