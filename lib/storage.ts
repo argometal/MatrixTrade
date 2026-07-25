@@ -507,13 +507,15 @@ export async function updateTrade(
         input.planId === "" || input.planId === "__none__"
           ? undefined
           : input.planId !== undefined
-            ? String(input.planId).trim().toUpperCase() || undefined
+            ? // Persist __LEGACY_NONE__ as historical-absence sentinel (do not invent PLAN-xxx).
+              String(input.planId).trim().toUpperCase() || undefined
             : trade.planId,
       playbookId:
         input.playbookId === "" || input.playbookId === "__none__"
           ? undefined
           : input.playbookId !== undefined
-            ? String(input.playbookId).trim() || undefined
+            ? // Persist __legacy_none__ as historical-absence sentinel.
+              String(input.playbookId).trim() || undefined
             : trade.playbookId,
       setupId:
         input.setupId === "" || input.setupId === "__none__"

@@ -134,3 +134,4 @@ Copied forensic payload = **evidence only**:
 - [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md)
 - [snapshot-catalog.md](snapshot-catalog.md)
 - [runtime-truth.md](runtime-truth.md)
+- [snapshot-label-fix-25-08.md](snapshot-label-fix-25-08.md) — Prompt 25-08 label + legacy trade contract

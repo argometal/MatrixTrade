@@ -29,7 +29,7 @@ Trade layer (use only when scouting approves):
 - trade-close: close trade — id, exit required; optional confirmExternalClose (true)
 - trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
 - analysis: notes on existing trade — id required; at least one of thesis, psychology, lessons, notes
-- trade-update: id required; at least one field to change
+- trade-update: id required; at least one field to change. Legacy closed completion may set playbookId=__legacy_none__, planId=__LEGACY_NONE__, thesis, riskRewardPlanned, lossClassification, postStopStudy — never invent real Playbook/PLAN links
 - attribution: MAF component attribution — tradeId and/or planId (or experimentId); components[] with component, classification, aiInterpretationConfidence (0-100), reasoning; optional tag, suggestedImprovement, summary, primaryDragComponent, observation{mfe,mae,…}. NEVER invent prices — only supply observation numbers the human stated.
 - observation-update: Observation Engine — observationId or tradeId or planId; at least one of targetReached, targetReachedAt, thesisInvalidated, invalidationReachedAt, firstTerminalEvent, maxPrice, minPrice, mfe, mae, betterEntryAvailable, status (observing|concluded). Never invent prices.
 - playbook-create / playbook-update: playbook CRUD
@@ -81,7 +81,7 @@ All Apply-ready block types:
 - trade-close: close trade — id, exit required; optional confirmExternalClose (true)
 - trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
 - analysis: notes on existing trade — id required; at least one of thesis, psychology, lessons, notes
-- trade-update: id required; at least one field to change
+- trade-update: id required; at least one field to change. Legacy closed completion may set playbookId=__legacy_none__, planId=__LEGACY_NONE__, thesis, riskRewardPlanned, lossClassification, postStopStudy — never invent real Playbook/PLAN links
 - attribution: MAF — tradeId/planId/experimentId; components[{component, classification, aiInterpretationConfidence, reasoning}]; optional observation{} (never invent prices)
 - observation-update: Observation Engine — observationId|tradeId|planId + measurable fields (targetReached, mfe/mae, …)
 - playbook-create / playbook-update: playbook CRUD

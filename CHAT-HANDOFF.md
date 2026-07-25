@@ -77,6 +77,15 @@ Por eso Apply responde **unsupported**.
 
 ---
 
+## Snapshots / labels (25-08)
+
+**Shipped:** Mechanics no pide `Control → Train AI`.  
+SCHEMA-FIRST → **Control → MTA Mechanics → Apply schema contract**.  
+Legacy ATTN-INCOMPLETE-CLOSED: `playbookId=__legacy_none__` · `planId=__LEGACY_NONE__` (no inventar vínculos).  
+Test: `npm run test:legacy-trade-completion` · doc: `md/matrix/snapshot-label-fix-25-08.md`.
+
+---
+
 ## Anti-patrones (vivos)
 
 | ❌ | ✅ |
@@ -110,6 +119,7 @@ Respuesta esperada: `CHECK COMPLETO — listo para implementar 25-29` o correcci
 |-----|-----|
 | `md/matrix/runtime-truth.md` | Qué hay en prod |
 | `md/matrix/needs-attention-ai-workflow.md` | Gap `plan-outcome` |
+| `md/matrix/snapshot-label-fix-25-08.md` | Labels Apply schema contract + legacy trade |
 | `md/matrix/maf-matrix-attribution-framework.md` | LO / OBS / MAF |
 | `lib/learning-outcome-types.ts` | Kinds actuales |
 | `lib/plans.ts` | `recordPlanOutcome` (UI) |

@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 29;
+export const MATRIX_MECHANICS_REVISION = 30;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -19,8 +19,8 @@ export function buildMatrixMechanicsSnapshot(): string {
     "Default: Analysis Mode — concise dialogue, no JSON, no persistence (see AI RESPONSE DISCIPLINE).",
     "Apply Mode: only after explicit intent (Save, Create, Update, Record, Apply, Import, Propose JSON, Persist to MTA).",
     "External AI proposes. MTA never auto-writes.",
-    "Flow: Copy snapshot → discuss in Analysis Mode → user requests Apply → ONE JSON block → Import in Inbox → human Apply.",
-    "SCHEMA-FIRST: before Apply JSON, read Apply Schema Contract. Never invent keys. stock-case-create requires entry+stop+target.",
+    "Flow: Copy snapshot → discuss in Analysis Mode → user requests Apply → ONE JSON block → Control → Apply → Validate → Accept.",
+    "SCHEMA-FIRST: before Apply JSON, copy Control → MTA Mechanics → Apply schema contract. Never invent keys. stock-case-create requires entry+stop+target.",
     "",
     "=== AI BLOCK TYPES ===",
     "Scouting layer:",
@@ -80,10 +80,10 @@ export function buildMatrixMechanicsSnapshot(): string {
     "=== SNAPSHOT MENU ===",
     "Preferred Stock File loop (MTA-002A): Analyze with AI → chat → Apply AI Result → Open Scout.",
     "Analyze with AI copies one package: operative prompt + Mechanics + MTAE + dossier + active Scout.",
-    "Ask the human to copy named snapshots from Control when they need a slice only",
-    "(Mechanics brief, Technical analysis / MTAE, Playbook, Stock file, Scout desk) or Trade window.",
+    "Ask ONLY for visible labels: MTA Mechanics · Apply schema contract · Stock Files · Apply ·",
+    "Library Technical Analysis · Playbook · Scout Desk · Learning · Dashboard snapshot · Trade forensic.",
     "Closed-trade forensic export lives ONLY on /trades/{ID} — never as a Control home section.",
-    "MTAE is Control → Technical analysis — not Playbook, not Mechanics.",
+    "MTAE is Control → Library → Technical Analysis — not Playbook, not Mechanics.",
     "Scout PLAN snapshot includes strategy_stop + planned_rr (never structural stop for R).",
     "Stock profile snapshot includes thesis_invalidation (structural) — do not substitute for strategy stop.",
     "",
