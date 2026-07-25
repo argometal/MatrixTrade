@@ -2,6 +2,7 @@ import { MobileMenuProvider } from "@/app/components/preview/MobileMenuContext";
 import { PreviewMobileHeader } from "@/app/components/preview/PreviewMobileHeader";
 import { PreviewMobileMenu } from "@/app/components/preview/PreviewMobileMenu";
 import { PreviewMobileNav } from "@/app/components/preview/PreviewMobileNav";
+import { UiWindowIdBadge } from "@/app/components/preview/UiWindowIdBadge";
 import { MatrixConnectProvider } from "@/app/components/matrix-connect/MatrixConnectProvider";
 import { MatrixControlPanelProvider } from "@/app/components/control-panel/MatrixControlPanelProvider";
 import { requireTradingSession } from "@/lib/auth/require-session";
@@ -25,6 +26,7 @@ export default async function TradingLayout({ children }: { children: React.Reac
           {children}
         </div>
         <PreviewMobileNav nav={nav} />
+        <UiWindowIdBadge />
       </MobileMenuProvider>
       </MatrixControlPanelProvider>
     </MatrixConnectProvider>
