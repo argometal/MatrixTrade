@@ -20,7 +20,7 @@ PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
 - scout-plan-create: NEW Scout Plan window on an EXISTING Stock File — stockFileId (or stockThesisId), ticker, plannedEntry, stopPrice, targetPrice required; optional verdict+decisionConfidence+challenges, playbookId/playbookIds, status (watching|ready|active), thesis, notes, reasoning. Allocates a NEW PLAN-xxx. Do NOT use stock-case-create for same ticker. Do NOT reuse an old planId.
-- technical-assessment: MTAE technical JSON only — stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[] (optional participation{volumeBehavior,wickAnalysis,candleSignals,movementCharacter{primary?|state+directionalEfficiency+rangeProgression,evidence,confidence},historicalReactionZones,largeParticipantFootprint}), integrated{} (optional participationSynthesis, optional momentumAssessment{expansionPotential,currentState,capitalEfficiencyConcern,rationale,scoutImplication,confidence}), technicalSummary{} (trend, zones, probableTarget vs extendedTarget, structuralInvalidation, contradictions, confidence). FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict, whalesAreBuying. Optional patchStockFile (default true).
+- technical-assessment: MTAE technical JSON only — REQUIRED: stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[] (each REQUIRES timeframe, trend bullish|neutral|bearish, structuralInvalidation, summary; optional participation{}), integrated{structureSpine, opportunityNote, executionContext REQUIRED; optional participationSynthesis, optional momentumAssessment{expansionPotential,currentState,capitalEfficiencyConcern:boolean,rationale[],scoutImplication,confidence}}, technicalSummary{trend, structureNote, structuralInvalidation REQUIRED; optional zones/targets/confidence}. Evidence First labels (Supports/Bias/…) are display-only — serialize exact JSON keys. FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict, whalesAreBuying. Optional patchStockFile (default true). Use Control → Train AI → Apply schema contract for enums + minimum valid example.
 - technical-calibration: human procedure correction — assessmentId, stockProfileId, ticker, errorType, fieldPath, aiValue, humanValue, reason; optional magnitude, confidenceAdjustment
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason. Deletes linked evidence and scout plans. Irreversible — human Apply only.
 
@@ -74,7 +74,7 @@ All Apply-ready block types:
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout (backfill missing Scout Plan only)
 - scout-plan-create: NEW PLAN on existing Stock File — stockFileId, ticker, plannedEntry, stopPrice, targetPrice; optional verdict+challenges; allocates NEW PLAN-xxx (same-ticker new window)
-- technical-assessment: MTAE technical-only multi-TF JSON — stockProfileId, ticker, timeframeRoles, perTimeframe[] (+ optional participation / movementCharacter expansion fields), integrated{} (+ optional participationSynthesis, momentumAssessment), technicalSummary{} (no Entry Solver / RR / Scout verdict / whalesAreBuying)
+- technical-assessment: MTAE technical-only — stockProfileId, ticker, timeframeRoles; perTimeframe[] each needs timeframe+trend+structuralInvalidation+summary; integrated needs structureSpine+opportunityNote+executionContext; technicalSummary needs trend+structureNote+structuralInvalidation (no Entry Solver / RR / Scout verdict / whalesAreBuying)
 - technical-calibration: MTAE human procedure correction — assessmentId, errorType, fieldPath, aiValue, humanValue, reason
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason (duplicate cleanup)
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId, status
@@ -834,7 +834,94 @@ export function sampleAiBlock(type: AiBlockType): string {
   return JSON.stringify(block, null, 2);
 }
 
+/** Rich demo sample (participation + momentum). Prefer TECHNICAL_ASSESSMENT_MIN_EXAMPLE for the Apply contract. */
 export const AI_BLOCK_SAMPLES = SAMPLE_BLOCKS;
+
+/**
+ * Minimum valid technical-assessment for the Apply schema contract.
+ * Required nested keys only — no optional participation layer.
+ * Distinct from the rich AI_BLOCK_SAMPLES["technical-assessment"] demo.
+ */
+export const TECHNICAL_ASSESSMENT_MIN_EXAMPLE: Record<string, unknown> = {
+  type: "technical-assessment",
+  source: "ai-block",
+  proposal: {
+    stockProfileId: "ST-EXAMPLE-001",
+    ticker: "EXAMPLE",
+    timeframeRoles: {
+      strategic_tf: "6M",
+      opportunity_tf: "3M",
+      refinement_tf: "1M",
+      execution_tf: "1W",
+    },
+    perTimeframe: [
+      {
+        timeframe: "6M",
+        trend: "bullish",
+        trendConfidence: 70,
+        structure: { higherHighs: true, higherLows: true },
+        supports: [
+          {
+            rank: 1,
+            price: 100,
+            reason: "Multi-touch demand shelf",
+            confidence: 72,
+          },
+        ],
+        resistances: [
+          {
+            rank: 1,
+            price: 140,
+            reason: "Prior supply high",
+            confidence: 65,
+          },
+        ],
+        battleZones: [
+          {
+            id: "bz-min-1",
+            low: 108,
+            high: 115,
+            reachProbability: "medium",
+            asymmetryQuality: "good",
+            technicalImportance: 70,
+            reason: "Primary refinement battle zone",
+          },
+        ],
+        structuralInvalidation: "Monthly close below 95",
+        contradictions: [],
+        summary: "Higher-TF uptrend intact; refine only inside the battle zone.",
+      },
+    ],
+    integrated: {
+      structureSpine: "6M higher highs / higher lows define the structure spine.",
+      opportunityNote: "Asymmetry improves inside 108–115; do not chase extended advances.",
+      executionContext: "1W timing only — wait for zone interaction.",
+      battleZoneRanking: [
+        {
+          id: "bz-min-1",
+          low: 108,
+          high: 115,
+          reachProbability: "medium",
+          asymmetryQuality: "good",
+          technicalImportance: 70,
+          reason: "Primary refinement battle zone",
+        },
+      ],
+      contradictions: [],
+    },
+    technicalSummary: {
+      trend: "bullish",
+      structureNote: "Secular structure intact; entries only in the defined battle zone.",
+      majorSupport: 100,
+      majorResistance: 140,
+      primaryBattleZone: { low: 108, high: 115 },
+      structuralInvalidation: "Monthly close below 95",
+      contradictions: [],
+      confidence: 70,
+    },
+    patchStockFile: true,
+  },
+};
 
 export function sampleTradeAiBlock(): string {
   return sampleAiBlock("trade-proposal");

@@ -2,13 +2,24 @@
  * Apply schema contract — schema-first handshake for AI.
  * Never invent keys: use only types/fields listed here or in accepted samples.
  */
-import { AI_BLOCK_SAMPLES, type AiBlockType } from "./ai-block";
+import {
+  AI_BLOCK_SAMPLES,
+  TECHNICAL_ASSESSMENT_MIN_EXAMPLE,
+  type AiBlockType,
+} from "./ai-block";
 import {
   STOCK_CASE_CREATE_ALLOWED_KEYS,
   STOCK_CASE_LEVELS_ALLOWED_KEYS,
   STOCK_CASE_RISK_ALLOWED_KEYS,
   STOCK_CASE_SCOUT_ALLOWED_KEYS,
 } from "./stock-case-schema";
+import {
+  MTAE_DOMINANT_CONDITIONS,
+  MTAE_EXPANSION_POTENTIALS,
+  MTAE_EXPANSION_STATES,
+  MTAE_MOMENTUM_CURRENT_STATES,
+  MTAE_SCOUT_IMPLICATIONS,
+} from "./mtae-types";
 
 export {
   STOCK_CASE_CREATE_ALLOWED_KEYS,
@@ -46,6 +57,47 @@ export const APPLY_LAYER_OWNERSHIP = {
   Trade: ["entry fill", "exit", "shares", "execution reality"],
 } as const;
 
+/** Matches runtime validator trend enum in mtae-validate (bullish|neutral|bearish). */
+export const MTAE_TREND_VALUES = ["bullish", "neutral", "bearish"] as const;
+
+/** Nested paths required by validateTechnicalAssessmentProposal (export contract). */
+export const TECHNICAL_ASSESSMENT_REQUIRED_PATHS = [
+  "stockProfileId",
+  "ticker",
+  "timeframeRoles.strategic_tf",
+  "timeframeRoles.opportunity_tf",
+  "timeframeRoles.refinement_tf",
+  "timeframeRoles.execution_tf",
+  "perTimeframe[]",
+  "perTimeframe[].timeframe",
+  "perTimeframe[].trend",
+  "perTimeframe[].structuralInvalidation",
+  "perTimeframe[].summary",
+  "integrated",
+  "integrated.structureSpine",
+  "integrated.opportunityNote",
+  "integrated.executionContext",
+  "technicalSummary",
+  "technicalSummary.trend",
+  "technicalSummary.structureNote",
+  "technicalSummary.structuralInvalidation",
+] as const;
+
+export type TechnicalAssessmentContractDetail = {
+  required: string[];
+  optionalWhenPresent: {
+    participationSynthesis: string[];
+    momentumAssessment: string[];
+  };
+  fieldTypes: Record<string, string>;
+  shapes: {
+    participationSynthesis: string;
+    momentumAssessment: string;
+  };
+  forbiddenInTechnicalSummary: string[];
+  notes: string[];
+};
+
 export type ApplySchemaContract = {
   schemaVersion: string;
   product: "MTA";
@@ -62,12 +114,16 @@ export type ApplySchemaContract = {
     required: string[];
     notes: string[];
   };
+  technicalAssessment: TechnicalAssessmentContractDetail;
+  /** Contract examples — technical-assessment uses the minimum valid example. */
   examples: Partial<Record<AiBlockType, Record<string, unknown>>>;
+  /** Rich demo (participation + momentum); not the contract minimum. */
+  richExamples?: Partial<Record<"technical-assessment", Record<string, unknown>>>;
 };
 
 export function buildApplySchemaContract(): ApplySchemaContract {
   return {
-    schemaVersion: "2026-07-22.schema-discipline",
+    schemaVersion: "2026-07-25.technical-assessment-export",
     product: "MTA",
     rules: [
       "SCHEMA-FIRST: before any Apply JSON, read this contract (or an accepted export example).",
@@ -81,6 +137,8 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "Do not put Scout capital fields into technical-assessment.",
       "Do not put Entry Solver / R:R / shares into MTAE.",
       "MTAE presentation is evidence-first (Analysis Mode); explain only on request.",
+      "Evidence First labels (Supports / Resistances / Bias / Confidence) are display-only — serialize exact JSON keys.",
+      "technical-assessment: use examples[\"technical-assessment\"] (minimum valid). Rich demo is richExamples only.",
     ],
     acceptedTypes: Object.keys(AI_BLOCK_SAMPLES) as AiBlockType[],
     requiredFields: {
@@ -103,14 +161,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       ],
       "file-update": ["id", "at least one updatable field"],
       "decision-update": ["planId", "decision mode OR tactical fields"],
-      "technical-assessment": [
-        "stockProfileId",
-        "ticker",
-        "timeframeRoles",
-        "perTimeframe[]",
-        "integrated",
-        "technicalSummary",
-      ],
+      "technical-assessment": [...TECHNICAL_ASSESSMENT_REQUIRED_PATHS],
       "trade-proposal": ["id", "ticker", "entry", "stop", "shares"],
     },
     allowedEnums: {
@@ -122,18 +173,12 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "invalidated",
         "archived",
       ],
-      "momentumAssessment.expansionPotential": [
-        "high",
-        "moderate",
-        "low",
-        "uncertain",
-      ],
-      "momentumAssessment.scoutImplication": [
-        "normal_entry_standard",
-        "require_better_entry",
-        "require_momentum_improvement",
-        "standby",
-      ],
+      "trend": [...MTAE_TREND_VALUES],
+      "momentumAssessment.expansionPotential": [...MTAE_EXPANSION_POTENTIALS],
+      "momentumAssessment.currentState": [...MTAE_MOMENTUM_CURRENT_STATES],
+      "momentumAssessment.scoutImplication": [...MTAE_SCOUT_IMPLICATIONS],
+      "participationSynthesis.dominantCondition": [...MTAE_DOMINANT_CONDITIONS],
+      "movementCharacter.state": [...MTAE_EXPANSION_STATES],
     },
     layerOwnership: APPLY_LAYER_OWNERSHIP,
     stockCaseCreate: {
@@ -158,13 +203,108 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "invalidation example: Weekly close below 130 — not 130 alone",
       ],
     },
+    technicalAssessment: {
+      required: [...TECHNICAL_ASSESSMENT_REQUIRED_PATHS],
+      optionalWhenPresent: {
+        participationSynthesis: [
+          "dominantCondition",
+          "buyingEvidence",
+          "sellingEvidence",
+          "unresolvedSignals",
+          "confidence",
+        ],
+        momentumAssessment: [
+          "expansionPotential",
+          "currentState",
+          "capitalEfficiencyConcern",
+          "rationale",
+          "scoutImplication",
+          "confidence",
+        ],
+      },
+      fieldTypes: {
+        "momentumAssessment.capitalEfficiencyConcern": "boolean",
+        "momentumAssessment.rationale": "string[] (non-empty)",
+        "momentumAssessment.confidence": "number 0-100",
+        "participationSynthesis.buyingEvidence": "string[]",
+        "participationSynthesis.sellingEvidence": "string[]",
+        "participationSynthesis.unresolvedSignals": "string[]",
+        "participationSynthesis.confidence": "number 0-100",
+      },
+      shapes: {
+        participationSynthesis:
+          "{ dominantCondition, buyingEvidence[], sellingEvidence[], unresolvedSignals[], confidence } — optional; if present dominantCondition required",
+        momentumAssessment:
+          "{ expansionPotential, currentState, capitalEfficiencyConcern:boolean, rationale:string[] (non-empty), scoutImplication, confidence } — optional; if present all listed fields required",
+      },
+      forbiddenInTechnicalSummary: [
+        "maximumEntry",
+        "recommendedEntry",
+        "plannedEntry",
+        "minimumRR",
+        "riskReward",
+        "rr",
+        "shares",
+        "positionSize",
+        "scoutVerdict",
+        "verdict",
+        "whalesAreBuying",
+        "whalesBuying",
+      ],
+      notes: [
+        "Evidence First presentation order is display-only — serialize exact JSON keys above.",
+        "movementCharacter.state uses MTAE_EXPANSION_STATES — NOT the same enum as momentumAssessment.currentState (MTAE_MOMENTUM_CURRENT_STATES).",
+        "Omit momentumAssessment / participationSynthesis when not assessed — never invent false evidence.",
+        "examples[\"technical-assessment\"] is the minimum valid example. richExamples[\"technical-assessment\"] is the optional rich demo.",
+      ],
+    },
     examples: {
       "stock-case-create": AI_BLOCK_SAMPLES["stock-case-create"],
       "scout-plan-create": AI_BLOCK_SAMPLES["scout-plan-create"],
-      "technical-assessment": AI_BLOCK_SAMPLES["technical-assessment"],
+      "technical-assessment": TECHNICAL_ASSESSMENT_MIN_EXAMPLE,
       "decision-update": AI_BLOCK_SAMPLES["decision-update"],
     },
+    richExamples: {
+      "technical-assessment": AI_BLOCK_SAMPLES["technical-assessment"],
+    },
   };
+}
+
+/** Compact TECHNICAL-ASSESSMENT section for Train AI text + MTAE snapshot. */
+export function buildTechnicalAssessmentContractSection(): string {
+  const contract = buildApplySchemaContract();
+  const ta = contract.technicalAssessment;
+  return [
+    "=== TECHNICAL-ASSESSMENT (hard) ===",
+    "Minimum valid example: examples[\"technical-assessment\"] (also TECHNICAL_ASSESSMENT_MIN_EXAMPLE).",
+    "Rich demo (optional): richExamples[\"technical-assessment\"] — not required for Apply.",
+    "",
+    "REQUIRED nested paths:",
+    ...ta.required.map((p) => `- ${p}`),
+    "",
+    "ENUMS (from lib/mtae-types consts):",
+    `- trend: ${contract.allowedEnums["trend"].join(" | ")}`,
+    `- momentumAssessment.expansionPotential: ${contract.allowedEnums["momentumAssessment.expansionPotential"].join(" | ")}`,
+    `- momentumAssessment.currentState: ${contract.allowedEnums["momentumAssessment.currentState"].join(" | ")}`,
+    `- momentumAssessment.scoutImplication: ${contract.allowedEnums["momentumAssessment.scoutImplication"].join(" | ")}`,
+    `- participationSynthesis.dominantCondition: ${contract.allowedEnums["participationSynthesis.dominantCondition"].join(" | ")}`,
+    `- movementCharacter.state (optional participation; DISTINCT from currentState): ${contract.allowedEnums["movementCharacter.state"].join(" | ")}`,
+    "",
+    "FIELD TYPES:",
+    ...Object.entries(ta.fieldTypes).map(([k, v]) => `- ${k}: ${v}`),
+    "",
+    "OPTIONAL SHAPES (when present):",
+    `- participationSynthesis: ${ta.shapes.participationSynthesis}`,
+    `- momentumAssessment: ${ta.shapes.momentumAssessment}`,
+    "",
+    "FORBIDDEN in technicalSummary:",
+    ta.forbiddenInTechnicalSummary.join(", "),
+    "",
+    ...ta.notes.map((n) => `- ${n}`),
+    "",
+    "=== MINIMUM VALID EXAMPLE JSON ===",
+    JSON.stringify(TECHNICAL_ASSESSMENT_MIN_EXAMPLE, null, 2),
+  ].join("\n");
 }
 
 export function buildApplySchemaContractText(): string {
@@ -189,6 +329,8 @@ export function buildApplySchemaContractText(): string {
     `allowed initialScout keys: ${contract.stockCaseCreate.allowedInitialScoutKeys.join(", ")}`,
     `required: ${contract.stockCaseCreate.required.join(", ")}`,
     ...contract.stockCaseCreate.notes.map((n) => `- ${n}`),
+    "",
+    buildTechnicalAssessmentContractSection(),
     "",
     "REQUIRED FIELDS (summary)",
     ...Object.entries(contract.requiredFields).map(

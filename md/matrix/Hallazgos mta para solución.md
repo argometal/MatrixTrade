@@ -456,3 +456,68 @@ Must assert:
 **READY FOR IMPLEMENTATION**
 
 Constraints are clear, the file set is minimal, the Control delivery path is existing, and no validator/Apply redesign is required. Proceed only after explicit approval to code.
+
+---
+
+## 12. Implementation result
+
+**Prompt ID:** 24-27  
+**Date:** 2026-07-25  
+**Branch:** `cursor/hallazgos-mta-schema-b0a5` · **PR:** #78
+
+### Exact files changed
+
+| File | Change |
+|------|--------|
+| `lib/ai-block.ts` | Nested required keys in AI request prose; `TECHNICAL_ASSESSMENT_MIN_EXAMPLE`; rich sample remains `AI_BLOCK_SAMPLES["technical-assessment"]` |
+| `lib/apply-schema-contract.ts` | Nested `requiredFields`; enums from `mtae-types` consts; `technicalAssessment` detail; `buildTechnicalAssessmentContractSection()`; contract `examples` → min example; `richExamples` → rich demo |
+| `lib/mtae-brief.ts` | Compact **APPLY JSON CONTRACT (technical-assessment)** block |
+| `lib/mtae-snapshot.ts` | Snapshot `mtae-technical-assessment-contract` from contract builders + min example |
+| `tools/test-mtae-schema-export.ts` | **New** alignment tests |
+| `package.json` | Script `test:mtae-schema-export` |
+| `md/matrix/Hallazgos mta para solución.md` | This section |
+
+### Implementation summary
+
+- Exported complete nested required paths for `technical-assessment` matching the runtime validator checklist.
+- Enums sourced from `MTAE_*` consts in `lib/mtae-types.ts` (plus shared `MTAE_TREND_VALUES` for trend).
+- Named minimum valid example exposed as the contract example; rich participation sample kept separate as `richExamples` / `sampleAiBlock`.
+- AI-facing request text names exact nested JSON keys.
+- MTAE brief + Control MTAE snapshot deliver the same contract without a second handwritten schema.
+- Validator, Apply UI, Accept, persistence, Mechanics, Stock/Scout/Trade/MAF: **untouched**.
+
+### Tests run
+
+```text
+npm run test:mtae-schema-export
+npm run test:mtae-participation
+npm run test:mtae-evidence-first
+npx tsc --noEmit
+```
+
+### Test results
+
+| Command | Result |
+|---------|--------|
+| `test:mtae-schema-export` | **pass** |
+| `test:mtae-participation` | **pass** |
+| `test:mtae-evidence-first` | **pass** |
+| `tsc --noEmit` | **pass** |
+
+### Deviations from section 11
+
+- None material. Added `richExamples` on the contract object so the min vs rich distinction is explicit in the JSON handshake (still the same `apply-schema-contract` / `ai-block` infrastructure — not a parallel system).
+- Trend enum exported as `MTAE_TREND_VALUES` in `apply-schema-contract.ts` because the validator uses a local array rather than a `mtae-types` const (validator was not modified per scope).
+
+### Forbidden areas untouched
+
+Confirmed no diffs in: `lib/mtae-validate.ts`, `lib/bridge.ts`, `lib/apply-trading-inbox.ts`, `lib/mtae-apply.ts`, `MatrixConnectWindow`, Mechanics, Stock/Scout/Trade/MAF paths.
+
+### Remaining risks
+
+- External AI sessions that never open Train AI / MTAE schema snapshot may still omit keys — mitigated by protocol compact block + request prose, but human must paste one of those surfaces.
+- Rich vs min example confusion if a session uses `sampleAiBlock("technical-assessment")` instead of the contract example — both remain valid; contract text labels which is minimum.
+
+### Final verdict
+
+**IMPLEMENTATION COMPLETE — READY FOR REVIEW**
