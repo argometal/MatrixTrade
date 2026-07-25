@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import { withLeadingAggregateSnapshot } from "@/lib/snapshot-aggregate";
 
 const MENU_WIDTH_PX = 288; // w-72
 const VIEWPORT_PAD_PX = 12;
+
+type MenuBox = {
+  left: number;
+  top: number;
+  width: number;
+  maxHeight: number;
+};
 
 export function SnapshotButton({
   title,
@@ -21,9 +29,11 @@ export function SnapshotButton({
 }) {
   const [open, setOpen] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  /** Prefer left edge of trigger; flip to right when the menu would clip off-screen. */
-  const [align, setAlign] = useState<"left" | "right">("left");
+  const [menuBox, setMenuBox] = useState<MenuBox | null>(null);
+  const [mounted, setMounted] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   /** Snapshot general first — read-only projection; children unchanged (Prompt ID 24-30). */
   const menuItems = useMemo(
@@ -31,27 +41,40 @@ export function SnapshotButton({
     [title, items]
   );
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useLayoutEffect(() => {
-    if (!open || !rootRef.current) return;
+    if (!open || !buttonRef.current) return;
 
     function placeMenu() {
-      const root = rootRef.current;
-      if (!root) return;
-      const rect = root.getBoundingClientRect();
+      const btn = buttonRef.current;
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
       const vw = window.innerWidth;
-      const maxMenu = Math.min(MENU_WIDTH_PX, vw - VIEWPORT_PAD_PX * 2);
-      const spaceRight = vw - rect.left - VIEWPORT_PAD_PX;
-      const spaceLeft = rect.right - VIEWPORT_PAD_PX;
+      const vh = window.innerHeight;
+      const width = Math.min(MENU_WIDTH_PX, vw - VIEWPORT_PAD_PX * 2);
 
-      // Grow right from left edge when it fits; otherwise grow left from right edge.
-      if (spaceRight >= maxMenu) {
-        setAlign("left");
-      } else if (spaceLeft >= maxMenu) {
-        setAlign("right");
-      } else {
-        // Neither side fits fully — pick the side with more room; max-width keeps it in view.
-        setAlign(spaceRight >= spaceLeft ? "left" : "right");
+      // Prefer aligning to trigger left; clamp so the full menu stays on-screen.
+      let left = rect.left;
+      if (left + width > vw - VIEWPORT_PAD_PX) {
+        left = vw - VIEWPORT_PAD_PX - width;
       }
+      if (left < VIEWPORT_PAD_PX) left = VIEWPORT_PAD_PX;
+
+      const maxHeight = Math.min(384, vh - VIEWPORT_PAD_PX * 2 - 48);
+      const spaceBelow = vh - rect.bottom - VIEWPORT_PAD_PX;
+      const spaceAbove = rect.top - VIEWPORT_PAD_PX;
+      let top = rect.bottom + 4;
+      if (spaceBelow < Math.min(maxHeight, 160) && spaceAbove > spaceBelow) {
+        top = Math.max(VIEWPORT_PAD_PX, rect.top - maxHeight - 4);
+      }
+      if (top + maxHeight > vh - VIEWPORT_PAD_PX) {
+        top = Math.max(VIEWPORT_PAD_PX, vh - VIEWPORT_PAD_PX - maxHeight);
+      }
+
+      setMenuBox({ left, top, width, maxHeight });
     }
 
     placeMenu();
@@ -61,15 +84,24 @@ export function SnapshotButton({
       window.removeEventListener("resize", placeMenu);
       window.removeEventListener("scroll", placeMenu, true);
     };
-  }, [open]);
+  }, [open, menuItems.length]);
 
   useEffect(() => {
     if (!open) return;
     function onDoc(e: MouseEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (rootRef.current?.contains(t) || menuRef.current?.contains(t)) return;
+      setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
     }
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   async function copyItem(item: SnapshotMenuItem) {
@@ -99,9 +131,47 @@ export function SnapshotButton({
     );
   }
 
+  const menu =
+    open && mounted && menuBox
+      ? createPortal(
+          <div
+            ref={menuRef}
+            role="menu"
+            style={{
+              position: "fixed",
+              left: menuBox.left,
+              top: menuBox.top,
+              width: menuBox.width,
+              maxHeight: menuBox.maxHeight,
+              zIndex: 80,
+            }}
+            className="overflow-y-auto overscroll-contain rounded-xl border border-zinc-700 bg-zinc-900 py-1 shadow-xl"
+          >
+            {menuItems.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                role="menuitem"
+                onClick={() => copyItem(item)}
+                className="block w-full px-3 py-2.5 text-left hover:bg-zinc-800"
+              >
+                <span className="text-xs font-medium text-zinc-200">
+                  {copiedId === item.id ? "Copied ✓" : item.label}
+                </span>
+                <span className="mt-0.5 block text-[11px] leading-snug text-zinc-500">
+                  {item.description}
+                </span>
+              </button>
+            ))}
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
     <div ref={rootRef} className="relative">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={`rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-left hover:bg-violet-500/20 ${className}`}
@@ -114,31 +184,7 @@ export function SnapshotButton({
         </span>
         <span className="mt-0.5 block text-[11px] text-zinc-500">{description}</span>
       </button>
-      {open ? (
-        <div
-          role="menu"
-          className={`absolute z-40 mt-1 max-h-[min(24rem,calc(100dvh-6rem))] w-72 max-w-[calc(100vw-1.5rem)] overflow-y-auto overscroll-contain rounded-xl border border-zinc-700 bg-zinc-900 py-1 shadow-xl ${
-            align === "left" ? "left-0" : "right-0"
-          }`}
-        >
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              role="menuitem"
-              onClick={() => copyItem(item)}
-              className="block w-full px-3 py-2.5 text-left hover:bg-zinc-800"
-            >
-              <span className="text-xs font-medium text-zinc-200">
-                {copiedId === item.id ? "Copied ✓" : item.label}
-              </span>
-              <span className="mt-0.5 block text-[11px] leading-snug text-zinc-500">
-                {item.description}
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : null}
+      {menu}
     </div>
   );
 }
