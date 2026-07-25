@@ -67,9 +67,9 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 | `/forge/active` | Active **list** — administrative folder/deck management (secondary) |
 | `/forge/archive` | Archive **list** — administrative (secondary) |
 | `/forge/vault` | Vault shell + **Vault \| Alexandria** selector (Alexandria frozen disclosure) |
-| `/forge/deck/[deckId]` | Chaos Deck internal view |
+| `/forge/deck/[deckId]` | Chaos Deck — Fragments + B0 builder entry + exchange export (24-1C) |
 | `/forge/deck/[deckId]/item/[itemId]/view` | Content Viewer |
-| `/forge/deck/[deckId]/item/[itemId]` | Basic content editor |
+| `/forge/deck/[deckId]/item/[itemId]` | **Fragment builder B0** (text/image blocks); `?legacy=1` classic editor |
 | `/forge/argus` | Argus graph prototype — Chaos units + manual links (React Flow); not Engine schema |
 | `/forge/focus` | **Hidden** from nav — deprecated/pending signals only |
 | `/forge/chaos` | Legacy capture prototype |

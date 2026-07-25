@@ -2,8 +2,11 @@
  * AF03 browser-local repository store (folders, Chaos Decks, content items).
  * Storage: localStorage — survives refresh, NOT server persistence.
  * Prototype / interim — see AF03 §14 disclosure.
+ * CHANGE 24-1C — version 3 blocks + asset metadata; safe migration (no wipe).
  */
 
+import type { Af03Block } from "./af03-builder-types";
+import { newStableId } from "./af03-ids";
 import {
   AF03_REPO_STORAGE_KEY,
   DEFAULT_PREFS,
@@ -23,7 +26,7 @@ function nowIso(): string {
 }
 
 function newId(prefix: string): string {
-  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  return newStableId(prefix);
 }
 
 function previewFromItems(items: Af03ContentItem[]): string {
@@ -33,7 +36,7 @@ function previewFromItems(items: Af03ContentItem[]): string {
   return snippet;
 }
 
-function syncDeckDerived(state: Af03RepoState, deckId: string): Af03RepoState {
+export function syncDeckDerived(state: Af03RepoState, deckId: string): Af03RepoState {
   const deckItems = state.items.filter((i) => i.deckId === deckId);
   const t = nowIso();
   return {
@@ -51,6 +54,14 @@ function syncDeckDerived(state: Af03RepoState, deckId: string): Af03RepoState {
   };
 }
 
+/** Alias used by builder store — same as syncDeckDerived. */
+export function syncDeckPreviewFromFragment(
+  state: Af03RepoState,
+  deckId: string
+): Af03RepoState {
+  return syncDeckDerived(state, deckId);
+}
+
 function seedState(): Af03RepoState {
   const t = nowIso();
   const notesId = "fld_seed_notes";
@@ -60,13 +71,17 @@ function seedState(): Af03RepoState {
   const afId = "deck_seed_af";
   const oldId = "deck_seed_old";
 
+  const welcomeBody =
+    "# Capture\n\nPaste thoughts here. Classification is optional.\n\n- raw notes\n- links\n- later: files";
+  const linkBody = "https://github.com/argometal/MatrixTrade";
+
   const items: Af03ContentItem[] = [
     {
       id: "item_seed_welcome",
       deckId: captureId,
       kind: "text",
       title: "Welcome scrap",
-      body: "# Capture\n\nPaste thoughts here. Classification is optional.\n\n- raw notes\n- links\n- later: files",
+      body: welcomeBody,
       sourceRef: null,
       order: 0,
       createdAt: t,
@@ -74,13 +89,16 @@ function seedState(): Af03RepoState {
       unsupported: false,
       unsupportedReason: null,
       markedForLater: false,
+      builderMigrated: true,
+      tags: [],
+      structuralHints: null,
     },
     {
       id: "item_seed_link",
       deckId: afId,
       kind: "link",
       title: "AF03 contract",
-      body: "https://github.com/argometal/MatrixTrade",
+      body: linkBody,
       sourceRef: "https://github.com/argometal/MatrixTrade",
       order: 0,
       createdAt: t,
@@ -88,11 +106,35 @@ function seedState(): Af03RepoState {
       unsupported: false,
       unsupportedReason: null,
       markedForLater: false,
+      builderMigrated: true,
+      tags: [],
+      structuralHints: null,
+    },
+  ];
+
+  const blocks: Af03Block[] = [
+    {
+      id: "blk_seed_welcome",
+      fragmentId: "item_seed_welcome",
+      type: "text",
+      order: 0,
+      payload: { text: welcomeBody, formatVersion: 1 },
+      createdAt: t,
+      updatedAt: t,
+    },
+    {
+      id: "blk_seed_link",
+      fragmentId: "item_seed_link",
+      type: "text",
+      order: 0,
+      payload: { text: linkBody, formatVersion: 1 },
+      createdAt: t,
+      updatedAt: t,
     },
   ];
 
   return {
-    version: 2,
+    version: 3,
     folders: [
       {
         id: notesId,
@@ -164,6 +206,8 @@ function seedState(): Af03RepoState {
       },
     ],
     items,
+    blocks,
+    assets: [],
     prefs: { ...DEFAULT_PREFS },
   };
 }
@@ -186,41 +230,94 @@ function normalizeDeck(d: Af03ChaosDeck): Af03ChaosDeck {
   };
 }
 
-function migrateToV2(raw: unknown): Af03RepoState | null {
+function normalizeItem(i: Af03ContentItem): Af03ContentItem {
+  return {
+    ...i,
+    markedForLater: Boolean(i.markedForLater),
+    builderMigrated: Boolean(i.builderMigrated),
+    tags: Array.isArray(i.tags) ? i.tags : [],
+    structuralHints: i.structuralHints ?? null,
+  };
+}
+
+function projectLegacyItemToBlock(item: Af03ContentItem): Af03Block {
+  const t = item.createdAt || nowIso();
+  return {
+    id: newId("blk"),
+    fragmentId: item.id,
+    type: "text",
+    order: 0,
+    payload: {
+      text: item.body || item.sourceRef || "",
+      formatVersion: 1,
+    },
+    createdAt: t,
+    updatedAt: t,
+  };
+}
+
+/** Idempotent v1/v2/v3 → v3 with blocks. Never clears user data. */
+function migrateRepo(raw: unknown): Af03RepoState | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
   if (!Array.isArray(o.folders) || !Array.isArray(o.decks)) return null;
 
-  if (o.version === 2 && Array.isArray(o.items)) {
-    const prefs =
-      o.prefs && typeof o.prefs === "object"
-        ? { ...DEFAULT_PREFS, ...(o.prefs as Af03RepoPrefs) }
-        : { ...DEFAULT_PREFS };
-    const items = (o.items as Af03ContentItem[]).map((i) => ({
-      ...i,
-      markedForLater: Boolean(i.markedForLater),
-    }));
-    return {
-      version: 2,
-      folders: (o.folders as Af03Folder[]).map(normalizeFolder),
-      decks: (o.decks as Af03ChaosDeck[]).map(normalizeDeck),
-      items,
-      prefs,
-    };
-  }
+  const prefs =
+    o.prefs && typeof o.prefs === "object"
+      ? { ...DEFAULT_PREFS, ...(o.prefs as Af03RepoPrefs) }
+      : { ...DEFAULT_PREFS };
 
+  let items: Af03ContentItem[] = [];
   if (o.version === 1) {
-    const decks = o.decks as Af03ChaosDeck[];
-    return {
-      version: 2,
-      folders: (o.folders as Af03Folder[]).map(normalizeFolder),
-      decks: decks.map(normalizeDeck),
-      items: [],
-      prefs: { ...DEFAULT_PREFS },
-    };
+    items = [];
+  } else if (Array.isArray(o.items)) {
+    items = (o.items as Af03ContentItem[]).map(normalizeItem);
+  } else {
+    return null;
   }
 
-  return null;
+  const existingBlocks = Array.isArray(o.blocks) ? (o.blocks as Af03Block[]) : [];
+  const existingAssets = Array.isArray(o.assets) ? o.assets : [];
+  const blocksByFragment = new Map<string, Af03Block[]>();
+  for (const b of existingBlocks) {
+    if (!b || typeof b.id !== "string" || typeof b.fragmentId !== "string") continue;
+    const list = blocksByFragment.get(b.fragmentId) ?? [];
+    list.push(b);
+    blocksByFragment.set(b.fragmentId, list);
+  }
+
+  const nextItems: Af03ContentItem[] = [];
+  const nextBlocks: Af03Block[] = [];
+
+  for (const item of items) {
+    const have = blocksByFragment.get(item.id) ?? [];
+    if (item.builderMigrated || have.length > 0) {
+      nextItems.push({ ...item, builderMigrated: true });
+      nextBlocks.push(...have);
+    } else {
+      nextBlocks.push(projectLegacyItemToBlock(item));
+      nextItems.push({ ...item, builderMigrated: true });
+    }
+  }
+
+  // Keep orphan blocks that reference unknown fragments (non-destructive)
+  const keptIds = new Set(nextBlocks.map((b) => b.id));
+  for (const b of existingBlocks) {
+    if (b && typeof b.id === "string" && !keptIds.has(b.id)) {
+      nextBlocks.push(b);
+      keptIds.add(b.id);
+    }
+  }
+
+  return {
+    version: 3,
+    folders: (o.folders as Af03Folder[]).map(normalizeFolder),
+    decks: (o.decks as Af03ChaosDeck[]).map(normalizeDeck),
+    items: nextItems,
+    blocks: nextBlocks,
+    assets: existingAssets as Af03RepoState["assets"],
+    prefs,
+  };
 }
 
 export function emptyOrSeedRepo(): Af03RepoState {
@@ -232,11 +329,15 @@ export function emptyOrSeedRepo(): Af03RepoState {
       localStorage.setItem(AF03_REPO_STORAGE_KEY, JSON.stringify(seeded));
       return seeded;
     }
-    const migrated = migrateToV2(JSON.parse(raw));
-    if (!migrated) return seedState();
+    const migrated = migrateRepo(JSON.parse(raw));
+    if (!migrated) {
+      // Corrupt payload: do not wipe — return seed only for this session, do not overwrite storage
+      return seedState();
+    }
     writeRepo(migrated);
     return migrated;
   } catch {
+    // Do not clear localStorage on parse errors
     return seedState();
   }
 }
@@ -565,8 +666,25 @@ export function createContent(
     unsupported: Boolean(input.unsupported),
     unsupportedReason: input.unsupportedReason ?? null,
     markedForLater: false,
+    builderMigrated: true,
+    tags: [],
+    structuralHints: null,
   };
-  let next: Af03RepoState = { ...state, items: [...state.items, item] };
+  const block: Af03Block = {
+    id: newId("blk"),
+    fragmentId: item.id,
+    type: "text",
+    order: 0,
+    payload: { text: input.body || input.sourceRef || "", formatVersion: 1 },
+    createdAt: t,
+    updatedAt: t,
+  };
+  let next: Af03RepoState = {
+    ...state,
+    items: [...state.items, item],
+    blocks: [...(state.blocks ?? []), block],
+    assets: state.assets ?? [],
+  };
   next = syncDeckDerived(next, input.deckId);
   writeRepo(next);
   return { state: next, item };
@@ -621,6 +739,8 @@ export function removeContent(state: Af03RepoState, id: string): Af03RepoState {
   let next: Af03RepoState = {
     ...state,
     items: state.items.filter((i) => i.id !== id),
+    blocks: (state.blocks ?? []).filter((b) => b.fragmentId !== id),
+    assets: state.assets ?? [],
   };
   next = syncDeckDerived(next, existing.deckId);
   writeRepo(next);
@@ -765,7 +885,7 @@ export function duplicateContent(
 ): { state: Af03RepoState; item: Af03ContentItem } | null {
   const existing = getItem(state, id);
   if (!existing) return null;
-  return createContent(state, {
+  const created = createContent(state, {
     deckId: existing.deckId,
     kind: existing.kind,
     title: `${existing.title} (copy)`,
@@ -774,6 +894,27 @@ export function duplicateContent(
     unsupported: existing.unsupported,
     unsupportedReason: existing.unsupportedReason,
   });
+  // createContent already added one text block; replace with copies of source blocks when richer
+  const sourceBlocks = (created.state.blocks ?? [])
+    .filter((b) => b.fragmentId === existing.id)
+    .sort((a, b) => a.order - b.order);
+  if (sourceBlocks.length === 0) return created;
+  const t = nowIso();
+  const withoutAuto = (created.state.blocks ?? []).filter((b) => b.fragmentId !== created.item.id);
+  const copied: Af03Block[] = sourceBlocks.map((b, idx) => ({
+    ...b,
+    id: newId("blk"),
+    fragmentId: created.item.id,
+    order: idx,
+    createdAt: t,
+    updatedAt: t,
+  }));
+  const next: Af03RepoState = {
+    ...created.state,
+    blocks: [...withoutAuto, ...copied],
+  };
+  writeRepo(next);
+  return { state: next, item: created.item };
 }
 
 export function setMarkedForLater(
