@@ -8,6 +8,7 @@ import {
   type PlaybookExecutionExperiments,
   type PlaybookMethodology,
   type PlaybookMultiTimeframeHierarchy,
+  type PlaybookModifiedKellyLayeredEntryExperiment,
   type PlaybookRiskWeightedLayeredEntryExperiment,
   type PlaybookScoutStatistics,
   type PlaybookStructuralPullbackExperiment,
@@ -224,6 +225,73 @@ function PlaybookStructuralPullbackPanel({
         <ul className="space-y-1 text-xs text-zinc-500">
           {experiment.failureConditions.map((item) => (
             <li key={item}>· Reject if: {item}</li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+function PlaybookModifiedKellyLayeredEntryPanel({
+  experiment,
+}: {
+  experiment: PlaybookModifiedKellyLayeredEntryExperiment;
+}) {
+  const d = experiment.defaults;
+  return (
+    <div className="mt-4 space-y-3 rounded-2xl border border-sky-500/20 bg-sky-950/20 p-4">
+      <p className="text-xs font-semibold uppercase tracking-wide text-sky-400">
+        Modified Kelly Layered Entry experiment
+      </p>
+      {experiment.experimentNote ? (
+        <p className="text-xs leading-relaxed text-sky-200/80">{experiment.experimentNote}</p>
+      ) : null}
+      <p className="text-sm text-zinc-300">{experiment.objective}</p>
+      <p className="text-xs leading-relaxed text-zinc-400">{experiment.hypothesis}</p>
+      <p className="text-xs text-sky-300/90">
+        vs layered-entry: {experiment.differentiationFromLayeredEntry}
+      </p>
+      <p className="text-xs text-sky-300/90">
+        vs risk-weighted: {experiment.differentiationFromRiskWeighted}
+      </p>
+      <p className="rounded-lg bg-zinc-950/50 px-3 py-2 font-mono text-xs text-sky-200">
+        {experiment.sizingFormula}
+      </p>
+      <dl className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+        <div>
+          <dt className="text-zinc-500">Base risk</dt>
+          <dd className="text-zinc-200">{d.baseRiskR}R</dd>
+        </div>
+        <div>
+          <dt className="text-zinc-500">Additional Kelly</dt>
+          <dd className="text-zinc-200">{d.additionalRiskR}R</dd>
+        </div>
+        <div>
+          <dt className="text-zinc-500">Total authorized</dt>
+          <dd className="text-zinc-200">{d.totalAuthorizedRiskR}R</dd>
+        </div>
+        <div>
+          <dt className="text-zinc-500">Kelly fraction</dt>
+          <dd className="text-zinc-200">{d.kellyFraction}</dd>
+        </div>
+        <div>
+          <dt className="text-zinc-500">Max additional</dt>
+          <dd className="text-zinc-200">{d.maximumAdditionalRiskR}R</dd>
+        </div>
+        <div>
+          <dt className="text-zinc-500">Calibration n</dt>
+          <dd className="text-zinc-200">{experiment.minimumCalibrationSample}</dd>
+        </div>
+      </dl>
+      {experiment.commonStopRule ? (
+        <p className="text-xs text-zinc-400">
+          <span className="text-sky-300">Stop:</span> {experiment.commonStopRule}
+        </p>
+      ) : null}
+      {experiment.checklist?.length ? (
+        <ul className="space-y-1 text-xs text-zinc-500">
+          {experiment.checklist.map((item) => (
+            <li key={item}>· {item}</li>
           ))}
         </ul>
       ) : null}
@@ -479,6 +547,12 @@ export function PreviewPlaybook({
                     {row.playbook?.riskWeightedLayeredEntryExperiment ? (
                       <PlaybookRiskWeightedLayeredEntryPanel
                         experiment={row.playbook.riskWeightedLayeredEntryExperiment}
+                      />
+                    ) : null}
+
+                    {row.playbook?.modifiedKellyLayeredEntryExperiment ? (
+                      <PlaybookModifiedKellyLayeredEntryPanel
+                        experiment={row.playbook.modifiedKellyLayeredEntryExperiment}
                       />
                     ) : null}
 

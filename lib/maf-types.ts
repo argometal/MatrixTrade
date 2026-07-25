@@ -50,6 +50,19 @@ export type MafObservableEvidence = {
   layeredSizingMode?: string;
   layeredStopModel?: string;
   layeredLimitsFilled?: number;
+  /** Modified Kelly experiment fields for capital_allocation / execution attribution. */
+  modifiedKellyExecutionModel?: string;
+  modifiedKellyFillState?: string;
+  modifiedKellyBaseRiskR?: number;
+  modifiedKellyAdditionalRiskR?: number;
+  modifiedKellyTotalAuthorizedRiskR?: number;
+  modifiedKellyFilledRiskR?: number;
+  modifiedKellyAuthorizedCampaignR?: number;
+  modifiedKellyFilledPositionR?: number;
+  modifiedKellyProbabilitySource?: string;
+  modifiedKellyFraction?: string;
+  /** Suggested MAF classification tags (hints — not accepted attribution). */
+  modifiedKellyMafHints?: string[];
   /** Family B bull-trend assessment snapshot for attribution. */
   familyBEntryState?: string;
   familyBTrendIntegrity?: string;

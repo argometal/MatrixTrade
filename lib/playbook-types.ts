@@ -121,6 +121,11 @@ export interface Playbook {
    * Execution only; does not change Scout contract or engine sizing.
    */
   riskWeightedLayeredEntryExperiment?: PlaybookRiskWeightedLayeredEntryExperiment;
+  /**
+   * Playbook experiment — Modified Kelly layered entry (base R + fractional-Kelly extension).
+   * Execution distribution only; does not decide whether the trade deserves capital.
+   */
+  modifiedKellyLayeredEntryExperiment?: PlaybookModifiedKellyLayeredEntryExperiment;
 }
 
 export type ReachProbability = "high" | "medium" | "low";
@@ -184,6 +189,47 @@ export interface PlaybookRiskWeightedLayeredEntryExperiment {
   partialFillRule: string;
   scoutVsTradeState: string;
   metrics: string[];
+}
+
+/** Defaults stored on the Modified Kelly playbook experiment. */
+export interface PlaybookModifiedKellyDefaults {
+  enabled: boolean;
+  baseRiskR: number;
+  additionalRiskR: number;
+  totalAuthorizedRiskR: number;
+  kellyFraction: "quarter" | "half" | "full" | "custom";
+  customKellyFraction?: number;
+  maximumAdditionalRiskR: number;
+  commonStopRequired: boolean;
+  noChase: boolean;
+  minimumCalibrationSample?: number;
+  minStopDistancePercent?: number;
+  allowFractionalShares?: boolean;
+}
+
+/**
+ * Playbook experiment — base risk + limited fractional-Kelly extension at better prices.
+ * Kelly sizes additional risk; Scout/technical analysis supplies prices.
+ */
+export interface PlaybookModifiedKellyLayeredEntryExperiment {
+  experimentNote: string;
+  objective: string;
+  hypothesis: string;
+  differentiationFromLayeredEntry: string;
+  differentiationFromRiskWeighted: string;
+  defaults: PlaybookModifiedKellyDefaults;
+  hardRules: string[];
+  sizingMath: string[];
+  sizingFormula: string;
+  commonStopRule: string;
+  noChaseRule: string;
+  probabilityRules: string[];
+  fillStates: string[];
+  metrics: string[];
+  aggregateMetrics: string[];
+  mafClassifications: string[];
+  minimumCalibrationSample: number;
+  checklist: string[];
 }
 
 export interface PlaybookStructuralPullbackExperiment {

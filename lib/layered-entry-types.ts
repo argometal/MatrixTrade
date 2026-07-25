@@ -1,5 +1,7 @@
 /** Layered limit entry — entry optimization, not thesis change or scaling after confirmation. */
 
+import type { ModifiedKellyPlanState } from "./modified-kelly-types";
+
 export type LayeredEntryStatus =
   | "planned"
   | "partial"
@@ -15,7 +17,17 @@ export type LayerRole =
   | "deep_pullback"
   | "confirmation"
   | "reclaim_confirmation"
-  | "custom";
+  | "custom"
+  /** Modified Kelly — primary entry layer. */
+  | "base"
+  /** Modified Kelly — better-price risk extension. */
+  | "kelly_extension";
+
+/** How layered risk is distributed for an execution experiment. Legacy plans omit → standard_layered. */
+export type LayeredExecutionModel =
+  | "standard_layered"
+  | "risk_weighted"
+  | "modified_kelly";
 
 export type EntryConfidence = "low" | "medium" | "high";
 
@@ -49,9 +61,15 @@ export interface LayeredEntryLimit {
    * Percent of the complete planned position (sum = 100%).
    * In risk_percent sizing mode, also used as share of authorizedRiskAmount.
    * Not automatically equal to monetary risk share in position_percent mode.
+   * Under Modified Kelly, represents share of authorized risk (not capital).
    */
   allocationPercent: number;
   role?: LayerRole;
+  /**
+   * Risk weight in R units for risk_weighted / modified_kelly models
+   * (e.g. base 1.0 + kelly_extension 0.65). Optional on legacy plans.
+   */
+  riskWeightR?: number;
   /** Per-layer stop — required when stopModel=per_layer. */
   stopPrice?: number;
   rationale?: string;
@@ -69,6 +87,11 @@ export interface LayeredEntryLimit {
 export interface LayeredEntryPlan {
   /** e.g. layered_limits — one execution variable per experiment. */
   executionMethod: "single_limit" | "layered_limits" | "market";
+  /**
+   * Execution experiment model. Omitted on legacy plans → treat as standard_layered.
+   * modified_kelly / risk_weighted are playbook experiments, not global engine rules.
+   */
+  executionModel?: LayeredExecutionModel;
   limits: LayeredEntryLimit[];
   /** Hard rule — if all limits miss, trade is over. No market chase. */
   noChase: true;
@@ -81,6 +104,8 @@ export interface LayeredEntryPlan {
   authorizedRiskAmount?: number;
   currency?: "USD";
   sizingMode?: LayerSizingMode;
+  /** Modified Kelly plan state — optional; only when executionModel=modified_kelly. */
+  modifiedKelly?: ModifiedKellyPlanState;
   /** Weighted average fill price when any limit executes. */
   averageEntry?: number;
   blendedStopPrice?: number;
@@ -119,7 +144,22 @@ export const LAYER_ROLE_LABELS: Record<LayerRole, string> = {
   confirmation: "Confirmation",
   reclaim_confirmation: "Reclaim confirmation",
   custom: "Custom",
+  base: "Base",
+  kelly_extension: "Kelly extension",
 };
+
+export const LAYERED_EXECUTION_MODEL_LABELS: Record<LayeredExecutionModel, string> = {
+  standard_layered: "Standard Layered Entry",
+  risk_weighted: "Risk-Weighted Layered Entry",
+  modified_kelly: "Modified Kelly Layered Entry",
+};
+
+/** Migration helper — legacy plans without executionModel. */
+export function resolveLayeredExecutionModel(
+  plan?: Pick<LayeredEntryPlan, "executionModel"> | null
+): LayeredExecutionModel {
+  return plan?.executionModel ?? "standard_layered";
+}
 
 export const EXECUTION_EXPERIMENT_METRICS = [
   "AverageEntryPrice",
@@ -164,11 +204,18 @@ export function formatLayeredEntrySection(plan: {
     "=== LAYERED ENTRY ===",
     "Entry prices, stops and allocations are human/AI proposals. Matrix calculations are deterministic validation outputs and do not prove that the technical levels are valid.",
     `method:${entry.executionMethod}`,
+    `execution_model:${entry.executionModel ?? "standard_layered"}`,
     `status:${entry.status}`,
     `no_chase:yes`,
     `stop_model:${entry.stopModel ?? "common"}`,
     `sizing_mode:${entry.sizingMode ?? "position_percent"}`,
   ];
+  if (entry.modifiedKelly) {
+    const mk = entry.modifiedKelly;
+    lines.push(
+      `modified_kelly:base=${mk.baseRiskR}R add=${mk.additionalRiskR}R total=${mk.totalAuthorizedRiskR}R fraction=${mk.kellyFraction} p_src=${mk.probabilitySource ?? "n/a"} fill=${mk.fillState ?? "n/a"}`
+    );
+  }
   if (entry.primaryTargetPrice !== undefined || plan.targetPrice !== undefined) {
     lines.push(`primary_target:${entry.primaryTargetPrice ?? plan.targetPrice}`);
   }

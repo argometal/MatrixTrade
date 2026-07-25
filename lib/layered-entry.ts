@@ -9,12 +9,20 @@ import {
   type LayeredEntryPlan,
   type LayeredEntryProposalSource,
   type LayeredEntryStatus,
+  type LayeredExecutionModel,
   type StopModel,
 } from "./layered-entry-types";
 import {
   DEFAULT_RISK_BUDGET_USD,
   recomputeLayeredEntryPlan,
 } from "./layered-entry-risk";
+import { computeModifiedKelly } from "./modified-kelly";
+import type {
+  KellyFractionMode,
+  ModifiedKellyLayerRole,
+  ModifiedKellyPlanState,
+  ProbabilitySource,
+} from "./modified-kelly-types";
 
 export type LayeredEntryInput = {
   executionMethod: LayeredEntryPlan["executionMethod"];
@@ -27,6 +35,8 @@ export type LayeredEntryInput = {
   sizingMode?: LayerSizingMode;
   cancelConditions?: string[];
   proposalSource?: LayeredEntryProposalSource;
+  executionModel?: LayeredExecutionModel;
+  modifiedKelly?: ModifiedKellyPlanState;
 };
 
 export type LayeredEntryUpdateInput = {
@@ -58,8 +68,17 @@ const LAYER_ROLES: LayerRole[] = [
   "confirmation",
   "reclaim_confirmation",
   "custom",
+  "base",
+  "kelly_extension",
 ];
 const CONFIDENCES: EntryConfidence[] = ["low", "medium", "high"];
+const EXECUTION_MODELS: LayeredExecutionModel[] = [
+  "standard_layered",
+  "risk_weighted",
+  "modified_kelly",
+];
+const KELLY_FRACTIONS: KellyFractionMode[] = ["quarter", "half", "full", "custom"];
+const PROB_SOURCES: ProbabilitySource[] = ["subjective", "historical", "calibrated"];
 
 function parseLimit(raw: unknown): LayeredEntryLimit | null {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
@@ -77,6 +96,10 @@ function parseLimit(raw: unknown): LayeredEntryLimit | null {
   }
   if (typeof obj.role === "string" && LAYER_ROLES.includes(obj.role as LayerRole)) {
     limit.role = obj.role as LayerRole;
+  }
+  if (obj.riskWeightR !== undefined) {
+    const rw = Number(obj.riskWeightR);
+    if (Number.isFinite(rw) && rw > 0) limit.riskWeightR = rw;
   }
   if (
     typeof obj.confidence === "string" &&
@@ -97,6 +120,47 @@ function parseLimit(raw: unknown): LayeredEntryLimit | null {
   }
   // Intentionally ignore client `derived` — recomputed server-side.
   return limit;
+}
+
+function parseModifiedKellyState(raw: unknown): ModifiedKellyPlanState | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const obj = raw as Record<string, unknown>;
+  const baseRiskR = Number(obj.baseRiskR);
+  const additionalRiskR = Number(obj.additionalRiskR);
+  const totalAuthorizedRiskR = Number(obj.totalAuthorizedRiskR);
+  const baseRiskDollar = Number(obj.baseRiskDollar);
+  const kellyFraction = String(obj.kellyFraction ?? "quarter");
+  if (
+    !Number.isFinite(baseRiskR) ||
+    !Number.isFinite(additionalRiskR) ||
+    !Number.isFinite(totalAuthorizedRiskR)
+  ) {
+    return undefined;
+  }
+  if (!KELLY_FRACTIONS.includes(kellyFraction as KellyFractionMode)) return undefined;
+  const state: ModifiedKellyPlanState = {
+    baseRiskR,
+    additionalRiskR,
+    totalAuthorizedRiskR,
+    baseRiskDollar: Number.isFinite(baseRiskDollar) && baseRiskDollar > 0 ? baseRiskDollar : 100,
+    kellyFraction: kellyFraction as KellyFractionMode,
+  };
+  if (obj.customKellyFraction !== undefined) {
+    const c = Number(obj.customKellyFraction);
+    if (Number.isFinite(c)) state.customKellyFraction = c;
+  }
+  if (obj.estimatedWinProbability !== undefined) {
+    const p = Number(obj.estimatedWinProbability);
+    if (Number.isFinite(p)) state.estimatedWinProbability = p;
+  }
+  if (
+    typeof obj.probabilitySource === "string" &&
+    PROB_SOURCES.includes(obj.probabilitySource as ProbabilitySource)
+  ) {
+    state.probabilitySource = obj.probabilitySource as ProbabilitySource;
+  }
+  if (typeof obj.warning === "string") state.warning = obj.warning;
+  return state;
 }
 
 function parseProposalSource(raw: unknown): LayeredEntryProposalSource | undefined {
@@ -132,6 +196,14 @@ export function parseLayeredEntryInput(raw: unknown): LayeredEntryInput | undefi
   if (obj.sizingMode === "position_percent" || obj.sizingMode === "risk_percent") {
     input.sizingMode = obj.sizingMode;
   }
+  if (
+    typeof obj.executionModel === "string" &&
+    EXECUTION_MODELS.includes(obj.executionModel as LayeredExecutionModel)
+  ) {
+    input.executionModel = obj.executionModel as LayeredExecutionModel;
+  }
+  const mk = parseModifiedKellyState(obj.modifiedKelly);
+  if (mk) input.modifiedKelly = mk;
   if (obj.commonStopPrice !== undefined) {
     const v = Number(obj.commonStopPrice);
     if (Number.isFinite(v)) input.commonStopPrice = v;
@@ -175,19 +247,141 @@ export function validateLayeredEntry(input: LayeredEntryInput): string[] {
   return errors;
 }
 
+function applyModifiedKellyAuthorization(
+  plan: LayeredEntryPlan,
+  input: LayeredEntryInput,
+  ctx?: {
+    primaryTargetPrice?: number;
+    planStopPrice?: number;
+    defaultRiskBudget?: number;
+    capitalAvailable?: number;
+    monthlyRiskRoom?: number;
+    maxRiskPerTrade?: number;
+  }
+): LayeredEntryPlan {
+  const mk = input.modifiedKelly;
+  const baseRiskDollar =
+    mk?.baseRiskDollar ??
+    input.authorizedRiskAmount ??
+    ctx?.defaultRiskBudget ??
+    DEFAULT_RISK_BUDGET_USD;
+  const baseRiskR = mk?.baseRiskR ?? 1;
+  const additionalRiskR = mk?.additionalRiskR ?? 0.65;
+  const commonStop =
+    plan.commonStopPrice ?? ctx?.planStopPrice ?? plan.limits[0]?.stopPrice;
+  const target =
+    plan.primaryTargetPrice ?? ctx?.primaryTargetPrice;
+  if (commonStop === undefined || target === undefined) {
+    return {
+      ...plan,
+      executionModel: "modified_kelly",
+      sizingMode: "risk_percent",
+      stopModel: "common",
+      modifiedKelly: mk,
+    };
+  }
+
+  const layers = plan.limits.map((limit, index) => {
+    const role: ModifiedKellyLayerRole =
+      limit.role === "kelly_extension"
+        ? "kelly_extension"
+        : index === 0
+          ? "base"
+          : "kelly_extension";
+    const riskWeightR =
+      limit.riskWeightR ??
+      (role === "base" ? baseRiskR : additionalRiskR / Math.max(1, plan.limits.length - 1));
+    return {
+      price: limit.price,
+      riskWeightR,
+      role,
+      filled: limit.filled,
+      fillPrice: limit.fillPrice,
+      filledShares: limit.filledQuantity,
+    };
+  });
+
+  const result = computeModifiedKelly({
+    baseRiskDollar,
+    baseRiskR,
+    additionalRiskR,
+    layers,
+    commonStopPrice: commonStop,
+    targetPrice: target,
+    kellyFraction: mk?.kellyFraction ?? "quarter",
+    customKellyFraction: mk?.customKellyFraction,
+    estimatedWinProbability: mk?.estimatedWinProbability,
+    probabilitySource: mk?.probabilitySource,
+    maximumAdditionalRiskR: 0.65,
+    capitalAvailable: ctx?.capitalAvailable,
+    monthlyRiskRoom: ctx?.monthlyRiskRoom,
+    maxRiskPerTrade: ctx?.maxRiskPerTrade,
+    allowFractionalShares: true,
+  });
+
+  const limits = plan.limits.map((limit, i) => {
+    const calc = result.layers[i];
+    return {
+      ...limit,
+      role: calc.role,
+      riskWeightR: calc.riskWeightR,
+      allocationPercent: calc.allocationPercent,
+      stopPrice: commonStop,
+      derived: {
+        riskPerShare: calc.riskPerShare,
+        rewardPerShare: round4Safe(target - limit.price),
+        rr: calc.layerR,
+        riskSharePercent: calc.allocationPercent,
+        plannedQuantity: calc.shares,
+        plannedCapital: calc.capitalRequired,
+        plannedRiskAmount: calc.riskDollars,
+      },
+    };
+  });
+
+  return {
+    ...plan,
+    executionModel: "modified_kelly",
+    sizingMode: "risk_percent",
+    stopModel: "common",
+    commonStopPrice: commonStop,
+    primaryTargetPrice: target,
+    authorizedRiskAmount: result.summary.totalAuthorizedRiskDollars,
+    limits,
+    modifiedKelly: result.planState,
+    blendedRR: result.summary.authorizedCampaignR,
+    combinedRR: result.summary.filledPositionR,
+    averageEntry: result.summary.averageEntryIfFullyFilled,
+    riskUsedAmount: result.summary.currentFilledRiskDollars,
+  };
+}
+
+function round4Safe(n: number): number {
+  return Math.round(n * 10000) / 10000;
+}
+
 export function authorizeLayeredEntry(
   input: LayeredEntryInput,
   ctx?: {
     primaryTargetPrice?: number;
     planStopPrice?: number;
     defaultRiskBudget?: number;
+    capitalAvailable?: number;
+    monthlyRiskRoom?: number;
+    maxRiskPerTrade?: number;
   }
 ): LayeredEntryPlan {
   const firstLimitPrice = input.limits[0]?.price;
   const hasExplicitRisk =
-    input.authorizedRiskAmount !== undefined || input.sizingMode === "risk_percent";
+    input.authorizedRiskAmount !== undefined ||
+    input.sizingMode === "risk_percent" ||
+    input.executionModel === "modified_kelly" ||
+    input.executionModel === "risk_weighted";
   const stopModel = input.stopModel ?? "common";
-  const sizingMode = input.sizingMode ?? "position_percent";
+  const sizingMode =
+    input.executionModel === "modified_kelly" || input.executionModel === "risk_weighted"
+      ? "risk_percent"
+      : (input.sizingMode ?? "position_percent");
 
   const base: LayeredEntryPlan = {
     executionMethod: input.executionMethod,
@@ -202,7 +396,13 @@ export function authorizeLayeredEntry(
     currency: input.currency ?? "USD",
     cancelConditions: input.cancelConditions,
     proposalSource: input.proposalSource,
+    executionModel: input.executionModel,
+    modifiedKelly: input.modifiedKelly,
   };
+
+  if (input.executionModel === "modified_kelly") {
+    return applyModifiedKellyAuthorization(base, input, ctx);
+  }
 
   // Do not infer authorized risk on legacy capital-split plans.
   if (hasExplicitRisk) {
