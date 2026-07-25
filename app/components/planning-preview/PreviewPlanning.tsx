@@ -44,6 +44,7 @@ import {
   findTradeProspect,
   type TradeProspect,
 } from "@/lib/trade-prospects";
+import { ActiveScoutsComparisonTable } from "@/app/components/planning-preview/ActiveScoutsComparisonTable";
 
 const thesisStatusStyles: Record<string, string> = {
   draft: "bg-zinc-700/50 text-zinc-400",
@@ -286,8 +287,9 @@ export function PreviewPlanning({
                   mapFocusCompact ? "hidden lg:block" : ""
                 }`}
               >
-                War room — cases to watch / re-enter, highest planned R first. Incomplete closed
-                fills belong on Trades (not this list’s mission).
+                War room — cases to watch / re-enter. Compare R potencial, ganancia potencial y
+                pérdida asignada below. Incomplete closed fills belong on Trades (not this list’s
+                mission).
               </p>
             </div>
             <div
@@ -325,6 +327,7 @@ export function PreviewPlanning({
             </section>
           ) : (
             <>
+              {!mapFocusCompact ? <ActiveScoutsComparisonTable plans={plans} /> : null}
               <section
                 className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 ${
                   mapFocusCompact ? "p-2.5 lg:p-4" : "p-4"

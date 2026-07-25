@@ -497,7 +497,7 @@ export function formatFamilyBAssessmentSection(input: {
         continue;
       }
       lines.push(
-        `  ${s.label}: avg=${s.averageEntry} risk$=${s.monetaryRisk} blendedR=${s.blendedRR ?? ""} combinedR=${s.combinedRR ?? s.portfolioRR ?? ""} filled%=${s.allocationPercent} improve_vs_L1=${s.entryImprovementVsFirst ?? ""}`
+        `  ${s.label}: avg=${s.averageEntry} risk$=${s.monetaryRisk} assigned_loss=${s.assignedLoss} potential_profit=${s.potentialProfit} blendedR=${s.blendedRR ?? ""} combinedR=${s.combinedRR ?? s.portfolioRR ?? ""} profit_per_risk$=${s.profitPerRiskDollar ?? ""} capital=${s.capitalDeployed} roc%=${s.returnOnCapitalPercent} filled%=${s.allocationPercent} improve_vs_L1=${s.entryImprovementVsFirst ?? ""}`
       );
     }
   }

@@ -128,15 +128,31 @@ export function FamilyBBullTrendPanel({
       )}
 
       {fillStates.length > 0 ? (
-        <ul className="mt-3 space-y-1 text-[11px] text-sky-100/70">
+        <ul className="mt-3 space-y-2 text-[11px] text-sky-100/70">
           {fillStates.map((s) => (
-            <li key={s.label} className="flex justify-between gap-2">
-              <span>{s.label}</span>
-              <span className="font-mono text-sky-100/50">
-                {s.limitsFilled > 0
-                  ? `avg ${s.averageEntry.toFixed(2)} · ${s.blendedRR?.toFixed(1) ?? s.combinedRR?.toFixed(1) ?? "—"}R`
-                  : "no chase"}
-              </span>
+            <li key={s.label} className="rounded border border-sky-500/15 px-2 py-1.5">
+              <div className="flex justify-between gap-2">
+                <span>{s.label}</span>
+                <span className="font-mono text-sky-100/50">
+                  {s.limitsFilled > 0
+                    ? `avg ${s.averageEntry.toFixed(2)} · ${s.blendedRR?.toFixed(1) ?? s.combinedRR?.toFixed(1) ?? "—"}R`
+                    : "no chase"}
+                </span>
+              </div>
+              <p className="mt-1 font-mono text-[10px] text-sky-100/45">
+                R potencial:{" "}
+                {(s.blendedRR ?? s.combinedRR ?? s.portfolioRR) !== undefined
+                  ? `${(s.blendedRR ?? s.combinedRR ?? s.portfolioRR)!.toFixed(2)}R`
+                  : "—"}
+                {" · "}
+                Ganancia potencial: USD {s.potentialProfit.toFixed(2)}
+                {" · "}
+                Pérdida asignada: USD {s.assignedLoss.toFixed(2)}
+                {" · "}
+                Capital requerido: USD {s.capitalDeployed.toFixed(2)}
+                {" · "}
+                Retorno sobre capital: {s.returnOnCapitalPercent.toFixed(2)}%
+              </p>
             </li>
           ))}
         </ul>
