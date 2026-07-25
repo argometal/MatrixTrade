@@ -19,6 +19,7 @@ import {
 import { validateAttributionProposal } from "./maf-validate";
 import { validateObservationUpdateProposal } from "./observation-validate";
 import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
+import { validatePlanOutcomeProposalFields } from "./plan-outcome-validate";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
 import { getSetupName } from "./setup-types";
@@ -232,6 +233,7 @@ export type TradingProposalType =
   | "layered-entry-update"
   | "file-update"
   | "scout-plan-create"
+  | "plan-outcome"
   | "technical-assessment"
   | "technical-calibration"
   | "trade-proposal"
@@ -264,6 +266,7 @@ export function parseTradingInboxPayload(
     type !== "layered-entry-update" &&
     type !== "file-update" &&
     type !== "scout-plan-create" &&
+    type !== "plan-outcome" &&
     type !== "technical-assessment" &&
     type !== "technical-calibration" &&
     type !== "trade-proposal" &&
@@ -309,6 +312,8 @@ export function describeProposal(payload: TradingInboxPayload): string {
         : `Update Stock File ${p.id}`;
     case "scout-plan-create":
       return `New Scout Plan ${p.ticker ?? ""} · ${p.stockFileId ?? p.stockThesisId ?? ""}`;
+    case "plan-outcome":
+      return `Plan outcome ${p.planId ?? ""} · ${p.outcome ?? "—"}`;
     case "technical-assessment":
       return `MTAE ${p.ticker ?? ""} ${p.stockProfileId ?? p.id ?? ""} · technical assessment`;
     case "technical-calibration":
@@ -616,6 +621,10 @@ export function validateProposalPayload(
   if (parsed.type === "scout-plan-create") {
     const check = validateScoutPlanCreateProposal(p);
     if (!check.ok) errors.push(...check.errors);
+  }
+
+  if (parsed.type === "plan-outcome") {
+    errors.push(...validatePlanOutcomeProposalFields(p));
   }
 
   if (parsed.type === "technical-assessment") {

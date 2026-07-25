@@ -75,6 +75,20 @@ export interface PlanOutcome {
   strategyStillValid?: boolean;
   externalFactors?: string[];
   lesson?: string;
+  /** Scout result kind from plan-outcome Apply (tactical close). */
+  outcomeKind?:
+    | "missed_opportunity"
+    | "unexecuted_plan_loss"
+    | "cancelled"
+    | "expired"
+    | "duplicate_creation";
+  entryReached?: boolean;
+  stopReachedBeforeTarget?: boolean;
+  targetReachedBeforeStop?: boolean;
+  nonExecutionReason?: string;
+  canonicalPlanId?: string;
+  counterfactualR?: number;
+  excludedFromMetrics?: boolean;
 }
 
 export interface TradePlan {

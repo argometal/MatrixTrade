@@ -42,6 +42,7 @@ export const APPLY_LAYER_OWNERSHIP = {
     "plannedRR",
     "verdict go|wait|probe|no",
     "capital gate / asymmetry",
+    "plan-outcome (Scout result without Trade)",
   ],
   Trade: ["entry fill", "exit", "shares", "execution reality"],
 } as const;
@@ -103,6 +104,12 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       ],
       "file-update": ["id", "at least one updatable field"],
       "decision-update": ["planId", "decision mode OR tactical fields"],
+      "plan-outcome": [
+        "planId",
+        "outcome",
+        "entryReached (required for unexecuted_plan_loss)",
+        "stopReachedBeforeTarget (required for unexecuted_plan_loss)",
+      ],
       "technical-assessment": [
         "stockProfileId",
         "ticker",
@@ -134,6 +141,30 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "require_momentum_improvement",
         "standby",
       ],
+      "plan-outcome.outcome": [
+        "missed_opportunity",
+        "unexecuted_plan_loss",
+        "cancelled",
+        "expired",
+        "duplicate_creation",
+      ],
+      "plan-outcome.nonExecutionReason": [
+        "monitoring_failure",
+        "manual_skip",
+        "capital_unavailable",
+        "technical_failure",
+        "duplicate_creation",
+        "other",
+      ],
+      "learningOutcome.kind": [
+        "executed_win",
+        "executed_loss",
+        "missed_opportunity",
+        "cancelled",
+        "expired",
+        "unexecuted_plan_loss",
+        "duplicate_creation",
+      ],
     },
     layerOwnership: APPLY_LAYER_OWNERSHIP,
     stockCaseCreate: {
@@ -161,6 +192,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
     examples: {
       "stock-case-create": AI_BLOCK_SAMPLES["stock-case-create"],
       "scout-plan-create": AI_BLOCK_SAMPLES["scout-plan-create"],
+      "plan-outcome": AI_BLOCK_SAMPLES["plan-outcome"],
       "technical-assessment": AI_BLOCK_SAMPLES["technical-assessment"],
       "decision-update": AI_BLOCK_SAMPLES["decision-update"],
     },

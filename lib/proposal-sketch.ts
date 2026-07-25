@@ -60,6 +60,10 @@ function actionLabel(type: TradingInboxPayload["type"]): string {
       return "Add evidence";
     case "layered-entry-update":
       return "Layered entry update";
+    case "plan-outcome":
+      return "Scout plan outcome";
+    case "scout-plan-create":
+      return "New scout plan";
     case "playbook-create":
       return "New playbook";
     case "playbook-update":
@@ -216,6 +220,29 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
       if (p.mfe !== undefined) fields.push({ label: "MFE", value: String(p.mfe) });
       if (p.mae !== undefined) fields.push({ label: "MAE", value: String(p.mae), tone: "risk" });
       if (p.status) fields.push({ label: "Status", value: String(p.status) });
+      break;
+    }
+    case "plan-outcome": {
+      fields.push({
+        label: "Plan",
+        value: String(p.planId ?? "—").toUpperCase(),
+        tone: "accent",
+      });
+      fields.push({ label: "Outcome", value: String(p.outcome ?? "—") });
+      if (p.entryReached !== undefined) {
+        fields.push({ label: "Entry reached", value: String(p.entryReached) });
+      }
+      if (p.stopReachedBeforeTarget !== undefined) {
+        fields.push({
+          label: "Stop before target",
+          value: String(p.stopReachedBeforeTarget),
+          tone: "risk",
+        });
+      }
+      if (p.nonExecutionReason) {
+        fields.push({ label: "Reason", value: String(p.nonExecutionReason) });
+      }
+      expectation = "down";
       break;
     }
     default:

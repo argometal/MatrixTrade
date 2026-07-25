@@ -20,6 +20,7 @@ PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
 - scout-plan-create: NEW Scout Plan window on an EXISTING Stock File — stockFileId (or stockThesisId), ticker, plannedEntry, stopPrice, targetPrice required; optional verdict+decisionConfidence+challenges, playbookId/playbookIds, status (watching|ready|active), thesis, notes, reasoning. Allocates a NEW PLAN-xxx. Do NOT use stock-case-create for same ticker. Do NOT reuse an old planId.
+- plan-outcome: close a Scout without a Trade — planId + outcome (missed_opportunity|unexecuted_plan_loss|cancelled|expired|duplicate_creation) required; for unexecuted_plan_loss require entryReached=true and stopReachedBeforeTarget=true (targetReachedBeforeStop false/absent); optional nonExecutionReason, notes, canonicalPlanId. Server derives counterfactualR / $; never invent fills or Trade. Does not invalidate Stock File thesis.
 - technical-assessment: MTAE technical JSON only — stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[] (optional participation{volumeBehavior,wickAnalysis,candleSignals,movementCharacter{primary?|state+directionalEfficiency+rangeProgression,evidence,confidence},historicalReactionZones,largeParticipantFootprint}), integrated{} (optional participationSynthesis, optional momentumAssessment{expansionPotential,currentState,capitalEfficiencyConcern,rationale,scoutImplication,confidence}), technicalSummary{} (trend, zones, probableTarget vs extendedTarget, structuralInvalidation, contradictions, confidence). FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict, whalesAreBuying. Optional patchStockFile (default true).
 - technical-calibration: human procedure correction — assessmentId, stockProfileId, ticker, errorType, fieldPath, aiValue, humanValue, reason; optional magnitude, confidenceAdjustment
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason. Deletes linked evidence and scout plans. Irreversible — human Apply only.
@@ -74,6 +75,7 @@ All Apply-ready block types:
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout (backfill missing Scout Plan only)
 - scout-plan-create: NEW PLAN on existing Stock File — stockFileId, ticker, plannedEntry, stopPrice, targetPrice; optional verdict+challenges; allocates NEW PLAN-xxx (same-ticker new window)
+- plan-outcome: Scout result without Trade — planId + outcome; unexecuted_plan_loss needs entryReached+stopReachedBeforeTarget; duplicate_creation excluded from metrics; server derives counterfactualR
 - technical-assessment: MTAE technical-only multi-TF JSON — stockProfileId, ticker, timeframeRoles, perTimeframe[] (+ optional participation / movementCharacter expansion fields), integrated{} (+ optional participationSynthesis, momentumAssessment), technicalSummary{} (no Entry Solver / RR / Scout verdict / whalesAreBuying)
 - technical-calibration: MTAE human procedure correction — assessmentId, errorType, fieldPath, aiValue, humanValue, reason
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason (duplicate cleanup)
@@ -218,6 +220,11 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
     type: "observation-update",
     label: "observation-update — post-trade/scout observation",
     hint: "Target/invalidation timestamps, MFE/MAE — never invent prices",
+  },
+  {
+    type: "plan-outcome",
+    label: "plan-outcome — Scout result without Trade",
+    hint: "UPL / miss / cancel / expire / duplicate — no fill, no invented P/L",
   },
   {
     type: "analysis",
@@ -794,6 +801,20 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       status: "concluded",
       dataSource: "ai",
       notes: "Target hit 36 days after stop; thesis invalidation never reached.",
+    },
+  },
+  "plan-outcome": {
+    type: "plan-outcome",
+    source: "ai-block",
+    proposal: {
+      planId: "PLAN-004",
+      outcome: "unexecuted_plan_loss",
+      entryReached: true,
+      stopReachedBeforeTarget: true,
+      targetReachedBeforeStop: false,
+      nonExecutionReason: "monitoring_failure",
+      notes:
+        "The planned entry was reached and the strategy stop was reached before the target. No Trade or fill. Record 0 realized P/L and -1R counterfactual Scout result. Do not invalidate the Stock File thesis automatically.",
     },
   },
   analysis: {

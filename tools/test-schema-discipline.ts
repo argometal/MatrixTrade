@@ -142,5 +142,19 @@ const contract = buildApplySchemaContract();
 assert.ok(contract.schemaVersion);
 assert.ok(contract.stockCaseCreate.required.includes("initialScout.plannedEntry"));
 assert.ok(contract.rules.some((r) => r.toLowerCase().includes("schema-first")));
+assert.ok(contract.acceptedTypes.includes("plan-outcome"));
+assert.ok(
+  contract.allowedEnums["learningOutcome.kind"]?.includes("unexecuted_plan_loss")
+);
+
+// plan-outcome sample validates
+{
+  const parsed = parseTradingInboxPayload(
+    AI_BLOCK_SAMPLES["plan-outcome"] as Record<string, unknown>
+  );
+  assert.ok(parsed);
+  const ok = validateProposalPayload(parsed!);
+  assert.equal(ok.ok, true, ok.ok ? "" : (ok as { errors: string[] }).errors.join("; "));
+}
 
 console.log("schema-discipline: ok");

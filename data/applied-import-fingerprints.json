@@ -1,11 +1,31 @@
 [
   {
     "fingerprint": "0f8875ce32e3d23f3542962dfc502fcabb9960b0514944b4f369391b1b531240",
-    "appliedAt": "2026-07-22T16:00:51.872Z",
+    "appliedAt": "2026-07-25T11:48:26.641Z",
     "result": {
       "message": "test",
       "type": "stock-case-create",
       "stockFileId": "ST-IDEMX-001"
+    }
+  },
+  {
+    "fingerprint": "c8c16aaab87bced4871617ad006095607671615a3eaedcd86471bed845b500cf",
+    "appliedAt": "2026-07-25T11:49:20.221Z",
+    "result": {
+      "message": "Recorded plan outcome PLAN-TEST-UPL-25-29 · unexecuted_plan_loss · counterfactual -1R",
+      "type": "plan-outcome",
+      "stockFileId": "ST-NFLX-TEST",
+      "planId": "PLAN-TEST-UPL-25-29"
+    }
+  },
+  {
+    "fingerprint": "73a003f92aa4196ebc190d0b0fc805683df5ca4b279b4c62ee463c4b36946ddb",
+    "appliedAt": "2026-07-25T11:49:20.223Z",
+    "result": {
+      "message": "Recorded plan outcome PLAN-TEST-DUP-25-29 · duplicate_creation · excluded from metrics",
+      "type": "plan-outcome",
+      "stockFileId": "ST-NFLX-TEST",
+      "planId": "PLAN-TEST-DUP-25-29"
     }
   }
 ]

@@ -4,8 +4,14 @@
     "ticker": "TSLA",
     "playbookId": "weekly-breakout",
     "stockThesisId": "ST-TSLA-001",
-    "status": "watching",
-    "analysisTimeframes": ["1W", "1D", "1H", "15m", "5m"],
+    "status": "expired",
+    "analysisTimeframes": [
+      "1W",
+      "1D",
+      "1H",
+      "15m",
+      "5m"
+    ],
     "entryTimeframe": "5m",
     "plannedEntry": 348,
     "supportLevel": 340,
@@ -47,14 +53,18 @@
     "decisionHistory": [],
     "scoutLifecycle": "decided_wait",
     "createdAt": "2026-07-10T12:00:00.000Z",
-    "updatedAt": "2026-07-10T18:00:00.000Z"
+    "updatedAt": "2026-07-25T11:48:06.340Z"
   },
   {
     "id": "PLAN-002",
     "ticker": "NFLX",
     "playbookId": "layered-entry",
-    "status": "ready",
-    "analysisTimeframes": ["1W", "1D", "1H"],
+    "status": "expired",
+    "analysisTimeframes": [
+      "1W",
+      "1D",
+      "1H"
+    ],
     "entryTimeframe": "1H",
     "plannedEntry": 73,
     "supportLevel": 71,
@@ -68,9 +78,18 @@
     "layeredEntry": {
       "executionMethod": "layered_limits",
       "limits": [
-        { "price": 73, "allocationPercent": 40 },
-        { "price": 72.2, "allocationPercent": 35 },
-        { "price": 71.4, "allocationPercent": 25 }
+        {
+          "price": 73,
+          "allocationPercent": 40
+        },
+        {
+          "price": 72.2,
+          "allocationPercent": 35
+        },
+        {
+          "price": 71.4,
+          "allocationPercent": 25
+        }
       ],
       "noChase": true,
       "status": "planned",
@@ -97,6 +116,6 @@
     "decisionHistory": [],
     "scoutLifecycle": "decided_go",
     "createdAt": "2026-07-11T09:00:00.000Z",
-    "updatedAt": "2026-07-11T10:00:00.000Z"
+    "updatedAt": "2026-07-25T11:48:06.340Z"
   }
 ]
