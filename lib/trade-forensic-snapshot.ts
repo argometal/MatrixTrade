@@ -97,6 +97,12 @@ export function formatTradeForensicSnapshot(input: {
     `exit_reason:${trade.exitReason ?? "na"}`,
     `created:${trade.createdAt}`,
     `closed:${trade.closedAt ?? "na"}`,
+    trade.datesReconstructed
+      ? `dates_reconstructed:yes`
+      : null,
+    trade.dateCorrectionNote
+      ? `date_correction_note:${trade.dateCorrectionNote.replace(/\s+/g, " ").slice(0, 240)}`
+      : null,
     holdDays !== null ? `hold_days:${holdDays}` : null,
     "",
     "=== RISK / R (strategy stop) ===",

@@ -53,6 +53,18 @@ export interface Trade {
    * `playbook_id` stays null for FK safety — this flag clears the incomplete-closed gap.
    */
   playbookHistoricallyAbsent?: boolean;
+  /** Human-reconstructed chronology (legacy fills) — not broker-verified. */
+  datesReconstructed?: boolean;
+  dateCorrectionNote?: string;
+  /** Append-only audit of prior createdAt/closedAt/postStop windows. */
+  dateCorrectionAudit?: Array<{
+    correctedAt: string;
+    previousCreatedAt: string;
+    previousClosedAt?: string;
+    previousPostStopStartedAt?: string;
+    previousPostStopEndsAt?: string;
+    note: string;
+  }>;
   /** Free-text setup note (optional) */
   setup?: string;
   direction?: TradeDirection;
@@ -175,6 +187,9 @@ export interface UpdateTradeInput extends TradeMetaInput {
   notes?: string;
   planId?: string;
   closedAt?: string;
+  createdAt?: string;
+  datesReconstructed?: boolean;
+  dateCorrectionNote?: string;
   lossClassification?: LossClassification;
   postStopStudy?: PostStopStudy;
   exitReason?: TradeExitReason;

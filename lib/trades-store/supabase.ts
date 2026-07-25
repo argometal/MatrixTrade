@@ -1,14 +1,26 @@
 import { createSupabaseAdmin } from "../supabase/server";
 import {
+  isMissingDateCorrectionColumnError,
   isMissingLearningColumnError,
   isMissingLegacyAbsenceColumnError,
   tradeRowToTrade,
   tradeToRow,
   tradeToRowCoreOnly,
+  tradeToRowWithoutDateCorrectionColumns,
   tradeToRowWithoutLearningExtensions,
   tradeToRowWithoutLegacyAbsenceColumns,
 } from "./mapping";
 import type { TradesStore } from "./types";
+
+function stripDateCorrection<T extends Record<string, unknown>>(row: T): T {
+  const {
+    dates_reconstructed: _dr,
+    date_correction_note: _dn,
+    date_correction_audit: _da,
+    ...rest
+  } = row;
+  return rest as T;
+}
 
 export function createSupabaseTradesStore(): TradesStore {
   return {
@@ -22,18 +34,39 @@ export function createSupabaseTradesStore(): TradesStore {
     },
     async upsert(trade) {
       const supabase = createSupabaseAdmin();
-      // tradeToRow never writes __legacy_none__ / __LEGACY_NONE__ into FK columns.
       const { error } = await supabase
         .from("trades")
         .upsert(tradeToRow(trade), { onConflict: "id" });
       if (!error) return;
 
-      const msg = error.message;
+      let msg = error.message;
+      let workingRow: Record<string, unknown> = tradeToRow(trade) as unknown as Record<
+        string,
+        unknown
+      >;
+
+      if (isMissingDateCorrectionColumnError(msg)) {
+        workingRow = stripDateCorrection(workingRow);
+        const { error: retryDates } = await supabase
+          .from("trades")
+          .upsert(workingRow, { onConflict: "id" });
+        if (!retryDates) {
+          console.warn(
+            "[trades-store] Upserted without date_correction_* columns. " +
+              "Run supabase/trade-date-correction.sql in Supabase SQL Editor."
+          );
+          return;
+        }
+        msg = retryDates.message;
+      }
 
       if (isMissingLegacyAbsenceColumnError(msg)) {
+        const reduced = stripDateCorrection(
+          tradeToRowWithoutLegacyAbsenceColumns(trade) as unknown as Record<string, unknown>
+        );
         const { error: retryLegacy } = await supabase
           .from("trades")
-          .upsert(tradeToRowWithoutLegacyAbsenceColumns(trade), { onConflict: "id" });
+          .upsert(reduced, { onConflict: "id" });
         if (!retryLegacy) {
           console.warn(
             "[trades-store] Upserted without plan_id / historically_absent. " +
@@ -41,25 +74,16 @@ export function createSupabaseTradesStore(): TradesStore {
           );
           return;
         }
-        if (isMissingLearningColumnError(retryLegacy.message)) {
-          const { error: coreError } = await supabase
-            .from("trades")
-            .upsert(tradeToRowCoreOnly(trade), { onConflict: "id" });
-          if (!coreError) {
-            console.warn(
-              "[trades-store] Upserted core trade only. Run trade-legacy-absence.sql + trade-learning-extensions.sql."
-            );
-            return;
-          }
-          throw new Error(`Supabase trades upsert failed: ${coreError.message}`);
-        }
-        throw new Error(`Supabase trades upsert failed: ${retryLegacy.message}`);
+        msg = retryLegacy.message;
       }
 
       if (isMissingLearningColumnError(msg)) {
+        const reduced = stripDateCorrection(
+          tradeToRowWithoutLearningExtensions(trade) as unknown as Record<string, unknown>
+        );
         const { error: retryLearning } = await supabase
           .from("trades")
-          .upsert(tradeToRowWithoutLearningExtensions(trade), { onConflict: "id" });
+          .upsert(reduced, { onConflict: "id" });
         if (!retryLearning) {
           console.warn(
             "[trades-store] Upserted without loss_classification/post_stop_study. " +
@@ -67,7 +91,19 @@ export function createSupabaseTradesStore(): TradesStore {
           );
           return;
         }
-        throw new Error(`Supabase trades upsert failed: ${retryLearning.message}`);
+        const core = stripDateCorrection(
+          tradeToRowCoreOnly(trade) as unknown as Record<string, unknown>
+        );
+        const { error: coreError } = await supabase
+          .from("trades")
+          .upsert(core, { onConflict: "id" });
+        if (!coreError) {
+          console.warn(
+            "[trades-store] Upserted core trade only. Run pending supabase/*.sql migrations."
+          );
+          return;
+        }
+        throw new Error(`Supabase trades upsert failed: ${coreError.message}`);
       }
 
       throw new Error(`Supabase trades upsert failed: ${msg}`);

@@ -47,6 +47,9 @@ export interface TradeRow {
   notes: string | null;
   loss_classification: string | null;
   post_stop_study: PostStopStudy | null;
+  dates_reconstructed: boolean | null;
+  date_correction_note: string | null;
+  date_correction_audit: Trade["dateCorrectionAudit"] | null;
 }
 
 function num(value: number | string | null | undefined): number | undefined {
@@ -127,6 +130,11 @@ export function tradeRowToTrade(row: TradeRow): Trade {
     notes: str(row.notes),
     lossClassification: str(row.loss_classification) as LossClassification | undefined,
     postStopStudy: row.post_stop_study ?? undefined,
+    datesReconstructed: bool(row.dates_reconstructed) || undefined,
+    dateCorrectionNote: str(row.date_correction_note),
+    dateCorrectionAudit: Array.isArray(row.date_correction_audit)
+      ? row.date_correction_audit
+      : undefined,
   };
 }
 
@@ -173,6 +181,9 @@ export function tradeToRow(trade: Trade): TradeRow {
     notes: stored.notes ?? null,
     loss_classification: stored.lossClassification ?? null,
     post_stop_study: stored.postStopStudy ?? null,
+    dates_reconstructed: Boolean(stored.datesReconstructed),
+    date_correction_note: stored.dateCorrectionNote ?? null,
+    date_correction_audit: stored.dateCorrectionAudit ?? [],
   };
 }
 
@@ -232,4 +243,27 @@ export function isMissingLegacyAbsenceColumnError(message: string): boolean {
     lower.includes("plan_id") ||
     (lower.includes("schema cache") && lower.includes("column"))
   );
+}
+
+export function isMissingDateCorrectionColumnError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("dates_reconstructed") ||
+    lower.includes("date_correction_note") ||
+    lower.includes("date_correction_audit") ||
+    (lower.includes("schema cache") && lower.includes("column"))
+  );
+}
+
+export function tradeToRowWithoutDateCorrectionColumns(
+  trade: Trade
+): Omit<TradeRow, "dates_reconstructed" | "date_correction_note" | "date_correction_audit"> {
+  const row = tradeToRow(trade);
+  const {
+    dates_reconstructed: _dr,
+    date_correction_note: _dn,
+    date_correction_audit: _da,
+    ...base
+  } = row;
+  return base;
 }
