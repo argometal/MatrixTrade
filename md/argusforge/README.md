@@ -18,7 +18,8 @@
 | [phase-0-architecture.md](phase-0-architecture.md) | **Canonical — Phase 0 CLOSED** | Technical boundaries, names, Chaos/org/Registry, engine limits |
 | [vault-training-layer-contract.md](vault-training-layer-contract.md) | **Canonical — Vault** | Vault prepares formation ≠ Memory |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria **repo** freeze; destination = Argus as Alexandria +1 / motor (§0) |
-| [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) | **Research — non-binding** | Chaos → Library → Argus (Alexandria +1 / I. Motor) pipeline |
+| [chaos-locus-capture-design.md](chaos-locus-capture-design.md) | **Design discussion — non-binding** | Chaos = locus builder only; Argus = Library hybrid (castillos / Parcour) |
+| [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) | **Research — non-binding** | Chaos → Vault / Alexandria handoff package research |
 | [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | **Research — deferred, non-binding** | Historical spatial notes; not AF architecture |
 | [external-repo-patterns-research.md](external-repo-patterns-research.md) | **Research** | External pattern references (evaluate before reuse) |
 
@@ -44,9 +45,10 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 4. [phase-0-architecture.md](phase-0-architecture.md) — technical Phase 0
 5. [vault-training-layer-contract.md](vault-training-layer-contract.md)
 6. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — repo freeze + Argus = Alexandria +1
-7. [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) (optional, non-binding)
-8. [external-repo-patterns-research.md](external-repo-patterns-research.md)
-9. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
+7. [chaos-locus-capture-design.md](chaos-locus-capture-design.md) (discussion — Chaos vs Argus Library split)
+8. [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) (optional, non-binding)
+9. [external-repo-patterns-research.md](external-repo-patterns-research.md)
+10. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
 
 ## Current UI (AF03 progress)
 

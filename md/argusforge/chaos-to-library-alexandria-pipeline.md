@@ -26,24 +26,23 @@ Alexandria (evolved)      →  I. Motor inside Argus
 
 ## Goal (near-term product intent)
 
-Evolve **Chaos** so its material is **compatible with Library Alexandria** (formation / locus bodies), and so that formed content can later feed the **Alexandria motor under Argus** — not a second dump pile, and not Godot editing from AF.
+**Library is hybrid inside ArgusForge** (see design discussion):
+
+- **Chaos** = only Library’s **locus capture / body builder** (text + images at full construction capacity for pipeline).  
+- **Argus** = Parcour-like / **castillos** / structure + host of Alexandria +1 motor.  
+- **Godot** = candidate spatial Alexandria — not Chaos.
 
 ```text
-Chaos (capture)           →  raw Fragments in Chaos Decks
-Library (formation)       →  shape Fragments into locus bodies / study units
-Alexandria motor (Argus)  →  spatial / structural engine consuming formed knowledge
-GateKeeper (traversal)    →  traverse what Library / motor already authored
+Chaos (locus builder)     →  Fragments with ORM-shaped bodies (dump OK, builder complete)
+Argus (Library hybrid)    →  castillos / parcour-like assembly + relations
+Vault                     →  human gate / formation prep
+Alexandria motor (Argus)  →  spatial runtime consuming formed knowledge
 ```
 
-**“Replace / become part of” means:**
+Design discussion (preferred reading before coding):  
+[`chaos-locus-capture-design.md`](chaos-locus-capture-design.md)
 
-| Keep | Become |
-|------|--------|
-| Chaos as **ingest surface** (fast, unclassified dump) | Library as **formation studio** for motor-ready content |
-| AF Home / lists / Argus graph for ops + relation | Export / handoff package that Library (then motor) can **import without rewrite** |
-| Vault as human gate for formation prep | Optional path: Vault package → Library ingest → Argus motor |
-
-It does **not** mean (while freeze holds): delete Chaos UI, edit 3D corridors from AF, or merge the frozen Alexandria repo into MatrixTrade.
+It does **not** mean: put all of LibraryBuild into Chaos; edit 3D corridors from Chaos; or merge the frozen Alexandria repo into MatrixTrade while freeze holds.
 
 ---
 
