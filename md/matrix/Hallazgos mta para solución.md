@@ -254,5 +254,205 @@ Forbidden: `maximumEntry`, `recommendedEntry`, `minimumRR`, `shares`, `scoutVerd
 
 ## Estado
 
-- Auditoría y plan mínimo: **entregados**.
+- Auditoría: **entregada**.
+- Plan de implementación acotado (sección 11): **entregado**.
 - Implementación de código: **pendiente de aprobación explícita**.
+
+---
+
+## 11. Proposed implementation plan
+
+**Prompt ID:** 24-22  
+**Decision rule applied:** Extend existing `apply-schema-contract` + `AI_BLOCK_SAMPLES` infrastructure. Do **not** create a second parallel contract system. Do **not** refactor/replace the runtime validator. No Zod. No app-wide JSON Schema.
+
+### How the AI receives the contract today (Control flow)
+
+| Surface | Path | Builder | Gap today |
+|---------|------|---------|-----------|
+| Primary handshake | Control → Train AI → **Apply schema contract** | `buildApplySchemaContractText()` via `load-control-panel-data.ts` → `MatrixControlPanel` `PlainCopyRow` | Nested required paths + most MTAE enums missing from `requiredFields` / `allowedEnums` (example JSON is already embedded) |
+| MTAE procedure | Control → Library → **MTAE** → protocol | `buildMtaeProtocolBrief()` | Functional procedure; nested Apply keys under-specified |
+| MTAE snapshots | Control → Library → MTAE → TF map items | `mtaeControlSnapshotItems()` | No schema / min-example snapshot |
+| Analyze boot | Stock File analyze package | includes `buildMtaeProtocolBrief()` | Same gap as protocol |
+| Sample blocks | Train AI contract JSON `examples["technical-assessment"]` | `AI_BLOCK_SAMPLES["technical-assessment"]` | Valid but heavy; not labeled as the contract min example; prose in `SCOUTING_AI_BLOCK_REQUEST` omits nested required |
+
+**Target after this plan:** Train AI schema contract alone is sufficient for a correct Apply JSON. MTAE protocol + one MTAE snapshot reinforce the same nested required list, enums, and a **minimum valid example**, without a second contract system.
+
+---
+
+### 1. Files to modify
+
+Smallest set (implementation phase — not done yet):
+
+1. `lib/apply-schema-contract.ts`
+2. `lib/ai-block.ts`
+3. `lib/mtae-brief.ts`
+4. `lib/mtae-snapshot.ts`
+5. `tools/test-mtae-schema-export.ts` (**new** test only)
+6. `package.json` (npm script only)
+7. `md/matrix/Hallazgos mta para solución.md` (this section — docs only)
+
+**Explicitly not modified:** `lib/mtae-validate.ts`, Apply UI, Accept/persist, Stock Files, Scouts, Trades, MAF, Mechanics (except zero changes unless a one-line pointer is later approved — **default: leave Mechanics untouched**).
+
+---
+
+### 2. Exact changes per file
+
+#### 2.1 `lib/apply-schema-contract.ts`
+
+| Item | Detail |
+|------|--------|
+| **Exports / functions** | `ApplySchemaContract` type; `buildApplySchemaContract()`; `buildApplySchemaContractText()` |
+| **Exact change** | (a) Expand `requiredFields["technical-assessment"]` to include dotted nested paths that the validator enforces. (b) Expand `allowedEnums` by **importing** consts from `lib/mtae-types.ts` (not hand-duplicating string lists). (c) Add a nested `technicalAssessment` detail block on the contract object (same pattern as existing `stockCaseCreate`) describing required nested fields, optional-when-present shapes, field types, forbidden keys, and notes. (d) In `buildApplySchemaContractText()`, add a short **TECHNICAL-ASSESSMENT (hard)** section that prints those nested required paths, enums, field types, and points at `examples["technical-assessment"]` / min example. (e) Wire `examples["technical-assessment"]` to a named minimum valid example export from `ai-block.ts` (see 2.2), keeping the full rich sample available separately if desired. |
+| **Required nested paths to list (must match validator)** | Top: `stockProfileId`, `ticker`, `timeframeRoles.strategic_tf\|opportunity_tf\|refinement_tf\|execution_tf`, `perTimeframe[]` (non-empty), `integrated`, `technicalSummary`. Per TF: `perTimeframe[].timeframe`, `perTimeframe[].trend`, `perTimeframe[].structuralInvalidation`, `perTimeframe[].summary`. Integrated: `integrated.structureSpine`, `integrated.opportunityNote`, `integrated.executionContext`. Technical summary: `technicalSummary.trend`, `technicalSummary.structureNote`, `technicalSummary.structuralInvalidation`. |
+| **Enums to export (from `mtae-types` consts)** | `trend` → `bullish\|neutral\|bearish` (inline or shared const). `momentumAssessment.expansionPotential` ← `MTAE_EXPANSION_POTENTIALS`. `momentumAssessment.currentState` ← `MTAE_MOMENTUM_CURRENT_STATES`. `momentumAssessment.scoutImplication` ← `MTAE_SCOUT_IMPLICATIONS`. `participationSynthesis.dominantCondition` ← `MTAE_DOMINANT_CONDITIONS`. Also surface (for optional participation) `movementCharacter.state` ← `MTAE_EXPANSION_STATES` with an explicit note that it is **not** the same enum as `momentumAssessment.currentState`. Optionally list candle/volume enums already used by the sample for completeness. |
+| **Shapes / types to document** | `participationSynthesis`: `{ dominantCondition, buyingEvidence[], sellingEvidence[], unresolvedSignals[], confidence }` — optional object; if present, `dominantCondition` required. `momentumAssessment`: `{ expansionPotential, currentState, capitalEfficiencyConcern:boolean, rationale:string[] (non-empty), scoutImplication, confidence }` — optional object; if present, all listed fields required; forbidden Scout/capital keys. |
+| **Why necessary** | This is the Control → Train AI copy surface the schema-first rule already points to; it currently under-lists nested required fields and enums. |
+| **Why smallest safe** | Extends the existing contract object and text builder; reuses `mtae-types` consts; does not touch the validator or Accept path. |
+| **Test** | `tools/test-mtae-schema-export.ts` asserts every nested required path string appears in `requiredFields` / `technicalAssessment.required` and every critical enum array equals the `mtae-types` const. |
+
+#### 2.2 `lib/ai-block.ts`
+
+| Item | Detail |
+|------|--------|
+| **Exports / functions** | `SAMPLE_BLOCKS` / `AI_BLOCK_SAMPLES`; `SCOUTING_AI_BLOCK_REQUEST` (and the thinner `DEFAULT_AI_BLOCK_REQUEST` line for technical-assessment); optionally new named export e.g. `TECHNICAL_ASSESSMENT_MIN_EXAMPLE` |
+| **Exact change** | (a) Add a **minimum valid** `technical-assessment` example: one or two TFs, all nested required fields, common stop-level technicalSummary fields; **omit** optional participation / or include the smallest optional objects only if needed for documentation — prefer omit optional so “minimum” is true. Keep the existing rich sample as `AI_BLOCK_SAMPLES["technical-assessment"]` **or** replace the contract example pointer to the min example while leaving the rich sample as `sampleAiBlock("technical-assessment")` — choose one: **recommended:** export `TECHNICAL_ASSESSMENT_MIN_EXAMPLE` and set `buildApplySchemaContract().examples["technical-assessment"]` to that min example; leave `AI_BLOCK_SAMPLES["technical-assessment"]` as the rich demo (or set both to min if dual samples are confusing — prefer distinct: min for contract, rich for sampleAiBlock). (b) Update the `technical-assessment` bullet in `SCOUTING_AI_BLOCK_REQUEST` to name nested required keys (`perTimeframe[].trend|summary|structuralInvalidation`, `integrated.structureSpine|opportunityNote|executionContext`, `technicalSummary.trend|structureNote|structuralInvalidation`) and note Evidence First labels ≠ JSON keys. (c) Align the shorter `DEFAULT_AI_BLOCK_REQUEST` technical-assessment line with the same nested required names (one sentence). |
+| **Why necessary** | Prose request text is what many sessions see; min example is what the contract must ship for copy-paste success. |
+| **Why smallest safe** | Same file / same sample infrastructure; no new block type; validator unchanged. |
+| **Test** | Min example `proposal` passes `validateTechnicalAssessmentProposal`. Omitting each nested required field from a clone fails. |
+
+#### 2.3 `lib/mtae-brief.ts`
+
+| Item | Detail |
+|------|--------|
+| **Exports / functions** | `buildMtaeProtocolBrief` (and optionally one line in `buildMtaeTickerRequest`) |
+| **Exact change** | Insert a compact **APPLY JSON CONTRACT (technical-assessment)** block after the APPLY section: nested required keys (exact list above), pointer that full enums + min example live in Control → Train AI → Apply schema contract, one line: “Evidence First presentation order is display-only — serialize using the JSON keys above.” Do **not** rewrite the whole protocol narrative. |
+| **Why necessary** | Control → MTAE and Stock File analyze boots use this brief without always including Train AI. |
+| **Why smallest safe** | Additive wording only; no behavior change. |
+| **Test** | Assert protocol text contains the nested required key names (`structureSpine`, `opportunityNote`, `executionContext`, `structureNote`, `perTimeframe` summary/trend/structuralInvalidation). |
+
+#### 2.4 `lib/mtae-snapshot.ts`
+
+| Item | Detail |
+|------|--------|
+| **Exports / functions** | `mtaeControlSnapshotItems` |
+| **Exact change** | Add one snapshot item, e.g. id `mtae-technical-assessment-contract`, label “technical-assessment schema + min example”, text built from `buildApplySchemaContract()` technicalAssessment section **or** a thin helper that formats nested required + enums + `JSON.stringify(TECHNICAL_ASSESSMENT_MIN_EXAMPLE)`. Reuse contract builders — do not invent a second schema source. |
+| **Why necessary** | Makes the contract visible inside Control → Library → MTAE without forcing Train AI. |
+| **Why smallest safe** | One snapshot row; content sourced from apply-schema-contract / ai-block exports. |
+| **Test** | Snapshot text includes min example `type: "technical-assessment"` and nested required key names; example substring validates when parsed (or test builds from the same export). |
+
+#### 2.5 `tools/test-mtae-schema-export.ts` (**new**) + `package.json`
+
+| Item | Detail |
+|------|--------|
+| **Exports** | N/A (test script); `package.json` → `"test:mtae-schema-export": "tsx tools/test-mtae-schema-export.ts"` |
+| **Exact change** | New test file only; register npm script. Optionally add 2–3 assertions to `tools/test-schema-discipline.ts` that the contract builder exposes technicalAssessment nested required — prefer **one dedicated test file** to avoid broadening schema-discipline scope. |
+| **Why necessary** | Locks export ↔ validator alignment (acceptance criteria). |
+| **Why smallest safe** | Tests only; no product behavior change. |
+
+#### 2.6 This audit MD
+
+Already updated with section 11. No further product docs required in this phase (`mtae-technical-analysis-engine.md` stays out of scope unless a later prompt asks).
+
+---
+
+### Explicit coverage checklist (must be in the exported contract)
+
+| Topic | Where it lands |
+|-------|----------------|
+| `perTimeframe` required: `timeframe`, `trend`, `structuralInvalidation`, `summary` | `apply-schema-contract` requiredFields + technicalAssessment.required + mtae-brief compact block |
+| `integrated` required: `structureSpine`, `opportunityNote`, `executionContext` | same |
+| `technicalSummary` required: `trend`, `structureNote`, `structuralInvalidation` | same |
+| All exact enums (momentum + participationSynthesis + trend; note dual expansion-state enums) | `allowedEnums` from `mtae-types` consts |
+| `participationSynthesis` object shape | technicalAssessment notes / shape field |
+| `momentumAssessment` types (`boolean`, `string[]`, enums) | technicalAssessment fieldTypes + allowedEnums |
+| Minimum valid example | `TECHNICAL_ASSESSMENT_MIN_EXAMPLE` → contract `examples` + MTAE snapshot |
+| AI receives via existing Control flow | Train AI schema contract row (primary); MTAE protocol + new snapshot (secondary); analyze boot inherits protocol |
+
+---
+
+### 3. Tests to add or update
+
+**New:** `tools/test-mtae-schema-export.ts` + npm script `test:mtae-schema-export`.
+
+Must assert:
+
+1. Contract nested required list includes every path in the checklist above.
+2. `allowedEnums["momentumAssessment.currentState"]` deep-equals `[...MTAE_MOMENTUM_CURRENT_STATES]` (and same pattern for expansionPotential, scoutImplication, dominantCondition).
+3. Contract documents that `movementCharacter.state` uses `MTAE_EXPANSION_STATES`, distinct from `momentumAssessment.currentState`.
+4. Min example passes `validateTechnicalAssessmentProposal` (import from `mtae-validate` — **call** validator, do not modify it).
+5. Clones of min example missing each of: `structureSpine`, `opportunityNote`, `executionContext`, TF `summary`, TF `trend`, TF `structuralInvalidation`, `technicalSummary.structureNote` → `ok: false`.
+6. `capitalEfficiencyConcern: "true"` on an otherwise valid momentumAssessment → fails; `true` → passes (when momentumAssessment included in a variant).
+7. `buildMtaeProtocolBrief([])` contains the nested required key names.
+8. MTAE snapshot item `mtae-technical-assessment-contract` exists and includes `"technical-assessment"`.
+9. Regression: existing `npm run test:mtae-participation` and `test:mtae-evidence-first` still pass (run in CI/manual checklist; no need to rewrite them).
+
+**Do not** change validator tests to weaken requirements.
+
+---
+
+### 4. Explicit non-goals
+
+- Refactor or rewrite `validateTechnicalAssessmentProposal` / `lib/mtae-validate.ts`
+- Introduce Zod or JSON Schema across the app
+- Redesign Control Apply UI / Accept / persistence
+- Change Stock Files, Scouts, Trades, MAF, MTAE analysis logic
+- Change Mechanics beyond “leave untouched” (no Mechanics edit in this plan)
+- New AI block types
+- General schema framework for all Apply types
+- Unrelated cleanup or doc rewrites outside this MD + the export surfaces listed
+- Broker / execution changes
+
+---
+
+### 5. Risks
+
+| Risk | Mitigation |
+|------|------------|
+| Contract text grows long | Keep TECHNICAL-ASSESSMENT section compact: required paths + enums + types + min JSON; leave narrative in MTAE protocol |
+| Min example drifts from validator | Test #4 always runs min example through `validateTechnicalAssessmentProposal` |
+| Enum lists hand-copied again | Import consts from `mtae-types`; test deep-equality |
+| Dual samples confuse AI (min vs rich) | Label clearly in contract text: “minimum valid example” vs optional rich sample via `sampleAiBlock` |
+| MTAE protocol still used alone without Train AI | Compact required block in `mtae-brief` + dedicated snapshot |
+| Scope creep into validator “cleanup” | Non-goals; PR review rejects validator diffs |
+
+---
+
+### 6. Rollback plan
+
+1. Revert the single implementation commit(s) on the feature branch (or revert merge commit on `main` if already merged).
+2. No data migration: exports/docs/tests only — Accept path and stored assessments unchanged.
+3. If only part fails (e.g. snapshot), revert `mtae-snapshot.ts` / `mtae-brief.ts` while keeping contract expansions if those tests pass.
+
+---
+
+### 7. Acceptance criteria
+
+- [ ] Control → Train AI → Apply schema contract text lists all nested required paths for `technical-assessment`.
+- [ ] Same contract lists exact enums for momentumAssessment (including `currentState`) and participationSynthesis `dominantCondition`, sourced from `mtae-types`.
+- [ ] Contract embeds a **minimum valid** example that passes `validateTechnicalAssessmentProposal`.
+- [ ] Control → Library → MTAE exposes protocol wording and/or snapshot with the same nested required keys + min example.
+- [ ] `SCOUTING_AI_BLOCK_REQUEST` names nested required keys (not only top-level objects).
+- [ ] `npm run test:mtae-schema-export` passes.
+- [ ] `npm run test:mtae-participation` and `npm run test:mtae-evidence-first` still pass.
+- [ ] Diff contains **no** changes to `lib/mtae-validate.ts`, Apply Accept/persist, Stock File/Scout/Trade/MAF behavior.
+- [ ] An external AI given only the Train AI schema contract (no tribal memory) can produce JSON that validates without invented keys.
+
+---
+
+### 8. Recommended implementation order
+
+1. Add `TECHNICAL_ASSESSMENT_MIN_EXAMPLE` in `lib/ai-block.ts` and verify it validates with a quick local script/test.
+2. Extend `lib/apply-schema-contract.ts` (requiredFields, allowedEnums from consts, technicalAssessment detail, text section, examples pointer).
+3. Tighten `SCOUTING_AI_BLOCK_REQUEST` / `DEFAULT_AI_BLOCK_REQUEST` bullets in `lib/ai-block.ts`.
+4. Add compact APPLY JSON CONTRACT block to `lib/mtae-brief.ts`.
+5. Add MTAE snapshot item in `lib/mtae-snapshot.ts` sourcing the contract/min example.
+6. Add `tools/test-mtae-schema-export.ts` + `package.json` script; run participation/evidence-first regressions.
+7. Open/update implementation PR; do not broaden scope.
+
+---
+
+### Verdict
+
+**READY FOR IMPLEMENTATION**
+
+Constraints are clear, the file set is minimal, the Control delivery path is existing, and no validator/Apply redesign is required. Proceed only after explicit approval to code.
