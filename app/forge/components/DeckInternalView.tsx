@@ -531,7 +531,13 @@ export function DeckInternalView({ deckId }: Props) {
                   window.location.href = "/forge/argus/units";
                 }}
                 onRemove={() => {
-                  if (!window.confirm("Remove this fragment from the deck?")) return;
+                  if (
+                    !window.confirm(
+                      `Delete Fragment “${item.title}” and its blocks? This cannot be undone.`
+                    )
+                  ) {
+                    return;
+                  }
                   setState(removeContent(state, item.id));
                   setMenuId(null);
                 }}
@@ -595,7 +601,13 @@ export function DeckInternalView({ deckId }: Props) {
                     window.location.href = "/forge/argus/units";
                   }}
                   onRemove={() => {
-                    if (!window.confirm("Remove this fragment from the deck?")) return;
+                    if (
+                      !window.confirm(
+                        `Delete Fragment “${item.title}” and its blocks? This cannot be undone.`
+                      )
+                    ) {
+                      return;
+                    }
                     setState(removeContent(state, item.id));
                     setMenuId(null);
                   }}
@@ -715,7 +727,7 @@ function ItemMenu({
             className="block w-full px-3 py-2 text-left text-sm text-rose-300 hover:bg-zinc-800"
             onClick={onRemove}
           >
-            Remove
+            Delete…
           </button>
         </div>
       ) : null}

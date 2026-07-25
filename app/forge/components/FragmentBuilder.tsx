@@ -26,6 +26,7 @@ import {
   emptyOrSeedRepo,
   getItem,
   itemHref,
+  removeContent,
   updateContent,
   viewHref,
 } from "@/lib/argusforge/af03-repo-store";
@@ -192,6 +193,24 @@ export function FragmentBuilder({ deckId, itemId }: Props) {
             }}
           />
         </label>
+        <button
+          type="button"
+          disabled={busy}
+          className="min-h-11 rounded-lg border border-rose-900/60 px-3 text-sm font-medium text-rose-300 sm:flex-none"
+          onClick={() => {
+            if (
+              !window.confirm(
+                `Delete Fragment “${fragment.title}” and its blocks? This cannot be undone.`
+              )
+            ) {
+              return;
+            }
+            setState(removeContent(state, itemId));
+            window.location.href = deckHref(deckId);
+          }}
+        >
+          Delete Fragment…
+        </button>
       </div>
 
       {blocks.length === 0 ? (
