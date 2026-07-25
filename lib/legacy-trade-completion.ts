@@ -46,16 +46,130 @@ export function isLegacyAbsentPlanId(value: string | undefined | null): boolean 
   return String(value ?? "").trim().toUpperCase() === LEGACY_ABSENT_PLAN_ID;
 }
 
-/** True when playbook link is either a real id or an explicit historical-absent sentinel. */
-export function hasSatisfiedPlaybookLink(trade: Pick<Trade, "playbookId">): boolean {
+/** True when playbook link is a real id OR historical absence was documented. */
+export function hasSatisfiedPlaybookLink(
+  trade: Pick<Trade, "playbookId" | "playbookHistoricallyAbsent">
+): boolean {
+  if (trade.playbookHistoricallyAbsent) return true;
   const id = trade.playbookId?.trim();
-  return Boolean(id);
+  if (!id || isLegacyAbsentPlaybookId(id)) return false;
+  return true;
 }
 
-/** True when plan link is either a real PLAN id or an explicit historical-absent sentinel. */
-export function hasSatisfiedPlanLink(trade: Pick<Trade, "planId">): boolean {
+/** True when plan link is a real PLAN id OR historical absence was documented. */
+export function hasSatisfiedPlanLink(
+  trade: Pick<Trade, "planId" | "planHistoricallyAbsent">
+): boolean {
+  if (trade.planHistoricallyAbsent) return true;
   const id = trade.planId?.trim();
-  return Boolean(id);
+  if (!id || isLegacyAbsentPlanId(id)) return false;
+  return true;
+}
+
+export type NormalizedLegacyTradeLinks = {
+  /** Never the Apply sentinel — nullish clears the FK column. */
+  playbookId: string | undefined;
+  planId: string | undefined;
+  playbookHistoricallyAbsent: boolean;
+  planHistoricallyAbsent: boolean;
+};
+
+/**
+ * Normalize Apply sentinels before persistence.
+ * `__legacy_none__` / `__LEGACY_NONE__` → FK columns null + historicallyAbsent flags.
+ * `__none__` / "" → clear link and clear absence flag (gap stays open).
+ */
+export function normalizeLegacyTradeLinks(input: {
+  playbookId?: string;
+  planId?: string;
+  playbookHistoricallyAbsent?: boolean;
+  planHistoricallyAbsent?: boolean;
+}): NormalizedLegacyTradeLinks {
+  let playbookId = input.playbookId?.trim() || undefined;
+  let planId = input.planId?.trim() || undefined;
+  let playbookHistoricallyAbsent = Boolean(input.playbookHistoricallyAbsent);
+  let planHistoricallyAbsent = Boolean(input.planHistoricallyAbsent);
+
+  if (playbookId !== undefined) {
+    if (isLegacyAbsentPlaybookId(playbookId)) {
+      playbookId = undefined;
+      playbookHistoricallyAbsent = true;
+    } else if (playbookId === "__none__") {
+      playbookId = undefined;
+      playbookHistoricallyAbsent = false;
+    } else {
+      playbookHistoricallyAbsent = false;
+    }
+  }
+
+  if (planId !== undefined) {
+    const upper = planId.toUpperCase();
+    if (isLegacyAbsentPlanId(upper)) {
+      planId = undefined;
+      planHistoricallyAbsent = true;
+    } else if (planId === "__none__" || upper === "__NONE__") {
+      planId = undefined;
+      planHistoricallyAbsent = false;
+    } else {
+      planId = upper;
+      planHistoricallyAbsent = false;
+    }
+  }
+
+  return {
+    playbookId,
+    planId,
+    playbookHistoricallyAbsent,
+    planHistoricallyAbsent,
+  };
+}
+
+/** Patch from a trade-update proposal — only touches fields present on the proposal. */
+export function applyLegacyLinkPatchFromProposal(
+  current: Pick<
+    Trade,
+    "playbookId" | "planId" | "playbookHistoricallyAbsent" | "planHistoricallyAbsent"
+  >,
+  proposal: { playbookId?: unknown; planId?: unknown }
+): Pick<
+  Trade,
+  "playbookId" | "planId" | "playbookHistoricallyAbsent" | "planHistoricallyAbsent"
+> {
+  let playbookId = current.playbookId;
+  let planId = current.planId;
+  let playbookHistoricallyAbsent = Boolean(current.playbookHistoricallyAbsent);
+  let planHistoricallyAbsent = Boolean(current.planHistoricallyAbsent);
+
+  if (proposal.playbookId !== undefined) {
+    const raw = String(proposal.playbookId).trim();
+    if (raw === "" || raw === "__none__") {
+      playbookId = undefined;
+      playbookHistoricallyAbsent = false;
+    } else {
+      const n = normalizeLegacyTradeLinks({ playbookId: raw });
+      playbookId = n.playbookId;
+      playbookHistoricallyAbsent = n.playbookHistoricallyAbsent;
+    }
+  }
+
+  if (proposal.planId !== undefined) {
+    const raw = String(proposal.planId).trim();
+    if (raw === "" || raw === "__none__") {
+      planId = undefined;
+      planHistoricallyAbsent = false;
+    } else {
+      const n = normalizeLegacyTradeLinks({ planId: raw });
+      planId = n.planId;
+      planHistoricallyAbsent = n.planHistoricallyAbsent;
+    }
+  }
+
+  return {
+    playbookId,
+    planId,
+    playbookHistoricallyAbsent,
+    planHistoricallyAbsent,
+  };
 }
 
 /**
@@ -160,8 +274,10 @@ export function buildLegacyTradeCompletionContractText(): string {
     "- missing_playbook | missing_plan | missing_thesis | missing_planned_rr | missing_loss_classification | missing_post_stop_study → trade-update",
     "",
     "Historical absence (do NOT invent links):",
-    `- playbookId: "${LEGACY_ABSENT_PLAYBOOK_ID}" when no playbook existed historically`,
-    `- planId: "${LEGACY_ABSENT_PLAN_ID}" when no Scout PLAN existed historically`,
+    `- Apply JSON: playbookId: "${LEGACY_ABSENT_PLAYBOOK_ID}" when no playbook existed historically`,
+    `- Apply JSON: planId: "${LEGACY_ABSENT_PLAN_ID}" when no Scout PLAN existed historically`,
+    "- Server normalizes sentinels → playbook_id/plan_id = null + playbookHistoricallyAbsent/planHistoricallyAbsent = true",
+    "- Do NOT write sentinels into FK columns; null alone without the flag leaves Needs Attention open",
     "- null / omit / \"\" / \"__none__\" leave the gap open (unassigned ≠ documented absence)",
     "- Never invent a real playbook id or PLAN-xxx to silence the alert",
     "",
@@ -185,9 +301,8 @@ export function applyLegacyTradeUpdateLocally(
   trade: Trade,
   proposal: Record<string, unknown>
 ): Trade {
-  const next: Trade = { ...trade };
-  if (proposal.playbookId !== undefined) next.playbookId = String(proposal.playbookId);
-  if (proposal.planId !== undefined) next.planId = String(proposal.planId).toUpperCase();
+  const links = applyLegacyLinkPatchFromProposal(trade, proposal);
+  const next: Trade = { ...trade, ...links };
   if (proposal.thesis !== undefined) next.thesis = String(proposal.thesis);
   if (proposal.riskRewardPlanned !== undefined) {
     next.riskRewardPlanned = Number(proposal.riskRewardPlanned);

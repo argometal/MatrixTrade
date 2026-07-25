@@ -74,8 +74,9 @@ const closedLegacyAbsent = base({
   closedAt: "2026-07-08T00:00:00.000Z",
   exit: 90,
   reviewedAt: "2026-07-08T12:00:00.000Z",
-  playbookId: "__legacy_none__",
-  planId: "__LEGACY_NONE__",
+  // FK columns stay null; documented absence uses flags (25-F8).
+  playbookHistoricallyAbsent: true,
+  planHistoricallyAbsent: true,
   thesis: "[reconstructed] Historical fill",
   riskRewardPlanned: 2,
   lossClassification: "pending_study",
@@ -91,7 +92,7 @@ const closedLegacyAbsent = base({
 assert.deepEqual(
   classifyIncompleteClosedTrade(closedLegacyAbsent),
   [],
-  "historical-absence sentinels clear playbook/plan gaps"
+  "historical-absence flags clear playbook/plan gaps with null FKs"
 );
 
 const listed = listIncompleteClosedTrades([
