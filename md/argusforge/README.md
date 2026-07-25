@@ -17,7 +17,8 @@
 | [af03-chaos-interface-contract.md](af03-chaos-interface-contract.md) | **Working contract — checklist** | Minimal Chaos interfaces → Vault boundary; completion Definition of Done |
 | [phase-0-architecture.md](phase-0-architecture.md) | **Canonical — Phase 0 CLOSED** | Technical boundaries, names, Chaos/org/Registry, engine limits |
 | [vault-training-layer-contract.md](vault-training-layer-contract.md) | **Canonical — Vault** | Vault prepares formation ≠ Memory |
-| [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria / Gatekeeper freeze |
+| [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria **repo** freeze; destination = Argus as Alexandria +1 / motor (§0) |
+| [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) | **Research — non-binding** | Chaos → Library → Argus (Alexandria +1 / I. Motor) pipeline |
 | [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | **Research — deferred, non-binding** | Historical spatial notes; not AF architecture |
 | [external-repo-patterns-research.md](external-repo-patterns-research.md) | **Research** | External pattern references (evaluate before reuse) |
 
@@ -42,9 +43,10 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 3. [af03-chaos-interface-contract.md](af03-chaos-interface-contract.md) — interface checklist (working)
 4. [phase-0-architecture.md](phase-0-architecture.md) — technical Phase 0
 5. [vault-training-layer-contract.md](vault-training-layer-contract.md)
-6. [alexandria-frozen-contract.md](alexandria-frozen-contract.md)
-7. [external-repo-patterns-research.md](external-repo-patterns-research.md)
-8. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
+6. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — repo freeze + Argus = Alexandria +1
+7. [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) (optional, non-binding)
+8. [external-repo-patterns-research.md](external-repo-patterns-research.md)
+9. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
 
 ## Current UI (AF03 progress)
 
