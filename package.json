@@ -22,6 +22,7 @@
     "test:control-sanity-snapshots": "tsx tools/test-control-sanity-snapshots.ts",
     "test:legacy-trade-completion": "tsx tools/test-legacy-trade-completion.ts",
     "test:obs-legacy-dates": "tsx tools/test-obs-legacy-dates-25-10f.ts",
+    "test:obs-durable-store": "tsx tools/test-obs-durable-store-25-115.ts",
     "test:ui-window-ids": "tsx tools/test-ui-window-ids.ts",
     "test:apply-failure-snapshot": "tsx tools/test-apply-failure-snapshot.ts",
     "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"
