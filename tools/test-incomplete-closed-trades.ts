@@ -67,6 +67,33 @@ assert.ok(classifyIncompleteClosedTrade(closedReviewedPartial).includes("missing
 assert.deepEqual(classifyIncompleteClosedTrade(closedComplete), []);
 assert.deepEqual(classifyIncompleteClosedTrade(openTrade), []);
 
+const closedLegacyAbsent = base({
+  id: "H005",
+  ticker: "NFLX",
+  status: "closed",
+  closedAt: "2026-07-08T00:00:00.000Z",
+  exit: 90,
+  reviewedAt: "2026-07-08T12:00:00.000Z",
+  playbookId: "__legacy_none__",
+  planId: "__LEGACY_NONE__",
+  thesis: "[reconstructed] Historical fill",
+  riskRewardPlanned: 2,
+  lossClassification: "pending_study",
+  postStopStudy: {
+    enabled: true,
+    durationDays: 90,
+    startedAt: "2026-07-08T12:00:00.000Z",
+    endsAt: "2026-10-06T12:00:00.000Z",
+    originalTradeId: "H005",
+    originalEntry: 100,
+  },
+});
+assert.deepEqual(
+  classifyIncompleteClosedTrade(closedLegacyAbsent),
+  [],
+  "historical-absence sentinels clear playbook/plan gaps"
+);
+
 const listed = listIncompleteClosedTrades([
   closedBare,
   closedReviewedPartial,

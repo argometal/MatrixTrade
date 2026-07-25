@@ -34,6 +34,7 @@
 | **Status** | **Shipped** — Matrix Mechanics · Stock Files · Apply · Library |
 | **Doc** | [control-panel-ia.md](control-panel-ia.md) |
 | **Next** | Feeds **MTA-002A** (collapse Stock File usage to ≤3 primary actions). Closed≠complete alert lives on **Trades** (P1 shipped) |
+| **Shipped (25-08)** | Snapshot labels aligned; Apply schema contract under MTA Mechanics; legacy `__legacy_none__` / `__LEGACY_NONE__` + `test:legacy-trade-completion` |
 
 ---
 

@@ -1,7 +1,8 @@
 # Snapshot catalog
 
 **Status:** Canonical (2026-07-22).  
-**Parent:** [external-ai-policy.md](external-ai-policy.md)
+**Parent:** [external-ai-policy.md](external-ai-policy.md)  
+**Label fix (25-08):** [snapshot-label-fix-25-08.md](snapshot-label-fix-25-08.md) — Mechanics → Apply schema contract; no Train AI.
 
 ---
 

@@ -1,5 +1,9 @@
 import { LOSS_CLASSIFICATION_LABELS } from "./asymmetry-types";
 import { calculateTradeResult } from "./calculate";
+import {
+  hasSatisfiedPlanLink,
+  hasSatisfiedPlaybookLink,
+} from "./legacy-trade-completion";
 import type { Playbook } from "./playbook-types";
 import { getPlaybookName } from "./playbooks";
 import type { TradePlan } from "./plan-types";
@@ -21,8 +25,8 @@ export interface TradeLegacyAssessment {
 
 export function assessTradeLegacy(trade: Trade): TradeLegacyAssessment {
   const missing: string[] = [];
-  if (!trade.playbookId) missing.push("playbookId");
-  if (!trade.planId) missing.push("planId (scout PLAN link)");
+  if (!hasSatisfiedPlaybookLink(trade)) missing.push("playbookId");
+  if (!hasSatisfiedPlanLink(trade)) missing.push("planId (scout PLAN link)");
   if (!trade.thesis?.trim()) missing.push("thesis snapshot at entry");
   if (trade.riskRewardPlanned === undefined) missing.push("riskRewardPlanned (strategy R at entry)");
   if (trade.status === "closed" && !trade.lossClassification) {
@@ -54,11 +58,11 @@ export const TRADE_FORENSIC_AI_REQUEST = [
   "Study this closed trade as one statistical observation. Do not invent prices or fills.",
   "When human requests Apply, allowed blocks:",
   "- analysis — qualitative forensic notes (psychology, lessons, post-stop observations)",
-  "- trade-update — attach planId, playbookId, lossClassification, postStopStudy, riskRewardPlanned",
+  "- trade-update — attach planId/playbookId (or __legacy_none__/__LEGACY_NONE__), thesis, riskRewardPlanned, lossClassification, postStopStudy",
   "- trade-review — supplement review fields if incomplete",
   "- attribution — MAF component attribution (evidence → which pipeline component dragged expectancy)",
   "- observation-update — Observation Engine fields (targetReachedAt, MFE/MAE) — never invent prices",
-  "Flag legacy gaps explicitly; suggest manual links only when human confirms.",
+  "Flag legacy gaps explicitly; never invent Playbook/PLAN links — use legacy absence sentinels when history had none.",
 ].join("\n");
 
 export function formatTradeForensicSnapshot(input: {

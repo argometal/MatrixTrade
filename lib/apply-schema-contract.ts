@@ -4,6 +4,12 @@
  */
 import { AI_BLOCK_SAMPLES, type AiBlockType } from "./ai-block";
 import {
+  buildLegacyTradeCompletionContractText,
+  buildLegacyTradeUpdateExample,
+  LEGACY_ABSENT_PLAN_ID,
+  LEGACY_ABSENT_PLAYBOOK_ID,
+} from "./legacy-trade-completion";
+import {
   STOCK_CASE_CREATE_ALLOWED_KEYS,
   STOCK_CASE_LEVELS_ALLOWED_KEYS,
   STOCK_CASE_RISK_ALLOWED_KEYS,
@@ -67,12 +73,12 @@ export type ApplySchemaContract = {
 
 export function buildApplySchemaContract(): ApplySchemaContract {
   return {
-    schemaVersion: "2026-07-22.schema-discipline",
+    schemaVersion: "2026-07-25.schema-discipline",
     product: "MTA",
     rules: [
-      "SCHEMA-FIRST: before any Apply JSON, read this contract (or an accepted export example).",
+      "SCHEMA-FIRST: before any Apply JSON, read this contract (Control → MTA Mechanics → Apply schema contract).",
       "Never invent JSON keys, enum values, nesting, or field formats.",
-      "If the exact contract is unavailable, stop and request schema or a valid example — do not guess.",
+      "If the exact contract is unavailable, stop and ask the human to copy Apply schema contract — do not guess.",
       "Separate analysis (conceptual levels) from serialization (exact MTA keys).",
       "A validator error on one field does not validate the rest of the object.",
       "stock-case-create REQUIRES initialScout.plannedEntry + stopPrice + targetPrice.",
@@ -81,6 +87,8 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "Do not put Scout capital fields into technical-assessment.",
       "Do not put Entry Solver / R:R / shares into MTAE.",
       "MTAE presentation is evidence-first (Analysis Mode); explain only on request.",
+      `Legacy closed trades: never invent playbookId/planId — use ${LEGACY_ABSENT_PLAYBOOK_ID} / ${LEGACY_ABSENT_PLAN_ID} for historical absence.`,
+      "Human mutations only via Control → Apply → Validate → Accept.",
     ],
     acceptedTypes: Object.keys(AI_BLOCK_SAMPLES) as AiBlockType[],
     requiredFields: {
@@ -112,6 +120,11 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "technicalSummary",
       ],
       "trade-proposal": ["id", "ticker", "entry", "stop", "shares"],
+      "trade-update": [
+        "id",
+        "at least one of: playbookId, planId, thesis, riskRewardPlanned, lossClassification, postStopStudy, notes, …",
+      ],
+      "trade-review": ["id", "qualityEntry", "qualityExit", "qualityMgmt"],
     },
     allowedEnums: {
       "decision.verdict": ["go", "wait", "probe", "no"],
@@ -163,6 +176,8 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "scout-plan-create": AI_BLOCK_SAMPLES["scout-plan-create"],
       "technical-assessment": AI_BLOCK_SAMPLES["technical-assessment"],
       "decision-update": AI_BLOCK_SAMPLES["decision-update"],
+      "trade-update": buildLegacyTradeUpdateExample("H002"),
+      "trade-review": AI_BLOCK_SAMPLES["trade-review"],
     },
   };
 }
@@ -172,6 +187,10 @@ export function buildApplySchemaContractText(): string {
   return [
     "=== MTA APPLY SCHEMA CONTRACT (schema-first handshake) ===",
     `schemaVersion: ${contract.schemaVersion}`,
+    "",
+    "WHERE TO COPY THIS",
+    "Control → MTA Mechanics → Apply schema contract (visible copy row under Mechanics).",
+    "Write path after JSON: Control → Apply → Validate → Accept.",
     "",
     "RULES",
     ...contract.rules.map((r) => `- ${r}`),
@@ -195,8 +214,10 @@ export function buildApplySchemaContractText(): string {
       ([type, fields]) => `- ${type}: ${fields.join("; ")}`
     ),
     "",
+    buildLegacyTradeCompletionContractText(),
+    "",
     "Before producing Apply JSON: read this contract. Do not rely on memory or semantic guesses.",
-    "Full JSON examples are available via Control → Train AI → Schema contract / sample blocks.",
+    "Full JSON examples are in this contract (examples.*) and in Mechanics samples when pasted.",
     "",
     "=== CONTRACT JSON ===",
     JSON.stringify(contract, null, 2),

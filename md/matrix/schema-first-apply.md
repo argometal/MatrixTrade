@@ -6,7 +6,7 @@ AI must not invent Apply JSON. Semantic guesses that look reasonable but fail im
 
 ## Rules
 
-1. **Schema-first** — before Apply JSON, read the Apply Schema Contract (Control → Train AI) or an accepted export example.
+1. **Schema-first** — before Apply JSON, copy **Control → MTA Mechanics → Apply schema contract** (or an accepted export example).
 2. **Never invent keys** — only fields in the contract / sample / validator feedback.
 3. **Stop if contract missing** — deliver conceptual analysis only; do not call it importable JSON.
 4. **One validator error ≠ full validation** — re-check the whole object against the contract.
