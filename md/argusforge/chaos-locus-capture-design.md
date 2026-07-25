@@ -1,8 +1,9 @@
 # Chaos locus capture + Argus Library-hybrid — design discussion
 
-**Status:** Design discussion — **non-binding**, **no implementation in this note**  
+**Status:** Design discussion (superseded for build order by **24-1C**)  
 **Date:** 2026-07-25  
-**Audience:** product / architecture review before coding  
+**Authoritative build:** [`chaos-builder-architecture.md`](chaos-builder-architecture.md) · [`change-24-1c.md`](change-24-1c.md)  
+**Note:** Provisional ownership — Realm / Parcour / Castle / Locus are **exchange-domain** until audit; not exclusive to Argus.  
 **Related:** [`chaos-to-library-alexandria-pipeline.md`](chaos-to-library-alexandria-pipeline.md) · [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md) §0 · AF03 Chaos checklist
 
 ---

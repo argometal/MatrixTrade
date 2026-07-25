@@ -1,11 +1,12 @@
 # Chaos → Library → Argus (Alexandria +1) — compatibility pipeline (research)
 
-**Status:** Research — **non-binding**, deferred until Alexandria reopen  
-**Date:** 2026-07-25  
-**Does not:** implement Alexandria motor in MatrixTrade · reopen GateKeeper · merge the frozen repo  
-**Binding freeze:** [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md) (§0: repo freeze ≠ architecture death)  
-**Alexandria repo (frozen):** https://github.com/argometal/Alexandria (LibraryBuild + GateKeeper + ORM-16)  
-**AF working names:** [`ontology-working.md`](ontology-working.md) when present; else sealed AF contracts
+**Status:** Research — historical Library formats; **exact mapping pending audit**  
+**Date:** 2026-07-25 · updated CHANGE **24-1C**  
+**Does not:** couple AF core to Alexandria schema · write into Alexandria storage  
+**Approved path:** AF neutral exchange → Legacy Adapter (after audit) → Legacy runtime — see [`chaos-builder-architecture.md`](chaos-builder-architecture.md)  
+**Binding freeze:** [`alexandria-frozen-contract.md`](alexandria-frozen-contract.md) (§0: repo freeze ≠ architecture death; inspection/adapter allowed)  
+**Alexandria repo:** https://github.com/argometal/Alexandria (LibraryBuild + GateKeeper + ORM-16)  
+**Audit:** [`alexandria-legacy-audit-checklist.md`](alexandria-legacy-audit-checklist.md)
 
 ---
 

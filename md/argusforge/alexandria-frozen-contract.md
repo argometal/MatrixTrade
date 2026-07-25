@@ -11,9 +11,11 @@ This contract remains active until explicitly replaced.
 
 ## 0. Clarification — freeze the repo, not the destination
 
-**What is frozen:** the Alexandria **repository** (the historical product line that already found a working path — ~LibraryBuild + GateKeeper + ORM-16 era). That artifact is preserved; it is not the place for incremental “final product” UI work.
+**What is frozen:** the Alexandria **repository** against **uncontrolled redesign** (the historical product line that already found a working path — ~LibraryBuild + GateKeeper + ORM-16 era). That artifact is preserved; it is not the place for incremental “final product” UI work.
 
-**What is not frozen forever:** the **architecture destination**. Integration that comes next evolves into a **new Alexandria** — not a forever-dead design sealed inside the old repo.
+**Freeze does not forbid:** inspection, execution, testing, or an **isolated compatibility adapter** (CHANGE 24-1C). AF must not import Alexandria domain classes, copy its DB schema into AF core, or write directly into Alexandria internal storage.
+
+**What is not frozen forever:** the **architecture destination**. Integration that comes next evolves into a **new Alexandria** — not a forever-dead design sealed inside the old repo. Historical Alexandria remains a **legacy validation runtime** until replacement capabilities exist.
 
 **Intended successor framing (product intent, not implementation authorization):**
 

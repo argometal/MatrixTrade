@@ -18,9 +18,12 @@
 | [phase-0-architecture.md](phase-0-architecture.md) | **Canonical — Phase 0 CLOSED** | Technical boundaries, names, Chaos/org/Registry, engine limits |
 | [vault-training-layer-contract.md](vault-training-layer-contract.md) | **Canonical — Vault** | Vault prepares formation ≠ Memory |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria **repo** freeze; destination = Argus as Alexandria +1 / motor (§0) |
-| [chaos-locus-capture-design.md](chaos-locus-capture-design.md) | **Design discussion — non-binding** | Chaos = locus builder only; Argus = Library hybrid (Castle / Parcour) |
-| [chaos-builder-architecture.md](chaos-builder-architecture.md) | **Architecture proposal — builder now** | Chaos progressive builder; Argus/Alexandria later; pipeline deferred |
-| [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) | **Research — deferred** | Alexandria handoff (leave as-is; not current build) |
+| [change-24-1c.md](change-24-1c.md) | **Active — 24-1C** | Architecture decision + Chaos builder B0 |
+| [chaos-builder-architecture.md](chaos-builder-architecture.md) | **Approved — implementing** | AF model + Legacy validation path; B0 builder |
+| [legacy-alexandria-adapter-boundary.md](legacy-alexandria-adapter-boundary.md) | **Boundary — pending_audit** | Adapter interface only |
+| [alexandria-legacy-audit-checklist.md](alexandria-legacy-audit-checklist.md) | **Checklist** | Inspect Alexandria formats (does not block B0) |
+| [chaos-locus-capture-design.md](chaos-locus-capture-design.md) | **Discussion** | Earlier Chaos/Argus split notes |
+| [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) | **Research** | Historical formats; mapping pending audit |
 | [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) | **Research — deferred, non-binding** | Historical spatial notes; not AF architecture |
 | [external-repo-patterns-research.md](external-repo-patterns-research.md) | **Research** | External pattern references (evaluate before reuse) |
 
@@ -46,9 +49,9 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 4. [phase-0-architecture.md](phase-0-architecture.md) — technical Phase 0
 5. [vault-training-layer-contract.md](vault-training-layer-contract.md)
 6. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — repo freeze + Argus = Alexandria +1
-7. [chaos-locus-capture-design.md](chaos-locus-capture-design.md) (discussion — Chaos vs Argus Library split)
-8. [chaos-builder-architecture.md](chaos-builder-architecture.md) (builder architecture — current build target)
-9. [chaos-to-library-alexandria-pipeline.md](chaos-to-library-alexandria-pipeline.md) (deferred research)
+7. [change-24-1c.md](change-24-1c.md) + [chaos-builder-architecture.md](chaos-builder-architecture.md) (24-1C)
+8. [legacy-alexandria-adapter-boundary.md](legacy-alexandria-adapter-boundary.md)
+9. [chaos-locus-capture-design.md](chaos-locus-capture-design.md) / pipeline research (optional)
 10. [external-repo-patterns-research.md](external-repo-patterns-research.md)
 11. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
 
