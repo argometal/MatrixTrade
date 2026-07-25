@@ -34,6 +34,12 @@ export type LayerDerivedMetrics = {
   plannedCapital: number;
   plannedRiskAmount: number;
   effectiveStopPrice: number;
+  /** Monetary benefit if price reaches primaryTargetPrice (not probability-weighted). */
+  potentialProfit: number;
+  /** Capital lost if effective stop is hit — same dollars as plannedRiskAmount. */
+  assignedLoss: number;
+  /** potentialProfit / plannedCapital * 100. */
+  returnOnCapitalPercent: number;
 };
 
 export type LayeredFillStateProjection = {
@@ -50,6 +56,14 @@ export type LayeredFillStateProjection = {
   portfolioRR?: number;
   entryImprovementVsFirst?: number;
   unusedRiskAmount?: number;
+  /** Sum of rewardPerShare * plannedQuantity for filled layers. */
+  potentialProfit: number;
+  /** Sum of plannedRiskAmount for filled layers (stop hit). */
+  assignedLoss: number;
+  /** potentialProfit / capitalDeployed * 100. */
+  returnOnCapitalPercent: number;
+  /** potentialProfit / assignedLoss — undefined when assignedLoss is 0 (never Infinity). */
+  profitPerRiskDollar?: number;
 };
 
 export type LayeredRiskValidation = {
@@ -106,8 +120,12 @@ export function computeLayerDerived(
   const rr = rewardPerShare / riskPerShare;
 
   const qty = plannedQuantity ?? 0;
-  const plannedRiskAmount = qty * riskPerShare;
-  const plannedCapital = qty * limit.price;
+  const plannedRiskAmount = round2(qty * riskPerShare);
+  const plannedCapital = round2(qty * limit.price);
+  const potentialProfit = round2(qty * rewardPerShare);
+  const assignedLoss = plannedRiskAmount;
+  const returnOnCapitalPercent =
+    plannedCapital > 0 ? (potentialProfit / plannedCapital) * 100 : 0;
 
   return {
     riskPerShare: round4(riskPerShare),
@@ -115,9 +133,12 @@ export function computeLayerDerived(
     rr: round4(rr),
     riskSharePercent: limit.allocationPercent,
     plannedQuantity: qty,
-    plannedCapital: round2(plannedCapital),
-    plannedRiskAmount: round2(plannedRiskAmount),
+    plannedCapital,
+    plannedRiskAmount,
     effectiveStopPrice: stop,
+    potentialProfit,
+    assignedLoss,
+    returnOnCapitalPercent,
   };
 }
 
@@ -212,6 +233,9 @@ export function attachDerivedToLimits(
         plannedQuantity: d.plannedQuantity,
         plannedCapital: d.plannedCapital,
         plannedRiskAmount: d.plannedRiskAmount,
+        potentialProfit: d.potentialProfit,
+        assignedLoss: d.assignedLoss,
+        returnOnCapitalPercent: d.returnOnCapitalPercent,
       },
     };
   });
@@ -270,13 +294,20 @@ export function projectFillStates(input: LayeredRiskComputeInput): LayeredFillSt
       Math.max(0, (input.authorizedRiskAmount * allocationPercent) / 100 - monetaryRisk)
     );
 
+    const potentialProfit = round2(totalReward);
+    const assignedLoss = round2(monetaryRisk);
+    const capital = round2(capitalDeployed);
+    const returnOnCapitalPercent = capital > 0 ? (potentialProfit / capital) * 100 : 0;
+    const profitPerRiskDollar =
+      assignedLoss > 0 ? potentialProfit / assignedLoss : undefined;
+
     projections.push({
       label,
       limitsFilled: end + 1,
       allocationPercent: round2(allocationPercent),
       totalQuantity,
-      capitalDeployed: round2(capitalDeployed),
-      monetaryRisk: round2(monetaryRisk),
+      capitalDeployed: capital,
+      monetaryRisk: assignedLoss,
       averageEntry: round4(averageEntry),
       effectiveStop,
       blendedRR,
@@ -287,6 +318,10 @@ export function projectFillStates(input: LayeredRiskComputeInput): LayeredFillSt
           ? round4(firstPrice - averageEntry)
           : undefined,
       unusedRiskAmount,
+      potentialProfit,
+      assignedLoss,
+      returnOnCapitalPercent,
+      profitPerRiskDollar,
     });
   }
 
@@ -298,6 +333,10 @@ export function projectFillStates(input: LayeredRiskComputeInput): LayeredFillSt
     capitalDeployed: 0,
     monetaryRisk: 0,
     averageEntry: 0,
+    potentialProfit: 0,
+    assignedLoss: 0,
+    returnOnCapitalPercent: 0,
+    profitPerRiskDollar: undefined,
   });
 
   return projections;
@@ -556,7 +595,7 @@ export function formatLayeredRiskSnapshotSection(
       continue;
     }
     lines.push(
-      `fill_state:${s.label} avg=${s.averageEntry} risk$=${s.monetaryRisk} blendedR=${s.blendedRR ?? ""} combinedR=${s.combinedRR ?? s.portfolioRR ?? ""} capital=${s.capitalDeployed} unused_risk=${s.unusedRiskAmount ?? ""}`
+      `fill_state:${s.label} avg=${s.averageEntry} risk$=${s.monetaryRisk} assigned_loss=${s.assignedLoss} potential_profit=${s.potentialProfit} blendedR=${s.blendedRR ?? ""} combinedR=${s.combinedRR ?? s.portfolioRR ?? ""} profit_per_risk$=${s.profitPerRiskDollar ?? ""} capital=${s.capitalDeployed} roc%=${s.returnOnCapitalPercent} unused_risk=${s.unusedRiskAmount ?? ""}`
     );
   }
   lines.push("AI: challenge unsupported stops, poor first-entry R, excessive starter, risk concentration, chase, target manipulation, % that do not represent actual risk.");

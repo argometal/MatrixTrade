@@ -52,6 +52,12 @@ export type LayeredEntryLimitDerived = {
   plannedQuantity: number;
   plannedCapital: number;
   plannedRiskAmount: number;
+  /** Monetary benefit if primary target is reached (not probability-weighted). */
+  potentialProfit?: number;
+  /** Capital lost if effective stop is hit. */
+  assignedLoss?: number;
+  /** potentialProfit / plannedCapital * 100. */
+  returnOnCapitalPercent?: number;
 };
 
 export interface LayeredEntryLimit {

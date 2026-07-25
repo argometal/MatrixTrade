@@ -10,6 +10,8 @@ import {
   type TradeMapNode,
   type TradeMapTone,
 } from "@/lib/plan-levels-board";
+import { FillStateMonetaryMetrics } from "@/app/components/planning-preview/MonetaryMetricsBlock";
+import { formatPotentialR } from "@/lib/scout-monetary-metrics";
 
 const TONE_STYLES: Record<
   TradeMapTone,
@@ -241,18 +243,19 @@ export function PlanLevelsBoard({
     const le = view.layeredEntry;
     if (!le) return [];
     if (le.fillStates?.length) {
-      return le.fillStates
-        .filter((s) => s.limitsFilled > 0)
-        .map((s) => ({
-          title:
-            s.limitsFilled === 1
+      return le.fillStates.map((s) => ({
+        title:
+          s.limitsFilled === 0
+            ? "None fill — no chase"
+            : s.limitsFilled === 1
               ? "Only Starter"
               : s.limitsFilled === le.plan.limits.length
                 ? "All Filled"
                 : s.label.replace(/^L1–L/, "Starter + L"),
-          average: s.averageEntry,
-          rr: s.blendedRR ?? s.combinedRR ?? s.portfolioRR,
-        }));
+        average: s.averageEntry,
+        rr: s.blendedRR ?? s.combinedRR ?? s.portfolioRR,
+        fillState: s,
+      }));
     }
     return le.scenarios
       .filter((s) => s.limitsFilled > 0)
@@ -267,15 +270,21 @@ export function PlanLevelsBoard({
                 : s.label,
           average: s.averageEntry,
           rr,
+          fillState: undefined as undefined,
         };
       });
   })();
 
-  // Friendlier scenario titles when layered roles exist
+  // Friendlier scenario titles when layered roles exist (preserve none-fill label)
   const titledScenarios = scenarioCards.map((card, i, arr) => {
-    if (i === 0) return { ...card, title: "Only Starter" };
-    if (i === arr.length - 1) return { ...card, title: "All Filled" };
-    if (i === 1) return { ...card, title: "Starter + Preferred" };
+    if (card.fillState?.limitsFilled === 0 || card.title.includes("no chase")) return card;
+    const filledCards = arr.filter(
+      (c) => c.fillState === undefined || (c.fillState?.limitsFilled ?? 0) > 0
+    );
+    const filledIndex = filledCards.indexOf(card);
+    if (filledIndex === 0) return { ...card, title: "Only Starter" };
+    if (filledIndex === filledCards.length - 1) return { ...card, title: "All Filled" };
+    if (filledIndex === 1) return { ...card, title: "Starter + Preferred" };
     return card;
   });
 
@@ -407,11 +416,17 @@ export function PlanLevelsBoard({
               >
                 <p className="text-xs font-medium text-zinc-300">{s.title}</p>
                 <p className="mt-1 font-mono text-sm text-zinc-100">
-                  Avg {formatPrice(s.average)}
+                  {s.fillState && s.fillState.limitsFilled === 0
+                    ? "No trade"
+                    : `Avg ${formatPrice(s.average)}`}
                 </p>
-                <p className="mt-0.5 text-xs text-emerald-400/90">
-                  {s.rr !== undefined ? `${s.rr.toFixed(1)}R` : "—"}
-                </p>
+                {s.fillState ? (
+                  <FillStateMonetaryMetrics state={s.fillState} />
+                ) : (
+                  <p className="mt-0.5 text-xs text-emerald-400/90">
+                    R potencial: {formatPotentialR(s.rr)}
+                  </p>
+                )}
               </div>
             ))}
           </div>

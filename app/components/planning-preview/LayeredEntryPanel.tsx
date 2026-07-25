@@ -3,7 +3,6 @@
 import type { TradePlan } from "@/lib/plan-types";
 import type { Playbook } from "@/lib/playbook-types";
 import {
-  buildLayeredEntryScenarios,
   formatLayeredEntrySummary,
   getExecutionExperimentContext,
   getHighestLimitPrice,
@@ -14,7 +13,8 @@ import {
   resolveLayeredExecutionModel,
   type LayeredEntryPlan,
 } from "@/lib/layered-entry-types";
-import { computePlannedRR } from "@/lib/plan-risk";
+import { buildFillStatesForPlan } from "@/lib/scout-monetary-metrics";
+import { FillStateMonetaryMetrics } from "@/app/components/planning-preview/MonetaryMetricsBlock";
 import { ModifiedKellyPanel } from "@/app/components/planning-preview/ModifiedKellyPanel";
 
 function formatPrice(value?: number): string {
@@ -42,7 +42,7 @@ export function LayeredEntryPanel({
   const entry = plan.layeredEntry;
   if (!entry) return null;
 
-  const scenarios = buildLayeredEntryScenarios(entry.limits);
+  const fillStates = buildFillStatesForPlan(plan);
   const highestLimit = getHighestLimitPrice(entry);
   const experiment = getExecutionExperimentContext(playbook);
   const filledCount = entry.limits.filter((l) => l.filled).length;
@@ -65,7 +65,7 @@ export function LayeredEntryPanel({
     >
       <div className="flex flex-wrap items-center gap-2">
         <p className={`font-medium text-teal-200 ${compact ? "text-xs" : "text-sm"}`}>
-          Layered entry · R / risk
+          Layered entry · R potencial / dinero
         </p>
         <LayeredEntryBadge entry={entry} />
         <span className="text-xs text-zinc-500">
@@ -97,15 +97,16 @@ export function LayeredEntryPanel({
       )}
 
       <div className="mt-3 overflow-x-auto">
-        <table className="w-full min-w-[280px] text-left text-xs">
+        <table className="w-full min-w-[420px] text-left text-xs">
           <thead>
             <tr className="text-zinc-500">
               <th className="pb-2 pr-3 font-medium">Role</th>
               <th className="pb-2 pr-3 font-medium">Entry</th>
               <th className="pb-2 pr-3 font-medium">Stop</th>
               <th className="pb-2 pr-3 font-medium">Alloc</th>
-              <th className="pb-2 pr-3 font-medium">Risk $</th>
-              <th className="pb-2 pr-3 font-medium">R</th>
+              <th className="pb-2 pr-3 font-medium">Pérdida asignada</th>
+              <th className="pb-2 pr-3 font-medium">Ganancia potencial</th>
+              <th className="pb-2 pr-3 font-medium">R potencial</th>
               <th className="pb-2 font-medium">Fill</th>
             </tr>
           </thead>
@@ -127,8 +128,13 @@ export function LayeredEntryPanel({
                   {entry.sizingMode === "risk_percent" ? " risk" : " pos"}
                 </td>
                 <td className="py-2 pr-3 tabular-nums text-zinc-500">
-                  {limit.derived?.plannedRiskAmount !== undefined
-                    ? `$${limit.derived.plannedRiskAmount.toFixed(0)}`
+                  {(limit.derived?.assignedLoss ?? limit.derived?.plannedRiskAmount) !== undefined
+                    ? `$${(limit.derived?.assignedLoss ?? limit.derived!.plannedRiskAmount).toFixed(2)}`
+                    : "—"}
+                </td>
+                <td className="py-2 pr-3 tabular-nums text-zinc-500">
+                  {limit.derived?.potentialProfit !== undefined
+                    ? `$${limit.derived.potentialProfit.toFixed(2)}`
                     : "—"}
                 </td>
                 <td className="py-2 pr-3 font-mono text-teal-300/90">
@@ -149,35 +155,28 @@ export function LayeredEntryPanel({
         </table>
       </div>
 
-      {!compact ? (
+      {!compact && fillStates.length > 0 ? (
         <div className="mt-4 rounded-lg border border-zinc-800 bg-zinc-950/50 p-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-            Projected outcomes (same thesis)
+            Escenarios de llenado · R potencial / dinero
           </p>
-          <ul className="mt-2 space-y-1.5 text-xs text-zinc-400">
-            {scenarios.map((scenario) => {
-              const rr =
-                scenario.limitsFilled > 0 &&
-                plan.stopPrice !== undefined &&
-                plan.targetPrice !== undefined
-                  ? computePlannedRR(
-                      scenario.averageEntry,
-                      plan.stopPrice,
-                      plan.targetPrice
-                    )?.rr
-                  : undefined;
-              return (
-                <li key={scenario.label} className="flex flex-wrap justify-between gap-2">
-                  <span>{scenario.label}</span>
+          <p className="mt-1 text-[11px] text-zinc-600">
+            R mide eficiencia; ganancia potencial y pérdida asignada son montos separados.
+          </p>
+          <ul className="mt-3 space-y-3 text-xs text-zinc-400">
+            {fillStates.map((state) => (
+              <li key={state.label} className="rounded-md border border-zinc-800/80 px-2.5 py-2">
+                <div className="flex flex-wrap justify-between gap-2">
+                  <span className="font-medium text-zinc-300">{state.label}</span>
                   <span className="font-mono text-zinc-500">
-                    {scenario.limitsFilled > 0
-                      ? `avg ${formatPrice(scenario.averageEntry)} · ${scenario.capitalPercent}%`
-                      : "no trade"}
-                    {rr !== undefined ? ` · ${rr.toFixed(1)}R` : ""}
+                    {state.limitsFilled > 0
+                      ? `avg ${formatPrice(state.averageEntry)} · ${state.allocationPercent}%`
+                      : "no chase"}
                   </span>
-                </li>
-              );
-            })}
+                </div>
+                <FillStateMonetaryMetrics state={state} />
+              </li>
+            ))}
           </ul>
         </div>
       ) : null}

@@ -344,4 +344,110 @@ assert.equal(DEFAULT_RISK_BUDGET_USD, 100);
   assert.ok((plan.riskUsedAmount ?? 0) <= 100);
 }
 
+// 25-0E: single-layer monetary metrics (entry 350, stop 334, target 450, 6 shares)
+{
+  const input = {
+    limits: [{ price: 350, allocationPercent: 100, stopPrice: 334 }],
+    primaryTargetPrice: 450,
+    authorizedRiskAmount: 96,
+    stopModel: "common" as const,
+    commonStopPrice: 334,
+    sizingMode: "risk_percent" as const,
+    noChase: true,
+  };
+  const derived = computeAllLayerDerived(input);
+  assert.ok(derived[0]);
+  assert.equal(derived[0]!.plannedQuantity, 6);
+  assert.equal(derived[0]!.plannedCapital, 2100);
+  assert.equal(derived[0]!.assignedLoss, 96);
+  assert.equal(derived[0]!.potentialProfit, 600);
+  assert.ok(Math.abs(derived[0]!.rr - 6.25) < 1e-9);
+  assert.ok(Math.abs(derived[0]!.returnOnCapitalPercent - (600 / 2100) * 100) < 1e-9);
+
+  const states = projectFillStates(input);
+  const full = states.find((s) => s.label === "All limits fill" || s.limitsFilled === 1);
+  assert.ok(full);
+  assert.equal(full!.capitalDeployed, 2100);
+  assert.equal(full!.assignedLoss, 96);
+  assert.equal(full!.potentialProfit, 600);
+  assert.equal(full!.monetaryRisk, 96);
+  assert.ok(full!.blendedRR !== undefined && Math.abs(full!.blendedRR! - 6.25) < 1e-4);
+  assert.ok(full!.profitPerRiskDollar !== undefined);
+  assert.ok(Math.abs(full!.profitPerRiskDollar! - 6.25) < 1e-4);
+  assert.ok(Math.abs(full!.returnOnCapitalPercent - 28.57142857142857) < 1e-6);
+
+  const none = states.find((s) => s.limitsFilled === 0);
+  assert.ok(none);
+  assert.equal(none!.capitalDeployed, 0);
+  assert.equal(none!.assignedLoss, 0);
+  assert.equal(none!.potentialProfit, 0);
+  assert.equal(none!.returnOnCapitalPercent, 0);
+  assert.equal(none!.profitPerRiskDollar, undefined);
+}
+
+// 25-0E: partial fill sums only filled layers
+{
+  const input = {
+    limits: [
+      { price: 350, allocationPercent: 50, stopPrice: 334 },
+      { price: 340, allocationPercent: 50, stopPrice: 334 },
+    ],
+    primaryTargetPrice: 450,
+    authorizedRiskAmount: 96,
+    stopModel: "common" as const,
+    commonStopPrice: 334,
+    sizingMode: "risk_percent" as const,
+    noChase: true,
+  };
+  const derived = computeAllLayerDerived(input);
+  const states = projectFillStates(input);
+  const onlyL1 = states.find((s) => s.limitsFilled === 1);
+  assert.ok(onlyL1 && derived[0]);
+  assert.equal(onlyL1!.capitalDeployed, derived[0]!.plannedCapital);
+  assert.equal(onlyL1!.assignedLoss, derived[0]!.assignedLoss);
+  assert.equal(onlyL1!.potentialProfit, derived[0]!.potentialProfit);
+  assert.ok(onlyL1!.assignedLoss < (derived[0]!.assignedLoss + (derived[1]?.assignedLoss ?? 0)));
+
+  const all = states.find((s) => s.label === "All limits fill");
+  assert.ok(all && derived[0] && derived[1]);
+  assert.equal(
+    all!.assignedLoss,
+    Math.round((derived[0]!.assignedLoss + derived[1]!.assignedLoss) * 100) / 100
+  );
+  assert.equal(
+    all!.potentialProfit,
+    Math.round((derived[0]!.potentialProfit + derived[1]!.potentialProfit) * 100) / 100
+  );
+  assert.equal(
+    all!.capitalDeployed,
+    Math.round((derived[0]!.plannedCapital + derived[1]!.plannedCapital) * 100) / 100
+  );
+  // common stop: profitPerRiskDollar matches blended / combined R
+  assert.ok(all!.blendedRR !== undefined && all!.profitPerRiskDollar !== undefined);
+  assert.ok(Math.abs(all!.profitPerRiskDollar! - all!.blendedRR!) < 1e-4);
+}
+
+// 25-0E: position_percent mode also emits monetary fields
+{
+  const states = projectFillStates({
+    limits: [
+      { price: 350, allocationPercent: 40 },
+      { price: 340, allocationPercent: 60 },
+    ],
+    primaryTargetPrice: 450,
+    authorizedRiskAmount: 96,
+    stopModel: "common",
+    commonStopPrice: 334,
+    sizingMode: "position_percent",
+    noChase: true,
+  });
+  const full = states.find((s) => s.label === "All limits fill");
+  assert.ok(full);
+  assert.ok(full!.potentialProfit > 0);
+  assert.ok(full!.assignedLoss > 0);
+  assert.ok(full!.capitalDeployed > 0);
+  assert.ok(full!.returnOnCapitalPercent > 0);
+  assert.ok(full!.profitPerRiskDollar !== undefined);
+}
+
 console.log("test-layered-entry-risk: ok");
