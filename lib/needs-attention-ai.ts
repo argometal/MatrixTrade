@@ -59,6 +59,7 @@ export function classifyNeedsAttentionTaskType(itemId: string): NeedsAttentionTa
   if (itemId.startsWith("playbook-")) return "assign_playbook";
   if (itemId.startsWith("samples-")) return "playbook_samples";
   if (itemId.startsWith("plan-review-")) return "evaluate_expired_plan";
+  if (itemId.startsWith("plan-outcome-sync-")) return "sync_plan_outcome_learning";
   if (itemId.startsWith("plan-ready-")) return "plan_ready_enter";
   if (itemId.startsWith("plan-window-")) return "plan_window_closing";
   if (itemId.startsWith("observation-")) return "closed_missing_observation";
@@ -80,6 +81,8 @@ export function buildNeedsAttentionTaskId(itemId: string): string {
       return "ATTN-INBOX-PROPOSALS";
     case "evaluate_expired_plan":
       return `ATTN-EVALUATE-PLAN-${itemId.replace(/^plan-review-/, "").toUpperCase()}`;
+    case "sync_plan_outcome_learning":
+      return `ATTN-SYNC-PLAN-OUTCOME-${itemId.replace(/^plan-outcome-sync-/, "").toUpperCase()}`;
     case "plan_ready_enter":
       return `ATTN-ENTER-PLAN-${itemId.replace(/^plan-ready-/, "").toUpperCase()}`;
     case "plan_window_closing":
@@ -113,6 +116,8 @@ export function getAllowedApplyBlocksForNeedsAttentionTask(
       return []; // review existing proposals in Control — do not invent a bulk block
     case "evaluate_expired_plan":
       return ["plan-outcome"];
+    case "sync_plan_outcome_learning":
+      return []; // Repair via Planning → Retry Learning Sync (not an Apply block)
     case "plan_ready_enter":
       return ["trade-proposal"];
     case "plan_window_closing":
@@ -142,6 +147,8 @@ export function getNeedsAttentionCompletionCondition(type: NeedsAttentionTaskTyp
       return "No unapplied inbox proposals remain.";
     case "evaluate_expired_plan":
       return "Plan.outcome.recordedAt set via plan-outcome Apply (or Planning Record Outcome). Derived LO/OBS/MAF tasks may remain open independently.";
+    case "sync_plan_outcome_learning":
+      return "plan.outcome.learningSyncStatus=complete and LO/OBS references verify (Planning → Retry Learning Sync). Do not reopen evaluate_expired_plan.";
     case "plan_ready_enter":
       return "Plan left ready (entered) or trade-proposal accepted for this plan.";
     case "plan_window_closing":
@@ -207,6 +214,8 @@ function extractEntityIds(itemId: string, type: NeedsAttentionTaskType): NeedsAt
     return { tradeId: itemId.replace(/^review-/, "").toUpperCase() };
   if (type === "evaluate_expired_plan")
     return { planId: itemId.replace(/^plan-review-/, "").toUpperCase() };
+  if (type === "sync_plan_outcome_learning")
+    return { planId: itemId.replace(/^plan-outcome-sync-/, "").toUpperCase() };
   if (type === "plan_ready_enter")
     return { planId: itemId.replace(/^plan-ready-/, "").toUpperCase() };
   if (type === "plan_window_closing")
@@ -355,8 +364,13 @@ export function buildNeedsAttentionTaskSnapshot(
       outcome: plan.outcome
         ? {
             recordedAt: plan.outcome.recordedAt,
+            outcomeKind: plan.outcome.outcomeKind ?? null,
             reason: plan.outcome.reason ?? null,
             strategyStillValid: plan.outcome.strategyStillValid ?? null,
+            learningSyncStatus: plan.outcome.learningSyncStatus ?? null,
+            learningSyncError: plan.outcome.learningSyncError ?? null,
+            learningOutcomeId: plan.outcome.learningOutcomeId ?? null,
+            observationId: plan.outcome.observationId ?? null,
           }
         : null,
       needsStrategyReview: planNeedsStrategyReview(plan),
@@ -383,6 +397,28 @@ export function buildNeedsAttentionTaskSnapshot(
         value: "plan-outcome",
         source: "Needs Attention contract",
         verified: true,
+      });
+    }
+    if (type === "sync_plan_outcome_learning") {
+      available.push({
+        field: "plan.outcome.learningSyncStatus",
+        value: plan.outcome?.learningSyncStatus ?? "legacy/unset",
+        source: "Plan outcome",
+        verified: plan.outcome?.learningSyncStatus === "complete",
+      });
+      if (plan.outcome?.learningSyncError) {
+        available.push({
+          field: "plan.outcome.learningSyncError",
+          value: plan.outcome.learningSyncError,
+          source: "Plan outcome",
+          verified: false,
+        });
+      }
+      missing.push({
+        field: "learningSyncStatus",
+        reason:
+          "Use Planning → Retry Learning Sync (idempotent). Do not invent Apply JSON or reopen evaluate_expired_plan.",
+        requiredFor: "sync_plan_outcome_learning",
       });
     }
   }
@@ -497,16 +533,26 @@ export function buildNeedsAttentionTaskSnapshot(
         libraryIndex: "Library Index",
       },
     },
-    instructions: [
-      "Respond first with MATRIX TASK DIAGNOSIS (STATUS before any JSON).",
-      "If NEEDS_MECHANICS: ask human to copy the visible block Matrix Mechanics.",
-      "If NEEDS_LIBRARY: ask for Library Index, then one exact Library section.",
-      "If NEEDS_DATA: ask precise factual questions — never invent answers.",
-      "Only when READY with zero unverified assumptions: output ONE Apply-ready JSON block.",
-      "Paste into Control → Apply → Validate → Accept.",
-      "Full global context is available under the visible label: Dashboard snapshot.",
-      "Do not embed or request a duplicate of this entire Dashboard inside the task reply.",
-    ],
+    instructions:
+      type === "sync_plan_outcome_learning"
+        ? [
+            "Respond first with MATRIX TASK DIAGNOSIS (STATUS before any JSON).",
+            "STATUS for this task is typically READY for human repair — not Apply JSON.",
+            "Tell the human to open Planning and use Retry Learning Sync for this planId.",
+            "Do not invent a new Apply block. Do not reopen evaluate_expired_plan (outcome.recordedAt already exists).",
+            "Do not invent LO/OBS fields, prices, or fills.",
+            "Full global context is available under the visible label: Dashboard snapshot.",
+          ]
+        : [
+            "Respond first with MATRIX TASK DIAGNOSIS (STATUS before any JSON).",
+            "If NEEDS_MECHANICS: ask human to copy the visible block Matrix Mechanics.",
+            "If NEEDS_LIBRARY: ask for Library Index, then one exact Library section.",
+            "If NEEDS_DATA: ask precise factual questions — never invent answers.",
+            "Only when READY with zero unverified assumptions: output ONE Apply-ready JSON block.",
+            "Paste into Control → Apply → Validate → Accept.",
+            "Full global context is available under the visible label: Dashboard snapshot.",
+            "Do not embed or request a duplicate of this entire Dashboard inside the task reply.",
+          ],
   };
 }
 
@@ -528,6 +574,8 @@ function describeSourceCondition(
       return "Pending unapplied inbox proposals exist";
     case "evaluate_expired_plan":
       return `Plan ${plan?.id ?? "?"} is ${plan?.status ?? "terminal"} without outcome.recordedAt`;
+    case "sync_plan_outcome_learning":
+      return `Plan ${plan?.id ?? "?"} has outcome.recordedAt but Learning sync is pending/failed or LO/OBS links are inconsistent`;
     case "plan_ready_enter":
       return `Plan ${plan?.id ?? "?"} status is ready`;
     case "plan_window_closing":

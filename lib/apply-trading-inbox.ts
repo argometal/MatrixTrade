@@ -57,8 +57,16 @@ export type ApplyTradingProposalResult =
       trade?: Trade;
       playbook?: Playbook;
       alreadyApplied?: boolean;
+      learningSyncComplete?: boolean;
     }
-  | { ok: false; errors: string[] };
+  | {
+      ok: false;
+      errors: string[];
+      /** Plan outcome (or similar) persisted but a follow-on sync failed. */
+      partial?: boolean;
+      planId?: string;
+      type?: TradingProposalType;
+    };
 
 function resultFromAppliedRecord(
   record: { result: { message: string; type: string; tradeId?: string; playbookId?: string; stockFileId?: string; planId?: string } },
@@ -363,13 +371,27 @@ async function applyPlanOutcomeBlock(
   parsed: TradingInboxPayload
 ): Promise<ApplyTradingProposalResult> {
   const result = await applyPlanOutcomeProposal(parsed.proposal);
+  if (result.partialFailure) {
+    return {
+      ok: false,
+      partial: true,
+      planId: result.plan?.id,
+      type: "plan-outcome",
+      errors: result.errors?.length
+        ? result.errors
+        : [
+            "Plan outcome persisted; Learning synchronization failed and requires repair.",
+          ],
+    };
+  }
   if (result.errors?.length) return { ok: false, errors: result.errors };
   const plan = result.plan;
   return {
     ok: true,
-    message: `Recorded plan outcome ${plan?.id ?? ""} · ${plan?.outcome?.outcomeKind ?? plan?.outcome?.status ?? "recorded"} · realizedR ${plan?.outcome?.realizedResultR ?? 0} · counterfactualR ${plan?.outcome?.theoreticalResultR ?? "—"}`,
+    message: `Recorded plan outcome ${plan?.id ?? ""} · ${plan?.outcome?.outcomeKind ?? plan?.outcome?.status ?? "recorded"} · realizedR ${plan?.outcome?.realizedResultR ?? 0} · counterfactualR ${plan?.outcome?.theoreticalResultR ?? "—"} · learning sync complete`,
     type: "plan-outcome",
     planId: plan?.id,
+    learningSyncComplete: true,
   };
 }
 

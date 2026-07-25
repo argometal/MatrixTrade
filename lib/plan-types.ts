@@ -4,6 +4,7 @@ import type { FamilyBEntryAssessment } from "./family-b-types";
 import type { Probe } from "./scout-probe-types";
 import type {
   ExecutionReadinessState,
+  LearningSyncStatus,
   NonExecutionReason,
   PlanOutcomeEvidenceStatus,
   PlanOutcomeKind,
@@ -105,6 +106,12 @@ export interface PlanOutcome {
   evidenceRefs?: string[];
   createdBy?: string;
   updatedAt?: string;
+  /** Learning sync durability (plan → LO → OBS). */
+  learningSyncStatus?: LearningSyncStatus;
+  learningSyncError?: string;
+  learningSyncAttemptedAt?: string;
+  learningOutcomeId?: string;
+  observationId?: string;
   /** Legacy fields. */
   reason?: PlanFailReason;
   strategyStillValid?: boolean;

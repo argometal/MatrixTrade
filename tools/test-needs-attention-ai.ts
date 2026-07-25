@@ -95,6 +95,7 @@ const idCases: Array<[string, string, string]> = [
   ["incomplete-closed", "incomplete_closed_aggregate", "ATTN-INCOMPLETE-CLOSED"],
   ["inbox", "apply_inbox", "ATTN-INBOX-PROPOSALS"],
   ["plan-review-PLAN-001", "evaluate_expired_plan", "ATTN-EVALUATE-PLAN-PLAN-001"],
+  ["plan-outcome-sync-PLAN-001", "sync_plan_outcome_learning", "ATTN-SYNC-PLAN-OUTCOME-PLAN-001"],
   ["plan-ready-PLAN-READY", "plan_ready_enter", "ATTN-ENTER-PLAN-PLAN-READY"],
   ["plan-window-PLAN-WINDOW", "plan_window_closing", "ATTN-PLAN-WINDOW-PLAN-WINDOW"],
   ["observation-H003", "closed_missing_observation", "ATTN-OBSERVATION-H003"],
@@ -124,8 +125,13 @@ assert.deepEqual(getAllowedApplyBlocksForNeedsAttentionTask("missing_attribution
 assert.deepEqual(getAllowedApplyBlocksForNeedsAttentionTask("evaluate_expired_plan"), [
   "plan-outcome",
 ]);
+assert.deepEqual(
+  getAllowedApplyBlocksForNeedsAttentionTask("sync_plan_outcome_learning"),
+  []
+);
 assert.deepEqual(getAllowedApplyBlocksForNeedsAttentionTask("playbook_samples"), []);
 assert.equal(getNeedsAttentionSnapshotSupport("evaluate_expired_plan"), "SUPPORTED");
+assert.equal(getNeedsAttentionSnapshotSupport("sync_plan_outcome_learning"), "SUPPORTED");
 assert.equal(getNeedsAttentionSnapshotSupport("monthly_loss_limit"), "UNSUPPORTED");
 assert.equal(getNeedsAttentionSnapshotSupport("assign_playbook"), "SUPPORTED");
 

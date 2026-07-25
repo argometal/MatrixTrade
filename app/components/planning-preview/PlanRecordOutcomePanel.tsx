@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { recordPlanOutcomeAction } from "@/app/actions";
+import {
+  recordPlanOutcomeAction,
+  retryPlanOutcomeLearningSyncAction,
+} from "@/app/actions";
 import {
   AUTOMATIC_EXECUTION_ENABLED,
   NON_EXECUTION_REASONS,
@@ -14,7 +17,11 @@ import type { TradePlan } from "@/lib/plan-types";
 export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(Boolean(plan.outcome?.recordedAt));
+  const [done, setDone] = useState(
+    Boolean(
+      plan.outcome?.recordedAt && plan.outcome.learningSyncStatus === "complete"
+    )
+  );
   const [outcomeKind, setOutcomeKind] = useState<string>("unexecuted_plan_loss");
   const [entryReached, setEntryReached] = useState(true);
   const [stopBeforeTarget, setStopBeforeTarget] = useState(true);
@@ -27,11 +34,20 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
     return deriveUnexecutedPlanLossServerValues(plan);
   }, [plan, outcomeKind]);
 
-  if (done && plan.outcome?.recordedAt) {
+  const syncNeedsRepair =
+    Boolean(plan.outcome?.recordedAt) &&
+    (plan.outcome?.learningSyncStatus === "pending" ||
+      plan.outcome?.learningSyncStatus === "failed");
+
+  if (
+    (done || plan.outcome?.learningSyncStatus === "complete") &&
+    plan.outcome?.recordedAt &&
+    !syncNeedsRepair
+  ) {
     return (
       <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-3 py-2 text-xs text-emerald-200">
         Outcome recorded · {plan.outcome.outcomeKind ?? plan.outcome.status ?? "legacy"} ·
-        realizedR {plan.outcome.realizedResultR ?? 0}
+        learning sync complete · realizedR {plan.outcome.realizedResultR ?? 0}
         {plan.outcome.theoreticalResultR !== undefined &&
         plan.outcome.theoreticalResultR !== null
           ? ` · counterfactualR ${plan.outcome.theoreticalResultR}`
@@ -40,6 +56,53 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
         plan.outcome.counterfactualDollarResult !== null
           ? ` · counterfactual$ ${plan.outcome.counterfactualDollarResult}`
           : " · counterfactual$ unavailable"}
+      </div>
+    );
+  }
+
+  if (syncNeedsRepair) {
+    return (
+      <div className="space-y-3 rounded-xl border border-rose-500/40 bg-rose-950/20 p-4 text-sm">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-rose-200">
+            Learning sync repair · {plan.id}
+          </p>
+          <p className="mt-1 text-xs text-zinc-400">
+            Plan outcome is persisted (evaluate_expired_plan stays closed). Learning Outcome /
+            Observation synchronization is{" "}
+            <span className="text-rose-200">
+              {plan.outcome?.learningSyncStatus ?? "pending"}
+            </span>
+            .
+            {plan.outcome?.learningSyncError
+              ? ` Error: ${plan.outcome.learningSyncError}`
+              : ""}
+          </p>
+          <p className="mt-1 text-xs text-zinc-500">
+            Execution path remains: approved → armed → alert → human confirmation → submitted.
+            Armed is not transmitted (automaticExecutionEnabled=
+            {String(AUTOMATIC_EXECUTION_ENABLED)}).
+          </p>
+        </div>
+        {error ? <p className="text-xs text-red-300">{error}</p> : null}
+        <button
+          type="button"
+          disabled={pending}
+          className="rounded-lg bg-rose-600/80 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
+          onClick={() => {
+            setError(null);
+            startTransition(async () => {
+              const result = await retryPlanOutcomeLearningSyncAction(plan.id);
+              if (result.error) {
+                setError(result.error);
+                return;
+              }
+              setDone(true);
+            });
+          }}
+        >
+          {pending ? "Retrying…" : "Retry Learning Sync"}
+        </button>
       </div>
     );
   }

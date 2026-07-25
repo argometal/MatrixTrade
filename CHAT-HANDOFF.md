@@ -80,6 +80,13 @@ Thesis failure **solo** tras MAF `thesis_quality=failure`.
 
 `outcomeKind: duplicate_creation` · `excludedFromMetrics=true` · fuera de denominadores.
 
+### Learning sync durability
+
+Plan outcome → LO → OBS uses `syncPlanOutcomeLearning` (idempotent).  
+`learningSyncStatus`: `pending` | `complete` | `failed`.  
+Partial Apply failure is visible; repair via Needs Attention `sync_plan_outcome_learning` / Planning **Retry Learning Sync**.  
+Does **not** reopen `evaluate_expired_plan` once `recordedAt` exists.
+
 ### Deuda restante (no UPL)
 
 - `scout-plan-create`: hoy solo **warn** si hay plan activo; falta reject/fingerprint de clones idénticos.
