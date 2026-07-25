@@ -747,6 +747,60 @@ export function removeContent(state: Af03RepoState, id: string): Af03RepoState {
   return next;
 }
 
+/**
+ * Permanently delete a Chaos Deck and its Fragments/Blocks.
+ * Asset blobs in IndexedDB are left for later GC (metadata refs drop with blocks).
+ */
+export function deleteDeck(state: Af03RepoState, deckId: string): Af03RepoState {
+  const deck = getDeck(state, deckId);
+  if (!deck) return state;
+  const fragmentIds = new Set(
+    state.items.filter((i) => i.deckId === deckId).map((i) => i.id)
+  );
+  const next: Af03RepoState = {
+    ...state,
+    decks: state.decks.filter((d) => d.id !== deckId),
+    items: state.items.filter((i) => i.deckId !== deckId),
+    blocks: (state.blocks ?? []).filter((b) => !fragmentIds.has(b.fragmentId)),
+    assets: state.assets ?? [],
+  };
+  writeRepo(next);
+  return next;
+}
+
+/**
+ * Permanently delete a Realm (folder) subtree: child Realms, Decks, Fragments, Blocks.
+ */
+export function deleteFolder(state: Af03RepoState, folderId: string): Af03RepoState {
+  if (!getFolder(state, folderId)) return state;
+  const folderIds = new Set<string>();
+  const walk = (fid: string) => {
+    folderIds.add(fid);
+    state.folders.filter((f) => f.parentId === fid).forEach((f) => walk(f.id));
+  };
+  walk(folderId);
+
+  const deckIds = new Set(
+    state.decks
+      .filter((d) => d.folderId != null && folderIds.has(d.folderId))
+      .map((d) => d.id)
+  );
+  const fragmentIds = new Set(
+    state.items.filter((i) => deckIds.has(i.deckId)).map((i) => i.id)
+  );
+
+  const next: Af03RepoState = {
+    ...state,
+    folders: state.folders.filter((f) => !folderIds.has(f.id)),
+    decks: state.decks.filter((d) => !deckIds.has(d.id)),
+    items: state.items.filter((i) => !fragmentIds.has(i.id)),
+    blocks: (state.blocks ?? []).filter((b) => !fragmentIds.has(b.fragmentId)),
+    assets: state.assets ?? [],
+  };
+  writeRepo(next);
+  return next;
+}
+
 export function moveContentOrder(
   state: Af03RepoState,
   id: string,

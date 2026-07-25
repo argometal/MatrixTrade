@@ -31,6 +31,8 @@ import {
   archiveFolder,
   createDeck,
   createFolder,
+  deleteDeck,
+  deleteFolder,
   emptyOrSeedRepo,
   formatRelativeAgo,
   getFolder,
@@ -441,6 +443,15 @@ export function HomeExplorer() {
                     setState(archiveFolder(state, folder.id));
                     setMenuId(null);
                   }}
+                  onDelete={() => {
+                    const ok = window.confirm(
+                      `Delete Realm “${folder.title}” and everything inside (child Realms, Decks, Fragments)? This cannot be undone.`
+                    );
+                    if (!ok) return;
+                    setState(deleteFolder(state, folder.id));
+                    setMenuId(null);
+                    if (realmId === folder.id) pushParams({ realmId: null });
+                  }}
                 />
               ))}
               {decks.map((deck) => (
@@ -465,6 +476,14 @@ export function HomeExplorer() {
                     setMenuId(null);
                   }}
                   onMove={() => moveDeck(deck)}
+                  onDelete={() => {
+                    const ok = window.confirm(
+                      `Delete Chaos Deck “${deck.title}” and all its Fragments/Blocks? This cannot be undone.`
+                    );
+                    if (!ok) return;
+                    setState(deleteDeck(state, deck.id));
+                    setMenuId(null);
+                  }}
                 />
               ))}
             </ul>
@@ -529,6 +548,7 @@ function RealmRow(props: {
   onChildRealm: () => void;
   onChildDeck: () => void;
   onArchive: () => void;
+  onDelete: () => void;
 }) {
   const { folder } = props;
   return (
@@ -571,6 +591,7 @@ function RealmRow(props: {
             {folder.view === "active" ? (
               <MenuItem label="Archive" onClick={props.onArchive} />
             ) : null}
+            <MenuItem label="Delete…" onClick={props.onDelete} danger />
           </div>
         ) : null}
       </div>
@@ -587,6 +608,7 @@ function DeckExplorerRow(props: {
   onArchive: () => void;
   onRestore: () => void;
   onMove: () => void;
+  onDelete: () => void;
 }) {
   const signals = deckBuilderSignals(props.state, props.deck);
   const alex = alexandriaStatusLabel(signals.alexandriaStatus);
@@ -640,6 +662,7 @@ function DeckExplorerRow(props: {
             ) : (
               <MenuItem label="Restore to Active" onClick={props.onRestore} />
             )}
+            <MenuItem label="Delete…" onClick={props.onDelete} danger />
           </div>
         ) : null}
       </div>
@@ -647,12 +670,22 @@ function DeckExplorerRow(props: {
   );
 }
 
-function MenuItem({ label, onClick }: { label: string; onClick: () => void }) {
+function MenuItem({
+  label,
+  onClick,
+  danger,
+}: {
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
   return (
     <button
       type="button"
       role="menuitem"
-      className="block w-full px-3 py-2.5 text-left text-sm text-zinc-200 hover:bg-zinc-800"
+      className={`block w-full px-3 py-2.5 text-left text-sm hover:bg-zinc-800 ${
+        danger ? "text-rose-300" : "text-zinc-200"
+      }`}
       onClick={onClick}
     >
       {label}
