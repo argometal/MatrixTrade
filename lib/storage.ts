@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { computeExperiment } from "./calculate";
+import { applyLegacyLinkPatchFromProposal } from "./legacy-trade-completion";
 import { createPostStopStudyFromTrade } from "./post-stop-study";
 import { computeMonthlyRisk, type MonthlyRisk } from "./monthly-risk";
 import { readNoteBody, resolveVaultPath } from "./obsidian";
@@ -204,6 +205,11 @@ export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Tr
   const status = input.status ?? "pending";
   const now = new Date().toISOString();
 
+  const legacyLinks = applyLegacyLinkPatchFromProposal(
+    {},
+    { playbookId: input.playbookId, planId: input.planId }
+  );
+
   const trade: Trade = enrichTrade(
     {
       id,
@@ -214,7 +220,8 @@ export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Tr
       shares: input.shares,
       status,
       setupId: input.setupId?.trim() || undefined,
-      playbookId: input.playbookId?.trim() || undefined,
+      playbookId: legacyLinks.playbookId,
+      playbookHistoricallyAbsent: legacyLinks.playbookHistoricallyAbsent,
       setup: input.setup?.trim() || undefined,
       direction: input.direction,
       plannedRisk: input.plannedRisk,
@@ -225,7 +232,8 @@ export async function createTrade(input: CreateTradeInput): Promise<{ trade?: Tr
       psychology: input.psychology,
       lessons: input.lessons,
       notes: input.notes,
-      planId: input.planId?.trim().toUpperCase() || undefined,
+      planId: legacyLinks.planId,
+      planHistoricallyAbsent: legacyLinks.planHistoricallyAbsent,
       openedAt: status === "open" ? now : undefined,
       createdAt: now,
     },
@@ -386,14 +394,17 @@ export async function updateTradeMeta(
     return { errors: ["Trade not found."] };
   }
 
-  const playbookIdRaw = input.playbookId;
+  const legacyLinks = applyLegacyLinkPatchFromProposal(trade, {
+    playbookId: input.playbookId,
+    planId: input.planId,
+  });
   const updated = enrichTrade(
     {
       ...trade,
-      playbookId:
-        playbookIdRaw === "" || playbookIdRaw === "__none__"
-          ? undefined
-          : playbookIdRaw?.trim() || trade.playbookId,
+      playbookId: legacyLinks.playbookId,
+      playbookHistoricallyAbsent: legacyLinks.playbookHistoricallyAbsent,
+      planId: legacyLinks.planId,
+      planHistoricallyAbsent: legacyLinks.planHistoricallyAbsent,
       setup: input.setup !== undefined ? input.setup.trim() || undefined : trade.setup,
       setupId:
         input.setupId === "" || input.setupId === "__none__"
@@ -489,6 +500,11 @@ export async function updateTrade(
     }
   }
 
+  const legacyLinks = applyLegacyLinkPatchFromProposal(trade, {
+    playbookId: input.playbookId,
+    planId: input.planId,
+  });
+
   const updated = enrichTrade(
     {
       ...trade,
@@ -503,20 +519,10 @@ export async function updateTrade(
       psychology: input.psychology !== undefined ? String(input.psychology) : trade.psychology,
       lessons: input.lessons !== undefined ? String(input.lessons) : trade.lessons,
       notes: input.notes !== undefined ? String(input.notes) : trade.notes,
-      planId:
-        input.planId === "" || input.planId === "__none__"
-          ? undefined
-          : input.planId !== undefined
-            ? // Persist __LEGACY_NONE__ as historical-absence sentinel (do not invent PLAN-xxx).
-              String(input.planId).trim().toUpperCase() || undefined
-            : trade.planId,
-      playbookId:
-        input.playbookId === "" || input.playbookId === "__none__"
-          ? undefined
-          : input.playbookId !== undefined
-            ? // Persist __legacy_none__ as historical-absence sentinel.
-              String(input.playbookId).trim() || undefined
-            : trade.playbookId,
+      planId: legacyLinks.planId,
+      planHistoricallyAbsent: legacyLinks.planHistoricallyAbsent,
+      playbookId: legacyLinks.playbookId,
+      playbookHistoricallyAbsent: legacyLinks.playbookHistoricallyAbsent,
       setupId:
         input.setupId === "" || input.setupId === "__none__"
           ? undefined

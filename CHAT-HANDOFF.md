@@ -81,8 +81,9 @@ Por eso Apply responde **unsupported**.
 
 **Shipped:** Mechanics no pide `Control → Train AI`.  
 SCHEMA-FIRST → **Control → MTA Mechanics → Apply schema contract**.  
-Legacy ATTN-INCOMPLETE-CLOSED: `playbookId=__legacy_none__` · `planId=__LEGACY_NONE__` (no inventar vínculos).  
-Test: `npm run test:legacy-trade-completion` · doc: `md/matrix/snapshot-label-fix-25-08.md`.
+Legacy ATTN-INCOMPLETE-CLOSED: Apply `playbookId=__legacy_none__` · `planId=__LEGACY_NONE__`  
+→ server guarda `playbook_id/plan_id=null` + flags `*HistoricallyAbsent` (FK-safe; 25-F8).  
+SQL: `supabase/trade-legacy-absence.sql`. Test: `npm run test:legacy-trade-completion`.
 
 ---
 

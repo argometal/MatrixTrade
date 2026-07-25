@@ -152,8 +152,9 @@ export function buildMatrixMechanicsBrief(): string {
     "LEGACY CLOSED TRADE COMPLETION (ATTN-INCOMPLETE-CLOSED)",
     "Evidence: /trades/{ID} forensic snapshot — not a Control section.",
     "needs_review → trade-review. Learning gaps → trade-update.",
-    "Historical absence (never invent links): playbookId=__legacy_none__ · planId=__LEGACY_NONE__.",
-    "null/omit/__none__ leave gaps open. Reconstructed thesis → prefix [reconstructed]. riskRewardPlanned = number from human math.",
+    "Historical absence (never invent links): Apply playbookId=__legacy_none__ · planId=__LEGACY_NONE__.",
+    "Server stores playbook_id/plan_id=null + historicallyAbsent flags (FK-safe). null/omit/__none__ leave gaps open.",
+    "Reconstructed thesis → prefix [reconstructed]. riskRewardPlanned = number from human math.",
     "Also set lossClassification + postStopStudy (min: enabled, durationDays, startedAt, endsAt, originalTradeId, originalEntry).",
     "Full field contract lives inside Apply schema contract (Legacy Trade Completion section).",
 

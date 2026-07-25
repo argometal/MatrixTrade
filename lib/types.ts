@@ -39,10 +39,20 @@ export interface Trade {
   exitReason?: TradeExitReason;
   /** Linked scout plan (PLAN-xxx) when spawned from scouting. */
   planId?: string;
+  /**
+   * Documented historical absence of a Scout PLAN (Apply sentinel `__LEGACY_NONE__`).
+   * playbook/plan FK columns stay null — this flag clears the incomplete-closed gap.
+   */
+  planHistoricallyAbsent?: boolean;
   /** Legacy setup tag — data/setups.json */
   setupId?: string;
   /** Playbook lab — data/playbooks.json */
   playbookId?: string;
+  /**
+   * Documented historical absence of a Playbook (Apply sentinel `__legacy_none__`).
+   * `playbook_id` stays null for FK safety — this flag clears the incomplete-closed gap.
+   */
+  playbookHistoricallyAbsent?: boolean;
   /** Free-text setup note (optional) */
   setup?: string;
   direction?: TradeDirection;
@@ -116,6 +126,7 @@ export interface Experiment {
 
 export interface TradeMetaInput {
   playbookId?: string;
+  planId?: string;
   setup?: string;
   direction?: TradeDirection;
   plannedRisk?: number;

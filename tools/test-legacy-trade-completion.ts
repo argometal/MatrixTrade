@@ -23,6 +23,7 @@ import {
   getAllowedApplyBlocksForNeedsAttentionTask,
   getNeedsAttentionCompletionCondition,
 } from "../lib/needs-attention-ai";
+import { tradeToRow } from "../lib/trades-store/mapping";
 import type { Trade } from "../lib/types";
 
 // ---------------------------------------------------------------------------
@@ -131,8 +132,10 @@ import type { Trade } from "../lib/types";
     reviewedAt: "2026-07-11T00:00:00.000Z",
   };
 
-  assert.equal(next.playbookId, LEGACY_ABSENT_PLAYBOOK_ID);
-  assert.equal(next.planId, LEGACY_ABSENT_PLAN_ID);
+  assert.equal(next.playbookId, undefined);
+  assert.equal(next.planId, undefined);
+  assert.equal(next.playbookHistoricallyAbsent, true);
+  assert.equal(next.planHistoricallyAbsent, true);
   assert.deepEqual(classifyIncompleteClosedTrade(next), []);
   assert.equal(
     listIncompleteClosedTrades([next]).length,
@@ -176,7 +179,34 @@ import type { Trade } from "../lib/types";
     playbookId: LEGACY_ABSENT_PLAYBOOK_ID,
     planId: LEGACY_ABSENT_PLAN_ID,
   });
+  assert.equal(withSentinels.playbookId, undefined);
+  assert.equal(withSentinels.planId, undefined);
+  assert.equal(withSentinels.playbookHistoricallyAbsent, true);
+  assert.equal(withSentinels.planHistoricallyAbsent, true);
   assert.deepEqual(classifyIncompleteClosedTrade(withSentinels), []);
+}
+
+// ---------------------------------------------------------------------------
+// 4. Row mapping never writes sentinels into playbook_id / plan_id
+// ---------------------------------------------------------------------------
+{
+  const row = tradeToRow({
+    id: "H002",
+    ticker: "GOOGL",
+    entry: 100,
+    stop: 90,
+    shares: 1,
+    status: "closed",
+    createdAt: "2026-07-01T00:00:00.000Z",
+    playbookId: LEGACY_ABSENT_PLAYBOOK_ID,
+    planId: LEGACY_ABSENT_PLAN_ID,
+    playbookHistoricallyAbsent: true,
+    planHistoricallyAbsent: true,
+  } as Trade);
+  assert.equal(row.playbook_id, null);
+  assert.equal(row.plan_id, null);
+  assert.equal(row.playbook_historically_absent, true);
+  assert.equal(row.plan_historically_absent, true);
 }
 
 console.log("test-legacy-trade-completion: ok");

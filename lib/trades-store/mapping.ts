@@ -1,4 +1,9 @@
 import type { PostStopStudy, LossClassification } from "../asymmetry-types";
+import {
+  isLegacyAbsentPlanId,
+  isLegacyAbsentPlaybookId,
+  normalizeLegacyTradeLinks,
+} from "../legacy-trade-completion";
 import type { MistakeType, Trade, TradeDirection, TradeStatus } from "../types";
 
 /** Fields computed at load time — never persisted. */
@@ -20,6 +25,9 @@ export interface TradeRow {
   closed_at: string | null;
   setup_id: string | null;
   playbook_id: string | null;
+  plan_id: string | null;
+  playbook_historically_absent: boolean | null;
+  plan_historically_absent: boolean | null;
   setup: string | null;
   direction: TradeDirection | null;
   planned_risk: number | string | null;
@@ -53,7 +61,37 @@ function str(value: string | null | undefined): string | undefined {
   return trimmed || undefined;
 }
 
+function bool(value: boolean | null | undefined): boolean | undefined {
+  if (value === null || value === undefined) return undefined;
+  return Boolean(value);
+}
+
+/** Never write Apply sentinels into FK / link columns. */
+function sanitizePlaybookIdForRow(value: string | undefined): string | null {
+  if (!value || isLegacyAbsentPlaybookId(value) || value === "__none__") return null;
+  return value;
+}
+
+function sanitizePlanIdForRow(value: string | undefined): string | null {
+  if (!value || isLegacyAbsentPlanId(value) || value === "__none__") return null;
+  return value;
+}
+
 export function tradeRowToTrade(row: TradeRow): Trade {
+  const rawPlaybook = str(row.playbook_id);
+  const rawPlan = str(row.plan_id);
+  const fromFlags = {
+    playbookHistoricallyAbsent: bool(row.playbook_historically_absent),
+    planHistoricallyAbsent: bool(row.plan_historically_absent),
+  };
+  // Recover if an older build wrote sentinels into the columns before 25-F8.
+  const recovered = normalizeLegacyTradeLinks({
+    playbookId: rawPlaybook,
+    planId: rawPlan,
+    playbookHistoricallyAbsent: fromFlags.playbookHistoricallyAbsent,
+    planHistoricallyAbsent: fromFlags.planHistoricallyAbsent,
+  });
+
   return {
     id: row.id.toUpperCase(),
     ticker: row.ticker.toUpperCase(),
@@ -66,7 +104,10 @@ export function tradeRowToTrade(row: TradeRow): Trade {
     createdAt: row.created_at,
     closedAt: row.closed_at ?? undefined,
     setupId: str(row.setup_id),
-    playbookId: str(row.playbook_id),
+    playbookId: recovered.playbookId,
+    playbookHistoricallyAbsent: recovered.playbookHistoricallyAbsent || undefined,
+    planId: recovered.planId,
+    planHistoricallyAbsent: recovered.planHistoricallyAbsent || undefined,
     setup: str(row.setup),
     direction: row.direction ?? undefined,
     plannedRisk: num(row.planned_risk),
@@ -91,6 +132,12 @@ export function tradeRowToTrade(row: TradeRow): Trade {
 
 export function tradeToRow(trade: Trade): TradeRow {
   const stored = stripComputedTradeFields(trade);
+  const links = normalizeLegacyTradeLinks({
+    playbookId: stored.playbookId,
+    planId: stored.planId,
+    playbookHistoricallyAbsent: stored.playbookHistoricallyAbsent,
+    planHistoricallyAbsent: stored.planHistoricallyAbsent,
+  });
   return {
     id: stored.id.toUpperCase(),
     ticker: stored.ticker.toUpperCase(),
@@ -103,7 +150,10 @@ export function tradeToRow(trade: Trade): TradeRow {
     created_at: stored.createdAt,
     closed_at: stored.closedAt ?? null,
     setup_id: stored.setupId ?? null,
-    playbook_id: stored.playbookId ?? null,
+    playbook_id: sanitizePlaybookIdForRow(links.playbookId),
+    plan_id: sanitizePlanIdForRow(links.planId),
+    playbook_historically_absent: links.playbookHistoricallyAbsent,
+    plan_historically_absent: links.planHistoricallyAbsent,
     setup: stored.setup ?? null,
     direction: stored.direction ?? null,
     planned_risk: stored.plannedRisk ?? null,
@@ -135,11 +185,51 @@ export function tradeToRowWithoutLearningExtensions(
   return base;
 }
 
+/** Row without plan_id / historically_absent columns (pre–25-F8 schema). Keeps learning cols. */
+export function tradeToRowWithoutLegacyAbsenceColumns(
+  trade: Trade
+): Omit<TradeRow, "plan_id" | "playbook_historically_absent" | "plan_historically_absent"> {
+  const row = tradeToRow(trade);
+  const {
+    plan_id: _plan,
+    playbook_historically_absent: _pha,
+    plan_historically_absent: _pla,
+    ...base
+  } = row;
+  return base;
+}
+
+/** Most-compatible row: no learning cols and no legacy-absence cols. */
+export function tradeToRowCoreOnly(
+  trade: Trade
+): Omit<
+  TradeRow,
+  | "loss_classification"
+  | "post_stop_study"
+  | "plan_id"
+  | "playbook_historically_absent"
+  | "plan_historically_absent"
+> {
+  const row = tradeToRowWithoutLegacyAbsenceColumns(trade);
+  const { loss_classification: _l, post_stop_study: _p, ...base } = row;
+  return base;
+}
+
 export function isMissingLearningColumnError(message: string): boolean {
   const lower = message.toLowerCase();
   return (
     lower.includes("loss_classification") ||
     lower.includes("post_stop_study") ||
+    (lower.includes("schema cache") && lower.includes("column"))
+  );
+}
+
+export function isMissingLegacyAbsenceColumnError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("playbook_historically_absent") ||
+    lower.includes("plan_historically_absent") ||
+    lower.includes("plan_id") ||
     (lower.includes("schema cache") && lower.includes("column"))
   );
 }
