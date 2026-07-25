@@ -1,7 +1,10 @@
 import { promises as fs } from "fs";
 import path from "path";
 import type { LearningOutcome } from "../learning-outcome-types";
-import { resolveLearningOutcomeUpsert } from "./merge";
+import {
+  resolveExistingLearningOutcome,
+  resolveLearningOutcomeUpsert,
+} from "./merge";
 import type { LearningOutcomesStore } from "./types";
 
 function learningOutcomesJsonPath(): string {
@@ -30,7 +33,14 @@ export async function readLearningOutcomesJsonFile(): Promise<LearningOutcome[]>
   }
 }
 
-function findCanonical(
+function findById(
+  all: LearningOutcome[],
+  id: string
+): LearningOutcome | undefined {
+  return all.find((x) => x.id.toUpperCase() === id.toUpperCase());
+}
+
+function findByBusinessIdentity(
   all: LearningOutcome[],
   row: LearningOutcome
 ): LearningOutcome | undefined {
@@ -49,15 +59,6 @@ function findCanonical(
   return undefined;
 }
 
-function findExisting(
-  all: LearningOutcome[],
-  row: LearningOutcome
-): LearningOutcome | undefined {
-  const byIdentity = findCanonical(all, row);
-  if (byIdentity) return byIdentity;
-  return all.find((x) => x.id.toUpperCase() === row.id.toUpperCase());
-}
-
 async function writeAll(all: LearningOutcome[]): Promise<void> {
   const file = learningOutcomesJsonPath();
   all.sort((a, b) => a.id.localeCompare(b.id));
@@ -71,8 +72,15 @@ export function createJsonLearningOutcomesStore(): LearningOutcomesStore {
     async upsert(row) {
       assertJsonLearningOutcomeWritesAllowed();
       const all = await readLearningOutcomesJsonFile();
-      const existing = findExisting(all, row);
-      const resolved = resolveLearningOutcomeUpsert(existing, row);
+      const existingById = findById(all, row.id);
+      const existingByIdentity = findByBusinessIdentity(all, row);
+      // Collision / target resolution before any file mutation.
+      const target = resolveExistingLearningOutcome({
+        incoming: row,
+        existingById,
+        existingByIdentity,
+      });
+      const resolved = resolveLearningOutcomeUpsert(target.existing, row);
 
       if (resolved.action === "insert") {
         all.push(resolved.row);
@@ -89,15 +97,6 @@ export function createJsonLearningOutcomesStore(): LearningOutcomesStore {
       );
       if (idx >= 0) all[idx] = resolved.row;
       else all.push(resolved.row);
-
-      for (let i = all.length - 1; i >= 0; i--) {
-        if (
-          all[i].id.toUpperCase() === row.id.toUpperCase() &&
-          all[i].id.toUpperCase() !== resolved.row.id.toUpperCase()
-        ) {
-          all.splice(i, 1);
-        }
-      }
       await writeAll(all);
       return { ...resolved.row };
     },

@@ -22,6 +22,7 @@ import {
   matchRemoteCanonical,
   validateLearningOutcomeTimestamps,
   checkLearningOutcomeIdentity,
+  resolveExistingLearningOutcome,
 } from "../lib/learning-outcomes-store";
 import {
   getLearningOutcomes,
@@ -745,6 +746,262 @@ async function main() {
       }).evaluatedScoutCount,
       1
     );
+  }
+
+  // -------------------------------------------------------------------------
+  // COLLISION A/G — same incoming ID belongs to another plan (memory)
+  // -------------------------------------------------------------------------
+  {
+    const lo001 = sampleLo({
+      id: "LO-001",
+      planId: "PLAN-001",
+      notes: "a",
+      updatedAt: "2026-07-25T10:00:00.000Z",
+    });
+    const lo002 = sampleLo({
+      id: "LO-002",
+      planId: "PLAN-002",
+      notes: "b",
+      updatedAt: "2026-07-25T10:00:00.000Z",
+    });
+    const store = createMemoryLearningOutcomesStore([lo001, lo002]);
+    const before = JSON.stringify(store.rows);
+    await assert.rejects(
+      () =>
+        store.upsert(
+          sampleLo({
+            id: "LO-001",
+            planId: "PLAN-002",
+            notes: "hijack",
+            updatedAt: "2026-07-25T16:00:00.000Z",
+          })
+        ),
+      /canonical_identity_collision/
+    );
+    assert.equal(JSON.stringify(store.rows), before);
+    assert.equal(store.rows.find((r) => r.id === "LO-001")?.planId, "PLAN-001");
+    assert.equal(store.rows.find((r) => r.id === "LO-002")?.planId, "PLAN-002");
+    assert.equal(store.rows.length, 2);
+  }
+
+  // -------------------------------------------------------------------------
+  // COLLISION B — same incoming ID belongs to another trade
+  // -------------------------------------------------------------------------
+  {
+    const store = createMemoryLearningOutcomesStore([
+      sampleLo({
+        id: "LO-T1",
+        planId: "PLAN-T1",
+        tradeId: "TRD-001",
+        kind: "executed_win",
+      }),
+      sampleLo({
+        id: "LO-T2",
+        planId: "PLAN-T2",
+        tradeId: "TRD-002",
+        kind: "executed_win",
+      }),
+    ]);
+    const before = JSON.stringify(store.rows);
+    await assert.rejects(
+      () =>
+        store.upsert(
+          sampleLo({
+            id: "LO-T1",
+            planId: "PLAN-T2",
+            tradeId: "TRD-002",
+            kind: "executed_win",
+            updatedAt: "2026-07-25T16:00:00.000Z",
+          })
+        ),
+      /canonical_identity_collision/
+    );
+    assert.equal(JSON.stringify(store.rows), before);
+  }
+
+  // -------------------------------------------------------------------------
+  // COLLISION C/D — different unused ID, same plan/trade → canonical preserved
+  // -------------------------------------------------------------------------
+  {
+    const store = createMemoryLearningOutcomesStore([
+      sampleLo({
+        id: "LO-PLAN-CANON",
+        planId: "PLAN-001",
+        observationId: "OBS-1",
+        updatedAt: "2026-07-25T10:00:00.000Z",
+      }),
+    ]);
+    const canonical = await store.upsert(
+      sampleLo({
+        id: "LO-PLAN-NEW",
+        planId: "PLAN-001",
+        observationId: undefined,
+        updatedAt: "2026-07-25T11:00:00.000Z",
+      })
+    );
+    assert.equal(canonical.id, "LO-PLAN-CANON");
+    assert.equal(canonical.observationId, "OBS-1");
+    assert.equal(store.rows.length, 1);
+
+    const tradeStore = createMemoryLearningOutcomesStore([
+      sampleLo({
+        id: "LO-TRD-CANON",
+        planId: "PLAN-T",
+        tradeId: "TRD-001",
+        kind: "executed_win",
+        updatedAt: "2026-07-25T10:00:00.000Z",
+      }),
+    ]);
+    const tradeCanon = await tradeStore.upsert(
+      sampleLo({
+        id: "LO-TRD-NEW",
+        planId: "PLAN-T",
+        tradeId: "TRD-001",
+        kind: "executed_win",
+        updatedAt: "2026-07-25T11:00:00.000Z",
+      })
+    );
+    assert.equal(tradeCanon.id, "LO-TRD-CANON");
+    assert.equal(tradeStore.rows.length, 1);
+  }
+
+  // -------------------------------------------------------------------------
+  // COLLISION E — Supabase uniqueness-race style dual reload rejects collision
+  // -------------------------------------------------------------------------
+  {
+    const existingById = sampleLo({
+      id: "LO-001",
+      planId: "PLAN-001",
+    });
+    const existingByIdentity = sampleLo({
+      id: "LO-002",
+      planId: "PLAN-002",
+    });
+    assert.throws(
+      () =>
+        resolveExistingLearningOutcome({
+          incoming: sampleLo({ id: "LO-001", planId: "PLAN-002" }),
+          existingById,
+          existingByIdentity,
+        }),
+      /canonical_identity_collision/
+    );
+    // Same-row dual load is OK
+    const same = resolveExistingLearningOutcome({
+      incoming: sampleLo({ id: "LO-001", planId: "PLAN-001" }),
+      existingById,
+      existingByIdentity: { ...existingById },
+    });
+    assert.equal(same.resolution, "same_row");
+    assert.equal(same.existing?.id, "LO-001");
+  }
+
+  // -------------------------------------------------------------------------
+  // COLLISION F — JSON store collision: no file mutation
+  // -------------------------------------------------------------------------
+  {
+    const prevCwd = process.cwd();
+    const tmp = await fs.mkdtemp(path.join(os.tmpdir(), "lo-coll-"));
+    process.chdir(tmp);
+    delete process.env.VERCEL;
+    delete process.env.VERCEL_ENV;
+    process.env.LEARNING_OUTCOMES_STORE = "json";
+    __setLearningOutcomesStoreForTests(null);
+
+    const store = createJsonLearningOutcomesStore();
+    await store.upsert(
+      sampleLo({
+        id: "LO-001",
+        planId: "PLAN-001",
+        notes: "a",
+        updatedAt: "2026-07-25T10:00:00.000Z",
+      })
+    );
+    await store.upsert(
+      sampleLo({
+        id: "LO-002",
+        planId: "PLAN-002",
+        notes: "b",
+        updatedAt: "2026-07-25T10:00:00.000Z",
+      })
+    );
+    const before = await fs.readFile(
+      path.join(tmp, "data", "learning-outcomes.json"),
+      "utf-8"
+    );
+    await assert.rejects(
+      () =>
+        store.upsert(
+          sampleLo({
+            id: "LO-001",
+            planId: "PLAN-002",
+            notes: "hijack",
+            updatedAt: "2026-07-25T16:00:00.000Z",
+          })
+        ),
+      /canonical_identity_collision/
+    );
+    const after = await fs.readFile(
+      path.join(tmp, "data", "learning-outcomes.json"),
+      "utf-8"
+    );
+    assert.equal(after, before);
+    const all = await store.readAll();
+    assert.equal(all.length, 2);
+    assert.equal(all.find((r) => r.id === "LO-001")?.planId, "PLAN-001");
+
+    delete process.env.LEARNING_OUTCOMES_STORE;
+    process.chdir(prevCwd);
+    await fs.rm(tmp, { recursive: true, force: true });
+  }
+
+  // -------------------------------------------------------------------------
+  // COLLISION H — migration collision → invalid, no write counters
+  // -------------------------------------------------------------------------
+  {
+    const match = matchRemoteCanonical(
+      sampleLo({
+        id: "LO-001",
+        planId: "PLAN-002",
+        updatedAt: "2026-07-25T16:00:00.000Z",
+      }),
+      [
+        sampleLo({ id: "LO-001", planId: "PLAN-001" }),
+        sampleLo({ id: "LO-002", planId: "PLAN-002" }),
+      ]
+    );
+    assert.equal(match.matchType, "collision");
+    assert.match(match.detail ?? "", /canonical_identity_collision/);
+
+    const decision = decideMigrationAction({
+      local: sampleLo({
+        id: "LO-001",
+        planId: "PLAN-002",
+        updatedAt: "2026-07-25T16:00:00.000Z",
+      }),
+      matchType: match.matchType,
+      existingById: match.existingById,
+      existingByIdentity: match.existingByIdentity,
+      detail: match.detail,
+    });
+    assert.equal(decision.action, "invalid");
+    assert.equal(decision.inserted, false);
+    assert.equal(decision.updated, false);
+    assert.equal(decision.skipped, false);
+    assert.equal(decision.conflicts, true);
+
+    let invalid = 0;
+    let inserted = 0;
+    let updated = 0;
+    let skipped = 0;
+    if (decision.action === "invalid") invalid += 1;
+    else if (decision.inserted) inserted += 1;
+    else if (decision.updated) updated += 1;
+    else if (decision.skipped) skipped += 1;
+    assert.equal(invalid, 1);
+    assert.equal(inserted, 0);
+    assert.equal(updated, 0);
+    assert.equal(skipped, 0);
   }
 
   // -------------------------------------------------------------------------

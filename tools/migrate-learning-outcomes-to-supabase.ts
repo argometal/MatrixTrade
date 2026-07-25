@@ -20,17 +20,14 @@ import {
 } from "../lib/learning-outcomes-store/mapping";
 import {
   decideMigrationAction,
+  matchRemoteCanonical,
   type MigrateAction,
   type MigrateMatchType,
+  type RemoteCanonicalMatch,
 } from "../lib/learning-outcomes-store/migrate-policy";
 import { validateLearningOutcomeTimestamps } from "../lib/learning-outcomes-store/merge";
 import { createSupabaseAdmin } from "../lib/supabase/server";
 import { sanitizeLearningSyncError } from "../lib/plan-outcome-learning-sync";
-
-type RemoteCanonical = {
-  matchType: MigrateMatchType;
-  row?: LearningOutcome;
-};
 
 type ConflictRow = {
   localId: string;
@@ -76,9 +73,12 @@ function validateRow(row: LearningOutcome): string | null {
   return null;
 }
 
-/** Lookup: id → trade_id → plan_id (Scout-only). */
-async function loadRemoteCanonical(row: LearningOutcome): Promise<RemoteCanonical> {
+/** Independent ID + business-identity loads; collision when they differ. */
+async function loadRemoteCanonical(
+  row: LearningOutcome
+): Promise<RemoteCanonicalMatch> {
   const supabase = createSupabaseAdmin();
+  const remoteRows: LearningOutcome[] = [];
 
   {
     const { data, error } = await supabase
@@ -87,12 +87,7 @@ async function loadRemoteCanonical(row: LearningOutcome): Promise<RemoteCanonica
       .eq("id", row.id.toUpperCase())
       .maybeSingle();
     if (error) throw new Error(`Supabase read failed: ${error.message}`);
-    if (data) {
-      return {
-        matchType: "id",
-        row: learningOutcomeRowToRecord(data as never),
-      };
-    }
+    if (data) remoteRows.push(learningOutcomeRowToRecord(data as never));
   }
 
   if (row.tradeId) {
@@ -103,14 +98,12 @@ async function loadRemoteCanonical(row: LearningOutcome): Promise<RemoteCanonica
       .maybeSingle();
     if (error) throw new Error(`Supabase read failed: ${error.message}`);
     if (data) {
-      return {
-        matchType: "trade_id",
-        row: learningOutcomeRowToRecord(data as never),
-      };
+      const rec = learningOutcomeRowToRecord(data as never);
+      if (!remoteRows.some((r) => r.id.toUpperCase() === rec.id.toUpperCase())) {
+        remoteRows.push(rec);
+      }
     }
-  }
-
-  if (row.planId && !row.tradeId) {
+  } else if (row.planId) {
     const { data, error } = await supabase
       .from("learning_outcomes")
       .select("*")
@@ -119,14 +112,14 @@ async function loadRemoteCanonical(row: LearningOutcome): Promise<RemoteCanonica
       .maybeSingle();
     if (error) throw new Error(`Supabase read failed: ${error.message}`);
     if (data) {
-      return {
-        matchType: "plan_id",
-        row: learningOutcomeRowToRecord(data as never),
-      };
+      const rec = learningOutcomeRowToRecord(data as never);
+      if (!remoteRows.some((r) => r.id.toUpperCase() === rec.id.toUpperCase())) {
+        remoteRows.push(rec);
+      }
     }
   }
 
-  return { matchType: "none" };
+  return matchRemoteCanonical(row, remoteRows);
 }
 
 async function main() {
@@ -157,7 +150,7 @@ async function main() {
     }
     report.valid += 1;
 
-    let remoteMatch: RemoteCanonical;
+    let remoteMatch: RemoteCanonicalMatch;
     try {
       remoteMatch = await loadRemoteCanonical(row);
     } catch (err) {
@@ -172,6 +165,9 @@ async function main() {
       local: row,
       remote: remoteMatch.row,
       matchType: remoteMatch.matchType,
+      existingById: remoteMatch.existingById,
+      existingByIdentity: remoteMatch.existingByIdentity,
+      detail: remoteMatch.detail,
     });
 
     if (decision.action === "invalid") {

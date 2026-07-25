@@ -294,6 +294,80 @@ export function mergeEqualTimestampLinks(
   };
 }
 
+export type ExistingResolution =
+  | "insert"
+  | "same_row"
+  | "canonical_identity";
+
+export type ResolveExistingLearningOutcomeResult = {
+  existing?: LearningOutcome;
+  resolution: ExistingResolution;
+};
+
+function formatIdentityCollision(input: {
+  incoming: LearningOutcome;
+  existingById: LearningOutcome;
+  existingByIdentity: LearningOutcome;
+}): string {
+  const { incoming, existingById, existingByIdentity } = input;
+  return [
+    "canonical_identity_collision",
+    `incomingId=${incoming.id}`,
+    `existingById.id=${existingById.id}`,
+    `existingById.planId=${normId(existingById.planId) ?? "none"}`,
+    `existingById.tradeId=${normId(existingById.tradeId) ?? "none"}`,
+    `existingByIdentity.id=${existingByIdentity.id}`,
+    `existingByIdentity.planId=${normId(existingByIdentity.planId) ?? "none"}`,
+    `existingByIdentity.tradeId=${normId(existingByIdentity.tradeId) ?? "none"}`,
+  ].join(" ");
+}
+
+/**
+ * Resolve which persisted row an upsert targets.
+ * Loads of existingById and existingByIdentity must be independent — never coalesce.
+ *
+ * A. Neither → insert
+ * B. Only by id → same_row (immutable identity checked later)
+ * C. Only by business identity → canonical_identity (different id OK if unused)
+ * D. Both same row → same_row
+ * E. Both different rows → throw canonical_identity_collision
+ */
+export function resolveExistingLearningOutcome(input: {
+  incoming: LearningOutcome;
+  existingById?: LearningOutcome;
+  existingByIdentity?: LearningOutcome;
+}): ResolveExistingLearningOutcomeResult {
+  const { incoming, existingById, existingByIdentity } = input;
+
+  if (!existingById && !existingByIdentity) {
+    return { resolution: "insert" };
+  }
+
+  if (existingById && existingByIdentity) {
+    if (
+      existingById.id.toUpperCase() === existingByIdentity.id.toUpperCase()
+    ) {
+      return { existing: existingById, resolution: "same_row" };
+    }
+    throw new Error(
+      formatIdentityCollision({
+        incoming,
+        existingById,
+        existingByIdentity,
+      })
+    );
+  }
+
+  if (existingById) {
+    return { existing: existingById, resolution: "same_row" };
+  }
+
+  return {
+    existing: existingByIdentity,
+    resolution: "canonical_identity",
+  };
+}
+
 /**
  * Shared upsert resolution for memory / JSON / Supabase.
  * Validates timestamps, enforces immutable identity, applies freshness.

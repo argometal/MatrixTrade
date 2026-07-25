@@ -1,8 +1,18 @@
 import type { LearningOutcome } from "../learning-outcome-types";
-import { resolveLearningOutcomeUpsert } from "./merge";
+import {
+  resolveExistingLearningOutcome,
+  resolveLearningOutcomeUpsert,
+} from "./merge";
 import type { LearningOutcomesStore } from "./types";
 
-function findCanonical(
+function findById(
+  rows: LearningOutcome[],
+  id: string
+): LearningOutcome | undefined {
+  return rows.find((x) => x.id.toUpperCase() === id.toUpperCase());
+}
+
+function findByBusinessIdentity(
   rows: LearningOutcome[],
   row: LearningOutcome
 ): LearningOutcome | undefined {
@@ -21,15 +31,6 @@ function findCanonical(
   return undefined;
 }
 
-function findExisting(
-  rows: LearningOutcome[],
-  row: LearningOutcome
-): LearningOutcome | undefined {
-  const byIdentity = findCanonical(rows, row);
-  if (byIdentity) return byIdentity;
-  return rows.find((x) => x.id.toUpperCase() === row.id.toUpperCase());
-}
-
 /** In-memory store for focused tests — no disk / Supabase. */
 export function createMemoryLearningOutcomesStore(
   seed: LearningOutcome[] = []
@@ -41,8 +42,15 @@ export function createMemoryLearningOutcomesStore(
       return rows.map((r) => ({ ...r }));
     },
     async upsert(row) {
-      const existing = findExisting(rows, row);
-      const resolved = resolveLearningOutcomeUpsert(existing, row);
+      const existingById = findById(rows, row.id);
+      const existingByIdentity = findByBusinessIdentity(rows, row);
+      // Collision / target resolution before any mutation.
+      const target = resolveExistingLearningOutcome({
+        incoming: row,
+        existingById,
+        existingByIdentity,
+      });
+      const resolved = resolveLearningOutcomeUpsert(target.existing, row);
 
       if (resolved.action === "insert") {
         rows.push({ ...resolved.row });
@@ -59,16 +67,6 @@ export function createMemoryLearningOutcomesStore(
       );
       if (writeIdx >= 0) rows[writeIdx] = { ...resolved.row };
       else rows.push({ ...resolved.row });
-
-      // Drop non-canonical duplicate id if present
-      for (let i = rows.length - 1; i >= 0; i--) {
-        if (
-          rows[i].id.toUpperCase() === row.id.toUpperCase() &&
-          rows[i].id.toUpperCase() !== resolved.row.id.toUpperCase()
-        ) {
-          rows.splice(i, 1);
-        }
-      }
       rows.sort((a, b) => a.id.localeCompare(b.id));
       return { ...resolved.row };
     },

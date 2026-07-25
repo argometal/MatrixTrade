@@ -7,10 +7,16 @@ import {
   compareLearningOutcomeFreshness,
   mergeCanonicalLearningOutcome,
   mergeEqualTimestampLinks,
+  resolveExistingLearningOutcome,
   validateLearningOutcomeTimestamps,
 } from "./merge";
 
-export type MigrateMatchType = "id" | "trade_id" | "plan_id" | "none";
+export type MigrateMatchType =
+  | "id"
+  | "trade_id"
+  | "plan_id"
+  | "none"
+  | "collision";
 
 export type MigrateAction =
   | "skip_remote_newer"
@@ -22,6 +28,9 @@ export type MigrateAction =
 export type RemoteCanonicalMatch = {
   matchType: MigrateMatchType;
   row?: LearningOutcome;
+  existingById?: LearningOutcome;
+  existingByIdentity?: LearningOutcome;
+  detail?: string;
 };
 
 export type MigrationDecision = {
@@ -57,28 +66,16 @@ function invalidDecision(detail: string, identityConflict = false): MigrationDec
   };
 }
 
-/**
- * Lookup order against an in-memory remote set (same as Supabase migration):
- * 1. exact id
- * 2. trade_id when row.tradeId exists
- * 3. plan_id + trade_id null when Scout-only
- */
-export function matchRemoteCanonical(
-  row: LearningOutcome,
-  remoteRows: LearningOutcome[]
-): RemoteCanonicalMatch {
-  const byId = remoteRows.find(
-    (r) => r.id.toUpperCase() === row.id.toUpperCase()
-  );
-  if (byId) return { matchType: "id", row: byId };
-
+function findByBusinessIdentity(
+  remoteRows: LearningOutcome[],
+  row: LearningOutcome
+): { matchType: "trade_id" | "plan_id"; row: LearningOutcome } | undefined {
   if (row.tradeId) {
     const byTrade = remoteRows.find(
       (r) => r.tradeId?.toUpperCase() === row.tradeId!.toUpperCase()
     );
     if (byTrade) return { matchType: "trade_id", row: byTrade };
   }
-
   if (row.planId && !row.tradeId) {
     const byPlan = remoteRows.find(
       (r) =>
@@ -87,19 +84,79 @@ export function matchRemoteCanonical(
     );
     if (byPlan) return { matchType: "plan_id", row: byPlan };
   }
+  return undefined;
+}
 
-  return { matchType: "none" };
+/**
+ * Independent lookup: exact id AND plan/trade identity.
+ * If they point at different rows → collision (invalid).
+ */
+export function matchRemoteCanonical(
+  row: LearningOutcome,
+  remoteRows: LearningOutcome[]
+): RemoteCanonicalMatch {
+  const existingById = remoteRows.find(
+    (r) => r.id.toUpperCase() === row.id.toUpperCase()
+  );
+  const identityHit = findByBusinessIdentity(remoteRows, row);
+  const existingByIdentity = identityHit?.row;
+
+  try {
+    const resolved = resolveExistingLearningOutcome({
+      incoming: row,
+      existingById,
+      existingByIdentity,
+    });
+
+    if (resolved.resolution === "insert") {
+      return { matchType: "none" };
+    }
+    if (resolved.resolution === "same_row") {
+      return {
+        matchType: "id",
+        row: resolved.existing,
+        existingById,
+        existingByIdentity,
+      };
+    }
+    // canonical_identity — different unused id, same plan/trade
+    return {
+      matchType: identityHit!.matchType,
+      row: resolved.existing,
+      existingById,
+      existingByIdentity,
+    };
+  } catch (err) {
+    const detail =
+      err instanceof Error ? err.message : "canonical_identity_collision";
+    return {
+      matchType: "collision",
+      existingById,
+      existingByIdentity,
+      detail,
+    };
+  }
 }
 
 export function decideMigrationAction(input: {
   local: LearningOutcome;
   remote?: LearningOutcome;
   matchType: MigrateMatchType;
+  existingById?: LearningOutcome;
+  existingByIdentity?: LearningOutcome;
+  detail?: string;
 }): MigrationDecision {
   const localTs = validateLearningOutcomeTimestamps(input.local);
   if (!localTs.valid) {
     return invalidDecision(
       `timestamp_invalid: ${localTs.errors.join("; ")}`
+    );
+  }
+
+  if (input.matchType === "collision") {
+    return invalidDecision(
+      input.detail ?? "canonical_identity_collision",
+      true
     );
   }
 

@@ -3,7 +3,10 @@ import {
   learningOutcomeRowToRecord,
   learningOutcomeToRow,
 } from "./mapping";
-import { resolveLearningOutcomeUpsert } from "./merge";
+import {
+  resolveExistingLearningOutcome,
+  resolveLearningOutcomeUpsert,
+} from "./merge";
 import type { LearningOutcomesStore } from "./types";
 import type { LearningOutcome } from "../learning-outcome-types";
 
@@ -71,6 +74,19 @@ async function writeById(row: LearningOutcome): Promise<LearningOutcome> {
   return reloaded ?? row;
 }
 
+function resolveAgainstLoaded(
+  incoming: LearningOutcome,
+  existingById: LearningOutcome | undefined,
+  existingByIdentity: LearningOutcome | undefined
+): { action: "insert" | "skip" | "write"; row: LearningOutcome } {
+  const target = resolveExistingLearningOutcome({
+    incoming,
+    existingById,
+    existingByIdentity,
+  });
+  return resolveLearningOutcomeUpsert(target.existing, incoming);
+}
+
 export function createSupabaseLearningOutcomesStore(): LearningOutcomesStore {
   return {
     async readAll() {
@@ -87,24 +103,18 @@ export function createSupabaseLearningOutcomesStore(): LearningOutcomesStore {
       );
     },
     async upsert(row) {
-      const byIdentity = await loadCanonicalByIdentity(row);
-      const byId =
-        byIdentity && byIdentity.id.toUpperCase() === row.id.toUpperCase()
-          ? byIdentity
-          : byIdentity ?? (await loadById(row.id));
-      // Prefer identity canonical when different id shares plan/trade.
-      const existing =
-        byIdentity && byIdentity.id.toUpperCase() !== row.id.toUpperCase()
-          ? byIdentity
-          : byId;
+      // Independent loads — never skip the ID read via null-coalescing.
+      const existingById = await loadById(row.id);
+      const existingByIdentity = await loadCanonicalByIdentity(row);
+      const resolved = resolveAgainstLoaded(
+        row,
+        existingById,
+        existingByIdentity
+      );
 
-      if (existing) {
-        const resolved = resolveLearningOutcomeUpsert(existing, row);
-        if (resolved.action === "skip") return resolved.row;
-        if (resolved.action === "write") return writeById(resolved.row);
-      }
+      if (resolved.action === "skip") return resolved.row;
+      if (resolved.action === "write") return writeById(resolved.row);
 
-      const resolved = resolveLearningOutcomeUpsert(undefined, row);
       const supabase = createSupabaseAdmin();
       const { error } = await supabase
         .from("learning_outcomes")
@@ -114,15 +124,15 @@ export function createSupabaseLearningOutcomesStore(): LearningOutcomesStore {
       }
 
       if (isUniqueViolation(error.message)) {
-        const existingAfter = await loadCanonicalByIdentity(row);
-        if (!existingAfter) {
-          throw new Error(
-            `Supabase learning_outcomes upsert unique conflict and reload missed: ${error.message}`
-          );
-        }
-        const retry = resolveLearningOutcomeUpsert(existingAfter, row);
+        // Race retry: reload BOTH id and business identity, then re-resolve.
+        const retryById = await loadById(row.id);
+        const retryByIdentity = await loadCanonicalByIdentity(row);
+        const retry = resolveAgainstLoaded(row, retryById, retryByIdentity);
         if (retry.action === "skip") return retry.row;
-        return writeById(retry.row);
+        if (retry.action === "write") return writeById(retry.row);
+        throw new Error(
+          `Supabase learning_outcomes upsert unique conflict and reload missed: ${error.message}`
+        );
       }
 
       throw new Error(`Supabase learning_outcomes upsert failed: ${error.message}`);

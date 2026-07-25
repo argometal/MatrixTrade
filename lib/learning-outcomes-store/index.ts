@@ -128,10 +128,13 @@ export {
   isValidLearningOutcomeTimestamp,
   mergeCanonicalLearningOutcome,
   mergeEqualTimestampLinks,
+  resolveExistingLearningOutcome,
   resolveLearningOutcomeUpsert,
   validateLearningOutcomeTimestamps,
+  type ExistingResolution,
   type IdentityCheckResult,
   type LearningOutcomeFreshness,
+  type ResolveExistingLearningOutcomeResult,
   type TimestampValidationResult,
 } from "./merge";
 export {
