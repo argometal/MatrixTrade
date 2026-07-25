@@ -69,6 +69,27 @@ export async function getSupabaseInboxItem(id: string): Promise<BridgeInboxItem 
   return rowToItem(data as InboxRow);
 }
 
+/** IDs that exist in trading_inbox but are no longer pending (applied|rejected). */
+export async function listSupabaseResolvedInboxIds(
+  ids: string[]
+): Promise<Set<string>> {
+  const unique = [...new Set(ids.map((id) => String(id).trim()).filter(Boolean))];
+  if (!unique.length) return new Set();
+
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("trading_inbox")
+    .select("id, status")
+    .in("id", unique)
+    .neq("status", "pending");
+
+  if (error) {
+    throw new Error(`Supabase trading_inbox status read failed: ${error.message}`);
+  }
+
+  return new Set((data ?? []).map((row) => String((row as { id: string }).id)));
+}
+
 export async function setSupabaseInboxStatus(
   id: string,
   status: "applied" | "rejected",

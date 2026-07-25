@@ -78,7 +78,15 @@ const playbooks = [
   { id: "secular-trend-continuation", name: "Secular Trend Continuation", status: "TESTING" },
 ] as Playbook[];
 
-const inbox = [{ id: "PROP-1", type: "trade-update" }] as unknown as BridgeInboxItem[];
+const inbox = [
+  {
+    id: "PROP-1",
+    status: "pending",
+    receivedAt: "2026-07-20T00:00:00.000Z",
+    payload: { type: "trade-update" },
+    origin: "supabase",
+  },
+] as BridgeInboxItem[];
 
 // --- classification + stable IDs (no random) ---
 const idCases: Array<[string, string, string]> = [
