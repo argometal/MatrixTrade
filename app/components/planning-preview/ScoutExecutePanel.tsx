@@ -15,6 +15,8 @@ import type { Playbook } from "@/lib/playbook-types";
 import type { TradePlan } from "@/lib/plan-types";
 import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 import { FamilyBBullTrendPanel } from "@/app/components/planning-preview/FamilyBBullTrendPanel";
+import { LayeredEntryPanel } from "@/app/components/planning-preview/LayeredEntryPanel";
+import { ModifiedKellyPanel } from "@/app/components/planning-preview/ModifiedKellyPanel";
 
 function buildExecuteFormState(
   plan: TradePlan | null,
@@ -229,12 +231,30 @@ export function ScoutExecutePanel({
         <p className="mt-3 text-xs text-amber-400/90">Set entry + stop on this scout for R map.</p>
       )}
 
-      <div className="mt-3">
+      <div className="mt-3 space-y-3">
         {plan ? (
           <FamilyBBullTrendPanel plan={plan} compact />
         ) : (
           <FamilyBChecklist playbookId={form.playbookId} compact />
         )}
+        {plan?.layeredEntry?.executionModel === "modified_kelly" ||
+        form.playbookId === "modified-kelly-layered-entry" ||
+        plan?.playbookId === "modified-kelly-layered-entry" ? (
+          plan ? (
+            <ModifiedKellyPanel
+              plan={plan}
+              playbook={playbooks.find((p) => p.id === (form.playbookId || plan.playbookId))}
+              compact
+              monthlyRiskRoom={monthlyLossRoom}
+            />
+          ) : null
+        ) : plan?.layeredEntry ? (
+          <LayeredEntryPanel
+            plan={plan}
+            playbook={playbooks.find((p) => p.id === (form.playbookId || plan.playbookId))}
+            compact
+          />
+        ) : null}
       </div>
 
       {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}

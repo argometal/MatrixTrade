@@ -129,6 +129,32 @@ export function buildMafEvidence(input: {
     evidence.layeredSizingMode = le.sizingMode;
     evidence.layeredStopModel = le.stopModel;
     evidence.layeredLimitsFilled = le.limits.filter((l) => l.filled).length;
+    if (le.executionModel === "modified_kelly" || le.modifiedKelly) {
+      const mk = le.modifiedKelly;
+      evidence.modifiedKellyExecutionModel = le.executionModel ?? "modified_kelly";
+      evidence.modifiedKellyFillState = mk?.fillState;
+      evidence.modifiedKellyBaseRiskR = mk?.baseRiskR;
+      evidence.modifiedKellyAdditionalRiskR = mk?.additionalRiskR;
+      evidence.modifiedKellyTotalAuthorizedRiskR = mk?.totalAuthorizedRiskR;
+      evidence.modifiedKellyFilledRiskR = le.riskUsedAmount !== undefined && mk?.baseRiskDollar
+        ? Math.round((le.riskUsedAmount / mk.baseRiskDollar) * 10000) / 10000
+        : undefined;
+      evidence.modifiedKellyAuthorizedCampaignR = le.blendedRR;
+      evidence.modifiedKellyFilledPositionR = le.combinedRR;
+      evidence.modifiedKellyProbabilitySource = mk?.probabilitySource;
+      evidence.modifiedKellyFraction = mk?.kellyFraction;
+      const hints: string[] = [];
+      if (mk?.fillState === "base_only") {
+        hints.push("extension_not_filled", "base_entry_sufficient");
+      }
+      if (mk?.fillState === "full") {
+        hints.push("modified_kelly_effective");
+      }
+      if (mk?.warning?.includes("too close")) {
+        hints.push("stop_too_close_for_layer");
+      }
+      if (hints.length) evidence.modifiedKellyMafHints = hints;
+    }
     if (
       evidence.slippageVsPlan === undefined &&
       le.averageEntry !== undefined &&

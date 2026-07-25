@@ -10,9 +10,12 @@ import {
 } from "@/lib/layered-entry";
 import {
   LAYERED_ENTRY_STATUS_LABELS,
+  LAYERED_EXECUTION_MODEL_LABELS,
+  resolveLayeredExecutionModel,
   type LayeredEntryPlan,
 } from "@/lib/layered-entry-types";
 import { computePlannedRR } from "@/lib/plan-risk";
+import { ModifiedKellyPanel } from "@/app/components/planning-preview/ModifiedKellyPanel";
 
 function formatPrice(value?: number): string {
   if (value === undefined || !Number.isFinite(value)) return "—";
@@ -44,6 +47,11 @@ export function LayeredEntryPanel({
   const experiment = getExecutionExperimentContext(playbook);
   const filledCount = entry.limits.filter((l) => l.filled).length;
   const isMissed = entry.status === "missed";
+  const executionModel = resolveLayeredExecutionModel(entry);
+
+  if (executionModel === "modified_kelly") {
+    return <ModifiedKellyPanel plan={plan} playbook={playbook} compact={compact} />;
+  }
 
   return (
     <div
@@ -62,6 +70,7 @@ export function LayeredEntryPanel({
         <LayeredEntryBadge entry={entry} />
         <span className="text-xs text-zinc-500">
           {entry.executionMethod.replace(/_/g, " ")}
+          {` · ${LAYERED_EXECUTION_MODEL_LABELS[executionModel]}`}
           {entry.authorizedRiskAmount !== undefined
             ? ` · risk $${entry.authorizedRiskAmount}`
             : ""}
