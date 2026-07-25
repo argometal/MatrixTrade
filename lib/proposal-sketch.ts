@@ -44,6 +44,8 @@ function actionLabel(type: TradingInboxPayload["type"]): string {
       return "Attribute experiment";
     case "observation-update":
       return "Update observation";
+    case "plan-outcome":
+      return "Record plan outcome";
     case "analysis":
       return "Add analysis";
     case "decision-update":

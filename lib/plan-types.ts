@@ -2,6 +2,12 @@ import type { ScoutDecision, ScoutLifecycleStatus } from "./scout-decision-types
 import type { LayeredEntryPlan } from "./layered-entry-types";
 import type { FamilyBEntryAssessment } from "./family-b-types";
 import type { Probe } from "./scout-probe-types";
+import type {
+  ExecutionReadinessState,
+  PlanOutcomeEvidenceStatus,
+  PlanOutcomeSource,
+  PlanOutcomeStatus,
+} from "./plan-outcome-types";
 
 export type PlanStatus =
   | "watching"
@@ -69,8 +75,28 @@ export const PLAN_EXTERNAL_FACTORS = [
   "timing",
 ] as const;
 
+/**
+ * Persisted on TradePlan.outcome (jsonb). Expanded for counterfactual learning.
+ * Backward-compatible: legacy reason/lesson fields remain optional.
+ */
 export interface PlanOutcome {
+  planId?: string;
   recordedAt: string;
+  /** New classification (preferred). */
+  status?: PlanOutcomeStatus;
+  tradeExecuted?: boolean;
+  entryTriggered?: boolean | null;
+  stopTriggered?: boolean | null;
+  targetTriggered?: boolean | null;
+  theoreticalResultR?: number | null;
+  realizedResultR?: number;
+  outcomeSource?: PlanOutcomeSource;
+  evidenceStatus?: PlanOutcomeEvidenceStatus;
+  notes?: string;
+  evidenceRefs?: string[];
+  createdBy?: string;
+  updatedAt?: string;
+  /** Legacy fields. */
   reason?: PlanFailReason;
   strategyStillValid?: boolean;
   externalFactors?: string[];
@@ -113,6 +139,11 @@ export interface TradePlan {
    * Human/AI propose; Matrix synthesizes/validates. Not required for Family A plans.
    */
   familyBAssessment?: FamilyBEntryAssessment;
+  /**
+   * Architecture-only execution readiness (armed ≠ submitted).
+   * automaticExecutionEnabled remains false — human confirmation mandatory.
+   */
+  executionReadiness?: ExecutionReadinessState;
   createdAt: string;
   updatedAt: string;
 }
@@ -137,8 +168,22 @@ export type SavePlanInput = {
 };
 
 export type RecordPlanOutcomeInput = {
+  /** Expanded counterfactual outcome (preferred). */
+  status?: PlanOutcomeStatus;
+  tradeExecuted?: boolean;
+  entryTriggered?: boolean | null;
+  stopTriggered?: boolean | null;
+  targetTriggered?: boolean | null;
+  theoreticalResultR?: number | null;
+  realizedResultR?: number;
+  outcomeSource?: PlanOutcomeSource;
+  evidenceStatus?: PlanOutcomeEvidenceStatus;
+  notes?: string;
+  evidenceRefs?: string[];
+  createdBy?: string;
+  /** Legacy UI fields. */
   reason?: PlanFailReason;
-  strategyStillValid: boolean;
+  strategyStillValid?: boolean;
   externalFactors?: string[];
   lesson?: string;
 };

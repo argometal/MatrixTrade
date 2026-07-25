@@ -137,6 +137,18 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "at least one measurable field",
         `allowed keys: ${OBSERVATION_UPDATE_ALLOWED_KEYS.join(", ")}`,
       ],
+      "plan-outcome": [
+        "planId",
+        "status",
+        "tradeExecuted",
+        "entryTriggered",
+        "stopTriggered",
+        "targetTriggered",
+        "theoreticalResultR",
+        "realizedResultR",
+        "outcomeSource",
+        "evidenceStatus",
+      ],
     },
     allowedEnums: {
       "decision.verdict": ["go", "wait", "probe", "no"],
@@ -191,6 +203,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "trade-update": buildLegacyTradeUpdateExample("H002"),
       "trade-review": AI_BLOCK_SAMPLES["trade-review"],
       "observation-update": AI_BLOCK_SAMPLES["observation-update"],
+      "plan-outcome": AI_BLOCK_SAMPLES["plan-outcome"],
     },
   };
 }

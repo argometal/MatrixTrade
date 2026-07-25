@@ -40,6 +40,16 @@ export async function getMafExperimentByTradeId(
   return all.find((row) => row.tradeId?.toUpperCase() === needle);
 }
 
+export async function getMafExperimentByPlanId(
+  planId: string
+): Promise<MafExperiment | undefined> {
+  const needle = planId.toUpperCase();
+  const all = await getMafExperiments();
+  return all.find(
+    (row) => row.planId?.toUpperCase() === needle && !row.tradeId
+  );
+}
+
 export async function upsertMafExperiment(row: MafExperiment): Promise<void> {
   const all = await getMafExperiments();
   const idx = all.findIndex((x) => x.id.toUpperCase() === row.id.toUpperCase());

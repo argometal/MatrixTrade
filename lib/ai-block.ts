@@ -220,6 +220,11 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
     hint: "Target/invalidation timestamps, MFE/MAE — never invent prices",
   },
   {
+    type: "plan-outcome",
+    label: "plan-outcome — counterfactual / terminal plan result",
+    hint: "Record theoretical vs realized R for expired/unexecuted plans — never invent fills",
+  },
+  {
     type: "analysis",
     label: "analysis — notes on trade",
     hint: "Thesis, psychology, lessons, or notes on existing trade",
@@ -794,6 +799,25 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       status: "concluded",
       dataSource: "ai",
       notes: "Target hit 36 days after stop; thesis invalidation never reached.",
+    },
+  },
+  "plan-outcome": {
+    type: "plan-outcome",
+    source: "ai-block",
+    proposal: {
+      planId: "PLAN-001",
+      status: "theoretical_loss",
+      tradeExecuted: false,
+      entryTriggered: true,
+      stopTriggered: true,
+      targetTriggered: false,
+      theoreticalResultR: -1,
+      realizedResultR: 0,
+      outcomeSource: "counterfactual_observation",
+      evidenceStatus: "verified",
+      notes:
+        "Approved entry reached; stop subsequently reached; target not reached. No real trade staged. Thesis failed. Account R unchanged (0).",
+      evidenceRefs: [],
     },
   },
   analysis: {

@@ -229,6 +229,31 @@ export async function recordPlanOutcome(
   id: string,
   input: RecordPlanOutcomeInput
 ): Promise<{ plan?: TradePlan; errors?: string[] }> {
+  // Expanded counterfactual path (preferred when status provided).
+  if (input.status) {
+    const { persistPlanOutcome } = await import("./plan-outcome");
+    const result = await persistPlanOutcome({
+      planId: id.toUpperCase(),
+      status: input.status,
+      tradeExecuted: input.tradeExecuted ?? false,
+      entryTriggered: input.entryTriggered ?? null,
+      stopTriggered: input.stopTriggered ?? null,
+      targetTriggered: input.targetTriggered ?? null,
+      theoreticalResultR: input.theoreticalResultR ?? null,
+      realizedResultR: input.tradeExecuted ? (input.realizedResultR ?? 0) : 0,
+      outcomeSource: input.outcomeSource ?? "manual_review",
+      evidenceStatus: input.evidenceStatus ?? "partial",
+      notes: input.notes ?? input.lesson,
+      evidenceRefs: input.evidenceRefs ?? [],
+      createdBy: input.createdBy,
+      reason: input.reason,
+      strategyStillValid: input.strategyStillValid,
+      externalFactors: input.externalFactors?.filter(Boolean),
+      lesson: input.lesson?.trim() || undefined,
+    });
+    return { plan: result.plan, errors: result.errors };
+  }
+
   const plan = await getPlanById(id);
   if (!plan) return { errors: ["Plan not found."] };
   if (plan.status !== "failed" && plan.status !== "expired" && plan.status !== "skipped") {
@@ -238,11 +263,17 @@ export async function recordPlanOutcome(
   const updated: TradePlan = {
     ...plan,
     outcome: {
+      planId: plan.id,
       recordedAt: new Date().toISOString(),
       reason: input.reason,
       strategyStillValid: input.strategyStillValid,
       externalFactors: input.externalFactors?.filter(Boolean),
       lesson: input.lesson?.trim() || undefined,
+      notes: input.lesson?.trim() || undefined,
+      tradeExecuted: false,
+      realizedResultR: 0,
+      evidenceRefs: [],
+      updatedAt: new Date().toISOString(),
     },
     updatedAt: new Date().toISOString(),
   };
@@ -256,7 +287,8 @@ export async function recordPlanOutcome(
       learning &&
       (learning.kind === "missed_opportunity" ||
         learning.kind === "expired" ||
-        learning.kind === "cancelled")
+        learning.kind === "cancelled" ||
+        learning.kind === "unexecuted_plan_loss")
     ) {
       await startObservationForPlanMiss(updated, { learningOutcomeId: learning.id });
     }

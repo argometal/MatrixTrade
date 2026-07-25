@@ -24,6 +24,7 @@
     "test:obs-legacy-dates": "tsx tools/test-obs-legacy-dates-25-10f.ts",
     "test:obs-durable-store": "tsx tools/test-obs-durable-store-25-115.ts",
     "test:attn-inbox-stale": "tsx tools/test-attn-inbox-stale-25-127.ts",
+    "test:plan-outcome-learning": "tsx tools/test-plan-outcome-learning-001.ts",
     "test:ui-window-ids": "tsx tools/test-ui-window-ids.ts",
     "test:apply-failure-snapshot": "tsx tools/test-apply-failure-snapshot.ts",
     "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"

@@ -25,19 +25,43 @@ export function deriveLearningOutcomeKindFromTrade(trade: Trade): LearningOutcom
 
 export function deriveLearningOutcomeKindFromPlan(plan: TradePlan): LearningOutcomeKind | null {
   if (plan.linkedTradeId) return null;
-  if (plan.status === "expired") return "expired";
+  const outcomeStatus = plan.outcome?.status;
+  if (outcomeStatus === "theoretical_loss" && plan.outcome?.tradeExecuted === false) {
+    return "unexecuted_plan_loss";
+  }
+  if (plan.outcome?.reason === "discipline" || outcomeStatus === "invalidated_before_entry") {
+    // Keep cancelled for discipline / invalidated-before-entry without fill.
+    if (outcomeStatus === "invalidated_before_entry") return "cancelled";
+  }
+  if (plan.status === "expired" && !outcomeStatus) return "expired";
   if (plan.status === "skipped") return "cancelled";
   if (plan.status === "failed") {
     const reason = plan.outcome?.reason;
     if (reason === "discipline") return "cancelled";
+    if (outcomeStatus === "entry_not_triggered") return "expired";
+    if (outcomeStatus === "theoretical_loss") return "unexecuted_plan_loss";
     return "missed_opportunity";
+  }
+  if (plan.status === "expired") {
+    if (outcomeStatus === "theoretical_loss") return "unexecuted_plan_loss";
+    if (outcomeStatus === "entry_not_triggered") return "expired";
+    return "expired";
   }
   if (plan.layeredEntry?.status === "missed") return "missed_opportunity";
   return null;
 }
 
 function initialLifecycle(kind: LearningOutcomeKind): LearningOutcomeLifecycle {
-  if (kind === "executed_loss" || kind === "missed_opportunity") return "observing";
+  if (
+    kind === "executed_loss" ||
+    kind === "missed_opportunity" ||
+    kind === "unexecuted_plan_loss"
+  ) {
+    // UPL: LO may go ready_for_attribution immediately (counterfactual concluded);
+    // observation still seeds for thesis path.
+    if (kind === "unexecuted_plan_loss") return "ready_for_attribution";
+    return "observing";
+  }
   return "ready_for_attribution";
 }
 
@@ -88,6 +112,7 @@ export async function upsertLearningOutcomeFromPlan(
   const all = await getLearningOutcomes();
   const now = new Date().toISOString();
 
+  const o = plan.outcome;
   const row: LearningOutcome = {
     id: existing?.id ?? nextLearningOutcomeId(all, plan.ticker),
     kind,
@@ -97,11 +122,26 @@ export async function upsertLearningOutcomeFromPlan(
     playbookId: plan.playbookId ?? existing?.playbookId,
     observationId: existing?.observationId,
     mafExperimentId: existing?.mafExperimentId,
+    realizedR: o?.tradeExecuted ? o.realizedResultR : 0,
+    counterfactualR:
+      o?.theoreticalResultR !== undefined && o?.theoreticalResultR !== null
+        ? o.theoreticalResultR
+        : existing?.counterfactualR,
+    entryReached: o?.entryTriggered ?? existing?.entryReached,
+    stopReachedBeforeTarget:
+      o?.stopTriggered === true && o?.targetTriggered !== true
+        ? true
+        : existing?.stopReachedBeforeTarget,
+    targetReachedBeforeStop:
+      o?.targetTriggered === true && o?.stopTriggered !== true
+        ? true
+        : existing?.targetReachedBeforeStop,
+    excludedFromMetrics: kind === "duplicate_creation" ? true : existing?.excludedFromMetrics,
     lifecycleStatus:
       existing?.lifecycleStatus === "attributed" || existing?.lifecycleStatus === "concluded"
         ? existing.lifecycleStatus
         : initialLifecycle(kind),
-    notes: plan.outcome?.lesson ?? existing?.notes,
+    notes: o?.notes ?? o?.lesson ?? existing?.notes,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
     source: "plan_outcome",

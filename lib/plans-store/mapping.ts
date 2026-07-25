@@ -4,6 +4,7 @@ import type { LayeredEntryPlan } from "../layered-entry-types";
 import type { FamilyBEntryAssessment } from "../family-b-types";
 import type { ScoutDecision, ScoutLifecycleStatus } from "../scout-decision-types";
 import type { Probe } from "../scout-probe-types";
+import type { ExecutionReadinessState } from "../plan-outcome-types";
 
 type LayeredEntryRow = LayeredEntryPlan & {
   familyBAssessment?: FamilyBEntryAssessment;
@@ -34,6 +35,7 @@ interface PlanRow {
   probe: Probe | null;
   layered_entry: LayeredEntryRow | null;
   execution_method: string | null;
+  execution_readiness: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -84,15 +86,19 @@ export function planRowToPlan(row: PlanRow): TradePlan {
       (row.execution_method as LayeredEntryPlan["executionMethod"] | null) ??
       layeredEntry?.executionMethod ??
       undefined,
+    executionReadiness:
+      (row.execution_readiness as ExecutionReadinessState | null) ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
 /** Supabase row for upsert — omits columns not yet on all prod schemas. */
-export function planToSupabaseRow(plan: TradePlan): Omit<PlanRow, "execution_method"> {
+export function planToSupabaseRow(
+  plan: TradePlan
+): Omit<PlanRow, "execution_method" | "execution_readiness"> {
   const row = planToRow(plan);
-  const { execution_method: _omit, ...rest } = row;
+  const { execution_method: _omitMethod, execution_readiness: _omitReady, ...rest } = row;
   return rest;
 }
 
@@ -129,6 +135,7 @@ export function planToRow(plan: TradePlan): PlanRow {
         }
       : null,
     execution_method: plan.executionMethod ?? null,
+    execution_readiness: plan.executionReadiness ?? null,
     created_at: plan.createdAt,
     updated_at: plan.updatedAt,
   };

@@ -5,6 +5,7 @@ import { buildMafEvidence } from "./maf-evidence";
 import { inferMafRuleHints } from "./maf-inference";
 import {
   getMafExperimentById,
+  getMafExperimentByPlanId,
   getMafExperimentByTradeId,
   getMafExperiments,
   nextMafExperimentId,
@@ -35,6 +36,8 @@ export async function applyAttribution(
     }
   } else if (value.tradeId) {
     existing = await getMafExperimentByTradeId(value.tradeId);
+  } else if (value.planId) {
+    existing = await getMafExperimentByPlanId(value.planId);
   }
 
   const tradeId = value.tradeId ?? existing?.tradeId;
@@ -53,6 +56,19 @@ export async function applyAttribution(
 
   if (planId && !plan) {
     return { errors: [`Scout Plan ${planId} not found.`] };
+  }
+
+  if (
+    trade &&
+    plan &&
+    trade.planId &&
+    trade.planId.toUpperCase() !== plan.id.toUpperCase()
+  ) {
+    return {
+      errors: [
+        `tradeId ${trade.id} is linked to plan ${trade.planId}, not ${plan.id}`,
+      ],
+    };
   }
 
   if (!trade && !plan && !existing) {

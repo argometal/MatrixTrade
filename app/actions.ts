@@ -866,6 +866,38 @@ export async function recordPlanOutcomeAction(
 ): Promise<{ error?: string }> {
   await requireTradingSession();
 
+  const statusRaw = String(formData.get("status") ?? "").trim();
+  const hasExpanded = Boolean(statusRaw);
+
+  if (hasExpanded) {
+    const refsRaw = String(formData.get("evidenceRefs") ?? "");
+    const result = await recordPlanOutcome(planId, {
+      status: statusRaw as import("@/lib/plan-outcome-types").PlanOutcomeStatus,
+      tradeExecuted: formData.get("tradeExecuted") === "true",
+      entryTriggered: formData.get("entryTriggered") === "true",
+      stopTriggered: formData.get("stopTriggered") === "true",
+      targetTriggered: formData.get("targetTriggered") === "true",
+      theoreticalResultR:
+        formData.get("theoreticalResultR") !== null &&
+        String(formData.get("theoreticalResultR")).trim() !== ""
+          ? Number(formData.get("theoreticalResultR"))
+          : null,
+      realizedResultR: Number(formData.get("realizedResultR") ?? 0),
+      outcomeSource: "manual_review",
+      evidenceStatus: "partial",
+      notes: String(formData.get("notes") ?? ""),
+      evidenceRefs: refsRaw
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      createdBy: "planning-ui",
+    });
+    if (result.errors?.length) return { error: result.errors.join(" ") };
+    revalidateTradingPaths();
+    revalidatePath("/planning");
+    return {};
+  }
+
   const reasonRaw = String(formData.get("reason") ?? "").trim();
   const reason = (Object.keys(PLAN_FAIL_REASON_LABELS) as PlanFailReason[]).includes(
     reasonRaw as PlanFailReason
