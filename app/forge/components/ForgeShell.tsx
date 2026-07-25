@@ -45,7 +45,7 @@ function sectionTitle(pathname: string, systemLabel: string): string {
   if (pathname.startsWith("/forge/deck/")) return "Chaos Deck";
   if (pathname.startsWith("/forge/realm/")) return "Realm";
   if (pathname.startsWith("/forge/argus/units")) return "Argus units";
-  if (pathname.startsWith("/forge/argus")) return "Argus";
+  if (pathname.startsWith("/forge/argus")) return "Argus · Experimental";
   if (pathname.startsWith("/forge/focus")) return "Focus";
   if (pathname.startsWith("/forge/chaos")) return "Capture (proto)";
   if (pathname.startsWith("/forge/task")) return "Task";
@@ -53,7 +53,7 @@ function sectionTitle(pathname: string, systemLabel: string): string {
   if (pathname.startsWith("/forge/archive")) return "Archive list";
   if (pathname.startsWith("/forge/active")) return "Active list";
   if (pathname.startsWith("/forge/library")) return "Active list";
-  if (pathname === "/forge" || pathname === "/forge/") return "Home";
+  if (pathname === "/forge" || pathname === "/forge/") return "Explorer";
   return systemLabel;
 }
 
@@ -279,7 +279,10 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
                     : "text-zinc-500 hover:text-zinc-300"
                 }`}
               >
-                Argus
+                <span>Argus</span>
+                <span className="text-[9px] font-normal uppercase tracking-wide text-amber-500/80">
+                  exp
+                </span>
               </button>
             </li>
 

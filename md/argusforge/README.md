@@ -19,6 +19,7 @@
 | [vault-training-layer-contract.md](vault-training-layer-contract.md) | **Canonical — Vault** | Vault prepares formation ≠ Memory |
 | [alexandria-frozen-contract.md](alexandria-frozen-contract.md) | **FROZEN — binding** | Alexandria **repo** freeze; destination = Argus as Alexandria +1 / motor (§0) |
 | [change-24-1c.md](change-24-1c.md) | **Active — 24-1C** | Architecture decision + Chaos builder B0 |
+| [change-24-1e.md](change-24-1e.md) | **Active — 24-1E** | Home = primary Explorer; Argus experimental (preserved) |
 | [chaos-builder-architecture.md](chaos-builder-architecture.md) | **Approved — implementing** | AF model + Legacy validation path; B0 builder |
 | [legacy-alexandria-adapter-boundary.md](legacy-alexandria-adapter-boundary.md) | **Boundary — pending_audit** | Adapter interface only |
 | [alexandria-legacy-audit-checklist.md](alexandria-legacy-audit-checklist.md) | **Checklist** | Inspect Alexandria formats (does not block B0) |
@@ -59,8 +60,8 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 
 | Route | Status |
 |-------|--------|
-| `/forge` | Home — operational summary/dashboard (not Treemap) |
-| `/forge/argus` | **Argus Realm Treemap** (24-17) — `?filter=focus\|active\|archive` |
+| `/forge` | **Home Explorer** (24-1E) — browse/search/filter Realms & Chaos Decks → Builder |
+| `/forge/argus` | **Argus experimental** Realm Treemap (24-17) — preserved; not current priority |
 | `/forge/argus/units` | Unit engine graph prototype (Fragments as nodes) |
 | `/forge/realm/[realmId]` | Molecular graph — Chaos Deck bodies; `unassigned` for root decks |
 | `/forge/library` | Library — AF repository browse / MTA library links |

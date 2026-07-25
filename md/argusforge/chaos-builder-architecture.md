@@ -66,13 +66,11 @@ Do **not** call every block a Locus. A future Locus may reference one or more bl
 ## 4. Long arc
 
 ```text
-NOW (24-1C B0)              NEXT                         LATER
+NOW                         NEXT                         LATER
 ─────────────────────────   ──────────────────────────   ─────────────────────────
-Chaos progressive builder   Argus structure + evidence   Alexandria Future motor
-  Decks + Fragments +         relations / recurrence       (+ Legacy validation
-  Blocks (text/image)         Realm viz                     path via adapter)
-  IndexedDB assets
-  neutral JSON export
+1 Chaos builder (24-1C)     Alexandria Legacy bridge     Alexandria Future motor
+2 Home Explorer (24-1E)     Real usage / evidence        Argus refinement (paused)
+  IndexedDB + export        (Argus preserved experimental — not current priority)
   Legacy Adapter boundary
 ```
 

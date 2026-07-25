@@ -129,17 +129,25 @@ export function RealmMapTree({ filter }: Props) {
 
       <header className="flex shrink-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-500/90">
-            Argus · Realms
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-amber-500/90">
+              Argus · Experimental
+            </p>
+            <span className="rounded border border-amber-700/50 bg-amber-950/40 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-200/90">
+              Preview
+            </span>
+          </div>
           <h2 className="text-xl font-semibold tracking-tight text-zinc-50">
             {filterLabel} Treemap
           </h2>
           <p className="text-xs text-zinc-500">
-            Macro view — size is mass, color is recent use. Open a Realm → select a deck →{" "}
-            <span className="text-zinc-400">Move to Realm</span>. Regroup fragments on{" "}
+            Relational laboratory — not the primary Explorer. Manage knowledge on{" "}
+            <Link href="/forge" className="underline hover:text-zinc-300">
+              Home
+            </Link>
+            . Open a Realm → select a deck → Move. Units:{" "}
             <Link href="/forge/argus/units" className="underline hover:text-zinc-300">
-              Unit graph
+              graph
             </Link>
             .
           </p>

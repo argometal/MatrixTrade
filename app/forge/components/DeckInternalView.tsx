@@ -7,6 +7,7 @@ import {
   buildExchangePackage,
   downloadExchangePackage,
 } from "@/lib/argusforge/af03-exchange-export";
+import { homeExplorerHref } from "@/lib/argusforge/af03-home-explorer";
 import {
   archiveDeck,
   createContent,
@@ -26,9 +27,9 @@ import {
   setMarkedForLater,
   viewHref,
 } from "@/lib/argusforge/af03-repo-store";
-import { UNASSIGNED_REALM_ID } from "@/lib/argusforge/af03-repo-types";
 import { createVaultPrep } from "@/lib/argusforge/af03-vault-prep-store";
 import type { Af03ContentItem, Af03RepoState } from "@/lib/argusforge/af03-repo-types";
+import { UNASSIGNED_REALM_ID } from "@/lib/argusforge/af03-repo-types";
 import { realmHref } from "@/lib/argusforge/af03-realm-map";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
 import { CreationMenu, type CreateAction } from "./CreationMenu";
@@ -84,7 +85,8 @@ export function DeckInternalView({ deckId }: Props) {
 
   function parentHref(): string {
     if (!deck) return "/forge";
-    return realmHref(deck.folderId ?? UNASSIGNED_REALM_ID);
+    // CHANGE 24-1E — return to Home Explorer Realm context (Argus molecular remains at realmHref)
+    return homeExplorerHref({ realmId: deck.folderId });
   }
 
   function toggleSelect(id: string) {
@@ -235,8 +237,19 @@ export function DeckInternalView({ deckId }: Props) {
           href={parentHref()}
           className="rounded px-1 py-0.5 hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
         >
-          ← Folder
+          ← Explorer
         </Link>
+        {deck.folderId ? (
+          <>
+            <span aria-hidden>·</span>
+            <Link
+              href={realmHref(deck.folderId)}
+              className="rounded px-1 py-0.5 hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            >
+              Argus Realm
+            </Link>
+          </>
+        ) : null}
         <span aria-hidden>/</span>
         <span className="text-zinc-400">{deck.view === "active" ? "Active" : "Archive"}</span>
       </nav>
