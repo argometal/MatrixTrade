@@ -22,6 +22,11 @@ import {
   type NeedsAttentionSnapshot,
   type NeedsAttentionTaskType,
 } from "./needs-attention-types";
+import {
+  inboxAttentionLabel,
+  normalizePendingInboxItems,
+  pendingInboxProposalIds,
+} from "./pending-inbox";
 import { wrapSnapshotText } from "./snapshot-verification";
 
 export type NeedsAttentionBuildContext = {
@@ -280,8 +285,10 @@ export function buildNeedsAttentionTaskSnapshot(
     if (lo.mafExperimentId) linked.mafExperimentId = lo.mafExperimentId;
     if (lo.observationId) linked.observationId = lo.observationId;
   }
-  if (type === "apply_inbox" && ctx.pendingInbox?.length) {
-    linked.inboxProposalIds = ctx.pendingInbox.map((p) => p.id).slice(0, 20);
+  if (type === "apply_inbox") {
+    // Live unique pending IDs only — never echo historical inboxProposalIds.
+    const liveIds = pendingInboxProposalIds(ctx.pendingInbox ?? []);
+    if (liveIds.length) linked.inboxProposalIds = liveIds;
   }
 
   const available: NeedsAttentionSnapshot["evidence"]["available"] = [];
@@ -445,11 +452,12 @@ export function buildNeedsAttentionTaskSnapshot(
   }
 
   if (type === "apply_inbox") {
-    currentState.pendingInboxCount = ctx.pendingInbox?.length ?? 0;
+    const livePending = normalizePendingInboxItems(ctx.pendingInbox ?? []);
+    currentState.pendingInboxCount = livePending.length;
     available.push({
       field: "pendingInbox.count",
-      value: ctx.pendingInbox?.length ?? 0,
-      source: "Inbox",
+      value: livePending.length,
+      source: "Inbox (live unique pending)",
       verified: true,
     });
   }
@@ -672,8 +680,28 @@ export function enrichAttentionItemsWithAiSnapshots(
   items: AttentionItem[],
   ctx: NeedsAttentionBuildContext
 ): AttentionItem[] {
-  const withCount = { ...ctx, openAttentionCount: items.length };
-  return items.map((item) => enrichAttentionItemWithAiSnapshot(item, withCount));
+  const livePending = normalizePendingInboxItems(ctx.pendingInbox ?? []);
+  const liveCtx: NeedsAttentionBuildContext = {
+    ...ctx,
+    pendingInbox: livePending,
+  };
+
+  // Drop stale ATTN-INBOX-PROPOSALS when the live unique pending set is empty.
+  const filtered = items
+    .filter((item) => {
+      if (classifyNeedsAttentionTaskType(item.id) !== "apply_inbox") return true;
+      return livePending.length > 0;
+    })
+    .map((item) => {
+      if (classifyNeedsAttentionTaskType(item.id) !== "apply_inbox") return item;
+      return {
+        ...item,
+        label: inboxAttentionLabel(livePending.length),
+      };
+    });
+
+  const withCount = { ...liveCtx, openAttentionCount: filtered.length };
+  return filtered.map((item) => enrichAttentionItemWithAiSnapshot(item, withCount));
 }
 
 export function validateNeedsAttentionSnapshot(snapshot: NeedsAttentionSnapshot): string[] {

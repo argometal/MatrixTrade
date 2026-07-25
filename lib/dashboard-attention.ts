@@ -4,6 +4,10 @@ import {
   listIncompleteClosedTrades,
 } from "./incomplete-closed-trades";
 import type { MonthlyRisk } from "./monthly-risk";
+import {
+  inboxAttentionLabel,
+  normalizePendingInboxItems,
+} from "./pending-inbox";
 import type { Playbook } from "./playbook-types";
 import type { Trade } from "./types";
 import type { NeedsAttentionTaskType } from "./needs-attention-types";
@@ -72,13 +76,12 @@ export function buildAttentionItems(
     });
   }
 
-  if (pendingInbox.length > 0) {
+  // Always recompute from the live unique pending set — never trust historical IDs.
+  const livePending = normalizePendingInboxItems(pendingInbox);
+  if (livePending.length > 0) {
     items.push({
       id: "inbox",
-      label:
-        pendingInbox.length === 1
-          ? "Apply inbox proposal"
-          : `Apply ${pendingInbox.length} inbox proposals`,
+      label: inboxAttentionLabel(livePending.length),
       href: "/inbox",
       priority: 2,
     });

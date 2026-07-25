@@ -1,9 +1,11 @@
 import { getBridgeConfig } from "./bridge";
 import { isSupabaseTradesStore } from "./trades-json";
+import { normalizePendingInboxItems } from "./pending-inbox";
 import {
   createSupabaseInboxItem,
   getSupabaseInboxItem,
   listSupabaseInboxItems,
+  listSupabaseResolvedInboxIds,
   setSupabaseInboxStatus,
 } from "./trading-inbox-store/supabase";
 import {
@@ -12,6 +14,7 @@ import {
   listLocalInboxItems,
   setLocalInboxStatus,
 } from "./trading-inbox-storage-local";
+import type { BridgeInboxItem } from "./bridge";
 
 export type InboxBackend = "worker" | "supabase" | "local";
 
@@ -145,16 +148,38 @@ export async function listSupabasePendingInboxItems() {
   }
 }
 
+/**
+ * Current pending Inbox set for badges + Needs Attention.
+ * Recomputes every call from live stores; drops applied/rejected; dedupes by id.
+ * Does not create or mutate proposals.
+ */
 export async function listPendingInboxForRuntime(
-  workerItems: import("./bridge").BridgeInboxItem[]
-): Promise<import("./bridge").BridgeInboxItem[]> {
+  workerItems: BridgeInboxItem[]
+): Promise<BridgeInboxItem[]> {
   const [supabase, local] = await Promise.all([
     listSupabasePendingInboxItems(),
     isVercelRuntime() ? Promise.resolve([]) : listLocalInboxItems(),
   ]);
-  return [...workerItems, ...supabase, ...local].sort((a, b) =>
-    b.receivedAt.localeCompare(a.receivedAt)
+
+  let workerPending = (workerItems ?? []).filter(
+    (item) => !item.status || item.status === "pending"
   );
+
+  // Durable store wins: if Supabase already applied/rejected an id, ignore worker ghost.
+  if (isSupabaseInboxStore() && workerPending.length) {
+    try {
+      const resolved = await listSupabaseResolvedInboxIds(
+        workerPending.map((item) => item.id)
+      );
+      if (resolved.size) {
+        workerPending = workerPending.filter((item) => !resolved.has(item.id));
+      }
+    } catch {
+      // Table may be unavailable — still normalize pending/dedupe below.
+    }
+  }
+
+  return normalizePendingInboxItems([...workerPending, ...supabase, ...local]);
 }
 
 export async function getInboxItemFromStore(
