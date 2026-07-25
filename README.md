@@ -3,7 +3,7 @@
 Experiment control for trades **H001–H030**.  
 Data lives in **Obsidian** (markdown files); the app manages numbers and rules.
 
-> **ChatGPT / handoff:** read [`CHATGPT.md`](CHATGPT.md) first, then [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md).
+> **ChatGPT / handoff:** read [`CHAT-HANDOFF.md`](CHAT-HANDOFF.md) (live checks / debt) and [`CHATGPT.md`](CHATGPT.md), then [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md).
 
 **Roadmap:** see [`MATRIX-v2-VISION.md`](MATRIX-v2-VISION.md) for the private investment knowledge base (portfolio, companies, journal, …).
 
