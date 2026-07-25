@@ -506,6 +506,13 @@ function buildTradeUpdateInput(proposal: Record<string, unknown>): UpdateTradeIn
   if (proposal.setupId !== undefined) input.setupId = String(proposal.setupId);
   if (proposal.planId !== undefined) input.planId = String(proposal.planId);
   if (proposal.closedAt !== undefined) input.closedAt = String(proposal.closedAt);
+  if (proposal.createdAt !== undefined) input.createdAt = String(proposal.createdAt);
+  if (proposal.datesReconstructed !== undefined) {
+    input.datesReconstructed = Boolean(proposal.datesReconstructed);
+  }
+  if (proposal.dateCorrectionNote !== undefined) {
+    input.dateCorrectionNote = String(proposal.dateCorrectionNote);
+  }
   if (proposal.plannedRisk !== undefined) input.plannedRisk = Number(proposal.plannedRisk);
   if (proposal.actualRisk !== undefined) input.actualRisk = Number(proposal.actualRisk);
   if (proposal.riskRewardPlanned !== undefined) {

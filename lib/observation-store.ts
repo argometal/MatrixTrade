@@ -33,11 +33,18 @@ export async function getObservationById(
   return (await readArray()).find((row) => row.id.toUpperCase() === needle);
 }
 
+export async function getObservationsByTradeId(
+  tradeId: string
+): Promise<ObservationRecord[]> {
+  const needle = tradeId.toUpperCase();
+  return (await readArray()).filter((row) => row.tradeId?.toUpperCase() === needle);
+}
+
 export async function getObservationByTradeId(
   tradeId: string
 ): Promise<ObservationRecord | undefined> {
-  const needle = tradeId.toUpperCase();
-  return (await readArray()).find((row) => row.tradeId?.toUpperCase() === needle);
+  const matches = await getObservationsByTradeId(tradeId);
+  return matches[0];
 }
 
 export async function getObservationByPlanId(

@@ -9,6 +9,11 @@ import {
   LEGACY_ABSENT_PLAN_ID,
   LEGACY_ABSENT_PLAYBOOK_ID,
 } from "./legacy-trade-completion";
+import { buildLegacyDateCorrectionContractText } from "./legacy-date-correction";
+import {
+  buildObservationUpdateContractText,
+  OBSERVATION_UPDATE_ALLOWED_KEYS,
+} from "./observation-validate";
 import {
   STOCK_CASE_CREATE_ALLOWED_KEYS,
   STOCK_CASE_LEVELS_ALLOWED_KEYS,
@@ -73,7 +78,7 @@ export type ApplySchemaContract = {
 
 export function buildApplySchemaContract(): ApplySchemaContract {
   return {
-    schemaVersion: "2026-07-25.schema-discipline",
+    schemaVersion: "2026-07-25.obs-legacy-dates",
     product: "MTA",
     rules: [
       "SCHEMA-FIRST: before any Apply JSON, read this contract (Control → MTA Mechanics → Apply schema contract).",
@@ -88,6 +93,8 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "Do not put Entry Solver / R:R / shares into MTAE.",
       "MTAE presentation is evidence-first (Analysis Mode); explain only on request.",
       `Legacy closed trades: never invent playbookId/planId — use ${LEGACY_ABSENT_PLAYBOOK_ID} / ${LEGACY_ABSENT_PLAN_ID} for historical absence.`,
+      "Legacy date correction: trade-update with datesReconstructed:true + dateCorrectionNote; closed legacy only; audit prior dates.",
+      "observation-update: one of observationId|tradeId|planId + at least one measurable field; never invent prices; observation ≠ attribution.",
       "Human mutations only via Control → Apply → Validate → Accept.",
     ],
     acceptedTypes: Object.keys(AI_BLOCK_SAMPLES) as AiBlockType[],
@@ -122,9 +129,14 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "trade-proposal": ["id", "ticker", "entry", "stop", "shares"],
       "trade-update": [
         "id",
-        "at least one of: playbookId, planId, thesis, riskRewardPlanned, lossClassification, postStopStudy, notes, …",
+        "at least one of: playbookId, planId, thesis, riskRewardPlanned, lossClassification, postStopStudy, notes, datesReconstructed+dateCorrectionNote, …",
       ],
       "trade-review": ["id", "qualityEntry", "qualityExit", "qualityMgmt"],
+      "observation-update": [
+        "observationId|tradeId|planId",
+        "at least one measurable field",
+        `allowed keys: ${OBSERVATION_UPDATE_ALLOWED_KEYS.join(", ")}`,
+      ],
     },
     allowedEnums: {
       "decision.verdict": ["go", "wait", "probe", "no"],
@@ -178,6 +190,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "decision-update": AI_BLOCK_SAMPLES["decision-update"],
       "trade-update": buildLegacyTradeUpdateExample("H002"),
       "trade-review": AI_BLOCK_SAMPLES["trade-review"],
+      "observation-update": AI_BLOCK_SAMPLES["observation-update"],
     },
   };
 }
@@ -215,6 +228,10 @@ export function buildApplySchemaContractText(): string {
     ),
     "",
     buildLegacyTradeCompletionContractText(),
+    "",
+    buildLegacyDateCorrectionContractText(),
+    "",
+    buildObservationUpdateContractText(),
     "",
     "Before producing Apply JSON: read this contract. Do not rely on memory or semantic guesses.",
     "Full JSON examples are in this contract (examples.*) and in Mechanics samples when pasted.",

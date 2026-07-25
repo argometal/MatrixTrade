@@ -1,6 +1,10 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { computeExperiment } from "./calculate";
+import {
+  applyLegacyDateCorrection,
+  validateLegacyDateCorrectionProposal,
+} from "./legacy-date-correction";
 import { applyLegacyLinkPatchFromProposal } from "./legacy-trade-completion";
 import { createPostStopStudyFromTrade } from "./post-stop-study";
 import { computeMonthlyRisk, type MonthlyRisk } from "./monthly-risk";
@@ -498,6 +502,31 @@ export async function updateTrade(
     if (!postStopStudy) {
       return { errors: ["postStopStudy must be an object."] };
     }
+  }
+
+  // Prompt 25-10F — reconstructed legacy chronology (closed trades only).
+  if (input.datesReconstructed === true) {
+    const check = validateLegacyDateCorrectionProposal(trade, {
+      datesReconstructed: true,
+      dateCorrectionNote: input.dateCorrectionNote,
+      createdAt: input.createdAt,
+      closedAt: input.closedAt,
+      postStopStudy: input.postStopStudy,
+    });
+    if (!check.ok) return { errors: check.errors };
+    const corrected = applyLegacyDateCorrection(trade, check.value);
+    const enriched = enrichTrade(corrected, rules);
+    await upsertTradeInJson(enriched);
+    await syncObsidianTradeIfLocal(enriched, rules);
+    return { trade: enriched };
+  }
+
+  if (input.createdAt !== undefined) {
+    return {
+      errors: [
+        "createdAt may only be changed with datesReconstructed: true and dateCorrectionNote",
+      ],
+    };
   }
 
   const legacyLinks = applyLegacyLinkPatchFromProposal(trade, {

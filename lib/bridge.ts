@@ -694,6 +694,9 @@ export function validateProposalPayload(
       p.setupId !== undefined ||
       p.status !== undefined ||
       p.closedAt !== undefined ||
+      p.createdAt !== undefined ||
+      p.datesReconstructed !== undefined ||
+      p.dateCorrectionNote !== undefined ||
       p.planId !== undefined ||
       p.plannedRisk !== undefined ||
       p.actualRisk !== undefined ||
@@ -704,7 +707,33 @@ export function validateProposalPayload(
       p.exitReason !== undefined;
     if (!hasField) {
       errors.push(
-        "At least one field to update required (entry, stop, target, shares, ticker, thesis, notes, playbookId, setupId, status, closedAt, planId, plannedRisk, actualRisk, riskRewardPlanned, riskRewardActual, lossClassification, postStopStudy, exitReason)"
+        "At least one field to update required (entry, stop, target, shares, ticker, thesis, notes, playbookId, setupId, status, closedAt, createdAt, datesReconstructed, dateCorrectionNote, planId, plannedRisk, actualRisk, riskRewardPlanned, riskRewardActual, lossClassification, postStopStudy, exitReason)"
+      );
+    }
+    if (p.datesReconstructed !== undefined && p.datesReconstructed !== true) {
+      errors.push("proposal.datesReconstructed must be true when supplied");
+    }
+    if (p.datesReconstructed === true) {
+      const note = String(p.dateCorrectionNote ?? "").trim();
+      if (!note) {
+        errors.push("proposal.dateCorrectionNote required when datesReconstructed is true");
+      }
+      if (p.createdAt === undefined && p.closedAt === undefined && p.postStopStudy === undefined) {
+        errors.push(
+          "legacy date correction requires createdAt and/or closedAt (optional postStopStudy)"
+        );
+      }
+      for (const field of ["createdAt", "closedAt"] as const) {
+        if (p[field] !== undefined) {
+          const raw = String(p[field]).trim();
+          if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/.test(raw) || !Number.isFinite(Date.parse(raw))) {
+            errors.push(`proposal.${field} must be ISO-8601 UTC (…Z)`);
+          }
+        }
+      }
+    } else if (p.createdAt !== undefined) {
+      errors.push(
+        "proposal.createdAt requires datesReconstructed: true and dateCorrectionNote"
       );
     }
     if (p.lossClassification !== undefined) {
