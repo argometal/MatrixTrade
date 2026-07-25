@@ -53,7 +53,7 @@ No Apply JSON until READY (protocol understood + evidence sufficient + zero unve
 | `closed_missing_review` | Closed + !reviewedAt | Trade | `/trades/{id}/review` | `trade-review` | reviewedAt set | Yes | **SUPPORTED** |
 | `incomplete_closed_aggregate` | Any incomplete closed gaps | Trades list | `/trades` | Per-trade blocks | All gaps cleared | Summary only | **SUPPORTED** (multi) |
 | `apply_inbox` | pendingInbox.length > 0 | Inbox items | `/inbox` | Existing proposal types via Control | No unapplied proposals | Yes (operational) | **SUPPORTED** |
-| `evaluate_expired_plan` | Plan failed/expired/skipped + !outcome.recordedAt | Plan, Stock File | `/planning?plan=` | **None today** — outcome via Planning UI `recordPlanOutcomeAction` only | outcome.recordedAt (then LO/OBS/MAF as derived tasks) | Yes (diagnostic) | **UNSUPPORTED** (Apply gap — see below) |
+| `evaluate_expired_plan` | Plan failed/expired/skipped + !outcome.recordedAt | Plan, Stock File | `/planning?plan=` | `plan-outcome` (also Planning UI Record Outcome) | outcome.recordedAt (then LO/OBS/MAF as derived tasks) | Yes (diagnostic) | **SUPPORTED** |
 | `plan_ready_enter` | Plan status = ready | Plan | Scout enter href | `trade-proposal` | Trade opened / plan entered | Yes | **SUPPORTED** |
 | `plan_window_closing` | Watching + validUntil ≤ 48h | Plan | `/planning?plan=` | `decision-update` | Window extended, entered, or terminal | Yes | **SUPPORTED** |
 | `closed_missing_observation` | Closed trade with no ObservationRecord | Trade, LO? | `/trades/{id}` | `observation-update` (ensure OBS) | Observation exists with required evidence fields as needed | Yes | **SUPPORTED** (new attention row) |
@@ -115,25 +115,20 @@ Sequential dependencies: one block at a time; recalculate between steps.
 
 ## UNSUPPORTED capability gaps
 
-### `evaluate_expired_plan` — missing Apply block
-
-| Field | Value |
-|-------|-------|
-| **Entity** | `TradePlan` (`plan.outcome`) |
-| **Missing mutation** | Persist `outcome.recordedAt` + reason / strategyStillValid / lesson |
-| **Today** | Planning UI → `recordPlanOutcomeAction` → `recordPlanOutcome` |
-| **Required validation** | Status ∈ failed\|expired\|skipped; required strategyStillValid; never invent market facts |
-| **Required persistence** | Plan store upsert + LO/OBS side-effects (already in `recordPlanOutcome`) |
-| **Required verification** | Re-read plan; `outcome.recordedAt` present; attention item gone |
-| **Completion condition** | `!planNeedsStrategyReview(plan)` |
-| **Smallest future block** | `plan-outcome` (Apply) wrapping existing `recordPlanOutcome` — do not force-fit `decision-update` |
-
-### Other UNSUPPORTED
-
 | Task | Why |
 |------|-----|
 | `playbook_samples` | Needs more closed trades — Apply cannot invent samples |
 | `monthly_loss_limit` / `monthly_loss_warning` | Calendar / risk room — not an Apply mutation |
+
+### `evaluate_expired_plan` — resolved (CURSOR-MTA-PLAN-OUTCOME-UPL-25-29)
+
+| Field | Value |
+|-------|-------|
+| **Entity** | `TradePlan` (`plan.outcome`) |
+| **Apply block** | `plan-outcome` (`outcomeKind: unexecuted_plan_loss`) |
+| **UI** | Planning → Record Outcome (`PlanRecordOutcomePanel`) |
+| **Persistence** | PlanOutcome + LO `unexecuted_plan_loss` (server-derived R); closes when `outcome.recordedAt` set; MAF separate |
+| **Docs** | `md/matrix/plan-outcome-upl-25-29.md` |
 
 ---
 

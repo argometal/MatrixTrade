@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { ScoutExecutePanel } from "@/app/components/planning-preview/ScoutExecutePanel";
+import { PlanRecordOutcomePanel } from "@/app/components/planning-preview/PlanRecordOutcomePanel";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
+import { planNeedsStrategyReview } from "@/lib/plan-helpers";
 import { scoutingVerdictStyle } from "@/lib/matrix-mechanics-brief";
 import type { MarketEvidence } from "@/lib/market-evidence-types";
 import type { MonthlyRisk } from "@/lib/monthly-risk";
@@ -562,6 +564,12 @@ export function PreviewPlanning({
                     </Link>
                   </div>
                 </section>
+              ) : null}
+
+              {scoutPrimaryPlan && planNeedsStrategyReview(scoutPrimaryPlan) ? (
+                <div className="mt-4">
+                  <PlanRecordOutcomePanel plan={scoutPrimaryPlan} />
+                </div>
               ) : null}
 
               {!focusedScoutCard?.orphan ? (

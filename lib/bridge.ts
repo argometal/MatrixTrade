@@ -18,6 +18,7 @@ import {
 } from "./mtae-validate";
 import { validateAttributionProposal } from "./maf-validate";
 import { validateObservationUpdateProposal } from "./observation-validate";
+import { validatePlanOutcomeProposal } from "./plan-outcome-validate";
 import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
@@ -241,6 +242,7 @@ export type TradingProposalType =
   | "trade-update"
   | "attribution"
   | "observation-update"
+  | "plan-outcome"
   | "playbook-create"
   | "playbook-update";
 
@@ -273,6 +275,7 @@ export function parseTradingInboxPayload(
     type !== "trade-update" &&
     type !== "attribution" &&
     type !== "observation-update" &&
+    type !== "plan-outcome" &&
     type !== "playbook-create" &&
     type !== "playbook-update"
   ) {
@@ -333,6 +336,8 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return `MAF attribution ${p.tradeId ?? p.planId ?? p.experimentId ?? ""} · ${(p.components as unknown[] | undefined)?.length ?? 0} components`;
     case "observation-update":
       return `Observation ${p.observationId ?? p.tradeId ?? p.planId ?? p.id ?? ""} · update`;
+    case "plan-outcome":
+      return `Plan outcome ${p.planId ?? ""} · ${p.outcomeKind ?? p.status ?? "record"} · entryReached ${String(p.entryReached ?? p.entryTriggered ?? "—")}`;
     case "playbook-create":
       return `New playbook · ${p.name ?? "unnamed"}`;
     case "playbook-update":
@@ -635,6 +640,11 @@ export function validateProposalPayload(
 
   if (parsed.type === "observation-update") {
     const check = validateObservationUpdateProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+
+  if (parsed.type === "plan-outcome") {
+    const check = validatePlanOutcomeProposal(p);
     if (!check.ok) errors.push(...check.errors);
   }
 

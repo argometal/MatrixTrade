@@ -13,6 +13,7 @@ import {
 import { applyTechnicalAssessment, applyTechnicalCalibration } from "./mtae-apply";
 import { applyAttribution } from "./maf-apply";
 import { applyObservationUpdateProposal } from "./observation-apply";
+import { applyPlanOutcomeProposal } from "./plan-outcome";
 import { applyScoutPlanCreate } from "./scout-plan-create";
 import {
   getPlaybookById,
@@ -140,6 +141,8 @@ async function applyTradingProposalInner(
       return applyAttributionBlock(parsed);
     case "observation-update":
       return applyObservationUpdateBlock(parsed);
+    case "plan-outcome":
+      return applyPlanOutcomeBlock(parsed);
     case "trade-proposal":
       return applyTradeProposal(parsed);
     case "trade-close":
@@ -353,6 +356,20 @@ async function applyObservationUpdateBlock(
     type: "observation-update",
     tradeId: obs?.tradeId,
     planId: obs?.planId,
+  };
+}
+
+async function applyPlanOutcomeBlock(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await applyPlanOutcomeProposal(parsed.proposal);
+  if (result.errors?.length) return { ok: false, errors: result.errors };
+  const plan = result.plan;
+  return {
+    ok: true,
+    message: `Recorded plan outcome ${plan?.id ?? ""} · ${plan?.outcome?.outcomeKind ?? plan?.outcome?.status ?? "recorded"} · realizedR ${plan?.outcome?.realizedResultR ?? 0} · counterfactualR ${plan?.outcome?.theoreticalResultR ?? "—"}`,
+    type: "plan-outcome",
+    planId: plan?.id,
   };
 }
 

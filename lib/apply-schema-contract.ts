@@ -95,6 +95,8 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       `Legacy closed trades: never invent playbookId/planId — use ${LEGACY_ABSENT_PLAYBOOK_ID} / ${LEGACY_ABSENT_PLAN_ID} for historical absence.`,
       "Legacy date correction: trade-update with datesReconstructed:true + dateCorrectionNote; closed legacy only; audit prior dates.",
       "observation-update: one of observationId|tradeId|planId + at least one measurable field; never invent prices; observation ≠ attribution.",
+      "plan-outcome: one mutation per block; human-confirmed event order; AI must not invent prices, timestamps, fills or risk.",
+      "plan-outcome: counterfactualR is server-derived (−1 for unexecuted_plan_loss); no Trade created; realized P/L unchanged; Stock File thesis unchanged; MAF separate.",
       "Human mutations only via Control → Apply → Validate → Accept.",
     ],
     acceptedTypes: Object.keys(AI_BLOCK_SAMPLES) as AiBlockType[],
@@ -137,8 +139,28 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "at least one measurable field",
         `allowed keys: ${OBSERVATION_UPDATE_ALLOWED_KEYS.join(", ")}`,
       ],
+      "plan-outcome": [
+        "planId",
+        "outcomeKind (unexecuted_plan_loss|duplicate_creation)",
+        "entryReached",
+        "stopReachedBeforeTarget",
+        "targetReachedBeforeStop",
+        "nonExecutionReason",
+        "notes?",
+        "evidenceRefs?",
+      ],
     },
     allowedEnums: {
+      "plan-outcome.outcomeKind": ["unexecuted_plan_loss", "duplicate_creation"],
+      "plan-outcome.nonExecutionReason": [
+        "order_not_staged",
+        "discretionary_skip",
+        "operational_unavailable",
+        "alert_missed",
+        "broker_rejection",
+        "insufficient_buying_power",
+        "unknown",
+      ],
       "decision.verdict": ["go", "wait", "probe", "no"],
       "stockThesis.status": [
         "draft",
@@ -191,6 +213,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "trade-update": buildLegacyTradeUpdateExample("H002"),
       "trade-review": AI_BLOCK_SAMPLES["trade-review"],
       "observation-update": AI_BLOCK_SAMPLES["observation-update"],
+      "plan-outcome": AI_BLOCK_SAMPLES["plan-outcome"],
     },
   };
 }

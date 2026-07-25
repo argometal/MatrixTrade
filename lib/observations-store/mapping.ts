@@ -33,6 +33,16 @@ export interface ObservationRow {
   better_entry_price: number | null;
   data_source: string | null;
   notes: string | null;
+  observation_kind: string | null;
+  learning_unit_kind: string | null;
+  entry_triggered: boolean | null;
+  stop_triggered: boolean | null;
+  target_triggered: boolean | null;
+  theoretical_result_r: number | null;
+  realized_result_r: number | null;
+  evidence_refs: string[] | null;
+  conclusion_reason: string | null;
+  concluded_at: string | null;
   created_at: string;
   last_updated_at: string;
 }
@@ -92,6 +102,18 @@ export function observationRowToRecord(row: ObservationRow): ObservationRecord {
     betterEntryPrice: num(row.better_entry_price),
     dataSource: str(row.data_source) as ObservationDataSource | undefined,
     notes: str(row.notes),
+    observationKind: str(row.observation_kind),
+    learningUnitKind: str(row.learning_unit_kind),
+    entryTriggered: bool(row.entry_triggered),
+    stopTriggered: bool(row.stop_triggered),
+    targetTriggered: bool(row.target_triggered),
+    theoreticalResultR: num(row.theoretical_result_r),
+    realizedResultR: num(row.realized_result_r),
+    evidenceRefs: Array.isArray(row.evidence_refs)
+      ? row.evidence_refs.map(String)
+      : undefined,
+    conclusionReason: str(row.conclusion_reason),
+    concludedAt: str(row.concluded_at),
     createdAt: String(row.created_at),
     lastUpdatedAt: String(row.last_updated_at),
   };
@@ -126,6 +148,16 @@ export function observationToRow(row: ObservationRecord): ObservationRow {
     better_entry_price: row.betterEntryPrice ?? null,
     data_source: row.dataSource ?? null,
     notes: row.notes ?? null,
+    observation_kind: row.observationKind ?? null,
+    learning_unit_kind: row.learningUnitKind ?? null,
+    entry_triggered: row.entryTriggered ?? null,
+    stop_triggered: row.stopTriggered ?? null,
+    target_triggered: row.targetTriggered ?? null,
+    theoretical_result_r: row.theoreticalResultR ?? null,
+    realized_result_r: row.realizedResultR ?? null,
+    evidence_refs: row.evidenceRefs ?? [],
+    conclusion_reason: row.conclusionReason ?? null,
+    concluded_at: row.concludedAt ?? null,
     created_at: row.createdAt,
     last_updated_at: row.lastUpdatedAt,
   };

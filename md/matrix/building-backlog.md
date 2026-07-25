@@ -16,7 +16,8 @@
 | **Shipped (P1)** | Trades banner + Dashboard attention for closed≠complete (`lib/incomplete-closed-trades.ts`) |
 | **Shipped (002C seed)** | Playbook `secular-trend-continuation` (TESTING) + MD — Family B vs `structural-pullback-entry` Family A |
 | **Shipped (Needs Attention AI)** | Task snapshots + Copy for AI / Apply / Go; Library Index; learning attention (OBS + attribution); `tools/test-needs-attention-ai.ts` |
-| **Phases left** | **002B** postponed · live Family B calibration · optional `plan-outcome` Apply block (gap documented) |
+| **Phases left** | **002B** postponed · live Family B calibration |
+| **Shipped (plan-outcome UPL 25-29)** | Apply `plan-outcome` (`unexecuted_plan_loss`) · server-derived R · Scout metrics · [plan-outcome-upl-25-29.md](plan-outcome-upl-25-29.md) |
 | **Shipped (Observation UX)** | Closed-trade Observation form on `/trades/[id]`; ensure OBS on save; Apply path can seed OBS for closed fills |
 | **Shipped (002C UI)** | Family B checklist on Scout / Stock File / Trade when playbook = `secular-trend-continuation` |
 | **Do not build now** | Coach, wide MAF dashboards, VP/AVWAP, more Control categories, parallel prompt systems, parallel AI workflow DB |

@@ -229,7 +229,8 @@ Method: `playbook-create`, `playbook-update`
 |--------|------|
 | **MTAE** | Momentum / Expansion Assessment (`momentumAssessment`) optional on technical-assessment |
 | **NORTH STAR** | **[MTA-002](mta-002-operability-plan.md)** + Needs Attention AI + layered R/risk + Family B + Trade Map; **002B postponed** |
-| **NEXT** | Live Copy-for-AI / risk_percent ladders · Family B calibration · optional `plan-outcome` Apply block |
+| **NEXT** | Live Copy-for-AI / risk_percent ladders · Family B calibration · Learning UI for Scout aggregates |
+| **Shipped** | `plan-outcome` UPL (`unexecuted_plan_loss`) — [plan-outcome-upl-25-29.md](plan-outcome-upl-25-29.md) · Scout metrics separate from Trade P/L |
 | **POSTPONED** | MTA-002B prompt validation log (10–20 chats) — until dedicated test sessions |
 | **EVALUATION** | MAF expectancy aggregation by component/Playbook — only if enough attributed rows exist |
 | **OUT OF SCOPE now** | Request layer, Library schema, Volume profile / AVWAP, L2 / heatmap, empty dashboards, Coach, broker automation |

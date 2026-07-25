@@ -6,6 +6,10 @@ export const LEARNING_OUTCOME_KINDS = [
   "missed_opportunity",
   "cancelled",
   "expired",
+  /** Entry triggered, stop before target, no fill — counterfactual loss (≠ missed_opportunity). */
+  "unexecuted_plan_loss",
+  /** Duplicate scout window excluded from denominators. */
+  "duplicate_creation",
 ] as const;
 
 export type LearningOutcomeKind = (typeof LEARNING_OUTCOME_KINDS)[number];
@@ -37,6 +41,19 @@ export type LearningOutcome = {
   observationId?: string;
   mafExperimentId?: string;
   rAchieved?: number;
+  /** Realized R (0 when no trade). */
+  realizedR?: number;
+  /** Counterfactual / theoretical R from plan outcome evidence. */
+  counterfactualR?: number;
+  /** Realized account P/L (0 when no trade). */
+  realizedPnL?: number;
+  /** Dollar counterfactual — only when authorizedRiskAmount persisted; else null. */
+  counterfactualDollarResult?: number | null;
+  entryReached?: boolean;
+  stopReachedBeforeTarget?: boolean;
+  targetReachedBeforeStop?: boolean;
+  nonExecutionReason?: string;
+  excludedFromMetrics?: boolean;
   lifecycleStatus: LearningOutcomeLifecycle;
   notes?: string;
   createdAt: string;
@@ -50,4 +67,14 @@ export const LEARNING_OUTCOME_KIND_LABELS: Record<LearningOutcomeKind, string> =
   missed_opportunity: "Missed opportunity",
   cancelled: "Cancelled",
   expired: "Expired",
+  unexecuted_plan_loss: "Unexecuted Plan Loss",
+  duplicate_creation: "Duplicate Creation",
 };
+
+/** Scout LO kinds that count toward evaluatedScoutCount (when not excluded). */
+export const SCOUT_EVALUATED_LO_KINDS: ReadonlySet<LearningOutcomeKind> = new Set([
+  "unexecuted_plan_loss",
+  "missed_opportunity",
+  "cancelled",
+  "expired",
+]);

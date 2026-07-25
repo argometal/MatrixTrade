@@ -50,6 +50,8 @@ export async function verifyApplyPersistence(
       return verifyAttributionPersistence(parsed);
     case "observation-update":
       return verifyObservationUpdatePersistence(parsed);
+    case "plan-outcome":
+      return verifyPlanOutcomePersistence(parsed);
     case "trade-proposal":
     case "trade-close":
     case "trade-review":
@@ -342,6 +344,21 @@ async function verifyObservationUpdatePersistence(
   return {
     ok: true,
     detail: `Observation ${row.id} verified · ${row.status}`,
+  };
+}
+
+async function verifyPlanOutcomePersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const planId = String(parsed.proposal.planId ?? "").trim().toUpperCase();
+  const { getPlanById } = await import("./plans");
+  const plan = await getPlanById(planId);
+  if (!plan?.outcome?.recordedAt) {
+    return { ok: false, detail: `Plan ${planId} outcome.recordedAt missing after apply.` };
+  }
+  return {
+    ok: true,
+    detail: `Plan ${plan.id} outcome verified · ${plan.outcome.outcomeKind ?? plan.outcome.status ?? "recorded"} · recordedAt set · realizedR ${plan.outcome.realizedResultR ?? 0}`,
   };
 }
 

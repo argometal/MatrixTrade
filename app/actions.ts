@@ -866,6 +866,58 @@ export async function recordPlanOutcomeAction(
 ): Promise<{ error?: string }> {
   await requireTradingSession();
 
+  const outcomeKindRaw = String(formData.get("outcomeKind") ?? "").trim();
+  const statusRaw = String(formData.get("status") ?? "").trim();
+  const refsRaw = String(formData.get("evidenceRefs") ?? "");
+  const evidenceRefs = refsRaw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (outcomeKindRaw) {
+    const result = await recordPlanOutcome(planId, {
+      outcomeKind: outcomeKindRaw as import("@/lib/plan-outcome-types").PlanOutcomeKind,
+      entryReached: formData.get("entryReached") === "true",
+      stopReachedBeforeTarget: formData.get("stopReachedBeforeTarget") === "true",
+      targetReachedBeforeStop: formData.get("targetReachedBeforeStop") === "true",
+      nonExecutionReason: String(formData.get("nonExecutionReason") ?? "").trim() as
+        | import("@/lib/plan-outcome-types").NonExecutionReason
+        | undefined,
+      notes: String(formData.get("notes") ?? ""),
+      evidenceRefs,
+      createdBy: "planning-ui",
+    });
+    if (result.errors?.length) return { error: result.errors.join(" ") };
+    revalidateTradingPaths();
+    revalidatePath("/planning");
+    return {};
+  }
+
+  if (statusRaw) {
+    const result = await recordPlanOutcome(planId, {
+      status: statusRaw as import("@/lib/plan-outcome-types").PlanOutcomeStatus,
+      tradeExecuted: formData.get("tradeExecuted") === "true",
+      entryTriggered: formData.get("entryTriggered") === "true",
+      stopTriggered: formData.get("stopTriggered") === "true",
+      targetTriggered: formData.get("targetTriggered") === "true",
+      theoreticalResultR:
+        formData.get("theoreticalResultR") !== null &&
+        String(formData.get("theoreticalResultR")).trim() !== ""
+          ? Number(formData.get("theoreticalResultR"))
+          : null,
+      realizedResultR: Number(formData.get("realizedResultR") ?? 0),
+      outcomeSource: "manual_review",
+      evidenceStatus: "partial",
+      notes: String(formData.get("notes") ?? ""),
+      evidenceRefs,
+      createdBy: "planning-ui",
+    });
+    if (result.errors?.length) return { error: result.errors.join(" ") };
+    revalidateTradingPaths();
+    revalidatePath("/planning");
+    return {};
+  }
+
   const reasonRaw = String(formData.get("reason") ?? "").trim();
   const reason = (Object.keys(PLAN_FAIL_REASON_LABELS) as PlanFailReason[]).includes(
     reasonRaw as PlanFailReason

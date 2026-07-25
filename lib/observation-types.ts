@@ -52,6 +52,20 @@ export type ObservationRecord = {
   betterEntryPrice?: number;
   dataSource?: ObservationDataSource;
   notes?: string;
+  /**
+   * Counterfactual / plan-without-trade observation (not a Missed Trade by default).
+   * Kind: plan_counterfactual_observation · unit: triggered_unexecuted_plan
+   */
+  observationKind?: string;
+  learningUnitKind?: string;
+  entryTriggered?: boolean | null;
+  stopTriggered?: boolean | null;
+  targetTriggered?: boolean | null;
+  theoreticalResultR?: number | null;
+  realizedResultR?: number | null;
+  evidenceRefs?: string[];
+  conclusionReason?: string;
+  concludedAt?: string;
   createdAt: string;
   lastUpdatedAt: string;
 };

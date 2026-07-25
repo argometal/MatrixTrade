@@ -32,6 +32,7 @@ Trade layer (use only when scouting approves):
 - trade-update: id required; at least one field to change. Legacy closed completion may set playbookId=__legacy_none__, planId=__LEGACY_NONE__, thesis, riskRewardPlanned, lossClassification, postStopStudy — never invent real Playbook/PLAN links
 - attribution: MAF component attribution — tradeId and/or planId (or experimentId); components[] with component, classification, aiInterpretationConfidence (0-100), reasoning; optional tag, suggestedImprovement, summary, primaryDragComponent, observation{mfe,mae,…}. NEVER invent prices — only supply observation numbers the human stated.
 - observation-update: Observation Engine — observationId or tradeId or planId; at least one of targetReached, targetReachedAt, thesisInvalidated, invalidationReachedAt, firstTerminalEvent, maxPrice, minPrice, mfe, mae, betterEntryAvailable, status (observing|concluded). Never invent prices.
+- plan-outcome: terminal Scout plan without Trade — planId, outcomeKind (unexecuted_plan_loss|duplicate_creation), entryReached, stopReachedBeforeTarget, targetReachedBeforeStop, nonExecutionReason required for UPL; server derives realizedR=0, counterfactualR=-1; never invent fills/risk; do not use decision-update or fictitious Trade
 - playbook-create / playbook-update: playbook CRUD
 
 Rules:
@@ -218,6 +219,11 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
     type: "observation-update",
     label: "observation-update — post-trade/scout observation",
     hint: "Target/invalidation timestamps, MFE/MAE — never invent prices",
+  },
+  {
+    type: "plan-outcome",
+    label: "plan-outcome — Unexecuted Plan Loss / Scout outcome (no Trade)",
+    hint: "outcomeKind=unexecuted_plan_loss + human-confirmed event order; server derives R — never invent fills",
   },
   {
     type: "analysis",
@@ -794,6 +800,21 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       status: "concluded",
       dataSource: "ai",
       notes: "Target hit 36 days after stop; thesis invalidation never reached.",
+    },
+  },
+  "plan-outcome": {
+    type: "plan-outcome",
+    source: "ai-block",
+    proposal: {
+      planId: "PLAN-001",
+      outcomeKind: "unexecuted_plan_loss",
+      entryReached: true,
+      stopReachedBeforeTarget: true,
+      targetReachedBeforeStop: false,
+      nonExecutionReason: "order_not_staged",
+      notes:
+        "Approved entry reached; stop reached before target; no Trade/fill. Order was not staged. Counterfactual Scout loss; account P/L unchanged.",
+      evidenceRefs: [],
     },
   },
   analysis: {
