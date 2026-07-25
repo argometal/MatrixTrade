@@ -3,7 +3,10 @@
  * Does not invent broker timestamps — human-supplied evidence only.
  */
 import { POST_STOP_STUDY_DAYS, type PostStopStudy } from "./asymmetry-types";
-import { assessTradeLegacy } from "./trade-forensic-snapshot";
+import {
+  hasSatisfiedPlanLink,
+  hasSatisfiedPlaybookLink,
+} from "./legacy-trade-completion";
 import type { Trade } from "./types";
 
 export type DateCorrectionAuditEntry = {
@@ -26,13 +29,23 @@ export function addCalendarDaysIso(iso: string, days: number): string {
   return new Date(Date.parse(iso) + days * 24 * 60 * 60 * 1000).toISOString();
 }
 
-/** Trade is closed and qualifies as legacy / reconstructed chronology. */
+/**
+ * Trade is closed and qualifies as legacy / reconstructed chronology.
+ * Mirrors assessTradeLegacy gaps without importing trade-forensic-snapshot
+ * (keeps Apply schema contract client-safe — no fs/playbooks-store).
+ */
 export function isClosedLegacyTradeForDateCorrection(trade: Trade): boolean {
   if (trade.status !== "closed") return false;
   if (trade.datesReconstructed) return true;
   if (trade.playbookHistoricallyAbsent || trade.planHistoricallyAbsent) return true;
-  const tier = assessTradeLegacy(trade).tier;
-  return tier === "legacy" || tier === "partial";
+  let missing = 0;
+  if (!hasSatisfiedPlaybookLink(trade)) missing += 1;
+  if (!hasSatisfiedPlanLink(trade)) missing += 1;
+  if (!trade.thesis?.trim()) missing += 1;
+  if (trade.riskRewardPlanned === undefined) missing += 1;
+  if (!trade.lossClassification) missing += 1;
+  if (!trade.postStopStudy) missing += 1;
+  return missing > 0;
 }
 
 export function buildPostStopWindowFromClose(
