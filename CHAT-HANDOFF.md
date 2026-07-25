@@ -77,6 +77,16 @@ Por eso Apply responde **unsupported**.
 
 ---
 
+## Deuda 25-07 — snapshots / labels obsoletos
+
+Mechanics todavía enseña `Control → Train AI` y un “Schema Contract” como menú separado.  
+La UI visible es: **MTA Mechanics · Stock Files · Apply** + Library + **Dashboard snapshot**.  
+Bajo Mechanics existe la copy row **Apply schema contract** — no un top-level Train AI.
+
+Hallazgos + checklist de depuración: [`md/matrix/snapshot-menu-debt-25-07.md`](md/matrix/snapshot-menu-debt-25-07.md).
+
+---
+
 ## Anti-patrones (vivos)
 
 | ❌ | ✅ |
@@ -110,6 +120,7 @@ Respuesta esperada: `CHECK COMPLETO — listo para implementar 25-29` o correcci
 |-----|-----|
 | `md/matrix/runtime-truth.md` | Qué hay en prod |
 | `md/matrix/needs-attention-ai-workflow.md` | Gap `plan-outcome` |
+| `md/matrix/snapshot-menu-debt-25-07.md` | Labels obsoletos Train AI / Schema Contract |
 | `md/matrix/maf-matrix-attribution-framework.md` | LO / OBS / MAF |
 | `lib/learning-outcome-types.ts` | Kinds actuales |
 | `lib/plans.ts` | `recordPlanOutcome` (UI) |

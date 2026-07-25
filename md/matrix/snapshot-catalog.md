@@ -1,7 +1,8 @@
 # Snapshot catalog
 
 **Status:** Canonical (2026-07-22).  
-**Parent:** [external-ai-policy.md](external-ai-policy.md)
+**Parent:** [external-ai-policy.md](external-ai-policy.md)  
+**Open debt:** [snapshot-menu-debt-25-07.md](snapshot-menu-debt-25-07.md) — Mechanics still teaches `Control → Train AI`; align SNAPSHOT MENU to visible labels.
 
 ---
 

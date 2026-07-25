@@ -34,6 +34,7 @@
 | **Status** | **Shipped** — Matrix Mechanics · Stock Files · Apply · Library |
 | **Doc** | [control-panel-ia.md](control-panel-ia.md) |
 | **Next** | Feeds **MTA-002A** (collapse Stock File usage to ≤3 primary actions). Closed≠complete alert lives on **Trades** (P1 shipped) |
+| **Open debt (25-07)** | Mechanics / schema-first still say `Control → Train AI` — see [snapshot-menu-debt-25-07.md](snapshot-menu-debt-25-07.md); fix AI-facing labels before more live Apply loops |
 
 ---
 
