@@ -22,7 +22,7 @@ export function AiBridgeClassicView({
         <div>
           <h1 className="text-2xl font-semibold">AI Bridge</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Classic view — Control → Update, or paste here → History → Apply.
+            Classic view — Control → Apply, or paste here → History → Apply.
           </p>
         </div>
         {viewToggle}

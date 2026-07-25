@@ -192,7 +192,7 @@ export function AiBridgeV2Panel({
             <div className="mb-6 grid gap-3 sm:grid-cols-2">
               {showHelp && (
                 <div className="rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-600">
-                  Control → Update, or paste AI Block → History → Apply.
+                  Control → Apply, or paste AI Block → History → Apply.
                 </div>
               )}
               {showExamples && (
@@ -345,7 +345,7 @@ export function AiBridgeV2Panel({
                 <div className="mb-3 py-2 text-center text-sm text-violet-900/80">
                   <p className="font-medium">AI Block will appear here</p>
                   <p className="mt-1 text-xs">
-                    Control → Update, or History → Apply
+                    Control → Apply, or History → Apply
                   </p>
                   <p className="mt-2 flex items-center justify-center gap-1 text-xs text-violet-700/70">
                     <span aria-hidden>🔒</span>
