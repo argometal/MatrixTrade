@@ -193,14 +193,70 @@ This design **does not** reproduce Library-the-product; it **does** take the **l
 
 ---
 
-## 8. Questions for decision (before any coding)
+## 8. Decisions from clarification (2026-07-25)
 
-1. **Fragment = locus?** Confirm one Fragment ↔ one locus-body candidate (recommended).  
-2. **Castillo naming** — working UI label vs keep Parcour internally.  
-3. **Image persistence in prototype** — IndexedDB vs defer binary until server; URL-only is **not** 100% builder.  
-4. **Thin `card` in Chaos?** Useful for pipeline or push to later?  
-5. **Does Vault rewrite bodies?** Proposal: no — Vault reviews / gates; Chaos remains editor of capture record until Library/motor is source of truth post-import.  
-6. **Argus castle before or after Chaos builder parity?** Proposal: **Chaos builder first** (unblocks pipeline); Argus structure can land in parallel only if it does not dilute capture work.
+### 8.1 Fragment growth (not “every Fragment is full Library on day one”)
+
+Intent: Fragments **grow with use and importance**.
+
+```text
+new / low recurrence     →  light capture (dump OK)
+rising use / importance  →  richer builder surface unlocks
+high recurrence          →  full Library-locus builder capacity
+earned integration       →  may join a Castle / Realm structure in Argus
+```
+
+A Fragment **may never** enter a Castle. That is valid. Chaos remains useful alone.
+
+**Chaos builder before Castle UI** — confirmed.
+
+### 8.2 Binaries / IndexedDB — recommendation (agent)
+
+| Store | Role |
+|-------|------|
+| **IndexedDB** | **Earn it for binary assets** (images from pick/drop/paste). Avoids `localStorage` quota wipe and `atob`/base64 bloat. |
+| **localStorage (current repo)** | Keep structured metadata + block JSON + asset **refs** (ids/keys) until a later full-IDB migration. |
+| URL-only images | Allowed as a block source, but **not** sufficient for builder parity. |
+
+**Decision recorded:** when Chaos builder ships, **IndexedDB for blobs**; structured Fragment/Deck state can stay on the current repo key until migration is justified. Prefer durable blobs over clever base64 in `localStorage`.
+
+### 8.3 Ontology — Parcour / Castle / Realm (coherent with Alexandria)
+
+Alexandria already separates these ([`LAYERS_REALM_PARCOUR_OBJECT.md`](https://github.com/argometal/Alexandria/blob/main/ORM/LAYERS_REALM_PARCOUR_OBJECT.md), ORM-16-03). Human language maps cleanly:
+
+| Term | Role | State |
+|------|------|--------|
+| **Object / Locus** | One content unit (← AF **Fragment** body candidate) | authored in Chaos |
+| **Parcour** | Path / topic run **under construction** — DB/path being filled with loci | work-in-progress |
+| **Castle** | **Culminated product** of a topic — used loci with the full authored series (objects, hints, questions / ridiculous-stories bar, etc.) | completion phase, not a fourth tree layer |
+| **Realm** | Structural container for **one theme** — holds many parcours; completed ones qualify as (or contribute to) Castle | accumulation / world root |
+
+**Coherence check**
+
+| Claim | Verdict |
+|-------|---------|
+| Parcour = en construcción | **Yes** — working path |
+| Castle = producto final de un tópico | **Yes** — completion status / graduated topic product (Alexandria: Castle ≠ synonym of Realm) |
+| Realm = acumulación de castles del mismo tema | **Mostly yes** — Realm accumulates **parcours** of a theme; those that culminate are Castles (or the Realm reaches Castle when the used-frame bar is met). A Realm may still hold unfinished parcours. |
+| “Castle = un realm culminado” | **Too loose** — prefer: Castle = **culminación de un tópico/parcour (o fase)**; Realm = **contenedor del tema**. A whole Realm can *qualify Castle* as a phase, but Castle is not “another name for Realm.” |
+
+**AF working rule (follow Alexandria ontology):**
+
+```text
+Realm (theme world)
+  └── Parcour (under construction)
+        └── Objects / Fragments (loci)
+              └── … when topic qualifies → Castle (completion of that product)
+```
+
+UI may say “Castillo” for the completed product; internal/type language keeps **Parcour** + **Castle (completion)** + **Realm** as in Alexandria. AF folder “Realm” (Chaos org) remains a **different namespace** until an explicit merge contract.
+
+### 8.4 Still open (lighter)
+
+1. **Fragment = locus body?** Still recommended yes (one Fragment ↔ one locus candidate).  
+2. **Thin `card` in Chaos?** Defer until builder `p`+`img`+assets solid.  
+3. **Vault rewrite bodies?** No — gate only.  
+4. **Exact Castle qualification metric in AF** — reuse Alexandria ≥80% used-frames / ridiculous-stories idea later; not required for Chaos builder v1.
 
 ---
 
@@ -215,9 +271,10 @@ This design **does not** reproduce Library-the-product; it **does** take the **l
 
 ## 10. One-line summary
 
-**Chaos = Library’s locus capture builder (text + images at full construction capacity for Alexandria pipeline).  
-Argus = Library hybrid for parcours / castillos / structure, and host of Alexandria +1 motor.  
-Godot = spatial Alexandria if it earns that seat — not a Chaos feature.**
+**Chaos = progressive locus builder (grows with use; full text+image construction when earned).  
+Parcour = topic path under construction; Castle = culminated topic product; Realm = theme container of parcours/castles.  
+Argus owns that structure; Chaos may feed it but need not.  
+IndexedDB for image binaries when builder ships.**
 
 ---
 
