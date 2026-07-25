@@ -183,8 +183,8 @@ function ArgusGraphCanvas() {
           source: r.sourceUnitId,
           target: r.targetUnitId,
           label: r.confirmed ? r.type : `${r.type}?`,
-          style: { stroke: r.confirmed ? "#71717a" : "#52525b" },
-          labelStyle: { fill: "#a1a1aa", fontSize: 10 },
+          style: { stroke: r.confirmed ? "#34d399" : "#6ee7b7" },
+          labelStyle: { fill: "#a7f3d0", fontSize: 10 },
           labelBgStyle: { fill: "#09090b" },
           labelBgPadding: [4, 2] as [number, number],
         }))
