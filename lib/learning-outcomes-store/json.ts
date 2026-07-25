@@ -1,11 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import type { LearningOutcome } from "../learning-outcome-types";
-import {
-  compareLearningOutcomeFreshness,
-  mergeCanonicalLearningOutcome,
-  mergeEqualTimestampLinks,
-} from "./merge";
+import { resolveLearningOutcomeUpsert } from "./merge";
 import type { LearningOutcomesStore } from "./types";
 
 function learningOutcomesJsonPath(): string {
@@ -43,13 +39,22 @@ function findCanonical(
       (x) => x.tradeId?.toUpperCase() === row.tradeId!.toUpperCase()
     );
   }
-  if (row.planId) {
+  if (row.planId && !row.tradeId) {
     return all.find(
       (x) =>
         !x.tradeId &&
         x.planId?.toUpperCase() === row.planId!.toUpperCase()
     );
   }
+  return undefined;
+}
+
+function findExisting(
+  all: LearningOutcome[],
+  row: LearningOutcome
+): LearningOutcome | undefined {
+  const byIdentity = findCanonical(all, row);
+  if (byIdentity) return byIdentity;
   return all.find((x) => x.id.toUpperCase() === row.id.toUpperCase());
 }
 
@@ -66,36 +71,35 @@ export function createJsonLearningOutcomesStore(): LearningOutcomesStore {
     async upsert(row) {
       assertJsonLearningOutcomeWritesAllowed();
       const all = await readLearningOutcomesJsonFile();
-      const existing = findCanonical(all, row);
-      if (existing) {
-        const freshness = compareLearningOutcomeFreshness(existing, row);
-        if (freshness === "existing_newer") {
-          return { ...existing };
-        }
-        const merged =
-          freshness === "equal"
-            ? mergeEqualTimestampLinks(existing, row)
-            : mergeCanonicalLearningOutcome(existing, row);
-        const idx = all.findIndex(
-          (x) => x.id.toUpperCase() === existing.id.toUpperCase()
-        );
-        if (idx >= 0) all[idx] = merged;
-        // Remove non-canonical duplicate id if present
-        for (let i = all.length - 1; i >= 0; i--) {
-          if (
-            all[i].id.toUpperCase() === row.id.toUpperCase() &&
-            all[i].id.toUpperCase() !== existing.id.toUpperCase()
-          ) {
-            all.splice(i, 1);
-          }
-        }
+      const existing = findExisting(all, row);
+      const resolved = resolveLearningOutcomeUpsert(existing, row);
+
+      if (resolved.action === "insert") {
+        all.push(resolved.row);
         await writeAll(all);
-        return { ...merged };
+        return { ...resolved.row };
       }
 
-      all.push(row);
+      if (resolved.action === "skip") {
+        return { ...resolved.row };
+      }
+
+      const idx = all.findIndex(
+        (x) => x.id.toUpperCase() === resolved.row.id.toUpperCase()
+      );
+      if (idx >= 0) all[idx] = resolved.row;
+      else all.push(resolved.row);
+
+      for (let i = all.length - 1; i >= 0; i--) {
+        if (
+          all[i].id.toUpperCase() === row.id.toUpperCase() &&
+          all[i].id.toUpperCase() !== resolved.row.id.toUpperCase()
+        ) {
+          all.splice(i, 1);
+        }
+      }
       await writeAll(all);
-      return { ...row };
+      return { ...resolved.row };
     },
     async upsertMany(rows) {
       const out: LearningOutcome[] = [];

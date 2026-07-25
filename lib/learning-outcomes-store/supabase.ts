@@ -3,11 +3,7 @@ import {
   learningOutcomeRowToRecord,
   learningOutcomeToRow,
 } from "./mapping";
-import {
-  compareLearningOutcomeFreshness,
-  mergeCanonicalLearningOutcome,
-  mergeEqualTimestampLinks,
-} from "./merge";
+import { resolveLearningOutcomeUpsert } from "./merge";
 import type { LearningOutcomesStore } from "./types";
 import type { LearningOutcome } from "../learning-outcome-types";
 
@@ -48,7 +44,7 @@ async function loadCanonicalByIdentity(
     }
     return data ? learningOutcomeRowToRecord(data as never) : undefined;
   }
-  if (row.planId) {
+  if (row.planId && !row.tradeId) {
     const { data, error } = await supabase
       .from("learning_outcomes")
       .select("*")
@@ -75,29 +71,6 @@ async function writeById(row: LearningOutcome): Promise<LearningOutcome> {
   return reloaded ?? row;
 }
 
-function resolveAgainstExisting(
-  existing: LearningOutcome,
-  incoming: LearningOutcome
-): { action: "skip" | "write"; row: LearningOutcome } {
-  const freshness = compareLearningOutcomeFreshness(existing, incoming);
-  if (freshness === "existing_newer") {
-    return { action: "skip", row: existing };
-  }
-  if (freshness === "equal") {
-    const merged = mergeEqualTimestampLinks(existing, incoming);
-    const changed =
-      merged.observationId !== existing.observationId ||
-      merged.mafExperimentId !== existing.mafExperimentId ||
-      merged.stockThesisId !== existing.stockThesisId ||
-      merged.playbookId !== existing.playbookId;
-    return { action: changed ? "write" : "skip", row: merged };
-  }
-  return {
-    action: "write",
-    row: mergeCanonicalLearningOutcome(existing, incoming),
-  };
-}
-
 export function createSupabaseLearningOutcomesStore(): LearningOutcomesStore {
   return {
     async readAll() {
@@ -114,39 +87,42 @@ export function createSupabaseLearningOutcomesStore(): LearningOutcomesStore {
       );
     },
     async upsert(row) {
-      // Prefer identity canonical when it already exists under another id.
       const byIdentity = await loadCanonicalByIdentity(row);
-      if (byIdentity && byIdentity.id.toUpperCase() !== row.id.toUpperCase()) {
-        const resolved = resolveAgainstExisting(byIdentity, row);
+      const byId =
+        byIdentity && byIdentity.id.toUpperCase() === row.id.toUpperCase()
+          ? byIdentity
+          : byIdentity ?? (await loadById(row.id));
+      // Prefer identity canonical when different id shares plan/trade.
+      const existing =
+        byIdentity && byIdentity.id.toUpperCase() !== row.id.toUpperCase()
+          ? byIdentity
+          : byId;
+
+      if (existing) {
+        const resolved = resolveLearningOutcomeUpsert(existing, row);
         if (resolved.action === "skip") return resolved.row;
-        return writeById(resolved.row);
+        if (resolved.action === "write") return writeById(resolved.row);
       }
 
-      const byId = byIdentity ?? (await loadById(row.id));
-      if (byId) {
-        const resolved = resolveAgainstExisting(byId, row);
-        if (resolved.action === "skip") return resolved.row;
-        return writeById(resolved.row);
-      }
-
+      const resolved = resolveLearningOutcomeUpsert(undefined, row);
       const supabase = createSupabaseAdmin();
       const { error } = await supabase
         .from("learning_outcomes")
-        .upsert(learningOutcomeToRow(row), { onConflict: "id" });
+        .upsert(learningOutcomeToRow(resolved.row), { onConflict: "id" });
       if (!error) {
-        return (await loadById(row.id)) ?? row;
+        return (await loadById(row.id)) ?? resolved.row;
       }
 
       if (isUniqueViolation(error.message)) {
-        const existing = await loadCanonicalByIdentity(row);
-        if (!existing) {
+        const existingAfter = await loadCanonicalByIdentity(row);
+        if (!existingAfter) {
           throw new Error(
             `Supabase learning_outcomes upsert unique conflict and reload missed: ${error.message}`
           );
         }
-        const resolved = resolveAgainstExisting(existing, row);
-        if (resolved.action === "skip") return resolved.row;
-        return writeById(resolved.row);
+        const retry = resolveLearningOutcomeUpsert(existingAfter, row);
+        if (retry.action === "skip") return retry.row;
+        return writeById(retry.row);
       }
 
       throw new Error(`Supabase learning_outcomes upsert failed: ${error.message}`);

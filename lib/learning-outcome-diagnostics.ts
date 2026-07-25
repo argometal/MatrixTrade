@@ -6,7 +6,10 @@ import type { LearningOutcome } from "./learning-outcome-types";
 import type { TradePlan } from "./plan-types";
 import type { ObservationRecord } from "./observation-types";
 import type { Trade } from "./types";
-import { compareLearningOutcomeFreshness } from "./learning-outcomes-store/merge";
+import {
+  compareLearningOutcomeFreshness,
+  validateLearningOutcomeTimestamps,
+} from "./learning-outcomes-store/merge";
 
 export type LearningOutcomeDiagnosticIssue = {
   code: string;
@@ -151,6 +154,16 @@ export function diagnoseLearningOutcomeDurability(input: {
   }
 
   for (const lo of input.learningOutcomes) {
+    const ts = validateLearningOutcomeTimestamps(lo);
+    if (!ts.valid) {
+      issues.push({
+        code: "lo_invalid_timestamps",
+        message: `LO ${lo.id} has invalid timestamps (${ts.errors.join("; ")}). Explicit repair required — do not overwrite automatically.`,
+        learningOutcomeId: lo.id,
+        planId: lo.planId,
+        tradeId: lo.tradeId,
+      });
+    }
     if (lo.planId && !planById.has(lo.planId.toUpperCase())) {
       issues.push({
         code: "lo_orphaned_plan",
@@ -210,6 +223,17 @@ export function diagnoseLearningOutcomeDurability(input: {
           planId: local.planId ?? remote.planId,
           tradeId: local.tradeId ?? remote.tradeId,
         });
+      }
+      const localTs = validateLearningOutcomeTimestamps(local);
+      const remoteTs = validateLearningOutcomeTimestamps(remote);
+      if (!localTs.valid || !remoteTs.valid) {
+        issues.push({
+          code: "stale_or_invalid_timestamp_compare",
+          message: `Cannot compare local LO ${local.id} with canonical ${remote.id}: invalid timestamps (local: ${localTs.errors.join("; ") || "ok"}; remote: ${remoteTs.errors.join("; ") || "ok"}). Explicit repair required.`,
+          localId: local.id,
+          remoteId: remote.id,
+        });
+        continue;
       }
       const freshness = compareLearningOutcomeFreshness(remote, local);
       if (freshness === "existing_newer") {

@@ -3,9 +3,11 @@
  */
 import type { LearningOutcome } from "../learning-outcome-types";
 import {
+  checkLearningOutcomeIdentity,
   compareLearningOutcomeFreshness,
   mergeCanonicalLearningOutcome,
   mergeEqualTimestampLinks,
+  validateLearningOutcomeTimestamps,
 } from "./merge";
 
 export type MigrateMatchType = "id" | "trade_id" | "plan_id" | "none";
@@ -41,6 +43,18 @@ function linksChanged(a: LearningOutcome, b: LearningOutcome): boolean {
     a.stockThesisId !== b.stockThesisId ||
     a.playbookId !== b.playbookId
   );
+}
+
+function invalidDecision(detail: string, identityConflict = false): MigrationDecision {
+  return {
+    action: "invalid",
+    identityConflict,
+    conflicts: identityConflict,
+    inserted: false,
+    updated: false,
+    skipped: false,
+    detail,
+  };
 }
 
 /**
@@ -82,6 +96,13 @@ export function decideMigrationAction(input: {
   remote?: LearningOutcome;
   matchType: MigrateMatchType;
 }): MigrationDecision {
+  const localTs = validateLearningOutcomeTimestamps(input.local);
+  if (!localTs.valid) {
+    return invalidDecision(
+      `timestamp_invalid: ${localTs.errors.join("; ")}`
+    );
+  }
+
   if (!input.remote || input.matchType === "none") {
     return {
       action: "insert_new",
@@ -99,6 +120,19 @@ export function decideMigrationAction(input: {
   const local = input.local;
   const identityConflict =
     remote.id.toUpperCase() !== local.id.toUpperCase();
+
+  const remoteTs = validateLearningOutcomeTimestamps(remote);
+  if (!remoteTs.valid) {
+    return invalidDecision(
+      `existing_timestamp_invalid: ${remoteTs.errors.join("; ")}. Explicit repair required.`,
+      identityConflict
+    );
+  }
+
+  const identity = checkLearningOutcomeIdentity(remote, local);
+  if (!identity.ok) {
+    return invalidDecision(identity.message, true);
+  }
 
   const freshness = compareLearningOutcomeFreshness(remote, local);
 
@@ -141,7 +175,6 @@ export function decideMigrationAction(input: {
     };
   }
 
-  // Local newer (or unparseable → allow merge onto canonical).
   const merged = mergeCanonicalLearningOutcome(remote, local);
   return {
     action: "update_canonical_remote",

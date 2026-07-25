@@ -1,6 +1,6 @@
 /**
  * CURSOR-MTA-LEARNING-OUTCOME-DURABLE-STORE-001
- * + CURSOR-MTA-LO-DURABLE-STORE-REVIEW-FIX-001 integrity regressions
+ * + CURSOR-MTA-LO-DURABLE-STORE-REVIEW-FIX-001 / FIX-002 integrity regressions
  * Run: npm run test:learning-outcome-durable-store
  */
 import assert from "node:assert/strict";
@@ -20,6 +20,8 @@ import {
   compareLearningOutcomeFreshness,
   decideMigrationAction,
   matchRemoteCanonical,
+  validateLearningOutcomeTimestamps,
+  checkLearningOutcomeIdentity,
 } from "../lib/learning-outcomes-store";
 import {
   getLearningOutcomes,
@@ -371,6 +373,8 @@ async function main() {
     });
     const incoming = {
       ...sampleLo({
+        planId: "PLAN-KEEP",
+        tradeId: undefined,
         updatedAt: "2026-07-25T12:00:00.000Z",
       }),
       notes: null,
@@ -379,7 +383,6 @@ async function main() {
       nonExecutionReason: null,
       observationId: null,
       mafExperimentId: null,
-      planId: null,
       stockThesisId: null,
       playbookId: null,
       lifecycleStatus: null,
@@ -387,7 +390,7 @@ async function main() {
     } as unknown as LearningOutcome;
 
     const merged = mergeCanonicalLearningOutcome(existing, incoming);
-    assert.equal(merged.notes, undefined); // notes null → clear
+    assert.equal(merged.notes, null); // notes null → persist as null (DB null)
     assert.equal(merged.counterfactualDollarResult, null); // clearable
     assert.equal(merged.nonExecutionReason, "order_not_staged");
     assert.equal(merged.observationId, "OBS-KEEP");
@@ -397,6 +400,351 @@ async function main() {
     assert.equal(merged.playbookId, "PB-KEEP");
     assert.equal(merged.lifecycleStatus, "concluded");
     assert.equal(merged.source, "plan_outcome");
+    const mapped = learningOutcomeToRow(merged);
+    assert.equal(mapped.notes, null);
+    assert.equal(mapped.counterfactual_dollar_result, null);
+  }
+
+  // -------------------------------------------------------------------------
+  // FIX-002 A — invalid incoming updatedAt: throw, no write
+  // -------------------------------------------------------------------------
+  {
+    const existing = sampleLo({
+      id: "LO-TSLA-001",
+      planId: "PLAN-001",
+      notes: "stable",
+      updatedAt: "2026-07-25T15:00:00.000Z",
+    });
+    const store = createMemoryLearningOutcomesStore([existing]);
+    await assert.rejects(
+      () =>
+        store.upsert(
+          sampleLo({
+            id: "LO-TSLA-001",
+            planId: "PLAN-001",
+            notes: "stale-write",
+            updatedAt: "invalid-date",
+          })
+        ),
+      /timestamp validation failed:.*updatedAt is invalid/
+    );
+    assert.equal(store.rows.length, 1);
+    assert.equal(store.rows[0].notes, "stable");
+    assert.equal(store.rows[0].updatedAt, "2026-07-25T15:00:00.000Z");
+  }
+
+  // -------------------------------------------------------------------------
+  // FIX-002 B — invalid createdAt → migration invalid, no write
+  // -------------------------------------------------------------------------
+  {
+    const decision = decideMigrationAction({
+      local: sampleLo({
+        id: "LO-TSLA-001",
+        createdAt: "not-a-date",
+        updatedAt: "2026-07-25T15:00:00.000Z",
+      }),
+      matchType: "none",
+    });
+    assert.equal(decision.action, "invalid");
+    assert.equal(decision.inserted, false);
+    assert.equal(decision.updated, false);
+    assert.equal(decision.skipped, false);
+    assert.match(decision.detail ?? "", /createdAt is invalid/);
+  }
+
+  // -------------------------------------------------------------------------
+  // FIX-002 C — existing timestamp invalid: diagnostic + no overwrite
+  // -------------------------------------------------------------------------
+  {
+    const broken = sampleLo({
+      id: "LO-BROKEN-001",
+      planId: "PLAN-BRK",
+      updatedAt: "garbage",
+    });
+    const issues = diagnoseLearningOutcomeDurability({
+      plans: [],
+      trades: [],
+      learningOutcomes: [broken],
+      observations: [],
+    });
+    assert.ok(issues.some((i) => i.code === "lo_invalid_timestamps"));
+
+    const store = createMemoryLearningOutcomesStore([broken]);
+    await assert.rejects(
+      () =>
+        store.upsert(
+          sampleLo({
+            id: "LO-BROKEN-001",
+            planId: "PLAN-BRK",
+            updatedAt: "2026-07-25T16:00:00.000Z",
+          })
+        ),
+      /existing canonical timestamps are invalid|Explicit repair required/
+    );
+    assert.equal(store.rows[0].updatedAt, "garbage");
+  }
+
+  // -------------------------------------------------------------------------
+  // FIX-002 D/E — same id, different planId / tradeId → reject
+  // -------------------------------------------------------------------------
+  {
+    const scout = sampleLo({
+      id: "LO-TSLA-001",
+      planId: "PLAN-001",
+      tradeId: undefined,
+      notes: "keep",
+    });
+    const store = createMemoryLearningOutcomesStore([scout]);
+    await assert.rejects(
+      () =>
+        store.upsert(
+          sampleLo({
+            id: "LO-TSLA-001",
+            planId: "PLAN-009",
+            tradeId: undefined,
+            updatedAt: "2026-07-25T16:00:00.000Z",
+          })
+        ),
+      /canonical_identity_mismatch/
+    );
+    assert.equal(store.rows[0].planId, "PLAN-001");
+    assert.equal(store.rows[0].notes, "keep");
+
+    const tradeStore = createMemoryLearningOutcomesStore([
+      sampleLo({
+        id: "LO-TRD-001",
+        planId: "PLAN-T",
+        tradeId: "TRD-001",
+        kind: "executed_win",
+      }),
+    ]);
+    await assert.rejects(
+      () =>
+        tradeStore.upsert(
+          sampleLo({
+            id: "LO-TRD-001",
+            planId: "PLAN-T",
+            tradeId: "TRD-009",
+            kind: "executed_win",
+            updatedAt: "2026-07-25T16:00:00.000Z",
+          })
+        ),
+      /canonical_identity_mismatch/
+    );
+    assert.equal(tradeStore.rows[0].tradeId, "TRD-001");
+
+    const mig = decideMigrationAction({
+      local: sampleLo({
+        id: "LO-TSLA-001",
+        planId: "PLAN-009",
+        updatedAt: "2026-07-25T16:00:00.000Z",
+      }),
+      remote: scout,
+      matchType: "id",
+    });
+    assert.equal(mig.action, "invalid");
+    assert.match(mig.detail ?? "", /canonical_identity_mismatch/);
+    assert.equal(mig.inserted, false);
+    assert.equal(mig.updated, false);
+  }
+
+  // -------------------------------------------------------------------------
+  // FIX-002 F/G — Scout↔Trade conversion rejected
+  // -------------------------------------------------------------------------
+  {
+    const scout = sampleLo({
+      id: "LO-SCOUT-001",
+      planId: "PLAN-001",
+      tradeId: undefined,
+    });
+    assert.equal(
+      checkLearningOutcomeIdentity(
+        scout,
+        sampleLo({
+          id: "LO-SCOUT-001",
+          planId: "PLAN-001",
+          tradeId: "TRD-NEW",
+        })
+      ).ok,
+      false
+    );
+    const store = createMemoryLearningOutcomesStore([scout]);
+    await assert.rejects(
+      () =>
+        store.upsert(
+          sampleLo({
+            id: "LO-SCOUT-001",
+            planId: "PLAN-001",
+            tradeId: "TRD-NEW",
+            updatedAt: "2026-07-25T16:00:00.000Z",
+          })
+        ),
+      /canonical_identity_mismatch/
+    );
+
+    const trade = sampleLo({
+      id: "LO-TRADE-001",
+      planId: "PLAN-001",
+      tradeId: "TRD-001",
+      kind: "executed_win",
+    });
+    await assert.rejects(
+      () =>
+        createMemoryLearningOutcomesStore([trade]).upsert(
+          sampleLo({
+            id: "LO-TRADE-001",
+            planId: "PLAN-001",
+            tradeId: undefined,
+            updatedAt: "2026-07-25T16:00:00.000Z",
+          })
+        ),
+      /canonical_identity_mismatch/
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // FIX-002 H/I — different id, same planId/tradeId → canonical preserved
+  // -------------------------------------------------------------------------
+  {
+    const store = createMemoryLearningOutcomesStore([
+      sampleLo({
+        id: "LO-TSLA-009",
+        planId: "PLAN-001",
+        observationId: "OBS-PLAN-001",
+        mafExperimentId: "MAF-001",
+        updatedAt: "2026-07-25T15:00:00.000Z",
+      }),
+    ]);
+    const canonical = await store.upsert(
+      sampleLo({
+        id: "LO-TSLA-004",
+        planId: "PLAN-001",
+        observationId: undefined,
+        mafExperimentId: undefined,
+        updatedAt: "2026-07-25T16:00:00.000Z",
+      })
+    );
+    assert.equal(canonical.id, "LO-TSLA-009");
+    assert.equal(canonical.planId, "PLAN-001");
+    assert.equal(canonical.observationId, "OBS-PLAN-001");
+    assert.equal(canonical.mafExperimentId, "MAF-001");
+    assert.equal(store.rows.length, 1);
+
+    const tradeStore = createMemoryLearningOutcomesStore([
+      sampleLo({
+        id: "LO-TRADE-009",
+        planId: "PLAN-T",
+        tradeId: "TRD-001",
+        kind: "executed_win",
+        observationId: "OBS-T",
+        updatedAt: "2026-07-25T12:00:00.000Z",
+      }),
+    ]);
+    const tradeCanon = await tradeStore.upsert(
+      sampleLo({
+        id: "LO-TRADE-004",
+        planId: "PLAN-T",
+        tradeId: "TRD-001",
+        kind: "executed_win",
+        observationId: undefined,
+        realizedR: 2,
+        updatedAt: "2026-07-25T13:00:00.000Z",
+      })
+    );
+    assert.equal(tradeCanon.id, "LO-TRADE-009");
+    assert.equal(tradeCanon.tradeId, "TRD-001");
+    assert.equal(tradeCanon.observationId, "OBS-T");
+    assert.equal(tradeStore.rows.length, 1);
+  }
+
+  // -------------------------------------------------------------------------
+  // FIX-002 J/K — null notes maps to DB null; undefined preserves
+  // -------------------------------------------------------------------------
+  {
+    const existing = sampleLo({
+      notes: "keep-notes",
+      updatedAt: "2026-07-25T10:00:00.000Z",
+    });
+    const cleared = mergeCanonicalLearningOutcome(existing, {
+      ...existing,
+      notes: null,
+      updatedAt: "2026-07-25T11:00:00.000Z",
+    });
+    assert.equal(cleared.notes, null);
+    assert.equal(learningOutcomeToRow(cleared).notes, null);
+    const roundTrip = learningOutcomeRowToRecord(learningOutcomeToRow(cleared));
+    assert.equal(roundTrip.notes, null);
+
+    const preserved = mergeCanonicalLearningOutcome(existing, {
+      ...existing,
+      notes: undefined,
+      realizedR: 0,
+      updatedAt: "2026-07-25T11:00:00.000Z",
+    });
+    assert.equal(preserved.notes, "keep-notes");
+
+    const store = createMemoryLearningOutcomesStore([existing]);
+    const saved = await store.upsert({
+      ...existing,
+      notes: null,
+      updatedAt: "2026-07-25T12:00:00.000Z",
+    });
+    assert.equal(saved.notes, null);
+    assert.equal(store.rows[0].notes, null);
+  }
+
+  // -------------------------------------------------------------------------
+  // FIX-002 — freshness API rejects invalid timestamps (no unparseable write)
+  // -------------------------------------------------------------------------
+  {
+    assert.equal(
+      validateLearningOutcomeTimestamps(
+        sampleLo({ updatedAt: "invalid-date" })
+      ).valid,
+      false
+    );
+    assert.throws(
+      () =>
+        compareLearningOutcomeFreshness(
+          sampleLo({ updatedAt: "2026-07-25T15:00:00.000Z" }),
+          sampleLo({ updatedAt: "invalid-date" })
+        ),
+      /timestamp validation failed/
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // FIX-002 L — repeated Plan Outcome sync preserves identity + links
+  // -------------------------------------------------------------------------
+  {
+    const plan = basePlan({
+      id: "PLAN-FIX002-L",
+      outcome: uplOutcome("PLAN-FIX002-L"),
+    });
+    resetMemoryStores([plan]);
+    const first = await syncPlanOutcomeLearning("PLAN-FIX002-L");
+    assert.equal(first.ok, true, first.errors?.join("; "));
+    const lo1 = await getLearningOutcomeByPlanId("PLAN-FIX002-L");
+    assert.ok(lo1);
+    await upsertLearningOutcome({
+      ...lo1!,
+      mafExperimentId: "MAF-FIX002-L",
+      updatedAt: new Date().toISOString(),
+    });
+    assert.equal((await syncPlanOutcomeLearning("PLAN-FIX002-L")).ok, true);
+    const lo2 = await getLearningOutcomeByPlanId("PLAN-FIX002-L");
+    assert.equal(lo2?.id, lo1!.id);
+    assert.equal(lo2?.planId, "PLAN-FIX002-L");
+    assert.equal(lo2?.tradeId, undefined);
+    assert.equal(lo2?.observationId, lo1!.observationId);
+    assert.equal(lo2?.mafExperimentId, "MAF-FIX002-L");
+    assert.equal((await getLearningOutcomes()).length, 1);
+    assert.equal(
+      computeScoutLearningAggregates({
+        learningOutcomes: await getLearningOutcomes(),
+      }).evaluatedScoutCount,
+      1
+    );
   }
 
   // -------------------------------------------------------------------------

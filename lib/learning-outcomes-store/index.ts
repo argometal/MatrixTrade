@@ -121,9 +121,18 @@ export {
   type LearningOutcomeRow,
 } from "./mapping";
 export {
+  assertSameLearningOutcomeIdentity,
+  assertValidLearningOutcomeTimestamps,
+  checkLearningOutcomeIdentity,
   compareLearningOutcomeFreshness,
+  isValidLearningOutcomeTimestamp,
   mergeCanonicalLearningOutcome,
   mergeEqualTimestampLinks,
+  resolveLearningOutcomeUpsert,
+  validateLearningOutcomeTimestamps,
+  type IdentityCheckResult,
+  type LearningOutcomeFreshness,
+  type TimestampValidationResult,
 } from "./merge";
 export {
   decideMigrationAction,

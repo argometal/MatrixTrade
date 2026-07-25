@@ -23,6 +23,7 @@ import {
   type MigrateAction,
   type MigrateMatchType,
 } from "../lib/learning-outcomes-store/migrate-policy";
+import { validateLearningOutcomeTimestamps } from "../lib/learning-outcomes-store/merge";
 import { createSupabaseAdmin } from "../lib/supabase/server";
 import { sanitizeLearningSyncError } from "../lib/plan-outcome-learning-sync";
 
@@ -70,6 +71,8 @@ function validateRow(row: LearningOutcome): string | null {
     return `invalid lifecycleStatus ${row.lifecycleStatus}`;
   }
   if (!row.createdAt || !row.updatedAt) return "createdAt/updatedAt required";
+  const ts = validateLearningOutcomeTimestamps(row);
+  if (!ts.valid) return ts.errors.join("; ");
   return null;
 }
 

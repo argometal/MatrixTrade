@@ -84,7 +84,8 @@ export function learningOutcomeRowToRecord(row: LearningOutcomeRow): LearningOut
     nonExecutionReason: str(row.non_execution_reason),
     excludedFromMetrics: row.excluded_from_metrics === true,
     lifecycleStatus: row.lifecycle_status as LearningOutcomeLifecycle,
-    notes: str(row.notes),
+    // Preserve DB null — do not coerce cleared notes to undefined.
+    notes: row.notes === null ? null : str(row.notes),
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
     source: (str(row.source) as LearningOutcomeSource) ?? "manual",
@@ -116,7 +117,8 @@ export function learningOutcomeToRow(row: LearningOutcome): LearningOutcomeRow {
     non_execution_reason: row.nonExecutionReason ?? null,
     excluded_from_metrics: row.excludedFromMetrics === true,
     lifecycle_status: row.lifecycleStatus,
-    notes: row.notes ?? null,
+    // undefined → null for insert; explicit null stays null (intentional clear).
+    notes: row.notes === undefined ? null : row.notes,
     source: row.source ?? null,
     created_at: row.createdAt,
     updated_at: row.updatedAt,
