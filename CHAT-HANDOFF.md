@@ -49,7 +49,8 @@ SQL: `supabase/external-positions.sql` (run in Supabase before prod writes; incl
 
 Apply: `external-position-create` · `external-position-update` · `external-position-reduction` · `external-position-settle` · `external-position-exit-plan-update`
 
-Hardening: idempotent reductions (`reductionId`/`executionReference`); pending→settled ledger (no double-count); `average_cost` only; valuation provenance; Capital Planner marks unconfigured fields (not silent zero).
+Hardening: idempotent reductions (`reductionId`/`executionReference`); pending→settled ledger (no double-count); `average_cost` only; valuation provenance; Capital Planner marks unconfigured fields (not silent zero).  
+Neutrality: no issuer-ticker hard-coding in EP infra — `tools/scan-external-position-neutrality.ts` (via `npm run test:external-positions`).
 
 ---
 

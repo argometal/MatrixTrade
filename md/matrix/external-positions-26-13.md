@@ -73,4 +73,6 @@ Control → Apply → Validate → Accept only:
 
 Use: External Position · Acquired outside MTA · Excluded from experiment metrics · Capital currently invested · Potential capital release · Pending settlement.
 
-Do not use employment / compensation share labels.
+Do not hard-code issuer tickers or employment-share labels in infrastructure, samples, fixtures, or docs. Placeholders: EXT, ABC, XYZ, TEST, EXAMPLE.
+
+Neutrality scan: `tools/scan-external-position-neutrality.ts` (run via `npm run test:external-positions`).

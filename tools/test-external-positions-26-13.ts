@@ -28,12 +28,16 @@ import { validateProposalPayload, parseTradingInboxPayload } from "../lib/bridge
 import { applyTradingProposal } from "../lib/apply-trading-inbox";
 import { computeMonthlyRisk } from "../lib/monthly-risk";
 import type { Trade } from "../lib/types";
+import { scanExternalPositionNeutrality } from "./scan-external-position-neutrality";
 
 function reset() {
   __setExternalPositionStoreForTests([]);
 }
 
 async function main() {
+  // 0 — repository neutrality: no ticker-specific hard-coding in EP infrastructure
+  await scanExternalPositionNeutrality();
+
   // 1 — create open External Position
   {
     reset();
