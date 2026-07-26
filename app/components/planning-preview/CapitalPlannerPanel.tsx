@@ -1,8 +1,5 @@
 import Link from "next/link";
-import type {
-  CapitalAccountSnapshot,
-  CapitalField,
-} from "@/lib/capital-account";
+import type { CapitalAccountSnapshot, CapitalField } from "@/lib/capital-account";
 import type { ExternalPosition } from "@/lib/external-position-types";
 import {
   isOpenExternalPosition,
@@ -20,6 +17,7 @@ function money(n: number | undefined): string {
 
 function fieldDisplay(field: CapitalField): string {
   if (field.status === "configured") return money(field.value);
+  if (field.status === "unknown") return "Unknown";
   return "Unconfigured";
 }
 
@@ -29,12 +27,10 @@ function pct(n: number | undefined): string {
 }
 
 function valuationLabel(p: ExternalPosition): string {
-  if (p.currentPrice === undefined) return "No price";
+  if (p.currentPrice === undefined) return "Unconfigured";
   const source = p.valuationSource ?? "unspecified";
-  const stale = isValuationStale(p.lastValuationAt);
-  if (source === "manual" && stale) return "Manual · stale";
+  if (isValuationStale(p.lastValuationAt)) return `${source} · Stale`;
   if (source === "manual") return "Manual";
-  if (stale) return `${source} · stale`;
   return source;
 }
 
@@ -42,10 +38,14 @@ export function CapitalPlannerPanel({
   account,
   positions,
   focusId,
+  capitalError,
+  positionsError,
 }: {
-  account: CapitalAccountSnapshot;
+  account: CapitalAccountSnapshot | null;
   positions: ExternalPosition[];
   focusId?: string;
+  capitalError?: string;
+  positionsError?: string;
 }) {
   const open = positions.filter(isOpenExternalPosition);
   const focus =
@@ -63,9 +63,8 @@ export function CapitalPlannerPanel({
           Capital Planner
         </h1>
         <p className="max-w-2xl text-sm text-zinc-400">
-          Partial capital view. External Positions are connected; Scout
-          reservations, committed capital, invested Scout capital, and base
-          equity are not wired as complete authoritative sources.
+          Model A cash-ledger foundation. Settled cash and account equity are
+          independent. Scout approval does not auto-reserve capital.
         </p>
         <div className="flex flex-wrap gap-3 pt-1 text-sm">
           <Link
@@ -77,66 +76,181 @@ export function CapitalPlannerPanel({
         </div>
       </header>
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-medium text-zinc-200">Capital Account</h2>
-        <p className="text-xs text-amber-200/80">
-          Completeness: {account.completeness.replaceAll("_", " ")}. Unconfigured
-          fields are not known zeros.
-        </p>
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {(
-            [
-              ["Total capital", account.totalCapital],
-              ["Settled cash", account.settledCash],
-              ["Invested (external)", account.investedExternalCapital],
-              ["External market value", account.externalMarketValue],
-              ["Pending settlement", account.pendingSettlementProceeds],
-              ["Settled external credits", account.settledExternalProceeds],
-              ["Potential capital release", account.potentialExternalCapitalRelease],
-              ["Deployable capital", account.deployableCapital],
-              ["Available capital", account.availableCapital],
-              ["Reserved capital", account.reservedCapital],
-              ["Committed capital", account.committedCapital],
-              ["Invested Scout capital", account.investedScoutCapital],
-            ] as const
-          ).map(([label, field]) => (
-            <div key={label} className="border-t border-zinc-800 pt-2">
-              <dt className="text-[11px] uppercase tracking-wide text-zinc-500">
-                {label}
-              </dt>
-              <dd className="mt-1 text-sm text-zinc-100">
-                {fieldDisplay(field)}
-              </dd>
-              {field.status === "unconfigured" ? (
-                <p className="mt-0.5 text-[10px] text-zinc-500">{field.reason}</p>
-              ) : null}
-            </div>
-          ))}
-        </dl>
-        {account.notes.length > 0 && (
-          <ul className="space-y-1 text-xs text-zinc-500">
-            {account.notes.map((n) => (
-              <li key={n}>{n}</li>
-            ))}
-          </ul>
-        )}
-        {account.monthlyRisk && (
-          <p className="text-xs text-zinc-500">
-            Monthly loss room (Scout risk, unchanged by External Positions):{" "}
-            {money(account.monthlyRisk.monthlyLossRoom)}
-          </p>
-        )}
-      </section>
+      {capitalError ? (
+        <section className="rounded border border-amber-900/50 bg-amber-950/20 px-3 py-2 text-sm text-amber-100">
+          Capital Account unavailable: {capitalError}
+        </section>
+      ) : null}
+
+      {account ? (
+        <>
+          <section className="space-y-3">
+            <h2 className="text-sm font-medium text-zinc-200">Account</h2>
+            <p className="text-xs text-zinc-500">
+              Completeness: {account.completeness.status} · reconciliation:{" "}
+              {account.reconciliationStatus}
+              {account.cashSource ? ` · cash source: ${account.cashSource}` : ""}
+            </p>
+            <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {(
+                [
+                  ["Total equity", account.totalEquity, account.totalEquityAsOf],
+                  ["Settled cash", account.settledCash, account.settledCashAsOf],
+                  ["Liquidity buffer", account.liquidityBuffer, undefined],
+                  ["Available capital", account.availableCapital, undefined],
+                  ["Deployable capital", account.deployableCapital, undefined],
+                ] as const
+              ).map(([label, field, asOf]) => (
+                <div key={label} className="border-t border-zinc-800 pt-2">
+                  <dt className="text-[11px] uppercase tracking-wide text-zinc-500">
+                    {label}
+                  </dt>
+                  <dd className="mt-1 text-sm text-zinc-100">
+                    {fieldDisplay(field)}
+                  </dd>
+                  {field.status !== "configured" ? (
+                    <p className="mt-0.5 text-[10px] text-zinc-500">
+                      {field.reason}
+                    </p>
+                  ) : null}
+                  {asOf ? (
+                    <p className="mt-0.5 text-[10px] text-zinc-500">
+                      as of {new Date(asOf).toLocaleString()}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-sm font-medium text-zinc-200">Allocations</h2>
+            <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {(
+                [
+                  ["Reserved for Scouts", account.reservedCapital],
+                  ["Committed", account.committedCapital],
+                  ["Invested in open Trades", account.investedScoutCapital],
+                  ["Available for new Scouts", account.availableCapital],
+                ] as const
+              ).map(([label, field]) => (
+                <div key={label} className="border-t border-zinc-800 pt-2">
+                  <dt className="text-[11px] uppercase tracking-wide text-zinc-500">
+                    {label}
+                  </dt>
+                  <dd className="mt-1 text-sm text-zinc-100">
+                    {fieldDisplay(field)}
+                  </dd>
+                  {field.status !== "configured" ? (
+                    <p className="mt-0.5 text-[10px] text-zinc-500">
+                      {field.reason}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </dl>
+            <p className="text-xs text-zinc-500">
+              Model A: invested Scout capital is informational and is not
+              subtracted again from settled cash.
+            </p>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-sm font-medium text-zinc-200">
+              External Positions
+            </h2>
+            {positionsError ? (
+              <p className="text-sm text-amber-200">
+                External Positions unavailable: {positionsError}
+              </p>
+            ) : null}
+            <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {(
+                [
+                  ["Cost basis", account.investedExternalCapital],
+                  ["Marked market value", account.externalMarketValue],
+                  ["Pending settlement", account.pendingSettlementProceeds],
+                  ["Settled proceeds", account.settledExternalProceeds],
+                  [
+                    "Potential release (not cash)",
+                    account.potentialExternalCapitalRelease,
+                  ],
+                ] as const
+              ).map(([label, field]) => (
+                <div key={label} className="border-t border-zinc-800 pt-2">
+                  <dt className="text-[11px] uppercase tracking-wide text-zinc-500">
+                    {label}
+                  </dt>
+                  <dd className="mt-1 text-sm text-zinc-100">
+                    {fieldDisplay(field)}
+                  </dd>
+                  {field.status !== "configured" ? (
+                    <p className="mt-0.5 text-[10px] text-zinc-500">
+                      {field.reason}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-sm font-medium text-zinc-200">Scout Funding</h2>
+            {account.reservations.length === 0 ? (
+              <p className="text-sm text-zinc-500">
+                No capital reservations. Scout approval alone does not fund —
+                use{" "}
+                <code className="text-zinc-400">capital-reservation-create</code>
+                .
+              </p>
+            ) : (
+              <ul className="space-y-2 text-sm text-zinc-300">
+                {account.reservations.map((r) => (
+                  <li key={r.id} className="border-t border-zinc-900 pt-2">
+                    <div className="font-medium text-zinc-100">
+                      {r.id} · {r.planId}
+                      {r.ticker ? ` · ${r.ticker}` : ""}
+                    </div>
+                    <div>
+                      requested {money(r.requestedCapital)} · reserved{" "}
+                      {money(r.reservedCapital)} · {r.status} ·{" "}
+                      {r.fundingDecision}
+                    </div>
+                    {r.blockingReasons.length > 0 ? (
+                      <div className="text-amber-200/80">
+                        Blockers: {r.blockingReasons.join("; ")}
+                      </div>
+                    ) : null}
+                    {r.expiresAt ? (
+                      <div className="text-zinc-500">
+                        expires {new Date(r.expiresAt).toLocaleString()}
+                      </div>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {account.notes.length > 0 && (
+            <ul className="space-y-1 text-xs text-zinc-500">
+              {account.notes.map((n) => (
+                <li key={n}>{n}</li>
+              ))}
+            </ul>
+          )}
+        </>
+      ) : null}
 
       <section className="space-y-3">
         <div className="flex items-end justify-between gap-3">
           <div>
             <h2 className="text-sm font-medium text-zinc-200">
-              External Positions
+              External Position detail
             </h2>
             <p className="text-xs text-zinc-500">
-              Capital currently invested outside the Scout → Trade pipeline.
-              Cost basis method: average_cost (no tax-lot accuracy).
+              Cost basis method: average_cost. Missing price → market value
+              Unknown (not cost basis).
             </p>
           </div>
           <span className="rounded border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300">
@@ -144,7 +258,7 @@ export function CapitalPlannerPanel({
           </span>
         </div>
 
-        {positions.length === 0 ? (
+        {positionsError ? null : positions.length === 0 ? (
           <p className="text-sm text-zinc-500">
             No External Positions yet. Create via Control → Apply →{" "}
             <code className="text-zinc-300">external-position-create</code>.
@@ -162,8 +276,7 @@ export function CapitalPlannerPanel({
                   <th className="py-2 pr-3 font-medium">Market value</th>
                   <th className="py-2 pr-3 font-medium">Unrealized</th>
                   <th className="py-2 pr-3 font-medium">Liquidity</th>
-                  <th className="py-2 pr-3 font-medium">Exit plan</th>
-                  <th className="py-2 font-medium">Review</th>
+                  <th className="py-2 font-medium">Exit plan</th>
                 </tr>
               </thead>
               <tbody>
@@ -194,7 +307,9 @@ export function CapitalPlannerPanel({
                       {valuationLabel(p)}
                     </td>
                     <td className="py-2.5 pr-3 text-zinc-300">
-                      {money(p.currentMarketValue)}
+                      {p.currentMarketValue === undefined
+                        ? "Unknown"
+                        : money(p.currentMarketValue)}
                     </td>
                     <td className="py-2.5 pr-3 text-zinc-300">
                       {money(p.unrealizedPnL)}{" "}
@@ -205,13 +320,8 @@ export function CapitalPlannerPanel({
                     <td className="py-2.5 pr-3 text-zinc-300">
                       {p.liquidityStatus}
                     </td>
-                    <td className="py-2.5 pr-3 text-zinc-300">
+                    <td className="py-2.5 text-zinc-300">
                       {p.exitPlan?.status ?? "—"}
-                    </td>
-                    <td className="py-2.5 text-zinc-400">
-                      {p.reviewAt
-                        ? new Date(p.reviewAt).toLocaleDateString()
-                        : "—"}
                     </td>
                   </tr>
                 ))}
@@ -223,99 +333,28 @@ export function CapitalPlannerPanel({
 
       {focus && (
         <section className="space-y-4 border-t border-zinc-800 pt-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-sm font-medium text-zinc-200">
-              {focus.ticker} · {focus.id}
-            </h2>
-            <span className="rounded border border-emerald-800/60 bg-emerald-950/40 px-2 py-0.5 text-[11px] text-emerald-200">
-              Excluded from MTA experiment metrics
-            </span>
-            <span className="rounded border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300">
-              Acquired outside MTA
-            </span>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <h3 className="text-xs uppercase tracking-wide text-zinc-500">
-                Valuation
-              </h3>
-              <ul className="space-y-1 text-sm text-zinc-300">
-                <li>Shares: {focus.shares}</li>
-                <li>Average cost: {money(focus.averageCost)}</li>
-                <li>Cost basis method: {focus.costBasisMethod ?? "average_cost"}</li>
-                <li>Cost basis (invested): {money(focus.costBasis)}</li>
-                <li>Current price: {money(focus.currentPrice)}</li>
-                <li>Valuation: {valuationLabel(focus)}</li>
-                <li>
-                  Last valuation:{" "}
-                  {focus.lastValuationAt
-                    ? new Date(focus.lastValuationAt).toLocaleString()
-                    : "—"}
-                </li>
-                <li>Market value: {money(focus.currentMarketValue)}</li>
-                <li>
-                  Unrealized P/L: {money(focus.unrealizedPnL)} (
-                  {pct(focus.unrealizedPnLPercent)})
-                </li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xs uppercase tracking-wide text-zinc-500">
-                Capital impact
-              </h3>
-              <ul className="space-y-1 text-sm text-zinc-300">
-                <li>Treatment: {focus.capitalTreatment}</li>
-                <li>Liquidity: {focus.liquidityStatus}</li>
-                <li>Source: {focus.acquisitionSource}</li>
-                <li>Status: {focus.status}</li>
-                <li>
-                  Sale proceeds (informational):{" "}
-                  {money(focus.cumulativeSaleProceeds)}
-                </li>
-                <li>
-                  Realized P/L (reductions):{" "}
-                  {money(focus.cumulativeRealizedPnL)}
-                </li>
-                <li>
-                  Potential capital release:{" "}
-                  {money(focus.currentMarketValue ?? focus.costBasis)}
-                </li>
-              </ul>
-            </div>
-          </div>
-
+          <h2 className="text-sm font-medium text-zinc-200">
+            {focus.ticker} · {focus.id}
+          </h2>
+          <ul className="space-y-1 text-sm text-zinc-300">
+            <li>Cost basis: {money(focus.costBasis)}</li>
+            <li>
+              Market value:{" "}
+              {focus.currentMarketValue === undefined
+                ? "Unknown"
+                : money(focus.currentMarketValue)}
+            </li>
+            <li>Valuation: {valuationLabel(focus)}</li>
+            <li>Treatment: {focus.capitalTreatment}</li>
+            <li>Status: {focus.status}</li>
+            <li>
+              Sale proceeds (informational):{" "}
+              {money(focus.cumulativeSaleProceeds)}
+            </li>
+          </ul>
           <div className="space-y-2">
             <h3 className="text-xs uppercase tracking-wide text-zinc-500">
-              Exit plan
-            </h3>
-            {focus.exitPlan ? (
-              <ul className="space-y-1 text-sm text-zinc-300">
-                <li>Status: {focus.exitPlan.status}</li>
-                <li>
-                  Target: {focus.exitPlan.targetShares ?? "—"} sh @{" "}
-                  {money(focus.exitPlan.targetPrice)}
-                </li>
-                <li>
-                  Defensive: {money(focus.exitPlan.defensivePrice)} ·{" "}
-                  {focus.exitPlan.defensiveAction ?? "—"}
-                </li>
-                <li>{focus.exitPlan.notes ?? "—"}</li>
-              </ul>
-            ) : (
-              <p className="text-sm text-zinc-500">
-                No exit plan. Optional via{" "}
-                <code className="text-zinc-400">
-                  external-position-exit-plan-update
-                </code>
-                .
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-xs uppercase tracking-wide text-zinc-500">
-              Reduction / settlement history
+              Reduction / settlement
             </h3>
             {focus.reductions.length === 0 ? (
               <p className="text-sm text-zinc-500">No reductions yet.</p>
@@ -324,29 +363,15 @@ export function CapitalPlannerPanel({
                 {focus.reductions.map((r) => (
                   <li key={r.id} className="border-t border-zinc-900 pt-2">
                     {r.sharesReduced} sh @ {money(r.executionPrice)} · proceeds{" "}
-                    {money(r.proceeds)} · realized {money(r.realizedPnL)} ·{" "}
-                    {r.settlementStatus}
-                    {r.settledAt
-                      ? ` · settled ${new Date(r.settledAt).toLocaleString()}`
-                      : ""}{" "}
-                    · {new Date(r.executedAt).toLocaleString()}
-                    {r.notes ? (
-                      <div className="text-zinc-500">{r.notes}</div>
-                    ) : null}
+                    {money(r.proceeds)} ·{" "}
+                    {r.settlementStatus === "pending_settlement"
+                      ? "Pending settlement"
+                      : r.settlementStatus}
                   </li>
                 ))}
               </ul>
             )}
           </div>
-
-          {focus.notes && (
-            <div className="space-y-1">
-              <h3 className="text-xs uppercase tracking-wide text-zinc-500">
-                Notes
-              </h3>
-              <p className="text-sm text-zinc-300">{focus.notes}</p>
-            </div>
-          )}
         </section>
       )}
     </div>

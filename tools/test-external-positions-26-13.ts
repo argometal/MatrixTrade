@@ -20,6 +20,7 @@ import {
   computeExternalPositionValuation,
 } from "../lib/external-position-types";
 import { __setExternalPositionStoreForTests } from "../lib/external-position-store";
+import { __setCapitalPlannerStoreForTests } from "../lib/capital-planner-store";
 import {
   validateExternalPositionCreateProposal,
   validateExternalPositionReductionProposal,
@@ -32,6 +33,7 @@ import { scanExternalPositionNeutrality } from "./scan-external-position-neutral
 
 function reset() {
   __setExternalPositionStoreForTests([]);
+  __setCapitalPlannerStoreForTests({ configuration: null, ledgerEvents: [], reservations: [] });
 }
 
 async function main() {
@@ -92,7 +94,9 @@ async function main() {
         await import("../lib/external-position-store")
       ).getExternalPositions(),
       monthlyRisk: monthly,
-      totalCapital: 10_000,
+      totalEquityBase: 10_000,
+      settledCashBase: 10_000,
+      liquidityBuffer: 0,
     });
     assert.equal(account.monthlyRisk?.monthlyLossRoom, monthly.monthlyLossRoom);
     assert.equal(capitalFieldValue(account.investedExternalCapital), 500);
@@ -119,12 +123,13 @@ async function main() {
     });
     assert.equal(capitalFieldValue(snap.investedExternalCapital), 1000 + 1000);
     assert.equal(snap.openExternalPositionCount, 2);
-    // Global fields unconfigured — not known zero
-    assert.equal(snap.totalCapital.status, "unconfigured");
+    // Cash / equity unconfigured — not known zero
+    assert.equal(snap.totalEquity.status, "unconfigured");
     assert.equal(snap.settledCash.status, "unconfigured");
-    assert.equal(snap.reservedCapital.status, "unconfigured");
-    assert.equal(snap.committedCapital.status, "unconfigured");
-    assert.equal(snap.investedScoutCapital.status, "unconfigured");
+    // Reservation + open-trade sources are wired (may be zero)
+    assert.equal(snap.reservedCapital.status, "configured");
+    assert.equal(snap.committedCapital.status, "configured");
+    assert.equal(snap.investedScoutCapital.status, "configured");
   }
 
   // 5 / 6 — partial reduction + full close with pending settlement (not cash)
@@ -491,11 +496,11 @@ async function main() {
     reset();
     const empty = buildCapitalAccountSnapshot({
       externalPositions: [],
-      totalCapital: 50_000,
-      reservedCapital: 0,
-      committedCapital: 0,
-      investedScoutCapital: 0,
+      totalEquityBase: 50_000,
+      settledCashBase: 50_000,
       liquidityBuffer: 0,
+      reservations: [],
+      openTrades: [],
     });
     assert.equal(capitalFieldValue(empty.investedExternalCapital), 0);
     assert.equal(capitalFieldValue(empty.externalMarketValue), 0);
@@ -505,8 +510,8 @@ async function main() {
     assert.equal(capitalFieldValue(empty.settledCash), 50_000);
 
     const partial = buildCapitalAccountSnapshot({ externalPositions: [] });
-    assert.equal(partial.completeness, "partial_external_only");
-    assert.equal(partial.totalCapital.status, "unconfigured");
+    assert.equal(partial.completeness.status, "partial");
+    assert.equal(partial.totalEquity.status, "unconfigured");
     assert.equal(partial.settledCash.status, "unconfigured");
     assert.equal(capitalFieldValue(partial.settledCash), undefined);
   }
@@ -563,6 +568,7 @@ async function main() {
   }
 
   __setExternalPositionStoreForTests(null);
+  __setCapitalPlannerStoreForTests(null);
   console.log("test-external-positions-26-13: ok (26-14 hardened)");
 }
 

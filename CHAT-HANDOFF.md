@@ -54,6 +54,18 @@ Neutrality: no issuer-ticker hard-coding in EP infra — `tools/scan-external-po
 
 ---
 
+## Shipped — Capital Planner sources 26-15
+
+Doc: `md/matrix/capital-planner-26-15.md`  
+Test: `npm run test:capital-planner`  
+SQL: `supabase/capital-planner.sql`
+
+Model A `cash_ledger`: settledCash ≠ totalEquity; availableCapital = deployableCapital; invested Scout capital informational.  
+Apply: `capital-configuration-*` · `capital-reservation-*` · `capital-ledger-adjustment`.  
+Dashboard curve renamed to Experiment cumulative P/L (not Account Equity).
+
+---
+
 ## Shipped — UPL 25-29 (CURSOR-MTA-PLAN-OUTCOME-UPL-25-29)
 
 Doc: `md/matrix/plan-outcome-upl-25-29.md`  

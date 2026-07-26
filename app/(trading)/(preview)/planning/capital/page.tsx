@@ -1,22 +1,38 @@
 import { CapitalPlannerPanel } from "@/app/components/planning-preview/CapitalPlannerPanel";
-import { buildCapitalAccountSnapshot } from "@/lib/capital-account";
+import { getCapitalAccountSnapshot } from "@/lib/capital-account";
 import { getExternalPositions } from "@/lib/external-position-store";
-import { getMonthlyRisk } from "@/lib/storage";
+import type { CapitalAccountSnapshot } from "@/lib/capital-account";
+import type { ExternalPosition } from "@/lib/external-position-types";
 
 export default async function CapitalPlannerPage({
   searchParams,
 }: {
   searchParams: Promise<{ position?: string }>;
 }) {
-  const [positions, monthlyRisk, params] = await Promise.all([
+  const params = await searchParams;
+
+  const [positionsResult, accountResult] = await Promise.allSettled([
     getExternalPositions(),
-    getMonthlyRisk(),
-    searchParams,
+    getCapitalAccountSnapshot(),
   ]);
-  const account = buildCapitalAccountSnapshot({
-    externalPositions: positions,
-    monthlyRisk,
-  });
+
+  const positions: ExternalPosition[] =
+    positionsResult.status === "fulfilled" ? positionsResult.value : [];
+  const positionsError =
+    positionsResult.status === "rejected"
+      ? positionsResult.reason instanceof Error
+        ? positionsResult.reason.message
+        : "External Positions failed to load"
+      : undefined;
+
+  const account: CapitalAccountSnapshot | null =
+    accountResult.status === "fulfilled" ? accountResult.value : null;
+  const capitalError =
+    accountResult.status === "rejected"
+      ? accountResult.reason instanceof Error
+        ? accountResult.reason.message
+        : "Capital Account failed to load"
+      : undefined;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -24,6 +40,8 @@ export default async function CapitalPlannerPage({
         account={account}
         positions={positions}
         focusId={params.position}
+        capitalError={capitalError}
+        positionsError={positionsError}
       />
     </div>
   );

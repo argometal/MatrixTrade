@@ -15,23 +15,18 @@ import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import { NeedsAttentionRow } from "@/app/components/dashboard/NeedsAttentionRow";
 
-function DarkEquityChart({
-  points,
-  lossLimit,
-}: {
-  points: EquityPoint[];
-  lossLimit: number;
-}) {
+function DarkExperimentPnLChart({ points }: { points: EquityPoint[] }) {
   if (points.length < 2) {
     return (
       <p className="py-8 text-center text-sm text-zinc-500">
-        Equity curve appears after your first closed trade.
+        Experiment cumulative P/L appears after your first closed trade.
       </p>
     );
   }
 
   const values = points.map((p) => p.cumulativePnL);
-  const min = Math.min(lossLimit, ...values, 0);
+  // Scale from trade P/L only — never use monthly risk cap as account-equity threshold.
+  const min = Math.min(...values, 0);
   const max = Math.max(...values, 0);
   const range = max - min || 1;
   const width = 640;
@@ -47,7 +42,12 @@ function DarkEquityChart({
   const polyline = points.map((p, i) => `${toX(i)},${toY(p.cumulativePnL)}`).join(" ");
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" role="img" aria-label="Equity curve">
+    <svg
+      viewBox={`0 0 ${width} ${height}`}
+      className="w-full"
+      role="img"
+      aria-label="Experiment cumulative P/L"
+    >
       <line x1={padLeft} y1={toY(0)} x2={width - padRight} y2={toY(0)} stroke="#3f3f46" />
       <polyline fill="none" stroke="#8b5cf6" strokeWidth="2.5" points={polyline} />
       {points.map((p, i) => (
@@ -247,12 +247,15 @@ export function PreviewDashboard({
             )}
 
             <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
-              <h2 className="text-sm font-semibold text-zinc-200">Equity curve</h2>
+              <h2 className="text-sm font-semibold text-zinc-200">
+                Experiment cumulative P/L
+              </h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                Closed-trade experiment P/L only — not Account Equity. Monthly
+                risk cap is a separate control.
+              </p>
               <div className="mt-4">
-                <DarkEquityChart
-                  points={data.equityPoints}
-                  lossLimit={monthly.effectiveLossCap}
-                />
+                <DarkExperimentPnLChart points={data.equityPoints} />
               </div>
             </section>
 

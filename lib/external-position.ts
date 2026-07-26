@@ -370,6 +370,19 @@ export async function reduceExternalPosition(
       next,
       existing.revision
     );
+
+    const { appendCapitalLedgerEvent } = await import("./capital-ledger");
+    await appendCapitalLedgerEvent({
+      idempotencyKey: `external_position_sale_pending:${reduction.id}`,
+      eventType: "external_position_sale_pending",
+      amount: reduction.proceeds,
+      status: "pending",
+      effectiveAt: executedAt,
+      sourceEntityType: "external_position_reduction",
+      sourceEntityId: reduction.id,
+      externalReference: existing.id,
+    });
+
     return { position, reduction };
   });
 }
@@ -399,6 +412,7 @@ export async function settleExternalPositionProceeds(
 
     let settledProceeds = 0;
     const settledReductionIds: string[] = [];
+    const newlySettled: ExternalPositionReduction[] = [];
     const reductions = existing.reductions.map((r) => {
       const match =
         targetId === undefined
@@ -414,11 +428,13 @@ export async function settleExternalPositionProceeds(
       }
       settledProceeds += r.proceeds;
       settledReductionIds.push(r.id);
-      return {
+      const settled = {
         ...r,
         settlementStatus: "settled" as const,
         settledAt,
       };
+      newlySettled.push(settled);
+      return settled;
     });
 
     if (targetId && settledReductionIds.length === 0) {
@@ -450,6 +466,22 @@ export async function settleExternalPositionProceeds(
       next,
       existing.revision
     );
+
+    const { appendCapitalLedgerEvent } = await import("./capital-ledger");
+    for (const r of newlySettled) {
+      await appendCapitalLedgerEvent({
+        idempotencyKey: `external_position_sale_settled:${r.id}`,
+        eventType: "external_position_sale_settled",
+        amount: r.proceeds,
+        status: "settled",
+        effectiveAt: r.executedAt,
+        settledAt,
+        sourceEntityType: "external_position_reduction",
+        sourceEntityId: r.id,
+        externalReference: existing.id,
+      });
+    }
+
     return { position, settledReductionIds, settledProceeds };
   });
 }

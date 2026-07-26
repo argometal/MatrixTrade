@@ -26,6 +26,14 @@ import {
   validateExternalPositionSettleProposal,
   validateExternalPositionUpdateProposal,
 } from "./external-position-validate";
+import {
+  validateCapitalConfigurationCreateProposal,
+  validateCapitalConfigurationUpdateProposal,
+  validateCapitalLedgerAdjustmentProposal,
+  validateCapitalReservationCreateProposal,
+  validateCapitalReservationReleaseProposal,
+  validateCapitalReservationUpdateProposal,
+} from "./capital-validate";
 import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
@@ -255,6 +263,12 @@ export type TradingProposalType =
   | "external-position-reduction"
   | "external-position-settle"
   | "external-position-exit-plan-update"
+  | "capital-configuration-create"
+  | "capital-configuration-update"
+  | "capital-reservation-create"
+  | "capital-reservation-update"
+  | "capital-reservation-release"
+  | "capital-ledger-adjustment"
   | "playbook-create"
   | "playbook-update";
 
@@ -293,6 +307,12 @@ export function parseTradingInboxPayload(
     type !== "external-position-reduction" &&
     type !== "external-position-settle" &&
     type !== "external-position-exit-plan-update" &&
+    type !== "capital-configuration-create" &&
+    type !== "capital-configuration-update" &&
+    type !== "capital-reservation-create" &&
+    type !== "capital-reservation-update" &&
+    type !== "capital-reservation-release" &&
+    type !== "capital-ledger-adjustment" &&
     type !== "playbook-create" &&
     type !== "playbook-update"
   ) {
@@ -365,6 +385,18 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return `External Position settle ${p.positionId ?? ""}${p.reductionId ? ` · ${p.reductionId}` : ""}`;
     case "external-position-exit-plan-update":
       return `External Position exit plan ${p.positionId ?? ""}`;
+    case "capital-configuration-create":
+      return `Capital configuration create`;
+    case "capital-configuration-update":
+      return `Capital configuration update ${p.id ?? ""}`;
+    case "capital-reservation-create":
+      return `Capital reservation create ${p.planId ?? ""}`;
+    case "capital-reservation-update":
+      return `Capital reservation update ${p.id ?? ""}`;
+    case "capital-reservation-release":
+      return `Capital reservation release ${p.id ?? ""}`;
+    case "capital-ledger-adjustment":
+      return `Capital ledger adjustment ${p.idempotencyKey ?? ""}`;
     case "playbook-create":
       return `New playbook · ${p.name ?? "unnamed"}`;
     case "playbook-update":
@@ -693,6 +725,30 @@ export function validateProposalPayload(
   }
   if (parsed.type === "external-position-exit-plan-update") {
     const check = validateExternalPositionExitPlanProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+  if (parsed.type === "capital-configuration-create") {
+    const check = validateCapitalConfigurationCreateProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+  if (parsed.type === "capital-configuration-update") {
+    const check = validateCapitalConfigurationUpdateProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+  if (parsed.type === "capital-reservation-create") {
+    const check = validateCapitalReservationCreateProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+  if (parsed.type === "capital-reservation-update") {
+    const check = validateCapitalReservationUpdateProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+  if (parsed.type === "capital-reservation-release") {
+    const check = validateCapitalReservationReleaseProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+  if (parsed.type === "capital-ledger-adjustment") {
+    const check = validateCapitalLedgerAdjustmentProposal(p);
     if (!check.ok) errors.push(...check.errors);
   }
 
