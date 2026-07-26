@@ -26,6 +26,7 @@ import type { Af03ChaosDeck, Af03Folder, Af03RepoState, OperationalView } from "
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
 import { ChaosDeckList } from "./ChaosDeckList";
 import { CreationMenu, type CreateAction } from "./CreationMenu";
+import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
 import { LevelSnapshotChart } from "./LevelSnapshotChart";
 import { RepoListRow } from "./RepoListRow";
 
@@ -245,7 +246,7 @@ export function RepositoryView({ view, folderId }: Props) {
                     href={folderHref(f.id)}
                     view={view}
                     menuOpen={menuId === f.id}
-                    onToggleMenu={() => setMenuId(menuId === f.id ? null : f.id)}
+                    onMenuOpenChange={(open) => setMenuId(open ? f.id : null)}
                     onRename={() => {
                       const name = promptTitle("Rename folder", f.title);
                       if (!name) return;
@@ -316,7 +317,7 @@ export function RepositoryView({ view, folderId }: Props) {
                 href={folderHref(f.id)}
                 view={view}
                 menuOpen={menuId === f.id}
-                onToggleMenu={() => setMenuId(menuId === f.id ? null : f.id)}
+                onMenuOpenChange={(open) => setMenuId(open ? f.id : null)}
                 onRename={() => {
                   const name = promptTitle("Rename folder", f.title);
                   if (!name) return;
@@ -359,7 +360,7 @@ export function RepositoryView({ view, folderId }: Props) {
                 state={state}
                 view={view}
                 menuOpen={menuId === d.id}
-                onToggleMenu={() => setMenuId(menuId === d.id ? null : d.id)}
+                onMenuOpenChange={(open) => setMenuId(open ? d.id : null)}
                 onRename={() => {
                   const name = promptTitle("Rename Chaos Deck", d.title);
                   if (!name) return;
@@ -404,7 +405,7 @@ function FolderRow({
   href,
   view,
   menuOpen,
-  onToggleMenu,
+  onMenuOpenChange,
   onRename,
   onChildFolder,
   onChildDeck,
@@ -415,7 +416,7 @@ function FolderRow({
   href: string;
   view: OperationalView;
   menuOpen: boolean;
-  onToggleMenu: () => void;
+  onMenuOpenChange: (open: boolean) => void;
   onRename: () => void;
   onChildFolder: () => void;
   onChildDeck: () => void;
@@ -442,38 +443,28 @@ function FolderRow({
         </>
       }
       menu={
-        <>
-          <button
-            type="button"
-            aria-label={`Menu for folder ${folder.title}`}
-            aria-expanded={menuOpen}
-            className="flex min-w-11 items-center justify-center px-2 text-zinc-500 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-            onClick={onToggleMenu}
-          >
-            ⋯
-          </button>
-          {menuOpen ? (
-            <div role="menu" className="absolute right-0 top-full z-10 w-44 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg">
-              <Link role="menuitem" href={href} className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800">
-                Open
-              </Link>
-              <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800" onClick={onRename}>
-                Rename
-              </button>
-              <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800" onClick={onChildFolder}>
-                Create child folder
-              </button>
-              <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800" onClick={onChildDeck}>
-                Create Chaos Deck
-              </button>
-              {view === "active" ? (
-                <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800" onClick={onArchive}>
-                  Archive
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </>
+        <ForgeOverflowMenu
+          open={menuOpen}
+          onOpenChange={onMenuOpenChange}
+          label={`Menu for folder ${folder.title}`}
+          menuWidthPx={176}
+          triggerClassName="flex min-w-11 items-center justify-center px-2 text-zinc-500 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+          items={[
+            {
+              id: "open",
+              label: "Open",
+              onClick: () => {
+                window.location.href = href;
+              },
+            },
+            { id: "rename", label: "Rename", onClick: onRename },
+            { id: "child-folder", label: "Create child folder", onClick: onChildFolder },
+            { id: "child-deck", label: "Create Chaos Deck", onClick: onChildDeck },
+            ...(view === "active"
+              ? [{ id: "archive", label: "Archive", onClick: onArchive }]
+              : []),
+          ]}
+        />
       }
     />
   );
@@ -484,7 +475,7 @@ function DeckRow({
   state,
   view,
   menuOpen,
-  onToggleMenu,
+  onMenuOpenChange,
   onRename,
   onArchive,
   onRestore,
@@ -494,7 +485,7 @@ function DeckRow({
   state: Af03RepoState;
   view: OperationalView;
   menuOpen: boolean;
-  onToggleMenu: () => void;
+  onMenuOpenChange: (open: boolean) => void;
   onRename: () => void;
   onArchive: () => void;
   onRestore: () => void;
@@ -521,47 +512,27 @@ function DeckRow({
         </>
       }
       menu={
-        <>
-          <button
-            type="button"
-            aria-label={`Menu for deck ${deck.title}`}
-            aria-expanded={menuOpen}
-            className="flex min-w-11 items-center justify-center px-2 text-zinc-500 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-            onClick={onToggleMenu}
-          >
-            ⋯
-          </button>
-          {menuOpen ? (
-            <div role="menu" className="absolute right-0 top-full z-10 w-40 rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-lg">
-              <Link role="menuitem" href={deckHref(deck.id)} className="block px-3 py-2 text-sm text-zinc-200 hover:bg-zinc-800">
-                Open
-              </Link>
-              <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800" onClick={onRename}>
-                Rename
-              </button>
-              <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800" onClick={onToggleLayout}>
-                Toggle list/grid pref
-              </button>
-              <button
-                type="button"
-                role="menuitem"
-                disabled
-                className="block w-full cursor-not-allowed px-3 py-2 text-left text-sm text-zinc-600"
-              >
-                Move (soon)
-              </button>
-              {view === "active" ? (
-                <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800" onClick={onArchive}>
-                  Archive
-                </button>
-              ) : (
-                <button type="button" role="menuitem" className="block w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800" onClick={onRestore}>
-                  Restore
-                </button>
-              )}
-            </div>
-          ) : null}
-        </>
+        <ForgeOverflowMenu
+          open={menuOpen}
+          onOpenChange={onMenuOpenChange}
+          label={`Menu for deck ${deck.title}`}
+          menuWidthPx={160}
+          triggerClassName="flex min-w-11 items-center justify-center px-2 text-zinc-500 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+          items={[
+            {
+              id: "open",
+              label: "Open",
+              onClick: () => {
+                window.location.href = deckHref(deck.id);
+              },
+            },
+            { id: "rename", label: "Rename", onClick: onRename },
+            { id: "layout", label: "Toggle list/grid pref", onClick: onToggleLayout },
+            view === "active"
+              ? { id: "archive", label: "Archive", onClick: onArchive }
+              : { id: "restore", label: "Restore", onClick: onRestore },
+          ]}
+        />
       }
     />
   );
