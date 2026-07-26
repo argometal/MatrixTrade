@@ -353,6 +353,7 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
               <Background gap={18} color="#27272a" />
               <Controls showInteractive={false} />
               <MiniMap
+                position="top-right"
                 nodeColor="#3f3f46"
                 maskColor="rgba(9,9,11,0.7)"
                 className="!bg-zinc-900"
