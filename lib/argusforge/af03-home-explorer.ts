@@ -8,7 +8,13 @@ import { UNASSIGNED_REALM_ID } from "./af03-repo-types";
 import { folderBreadcrumb, getFolder, listChildFolders, listDecksAt } from "./af03-repo-store";
 
 export type ExplorerStatusFilter = "all" | "active" | "archive";
-export type ExplorerSortKey = "name" | "updated" | "opened" | "fragments" | "status";
+export type ExplorerSortKey =
+  | "name"
+  | "updated"
+  | "opened"
+  | "stale"
+  | "fragments"
+  | "status";
 
 /** Placeholder only — never invent success. */
 export type AlexandriaExplorerStatus =
@@ -65,12 +71,26 @@ export function parseExplorerSort(raw: string | null): ExplorerSortKey {
     raw === "name" ||
     raw === "updated" ||
     raw === "opened" ||
+    raw === "stale" ||
     raw === "fragments" ||
     raw === "status"
   ) {
     return raw;
   }
   return "updated";
+}
+
+/** Oldest / never opened first — “needs review” queue. */
+function compareNeedsReview(
+  aOpened: string | null | undefined,
+  bOpened: string | null | undefined,
+  aUpdated: string,
+  bUpdated: string
+): number {
+  const aKey = aOpened ?? "";
+  const bKey = bOpened ?? "";
+  if (aKey !== bKey) return aKey.localeCompare(bKey);
+  return aUpdated.localeCompare(bUpdated);
 }
 
 export function deckBuilderSignals(state: Af03RepoState, deck: Af03ChaosDeck): DeckBuilderSignals {
@@ -149,6 +169,13 @@ export function filterAndSortDecks(
         return a.title.localeCompare(b.title);
       case "opened":
         return (b.lastOpenedAt ?? "").localeCompare(a.lastOpenedAt ?? "");
+      case "stale":
+        return compareNeedsReview(
+          a.lastOpenedAt,
+          b.lastOpenedAt,
+          a.updatedAt,
+          b.updatedAt
+        );
       case "fragments":
         return (
           state.items.filter((i) => i.deckId === b.id).length -
@@ -173,6 +200,13 @@ export function filterAndSortRealms(
         return a.title.localeCompare(b.title);
       case "opened":
         return (b.lastOpenedAt ?? "").localeCompare(a.lastOpenedAt ?? "");
+      case "stale":
+        return compareNeedsReview(
+          a.lastOpenedAt,
+          b.lastOpenedAt,
+          a.updatedAt,
+          b.updatedAt
+        );
       case "status":
         return a.view.localeCompare(b.view) || a.title.localeCompare(b.title);
       case "fragments":
