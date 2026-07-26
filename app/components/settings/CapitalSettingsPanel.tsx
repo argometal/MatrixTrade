@@ -9,12 +9,21 @@ import type { CapitalAccountSnapshot } from "@/lib/capital-account";
 import {
   buildCapitalConfigurationCreateProposal,
   buildCapitalConfigurationUpdateProposal,
+  capitalSettingsFormWarnings,
+  computeDirtyFields,
   formValuesFromConfiguration,
+  hasDirtyFields,
   proposalMixesExternalPosition,
+  validateCapitalSettingsFormValues,
   validatePreparedCapitalProposal,
+  validateUpdateTimestampCoupling,
+  type CapitalSettingsDirtyFields,
   type CapitalSettingsFormValues,
 } from "@/lib/capital-settings-proposal";
-import { capitalSettingsSnapshotItems } from "@/lib/capital-settings-snapshot";
+import {
+  capitalSettingsPrivateSnapshotItem,
+  capitalSettingsStatusSnapshotItems,
+} from "@/lib/capital-settings-snapshot";
 import type {
   CapitalConfigSource,
   CapitalConfiguration,
@@ -40,46 +49,88 @@ const SOURCES: CapitalConfigSource[] = [
   "other",
 ];
 
+const EMPTY_FORM: CapitalSettingsFormValues = {
+  source: "broker_snapshot",
+  externalCreditsIncludedInCash: false,
+  liquidityBuffer: 0,
+};
+
 export function CapitalSettingsPanel({
   configuration,
+  configurationError,
   account,
+  accountError,
   storeMode,
+  storeModeError,
   sqlMigrationAvailable,
+  sqlMigrationError,
 }: {
   configuration: CapitalConfiguration | null;
+  configurationError?: string;
   account: CapitalAccountSnapshot | null;
-  storeMode: string;
-  sqlMigrationAvailable: boolean;
+  accountError?: string;
+  storeMode?: string;
+  storeModeError?: string;
+  sqlMigrationAvailable?: boolean;
+  sqlMigrationError?: string;
 }) {
   const { openPanel } = useControlPanel();
-  const hasActive = Boolean(configuration && configuration.status === "active");
-  const [mode, setMode] = useState<"idle" | "create" | "update">("idle");
-  const [form, setForm] = useState<CapitalSettingsFormValues>(() =>
-    configuration
-      ? formValuesFromConfiguration(configuration)
-      : {
-          source: "broker_snapshot",
-          externalCreditsIncludedInCash: false,
-          liquidityBuffer: 0,
-        }
+  const configUnavailable = Boolean(configurationError);
+  const hasActive = Boolean(
+    !configUnavailable && configuration && configuration.status === "active"
   );
+
+  const [mode, setMode] = useState<"idle" | "create" | "update">("idle");
+  const [original, setOriginal] = useState<CapitalSettingsFormValues>(EMPTY_FORM);
+  const [form, setForm] = useState<CapitalSettingsFormValues>(EMPTY_FORM);
   const [proposalJson, setProposalJson] = useState<string>("");
   const [statusMsg, setStatusMsg] = useState<string>("");
   const [adminOpen, setAdminOpen] = useState(false);
+  const [privateConfirmed, setPrivateConfirmed] = useState(false);
+  const [privateCopyMsg, setPrivateCopyMsg] = useState("");
 
-  const snapshotItems = useMemo(
-    () => capitalSettingsSnapshotItems({ configuration, account }),
-    [configuration, account]
+  const dirtyFields: CapitalSettingsDirtyFields = useMemo(
+    () => (mode === "update" ? computeDirtyFields(original, form) : {}),
+    [mode, original, form]
+  );
+  const dirty = hasDirtyFields(dirtyFields);
+
+  const statusSnapshotItems = useMemo(
+    () =>
+      capitalSettingsStatusSnapshotItems({
+        configuration: configUnavailable ? null : configuration,
+        account,
+        accountError,
+      }),
+    [configuration, configUnavailable, account, accountError]
   );
 
+  const privateSnapshot = useMemo(
+    () =>
+      capitalSettingsPrivateSnapshotItem({
+        configuration: configUnavailable ? null : configuration,
+        account,
+        accountError,
+      }),
+    [configuration, configUnavailable, account, accountError]
+  );
+
+  const formWarnings = capitalSettingsFormWarnings(form);
+
+  function resetDirtyFromConfig(cfg: CapitalConfiguration | null) {
+    const values = cfg ? formValuesFromConfiguration(cfg) : EMPTY_FORM;
+    setOriginal(values);
+    setForm(values);
+  }
+
   function setNumberField(
-    key: keyof CapitalSettingsFormValues,
+    key: "settledCashBase" | "totalEquityBase" | "liquidityBuffer",
     raw: string
   ) {
     if (raw.trim() === "") {
       setForm((f) => {
         const next = { ...f };
-        delete (next as Record<string, unknown>)[key];
+        delete next[key];
         return next;
       });
       return;
@@ -88,53 +139,134 @@ export function CapitalSettingsPanel({
     setForm((f) => ({ ...f, [key]: n }));
   }
 
-  function generateProposal() {
-    const payload =
-      mode === "create" || (!hasActive && mode === "idle")
-        ? buildCapitalConfigurationCreateProposal(form)
-        : buildCapitalConfigurationUpdateProposal(
-            configuration!.id,
-            form
-          );
+  function setTimestampField(
+    key: "settledCashAsOf" | "totalEquityAsOf",
+    raw: string
+  ) {
+    setForm((f) => ({ ...f, [key]: raw }));
+  }
 
+  function prepareProposal():
+    | { ok: true; text: string }
+    | { ok: false; message: string } {
+    if (mode === "update") {
+      if (!hasActive || !configuration) {
+        return {
+          ok: false,
+          message: "Update unavailable — no active configuration loaded.",
+        };
+      }
+      if (!dirty) {
+        return { ok: false, message: "No changes detected." };
+      }
+      const coupling = validateUpdateTimestampCoupling(dirtyFields);
+      if (!coupling.ok) {
+        return { ok: false, message: coupling.errors.join("; ") };
+      }
+      const formCheck = validateCapitalSettingsFormValues(form, {
+        mode: "update",
+        dirtyFields,
+      });
+      if (!formCheck.ok) {
+        return { ok: false, message: formCheck.errors.join("; ") };
+      }
+      const payload = buildCapitalConfigurationUpdateProposal({
+        activeId: configuration.id,
+        values: form,
+        dirtyFields,
+      });
+      if (proposalMixesExternalPosition(payload)) {
+        return {
+          ok: false,
+          message:
+            "Invalid: Capital Configuration must not mix External Position fields.",
+        };
+      }
+      const check = validatePreparedCapitalProposal(payload);
+      if (!check.ok) {
+        return { ok: false, message: `Validation failed: ${check.errors.join("; ")}` };
+      }
+      return { ok: true, text: JSON.stringify(payload, null, 2) };
+    }
+
+    // create
+    if (configUnavailable) {
+      return {
+        ok: false,
+        message:
+          "Configuration source unavailable — recovery mode: use Control → Apply with a hand-authored proposal, or retry after the store recovers.",
+      };
+    }
+    const formCheck = validateCapitalSettingsFormValues(form, { mode: "create" });
+    if (!formCheck.ok) {
+      return { ok: false, message: formCheck.errors.join("; ") };
+    }
+    const payload = buildCapitalConfigurationCreateProposal(form);
     if (proposalMixesExternalPosition(payload)) {
-      setStatusMsg(
-        "Invalid: Capital Configuration must not mix External Position fields."
-      );
-      return;
+      return {
+        ok: false,
+        message:
+          "Invalid: Capital Configuration must not mix External Position fields.",
+      };
     }
     const check = validatePreparedCapitalProposal(payload);
     if (!check.ok) {
-      setStatusMsg(`Validation failed: ${check.errors.join("; ")}`);
+      return { ok: false, message: `Validation failed: ${check.errors.join("; ")}` };
+    }
+    return { ok: true, text: JSON.stringify(payload, null, 2) };
+  }
+
+  function generateProposal() {
+    const result = prepareProposal();
+    if (!result.ok) {
+      setProposalJson("");
+      setStatusMsg(result.message);
       return;
     }
-    const text = JSON.stringify(payload, null, 2);
-    setProposalJson(text);
-    setStatusMsg("Proposal prepared — not persisted. Copy and open Control → Apply.");
+    setProposalJson(result.text);
+    setStatusMsg(
+      "Proposal prepared — not persisted. Copy and open Control → Apply."
+    );
   }
 
   async function copyProposal() {
-    if (!proposalJson) {
-      generateProposal();
-    }
-    const text =
-      proposalJson ||
-      JSON.stringify(
-        hasActive
-          ? buildCapitalConfigurationUpdateProposal(configuration!.id, form)
-          : buildCapitalConfigurationCreateProposal(form),
-        null,
-        2
-      );
-    const check = validatePreparedCapitalProposal(JSON.parse(text));
-    if (!check.ok) {
-      setStatusMsg(`Cannot copy: ${check.errors.join("; ")}`);
+    const result = prepareProposal();
+    if (!result.ok) {
+      setProposalJson("");
+      setStatusMsg(result.message);
       return;
     }
-    setProposalJson(text);
-    const ok = await copyText(text);
+    setProposalJson(result.text);
+    const ok = await copyText(result.text);
     setStatusMsg(ok ? "Copied Apply proposal to clipboard." : "Copy failed.");
   }
+
+  async function copyPrivateSnapshot() {
+    if (!privateConfirmed) {
+      setPrivateCopyMsg("Confirm inclusion of private values first.");
+      return;
+    }
+    const ok = await copyText(privateSnapshot.text);
+    setPrivateCopyMsg(
+      ok
+        ? "Private snapshot copied. Do not attach to ticker analysis or shared prompts."
+        : "Copy failed."
+    );
+  }
+
+  const proposalActionsDisabled =
+    mode === "update" ? !dirty : mode === "idle" || configUnavailable;
+
+  const storeModeDisplay = storeModeError
+    ? "Unknown"
+    : storeMode ?? "Unknown";
+  const sqlDisplay = sqlMigrationError
+    ? "Unknown"
+    : sqlMigrationAvailable === undefined
+      ? "Unknown"
+      : sqlMigrationAvailable
+        ? "yes (`supabase/capital-planner.sql`)"
+        : "no";
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8 sm:px-6">
@@ -165,10 +297,38 @@ export function CapitalSettingsPanel({
             Open Apply
           </button>
           <SnapshotButton
-            title="Capital Settings snapshot"
-            description="Opt-in account-level snapshot — not attached to ticker packages"
-            items={snapshotItems}
+            title="Capital Settings status snapshot"
+            description="Default account-level status — balances omitted; not attached to ticker packages"
+            items={statusSnapshotItems}
           />
+        </div>
+        <div className="space-y-2 rounded border border-zinc-800 p-3 text-xs text-zinc-400">
+          <p className="text-amber-200/90">
+            Contains private account-level financial values. Do not attach to
+            ticker analysis, public reports, or shared prompts.
+          </p>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={privateConfirmed}
+              onChange={(e) => {
+                setPrivateConfirmed(e.target.checked);
+                setPrivateCopyMsg("");
+              }}
+            />
+            Include private values
+          </label>
+          <button
+            type="button"
+            disabled={!privateConfirmed}
+            className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-100 disabled:opacity-40"
+            onClick={() => void copyPrivateSnapshot()}
+          >
+            Private full snapshot
+          </button>
+          {privateCopyMsg ? (
+            <p className="text-amber-200/80">{privateCopyMsg}</p>
+          ) : null}
         </div>
       </header>
 
@@ -177,7 +337,11 @@ export function CapitalSettingsPanel({
         <h2 className="text-sm font-medium text-zinc-200">
           Current Configuration
         </h2>
-        {!hasActive ? (
+        {configUnavailable ? (
+          <p className="text-sm text-amber-200/90">
+            Current configuration unavailable: {configurationError}
+          </p>
+        ) : !hasActive ? (
           <p className="text-sm text-amber-200/90">
             Unconfigured — no active Capital Configuration. Use Configure
             Capital below, then Control → Apply.
@@ -218,11 +382,15 @@ export function CapitalSettingsPanel({
                 ],
                 [
                   "Completeness",
-                  account?.completeness.status ?? "Unknown",
+                  accountError
+                    ? "unavailable"
+                    : (account?.completeness.status ?? "Unknown"),
                 ],
                 [
                   "Reconciliation",
-                  account?.reconciliationStatus ?? "Unknown",
+                  accountError
+                    ? "unavailable"
+                    : (account?.reconciliationStatus ?? "Unknown"),
                 ],
               ] as const
             ).map(([label, value]) => (
@@ -235,6 +403,11 @@ export function CapitalSettingsPanel({
             ))}
           </dl>
         )}
+        {accountError ? (
+          <p className="text-xs text-amber-200/80">
+            Capital Account unavailable: {accountError}
+          </p>
+        ) : null}
       </section>
 
       {/* B. Configuration Guide */}
@@ -282,7 +455,9 @@ export function CapitalSettingsPanel({
               </li>
               <li>
                 <code className="text-zinc-300">other</code> — use only with
-                explanation.
+                explanation in Apply notes (
+                <code className="text-zinc-300">sourceNote</code> is not a
+                persisted field).
               </li>
             </ul>
             <p className="mt-2">
@@ -312,6 +487,14 @@ export function CapitalSettingsPanel({
               balances. External Position records shares, cost basis and
               valuation of a holding outside Scout→Trade. Never combine both
               into one Apply block.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-zinc-200">Updates</h3>
+            <p>
+              Update proposals include only changed fields. Changing settled
+              cash or total equity requires a matching fresh as-of timestamp
+              (not invented automatically).
             </p>
           </div>
         </div>
@@ -354,6 +537,10 @@ export function CapitalSettingsPanel({
           <li>Do not update Supabase manually during normal operation.</li>
           <li>Do not persist from Settings without Apply.</li>
           <li>Do not include account balances in ticker snapshots.</li>
+          <li>
+            Do not attach the private Capital Settings snapshot to ticker
+            analysis or shared prompts.
+          </li>
         </ul>
       </section>
 
@@ -364,20 +551,17 @@ export function CapitalSettingsPanel({
         </h2>
         <p className="text-xs text-zinc-500">
           Settings never writes to the store. Copy the proposal and Accept in
-          Control → Apply.
+          Control → Apply. Update proposals emit changed fields only.
         </p>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            disabled={hasActive}
+            disabled={hasActive || configUnavailable}
             className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-100 disabled:opacity-40"
             onClick={() => {
               setMode("create");
-              setForm({
-                source: "broker_snapshot",
-                externalCreditsIncludedInCash: false,
-                liquidityBuffer: 0,
-              });
+              setOriginal(EMPTY_FORM);
+              setForm({ ...EMPTY_FORM });
               setProposalJson("");
               setStatusMsg("");
             }}
@@ -390,9 +574,7 @@ export function CapitalSettingsPanel({
             className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-100 disabled:opacity-40"
             onClick={() => {
               setMode("update");
-              if (configuration) {
-                setForm(formValuesFromConfiguration(configuration));
-              }
+              resetDirtyFromConfig(configuration);
               setProposalJson("");
               setStatusMsg("");
             }}
@@ -401,7 +583,20 @@ export function CapitalSettingsPanel({
           </button>
           <button
             type="button"
-            className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-100"
+            className="rounded border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300"
+            onClick={() => {
+              setMode("idle");
+              resetDirtyFromConfig(hasActive ? configuration : null);
+              setProposalJson("");
+              setStatusMsg("");
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={proposalActionsDisabled}
+            className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-100 disabled:opacity-40"
             onClick={() => void copyProposal()}
           >
             Copy Apply Proposal
@@ -420,7 +615,13 @@ export function CapitalSettingsPanel({
             <p className="text-xs text-zinc-500">
               {mode === "create"
                 ? "Preparing capital-configuration-create"
-                : `Preparing capital-configuration-update · ${configuration?.id}`}
+                : `Preparing capital-configuration-update · ${configuration?.id} · dirty: ${
+                    dirty
+                      ? Object.keys(dirtyFields)
+                          .filter((k) => dirtyFields[k as keyof CapitalSettingsDirtyFields])
+                          .join(", ")
+                      : "none"
+                  }`}
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="text-xs text-zinc-400">
@@ -442,10 +643,7 @@ export function CapitalSettingsPanel({
                   placeholder="2026-07-26T00:00:00.000Z"
                   value={form.settledCashAsOf ?? ""}
                   onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      settledCashAsOf: e.target.value,
-                    }))
+                    setTimestampField("settledCashAsOf", e.target.value)
                   }
                 />
               </label>
@@ -467,10 +665,7 @@ export function CapitalSettingsPanel({
                   className="mt-1 w-full rounded border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm text-zinc-100"
                   value={form.totalEquityAsOf ?? ""}
                   onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      totalEquityAsOf: e.target.value,
-                    }))
+                    setTimestampField("totalEquityAsOf", e.target.value)
                   }
                 />
               </label>
@@ -518,9 +713,15 @@ export function CapitalSettingsPanel({
                 External credits already included in settled cash
               </label>
             </div>
+            {formWarnings.map((w) => (
+              <p key={w} className="text-xs text-amber-200/80">
+                {w}
+              </p>
+            ))}
             <button
               type="button"
-              className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-100"
+              disabled={proposalActionsDisabled}
+              className="rounded border border-zinc-600 px-3 py-1.5 text-sm text-zinc-100 disabled:opacity-40"
               onClick={generateProposal}
             >
               Generate proposal JSON
@@ -538,7 +739,7 @@ export function CapitalSettingsPanel({
         ) : null}
       </section>
 
-      {/* Administrative */}
+      {/* Administrative — always reachable */}
       <section className="space-y-2 border-t border-zinc-800 pt-6">
         <button
           type="button"
@@ -554,19 +755,29 @@ export function CapitalSettingsPanel({
               Normal mutations must use Control → Apply.
             </p>
             <p>
-              Table: <code className="text-zinc-400">public.capital_planner_state</code>
+              Table:{" "}
+              <code className="text-zinc-400">public.capital_planner_state</code>
             </p>
             <pre className="overflow-x-auto rounded border border-zinc-900 p-2 text-[11px] text-zinc-400">{`select id, payload, updated_at
 from public.capital_planner_state
 where id = 'default';`}</pre>
-            <p>Store / backend mode: {storeMode}</p>
-            <p>
-              SQL migration available:{" "}
-              {sqlMigrationAvailable ? "yes (`supabase/capital-planner.sql`)" : "no"}
-            </p>
+            <p>Store / backend mode: {storeModeDisplay}</p>
+            {storeModeError ? (
+              <p className="text-amber-200/80">
+                Store mode error: {storeModeError}
+              </p>
+            ) : null}
+            <p>SQL migration available: {sqlDisplay}</p>
+            {sqlMigrationError ? (
+              <p className="text-amber-200/80">
+                Migration check error: {sqlMigrationError}
+              </p>
+            ) : null}
             <p>
               Active configuration ID:{" "}
-              {configuration?.id ?? "Unconfigured"}
+              {configUnavailable
+                ? "unavailable"
+                : (configuration?.id ?? "Unconfigured")}
             </p>
             <p className="text-amber-200/80">
               No destructive editor. No privileged database credentials. No

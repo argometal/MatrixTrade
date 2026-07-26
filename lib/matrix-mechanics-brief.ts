@@ -428,6 +428,8 @@ export function buildMatrixMechanicsBrief(): string {
     "  2. Control → MTA Mechanics → Apply schema contract",
     "- All persisted mutations still use Control → Apply → Validate → Accept.",
     "- Settings may prepare a valid proposal but must not bypass Apply.",
+    "- capital-configuration-update: changed fields only; balance changes require a matching fresh as-of (never invent timestamps).",
+    "- Settings status snapshot omits balances by default; private full snapshot requires explicit confirmation.",
     "- Capital Configuration and External Positions are separate entities.",
     "- Monthly Risk and Capital Availability are separate controls.",
     "- Capital Planner (`/planning/capital`) consumes configured capital; it is not the primary settings editor.",

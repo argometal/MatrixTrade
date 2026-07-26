@@ -1,4 +1,4 @@
-# Capital Settings (26-1A)
+# Capital Settings (26-1A / 26-1C)
 
 **Route:** Settings → Capital (`/settings/capital`)  
 **Role:** Configure and prepare account-level capital. Does not persist.
@@ -19,10 +19,30 @@ Settings may prepare `capital-configuration-create` / `capital-configuration-upd
 Persistence: Control → Apply → Validate → Accept.  
 No direct Supabase writes from Settings. Administrative section is inspect-only.
 
-## Opt-in snapshot
+### Updates (26-1C)
 
-`capital-settings-snapshot` is available only from Settings → Capital.  
-It is never auto-attached to Scout / Stock File / Trade / MTAE / Learning packages.
+`capital-configuration-update` proposals include:
+
+- `id`
+- only fields the user actually changed (dirty-field tracking)
+
+Changing settled cash or total equity requires a matching fresh as-of timestamp.  
+Timestamps are never invented automatically.  
+Explicit clearing of optional as-of fields emits `null` only when that field is dirty.
+
+## Snapshots (26-1C)
+
+| ID | Mode | Contents |
+|---|---|---|
+| `capital-settings-status-snapshot` | Default | Status / configured flags only — **balances omitted** |
+| `capital-settings-private-snapshot` | Explicit secondary | May include balances; requires UI confirmation |
+
+Neither is auto-attached to Scout / Stock File / Trade / MTAE / Learning / Snapshot General packages.
+
+## Isolated loading (26-1C)
+
+Configuration, Capital Account, store mode, and SQL migration checks load independently.  
+A single source failure must not crash the route or invent zero balances.
 
 ## Neutrality
 

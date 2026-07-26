@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 32;
+export const MATRIX_MECHANICS_REVISION = 33;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -50,6 +50,8 @@ export function buildMatrixMechanicsSnapshot(): string {
     "",
     "Capital layer (account-level — not ticker analysis):",
     "- capital-configuration-create / capital-configuration-update — Settings → Capital prepares; Apply persists",
+    "- capital-configuration-update emits changed fields only; balance changes need fresh as-of",
+    "- Settings status snapshot omits balances; private snapshot is explicit secondary confirmation only",
     "- capital-reservation-* / capital-ledger-adjustment — Capital Planner / Apply",
     "- Never put account balances in Scout/Stock/Trade/MTAE/Learning snapshots",
     "- Never mix External Position fields into Capital Configuration",

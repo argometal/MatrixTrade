@@ -4,6 +4,21 @@ import { CapitalSettingsPanel } from "@/app/components/settings/CapitalSettingsP
 import { getCapitalAccountSnapshot } from "@/lib/capital-account";
 import { getActiveCapitalConfiguration } from "@/lib/capital-configuration";
 
+export type LoadResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: string };
+
+async function settleLoad<T>(promise: Promise<T>): Promise<LoadResult<T>> {
+  try {
+    return { ok: true, value: await promise };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
 async function resolveStoreMode(): Promise<string> {
   const forced = process.env.CAPITAL_PLANNER_STORE?.trim().toLowerCase();
   if (forced) return forced;
@@ -13,28 +28,48 @@ async function resolveStoreMode(): Promise<string> {
 
 async function sqlMigrationAvailable(): Promise<boolean> {
   try {
-    await fs.access(path.join(process.cwd(), "supabase", "capital-planner.sql"));
+    await fs.access(
+      path.join(process.cwd(), "supabase", "capital-planner.sql")
+    );
     return true;
-  } catch {
-    return false;
+  } catch (err) {
+    const code =
+      err && typeof err === "object" && "code" in err
+        ? String((err as { code?: unknown }).code)
+        : "";
+    if (code === "ENOENT") return false;
+    throw err instanceof Error
+      ? err
+      : new Error("SQL migration availability check failed");
   }
 }
 
 export default async function CapitalSettingsPage() {
-  const [configuration, accountResult, storeMode, sqlOk] = await Promise.all([
-    getActiveCapitalConfiguration(),
-    getCapitalAccountSnapshot().catch(() => null),
-    resolveStoreMode(),
-    sqlMigrationAvailable(),
-  ]);
+  const [configurationResult, accountResult, storeModeResult, sqlResult] =
+    await Promise.all([
+      settleLoad(getActiveCapitalConfiguration()),
+      settleLoad(getCapitalAccountSnapshot()),
+      settleLoad(resolveStoreMode()),
+      settleLoad(sqlMigrationAvailable()),
+    ]);
 
   return (
     <div className="h-full overflow-y-auto">
       <CapitalSettingsPanel
-        configuration={configuration}
-        account={accountResult}
-        storeMode={storeMode}
-        sqlMigrationAvailable={sqlOk}
+        configuration={
+          configurationResult.ok ? configurationResult.value : null
+        }
+        configurationError={
+          configurationResult.ok ? undefined : configurationResult.error
+        }
+        account={accountResult.ok ? accountResult.value : null}
+        accountError={accountResult.ok ? undefined : accountResult.error}
+        storeMode={storeModeResult.ok ? storeModeResult.value : undefined}
+        storeModeError={
+          storeModeResult.ok ? undefined : storeModeResult.error
+        }
+        sqlMigrationAvailable={sqlResult.ok ? sqlResult.value : undefined}
+        sqlMigrationError={sqlResult.ok ? undefined : sqlResult.error}
       />
     </div>
   );
