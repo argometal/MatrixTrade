@@ -3,6 +3,7 @@
 /**
  * Fullscreen expand affordance matching Chaos Dumping (`+`) expand control.
  * Same expand icon button; Back / Done chrome when open.
+ * Supports controlled expand for custom floating triggers (24-27).
  */
 
 import {
@@ -42,6 +43,11 @@ type Props = {
   backSubtitle?: string;
   expandAriaLabel?: string;
   expandTitle?: string;
+  /** Show the built-in corner expand button (default true). */
+  showExpandButton?: boolean;
+  /** Controlled expanded state. */
+  expanded?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
 };
 
 export function ForgeExpandableSurface({
@@ -55,8 +61,18 @@ export function ForgeExpandableSurface({
   backSubtitle = "Collapse view",
   expandAriaLabel = "Expand fullscreen",
   expandTitle = "Expand",
+  showExpandButton = true,
+  expanded: expandedProp,
+  onExpandedChange,
 }: Props) {
-  const [expanded, setExpanded] = useState(false);
+  const [uncontrolled, setUncontrolled] = useState(false);
+  const controlled = expandedProp !== undefined;
+  const expanded = controlled ? Boolean(expandedProp) : uncontrolled;
+
+  function setExpanded(next: boolean) {
+    if (!controlled) setUncontrolled(next);
+    onExpandedChange?.(next);
+  }
 
   useEffect(() => {
     if (!expanded) return;
@@ -70,7 +86,8 @@ export function ForgeExpandableSurface({
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
     };
-  }, [expanded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setExpanded identity not stable when uncontrolled
+  }, [expanded, controlled, expandedProp]);
 
   return (
     <div
@@ -120,7 +137,7 @@ export function ForgeExpandableSurface({
         {children}
       </div>
 
-      {!expanded ? (
+      {showExpandButton && !expanded ? (
         <button
           type="button"
           aria-label={expandAriaLabel}

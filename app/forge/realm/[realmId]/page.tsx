@@ -5,7 +5,7 @@ type Props = {
 };
 
 /**
- * CHANGE 24-17 — Open Realm → molecular Chaos Deck graph.
+ * CHANGE 24-17 / 24-27 — Open Realm → molecular Chaos Deck graph.
  */
 export default async function ForgeRealmPage({ params }: Props) {
   const { realmId } = await params;

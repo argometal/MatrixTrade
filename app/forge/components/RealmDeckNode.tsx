@@ -1,72 +1,103 @@
 "use client";
 
-import { Handle, Position, type NodeProps } from "@xyflow/react";
+/**
+ * CHANGE 24-27 — Molecular Chaos Deck node (clamped size, clean face labels).
+ */
+
+import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
 import type { DeckNodeMetrics } from "@/lib/argusforge/af03-realm-map";
-import { freshnessToBorder, freshnessToFill } from "@/lib/argusforge/af03-realm-map";
+import {
+  formatUsedLabel,
+  freshnessToBorder,
+  freshnessToFill,
+} from "@/lib/argusforge/af03-realm-map";
 
 export type RealmDeckNodeData = {
   title: string;
   metrics: DeckNodeMetrics;
   selected: boolean;
-  clusterLabel: string;
+  /** Dimmed when Focus mode isolates another node's neighborhood. */
+  dimmed: boolean;
   hasAffinityHalo: boolean;
+  /** Reserved — pulse removed in 24-27 (no decorative motion). */
   reduceMotion: boolean;
 };
 
+export type RealmDeckFlowNode = Node<RealmDeckNodeData, "realmDeck">;
+
+const MIN_DIAMETER = 96;
+const MAX_DIAMETER = 180;
+
+/** Clamp rendered diameter from mass visualWeight (24-27). */
+export function clampDeckNodeDiameter(visualWeight: number): number {
+  const raw = 112 + Math.min(48, Math.max(0, visualWeight) * 14);
+  return Math.round(Math.min(MAX_DIAMETER, Math.max(MIN_DIAMETER, raw)));
+}
+
 /**
- * Chaos Deck molecular body — size=mass, color=use, pulse=activity, halo=affinity (24-17).
- * Palette: Argus emerald (V2KnowledgeTreemap family).
+ * Chaos Deck molecular body — size=mass, color=recent use, ring=selected, halo=affinity.
+ * No m1.0 / 0f / pulse on the face.
  */
-export function RealmDeckNode({ data }: NodeProps & { data: RealmDeckNodeData }) {
-  const { title, metrics, selected, clusterLabel, hasAffinityHalo, reduceMotion } = data;
-  const size = Math.round(108 + Math.min(96, metrics.visualWeight * 22));
+export function RealmDeckNode({ data }: NodeProps<RealmDeckFlowNode>) {
+  const { title, metrics, selected, dimmed, hasAffinityHalo } = data;
+  const size = clampDeckNodeDiameter(metrics.visualWeight);
   const fill = freshnessToFill(metrics.freshness, false, 1);
-  const border = selected ? "#34d399" : freshnessToBorder(metrics.freshness, 1);
-  const motion =
-    !reduceMotion && metrics.activityLevel !== "still"
-      ? metrics.activityLevel === "active"
-        ? "realmDeckPulse 2.6s ease-in-out infinite"
-        : "realmDeckPulse 4.2s ease-in-out infinite"
-      : undefined;
+  const border = selected ? "#fafafa" : freshnessToBorder(metrics.freshness, 1);
+  const usedLabel = formatUsedLabel(metrics.lastUsedAt ?? metrics.lastActivityAt);
+  const fragmentLabel =
+    metrics.fragmentCount === 1
+      ? "1 Fragment"
+      : `${metrics.fragmentCount} Fragments`;
 
   return (
-    <div className="relative" style={{ width: size + (hasAffinityHalo ? 16 : 0) }}>
+    <div
+      className="relative"
+      style={{
+        width: size + (hasAffinityHalo ? 14 : 0),
+        opacity: dimmed ? 0.22 : 1,
+        transition: "opacity 160ms ease",
+      }}
+    >
       {hasAffinityHalo ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-full border border-dashed border-emerald-400/40"
-          style={{
-            margin: -8,
-            boxShadow: "0 0 18px rgba(16, 185, 129, 0.18)",
-          }}
+          className="pointer-events-none absolute inset-0 rounded-full border border-dashed border-emerald-400/35"
+          style={{ margin: -7 }}
           title="Detected affinity — not a confirmed relation"
         />
       ) : null}
       <div
-        className={`relative rounded-full border-2 px-3 py-3 text-center shadow-md ${
-          selected ? "ring-2 ring-emerald-400/50" : ""
+        className={`relative rounded-full border-2 px-2.5 py-2.5 text-center shadow-md ${
+          selected ? "ring-2 ring-white/90" : ""
         }`}
         style={{
           width: size,
           minHeight: size,
           background: fill,
           borderColor: border,
-          animation: motion,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <Handle type="target" position={Position.Left} className="!h-2 !w-2 !bg-emerald-400" />
-        <p className="text-[8px] uppercase tracking-wide text-emerald-200/70">{clusterLabel}</p>
-        <p className="mt-0.5 line-clamp-2 text-[12px] font-semibold leading-snug text-zinc-50">
+        <Handle
+          type="target"
+          position={Position.Left}
+          className="!h-2 !w-2 !border-0 !bg-violet-400"
+        />
+        <p className="line-clamp-2 px-0.5 text-[11px] font-semibold leading-snug text-zinc-50">
           {title}
         </p>
-        <p className="mt-1 text-[9px] text-emerald-100/80">
-          m{metrics.massScore.toFixed(1)} · {metrics.fragmentCount}f
-        </p>
-        <Handle type="source" position={Position.Right} className="!h-2 !w-2 !bg-emerald-400" />
+        <p className="mt-0.5 text-[9px] font-medium text-emerald-100/85">{fragmentLabel}</p>
+        {usedLabel && usedLabel !== "Unused" ? (
+          <p className="mt-0.5 text-[8px] text-emerald-200/65">{usedLabel}</p>
+        ) : null}
+        <Handle
+          type="source"
+          position={Position.Right}
+          className="!h-2 !w-2 !border-0 !bg-violet-400"
+        />
       </div>
     </div>
   );

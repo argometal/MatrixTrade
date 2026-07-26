@@ -9,6 +9,15 @@
 
 ---
 
+## Shipped — ArgusForge 24-27 molecular graph UI
+
+Doc: `md/argusforge/change-24-27.md`  
+Route: `/forge/realm/[realmId]`  
+
+Compact header · Graph/List · clamped nodes · floating controls · Focus dim · selection sheet · toggle MiniMap · prefs + positions in localStorage.
+
+---
+
 ## Modelo (orden)
 
 ```text
