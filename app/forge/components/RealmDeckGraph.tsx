@@ -45,6 +45,7 @@ import { readArgusGraph } from "@/lib/argusforge/argus-graph-store";
 import type { ArgusGraphState } from "@/lib/argusforge/argus-graph-types";
 import { readMolecularOverlay } from "@/lib/argusforge/af03-realm-molecular";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import { ForgeExpandableSurface } from "./ForgeExpandableSurface";
 import { RealmDeckNode, type RealmDeckNodeData } from "./RealmDeckNode";
 
 const nodeTypes = { realmDeck: RealmDeckNode };
@@ -326,7 +327,14 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
         </div>
       ) : (
         <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_15.5rem]">
-          <div className="relative h-[min(70dvh,560px)] min-h-[320px] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 lg:h-auto lg:min-h-[420px]">
+          <ForgeExpandableSurface
+            className="relative h-[min(70dvh,560px)] min-h-[320px] overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 lg:h-auto lg:min-h-[420px]"
+            ariaLabel="Fullscreen Realm molecular graph"
+            backTitle="Back to Realm"
+            backSubtitle="Collapse graph"
+            expandAriaLabel="Expand graph fullscreen"
+            expandTitle="Expand graph"
+          >
             <div className="absolute left-2 top-2 z-10 w-40">
               <MolecularLegend open={legendOpen} onToggle={() => setLegendOpen((v) => !v)} />
             </div>
@@ -340,7 +348,7 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
               nodeTypes={nodeTypes}
               fitView
               proOptions={{ hideAttribution: true }}
-              className="bg-zinc-950"
+              className="h-full bg-zinc-950"
             >
               <Background gap={18} color="#27272a" />
               <Controls showInteractive={false} />
@@ -350,7 +358,7 @@ function RealmGraphCanvas({ realmId }: { realmId: string }) {
                 className="!bg-zinc-900"
               />
             </ReactFlow>
-          </div>
+          </ForgeExpandableSurface>
 
           <aside className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3 text-sm">
             {selectedDeck && selectedMetrics ? (
