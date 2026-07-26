@@ -5,10 +5,11 @@ import {
   getExternalPositionsStore,
   __setExternalPositionsStoreForTests,
   EXTERNAL_POSITIONS_JSON_PATH,
+  withExternalPositionLock,
 } from "./external-positions-store";
 import type { ExternalPosition } from "./external-position-types";
 
-export { EXTERNAL_POSITIONS_JSON_PATH };
+export { EXTERNAL_POSITIONS_JSON_PATH, withExternalPositionLock };
 
 export async function getExternalPositions(): Promise<ExternalPosition[]> {
   return getExternalPositionsStore().readAll();
@@ -27,6 +28,13 @@ export async function upsertExternalPosition(
   row: ExternalPosition
 ): Promise<ExternalPosition> {
   return getExternalPositionsStore().upsert(row);
+}
+
+export async function upsertExternalPositionIfRevision(
+  row: ExternalPosition,
+  expectedRevision: number
+): Promise<ExternalPosition> {
+  return getExternalPositionsStore().upsertIfRevision(row, expectedRevision);
 }
 
 export function nextExternalPositionId(

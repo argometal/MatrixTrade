@@ -5,6 +5,9 @@ import type { ExternalPositionsStore } from "./types";
 
 const FILE = path.join(process.cwd(), "data", "external-positions.json");
 
+/** Serialize JSON mutations to reduce lost updates in local single-process use. */
+let writeChain: Promise<void> = Promise.resolve();
+
 export function assertJsonExternalPositionWritesAllowed(): void {
   if (process.env.VERCEL || process.env.VERCEL_ENV) {
     throw new Error(
@@ -28,26 +31,47 @@ export async function readExternalPositionsJsonFile(): Promise<
   }
 }
 
+async function writeAll(all: ExternalPosition[]): Promise<void> {
+  all.sort((a, b) => a.id.localeCompare(b.id));
+  await fs.mkdir(path.dirname(FILE), { recursive: true });
+  await fs.writeFile(FILE, `${JSON.stringify(all, null, 2)}\n`, "utf-8");
+}
+
 export function createJsonExternalPositionsStore(): ExternalPositionsStore {
   return {
     readAll: readExternalPositionsJsonFile,
     async upsert(row) {
+      return this.upsertIfRevision(row, row.revision);
+    },
+    async upsertIfRevision(row, expectedRevision) {
       assertJsonExternalPositionWritesAllowed();
-      const all = await readExternalPositionsJsonFile();
-      const next = {
-        ...row,
-        experimentEligible: false as const,
-        scoutLinked: false as const,
-      };
-      const idx = all.findIndex(
-        (x) => x.id.toUpperCase() === next.id.toUpperCase()
+      const run = writeChain.then(async () => {
+        const all = await readExternalPositionsJsonFile();
+        const idx = all.findIndex(
+          (x) => x.id.toUpperCase() === row.id.toUpperCase()
+        );
+        if (idx >= 0 && all[idx].revision !== expectedRevision) {
+          throw new Error(
+            `external_position_revision_conflict ${row.id}: expected ${expectedRevision}, found ${all[idx].revision}`
+          );
+        }
+        const next: ExternalPosition = {
+          ...row,
+          experimentEligible: false,
+          scoutLinked: false,
+          revision: idx >= 0 ? all[idx].revision + 1 : 1,
+          reductions: [...(row.reductions ?? [])],
+        };
+        if (idx >= 0) all[idx] = next;
+        else all.push(next);
+        await writeAll(all);
+        return next;
+      });
+      writeChain = run.then(
+        () => undefined,
+        () => undefined
       );
-      if (idx >= 0) all[idx] = next;
-      else all.push(next);
-      all.sort((a, b) => a.id.localeCompare(b.id));
-      await fs.mkdir(path.dirname(FILE), { recursive: true });
-      await fs.writeFile(FILE, `${JSON.stringify(all, null, 2)}\n`, "utf-8");
-      return next;
+      return run;
     },
   };
 }

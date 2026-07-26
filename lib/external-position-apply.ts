@@ -2,6 +2,7 @@ import type { TradingInboxPayload, TradingProposalType } from "./bridge";
 import {
   createExternalPosition,
   reduceExternalPosition,
+  settleExternalPositionProceeds,
   updateExternalPosition,
   upsertExternalExitPlan,
 } from "./external-position";
@@ -10,6 +11,7 @@ import type {
   ExternalCapitalTreatment,
   ExternalLiquidityStatus,
   ExitPlanStatus,
+  ValuationSource,
 } from "./external-position-types";
 
 type ExtApplyResult =
@@ -38,6 +40,7 @@ export async function applyExternalPositionCreateBlock(
       averageCost: Number(p.averageCost),
       currentPrice:
         p.currentPrice !== undefined ? Number(p.currentPrice) : undefined,
+      valuationSource: p.valuationSource as ValuationSource | undefined,
       acquisitionSource: p.acquisitionSource as
         | ExternalAcquisitionSource
         | undefined,
@@ -52,7 +55,7 @@ export async function applyExternalPositionCreateBlock(
     return {
       ok: true,
       type: "external-position-create",
-      message: `External Position ${position.id} created (${position.ticker}). Excluded from experiment metrics.`,
+      message: `External Position ${position.id} created (${position.ticker}). Cost basis method average_cost. Excluded from experiment metrics.`,
     };
   } catch (err) {
     return fail("external-position-create", err);
@@ -68,6 +71,7 @@ export async function applyExternalPositionUpdateBlock(
       id: String(p.id ?? ""),
       currentPrice:
         p.currentPrice !== undefined ? Number(p.currentPrice) : undefined,
+      valuationSource: p.valuationSource as ValuationSource | undefined,
       reviewAt:
         p.reviewAt === null
           ? null
@@ -103,21 +107,51 @@ export async function applyExternalPositionReductionBlock(
 ): Promise<ExtApplyResult> {
   try {
     const p = parsed.proposal;
-    const { position, reduction } = await reduceExternalPosition({
-      positionId: String(p.positionId ?? ""),
-      sharesReduced: Number(p.sharesReduced),
-      executionPrice: Number(p.executionPrice),
-      executedAt: p.executedAt !== undefined ? String(p.executedAt) : undefined,
-      fees: p.fees !== undefined ? Number(p.fees) : undefined,
-      notes: p.notes !== undefined ? String(p.notes) : undefined,
-    });
+    const { position, reduction, idempotentReplay } =
+      await reduceExternalPosition({
+        positionId: String(p.positionId ?? ""),
+        reductionId:
+          p.reductionId !== undefined ? String(p.reductionId) : undefined,
+        executionReference:
+          p.executionReference !== undefined
+            ? String(p.executionReference)
+            : undefined,
+        sharesReduced: Number(p.sharesReduced),
+        executionPrice: Number(p.executionPrice),
+        executedAt:
+          p.executedAt !== undefined ? String(p.executedAt) : undefined,
+        fees: p.fees !== undefined ? Number(p.fees) : undefined,
+        notes: p.notes !== undefined ? String(p.notes) : undefined,
+      });
+    const replay = idempotentReplay ? " · idempotent replay" : "";
     return {
       ok: true,
       type: "external-position-reduction",
-      message: `External Position ${position.id} reduced by ${reduction.sharesReduced} shares · realized P/L ${reduction.realizedPnL.toFixed(2)} · status ${position.status}. No Trade created.`,
+      message: `External Position ${position.id} reduced by ${reduction.sharesReduced} shares · realized P/L ${reduction.realizedPnL.toFixed(2)} · settlement ${reduction.settlementStatus} · status ${position.status}${replay}. No Trade created.`,
     };
   } catch (err) {
     return fail("external-position-reduction", err);
+  }
+}
+
+export async function applyExternalPositionSettleBlock(
+  parsed: TradingInboxPayload
+): Promise<ExtApplyResult> {
+  try {
+    const p = parsed.proposal;
+    const result = await settleExternalPositionProceeds({
+      positionId: String(p.positionId ?? ""),
+      reductionId:
+        p.reductionId !== undefined ? String(p.reductionId) : undefined,
+      settledAt: p.settledAt !== undefined ? String(p.settledAt) : undefined,
+    });
+    return {
+      ok: true,
+      type: "external-position-settle",
+      message: `Settled ${result.settledReductionIds.length} reduction(s) on ${result.position.id} · credits ${result.settledProceeds.toFixed(2)} · capitalTreatment ${result.position.capitalTreatment}.`,
+    };
+  } catch (err) {
+    return fail("external-position-settle", err);
   }
 }
 

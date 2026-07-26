@@ -18,6 +18,7 @@ import {
   applyExternalPositionCreateBlock,
   applyExternalPositionExitPlanBlock,
   applyExternalPositionReductionBlock,
+  applyExternalPositionSettleBlock,
   applyExternalPositionUpdateBlock,
 } from "./external-position-apply";
 import { applyScoutPlanCreate } from "./scout-plan-create";
@@ -163,6 +164,8 @@ async function applyTradingProposalInner(
       return applyExternalPositionUpdateBlock(parsed);
     case "external-position-reduction":
       return applyExternalPositionReductionBlock(parsed);
+    case "external-position-settle":
+      return applyExternalPositionSettleBlock(parsed);
     case "external-position-exit-plan-update":
       return applyExternalPositionExitPlanBlock(parsed);
     case "trade-proposal":

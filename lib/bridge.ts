@@ -23,6 +23,7 @@ import {
   validateExternalPositionCreateProposal,
   validateExternalPositionExitPlanProposal,
   validateExternalPositionReductionProposal,
+  validateExternalPositionSettleProposal,
   validateExternalPositionUpdateProposal,
 } from "./external-position-validate";
 import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
@@ -252,6 +253,7 @@ export type TradingProposalType =
   | "external-position-create"
   | "external-position-update"
   | "external-position-reduction"
+  | "external-position-settle"
   | "external-position-exit-plan-update"
   | "playbook-create"
   | "playbook-update";
@@ -289,6 +291,7 @@ export function parseTradingInboxPayload(
     type !== "external-position-create" &&
     type !== "external-position-update" &&
     type !== "external-position-reduction" &&
+    type !== "external-position-settle" &&
     type !== "external-position-exit-plan-update" &&
     type !== "playbook-create" &&
     type !== "playbook-update"
@@ -358,6 +361,8 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return `External Position update ${p.id ?? ""}`;
     case "external-position-reduction":
       return `External Position reduce ${p.positionId ?? ""} · ${p.sharesReduced ?? ""} sh`;
+    case "external-position-settle":
+      return `External Position settle ${p.positionId ?? ""}${p.reductionId ? ` · ${p.reductionId}` : ""}`;
     case "external-position-exit-plan-update":
       return `External Position exit plan ${p.positionId ?? ""}`;
     case "playbook-create":
@@ -680,6 +685,10 @@ export function validateProposalPayload(
   }
   if (parsed.type === "external-position-reduction") {
     const check = validateExternalPositionReductionProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+  if (parsed.type === "external-position-settle") {
+    const check = validateExternalPositionSettleProposal(p);
     if (!check.ok) errors.push(...check.errors);
   }
   if (parsed.type === "external-position-exit-plan-update") {

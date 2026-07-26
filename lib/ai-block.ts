@@ -846,10 +846,19 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
     source: "ai-block",
     proposal: {
       positionId: "EXT-EXAMPLE-001",
+      reductionId: "EXTRED-EXAMPLE-001",
       sharesReduced: 40,
       executionPrice: 55,
       fees: 1.5,
-      notes: "Partial reduction — releases capital to Capital Planner.",
+      notes: "Partial reduction — proceeds pending settlement (not settled cash).",
+    },
+  },
+  "external-position-settle": {
+    type: "external-position-settle",
+    source: "ai-block",
+    proposal: {
+      positionId: "EXT-EXAMPLE-001",
+      reductionId: "EXTRED-EXAMPLE-001",
     },
   },
   "external-position-exit-plan-update": {

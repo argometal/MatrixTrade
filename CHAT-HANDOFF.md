@@ -41,13 +41,15 @@ Cierre Scout sin Trade: Apply **`plan-outcome`** (también Planning → Record O
 
 ---
 
-## Shipped — External Positions 26-13
+## Shipped — External Positions 26-13 / hardened 26-14
 
 Doc: `md/matrix/external-positions-26-13.md`  
 Test: `npm run test:external-positions`  
-SQL: `supabase/external-positions.sql` (run in Supabase before prod writes)
+SQL: `supabase/external-positions.sql` (run in Supabase before prod writes; includes 26-14 columns)
 
-Apply: `external-position-create` · `external-position-update` · `external-position-reduction` · `external-position-exit-plan-update`
+Apply: `external-position-create` · `external-position-update` · `external-position-reduction` · `external-position-settle` · `external-position-exit-plan-update`
+
+Hardening: idempotent reductions (`reductionId`/`executionReference`); pending→settled ledger (no double-count); `average_cost` only; valuation provenance; Capital Planner marks unconfigured fields (not silent zero).
 
 ---
 

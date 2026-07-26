@@ -1,7 +1,13 @@
 import Link from "next/link";
-import type { CapitalAccountSnapshot } from "@/lib/capital-account";
+import type {
+  CapitalAccountSnapshot,
+  CapitalField,
+} from "@/lib/capital-account";
 import type { ExternalPosition } from "@/lib/external-position-types";
-import { isOpenExternalPosition } from "@/lib/external-position-types";
+import {
+  isOpenExternalPosition,
+  isValuationStale,
+} from "@/lib/external-position-types";
 
 function money(n: number | undefined): string {
   if (n === undefined || !Number.isFinite(n)) return "—";
@@ -12,9 +18,24 @@ function money(n: number | undefined): string {
   });
 }
 
+function fieldDisplay(field: CapitalField): string {
+  if (field.status === "configured") return money(field.value);
+  return "Unconfigured";
+}
+
 function pct(n: number | undefined): string {
   if (n === undefined || !Number.isFinite(n)) return "—";
   return `${n.toFixed(1)}%`;
+}
+
+function valuationLabel(p: ExternalPosition): string {
+  if (p.currentPrice === undefined) return "No price";
+  const source = p.valuationSource ?? "unspecified";
+  const stale = isValuationStale(p.lastValuationAt);
+  if (source === "manual" && stale) return "Manual · stale";
+  if (source === "manual") return "Manual";
+  if (stale) return `${source} · stale`;
+  return source;
 }
 
 export function CapitalPlannerPanel({
@@ -42,12 +63,15 @@ export function CapitalPlannerPanel({
           Capital Planner
         </h1>
         <p className="max-w-2xl text-sm text-zinc-400">
-          Coordinates invested capital across Scout risk and External Positions.
-          External Positions are acquired outside MTA and are excluded from
-          experiment metrics.
+          Partial capital view. External Positions are connected; Scout
+          reservations, committed capital, invested Scout capital, and base
+          equity are not wired as complete authoritative sources.
         </p>
         <div className="flex flex-wrap gap-3 pt-1 text-sm">
-          <Link href="/planning" className="text-zinc-300 underline-offset-4 hover:underline">
+          <Link
+            href="/planning"
+            className="text-zinc-300 underline-offset-4 hover:underline"
+          >
             ← Scout desk
           </Link>
         </div>
@@ -55,31 +79,47 @@ export function CapitalPlannerPanel({
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-zinc-200">Capital Account</h2>
-        {!account.baseEquityConfigured && (
-          <p className="text-xs text-amber-200/80">
-            Base equity not configured — totals stay at zero except External
-            Position invested capital and released proceeds.
-          </p>
-        )}
+        <p className="text-xs text-amber-200/80">
+          Completeness: {account.completeness.replaceAll("_", " ")}. Unconfigured
+          fields are not known zeros.
+        </p>
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {[
-            ["Invested (external)", money(account.investedExternalCapital)],
-            ["External market value", money(account.externalMarketValue)],
-            ["Released proceeds", money(account.externalReleasedProceeds)],
-            ["Potential capital release", money(account.potentialExternalCapitalRelease)],
-            ["Settled cash", money(account.settledCash)],
-            ["Deployable capital", money(account.deployableCapital)],
-            ["Available capital", money(account.availableCapital)],
-            ["Reserved / committed", `${money(account.reservedCapital)} / ${money(account.committedCapital)}`],
-          ].map(([label, value]) => (
+          {(
+            [
+              ["Total capital", account.totalCapital],
+              ["Settled cash", account.settledCash],
+              ["Invested (external)", account.investedExternalCapital],
+              ["External market value", account.externalMarketValue],
+              ["Pending settlement", account.pendingSettlementProceeds],
+              ["Settled external credits", account.settledExternalProceeds],
+              ["Potential capital release", account.potentialExternalCapitalRelease],
+              ["Deployable capital", account.deployableCapital],
+              ["Available capital", account.availableCapital],
+              ["Reserved capital", account.reservedCapital],
+              ["Committed capital", account.committedCapital],
+              ["Invested Scout capital", account.investedScoutCapital],
+            ] as const
+          ).map(([label, field]) => (
             <div key={label} className="border-t border-zinc-800 pt-2">
               <dt className="text-[11px] uppercase tracking-wide text-zinc-500">
                 {label}
               </dt>
-              <dd className="mt-1 text-sm text-zinc-100">{value}</dd>
+              <dd className="mt-1 text-sm text-zinc-100">
+                {fieldDisplay(field)}
+              </dd>
+              {field.status === "unconfigured" ? (
+                <p className="mt-0.5 text-[10px] text-zinc-500">{field.reason}</p>
+              ) : null}
             </div>
           ))}
         </dl>
+        {account.notes.length > 0 && (
+          <ul className="space-y-1 text-xs text-zinc-500">
+            {account.notes.map((n) => (
+              <li key={n}>{n}</li>
+            ))}
+          </ul>
+        )}
         {account.monthlyRisk && (
           <p className="text-xs text-zinc-500">
             Monthly loss room (Scout risk, unchanged by External Positions):{" "}
@@ -96,6 +136,7 @@ export function CapitalPlannerPanel({
             </h2>
             <p className="text-xs text-zinc-500">
               Capital currently invested outside the Scout → Trade pipeline.
+              Cost basis method: average_cost (no tax-lot accuracy).
             </p>
           </div>
           <span className="rounded border border-zinc-700 px-2 py-0.5 text-[11px] text-zinc-300">
@@ -107,7 +148,6 @@ export function CapitalPlannerPanel({
           <p className="text-sm text-zinc-500">
             No External Positions yet. Create via Control → Apply →{" "}
             <code className="text-zinc-300">external-position-create</code>.
-            Invested external capital is {money(0)}.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -118,6 +158,7 @@ export function CapitalPlannerPanel({
                   <th className="py-2 pr-3 font-medium">Shares</th>
                   <th className="py-2 pr-3 font-medium">Avg cost</th>
                   <th className="py-2 pr-3 font-medium">Price</th>
+                  <th className="py-2 pr-3 font-medium">Valuation</th>
                   <th className="py-2 pr-3 font-medium">Market value</th>
                   <th className="py-2 pr-3 font-medium">Unrealized</th>
                   <th className="py-2 pr-3 font-medium">Liquidity</th>
@@ -148,6 +189,9 @@ export function CapitalPlannerPanel({
                     </td>
                     <td className="py-2.5 pr-3 text-zinc-300">
                       {money(p.currentPrice)}
+                    </td>
+                    <td className="py-2.5 pr-3 text-zinc-400">
+                      {valuationLabel(p)}
                     </td>
                     <td className="py-2.5 pr-3 text-zinc-300">
                       {money(p.currentMarketValue)}
@@ -199,8 +243,16 @@ export function CapitalPlannerPanel({
               <ul className="space-y-1 text-sm text-zinc-300">
                 <li>Shares: {focus.shares}</li>
                 <li>Average cost: {money(focus.averageCost)}</li>
+                <li>Cost basis method: {focus.costBasisMethod ?? "average_cost"}</li>
                 <li>Cost basis (invested): {money(focus.costBasis)}</li>
                 <li>Current price: {money(focus.currentPrice)}</li>
+                <li>Valuation: {valuationLabel(focus)}</li>
+                <li>
+                  Last valuation:{" "}
+                  {focus.lastValuationAt
+                    ? new Date(focus.lastValuationAt).toLocaleString()
+                    : "—"}
+                </li>
                 <li>Market value: {money(focus.currentMarketValue)}</li>
                 <li>
                   Unrealized P/L: {money(focus.unrealizedPnL)} (
@@ -218,13 +270,17 @@ export function CapitalPlannerPanel({
                 <li>Source: {focus.acquisitionSource}</li>
                 <li>Status: {focus.status}</li>
                 <li>
-                  Released proceeds: {money(focus.cumulativeReleasedProceeds)}
+                  Sale proceeds (informational):{" "}
+                  {money(focus.cumulativeSaleProceeds)}
                 </li>
                 <li>
                   Realized P/L (reductions):{" "}
                   {money(focus.cumulativeRealizedPnL)}
                 </li>
-                <li>Potential capital release: {money(focus.currentMarketValue ?? focus.costBasis)}</li>
+                <li>
+                  Potential capital release:{" "}
+                  {money(focus.currentMarketValue ?? focus.costBasis)}
+                </li>
               </ul>
             </div>
           </div>
@@ -259,7 +315,7 @@ export function CapitalPlannerPanel({
 
           <div className="space-y-2">
             <h3 className="text-xs uppercase tracking-wide text-zinc-500">
-              Reduction history
+              Reduction / settlement history
             </h3>
             {focus.reductions.length === 0 ? (
               <p className="text-sm text-zinc-500">No reductions yet.</p>
@@ -269,7 +325,11 @@ export function CapitalPlannerPanel({
                   <li key={r.id} className="border-t border-zinc-900 pt-2">
                     {r.sharesReduced} sh @ {money(r.executionPrice)} · proceeds{" "}
                     {money(r.proceeds)} · realized {money(r.realizedPnL)} ·{" "}
-                    {new Date(r.executedAt).toLocaleString()}
+                    {r.settlementStatus}
+                    {r.settledAt
+                      ? ` · settled ${new Date(r.settledAt).toLocaleString()}`
+                      : ""}{" "}
+                    · {new Date(r.executedAt).toLocaleString()}
                     {r.notes ? (
                       <div className="text-zinc-500">{r.notes}</div>
                     ) : null}

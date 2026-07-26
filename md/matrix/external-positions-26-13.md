@@ -1,6 +1,6 @@
-# External Positions (26-13)
+# External Positions (26-13 / hardened 26-14)
 
-**Status:** Implemented (domain + Capital Planner surface + Apply).  
+**Status:** Implemented + hardened (domain + Capital Planner surface + Apply).  
 **Canonical name:** External Position  
 **Surface:** Scouting Desk → Capital Planner (`/planning/capital`)
 
@@ -12,20 +12,46 @@
 - Selling / reducing does **not** create MAF attribution or a Trade record.
 - A later MTA purchase of the same ticker remains a separate Trade.
 
-## Capital Planner
+## Cost basis
 
-External Positions contribute to:
+- Declared `costBasisMethod`: **`average_cost` only**.
+- FIFO / specific-lot support is **not implemented**.
+- Do not imply tax-lot accuracy. Room for lots later without forcing them here.
+
+## Settlement lifecycle
+
+- Sale / reduction creates proceeds with `settlementStatus: pending_settlement`.
+- Cash credit requires `external-position-settle` → `settled`.
+- A fully sold position may be `closed` while proceeds remain pending settlement (`capitalTreatment: pending_release`).
+- After all reductions settle, closed positions move to `capitalTreatment: released`.
+- `cumulativeSaleProceeds` is informational only — **never** auto-added into `settledCash` on each snapshot.
+
+## Capital Planner (partial)
+
+Completeness: `partial_external_only`.
+
+Connected (known):
 
 - `investedExternalCapital` (open cost basis)
-- total invested capital views
-- potential future capital release (market value informational)
+- `externalMarketValue`
+- `pendingSettlementProceeds` / `settledExternalProceeds` (ledger, counted once)
 
-They do **not** contribute to:
+Unconfigured until wired (shown as unconfigured, **not** known zero):
 
-- monthly risk used / authorizedRiskAmount / Scout R
-- Playbook win/loss, MAF, missed Scout statistics
+- Scout reservations / reserved capital
+- committed capital
+- invested Scout capital
+- total capital / base equity (unless explicitly supplied)
+- deployable / available when prerequisites missing
 
-Market value is never available cash. Only realized proceeds from reduction/close increase `settledCash` / deployable capital.
+Pending settlement does **not** increase settled cash.
+
+## Valuation provenance
+
+- `valuationSource` + `lastValuationAt` stored explicitly.
+- Updating notes / `reviewAt` does **not** refresh `lastValuationAt`.
+- Only a newly supplied `currentPrice` refreshes valuation time.
+- UI indicates manual / stale valuation.
 
 ## Apply types
 
@@ -33,17 +59,18 @@ Control → Apply → Validate → Accept only:
 
 - `external-position-create`
 - `external-position-update`
-- `external-position-reduction`
-- `external-position-exit-plan-update`
+- `external-position-reduction` — requires `reductionId` or `executionReference` (idempotent)
+- `external-position-settle` — settlement credit (once)
+- `external-position-exit-plan-update` — `targetShares` ≤ remaining shares; closed ≠ active plan
 
 ## Ops
 
-1. Run `supabase/external-positions.sql` in Supabase SQL Editor (prod).
+1. Run `supabase/external-positions.sql` in Supabase SQL Editor (prod) — includes 26-14 columns.
 2. Local JSON: `data/external-positions.json`.
 3. Test: `npm run test:external-positions`.
 
 ## Neutral language
 
-Use: External Position · Acquired outside MTA · Excluded from experiment metrics · Capital currently invested · Potential capital release.
+Use: External Position · Acquired outside MTA · Excluded from experiment metrics · Capital currently invested · Potential capital release · Pending settlement.
 
 Do not use employment / compensation share labels.

@@ -96,7 +96,10 @@ export {
   EXTERNAL_POSITIONS_JSON_PATH,
   readExternalPositionsJsonFile,
 } from "./json";
-export { createMemoryExternalPositionsStore } from "./memory";
+export {
+  createMemoryExternalPositionsStore,
+  withExternalPositionLock,
+} from "./memory";
 export { createSupabaseExternalPositionsStore } from "./supabase";
 export {
   externalPositionRowToRecord,

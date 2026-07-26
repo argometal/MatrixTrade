@@ -1,6 +1,8 @@
 /**
  * External Position — capital held outside the MTA Scout→Trade pipeline.
- * Prompt 26-13. Never a Trade / Scout / Stock File; never experiment-eligible.
+ * 26-13 / hardened 26-14. Never a Trade / Scout / Stock File; never experiment-eligible.
+ *
+ * Cost basis: average_cost only. FIFO / specific-lot is NOT implemented.
  */
 
 export const EXTERNAL_POSITION_STATUSES = [
@@ -48,6 +50,23 @@ export const EXIT_PLAN_STATUSES = [
 ] as const;
 export type ExitPlanStatus = (typeof EXIT_PLAN_STATUSES)[number];
 
+/** Only average_cost is implemented. Room for lots later — not in this PR. */
+export const COST_BASIS_METHODS = ["average_cost"] as const;
+export type CostBasisMethod = (typeof COST_BASIS_METHODS)[number];
+
+export const VALUATION_SOURCES = [
+  "manual",
+  "import",
+  "unspecified",
+] as const;
+export type ValuationSource = (typeof VALUATION_SOURCES)[number];
+
+export const SETTLEMENT_STATUSES = [
+  "pending_settlement",
+  "settled",
+] as const;
+export type SettlementStatus = (typeof SETTLEMENT_STATUSES)[number];
+
 export type ExternalExitPlan = {
   positionId: string;
   targetPrice?: number;
@@ -62,7 +81,10 @@ export type ExternalExitPlan = {
 };
 
 export type ExternalPositionReduction = {
+  /** Stable idempotency key (reductionId or derived from executionReference). */
   id: string;
+  /** Optional alternate execution identity supplied by Apply. */
+  executionReference?: string;
   positionId: string;
   sharesReduced: number;
   executionPrice: number;
@@ -74,6 +96,9 @@ export type ExternalPositionReduction = {
   remainingShares: number;
   remainingCostBasis: number;
   remainingAverageCost: number;
+  /** Sale proceeds start pending; cash only after settle. */
+  settlementStatus: SettlementStatus;
+  settledAt?: string;
   notes?: string;
   createdAt: string;
 };
@@ -85,27 +110,31 @@ export type ExternalPosition = {
   acquisitionSource: ExternalAcquisitionSource;
   shares: number;
   averageCost: number;
-  /** Server-owned: shares × averageCost */
+  /** Declared method — average_cost only (no tax-lot accuracy). */
+  costBasisMethod: CostBasisMethod;
+  /** Server-owned: shares × averageCost under average_cost. */
   costBasis: number;
   currentPrice?: number;
-  /** Server-owned when currentPrice set */
   currentMarketValue?: number;
   unrealizedPnL?: number;
   unrealizedPnLPercent?: number;
+  valuationSource?: ValuationSource;
   capitalTreatment: ExternalCapitalTreatment;
   liquidityStatus: ExternalLiquidityStatus;
-  /** Always false — never contaminates experiment metrics. */
   experimentEligible: false;
-  /** Always false — not linked to Scout pipeline. */
   scoutLinked: false;
   openedAt: string;
+  /** Set only when a new currentPrice is supplied. */
   lastValuationAt?: string;
   reviewAt?: string;
   notes?: string;
   exitPlan?: ExternalExitPlan;
   reductions: ExternalPositionReduction[];
-  cumulativeReleasedProceeds: number;
+  /** Informational sum of sale proceeds (pending + settled). Never auto-added to cash. */
+  cumulativeSaleProceeds: number;
   cumulativeRealizedPnL: number;
+  /** Optimistic concurrency token. */
+  revision: number;
   createdAt: string;
   updatedAt: string;
 };
@@ -117,7 +146,6 @@ export type ExternalPositionValuation = {
   unrealizedPnLPercent: number | undefined;
 };
 
-/** Deterministic server valuation — never trust client-computed fields. */
 export function computeExternalPositionValuation(input: {
   shares: number;
   averageCost: number;
@@ -151,26 +179,42 @@ export function computeExternalPositionValuation(input: {
   };
 }
 
+/**
+ * Recompute derived valuation fields.
+ * Refresh lastValuationAt / valuationSource only when refreshValuationTime is true
+ * (i.e. a new currentPrice was supplied).
+ */
 export function applyValuationToPosition(
   position: ExternalPosition,
-  currentPrice?: number
+  opts?: {
+    currentPrice?: number;
+    refreshValuationTime?: boolean;
+    valuationSource?: ValuationSource;
+    observedAt?: string;
+  }
 ): ExternalPosition {
   const price =
-    currentPrice !== undefined ? currentPrice : position.currentPrice;
+    opts?.currentPrice !== undefined ? opts.currentPrice : position.currentPrice;
   const v = computeExternalPositionValuation({
     shares: position.shares,
     averageCost: position.averageCost,
     currentPrice: price,
   });
+  const refresh = opts?.refreshValuationTime === true;
   return {
     ...position,
+    costBasisMethod: position.costBasisMethod ?? "average_cost",
     currentPrice: price,
     costBasis: v.costBasis,
     currentMarketValue: v.currentMarketValue,
     unrealizedPnL: v.unrealizedPnL,
     unrealizedPnLPercent: v.unrealizedPnLPercent,
-    lastValuationAt:
-      price !== undefined ? new Date().toISOString() : position.lastValuationAt,
+    lastValuationAt: refresh
+      ? opts?.observedAt ?? new Date().toISOString()
+      : position.lastValuationAt,
+    valuationSource: refresh
+      ? opts?.valuationSource ?? "manual"
+      : position.valuationSource,
     experimentEligible: false,
     scoutLinked: false,
   };
@@ -208,8 +252,8 @@ export function computeExternalPositionReduction(input: {
       `sharesReduced ${sharesReduced} exceeds available shares ${shares}`
     );
   }
-  if (!(executionPrice >= 0) || !Number.isFinite(executionPrice)) {
-    throw new Error("executionPrice must be a non-negative number");
+  if (!(executionPrice > 0) || !Number.isFinite(executionPrice)) {
+    throw new Error("executionPrice must be a positive number");
   }
   if (!(fees >= 0) || !Number.isFinite(fees)) {
     throw new Error("fees must be a non-negative number");
@@ -237,4 +281,56 @@ export function computeExternalPositionReduction(input: {
 
 export function isOpenExternalPosition(p: ExternalPosition): boolean {
   return p.status === "open" || p.status === "partially_reduced";
+}
+
+export function sumPendingSettlementProceeds(
+  positions: ExternalPosition[]
+): number {
+  let sum = 0;
+  for (const p of positions) {
+    for (const r of p.reductions ?? []) {
+      if (r.settlementStatus === "pending_settlement") sum += r.proceeds;
+    }
+  }
+  return sum;
+}
+
+export function sumSettledProceeds(positions: ExternalPosition[]): number {
+  let sum = 0;
+  for (const p of positions) {
+    for (const r of p.reductions ?? []) {
+      if (r.settlementStatus === "settled") sum += r.proceeds;
+    }
+  }
+  return sum;
+}
+
+/** Compatible status ↔ capitalTreatment pairs. */
+export function assertCompatibleCapitalState(
+  status: ExternalPositionStatus,
+  treatment: ExternalCapitalTreatment
+): void {
+  if (status === "archived" && treatment === "invested") {
+    throw new Error(
+      "incompatible status/capitalTreatment: archived cannot be invested"
+    );
+  }
+  if (
+    (status === "open" || status === "partially_reduced") &&
+    treatment === "released"
+  ) {
+    throw new Error(
+      "incompatible status/capitalTreatment: open/partially_reduced cannot be released"
+    );
+  }
+}
+
+export function isValuationStale(
+  lastValuationAt: string | undefined,
+  maxAgeMs = 7 * 24 * 60 * 60 * 1000
+): boolean {
+  if (!lastValuationAt) return true;
+  const t = Date.parse(lastValuationAt);
+  if (!Number.isFinite(t)) return true;
+  return Date.now() - t > maxAgeMs;
 }

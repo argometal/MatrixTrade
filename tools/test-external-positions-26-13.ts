@@ -1,15 +1,17 @@
 /**
- * Prompt 26-13 — External Positions + Capital Planner
+ * Prompt 26-13 / harden 26-14 — External Positions + Capital Planner
  * Run: npm run test:external-positions
  */
 import assert from "node:assert/strict";
 import {
   buildCapitalAccountSnapshot,
+  capitalFieldValue,
   externalPositionsAffectMonthlyRisk,
 } from "../lib/capital-account";
 import {
   createExternalPosition,
   reduceExternalPosition,
+  settleExternalPositionProceeds,
   updateExternalPosition,
   upsertExternalExitPlan,
 } from "../lib/external-position";
@@ -48,6 +50,9 @@ async function main() {
     assert.equal(p.scoutLinked, false);
     assert.equal(p.capitalTreatment, "invested");
     assert.equal(p.costBasis, 4000);
+    assert.equal(p.costBasisMethod, "average_cost");
+    assert.equal(p.valuationSource, "manual");
+    assert.ok(p.lastValuationAt);
     assert.ok(p.id.startsWith("EXT-ACME-"));
   }
 
@@ -61,7 +66,7 @@ async function main() {
     assert.equal(v.costBasis, 5400);
     assert.equal(v.currentMarketValue, 7200);
     assert.equal(v.unrealizedPnL, 1800);
-    assert.equal(v.unrealizedPnLPercent, 1800 / 5400 * 100);
+    assert.equal(v.unrealizedPnLPercent, (1800 / 5400) * 100);
   }
 
   // 3 — exclusion from monthly risk / experiment flags
@@ -85,9 +90,8 @@ async function main() {
       monthlyRisk: monthly,
       totalCapital: 10_000,
     });
-    // Monthly room unchanged by external invested capital
     assert.equal(account.monthlyRisk?.monthlyLossRoom, monthly.monthlyLossRoom);
-    assert.equal(account.investedExternalCapital, 500);
+    assert.equal(capitalFieldValue(account.investedExternalCapital), 500);
   }
 
   // 4 — inclusion in investedExternalCapital
@@ -109,11 +113,17 @@ async function main() {
     const snap = buildCapitalAccountSnapshot({
       externalPositions: await getExternalPositions(),
     });
-    assert.equal(snap.investedExternalCapital, 1000 + 1000);
+    assert.equal(capitalFieldValue(snap.investedExternalCapital), 1000 + 1000);
     assert.equal(snap.openExternalPositionCount, 2);
+    // Global fields unconfigured — not known zero
+    assert.equal(snap.totalCapital.status, "unconfigured");
+    assert.equal(snap.settledCash.status, "unconfigured");
+    assert.equal(snap.reservedCapital.status, "unconfigured");
+    assert.equal(snap.committedCapital.status, "unconfigured");
+    assert.equal(snap.investedScoutCapital.status, "unconfigured");
   }
 
-  // 5 / 6 / 7 / 8 — partial reduction, full close, realized P/L, capital release
+  // 5 / 6 — partial reduction + full close with pending settlement (not cash)
   {
     reset();
     const created = await createExternalPosition({
@@ -124,6 +134,7 @@ async function main() {
     });
     const partial = await reduceExternalPosition({
       positionId: created.id,
+      reductionId: "CUT-RED-001",
       sharesReduced: 40,
       executionPrice: 35,
       fees: 2,
@@ -131,45 +142,233 @@ async function main() {
     assert.equal(partial.position.status, "partially_reduced");
     assert.equal(partial.position.shares, 60);
     assert.equal(partial.reduction.proceeds, 40 * 35 - 2);
-    assert.equal(partial.reduction.costBasisRemoved, 40 * 20);
+    assert.equal(partial.reduction.settlementStatus, "pending_settlement");
     assert.equal(
-      partial.reduction.realizedPnL,
-      partial.reduction.proceeds - partial.reduction.costBasisRemoved
-    );
-    assert.equal(
-      partial.position.cumulativeReleasedProceeds,
+      partial.position.cumulativeSaleProceeds,
       partial.reduction.proceeds
     );
 
     const closed = await reduceExternalPosition({
       positionId: created.id,
+      reductionId: "CUT-RED-002",
       sharesReduced: 60,
       executionPrice: 32,
     });
     assert.equal(closed.position.status, "closed");
     assert.equal(closed.position.shares, 0);
-    assert.equal(closed.position.capitalTreatment, "released");
+    assert.equal(closed.position.capitalTreatment, "pending_release");
 
     const { getExternalPositions } = await import(
       "../lib/external-position-store"
     );
     const afterClose = buildCapitalAccountSnapshot({
       externalPositions: await getExternalPositions(),
-      totalCapital: 0,
       settledCashBase: 0,
     });
-    assert.equal(afterClose.investedExternalCapital, 0);
+    assert.equal(capitalFieldValue(afterClose.investedExternalCapital), 0);
     assert.equal(
-      afterClose.externalReleasedProceeds,
-      closed.position.cumulativeReleasedProceeds
+      capitalFieldValue(afterClose.pendingSettlementProceeds),
+      closed.position.cumulativeSaleProceeds
     );
-    assert.equal(
-      afterClose.settledCash,
-      closed.position.cumulativeReleasedProceeds
-    );
+    // Pending settlement must NOT increase settled cash
+    assert.equal(capitalFieldValue(afterClose.settledCash), 0);
+    assert.equal(capitalFieldValue(afterClose.settledExternalProceeds), 0);
   }
 
-  // 9 — exit plan create/update
+  // 7 — settlement increases settled cash exactly once; no double-count across snapshots
+  {
+    reset();
+    const created = await createExternalPosition({
+      ticker: "SETL",
+      shares: 10,
+      averageCost: 10,
+    });
+    const { reduction } = await reduceExternalPosition({
+      positionId: created.id,
+      reductionId: "SETL-1",
+      sharesReduced: 10,
+      executionPrice: 12,
+    });
+    const { getExternalPositions } = await import(
+      "../lib/external-position-store"
+    );
+    const pendingSnap = buildCapitalAccountSnapshot({
+      externalPositions: await getExternalPositions(),
+      settledCashBase: 100,
+    });
+    assert.equal(capitalFieldValue(pendingSnap.settledCash), 100);
+    assert.equal(
+      capitalFieldValue(pendingSnap.pendingSettlementProceeds),
+      reduction.proceeds
+    );
+
+    await settleExternalPositionProceeds({
+      positionId: created.id,
+      reductionId: "SETL-1",
+    });
+    const settled1 = buildCapitalAccountSnapshot({
+      externalPositions: await getExternalPositions(),
+      settledCashBase: 100,
+    });
+    const settled2 = buildCapitalAccountSnapshot({
+      externalPositions: await getExternalPositions(),
+      settledCashBase: 100,
+    });
+    assert.equal(
+      capitalFieldValue(settled1.settledCash),
+      100 + reduction.proceeds
+    );
+    assert.equal(
+      capitalFieldValue(settled2.settledCash),
+      capitalFieldValue(settled1.settledCash)
+    );
+    assert.equal(capitalFieldValue(settled1.pendingSettlementProceeds), 0);
+    assert.equal(
+      capitalFieldValue(settled1.settledExternalProceeds),
+      reduction.proceeds
+    );
+
+    // Re-settle is idempotent for cash (ledger already settled)
+    await settleExternalPositionProceeds({
+      positionId: created.id,
+      reductionId: "SETL-1",
+    });
+    const settled3 = buildCapitalAccountSnapshot({
+      externalPositions: await getExternalPositions(),
+      settledCashBase: 100,
+    });
+    assert.equal(
+      capitalFieldValue(settled3.settledCash),
+      100 + reduction.proceeds
+    );
+
+    const pos = (await getExternalPositions())[0];
+    assert.equal(pos.capitalTreatment, "released");
+  }
+
+  // 8 — repeated reduction Apply is idempotent
+  {
+    reset();
+    const created = await createExternalPosition({
+      ticker: "IDEM",
+      shares: 100,
+      averageCost: 10,
+    });
+    const first = await reduceExternalPosition({
+      positionId: created.id,
+      reductionId: "IDEM-R1",
+      sharesReduced: 25,
+      executionPrice: 12,
+      fees: 1,
+    });
+    const second = await reduceExternalPosition({
+      positionId: created.id,
+      reductionId: "IDEM-R1",
+      sharesReduced: 25,
+      executionPrice: 12,
+      fees: 1,
+    });
+    assert.equal(second.idempotentReplay, true);
+    assert.equal(second.position.shares, 75);
+    assert.equal(second.position.reductions.length, 1);
+    assert.equal(second.reduction.id, first.reduction.id);
+  }
+
+  // 9 — conflicting duplicate reduction reference is rejected
+  {
+    reset();
+    const created = await createExternalPosition({
+      ticker: "CONF",
+      shares: 100,
+      averageCost: 10,
+    });
+    await reduceExternalPosition({
+      positionId: created.id,
+      executionReference: "BROKER-99",
+      sharesReduced: 10,
+      executionPrice: 11,
+    });
+    await assert.rejects(
+      () =>
+        reduceExternalPosition({
+          positionId: created.id,
+          executionReference: "BROKER-99",
+          sharesReduced: 20,
+          executionPrice: 11,
+        }),
+      /conflicting payload/
+    );
+    const { getExternalPositionById } = await import(
+      "../lib/external-position-store"
+    );
+    const pos = await getExternalPositionById(created.id);
+    assert.equal(pos?.shares, 90);
+    assert.equal(pos?.reductions.length, 1);
+  }
+
+  // 10 — concurrent reductions cannot oversell
+  {
+    reset();
+    const created = await createExternalPosition({
+      ticker: "RACE",
+      shares: 100,
+      averageCost: 10,
+    });
+    const results = await Promise.allSettled([
+      reduceExternalPosition({
+        positionId: created.id,
+        reductionId: "RACE-A",
+        sharesReduced: 100,
+        executionPrice: 11,
+      }),
+      reduceExternalPosition({
+        positionId: created.id,
+        reductionId: "RACE-B",
+        sharesReduced: 100,
+        executionPrice: 11,
+      }),
+    ]);
+    const fulfilled = results.filter((r) => r.status === "fulfilled");
+    const rejected = results.filter((r) => r.status === "rejected");
+    assert.equal(fulfilled.length, 1);
+    assert.equal(rejected.length, 1);
+    const { getExternalPositionById } = await import(
+      "../lib/external-position-store"
+    );
+    const pos = await getExternalPositionById(created.id);
+    assert.equal(pos?.shares, 0);
+    assert.equal(pos?.status, "closed");
+    assert.equal(pos?.reductions.length, 1);
+  }
+
+  // 11 — note-only update does not refresh valuation timestamp
+  {
+    reset();
+    const created = await createExternalPosition({
+      ticker: "NOTE",
+      shares: 10,
+      averageCost: 5,
+      currentPrice: 6,
+    });
+    const valuationAt = created.lastValuationAt;
+    assert.ok(valuationAt);
+    await new Promise((r) => setTimeout(r, 5));
+    const updated = await updateExternalPosition({
+      id: created.id,
+      notes: "review later",
+      reviewAt: "2026-08-01T00:00:00.000Z",
+    });
+    assert.equal(updated.lastValuationAt, valuationAt);
+    assert.equal(updated.notes, "review later");
+    const priced = await updateExternalPosition({
+      id: created.id,
+      currentPrice: 7,
+    });
+    assert.notEqual(priced.lastValuationAt, valuationAt);
+    assert.equal(priced.currentPrice, 7);
+  }
+
+  // 12 — exit plan create/update + targetShares > remaining rejected
   {
     reset();
     const p = await createExternalPosition({
@@ -187,18 +386,34 @@ async function main() {
       notes: "No automatic claim that a stop order exists.",
     });
     assert.equal(withPlan.exitPlan?.status, "active");
-    assert.equal(withPlan.exitPlan?.targetPrice, 60);
-    const updated = await upsertExternalExitPlan({
+    await assert.rejects(
+      () =>
+        upsertExternalExitPlan({
+          positionId: p.id,
+          targetShares: 121,
+        }),
+      /exceeds current position shares/
+    );
+
+    // Close then reject active exit plan
+    await reduceExternalPosition({
       positionId: p.id,
-      status: "draft",
-      targetShares: 60,
+      reductionId: "EXIT-CLOSE",
+      sharesReduced: 120,
+      executionPrice: 55,
     });
-    assert.equal(updated.exitPlan?.status, "draft");
-    assert.equal(updated.exitPlan?.targetShares, 60);
-    assert.equal(updated.exitPlan?.targetPrice, 60);
+    await assert.rejects(
+      () =>
+        upsertExternalExitPlan({
+          positionId: p.id,
+          status: "active",
+          targetShares: 1,
+        }),
+      /cannot receive an active exit plan/
+    );
   }
 
-  // 10 — same ticker can coexist with Stock File / Scout / Trade identities
+  // 13 — same ticker can coexist with Stock File / Scout / Trade identities
   {
     reset();
     const ext = await createExternalPosition({
@@ -206,7 +421,6 @@ async function main() {
       shares: 10,
       averageCost: 1,
     });
-    // Synthetic parallel identities — not merged
     const stockFileId = "ST-SAME-001";
     const scoutId = "PLAN-SAME-001";
     const tradeId = "TRD-SAME-001";
@@ -217,7 +431,7 @@ async function main() {
     assert.equal(ext.experimentEligible, false);
   }
 
-  // 11 — invalid reduction > shares
+  // 14 — invalid reduction > shares
   {
     reset();
     const p = await createExternalPosition({
@@ -229,6 +443,7 @@ async function main() {
       () =>
         reduceExternalPosition({
           positionId: p.id,
+          reductionId: "OVERR-1",
           sharesReduced: 11,
           executionPrice: 6,
         }),
@@ -246,7 +461,7 @@ async function main() {
     );
   }
 
-  // 12 — unknown liquidity
+  // 15 — unknown liquidity + price must be positive
   {
     reset();
     const p = await createExternalPosition({
@@ -260,11 +475,14 @@ async function main() {
       id: p.id,
       currentPrice: 2,
     });
-    assert.equal(updated.liquidityStatus, "unknown");
     assert.equal(updated.currentMarketValue, 2);
+    await assert.rejects(
+      () => updateExternalPosition({ id: p.id, currentPrice: 0 }),
+      /positive number/
+    );
   }
 
-  // 13 — no external positions preserves prior Capital Planner behavior (zeros)
+  // 16 — configured empty planner with wired base; unconfigured when incomplete
   {
     reset();
     const empty = buildCapitalAccountSnapshot({
@@ -275,12 +493,18 @@ async function main() {
       investedScoutCapital: 0,
       liquidityBuffer: 0,
     });
-    assert.equal(empty.investedExternalCapital, 0);
-    assert.equal(empty.externalMarketValue, 0);
-    assert.equal(empty.externalReleasedProceeds, 0);
+    assert.equal(capitalFieldValue(empty.investedExternalCapital), 0);
+    assert.equal(capitalFieldValue(empty.externalMarketValue), 0);
+    assert.equal(capitalFieldValue(empty.settledExternalProceeds), 0);
     assert.equal(empty.openExternalPositionCount, 0);
-    assert.equal(empty.availableCapital, 50_000);
-    assert.equal(empty.settledCash, 50_000);
+    assert.equal(capitalFieldValue(empty.availableCapital), 50_000);
+    assert.equal(capitalFieldValue(empty.settledCash), 50_000);
+
+    const partial = buildCapitalAccountSnapshot({ externalPositions: [] });
+    assert.equal(partial.completeness, "partial_external_only");
+    assert.equal(partial.totalCapital.status, "unconfigured");
+    assert.equal(partial.settledCash.status, "unconfigured");
+    assert.equal(capitalFieldValue(partial.settledCash), undefined);
   }
 
   // Apply validate + accept path (memory store)
@@ -317,10 +541,25 @@ async function main() {
       executionPrice: 1,
     });
     assert.equal(badRed.ok, false);
+
+    const needId = validateExternalPositionReductionProposal({
+      positionId: "EXT-X-001",
+      sharesReduced: 1,
+      executionPrice: 1,
+    });
+    assert.equal(needId.ok, false);
+
+    const zeroPrice = validateExternalPositionCreateProposal({
+      ticker: "Z",
+      shares: 1,
+      averageCost: 1,
+      currentPrice: 0,
+    });
+    assert.equal(zeroPrice.ok, false);
   }
 
   __setExternalPositionStoreForTests(null);
-  console.log("test-external-positions-26-13: ok");
+  console.log("test-external-positions-26-13: ok (26-14 hardened)");
 }
 
 main().catch((err) => {
