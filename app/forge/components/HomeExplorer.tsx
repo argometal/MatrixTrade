@@ -1,15 +1,14 @@
 "use client";
 
 /**
- * CHANGE 24-1E — Home primary knowledge Explorer.
- * Traditional navigation + AF semantics (Realm → Chaos Deck → Fragment → Block).
+ * CHANGE 24-1E / 24-23 — Home primary knowledge Explorer.
+ * Visual hierarchy refinement: search + contents first; metrics secondary.
  */
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  alexandriaStatusLabel,
   compactHomeSummary,
   deckBuilderSignals,
   explorerBreadcrumb,
@@ -21,6 +20,8 @@ import {
   parseExplorerSort,
   parseExplorerStatus,
   realmChaosDeckCount,
+  realmFragmentCount,
+  recentlyOpenedDecks,
   searchExplorer,
   type ExplorerSortKey,
   type ExplorerStatusFilter,
@@ -35,7 +36,6 @@ import {
   emptyOrSeedRepo,
   formatRelativeAgo,
   getFolder,
-  homeOverview,
   levelSnapshot,
   moveDeckToFolder,
   recordRealmOpen,
@@ -70,20 +70,38 @@ function StatusBadge({ status }: { status: "active" | "archive" }) {
   );
 }
 
-function TypeIcon({ type }: { type: "realm" | "deck" }) {
+function TypeIcon({ type }: { type: "realm" | "deck" | "fragment" }) {
   return (
     <span
       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
         type === "realm"
           ? "bg-emerald-500/15 text-emerald-300"
-          : "bg-zinc-800 text-zinc-200"
+          : type === "fragment"
+            ? "bg-sky-500/15 text-sky-300"
+            : "bg-zinc-800 text-zinc-200"
       }`}
       aria-hidden
     >
-      {type === "realm" ? "R" : "D"}
+      {type === "realm" ? "R" : type === "fragment" ? "F" : "D"}
     </span>
   );
 }
+
+const STATUS_CHIPS: { id: ExplorerStatusFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  { id: "active", label: "Active" },
+  { id: "archive", label: "Archive" },
+  { id: "empty", label: "Empty" },
+];
+
+const SORT_LABELS: Record<ExplorerSortKey, string> = {
+  updated: "Recent",
+  opened: "Opened",
+  stale: "Needs review",
+  name: "Name",
+  fragments: "Fragments",
+  status: "Status",
+};
 
 export function HomeExplorer() {
   const router = useRouter();
@@ -92,12 +110,16 @@ export function HomeExplorer() {
   const [menuId, setMenuId] = useState<string | null>(null);
   const [moveDeckId, setMoveDeckId] = useState<string | null>(null);
   const [overviewOpen, setOverviewOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [queryDraft, setQueryDraft] = useState("");
+  const createRef = useRef<HTMLDivElement>(null);
+  const searchTimer = useRef<number | null>(null);
 
   const realmId = searchParams.get("realm");
   const status = parseExplorerStatus(searchParams.get("status"));
   const sort = parseExplorerSort(searchParams.get("sort"));
   const q = searchParams.get("q") ?? "";
+  const showStatusBadges = status === "all" || status === "empty";
 
   useEffect(() => {
     setState(emptyOrSeedRepo());
@@ -107,11 +129,19 @@ export function HomeExplorer() {
     setQueryDraft(q);
   }, [q]);
 
-  /** Keep Realm lastOpenedAt current when drilling in Explorer (Needs review sort). */
   useEffect(() => {
     if (!realmId) return;
     setState((prev) => recordRealmOpen(prev ?? emptyOrSeedRepo(), realmId));
   }, [realmId]);
+
+  useEffect(() => {
+    if (!createOpen) return;
+    function onDoc(e: MouseEvent) {
+      if (!createRef.current?.contains(e.target as Node)) setCreateOpen(false);
+    }
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [createOpen]);
 
   function pushParams(patch: {
     realmId?: string | null;
@@ -127,6 +157,14 @@ export function HomeExplorer() {
         q: patch.q !== undefined ? patch.q : q,
       })
     );
+  }
+
+  function scheduleSearch(next: string) {
+    setQueryDraft(next);
+    if (searchTimer.current) window.clearTimeout(searchTimer.current);
+    searchTimer.current = window.setTimeout(() => {
+      pushParams({ q: next });
+    }, 280);
   }
 
   const currentRealm = state && realmId ? getFolder(state, realmId) : undefined;
@@ -151,14 +189,13 @@ export function HomeExplorer() {
   );
 
   const summary = state ? compactHomeSummary(state) : null;
-  const overview = state ? homeOverview(state) : null;
+  const recentOpened = state ? recentlyOpenedDecks(state, 3) : [];
   const snapshot = state
-    ? levelSnapshot(
-        state,
-        status === "archive" ? "archive" : "active",
-        realmId
-      )
+    ? levelSnapshot(state, status === "archive" ? "archive" : "active", realmId)
     : null;
+
+  const repoEmpty = Boolean(state && state.folders.length === 0 && state.decks.length === 0);
+  const listEmpty = !q.trim() && realms.length === 0 && decks.length === 0;
 
   function createRealm() {
     if (!state) return;
@@ -171,6 +208,7 @@ export function HomeExplorer() {
       view,
     });
     setState(next);
+    setCreateOpen(false);
   }
 
   function createChaosDeck() {
@@ -185,6 +223,7 @@ export function HomeExplorer() {
       view,
     });
     setState(next);
+    setCreateOpen(false);
     window.location.href = `/forge/deck/${deck.id}`;
   }
 
@@ -209,16 +248,16 @@ export function HomeExplorer() {
   }
 
   return (
-    <div className="space-y-4 pb-4">
-      <Af03RepoDisclosure />
+    <div className="space-y-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+      <Af03RepoDisclosure compact />
 
-      {/* 1. Header */}
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      {/* Header */}
+      <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-500/90">
             Home · Explorer
           </p>
-          <h2 className="text-xl font-semibold tracking-tight text-zinc-50">
+          <h2 className="truncate text-xl font-semibold tracking-tight text-zinc-50">
             {currentRealm ? currentRealm.title : "Knowledge Explorer"}
           </h2>
           <p className="mt-0.5 text-xs text-zinc-500">
@@ -226,73 +265,103 @@ export function HomeExplorer() {
             {summary.blocks} Blocks
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="relative shrink-0" ref={createRef}>
           <button
             type="button"
-            className="min-h-11 rounded-lg border border-zinc-700 px-3 text-sm font-medium text-zinc-100"
-            onClick={createRealm}
+            aria-label="Create"
+            aria-expanded={createOpen}
+            onClick={() => setCreateOpen((o) => !o)}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-zinc-100 text-xl font-light text-zinc-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
-            New Realm
+            +
           </button>
-          <button
-            type="button"
-            className="min-h-11 rounded-lg border border-emerald-800/60 bg-emerald-950/40 px-3 text-sm font-medium text-emerald-100"
-            onClick={createChaosDeck}
-          >
-            New Chaos Deck
-          </button>
+          {createOpen ? (
+            <div
+              role="menu"
+              className="absolute right-0 z-30 mt-1 w-44 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-900 py-1 shadow-xl"
+            >
+              <button
+                type="button"
+                role="menuitem"
+                className="block w-full px-3 py-2.5 text-left text-sm text-zinc-100 hover:bg-zinc-800"
+                onClick={createRealm}
+              >
+                New Realm
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="block w-full px-3 py-2.5 text-left text-sm text-zinc-100 hover:bg-zinc-800"
+                onClick={createChaosDeck}
+              >
+                New Chaos Deck
+              </button>
+            </div>
+          ) : null}
         </div>
       </header>
 
-      {/* 2. Search */}
+      {/* Search */}
       <form
-        className="flex gap-2"
+        className="relative"
         onSubmit={(e) => {
           e.preventDefault();
+          if (searchTimer.current) window.clearTimeout(searchTimer.current);
           pushParams({ q: queryDraft });
         }}
       >
         <label htmlFor="home-explorer-search" className="sr-only">
           Search Realms, Decks, Fragments
         </label>
+        <span
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
+          aria-hidden
+        >
+          ⌕
+        </span>
         <input
           id="home-explorer-search"
           type="search"
           value={queryDraft}
-          onChange={(e) => setQueryDraft(e.target.value)}
+          onChange={(e) => scheduleSearch(e.target.value)}
           placeholder="Search Realms, Decks, Fragments…"
-          className="min-h-11 w-full rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+          className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-9 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
         />
-        <button
-          type="submit"
-          className="min-h-11 shrink-0 rounded-lg border border-zinc-700 px-3 text-sm font-medium text-zinc-100"
-        >
-          Search
-        </button>
       </form>
 
-      {/* 3. Status + sort */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-        <label className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/60 px-2 text-xs text-zinc-400">
-          Status
+      {/* Filters + sort */}
+      <div className="flex items-center gap-2">
+        <div
+          className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="group"
+          aria-label="Status filter"
+        >
+          {STATUS_CHIPS.map((chip) => {
+            const active = status === chip.id;
+            return (
+              <button
+                key={chip.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => pushParams({ status: chip.id })}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 ${
+                  active
+                    ? "bg-emerald-600 text-white"
+                    : "bg-zinc-900 text-zinc-400 ring-1 ring-zinc-800 hover:text-zinc-200"
+                }`}
+              >
+                {chip.label}
+              </button>
+            );
+          })}
+        </div>
+        <label className="flex shrink-0 items-center gap-1 rounded-full bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-400 ring-1 ring-zinc-800">
+          <span className="sr-only">Sort</span>
           <select
-            className="min-h-9 flex-1 rounded-md border-0 bg-transparent text-sm text-zinc-100 focus:outline-none"
-            value={status}
-            onChange={(e) =>
-              pushParams({ status: e.target.value as ExplorerStatusFilter })
-            }
-          >
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="archive">Archive</option>
-          </select>
-        </label>
-        <label className="flex min-h-11 flex-1 items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-950/60 px-2 text-xs text-zinc-400">
-          Sort
-          <select
-            className="min-h-9 flex-1 rounded-md border-0 bg-transparent text-sm text-zinc-100 focus:outline-none"
             value={sort}
             onChange={(e) => pushParams({ sort: e.target.value as ExplorerSortKey })}
+            className="max-w-[7.5rem] bg-transparent font-semibold text-zinc-200 focus:outline-none"
+            aria-label="Sort"
           >
             <option value="updated">Recently updated</option>
             <option value="opened">Recently opened</option>
@@ -301,11 +370,30 @@ export function HomeExplorer() {
             <option value="fragments">Fragment count</option>
             <option value="status">Status</option>
           </select>
+          <span aria-hidden className="text-zinc-600">
+            ▾
+          </span>
         </label>
       </div>
 
-      {/* 4. Breadcrumbs */}
-      <nav aria-label="Realm path" className="flex flex-wrap items-center gap-1 text-xs text-zinc-500">
+      {/* Breadcrumbs */}
+      <nav
+        aria-label="Realm path"
+        className="flex flex-wrap items-center gap-1 text-xs text-zinc-500"
+      >
+        {realmId ? (
+          <button
+            type="button"
+            aria-label="Back"
+            className="mr-1 min-h-8 rounded-md px-1.5 text-emerald-300/90 hover:bg-zinc-900"
+            onClick={() => {
+              const parent = crumbs.length >= 2 ? crumbs[crumbs.length - 2]! : null;
+              pushParams({ realmId: parent?.id ?? null });
+            }}
+          >
+            ←
+          </button>
+        ) : null}
         {crumbs.map((c, i) => (
           <span key={`${c.id ?? "home"}-${i}`} className="inline-flex items-center gap-1">
             {i > 0 ? <span aria-hidden>/</span> : null}
@@ -314,7 +402,7 @@ export function HomeExplorer() {
             ) : (
               <button
                 type="button"
-                className="min-h-9 text-emerald-300/90 underline-offset-2 hover:underline"
+                className="min-h-8 text-emerald-300/90 underline-offset-2 hover:underline"
                 onClick={() => pushParams({ realmId: c.id })}
               >
                 {c.title}
@@ -322,19 +410,26 @@ export function HomeExplorer() {
             )}
           </span>
         ))}
-        {!realmId ? (
-          <span className="ml-1 text-zinc-600">· Unassigned decks at root</span>
-        ) : null}
+        {!realmId ? <span className="text-zinc-600">· Unassigned Decks</span> : null}
       </nav>
 
-      {/* 5. Explorer / search results */}
+      {/* Contents / search */}
       {q.trim() ? (
         <section aria-labelledby="search-results-heading" className="space-y-2">
-          <h3 id="search-results-heading" className="text-sm font-semibold text-zinc-200">
-            Search results ({searchHits.length})
+          <h3 id="search-results-heading" className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            Search results · {searchHits.length}
           </h3>
           {searchHits.length === 0 ? (
-            <p className="py-6 text-center text-sm text-zinc-600">No matches.</p>
+            <EmptyPanel
+              title="No matching Realms or Chaos Decks"
+              primaryLabel="Clear search"
+              onPrimary={() => {
+                setQueryDraft("");
+                pushParams({ q: "" });
+              }}
+              secondaryLabel="Reset filters"
+              onSecondary={() => pushParams({ status: "all", sort: "updated", q: "" })}
+            />
           ) : (
             <ul className="divide-y divide-zinc-800 overflow-hidden rounded-xl border border-zinc-800">
               {searchHits.map((hit) => (
@@ -343,14 +438,19 @@ export function HomeExplorer() {
                     href={hit.href}
                     className="flex min-h-14 items-center gap-3 px-3 py-2.5 hover:bg-zinc-900/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500/40"
                   >
-                    <TypeIcon type={hit.objectType === "realm" ? "realm" : "deck"} />
+                    <TypeIcon
+                      type={
+                        hit.objectType === "realm"
+                          ? "realm"
+                          : hit.objectType === "fragment"
+                            ? "fragment"
+                            : "deck"
+                      }
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="truncate font-medium text-zinc-100">{hit.title}</p>
-                        <span className="text-[10px] uppercase text-zinc-500">
-                          {hit.objectType.replace("_", " ")}
-                        </span>
-                        <StatusBadge status={hit.status} />
+                        {showStatusBadges ? <StatusBadge status={hit.status} /> : null}
                       </div>
                       <p className="truncate text-xs text-zinc-500">
                         {hit.parentRealmTitle} · {formatRelativeAgo(hit.updatedAt)}
@@ -364,13 +464,33 @@ export function HomeExplorer() {
         </section>
       ) : (
         <section aria-labelledby="explorer-contents-heading" className="space-y-2">
-          <h3 id="explorer-contents-heading" className="text-sm font-semibold text-zinc-200">
-            Contents
+          <h3
+            id="explorer-contents-heading"
+            className="text-xs font-semibold uppercase tracking-wide text-zinc-500"
+          >
+            {realmId ? "Contents" : "Home · Root"}
           </h3>
-          {realms.length === 0 && decks.length === 0 ? (
-            <p className="py-6 text-center text-sm text-zinc-600">
-              Nothing here yet. Create a Realm or Chaos Deck.
-            </p>
+          {listEmpty ? (
+            repoEmpty ? (
+              <EmptyPanel
+                title="Your Explorer is empty"
+                primaryLabel="+ New Realm"
+                onPrimary={createRealm}
+                secondaryLabel="+ New Chaos Deck"
+                onSecondary={createChaosDeck}
+              />
+            ) : (
+              <EmptyPanel
+                title="No matching Realms or Chaos Decks"
+                primaryLabel="Clear search"
+                onPrimary={() => {
+                  setQueryDraft("");
+                  pushParams({ q: "" });
+                }}
+                secondaryLabel="Reset filters"
+                onSecondary={() => pushParams({ status: "all", sort: "updated" })}
+              />
+            )
           ) : (
             <ul className="divide-y divide-zinc-800 overflow-hidden rounded-xl border border-zinc-800">
               {realms.map((folder) => (
@@ -378,6 +498,8 @@ export function HomeExplorer() {
                   key={folder.id}
                   folder={folder}
                   chaosDeckCount={realmChaosDeckCount(state, folder.id)}
+                  fragmentCount={realmFragmentCount(state, folder.id)}
+                  showBadge={showStatusBadges}
                   menuOpen={menuId === folder.id}
                   onMenuOpenChange={(open) => setMenuId(open ? folder.id : null)}
                   onOpen={() => pushParams({ realmId: folder.id })}
@@ -430,6 +552,7 @@ export function HomeExplorer() {
                   key={deck.id}
                   state={state}
                   deck={deck}
+                  showBadge={showStatusBadges}
                   menuOpen={menuId === deck.id}
                   onMenuOpenChange={(open) => setMenuId(open ? deck.id : null)}
                   onRename={() => {
@@ -465,22 +588,35 @@ export function HomeExplorer() {
         </section>
       )}
 
-      {/* 6. Optional recent */}
-      {!q.trim() && overview && overview.recentDecks.length > 0 ? (
-        <section aria-labelledby="recent-heading" className="space-y-2">
-          <h3 id="recent-heading" className="text-sm font-semibold text-zinc-200">
-            Recent Chaos Decks
-          </h3>
-          <ul className="flex flex-col gap-1">
-            {overview.recentDecks.slice(0, 5).map((d) => (
+      {/* Recently opened — compact, not a duplicate Contents list */}
+      {!q.trim() && !repoEmpty && recentOpened.length > 0 ? (
+        <section aria-labelledby="recent-opened-heading" className="space-y-1.5">
+          <div className="flex items-baseline justify-between gap-2">
+            <h3
+              id="recent-opened-heading"
+              className="text-xs font-semibold uppercase tracking-wide text-zinc-500"
+            >
+              Recently opened
+            </h3>
+            <button
+              type="button"
+              className="text-[11px] font-medium text-emerald-400/90"
+              onClick={() => pushParams({ sort: "opened", status: "all" })}
+            >
+              View all
+            </button>
+          </div>
+          <ul className="flex flex-col gap-0.5">
+            {recentOpened.map((d) => (
               <li key={d.id}>
                 <Link
                   href={`/forge/deck/${d.id}`}
-                  className="flex min-h-11 items-center justify-between gap-2 rounded-lg border border-zinc-800/80 px-3 text-sm text-zinc-200 hover:bg-zinc-900"
+                  className="flex min-h-10 items-center gap-2 rounded-lg px-1.5 text-sm text-zinc-300 hover:bg-zinc-900"
                 >
-                  <span className="truncate">{d.title}</span>
-                  <span className="shrink-0 text-xs text-zinc-500">
-                    {formatRelativeAgo(d.updatedAt)}
+                  <TypeIcon type="deck" />
+                  <span className="min-w-0 flex-1 truncate">{d.title}</span>
+                  <span className="shrink-0 text-[11px] text-zinc-600">
+                    {formatRelativeAgo(d.lastOpenedAt ?? d.updatedAt)}
                   </span>
                 </Link>
               </li>
@@ -489,26 +625,29 @@ export function HomeExplorer() {
         </section>
       ) : null}
 
-      {/* 7. Collapsible overview metrics */}
-      <section className="rounded-xl border border-zinc-800/80 bg-zinc-950/40">
-        <button
-          type="button"
-          className="flex min-h-11 w-full items-center justify-between px-3 text-left text-sm font-medium text-zinc-300"
-          aria-expanded={overviewOpen}
-          onClick={() => setOverviewOpen((o) => !o)}
-        >
-          Overview metrics
-          <span className="text-xs text-zinc-500">{overviewOpen ? "Hide" : "Show"}</span>
-        </button>
-        {overviewOpen && snapshot ? (
-          <div className="border-t border-zinc-800 px-3 py-3">
-            <LevelSnapshotChart snapshot={snapshot} />
-            <p className="mt-2 text-[11px] text-zinc-600">
-              Metrics are secondary. Explorer above is the primary surface.
-            </p>
-          </div>
-        ) : null}
-      </section>
+      {/* Overview metrics — collapsed, secondary */}
+      {!repoEmpty ? (
+        <section className="rounded-lg border border-zinc-800/70">
+          <button
+            type="button"
+            className="flex min-h-10 w-full items-center justify-between px-3 text-left text-xs font-medium text-zinc-500"
+            aria-expanded={overviewOpen}
+            onClick={() => setOverviewOpen((o) => !o)}
+          >
+            Overview metrics
+            <span>{overviewOpen ? "Hide" : "Show"}</span>
+          </button>
+          {overviewOpen && snapshot ? (
+            <div className="border-t border-zinc-800 px-3 py-2">
+              <LevelSnapshotChart snapshot={snapshot} />
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      <p className="sr-only">
+        Sorted by {SORT_LABELS[sort]}
+      </p>
 
       {state && moveDeckTarget ? (
         <ForgeMoveDeckDialog
@@ -526,9 +665,41 @@ export function HomeExplorer() {
   );
 }
 
+function EmptyPanel(props: {
+  title: string;
+  primaryLabel: string;
+  onPrimary: () => void;
+  secondaryLabel: string;
+  onSecondary: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-zinc-800 px-4 py-10 text-center">
+      <p className="text-sm text-zinc-400">{props.title}</p>
+      <div className="flex w-full max-w-xs flex-col gap-2">
+        <button
+          type="button"
+          onClick={props.onPrimary}
+          className="min-h-11 rounded-lg bg-emerald-600 text-sm font-semibold text-white"
+        >
+          {props.primaryLabel}
+        </button>
+        <button
+          type="button"
+          onClick={props.onSecondary}
+          className="min-h-11 rounded-lg border border-zinc-700 text-sm font-medium text-zinc-200"
+        >
+          {props.secondaryLabel}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function RealmRow(props: {
   folder: Af03Folder;
   chaosDeckCount: number;
+  fragmentCount: number;
+  showBadge: boolean;
   menuOpen: boolean;
   onMenuOpenChange: (open: boolean) => void;
   onOpen: () => void;
@@ -538,7 +709,7 @@ function RealmRow(props: {
   onArchive: () => void;
   onDelete: () => void;
 }) {
-  const { folder, chaosDeckCount } = props;
+  const { folder, chaosDeckCount, fragmentCount } = props;
   return (
     <li className="relative flex items-stretch bg-zinc-950">
       <button
@@ -550,11 +721,13 @@ function RealmRow(props: {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate font-medium text-zinc-100">{folder.title}</p>
-            <StatusBadge status={folder.view === "archive" ? "archive" : "active"} />
+            {props.showBadge ? (
+              <StatusBadge status={folder.view === "archive" ? "archive" : "active"} />
+            ) : null}
           </div>
           <p className="truncate text-xs text-zinc-500">
-            Realm · {chaosDeckCount} Chaos Deck{chaosDeckCount === 1 ? "" : "s"} · updated{" "}
-            {formatRelativeAgo(folder.updatedAt)}
+            {chaosDeckCount} Deck{chaosDeckCount === 1 ? "" : "s"} · {fragmentCount} Fragment
+            {fragmentCount === 1 ? "" : "s"} · updated {formatRelativeAgo(folder.updatedAt)}
           </p>
         </div>
       </button>
@@ -582,6 +755,7 @@ function RealmRow(props: {
 function DeckExplorerRow(props: {
   state: Af03RepoState;
   deck: Af03ChaosDeck;
+  showBadge: boolean;
   menuOpen: boolean;
   onMenuOpenChange: (open: boolean) => void;
   onRename: () => void;
@@ -591,7 +765,8 @@ function DeckExplorerRow(props: {
   onDelete: () => void;
 }) {
   const signals = deckBuilderSignals(props.state, props.deck);
-  const alex = alexandriaStatusLabel(signals.alexandriaStatus);
+  const distinctBits: string[] = [];
+  if (signals.imageBlockCount > 0) distinctBits.push(`${signals.imageBlockCount} images`);
   return (
     <li className="relative flex items-stretch bg-zinc-950">
       <Link
@@ -602,15 +777,13 @@ function DeckExplorerRow(props: {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p className="truncate font-medium text-zinc-100">{props.deck.title}</p>
-            <StatusBadge status={signals.status} />
+            {props.showBadge ? <StatusBadge status={signals.status} /> : null}
           </div>
           <p className="truncate text-xs text-zinc-500">
             {signals.fragmentCount} Fragments · {signals.blockCount} Blocks
-            {signals.imageBlockCount > 0 ? ` · ${signals.imageBlockCount} images` : ""}
-            {" · "}
+            {distinctBits.length ? ` · ${distinctBits.join(" · ")}` : ""}
+            {" · updated "}
             {formatRelativeAgo(signals.lastUpdated)}
-            {signals.exportAvailable ? " · Export ready" : ""}
-            {alex ? ` · ${alex}` : ""}
           </p>
         </div>
       </Link>

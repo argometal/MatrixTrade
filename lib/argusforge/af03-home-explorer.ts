@@ -7,7 +7,7 @@ import type { Af03ChaosDeck, Af03Folder, Af03RepoState } from "./af03-repo-types
 import { UNASSIGNED_REALM_ID } from "./af03-repo-types";
 import { folderBreadcrumb, getFolder, listChildFolders, listDecksAt } from "./af03-repo-store";
 
-export type ExplorerStatusFilter = "all" | "active" | "archive";
+export type ExplorerStatusFilter = "all" | "active" | "archive" | "empty";
 export type ExplorerSortKey =
   | "name"
   | "updated"
@@ -62,7 +62,9 @@ export function homeExplorerHref(opts: {
 }
 
 export function parseExplorerStatus(raw: string | null): ExplorerStatusFilter {
-  if (raw === "active" || raw === "archive" || raw === "all") return raw;
+  if (raw === "active" || raw === "archive" || raw === "all" || raw === "empty") {
+    return raw;
+  }
   return "all";
 }
 
@@ -131,10 +133,14 @@ export function listRealmsAt(
   parentId: string | null,
   status: ExplorerStatusFilter
 ): Af03Folder[] {
-  if (status === "all") {
+  if (status === "all" || status === "empty") {
     const active = listChildFolders(state, "active", parentId);
     const archived = listChildFolders(state, "archive", parentId);
-    return [...active, ...archived];
+    const all = [...active, ...archived];
+    if (status === "empty") {
+      return all.filter((f) => realmChaosDeckCount(state, f.id) === 0);
+    }
+    return all;
   }
   return listChildFolders(state, status === "archive" ? "archive" : "active", parentId);
 }
@@ -144,11 +150,15 @@ export function listDecksForExplorer(
   realmId: string | null,
   status: ExplorerStatusFilter
 ): Af03ChaosDeck[] {
-  if (status === "all") {
-    return [
+  if (status === "all" || status === "empty") {
+    const all = [
       ...listDecksAt(state, "active", realmId),
       ...listDecksAt(state, "archive", realmId),
     ];
+    if (status === "empty") {
+      return all.filter((d) => d.contentCount === 0);
+    }
+    return all;
   }
   return listDecksAt(state, status === "archive" ? "archive" : "active", realmId);
 }
@@ -156,6 +166,22 @@ export function listDecksForExplorer(
 /** Direct Chaos Decks inside a Realm (not nested child-Realm decks). */
 export function realmChaosDeckCount(state: Af03RepoState, folderId: string): number {
   return state.decks.filter((d) => d.folderId === folderId).length;
+}
+
+/** Fragments in direct Chaos Decks of a Realm. */
+export function realmFragmentCount(state: Af03RepoState, folderId: string): number {
+  const deckIds = new Set(
+    state.decks.filter((d) => d.folderId === folderId).map((d) => d.id)
+  );
+  return state.items.filter((i) => deckIds.has(i.deckId)).length;
+}
+
+/** Recently opened decks (never-opened excluded), newest first. */
+export function recentlyOpenedDecks(state: Af03RepoState, limit = 3): Af03ChaosDeck[] {
+  return [...state.decks]
+    .filter((d) => Boolean(d.lastOpenedAt))
+    .sort((a, b) => (b.lastOpenedAt ?? "").localeCompare(a.lastOpenedAt ?? ""))
+    .slice(0, limit);
 }
 
 export function filterAndSortDecks(
