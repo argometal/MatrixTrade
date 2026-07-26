@@ -73,6 +73,12 @@ export function CapitalPlannerPanel({
           >
             ← Scout desk
           </Link>
+          <Link
+            href="/settings/capital"
+            className="text-zinc-300 underline-offset-4 hover:underline"
+          >
+            Manage capital settings
+          </Link>
         </div>
       </header>
 

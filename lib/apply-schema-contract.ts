@@ -109,6 +109,8 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "external-position-settle: credits settled cash once via settlement ledger; pending ≠ settled.",
       "External Position costBasisMethod is average_cost only — FIFO/specific-lot not implemented.",
       "Capital Planner Model A (cash_ledger): never derive settledCash from totalEquity; availableCapital = deployableCapital; unconfigured ≠ known zero.",
+      "Capital configuration location: Settings → Capital (`/settings/capital`). Account balances are global — never embed in Scout/Stock/Trade/MTAE/Learning snapshots.",
+      "Settings → Capital prepares capital-configuration-* proposals only; persistence remains Control → Apply. Never mix External Position fields into Capital Configuration.",
       "capital-configuration-*: settledCashBase and totalEquityBase are independent; Scout approval does not auto-reserve.",
       "capital-reservation-*: Apply-only; does not create Trade; one active reservation per Plan.",
       "capital-ledger-adjustment: idempotencyKey required; settled amounts immutable; reversals are separate events.",

@@ -75,6 +75,18 @@ Dashboard curve renamed to Experiment cumulative P/L (not Account Equity).
 
 ---
 
+## In review — Capital Settings 26-1A
+
+Doc: `md/matrix/capital-settings-26-1a.md`  
+Route: `/settings/capital`  
+Test: `npm run test:capital-settings`  
+Branch: `cursor/capital-settings-26-1a-b0a5` — do not merge until human review.
+
+Settings prepares capital-configuration proposals only (no persist).  
+Mechanics points to Settings → Capital; ticker snapshots exclude account balances.
+
+---
+
 ## Shipped — UPL 25-29 (CURSOR-MTA-PLAN-OUTCOME-UPL-25-29)
 
 Doc: `md/matrix/plan-outcome-upl-25-29.md`  

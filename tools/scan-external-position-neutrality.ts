@@ -47,6 +47,13 @@ const SCAN_TARGETS: string[] = [
   "supabase/capital-planner.sql",
   "tools/test-capital-planner-26-15.ts",
   "data/capital-planner.json",
+  // Capital Settings (26-1A)
+  "lib/capital-settings-proposal.ts",
+  "lib/capital-settings-snapshot.ts",
+  "app/components/settings/CapitalSettingsPanel.tsx",
+  "app/(trading)/(preview)/settings/capital",
+  "md/matrix/capital-settings-26-1a.md",
+  "tools/test-capital-settings-26-1a.ts",
 ];
 
 type ProhibitedRule = { label: string; re: RegExp };
