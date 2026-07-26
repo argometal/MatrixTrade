@@ -1,93 +1,59 @@
-import { promises as fs } from "fs";
-import path from "path";
+/**
+ * Learning Outcome persistence facade.
+ * Durable backend: Supabase `public.learning_outcomes` when Matrix store is cloud/Vercel.
+ * Local JSON only off-Vercel — never write learning-outcomes.json in production.
+ */
+import {
+  getLearningOutcomesStore,
+  __setLearningOutcomesStoreForTests,
+  LEARNING_OUTCOMES_JSON_PATH,
+} from "./learning-outcomes-store";
 import type { LearningOutcome } from "./learning-outcome-types";
+import type { LearningOutcomesStore } from "./learning-outcomes-store/types";
 
-const DATA_DIR = path.join(process.cwd(), "data");
-const FILE = path.join(DATA_DIR, "learning-outcomes.json");
-
-type LoStore = {
-  readAll(): Promise<LearningOutcome[]>;
-  writeAll(rows: LearningOutcome[]): Promise<void>;
-};
-
-let testOverride: LoStore | null = null;
-
-function createMemoryLoStore(seed: LearningOutcome[] = []): LoStore {
-  let rows = [...seed];
-  return {
-    async readAll() {
-      return [...rows];
-    },
-    async writeAll(next) {
-      rows = [...next];
-    },
-  };
-}
-
-export function __setLearningOutcomeStoreForTests(
-  seed: LearningOutcome[] | null
-): void {
-  testOverride = seed === null ? null : createMemoryLoStore(seed);
-}
-
-async function readArray(): Promise<LearningOutcome[]> {
-  if (testOverride) return testOverride.readAll();
-  try {
-    const raw = await fs.readFile(FILE, "utf-8");
-    const parsed = JSON.parse(raw) as LearningOutcome[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code;
-    if (code === "ENOENT") return [];
-    throw err;
-  }
-}
-
-async function writeArray(rows: LearningOutcome[]): Promise<void> {
-  if (testOverride) {
-    await testOverride.writeAll(rows);
-    return;
-  }
-  await fs.mkdir(DATA_DIR, { recursive: true });
-  await fs.writeFile(FILE, `${JSON.stringify(rows, null, 2)}\n`, "utf-8");
-}
+export { LEARNING_OUTCOMES_JSON_PATH };
 
 export async function getLearningOutcomes(): Promise<LearningOutcome[]> {
-  return readArray();
+  return getLearningOutcomesStore().readAll();
 }
 
 export async function getLearningOutcomeById(
   id: string
 ): Promise<LearningOutcome | undefined> {
   const needle = id.toUpperCase();
-  return (await readArray()).find((row) => row.id.toUpperCase() === needle);
+  return (await getLearningOutcomes()).find(
+    (row) => row.id.toUpperCase() === needle
+  );
 }
 
 export async function getLearningOutcomeByTradeId(
   tradeId: string
 ): Promise<LearningOutcome | undefined> {
   const needle = tradeId.toUpperCase();
-  return (await readArray()).find((row) => row.tradeId?.toUpperCase() === needle);
+  return (await getLearningOutcomes()).find(
+    (row) => row.tradeId?.toUpperCase() === needle
+  );
 }
 
 export async function getLearningOutcomeByPlanId(
   planId: string
 ): Promise<LearningOutcome | undefined> {
   const needle = planId.toUpperCase();
-  const rows = await readArray();
-  return rows.find((row) => row.planId?.toUpperCase() === needle && !row.tradeId);
+  return (await getLearningOutcomes()).find(
+    (row) => row.planId?.toUpperCase() === needle && !row.tradeId
+  );
 }
 
-export async function upsertLearningOutcome(row: LearningOutcome): Promise<void> {
-  const all = await readArray();
-  const idx = all.findIndex((x) => x.id.toUpperCase() === row.id.toUpperCase());
-  if (idx >= 0) all[idx] = row;
-  else all.push(row);
-  all.sort((a, b) => a.id.localeCompare(b.id));
-  await writeArray(all);
+export async function upsertLearningOutcome(
+  row: LearningOutcome
+): Promise<LearningOutcome> {
+  return getLearningOutcomesStore().upsert(row);
 }
 
-export function nextLearningOutcomeId(rows: LearningOutcome[], ticker: string): string {
+export function nextLearningOutcomeId(
+  rows: LearningOutcome[],
+  ticker: string
+): string {
   const normalized = ticker.trim().toUpperCase();
   const prefix = `LO-${normalized}-`;
   let max = 0;
@@ -97,4 +63,14 @@ export function nextLearningOutcomeId(rows: LearningOutcome[], ticker: string): 
     if (Number.isFinite(n)) max = Math.max(max, n);
   }
   return `${prefix}${String(max + 1).padStart(3, "0")}`;
+}
+
+/**
+ * Backward-compatible test override.
+ * Accepts seed array (legacy), a store instance, or null to clear.
+ */
+export function __setLearningOutcomeStoreForTests(
+  seedOrStore: LearningOutcome[] | LearningOutcomesStore | null
+): void {
+  __setLearningOutcomesStoreForTests(seedOrStore);
 }

@@ -55,7 +55,8 @@ export type LearningOutcome = {
   nonExecutionReason?: string;
   excludedFromMetrics?: boolean;
   lifecycleStatus: LearningOutcomeLifecycle;
-  notes?: string;
+  /** Explicit null clears notes (DB null). undefined preserves existing on merge. */
+  notes?: string | null;
   createdAt: string;
   updatedAt: string;
   source: LearningOutcomeSource;

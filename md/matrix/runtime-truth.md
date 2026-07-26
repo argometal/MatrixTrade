@@ -119,7 +119,7 @@ Code: `lib/scout-case-trades.ts`, `lib/trades-ledger.ts`, `ScoutExecutePanel`.
 | `data/scoped-ai-grants.json` | Temporal AI grants |
 | `data/trade-evaluations.json` | Post-close evaluation records |
 | `data/maf-experiments.json` | MAF attribution experiments |
-| `data/learning-outcomes.json` | Learning Outcome (`LO-xxx`) — win/loss/miss/cancel/expire |
+| `public.learning_outcomes` (Supabase) / `data/learning-outcomes.json` (local) | Learning Outcome (`LO-xxx`) — durable on Vercel via SQL `supabase/learning-outcomes.sql` |
 | `data/observations.json` | Observation Engine (`OBS-xxx`) |
 | `data/setups.json` | Setup catalog |
 | `data/trades.json` | Used when not on Supabase |
@@ -154,7 +154,7 @@ Stock files / plans / playbooks remain file-backed unless otherwise configured.
 | **MTAE UI** | Evidence First default: TF Supports→Targets→Bias→Conf; Integrated; Profile Notes last |
 | **MTAE** | Control → Library → **Technical Analysis**; optional per-TF `participation` + `participationSynthesis` |
 | **MAF** | `attribution` Apply → `data/maf-experiments.json`; evidence from Trade+Plan+Observation+LearningOutcome; rule hints |
-| **Learning Outcome** | Auto on trade close / plan outcome → `data/learning-outcomes.json` (`LO-xxx`) |
+| **Learning Outcome** | Auto on trade close / plan outcome → Supabase `learning_outcomes` in prod; JSON local; memory tests (`LO-xxx`) |
 | **Observation** | Auto seed + `observation-update` Apply → `data/observations.json` (`OBS-xxx`) |
 | TF role presets | `data/mtae-timeframe-maps.json` (swing-6m, swing-3m, day-active) |
 | `lib/ai-context.ts` | Unified export builders |

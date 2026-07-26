@@ -95,8 +95,11 @@ Do **not** infer execution omission solely because there was no trade.
 
 - `supabase/observations-counterfactual.sql` — counterfactual OBS columns
 - `supabase/trade-plans-execution-readiness.sql` — readiness enum column
+- `supabase/learning-outcomes.sql` — durable Learning Outcomes (required on Vercel)
 
 Plan outcome itself persists in existing `trade_plans.outcome` jsonb.  
+Learning Outcomes: Supabase in production; JSON local; memory in tests.  
+Migrate: `npm run migrate:learning-outcomes-to-supabase` (dry-run default).  
 Existing plans without outcome and historical trades are unchanged.
 
 ---

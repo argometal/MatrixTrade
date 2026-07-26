@@ -52,6 +52,13 @@
 - Observation linked; **MAF is a separate later action**
 - If sync fails: Apply reports partial failure; Needs Attention `sync_plan_outcome_learning` + Planning **Retry Learning Sync**
 
+### Learning Outcome durability
+
+Prod/Vercel: Supabase `public.learning_outcomes` (`supabase/learning-outcomes.sql`).  
+Local: `data/learning-outcomes.json`. Tests: memory.  
+No silent JSON fallback when Supabase is selected.  
+Migrate: `npm run migrate:learning-outcomes-to-supabase` (dry-run) · `-- --apply`.
+
 ### Execution readiness (unchanged)
 
 `approved → armed → alert → human confirmation → submitted`  
