@@ -6,6 +6,7 @@
 export type UiWindowId =
   | "UI·dashboard"
   | "UI·scout"
+  | "UI·capital-planner"
   | "UI·trades"
   | "UI·trade-detail"
   | "UI·trade-review"
@@ -36,6 +37,9 @@ export function resolveUiWindowId(pathname: string | null | undefined): UiWindow
   if (/^\/trades\/[^/]+$/.test(path)) return "UI·trade-detail";
   if (path === "/trades" || path === "/trades-preview") return "UI·trades";
 
+  if (path === "/planning/capital" || path.startsWith("/planning/capital/")) {
+    return "UI·capital-planner";
+  }
   if (path === "/planning") return "UI·scout";
   if (path === "/stock-theses/new") return "UI·stock-file-new";
   if (path.startsWith("/stock-theses/")) return "UI·stock-file";

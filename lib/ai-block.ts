@@ -817,6 +817,63 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       evidenceRefs: [],
     },
   },
+  "external-position-create": {
+    type: "external-position-create",
+    source: "ai-block",
+    proposal: {
+      ticker: "EXAMPLE",
+      shares: 100,
+      averageCost: 42.5,
+      currentPrice: 48,
+      acquisitionSource: "external_program",
+      capitalTreatment: "invested",
+      liquidityStatus: "unknown",
+      notes: "Acquired outside MTA. Excluded from experiment metrics.",
+    },
+  },
+  "external-position-update": {
+    type: "external-position-update",
+    source: "ai-block",
+    proposal: {
+      id: "EXT-EXAMPLE-001",
+      currentPrice: 51.25,
+      liquidityStatus: "liquid",
+      reviewAt: "2026-08-01T00:00:00.000Z",
+    },
+  },
+  "external-position-reduction": {
+    type: "external-position-reduction",
+    source: "ai-block",
+    proposal: {
+      positionId: "EXT-EXAMPLE-001",
+      reductionId: "EXTRED-EXAMPLE-001",
+      sharesReduced: 40,
+      executionPrice: 55,
+      fees: 1.5,
+      notes: "Partial reduction — proceeds pending settlement (not settled cash).",
+    },
+  },
+  "external-position-settle": {
+    type: "external-position-settle",
+    source: "ai-block",
+    proposal: {
+      positionId: "EXT-EXAMPLE-001",
+      reductionId: "EXTRED-EXAMPLE-001",
+    },
+  },
+  "external-position-exit-plan-update": {
+    type: "external-position-exit-plan-update",
+    source: "ai-block",
+    proposal: {
+      positionId: "EXT-EXAMPLE-001",
+      targetPrice: 60,
+      targetShares: 50,
+      defensivePrice: 48,
+      defensiveAction: "review_position",
+      status: "active",
+      notes: "No claim that a stop order exists.",
+    },
+  },
   analysis: {
     type: "analysis",
     source: "ai-block",

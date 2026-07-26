@@ -305,6 +305,12 @@ export function PreviewPlanning({
               >
                 New stock case
               </Link>
+              <Link
+                href="/planning/capital"
+                className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
+              >
+                Capital Planner
+              </Link>
               <SnapshotButton
                 title={snapshotTitle}
                 description="Focused scout / ticker / desk"

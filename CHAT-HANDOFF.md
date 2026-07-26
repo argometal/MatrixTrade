@@ -13,11 +13,13 @@
 
 ```text
 Playbook → Stock File → Scout (PLAN) → Trade → Learning Outcome / Observation / MAF
+                          ↘ Capital Planner → External Positions (outside pipeline)
 ```
 
 - Scout ≠ Trade. Sin fill no hay Trade ni P/L realizado.
 - Mutations solo vía Control → Apply (humano). Nunca auto-apply.
 - Tesis estratégica (Stock File) ≠ resultado táctico del Scout.
+- **External Position** ≠ Trade/Scout/Stock File; capital only; excluded from experiment metrics.
 
 ---
 
@@ -26,6 +28,7 @@ Playbook → Stock File → Scout (PLAN) → Trade → Learning Outcome / Observ
 | Capa | Ruta / store | Notas |
 |------|----------------|-------|
 | Scout | `/planning` · `plans` | Active = `watching` \| `ready` |
+| Capital | `/planning/capital` · `external_positions` | External Positions; investedExternalCapital |
 | Trade | `/trades` | Supabase; win rate / monthly loss = solo ejecutados |
 | LO | `learning-outcomes` | kinds actuales abajo |
 | Apply | Control → Apply | tipos en `AI_BRIDGE_BLOCK_TYPES` |
@@ -35,6 +38,19 @@ Learning Outcome kinds **hoy en código:**
 `executed_win` · `executed_loss` · `missed_opportunity` · `cancelled` · `expired` · **`unexecuted_plan_loss`** · **`duplicate_creation`**
 
 Cierre Scout sin Trade: Apply **`plan-outcome`** (también Planning → Record Outcome).
+
+---
+
+## Shipped — External Positions 26-13 / hardened 26-14
+
+Doc: `md/matrix/external-positions-26-13.md`  
+Test: `npm run test:external-positions`  
+SQL: `supabase/external-positions.sql` (run in Supabase before prod writes; includes 26-14 columns)
+
+Apply: `external-position-create` · `external-position-update` · `external-position-reduction` · `external-position-settle` · `external-position-exit-plan-update`
+
+Hardening: idempotent reductions (`reductionId`/`executionReference`); pending→settled ledger (no double-count); `average_cost` only; valuation provenance; Capital Planner marks unconfigured fields (not silent zero).  
+Neutrality: no issuer-ticker hard-coding in EP infra — `tools/scan-external-position-neutrality.ts` (via `npm run test:external-positions`).
 
 ---
 
