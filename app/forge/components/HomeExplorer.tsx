@@ -38,6 +38,7 @@ import {
   homeOverview,
   levelSnapshot,
   moveDeckToFolder,
+  recordRealmOpen,
   renameDeck,
   renameFolder,
   restoreDeck,
@@ -105,6 +106,12 @@ export function HomeExplorer() {
   useEffect(() => {
     setQueryDraft(q);
   }, [q]);
+
+  /** Keep Realm lastOpenedAt current when drilling in Explorer (Needs review sort). */
+  useEffect(() => {
+    if (!realmId) return;
+    setState((prev) => recordRealmOpen(prev ?? emptyOrSeedRepo(), realmId));
+  }, [realmId]);
 
   function pushParams(patch: {
     realmId?: string | null;
@@ -289,6 +296,7 @@ export function HomeExplorer() {
           >
             <option value="updated">Recently updated</option>
             <option value="opened">Recently opened</option>
+            <option value="stale">Needs review</option>
             <option value="name">Name</option>
             <option value="fragments">Fragment count</option>
             <option value="status">Status</option>
