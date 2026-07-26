@@ -44,6 +44,7 @@ import {
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03ChaosDeck, Af03Folder, Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import { ForgeMoveDeckDialog } from "./ForgeMoveDeckDialog";
 import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
 import { LevelSnapshotChart } from "./LevelSnapshotChart";
 
@@ -88,6 +89,7 @@ export function HomeExplorer() {
   const searchParams = useSearchParams();
   const [state, setState] = useState<Af03RepoState | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
+  const [moveDeckId, setMoveDeckId] = useState<string | null>(null);
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [queryDraft, setQueryDraft] = useState("");
 
@@ -179,25 +181,8 @@ export function HomeExplorer() {
     window.location.href = `/forge/deck/${deck.id}`;
   }
 
-  function moveDeck(deck: Af03ChaosDeck) {
-    if (!state) return;
-    const targets = state.folders
-      .filter((f) => f.view === deck.view)
-      .map((f) => `${f.id} = ${f.title}`)
-      .join("\n");
-    const raw = window.prompt(
-      `Move Chaos Deck to Realm id (or blank for Unassigned).\n\n${targets || "(no Realms)"}`,
-      deck.folderId ?? ""
-    );
-    if (raw === null) return;
-    const target = raw.trim() === "" ? null : raw.trim();
-    if (target && !getFolder(state, target)) {
-      window.alert("Realm not found.");
-      return;
-    }
-    setState(moveDeckToFolder(state, deck.id, target));
-    setMenuId(null);
-  }
+  const moveDeckTarget =
+    state && moveDeckId ? state.decks.find((d) => d.id === moveDeckId) : undefined;
 
   if (!state || !summary) {
     return <p className="text-sm text-zinc-500">Loading Explorer…</p>;
@@ -453,7 +438,10 @@ export function HomeExplorer() {
                     setState(restoreDeck(state, deck.id));
                     setMenuId(null);
                   }}
-                  onMove={() => moveDeck(deck)}
+                  onMove={() => {
+                    setMenuId(null);
+                    setMoveDeckId(deck.id);
+                  }}
                   onDelete={() => {
                     const ok = window.confirm(
                       `Delete Chaos Deck “${deck.title}” and all its Fragments/Blocks? This cannot be undone.`
@@ -513,6 +501,19 @@ export function HomeExplorer() {
           </div>
         ) : null}
       </section>
+
+      {state && moveDeckTarget ? (
+        <ForgeMoveDeckDialog
+          open={Boolean(moveDeckId)}
+          state={state}
+          deck={moveDeckTarget}
+          onClose={() => setMoveDeckId(null)}
+          onMove={(folderId) => {
+            setState(moveDeckToFolder(state, moveDeckTarget.id, folderId));
+            setMoveDeckId(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

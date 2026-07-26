@@ -3,6 +3,7 @@
 /**
  * Overflow ⋯ menu via portal + fixed position.
  * Avoids clipping by parent overflow-hidden (same class of bug as MTA SnapshotButton).
+ * Flips above the trigger near the ForgeShell bottom chrome so Delete stays reachable.
  */
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
@@ -10,8 +11,9 @@ import { createPortal } from "react-dom";
 
 const DEFAULT_MENU_WIDTH_PX = 192; // w-48
 const VIEWPORT_PAD_PX = 12;
-/** ForgeShell fixed bottom nav ≈ 5.5rem + safe area — keep menus above it. */
-const BOTTOM_CHROME_PX = 96;
+/** Primary nav (~3.5rem) + Focus/Active/Archive (~3.5rem) + cushion. */
+const BOTTOM_CHROME_PX = 168;
+const ITEM_ESTIMATE_PX = 42;
 
 export type ForgeOverflowMenuItem = {
   id: string;
@@ -39,6 +41,17 @@ type Props = {
   trigger?: ReactNode;
 };
 
+function readSafeAreaBottom(): number {
+  if (typeof window === "undefined") return 0;
+  const probe = document.createElement("div");
+  probe.style.cssText =
+    "position:fixed;bottom:0;padding-bottom:env(safe-area-inset-bottom);visibility:hidden;pointer-events:none";
+  document.body.appendChild(probe);
+  const pad = Number.parseFloat(getComputedStyle(probe).paddingBottom) || 0;
+  probe.remove();
+  return pad;
+}
+
 export function ForgeOverflowMenu({
   open,
   onOpenChange,
@@ -59,15 +72,20 @@ export function ForgeOverflowMenu({
   }, []);
 
   useLayoutEffect(() => {
-    if (!open || !buttonRef.current) return;
+    if (!open || !buttonRef.current) {
+      setMenuBox(null);
+      return;
+    }
 
-    function placeMenu() {
+    function placeMenu(measuredHeight?: number) {
       const btn = buttonRef.current;
       if (!btn) return;
       const rect = btn.getBoundingClientRect();
       const vw = window.innerWidth;
       const vh = window.innerHeight;
       const width = Math.min(menuWidthPx, vw - VIEWPORT_PAD_PX * 2);
+      const bottomPad = VIEWPORT_PAD_PX + BOTTOM_CHROME_PX + readSafeAreaBottom();
+      const topPad = VIEWPORT_PAD_PX;
 
       let left = align === "end" ? rect.right - width : rect.left;
       if (left + width > vw - VIEWPORT_PAD_PX) {
@@ -75,27 +93,47 @@ export function ForgeOverflowMenu({
       }
       if (left < VIEWPORT_PAD_PX) left = VIEWPORT_PAD_PX;
 
-      const bottomPad = VIEWPORT_PAD_PX + BOTTOM_CHROME_PX;
-      const maxHeight = Math.min(360, vh - VIEWPORT_PAD_PX - bottomPad - 24);
-      const spaceBelow = vh - rect.bottom - bottomPad;
-      const spaceAbove = rect.top - VIEWPORT_PAD_PX;
-      let top = rect.bottom + 4;
-      if (spaceBelow < Math.min(maxHeight, 140) && spaceAbove > spaceBelow) {
-        top = Math.max(VIEWPORT_PAD_PX, rect.top - maxHeight - 4);
-      }
-      if (top + maxHeight > vh - bottomPad) {
-        top = Math.max(VIEWPORT_PAD_PX, vh - bottomPad - maxHeight);
+      const estimatedH = Math.min(
+        360,
+        measuredHeight ?? items.length * ITEM_ESTIMATE_PX + 8
+      );
+      const spaceBelow = vh - bottomPad - rect.bottom - 4;
+      const spaceAbove = rect.top - topPad - 4;
+      const needsFlip =
+        spaceBelow < estimatedH
+          ? spaceAbove > spaceBelow
+          : spaceBelow < 200 && spaceAbove > spaceBelow;
+
+      const avail = Math.max(96, needsFlip ? spaceAbove : spaceBelow);
+      const maxHeight = Math.min(360, avail);
+      const height = Math.min(estimatedH, maxHeight);
+
+      let top = needsFlip ? rect.top - 4 - height : rect.bottom + 4;
+      if (top < topPad) top = topPad;
+      if (top + height > vh - bottomPad) {
+        top = Math.max(topPad, vh - bottomPad - height);
       }
 
       setMenuBox({ left, top, width, maxHeight });
     }
 
+    function onReposition() {
+      const el = menuRef.current;
+      placeMenu(el?.scrollHeight);
+    }
+
     placeMenu();
-    window.addEventListener("resize", placeMenu);
-    window.addEventListener("scroll", placeMenu, true);
+    const raf = window.requestAnimationFrame(() => {
+      const el = menuRef.current;
+      if (el) placeMenu(el.scrollHeight);
+    });
+
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
     return () => {
-      window.removeEventListener("resize", placeMenu);
-      window.removeEventListener("scroll", placeMenu, true);
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
     };
   }, [open, items.length, align, menuWidthPx]);
 
@@ -130,7 +168,7 @@ export function ForgeOverflowMenu({
               top: menuBox.top,
               width: menuBox.width,
               maxHeight: menuBox.maxHeight,
-              zIndex: 60,
+              zIndex: 100,
             }}
             className="overflow-y-auto overscroll-contain rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-xl"
           >
