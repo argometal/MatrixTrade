@@ -21,6 +21,7 @@
 | [change-24-1c.md](change-24-1c.md) | **Active — 24-1C** | Architecture decision + Chaos builder B0 |
 | [change-24-1e.md](change-24-1e.md) | **Active — 24-1E** | Home = primary Explorer; Argus experimental (preserved) |
 | [change-24-22.md](change-24-22.md) | **Active — 24-22** | `+` = fullscreen Chaos Dumping (Inbox / deck destination) |
+| [change-24-23.md](change-24-23.md) | **Active — 24-23** | Home Explorer visual hierarchy (search/contents first) |
 | [chaos-builder-architecture.md](chaos-builder-architecture.md) | **Approved — implementing** | AF model + Legacy validation path; B0 builder |
 | [legacy-alexandria-adapter-boundary.md](legacy-alexandria-adapter-boundary.md) | **Boundary — pending_audit** | Adapter interface only |
 | [alexandria-legacy-audit-checklist.md](alexandria-legacy-audit-checklist.md) | **Checklist** | Inspect Alexandria formats (does not block B0) |
