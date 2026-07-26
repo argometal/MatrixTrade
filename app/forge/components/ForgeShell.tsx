@@ -1,8 +1,8 @@
 "use client";
 
 /**
- * CHANGE 24-01 / 24-17 — primary bottom bar:
- * [home icon] | Argus | + | [Prepared output icon]
+ * CHANGE 24-01 / 24-17 / 24-22 — primary bottom bar:
+ * [home icon] | Argus | + (Chaos Dumping) | [Prepared output icon]
  * Argus secondary: Focus | Active | Archive — filters Realm Treemap (same Realms, no copies).
  * Administrative lists remain at /forge/active and /forge/archive.
  */
@@ -10,10 +10,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState, type ReactNode } from "react";
-import { ForgeGlobalCreate } from "./ForgeGlobalCreate";
 import { useForgeSystem } from "./ForgeSystemProvider";
-
-type SheetId = "create" | null;
 
 const ARGUS_SECONDARY: {
   href: string;
@@ -47,7 +44,7 @@ function sectionTitle(pathname: string, systemLabel: string): string {
   if (pathname.startsWith("/forge/argus/units")) return "Argus units";
   if (pathname.startsWith("/forge/argus")) return "Argus · Experimental";
   if (pathname.startsWith("/forge/focus")) return "Focus";
-  if (pathname.startsWith("/forge/chaos")) return "Capture (proto)";
+  if (pathname.startsWith("/forge/chaos")) return "Chaos Dumping";
   if (pathname.startsWith("/forge/task")) return "Task";
   if (pathname.startsWith("/forge/vault")) return "Prepared output";
   if (pathname.startsWith("/forge/archive")) return "Archive list";
@@ -111,13 +108,13 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { system, setSystem, ready } = useForgeSystem();
-  const [sheet, setSheet] = useState<SheetId>(null);
   const [argusOpen, setArgusOpen] = useState(false);
 
   const systemLabel = system === "mta" ? "MTA" : "ArgusForge";
   const title = sectionTitle(pathname, systemLabel);
   const hideChromeTitle = pathname === "/forge" || pathname === "/forge/";
   const onHome = pathname === "/forge" || pathname === "/forge/";
+  const onChaos = pathname.startsWith("/forge/chaos");
   const onOutput = pathname.startsWith("/forge/vault");
   const onArgus = isArgusSurface(pathname);
   const onArgusTreemap =
@@ -126,7 +123,6 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
   const treemapFilter = searchParams.get("filter") || (onArgusTreemap ? "active" : null);
 
   useEffect(() => {
-    setSheet(null);
     if (isArgusSurface(pathname)) setArgusOpen(true);
   }, [pathname]);
 
@@ -191,20 +187,6 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      {sheet === "create" ? (
-        <div
-          className={`fixed inset-x-0 z-30 mx-auto max-w-lg border-t border-zinc-800 bg-zinc-950/98 shadow-[0_-12px_40px_rgba(0,0,0,0.45)] lg:max-w-3xl ${
-            showArgusSecondary
-              ? "bottom-[calc(7rem+env(safe-area-inset-bottom))]"
-              : "bottom-[calc(3.5rem+env(safe-area-inset-bottom))]"
-          }`}
-          role="region"
-          aria-label="Create sheet"
-        >
-          <ForgeGlobalCreate pathname={pathname} onClose={() => setSheet(null)} />
-        </div>
-      ) : null}
-
       <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg lg:max-w-3xl">
         {showArgusSecondary ? (
           <nav
@@ -252,10 +234,10 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
                 href="/forge"
                 aria-label="Home"
                 title="Home"
-                aria-current={onHome && !sheet ? "page" : undefined}
+                aria-current={onHome ? "page" : undefined}
                 className={itemClass}
               >
-                <HomeIcon active={onHome && !sheet} />
+                <HomeIcon active={onHome} />
               </Link>
             </li>
 
@@ -270,7 +252,6 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
                     return;
                   }
                   setArgusOpen(true);
-                  setSheet(null);
                   if (!onArgusTreemap) router.push("/forge/argus?filter=active");
                 }}
                 className={`${itemClass} text-[13px] font-semibold ${
@@ -287,18 +268,17 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
             </li>
 
             <li className="min-w-0 flex-1">
-              <button
-                type="button"
-                aria-label="Create"
-                title="Create"
-                aria-expanded={sheet === "create"}
-                onClick={() => setSheet((s) => (s === "create" ? null : "create"))}
+              <Link
+                href="/forge/chaos"
+                aria-label="Chaos Dumping"
+                title="Chaos Dumping"
+                aria-current={onChaos ? "page" : undefined}
                 className={`${itemClass} text-2xl font-light leading-none ${
-                  sheet === "create" ? "text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
+                  onChaos ? "text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
                 }`}
               >
                 +
-              </button>
+              </Link>
             </li>
 
             <li className="min-w-0 flex-1">
@@ -306,10 +286,10 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
                 href="/forge/vault"
                 aria-label="Prepared output"
                 title="Prepared output"
-                aria-current={onOutput && !sheet ? "page" : undefined}
+                aria-current={onOutput ? "page" : undefined}
                 className={itemClass}
               >
-                <PreparedOutputIcon active={onOutput && !sheet} />
+                <PreparedOutputIcon active={onOutput} />
               </Link>
             </li>
           </ul>
