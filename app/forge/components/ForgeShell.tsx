@@ -42,7 +42,7 @@ function sectionTitle(pathname: string, systemLabel: string): string {
   if (pathname.startsWith("/forge/deck/")) return "Chaos Deck";
   if (pathname.startsWith("/forge/realm/")) return "Realm";
   if (pathname.startsWith("/forge/argus/units")) return "Argus units";
-  if (pathname.startsWith("/forge/argus")) return "Argus · Experimental";
+  if (pathname.startsWith("/forge/argus")) return "Argus";
   if (pathname.startsWith("/forge/focus")) return "Focus";
   if (pathname.startsWith("/forge/chaos")) return "Chaos Dumping";
   if (pathname.startsWith("/forge/task")) return "Task";
@@ -119,7 +119,8 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
   const onArgus = isArgusSurface(pathname);
   const onArgusTreemap =
     pathname.startsWith("/forge/argus") && !pathname.startsWith("/forge/argus/units");
-  const showArgusSecondary = argusOpen || onArgus;
+  /** Treemap hosts its own filter chips (24-25) — no fixed secondary bar above nav. */
+  const showArgusSecondary = (argusOpen || onArgus) && !onArgusTreemap;
   const treemapFilter = searchParams.get("filter") || (onArgusTreemap ? "active" : null);
 
   useEffect(() => {
@@ -138,7 +139,14 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
               System
             </p>
             {!hideChromeTitle ? (
-              <h1 className="truncate text-base font-semibold text-zinc-100">{title}</h1>
+              <h1 className="flex min-w-0 items-center gap-2 truncate text-base font-semibold text-zinc-100">
+                <span className="truncate">{title}</span>
+                {onArgusTreemap ? (
+                  <span className="shrink-0 rounded-full border border-amber-700/50 bg-amber-950/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200/90">
+                    Experimental
+                  </span>
+                ) : null}
+              </h1>
             ) : (
               <p className="truncate text-xs text-zinc-600">Coordination shell</p>
             )}

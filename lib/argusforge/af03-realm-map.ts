@@ -373,9 +373,9 @@ export function buildRealmForest(
       ...unassignedDecks.map((d) => d.lastOpenedAt),
       ...unassignedDecks.map((d) => d.updatedAt),
     ]);
-    roots.unshift({
+    roots.push({
       id: UNASSIGNED_REALM_ID,
-      title: "Unassigned",
+      title: "Inbox / Unassigned",
       synthetic: true,
       view,
       folder: null,
@@ -434,7 +434,7 @@ export function layoutTreemap(
       cursor += bh;
     }
 
-    const pad = 2;
+    const pad = 1.5;
     const ix = bx + pad;
     const iy = by + pad;
     const iw = Math.max(0, bw - pad * 2);
@@ -545,6 +545,20 @@ export function realmHref(realmId: string, opts?: { deckId?: string }): string {
 
 export function isUnassignedRealm(realmId: string): boolean {
   return realmId === UNASSIGNED_REALM_ID;
+}
+
+/** Human recency for Treemap tiles — no mass abbreviations. */
+export function formatUsedLabel(iso: string | null | undefined): string {
+  if (!iso) return "Unused";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return "Used today";
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return "Used today";
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return "Used today";
+  const days = Math.floor(hours / 24);
+  if (days < 365) return `Used ${days}d ago`;
+  return `Used ${Math.floor(days / 365)}y ago`;
 }
 
 export function listDecksForRealm(
@@ -709,6 +723,6 @@ export function molecularDefaultPosition(
 }
 
 export function getRealmTitle(state: Af03RepoState, realmId: string): string {
-  if (isUnassignedRealm(realmId)) return "Unassigned";
+  if (isUnassignedRealm(realmId)) return "Inbox / Unassigned";
   return state.folders.find((f) => f.id === realmId)?.title ?? "Realm";
 }
