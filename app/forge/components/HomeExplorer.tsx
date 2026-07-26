@@ -621,10 +621,10 @@ function DeckExplorerRow(props: {
             },
             { id: "rename", label: "Rename", onClick: props.onRename },
             { id: "move", label: "Move…", onClick: props.onMove },
+            { id: "delete", label: "Delete…", onClick: props.onDelete, danger: true },
             props.deck.view === "active"
               ? { id: "archive", label: "Archive", onClick: props.onArchive }
               : { id: "restore", label: "Restore to Active", onClick: props.onRestore },
-            { id: "delete", label: "Delete…", onClick: props.onDelete, danger: true },
           ]}
         />
       </div>
