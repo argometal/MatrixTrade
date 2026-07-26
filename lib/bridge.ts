@@ -19,6 +19,12 @@ import {
 import { validateAttributionProposal } from "./maf-validate";
 import { validateObservationUpdateProposal } from "./observation-validate";
 import { validatePlanOutcomeProposal } from "./plan-outcome-validate";
+import {
+  validateExternalPositionCreateProposal,
+  validateExternalPositionExitPlanProposal,
+  validateExternalPositionReductionProposal,
+  validateExternalPositionUpdateProposal,
+} from "./external-position-validate";
 import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
@@ -243,6 +249,10 @@ export type TradingProposalType =
   | "attribution"
   | "observation-update"
   | "plan-outcome"
+  | "external-position-create"
+  | "external-position-update"
+  | "external-position-reduction"
+  | "external-position-exit-plan-update"
   | "playbook-create"
   | "playbook-update";
 
@@ -276,6 +286,10 @@ export function parseTradingInboxPayload(
     type !== "attribution" &&
     type !== "observation-update" &&
     type !== "plan-outcome" &&
+    type !== "external-position-create" &&
+    type !== "external-position-update" &&
+    type !== "external-position-reduction" &&
+    type !== "external-position-exit-plan-update" &&
     type !== "playbook-create" &&
     type !== "playbook-update"
   ) {
@@ -338,6 +352,14 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return `Observation ${p.observationId ?? p.tradeId ?? p.planId ?? p.id ?? ""} · update`;
     case "plan-outcome":
       return `Plan outcome ${p.planId ?? ""} · ${p.outcomeKind ?? p.status ?? "record"} · entryReached ${String(p.entryReached ?? p.entryTriggered ?? "—")}`;
+    case "external-position-create":
+      return `External Position ${p.ticker ?? ""} · ${p.shares ?? ""} shares (outside MTA)`;
+    case "external-position-update":
+      return `External Position update ${p.id ?? ""}`;
+    case "external-position-reduction":
+      return `External Position reduce ${p.positionId ?? ""} · ${p.sharesReduced ?? ""} sh`;
+    case "external-position-exit-plan-update":
+      return `External Position exit plan ${p.positionId ?? ""}`;
     case "playbook-create":
       return `New playbook · ${p.name ?? "unnamed"}`;
     case "playbook-update":
@@ -645,6 +667,23 @@ export function validateProposalPayload(
 
   if (parsed.type === "plan-outcome") {
     const check = validatePlanOutcomeProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+
+  if (parsed.type === "external-position-create") {
+    const check = validateExternalPositionCreateProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+  if (parsed.type === "external-position-update") {
+    const check = validateExternalPositionUpdateProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+  if (parsed.type === "external-position-reduction") {
+    const check = validateExternalPositionReductionProposal(p);
+    if (!check.ok) errors.push(...check.errors);
+  }
+  if (parsed.type === "external-position-exit-plan-update") {
+    const check = validateExternalPositionExitPlanProposal(p);
     if (!check.ok) errors.push(...check.errors);
   }
 

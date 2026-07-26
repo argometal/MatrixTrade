@@ -93,6 +93,7 @@ function revalidateTradingPaths() {
   revalidatePath("/review");
   revalidatePath("/journal");
   revalidatePath("/planning");
+  revalidatePath("/planning/capital");
   revalidatePath("/stock-theses");
   revalidatePath("/exchange");
   revalidatePath("/ai-bridge");

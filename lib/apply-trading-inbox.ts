@@ -14,6 +14,12 @@ import { applyTechnicalAssessment, applyTechnicalCalibration } from "./mtae-appl
 import { applyAttribution } from "./maf-apply";
 import { applyObservationUpdateProposal } from "./observation-apply";
 import { applyPlanOutcomeProposal } from "./plan-outcome";
+import {
+  applyExternalPositionCreateBlock,
+  applyExternalPositionExitPlanBlock,
+  applyExternalPositionReductionBlock,
+  applyExternalPositionUpdateBlock,
+} from "./external-position-apply";
 import { applyScoutPlanCreate } from "./scout-plan-create";
 import {
   getPlaybookById,
@@ -151,6 +157,14 @@ async function applyTradingProposalInner(
       return applyObservationUpdateBlock(parsed);
     case "plan-outcome":
       return applyPlanOutcomeBlock(parsed);
+    case "external-position-create":
+      return applyExternalPositionCreateBlock(parsed);
+    case "external-position-update":
+      return applyExternalPositionUpdateBlock(parsed);
+    case "external-position-reduction":
+      return applyExternalPositionReductionBlock(parsed);
+    case "external-position-exit-plan-update":
+      return applyExternalPositionExitPlanBlock(parsed);
     case "trade-proposal":
       return applyTradeProposal(parsed);
     case "trade-close":

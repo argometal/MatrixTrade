@@ -17,6 +17,7 @@ export const PREVIEW_NAV_SECTIONS = [
     items: [
       { href: "/home-preview", label: "Dashboard" },
       { href: "/planning", label: "Scout" },
+      { href: "/planning/capital", label: "Capital" },
     ],
   },
   {
@@ -48,7 +49,15 @@ export const PREVIEW_MOBILE_TABS = [
 export function isPreviewNavActive(pathname: string, href: string): boolean {
   if (href === "/home-preview") return pathname === "/home-preview";
   if (href === "/trades-preview") return pathname === "/trades-preview" || pathname === "/planning";
-  if (href === "/planning") return pathname === "/planning" || pathname.startsWith("/planning/");
+  if (href === "/planning/capital") {
+    return pathname === "/planning/capital" || pathname.startsWith("/planning/capital/");
+  }
+  if (href === "/planning") {
+    return (
+      pathname === "/planning" ||
+      (pathname.startsWith("/planning/") && !pathname.startsWith("/planning/capital"))
+    );
+  }
   if (href === "/trades") return pathname === "/trades" || pathname.startsWith("/trades/");
   if (href === "/stats") return pathname === "/stats" || pathname.startsWith("/stats/");
   return pathname === href || pathname.startsWith(`${href}/`);

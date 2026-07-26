@@ -55,6 +55,13 @@ export const APPLY_LAYER_OWNERSHIP = {
     "capital gate / asymmetry",
   ],
   Trade: ["entry fill", "exit", "shares", "execution reality"],
+  ExternalPosition: [
+    "shares / averageCost / valuation (server-owned)",
+    "capitalTreatment / liquidityStatus",
+    "optional exit plan",
+    "reduction history → capital release",
+    "never Scout / Trade / MAF / experiment metrics",
+  ],
 } as const;
 
 export type ApplySchemaContract = {
@@ -97,6 +104,8 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "observation-update: one of observationId|tradeId|planId + at least one measurable field; never invent prices; observation ≠ attribution.",
       "plan-outcome: one mutation per block; human-confirmed event order; AI must not invent prices, timestamps, fills or risk.",
       "plan-outcome: counterfactualR is server-derived (−1 for unexecuted_plan_loss); no Trade created; realized P/L unchanged; Stock File thesis unchanged; MAF separate.",
+      "External Position: outside Scout→Trade pipeline; experimentEligible=false; never creates Trade/MAF; capital only via Capital Planner.",
+      "external-position-reduction: server computes proceeds/realized P/L; market value is never available cash until reduction/close.",
       "Human mutations only via Control → Apply → Validate → Accept.",
     ],
     acceptedTypes: Object.keys(AI_BLOCK_SAMPLES) as AiBlockType[],
@@ -149,9 +158,65 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "notes?",
         "evidenceRefs?",
       ],
+      "external-position-create": [
+        "ticker",
+        "shares",
+        "averageCost",
+        "currentPrice?",
+        "acquisitionSource?",
+        "capitalTreatment?",
+        "liquidityStatus?",
+        "notes?",
+      ],
+      "external-position-update": ["id", "currentPrice?", "liquidityStatus?", "reviewAt?", "notes?"],
+      "external-position-reduction": [
+        "positionId",
+        "sharesReduced",
+        "executionPrice",
+        "executedAt?",
+        "fees?",
+        "notes?",
+      ],
+      "external-position-exit-plan-update": [
+        "positionId",
+        "targetPrice?",
+        "targetShares?",
+        "defensivePrice?",
+        "defensiveAction?",
+        "status?",
+        "notes?",
+      ],
     },
     allowedEnums: {
       "plan-outcome.outcomeKind": ["unexecuted_plan_loss", "duplicate_creation"],
+      "external-position.acquisitionSource": [
+        "external_program",
+        "legacy_holding",
+        "transferred_position",
+        "manual_external",
+        "other",
+      ],
+      "external-position.status": [
+        "open",
+        "partially_reduced",
+        "closed",
+        "archived",
+      ],
+      "external-position.capitalTreatment": [
+        "invested",
+        "restricted",
+        "pending_release",
+        "released",
+      ],
+      "external-position.liquidityStatus": ["liquid", "restricted", "unknown"],
+      "external-position.exitPlan.status": [
+        "draft",
+        "active",
+        "partially_executed",
+        "completed",
+        "cancelled",
+        "expired",
+      ],
       "plan-outcome.nonExecutionReason": [
         "order_not_staged",
         "discretionary_skip",
@@ -214,6 +279,12 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "trade-review": AI_BLOCK_SAMPLES["trade-review"],
       "observation-update": AI_BLOCK_SAMPLES["observation-update"],
       "plan-outcome": AI_BLOCK_SAMPLES["plan-outcome"],
+      "external-position-create": AI_BLOCK_SAMPLES["external-position-create"],
+      "external-position-update": AI_BLOCK_SAMPLES["external-position-update"],
+      "external-position-reduction":
+        AI_BLOCK_SAMPLES["external-position-reduction"],
+      "external-position-exit-plan-update":
+        AI_BLOCK_SAMPLES["external-position-exit-plan-update"],
     },
   };
 }
