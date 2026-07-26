@@ -108,7 +108,10 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "external-position-reduction: requires reductionId|executionReference; server computes proceeds/realized P/L; proceeds start pending_settlement (not settled cash).",
       "external-position-settle: credits settled cash once via settlement ledger; pending ≠ settled.",
       "External Position costBasisMethod is average_cost only — FIFO/specific-lot not implemented.",
-      "Capital Planner is partial until Scout reservations/committed/invested Scout capital/base equity sources are wired; unconfigured ≠ known zero.",
+      "Capital Planner Model A (cash_ledger): never derive settledCash from totalEquity; availableCapital = deployableCapital; unconfigured ≠ known zero.",
+      "capital-configuration-*: settledCashBase and totalEquityBase are independent; Scout approval does not auto-reserve.",
+      "capital-reservation-*: Apply-only; does not create Trade; one active reservation per Plan.",
+      "capital-ledger-adjustment: idempotencyKey required; settled amounts immutable; reversals are separate events.",
       "Human mutations only via Control → Apply → Validate → Accept.",
     ],
     acceptedTypes: Object.keys(AI_BLOCK_SAMPLES) as AiBlockType[],
@@ -199,6 +202,24 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "status?",
         "notes?",
       ],
+      "capital-configuration-create": [
+        "settledCashBase?",
+        "totalEquityBase?",
+        "liquidityBuffer?",
+        "source?",
+        "externalCreditsIncludedInCash?",
+      ],
+      "capital-configuration-update": ["id", "at least one updatable field"],
+      "capital-reservation-create": [
+        "planId",
+        "requestedCapital",
+        "estimatedRisk",
+        "ticker?",
+        "expiresAt?",
+      ],
+      "capital-reservation-update": ["id", "at least one updatable field"],
+      "capital-reservation-release": ["id", "reason?"],
+      "capital-ledger-adjustment": ["idempotencyKey", "amount", "notes?"],
     },
     allowedEnums: {
       "plan-outcome.outcomeKind": ["unexecuted_plan_loss", "duplicate_creation"],
@@ -305,6 +326,18 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "external-position-settle": AI_BLOCK_SAMPLES["external-position-settle"],
       "external-position-exit-plan-update":
         AI_BLOCK_SAMPLES["external-position-exit-plan-update"],
+      "capital-configuration-create":
+        AI_BLOCK_SAMPLES["capital-configuration-create"],
+      "capital-configuration-update":
+        AI_BLOCK_SAMPLES["capital-configuration-update"],
+      "capital-reservation-create":
+        AI_BLOCK_SAMPLES["capital-reservation-create"],
+      "capital-reservation-update":
+        AI_BLOCK_SAMPLES["capital-reservation-update"],
+      "capital-reservation-release":
+        AI_BLOCK_SAMPLES["capital-reservation-release"],
+      "capital-ledger-adjustment":
+        AI_BLOCK_SAMPLES["capital-ledger-adjustment"],
     },
   };
 }

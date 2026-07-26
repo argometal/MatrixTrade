@@ -21,6 +21,14 @@ import {
   applyExternalPositionSettleBlock,
   applyExternalPositionUpdateBlock,
 } from "./external-position-apply";
+import {
+  applyCapitalConfigurationCreateBlock,
+  applyCapitalConfigurationUpdateBlock,
+  applyCapitalLedgerAdjustmentBlock,
+  applyCapitalReservationCreateBlock,
+  applyCapitalReservationReleaseBlock,
+  applyCapitalReservationUpdateBlock,
+} from "./capital-apply";
 import { applyScoutPlanCreate } from "./scout-plan-create";
 import {
   getPlaybookById,
@@ -168,6 +176,18 @@ async function applyTradingProposalInner(
       return applyExternalPositionSettleBlock(parsed);
     case "external-position-exit-plan-update":
       return applyExternalPositionExitPlanBlock(parsed);
+    case "capital-configuration-create":
+      return applyCapitalConfigurationCreateBlock(parsed);
+    case "capital-configuration-update":
+      return applyCapitalConfigurationUpdateBlock(parsed);
+    case "capital-reservation-create":
+      return applyCapitalReservationCreateBlock(parsed);
+    case "capital-reservation-update":
+      return applyCapitalReservationUpdateBlock(parsed);
+    case "capital-reservation-release":
+      return applyCapitalReservationReleaseBlock(parsed);
+    case "capital-ledger-adjustment":
+      return applyCapitalLedgerAdjustmentBlock(parsed);
     case "trade-proposal":
       return applyTradeProposal(parsed);
     case "trade-close":

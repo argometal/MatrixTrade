@@ -23,4 +23,6 @@ export type DashboardData = {
   avgR: number | null;
   bestPlaybook: PlaybookStats | null;
   worstPlaybook: PlaybookStats | null;
+  /** Isolated source failures — other sections still render. */
+  sectionErrors?: string[];
 };

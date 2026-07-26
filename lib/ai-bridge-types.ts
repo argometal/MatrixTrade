@@ -24,6 +24,12 @@ export const AI_BRIDGE_BLOCK_TYPES = [
   "external-position-reduction",
   "external-position-settle",
   "external-position-exit-plan-update",
+  "capital-configuration-create",
+  "capital-configuration-update",
+  "capital-reservation-create",
+  "capital-reservation-update",
+  "capital-reservation-release",
+  "capital-ledger-adjustment",
   "playbook-create",
   "playbook-update",
 ] as const satisfies readonly TradingProposalType[];

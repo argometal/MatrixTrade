@@ -32,6 +32,21 @@ const SCAN_TARGETS: string[] = [
   "lib/apply-schema-contract.ts",
   "lib/ai-bridge-types.ts",
   "lib/apply-trading-inbox.ts",
+  // Capital Planner foundation (26-15)
+  "lib/capital-types.ts",
+  "lib/capital-account.ts",
+  "lib/capital-configuration.ts",
+  "lib/capital-ledger.ts",
+  "lib/capital-reservation.ts",
+  "lib/capital-planner-store.ts",
+  "lib/capital-validate.ts",
+  "lib/capital-apply.ts",
+  "lib/scout-funding.ts",
+  "lib/invested-scout-capital.ts",
+  "md/matrix/capital-planner-26-15.md",
+  "supabase/capital-planner.sql",
+  "tools/test-capital-planner-26-15.ts",
+  "data/capital-planner.json",
 ];
 
 type ProhibitedRule = { label: string; re: RegExp };

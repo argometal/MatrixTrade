@@ -874,6 +874,65 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       notes: "No claim that a stop order exists.",
     },
   },
+  "capital-configuration-create": {
+    type: "capital-configuration-create",
+    source: "ai-block",
+    proposal: {
+      settledCashBase: 100000,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
+      totalEquityBase: 150000,
+      totalEquityAsOf: "2026-07-26T00:00:00.000Z",
+      liquidityBuffer: 10000,
+      source: "manual",
+      externalCreditsIncludedInCash: false,
+    },
+  },
+  "capital-configuration-update": {
+    type: "capital-configuration-update",
+    source: "ai-block",
+    proposal: {
+      id: "CAPCFG-DEFAULT",
+      settledCashBase: 98000,
+      liquidityBuffer: 10000,
+    },
+  },
+  "capital-reservation-create": {
+    type: "capital-reservation-create",
+    source: "ai-block",
+    proposal: {
+      planId: "PLAN-EXAMPLE-001",
+      ticker: "ABC",
+      requestedCapital: 5000,
+      estimatedRisk: 200,
+      expiresAt: "2026-08-01T00:00:00.000Z",
+    },
+  },
+  "capital-reservation-update": {
+    type: "capital-reservation-update",
+    source: "ai-block",
+    proposal: {
+      id: "CAPRES-PLAN-EXAMPLE-001",
+      reservedCapital: 4000,
+      status: "committed",
+    },
+  },
+  "capital-reservation-release": {
+    type: "capital-reservation-release",
+    source: "ai-block",
+    proposal: {
+      id: "CAPRES-PLAN-EXAMPLE-001",
+      reason: "Scout cancelled",
+    },
+  },
+  "capital-ledger-adjustment": {
+    type: "capital-ledger-adjustment",
+    source: "ai-block",
+    proposal: {
+      idempotencyKey: "manual-adj-EXAMPLE-001",
+      amount: 250,
+      notes: "Manual cash reconciliation credit",
+    },
+  },
   analysis: {
     type: "analysis",
     source: "ai-block",
