@@ -31,6 +31,7 @@ import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { readArgusGraph } from "@/lib/argusforge/argus-graph-store";
 import type { ArgusGraphState } from "@/lib/argusforge/argus-graph-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import { ForgeExpandableSurface } from "./ForgeExpandableSurface";
 
 const UNASSIGNED_STRIP_H = 72;
 
@@ -227,11 +228,16 @@ export function RealmMapTree({ filter }: Props) {
           </div>
         </div>
       ) : (
-        <div
-          ref={mapRef}
+        <ForgeExpandableSurface
+          contentRef={mapRef}
           className="relative min-h-[280px] max-h-[min(52dvh,420px)] flex-1 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950"
-          role="tree"
-          aria-label={`${filterLabel} Realm Treemap`}
+          surfaceRole="tree"
+          surfaceAriaLabel={`${filterLabel} Realm Treemap`}
+          ariaLabel="Fullscreen Realm Treemap"
+          backTitle="Back to Argus"
+          backSubtitle="Collapse treemap"
+          expandAriaLabel="Expand treemap fullscreen"
+          expandTitle="Expand treemap"
         >
           {rects.map((r) => (
             <RealmTile
@@ -279,7 +285,7 @@ export function RealmMapTree({ filter }: Props) {
               No Realms yet — Inbox / Unassigned holds free Chaos Decks.
             </div>
           ) : null}
-        </div>
+        </ForgeExpandableSurface>
       )}
 
       {selected ? (
