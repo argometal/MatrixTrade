@@ -32,8 +32,8 @@ export function Af03RepoDisclosure({ compact = false }: { compact?: boolean }) {
         className="flex min-h-9 w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-[11px] text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500"
       >
         <span>
-          Local prototype · browser storage ·{" "}
-          <span className="text-zinc-400 underline-offset-2">{open ? "hide" : "details"}</span>
+          Local prototype ·{" "}
+          <span className="text-zinc-400 underline-offset-2">{open ? "Hide" : "Details"}</span>
         </span>
         <span aria-hidden className="text-zinc-600">
           {open ? "▴" : "▾"}
