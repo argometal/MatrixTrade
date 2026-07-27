@@ -9,6 +9,17 @@
 
 ---
 
+## Shipped — ArgusForge 24-2E Chaos image ingestion
+
+Doc: `md/argusforge/change-24-2E.md`  
+Route: `/forge/chaos` · Test: `npm run test:chaos-dump-images`
+
+Chaos Dumping accepts text, images, or both via picker, clipboard paste, and drag/drop. Binaries use existing Chaos IndexedDB asset store (24-1C); fragments keep image blocks + asset metas. Text-only flow unchanged. Argus / MTA / Apply untouched.
+
+Live limits: max 10 images · 15 MB each · missing assets → “Image unavailable”.
+
+---
+
 ## Shipped — ArgusForge 24-27 molecular graph UI
 
 Doc: `md/argusforge/change-24-27.md`  
