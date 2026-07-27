@@ -2,6 +2,9 @@
  * Capital Configuration — single active cash_ledger config.
  */
 import {
+  assertBalanceAsOfInvariant,
+} from "./capital-balance-asof";
+import {
   assertFiniteNonNegative,
   assertIsoTimestamp,
   type CapitalConfigSource,
@@ -53,13 +56,23 @@ export async function createCapitalConfiguration(
     );
   }
 
+  // Create must never coerce null → 0 via Number(null).
   if (input.settledCashBase !== undefined) {
+    if (input.settledCashBase === null) {
+      throw new Error("settledCashBase null is not allowed on create");
+    }
     assertFiniteNonNegative(Number(input.settledCashBase), "settledCashBase");
   }
   if (input.totalEquityBase !== undefined) {
+    if (input.totalEquityBase === null) {
+      throw new Error("totalEquityBase null is not allowed on create");
+    }
     assertFiniteNonNegative(Number(input.totalEquityBase), "totalEquityBase");
   }
   if (input.liquidityBuffer !== undefined) {
+    if (input.liquidityBuffer === null) {
+      throw new Error("liquidityBuffer null is not allowed on create");
+    }
     assertFiniteNonNegative(Number(input.liquidityBuffer), "liquidityBuffer");
   }
   assertIsoTimestamp(input.settledCashAsOf, "settledCashAsOf");
@@ -91,6 +104,9 @@ export async function createCapitalConfiguration(
     updatedAt: now,
   };
 
+  // Domain enforces create invariants independently of UI / Apply validation.
+  assertBalanceAsOfInvariant(config, { requireAtLeastOneCompletePair: true });
+
   state.configuration = config;
   await writeCapitalPlannerState(state);
   return config;
@@ -115,21 +131,42 @@ export async function updateCapitalConfiguration(
   if (input.settledCashBase !== undefined) {
     if (input.settledCashBase === null) {
       next.settledCashBase = undefined;
+      if (input.settledCashAsOf === undefined) {
+        throw new Error(
+          "Clearing settledCashBase requires settledCashAsOf: null"
+        );
+      }
     } else {
       assertFiniteNonNegative(Number(input.settledCashBase), "settledCashBase");
       next.settledCashBase = Number(input.settledCashBase);
+      if (input.settledCashAsOf === undefined || input.settledCashAsOf === null) {
+        throw new Error(
+          "Setting settledCashBase requires a fresh settledCashAsOf"
+        );
+      }
     }
   }
   if (input.totalEquityBase !== undefined) {
     if (input.totalEquityBase === null) {
       next.totalEquityBase = undefined;
+      if (input.totalEquityAsOf === undefined) {
+        throw new Error(
+          "Clearing totalEquityBase requires totalEquityAsOf: null"
+        );
+      }
     } else {
       assertFiniteNonNegative(Number(input.totalEquityBase), "totalEquityBase");
       next.totalEquityBase = Number(input.totalEquityBase);
+      if (input.totalEquityAsOf === undefined || input.totalEquityAsOf === null) {
+        throw new Error(
+          "Setting totalEquityBase requires a fresh totalEquityAsOf"
+        );
+      }
     }
   }
   if (input.liquidityBuffer !== undefined) {
     if (input.liquidityBuffer === null) {
+      // Explicit clear — do not coerce to 0.
       next.liquidityBuffer = undefined;
     } else {
       assertFiniteNonNegative(Number(input.liquidityBuffer), "liquidityBuffer");
@@ -151,6 +188,8 @@ export async function updateCapitalConfiguration(
     next.externalCreditsIncludedInCash = input.externalCreditsIncludedInCash;
   }
   if (input.status !== undefined) next.status = input.status;
+
+  assertBalanceAsOfInvariant(next);
 
   // Never infer cash from equity or equity from cash.
   state.configuration = next;

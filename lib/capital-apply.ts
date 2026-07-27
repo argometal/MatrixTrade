@@ -38,6 +38,16 @@ export async function applyCapitalConfigurationCreateBlock(
 ): Promise<CapApplyResult> {
   try {
     const p = parsed.proposal;
+    // Never Number(null) — null is invalid on create (would become 0).
+    if (
+      p.settledCashBase === null ||
+      p.totalEquityBase === null ||
+      p.liquidityBuffer === null ||
+      p.settledCashAsOf === null ||
+      p.totalEquityAsOf === null
+    ) {
+      throw new Error("capital-configuration-create does not accept null fields");
+    }
     const config = await createCapitalConfiguration({
       id: p.id !== undefined ? String(p.id) : undefined,
       settledCashBase:
