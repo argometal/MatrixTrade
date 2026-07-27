@@ -2,6 +2,9 @@
  * Capital Configuration — single active cash_ledger config.
  */
 import {
+  assertBalanceAsOfInvariant,
+} from "./capital-balance-asof";
+import {
   assertFiniteNonNegative,
   assertIsoTimestamp,
   type CapitalConfigSource,
@@ -101,6 +104,9 @@ export async function createCapitalConfiguration(
     updatedAt: now,
   };
 
+  // Domain enforces create invariants independently of UI / Apply validation.
+  assertBalanceAsOfInvariant(config, { requireAtLeastOneCompletePair: true });
+
   state.configuration = config;
   await writeCapitalPlannerState(state);
   return config;
@@ -189,32 +195,4 @@ export async function updateCapitalConfiguration(
   state.configuration = next;
   await writeCapitalPlannerState(state);
   return next;
-}
-
-/** Configured balance requires configured as-of; orphan as-of is rejected. */
-function assertBalanceAsOfInvariant(config: CapitalConfiguration): void {
-  const cashConfigured = config.settledCashBase !== undefined;
-  const cashAsOf = Boolean(config.settledCashAsOf?.trim());
-  if (cashConfigured && !cashAsOf) {
-    throw new Error(
-      "settledCashBase requires settledCashAsOf — clear both or set a fresh as-of"
-    );
-  }
-  if (!cashConfigured && cashAsOf) {
-    throw new Error(
-      "settledCashAsOf requires settledCashBase — clear both or restore cash"
-    );
-  }
-  const equityConfigured = config.totalEquityBase !== undefined;
-  const equityAsOf = Boolean(config.totalEquityAsOf?.trim());
-  if (equityConfigured && !equityAsOf) {
-    throw new Error(
-      "totalEquityBase requires totalEquityAsOf — clear both or set a fresh as-of"
-    );
-  }
-  if (!equityConfigured && equityAsOf) {
-    throw new Error(
-      "totalEquityAsOf requires totalEquityBase — clear both or restore equity"
-    );
-  }
 }

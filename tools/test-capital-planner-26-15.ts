@@ -76,6 +76,7 @@ async function main() {
     reset();
     await createCapitalConfiguration({
       settledCashBase: 1000,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
       liquidityBuffer: 0,
       externalCreditsIncludedInCash: false,
     });
@@ -123,6 +124,7 @@ async function main() {
     reset();
     await createCapitalConfiguration({
       settledCashBase: 1120,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
       liquidityBuffer: 0,
       externalCreditsIncludedInCash: true,
     });
@@ -312,6 +314,7 @@ async function main() {
     reset();
     await createCapitalConfiguration({
       settledCashBase: 50_000,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
       liquidityBuffer: 0,
     });
     const state = await (
@@ -332,6 +335,7 @@ async function main() {
     reset();
     await createCapitalConfiguration({
       settledCashBase: 10_000,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
       liquidityBuffer: 0,
     });
     const before = buildCapitalAccountSnapshot({
@@ -368,6 +372,7 @@ async function main() {
     reset();
     await createCapitalConfiguration({
       settledCashBase: 10_000,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
       liquidityBuffer: 0,
     });
     const res = await createCapitalReservation({
@@ -395,6 +400,7 @@ async function main() {
     reset();
     await createCapitalConfiguration({
       settledCashBase: 20_000,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
       liquidityBuffer: 0,
     });
     const res = await createCapitalReservation({
@@ -533,6 +539,7 @@ async function main() {
     assert.equal(empty.completeness.status, "partial"); // external configured flag true
     await createCapitalConfiguration({
       settledCashBase: 1,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
       liquidityBuffer: 0,
     });
     const state = await (
@@ -594,6 +601,7 @@ async function main() {
       type: "capital-configuration-create",
       proposal: {
         settledCashBase: 25_000,
+        settledCashAsOf: "2026-07-26T00:00:00.000Z",
         liquidityBuffer: 1000,
         source: "manual",
         externalCreditsIncludedInCash: false,
@@ -611,6 +619,7 @@ async function main() {
     reset();
     await createCapitalConfiguration({
       settledCashBase: 100,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
       liquidityBuffer: 0,
       externalCreditsIncludedInCash: false,
     });

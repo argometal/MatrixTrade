@@ -111,6 +111,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "Capital Planner Model A (cash_ledger): never derive settledCash from totalEquity; availableCapital = deployableCapital; unconfigured ≠ known zero.",
       "Capital configuration location: Settings → Capital (`/settings/capital`). Account balances are global — never embed in Scout/Stock/Trade/MTAE/Learning snapshots.",
       "Settings → Capital prepares capital-configuration-* proposals only; persistence remains Control → Apply. Never mix External Position fields into Capital Configuration.",
+      "capital-configuration-create: at least one complete balance pair (cash+as-of or equity+as-of); orphan balance or as-of rejected; null invalid; 0 valid; never infer cash↔equity.",
       "capital-configuration-update: id + changed fields only; omitted=unchanged; number (incl. 0)=set; null=explicit clear; never Number(null).",
       "capital-configuration-update: balance changes require matching fresh as-of; clearing a balance requires clearing its as-of (both null); configured balance requires configured as-of.",
       "Settings status snapshot omits balances; private full snapshot requires explicit confirmation and is never attached to ticker packages.",

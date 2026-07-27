@@ -535,6 +535,7 @@ async function main() {
     reset();
     buildCapitalConfigurationCreateProposal({
       settledCashBase: 1,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
       source: "manual",
       externalCreditsIncludedInCash: false,
       liquidityBuffer: 0,
@@ -576,7 +577,9 @@ async function main() {
   {
     const payload = buildCapitalConfigurationCreateProposal({
       settledCashBase: 100,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
       totalEquityBase: 999,
+      totalEquityAsOf: "2026-07-26T00:00:00.000Z",
       source: "manual",
       externalCreditsIncludedInCash: false,
       liquidityBuffer: 0,
@@ -585,12 +588,14 @@ async function main() {
     assert.equal(p.settledCashBase, 100);
     assert.equal(p.totalEquityBase, 999);
     assert.notEqual(p.settledCashBase, p.totalEquityBase);
+    assert.equal(validatePreparedCapitalProposal(payload).ok, true);
   }
 
   // 10 — external credits flag explicit
   {
     const payload = buildCapitalConfigurationCreateProposal({
       settledCashBase: 1,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
       source: "manual",
       externalCreditsIncludedInCash: true,
       liquidityBuffer: 0,
@@ -925,6 +930,7 @@ async function main() {
       proposalMixesExternalPosition(
         buildCapitalConfigurationCreateProposal({
           settledCashBase: 1,
+          settledCashAsOf: "2026-07-26T00:00:00.000Z",
           source: "manual",
           externalCreditsIncludedInCash: false,
           liquidityBuffer: 0,
@@ -940,6 +946,232 @@ async function main() {
       "app/components/settings/CapitalSettingsPanel.tsx"
     );
     assert.doesNotMatch(settings, /\.upsert\(|from\("capital_planner/);
+  }
+
+  // ——— 26-20 create balance/as-of invariants ———
+  {
+    const { createCapitalConfiguration } = await import(
+      "../lib/capital-configuration"
+    );
+    const { applyCapitalConfigurationCreateBlock } = await import(
+      "../lib/capital-apply"
+    );
+    const asOf = "2026-07-26T00:00:00.000Z";
+
+    // 1 — cash without timestamp rejected
+    assert.equal(
+      validatePreparedCapitalProposal({
+        type: "capital-configuration-create",
+        proposal: {
+          settledCashBase: 100,
+          source: "manual",
+          externalCreditsIncludedInCash: false,
+        },
+      }).ok,
+      false
+    );
+    const cashNoTs = validateCapitalSettingsFormValues({
+      settledCashBase: 100,
+      source: "manual",
+      externalCreditsIncludedInCash: false,
+      liquidityBuffer: 0,
+    });
+    assert.equal(cashNoTs.ok, false);
+    if (!cashNoTs.ok) {
+      assert.match(
+        cashNoTs.errors.join("; "),
+        /Settled cash requires settledCashAsOf/
+      );
+    }
+
+    // 2 — cash timestamp without cash rejected
+    assert.equal(
+      validatePreparedCapitalProposal({
+        type: "capital-configuration-create",
+        proposal: {
+          settledCashAsOf: asOf,
+          source: "manual",
+          externalCreditsIncludedInCash: false,
+        },
+      }).ok,
+      false
+    );
+    const tsOnly = validateCapitalSettingsFormValues({
+      settledCashAsOf: asOf,
+      source: "manual",
+      externalCreditsIncludedInCash: false,
+    });
+    assert.equal(tsOnly.ok, false);
+    if (!tsOnly.ok) {
+      assert.match(tsOnly.errors.join("; "), /settledCashAsOf requires settledCashBase/);
+    }
+
+    // 3 — equity without timestamp rejected
+    assert.equal(
+      validatePreparedCapitalProposal({
+        type: "capital-configuration-create",
+        proposal: {
+          totalEquityBase: 200,
+          source: "manual",
+          externalCreditsIncludedInCash: false,
+        },
+      }).ok,
+      false
+    );
+    const eqOnly = validateCapitalSettingsFormValues({
+      totalEquityBase: 200,
+      source: "manual",
+      externalCreditsIncludedInCash: false,
+    });
+    assert.equal(eqOnly.ok, false);
+    if (!eqOnly.ok) {
+      assert.match(eqOnly.errors.join("; "), /Total equity requires totalEquityAsOf/);
+    }
+
+    // 4 — equity timestamp without equity rejected
+    const eqTs = validateCapitalSettingsFormValues({
+      totalEquityAsOf: asOf,
+      source: "manual",
+      externalCreditsIncludedInCash: false,
+    });
+    assert.equal(eqTs.ok, false);
+    if (!eqTs.ok) {
+      assert.match(eqTs.errors.join("; "), /totalEquityAsOf requires totalEquityBase/);
+    }
+
+    // 5 — complete cash pair accepted
+    const cashPair = buildCapitalConfigurationCreateProposal({
+      settledCashBase: 100,
+      settledCashAsOf: asOf,
+      liquidityBuffer: 0,
+      source: "manual",
+      externalCreditsIncludedInCash: false,
+    });
+    assert.equal(validatePreparedCapitalProposal(cashPair).ok, true);
+
+    // 6 — complete equity pair accepted
+    const equityPair = buildCapitalConfigurationCreateProposal({
+      totalEquityBase: 200,
+      totalEquityAsOf: asOf,
+      liquidityBuffer: 0,
+      source: "manual",
+      externalCreditsIncludedInCash: false,
+    });
+    assert.equal(validatePreparedCapitalProposal(equityPair).ok, true);
+
+    // 7 — both complete pairs accepted
+    const both = buildCapitalConfigurationCreateProposal({
+      settledCashBase: 100,
+      settledCashAsOf: asOf,
+      totalEquityBase: 200,
+      totalEquityAsOf: asOf,
+      liquidityBuffer: 0,
+      source: "manual",
+      externalCreditsIncludedInCash: false,
+    });
+    assert.equal(validatePreparedCapitalProposal(both).ok, true);
+
+    // 8 — zero cash with valid timestamp accepted
+    const zeroCash = buildCapitalConfigurationCreateProposal({
+      settledCashBase: 0,
+      settledCashAsOf: asOf,
+      liquidityBuffer: 0,
+      source: "manual",
+      externalCreditsIncludedInCash: false,
+    });
+    assert.equal(validatePreparedCapitalProposal(zeroCash).ok, true);
+
+    // 9 — null rejected on create
+    assert.equal(
+      validatePreparedCapitalProposal({
+        type: "capital-configuration-create",
+        proposal: {
+          settledCashBase: null,
+          settledCashAsOf: asOf,
+          source: "manual",
+          externalCreditsIncludedInCash: false,
+        },
+      }).ok,
+      false
+    );
+
+    // 10 — domain create rejects invalid pair even if called directly
+    reset();
+    await assert.rejects(
+      () =>
+        createCapitalConfiguration({
+          settledCashBase: 50,
+          liquidityBuffer: 0,
+          source: "manual",
+        }),
+      /Settled cash requires settledCashAsOf/
+    );
+    await assert.rejects(
+      () =>
+        createCapitalConfiguration({
+          settledCashAsOf: asOf,
+          liquidityBuffer: 0,
+          source: "manual",
+        }),
+      /settledCashAsOf requires settledCashBase|complete balance pair/
+    );
+
+    // 11 — Apply rejects invalid create
+    const applyBad = await applyCapitalConfigurationCreateBlock({
+      type: "capital-configuration-create",
+      source: "settings-capital",
+      proposal: {
+        settledCashBase: 75,
+        liquidityBuffer: 0,
+        source: "manual",
+        externalCreditsIncludedInCash: false,
+      },
+    });
+    assert.equal(applyBad.ok, false);
+
+    // 12 — Settings blocks invalid create (form)
+    assert.equal(
+      validateCapitalSettingsFormValues({
+        settledCashBase: 10,
+        source: "broker_snapshot",
+        externalCreditsIncludedInCash: false,
+        liquidityBuffer: 0,
+      }).ok,
+      false
+    );
+
+    // Valid domain create still works
+    reset();
+    await createCapitalConfiguration({
+      settledCashBase: 0,
+      settledCashAsOf: asOf,
+      liquidityBuffer: 0,
+      source: "manual",
+    });
+
+    // 13 — no regression to update null-clear semantics
+    const clearEquity = buildCapitalConfigurationUpdateProposal({
+      activeId: "CAPCFG-DEFAULT",
+      values: {
+        settledCashBase: 0,
+        settledCashAsOf: asOf,
+        totalEquityBase: null,
+        totalEquityAsOf: null,
+        liquidityBuffer: 0,
+        source: "manual",
+        externalCreditsIncludedInCash: false,
+      },
+      dirtyFields: { totalEquityBase: true, totalEquityAsOf: true },
+    });
+    assert.equal(
+      (clearEquity.proposal as Record<string, unknown>).totalEquityBase,
+      null
+    );
+    assert.equal(
+      (clearEquity.proposal as Record<string, unknown>).totalEquityAsOf,
+      null
+    );
+    assert.equal(validatePreparedCapitalProposal(clearEquity).ok, true);
   }
 
   // Mechanics points to Settings → Capital + 26-1C clarifications

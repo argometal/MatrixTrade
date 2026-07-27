@@ -48,6 +48,7 @@ const SCAN_TARGETS: string[] = [
   "tools/test-capital-planner-26-15.ts",
   "data/capital-planner.json",
   // Capital Settings (26-1A)
+  "lib/capital-balance-asof.ts",
   "lib/capital-settings-proposal.ts",
   "lib/capital-settings-snapshot.ts",
   "app/components/settings/CapitalSettingsPanel.tsx",

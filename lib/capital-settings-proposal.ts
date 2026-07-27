@@ -1,5 +1,5 @@
 /**
- * Settings → Capital proposal preparation (26-1A / 26-1C / 26-1E).
+ * Settings → Capital proposal preparation (26-1A / 26-1C / 26-1E / 26-20).
  * Pure helpers — never persist. Persistence remains Control → Apply.
  *
  * Null/undefined policy (update):
@@ -8,6 +8,7 @@
  * - null → explicitly clear optional field
  * - undefined must never represent an explicit clear
  */
+import { collectBalanceAsOfInvariantErrors } from "./capital-balance-asof";
 import {
   validateCapitalConfigurationCreateProposal,
   validateCapitalConfigurationUpdateProposal,
@@ -399,18 +400,35 @@ export function validateCapitalSettingsFormValues(
   checkTs("totalEquityAsOf", "Total equity as-of");
 
   if (mode === "create") {
-    const hasCash = typeof values.settledCashBase === "number";
-    const hasEquity = typeof values.totalEquityBase === "number";
-    if (!hasCash && !hasEquity) {
-      errors.push(
-        "Create requires at least settled cash or total equity (do not invent missing values)"
-      );
-    }
     for (const key of CLEARABLE_KEYS) {
       if (values[key] === null) {
         errors.push(`Create does not accept null for ${key}`);
       }
     }
+    // Balance/as-of pairs — do not invent timestamps; do not infer cash↔equity.
+    errors.push(
+      ...collectBalanceAsOfInvariantErrors(
+        {
+          settledCashBase:
+            typeof values.settledCashBase === "number"
+              ? values.settledCashBase
+              : undefined,
+          settledCashAsOf:
+            typeof values.settledCashAsOf === "string"
+              ? values.settledCashAsOf
+              : undefined,
+          totalEquityBase:
+            typeof values.totalEquityBase === "number"
+              ? values.totalEquityBase
+              : undefined,
+          totalEquityAsOf:
+            typeof values.totalEquityAsOf === "string"
+              ? values.totalEquityAsOf
+              : undefined,
+        },
+        { requireAtLeastOneCompletePair: true }
+      )
+    );
   }
 
   return errors.length ? { ok: false, errors } : { ok: true };

@@ -428,6 +428,7 @@ export function buildMatrixMechanicsBrief(): string {
     "  2. Control → MTA Mechanics → Apply schema contract",
     "- All persisted mutations still use Control → Apply → Validate → Accept.",
     "- Settings may prepare a valid proposal but must not bypass Apply.",
+    "- capital-configuration-create: complete cash+as-of or equity+as-of pair required; orphan balance/as-of rejected; null invalid; never invent timestamps.",
     "- capital-configuration-update: changed fields only; omitted=unchanged; number/0=set; null=clear; never Number(null).",
     "- Balance clear requires as-of clear (both null); configured balance requires configured as-of; never invent timestamps.",
     "- Settings status snapshot omits balances by default; private full snapshot requires explicit confirmation.",

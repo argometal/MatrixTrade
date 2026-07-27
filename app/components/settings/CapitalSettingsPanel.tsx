@@ -576,6 +576,11 @@ export function CapitalSettingsPanel({
               configured value. Configured balances require configured as-of —
               clear both together.
             </p>
+            <p className="mt-2">
+              Create requires at least one complete pair: settled cash + as-of,
+              or total equity + as-of. Orphan balances or timestamps are
+              rejected. Do not invent timestamps.
+            </p>
           </div>
         </div>
       </section>

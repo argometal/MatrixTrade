@@ -1,6 +1,7 @@
 /**
  * Apply validators for Capital Planner mutations (26-15).
  */
+import { collectBalanceAsOfInvariantErrors } from "./capital-balance-asof";
 import {
   CAPITAL_CONFIG_SOURCES,
   CAPITAL_RESERVATION_STATUSES,
@@ -188,6 +189,34 @@ export function validateCapitalConfigurationCreateProposal(
   }
   parseIso(proposal.settledCashAsOf, "proposal.settledCashAsOf", errors);
   parseIso(proposal.totalEquityAsOf, "proposal.totalEquityAsOf", errors);
+  // Create balance/as-of pairs — shared invariant (no orphan balance or timestamp).
+  errors.push(
+    ...collectBalanceAsOfInvariantErrors(
+      {
+        settledCashBase:
+          proposal.settledCashBase === undefined ||
+          proposal.settledCashBase === null
+            ? undefined
+            : Number(proposal.settledCashBase),
+        settledCashAsOf:
+          proposal.settledCashAsOf === undefined ||
+          proposal.settledCashAsOf === null
+            ? undefined
+            : String(proposal.settledCashAsOf),
+        totalEquityBase:
+          proposal.totalEquityBase === undefined ||
+          proposal.totalEquityBase === null
+            ? undefined
+            : Number(proposal.totalEquityBase),
+        totalEquityAsOf:
+          proposal.totalEquityAsOf === undefined ||
+          proposal.totalEquityAsOf === null
+            ? undefined
+            : String(proposal.totalEquityAsOf),
+      },
+      { requireAtLeastOneCompletePair: true }
+    )
+  );
   if (
     proposal.source !== undefined &&
     !(CAPITAL_CONFIG_SOURCES as readonly string[]).includes(

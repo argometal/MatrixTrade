@@ -19,6 +19,19 @@ Settings may prepare `capital-configuration-create` / `capital-configuration-upd
 Persistence: Control → Apply → Validate → Accept.  
 No direct Supabase writes from Settings. Administrative section is inspect-only.
 
+### Create balance / as-of invariants (26-20)
+
+Shared helper: `lib/capital-balance-asof.ts` (create + update).
+
+On **create**:
+- If `settledCashBase` is present → `settledCashAsOf` required
+- If `settledCashAsOf` is present → `settledCashBase` required
+- Same pairing for total equity
+- At least one complete pair (cash+as-of **or** equity+as-of)
+- `null` invalid; `0` valid; never invent timestamps; never infer cash↔equity
+
+Domain `createCapitalConfiguration` enforces this independently of UI/Apply.
+
 ### Update field semantics (26-1E)
 
 | Proposal value | Meaning |
