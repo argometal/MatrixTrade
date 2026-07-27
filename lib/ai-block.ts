@@ -893,6 +893,7 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
     proposal: {
       id: "CAPCFG-DEFAULT",
       settledCashBase: 98000,
+      settledCashAsOf: "2026-07-26T12:00:00.000Z",
       liquidityBuffer: 10000,
     },
   },

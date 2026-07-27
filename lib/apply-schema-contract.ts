@@ -209,8 +209,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "notes?",
       ],
       "capital-configuration-create": [
-        "settledCashBase?",
-        "totalEquityBase?",
+        "settledCashBase+settledCashAsOf and/or totalEquityBase+totalEquityAsOf",
         "liquidityBuffer?",
         "source?",
         "externalCreditsIncludedInCash?",
