@@ -34,6 +34,7 @@
     "test:capital-planner": "tsx tools/test-capital-planner-26-15.ts",
     "test:ui-window-ids": "tsx tools/test-ui-window-ids.ts",
     "test:apply-failure-snapshot": "tsx tools/test-apply-failure-snapshot.ts",
+    "test:chaos-dump-images": "tsx tools/test-chaos-dump-images-24-2e.ts",
     "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"
   },
   "dependencies": {
