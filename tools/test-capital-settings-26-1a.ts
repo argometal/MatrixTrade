@@ -877,8 +877,11 @@ async function main() {
       "app/components/settings/CapitalSettingsPanel.tsx"
     );
     assert.match(settings, /\/planning\/capital/);
-    assert.match(settings, /View Capital Planner/);
+    assert.match(settings, /Open Capital Planner/);
+    assert.match(settings, /data-capital-planner-cta/);
+    assert.match(settings, /Open Apply/);
     assert.match(settings, /Open Control|openPanel/);
+    assert.doesNotMatch(settings, /View Capital Planner/);
   }
 
   // 18 — schema-generated proposal validates through Apply validation
@@ -1183,6 +1186,93 @@ async function main() {
     assert.match(brief, /changed fields only/);
     assert.match(brief, /status snapshot omits balances/i);
     assert.match(brief, /private full snapshot requires explicit/i);
+  }
+
+  // 26-34 — Capital Help drawer + CTA + missing-table recovery + checklist
+  {
+    const settings = await readUtf8(
+      "app/components/settings/CapitalSettingsPanel.tsx"
+    );
+    assert.match(settings, /CapitalHelpDrawer/);
+    assert.match(settings, /Open Capital Planner/);
+    assert.match(settings, /min-h-11/);
+    assert.match(settings, /formatCapitalStoreError/);
+
+    const helpDrawer = await readUtf8(
+      "app/components/settings/CapitalHelpDrawer.tsx"
+    );
+    assert.match(helpDrawer, /data-capital-help-drawer/);
+    assert.match(helpDrawer, /data-capital-help-layout="responsive"/);
+    assert.match(helpDrawer, /CAPITAL_HELP_SECTIONS/);
+    assert.match(helpDrawer, /Setup checklist/);
+    assert.match(helpDrawer, /lg:w-\[360px\]/);
+    assert.match(helpDrawer, /w-full/);
+    assert.match(helpDrawer, /fixed inset-0/);
+
+    const helpLib = await readUtf8("lib/capital-help.ts");
+    assert.match(helpLib, /Settled Cash vs Total Equity/);
+    assert.match(helpLib, /Liquidity Buffer/);
+    assert.match(helpLib, /broker_snapshot/);
+    assert.match(helpLib, /Balance and as-of must be paired/);
+    assert.match(helpLib, /Configure/);
+    assert.match(helpLib, /Generate Proposal/);
+    assert.match(helpLib, /Capital Planner/);
+    assert.match(helpLib, /Capital Settings status snapshot/);
+    assert.match(helpLib, /Private full snapshot/);
+    assert.match(helpLib, /supabase\/capital-planner\.sql/);
+    assert.match(helpLib, /supabase\/external-positions\.sql/);
+
+    const {
+      formatCapitalStoreError,
+      capitalPlannerMissingTableRecovery,
+      externalPositionsMissingTableRecovery,
+    } = await import("../lib/capital-store-recovery");
+    const missing = formatCapitalStoreError(
+      'Supabase capital_planner_state read failed: relation "public.capital_planner_state" does not exist',
+      "capital"
+    )!;
+    assert.match(missing, /capital-planner\.sql/);
+    assert.match(missing, /SQL Editor/);
+    assert.ok(missing.includes(capitalPlannerMissingTableRecovery().slice(0, 40)));
+
+    const epMissing = formatCapitalStoreError(
+      'Could not find the table \'public.external_positions\' in the schema cache',
+      "external"
+    )!;
+    assert.match(epMissing, /external-positions\.sql/);
+    assert.ok(
+      epMissing.includes(externalPositionsMissingTableRecovery().slice(0, 40))
+    );
+
+    const {
+      buildCapitalSetupChecklist,
+    } = await import("../lib/capital-help");
+    const checklist = buildCapitalSetupChecklist({
+      capitalPlannerSqlAvailable: false,
+      externalPositionsSqlAvailable: true,
+      hasActiveConfiguration: false,
+      cashConfigured: false,
+      equityConfigured: false,
+      capitalAccountOperational: false,
+    });
+    assert.equal(
+      checklist.find((c) => c.id === "capital-planner-tables")?.status,
+      "missing"
+    );
+    assert.equal(
+      checklist.find((c) => c.id === "external-positions-table")?.status,
+      "ok"
+    );
+    assert.match(
+      checklist.find((c) => c.id === "capital-planner-tables")?.detail ?? "",
+      /capital-planner\.sql/
+    );
+
+    const page = await readUtf8(
+      "app/(trading)/(preview)/settings/capital/page.tsx"
+    );
+    assert.match(page, /externalPositionsSqlAvailable/);
+    assert.match(page, /external-positions\.sql/);
   }
 
   __setCapitalPlannerStoreForTests(null);

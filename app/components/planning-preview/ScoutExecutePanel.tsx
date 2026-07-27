@@ -13,6 +13,10 @@ import type { TradeProspect } from "@/lib/trade-prospects";
 import { prospectToPrefill } from "@/lib/trade-prospects";
 import type { Playbook } from "@/lib/playbook-types";
 import type { TradePlan } from "@/lib/plan-types";
+import type { CapitalAccountSnapshot } from "@/lib/capital-account";
+import type { CapitalReservation } from "@/lib/capital-types";
+import { scoutFundingSnapshotItem } from "@/lib/scout-funding-snapshot";
+import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 import { FamilyBBullTrendPanel } from "@/app/components/planning-preview/FamilyBBullTrendPanel";
 import { LayeredEntryPanel } from "@/app/components/planning-preview/LayeredEntryPanel";
@@ -48,6 +52,9 @@ export function ScoutExecutePanel({
   playbooks,
   suggestedTradeId,
   monthlyLossRoom,
+  reservations = [],
+  capitalAccount = null,
+  capitalConfigurationPresent,
 }: {
   plan: TradePlan | null;
   prospect: TradeProspect | null;
@@ -55,6 +62,9 @@ export function ScoutExecutePanel({
   playbooks: Playbook[];
   suggestedTradeId: string;
   monthlyLossRoom: number;
+  reservations?: CapitalReservation[];
+  capitalAccount?: CapitalAccountSnapshot | null;
+  capitalConfigurationPresent?: boolean;
 }) {
   const [copiedBoot, setCopiedBoot] = useState(false);
   const [copiedSample, setCopiedSample] = useState(false);
@@ -198,12 +208,36 @@ export function ScoutExecutePanel({
     );
   }
 
+  const fundingSnapshotItem = scoutFundingSnapshotItem({
+    plan,
+    reservations,
+    account: capitalAccount,
+    authorizableLossRoom: monthlyLossRoom,
+    capitalConfigurationPresent,
+  });
+
   return (
     <section className="rounded-2xl border border-emerald-500/30 bg-emerald-950/10 p-4">
-      <h2 className="text-sm font-semibold text-emerald-200">Execute · {plan.id}</h2>
-      <p className="mt-1 text-xs text-zinc-500">
-        Copy boot → AI → <span className="text-emerald-300/90">Control → Apply → Accept</span>.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold text-emerald-200">
+            Execute · {plan.id}
+          </h2>
+          <p className="mt-1 text-xs text-zinc-500">
+            Copy boot → AI →{" "}
+            <span className="text-emerald-300/90">Control → Apply → Accept</span>
+            .
+          </p>
+        </div>
+        <div data-scout-funding-snapshot>
+          <SnapshotButton
+            title="Scout Funding Snapshot"
+            description="Canonical package for capital-reservation-create — read-only"
+            items={[fundingSnapshotItem]}
+            className="!min-h-11"
+          />
+        </div>
+      </div>
       {plan.status === "expired" ? (
         <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
           Plan expired — still valid to update. Paste a decision-update with{" "}

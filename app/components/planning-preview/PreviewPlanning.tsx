@@ -31,6 +31,9 @@ import { scoutDeskSnapshotItems, stockProfileSnapshotItems } from "@/lib/snapsho
 import { snapshotButtonTitle } from "@/lib/snapshot-verification";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import type { Experiment, Trade } from "@/lib/types";
+import type { CapitalAccountSnapshot } from "@/lib/capital-account";
+import type { CapitalReservation } from "@/lib/capital-types";
+import { scoutFundingSnapshotItem } from "@/lib/scout-funding-snapshot";
 import {
   incompleteTradesForTicker,
   orphanIncompleteTradeTickers,
@@ -103,6 +106,9 @@ export function PreviewPlanning({
   focusPlanId,
   focusThesisId,
   snapshotItems: initialSnapshotItems,
+  reservations = [],
+  capitalAccount = null,
+  capitalConfigurationPresent,
 }: {
   plans: TradePlan[];
   playbooks: Playbook[];
@@ -115,6 +121,9 @@ export function PreviewPlanning({
   focusPlanId?: string;
   focusThesisId?: string;
   snapshotItems: SnapshotMenuItem[];
+  reservations?: CapitalReservation[];
+  capitalAccount?: CapitalAccountSnapshot | null;
+  capitalConfigurationPresent?: boolean;
 }) {
   const [scoutCaseKey, setScoutCaseKey] = useState<string | null>(focusThesisId ?? null);
   const [planPanelOpen, setPlanPanelOpen] = useState(false);
@@ -206,7 +215,7 @@ export function PreviewPlanning({
   }, [scoutThesis, focusPlan]);
 
   const snapshotItems = useMemo(() => {
-    return scoutDeskSnapshotItems({
+    const items = scoutDeskSnapshotItems({
       playbooks,
       stockTheses: activeTheses,
       plans,
@@ -216,15 +225,30 @@ export function PreviewPlanning({
       focusThesis: scoutThesis ?? undefined,
       focusPlan: focusPlan ?? undefined,
     });
+    if (focusPlan) {
+      items.push(
+        scoutFundingSnapshotItem({
+          plan: focusPlan,
+          reservations,
+          account: capitalAccount,
+          authorizableLossRoom: monthly.monthlyLossRoom,
+          capitalConfigurationPresent,
+        })
+      );
+    }
+    return items;
   }, [
     scoutThesis,
     focusPlan,
-    plans,
     playbooks,
     activeTheses,
+    plans,
     monthly,
     experiment,
     marketEvidence,
+    reservations,
+    capitalAccount,
+    capitalConfigurationPresent,
   ]);
 
   useEffect(() => {
@@ -591,6 +615,9 @@ export function PreviewPlanning({
                     playbooks={playbooks}
                     suggestedTradeId={suggestedTradeId}
                     monthlyLossRoom={monthly.monthlyLossRoom}
+                    reservations={reservations}
+                    capitalAccount={capitalAccount}
+                    capitalConfigurationPresent={capitalConfigurationPresent}
                   />
                 </div>
               ) : null}

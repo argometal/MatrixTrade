@@ -26,11 +26,9 @@ async function resolveStoreMode(): Promise<string> {
   return "json";
 }
 
-async function sqlMigrationAvailable(): Promise<boolean> {
+async function sqlFileAvailable(rel: string): Promise<boolean> {
   try {
-    await fs.access(
-      path.join(process.cwd(), "supabase", "capital-planner.sql")
-    );
+    await fs.access(path.join(process.cwd(), rel));
     return true;
   } catch (err) {
     const code =
@@ -40,18 +38,32 @@ async function sqlMigrationAvailable(): Promise<boolean> {
     if (code === "ENOENT") return false;
     throw err instanceof Error
       ? err
-      : new Error("SQL migration availability check failed");
+      : new Error(`SQL migration availability check failed for ${rel}`);
   }
 }
 
+async function sqlMigrationAvailable(): Promise<boolean> {
+  return sqlFileAvailable("supabase/capital-planner.sql");
+}
+
+async function externalPositionsSqlAvailable(): Promise<boolean> {
+  return sqlFileAvailable("supabase/external-positions.sql");
+}
+
 export default async function CapitalSettingsPage() {
-  const [configurationResult, accountResult, storeModeResult, sqlResult] =
-    await Promise.all([
-      settleLoad(getActiveCapitalConfiguration()),
-      settleLoad(getCapitalAccountSnapshot()),
-      settleLoad(resolveStoreMode()),
-      settleLoad(sqlMigrationAvailable()),
-    ]);
+  const [
+    configurationResult,
+    accountResult,
+    storeModeResult,
+    sqlResult,
+    externalSqlResult,
+  ] = await Promise.all([
+    settleLoad(getActiveCapitalConfiguration()),
+    settleLoad(getCapitalAccountSnapshot()),
+    settleLoad(resolveStoreMode()),
+    settleLoad(sqlMigrationAvailable()),
+    settleLoad(externalPositionsSqlAvailable()),
+  ]);
 
   return (
     <div className="h-full overflow-y-auto">
@@ -70,6 +82,12 @@ export default async function CapitalSettingsPage() {
         }
         sqlMigrationAvailable={sqlResult.ok ? sqlResult.value : undefined}
         sqlMigrationError={sqlResult.ok ? undefined : sqlResult.error}
+        externalPositionsSqlAvailable={
+          externalSqlResult.ok ? externalSqlResult.value : undefined
+        }
+        externalPositionsSqlError={
+          externalSqlResult.ok ? undefined : externalSqlResult.error
+        }
       />
     </div>
   );
