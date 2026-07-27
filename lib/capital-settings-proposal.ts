@@ -1,6 +1,12 @@
 /**
- * Settings → Capital proposal preparation (26-1A / 26-1C).
+ * Settings → Capital proposal preparation (26-1A / 26-1C / 26-1E).
  * Pure helpers — never persist. Persistence remains Control → Apply.
+ *
+ * Null/undefined policy (update):
+ * - omitted / not dirty → leave persisted value unchanged
+ * - number (including 0) → replace
+ * - null → explicitly clear optional field
+ * - undefined must never represent an explicit clear
  */
 import {
   validateCapitalConfigurationCreateProposal,
@@ -8,12 +14,17 @@ import {
 } from "./capital-validate";
 import type { CapitalConfigSource, CapitalConfiguration } from "./capital-types";
 
+/** Optional numeric: undefined=absent, null=explicit clear (update), number=value (0 valid). */
+export type ClearableNumber = number | null | undefined;
+/** Optional timestamp: undefined=absent, null=explicit clear, string=value. */
+export type ClearableTimestamp = string | null | undefined;
+
 export type CapitalSettingsFormValues = {
-  settledCashBase?: number;
-  settledCashAsOf?: string;
-  totalEquityBase?: number;
-  totalEquityAsOf?: string;
-  liquidityBuffer?: number;
+  settledCashBase?: ClearableNumber;
+  settledCashAsOf?: ClearableTimestamp;
+  totalEquityBase?: ClearableNumber;
+  totalEquityAsOf?: ClearableTimestamp;
+  liquidityBuffer?: ClearableNumber;
   source: CapitalConfigSource;
   externalCreditsIncludedInCash: boolean;
 };
@@ -21,6 +32,13 @@ export type CapitalSettingsFormValues = {
 export type CapitalSettingsDirtyFields = Partial<
   Record<keyof CapitalSettingsFormValues, true>
 >;
+
+export type ClearableFieldKey =
+  | "settledCashBase"
+  | "settledCashAsOf"
+  | "totalEquityBase"
+  | "totalEquityAsOf"
+  | "liquidityBuffer";
 
 const FORM_KEYS: (keyof CapitalSettingsFormValues)[] = [
   "settledCashBase",
@@ -32,24 +50,37 @@ const FORM_KEYS: (keyof CapitalSettingsFormValues)[] = [
   "externalCreditsIncludedInCash",
 ];
 
-const TIMESTAMP_KEYS = new Set<keyof CapitalSettingsFormValues>([
+const CLEARABLE_KEYS: ClearableFieldKey[] = [
+  "settledCashBase",
+  "settledCashAsOf",
+  "totalEquityBase",
+  "totalEquityAsOf",
+  "liquidityBuffer",
+];
+
+const TIMESTAMP_KEYS = new Set<ClearableFieldKey>([
   "settledCashAsOf",
   "totalEquityAsOf",
 ]);
+
+function isUnconfigured(value: unknown): boolean {
+  return value === undefined || value === null;
+}
 
 function normalizeComparable(
   key: keyof CapitalSettingsFormValues,
   value: unknown
 ): unknown {
-  if (value === undefined) return undefined;
-  if (typeof value === "boolean") return value;
-  if (typeof value === "number") {
-    return Number.isFinite(value) ? value : value;
+  if (value === undefined || value === null) {
+    // Treat null and undefined as the same unconfigured state for dirty equality.
+    return undefined;
   }
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value;
   if (typeof value === "string") {
     const trimmed = value.trim();
-    if (TIMESTAMP_KEYS.has(key)) {
-      return trimmed === "" ? "" : trimmed;
+    if (TIMESTAMP_KEYS.has(key as ClearableFieldKey)) {
+      return trimmed === "" ? undefined : trimmed;
     }
     return trimmed;
   }
@@ -88,6 +119,14 @@ export function hasDirtyFields(dirty: CapitalSettingsDirtyFields): boolean {
   return FORM_KEYS.some((k) => dirty[k] === true);
 }
 
+/** True when a dirty clearable field is an explicit null clear. */
+export function isExplicitClear(
+  values: Partial<CapitalSettingsFormValues>,
+  key: ClearableFieldKey
+): boolean {
+  return values[key] === null;
+}
+
 export function buildCapitalConfigurationCreateProposal(
   values: CapitalSettingsFormValues
 ): Record<string, unknown> {
@@ -95,19 +134,25 @@ export function buildCapitalConfigurationCreateProposal(
     source: values.source,
     externalCreditsIncludedInCash: values.externalCreditsIncludedInCash,
   };
-  if (values.settledCashBase !== undefined) {
+  if (typeof values.settledCashBase === "number") {
     proposal.settledCashBase = values.settledCashBase;
   }
-  if (values.settledCashAsOf?.trim()) {
+  if (
+    typeof values.settledCashAsOf === "string" &&
+    values.settledCashAsOf.trim()
+  ) {
     proposal.settledCashAsOf = values.settledCashAsOf.trim();
   }
-  if (values.totalEquityBase !== undefined) {
+  if (typeof values.totalEquityBase === "number") {
     proposal.totalEquityBase = values.totalEquityBase;
   }
-  if (values.totalEquityAsOf?.trim()) {
+  if (
+    typeof values.totalEquityAsOf === "string" &&
+    values.totalEquityAsOf.trim()
+  ) {
     proposal.totalEquityAsOf = values.totalEquityAsOf.trim();
   }
-  if (values.liquidityBuffer !== undefined) {
+  if (typeof values.liquidityBuffer === "number") {
     proposal.liquidityBuffer = values.liquidityBuffer;
   }
   return {
@@ -117,9 +162,39 @@ export function buildCapitalConfigurationCreateProposal(
   };
 }
 
+function emitClearable(
+  proposal: Record<string, unknown>,
+  key: ClearableFieldKey,
+  value: unknown,
+  errors: string[]
+): void {
+  if (value === undefined) {
+    errors.push(
+      `Dirty field ${key} resolved to undefined without an explicit clear — emit null to clear, or restore the value`
+    );
+    return;
+  }
+  if (value === null) {
+    proposal[key] = null;
+    return;
+  }
+  if (TIMESTAMP_KEYS.has(key)) {
+    const trimmed = String(value).trim();
+    if (!trimmed) {
+      errors.push(
+        `Dirty field ${key} is blank without explicit clear marker — use null to clear`
+      );
+      return;
+    }
+    proposal[key] = trimmed;
+    return;
+  }
+  proposal[key] = value;
+}
+
 /**
  * Update proposal: id + only dirty fields.
- * Explicit empty timestamps emit null; untouched blanks are omitted.
+ * Explicit clears emit null; untouched fields omitted; 0 is a real value.
  */
 export function buildCapitalConfigurationUpdateProposal(input: {
   activeId: string;
@@ -130,36 +205,33 @@ export function buildCapitalConfigurationUpdateProposal(input: {
   const proposal: Record<string, unknown> = {
     id: activeId.trim().toUpperCase(),
   };
+  const errors: string[] = [];
 
-  if (dirtyFields.settledCashBase) {
-    proposal.settledCashBase = values.settledCashBase;
-  }
-  if (dirtyFields.settledCashAsOf) {
-    const raw = values.settledCashAsOf;
-    proposal.settledCashAsOf =
-      raw === undefined || String(raw).trim() === ""
-        ? null
-        : String(raw).trim();
-  }
-  if (dirtyFields.totalEquityBase) {
-    proposal.totalEquityBase = values.totalEquityBase;
-  }
-  if (dirtyFields.totalEquityAsOf) {
-    const raw = values.totalEquityAsOf;
-    proposal.totalEquityAsOf =
-      raw === undefined || String(raw).trim() === ""
-        ? null
-        : String(raw).trim();
-  }
-  if (dirtyFields.liquidityBuffer) {
-    proposal.liquidityBuffer = values.liquidityBuffer;
+  for (const key of CLEARABLE_KEYS) {
+    if (dirtyFields[key]) {
+      emitClearable(proposal, key, values[key], errors);
+    }
   }
   if (dirtyFields.source) {
-    proposal.source = values.source;
+    if (values.source === undefined) {
+      errors.push("Dirty field source resolved to undefined");
+    } else {
+      proposal.source = values.source;
+    }
   }
   if (dirtyFields.externalCreditsIncludedInCash) {
-    proposal.externalCreditsIncludedInCash =
-      values.externalCreditsIncludedInCash;
+    if (values.externalCreditsIncludedInCash === undefined) {
+      errors.push(
+        "Dirty field externalCreditsIncludedInCash resolved to undefined"
+      );
+    } else {
+      proposal.externalCreditsIncludedInCash =
+        values.externalCreditsIncludedInCash;
+    }
+  }
+
+  if (errors.length) {
+    throw new Error(errors.join("; "));
   }
 
   return {
@@ -169,29 +241,98 @@ export function buildCapitalConfigurationUpdateProposal(input: {
   };
 }
 
-/** Balance ↔ as-of coupling for update proposals. */
+function resultingClearable(
+  original: CapitalSettingsFormValues,
+  values: Partial<CapitalSettingsFormValues>,
+  dirty: CapitalSettingsDirtyFields,
+  key: ClearableFieldKey
+): ClearableNumber | ClearableTimestamp {
+  if (dirty[key]) return values[key];
+  return original[key];
+}
+
+/**
+ * Balance ↔ as-of coupling and clear integrity for update proposals.
+ *
+ * Invariants:
+ * - Setting/changing a balance to a number requires a fresh dirty as-of timestamp.
+ * - Clearing a balance requires clearing its as-of (both emit null).
+ * - Clearing only an as-of while the balance remains configured is rejected.
+ * - Configured balance requires configured as-of.
+ */
 export function validateUpdateTimestampCoupling(
-  dirtyFields: CapitalSettingsDirtyFields
+  dirtyFields: CapitalSettingsDirtyFields,
+  values?: Partial<CapitalSettingsFormValues>,
+  original?: CapitalSettingsFormValues
 ): { ok: true } | { ok: false; errors: string[] } {
   const errors: string[] = [];
-  if (dirtyFields.settledCashBase && !dirtyFields.settledCashAsOf) {
-    errors.push(
-      "Changing settled cash requires a fresh settledCashAsOf (do not invent timestamps)"
-    );
-  }
-  if (dirtyFields.totalEquityBase && !dirtyFields.totalEquityAsOf) {
-    errors.push(
-      "Changing total equity requires a fresh totalEquityAsOf (do not invent timestamps)"
-    );
-  }
+  const v = values ?? {};
+  const o = original;
+
+  const checkPair = (
+    balanceKey: "settledCashBase" | "totalEquityBase",
+    asOfKey: "settledCashAsOf" | "totalEquityAsOf",
+    label: string
+  ) => {
+    if (!dirtyFields[balanceKey] && !dirtyFields[asOfKey]) return;
+
+    const bal = o
+      ? resultingClearable(o, v, dirtyFields, balanceKey)
+      : v[balanceKey];
+    const asOf = o
+      ? resultingClearable(o, v, dirtyFields, asOfKey)
+      : v[asOfKey];
+
+    if (dirtyFields[balanceKey]) {
+      if (typeof bal === "number") {
+        if (!dirtyFields[asOfKey]) {
+          errors.push(
+            `Changing ${label} requires a fresh ${asOfKey} (do not invent timestamps)`
+          );
+        } else if (asOf === null || asOf === undefined || String(asOf).trim() === "") {
+          errors.push(
+            `Changing ${label} requires a valid ${asOfKey} timestamp (not cleared)`
+          );
+        }
+      } else if (bal === null) {
+        if (!dirtyFields[asOfKey] || asOf !== null) {
+          errors.push(
+            `Clearing ${label} requires clearing ${asOfKey} (emit both as null)`
+          );
+        }
+      } else if (bal === undefined) {
+        errors.push(
+          `Dirty ${balanceKey} is undefined — use null to clear or a number to set`
+        );
+      }
+    }
+
+    if (dirtyFields[asOfKey] && !dirtyFields[balanceKey]) {
+      // Clearing only timestamp while balance remains configured — reject.
+      if (asOf === null || asOf === undefined || String(asOf).trim() === "") {
+        if (typeof bal === "number") {
+          errors.push(
+            `Cannot clear ${asOfKey} while ${label} remains configured — clear both or keep as-of`
+          );
+        }
+      }
+    }
+  };
+
+  checkPair("settledCashBase", "settledCashAsOf", "settled cash");
+  checkPair("totalEquityBase", "totalEquityAsOf", "total equity");
+
   return errors.length ? { ok: false, errors } : { ok: true };
 }
 
-const FAR_FUTURE_MS = 48 * 60 * 60 * 1000; // 48h grace for clock skew
+const FAR_FUTURE_MS = 48 * 60 * 60 * 1000;
 
 export function validateCapitalSettingsFormValues(
   values: CapitalSettingsFormValues,
-  options?: { mode: "create" | "update"; dirtyFields?: CapitalSettingsDirtyFields }
+  options?: {
+    mode: "create" | "update";
+    dirtyFields?: CapitalSettingsDirtyFields;
+  }
 ): { ok: true } | { ok: false; errors: string[] } {
   const errors: string[] = [];
   const mode = options?.mode ?? "create";
@@ -203,7 +344,7 @@ export function validateCapitalSettingsFormValues(
   ) => {
     if (mode === "update" && dirty && !dirty[key]) return;
     const v = values[key];
-    if (v === undefined) return;
+    if (v === undefined || v === null) return;
     if (!Number.isFinite(v) || Number.isNaN(v)) {
       errors.push(`${label} must be a finite number`);
     } else if (v < 0) {
@@ -215,6 +356,14 @@ export function validateCapitalSettingsFormValues(
   checkNumber("totalEquityBase", "Total equity");
   checkNumber("liquidityBuffer", "Liquidity buffer");
 
+  const cash =
+    typeof values.settledCashBase === "number"
+      ? values.settledCashBase
+      : undefined;
+  const buffer =
+    typeof values.liquidityBuffer === "number"
+      ? values.liquidityBuffer
+      : undefined;
   const cashRelevant =
     mode === "create" ||
     !dirty ||
@@ -222,11 +371,9 @@ export function validateCapitalSettingsFormValues(
     dirty.liquidityBuffer;
   if (
     cashRelevant &&
-    values.settledCashBase !== undefined &&
-    values.liquidityBuffer !== undefined &&
-    Number.isFinite(values.settledCashBase) &&
-    Number.isFinite(values.liquidityBuffer) &&
-    values.liquidityBuffer > values.settledCashBase
+    cash !== undefined &&
+    buffer !== undefined &&
+    buffer > cash
   ) {
     errors.push("Liquidity buffer cannot exceed settled cash");
   }
@@ -237,7 +384,7 @@ export function validateCapitalSettingsFormValues(
   ) => {
     if (mode === "update" && dirty && !dirty[key]) return;
     const raw = values[key];
-    if (raw === undefined || String(raw).trim() === "") return;
+    if (raw === undefined || raw === null || String(raw).trim() === "") return;
     const t = Date.parse(String(raw).trim());
     if (!Number.isFinite(t) || Number.isNaN(t)) {
       errors.push(`${label} must be a valid ISO timestamp`);
@@ -252,19 +399,23 @@ export function validateCapitalSettingsFormValues(
   checkTs("totalEquityAsOf", "Total equity as-of");
 
   if (mode === "create") {
-    const hasCash = values.settledCashBase !== undefined;
-    const hasEquity = values.totalEquityBase !== undefined;
+    const hasCash = typeof values.settledCashBase === "number";
+    const hasEquity = typeof values.totalEquityBase === "number";
     if (!hasCash && !hasEquity) {
       errors.push(
         "Create requires at least settled cash or total equity (do not invent missing values)"
       );
+    }
+    for (const key of CLEARABLE_KEYS) {
+      if (values[key] === null) {
+        errors.push(`Create does not accept null for ${key}`);
+      }
     }
   }
 
   return errors.length ? { ok: false, errors } : { ok: true };
 }
 
-/** Soft warnings for UI (e.g. source=other). */
 export function capitalSettingsFormWarnings(
   values: CapitalSettingsFormValues
 ): string[] {
@@ -313,7 +464,25 @@ export function formValuesFromConfiguration(
   };
 }
 
-/** Forbidden: mixing External Position fields into a Capital Configuration proposal. */
+/** Field UI state for update mode indicators. */
+export function fieldUpdateState(
+  original: CapitalSettingsFormValues,
+  current: CapitalSettingsFormValues,
+  key: ClearableFieldKey
+): "unchanged" | "changed" | "will-clear" {
+  if (valuesEqualForDirty(key, original[key], current[key])) return "unchanged";
+  if (current[key] === null) return "will-clear";
+  // Empty string timestamp after having a value is treated as clear intent in the form layer.
+  if (
+    TIMESTAMP_KEYS.has(key) &&
+    (current[key] === undefined ||
+      (typeof current[key] === "string" && !String(current[key]).trim()))
+  ) {
+    return isUnconfigured(original[key]) ? "unchanged" : "will-clear";
+  }
+  return "changed";
+}
+
 export function proposalMixesExternalPosition(
   payload: Record<string, unknown>
 ): boolean {

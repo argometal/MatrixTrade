@@ -75,7 +75,7 @@ Dashboard curve renamed to Experiment cumulative P/L (not Account Equity).
 
 ---
 
-## In review — Capital Settings 26-1A / harden 26-1C
+## In review — Capital Settings 26-1A / 26-1C / 26-1E
 
 Doc: `md/matrix/capital-settings-26-1a.md`  
 Route: `/settings/capital`  
@@ -83,7 +83,8 @@ Test: `npm run test:capital-settings`
 PR: #107 · branch `cursor/capital-settings-26-1a-b0a5` — do not merge until human review.
 
 Settings prepares capital-configuration proposals only (no persist).  
-Updates emit dirty fields only; balance changes need fresh as-of.  
+Updates: omitted=unchanged · number/0=set · null=clear (never undefined clear; never Number(null)).  
+Balance clear requires as-of clear; configured balance requires configured as-of.  
 Default status snapshot omits balances; private snapshot is explicit + confirmed.  
 Isolated load: config/account/store/SQL failures do not crash the page.  
 Mechanics points to Settings → Capital; ticker snapshots exclude account balances.

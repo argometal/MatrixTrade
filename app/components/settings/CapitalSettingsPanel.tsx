@@ -11,6 +11,7 @@ import {
   buildCapitalConfigurationUpdateProposal,
   capitalSettingsFormWarnings,
   computeDirtyFields,
+  fieldUpdateState,
   formValuesFromConfiguration,
   hasDirtyFields,
   proposalMixesExternalPosition,
@@ -19,6 +20,7 @@ import {
   validateUpdateTimestampCoupling,
   type CapitalSettingsDirtyFields,
   type CapitalSettingsFormValues,
+  type ClearableFieldKey,
 } from "@/lib/capital-settings-proposal";
 import {
   capitalSettingsPrivateSnapshotItem,
@@ -29,8 +31,9 @@ import type {
   CapitalConfiguration,
 } from "@/lib/capital-types";
 
-function displayMoney(n: number | undefined): string {
-  if (n === undefined || !Number.isFinite(n)) return "Unconfigured";
+function displayMoney(n: number | null | undefined): string {
+  // null/undefined = Unconfigured; 0 remains a configured zero (never coerce null → $0).
+  if (n === undefined || n === null || !Number.isFinite(n)) return "Unconfigured";
   return n.toLocaleString(undefined, {
     style: "currency",
     currency: "USD",
@@ -38,8 +41,16 @@ function displayMoney(n: number | undefined): string {
   });
 }
 
-function displayText(v: string | undefined): string {
+function displayText(v: string | null | undefined): string {
   return v && v.trim() ? v : "Unconfigured";
+}
+
+function fieldStateLabel(
+  state: "unchanged" | "changed" | "will-clear"
+): string | null {
+  if (state === "changed") return "Changed";
+  if (state === "will-clear") return "Will be cleared";
+  return null;
 }
 
 const SOURCES: CapitalConfigSource[] = [
@@ -88,12 +99,16 @@ export function CapitalSettingsPanel({
   const [adminOpen, setAdminOpen] = useState(false);
   const [privateConfirmed, setPrivateConfirmed] = useState(false);
   const [privateCopyMsg, setPrivateCopyMsg] = useState("");
+  const [cashClearConfirmed, setCashClearConfirmed] = useState(false);
 
   const dirtyFields: CapitalSettingsDirtyFields = useMemo(
     () => (mode === "update" ? computeDirtyFields(original, form) : {}),
     [mode, original, form]
   );
   const dirty = hasDirtyFields(dirtyFields);
+  const willClearCash =
+    mode === "update" &&
+    fieldUpdateState(original, form, "settledCashBase") === "will-clear";
 
   const statusSnapshotItems = useMemo(
     () =>
@@ -121,6 +136,26 @@ export function CapitalSettingsPanel({
     const values = cfg ? formValuesFromConfiguration(cfg) : EMPTY_FORM;
     setOriginal(values);
     setForm(values);
+    setCashClearConfirmed(false);
+  }
+
+  function restoreField(key: ClearableFieldKey) {
+    setForm((f) => ({ ...f, [key]: original[key] }));
+    if (key === "settledCashBase" || key === "settledCashAsOf") {
+      setCashClearConfirmed(false);
+    }
+  }
+
+  function clearNumericField(
+    key: "settledCashBase" | "totalEquityBase" | "liquidityBuffer"
+  ) {
+    setForm((f) => {
+      const next = { ...f, [key]: null as null };
+      if (key === "settledCashBase") next.settledCashAsOf = null;
+      if (key === "totalEquityBase") next.totalEquityAsOf = null;
+      return next;
+    });
+    if (key === "settledCashBase") setCashClearConfirmed(false);
   }
 
   function setNumberField(
@@ -128,9 +163,17 @@ export function CapitalSettingsPanel({
     raw: string
   ) {
     if (raw.trim() === "") {
+      // Explicit clear when original had a configured value; otherwise leave absent.
+      const orig = original[key];
       setForm((f) => {
         const next = { ...f };
-        delete next[key];
+        if (typeof orig === "number") {
+          next[key] = null;
+          if (key === "settledCashBase") next.settledCashAsOf = null;
+          if (key === "totalEquityBase") next.totalEquityAsOf = null;
+        } else {
+          delete next[key];
+        }
         return next;
       });
       return;
@@ -143,6 +186,19 @@ export function CapitalSettingsPanel({
     key: "settledCashAsOf" | "totalEquityAsOf",
     raw: string
   ) {
+    if (raw.trim() === "") {
+      const orig = original[key];
+      setForm((f) => ({
+        ...f,
+        [key]:
+          typeof orig === "string" && orig.trim()
+            ? null
+            : mode === "update"
+              ? null
+              : undefined,
+      }));
+      return;
+    }
     setForm((f) => ({ ...f, [key]: raw }));
   }
 
@@ -159,7 +215,18 @@ export function CapitalSettingsPanel({
       if (!dirty) {
         return { ok: false, message: "No changes detected." };
       }
-      const coupling = validateUpdateTimestampCoupling(dirtyFields);
+      if (willClearCash && !cashClearConfirmed) {
+        return {
+          ok: false,
+          message:
+            "Clearing settled cash will make available capital unconfigured. Confirm the clear before generating a proposal. The account balance will not be inferred from total equity.",
+        };
+      }
+      const coupling = validateUpdateTimestampCoupling(
+        dirtyFields,
+        form,
+        original
+      );
       if (!coupling.ok) {
         return { ok: false, message: coupling.errors.join("; ") };
       }
@@ -170,11 +237,19 @@ export function CapitalSettingsPanel({
       if (!formCheck.ok) {
         return { ok: false, message: formCheck.errors.join("; ") };
       }
-      const payload = buildCapitalConfigurationUpdateProposal({
-        activeId: configuration.id,
-        values: form,
-        dirtyFields,
-      });
+      let payload: Record<string, unknown>;
+      try {
+        payload = buildCapitalConfigurationUpdateProposal({
+          activeId: configuration.id,
+          values: form,
+          dirtyFields,
+        });
+      } catch (err) {
+        return {
+          ok: false,
+          message: err instanceof Error ? err.message : String(err),
+        };
+      }
       if (proposalMixesExternalPosition(payload)) {
         return {
           ok: false,
@@ -186,6 +261,7 @@ export function CapitalSettingsPanel({
       if (!check.ok) {
         return { ok: false, message: `Validation failed: ${check.errors.join("; ")}` };
       }
+      // Canonical JSON for both preview and copy — null must appear explicitly.
       return { ok: true, text: JSON.stringify(payload, null, 2) };
     }
 
@@ -494,7 +570,11 @@ export function CapitalSettingsPanel({
             <p>
               Update proposals include only changed fields. Changing settled
               cash or total equity requires a matching fresh as-of timestamp
-              (not invented automatically).
+              (not invented automatically). Explicit clear emits{" "}
+              <code className="text-zinc-300">null</code>; omitted means
+              unchanged; <code className="text-zinc-300">0</code> is a valid
+              configured value. Configured balances require configured as-of —
+              clear both together.
             </p>
           </div>
         </div>
@@ -516,8 +596,9 @@ export function CapitalSettingsPanel({
         <p className="pt-2 text-zinc-300">For updates:</p>
         <ul className="list-disc space-y-1 pl-5">
           <li>active configuration ID</li>
-          <li>only the fields being changed</li>
+          <li>only the fields being changed (null = clear)</li>
           <li>fresh as-of timestamp when a balance changes</li>
+          <li>clearing a balance also clears its as-of</li>
         </ul>
       </section>
 
@@ -624,62 +705,118 @@ export function CapitalSettingsPanel({
                   }`}
             </p>
             <div className="grid gap-3 sm:grid-cols-2">
-              <label className="text-xs text-zinc-400">
-                Settled cash
-                <input
-                  type="number"
-                  className="mt-1 w-full rounded border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm text-zinc-100"
-                  value={form.settledCashBase ?? ""}
-                  onChange={(e) =>
-                    setNumberField("settledCashBase", e.target.value)
-                  }
-                />
-              </label>
-              <label className="text-xs text-zinc-400">
-                Settled cash as-of (ISO)
-                <input
-                  type="text"
-                  className="mt-1 w-full rounded border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm text-zinc-100"
-                  placeholder="2026-07-26T00:00:00.000Z"
-                  value={form.settledCashAsOf ?? ""}
-                  onChange={(e) =>
-                    setTimestampField("settledCashAsOf", e.target.value)
-                  }
-                />
-              </label>
-              <label className="text-xs text-zinc-400">
-                Total equity
-                <input
-                  type="number"
-                  className="mt-1 w-full rounded border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm text-zinc-100"
-                  value={form.totalEquityBase ?? ""}
-                  onChange={(e) =>
-                    setNumberField("totalEquityBase", e.target.value)
-                  }
-                />
-              </label>
-              <label className="text-xs text-zinc-400">
-                Total equity as-of (ISO)
-                <input
-                  type="text"
-                  className="mt-1 w-full rounded border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm text-zinc-100"
-                  value={form.totalEquityAsOf ?? ""}
-                  onChange={(e) =>
-                    setTimestampField("totalEquityAsOf", e.target.value)
-                  }
-                />
-              </label>
-              <label className="text-xs text-zinc-400">
-                Liquidity buffer (0 valid)
-                <input
-                  type="number"
-                  className="mt-1 w-full rounded border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm text-zinc-100"
-                  value={form.liquidityBuffer ?? ""}
-                  onChange={(e) =>
-                    setNumberField("liquidityBuffer", e.target.value)
-                  }
-                />
-              </label>
+              {(
+                [
+                  {
+                    key: "settledCashBase" as const,
+                    label: "Settled cash",
+                    kind: "number" as const,
+                  },
+                  {
+                    key: "settledCashAsOf" as const,
+                    label: "Settled cash as-of (ISO)",
+                    kind: "timestamp" as const,
+                  },
+                  {
+                    key: "totalEquityBase" as const,
+                    label: "Total equity",
+                    kind: "number" as const,
+                  },
+                  {
+                    key: "totalEquityAsOf" as const,
+                    label: "Total equity as-of (ISO)",
+                    kind: "timestamp" as const,
+                  },
+                  {
+                    key: "liquidityBuffer" as const,
+                    label: "Liquidity buffer (0 valid · null = unconfigured)",
+                    kind: "number" as const,
+                  },
+                ] as const
+              ).map((field) => {
+                const state =
+                  mode === "update"
+                    ? fieldUpdateState(original, form, field.key)
+                    : "unchanged";
+                const stateLabel = fieldStateLabel(state);
+                const raw = form[field.key];
+                const inputValue =
+                  raw === null || raw === undefined ? "" : String(raw);
+                return (
+                  <div key={field.key} className="space-y-1">
+                    <label className="text-xs text-zinc-400">
+                      <span className="flex flex-wrap items-center gap-2">
+                        {field.label}
+                        {stateLabel ? (
+                          <span
+                            className={
+                              state === "will-clear"
+                                ? "text-amber-300"
+                                : "text-sky-300"
+                            }
+                          >
+                            {stateLabel}
+                          </span>
+                        ) : null}
+                      </span>
+                      <input
+                        type={field.kind === "number" ? "number" : "text"}
+                        className="mt-1 w-full rounded border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm text-zinc-100"
+                        placeholder={
+                          field.kind === "timestamp"
+                            ? "2026-07-26T00:00:00.000Z"
+                            : undefined
+                        }
+                        value={inputValue}
+                        onChange={(e) =>
+                          field.kind === "number"
+                            ? setNumberField(
+                                field.key as
+                                  | "settledCashBase"
+                                  | "totalEquityBase"
+                                  | "liquidityBuffer",
+                                e.target.value
+                              )
+                            : setTimestampField(
+                                field.key as
+                                  | "settledCashAsOf"
+                                  | "totalEquityAsOf",
+                                e.target.value
+                              )
+                        }
+                      />
+                    </label>
+                    {mode === "update" ? (
+                      <div className="flex flex-wrap gap-2 text-[11px]">
+                        {field.key === "settledCashBase" ||
+                        field.key === "totalEquityBase" ||
+                        field.key === "liquidityBuffer" ? (
+                          <button
+                            type="button"
+                            className="text-zinc-400 underline-offset-2 hover:underline"
+                            onClick={() => clearNumericField(field.key)}
+                          >
+                            {field.key === "settledCashBase"
+                              ? "Clear settled cash"
+                              : field.key === "totalEquityBase"
+                                ? "Clear equity"
+                                : "Clear liquidity buffer"}
+                          </button>
+                        ) : null}
+                        {state !== "unchanged" ? (
+                          <button
+                            type="button"
+                            className="text-zinc-400 underline-offset-2 hover:underline"
+                            onClick={() => restoreField(field.key)}
+                          >
+                            Restore current value
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
               <label className="text-xs text-zinc-400">
                 Source
                 <select
@@ -713,6 +850,21 @@ export function CapitalSettingsPanel({
                 External credits already included in settled cash
               </label>
             </div>
+            {willClearCash ? (
+              <label className="flex items-start gap-2 rounded border border-amber-900/50 bg-amber-950/20 p-2 text-xs text-amber-100">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={cashClearConfirmed}
+                  onChange={(e) => setCashClearConfirmed(e.target.checked)}
+                />
+                <span>
+                  Clearing settled cash will make available capital
+                  unconfigured. The account balance will not be inferred from
+                  total equity.
+                </span>
+              </label>
+            ) : null}
             {formWarnings.map((w) => (
               <p key={w} className="text-xs text-amber-200/80">
                 {w}

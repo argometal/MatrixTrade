@@ -1,4 +1,4 @@
-# Capital Settings (26-1A / 26-1C)
+# Capital Settings (26-1A / 26-1C / 26-1E)
 
 **Route:** Settings → Capital (`/settings/capital`)  
 **Role:** Configure and prepare account-level capital. Does not persist.
@@ -19,16 +19,24 @@ Settings may prepare `capital-configuration-create` / `capital-configuration-upd
 Persistence: Control → Apply → Validate → Accept.  
 No direct Supabase writes from Settings. Administrative section is inspect-only.
 
-### Updates (26-1C)
+### Update field semantics (26-1E)
 
-`capital-configuration-update` proposals include:
+| Proposal value | Meaning |
+|---|---|
+| omitted (not dirty) | Leave persisted value unchanged |
+| number (including `0`) | Replace with configured value |
+| `null` | Explicitly clear optional field |
+| `undefined` | Never emit — not a clear operation |
 
-- `id`
-- only fields the user actually changed (dirty-field tracking)
+Applies to: `settledCashBase`, `totalEquityBase`, `liquidityBuffer`, and their as-of timestamps.
 
-Changing settled cash or total equity requires a matching fresh as-of timestamp.  
-Timestamps are never invented automatically.  
-Explicit clearing of optional as-of fields emits `null` only when that field is dirty.
+### Balance / as-of invariants
+
+- Setting or changing a balance requires a fresh dirty as-of timestamp (never invented).
+- Clearing a balance requires clearing its as-of — both emit `null`.
+- Clearing only an as-of while the balance remains configured is rejected.
+- Configured balance requires configured as-of.
+- Liquidity buffer: `0` is valid; `null` means unconfigured (never coerce clear → zero).
 
 ## Snapshots (26-1C)
 

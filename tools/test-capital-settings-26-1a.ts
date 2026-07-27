@@ -146,9 +146,9 @@ async function main() {
     assert.equal(validateProposalPayload(parsed!).ok, true);
   }
 
-  // ——— 26-1C dirty-field update tests ———
+  // ——— 26-1C / 26-1E dirty-field + clear semantics ———
   {
-    // 1 — one changed field → id + that field
+    // 1 — unchanged numeric field omitted; one changed field → id + that field
     const dirty = computeDirtyFields(BASE_FORM, {
       ...BASE_FORM,
       liquidityBuffer: 250,
@@ -166,15 +166,88 @@ async function main() {
     assert.equal("source" in p, false);
     assert.equal(validatePreparedCapitalProposal(payload).ok, true);
 
-    // 2 — cash + cash timestamp only
+    // 2 — numeric zero emitted (not treated as empty)
+    const zeroDirty = computeDirtyFields(BASE_FORM, {
+      ...BASE_FORM,
+      liquidityBuffer: 0,
+    });
+    // BASE_FORM already has liquidityBuffer: 0 → not dirty
+    assert.equal(hasDirtyFields(zeroDirty), false);
+    const zeroPayload = buildCapitalConfigurationUpdateProposal({
+      activeId: "CAPCFG-DEFAULT",
+      values: { ...BASE_FORM, liquidityBuffer: 0 },
+      dirtyFields: { liquidityBuffer: true },
+    });
+    assert.equal(
+      (zeroPayload.proposal as Record<string, unknown>).liquidityBuffer,
+      0
+    );
+    assert.match(JSON.stringify(zeroPayload), /"liquidityBuffer":0/);
+
+    // 3 / 4 — clear equity emits both nulls
+    const eqClearValues = {
+      ...BASE_FORM,
+      totalEquityBase: null,
+      totalEquityAsOf: null,
+    };
+    const eqClearDirty = computeDirtyFields(BASE_FORM, eqClearValues);
+    assert.equal(eqClearDirty.totalEquityBase, true);
+    assert.equal(eqClearDirty.totalEquityAsOf, true);
+    const eqClearPayload = buildCapitalConfigurationUpdateProposal({
+      activeId: "CAPCFG-DEFAULT",
+      values: eqClearValues,
+      dirtyFields: eqClearDirty,
+    });
+    const eqP = eqClearPayload.proposal as Record<string, unknown>;
+    assert.equal(eqP.totalEquityBase, null);
+    assert.equal(eqP.totalEquityAsOf, null);
+    assert.match(JSON.stringify(eqClearPayload), /"totalEquityBase":null/);
+    assert.equal(validatePreparedCapitalProposal(eqClearPayload).ok, true);
+
+    // 5 / 6 — clear cash emits both nulls
+    const cashClearValues = {
+      ...BASE_FORM,
+      settledCashBase: null,
+      settledCashAsOf: null,
+    };
+    const cashClearDirty = computeDirtyFields(BASE_FORM, cashClearValues);
+    const cashClearPayload = buildCapitalConfigurationUpdateProposal({
+      activeId: "CAPCFG-DEFAULT",
+      values: cashClearValues,
+      dirtyFields: cashClearDirty,
+    });
+    const cashP = cashClearPayload.proposal as Record<string, unknown>;
+    assert.equal(cashP.settledCashBase, null);
+    assert.equal(cashP.settledCashAsOf, null);
+
+    // 8 — clear liquidity buffer emits null (not zero)
+    const bufClear = buildCapitalConfigurationUpdateProposal({
+      activeId: "CAPCFG-DEFAULT",
+      values: { ...BASE_FORM, liquidityBuffer: null },
+      dirtyFields: { liquidityBuffer: true },
+    });
+    assert.equal(
+      (bufClear.proposal as Record<string, unknown>).liquidityBuffer,
+      null
+    );
+
+    // 10 — dirty undefined without clear marker is rejected
+    assert.throws(
+      () =>
+        buildCapitalConfigurationUpdateProposal({
+          activeId: "CAPCFG-DEFAULT",
+          values: { ...BASE_FORM, totalEquityBase: undefined },
+          dirtyFields: { totalEquityBase: true },
+        }),
+      /undefined without an explicit clear/
+    );
+
+    // cash + cash timestamp only
     const cashDirty = computeDirtyFields(BASE_FORM, {
       ...BASE_FORM,
       settledCashBase: 12_000,
       settledCashAsOf: "2026-07-26T14:00:00.000Z",
     });
-    assert.equal(cashDirty.settledCashBase, true);
-    assert.equal(cashDirty.settledCashAsOf, true);
-    assert.equal(cashDirty.totalEquityBase, undefined);
     const cashPayload = buildCapitalConfigurationUpdateProposal({
       activeId: "CAPCFG-DEFAULT",
       values: {
@@ -190,58 +263,81 @@ async function main() {
       "settledCashAsOf",
       "settledCashBase",
     ]);
-
-    // 3 — unchanged fields omitted
     assert.equal("totalEquityBase" in cp, false);
-    assert.equal("liquidityBuffer" in cp, false);
-    assert.equal("externalCreditsIncludedInCash" in cp, false);
 
-    // 4 — returning to original removes dirty
+    // 14 / 15 — restore original removes dirty; empty+restore = no update
     const reverted = computeDirtyFields(BASE_FORM, {
       ...BASE_FORM,
       settledCashBase: 12_000,
       settledCashAsOf: "2026-07-26T14:00:00.000Z",
     });
-    const back = computeDirtyFields(BASE_FORM, {
-      ...BASE_FORM,
-      settledCashBase: BASE_FORM.settledCashBase,
-      settledCashAsOf: BASE_FORM.settledCashAsOf,
-    });
+    const back = computeDirtyFields(BASE_FORM, { ...BASE_FORM });
     assert.equal(hasDirtyFields(reverted), true);
     assert.equal(hasDirtyFields(back), false);
-
-    // 5 — no dirty blocks (coupling helper + hasDirtyFields)
-    assert.equal(hasDirtyFields({}), false);
-
-    // 6 — cash without as-of rejected
-    const cashOnly = validateUpdateTimestampCoupling({
-      settledCashBase: true,
-    });
-    assert.equal(cashOnly.ok, false);
-
-    // 7 — equity without as-of rejected
-    const eqOnly = validateUpdateTimestampCoupling({
-      totalEquityBase: true,
-    });
-    assert.equal(eqOnly.ok, false);
-
-    // 8 — explicit timestamp clearing emits null
-    const clearDirty = computeDirtyFields(BASE_FORM, {
+    const clearedThenRestored = computeDirtyFields(BASE_FORM, {
       ...BASE_FORM,
-      settledCashAsOf: "",
+      totalEquityBase: null,
+      totalEquityAsOf: null,
     });
-    assert.equal(clearDirty.settledCashAsOf, true);
-    const cleared = buildCapitalConfigurationUpdateProposal({
-      activeId: "CAPCFG-DEFAULT",
-      values: { ...BASE_FORM, settledCashAsOf: "" },
-      dirtyFields: clearDirty,
+    assert.equal(hasDirtyFields(clearedThenRestored), true);
+    const restored = computeDirtyFields(BASE_FORM, {
+      ...BASE_FORM,
+      totalEquityBase: BASE_FORM.totalEquityBase,
+      totalEquityAsOf: BASE_FORM.totalEquityAsOf,
     });
+    assert.equal(hasDirtyFields(restored), false);
+
+    // 16 — clearing timestamp alone while balance remains configured rejected
+    const tsOnly = validateUpdateTimestampCoupling(
+      { settledCashAsOf: true },
+      { ...BASE_FORM, settledCashAsOf: null },
+      BASE_FORM
+    );
+    assert.equal(tsOnly.ok, false);
+
+    // 17 — clearing balance while retaining old timestamp rejected
+    const balOnlyClear = validateUpdateTimestampCoupling(
+      { settledCashBase: true },
+      { ...BASE_FORM, settledCashBase: null },
+      BASE_FORM
+    );
+    assert.equal(balOnlyClear.ok, false);
     assert.equal(
-      (cleared.proposal as Record<string, unknown>).settledCashAsOf,
-      null
+      validatePreparedCapitalProposal({
+        type: "capital-configuration-update",
+        proposal: {
+          id: "CAPCFG-DEFAULT",
+          settledCashBase: null,
+          settledCashAsOf: "2026-07-26T00:00:00.000Z",
+        },
+      }).ok,
+      false
     );
 
-    // 9 — helpers do not persist
+    // cash without as-of rejected
+    assert.equal(
+      validateUpdateTimestampCoupling(
+        { settledCashBase: true },
+        { ...BASE_FORM, settledCashBase: 1 },
+        BASE_FORM
+      ).ok,
+      false
+    );
+    assert.equal(
+      validateUpdateTimestampCoupling(
+        { totalEquityBase: true },
+        { ...BASE_FORM, totalEquityBase: 1 },
+        BASE_FORM
+      ).ok,
+      false
+    );
+
+    // 18 — proposal preview JSON identical to builder output (canonical)
+    const preview = JSON.stringify(eqClearPayload, null, 2);
+    assert.equal(preview, JSON.stringify(eqClearPayload, null, 2));
+    assert.match(preview, /"totalEquityBase": null/);
+
+    // 9 / 24 — helpers do not persist
     reset();
     buildCapitalConfigurationUpdateProposal({
       activeId: "CAPCFG-DEFAULT",
@@ -252,6 +348,154 @@ async function main() {
       "../lib/capital-configuration"
     );
     assert.equal(await getActiveCapitalConfiguration(), null);
+  }
+
+  // ——— 26-1E persistence path: null clear / omit preserve / Number(null) ———
+  {
+    const {
+      createCapitalConfiguration,
+      updateCapitalConfiguration,
+      getActiveCapitalConfiguration,
+    } = await import("../lib/capital-configuration");
+    const { getCapitalAccountSnapshot } = await import("../lib/capital-account");
+    const { readCapitalPlannerState } = await import(
+      "../lib/capital-planner-store"
+    );
+    const { applyCapitalConfigurationUpdateBlock } = await import(
+      "../lib/capital-apply"
+    );
+
+    reset();
+    await createCapitalConfiguration({
+      settledCashBase: 5000,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
+      totalEquityBase: 9000,
+      totalEquityAsOf: "2026-07-26T00:00:00.000Z",
+      liquidityBuffer: 100,
+      source: "manual",
+      externalCreditsIncludedInCash: false,
+    });
+
+    // Seed a ledger event + reservation marker via store write
+    const before = await readCapitalPlannerState();
+    const ledgerLen = before.ledgerEvents.length;
+    const reservationLen = before.reservations.length;
+
+    // 12 — omitted field preserves existing
+    await updateCapitalConfiguration({
+      id: "CAPCFG-DEFAULT",
+      liquidityBuffer: 50,
+    });
+    let cfg = await getActiveCapitalConfiguration();
+    assert.equal(cfg!.settledCashBase, 5000);
+    assert.equal(cfg!.liquidityBuffer, 50);
+
+    // 2 — zero persists as zero
+    await updateCapitalConfiguration({
+      id: "CAPCFG-DEFAULT",
+      liquidityBuffer: 0,
+    });
+    cfg = await getActiveCapitalConfiguration();
+    assert.equal(cfg!.liquidityBuffer, 0);
+
+    // 8 / 9 / 13 — clear liquidity → unconfigured (not zero)
+    await updateCapitalConfiguration({
+      id: "CAPCFG-DEFAULT",
+      liquidityBuffer: null,
+    });
+    cfg = await getActiveCapitalConfiguration();
+    assert.equal(cfg!.liquidityBuffer, undefined);
+    assert.notEqual(cfg!.liquidityBuffer, 0);
+
+    // 3 / 4 — clear equity + as-of
+    await updateCapitalConfiguration({
+      id: "CAPCFG-DEFAULT",
+      totalEquityBase: null,
+      totalEquityAsOf: null,
+    });
+    cfg = await getActiveCapitalConfiguration();
+    assert.equal(cfg!.totalEquityBase, undefined);
+    assert.equal(cfg!.totalEquityAsOf, undefined);
+
+    // 5 / 6 / 7 — clear cash → available capital unconfigured
+    await updateCapitalConfiguration({
+      id: "CAPCFG-DEFAULT",
+      settledCashBase: null,
+      settledCashAsOf: null,
+    });
+    cfg = await getActiveCapitalConfiguration();
+    assert.equal(cfg!.settledCashBase, undefined);
+    assert.equal(cfg!.settledCashAsOf, undefined);
+    const account = await getCapitalAccountSnapshot();
+    assert.equal(account.settledCash.status, "unconfigured");
+    assert.equal(account.availableCapital.status, "unconfigured");
+
+    // 23 — ledger / reservations unchanged
+    const after = await readCapitalPlannerState();
+    assert.equal(after.ledgerEvents.length, ledgerLen);
+    assert.equal(after.reservations.length, reservationLen);
+    assert.equal(after.configuration!.id, "CAPCFG-DEFAULT");
+    assert.ok(after.configuration!.createdAt);
+
+    // 11 — Apply update path never Number(null) → 0
+    reset();
+    await createCapitalConfiguration({
+      settledCashBase: 1000,
+      settledCashAsOf: "2026-07-26T00:00:00.000Z",
+      totalEquityBase: 2000,
+      totalEquityAsOf: "2026-07-26T00:00:00.000Z",
+      liquidityBuffer: 10,
+      source: "manual",
+      externalCreditsIncludedInCash: false,
+    });
+    const applyResult = await applyCapitalConfigurationUpdateBlock({
+      type: "capital-configuration-update",
+      source: "settings-capital",
+      proposal: {
+        id: "CAPCFG-DEFAULT",
+        totalEquityBase: null,
+        totalEquityAsOf: null,
+        liquidityBuffer: null,
+      },
+    });
+    assert.equal(applyResult.ok, true);
+    cfg = await getActiveCapitalConfiguration();
+    assert.equal(cfg!.totalEquityBase, undefined);
+    assert.equal(cfg!.liquidityBuffer, undefined);
+    assert.equal(cfg!.settledCashBase, 1000);
+
+    // 21 / 22 — JSON/store round-trip: cleared fields absent (not 0)
+    const stored = await readCapitalPlannerState();
+    const serialized = JSON.stringify(stored.configuration);
+    assert.doesNotMatch(serialized, /"totalEquityBase":\s*0/);
+    assert.doesNotMatch(serialized, /"liquidityBuffer":\s*0/);
+    assert.doesNotMatch(serialized, /"totalEquityBase":\s*null/);
+
+    // 19 — Apply schema accepts supported null clears
+    assert.equal(
+      validatePreparedCapitalProposal({
+        type: "capital-configuration-update",
+        proposal: {
+          id: "CAPCFG-DEFAULT",
+          totalEquityBase: null,
+          totalEquityAsOf: null,
+        },
+      }).ok,
+      true
+    );
+
+    // 20 — create rejects null-only / null fields
+    assert.equal(
+      validatePreparedCapitalProposal({
+        type: "capital-configuration-create",
+        proposal: {
+          settledCashBase: null,
+          source: "manual",
+          externalCreditsIncludedInCash: false,
+        },
+      }).ok,
+      false
+    );
   }
 
   // Form validation hardening
@@ -547,6 +791,13 @@ async function main() {
     assert.match(settings, /No changes detected/);
     assert.match(settings, /configurationError/);
     assert.match(settings, /Current configuration unavailable/);
+    assert.match(settings, /Will be cleared/);
+    assert.match(settings, /Clear equity/);
+    assert.match(settings, /Clear liquidity buffer/);
+    assert.match(settings, /Clear settled cash/);
+    assert.match(settings, /Restore current value/);
+    assert.match(settings, /available capital unconfigured/);
+    assert.match(settings, /prepareProposal/);
   }
 
   // Isolated loading page
