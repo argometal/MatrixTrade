@@ -75,12 +75,12 @@ Dashboard curve renamed to Experiment cumulative P/L (not Account Equity).
 
 ---
 
-## In review — Capital Settings 26-1A / 26-1C / 26-1E / 26-20
+## Shipped — Capital Settings 26-1A / 26-1C / 26-1E / 26-20
 
 Doc: `md/matrix/capital-settings-26-1a.md`  
 Route: `/settings/capital`  
 Test: `npm run test:capital-settings`  
-PR: #107 · branch `cursor/capital-settings-26-1a-b0a5` — do not merge until human review.
+Merged: PR #107 · tip `43be2db` · prod https://matrix-trade-theta.vercel.app
 
 Settings prepares capital-configuration proposals only (no persist).  
 Create: complete cash+as-of or equity+as-of pair required (shared invariant helper).  
