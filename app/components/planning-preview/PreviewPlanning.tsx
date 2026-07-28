@@ -20,6 +20,7 @@ import {
 import {
   isActiveStockThesisStatus,
   STOCK_THESIS_STATUS_LABELS,
+  formatStockThesisZone,
   type StockThesis,
 } from "@/lib/stock-thesis-types";
 import {
@@ -34,6 +35,8 @@ import type { Experiment, Trade } from "@/lib/types";
 import type { CapitalAccountSnapshot } from "@/lib/capital-account";
 import type { CapitalReservation } from "@/lib/capital-types";
 import { scoutFundingSnapshotItem } from "@/lib/scout-funding-snapshot";
+import { copyText } from "@/app/components/ai-bridge/copy-text";
+import { buildTradeProposalBlock } from "@/lib/build-trade-proposal-block";
 import {
   incompleteTradesForTicker,
   orphanIncompleteTradeTickers,
@@ -127,6 +130,11 @@ export function PreviewPlanning({
 }) {
   const [scoutCaseKey, setScoutCaseKey] = useState<string | null>(focusThesisId ?? null);
   const [planPanelOpen, setPlanPanelOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsSection, setDetailsSection] = useState<
+    "thesis" | "invalidation" | "fills" | "evidence" | null
+  >(null);
+  const [prepareMsg, setPrepareMsg] = useState("");
 
   const activeTheses = useMemo(
     () => stockTheses.filter((t) => isActiveStockThesisStatus(t.status)),
@@ -208,12 +216,6 @@ export function PreviewPlanning({
 
   const panelLevelsView = focusedScoutCard?.levelsView ?? null;
 
-  const snapshotTitle = useMemo(() => {
-    if (focusPlan) return snapshotButtonTitle(focusPlan.ticker, `${focusPlan.id} snapshot`);
-    if (scoutThesis) return snapshotButtonTitle(scoutThesis.ticker, "snapshot");
-    return "Scout snapshot";
-  }, [scoutThesis, focusPlan]);
-
   const snapshotItems = useMemo(() => {
     const items = scoutDeskSnapshotItems({
       playbooks,
@@ -281,20 +283,20 @@ export function PreviewPlanning({
   const mapFocusCompact = planPanelOpen;
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row" data-scout-desk>
       <div
         className={`min-h-0 min-w-0 overflow-y-auto overscroll-y-contain ${
           mapFocusCompact
-            ? "shrink-0 pb-2 lg:flex-1 lg:pb-10"
-            : "flex-1 pb-10"
+            ? "shrink-0 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:flex-1 lg:pb-10"
+            : "flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-10"
         }`}
       >
         <header
           className={`border-b border-zinc-800 px-4 lg:px-6 ${
-            mapFocusCompact ? "py-2 lg:py-4" : "py-4"
+            mapFocusCompact ? "py-2 lg:py-3" : "py-3"
           }`}
         >
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-start justify-between gap-3 pr-10">
             <div className={mapFocusCompact ? "lg:block" : undefined}>
               <h1
                 className={`font-semibold text-zinc-100 ${
@@ -314,13 +316,11 @@ export function PreviewPlanning({
                   mapFocusCompact ? "hidden lg:block" : ""
                 }`}
               >
-                War room — cases to watch / re-enter. Compare R potencial, ganancia potencial y
-                pérdida asignada below. Incomplete closed fills belong on Trades (not this list’s
-                mission).
+                Active cases and execution readiness
               </p>
             </div>
             <div
-              className={`flex flex-wrap items-center gap-2 lg:mr-[11rem] ${
+              className={`flex flex-wrap items-center gap-2 ${
                 mapFocusCompact ? "hidden lg:flex" : ""
               }`}
             >
@@ -336,11 +336,6 @@ export function PreviewPlanning({
               >
                 Capital Planner
               </Link>
-              <SnapshotButton
-                title={snapshotTitle}
-                description="Focused scout / ticker / desk"
-                items={snapshotItems.length > 0 ? snapshotItems : initialSnapshotItems}
-              />
             </div>
           </div>
         </header>
@@ -360,11 +355,21 @@ export function PreviewPlanning({
             </section>
           ) : (
             <>
-              {!mapFocusCompact ? <ActiveScoutsComparisonTable plans={plans} /> : null}
+              {!mapFocusCompact ? (
+                <details className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
+                  <summary className="cursor-pointer text-xs font-medium text-zinc-500 hover:text-zinc-300">
+                    Compare active scouts
+                  </summary>
+                  <div className="mt-2">
+                    <ActiveScoutsComparisonTable plans={plans} />
+                  </div>
+                </details>
+              ) : null}
               <section
                 className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 ${
-                  mapFocusCompact ? "p-2.5 lg:p-4" : "p-4"
+                  mapFocusCompact ? "p-2.5 lg:p-4" : "p-3"
                 }`}
+                data-scout-case-selector
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <label
@@ -474,126 +479,331 @@ export function PreviewPlanning({
 
               {focusedScoutCard && !focusedScoutCard.orphan && focusedScoutCard.thesis ? (
                 <section
-                  className={`rounded-2xl border p-5 ${scoutingVerdictStyle(focusedScoutCard.verdict ?? "wait")} ${
+                  className={`rounded-2xl border p-4 ${scoutingVerdictStyle(focusedScoutCard.verdict ?? "wait")} ${
                     mapFocusCompact ? "hidden lg:block" : ""
                   }`}
+                  data-scout-case-summary
                 >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      href={`/stock-theses/${focusedScoutCard.thesis.id}`}
-                      className="text-xl font-semibold hover:underline"
-                    >
-                      {focusedScoutCard.thesis.ticker}
-                    </Link>
-                    <span className="text-xs opacity-70">{focusedScoutCard.thesis.id}</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase ${
-                        thesisStatusStyles[focusedScoutCard.thesis.status] ?? "bg-zinc-800 text-zinc-400"
-                      }`}
-                    >
-                      {STOCK_THESIS_STATUS_LABELS[focusedScoutCard.thesis.status]}
-                    </span>
-                    {focusedScoutCard.verdict ? (
-                      <span className="rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase">
-                        {SCOUTING_VERDICT_LABELS[focusedScoutCard.verdict]}
-                      </span>
-                    ) : null}
-                    {focusedScoutCard.primaryPlan?.status === "expired" ? (
-                      <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-amber-200">
-                        Plan expired — revive via Control
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="mt-3 text-sm opacity-95">{focusedScoutCard.thesis.currentHypothesis}</p>
-                  {focusedScoutCard.thesis.thesis ? (
-                    <p className="mt-2 text-xs opacity-70 line-clamp-3">{focusedScoutCard.thesis.thesis}</p>
-                  ) : null}
+                  {(() => {
+                    const thesis = focusedScoutCard.thesis!;
+                    const plan = focusedScoutCard.primaryPlan;
+                    const le = plan?.layeredEntry;
+                    const entry =
+                      plan?.plannedEntry ?? le?.limits?.[0]?.price;
+                    const stop =
+                      plan?.stopPrice ?? le?.commonStopPrice;
+                    const target =
+                      plan?.targetPrice ?? le?.primaryTargetPrice;
+                    const zone = formatStockThesisZone(thesis.levels?.primaryZone);
+                    const rr = focusedScoutCard.plannedRR;
+                    const snapshotItemsForCase = stockProfileSnapshotItems({
+                      thesis,
+                      playbooks,
+                      plans,
+                      activeEvidence,
+                    }).filter((item) => item.id !== "mechanics");
 
-                  <div className="mt-4 grid gap-3 text-xs sm:grid-cols-2">
-                    {focusedScoutCard.levelsView ? (
-                      <p className="text-violet-100/90">
-                        <PlanMapSummaryLine view={focusedScoutCard.levelsView} />
-                      </p>
-                    ) : (
-                      <p>Min R:R {focusedScoutCard.thesis.riskRules.minimumRR}R — set plan stop</p>
-                    )}
-                    <p>
-                      Invalidation:{" "}
-                      <span className="opacity-80">
-                        {focusedScoutCard.thesis.riskRules.invalidation.slice(0, 100)}
-                        {focusedScoutCard.thesis.riskRules.invalidation.length > 100 ? "…" : ""}
-                      </span>
-                    </p>
-                    <p>
-                      Room ${monthly.monthlyLossRoom.toFixed(0)}
-                      {monthly.monthlyCapBreached ? " · cap breached" : ""}
-                    </p>
-                    <p>
-                      Scout{" "}
-                      {focusedScoutCard.primaryPlan ? (
-                        <button
-                          type="button"
-                          onClick={() => setPlanPanelOpen(true)}
-                          className="underline opacity-90 hover:opacity-100"
-                        >
-                          {focusedScoutCard.primaryPlan.id}
-                          {focusedScoutCard.primaryPlan.status === "expired" ? " (expired)" : ""}
-                        </button>
-                      ) : (
-                        "— none —"
-                      )}
-                      {focusedScoutCard.activeScoutCount > 1
-                        ? ` · ${focusedScoutCard.activeScoutCount} active`
-                        : ""}
-                    </p>
-                  </div>
+                    async function prepareTrade() {
+                      if (!plan || entry === undefined || stop === undefined) {
+                        setPrepareMsg("Need entry + stop on the scout plan.");
+                        return;
+                      }
+                      const ok = await copyText(
+                        buildTradeProposalBlock({
+                          id: suggestedTradeId,
+                          ticker: plan.ticker,
+                          entry,
+                          stop,
+                          target,
+                          shares: 10,
+                          playbookId: plan.playbookId,
+                          thesis: `From plan ${plan.id}`,
+                          direction: "long",
+                        })
+                      );
+                      setPrepareMsg(
+                        ok
+                          ? "Copied trade-proposal — paste in Control → Apply"
+                          : "Clipboard blocked"
+                      );
+                      setTimeout(() => setPrepareMsg(""), 2500);
+                    }
 
-                  <div className="mt-4 border-t border-current/20 pt-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-                      Fills in war room (until completed)
-                    </p>
-                    {focusedScoutCard.linkedTrades.length === 0 ? (
-                      <p className="mt-2 text-xs opacity-70">No open-loop fills for this ticker.</p>
-                    ) : (
-                      <ul className="mt-2 space-y-1 text-xs">
-                        {focusedScoutCard.linkedTrades.map((t) => (
-                          <li key={t.id} className="flex flex-wrap justify-between gap-2">
-                            <Link
-                              href={`/trades/${t.id}`}
-                              className="underline opacity-90 hover:opacity-100"
-                            >
-                              {t.id} · {t.status}
-                              {t.status === "closed" ? " · review pending" : ""}
-                            </Link>
-                            <span className="opacity-70">
-                              {t.entry}
-                              {t.target !== undefined ? ` → ${t.target}` : ""}
+                    return (
+                      <>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xl font-semibold">
+                            {thesis.ticker}
+                          </span>
+                          <span className="text-xs opacity-70">{thesis.id}</span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase ${
+                              thesisStatusStyles[thesis.status] ??
+                              "bg-zinc-800 text-zinc-400"
+                            }`}
+                          >
+                            {STOCK_THESIS_STATUS_LABELS[thesis.status]}
+                          </span>
+                          {focusedScoutCard.verdict ? (
+                            <span className="rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase">
+                              {SCOUTING_VERDICT_LABELS[focusedScoutCard.verdict]}
                             </span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                          ) : null}
+                          {plan?.status === "expired" ? (
+                            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-amber-200">
+                              Expired
+                            </span>
+                          ) : null}
+                        </div>
 
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <SnapshotButton
-                      title={snapshotButtonTitle(focusedScoutCard.thesis.ticker, "snapshot")}
-                      description="Profile + evidence + scout"
-                      className="!px-3 !py-1.5"
-                      items={stockProfileSnapshotItems({
-                        thesis: focusedScoutCard.thesis,
-                        playbooks,
-                        plans,
-                        activeEvidence,
-                      }).filter((item) => item.id !== "mechanics")}
-                    />
-                    <Link
-                      href={`/stock-theses/${focusedScoutCard.thesis.id}`}
-                      className="rounded-lg border border-current/30 px-3 py-1.5 text-xs opacity-90 hover:opacity-100"
-                    >
-                      Full profile
-                    </Link>
-                  </div>
+                        <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
+                          {(
+                            [
+                              ["Zone", zone],
+                              [
+                                "Entry",
+                                entry !== undefined ? String(entry) : "—",
+                              ],
+                              [
+                                "Stop",
+                                stop !== undefined ? String(stop) : "—",
+                              ],
+                              [
+                                "Target",
+                                target !== undefined ? String(target) : "—",
+                              ],
+                              [
+                                "Plan R:R",
+                                rr !== undefined ? `${rr.toFixed(1)}R` : "—",
+                              ],
+                              [
+                                "Room",
+                                `$${monthly.monthlyLossRoom.toFixed(0)}`,
+                              ],
+                            ] as const
+                          ).map(([label, value]) => (
+                            <div
+                              key={label}
+                              className="rounded-lg border border-current/15 bg-black/10 px-2.5 py-1.5"
+                            >
+                              <dt className="text-[10px] uppercase tracking-wide opacity-60">
+                                {label}
+                              </dt>
+                              <dd className="mt-0.5 text-sm font-medium tabular-nums">
+                                {value}
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Link
+                            href={`/stock-theses/${thesis.id}`}
+                            className="rounded-lg border border-current/30 px-3 py-2 text-xs font-medium opacity-90 hover:opacity-100"
+                          >
+                            Open Scout
+                          </Link>
+                          <SnapshotButton
+                            title={snapshotButtonTitle(thesis.ticker, "snapshot")}
+                            description="Profile + evidence + scout"
+                            className="!px-3 !py-2"
+                            items={
+                              snapshotItemsForCase.length > 0
+                                ? snapshotItemsForCase
+                                : snapshotItems.length > 0
+                                  ? snapshotItems
+                                  : initialSnapshotItems
+                            }
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDetailsOpen(true);
+                              setDetailsSection(null);
+                            }}
+                            className="rounded-lg border border-current/30 px-3 py-2 text-xs font-medium opacity-90 hover:opacity-100"
+                          >
+                            Details
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void prepareTrade()}
+                            className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20"
+                          >
+                            Prepare trade
+                          </button>
+                        </div>
+                        {prepareMsg ? (
+                          <p className="mt-2 text-[11px] opacity-80">{prepareMsg}</p>
+                        ) : null}
+
+                        <div
+                          className="mt-3 border-t border-current/15 pt-2"
+                          data-scout-case-details
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setDetailsOpen((v) => !v)}
+                            className="flex w-full items-center justify-between gap-2 py-1.5 text-left text-xs font-medium opacity-80 hover:opacity-100"
+                            aria-expanded={detailsOpen}
+                          >
+                            <span>
+                              Details
+                              <span className="ml-2 font-normal opacity-60">
+                                Thesis, invalidation, fills, evidence
+                              </span>
+                            </span>
+                            <span>{detailsOpen ? "▾" : "▸"}</span>
+                          </button>
+                          {detailsOpen ? (
+                            <div className="mt-2 space-y-2">
+                              {(
+                                [
+                                  {
+                                    id: "thesis" as const,
+                                    title: "Thesis",
+                                    blurb: "Market structure and scenario.",
+                                    body: (
+                                      <div className="space-y-2 text-sm opacity-90">
+                                        {thesis.currentHypothesis ? (
+                                          <p>{thesis.currentHypothesis}</p>
+                                        ) : null}
+                                        {thesis.thesis ? (
+                                          <p className="text-xs opacity-70">
+                                            {thesis.thesis}
+                                          </p>
+                                        ) : (
+                                          <p className="text-xs opacity-60">
+                                            No extended thesis.
+                                          </p>
+                                        )}
+                                      </div>
+                                    ),
+                                  },
+                                  {
+                                    id: "invalidation" as const,
+                                    title: "Invalidation",
+                                    blurb: "Conditions that void the plan.",
+                                    body: (
+                                      <p className="text-sm opacity-90">
+                                        {thesis.riskRules.invalidation ||
+                                          "Unconfigured"}
+                                      </p>
+                                    ),
+                                  },
+                                  {
+                                    id: "fills" as const,
+                                    title: "Fills in war room",
+                                    blurb: "Open-loop fills and re-entries.",
+                                    body:
+                                      focusedScoutCard.linkedTrades.length ===
+                                      0 ? (
+                                        <p className="text-xs opacity-70">
+                                          No open-loop fills for this ticker.
+                                        </p>
+                                      ) : (
+                                        <ul className="space-y-1 text-xs">
+                                          {focusedScoutCard.linkedTrades.map(
+                                            (t) => (
+                                              <li
+                                                key={t.id}
+                                                className="flex flex-wrap justify-between gap-2"
+                                              >
+                                                <Link
+                                                  href={`/trades/${t.id}`}
+                                                  className="underline opacity-90 hover:opacity-100"
+                                                >
+                                                  {t.id} · {t.status}
+                                                  {t.status === "closed"
+                                                    ? " · review pending"
+                                                    : ""}
+                                                </Link>
+                                                <span className="opacity-70">
+                                                  {t.entry}
+                                                  {t.target !== undefined
+                                                    ? ` → ${t.target}`
+                                                    : ""}
+                                                </span>
+                                              </li>
+                                            )
+                                          )}
+                                        </ul>
+                                      ),
+                                  },
+                                  {
+                                    id: "evidence" as const,
+                                    title: "Evidence",
+                                    blurb: "Charts, notes and references.",
+                                    body: (
+                                      <div className="space-y-1 text-xs opacity-80">
+                                        {activeEvidence.length === 0 ? (
+                                          <p>No active evidence linked.</p>
+                                        ) : (
+                                          <ul className="space-y-1">
+                                            {activeEvidence
+                                              .slice(0, 8)
+                                              .map((ev) => (
+                                                <li key={ev.id}>
+                                                  {ev.category}
+                                                  {ev.value
+                                                    ? ` · ${ev.value.slice(0, 80)}`
+                                                    : ""}
+                                                </li>
+                                              ))}
+                                          </ul>
+                                        )}
+                                        {focusedScoutCard.levelsView ? (
+                                          <p className="pt-1 opacity-70">
+                                            <PlanMapSummaryLine
+                                              view={focusedScoutCard.levelsView}
+                                            />
+                                          </p>
+                                        ) : null}
+                                      </div>
+                                    ),
+                                  },
+                                ] as const
+                              ).map((row) => {
+                                const open = detailsSection === row.id;
+                                return (
+                                  <div
+                                    key={row.id}
+                                    className="rounded-lg border border-current/15 bg-black/10"
+                                  >
+                                    <button
+                                      type="button"
+                                      className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
+                                      onClick={() =>
+                                        setDetailsSection(open ? null : row.id)
+                                      }
+                                      aria-expanded={open}
+                                    >
+                                      <div>
+                                        <p className="text-xs font-medium">
+                                          {row.title}
+                                        </p>
+                                        <p className="text-[11px] opacity-60">
+                                          {row.blurb}
+                                        </p>
+                                      </div>
+                                      <span className="text-xs opacity-50">
+                                        {open ? "▾" : "▸"}
+                                      </span>
+                                    </button>
+                                    {open ? (
+                                      <div className="border-t border-current/10 px-3 py-2">
+                                        {row.body}
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : null}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </section>
               ) : null}
 

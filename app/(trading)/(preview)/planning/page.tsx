@@ -82,7 +82,7 @@ export default async function PlanningPage({
 
   return (
     <Suspense fallback={null}>
-      <PageHelpPanel pageId="planning">
+      <PageHelpPanel pageId="planning" trigger="icon">
         <PreviewPlanning
           plans={plans}
           playbooks={playbooks}
