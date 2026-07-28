@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * CHANGE 24-39 — Chaos Deck as capture + recovery space.
+ * Classic dump capture · full-content search · denser grid · optional titles.
+ */
+
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createFragment } from "@/lib/argusforge/af03-builder-store";
@@ -9,9 +14,14 @@ import {
 } from "@/lib/argusforge/af03-exchange-export";
 import { homeExplorerHref } from "@/lib/argusforge/af03-home-explorer";
 import {
+  filterDeckItems,
+  fragmentDisplayTitle,
+  fragmentFirstImageAssetId,
+  fragmentPreviewText,
+} from "@/lib/argusforge/af03-deck-search";
+import {
   archiveDeck,
   createContent,
-  deckHref,
   deckStats,
   duplicateContent,
   emptyOrSeedRepo,
@@ -25,14 +35,20 @@ import {
   restoreDeck,
   setDeckInternalLayout,
   setMarkedForLater,
+  updateContent,
   viewHref,
 } from "@/lib/argusforge/af03-repo-store";
 import { createVaultPrep } from "@/lib/argusforge/af03-vault-prep-store";
 import type { Af03ContentItem, Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { UNASSIGNED_REALM_ID } from "@/lib/argusforge/af03-repo-types";
 import { realmHref } from "@/lib/argusforge/af03-realm-map";
+import {
+  chaosAssetsAvailability,
+  createObjectUrl,
+  revokeObjectUrl,
+} from "@/lib/argusforge/af03-chaos-assets-idb";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
-import { CreationMenu, type CreateAction } from "./CreationMenu";
+import { DeckCaptureComposer } from "./DeckCaptureComposer";
 import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
 
 type Props = {
@@ -60,19 +76,21 @@ function promptTitle(label: string, initial: string): string | null {
   return trimmed || null;
 }
 
-function kindLabel(item: Af03ContentItem): string {
-  const bits: string[] = [item.kind];
+function kindHint(item: Af03ContentItem): string | null {
+  const bits: string[] = [];
   if (item.unsupported) bits.push("stub");
   if (item.markedForLater) bits.push("later");
-  return bits.join(" · ");
+  if (item.kind === "link") bits.push("link");
+  return bits.length ? bits.join(" · ") : null;
 }
 
-/** AF03 §6 + §7/§10/§11/§12 hooks — Chaos Deck internal view. */
+/** AF03 §6 + 24-39 — Chaos Deck internal view. */
 export function DeckInternalView({ deckId }: Props) {
   const [state, setState] = useState<Af03RepoState | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
   const [deckMenuOpen, setDeckMenuOpen] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const repo = recordDeckOpen(emptyOrSeedRepo(), deckId);
@@ -80,13 +98,20 @@ export function DeckInternalView({ deckId }: Props) {
   }, [deckId]);
 
   const deck = state ? getDeck(state, deckId) : undefined;
-  const items = useMemo(() => (state ? listItemsInDeck(state, deckId) : []), [state, deckId]);
+  const allItems = useMemo(
+    () => (state ? listItemsInDeck(state, deckId) : []),
+    [state, deckId]
+  );
+  const items = useMemo(
+    () => (state ? filterDeckItems(state, deckId, query) : []),
+    [state, deckId, query]
+  );
   const stats = state ? deckStats(state, deckId) : null;
   const layout = state?.prefs.deckInternalLayout ?? "list";
+  const searching = query.trim().length > 0;
 
   function parentHref(): string {
     if (!deck) return "/forge";
-    // CHANGE 24-1E — return to Home Explorer Realm context (Argus molecular remains at realmHref)
     return homeExplorerHref({ realmId: deck.folderId });
   }
 
@@ -99,75 +124,9 @@ export function DeckInternalView({ deckId }: Props) {
     });
   }
 
-  function handleCreate(action: CreateAction) {
-    if (!state || !deck) return;
-    if (action === "text") {
-      const title = promptTitle("Text title (optional context)", "Untitled note");
-      if (title === null) return;
-      const body = window.prompt("Text body — raw capture, no classification required", "") ?? "";
-      const { state: next, item } = createContent(state, {
-        deckId,
-        kind: "text",
-        title: title || "Untitled note",
-        body,
-      });
-      setState(next);
-      window.location.href = viewHref(deckId, item.id);
-      return;
-    }
-    if (action === "link") {
-      const url = promptTitle("Link URL", "https://");
-      if (!url) return;
-      const title = promptTitle("Link title (optional)", url) || url;
-      const { state: next, item } = createContent(state, {
-        deckId,
-        kind: "link",
-        title,
-        body: url,
-        sourceRef: url,
-      });
-      setState(next);
-      window.location.href = viewHref(deckId, item.id);
-      return;
-    }
-    if (action === "image") {
-      const url = promptTitle("Image URL (not binary upload)", "https://");
-      if (!url) return;
-      const title = promptTitle("Image title (optional)", "Image") || "Image";
-      const { state: next, item } = createContent(state, {
-        deckId,
-        kind: "image",
-        title,
-        body: url,
-        sourceRef: url,
-      });
-      setState(next);
-      window.location.href = viewHref(deckId, item.id);
-      return;
-    }
-    if (action === "file" || action === "pdf") {
-      const name = promptTitle(
-        action === "pdf" ? "PDF name (binary not stored — stub)" : "File name (binary not stored — stub)",
-        action === "pdf" ? "document.pdf" : "file.bin"
-      );
-      if (!name) return;
-      const { state: next, item } = createContent(state, {
-        deckId,
-        kind: action === "pdf" ? "pdf" : "file",
-        title: name,
-        body: `Reference only — original name preserved. Binary not stored in this prototype.`,
-        sourceRef: name,
-        unsupported: true,
-        unsupportedReason: "Binary payload not stored — stub keeps the reference",
-      });
-      setState(next);
-      window.location.href = viewHref(deckId, item.id);
-    }
-  }
-
   function prepareVault() {
     if (!state || !deck) return;
-    const chosen = items.filter((i) => selected.has(i.id));
+    const chosen = allItems.filter((i) => selected.has(i.id));
     if (chosen.length === 0) {
       window.alert("Select one or more items first.");
       return;
@@ -212,6 +171,29 @@ export function DeckInternalView({ deckId }: Props) {
     setDeckMenuOpen(false);
   }
 
+  /** Secondary stub paths — no title modal for text; URL/name only when needed. */
+  function quickLinkStub() {
+    if (!state || !deck) return;
+    const url = promptTitle("Link URL", "https://");
+    if (!url) return;
+    const { state: next } = createContent(state, {
+      deckId,
+      kind: "link",
+      title: url,
+      body: url,
+      sourceRef: url,
+    });
+    setState(next);
+  }
+
+  function renameFragment(item: Af03ContentItem) {
+    if (!state) return;
+    const title = promptTitle("Rename Fragment", item.title);
+    if (title === null) return;
+    setState(updateContent(state, item.id, { title: title || "Untitled note" }));
+    setMenuId(null);
+  }
+
   if (!state) {
     return <p className="text-sm text-zinc-500">Loading Chaos Deck…</p>;
   }
@@ -230,7 +212,7 @@ export function DeckInternalView({ deckId }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-4">
       <Af03RepoDisclosure />
 
       <nav aria-label="Deck location" className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
@@ -259,7 +241,7 @@ export function DeckInternalView({ deckId }: Props) {
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold text-zinc-100">{deck.title}</h2>
           <p className="text-xs text-zinc-500">
-            Cumulative container — select items to prepare toward Vault (human review).
+            Capture, find, and review material in this Deck.
           </p>
         </div>
         <div className="shrink-0">
@@ -272,7 +254,7 @@ export function DeckInternalView({ deckId }: Props) {
             items={[
               {
                 id: "rename",
-                label: "Rename",
+                label: "Rename Deck",
                 onClick: () => {
                   const title = promptTitle("Rename Chaos Deck", deck.title);
                   if (!title) return;
@@ -288,13 +270,13 @@ export function DeckInternalView({ deckId }: Props) {
               },
               {
                 id: "new-builder",
-                label: "New Fragment (builder)",
+                label: "Open blank Fragment (builder)",
                 onClick: createBuilderFragment,
               },
               {
-                id: "add-text",
-                label: "Add fragment (text)",
-                onClick: () => handleCreate("text"),
+                id: "add-link",
+                label: "Add link stub…",
+                onClick: quickLinkStub,
               },
               {
                 id: "export",
@@ -345,7 +327,7 @@ export function DeckInternalView({ deckId }: Props) {
       </div>
 
       {stats ? (
-        <dl className="grid grid-cols-3 gap-2 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2 text-center text-xs sm:grid-cols-6">
+        <dl className="grid grid-cols-3 gap-2 rounded-lg border border-zinc-800/70 bg-zinc-900/30 px-3 py-2 text-center text-xs sm:grid-cols-6">
           <div>
             <dt className="text-zinc-500">Items</dt>
             <dd className="text-base font-semibold text-zinc-100">{stats.items}</dd>
@@ -373,6 +355,13 @@ export function DeckInternalView({ deckId }: Props) {
         </dl>
       ) : null}
 
+      <DeckCaptureComposer
+        state={state}
+        deckId={deck.id}
+        deckTitle={deck.title}
+        onSaved={(next) => setState(next)}
+      />
+
       {selected.size > 0 ? (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-sky-900/50 bg-sky-950/30 px-3 py-2 text-sm text-sky-100">
           <span>{selected.size} selected</span>
@@ -393,30 +382,46 @@ export function DeckInternalView({ deckId }: Props) {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          className="min-h-11 rounded-lg border border-emerald-800/60 bg-emerald-950/40 px-3 text-sm font-medium text-emerald-100"
-          onClick={createBuilderFragment}
-        >
-          New Fragment (builder)
-        </button>
-        <button
-          type="button"
-          className="min-h-11 rounded-lg border border-zinc-700 px-3 text-sm font-medium text-zinc-200"
-          onClick={exportNeutralPackage}
-        >
-          Export exchange JSON
-        </button>
+      <div className="space-y-2">
+        <label className="sr-only" htmlFor="deck-search">
+          Search this Deck
+        </label>
+        <div className="flex gap-2">
+          <input
+            id="deck-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search this Deck…"
+            autoComplete="off"
+            className="min-h-11 w-full flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+          />
+          {searching ? (
+            <button
+              type="button"
+              className="min-h-11 shrink-0 rounded-xl border border-zinc-700 px-3 text-sm text-zinc-300 hover:text-zinc-100"
+              onClick={() => setQuery("")}
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
+        {searching ? (
+          <p className="text-[11px] text-zinc-500">
+            {items.length} match{items.length === 1 ? "" : "es"} in title, body, blocks, links &amp; filenames
+          </p>
+        ) : null}
       </div>
-
-      <CreationMenu scope="deck" onAction={handleCreate} />
 
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Fragments ({items.length})
+          Fragments ({searching ? `${items.length}/${allItems.length}` : allItems.length})
         </h3>
-        <div className="flex rounded-lg border border-zinc-800 p-0.5 text-xs" role="group" aria-label="Content layout">
+        <div
+          className="flex rounded-lg border border-zinc-800 p-0.5 text-xs"
+          role="group"
+          aria-label="Content layout"
+        >
           <button
             type="button"
             aria-pressed={layout === "list"}
@@ -440,36 +445,43 @@ export function DeckInternalView({ deckId }: Props) {
         </div>
       </div>
 
-      {items.length === 0 ? (
+      {allItems.length === 0 ? (
         <p className="text-sm text-zinc-600">
-          No fragments yet — a deck can hold many. Add text, link, image URL, or a file/PDF stub.
+          No fragments yet — capture above. Same pattern as Chaos Dumping; destination is this Deck.
+        </p>
+      ) : items.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-zinc-800 px-3 py-6 text-center text-sm text-zinc-500">
+          No matches for “{query.trim()}”.{" "}
+          <button type="button" className="underline" onClick={() => setQuery("")}>
+            Clear
+          </button>
         </p>
       ) : layout === "grid" ? (
-        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <ul className="grid grid-cols-2 gap-2.5">
           {items.map((item) => (
-            <li key={item.id} className="relative overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
-              <div className="absolute left-2 top-2 z-[1]">
+            <li
+              key={item.id}
+              className={`relative flex flex-col overflow-hidden rounded-xl border bg-zinc-900 shadow-sm ${
+                searching
+                  ? "border-emerald-700/50 ring-1 ring-emerald-500/25"
+                  : "border-zinc-700/50"
+              }`}
+            >
+              <div className="absolute left-1.5 top-1.5 z-[1]">
                 <input
                   type="checkbox"
                   checked={selected.has(item.id)}
                   onChange={() => toggleSelect(item.id)}
-                  aria-label={`Select ${item.title}`}
-                  className="h-4 w-4"
+                  aria-label={`Select ${fragmentDisplayTitle(item)}`}
+                  className="h-3.5 w-3.5 accent-emerald-500"
                 />
               </div>
-              <Link
-                href={itemHref(deckId, item.id)}
-                className="block min-h-[6.5rem] px-3 py-3 pl-9 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400"
-              >
-                <span className="text-[10px] uppercase tracking-wide text-zinc-500">{kindLabel(item)}</span>
-                <p className="mt-1 font-medium text-zinc-100">{item.title}</p>
-                <p className="mt-1 line-clamp-2 text-xs text-zinc-500">{item.body || "—"}</p>
-              </Link>
               <ItemMenu
                 item={item}
                 floating
                 open={menuId === item.id}
                 onToggle={() => setMenuId(menuId === item.id ? null : item.id)}
+                onRename={() => renameFragment(item)}
                 onDuplicate={() => {
                   const result = duplicateContent(state, item.id);
                   if (result) setState(result.state);
@@ -494,7 +506,7 @@ export function DeckInternalView({ deckId }: Props) {
                 onRemove={() => {
                   if (
                     !window.confirm(
-                      `Delete Fragment “${item.title}” and its blocks? This cannot be undone.`
+                      `Delete Fragment “${fragmentDisplayTitle(item)}” and its blocks? This cannot be undone.`
                     )
                   ) {
                     return;
@@ -503,19 +515,45 @@ export function DeckInternalView({ deckId }: Props) {
                   setMenuId(null);
                 }}
               />
+              <Link
+                href={itemHref(deckId, item.id)}
+                className="flex min-h-0 flex-1 flex-col gap-1.5 px-2.5 pb-2.5 pt-7 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400"
+              >
+                <GridThumb state={state} item={item} />
+                <p className="line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-50">
+                  {fragmentDisplayTitle(item)}
+                </p>
+                {fragmentPreviewText(item) ? (
+                  <p className="line-clamp-5 whitespace-pre-line text-[15px] leading-[1.35] text-zinc-300">
+                    {fragmentPreviewText(item)}
+                  </p>
+                ) : (
+                  <p className="text-[13px] text-zinc-500">Empty capture</p>
+                )}
+                {kindHint(item) ? (
+                  <span className="mt-auto pt-1 text-[10px] uppercase tracking-wide text-zinc-500">
+                    {kindHint(item)}
+                  </span>
+                ) : null}
+              </Link>
             </li>
           ))}
         </ul>
       ) : (
-        <ul className="divide-y divide-zinc-800 overflow-hidden rounded-lg border border-zinc-800">
+        <ul className="divide-y divide-zinc-800 overflow-hidden rounded-xl border border-zinc-800">
           {items.map((item) => (
-            <li key={item.id} className="flex items-stretch bg-zinc-950">
+            <li
+              key={item.id}
+              className={`flex items-stretch bg-zinc-950 ${
+                searching ? "ring-1 ring-inset ring-emerald-500/30" : ""
+              }`}
+            >
               <label className="flex items-center px-2">
                 <input
                   type="checkbox"
                   checked={selected.has(item.id)}
                   onChange={() => toggleSelect(item.id)}
-                  aria-label={`Select ${item.title}`}
+                  aria-label={`Select ${fragmentDisplayTitle(item)}`}
                   className="h-4 w-4"
                 />
               </label>
@@ -524,22 +562,31 @@ export function DeckInternalView({ deckId }: Props) {
                 className="min-w-0 flex-1 px-2 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400"
               >
                 <div className="flex items-center gap-2">
-                  <p className="truncate font-medium text-zinc-100">{item.title}</p>
-                  <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-500">
-                    {kindLabel(item)}
-                  </span>
+                  <p className="truncate font-medium text-zinc-100">
+                    {fragmentDisplayTitle(item)}
+                  </p>
+                  {kindHint(item) ? (
+                    <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-500">
+                      {kindHint(item)}
+                    </span>
+                  ) : null}
                 </div>
                 <p className="mt-0.5 truncate text-xs text-zinc-500">
                   {formatTime(item.updatedAt)}
-                  {item.unsupported && item.unsupportedReason ? ` · ${item.unsupportedReason}` : ""}
+                  {item.unsupported && item.unsupportedReason
+                    ? ` · ${item.unsupportedReason}`
+                    : ""}
                 </p>
-                <p className="mt-1 truncate text-xs text-zinc-600">{item.body || "—"}</p>
+                <p className="mt-1 line-clamp-2 text-sm leading-snug text-zinc-400">
+                  {fragmentPreviewText(item, 160) || "—"}
+                </p>
               </Link>
               <div className="relative border-l border-zinc-800">
                 <ItemMenu
                   item={item}
                   open={menuId === item.id}
                   onToggle={() => setMenuId(menuId === item.id ? null : item.id)}
+                  onRename={() => renameFragment(item)}
                   onDuplicate={() => {
                     const result = duplicateContent(state, item.id);
                     if (result) setState(result.state);
@@ -564,7 +611,7 @@ export function DeckInternalView({ deckId }: Props) {
                   onRemove={() => {
                     if (
                       !window.confirm(
-                        `Delete Fragment “${item.title}” and its blocks? This cannot be undone.`
+                        `Delete Fragment “${fragmentDisplayTitle(item)}” and its blocks? This cannot be undone.`
                       )
                     ) {
                       return;
@@ -580,7 +627,7 @@ export function DeckInternalView({ deckId }: Props) {
       )}
 
       <p className="text-[11px] text-zinc-600">
-        Deck id <code className="text-zinc-500">{deck.id}</code> · multiple fragments OK ·{" "}
+        Deck id <code className="text-zinc-500">{deck.id}</code> ·{" "}
         <Link href="/forge/vault" className="underline">
           Vault prep queue
         </Link>
@@ -589,10 +636,76 @@ export function DeckInternalView({ deckId }: Props) {
   );
 }
 
+function GridThumb({
+  state,
+  item,
+}: {
+  state: Af03RepoState;
+  item: Af03ContentItem;
+}) {
+  const assetId = fragmentFirstImageAssetId(state, item.id);
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!assetId) {
+      setUrl(null);
+      return;
+    }
+    let active = true;
+    let objectUrl: string | null = null;
+    const avail = chaosAssetsAvailability();
+    if (!avail.ok) {
+      setUrl(null);
+      return;
+    }
+    createObjectUrl(assetId)
+      .then((u) => {
+        if (!active) {
+          if (u) revokeObjectUrl(u);
+          return;
+        }
+        if (!u) {
+          setUrl(null);
+          return;
+        }
+        objectUrl = u;
+        setUrl(u);
+      })
+      .catch(() => {
+        if (active) setUrl(null);
+      });
+    return () => {
+      active = false;
+      if (objectUrl) revokeObjectUrl(objectUrl);
+    };
+  }, [assetId]);
+
+  if (!assetId) return null;
+  if (!url) {
+    return (
+      <span
+        className="mb-0.5 flex h-16 w-full items-center justify-center rounded-lg bg-zinc-800/80 text-[10px] uppercase tracking-wide text-zinc-500"
+        aria-hidden
+      >
+        Image
+      </span>
+    );
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={url}
+      alt=""
+      className="mb-0.5 h-16 w-full rounded-lg object-cover"
+    />
+  );
+}
+
 function ItemMenu({
   item,
   open,
   onToggle,
+  onRename,
   onDuplicate,
   onMarkLater,
   onMoveUp,
@@ -604,6 +717,7 @@ function ItemMenu({
   item: Af03ContentItem;
   open: boolean;
   onToggle: () => void;
+  onRename: () => void;
   onDuplicate: () => void;
   onMarkLater: () => void;
   onMoveUp: () => void;
@@ -613,14 +727,24 @@ function ItemMenu({
   floating?: boolean;
 }) {
   return (
-    <div className={floating ? "absolute right-1 top-1 z-[2]" : "relative h-full border-l border-zinc-800"}>
+    <div
+      className={
+        floating
+          ? "absolute right-1 top-1 z-[2]"
+          : "relative h-full border-l border-zinc-800"
+      }
+    >
       <ForgeOverflowMenu
         open={open}
         onOpenChange={(next) => {
           if (next !== open) onToggle();
         }}
-        label={`Menu for ${item.title}`}
-        triggerClassName="flex h-full min-h-11 min-w-11 items-center justify-center px-3 text-zinc-400 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+        label={`Menu for ${fragmentDisplayTitle(item)}`}
+        triggerClassName={
+          floating
+            ? "flex h-8 w-8 items-center justify-center rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            : "flex h-full min-h-11 min-w-11 items-center justify-center px-3 text-zinc-400 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+        }
         items={[
           {
             id: "view",
@@ -636,6 +760,7 @@ function ItemMenu({
               window.location.href = itemHref(item.deckId, item.id);
             },
           },
+          { id: "rename", label: "Rename…", onClick: onRename },
           { id: "dup", label: "Duplicate", onClick: onDuplicate },
           {
             id: "later",
