@@ -11,6 +11,7 @@
 
 ## Pending — ArgusForge 24-39 Chaos Deck capture & recovery
 
+PR: #112  
 Route: `/forge/deck/[deckId]`  
 Doc: `md/argusforge/change-24-39.md`
 
