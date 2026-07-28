@@ -1,14 +1,14 @@
 # CHANGE 24-47 — ArgusForge consolidation, trimming, and alignment
 
-**Status:** Pending (PR #113; validation pass **24-49**)  
-**Branch:** `cursor/af03-consolidation-24-47-c2fb`
+**Status:** Shipped (PR #113 · merge `060eb27`)  
+**Branch:** `cursor/af03-consolidation-24-47-c2fb` (merged)
 
 ## Branch strategy
 
 Integration from `main`, folding draft **#108** (24-2E images) and **#112** (24-39 Deck).  
 **#110** Recent linkage remains separate (Argus-only).
 
-After #113 merges: close #108 and #112 as superseded; rebase #110 onto main separately.
+#108 and #112 closed as superseded by #113. #110 rebased onto main separately (still Pending).
 
 ## Runtime truth (validated)
 
@@ -58,4 +58,4 @@ Transactional: assets → Fragment + Blocks; failure keeps draft (caller); clean
 ## Docs
 
 - `capability-map.md`
-- Handoff: **Pending** until merge + production verification
+- Handoff: **Shipped** after merge + production verification (24-4B)

@@ -9,22 +9,22 @@
 
 ---
 
-## Pending — ArgusForge 24-47 consolidation (+ 24-49 validate)
+## Pending — ArgusForge 24-33 Recent linkage
 
-PR: #113  
-Doc: `md/argusforge/change-24-47.md` · `md/argusforge/change-24-49.md` · `md/argusforge/capability-map.md`
+PR: #110  
+Route: `/forge/argus`  
+Doc: `md/argusforge/change-24-33.md`  
+Test: `npm run test:argus-recent-linkage`
 
-One capture engine · ontology alignment · mobile legibility · less technical UI. Incorporates foundations from draft #108 (images) and #112 (Deck). Do not treat as shipped until merge and production verification. After merge: close #108/#112 as superseded; rebase #110 separately.
+Four statuses: Unlinked · In Realm · In related Deck · Related (24-36). Rebased onto main after #113. Do not treat as shipped until merge and production verification.
 
-## Pending — ArgusForge 24-2E Chaos image ingestion
+## Shipped — ArgusForge 24-47 consolidation (+ 24-49)
 
-PR: #108 · Doc: `md/argusforge/change-24-2E.md` · folded into 24-47 branch  
-Do not treat as shipped until merge and production verification.
+PR: #113 · merge `060eb27` · prod https://matrix-trade-theta.vercel.app  
+Docs: `md/argusforge/change-24-47.md` · `md/argusforge/change-24-49.md` · `md/argusforge/capability-map.md`
 
-## Pending — ArgusForge 24-39 Chaos Deck capture & recovery
-
-PR: #112 · Doc: `md/argusforge/change-24-39.md` · folded into 24-47 branch  
-Do not treat as shipped until merge and production verification.
+One capture engine · ontology alignment · mobile legibility · less technical UI.  
+**#108** and **#112** superseded by #113 (do not merge separately).
 
 ---
 

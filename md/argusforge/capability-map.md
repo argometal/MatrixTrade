@@ -5,9 +5,9 @@
 
 | Capability | Visible surface | Canonical entity | Persistence | Status |
 |------------|-----------------|------------------|-------------|--------|
-| Classic Capture | Chaos Dumping · Chaos Deck | Fragment + Blocks | repo + IndexedDB assets | Pending (#113) |
+| Classic Capture | Chaos Dumping · Chaos Deck | Fragment + Blocks | repo + IndexedDB assets | Shipped (#113) |
 | Structured Fragment | Builder | Fragment + Blocks | repo + assets | Active |
-| Local image assets | Capture · Builder · Viewer | Block (image) | IndexedDB + asset meta | Pending (#113 / 24-2E) |
+| Local image assets | Capture · Builder · Viewer | Block (image) | IndexedDB + asset meta | Shipped (#113 / 24-2E) |
 | Image URL | legacy body/viewer | reference string | repo | Deprecated |
 | File reference | Deck secondary | stub Fragment | repo | Limited |
 | PDF reference | Deck secondary | stub Fragment | repo | Limited |
@@ -47,7 +47,7 @@ Text + images = one logical capture. Report success only when assets, Fragment, 
 
 | PR | Role |
 |----|------|
-| #113 | Consolidation (24-47 + 24-49) — Pending |
-| #108 | Folded into #113 — do not merge separately |
-| #112 | Folded into #113 — do not merge separately |
-| #110 | Separate Recent linkage — keep open |
+| #113 | Consolidation (24-47 + 24-49) — Shipped |
+| #108 | Superseded by #113 — closed |
+| #112 | Superseded by #113 — closed |
+| #110 | Separate Recent linkage — Pending (draft) |
