@@ -54,8 +54,9 @@ export type ScoutFundingSnapshot = {
 export type BuildScoutFundingSnapshotInput = {
   plan: TradePlan;
   /**
-   * Authoritative Stock File ID from focused Scout/Thesis context.
-   * Never derived from plan.stockThesisId or ticker.
+   * Authoritative Stock File ID only.
+   * Never derived from plan.stockThesisId, ticker, plan id, or case key.
+   * Omit until a real Stock File relationship exists (26-40).
    */
   stockFileId?: string | null;
   /** Active or any reservation for this plan, when known. */

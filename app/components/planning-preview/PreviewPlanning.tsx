@@ -229,7 +229,7 @@ export function PreviewPlanning({
       items.push(
         scoutFundingSnapshotItem({
           plan: focusPlan,
-          stockFileId: scoutThesis?.id,
+          // stockFileId omitted — StockThesis has no authoritative Stock File ID (26-40)
           reservations,
           account: capitalAccount,
           authorizableLossRoom: monthly.monthlyLossRoom,
@@ -619,7 +619,6 @@ export function PreviewPlanning({
                     reservations={reservations}
                     capitalAccount={capitalAccount}
                     capitalConfigurationPresent={capitalConfigurationPresent}
-                    stockFileId={scoutThesis?.id}
                   />
                 </div>
               ) : null}

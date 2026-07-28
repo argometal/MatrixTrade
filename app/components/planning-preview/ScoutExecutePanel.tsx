@@ -66,7 +66,10 @@ export function ScoutExecutePanel({
   reservations?: CapitalReservation[];
   capitalAccount?: CapitalAccountSnapshot | null;
   capitalConfigurationPresent?: boolean;
-  /** Authoritative Stock File ID from focused thesis context — never inferred. */
+  /**
+   * Authoritative Stock File ID only — never a Stock Thesis ID, ticker, or case key.
+   * Omit until a real Stock File relationship exists (26-40).
+   */
   stockFileId?: string;
 }) {
   const [copiedBoot, setCopiedBoot] = useState(false);

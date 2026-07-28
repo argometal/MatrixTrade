@@ -857,7 +857,7 @@ async function main() {
     });
     const withRes = buildScoutFundingSnapshot({
       plan: thesisOnlyPlan,
-      stockFileId: "ST-ABC-001",
+      // no stockFileId — UI must not alias thesis id (26-40)
       reservations: await listCapitalReservations(),
     });
     assert.notEqual(withRes.existingReservationId, "unconfigured");
@@ -865,13 +865,12 @@ async function main() {
     assert.equal(withRes.estimatedRisk, 50);
     assert.equal(typeof withRes.currentFundingDecision, "string");
     assert.equal(withRes.mutatesCapital, false);
-    assert.equal(withRes.stockFileId, "ST-ABC-001");
     assert.equal(withRes.stockThesisId, "ST-ABC-001");
+    assert.equal(withRes.stockFileId, "unconfigured");
 
     const resCount = (await listCapitalReservations()).length;
     buildScoutFundingSnapshot({
       plan: thesisOnlyPlan,
-      stockFileId: "ST-ABC-001",
       reservations: await listCapitalReservations(),
     });
     assert.equal(
@@ -890,7 +889,6 @@ async function main() {
     assert.match(execute, /Scout Funding Snapshot/);
     assert.match(execute, /scoutFundingSnapshotItem/);
     assert.match(execute, /data-scout-funding-snapshot/);
-    assert.match(execute, /stockFileId/);
 
     const preview = await fs.readFile(
       path.join(
@@ -899,7 +897,9 @@ async function main() {
       ),
       "utf-8"
     );
-    assert.match(preview, /stockFileId:\s*scoutThesis\?\.id/);
+    assert.doesNotMatch(preview, /stockFileId:\s*scoutThesis\?\.id/);
+    assert.doesNotMatch(preview, /stockFileId=\{scoutThesis\?\.id\}/);
+    assert.match(preview, /scoutFundingSnapshotItem\(/);
   }
 
   __setCapitalPlannerStoreForTests(null);
