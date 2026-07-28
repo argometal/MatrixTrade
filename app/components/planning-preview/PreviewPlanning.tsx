@@ -58,6 +58,10 @@ import {
   type TradeProspect,
 } from "@/lib/trade-prospects";
 import { ActiveScoutsComparisonTable } from "@/app/components/planning-preview/ActiveScoutsComparisonTable";
+import { ScoutAllocationProvider } from "@/app/components/planning-preview/ScoutAllocationProvider";
+import { ScoutAllocationImpact } from "@/app/components/planning-preview/ScoutAllocationImpact";
+import { ScoutAllocationStrip } from "@/app/components/planning-preview/ScoutAllocationStrip";
+import { ScoutPrepareAllocationNote } from "@/app/components/planning-preview/ScoutPrepareAllocationNote";
 
 const thesisStatusStyles: Record<string, string> = {
   draft: "bg-zinc-700/50 text-zinc-400",
@@ -287,7 +291,44 @@ export function PreviewPlanning({
   const focusedRr = formatScoutCasePlannedRR(focusedScoutCard?.plannedRR);
   const mapFocusCompact = planPanelOpen;
 
+  const allocationPlans = useMemo(
+    () =>
+      plans.filter(
+        (p) =>
+          p.status === "watching" ||
+          p.status === "ready" ||
+          p.status === "expired"
+      ),
+    [plans]
+  );
+
+  const plannedRRByPlanId = useMemo(() => {
+    const map: Record<string, number | undefined> = {};
+    for (const p of allocationPlans) {
+      map[p.id] = resolvePlannedRRFromPlan(p);
+    }
+    return map;
+  }, [allocationPlans]);
+
+  function focusPlanFromAllocation(planId: string) {
+    const plan = plans.find((p) => p.id === planId);
+    if (!plan) return;
+    if (plan.stockThesisId) {
+      setScoutCaseKey(plan.stockThesisId);
+      return;
+    }
+    if (plan.ticker) setScoutCaseKey(`orphan:${plan.ticker.toUpperCase()}`);
+  }
+
   return (
+    <ScoutAllocationProvider
+      plans={allocationPlans}
+      reservations={reservations}
+      capitalAccount={capitalAccount}
+      authorizableLossRoom={monthly.monthlyLossRoom}
+      capitalConfigurationPresent={capitalConfigurationPresent}
+      plannedRRByPlanId={plannedRRByPlanId}
+    >
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row" data-scout-desk>
       <div
         className={`min-h-0 min-w-0 overflow-y-auto overscroll-y-contain ${
@@ -341,6 +382,12 @@ export function PreviewPlanning({
               >
                 Capital Planner
               </Link>
+              <Link
+                href="/planning/capital/allocation"
+                className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
+              >
+                Allocation Board
+              </Link>
             </div>
           </div>
         </header>
@@ -366,10 +413,14 @@ export function PreviewPlanning({
                     Compare active scouts
                   </summary>
                   <div className="mt-2">
-                    <ActiveScoutsComparisonTable plans={plans} />
+                    <ActiveScoutsComparisonTable
+                      plans={plans}
+                      onFocusPlan={focusPlanFromAllocation}
+                    />
                   </div>
                 </details>
               ) : null}
+              <ScoutAllocationStrip />
               <section
                 className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 ${
                   mapFocusCompact ? "p-2.5 lg:p-4" : "p-3"
@@ -527,7 +578,7 @@ export function PreviewPlanning({
                       if (typeof v === "number" && Number.isFinite(v)) {
                         return `$${v.toFixed(0)}`;
                       }
-                      return "—";
+                      return "Unconfigured";
                     }
 
                     const snapshotItemsForCase = stockProfileSnapshotItems({
@@ -653,6 +704,11 @@ export function PreviewPlanning({
                           ))}
                         </dl>
 
+                        <ScoutAllocationImpact
+                          planId={plan?.id}
+                          onFocusPlan={focusPlanFromAllocation}
+                        />
+
                         <div className="mt-3 flex flex-wrap gap-2">
                           <Link
                             href={`/stock-theses/${thesis.id}`}
@@ -713,23 +769,11 @@ export function PreviewPlanning({
                               : "Prepare trade"}
                           </button>
                         </div>
-                        {shares === undefined ? (
-                          <p
-                            className="mt-2 text-[11px] opacity-80"
-                            data-scout-prepare-allocation-msg
-                          >
-                            Share count unconfigured — calculate allocation first
-                            <span className="mt-1 flex flex-wrap gap-2">
-                              <Link
-                                href="/planning/capital"
-                                className="underline opacity-90 hover:opacity-100"
-                              >
-                                Capital Planner
-                              </Link>
-                            </span>
-                          </p>
-                        ) : prepareMsg ? (
-                          <p className="mt-2 text-[11px] opacity-80">{prepareMsg}</p>
+                        {shares === undefined || prepareMsg ? (
+                          <ScoutPrepareAllocationNote
+                            hasCanonicalShares={shares !== undefined}
+                            prepareMsg={prepareMsg}
+                          />
                         ) : null}
 
                         <div
@@ -945,5 +989,6 @@ export function PreviewPlanning({
         }
       />
     </div>
+    </ScoutAllocationProvider>
   );
 }
