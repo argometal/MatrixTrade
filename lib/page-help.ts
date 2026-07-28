@@ -62,28 +62,28 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
     title: "Scout",
     panelLabel: "Help",
     workflowTitle: "Workflow",
-    summary: "War room: casos a vigilar/reentrar ordenados por R planificado (mayor→menor).",
+    summary: "Active cases and execution readiness — decision and numbers first.",
     principles: [
       "Casos ordenados por planned R alto → bajo.",
       "Un caso seleccionado a la vez.",
-      "Copy boot → AI → Control → Apply → Accept.",
+      "Full thesis / invalidation / evidence live in Details or Snapshot.",
       "Fills cerrados incompletos → Trades, no misión de Scout.",
     ],
     copyButtons: [
       {
-        button: "Scout snapshot ▾",
-        copies: "Caso enfocado / desk / Mechanics.",
+        button: "Snapshot",
+        copies: "Caso enfocado / desk package.",
       },
       {
-        button: "Copy trade boot package",
+        button: "Trade boot",
         copies: "Contexto de ejecución para trade-proposal.",
       },
     ],
     steps: [
       "Elige el case en el selector.",
-      "Revisa niveles / R / invalidation.",
-      "Copy boot → pega en Control el AI Block.",
-      "Veredictos y no-entradas → Trades.",
+      "Revisa niveles / R / room.",
+      "Trade boot → Control → Apply → Accept.",
+      "Texto completo → Details o Snapshot.",
     ],
   },
   playbook: {

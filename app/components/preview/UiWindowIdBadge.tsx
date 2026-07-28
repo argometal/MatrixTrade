@@ -3,14 +3,21 @@
 import { usePathname } from "next/navigation";
 import { resolveUiWindowId } from "@/lib/ui-window-ids";
 
+function isProductionUi(): boolean {
+  if (process.env.NODE_ENV === "production") return true;
+  const vercel = process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.VERCEL_ENV;
+  return vercel === "production";
+}
+
 /**
  * Persistent screen id for human debugging — every MTA trading window.
- * Sits above the mobile tab bar; desktop bottom-left.
+ * Hidden in production so it does not cover mobile content (26-41).
+ * Dev/preview: sits above the mobile tab bar; desktop bottom-left.
  */
 export function UiWindowIdBadge() {
   const pathname = usePathname();
   const id = resolveUiWindowId(pathname);
-  if (!id) return null;
+  if (!id || isProductionUi()) return null;
 
   return (
     <div
