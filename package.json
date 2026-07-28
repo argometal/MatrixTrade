@@ -33,6 +33,7 @@
     "test:external-positions": "tsx tools/test-external-positions-26-13.ts",
     "test:capital-planner": "tsx tools/test-capital-planner-26-15.ts",
     "test:capital-settings": "tsx tools/test-capital-settings-26-1a.ts",
+    "test:chaos-deck-24-39": "tsx tools/test-chaos-deck-24-39.ts",
     "test:ui-window-ids": "tsx tools/test-ui-window-ids.ts",
     "test:apply-failure-snapshot": "tsx tools/test-apply-failure-snapshot.ts",
     "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"

@@ -9,6 +9,15 @@
 
 ---
 
+## Pending — ArgusForge 24-39 Chaos Deck capture & recovery
+
+Route: `/forge/deck/[deckId]`  
+Doc: `md/argusforge/change-24-39.md`
+
+Optional titles · classic dump capture in Deck · full-content search · denser grid. Do not treat as shipped until merge and production verification.
+
+---
+
 ## Shipped — ArgusForge 24-27 molecular graph UI
 
 Doc: `md/argusforge/change-24-27.md`  
