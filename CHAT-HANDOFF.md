@@ -11,7 +11,8 @@
 
 ## Pending — ArgusForge 24-47 consolidation
 
-Doc: `md/argusforge/change-24-47.md`
+PR: #113  
+Doc: `md/argusforge/change-24-47.md` · `md/argusforge/capability-map.md`
 
 One capture engine · ontology alignment · mobile legibility · less technical UI. Incorporates foundations from draft #108 (images) and #112 (Deck). Do not treat as shipped until merge and production verification.
 
