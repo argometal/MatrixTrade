@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import type { Af03ImageBlockPayload } from "@/lib/argusforge/af03-builder-types";
+import { listBlocksForFragment } from "@/lib/argusforge/af03-builder-store";
 import {
   deckHref,
   emptyOrSeedRepo,
@@ -13,6 +15,7 @@ import {
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import { ChaosAssetImage } from "./ChaosAssetImage";
 import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
 import { SimpleMarkdown } from "./SimpleMarkdown";
 
@@ -76,6 +79,10 @@ export function ContentViewer({ deckId, itemId }: Props) {
     item.kind === "image" ||
     /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(item.body.trim()) ||
     item.body.trim().startsWith("data:image/");
+  const blocks = listBlocksForFragment(state, item.id);
+  const imageBlocks = blocks.filter((b) => b.type === "image");
+  const textBlocks = blocks.filter((b) => b.type === "text");
+  const hasAssetImages = imageBlocks.length > 0;
 
   return (
     <div className="space-y-5">
@@ -128,8 +135,40 @@ export function ContentViewer({ deckId, itemId }: Props) {
         </p>
       ) : null}
 
-      <article className="min-h-[12rem] rounded-xl border border-zinc-800/80 bg-zinc-950/50 px-4 py-5">
-        {isImageUrl && !item.unsupported ? (
+      <article className="min-h-[12rem] space-y-4 rounded-xl border border-zinc-800/80 bg-zinc-950/50 px-4 py-5">
+        {hasAssetImages ? (
+          <>
+            {textBlocks.length > 0 || item.body.trim() ? (
+              <div className="space-y-2">
+                {textBlocks.length > 0
+                  ? textBlocks.map((b) => (
+                      <SimpleMarkdown
+                        key={b.id}
+                        source={
+                          (b.payload as { text?: string }).text || "_Empty._"
+                        }
+                      />
+                    ))
+                  : item.body.trim()
+                    ? <SimpleMarkdown source={item.body} />
+                    : null}
+              </div>
+            ) : null}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {imageBlocks.map((b) => {
+                const payload = b.payload as Af03ImageBlockPayload;
+                return (
+                  <ChaosAssetImage
+                    key={b.id}
+                    assetId={payload.assetId}
+                    alt={payload.alt || item.title}
+                    className="max-h-[28rem] w-full rounded-lg object-contain"
+                  />
+                );
+              })}
+            </div>
+          </>
+        ) : isImageUrl && !item.unsupported ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={item.body.trim()}
