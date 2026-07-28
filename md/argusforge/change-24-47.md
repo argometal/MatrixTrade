@@ -1,61 +1,61 @@
 # CHANGE 24-47 — ArgusForge consolidation, trimming, and alignment
 
-**Status:** Pending (draft PR)  
-**Branch strategy:** Integration branch from `main`, folding draft #108 (24-2E images) and #112 (24-39 Deck). #110 (Recent linkage) left separate — Argus-only.
+**Status:** Pending (PR #113; validation pass **24-49**)  
+**Branch:** `cursor/af03-consolidation-24-47-c2fb`
 
-## Goal
+## Branch strategy
 
-- One capture engine (Dumping + Deck)
-- Canonical visible ontology
-- Stronger mobile legibility
-- Less technical UI
-- Aligned Markdown / UI / code
+Integration from `main`, folding draft **#108** (24-2E images) and **#112** (24-39 Deck).  
+**#110** Recent linkage remains separate (Argus-only).
 
-Not in scope: new major surfaces, new ontology, AI, Argus redesign, premature deletion of persisted kinds.
+After #113 merges: close #108 and #112 as superseded; rebase #110 onto main separately.
 
-## Surfaces (audit summary)
+## Runtime truth (validated)
 
-| Surface | Capture | Notes |
-|---------|---------|-------|
-| Chaos Dumping | Shared `persistChaosDumpCapture` | Destination picker |
-| Chaos Deck | Same engine via `DeckCaptureComposer` | Fixed destination |
-| Knowledge Explorer / Home | Structure + filters | Empty in filter group |
-| Viewer / Classic / Builder | Modes of same Fragment | Entity breadcrumbs |
-| Argus / Realm / Vault | Untouched functionally | Secondary Focus/Active/Archive bar removed |
+### Visible hierarchy
 
-## Capture engine
+Persisted folders are the nested container type (UI: **Realm** at root, **Folder** when nested):
 
-Shared module: `lib/argusforge/af03-chaos-dump-images.ts`
+```text
+Explorer
+└── Realm (folder, parentId null)
+    └── Folder (nested folder, optional)
+        └── Chaos Deck
+            └── Fragment
+                └── Block
+```
 
-- Draft text + images · validation · limits · transactional persist · cleanup · undo
-- Success only when assets + Fragment + Blocks persist
-- On failure: keep draft, no success flash, clean partial assets
+Breadcrumbs only show real ancestors from `folderBreadcrumb` + Deck + Fragment.  
+**Viewer / Classic / Builder / Fullscreen are modes, not ancestors.**
 
-## Deprecated primary actions
+### Mode graph (actual)
 
-- Add text / Add link / Add image URL → Classic Capture
-- Image URL records remain readable (deprecated UI)
+```text
+Knowledge Explorer → Chaos Deck → Fragment
+                         ↓
+              Viewer ⇄ Classic ⇄ Builder   (same fragmentId)
+Chaos Dumping / Deck capture:
+  Classic capture box ⇄ Fullscreen overlay  (same draft; not a route)
+```
 
-## Limited (secondary)
+There is **no** direct Explorer → Classic Fragment shortcut without opening the Deck/Fragment.  
+Fullscreen is a **state of the capture composer** (Dumping or Deck), not of Classic editor.
 
-- File reference · PDF reference (stubs)
-- Structured Fragment (Builder)
+### Capture
 
-## Ontology
+Both `/forge/chaos` and `/forge/deck/[deckId]` call `persistChaosDumpCapture`.  
+Transactional: assets → Fragment + Blocks; failure keeps draft (caller); cleans partial assets.
 
-Visible: Realm → Folder → Chaos Deck → Fragment → Block  
-Labels: `af03-visible-ontology.ts`  
-Breadcrumbs: `af03-entity-path.ts` + `EntityLocationNav`
+### Deprecated / limited
 
-## Home / shell
-
-- Filters: All · Active · Archive · Empty · Sort
-- Removed persistent Focus/Active/Archive bottom bar
-- Level snapshot counts actionable
-- Recently opened: Open · Move · Rename · Archive
+| Action | Status |
+|--------|--------|
+| Add text / link / image URL (primary) | Removed — Classic Capture |
+| Image URL records | Deprecated — still readable |
+| File / PDF reference | Limited stubs (secondary) |
+| Structured Fragment | Active (Builder) |
 
 ## Docs
 
-- `md/argusforge/capability-map.md`
-- This change doc
-- Handoff: **Pending** only until merge + prod verify
+- `capability-map.md`
+- Handoff: **Pending** until merge + production verification

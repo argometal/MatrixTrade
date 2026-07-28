@@ -207,8 +207,8 @@ export function FragmentBuilder({ deckId, itemId }: Props) {
       </div>
 
       {blocks.length === 0 ? (
-        <p className="text-sm text-zinc-600">
-          No blocks yet. Add text or an image. Order with Move up / Move down (no drag required).
+        <p className={`text-sm ${AF_TEXT.metadata}`}>
+          No blocks yet. Add text or an image. Order with Move up / Move down.
         </p>
       ) : (
         <ul className="space-y-3">
@@ -258,9 +258,6 @@ export function FragmentBuilder({ deckId, itemId }: Props) {
               ) : (
                 <div className="space-y-2">
                   <ImagePreview assetId={(block.payload as Af03ImageBlockPayload).assetId} />
-                  <p className="font-mono text-[10px] text-zinc-600">
-                    asset {(block.payload as Af03ImageBlockPayload).assetId}
-                  </p>
                 </div>
               )}
               <p className={`mt-1 text-[10px] ${AF_TEXT.disabled}`}>Block</p>
@@ -269,8 +266,8 @@ export function FragmentBuilder({ deckId, itemId }: Props) {
         </ul>
       )}
 
-      <p className="text-xs text-zinc-600">
-        Legacy editor still available at{" "}
+      <p className={`text-xs ${AF_TEXT.metadata}`}>
+        Also available:{" "}
         <Link href={`${itemHref(deckId, itemId)}?legacy=1`} className={`underline ${AF_TEXT.metadata}`}>
           Classic editor
         </Link>{" "}

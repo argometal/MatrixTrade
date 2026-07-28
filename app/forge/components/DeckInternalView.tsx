@@ -375,7 +375,7 @@ export function DeckInternalView({ deckId }: Props) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search this Deck…"
             autoComplete="off"
-            className="min-h-11 w-full flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-sm text-zinc-100 placeholder:text-zinc-600 outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            className="min-h-11 w-full flex-1 rounded-xl border border-zinc-700 bg-zinc-900 px-3 text-base text-zinc-100 placeholder:text-zinc-500 outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
           />
           {searching ? (
             <button
@@ -427,7 +427,7 @@ export function DeckInternalView({ deckId }: Props) {
       </div>
 
       {allItems.length === 0 ? (
-        <p className="text-sm text-zinc-600">
+        <p className={`text-sm ${AF_TEXT.metadata}`}>
           No fragments yet — capture above. Same pattern as Chaos Dumping; destination is this Deck.
         </p>
       ) : items.length === 0 ? (
@@ -438,7 +438,7 @@ export function DeckInternalView({ deckId }: Props) {
           </button>
         </p>
       ) : layout === "grid" ? (
-        <ul className="grid grid-cols-2 gap-2.5">
+        <ul className="grid grid-cols-1 gap-2.5 min-[380px]:grid-cols-2">
           {items.map((item) => (
             <li
               key={item.id}

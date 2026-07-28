@@ -9,12 +9,12 @@
 
 ---
 
-## Pending — ArgusForge 24-47 consolidation
+## Pending — ArgusForge 24-47 consolidation (+ 24-49 validate)
 
 PR: #113  
-Doc: `md/argusforge/change-24-47.md` · `md/argusforge/capability-map.md`
+Doc: `md/argusforge/change-24-47.md` · `md/argusforge/change-24-49.md` · `md/argusforge/capability-map.md`
 
-One capture engine · ontology alignment · mobile legibility · less technical UI. Incorporates foundations from draft #108 (images) and #112 (Deck). Do not treat as shipped until merge and production verification.
+One capture engine · ontology alignment · mobile legibility · less technical UI. Incorporates foundations from draft #108 (images) and #112 (Deck). Do not treat as shipped until merge and production verification. After merge: close #108/#112 as superseded; rebase #110 separately.
 
 ## Pending — ArgusForge 24-2E Chaos image ingestion
 

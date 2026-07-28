@@ -99,6 +99,7 @@ export function RepositoryView({ view, folderId }: Props) {
         folders: 0,
         decks: 0,
         items: 0,
+        blocks: 0,
         emptyDecks: 0,
         fresh: 0,
         older: 0,
@@ -215,7 +216,7 @@ export function RepositoryView({ view, folderId }: Props) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search folders and decks…"
-          className="min-h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+          className="min-h-10 w-full rounded-lg border border-zinc-800 bg-zinc-900/80 px-3 text-base text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
         />
       </div>
 
@@ -234,7 +235,7 @@ export function RepositoryView({ view, folderId }: Props) {
         </div>
 
         {folders.length === 0 && decks.length === 0 ? (
-          <p className="py-6 text-center text-sm text-zinc-600">Nothing at this level yet.</p>
+          <p className="py-6 text-center text-sm text-zinc-400">Nothing at this level yet.</p>
         ) : state.prefs.deckListLayout === "grid" ? (
           <div className="space-y-3">
             {folders.length > 0 ? (
@@ -255,8 +256,8 @@ export function RepositoryView({ view, folderId }: Props) {
                       setMenuId(null);
                     }}
                     onChildFolder={() => {
-                      const name = promptTitle("Child folder name", "New folder");
-                      if (!name) return;
+                      const siblings = state.folders.filter((x) => x.parentId === f.id);
+                      const name = provisionalRealmTitle(siblings.map((x) => x.title));
                       const { state: next } = createFolder(state, {
                         title: name,
                         parentId: f.id,
@@ -266,8 +267,8 @@ export function RepositoryView({ view, folderId }: Props) {
                       setMenuId(null);
                     }}
                     onChildDeck={() => {
-                      const name = promptTitle("Chaos Deck name", "New Chaos Deck");
-                      if (!name) return;
+                      const siblings = state.decks.filter((x) => x.folderId === f.id);
+                      const name = provisionalDeckTitle(siblings.map((x) => x.title));
                       const { state: next, deck } = createDeck(state, {
                         title: name,
                         folderId: f.id,
@@ -326,24 +327,24 @@ export function RepositoryView({ view, folderId }: Props) {
                   setMenuId(null);
                 }}
                 onChildFolder={() => {
-                  const name = promptTitle("Child folder name", "New folder");
-                  if (!name) return;
-                  const { state: next } = createFolder(state, {
-                    title: name,
-                    parentId: f.id,
-                    view,
-                  });
+                      const siblings = state.folders.filter((x) => x.parentId === f.id);
+                      const name = provisionalRealmTitle(siblings.map((x) => x.title));
+                      const { state: next } = createFolder(state, {
+                        title: name,
+                        parentId: f.id,
+                        view,
+                      });
                   setState(next);
                   setMenuId(null);
                 }}
                 onChildDeck={() => {
-                  const name = promptTitle("Chaos Deck name", "New Chaos Deck");
-                  if (!name) return;
-                  const { state: next, deck } = createDeck(state, {
-                    title: name,
-                    folderId: f.id,
-                    view,
-                  });
+                      const siblings = state.decks.filter((x) => x.folderId === f.id);
+                      const name = provisionalDeckTitle(siblings.map((x) => x.title));
+                      const { state: next, deck } = createDeck(state, {
+                        title: name,
+                        folderId: f.id,
+                        view,
+                      });
                   setState(next);
                   setMenuId(null);
                   window.location.href = `/forge/deck/${deck.id}`;

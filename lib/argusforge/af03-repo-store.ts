@@ -851,6 +851,7 @@ export function levelSnapshot(
   folders: number;
   decks: number;
   items: number;
+  blocks: number;
   emptyDecks: number;
   fresh: number;
   older: number;
@@ -876,6 +877,10 @@ export function levelSnapshot(
     folders: folders.length,
     decks: decks.length,
     items,
+    blocks: state.blocks.filter((b) => {
+      const item = state.items.find((i) => i.id === b.fragmentId);
+      return Boolean(item && deckIds.has(item.deckId));
+    }).length,
     emptyDecks,
     fresh,
     older,

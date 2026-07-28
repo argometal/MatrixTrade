@@ -713,7 +713,7 @@ export function HomeExplorer() {
                     pushParams({ status: "all", sort: "updated" });
                     return;
                   }
-                  if (action === "fragments") {
+                  if (action === "fragments" || action === "blocks") {
                     pushParams({ status: "all", sort: "fragments" });
                   }
                 }}

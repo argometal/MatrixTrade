@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AF-safe level snapshot — CHANGE 24-47: counts are actionable filters.
+ * AF-safe level snapshot — CHANGE 24-47 / 24-49: counts are actionable filters.
  */
 
 import { AF_LABEL, AF_TEXT } from "@/lib/argusforge/af03-visible-ontology";
@@ -9,10 +9,10 @@ import type { levelSnapshot } from "@/lib/argusforge/af03-repo-store";
 
 type Snapshot = ReturnType<typeof levelSnapshot>;
 
-export type SnapshotActionKey = "realms" | "decks" | "fragments" | "empty";
+export type SnapshotActionKey = "realms" | "decks" | "fragments" | "blocks" | "empty";
 
 type Bar = {
-  key: keyof Pick<Snapshot, "folders" | "decks" | "items" | "emptyDecks">;
+  key: keyof Pick<Snapshot, "folders" | "decks" | "items" | "blocks" | "emptyDecks">;
   action: SnapshotActionKey;
   label: string;
   color: string;
@@ -22,6 +22,7 @@ const BARS: Bar[] = [
   { key: "folders", action: "realms", label: AF_LABEL.realms, color: "bg-sky-500" },
   { key: "decks", action: "decks", label: AF_LABEL.chaosDecks, color: "bg-rose-500" },
   { key: "items", action: "fragments", label: AF_LABEL.fragments, color: "bg-amber-500" },
+  { key: "blocks", action: "blocks", label: AF_LABEL.blocks, color: "bg-violet-500" },
   { key: "emptyDecks", action: "empty", label: "Empty", color: "bg-zinc-500" },
 ];
 
@@ -57,7 +58,7 @@ export function LevelSnapshotChart({
         ) : null}
       </div>
       <p className={`text-[11px] ${AF_TEXT.metadata}`}>Tap a count to filter this level.</p>
-      <div className="flex items-end justify-between gap-1.5 border-b border-zinc-800 pb-2 pt-1">
+      <div className="flex items-end justify-between gap-1 overflow-x-auto pb-2 pt-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {BARS.map((b) => {
           const value = snapshot[b.key];
           const heightPct = value === 0 ? 0 : Math.max(8, Math.round((value / max) * 100));
@@ -70,7 +71,7 @@ export function LevelSnapshotChart({
               disabled={disabled}
               aria-pressed={active}
               onClick={() => onSelect?.(b.action)}
-              className={`flex min-w-0 flex-1 flex-col items-center gap-1 rounded-md px-0.5 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 disabled:cursor-default ${
+              className={`flex min-w-[3.25rem] flex-1 flex-col items-center gap-1 rounded-md px-0.5 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 disabled:cursor-default ${
                 active ? "bg-zinc-800/80" : "hover:bg-zinc-900/60 disabled:hover:bg-transparent"
               }`}
               title={value === 0 ? `${b.label}: none` : `Filter ${b.label}`}

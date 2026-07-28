@@ -190,15 +190,6 @@ export function resolveDumpTitle(text: string, images: ChaosDraftImage[]): strin
   return "Image";
 }
 
-async function cleanupOrphans(assetIds: string[]): Promise<void> {
-  for (const id of assetIds) {
-    try {
-      await deleteAsset(id);
-    } catch {
-      /* best-effort */
-    }
-  }
-}
 
 export type PersistDumpResult =
   | {
@@ -215,15 +206,28 @@ export type PersistDumpResult =
 /**
  * One logical save: validate → persist blobs → create fragment + blocks + asset metas.
  * Clears nothing in the UI — caller clears draft only after ok.
+ *
+ * Optional `deps` are for tests (simulate asset write failure without IndexedDB).
  */
+export type PersistChaosDumpDeps = {
+  putAssetFn?: typeof putAsset;
+  availabilityFn?: typeof chaosAssetsAvailability;
+  deleteAssetFn?: typeof deleteAsset;
+};
+
 export async function persistChaosDumpCapture(
   state: Af03RepoState,
   input: {
     deckId: string;
     text: string;
     images: ChaosDraftImage[];
-  }
+  },
+  deps?: PersistChaosDumpDeps
 ): Promise<PersistDumpResult> {
+  const putAssetFn = deps?.putAssetFn ?? putAsset;
+  const availabilityFn = deps?.availabilityFn ?? chaosAssetsAvailability;
+  const deleteAssetFn = deps?.deleteAssetFn ?? deleteAsset;
+
   const trimmed = input.text.trim();
   if (!isValidChaosDumpCapture(trimmed, input.images.length)) {
     return {
@@ -252,7 +256,7 @@ export async function persistChaosDumpCapture(
   }
 
   if (input.images.length > 0) {
-    const avail = chaosAssetsAvailability();
+    const avail = availabilityFn();
     if (!avail.ok) {
       return {
         ok: false,
@@ -268,10 +272,20 @@ export async function persistChaosDumpCapture(
   const assetMetas: Af03AssetMeta[] = [];
   const t = nowIso();
 
+  async function cleanupOrphansLocal(assetIds: string[]): Promise<void> {
+    for (const id of assetIds) {
+      try {
+        await deleteAssetFn(id);
+      } catch {
+        /* best-effort */
+      }
+    }
+  }
+
   try {
     for (const img of input.images) {
       const assetId = newStableId("asset");
-      await putAsset(assetId, img.file, {
+      await putAssetFn(assetId, img.file, {
         mimeType: img.mimeType,
         filename: img.filename,
         createdAt: t,
@@ -286,7 +300,7 @@ export async function persistChaosDumpCapture(
       });
     }
   } catch (e) {
-    await cleanupOrphans(writtenIds);
+    await cleanupOrphansLocal(writtenIds);
     return {
       ok: false,
       error: {
@@ -323,8 +337,6 @@ export async function persistChaosDumpCapture(
   const blocks: Af03Block[] = [];
   let order = 0;
   if (trimmed.length > 0 || input.images.length === 0) {
-    // Text-only always gets a text block; mixed gets text then images.
-    // Image-only: skip empty text block.
     if (trimmed.length > 0) {
       blocks.push({
         id: newStableId("blk"),
@@ -367,7 +379,7 @@ export async function persistChaosDumpCapture(
     writeRepo(next);
     return { ok: true, state: next, item, assetIds: writtenIds };
   } catch (e) {
-    await cleanupOrphans(writtenIds);
+    await cleanupOrphansLocal(writtenIds);
     return {
       ok: false,
       error: {

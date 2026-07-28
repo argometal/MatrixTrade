@@ -1,6 +1,6 @@
 # CHANGE 24-39 — Chaos Deck capture & recovery
 
-**Status:** Implemented (draft PR)  
+**Status:** Pending — folded into PR **#113** (24-47 / 24-49). Do not merge #112 separately.  
 **Route:** `/forge/deck/[deckId]`  
 **Code:** `DeckInternalView` · `DeckCaptureComposer` · `af03-deck-search.ts`
 

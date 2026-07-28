@@ -254,6 +254,131 @@ async function main() {
     assert.equal(isValidChaosDumpCapture("x", 0), true);
   }
 
+  // 13. Transaction failure: asset write fails → no Fragment, draft caller-owned
+  {
+    let state = blankState();
+    const created = createDeck(state, {
+      title: "Inbox",
+      folderId: null,
+      view: "active",
+    });
+    state = created.state;
+    const beforeCount = state.items.length;
+    const draft = {
+      draftId: "d1",
+      file: pngFile("fail.png"),
+      previewUrl: "blob:test",
+      filename: "fail.png",
+      mimeType: "image/png",
+      byteSize: 128,
+      status: "ready" as const,
+    };
+    const deleted: string[] = [];
+    let putCalls = 0;
+    const result = await persistChaosDumpCapture(
+      state,
+      { deckId: created.deck.id, text: "keep this draft text", images: [draft] },
+      {
+        availabilityFn: () => ({ ok: true }),
+        putAssetFn: async () => {
+          putCalls += 1;
+          if (putCalls === 1) {
+            // simulate first write ok then second would fail — single image fails after write
+            throw new Error("simulated IDB write failure");
+          }
+        },
+        deleteAssetFn: async (id) => {
+          deleted.push(id);
+        },
+      }
+    );
+    assert.equal(result.ok, false);
+    if (result.ok) throw new Error("expected failure");
+    assert.equal(result.error.code, "persistence_failure");
+    assert.equal(state.items.length, beforeCount);
+    assert.equal(
+      state.items.some((i) => i.body === "keep this draft text"),
+      false
+    );
+    // Caller keeps draft — persist does not mutate draft arrays
+    assert.equal(draft.filename, "fail.png");
+  }
+
+  // 14. Availability gate: no Fragment when storage unavailable
+  {
+    let state = blankState();
+    const created = createDeck(state, {
+      title: "Inbox2",
+      folderId: null,
+      view: "active",
+    });
+    state = created.state;
+    const draft = {
+      draftId: "d2",
+      file: pngFile("x.png"),
+      previewUrl: "blob:test",
+      filename: "x.png",
+      mimeType: "image/png",
+      byteSize: 64,
+      status: "ready" as const,
+    };
+    const result = await persistChaosDumpCapture(
+      state,
+      { deckId: created.deck.id, text: "hello", images: [draft] },
+      {
+        availabilityFn: () => ({
+          ok: false,
+          reason: "IndexedDB unavailable in this environment",
+        }),
+      }
+    );
+    assert.equal(result.ok, false);
+    if (result.ok) throw new Error("expected failure");
+    assert.equal(result.error.code, "storage_unavailable");
+    assert.equal(state.items.length, created.state.items.length);
+  }
+
+  // 15. Partial write then failure cleans orphans (no success Fragment)
+  {
+    let state = blankState();
+    const created = createDeck(state, {
+      title: "Inbox3",
+      folderId: null,
+      view: "active",
+    });
+    state = created.state;
+    const drafts = [0, 1].map((i) => ({
+      draftId: `pd${i}`,
+      file: pngFile(`p${i}.png`),
+      previewUrl: `blob:${i}`,
+      filename: `p${i}.png`,
+      mimeType: "image/png",
+      byteSize: 32,
+      status: "ready" as const,
+    }));
+    const deleted: string[] = [];
+    let n = 0;
+    const result = await persistChaosDumpCapture(
+      state,
+      { deckId: created.deck.id, text: "", images: drafts },
+      {
+        availabilityFn: () => ({ ok: true }),
+        putAssetFn: async (id) => {
+          n += 1;
+          if (n >= 2) throw new Error("second image failed");
+          // first succeeds — id recorded then cleaned
+          void id;
+        },
+        deleteAssetFn: async (id) => {
+          deleted.push(id);
+        },
+      }
+    );
+    assert.equal(result.ok, false);
+    assert.equal(deleted.length, 1);
+    assert.equal(state.items.length, created.state.items.length);
+  }
+
   console.log("test-chaos-dump-images-24-2e: ok");
 }
 
