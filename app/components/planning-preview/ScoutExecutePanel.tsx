@@ -306,10 +306,12 @@ export function ScoutExecutePanel({
       : {
           value: "Unconfigured",
           reason:
-            capitalAccount?.availableCapital.reason ??
-            (capitalConfigurationPresent
-              ? "Available capital not configured"
-              : "Missing capital configuration"),
+            capitalAccount &&
+            capitalAccount.availableCapital.status !== "configured"
+              ? capitalAccount.availableCapital.reason
+              : capitalConfigurationPresent
+                ? "Available capital not configured"
+                : "Missing capital configuration",
         };
   const riskRoom =
     Number.isFinite(monthlyLossRoom)

@@ -1,5 +1,5 @@
 /**
- * Prompt 26-41 — Scout desk declutter (decision + numbers first).
+ * Prompt 26-41 / 26-48 — Scout desk declutter + capital funding integration.
  * Run: npx tsx tools/test-scout-ui-26-41.ts
  */
 import assert from "node:assert/strict";
@@ -21,19 +21,19 @@ async function main() {
   const badge = await read("app/components/preview/UiWindowIdBadge.tsx");
   const page = await read("app/(trading)/(preview)/planning/page.tsx");
   const pageHelp = await read("lib/page-help.ts");
+  const fundingSnap = await read("lib/scout-funding-snapshot.ts");
 
-  // Header — short subtitle, no war-room essay
+  // 1 — Header short subtitle, no war-room essay
   assert.match(planning, /Active cases and execution readiness/);
   assert.doesNotMatch(planning, /War room — cases to watch/);
   assert.match(planning, /New stock case/);
   assert.match(planning, /Capital Planner/);
-  // Desk snapshot removed from header chrome
   assert.doesNotMatch(
     planning,
     /header[\s\S]*SnapshotButton[\s\S]*<\/header>/
   );
 
-  // Case summary — numbers first, long copy in Details
+  // 2 / 3 — Case summary numbers first; Details collapsed
   assert.match(planning, /data-scout-case-summary/);
   assert.match(planning, /data-scout-case-details/);
   assert.match(planning, /"Zone"/);
@@ -49,7 +49,46 @@ async function main() {
   assert.match(planning, /Fills in war room/);
   assert.match(planning, /Evidence/);
 
-  // Execute — slim primary; technical secondary
+  // 4 / 5 — Funding snapshot + capital inputs reach Execute
+  assert.match(execute, /Scout Funding Snapshot/);
+  assert.match(execute, /data-scout-funding-snapshot/);
+  assert.match(execute, /scoutFundingSnapshotItem/);
+  assert.match(execute, /buildScoutFundingSnapshot/);
+  assert.match(execute, /reservations/);
+  assert.match(execute, /capitalAccount/);
+  assert.match(execute, /capitalConfigurationPresent/);
+  assert.match(page, /listCapitalReservations/);
+  assert.match(page, /getCapitalAccountSnapshot/);
+  assert.match(planning, /reservations=\{reservations\}/);
+  assert.match(planning, /capitalAccount=\{capitalAccount\}/);
+
+  // 6 / 7 — stockFileId unconfigured; no thesis→file alias
+  assert.doesNotMatch(planning, /stockFileId:\s*scoutThesis\?\.id/);
+  assert.doesNotMatch(planning, /stockFileId=\{scoutThesis\?\.id\}/);
+  assert.doesNotMatch(execute, /stockFileId:\s*plan\.stockThesisId/);
+  assert.match(fundingSnap, /textOrUnconfigured\(input\.stockFileId\)/);
+  assert.match(
+    planning,
+    /stockFileId omitted — StockThesis has no authoritative Stock File ID/
+  );
+
+  // 8 / 9 — Compact funding summary visible
+  assert.match(execute, /data-scout-funding-summary/);
+  assert.match(execute, /Capital required/);
+  assert.match(execute, /Estimated risk/);
+  assert.match(execute, /Available capital/);
+  assert.match(execute, /Risk room/);
+  assert.match(execute, /Funding status/);
+  assert.match(execute, /Unconfigured/);
+
+  // 10 — Manual 10 shares placeholder does not drive funding
+  assert.match(execute, /MANUAL_SHARES_PLACEHOLDER/);
+  assert.match(execute, /never authoritative for funding|not funding data/i);
+  assert.match(execute, /shares: MANUAL_SHARES_PLACEHOLDER/);
+  // Primary levels omit Shares unless canonical shareCount exists
+  assert.match(execute, /row\.label !== \"Shares\"/);
+
+  // 11 / 12 — Example / Trades book off primary; technical menu present
   assert.match(execute, /data-scout-execute/);
   assert.match(execute, /Trade boot/);
   assert.match(execute, /Prepare trade/);
@@ -61,22 +100,21 @@ async function main() {
   assert.match(execute, /data-scout-tech-menu/);
   assert.match(execute, /Manual levels → JSON/);
   assert.match(execute, /Technical actions/);
-  // Example block only inside technical/manual path
   const exampleIdx = execute.indexOf("Example block");
   const techIdx = execute.indexOf("data-scout-tech-menu");
   assert.ok(exampleIdx > techIdx, "Example block must sit under technical menu");
 
-  // Help — icon trigger on Scout page
+  // 13 — Compact Help
   assert.match(page, /trigger="icon"/);
   assert.match(help, /trigger\?: \"rail\" \| \"icon\"/);
   assert.match(help, /data-page-help-trigger="icon"/);
   assert.match(pageHelp, /Active cases and execution readiness/);
 
-  // UI badge hidden in production
+  // 14 — UI·scout hidden in production
   assert.match(badge, /isProductionUi/);
   assert.match(badge, /NODE_ENV === \"production\"/);
 
-  // Bottom safe padding so mobile nav does not cover cards
+  // 15 — Mobile bottom safe-area
   assert.match(
     planning,
     /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/
