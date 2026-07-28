@@ -1,6 +1,6 @@
 # CHANGE 24-2E — Chaos Dumping image ingestion
 
-**Status:** Pending — folded into PR **#113** (24-47 / 24-49). Do not merge #108 separately.  
+**Status:** Superseded — shipped via merged PR **#113** (24-47 / 24-49). #108 closed; do not merge separately.  
 **Route:** `/forge/chaos` (also shared by Deck capture via `persistChaosDumpCapture`)  
 **Scope:** Chaos Dumping image ingestion — not Argus Treemap/graph, Vault, Alexandria, MTA, Apply, Capital, Learning, nav.
 
