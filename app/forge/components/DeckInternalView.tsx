@@ -12,7 +12,6 @@ import {
   buildExchangePackage,
   downloadExchangePackage,
 } from "@/lib/argusforge/af03-exchange-export";
-import { homeExplorerHref } from "@/lib/argusforge/af03-home-explorer";
 import {
   filterDeckItems,
   fragmentDisplayTitle,
@@ -48,8 +47,11 @@ import {
   revokeObjectUrl,
 } from "@/lib/argusforge/af03-chaos-assets-idb";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import { CreationMenu, type CreateAction } from "./CreationMenu";
 import { DeckCaptureComposer } from "./DeckCaptureComposer";
+import { EntityLocationBreadcrumb } from "./EntityLocationNav";
 import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
+import { AF_LABEL, AF_TEXT } from "@/lib/argusforge/af03-visible-ontology";
 
 type Props = {
   deckId: string;
@@ -110,11 +112,6 @@ export function DeckInternalView({ deckId }: Props) {
   const layout = state?.prefs.deckInternalLayout ?? "list";
   const searching = query.trim().length > 0;
 
-  function parentHref(): string {
-    if (!deck) return "/forge";
-    return homeExplorerHref({ realmId: deck.folderId });
-  }
-
   function toggleSelect(id: string) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -171,19 +168,27 @@ export function DeckInternalView({ deckId }: Props) {
     setDeckMenuOpen(false);
   }
 
-  /** Secondary stub paths — no title modal for text; URL/name only when needed. */
-  function quickLinkStub() {
+  /** Secondary limited stubs — File/PDF. Structured opens Builder. */
+  function handleSecondaryCreate(action: CreateAction) {
     if (!state || !deck) return;
-    const url = promptTitle("Link URL", "https://");
-    if (!url) return;
-    const { state: next } = createContent(state, {
-      deckId,
-      kind: "link",
-      title: url,
-      body: url,
-      sourceRef: url,
-    });
-    setState(next);
+    if (action === "structured") {
+      createBuilderFragment();
+      return;
+    }
+    if (action === "file" || action === "pdf") {
+      const name =
+        action === "pdf" ? "document.pdf" : "file.bin";
+      const { state: next } = createContent(state, {
+        deckId,
+        kind: action === "pdf" ? "pdf" : "file",
+        title: name,
+        body: `Reference only — original name preserved. Binary not stored in this prototype.`,
+        sourceRef: name,
+        unsupported: true,
+        unsupportedReason: "Binary payload not stored — stub keeps the reference",
+      });
+      setState(next);
+    }
   }
 
   function renameFragment(item: Af03ContentItem) {
@@ -212,35 +217,14 @@ export function DeckInternalView({ deckId }: Props) {
   }
 
   return (
-    <div className="space-y-4 pb-4">
-      <Af03RepoDisclosure />
-
-      <nav aria-label="Deck location" className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-        <Link
-          href={parentHref()}
-          className="rounded px-1 py-0.5 hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-        >
-          ← Explorer
-        </Link>
-        {deck.folderId ? (
-          <>
-            <span aria-hidden>·</span>
-            <Link
-              href={realmHref(deck.folderId)}
-              className="rounded px-1 py-0.5 hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-            >
-              Argus Realm
-            </Link>
-          </>
-        ) : null}
-        <span aria-hidden>/</span>
-        <span className="text-zinc-400">{deck.view === "active" ? "Active" : "Archive"}</span>
-      </nav>
+    <div className="min-w-0 space-y-4 pb-4">
+      <Af03RepoDisclosure compact />
+      <EntityLocationBreadcrumb state={state} deckId={deckId} />
 
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold text-zinc-100">{deck.title}</h2>
-          <p className="text-xs text-zinc-500">
+          <p className={`text-xs ${AF_TEXT.metadata}`}>
             Capture, find, and review material in this Deck.
           </p>
         </div>
@@ -270,13 +254,8 @@ export function DeckInternalView({ deckId }: Props) {
               },
               {
                 id: "new-builder",
-                label: "Open blank Fragment (builder)",
+                label: "Structured Fragment",
                 onClick: createBuilderFragment,
-              },
-              {
-                id: "add-link",
-                label: "Add link stub…",
-                onClick: quickLinkStub,
               },
               {
                 id: "export",
@@ -329,7 +308,7 @@ export function DeckInternalView({ deckId }: Props) {
       {stats ? (
         <dl className="grid grid-cols-3 gap-2 rounded-lg border border-zinc-800/70 bg-zinc-900/30 px-3 py-2 text-center text-xs sm:grid-cols-6">
           <div>
-            <dt className="text-zinc-500">Items</dt>
+            <dt className={AF_TEXT.metadata}>{AF_LABEL.fragments}</dt>
             <dd className="text-base font-semibold text-zinc-100">{stats.items}</dd>
           </div>
           <div>
@@ -361,6 +340,8 @@ export function DeckInternalView({ deckId }: Props) {
         deckTitle={deck.title}
         onSaved={(next) => setState(next)}
       />
+
+      <CreationMenu scope="deck" onAction={handleSecondaryCreate} />
 
       {selected.size > 0 ? (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-sky-900/50 bg-sky-950/30 px-3 py-2 text-sm text-sky-100">
@@ -626,8 +607,7 @@ export function DeckInternalView({ deckId }: Props) {
         </ul>
       )}
 
-      <p className="text-[11px] text-zinc-600">
-        Deck id <code className="text-zinc-500">{deck.id}</code> ·{" "}
+      <p className={`text-[11px] ${AF_TEXT.disabled}`}>
         <Link href="/forge/vault" className="underline">
           Vault prep queue
         </Link>

@@ -16,8 +16,13 @@ import {
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
 import { ChaosAssetImage } from "./ChaosAssetImage";
+import {
+  EntityLocationBreadcrumb,
+  FragmentModeSwitch,
+} from "./EntityLocationNav";
 import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
 import { SimpleMarkdown } from "./SimpleMarkdown";
+import { AF_TEXT } from "@/lib/argusforge/af03-visible-ontology";
 
 type Props = {
   deckId: string;
@@ -85,24 +90,19 @@ export function ContentViewer({ deckId, itemId }: Props) {
   const hasAssetImages = imageBlocks.length > 0;
 
   return (
-    <div className="space-y-5">
-      <Af03RepoDisclosure />
+    <div className="min-w-0 space-y-5">
+      <Af03RepoDisclosure compact />
+      <EntityLocationBreadcrumb state={state} deckId={deckId} fragmentId={itemId} />
 
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <Link
-            href={deckHref(deckId)}
-            className="text-xs text-zinc-500 hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-          >
-            ← {deck?.title ?? "Chaos Deck"}
-          </Link>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-50">{item.title}</h2>
-          <p className="mt-1 text-[11px] uppercase tracking-wide text-zinc-500">
-            Viewer · {item.kind}
-            {item.markedForLater ? " · marked later" : ""} · not Alexandria
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-50">{item.title}</h2>
+          <p className={`mt-1 text-[11px] uppercase tracking-wide ${AF_TEXT.metadata}`}>
+            {item.markedForLater ? "Marked for later" : "Fragment"}
           </p>
         </div>
-        <div className="shrink-0">
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <FragmentModeSwitch deckId={deckId} fragmentId={itemId} mode="viewer" />
           <ForgeOverflowMenu
             open={menuOpen}
             onOpenChange={setMenuOpen}
@@ -111,14 +111,14 @@ export function ContentViewer({ deckId, itemId }: Props) {
             items={[
               {
                 id: "edit",
-                label: "Edit",
+                label: "Builder",
                 onClick: () => {
                   window.location.href = itemHref(deckId, itemId);
                 },
               },
               {
                 id: "back",
-                label: "Back to deck",
+                label: "Back to Deck",
                 onClick: () => {
                   window.location.href = deckHref(deckId);
                 },

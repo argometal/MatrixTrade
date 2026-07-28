@@ -11,7 +11,12 @@ import {
   viewHref,
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
+import { AF_TEXT } from "@/lib/argusforge/af03-visible-ontology";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import {
+  EntityLocationBreadcrumb,
+  FragmentModeSwitch,
+} from "./EntityLocationNav";
 
 type Props = {
   deckId: string;
@@ -144,45 +149,21 @@ export function ContentEditor({ deckId, itemId }: Props) {
   }
 
   return (
-    <div className="space-y-4">
-      <Af03RepoDisclosure />
+    <div className="min-w-0 space-y-4">
+      <Af03RepoDisclosure compact />
+      <EntityLocationBreadcrumb state={state} deckId={deckId} fragmentId={itemId} />
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <Link
-          href={deckHref(deckId)}
-          className="text-xs text-zinc-500 hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-          onClick={(e) => {
-            if (!dirty.current) return;
-            e.preventDefault();
-            close();
-          }}
-        >
-          ← {deck?.title ?? "Chaos Deck"}
-        </Link>
-        <div className="flex items-center gap-3">
-          <Link
-            href={viewHref(deckId, itemId)}
-            className="text-xs font-medium text-sky-400 hover:text-sky-300"
-            onClick={(e) => {
-              if (dirty.current && !window.confirm("Discard unsaved changes and open Viewer?")) {
-                e.preventDefault();
-              } else {
-                dirty.current = false;
-              }
-            }}
-          >
-            Viewer
-          </Link>
-          <p className="text-[10px] uppercase tracking-wide text-zinc-600">
-            Basic editor · not Alexandria
-          </p>
-        </div>
+        <p className={`text-[10px] uppercase tracking-wide ${AF_TEXT.metadata}`}>
+          Classic editor
+        </p>
+        <FragmentModeSwitch deckId={deckId} fragmentId={itemId} mode="classic" />
       </div>
 
       {item.unsupported ? (
         <p role="status" className="rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-2 text-sm text-amber-100/90">
-          Stub item — {item.unsupportedReason || "payload not fully stored in this prototype"}.
-          Original reference preserved; not silently discarded.
+          Stub — {item.unsupportedReason || "payload not fully stored"}.
+          Original reference preserved.
         </p>
       ) : null}
 

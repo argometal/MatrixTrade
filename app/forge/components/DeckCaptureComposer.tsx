@@ -1,26 +1,31 @@
 "use client";
 
 /**
- * CHANGE 24-39 — Classic Chaos capture inside a Deck.
- * Same draft pattern as Chaos Dumping: content first, optional image, Save, Expand.
- * Destination is fixed to the current Deck (no picker).
+ * CHANGE 24-47 — Classic Chaos capture inside a Deck.
+ * Shares the transactional capture engine with Chaos Dumping (24-2E).
+ * Destination is fixed to the current Deck.
  */
 
 import {
+  useCallback,
   useEffect,
   useId,
   useRef,
   useState,
   type ChangeEvent,
+  type ClipboardEvent,
 } from "react";
 import { createPortal } from "react-dom";
-import { addImageBlockFromFile } from "@/lib/argusforge/af03-builder-store";
 import {
-  looksLikeUrl,
-  titleFromDump,
-} from "@/lib/argusforge/af03-chaos-dump";
-import { createContent } from "@/lib/argusforge/af03-repo-store";
+  appendImageFilesToDraft,
+  extractImagesFromClipboard,
+  persistChaosDumpCapture,
+  revokeAllDraftImages,
+  revokeDraftImage,
+  type ChaosDraftImage,
+} from "@/lib/argusforge/af03-chaos-dump-images";
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
+import { AF_TEXT } from "@/lib/argusforge/af03-visible-ontology";
 
 const PLACEHOLDER =
   "Paste an idea, conversation, error, instruction, link, or raw material...";
@@ -30,11 +35,6 @@ type Props = {
   deckId: string;
   deckTitle: string;
   onSaved: (next: Af03RepoState, itemId: string) => void;
-};
-
-type DraftImage = {
-  file: File;
-  previewUrl: string;
 };
 
 export function DeckCaptureComposer({
@@ -50,9 +50,10 @@ export function DeckCaptureComposer({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const expandedRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const draftImagesRef = useRef<ChaosDraftImage[]>([]);
 
   const [content, setContent] = useState("");
-  const [draftImage, setDraftImage] = useState<DraftImage | null>(null);
+  const [draftImages, setDraftImages] = useState<ChaosDraftImage[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -64,98 +65,71 @@ export function DeckCaptureComposer({
   }, []);
 
   useEffect(() => {
+    draftImagesRef.current = draftImages;
+  }, [draftImages]);
+
+  useEffect(() => {
+    return () => {
+      revokeAllDraftImages(draftImagesRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!expanded) return;
     const t = window.setTimeout(() => expandedRef.current?.focus(), 40);
     return () => window.clearTimeout(t);
   }, [expanded]);
 
-  useEffect(() => {
-    return () => {
-      if (draftImage) {
-        try {
-          URL.revokeObjectURL(draftImage.previewUrl);
-        } catch {
-          /* ignore */
-        }
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- revoke only on unmount
+  const acceptImages = useCallback((files: File[]) => {
+    if (files.length === 0) return;
+    setDraftImages((prev) => {
+      const { drafts, error: err } = appendImageFilesToDraft(prev, files);
+      if (err) setError(err.message);
+      else setError(null);
+      return drafts;
+    });
   }, []);
 
-  function clearDraftImage() {
-    setDraftImage((prev) => {
-      if (prev) {
-        try {
-          URL.revokeObjectURL(prev.previewUrl);
-        } catch {
-          /* ignore */
-        }
-      }
-      return null;
+  function removeDraft(draftId: string) {
+    setDraftImages((prev) => {
+      const target = prev.find((d) => d.draftId === draftId);
+      if (target) revokeDraftImage(target);
+      return prev.filter((d) => d.draftId !== draftId);
     });
   }
 
   function onFilePicked(e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
+    const list = e.target.files;
+    if (list?.length) acceptImages(Array.from(list));
     e.target.value = "";
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setError("Only image files can be attached.");
-      return;
-    }
-    clearDraftImage();
-    setDraftImage({
-      file,
-      previewUrl: URL.createObjectURL(file),
-    });
-    setError(null);
+  }
+
+  function onPaste(e: ClipboardEvent) {
+    const images = extractImagesFromClipboard(e.clipboardData);
+    if (images.length === 0) return;
+    acceptImages(images);
   }
 
   async function onSave() {
-    const trimmed = content.trim();
-    if (!trimmed && !draftImage) {
-      setError("Add text or an image before saving.");
-      return;
-    }
     setBusy(true);
     setError(null);
     try {
-      const isLink = Boolean(trimmed && looksLikeUrl(trimmed) && !draftImage);
-      const title = trimmed
-        ? titleFromDump(trimmed)
-        : draftImage?.file.name || "Untitled note";
-      // titleFromDump uses "Untitled dump" for empty — never reached when trimmed is set.
-      const resolvedTitle =
-        title === "Untitled dump" ? "Untitled note" : title;
-
-      let { state: next, item } = createContent(state, {
+      const result = await persistChaosDumpCapture(state, {
         deckId,
-        kind: isLink ? "link" : draftImage && !trimmed ? "image" : "text",
-        title: resolvedTitle,
-        body: trimmed,
-        sourceRef: isLink ? trimmed : null,
+        text: content,
+        images: draftImages,
       });
-
-      if (draftImage) {
-        const result = await addImageBlockFromFile(next, item.id, draftImage.file);
-        if ("error" in result) {
-          setError(result.error);
-          onSaved(next, item.id);
-          clearDraftImage();
-          setContent("");
-          setExpanded(false);
-          setBusy(false);
-          return;
-        }
-        next = result.state;
+      if (!result.ok) {
+        setError(result.error.message);
+        return;
       }
-
-      clearDraftImage();
+      revokeAllDraftImages(draftImages);
+      setDraftImages([]);
       setContent("");
       setExpanded(false);
       setSavedFlash(true);
       window.setTimeout(() => setSavedFlash(false), 1800);
-      onSaved(next, item.id);
+      onSaved(result.state, result.item.id);
     } finally {
       setBusy(false);
     }
@@ -178,32 +152,35 @@ export function DeckCaptureComposer({
           setContent(e.target.value);
           if (error) setError(null);
         }}
+        onPaste={onPaste}
         placeholder={PLACEHOLDER}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
-        className={`w-full resize-none bg-transparent px-4 py-3.5 text-base leading-relaxed text-zinc-100 outline-none placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500 ${
+        className={`w-full resize-none bg-transparent px-4 py-3.5 text-base leading-relaxed text-zinc-100 outline-none placeholder:text-zinc-500 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500 ${
           fullscreen ? "min-h-0 flex-1" : "min-h-[8.5rem]"
         }`}
       />
-      {draftImage ? (
-        <div className="flex items-center gap-2 border-t border-zinc-800 px-3 py-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={draftImage.previewUrl}
-            alt=""
-            className="h-12 w-12 rounded-md object-cover"
-          />
-          <span className="min-w-0 flex-1 truncate text-xs text-zinc-400">
-            {draftImage.file.name}
-          </span>
-          <button
-            type="button"
-            className="text-xs text-zinc-400 underline-offset-2 hover:text-zinc-200 hover:underline"
-            onClick={clearDraftImage}
-          >
-            Remove
-          </button>
-        </div>
+      {draftImages.length > 0 ? (
+        <ul className="flex gap-2 overflow-x-auto border-t border-zinc-800 px-3 py-2">
+          {draftImages.map((img) => (
+            <li key={img.draftId} className="relative shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={img.previewUrl}
+                alt=""
+                className="h-14 w-14 rounded-md object-cover"
+              />
+              <button
+                type="button"
+                className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-zinc-950 text-[10px] text-zinc-200"
+                aria-label={`Remove ${img.filename}`}
+                onClick={() => removeDraft(img.draftId)}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
       ) : null}
       <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-zinc-800/80 px-3 py-2">
         <input
@@ -211,6 +188,7 @@ export function DeckCaptureComposer({
           id={fileId}
           type="file"
           accept="image/*"
+          multiple
           className="sr-only"
           onChange={onFilePicked}
         />
@@ -221,6 +199,11 @@ export function DeckCaptureComposer({
         >
           + Add image
         </button>
+        {draftImages.length > 0 ? (
+          <span className={`text-[11px] ${AF_TEXT.metadata}`}>
+            {draftImages.length} image{draftImages.length === 1 ? "" : "s"}
+          </span>
+        ) : null}
         {!fullscreen ? (
           <button
             type="button"
@@ -244,15 +227,15 @@ export function DeckCaptureComposer({
       <div className="flex items-baseline justify-between gap-2">
         <h3
           id={`${formId}-heading`}
-          className="text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500"
+          className={`text-[10px] font-semibold uppercase tracking-[0.14em] ${AF_TEXT.metadata}`}
         >
           Capture into this Deck
         </h3>
-        <span className="truncate text-[11px] text-zinc-600">{deckTitle}</span>
+        <span className={`truncate text-[11px] ${AF_TEXT.disabled}`}>{deckTitle}</span>
       </div>
 
       {expanded ? (
-        <p className="rounded-xl border border-dashed border-zinc-800 px-3 py-5 text-center text-xs text-zinc-600">
+        <p className="rounded-xl border border-dashed border-zinc-800 px-3 py-5 text-center text-xs text-zinc-500">
           Editing in fullscreen — draft stays here.
         </p>
       ) : (
@@ -280,7 +263,7 @@ export function DeckCaptureComposer({
         </p>
       ) : null}
 
-      <p className="text-[11px] text-zinc-600">
+      <p className={`text-[11px] ${AF_TEXT.disabled}`}>
         Title is optional — first useful line is used. Rename later from •••.
       </p>
 
@@ -305,7 +288,7 @@ export function DeckCaptureComposer({
                     <span className="block text-sm font-semibold text-zinc-100">
                       Back to Deck
                     </span>
-                    <span className="block text-[11px] text-zinc-500">
+                    <span className={`block text-[11px] ${AF_TEXT.metadata}`}>
                       Collapse editor
                     </span>
                   </span>
@@ -316,16 +299,21 @@ export function DeckCaptureComposer({
                   className="min-h-11 text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400"
                 >
                   <span className="block text-sm font-semibold text-sky-400">Done</span>
-                  <span className="block text-[11px] text-zinc-500">
+                  <span className={`block text-[11px] ${AF_TEXT.metadata}`}>
                     Collapse &amp; return
                   </span>
                 </button>
               </header>
               <div className="flex min-h-0 flex-1 flex-col px-3 py-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-                <p className="mb-2 text-xs text-zinc-500">
-                  Save to: <span className="text-zinc-300">{deckTitle}</span>
+                <p className={`mb-2 text-xs ${AF_TEXT.metadata}`}>
+                  Save to: <span className={AF_TEXT.secondary}>{deckTitle}</span>
                 </p>
                 {editor(true)}
+                {error ? (
+                  <p role="alert" className="mt-2 text-sm font-medium text-rose-300">
+                    {error}
+                  </p>
+                ) : null}
                 <button
                   type="button"
                   disabled={busy}

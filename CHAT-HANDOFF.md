@@ -9,24 +9,21 @@
 
 ---
 
-<<<<<<< HEAD
-## Shipped — ArgusForge 24-2E Chaos image ingestion
+## Pending — ArgusForge 24-47 consolidation
 
-Doc: `md/argusforge/change-24-2E.md`  
-Route: `/forge/chaos` · Test: `npm run test:chaos-dump-images`
+Doc: `md/argusforge/change-24-47.md`
 
-Chaos Dumping accepts text, images, or both via picker, clipboard paste, and drag/drop. Binaries use existing Chaos IndexedDB asset store (24-1C); fragments keep image blocks + asset metas. Text-only flow unchanged. Argus / MTA / Apply untouched.
+One capture engine · ontology alignment · mobile legibility · less technical UI. Incorporates foundations from draft #108 (images) and #112 (Deck). Do not treat as shipped until merge and production verification.
 
-Live limits: max 10 images · 15 MB each · missing assets → “Image unavailable”.
-=======
+## Pending — ArgusForge 24-2E Chaos image ingestion
+
+PR: #108 · Doc: `md/argusforge/change-24-2E.md` · folded into 24-47 branch  
+Do not treat as shipped until merge and production verification.
+
 ## Pending — ArgusForge 24-39 Chaos Deck capture & recovery
 
-PR: #112  
-Route: `/forge/deck/[deckId]`  
-Doc: `md/argusforge/change-24-39.md`
-
-Optional titles · classic dump capture in Deck · full-content search · denser grid. Do not treat as shipped until merge and production verification.
->>>>>>> origin/cursor/af03-chaos-deck-capture-24-39-c2fb
+PR: #112 · Doc: `md/argusforge/change-24-39.md` · folded into 24-47 branch  
+Do not treat as shipped until merge and production verification.
 
 ---
 

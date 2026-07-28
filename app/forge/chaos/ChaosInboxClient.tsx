@@ -45,6 +45,10 @@ import {
   moveFragmentToDeck,
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
+import {
+  provisionalDeckTitle,
+  provisionalRealmTitle,
+} from "@/lib/argusforge/af03-visible-ontology";
 
 type ToastState = {
   itemId: string;
@@ -56,13 +60,6 @@ type ToastState = {
 
 const PLACEHOLDER =
   "Paste an idea, conversation, error, instruction, link, image, or raw material...";
-
-function promptTitle(label: string, initial: string): string | null {
-  const value = window.prompt(label, initial);
-  if (value === null) return null;
-  const trimmed = value.trim();
-  return trimmed || null;
-}
 
 export function ChaosInboxClient() {
   const formId = useId();
@@ -260,8 +257,7 @@ export function ChaosInboxClient() {
 
   function birthDeck() {
     if (!state) return;
-    const name = promptTitle("Chaos Deck name", "New Chaos Deck");
-    if (!name) return;
+    const name = provisionalDeckTitle(state.decks.map((d) => d.title));
     const { state: next, deck } = createDeck(state, {
       title: name,
       folderId: null,
@@ -274,8 +270,9 @@ export function ChaosInboxClient() {
 
   function birthRealm() {
     if (!state) return;
-    const name = promptTitle("Realm name", "New Realm");
-    if (!name) return;
+    const name = provisionalRealmTitle(
+      state.folders.filter((f) => f.parentId === null).map((f) => f.title)
+    );
     const { state: next } = createFolder(state, {
       title: name,
       parentId: null,

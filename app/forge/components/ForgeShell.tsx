@@ -1,40 +1,16 @@
 "use client";
 
 /**
- * CHANGE 24-01 / 24-17 / 24-22 — primary bottom bar:
- * [home icon] | Argus | + (Chaos Dumping) | [Prepared output icon]
- * Argus secondary: Focus | Active | Archive — filters Realm Treemap (same Realms, no copies).
- * Administrative lists remain at /forge/active and /forge/archive.
+ * CHANGE 24-01 / 24-22 / 24-47 — primary bottom bar only:
+ * [home] | Argus | + (Chaos Dumping) | [Prepared output]
+ * Focus / Active / Archive are Home filters — not global navigation (24-47).
  */
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Suspense, type ReactNode } from "react";
 import { useForgeSystem } from "./ForgeSystemProvider";
-
-const ARGUS_SECONDARY: {
-  href: string;
-  label: string;
-  filter: "focus" | "active" | "archive";
-  pending?: boolean;
-}[] = [
-  {
-    href: "/forge/argus?filter=focus",
-    label: "Focus",
-    filter: "focus",
-    pending: true,
-  },
-  {
-    href: "/forge/argus?filter=active",
-    label: "Active",
-    filter: "active",
-  },
-  {
-    href: "/forge/argus?filter=archive",
-    label: "Archive",
-    filter: "archive",
-  },
-];
+import { AF_TEXT } from "@/lib/argusforge/af03-visible-ontology";
 
 function sectionTitle(pathname: string, systemLabel: string): string {
   if (pathname.endsWith("/view") || pathname.includes("/view")) return "Viewer";
@@ -105,10 +81,8 @@ function PreparedOutputIcon({ active }: { active: boolean }) {
 
 function ForgeShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname() || "/forge";
-  const searchParams = useSearchParams();
   const router = useRouter();
   const { system, setSystem, ready } = useForgeSystem();
-  const [argusOpen, setArgusOpen] = useState(false);
 
   const systemLabel = system === "mta" ? "MTA" : "ArgusForge";
   const title = sectionTitle(pathname, systemLabel);
@@ -119,23 +93,16 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
   const onArgus = isArgusSurface(pathname);
   const onArgusTreemap =
     pathname.startsWith("/forge/argus") && !pathname.startsWith("/forge/argus/units");
-  /** Treemap hosts its own filter chips (24-25) — no fixed secondary bar above nav. */
-  const showArgusSecondary = (argusOpen || onArgus) && !onArgusTreemap;
-  const treemapFilter = searchParams.get("filter") || (onArgusTreemap ? "active" : null);
-
-  useEffect(() => {
-    if (isArgusSurface(pathname)) setArgusOpen(true);
-  }, [pathname]);
 
   const itemClass =
     "flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400";
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col bg-zinc-950 lg:max-w-3xl">
+    <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col overflow-x-hidden bg-zinc-950 lg:max-w-3xl">
       <header className="sticky top-0 z-20 border-b border-zinc-800 bg-zinc-950/95 px-3 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500">
+            <p className={`text-[10px] font-medium uppercase tracking-[0.14em] ${AF_TEXT.metadata}`}>
               System
             </p>
             {!hideChromeTitle ? (
@@ -148,7 +115,7 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
                 ) : null}
               </h1>
             ) : (
-              <p className="truncate text-xs text-zinc-600">Coordination shell</p>
+              <p className={`truncate text-xs ${AF_TEXT.metadata}`}>ArgusForge</p>
             )}
           </div>
 
@@ -165,7 +132,7 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
               className={`min-h-9 rounded-md px-2.5 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
                 system === "argusforge"
                   ? "bg-zinc-800 text-zinc-50"
-                  : "text-zinc-500 hover:text-zinc-300"
+                  : `${AF_TEXT.metadata} hover:text-zinc-300`
               }`}
             >
               ArgusForge
@@ -176,7 +143,7 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
               disabled={!ready}
               onClick={() => setSystem("mta")}
               className={`min-h-9 rounded-md px-2.5 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
-                system === "mta" ? "bg-zinc-800 text-zinc-50" : "text-zinc-500 hover:text-zinc-300"
+                system === "mta" ? "bg-zinc-800 text-zinc-50" : `${AF_TEXT.metadata} hover:text-zinc-300`
               }`}
             >
               MTA
@@ -185,53 +152,11 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main
-        className={`flex-1 px-3 py-4 ${
-          showArgusSecondary
-            ? "pb-[calc(8.5rem+env(safe-area-inset-bottom))]"
-            : "pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
-        }`}
-      >
+      <main className="min-w-0 flex-1 overflow-x-hidden px-3 py-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
         {children}
       </main>
 
       <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg lg:max-w-3xl">
-        {showArgusSecondary ? (
-          <nav
-            aria-label="Argus lifecycle filter"
-            className="border-t border-zinc-800 bg-zinc-900/95 px-2 py-1.5 backdrop-blur"
-          >
-            <ul className="flex items-stretch gap-1">
-              {ARGUS_SECONDARY.map((item) => {
-                const active =
-                  onArgusTreemap &&
-                  (treemapFilter === item.filter ||
-                    (!searchParams.get("filter") && item.filter === "active"));
-                return (
-                  <li key={item.filter} className="min-w-0 flex-1">
-                    <Link
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      className={`flex min-h-10 items-center justify-center rounded-md text-xs font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
-                        active
-                          ? "bg-zinc-800 text-zinc-50"
-                          : "text-zinc-500 hover:bg-zinc-800/60 hover:text-zinc-300"
-                      }`}
-                    >
-                      {item.label}
-                      {item.pending ? (
-                        <span className="ml-1 text-[9px] font-normal uppercase text-amber-500/90">
-                          soon
-                        </span>
-                      ) : null}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        ) : null}
-
         <nav
           aria-label="ArgusForge primary"
           className="border-t border-zinc-800 bg-zinc-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
@@ -253,19 +178,10 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 aria-label="Argus"
-                aria-expanded={showArgusSecondary}
-                onClick={() => {
-                  if (showArgusSecondary && onArgusTreemap) {
-                    setArgusOpen(false);
-                    return;
-                  }
-                  setArgusOpen(true);
-                  if (!onArgusTreemap) router.push("/forge/argus?filter=active");
-                }}
+                aria-current={onArgus ? "page" : undefined}
+                onClick={() => router.push("/forge/argus?filter=active")}
                 className={`${itemClass} text-[13px] font-semibold ${
-                  showArgusSecondary || onArgus
-                    ? "text-zinc-100"
-                    : "text-zinc-500 hover:text-zinc-300"
+                  onArgus ? "text-zinc-100" : `${AF_TEXT.metadata} hover:text-zinc-300`
                 }`}
               >
                 <span>Argus</span>
@@ -282,7 +198,7 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
                 title="Chaos Dumping"
                 aria-current={onChaos ? "page" : undefined}
                 className={`${itemClass} text-2xl font-light leading-none ${
-                  onChaos ? "text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
+                  onChaos ? "text-zinc-100" : `${AF_TEXT.metadata} hover:text-zinc-300`
                 }`}
               >
                 +

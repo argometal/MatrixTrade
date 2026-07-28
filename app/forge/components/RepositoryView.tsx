@@ -25,6 +25,7 @@ import {
 import type { Af03ChaosDeck, Af03Folder, Af03RepoState, OperationalView } from "@/lib/argusforge/af03-repo-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
 import { ChaosDeckList } from "./ChaosDeckList";
+import { provisionalDeckTitle, provisionalRealmTitle } from "@/lib/argusforge/af03-visible-ontology";
 import { CreationMenu, type CreateAction } from "./CreationMenu";
 import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
 import { LevelSnapshotChart } from "./LevelSnapshotChart";
@@ -115,16 +116,16 @@ export function RepositoryView({ view, folderId }: Props) {
   function handleCreate(action: CreateAction) {
     if (!state) return;
     if (action === "folder") {
-      const name = promptTitle("New folder name", "New folder");
-      if (!name) return;
+      const siblings = state.folders.filter((f) => f.parentId === folderId);
+      const name = provisionalRealmTitle(siblings.map((f) => f.title));
       const { state: next } = createFolder(state, { title: name, parentId: folderId, view });
       setState(next);
       setCreateOpen(false);
       return;
     }
     if (action === "deck") {
-      const name = promptTitle("New Chaos Deck name", "New Chaos Deck");
-      if (!name) return;
+      const siblings = state.decks.filter((d) => d.folderId === folderId);
+      const name = provisionalDeckTitle(siblings.map((d) => d.title));
       const { state: next, deck } = createDeck(state, { title: name, folderId, view });
       setState(next);
       setCreateOpen(false);
