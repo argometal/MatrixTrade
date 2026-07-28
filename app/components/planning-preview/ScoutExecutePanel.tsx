@@ -291,27 +291,23 @@ export function ScoutExecutePanel({
     fundingSnap.blockingReasons.find((r) => r.includes("risk")) ??
       "No canonical estimatedRisk yet"
   );
+  const availableField = capitalAccount?.availableCapital;
   const availableCapital =
-    capitalAccount?.availableCapital.status === "configured"
+    availableField?.status === "configured"
       ? {
-          value: capitalAccount.availableCapital.value.toLocaleString(
-            undefined,
-            {
-              style: "currency",
-              currency: "USD",
-              maximumFractionDigits: 0,
-            }
-          ),
+          value: availableField.value.toLocaleString(undefined, {
+            style: "currency",
+            currency: "USD",
+            maximumFractionDigits: 0,
+          }),
         }
       : {
           value: "Unconfigured",
           reason:
-            capitalAccount &&
-            capitalAccount.availableCapital.status !== "configured"
-              ? capitalAccount.availableCapital.reason
-              : capitalConfigurationPresent
-                ? "Available capital not configured"
-                : "Missing capital configuration",
+            availableField?.reason ??
+            (capitalConfigurationPresent
+              ? "Available capital not configured"
+              : "Missing capital configuration"),
         };
   const riskRoom =
     Number.isFinite(monthlyLossRoom)
