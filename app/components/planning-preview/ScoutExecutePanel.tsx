@@ -16,6 +16,7 @@ import type { CapitalAccountSnapshot } from "@/lib/capital-account";
 import type { CapitalReservation } from "@/lib/capital-types";
 import {
   buildScoutFundingSnapshot,
+  canonicalShareCount,
   scoutFundingSnapshotItem,
   type ScoutFundingSnapshotField,
 } from "@/lib/scout-funding-snapshot";
@@ -253,10 +254,56 @@ export function ScoutExecutePanel({
     };
   }
 
-  function handleCopyProposal() {
+  function handleCopyManualProposal() {
     const fields = buildFromForm();
     if (!fields) return;
     void copyTextClipboard(buildTradeProposalBlock(fields), "proposal");
+  }
+
+  function handlePrepareTradeCanonical() {
+    if (!plan) return;
+    const funding = buildScoutFundingSnapshot({
+      plan,
+      stockFileId,
+      reservations,
+      account: capitalAccount,
+      authorizableLossRoom: monthlyLossRoom,
+      capitalConfigurationPresent,
+    });
+    const shares = canonicalShareCount(funding.shareCount);
+    if (shares === undefined) {
+      setError("Share count unconfigured — calculate allocation first");
+      return;
+    }
+    const entry =
+      typeof funding.entry === "number" ? funding.entry : Number(form.entry);
+    const stop =
+      typeof funding.stop === "number" ? funding.stop : Number(form.stop);
+    const target =
+      typeof funding.target === "number"
+        ? funding.target
+        : form.target
+          ? Number(form.target)
+          : undefined;
+    if (!Number.isFinite(entry) || !Number.isFinite(stop)) {
+      setError("Need entry + stop on the scout plan.");
+      return;
+    }
+    setError(null);
+    void copyTextClipboard(
+      buildTradeProposalBlock({
+        id: suggestedTradeId,
+        ticker: plan.ticker,
+        entry,
+        stop,
+        target: Number.isFinite(target) ? target : undefined,
+        shares,
+        playbookId: plan.playbookId,
+        thesis: `From plan ${plan.id}`,
+        direction: "long",
+      }),
+      "proposal"
+    );
   }
 
   if (!plan) {
@@ -324,11 +371,7 @@ export function ScoutExecutePanel({
     fundingSnap.blockingReasons[0]
   );
 
-  const canonicalShares =
-    typeof fundingSnap.shareCount === "number" &&
-    Number.isFinite(fundingSnap.shareCount)
-      ? fundingSnap.shareCount
-      : undefined;
+  const canonicalShares = canonicalShareCount(fundingSnap.shareCount);
 
   return (
     <section
@@ -435,11 +478,34 @@ export function ScoutExecutePanel({
       <div className="mt-3 flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={handleCopyProposal}
-          className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20"
+          data-scout-prepare-trade
+          disabled={canonicalShares === undefined}
+          title={
+            canonicalShares === undefined
+              ? "Canonical share count is required."
+              : undefined
+          }
+          onClick={handlePrepareTradeCanonical}
+          className={
+            canonicalShares === undefined
+              ? "cursor-not-allowed rounded-lg border border-zinc-700 bg-zinc-900/50 px-3 py-2 text-xs font-medium text-zinc-500"
+              : "rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20"
+          }
         >
-          {copiedProposal ? "Copied JSON" : "Prepare trade"}
+          {copiedProposal && canonicalShares !== undefined
+            ? "Copied JSON"
+            : canonicalShares === undefined
+              ? "Prepare trade · allocation required"
+              : "Prepare trade"}
         </button>
+        {canonicalShares === undefined ? (
+          <p
+            className="w-full text-[11px] text-zinc-500"
+            data-scout-prepare-allocation-msg
+          >
+            Share count unconfigured — calculate allocation first
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-3 border-t border-zinc-800/80 pt-2">
@@ -550,7 +616,7 @@ export function ScoutExecutePanel({
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={handleCopyProposal}
+                      onClick={handleCopyManualProposal}
                       className="rounded-lg border border-emerald-500/40 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-600/10"
                     >
                       {copiedProposal

@@ -30,6 +30,20 @@ export type ScoutFundingSentinel = "unconfigured" | "unknown";
 
 export type ScoutFundingSnapshotField<T> = T | ScoutFundingSentinel;
 
+/**
+ * Canonical share count for Prepare trade / Allocation Board.
+ * Sentinels, non-finite, and non-positive values are never authoritative.
+ */
+export function canonicalShareCount(
+  value: ScoutFundingSnapshotField<number>
+): number | undefined {
+  return typeof value === "number" &&
+    Number.isFinite(value) &&
+    value > 0
+    ? value
+    : undefined;
+}
+
 export type ScoutFundingSnapshot = {
   planId: string;
   stockFileId: ScoutFundingSnapshotField<string>;

@@ -34,7 +34,12 @@ import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import type { Experiment, Trade } from "@/lib/types";
 import type { CapitalAccountSnapshot } from "@/lib/capital-account";
 import type { CapitalReservation } from "@/lib/capital-types";
-import { scoutFundingSnapshotItem } from "@/lib/scout-funding-snapshot";
+import {
+  buildScoutFundingSnapshot,
+  canonicalShareCount,
+  scoutFundingSnapshotItem,
+  type ScoutFundingSnapshotField,
+} from "@/lib/scout-funding-snapshot";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { buildTradeProposalBlock } from "@/lib/build-trade-proposal-block";
 import {
@@ -496,6 +501,35 @@ export function PreviewPlanning({
                       plan?.targetPrice ?? le?.primaryTargetPrice;
                     const zone = formatStockThesisZone(thesis.levels?.primaryZone);
                     const rr = focusedScoutCard.plannedRR;
+                    const fundingInput = plan
+                      ? {
+                          plan,
+                          // stockFileId omitted — no authoritative Stock File ID (26-40)
+                          reservations,
+                          account: capitalAccount,
+                          authorizableLossRoom: monthly.monthlyLossRoom,
+                          capitalConfigurationPresent,
+                        }
+                      : null;
+                    const fundingSnap = fundingInput
+                      ? buildScoutFundingSnapshot(fundingInput)
+                      : null;
+                    const shares = fundingSnap
+                      ? canonicalShareCount(fundingSnap.shareCount)
+                      : undefined;
+                    const fundingSnapshotForCase = fundingInput
+                      ? scoutFundingSnapshotItem(fundingInput)
+                      : null;
+
+                    function formatMoneyField(
+                      v: ScoutFundingSnapshotField<number> | undefined
+                    ): string {
+                      if (typeof v === "number" && Number.isFinite(v)) {
+                        return `$${v.toFixed(0)}`;
+                      }
+                      return "—";
+                    }
+
                     const snapshotItemsForCase = stockProfileSnapshotItems({
                       thesis,
                       playbooks,
@@ -508,6 +542,12 @@ export function PreviewPlanning({
                         setPrepareMsg("Need entry + stop on the scout plan.");
                         return;
                       }
+                      if (shares === undefined) {
+                        setPrepareMsg(
+                          "Share count unconfigured — calculate allocation first"
+                        );
+                        return;
+                      }
                       const ok = await copyText(
                         buildTradeProposalBlock({
                           id: suggestedTradeId,
@@ -515,7 +555,7 @@ export function PreviewPlanning({
                           entry,
                           stop,
                           target,
-                          shares: 10,
+                          shares,
                           playbookId: plan.playbookId,
                           thesis: `From plan ${plan.id}`,
                           direction: "long",
@@ -580,6 +620,23 @@ export function PreviewPlanning({
                                 "Room",
                                 `$${monthly.monthlyLossRoom.toFixed(0)}`,
                               ],
+                              [
+                                "Capital required",
+                                formatMoneyField(fundingSnap?.requestedCapital),
+                              ],
+                              [
+                                "Estimated risk",
+                                formatMoneyField(fundingSnap?.estimatedRisk),
+                              ],
+                              [
+                                "Funding status",
+                                fundingSnap &&
+                                fundingSnap.currentFundingDecision !==
+                                  "unconfigured" &&
+                                fundingSnap.currentFundingDecision !== "unknown"
+                                  ? String(fundingSnap.currentFundingDecision)
+                                  : "—",
+                              ],
                             ] as const
                           ).map(([label, value]) => (
                             <div
@@ -615,6 +672,16 @@ export function PreviewPlanning({
                                   : initialSnapshotItems
                             }
                           />
+                          {fundingSnapshotForCase ? (
+                            <span data-scout-case-funding-snapshot>
+                              <SnapshotButton
+                                title="Scout Funding Snapshot"
+                                description="Canonical package for capital-reservation-create — read-only"
+                                items={[fundingSnapshotForCase]}
+                                className="!px-3 !py-2"
+                              />
+                            </span>
+                          ) : null}
                           <button
                             type="button"
                             onClick={() => {
@@ -627,13 +694,41 @@ export function PreviewPlanning({
                           </button>
                           <button
                             type="button"
+                            data-scout-prepare-trade
+                            disabled={shares === undefined}
+                            title={
+                              shares === undefined
+                                ? "Canonical share count is required."
+                                : undefined
+                            }
                             onClick={() => void prepareTrade()}
-                            className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20"
+                            className={
+                              shares === undefined
+                                ? "cursor-not-allowed rounded-lg border border-zinc-600/50 bg-zinc-900/40 px-3 py-2 text-xs font-medium text-zinc-500"
+                                : "rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20"
+                            }
                           >
-                            Prepare trade
+                            {shares === undefined
+                              ? "Prepare trade · allocation required"
+                              : "Prepare trade"}
                           </button>
                         </div>
-                        {prepareMsg ? (
+                        {shares === undefined ? (
+                          <p
+                            className="mt-2 text-[11px] opacity-80"
+                            data-scout-prepare-allocation-msg
+                          >
+                            Share count unconfigured — calculate allocation first
+                            <span className="mt-1 flex flex-wrap gap-2">
+                              <Link
+                                href="/planning/capital"
+                                className="underline opacity-90 hover:opacity-100"
+                              >
+                                Capital Planner
+                              </Link>
+                            </span>
+                          </p>
+                        ) : prepareMsg ? (
                           <p className="mt-2 text-[11px] opacity-80">{prepareMsg}</p>
                         ) : null}
 

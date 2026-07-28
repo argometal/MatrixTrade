@@ -51,12 +51,17 @@ async function main() {
   assert.doesNotMatch(planning, /stockFileId=\{scoutThesis\?\.id\}/);
   assert.doesNotMatch(execute, /stockFileId:\s*plan\.stockThesisId/);
 
-  // Manual shares placeholder is not funding input
+  // Manual shares placeholder is not funding input / primary Prepare trade
   assert.match(execute, /MANUAL_SHARES_PLACEHOLDER/);
+  assert.match(execute, /handlePrepareTradeCanonical/);
+  assert.match(execute, /canonicalShareCount/);
   assert.doesNotMatch(
     execute,
     /buildScoutFundingSnapshot\([\s\S]*shares:\s*form\.shares/
   );
+  assert.doesNotMatch(planning, /shares:\s*10/);
+  assert.match(planning, /canonicalShareCount/);
+  assert.match(planning, /Prepare trade · allocation required/);
 
   // Snapshot ontology: thesis present, no file source → file unconfigured
   __setCapitalPlannerStoreForTests({

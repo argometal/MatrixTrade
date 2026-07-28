@@ -48,6 +48,13 @@ async function main() {
   assert.match(planning, /Invalidation/);
   assert.match(planning, /Fills in war room/);
   assert.match(planning, /Evidence/);
+  assert.match(planning, /"Capital required"/);
+  assert.match(planning, /"Estimated risk"/);
+  assert.match(planning, /"Funding status"/);
+  // 26-50 — no hard-coded shares in case-summary Prepare trade
+  assert.doesNotMatch(planning, /shares:\s*10/);
+  assert.match(planning, /canonicalShareCount/);
+  assert.match(planning, /Prepare trade · allocation required/);
 
   // 4 / 5 — Funding snapshot + capital inputs reach Execute
   assert.match(execute, /Scout Funding Snapshot/);
@@ -67,9 +74,10 @@ async function main() {
   assert.doesNotMatch(planning, /stockFileId=\{scoutThesis\?\.id\}/);
   assert.doesNotMatch(execute, /stockFileId:\s*plan\.stockThesisId/);
   assert.match(fundingSnap, /textOrUnconfigured\(input\.stockFileId\)/);
+  assert.match(fundingSnap, /export function canonicalShareCount/);
   assert.match(
     planning,
-    /stockFileId omitted — StockThesis has no authoritative Stock File ID/
+    /stockFileId omitted — StockThesis has no authoritative Stock File ID|stockFileId omitted — no authoritative Stock File ID/
   );
 
   // 8 / 9 — Compact funding summary visible
