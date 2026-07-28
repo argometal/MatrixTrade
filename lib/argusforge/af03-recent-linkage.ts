@@ -1,5 +1,6 @@
 /**
- * CHANGE 24-33 — Recent linkage rows for Argus Treemap (derived, no new store).
+ * CHANGE 24-33 / 24-36 — Recent linkage rows for Argus Treemap (derived, no new store).
+ * 24-36: Fragment-level vs Deck-level relation semantics (no overstatement).
  */
 
 import type { Af03ImageBlockPayload } from "./af03-builder-types";
@@ -9,7 +10,11 @@ import { getFolder, getDeck } from "./af03-repo-store";
 import type { Af03ContentItem, Af03ContentKind, Af03RepoState } from "./af03-repo-types";
 import type { ArgusGraphState } from "./argus-graph-types";
 
-export type RecentLinkageStatus = "unlinked" | "in_realm" | "related";
+export type RecentLinkageStatus =
+  | "unlinked"
+  | "in_realm"
+  | "in_related_deck"
+  | "related";
 
 export type RecentLinkageRow = {
   fragmentId: string;
@@ -20,7 +25,10 @@ export type RecentLinkageRow = {
   deckTitle: string;
   realmTitle: string | null;
   createdAt: string;
-  relationCount: number;
+  /** Relations that touch a unit with chaosItemId === fragmentId. */
+  fragmentRelationCount: number;
+  /** Relations that touch a unit with chaosDeckId === deckId. */
+  deckRelationCount: number;
   status: RecentLinkageStatus;
   /** First image asset id when present (24-1C blocks). */
   imageAssetId: string | null;
@@ -63,38 +71,80 @@ function firstImageAssetId(
   return null;
 }
 
+function countUniqueRelationsForUnits(
+  graph: ArgusGraphState,
+  unitIds: Set<string>
+): number {
+  if (unitIds.size === 0) return 0;
+  const seen = new Set<string>();
+  for (const r of graph.relations) {
+    if (unitIds.has(r.sourceUnitId) || unitIds.has(r.targetUnitId)) {
+      seen.add(r.id);
+    }
+  }
+  return seen.size;
+}
+
 /**
- * Count Argus relations that reference units for this Fragment and/or its Deck.
- * Uses only existing graph units + relations — no inference.
+ * Relations that reference a unit whose chaosItemId === fragmentId.
+ * Unique relation IDs — both endpoints matching still count once.
  */
 export function countFragmentRelations(
   graph: ArgusGraphState | null,
-  fragmentId: string,
-  deckId: string
+  fragmentId: string
 ): number {
   if (!graph) return 0;
   const unitIds = new Set<string>();
   for (const u of graph.units) {
     if (u.chaosItemId === fragmentId) unitIds.add(u.id);
-    if (u.chaosDeckId === deckId) unitIds.add(u.id);
   }
-  if (unitIds.size === 0) return 0;
-  let n = 0;
-  for (const r of graph.relations) {
-    if (unitIds.has(r.sourceUnitId) || unitIds.has(r.targetUnitId)) n += 1;
-  }
-  return n;
+  return countUniqueRelationsForUnits(graph, unitIds);
 }
 
-export function deriveLinkageStatus(input: {
-  isInbox: boolean;
-  realmTitle: string | null;
-  relationCount: number;
+/**
+ * Relations that reference a unit associated with the parent Deck
+ * (chaosDeckId === deckId). Unique relation IDs.
+ */
+export function countDeckRelations(
+  graph: ArgusGraphState | null,
+  deckId: string
+): number {
+  if (!graph) return 0;
+  const unitIds = new Set<string>();
+  for (const u of graph.units) {
+    if (u.chaosDeckId === deckId) unitIds.add(u.id);
+  }
+  return countUniqueRelationsForUnits(graph, unitIds);
+}
+
+/**
+ * Four-state projection. Status follows actual linkage, not location alone.
+ * Deck relation never implies direct Fragment relation.
+ */
+export function deriveRecentLinkageStatus(input: {
+  fragmentRelationCount: number;
+  deckRelationCount: number;
+  hasRealm: boolean;
 }): RecentLinkageStatus {
-  if (input.relationCount > 0) return "related";
-  if (input.realmTitle) return "in_realm";
-  // Chaos Inbox / unassigned / no realm / no relations
+  if (input.fragmentRelationCount > 0) return "related";
+  if (input.deckRelationCount > 0) return "in_related_deck";
+  if (input.hasRealm) return "in_realm";
   return "unlinked";
+}
+
+/** @deprecated Prefer deriveRecentLinkageStatus — kept for transitional imports. */
+export function deriveLinkageStatus(input: {
+  fragmentRelationCount?: number;
+  deckRelationCount?: number;
+  relationCount?: number;
+  realmTitle?: string | null;
+  hasRealm?: boolean;
+}): RecentLinkageStatus {
+  return deriveRecentLinkageStatus({
+    fragmentRelationCount: input.fragmentRelationCount ?? input.relationCount ?? 0,
+    deckRelationCount: input.deckRelationCount ?? 0,
+    hasRealm: input.hasRealm ?? Boolean(input.realmTitle),
+  });
 }
 
 export function listRecentLinkageRows(
@@ -116,11 +166,14 @@ export function listRecentLinkageRows(
     const isInbox = Boolean(inboxId && deck.id === inboxId);
     const folder = deck.folderId ? getFolder(state, deck.folderId) : undefined;
     const realmTitle = folder?.title ?? null;
-    const relationCount = countFragmentRelations(graph, item.id, deck.id);
-    const status = deriveLinkageStatus({
-      isInbox,
-      realmTitle,
-      relationCount,
+    // Chaos Inbox is never Realm membership for status (findChaosInboxId, not title alone).
+    const hasRealm = Boolean(!isInbox && deck.folderId && folder);
+    const fragmentRelationCount = countFragmentRelations(graph, item.id);
+    const deckRelationCount = countDeckRelations(graph, deck.id);
+    const status = deriveRecentLinkageStatus({
+      fragmentRelationCount,
+      deckRelationCount,
+      hasRealm,
     });
 
     rows.push({
@@ -132,7 +185,8 @@ export function listRecentLinkageRows(
       deckTitle: isInbox ? "Chaos Inbox" : deck.title,
       realmTitle,
       createdAt: item.createdAt,
-      relationCount,
+      fragmentRelationCount,
+      deckRelationCount,
       status,
       imageAssetId: firstImageAssetId(state, item.id),
       isInbox,
@@ -144,13 +198,14 @@ export function listRecentLinkageRows(
 
 export function linkageStatusLabel(
   status: RecentLinkageStatus,
-  relationCount: number
+  fragmentRelationCount = 0
 ): string {
   if (status === "related") {
-    return relationCount === 1
+    return fragmentRelationCount === 1
       ? "Related · 1 relation"
-      : `Related · ${relationCount} relations`;
+      : `Related · ${fragmentRelationCount} relations`;
   }
+  if (status === "in_related_deck") return "In related Deck";
   if (status === "in_realm") return "In Realm";
   return "Unlinked";
 }

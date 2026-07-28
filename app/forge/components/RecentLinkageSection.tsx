@@ -86,7 +86,7 @@ function RecentLinkageRowView({ row }: { row: RecentLinkageRow }) {
           <span
             className={`mt-1 inline-block text-[10px] font-semibold uppercase tracking-wide ${statusTone(row.status)}`}
           >
-            {linkageStatusLabel(row.status, row.relationCount)}
+            {linkageStatusLabel(row.status, row.fragmentRelationCount)}
           </span>
         </span>
       </Link>
@@ -102,6 +102,7 @@ function RecentLinkageRowView({ row }: { row: RecentLinkageRow }) {
 
 function statusTone(status: RecentLinkageStatus): string {
   if (status === "related") return "text-emerald-400/90";
+  if (status === "in_related_deck") return "text-violet-400/90";
   if (status === "in_realm") return "text-sky-400/90";
   return "text-zinc-500";
 }
