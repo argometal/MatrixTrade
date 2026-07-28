@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import type { Af03ImageBlockPayload } from "@/lib/argusforge/af03-builder-types";
+import { listBlocksForFragment } from "@/lib/argusforge/af03-builder-store";
 import {
   deckHref,
   emptyOrSeedRepo,
@@ -13,8 +15,14 @@ import {
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import { ChaosAssetImage } from "./ChaosAssetImage";
+import {
+  EntityLocationBreadcrumb,
+  FragmentModeSwitch,
+} from "./EntityLocationNav";
 import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
 import { SimpleMarkdown } from "./SimpleMarkdown";
+import { AF_TEXT } from "@/lib/argusforge/af03-visible-ontology";
 
 type Props = {
   deckId: string;
@@ -76,26 +84,25 @@ export function ContentViewer({ deckId, itemId }: Props) {
     item.kind === "image" ||
     /\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(item.body.trim()) ||
     item.body.trim().startsWith("data:image/");
+  const blocks = listBlocksForFragment(state, item.id);
+  const imageBlocks = blocks.filter((b) => b.type === "image");
+  const textBlocks = blocks.filter((b) => b.type === "text");
+  const hasAssetImages = imageBlocks.length > 0;
 
   return (
-    <div className="space-y-5">
-      <Af03RepoDisclosure />
+    <div className="min-w-0 space-y-5">
+      <Af03RepoDisclosure compact />
+      <EntityLocationBreadcrumb state={state} deckId={deckId} fragmentId={itemId} />
 
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <Link
-            href={deckHref(deckId)}
-            className="text-xs text-zinc-500 hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-          >
-            ← {deck?.title ?? "Chaos Deck"}
-          </Link>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-zinc-50">{item.title}</h2>
-          <p className="mt-1 text-[11px] uppercase tracking-wide text-zinc-500">
-            Viewer · {item.kind}
-            {item.markedForLater ? " · marked later" : ""} · not Alexandria
+          <h2 className="text-2xl font-bold tracking-tight text-zinc-50">{item.title}</h2>
+          <p className={`mt-1 text-[11px] uppercase tracking-wide ${AF_TEXT.metadata}`}>
+            {item.markedForLater ? "Marked for later" : "Fragment"}
           </p>
         </div>
-        <div className="shrink-0">
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <FragmentModeSwitch deckId={deckId} fragmentId={itemId} mode="viewer" />
           <ForgeOverflowMenu
             open={menuOpen}
             onOpenChange={setMenuOpen}
@@ -104,14 +111,14 @@ export function ContentViewer({ deckId, itemId }: Props) {
             items={[
               {
                 id: "edit",
-                label: "Edit",
+                label: "Builder",
                 onClick: () => {
                   window.location.href = itemHref(deckId, itemId);
                 },
               },
               {
                 id: "back",
-                label: "Back to deck",
+                label: "Back to Deck",
                 onClick: () => {
                   window.location.href = deckHref(deckId);
                 },
@@ -128,8 +135,40 @@ export function ContentViewer({ deckId, itemId }: Props) {
         </p>
       ) : null}
 
-      <article className="min-h-[12rem] rounded-xl border border-zinc-800/80 bg-zinc-950/50 px-4 py-5">
-        {isImageUrl && !item.unsupported ? (
+      <article className="min-h-[12rem] space-y-4 rounded-xl border border-zinc-800/80 bg-zinc-950/50 px-4 py-5">
+        {hasAssetImages ? (
+          <>
+            {textBlocks.length > 0 || item.body.trim() ? (
+              <div className="space-y-2">
+                {textBlocks.length > 0
+                  ? textBlocks.map((b) => (
+                      <SimpleMarkdown
+                        key={b.id}
+                        source={
+                          (b.payload as { text?: string }).text || "_Empty._"
+                        }
+                      />
+                    ))
+                  : item.body.trim()
+                    ? <SimpleMarkdown source={item.body} />
+                    : null}
+              </div>
+            ) : null}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {imageBlocks.map((b) => {
+                const payload = b.payload as Af03ImageBlockPayload;
+                return (
+                  <ChaosAssetImage
+                    key={b.id}
+                    assetId={payload.assetId}
+                    alt={payload.alt || item.title}
+                    className="max-h-[28rem] w-full rounded-lg object-contain"
+                  />
+                );
+              })}
+            </div>
+          </>
+        ) : isImageUrl && !item.unsupported ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={item.body.trim()}

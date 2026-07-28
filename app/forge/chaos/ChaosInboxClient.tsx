@@ -1,60 +1,80 @@
 "use client";
 
 /**
- * CHANGE 24-22 — Chaos Dumping (`+` route).
- * Fast capture only — not builder, not Library, not Argus enrichment.
+ * CHANGE 24-22 / 24-2E — Chaos Dumping (`+` route).
+ * Fast capture: text and/or images — not builder, not Library, not Argus.
  */
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ClipboardEvent,
+  type DragEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import {
   formatDumpRelative,
   listDumpDestinations,
-  looksLikeUrl,
   readLastDumpDestination,
   resolveDumpDestination,
-  titleFromDump,
   writeLastDumpDestination,
 } from "@/lib/argusforge/af03-chaos-dump";
 import {
-  createContent,
+  appendImageFilesToDraft,
+  extractImagesFromClipboard,
+  extractImagesFromDrop,
+  isValidChaosDumpCapture,
+  persistChaosDumpCapture,
+  revokeAllDraftImages,
+  revokeDraftImage,
+  undoChaosDumpCapture,
+  type ChaosDraftImage,
+} from "@/lib/argusforge/af03-chaos-dump-images";
+import {
   createDeck,
   createFolder,
   emptyOrSeedRepo,
   itemHref,
   moveFragmentToDeck,
-  removeContent,
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
+import {
+  provisionalDeckTitle,
+  provisionalRealmTitle,
+} from "@/lib/argusforge/af03-visible-ontology";
 
 type ToastState = {
   itemId: string;
   deckId: string;
   snapshotBody: string;
+  /** Asset IDs written for this capture (for undo awareness). */
+  assetIds: string[];
 };
 
 const PLACEHOLDER =
-  "Paste an idea, conversation, error, instruction, link, or raw material...";
-
-function promptTitle(label: string, initial: string): string | null {
-  const value = window.prompt(label, initial);
-  if (value === null) return null;
-  const trimmed = value.trim();
-  return trimmed || null;
-}
+  "Paste an idea, conversation, error, instruction, link, image, or raw material...";
 
 export function ChaosInboxClient() {
   const formId = useId();
   const contentId = `${formId}-content`;
   const errorId = `${formId}-error`;
+  const fileInputId = `${formId}-images`;
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const expandedTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const draftImagesRef = useRef<ChaosDraftImage[]>([]);
 
   const [state, setState] = useState<Af03RepoState | null>(null);
   const [content, setContent] = useState("");
+  const [draftImages, setDraftImages] = useState<ChaosDraftImage[]>([]);
   const [destId, setDestId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -62,6 +82,9 @@ export function ChaosInboxClient() {
   const [toast, setToast] = useState<ToastState | null>(null);
   const [moveOpen, setMoveOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const dragDepth = useRef(0);
 
   useEffect(() => {
     setMounted(true);
@@ -70,6 +93,16 @@ export function ChaosInboxClient() {
     const resolved = resolveDumpDestination(base, preferred);
     setState(resolved.state);
     setDestId(resolved.deckId);
+  }, []);
+
+  useEffect(() => {
+    draftImagesRef.current = draftImages;
+  }, [draftImages]);
+
+  useEffect(() => {
+    return () => {
+      revokeAllDraftImages(draftImagesRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -96,47 +129,135 @@ export function ChaosInboxClient() {
       .slice(0, 3);
   }, [state, destId]);
 
-  function onSave() {
-    if (!state || !destId) return;
-    const trimmed = content.trim();
-    if (!trimmed) {
-      setError("Add text or a link before saving to Chaos.");
-      return;
-    }
-    const resolved = resolveDumpDestination(state, destId);
-    const isLink = looksLikeUrl(trimmed);
-    const title = titleFromDump(trimmed);
-    const { state: next, item } = createContent(resolved.state, {
-      deckId: resolved.deckId,
-      kind: isLink ? "link" : "text",
-      title,
-      body: trimmed,
-      sourceRef: isLink ? trimmed : null,
+  const acceptImageFiles = useCallback((files: File[]) => {
+    if (files.length === 0) return;
+    setDraftImages((prev) => {
+      const { drafts, error: err } = appendImageFilesToDraft(prev, files);
+      if (err) setError(err.message);
+      else setError(null);
+      return drafts;
     });
-    writeLastDumpDestination(resolved.deckId);
-    setState(next);
-    setDestId(resolved.deckId);
-    setContent("");
-    setError(null);
-    setExpanded(false);
-    setToast({
-      itemId: item.id,
-      deckId: resolved.deckId,
-      snapshotBody: trimmed,
+  }, []);
+
+  function removeDraft(draftId: string) {
+    setDraftImages((prev) => {
+      const target = prev.find((d) => d.draftId === draftId);
+      if (target) revokeDraftImage(target);
+      return prev.filter((d) => d.draftId !== draftId);
     });
   }
 
-  function undoSave() {
+  function onFilePicked(e: ChangeEvent<HTMLInputElement>) {
+    const list = e.target.files;
+    if (list?.length) {
+      acceptImageFiles(Array.from(list));
+    }
+    e.target.value = "";
+  }
+
+  function onPaste(e: ClipboardEvent) {
+    const images = extractImagesFromClipboard(e.clipboardData);
+    if (images.length === 0) return;
+    // Allow native text paste; only append images.
+    acceptImageFiles(images);
+  }
+
+  function onDragEnter(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepth.current += 1;
+    setDragOver(true);
+  }
+
+  function onDragOver(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+  }
+
+  function onDragLeave(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setDragOver(false);
+  }
+
+  function onDrop(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepth.current = 0;
+    setDragOver(false);
+    const { images, rejectedNonImages } = extractImagesFromDrop(e.dataTransfer);
+    if (rejectedNonImages > 0 && images.length === 0) {
+      setError("Only image files can be dropped into Chaos.");
+      return;
+    }
+    if (rejectedNonImages > 0) {
+      setError("Some non-image files were ignored.");
+    }
+    acceptImageFiles(images);
+  }
+
+  async function onSave() {
+    if (!state || !destId || saving) return;
+    if (!isValidChaosDumpCapture(content, draftImages.length)) {
+      setError("Add text or at least one image before saving to Chaos.");
+      return;
+    }
+    setSaving(true);
+    setDraftImages((prev) => prev.map((d) => ({ ...d, status: "saving" as const })));
+    try {
+      const resolved = resolveDumpDestination(state, destId);
+      const result = await persistChaosDumpCapture(resolved.state, {
+        deckId: resolved.deckId,
+        text: content,
+        images: draftImages,
+      });
+      if (!result.ok) {
+        setError(result.error.message);
+        setDraftImages((prev) =>
+          prev.map((d) => ({
+            ...d,
+            status: "error" as const,
+            error: result.error.message,
+          }))
+        );
+        return;
+      }
+      writeLastDumpDestination(resolved.deckId);
+      const snapshotBody = content;
+      revokeAllDraftImages(draftImages);
+      setState(result.state);
+      setDestId(resolved.deckId);
+      setContent("");
+      setDraftImages([]);
+      setError(null);
+      setExpanded(false);
+      setToast({
+        itemId: result.item.id,
+        deckId: resolved.deckId,
+        snapshotBody,
+        assetIds: result.assetIds,
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function undoSave() {
     if (!state || !toast) return;
-    setState(removeContent(state, toast.itemId));
-    setContent(toast.snapshotBody);
+    const result = await undoChaosDumpCapture(state, toast.itemId);
+    revokeAllDraftImages(draftImages);
+    setState(result.state);
+    setContent(result.restoredText || toast.snapshotBody);
+    setDraftImages(result.restoredImages);
     setToast(null);
+    setError(null);
   }
 
   function birthDeck() {
     if (!state) return;
-    const name = promptTitle("Chaos Deck name", "New Chaos Deck");
-    if (!name) return;
+    const name = provisionalDeckTitle(state.decks.map((d) => d.title));
     const { state: next, deck } = createDeck(state, {
       title: name,
       folderId: null,
@@ -149,8 +270,9 @@ export function ChaosInboxClient() {
 
   function birthRealm() {
     if (!state) return;
-    const name = promptTitle("Realm name", "New Realm");
-    if (!name) return;
+    const name = provisionalRealmTitle(
+      state.folders.filter((f) => f.parentId === null).map((f) => f.title)
+    );
     const { state: next } = createFolder(state, {
       title: name,
       parentId: null,
@@ -163,34 +285,78 @@ export function ChaosInboxClient() {
     return <p className="text-sm text-zinc-500">Loading Chaos Dumping…</p>;
   }
 
-  const editorCard = (
-    <div className="relative flex min-h-[14rem] flex-1 flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/80">
-      <label htmlFor={contentId} className="sr-only">
+  const materialEditor = (opts: { fullscreen: boolean; textareaRef: typeof textareaRef }) => (
+    <div
+      className={`relative flex min-h-[14rem] flex-1 flex-col overflow-hidden rounded-2xl border bg-zinc-900/80 ${
+        dragOver ? "border-emerald-500/70 ring-2 ring-emerald-500/30" : "border-zinc-800"
+      } ${opts.fullscreen ? "min-h-0" : ""}`}
+      onDragEnter={onDragEnter}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
+      {dragOver ? (
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-emerald-950/40 text-sm font-medium text-emerald-100">
+          Drop images into Chaos
+        </div>
+      ) : null}
+      <label htmlFor={opts.fullscreen ? `${contentId}-fs` : contentId} className="sr-only">
         Material
       </label>
       <textarea
-        ref={textareaRef}
-        id={contentId}
+        ref={opts.textareaRef}
+        id={opts.fullscreen ? `${contentId}-fs` : contentId}
         name="content"
         value={content}
         onChange={(e) => {
           setContent(e.target.value);
           if (error) setError(null);
         }}
+        onPaste={onPaste}
         placeholder={PLACEHOLDER}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
-        className="min-h-[14rem] w-full flex-1 resize-none bg-transparent px-4 py-4 text-base leading-relaxed text-zinc-100 outline-none placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500"
+        className={`w-full resize-none bg-transparent px-4 py-4 text-base leading-relaxed text-zinc-100 outline-none placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-500 ${
+          opts.fullscreen ? "min-h-0 flex-1" : "min-h-[14rem] flex-1"
+        }`}
       />
-      <button
-        type="button"
-        aria-label="Expand editor fullscreen"
-        title="Expand editor"
-        onClick={() => setExpanded(true)}
-        className="absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-950/90 text-zinc-300 hover:border-zinc-500 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-      >
-        <ExpandIcon />
-      </button>
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-zinc-800/80 px-3 py-2">
+        <input
+          ref={fileInputRef}
+          id={fileInputId}
+          type="file"
+          accept="image/*"
+          multiple
+          className="sr-only"
+          onChange={onFilePicked}
+        />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="min-h-9 rounded-lg border border-zinc-700 bg-zinc-950/80 px-3 text-xs font-medium text-zinc-200 hover:border-zinc-500"
+        >
+          Add image
+        </button>
+        {draftImages.length > 0 ? (
+          <span className="text-[11px] text-zinc-500">
+            {draftImages.length} image{draftImages.length === 1 ? "" : "s"}
+          </span>
+        ) : null}
+        {!opts.fullscreen ? (
+          <button
+            type="button"
+            aria-label="Expand editor fullscreen"
+            title="Expand editor"
+            onClick={() => setExpanded(true)}
+            className="ml-auto flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-700 bg-zinc-950/90 text-zinc-300 hover:border-zinc-500 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+          >
+            <ExpandIcon />
+          </button>
+        ) : null}
+      </div>
+      {draftImages.length > 0 ? (
+        <DraftImageStrip images={draftImages} onRemove={removeDraft} />
+      ) : null}
     </div>
   );
 
@@ -203,7 +369,13 @@ export function ChaosInboxClient() {
         <h2 id={`${formId}-material`} className="text-sm font-medium text-zinc-300">
           Material
         </h2>
-        {editorCard}
+        {expanded ? (
+          <p className="rounded-xl border border-dashed border-zinc-800 px-3 py-6 text-center text-xs text-zinc-600">
+            Editing in fullscreen — text and images stay in this draft.
+          </p>
+        ) : (
+          materialEditor({ fullscreen: false, textareaRef })
+        )}
       </section>
 
       <div className="shrink-0 space-y-2">
@@ -280,9 +452,10 @@ export function ChaosInboxClient() {
       <button
         type="button"
         onClick={onSave}
-        className="flex min-h-12 w-full shrink-0 items-center justify-center rounded-xl bg-zinc-100 px-4 text-base font-semibold text-zinc-950 transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950"
+        disabled={saving}
+        className="flex min-h-12 w-full shrink-0 items-center justify-center rounded-xl bg-zinc-100 px-4 text-base font-semibold text-zinc-950 transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:opacity-60"
       >
-        Save to Chaos
+        {saving ? "Saving…" : "Save to Chaos"}
       </button>
 
       {toast ? (
@@ -340,7 +513,14 @@ export function ChaosInboxClient() {
                   href={itemHref(item.deckId, item.id)}
                   className="flex min-h-10 items-center gap-2 rounded-lg px-1.5 text-sm text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200"
                 >
-                  <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                  <span className="min-w-0 flex-1 truncate">
+                    {item.title}
+                    {item.kind === "image" || item.kind === "mixed" ? (
+                      <span className="ml-1 text-[10px] uppercase text-zinc-600">
+                        · {item.kind}
+                      </span>
+                    ) : null}
+                  </span>
                   <span className="shrink-0 text-[11px] text-zinc-600">
                     {formatDumpRelative(item.createdAt)}
                   </span>
@@ -396,26 +576,23 @@ export function ChaosInboxClient() {
                   </span>
                 </button>
               </header>
-              <div className="flex min-h-0 flex-1 flex-col px-3 py-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
-                <p className="mb-2 text-xs text-zinc-500">
+              <div className="flex min-h-0 flex-1 flex-col gap-2 px-3 py-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                <p className="text-xs text-zinc-500">
                   Save to: <span className="text-zinc-300">{destLabel}</span>
                 </p>
-                <textarea
-                  ref={expandedTextareaRef}
-                  value={content}
-                  onChange={(e) => {
-                    setContent(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  placeholder={PLACEHOLDER}
-                  className="min-h-0 w-full flex-1 resize-none rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-4 text-base leading-relaxed text-zinc-100 outline-none placeholder:text-zinc-600 focus-visible:ring-2 focus-visible:ring-zinc-500"
-                />
+                {materialEditor({ fullscreen: true, textareaRef: expandedTextareaRef })}
+                {error ? (
+                  <p role="alert" className="text-sm font-medium text-rose-300">
+                    {error}
+                  </p>
+                ) : null}
                 <button
                   type="button"
                   onClick={onSave}
-                  className="mt-3 flex min-h-12 w-full shrink-0 items-center justify-center rounded-xl bg-zinc-100 px-4 text-base font-semibold text-zinc-950"
+                  disabled={saving}
+                  className="mt-1 flex min-h-12 w-full shrink-0 items-center justify-center rounded-xl bg-zinc-100 px-4 text-base font-semibold text-zinc-950 disabled:opacity-60"
                 >
-                  Save to Chaos
+                  {saving ? "Saving…" : "Save to Chaos"}
                 </button>
               </div>
             </div>,
@@ -437,6 +614,48 @@ export function ChaosInboxClient() {
         />
       ) : null}
     </div>
+  );
+}
+
+function DraftImageStrip({
+  images,
+  onRemove,
+}: {
+  images: ChaosDraftImage[];
+  onRemove: (draftId: string) => void;
+}) {
+  return (
+    <ul className="flex shrink-0 gap-2 overflow-x-auto border-t border-zinc-800/80 px-3 py-2">
+      {images.map((img) => (
+        <li
+          key={img.draftId}
+          className={`relative w-24 shrink-0 overflow-hidden rounded-lg border ${
+            img.status === "error" ? "border-rose-700" : "border-zinc-700"
+          } bg-zinc-950`}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={img.previewUrl}
+            alt={img.filename}
+            className="h-20 w-full object-cover"
+          />
+          <p className="truncate px-1 py-0.5 text-[9px] text-zinc-500" title={img.filename}>
+            {img.filename}
+          </p>
+          {img.status === "error" ? (
+            <p className="px-1 pb-1 text-[9px] text-rose-300">Failed</p>
+          ) : null}
+          <button
+            type="button"
+            aria-label={`Remove image ${img.filename}`}
+            onClick={() => onRemove(img.draftId)}
+            className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-md bg-black/70 text-xs text-zinc-100"
+          >
+            ✕
+          </button>
+        </li>
+      ))}
+    </ul>
   );
 }
 

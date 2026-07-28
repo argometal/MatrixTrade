@@ -44,10 +44,18 @@ import {
   restoreDeck,
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03ChaosDeck, Af03Folder, Af03RepoState } from "@/lib/argusforge/af03-repo-types";
+import {
+  provisionalDeckTitle,
+  provisionalRealmTitle,
+  AF_TEXT,
+} from "@/lib/argusforge/af03-visible-ontology";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
 import { ForgeMoveDeckDialog } from "./ForgeMoveDeckDialog";
 import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
-import { LevelSnapshotChart } from "./LevelSnapshotChart";
+import {
+  LevelSnapshotChart,
+  type SnapshotActionKey,
+} from "./LevelSnapshotChart";
 
 function promptTitle(label: string, initial: string): string | null {
   const value = window.prompt(label, initial);
@@ -112,6 +120,8 @@ export function HomeExplorer() {
   const [overviewOpen, setOverviewOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [queryDraft, setQueryDraft] = useState("");
+  const [snapshotFocus, setSnapshotFocus] = useState<SnapshotActionKey | null>(null);
+  const [recentMenuId, setRecentMenuId] = useState<string | null>(null);
   const createRef = useRef<HTMLDivElement>(null);
   const searchTimer = useRef<number | null>(null);
 
@@ -199,8 +209,8 @@ export function HomeExplorer() {
 
   function createRealm() {
     if (!state) return;
-    const name = promptTitle("New Realm name", "New Realm");
-    if (!name) return;
+    const siblings = state.folders.filter((f) => f.parentId === (realmId ?? null));
+    const name = provisionalRealmTitle(siblings.map((f) => f.title));
     const view = status === "archive" ? "archive" : "active";
     const { state: next } = createFolder(state, {
       title: name,
@@ -213,8 +223,8 @@ export function HomeExplorer() {
 
   function createChaosDeck() {
     if (!state) return;
-    const name = promptTitle("New Chaos Deck name", "New Chaos Deck");
-    if (!name) return;
+    const siblings = state.decks.filter((d) => d.folderId === (realmId ?? null));
+    const name = provisionalDeckTitle(siblings.map((d) => d.title));
     const view =
       currentRealm?.view ?? (status === "archive" ? "archive" : "active");
     const { state: next, deck } = createDeck(state, {
@@ -248,7 +258,7 @@ export function HomeExplorer() {
   }
 
   return (
-    <div className="space-y-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+    <div className="min-w-0 space-y-3">
       <Af03RepoDisclosure compact />
 
       {/* Header */}
@@ -325,7 +335,7 @@ export function HomeExplorer() {
           value={queryDraft}
           onChange={(e) => scheduleSearch(e.target.value)}
           placeholder="Search Realms, Decks, Fragments…"
-          className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-9 pr-3 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+          className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-9 pr-3 text-base text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
         />
       </form>
 
@@ -510,8 +520,8 @@ export function HomeExplorer() {
                     setMenuId(null);
                   }}
                   onChildRealm={() => {
-                    const name = promptTitle("Child Realm name", "New Realm");
-                    if (!name) return;
+                    const siblings = state.folders.filter((f) => f.parentId === folder.id);
+                    const name = provisionalRealmTitle(siblings.map((f) => f.title));
                     const { state: next } = createFolder(state, {
                       title: name,
                       parentId: folder.id,
@@ -521,8 +531,8 @@ export function HomeExplorer() {
                     setMenuId(null);
                   }}
                   onChildDeck={() => {
-                    const name = promptTitle("Chaos Deck name", "New Chaos Deck");
-                    if (!name) return;
+                    const siblings = state.decks.filter((d) => d.folderId === folder.id);
+                    const name = provisionalDeckTitle(siblings.map((d) => d.title));
                     const { state: next, deck } = createDeck(state, {
                       title: name,
                       folderId: folder.id,
@@ -594,7 +604,7 @@ export function HomeExplorer() {
           <div className="flex items-baseline justify-between gap-2">
             <h3
               id="recent-opened-heading"
-              className="text-xs font-semibold uppercase tracking-wide text-zinc-500"
+              className={`text-xs font-semibold uppercase tracking-wide ${AF_TEXT.metadata}`}
             >
               Recently opened
             </h3>
@@ -608,17 +618,59 @@ export function HomeExplorer() {
           </div>
           <ul className="flex flex-col gap-0.5">
             {recentOpened.map((d) => (
-              <li key={d.id}>
+              <li key={d.id} className="flex items-center gap-1 rounded-lg hover:bg-zinc-900">
                 <Link
                   href={`/forge/deck/${d.id}`}
-                  className="flex min-h-10 items-center gap-2 rounded-lg px-1.5 text-sm text-zinc-300 hover:bg-zinc-900"
+                  className="flex min-h-10 min-w-0 flex-1 items-center gap-2 px-1.5 text-sm text-zinc-300"
                 >
                   <TypeIcon type="deck" />
                   <span className="min-w-0 flex-1 truncate">{d.title}</span>
-                  <span className="shrink-0 text-[11px] text-zinc-600">
+                  <span className={`shrink-0 text-[11px] ${AF_TEXT.disabled}`}>
                     {formatRelativeAgo(d.lastOpenedAt ?? d.updatedAt)}
                   </span>
                 </Link>
+                <ForgeOverflowMenu
+                  open={recentMenuId === d.id}
+                  onOpenChange={(open) => setRecentMenuId(open ? d.id : null)}
+                  label={`Actions for ${d.title}`}
+                  triggerClassName="flex h-10 w-10 items-center justify-center text-zinc-400 hover:text-zinc-100"
+                  items={[
+                    {
+                      id: "open",
+                      label: "Open",
+                      onClick: () => {
+                        window.location.href = `/forge/deck/${d.id}`;
+                      },
+                    },
+                    {
+                      id: "move",
+                      label: "Move…",
+                      onClick: () => {
+                        setMoveDeckId(d.id);
+                        setRecentMenuId(null);
+                      },
+                    },
+                    {
+                      id: "rename",
+                      label: "Rename…",
+                      onClick: () => {
+                        const name = promptTitle("Rename Chaos Deck", d.title);
+                        if (!name) return;
+                        setState(renameDeck(state, d.id, name));
+                        setRecentMenuId(null);
+                      },
+                    },
+                    {
+                      id: "archive",
+                      label: d.view === "archive" ? "Already archived" : "Archive",
+                      onClick: () => {
+                        if (d.view === "archive") return;
+                        setState(archiveDeck(state, d.id));
+                        setRecentMenuId(null);
+                      },
+                    },
+                  ]}
+                />
               </li>
             ))}
           </ul>
@@ -630,7 +682,7 @@ export function HomeExplorer() {
         <section className="rounded-lg border border-zinc-800/70">
           <button
             type="button"
-            className="flex min-h-10 w-full items-center justify-between px-3 text-left text-xs font-medium text-zinc-500"
+            className={`flex min-h-10 w-full items-center justify-between px-3 text-left text-xs font-medium ${AF_TEXT.metadata}`}
             aria-expanded={overviewOpen}
             onClick={() => setOverviewOpen((o) => !o)}
           >
@@ -639,7 +691,33 @@ export function HomeExplorer() {
           </button>
           {overviewOpen && snapshot ? (
             <div className="border-t border-zinc-800 px-3 py-2">
-              <LevelSnapshotChart snapshot={snapshot} />
+              <LevelSnapshotChart
+                snapshot={snapshot}
+                activeAction={snapshotFocus}
+                onClear={() => {
+                  setSnapshotFocus(null);
+                  pushParams({ status: "all" });
+                }}
+                onSelect={(action) => {
+                  setSnapshotFocus(action);
+                  setOverviewOpen(true);
+                  if (action === "empty") {
+                    pushParams({ status: "empty" });
+                    return;
+                  }
+                  if (action === "realms") {
+                    pushParams({ status: "all", sort: "name" });
+                    return;
+                  }
+                  if (action === "decks") {
+                    pushParams({ status: "all", sort: "updated" });
+                    return;
+                  }
+                  if (action === "fragments" || action === "blocks") {
+                    pushParams({ status: "all", sort: "fragments" });
+                  }
+                }}
+              />
             </div>
           ) : null}
         </section>

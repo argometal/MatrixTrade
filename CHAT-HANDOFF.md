@@ -9,6 +9,25 @@
 
 ---
 
+## Pending — ArgusForge 24-47 consolidation (+ 24-49 validate)
+
+PR: #113  
+Doc: `md/argusforge/change-24-47.md` · `md/argusforge/change-24-49.md` · `md/argusforge/capability-map.md`
+
+One capture engine · ontology alignment · mobile legibility · less technical UI. Incorporates foundations from draft #108 (images) and #112 (Deck). Do not treat as shipped until merge and production verification. After merge: close #108/#112 as superseded; rebase #110 separately.
+
+## Pending — ArgusForge 24-2E Chaos image ingestion
+
+PR: #108 · Doc: `md/argusforge/change-24-2E.md` · folded into 24-47 branch  
+Do not treat as shipped until merge and production verification.
+
+## Pending — ArgusForge 24-39 Chaos Deck capture & recovery
+
+PR: #112 · Doc: `md/argusforge/change-24-39.md` · folded into 24-47 branch  
+Do not treat as shipped until merge and production verification.
+
+---
+
 ## Shipped — ArgusForge 24-27 molecular graph UI
 
 Doc: `md/argusforge/change-24-27.md`  

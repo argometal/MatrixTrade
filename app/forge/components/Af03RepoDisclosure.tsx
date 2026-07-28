@@ -5,8 +5,8 @@ import { useState } from "react";
 const DISCLOSURE_BODY =
   "AF03 prototype — browser localStorage (repo + vault prep queue). Not server persistence; data can be lost. Viewer/editor/Vault prep are local-only. Dual Active/Archive roots remain interim (DEBT-AF03-01). Not Alexandria. Focus triggers not implemented.";
 
-/** AF03 §14 prototype disclosure — shared banner for repo / deck / editor / viewer / vault. */
-export function Af03RepoDisclosure({ compact = false }: { compact?: boolean }) {
+/** AF03 prototype disclosure — collapsed by default on operational surfaces (24-47). */
+export function Af03RepoDisclosure({ compact = true }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);
 
   if (!compact) {

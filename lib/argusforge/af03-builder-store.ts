@@ -74,6 +74,14 @@ function syncFragmentBodyFromBlocks(
   return next;
 }
 
+/** Exported for Chaos Dumping (24-2E) save transaction. */
+export function syncFragmentBodyFromBlocksForDump(
+  state: Af03RepoState,
+  fragmentId: string
+): Af03RepoState {
+  return syncFragmentBodyFromBlocks(state, fragmentId);
+}
+
 /** Exported for store coupling — updates deck preview after fragment body sync. */
 export function touchDeck(state: Af03RepoState, deckId: string): Af03RepoState {
   return syncDeckPreviewFromFragment(state, deckId);

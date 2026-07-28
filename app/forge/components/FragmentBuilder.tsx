@@ -31,6 +31,12 @@ import {
   viewHref,
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03Block, Af03RepoState } from "@/lib/argusforge/af03-repo-types";
+import { AF_TEXT } from "@/lib/argusforge/af03-visible-ontology";
+import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import {
+  EntityLocationBreadcrumb,
+  FragmentModeSwitch,
+} from "./EntityLocationNav";
 
 type Props = {
   deckId: string;
@@ -132,34 +138,21 @@ export function FragmentBuilder({ deckId, itemId }: Props) {
   }
 
   return (
-    <div className="space-y-4 pb-24">
-      <nav className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
-        <Link
-          href={deckHref(deckId)}
-          className="min-h-11 rounded px-1 py-2 hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-        >
-          ← Chaos Deck
-        </Link>
-        <span aria-hidden>/</span>
-        <Link href={viewHref(deckId, itemId)} className="min-h-11 py-2 hover:text-zinc-200">
-          Viewer
-        </Link>
-        <span aria-hidden>/</span>
-        <span className="text-zinc-400">Builder</span>
-      </nav>
+    <div className="min-w-0 space-y-4 pb-6">
+      <Af03RepoDisclosure compact />
+      <EntityLocationBreadcrumb state={state} deckId={deckId} fragmentId={itemId} />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className={`text-[10px] uppercase tracking-wide ${AF_TEXT.metadata}`}>Fragment</p>
+        <FragmentModeSwitch deckId={deckId} fragmentId={itemId} mode="builder" />
+      </div>
 
       <div>
-        <p className="text-[10px] uppercase tracking-wide text-zinc-500">Fragment</p>
         <input
           className="mt-1 w-full min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 px-3 text-base text-zinc-100"
           value={fragment.title}
           aria-label="Fragment title"
           onChange={(e) => setState(updateContent(state, itemId, { title: e.target.value }))}
         />
-        <p className="mt-1 text-xs text-zinc-600">
-          Progressive builder B0 — text &amp; image blocks. id:{" "}
-          <span className="font-mono text-zinc-500">{fragment.id}</span>
-        </p>
       </div>
 
       {notice ? (
@@ -214,8 +207,8 @@ export function FragmentBuilder({ deckId, itemId }: Props) {
       </div>
 
       {blocks.length === 0 ? (
-        <p className="text-sm text-zinc-600">
-          No blocks yet. Add text or an image. Order with Move up / Move down (no drag required).
+        <p className={`text-sm ${AF_TEXT.metadata}`}>
+          No blocks yet. Add text or an image. Order with Move up / Move down.
         </p>
       ) : (
         <ul className="space-y-3">
@@ -265,21 +258,22 @@ export function FragmentBuilder({ deckId, itemId }: Props) {
               ) : (
                 <div className="space-y-2">
                   <ImagePreview assetId={(block.payload as Af03ImageBlockPayload).assetId} />
-                  <p className="font-mono text-[10px] text-zinc-600">
-                    asset {(block.payload as Af03ImageBlockPayload).assetId}
-                  </p>
                 </div>
               )}
-              <p className="mt-1 font-mono text-[10px] text-zinc-700">{block.id}</p>
+              <p className={`mt-1 text-[10px] ${AF_TEXT.disabled}`}>Block</p>
             </li>
           ))}
         </ul>
       )}
 
-      <p className="text-xs text-zinc-600">
-        Legacy editor still available at{" "}
-        <Link href={`${itemHref(deckId, itemId)}?legacy=1`} className="underline text-zinc-400">
-          classic editor
+      <p className={`text-xs ${AF_TEXT.metadata}`}>
+        Also available:{" "}
+        <Link href={`${itemHref(deckId, itemId)}?legacy=1`} className={`underline ${AF_TEXT.metadata}`}>
+          Classic editor
+        </Link>{" "}
+        ·{" "}
+        <Link href={viewHref(deckId, itemId)} className={`underline ${AF_TEXT.metadata}`}>
+          Viewer
         </Link>
         .
       </p>
