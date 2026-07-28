@@ -23,7 +23,7 @@ import {
   type StockThesisStatus,
 } from "@/lib/stock-thesis-types";
 import { PlanLevelsBoard } from "@/app/components/planning-preview/PlanLevelsBoard";
-import { PlanMapSummaryLine, PlanMapToggleButton } from "@/app/components/planning-preview/PlanLevelsSidePanel";
+import { PlanMapSummaryLine } from "@/app/components/planning-preview/PlanLevelsSidePanel";
 import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 import type { MtaeAssessment } from "@/lib/mtae-types";
@@ -70,7 +70,7 @@ export function PreviewStockThesis({
 }) {
   const { openPanel } = useControlPanel();
   const [tab, setTab] = useState<ProfileTab>("snapshot");
-  const [planMapOpen, setPlanMapOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [analyzeCopied, setAnalyzeCopied] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -116,12 +116,20 @@ export function PreviewStockThesis({
     setTimeout(() => setAnalyzeCopied(false), 2500);
   }
 
+  const selectedPlan = useMemo(() => {
+    if (selectedPlanId) {
+      const match = activePlans.find((p) => p.id === selectedPlanId);
+      if (match) return match;
+    }
+    return activePlans[0];
+  }, [activePlans, selectedPlanId]);
+
   const levelsView = useMemo(
-    () => buildPlanLevelsView(thesis, activePlans[0]),
-    [thesis, activePlans]
+    () => buildPlanLevelsView(thesis, selectedPlan),
+    [thesis, selectedPlan]
   );
 
-  const primaryPlan = activePlans[0];
+  const primaryPlan = selectedPlan;
   const levels = thesis.levels;
   const tabs: { id: ProfileTab; label: string }[] = [
     { id: "snapshot", label: "Snapshot" },
@@ -217,13 +225,19 @@ export function PreviewStockThesis({
                   <dd className="font-medium text-zinc-200">
                     {primaryPlan.plannedEntry !== undefined
                       ? `$${primaryPlan.plannedEntry}`
-                      : "—"}
+                      : primaryPlan.layeredEntry?.limits?.[0]?.price !== undefined
+                        ? `$${primaryPlan.layeredEntry.limits[0].price}`
+                        : "—"}
                   </dd>
                 </div>
                 <div>
                   <dt className="text-zinc-600">Stop</dt>
                   <dd className="font-medium text-zinc-200">
-                    {primaryPlan.stopPrice !== undefined ? `$${primaryPlan.stopPrice}` : "—"}
+                    {primaryPlan.stopPrice !== undefined
+                      ? `$${primaryPlan.stopPrice}`
+                      : primaryPlan.layeredEntry?.commonStopPrice !== undefined
+                        ? `$${primaryPlan.layeredEntry.commonStopPrice}`
+                        : "—"}
                   </dd>
                 </div>
                 <div>
@@ -231,7 +245,9 @@ export function PreviewStockThesis({
                   <dd className="font-medium text-zinc-200">
                     {primaryPlan.targetPrice !== undefined
                       ? `$${primaryPlan.targetPrice}`
-                      : "—"}
+                      : primaryPlan.layeredEntry?.primaryTargetPrice !== undefined
+                        ? `$${primaryPlan.layeredEntry.primaryTargetPrice}`
+                        : "—"}
                   </dd>
                 </div>
                 <div>
@@ -251,21 +267,29 @@ export function PreviewStockThesis({
                 </p>
               ) : null}
               {activePlans.length > 1 ? (
-                <ul className="mt-3 space-y-1 border-t border-zinc-800 pt-2 text-xs text-zinc-500">
-                  {activePlans.slice(1).map((plan) => (
-                    <li key={plan.id}>
-                      <Link
-                        href={`/planning?plan=${plan.id}`}
-                        className="text-violet-400 hover:underline"
-                      >
+                <div className="mt-3 border-t border-zinc-800 pt-2">
+                  <label
+                    htmlFor="stock-file-scout-plan"
+                    className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500"
+                  >
+                    Scout plan
+                  </label>
+                  <select
+                    id="stock-file-scout-plan"
+                    value={primaryPlan.id}
+                    onChange={(e) => setSelectedPlanId(e.target.value)}
+                    className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200"
+                  >
+                    {activePlans.map((plan) => (
+                      <option key={plan.id} value={plan.id}>
                         {plan.id}
-                      </Link>
-                      {plan.decision
-                        ? ` · ${DECISION_VERDICT_LABELS[plan.decision.verdict]}`
-                        : ""}
-                    </li>
-                  ))}
-                </ul>
+                        {plan.decision
+                          ? ` · ${DECISION_VERDICT_LABELS[plan.decision.verdict]}`
+                          : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               ) : null}
             </div>
           ) : (
@@ -388,25 +412,36 @@ export function PreviewStockThesis({
                 profileNotes={thesis.notes ?? thesis.thesis}
               />
 
-              <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <h2 className="text-sm font-semibold text-zinc-200">Plan map</h2>
-                    <p className="mt-0.5 text-xs text-zinc-500">
-                      <PlanMapSummaryLine view={levelsView} />
-                    </p>
-                  </div>
-                  <PlanMapToggleButton
-                    open={planMapOpen}
-                    onClick={() => setPlanMapOpen((v) => !v)}
-                    view={levelsView}
-                  />
-                </div>
-                {planMapOpen ? (
-                  <div className="mt-4 border-t border-zinc-800 pt-4">
-                    <PlanLevelsBoard view={levelsView} />
-                  </div>
+              <section
+                className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5"
+                data-stock-plan-preview
+              >
+                <h2 className="text-sm font-semibold text-zinc-200">Plan map</h2>
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  <PlanMapSummaryLine view={levelsView} />
+                </p>
+                {activePlans.length > 1 ? (
+                  <label className="mt-3 block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                    Scout plan
+                    <select
+                      value={primaryPlan?.id ?? ""}
+                      onChange={(e) => setSelectedPlanId(e.target.value)}
+                      className="mt-1 w-full rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs font-normal normal-case text-zinc-200"
+                    >
+                      {activePlans.map((plan) => (
+                        <option key={plan.id} value={plan.id}>
+                          {plan.id}
+                          {plan.decision
+                            ? ` · ${DECISION_VERDICT_LABELS[plan.decision.verdict]}`
+                            : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                 ) : null}
+                <div className="mt-3">
+                  <PlanLevelsBoard view={levelsView} />
+                </div>
               </section>
 
               <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
