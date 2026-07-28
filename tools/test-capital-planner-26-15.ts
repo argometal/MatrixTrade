@@ -3,6 +3,8 @@
  * Run: npm run test:capital-planner
  */
 import assert from "node:assert/strict";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import {
   buildCapitalAccountSnapshot,
   capitalFieldValue,
@@ -648,6 +650,256 @@ async function main() {
     });
     assert.equal(capitalFieldValue(snap.settledCash), 100);
     assert.ok((capitalFieldValue(snap.pendingSettlementProceeds) ?? 0) > 0);
+  }
+
+  // 26-34 — Capital Planner mobile UX + allocation help + recovery
+  {
+    const planner = await fs.readFile(
+      path.join(
+        process.cwd(),
+        "app/components/planning-preview/CapitalPlannerPanel.tsx"
+      ),
+      "utf-8"
+    );
+    assert.match(planner, /data-capital-planner-root/);
+    assert.match(
+      planner,
+      /pb-\[calc\(5\.5rem\+env\(safe-area-inset-bottom\)\)\]/
+    );
+    assert.match(planner, /data-allocation-flow-help/);
+    assert.match(planner, /CAPITAL_ALLOCATION_FLOW/);
+    const helpLib = await fs.readFile(
+      path.join(process.cwd(), "lib/capital-help.ts"),
+      "utf-8"
+    );
+    assert.match(
+      helpLib,
+      /Scout Plan → Scout Funding Snapshot → evaluation → capital-reservation-create/
+    );
+    assert.match(planner, /data-capital-settings-cta/);
+    assert.match(planner, /min-h-11/);
+    assert.match(planner, /Technical notes/);
+    assert.match(planner, /formatCapitalStoreError/);
+    assert.match(planner, /CompactSection|rounded-xl border/);
+    // Primary settings link is a button-styled CTA, not plain underline text alone
+    assert.match(
+      planner,
+      /Manage capital settings[\s\S]*rounded-lg border|rounded-lg border[\s\S]*Manage capital settings/
+    );
+  }
+
+  // 26-34 / 26-36 — Scout Funding Snapshot ontology, levels, no mutation
+  {
+    const {
+      buildScoutFundingSnapshot,
+      formatScoutFundingSnapshotText,
+      scoutFundingSnapshotItem,
+      SCOUT_FUNDING_SNAPSHOT_REQUIRED_KEYS,
+      SCOUT_FUNDING_SNAPSHOT_ID,
+    } = await import("../lib/scout-funding-snapshot");
+    const { createCapitalReservation, listCapitalReservations } = await import(
+      "../lib/capital-reservation"
+    );
+    const { __setCapitalPlannerStoreForTests: pin } = await import(
+      "../lib/capital-planner-store"
+    );
+
+    pin({
+      configuration: null,
+      ledgerEvents: [],
+      reservations: [],
+    });
+
+    const barePlan = {
+      id: "PLAN-FUND-001",
+      ticker: "ABC",
+      status: "watching" as const,
+      analysisTimeframes: ["1D" as const],
+      entryTimeframe: "1D" as const,
+      createdAt: "2026-07-01T00:00:00.000Z",
+      updatedAt: "2026-07-01T00:00:00.000Z",
+    };
+
+    const snap = buildScoutFundingSnapshot({ plan: barePlan });
+    for (const key of SCOUT_FUNDING_SNAPSHOT_REQUIRED_KEYS) {
+      assert.ok(key in snap, `missing required field ${key}`);
+    }
+    assert.equal(snap.planId, "PLAN-FUND-001");
+    assert.equal(snap.stockFileId, "unconfigured");
+    assert.equal(snap.stockThesisId, "unconfigured");
+    assert.equal(snap.ticker, "ABC");
+    assert.equal(snap.requestedCapital, "unconfigured");
+    assert.equal(snap.estimatedRisk, "unconfigured");
+    assert.equal(snap.expiration, "unconfigured");
+    assert.equal(snap.entry, "unconfigured");
+    assert.equal(snap.stop, "unconfigured");
+    assert.equal(snap.target, "unconfigured");
+    assert.equal(snap.shareCount, "unconfigured");
+    assert.equal(snap.existingReservationId, "unconfigured");
+    assert.equal(snap.reservationStatus, "unconfigured");
+    assert.equal(snap.mutatesCapital, false);
+    assert.equal(snap.readOnly, true);
+
+    const before = await listCapitalReservations();
+    const text = formatScoutFundingSnapshotText(snap);
+    assert.match(text, /mutatesCapital: false/);
+    assert.match(text, /requestedCapital: unconfigured/);
+    const item = scoutFundingSnapshotItem({ plan: barePlan });
+    assert.equal(item.id, SCOUT_FUNDING_SNAPSHOT_ID);
+    assert.match(item.label, /Scout Funding Snapshot/);
+    const after = await listCapitalReservations();
+    assert.equal(after.length, before.length, "snapshot must not mutate reservations");
+
+    // 26-36 A — thesis ID present, no Stock File source → thesis preserved, file unconfigured
+    const thesisOnlyPlan = {
+      ...barePlan,
+      stockThesisId: "ST-ABC-001",
+      plannedEntry: 10,
+      stopPrice: 9,
+      targetPrice: 12,
+      validUntil: "2026-08-01T00:00:00.000Z",
+    };
+    const thesisOnly = buildScoutFundingSnapshot({ plan: thesisOnlyPlan });
+    assert.equal(thesisOnly.stockThesisId, "ST-ABC-001");
+    assert.equal(thesisOnly.stockFileId, "unconfigured");
+    assert.notEqual(thesisOnly.stockFileId, thesisOnly.stockThesisId);
+
+    // 26-36 A — authoritative Stock File ID emitted exactly
+    const withFile = buildScoutFundingSnapshot({
+      plan: thesisOnlyPlan,
+      stockFileId: "ST-FILE-AUTH-9",
+    });
+    assert.equal(withFile.stockFileId, "ST-FILE-AUTH-9");
+    assert.equal(withFile.stockThesisId, "ST-ABC-001");
+
+    // 26-36 A — never infer Stock File ID from ticker
+    const tickerTrap = buildScoutFundingSnapshot({
+      plan: { ...barePlan, ticker: "ST-FAKE-TICKER", stockThesisId: "ST-REAL-001" },
+    });
+    assert.equal(tickerTrap.stockFileId, "unconfigured");
+    assert.equal(tickerTrap.stockThesisId, "ST-REAL-001");
+    assert.equal(tickerTrap.ticker, "ST-FAKE-TICKER");
+    assert.notEqual(tickerTrap.stockFileId, tickerTrap.ticker);
+
+    // 26-36 B — layered-entry-only complete levels: emit levels, no false missing-level blocker
+    const layeredOnlyPlan = {
+      ...barePlan,
+      id: "PLAN-LAYER-001",
+      // intentionally omit plannedEntry / stopPrice / targetPrice
+      layeredEntry: {
+        executionMethod: "layered_limits" as const,
+        noChase: true as const,
+        status: "planned" as const,
+        sizingMode: "risk_percent" as const,
+        stopModel: "common" as const,
+        commonStopPrice: 9,
+        primaryTargetPrice: 12,
+        authorizedRiskAmount: 50,
+        limits: [{ price: 10, allocationPercent: 100 }],
+      },
+    };
+    const layeredOnly = buildScoutFundingSnapshot({
+      plan: layeredOnlyPlan,
+      stockFileId: "ST-LAYER-001",
+      capitalConfigurationPresent: true,
+      authorizableLossRoom: 200,
+      account: {
+        availableCapital: { status: "configured", value: 10_000 },
+      } as import("../lib/capital-account").CapitalAccountSnapshot,
+    });
+    assert.equal(layeredOnly.entry, 10);
+    assert.equal(layeredOnly.stop, 9);
+    assert.equal(layeredOnly.target, 12);
+    assert.equal(typeof layeredOnly.requestedCapital, "number");
+    assert.equal(typeof layeredOnly.estimatedRisk, "number");
+    assert.ok(
+      !layeredOnly.blockingReasons.includes("missing execution levels"),
+      "layered-only complete levels must not false-block"
+    );
+    assert.notEqual(layeredOnly.currentFundingDecision, "blocked");
+
+    // 26-36 B — partial layered-entry: missing stays unconfigured; funding blocked
+    const layeredPartialPlan = {
+      ...barePlan,
+      id: "PLAN-LAYER-PARTIAL",
+      layeredEntry: {
+        executionMethod: "layered_limits" as const,
+        noChase: true as const,
+        status: "planned" as const,
+        sizingMode: "risk_percent" as const,
+        stopModel: "common" as const,
+        commonStopPrice: 9,
+        // primaryTargetPrice omitted — incomplete
+        authorizedRiskAmount: 50,
+        limits: [{ price: 10, allocationPercent: 100 }],
+      },
+    };
+    const layeredPartial = buildScoutFundingSnapshot({
+      plan: layeredPartialPlan,
+    });
+    assert.equal(layeredPartial.entry, 10);
+    assert.equal(layeredPartial.stop, 9);
+    assert.equal(layeredPartial.target, "unconfigured");
+    assert.ok(
+      layeredPartial.blockingReasons.includes("missing execution levels")
+    );
+    assert.equal(layeredPartial.currentFundingDecision, "blocked");
+
+    // Existing reservation values remain authoritative; still no mutation from snapshot
+    await createCapitalReservation({
+      planId: "PLAN-FUND-001",
+      stockFileId: "ST-ABC-001",
+      ticker: "ABC",
+      requestedCapital: 1000,
+      estimatedRisk: 50,
+      expiresAt: "2026-08-01T00:00:00.000Z",
+      capitalConfigurationPresent: false,
+    });
+    const withRes = buildScoutFundingSnapshot({
+      plan: thesisOnlyPlan,
+      // no stockFileId — UI must not alias thesis id (26-40)
+      reservations: await listCapitalReservations(),
+    });
+    assert.notEqual(withRes.existingReservationId, "unconfigured");
+    assert.equal(withRes.requestedCapital, 1000);
+    assert.equal(withRes.estimatedRisk, 50);
+    assert.equal(typeof withRes.currentFundingDecision, "string");
+    assert.equal(withRes.mutatesCapital, false);
+    assert.equal(withRes.stockThesisId, "ST-ABC-001");
+    assert.equal(withRes.stockFileId, "unconfigured");
+
+    const resCount = (await listCapitalReservations()).length;
+    buildScoutFundingSnapshot({
+      plan: thesisOnlyPlan,
+      reservations: await listCapitalReservations(),
+    });
+    assert.equal(
+      (await listCapitalReservations()).length,
+      resCount,
+      "snapshot creates no reservation mutation"
+    );
+
+    const execute = await fs.readFile(
+      path.join(
+        process.cwd(),
+        "app/components/planning-preview/ScoutExecutePanel.tsx"
+      ),
+      "utf-8"
+    );
+    assert.match(execute, /Scout Funding Snapshot/);
+    assert.match(execute, /scoutFundingSnapshotItem/);
+    assert.match(execute, /data-scout-funding-snapshot/);
+
+    const preview = await fs.readFile(
+      path.join(
+        process.cwd(),
+        "app/components/planning-preview/PreviewPlanning.tsx"
+      ),
+      "utf-8"
+    );
+    assert.doesNotMatch(preview, /stockFileId:\s*scoutThesis\?\.id/);
+    assert.doesNotMatch(preview, /stockFileId=\{scoutThesis\?\.id\}/);
+    assert.match(preview, /scoutFundingSnapshotItem\(/);
   }
 
   __setCapitalPlannerStoreForTests(null);

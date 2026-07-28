@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { useControlPanel } from "@/app/components/control-panel/MatrixControlPanelProvider";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import { CapitalHelpDrawer } from "@/app/components/settings/CapitalHelpDrawer";
 import type { CapitalAccountSnapshot } from "@/lib/capital-account";
 import {
   buildCapitalConfigurationCreateProposal,
@@ -30,6 +31,7 @@ import type {
   CapitalConfigSource,
   CapitalConfiguration,
 } from "@/lib/capital-types";
+import { formatCapitalStoreError } from "@/lib/capital-store-recovery";
 
 function displayMoney(n: number | null | undefined): string {
   // null/undefined = Unconfigured; 0 remains a configured zero (never coerce null → $0).
@@ -75,6 +77,8 @@ export function CapitalSettingsPanel({
   storeModeError,
   sqlMigrationAvailable,
   sqlMigrationError,
+  externalPositionsSqlAvailable,
+  externalPositionsSqlError,
 }: {
   configuration: CapitalConfiguration | null;
   configurationError?: string;
@@ -84,12 +88,19 @@ export function CapitalSettingsPanel({
   storeModeError?: string;
   sqlMigrationAvailable?: boolean;
   sqlMigrationError?: string;
+  externalPositionsSqlAvailable?: boolean;
+  externalPositionsSqlError?: string;
 }) {
   const { openPanel } = useControlPanel();
   const configUnavailable = Boolean(configurationError);
   const hasActive = Boolean(
     !configUnavailable && configuration && configuration.status === "active"
   );
+  const configurationErrorDisplay = formatCapitalStoreError(
+    configurationError,
+    "capital"
+  );
+  const accountErrorDisplay = formatCapitalStoreError(accountError, "capital");
 
   const [mode, setMode] = useState<"idle" | "create" | "update">("idle");
   const [original, setOriginal] = useState<CapitalSettingsFormValues>(EMPTY_FORM);
@@ -358,20 +369,41 @@ export function CapitalSettingsPanel({
           not ticker evidence. Settings prepares proposals; Control → Apply
           validates and persists.
         </p>
-        <div className="flex flex-wrap gap-3 pt-1 text-sm">
+        <div className="flex flex-wrap items-stretch gap-2 pt-2 sm:gap-3">
           <Link
             href="/planning/capital"
-            className="text-zinc-300 underline-offset-4 hover:underline"
+            data-capital-planner-cta
+            className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg border border-emerald-500/50 bg-emerald-500/15 px-4 py-2.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/25 sm:flex-none"
           >
-            View Capital Planner
+            Open Capital Planner
           </Link>
           <button
             type="button"
-            className="text-zinc-300 underline-offset-4 hover:underline"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-zinc-600 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
             onClick={() => openPanel({ step: "apply" })}
           >
             Open Apply
           </button>
+          <CapitalHelpDrawer
+            checklistInput={{
+              capitalPlannerSqlAvailable: sqlMigrationAvailable,
+              capitalPlannerSqlError: sqlMigrationError,
+              externalPositionsSqlAvailable,
+              externalPositionsSqlError,
+              hasActiveConfiguration: hasActive,
+              configurationUnavailable: configUnavailable,
+              cashConfigured:
+                configuration?.settledCashBase !== undefined &&
+                Boolean(configuration?.settledCashAsOf),
+              equityConfigured:
+                configuration?.totalEquityBase !== undefined &&
+                Boolean(configuration?.totalEquityAsOf),
+              capitalAccountOperational:
+                account?.completeness.status === "operational" ||
+                account?.completeness.status === "reconciled",
+              capitalAccountUnavailable: Boolean(accountError),
+            }}
+          />
           <SnapshotButton
             title="Capital Settings status snapshot"
             description="Default account-level status — balances omitted; not attached to ticker packages"
@@ -415,7 +447,7 @@ export function CapitalSettingsPanel({
         </h2>
         {configUnavailable ? (
           <p className="text-sm text-amber-200/90">
-            Current configuration unavailable: {configurationError}
+            Current configuration unavailable: {configurationErrorDisplay}
           </p>
         ) : !hasActive ? (
           <p className="text-sm text-amber-200/90">
@@ -479,9 +511,9 @@ export function CapitalSettingsPanel({
             ))}
           </dl>
         )}
-        {accountError ? (
+        {accountErrorDisplay ? (
           <p className="text-xs text-amber-200/80">
-            Capital Account unavailable: {accountError}
+            Capital Account unavailable: {accountErrorDisplay}
           </p>
         ) : null}
       </section>
