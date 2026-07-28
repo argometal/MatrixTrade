@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CHANGE 24-17 / 24-25 — Argus Realm Treemap (macro view).
+ * CHANGE 24-17 / 24-25 / 24-33 — Argus Realm Treemap + Recent linkage.
  * Experimental relational surface — not Home Explorer.
  */
 
@@ -32,6 +32,7 @@ import { readArgusGraph } from "@/lib/argusforge/argus-graph-store";
 import type { ArgusGraphState } from "@/lib/argusforge/argus-graph-types";
 import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
 import { ForgeExpandableSurface } from "./ForgeExpandableSurface";
+import { RecentLinkageSection } from "./RecentLinkageSection";
 
 const UNASSIGNED_STRIP_H = 72;
 
@@ -308,6 +309,8 @@ export function RealmMapTree({ filter }: Props) {
           Tap a Realm to inspect · then open graph or Explorer.
         </p>
       ) : null}
+
+      {state ? <RecentLinkageSection state={state} graph={graph} /> : null}
     </div>
   );
 }
