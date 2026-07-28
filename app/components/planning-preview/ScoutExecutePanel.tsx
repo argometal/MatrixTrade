@@ -55,6 +55,7 @@ export function ScoutExecutePanel({
   reservations = [],
   capitalAccount = null,
   capitalConfigurationPresent,
+  stockFileId,
 }: {
   plan: TradePlan | null;
   prospect: TradeProspect | null;
@@ -65,6 +66,8 @@ export function ScoutExecutePanel({
   reservations?: CapitalReservation[];
   capitalAccount?: CapitalAccountSnapshot | null;
   capitalConfigurationPresent?: boolean;
+  /** Authoritative Stock File ID from focused thesis context — never inferred. */
+  stockFileId?: string;
 }) {
   const [copiedBoot, setCopiedBoot] = useState(false);
   const [copiedSample, setCopiedSample] = useState(false);
@@ -210,6 +213,7 @@ export function ScoutExecutePanel({
 
   const fundingSnapshotItem = scoutFundingSnapshotItem({
     plan,
+    stockFileId,
     reservations,
     account: capitalAccount,
     authorizableLossRoom: monthlyLossRoom,

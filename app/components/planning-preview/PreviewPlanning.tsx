@@ -229,6 +229,7 @@ export function PreviewPlanning({
       items.push(
         scoutFundingSnapshotItem({
           plan: focusPlan,
+          stockFileId: scoutThesis?.id,
           reservations,
           account: capitalAccount,
           authorizableLossRoom: monthly.monthlyLossRoom,
@@ -618,6 +619,7 @@ export function PreviewPlanning({
                     reservations={reservations}
                     capitalAccount={capitalAccount}
                     capitalConfigurationPresent={capitalConfigurationPresent}
+                    stockFileId={scoutThesis?.id}
                   />
                 </div>
               ) : null}

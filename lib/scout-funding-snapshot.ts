@@ -1,7 +1,12 @@
 /**
- * Canonical Scout Funding Snapshot (26-34).
+ * Canonical Scout Funding Snapshot (26-34 / 26-36).
  * Read-only package for evaluating / preparing capital-reservation-create.
  * Never invents missing values; never mutates or reserves capital.
+ *
+ * Ontology (26-36):
+ * - stockThesisId may come from plan.stockThesisId
+ * - stockFileId only from an authoritative Stock File source passed in
+ * - never alias the two; never infer Stock File ID from ticker
  */
 
 import type { CapitalAccountSnapshot } from "./capital-account";
@@ -48,6 +53,11 @@ export type ScoutFundingSnapshot = {
 
 export type BuildScoutFundingSnapshotInput = {
   plan: TradePlan;
+  /**
+   * Authoritative Stock File ID from focused Scout/Thesis context.
+   * Never derived from plan.stockThesisId or ticker.
+   */
+  stockFileId?: string | null;
   /** Active or any reservation for this plan, when known. */
   reservation?: CapitalReservation | null;
   /** All reservations — used to find plan match when reservation not passed. */
@@ -89,6 +99,12 @@ function textOrUnconfigured(
   return t;
 }
 
+function isFiniteLevel(
+  v: ScoutFundingSnapshotField<number>
+): v is number {
+  return typeof v === "number" && Number.isFinite(v);
+}
+
 function resolveShareCount(plan: TradePlan): ScoutFundingSnapshotField<number> {
   const states = buildFillStatesForPlan(plan);
   const canonical = pickCanonicalFillState(states);
@@ -110,7 +126,13 @@ function resolveShareCount(plan: TradePlan): ScoutFundingSnapshotField<number> {
   return sum;
 }
 
-function resolveEntryStopTarget(plan: TradePlan): {
+/**
+ * Resolve entry / stop / target from canonical supported sources
+ * (monetary projection, plan levels, then layered-entry).
+ * Do not treat plan.plannedEntry/stopPrice/targetPrice alone as the
+ * completeness gate — layered-entry may supply valid levels.
+ */
+export function resolveEntryStopTarget(plan: TradePlan): {
   entry: ScoutFundingSnapshotField<number>;
   stop: ScoutFundingSnapshotField<number>;
   target: ScoutFundingSnapshotField<number>;
@@ -130,6 +152,18 @@ function resolveEntryStopTarget(plan: TradePlan): {
   };
 }
 
+export function executionLevelsPresentFromResolved(levels: {
+  entry: ScoutFundingSnapshotField<number>;
+  stop: ScoutFundingSnapshotField<number>;
+  target: ScoutFundingSnapshotField<number>;
+}): boolean {
+  return (
+    isFiniteLevel(levels.entry) &&
+    isFiniteLevel(levels.stop) &&
+    isFiniteLevel(levels.target)
+  );
+}
+
 /**
  * Build the canonical Scout Funding Snapshot for one plan.
  * Pure — does not call Create/Update reservation APIs.
@@ -147,6 +181,7 @@ export function buildScoutFundingSnapshot(
 
   const monetary = buildScoutMonetaryRow(plan);
   const levels = resolveEntryStopTarget(plan);
+  const executionLevelsPresent = executionLevelsPresentFromResolved(levels);
 
   const requestedFromReservation = reservation?.requestedCapital;
   const riskFromReservation = reservation?.estimatedRisk;
@@ -159,9 +194,9 @@ export function buildScoutFundingSnapshot(
       plan.layeredEntry?.authorizedRiskAmount
   );
 
-  const stockId = plan.stockThesisId?.trim();
-  const stockFileId = textOrUnconfigured(stockId);
-  const stockThesisId = textOrUnconfigured(stockId);
+  // 26-36 ontology: thesis from plan; file only from authoritative input.
+  const stockThesisId = textOrUnconfigured(plan.stockThesisId);
+  const stockFileId = textOrUnconfigured(input.stockFileId);
 
   let currentFundingDecision: ScoutFundingSnapshotField<string>;
   let blockingReasons: string[] = [];
@@ -183,9 +218,14 @@ export function buildScoutFundingSnapshot(
       typeof estimatedRisk === "number" && Number.isFinite(estimatedRisk);
 
     if (!requestedOk || !riskOk) {
-      currentFundingDecision = "unconfigured";
       if (!requestedOk) blockingReasons.push("requested capital unconfigured");
       if (!riskOk) blockingReasons.push("estimated risk unconfigured");
+      if (!executionLevelsPresent) {
+        blockingReasons.push("missing execution levels");
+        currentFundingDecision = "blocked";
+      } else {
+        currentFundingDecision = "unconfigured";
+      }
     } else {
       const available =
         input.account?.availableCapital.status === "configured"
@@ -199,10 +239,7 @@ export function buildScoutFundingSnapshot(
         existingReservations: input.reservations,
         capitalConfigurationPresent: input.capitalConfigurationPresent,
         scoutExpired: plan.status === "expired",
-        executionLevelsPresent:
-          plan.plannedEntry !== undefined &&
-          plan.stopPrice !== undefined &&
-          plan.targetPrice !== undefined,
+        executionLevelsPresent,
         planId,
       });
       currentFundingDecision = funding.fundingDecision;
