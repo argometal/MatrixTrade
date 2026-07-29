@@ -178,6 +178,12 @@ export function CapitalPlannerPanel({
             ← Scout desk
           </Link>
           <Link
+            href="/planning/capital/allocation"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm font-medium text-sky-200 hover:bg-sky-500/20"
+          >
+            Allocation Board
+          </Link>
+          <Link
             href="/settings/capital"
             data-capital-settings-cta
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-200 hover:bg-emerald-500/20"
