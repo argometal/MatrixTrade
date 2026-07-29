@@ -6,6 +6,7 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { acceptAiBlockAction } from "@/app/actions";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { ProposalSketchCard } from "@/app/components/matrix-connect/ProposalSketchCard";
+import { FundingFollowUpPanel } from "@/app/components/control-panel/FundingFollowUpPanel";
 import { parseAiBlock } from "@/lib/ai-block";
 import { isApplyImplemented } from "@/lib/ai-bridge-types";
 import {
@@ -15,6 +16,7 @@ import {
 } from "@/lib/apply-failure-snapshot";
 import { buildProposalSketch } from "@/lib/proposal-sketch";
 import { validateProposalPayload, type TradingInboxPayload } from "@/lib/bridge";
+import type { FundingFollowUpResult } from "@/lib/scout-funding-follow-up";
 
 type UpdatePhase = "paste" | "success";
 
@@ -26,6 +28,7 @@ type ApplyOutcome = {
   stockFileId?: string;
   planId?: string;
   playbookId?: string;
+  fundingFollowUp?: FundingFollowUpResult;
 };
 
 type ApplyStatus = "idle" | "validating" | "applying" | "success" | "failure";
@@ -228,6 +231,7 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
           stockFileId: result.stockFileId,
           planId: result.planId,
           playbookId: result.playbookId,
+          fundingFollowUp: result.fundingFollowUp,
         });
         setPhase("success");
         router.refresh();
@@ -287,6 +291,32 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
               </p>
             ) : null}
           </div>
+
+          {outcome.type === "decision-update" && outcome.fundingFollowUp ? (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-zinc-300">
+                {outcome.fundingFollowUp.eligible
+                  ? "Funding proposal available"
+                  : "Funding follow-up"}
+              </p>
+              <FundingFollowUpPanel
+                followUp={outcome.fundingFollowUp}
+                onPrepare={(json) => {
+                  setApplyInput(json);
+                  setPhase("paste");
+                  setOutcome(null);
+                  setApplyStatus("idle");
+                  setPreview(null);
+                  setApplyError(null);
+                }}
+                onDismiss={() => {
+                  setOutcome((o) =>
+                    o ? { ...o, fundingFollowUp: undefined } : o
+                  );
+                }}
+              />
+            </div>
+          ) : null}
 
           <div className="flex flex-wrap gap-2 text-xs">
             {outcome.tradeId ? (

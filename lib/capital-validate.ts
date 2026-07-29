@@ -43,6 +43,10 @@ export const CAPITAL_RESERVATION_CREATE_KEYS = [
   "reservationPriority",
   "expiresAt",
   "status",
+  /** Assisted funding follow-up provenance (29-21) — optional / nullable on legacy. */
+  "fundingFingerprint",
+  "sourcePlanUpdatedAt",
+  "sourceDecisionUpdateId",
 ] as const;
 
 export const CAPITAL_RESERVATION_UPDATE_KEYS = [

@@ -75,6 +75,7 @@ export type AcceptAiBlockActionResult =
       planId?: string;
       inboxItemId?: string;
       alreadyApplied?: boolean;
+      fundingFollowUp?: import("@/lib/scout-funding-follow-up").FundingFollowUpResult;
     }
   | { ok: false; error: string; details?: string[] };
 
@@ -187,6 +188,7 @@ export async function acceptAiBlockAction(formData: FormData): Promise<AcceptAiB
     planId: applyResult.planId,
     inboxItemId: inboxResult.ok ? inboxResult.inboxItemId : undefined,
     alreadyApplied: applyResult.alreadyApplied,
+    fundingFollowUp: applyResult.fundingFollowUp,
   };
 }
 

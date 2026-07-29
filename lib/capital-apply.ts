@@ -20,7 +20,7 @@ import { capitalFieldValue } from "./capital-types";
 import { getMonthlyRisk } from "./storage";
 
 type CapApplyResult =
-  | { ok: true; message: string; type: TradingProposalType }
+  | { ok: true; message: string; type: TradingProposalType; planId?: string }
   | { ok: false; errors: string[]; type: TradingProposalType };
 
 function fail(type: TradingProposalType, err: unknown): CapApplyResult {
@@ -165,11 +165,24 @@ export async function applyCapitalReservationCreateBlock(
       authorizableLossRoom: monthly.monthlyLossRoom,
       capitalConfigurationPresent: Boolean(config),
       executionLevelsPresent: true,
+      fundingFingerprint:
+        p.fundingFingerprint !== undefined
+          ? String(p.fundingFingerprint)
+          : undefined,
+      sourcePlanUpdatedAt:
+        p.sourcePlanUpdatedAt !== undefined
+          ? String(p.sourcePlanUpdatedAt)
+          : undefined,
+      sourceDecisionUpdateId:
+        p.sourceDecisionUpdateId !== undefined
+          ? String(p.sourceDecisionUpdateId)
+          : undefined,
     });
     return {
       ok: true,
       type: "capital-reservation-create",
       message: `Capital reservation ${reservation.id} for ${reservation.planId} → ${reservation.fundingDecision}.`,
+      planId: reservation.planId,
     };
   } catch (err) {
     return fail("capital-reservation-create", err);
