@@ -204,6 +204,12 @@ async function main() {
   assert.match(planning, /Update operational state/);
   assert.match(planning, /Already passed/);
   assert.match(planning, /Prepare status update/);
+  assert.match(planning, /prepareOperationalStatusUpdate/);
+  assert.match(planning, /data-scout-operational-preset/);
+  assert.match(
+    planning,
+    /setQuickOperationalPhrase\(phrase\);\s*void prepareOperationalStatusUpdate\(phrase\)/
+  );
   assert.match(planning, /data-scout-operational-tag/);
   assert.match(planning, /formatConsolidatedOperationalTag/);
   assert.match(planning, /ScoutFundingExecutionMenu/);

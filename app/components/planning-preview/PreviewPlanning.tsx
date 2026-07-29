@@ -649,6 +649,26 @@ export function PreviewPlanning({
                       setTimeout(() => setPrepareMsg(""), 2500);
                     }
 
+                    async function prepareOperationalStatusUpdate(
+                      phrase: string
+                    ) {
+                      if (!plan) return;
+                      const parsed = parseOperationalPhraseToProposal(
+                        plan,
+                        phrase
+                      );
+                      if (!parsed.ok) {
+                        setQuickOperationalMsg(parsed.error);
+                        return;
+                      }
+                      const ok = await copyText(parsed.json);
+                      setQuickOperationalMsg(
+                        ok
+                          ? "Copied decision-update — Validate → Accept remains mandatory"
+                          : "Clipboard blocked"
+                      );
+                    }
+
                     return (
                       <>
                         <div className="flex flex-wrap items-center gap-2">
@@ -763,23 +783,11 @@ export function PreviewPlanning({
                                 <button
                                   key={phrase}
                                   type="button"
+                                  data-scout-operational-preset
                                   className="rounded-full border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-300 hover:bg-zinc-900"
-                                  onClick={async () => {
-                                    const parsed =
-                                      parseOperationalPhraseToProposal(
-                                        plan,
-                                        phrase
-                                      );
-                                    if (!parsed.ok) {
-                                      setQuickOperationalMsg(parsed.error);
-                                      return;
-                                    }
-                                    const ok = await copyText(parsed.json);
-                                    setQuickOperationalMsg(
-                                      ok
-                                        ? "Copied decision-update — paste in Control → Apply"
-                                        : "Clipboard blocked"
-                                    );
+                                  onClick={() => {
+                                    setQuickOperationalPhrase(phrase);
+                                    void prepareOperationalStatusUpdate(phrase);
                                   }}
                                 >
                                   {phrase}
@@ -794,27 +802,17 @@ export function PreviewPlanning({
                                 }
                                 placeholder="Already passed / Review tomorrow / Reanalyze"
                                 className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200"
+                                data-scout-operational-phrase-input
                               />
                               <button
                                 type="button"
+                                data-scout-prepare-status-update
                                 className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
-                                onClick={async () => {
-                                  const parsed =
-                                    parseOperationalPhraseToProposal(
-                                      plan,
-                                      quickOperationalPhrase
-                                    );
-                                  if (!parsed.ok) {
-                                    setQuickOperationalMsg(parsed.error);
-                                    return;
-                                  }
-                                  const ok = await copyText(parsed.json);
-                                  setQuickOperationalMsg(
-                                    ok
-                                      ? "Copied decision-update — Validate → Accept remains mandatory"
-                                      : "Clipboard blocked"
-                                  );
-                                }}
+                                onClick={() =>
+                                  void prepareOperationalStatusUpdate(
+                                    quickOperationalPhrase
+                                  )
+                                }
                               >
                                 Prepare status update
                               </button>
