@@ -407,7 +407,7 @@ export function PreviewPlanning({
                 {mapFocusCompact && focusedScoutCard ? (
                   <span className="ml-2 text-sm font-medium text-zinc-400 lg:hidden">
                     · {focusedScoutCard.ticker}
-                    {focusedRr ? ` · ${focusedRr}` : ""}
+                    {focusedScoutCard.primaryPlan ? ` · ${focusedScoutCard.primaryPlan.id}` : ""}
                   </span>
                 ) : null}
               </h1>
@@ -416,7 +416,17 @@ export function PreviewPlanning({
                   mapFocusCompact ? "hidden lg:block" : ""
                 }`}
               >
-                Active cases and execution readiness
+                {mapFocusCompact && focusedScoutCard ? (
+                  <>
+                    {(focusedScoutCard.operational.detectedAssessment.operationalState ?? "unassessed").replace(
+                      /_/g,
+                      " "
+                    )}{" "}
+                    · {focusedRr}
+                  </>
+                ) : (
+                  "Active cases and execution readiness"
+                )}
               </p>
             </div>
             <div
