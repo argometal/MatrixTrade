@@ -31,6 +31,8 @@ async function main() {
   assert.doesNotMatch(planning, /War room — cases to watch/);
   assert.match(planning, /New stock case/);
   assert.match(planning, /Capital Planner/);
+  assert.match(planning, /data-scout-header-actions/);
+  assert.match(planning, /grid grid-cols-3/);
   assert.doesNotMatch(
     planning,
     /header[\s\S]*SnapshotButton[\s\S]*<\/header>/
