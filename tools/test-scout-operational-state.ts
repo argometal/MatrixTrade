@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   buildOperationalDecisionUpdateProposal,
   evaluateScoutOperationalState,
+  formatConsolidatedOperationalTag,
   parseOperationalPhraseToProposal,
 } from "../lib/scout-operational-state";
 import type { TradePlan } from "../lib/plan-types";
@@ -143,15 +144,20 @@ const now = "2026-07-29T00:00:00.000Z";
 }
 
 {
-  const parsed = parseOperationalPhraseToProposal(plan(), "Ya pasó");
+  const parsed = parseOperationalPhraseToProposal(plan(), "Already passed");
   assert.equal(parsed.ok, true);
   if (parsed.ok) assert.match(parsed.json, /"operationalState": "missed"/);
 }
 
 {
+  const parsedEs = parseOperationalPhraseToProposal(plan(), "Ya pasó");
+  assert.equal(parsedEs.ok, true);
+}
+
+{
   const parsed = parseOperationalPhraseToProposal(
     plan({ executionReadiness: "approved" }),
-    "Entrada automática activa"
+    "Automatic entry active"
   );
   assert.equal(parsed.ok, false);
 }
@@ -171,6 +177,69 @@ const now = "2026-07-29T00:00:00.000Z";
   });
   assert.match(json, /"type": "decision-update"/);
   assert.match(json, /"operationalAssessment"/);
+}
+
+{
+  assert.equal(
+    formatConsolidatedOperationalTag({
+      verdict: "wait",
+      assessment: {
+        operationalState: "unassessed",
+        nextAction: "monitor",
+        freshness: "current",
+        reviewRequired: false,
+      },
+    }),
+    "WAIT · UNASSESSED · MONITOR"
+  );
+  assert.equal(
+    formatConsolidatedOperationalTag({
+      verdict: "go",
+      assessment: {
+        operationalState: "in_zone",
+        nextAction: "prepare",
+        freshness: "current",
+        reviewRequired: false,
+      },
+    }),
+    "GO · IN ZONE · PREPARE"
+  );
+  assert.equal(
+    formatConsolidatedOperationalTag({
+      verdict: "wait",
+      assessment: {
+        operationalState: "approaching",
+        nextAction: "monitor",
+        freshness: "current",
+        reviewRequired: true,
+      },
+    }),
+    "WAIT · REVIEW REQUIRED"
+  );
+  assert.equal(
+    formatConsolidatedOperationalTag({
+      verdict: "wait",
+      assessment: {
+        operationalState: "missed",
+        nextAction: "replace_plan",
+        freshness: "current",
+        reviewRequired: true,
+      },
+    }),
+    "MISSED · REPLACE PLAN"
+  );
+  assert.doesNotMatch(
+    formatConsolidatedOperationalTag({
+      verdict: "wait",
+      assessment: {
+        operationalState: "approaching",
+        nextAction: "monitor",
+        freshness: "current",
+        reviewRequired: false,
+      },
+    }),
+    /FRESHNESS|CURRENT|REVIEW: CURRENT/i
+  );
 }
 
 console.log("test-scout-operational-state: ok");

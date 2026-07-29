@@ -23,6 +23,9 @@ async function main() {
   const planning = await read(
     "app/components/planning-preview/PreviewPlanning.tsx"
   );
+  const fundingMenu = await read(
+    "app/components/planning-preview/ScoutFundingExecutionMenu.tsx"
+  );
   const page = await read("app/(trading)/(preview)/planning/page.tsx");
 
   // Wiring from page → PreviewPlanning → ScoutExecutePanel
@@ -36,10 +39,14 @@ async function main() {
   assert.match(execute, /capitalAccount/);
   assert.match(execute, /capitalConfigurationPresent/);
 
-  // Visible funding summary + snapshot action
+  // Visible funding summary on Execute; snapshot/prepare once in Funding & execution
   assert.match(execute, /data-scout-funding-summary/);
-  assert.match(execute, /data-scout-funding-snapshot/);
-  assert.match(execute, /Scout Funding Snapshot/);
+  assert.match(fundingMenu, /data-scout-funding-snapshot/);
+  assert.match(fundingMenu, /Scout Funding Snapshot/);
+  assert.match(fundingMenu, /data-scout-prepare-trade/);
+  assert.match(planning, /ScoutFundingExecutionMenu/);
+  assert.doesNotMatch(execute, /Scout Funding Snapshot/);
+  assert.doesNotMatch(execute, /data-scout-prepare-trade/);
   assert.match(execute, /Capital required/);
   assert.match(execute, /Estimated risk/);
   assert.match(execute, /Available capital/);
@@ -53,8 +60,9 @@ async function main() {
 
   // Manual shares placeholder is not funding input / primary Prepare trade
   assert.match(execute, /MANUAL_SHARES_PLACEHOLDER/);
-  assert.match(execute, /handlePrepareTradeCanonical/);
+  assert.doesNotMatch(execute, /handlePrepareTradeCanonical/);
   assert.match(execute, /canonicalShareCount/);
+  assert.match(planning, /buildTradeProposalBlock/);
   assert.doesNotMatch(
     execute,
     /buildScoutFundingSnapshot\([\s\S]*shares:\s*form\.shares/

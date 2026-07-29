@@ -17,7 +17,6 @@ import type { CapitalReservation } from "@/lib/capital-types";
 import {
   buildScoutFundingSnapshot,
   canonicalShareCount,
-  scoutFundingSnapshotItem,
   type ScoutFundingSnapshotField,
 } from "@/lib/scout-funding-snapshot";
 import {
@@ -25,7 +24,6 @@ import {
   isReservationStaleRelativeToPlan,
 } from "@/lib/scout-funding-follow-up";
 import { isActiveReservation } from "@/lib/capital-types";
-import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 import { FamilyBBullTrendPanel } from "@/app/components/planning-preview/FamilyBBullTrendPanel";
 import { LayeredEntryPanel } from "@/app/components/planning-preview/LayeredEntryPanel";
@@ -265,52 +263,6 @@ export function ScoutExecutePanel({
     void copyTextClipboard(buildTradeProposalBlock(fields), "proposal");
   }
 
-  function handlePrepareTradeCanonical() {
-    if (!plan) return;
-    const funding = buildScoutFundingSnapshot({
-      plan,
-      stockFileId,
-      reservations,
-      account: capitalAccount,
-      authorizableLossRoom: monthlyLossRoom,
-      capitalConfigurationPresent,
-    });
-    const shares = canonicalShareCount(funding.shareCount);
-    if (shares === undefined) {
-      setError("Share count unconfigured — calculate allocation first");
-      return;
-    }
-    const entry =
-      typeof funding.entry === "number" ? funding.entry : Number(form.entry);
-    const stop =
-      typeof funding.stop === "number" ? funding.stop : Number(form.stop);
-    const target =
-      typeof funding.target === "number"
-        ? funding.target
-        : form.target
-          ? Number(form.target)
-          : undefined;
-    if (!Number.isFinite(entry) || !Number.isFinite(stop)) {
-      setError("Need entry + stop on the scout plan.");
-      return;
-    }
-    setError(null);
-    void copyTextClipboard(
-      buildTradeProposalBlock({
-        id: suggestedTradeId,
-        ticker: plan.ticker,
-        entry,
-        stop,
-        target: Number.isFinite(target) ? target : undefined,
-        shares,
-        playbookId: plan.playbookId,
-        thesis: `From plan ${plan.id}`,
-        direction: "long",
-      }),
-      "proposal"
-    );
-  }
-
   if (!plan) {
     return (
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
@@ -331,7 +283,6 @@ export function ScoutExecutePanel({
     capitalConfigurationPresent,
   };
   const fundingSnap = buildScoutFundingSnapshot(fundingInput);
-  const fundingSnapshotItem = scoutFundingSnapshotItem(fundingInput);
 
   const capitalRequired = moneyOrUnconfigured(
     fundingSnap.requestedCapital,
@@ -402,14 +353,6 @@ export function ScoutExecutePanel({
           Execute · {plan.id}
         </h2>
         <div className="flex flex-wrap items-center gap-2">
-          <div data-scout-funding-snapshot>
-            <SnapshotButton
-              title="Scout Funding Snapshot"
-              description="Canonical package for capital-reservation-create — read-only"
-              items={[fundingSnapshotItem]}
-              className="!min-h-10 !px-3 !py-2"
-            />
-          </div>
           <button
             type="button"
             onClick={() => void copyTextClipboard(bootPackage, "boot")}
@@ -515,38 +458,7 @@ export function ScoutExecutePanel({
 
       {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}
 
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          data-scout-prepare-trade
-          disabled={canonicalShares === undefined}
-          title={
-            canonicalShares === undefined
-              ? "Canonical share count is required."
-              : undefined
-          }
-          onClick={handlePrepareTradeCanonical}
-          className={
-            canonicalShares === undefined
-              ? "cursor-not-allowed rounded-lg border border-zinc-700 bg-zinc-900/50 px-3 py-2 text-xs font-medium text-zinc-500"
-              : "rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20"
-          }
-        >
-          {copiedProposal && canonicalShares !== undefined
-            ? "Copied JSON"
-            : canonicalShares === undefined
-              ? "Prepare trade · allocation required"
-              : "Prepare trade"}
-        </button>
-        {canonicalShares === undefined ? (
-          <p
-            className="w-full text-[11px] text-zinc-500"
-            data-scout-prepare-allocation-msg
-          >
-            Share count unconfigured — calculate allocation first
-          </p>
-        ) : null}
-      </div>
+      {/* Prepare trade / Funding Snapshot live once in Scout card Funding & execution (29-48). */}
 
       <div className="mt-3 border-t border-zinc-800/80 pt-2">
         <button

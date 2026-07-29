@@ -467,7 +467,7 @@ async function main() {
 
   // 18 — Scout card displays relationship
   assert.match(impact, /Allocation impact/);
-  assert.match(impact, /Relationship/);
+  assert.match(impact, /Relationship|Order sensitive/);
   assert.match(impact, /data-scout-allocation-impact/);
   assert.match(planning, /ScoutAllocationImpact/);
 

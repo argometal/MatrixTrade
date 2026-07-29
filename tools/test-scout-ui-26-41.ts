@@ -1,5 +1,5 @@
 /**
- * Prompt 26-41 / 26-48 — Scout desk declutter + capital funding integration.
+ * Prompt 26-41 / 26-48 / 29-47 / 29-48 — Scout desk declutter + funding menu.
  * Run: npx tsx tools/test-scout-ui-26-41.ts
  */
 import assert from "node:assert/strict";
@@ -13,6 +13,9 @@ async function read(rel: string) {
 async function main() {
   const planning = await read(
     "app/components/planning-preview/PreviewPlanning.tsx"
+  );
+  const fundingMenu = await read(
+    "app/components/planning-preview/ScoutFundingExecutionMenu.tsx"
   );
   const execute = await read(
     "app/components/planning-preview/ScoutExecutePanel.tsx"
@@ -33,7 +36,7 @@ async function main() {
     /header[\s\S]*SnapshotButton[\s\S]*<\/header>/
   );
 
-  // 2 / 3 — Case summary numbers first; Details collapsed
+  // 2 / 3 — Case summary numbers first; Details collapsed; consolidated tag
   assert.match(planning, /data-scout-case-summary/);
   assert.match(planning, /data-scout-case-details/);
   assert.match(planning, /"Zone"/);
@@ -41,6 +44,8 @@ async function main() {
   assert.match(planning, /"Stop"/);
   assert.match(planning, /"Target"/);
   assert.match(planning, /"Plan R:R"/);
+  assert.match(planning, /"Executable R"/);
+  assert.match(planning, /"Wait Horizon"/);
   assert.match(planning, /"Room"/);
   assert.match(planning, /Open Scout/);
   assert.match(planning, /Prepare trade/);
@@ -48,18 +53,33 @@ async function main() {
   assert.match(planning, /Invalidation/);
   assert.match(planning, /Fills in war room/);
   assert.match(planning, /Evidence/);
-  assert.match(planning, /"Capital required"/);
-  assert.match(planning, /"Estimated risk"/);
-  assert.match(planning, /"Funding status"/);
+  assert.doesNotMatch(planning, /\["Decision"/);
+  assert.doesNotMatch(planning, /\["Operational State"/);
+  assert.doesNotMatch(planning, /\["Next Action"/);
+  assert.doesNotMatch(planning, /\["Freshness"/);
+  assert.doesNotMatch(planning, /\["Review"/);
+  assert.doesNotMatch(planning, /\["Capital required"/);
+  assert.doesNotMatch(planning, /\["Estimated risk"/);
+  assert.doesNotMatch(planning, /\["Funding status"/);
   // 26-50 — no hard-coded shares in case-summary Prepare trade
   assert.doesNotMatch(planning, /shares:\s*10/);
   assert.match(planning, /canonicalShareCount/);
   assert.match(planning, /Prepare trade · allocation required/);
+  assert.match(planning, /data-scout-operational-tag/);
+  assert.match(planning, /formatConsolidatedOperationalTag/);
 
-  // 4 / 5 — Funding snapshot + capital inputs reach Execute
-  assert.match(execute, /Scout Funding Snapshot/);
-  assert.match(execute, /data-scout-funding-snapshot/);
-  assert.match(execute, /scoutFundingSnapshotItem/);
+  // 4 / 5 — Funding & execution menu (single path); capital inputs still wired
+  assert.match(planning, /ScoutFundingExecutionMenu/);
+  assert.match(fundingMenu, /data-scout-funding-execution-menu/);
+  assert.match(fundingMenu, /Funding &amp; execution/);
+  assert.match(fundingMenu, /Scout Funding Snapshot/);
+  assert.match(fundingMenu, /data-scout-funding-snapshot/);
+  assert.match(fundingMenu, /Calculate allocation/);
+  assert.match(fundingMenu, /Open Allocation Board/);
+  assert.match(fundingMenu, /Open Capital Planner/);
+  assert.match(fundingMenu, /data-scout-prepare-trade/);
+  assert.match(planning, /scoutFundingSnapshotItem/);
+  assert.match(planning, /buildScoutFundingSnapshot/);
   assert.match(execute, /buildScoutFundingSnapshot/);
   assert.match(execute, /reservations/);
   assert.match(execute, /capitalAccount/);
@@ -68,6 +88,9 @@ async function main() {
   assert.match(page, /getCapitalAccountSnapshot/);
   assert.match(planning, /reservations=\{reservations\}/);
   assert.match(planning, /capitalAccount=\{capitalAccount\}/);
+  // Lower Execute no longer duplicates snapshot / prepare
+  assert.doesNotMatch(execute, /Scout Funding Snapshot/);
+  assert.doesNotMatch(execute, /data-scout-prepare-trade/);
 
   // 6 / 7 — stockFileId unconfigured; no thesis→file alias
   assert.doesNotMatch(planning, /stockFileId:\s*scoutThesis\?\.id/);
@@ -80,7 +103,7 @@ async function main() {
     /stockFileId omitted — StockThesis has no authoritative Stock File ID|stockFileId omitted — no authoritative Stock File ID/
   );
 
-  // 8 / 9 — Compact funding summary visible
+  // 8 / 9 — Compact funding summary visible on Execute (read-only summary)
   assert.match(execute, /data-scout-funding-summary/);
   assert.match(execute, /Capital required/);
   assert.match(execute, /Estimated risk/);
@@ -99,7 +122,9 @@ async function main() {
   // 11 / 12 — Example / Trades book off primary; technical menu present
   assert.match(execute, /data-scout-execute/);
   assert.match(execute, /Trade boot/);
-  assert.match(execute, /Prepare trade/);
+  assert.match(fundingMenu, /prepareLabel/);
+  assert.match(fundingMenu, /data-scout-prepare-trade/);
+  assert.match(planning, /Prepare trade/);
   assert.doesNotMatch(
     execute,
     /Copy boot → AI →[\s\S]*Control → Apply → Accept/

@@ -98,7 +98,7 @@ export function ScoutAllocationImpact({
 
   const relationshipSummary =
     orderSensitivePairs.length > 0
-      ? "Order sensitive"
+                      ? "Order sensitive"
       : competingOrExclusive.filter(
           (p) => p.relationship === "competing" || p.relationship === "mutually_exclusive"
         ).length > 0

@@ -38,7 +38,7 @@ export function PlanLevelsSidePanel({
         </button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-3">
-        <PlanLevelsBoard view={view} />
+        <PlanLevelsBoard view={view} compact />
       </div>
     </aside>
   );

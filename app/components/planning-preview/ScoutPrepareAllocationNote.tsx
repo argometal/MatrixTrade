@@ -10,9 +10,12 @@ import { useScoutAllocationSelection } from "./ScoutAllocationProvider";
 export function ScoutPrepareAllocationNote({
   hasCanonicalShares,
   prepareMsg,
+  linksInNote = true,
 }: {
   hasCanonicalShares: boolean;
   prepareMsg: string;
+  /** When false, board/planner links are omitted (shown once in Funding & execution). */
+  linksInNote?: boolean;
 }) {
   const { selectionOrder } = useScoutAllocationSelection();
   // When shares missing: always show allocation guidance.
@@ -27,20 +30,22 @@ export function ScoutPrepareAllocationNote({
         {selectedSomewhere
           ? "Allocation selected · share count still unconfigured"
           : "Share count unconfigured — calculate allocation first"}
-        <span className="mt-1 flex flex-wrap gap-2">
-          <Link
-            href="/planning/capital/allocation"
-            className="underline opacity-90 hover:opacity-100"
-          >
-            Allocation Board
-          </Link>
-          <Link
-            href="/planning/capital"
-            className="underline opacity-90 hover:opacity-100"
-          >
-            Capital Planner
-          </Link>
-        </span>
+        {linksInNote ? (
+          <span className="mt-1 flex flex-wrap gap-2">
+            <Link
+              href="/planning/capital/allocation"
+              className="underline opacity-90 hover:opacity-100"
+            >
+              Allocation Board
+            </Link>
+            <Link
+              href="/planning/capital"
+              className="underline opacity-90 hover:opacity-100"
+            >
+              Capital Planner
+            </Link>
+          </span>
+        ) : null}
       </p>
     );
   }

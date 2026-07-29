@@ -14,7 +14,6 @@ import type { TradePlan } from "@/lib/plan-types";
 import type { Playbook } from "@/lib/playbook-types";
 import {
   resolveScoutingVerdict,
-  SCOUTING_VERDICT_LABELS,
   type ScoutingVerdict,
 } from "@/lib/scouting-types";
 import {
@@ -38,7 +37,6 @@ import {
   buildScoutFundingSnapshot,
   canonicalShareCount,
   scoutFundingSnapshotItem,
-  type ScoutFundingSnapshotField,
 } from "@/lib/scout-funding-snapshot";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { buildTradeProposalBlock } from "@/lib/build-trade-proposal-block";
@@ -50,7 +48,7 @@ import {
 import {
   evaluateScoutOperationalState,
   compareScoutOperationalEvaluations,
-  formatOperationalActionLabel,
+  formatConsolidatedOperationalTag,
   formatOperationalR,
   formatOperationalStateLabel,
   parseOperationalPhraseToProposal,
@@ -66,6 +64,7 @@ import { ActiveScoutsComparisonTable } from "@/app/components/planning-preview/A
 import { ScoutAllocationProvider } from "@/app/components/planning-preview/ScoutAllocationProvider";
 import { ScoutAllocationImpact } from "@/app/components/planning-preview/ScoutAllocationImpact";
 import { ScoutAllocationStrip } from "@/app/components/planning-preview/ScoutAllocationStrip";
+import { ScoutFundingExecutionMenu } from "@/app/components/planning-preview/ScoutFundingExecutionMenu";
 import { ScoutPrepareAllocationNote } from "@/app/components/planning-preview/ScoutPrepareAllocationNote";
 
 const thesisStatusStyles: Record<string, string> = {
@@ -404,29 +403,13 @@ export function PreviewPlanning({
                 }`}
               >
                 Scout
-                {mapFocusCompact && focusedScoutCard ? (
-                  <span className="ml-2 text-sm font-medium text-zinc-400 lg:hidden">
-                    · {focusedScoutCard.ticker}
-                    {focusedScoutCard.primaryPlan ? ` · ${focusedScoutCard.primaryPlan.id}` : ""}
-                  </span>
-                ) : null}
               </h1>
               <p
                 className={`mt-0.5 text-sm text-zinc-500 ${
                   mapFocusCompact ? "hidden lg:block" : ""
                 }`}
               >
-                {mapFocusCompact && focusedScoutCard ? (
-                  <>
-                    {(focusedScoutCard.operational.detectedAssessment.operationalState ?? "unassessed").replace(
-                      /_/g,
-                      " "
-                    )}{" "}
-                    · {focusedRr}
-                  </>
-                ) : (
-                  "Active cases and execution readiness"
-                )}
+                Active cases and execution readiness
               </p>
             </div>
             <div
@@ -457,7 +440,9 @@ export function PreviewPlanning({
         </header>
 
         <div
-          className={`space-y-4 px-4 lg:px-6 ${mapFocusCompact ? "py-2 lg:py-4" : "py-4"}`}
+          className={`px-4 lg:px-6 ${
+            mapFocusCompact ? "space-y-2 py-1 lg:space-y-4 lg:py-4" : "space-y-4 py-4"
+          }`}
         >
           {!hasCases ? (
             <section className="rounded-2xl border border-dashed border-zinc-700 px-4 py-10 text-center">
@@ -484,10 +469,10 @@ export function PreviewPlanning({
                   </div>
                 </details>
               ) : null}
-              <ScoutAllocationStrip />
+              {!mapFocusCompact ? <ScoutAllocationStrip /> : null}
               <section
                 className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 ${
-                  mapFocusCompact ? "p-2.5 lg:p-4" : "p-3"
+                  mapFocusCompact ? "p-2 lg:p-4" : "p-3"
                 }`}
                 data-scout-case-selector
               >
@@ -509,11 +494,14 @@ export function PreviewPlanning({
                     {scoutCards.map((card) => {
                       const op = card.operational.detectedAssessment;
                       const rrLabel = formatOperationalR(op.currentExecutableRR);
+                      const tag = formatConsolidatedOperationalTag({
+                        verdict: card.verdict,
+                        assessment: op,
+                      });
                       return (
                         <option key={card.key} value={card.key}>
                           {card.ticker}
-                          {` · ${formatOperationalStateLabel(op.operationalState)}`}
-                          {` · ${formatOperationalActionLabel(op.nextAction)}`}
+                          {` · ${tag}`}
                           {` · ${rrLabel}`}
                           {card.orphan ? " · orphan fill" : ""}
                           {card.linkedTrades.length
@@ -531,35 +519,6 @@ export function PreviewPlanning({
                       view={panelLevelsView}
                     />
                   ) : null}
-                </div>
-                <div
-                  className={`mt-2 flex flex-wrap gap-1.5 ${
-                    mapFocusCompact ? "hidden lg:flex" : ""
-                  }`}
-                >
-                  {scoutCards.map((card) => {
-                    const selected = card.key === focusedScoutCard?.key;
-                    const op = card.operational.detectedAssessment;
-                    const rrChip = formatOperationalR(op.currentExecutableRR);
-                    return (
-                      <button
-                        key={card.key}
-                        type="button"
-                        onClick={() => setScoutCaseKey(card.key)}
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                          selected
-                            ? "bg-violet-600 text-white"
-                            : "border border-zinc-700 text-zinc-500 hover:text-zinc-300"
-                        }`}
-                      >
-                        {card.ticker}
-                        {` ·${formatOperationalStateLabel(op.operationalState)}`}
-                        {` ·${formatOperationalActionLabel(op.nextAction)}`}
-                        {` ·${rrChip}`}
-                        {card.linkedTrades.length > 0 ? ` ·${card.linkedTrades.length}` : ""}
-                      </button>
-                    );
-                  })}
                 </div>
               </section>
 
@@ -644,15 +603,6 @@ export function PreviewPlanning({
                       ? scoutFundingSnapshotItem(fundingInput)
                       : null;
 
-                    function formatMoneyField(
-                      v: ScoutFundingSnapshotField<number> | undefined
-                    ): string {
-                      if (typeof v === "number" && Number.isFinite(v)) {
-                        return `$${v.toFixed(0)}`;
-                      }
-                      return "Unconfigured";
-                    }
-
                     const snapshotItemsForCase = stockProfileSnapshotItems({
                       thesis,
                       playbooks,
@@ -707,16 +657,15 @@ export function PreviewPlanning({
                           >
                             {STOCK_THESIS_STATUS_LABELS[thesis.status]}
                           </span>
-                          {focusedScoutCard.verdict ? (
-                            <span className="rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase">
-                              {SCOUTING_VERDICT_LABELS[focusedScoutCard.verdict]}
-                            </span>
-                          ) : null}
-                          {plan?.status === "expired" ? (
-                            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-amber-200">
-                              Expired
-                            </span>
-                          ) : null}
+                          <span
+                            className="rounded-full border border-current/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                            data-scout-operational-tag
+                          >
+                            {formatConsolidatedOperationalTag({
+                              verdict: focusedScoutCard.verdict,
+                              assessment: operational,
+                            })}
+                          </span>
                         </div>
 
                         <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
@@ -736,24 +685,6 @@ export function PreviewPlanning({
                                 target !== undefined ? String(target) : "—",
                               ],
                               [
-                                "Decision",
-                                focusedScoutCard.verdict
-                                  ? SCOUTING_VERDICT_LABELS[focusedScoutCard.verdict]
-                                  : "—",
-                              ],
-                              [
-                                "Operational state",
-                                formatOperationalStateLabel(
-                                  operational.operationalState
-                                ),
-                              ],
-                              [
-                                "Next action",
-                                formatOperationalActionLabel(
-                                  operational.nextAction
-                                ),
-                              ],
-                              [
                                 "Plan R:R",
                                 rr !== undefined ? `${rr.toFixed(1)}R` : "—",
                               ],
@@ -764,37 +695,12 @@ export function PreviewPlanning({
                                 ),
                               ],
                               [
-                                "Wait horizon",
+                                "Wait Horizon",
                                 operational.waitHorizon,
-                              ],
-                              [
-                                "Freshness",
-                                operational.freshness,
-                              ],
-                              [
-                                "Review",
-                                operational.reviewRequired ? "Required" : "Current",
                               ],
                               [
                                 "Room",
                                 `$${monthly.monthlyLossRoom.toFixed(0)}`,
-                              ],
-                              [
-                                "Capital required",
-                                formatMoneyField(fundingSnap?.requestedCapital),
-                              ],
-                              [
-                                "Estimated risk",
-                                formatMoneyField(fundingSnap?.estimatedRisk),
-                              ],
-                              [
-                                "Funding status",
-                                fundingSnap &&
-                                fundingSnap.currentFundingDecision !==
-                                  "unconfigured" &&
-                                fundingSnap.currentFundingDecision !== "unknown"
-                                  ? String(fundingSnap.currentFundingDecision)
-                                  : "—",
                               ],
                             ] as const
                           ).map(([label, value]) => (
@@ -841,11 +747,11 @@ export function PreviewPlanning({
                             <div className="mt-2 flex flex-wrap gap-2">
                               {[
                                 "Already passed",
-                                "Puede ser la otra semana",
-                                "Revisar mañana",
-                                "Entrada automática activa",
-                                "No parece probable",
-                                "Reanalizar",
+                                "Maybe next week",
+                                "Review tomorrow",
+                                "Automatic entry active",
+                                "Not likely",
+                                "Reanalyze",
                               ].map((phrase) => (
                                 <button
                                   key={phrase}
@@ -879,7 +785,7 @@ export function PreviewPlanning({
                                 onChange={(e) =>
                                   setQuickOperationalPhrase(e.target.value)
                                 }
-                                placeholder="Already passed / Revisar mañana / Reanalizar"
+                                placeholder="Already passed / Review tomorrow / Reanalyze"
                                 className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200"
                               />
                               <button
@@ -933,16 +839,6 @@ export function PreviewPlanning({
                                   : initialSnapshotItems
                             }
                           />
-                          {fundingSnapshotForCase ? (
-                            <span data-scout-case-funding-snapshot>
-                              <SnapshotButton
-                                title="Scout Funding Snapshot"
-                                description="Canonical package for capital-reservation-create — read-only"
-                                items={[fundingSnapshotForCase]}
-                                className="!px-3 !py-2"
-                              />
-                            </span>
-                          ) : null}
                           <button
                             type="button"
                             onClick={() => {
@@ -953,31 +849,46 @@ export function PreviewPlanning({
                           >
                             Details
                           </button>
-                          <button
-                            type="button"
-                            data-scout-prepare-trade
-                            disabled={shares === undefined}
-                            title={
-                              shares === undefined
-                                ? "Canonical share count is required."
-                                : undefined
-                            }
-                            onClick={() => void prepareTrade()}
-                            className={
-                              shares === undefined
-                                ? "cursor-not-allowed rounded-lg border border-zinc-600/50 bg-zinc-900/40 px-3 py-2 text-xs font-medium text-zinc-500"
-                                : "rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20"
-                            }
-                          >
-                            {shares === undefined
-                              ? "Prepare trade · allocation required"
-                              : "Prepare trade"}
-                          </button>
                         </div>
+
+                        <ScoutFundingExecutionMenu
+                          fundingSnapshotItem={fundingSnapshotForCase}
+                          prepareTrade={() => void prepareTrade()}
+                          prepareDisabled={shares === undefined}
+                          prepareLabel={
+                            shares === undefined
+                              ? "Prepare trade · allocation required"
+                              : "Prepare trade"
+                          }
+                          blockers={[
+                            ...(shares === undefined
+                              ? ["Share count unconfigured"]
+                              : []),
+                            ...(shares === undefined
+                              ? ["Allocation required"]
+                              : []),
+                            ...(fundingSnap &&
+                            fundingSnap.currentFundingDecision !==
+                              "unconfigured" &&
+                            fundingSnap.currentFundingDecision !== "unknown"
+                              ? [
+                                  String(fundingSnap.currentFundingDecision)
+                                    .replace(/_/g, " ")
+                                    .replace(/\b\w/g, (c) => c.toUpperCase()),
+                                ]
+                              : []),
+                            ...(fundingSnap?.blockingReasons?.some((r) =>
+                              r.toLowerCase().includes("reservation")
+                            )
+                              ? ["Reservation required"]
+                              : []),
+                          ].filter((v, i, a) => a.indexOf(v) === i)}
+                        />
                         {shares === undefined || prepareMsg ? (
                           <ScoutPrepareAllocationNote
                             hasCanonicalShares={shares !== undefined}
                             prepareMsg={prepareMsg}
+                            linksInNote={false}
                           />
                         ) : null}
 
@@ -1152,6 +1063,7 @@ export function PreviewPlanning({
               ) : null}
 
               {scoutPrimaryPlan &&
+              !mapFocusCompact &&
               (planNeedsStrategyReview(scoutPrimaryPlan) ||
                 scoutPrimaryPlan.outcome?.learningSyncStatus === "pending" ||
                 scoutPrimaryPlan.outcome?.learningSyncStatus === "failed") ? (
