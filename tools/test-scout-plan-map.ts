@@ -169,12 +169,33 @@ const layeredPlan: TradePlan = {
 async function main() {
   const board = await read("app/components/planning-preview/PlanLevelsBoard.tsx");
   const side = await read("app/components/planning-preview/PlanLevelsSidePanel.tsx");
-  assert.match(board, /Layered entry|Single entry/);
-  assert.match(board, /Reward region/);
-  assert.match(board, /spacing compressed/);
-  assert.match(board, /Shares unconfigured/);
-  assert.match(side, /view\\.planId|view\.planId/);
+  const planning = await read(
+    "app/components/planning-preview/PreviewPlanning.tsx"
+  );
+
+  assert.match(board, /data-scout-trade-map-spine/);
+  assert.match(board, /Entrada en capas|Entrada única/);
+  assert.match(board, /↑ Recompensa/);
+  assert.match(board, /↓ Riesgo/);
+  assert.match(board, /Resumen capital \/ riesgo/);
+  assert.match(board, /Target principal/);
+  assert.match(board, /Stop común/);
+  assert.match(board, /Acciones sin configurar/);
+  assert.doesNotMatch(board, /PlanMapLevelRow/);
   assert.doesNotMatch(board, /shares:\\s*10|MANUAL_SHARES_PLACEHOLDER/);
+  assert.match(side, /view\\.planId|view\.planId/);
+  assert.match(side, /Ocultar mapa|Mapa del plan/);
+
+  // Mobile cleanup: Case dropdown only — no duplicate ticker chips
+  assert.match(planning, /htmlFor=\"scout-case\"/);
+  assert.match(planning, />\s*Caso\s*</);
+  assert.doesNotMatch(
+    planning,
+    /scoutCards\.map\(\(card\) => \{\s*const selected = card\.key/
+  );
+  assert.match(planning, /Actualizar estado operativo/);
+  assert.match(planning, /Ya pasó/);
+  assert.match(planning, /Preparar actualización/);
 
   console.log("test-scout-plan-map: ok");
 }

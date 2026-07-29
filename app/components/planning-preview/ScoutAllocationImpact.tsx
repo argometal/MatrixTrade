@@ -88,17 +88,17 @@ export function ScoutAllocationImpact({
     "No canonical estimatedRisk yet"
   );
   const capitalCell = isAlreadyReserved
-    ? { ...baseCapitalCell, text: `Already reserved ${baseCapitalCell.text}` }
+    ? { ...baseCapitalCell, text: `Ya reservado ${baseCapitalCell.text}` }
     : baseCapitalCell;
   const riskCell = isAlreadyReserved
-    ? { ...baseRiskCell, text: `Already reserved ${baseRiskCell.text}` }
+    ? { ...baseRiskCell, text: `Ya reservado ${baseRiskCell.text}` }
     : baseRiskCell;
   const fundingLabel =
     SCOUT_ALLOCATION_FUNDING_LABELS[candidate.fundingDecision];
 
   const relationshipSummary =
     orderSensitivePairs.length > 0
-      ? "Order sensitive"
+                      ? "Sensible al orden"
       : competingOrExclusive.filter(
           (p) => p.relationship === "competing" || p.relationship === "mutually_exclusive"
         ).length > 0
@@ -126,7 +126,7 @@ export function ScoutAllocationImpact({
 
   const capitalAfter = isAlreadyReserved
     ? {
-        text: "No additional capital consumed",
+        text: "Sin capital adicional consumido",
       }
     : moneyOrUnconfigured(
         selected ? simulation.remainingCapital : availableCapital,
@@ -134,7 +134,7 @@ export function ScoutAllocationImpact({
       );
   const riskAfter = isAlreadyReserved
     ? {
-        text: "No additional risk consumed",
+        text: "Sin riesgo adicional consumido",
       }
     : moneyOrUnconfigured(
         selected ? simulation.remainingRiskRoom : availableRiskRoom,
@@ -150,7 +150,7 @@ export function ScoutAllocationImpact({
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-          Allocation impact
+          Impacto de asignación
         </p>
         <div className="flex flex-wrap gap-1.5">
           <Link
@@ -165,7 +165,7 @@ export function ScoutAllocationImpact({
             onClick={() => (selected ? remove(planId) : add(planId))}
             className="rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[10px] font-medium text-emerald-100 hover:bg-emerald-500/20"
           >
-            {selected ? "Remove from allocation" : "Add to allocation"}
+            {selected ? "Quitar de la asignación" : "Agregar a la asignación"}
           </button>
           <Link
             href={boardHref}
@@ -212,7 +212,7 @@ export function ScoutAllocationImpact({
         <dl className="mt-2 grid grid-cols-2 gap-2 border-t border-current/15 pt-2 text-xs sm:grid-cols-3">
           <div>
             <dt className="text-[10px] uppercase tracking-wide opacity-60">
-              Capital after
+              Capital después
             </dt>
             <dd className="mt-0.5 font-medium tabular-nums">
               {capitalAfter.text}
@@ -220,13 +220,13 @@ export function ScoutAllocationImpact({
           </div>
           <div>
             <dt className="text-[10px] uppercase tracking-wide opacity-60">
-              Risk room after
+              Riesgo después
             </dt>
             <dd className="mt-0.5 font-medium tabular-nums">{riskAfter.text}</dd>
           </div>
           <div>
             <dt className="text-[10px] uppercase tracking-wide opacity-60">
-              Affected Scouts
+              Scouts afectados
             </dt>
             <dd className="mt-0.5 font-medium tabular-nums">
               {affectedFromSim.length}
@@ -250,7 +250,7 @@ export function ScoutAllocationImpact({
             aria-expanded={affectedOpen}
           >
             <span>
-              Affected Scouts ·{" "}
+              Scouts afectados ·{" "}
               {selected
                 ? competingOrExclusive.length
                 : competingOrExclusive.length}
@@ -284,7 +284,7 @@ export function ScoutAllocationImpact({
                   {p.relationship === "order_sensitive" ? (
                     <span className="mt-1 w-full text-[10px] leading-snug opacity-80">
                       <span className="font-medium text-zinc-200">
-                        Impact if this Scout is selected first:
+                        Impacto si este Scout se selecciona primero:
                       </span>{" "}
                       {p.focusPlanId}{" "}
                       {SCOUT_ALLOCATION_FUNDING_LABELS[p.focusThenOther.focusDecision]}
@@ -293,7 +293,7 @@ export function ScoutAllocationImpact({
                       {SCOUT_ALLOCATION_FUNDING_LABELS[p.focusThenOther.otherDecision]}
                       <br />
                       <span className="font-medium text-zinc-200">
-                        Reverse order:
+                        Orden inverso:
                       </span>{" "}
                       {p.otherPlanId}{" "}
                       {SCOUT_ALLOCATION_FUNDING_LABELS[p.otherThenFocus.otherDecision]}

@@ -24,7 +24,10 @@ async function main() {
   const fundingSnap = await read("lib/scout-funding-snapshot.ts");
 
   // 1 — Header short subtitle, no war-room essay
-  assert.match(planning, /Active cases and execution readiness/);
+  assert.match(
+    planning,
+    /Casos activos y preparación de ejecución|Active cases and execution readiness/
+  );
   assert.doesNotMatch(planning, /War room — cases to watch/);
   assert.match(planning, /New stock case/);
   assert.match(planning, /Capital Planner/);

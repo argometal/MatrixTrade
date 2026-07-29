@@ -275,7 +275,7 @@ export function ScoutAllocationBoard({
                           {relationship === "order_sensitive" && pair ? (
                             <span className="ml-2 block text-[10px] text-zinc-500 leading-snug">
                               <span className="font-medium text-zinc-400">
-                                Selected first:
+                                Seleccionado primero:
                               </span>{" "}
                               {pair.focusThenOther.focusDecision === "fully_funded"
                                 ? pair.focusPlanId
@@ -286,7 +286,7 @@ export function ScoutAllocationBoard({
                               {SCOUT_ALLOCATION_FUNDING_LABELS[pair.focusThenOther.otherDecision]}
                               <br />
                               <span className="font-medium text-zinc-400">
-                                Reverse order:
+                                Orden inverso:
                               </span>{" "}
                               {pair.otherPlanId}{" "}
                               {SCOUT_ALLOCATION_FUNDING_LABELS[pair.otherThenFocus.otherDecision]}
@@ -321,7 +321,7 @@ export function ScoutAllocationBoard({
         <h2 className="text-sm font-semibold text-zinc-200">Impact summary</h2>
         <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
           <div>
-            <dt className="text-[10px] uppercase text-zinc-500">Affected Scouts</dt>
+            <dt className="text-[10px] uppercase text-zinc-500">Scouts afectados</dt>
             <dd className="font-medium text-zinc-100">
               {simulation.affected.length}
             </dd>

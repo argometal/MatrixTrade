@@ -404,29 +404,13 @@ export function PreviewPlanning({
                 }`}
               >
                 Scout
-                {mapFocusCompact && focusedScoutCard ? (
-                  <span className="ml-2 text-sm font-medium text-zinc-400 lg:hidden">
-                    · {focusedScoutCard.ticker}
-                    {focusedScoutCard.primaryPlan ? ` · ${focusedScoutCard.primaryPlan.id}` : ""}
-                  </span>
-                ) : null}
               </h1>
               <p
                 className={`mt-0.5 text-sm text-zinc-500 ${
                   mapFocusCompact ? "hidden lg:block" : ""
                 }`}
               >
-                {mapFocusCompact && focusedScoutCard ? (
-                  <>
-                    {(focusedScoutCard.operational.detectedAssessment.operationalState ?? "unassessed").replace(
-                      /_/g,
-                      " "
-                    )}{" "}
-                    · {focusedRr}
-                  </>
-                ) : (
-                  "Active cases and execution readiness"
-                )}
+                Casos activos y preparación de ejecución
               </p>
             </div>
             <div
@@ -457,16 +441,18 @@ export function PreviewPlanning({
         </header>
 
         <div
-          className={`space-y-4 px-4 lg:px-6 ${mapFocusCompact ? "py-2 lg:py-4" : "py-4"}`}
+          className={`px-4 lg:px-6 ${
+            mapFocusCompact ? "space-y-2 py-1 lg:space-y-4 lg:py-4" : "space-y-4 py-4"
+          }`}
         >
           {!hasCases ? (
             <section className="rounded-2xl border border-dashed border-zinc-700 px-4 py-10 text-center">
-              <p className="text-sm text-zinc-500">No scout cases yet.</p>
+              <p className="text-sm text-zinc-500">Aún no hay casos Scout.</p>
               <Link
                 href="/stock-theses/new"
                 className="mt-3 inline-block text-sm text-violet-300 hover:underline"
               >
-                New stock case →
+                Nuevo caso →
               </Link>
             </section>
           ) : (
@@ -474,7 +460,7 @@ export function PreviewPlanning({
               {!mapFocusCompact ? (
                 <details className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
                   <summary className="cursor-pointer text-xs font-medium text-zinc-500 hover:text-zinc-300">
-                    Compare active scouts
+                    Comparar Scouts activos
                   </summary>
                   <div className="mt-2">
                     <ActiveScoutsComparisonTable
@@ -484,10 +470,10 @@ export function PreviewPlanning({
                   </div>
                 </details>
               ) : null}
-              <ScoutAllocationStrip />
+              {!mapFocusCompact ? <ScoutAllocationStrip /> : null}
               <section
                 className={`rounded-2xl border border-zinc-800 bg-zinc-900/50 ${
-                  mapFocusCompact ? "p-2.5 lg:p-4" : "p-3"
+                  mapFocusCompact ? "p-2 lg:p-4" : "p-3"
                 }`}
                 data-scout-case-selector
               >
@@ -498,7 +484,7 @@ export function PreviewPlanning({
                       mapFocusCompact ? "sr-only lg:not-sr-only" : ""
                     }`}
                   >
-                    Case
+                    Caso
                   </label>
                   <select
                     id="scout-case"
@@ -515,9 +501,9 @@ export function PreviewPlanning({
                           {` · ${formatOperationalStateLabel(op.operationalState)}`}
                           {` · ${formatOperationalActionLabel(op.nextAction)}`}
                           {` · ${rrLabel}`}
-                          {card.orphan ? " · orphan fill" : ""}
+                          {card.orphan ? " · fill huérfano" : ""}
                           {card.linkedTrades.length
-                            ? ` · ${card.linkedTrades.length} open loop`
+                            ? ` · ${card.linkedTrades.length} loop abierto`
                             : ""}
                           {card.primaryPlan ? ` · ${card.primaryPlan.id}` : ""}
                         </option>
@@ -531,35 +517,6 @@ export function PreviewPlanning({
                       view={panelLevelsView}
                     />
                   ) : null}
-                </div>
-                <div
-                  className={`mt-2 flex flex-wrap gap-1.5 ${
-                    mapFocusCompact ? "hidden lg:flex" : ""
-                  }`}
-                >
-                  {scoutCards.map((card) => {
-                    const selected = card.key === focusedScoutCard?.key;
-                    const op = card.operational.detectedAssessment;
-                    const rrChip = formatOperationalR(op.currentExecutableRR);
-                    return (
-                      <button
-                        key={card.key}
-                        type="button"
-                        onClick={() => setScoutCaseKey(card.key)}
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                          selected
-                            ? "bg-violet-600 text-white"
-                            : "border border-zinc-700 text-zinc-500 hover:text-zinc-300"
-                        }`}
-                      >
-                        {card.ticker}
-                        {` ·${formatOperationalStateLabel(op.operationalState)}`}
-                        {` ·${formatOperationalActionLabel(op.nextAction)}`}
-                        {` ·${rrChip}`}
-                        {card.linkedTrades.length > 0 ? ` ·${card.linkedTrades.length}` : ""}
-                      </button>
-                    );
-                  })}
                 </div>
               </section>
 
@@ -836,11 +793,11 @@ export function PreviewPlanning({
                         {plan ? (
                           <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/40 p-3">
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                              Update operational state
+                              Actualizar estado operativo
                             </p>
                             <div className="mt-2 flex flex-wrap gap-2">
                               {[
-                                "Already passed",
+                                "Ya pasó",
                                 "Puede ser la otra semana",
                                 "Revisar mañana",
                                 "Entrada automática activa",
@@ -864,8 +821,8 @@ export function PreviewPlanning({
                                     const ok = await copyText(parsed.json);
                                     setQuickOperationalMsg(
                                       ok
-                                        ? "Copied decision-update — paste in Control → Apply"
-                                        : "Clipboard blocked"
+                                        ? "decision-update copiado — pégalo en Control → Apply"
+                                        : "Portapapeles bloqueado"
                                     );
                                   }}
                                 >
@@ -879,7 +836,7 @@ export function PreviewPlanning({
                                 onChange={(e) =>
                                   setQuickOperationalPhrase(e.target.value)
                                 }
-                                placeholder="Already passed / Revisar mañana / Reanalizar"
+                                placeholder="Ya pasó / Revisar mañana / Reanalizar"
                                 className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200"
                               />
                               <button
@@ -898,12 +855,12 @@ export function PreviewPlanning({
                                   const ok = await copyText(parsed.json);
                                   setQuickOperationalMsg(
                                     ok
-                                      ? "Copied decision-update — Validate → Accept remains mandatory"
-                                      : "Clipboard blocked"
+                                      ? "decision-update copiado — Validate → Accept sigue siendo obligatorio"
+                                      : "Portapapeles bloqueado"
                                   );
                                 }}
                               >
-                                Prepare status update
+                                Preparar actualización
                               </button>
                             </div>
                             {quickOperationalMsg ? (
@@ -1152,6 +1109,7 @@ export function PreviewPlanning({
               ) : null}
 
               {scoutPrimaryPlan &&
+              !mapFocusCompact &&
               (planNeedsStrategyReview(scoutPrimaryPlan) ||
                 scoutPrimaryPlan.outcome?.learningSyncStatus === "pending" ||
                 scoutPrimaryPlan.outcome?.learningSyncStatus === "failed") ? (

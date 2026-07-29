@@ -713,7 +713,7 @@ export function parseOperationalPhraseToProposal(
   now?: string
 ): { ok: true; json: string } | { ok: false; error: string } {
   const normalized = phrase.trim().toLowerCase();
-  if (!normalized) return { ok: false, error: "Phrase required." };
+  if (!normalized) return { ok: false, error: "Frase requerida." };
   if (/(ya paso|ya pasó|already passed)/i.test(normalized)) {
     return {
       ok: true,
@@ -825,6 +825,6 @@ export function parseOperationalPhraseToProposal(
   }
   return {
     ok: false,
-    error: "Phrase not recognized. Try Already passed, Puede ser la otra semana, Revisar mañana, Entrada automática activa, No parece probable, or Reanalizar.",
+    error: "Frase no reconocida. Prueba Ya pasó, Puede ser la otra semana, Revisar mañana, Entrada automática activa, No parece probable o Reanalizar.",
   };
 }
