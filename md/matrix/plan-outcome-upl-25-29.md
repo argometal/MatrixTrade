@@ -28,6 +28,29 @@
 }
 ```
 
+### `expired_window` (PROMPT 29-02)
+
+Closes only the tactical Scout Plan validity window when it ended without execution.
+Does **not** imply loss, miss, cancellation, thesis invalidation, or opportunity termination.
+
+```json
+{
+  "type": "plan-outcome",
+  "proposal": {
+    "planId": "PLAN-002",
+    "outcomeKind": "expired_window"
+  }
+}
+```
+
+- Required: `planId`, `outcomeKind: expired_window`
+- Do **not** require: `entryReached`, `stopReachedBeforeTarget`, `targetReachedBeforeStop`, `nonExecutionReason`
+- Server: `realizedR=0`, no counterfactual loss, plan status stays `expired`, no Trade
+- Learning Outcome kind: `expired` (label: Execution window expired) — not `missed_opportunity` / `cancelled` / `executed_loss`
+- Needs Attention `evaluate_expired_plan` completes when `outcome.recordedAt` is set
+- Stock File may remain active; a new Scout Plan may be created on the same Stock File
+- Historical expired plans are **not** auto-mutated — only explicit Apply
+
 ### Server-derived (never trust AI)
 
 - `realizedR = 0`
@@ -84,4 +107,5 @@ Evidence for later MAF — not accepted `execution_quality`.
 
 ## Tests
 
-`npm run test:plan-outcome-upl`
+`npm run test:plan-outcome-upl`  
+`npm run test:plan-outcome-expired-window`
