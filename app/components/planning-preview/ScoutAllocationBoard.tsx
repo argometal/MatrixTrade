@@ -32,6 +32,7 @@ function money(value: number | undefined | null): string {
 const GROUP_ORDER: ScoutAllocationRelationship[] = [
   "compatible",
   "competing",
+  "order_sensitive",
   "mutually_exclusive",
   "blocked_independently",
   "unassessed",
@@ -65,18 +66,26 @@ export function ScoutAllocationBoard({
     [focusId, relationshipsFor]
   );
 
+  const pairByOtherPlanId = useMemo(() => {
+    const m = new Map<string, (typeof pairs)[number]>();
+    for (const p of pairs) m.set(p.otherPlanId, p);
+    return m;
+  }, [pairs]);
+
   const groups = useMemo(() => {
     const map = new Map<ScoutAllocationRelationship, typeof candidates>();
     for (const rel of GROUP_ORDER) map.set(rel, []);
     for (const c of candidates) {
-      const impact = impactsByPlanId.get(c.planId);
-      const rel = impact?.relationship ?? "unassessed";
+      const rel =
+        c.planId === focusId
+          ? "unassessed"
+          : pairByOtherPlanId.get(c.planId)?.relationship ?? "unassessed";
       const list = map.get(rel) ?? [];
       list.push(c);
       map.set(rel, list);
     }
     return map;
-  }, [candidates, impactsByPlanId]);
+  }, [candidates, focusId, pairByOtherPlanId]);
 
   async function copySnapshot() {
     const pkg = buildScoutAllocationSnapshotPackage({
@@ -100,10 +109,13 @@ export function ScoutAllocationBoard({
   const summaryCells: Array<[string, string]> = [
     ["Available capital", money(availableCapital)],
     ["Available risk room", money(availableRiskRoom)],
-    ["Selected capital", money(simulation.selectedCapital)],
-    ["Selected risk", money(simulation.selectedRisk)],
-    ["Remaining capital", money(simulation.remainingCapital)],
-    ["Remaining risk", money(simulation.remainingRiskRoom)],
+    ["Already reserved", money(simulation.alreadyReservedCapital)],
+    ["New allocation", money(simulation.newSelectedCapital)],
+    ["Total selected", money(simulation.totalSelectedExposure)],
+    ["Capital remaining", money(simulation.remainingCapital)],
+    ["Already reserved risk", money(simulation.alreadyReservedRisk)],
+    ["New risk", money(simulation.newSelectedRisk)],
+    ["Risk remaining", money(simulation.remainingRiskRoom)],
     [
       "Portfolio status",
       SCOUT_ALLOCATION_PORTFOLIO_LABELS[simulation.portfolioStatus],
@@ -241,7 +253,9 @@ export function ScoutAllocationBoard({
                 </h3>
                 <ul className="mt-1.5 space-y-1">
                   {list.map((c) => {
-                    const impact = impactsByPlanId.get(c.planId);
+                    const pair =
+                      c.planId === focusId ? undefined : pairByOtherPlanId.get(c.planId);
+                    const relationship = pair?.relationship ?? "unassessed";
                     return (
                       <li
                         key={c.planId}
@@ -252,11 +266,33 @@ export function ScoutAllocationBoard({
                             {c.ticker}
                           </span>
                           <span className="ml-2 text-zinc-500">{c.planId}</span>
-                          {impact ? (
+                          {pair ? (
                             <span className="ml-2 text-zinc-400">
-                              {SCOUT_ALLOCATION_FUNDING_LABELS[impact.beforeDecision]}{" "}
-                              →{" "}
-                              {SCOUT_ALLOCATION_FUNDING_LABELS[impact.afterDecision]}
+                              {SCOUT_ALLOCATION_FUNDING_LABELS[pair.otherBaseline]} →{" "}
+                              {SCOUT_ALLOCATION_FUNDING_LABELS[pair.focusThenOther.otherDecision]}
+                            </span>
+                          ) : null}
+                          {relationship === "order_sensitive" && pair ? (
+                            <span className="ml-2 block text-[10px] text-zinc-500 leading-snug">
+                              <span className="font-medium text-zinc-400">
+                                Selected first:
+                              </span>{" "}
+                              {pair.focusThenOther.focusDecision === "fully_funded"
+                                ? pair.focusPlanId
+                                : pair.focusPlanId}{" "}
+                              {SCOUT_ALLOCATION_FUNDING_LABELS[pair.focusThenOther.focusDecision]}
+                              {" · "}
+                              {pair.otherPlanId}{" "}
+                              {SCOUT_ALLOCATION_FUNDING_LABELS[pair.focusThenOther.otherDecision]}
+                              <br />
+                              <span className="font-medium text-zinc-400">
+                                Reverse order:
+                              </span>{" "}
+                              {pair.otherPlanId}{" "}
+                              {SCOUT_ALLOCATION_FUNDING_LABELS[pair.otherThenFocus.otherDecision]}
+                              {" · "}
+                              {pair.focusPlanId}{" "}
+                              {SCOUT_ALLOCATION_FUNDING_LABELS[pair.otherThenFocus.focusDecision]}
                             </span>
                           ) : null}
                         </span>

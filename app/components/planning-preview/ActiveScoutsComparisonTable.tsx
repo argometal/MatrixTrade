@@ -53,6 +53,7 @@ export function ActiveScoutsComparisonTable({
     move,
     selectionOrder,
     candidates,
+    relationshipsFor,
   } = useScoutAllocationSelection();
 
   const rows = useMemo(() => {
@@ -64,6 +65,17 @@ export function ActiveScoutsComparisonTable({
     () => new Map(candidates.map((c) => [c.planId, c])),
     [candidates]
   );
+
+  const focusId = selectionOrder[0];
+  const pairs = useMemo(
+    () => (focusId ? relationshipsFor(focusId) : []),
+    [focusId, relationshipsFor]
+  );
+  const relationshipByOtherPlanId = useMemo(() => {
+    const m = new Map<string, (typeof pairs)[number]>();
+    for (const p of pairs) m.set(p.otherPlanId, p);
+    return m;
+  }, [pairs]);
 
   if (rows.length === 0) return null;
 
@@ -164,8 +176,12 @@ export function ActiveScoutsComparisonTable({
                 <div className="col-span-2">
                   <dt>Relationship</dt>
                   <dd className="text-zinc-200">
-                    {impact
-                      ? SCOUT_ALLOCATION_RELATIONSHIP_LABELS[impact.relationship]
+                    {impact && row.planId !== focusId
+                      ? relationshipByOtherPlanId.get(row.planId)
+                        ? SCOUT_ALLOCATION_RELATIONSHIP_LABELS[
+                            relationshipByOtherPlanId.get(row.planId)!.relationship
+                          ]
+                        : SCOUT_ALLOCATION_RELATIONSHIP_LABELS[impact.relationship]
                       : "Unassessed"}
                   </dd>
                 </div>
@@ -276,8 +292,12 @@ export function ActiveScoutsComparisonTable({
                       : "—"}
                   </td>
                   <td className="py-2 pr-3">
-                    {impact
-                      ? SCOUT_ALLOCATION_RELATIONSHIP_LABELS[impact.relationship]
+                    {impact && row.planId !== focusId
+                      ? relationshipByOtherPlanId.get(row.planId)
+                        ? SCOUT_ALLOCATION_RELATIONSHIP_LABELS[
+                            relationshipByOtherPlanId.get(row.planId)!.relationship
+                          ]
+                        : SCOUT_ALLOCATION_RELATIONSHIP_LABELS[impact.relationship]
                       : "Unassessed"}
                   </td>
                   <td className="py-2 pr-3">

@@ -55,16 +55,21 @@ export function ScoutAllocationImpact({
     [planId, relationshipsFor]
   );
 
+  const orderSensitivePairs = pairs.filter(
+    (p) => p.relationship === "order_sensitive"
+  );
   const competingOrExclusive = pairs.filter(
     (p) =>
       p.relationship === "competing" ||
-      p.relationship === "mutually_exclusive"
+      p.relationship === "mutually_exclusive" ||
+      p.relationship === "order_sensitive"
   );
 
   if (!planId || !candidate) return null;
 
   const selected = isSelected(planId);
   const impact = impactsByPlanId.get(planId);
+  const isAlreadyReserved = selected && impact?.relationship === "already_reserved";
   const capitalReq =
     typeof candidate.requestedCapital === "number"
       ? candidate.requestedCapital
@@ -74,27 +79,43 @@ export function ScoutAllocationImpact({
       ? candidate.estimatedRisk
       : undefined;
 
-  const capitalCell = moneyOrUnconfigured(
+  const baseCapitalCell = moneyOrUnconfigured(
     capitalReq,
     "No canonical capitalRequired yet"
   );
-  const riskCell = moneyOrUnconfigured(
+  const baseRiskCell = moneyOrUnconfigured(
     riskReq,
     "No canonical estimatedRisk yet"
   );
+  const capitalCell = isAlreadyReserved
+    ? { ...baseCapitalCell, text: `Already reserved ${baseCapitalCell.text}` }
+    : baseCapitalCell;
+  const riskCell = isAlreadyReserved
+    ? { ...baseRiskCell, text: `Already reserved ${baseRiskCell.text}` }
+    : baseRiskCell;
   const fundingLabel =
     SCOUT_ALLOCATION_FUNDING_LABELS[candidate.fundingDecision];
 
   const relationshipSummary =
-    competingOrExclusive.length > 0
-      ? `Competes with ${competingOrExclusive.length} Scout${
-          competingOrExclusive.length === 1 ? "" : "s"
+    orderSensitivePairs.length > 0
+      ? "Order sensitive"
+      : competingOrExclusive.filter(
+          (p) => p.relationship === "competing" || p.relationship === "mutually_exclusive"
+        ).length > 0
+      ? `Competes with ${competingOrExclusive.filter(
+          (p) => p.relationship === "competing" || p.relationship === "mutually_exclusive"
+        ).length} Scout${
+          competingOrExclusive.filter(
+            (p) => p.relationship === "competing" || p.relationship === "mutually_exclusive"
+          ).length === 1
+            ? ""
+            : "s"
         }`
       : pairs.some((p) => p.relationship === "compatible")
-        ? "Compatible with other Scouts"
-        : pairs.some((p) => p.relationship === "unassessed")
-          ? "Unassessed"
-          : "No conflicts detected";
+      ? "Compatible with other Scouts"
+      : pairs.some((p) => p.relationship === "unassessed")
+      ? "Unassessed"
+      : "No conflicts detected";
 
   const boardHref =
     selectionOrder.length > 0
@@ -103,14 +124,22 @@ export function ScoutAllocationImpact({
         )}`
       : "/planning/capital/allocation";
 
-  const capitalAfter = moneyOrUnconfigured(
-    selected ? simulation.remainingCapital : availableCapital,
-    selected ? undefined : "Available capital not configured"
-  );
-  const riskAfter = moneyOrUnconfigured(
-    selected ? simulation.remainingRiskRoom : availableRiskRoom,
-    selected ? undefined : "Risk room not configured"
-  );
+  const capitalAfter = isAlreadyReserved
+    ? {
+        text: "No additional capital consumed",
+      }
+    : moneyOrUnconfigured(
+        selected ? simulation.remainingCapital : availableCapital,
+        selected ? undefined : "Available capital not configured"
+      );
+  const riskAfter = isAlreadyReserved
+    ? {
+        text: "No additional risk consumed",
+      }
+    : moneyOrUnconfigured(
+        selected ? simulation.remainingRiskRoom : availableRiskRoom,
+        selected ? undefined : "Risk room not configured"
+      );
 
   const affectedFromSim = simulation.affected;
 
@@ -223,39 +252,56 @@ export function ScoutAllocationImpact({
             <span>
               Affected Scouts ·{" "}
               {selected
-                ? affectedFromSim.length
+                ? competingOrExclusive.length
                 : competingOrExclusive.length}
             </span>
             <span>{affectedOpen ? "▾" : "▸"}</span>
           </button>
           {affectedOpen ? (
             <ul className="mt-1 space-y-1.5 text-xs">
-              {(selected ? affectedFromSim : competingOrExclusive.map((p) => ({
-                planId: p.otherPlanId,
-                ticker: p.otherTicker,
-                beforeDecision: p.otherBaseline,
-                afterDecision: p.otherAfterFocus,
-                relationship: p.relationship,
-              }))).map((row) => (
+              {competingOrExclusive.map((p) => (
                 <li
-                  key={row.planId}
+                  key={p.otherPlanId}
                   className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-current/10 bg-black/10 px-2 py-1.5"
                 >
                   <button
                     type="button"
-                    onClick={() => onFocusPlan?.(row.planId)}
+                    onClick={() => onFocusPlan?.(p.otherPlanId)}
                     className="font-medium text-left hover:underline"
                   >
-                    {row.planId}
-                    <span className="ml-1 opacity-60">{row.ticker}</span>
+                    {p.otherPlanId}
+                    <span className="ml-1 opacity-60">
+                      {p.otherTicker}
+                    </span>
                   </button>
                   <span className="text-[10px] opacity-80">
-                    {SCOUT_ALLOCATION_FUNDING_LABELS[row.beforeDecision]} →{" "}
-                    {SCOUT_ALLOCATION_FUNDING_LABELS[row.afterDecision]}
+                    {SCOUT_ALLOCATION_FUNDING_LABELS[p.otherBaseline]} →{" "}
+                    {SCOUT_ALLOCATION_FUNDING_LABELS[p.focusThenOther.otherDecision]}
                     <span className="ml-1 opacity-70">
-                      · {SCOUT_ALLOCATION_RELATIONSHIP_LABELS[row.relationship]}
+                      · {SCOUT_ALLOCATION_RELATIONSHIP_LABELS[p.relationship]}
                     </span>
                   </span>
+                  {p.relationship === "order_sensitive" ? (
+                    <span className="mt-1 w-full text-[10px] leading-snug opacity-80">
+                      <span className="font-medium text-zinc-200">
+                        Impact if this Scout is selected first:
+                      </span>{" "}
+                      {p.focusPlanId}{" "}
+                      {SCOUT_ALLOCATION_FUNDING_LABELS[p.focusThenOther.focusDecision]}
+                      {" · "}
+                      {p.otherPlanId}{" "}
+                      {SCOUT_ALLOCATION_FUNDING_LABELS[p.focusThenOther.otherDecision]}
+                      <br />
+                      <span className="font-medium text-zinc-200">
+                        Reverse order:
+                      </span>{" "}
+                      {p.otherPlanId}{" "}
+                      {SCOUT_ALLOCATION_FUNDING_LABELS[p.otherThenFocus.otherDecision]}
+                      {" · "}
+                      {p.focusPlanId}{" "}
+                      {SCOUT_ALLOCATION_FUNDING_LABELS[p.otherThenFocus.focusDecision]}
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>

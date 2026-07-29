@@ -16,6 +16,14 @@ export type ScoutPairRelationship = {
   otherPlanId: string;
   otherTicker: string;
   relationship: ScoutAllocationRelationship;
+  focusThenOther: {
+    focusDecision: ScoutAllocationFundingDecision;
+    otherDecision: ScoutAllocationFundingDecision;
+  };
+  otherThenFocus: {
+    otherDecision: ScoutAllocationFundingDecision;
+    focusDecision: ScoutAllocationFundingDecision;
+  };
   focusAlone: ScoutAllocationFundingDecision;
   otherBaseline: ScoutAllocationFundingDecision;
   otherAfterFocus: ScoutAllocationFundingDecision;
@@ -123,10 +131,18 @@ export function deriveScoutRelationships(
   for (const other of candidates) {
     if (other.planId === focusPlanId) continue;
 
+    // Direction 1: focus → other
     const both = simulateScoutAllocation({
       ...baseInput,
       selectedPlanIds: [focusPlanId, other.planId],
       selectionOrder: [focusPlanId, other.planId],
+    });
+
+    // Direction 2: other → focus
+    const reverse = simulateScoutAllocation({
+      ...baseInput,
+      selectedPlanIds: [focusPlanId, other.planId],
+      selectionOrder: [other.planId, focusPlanId],
     });
 
     const otherBaseline =
@@ -142,33 +158,77 @@ export function deriveScoutRelationships(
     const otherAfterFocus =
       afterFocusImpact?.afterDecision ?? other.fundingDecision;
 
-    const bothFocus =
+    const forwardFocus =
       both.selected.find((i) => i.planId === focusPlanId)?.afterDecision ??
       "unassessed";
-    const bothOther =
+    const forwardOther =
       both.selected.find((i) => i.planId === other.planId)?.afterDecision ??
+      "unassessed";
+
+    const reverseOther =
+      reverse.selected.find((i) => i.planId === other.planId)?.afterDecision ??
+      "unassessed";
+    const reverseFocus =
+      reverse.selected.find((i) => i.planId === focusPlanId)?.afterDecision ??
       "unassessed";
 
     const focusAlone =
       focusOnly.selected.find((i) => i.planId === focusPlanId)?.afterDecision ??
       focus.fundingDecision;
 
+    const forwardRelationship = classifyPair({
+      otherBaseline,
+      otherAfterFocus,
+      bothTogetherFocus: forwardFocus,
+      bothTogetherOther: forwardOther,
+      otherRelationshipHint: afterFocusImpact?.relationship,
+    });
+
+    const relationshipIsOrderSensitive =
+      forwardRelationship !== "unassessed" &&
+      forwardRelationship !== "already_reserved" &&
+      forwardRelationship !== "blocked_independently" &&
+      forwardFocus !== "unassessed" &&
+      forwardOther !== "unassessed" &&
+      reverseFocus !== "unassessed" &&
+      reverseOther !== "unassessed" &&
+      // Mutually exclusive: at least one order produces `unfunded`.
+      forwardFocus !== "unfunded" &&
+      forwardOther !== "unfunded" &&
+      reverseFocus !== "unfunded" &&
+      reverseOther !== "unfunded" &&
+      // Order sensitive example: fully/partially swap depending on order.
+      ((forwardFocus === "fully_funded" &&
+        forwardOther === "partially_funded" &&
+        reverseOther === "fully_funded" &&
+        reverseFocus === "partially_funded") ||
+        (forwardOther === "fully_funded" &&
+          forwardFocus === "partially_funded" &&
+          reverseFocus === "fully_funded" &&
+          reverseOther === "partially_funded"));
+
+    const relationship: ScoutAllocationRelationship = relationshipIsOrderSensitive
+      ? "order_sensitive"
+      : forwardRelationship;
+
     results.push({
       focusPlanId,
       otherPlanId: other.planId,
       otherTicker: other.ticker,
-      relationship: classifyPair({
-        otherBaseline,
-        otherAfterFocus,
-        bothTogetherFocus: bothFocus,
-        bothTogetherOther: bothOther,
-        otherRelationshipHint: afterFocusImpact?.relationship,
-      }),
+      relationship,
+      focusThenOther: {
+        focusDecision: forwardFocus,
+        otherDecision: forwardOther,
+      },
+      otherThenFocus: {
+        otherDecision: reverseOther,
+        focusDecision: reverseFocus,
+      },
       focusAlone,
       otherBaseline,
       otherAfterFocus,
-      bothTogetherFocus: bothFocus,
-      bothTogetherOther: bothOther,
+      bothTogetherFocus: forwardFocus,
+      bothTogetherOther: forwardOther,
     });
   }
 
@@ -181,6 +241,7 @@ export function summarizeRelationshipCounts(
   const counts: Record<ScoutAllocationRelationship, number> = {
     compatible: 0,
     competing: 0,
+    order_sensitive: 0,
     mutually_exclusive: 0,
     already_reserved: 0,
     blocked_independently: 0,

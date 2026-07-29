@@ -231,7 +231,13 @@ async function main() {
     assert.equal(result.selected[0]?.relationship, "already_reserved");
     assert.equal(result.remainingCapital, 3000);
     assert.equal(result.remainingRiskRoom, 120);
-    assert.equal(result.selectedCapital, 0);
+    assert.equal(result.selectedCapital, 0); // newSelectedCapital excludes own active reservation
+    assert.equal(result.alreadyReservedCapital, 2000);
+    assert.equal(result.newSelectedCapital, 0);
+    assert.equal(result.totalSelectedExposure, 2000);
+    assert.equal(result.alreadyReservedRisk, 80);
+    assert.equal(result.newSelectedRisk, 0);
+    assert.equal(result.totalSelectedRiskExposure, 80);
   }
 
   // 12 — released reservation ignored
@@ -251,6 +257,12 @@ async function main() {
       existingReservations: [res],
     });
     assert.notEqual(result.selected[0]?.relationship, "already_reserved");
+    assert.equal(result.alreadyReservedCapital, 0);
+    assert.equal(result.newSelectedCapital, 1000);
+    assert.equal(result.totalSelectedExposure, 1000);
+    assert.equal(result.alreadyReservedRisk, 0);
+    assert.equal(result.newSelectedRisk, 40);
+    assert.equal(result.totalSelectedRiskExposure, 40);
     assert.equal(result.remainingCapital, 4000);
   }
 
@@ -271,6 +283,12 @@ async function main() {
       existingReservations: [res],
     });
     assert.equal(result.remainingCapital, 4000);
+    assert.equal(result.alreadyReservedCapital, 0);
+    assert.equal(result.newSelectedCapital, 1000);
+    assert.equal(result.totalSelectedExposure, 1000);
+    assert.equal(result.alreadyReservedRisk, 0);
+    assert.equal(result.newSelectedRisk, 40);
+    assert.equal(result.totalSelectedRiskExposure, 40);
   }
 
   // 14 — blocked Scout remains blocked independently
@@ -341,6 +359,25 @@ async function main() {
     assert.equal(pairs[0]?.relationship, "mutually_exclusive");
   }
 
+  // 18 — order-sensitive pair (selected first swaps who is fully funded)
+  {
+    const a = funded("PLAN-A", "AAA", 1000, 50);
+    const b = funded("PLAN-B", "BBB", 1000, 50);
+    const pairs = deriveScoutRelationships({
+      focusPlanId: "PLAN-A",
+      candidates: [a, b],
+      availableCapital: 1500,
+      availableRiskRoom: 200,
+      existingReservations: [],
+    });
+    assert.equal(pairs.length, 1);
+    assert.equal(pairs[0]?.relationship, "order_sensitive");
+    assert.equal(pairs[0]?.focusThenOther.focusDecision, "fully_funded");
+    assert.equal(pairs[0]?.focusThenOther.otherDecision, "partially_funded");
+    assert.equal(pairs[0]?.otherThenFocus.otherDecision, "fully_funded");
+    assert.equal(pairs[0]?.otherThenFocus.focusDecision, "partially_funded");
+  }
+
   // Snapshot read-only / no invent zeros
   {
     const result = simulateScoutAllocation({
@@ -364,10 +401,17 @@ async function main() {
     assert.equal(pkg.startingCapital, null);
     assert.equal(pkg.startingRiskRoom, null);
     assert.equal(pkg.selectedCapital, null);
+    assert.equal(pkg.alreadyReservedCapital, null);
+    assert.equal(pkg.newSelectedCapital, null);
+    assert.equal(pkg.totalSelectedExposure, null);
+    assert.equal(pkg.alreadyReservedRisk, null);
+    assert.equal(pkg.newSelectedRisk, null);
+    assert.equal(pkg.totalSelectedRiskExposure, null);
     const text = formatScoutAllocationSnapshotText(pkg);
     assert.match(text, /"readOnly": true/);
     assert.match(text, /"mutatesCapital": false/);
     assert.doesNotMatch(text, /"startingCapital": 0/);
+    assert.doesNotMatch(text, /\"alreadyReservedCapital\": 0/);
   }
 
   // Candidate builder: no stockFileId from thesis; shares from snapshot only
@@ -450,10 +494,13 @@ async function main() {
   assert.match(strip, /Risk left/);
   assert.match(planning, /ScoutAllocationStrip/);
 
+  // focused UI exposes order_sensitive directional preview
+  assert.match(impact, /selected first/i);
+
   // 24 — Board groups relationships
   assert.match(board, /Relationship groups/);
   assert.match(board, /data-allocation-group/);
-  assert.match(board, /Compatible|competing|mutually_exclusive/);
+  assert.match(board, /Compatible|competing|mutually_exclusive|Order sensitive/);
   assert.match(boardPage, /ScoutAllocationProvider/);
 
   // 25 — Allocation Snapshot read-only

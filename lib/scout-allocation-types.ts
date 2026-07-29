@@ -13,6 +13,7 @@ export type ScoutAllocationFundingDecision =
 export type ScoutAllocationRelationship =
   | "compatible"
   | "competing"
+  | "order_sensitive"
   | "mutually_exclusive"
   | "already_reserved"
   | "blocked_independently"
@@ -78,6 +79,18 @@ export type ScoutAllocationSimulationResult = {
   startingRiskRoom?: number;
   selectedCapital?: number;
   selectedRisk?: number;
+  /**
+   * Clarified totals:
+   * - alreadyReserved* reflect authoritative active reservations belonging to selected Scouts
+   * - newSelected* reflect additional consumption by selected Scouts without an active own reservation
+   * - totalSelected* is informational only and must not be subtracted again
+   */
+  alreadyReservedCapital?: number;
+  newSelectedCapital?: number;
+  totalSelectedExposure?: number;
+  alreadyReservedRisk?: number;
+  newSelectedRisk?: number;
+  totalSelectedRiskExposure?: number;
   remainingCapital?: number;
   remainingRiskRoom?: number;
   capitalDeficit?: number;
@@ -96,6 +109,7 @@ export const SCOUT_ALLOCATION_RELATIONSHIP_LABELS: Record<
 > = {
   compatible: "Compatible",
   competing: "Competing",
+  order_sensitive: "Order sensitive",
   mutually_exclusive: "Mutually exclusive",
   already_reserved: "Already reserved",
   blocked_independently: "Blocked independently",

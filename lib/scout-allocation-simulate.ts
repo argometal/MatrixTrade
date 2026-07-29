@@ -38,6 +38,21 @@ function hasOwnActiveReservation(
   return activeReservationsFor(reservations, candidate.planId).length > 0;
 }
 
+function findOwnActiveReservation(
+  candidate: ScoutAllocationCandidate,
+  reservations: CapitalReservation[]
+): CapitalReservation | undefined {
+  if (candidate.existingReservationId) {
+    const own = reservations.find((r) => r.id === candidate.existingReservationId);
+    return own && isActiveReservation(own) ? own : undefined;
+  }
+
+  const activeForPlan = activeReservationsFor(reservations, candidate.planId);
+  // Avoid counting invalid duplicates as legitimate exposure.
+  if (activeForPlan.length !== 1) return undefined;
+  return activeForPlan[0];
+}
+
 function isIndependentlyBlocked(candidate: ScoutAllocationCandidate): boolean {
   const reasons = candidate.blockingReasons;
   const independent = [
@@ -242,6 +257,8 @@ export function simulateScoutAllocation(
   let remainingRiskRoom = startingRiskRoom;
   let selectedCapital = 0;
   let selectedRisk = 0;
+  let alreadyReservedCapital = 0;
+  let alreadyReservedRisk = 0;
   let capitalDeficit: number | undefined;
   let riskDeficit: number | undefined;
   let thresholdCrossingPlanId: string | undefined;
@@ -268,19 +285,31 @@ export function simulateScoutAllocation(
     let displacementReason: string | undefined;
     let crossed = false;
 
-    if (independentlyBlocked) {
+    const conflictingDuplicateReservation =
+      candidate.blockingReasons.includes("conflicting reservation") &&
+      !candidate.existingReservationId;
+
+    if (alreadyReserved && !conflictingDuplicateReservation) {
+      // Own active reservation owns capacity in the account model —
+      // do not charge again.
+      const ownReservation = findOwnActiveReservation(candidate, reservations);
+      if (ownReservation) {
+        if (typeof ownReservation.reservedCapital === "number") {
+          alreadyReservedCapital += ownReservation.reservedCapital;
+        }
+        if (typeof ownReservation.estimatedRisk === "number") {
+          alreadyReservedRisk += ownReservation.estimatedRisk;
+        }
+      }
+
+      afterDecision =
+        candidate.fundingDecision === "blocked" ? "blocked" : "fully_funded";
+      relationship = "already_reserved";
+    } else if (independentlyBlocked) {
       afterDecision = "blocked";
       relationship = "blocked_independently";
       displacementReason = candidate.blockingReasons[0] ?? "blocked independently";
       blockingReasons.push(`${planId}: ${displacementReason}`);
-    } else if (alreadyReserved) {
-      // Own active reservation already consumes capacity in availableCapital —
-      // do not charge again.
-      afterDecision =
-        candidate.fundingDecision === "blocked"
-          ? "blocked"
-          : "fully_funded";
-      relationship = "already_reserved";
     } else {
       const decided = decideAgainstCapacity({
         requestedCapital: req,
@@ -463,6 +492,15 @@ export function simulateScoutAllocation(
     startingRiskRoom,
     selectedCapital: orderedIds.length > 0 ? selectedCapital : undefined,
     selectedRisk: orderedIds.length > 0 ? selectedRisk : undefined,
+    alreadyReservedCapital:
+      orderedIds.length > 0 ? alreadyReservedCapital : undefined,
+    newSelectedCapital: orderedIds.length > 0 ? selectedCapital : undefined,
+    totalSelectedExposure:
+      orderedIds.length > 0 ? alreadyReservedCapital + selectedCapital : undefined,
+    alreadyReservedRisk: orderedIds.length > 0 ? alreadyReservedRisk : undefined,
+    newSelectedRisk: orderedIds.length > 0 ? selectedRisk : undefined,
+    totalSelectedRiskExposure:
+      orderedIds.length > 0 ? alreadyReservedRisk + selectedRisk : undefined,
     remainingCapital,
     remainingRiskRoom,
     capitalDeficit,

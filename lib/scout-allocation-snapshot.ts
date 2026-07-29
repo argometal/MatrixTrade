@@ -14,8 +14,16 @@ export type ScoutAllocationSnapshotPackage = {
   selectionOrder: string[];
   startingCapital: number | null;
   startingRiskRoom: number | null;
+  // Legacy fields (new allocation only) — kept for compatibility.
   selectedCapital: number | null;
   selectedRisk: number | null;
+  // Clarified totals.
+  alreadyReservedCapital: number | null;
+  newSelectedCapital: number | null;
+  totalSelectedExposure: number | null;
+  alreadyReservedRisk: number | null;
+  newSelectedRisk: number | null;
+  totalSelectedRiskExposure: number | null;
   remainingCapital: number | null;
   remainingRiskRoom: number | null;
   capitalDeficit: number | null;
@@ -62,6 +70,12 @@ export function buildScoutAllocationSnapshotPackage(input: {
     startingRiskRoom: numOrNull(result.startingRiskRoom),
     selectedCapital: numOrNull(result.selectedCapital),
     selectedRisk: numOrNull(result.selectedRisk),
+    alreadyReservedCapital: numOrNull(result.alreadyReservedCapital),
+    newSelectedCapital: numOrNull(result.newSelectedCapital),
+    totalSelectedExposure: numOrNull(result.totalSelectedExposure),
+    alreadyReservedRisk: numOrNull(result.alreadyReservedRisk),
+    newSelectedRisk: numOrNull(result.newSelectedRisk),
+    totalSelectedRiskExposure: numOrNull(result.totalSelectedRiskExposure),
     remainingCapital: numOrNull(result.remainingCapital),
     remainingRiskRoom: numOrNull(result.remainingRiskRoom),
     capitalDeficit: numOrNull(result.capitalDeficit),

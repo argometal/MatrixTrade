@@ -37,6 +37,8 @@ export function ScoutAllocationStrip() {
           <span>
             Selected {selectedCount}
             <span className="mx-1 opacity-40">·</span>
+            Total selected {money(simulation.totalSelectedExposure)}
+            <span className="mx-1 opacity-40">·</span>
             Capital left {money(simulation.remainingCapital)}
             <span className="mx-1 opacity-40">·</span>
             Risk left {money(simulation.remainingRiskRoom)}
