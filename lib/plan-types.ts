@@ -160,6 +160,9 @@ export interface TradePlan {
    * automaticExecutionEnabled remains false — human confirmation mandatory.
    */
   executionReadiness?: ExecutionReadinessState;
+  /** Replacement lineage (29-29). Nullable on legacy plans. */
+  replacesPlanId?: string;
+  replacedByPlanId?: string;
   createdAt: string;
   updatedAt: string;
 }

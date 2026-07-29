@@ -15,7 +15,7 @@ Required shape:
 PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - stock-case-create: NEW Stock Profile — ticker, currentHypothesis, levels{}, riskRules{minimumRR, invalidation EVENT string}, REQUIRED initialScout{plannedEntry, stopPrice, targetPrice}; optional thesis, notes, historicalAnalysis[]. Creation WITHOUT entry+stop+target is REJECTED. Never invent keys outside schema contract.
 - evidence-add: MarketEvidence row — stockProfileId, ticker, timeframe, category, value, confidence (0-100) required; optional note
-- decision-update: scout decision on PLAN — planId required; decision mode: verdict (go|wait|probe|no), decisionConfidence (0-100), challenges[] (min 1); tactical mode: at least one of plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, familyBAssessment (verdict optional); layeredEntry may include stopModel, sizingMode, authorizedRiskAmount, primaryTargetPrice, commonStopPrice, limits[{price,allocationPercent,role?,stopPrice?,rationale?,confidence?}]; Family B may include familyBAssessment{state,trendIntegrity,extension,pullbackQuality,participationCase,evidenceFor[],evidenceAgainst[],unresolved[]}; Matrix recomputes R/risk derived fields server-side — do not forge rr; optional thesisQuality, opportunityQuality (0-100), confirmationCost{...}, locationEvidence, confirmationEvidence, singleEntryOnly, reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe, layeredEntry when verdict=go
+- decision-update: scout decision on PLAN — planId required; decision mode: verdict (go|wait|probe|no), decisionConfidence (0-100), challenges[] (min 1); tactical mode: at least one of plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, familyBAssessment, operationalAssessment (verdict optional); layeredEntry may include stopModel, sizingMode, authorizedRiskAmount, primaryTargetPrice, commonStopPrice, limits[{price,allocationPercent,role?,stopPrice?,rationale?,confidence?}]; operationalAssessment may include thesisState, operationalState, waitHorizon, nextAction, freshness, currentExecutableRR, reviewRequired, reasonCodes[], nextReviewAt; Matrix recomputes R/risk derived fields server-side — do not forge rr; optional thesisQuality, opportunityQuality (0-100), confirmationCost{...}, locationEvidence, confirmationEvidence, singleEntryOnly, reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe, layeredEntry when verdict=go
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex (0-based, -1=none) or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
@@ -158,7 +158,7 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
   {
     type: "decision-update",
     label: "decision-update — scout decision on PLAN",
-    hint: "verdict + confidence + challenges; probe{} when verdict=probe; layeredEntry{} when verdict=go",
+    hint: "verdict + confidence + challenges; optional operationalAssessment; probe{} when verdict=probe; layeredEntry{} when verdict=go",
   },
   {
     type: "scout-plan-create",
@@ -315,6 +315,18 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       confirmationEvidence: "No reclaim or higher low yet",
       planningRisk: { structure: "HH/HL intact", stop: "below 320", rr: "3R min not met at spot" },
       executionRisk: { earnings: "none this week", emotion: "avoid FOMO chase" },
+      operationalAssessment: {
+        thesisState: "valid",
+        operationalState: "approaching",
+        waitHorizon: "weeks",
+        nextAction: "monitor",
+        freshness: "current",
+        currentExecutableRR: 3.8,
+        reviewRequired: false,
+        reasonCodes: ["manual_override"],
+        nextReviewAt: "2026-07-30T12:00:00.000Z",
+        source: "manual_override",
+      },
     },
   },
   "layered-entry-update": {

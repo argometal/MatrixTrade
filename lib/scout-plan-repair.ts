@@ -30,6 +30,7 @@ export const DECISION_TACTICAL_FIELDS = [
   "validUntil",
   "status",
   "layeredEntry",
+  "operationalAssessment",
 ] as const;
 
 export type DecisionTacticalField = (typeof DECISION_TACTICAL_FIELDS)[number];
@@ -332,7 +333,7 @@ export async function applyDecisionUpdateFromProposal(
   if (!hasTactical && !hasDecision) {
     return {
       errors: [
-        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry).",
+        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, operationalAssessment).",
       ],
     };
   }

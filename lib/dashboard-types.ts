@@ -1,5 +1,6 @@
 import type { PlaybookStats } from "./analytics";
 import type { AttentionItem } from "./dashboard-attention";
+import type { ScoutMonitoringSections } from "./scout-monitoring";
 import type { EquityPoint, MistakeStat } from "./review";
 import type { Experiment } from "./types";
 import type { MonthlyRisk } from "./monthly-risk";
@@ -15,6 +16,7 @@ export type DashboardData = {
   activePlans: number;
   plansNeedingReview: number;
   attentionItems: AttentionItem[];
+  scoutMonitoring: ScoutMonitoringSections;
   mistakeStats: MistakeStat[];
   equityPoints: EquityPoint[];
   winRate: number;

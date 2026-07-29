@@ -215,6 +215,63 @@ export function PreviewDashboard({
               )}
             </section>
 
+            <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
+                Scout monitoring
+              </h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                Detection surface only. Review Scout / Prepare status update / Open Plan Map —
+                no automatic Scout mutation.
+              </p>
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                {(
+                  [
+                    ["Action now", data.scoutMonitoring.actionNow],
+                    ["Needs review", data.scoutMonitoring.needsReview],
+                    ["Waiting", data.scoutMonitoring.waiting],
+                    ["Low probability", data.scoutMonitoring.lowProbability],
+                  ] as const
+                ).map(([label, rows]) => (
+                  <section
+                    key={label}
+                    className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-4"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                        {label}
+                      </h3>
+                      <span className="text-[11px] text-zinc-600">{rows.length}</span>
+                    </div>
+                    {rows.length === 0 ? (
+                      <p className="mt-3 text-xs text-zinc-500">Nothing here.</p>
+                    ) : (
+                      <ul className="mt-3 space-y-2">
+                        {rows.map((row) => (
+                          <li key={`${label}-${row.planId}`}>
+                            <Link
+                              href={row.href}
+                              className="block rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 hover:border-zinc-700"
+                            >
+                              <p className="text-sm font-medium text-zinc-100">
+                                {row.ticker} · {row.planId}
+                              </p>
+                              <p className="mt-0.5 text-xs text-zinc-400">
+                                Detected {row.detectedState} · Confirmed {row.confirmedState} ·{" "}
+                                {row.nextAction}
+                              </p>
+                              <p className="mt-0.5 text-[11px] text-zinc-500">
+                                {row.reason} · last reviewed {row.lastReviewed}
+                              </p>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </section>
+                ))}
+              </div>
+            </section>
+
             {(data.bestPlaybook || data.worstPlaybook || topMistake) && (
               <section className="grid gap-4 sm:grid-cols-3">
                 {data.bestPlaybook && (

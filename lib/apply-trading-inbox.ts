@@ -282,6 +282,9 @@ async function applyDecisionUpdate(
   const plan = result.plan!;
   const parts = [`Updated scout ${plan.id}`];
   if (plan.decision?.verdict) parts.push(`verdict ${plan.decision.verdict}`);
+  if (plan.decision?.operationalAssessment?.operationalState) {
+    parts.push(`operational ${plan.decision.operationalAssessment.operationalState}`);
+  }
   if (plan.plannedEntry !== undefined) parts.push(`entry ${plan.plannedEntry}`);
   if (plan.stopPrice !== undefined) parts.push(`stop ${plan.stopPrice}`);
   if (plan.targetPrice !== undefined) parts.push(`target ${plan.targetPrice}`);

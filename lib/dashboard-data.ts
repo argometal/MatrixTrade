@@ -18,6 +18,7 @@ import { buildLearningAttentionItems } from "./learning-attention";
 import { enrichAttentionItemsWithAiSnapshots } from "./needs-attention-ai";
 import { countActivePlans, countPlansNeedingReview } from "./plan-helpers";
 import { getPlans } from "./plans";
+import { buildScoutMonitoringSections } from "./scout-monitoring";
 import { getExperiment, getMonthlyRisk, getTrades } from "./storage";
 import { getStockTheses } from "./stock-theses";
 import { getObservations } from "./observation-store";
@@ -176,6 +177,7 @@ export async function loadDashboardData(): Promise<DashboardData> {
     activePlans: countActivePlans(plans),
     plansNeedingReview: countPlansNeedingReview(plans),
     attentionItems,
+    scoutMonitoring: buildScoutMonitoringSections({ plans, trades, reservations }),
     mistakeStats: computeMistakeStats(trades),
     // Experiment cumulative P/L points — not Account Equity.
     equityPoints: buildEquityCurve(trades),

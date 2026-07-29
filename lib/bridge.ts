@@ -34,6 +34,14 @@ import {
   validateCapitalReservationReleaseProposal,
   validateCapitalReservationUpdateProposal,
 } from "./capital-validate";
+import {
+  SCOUT_FRESHNESS_VALUES,
+  SCOUT_NEXT_ACTIONS,
+  SCOUT_OPERATIONAL_REASON_CODES,
+  SCOUT_OPERATIONAL_STATES,
+  SCOUT_THESIS_STATES,
+  SCOUT_WAIT_HORIZONS,
+} from "./scout-operational-state";
 import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
@@ -551,6 +559,7 @@ export function validateProposalPayload(
       "status",
       "layeredEntry",
       "familyBAssessment",
+      "operationalAssessment",
     ];
     const hasTactical = tacticalFields.some((field) => p[field] !== undefined);
     const hasDecisionMutation =
@@ -605,6 +614,95 @@ export function validateProposalPayload(
       if (p.layeredEntry !== undefined) {
         if (!p.layeredEntry || typeof p.layeredEntry !== "object" || Array.isArray(p.layeredEntry)) {
           errors.push("proposal.layeredEntry must be an object");
+        }
+      }
+      if (p.operationalAssessment !== undefined) {
+        if (
+          !p.operationalAssessment ||
+          typeof p.operationalAssessment !== "object" ||
+          Array.isArray(p.operationalAssessment)
+        ) {
+          errors.push("proposal.operationalAssessment must be an object");
+        } else {
+          const o = p.operationalAssessment as Record<string, unknown>;
+          if (
+            o.thesisState !== undefined &&
+            !(SCOUT_THESIS_STATES as readonly string[]).includes(String(o.thesisState))
+          ) {
+            errors.push(
+              `proposal.operationalAssessment.thesisState must be one of: ${SCOUT_THESIS_STATES.join(", ")}`
+            );
+          }
+          if (
+            o.operationalState === undefined ||
+            !(SCOUT_OPERATIONAL_STATES as readonly string[]).includes(
+              String(o.operationalState)
+            )
+          ) {
+            errors.push(
+              `proposal.operationalAssessment.operationalState must be one of: ${SCOUT_OPERATIONAL_STATES.join(", ")}`
+            );
+          }
+          if (
+            o.waitHorizon !== undefined &&
+            !(SCOUT_WAIT_HORIZONS as readonly string[]).includes(String(o.waitHorizon))
+          ) {
+            errors.push(
+              `proposal.operationalAssessment.waitHorizon must be one of: ${SCOUT_WAIT_HORIZONS.join(", ")}`
+            );
+          }
+          if (
+            o.nextAction === undefined ||
+            !(SCOUT_NEXT_ACTIONS as readonly string[]).includes(String(o.nextAction))
+          ) {
+            errors.push(
+              `proposal.operationalAssessment.nextAction must be one of: ${SCOUT_NEXT_ACTIONS.join(", ")}`
+            );
+          }
+          if (
+            o.freshness !== undefined &&
+            !(SCOUT_FRESHNESS_VALUES as readonly string[]).includes(String(o.freshness))
+          ) {
+            errors.push(
+              `proposal.operationalAssessment.freshness must be one of: ${SCOUT_FRESHNESS_VALUES.join(", ")}`
+            );
+          }
+          if (o.reviewRequired !== undefined && typeof o.reviewRequired !== "boolean") {
+            errors.push("proposal.operationalAssessment.reviewRequired must be boolean");
+          }
+          if (o.reasonCodes !== undefined) {
+            if (!Array.isArray(o.reasonCodes)) {
+              errors.push("proposal.operationalAssessment.reasonCodes must be an array");
+            } else {
+              for (const code of o.reasonCodes) {
+                if (
+                  !(SCOUT_OPERATIONAL_REASON_CODES as readonly string[]).includes(
+                    String(code)
+                  )
+                ) {
+                  errors.push(
+                    `proposal.operationalAssessment.reasonCodes contains invalid code: ${String(code)}`
+                  );
+                  break;
+                }
+              }
+            }
+          }
+          for (const field of [
+            "plannedRR",
+            "currentExecutableRR",
+            "currentPrice",
+            "distanceToEntryPct",
+            "distanceToEntryAtr",
+          ] as const) {
+            if (
+              o[field] !== undefined &&
+              o[field] !== null &&
+              !Number.isFinite(Number(o[field]))
+            ) {
+              errors.push(`proposal.operationalAssessment.${field} must be numeric`);
+            }
+          }
         }
       }
     }

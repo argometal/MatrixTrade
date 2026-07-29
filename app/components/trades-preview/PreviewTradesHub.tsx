@@ -16,6 +16,10 @@ import {
   LEDGER_VERDICT_LABELS,
   type LedgerVerdict,
 } from "@/lib/trades-ledger";
+import {
+  buildNonExecutedPlanRows,
+  buildReviewPlanRows,
+} from "@/lib/trades-plan-review";
 import type { TradePlan } from "@/lib/plan-types";
 import type { Trade } from "@/lib/types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
@@ -58,6 +62,8 @@ export function PreviewTradesHub({
   const counts = countLedgerByVerdict(ledger);
   const pendingReviewCount = reviewData.unreviewed.length;
   const incompleteClosed = listIncompleteClosedTrades(trades);
+  const nonExecutedRows = buildNonExecutedPlanRows(plans, trades);
+  const reviewPlanRows = buildReviewPlanRows(plans, trades);
 
   const filter: LedgerVerdict | "historico" | "all" =
     tab === "review"
@@ -66,13 +72,18 @@ export function PreviewTradesHub({
         ? "historico"
         : tab;
 
-  const rows = tab === "review" ? [] : filterLedgerRows(ledger, filter);
+  const rows =
+    tab === "review" || tab === "never_executed"
+      ? []
+      : filterLedgerRows(ledger, filter);
 
   const subtitle =
     tab === "review"
       ? `${pendingReviewCount} waiting for review`
       : tab === "historico"
-        ? "Veredictos — éxito, pérdida, tarde, no ejecutado"
+        ? "Executed / No ejecutados / Review"
+        : tab === "never_executed"
+          ? "No ejecutados — operational outcomes and required action"
         : LEDGER_VERDICT_LABELS[tab as LedgerVerdict];
 
   const tabs: { id: TradesHubTab; href: string; label: string }[] = [
@@ -95,7 +106,7 @@ export function PreviewTradesHub({
     {
       id: "never_executed",
       href: "/trades?tab=never_executed",
-      label: `No ejecutado (${counts.never_executed})`,
+      label: `No ejecutados (${nonExecutedRows.length})`,
     },
     {
       id: "incomplete",
@@ -190,14 +201,72 @@ export function PreviewTradesHub({
           </header>
 
           {tab === "review" ? (
-            <PreviewReview
-              attentionItems={reviewData.attentionItems}
-              unreviewed={reviewData.unreviewed}
-              pendingInbox={reviewData.pendingInbox}
-              needsPlaybook={reviewData.needsPlaybook}
-              reviewedTrades={reviewData.reviewedTrades}
-              embedded
-            />
+            <div className="space-y-4 px-4 py-4 lg:px-6">
+              {reviewPlanRows.length > 0 ? (
+                <section className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-4">
+                  <h2 className="text-sm font-semibold text-amber-100">
+                    Review · non-executed plans
+                  </h2>
+                  <ul className="mt-3 space-y-2">
+                    {reviewPlanRows.map((row) => (
+                      <li key={`review-${row.id}`}>
+                        <Link
+                          href={row.href}
+                          className="block rounded-lg border border-amber-500/20 bg-zinc-950/40 px-3 py-2 hover:border-amber-400/30"
+                        >
+                          <p className="text-sm font-medium text-amber-50">
+                            {row.ticker} · {row.planId}
+                          </p>
+                          <p className="mt-0.5 text-xs text-amber-100/70">
+                            {row.outcome} · {row.strategyState} · {row.requiredAction}
+                          </p>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null}
+              <PreviewReview
+                attentionItems={reviewData.attentionItems}
+                unreviewed={reviewData.unreviewed}
+                pendingInbox={reviewData.pendingInbox}
+                needsPlaybook={reviewData.needsPlaybook}
+                reviewedTrades={reviewData.reviewedTrades}
+                embedded
+              />
+            </div>
+          ) : tab === "never_executed" ? (
+            <div className="px-4 py-4 lg:px-6">
+              {nonExecutedRows.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-zinc-700 px-4 py-10 text-center text-sm text-zinc-500">
+                  No non-executed plans to review.
+                </p>
+              ) : (
+                <ul className="divide-y divide-zinc-800 rounded-xl border border-zinc-800 bg-zinc-900/50">
+                  {nonExecutedRows.map((row) => (
+                    <li key={row.id}>
+                      <Link
+                        href={row.href}
+                        className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 hover:bg-zinc-800/40"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-zinc-100">
+                            {row.ticker} · {row.planId}
+                          </p>
+                          <p className="mt-0.5 text-xs text-zinc-500">
+                            {row.outcome} · {row.strategyState} · Original {row.originalR} · Current{" "}
+                            {row.executableR}
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-zinc-600">
+                            Required action · {row.requiredAction}
+                          </p>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           ) : (
             <div className="px-4 py-4 lg:px-6">
               {rows.length === 0 ? (

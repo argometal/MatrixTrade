@@ -9,6 +9,10 @@ import {
   type LayeredEntryInput,
   validateLayeredEntry,
 } from "./layered-entry";
+import type {
+  ScoutOperationalAssessment,
+  ScoutOperationalReasonCode,
+} from "./scout-operational-state";
 import {
   DECISION_HISTORY_CAP,
   type DecisionVerdict,
@@ -41,7 +45,60 @@ export type DecisionInput = {
   decidedBy?: ScoutDecisionSource;
   priorConfidence?: number;
   posteriorConfidence?: number;
+  operationalAssessment?: ScoutOperationalAssessment;
 };
+
+function parseOperationalAssessment(
+  raw: unknown
+): ScoutOperationalAssessment | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const obj = raw as Record<string, unknown>;
+  const reasonCodes = Array.isArray(obj.reasonCodes)
+    ? obj.reasonCodes.map((v) => String(v) as ScoutOperationalReasonCode)
+    : [];
+  return {
+    thesisState: String(obj.thesisState ?? "unknown") as ScoutOperationalAssessment["thesisState"],
+    operationalState: String(
+      obj.operationalState ?? "unassessed"
+    ) as ScoutOperationalAssessment["operationalState"],
+    waitHorizon: String(obj.waitHorizon ?? "unknown") as ScoutOperationalAssessment["waitHorizon"],
+    nextAction: String(obj.nextAction ?? "none") as ScoutOperationalAssessment["nextAction"],
+    freshness: String(obj.freshness ?? "unknown") as ScoutOperationalAssessment["freshness"],
+    plannedRR:
+      obj.plannedRR !== undefined ? Number(obj.plannedRR) : undefined,
+    currentExecutableRR:
+      obj.currentExecutableRR === null
+        ? null
+        : obj.currentExecutableRR !== undefined
+          ? Number(obj.currentExecutableRR)
+          : undefined,
+    reviewRequired: obj.reviewRequired === true,
+    reasonCodes,
+    explanation:
+      obj.explanation !== undefined ? String(obj.explanation) : undefined,
+    detectedAt:
+      obj.detectedAt !== undefined ? String(obj.detectedAt) : undefined,
+    confirmedAt:
+      obj.confirmedAt !== undefined ? String(obj.confirmedAt) : undefined,
+    confirmedBy:
+      obj.confirmedBy !== undefined
+        ? (String(obj.confirmedBy) as ScoutOperationalAssessment["confirmedBy"])
+        : undefined,
+    nextReviewAt:
+      obj.nextReviewAt !== undefined ? String(obj.nextReviewAt) : undefined,
+    currentPrice:
+      obj.currentPrice !== undefined ? Number(obj.currentPrice) : undefined,
+    distanceToEntryPct:
+      obj.distanceToEntryPct !== undefined
+        ? Number(obj.distanceToEntryPct)
+        : undefined,
+    distanceToEntryAtr:
+      obj.distanceToEntryAtr !== undefined
+        ? Number(obj.distanceToEntryAtr)
+        : undefined,
+    source: String(obj.source ?? "manual_override") as ScoutOperationalAssessment["source"],
+  };
+}
 
 function parseRiskStruct(raw: unknown): Record<string, string> | undefined {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
@@ -100,6 +157,7 @@ export function parseDecisionInput(raw: Record<string, unknown>): DecisionInput 
       raw.posteriorConfidence !== undefined
         ? Number(raw.posteriorConfidence)
         : undefined,
+    operationalAssessment: parseOperationalAssessment(raw.operationalAssessment),
   };
 }
 
@@ -209,6 +267,7 @@ export function appendDecision(
     decidedBy: input.decidedBy ?? "human",
     priorConfidence: input.priorConfidence ?? plan.decision?.decisionConfidence,
     posteriorConfidence: input.posteriorConfidence,
+    operationalAssessment: input.operationalAssessment,
   };
 
   const history = [...(plan.decisionHistory ?? []), ...(plan.decision ? [plan.decision] : [])];
