@@ -234,8 +234,8 @@ function VerticalTradeMap({
   const prices = nodes.map((n) => n.price);
   const high = Math.max(...prices);
   const low = Math.min(...prices);
-  const baseHeight = compact && !expanded ? 280 : compact ? 420 : 440;
-  const minGapPx = compact ? 64 : 72;
+  const baseHeight = compact && !expanded ? 320 : compact ? 460 : 440;
+  const minGapPx = compact ? 76 : 80;
 
   const rawPercents = nodes.map((n) => normalizeTradeMapY(n.price, high, low));
   const { topsPx, heightPx } = spacedTops(rawPercents, baseHeight, minGapPx);
