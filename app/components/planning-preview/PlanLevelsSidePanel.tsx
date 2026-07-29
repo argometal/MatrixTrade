@@ -21,14 +21,12 @@ export function PlanLevelsSidePanel({
       className="flex min-h-0 w-full flex-1 flex-col border-t border-zinc-800 bg-zinc-950/95 lg:max-h-none lg:w-[min(400px,38%)] lg:flex-none lg:border-l lg:border-t-0"
       aria-label={`Plan map for ${view.ticker}`}
     >
-      <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-800 px-4 py-3">
+      <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-800 px-3 py-2">
         <div>
           <h2 className="text-sm font-semibold text-zinc-100">
-            Plan map · {view.ticker}
+            {view.ticker} · {view.planId ?? "Plan"}
           </h2>
-          <p className="mt-0.5 text-xs text-zinc-500">
-            {subtitle ?? "Entry, zones, stop, target — collapsible viewer"}
-          </p>
+          {subtitle ? <p className="mt-0.5 text-xs text-zinc-500">{subtitle}</p> : null}
         </div>
         <button
           type="button"
@@ -39,7 +37,7 @@ export function PlanLevelsSidePanel({
           Hide
         </button>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-3">
         <PlanLevelsBoard view={view} />
       </div>
     </aside>
@@ -58,7 +56,11 @@ export function PlanMapToggleButton({
   if (!view || view.rows.length === 0) return null;
 
   const rr =
-    view.plannedRR !== undefined ? `${view.plannedRR.toFixed(1)}R plan` : null;
+    view.executableRR !== undefined && view.executableRR !== null
+      ? `${view.executableRR.toFixed(1)}R`
+      : view.plannedRR !== undefined
+        ? `${view.plannedRR.toFixed(1)}R plan`
+        : null;
 
   return (
     <button
@@ -79,13 +81,16 @@ export function PlanMapToggleButton({
 export function PlanMapSummaryLine({ view }: { view: PlanLevelsView }) {
   const parts: string[] = [];
   if (view.layeredEntry) {
-    parts.push(`${view.layeredEntry.plan.limits.length} limits`);
-    if (view.layeredEntry.highestLimit !== undefined) {
-      parts.push(`no chase above $${view.layeredEntry.highestLimit.toFixed(2)}`);
-    }
+    parts.push(`${view.layeredEntry.plan.limits.length} layers`);
   }
-  if (view.plannedRR !== undefined) {
-    parts.push(`Plan ${view.plannedRR.toFixed(1)}R (strategy stop)`);
+  if (view.operationalState) {
+    parts.push(view.operationalState.replace(/_/g, " "));
+  }
+  if (view.nextAction) parts.push(view.nextAction.replace(/_/g, " "));
+  if (view.executableRR !== undefined && view.executableRR !== null) {
+    parts.push(`Executable ${view.executableRR.toFixed(1)}R`);
+  } else if (view.plannedRR !== undefined) {
+    parts.push(`Reference ${view.plannedRR.toFixed(1)}R`);
   }
   if (view.minRR !== undefined) parts.push(`min ${view.minRR}R`);
   if (parts.length === 0) return null;

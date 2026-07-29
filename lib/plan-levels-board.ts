@@ -14,6 +14,7 @@ import {
   type StockThesis,
   type StockThesisLevels,
 } from "./stock-thesis-types";
+import { evaluateScoutOperationalState } from "./scout-operational-state";
 
 export type PlanLevelRowKind =
   | "target"
@@ -33,6 +34,7 @@ export interface PlanLevelRow {
 }
 
 export interface PlanLevelsView {
+  planId?: string;
   ticker: string;
   strategy: string;
   source: "plan" | "profile" | "both";
@@ -44,6 +46,13 @@ export interface PlanLevelsView {
   window?: string;
   /** Optional last/reference price for the trade map — never invent. */
   currentPrice?: number;
+  referenceEntry?: number;
+  primaryTarget?: number;
+  extendedTargets?: number[];
+  commonStop?: number;
+  operationalState?: string;
+  nextAction?: string;
+  executableRR?: number | null;
   layeredEntry?: {
     plan: LayeredEntryPlan;
     scenarios: LayeredEntryScenario[];
@@ -454,6 +463,15 @@ export function buildPlanLevelsView(
       : undefined;
 
   const plannedRR = plan ? resolvePlannedRRFromPlan(plan) : undefined;
+  const operational = plan
+    ? evaluateScoutOperationalState({
+        plan,
+        linkedTrades: [],
+        reservations: [],
+        now: new Date().toISOString(),
+        minimumRR: thesis.riskRules.minimumRR,
+      })
+    : null;
 
   let layeredEntry: PlanLevelsView["layeredEntry"];
   if (plan?.layeredEntry) {
@@ -498,6 +516,7 @@ export function buildPlanLevelsView(
   }
 
   return {
+    planId: plan?.id,
     ticker: thesis.ticker,
     strategy,
     source,
@@ -506,6 +525,22 @@ export function buildPlanLevelsView(
     minRR: thesis.riskRules.minimumRR,
     invalidation: thesis.riskRules.invalidation,
     window,
+    referenceEntry: plan?.plannedEntry,
+    primaryTarget: plan?.layeredEntry?.primaryTargetPrice ?? plan?.targetPrice,
+    extendedTargets: Array.from(
+      new Set(
+        (thesis.levels.targets ?? []).filter(
+          (target) =>
+            Number.isFinite(target) &&
+            target !==
+              (plan?.layeredEntry?.primaryTargetPrice ?? plan?.targetPrice)
+        )
+      )
+    ).sort((a, b) => b - a),
+    commonStop: plan?.layeredEntry?.commonStopPrice ?? plan?.stopPrice,
+    operationalState: operational?.detectedAssessment.operationalState,
+    nextAction: operational?.detectedAssessment.nextAction,
+    executableRR: operational?.detectedAssessment.currentExecutableRR,
     layeredEntry,
   };
 }

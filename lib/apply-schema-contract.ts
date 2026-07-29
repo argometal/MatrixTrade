@@ -140,7 +140,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "targetPrice",
       ],
       "file-update": ["id", "at least one updatable field"],
-      "decision-update": ["planId", "decision mode OR tactical fields"],
+      "decision-update": ["planId", "decision mode OR tactical fields (including operationalAssessment)"],
       "technical-assessment": [
         "stockProfileId",
         "ticker",

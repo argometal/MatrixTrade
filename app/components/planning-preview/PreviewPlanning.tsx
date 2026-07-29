@@ -48,9 +48,14 @@ import {
   tradesForScoutCase,
 } from "@/lib/scout-case-trades";
 import {
-  formatScoutCasePlannedRR,
-  sortScoutCasesByPlannedRR,
-} from "@/lib/scout-case-sort";
+  evaluateScoutOperationalState,
+  compareScoutOperationalEvaluations,
+  formatOperationalActionLabel,
+  formatOperationalR,
+  formatOperationalStateLabel,
+  parseOperationalPhraseToProposal,
+  type ScoutOperationalEvaluation,
+} from "@/lib/scout-operational-state";
 import { resolvePlannedRRFromPlan } from "@/lib/plan-risk";
 import {
   buildTradeProspects,
@@ -83,7 +88,27 @@ type ScoutCard = {
   activeScoutCount: number;
   linkedTrades: Trade[];
   orphan: boolean;
+  operational: ScoutOperationalEvaluation;
 };
+
+function fallbackOperationalEvaluation(): ScoutOperationalEvaluation {
+  return {
+    detectedAssessment: {
+      thesisState: "unknown",
+      operationalState: "unassessed",
+      waitHorizon: "unknown",
+      nextAction: "none",
+      freshness: "unknown",
+      plannedRR: undefined,
+      currentExecutableRR: undefined,
+      reviewRequired: true,
+      reasonCodes: ["legacy_unassessed"],
+      source: "legacy",
+    },
+    mismatch: false,
+    alerts: [],
+  };
+}
 
 function resolveScoutCardPlannedRR(
   primaryPlan: TradePlan | undefined,
@@ -144,6 +169,8 @@ export function PreviewPlanning({
     "thesis" | "invalidation" | "fills" | "evidence" | null
   >(null);
   const [prepareMsg, setPrepareMsg] = useState("");
+  const [quickOperationalPhrase, setQuickOperationalPhrase] = useState("");
+  const [quickOperationalMsg, setQuickOperationalMsg] = useState("");
 
   const activeTheses = useMemo(
     () => stockTheses.filter((t) => isActiveStockThesisStatus(t.status)),
@@ -166,6 +193,16 @@ export function PreviewPlanning({
       const decisionPlan = thesisPlans.find((p) => p.decision) ?? primaryPlan;
       const verdict = resolveScoutingVerdict(thesis, decisionPlan);
       const linkedTrades = tradesForScoutCase({ thesis, thesisPlans, trades });
+      const evaluation =
+        primaryPlan ?? thesisPlans[0]
+          ? evaluateScoutOperationalState({
+              plan: (primaryPlan ?? thesisPlans[0]) as TradePlan,
+              linkedTrades,
+              reservations,
+              now: new Date().toISOString(),
+              minimumRR: thesis.riskRules?.minimumRR ?? 3,
+            })
+          : fallbackOperationalEvaluation();
       return {
         key: thesis.id,
         thesis,
@@ -178,6 +215,7 @@ export function PreviewPlanning({
         activeScoutCount: activePlans.length,
         linkedTrades,
         orphan: false,
+        operational: evaluation,
       };
     });
 
@@ -185,6 +223,15 @@ export function PreviewPlanning({
     const orphans: ScoutCard[] = orphanTickers.map((ticker) => {
       const tickerPlans = plans.filter((p) => p.ticker.toUpperCase() === ticker);
       const primaryPlan = tickerPlans[0];
+      const evaluation = primaryPlan
+        ? evaluateScoutOperationalState({
+            plan: primaryPlan,
+            linkedTrades: incompleteTradesForTicker(trades, ticker),
+            reservations,
+            now: new Date().toISOString(),
+            minimumRR: 3,
+          })
+        : fallbackOperationalEvaluation();
       return {
         key: `orphan:${ticker}`,
         thesis: null,
@@ -198,12 +245,17 @@ export function PreviewPlanning({
           .length,
         linkedTrades: incompleteTradesForTicker(trades, ticker),
         orphan: true,
+        operational: evaluation,
       };
     });
 
-    // Highest planned R first — watch strongest asymmetry; orphans last.
-    return sortScoutCasesByPlannedRR([...fromTheses, ...orphans]);
-  }, [activeTheses, plans, trades]);
+    return [...fromTheses, ...orphans].sort((a, b) => {
+      if (Boolean(a.orphan) !== Boolean(b.orphan)) return a.orphan ? 1 : -1;
+      const cmp = compareScoutOperationalEvaluations(a.operational, b.operational);
+      if (cmp !== 0) return cmp;
+      return a.ticker.localeCompare(b.ticker);
+    });
+  }, [activeTheses, plans, trades, reservations]);
 
   const focusedScoutCard = useMemo(() => {
     const id = scoutCaseKey ?? focusThesisId ?? scoutCards[0]?.key ?? "";
@@ -288,7 +340,9 @@ export function PreviewPlanning({
 
   const hasCases = scoutCards.length > 0;
 
-  const focusedRr = formatScoutCasePlannedRR(focusedScoutCard?.plannedRR);
+  const focusedRr = formatOperationalR(
+    focusedScoutCard?.operational.detectedAssessment.currentExecutableRR
+  );
   const mapFocusCompact = planPanelOpen;
 
   const allocationPlans = useMemo(
@@ -353,7 +407,7 @@ export function PreviewPlanning({
                 {mapFocusCompact && focusedScoutCard ? (
                   <span className="ml-2 text-sm font-medium text-zinc-400 lg:hidden">
                     · {focusedScoutCard.ticker}
-                    {focusedRr ? ` · ${focusedRr}` : ""}
+                    {focusedScoutCard.primaryPlan ? ` · ${focusedScoutCard.primaryPlan.id}` : ""}
                   </span>
                 ) : null}
               </h1>
@@ -362,7 +416,17 @@ export function PreviewPlanning({
                   mapFocusCompact ? "hidden lg:block" : ""
                 }`}
               >
-                Active cases and execution readiness
+                {mapFocusCompact && focusedScoutCard ? (
+                  <>
+                    {(focusedScoutCard.operational.detectedAssessment.operationalState ?? "unassessed").replace(
+                      /_/g,
+                      " "
+                    )}{" "}
+                    · {focusedRr}
+                  </>
+                ) : (
+                  "Active cases and execution readiness"
+                )}
               </p>
             </div>
             <div
@@ -443,13 +507,15 @@ export function PreviewPlanning({
                     className="min-w-[10rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
                   >
                     {scoutCards.map((card) => {
-                      const rrLabel = formatScoutCasePlannedRR(card.plannedRR);
+                      const op = card.operational.detectedAssessment;
+                      const rrLabel = formatOperationalR(op.currentExecutableRR);
                       return (
                         <option key={card.key} value={card.key}>
                           {card.ticker}
-                          {rrLabel ? ` · ${rrLabel}` : " · —R"}
+                          {` · ${formatOperationalStateLabel(op.operationalState)}`}
+                          {` · ${formatOperationalActionLabel(op.nextAction)}`}
+                          {` · ${rrLabel}`}
                           {card.orphan ? " · orphan fill" : ""}
-                          {card.verdict ? ` · ${SCOUTING_VERDICT_LABELS[card.verdict]}` : ""}
                           {card.linkedTrades.length
                             ? ` · ${card.linkedTrades.length} open loop`
                             : ""}
@@ -473,7 +539,8 @@ export function PreviewPlanning({
                 >
                   {scoutCards.map((card) => {
                     const selected = card.key === focusedScoutCard?.key;
-                    const rrChip = formatScoutCasePlannedRR(card.plannedRR);
+                    const op = card.operational.detectedAssessment;
+                    const rrChip = formatOperationalR(op.currentExecutableRR);
                     return (
                       <button
                         key={card.key}
@@ -486,7 +553,9 @@ export function PreviewPlanning({
                         }`}
                       >
                         {card.ticker}
-                        {rrChip ? ` ·${rrChip}` : ""}
+                        {` ·${formatOperationalStateLabel(op.operationalState)}`}
+                        {` ·${formatOperationalActionLabel(op.nextAction)}`}
+                        {` ·${rrChip}`}
                         {card.linkedTrades.length > 0 ? ` ·${card.linkedTrades.length}` : ""}
                       </button>
                     );
@@ -552,6 +621,9 @@ export function PreviewPlanning({
                       plan?.targetPrice ?? le?.primaryTargetPrice;
                     const zone = formatStockThesisZone(thesis.levels?.primaryZone);
                     const rr = focusedScoutCard.plannedRR;
+                    const operational = focusedScoutCard.operational.detectedAssessment;
+                    const confirmedOperational =
+                      focusedScoutCard.operational.confirmedAssessment;
                     const fundingInput = plan
                       ? {
                           plan,
@@ -664,8 +736,44 @@ export function PreviewPlanning({
                                 target !== undefined ? String(target) : "—",
                               ],
                               [
+                                "Decision",
+                                focusedScoutCard.verdict
+                                  ? SCOUTING_VERDICT_LABELS[focusedScoutCard.verdict]
+                                  : "—",
+                              ],
+                              [
+                                "Operational state",
+                                formatOperationalStateLabel(
+                                  operational.operationalState
+                                ),
+                              ],
+                              [
+                                "Next action",
+                                formatOperationalActionLabel(
+                                  operational.nextAction
+                                ),
+                              ],
+                              [
                                 "Plan R:R",
                                 rr !== undefined ? `${rr.toFixed(1)}R` : "—",
+                              ],
+                              [
+                                "Executable R",
+                                formatOperationalR(
+                                  operational.currentExecutableRR
+                                ),
+                              ],
+                              [
+                                "Wait horizon",
+                                operational.waitHorizon,
+                              ],
+                              [
+                                "Freshness",
+                                operational.freshness,
+                              ],
+                              [
+                                "Review",
+                                operational.reviewRequired ? "Required" : "Current",
                               ],
                               [
                                 "Room",
@@ -708,6 +816,103 @@ export function PreviewPlanning({
                           planId={plan?.id}
                           onFocusPlan={focusPlanFromAllocation}
                         />
+
+                        {focusedScoutCard.operational.mismatch ? (
+                          <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-xs text-amber-100">
+                            Detected:{" "}
+                            {formatOperationalStateLabel(
+                              operational.operationalState
+                            )}{" "}
+                            · Confirmed:{" "}
+                            {confirmedOperational
+                              ? formatOperationalStateLabel(
+                                  confirmedOperational.operationalState
+                                )
+                              : "none"}{" "}
+                            · Review required
+                          </div>
+                        ) : null}
+
+                        {plan ? (
+                          <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/40 p-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                              Update operational state
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {[
+                                "Already passed",
+                                "Puede ser la otra semana",
+                                "Revisar mañana",
+                                "Entrada automática activa",
+                                "No parece probable",
+                                "Reanalizar",
+                              ].map((phrase) => (
+                                <button
+                                  key={phrase}
+                                  type="button"
+                                  className="rounded-full border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-300 hover:bg-zinc-900"
+                                  onClick={async () => {
+                                    const parsed =
+                                      parseOperationalPhraseToProposal(
+                                        plan,
+                                        phrase
+                                      );
+                                    if (!parsed.ok) {
+                                      setQuickOperationalMsg(parsed.error);
+                                      return;
+                                    }
+                                    const ok = await copyText(parsed.json);
+                                    setQuickOperationalMsg(
+                                      ok
+                                        ? "Copied decision-update — paste in Control → Apply"
+                                        : "Clipboard blocked"
+                                    );
+                                  }}
+                                >
+                                  {phrase}
+                                </button>
+                              ))}
+                            </div>
+                            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                              <input
+                                value={quickOperationalPhrase}
+                                onChange={(e) =>
+                                  setQuickOperationalPhrase(e.target.value)
+                                }
+                                placeholder="Already passed / Revisar mañana / Reanalizar"
+                                className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200"
+                              />
+                              <button
+                                type="button"
+                                className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
+                                onClick={async () => {
+                                  const parsed =
+                                    parseOperationalPhraseToProposal(
+                                      plan,
+                                      quickOperationalPhrase
+                                    );
+                                  if (!parsed.ok) {
+                                    setQuickOperationalMsg(parsed.error);
+                                    return;
+                                  }
+                                  const ok = await copyText(parsed.json);
+                                  setQuickOperationalMsg(
+                                    ok
+                                      ? "Copied decision-update — Validate → Accept remains mandatory"
+                                      : "Clipboard blocked"
+                                  );
+                                }}
+                              >
+                                Prepare status update
+                              </button>
+                            </div>
+                            {quickOperationalMsg ? (
+                              <p className="mt-2 text-xs text-zinc-400">
+                                {quickOperationalMsg}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : null}
 
                         <div className="mt-3 flex flex-wrap gap-2">
                           <Link

@@ -42,6 +42,10 @@
     "test:scout-prepare-trade": "tsx tools/test-scout-prepare-trade.ts",
     "test:funding-follow-up": "tsx tools/test-funding-follow-up.ts",
     "test:scout-allocation": "tsx tools/test-scout-allocation.ts",
+    "test:scout-operational-state": "tsx tools/test-scout-operational-state.ts",
+    "test:scout-monitoring": "tsx tools/test-scout-monitoring.ts",
+    "test:trades-plan-review": "tsx tools/test-trades-plan-review.ts",
+    "test:scout-plan-map": "tsx tools/test-scout-plan-map.ts",
     "test:apply-failure-snapshot": "tsx tools/test-apply-failure-snapshot.ts",
     "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"
   },

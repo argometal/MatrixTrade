@@ -1,5 +1,6 @@
 import type { ConfirmationCost } from "./asymmetry-types";
 import type { PlaybookScoutStatus } from "./playbook-types";
+import type { ScoutOperationalAssessment } from "./scout-operational-state";
 
 /** Stored scout decision verdict — extends display-only ScoutingVerdict with probe. */
 export type DecisionVerdict = "wait" | "probe" | "go" | "no";
@@ -49,6 +50,8 @@ export interface ScoutDecision {
   decidedBy?: ScoutDecisionSource;
   priorConfidence?: number;
   posteriorConfidence?: number;
+  /** Confirmed/manual operational classification persisted through decision-update. */
+  operationalAssessment?: ScoutOperationalAssessment;
 }
 
 export type ScoutLifecycleStatus =
