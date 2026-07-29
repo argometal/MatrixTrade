@@ -230,6 +230,20 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
         label: "Kind",
         value: String(p.outcomeKind ?? p.status ?? "—"),
       });
+      if (p.outcomeKind === "expired_window") {
+        fields.push({ label: "Realized R (server)", value: "0" });
+        fields.push({
+          label: "Counterfactual R",
+          value: "none (window expired)",
+        });
+        fields.push({
+          label: "Note",
+          value:
+            "Execution window expired — PLAN only; Stock File may remain active",
+        });
+        expectation = "neutral";
+        break;
+      }
       if (p.entryReached !== undefined || p.entryTriggered !== undefined) {
         fields.push({
           label: "Entry reached",

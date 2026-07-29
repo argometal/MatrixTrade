@@ -18,9 +18,22 @@ export type PlanOutcomeStatus = (typeof PLAN_OUTCOME_STATUSES)[number];
 export const PLAN_OUTCOME_KINDS = [
   "unexecuted_plan_loss",
   "duplicate_creation",
+  /** Tactical validity window ended without execution — closes PLAN only. */
+  "expired_window",
 ] as const;
 
 export type PlanOutcomeKind = (typeof PLAN_OUTCOME_KINDS)[number];
+
+/** User-facing labels for plan outcome kinds (Apply / Record Outcome). */
+export const PLAN_OUTCOME_KIND_LABELS: Record<PlanOutcomeKind, string> = {
+  unexecuted_plan_loss: "Unexecuted plan loss",
+  duplicate_creation: "Duplicate creation",
+  expired_window: "Execution window expired",
+};
+
+/** Preferred explanation for expired_window (UI / default notes). */
+export const EXPIRED_WINDOW_EXPLANATION =
+  "The tactical plan window ended without execution. The linked Stock File and opportunity may remain active and can be evaluated through a new Scout Plan.";
 
 export const NON_EXECUTION_REASONS = [
   "order_not_staged",

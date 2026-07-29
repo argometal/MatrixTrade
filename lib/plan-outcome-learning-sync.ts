@@ -89,8 +89,13 @@ function isDuplicateCreation(plan: TradePlan): boolean {
   return plan.outcome?.outcomeKind === "duplicate_creation";
 }
 
+function isExpiredWindow(plan: TradePlan): boolean {
+  return plan.outcome?.outcomeKind === "expired_window";
+}
+
 function observationRequired(plan: TradePlan): boolean {
   if (isDuplicateCreation(plan)) return false;
+  if (isExpiredWindow(plan)) return false;
   if (isUnexecutedPlanLoss(plan)) return true;
   // Other counterfactual / no-trade outcomes that seed OBS today.
   return plan.outcome?.tradeExecuted === false && !plan.linkedTradeId;
@@ -126,6 +131,54 @@ export function verifyPlanOutcomeLearningLinks(
         issues.push({
           code: "not_excluded",
           message: "duplicate_creation LO must have excludedFromMetrics=true",
+        });
+      }
+    }
+  } else if (isExpiredWindow(plan)) {
+    if (!learningOutcome) {
+      issues.push({
+        code: "missing_lo",
+        message: "Learning Outcome missing for expired_window",
+      });
+    } else {
+      if (learningOutcome.kind !== "expired") {
+        issues.push({
+          code: "wrong_lo_kind",
+          message: `Expected LO kind expired, got ${learningOutcome.kind}`,
+        });
+      }
+      if (learningOutcome.tradeId) {
+        issues.push({
+          code: "lo_has_trade",
+          message: "expired_window LO must not have tradeId",
+        });
+      }
+      if (learningOutcome.realizedR !== 0 && learningOutcome.realizedR !== undefined) {
+        issues.push({
+          code: "realized_r",
+          message: `Expected realizedR=0, got ${String(learningOutcome.realizedR)}`,
+        });
+      }
+      if (
+        learningOutcome.counterfactualR !== undefined &&
+        learningOutcome.counterfactualR !== null &&
+        learningOutcome.counterfactualR !== 0
+      ) {
+        issues.push({
+          code: "counterfactual_r",
+          message: `expired_window must not assign counterfactual loss, got ${String(learningOutcome.counterfactualR)}`,
+        });
+      }
+      if (learningOutcome.kind === "missed_opportunity") {
+        issues.push({
+          code: "missed_metric",
+          message: "expired_window must not map to missed_opportunity",
+        });
+      }
+      if (learningOutcome.lifecycleStatus !== "concluded") {
+        issues.push({
+          code: "lifecycle",
+          message: `Expected LO lifecycle concluded, got ${learningOutcome.lifecycleStatus}`,
         });
       }
     }

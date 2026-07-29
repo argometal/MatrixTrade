@@ -28,6 +28,9 @@ export function deriveLearningOutcomeKindFromPlan(plan: TradePlan): LearningOutc
   if (plan.outcome?.outcomeKind === "duplicate_creation") {
     return "duplicate_creation";
   }
+  if (plan.outcome?.outcomeKind === "expired_window") {
+    return "expired";
+  }
   if (plan.outcome?.outcomeKind === "unexecuted_plan_loss") {
     return "unexecuted_plan_loss";
   }
@@ -63,6 +66,10 @@ function initialLifecycle(kind: LearningOutcomeKind): LearningOutcomeLifecycle {
     return "concluded";
   }
   if (kind === "duplicate_creation") {
+    return "concluded";
+  }
+  if (kind === "expired") {
+    // Execution window closed — not a miss attribution workflow.
     return "concluded";
   }
   if (kind === "executed_loss" || kind === "missed_opportunity") {
@@ -122,6 +129,7 @@ export async function upsertLearningOutcomeFromPlan(
   const o = plan.outcome;
 
   const isUpl = kind === "unexecuted_plan_loss";
+  const isExpiredWindow = plan.outcome?.outcomeKind === "expired_window";
   const server = isUpl ? deriveUnexecutedPlanLossServerValues(plan) : null;
 
   const row: LearningOutcome = {
@@ -135,36 +143,56 @@ export async function upsertLearningOutcomeFromPlan(
     playbookId: plan.playbookId ?? existing?.playbookId,
     observationId: existing?.observationId,
     mafExperimentId: existing?.mafExperimentId,
-    realizedR: server ? server.realizedR : o?.tradeExecuted ? o.realizedResultR : 0,
+    realizedR: server
+      ? server.realizedR
+      : isExpiredWindow
+        ? 0
+        : o?.tradeExecuted
+          ? o.realizedResultR
+          : 0,
     realizedPnL: server
       ? server.realizedPnL
-      : o?.realizedPnL ?? (o?.tradeExecuted ? undefined : 0),
+      : isExpiredWindow
+        ? 0
+        : o?.realizedPnL ?? (o?.tradeExecuted ? undefined : 0),
     counterfactualR: server
       ? server.counterfactualR
-      : o?.theoreticalResultR !== undefined && o?.theoreticalResultR !== null
-        ? o.theoreticalResultR
-        : existing?.counterfactualR,
+      : isExpiredWindow
+        ? undefined
+        : o?.theoreticalResultR !== undefined && o?.theoreticalResultR !== null
+          ? o.theoreticalResultR
+          : existing?.counterfactualR,
     counterfactualDollarResult: server
       ? server.counterfactualDollarResult
-      : o?.counterfactualDollarResult ?? existing?.counterfactualDollarResult ?? null,
-    entryReached: o?.entryReached ?? o?.entryTriggered ?? existing?.entryReached,
-    stopReachedBeforeTarget:
-      o?.stopReachedBeforeTarget ??
-      (o?.stopTriggered === true && o?.targetTriggered !== true
-        ? true
-        : existing?.stopReachedBeforeTarget),
-    targetReachedBeforeStop:
-      o?.targetReachedBeforeStop ??
-      (o?.targetTriggered === true && o?.stopTriggered !== true
-        ? true
-        : existing?.targetReachedBeforeStop),
-    nonExecutionReason: o?.nonExecutionReason ?? existing?.nonExecutionReason,
+      : isExpiredWindow
+        ? null
+        : o?.counterfactualDollarResult ?? existing?.counterfactualDollarResult ?? null,
+    entryReached: isExpiredWindow
+      ? undefined
+      : o?.entryReached ?? o?.entryTriggered ?? existing?.entryReached,
+    stopReachedBeforeTarget: isExpiredWindow
+      ? undefined
+      : o?.stopReachedBeforeTarget ??
+        (o?.stopTriggered === true && o?.targetTriggered !== true
+          ? true
+          : existing?.stopReachedBeforeTarget),
+    targetReachedBeforeStop: isExpiredWindow
+      ? undefined
+      : o?.targetReachedBeforeStop ??
+        (o?.targetTriggered === true && o?.stopTriggered !== true
+          ? true
+          : existing?.targetReachedBeforeStop),
+    nonExecutionReason: isExpiredWindow
+      ? undefined
+      : o?.nonExecutionReason ?? existing?.nonExecutionReason,
     excludedFromMetrics:
       kind === "duplicate_creation" ? true : existing?.excludedFromMetrics,
     lifecycleStatus:
       existing?.lifecycleStatus === "attributed"
         ? existing.lifecycleStatus
-        : kind === "unexecuted_plan_loss" || kind === "duplicate_creation"
+        : kind === "unexecuted_plan_loss" ||
+            kind === "duplicate_creation" ||
+            isExpiredWindow
           ? "concluded"
           : existing?.lifecycleStatus === "concluded"
             ? existing.lifecycleStatus

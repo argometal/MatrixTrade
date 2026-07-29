@@ -104,6 +104,8 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "observation-update: one of observationId|tradeId|planId + at least one measurable field; never invent prices; observation ≠ attribution.",
       "plan-outcome: one mutation per block; human-confirmed event order; AI must not invent prices, timestamps, fills or risk.",
       "plan-outcome: counterfactualR is server-derived (−1 for unexecuted_plan_loss); no Trade created; realized P/L unchanged; Stock File thesis unchanged; MAF separate.",
+      "plan-outcome expired_window: closes only the tactical PLAN validity window; realizedR=0; no counterfactual loss; no Trade; Stock File/opportunity may remain active; Learning Outcome kind=expired (not missed_opportunity).",
+      "plan-outcome: entryReached/stopReachedBeforeTarget/targetReachedBeforeStop/nonExecutionReason required only for unexecuted_plan_loss — omit for expired_window and duplicate_creation.",
       "External Position: outside Scout→Trade pipeline; experimentEligible=false; never creates Trade/MAF; capital only via Capital Planner.",
       "external-position-reduction: requires reductionId|executionReference; server computes proceeds/realized P/L; proceeds start pending_settlement (not settled cash).",
       "external-position-settle: credits settled cash once via settlement ledger; pending ≠ settled.",
@@ -162,11 +164,8 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       ],
       "plan-outcome": [
         "planId",
-        "outcomeKind (unexecuted_plan_loss|duplicate_creation)",
-        "entryReached",
-        "stopReachedBeforeTarget",
-        "targetReachedBeforeStop",
-        "nonExecutionReason",
+        "outcomeKind (unexecuted_plan_loss|duplicate_creation|expired_window)",
+        "for unexecuted_plan_loss only: entryReached, stopReachedBeforeTarget, targetReachedBeforeStop, nonExecutionReason",
         "notes?",
         "evidenceRefs?",
       ],
@@ -227,7 +226,11 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "capital-ledger-adjustment": ["idempotencyKey", "amount", "notes?"],
     },
     allowedEnums: {
-      "plan-outcome.outcomeKind": ["unexecuted_plan_loss", "duplicate_creation"],
+      "plan-outcome.outcomeKind": [
+        "unexecuted_plan_loss",
+        "duplicate_creation",
+        "expired_window",
+      ],
       "external-position.acquisitionSource": [
         "external_program",
         "legacy_holding",
