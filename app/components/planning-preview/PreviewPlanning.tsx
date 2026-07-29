@@ -14,7 +14,6 @@ import type { TradePlan } from "@/lib/plan-types";
 import type { Playbook } from "@/lib/playbook-types";
 import {
   resolveScoutingVerdict,
-  SCOUTING_VERDICT_LABELS,
   type ScoutingVerdict,
 } from "@/lib/scouting-types";
 import {
@@ -38,7 +37,6 @@ import {
   buildScoutFundingSnapshot,
   canonicalShareCount,
   scoutFundingSnapshotItem,
-  type ScoutFundingSnapshotField,
 } from "@/lib/scout-funding-snapshot";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { buildTradeProposalBlock } from "@/lib/build-trade-proposal-block";
@@ -50,7 +48,7 @@ import {
 import {
   evaluateScoutOperationalState,
   compareScoutOperationalEvaluations,
-  formatOperationalActionLabel,
+  formatConsolidatedOperationalTag,
   formatOperationalR,
   formatOperationalStateLabel,
   parseOperationalPhraseToProposal,
@@ -66,6 +64,7 @@ import { ActiveScoutsComparisonTable } from "@/app/components/planning-preview/A
 import { ScoutAllocationProvider } from "@/app/components/planning-preview/ScoutAllocationProvider";
 import { ScoutAllocationImpact } from "@/app/components/planning-preview/ScoutAllocationImpact";
 import { ScoutAllocationStrip } from "@/app/components/planning-preview/ScoutAllocationStrip";
+import { ScoutFundingExecutionMenu } from "@/app/components/planning-preview/ScoutFundingExecutionMenu";
 import { ScoutPrepareAllocationNote } from "@/app/components/planning-preview/ScoutPrepareAllocationNote";
 
 const thesisStatusStyles: Record<string, string> = {
@@ -410,7 +409,7 @@ export function PreviewPlanning({
                   mapFocusCompact ? "hidden lg:block" : ""
                 }`}
               >
-                Casos activos y preparación de ejecución
+                Active cases and execution readiness
               </p>
             </div>
             <div
@@ -447,12 +446,12 @@ export function PreviewPlanning({
         >
           {!hasCases ? (
             <section className="rounded-2xl border border-dashed border-zinc-700 px-4 py-10 text-center">
-              <p className="text-sm text-zinc-500">Aún no hay casos Scout.</p>
+              <p className="text-sm text-zinc-500">No scout cases yet.</p>
               <Link
                 href="/stock-theses/new"
                 className="mt-3 inline-block text-sm text-violet-300 hover:underline"
               >
-                Nuevo caso →
+                New stock case →
               </Link>
             </section>
           ) : (
@@ -460,7 +459,7 @@ export function PreviewPlanning({
               {!mapFocusCompact ? (
                 <details className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
                   <summary className="cursor-pointer text-xs font-medium text-zinc-500 hover:text-zinc-300">
-                    Comparar Scouts activos
+                    Compare active scouts
                   </summary>
                   <div className="mt-2">
                     <ActiveScoutsComparisonTable
@@ -484,7 +483,7 @@ export function PreviewPlanning({
                       mapFocusCompact ? "sr-only lg:not-sr-only" : ""
                     }`}
                   >
-                    Caso
+                    Case
                   </label>
                   <select
                     id="scout-case"
@@ -495,15 +494,18 @@ export function PreviewPlanning({
                     {scoutCards.map((card) => {
                       const op = card.operational.detectedAssessment;
                       const rrLabel = formatOperationalR(op.currentExecutableRR);
+                      const tag = formatConsolidatedOperationalTag({
+                        verdict: card.verdict,
+                        assessment: op,
+                      });
                       return (
                         <option key={card.key} value={card.key}>
                           {card.ticker}
-                          {` · ${formatOperationalStateLabel(op.operationalState)}`}
-                          {` · ${formatOperationalActionLabel(op.nextAction)}`}
+                          {` · ${tag}`}
                           {` · ${rrLabel}`}
-                          {card.orphan ? " · fill huérfano" : ""}
+                          {card.orphan ? " · orphan fill" : ""}
                           {card.linkedTrades.length
-                            ? ` · ${card.linkedTrades.length} loop abierto`
+                            ? ` · ${card.linkedTrades.length} open loop`
                             : ""}
                           {card.primaryPlan ? ` · ${card.primaryPlan.id}` : ""}
                         </option>
@@ -601,15 +603,6 @@ export function PreviewPlanning({
                       ? scoutFundingSnapshotItem(fundingInput)
                       : null;
 
-                    function formatMoneyField(
-                      v: ScoutFundingSnapshotField<number> | undefined
-                    ): string {
-                      if (typeof v === "number" && Number.isFinite(v)) {
-                        return `$${v.toFixed(0)}`;
-                      }
-                      return "Unconfigured";
-                    }
-
                     const snapshotItemsForCase = stockProfileSnapshotItems({
                       thesis,
                       playbooks,
@@ -664,16 +657,15 @@ export function PreviewPlanning({
                           >
                             {STOCK_THESIS_STATUS_LABELS[thesis.status]}
                           </span>
-                          {focusedScoutCard.verdict ? (
-                            <span className="rounded-full border border-current px-2 py-0.5 text-xs font-bold uppercase">
-                              {SCOUTING_VERDICT_LABELS[focusedScoutCard.verdict]}
-                            </span>
-                          ) : null}
-                          {plan?.status === "expired" ? (
-                            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs font-semibold uppercase text-amber-200">
-                              Expired
-                            </span>
-                          ) : null}
+                          <span
+                            className="rounded-full border border-current/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                            data-scout-operational-tag
+                          >
+                            {formatConsolidatedOperationalTag({
+                              verdict: focusedScoutCard.verdict,
+                              assessment: operational,
+                            })}
+                          </span>
                         </div>
 
                         <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
@@ -693,24 +685,6 @@ export function PreviewPlanning({
                                 target !== undefined ? String(target) : "—",
                               ],
                               [
-                                "Decision",
-                                focusedScoutCard.verdict
-                                  ? SCOUTING_VERDICT_LABELS[focusedScoutCard.verdict]
-                                  : "—",
-                              ],
-                              [
-                                "Operational state",
-                                formatOperationalStateLabel(
-                                  operational.operationalState
-                                ),
-                              ],
-                              [
-                                "Next action",
-                                formatOperationalActionLabel(
-                                  operational.nextAction
-                                ),
-                              ],
-                              [
                                 "Plan R:R",
                                 rr !== undefined ? `${rr.toFixed(1)}R` : "—",
                               ],
@@ -721,37 +695,12 @@ export function PreviewPlanning({
                                 ),
                               ],
                               [
-                                "Wait horizon",
+                                "Wait Horizon",
                                 operational.waitHorizon,
-                              ],
-                              [
-                                "Freshness",
-                                operational.freshness,
-                              ],
-                              [
-                                "Review",
-                                operational.reviewRequired ? "Required" : "Current",
                               ],
                               [
                                 "Room",
                                 `$${monthly.monthlyLossRoom.toFixed(0)}`,
-                              ],
-                              [
-                                "Capital required",
-                                formatMoneyField(fundingSnap?.requestedCapital),
-                              ],
-                              [
-                                "Estimated risk",
-                                formatMoneyField(fundingSnap?.estimatedRisk),
-                              ],
-                              [
-                                "Funding status",
-                                fundingSnap &&
-                                fundingSnap.currentFundingDecision !==
-                                  "unconfigured" &&
-                                fundingSnap.currentFundingDecision !== "unknown"
-                                  ? String(fundingSnap.currentFundingDecision)
-                                  : "—",
                               ],
                             ] as const
                           ).map(([label, value]) => (
@@ -793,16 +742,16 @@ export function PreviewPlanning({
                         {plan ? (
                           <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/40 p-3">
                             <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                              Actualizar estado operativo
+                              Update operational state
                             </p>
                             <div className="mt-2 flex flex-wrap gap-2">
                               {[
-                                "Ya pasó",
-                                "Puede ser la otra semana",
-                                "Revisar mañana",
-                                "Entrada automática activa",
-                                "No parece probable",
-                                "Reanalizar",
+                                "Already passed",
+                                "Maybe next week",
+                                "Review tomorrow",
+                                "Automatic entry active",
+                                "Not likely",
+                                "Reanalyze",
                               ].map((phrase) => (
                                 <button
                                   key={phrase}
@@ -821,8 +770,8 @@ export function PreviewPlanning({
                                     const ok = await copyText(parsed.json);
                                     setQuickOperationalMsg(
                                       ok
-                                        ? "decision-update copiado — pégalo en Control → Apply"
-                                        : "Portapapeles bloqueado"
+                                        ? "Copied decision-update — paste in Control → Apply"
+                                        : "Clipboard blocked"
                                     );
                                   }}
                                 >
@@ -836,7 +785,7 @@ export function PreviewPlanning({
                                 onChange={(e) =>
                                   setQuickOperationalPhrase(e.target.value)
                                 }
-                                placeholder="Ya pasó / Revisar mañana / Reanalizar"
+                                placeholder="Already passed / Review tomorrow / Reanalyze"
                                 className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200"
                               />
                               <button
@@ -855,12 +804,12 @@ export function PreviewPlanning({
                                   const ok = await copyText(parsed.json);
                                   setQuickOperationalMsg(
                                     ok
-                                      ? "decision-update copiado — Validate → Accept sigue siendo obligatorio"
-                                      : "Portapapeles bloqueado"
+                                      ? "Copied decision-update — Validate → Accept remains mandatory"
+                                      : "Clipboard blocked"
                                   );
                                 }}
                               >
-                                Preparar actualización
+                                Prepare status update
                               </button>
                             </div>
                             {quickOperationalMsg ? (
@@ -890,16 +839,6 @@ export function PreviewPlanning({
                                   : initialSnapshotItems
                             }
                           />
-                          {fundingSnapshotForCase ? (
-                            <span data-scout-case-funding-snapshot>
-                              <SnapshotButton
-                                title="Scout Funding Snapshot"
-                                description="Canonical package for capital-reservation-create — read-only"
-                                items={[fundingSnapshotForCase]}
-                                className="!px-3 !py-2"
-                              />
-                            </span>
-                          ) : null}
                           <button
                             type="button"
                             onClick={() => {
@@ -910,31 +849,46 @@ export function PreviewPlanning({
                           >
                             Details
                           </button>
-                          <button
-                            type="button"
-                            data-scout-prepare-trade
-                            disabled={shares === undefined}
-                            title={
-                              shares === undefined
-                                ? "Canonical share count is required."
-                                : undefined
-                            }
-                            onClick={() => void prepareTrade()}
-                            className={
-                              shares === undefined
-                                ? "cursor-not-allowed rounded-lg border border-zinc-600/50 bg-zinc-900/40 px-3 py-2 text-xs font-medium text-zinc-500"
-                                : "rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-200 hover:bg-emerald-500/20"
-                            }
-                          >
-                            {shares === undefined
-                              ? "Prepare trade · allocation required"
-                              : "Prepare trade"}
-                          </button>
                         </div>
+
+                        <ScoutFundingExecutionMenu
+                          fundingSnapshotItem={fundingSnapshotForCase}
+                          prepareTrade={() => void prepareTrade()}
+                          prepareDisabled={shares === undefined}
+                          prepareLabel={
+                            shares === undefined
+                              ? "Prepare trade · allocation required"
+                              : "Prepare trade"
+                          }
+                          blockers={[
+                            ...(shares === undefined
+                              ? ["Share count unconfigured"]
+                              : []),
+                            ...(shares === undefined
+                              ? ["Allocation required"]
+                              : []),
+                            ...(fundingSnap &&
+                            fundingSnap.currentFundingDecision !==
+                              "unconfigured" &&
+                            fundingSnap.currentFundingDecision !== "unknown"
+                              ? [
+                                  String(fundingSnap.currentFundingDecision)
+                                    .replace(/_/g, " ")
+                                    .replace(/\b\w/g, (c) => c.toUpperCase()),
+                                ]
+                              : []),
+                            ...(fundingSnap?.blockingReasons?.some((r) =>
+                              r.toLowerCase().includes("reservation")
+                            )
+                              ? ["Reservation required"]
+                              : []),
+                          ].filter((v, i, a) => a.indexOf(v) === i)}
+                        />
                         {shares === undefined || prepareMsg ? (
                           <ScoutPrepareAllocationNote
                             hasCanonicalShares={shares !== undefined}
                             prepareMsg={prepareMsg}
+                            linksInNote={false}
                           />
                         ) : null}
 

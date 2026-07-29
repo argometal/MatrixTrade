@@ -68,13 +68,13 @@ type GraphicNode = {
 };
 
 function fmtPrice(value?: number): string {
-  if (value === undefined || !Number.isFinite(value)) return "Sin configurar";
+  if (value === undefined || !Number.isFinite(value)) return "Unconfigured";
   return Number.isInteger(value) ? String(value) : value.toFixed(2);
 }
 
 function fmtUsd(value?: number): string {
-  if (value === undefined || !Number.isFinite(value)) return "Sin configurar";
-  return value.toLocaleString("es-MX", {
+  if (value === undefined || !Number.isFinite(value)) return "Unconfigured";
+  return value.toLocaleString(undefined, {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0,
@@ -83,7 +83,7 @@ function fmtUsd(value?: number): string {
 
 function fmtR(value?: number | null): string {
   if (value === undefined || value === null || !Number.isFinite(value)) {
-    return "No disponible";
+    return "Unavailable";
   }
   return `${value.toFixed(1)}R`;
 }
@@ -105,29 +105,29 @@ function buildGraphicNodes(
   for (const [index, target] of model.extendedTargets.entries()) {
     nodes.push({
       kind: "target",
-      label: `Target extendido ${index + 1}`,
+      label: `Extended target ${index + 1}`,
       price: target,
       tone: "stretch",
-      ariaLabel: `Target extendido ${target}`,
+      ariaLabel: `Extended target ${target}`,
     });
   }
 
   if (model.primaryTarget !== undefined) {
     nodes.push({
       kind: "target",
-      label: "Target principal",
+      label: "Primary target",
       price: model.primaryTarget,
       rr: model.referencePlanRR,
       tone: "target",
-      ariaLabel: `Target principal ${model.primaryTarget}`,
+      ariaLabel: `Primary target ${model.primaryTarget}`,
     });
   }
 
   for (const layer of model.layers) {
-    const role = layer.role ?? `Capa ${layer.index + 1}`;
+    const role = layer.role ?? `Layer ${layer.index + 1}`;
     const quantityLabel =
       layer.shares !== undefined
-        ? `${layer.shares} acc.`
+        ? `${layer.shares} sh.`
         : layer.allocationPercent !== undefined
           ? `${layer.allocationPercent}%`
           : undefined;
@@ -147,7 +147,7 @@ function buildGraphicNodes(
       kind: "stop",
       label:
         (model.stopModel ?? "common") === "common"
-          ? "Stop común"
+          ? "Common stop"
           : "Stop",
       price: model.commonStop,
       tone: "stop",
@@ -158,10 +158,10 @@ function buildGraphicNodes(
   if (view.currentPrice !== undefined && Number.isFinite(view.currentPrice)) {
     nodes.push({
       kind: "current",
-      label: "Precio actual",
+      label: "Current price",
       price: view.currentPrice,
       tone: "current",
-      ariaLabel: `Precio actual ${view.currentPrice}`,
+      ariaLabel: `Current price ${view.currentPrice}`,
     });
   }
 
@@ -248,7 +248,7 @@ function VerticalTradeMap({
       className="relative mx-auto w-full max-w-md transition-[height] duration-300 ease-out"
       style={{ height: heightPx }}
       role="list"
-      aria-label="Mapa de trade vertical"
+      aria-label="Vertical trade map"
       data-scout-trade-map-spine
     >
       <div
@@ -266,7 +266,7 @@ function VerticalTradeMap({
           aria-hidden
         >
           <span className="text-[10px] font-medium uppercase tracking-wide text-emerald-400/70">
-            ↑ Recompensa
+            ↑ Reward
           </span>
         </div>
       ) : null}
@@ -281,7 +281,7 @@ function VerticalTradeMap({
           aria-hidden
         >
           <span className="text-[10px] font-medium uppercase tracking-wide text-red-400/70">
-            ↓ Riesgo
+            ↓ Risk
           </span>
         </div>
       ) : null}
@@ -331,7 +331,7 @@ export function PlanLevelsBoard({
   ) {
     return (
       <p className="text-sm text-zinc-500">
-        Aún no hay niveles — agrégalos en el perfil o en el plan Scout.
+        No levels defined yet — add them via Stock Profile or a scout plan.
       </p>
     );
   }
@@ -348,16 +348,16 @@ export function PlanLevelsBoard({
               {model.ticker} · {model.planId}
             </h3>
             <p className="mt-0.5 text-xs text-zinc-400">
-              {model.mode === "layered" ? "Entrada en capas" : "Entrada única"} ·{" "}
+              {model.mode === "layered" ? "Layered entry" : "Single entry"} ·{" "}
               {(model.stopModel ?? "common") === "common"
-                ? "Stop común"
-                : "Stops por capa"}{" "}
+                ? "Common stop"
+                : "Per-layer stops"}{" "}
               · {model.layerCount}{" "}
-              {model.layerCount === 1 ? "capa" : "capas"}
+              {model.layerCount === 1 ? "layer" : "layers"}
             </p>
             <p className="mt-1 text-[11px] text-zinc-500">
               {(model.operationalState ?? "unassessed").replace(/_/g, " ")} ·{" "}
-              {(model.nextAction ?? "none").replace(/_/g, " ")} · R ejecutable{" "}
+              {(model.nextAction ?? "none").replace(/_/g, " ")} · Executable R{" "}
               {fmtR(model.executableRR)}
             </p>
           </div>
@@ -367,7 +367,7 @@ export function PlanLevelsBoard({
               onClick={() => setExpanded((v) => !v)}
               className="rounded-md border border-zinc-700 px-2 py-1 text-[10px] text-zinc-400 hover:text-zinc-200"
             >
-              {expanded ? "Compactar" : "Expandir"}
+              {expanded ? "Compact" : "Expand"}
             </button>
           ) : null}
         </div>
@@ -381,30 +381,30 @@ export function PlanLevelsBoard({
             expanded={expanded}
           />
         ) : (
-          <p className="px-2 text-sm text-zinc-500">Sin geometría de precios.</p>
+          <p className="px-2 text-sm text-zinc-500">No price geometry.</p>
         )}
       </section>
 
       <section className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
         <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-          Resumen capital / riesgo
+          Capital / risk summary
         </p>
         <dl className="mt-2 grid grid-cols-2 gap-2 text-xs">
           {(
             [
-              ["Modo de asignación", model.allocationModeLabel ?? "Sin configurar"],
-              ["R del plan (referencia)", fmtR(model.referencePlanRR)],
-              ["R combinada (full build)", fmtR(model.blendedRR)],
-              ["R posición llenada", fmtR(model.filledPositionRR)],
-              ["R ejecutable", fmtR(model.executableRR)],
-              ["R mínima", model.minRR !== undefined ? `${model.minRR}` : "Sin configurar"],
-              ["Riesgo autorizado", fmtUsd(model.authorizedRisk)],
-              ["Riesgo planeado", fmtUsd(model.roundedRisk)],
-              ["Riesgo no usado", fmtUsd(model.unusedRisk)],
-              ["Capital requerido", fmtUsd(model.requestedCapital)],
-              ["Entrada de referencia", fmtPrice(model.referenceEntry)],
-              ["Stop común", fmtPrice(model.commonStop)],
-              ["Llenado", model.fillSummary],
+              ["Allocation mode", model.allocationModeLabel ?? "Unconfigured"],
+              ["Reference plan R", fmtR(model.referencePlanRR)],
+              ["Full-build blended R", fmtR(model.blendedRR)],
+              ["Filled-position R", fmtR(model.filledPositionRR)],
+              ["Executable R", fmtR(model.executableRR)],
+              ["Min R", model.minRR !== undefined ? `${model.minRR}` : "Unconfigured"],
+              ["Authorized risk", fmtUsd(model.authorizedRisk)],
+              ["Rounded planned risk", fmtUsd(model.roundedRisk)],
+              ["Unused risk", fmtUsd(model.unusedRisk)],
+              ["Capital required", fmtUsd(model.requestedCapital)],
+              ["Reference entry", fmtPrice(model.referenceEntry)],
+              ["Common stop", fmtPrice(model.commonStop)],
+              ["Fill summary", model.fillSummary],
             ] as const
           ).map(([label, value]) => (
             <div
@@ -423,7 +423,7 @@ export function PlanLevelsBoard({
             layer.shares === undefined && layer.allocationPercent === undefined
         ) ? (
           <p className="mt-2 text-[10px] text-zinc-500">
-            Acciones sin configurar en una o más capas — no se inventan.
+            Shares unconfigured on one or more layers — not invented.
           </p>
         ) : null}
       </section>

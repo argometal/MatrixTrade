@@ -32,13 +32,13 @@ export function PlanLevelsSidePanel({
           type="button"
           onClick={onClose}
           className="rounded-lg border border-zinc-700 px-2 py-1 text-xs text-zinc-400 hover:text-zinc-200"
-          aria-label="Cerrar mapa del plan"
+          aria-label="Close plan map"
         >
-          Ocultar
+          Hide
         </button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-3 py-3">
-        <PlanLevelsBoard view={view} />
+        <PlanLevelsBoard view={view} compact />
       </div>
     </aside>
   );
@@ -72,7 +72,7 @@ export function PlanMapToggleButton({
           : "border-zinc-700 text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
       }`}
     >
-      {open ? "Ocultar mapa" : "Mapa del plan"}
+      {open ? "Hide plan map" : "Plan map"}
       {rr ? <span className="ml-1.5 opacity-70">· {rr}</span> : null}
     </button>
   );

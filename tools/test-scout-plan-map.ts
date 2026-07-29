@@ -172,30 +172,38 @@ async function main() {
   const planning = await read(
     "app/components/planning-preview/PreviewPlanning.tsx"
   );
+  const fundingMenu = await read(
+    "app/components/planning-preview/ScoutFundingExecutionMenu.tsx"
+  );
 
   assert.match(board, /data-scout-trade-map-spine/);
-  assert.match(board, /Entrada en capas|Entrada única/);
-  assert.match(board, /↑ Recompensa/);
-  assert.match(board, /↓ Riesgo/);
-  assert.match(board, /Resumen capital \/ riesgo/);
-  assert.match(board, /Target principal/);
-  assert.match(board, /Stop común/);
-  assert.match(board, /Acciones sin configurar/);
+  assert.match(board, /Layered entry|Single entry/);
+  assert.match(board, /↑ Reward/);
+  assert.match(board, /↓ Risk/);
+  assert.match(board, /Capital \/ risk summary/);
+  assert.match(board, /Primary target/);
+  assert.match(board, /Common stop/);
+  assert.match(board, /Shares unconfigured/);
   assert.doesNotMatch(board, /PlanMapLevelRow/);
   assert.doesNotMatch(board, /shares:\\s*10|MANUAL_SHARES_PLACEHOLDER/);
   assert.match(side, /view\\.planId|view\.planId/);
-  assert.match(side, /Ocultar mapa|Mapa del plan/);
+  assert.match(side, /Hide plan map|Plan map/);
 
   // Mobile cleanup: Case dropdown only — no duplicate ticker chips
   assert.match(planning, /htmlFor=\"scout-case\"/);
-  assert.match(planning, />\s*Caso\s*</);
+  assert.match(planning, />\s*Case\s*</);
   assert.doesNotMatch(
     planning,
     /scoutCards\.map\(\(card\) => \{\s*const selected = card\.key/
   );
-  assert.match(planning, /Actualizar estado operativo/);
-  assert.match(planning, /Ya pasó/);
-  assert.match(planning, /Preparar actualización/);
+  assert.match(planning, /Update operational state/);
+  assert.match(planning, /Already passed/);
+  assert.match(planning, /Prepare status update/);
+  assert.match(planning, /data-scout-operational-tag/);
+  assert.match(planning, /formatConsolidatedOperationalTag/);
+  assert.match(planning, /ScoutFundingExecutionMenu/);
+  assert.match(fundingMenu, /data-scout-funding-execution-menu/);
+  assert.match(fundingMenu, /Funding &amp; execution|Funding & execution/);
 
   console.log("test-scout-plan-map: ok");
 }

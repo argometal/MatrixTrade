@@ -664,6 +664,66 @@ export function formatOperationalActionLabel(
   return value.replace(/_/g, " ");
 }
 
+function upperToken(value: string): string {
+  return value.replace(/_/g, " ").toUpperCase();
+}
+
+/**
+ * Presentation-only consolidated tag for the Scout card.
+ * Derived from existing canonical fields — never persisted.
+ */
+export function formatConsolidatedOperationalTag(input: {
+  verdict?: string | null;
+  assessment: Pick<
+    ScoutOperationalAssessment,
+    "operationalState" | "nextAction" | "freshness" | "reviewRequired"
+  >;
+}): string {
+  const { assessment } = input;
+  const state = assessment.operationalState;
+  const action = assessment.nextAction;
+  const verdict = input.verdict?.trim().toLowerCase() || undefined;
+
+  const exceptions: string[] = [];
+  if (assessment.freshness === "stale") exceptions.push("STALE");
+  if (assessment.freshness === "expired") exceptions.push("EXPIRED");
+
+  const leadWithState =
+    state === "missed" ||
+    state === "expired" ||
+    state === "superseded" ||
+    state === "improbable";
+
+  const parts: string[] = [];
+
+  if (assessment.reviewRequired && !leadWithState) {
+    if (verdict) parts.push(upperToken(verdict));
+    parts.push("REVIEW REQUIRED");
+    for (const ex of exceptions) {
+      if (!parts.includes(ex)) parts.push(ex);
+    }
+    return parts.join(" · ");
+  }
+
+  if (leadWithState) {
+    parts.push(upperToken(state));
+    if (action !== "none") parts.push(upperToken(action));
+  } else {
+    if (verdict) parts.push(upperToken(verdict));
+    parts.push(upperToken(state));
+    if (action !== "none") parts.push(upperToken(action));
+    if (assessment.reviewRequired) {
+      parts.push("REVIEW REQUIRED");
+    }
+  }
+
+  for (const ex of exceptions) {
+    if (!parts.includes(ex)) parts.push(ex);
+  }
+
+  return parts.join(" · ");
+}
+
 export function buildOperationalDecisionUpdateProposal(input: {
   plan: TradePlan;
   assessment: Partial<ScoutOperationalAssessment> &
@@ -713,7 +773,7 @@ export function parseOperationalPhraseToProposal(
   now?: string
 ): { ok: true; json: string } | { ok: false; error: string } {
   const normalized = phrase.trim().toLowerCase();
-  if (!normalized) return { ok: false, error: "Frase requerida." };
+  if (!normalized) return { ok: false, error: "Phrase required." };
   if (/(ya paso|ya pasó|already passed)/i.test(normalized)) {
     return {
       ok: true,
@@ -731,7 +791,7 @@ export function parseOperationalPhraseToProposal(
       }),
     };
   }
-  if (/(otra semana|next week|la otra semana)/i.test(normalized)) {
+  if (/(otra semana|next week|la otra semana|maybe next week)/i.test(normalized)) {
     return {
       ok: true,
       json: buildOperationalDecisionUpdateProposal({
@@ -789,7 +849,7 @@ export function parseOperationalPhraseToProposal(
       }),
     };
   }
-  if (/(no parece probable|improbable)/i.test(normalized)) {
+  if (/(no parece probable|improbable|not likely|doesn.?t seem likely)/i.test(normalized)) {
     return {
       ok: true,
       json: buildOperationalDecisionUpdateProposal({
@@ -825,6 +885,7 @@ export function parseOperationalPhraseToProposal(
   }
   return {
     ok: false,
-    error: "Frase no reconocida. Prueba Ya pasó, Puede ser la otra semana, Revisar mañana, Entrada automática activa, No parece probable o Reanalizar.",
+    error:
+      "Phrase not recognized. Try Already passed, Maybe next week, Review tomorrow, Automatic entry active, Not likely, or Reanalyze.",
   };
 }

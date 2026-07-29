@@ -466,14 +466,14 @@ async function main() {
   const simulateSrc = await read("lib/scout-allocation-simulate.ts");
 
   // 18 — Scout card displays relationship
-  assert.match(impact, /Impacto de asignación|Allocation impact/);
-  assert.match(impact, /Relationship|Relación|Sensible al orden|Order sensitive/);
+  assert.match(impact, /Allocation impact/);
+  assert.match(impact, /Relationship|Order sensitive/);
   assert.match(impact, /data-scout-allocation-impact/);
   assert.match(planning, /ScoutAllocationImpact/);
 
   // 19 / 20 — Add / Remove
-  assert.match(impact, /Agregar a la asignación|Add to allocation/);
-  assert.match(impact, /Quitar de la asignación|Remove from allocation/);
+  assert.match(impact, /Add to allocation/);
+  assert.match(impact, /Remove from allocation/);
   assert.match(provider, /const add = useCallback/);
   assert.match(provider, /const remove = useCallback/);
 
@@ -495,7 +495,7 @@ async function main() {
   assert.match(planning, /ScoutAllocationStrip/);
 
   // focused UI exposes order_sensitive directional preview
-  assert.match(impact, /selecciona primero|selected first/i);
+  assert.match(impact, /selected first/i);
 
   // 24 — Board groups relationships
   assert.match(board, /Relationship groups/);
