@@ -180,6 +180,7 @@ async function main() {
   assert.match(board, /Layered entry|Single entry/);
   assert.match(board, /↑ Reward/);
   assert.match(board, /↓ Risk/);
+  assert.match(board, /spacedTops|minGapPx/);
   assert.match(board, /Capital \/ risk summary/);
   assert.match(board, /Primary target/);
   assert.match(board, /Common stop/);
@@ -188,8 +189,12 @@ async function main() {
   assert.doesNotMatch(board, /shares:\\s*10|MANUAL_SHARES_PLACEHOLDER/);
   assert.match(side, /view\\.planId|view\.planId/);
   assert.match(side, /Hide plan map|Plan map/);
+  assert.match(side, /data-scout-plan-map-panel/);
+  assert.match(side, /fixed inset-x-0 top-14/);
 
-  // Mobile cleanup: Case dropdown only — no duplicate ticker chips
+  // Mobile: Scout chrome collapses when plan map focuses
+  assert.match(planning, /data-scout-map-focus/);
+  assert.match(planning, /hidden lg:flex lg:flex-1 lg:flex-col/);
   assert.match(planning, /htmlFor=\"scout-case\"/);
   assert.match(planning, />\s*Case\s*</);
   assert.doesNotMatch(

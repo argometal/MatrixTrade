@@ -147,8 +147,10 @@ async function main() {
   assert.match(badge, /isProductionUi/);
   assert.match(badge, /NODE_ENV === \"production\"/);
 
-  // 15 — Mobile bottom safe-area
-  assert.match(
+  // 15 — Mobile map focus collapses Scout chrome; layout owns bottom safe-area
+  assert.match(planning, /data-scout-map-focus/);
+  assert.match(planning, /hidden lg:flex lg:flex-1 lg:flex-col/);
+  assert.doesNotMatch(
     planning,
     /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/
   );

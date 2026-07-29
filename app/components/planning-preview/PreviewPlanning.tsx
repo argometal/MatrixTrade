@@ -382,12 +382,18 @@ export function PreviewPlanning({
       capitalConfigurationPresent={capitalConfigurationPresent}
       plannedRRByPlanId={plannedRRByPlanId}
     >
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row" data-scout-desk>
+    <div
+      className={`flex min-h-0 w-full flex-col lg:h-full lg:flex-row lg:overflow-hidden ${
+        mapFocusCompact ? "max-lg:overflow-hidden" : ""
+      }`}
+      data-scout-desk
+      data-scout-map-focus={mapFocusCompact ? "true" : undefined}
+    >
       <div
         className={`min-h-0 min-w-0 overflow-y-auto overscroll-y-contain ${
           mapFocusCompact
-            ? "shrink-0 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:flex-1 lg:pb-10"
-            : "flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-10"
+            ? "hidden lg:flex lg:flex-1 lg:flex-col lg:pb-10"
+            : "flex-1 pb-4 lg:pb-10"
         }`}
       >
         <header
@@ -396,7 +402,7 @@ export function PreviewPlanning({
           }`}
         >
           <div className="flex flex-wrap items-start justify-between gap-3 pr-10">
-            <div className={mapFocusCompact ? "lg:block" : undefined}>
+            <div>
               <h1
                 className={`font-semibold text-zinc-100 ${
                   mapFocusCompact ? "text-base lg:text-xl" : "text-xl"

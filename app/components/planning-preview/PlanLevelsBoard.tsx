@@ -182,24 +182,44 @@ function MapLevelCard({ node }: { node: GraphicNode }) {
     <div
       role="listitem"
       aria-label={node.ariaLabel}
-      className={`w-full max-w-[15rem] rounded-lg border px-3 py-2 ${style.border} ${style.bg}`}
+      className={`w-full rounded-lg border px-3 py-2.5 ${style.border} ${style.bg}`}
     >
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex items-baseline justify-between gap-3">
         <p
-          className={`text-[10px] font-semibold uppercase tracking-wide ${style.text}`}
+          className={`min-w-0 text-[10px] font-semibold uppercase tracking-wide ${style.text}`}
         >
           {node.label}
         </p>
-        <p className={`font-mono text-sm font-semibold ${style.text}`}>
+        <p className={`shrink-0 font-mono text-sm font-semibold ${style.text}`}>
           {fmtPrice(node.price)}
         </p>
       </div>
-      <div className="mt-0.5 flex flex-wrap gap-2 text-[10px] text-zinc-400">
-        {node.quantityLabel ? <span>{node.quantityLabel}</span> : null}
-        {node.rr !== undefined ? <span>{node.rr.toFixed(1)}R</span> : null}
-      </div>
+      {(node.quantityLabel || node.rr !== undefined) && (
+        <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-zinc-400">
+          {node.quantityLabel ? <span>{node.quantityLabel}</span> : null}
+          {node.rr !== undefined ? <span>{node.rr.toFixed(1)}R</span> : null}
+        </div>
+      )}
     </div>
   );
+}
+
+/** Push absolute tops apart so cards never stack on top of each other. */
+function spacedTops(
+  rawPercents: number[],
+  heightPx: number,
+  minGapPx: number
+): { topsPx: number[]; heightPx: number } {
+  if (rawPercents.length === 0) return { topsPx: [], heightPx };
+  const topsPx = rawPercents.map((p) => (p / 100) * heightPx);
+  for (let i = 1; i < topsPx.length; i++) {
+    if (topsPx[i]! < topsPx[i - 1]! + minGapPx) {
+      topsPx[i] = topsPx[i - 1]! + minGapPx;
+    }
+  }
+  const last = topsPx[topsPx.length - 1] ?? 0;
+  const needed = Math.max(heightPx, last + minGapPx * 0.65);
+  return { topsPx, heightPx: needed };
 }
 
 function VerticalTradeMap({
@@ -214,7 +234,11 @@ function VerticalTradeMap({
   const prices = nodes.map((n) => n.price);
   const high = Math.max(...prices);
   const low = Math.min(...prices);
-  const heightPx = compact && !expanded ? 200 : compact ? 300 : 380;
+  const baseHeight = compact && !expanded ? 280 : compact ? 420 : 440;
+  const minGapPx = compact ? 64 : 72;
+
+  const rawPercents = nodes.map((n) => normalizeTradeMapY(n.price, high, low));
+  const { topsPx, heightPx } = spacedTops(rawPercents, baseHeight, minGapPx);
 
   const entries = nodes.filter((n) => n.kind === "entry");
   const highestEntry = entries.length
@@ -228,44 +252,51 @@ function VerticalTradeMap({
   );
   const stop = nodes.find((n) => n.kind === "stop");
 
+  const yForPrice = (price: number) => {
+    const idx = nodes.findIndex((n) => n.price === price);
+    if (idx >= 0) return topsPx[idx]!;
+    return (normalizeTradeMapY(price, high, low) / 100) * heightPx;
+  };
+
   const rewardBand =
     primaryTarget && highestEntry !== undefined
       ? {
-          top: normalizeTradeMapY(primaryTarget.price, high, low),
-          bottom: normalizeTradeMapY(highestEntry, high, low),
+          top: yForPrice(primaryTarget.price),
+          bottom: yForPrice(highestEntry),
         }
       : null;
   const riskBand =
     stop && lowestEntry !== undefined
       ? {
-          top: normalizeTradeMapY(lowestEntry, high, low),
-          bottom: normalizeTradeMapY(stop.price, high, low),
+          top: yForPrice(lowestEntry),
+          bottom: yForPrice(stop.price),
         }
       : null;
 
   return (
     <div
-      className="relative mx-auto w-full max-w-md transition-[height] duration-300 ease-out"
+      className="relative w-full transition-[height] duration-300 ease-out"
       style={{ height: heightPx }}
       role="list"
       aria-label="Vertical trade map"
       data-scout-trade-map-spine
     >
+      {/* Left gutter: spine + band labels; cards start clear of this lane */}
       <div
-        className="absolute bottom-2 left-1/2 top-2 w-px -translate-x-1/2 bg-gradient-to-b from-emerald-500/40 via-violet-500/30 to-red-500/50"
+        className="absolute bottom-3 left-3 top-3 w-px bg-gradient-to-b from-emerald-500/45 via-violet-500/35 to-red-500/55"
         aria-hidden
       />
 
       {rewardBand ? (
         <div
-          className="pointer-events-none absolute left-[calc(50%+0.75rem)] flex flex-col items-start justify-center"
+          className="pointer-events-none absolute left-5 z-10 flex max-w-[3.25rem] items-center"
           style={{
-            top: `${rewardBand.top}%`,
-            height: `${Math.max(8, rewardBand.bottom - rewardBand.top)}%`,
+            top: rewardBand.top,
+            height: Math.max(20, rewardBand.bottom - rewardBand.top),
           }}
           aria-hidden
         >
-          <span className="text-[10px] font-medium uppercase tracking-wide text-emerald-400/70">
+          <span className="rounded bg-zinc-950/90 px-1 py-0.5 text-[9px] font-medium uppercase leading-tight tracking-wide text-emerald-400/85">
             ↑ Reward
           </span>
         </div>
@@ -273,37 +304,33 @@ function VerticalTradeMap({
 
       {riskBand ? (
         <div
-          className="pointer-events-none absolute left-[calc(50%+0.75rem)] flex flex-col items-start justify-end"
+          className="pointer-events-none absolute left-5 z-10 flex max-w-[3.25rem] items-end"
           style={{
-            top: `${riskBand.top}%`,
-            height: `${Math.max(8, riskBand.bottom - riskBand.top)}%`,
+            top: riskBand.top,
+            height: Math.max(20, riskBand.bottom - riskBand.top),
           }}
           aria-hidden
         >
-          <span className="text-[10px] font-medium uppercase tracking-wide text-red-400/70">
+          <span className="rounded bg-zinc-950/90 px-1 py-0.5 text-[9px] font-medium uppercase leading-tight tracking-wide text-red-400/85">
             ↓ Risk
           </span>
         </div>
       ) : null}
 
-      {nodes.map((node) => {
-        const y = normalizeTradeMapY(node.price, high, low);
+      {nodes.map((node, index) => {
         const style = TONE_STYLES[node.tone];
         return (
           <div
             key={`${node.kind}-${node.label}-${node.price}`}
-            className="absolute left-0 right-0 flex -translate-y-1/2 items-center justify-center px-2"
-            style={{ top: `${y}%` }}
+            className="absolute left-[3.75rem] right-0 flex -translate-y-1/2 items-center gap-2.5 pr-1"
+            style={{ top: topsPx[index] }}
           >
-            <div className="flex w-full items-center gap-2">
-              <div className="hidden w-[12%] sm:block" aria-hidden />
-              <div
-                className={`h-2.5 w-2.5 shrink-0 rounded-full ${style.dot}`}
-                aria-hidden
-              />
-              <div className="flex min-w-0 flex-1 justify-center">
-                <MapLevelCard node={node} />
-              </div>
+            <div
+              className={`h-3 w-3 shrink-0 rounded-full ring-2 ring-zinc-950 ${style.dot}`}
+              aria-hidden
+            />
+            <div className="min-w-0 flex-1">
+              <MapLevelCard node={node} />
             </div>
           </div>
         );
@@ -320,7 +347,7 @@ export function PlanLevelsBoard({
   view: PlanLevelsView;
   compact?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(Boolean(compact));
   const model = useMemo(() => buildPlanMapModel(view), [view]);
   const nodes = useMemo(() => buildGraphicNodes(view), [view]);
 
@@ -338,28 +365,31 @@ export function PlanLevelsBoard({
 
   return (
     <div
-      className="space-y-3 pb-[calc(6rem+env(safe-area-inset-bottom))]"
+      className={`space-y-3 ${compact ? "pb-2" : "pb-4"}`}
       data-scout-plan-map
     >
       <section className="rounded-xl border border-zinc-800 bg-zinc-950/50 p-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
+          <div className="min-w-0">
             <h3 className="text-sm font-semibold text-zinc-100">
-              {model.ticker} · {model.planId}
+              {model.mode === "layered" ? "Layered entry" : "Single entry"}
+              <span className="font-normal text-zinc-500">
+                {" "}
+                ·{" "}
+                {(model.stopModel ?? "common") === "common"
+                  ? "Common stop"
+                  : "Per-layer stops"}{" "}
+                · {model.layerCount}{" "}
+                {model.layerCount === 1 ? "layer" : "layers"}
+              </span>
             </h3>
-            <p className="mt-0.5 text-xs text-zinc-400">
-              {model.mode === "layered" ? "Layered entry" : "Single entry"} ·{" "}
-              {(model.stopModel ?? "common") === "common"
-                ? "Common stop"
-                : "Per-layer stops"}{" "}
-              · {model.layerCount}{" "}
-              {model.layerCount === 1 ? "layer" : "layers"}
-            </p>
-            <p className="mt-1 text-[11px] text-zinc-500">
-              {(model.operationalState ?? "unassessed").replace(/_/g, " ")} ·{" "}
-              {(model.nextAction ?? "none").replace(/_/g, " ")} · Executable R{" "}
-              {fmtR(model.executableRR)}
-            </p>
+            {!compact ? (
+              <p className="mt-1 text-[11px] text-zinc-500">
+                {(model.operationalState ?? "unassessed").replace(/_/g, " ")} ·{" "}
+                {(model.nextAction ?? "none").replace(/_/g, " ")} · Executable R{" "}
+                {fmtR(model.executableRR)}
+              </p>
+            ) : null}
           </div>
           {compact ? (
             <button
@@ -373,7 +403,7 @@ export function PlanLevelsBoard({
         </div>
       </section>
 
-      <section className="rounded-xl border border-zinc-800 bg-zinc-950/40 px-2 py-3">
+      <section className="rounded-xl border border-zinc-800 bg-zinc-950/40 px-2 py-4">
         {nodes.length > 0 ? (
           <VerticalTradeMap
             nodes={nodes}
