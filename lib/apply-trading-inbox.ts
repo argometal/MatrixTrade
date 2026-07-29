@@ -29,6 +29,11 @@ import {
   applyCapitalReservationReleaseBlock,
   applyCapitalReservationUpdateBlock,
 } from "./capital-apply";
+import { assessFundingFollowUp, type FundingFollowUpResult } from "./scout-funding-follow-up";
+import { getCapitalAccountSnapshot } from "./capital-account";
+import { getActiveCapitalConfiguration } from "./capital-configuration";
+import { listCapitalReservations } from "./capital-reservation";
+import { getMonthlyRisk } from "./storage";
 import { applyScoutPlanCreate } from "./scout-plan-create";
 import {
   getPlaybookById,
@@ -73,6 +78,8 @@ export type ApplyTradingProposalResult =
       playbook?: Playbook;
       alreadyApplied?: boolean;
       learningSyncComplete?: boolean;
+      /** Assisted funding follow-up after decision-update (29-21). */
+      fundingFollowUp?: FundingFollowUpResult;
     }
   | {
       ok: false;
@@ -278,12 +285,42 @@ async function applyDecisionUpdate(
   if (plan.plannedEntry !== undefined) parts.push(`entry ${plan.plannedEntry}`);
   if (plan.stopPrice !== undefined) parts.push(`stop ${plan.stopPrice}`);
   if (plan.targetPrice !== undefined) parts.push(`target ${plan.targetPrice}`);
+
+  // Option C: derive follow-up from accepted persisted Scout — never stale client state.
+  let fundingFollowUp: FundingFollowUpResult | undefined;
+  try {
+    const [account, reservations, monthly, config] = await Promise.all([
+      getCapitalAccountSnapshot(),
+      listCapitalReservations(),
+      getMonthlyRisk(),
+      getActiveCapitalConfiguration(),
+    ]);
+    fundingFollowUp = assessFundingFollowUp({
+      plan,
+      account,
+      reservations,
+      authorizableLossRoom: monthly.monthlyLossRoom,
+      capitalConfigurationPresent: Boolean(
+        config && config.status === "active"
+      ),
+      decisionUpdateId:
+        typeof parsed.proposal.id === "string" ? parsed.proposal.id : undefined,
+    });
+  } catch {
+    fundingFollowUp = {
+      eligible: false,
+      reason: "Funding follow-up assessment failed — Scout update intact",
+      planId: plan.id,
+    };
+  }
+
   return {
     ok: true,
     message: parts.join(" · "),
     type: "decision-update",
     planId: plan.id,
     stockFileId: plan.stockThesisId,
+    fundingFollowUp,
   };
 }
 

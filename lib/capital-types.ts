@@ -122,6 +122,13 @@ export type CapitalReservation = {
   createdAt: string;
   updatedAt: string;
   releasedAt?: string;
+  /**
+   * Provenance for assisted funding follow-up (29-21).
+   * Nullable on legacy reservations — never invent during migration.
+   */
+  fundingFingerprint?: string;
+  sourcePlanUpdatedAt?: string;
+  sourceDecisionUpdateId?: string;
 };
 
 export const ACTIVE_RESERVATION_STATUSES: CapitalReservationStatus[] = [

@@ -33,6 +33,10 @@ export type CreateCapitalReservationInput = {
   capitalConfigurationPresent?: boolean;
   scoutExpired?: boolean;
   executionLevelsPresent?: boolean;
+  /** Assisted funding follow-up provenance (29-21). */
+  fundingFingerprint?: string;
+  sourcePlanUpdatedAt?: string;
+  sourceDecisionUpdateId?: string;
 };
 
 export type UpdateCapitalReservationInput = {
@@ -114,6 +118,9 @@ export async function createCapitalReservation(
     blockingReasons: funding.reasons,
     createdAt: now,
     updatedAt: now,
+    fundingFingerprint: input.fundingFingerprint?.trim() || undefined,
+    sourcePlanUpdatedAt: input.sourcePlanUpdatedAt?.trim() || undefined,
+    sourceDecisionUpdateId: input.sourceDecisionUpdateId?.trim() || undefined,
   };
 
   if (state.reservations.some((r) => r.id === reservation.id)) {

@@ -20,6 +20,11 @@ import {
   scoutFundingSnapshotItem,
   type ScoutFundingSnapshotField,
 } from "@/lib/scout-funding-snapshot";
+import {
+  assessFundingFollowUp,
+  isReservationStaleRelativeToPlan,
+} from "@/lib/scout-funding-follow-up";
+import { isActiveReservation } from "@/lib/capital-types";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 import { FamilyBBullTrendPanel } from "@/app/components/planning-preview/FamilyBBullTrendPanel";
@@ -373,6 +378,20 @@ export function ScoutExecutePanel({
 
   const canonicalShares = canonicalShareCount(fundingSnap.shareCount);
 
+  const fundingFollowUp = assessFundingFollowUp({
+    plan,
+    reservations,
+    account: capitalAccount,
+    authorizableLossRoom: monthlyLossRoom,
+    capitalConfigurationPresent,
+  });
+  const activeReservation = reservations.find(
+    (r) => r.planId === plan.id && isActiveReservation(r)
+  );
+  const reservationStale = activeReservation
+    ? isReservationStaleRelativeToPlan(activeReservation, plan)
+    : false;
+
   return (
     <section
       className="rounded-2xl border border-emerald-500/30 bg-emerald-950/10 p-4"
@@ -472,6 +491,27 @@ export function ScoutExecutePanel({
           ))}
         </dl>
       </div>
+
+      {reservationStale ? (
+        <p
+          className="mt-2 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-100"
+          data-scout-reservation-stale
+        >
+          Reservation stale — Scout funding parameters changed. Release the old
+          reservation, then prepare a replacement via Control → Apply.
+        </p>
+      ) : null}
+
+      {!activeReservation && fundingFollowUp.eligible ? (
+        <p
+          className="mt-2 rounded-lg border border-sky-500/30 bg-sky-950/20 px-3 py-2 text-xs text-sky-100"
+          data-scout-funding-follow-up-pending
+        >
+          Funding follow-up pending — Accept a decision-update (or reopen Control
+          success) to Prepare Funding JSON. Does not reserve capital until Apply
+          → Validate → Accept.
+        </p>
+      ) : null}
 
       {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}
 
