@@ -226,6 +226,7 @@ export function PreviewDashboard({
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 {(
                   [
+                    ["Passed", data.scoutMonitoring.passed],
                     ["Action now", data.scoutMonitoring.actionNow],
                     ["Needs review", data.scoutMonitoring.needsReview],
                     ["Waiting", data.scoutMonitoring.waiting],

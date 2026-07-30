@@ -724,43 +724,187 @@ export function formatConsolidatedOperationalTag(input: {
   return parts.join(" · ");
 }
 
+export function normalizeOperationalAssessmentInput(
+  raw: unknown
+): ScoutOperationalAssessment | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const obj = raw as Record<string, unknown>;
+  const operationalState = String(obj.operationalState ?? "").trim();
+  const nextAction = String(obj.nextAction ?? "").trim();
+  if (
+    !(SCOUT_OPERATIONAL_STATES as readonly string[]).includes(operationalState) ||
+    !(SCOUT_NEXT_ACTIONS as readonly string[]).includes(nextAction)
+  ) {
+    return null;
+  }
+  const reasonCodes = Array.isArray(obj.reasonCodes)
+    ? obj.reasonCodes
+        .map((v) => String(v))
+        .filter((code): code is ScoutOperationalReasonCode =>
+          (SCOUT_OPERATIONAL_REASON_CODES as readonly string[]).includes(code)
+        )
+    : [];
+  const thesisState = String(obj.thesisState ?? "unknown");
+  const waitHorizon = String(obj.waitHorizon ?? "unknown");
+  const freshness = String(obj.freshness ?? "unknown");
+  return {
+    thesisState: ((SCOUT_THESIS_STATES as readonly string[]).includes(thesisState)
+      ? thesisState
+      : "unknown") as ScoutThesisState,
+    operationalState: operationalState as ScoutOperationalState,
+    waitHorizon: ((SCOUT_WAIT_HORIZONS as readonly string[]).includes(waitHorizon)
+      ? waitHorizon
+      : "unknown") as ScoutWaitHorizon,
+    nextAction: nextAction as ScoutNextAction,
+    freshness: ((SCOUT_FRESHNESS_VALUES as readonly string[]).includes(freshness)
+      ? freshness
+      : "unknown") as ScoutFreshness,
+    plannedRR: obj.plannedRR !== undefined ? Number(obj.plannedRR) : undefined,
+    currentExecutableRR:
+      obj.currentExecutableRR === null
+        ? null
+        : obj.currentExecutableRR !== undefined
+          ? Number(obj.currentExecutableRR)
+          : undefined,
+    reviewRequired: obj.reviewRequired === true,
+    reasonCodes,
+    explanation:
+      obj.explanation !== undefined ? String(obj.explanation) : undefined,
+    detectedAt: obj.detectedAt !== undefined ? String(obj.detectedAt) : undefined,
+    confirmedAt:
+      obj.confirmedAt !== undefined ? String(obj.confirmedAt) : undefined,
+    confirmedBy:
+      obj.confirmedBy !== undefined
+        ? (String(obj.confirmedBy) as ScoutOperationalAssessment["confirmedBy"])
+        : undefined,
+    nextReviewAt:
+      obj.nextReviewAt !== undefined ? String(obj.nextReviewAt) : undefined,
+    currentPrice:
+      obj.currentPrice !== undefined ? Number(obj.currentPrice) : undefined,
+    distanceToEntryPct:
+      obj.distanceToEntryPct !== undefined
+        ? Number(obj.distanceToEntryPct)
+        : undefined,
+    distanceToEntryAtr:
+      obj.distanceToEntryAtr !== undefined
+        ? Number(obj.distanceToEntryAtr)
+        : undefined,
+    source:
+      obj.source === "system_detected" ||
+      obj.source === "human_confirmed" ||
+      obj.source === "manual_override" ||
+      obj.source === "legacy"
+        ? obj.source
+        : "manual_override",
+  };
+}
+
+export function addCalendarDaysIso(nowIso: string, days: number): string {
+  const date = new Date(nowIso);
+  if (!Number.isFinite(date.getTime())) return nowIso;
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString();
+}
+
+/** Canonical UI actions for Update operational state (31-3C). */
+export const SCOUT_OPERATIONAL_STATUS_ACTIONS = [
+  "Passed",
+  "Review 1D",
+  "Review 1W",
+  "Reanalyze",
+  "Unlikely",
+  "Armed",
+] as const;
+export type ScoutOperationalStatusAction =
+  (typeof SCOUT_OPERATIONAL_STATUS_ACTIONS)[number];
+
+export function resolveOperationalStatusAction(
+  phrase: string
+): ScoutOperationalStatusAction | undefined {
+  const normalized = phrase.trim().toLowerCase();
+  if (!normalized) return undefined;
+  if (/^(passed)$/i.test(normalized) || /(ya paso|ya pasó|already passed)/i.test(normalized)) {
+    return "Passed";
+  }
+  if (
+    /^(review 1d)$/i.test(normalized) ||
+    /(revisar manana|revisar mañana|review tomorrow)/i.test(normalized)
+  ) {
+    return "Review 1D";
+  }
+  if (
+    /^(review 1w)$/i.test(normalized) ||
+    /(otra semana|next week|la otra semana|maybe next week)/i.test(normalized)
+  ) {
+    return "Review 1W";
+  }
+  if (/(reanalizar|reanalyse|reanalyze)/i.test(normalized)) {
+    return "Reanalyze";
+  }
+  if (
+    /^(unlikely)$/i.test(normalized) ||
+    /(no parece probable|improbable|not likely|doesn.?t seem likely)/i.test(normalized)
+  ) {
+    return "Unlikely";
+  }
+  if (
+    /^(armed)$/i.test(normalized) ||
+    /(entrada automatica activa|entrada automática activa|automatic entry active)/i.test(
+      normalized
+    )
+  ) {
+    return "Armed";
+  }
+  return undefined;
+}
+
 export function buildOperationalDecisionUpdateProposal(input: {
   plan: TradePlan;
-  assessment: Partial<ScoutOperationalAssessment> &
-    Pick<
-      ScoutOperationalAssessment,
-      "operationalState" | "nextAction"
-    >;
+  assessment?: Partial<ScoutOperationalAssessment> &
+    Pick<ScoutOperationalAssessment, "operationalState" | "nextAction">;
   decidedBy?: "human" | "ai" | "system";
-  reviewTomorrow?: boolean;
+  reviewInDays?: number;
+  executionReadiness?: TradePlan["executionReadiness"];
   now?: string;
+  explanation?: string;
 }): string {
   const now = input.now ?? new Date().toISOString();
-  const nextReviewAt = input.reviewTomorrow
-    ? new Date(Date.parse(now) + 24 * 60 * 60 * 1000).toISOString()
-    : input.assessment.nextReviewAt;
+  const proposal: Record<string, unknown> = {
+    planId: input.plan.id,
+  };
+
+  if (input.executionReadiness !== undefined) {
+    proposal.executionReadiness = input.executionReadiness;
+  }
+
+  if (input.assessment) {
+    const nextReviewAt =
+      input.reviewInDays !== undefined
+        ? addCalendarDaysIso(now, input.reviewInDays)
+        : input.assessment.nextReviewAt;
+    proposal.operationalAssessment = {
+      thesisState: input.assessment.thesisState ?? "unknown",
+      operationalState: input.assessment.operationalState,
+      waitHorizon: input.assessment.waitHorizon ?? "unknown",
+      nextAction: input.assessment.nextAction,
+      freshness: input.assessment.freshness ?? "unknown",
+      currentExecutableRR:
+        input.assessment.currentExecutableRR ?? input.plan.plannedRR ?? null,
+      reviewRequired: input.assessment.reviewRequired ?? false,
+      reasonCodes: input.assessment.reasonCodes ?? ["manual_override"],
+      confirmedAt: now,
+      confirmedBy: input.decidedBy ?? "human",
+      nextReviewAt,
+      explanation: input.explanation ?? input.assessment.explanation,
+      source: "manual_override",
+    };
+  }
+
   return JSON.stringify(
     {
       type: "decision-update",
       source: "operational-quick-update",
-      proposal: {
-        planId: input.plan.id,
-        operationalAssessment: {
-          thesisState: input.assessment.thesisState ?? "unknown",
-          operationalState: input.assessment.operationalState,
-          waitHorizon: input.assessment.waitHorizon ?? "unknown",
-          nextAction: input.assessment.nextAction,
-          freshness: input.assessment.freshness ?? "unknown",
-          currentExecutableRR:
-            input.assessment.currentExecutableRR ?? input.plan.plannedRR ?? null,
-          reviewRequired: input.assessment.reviewRequired ?? false,
-          reasonCodes: input.assessment.reasonCodes ?? ["manual_override"],
-          confirmedAt: now,
-          confirmedBy: input.decidedBy ?? "human",
-          nextReviewAt,
-          source: "manual_override",
-        },
-      },
+      proposal,
     },
     null,
     2
@@ -771,90 +915,105 @@ export function parseOperationalPhraseToProposal(
   plan: TradePlan,
   phrase: string,
   now?: string
-): { ok: true; json: string } | { ok: false; error: string } {
-  const normalized = phrase.trim().toLowerCase();
-  if (!normalized) return { ok: false, error: "Phrase required." };
-  if (/(ya paso|ya pasó|already passed)/i.test(normalized)) {
+): { ok: true; json: string; action: ScoutOperationalStatusAction } | { ok: false; error: string } {
+  const action = resolveOperationalStatusAction(phrase);
+  if (!action) {
+    return {
+      ok: false,
+      error:
+        "Phrase not recognized. Use Passed, Review 1D, Review 1W, Reanalyze, Unlikely, or Armed.",
+    };
+  }
+  const at = now ?? new Date().toISOString();
+  const note = `Selected action: ${action}`;
+
+  if (action === "Passed") {
     return {
       ok: true,
+      action,
       json: buildOperationalDecisionUpdateProposal({
         plan,
-        now,
+        now: at,
+        explanation: note,
         assessment: {
           operationalState: "missed",
           waitHorizon: "unknown",
           nextAction: "replace_plan",
           freshness: "stale",
-          reviewRequired: true,
+          reviewRequired: false,
           reasonCodes: ["entry_passed_without_execution", "manual_override"],
         },
       }),
     };
   }
-  if (/(otra semana|next week|la otra semana|maybe next week)/i.test(normalized)) {
+  if (action === "Review 1D") {
     return {
       ok: true,
+      action,
       json: buildOperationalDecisionUpdateProposal({
         plan,
-        now,
+        now: at,
+        reviewInDays: 1,
+        explanation: note,
         assessment: {
           operationalState: "approaching",
-          waitHorizon: "weeks",
+          waitHorizon: "days",
           nextAction: "monitor",
           freshness: "current",
-          reviewRequired: false,
-          reasonCodes: ["manual_override"],
-        },
-      }),
-    };
-  }
-  if (/(revisar manana|revisar mañana|review tomorrow)/i.test(normalized)) {
-    return {
-      ok: true,
-      json: buildOperationalDecisionUpdateProposal({
-        plan,
-        now,
-        reviewTomorrow: true,
-        assessment: {
-          operationalState: "unassessed",
-          waitHorizon: "unknown",
-          nextAction: "monitor",
-          freshness: "current",
-          reviewRequired: false,
+          reviewRequired: true,
           reasonCodes: ["next_review_confirmed", "manual_override"],
         },
       }),
     };
   }
-  if (/(entrada automatica activa|entrada automática activa|automatic entry active)/i.test(normalized)) {
-    if (plan.executionReadiness !== "armed") {
-      return {
-        ok: false,
-        error: "Automatic entry active requires authoritative executionReadiness=armed.",
-      };
-    }
+  if (action === "Review 1W") {
     return {
       ok: true,
+      action,
       json: buildOperationalDecisionUpdateProposal({
         plan,
-        now,
+        now: at,
+        reviewInDays: 7,
+        explanation: note,
         assessment: {
-          operationalState: "armed",
-          waitHorizon: "now",
-          nextAction: "act",
+          operationalState: "approaching",
+          waitHorizon: "weeks",
+          nextAction: "monitor",
           freshness: "current",
-          reviewRequired: false,
-          reasonCodes: ["execution_readiness_armed", "manual_override"],
+          reviewRequired: true,
+          reasonCodes: ["next_review_confirmed", "manual_override"],
         },
       }),
     };
   }
-  if (/(no parece probable|improbable|not likely|doesn.?t seem likely)/i.test(normalized)) {
+  if (action === "Reanalyze") {
     return {
       ok: true,
+      action,
       json: buildOperationalDecisionUpdateProposal({
         plan,
-        now,
+        now: at,
+        explanation: note,
+        assessment: {
+          operationalState: "needs_reanalysis",
+          waitHorizon: "unknown",
+          nextAction: "reassess",
+          freshness: "stale",
+          reviewRequired: true,
+          nextReviewAt: at,
+          reasonCodes: ["manual_override"],
+        },
+      }),
+    };
+  }
+  if (action === "Unlikely") {
+    return {
+      ok: true,
+      action,
+      json: buildOperationalDecisionUpdateProposal({
+        plan,
+        now: at,
+        explanation: note,
         assessment: {
           operationalState: "improbable",
           waitHorizon: "improbable",
@@ -866,26 +1025,78 @@ export function parseOperationalPhraseToProposal(
       }),
     };
   }
-  if (/(reanalizar|reanalyse|reanalyze)/i.test(normalized)) {
-    return {
-      ok: true,
-      json: buildOperationalDecisionUpdateProposal({
-        plan,
-        now,
-        assessment: {
-          operationalState: "needs_reanalysis",
-          waitHorizon: "unknown",
-          nextAction: "reassess",
-          freshness: "stale",
-          reviewRequired: true,
-          reasonCodes: ["manual_override"],
-        },
-      }),
-    };
+  // Armed — authoritative field is executionReadiness (not an OA verdict substitute).
+  return {
+    ok: true,
+    action,
+    json: buildOperationalDecisionUpdateProposal({
+      plan,
+      now: at,
+      explanation: note,
+      executionReadiness: "armed",
+    }),
+  };
+}
+
+export type OperationalStatusPreview = {
+  action: ScoutOperationalStatusAction;
+  json: string;
+  previous: Record<string, unknown>;
+  proposed: Record<string, unknown>;
+  changes: Array<{ field: string; from: unknown; to: unknown }>;
+  affectedFields: string[];
+};
+
+export function buildOperationalStatusPreview(
+  plan: TradePlan,
+  phrase: string,
+  now?: string
+):
+  | { ok: true; preview: OperationalStatusPreview }
+  | { ok: false; error: string } {
+  const parsed = parseOperationalPhraseToProposal(plan, phrase, now);
+  if (!parsed.ok) return parsed;
+  const payload = JSON.parse(parsed.json) as {
+    proposal: Record<string, unknown>;
+  };
+  const prevAssessment = getConfirmedOperationalAssessment(plan);
+  const previous: Record<string, unknown> = {
+    operationalState: prevAssessment?.operationalState ?? null,
+    reviewRequired: prevAssessment?.reviewRequired ?? null,
+    nextReviewAt: prevAssessment?.nextReviewAt ?? null,
+    waitHorizon: prevAssessment?.waitHorizon ?? null,
+    nextAction: prevAssessment?.nextAction ?? null,
+    freshness: prevAssessment?.freshness ?? null,
+    executionReadiness: plan.executionReadiness ?? null,
+  };
+  const nextAssessment = payload.proposal.operationalAssessment as
+    | Record<string, unknown>
+    | undefined;
+  const proposed: Record<string, unknown> = {
+    operationalState: nextAssessment?.operationalState ?? previous.operationalState,
+    reviewRequired: nextAssessment?.reviewRequired ?? previous.reviewRequired,
+    nextReviewAt: nextAssessment?.nextReviewAt ?? previous.nextReviewAt,
+    waitHorizon: nextAssessment?.waitHorizon ?? previous.waitHorizon,
+    nextAction: nextAssessment?.nextAction ?? previous.nextAction,
+    freshness: nextAssessment?.freshness ?? previous.freshness,
+    executionReadiness:
+      payload.proposal.executionReadiness ?? previous.executionReadiness,
+  };
+  const changes: OperationalStatusPreview["changes"] = [];
+  for (const field of Object.keys(proposed)) {
+    if (JSON.stringify(previous[field]) !== JSON.stringify(proposed[field])) {
+      changes.push({ field, from: previous[field], to: proposed[field] });
+    }
   }
   return {
-    ok: false,
-    error:
-      "Phrase not recognized. Try Already passed, Maybe next week, Review tomorrow, Automatic entry active, Not likely, or Reanalyze.",
+    ok: true,
+    preview: {
+      action: parsed.action,
+      json: parsed.json,
+      previous,
+      proposed,
+      changes,
+      affectedFields: changes.map((c) => c.field),
+    },
   };
 }

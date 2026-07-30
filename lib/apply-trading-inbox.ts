@@ -285,6 +285,9 @@ async function applyDecisionUpdate(
   if (plan.decision?.operationalAssessment?.operationalState) {
     parts.push(`operational ${plan.decision.operationalAssessment.operationalState}`);
   }
+  if (plan.executionReadiness) {
+    parts.push(`executionReadiness ${plan.executionReadiness}`);
+  }
   if (plan.plannedEntry !== undefined) parts.push(`entry ${plan.plannedEntry}`);
   if (plan.stopPrice !== undefined) parts.push(`stop ${plan.stopPrice}`);
   if (plan.targetPrice !== undefined) parts.push(`target ${plan.targetPrice}`);

@@ -215,10 +215,20 @@ async function main() {
     /scoutCards\.map\(\(card\) => \{\s*const selected = card\.key/
   );
   assert.match(planning, /Update operational state/);
-  assert.match(planning, /Already passed/);
+  assert.match(planning, /Passed/);
+  assert.match(planning, /Review 1D/);
+  assert.match(planning, /Review 1W/);
+  assert.match(planning, /Reanalyze/);
+  assert.match(planning, /Unlikely/);
+  assert.match(planning, /Armed/);
   assert.match(planning, /Prepare status update/);
   assert.match(planning, /prepareOperationalStatusUpdate/);
+  assert.match(planning, /buildOperationalStatusPreview/);
   assert.match(planning, /data-scout-operational-preset/);
+  assert.match(planning, /data-scout-operational-preview/);
+  assert.match(planning, /data-scout-operational-error/);
+  assert.match(planning, /data-scout-operational-json/);
+  assert.match(planning, /Open Control → Apply/);
   assert.match(
     planning,
     /setQuickOperationalPhrase\(phrase\);\s*void prepareOperationalStatusUpdate\(phrase\)/

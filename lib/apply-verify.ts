@@ -110,6 +110,8 @@ async function verifyDecisionUpdatePersistence(
     "notes",
     "validUntil",
     "status",
+    "operationalAssessment",
+    "executionReadiness",
   ] as const;
   const hasTactical = tacticalFields.some((field) => p[field] !== undefined);
   const hasDecision =
@@ -138,6 +140,37 @@ async function verifyDecisionUpdatePersistence(
     if (p.status !== undefined && reloaded.status !== String(p.status)) {
       failures.push("status");
     }
+    if (p.executionReadiness !== undefined) {
+      if (reloaded.executionReadiness !== String(p.executionReadiness).trim()) {
+        failures.push("executionReadiness");
+      }
+    }
+    if (p.operationalAssessment !== undefined) {
+      const expected = p.operationalAssessment as Record<string, unknown>;
+      const stored = reloaded.decision?.operationalAssessment;
+      if (!stored) {
+        failures.push("operationalAssessment");
+      } else {
+        if (
+          expected.operationalState !== undefined &&
+          stored.operationalState !== String(expected.operationalState)
+        ) {
+          failures.push("operationalAssessment.operationalState");
+        }
+        if (
+          expected.reviewRequired !== undefined &&
+          stored.reviewRequired !== Boolean(expected.reviewRequired)
+        ) {
+          failures.push("operationalAssessment.reviewRequired");
+        }
+        if (
+          expected.nextReviewAt !== undefined &&
+          stored.nextReviewAt !== String(expected.nextReviewAt)
+        ) {
+          failures.push("operationalAssessment.nextReviewAt");
+        }
+      }
+    }
     if (failures.length > 0) {
       return {
         ok: false,
@@ -157,11 +190,18 @@ async function verifyDecisionUpdatePersistence(
     }
   }
 
+  const oaState = reloaded.decision?.operationalAssessment?.operationalState;
   return {
     ok: true,
     detail: hasDecision
       ? `Decision on ${planId} · ${reloaded.decision?.verdict} · confidence ${reloaded.decision?.decisionConfidence}`
-      : `Tactical fields updated on ${planId}.`,
+      : oaState || reloaded.executionReadiness
+        ? `Tactical fields updated on ${planId}${oaState ? ` · operational ${oaState}` : ""}${
+            reloaded.executionReadiness
+              ? ` · executionReadiness ${reloaded.executionReadiness}`
+              : ""
+          }.`
+        : `Tactical fields updated on ${planId}.`,
   };
 }
 

@@ -31,6 +31,7 @@ export const DECISION_TACTICAL_FIELDS = [
   "status",
   "layeredEntry",
   "operationalAssessment",
+  "executionReadiness",
 ] as const;
 
 export type DecisionTacticalField = (typeof DECISION_TACTICAL_FIELDS)[number];
@@ -280,6 +281,47 @@ export async function updatePlanTacticsFromProposal(
     }
   }
 
+  if (proposal.operationalAssessment !== undefined) {
+    const { normalizeOperationalAssessmentInput } = await import("./scout-operational-state");
+    const parsed = normalizeOperationalAssessmentInput(proposal.operationalAssessment);
+    if (!parsed) {
+      errors.push(
+        "proposal.operationalAssessment must include operationalState and nextAction"
+      );
+    } else {
+      const nowIso = new Date().toISOString();
+      if (updated.decision) {
+        updated.decision = {
+          ...updated.decision,
+          operationalAssessment: parsed,
+        };
+      } else {
+        const { newDecisionId } = await import("./scout-decision");
+        updated.decision = {
+          id: newDecisionId(),
+          verdict: "wait",
+          decisionConfidence: 0,
+          challenges: ["operational_status_update"],
+          decidedAt: parsed.confirmedAt ?? nowIso,
+          decidedBy: parsed.confirmedBy ?? "human",
+          operationalAssessment: parsed,
+        };
+      }
+    }
+  }
+
+  if (proposal.executionReadiness !== undefined) {
+    const { EXECUTION_READINESS_STATES } = await import("./plan-outcome-types");
+    const value = String(proposal.executionReadiness).trim();
+    if (!(EXECUTION_READINESS_STATES as readonly string[]).includes(value)) {
+      errors.push(
+        `proposal.executionReadiness must be one of: ${EXECUTION_READINESS_STATES.join(", ")}`
+      );
+    } else {
+      updated.executionReadiness = value as TradePlan["executionReadiness"];
+    }
+  }
+
   if (errors.length) return { errors };
 
   const entry = updated.plannedEntry ?? updated.layeredEntry?.averageEntry;
@@ -333,7 +375,7 @@ export async function applyDecisionUpdateFromProposal(
   if (!hasTactical && !hasDecision) {
     return {
       errors: [
-        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, operationalAssessment).",
+        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, operationalAssessment, executionReadiness).",
       ],
     };
   }
