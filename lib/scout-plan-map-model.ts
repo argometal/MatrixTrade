@@ -4,6 +4,7 @@ import {
   layeredSharesAvailability,
 } from "./layered-entry";
 import { LAYER_ROLE_LABELS, resolveLayeredExecutionModel } from "./layered-entry-types";
+import { formatPlanMapOperationalParagraph } from "./scout-plan-map-operational";
 
 export type ScoutPlanMapModel = {
   mode: "single_entry" | "layered";
@@ -45,6 +46,8 @@ export type ScoutPlanMapModel = {
   allocationModeLabel?: string;
   fillSummary: string;
   spacingCompressed: boolean;
+  /** Concise operational summary from persisted plan data only. */
+  operationalParagraph?: string;
   /** When set, shares cannot be derived — list missing structured fields. */
   sharesUnavailableReason?: string;
 };
@@ -172,9 +175,25 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
   const isLayered =
     !!layered?.limits?.length &&
     (layered.executionMethod === "layered_limits" || layered.limits.length >= 2);
+  const mode: ScoutPlanMapModel["mode"] = isLayered ? "layered" : "single_entry";
+  const allocationMeaning = layers[0]?.allocationMeaning;
+  const operationalParagraph = formatPlanMapOperationalParagraph({
+    mode,
+    layers: layers.map((layer) => ({
+      price: layer.price,
+      allocationPercent: layer.allocationPercent,
+      shares: layer.shares,
+      stopPrice: layer.stopPrice,
+    })),
+    stopModel: layered?.stopModel ?? "common",
+    commonStop,
+    primaryTarget,
+    referenceEntry: view.referenceEntry,
+    allocationMeaning,
+  });
 
   return {
-    mode: isLayered ? "layered" : "single_entry",
+    mode,
     ticker: view.ticker,
     planId: view.planId ?? "—",
     primaryTarget,
@@ -225,6 +244,7 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
           ? "Filled"
           : "Pending",
     spacingCompressed: true,
+    operationalParagraph,
     sharesUnavailableReason:
       layered && !sharesAvailability.available
         ? `Shares unavailable — missing ${sharesAvailability.missingFields.join(", ")}`

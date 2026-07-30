@@ -185,6 +185,8 @@ async function main() {
   assert.match(board, /Primary target/);
   assert.match(board, /Common stop/);
   assert.match(board, /Shares unconfigured/);
+  assert.match(board, /data-scout-plan-map-operational/);
+  assert.match(board, /model\.operationalParagraph/);
   assert.doesNotMatch(board, /PlanMapLevelRow/);
   assert.doesNotMatch(board, /shares:\\s*10|MANUAL_SHARES_PLACEHOLDER/);
   assert.match(side, /view\\.planId|view\.planId/);
