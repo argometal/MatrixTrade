@@ -47,6 +47,7 @@
     "test:scout-operational-update": "tsx tools/test-scout-operational-update-31-3c.ts",
     "test:prepare-status-apply": "tsx tools/test-prepare-status-apply-30-27.ts",
     "test:insights-pipeline": "tsx tools/test-insights-pipeline-30-2c.ts",
+    "test:scout-decision-source": "tsx tools/test-scout-decision-source-30-2d.ts",
     "test:scout-monitoring": "tsx tools/test-scout-monitoring.ts",
     "test:trades-plan-review": "tsx tools/test-trades-plan-review.ts",
     "test:scout-plan-map": "tsx tools/test-scout-plan-map.ts",
