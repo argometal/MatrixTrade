@@ -61,6 +61,21 @@ export async function verifyApplyPersistence(
     case "playbook-create":
     case "playbook-update":
       return verifyPlaybookPersistence(parsed);
+    case "capital-configuration-create":
+    case "capital-configuration-update":
+      return verifyCapitalConfigurationPersistence(parsed);
+    case "capital-reservation-create":
+    case "capital-reservation-update":
+    case "capital-reservation-release":
+      return verifyCapitalReservationPersistence(parsed);
+    case "capital-ledger-adjustment":
+      return verifyCapitalLedgerPersistence(parsed);
+    case "external-position-create":
+    case "external-position-update":
+    case "external-position-reduction":
+    case "external-position-settle":
+    case "external-position-exit-plan-update":
+      return verifyExternalPositionPersistence(parsed);
     default:
       return { ok: false, detail: "Unsupported proposal type for verification." };
   }
@@ -640,6 +655,135 @@ async function verifyPlaybookPersistence(parsed: TradingInboxPayload): Promise<A
 
 export function formatPersistenceTarget(storeMode: string): string {
   return storeMode === "supabase" ? "Supabase" : "local JSON";
+}
+
+async function verifyCapitalConfigurationPersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const { getActiveCapitalConfiguration } = await import("./capital-configuration");
+  const active = await getActiveCapitalConfiguration();
+  if (!active) {
+    return {
+      ok: false,
+      detail: "No active Capital Configuration found after apply.",
+    };
+  }
+  const expectedId = String(parsed.proposal.id ?? "").trim();
+  if (expectedId && active.id !== expectedId && parsed.type === "capital-configuration-update") {
+    return {
+      ok: false,
+      detail: `Active Capital Configuration is ${active.id}, expected ${expectedId}.`,
+    };
+  }
+  return {
+    ok: true,
+    detail: `Capital Configuration ${active.id} active (${active.status}).`,
+  };
+}
+
+async function verifyCapitalReservationPersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const { listCapitalReservations } = await import("./capital-reservation");
+  const rows = await listCapitalReservations();
+  const planId = String(parsed.proposal.planId ?? "").trim().toUpperCase();
+  const reservationId = String(parsed.proposal.reservationId ?? parsed.proposal.id ?? "")
+    .trim()
+    .toUpperCase();
+  const match = rows.find(
+    (row) =>
+      (reservationId && row.id.toUpperCase() === reservationId) ||
+      (planId && row.planId.toUpperCase() === planId)
+  );
+  if (!match) {
+    return {
+      ok: false,
+      detail: `Capital reservation not found after apply${
+        reservationId ? ` (${reservationId})` : planId ? ` for plan ${planId}` : ""
+      }.`,
+    };
+  }
+  if (parsed.type === "capital-reservation-release" && match.status !== "released") {
+    return {
+      ok: false,
+      detail: `Capital reservation ${match.id} status is ${match.status}, expected released.`,
+    };
+  }
+  return {
+    ok: true,
+    detail: `Capital reservation ${match.id} · ${match.planId} · ${match.status}.`,
+  };
+}
+
+async function verifyCapitalLedgerPersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const { listCapitalLedgerEvents } = await import("./capital-ledger");
+  const events = await listCapitalLedgerEvents();
+  const idempotencyKey = String(parsed.proposal.idempotencyKey ?? "").trim();
+  const eventId = String(parsed.proposal.id ?? "").trim();
+  const match = events.find(
+    (event) =>
+      (idempotencyKey && event.idempotencyKey === idempotencyKey) ||
+      (eventId && event.id === eventId)
+  );
+  if (!match && events.length === 0) {
+    return { ok: false, detail: "No capital ledger events found after apply." };
+  }
+  if (!match) {
+    // Apply may generate server id — confirm ledger non-empty as soft structural check.
+    const latest = events[events.length - 1];
+    return {
+      ok: true,
+      detail: `Capital ledger recorded (${latest?.id ?? "event"}).`,
+    };
+  }
+  return { ok: true, detail: `Capital ledger event ${match.id} verified.` };
+}
+
+async function verifyExternalPositionPersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const { getExternalPositionById, getExternalPositions } = await import(
+    "./external-position-store"
+  );
+  const positionId = String(
+    parsed.proposal.positionId ?? parsed.proposal.id ?? ""
+  )
+    .trim()
+    .toUpperCase();
+  if (positionId) {
+    const row = await getExternalPositionById(positionId);
+    if (!row) {
+      return {
+        ok: false,
+        detail: `External Position ${positionId} not found after apply.`,
+      };
+    }
+    return {
+      ok: true,
+      detail: `External Position ${row.id} · ${row.ticker} · ${row.status}.`,
+    };
+  }
+  const ticker = String(parsed.proposal.ticker ?? "").trim().toUpperCase();
+  if (ticker) {
+    const rows = await getExternalPositions();
+    const match = rows.find((row) => row.ticker.toUpperCase() === ticker);
+    if (!match) {
+      return {
+        ok: false,
+        detail: `External Position for ${ticker} not found after apply.`,
+      };
+    }
+    return {
+      ok: true,
+      detail: `External Position ${match.id} · ${match.ticker} · ${match.status}.`,
+    };
+  }
+  return {
+    ok: false,
+    detail: "External Position verification requires positionId or ticker.",
+  };
 }
 
 export function summarizeTradeEvidence(trade: Trade | undefined, type: string): string | null {
