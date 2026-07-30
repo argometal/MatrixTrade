@@ -7,6 +7,26 @@ export type DecisionVerdict = "wait" | "probe" | "go" | "no";
 
 export type ScoutDecisionSource = "human" | "ai" | "import";
 
+/**
+ * Operational assessment `confirmedBy` allows "system"; Scout decision `decidedBy`
+ * does not. Used when persisting OA through decision-update Apply.
+ */
+export type OperationalAssessmentConfirmedBy = "human" | "ai" | "system";
+
+/**
+ * Explicit OA confirmedBy → ScoutDecisionSource for human-triggered Apply.
+ * - human → human
+ * - ai → ai
+ * - system → human (no ScoutDecisionSource equivalent; Apply is human-gated)
+ * - undefined → human
+ */
+export function mapOperationalConfirmedByToDecisionSource(
+  confirmedBy: OperationalAssessmentConfirmedBy | undefined
+): ScoutDecisionSource {
+  if (confirmedBy === "ai") return "ai";
+  return "human";
+}
+
 export interface PlanningRisk {
   structure?: string;
   support?: string;

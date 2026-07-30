@@ -297,18 +297,16 @@ export async function updatePlanTacticsFromProposal(
         };
       } else {
         const { newDecisionId } = await import("./scout-decision");
+        const { mapOperationalConfirmedByToDecisionSource } = await import(
+          "./scout-decision-types"
+        );
         updated.decision = {
           id: newDecisionId(),
           verdict: "wait",
           decisionConfidence: 0,
           challenges: ["operational_status_update"],
           decidedAt: parsed.confirmedAt ?? nowIso,
-          decidedBy:
-            parsed.confirmedBy === "ai"
-              ? "ai"
-              : parsed.confirmedBy === "human"
-                ? "human"
-                : "human",
+          decidedBy: mapOperationalConfirmedByToDecisionSource(parsed.confirmedBy),
           operationalAssessment: parsed,
         };
       }
