@@ -13,6 +13,15 @@
 
 **Authorship split:** Human and AI propose entry prices, stops, target, roles, and allocation %. Matrix calculates R, monetary risk, quantities, and fill-state projections — and never invents technical levels.
 
+## Authoritative execution pair (30-16)
+
+Every accepted Scout execution preserves **two synchronized outputs**:
+
+1. **Structured execution** — `layeredEntry` (limits, allocation %, stop model/prices, primary target, authorized risk / sizing inputs) plus plan entry/stop/target.
+2. **Human-readable execution description** — a deterministic projection of (1), shown on Plan Map and in Scout snapshots. Concise and broker-actionable.
+
+The description is **never** the calculation source. It must **not** be manually interpreted from `reasoning` / notes. Changing shares, layers, stop, or target regenerates the description. A layered description is rejected/flagged when the stored plan has fewer than 2 entry layers. Layered analysis must never persist only as prose while the operative plan remains single-entry.
+
 ---
 
 ## Allocation % vs monetary risk

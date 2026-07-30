@@ -411,6 +411,13 @@ export function PlanLevelsBoard({
             {model.operationalParagraph}
           </p>
         ) : null}
+        {model.executionDescriptionFlags?.length ? (
+          <ul className="mt-2 space-y-1 text-[10px] text-amber-200/80" data-scout-execution-flags>
+            {model.executionDescriptionFlags.map((flag) => (
+              <li key={flag}>{flag}</li>
+            ))}
+          </ul>
+        ) : null}
       </section>
 
       <section className="rounded-xl border border-zinc-800 bg-zinc-950/40 px-2 py-4">

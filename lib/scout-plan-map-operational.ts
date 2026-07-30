@@ -147,6 +147,7 @@ export function formatPlanMapOperationalParagraph(
     const sentences = [
       formatLayeredSharesSentence(input.layers),
       formatStopAndTarget(input),
+      "Any unfilled layer remains inactive.",
     ];
     return sentences.filter(Boolean).join(" ");
   }
@@ -155,7 +156,7 @@ export function formatPlanMapOperationalParagraph(
     const sentences = [
       formatLayeredAllocationSentence(input.layers, input.allocationMeaning),
       formatStopAndTarget(input),
-      "Any layer not reached remains unfilled.",
+      "Any unfilled layer remains inactive.",
     ];
     return sentences.filter(Boolean).join(" ");
   }
