@@ -19,7 +19,7 @@ PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex (0-based, -1=none) or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
-- scout-plan-create: NEW Scout Plan window on an EXISTING Stock File — stockFileId (or stockThesisId), ticker, plannedEntry, stopPrice, targetPrice required; optional verdict+decisionConfidence+challenges, playbookId/playbookIds, status (watching|ready|active), thesis, notes, reasoning. Allocates a NEW PLAN-xxx. Do NOT use stock-case-create for same ticker. Do NOT reuse an old planId.
+- scout-plan-create: NEW Scout Plan window on an EXISTING Stock File — stockFileId (or stockThesisId), ticker, plannedEntry, stopPrice, targetPrice required; optional layeredEntry{stopModel,sizingMode,authorizedRiskAmount,primaryTargetPrice,commonStopPrice,limits[{price,allocationPercent,role?,stopPrice?,rationale?,confidence?}]} (persist structured layers — never leave layers only in notes/reasoning), optional verdict+decisionConfidence+challenges, playbookId/playbookIds, status (watching|ready|active), thesis, notes, reasoning. Allocates a NEW PLAN-xxx. Do NOT use stock-case-create for same ticker. Do NOT reuse an old planId.
 - technical-assessment: MTAE technical JSON only — stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[] (optional participation{volumeBehavior,wickAnalysis,candleSignals,movementCharacter{primary?|state+directionalEfficiency+rangeProgression,evidence,confidence},historicalReactionZones,largeParticipantFootprint}), integrated{} (optional participationSynthesis, optional momentumAssessment{expansionPotential,currentState,capitalEfficiencyConcern,rationale,scoutImplication,confidence}), technicalSummary{} (trend, zones, probableTarget vs extendedTarget, structuralInvalidation, contradictions, confidence). FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict, whalesAreBuying. Optional patchStockFile (default true).
 - technical-calibration: human procedure correction — assessmentId, stockProfileId, ticker, errorType, fieldPath, aiValue, humanValue, reason; optional magnitude, confidenceAdjustment
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason. Deletes linked evidence and scout plans. Irreversible — human Apply only.
@@ -74,7 +74,7 @@ All Apply-ready block types:
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout (backfill missing Scout Plan only)
-- scout-plan-create: NEW PLAN on existing Stock File — stockFileId, ticker, plannedEntry, stopPrice, targetPrice; optional verdict+challenges; allocates NEW PLAN-xxx (same-ticker new window)
+- scout-plan-create: NEW PLAN on existing Stock File — stockFileId, ticker, plannedEntry, stopPrice, targetPrice; optional layeredEntry (structured limits — required when analysis concludes layered execution); optional verdict+challenges; allocates NEW PLAN-xxx (same-ticker new window)
 - technical-assessment: MTAE technical-only multi-TF JSON — stockProfileId, ticker, timeframeRoles, perTimeframe[] (+ optional participation / movementCharacter expansion fields), integrated{} (+ optional participationSynthesis, momentumAssessment), technicalSummary{} (no Entry Solver / RR / Scout verdict / whalesAreBuying)
 - technical-calibration: MTAE human procedure correction — assessmentId, errorType, fieldPath, aiValue, humanValue, reason
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason (duplicate cleanup)
@@ -158,12 +158,12 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
   {
     type: "decision-update",
     label: "decision-update — scout decision on PLAN",
-    hint: "verdict + confidence + challenges; optional operationalAssessment; probe{} when verdict=probe; layeredEntry{} when verdict=go",
+    hint: "verdict + confidence + challenges; optional operationalAssessment; probe{} when verdict=probe; layeredEntry{} whenever layered execution is concluded (persisted on wait/go — not notes-only)",
   },
   {
     type: "scout-plan-create",
     label: "scout-plan-create — new PLAN on existing Stock File",
-    hint: "Same-ticker new window: stockFileId + entry/stop/target → NEW PLAN-xxx (not stock-case-create)",
+    hint: "Same-ticker new window: stockFileId + entry/stop/target; include layeredEntry{} when layered — NEW PLAN-xxx (not stock-case-create)",
   },
   {
     type: "layered-entry-update",
@@ -351,6 +351,19 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       targetPrice: 260,
       minimumRR: 3,
       playbookIds: ["expectancy-asymmetry", "structural-pullback-entry"],
+      layeredEntry: {
+        executionMethod: "layered_limits",
+        stopModel: "common",
+        sizingMode: "risk_percent",
+        authorizedRiskAmount: 100,
+        commonStopPrice: 200,
+        primaryTargetPrice: 260,
+        limits: [
+          { price: 215, allocationPercent: 30, role: "starter" },
+          { price: 210, allocationPercent: 40, role: "preferred" },
+          { price: 205, allocationPercent: 30, role: "deep_pullback" },
+        ],
+      },
       thesis:
         "New tactical window on existing Stock File. Wait for structural pullback; probable target 260.",
       reasoning: "Entry 215 / stop 200 / target 260 ≈ 3R inside preferred battle zone.",

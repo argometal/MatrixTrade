@@ -1,4 +1,8 @@
 import type { PlanLevelsView } from "./plan-levels-board";
+import {
+  getPersistedLayerDisplayValues,
+  layeredSharesAvailability,
+} from "./layered-entry";
 import { LAYER_ROLE_LABELS, resolveLayeredExecutionModel } from "./layered-entry-types";
 
 export type ScoutPlanMapModel = {
@@ -21,6 +25,7 @@ export type ScoutPlanMapModel = {
     rrToPrimaryTarget?: number;
     fillStatus?: string;
     stopPrice?: number;
+    sharesUnavailable?: boolean;
   }>;
   referencePlanRR?: number;
   blendedEntry?: number;
@@ -40,6 +45,8 @@ export type ScoutPlanMapModel = {
   allocationModeLabel?: string;
   fillSummary: string;
   spacingCompressed: boolean;
+  /** When set, shares cannot be derived — list missing structured fields. */
+  sharesUnavailableReason?: string;
 };
 
 type ScoutPlanMapLayer = ScoutPlanMapModel["layers"][number];
@@ -105,31 +112,43 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
   const layered = view.layeredEntry?.plan;
   const primaryTarget = layered?.primaryTargetPrice ?? view.primaryTarget;
   const commonStop = layered?.commonStopPrice ?? view.commonStop;
+  const displayLayers = getPersistedLayerDisplayValues({
+    layeredEntry: layered,
+    stopPrice: view.commonStop,
+    targetPrice: view.primaryTarget,
+  });
+  const sharesAvailability = layered
+    ? layeredSharesAvailability({
+        ...layered,
+        primaryTargetPrice: layered.primaryTargetPrice ?? view.primaryTarget,
+        commonStopPrice: layered.commonStopPrice ?? view.commonStop,
+      })
+    : { available: true, missingFields: [] as string[] };
+
   const layers: ScoutPlanMapLayer[] =
     layered?.limits?.length
-      ? layered.limits.map((limit, index) => ({
-          index,
-          role: limit.role ? LAYER_ROLE_LABELS[limit.role] : undefined,
-          price: limit.price,
-          allocationPercent: limit.allocationPercent,
-          allocationMeaning:
-            layered.sizingMode === "risk_percent"
-              ? ("risk" as const)
-              : ("position" as const),
-          shares:
-            limit.derived?.plannedQuantity !== undefined &&
-            limit.derived.plannedQuantity > 0
-              ? limit.derived.plannedQuantity
+      ? layered.limits.map((limit, index) => {
+          const display = displayLayers[index];
+          return {
+            index,
+            role: limit.role ? LAYER_ROLE_LABELS[limit.role] : undefined,
+            price: limit.price,
+            allocationPercent: limit.allocationPercent,
+            allocationMeaning:
+              layered.sizingMode === "risk_percent"
+                ? ("risk" as const)
+                : ("position" as const),
+            shares: display?.shares,
+            capitalRequired: sharesAvailability.available
+              ? limit.derived?.plannedCapital
               : undefined,
-          capitalRequired: limit.derived?.plannedCapital,
-          estimatedRisk: limit.derived?.plannedRiskAmount,
-          rrToPrimaryTarget: limit.derived?.rr,
-          fillStatus: resolveLayerFillStatus(view, index),
-          stopPrice:
-            (layered.stopModel ?? "common") === "per_layer"
-              ? limit.stopPrice
-              : commonStop,
-        }))
+            estimatedRisk: display?.riskAllocated,
+            rrToPrimaryTarget: limit.derived?.rr,
+            fillStatus: resolveLayerFillStatus(view, index),
+            stopPrice: display?.stopPrice,
+            sharesUnavailable: display?.sharesUnavailable,
+          };
+        })
       : view.referenceEntry !== undefined
         ? [
             {
@@ -150,8 +169,12 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
   const fillStates = view.layeredEntry?.fillStates;
   const fullBuild = fillStates?.[fillStates.length - 1];
   const filledCount = layers.filter((layer) => layer.fillStatus === "filled").length;
+  const isLayered =
+    !!layered?.limits?.length &&
+    (layered.executionMethod === "layered_limits" || layered.limits.length >= 2);
+
   return {
-    mode: layered?.limits?.length ? "layered" : "single_entry",
+    mode: isLayered ? "layered" : "single_entry",
     ticker: view.ticker,
     planId: view.planId ?? "—",
     primaryTarget,
@@ -169,8 +192,11 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
       layered?.combinedRR,
     filledPositionRR: computeFilledPositionRR(view),
     authorizedRisk: layered?.authorizedRiskAmount,
-    roundedRisk: fullBuild?.assignedLoss ?? sum(layers.map((layer) => layer.estimatedRisk)),
+    roundedRisk: sharesAvailability.available
+      ? fullBuild?.assignedLoss ?? sum(layers.map((layer) => layer.estimatedRisk))
+      : undefined,
     unusedRisk:
+      sharesAvailability.available &&
       layered?.authorizedRiskAmount !== undefined &&
       (fullBuild?.assignedLoss ?? sum(layers.map((layer) => layer.estimatedRisk))) !== undefined
         ? Math.max(
@@ -180,8 +206,9 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
                 sum(layers.map((layer) => layer.estimatedRisk))) as number)
           )
         : undefined,
-    requestedCapital:
-      fullBuild?.capitalDeployed ?? sum(layers.map((layer) => layer.capitalRequired)),
+    requestedCapital: sharesAvailability.available
+      ? fullBuild?.capitalDeployed ?? sum(layers.map((layer) => layer.capitalRequired))
+      : undefined,
     minRR: view.minRR,
     stopModel: layered?.stopModel ?? "common",
     operationalState: view.operationalState,
@@ -198,5 +225,9 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
           ? "Filled"
           : "Pending",
     spacingCompressed: true,
+    sharesUnavailableReason:
+      layered && !sharesAvailability.available
+        ? `Shares unavailable — missing ${sharesAvailability.missingFields.join(", ")}`
+        : undefined,
   };
 }
