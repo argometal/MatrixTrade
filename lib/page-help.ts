@@ -45,8 +45,13 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
   },
   insights: {
     title: "Insights",
-    summary: "Stats / journal / mistakes del ciclo.",
-    steps: ["Ajustar Playbook con lo aprendido."],
+    summary:
+      "Stats / journal / mistakes / pipeline performance — realized Trade P/L separate from Scout counterfactuals.",
+    steps: [
+      "Review Statistics for cycle P/L.",
+      "Use Pipeline Performance for component drag and Scout outcomes.",
+      "Adjust Playbook with what you learned.",
+    ],
   },
   "new-trade": {
     title: "Enter Trade (deprecated)",

@@ -303,7 +303,12 @@ export async function updatePlanTacticsFromProposal(
           decisionConfidence: 0,
           challenges: ["operational_status_update"],
           decidedAt: parsed.confirmedAt ?? nowIso,
-          decidedBy: parsed.confirmedBy ?? "human",
+          decidedBy:
+            parsed.confirmedBy === "ai"
+              ? "ai"
+              : parsed.confirmedBy === "human"
+                ? "human"
+                : "human",
           operationalAssessment: parsed,
         };
       }

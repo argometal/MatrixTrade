@@ -1,21 +1,32 @@
 import Link from "next/link";
 import { PreviewJournal } from "@/app/components/journal-preview/PreviewJournal";
 import { PreviewMistakes } from "@/app/components/mistakes-preview/PreviewMistakes";
+import { PreviewPipelinePerformance } from "@/app/components/insights-preview/PreviewPipelinePerformance";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
 import {
   PreviewStats,
   type PreviewStatsData,
 } from "@/app/components/stats-preview/PreviewStats";
+import type { PipelinePerformanceInput } from "@/lib/insights-pipeline-performance";
 import type { MistakeStat } from "@/lib/review";
 import type { Playbook } from "@/lib/playbook-types";
 import type { Trade } from "@/lib/types";
 
-type TabId = "stats" | "journal" | "mistakes";
+export type InsightsTabId =
+  | "stats"
+  | "journal"
+  | "mistakes"
+  | "pipeline";
 
-const TABS: { id: TabId; label: string; href: string }[] = [
+const TABS: { id: InsightsTabId; label: string; href: string }[] = [
   { id: "stats", label: "Statistics", href: "/stats" },
   { id: "journal", label: "Journal", href: "/stats?tab=journal" },
   { id: "mistakes", label: "Mistakes", href: "/stats?tab=mistakes" },
+  {
+    id: "pipeline",
+    label: "Pipeline Performance",
+    href: "/stats?tab=pipeline",
+  },
 ];
 
 export function PreviewInsightsHub({
@@ -25,18 +36,22 @@ export function PreviewInsightsHub({
   playbooks,
   mistakeStats,
   trades,
+  pipelineInput,
 }: {
-  tab: TabId;
+  tab: InsightsTabId;
   statsData: PreviewStatsData;
   closed: Trade[];
   playbooks: Playbook[];
   mistakeStats: MistakeStat[];
   trades: Trade[];
+  pipelineInput: Omit<PipelinePerformanceInput, "filters">;
 }) {
-  const subtitles: Record<TabId, string> = {
+  const subtitles: Record<InsightsTabId, string> = {
     stats: "Cycle metrics — decide what to improve next.",
     journal: "Closed trades, lessons, and review notes — your trading log.",
     mistakes: "What errors cost you money — tagged in trade reviews.",
+    pipeline:
+      "Results by pipeline component — realized Trade P/L separate from Scout counterfactuals.",
   };
 
   return (
@@ -53,6 +68,7 @@ export function PreviewInsightsHub({
                 <Link
                   key={id}
                   href={href}
+                  data-insights-tab={id}
                   className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
                     tab === id
                       ? "bg-violet-600/20 text-violet-300"
@@ -71,6 +87,12 @@ export function PreviewInsightsHub({
           )}
           {tab === "mistakes" && (
             <PreviewMistakes stats={mistakeStats} trades={trades} embedded />
+          )}
+          {tab === "pipeline" && (
+            <PreviewPipelinePerformance
+              input={pipelineInput}
+              playbooks={playbooks.map((p) => ({ id: p.id, name: p.name }))}
+            />
           )}
         </div>
       </div>
