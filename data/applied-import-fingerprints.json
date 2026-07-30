@@ -7,15 +7,5 @@
       "type": "stock-case-create",
       "stockFileId": "ST-IDEMX-001"
     }
-  },
-  {
-    "fingerprint": "1dd14b3076781e8fbfa1c02edffef2dde865f2b1997a39247743b67f499c4764",
-    "appliedAt": "2026-07-30T11:53:18.422Z",
-    "result": {
-      "message": "Updated scout PLAN-APPLY-001 · verdict wait · executionReadiness armed · entry 100 · stop 90 · target 140",
-      "type": "decision-update",
-      "stockFileId": "ST-MSFT-APPLY",
-      "planId": "PLAN-APPLY-001"
-    }
   }
 ]
