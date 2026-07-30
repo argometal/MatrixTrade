@@ -7,6 +7,8 @@
 
 **Copia desde la raíz del repo:** `CHAT-HANDOFF.md`
 
+**Auditoría consolidación (2026-07-31):** ver [`md/matrix/sprint-continuation-001-handoff.md`](md/matrix/sprint-continuation-001-handoff.md) — Needs Attention / drift / Sprints 1–3. No implementar features nuevas hasta aprobar ese roadmap.
+
 ---
 
 ## Pending — ArgusForge 24-33 Recent linkage
