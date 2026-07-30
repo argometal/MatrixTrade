@@ -1,6 +1,7 @@
 import { buildAiContextPackage } from "./ai-context";
 import { formatDecisionSection } from "./scout-decision";
 import { formatLayeredEntrySection } from "./layered-entry-types";
+import { formatScoutExecutionDescriptionLine } from "./scout-execution-description";
 import { formatProbeSection } from "./scout-probe";
 import {
   ensureProfileEvidenceSeeded,
@@ -25,7 +26,7 @@ SCOPED ACCESS — you may ONLY act on the stock profile in this package.
 Allowed types:
 - evidence-add: stockProfileId, ticker, timeframe, category, value, confidence required
 - file-update: id (stock profile), at least one of status, currentHypothesis, notes, thesis
-- decision-update: planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required; optional thesisQuality, opportunityQuality, confirmationCost (supplied prices only), locationEvidence, confirmationEvidence, singleEntryOnly, reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe, layeredEntry{executionMethod,limits[{price,allocationPercent}]} when verdict=go
+- decision-update: planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required; optional thesisQuality, opportunityQuality, confirmationCost (supplied prices only), locationEvidence, confirmationEvidence, singleEntryOnly, reasoning (historical notes — not execution source), planningRisk{}, executionRisk{}, probe{} when verdict=probe; when analysis concludes layered execution MUST include structured layeredEntry{executionMethod,stopModel,sizingMode,authorizedRiskAmount,commonStopPrice,primaryTargetPrice,limits[{price,allocationPercent,role?}]} (min 2 limits, alloc sum 100%) — never leave layers only in reasoning
 - layered-entry-update: planId, filledThroughIndex (0-based) or status (missed|partial|full|active) — record fill outcome without changing thesis
 - scout-assessment: stockProfileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[]
 
@@ -78,6 +79,8 @@ export async function loadScopedScoutContext(grant: ScopedAiGrant): Promise<{
     if (probeSection) decisionProbeSections.push(probeSection);
     const layeredSection = formatLayeredEntrySection(focusPlan);
     if (layeredSection) decisionProbeSections.push(layeredSection);
+    const executionSection = formatScoutExecutionDescriptionLine(focusPlan);
+    if (executionSection) decisionProbeSections.push(executionSection);
   }
 
   const text = [

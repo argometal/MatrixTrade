@@ -1,0 +1,39 @@
+{
+  "_readme": "30-16 — Repair PLAN-007 (GOOGL) layered execution. Paste in Control → Validate → Accept. Does not invent layers from notes; persists structured layeredEntry so Plan Map / snapshots project the broker description. authorizedRiskAmount 126 + risk_percent alloc 34/39/27 yields Matrix-calculated 2/3/3 shares at 315/310/305 (stop 294).",
+  "type": "decision-update",
+  "source": "ai-block",
+  "proposal": {
+    "planId": "PLAN-007",
+    "plannedEntry": 310,
+    "stopPrice": 294,
+    "targetPrice": 380,
+    "layeredEntry": {
+      "executionMethod": "layered_limits",
+      "stopModel": "common",
+      "sizingMode": "risk_percent",
+      "authorizedRiskAmount": 126,
+      "commonStopPrice": 294,
+      "primaryTargetPrice": 380,
+      "limits": [
+        {
+          "price": 315,
+          "allocationPercent": 34,
+          "role": "starter",
+          "rationale": "Starter participation at first structural level"
+        },
+        {
+          "price": 310,
+          "allocationPercent": 39,
+          "role": "preferred",
+          "confidence": "medium"
+        },
+        {
+          "price": 305,
+          "allocationPercent": 27,
+          "role": "deep_pullback"
+        }
+      ]
+    },
+    "notes": "Repair: structured layeredEntry only. Prior reasoning/notes remain historical — not the execution source."
+  }
+}

@@ -69,7 +69,7 @@ function basePlan(overrides: Partial<TradePlan> = {}): TradePlan {
   });
   assert.equal(
     text,
-    "Enter with 20% of authorized risk at 315, 50% at 310, and 30% at 305. Use a common stop at 294 and primary target at 380. Any layer not reached remains unfilled."
+    "Enter with 20% of authorized risk at 315, 50% at 310, and 30% at 305. Use a common stop at 294 and primary target at 380. Any unfilled layer remains inactive."
   );
 }
 
@@ -89,7 +89,7 @@ function basePlan(overrides: Partial<TradePlan> = {}): TradePlan {
   });
   assert.equal(
     text,
-    "Enter 2 shares at 315, 3 shares at 310, and 3 shares at 305. Use a common stop at 294 and primary target at 380."
+    "Enter 2 shares at 315, 3 shares at 310, and 3 shares at 305. Use a common stop at 294 and primary target at 380. Any unfilled layer remains inactive."
   );
   assert.doesNotMatch(text!, /20%|50%|30%/);
 }
@@ -142,7 +142,7 @@ function basePlan(overrides: Partial<TradePlan> = {}): TradePlan {
   });
   assert.equal(
     text,
-    "Enter with 40% of planned position at 150 and 60% at 140. Use a common stop at 100 and primary target at 200. Any layer not reached remains unfilled."
+    "Enter with 40% of planned position at 150 and 60% at 140. Use a common stop at 100 and primary target at 200. Any unfilled layer remains inactive."
   );
 }
 
@@ -170,7 +170,7 @@ function basePlan(overrides: Partial<TradePlan> = {}): TradePlan {
   assert.equal(model.mode, "layered");
   assert.equal(
     model.operationalParagraph,
-    "Enter with 20% of authorized risk at 315, 50% at 310, and 30% at 305. Use a common stop at 294 and primary target at 380. Any layer not reached remains unfilled."
+    "Enter with 20% of authorized risk at 315, 50% at 310, and 30% at 305. Use a common stop at 294 and primary target at 380. Any unfilled layer remains inactive."
   );
   // Notes/reasoning must not affect paragraph
   const noisy = buildPlanMapModel(

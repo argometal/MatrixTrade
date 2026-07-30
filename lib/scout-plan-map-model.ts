@@ -4,7 +4,8 @@ import {
   layeredSharesAvailability,
 } from "./layered-entry";
 import { LAYER_ROLE_LABELS, resolveLayeredExecutionModel } from "./layered-entry-types";
-import { formatPlanMapOperationalParagraph } from "./scout-plan-map-operational";
+import { buildScoutExecutionDescription } from "./scout-execution-description";
+import type { TradePlan } from "./plan-types";
 
 export type ScoutPlanMapModel = {
   mode: "single_entry" | "layered";
@@ -46,8 +47,10 @@ export type ScoutPlanMapModel = {
   allocationModeLabel?: string;
   fillSummary: string;
   spacingCompressed: boolean;
-  /** Concise operational summary from persisted plan data only. */
+  /** Concise operational summary — projection of structured execution (30-16). */
   operationalParagraph?: string;
+  /** Integrity flags from buildScoutExecutionDescription. */
+  executionDescriptionFlags?: string[];
   /** When set, shares cannot be derived — list missing structured fields. */
   sharesUnavailableReason?: string;
 };
@@ -176,21 +179,22 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
     !!layered?.limits?.length &&
     (layered.executionMethod === "layered_limits" || layered.limits.length >= 2);
   const mode: ScoutPlanMapModel["mode"] = isLayered ? "layered" : "single_entry";
-  const allocationMeaning = layers[0]?.allocationMeaning;
-  const operationalParagraph = formatPlanMapOperationalParagraph({
-    mode,
-    layers: layers.map((layer) => ({
-      price: layer.price,
-      allocationPercent: layer.allocationPercent,
-      shares: layer.shares,
-      stopPrice: layer.stopPrice,
-    })),
-    stopModel: layered?.stopModel ?? "common",
-    commonStop,
-    primaryTarget,
-    referenceEntry: view.referenceEntry,
-    allocationMeaning,
-  });
+
+  // Same authoritative projection used by snapshots (30-16).
+  const planShim = {
+    id: view.planId ?? "PLAN",
+    ticker: view.ticker,
+    status: "watching",
+    analysisTimeframes: ["1D"],
+    entryTimeframe: "1D",
+    plannedEntry: view.referenceEntry,
+    stopPrice: commonStop,
+    targetPrice: primaryTarget,
+    layeredEntry: layered,
+    createdAt: "",
+    updatedAt: "",
+  } as TradePlan;
+  const execution = buildScoutExecutionDescription(planShim);
 
   return {
     mode,
@@ -244,7 +248,8 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
           ? "Filled"
           : "Pending",
     spacingCompressed: true,
-    operationalParagraph,
+    operationalParagraph: execution.description,
+    executionDescriptionFlags: execution.flags.length ? execution.flags : undefined,
     sharesUnavailableReason:
       layered && !sharesAvailability.available
         ? `Shares unavailable — missing ${sharesAvailability.missingFields.join(", ")}`

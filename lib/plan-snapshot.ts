@@ -2,6 +2,7 @@ import type { TradePlan } from "./plan-types";
 import { resolvePlannedRRFromPlan } from "./plan-risk";
 import { formatDecisionSection } from "./scout-decision";
 import { formatLayeredEntrySection } from "./layered-entry-types";
+import { formatScoutExecutionDescriptionLine } from "./scout-execution-description";
 import { formatProbeSection } from "./scout-probe";
 
 export function formatPlansSnapshotSection(plans: TradePlan[]): string {
@@ -65,6 +66,10 @@ export function formatPlansSnapshotSection(plans: TradePlan[]): string {
       const layeredBlock = formatLayeredEntrySection(plan);
       if (layeredBlock) {
         lines.push(layeredBlock.split("\n").map((l) => `  ${l}`).join("\n"));
+      }
+      const executionBlock = formatScoutExecutionDescriptionLine(plan);
+      if (executionBlock) {
+        lines.push(executionBlock.split("\n").map((l) => `  ${l}`).join("\n"));
       }
     }
   }
