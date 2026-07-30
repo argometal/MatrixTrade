@@ -25,6 +25,9 @@ async function main() {
   const page = await read("app/(trading)/(preview)/planning/page.tsx");
   const pageHelp = await read("lib/page-help.ts");
   const fundingSnap = await read("lib/scout-funding-snapshot.ts");
+  const sidePanel = await read(
+    "app/components/planning-preview/PlanLevelsSidePanel.tsx"
+  );
 
   // 1 — Header short subtitle, no war-room essay
   assert.match(planning, /Active cases and execution readiness/);
@@ -143,6 +146,10 @@ async function main() {
   assert.match(page, /trigger="icon"/);
   assert.match(help, /trigger\?: \"rail\" \| \"icon\"/);
   assert.match(help, /data-page-help-trigger="icon"/);
+  assert.match(
+    help,
+    /has-\[\[data-scout-map-focus=true\]\]:\[&_\[data-page-help-trigger=icon\]\]:max-lg:hidden/
+  );
   assert.match(pageHelp, /Active cases and execution readiness/);
 
   // 14 — UI·scout hidden in production
@@ -156,6 +163,10 @@ async function main() {
     planning,
     /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/
   );
+
+  // 16 — Plan map Hide above page-help "?" on mobile
+  assert.match(sidePanel, /z-40/);
+  assert.match(sidePanel, /data-scout-plan-map-hide/);
 
   console.log("test-scout-ui-26-41: ok");
 }
