@@ -1,5 +1,6 @@
 import type { PlanLevelsView } from "./plan-levels-board";
 import { LAYER_ROLE_LABELS, resolveLayeredExecutionModel } from "./layered-entry-types";
+import { formatPlanMapOperationalParagraph } from "./scout-plan-map-operational";
 
 export type ScoutPlanMapModel = {
   mode: "single_entry" | "layered";
@@ -40,6 +41,8 @@ export type ScoutPlanMapModel = {
   allocationModeLabel?: string;
   fillSummary: string;
   spacingCompressed: boolean;
+  /** Concise operational summary from persisted plan data only. */
+  operationalParagraph?: string;
 };
 
 type ScoutPlanMapLayer = ScoutPlanMapModel["layers"][number];
@@ -150,8 +153,25 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
   const fillStates = view.layeredEntry?.fillStates;
   const fullBuild = fillStates?.[fillStates.length - 1];
   const filledCount = layers.filter((layer) => layer.fillStatus === "filled").length;
+  const mode: ScoutPlanMapModel["mode"] = layered?.limits?.length ? "layered" : "single_entry";
+  const allocationMeaning = layers[0]?.allocationMeaning;
+  const operationalParagraph = formatPlanMapOperationalParagraph({
+    mode,
+    layers: layers.map((layer) => ({
+      price: layer.price,
+      allocationPercent: layer.allocationPercent,
+      shares: layer.shares,
+      stopPrice: layer.stopPrice,
+    })),
+    stopModel: layered?.stopModel ?? "common",
+    commonStop,
+    primaryTarget,
+    referenceEntry: view.referenceEntry,
+    allocationMeaning,
+  });
+
   return {
-    mode: layered?.limits?.length ? "layered" : "single_entry",
+    mode,
     ticker: view.ticker,
     planId: view.planId ?? "—",
     primaryTarget,
@@ -198,5 +218,6 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
           ? "Filled"
           : "Pending",
     spacingCompressed: true,
+    operationalParagraph,
   };
 }

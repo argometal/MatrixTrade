@@ -401,6 +401,14 @@ export function PlanLevelsBoard({
             </button>
           ) : null}
         </div>
+        {model.operationalParagraph ? (
+          <p
+            className="mt-2 text-xs leading-relaxed text-zinc-300"
+            data-scout-plan-map-operational
+          >
+            {model.operationalParagraph}
+          </p>
+        ) : null}
       </section>
 
       <section className="rounded-xl border border-zinc-800 bg-zinc-950/40 px-2 py-4">
