@@ -1,4 +1,5 @@
 import type { PlanStatus } from "./plan-types";
+import { parseLayeredEntryInput, validateLayeredEntry } from "./layered-entry";
 import { validateScoutContract } from "./scout-contract";
 import type { DecisionVerdict } from "./scout-decision-types";
 
@@ -98,6 +99,17 @@ export function validateScoutPlanCreateProposal(
     }
     if (!Array.isArray(proposal.challenges) || proposal.challenges.length === 0) {
       errors.push("proposal.challenges (min 1) required when verdict is set");
+    }
+  }
+
+  if (proposal.layeredEntry !== undefined) {
+    const layered = parseLayeredEntryInput(proposal.layeredEntry);
+    if (!layered) {
+      errors.push(
+        "proposal.layeredEntry must be a valid layered entry object with limits[{price,allocationPercent}]"
+      );
+    } else {
+      errors.push(...validateLayeredEntry(layered));
     }
   }
 

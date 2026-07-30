@@ -372,11 +372,6 @@ export function authorizeLayeredEntry(
   }
 ): LayeredEntryPlan {
   const firstLimitPrice = input.limits[0]?.price;
-  const hasExplicitRisk =
-    input.authorizedRiskAmount !== undefined ||
-    input.sizingMode === "risk_percent" ||
-    input.executionModel === "modified_kelly" ||
-    input.executionModel === "risk_weighted";
   const stopModel = input.stopModel ?? "common";
   const sizingMode =
     input.executionModel === "modified_kelly" || input.executionModel === "risk_weighted"
@@ -385,7 +380,10 @@ export function authorizeLayeredEntry(
 
   const base: LayeredEntryPlan = {
     executionMethod: input.executionMethod,
-    limits: input.limits.map((l) => ({ ...l })),
+    limits: input.limits.map((l) => {
+      const { derived: _derived, ...rest } = l;
+      return { ...rest };
+    }),
     noChase: true,
     status: "planned",
     firstLimitPrice,
@@ -404,12 +402,13 @@ export function authorizeLayeredEntry(
     return applyModifiedKellyAuthorization(base, input, ctx);
   }
 
-  // Do not infer authorized risk on legacy capital-split plans.
-  if (hasExplicitRisk) {
-    base.authorizedRiskAmount =
-      input.authorizedRiskAmount ?? ctx?.defaultRiskBudget ?? DEFAULT_RISK_BUDGET_USD;
-  } else if (input.authorizedRiskAmount !== undefined) {
+  // Only persist authorized risk when explicitly supplied.
+  // Do not invent DEFAULT_RISK_BUDGET for ordinary layered plans — shares stay unavailable.
+  // modified_kelly / risk_weighted may fall back to default budget when needed.
+  if (input.authorizedRiskAmount !== undefined) {
     base.authorizedRiskAmount = input.authorizedRiskAmount;
+  } else if (input.executionModel === "risk_weighted") {
+    base.authorizedRiskAmount = ctx?.defaultRiskBudget ?? DEFAULT_RISK_BUDGET_USD;
   }
 
   if (
@@ -624,6 +623,81 @@ export function formatLayeredEntrySummary(entry: LayeredEntryPlan): string {
   }
   if (entry.blendedRR !== undefined) parts.push(`${entry.blendedRR.toFixed(1)}R`);
   return parts.join(" · ");
+}
+
+/**
+ * Which inputs are required before Matrix can derive share counts.
+ * Does not invent values — missing fields leave shares unavailable.
+ */
+export function layeredSharesAvailability(entry: LayeredEntryPlan): {
+  available: boolean;
+  missingFields: string[];
+} {
+  const missing: string[] = [];
+  if (entry.authorizedRiskAmount === undefined) missing.push("authorizedRiskAmount");
+  if (entry.primaryTargetPrice === undefined) missing.push("primaryTargetPrice");
+  const stopModel = entry.stopModel ?? "common";
+  if (stopModel === "common") {
+    if (entry.commonStopPrice === undefined && !entry.limits.every((l) => l.stopPrice !== undefined)) {
+      missing.push("commonStopPrice");
+    }
+  } else {
+    const incomplete = entry.limits.some(
+      (l) => l.stopPrice === undefined && entry.commonStopPrice === undefined
+    );
+    if (incomplete) missing.push("stopPrice (per layer)");
+  }
+  return { available: missing.length === 0, missingFields: missing };
+}
+
+/** Canonical layer values shared by textual and graphical Scout Plan views. */
+export function getPersistedLayerDisplayValues(plan: {
+  layeredEntry?: LayeredEntryPlan;
+  stopPrice?: number;
+  targetPrice?: number;
+}): Array<{
+  index: number;
+  price: number;
+  allocationPercent: number;
+  shares?: number;
+  riskAllocated?: number;
+  stopPrice?: number;
+  primaryTargetPrice?: number;
+  role?: string;
+  sharesUnavailable?: boolean;
+  missingFields?: string[];
+}> {
+  const entry = plan.layeredEntry;
+  if (!entry?.limits?.length) return [];
+  const availability = layeredSharesAvailability({
+    ...entry,
+    primaryTargetPrice: entry.primaryTargetPrice ?? plan.targetPrice,
+    commonStopPrice: entry.commonStopPrice ?? plan.stopPrice,
+  });
+  const primaryTarget = entry.primaryTargetPrice ?? plan.targetPrice;
+  return entry.limits.map((limit, index) => {
+    const shares =
+      availability.available &&
+      limit.derived?.plannedQuantity !== undefined &&
+      limit.derived.plannedQuantity > 0
+        ? limit.derived.plannedQuantity
+        : undefined;
+    return {
+      index,
+      price: limit.price,
+      allocationPercent: limit.allocationPercent,
+      shares,
+      riskAllocated: availability.available ? limit.derived?.plannedRiskAmount : undefined,
+      stopPrice:
+        (entry.stopModel ?? "common") === "per_layer"
+          ? limit.stopPrice ?? entry.commonStopPrice ?? plan.stopPrice
+          : entry.commonStopPrice ?? plan.stopPrice,
+      primaryTargetPrice: primaryTarget,
+      role: limit.role,
+      sharesUnavailable: !availability.available || shares === undefined,
+      missingFields: availability.available ? undefined : availability.missingFields,
+    };
+  });
 }
 
 export function getHighestLimitPrice(entry: LayeredEntryPlan): number | undefined {

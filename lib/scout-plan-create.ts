@@ -1,6 +1,8 @@
+import { authorizeLayeredEntry, parseLayeredEntryInput } from "./layered-entry";
 import { computePlannedRR } from "./plan-risk";
 import type { PlanTimeframe, SavePlanInput, TradePlan } from "./plan-types";
 import { PLAN_TIMEFRAMES } from "./plan-types";
+import { getPlansStore } from "./plans-store";
 import { recordScoutDecision, savePlan } from "./plans";
 import {
   parseOptionalIso,
@@ -123,41 +125,80 @@ export async function applyScoutPlanCreate(
   if (!saved.plan) return { errors: ["Failed to create Scout Plan."] };
   if (saved.warnings?.length) warnings.push(...saved.warnings);
 
+  let plan = saved.plan;
+  const layeredInput = parseLayeredEntryInput(proposal.layeredEntry);
+  if (layeredInput) {
+    const authorized = authorizeLayeredEntry(layeredInput, {
+      primaryTargetPrice: layeredInput.primaryTargetPrice ?? plan.targetPrice,
+      planStopPrice: layeredInput.commonStopPrice ?? plan.stopPrice,
+    });
+    plan = {
+      ...plan,
+      layeredEntry: authorized,
+      executionMethod: authorized.executionMethod,
+      stopPrice:
+        authorized.commonStopPrice !== undefined && (authorized.stopModel ?? "common") === "common"
+          ? authorized.commonStopPrice
+          : plan.stopPrice,
+      targetPrice: authorized.primaryTargetPrice ?? plan.targetPrice,
+      plannedEntry: plan.plannedEntry ?? authorized.limits[0]?.price,
+      updatedAt: new Date().toISOString(),
+    };
+    const entry = plan.plannedEntry ?? authorized.averageEntry ?? authorized.limits[0]?.price;
+    if (
+      entry !== undefined &&
+      plan.stopPrice !== undefined &&
+      plan.targetPrice !== undefined
+    ) {
+      const computed = computePlannedRR(entry, plan.stopPrice, plan.targetPrice);
+      if (computed) plan.plannedRR = computed.rr;
+    }
+    await getPlansStore().upsert(plan);
+  }
+
   const verdict = parseVerdict(proposal.verdict);
   if (verdict) {
     const challenges = Array.isArray(proposal.challenges)
       ? proposal.challenges.map((c) => String(c).trim()).filter(Boolean)
       : [];
-    const decision = await recordScoutDecision(saved.plan.id, {
-      verdict,
-      decisionConfidence: Number(proposal.decisionConfidence),
-      challenges,
-      reasoning:
-        proposal.reasoning !== undefined ? String(proposal.reasoning).trim() || undefined : undefined,
-      locationEvidence:
-        proposal.locationEvidence !== undefined
-          ? String(proposal.locationEvidence).trim() || undefined
-          : undefined,
-      confirmationEvidence:
-        proposal.confirmationEvidence !== undefined
-          ? String(proposal.confirmationEvidence).trim() || undefined
-          : undefined,
-      singleEntryOnly: proposal.singleEntryOnly === true ? true : undefined,
-    });
+    const decision = await recordScoutDecision(
+      plan.id,
+      {
+        verdict,
+        decisionConfidence: Number(proposal.decisionConfidence),
+        challenges,
+        reasoning:
+          proposal.reasoning !== undefined
+            ? String(proposal.reasoning).trim() || undefined
+            : undefined,
+        locationEvidence:
+          proposal.locationEvidence !== undefined
+            ? String(proposal.locationEvidence).trim() || undefined
+            : undefined,
+        confirmationEvidence:
+          proposal.confirmationEvidence !== undefined
+            ? String(proposal.confirmationEvidence).trim() || undefined
+            : undefined,
+        singleEntryOnly: proposal.singleEntryOnly === true ? true : undefined,
+      },
+      undefined,
+      // Layers already persisted above; pass again on go so decision path stays consistent.
+      verdict === "go" ? layeredInput : undefined
+    );
     if (decision.errors?.length) {
       return {
-        plan: saved.plan,
+        plan,
         errors: [
-          `Plan ${saved.plan.id} created but decision failed: ${decision.errors.join("; ")}`,
+          `Plan ${plan.id} created but decision failed: ${decision.errors.join("; ")}`,
         ],
         warnings: warnings.length ? warnings : undefined,
       };
     }
     return {
-      plan: decision.plan ?? saved.plan,
+      plan: decision.plan ?? plan,
       warnings: warnings.length ? warnings : undefined,
     };
   }
 
-  return { plan: saved.plan, warnings: warnings.length ? warnings : undefined };
+  return { plan, warnings: warnings.length ? warnings : undefined };
 }

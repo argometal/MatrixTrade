@@ -235,10 +235,7 @@ export function appendDecision(
   probeInput?: ProbeInput,
   layeredEntryInput?: LayeredEntryInput
 ): { plan: TradePlan; errors?: string[] } {
-  const layeredErrors =
-    layeredEntryInput && input.verdict === "go"
-      ? validateLayeredEntry(layeredEntryInput)
-      : [];
+  const layeredErrors = layeredEntryInput ? validateLayeredEntry(layeredEntryInput) : [];
   const errors = [
     ...validateDecision(input, { probe: probeInput }),
     ...layeredErrors,
@@ -282,18 +279,18 @@ export function appendDecision(
     probe = undefined;
   }
 
+  // Layered execution is structured plan data — preserve across verdict changes.
+  // Only replace when a new layered payload is authorized (typically with go).
+  // Do not clear layers on wait/probe/no; that left plans as Single entry · 1 layer.
   let layeredEntry = plan.layeredEntry;
   let executionMethod = plan.executionMethod;
-  if (input.verdict === "go" && layeredEntryInput) {
+  if (layeredEntryInput) {
     layeredEntry = authorizeLayeredEntry(layeredEntryInput, {
       primaryTargetPrice:
         layeredEntryInput.primaryTargetPrice ?? plan.targetPrice,
       planStopPrice: layeredEntryInput.commonStopPrice ?? plan.stopPrice,
     });
     executionMethod = layeredEntry.executionMethod;
-  } else if (input.verdict !== "go") {
-    layeredEntry = undefined;
-    executionMethod = undefined;
   }
 
   const updated: TradePlan = {

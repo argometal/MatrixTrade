@@ -128,9 +128,11 @@ function buildGraphicNodes(
     const quantityLabel =
       layer.shares !== undefined
         ? `${layer.shares} sh.`
-        : layer.allocationPercent !== undefined
-          ? `${layer.allocationPercent}%`
-          : undefined;
+        : layer.sharesUnavailable
+          ? "shares n/a"
+          : layer.allocationPercent !== undefined
+            ? `${layer.allocationPercent}%`
+            : undefined;
     nodes.push({
       kind: "entry",
       label: role,
@@ -456,10 +458,14 @@ export function PlanLevelsBoard({
             </div>
           ))}
         </dl>
-        {model.layers.some(
-          (layer) =>
-            layer.shares === undefined && layer.allocationPercent === undefined
-        ) ? (
+        {model.sharesUnavailableReason ? (
+          <p className="mt-2 text-[10px] text-amber-200/80">
+            {model.sharesUnavailableReason}
+          </p>
+        ) : model.layers.some(
+            (layer) =>
+              layer.shares === undefined && layer.allocationPercent === undefined
+          ) ? (
           <p className="mt-2 text-[10px] text-zinc-500">
             Shares unconfigured on one or more layers — not invented.
           </p>

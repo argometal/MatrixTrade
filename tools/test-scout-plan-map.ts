@@ -192,7 +192,18 @@ async function main() {
   assert.match(side, /view\\.planId|view\.planId/);
   assert.match(side, /Hide plan map|Plan map/);
   assert.match(side, /data-scout-plan-map-panel/);
+  assert.match(side, /data-scout-plan-map-hide/);
   assert.match(side, /fixed inset-x-0 top-14/);
+  // Hide must sit above page-help "?" (z-20) on mobile
+  assert.match(side, /z-40/);
+
+  const help = await read("app/components/preview/PageHelpPanel.tsx");
+  assert.match(
+    help,
+    /has-\[\[data-scout-map-focus=true\]\]:\[&_\[data-page-help-trigger=icon\]\]:max-lg:hidden/
+  );
+  assert.match(help, /data-page-help-trigger="icon"/);
+  assert.match(help, /z-20/);
 
   // Mobile: Scout chrome collapses when plan map focuses
   assert.match(planning, /data-scout-map-focus/);

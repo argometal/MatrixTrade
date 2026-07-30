@@ -544,6 +544,8 @@ export function recomputeLayeredEntryPlan(
     cancelConditions: plan.cancelConditions,
     proposalSource: plan.proposalSource,
     filled: plan.limits.some((l) => l.filled),
+    executionModel: plan.executionModel,
+    modifiedKelly: plan.modifiedKelly,
   };
 
   // Preserve fill flags
