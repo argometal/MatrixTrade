@@ -63,6 +63,8 @@ assert.equal(
   sections.needsReview.some((row) => row.planId === "PLAN-OLD"),
   true
 );
+assert.ok(Array.isArray(sections.passed));
+assert.ok(Array.isArray(sections.lowProbability));
 
 const ids = sections.needsReview.flatMap((row) => row.alerts.map((a) => a.id));
 assert.equal(new Set(ids).size, ids.length);

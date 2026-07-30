@@ -19,6 +19,7 @@ import {
 import { validateAttributionProposal } from "./maf-validate";
 import { validateObservationUpdateProposal } from "./observation-validate";
 import { validatePlanOutcomeProposal } from "./plan-outcome-validate";
+import { EXECUTION_READINESS_STATES } from "./plan-outcome-types";
 import {
   validateExternalPositionCreateProposal,
   validateExternalPositionExitPlanProposal,
@@ -561,6 +562,7 @@ export function validateProposalPayload(
       "layeredEntry",
       "familyBAssessment",
       "operationalAssessment",
+      "executionReadiness",
     ];
     const hasTactical = tacticalFields.some((field) => p[field] !== undefined);
     const hasDecisionMutation =
@@ -571,7 +573,7 @@ export function validateProposalPayload(
 
     if (!hasTactical && !hasDecisionMutation) {
       errors.push(
-        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, familyBAssessment)"
+        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, familyBAssessment, operationalAssessment, executionReadiness)"
       );
     }
 
@@ -709,6 +711,14 @@ export function validateProposalPayload(
               errors.push(`proposal.operationalAssessment.${field} must be numeric`);
             }
           }
+        }
+      }
+      if (p.executionReadiness !== undefined) {
+        const value = String(p.executionReadiness);
+        if (!(EXECUTION_READINESS_STATES as readonly string[]).includes(value)) {
+          errors.push(
+            `proposal.executionReadiness must be one of: ${EXECUTION_READINESS_STATES.join(", ")}`
+          );
         }
       }
     }

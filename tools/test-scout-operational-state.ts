@@ -144,7 +144,7 @@ const now = "2026-07-29T00:00:00.000Z";
 }
 
 {
-  const parsed = parseOperationalPhraseToProposal(plan(), "Already passed");
+  const parsed = parseOperationalPhraseToProposal(plan(), "Passed");
   assert.equal(parsed.ok, true);
   if (parsed.ok) assert.match(parsed.json, /"operationalState": "missed"/);
 }
@@ -157,9 +157,13 @@ const now = "2026-07-29T00:00:00.000Z";
 {
   const parsed = parseOperationalPhraseToProposal(
     plan({ executionReadiness: "approved" }),
-    "Automatic entry active"
+    "Armed"
   );
-  assert.equal(parsed.ok, false);
+  assert.equal(parsed.ok, true);
+  if (parsed.ok) {
+    assert.match(parsed.json, /"executionReadiness": "armed"/);
+    assert.doesNotMatch(parsed.json, /"operationalAssessment"/);
+  }
 }
 
 {

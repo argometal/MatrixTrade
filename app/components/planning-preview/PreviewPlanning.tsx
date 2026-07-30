@@ -51,7 +51,9 @@ import {
   formatConsolidatedOperationalTag,
   formatOperationalR,
   formatOperationalStateLabel,
-  parseOperationalPhraseToProposal,
+  buildOperationalStatusPreview,
+  SCOUT_OPERATIONAL_STATUS_ACTIONS,
+  type OperationalStatusPreview,
   type ScoutOperationalEvaluation,
 } from "@/lib/scout-operational-state";
 import { resolvePlannedRRFromPlan } from "@/lib/plan-risk";
@@ -170,6 +172,9 @@ export function PreviewPlanning({
   const [prepareMsg, setPrepareMsg] = useState("");
   const [quickOperationalPhrase, setQuickOperationalPhrase] = useState("");
   const [quickOperationalMsg, setQuickOperationalMsg] = useState("");
+  const [quickOperationalError, setQuickOperationalError] = useState("");
+  const [operationalPreview, setOperationalPreview] =
+    useState<OperationalStatusPreview | null>(null);
 
   const activeTheses = useMemo(
     () => stockTheses.filter((t) => isActiveStockThesisStatus(t.status)),
@@ -499,11 +504,17 @@ export function PreviewPlanning({
                     className="min-w-[10rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
                   >
                     {scoutCards.map((card) => {
-                      const op = card.operational.detectedAssessment;
-                      const rrLabel = formatOperationalR(op.currentExecutableRR);
+                      const op =
+                        card.operational.confirmedAssessment ??
+                        card.operational.detectedAssessment;
+                      const displayOp =
+                        card.primaryPlan?.executionReadiness === "armed"
+                          ? { ...op, operationalState: "armed" as const, nextAction: "act" as const }
+                          : op;
+                      const rrLabel = formatOperationalR(displayOp.currentExecutableRR);
                       const tag = formatConsolidatedOperationalTag({
                         verdict: card.verdict,
-                        assessment: op,
+                        assessment: displayOp,
                       });
                       return (
                         <option key={card.key} value={card.key}>
@@ -590,6 +601,15 @@ export function PreviewPlanning({
                     const operational = focusedScoutCard.operational.detectedAssessment;
                     const confirmedOperational =
                       focusedScoutCard.operational.confirmedAssessment;
+                    const displayOperational =
+                      plan?.executionReadiness === "armed"
+                        ? {
+                            ...(confirmedOperational ?? operational),
+                            operationalState: "armed" as const,
+                            nextAction: "act" as const,
+                            waitHorizon: "now" as const,
+                          }
+                        : confirmedOperational ?? operational;
                     const fundingInput = plan
                       ? {
                           plan,
@@ -652,20 +672,28 @@ export function PreviewPlanning({
                     async function prepareOperationalStatusUpdate(
                       phrase: string
                     ) {
-                      if (!plan) return;
-                      const parsed = parseOperationalPhraseToProposal(
-                        plan,
-                        phrase
-                      );
-                      if (!parsed.ok) {
-                        setQuickOperationalMsg(parsed.error);
+                      if (!plan) {
+                        setQuickOperationalError(
+                          "No Scout Plan selected — cannot prepare status update."
+                        );
+                        setOperationalPreview(null);
+                        setQuickOperationalMsg("");
                         return;
                       }
-                      const ok = await copyText(parsed.json);
+                      const prepared = buildOperationalStatusPreview(plan, phrase);
+                      if (!prepared.ok) {
+                        setQuickOperationalError(prepared.error);
+                        setOperationalPreview(null);
+                        setQuickOperationalMsg("");
+                        return;
+                      }
+                      setQuickOperationalError("");
+                      setOperationalPreview(prepared.preview);
+                      const ok = await copyText(prepared.preview.json);
                       setQuickOperationalMsg(
                         ok
-                          ? "Copied decision-update — Validate → Accept remains mandatory"
-                          : "Clipboard blocked"
+                          ? "Proposal ready — JSON copied. Open Control → Apply → Validate → Accept."
+                          : "Proposal ready — clipboard blocked; copy JSON from the preview below, then Control → Apply."
                       );
                     }
 
@@ -690,7 +718,7 @@ export function PreviewPlanning({
                           >
                             {formatConsolidatedOperationalTag({
                               verdict: focusedScoutCard.verdict,
-                              assessment: operational,
+                              assessment: displayOperational,
                             })}
                           </span>
                         </div>
@@ -718,16 +746,20 @@ export function PreviewPlanning({
                               [
                                 "Executable R",
                                 formatOperationalR(
-                                  operational.currentExecutableRR
+                                  displayOperational.currentExecutableRR
                                 ),
                               ],
                               [
                                 "Wait Horizon",
-                                operational.waitHorizon,
+                                displayOperational.waitHorizon,
                               ],
                               [
                                 "Room",
                                 `$${monthly.monthlyLossRoom.toFixed(0)}`,
+                              ],
+                              [
+                                "Execution readiness",
+                                plan?.executionReadiness ?? "—",
                               ],
                             ] as const
                           ).map(([label, value]) => (
@@ -772,14 +804,7 @@ export function PreviewPlanning({
                               Update operational state
                             </p>
                             <div className="mt-2 flex flex-wrap gap-2">
-                              {[
-                                "Already passed",
-                                "Maybe next week",
-                                "Review tomorrow",
-                                "Automatic entry active",
-                                "Not likely",
-                                "Reanalyze",
-                              ].map((phrase) => (
+                              {SCOUT_OPERATIONAL_STATUS_ACTIONS.map((phrase) => (
                                 <button
                                   key={phrase}
                                   type="button"
@@ -800,7 +825,7 @@ export function PreviewPlanning({
                                 onChange={(e) =>
                                   setQuickOperationalPhrase(e.target.value)
                                 }
-                                placeholder="Already passed / Review tomorrow / Reanalyze"
+                                placeholder="Passed / Review 1D / Review 1W / Reanalyze / Unlikely / Armed"
                                 className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200"
                                 data-scout-operational-phrase-input
                               />
@@ -817,10 +842,68 @@ export function PreviewPlanning({
                                 Prepare status update
                               </button>
                             </div>
+                            {quickOperationalError ? (
+                              <p
+                                className="mt-2 text-xs text-red-300"
+                                data-scout-operational-error
+                                role="alert"
+                              >
+                                {quickOperationalError}
+                              </p>
+                            ) : null}
                             {quickOperationalMsg ? (
-                              <p className="mt-2 text-xs text-zinc-400">
+                              <p
+                                className="mt-2 text-xs text-emerald-300/90"
+                                data-scout-operational-success
+                              >
                                 {quickOperationalMsg}
                               </p>
+                            ) : null}
+                            {operationalPreview ? (
+                              <div
+                                className="mt-3 space-y-2 rounded-lg border border-zinc-800 bg-black/30 p-3"
+                                data-scout-operational-preview
+                              >
+                                <p className="text-xs font-medium text-zinc-200">
+                                  Action: {operationalPreview.action}
+                                </p>
+                                <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+                                  Changes
+                                </p>
+                                {operationalPreview.changes.length === 0 ? (
+                                  <p className="text-xs text-zinc-500">
+                                    No field changes vs current persisted values.
+                                  </p>
+                                ) : (
+                                  <ul className="space-y-1 text-xs text-zinc-300">
+                                    {operationalPreview.changes.map((change) => (
+                                      <li key={change.field}>
+                                        <span className="font-mono text-zinc-400">
+                                          {change.field}
+                                        </span>
+                                        : {String(change.from)} →{" "}
+                                        {String(change.to)}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                                <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+                                  Generated JSON
+                                </p>
+                                <pre
+                                  className="max-h-48 overflow-auto rounded-md border border-zinc-800 bg-zinc-950 p-2 text-[10px] leading-relaxed text-zinc-300"
+                                  data-scout-operational-json
+                                >
+                                  {operationalPreview.json}
+                                </pre>
+                                <Link
+                                  href="/control"
+                                  className="inline-flex rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-500/20"
+                                  data-scout-operational-apply-link
+                                >
+                                  Open Control → Apply
+                                </Link>
+                              </div>
                             ) : null}
                           </div>
                         ) : null}
