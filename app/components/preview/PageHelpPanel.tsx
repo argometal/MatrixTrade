@@ -124,14 +124,14 @@ export function PageHelpPanel({
         : null;
 
     return (
-      <div className="relative flex h-full min-h-0 w-full overflow-hidden">
+      <div className="relative flex h-full min-h-0 w-full overflow-hidden has-[[data-scout-map-focus=true]]:[&_[data-page-help-trigger=icon]]:max-lg:hidden">
         <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {children}
         </div>
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="absolute right-2 top-2 z-30 flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950/90 text-xs font-semibold text-zinc-400 shadow-sm hover:border-violet-500/40 hover:text-violet-300 lg:right-3 lg:top-3"
+          className="absolute right-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950/90 text-xs font-semibold text-zinc-400 shadow-sm hover:border-violet-500/40 hover:text-violet-300 lg:right-3 lg:top-3"
           aria-label={
             help.panelLabel
               ? `Open ${help.panelLabel.toLowerCase()}`
