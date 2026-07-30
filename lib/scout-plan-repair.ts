@@ -354,8 +354,7 @@ export async function applyDecisionUpdateFromProposal(
   input.decidedBy = (proposal.decidedBy as typeof input.decidedBy) ?? "ai";
   const probeInput =
     input.verdict === "probe" ? parseProbeInput(proposal.probe) : undefined;
-  const layeredEntryInput =
-    input.verdict === "go" ? parseLayeredEntryInput(proposal.layeredEntry) : undefined;
+  const layeredEntryInput = parseLayeredEntryInput(proposal.layeredEntry);
   const decisionResult = await recordScoutDecision(
     planId,
     input,

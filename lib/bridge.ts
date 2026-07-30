@@ -43,6 +43,7 @@ import {
   SCOUT_WAIT_HORIZONS,
 } from "./scout-operational-state";
 import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
+import { parseLayeredEntryInput, validateLayeredEntry } from "./layered-entry";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
 import { getSetupName } from "./setup-types";
@@ -612,8 +613,13 @@ export function validateProposalPayload(
         }
       }
       if (p.layeredEntry !== undefined) {
-        if (!p.layeredEntry || typeof p.layeredEntry !== "object" || Array.isArray(p.layeredEntry)) {
-          errors.push("proposal.layeredEntry must be an object");
+        const layered = parseLayeredEntryInput(p.layeredEntry);
+        if (!layered) {
+          errors.push(
+            "proposal.layeredEntry must be a valid layered entry object with limits[{price,allocationPercent}]"
+          );
+        } else {
+          errors.push(...validateLayeredEntry(layered));
         }
       }
       if (p.operationalAssessment !== undefined) {

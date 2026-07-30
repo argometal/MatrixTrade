@@ -6,6 +6,7 @@ import {
   formatLayeredEntrySummary,
   getExecutionExperimentContext,
   getHighestLimitPrice,
+  layeredSharesAvailability,
 } from "@/lib/layered-entry";
 import {
   LAYERED_ENTRY_STATUS_LABELS,
@@ -48,6 +49,7 @@ export function LayeredEntryPanel({
   const filledCount = entry.limits.filter((l) => l.filled).length;
   const isMissed = entry.status === "missed";
   const executionModel = resolveLayeredExecutionModel(entry);
+  const sharesAvailability = layeredSharesAvailability(entry);
 
   if (executionModel === "modified_kelly") {
     return <ModifiedKellyPanel plan={plan} playbook={playbook} compact={compact} />;
@@ -79,6 +81,12 @@ export function LayeredEntryPanel({
       <p className="mt-1 text-[11px] text-zinc-500">
         Proposed by human/AI · MTA-calculated R and risk · Final human approval required
       </p>
+      {!sharesAvailability.available ? (
+        <p className="mt-2 text-xs text-amber-200/80">
+          Shares unavailable — missing {sharesAvailability.missingFields.join(", ")}.
+          Prices and allocation percentages are preserved.
+        </p>
+      ) : null}
 
       {isMissed ? (
         <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
@@ -104,6 +112,7 @@ export function LayeredEntryPanel({
               <th className="pb-2 pr-3 font-medium">Entry</th>
               <th className="pb-2 pr-3 font-medium">Stop</th>
               <th className="pb-2 pr-3 font-medium">Alloc</th>
+              <th className="pb-2 pr-3 font-medium">Shares</th>
               <th className="pb-2 pr-3 font-medium">Pérdida asignada</th>
               <th className="pb-2 pr-3 font-medium">Ganancia potencial</th>
               <th className="pb-2 pr-3 font-medium">R potencial</th>
@@ -126,6 +135,13 @@ export function LayeredEntryPanel({
                 <td className="py-2 pr-3 tabular-nums text-zinc-500">
                   {limit.allocationPercent}%
                   {entry.sizingMode === "risk_percent" ? " risk" : " pos"}
+                </td>
+                <td className="py-2 pr-3 tabular-nums text-zinc-500">
+                  {sharesAvailability.available &&
+                  limit.derived?.plannedQuantity !== undefined &&
+                  limit.derived.plannedQuantity > 0
+                    ? limit.derived.plannedQuantity
+                    : "n/a"}
                 </td>
                 <td className="py-2 pr-3 tabular-nums text-zinc-500">
                   {(limit.derived?.assignedLoss ?? limit.derived?.plannedRiskAmount) !== undefined

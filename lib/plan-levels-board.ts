@@ -363,6 +363,7 @@ function buildRowsFromPlan(plan: TradePlan): PlanLevelRow[] {
       const role = limit.role ? LAYER_ROLE_LABELS[limit.role] : `Limit ${index + 1}`;
       const rr = limit.derived?.rr;
       const risk$ = limit.derived?.plannedRiskAmount;
+      const qty = limit.derived?.plannedQuantity;
       const stop = limit.stopPrice ?? plan.layeredEntry.commonStopPrice ?? plan.stopPrice;
       rows.push({
         kind: "limit",
@@ -372,6 +373,11 @@ function buildRowsFromPlan(plan: TradePlan): PlanLevelRow[] {
           allocLabel(plan.layeredEntry, limit.allocationPercent),
           stop !== undefined ? `stop ${formatPrice(stop)}` : null,
           rr !== undefined ? `${rr.toFixed(2)}R` : null,
+          qty !== undefined && qty > 0
+            ? `${qty} sh`
+            : plan.layeredEntry.authorizedRiskAmount === undefined
+              ? "shares n/a (missing authorizedRiskAmount)"
+              : null,
           risk$ !== undefined ? `risk $${risk$.toFixed(0)}` : null,
           limit.confidence ? limit.confidence : null,
           filled.trim() || null,
