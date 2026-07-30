@@ -382,12 +382,18 @@ export function PreviewPlanning({
       capitalConfigurationPresent={capitalConfigurationPresent}
       plannedRRByPlanId={plannedRRByPlanId}
     >
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden lg:flex-row" data-scout-desk>
+    <div
+      className={`flex min-h-0 w-full flex-col lg:h-full lg:flex-row lg:overflow-hidden ${
+        mapFocusCompact ? "max-lg:overflow-hidden" : ""
+      }`}
+      data-scout-desk
+      data-scout-map-focus={mapFocusCompact ? "true" : undefined}
+    >
       <div
         className={`min-h-0 min-w-0 overflow-y-auto overscroll-y-contain ${
           mapFocusCompact
-            ? "shrink-0 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:flex-1 lg:pb-10"
-            : "flex-1 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-10"
+            ? "hidden lg:flex lg:flex-1 lg:flex-col lg:pb-10"
+            : "flex-1 pb-4 lg:pb-10"
         }`}
       >
         <header
@@ -395,8 +401,8 @@ export function PreviewPlanning({
             mapFocusCompact ? "py-2 lg:py-3" : "py-3"
           }`}
         >
-          <div className="flex flex-wrap items-start justify-between gap-3 pr-10">
-            <div className={mapFocusCompact ? "lg:block" : undefined}>
+          <div className="flex items-start justify-between gap-3 pr-10">
+            <div className="min-w-0">
               <h1
                 className={`font-semibold text-zinc-100 ${
                   mapFocusCompact ? "text-base lg:text-xl" : "text-xl"
@@ -412,30 +418,31 @@ export function PreviewPlanning({
                 Active cases and execution readiness
               </p>
             </div>
-            <div
-              className={`flex flex-wrap items-center gap-2 ${
-                mapFocusCompact ? "hidden lg:flex" : ""
-              }`}
+          </div>
+          <div
+            className={`mt-2 grid grid-cols-3 gap-1.5 sm:gap-2 ${
+              mapFocusCompact ? "hidden lg:grid" : ""
+            }`}
+            data-scout-header-actions
+          >
+            <Link
+              href="/stock-theses/new"
+              className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-2 text-center text-[11px] font-medium leading-tight text-emerald-300 hover:bg-emerald-500/20 sm:px-3 sm:text-xs"
             >
-              <Link
-                href="/stock-theses/new"
-                className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-500/20"
-              >
-                New stock case
-              </Link>
-              <Link
-                href="/planning/capital"
-                className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-800"
-              >
-                Capital Planner
-              </Link>
-              <Link
-                href="/planning/capital/allocation"
-                className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
-              >
-                Allocation Board
-              </Link>
-            </div>
+              New stock case
+            </Link>
+            <Link
+              href="/planning/capital"
+              className="rounded-lg border border-zinc-600 bg-zinc-900 px-2 py-2 text-center text-[11px] font-medium leading-tight text-zinc-200 hover:bg-zinc-800 sm:px-3 sm:text-xs"
+            >
+              Capital Planner
+            </Link>
+            <Link
+              href="/planning/capital/allocation"
+              className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-2 py-2 text-center text-[11px] font-medium leading-tight text-sky-200 hover:bg-sky-500/20 sm:px-3 sm:text-xs"
+            >
+              Allocation Board
+            </Link>
           </div>
         </header>
 
@@ -642,6 +649,26 @@ export function PreviewPlanning({
                       setTimeout(() => setPrepareMsg(""), 2500);
                     }
 
+                    async function prepareOperationalStatusUpdate(
+                      phrase: string
+                    ) {
+                      if (!plan) return;
+                      const parsed = parseOperationalPhraseToProposal(
+                        plan,
+                        phrase
+                      );
+                      if (!parsed.ok) {
+                        setQuickOperationalMsg(parsed.error);
+                        return;
+                      }
+                      const ok = await copyText(parsed.json);
+                      setQuickOperationalMsg(
+                        ok
+                          ? "Copied decision-update — Validate → Accept remains mandatory"
+                          : "Clipboard blocked"
+                      );
+                    }
+
                     return (
                       <>
                         <div className="flex flex-wrap items-center gap-2">
@@ -756,23 +783,11 @@ export function PreviewPlanning({
                                 <button
                                   key={phrase}
                                   type="button"
+                                  data-scout-operational-preset
                                   className="rounded-full border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-300 hover:bg-zinc-900"
-                                  onClick={async () => {
-                                    const parsed =
-                                      parseOperationalPhraseToProposal(
-                                        plan,
-                                        phrase
-                                      );
-                                    if (!parsed.ok) {
-                                      setQuickOperationalMsg(parsed.error);
-                                      return;
-                                    }
-                                    const ok = await copyText(parsed.json);
-                                    setQuickOperationalMsg(
-                                      ok
-                                        ? "Copied decision-update — paste in Control → Apply"
-                                        : "Clipboard blocked"
-                                    );
+                                  onClick={() => {
+                                    setQuickOperationalPhrase(phrase);
+                                    void prepareOperationalStatusUpdate(phrase);
                                   }}
                                 >
                                   {phrase}
@@ -787,27 +802,17 @@ export function PreviewPlanning({
                                 }
                                 placeholder="Already passed / Review tomorrow / Reanalyze"
                                 className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200"
+                                data-scout-operational-phrase-input
                               />
                               <button
                                 type="button"
+                                data-scout-prepare-status-update
                                 className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
-                                onClick={async () => {
-                                  const parsed =
-                                    parseOperationalPhraseToProposal(
-                                      plan,
-                                      quickOperationalPhrase
-                                    );
-                                  if (!parsed.ok) {
-                                    setQuickOperationalMsg(parsed.error);
-                                    return;
-                                  }
-                                  const ok = await copyText(parsed.json);
-                                  setQuickOperationalMsg(
-                                    ok
-                                      ? "Copied decision-update — Validate → Accept remains mandatory"
-                                      : "Clipboard blocked"
-                                  );
-                                }}
+                                onClick={() =>
+                                  void prepareOperationalStatusUpdate(
+                                    quickOperationalPhrase
+                                  )
+                                }
                               >
                                 Prepare status update
                               </button>

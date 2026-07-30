@@ -31,6 +31,8 @@ async function main() {
   assert.doesNotMatch(planning, /War room — cases to watch/);
   assert.match(planning, /New stock case/);
   assert.match(planning, /Capital Planner/);
+  assert.match(planning, /data-scout-header-actions/);
+  assert.match(planning, /grid grid-cols-3/);
   assert.doesNotMatch(
     planning,
     /header[\s\S]*SnapshotButton[\s\S]*<\/header>/
@@ -147,8 +149,10 @@ async function main() {
   assert.match(badge, /isProductionUi/);
   assert.match(badge, /NODE_ENV === \"production\"/);
 
-  // 15 — Mobile bottom safe-area
-  assert.match(
+  // 15 — Mobile map focus collapses Scout chrome; layout owns bottom safe-area
+  assert.match(planning, /data-scout-map-focus/);
+  assert.match(planning, /hidden lg:flex lg:flex-1 lg:flex-col/);
+  assert.doesNotMatch(
     planning,
     /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/
   );

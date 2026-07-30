@@ -18,20 +18,23 @@ export function PlanLevelsSidePanel({
 
   return (
     <aside
-      className="flex min-h-0 w-full flex-1 flex-col border-t border-zinc-800 bg-zinc-950/95 lg:max-h-none lg:w-[min(400px,38%)] lg:flex-none lg:border-l lg:border-t-0"
+      className="fixed inset-x-0 top-14 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex min-h-0 flex-col border-t border-zinc-800 bg-zinc-950 lg:static lg:inset-auto lg:z-auto lg:w-[min(400px,38%)] lg:flex-none lg:border-l lg:border-t-0 lg:bg-zinc-950/95"
       aria-label={`Plan map for ${view.ticker}`}
+      data-scout-plan-map-panel
     >
       <div className="flex shrink-0 items-start justify-between gap-3 border-b border-zinc-800 px-3 py-2">
-        <div>
-          <h2 className="text-sm font-semibold text-zinc-100">
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-semibold text-zinc-100">
             {view.ticker} · {view.planId ?? "Plan"}
           </h2>
-          {subtitle ? <p className="mt-0.5 text-xs text-zinc-500">{subtitle}</p> : null}
+          {subtitle ? (
+            <p className="mt-0.5 truncate text-xs text-zinc-500">{subtitle}</p>
+          ) : null}
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg border border-zinc-700 px-2 py-1 text-xs text-zinc-400 hover:text-zinc-200"
+          className="shrink-0 rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-300 hover:text-zinc-100"
           aria-label="Close plan map"
         >
           Hide
