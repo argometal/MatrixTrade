@@ -1,7 +1,15 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import type { ControlPanelData } from "@/lib/control-panel-types";
+import { stashControlApplyDraft } from "@/lib/control-apply-draft";
 import { MatrixControlPanel } from "./MatrixControlPanel";
 
 /** Steps that can be requested when opening Control from another surface. */
@@ -9,6 +17,8 @@ export type ControlPanelOpenStep = "pick" | "apply";
 
 export type OpenControlPanelOptions = {
   step?: ControlPanelOpenStep;
+  /** Prefill Control → Apply editor (30-27 Scout Prepare status update handoff). */
+  applyJson?: string;
 };
 
 type MatrixControlPanelContextValue = {
@@ -16,6 +26,8 @@ type MatrixControlPanelContextValue = {
   /** Step to land on when the drawer opens (defaults to pick). */
   requestedStep: ControlPanelOpenStep;
   openPanel: (options?: OpenControlPanelOptions) => void;
+  /** Consume-once in-memory Apply draft (fallback when sessionStorage is blocked). */
+  consumePendingApplyJson: () => string | null;
   closePanel: () => void;
   togglePanel: () => void;
   data: ControlPanelData;
@@ -40,10 +52,22 @@ export function MatrixControlPanelProvider({
 }) {
   const [open, setOpen] = useState(false);
   const [requestedStep, setRequestedStep] = useState<ControlPanelOpenStep>("pick");
+  const pendingApplyJsonRef = useRef<string | null>(null);
 
   const openPanel = useCallback((options?: OpenControlPanelOptions) => {
+    const applyJson = options?.applyJson?.trim();
+    if (applyJson) {
+      stashControlApplyDraft(applyJson);
+      pendingApplyJsonRef.current = applyJson;
+    }
     setRequestedStep(options?.step === "apply" ? "apply" : "pick");
     setOpen(true);
+  }, []);
+
+  const consumePendingApplyJson = useCallback(() => {
+    const value = pendingApplyJsonRef.current;
+    pendingApplyJsonRef.current = null;
+    return value;
   }, []);
 
   const closePanel = useCallback(() => {
@@ -64,7 +88,15 @@ export function MatrixControlPanelProvider({
 
   return (
     <MatrixControlPanelContext.Provider
-      value={{ open, requestedStep, openPanel, closePanel, togglePanel, data }}
+      value={{
+        open,
+        requestedStep,
+        openPanel,
+        consumePendingApplyJson,
+        closePanel,
+        togglePanel,
+        data,
+      }}
     >
       {children}
       <MatrixControlPanel />

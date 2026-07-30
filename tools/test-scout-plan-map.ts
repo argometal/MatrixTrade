@@ -228,7 +228,10 @@ async function main() {
   assert.match(planning, /data-scout-operational-preview/);
   assert.match(planning, /data-scout-operational-error/);
   assert.match(planning, /data-scout-operational-json/);
-  assert.match(planning, /Open Control → Apply/);
+  assert.match(planning, /openPanel\(\{\s*step:\s*"apply",\s*applyJson:/);
+  assert.match(planning, /data-scout-operational-apply-link/);
+  assert.match(planning, /Open Apply/);
+  assert.match(planning, /stashControlApplyDraft/);
   assert.match(
     planning,
     /setQuickOperationalPhrase\(phrase\);\s*void prepareOperationalStatusUpdate\(phrase\)/

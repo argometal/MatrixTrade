@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { acceptAiBlockAction } from "@/app/actions";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { ProposalSketchCard } from "@/app/components/matrix-connect/ProposalSketchCard";
 import { FundingFollowUpPanel } from "@/app/components/control-panel/FundingFollowUpPanel";
+import { useControlPanel } from "@/app/components/control-panel/MatrixControlPanelProvider";
 import { parseAiBlock } from "@/lib/ai-block";
 import { isApplyImplemented } from "@/lib/ai-bridge-types";
 import {
@@ -14,6 +15,7 @@ import {
   formatApplyFailureSnapshot,
   type ApplyFailureRecord,
 } from "@/lib/apply-failure-snapshot";
+import { consumeControlApplyDraft, clearControlApplyDraft } from "@/lib/control-apply-draft";
 import { buildProposalSketch } from "@/lib/proposal-sketch";
 import { validateProposalPayload, type TradingInboxPayload } from "@/lib/bridge";
 import type { FundingFollowUpResult } from "@/lib/scout-funding-follow-up";
@@ -40,6 +42,7 @@ type ApplyStatus = "idle" | "validating" | "applying" | "success" | "failure";
  */
 export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
   const router = useRouter();
+  const { consumePendingApplyJson } = useControlPanel();
   const [phase, setPhase] = useState<UpdatePhase>("paste");
   const [applyInput, setApplyInput] = useState("");
   const [applyStatus, setApplyStatus] = useState<ApplyStatus>("idle");
@@ -53,7 +56,25 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
   const [snapCopied, setSnapCopied] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const acceptingRef = useRef(false);
+  const draftSeededRef = useRef(false);
   const [pending, startTransition] = useTransition();
+
+  // 30-27 — seed Apply editor from Scout Prepare handoff (sessionStorage + memory).
+  useEffect(() => {
+    if (draftSeededRef.current) return;
+    draftSeededRef.current = true;
+    const fromMemory = consumePendingApplyJson();
+    const fromStore = consumeControlApplyDraft();
+    const draft = fromMemory ?? fromStore;
+    if (draft) {
+      clearControlApplyDraft();
+      setApplyInput(draft);
+      setPhase("paste");
+      setApplyStatus("idle");
+      setApplyError(null);
+      setPreview(null);
+    }
+  }, [consumePendingApplyJson]);
 
   const sketch = useMemo(() => (preview ? buildProposalSketch(preview) : null), [preview]);
   const validation = useMemo(

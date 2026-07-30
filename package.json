@@ -45,6 +45,7 @@
     "test:scout-allocation": "tsx tools/test-scout-allocation.ts",
     "test:scout-operational-state": "tsx tools/test-scout-operational-state.ts",
     "test:scout-operational-update": "tsx tools/test-scout-operational-update-31-3c.ts",
+    "test:prepare-status-apply": "tsx tools/test-prepare-status-apply-30-27.ts",
     "test:scout-monitoring": "tsx tools/test-scout-monitoring.ts",
     "test:trades-plan-review": "tsx tools/test-trades-plan-review.ts",
     "test:scout-plan-map": "tsx tools/test-scout-plan-map.ts",

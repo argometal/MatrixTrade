@@ -39,7 +39,9 @@ import {
   scoutFundingSnapshotItem,
 } from "@/lib/scout-funding-snapshot";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
+import { useControlPanel } from "@/app/components/control-panel/MatrixControlPanelProvider";
 import { buildTradeProposalBlock } from "@/lib/build-trade-proposal-block";
+import { stashControlApplyDraft } from "@/lib/control-apply-draft";
 import {
   incompleteTradesForTicker,
   orphanIncompleteTradeTickers,
@@ -163,6 +165,7 @@ export function PreviewPlanning({
   capitalAccount?: CapitalAccountSnapshot | null;
   capitalConfigurationPresent?: boolean;
 }) {
+  const { openPanel } = useControlPanel();
   const [scoutCaseKey, setScoutCaseKey] = useState<string | null>(focusThesisId ?? null);
   const [planPanelOpen, setPlanPanelOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -173,6 +176,9 @@ export function PreviewPlanning({
   const [quickOperationalPhrase, setQuickOperationalPhrase] = useState("");
   const [quickOperationalMsg, setQuickOperationalMsg] = useState("");
   const [quickOperationalError, setQuickOperationalError] = useState("");
+  const [operationalClipboardOk, setOperationalClipboardOk] = useState<boolean | null>(
+    null
+  );
   const [operationalPreview, setOperationalPreview] =
     useState<OperationalStatusPreview | null>(null);
 
@@ -678,6 +684,7 @@ export function PreviewPlanning({
                         );
                         setOperationalPreview(null);
                         setQuickOperationalMsg("");
+                        setOperationalClipboardOk(null);
                         return;
                       }
                       const prepared = buildOperationalStatusPreview(plan, phrase);
@@ -685,16 +692,51 @@ export function PreviewPlanning({
                         setQuickOperationalError(prepared.error);
                         setOperationalPreview(null);
                         setQuickOperationalMsg("");
+                        setOperationalClipboardOk(null);
                         return;
                       }
+                      const json = prepared.preview.json;
                       setQuickOperationalError("");
                       setOperationalPreview(prepared.preview);
-                      const ok = await copyText(prepared.preview.json);
-                      setQuickOperationalMsg(
-                        ok
-                          ? "Proposal ready — JSON copied. Open Control → Apply → Validate → Accept."
-                          : "Proposal ready — clipboard blocked; copy JSON from the preview below, then Control → Apply."
-                      );
+                      // Copy while still in the user-gesture async chain (mobile Safari).
+                      const copied = await copyText(json);
+                      setOperationalClipboardOk(copied);
+                      stashControlApplyDraft(json);
+                      openPanel({ step: "apply", applyJson: json });
+                      if (copied) {
+                        setQuickOperationalMsg(
+                          "JSON copied — Control → Apply opened. Validate → Accept."
+                        );
+                      } else {
+                        setQuickOperationalMsg("");
+                        setQuickOperationalError(
+                          "Clipboard blocked — JSON is ready below and loaded in Apply. Use Copy JSON if needed, then Validate → Accept."
+                        );
+                      }
+                    }
+
+                    async function copyOperationalJsonAgain() {
+                      if (!operationalPreview?.json) return;
+                      const copied = await copyText(operationalPreview.json);
+                      setOperationalClipboardOk(copied);
+                      if (copied) {
+                        setQuickOperationalError("");
+                        setQuickOperationalMsg("JSON copied to clipboard.");
+                      } else {
+                        setQuickOperationalMsg("");
+                        setQuickOperationalError(
+                          "Clipboard still blocked — select the JSON below and copy manually, or use the JSON already loaded in Apply."
+                        );
+                      }
+                    }
+
+                    function openOperationalApply() {
+                      if (!operationalPreview?.json) return;
+                      stashControlApplyDraft(operationalPreview.json);
+                      openPanel({
+                        step: "apply",
+                        applyJson: operationalPreview.json,
+                      });
                     }
 
                     return (
@@ -896,13 +938,26 @@ export function PreviewPlanning({
                                 >
                                   {operationalPreview.json}
                                 </pre>
-                                <Link
-                                  href="/control"
-                                  className="inline-flex rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-500/20"
-                                  data-scout-operational-apply-link
-                                >
-                                  Open Control → Apply
-                                </Link>
+                                <div className="flex flex-wrap gap-2">
+                                  {operationalClipboardOk === false ? (
+                                    <button
+                                      type="button"
+                                      data-scout-operational-copy-json
+                                      className="inline-flex rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
+                                      onClick={() => void copyOperationalJsonAgain()}
+                                    >
+                                      Copy JSON
+                                    </button>
+                                  ) : null}
+                                  <button
+                                    type="button"
+                                    data-scout-operational-apply-link
+                                    className="inline-flex rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-500/20"
+                                    onClick={openOperationalApply}
+                                  >
+                                    Open Apply
+                                  </button>
+                                </div>
                               </div>
                             ) : null}
                           </div>
