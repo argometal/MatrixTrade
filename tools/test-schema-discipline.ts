@@ -122,6 +122,8 @@ assert.equal(
     plannedEntry: 140.5,
     stopPrice: 135,
     targetPrice: 160,
+    executionInstruction:
+      "Buy at $140.50. Place stop at $135. Hold until primary target $160. Do not chase.",
   });
   assert.equal(ok.ok, true, ok.ok ? "" : (ok as { errors: string[] }).errors.join("; "));
 }

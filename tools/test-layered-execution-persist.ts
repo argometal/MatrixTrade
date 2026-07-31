@@ -353,6 +353,8 @@ async function main() {
     decisionConfidence: 80,
     challenges: ["timing"],
     layeredEntry: layeredPayload,
+    executionInstruction:
+      "Buy 30% at $240, add 40% at $230 if reached, complete at $220. Common stop $200. Hold to $270. Do not chase. Unfilled layers stay inactive.",
   });
   assert.equal(created.errors, undefined, String(created.errors));
   assert.ok(created.plan?.layeredEntry);

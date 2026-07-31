@@ -4,7 +4,7 @@ import {
   layeredSharesAvailability,
 } from "./layered-entry";
 import { LAYER_ROLE_LABELS, resolveLayeredExecutionModel } from "./layered-entry-types";
-import { formatPlanMapOperationalParagraph } from "./scout-plan-map-operational";
+import { resolvePlanMapExecutionInstruction } from "./scout-execution-instruction";
 
 export type ScoutPlanMapModel = {
   mode: "single_entry" | "layered";
@@ -46,7 +46,10 @@ export type ScoutPlanMapModel = {
   allocationModeLabel?: string;
   fillSummary: string;
   spacingCompressed: boolean;
-  /** Concise operational summary from persisted plan data only. */
+  /**
+   * AI-authored operational execution instruction (explanation layer).
+   * Never template-generated from structured levels.
+   */
   operationalParagraph?: string;
   /** When set, shares cannot be derived — list missing structured fields. */
   sharesUnavailableReason?: string;
@@ -176,20 +179,8 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
     !!layered?.limits?.length &&
     (layered.executionMethod === "layered_limits" || layered.limits.length >= 2);
   const mode: ScoutPlanMapModel["mode"] = isLayered ? "layered" : "single_entry";
-  const allocationMeaning = layers[0]?.allocationMeaning;
-  const operationalParagraph = formatPlanMapOperationalParagraph({
-    mode,
-    layers: layers.map((layer) => ({
-      price: layer.price,
-      allocationPercent: layer.allocationPercent,
-      shares: layer.shares,
-      stopPrice: layer.stopPrice,
-    })),
-    stopModel: layered?.stopModel ?? "common",
-    commonStop,
-    primaryTarget,
-    referenceEntry: view.referenceEntry,
-    allocationMeaning,
+  const operationalParagraph = resolvePlanMapExecutionInstruction({
+    executionInstruction: view.executionInstruction,
   });
 
   return {

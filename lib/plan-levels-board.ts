@@ -50,6 +50,8 @@ export interface PlanLevelsView {
   primaryTarget?: number;
   extendedTargets?: number[];
   commonStop?: number;
+  /** AI-authored Plan Map execution sentence — explanation layer only. */
+  executionInstruction?: string;
   operationalState?: string;
   nextAction?: string;
   executableRR?: number | null;
@@ -544,6 +546,7 @@ export function buildPlanLevelsView(
       )
     ).sort((a, b) => b - a),
     commonStop: plan?.layeredEntry?.commonStopPrice ?? plan?.stopPrice,
+    executionInstruction: plan?.executionInstruction,
     operationalState: operational?.detectedAssessment.operationalState,
     nextAction: operational?.detectedAssessment.nextAction,
     executableRR: operational?.detectedAssessment.currentExecutableRR,

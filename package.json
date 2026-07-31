@@ -52,6 +52,8 @@
     "test:trades-plan-review": "tsx tools/test-trades-plan-review.ts",
     "test:scout-plan-map": "tsx tools/test-scout-plan-map.ts",
     "test:plan-map-operational": "tsx tools/test-plan-map-operational.ts",
+    "test:scout-execution-instruction": "tsx tools/test-scout-execution-instruction.ts",
+    "test:execution-instruction-mandatory": "tsx tools/test-execution-instruction-mandatory.ts",
     "test:apply-failure-snapshot": "tsx tools/test-apply-failure-snapshot.ts",
     "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"
   },

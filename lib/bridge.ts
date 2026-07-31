@@ -45,6 +45,7 @@ import {
 } from "./scout-operational-state";
 import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
 import { parseLayeredEntryInput, validateLayeredEntry } from "./layered-entry";
+import { requireExecutionInstructionForGeometry } from "./scout-execution-instruction";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
 import { getSetupName } from "./setup-types";
@@ -563,6 +564,7 @@ export function validateProposalPayload(
       "familyBAssessment",
       "operationalAssessment",
       "executionReadiness",
+      "executionInstruction",
     ];
     const hasTactical = tacticalFields.some((field) => p[field] !== undefined);
     const hasDecisionMutation =
@@ -573,8 +575,18 @@ export function validateProposalPayload(
 
     if (!hasTactical && !hasDecisionMutation) {
       errors.push(
-        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, familyBAssessment, operationalAssessment, executionReadiness)"
+        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, familyBAssessment, operationalAssessment, executionReadiness, executionInstruction)"
       );
+    }
+    if (p.executionInstruction !== undefined) {
+      const text = String(p.executionInstruction).trim();
+      if (!text) {
+        errors.push("proposal.executionInstruction must be a non-empty string when provided");
+      }
+    }
+    {
+      const instructionErr = requireExecutionInstructionForGeometry(p);
+      if (instructionErr) errors.push(instructionErr);
     }
 
     if (hasDecisionMutation) {

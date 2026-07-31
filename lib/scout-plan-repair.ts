@@ -32,6 +32,7 @@ export const DECISION_TACTICAL_FIELDS = [
   "layeredEntry",
   "operationalAssessment",
   "executionReadiness",
+  "executionInstruction",
 ] as const;
 
 export type DecisionTacticalField = (typeof DECISION_TACTICAL_FIELDS)[number];
@@ -200,6 +201,14 @@ export async function updatePlanTacticsFromProposal(
   }
   if (proposal.notes !== undefined) {
     updated.chatNotes = String(proposal.notes).trim() || undefined;
+  }
+  if (proposal.executionInstruction !== undefined) {
+    const { normalizeExecutionInstruction } = await import(
+      "./scout-execution-instruction"
+    );
+    updated.executionInstruction = normalizeExecutionInstruction(
+      proposal.executionInstruction
+    );
   }
   if (proposal.validUntil !== undefined) {
     updated.validUntil = parseOptionalIso(proposal.validUntil);
@@ -378,7 +387,7 @@ export async function applyDecisionUpdateFromProposal(
   if (!hasTactical && !hasDecision) {
     return {
       errors: [
-        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, operationalAssessment, executionReadiness).",
+        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, operationalAssessment, executionReadiness, executionInstruction).",
       ],
     };
   }

@@ -2,6 +2,7 @@ import type { PlanStatus } from "./plan-types";
 import { parseLayeredEntryInput, validateLayeredEntry } from "./layered-entry";
 import { validateScoutContract } from "./scout-contract";
 import type { DecisionVerdict } from "./scout-decision-types";
+import { requireExecutionInstructionForGeometry } from "./scout-execution-instruction";
 
 export function parseOptionalNumber(value: unknown): number | undefined {
   if (value === undefined || value === null || value === "") return undefined;
@@ -113,6 +114,13 @@ export function validateScoutPlanCreateProposal(
     }
   }
 
+  // scout-plan-create always creates geometry → executionInstruction mandatory
+  const instructionErr = requireExecutionInstructionForGeometry(proposal, {
+    always: true,
+  });
+  if (instructionErr) errors.push(instructionErr);
+
   if (errors.length) return { ok: false, errors };
   return { ok: true };
 }
+

@@ -3,6 +3,10 @@ import { resolvePlannedRRFromPlan } from "./plan-risk";
 import { formatDecisionSection } from "./scout-decision";
 import { formatLayeredEntrySection } from "./layered-entry-types";
 import { formatProbeSection } from "./scout-probe";
+import {
+  formatExecutionInstructionGuidance,
+  formatExecutionInstructionSection,
+} from "./scout-execution-instruction";
 
 export function formatPlansSnapshotSection(plans: TradePlan[]): string {
   const active = plans.filter((p) => p.status === "watching" || p.status === "ready");
@@ -15,7 +19,10 @@ export function formatPlansSnapshotSection(plans: TradePlan[]): string {
     (p) => (p.status === "failed" || p.status === "expired") && !p.outcome?.recordedAt
   );
 
-  const lines = ["=== TRADE PLANS (AI) ===", "rr_rule:planned_rr = (target-entry)/(entry-strategy_stop) — never structural invalidation"];
+  const lines = [
+    "=== TRADE PLANS (AI) ===",
+    "rr_rule:planned_rr = (target-entry)/(entry-strategy_stop) — never structural invalidation",
+  ];
 
   if (active.length === 0) {
     lines.push("active_plans:0");
@@ -54,6 +61,10 @@ export function formatPlansSnapshotSection(plans: TradePlan[]): string {
           `  layered_entry:${plan.layeredEntry.status} method:${plan.layeredEntry.executionMethod} limits:${plan.layeredEntry.limits.length}`
         );
       }
+      const instructionBlock = formatExecutionInstructionSection(plan);
+      if (instructionBlock) {
+        lines.push(instructionBlock.split("\n").map((l) => `  ${l}`).join("\n"));
+      }
       const decisionBlock = formatDecisionSection(plan);
       if (decisionBlock) {
         lines.push(decisionBlock.split("\n").map((l) => `  ${l}`).join("\n"));
@@ -85,6 +96,8 @@ export function formatPlansSnapshotSection(plans: TradePlan[]): string {
       );
     }
   }
+
+  lines.push("", formatExecutionInstructionGuidance());
 
   return lines.join("\n");
 }

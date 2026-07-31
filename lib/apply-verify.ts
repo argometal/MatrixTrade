@@ -112,6 +112,7 @@ async function verifyDecisionUpdatePersistence(
     "status",
     "operationalAssessment",
     "executionReadiness",
+    "executionInstruction",
   ] as const;
   const hasTactical = tacticalFields.some((field) => p[field] !== undefined);
   const hasDecision =
@@ -143,6 +144,15 @@ async function verifyDecisionUpdatePersistence(
     if (p.executionReadiness !== undefined) {
       if (reloaded.executionReadiness !== String(p.executionReadiness).trim()) {
         failures.push("executionReadiness");
+      }
+    }
+    if (p.executionInstruction !== undefined) {
+      const { normalizeExecutionInstruction } = await import(
+        "./scout-execution-instruction"
+      );
+      const expected = normalizeExecutionInstruction(p.executionInstruction);
+      if (reloaded.executionInstruction !== expected) {
+        failures.push("executionInstruction");
       }
     }
     if (p.operationalAssessment !== undefined) {
@@ -270,6 +280,20 @@ async function verifyScoutPlanCreatePersistence(
     );
   if (!match) {
     return { ok: false, detail: `No new Scout Plan found for ${stockFileId} @ entry ${entry}.` };
+  }
+  if (parsed.proposal.executionInstruction !== undefined) {
+    const { normalizeExecutionInstruction } = await import(
+      "./scout-execution-instruction"
+    );
+    const expected = normalizeExecutionInstruction(
+      parsed.proposal.executionInstruction
+    );
+    if (match.executionInstruction !== expected) {
+      return {
+        ok: false,
+        detail: `executionInstruction not persisted on ${match.id}.`,
+      };
+    }
   }
   return {
     ok: true,
