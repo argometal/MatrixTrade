@@ -563,6 +563,7 @@ export function validateProposalPayload(
       "familyBAssessment",
       "operationalAssessment",
       "executionReadiness",
+      "executionInstruction",
     ];
     const hasTactical = tacticalFields.some((field) => p[field] !== undefined);
     const hasDecisionMutation =
@@ -573,8 +574,14 @@ export function validateProposalPayload(
 
     if (!hasTactical && !hasDecisionMutation) {
       errors.push(
-        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, familyBAssessment, operationalAssessment, executionReadiness)"
+        "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, familyBAssessment, operationalAssessment, executionReadiness, executionInstruction)"
       );
+    }
+    if (p.executionInstruction !== undefined) {
+      const text = String(p.executionInstruction).trim();
+      if (!text) {
+        errors.push("proposal.executionInstruction must be a non-empty string when provided");
+      }
     }
 
     if (hasDecisionMutation) {

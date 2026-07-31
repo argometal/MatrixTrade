@@ -126,6 +126,20 @@ export async function applyScoutPlanCreate(
   if (saved.warnings?.length) warnings.push(...saved.warnings);
 
   let plan = saved.plan;
+  if (proposal.executionInstruction !== undefined) {
+    const { normalizeExecutionInstruction } = await import(
+      "./scout-execution-instruction"
+    );
+    const instruction = normalizeExecutionInstruction(proposal.executionInstruction);
+    if (instruction !== plan.executionInstruction) {
+      plan = {
+        ...plan,
+        executionInstruction: instruction,
+        updatedAt: new Date().toISOString(),
+      };
+      await getPlansStore().upsert(plan);
+    }
+  }
   const layeredInput = parseLayeredEntryInput(proposal.layeredEntry);
   if (layeredInput) {
     const authorized = authorizeLayeredEntry(layeredInput, {

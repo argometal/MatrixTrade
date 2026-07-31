@@ -112,6 +112,7 @@ async function verifyDecisionUpdatePersistence(
     "status",
     "operationalAssessment",
     "executionReadiness",
+    "executionInstruction",
   ] as const;
   const hasTactical = tacticalFields.some((field) => p[field] !== undefined);
   const hasDecision =
@@ -143,6 +144,15 @@ async function verifyDecisionUpdatePersistence(
     if (p.executionReadiness !== undefined) {
       if (reloaded.executionReadiness !== String(p.executionReadiness).trim()) {
         failures.push("executionReadiness");
+      }
+    }
+    if (p.executionInstruction !== undefined) {
+      const { normalizeExecutionInstruction } = await import(
+        "./scout-execution-instruction"
+      );
+      const expected = normalizeExecutionInstruction(p.executionInstruction);
+      if (reloaded.executionInstruction !== expected) {
+        failures.push("executionInstruction");
       }
     }
     if (p.operationalAssessment !== undefined) {

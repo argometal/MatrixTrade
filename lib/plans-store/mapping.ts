@@ -8,6 +8,13 @@ import type { ExecutionReadinessState } from "../plan-outcome-types";
 
 type LayeredEntryRow = LayeredEntryPlan & {
   familyBAssessment?: FamilyBEntryAssessment;
+  /** Sidecar — AI Plan Map instruction when dedicated column absent. */
+  executionInstruction?: string;
+};
+
+type DecisionRow = ScoutDecision & {
+  /** Sidecar — AI Plan Map instruction when dedicated column absent. */
+  executionInstruction?: string;
 };
 
 interface PlanRow {
@@ -27,9 +34,11 @@ interface PlanRow {
   valid_until: string | null;
   thesis: string | null;
   chat_notes: string | null;
+  /** Optional dedicated column (see supabase/trade-plans-execution-instruction.sql). */
+  execution_instruction?: string | null;
   linked_trade_id: string | null;
   outcome: PlanOutcome | null;
-  decision: ScoutDecision | null;
+  decision: DecisionRow | null;
   decision_history: ScoutDecision[] | null;
   scout_lifecycle: ScoutLifecycleStatus | null;
   probe: Probe | null;
@@ -52,10 +61,24 @@ export function planRowToPlan(row: PlanRow): TradePlan {
   const layeredRaw = row.layered_entry ?? undefined;
   let layeredEntry: LayeredEntryPlan | undefined;
   let familyBAssessment: FamilyBEntryAssessment | undefined;
+  let layeredInstruction: string | undefined;
   if (layeredRaw) {
-    const { familyBAssessment: nested, ...rest } = layeredRaw;
+    const {
+      familyBAssessment: nested,
+      executionInstruction: fromLayered,
+      ...rest
+    } = layeredRaw;
     layeredEntry = rest;
     familyBAssessment = nested;
+    layeredInstruction = fromLayered;
+  }
+  const decisionRaw = row.decision ?? undefined;
+  let decision: ScoutDecision | undefined;
+  let decisionInstruction: string | undefined;
+  if (decisionRaw) {
+    const { executionInstruction: fromDecision, ...rest } = decisionRaw;
+    decision = rest;
+    decisionInstruction = fromDecision;
   }
   return {
     id: row.id,
@@ -74,9 +97,14 @@ export function planRowToPlan(row: PlanRow): TradePlan {
     validUntil: row.valid_until ?? undefined,
     thesis: row.thesis ?? undefined,
     chatNotes: row.chat_notes ?? undefined,
+    executionInstruction:
+      row.execution_instruction ??
+      decisionInstruction ??
+      layeredInstruction ??
+      undefined,
     linkedTradeId: row.linked_trade_id ?? undefined,
     outcome: row.outcome ?? undefined,
-    decision: row.decision ?? undefined,
+    decision,
     decisionHistory: row.decision_history ?? undefined,
     scoutLifecycle: row.scout_lifecycle ?? undefined,
     probe: row.probe ?? undefined,
@@ -93,16 +121,26 @@ export function planRowToPlan(row: PlanRow): TradePlan {
   };
 }
 
-/** Supabase row for upsert — omits columns not yet on all prod schemas. */
+/**
+ * Supabase row for upsert — omits columns not yet on all prod schemas.
+ * AI executionInstruction nests into decision / layered_entry jsonb sidecars
+ * so Plan Map text round-trips without requiring a migration first.
+ */
 export function planToSupabaseRow(
   plan: TradePlan
-): Omit<PlanRow, "execution_method" | "execution_readiness"> {
+): Omit<PlanRow, "execution_method" | "execution_readiness" | "execution_instruction"> {
   const row = planToRow(plan);
-  const { execution_method: _omitMethod, execution_readiness: _omitReady, ...rest } = row;
+  const {
+    execution_method: _omitMethod,
+    execution_readiness: _omitReady,
+    execution_instruction: _omitInstruction,
+    ...rest
+  } = row;
   return rest;
 }
 
 export function planToRow(plan: TradePlan): PlanRow {
+  const instruction = plan.executionInstruction ?? undefined;
   return {
     id: plan.id,
     ticker: plan.ticker.toUpperCase(),
@@ -120,9 +158,15 @@ export function planToRow(plan: TradePlan): PlanRow {
     valid_until: plan.validUntil ?? null,
     thesis: plan.thesis ?? null,
     chat_notes: plan.chatNotes ?? null,
+    execution_instruction: instruction ?? null,
     linked_trade_id: plan.linkedTradeId ?? null,
     outcome: plan.outcome ?? null,
-    decision: plan.decision ?? null,
+    decision: plan.decision
+      ? {
+          ...plan.decision,
+          ...(instruction ? { executionInstruction: instruction } : {}),
+        }
+      : null,
     decision_history: plan.decisionHistory ?? [],
     scout_lifecycle: plan.scoutLifecycle ?? null,
     probe: plan.probe ?? null,
@@ -132,6 +176,7 @@ export function planToRow(plan: TradePlan): PlanRow {
           ...(plan.familyBAssessment
             ? { familyBAssessment: plan.familyBAssessment }
             : {}),
+          ...(instruction ? { executionInstruction: instruction } : {}),
         }
       : null,
     execution_method: plan.executionMethod ?? null,

@@ -136,6 +136,11 @@ export interface TradePlan {
   validUntil?: string;
   thesis?: string;
   chatNotes?: string;
+  /**
+   * AI-authored Plan Map execution instruction (explanation layer only).
+   * Displayed under the plan header — never a calculation source; never template-generated.
+   */
+  executionInstruction?: string;
   linkedTradeId?: string;
   outcome?: PlanOutcome;
   /** Latest decision snapshot (V2 Decision Engine). */
@@ -184,6 +189,8 @@ export type SavePlanInput = {
   validUntil?: string;
   thesis?: string;
   chatNotes?: string;
+  /** AI-authored Plan Map execution instruction (optional). */
+  executionInstruction?: string;
 };
 
 export type RecordPlanOutcomeInput = {

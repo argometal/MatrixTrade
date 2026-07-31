@@ -286,6 +286,7 @@ export function buildMatrixMechanicsBrief(): string {
     "Do not label position % as risk % when stop distances differ. Default authorized risk comes from rules.defaultRiskBudget (editable; migration default USD 100).",
     "stopModel=common (preferred) or per_layer (explicit; separate attribution). Starter role is a controlled exception — not permission for poor trades.",
     "No chase remains hard. Matrix never invents entry levels or stops.",
+    "Plan Map execution sentence: AI-authored proposal.executionInstruction only (PM-style operational instruction). Never a deterministic template. Never invent prices/shares/risk. Omit unknowns. Explanation layer — does not change Matrix math.",
     "FAMILY B (secular-trend-continuation): classify entry state watch|starter_available|preferred_entry_available|deep_entry_available|extended_no_chase|structure_damaged|invalidated.",
     "Preferred pullback normally largest allocation; starter ≤30%; deep may raise R while weakening thesis — show both. Fibonacci is context only.",
     "Apply familyBAssessment + layeredEntry on decision-update; Scout verdict remains go|wait|probe|no.",

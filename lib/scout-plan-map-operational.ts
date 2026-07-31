@@ -1,6 +1,7 @@
 /**
- * Concise operational paragraph for Scout Plan Map.
- * Built only from persisted structured plan / layeredEntry data — never from notes or reasoning.
+ * Legacy deterministic formatter (30-0B). Plan Map no longer uses this —
+ * the header sentence is AI-authored `executionInstruction` only.
+ * Kept for unit coverage / tooling; do not wire into Plan Map UI.
  */
 
 export type PlanMapOperationalLayer = {

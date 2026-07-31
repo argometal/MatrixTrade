@@ -178,6 +178,8 @@ export async function savePlan(input: SavePlanInput): Promise<{
     validUntil: parseOptionalIso(input.validUntil) ?? existing?.validUntil,
     thesis: input.thesis?.trim() || undefined,
     chatNotes: input.chatNotes?.trim() || undefined,
+    executionInstruction:
+      input.executionInstruction?.trim() || existing?.executionInstruction,
     linkedTradeId: existing?.linkedTradeId,
     outcome: existing?.outcome,
     decision: existing?.decision,
