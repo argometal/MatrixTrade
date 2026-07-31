@@ -11,21 +11,22 @@
 
 ## Pending — Plan Map AI execution sentence
 
-PR: #132 (draft) · e`  
-Doc entrega: `md/matrix/plan-map-ai-execution-sentence-handoff.md`  
-Architecture review (full): `md/matrix/execution-instruction-architecture-follow-up.md`  
-Test: `npm run test:scout-execution-instruction` · `npm run test:plan-map-operational`
+PR: #132 · branch `cursor/plan-map-ai-execution-sentence-b0a5`
+Doc entrega: `md/matrix/plan-map-ai-execution-sentence-handoff.md`
+Architecture: `md/matrix/execution-instruction-architecture-follow-up.md`
+**Spec canónica:** `md/matrix/execution-instruction-spec.md`
+**Ontología:** `md/matrix/scout-ontology-scoutplan.md`
+**Diff legible (Chat):** `md/matrix/execution-instruction-implement-diff.md`
+Test: `npm run test:execution-instruction-mandatory` · `npm run test:scout-execution-instruction`
 
-Plan Map header sentence = AI `executionInstruction` only (no deterministic template). Not shipped until merge + prod verify.
+**Implemented on branch (pending merge + prod):**
 
-**Architecture decisions (accepted in review; not yet implemented in code):**
+- Plan Map sentence = AI `executionInstruction` only (no deterministic template)
+- **Mandatory gate:** `scout-plan-create` + geometry-mutating `decision-update` → schema Validate rejects missing instruction; Apply Verify confirms persist
+- Spec + ScoutPlan ontology docs landed
+- **PR #125:** superseded for Plan Map sentence — do not merge deterministic description; evolve to guidance/integrity or close
 
-- **B — Mandatory:** actionable Scout (create or geometry-mutating `decision-update`) ⇒ `executionInstruction` required. Reject at **schema Validate**; **Apply Verify** confirms persist; **no UI fallback / no deterministic sentence**.
-- **C — Ontology milestone:** ScoutPlan aggregate → Plan Map / ATTN / Dashboard / Learning / Trade projections (doc-only first).
-- **D — Spec:** draft in architecture follow-up §3; canonical `md/matrix/execution-instruction-spec.md` **not yet promoted**.
-- **E — PR #125:** open — reconcile before merge; must not restore deterministic Plan Map sentence; evolve → generation guidance / integrity **or close**.
-
-**Do not implement gates until architecture acceptance + #132 merge + #125 reconciliation.**
+Not shipped until merge + prod verify. Legacy plans without instruction still show empty sentence until AI backfill.
 
 ---
 

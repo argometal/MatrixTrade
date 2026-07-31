@@ -281,6 +281,20 @@ async function verifyScoutPlanCreatePersistence(
   if (!match) {
     return { ok: false, detail: `No new Scout Plan found for ${stockFileId} @ entry ${entry}.` };
   }
+  if (parsed.proposal.executionInstruction !== undefined) {
+    const { normalizeExecutionInstruction } = await import(
+      "./scout-execution-instruction"
+    );
+    const expected = normalizeExecutionInstruction(
+      parsed.proposal.executionInstruction
+    );
+    if (match.executionInstruction !== expected) {
+      return {
+        ok: false,
+        detail: `executionInstruction not persisted on ${match.id}.`,
+      };
+    }
+  }
   return {
     ok: true,
     detail: `Scout Plan ${match.id} verified · linked ${match.stockThesisId} · status ${match.status}`,

@@ -1,11 +1,13 @@
 # MTA · ExecutionInstruction architecture follow-up (post #132)
 
 **Fecha:** 2026-07-31  
-**Mode:** architecture review — **no code implementation authorized yet**  
+**Mode:** architecture + implementation on branch #132  
 **Baseline:** PR #132 — `executionInstruction` = Plan Map sentence  
 **Related:** PR #125 · entrega `#132` · `CHAT-HANDOFF.md`  
 **Branch:** `cursor/plan-map-ai-execution-sentence-b0a5`  
-**Tip at last review:** `f06ee1f`
+**Implementation status:** mandatory gate + spec + ontology **landed on branch** (see `md/matrix/execution-instruction-implement-diff.md`)  
+**Spec canónica:** `md/matrix/execution-instruction-spec.md`  
+**Ontología:** `md/matrix/scout-ontology-scoutplan.md`
 
 **Sources reviewed:** PR #132 · PR #125 · `CHAT-HANDOFF.md` · `md/matrix/plan-map-ai-execution-sentence-handoff.md` · repo prompts/snapshots/docs
 
@@ -15,9 +17,9 @@
 
 1. **`executionInstruction` mandatory** for actionable Scout geometry — gate in **schema Validate**, confirm in **Apply Verify**; never UI fallback; never deterministic sentence generation.  
 2. **One ScoutPlan aggregate → many UI projections.**  
-3. **Formal spec:** draft in §3 — promote to standalone `execution-instruction-spec.md` when implementing.  
+3. **Formal spec:** **landed** — `md/matrix/execution-instruction-spec.md`.  
 4. **PR #125:** do not merge as Plan Map sentence source; evolve→guidance/integrity or close.  
-5. **CHAT-HANDOFF:** tighten A–E (§5) — tip SHA was stale vs branch.
+5. **Mandatory gate:** **landed on branch** — schema Validate + Apply Verify.  
 
 ---
 

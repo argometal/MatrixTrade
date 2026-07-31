@@ -14,6 +14,17 @@ import type { TradePlan } from "./plan-types";
 /** Max length for a concise PM-style operational instruction. */
 export const EXECUTION_INSTRUCTION_MAX_CHARS = 1200;
 
+export const EXECUTION_INSTRUCTION_REQUIRED_MSG =
+  "executionInstruction required when execution geometry is present or changed — AI-authored Plan Map operational instruction; never invent prices/shares/risk";
+
+/** Fields that mutate Scout execution geometry (actionable plan). */
+export const EXECUTION_GEOMETRY_FIELDS = [
+  "plannedEntry",
+  "stopPrice",
+  "targetPrice",
+  "layeredEntry",
+] as const;
+
 /**
  * Normalize AI-authored execution instruction for persistence / display.
  * Empty or whitespace-only → undefined. Never synthesizes content.
@@ -37,16 +48,40 @@ export function resolvePlanMapExecutionInstruction(
   return normalizeExecutionInstruction(plan?.executionInstruction);
 }
 
+/** True when the proposal creates or mutates execution geometry. */
+export function proposalMutatesExecutionGeometry(
+  proposal: Record<string, unknown>
+): boolean {
+  return EXECUTION_GEOMETRY_FIELDS.some((field) => proposal[field] !== undefined);
+}
+
+/**
+ * Schema-gate helper: actionable geometry requires non-empty executionInstruction.
+ * Returns an error string or undefined when OK.
+ */
+export function requireExecutionInstructionForGeometry(
+  proposal: Record<string, unknown>,
+  opts?: { always?: boolean }
+): string | undefined {
+  const mustHave =
+    opts?.always === true || proposalMutatesExecutionGeometry(proposal);
+  if (!mustHave) return undefined;
+  if (!normalizeExecutionInstruction(proposal.executionInstruction)) {
+    return EXECUTION_INSTRUCTION_REQUIRED_MSG;
+  }
+  return undefined;
+}
+
 /** Snapshot / brief guidance for external AI authors. */
 export function formatExecutionInstructionGuidance(): string {
   return [
     "=== EXECUTION INSTRUCTION (Plan Map sentence) ===",
+    "Canonical spec: md/matrix/execution-instruction-spec.md",
     "AI explanation layer only — not a calculation source; never invent prices, shares, risk, or allocations.",
-    "When proposing scout-plan-create or decision-update with actionable execution geometry, include proposal.executionInstruction:",
-    "a concise operational instruction for the human trader (experienced PM tone).",
-    "Use only facts already in the Scout Plan context (layers, allocation, risk, stops, targets, OA, playbook, notes).",
-    "Omit unavailable facts. Do not summarize the Plan Map cards — write how to execute.",
+    "REQUIRED on scout-plan-create and on decision-update that changes execution geometry (plannedEntry, stopPrice, targetPrice, layeredEntry).",
+    "Omit unavailable facts. Do not summarize Plan Map cards — write how to execute (PM / desk tone).",
     "Matrix displays this string under the Plan Map header as-is; it does not template-generate it.",
+    "Apply rejects actionable proposals missing executionInstruction (schema Validate).",
   ].join("\n");
 }
 

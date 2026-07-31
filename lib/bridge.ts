@@ -45,6 +45,7 @@ import {
 } from "./scout-operational-state";
 import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
 import { parseLayeredEntryInput, validateLayeredEntry } from "./layered-entry";
+import { requireExecutionInstructionForGeometry } from "./scout-execution-instruction";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
 import { getSetupName } from "./setup-types";
@@ -582,6 +583,10 @@ export function validateProposalPayload(
       if (!text) {
         errors.push("proposal.executionInstruction must be a non-empty string when provided");
       }
+    }
+    {
+      const instructionErr = requireExecutionInstructionForGeometry(p);
+      if (instructionErr) errors.push(instructionErr);
     }
 
     if (hasDecisionMutation) {
