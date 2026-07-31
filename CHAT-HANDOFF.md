@@ -9,6 +9,16 @@
 
 ---
 
+## Pending — Plan Map AI execution sentence
+
+PR: #132 (draft) · branch `cursor/plan-map-ai-execution-sentence-b0a5` · tip `48c3c8c`  
+Doc: `md/matrix/plan-map-ai-execution-sentence-handoff.md`  
+Test: `npm run test:scout-execution-instruction` · `npm run test:plan-map-operational`
+
+Plan Map header sentence = AI `executionInstruction` only (no deterministic template). Not shipped until merge + prod verify.
+
+---
+
 ## Pending — ArgusForge 24-33 Recent linkage
 
 PR: #110  
