@@ -11,7 +11,7 @@
 
 ## Pending — Plan Map AI execution sentence
 
-PR: #132 (draft) · branch `cursor/plan-map-ai-execution-sentence-b0a5` · tip `b94c0de`  
+PR: #132 (draft) · branch `cursor/plan-map-ai-execution-sentence-b0a5` · tip `2bc0beb`  
 Doc: `md/matrix/plan-map-ai-execution-sentence-handoff.md`  
 Architecture follow-up: `md/matrix/execution-instruction-architecture-follow-up.md`  
 Test: `npm run test:scout-execution-instruction` · `npm run test:plan-map-operational`
