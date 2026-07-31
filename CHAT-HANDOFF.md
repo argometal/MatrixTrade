@@ -11,14 +11,21 @@
 
 ## Pending — Plan Map AI execution sentence
 
-PR: #132 (draft) · branch `cursor/plan-map-ai-execution-sentence-b0a5` · tip `2bc0beb`  
-Doc: `md/matrix/plan-map-ai-execution-sentence-handoff.md`  
-Architecture follow-up: `md/matrix/execution-instruction-architecture-follow-up.md`  
+PR: #132 (draft) · branch `cursor/plan-map-ai-execution-sentence-b0a5` · tip `f06ee1f`  
+Doc entrega: `md/matrix/plan-map-ai-execution-sentence-handoff.md`  
+Architecture review (full): `md/matrix/execution-instruction-architecture-follow-up.md`  
 Test: `npm run test:scout-execution-instruction` · `npm run test:plan-map-operational`
 
 Plan Map header sentence = AI `executionInstruction` only (no deterministic template). Not shipped until merge + prod verify.
 
-**Architecture decisions (not yet implemented):** mandatory gate on create/geometry updates · ScoutPlan ontology · formal instruction spec · close/evolve #125 (no deterministic Plan Map overlap).
+**Architecture decisions (accepted in review; not yet implemented in code):**
+
+- **B — Mandatory:** actionable Scout (create or geometry-mutating `decision-update`) ⇒ `executionInstruction` required. Reject at **schema Validate**; **Apply Verify** confirms persist; **no UI fallback / no deterministic sentence**.
+- **C — Ontology milestone:** ScoutPlan aggregate → Plan Map / ATTN / Dashboard / Learning / Trade projections (doc-only first).
+- **D — Spec:** draft in architecture follow-up §3; canonical `md/matrix/execution-instruction-spec.md` **not yet promoted**.
+- **E — PR #125:** open — reconcile before merge; must not restore deterministic Plan Map sentence; evolve → generation guidance / integrity **or close**.
+
+**Do not implement gates until architecture acceptance + #132 merge + #125 reconciliation.**
 
 ---
 
