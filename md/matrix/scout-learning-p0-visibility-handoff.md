@@ -3,7 +3,7 @@
 **Fecha:** 2026-08-03  
 **Baseline:** `main` @ `f284719`  
 **Branch:** `cursor/scout-learning-p0-visibility-b0a5`  
-**Commit:** `f3a17cf` (`f3a17cf1a66d42d692af41ac518eeb04772cf4d0`)  
+**Commit:** `9e3ae1b` (`9e3ae1b530d5009d63024933f3127f94af85e40a`)  
 **PR:** https://github.com/argometal/MatrixTrade/pull/134 (draft)  
 **Prod:** https://matrix-trade-theta.vercel.app — **aún no merged / no desplegado**  
 **Alcance:** visibilidad del circuito Scout → plan-outcome → Learning → `/stats` Pipeline (sin página/tabla/modelo nuevo)
