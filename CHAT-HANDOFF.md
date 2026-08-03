@@ -9,15 +9,22 @@
 
 ---
 
-## Library — Scout Learning circuit + P0 visibility
+## Pending — Scout Learning P0 visibility
 
-Docs:
-- `md/matrix/metrics-analysis-planteamiento-handoff.md` — tres ledgers (Trade · Scout counterfactual · Pipeline)
-- `md/matrix/scout-learning-circuit-audit-handoff.md` — auditoría acotada + **=== PLAN P0 ===**
+PR: #134 · branch `cursor/scout-learning-p0-visibility-b0a5` · tip `f3a17cf`  
+**Handoff de entrega:** `md/matrix/scout-learning-p0-visibility-handoff.md`  
+Auditoría + PLAN P0: `md/matrix/scout-learning-circuit-audit-handoff.md`  
+Tres ledgers: `md/matrix/metrics-analysis-planteamiento-handoff.md`  
+Tests: `npm run test:insights-pipeline` · `npm run test:plan-outcome-learning-sync`
 
-**P0 (implementado en branch `cursor/scout-learning-p0-visibility-b0a5`):** aggregates Scout en `/stats?tab=pipeline`; discovery cola Learning en Planning; copy Retry Sync post-partialFailure. Sin página/tabla nueva. No mezclar con Trade WR/P/L.
+**Implemented on branch (pending merge + prod):**
 
-Siguiente: merge + prod verify → P1 solo con auth (sección Scout Learning en hub).
+- `/stats?tab=pipeline` muestra Triggered-without-Trade + thesis fail rate
+- Planning: cola Learning (needs outcome / Retry Sync)
+- Copy post-`partialFailure` → Retry Learning Sync
+- Sin página/tabla nueva; no mezclar con Trade WR/P/L
+
+Not shipped until merge + prod verify. P1 hub Scout Learning solo con auth.
 
 ## Shipped — Plan Map AI execution sentence (#132)
 
