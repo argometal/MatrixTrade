@@ -9,25 +9,20 @@
 
 ---
 
-## Library — Metrics analysis planteamiento
+## Library — Scout Learning circuit + P0 visibility
 
-Doc: `md/matrix/metrics-analysis-planteamiento-handoff.md`  
-Raw (branch hasta merge #133): `https://raw.githubusercontent.com/argometal/MatrixTrade/cursor/metrics-planteamiento-handoff-b0a5/md/matrix/metrics-analysis-planteamiento-handoff.md`
+Docs:
+- `md/matrix/metrics-analysis-planteamiento-handoff.md` — tres ledgers (Trade · Scout counterfactual · Pipeline)
+- `md/matrix/scout-learning-circuit-audit-handoff.md` — auditoría acotada + **=== PLAN P0 ===**
 
-Tres ledgers (Trade · Scout counterfactual · Pipeline). No mezclar WR con UPL.
+**P0 (implementado en branch `cursor/scout-learning-p0-visibility-b0a5`):** aggregates Scout en `/stats?tab=pipeline`; discovery cola Learning en Planning; copy Retry Sync post-partialFailure. Sin página/tabla nueva. No mezclar con Trade WR/P/L.
 
-**Auditoría circuito Scout → plan-outcome → Learning → UI:**  
-`md/matrix/scout-learning-circuit-audit-handoff.md`  
-Raw: `https://raw.githubusercontent.com/argometal/MatrixTrade/cursor/metrics-planteamiento-handoff-b0a5/md/matrix/scout-learning-circuit-audit-handoff.md`
-
-P0 = visibilidad aggregates + discovery terminal sin outcome (sin página nueva). **No implementar sin autorización.**
-
----
+Siguiente: merge + prod verify → P1 solo con auth (sección Scout Learning en hub).
 
 ## Shipped — Plan Map AI execution sentence (#132)
 
 Merge: `a88c627` · prod https://matrix-trade-theta.vercel.app  
-Docs: `md/matrix/plan-map-ai-execution-sentence-handoff.md` · `md/matrix/execution-instruction-spec.md` · `md/matrix/execution-instruction-implement-diff.md`
+Docs: `md/matrix/plan-map-ai-execution-sentence-handoff.md` · `md/matrix/execution-instruction-spec.md`
 
 Plan Map sentence = AI `executionInstruction` only. Mandatory on create + geometry-mutating `decision-update`. PR #125 superseded for Plan Map prose.
 

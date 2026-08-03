@@ -460,7 +460,7 @@ async function applyPlanOutcomeBlock(
       errors: result.errors?.length
         ? result.errors
         : [
-            "Plan outcome persisted; Learning synchronization failed and requires repair.",
+            "Plan outcome persisted (partialFailure); Learning sync failed. Open Planning → Retry Learning Sync — do not re-Apply a new outcome or reopen evaluate_expired_plan.",
           ],
     };
   }

@@ -86,7 +86,7 @@ export async function persistPlanOutcome(
         partialFailure: true,
         learningSyncComplete: false,
         errors: [
-          "Plan outcome persisted; Learning synchronization failed and requires repair.",
+          "Plan outcome persisted (partialFailure); Learning sync failed. Open Planning → Retry Learning Sync — do not re-Apply a new outcome or reopen evaluate_expired_plan.",
           ...(sync.errors ?? []),
         ],
       };
@@ -228,7 +228,7 @@ export async function persistPlanOutcome(
       partialFailure: true,
       learningSyncComplete: false,
       errors: [
-        "Plan outcome persisted; Learning synchronization failed and requires repair.",
+        "Plan outcome persisted (partialFailure); Learning sync failed. Open Planning → Retry Learning Sync — do not re-Apply a new outcome or reopen evaluate_expired_plan.",
         ...(sync.errors ?? []),
       ],
     };

@@ -413,7 +413,7 @@ async function main() {
     assert.equal(result.partialFailure, true);
     assert.ok(
       result.errors?.some((e) =>
-        e.includes("Plan outcome persisted; Learning synchronization failed")
+        e.includes("Plan outcome persisted") && e.includes("Retry Learning Sync")
       )
     );
     const reloaded = await getPlanById("PLAN-008");

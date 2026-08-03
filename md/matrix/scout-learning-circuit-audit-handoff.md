@@ -1,47 +1,55 @@
 # MTA · Scout Learning circuit audit — Library handoff
 
 **Fecha:** 2026-08-03  
-**Mode:** auditoría arquitectónica — **sin implementación autorizada**  
+**Mode:** auditoría acotada → **P0 autorizado e implementado** (visibilidad + discovery)  
 **Baseline auditada:** `main` @ `f284719`  
 **Audience:** ChatGPT · Cursor · agentes  
 **Referencia canónica previa:** `md/matrix/metrics-analysis-planteamiento-handoff.md`
 
-**Reglas respetadas en la auditoría:** no tablas/modelos/ontología/páginas nuevas; no mezclar ledgers; no Coach/export/analytics dimensionales; reutilizar antes de proponer.
+**Reglas:** no tablas/modelos/ontología/páginas nuevas; no mezclar ledgers; no Coach/export/analytics dimensionales; reutilizar antes de proponer.
 
 ---
 
-## Veredicto
+## Alcance de auditoría (obligatorio)
 
-El circuito **Scout → plan-outcome → LO/OBS → Pipeline** ya funciona para UPL/duplicate.  
-El estancamiento es **cierre operativo + visibilidad**, no falta de arquitectura.
+**Objetivo:** explicar completamente el flujo  
+`Scout → plan-outcome → Learning → visualización`.
 
-**P0:** wire aggregates ya calculados en `/stats?tab=pipeline` + discovery de Scouts terminales sin outcome — sin página nueva.  
-**P1:** sección Scout Learning en `/stats` (tab/subsección).  
-**No implementar** hasta autorización explícita.
-
----
-
-## Respuestas A–M
-
-| Q | Respuesta |
-|---|-----------|
-| **A** Qué funciona | Apply UPL/duplicate → persist → sync LO/OBS → Verify `learningSyncStatus=complete` → Pipeline muestra evaluated/UPL/counterfactual R. Statistics Trade-only limpio. Control Clear + Snap Failure. Idempotencia UPL; duplicate excluded. |
-| **B** Dónde se rompe | Sync puede fallar tras persist (`partialFailure` → Retry manual). Legacy path sin `outcomeKind`. UI Apply solo 2 kinds. Record Outcome solo en scout enfocado. Aggregates `triggeredPlansWithoutTrade` / thesis **calculados no visibles**. |
-| **C** Outcomes | Apply 1ª clase: `unexecuted_plan_loss`, `duplicate_creation`. Legacy/derive: missed/expired/cancelled/invalidated. Triggered-without-trade = métrica, no kind. Executed = trade-close LO, no plan-outcome. |
-| **D** Sync LO/OBS | `syncPlanOutcomeLearning` → upsert LO → OBS (UPL) → link → verify → `learningSyncStatus`. Idempotente. |
-| **E** Persist OK, sync fail | Outcome queda; `failed` + ATTN repair; evaluate_expired_plan **no reabre**; solo Retry. |
-| **F** Terminal sin outcome obligatorio | `failed\|expired\|skipped` → review hasta `recordedAt`. `watching\|ready\|entered` no. |
-| **G** Aggregates | `evaluatedScoutCount`, `unexecutedPlanLossCount`, `counterfactualScoutR`, `triggeredPlansWithoutTrade`, thesis counts/rate (`computeScoutLearningAggregates`). |
-| **H** No visibles | `triggeredPlansWithoutTrade`, thesis failure*, rollups `nonExecutionReason`, sync diagnostics fuera del banner. |
-| **I** `/stats` sin página nueva | **Sí** — hub tabs; Pipeline ya es la superficie Scout/Learning. |
-| **J** Reutilizar | `PreviewPipelinePerformance`, `computePipelinePerformance`, `computeScoutLearningAggregates`, loaders `stats/page.tsx`, ATTN `planNeedsStrategyReview`. No: `PreviewStats`/`analytics.ts` para Scout. |
-| **K** Deuda diaria | Dual contract UPL/legacy; sync manual; panel solo foco; MAF JSON; kinds UI incompletos; half-rendered aggregates. |
-| **L** Manual hoy | Confirmar orden eventos + reason; Save/Accept outcome; Retry sync; MAF aparte; broker human. |
-| **M** Gaps datos | Sin auto mercado; terminales sin outcome; sync failed; geometry/risk ausente bloquea UPL; poco MAF. |
+**Detente** cuando ese circuito quede cerrado con evidencia.  
+**No amplíes** la auditoría a `/planning` capital, Forge, stats Trade math, migraciones, o módulos no relacionados **salvo dependencia directa** del circuito.
 
 ---
 
-## Flujo actual
+## Evidencia concreta (obligatorio)
+
+Para **cada** conclusión debes citar:
+
+* archivo,
+* función / componente / símbolo,
+* y **por qué** participa en el flujo.
+
+No se aceptan conclusiones generales sin evidencia (“parece que…”, “probablemente…”).
+
+---
+
+## Veredicto (con evidencia)
+
+El circuito **Scout → plan-outcome → LO/OBS → Pipeline** ya funciona para UPL/duplicate.
+
+| Afirmación | Evidencia |
+|------------|-----------|
+| Persist + sync existen | `lib/plan-outcome.ts` → `persistPlanOutcome` / `applyPlanOutcomeProposal`; `lib/plan-outcome-learning-sync.ts` → `syncPlanOutcomeLearning` |
+| Review gate terminal | `lib/plan-helpers.ts` → `planNeedsStrategyReview` (`failed\|expired\|skipped` sin `recordedAt`) |
+| Sync repair sin reabrir review | `lib/plan-helpers.ts` → `planNeedsLearningSyncRepair`; ATTN `lib/needs-attention-ai.ts` → `sync_plan_outcome_learning` |
+| Aggregates calculados | `lib/learning-scout-aggregates.ts` → `computeScoutLearningAggregates` (`triggeredPlansWithoutTrade`, thesis*) |
+| Gap era visibilidad | Antes: `lib/insights-pipeline-performance.ts` → `computePipelinePerformance` solo exponía 3 campos counterfactual; UI `PreviewPipelinePerformance` no mostraba triggered/thesis |
+| Gap era discovery | Antes: `PreviewPlanning.tsx` solo montaba `PlanRecordOutcomePanel` en scout enfocado |
+
+**Estancamiento = cierre operativo + visibilidad**, no arquitectura faltante.
+
+---
+
+## Flujo actual (cerrado)
 
 ```text
 Scout terminal (failed|expired|skipped ± UPL-eligible)
@@ -57,156 +65,102 @@ Scout terminal (failed|expired|skipped ± UPL-eligible)
 
 ### Archivos / símbolos por etapa
 
-| Etapa | Path / símbolo |
-|-------|----------------|
-| Review gate | `lib/plan-helpers.ts` → `planNeedsStrategyReview` |
-| ATTN | `lib/plan-attention.ts`, `lib/needs-attention-ai.ts` → `evaluate_expired_plan`, `sync_plan_outcome_learning` |
-| UI outcome | `PlanRecordOutcomePanel.tsx`, `PreviewPlanning.tsx` |
-| Actions | `app/actions.ts` → `recordPlanOutcomeAction`, `retryPlanOutcomeLearningSyncAction` |
-| Validate | `lib/plan-outcome*.ts` → `validatePlanOutcomeProposal`, `validateUnexecutedPlanLossEligibility` |
-| Bridge / Apply | `lib/bridge.ts`, `lib/apply-trading-inbox.ts` |
-| Persist + sync | `lib/plan-outcome.ts` → `persistPlanOutcome`, `applyPlanOutcomeProposal`; `lib/plan-outcome-learning-sync.ts` → `syncPlanOutcomeLearning` |
-| Verify | `lib/apply-verify.ts` → `verifyPlanOutcomePersistence` |
-| Aggregates | `lib/learning-scout-aggregates.ts` → `computeScoutLearningAggregates` |
-| Pipeline | `lib/insights-pipeline-performance.ts` → `computePipelinePerformance` |
-| UI stats | `app/(trading)/(nav)/stats/page.tsx`, `PreviewInsightsHub.tsx`, `PreviewPipelinePerformance.tsx`, `PreviewStats.tsx` |
-| Trade ledger | `lib/load-stats-page-data.ts`, `lib/analytics.ts` |
-| Apply UX | `ControlPanelUpdate.tsx` — Clear, Snap Failure, auto-clear |
-| Types | `lib/plan-outcome-types.ts` → `PLAN_OUTCOME_KINDS` |
-| Tests | `tools/test-plan-outcome-upl-25-29.ts`, `test-plan-outcome-learning-sync.ts`, `test-insights-pipeline-30-2c.ts` |
-
-### Stores / tablas (reutilizar)
-
-- Plans: `getPlansStore` → Supabase `trade_plans` / JSON (`outcome` jsonb)  
-- LO: `getLearningOutcomesStore` → `learning_outcomes` / JSON  
-- OBS: `getObservationsStore`  
-- MAF: `getMafExperiments` (JSON — frágil)  
-
-### Endpoints
-
-- Inbox / Control Apply (server actions)  
-- Stats SSR loaders en `stats/page.tsx`  
-- `/api/ai/stats` = Trade/playbook — **no** Scout Learning  
-
-### Validadores
-
-- `PLAN_OUTCOME_KINDS` = `unexecuted_plan_loss` \| `duplicate_creation`  
-- `SCOUT_EVALUATED_LO_KINDS` = UPL + `missed_opportunity` (+ cancel/expire vía derive)  
-- Verify exige `learningSyncStatus=complete`  
+| Etapa | Path / símbolo | Por qué |
+|-------|----------------|---------|
+| Review gate | `lib/plan-helpers.ts` → `planNeedsStrategyReview` | Define Scouts que deben cerrar outcome |
+| Sync repair | `lib/plan-helpers.ts` → `planNeedsLearningSyncRepair` | Persist OK, sync no |
+| ATTN | `lib/plan-attention.ts`, `lib/needs-attention-ai.ts` | Inbox operativo `evaluate_expired_plan` / sync repair |
+| UI outcome | `PlanRecordOutcomePanel.tsx`, `PreviewPlanning.tsx` | Persist + Retry Sync en Planning |
+| Discovery | `PreviewPlanning.tsx` → `data-scout-learning-queue` | Lista terminales sin outcome / sync failed |
+| Actions | `app/actions.ts` → `recordPlanOutcomeAction`, `retryPlanOutcomeLearningSyncAction` | Mutaciones server |
+| Validate | `lib/plan-outcome*.ts` | Contrato Apply/UI |
+| Persist + sync | `lib/plan-outcome.ts`, `lib/plan-outcome-learning-sync.ts` | Escritura + LO/OBS |
+| Aggregates | `lib/learning-scout-aggregates.ts` | Ledger Scout (no Trade) |
+| Pipeline | `lib/insights-pipeline-performance.ts` → `computePipelinePerformance` | Une LO/plans/MAF para UI |
+| UI stats | `PreviewPipelinePerformance.tsx`, `stats/page.tsx` | Visualización sin página nueva |
+| Trade ledger | `lib/analytics.ts`, `PreviewStats.tsx` | **No** tocar para Scout |
 
 ---
 
 ## Separación de ledgers (obligatoria)
 
-| Ledger | Fuente | UI hoy | Prohibido |
-|--------|--------|--------|-----------|
+| Ledger | Fuente | UI | Prohibido |
+|--------|--------|-----|-----------|
 | **1 Trade realizado** | Trades/fills | `/stats` Statistics | Meter Scout R |
-| **2 Scout counterfactual** | plan-outcome / Scout LO | Pipeline (parcial) | Meter en WR/P/L/equity |
+| **2 Scout counterfactual** | plan-outcome / Scout LO | Pipeline | Meter en WR/P/L |
 | **3 Pipeline / MAF** | LO/OBS/MAF | Pipeline attribution | Mezclar con WR Trade |
 
 ---
 
-## Datos incompletos / ruptura / riesgos
+## === PLAN P0 ===
 
-**Ruptura:** persist ≠ sync complete; legacy sin sync status; sync repair sin Apply block; discovery terminal-sin-outcome débil; aggregates half-rendered.
+Autorizado: implementar. Sin página/tabla/modelo nuevo.
 
-**Duplicación:** re-Accept UPL = sync retry (OK); segundo outcome distinto = reject (OK); legacy+UPL paralelo = riesgo.
+### Paso 1 — Wire aggregates en Pipeline
 
-**Contaminación:** Statistics limpio; Pipeline riesgo de **lectura humana**; duplicate excluded.
+* **Qué:** Exponer `triggeredPlansWithoutTrade` + thesis failure rate desde `computeScoutLearningAggregates` vía `computePipelinePerformance.counterfactual` y render en `PreviewPipelinePerformance`.
+* **Archivos:** `lib/insights-pipeline-performance.ts`, `app/components/insights-preview/PreviewPipelinePerformance.tsx`, `tools/test-insights-pipeline-30-2c.ts`
+* **Resultado esperado:** `/stats?tab=pipeline` muestra Triggered-without-Trade y thesis fail rate; markers `data-pipeline-triggered-without-trade`, `data-pipeline-thesis-failure-rate`.
 
-**Deuda:** dual schemas; MAF JSON; UI kinds incompletos; authorizedRisk opcional → $ null.
+### Paso 2 — Discovery terminal sin outcome + sync repair
 
----
+* **Qué:** Banner/lista en Planning con Scouts `planNeedsStrategyReview` y `planNeedsLearningSyncRepair`; foco abre `PlanRecordOutcomePanel`; select case marca `needs outcome` / `sync repair`; preferir plan que necesita cierre cuando no hay Scout activo.
+* **Archivos:** `lib/plan-helpers.ts`, `app/components/planning-preview/PreviewPlanning.tsx`
+* **Resultado esperado:** Operador ve la cola sin depender solo de ATTN o del foco actual (`data-scout-learning-queue`).
 
-## Checklist P0 (1–11)
+### Paso 3 — Copy post-partialFailure + Retry Sync
 
-| # | Item | Estado |
-|---|------|--------|
-| 1 | plan-outcome desde UI | Sí — Planning + Control Apply |
-| 2 | Clear tras éxito/error Apply | Sí — `ControlPanelUpdate` |
-| 3 | Clear manual | Sí |
-| 4 | Snap Failure | Sí |
-| 5 | Outcomes fáciles | Parcial — solo foco + ATTN |
-| 6 | Confirmación | Sí — form + preview UPL |
-| 7 | Identificar terminal sin outcome | Sí ATTN / `planNeedsStrategyReview`; lista UX débil |
-| 8 | Visible en /stats | Parcial — Pipeline, no Statistics |
-| 9 | Idempotente | Sí |
-| 10 | Duplicate contaminar | No — excluded |
-| 11 | Fallo parcial | Mitigado — Retry; residual legacy |
+* **Qué:** Mensaje Apply parcial apunta a Planning → Retry Learning Sync; panel sync repair aclara “no re-Apply / no reabrir evaluate_expired_plan”.
+* **Archivos:** `lib/apply-trading-inbox.ts`, `app/components/planning-preview/PlanRecordOutcomePanel.tsx`
+* **Resultado esperado:** Tras persist+sync fail, el siguiente paso es Retry Sync, no nuevo Apply.
 
----
+### Orden de implementación
 
-## Arquitectura P0 recomendada (mínimo cambio)
+1. Paso 1 (aggregates)  
+2. Paso 2 (discovery)  
+3. Paso 3 (copy)  
+4. Tests pipeline + markers UI  
 
-1. Extender `/stats?tab=pipeline` para mostrar aggregates ya producidos (`triggeredPlansWithoutTrade`, thesis rates si trivial).  
-2. Discovery: lista/banner Scouts `planNeedsStrategyReview` (reusar ATTN) — no solo panel del foco.  
-3. Copy claro post-`partialFailure` + Retry Sync visible.  
-4. No ampliar Insights wide / Coach / export.  
-5. No tocar Ledger 1 Trade math.
+### Riesgo
 
-**Archivos P0 (cuando autoricen):**  
-`PreviewPipelinePerformance.tsx` · `insights-pipeline-performance.ts` · `PreviewPlanning.tsx` / ATTN copy · tests `test-insights-pipeline-30-2c.ts` · posiblemente hub labels.
+* Contaminación visual Trade↔Scout si copy es ambiguo → mitigar con labels “not P/L”.
+* Preferencia `primaryPlan` hacia learning-close solo cuando **no** hay `watching|ready` → no desplaza Scouts vivos.
 
----
+### Resultado esperado P0
 
-## Arquitectura P1 recomendada (no implementar aún)
+Circuito usable en el día a día: ver métricas Scout ya calculadas, encontrar terminales sin outcome, reparar sync sin otra ronda de arquitectura.
 
-Sección **Scout Learning** en `/stats` (tab Pipeline ampliado o tab hermano):
+### Fuera de P0
 
-- Loader: `stats/page.tsx` / `pipelineInput`  
-- UI: reutilizar `PreviewPipelinePerformance`  
-- Datos: `computeScoutLearningAggregates` completo  
-- Vacío: “No evaluated Scouts — record plan-outcome…”  
-- **No mostrar:** Coach, expectancy dimensional MAF, equity Scout inventada  
+* P1: sección Scout Learning dedicada en hub `/stats`  
+* Coach / export / Insights dimensional  
+* Cambiar math de Trade Statistics  
+* MAF durable store  
 
 ---
 
-## Pruebas requeridas (tras auth)
+## Respuestas A–M (resumen)
 
-- Existentes: UPL, learning-sync, insights-pipeline  
-- Añadir: assertion aggregates visibles; terminal-without-outcome discovery; regression Statistics sin LO  
-
-## Cambios que NO realizar
-
-Tablas/modelos/ontología/páginas nuevas · mezclar ledgers · counterfactual en WR · Coach/export/metrics dimensional · auto-broker · Insights amplio · merge sin autorización  
-
----
-
-## Orden de implementación (cuando autoricen)
-
-1. Merge PR #133 (docs) — desbloquea raw main  
-2. P0: wire aggregates + discovery terminal sin outcome  
-3. P0: copy Retry sync  
-4. Tests  
-5. P1 Scout Learning section  
-6. Luego (fuera P0): MAF durable  
-
-**Bloqueador actual:** autorización explícita — no código duro.
+| Q | Respuesta (evidencia en tablas arriba) |
+|---|----------------------------------------|
+| **A** Qué funciona | Apply UPL/duplicate → persist → sync → Pipeline |
+| **B** Dónde se rompía | Sync parcial; discovery débil; aggregates half-rendered → **P0 cierra** |
+| **C–E** Outcomes / sync | Ver flujo + `learningSyncStatus` |
+| **F** Terminal obligatorio | `planNeedsStrategyReview` |
+| **G–H** Aggregates | Calculados en `computeScoutLearningAggregates`; **P0 los muestra** |
+| **I–J** /stats sin página nueva | Pipeline reutilizado |
+| **K–M** Deuda residual | Dual contract legacy; MAF JSON; kinds UI incompletos — **no P0** |
 
 ---
 
-## Estado PR #133 (docs metrics planteamiento)
+## Instrucciones para la IA (siguiente iteración)
 
-| Campo | Valor |
-|-------|--------|
-| URL | https://github.com/argometal/MatrixTrade/pull/133 |
-| State | OPEN draft |
-| Mergeable | MERGEABLE / CLEAN |
-| CI | Vercel SUCCESS |
-| Auto-merge | **No** — pendiente OK humano |
-| Raw main | **404** hasta merge |
-| Raw branch | `https://raw.githubusercontent.com/argometal/MatrixTrade/cursor/metrics-planteamiento-handoff-b0a5/md/matrix/metrics-analysis-planteamiento-handoff.md` |
+1. No re-auditar el repo entero — el circuito ya está explicado.  
+2. Si falta algo, implementar el gap concreto con evidencia (archivo/símbolo).  
+3. Mantener tres ledgers.  
+4. P1 solo con autorización explícita.  
+5. Cada conclusión: archivo + función/componente/símbolo + por qué.
 
 ---
 
-## Instrucciones para la IA
-
-1. Leer este handoff + `metrics-analysis-planteamiento-handoff.md` antes de proponer Insights nuevos.  
-2. Mantener tres ledgers separados.  
-3. Proponer solo P0 mínimo sobre `/stats` Pipeline + Planning/ATTN.  
-4. No implementar sin “autorización explícita” / “procede”.  
-5. Citar archivos concretos en cualquier plan.
-
----
-
-*Library handoff — auditoría circuito Scout Learning. Sin código hasta autorización.*
+*Library handoff — auditoría acotada + PLAN P0 ejecutable.*

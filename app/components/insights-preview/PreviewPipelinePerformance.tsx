@@ -287,6 +287,30 @@ export function PreviewPipelinePerformance({
                     {view.counterfactual.unexecutedPlanLossCount}
                   </dd>
                 </div>
+                <div>
+                  <dt className="text-zinc-500">Triggered, no Trade</dt>
+                  <dd
+                    className="tabular-nums text-zinc-100"
+                    data-pipeline-triggered-without-trade
+                  >
+                    {view.counterfactual.triggeredPlansWithoutTrade}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-500">Thesis fail rate (MAF)</dt>
+                  <dd
+                    className="tabular-nums text-zinc-100"
+                    data-pipeline-thesis-failure-rate
+                  >
+                    {view.counterfactual.thesisFailureRate === null
+                      ? "—"
+                      : `${Math.round(view.counterfactual.thesisFailureRate * 100)}%`}
+                    <span className="ml-1 text-[11px] text-zinc-600">
+                      ({view.counterfactual.thesisFailureCount}/
+                      {view.counterfactual.thesisEvaluationCount})
+                    </span>
+                  </dd>
+                </div>
                 <div className="col-span-2">
                   <dt className="text-zinc-500">Counterfactual R (filtered rows)</dt>
                   <dd
@@ -301,6 +325,8 @@ export function PreviewPipelinePerformance({
                 <span data-pipeline-pending-obs>
                   {view.pendingObservationCount}
                 </span>
+                . Triggered-without-Trade and thesis rates are Scout/MAF metrics — never
+                Trade P/L.
               </p>
             </div>
           </section>

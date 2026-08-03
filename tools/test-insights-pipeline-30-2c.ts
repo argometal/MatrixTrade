@@ -88,6 +88,8 @@ function maf(partial: Partial<MafExperiment> & Pick<MafExperiment, "id" | "ticke
   assert.equal(view.realized.realizedPnLSum, 200);
   // Missed + UPL counterfactual only
   assert.equal(view.counterfactual.counterfactualRSum, -2);
+  assert.equal(view.counterfactual.triggeredPlansWithoutTrade, 0);
+  assert.equal(view.counterfactual.thesisFailureRate, null);
 
   const miss = view.rows.find((r) => r.learningOutcomeId === "LO-MISS");
   assert.ok(miss);
@@ -99,6 +101,65 @@ function maf(partial: Partial<MafExperiment> & Pick<MafExperiment, "id" | "ticke
   assert.ok(win);
   assert.equal(win!.counterfactualR, null);
   assert.equal(win!.realizedR, 2);
+}
+
+{
+  // P0: triggered-without-trade + thesis failure rate surface (Scout ledger only)
+  const view = computePipelinePerformance({
+    learningOutcomes: [
+      lo({
+        id: "LO-TRIG",
+        kind: "unexecuted_plan_loss",
+        ticker: "TSLA",
+        planId: "PLAN-TRIG",
+        entryReached: true,
+        counterfactualR: -1,
+      }),
+      lo({
+        id: "LO-TRIG2",
+        kind: "missed_opportunity",
+        ticker: "TSLA",
+        planId: "PLAN-TRIG2",
+        entryReached: true,
+        counterfactualR: 0.5,
+      }),
+    ],
+    plans: [],
+    trades: [],
+    observations: [],
+    mafExperiments: [
+      maf({
+        id: "MAF-T",
+        ticker: "TSLA",
+        attributions: [
+          {
+            component: "thesis_quality",
+            classification: "failure",
+            aiInterpretationConfidence: 70,
+            reasoning: "weak thesis",
+          },
+        ],
+      }),
+      maf({
+        id: "MAF-T2",
+        ticker: "TSLA",
+        attributions: [
+          {
+            component: "thesis_quality",
+            classification: "good",
+            aiInterpretationConfidence: 60,
+            reasoning: "ok",
+          },
+        ],
+      }),
+    ],
+  });
+  assert.equal(view.counterfactual.triggeredPlansWithoutTrade, 2);
+  assert.equal(view.counterfactual.thesisEvaluationCount, 2);
+  assert.equal(view.counterfactual.thesisFailureCount, 1);
+  assert.equal(view.counterfactual.thesisFailureRate, 0.5);
+  assert.equal(view.realized.tradeCount, 0);
+  assert.equal(view.realized.realizedPnLSum, 0);
 }
 
 {
@@ -343,6 +404,8 @@ function maf(partial: Partial<MafExperiment> & Pick<MafExperiment, "id" | "ticke
   assert.match(ui, /data-pipeline-empty/);
   assert.match(ui, /data-pipeline-realized/);
   assert.match(ui, /data-pipeline-counterfactual/);
+  assert.match(ui, /data-pipeline-triggered-without-trade/);
+  assert.match(ui, /data-pipeline-thesis-failure-rate/);
   assert.match(ui, /min-h-11/);
   assert.match(ui, /sm:grid-cols-2/);
   assert.match(ui, /overflow-x-auto/);
@@ -352,6 +415,14 @@ function maf(partial: Partial<MafExperiment> & Pick<MafExperiment, "id" | "ticke
   assert.match(page, /getPlans/);
   assert.doesNotMatch(page, /app\/\(trading\).*\/insights\/page/);
   assert.doesNotMatch(hub, /create table|maf_experiments/);
+
+  const planning = readFileSync(
+    join(root, "app/components/planning-preview/PreviewPlanning.tsx"),
+    "utf8"
+  );
+  assert.match(planning, /data-scout-learning-queue/);
+  assert.match(planning, /planNeedsLearningSyncRepair/);
+  assert.match(planning, /data-scout-needs-outcome/);
 }
 
 console.log("test-insights-pipeline-30-2c: ok");

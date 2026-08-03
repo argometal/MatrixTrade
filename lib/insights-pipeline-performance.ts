@@ -133,6 +133,11 @@ export type PipelinePerformanceView = {
     scoutEvaluatedCount: number;
     unexecutedPlanLossCount: number;
     counterfactualRSum: number;
+    /** entryReached without trade — Scout metric, never Trade P/L. */
+    triggeredPlansWithoutTrade: number;
+    thesisEvaluationCount: number;
+    thesisFailureCount: number;
+    thesisFailureRate: number | null;
   };
   rows: PipelineDrillRow[];
   empty: boolean;
@@ -493,6 +498,10 @@ export function computePipelinePerformance(
       scoutEvaluatedCount: scoutAgg.evaluatedScoutCount,
       unexecutedPlanLossCount: scoutAgg.unexecutedPlanLossCount,
       counterfactualRSum: Math.round(counterfactualRSum * 1000) / 1000,
+      triggeredPlansWithoutTrade: scoutAgg.triggeredPlansWithoutTrade,
+      thesisEvaluationCount: scoutAgg.thesisEvaluationCount,
+      thesisFailureCount: scoutAgg.thesisFailureCount,
+      thesisFailureRate: scoutAgg.thesisFailureRate,
     },
     rows,
     empty: rows.length === 0,
