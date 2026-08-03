@@ -11,7 +11,7 @@
 
 ## Pending — Scout Learning P0 visibility
 
-PR: #134 · branch `cursor/scout-learning-p0-visibility-b0a5` · tip `9e3ae1b`  
+PR: #134 · branch `cursor/scout-learning-p0-visibility-b0a5` · tip `69fea85`  
 **Handoff de entrega:** `md/matrix/scout-learning-p0-visibility-handoff.md`  
 Auditoría + PLAN P0: `md/matrix/scout-learning-circuit-audit-handoff.md`  
 Tres ledgers: `md/matrix/metrics-analysis-planteamiento-handoff.md`  
