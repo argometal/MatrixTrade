@@ -4,6 +4,8 @@
 **V2 docs:** **Done** as target architecture — see [v2-engine-architecture.md](v2-engine-architecture.md).  
 **Program truth:** [runtime-truth.md](runtime-truth.md) · **Queue:** [building-backlog.md](building-backlog.md).
 
+**Metrics planteamiento (AI handoff):** [metrics-analysis-planteamiento-handoff.md](metrics-analysis-planteamiento-handoff.md) — tres ledgers Trade / Scout counterfactual / Pipeline.
+
 ---
 
 ## Done (2026-07-22)

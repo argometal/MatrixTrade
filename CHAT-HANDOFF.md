@@ -9,24 +9,21 @@
 
 ---
 
-## Pending — Plan Map AI execution sentence
+## Library — Metrics analysis planteamiento
 
-PR: #132 · branch `cursor/plan-map-ai-execution-sentence-b0a5` · tip `5aed848`
-Doc entrega: `md/matrix/plan-map-ai-execution-sentence-handoff.md`
-Architecture: `md/matrix/execution-instruction-architecture-follow-up.md`
-**Spec canónica:** `md/matrix/execution-instruction-spec.md`
-**Ontología:** `md/matrix/scout-ontology-scoutplan.md`
-**Diff legible (Chat):** `md/matrix/execution-instruction-implement-diff.md`
-Test: `npm run test:execution-instruction-mandatory` · `npm run test:scout-execution-instruction`
+Doc: `md/matrix/metrics-analysis-planteamiento-handoff.md`  
+Raw: `https://raw.githubusercontent.com/argometal/MatrixTrade/main/md/matrix/metrics-analysis-planteamiento-handoff.md`
 
-**Implemented on branch (pending merge + prod):**
+Tres ledgers (Trade · Scout counterfactual · Pipeline). No mezclar WR con UPL. Vista Learning Scout dedicada = pendiente.
 
-- Plan Map sentence = AI `executionInstruction` only (no deterministic template)
-- **Mandatory gate:** `scout-plan-create` + geometry-mutating `decision-update` → schema Validate rejects missing instruction; Apply Verify confirms persist
-- Spec + ScoutPlan ontology docs landed
-- **PR #125:** superseded for Plan Map sentence — do not merge deterministic description; evolve to guidance/integrity or close
+---
 
-Not shipped until merge + prod verify. Legacy plans without instruction still show empty sentence until AI backfill.
+## Shipped — Plan Map AI execution sentence (#132)
+
+Merge: `a88c627` · prod https://matrix-trade-theta.vercel.app  
+Docs: `md/matrix/plan-map-ai-execution-sentence-handoff.md` · `md/matrix/execution-instruction-spec.md` · `md/matrix/execution-instruction-implement-diff.md`
+
+Plan Map sentence = AI `executionInstruction` only. Mandatory on create + geometry-mutating `decision-update`. PR #125 superseded for Plan Map prose.
 
 ---
 
