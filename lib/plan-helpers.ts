@@ -9,6 +9,15 @@ export function planNeedsStrategyReview(plan: TradePlan): boolean {
   );
 }
 
+/** Outcome persisted but LO/OBS sync incomplete — repair only; do not reopen evaluate_expired_plan. */
+export function planNeedsLearningSyncRepair(plan: TradePlan): boolean {
+  return (
+    Boolean(plan.outcome?.recordedAt) &&
+    (plan.outcome?.learningSyncStatus === "pending" ||
+      plan.outcome?.learningSyncStatus === "failed")
+  );
+}
+
 export function countActivePlans(plans: TradePlan[]): number {
   return plans.filter((p) => p.status === "watching" || p.status === "ready").length;
 }

@@ -68,8 +68,9 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
             Learning sync repair · {plan.id}
           </p>
           <p className="mt-1 text-xs text-zinc-400">
-            Plan outcome is persisted (evaluate_expired_plan stays closed). Learning Outcome /
-            Observation synchronization is{" "}
+            Partial failure after Apply/Save: plan outcome is persisted (
+            evaluate_expired_plan stays closed). Learning Outcome / Observation
+            synchronization is{" "}
             <span className="text-rose-200">
               {plan.outcome?.learningSyncStatus ?? "pending"}
             </span>
@@ -79,9 +80,9 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
               : ""}
           </p>
           <p className="mt-1 text-xs text-zinc-500">
-            Execution path remains: approved → armed → alert → human confirmation → submitted.
-            Armed is not transmitted (automaticExecutionEnabled=
-            {String(AUTOMATIC_EXECUTION_ENABLED)}).
+            Use Retry Learning Sync only — do not re-Apply a new outcome. Execution path
+            remains: approved → armed → alert → human confirmation → submitted
+            (automaticExecutionEnabled={String(AUTOMATIC_EXECUTION_ENABLED)}).
           </p>
         </div>
         {error ? <p className="text-xs text-red-300">{error}</p> : null}
