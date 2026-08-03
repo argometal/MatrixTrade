@@ -6,7 +6,10 @@ import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { ScoutExecutePanel } from "@/app/components/planning-preview/ScoutExecutePanel";
 import { PlanRecordOutcomePanel } from "@/app/components/planning-preview/PlanRecordOutcomePanel";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
-import { planNeedsStrategyReview } from "@/lib/plan-helpers";
+import {
+  planNeedsLearningSyncRepair,
+  planNeedsStrategyReview,
+} from "@/lib/plan-helpers";
 import { scoutingVerdictStyle } from "@/lib/matrix-mechanics-brief";
 import type { MarketEvidence } from "@/lib/market-evidence-types";
 import type { MonthlyRisk } from "@/lib/monthly-risk";
@@ -167,6 +170,8 @@ export function PreviewPlanning({
 }) {
   const { openPanel } = useControlPanel();
   const [scoutCaseKey, setScoutCaseKey] = useState<string | null>(focusThesisId ?? null);
+  /** Explicit plan for Record Outcome / Retry Sync when primaryPlan is a live Scout. */
+  const [learningFocusPlanId, setLearningFocusPlanId] = useState<string | null>(null);
   const [planPanelOpen, setPlanPanelOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [detailsSection, setDetailsSection] = useState<
@@ -193,9 +198,13 @@ export function PreviewPlanning({
     const fromTheses: ScoutCard[] = activeTheses.map((thesis) => {
       const thesisPlans = plans.filter((p) => p.stockThesisId === thesis.id);
       const activePlans = thesisPlans.filter((p) => p.status === "watching" || p.status === "ready");
-      // Prefer live plan; expired still usable (revive via Control) if no active
+      // Prefer live plan; else close the learning loop before stale entered/expired picks.
+      const needsLearningClose =
+        thesisPlans.find(planNeedsStrategyReview) ??
+        thesisPlans.find(planNeedsLearningSyncRepair);
       const primaryPlan =
         activePlans[0] ??
+        needsLearningClose ??
         thesisPlans.find((p) => p.status === "entered") ??
         thesisPlans.find((p) => p.status === "expired") ??
         thesisPlans[0];
@@ -274,6 +283,32 @@ export function PreviewPlanning({
 
   const scoutThesis = focusedScoutCard?.thesis ?? null;
   const scoutPrimaryPlan = focusedScoutCard?.primaryPlan ?? null;
+
+  const learningQueue = useMemo(() => {
+    const needsOutcome = plans.filter(planNeedsStrategyReview);
+    const needsSync = plans.filter(planNeedsLearningSyncRepair);
+    return { needsOutcome, needsSync };
+  }, [plans]);
+
+  const outcomePanelPlan = useMemo(() => {
+    if (learningFocusPlanId) {
+      const targeted = plans.find((p) => p.id === learningFocusPlanId);
+      if (
+        targeted &&
+        (planNeedsStrategyReview(targeted) || planNeedsLearningSyncRepair(targeted))
+      ) {
+        return targeted;
+      }
+    }
+    if (
+      scoutPrimaryPlan &&
+      (planNeedsStrategyReview(scoutPrimaryPlan) ||
+        planNeedsLearningSyncRepair(scoutPrimaryPlan))
+    ) {
+      return scoutPrimaryPlan;
+    }
+    return null;
+  }, [learningFocusPlanId, plans, scoutPrimaryPlan]);
 
   const focusPlan = useMemo(() => {
     if (focusPlanId) return plans.find((p) => p.id === focusPlanId) ?? scoutPrimaryPlan;
@@ -377,6 +412,7 @@ export function PreviewPlanning({
   function focusPlanFromAllocation(planId: string) {
     const plan = plans.find((p) => p.id === planId);
     if (!plan) return;
+    setLearningFocusPlanId(planId);
     if (plan.stockThesisId) {
       setScoutCaseKey(plan.stockThesisId);
       return;
@@ -474,6 +510,53 @@ export function PreviewPlanning({
             </section>
           ) : (
             <>
+              {!mapFocusCompact &&
+              (learningQueue.needsOutcome.length > 0 ||
+                learningQueue.needsSync.length > 0) ? (
+                <section
+                  className="rounded-xl border border-amber-500/35 bg-amber-950/25 px-3 py-3"
+                  data-scout-learning-queue
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">
+                    Scout learning queue
+                  </p>
+                  <p className="mt-1 text-[11px] text-zinc-400">
+                    Close the circuit before new Scouts: record outcome, or Retry Learning
+                    Sync when outcome already persisted.
+                  </p>
+                  {learningQueue.needsOutcome.length > 0 ? (
+                    <ul className="mt-2 space-y-1" data-scout-needs-outcome>
+                      {learningQueue.needsOutcome.map((plan) => (
+                        <li key={plan.id}>
+                          <button
+                            type="button"
+                            className="text-left text-xs text-amber-100 underline-offset-2 hover:underline"
+                            onClick={() => focusPlanFromAllocation(plan.id)}
+                          >
+                            {plan.ticker} · {plan.id} · {plan.status} · needs outcome
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {learningQueue.needsSync.length > 0 ? (
+                    <ul className="mt-2 space-y-1" data-scout-needs-sync-repair>
+                      {learningQueue.needsSync.map((plan) => (
+                        <li key={plan.id}>
+                          <button
+                            type="button"
+                            className="text-left text-xs text-rose-200 underline-offset-2 hover:underline"
+                            onClick={() => focusPlanFromAllocation(plan.id)}
+                          >
+                            {plan.ticker} · {plan.id} · sync{" "}
+                            {plan.outcome?.learningSyncStatus ?? "pending"} · Retry Sync
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </section>
+              ) : null}
               {!mapFocusCompact ? (
                 <details className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
                   <summary className="cursor-pointer text-xs font-medium text-zinc-500 hover:text-zinc-300">
@@ -522,6 +605,16 @@ export function PreviewPlanning({
                         verdict: card.verdict,
                         assessment: displayOp,
                       });
+                      const learningHint = card.thesisPlans.some(planNeedsStrategyReview)
+                        ? " · needs outcome"
+                        : card.thesisPlans.some(planNeedsLearningSyncRepair)
+                          ? " · sync repair"
+                          : card.primaryPlan && planNeedsStrategyReview(card.primaryPlan)
+                            ? " · needs outcome"
+                            : card.primaryPlan &&
+                                planNeedsLearningSyncRepair(card.primaryPlan)
+                              ? " · sync repair"
+                              : "";
                       return (
                         <option key={card.key} value={card.key}>
                           {card.ticker}
@@ -531,6 +624,7 @@ export function PreviewPlanning({
                           {card.linkedTrades.length
                             ? ` · ${card.linkedTrades.length} open loop`
                             : ""}
+                          {learningHint}
                           {card.primaryPlan ? ` · ${card.primaryPlan.id}` : ""}
                         </option>
                       );
@@ -1205,13 +1299,9 @@ export function PreviewPlanning({
                 </section>
               ) : null}
 
-              {scoutPrimaryPlan &&
-              !mapFocusCompact &&
-              (planNeedsStrategyReview(scoutPrimaryPlan) ||
-                scoutPrimaryPlan.outcome?.learningSyncStatus === "pending" ||
-                scoutPrimaryPlan.outcome?.learningSyncStatus === "failed") ? (
-                <div className="mt-4">
-                  <PlanRecordOutcomePanel plan={scoutPrimaryPlan} />
+              {outcomePanelPlan && !mapFocusCompact ? (
+                <div className="mt-4" data-scout-outcome-panel>
+                  <PlanRecordOutcomePanel plan={outcomePanelPlan} />
                 </div>
               ) : null}
 

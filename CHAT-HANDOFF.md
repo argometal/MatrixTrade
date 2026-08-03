@@ -9,24 +9,22 @@
 
 ---
 
-## Pending — Plan Map AI execution sentence
+## Library — Scout Learning circuit + P0 visibility
 
-PR: #132 · branch `cursor/plan-map-ai-execution-sentence-b0a5` · tip `5aed848`
-Doc entrega: `md/matrix/plan-map-ai-execution-sentence-handoff.md`
-Architecture: `md/matrix/execution-instruction-architecture-follow-up.md`
-**Spec canónica:** `md/matrix/execution-instruction-spec.md`
-**Ontología:** `md/matrix/scout-ontology-scoutplan.md`
-**Diff legible (Chat):** `md/matrix/execution-instruction-implement-diff.md`
-Test: `npm run test:execution-instruction-mandatory` · `npm run test:scout-execution-instruction`
+Docs:
+- `md/matrix/metrics-analysis-planteamiento-handoff.md` — tres ledgers (Trade · Scout counterfactual · Pipeline)
+- `md/matrix/scout-learning-circuit-audit-handoff.md` — auditoría acotada + **=== PLAN P0 ===**
 
-**Implemented on branch (pending merge + prod):**
+**P0 (implementado en branch `cursor/scout-learning-p0-visibility-b0a5`):** aggregates Scout en `/stats?tab=pipeline`; discovery cola Learning en Planning; copy Retry Sync post-partialFailure. Sin página/tabla nueva. No mezclar con Trade WR/P/L.
 
-- Plan Map sentence = AI `executionInstruction` only (no deterministic template)
-- **Mandatory gate:** `scout-plan-create` + geometry-mutating `decision-update` → schema Validate rejects missing instruction; Apply Verify confirms persist
-- Spec + ScoutPlan ontology docs landed
-- **PR #125:** superseded for Plan Map sentence — do not merge deterministic description; evolve to guidance/integrity or close
+Siguiente: merge + prod verify → P1 solo con auth (sección Scout Learning en hub).
 
-Not shipped until merge + prod verify. Legacy plans without instruction still show empty sentence until AI backfill.
+## Shipped — Plan Map AI execution sentence (#132)
+
+Merge: `a88c627` · prod https://matrix-trade-theta.vercel.app  
+Docs: `md/matrix/plan-map-ai-execution-sentence-handoff.md` · `md/matrix/execution-instruction-spec.md`
+
+Plan Map sentence = AI `executionInstruction` only. Mandatory on create + geometry-mutating `decision-update`. PR #125 superseded for Plan Map prose.
 
 ---
 

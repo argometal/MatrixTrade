@@ -873,7 +873,7 @@ export async function retryPlanOutcomeLearningSyncAction(
     return {
       error:
         result.errors?.join(" ") ||
-        "Plan outcome persisted; Learning synchronization failed and requires repair.",
+        "Plan outcome persisted (partialFailure); Learning sync failed. Open Planning → Retry Learning Sync — do not re-Apply a new outcome or reopen evaluate_expired_plan.",
     };
   }
   revalidateTradingPaths();

@@ -1,8 +1,12 @@
 # Library alignment backlog — Matrix strategic vision
 
-**Status:** Partial (updated 2026-07-22).  
+**Status:** Partial (updated 2026-08-03).  
 **V2 docs:** **Done** as target architecture — see [v2-engine-architecture.md](v2-engine-architecture.md).  
 **Program truth:** [runtime-truth.md](runtime-truth.md) · **Queue:** [building-backlog.md](building-backlog.md).
+
+**Metrics planteamiento (AI handoff):** [metrics-analysis-planteamiento-handoff.md](metrics-analysis-planteamiento-handoff.md) — tres ledgers Trade / Scout counterfactual / Pipeline.
+
+**Scout Learning circuit audit + P0:** [scout-learning-circuit-audit-handoff.md](scout-learning-circuit-audit-handoff.md) — alcance acotado, evidencia obligatoria, PLAN P0 (aggregates + discovery + Retry Sync).
 
 ---
 
