@@ -130,7 +130,7 @@ export function PreviewTradesHub({
                 <h1 className="text-xl font-semibold text-zinc-100">Trades</h1>
                 <p className="mt-0.5 text-sm text-zinc-500">{subtitle}</p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
+              <div className="flex flex-wrap items-center gap-2 lg:mr-[14rem]">
                 <SnapshotButton
                   title="Trades snapshot"
                   description="Ledger summary for AI"

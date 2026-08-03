@@ -432,7 +432,7 @@ export function PreviewPlaybook({
                 Strategy laboratory — assign trades manually, measure what works.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
+            <div className="flex flex-wrap items-center gap-2 lg:mr-[14rem]">
               <SnapshotButton
                 title="Playbook snapshot"
                 description="Strategies, checklists, P/L and win rate per playbook"

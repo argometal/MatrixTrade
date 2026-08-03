@@ -5,7 +5,7 @@ import { ControlPanelButton } from "@/app/components/control-panel/ControlPanelB
 
 export function MatrixDesktopChrome({ pendingInboxCount = 0 }: { pendingInboxCount?: number }) {
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex items-center gap-2.5">
       <ControlPanelButton />
       <AppExchangeActions app="matrix" inboxCount={pendingInboxCount} />
     </div>

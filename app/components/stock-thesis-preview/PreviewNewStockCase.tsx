@@ -88,7 +88,7 @@ export function PreviewNewStockCase() {
             </div>
             <Link
               href="/planning"
-              className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200 lg:mr-[11rem]"
+              className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200 lg:mr-[14rem]"
             >
               ← Scouting Desk
             </Link>

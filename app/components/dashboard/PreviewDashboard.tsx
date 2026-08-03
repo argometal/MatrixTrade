@@ -103,7 +103,7 @@ export function PreviewDashboard({
                   {data.cycleLabel} · experiment control
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
+              <div className="flex flex-wrap items-center gap-3 lg:mr-[14rem]">
                 {exchange ? (
                   <SnapshotButton
                     title="Dashboard snapshot"

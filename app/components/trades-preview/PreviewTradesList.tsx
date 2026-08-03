@@ -153,7 +153,7 @@ export function PreviewTradesList({
                 {trades.length} closed in lab
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 lg:mr-[11rem]">
+            <div className="flex flex-wrap gap-2 lg:mr-[14rem]">
               <Link
                 href="/planning"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"

@@ -60,7 +60,7 @@ export function PreviewSystem({
                 Bridge sync, inbox backend, vault paths, and deployment status.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:mr-[11rem]">
+            <div className="flex flex-wrap items-center gap-2 lg:mr-[14rem]">
               <SnapshotButton
                 title="MTA Mechanics snapshot"
                 description="Full rules, block types, Apply gate — paste once per AI session"
