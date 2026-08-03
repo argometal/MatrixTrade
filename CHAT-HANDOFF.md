@@ -12,9 +12,15 @@
 ## Library — Metrics analysis planteamiento
 
 Doc: `md/matrix/metrics-analysis-planteamiento-handoff.md`  
-Raw: `https://raw.githubusercontent.com/argometal/MatrixTrade/main/md/matrix/metrics-analysis-planteamiento-handoff.md`
+Raw (branch hasta merge #133): `https://raw.githubusercontent.com/argometal/MatrixTrade/cursor/metrics-planteamiento-handoff-b0a5/md/matrix/metrics-analysis-planteamiento-handoff.md`
 
-Tres ledgers (Trade · Scout counterfactual · Pipeline). No mezclar WR con UPL. Vista Learning Scout dedicada = pendiente.
+Tres ledgers (Trade · Scout counterfactual · Pipeline). No mezclar WR con UPL.
+
+**Auditoría circuito Scout → plan-outcome → Learning → UI:**  
+`md/matrix/scout-learning-circuit-audit-handoff.md`  
+Raw: `https://raw.githubusercontent.com/argometal/MatrixTrade/cursor/metrics-planteamiento-handoff-b0a5/md/matrix/scout-learning-circuit-audit-handoff.md`
+
+P0 = visibilidad aggregates + discovery terminal sin outcome (sin página nueva). **No implementar sin autorización.**
 
 ---
 
