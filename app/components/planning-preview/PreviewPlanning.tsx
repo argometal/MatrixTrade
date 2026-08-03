@@ -370,9 +370,15 @@ export function PreviewPlanning({
     const plan = plans.find((p) => p.id === focusPlanId);
     if (plan?.stockThesisId) {
       setScoutCaseKey(plan.stockThesisId);
-      return;
+    } else if (plan?.ticker) {
+      setScoutCaseKey(`orphan:${plan.ticker.toUpperCase()}`);
     }
-    if (plan?.ticker) setScoutCaseKey(`orphan:${plan.ticker.toUpperCase()}`);
+    if (
+      plan &&
+      (planNeedsStrategyReview(plan) || planNeedsLearningSyncRepair(plan))
+    ) {
+      setLearningFocusPlanId(focusPlanId);
+    }
   }, [focusPlanId, plans]);
 
   const activeEvidence =

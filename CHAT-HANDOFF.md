@@ -9,22 +9,23 @@
 
 ---
 
-## Pending — Scout Learning P0 visibility
+## Pending — Scout Learning P0 visibility (#134)
 
-PR: #134 · branch `cursor/scout-learning-p0-visibility-b0a5` · feature `f3a17cf`  
+PR: #134 · branch `cursor/scout-learning-p0-visibility-b0a5`  
 **Handoff de entrega:** `md/matrix/scout-learning-p0-visibility-handoff.md`  
 Auditoría + PLAN P0: `md/matrix/scout-learning-circuit-audit-handoff.md`  
-Tres ledgers: `md/matrix/metrics-analysis-planteamiento-handoff.md`  
+Tres ledgers (#133 merged): `md/matrix/metrics-analysis-planteamiento-handoff.md`  
 Tests: `npm run test:insights-pipeline` · `npm run test:plan-outcome-learning-sync`
 
-**Implemented on branch (pending merge + prod):**
-
-- `/stats?tab=pipeline` muestra Triggered-without-Trade + thesis fail rate
-- Planning: cola Learning (needs outcome / Retry Sync)
+**Scope (P0 only — do not expand):**
+- `/stats?tab=pipeline` — Triggered-without-Trade + thesis fail rate
+- Planning — learning queue (needs outcome / Retry Sync)
 - Copy post-`partialFailure` → Retry Learning Sync
-- Sin página/tabla nueva; no mezclar con Trade WR/P/L
+- Strict Trade vs Scout ledger separation
 
-Not shipped until merge + prod verify. P1 hub Scout Learning solo con auth.
+**Paused (not in this PR):** Scout Coverage / Funnel audit (#136). Ops review sheet (#135) docs-only — no product scope here.
+
+Not shipped until #134 merge + prod verify. P1 hub Scout Learning solo con auth.
 
 ## Shipped — Plan Map AI execution sentence (#132)
 
