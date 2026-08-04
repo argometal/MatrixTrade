@@ -4,7 +4,7 @@
 **Fecha:** 2026-08-04  
 **PR:** https://github.com/argometal/MatrixTrade/pull/137  
 **Branch:** `cursor/strategy-review-handoff-b0a5`  
-**Tip:** `4db85c7`  
+**Tip:** `36bf325`  
 **Main tip al sync:** `427024a`  
 
 **No merge automático** — merge humano pendiente.
@@ -20,7 +20,7 @@
 | Conflictos | **Ninguno** |
 | Contrato / fixtures tocados | **No** (sin conflictos reales) |
 
-La rama ya partía de `main` @ `427024a` (merge-base = main tip). VERIFY-001 tip `4db85c7` sigue siendo HEAD.
+La rama ya partía de `main` @ `427024a` (merge-base = main tip). VERIFY-001 tip `36bf325` sigue siendo HEAD.
 
 ---
 
