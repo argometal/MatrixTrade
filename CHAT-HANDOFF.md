@@ -11,11 +11,14 @@
 
 ## Pending — Scout Learning P0 visibility (#134)
 
-PR: #134 · branch `cursor/scout-learning-p0-visibility-b0a5`  
+PR: #134 · branch `cursor/scout-learning-p0-visibility-b0a5` · tip `35847e7`  
+**CLOSE-001 (merge ready):** `md/matrix/scout-learning-p0-close-001-handoff.md`  
 **Handoff de entrega:** `md/matrix/scout-learning-p0-visibility-handoff.md`  
 Auditoría + PLAN P0: `md/matrix/scout-learning-circuit-audit-handoff.md`  
 Tres ledgers (#133 merged): `md/matrix/metrics-analysis-planteamiento-handoff.md`  
 Tests: `npm run test:insights-pipeline` · `npm run test:plan-outcome-learning-sync`
+
+**MERGEABLE / CLEAN · Vercel SUCCESS · Listo para merge: sí · No auto-merge.**
 
 **Scope (P0 only — do not expand):**
 - `/stats?tab=pipeline` — Triggered-without-Trade + thesis fail rate
@@ -25,7 +28,7 @@ Tests: `npm run test:insights-pipeline` · `npm run test:plan-outcome-learning-s
 
 **Paused (not in this PR):** Scout Coverage / Funnel audit (#136). Ops review sheet (#135) docs-only — no product scope here.
 
-Not shipped until #134 merge + prod verify. P1 hub Scout Learning solo con auth.
+Nota: código P0 ya está en `main` (`6bc41fc`+`97788c0`); merge #134 cierra docs/PR. Prod verify tras merge humano.
 
 ## Shipped — Plan Map AI execution sentence (#132)
 
