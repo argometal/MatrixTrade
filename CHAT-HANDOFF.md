@@ -9,6 +9,14 @@
 
 ---
 
+## Pending — Strategy Review Handoff (MTA-AI-STRATEGY-HANDOFF-001)
+
+PR branch: `cursor/strategy-review-handoff-b0a5`  
+Doc: `md/matrix/strategy-review-handoff-001.md`  
+Test: `npm run test:strategy-review-handoff`
+
+Planning Snapshot → **Snap Strategy Review** — read-only projection for external AI (thesis / entry / outcome / Learning). No Funnel. No new page/table.
+
 ## Library — Scout Learning circuit + P0 visibility
 
 Docs:

@@ -73,6 +73,13 @@ import { ScoutAllocationImpact } from "@/app/components/planning-preview/ScoutAl
 import { ScoutAllocationStrip } from "@/app/components/planning-preview/ScoutAllocationStrip";
 import { ScoutFundingExecutionMenu } from "@/app/components/planning-preview/ScoutFundingExecutionMenu";
 import { ScoutPrepareAllocationNote } from "@/app/components/planning-preview/ScoutPrepareAllocationNote";
+import {
+  resolveLinkedTradeForPlan,
+  strategyReviewSnapshotItem,
+} from "@/lib/strategy-review-handoff";
+import type { LearningOutcome } from "@/lib/learning-outcome-types";
+import type { ObservationRecord } from "@/lib/observation-types";
+import type { MafExperiment } from "@/lib/maf-types";
 
 const thesisStatusStyles: Record<string, string> = {
   draft: "bg-zinc-700/50 text-zinc-400",
@@ -152,6 +159,9 @@ export function PreviewPlanning({
   reservations = [],
   capitalAccount = null,
   capitalConfigurationPresent,
+  learningOutcomes = [],
+  observations = [],
+  mafExperiments = [],
 }: {
   plans: TradePlan[];
   playbooks: Playbook[];
@@ -167,6 +177,9 @@ export function PreviewPlanning({
   reservations?: CapitalReservation[];
   capitalAccount?: CapitalAccountSnapshot | null;
   capitalConfigurationPresent?: boolean;
+  learningOutcomes?: LearningOutcome[];
+  observations?: ObservationRecord[];
+  mafExperiments?: MafExperiment[];
 }) {
   const { openPanel } = useControlPanel();
   const [scoutCaseKey, setScoutCaseKey] = useState<string | null>(focusThesisId ?? null);
@@ -344,6 +357,20 @@ export function PreviewPlanning({
           capitalConfigurationPresent,
         })
       );
+      const thesisForReview =
+        scoutThesis ??
+        stockTheses.find((t) => t.id === focusPlan.stockThesisId) ??
+        null;
+      items.push(
+        strategyReviewSnapshotItem({
+          plan: focusPlan,
+          stockThesis: thesisForReview,
+          linkedTrade: resolveLinkedTradeForPlan(focusPlan, trades),
+          learningOutcomes,
+          observations,
+          mafExperiments,
+        })
+      );
     }
     return items;
   }, [
@@ -358,6 +385,11 @@ export function PreviewPlanning({
     reservations,
     capitalAccount,
     capitalConfigurationPresent,
+    stockTheses,
+    trades,
+    learningOutcomes,
+    observations,
+    mafExperiments,
   ]);
 
   useEffect(() => {
@@ -742,6 +774,18 @@ export function PreviewPlanning({
                       plans,
                       activeEvidence,
                     }).filter((item) => item.id !== "mechanics");
+                    if (plan) {
+                      snapshotItemsForCase.push(
+                        strategyReviewSnapshotItem({
+                          plan,
+                          stockThesis: thesis,
+                          linkedTrade: resolveLinkedTradeForPlan(plan, trades),
+                          learningOutcomes,
+                          observations,
+                          mafExperiments,
+                        })
+                      );
+                    }
 
                     async function prepareTrade() {
                       if (!plan || entry === undefined || stop === undefined) {
