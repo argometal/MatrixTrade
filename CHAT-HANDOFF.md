@@ -11,7 +11,7 @@
 
 ## Pending — Strategy Review Handoff (MTA-AI-STRATEGY-HANDOFF-001)
 
-PR: #137 · branch `cursor/strategy-review-handoff-b0a5` · tip `8baaebd`  
+PR: #137 · branch `cursor/strategy-review-handoff-b0a5` · feature+VERIFY `4db85c7`  
 Doc: `md/matrix/strategy-review-handoff-001.md`  
 VERIFY: `md/matrix/strategy-review-handoff-verify-001.md`  
 **MERGE-001:** `md/matrix/strategy-review-handoff-merge-001.md`  
