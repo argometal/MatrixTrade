@@ -11,11 +11,12 @@
 
 ## Pending — Strategy Review Handoff (MTA-AI-STRATEGY-HANDOFF-001)
 
-PR branch: `cursor/strategy-review-handoff-b0a5`  
+PR: #137 · branch `cursor/strategy-review-handoff-b0a5`  
 Doc: `md/matrix/strategy-review-handoff-001.md`  
+**VERIFY-001:** `md/matrix/strategy-review-handoff-verify-001.md` · fixtures en `md/matrix/fixtures/`  
 Test: `npm run test:strategy-review-handoff`
 
-Planning Snapshot → **Snap Strategy Review** — read-only projection for external AI (thesis / entry / outcome / Learning). No Funnel. No new page/table.
+Planning Snapshot → **Snap Strategy Review** — read-only projection for external AI. VERIFY: MERGEABLE · listo para merge. No Funnel.
 
 ## Library — Scout Learning circuit + P0 visibility
 

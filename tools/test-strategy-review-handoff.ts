@@ -281,4 +281,41 @@ function lo(
   assert.doesNotMatch(mod, /upsert|persistPlanOutcome|getPlansStore\(\)\.upsert/);
 }
 
+{
+  // Learning Outcome must not link by ticker alone
+  const plan = basePlan({
+    id: "PLAN-A",
+    status: "failed",
+    outcome: {
+      recordedAt: "2026-07-22T00:00:00.000Z",
+      learningSyncStatus: "complete",
+      learningOutcomeId: "LO-A",
+      tradeExecuted: false,
+    },
+  });
+  const handoff = buildStrategyReviewHandoff({
+    plan,
+    stockThesis: baseThesis(),
+    learningOutcomes: [
+      lo({
+        id: "LO-OTHER",
+        kind: "unexecuted_plan_loss",
+        ticker: "AMZN",
+        planId: "PLAN-OTHER",
+        counterfactualR: -9,
+      }),
+      lo({
+        id: "LO-A",
+        kind: "unexecuted_plan_loss",
+        ticker: "AMZN",
+        planId: "PLAN-A",
+        counterfactualR: -1,
+      }),
+    ],
+    now: FIXED_NOW,
+  });
+  assert.equal(handoff.learning.learningOutcome?.id, "LO-A");
+  assert.equal(handoff.learning.counterfactualR, -1);
+}
+
 console.log("test-strategy-review-handoff: ok");

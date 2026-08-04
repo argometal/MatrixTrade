@@ -1,0 +1,152 @@
+=== SNAP STRATEGY REVIEW · AMZN · PLAN-TRADE ===
+
+=== MTA STRATEGY REVIEW HANDOFF ===
+
+META
+{
+  "handoffVersion": "1.0.0",
+  "generatedAt": "2026-08-04T12:00:00.000Z",
+  "reviewAsOf": "2026-08-04T12:00:00.000Z",
+  "dataCompleteness": "partial",
+  "missingFields": [
+    "marketObservation.priceAtPlanCreation",
+    "marketObservation.currentPrice",
+    "marketObservation.lowestPriceSinceCreation",
+    "marketObservation.highestPriceSinceCreation",
+    "marketObservation.marketDataAsOf",
+    "marketObservation.marketDataSource",
+    "marketObservation.entryTouched",
+    "marketObservation.stopTouched",
+    "marketObservation.targetTouched"
+  ]
+}
+
+IDENTITY
+{
+  "ticker": "AMZN",
+  "stockFileId": "ST-AMZN-001",
+  "planId": "PLAN-TRADE",
+  "playbookId": "PB-1",
+  "family": "Family A",
+  "createdAt": "2026-07-01T00:00:00.000Z",
+  "updatedAt": "2026-07-20T00:00:00.000Z"
+}
+
+STRATEGIC_THESIS
+{
+  "thesis": "Accumulate pullbacks in primary zone",
+  "strategicBias": "Family A",
+  "strategicTimeframe": "3M",
+  "opportunityTimeframe": "1D",
+  "refinementTimeframe": "1H",
+  "invalidationConditions": "Weekly close below 185",
+  "importantNotes": null,
+  "stockFileStatus": "watching",
+  "currentHypothesis": "Wait for zone"
+}
+
+PLAN
+{
+  "status": "entered",
+  "plannedEntry": 200,
+  "maximumEntry": null,
+  "stopPrice": 190,
+  "targetPrice": 230,
+  "extendedTarget": 250,
+  "minimumRR": 3,
+  "plannedRisk": null,
+  "plannedRR": 3,
+  "executionInstruction": "Buy at 200 with stop 190 target 230.",
+  "expiresAt": null
+}
+
+OPERATIONAL_STATE
+{
+  "monitoringStatus": "entered",
+  "decisionState": null,
+  "lastDecision": null,
+  "linkedTradeId": "H010",
+  "outcome": null,
+  "learningSyncStatus": null,
+  "needsStrategyReview": false,
+  "needsLearningSyncRepair": false,
+  "needsOutcome": false
+}
+
+MARKET_OBSERVATION
+{
+  "priceAtPlanCreation": "not_recorded",
+  "currentPrice": "not_recorded",
+  "lowestPriceSinceCreation": "not_recorded",
+  "highestPriceSinceCreation": "not_recorded",
+  "entryTouched": "not_recorded",
+  "entryTouchedAt": "not_recorded",
+  "stopTouched": "not_recorded",
+  "stopTouchedAt": "not_recorded",
+  "targetTouched": "not_recorded",
+  "targetTouchedAt": "not_recorded",
+  "marketDataAsOf": "not_recorded",
+  "marketDataSource": "not_recorded",
+  "note": "No live market feed in this projection. Touch flags come only from plan.outcome when recorded; otherwise not_recorded."
+}
+
+HISTORY
+{
+  "decisionUpdates": [],
+  "reanalyses": "not_recorded",
+  "statusChanges": "not_recorded",
+  "previousLevels": "not_recorded",
+  "observations": []
+}
+
+LEARNING
+{
+  "learningOutcome": null,
+  "counterfactualR": "not_recorded",
+  "missedReason": "not_recorded",
+  "attribution": "not_recorded",
+  "maf": null,
+  "learningObservations": [],
+  "linkedTradeSummary": {
+    "tradeId": "H010",
+    "status": "open",
+    "entry": 201,
+    "stop": 190,
+    "target": 230,
+    "shares": 10,
+    "exit": null,
+    "note": "Compact Trade summary only — use Trade Review snapshot for full forensic."
+  }
+}
+
+AI_REVIEW_REQUEST
+{
+  "questions": [
+    "Is the strategic thesis still valid?",
+    "Was the planned entry reached?",
+    "Did the price move without entry?",
+    "What is the correct Scout status?",
+    "Is plan-outcome required?",
+    "Is Learning sync required?",
+    "What should be done now?"
+  ]
+}
+
+MISSING_FIELDS
+- marketObservation.priceAtPlanCreation
+- marketObservation.currentPrice
+- marketObservation.lowestPriceSinceCreation
+- marketObservation.highestPriceSinceCreation
+- marketObservation.marketDataAsOf
+- marketObservation.marketDataSource
+- marketObservation.entryTouched
+- marketObservation.stopTouched
+- marketObservation.targetTouched
+
+LEDGER_RULES
+- Scout counterfactual R is NOT Trade P/L.
+- Do not invent market prices.
+- Active Scouts may have null outcome.
+- Compact linked Trade summary is not a full Trade Review.
+
+=== END SNAP STRATEGY REVIEW · AMZN · PLAN-TRADE ===
