@@ -37,8 +37,7 @@ La rama ya partía de `main` @ `427024a` (merge-base = main tip). VERIFY-001 tip
 
 ## Cambios posteriores a VERIFY-001
 
-**Ninguno de producto.** Solo este handoff MERGE-001 + pointer CHAT.
-
+Solo docs MERGE-001 + pointer CHAT (tips). **Sin** cambios de contrato, fixtures, ni producto.
 ---
 
 ## Checks
