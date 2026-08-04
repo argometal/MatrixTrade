@@ -4,7 +4,7 @@
 **Fecha:** 2026-08-04  
 **PR:** https://github.com/argometal/MatrixTrade/pull/137  
 **Branch:** `cursor/strategy-review-handoff-b0a5`  
-**Tip:** `36bf325`  
+**Tip:** `8baaebd`  
 **Main tip al sync:** `427024a`  
 
 **No merge automático** — merge humano pendiente.
