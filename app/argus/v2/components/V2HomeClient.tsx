@@ -19,6 +19,8 @@ import {
   parseV2HomeView,
   type V2HomeView,
 } from "./V2HomeMainShell";
+import { V2EntityViewer } from "./V2EntityViewer";
+import type { V2EntityRow, V2EntityTab } from "@/lib/argus/v2/loaders";
 
 const HOME_VIEW_TABS: { id: V2HomeView; label: string }[] = [
   { id: "intelligence", label: "Intelligence" },
@@ -70,6 +72,8 @@ export function V2HomeClient({
   initialView,
   followUps,
   homeTimeline,
+  entityTab = "organizations",
+  entityRowsByTab,
 }: {
   nodes: V2KnowledgeNode[];
   tags: V2TagCloudItem[];
@@ -77,6 +81,8 @@ export function V2HomeClient({
   initialView?: string;
   followUps: FollowUpItem[];
   homeTimeline: V2TimelineEntry[];
+  entityTab?: V2EntityTab;
+  entityRowsByTab?: Record<V2EntityTab, V2EntityRow[]>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -86,12 +92,14 @@ export function V2HomeClient({
 
   const lensNode = lensId ? nodes.find((node) => node.id === lensId) : undefined;
   const showLensDock = view === "intelligence" && intelTab !== "tags";
+  const browseRows = entityRowsByTab?.[entityTab] ?? [];
 
   function setView(next: V2HomeView) {
     const params = new URLSearchParams(searchParams.toString());
     if (next === "intelligence") {
       params.delete("view");
       params.delete("tab");
+      params.delete("layout");
     } else {
       params.set("view", "browse");
       setLensId(null);
@@ -123,7 +131,13 @@ export function V2HomeClient({
               </div>
 
               {view === "browse" ? (
-                <BrowseQuickLinks />
+                <div className="space-y-6">
+                  {entityRowsByTab ? (
+                    <V2EntityViewer tab={entityTab} rows={browseRows} primary />
+                  ) : (
+                    <BrowseQuickLinks />
+                  )}
+                </div>
               ) : (
                 <V2HomeIntelligencePanel
                   nodes={treemapNodes}
