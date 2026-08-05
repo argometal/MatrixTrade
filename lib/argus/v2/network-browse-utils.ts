@@ -1,4 +1,4 @@
-import type { ArgusData, Entity, InboxItem, Log } from "../types";
+import type { ArgusData, Entity, EntityLifecycleStatus, InboxItem, Log } from "../types";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import { buildEntityIntelligence } from "../network-intelligence";
 import { entitiesByKind, personEvidenceScope } from "./hierarchy";
@@ -17,6 +17,7 @@ export interface V2NetworkBrowseCard {
   organizationId: string | null;
   status: V2NetworkBrowseStatus;
   statusTone: "green" | "blue" | "amber" | "default";
+  lifecycleStatus?: EntityLifecycleStatus;
   expertise: string[];
   strength: number;
   lastInteraction: {
@@ -270,6 +271,7 @@ export function buildV2NetworkBrowseCards(
         organizationId: org?.id ?? null,
         status,
         statusTone: statusTone(status),
+        lifecycleStatus: person.lifecycleStatus,
         expertise: expertiseTags(person, scope.logs, data),
         strength: computeRelationshipStrength(
           scope.emailCount,

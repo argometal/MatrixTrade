@@ -143,6 +143,17 @@ export function EntityEditForm({
 
       <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Editable fields</p>
 
+      <label className="block">
+        <span className="text-xs text-zinc-500">Name</span>
+        <input
+          name="name"
+          required
+          defaultValue={entity.name}
+          placeholder="Display name"
+          className={`${inputClass} mt-1`}
+        />
+      </label>
+
       <NetworkRelationshipMetricsFields entity={entity} />
 
       <label className="block">
