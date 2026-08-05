@@ -9,15 +9,21 @@
 
 ---
 
-## Library — Scout Learning circuit + P0 visibility
+## Pending — Scout Coverage / Funnel audit
 
-Docs:
-- `md/matrix/metrics-analysis-planteamiento-handoff.md` — tres ledgers (Trade · Scout counterfactual · Pipeline)
-- `md/matrix/scout-learning-circuit-audit-handoff.md` — auditoría acotada + **=== PLAN P0 ===**
+Doc: `md/matrix/scout-coverage-funnel-audit-handoff.md`  
+Raw (branch hasta merge): `https://raw.githubusercontent.com/argometal/MatrixTrade/cursor/scout-coverage-funnel-audit-b0a5/md/matrix/scout-coverage-funnel-audit-handoff.md`
 
-**P0 (implementado en branch `cursor/scout-learning-p0-visibility-b0a5`):** aggregates Scout en `/stats?tab=pipeline`; discovery cola Learning en Planning; copy Retry Sync post-partialFailure. Sin página/tabla nueva. No mezclar con Trade WR/P/L.
+**Hallazgo:** Pipeline cuenta outcomes/LOs formalizados, **no** el universo `TradePlan`. Funnel propuesto en `/stats?tab=pipeline` (Total/Active/Terminal/Outcome/Synced/Trade/Needs*). **Sin implementación** hasta auth. Prod enumeration requiere Supabase en el agente.
 
-Siguiente: merge + prod verify → P1 solo con auth (sección Scout Learning en hub).
+## Library — Metrics + Scout Learning (on main)
+
+Raw `main`:
+- https://raw.githubusercontent.com/argometal/MatrixTrade/main/md/matrix/metrics-analysis-planteamiento-handoff.md
+- https://raw.githubusercontent.com/argometal/MatrixTrade/main/md/matrix/scout-learning-circuit-audit-handoff.md
+- https://raw.githubusercontent.com/argometal/MatrixTrade/main/md/matrix/scout-learning-p0-visibility-handoff.md
+
+P0 visibility shipped on main (`6bc41fc`+). Prioridad operativa: cobertura Scout + cierre outcomes — no arquitectura amplia.
 
 ## Shipped — Plan Map AI execution sentence (#132)
 

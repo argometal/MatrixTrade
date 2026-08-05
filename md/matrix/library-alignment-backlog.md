@@ -6,7 +6,8 @@
 
 **Metrics planteamiento (AI handoff):** [metrics-analysis-planteamiento-handoff.md](metrics-analysis-planteamiento-handoff.md) — tres ledgers Trade / Scout counterfactual / Pipeline.
 
-**Scout Learning circuit audit + P0:** [scout-learning-circuit-audit-handoff.md](scout-learning-circuit-audit-handoff.md) — alcance acotado, evidencia obligatoria, PLAN P0 (aggregates + discovery + Retry Sync).
+**Scout Learning circuit audit + P0:** [scout-learning-circuit-audit-handoff.md](scout-learning-circuit-audit-handoff.md) — alcance acotado, evidencia obligatoria, PLAN P0.  
+**Scout Coverage / Funnel audit:** [scout-coverage-funnel-audit-handoff.md](scout-coverage-funnel-audit-handoff.md) — universo TradePlan vs Insights; propuesta Funnel; sin implementación hasta auth.
 
 ---
 
