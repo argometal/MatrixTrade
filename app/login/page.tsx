@@ -35,6 +35,11 @@ export default async function LoginPage({
           Sign in
         </button>
       </form>
+      <p className="mt-6 text-center text-sm text-zinc-500">
+        <a href="/apps" className="underline-offset-2 hover:text-zinc-800 hover:underline">
+          All apps
+        </a>
+      </p>
       </div>
     </>
   );

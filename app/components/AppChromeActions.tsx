@@ -7,7 +7,7 @@ import { TradingMark } from "@/app/components/TradingMark";
 const iconBtn =
   "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200";
 
-/** MTA chrome: inbox + switch to Argus (never Matrix). */
+/** MTA chrome: inbox + switch to Argus and ArgusForge. */
 export function MatrixAppChromeActions({ pendingInboxCount = 0 }: { pendingInboxCount?: number }) {
   return (
     <>
@@ -30,11 +30,14 @@ export function MatrixAppChromeActions({ pendingInboxCount = 0 }: { pendingInbox
       >
         AF
       </Link>
+      <Link href="/apps" aria-label="All apps" title="All apps" className={`${iconBtn} text-[10px] font-semibold`}>
+        ···
+      </Link>
     </>
   );
 }
 
-/** Argus chrome: inbox + switch to MTA (never Argus). */
+/** Argus chrome: inbox + switch to MTA and ArgusForge. */
 export function ArgusAppChromeActions({ inboxCount = 0 }: { inboxCount?: number }) {
   return (
     <>
@@ -48,6 +51,17 @@ export function ArgusAppChromeActions({ inboxCount = 0 }: { inboxCount?: number 
       </Link>
       <Link href="/home-preview" aria-label="MTA" title="MTA" className={`${iconBtn} p-0`}>
         <TradingMark size={28} />
+      </Link>
+      <Link
+        href="/forge"
+        aria-label="Open ArgusForge"
+        title="ArgusForge"
+        className={`${iconBtn} text-[10px] font-bold tracking-wide text-zinc-300`}
+      >
+        AF
+      </Link>
+      <Link href="/apps" aria-label="All apps" title="All apps" className={`${iconBtn} text-[10px] font-semibold`}>
+        ···
       </Link>
     </>
   );

@@ -9,9 +9,19 @@ export async function requireTradingSession(): Promise<void> {
   }
 }
 
-export async function requireArgusSession(): Promise<void> {
+export async function requireArgusSession(options?: { next?: string }): Promise<void> {
   if (!argusAuthRequired()) return;
   if (!(await hasArgusSession())) {
+    const next = options?.next;
+    if (
+      next &&
+      next.startsWith("/") &&
+      !next.startsWith("//") &&
+      !next.includes("\\") &&
+      (next === "/forge" || next.startsWith("/forge/") || next.startsWith("/argus"))
+    ) {
+      redirect(`/argus/login?next=${encodeURIComponent(next)}`);
+    }
     redirect("/argus/login");
   }
 }

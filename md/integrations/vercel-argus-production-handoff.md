@@ -11,7 +11,7 @@
 | Symptom | Root cause | Fix |
 |---------|------------|-----|
 | No password on production | `MATRIXTRADE_PASSWORD` / `ARGUS_PASSWORD` **not set in Vercel** | Add env vars → Redeploy |
-| “ARGUS isn’t there” | Trading lives at `/`; ARGUS at `/argus` — **no nav link** by design | Open `/argus` or `/argus/login` directly |
+| “ARGUS isn’t there” | User expects ARGUS from MTA home | Open `/apps`, use chrome AF/ARGUS marks, or `/argus` / `/argus/login` |
 | ARGUS empty on Vercel | `data/argus/` is **gitignored** + Vercel has **no persistent disk** | Use local for journal; Vercel is not ARGUS host (yet) |
 | Confusing URL | Deployment hash URL ≠ production domain | Use **`matrix-trade-theta.vercel.app`** |
 

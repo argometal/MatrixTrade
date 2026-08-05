@@ -9,7 +9,7 @@ import {
 } from "@/lib/auth/guest-workstation-lock";
 
 function isPublicPath(pathname: string): boolean {
-  if (pathname === "/login" || pathname === "/argus/login") return true;
+  if (pathname === "/login" || pathname === "/argus/login" || pathname === "/apps") return true;
   if (pathname.startsWith("/_next")) return true;
   if (pathname.startsWith("/api/")) return true;
   if (/\.(?:svg|png|jpg|jpeg|gif|webp|ico)$/.test(pathname)) return true;
@@ -87,7 +87,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (pathname === "/") {
-    return NextResponse.redirect(new URL("/home-preview", request.url));
+    return NextResponse.redirect(new URL("/apps", request.url));
   }
 
   const tradingPasswordSet = Boolean(process.env.MATRIXTRADE_PASSWORD);
@@ -123,13 +123,17 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  if (
+  const needsArgusAuth =
     argusPasswordSet &&
-    pathname.startsWith("/argus") &&
-    pathname !== "/argus/login" &&
-    !request.cookies.get("argus-auth")?.value
-  ) {
-    return NextResponse.redirect(new URL("/argus/login", request.url));
+    !request.cookies.get("argus-auth")?.value &&
+    ((pathname.startsWith("/argus") && pathname !== "/argus/login") ||
+      pathname === "/forge" ||
+      pathname.startsWith("/forge/"));
+
+  if (needsArgusAuth) {
+    const login = new URL("/argus/login", request.url);
+    login.searchParams.set("next", pathname);
+    return NextResponse.redirect(login);
   }
 
   return NextResponse.next();

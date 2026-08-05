@@ -9,6 +9,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
+import { AppExchangeActions } from "@/app/components/AppExchangeActions";
 import { useForgeSystem } from "./ForgeSystemProvider";
 import { AF_TEXT } from "@/lib/argusforge/af03-visible-ontology";
 
@@ -119,35 +120,38 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
             )}
           </div>
 
-          <div
-            className="inline-flex shrink-0 rounded-lg border border-zinc-800 bg-zinc-950 p-0.5"
-            role="group"
-            aria-label="Operational system"
-          >
-            <button
-              type="button"
-              aria-pressed={system === "argusforge"}
-              disabled={!ready}
-              onClick={() => setSystem("argusforge")}
-              className={`min-h-9 rounded-md px-2.5 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
-                system === "argusforge"
-                  ? "bg-zinc-800 text-zinc-50"
-                  : `${AF_TEXT.metadata} hover:text-zinc-300`
-              }`}
+          <div className="flex shrink-0 items-center gap-2">
+            <div
+              className="inline-flex rounded-lg border border-zinc-800 bg-zinc-950 p-0.5"
+              role="group"
+              aria-label="Operational system"
             >
-              ArgusForge
-            </button>
-            <button
-              type="button"
-              aria-pressed={system === "mta"}
-              disabled={!ready}
-              onClick={() => setSystem("mta")}
-              className={`min-h-9 rounded-md px-2.5 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
-                system === "mta" ? "bg-zinc-800 text-zinc-50" : `${AF_TEXT.metadata} hover:text-zinc-300`
-              }`}
-            >
-              MTA
-            </button>
+              <button
+                type="button"
+                aria-pressed={system === "argusforge"}
+                disabled={!ready}
+                onClick={() => setSystem("argusforge")}
+                className={`min-h-9 rounded-md px-2.5 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
+                  system === "argusforge"
+                    ? "bg-zinc-800 text-zinc-50"
+                    : `${AF_TEXT.metadata} hover:text-zinc-300`
+                }`}
+              >
+                ArgusForge
+              </button>
+              <button
+                type="button"
+                aria-pressed={system === "mta"}
+                disabled={!ready}
+                onClick={() => setSystem("mta")}
+                className={`min-h-9 rounded-md px-2.5 text-[11px] font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
+                  system === "mta" ? "bg-zinc-800 text-zinc-50" : `${AF_TEXT.metadata} hover:text-zinc-300`
+                }`}
+              >
+                MTA
+              </button>
+            </div>
+            <AppExchangeActions app="forge" />
           </div>
         </div>
       </header>
