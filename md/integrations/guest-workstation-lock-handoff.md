@@ -6,7 +6,9 @@
 **Prod today:** https://matrix-trade-theta.vercel.app · tag `main0805d`  
 **Intent:** Safe work on **guest / shared computers** — if the user forgets to close the app, access expires and credentials are required again.
 
-**v1+ (password override):** Emulates Apple Screen Time **Ignore Limit** — schedule auto-locks when outside daily hours / timer ends, but a **correct password always grants a timed override** for the configured `hours` (cookie `guest-lock-override-until`). Outside the window without override → login with `?guest_expired=1`.
+**v1+ (password override + account policy):**
+- Emulates Apple Screen Time **Ignore Limit**, but override is fixed at **30 minutes** (not the session timer hours) so you can edit settings without leaving the app open for hours.
+- **Canonical schedule** lives in Supabase `guest_lock_policy_state` (all devices / sessions). Cookie is a mirror + Edge fallback. Apply `supabase/guest-lock-policy.sql` once in prod.
 
 ---
 

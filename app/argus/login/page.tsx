@@ -16,8 +16,8 @@ export default async function ArgusLoginPage({
       <p className="mt-1 text-sm text-zinc-500">{ARGUS_SUBTITLE}</p>
       {guest_expired === "1" ? (
         <p className="mt-4 rounded-xl border border-amber-800/60 bg-amber-950/40 px-3 py-2 text-sm text-amber-100">
-          Guest lock closed this session (outside schedule or time expired). Enter the password to unlock
-          again for the configured hours — like Screen Time “Ignore Limit”.
+          Guest lock closed this session (outside schedule or time expired). Enter the password for a
+          30-minute unlock to change settings or finish work — then it locks again.
         </p>
       ) : null}
       <form action={loginArgusAction} className="mt-8 space-y-4">

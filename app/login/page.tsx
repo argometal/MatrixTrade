@@ -17,8 +17,8 @@ export default async function LoginPage({
       <p className="mt-1 text-sm text-zinc-500">Trading access</p>
       {guest_expired === "1" ? (
         <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-          Guest lock closed this session (outside schedule or time expired). Enter the password to unlock
-          again for the configured hours — like Screen Time “Ignore Limit”.
+          Guest lock closed this session (outside schedule or time expired). Enter the password for a
+          30-minute unlock to change settings or finish work — then it locks again.
         </p>
       ) : null}
       <form action={loginTradingAction} className="mt-8 space-y-4">

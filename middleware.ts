@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { argusLegacyRedirectUrl } from "@/lib/argus/argus-legacy-redirects";
+import { resolveGuestLockPolicyForMiddleware } from "@/lib/auth/guest-lock-policy-edge";
 import {
   GUEST_LOCK_COOKIE,
   GUEST_LOCK_OVERRIDE_COOKIE,
   GUEST_SESSION_UNTIL_COOKIE,
   isGuestLockWindowOpen,
   isGuestOverrideActive,
-  parseGuestLockPolicy,
+  type GuestLockPolicy,
 } from "@/lib/auth/guest-workstation-lock";
 
 function isPublicPath(pathname: string): boolean {
@@ -56,13 +57,12 @@ function clearSessionCookies(response: NextResponse): void {
   response.cookies.delete(GUEST_LOCK_OVERRIDE_COOKIE);
 }
 
-function guestLockBlocks(request: NextRequest): boolean {
-  const policy = parseGuestLockPolicy(request.cookies.get(GUEST_LOCK_COOKIE)?.value);
-  if (!policy?.enabled) return false;
+function guestLockBlocks(policy: GuestLockPolicy, request: NextRequest): boolean {
+  if (!policy.enabled) return false;
 
   const override = request.cookies.get(GUEST_LOCK_OVERRIDE_COOKIE)?.value;
   if (isGuestOverrideActive(override)) {
-    // Password override active — schedule ignored; only honor absolute session end.
+    // 30-min password override — schedule ignored; honor absolute session end.
     const until = request.cookies.get(GUEST_SESSION_UNTIL_COOKIE)?.value;
     if (until) {
       const ts = Date.parse(until);
@@ -71,17 +71,16 @@ function guestLockBlocks(request: NextRequest): boolean {
     return false;
   }
 
-  // No password override: enforce schedule + soft timer.
+  // No override: enforce account schedule + require a timed session cookie.
   if (!isGuestLockWindowOpen(policy)) return true;
   const until = request.cookies.get(GUEST_SESSION_UNTIL_COOKIE)?.value;
-  if (until) {
-    const ts = Date.parse(until);
-    if (Number.isFinite(ts) && Date.now() > ts) return true;
-  }
+  if (!until) return true;
+  const ts = Date.parse(until);
+  if (!Number.isFinite(ts) || Date.now() > ts) return true;
   return false;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname === "/health" || pathname.startsWith("/health/")) {
@@ -111,7 +110,11 @@ export function middleware(request: NextRequest) {
     process.env.ARGUS_PASSWORD ?? process.env.HEALTH_VAULT_PASSWORD
   );
 
-  if (guestLockBlocks(request)) {
+  const policy = await resolveGuestLockPolicyForMiddleware(
+    request.cookies.get(GUEST_LOCK_COOKIE)?.value
+  );
+
+  if (guestLockBlocks(policy, request)) {
     const loginPath =
       pathname.startsWith("/argus") && argusPasswordSet
         ? "/argus/login"

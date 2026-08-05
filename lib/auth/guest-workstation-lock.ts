@@ -2,12 +2,15 @@
 
 export const GUEST_LOCK_COOKIE = "guest-lock-policy";
 export const GUEST_SESSION_UNTIL_COOKIE = "guest-session-until";
-/** Set on password login — Screen Time–style “Ignore Limit” for the timer hours. */
+/** Set on password login outside schedule — short “Ignore Limit” to edit settings. */
 export const GUEST_LOCK_OVERRIDE_COOKIE = "guest-lock-override-until";
+
+/** Password unlock outside schedule lasts this long, then logout again. */
+export const GUEST_LOCK_PASSWORD_OVERRIDE_SECONDS = 30 * 60;
 
 export type GuestLockPolicy = {
   enabled: boolean;
-  /** Session lifetime in hours after each login (1–24). */
+  /** Session lifetime in hours after each in-window login (1–24). */
   hours: number;
   /** Optional inclusive calendar range (local YYYY-MM-DD). */
   dateFrom?: string;
@@ -30,26 +33,29 @@ export function clampGuestHours(hours: number): number {
   return Math.min(24, Math.max(1, Math.round(hours)));
 }
 
+export function normalizeGuestLockPolicy(parsed: Partial<GuestLockPolicy> | null | undefined): GuestLockPolicy | null {
+  if (!parsed || typeof parsed.enabled !== "boolean") return null;
+  return {
+    enabled: parsed.enabled,
+    hours: clampGuestHours(Number(parsed.hours ?? 4)),
+    dateFrom: typeof parsed.dateFrom === "string" && parsed.dateFrom ? parsed.dateFrom.slice(0, 10) : undefined,
+    dateTo: typeof parsed.dateTo === "string" && parsed.dateTo ? parsed.dateTo.slice(0, 10) : undefined,
+    dailyStart:
+      typeof parsed.dailyStart === "string" && /^\d{2}:\d{2}$/.test(parsed.dailyStart)
+        ? parsed.dailyStart
+        : undefined,
+    dailyEnd:
+      typeof parsed.dailyEnd === "string" && /^\d{2}:\d{2}$/.test(parsed.dailyEnd)
+        ? parsed.dailyEnd
+        : undefined,
+    indefinite: parsed.indefinite !== false,
+  };
+}
+
 export function parseGuestLockPolicy(raw: string | undefined | null): GuestLockPolicy | null {
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as Partial<GuestLockPolicy>;
-    if (typeof parsed.enabled !== "boolean") return null;
-    return {
-      enabled: parsed.enabled,
-      hours: clampGuestHours(Number(parsed.hours ?? 4)),
-      dateFrom: typeof parsed.dateFrom === "string" && parsed.dateFrom ? parsed.dateFrom.slice(0, 10) : undefined,
-      dateTo: typeof parsed.dateTo === "string" && parsed.dateTo ? parsed.dateTo.slice(0, 10) : undefined,
-      dailyStart:
-        typeof parsed.dailyStart === "string" && /^\d{2}:\d{2}$/.test(parsed.dailyStart)
-          ? parsed.dailyStart
-          : undefined,
-      dailyEnd:
-        typeof parsed.dailyEnd === "string" && /^\d{2}:\d{2}$/.test(parsed.dailyEnd)
-          ? parsed.dailyEnd
-          : undefined,
-      indefinite: parsed.indefinite !== false,
-    };
+    return normalizeGuestLockPolicy(JSON.parse(raw) as Partial<GuestLockPolicy>);
   } catch {
     return null;
   }
@@ -96,22 +102,15 @@ export function isGuestLockWindowOpen(policy: GuestLockPolicy, now = new Date())
 }
 
 /**
- * Password login always grants this many seconds (Screen Time “Ignore Limit”).
- * Schedule may auto-lock when idle, but correct password always reopens for `hours`.
+ * Soft TTL while inside an open schedule window (in-window login).
+ * Outside schedule → password override only (30 minutes).
  */
-export function guestLoginSessionSeconds(policy: GuestLockPolicy): number {
-  if (!policy.enabled) return 60 * 60 * 24 * 7;
-  return clampGuestHours(policy.hours) * 60 * 60;
-}
-
-/** Soft TTL while already inside an open schedule window (no password override). */
 export function guestSessionMaxAgeSeconds(policy: GuestLockPolicy, now = new Date()): number {
   const hoursCap = clampGuestHours(policy.hours) * 60 * 60;
   if (!policy.enabled) return 60 * 60 * 24 * 7;
 
   if (!isGuestLockWindowOpen(policy, now)) {
-    // Outside schedule: only a password override session is valid (handled by login).
-    return hoursCap;
+    return GUEST_LOCK_PASSWORD_OVERRIDE_SECONDS;
   }
 
   let untilWindowEnd = hoursCap;
@@ -136,8 +135,18 @@ export function guestSessionMaxAgeSeconds(policy: GuestLockPolicy, now = new Dat
   return Math.min(hoursCap, untilWindowEnd);
 }
 
+/**
+ * Seconds granted after a password login.
+ * Inside schedule → timer hours (capped by window). Outside → 30 min override.
+ */
+export function guestLoginSessionSeconds(policy: GuestLockPolicy, now = new Date()): number {
+  if (!policy.enabled) return 60 * 60 * 24 * 7;
+  if (!isGuestLockWindowOpen(policy, now)) return GUEST_LOCK_PASSWORD_OVERRIDE_SECONDS;
+  return guestSessionMaxAgeSeconds(policy, now);
+}
+
 export function guestSessionUntilIso(policy: GuestLockPolicy, now = new Date()): string {
-  const seconds = guestLoginSessionSeconds(policy);
+  const seconds = guestLoginSessionSeconds(policy, now);
   return new Date(now.getTime() + seconds * 1000).toISOString();
 }
 
@@ -145,4 +154,9 @@ export function isGuestOverrideActive(overrideUntilIso: string | undefined | nul
   if (!overrideUntilIso) return false;
   const ts = Date.parse(overrideUntilIso);
   return Number.isFinite(ts) && now < ts;
+}
+
+/** True when login should stamp the short password-override cookie. */
+export function guestLoginNeedsOverride(policy: GuestLockPolicy, now = new Date()): boolean {
+  return policy.enabled && !isGuestLockWindowOpen(policy, now);
 }
