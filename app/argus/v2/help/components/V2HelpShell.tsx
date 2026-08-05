@@ -144,7 +144,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Guest workstation lock",
-        body: "On shared or remote PCs, open Settings → Security (/settings/security) to force re-login after N hours, outside daily hours, or outside a date range.",
+        body: "Open Argus → Security in the left menu (or Trading → System → Security). Set hours, daily window, and date range. One policy applies to both Argus and MatrixTrade.",
       },
       {
         title: "Project dates",

@@ -7,9 +7,12 @@ import type { GuestLockPolicy } from "@/lib/auth/guest-workstation-lock";
 export function GuestWorkstationLockPanel({
   initialPolicy,
   passwordsConfigured,
+  returnTo = "/settings/security",
 }: {
   initialPolicy: GuestLockPolicy;
   passwordsConfigured: boolean;
+  /** Where to return after save (Argus or Trading settings path). */
+  returnTo?: string;
 }) {
   const [enabled, setEnabled] = useState(initialPolicy.enabled);
   const [hours, setHours] = useState(initialPolicy.hours);
@@ -26,7 +29,7 @@ export function GuestWorkstationLockPanel({
     const form = new FormData(event.currentTarget);
     form.set("enabled", enabled ? "1" : "0");
     form.set("indefinite", indefinite ? "1" : "0");
-    form.set("returnTo", "/settings/security");
+    form.set("returnTo", returnTo);
     await saveGuestWorkstationLockAction(form);
   }
 
@@ -157,7 +160,7 @@ export function GuestWorkstationLockPanel({
       </button>
 
       <p className="text-xs text-zinc-600">
-        Also available from Argus Help → Security. Logout clears the session immediately.
+        Applies to both MatrixTrade and Argus sessions. Logout clears the session immediately.
       </p>
     </form>
   );

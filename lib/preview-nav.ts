@@ -35,6 +35,7 @@ export const PREVIEW_NAV_SECTIONS = [
     items: [
       { href: "/inbox", label: "History", badge: "inbox" as const },
       { href: "/settings/capital", label: "Capital Settings" },
+      { href: "/settings/security", label: "Security" },
       { href: "/system", label: "System" },
       { href: "/connect", label: "Connect" },
     ],
@@ -57,6 +58,12 @@ export function isPreviewNavActive(pathname: string, href: string): boolean {
     return (
       pathname === "/settings/capital" ||
       pathname.startsWith("/settings/capital/")
+    );
+  }
+  if (href === "/settings/security") {
+    return (
+      pathname === "/settings/security" ||
+      pathname.startsWith("/settings/security/")
     );
   }
   if (href === "/planning") {
