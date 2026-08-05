@@ -637,10 +637,10 @@ export function V2TopicsShell({
       params.delete("page");
     });
     if (!syncStatus) return;
-    if (next === "active") setStatusFilter("Active");
-    else if (next === "empty") setStatusFilter("Empty");
-    else if (next === "patterns") setStatusFilter("patterns");
-    else setStatusFilter("all");
+    const nextStatus =
+      next === "active" ? "Active" : next === "empty" ? "Empty" : next === "patterns" ? "patterns" : "all";
+    setStatusFilter(nextStatus);
+    writeBrowseViewPrefs(ORDER_SCOPE, { status: nextStatus });
   }
 
   function applyStatusFilter(value: V2TopicBrowseStatus | "all" | "patterns") {
