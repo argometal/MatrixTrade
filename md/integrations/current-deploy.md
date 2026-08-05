@@ -4,10 +4,10 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0725a` |
-| **Commit** | Always `git rev-parse main0725a` after fetch (must match `origin/main`) |
+| **Tag** | `main0805a` |
+| **Commit** | Always `git rev-parse main0805a` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
-| **Date** | 2026-07-25 |
+| **Date** | 2026-08-05 |
 
 ## Sync local (avoid conflicts / lost work)
 
@@ -15,11 +15,14 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0725a
+# optional pin: git checkout main0805a
 ```
 
 ## What this deploy includes
 
+- PR #139: Movable browse cards (List/Cards/Board DnD) + Exit/Cancel on link prompts
+- PR #138: Project runbook Edit on organization + returnTo + persistent project/org tabs
+- PR #140: Supabase RLS lockdown on all public tables (`rls-lockdown-public.sql`)
 - PR #76: 24-1C Chaos builder B0 + architecture; 24-1E Home Explorer; Argus emerald palette; Argus marked Experimental
 - PR #74: Argus organize — move decks between Realms + regroup fragments between decks; multi-fragment deck UX
 - PR #72: Runbooks 24-a1 (sections, ··· menu, DnD, org copy/move) + units 3D molecular graph
