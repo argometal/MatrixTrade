@@ -4,9 +4,10 @@ import { ARGUS_PRODUCT_NAME, ARGUS_SUBTITLE, ARGUS_TAGLINE } from "@/lib/argus/u
 export default async function ArgusLoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; next?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, next } = await searchParams;
+  const defaultNext = "/argus/v2";
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center bg-zinc-950 px-4 text-zinc-100">
@@ -14,6 +15,7 @@ export default async function ArgusLoginPage({
       <h1 className="mt-2 text-xl font-medium text-zinc-200">{ARGUS_TAGLINE}</h1>
       <p className="mt-1 text-sm text-zinc-500">{ARGUS_SUBTITLE}</p>
       <form action={loginArgusAction} className="mt-8 space-y-4">
+        <input type="hidden" name="next" value={next ?? defaultNext} />
         <label className="block text-sm">
           <span className="font-medium text-zinc-400">Password</span>
           <input

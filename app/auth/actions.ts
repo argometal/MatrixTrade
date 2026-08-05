@@ -25,15 +25,26 @@ export async function loginTradingAction(formData: FormData): Promise<void> {
   redirect(next.startsWith("/") ? next : "/");
 }
 
+function safeArgusReturnPath(next: string): string {
+  if (!next.startsWith("/") || next.startsWith("//") || next.includes("\\")) {
+    return "/argus/v2";
+  }
+  if (next === "/forge" || next.startsWith("/forge/")) return next;
+  if (next.startsWith("/argus") && next !== "/argus/login") return next;
+  return "/argus/v2";
+}
+
 export async function loginArgusAction(formData: FormData): Promise<void> {
   const password = String(formData.get("password") ?? "");
+  const next = String(formData.get("next") ?? "/argus/v2");
+  const returnTo = safeArgusReturnPath(next);
 
   if (!verifyArgusPassword(password)) {
-    redirect("/argus/login?error=1");
+    redirect(`/argus/login?error=1&next=${encodeURIComponent(returnTo)}`);
   }
 
   await setArgusSession();
-  redirect("/argus/v2");
+  redirect(returnTo);
 }
 
 export async function unlockArgusPrivateAction(formData: FormData): Promise<void> {
