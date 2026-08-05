@@ -123,4 +123,7 @@ comment on column public.external_positions.cumulative_sale_proceeds is
 comment on column public.external_positions.reductions is
   'Array of reductions; each has settlementStatus pending_settlement|settled. Settled credits counted once in Capital Account.';
 
+alter table public.external_positions enable row level security;
+revoke all on table public.external_positions from anon, authenticated;
+
 notify pgrst, 'reload schema';

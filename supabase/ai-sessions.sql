@@ -17,3 +17,6 @@ create table if not exists public.ai_sessions (
 
 create index if not exists ai_sessions_expires_at_idx on public.ai_sessions (expires_at);
 create index if not exists ai_sessions_revoked_at_idx on public.ai_sessions (revoked_at);
+
+alter table public.ai_sessions enable row level security;
+revoke all on table public.ai_sessions from anon, authenticated;

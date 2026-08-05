@@ -15,3 +15,6 @@ create table if not exists public.ai_notes (
 create index if not exists ai_notes_created_at_idx on public.ai_notes (created_at desc);
 create index if not exists ai_notes_trade_id_idx on public.ai_notes (trade_id);
 create index if not exists ai_notes_snapshot_revision_idx on public.ai_notes (snapshot_revision);
+
+alter table public.ai_notes enable row level security;
+revoke all on table public.ai_notes from anon, authenticated;

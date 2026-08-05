@@ -9,3 +9,6 @@ create table if not exists public.trading_inbox (
 
 create index if not exists trading_inbox_status_idx on public.trading_inbox (status);
 create index if not exists trading_inbox_received_at_idx on public.trading_inbox (received_at desc);
+
+alter table public.trading_inbox enable row level security;
+revoke all on table public.trading_inbox from anon, authenticated;
