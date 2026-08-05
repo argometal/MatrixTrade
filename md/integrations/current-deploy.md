@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0805c` |
-| **Commit** | Always `git rev-parse main0805c` after fetch (must match `origin/main`) |
+| **Tag** | `main0805d` |
+| **Commit** | Always `git rev-parse main0805d` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-05 |
 
@@ -15,12 +15,13 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0805c
+# optional pin: git checkout main0805d
 ```
 
 ## What this deploy includes
 
-- PR #147: Network organize (grid/list/board DnD); archive visibility + quiet archive; status chip filters; guest workstation lock (`/settings/security`)
+- PR #150: Guest lock settings reachable from Argus + Trading (no home redirect)
+- PR #147: Network organize (grid/list/board DnD); archive visibility + quiet archive; status chip filters; guest workstation lock
 - PR #145: Network people rename (Edit Name + ··· Rename on detail/browse)
 - PR #144: Sidebar stays collapsed until expand is clicked (no hover-expand)
 - PR #143: Projects & topics portfolio cards (grid/list/board + search-aware DnD organize)
