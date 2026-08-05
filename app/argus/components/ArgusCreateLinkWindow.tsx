@@ -691,7 +691,7 @@ function ArgusCreateLinkWindowBody({
             onClick={onClose}
             className="rounded-xl border border-zinc-700 px-5 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800"
           >
-            Cancel
+            Exit / Cancel
           </button>
           <button
             type="button"
