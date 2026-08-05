@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0805a` |
-| **Commit** | Always `git rev-parse main0805a` after fetch (must match `origin/main`) |
+| **Tag** | `main0805b` |
+| **Commit** | Always `git rev-parse main0805b` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-05 |
 
@@ -15,11 +15,14 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0805a
+# optional pin: git checkout main0805b
 ```
 
 ## What this deploy includes
 
+- PR #145: Network people rename (Edit Name + ··· Rename on detail/browse)
+- PR #144: Sidebar stays collapsed until expand is clicked (no hover-expand)
+- PR #143: Projects & topics portfolio cards (grid/list/board + search-aware DnD organize)
 - PR #139: Movable browse cards (List/Cards/Board DnD) + Exit/Cancel on link prompts
 - PR #138: Project runbook Edit on organization + returnTo + persistent project/org tabs
 - PR #140: Supabase RLS lockdown on all public tables (`rls-lockdown-public.sql`)

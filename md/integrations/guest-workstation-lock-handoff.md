@@ -3,7 +3,7 @@
 **Status:** Proposal only — **do not implement** until AI + human review of this handoff.  
 **Date:** 2026-08-05  
 **Repo:** https://github.com/argometal/MatrixTrade  
-**Prod today:** https://matrix-trade-theta.vercel.app · tag `main0805a`  
+**Prod today:** https://matrix-trade-theta.vercel.app · tag `main0805b`  
 **Intent:** Safe work on **guest / shared computers** — if the user forgets to close the app, access expires and credentials are required again.
 
 ---
