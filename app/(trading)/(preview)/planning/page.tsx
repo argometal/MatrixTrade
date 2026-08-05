@@ -5,6 +5,9 @@ import { getCapitalAccountSnapshot } from "@/lib/capital-account";
 import { getActiveCapitalConfiguration } from "@/lib/capital-configuration";
 import { listCapitalReservations } from "@/lib/capital-reservation";
 import { getMarketEvidence } from "@/lib/market-evidence";
+import { getLearningOutcomes } from "@/lib/learning-outcome-store";
+import { getObservations } from "@/lib/observation-store";
+import { getMafExperiments } from "@/lib/maf-store";
 import { getPlans } from "@/lib/plans";
 import { getPlaybooks } from "@/lib/playbooks";
 import { scoutDeskSnapshotItems } from "@/lib/snapshot-packages";
@@ -14,6 +17,9 @@ import { getExperiment, getMonthlyRisk, getTrades } from "@/lib/storage";
 import { suggestNextTradeId } from "@/lib/trades-workspace";
 import type { CapitalAccountSnapshot } from "@/lib/capital-account";
 import type { CapitalReservation } from "@/lib/capital-types";
+import type { LearningOutcome } from "@/lib/learning-outcome-types";
+import type { ObservationRecord } from "@/lib/observation-types";
+import type { MafExperiment } from "@/lib/maf-types";
 
 async function settle<T>(promise: Promise<T>): Promise<T | null> {
   try {
@@ -40,6 +46,9 @@ export default async function PlanningPage({
     reservationsResult,
     accountResult,
     configurationResult,
+    learningOutcomesResult,
+    observationsResult,
+    mafResult,
   ] = await Promise.all([
     getPlans(),
     getPlaybooks(),
@@ -52,6 +61,9 @@ export default async function PlanningPage({
     settle(listCapitalReservations()),
     settle(getCapitalAccountSnapshot()),
     settle(getActiveCapitalConfiguration()),
+    settle(getLearningOutcomes()),
+    settle(getObservations()),
+    settle(getMafExperiments()),
   ]);
 
   const focusPlanId = params.plan?.toUpperCase();
@@ -68,6 +80,9 @@ export default async function PlanningPage({
   const capitalConfigurationPresent = Boolean(
     configurationResult && configurationResult.status === "active"
   );
+  const learningOutcomes: LearningOutcome[] = learningOutcomesResult ?? [];
+  const observations: ObservationRecord[] = observationsResult ?? [];
+  const mafExperiments: MafExperiment[] = mafResult ?? [];
 
   const snapshotItems = scoutDeskSnapshotItems({
     playbooks,
@@ -98,6 +113,9 @@ export default async function PlanningPage({
           reservations={reservations}
           capitalAccount={capitalAccount}
           capitalConfigurationPresent={capitalConfigurationPresent}
+          learningOutcomes={learningOutcomes}
+          observations={observations}
+          mafExperiments={mafExperiments}
         />
       </PageHelpPanel>
     </Suspense>

@@ -9,6 +9,17 @@
 
 ---
 
+## Pending — Strategy Review Handoff (MTA-AI-STRATEGY-HANDOFF-001)
+
+PR: #137 · branch `cursor/strategy-review-handoff-b0a5` · feature+VERIFY `4db85c7`  
+Doc: `md/matrix/strategy-review-handoff-001.md`  
+VERIFY: `md/matrix/strategy-review-handoff-verify-001.md`  
+**MERGE-001:** `md/matrix/strategy-review-handoff-merge-001.md`  
+
+**MERGEABLE / CLEAN · Vercel SUCCESS · Ready for review · Listo para merge: sí · No auto-merge.**
+
+Planning Snapshot → **Snap Strategy Review**. Main sync: already up to date @ `427024a`.
+
 ## Library — Scout Learning circuit + P0 visibility
 
 Docs:
