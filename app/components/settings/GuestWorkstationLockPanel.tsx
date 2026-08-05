@@ -38,8 +38,9 @@ export function GuestWorkstationLockPanel({
       <header>
         <h1 className="text-2xl font-bold text-zinc-50">Guest workstation lock</h1>
         <p className="mt-2 text-sm text-zinc-500">
-          For shared or remote computers: force re-login after a timer, outside daily hours, or outside a date
-          range. Does not create a separate guest user — same data, shorter session.
+          Like Apple Screen Time: auto-locks after a timer or outside daily hours / date range. The correct
+          password always unlocks again for the configured hours (Ignore Limit), even outside the schedule.
+          Same data — not a separate guest user.
         </p>
       </header>
 
@@ -160,7 +161,8 @@ export function GuestWorkstationLockPanel({
       </button>
 
       <p className="text-xs text-zinc-600">
-        Applies to both MatrixTrade and Argus sessions. Logout clears the session immediately.
+        Applies to both MatrixTrade and Argus. Outside the daily window, password still works — it
+        starts a timed override for the hours above.
       </p>
     </form>
   );

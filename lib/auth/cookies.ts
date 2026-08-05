@@ -2,8 +2,9 @@ import { cookies } from "next/headers";
 import {
   DEFAULT_GUEST_LOCK_POLICY,
   GUEST_LOCK_COOKIE,
+  GUEST_LOCK_OVERRIDE_COOKIE,
   GUEST_SESSION_UNTIL_COOKIE,
-  guestSessionMaxAgeSeconds,
+  guestLoginSessionSeconds,
   guestSessionUntilIso,
   parseGuestLockPolicy,
   serializeGuestLockPolicy,
@@ -40,6 +41,7 @@ export async function writeGuestLockPolicy(policy: GuestLockPolicy): Promise<voi
   if (!policy.enabled) {
     jar.delete(GUEST_LOCK_COOKIE);
     jar.delete(GUEST_SESSION_UNTIL_COOKIE);
+    jar.delete(GUEST_LOCK_OVERRIDE_COOKIE);
     return;
   }
   jar.set(GUEST_LOCK_COOKIE, serializeGuestLockPolicy(policy), {
@@ -51,22 +53,28 @@ export async function writeGuestLockPolicy(policy: GuestLockPolicy): Promise<voi
 async function sessionMaxAgeSeconds(): Promise<number> {
   const policy = await readGuestLockPolicy();
   if (!policy.enabled) return SESSION_MAX_AGE;
-  return guestSessionMaxAgeSeconds(policy);
+  // Password login / re-stamp always uses the configured hours (override schedule).
+  return guestLoginSessionSeconds(policy);
 }
 
+/** After password login: grant timer hours even outside daily schedule (Screen Time ignore-limit). */
 async function stampGuestSessionUntil(): Promise<void> {
   const policy = await readGuestLockPolicy();
+  const jar = await cookies();
   if (!policy.enabled) {
-    const jar = await cookies();
     jar.delete(GUEST_SESSION_UNTIL_COOKIE);
+    jar.delete(GUEST_LOCK_OVERRIDE_COOKIE);
     return;
   }
-  const jar = await cookies();
+  const maxAge = guestLoginSessionSeconds(policy);
   const until = guestSessionUntilIso(policy);
-  const maxAge = guestSessionMaxAgeSeconds(policy);
   jar.set(GUEST_SESSION_UNTIL_COOKIE, until, {
     ...cookieBase(),
     httpOnly: false,
+    maxAge,
+  });
+  jar.set(GUEST_LOCK_OVERRIDE_COOKIE, until, {
+    ...cookieBase(),
     maxAge,
   });
 }
@@ -76,7 +84,7 @@ export async function setTradingSession(): Promise<void> {
   const maxAge = await sessionMaxAgeSeconds();
   jar.set(MT_AUTH, "1", {
     ...cookieBase(),
-    maxAge,
+    maxAge: Math.max(60, maxAge),
   });
   await stampGuestSessionUntil();
 }
@@ -86,7 +94,7 @@ export async function setArgusSession(): Promise<void> {
   const maxAge = await sessionMaxAgeSeconds();
   jar.set(ARGUS_AUTH, "1", {
     ...cookieBase(),
-    maxAge,
+    maxAge: Math.max(60, maxAge),
   });
   await stampGuestSessionUntil();
 }
@@ -139,6 +147,7 @@ export async function clearAllSessions(): Promise<void> {
   jar.delete(ARGUS_DELETE);
   jar.delete(ARGUS_DELETE_AUTH);
   jar.delete(GUEST_SESSION_UNTIL_COOKIE);
+  jar.delete(GUEST_LOCK_OVERRIDE_COOKIE);
 }
 
 export async function hasTradingSession(): Promise<boolean> {

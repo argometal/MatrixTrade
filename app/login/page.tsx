@@ -4,9 +4,9 @@ import { MatrixPublicTopBar } from "@/app/components/MatrixPublicTopBar";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; next?: string }>;
+  searchParams: Promise<{ error?: string; next?: string; guest_expired?: string }>;
 }) {
-  const { error, next } = await searchParams;
+  const { error, next, guest_expired } = await searchParams;
   const defaultNext = "/home-preview";
 
   return (
@@ -15,6 +15,12 @@ export default async function LoginPage({
       <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4 pt-16">
       <h1 className="text-2xl font-semibold">MTA</h1>
       <p className="mt-1 text-sm text-zinc-500">Trading access</p>
+      {guest_expired === "1" ? (
+        <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          Guest lock closed this session (outside schedule or time expired). Enter the password to unlock
+          again for the configured hours — like Screen Time “Ignore Limit”.
+        </p>
+      ) : null}
       <form action={loginTradingAction} className="mt-8 space-y-4">
         <input type="hidden" name="next" value={next ?? defaultNext} />
         <label className="block text-sm">
