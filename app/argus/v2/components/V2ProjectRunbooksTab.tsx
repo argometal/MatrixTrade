@@ -9,11 +9,15 @@ export function V2ProjectRunbooksTab({
   projectId,
   libraryRunbooks = [],
   progressRecords = [],
+  organizationId,
+  organizationName,
 }: {
   runbooks: Runbook[];
   projectId: string;
   libraryRunbooks?: Runbook[];
   progressRecords?: RunbookProgress[];
+  organizationId?: string;
+  organizationName?: string;
 }) {
   return (
     <V2EntityRunbooksTab
@@ -22,6 +26,8 @@ export function V2ProjectRunbooksTab({
       linkedRunbooks={runbooks}
       libraryRunbooks={libraryRunbooks}
       progressRecords={progressRecords}
+      organizationId={organizationId}
+      organizationName={organizationName}
     />
   );
 }

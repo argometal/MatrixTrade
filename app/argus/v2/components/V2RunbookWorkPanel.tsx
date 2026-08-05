@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   useEffect,
   useMemo,
@@ -267,6 +268,9 @@ export function V2RunbookWorkPanel({
   closed = false,
   executeMode = false,
   peerLists = [],
+  editOnOrganizationHref,
+  returnToProjectHref,
+  returnToProjectLabel = "Back to project",
 }: {
   runbook: Runbook;
   onBack?: () => void;
@@ -276,6 +280,11 @@ export function V2RunbookWorkPanel({
   executeMode?: boolean;
   /** Other runbooks available for Copy/Move to list. */
   peerLists?: RunbookPeerList[];
+  /** Project execute mode → open template edit on the organization library. */
+  editOnOrganizationHref?: string | null;
+  /** Organization edit opened from a project → return link. */
+  returnToProjectHref?: string | null;
+  returnToProjectLabel?: string;
 }) {
   const router = useRouter();
   const importRef = useRef<HTMLInputElement>(null);
@@ -404,32 +413,6 @@ export function V2RunbookWorkPanel({
     run(() => uncheckAllRunbookItemsAction(runbook.id));
   }
 
-  function handleExportJson() {
-    const payload = {
-      version: "1.0",
-      exportedAt: new Date().toISOString().slice(0, 19),
-      runbook: {
-        id: runbook.id,
-        title: runbook.title,
-        items: runbook.items,
-        linkedEntityIds: runbook.linkedEntityIds,
-        createdAt: runbook.createdAt,
-        updatedAt: runbook.updatedAt,
-      },
-    };
-    const filename = `runbook_${runbook.title.replace(/[\\/:*?"<>|]/g, "_")}.json`;
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = filename;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
-    setStatus(`Exported ${filename}`);
-  }
-
   function handleImportClick() {
     importRef.current?.click();
   }
@@ -545,6 +528,15 @@ export function V2RunbookWorkPanel({
           {runbook.updatedAt.slice(0, 19).replace("T", " ")}
         </p>
       </div>
+
+      {returnToProjectHref ? (
+        <Link
+          href={returnToProjectHref}
+          className="runbook-no-print inline-flex items-center gap-1.5 rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold text-violet-200 hover:bg-violet-500/15"
+        >
+          ← {returnToProjectLabel}
+        </Link>
+      ) : null}
 
       {onBack ? (
         <button
@@ -675,10 +667,19 @@ export function V2RunbookWorkPanel({
             Remove accomplished
           </button>
         ) : null}
+        {editOnOrganizationHref ? (
+          <Link href={editOnOrganizationHref} className={toolbarButtonClass("primary")}>
+            Edit on organization
+          </Link>
+        ) : executeMode ? (
+          <span
+            className="rounded-lg border border-zinc-800 px-2.5 py-1.5 text-xs text-zinc-600"
+            title="Link this project to an organization to edit the shared runbook template"
+          >
+            Edit on organization (link org first)
+          </span>
+        ) : null}
         <span className="mx-1 hidden h-4 w-px bg-zinc-800 sm:inline" />
-        <button type="button" disabled={isPending} onClick={handleExportJson} className={toolbarButtonClass()}>
-          Export JSON
-        </button>
         {canEdit ? (
           <>
             <button type="button" disabled={isPending} onClick={handleImportClick} className={toolbarButtonClass()}>

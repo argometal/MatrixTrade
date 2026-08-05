@@ -24,7 +24,16 @@ export default async function V2ProjectPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ scope?: string; delete_error?: string; delete_auth_error?: string; totp_required?: string; error?: string; from?: string }>;
+  searchParams: Promise<{
+    scope?: string;
+    tab?: string;
+    runbook?: string;
+    delete_error?: string;
+    delete_auth_error?: string;
+    totp_required?: string;
+    error?: string;
+    from?: string;
+  }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -64,7 +73,12 @@ export default async function V2ProjectPage({
   const hasPrivateEvidence = projectHasPrivateEvidence(data, inboxItems, entity);
   const deleteGate = await buildV2DeleteGateProps(entity, sp);
   const privateLocked = hasPrivateEvidence && !includePrivate;
-  const returnTo = `/argus/v2/projects/${entity.id}${respectProjectDates ? "" : "?scope=all"}`;
+  const returnQs = new URLSearchParams();
+  if (!respectProjectDates) returnQs.set("scope", "all");
+  if (sp.tab) returnQs.set("tab", sp.tab);
+  if (sp.runbook) returnQs.set("runbook", sp.runbook);
+  const returnQuery = returnQs.toString();
+  const returnTo = `/argus/v2/projects/${entity.id}${returnQuery ? `?${returnQuery}` : ""}`;
   const notes = entityNotesForDisplay(entity.notes ?? "");
   const statusTone =
     page.status === "Completed" ? "green" : page.status === "In Progress" ? "blue" : "amber";
