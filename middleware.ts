@@ -1,15 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { argusLegacyRedirectUrl } from "@/lib/argus/argus-legacy-redirects";
+import { resolveGuestLockPolicyForMiddleware } from "@/lib/auth/guest-lock-policy-edge";
 import {
   GUEST_LOCK_COOKIE,
+  GUEST_LOCK_OVERRIDE_COOKIE,
   GUEST_SESSION_UNTIL_COOKIE,
   isGuestLockWindowOpen,
-  parseGuestLockPolicy,
+  isGuestOverrideActive,
+  type GuestLockPolicy,
 } from "@/lib/auth/guest-workstation-lock";
 
 function isPublicPath(pathname: string): boolean {
-  if (pathname === "/login" || pathname === "/argus/login" || pathname === "/apps") return true;
+  if (pathname === "/login" || pathname === "/argus/login") return true;
   if (pathname.startsWith("/_next")) return true;
   if (pathname.startsWith("/api/")) return true;
   if (/\.(?:svg|png|jpg|jpeg|gif|webp|ico)$/.test(pathname)) return true;
@@ -51,21 +54,33 @@ function clearSessionCookies(response: NextResponse): void {
   response.cookies.delete("argus-delete");
   response.cookies.delete("argus-delete-auth");
   response.cookies.delete(GUEST_SESSION_UNTIL_COOKIE);
+  response.cookies.delete(GUEST_LOCK_OVERRIDE_COOKIE);
 }
 
-function guestLockBlocks(request: NextRequest): boolean {
-  const policy = parseGuestLockPolicy(request.cookies.get(GUEST_LOCK_COOKIE)?.value);
-  if (!policy?.enabled) return false;
+function guestLockBlocks(policy: GuestLockPolicy, request: NextRequest): boolean {
+  if (!policy.enabled) return false;
+
+  const override = request.cookies.get(GUEST_LOCK_OVERRIDE_COOKIE)?.value;
+  if (isGuestOverrideActive(override)) {
+    // 30-min password override — schedule ignored; honor absolute session end.
+    const until = request.cookies.get(GUEST_SESSION_UNTIL_COOKIE)?.value;
+    if (until) {
+      const ts = Date.parse(until);
+      if (Number.isFinite(ts) && Date.now() > ts) return true;
+    }
+    return false;
+  }
+
+  // No override: enforce account schedule + require a timed session cookie.
   if (!isGuestLockWindowOpen(policy)) return true;
   const until = request.cookies.get(GUEST_SESSION_UNTIL_COOKIE)?.value;
-  if (until) {
-    const ts = Date.parse(until);
-    if (Number.isFinite(ts) && Date.now() > ts) return true;
-  }
+  if (!until) return true;
+  const ts = Date.parse(until);
+  if (!Number.isFinite(ts) || Date.now() > ts) return true;
   return false;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname === "/health" || pathname.startsWith("/health/")) {
@@ -87,7 +102,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (pathname === "/") {
-    return NextResponse.redirect(new URL("/apps", request.url));
+    return NextResponse.redirect(new URL("/home-preview", request.url));
   }
 
   const tradingPasswordSet = Boolean(process.env.MATRIXTRADE_PASSWORD);
@@ -95,7 +110,11 @@ export function middleware(request: NextRequest) {
     process.env.ARGUS_PASSWORD ?? process.env.HEALTH_VAULT_PASSWORD
   );
 
-  if (guestLockBlocks(request)) {
+  const policy = await resolveGuestLockPolicyForMiddleware(
+    request.cookies.get(GUEST_LOCK_COOKIE)?.value
+  );
+
+  if (guestLockBlocks(policy, request)) {
     const loginPath =
       pathname.startsWith("/argus") && argusPasswordSet
         ? "/argus/login"
@@ -113,7 +132,6 @@ export function middleware(request: NextRequest) {
   }
 
   if (tradingPasswordSet && isTradingRoute(pathname) && !request.cookies.get("mt-auth")?.value) {
-    // Shared security settings: allow Argus session so guest lock is reachable from Argus
     const isSharedSecurity =
       pathname === "/settings/security" || pathname.startsWith("/settings/security/");
     if (!(isSharedSecurity && request.cookies.get("argus-auth")?.value)) {
@@ -123,17 +141,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  const needsArgusAuth =
+  if (
     argusPasswordSet &&
-    !request.cookies.get("argus-auth")?.value &&
-    ((pathname.startsWith("/argus") && pathname !== "/argus/login") ||
-      pathname === "/forge" ||
-      pathname.startsWith("/forge/"));
-
-  if (needsArgusAuth) {
-    const login = new URL("/argus/login", request.url);
-    login.searchParams.set("next", pathname);
-    return NextResponse.redirect(login);
+    pathname.startsWith("/argus") &&
+    pathname !== "/argus/login" &&
+    !request.cookies.get("argus-auth")?.value
+  ) {
+    return NextResponse.redirect(new URL("/argus/login", request.url));
   }
 
   return NextResponse.next();

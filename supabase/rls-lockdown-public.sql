@@ -64,6 +64,7 @@ declare
     'learning_outcomes',
     'external_positions',
     'capital_planner_state',
+    'guest_lock_policy_state',
     'applied_import_fingerprints',
     'trading_inbox',
     'ai_sessions',

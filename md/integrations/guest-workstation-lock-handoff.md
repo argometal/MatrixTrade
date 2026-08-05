@@ -1,10 +1,14 @@
 # Guest workstation session lock — design handoff (REVIEW BEFORE IMPLEMENT)
 
-**Status:** Implemented (v1) — Settings at `/settings/security`; middleware enforces schedule + timer.  
+**Status:** Implemented (v1+) — Settings at `/settings/security` + `/argus/v2/settings/security`.  
 **Date:** 2026-08-05  
 **Repo:** https://github.com/argometal/MatrixTrade  
 **Prod today:** https://matrix-trade-theta.vercel.app · tag `main0805e`  
 **Intent:** Safe work on **guest / shared computers** — if the user forgets to close the app, access expires and credentials are required again.
+
+**v1+ (password override + account policy):**
+- Emulates Apple Screen Time **Ignore Limit**, but override is fixed at **30 minutes** (not the session timer hours) so you can edit settings without leaving the app open for hours.
+- **Canonical schedule** lives in Supabase `guest_lock_policy_state` (all devices / sessions). Cookie is a mirror + Edge fallback. Apply `supabase/guest-lock-policy.sql` once in prod.
 
 ---
 
