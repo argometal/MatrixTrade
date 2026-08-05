@@ -3,7 +3,7 @@
 **Status:** Implemented (v1) — Settings at `/settings/security`; middleware enforces schedule + timer.  
 **Date:** 2026-08-05  
 **Repo:** https://github.com/argometal/MatrixTrade  
-**Prod today:** https://matrix-trade-theta.vercel.app · tag `main0805d`  
+**Prod today:** https://matrix-trade-theta.vercel.app · tag `main0805e`  
 **Intent:** Safe work on **guest / shared computers** — if the user forgets to close the app, access expires and credentials are required again.
 
 ---

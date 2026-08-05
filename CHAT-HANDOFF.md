@@ -9,9 +9,9 @@
 
 ---
 
-## Pending — Cross-app switch + Forge Argus gate
+## Shipped — Cross-app switch + Forge Argus gate (#148)
 
-PR: #148 · Branch: `cursor/af-forge-argus-auth-gate-c2fb`
+Merge: `b70439d` · tag `main0805e` · prod https://matrix-trade-theta.vercel.app
 
 - `/forge` gated with Argus password (`/argus/login`, `argus-auth`)
 - Mutual chrome links MTA ↔ ARGUS ↔ ArgusForge + public `/apps` hub (`/` → `/apps`)
