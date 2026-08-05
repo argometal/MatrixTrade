@@ -377,6 +377,12 @@ export function CapitalSettingsPanel({
           >
             Open Capital Planner
           </Link>
+          <Link
+            href="/settings/security"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-violet-500/40 bg-violet-500/10 px-4 py-2.5 text-sm font-medium text-violet-200 hover:bg-violet-500/20"
+          >
+            Security / Guest lock
+          </Link>
           <button
             type="button"
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-zinc-600 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:bg-zinc-800"

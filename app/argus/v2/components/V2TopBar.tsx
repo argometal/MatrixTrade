@@ -99,15 +99,24 @@ export function V2TopBar({
           >
             ?
           </Link>
+          <Link
+            href="/argus/v2/settings/security"
+            className="hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:border-violet-500/40 hover:text-violet-200 lg:flex"
+            aria-label="Security settings"
+            title="Guest workstation lock"
+          >
+            🛡
+          </Link>
           {privateConfigured ? (
             <PrivateLockMenu configured={privateConfigured} unlocked={privateUnlocked} />
           ) : (
-            <span
-              className="hidden items-center gap-1.5 rounded-xl border border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-600 lg:inline-flex"
-              title="Set ARGUS_PRIVATE_PIN to enable protected records"
+            <Link
+              href="/argus/v2/settings/security"
+              className="hidden items-center gap-1.5 rounded-xl border border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-500 hover:border-violet-500/40 hover:text-violet-200 lg:inline-flex"
+              title="Guest workstation lock"
             >
-              <span aria-hidden>🛡</span> PIN
-            </span>
+              <span aria-hidden>🛡</span> Security
+            </Link>
           )}
           <V2PageIdBadge />
           <V2BuildBadge className="hidden min-[420px]:inline" />

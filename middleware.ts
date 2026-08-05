@@ -113,9 +113,14 @@ export function middleware(request: NextRequest) {
   }
 
   if (tradingPasswordSet && isTradingRoute(pathname) && !request.cookies.get("mt-auth")?.value) {
-    const login = new URL("/login", request.url);
-    login.searchParams.set("next", pathname);
-    return NextResponse.redirect(login);
+    // Shared security settings: allow Argus session so guest lock is reachable from Argus
+    const isSharedSecurity =
+      pathname === "/settings/security" || pathname.startsWith("/settings/security/");
+    if (!(isSharedSecurity && request.cookies.get("argus-auth")?.value)) {
+      const login = new URL("/login", request.url);
+      login.searchParams.set("next", pathname);
+      return NextResponse.redirect(login);
+    }
   }
 
   if (
