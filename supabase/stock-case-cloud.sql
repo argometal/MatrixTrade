@@ -84,3 +84,11 @@ create table if not exists public.scoped_ai_grants (
 );
 
 create index if not exists scoped_ai_grants_expires_idx on public.scoped_ai_grants (expires_at);
+
+-- RLS (anon/authenticated denied; app uses service_role). Full sweep: rls-lockdown-public.sql
+alter table public.stock_theses enable row level security;
+alter table public.market_evidence enable row level security;
+alter table public.scoped_ai_grants enable row level security;
+revoke all on table public.stock_theses from anon, authenticated;
+revoke all on table public.market_evidence from anon, authenticated;
+revoke all on table public.scoped_ai_grants from anon, authenticated;

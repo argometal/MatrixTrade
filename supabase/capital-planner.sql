@@ -11,4 +11,7 @@ create table if not exists public.capital_planner_state (
 comment on table public.capital_planner_state is
   'Capital Planner document store: CapitalConfiguration + CapitalLedgerEvent[] + CapitalReservation[]. Model A cash_ledger.';
 
+alter table public.capital_planner_state enable row level security;
+revoke all on table public.capital_planner_state from anon, authenticated;
+
 notify pgrst, 'reload schema';

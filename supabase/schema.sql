@@ -106,3 +106,12 @@ drop trigger if exists trade_plans_set_updated_at on public.trade_plans;
 create trigger trade_plans_set_updated_at
   before update on public.trade_plans
   for each row execute function public.set_updated_at();
+
+-- RLS: block direct anon/authenticated PostgREST access.
+-- App uses service_role server-side only. Full sweep: supabase/rls-lockdown-public.sql
+alter table public.playbooks enable row level security;
+alter table public.trades enable row level security;
+alter table public.trade_plans enable row level security;
+revoke all on table public.playbooks from anon, authenticated;
+revoke all on table public.trades from anon, authenticated;
+revoke all on table public.trade_plans from anon, authenticated;

@@ -45,9 +45,18 @@ In Supabase → **SQL Editor**, run:
 ```
 supabase/schema.sql
 supabase/stock-case-cloud.sql   # stock profiles, evidence, scoped AI grants
+supabase/rls-lockdown-public.sql  # REQUIRED — enable RLS on all public tables
 ```
 
 `stock-case-cloud.sql` is required for Stock Profile Apply and **Scoped AI Grant API** on Vercel. See [building-backlog.md](../matrix/building-backlog.md).
+
+`rls-lockdown-public.sql` fixes Supabase Advisor **`rls_disabled_in_public`** (“Table publicly accessible”). The app uses **service role only**; anon/authenticated get no table access. Re-run after creating new tables, or whenever Advisor flags RLS.
+
+Verify:
+
+```bash
+npm run verify:supabase-rls
+```
 
 ### 2. Seed from local JSON
 
@@ -113,9 +122,11 @@ git rm --cached data/trades.json
 ## Migration checklist
 
 - [ ] Run `supabase/schema.sql`
+- [ ] Run `supabase/rls-lockdown-public.sql` (RLS on all public tables — clears Advisor critical)
 - [ ] Set `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`
 - [ ] Run `npm run seed:supabase`
 - [ ] Run `npm run validate:supabase` (must exit 0)
+- [ ] Run `npm run verify:supabase-rls` (must exit 0 when credentials present)
 - [ ] Set `TRADES_STORE=supabase` on Vercel
 - [ ] Redeploy Vercel
 - [ ] Verify: dashboard, create/close trade, review, Sync, Apply inbox

@@ -63,4 +63,7 @@ create index if not exists observations_last_updated_at_idx
 comment on table public.observations is
   'Observation Engine records (OBS-xxx). Durable replacement for data/observations.json.';
 
+alter table public.observations enable row level security;
+revoke all on table public.observations from anon, authenticated;
+
 notify pgrst, 'reload schema';

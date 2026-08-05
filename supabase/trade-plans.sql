@@ -33,3 +33,6 @@ drop trigger if exists trade_plans_set_updated_at on public.trade_plans;
 create trigger trade_plans_set_updated_at
   before update on public.trade_plans
   for each row execute function public.set_updated_at();
+
+alter table public.trade_plans enable row level security;
+revoke all on table public.trade_plans from anon, authenticated;

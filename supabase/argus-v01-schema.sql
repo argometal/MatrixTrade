@@ -310,3 +310,27 @@ create trigger argus_evidence_set_updated_at
 insert into storage.buckets (id, name, public)
 values ('argus-files', 'argus-files', false)
 on conflict (id) do nothing;
+
+-- RLS for v01 tables if created. Prefer full sweep: supabase/rls-lockdown-public.sql
+do $$
+declare
+  t text;
+  tables text[] := array[
+    'argus_organizations', 'argus_people', 'argus_projects', 'argus_project_milestones',
+    'argus_topics', 'argus_tags', 'argus_events', 'argus_evidence',
+    'argus_topic_tag_review_queue', 'argus_evidence_projects', 'argus_evidence_topics',
+    'argus_evidence_events', 'argus_evidence_people', 'argus_evidence_organizations',
+    'argus_evidence_tags', 'argus_event_participants'
+  ];
+begin
+  foreach t in array tables loop
+    if to_regclass(format('public.%I', t)) is null then
+      continue;
+    end if;
+    execute format('alter table public.%I enable row level security', t);
+    begin
+      execute format('revoke all on table public.%I from anon, authenticated', t);
+    exception when undefined_object then null;
+    end;
+  end loop;
+end $$;

@@ -83,6 +83,9 @@ create index if not exists learning_outcomes_updated_at_idx
 comment on table public.learning_outcomes is
   'Learning Outcome records (LO-xxx). Durable replacement for data/learning-outcomes.json.';
 
+alter table public.learning_outcomes enable row level security;
+revoke all on table public.learning_outcomes from anon, authenticated;
+
 -- Diagnostic before applying unique indexes on an existing polluted table:
 -- select plan_id, count(*) from public.learning_outcomes
 --   where plan_id is not null and trade_id is null

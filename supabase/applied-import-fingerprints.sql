@@ -9,3 +9,6 @@ create table if not exists public.applied_import_fingerprints (
 
 create index if not exists applied_import_fingerprints_applied_at_idx
   on public.applied_import_fingerprints (applied_at desc);
+
+alter table public.applied_import_fingerprints enable row level security;
+revoke all on table public.applied_import_fingerprints from anon, authenticated;
