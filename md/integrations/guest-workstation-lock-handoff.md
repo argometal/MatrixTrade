@@ -1,10 +1,12 @@
 # Guest workstation session lock — design handoff (REVIEW BEFORE IMPLEMENT)
 
-**Status:** Implemented (v1) — Settings at `/settings/security`; middleware enforces schedule + timer.  
+**Status:** Implemented (v1+) — Settings at `/settings/security` + `/argus/v2/settings/security`.  
 **Date:** 2026-08-05  
 **Repo:** https://github.com/argometal/MatrixTrade  
 **Prod today:** https://matrix-trade-theta.vercel.app · tag `main0805d`  
 **Intent:** Safe work on **guest / shared computers** — if the user forgets to close the app, access expires and credentials are required again.
+
+**v1+ (password override):** Emulates Apple Screen Time **Ignore Limit** — schedule auto-locks when outside daily hours / timer ends, but a **correct password always grants a timed override** for the configured `hours` (cookie `guest-lock-override-until`). Outside the window without override → login with `?guest_expired=1`.
 
 ---
 
