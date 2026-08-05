@@ -67,6 +67,12 @@ export function PrivateLockMenu({
                 {privateError && <p className="mt-2 text-xs text-red-400">Wrong PIN</p>}
               </form>
             )}
+            <a
+              href="/settings/security"
+              className="mt-3 block text-center text-[11px] text-violet-400 hover:text-violet-300"
+            >
+              Guest workstation lock →
+            </a>
           </div>
         </div>
       )}

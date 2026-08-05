@@ -1,11 +1,12 @@
 import type { ArgusData, Entity, EntityLifecycleStatus, InboxItem, Log } from "../types";
+import { isEntityArchived } from "../entity-lifecycle";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import { buildEntityIntelligence } from "../network-intelligence";
-import { entitiesByKind, personEvidenceScope } from "./hierarchy";
+import { browseEntitiesByKind, entitiesByKind, personEvidenceScope } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
 import { countTopicsAndEventsInScope } from "./scope-node-counts";
 
-export type V2NetworkBrowseStatus = "New" | "Active" | "Dormant" | "Lost";
+export type V2NetworkBrowseStatus = "New" | "Active" | "Dormant" | "Lost" | "Archived";
 
 export interface V2NetworkBrowseCard {
   id: string;
@@ -42,6 +43,7 @@ export interface V2NetworkBrowseSummary {
   dormant: number;
   new: number;
   lost: number;
+  archived: number;
   organizations: number;
   projectsTogether: number;
   emailsExchanged: number;
@@ -158,6 +160,7 @@ function deriveNetworkStatus(
   today: string,
   health: ReturnType<typeof buildEntityIntelligence>["relationshipHealth"]
 ): V2NetworkBrowseStatus {
+  if (person.lifecycleStatus === "archived" || isEntityArchived(person, today)) return "Archived";
   if (person.deletedAt || /status:\s*lost/i.test(person.notes ?? "")) return "Lost";
   if (health === "neglected" && daysSinceLast !== null && daysSinceLast > 180) return "Lost";
 
@@ -175,6 +178,7 @@ function statusTone(status: V2NetworkBrowseStatus): V2NetworkBrowseCard["statusT
   if (status === "Active") return "green";
   if (status === "New") return "blue";
   if (status === "Dormant") return "amber";
+  if (status === "Archived") return "default";
   return "default";
 }
 
@@ -240,7 +244,7 @@ export function buildV2NetworkBrowseCards(
   includePrivate: boolean,
   today: string
 ): V2NetworkBrowseCard[] {
-  const people = entitiesByKind(data).people;
+  const people = browseEntitiesByKind(data).people;
 
   return people
     .map((person) => {
@@ -306,6 +310,7 @@ export function buildV2NetworkBrowseSummary(cards: V2NetworkBrowseCard[]): V2Net
     dormant: cards.filter((c) => c.status === "Dormant").length,
     new: cards.filter((c) => c.status === "New").length,
     lost: cards.filter((c) => c.status === "Lost").length,
+    archived: cards.filter((c) => c.status === "Archived").length,
     organizations: orgIds.size,
     projectsTogether: projectTotal,
     emailsExchanged: cards.reduce((n, c) => n + c.metrics.emails, 0),
@@ -322,6 +327,7 @@ export function buildV2NetworkBrowseInsights(cards: V2NetworkBrowseCard[]): V2Ne
     Active: 0,
     Dormant: 0,
     Lost: 0,
+    Archived: 0,
   };
   for (const card of cards) statusCounts[card.status] += 1;
 

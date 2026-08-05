@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { argusLegacyRedirectUrl } from "@/lib/argus/argus-legacy-redirects";
+import {
+  GUEST_LOCK_COOKIE,
+  GUEST_SESSION_UNTIL_COOKIE,
+  isGuestLockWindowOpen,
+  parseGuestLockPolicy,
+} from "@/lib/auth/guest-workstation-lock";
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/login" || pathname === "/argus/login") return true;
@@ -32,9 +38,31 @@ function isTradingRoute(pathname: string): boolean {
     "/planning",
     "/stock-theses",
     "/scout-access",
+    "/settings",
   ];
 
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
+function clearSessionCookies(response: NextResponse): void {
+  response.cookies.delete("mt-auth");
+  response.cookies.delete("argus-auth");
+  response.cookies.delete("argus-private");
+  response.cookies.delete("argus-delete");
+  response.cookies.delete("argus-delete-auth");
+  response.cookies.delete(GUEST_SESSION_UNTIL_COOKIE);
+}
+
+function guestLockBlocks(request: NextRequest): boolean {
+  const policy = parseGuestLockPolicy(request.cookies.get(GUEST_LOCK_COOKIE)?.value);
+  if (!policy?.enabled) return false;
+  if (!isGuestLockWindowOpen(policy)) return true;
+  const until = request.cookies.get(GUEST_SESSION_UNTIL_COOKIE)?.value;
+  if (until) {
+    const ts = Date.parse(until);
+    if (Number.isFinite(ts) && Date.now() > ts) return true;
+  }
+  return false;
 }
 
 export function middleware(request: NextRequest) {
@@ -66,6 +94,23 @@ export function middleware(request: NextRequest) {
   const argusPasswordSet = Boolean(
     process.env.ARGUS_PASSWORD ?? process.env.HEALTH_VAULT_PASSWORD
   );
+
+  if (guestLockBlocks(request)) {
+    const loginPath =
+      pathname.startsWith("/argus") && argusPasswordSet
+        ? "/argus/login"
+        : tradingPasswordSet
+          ? "/login"
+          : null;
+    if (loginPath) {
+      const login = new URL(loginPath, request.url);
+      if (loginPath === "/login") login.searchParams.set("next", pathname);
+      login.searchParams.set("guest_expired", "1");
+      const response = NextResponse.redirect(login);
+      clearSessionCookies(response);
+      return response;
+    }
+  }
 
   if (tradingPasswordSet && isTradingRoute(pathname) && !request.cookies.get("mt-auth")?.value) {
     const login = new URL("/login", request.url);

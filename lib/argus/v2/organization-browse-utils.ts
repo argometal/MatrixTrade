@@ -2,6 +2,7 @@ import type { ArgusData, Entity, InboxItem, Log } from "../types";
 import { isEntityArchived } from "../entity-lifecycle";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import {
+  browseEntitiesByKind,
   entitiesByKind,
   organizationEvidenceScope,
   organizationLinkedPersonIds,
@@ -155,7 +156,7 @@ export function buildV2OrganizationBrowseCards(
   includePrivate: boolean,
   today: string
 ): V2OrganizationBrowseCard[] {
-  const organizations = entitiesByKind(data).organizations;
+  const organizations = browseEntitiesByKind(data).organizations;
   const chartEndYear = Number(today.slice(0, 4));
   const chartStartYear = chartEndYear - 1;
 

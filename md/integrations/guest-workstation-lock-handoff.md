@@ -1,6 +1,6 @@
 # Guest workstation session lock — design handoff (REVIEW BEFORE IMPLEMENT)
 
-**Status:** Proposal only — **do not implement** until AI + human review of this handoff.  
+**Status:** Implemented (v1) — Settings at `/settings/security`; middleware enforces schedule + timer.  
 **Date:** 2026-08-05  
 **Repo:** https://github.com/argometal/MatrixTrade  
 **Prod today:** https://matrix-trade-theta.vercel.app · tag `main0805b`  
@@ -203,6 +203,7 @@ When **Off**: keep today’s 7-day behavior.
 | Date | Decision |
 |------|----------|
 | 2026-08-05 | Handoff written; **no code** until AI + human verify |
+| 2026-08-05 | v1 shipped: `/settings/security`, cookie policy, middleware window + timer, login TTL |
 
 ---
 
