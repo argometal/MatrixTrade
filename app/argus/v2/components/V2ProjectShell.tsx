@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Entity, Runbook, RunbookProgress } from "@/lib/argus/types";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
@@ -28,6 +29,12 @@ import {
 
 const TABS = ["Overview", "Timeline", "Runbooks", "Links"] as const;
 type ProjectTab = (typeof TABS)[number];
+
+function parseProjectTab(raw: string | null): ProjectTab {
+  if (!raw) return "Overview";
+  const hit = TABS.find((t) => t.toLowerCase() === raw.toLowerCase());
+  return hit ?? "Overview";
+}
 
 export type V2ProjectShellProps = {
   entity: Entity;
@@ -58,7 +65,11 @@ export type V2ProjectShellProps = {
 };
 
 export function V2ProjectShell(props: V2ProjectShellProps) {
-  const [tab, setTab] = useState<ProjectTab>("Overview");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tab = parseProjectTab(searchParams.get("tab"));
+
   const {
     entity,
     notes,
@@ -80,6 +91,24 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
     org,
     stats,
   } = props;
+
+  const replaceParams = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const params = new URLSearchParams(searchParams.toString());
+      mutate(params);
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
+  function setTab(next: ProjectTab) {
+    replaceParams((params) => {
+      if (next === "Overview") params.delete("tab");
+      else params.set("tab", next);
+      if (next !== "Runbooks") params.delete("runbook");
+    });
+  }
 
   const morePeople = Math.max(0, peopleWithRoles.length - 4);
   const chronicleSubtitle = respectProjectDates
@@ -225,6 +254,8 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
           projectId={entity.id}
           libraryRunbooks={libraryRunbooks}
           progressRecords={progressRecords}
+          organizationId={org?.id}
+          organizationName={org?.name}
         />
       ) : null}
 

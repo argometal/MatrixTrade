@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Entity, Runbook, RunbookProgress } from "@/lib/argus/types";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
@@ -29,6 +30,12 @@ import {
 
 const TABS = ["Overview", "Timeline", "Runbooks", "Links"] as const;
 type OrgTab = (typeof TABS)[number];
+
+function parseOrgTab(raw: string | null): OrgTab {
+  if (!raw) return "Overview";
+  const hit = TABS.find((t) => t.toLowerCase() === raw.toLowerCase());
+  return hit ?? "Overview";
+}
 
 export type V2OrgShellProps = {
   entity: Entity;
@@ -74,7 +81,10 @@ function initials(name: string): string {
 }
 
 export function V2OrgShell(props: V2OrgShellProps) {
-  const [tab, setTab] = useState<OrgTab>("Overview");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tab = parseOrgTab(searchParams.get("tab"));
   const {
     entity,
     privateLocked,
@@ -98,6 +108,25 @@ export function V2OrgShell(props: V2OrgShellProps) {
     progressRecords = [],
     peerOrganizations = [],
   } = props;
+
+  const replaceParams = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const params = new URLSearchParams(searchParams.toString());
+      mutate(params);
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
+  function setTab(next: OrgTab) {
+    replaceParams((params) => {
+      if (next === "Overview") params.delete("tab");
+      else params.set("tab", next);
+      // Keep returnTo so "Back to project" survives tab switches while editing from a project.
+      if (next !== "Runbooks") params.delete("runbook");
+    });
+  }
 
   const morePeople = Math.max(0, linkedPeople.length - 4);
   const moreProjects = Math.max(0, orgProjects.length - 3);

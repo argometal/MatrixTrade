@@ -41,6 +41,9 @@ export default async function V2OrganizationPage({
     delete_auth_error?: string;
     totp_required?: string;
     error?: string;
+    tab?: string;
+    runbook?: string;
+    returnTo?: string;
   }>;
 }) {
   const { id } = await params;
@@ -73,7 +76,12 @@ export default async function V2OrganizationPage({
   const hasPrivateEvidence = entityHasPrivateEvidence(data, inboxItems, entity.id);
   const deleteGate = await buildV2DeleteGateProps(entity, sp);
   const privateLocked = hasPrivateEvidence && !includePrivate;
-  const returnTo = `/argus/v2/organizations/${entity.id}`;
+  const returnQs = new URLSearchParams();
+  if (sp.tab) returnQs.set("tab", sp.tab);
+  if (sp.runbook) returnQs.set("runbook", sp.runbook);
+  if (sp.returnTo) returnQs.set("returnTo", sp.returnTo);
+  const returnQuery = returnQs.toString();
+  const returnTo = `/argus/v2/organizations/${entity.id}${returnQuery ? `?${returnQuery}` : ""}`;
   const linkedTopics = page.tagPatterns.map((pattern) => pattern.tag);
   const orgRunbooks = runbooksForEntity(data.runbooks ?? [], entity.id);
   const progressRecords = progressForEntity(data.runbookProgress, entity.id);

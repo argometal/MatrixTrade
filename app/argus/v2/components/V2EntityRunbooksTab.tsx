@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import {
   applyRunbookProgress,
@@ -32,6 +33,8 @@ export function V2EntityRunbooksTab({
   libraryRunbooks = [],
   progressRecords = [],
   peerOrganizations = [],
+  organizationId,
+  organizationName,
 }: {
   level: Level;
   entityId: string;
@@ -41,10 +44,22 @@ export function V2EntityRunbooksTab({
   progressRecords?: RunbookProgress[];
   /** Other orgs — used on organization library for copy/move runbook. */
   peerOrganizations?: RunbookPeerOrg[];
+  /** Project's linked organization — enables "Edit on organization". */
+  organizationId?: string;
+  organizationName?: string;
 }) {
   const router = useRouter();
-  const [screen, setScreen] = useState<"home" | "runbook">("home");
-  const [selectedId, setSelectedId] = useState("");
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const urlRunbookId = searchParams.get("runbook") ?? "";
+  const returnToRaw = searchParams.get("returnTo");
+  const returnToProjectHref =
+    level === "organization" && returnToRaw && returnToRaw.startsWith("/argus/")
+      ? returnToRaw
+      : null;
+
+  const [screen, setScreen] = useState<"home" | "runbook">(urlRunbookId ? "runbook" : "home");
+  const [selectedId, setSelectedId] = useState(urlRunbookId);
   const [showCreate, setShowCreate] = useState(level === "organization" && linkedRunbooks.length === 0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [assignOpen, setAssignOpen] = useState(false);
@@ -87,6 +102,33 @@ export function V2EntityRunbooksTab({
     return [...map.entries()].map(([id, title]) => ({ id, title }));
   }, [linkedRunbooks, libraryRunbooks, selectedId]);
 
+  const replaceParams = useCallback(
+    (mutate: (params: URLSearchParams) => void) => {
+      const params = new URLSearchParams(searchParams.toString());
+      mutate(params);
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams]
+  );
+
+  useEffect(() => {
+    const known =
+      Boolean(urlRunbookId) &&
+      (linkedRunbooks.some((r) => r.id === urlRunbookId) ||
+        libraryRunbooks.some((r) => r.id === urlRunbookId));
+    if (known) {
+      setSelectedId(urlRunbookId);
+      setScreen("runbook");
+      setShowCreate(false);
+      return;
+    }
+    if (!urlRunbookId) {
+      setScreen("home");
+      setSelectedId("");
+    }
+  }, [urlRunbookId, linkedRunbooks, libraryRunbooks]);
+
   useEffect(() => {
     if (!cardMenuId) {
       setCardSubmenu(null);
@@ -107,6 +149,18 @@ export function V2EntityRunbooksTab({
     setScreen("runbook");
     setShowCreate(false);
     setCardMenuId(null);
+    replaceParams((params) => {
+      params.set("tab", "Runbooks");
+      params.set("runbook", id);
+    });
+  }
+
+  function backToHome() {
+    setScreen("home");
+    setSelectedId("");
+    replaceParams((params) => {
+      params.delete("runbook");
+    });
   }
 
   function toggleSelect(id: string) {
@@ -126,29 +180,58 @@ export function V2EntityRunbooksTab({
     });
   }
 
+  const editOnOrganizationHref = useMemo(() => {
+    if (isLibrary || !organizationId || !selectedId) return null;
+    const returnParams = new URLSearchParams(searchParams.toString());
+    returnParams.set("tab", "Runbooks");
+    returnParams.set("runbook", selectedId);
+    returnParams.delete("returnTo");
+    const returnQuery = returnParams.toString();
+    const returnPath = returnQuery ? `${pathname}?${returnQuery}` : pathname;
+    const params = new URLSearchParams();
+    params.set("tab", "Runbooks");
+    params.set("runbook", selectedId);
+    params.set("returnTo", returnPath);
+    return `/argus/v2/organizations/${organizationId}?${params.toString()}`;
+  }, [isLibrary, organizationId, selectedId, pathname, searchParams]);
+
   if (screen === "runbook" && displayRunbook) {
     return (
       <V2RunbookWorkPanel
         runbook={displayRunbook}
-        onBack={() => setScreen("home")}
+        onBack={backToHome}
         backLabel="All runbooks"
         scopeEntityId={entityId}
         closed={progressForSelected?.closed ?? false}
         executeMode={!isLibrary}
         peerLists={peerLists}
+        editOnOrganizationHref={editOnOrganizationHref}
+        returnToProjectHref={returnToProjectHref}
+        returnToProjectLabel={
+          organizationName ? `Back to project` : "Back to project"
+        }
       />
     );
   }
 
   return (
     <div className="space-y-4">
+      {returnToProjectHref ? (
+        <Link
+          href={returnToProjectHref}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold text-violet-200 hover:bg-violet-500/15"
+        >
+          ← Back to project
+        </Link>
+      ) : null}
+
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-zinc-100">Runbooks</h2>
           <p className="mt-1 text-xs text-zinc-500">
             {isLibrary
               ? "Organization library — create checklists, then link them to projects, topics, or events. Copy or move lists between organizations."
-              : "Checklists linked here. Progress (checks / closed) is saved only for this level."}
+              : "Checklists linked here. Progress (checks / closed) is saved only for this level. Edit the shared template on the organization."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
