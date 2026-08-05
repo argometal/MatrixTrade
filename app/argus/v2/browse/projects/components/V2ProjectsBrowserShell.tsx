@@ -15,6 +15,12 @@ import {
   readBrowseCardOrder,
   writeBrowseCardOrder,
 } from "@/lib/argus/v2/browse-card-order";
+import {
+  readBrowseViewPrefs,
+  writeBrowseViewPrefs,
+  type BrowseLayoutView,
+} from "@/lib/argus/v2/browse-view-prefs";
+import { BrowseBoardColumnHeader } from "@/app/argus/v2/components/BrowseBoardColumnHeader";
 import { textMatchesBrowseQuery } from "@/lib/argus/v2/browse-filter-utils";
 import {
   filterV2ProjectBrowseCards,
@@ -317,8 +323,8 @@ export function V2ProjectsBrowserShell({
   const router = useRouter();
   const searchParams = useSearchParams();
   const orgScope = searchParams.get("org")?.trim() || undefined;
-  const [view, setView] = useState<"grid" | "list" | "board">("grid");
-  const [statusFilter, setStatusFilter] = useState<V2ProjectBrowseStatus | "all">("all");
+  const [view, setViewState] = useState<BrowseLayoutView>("grid");
+  const [statusFilter, setStatusFilterState] = useState<V2ProjectBrowseStatus | "all">("all");
   const [searchDraft, setSearchDraft] = useState("");
   const [order, setOrder] = useState<string[]>([]);
   const [columnOverrides, setColumnOverrides] = useState<Record<string, V2ProjectBrowseStatus>>({});
@@ -334,7 +340,29 @@ export function V2ProjectsBrowserShell({
     } catch {
       /* ignore */
     }
+    const prefs = readBrowseViewPrefs(ORDER_SCOPE);
+    if (prefs.view) setViewState(prefs.view);
+    if (
+      prefs.status === "all" ||
+      prefs.status === "Planning" ||
+      prefs.status === "Active" ||
+      prefs.status === "On Hold" ||
+      prefs.status === "Completed" ||
+      prefs.status === "Archived"
+    ) {
+      setStatusFilterState(prefs.status);
+    }
   }, []);
+
+  function setView(next: BrowseLayoutView) {
+    setViewState(next);
+    writeBrowseViewPrefs(ORDER_SCOPE, { view: next });
+  }
+
+  function setStatusFilter(next: V2ProjectBrowseStatus | "all") {
+    setStatusFilterState(next);
+    writeBrowseViewPrefs(ORDER_SCOPE, { status: next });
+  }
 
   function persistOrder(next: string[]) {
     setOrder(next);
@@ -595,13 +623,12 @@ export function V2ProjectsBrowserShell({
                   }}
                   onDrop={(event) => onDropBoard(event, column, null)}
                 >
-                  <div className="border-b border-zinc-800/80 px-3 py-2.5">
-                    <h3 className="text-sm font-semibold text-zinc-200">{column}</h3>
-                    <p className="text-[11px] text-zinc-600">{boardGroups[column].length}</p>
-                  </div>
+                  <BrowseBoardColumnHeader column={column} count={boardGroups[column].length} />
                   <div className="min-h-[8rem] space-y-2 p-2">
                     {boardGroups[column].length === 0 ? (
-                      <p className="px-1 py-8 text-center text-xs text-zinc-600">Drop here</p>
+                      <p className="px-1 py-8 text-center text-xs text-zinc-600">
+                        {column === "Archived" ? "Drop to hide (not delete)" : "Drop here"}
+                      </p>
                     ) : (
                       boardGroups[column].map((card) => (
                         <div

@@ -22,6 +22,12 @@ import {
   writeBrowseCardOrder,
 } from "@/lib/argus/v2/browse-card-order";
 import {
+  readBrowseViewPrefs,
+  writeBrowseViewPrefs,
+  type BrowseLayoutView,
+} from "@/lib/argus/v2/browse-view-prefs";
+import { BrowseBoardColumnHeader } from "@/app/argus/v2/components/BrowseBoardColumnHeader";
+import {
   buildV2TopicBrowseCards,
   buildV2TopicBrowseSummary,
   buildV2TopicFilterOptions,
@@ -473,15 +479,19 @@ export function V2TopicsShell({
     [searchParams]
   );
   const urlSelected = searchParams.get("selected");
+  const urlStatus = searchParams.get("status");
   const selectedId = urlSelected?.trim() || initialSelectedId;
   const selected = selectedId ? details.find((d) => d.id === selectedId) : undefined;
   const mobileDetailOpen = Boolean(urlSelected);
 
-  const [view, setView] = useState<"grid" | "list" | "board">("grid");
+  const [view, setViewState] = useState<BrowseLayoutView>("grid");
   const [statusFilter, setStatusFilter] = useState<V2TopicBrowseStatus | "all" | "patterns">(() => {
     if (tab === "active") return "Active";
     if (tab === "empty") return "Empty";
     if (tab === "patterns") return "patterns";
+    if (urlStatus === "Quiet" || urlStatus === "Archived" || urlStatus === "Active" || urlStatus === "Empty") {
+      return urlStatus;
+    }
     return "all";
   });
   const [order, setOrder] = useState<string[]>([]);
@@ -511,7 +521,27 @@ export function V2TopicsShell({
     } catch {
       /* ignore */
     }
+    const prefs = readBrowseViewPrefs(ORDER_SCOPE);
+    if (prefs.view) setViewState(prefs.view);
+    const params = new URLSearchParams(window.location.search);
+    if (
+      !params.has("tab") &&
+      !params.has("status") &&
+      (prefs.status === "Quiet" ||
+        prefs.status === "Archived" ||
+        prefs.status === "Active" ||
+        prefs.status === "Empty" ||
+        prefs.status === "patterns" ||
+        prefs.status === "all")
+    ) {
+      setStatusFilter(prefs.status);
+    }
   }, []);
+
+  function setView(next: BrowseLayoutView) {
+    setViewState(next);
+    writeBrowseViewPrefs(ORDER_SCOPE, { view: next });
+  }
 
   useEffect(() => {
     setSearchDraft(filters.q ?? "");
@@ -603,6 +633,7 @@ export function V2TopicsShell({
     replaceTopicParams((params) => {
       if (next === "all") params.delete("tab");
       else params.set("tab", next);
+      params.delete("status");
       params.delete("page");
     });
     if (!syncStatus) return;
@@ -614,10 +645,26 @@ export function V2TopicsShell({
 
   function applyStatusFilter(value: V2TopicBrowseStatus | "all" | "patterns") {
     setStatusFilter(value);
-    if (value === "Active") setTab("active", false);
-    else if (value === "Empty") setTab("empty", false);
-    else if (value === "patterns") setTab("patterns", false);
-    else setTab("all", false);
+    writeBrowseViewPrefs(ORDER_SCOPE, { status: value });
+    replaceTopicParams((params) => {
+      params.delete("page");
+      if (value === "Active") {
+        params.set("tab", "active");
+        params.delete("status");
+      } else if (value === "Empty") {
+        params.set("tab", "empty");
+        params.delete("status");
+      } else if (value === "patterns") {
+        params.set("tab", "patterns");
+        params.delete("status");
+      } else if (value === "Quiet" || value === "Archived") {
+        params.delete("tab");
+        params.set("status", value);
+      } else {
+        params.delete("tab");
+        params.delete("status");
+      }
+    });
   }
 
   function setFilter(key: keyof V2TopicFilters, value?: string) {
@@ -1063,13 +1110,12 @@ export function V2TopicsShell({
                   }}
                   onDrop={(event) => onDropBoard(event, column, null)}
                 >
-                  <div className="border-b border-zinc-800/80 px-3 py-2.5">
-                    <h3 className="text-sm font-semibold text-zinc-200">{column}</h3>
-                    <p className="text-[11px] text-zinc-600">{boardGroups[column].length}</p>
-                  </div>
+                  <BrowseBoardColumnHeader column={column} count={boardGroups[column].length} />
                   <div className="min-h-[8rem] space-y-2 p-2">
                     {boardGroups[column].length === 0 ? (
-                      <p className="px-1 py-8 text-center text-xs text-zinc-600">Drop here</p>
+                      <p className="px-1 py-8 text-center text-xs text-zinc-600">
+                        {column === "Archived" ? "Drop to hide (not delete)" : "Drop here"}
+                      </p>
                     ) : (
                       boardGroups[column].map((card) => (
                         <div
