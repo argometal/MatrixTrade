@@ -1076,6 +1076,7 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
   const endDate = String(formData.get("endDate") ?? "").trim();
 
   await updateEntity(entityId, {
+    name: String(formData.get("name") ?? "").trim() || entity.name,
     strategicValue,
     contactValue,
     myValue,
@@ -1093,6 +1094,7 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
   revalidateArgus();
   revalidatePath(`/argus/network/${entityId}`);
   revalidatePath(`/argus/v2/network/${entityId}`);
+  revalidatePath("/argus/v2/browse/network");
   redirect(`/argus/v2/network/${entityId}`);
 }
 

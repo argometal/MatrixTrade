@@ -29,6 +29,7 @@ import { initialsFromName } from "@/lib/argus/v2/network-contact-loaders";
 import { personHasContactEvidence } from "@/lib/argus/network-dialogue";
 import { V2Badge, V2Card } from "@/app/argus/v2/components/v2-ui";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
+import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
 import { NetworkDialogueGuide } from "./NetworkDialogueGuide";
 import { NetworkPanelProvider } from "./NetworkPanelProvider";
@@ -544,6 +545,14 @@ export function NetworkContactShell({
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <NetworkPanelButton />
+            <V2EntityLifecycleActions
+              entityId={entity.id}
+              entityName={entity.name}
+              entityKind="person"
+              lifecycleStatus={entity.lifecycleStatus}
+              returnTo={`/argus/v2/network/${entity.id}`}
+              variant="menu"
+            />
             <button
               type="button"
               onClick={() => setShowEdit((value) => !value)}

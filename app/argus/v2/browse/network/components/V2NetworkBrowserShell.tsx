@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { recordNetworkLastContactAction } from "@/app/argus/actions";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
+import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
 import { V2DayPicker } from "@/app/argus/v2/components/V2DayPicker";
 import { V2Badge } from "../../../components/v2-ui";
 import type {
@@ -227,13 +228,19 @@ function PersonCard({ card }: { card: V2NetworkBrowseCard }) {
                 <p className="truncate text-xs text-zinc-500">{card.organization}</p>
               ) : null}
             </div>
-            <div className="flex shrink-0 gap-1 text-zinc-600">
-              <span className="rounded-md p-1 hover:bg-zinc-800 hover:text-amber-300" aria-hidden>
+            <div className="relative z-20 flex shrink-0 items-center gap-1 pointer-events-auto">
+              <span className="rounded-md p-1 text-zinc-600" aria-hidden>
                 ★
               </span>
-              <span className="rounded-md p-1 hover:bg-zinc-800" aria-hidden>
-                ⋮
-              </span>
+              <V2EntityLifecycleActions
+                entityId={card.id}
+                entityName={card.name}
+                entityKind="person"
+                lifecycleStatus={card.lifecycleStatus}
+                href={card.href}
+                returnTo="/argus/v2/browse/network"
+                variant="menu"
+              />
             </div>
           </div>
           <div className="mt-2">
@@ -333,8 +340,17 @@ function PersonListRow({ card }: { card: V2NetworkBrowseCard }) {
       <span className="relative z-10 hidden shrink-0 text-sm font-semibold tabular-nums text-violet-300 pointer-events-none sm:block">
         {card.strength}%
       </span>
-      <div className="relative z-20 shrink-0 pointer-events-auto">
+      <div className="relative z-20 flex shrink-0 items-center gap-1 pointer-events-auto">
         <NetworkLastContactPicker personId={card.id} compact />
+        <V2EntityLifecycleActions
+          entityId={card.id}
+          entityName={card.name}
+          entityKind="person"
+          lifecycleStatus={card.lifecycleStatus}
+          href={card.href}
+          returnTo="/argus/v2/browse/network"
+          variant="menu"
+        />
       </div>
     </div>
   );
