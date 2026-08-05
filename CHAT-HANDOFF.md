@@ -9,6 +9,14 @@
 
 ---
 
+## Pending review — Guest workstation lock (no implement yet)
+
+Doc: [`md/integrations/guest-workstation-lock-handoff.md`](md/integrations/guest-workstation-lock-handoff.md)
+
+Settings-controlled session timer for guest/shared PCs (hours, date range, or indefinite policy). Emulate private unlock + delete TTL. **Review with AI before coding.**
+
+---
+
 ## Library — Scout Learning circuit + P0 visibility
 
 Docs:
