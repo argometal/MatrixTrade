@@ -181,12 +181,16 @@ export function V2TopicDetailPanel({
           title={selected.name}
           subtitle={selected.category}
           collapsedExtra={
-            <V2QuickDeliverButton
-              scopeType="topic"
-              scopeId={selected.id}
-              scopeName={selected.name}
-              label="PDF"
-            />
+            <>
+              <V2QuickDeliverButton
+                scopeType="topic"
+                scopeId={selected.id}
+                scopeName={selected.name}
+                label="PDF"
+              />
+              {/* Compact chrome used to hide ···; keep delete reachable unless the unlocked manage bar is up */}
+              {!showMobileManageBar ? lifecycle : null}
+            </>
           }
           expanded={
             <>

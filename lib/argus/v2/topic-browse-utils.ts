@@ -251,3 +251,102 @@ export function paginateV2TopicRows<T>(rows: T[], page: number, pageSize = V2_TO
 export function v2TopicPageCount(rowCount: number, pageSize = V2_TOPIC_PAGE_SIZE): number {
   return Math.max(1, Math.ceil(rowCount / pageSize));
 }
+
+/** Portfolio board / filter status for topics (exclusive buckets). */
+export type V2TopicBrowseStatus = "Active" | "Quiet" | "Empty" | "Archived";
+
+export interface V2TopicBrowseCard {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  status: V2TopicBrowseStatus;
+  statusTone: "green" | "amber" | "blue" | "default";
+  lastActivity: string;
+  lastSort: string;
+  patternCount: number;
+  aliases: string[];
+  metrics: {
+    journals: number;
+    emails: number;
+    files: number;
+    orgs: number;
+    projects: number;
+    people: number;
+  };
+  hasPrivateEvidence: boolean;
+  deleteRequiresAuthenticator: boolean;
+  lifecycleStatus?: EntityLifecycleStatus;
+  searchText: string;
+}
+
+export interface V2TopicBrowseSummary {
+  total: number;
+  active: number;
+  quiet: number;
+  empty: number;
+  archived: number;
+}
+
+function deriveTopicBrowseStatus(
+  row: V2TopicRow,
+  detail: V2TopicDetail | undefined
+): V2TopicBrowseStatus {
+  if (detail?.lifecycleStatus === "archived") return "Archived";
+  if (row.evidenceCount === 0) return "Empty";
+  const cutoff = activeCutoffIso();
+  if (row.lastSort.slice(0, 10) >= cutoff) return "Active";
+  return "Quiet";
+}
+
+function topicStatusTone(status: V2TopicBrowseStatus): V2TopicBrowseCard["statusTone"] {
+  if (status === "Active") return "green";
+  if (status === "Quiet") return "amber";
+  if (status === "Empty") return "blue";
+  return "default";
+}
+
+export function buildV2TopicBrowseCards(
+  rows: V2TopicRow[],
+  details: V2TopicDetail[]
+): V2TopicBrowseCard[] {
+  const byId = new Map(details.map((d) => [d.id, d]));
+  return rows.map((row) => {
+    const detail = byId.get(row.id);
+    const status = deriveTopicBrowseStatus(row, detail);
+    return {
+      id: row.id,
+      name: row.name,
+      category: detail?.category ?? "Topic",
+      description: detail?.description ?? "No description yet.",
+      status,
+      statusTone: topicStatusTone(status),
+      lastActivity: row.lastActivity,
+      lastSort: row.lastSort,
+      patternCount: row.patternCount,
+      aliases: row.aliases,
+      metrics: {
+        journals: row.journalCount,
+        emails: row.emailCount,
+        files: row.fileCount,
+        orgs: detail?.orgCount ?? row.linkedOrgIds.length,
+        projects: detail?.projectCount ?? row.linkedProjectIds.length,
+        people: detail?.peopleCount ?? 0,
+      },
+      hasPrivateEvidence: detail?.hasPrivateEvidence ?? false,
+      deleteRequiresAuthenticator: detail?.deleteRequiresAuthenticator ?? false,
+      lifecycleStatus: detail?.lifecycleStatus,
+      searchText: row.searchText,
+    };
+  });
+}
+
+export function buildV2TopicBrowseSummary(cards: V2TopicBrowseCard[]): V2TopicBrowseSummary {
+  return {
+    total: cards.length,
+    active: cards.filter((c) => c.status === "Active").length,
+    quiet: cards.filter((c) => c.status === "Quiet").length,
+    empty: cards.filter((c) => c.status === "Empty").length,
+    archived: cards.filter((c) => c.status === "Archived").length,
+  };
+}
