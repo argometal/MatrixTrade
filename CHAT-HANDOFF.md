@@ -9,15 +9,26 @@
 
 ---
 
-## Library — Scout Learning circuit + P0 visibility
+## Pending — Scout Learning P0 visibility (#134)
 
-Docs:
-- `md/matrix/metrics-analysis-planteamiento-handoff.md` — tres ledgers (Trade · Scout counterfactual · Pipeline)
-- `md/matrix/scout-learning-circuit-audit-handoff.md` — auditoría acotada + **=== PLAN P0 ===**
+PR: #134 · branch `cursor/scout-learning-p0-visibility-b0a5` · tip `35847e7`  
+**CLOSE-001 (merge ready):** `md/matrix/scout-learning-p0-close-001-handoff.md`  
+**Handoff de entrega:** `md/matrix/scout-learning-p0-visibility-handoff.md`  
+Auditoría + PLAN P0: `md/matrix/scout-learning-circuit-audit-handoff.md`  
+Tres ledgers (#133 merged): `md/matrix/metrics-analysis-planteamiento-handoff.md`  
+Tests: `npm run test:insights-pipeline` · `npm run test:plan-outcome-learning-sync`
 
-**P0 (implementado en branch `cursor/scout-learning-p0-visibility-b0a5`):** aggregates Scout en `/stats?tab=pipeline`; discovery cola Learning en Planning; copy Retry Sync post-partialFailure. Sin página/tabla nueva. No mezclar con Trade WR/P/L.
+**MERGEABLE / CLEAN · Vercel SUCCESS · Listo para merge: sí · No auto-merge.**
 
-Siguiente: merge + prod verify → P1 solo con auth (sección Scout Learning en hub).
+**Scope (P0 only — do not expand):**
+- `/stats?tab=pipeline` — Triggered-without-Trade + thesis fail rate
+- Planning — learning queue (needs outcome / Retry Sync)
+- Copy post-`partialFailure` → Retry Learning Sync
+- Strict Trade vs Scout ledger separation
+
+**Paused (not in this PR):** Scout Coverage / Funnel audit (#136). Ops review sheet (#135) docs-only — no product scope here.
+
+Nota: código P0 ya está en `main` (`6bc41fc`+`97788c0`); merge #134 cierra docs/PR. Prod verify tras merge humano.
 
 ## Shipped — Plan Map AI execution sentence (#132)
 

@@ -4,7 +4,8 @@
 **Mode:** auditoría acotada → **P0 autorizado e implementado** (visibilidad + discovery)  
 **Baseline auditada:** `main` @ `f284719`  
 **Audience:** ChatGPT · Cursor · agentes  
-**Referencia canónica previa:** `md/matrix/metrics-analysis-planteamiento-handoff.md`
+**Referencia canónica previa:** `md/matrix/metrics-analysis-planteamiento-handoff.md`  
+**Handoff de entrega P0:** `md/matrix/scout-learning-p0-visibility-handoff.md` · PR #134
 
 **Reglas:** no tablas/modelos/ontología/páginas nuevas; no mezclar ledgers; no Coach/export/analytics dimensionales; reutilizar antes de proponer.
 
