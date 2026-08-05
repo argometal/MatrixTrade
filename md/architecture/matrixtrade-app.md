@@ -21,8 +21,11 @@ Legacy light UI preserved in `app/components/legacy/` — not mounted on active 
 
 | Route | Purpose |
 |-------|---------|
-| `/` → `/home-preview` | Dashboard — monthly risk, experiment P/L, attention queue |
-| `/home-preview` | Same dashboard |
+| `/` → `/apps` | Product chooser — MTA · ARGUS · ArgusForge |
+| `/apps` | Same apps hub (public) |
+| `/home-preview` | MTA dashboard — monthly risk, experiment P/L, attention queue |
+| `/argus/v2` | ARGUS (password: `ARGUS_PASSWORD`) |
+| `/forge` | ArgusForge (same Argus password session) |
 | `/trades-preview` | New Trade workspace — proposals → Inbox |
 | `/planning` | Pre-trade plans — entries, MTF, failed/expired tracking |
 | `/trades` | Trades list |

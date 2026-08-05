@@ -9,6 +9,15 @@
 
 ---
 
+## Pending — Cross-app switch + Forge Argus gate
+
+PR: #148 · Branch: `cursor/af-forge-argus-auth-gate-c2fb`
+
+- `/forge` gated with Argus password (`/argus/login`, `argus-auth`)
+- Mutual chrome links MTA ↔ ARGUS ↔ ArgusForge + public `/apps` hub (`/` → `/apps`)
+
+---
+
 ## Pending review — Guest workstation lock (no implement yet)
 
 Doc: [`md/integrations/guest-workstation-lock-handoff.md`](md/integrations/guest-workstation-lock-handoff.md)

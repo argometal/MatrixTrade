@@ -34,6 +34,11 @@ export default async function ArgusLoginPage({
           Sign in
         </button>
       </form>
+      <p className="mt-6 text-center text-sm text-zinc-500">
+        <a href="/apps" className="underline-offset-2 hover:text-zinc-300 hover:underline">
+          All apps
+        </a>
+      </p>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { argusLegacyRedirectUrl } from "@/lib/argus/argus-legacy-redirects";
 
 function isPublicPath(pathname: string): boolean {
-  if (pathname === "/login" || pathname === "/argus/login") return true;
+  if (pathname === "/login" || pathname === "/argus/login" || pathname === "/apps") return true;
   if (pathname.startsWith("/_next")) return true;
   if (pathname.startsWith("/api/")) return true;
   if (/\.(?:svg|png|jpg|jpeg|gif|webp|ico)$/.test(pathname)) return true;
@@ -59,7 +59,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (pathname === "/") {
-    return NextResponse.redirect(new URL("/home-preview", request.url));
+    return NextResponse.redirect(new URL("/apps", request.url));
   }
 
   const tradingPasswordSet = Boolean(process.env.MATRIXTRADE_PASSWORD);
