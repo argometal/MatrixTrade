@@ -86,3 +86,41 @@ export async function logoutAction(): Promise<void> {
   await clearAllSessions();
   redirect("/login");
 }
+
+export async function saveGuestWorkstationLockAction(formData: FormData): Promise<void> {
+  const returnTo = String(formData.get("returnTo") ?? "/settings/security");
+  const password = String(formData.get("password") ?? "");
+  const enabled = String(formData.get("enabled") ?? "") === "1";
+
+  const tradingSet = Boolean(process.env.MATRIXTRADE_PASSWORD);
+  const argusSet = Boolean(process.env.ARGUS_PASSWORD ?? process.env.HEALTH_VAULT_PASSWORD);
+  const ok =
+    (!tradingSet && !argusSet) ||
+    (tradingSet && verifyTradingPassword(password)) ||
+    (argusSet && verifyArgusPassword(password));
+
+  if (!ok) {
+    redirect(`${returnTo}${returnTo.includes("?") ? "&" : "?"}error=password`);
+  }
+
+  const { writeGuestLockPolicy } = await import("@/lib/auth/cookies");
+  const { clampGuestHours } = await import("@/lib/auth/guest-workstation-lock");
+
+  await writeGuestLockPolicy({
+    enabled,
+    hours: clampGuestHours(Number(formData.get("hours") ?? 4)),
+    dateFrom: String(formData.get("dateFrom") ?? "").trim().slice(0, 10) || undefined,
+    dateTo: String(formData.get("dateTo") ?? "").trim().slice(0, 10) || undefined,
+    dailyStart: String(formData.get("dailyStart") ?? "").trim() || undefined,
+    dailyEnd: String(formData.get("dailyEnd") ?? "").trim() || undefined,
+    indefinite: String(formData.get("indefinite") ?? "1") === "1",
+  });
+
+  // Re-stamp session TTLs under the new policy when enabling
+  if (enabled) {
+    await setTradingSession();
+    await setArgusSession();
+  }
+
+  redirect(returnTo.startsWith("/") ? returnTo : "/settings/security");
+}

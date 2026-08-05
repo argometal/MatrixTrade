@@ -2,7 +2,7 @@ import type { ArgusData, Entity, InboxItem } from "../types";
 import { isEntityArchived } from "../entity-lifecycle";
 import { entityNotesForDisplay } from "../reference-types";
 import { getAllProjectScopeInbox, getProjectEvidenceScope } from "../project-evidence-scope";
-import { entitiesByKind } from "./hierarchy";
+import { browseEntitiesByKind } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
 import { collectProjectLinkIds, countLinkKinds } from "./entity-link-counts";
 import { projectHasPrivateEvidence } from "./project-private";
@@ -168,7 +168,7 @@ export function buildV2ProjectBrowseCards(
   includePrivate: boolean,
   today: string
 ): V2ProjectBrowseCard[] {
-  const projects = entitiesByKind(data).projects.filter((p) => !p.deletedAt);
+  const projects = browseEntitiesByKind(data).projects;
 
   return projects
     .map((project) => {

@@ -4,7 +4,7 @@ import { getEntityHistory } from "../network";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import { entityHasPrivateEvidence } from "../entity-private-evidence";
 import { entityDeleteRequiresAuthenticator } from "../delete-link-check";
-import { entitiesByKind } from "./hierarchy";
+import { browseEntitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { relativeActivityLabel, buildTimelineFromLogsAndInbox } from "./timeline-builders";
 import {
@@ -184,7 +184,7 @@ export function buildV2TopicRows(
   includePrivate: boolean,
   today: string
 ): V2TopicRow[] {
-  const topics = entitiesByKind(data).topics;
+  const topics = browseEntitiesByKind(data).topics;
 
   return topics
     .map((topic) => {
@@ -217,7 +217,7 @@ export function buildV2TopicDetails(
   includePrivate: boolean,
   today: string
 ): V2TopicDetail[] {
-  const topics = entitiesByKind(data).topics;
+  const topics = browseEntitiesByKind(data).topics;
 
   return topics.map((topic) => {
     const { history, inbox, evidence, counts } = topicEvidenceBundle(

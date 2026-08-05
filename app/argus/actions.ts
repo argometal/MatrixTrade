@@ -1317,13 +1317,23 @@ export async function archiveEntityAction(formData: FormData): Promise<void> {
   await requireArgusSession();
   const entityId = String(formData.get("entityId") ?? "");
   const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
+  const quiet = String(formData.get("quiet") ?? "") === "1";
 
   const entity = await getEntity(entityId);
-  if (!entity || entity.deletedAt) redirect(returnTo);
+  if (!entity || entity.deletedAt) {
+    if (quiet) return;
+    redirect(returnTo);
+  }
 
   await updateEntity(entityId, { lifecycleStatus: "archived" });
   revalidateArgus();
   revalidatePath("/argus/v2");
+  revalidatePath("/argus/v2/browse/organizations");
+  revalidatePath("/argus/v2/browse/projects");
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/browse/network");
+  revalidatePath("/argus/v2/browse/events");
+  if (quiet) return;
   redirect(returnTo);
 }
 
@@ -1331,13 +1341,23 @@ export async function restoreEntityAction(formData: FormData): Promise<void> {
   await requireArgusSession();
   const entityId = String(formData.get("entityId") ?? "");
   const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
+  const quiet = String(formData.get("quiet") ?? "") === "1";
 
   const entity = await getEntity(entityId);
-  if (!entity || entity.deletedAt) redirect(returnTo);
+  if (!entity || entity.deletedAt) {
+    if (quiet) return;
+    redirect(returnTo);
+  }
 
   await updateEntity(entityId, { lifecycleStatus: "active" });
   revalidateArgus();
   revalidatePath("/argus/v2");
+  revalidatePath("/argus/v2/browse/organizations");
+  revalidatePath("/argus/v2/browse/projects");
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/browse/network");
+  revalidatePath("/argus/v2/browse/events");
+  if (quiet) return;
   redirect(returnTo);
 }
 

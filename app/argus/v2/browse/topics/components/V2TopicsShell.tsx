@@ -76,10 +76,14 @@ function SummaryPill({
   label,
   value,
   tone = "default",
+  active,
+  onClick,
 }: {
   label: string;
   value: number;
   tone?: "default" | "green" | "amber" | "blue";
+  active?: boolean;
+  onClick?: () => void;
 }) {
   const valueTone =
     tone === "green"
@@ -89,11 +93,22 @@ function SummaryPill({
         : tone === "blue"
           ? "text-sky-300"
           : "text-zinc-50";
-  return (
-    <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
+  const className = `rounded-xl border px-4 py-3 text-left transition ${
+    active
+      ? "border-violet-500/50 bg-violet-500/10"
+      : "border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700"
+  }`;
+  const body = (
+    <>
       <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-600">{label}</p>
       <p className={`mt-1 text-2xl font-bold tabular-nums ${valueTone}`}>{value}</p>
-    </div>
+    </>
+  );
+  if (!onClick) return <div className={className}>{body}</div>;
+  return (
+    <button type="button" onClick={onClick} className={className} aria-pressed={active}>
+      {body}
+    </button>
   );
 }
 
@@ -722,6 +737,7 @@ export function V2TopicsShell({
         const fd = new FormData();
         fd.set("entityId", id);
         fd.set("returnTo", "/argus/v2/browse/topics");
+        fd.set("quiet", "1");
         await archiveEntityAction(fd);
         router.refresh();
       });
@@ -730,6 +746,7 @@ export function V2TopicsShell({
         const fd = new FormData();
         fd.set("entityId", id);
         fd.set("returnTo", "/argus/v2/browse/topics");
+        fd.set("quiet", "1");
         await restoreEntityAction(fd);
         router.refresh();
       });
@@ -976,11 +993,11 @@ export function V2TopicsShell({
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <SummaryPill label="Total" value={summary.total} />
-            <SummaryPill label="Active" value={summary.active} tone="green" />
-            <SummaryPill label="Quiet" value={summary.quiet} tone="amber" />
-            <SummaryPill label="Empty" value={summary.empty} tone="blue" />
-            <SummaryPill label="Archived" value={summary.archived} />
+            <SummaryPill label="Total" value={summary.total} active={statusFilter === "all"} onClick={() => applyStatusFilter("all")} />
+            <SummaryPill label="Active" value={summary.active} tone="green" active={statusFilter === "Active"} onClick={() => applyStatusFilter("Active")} />
+            <SummaryPill label="Quiet" value={summary.quiet} tone="amber" active={statusFilter === "Quiet"} onClick={() => applyStatusFilter("Quiet")} />
+            <SummaryPill label="Empty" value={summary.empty} tone="blue" active={statusFilter === "Empty"} onClick={() => applyStatusFilter("Empty")} />
+            <SummaryPill label="Archived" value={summary.archived} active={statusFilter === "Archived"} onClick={() => applyStatusFilter("Archived")} />
           </div>
 
           {filtered.length === 0 ? (

@@ -140,7 +140,11 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Archive",
-        body: "Archived entities disappear from metrics, treemap, and default browse. Evidence remains — use Deliver or restore later.",
+        body: "Archived entities leave default metrics but stay visible on browse boards under the Archived column/filter. Drag off Archived (or Restore) to bring them back. Evidence is never deleted by archive.",
+      },
+      {
+        title: "Guest workstation lock",
+        body: "On shared or remote PCs, open Settings → Security (/settings/security) to force re-login after N hours, outside daily hours, or outside a date range.",
       },
       {
         title: "Project dates",

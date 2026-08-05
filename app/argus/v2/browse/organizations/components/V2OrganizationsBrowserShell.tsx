@@ -41,11 +41,15 @@ function SummaryPill({
   value,
   icon,
   tone = "default",
+  active,
+  onClick,
 }: {
   label: string;
   value: number;
   icon?: string;
   tone?: "default" | "green" | "amber" | "blue";
+  active?: boolean;
+  onClick?: () => void;
 }) {
   const valueTone =
     tone === "green"
@@ -56,14 +60,25 @@ function SummaryPill({
           ? "text-sky-300"
           : "text-zinc-50";
 
-  return (
-    <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
+  const className = `rounded-xl border px-4 py-3 text-left transition ${
+    active
+      ? "border-violet-500/50 bg-violet-500/10"
+      : "border-zinc-800/80 bg-zinc-900/50 hover:border-zinc-700"
+  }`;
+  const body = (
+    <>
       <p className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-zinc-600">
         {icon ? <span aria-hidden>{icon}</span> : null}
         {label}
       </p>
       <p className={`mt-1 text-2xl font-bold tabular-nums ${valueTone}`}>{value}</p>
-    </div>
+    </>
+  );
+  if (!onClick) return <div className={className}>{body}</div>;
+  return (
+    <button type="button" onClick={onClick} className={className} aria-pressed={active}>
+      {body}
+    </button>
   );
 }
 
@@ -336,6 +351,7 @@ export function V2OrganizationsBrowserShell({
         const fd = new FormData();
         fd.set("entityId", id);
         fd.set("returnTo", "/argus/v2/browse/organizations");
+        fd.set("quiet", "1");
         await archiveEntityAction(fd);
         router.refresh();
       });
@@ -344,6 +360,7 @@ export function V2OrganizationsBrowserShell({
         const fd = new FormData();
         fd.set("entityId", id);
         fd.set("returnTo", "/argus/v2/browse/organizations");
+        fd.set("quiet", "1");
         await restoreEntityAction(fd);
         router.refresh();
       });
@@ -413,10 +430,10 @@ export function V2OrganizationsBrowserShell({
             </header>
 
             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              <SummaryPill label="Total Organizations" value={summary.total} />
-              <SummaryPill label="Active" value={summary.active} icon="✓" tone="green" />
-              <SummaryPill label="Inactive" value={summary.inactive} icon="◷" tone="amber" />
-              <SummaryPill label="Archived" value={summary.archived} icon="▣" tone="default" />
+              <SummaryPill label="Total Organizations" value={summary.total} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} />
+              <SummaryPill label="Active" value={summary.active} icon="✓" tone="green" active={statusFilter === "Active"} onClick={() => setStatusFilter("Active")} />
+              <SummaryPill label="Inactive" value={summary.inactive} icon="◷" tone="amber" active={statusFilter === "Inactive"} onClick={() => setStatusFilter("Inactive")} />
+              <SummaryPill label="Archived" value={summary.archived} icon="▣" tone="default" active={statusFilter === "Archived"} onClick={() => setStatusFilter("Archived")} />
               <SummaryPill label="Total Projects" value={summary.totalProjects} icon="📁" tone="blue" />
             </div>
 

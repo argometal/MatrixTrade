@@ -100,8 +100,12 @@ export function archivedEntities(data: ArgusData, today?: string): Entity[] {
   return data.entities.filter((e) => !e.deletedAt && isEntityArchived(e, day));
 }
 
-export function entitiesByKind(data: ArgusData, today?: string) {
-  const entities = activeEntities(data, today);
+/** Non-deleted entities for portfolio browse (includes archived so Archive columns work). */
+export function browseEntities(data: ArgusData): Entity[] {
+  return data.entities.filter((e) => !e.deletedAt);
+}
+
+function kindBuckets(entities: Entity[]) {
   return {
     organizations: entities.filter(isOrganizationEntity),
     projects: entities.filter(isProjectEntity),
@@ -113,4 +117,14 @@ export function entitiesByKind(data: ArgusData, today?: string) {
       (e) => e.type === "other" && referenceKindFromNotes(e.notes ?? "") === "event"
     ),
   };
+}
+
+/** Active + completed only — use for metrics / home counts. */
+export function entitiesByKind(data: ArgusData, today?: string) {
+  return kindBuckets(activeEntities(data, today));
+}
+
+/** Active + archived (not soft-deleted) — use for browse portfolios / boards. */
+export function browseEntitiesByKind(data: ArgusData) {
+  return kindBuckets(browseEntities(data));
 }
