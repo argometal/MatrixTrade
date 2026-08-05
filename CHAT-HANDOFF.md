@@ -9,15 +9,19 @@
 
 ---
 
-## Library — Scout Learning circuit + P0 visibility
+## Library — Metrics + Scout Learning (on main)
 
-Docs:
-- `md/matrix/metrics-analysis-planteamiento-handoff.md` — tres ledgers (Trade · Scout counterfactual · Pipeline)
-- `md/matrix/scout-learning-circuit-audit-handoff.md` — auditoría acotada + **=== PLAN P0 ===**
+PR #133 merged · raw `main`:
+- https://raw.githubusercontent.com/argometal/MatrixTrade/main/md/matrix/metrics-analysis-planteamiento-handoff.md
+- https://raw.githubusercontent.com/argometal/MatrixTrade/main/md/matrix/scout-learning-circuit-audit-handoff.md
+- https://raw.githubusercontent.com/argometal/MatrixTrade/main/md/matrix/scout-learning-p0-visibility-handoff.md
 
-**P0 (implementado en branch `cursor/scout-learning-p0-visibility-b0a5`):** aggregates Scout en `/stats?tab=pipeline`; discovery cola Learning en Planning; copy Retry Sync post-partialFailure. Sin página/tabla nueva. No mezclar con Trade WR/P/L.
+**Prioridad:** MTA operativo (tesis / plan-outcomes por ticker) — no arquitectura amplia sin auth.
 
-Siguiente: merge + prod verify → P1 solo con auth (sección Scout Learning en hub).
+## Shipped — Scout Learning P0 visibility (`6bc41fc`+ on main)
+
+Aggregates en `/stats?tab=pipeline` · cola Learning en Planning · Retry Sync.  
+Sin página/tabla nueva; no mezclar con Trade WR/P/L.
 
 ## Shipped — Plan Map AI execution sentence (#132)
 
