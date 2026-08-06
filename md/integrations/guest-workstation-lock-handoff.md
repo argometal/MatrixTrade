@@ -3,7 +3,7 @@
 **Status:** Implemented (v1+) — Settings at `/settings/security` + `/argus/v2/settings/security`.  
 **Date:** 2026-08-05  
 **Repo:** https://github.com/argometal/MatrixTrade  
-**Prod today:** https://matrix-trade-theta.vercel.app · tag `main0806a`  
+**Prod today:** https://matrix-trade-theta.vercel.app · tag `main0806b`  
 **Intent:** Safe work on **guest / shared computers** — if the user forgets to close the app, access expires and credentials are required again.
 
 **v1+ (password override + account policy):**
