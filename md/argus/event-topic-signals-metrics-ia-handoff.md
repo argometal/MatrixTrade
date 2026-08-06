@@ -2,7 +2,8 @@
 
 **Status:** Proposed (awaiting IA / product confirmation)  
 **Date:** 2026-08-06  
-**Branch / PR:** `cursor/ia-event-topic-signals-handoff-e1a0`  
+**Branch / PR:** `cursor/ia-event-topic-signals-handoff-e1a0` · https://github.com/argometal/MatrixTrade/pull/162  
+**Full IA audit front door (library addresses + six-part charter):** [`ia-architecture-audit-brief.md`](ia-architecture-audit-brief.md)  
 **Related:** [`vocabulary-policy.md`](vocabulary-policy.md) · [`tag-patterns-vision.md`](tag-patterns-vision.md) · [`event-chronicle-v2.md`](event-chronicle-v2.md) · [`correlation-guide.md`](correlation-guide.md)
 
 ---
