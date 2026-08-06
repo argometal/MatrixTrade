@@ -78,13 +78,13 @@ This directory (`md/argus-review/`) is a **read-only evidence pack** for externa
 Recorded at pack creation:
 
 ```text
-cab7753658dbcd2ddc03eaf17824b294b63b0204
+19108b925c40063b7e0df37a39fd2f735bdd089e
 ```
 
-After push, the commit hash of the tip of `cursor/chatgpt-argus-review-e1a0` is the authoritative value. Update this section in the same commit that adds the pack, or treat `git rev-parse HEAD` on that branch as source of truth.
-
+Tip of `cursor/chatgpt-argus-review-e1a0` after pack commits.  
+**Pack content commit:** `cab7753658dbcd2ddc03eaf17824b294b63b0204`  
 **Base at pack start:** `24d83758e2427b58dc3426196e2b495fd5c6cf7b` (`origin/main` at branch creation).  
-**Intermediate evidence notes commit (not this pack):** `6f114aecc0c389a18401e5806d5dbbd48876ee5b` (`md/argus/architecture-review-evidence-notes.md`).
+**Intermediate evidence notes commit:** `6f114aecc0c389a18401e5806d5dbbd48876ee5b` (`md/argus/architecture-review-evidence-notes.md`).
 
 ---
 

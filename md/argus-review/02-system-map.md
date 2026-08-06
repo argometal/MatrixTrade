@@ -257,13 +257,10 @@ lib/argus/ux-copy.ts
 
 ### Full trees
 
-Complete sorted path lists for all 172 `app/argus` and 128 `lib/argus` source files:  
-**UNKNOWN as embedded here** — regenerate with:
+Complete sorted path lists (no omissions for source files):
 
-```bash
-find app/argus -type f \( -name '*.ts' -o -name '*.tsx' \) | sort
-find lib/argus -type f \( -name '*.ts' -o -name '*.tsx' \) | sort
-```
+- [`appendix-app-argus-files.txt`](appendix-app-argus-files.txt) — 172 paths
+- [`appendix-lib-argus-files.txt`](appendix-lib-argus-files.txt) — 128 paths
 
 Counts verified: 172 + 128 + 8 = 308.
 
@@ -271,12 +268,6 @@ Counts verified: 172 + 128 + 8 = 308.
 
 ## Server actions inventory (`app/argus/actions.ts`)
 
-73 exports named `export async function`. Full name list: regenerate with:
+73 exports named `export async function`. Complete list:
 
-```bash
-rg -n "^export async function " app/argus/actions.ts
-```
-
-Sample (non-exhaustive): `createLogAction`, `updateLogAction`, `createEntityAction`, `deleteEntityV2Action`, `appendEventChronicleEntryAction`, `updateTopicAliasesAction`, `updateEventSignalsAction`, `saveUnifiedCreateFlowAction`, runbook actions, inbox triage/link/convert actions.
-
-Complete enumerated list: see `rg` output at pack assembly time (73 lines) — **not pasted in full in this file**; presence of 73 exports is verified.
+- [`appendix-actions-exports.txt`](appendix-actions-exports.txt)
