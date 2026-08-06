@@ -13,7 +13,8 @@ export type DeliverPackageKind =
   | "pdf_deliver"
   | "quick_package"
   | "evidence_dossier"
-  | "evidence_vault";
+  | "evidence_vault"
+  | "json_snapshot";
 
 export type QuickDeliverSummary = {
   scopeType: ExportScopeType;

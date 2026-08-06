@@ -74,6 +74,7 @@ import {
   newRunbookItemId,
   normalizeRunbookSubtasks,
   placeRunbookBlockAt,
+  runbookSectionCheckIds,
   runbookStamp,
   runbookTransferIds,
 } from "@/lib/argus/runbook-helpers";
@@ -1805,6 +1806,54 @@ export async function checkAllRunbookItemsAction(runbookId: string): Promise<voi
   );
   await updateRunbook(runbookId, { items });
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+/** Check or uncheck every item under one section (template / library edit). */
+export async function setRunbookSectionChecksAction(
+  runbookId: string,
+  sectionId: string,
+  done: boolean
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+  const ids = new Set(runbookSectionCheckIds(runbook.items, sectionId));
+  if (ids.size === 0) return;
+  const stamp = runbookStamp();
+  const items = runbook.items.map((item) => {
+    if (!ids.has(item.id) || !isRunbookCheck(item)) return item;
+    return { ...item, done, doneAt: done ? stamp : "" };
+  });
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+/** Check or uncheck every item under one section for a scoped entity progress record. */
+export async function setRunbookSectionChecksScopedAction(
+  runbookId: string,
+  sectionId: string,
+  scopeEntityId: string,
+  done: boolean
+): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) throw new ArgusPersistenceError("validation", "Runbook not found.");
+  const progress = await loadOrSeedProgress(runbookId, scopeEntityId);
+  if (!progress) throw new ArgusPersistenceError("validation", "Runbook not found.");
+  const ids = runbookSectionCheckIds(runbook.items, sectionId);
+  if (ids.length === 0) return;
+  const stamp = runbookStamp();
+  const checks = { ...progress.checks };
+  for (const id of ids) {
+    if (done) checks[id] = { done: true, doneAt: stamp };
+    else delete checks[id];
+  }
+  const allChecks = runbook.items.filter(isRunbookCheck);
+  const closed = allChecks.length > 0 && allChecks.every((item) => checks[item.id]?.done);
+  await upsertRunbookProgress({ ...progress, checks, closed });
+  await revalidateRunbookSurfaces(runbookId, [...runbook.linkedEntityIds, scopeEntityId]);
 }
 
 export async function renameRunbookItemAction(

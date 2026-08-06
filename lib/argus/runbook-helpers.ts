@@ -375,12 +375,22 @@ export function runbookItemSectionId(items: RunbookItem[], itemId: string): stri
 export function runbookSectionChildStats(
   items: RunbookItem[],
   sectionId: string
-): { total: number; open: number } {
+): { total: number; open: number; done: number } {
   const range = runbookSectionBlockRange(items, sectionId);
-  if (!range) return { total: 0, open: 0 };
+  if (!range) return { total: 0, open: 0, done: 0 };
   const children = items.slice(range.start + 1, range.end).filter(isRunbookCheck);
   const open = children.filter((item) => !item.done).length;
-  return { total: children.length, open };
+  return { total: children.length, open, done: children.length - open };
+}
+
+/** Check item ids owned by a section (until the next section). */
+export function runbookSectionCheckIds(items: RunbookItem[], sectionId: string): string[] {
+  const range = runbookSectionBlockRange(items, sectionId);
+  if (!range) return [];
+  return items
+    .slice(range.start + 1, range.end)
+    .filter(isRunbookCheck)
+    .map((item) => item.id);
 }
 
 /**

@@ -75,6 +75,15 @@ export const DELIVER_PACKAGES: DeliverPackageCard[] = [
     badgeTone: "slate",
     available: true,
   },
+  {
+    id: "json_snapshot",
+    title: "JSON Snapshot",
+    description:
+      "Single JSON download — scope entity, evidence, timeline, and runbooks (import-compatible). For backup and AI/tools.",
+    badge: "Machine readable",
+    badgeTone: "slate",
+    available: true,
+  },
 ];
 
 export function deliverPackageLabel(id: DeliverPackageKind): string {

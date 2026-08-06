@@ -10,6 +10,7 @@ import { buildV2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
 import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { resolveEntityLifecycleStatus } from "@/lib/argus/entity-lifecycle";
 import { V2QuickDeliverButton } from "../../components/V2QuickDeliverModal";
+import { V2ExportJsonButton } from "../../components/V2ExportJsonButton";
 import { V2EntityLifecycleActions } from "../../components/V2EntityLifecycleActions";
 import { V2TagPatternBadges } from "../../components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "../../components/V2RecordRecentEntity";
@@ -131,6 +132,12 @@ export default async function V2OrganizationPage({
                     scopeName={entity.name}
                     label="PDF"
                     className="rounded-lg border border-emerald-500/40 bg-emerald-600/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-600/25"
+                  />
+                  <V2ExportJsonButton
+                    scopeType="organization"
+                    scopeId={entity.id}
+                    scopeName={entity.name}
+                    className="rounded-lg border border-sky-500/40 bg-sky-600/15 px-3 py-1.5 text-xs font-semibold text-sky-300 hover:bg-sky-600/25"
                   />
                   <Link
                     href={`/argus/v2/deliver?scopeType=organization&scopeId=${entity.id}&package=pdf_deliver`}

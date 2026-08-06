@@ -29,6 +29,8 @@ import {
   renameRunbookTitleAction,
   setRunbookItemTypeAction,
   setRunbookScopeClosedAction,
+  setRunbookSectionChecksAction,
+  setRunbookSectionChecksScopedAction,
   toggleRunbookItemAction,
   uncheckAllRunbookItemsAction,
   uncheckAllRunbookItemsScopedAction,
@@ -413,6 +415,42 @@ export function V2RunbookWorkPanel({
     run(() => uncheckAllRunbookItemsAction(runbook.id));
   }
 
+  function handleSectionCheckAll(sectionId: string, done: boolean) {
+    if (scopeEntityId) {
+      run(
+        () => setRunbookSectionChecksScopedAction(runbook.id, sectionId, scopeEntityId, done),
+        done ? "Section checked." : "Section unchecked."
+      );
+      return;
+    }
+    run(
+      () => setRunbookSectionChecksAction(runbook.id, sectionId, done),
+      done ? "Section checked." : "Section unchecked."
+    );
+  }
+
+  function handleExportJson() {
+    const payload = {
+      runbook: {
+        title: runbook.title,
+        linkedEntityIds: runbook.linkedEntityIds,
+        items: runbook.items,
+      },
+    };
+    const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    const token = runbook.title.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "runbook";
+    anchor.href = url;
+    anchor.download = `runbook-${token}-${stamp}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    setStatus("JSON exported.");
+  }
+
   function handleImportClick() {
     importRef.current?.click();
   }
@@ -688,6 +726,9 @@ export function V2RunbookWorkPanel({
             <input ref={importRef} type="file" accept="application/json,.json" className="hidden" onChange={handleImportFile} />
           </>
         ) : null}
+        <button type="button" disabled={isPending} onClick={handleExportJson} className={toolbarButtonClass()}>
+          Export JSON
+        </button>
         <button type="button" onClick={handlePrint} className={toolbarButtonClass()}>
           Print / PDF
         </button>
@@ -761,6 +802,8 @@ export function V2RunbookWorkPanel({
             if (item.type === "section") {
               const collapsed = !!collapsedSections[item.id];
               const stats = runbookSectionChildStats(runbook.items, item.id);
+              const sectionAllDone = stats.total > 0 && stats.open === 0;
+              const sectionPartial = stats.done > 0 && stats.open > 0;
               return (
                 <div
                   key={item.id}
@@ -783,6 +826,20 @@ export function V2RunbookWorkPanel({
                       ⠿
                     </button>
                   ) : null}
+                  <input
+                    type="checkbox"
+                    checked={sectionAllDone}
+                    ref={(el) => {
+                      if (el) el.indeterminate = sectionPartial;
+                    }}
+                    disabled={isPending || stats.total === 0}
+                    onChange={(event) => handleSectionCheckAll(item.id, event.target.checked)}
+                    className="runbook-no-print h-4 w-4 shrink-0 rounded border-zinc-600 text-lime-500 focus:ring-lime-500/40 disabled:opacity-40"
+                    title={sectionAllDone ? "Uncheck all items in this section" : "Check all items in this section"}
+                    aria-label={
+                      sectionAllDone ? "Uncheck all items in this section" : "Check all items in this section"
+                    }
+                  />
                   <button
                     type="button"
                     onClick={() =>
@@ -811,7 +868,7 @@ export function V2RunbookWorkPanel({
                       </p>
                     )}
                   </div>
-                  {collapsed && stats.total > 0 ? (
+                  {stats.total > 0 ? (
                     <span className="runbook-no-print shrink-0 text-[10px] tabular-nums text-zinc-600">
                       {stats.open}/{stats.total}
                     </span>
