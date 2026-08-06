@@ -1,5 +1,8 @@
 # ARGUS — ChatGPT handoff
 
+**Architecture review pack (`main` only — start here):** [`../argus-review/00-PUBLIC-STATUS.md`](../argus-review/00-PUBLIC-STATUS.md)  
+**Deprecated:** feature-branch / draft-PR / screenshot URL handoffs for architecture review.
+
 **Read first:** [`ai-charter.md`](../argus/ai-charter.md) · [`argus-architecture.md`](argus-architecture.md) · [`argus-design-principles.md`](argus-design-principles.md)  
 **Doc index:** [`README.md`](../argus/README.md) — reading order, runtime truth, mobile QA  
 **Export / delivery:** [`export-delivery-handoff.md`](../argus/export-delivery-handoff.md)  

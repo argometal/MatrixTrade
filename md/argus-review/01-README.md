@@ -1,10 +1,10 @@
 # 01 — README
 
-**Start with the public status summary (humans + ChatGPT):**  
-[`00-PUBLIC-STATUS.md`](00-PUBLIC-STATUS.md)
+**Canonical location:** `main` → `md/argus-review/`  
+**Branch-only handoffs are deprecated.** See [`00-PUBLIC-STATUS.md`](00-PUBLIC-STATUS.md).
 
-**Raw URL:**  
-https://raw.githubusercontent.com/argometal/MatrixTrade/cursor/chatgpt-argus-review-e1a0/md/argus-review/00-PUBLIC-STATUS.md
+**Start here:**  
+https://raw.githubusercontent.com/argometal/MatrixTrade/main/md/argus-review/00-PUBLIC-STATUS.md
 
 ---
 
@@ -26,7 +26,8 @@ This directory (`md/argus-review/`) is a **read-only evidence pack** for externa
 
 | File | Contents |
 |------|----------|
-| [`01-README.md`](01-README.md) | Purpose, index, reading order, version, commit, branch |
+| [`00-PUBLIC-STATUS.md`](00-PUBLIC-STATUS.md) | Public status + main URLs (start here) |
+| [`01-README.md`](01-README.md) | Purpose, index, reading order, version |
 | [`02-system-map.md`](02-system-map.md) | Directories, modules, major files, purposes, dependencies |
 | [`03-document-index.md`](03-document-index.md) | Every architecture document under `md/argus/` and `md/integrations/argus-*.md` |
 | [`04-architecture.md`](04-architecture.md) | Current layers, components, responsibilities, ownership, interfaces |
@@ -44,18 +45,19 @@ This directory (`md/argus-review/`) is a **read-only evidence pack** for externa
 
 ## Reading order (for ChatGPT)
 
-1. This file (`01-README.md`)
-2. `02-system-map.md`
-3. `03-document-index.md`
-4. `04-architecture.md`
-5. `05-data-flow.md`
-6. `06-decision-flow.md`
-7. `07-ontology.md`
-8. `08-dependencies.md`
-9. `09-open-items.md`
-10. `10-source-index.md`
+1. `00-PUBLIC-STATUS.md`
+2. `01-README.md`
+3. `02-system-map.md`
+4. `03-document-index.md`
+5. `04-architecture.md`
+6. `05-data-flow.md`
+7. `06-decision-flow.md`
+8. `07-ontology.md`
+9. `08-dependencies.md`
+10. `09-open-items.md`
+11. `10-source-index.md`
 
-**Canonical product reading order** (from `md/argus/README.md`, Tracks A–C) is catalogued in `03-document-index.md`. Prefer that order when reading the full `md/argus/` library beyond this pack.
+**Canonical product reading order** (from `md/argus/README.md`, Tracks A–C) is catalogued in `03-document-index.md`.
 
 ---
 
@@ -70,39 +72,13 @@ This directory (`md/argus-review/`) is a **read-only evidence pack** for externa
 
 ---
 
-## Branch name
-
-| | |
-|--|--|
-| **IA prompt requested** | `chatgpt/argus-review` |
-| **Actual Git branch** | `cursor/chatgpt-argus-review-e1a0` |
-| **Reason** | Cloud agent branch naming rule requires `cursor/<name>-e1a0` |
-| **Pack path** | `md/argus-review/` (as requested) |
-
----
-
-## Commit hash
-
-Recorded at pack creation:
-
-```text
-19108b925c40063b7e0df37a39fd2f735bdd089e
-```
-
-Tip of `cursor/chatgpt-argus-review-e1a0` after pack commits.  
-**Pack content commit:** `cab7753658dbcd2ddc03eaf17824b294b63b0204`  
-**Base at pack start:** `24d83758e2427b58dc3426196e2b495fd5c6cf7b` (`origin/main` at branch creation).  
-**Intermediate evidence notes commit:** `6f114aecc0c389a18401e5806d5dbbd48876ee5b` (`md/argus/architecture-review-evidence-notes.md`).
-
----
-
-## Share addresses (after push)
+## Share addresses (main only)
 
 | What | URL |
 |------|-----|
-| Pack folder | `https://github.com/argometal/MatrixTrade/tree/cursor/chatgpt-argus-review-e1a0/md/argus-review` |
-| This README (raw) | `https://raw.githubusercontent.com/argometal/MatrixTrade/cursor/chatgpt-argus-review-e1a0/md/argus-review/01-README.md` |
-| Branch ZIP | `https://github.com/argometal/MatrixTrade/archive/refs/heads/cursor/chatgpt-argus-review-e1a0.zip` → open `md/argus-review/` |
+| Status | https://raw.githubusercontent.com/argometal/MatrixTrade/main/md/argus-review/00-PUBLIC-STATUS.md |
+| Pack folder | https://github.com/argometal/MatrixTrade/tree/main/md/argus-review |
+| Repo ZIP | https://github.com/argometal/MatrixTrade/archive/refs/heads/main.zip |
 
 ---
 
@@ -110,6 +86,6 @@ Tip of `cursor/chatgpt-argus-review-e1a0` after pack commits.
 
 | Path | Note |
 |------|------|
-| `md/argus/` | Full Argus MD library |
+| `md/argus/` | Full Argus MD library (on `main`) |
 | `md/integrations/argus-*.md` | Constitution, storage, email |
-| `md/argus/architecture-review-evidence-notes.md` | Extraction scratch notes used while assembling this pack |
+| `md/argusforge/IA-HANDOFF.md` | Apps · ARGUS · ArgusForge runtime truth |

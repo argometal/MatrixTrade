@@ -5,9 +5,12 @@
 **Repo:** https://github.com/argometal/MatrixTrade  
 **Prod:** https://matrix-trade-theta.vercel.app  
 **Deploy pin:** `md/integrations/current-deploy.md` (tag on `origin/main`)  
+**ARGUS architecture review pack (external AI — `main` only):** `md/argus-review/00-PUBLIC-STATUS.md`  
 **Date:** 2026-08-06
 
 External analysis text was **not** attached to the request that created this file. This handoff is **runtime truth from `main`**, not a transcript of an external memo.
+
+**Deprecated:** feature-branch / draft-PR / screenshot URL handoffs for Argus architecture review. Use `md/argus-review/` on `main`.
 
 ---
 

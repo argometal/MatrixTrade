@@ -28,6 +28,7 @@ Four statuses: Unlinked · In Realm · In related Deck · Related. Do not treat 
 | Topic | Doc |
 |-------|-----|
 | Apps · ARGUS · ArgusForge runtime | [`md/argusforge/IA-HANDOFF.md`](md/argusforge/IA-HANDOFF.md) |
+| **ARGUS architecture review pack (`main` only)** | [`md/argus-review/00-PUBLIC-STATUS.md`](md/argus-review/00-PUBLIC-STATUS.md) — branch/PR handoffs **deprecated** |
 | ArgusForge capabilities | [`md/argusforge/capability-map.md`](md/argusforge/capability-map.md) |
 | Scout / Trade / Pipeline ledgers | [`md/matrix/metrics-analysis-planteamiento-handoff.md`](md/matrix/metrics-analysis-planteamiento-handoff.md) |
 | Scout Learning circuit audit | [`md/matrix/scout-learning-circuit-audit-handoff.md`](md/matrix/scout-learning-circuit-audit-handoff.md) |

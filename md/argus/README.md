@@ -9,6 +9,7 @@
 | **Production** | https://matrix-trade-theta.vercel.app/argus |
 | **Parent index** | [`md/README.md`](../README.md) |
 | **ChatGPT entry** | [`CHATGPT.md`](../../CHATGPT.md) · [`argus-chatgpt-handoff.md`](../integrations/argus-chatgpt-handoff.md) |
+| **Architecture review pack (`main` only)** | [`../argus-review/00-PUBLIC-STATUS.md`](../argus-review/00-PUBLIC-STATUS.md) — branch/PR handoffs deprecated |
 
 ---
 

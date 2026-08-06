@@ -132,6 +132,8 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 
 **Start here:** [`argus/README.md`](argus/README.md) — index, reading order, runtime truth, known weaknesses.
 
+**External AI architecture review pack (`main` only):** [`argus-review/00-PUBLIC-STATUS.md`](argus-review/00-PUBLIC-STATUS.md) — branch/PR handoffs deprecated.
+
 **Rule of construction for AI:** [`argus/evidence-organization-vision.md`](argus/evidence-organization-vision.md) — product identity; then [`argus/observation-engine-vision.md`](argus/observation-engine-vision.md) for engine behavior; [`argus/ai-charter.md`](argus/ai-charter.md) for operational AI rules. Periodic review: [`argus/vision-review-protocol.md`](argus/vision-review-protocol.md).
 
 | Document | Contents |
