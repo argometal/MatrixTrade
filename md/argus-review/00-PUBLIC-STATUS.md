@@ -74,6 +74,7 @@ App: https://matrix-trade-theta.vercel.app/argus
 | `08-dependencies.md` | Internal + external deps |
 | `09-open-items.md` | Known debt already in repo |
 | `10-source-index.md` | Traceability |
+| `11-behavioral-evaluation-review.md` | **Behavioral metrics inventory + refinement recommendations** |
 | `appendix-*.txt` | Complete file / action lists |
 
 ---
@@ -82,7 +83,7 @@ App: https://matrix-trade-theta.vercel.app/argus
 
 1. Open **main** URLs above (not branch URLs).  
 2. Read `00` then `01`–`10` under `md/argus-review/`.  
-3. Perform architecture / ontology / metrics / gaps audit using **evidence only**.  
+3. For behavioral metrics refinement, read **`11-behavioral-evaluation-review.md`**.  
 4. Return Decisions D1–D5 for Signals↔topic metrics (or override).  
 5. Do **not** treat feature-branch PRs as the source of truth for access.
 
