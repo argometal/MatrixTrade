@@ -13,4 +13,6 @@ Nav badge counts are **not** Signals (see `buildV2NavCounts`).
 
 UI: one chip-list editor; copy is Aliases (Topics) or Signals (Events).
 
+**Open IA review (metrics after event↔topic link):** [`event-topic-signals-metrics-ia-handoff.md`](event-topic-signals-metrics-ia-handoff.md) — Proposed; awaiting confirmation before code.
+
 **Timeline vs Chronicle:** [`timeline-chronicle-model.md`](timeline-chronicle-model.md) · **Storage growth:** [`storage-archive-export.md`](storage-archive-export.md)
