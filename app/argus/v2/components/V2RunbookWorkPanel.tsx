@@ -205,6 +205,9 @@ function RowActionMenu({
                 >
                   Turn into section
                 </button>
+                <p className="border-b border-zinc-800 px-3 pb-2 text-[10px] leading-snug text-zinc-600">
+                  Items below become part of this section until the next one.
+                </p>
               )}
               <button
                 type="button"
@@ -341,7 +344,12 @@ export function V2RunbookWorkPanel({
   }
 
   function handleSetType(itemId: string, type: "item" | "section") {
-    run(() => setRunbookItemTypeAction(runbook.id, itemId, type));
+    run(
+      () => setRunbookItemTypeAction(runbook.id, itemId, type),
+      type === "section"
+        ? "Converted to section — checks below belong to it until the next section."
+        : "Converted to check."
+    );
   }
 
   function handleCopyToList(itemId: string, targetId: string) {
@@ -664,6 +672,9 @@ export function V2RunbookWorkPanel({
               <button type="button" disabled={isPending} onClick={handleAddSection} className={toolbarButtonClass()}>
                 Add section
               </button>
+              <span className="text-[10px] text-zinc-600">
+                Or ··· on a check → Turn into section (owns items below).
+              </span>
             </div>
           </div>
         </div>
@@ -955,17 +966,29 @@ export function V2RunbookWorkPanel({
                   ) : null}
                 </div>
                 {canEdit ? (
-                  <RowActionMenu
-                    open={menuId === item.id}
-                    onToggle={() => setMenuId((current) => (current === item.id ? null : item.id))}
-                    disabled={isPending}
-                    isSection={false}
-                    peerLists={peers}
-                    onTurnIntoSection={() => handleSetType(item.id, "section")}
-                    onTurnIntoCheck={() => handleSetType(item.id, "item")}
-                    onCopyToList={(targetId) => handleCopyToList(item.id, targetId)}
-                    onMoveToList={(targetId) => handleMoveToList(item.id, targetId)}
-                  />
+                  <>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleSetType(item.id, "section")}
+                      className="runbook-no-print shrink-0 rounded-lg border border-zinc-800 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-zinc-500 opacity-100 hover:border-lime-500/40 hover:bg-lime-500/10 hover:text-lime-300 disabled:opacity-40 sm:opacity-0 sm:group-hover:opacity-100"
+                      title="Turn into section — all checks below belong to it until the next section"
+                      aria-label="Turn into section"
+                    >
+                      Section
+                    </button>
+                    <RowActionMenu
+                      open={menuId === item.id}
+                      onToggle={() => setMenuId((current) => (current === item.id ? null : item.id))}
+                      disabled={isPending}
+                      isSection={false}
+                      peerLists={peers}
+                      onTurnIntoSection={() => handleSetType(item.id, "section")}
+                      onTurnIntoCheck={() => handleSetType(item.id, "item")}
+                      onCopyToList={(targetId) => handleCopyToList(item.id, targetId)}
+                      onMoveToList={(targetId) => handleMoveToList(item.id, targetId)}
+                    />
+                  </>
                 ) : null}
               </div>
             );
