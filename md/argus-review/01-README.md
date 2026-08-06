@@ -1,5 +1,13 @@
 # 01 — README
 
+**Start with the public status summary (humans + ChatGPT):**  
+[`00-PUBLIC-STATUS.md`](00-PUBLIC-STATUS.md)
+
+**Raw URL:**  
+https://raw.githubusercontent.com/argometal/MatrixTrade/cursor/chatgpt-argus-review-e1a0/md/argus-review/00-PUBLIC-STATUS.md
+
+---
+
 **Purpose of this pack:** Expose the existing Argus architecture exactly as implemented and documented in the repository, so ChatGPT can perform an evidence-based architectural review.
 
 **Rules applied while assembling this pack:** No summarization-as-redesign, no reinterpretation, no recommendations, no invented architecture. Gaps marked `UNKNOWN`. Incomplete work marked `PARTIALLY IMPLEMENTED` only where the repository already uses that wording or an equivalent cited phrase. Where two documents disagree, both are reported.
