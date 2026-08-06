@@ -8,6 +8,7 @@ import { deliverFilenamePrefix, resolveDeliverBranding } from "@/lib/argus/expor
 import { isDeliverPackageAvailable } from "@/lib/argus/export/deliver-catalog";
 import { buildPdfDeliver } from "@/lib/argus/export/packages/pdf-deliver";
 import { buildEvidenceVaultZip } from "@/lib/argus/export/packages/vault";
+import { buildJsonSnapshotPayload } from "@/lib/argus/export/packages/json-snapshot";
 import type { DeliverPackageKind, ExportCollectionOptions, ExportScopeType } from "@/lib/argus/export/types";
 import { getInboxItems, readArgus } from "@/lib/argus/server-storage";
 
@@ -121,6 +122,24 @@ export async function POST(request: Request) {
       const message = error instanceof Error ? error.message : "PDF generation failed";
       return NextResponse.json({ error: message }, { status: 500 });
     }
+  }
+
+  if (packageKind === "json_snapshot") {
+    const generatedAt = new Date().toISOString();
+    const payload = buildJsonSnapshotPayload({ data, collected, generatedAt });
+    const json = `${JSON.stringify(payload, null, 2)}\n`;
+    const filename = `argus-${scopeType}-${nameToken}-${stamp}.json`;
+    return new NextResponse(json, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Cache-Control": "no-store",
+        "X-Argus-Package": "json_snapshot",
+        "X-Argus-Evidence-Count": String(collected.logs.length + collected.inbox.length),
+        "X-Argus-Runbook-Count": String(payload.runbooks.length),
+      },
+    });
   }
 
   const { buffer, manifest } = await buildEvidenceVaultZip({ collected, includePrivate, options });

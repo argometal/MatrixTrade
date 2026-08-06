@@ -1,5 +1,6 @@
 "use client";
 
+import type { RefObject } from "react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -65,9 +66,29 @@ export function V2EntityRunbooksTab({
   const [assignOpen, setAssignOpen] = useState(false);
   const [cardMenuId, setCardMenuId] = useState<string | null>(null);
   const [cardSubmenu, setCardSubmenu] = useState<"copy" | "move" | null>(null);
+  const [view, setView] = useState<"grid" | "list" | "board">("grid");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const viewStorageKey = `argus-v2-runbooks-view:${level}:${entityId}`;
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(viewStorageKey);
+      if (raw === "grid" || raw === "list" || raw === "board") setView(raw);
+    } catch {
+      /* ignore */
+    }
+  }, [viewStorageKey]);
+
+  function setViewPersist(next: "grid" | "list" | "board") {
+    setView(next);
+    try {
+      localStorage.setItem(viewStorageKey, next);
+    } catch {
+      /* quota */
+    }
+  }
 
   const isLibrary = level === "organization";
   const selected = useMemo(
@@ -235,6 +256,33 @@ export function V2EntityRunbooksTab({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {linkedRunbooks.length > 0 ? (
+            <div className="flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-950/60 p-0.5">
+              {(
+                [
+                  { id: "grid" as const, label: "▦", title: "Grid" },
+                  { id: "list" as const, label: "☰", title: "List" },
+                  { id: "board" as const, label: "▥", title: "Board" },
+                ] as const
+              ).map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  title={option.title}
+                  aria-label={option.title}
+                  aria-pressed={view === option.id}
+                  onClick={() => setViewPersist(option.id)}
+                  className={`rounded-lg px-2.5 py-1.5 text-sm ${
+                    view === option.id
+                      ? "bg-lime-500/15 text-lime-300"
+                      : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {isLibrary ? (
             <button
               type="button"
@@ -334,138 +382,271 @@ export function V2EntityRunbooksTab({
             ? "No runbooks yet — create a checklist template above."
             : "No runbooks linked yet — assign from the organization library."}
         </p>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {linkedRunbooks.map((runbook) => {
-            const prog = findRunbookProgress(progressRecords, runbook.id, entityId);
-            const items = applyRunbookProgress(runbook, prog ?? null);
-            const stats = calcProgress(items);
-            const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
-            const menuOpen = cardMenuId === runbook.id;
+      ) : view === "board" ? (
+        <div className="argus-v2-scroll flex gap-3 overflow-x-auto pb-2">
+          {(["Open", "In progress", "Closed"] as const).map((column) => {
+            const columnCards = linkedRunbooks.filter((runbook) => {
+              const prog = findRunbookProgress(progressRecords, runbook.id, entityId);
+              const items = applyRunbookProgress(runbook, prog ?? null);
+              const stats = calcProgress(items);
+              const bucket =
+                prog?.closed || (stats.total > 0 && stats.open === 0)
+                  ? "Closed"
+                  : stats.done > 0
+                    ? "In progress"
+                    : "Open";
+              return bucket === column;
+            });
             return (
               <div
-                key={runbook.id}
-                className="relative flex flex-col gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 transition hover:border-lime-500/30"
+                key={column}
+                className="flex w-72 shrink-0 flex-col rounded-2xl border border-zinc-800/80 bg-zinc-900/30"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <button type="button" onClick={() => openRunbook(runbook.id)} className="min-w-0 flex-1 text-left">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm font-semibold text-zinc-100">{runbook.title}</span>
-                      {prog?.closed ? (
-                        <span className="shrink-0 text-[10px] font-medium text-sky-300">Closed</span>
-                      ) : null}
-                    </div>
-                    <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-zinc-800">
-                      <span className="block h-full rounded-full bg-lime-500/60" style={{ width: `${pct}%` }} />
-                    </span>
-                    <span className="mt-2 block text-[10px] tabular-nums text-zinc-500">
-                      {stats.open} open · {stats.done}/{stats.total} checks
-                    </span>
-                  </button>
-                  {isLibrary ? (
-                    <div ref={menuOpen ? menuRef : undefined} className="relative shrink-0">
-                      <button
-                        type="button"
-                        disabled={isPending}
-                        onClick={() => {
+                <div className="border-b border-zinc-800/80 px-3 py-2.5">
+                  <h3 className="text-sm font-semibold text-zinc-200">{column}</h3>
+                  <p className="text-[11px] text-zinc-600">{columnCards.length}</p>
+                </div>
+                <div className="min-h-[8rem] space-y-2 p-2">
+                  {columnCards.length === 0 ? (
+                    <p className="px-1 py-8 text-center text-xs text-zinc-600">No runbooks</p>
+                  ) : (
+                    columnCards.map((runbook) => (
+                      <RunbookHomeCard
+                        key={runbook.id}
+                        runbook={runbook}
+                        entityId={entityId}
+                        progressRecords={progressRecords}
+                        isLibrary={isLibrary}
+                        isPending={isPending}
+                        cardMenuId={cardMenuId}
+                        cardSubmenu={cardSubmenu}
+                        menuRef={menuRef}
+                        peerOrganizations={peerOrganizations}
+                        dense
+                        onOpen={() => openRunbook(runbook.id)}
+                        onMenuToggle={() => {
                           setCardMenuId((current) => (current === runbook.id ? null : runbook.id));
                           setCardSubmenu(null);
                         }}
-                        className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
-                        aria-label="Runbook actions"
-                      >
-                        ···
-                      </button>
-                      {menuOpen ? (
-                        <div className="absolute right-0 z-20 mt-1 min-w-[12rem] rounded-xl border border-zinc-700 bg-zinc-950 py-1 shadow-xl">
-                          {cardSubmenu === null ? (
-                            <>
-                              <button
-                                type="button"
-                                className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40"
-                                disabled={peerOrganizations.length === 0}
-                                onClick={() => setCardSubmenu("copy")}
-                              >
-                                Copy to organization…
-                              </button>
-                              <button
-                                type="button"
-                                className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40"
-                                disabled={peerOrganizations.length === 0}
-                                onClick={() => setCardSubmenu("move")}
-                              >
-                                Move to organization…
-                              </button>
-                              {peerOrganizations.length === 0 ? (
-                                <p className="border-t border-zinc-800 px-3 py-2 text-[10px] text-zinc-600">
-                                  No other organizations available.
-                                </p>
-                              ) : null}
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                type="button"
-                                className="block w-full px-3 py-1.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 hover:bg-zinc-800"
-                                onClick={() => setCardSubmenu(null)}
-                              >
-                                ← Back
-                              </button>
-                              <p className="px-3 pb-1 text-[10px] text-zinc-500">
-                                {cardSubmenu === "copy" ? "Copy to" : "Move to"}
-                              </p>
-                              <ul className="max-h-48 overflow-y-auto">
-                                {peerOrganizations.map((org) => (
-                                  <li key={org.id}>
-                                    <button
-                                      type="button"
-                                      className="block w-full truncate px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
-                                      onClick={() =>
-                                        run(async () => {
-                                          if (cardSubmenu === "copy") {
-                                            await copyRunbookToEntityAction(runbook.id, org.id);
-                                          } else {
-                                            if (
-                                              !window.confirm(
-                                                `Move “${runbook.title}” to ${org.name}? It will leave this organization library.`
-                                              )
-                                            ) {
-                                              return;
-                                            }
-                                            await moveRunbookToEntityAction(runbook.id, entityId, org.id);
-                                          }
-                                          setCardMenuId(null);
-                                          setCardSubmenu(null);
-                                        })
-                                      }
-                                    >
-                                      {org.name}
-                                    </button>
-                                  </li>
-                                ))}
-                              </ul>
-                            </>
-                          )}
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
+                        onSubmenu={setCardSubmenu}
+                        onCopyOrMove={(mode, orgId, orgName) =>
+                          run(async () => {
+                            if (mode === "copy") {
+                              await copyRunbookToEntityAction(runbook.id, orgId);
+                            } else {
+                              if (
+                                !window.confirm(
+                                  `Move “${runbook.title}” to ${orgName}? It will leave this organization library.`
+                                )
+                              ) {
+                                return;
+                              }
+                              await moveRunbookToEntityAction(runbook.id, entityId, orgId);
+                            }
+                            setCardMenuId(null);
+                            setCardSubmenu(null);
+                          })
+                        }
+                        onUnlink={() => run(() => unlinkRunbookFromEntityAction(runbook.id, entityId))}
+                      />
+                    ))
+                  )}
                 </div>
-                {!isLibrary ? (
-                  <button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => run(() => unlinkRunbookFromEntityAction(runbook.id, entityId))}
-                    className="self-start text-[10px] text-zinc-600 hover:text-rose-300"
-                  >
-                    Unlink
-                  </button>
-                ) : null}
               </div>
             );
           })}
         </div>
+      ) : (
+        <div
+          className={
+            view === "list" ? "space-y-2" : "grid gap-3 sm:grid-cols-2"
+          }
+        >
+          {linkedRunbooks.map((runbook) => (
+            <RunbookHomeCard
+              key={runbook.id}
+              runbook={runbook}
+              entityId={entityId}
+              progressRecords={progressRecords}
+              isLibrary={isLibrary}
+              isPending={isPending}
+              cardMenuId={cardMenuId}
+              cardSubmenu={cardSubmenu}
+              menuRef={menuRef}
+              peerOrganizations={peerOrganizations}
+              dense={view === "list"}
+              onOpen={() => openRunbook(runbook.id)}
+              onMenuToggle={() => {
+                setCardMenuId((current) => (current === runbook.id ? null : runbook.id));
+                setCardSubmenu(null);
+              }}
+              onSubmenu={setCardSubmenu}
+              onCopyOrMove={(mode, orgId, orgName) =>
+                run(async () => {
+                  if (mode === "copy") {
+                    await copyRunbookToEntityAction(runbook.id, orgId);
+                  } else {
+                    if (
+                      !window.confirm(
+                        `Move “${runbook.title}” to ${orgName}? It will leave this organization library.`
+                      )
+                    ) {
+                      return;
+                    }
+                    await moveRunbookToEntityAction(runbook.id, entityId, orgId);
+                  }
+                  setCardMenuId(null);
+                  setCardSubmenu(null);
+                })
+              }
+              onUnlink={() => run(() => unlinkRunbookFromEntityAction(runbook.id, entityId))}
+            />
+          ))}
+        </div>
       )}
+    </div>
+  );
+}
+
+function RunbookHomeCard({
+  runbook,
+  entityId,
+  progressRecords,
+  isLibrary,
+  isPending,
+  cardMenuId,
+  cardSubmenu,
+  menuRef,
+  peerOrganizations,
+  dense,
+  onOpen,
+  onMenuToggle,
+  onSubmenu,
+  onCopyOrMove,
+  onUnlink,
+}: {
+  runbook: Runbook;
+  entityId: string;
+  progressRecords: RunbookProgress[];
+  isLibrary: boolean;
+  isPending: boolean;
+  cardMenuId: string | null;
+  cardSubmenu: "copy" | "move" | null;
+  menuRef: RefObject<HTMLDivElement | null>;
+  peerOrganizations: RunbookPeerOrg[];
+  dense?: boolean;
+  onOpen: () => void;
+  onMenuToggle: () => void;
+  onSubmenu: (next: "copy" | "move" | null) => void;
+  onCopyOrMove: (mode: "copy" | "move", orgId: string, orgName: string) => void;
+  onUnlink: () => void;
+}) {
+  const prog = findRunbookProgress(progressRecords, runbook.id, entityId);
+  const items = applyRunbookProgress(runbook, prog ?? null);
+  const stats = calcProgress(items);
+  const pct = stats.total > 0 ? Math.round((stats.done / stats.total) * 100) : 0;
+  const menuOpen = cardMenuId === runbook.id;
+
+  return (
+    <div
+      className={`relative flex flex-col gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/60 transition hover:border-lime-500/30 ${
+        dense ? "p-3" : "p-4"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <button type="button" onClick={onOpen} className="min-w-0 flex-1 text-left">
+          <div className="flex items-start justify-between gap-2">
+            <span className="text-sm font-semibold text-zinc-100">{runbook.title}</span>
+            {prog?.closed ? (
+              <span className="shrink-0 text-[10px] font-medium text-sky-300">Closed</span>
+            ) : null}
+          </div>
+          <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-zinc-800">
+            <span className="block h-full rounded-full bg-lime-500/60" style={{ width: `${pct}%` }} />
+          </span>
+          <span className="mt-2 block text-[10px] tabular-nums text-zinc-500">
+            {stats.open} open · {stats.done}/{stats.total} checks
+          </span>
+        </button>
+        {isLibrary ? (
+          <div ref={menuOpen ? menuRef : undefined} className="relative shrink-0">
+            <button
+              type="button"
+              disabled={isPending}
+              onClick={onMenuToggle}
+              className="rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+              aria-label="Runbook actions"
+            >
+              ···
+            </button>
+            {menuOpen ? (
+              <div className="absolute right-0 z-20 mt-1 min-w-[12rem] rounded-xl border border-zinc-700 bg-zinc-950 py-1 shadow-xl">
+                {cardSubmenu === null ? (
+                  <>
+                    <button
+                      type="button"
+                      className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40"
+                      disabled={peerOrganizations.length === 0}
+                      onClick={() => onSubmenu("copy")}
+                    >
+                      Copy to organization…
+                    </button>
+                    <button
+                      type="button"
+                      className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800 disabled:opacity-40"
+                      disabled={peerOrganizations.length === 0}
+                      onClick={() => onSubmenu("move")}
+                    >
+                      Move to organization…
+                    </button>
+                    {peerOrganizations.length === 0 ? (
+                      <p className="border-t border-zinc-800 px-3 py-2 text-[10px] text-zinc-600">
+                        No other organizations available.
+                      </p>
+                    ) : null}
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      className="block w-full px-3 py-1.5 text-left text-[10px] uppercase tracking-wide text-zinc-500 hover:bg-zinc-800"
+                      onClick={() => onSubmenu(null)}
+                    >
+                      ← Back
+                    </button>
+                    <p className="px-3 pb-1 text-[10px] text-zinc-500">
+                      {cardSubmenu === "copy" ? "Copy to" : "Move to"}
+                    </p>
+                    <ul className="max-h-48 overflow-y-auto">
+                      {peerOrganizations.map((org) => (
+                        <li key={org.id}>
+                          <button
+                            type="button"
+                            className="block w-full truncate px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+                            onClick={() => onCopyOrMove(cardSubmenu, org.id, org.name)}
+                          >
+                            {org.name}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+      {!isLibrary ? (
+        <button
+          type="button"
+          disabled={isPending}
+          onClick={onUnlink}
+          className="self-start text-[10px] text-zinc-600 hover:text-rose-300"
+        >
+          Unlink
+        </button>
+      ) : null}
     </div>
   );
 }

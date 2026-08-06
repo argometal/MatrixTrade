@@ -29,6 +29,8 @@ import {
   renameRunbookTitleAction,
   setRunbookItemTypeAction,
   setRunbookScopeClosedAction,
+  setRunbookSectionChecksAction,
+  setRunbookSectionChecksScopedAction,
   toggleRunbookItemAction,
   uncheckAllRunbookItemsAction,
   uncheckAllRunbookItemsScopedAction,
@@ -193,16 +195,21 @@ function RowActionMenu({
                   Turn into check
                 </button>
               ) : (
-                <button
-                  type="button"
-                  className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
-                  onClick={() => {
-                    onTurnIntoSection();
-                    onToggle();
-                  }}
-                >
-                  Turn into section
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+                    onClick={() => {
+                      onTurnIntoSection();
+                      onToggle();
+                    }}
+                  >
+                    Turn into section
+                  </button>
+                  <p className="border-b border-zinc-800 px-3 pb-2 text-[10px] leading-snug text-zinc-600">
+                    Items below become part of this section until the next one.
+                  </p>
+                </>
               )}
               <button
                 type="button"
@@ -339,7 +346,12 @@ export function V2RunbookWorkPanel({
   }
 
   function handleSetType(itemId: string, type: "item" | "section") {
-    run(() => setRunbookItemTypeAction(runbook.id, itemId, type));
+    run(
+      () => setRunbookItemTypeAction(runbook.id, itemId, type),
+      type === "section"
+        ? "Converted to section — checks below belong to it until the next section."
+        : "Converted to check."
+    );
   }
 
   function handleCopyToList(itemId: string, targetId: string) {
@@ -411,6 +423,42 @@ export function V2RunbookWorkPanel({
       return;
     }
     run(() => uncheckAllRunbookItemsAction(runbook.id));
+  }
+
+  function handleSectionCheckAll(sectionId: string, done: boolean) {
+    if (scopeEntityId) {
+      run(
+        () => setRunbookSectionChecksScopedAction(runbook.id, sectionId, scopeEntityId, done),
+        done ? "Section checked." : "Section unchecked."
+      );
+      return;
+    }
+    run(
+      () => setRunbookSectionChecksAction(runbook.id, sectionId, done),
+      done ? "Section checked." : "Section unchecked."
+    );
+  }
+
+  function handleExportJson() {
+    const payload = {
+      runbook: {
+        title: runbook.title,
+        linkedEntityIds: runbook.linkedEntityIds,
+        items: runbook.items,
+      },
+    };
+    const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    const token = runbook.title.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "") || "runbook";
+    anchor.href = url;
+    anchor.download = `runbook-${token}-${stamp}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    URL.revokeObjectURL(url);
+    setStatus("JSON exported.");
   }
 
   function handleImportClick() {
@@ -626,6 +674,9 @@ export function V2RunbookWorkPanel({
               <button type="button" disabled={isPending} onClick={handleAddSection} className={toolbarButtonClass()}>
                 Add section
               </button>
+              <span className="text-[10px] text-zinc-600">
+                Or ··· on a check → Turn into section (owns items below).
+              </span>
             </div>
           </div>
         </div>
@@ -688,6 +739,9 @@ export function V2RunbookWorkPanel({
             <input ref={importRef} type="file" accept="application/json,.json" className="hidden" onChange={handleImportFile} />
           </>
         ) : null}
+        <button type="button" disabled={isPending} onClick={handleExportJson} className={toolbarButtonClass()}>
+          Export JSON
+        </button>
         <button type="button" onClick={handlePrint} className={toolbarButtonClass()}>
           Print / PDF
         </button>
@@ -761,6 +815,8 @@ export function V2RunbookWorkPanel({
             if (item.type === "section") {
               const collapsed = !!collapsedSections[item.id];
               const stats = runbookSectionChildStats(runbook.items, item.id);
+              const sectionAllDone = stats.total > 0 && stats.open === 0;
+              const sectionPartial = stats.done > 0 && stats.open > 0;
               return (
                 <div
                   key={item.id}
@@ -783,6 +839,20 @@ export function V2RunbookWorkPanel({
                       ⠿
                     </button>
                   ) : null}
+                  <input
+                    type="checkbox"
+                    checked={sectionAllDone}
+                    ref={(el) => {
+                      if (el) el.indeterminate = sectionPartial;
+                    }}
+                    disabled={isPending || stats.total === 0}
+                    onChange={(event) => handleSectionCheckAll(item.id, event.target.checked)}
+                    className="runbook-no-print h-4 w-4 shrink-0 rounded border-zinc-600 text-lime-500 focus:ring-lime-500/40 disabled:opacity-40"
+                    title={sectionAllDone ? "Uncheck all items in this section" : "Check all items in this section"}
+                    aria-label={
+                      sectionAllDone ? "Uncheck all items in this section" : "Check all items in this section"
+                    }
+                  />
                   <button
                     type="button"
                     onClick={() =>
@@ -811,7 +881,7 @@ export function V2RunbookWorkPanel({
                       </p>
                     )}
                   </div>
-                  {collapsed && stats.total > 0 ? (
+                  {stats.total > 0 ? (
                     <span className="runbook-no-print shrink-0 text-[10px] tabular-nums text-zinc-600">
                       {stats.open}/{stats.total}
                     </span>
@@ -898,17 +968,29 @@ export function V2RunbookWorkPanel({
                   ) : null}
                 </div>
                 {canEdit ? (
-                  <RowActionMenu
-                    open={menuId === item.id}
-                    onToggle={() => setMenuId((current) => (current === item.id ? null : item.id))}
-                    disabled={isPending}
-                    isSection={false}
-                    peerLists={peers}
-                    onTurnIntoSection={() => handleSetType(item.id, "section")}
-                    onTurnIntoCheck={() => handleSetType(item.id, "item")}
-                    onCopyToList={(targetId) => handleCopyToList(item.id, targetId)}
-                    onMoveToList={(targetId) => handleMoveToList(item.id, targetId)}
-                  />
+                  <>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => handleSetType(item.id, "section")}
+                      className="runbook-no-print shrink-0 rounded-lg border border-zinc-800 px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-zinc-500 opacity-100 hover:border-lime-500/40 hover:bg-lime-500/10 hover:text-lime-300 disabled:opacity-40 sm:opacity-0 sm:group-hover:opacity-100"
+                      title="Turn into section — all checks below belong to it until the next section"
+                      aria-label="Turn into section"
+                    >
+                      Section
+                    </button>
+                    <RowActionMenu
+                      open={menuId === item.id}
+                      onToggle={() => setMenuId((current) => (current === item.id ? null : item.id))}
+                      disabled={isPending}
+                      isSection={false}
+                      peerLists={peers}
+                      onTurnIntoSection={() => handleSetType(item.id, "section")}
+                      onTurnIntoCheck={() => handleSetType(item.id, "item")}
+                      onCopyToList={(targetId) => handleCopyToList(item.id, targetId)}
+                      onMoveToList={(targetId) => handleMoveToList(item.id, targetId)}
+                    />
+                  </>
                 ) : null}
               </div>
             );
