@@ -443,6 +443,21 @@ export const TESTING = {
     "This removes the project from your knowledge base and unlinks it from journal entries and emails. Evidence is kept.",
   deleteProjectTypeName: "Type the project name to confirm",
   deleteProjectPinHint: "This project includes protected evidence. Enter your PIN to delete.",
+  deleteEvent: "Delete event",
+  deleteEventConfirmHint:
+    "This removes the event from your knowledge base and unlinks it from evidence. Chronicle entries and emails are kept.",
+  deleteEventTypeName: "Type the event name to confirm",
+  deleteEventPinHint: "This event includes protected evidence. Enter your PIN to delete.",
+  deleteTopic: "Delete topic",
+  deleteTopicConfirmHint:
+    "This removes the topic from your knowledge base and unlinks it from evidence. Linked entries and emails are kept.",
+  deleteTopicTypeName: "Type the topic name to confirm",
+  deleteTopicPinHint: "This topic includes protected evidence. Enter your PIN to delete.",
+  deleteOrganization: "Delete organization",
+  deleteOrganizationConfirmHint:
+    "This removes the organization from your knowledge base and unlinks it from evidence. Linked entries and emails are kept.",
+  deleteOrganizationTypeName: "Type the organization name to confirm",
+  deleteOrganizationPinHint: "This organization includes protected evidence. Enter your PIN to delete.",
   deleteEntityConfirmHint:
     "This removes the record from your knowledge base and unlinks it from evidence. Linked entries and emails are kept.",
   deleteEntityTypeName: "Type the name to confirm",

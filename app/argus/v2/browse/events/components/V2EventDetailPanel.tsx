@@ -226,7 +226,7 @@ export function V2EventDetailPanel({
                       privateConfigured={privateConfigured}
                       privateUnlocked={privateUnlocked}
                       showDelete
-                      variant="menu"
+                      variant="inline"
                       {...deleteGate}
                     />
                   </div>

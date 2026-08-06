@@ -145,6 +145,35 @@ function parseTopics(raw: string): string[] {
     .filter(Boolean);
 }
 
+const DELETABLE_ENTITY_KINDS = new Set(["project", "organization", "topic", "event"]);
+
+/** Prefer UI kind when notes lost Kind: prefix (type other → display "other"). */
+function resolveDeletableKind(kindFromEntity: string, claimedKind: string): string {
+  if (DELETABLE_ENTITY_KINDS.has(kindFromEntity)) return kindFromEntity;
+  if (
+    DELETABLE_ENTITY_KINDS.has(claimedKind) &&
+    (kindFromEntity === "other" || kindFromEntity === claimedKind)
+  ) {
+    return claimedKind;
+  }
+  return kindFromEntity;
+}
+
+function stripSelectedFromReturnTo(returnTo: string): string {
+  try {
+    const url = new URL(returnTo, "http://local.invalid");
+    url.searchParams.delete("selected");
+    url.searchParams.delete("error");
+    url.searchParams.delete("delete_error");
+    url.searchParams.delete("delete_auth_error");
+    url.searchParams.delete("totp_required");
+    const qs = url.searchParams.toString();
+    return `${url.pathname}${qs ? `?${qs}` : ""}`;
+  } catch {
+    return returnTo.split("?")[0] || returnTo;
+  }
+}
+
 function redirectWriteFailure(fallback: string, err: unknown): never {
   const { errorLayer, errorMsg } = argusErrorQueryParams(err);
   redirect(`${fallback}?errorLayer=${encodeURIComponent(errorLayer)}&errorMsg=${encodeURIComponent(errorMsg)}`);
@@ -1396,17 +1425,19 @@ export async function updateInboxSubjectAction(formData: FormData): Promise<void
 export async function deleteEntityV2Action(formData: FormData): Promise<void> {
   await requireArgusSession();
   const entityId = String(formData.get("entityId") ?? "");
+  const claimedKind = String(formData.get("entityKind") ?? "").trim();
   const confirmName = String(formData.get("confirmName") ?? "").trim();
   const pin = String(formData.get("pin") ?? "");
-  const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
+  const returnTo = stripSelectedFromReturnTo(String(formData.get("returnTo") ?? "/argus/v2"));
 
   const entity = await getEntity(entityId);
   if (!entity || entity.deletedAt) {
     redirect(returnTo);
   }
 
-  const kind = entityTypeToReferenceKind(entity.type, entity.notes ?? "");
-  if (!["project", "organization", "topic", "event"].includes(kind)) {
+  const kindFromEntity = entityTypeToReferenceKind(entity.type, entity.notes ?? "");
+  const kind = resolveDeletableKind(kindFromEntity, claimedKind);
+  if (!DELETABLE_ENTITY_KINDS.has(kind)) {
     redirect(returnTo);
   }
 

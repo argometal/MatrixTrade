@@ -14,6 +14,73 @@ import { DELETE_AUTH, TESTING } from "@/lib/argus/ux-copy";
 
 type EntityKind = "project" | "organization" | "topic" | "event" | "person";
 
+const DELETABLE_KINDS = new Set<EntityKind>(["project", "organization", "topic", "event"]);
+
+function deleteCopy(entityKind: EntityKind) {
+  if (entityKind === "project") {
+    return {
+      label: TESTING.deleteProject,
+      hint: TESTING.deleteProjectConfirmHint,
+      typeName: TESTING.deleteProjectTypeName,
+      pinHint: TESTING.deleteProjectPinHint,
+    };
+  }
+  if (entityKind === "event") {
+    return {
+      label: TESTING.deleteEvent,
+      hint: TESTING.deleteEventConfirmHint,
+      typeName: TESTING.deleteEventTypeName,
+      pinHint: TESTING.deleteEventPinHint,
+    };
+  }
+  if (entityKind === "topic") {
+    return {
+      label: TESTING.deleteTopic,
+      hint: TESTING.deleteTopicConfirmHint,
+      typeName: TESTING.deleteTopicTypeName,
+      pinHint: TESTING.deleteTopicPinHint,
+    };
+  }
+  if (entityKind === "organization") {
+    return {
+      label: TESTING.deleteOrganization,
+      hint: TESTING.deleteOrganizationConfirmHint,
+      typeName: TESTING.deleteOrganizationTypeName,
+      pinHint: TESTING.deleteOrganizationPinHint,
+    };
+  }
+  return {
+    label: TESTING.deleteEntity,
+    hint: TESTING.deleteEntityConfirmHint,
+    typeName: TESTING.deleteEntityTypeName,
+    pinHint: TESTING.deleteEntityPinHint,
+  };
+}
+
+function archiveLabelFor(entityKind: EntityKind): string {
+  if (entityKind === "project") return "Archive project";
+  if (entityKind === "event") return "Archive event";
+  if (entityKind === "topic") return "Archive topic";
+  if (entityKind === "organization") return "Archive organization";
+  return "Archive";
+}
+
+/** After soft-delete, drop selection so browse does not keep a missing id. */
+function returnToAfterDelete(returnTo: string): string {
+  try {
+    const url = new URL(returnTo, "http://local.invalid");
+    url.searchParams.delete("selected");
+    url.searchParams.delete("error");
+    url.searchParams.delete("delete_error");
+    url.searchParams.delete("delete_auth_error");
+    url.searchParams.delete("totp_required");
+    const qs = url.searchParams.toString();
+    return `${url.pathname}${qs ? `?${qs}` : ""}`;
+  } catch {
+    return returnTo.split("?")[0] || returnTo;
+  }
+}
+
 type Props = {
   entityId: string;
   entityName: string;
@@ -72,13 +139,10 @@ export function V2EntityLifecycleActions({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isArchived = lifecycleStatus === "archived";
-  const deleteLabel = entityKind === "project" ? TESTING.deleteProject : TESTING.deleteEntity;
-  const deleteHint =
-    entityKind === "project" ? TESTING.deleteProjectConfirmHint : TESTING.deleteEntityConfirmHint;
-  const typeNameLabel =
-    entityKind === "project" ? TESTING.deleteProjectTypeName : TESTING.deleteEntityTypeName;
-  const pinHint =
-    entityKind === "project" ? TESTING.deleteProjectPinHint : TESTING.deleteEntityPinHint;
+  const { label: deleteLabel, hint: deleteHint, typeName: typeNameLabel, pinHint } =
+    deleteCopy(entityKind);
+  const archiveLabel = archiveLabelFor(entityKind);
+  const canDeleteKind = DELETABLE_KINDS.has(entityKind);
 
   useEffect(() => {
     setDraftName(entityName);
@@ -97,13 +161,19 @@ export function V2EntityLifecycleActions({
 
   const needsPrivatePin = hasPrivateEvidence && privateConfigured && !privateUnlocked;
   const nameMatches = confirmName.trim().toLowerCase() === entityName.trim().toLowerCase();
-  const canSubmitDelete = showDelete && nameMatches && (!needsPrivatePin || pin.length > 0);
+  const canSubmitDelete =
+    showDelete && canDeleteKind && nameMatches && (!needsPrivatePin || pin.length > 0);
 
   const deleteBlockedNoTotp = Boolean(
-    showDelete && deleteAuthConfigured && requiresAuthenticator && !totpConfigured
+    showDelete &&
+      canDeleteKind &&
+      deleteAuthConfigured &&
+      requiresAuthenticator &&
+      !totpConfigured
   );
   const needsDeleteUnlock = Boolean(
     showDelete &&
+      canDeleteKind &&
       deleteAuthConfigured &&
       !deleteBlockedNoTotp &&
       (requiresAuthenticator ? !deleteAuthUnlocked : deleteCodeConfigured && !deleteUnlocked)
@@ -156,20 +226,19 @@ export function V2EntityLifecycleActions({
     setBusy(true);
     const formData = new FormData();
     formData.set("entityId", entityId);
+    formData.set("entityKind", entityKind);
     formData.set("confirmName", confirmName.trim());
     formData.set("pin", pin);
-    formData.set("returnTo", returnTo);
+    formData.set("returnTo", returnToAfterDelete(returnTo));
     await deleteEntityV2Action(formData);
   }
 
-  const archiveLabel = entityKind === "project" ? "Archive project" : "Archive";
-
   const deleteControl =
-    showDelete && deleteBlockedNoTotp ? (
+    showDelete && canDeleteKind && deleteBlockedNoTotp ? (
       <span className="rounded-xl border border-amber-900/40 bg-amber-950/20 px-3 py-2 text-xs text-amber-200/90">
         {DELETE_AUTH.totpNotConfigured}
       </span>
-    ) : showDelete ? (
+    ) : showDelete && canDeleteKind ? (
       <button
         type="button"
         onClick={openDeleteFlow}
@@ -276,7 +345,7 @@ export function V2EntityLifecycleActions({
               {archiveLabel}
             </button>
           )}
-          {showDelete && !deleteBlockedNoTotp ? (
+          {showDelete && canDeleteKind && !deleteBlockedNoTotp ? (
             <button
               type="button"
               onClick={openDeleteFlow}
@@ -389,7 +458,7 @@ export function V2EntityLifecycleActions({
         </Modal>
       ) : null}
 
-      {deleteOpen && showDelete && !needsDeleteUnlock ? (
+      {deleteOpen && showDelete && canDeleteKind && !needsDeleteUnlock ? (
         <Modal title={deleteLabel} onClose={() => !busy && setDeleteOpen(false)}>
           <form onSubmit={(event) => void submitDelete(event)} className="space-y-4">
             <p className="text-sm leading-relaxed text-zinc-400">{deleteHint}</p>
