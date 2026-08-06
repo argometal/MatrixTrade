@@ -66,7 +66,7 @@ export function V2EntityRunbooksTab({
   const [assignOpen, setAssignOpen] = useState(false);
   const [cardMenuId, setCardMenuId] = useState<string | null>(null);
   const [cardSubmenu, setCardSubmenu] = useState<"copy" | "move" | null>(null);
-  const [view, setView] = useState<"grid" | "list" | "board">("grid");
+  const [view, setView] = useState<"grid" | "list" | "board">("board");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);

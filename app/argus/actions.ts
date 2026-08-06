@@ -2113,6 +2113,24 @@ export async function copyRunbookItemsToRunbookAction(
   await revalidateRunbookSurfaces(targetRunbookId, target.linkedEntityIds);
 }
 
+/** Delete a check, or a section and everything it owns until the next section. */
+export async function deleteRunbookItemsAction(runbookId: string, itemId: string): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+
+  const ids = new Set(runbookTransferIds(runbook.items, itemId));
+  if (ids.size === 0) {
+    throw new ArgusPersistenceError("validation", "Row not found.");
+  }
+
+  const items = runbook.items.filter((item) => !ids.has(item.id));
+  await updateRunbook(runbookId, { items });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
 /** Move row(s) into another runbook (removes from source). */
 export async function moveRunbookItemsToRunbookAction(
   sourceRunbookId: string,

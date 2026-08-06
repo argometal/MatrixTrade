@@ -19,6 +19,7 @@ import {
   checkAllRunbookItemsAction,
   checkAllRunbookItemsScopedAction,
   copyRunbookItemsToRunbookAction,
+  deleteRunbookItemsAction,
   flattenRunbookSubtasksAction,
   importRunbookJsonAction,
   moveRunbookItemsToRunbookAction,
@@ -140,6 +141,7 @@ function RowActionMenu({
   onTurnIntoCheck,
   onCopyToList,
   onMoveToList,
+  onDelete,
 }: {
   open: boolean;
   onToggle: () => void;
@@ -150,6 +152,7 @@ function RowActionMenu({
   onTurnIntoCheck: () => void;
   onCopyToList: (targetId: string) => void;
   onMoveToList: (targetId: string) => void;
+  onDelete: () => void;
 }) {
   const [submenu, setSubmenu] = useState<"copy" | "move" | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -226,6 +229,16 @@ function RowActionMenu({
                 onClick={() => setSubmenu("move")}
               >
                 Move to list…
+              </button>
+              <button
+                type="button"
+                className="block w-full px-3 py-1.5 text-left text-xs text-rose-300 hover:bg-rose-950/40"
+                onClick={() => {
+                  onDelete();
+                  onToggle();
+                }}
+              >
+                {isSection ? "Delete section…" : "Delete…"}
               </button>
               {peerLists.length === 0 ? (
                 <p className="border-t border-zinc-800 px-3 py-2 text-[10px] text-zinc-600">
@@ -361,6 +374,17 @@ export function V2RunbookWorkPanel({
   function handleMoveToList(itemId: string, targetId: string) {
     if (!window.confirm("Move this row (and section children, if any) to the other list?")) return;
     run(() => moveRunbookItemsToRunbookAction(runbook.id, itemId, targetId), "Moved to list.");
+  }
+
+  function handleDeleteRow(itemId: string) {
+    const item = runbook.items.find((row) => row.id === itemId);
+    if (!item) return;
+    const message =
+      item.type === "section"
+        ? "Delete this section and all checks under it until the next section?"
+        : "Delete this check?";
+    if (!window.confirm(message)) return;
+    run(() => deleteRunbookItemsAction(runbook.id, itemId), "Deleted.");
   }
 
   function handleAddSection() {
@@ -897,6 +921,7 @@ export function V2RunbookWorkPanel({
                       onTurnIntoCheck={() => handleSetType(item.id, "item")}
                       onCopyToList={(targetId) => handleCopyToList(item.id, targetId)}
                       onMoveToList={(targetId) => handleMoveToList(item.id, targetId)}
+                      onDelete={() => handleDeleteRow(item.id)}
                     />
                   ) : null}
                 </div>
@@ -989,6 +1014,7 @@ export function V2RunbookWorkPanel({
                       onTurnIntoCheck={() => handleSetType(item.id, "item")}
                       onCopyToList={(targetId) => handleCopyToList(item.id, targetId)}
                       onMoveToList={(targetId) => handleMoveToList(item.id, targetId)}
+                      onDelete={() => handleDeleteRow(item.id)}
                     />
                   </>
                 ) : null}
