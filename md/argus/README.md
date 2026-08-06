@@ -177,7 +177,7 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 | Doc | Status |
 |-----|--------|
 | [../integrations/argus-chatgpt-handoff.md](../integrations/argus-chatgpt-handoff.md) | External AI |
-| [../integrations/vercel-argus-production-handoff.md](../integrations/vercel-argus-production-handoff.md) | Production gaps |
+| [../argusforge/IA-HANDOFF.md](../argusforge/IA-HANDOFF.md) | Apps · ARGUS · ArgusForge runtime |
 | [email-intake-e2e.md](email-intake-e2e.md) | Email pipeline |
 | [phase-0-1-stabilization-audit.md](phase-0-1-stabilization-audit.md) | Stabilization |
 | [phase-1-gate.md](phase-1-gate.md) | Gate criteria |

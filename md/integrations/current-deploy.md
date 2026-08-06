@@ -8,6 +8,7 @@
 | **Commit** | Always `git rev-parse main0806b` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-06 |
+| **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
 
 ## Sync local (avoid conflicts / lost work)
 

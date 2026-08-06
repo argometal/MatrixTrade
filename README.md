@@ -129,7 +129,7 @@ Read-only **trading** dashboard from any device — no LAN, no QR required.
 5. Deploy → use stable URL **`matrix-trade-theta.vercel.app`** (not the per-deployment hash URL).
 
 **Checkpoint:** `/` dashboard and `/trades` (H001) load from the deployed URL.  
-**ARGUS:** `/argus` — separate module; data stays local (`data/argus/` gitignored). See [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md).
+**ARGUS:** `/argus` — separate module. Runtime + apps map: [`md/argusforge/IA-HANDOFF.md`](md/argusforge/IA-HANDOFF.md). Deploy pin: [`md/integrations/current-deploy.md`](md/integrations/current-deploy.md).
 
 **If login does not appear:** env vars are missing — auth is opt-in and production is public until you set them and redeploy.
 
