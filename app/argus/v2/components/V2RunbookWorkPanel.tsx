@@ -195,19 +195,21 @@ function RowActionMenu({
                   Turn into check
                 </button>
               ) : (
-                <button
-                  type="button"
-                  className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
-                  onClick={() => {
-                    onTurnIntoSection();
-                    onToggle();
-                  }}
-                >
-                  Turn into section
-                </button>
-                <p className="border-b border-zinc-800 px-3 pb-2 text-[10px] leading-snug text-zinc-600">
-                  Items below become part of this section until the next one.
-                </p>
+                <>
+                  <button
+                    type="button"
+                    className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+                    onClick={() => {
+                      onTurnIntoSection();
+                      onToggle();
+                    }}
+                  >
+                    Turn into section
+                  </button>
+                  <p className="border-b border-zinc-800 px-3 pb-2 text-[10px] leading-snug text-zinc-600">
+                    Items below become part of this section until the next one.
+                  </p>
+                </>
               )}
               <button
                 type="button"
