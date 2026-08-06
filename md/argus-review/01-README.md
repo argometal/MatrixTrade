@@ -39,6 +39,7 @@ This directory (`md/argus-review/`) is a **read-only evidence pack** for externa
 | [`10-source-index.md`](10-source-index.md) | Traceability: statements → source paths |
 | [`11-behavioral-evaluation-review.md`](11-behavioral-evaluation-review.md) | Behavioral evaluation inventory + prioritized refinement |
 | [`12-evidence-engine-principles-solution.md`](12-evidence-engine-principles-solution.md) | Sealed principles + Evidence Engine solution |
+| [`13-evidence-engine-implementation.md`](13-evidence-engine-implementation.md) | Implementation notes for principles solution (phases A–D) |
 | [`appendix-app-argus-files.txt`](appendix-app-argus-files.txt) | Complete `app/argus` `.ts`/`.tsx` paths (172) |
 | [`appendix-lib-argus-files.txt`](appendix-lib-argus-files.txt) | Complete `lib/argus` `.ts`/`.tsx` paths (128) |
 | [`appendix-actions-exports.txt`](appendix-actions-exports.txt) | All `export async function` names in `actions.ts` (73) |

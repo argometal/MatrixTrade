@@ -1,6 +1,7 @@
 import type { ArgusData, Entity, Log } from "./types";
 
 export type StrategicValue = 1 | 2 | 3 | 4 | 5;
+/** Internal recency band — not a user-facing product vocabulary. */
 export type RelationshipHealth = "active" | "cooling" | "dormant" | "neglected";
 
 export interface EntityIntelligence {
@@ -11,26 +12,18 @@ export interface EntityIntelligence {
   logCount: number;
   evidenceCount: number;
   topics: string[];
+  /**
+   * @deprecated Always 0 — opaque regex outcome scoring removed (Evidence Engine P4/P5).
+   * Kept on the type so call sites compile until fully scrubbed.
+   */
   outcomeScore: number;
+  /** Sort aid only — derived from evidence dates, follow-ups, and contactValue weight. Not displayed as a KPI. */
   attentionScore: number;
+  /** Internal band used to derive browse status — prefer V2NetworkBrowseStatus in UI. */
   relationshipHealth: RelationshipHealth;
   daysSinceLastInteraction: number | null;
   relatedEntityIds: string[];
 }
-
-const OUTCOME_SIGNALS: { pattern: RegExp; points: number }[] = [
-  { pattern: /\bopportunit/i, points: 3 },
-  { pattern: /\breferr/i, points: 4 },
-  { pattern: /\brecommend/i, points: 3 },
-  { pattern: /\bsolved\b|\bresolved\b|\bfixed\b/i, points: 3 },
-  { pattern: /\bknowledge shared\b|\bshared knowledge\b|\btaught\b|\btraining\b/i, points: 2 },
-  { pattern: /\bintroduc(ed|ing|tion)\b|\bconnected (me|us) with\b/i, points: 4 },
-  { pattern: /\bbusiness generated\b|\brevenue\b|\bdeal\b|\bcontract\b/i, points: 5 },
-  { pattern: /\bhelp received\b|\bsupport(ed)? me\b|\bassisted\b/i, points: 2 },
-  { pattern: /\bsupport provided\b|\bhelped (them|him|her)\b/i, points: 2 },
-  { pattern: /\bmeeting\b|\bconversation\b|\bcall\b|\bdiscussion\b/i, points: 1 },
-  { pattern: /\bdecision\b|\bagreed\b|\bapproved\b/i, points: 2 },
-];
 
 /** Grace days before relationship is considered cooling/dormant/neglected */
 const GRACE_DAYS: Record<StrategicValue, number> = {
@@ -69,18 +62,6 @@ function daysBetween(fromDate: string, toDate: string): number {
   return Math.max(0, Math.floor((to - from) / (1000 * 60 * 60 * 24)));
 }
 
-function computeOutcomeScore(logs: Log[]): number {
-  let score = 0;
-  for (const log of logs) {
-    const haystack = `${log.title} ${log.body} ${log.topics.join(" ")}`;
-    for (const { pattern, points } of OUTCOME_SIGNALS) {
-      if (pattern.test(haystack)) score += points;
-    }
-    if (log.attachmentIds.length > 0) score += 1;
-  }
-  return score;
-}
-
 function openFollowUpCount(logs: Log[], today: string): number {
   return logs.filter((l) => {
     const touch = l.followUpDate ?? (l.kind === "follow_up" ? l.date : undefined);
@@ -106,8 +87,11 @@ function topicsForEntity(logs: Log[]): string[] {
   return [...set].sort();
 }
 
-/** Map selected contact-value outcomes to grace-period weight (replaces manual 1–5). */
-function contactValueWeight(entity: Entity): StrategicValue {
+/**
+ * Map selected contact-value outcomes to grace-period weight.
+ * Falls back to legacy strategicValue only when contactValue is empty (read fallback).
+ */
+export function contactValueWeight(entity: Entity): StrategicValue {
   const count = entity.contactValue?.length ?? 0;
   if (count >= 4) return 5;
   if (count === 3) return 4;
@@ -118,13 +102,13 @@ function contactValueWeight(entity: Entity): StrategicValue {
 }
 
 export function computeRelationshipHealth(
-  strategicValue: StrategicValue,
+  valueWeight: StrategicValue,
   daysSince: number | null,
   openFollowUps: number
 ): RelationshipHealth {
   if (daysSince === null) return openFollowUps > 0 ? "cooling" : "dormant";
 
-  const grace = GRACE_DAYS[strategicValue];
+  const grace = GRACE_DAYS[valueWeight];
   const activeWindow = Math.floor(grace / 4);
   const coolingWindow = Math.floor(grace / 2);
 
@@ -133,29 +117,24 @@ export function computeRelationshipHealth(
   if (daysSince <= coolingWindow) return "cooling";
   if (daysSince <= grace) return "dormant";
 
-  if (strategicValue >= 4) return "neglected";
+  if (valueWeight >= 4) return "neglected";
   return daysSince <= grace * 1.5 ? "dormant" : "neglected";
 }
 
+/** Sort aid for neglected-first lists — not a user-facing score. */
 export function computeAttentionScore(
-  strategicValue: StrategicValue,
+  valueWeight: StrategicValue,
   daysSince: number | null,
   openFollowUps: number,
-  outcomeScore: number,
   relationshipHealth: RelationshipHealth
 ): number {
-  const silence =
-    daysSince === null ? 60 : Math.min(daysSince, 180);
-  const valueWeight = strategicValue / 5;
+  const silence = daysSince === null ? 60 : Math.min(daysSince, 180);
+  const weight = valueWeight / 5;
 
-  let score =
-    strategicValue * 12 +
-    silence * valueWeight * 1.5 +
-    openFollowUps * 18 +
-    Math.min(outcomeScore, 40) * 0.8;
+  let score = valueWeight * 12 + silence * weight * 1.5 + openFollowUps * 18;
 
   if (relationshipHealth === "neglected") score += 25;
-  if (relationshipHealth === "dormant" && strategicValue >= 3) score += 12;
+  if (relationshipHealth === "dormant" && valueWeight >= 3) score += 12;
 
   return Math.round(score);
 }
@@ -168,19 +147,12 @@ export function buildEntityIntelligence(
 ): EntityIntelligence {
   const visibleLogs = includePrivate ? data.logs : data.logs.filter((l) => !l.private);
   const linked = logsForEntity(visibleLogs, entity.id);
-  const strategicValue = contactValueWeight(entity);
+  const valueWeight = contactValueWeight(entity);
   const lastInteraction = lastMeaningfulInteractionDate(linked);
   const daysSince = lastInteraction ? daysBetween(lastInteraction, today) : null;
   const openFollowUps = openFollowUpCount(linked, today);
-  const outcomeScore = computeOutcomeScore(linked);
-  const relationshipHealth = computeRelationshipHealth(strategicValue, daysSince, openFollowUps);
-  const attentionScore = computeAttentionScore(
-    strategicValue,
-    daysSince,
-    openFollowUps,
-    outcomeScore,
-    relationshipHealth
-  );
+  const relationshipHealth = computeRelationshipHealth(valueWeight, daysSince, openFollowUps);
+  const attentionScore = computeAttentionScore(valueWeight, daysSince, openFollowUps, relationshipHealth);
 
   const related = new Set<string>();
   for (const log of linked) {
@@ -197,7 +169,7 @@ export function buildEntityIntelligence(
     logCount: linked.length,
     evidenceCount: linked.filter((l) => l.attachmentIds.length > 0).length,
     topics: topicsForEntity(linked),
-    outcomeScore,
+    outcomeScore: 0,
     attentionScore,
     relationshipHealth,
     daysSinceLastInteraction: daysSince,
@@ -225,55 +197,4 @@ export function buildAllEntityIntelligence(
   }
 
   return entities.map((entity) => buildEntityIntelligence(data, entity, includePrivate, today));
-}
-
-export interface NetworkHomeSections {
-  needsAttention: EntityIntelligence[];
-  topStrategic: EntityIntelligence[];
-  recentlyActive: EntityIntelligence[];
-  dormant: EntityIntelligence[];
-  recentlyUpdated: EntityIntelligence[];
-}
-
-export function buildNetworkHomeSections(
-  intelligence: EntityIntelligence[]
-): NetworkHomeSections {
-  const withHistory = intelligence.filter((i) => i.logCount > 0 || i.openFollowUps > 0);
-  const all = intelligence;
-
-  const needsAttention = [...withHistory]
-    .filter(
-      (i) =>
-        i.relationshipHealth === "neglected" ||
-        i.relationshipHealth === "dormant" ||
-        i.openFollowUps > 0 ||
-        (i.entity.strategicValue ?? 3) >= 4 && i.relationshipHealth !== "active"
-    )
-    .sort((a, b) => b.attentionScore - a.attentionScore)
-    .slice(0, 8);
-
-  const topStrategic = [...all]
-    .filter((i) => (i.entity.strategicValue ?? 3) >= 4)
-    .sort(
-      (a, b) =>
-        (b.entity.strategicValue ?? 3) - (a.entity.strategicValue ?? 3) ||
-        b.outcomeScore - a.outcomeScore
-    )
-    .slice(0, 8);
-
-  const recentlyActive = [...withHistory]
-    .filter((i) => i.relationshipHealth === "active")
-    .sort((a, b) => (b.lastMeaningfulInteraction ?? "").localeCompare(a.lastMeaningfulInteraction ?? ""))
-    .slice(0, 8);
-
-  const dormant = [...withHistory]
-    .filter((i) => i.relationshipHealth === "dormant" || i.relationshipHealth === "neglected")
-    .sort((a, b) => (b.daysSinceLastInteraction ?? 0) - (a.daysSinceLastInteraction ?? 0))
-    .slice(0, 8);
-
-  const recentlyUpdated = [...all]
-    .sort((a, b) => b.entity.updatedAt.localeCompare(a.entity.updatedAt))
-    .slice(0, 8);
-
-  return { needsAttention, topStrategic, recentlyActive, dormant, recentlyUpdated };
 }

@@ -4,7 +4,7 @@ export type V2NavLinkItem = {
   href: string;
   label: string;
   icon?: string;
-  /** Action signal — shown only when > 0. */
+  /** Triage debt count — shown only when > 0. Not Event Signals / Patterns. */
   signal?: number;
 };
 
@@ -56,7 +56,7 @@ export function isV2NavItemActive(pathname: string, item: V2NavLinkItem): boolea
   return isBrowseNavActive(pathname, item.href, item.label);
 }
 
-/** Sidebar + mobile drawer — navigation only, action signals on select items. */
+/** Sidebar + mobile drawer — navigation only; triage counts on select items (not Event Signals). */
 export function buildV2NavSections(signals: V2NavCounts): V2NavSection[] {
   return [
     {

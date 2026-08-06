@@ -50,6 +50,7 @@ export const STRATEGIC_VALUE_LABELS: Record<StrategicValue, string> = {
   5: "Strategic — protect relationship",
 };
 
+/** @deprecated Internal band labels — prefer V2NetworkBrowseStatus in UI. */
 export const RELATIONSHIP_HEALTH_LABELS: Record<RelationshipHealth, string> = {
   active: "Active",
   cooling: "Cooling",
@@ -57,6 +58,7 @@ export const RELATIONSHIP_HEALTH_LABELS: Record<RelationshipHealth, string> = {
   neglected: "Neglected",
 };
 
+/** @deprecated Prefer browse status tones. */
 export const RELATIONSHIP_HEALTH_COLORS: Record<RelationshipHealth, string> = {
   active: "text-teal-400",
   cooling: "text-sky-400",

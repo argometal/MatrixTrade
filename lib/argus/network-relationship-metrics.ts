@@ -202,9 +202,9 @@ export function attentionSummaryMessage(attention: DerivedRelationshipAttention)
     return "An opportunity signal is open. Keep momentum while context is fresh.";
   }
   if (attention.status === "needs_attention") {
-    return "This relationship needs attention based on recent activity signals.";
+    return "This relationship needs attention based on follow-ups or recent activity.";
   }
-  return "This relationship is healthy. No action is required at this time.";
+  return "No open follow-up or triage debt right now.";
 }
 
 export const CONTACT_VALUE_ICONS: Record<ContactValueKey, string> = {

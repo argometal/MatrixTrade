@@ -39,7 +39,7 @@ import {
   updateRunbook,
   renameTagGlobally,
 } from "@/lib/argus/server-storage";
-import type { EntityType, JournalKind, LogSource, RunbookItem, StrategicValue } from "@/lib/argus/types";
+import type { EntityType, JournalKind, LogSource, RunbookItem } from "@/lib/argus/types";
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
 import { inferJournalKind, resolveLogDate, autoTitleFromBody } from "@/lib/argus/journal-helpers";
 import { resolveClassificationStatus } from "@/lib/argus/normalize";
@@ -1059,10 +1059,6 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
     redirect("/argus/network");
   }
 
-  const rawValue = Number(formData.get("strategicValue") ?? entity.strategicValue ?? 3);
-  const strategicValue = (
-    rawValue >= 1 && rawValue <= 5 ? rawValue : entity.strategicValue ?? 3
-  ) as StrategicValue;
   const contactValue = normalizeContactValueKeys(formData.getAll("contactValue").map(String));
   const myValue = normalizeMyValueKeys(formData.getAll("myValue").map(String));
 
@@ -1076,9 +1072,9 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
   const startDate = String(formData.get("startDate") ?? "").trim();
   const endDate = String(formData.get("endDate") ?? "").trim();
 
+  // strategicValue is deprecated — omit from patch (read-fallback only via contactValueWeight).
   await updateEntity(entityId, {
     name: String(formData.get("name") ?? "").trim() || entity.name,
-    strategicValue,
     contactValue,
     myValue,
     alias: String(formData.get("alias") ?? "").trim(),

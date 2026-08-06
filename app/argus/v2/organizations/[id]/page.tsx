@@ -211,12 +211,11 @@ export default async function V2OrganizationPage({
             recentProjects={page.recentProjects}
             tagPatterns={page.tagPatterns}
             stats={page.stats}
-            relationshipScore={page.relationshipScore}
-            relationshipLabel={page.relationshipLabel}
+            networkStatus={page.networkStatus}
+            relationshipFacts={page.relationshipFacts}
             sparkline={page.sparkline}
             chartStartYear={page.chartStartYear}
             chartEndYear={page.chartEndYear}
-            relationshipMetrics={page.relationshipMetrics}
             linkedTopics={linkedTopics}
             runbooks={orgRunbooks}
             progressRecords={progressRecords}

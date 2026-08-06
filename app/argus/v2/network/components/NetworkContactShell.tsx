@@ -13,11 +13,9 @@ import {
   MY_VALUE_ICONS,
   MY_VALUE_OPTIONS,
   RELATIONSHIP_REASON_OPTIONS,
-  RELATIONSHIP_STATUS_OPTIONS,
   attentionSummaryMessage,
   countOfFive,
   relationshipReasonLabel,
-  relationshipStatusLabel,
   type DerivedRelationshipAttention,
 } from "@/lib/argus/network-relationship-metrics";
 import type {
@@ -25,6 +23,7 @@ import type {
   NetworkContactRelatedOrg,
   NetworkContactTimelineItem,
 } from "@/lib/argus/v2/network-contact-loaders";
+import type { V2NetworkBrowseStatus } from "@/lib/argus/v2/network-browse-utils";
 import { initialsFromName } from "@/lib/argus/v2/network-contact-loaders";
 import { personHasContactEvidence } from "@/lib/argus/network-dialogue";
 import { V2Badge, V2Card } from "@/app/argus/v2/components/v2-ui";
@@ -96,8 +95,13 @@ function ValueCheckboxList({
   );
 }
 
-function AttentionPanel({ attention }: { attention: DerivedRelationshipAttention }) {
-  const statusOption = RELATIONSHIP_STATUS_OPTIONS.find((option) => option.key === attention.status);
+function AttentionPanel({
+  networkStatus,
+  attention,
+}: {
+  networkStatus: V2NetworkBrowseStatus;
+  attention: DerivedRelationshipAttention;
+}) {
   const reasonOption = RELATIONSHIP_REASON_OPTIONS.find((option) => option.key === attention.reason);
 
   return (
@@ -107,19 +111,22 @@ function AttentionPanel({ attention }: { attention: DerivedRelationshipAttention
       </div>
       <div className="space-y-4 p-4">
         <div>
-          <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Relationship status</p>
+          <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Network status</p>
           <div className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200">
-            <span>{attention.status === "healthy" ? "💚" : attention.status === "needs_attention" ? "⚠️" : "💤"}</span>
-            <span>{statusOption?.label ?? relationshipStatusLabel(attention.status)}</span>
+            <span>{networkStatus}</span>
           </div>
+          <p className="mt-1.5 text-[11px] text-zinc-600">
+            Same vocabulary as Network browse — derived from evidence and follow-ups.
+          </p>
         </div>
-        <div>
-          <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Reason</p>
-          <div className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200">
-            <span>✓</span>
-            <span>{reasonOption?.label ?? relationshipReasonLabel(attention.reason)}</span>
+        {attention.reason !== "no_action_required" ? (
+          <div>
+            <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Why it surfaced</p>
+            <div className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200">
+              <span>{reasonOption?.label ?? relationshipReasonLabel(attention.reason)}</span>
+            </div>
           </div>
-        </div>
+        ) : null}
         <div className="rounded-xl border border-sky-500/20 bg-sky-500/10 px-3 py-3 text-[12px] leading-relaxed text-sky-100/90">
           {attentionSummaryMessage(attention)}
         </div>
@@ -349,6 +356,7 @@ function RelationshipTab({
   entity,
   contactValue,
   myValue,
+  networkStatus,
   attention,
   hasContact,
   isPending,
@@ -357,6 +365,7 @@ function RelationshipTab({
   entity: Entity;
   contactValue: string[];
   myValue: string[];
+  networkStatus: V2NetworkBrowseStatus;
   attention: DerivedRelationshipAttention;
   hasContact: boolean;
   isPending: boolean;
@@ -381,7 +390,7 @@ function RelationshipTab({
           <p className="mt-1 text-[11px] text-zinc-600">Post-hoc value exchange — not a pre-contact scorecard.</p>
         </div>
         <p className="text-xs tabular-nums text-zinc-500">
-          Strategic {countOfFive(contactValue)}/5 · Yours {countOfFive(myValue)}/5
+          Contact value {countOfFive(contactValue)} · Yours {countOfFive(myValue)}
         </p>
       </div>
       <form action={onSave}>
@@ -393,7 +402,7 @@ function RelationshipTab({
             icons={CONTACT_VALUE_ICONS}
             fieldName="contactValue"
             selected={contactValue}
-            footerLabel="Strategic Value"
+            footerLabel="Contact value"
             footerTone="blue"
           />
           <ValueCheckboxList
@@ -405,7 +414,7 @@ function RelationshipTab({
             footerLabel="My Value"
             footerTone="green"
           />
-          <AttentionPanel attention={attention} />
+          <AttentionPanel networkStatus={networkStatus} attention={attention} />
         </div>
         <div className="mt-4 flex justify-end">
           <button
@@ -629,6 +638,7 @@ export function NetworkContactShell({
           entity={entity}
           contactValue={contactValue}
           myValue={myValue}
+          networkStatus={page.networkStatus}
           attention={page.attention}
           hasContact={hasContact}
           isPending={isPending}

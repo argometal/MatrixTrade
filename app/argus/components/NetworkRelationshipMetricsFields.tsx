@@ -58,7 +58,7 @@ export function NetworkRelationshipMetricsFields({ entity }: { entity: Entity })
 
   return (
     <div className="space-y-4">
-      <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Relationship metrics</p>
+      <p className="text-xs font-medium uppercase tracking-wider text-zinc-500">Relationship marks</p>
 
       <CheckboxGroup
         title="Contact Value"
@@ -79,8 +79,8 @@ export function NetworkRelationshipMetricsFields({ entity }: { entity: Entity })
       />
 
       <p className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3 text-[11px] leading-snug text-zinc-600">
-        Relationship status and reason update automatically from follow-ups, linked inbox items, and interaction
-        history when you save contact/my value changes.
+        Network status (New / Active / Dormant / Lost / Archived) updates from follow-ups, linked inbox items, and
+        interaction history — it is derived, not edited here.
       </p>
     </div>
   );

@@ -1,8 +1,5 @@
-import type { ArgusData, Entity, InboxItem, Log } from "./types";
-import { referenceKindFromNotes } from "./reference-types";
-import { getLinkedInboxForEntity } from "./inbox-entity-links";
+import type { Entity, InboxItem, Log } from "./types";
 import { getProjectHomeCounts } from "./project-evidence-scope";
-import { buildEntityIntelligence, type EntityIntelligence } from "./network-intelligence";
 
 export type HomeActivityItem =
   | { type: "entity"; entity: Entity; at: string }
@@ -31,13 +28,6 @@ export interface HomeProjectSummary {
   linkedCount: number;
 }
 
-export interface HomeNetworkSummary {
-  intelligence: EntityIntelligence;
-  logCount: number;
-  inboxCount: number;
-  linkedCount: number;
-}
-
 export function buildHomeProjectSummaries(
   entities: Entity[],
   logs: Log[],
@@ -51,43 +41,6 @@ export function buildHomeProjectSummaries(
       return { entity, ...counts };
     })
     .sort((a, b) => b.linkedCount - a.linkedCount || a.entity.name.localeCompare(b.entity.name));
-}
-
-export function buildHomeNetworkSummaries(
-  data: ArgusData,
-  entities: Entity[],
-  inboxItems: InboxItem[],
-  includePrivate: boolean,
-  today: string,
-  limit: number
-): HomeNetworkSummary[] {
-  return entities
-    .filter((e) => {
-      if (e.type === "person" || e.type === "company") return true;
-      if (e.type === "other") {
-        const kind = referenceKindFromNotes(e.notes);
-        return kind === "topic" || kind === "event";
-      }
-      return false;
-    })
-    .map((entity) => {
-      const intelligence = buildEntityIntelligence(data, entity, includePrivate, today);
-      const inboxCount = getLinkedInboxForEntity(inboxItems, entity.id, includePrivate).length;
-      return {
-        intelligence,
-        logCount: intelligence.logCount,
-        inboxCount,
-        linkedCount: intelligence.logCount + inboxCount,
-      };
-    })
-    .sort(
-      (a, b) =>
-        b.intelligence.attentionScore - a.intelligence.attentionScore ||
-        (b.intelligence.lastMeaningfulInteraction ?? "").localeCompare(
-          a.intelligence.lastMeaningfulInteraction ?? ""
-        )
-    )
-    .slice(0, limit);
 }
 
 export function countActiveProjects(projects: HomeProjectSummary[]): number {

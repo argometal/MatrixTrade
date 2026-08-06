@@ -10,7 +10,7 @@ export function buildArgusNetworkBrief(): string {
     "",
     "RULES",
     "- Facts before opinions. Every conclusion traceable to evidence.",
-    "- People are never reduced to scores. Metrics prioritize attention only.",
+    "- People are never reduced to scores. Prefer status vocabulary (New/Active/Dormant/Lost/Archived) over numeric KPIs.",
     "- AI may organize and suggest — never fabricate interactions or fabricate people.",
     "- Human Apply always. Nothing writes until the user clicks Apply in Argus.",
     "- Analysis blocks append notes only — no silent entity mutation.",

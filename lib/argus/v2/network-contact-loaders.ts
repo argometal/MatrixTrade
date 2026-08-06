@@ -8,7 +8,8 @@ import {
   type DerivedRelationshipAttention,
 } from "../network-relationship-metrics";
 import { getInboxCardsForEntity } from "../inbox-entity-links";
-import { entitiesByKind } from "./hierarchy";
+import { entitiesByKind, personEvidenceScope } from "./hierarchy";
+import { deriveNetworkStatus, type V2NetworkBrowseStatus } from "./network-browse-utils";
 
 export type NetworkContactTimelineItem =
   | {
@@ -43,6 +44,8 @@ export type NetworkContactPageData = {
   relatedProjects: Array<{ id: string; name: string; href: string }>;
   relatedTopics: Array<{ id: string; name: string; href: string }>;
   intel: EntityIntelligence;
+  /** Single Network status vocabulary (browse + contact). */
+  networkStatus: V2NetworkBrowseStatus;
   attention: DerivedRelationshipAttention;
   timeline: NetworkContactTimelineItem[];
   fileCount: number;
@@ -188,6 +191,14 @@ export function buildNetworkContactPageData(input: {
   const intel = buildEntityIntelligence(data, entity, includePrivate, today);
   const pendingInboxCount = getInboxCardsForEntity(inboxItems, entity.id, includePrivate).length;
   const attention = deriveRelationshipAttention({ entity, intel, pendingInboxCount, today });
+  const scope = personEvidenceScope(data, inboxItems, entity, includePrivate);
+  const networkStatus = deriveNetworkStatus({
+    person: entity,
+    totalEvidence: scope.totalCount,
+    daysSinceLast: intel.daysSinceLastInteraction,
+    openFollowUps: intel.openFollowUps,
+    today,
+  });
   const organization = personOrganization(data, entity);
   const fileCount = logs.reduce((sum, log) => sum + log.attachmentIds.length, 0);
 
@@ -206,6 +217,7 @@ export function buildNetworkContactPageData(input: {
     relatedProjects: relatedProjects(data, entity.id),
     relatedTopics: relatedTopics(data, entity),
     intel,
+    networkStatus,
     attention,
     timeline: buildTimeline(logs, enrichedInbox),
     fileCount,

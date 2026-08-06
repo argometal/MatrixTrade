@@ -187,17 +187,6 @@ export type LogInput = Omit<Log, "id" | "createdAt" | "updatedAt">;
 export type InboxItemInput = Omit<InboxItem, "id" | "receivedAt" | "status" | "createdAt" | "convertedLogId">;
 export type RunbookInput = Omit<Runbook, "id" | "createdAt" | "updatedAt">;
 
-export interface EntityNetworkView {
-  entity: Entity;
-  lastInteraction?: string;
-  nextTouch?: string;
-  topics: string[];
-  logCount: number;
-  openFollowUps: number;
-  /** Co-occurring entities from shared journal entries (relationship graph) */
-  relatedEntityIds: string[];
-}
-
 /** Time-varying context slice derived from journal co-mentions */
 export interface EntityContextSlice {
   periodStart: string;

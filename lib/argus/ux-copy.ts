@@ -398,10 +398,14 @@ export const TOPIC_ALIASES = {
   removeAria: (item: string) => `Remove alias ${item}`,
 } as const;
 
-/** Event signals — user-defined markers; copied to evidence on chronicle save. */
+/**
+ * Event Signals — user marks on the event binder.
+ * They become evidence Tags (and thus Patterns) only after chronicle Save copies them onto logs.
+ * Nav triage badges are not Signals.
+ */
 export const EVENT_SIGNALS = {
   heading: "Signals",
-  hint: "Your markers for this event — gaps, quality, follow-ups, or anything you track. Repeats surface as patterns in evidence.",
+  hint: "Marks for this event only. After you Save a chronicle entry, they copy onto that evidence as Tags — Patterns count Tags on evidence, not these binder marks alone.",
   placeholder: "Add signal…",
   add: "Add",
   empty: "No signals yet.",

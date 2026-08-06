@@ -76,6 +76,7 @@ App: https://matrix-trade-theta.vercel.app/argus
 | `10-source-index.md` | Traceability |
 | `11-behavioral-evaluation-review.md` | **Behavioral metrics inventory + refinement recommendations** |
 | `12-evidence-engine-principles-solution.md` | **Sealed principles + concrete solution (Evidence Engine)** |
+| `13-evidence-engine-implementation.md` | **Implementation notes (phases A–D)** |
 | `appendix-*.txt` | Complete file / action lists |
 
 ---

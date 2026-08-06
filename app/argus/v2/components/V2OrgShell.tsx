@@ -59,12 +59,11 @@ export type V2OrgShellProps = {
     lastActivity: string;
     isActiveToday: boolean;
   };
-  relationshipScore: string;
-  relationshipLabel: string;
+  relationshipFacts: Array<{ label: string; value: string }>;
+  networkStatus: "New" | "Active" | "Dormant" | "Lost" | "Archived";
   sparkline: number[];
   chartStartYear: number;
   chartEndYear: number;
-  relationshipMetrics: Array<{ label: string; value: string }>;
   linkedTopics: string[];
   runbooks?: Runbook[];
   progressRecords?: RunbookProgress[];
@@ -97,12 +96,11 @@ export function V2OrgShell(props: V2OrgShellProps) {
     recentProjects,
     tagPatterns,
     stats,
-    relationshipScore,
-    relationshipLabel,
+    networkStatus,
+    relationshipFacts,
     sparkline,
     chartStartYear,
     chartEndYear,
-    relationshipMetrics,
     linkedTopics,
     runbooks = [],
     progressRecords = [],
@@ -219,19 +217,18 @@ export function V2OrgShell(props: V2OrgShellProps) {
 
           <aside className="space-y-4">
             <V2PanelCard>
-              <V2PanelHeader title="Relationship Performance" />
-              <div className="mb-1 flex items-end gap-1.5">
-                <span className="text-4xl font-bold tabular-nums text-zinc-50">{relationshipScore}</span>
-                <span className="pb-1 text-sm text-zinc-500">/ 5</span>
-              </div>
-              <p className="mb-4 text-sm font-semibold text-emerald-400">{relationshipLabel}</p>
+              <V2PanelHeader title="Relationship status" />
+              <p className="mb-1 text-3xl font-bold text-zinc-50">{networkStatus}</p>
+              <p className="mb-4 text-sm text-zinc-500">
+                Derived from evidence dates and follow-ups — same Network vocabulary as people browse.
+              </p>
               <V2RelationshipChart points={sparkline} startYear={chartStartYear} endYear={chartEndYear} />
               <div className="border-t border-zinc-800/80 pt-4">
                 <V2MetricRows
-                  metrics={relationshipMetrics.map((m) => ({
+                  metrics={relationshipFacts.map((m) => ({
                     label: m.label,
                     value: m.value,
-                    highlight: m.value === "High" || m.value === "Strong",
+                    highlight: false,
                   }))}
                 />
               </div>
