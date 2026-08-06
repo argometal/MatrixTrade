@@ -4,10 +4,10 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0805f` |
-| **Commit** | Always `git rev-parse main0805f` after fetch (must match `origin/main`) |
+| **Tag** | `main0806a` |
+| **Commit** | Always `git rev-parse main0806a` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
-| **Date** | 2026-08-05 |
+| **Date** | 2026-08-06 |
 
 ## Sync local (avoid conflicts / lost work)
 
@@ -15,11 +15,14 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0805f
+# optional pin: git checkout main0806a
 ```
 
 ## What this deploy includes
 
+- PR #157: A08 Export JSON; runbooks grid/list/board; section check-all; Turn into section
+- PR #156: Archive is hide (not delete); persist browse view + status chips
+- PR #155: Guest lock calendar + clock pickers for Active from/until and Daily hours
 - PR #152: Guest lock — 30-minute password override + account-wide schedule (`guest_lock_policy_state`; apply `supabase/guest-lock-policy.sql`)
 - PR #150: Guest lock settings reachable from Argus + Trading (no home redirect)
 - PR #147: Network organize (grid/list/board DnD); archive visibility + quiet archive; status chip filters; guest workstation lock
