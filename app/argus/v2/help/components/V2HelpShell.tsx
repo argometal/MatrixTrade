@@ -140,7 +140,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Archive",
-        body: "Archived entities leave default metrics but stay visible on browse boards under the Archived column/filter. Drag off Archived (or Restore) to bring them back. Evidence is never deleted by archive.",
+        body: "Archived hides from Active views — it does not delete. Evidence and links stay. Drag off Archived (or Restore) to bring them back. Delete only happens behind the delete lock. Your board layout and chip filters (Quiet, Empty, Archived, Completed) persist per browser like card order.",
       },
       {
         title: "Guest workstation lock",

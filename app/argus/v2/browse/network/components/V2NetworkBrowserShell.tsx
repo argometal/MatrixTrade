@@ -29,6 +29,12 @@ import {
   readBrowseCardOrder,
   writeBrowseCardOrder,
 } from "@/lib/argus/v2/browse-card-order";
+import {
+  readBrowseViewPrefs,
+  writeBrowseViewPrefs,
+  type BrowseLayoutView,
+} from "@/lib/argus/v2/browse-view-prefs";
+import { BrowseBoardColumnHeader } from "@/app/argus/v2/components/BrowseBoardColumnHeader";
 import { textMatchesBrowseQuery } from "@/lib/argus/v2/browse-filter-utils";
 import { NetworkPanelProvider } from "@/app/argus/v2/network/components/NetworkPanelProvider";
 import { NetworkPanelButton } from "@/app/argus/v2/network/components/NetworkPanelButton";
@@ -569,8 +575,8 @@ export function V2NetworkBrowserShell({
     () => (orgScope ? cards.filter((c) => c.organizationId === orgScope) : cards),
     [cards, orgScope]
   );
-  const [view, setView] = useState<"grid" | "list" | "board">("grid");
-  const [statusTab, setStatusTab] = useState<V2NetworkBrowseStatus | "all">("all");
+  const [view, setViewState] = useState<BrowseLayoutView>("grid");
+  const [statusTab, setStatusTabState] = useState<V2NetworkBrowseStatus | "all">("all");
   const [smartView, setSmartView] = useState<V2NetworkSmartView>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -589,7 +595,29 @@ export function V2NetworkBrowserShell({
     } catch {
       /* ignore */
     }
+    const prefs = readBrowseViewPrefs(ORDER_SCOPE);
+    if (prefs.view) setViewState(prefs.view);
+    if (
+      prefs.status === "all" ||
+      prefs.status === "Active" ||
+      prefs.status === "Dormant" ||
+      prefs.status === "New" ||
+      prefs.status === "Lost" ||
+      prefs.status === "Archived"
+    ) {
+      setStatusTabState(prefs.status);
+    }
   }, []);
+
+  function setView(next: BrowseLayoutView) {
+    setViewState(next);
+    writeBrowseViewPrefs(ORDER_SCOPE, { view: next });
+  }
+
+  function setStatusTab(next: V2NetworkBrowseStatus | "all") {
+    setStatusTabState(next);
+    writeBrowseViewPrefs(ORDER_SCOPE, { status: next });
+  }
 
   function persistOrder(next: string[]) {
     setOrder(next);
@@ -935,13 +963,12 @@ export function V2NetworkBrowserShell({
                       }}
                       onDrop={(event) => onDropBoard(event, column, null)}
                     >
-                      <div className="border-b border-zinc-800/80 px-3 py-2.5">
-                        <h3 className="text-sm font-semibold text-zinc-200">{column}</h3>
-                        <p className="text-[11px] text-zinc-600">{boardGroups[column].length}</p>
-                      </div>
+                      <BrowseBoardColumnHeader column={column} count={boardGroups[column].length} />
                       <div className="min-h-[8rem] space-y-2 p-2">
                         {boardGroups[column].length === 0 ? (
-                          <p className="px-1 py-8 text-center text-xs text-zinc-600">Drop here</p>
+                          <p className="px-1 py-8 text-center text-xs text-zinc-600">
+                            {column === "Archived" ? "Drop to hide (not delete)" : "Drop here"}
+                          </p>
                         ) : (
                           boardGroups[column].map((card) => (
                             <div
