@@ -168,7 +168,7 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 | [obsidian.md](integrations/obsidian.md) | Vault, frontmatter, note body |
 | [chatgpt-bridge.md](integrations/chatgpt-bridge.md) | Export, sync control, ChatGPT role |
 | [cloudflare-worker-bridge.md](integrations/cloudflare-worker-bridge.md) | **Active plan:** Worker + KV snapshot URL for ChatGPT |
-| [vercel-argus-production-handoff.md](integrations/vercel-argus-production-handoff.md) | Vercel + ARGUS production gap |
+| [IA-HANDOFF.md](argusforge/IA-HANDOFF.md) | Apps · ARGUS · ArgusForge runtime (IA) |
 | [argus-storage.md](integrations/argus-storage.md) | **ARGUS persistent storage — ARGUS_DATA_DIR (P0)** |
 | [argus-architecture.md](integrations/argus-architecture.md) | ARGUS accepted architecture (constitution) |
 | [argus-design-principles.md](integrations/argus-design-principles.md) | **ARGUS design principles — gate before UX** |

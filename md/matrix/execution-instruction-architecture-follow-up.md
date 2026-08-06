@@ -9,7 +9,7 @@
 **Spec canónica:** `md/matrix/execution-instruction-spec.md`  
 **Ontología:** `md/matrix/scout-ontology-scoutplan.md`
 
-**Sources reviewed:** PR #132 · PR #125 · `CHAT-HANDOFF.md` · `md/matrix/plan-map-ai-execution-sentence-handoff.md` · repo prompts/snapshots/docs
+**Sources reviewed:** PR #132 · PR #125 · `CHAT-HANDOFF.md` · `md/matrix/execution-instruction-spec.md` · repo prompts/snapshots/docs
 
 ---
 
@@ -303,7 +303,7 @@ Do **not** implement mandatory rejection before #132 merge + #125 reconciliation
 
 ## Related docs
 
-- Entrega #132: `md/matrix/plan-map-ai-execution-sentence-handoff.md`  
+- Entrega #132: `md/matrix/execution-instruction-spec.md`  
 - PR #132: https://github.com/argometal/MatrixTrade/pull/132  
 - PR #125: https://github.com/argometal/MatrixTrade/pull/125  
 

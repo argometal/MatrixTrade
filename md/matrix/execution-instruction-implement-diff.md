@@ -13,7 +13,7 @@
 md/matrix/execution-instruction-spec.md
 md/matrix/scout-ontology-scoutplan.md
 md/matrix/execution-instruction-architecture-follow-up.md
-md/matrix/plan-map-ai-execution-sentence-handoff.md
+md/matrix/execution-instruction-spec.md
 md/matrix/execution-instruction-implement-diff.md   ← este archivo
 CHAT-HANDOFF.md
 lib/scout-execution-instruction.ts

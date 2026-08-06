@@ -260,5 +260,5 @@ Future candidates (not approved): **Calendar** (if Event purpose demands it), **
 | [`argus-storage.md`](argus-storage.md) | Persistent storage — `ARGUS_DATA_DIR`, backup, migration |
 | [`argus-design-principles.md`](argus-design-principles.md) | Constitution — 10 principles |
 | [`argus-chatgpt-handoff.md`](argus-chatgpt-handoff.md) | ChatGPT operational handoff |
-| [`vercel-argus-production-handoff.md`](vercel-argus-production-handoff.md) | Production deployment gap |
+| [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) | Apps · ARGUS · ArgusForge runtime |
 | [`CHATGPT.md`](../../CHATGPT.md) | Repo entry point |

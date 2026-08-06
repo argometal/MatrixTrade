@@ -400,4 +400,4 @@ Email intake sends **base64 in JSON** from Worker (proven up to ~736 KB JPEG).
 - [`supabase-cloud-first.md`](supabase-cloud-first.md) — MatrixTrade migration pattern
 - [`argus-storage.md`](argus-storage.md) — current filesystem model
 - [`argus-email-routing-final.md`](argus-email-routing-final.md) — email routing (working)
-- [`vercel-argus-production-handoff.md`](vercel-argus-production-handoff.md) — prior Vercel gap analysis
+- [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) — current apps / auth runtime (supersedes old Vercel gap handoff)

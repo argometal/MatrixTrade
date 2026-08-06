@@ -24,7 +24,7 @@
 | **Also shipped** | Scout Case list ordered by planned R high→low (`lib/scout-case-sort.ts`) |
 | **Shipped (layered R/risk)** | `lib/layered-entry-risk.ts`; `rules.defaultRiskBudget`; Plan map R/risk fill states; MAF layered fill fields; Mechanics rev **24→25** |
 | **Shipped (Family B bull-trend)** | `lib/family-b-assessment.ts`; Scout `FamilyBBullTrendPanel`; `familyBAssessment` on decision-update; Analyze package section |
-| **Shipped (Scout Learning P0 visibility)** | Planning **Scout learning queue** + `learningFocusPlanId` — retry sync on PLAN-006 when PLAN-008 is live; `/planning?plan=PLAN-xxx` from Needs Attention; doc [`scout-learning-p0-visibility-handoff.md`](scout-learning-p0-visibility-handoff.md) |
+| **Shipped (Scout Learning P0 visibility)** | Planning **Scout learning queue** + `learningFocusPlanId` — retry sync on PLAN-006 when PLAN-008 is live; `/planning?plan=PLAN-xxx` from Needs Attention; P0 shipped on main — see [`scout-learning-circuit-audit-handoff.md`](scout-learning-circuit-audit-handoff.md) |
 
 ---
 

@@ -29,7 +29,7 @@ No ARGUS. Fuente de verdad: data/trades.json + Obsidian local.
 **The Library (architecture):** [`md/README.md`](md/README.md)  
 **Product research (read before design):** [`md/research/trading-journal-product-research.md`](md/research/trading-journal-product-research.md)  
 **Bridge detail:** [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md)  
-**Vercel + ARGUS production (OPEN):** [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md)  
+**Apps · ARGUS · ArgusForge (runtime):** [`md/argusforge/IA-HANDOFF.md`](md/argusforge/IA-HANDOFF.md)  
 **ARGUS for ChatGPT:** [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md)  
 **ARGUS architecture (constitution):** [`md/integrations/argus-architecture.md`](md/integrations/argus-architecture.md) · [`md/integrations/argus-design-principles.md`](md/integrations/argus-design-principles.md) · [`md/argus/ai-charter.md`](md/argus/ai-charter.md)
 
@@ -44,7 +44,7 @@ No ARGUS. Fuente de verdad: data/trades.json + Obsidian local.
 | ARGUS empty on Vercel | `data/argus/` gitignored; no persistent disk on serverless |
 
 **Stable production URL:** `https://matrix-trade-theta.vercel.app` (not the deployment hash URL).  
-**Full diagnosis + fix checklist:** [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md)
+**Deploy pin:** [`md/integrations/current-deploy.md`](md/integrations/current-deploy.md)
 
 ---
 
@@ -362,7 +362,7 @@ User reviews in MatrixTrade `/inbox` — **never auto-applied**.
 | [`md/argus/v2-design-checklist.md`](md/argus/v2-design-checklist.md) | v2 UI QA checklist — update on every design change |
 | [`md/argus/checklist-protocol.md`](md/argus/checklist-protocol.md) | How to maintain the v2 checklist |
 | [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md) | ARGUS Journal + Network + inbox for ChatGPT |
-| [`md/integrations/vercel-argus-production-handoff.md`](md/integrations/vercel-argus-production-handoff.md) | Vercel + ARGUS production gap |
+| [`md/argusforge/IA-HANDOFF.md`](md/argusforge/IA-HANDOFF.md) | Apps · ARGUS · ArgusForge runtime handoff |
 | [`app/api/argus/export/route.ts`](app/api/argus/export/route.ts) | Evidence Vault ZIP export (v1) |
 | [`lib/argus/export/`](lib/argus/export/) | Export collector, manifest, ZIP writer |
 | [`lib/argus/network.ts`](lib/argus/network.ts) | Network view (read-only) |

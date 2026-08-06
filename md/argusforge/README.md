@@ -1,17 +1,22 @@
 # ArgusForge — Library index
 
+**IA runtime handoff (read first):** [`IA-HANDOFF.md`](IA-HANDOFF.md)
+
 **Role:** Index for ArgusForge (AF) documentation inside MatrixTrade.  
+**Runtime truth for agents:** [`IA-HANDOFF.md`](IA-HANDOFF.md) · [`capability-map.md`](capability-map.md)  
 **Sealed vision contract (prevails):** [`argusforge-contract.md`](argusforge-contract.md)  
 **Sealed evolution addendum:** [`perpetual-evolution-contract.md`](perpetual-evolution-contract.md)  
 **Working interface checklist:** [`af03-chaos-interface-contract.md`](af03-chaos-interface-contract.md)  
 **Technical Phase 0:** [`phase-0-architecture.md`](phase-0-architecture.md)  
 **Vault detail:** [`vault-training-layer-contract.md`](vault-training-layer-contract.md)  
-**Rule:** Do not contradict the sealed contracts. No AF implementation is final. Do not reduce AF to a notes app, universal memory, or a single-AI chat wrapper. Do not treat `/forge/chaos` as functional Chaos.
+**Rule:** Do not contradict the sealed contracts. No AF implementation is final. Do not reduce AF to a notes app, universal memory, or a single-AI chat wrapper. Prefer runtime docs over sealed vision when they diverge on shipped surfaces.
 
 ## Documents
 
 | Document | Status | Responsibility |
 |----------|--------|----------------|
+| [IA-HANDOFF.md](IA-HANDOFF.md) | **Living — IA / agents** | Apps map, auth, Forge ontology, open debt |
+| [capability-map.md](capability-map.md) | **Living** | Capability × status vocabulary |
 | [argusforge-contract.md](argusforge-contract.md) | **Canonical — SEALED** | Vision, mission, formation transfer, component duties, success criteria |
 | [perpetual-evolution-contract.md](perpetual-evolution-contract.md) | **Canonical — SEALED addendum** | Perpetual evolution; evidence; reversible change; user agency |
 | [af03-chaos-interface-contract.md](af03-chaos-interface-contract.md) | **Working contract — checklist** | Minimal Chaos interfaces → Vault boundary; completion Definition of Done |
