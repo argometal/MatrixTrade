@@ -65,6 +65,7 @@ Use these labels in docs and checklists. Update when reality changes.
 8. [`knowledge-execution-model.md`](knowledge-execution-model.md) — Evidence registration, entities, Execution
 9. [`timeline-vision.md`](timeline-vision.md) — Timeline scope and placement
 10. [`event-chronicle-v2.md`](event-chronicle-v2.md) — Event append-only chronicle (Note → Chronicle)
+10b. [`event-topic-signals-metrics-ia-handoff.md`](event-topic-signals-metrics-ia-handoff.md) — **Proposed** IA: Signals/Aliases ontology + topic metric rollup
 11. [`design-matrix-stage.md`](design-matrix-stage.md) — org / project / person lenses
 12. [`product-flow-proposal.md`](product-flow-proposal.md) — evidence → relations → narrative
 13. [`v2-hierarchy-implementation-report.md`](v2-hierarchy-implementation-report.md) — **implemented** linking rules + code map
@@ -162,6 +163,9 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 | [checklist-protocol.md](checklist-protocol.md) | Mandatory process |
 | [create-link-mobile-checklist.md](create-link-mobile-checklist.md) | Mobile QA |
 | [changes-numbered.md](changes-numbered.md) | Change log |
+| [vocabulary-policy.md](vocabulary-policy.md) | Canonical — Topic / Tag / Alias / Signal |
+| [tag-patterns-vision.md](tag-patterns-vision.md) | Canonical — Patterns from evidence Tags only |
+| [event-topic-signals-metrics-ia-handoff.md](event-topic-signals-metrics-ia-handoff.md) | **Proposed** — Event Signals vs Topic Aliases + metric rollup (awaiting IA) |
 
 ### Delivery & export
 
