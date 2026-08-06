@@ -75,6 +75,7 @@ App: https://matrix-trade-theta.vercel.app/argus
 | `09-open-items.md` | Known debt already in repo |
 | `10-source-index.md` | Traceability |
 | `11-behavioral-evaluation-review.md` | **Behavioral metrics inventory + refinement recommendations** |
+| `12-evidence-engine-principles-solution.md` | **Sealed principles + concrete solution (Evidence Engine)** |
 | `appendix-*.txt` | Complete file / action lists |
 
 ---
