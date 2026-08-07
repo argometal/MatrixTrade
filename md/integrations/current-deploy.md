@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807c` |
-| **Commit** | Always `git rev-parse main0807c` after fetch (must match `origin/main`) |
+| **Tag** | `main0807d` |
+| **Commit** | Always `git rev-parse main0807d` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-07 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,13 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807c
+# optional pin: git checkout main0807d
 ```
 
 ## What this deploy includes
 
+- PR #171: Stop ghost chronicle notes on every Event open (idempotent legacy migration)
+- PR #170: Clean Argus/trading login — drop Work Tracker tagline and guest-lock banner
 - PR #169: Guest lock daily hours use this computer’s local timezone (not server UTC)
 - PR #168: Chronicle note delete — PIN unlock; remove per-row TOTP env legend
 - PR #167: Chronicle multi-select note delete + PIN/authenticator lock (Events, Topics, Network)
