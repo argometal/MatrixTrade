@@ -417,6 +417,11 @@ export const DELETE_AUTH = {
   deleteInboxConfirm: "Delete this inbox item permanently? Attachments will be removed.",
   deleteLinkedConfirm:
     "This email is linked to a topic, event, or organization. Delete permanently? Recoverable from backup only.",
+  deleteNote: "Delete note",
+  deleteNoteConfirm:
+    "Delete this note from the chronicle? Soft-delete — recoverable from backup only. Attachments are removed.",
+  deleteNotesConfirm: (count: number) =>
+    `Delete ${count} note${count === 1 ? "" : "s"} from the chronicle? Soft-delete — recoverable from backup only. Attachments are removed.`,
   unlockCode: "Unlock delete (5 min)",
   unlockAuthenticator: "Unlock with authenticator",
   codeTitle: "Enter deletion code",

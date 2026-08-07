@@ -1512,6 +1512,36 @@ export async function deleteLogAction(formData: FormData): Promise<void> {
   redirect(returnTo.startsWith("/argus/") ? returnTo : "/argus/v2");
 }
 
+/** Soft-delete multiple chronicle notes — same delete lock as single note / inbox. */
+export async function bulkDeleteLogsAction(
+  logIds: string[]
+): Promise<
+  | { ok: true; count: number }
+  | { error: "delete_code_locked" | "delete_auth_locked" | "totp_not_configured" }
+> {
+  await requireArgusSession();
+  const data = await readArgus();
+  const ids = [...new Set(logIds.filter(Boolean))];
+
+  for (const id of ids) {
+    const log = await getLog(id, true);
+    if (!log) continue;
+    const gate = await assertDeleteAllowed(data.entities, log.entityIds);
+    if ("error" in gate) return { error: gate.error };
+  }
+
+  let count = 0;
+  for (const id of ids) {
+    const deleted = await deleteLog(id);
+    if (deleted) count += 1;
+  }
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/events");
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/browse/network");
+  return { ok: true, count };
+}
+
 export async function deleteEntityAction(formData: FormData): Promise<void> {
   await deleteEntityV2Action(formData);
 }

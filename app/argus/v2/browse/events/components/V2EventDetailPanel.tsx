@@ -21,9 +21,9 @@ import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnl
 import { V2EventSignalEditor } from "./V2EventSignalEditor";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
 import {
-  V2ChronicleNoteDeleteButton,
+  V2ChronicleSelectableList,
   chronicleLogIdFromEvidenceId,
-} from "@/app/argus/v2/components/V2ChronicleNoteDeleteButton";
+} from "@/app/argus/v2/components/V2ChronicleSelectableList";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
@@ -342,46 +342,47 @@ export function V2EventDetailPanel({
                   ))}
                 </div>
               </div>
-              {filteredEvidence.length === 0 ? (
-                <p className="text-sm text-zinc-500">
-                  {selected.evidence.length === 0
-                    ? "No entries yet. Write a note, attach files, or link an email."
-                    : "No items match this filter."}
-                </p>
-              ) : (
-                <ul className="space-y-2">
-                  {filteredEvidence.map((item) => {
-                    const noteId = chronicleLogIdFromEvidenceId(item.id);
-                    return (
-                      <li key={item.id}>
-                        <div className="flex items-stretch gap-2 rounded-xl border border-zinc-800/80 transition hover:border-zinc-700">
-                          <Link
-                            href={item.href}
-                            target={item.kind === "photo" ? "_blank" : undefined}
-                            className="flex min-w-0 flex-1 items-start gap-3 px-3 py-3"
-                          >
-                            <span className="mt-0.5 text-sm text-zinc-500">
-                              <EvidenceIcon kind={item.kind} />
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block text-sm font-medium text-zinc-100">{item.title}</span>
-                              <span className="block text-xs text-zinc-500">{item.meta}</span>
-                            </span>
-                            <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-600">
-                              {item.kind === "journal" ? "note" : item.kind}
-                            </span>
-                          </Link>
-                          {noteId ? (
-                            <div className="flex items-center pr-2">
-                              <V2ChronicleNoteDeleteButton logId={noteId} returnTo={returnTo} />
-                            </div>
-                          ) : null}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+              <V2ChronicleSelectableList
+                key={selected.id}
+                returnTo={returnTo}
+                requiresAuthenticator
+                deleteUnlocked={deleteGate.deleteUnlocked}
+                deleteAuthUnlocked={deleteGate.deleteAuthUnlocked}
+                deleteCodeConfigured={deleteGate.deleteCodeConfigured}
+                totpConfigured={deleteGate.totpConfigured}
+                deleteAuthConfigured={deleteGate.deleteAuthConfigured}
+                deleteError={deleteGate.deleteError}
+                deleteAuthError={deleteGate.deleteAuthError}
+                totpRequired={deleteGate.totpRequired}
+                empty={
+                  <p className="text-sm text-zinc-500">
+                    {selected.evidence.length === 0
+                      ? "No entries yet. Write a note, attach files, or link an email."
+                      : "No items match this filter."}
+                  </p>
+                }
+                items={filteredEvidence.map((item) => ({
+                  key: item.id,
+                  logId: chronicleLogIdFromEvidenceId(item.id),
+                  title: item.title,
+                  href: item.href,
+                  external: item.kind === "photo",
+                  body: (
+                    <>
+                      <span className="mt-0.5 text-sm text-zinc-500">
+                        <EvidenceIcon kind={item.kind} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium text-zinc-100">{item.title}</span>
+                        <span className="block text-xs text-zinc-500">{item.meta}</span>
+                      </span>
+                      <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-600">
+                        {item.kind === "journal" ? "note" : item.kind}
+                      </span>
+                    </>
+                  ),
+                }))}
+              />
             </div>
           ) : null}
 
