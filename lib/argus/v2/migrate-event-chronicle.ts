@@ -15,6 +15,16 @@ function sameTagSet(a: string[], b: string[]): boolean {
   return left.every((tag, i) => tag === right[i]);
 }
 
+function isTrivialLegacyBody(body: string): boolean {
+  const t = body.trim();
+  if (!t) return true;
+  // Separators / kind echoes that must never become chronicle notes
+  if (/^(---)+$/.test(t)) return true;
+  if (/^Kind:\s*Event\s*$/i.test(t)) return true;
+  if (/^Kind:\s*Event\s*\n---\s*$/i.test(t)) return true;
+  return false;
+}
+
 /**
  * Clear note Tags that were auto-stamped as the full Event Signals set.
  * One note × N signals was inflating Patterns / stats. Safe heuristic: topics === signals.
@@ -49,7 +59,7 @@ export async function repairEventChronicleSignalStampInflation(eventId: string):
 
 /**
  * One-time migration: legacy narrative in entity.notes → first chronicle log.
- * Safe to call during RSC render (no revalidatePath).
+ * Idempotent — safe on every event open / RSC render (no duplicate notes).
  */
 export async function migrateLegacyEventRecordIfNeeded(eventId: string): Promise<boolean> {
   const entity = await getEntity(eventId);
@@ -57,11 +67,30 @@ export async function migrateLegacyEventRecordIfNeeded(eventId: string): Promise
     return false;
   }
 
+  const shell = buildEventShellNotes();
   const legacyBody = legacyEventRecordBody(entity.notes ?? "");
-  if (!legacyBody) {
-    if (entity.notes?.trim() !== buildEventShellNotes()) {
-      await updateEntity(eventId, { notes: buildEventShellNotes() });
+
+  if (!legacyBody || isTrivialLegacyBody(legacyBody)) {
+    if (entity.notes?.trim() !== shell) {
+      await updateEntity(eventId, { notes: shell });
     }
+    return false;
+  }
+
+  const data = await readArgus();
+  const alreadyMigrated = data.logs.some(
+    (log) =>
+      !log.deletedAt &&
+      log.entityIds.includes(eventId) &&
+      (log.body ?? "").trim() === legacyBody
+  );
+
+  // Clear shell FIRST so concurrent page loads do not keep seeing legacy narrative.
+  if (entity.notes?.trim() !== shell) {
+    await updateEntity(eventId, { notes: shell });
+  }
+
+  if (alreadyMigrated) {
     return false;
   }
 
@@ -79,7 +108,6 @@ export async function migrateLegacyEventRecordIfNeeded(eventId: string): Promise
     attachmentIds: [],
     classificationStatus: "classified",
   });
-  await updateEntity(eventId, { notes: buildEventShellNotes() });
   return true;
 }
 
