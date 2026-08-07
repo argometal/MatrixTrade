@@ -2,9 +2,14 @@ import { parseEventRecord } from "./event-record";
 import type { Entity } from "../types";
 import { referenceKindFromNotes } from "../reference-types";
 
-/** Event entity shell — no narrative body; chronicle lives in linked logs. */
+/** Event entity shell — narrative lives in linked logs. `Chronicle: v2` = migration done. */
 export function buildEventShellNotes(): string {
-  return "Kind: Event\n---";
+  return "Kind: Event\nChronicle: v2\n---";
+}
+
+/** True once legacy notes → chronicle migration has completed for this event. */
+export function eventChronicleMigrated(notes: string): boolean {
+  return /^Chronicle:\s*v2\b/im.test(notes);
 }
 
 export function isEventEntityNotes(notes: string): boolean {

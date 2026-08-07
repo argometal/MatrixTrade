@@ -1,6 +1,6 @@
 /**
  * Unlock mode for deleting linked evidence (inbox / chronicle notes).
- * Prefer authenticator when TOTP is configured; otherwise fall back to deletion PIN.
+ * Prefer deletion PIN when configured; authenticator only if PIN is unavailable.
  * Pure — pass configured flags from the server (safe for client components).
  */
 export function resolveLinkedDeleteUnlockMode(input: {
@@ -8,7 +8,7 @@ export function resolveLinkedDeleteUnlockMode(input: {
   totpConfigured: boolean;
   deleteCodeConfigured: boolean;
 }): "none" | "pin" | "totp" {
-  if (input.linkedRequiresAuthenticator && input.totpConfigured) return "totp";
   if (input.deleteCodeConfigured) return "pin";
+  if (input.linkedRequiresAuthenticator && input.totpConfigured) return "totp";
   return "none";
 }
