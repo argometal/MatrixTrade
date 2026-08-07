@@ -5,9 +5,11 @@ import {
   GUEST_LOCK_OVERRIDE_COOKIE,
   GUEST_LOCK_PASSWORD_OVERRIDE_SECONDS,
   GUEST_SESSION_UNTIL_COOKIE,
+  GUEST_TZ_COOKIE,
   guestLoginNeedsOverride,
   guestLoginSessionSeconds,
   guestSessionUntilIso,
+  normalizeGuestTimeZone,
   parseGuestLockPolicy,
   serializeGuestLockPolicy,
   type GuestLockPolicy,
@@ -27,6 +29,7 @@ const SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 const PRIVATE_MAX_AGE = 60 * 60;
 const DELETE_MAX_AGE = 60 * 5;
 const POLICY_MAX_AGE = 60 * 60 * 24 * 365;
+const TZ_MAX_AGE = 60 * 60 * 24 * 365;
 
 function cookieBase() {
   return {
@@ -46,6 +49,26 @@ function mirrorPolicyCookie(jar: Awaited<ReturnType<typeof cookies>>, policy: Gu
     ...cookieBase(),
     maxAge: POLICY_MAX_AGE,
   });
+}
+
+export async function readGuestTimeZone(): Promise<string | undefined> {
+  const jar = await cookies();
+  return normalizeGuestTimeZone(jar.get(GUEST_TZ_COOKIE)?.value);
+}
+
+/** Persist browser IANA timezone for schedule evaluation (readable by JS + middleware). */
+export async function writeGuestTimeZone(raw: string | undefined | null): Promise<string | undefined> {
+  const tz = normalizeGuestTimeZone(raw);
+  if (!tz) return undefined;
+  const jar = await cookies();
+  jar.set(GUEST_TZ_COOKIE, tz, {
+    httpOnly: false,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: TZ_MAX_AGE,
+  });
+  return tz;
 }
 
 /** Canonical account policy (Supabase/json). Cookie used only as migration fallback. */
@@ -70,9 +93,9 @@ export async function writeGuestLockPolicy(policy: GuestLockPolicy): Promise<voi
   mirrorPolicyCookie(jar, policy);
 }
 
-async function sessionMaxAgeSeconds(policy: GuestLockPolicy): Promise<number> {
+async function sessionMaxAgeSeconds(policy: GuestLockPolicy, timeZone?: string): Promise<number> {
   if (!policy.enabled) return SESSION_MAX_AGE;
-  return guestLoginSessionSeconds(policy);
+  return guestLoginSessionSeconds(policy, new Date(), timeZone);
 }
 
 /**
@@ -80,7 +103,7 @@ async function sessionMaxAgeSeconds(policy: GuestLockPolicy): Promise<number> {
  * - Inside schedule → timer hours (no override cookie).
  * - Outside schedule → 30 min override, then logout again.
  */
-async function stampGuestSessionUntil(policy: GuestLockPolicy): Promise<void> {
+async function stampGuestSessionUntil(policy: GuestLockPolicy, timeZone?: string): Promise<void> {
   const jar = await cookies();
   mirrorPolicyCookie(jar, policy);
 
@@ -90,15 +113,16 @@ async function stampGuestSessionUntil(policy: GuestLockPolicy): Promise<void> {
     return;
   }
 
-  const maxAge = guestLoginSessionSeconds(policy);
-  const until = guestSessionUntilIso(policy);
+  const tz = timeZone ?? (await readGuestTimeZone());
+  const maxAge = guestLoginSessionSeconds(policy, new Date(), tz);
+  const until = guestSessionUntilIso(policy, new Date(), tz);
   jar.set(GUEST_SESSION_UNTIL_COOKIE, until, {
     ...cookieBase(),
     httpOnly: false,
     maxAge,
   });
 
-  if (guestLoginNeedsOverride(policy)) {
+  if (guestLoginNeedsOverride(policy, new Date(), tz)) {
     jar.set(GUEST_LOCK_OVERRIDE_COOKIE, until, {
       ...cookieBase(),
       maxAge: GUEST_LOCK_PASSWORD_OVERRIDE_SECONDS,
@@ -108,26 +132,28 @@ async function stampGuestSessionUntil(policy: GuestLockPolicy): Promise<void> {
   }
 }
 
-export async function setTradingSession(): Promise<void> {
+export async function setTradingSession(timeZone?: string): Promise<void> {
   const policy = await readGuestLockPolicy();
   const jar = await cookies();
-  const maxAge = await sessionMaxAgeSeconds(policy);
+  const tz = (await writeGuestTimeZone(timeZone)) ?? (await readGuestTimeZone());
+  const maxAge = await sessionMaxAgeSeconds(policy, tz);
   jar.set(MT_AUTH, "1", {
     ...cookieBase(),
     maxAge: Math.max(60, maxAge),
   });
-  await stampGuestSessionUntil(policy);
+  await stampGuestSessionUntil(policy, tz);
 }
 
-export async function setArgusSession(): Promise<void> {
+export async function setArgusSession(timeZone?: string): Promise<void> {
   const policy = await readGuestLockPolicy();
   const jar = await cookies();
-  const maxAge = await sessionMaxAgeSeconds(policy);
+  const tz = (await writeGuestTimeZone(timeZone)) ?? (await readGuestTimeZone());
+  const maxAge = await sessionMaxAgeSeconds(policy, tz);
   jar.set(ARGUS_AUTH, "1", {
     ...cookieBase(),
     maxAge: Math.max(60, maxAge),
   });
-  await stampGuestSessionUntil(policy);
+  await stampGuestSessionUntil(policy, tz);
 }
 
 export async function setArgusPrivateUnlock(): Promise<void> {
