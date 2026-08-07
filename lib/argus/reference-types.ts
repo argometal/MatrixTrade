@@ -82,7 +82,7 @@ export function buildReferenceNotes(kind: ReferenceKind, notes: string): string 
   if (kind === "event") {
     // Chronicle v2 shell — narrative lives in linked logs, not entity.notes.
     // Keep optional create-time blurb below --- so one-time migration can move it once.
-    return trimmed ? `Kind: Event\n---\n${trimmed}` : "Kind: Event\n---";
+    return trimmed ? `Kind: Event\n---\n${trimmed}` : "Kind: Event\nChronicle: v2\n---";
   }
   if (kind === "topic") {
     const label = REFERENCE_KIND_LABELS[kind];

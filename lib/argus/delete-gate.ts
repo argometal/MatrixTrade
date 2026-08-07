@@ -24,14 +24,22 @@ export async function assertDeleteAllowed(
 ): Promise<{ ok: true } | { error: DeleteGateError }> {
   if (!deleteAuthConfigured()) return { ok: true };
 
+  const pinConfigured = argusDeleteCodeConfigured();
+  const totpConfigured = argusTotpConfigured();
+  const pinUnlocked = pinConfigured && (await hasArgusDeleteUnlock());
+  const authUnlocked = totpConfigured && (await hasArgusDeleteAuthUnlock());
+
   const needsAuthenticator = linkedEntityIdsRequireAuthenticator(entities, linkedEntityIds);
-  if (needsAuthenticator && argusTotpConfigured()) {
-    if (!(await hasArgusDeleteAuthUnlock())) return { error: "delete_auth_locked" };
+
+  // Linked evidence (topic/event/org): PIN or authenticator unlock both suffice.
+  if (needsAuthenticator) {
+    if (pinUnlocked || authUnlocked) return { ok: true };
+    if (pinConfigured) return { error: "delete_code_locked" };
+    if (totpConfigured) return { error: "delete_auth_locked" };
     return { ok: true };
   }
 
-  // No TOTP (or not linked): deletion PIN when configured — no env-legend hard stop.
-  if (argusDeleteCodeConfigured() && !(await hasArgusDeleteUnlock())) {
+  if (pinConfigured && !pinUnlocked) {
     return { error: "delete_code_locked" };
   }
   return { ok: true };

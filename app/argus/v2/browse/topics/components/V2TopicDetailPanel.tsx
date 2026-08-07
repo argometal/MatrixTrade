@@ -340,7 +340,7 @@ export function V2TopicDetailPanel({
               <V2ChronicleSelectableList
                 key={selected.id}
                 returnTo={returnTo}
-                requiresAuthenticator
+                requiresAuthenticator={false}
                 deleteUnlocked={deleteGate.deleteUnlocked}
                 deleteAuthUnlocked={deleteGate.deleteAuthUnlocked}
                 deleteCodeConfigured={deleteGate.deleteCodeConfigured}

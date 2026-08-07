@@ -4,6 +4,7 @@ import { autoTitleFromBody } from "../journal-helpers";
 import {
   buildEventShellNotes,
   eventAnchorDate,
+  eventChronicleMigrated,
   legacyEventRecordBody,
   normalizeEventTags,
 } from "./event-chronicle";
@@ -18,10 +19,10 @@ function sameTagSet(a: string[], b: string[]): boolean {
 function isTrivialLegacyBody(body: string): boolean {
   const t = body.trim();
   if (!t) return true;
-  // Separators / kind echoes that must never become chronicle notes
   if (/^(---)+$/.test(t)) return true;
   if (/^Kind:\s*Event\s*$/i.test(t)) return true;
   if (/^Kind:\s*Event\s*\n---\s*$/i.test(t)) return true;
+  if (/^Chronicle:\s*v2\s*$/i.test(t)) return true;
   return false;
 }
 
@@ -59,7 +60,7 @@ export async function repairEventChronicleSignalStampInflation(eventId: string):
 
 /**
  * One-time migration: legacy narrative in entity.notes → first chronicle log.
- * Idempotent — safe on every event open / RSC render (no duplicate notes).
+ * Idempotent — `Chronicle: v2` marker + prior logs (including soft-deleted) prevent resurrection.
  */
 export async function migrateLegacyEventRecordIfNeeded(eventId: string): Promise<boolean> {
   const entity = await getEntity(eventId);
@@ -68,34 +69,39 @@ export async function migrateLegacyEventRecordIfNeeded(eventId: string): Promise
   }
 
   const shell = buildEventShellNotes();
-  const legacyBody = legacyEventRecordBody(entity.notes ?? "");
+  const notes = entity.notes ?? "";
+
+  // Already migrated — never recreate notes from leftover narrative.
+  if (eventChronicleMigrated(notes)) {
+    if (notes.trim() !== shell) {
+      await updateEntity(eventId, { notes: shell });
+    }
+    return false;
+  }
+
+  const legacyBody = legacyEventRecordBody(notes);
 
   if (!legacyBody || isTrivialLegacyBody(legacyBody)) {
-    if (entity.notes?.trim() !== shell) {
+    if (notes.trim() !== shell) {
       await updateEntity(eventId, { notes: shell });
     }
     return false;
   }
 
   const data = await readArgus();
+  // Include soft-deleted — deleting the migrated note must not resurrect it on reopen.
   const alreadyMigrated = data.logs.some(
-    (log) =>
-      !log.deletedAt &&
-      log.entityIds.includes(eventId) &&
-      (log.body ?? "").trim() === legacyBody
+    (log) => log.entityIds.includes(eventId) && (log.body ?? "").trim() === legacyBody
   );
 
-  // Clear shell FIRST so concurrent page loads do not keep seeing legacy narrative.
-  if (entity.notes?.trim() !== shell) {
-    await updateEntity(eventId, { notes: shell });
-  }
+  // Stamp migrated shell FIRST so concurrent opens stop seeing legacy narrative.
+  await updateEntity(eventId, { notes: shell });
 
   if (alreadyMigrated) {
     return false;
   }
 
   const eventDate = eventAnchorDate(entity);
-  // Legacy body becomes one Note — do not stamp all Event Signals onto it (Patterns inflate).
   await createLog({
     kind: "log",
     date: eventDate,
