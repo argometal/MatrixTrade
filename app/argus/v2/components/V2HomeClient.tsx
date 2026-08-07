@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import type { V2NavCounts } from "@/lib/argus/v2/loaders";
+import type { V2FocusTagStat, V2NavCounts } from "@/lib/argus/v2/loaders";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import type { IntelligenceFrom } from "@/lib/argus/v2/intelligence-nav";
 import { type V2KnowledgeNode } from "@/lib/argus/v2/intelligence-viz";
@@ -14,6 +14,7 @@ import { V2IntelligenceLens, V2IntelligenceLensEmpty } from "./V2IntelligenceLen
 import { V2TabBar } from "./V2TabBar";
 import { V2TagCloud, type V2TagCloudItem } from "./V2TagCloud";
 import { V2SignalTagsEditor } from "./V2SignalTagsEditor";
+import { V2FocusTagPortfolio } from "./V2FocusTagPortfolio";
 import { V2Timeline, V2TimelineRail } from "./V2Timeline";
 import {
   BrowseQuickLinks,
@@ -69,6 +70,7 @@ function IconBox({ icon, boxClass }: { icon: string; boxClass: string }) {
 export function V2HomeClient({
   nodes,
   tags,
+  focusTagPortfolio = [],
   signalTags = [],
   signals,
   initialView,
@@ -79,6 +81,7 @@ export function V2HomeClient({
 }: {
   nodes: V2KnowledgeNode[];
   tags: V2TagCloudItem[];
+  focusTagPortfolio?: V2FocusTagStat[];
   signalTags?: string[];
   signals: V2NavCounts;
   initialView?: string;
@@ -213,13 +216,21 @@ export function V2HomeClient({
             <V2Card className="p-5">
               <V2SectionTitle>Tags</V2SectionTitle>
               <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
-                Flag Focus Tags below (what you are watching). Cloud shows Tags from Notes and emails — Patterns come from
-                those, not from Focus alone.
+                Manage Focus Tags here — flag what you are watching, triage by recency × recurrence (same axes as
+                Portfolio), unflag when done. Cloud below is evidence context; Patterns still come from Note/email Tags.
               </p>
               <div className="mb-4">
                 <V2SignalTagsEditor initialTags={signalTags} returnTo="/argus/v2#tags" compact />
               </div>
-              <V2TagCloud tags={tags.slice(0, 16)} />
+              <div className="mb-4 border-t border-zinc-800/80 pt-4">
+                <V2FocusTagPortfolio rows={focusTagPortfolio} initialFocusTags={signalTags} />
+              </div>
+              <div className="border-t border-zinc-800/80 pt-3">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
+                  Evidence cloud
+                </p>
+                <V2TagCloud tags={tags.slice(0, 16)} />
+              </div>
             </V2Card>
           </div>
 

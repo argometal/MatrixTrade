@@ -6,6 +6,7 @@ import {
   buildV2FollowUps,
   buildV2HomeTimeline,
   buildV2NavCounts,
+  buildV2FocusTagPortfolio,
   buildV2TagCloud,
   parseV2EntityTab,
   V2_ENTITY_TABS,
@@ -33,6 +34,7 @@ export default async function V2HomePage({
   const followUps = buildV2FollowUps(data, entities, includePrivate, today);
   const homeTimeline = buildV2HomeTimeline(data, inboxItems, includePrivate);
   const tags = buildV2TagCloud(data, inboxItems, includePrivate);
+  const focusTagPortfolio = buildV2FocusTagPortfolio(data, inboxItems, includePrivate, today);
   const knowledgeNodes = buildV2KnowledgeNodes(data, inboxItems, includePrivate, today);
   const entityRowsByTab = Object.fromEntries(
     V2_ENTITY_TABS.map((tab) => [
@@ -48,6 +50,7 @@ export default async function V2HomePage({
           <V2HomeClient
             nodes={knowledgeNodes}
             tags={tags}
+            focusTagPortfolio={focusTagPortfolio}
             signalTags={data.signalTags ?? []}
             signals={navSignals}
             initialView={viewParam}
