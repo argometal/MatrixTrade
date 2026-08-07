@@ -1,5 +1,6 @@
 import { loginTradingAction } from "@/app/auth/actions";
 import { MatrixPublicTopBar } from "@/app/components/MatrixPublicTopBar";
+import { GuestLocalTimeZoneField, GuestLocalTimeZoneSync } from "@/app/components/GuestLocalTimeZone";
 
 export default async function LoginPage({
   searchParams,
@@ -11,41 +12,43 @@ export default async function LoginPage({
 
   return (
     <>
+      <GuestLocalTimeZoneSync />
       <MatrixPublicTopBar />
       <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4 pt-16">
-      <h1 className="text-2xl font-semibold">MTA</h1>
-      <p className="mt-1 text-sm text-zinc-500">Trading access</p>
-      {guest_expired === "1" ? (
-        <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-          Guest lock closed this session (outside schedule or time expired). Enter the password for a
-          30-minute unlock to change settings or finish work — then it locks again.
+        <h1 className="text-2xl font-semibold">MTA</h1>
+        <p className="mt-1 text-sm text-zinc-500">Trading access</p>
+        {guest_expired === "1" ? (
+          <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+            Guest lock closed this session (outside schedule or time expired). Enter the password for a
+            30-minute unlock to change settings or finish work — then it locks again.
+          </p>
+        ) : null}
+        <form action={loginTradingAction} className="mt-8 space-y-4">
+          <input type="hidden" name="next" value={next ?? defaultNext} />
+          <GuestLocalTimeZoneField />
+          <label className="block text-sm">
+            <span className="font-medium">Password</span>
+            <input
+              name="password"
+              type="password"
+              required
+              autoComplete="current-password"
+              className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
+            />
+          </label>
+          {error && <p className="text-sm text-red-600">Wrong password.</p>}
+          <button
+            type="submit"
+            className="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
+          >
+            Sign in
+          </button>
+        </form>
+        <p className="mt-6 text-center text-sm text-zinc-500">
+          <a href="/apps" className="underline-offset-2 hover:text-zinc-800 hover:underline">
+            All apps
+          </a>
         </p>
-      ) : null}
-      <form action={loginTradingAction} className="mt-8 space-y-4">
-        <input type="hidden" name="next" value={next ?? defaultNext} />
-        <label className="block text-sm">
-          <span className="font-medium">Password</span>
-          <input
-            name="password"
-            type="password"
-            required
-            autoComplete="current-password"
-            className="mt-1 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
-          />
-        </label>
-        {error && <p className="text-sm text-red-600">Wrong password.</p>}
-        <button
-          type="submit"
-          className="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
-        >
-          Sign in
-        </button>
-      </form>
-      <p className="mt-6 text-center text-sm text-zinc-500">
-        <a href="/apps" className="underline-offset-2 hover:text-zinc-800 hover:underline">
-          All apps
-        </a>
-      </p>
       </div>
     </>
   );

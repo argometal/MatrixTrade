@@ -16,12 +16,13 @@ import { verifyArgusTotp } from "@/lib/auth/totp";
 export async function loginTradingAction(formData: FormData): Promise<void> {
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "/");
+  const timeZone = String(formData.get("timeZone") ?? "");
 
   if (!verifyTradingPassword(password)) {
     redirect(`/login?error=1&next=${encodeURIComponent(next)}`);
   }
 
-  await setTradingSession();
+  await setTradingSession(timeZone);
   redirect(next.startsWith("/") ? next : "/");
 }
 
@@ -37,13 +38,14 @@ function safeArgusReturnPath(next: string): string {
 export async function loginArgusAction(formData: FormData): Promise<void> {
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "/argus/v2");
+  const timeZone = String(formData.get("timeZone") ?? "");
   const returnTo = safeArgusReturnPath(next);
 
   if (!verifyArgusPassword(password)) {
     redirect(`/argus/login?error=1&next=${encodeURIComponent(returnTo)}`);
   }
 
-  await setArgusSession();
+  await setArgusSession(timeZone);
   redirect(returnTo);
 }
 
@@ -127,10 +129,11 @@ export async function saveGuestWorkstationLockAction(formData: FormData): Promis
     indefinite: String(formData.get("indefinite") ?? "1") === "1",
   });
 
-  // Re-stamp session TTLs under the new policy when enabling
+  // Re-stamp session TTLs under the new policy when enabling (uses this computer's tz cookie).
   if (enabled) {
-    await setTradingSession();
-    await setArgusSession();
+    const timeZone = String(formData.get("timeZone") ?? "");
+    await setTradingSession(timeZone);
+    await setArgusSession(timeZone);
   }
 
   redirect(returnTo.startsWith("/") ? returnTo : "/settings/security");

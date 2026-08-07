@@ -6,8 +6,10 @@ import {
   GUEST_LOCK_COOKIE,
   GUEST_LOCK_OVERRIDE_COOKIE,
   GUEST_SESSION_UNTIL_COOKIE,
+  GUEST_TZ_COOKIE,
   isGuestLockWindowOpen,
   isGuestOverrideActive,
+  normalizeGuestTimeZone,
   type GuestLockPolicy,
 } from "@/lib/auth/guest-workstation-lock";
 
@@ -60,6 +62,8 @@ function clearSessionCookies(response: NextResponse): void {
 function guestLockBlocks(policy: GuestLockPolicy, request: NextRequest): boolean {
   if (!policy.enabled) return false;
 
+  const timeZone = normalizeGuestTimeZone(request.cookies.get(GUEST_TZ_COOKIE)?.value);
+
   const override = request.cookies.get(GUEST_LOCK_OVERRIDE_COOKIE)?.value;
   if (isGuestOverrideActive(override)) {
     // 30-min password override — schedule ignored; honor absolute session end.
@@ -71,8 +75,8 @@ function guestLockBlocks(policy: GuestLockPolicy, request: NextRequest): boolean
     return false;
   }
 
-  // No override: enforce account schedule + require a timed session cookie.
-  if (!isGuestLockWindowOpen(policy)) return true;
+  // No override: enforce account schedule (this computer's timezone) + timed session cookie.
+  if (!isGuestLockWindowOpen(policy, new Date(), timeZone)) return true;
   const until = request.cookies.get(GUEST_SESSION_UNTIL_COOKIE)?.value;
   if (!until) return true;
   const ts = Date.parse(until);

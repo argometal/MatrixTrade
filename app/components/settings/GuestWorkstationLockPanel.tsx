@@ -5,6 +5,7 @@ import { saveGuestWorkstationLockAction } from "@/app/auth/actions";
 import type { GuestLockPolicy } from "@/lib/auth/guest-workstation-lock";
 import { GuestLockDateField } from "@/app/components/settings/GuestLockDateField";
 import { GuestLockTimeField } from "@/app/components/settings/GuestLockTimeField";
+import { GuestLocalTimeZoneField } from "@/app/components/GuestLocalTimeZone";
 
 export function GuestWorkstationLockPanel({
   initialPolicy,
@@ -37,10 +38,12 @@ export function GuestWorkstationLockPanel({
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="mx-auto max-w-xl space-y-6 px-4 py-8">
+      <GuestLocalTimeZoneField />
       <header>
         <h1 className="text-2xl font-bold text-zinc-50">Guest workstation lock</h1>
         <p className="mt-2 text-sm text-zinc-500">
-          Like Apple Screen Time: schedule + timer apply on every computer for this account. Outside the
+          Like Apple Screen Time: schedule + timer apply on every computer for this account. Daily hours
+          follow <span className="text-zinc-300">this computer&apos;s local timezone</span>. Outside the
           window, the password unlocks for 30 minutes so you can change settings — then it locks again.
           Same data — not a separate guest user.
         </p>
