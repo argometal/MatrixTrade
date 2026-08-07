@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807n` |
-| **Commit** | Always `git rev-parse main0807n` after fetch (must match `origin/main`) |
+| **Tag** | `main0807o` |
+| **Commit** | Always `git rev-parse main0807o` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-07 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807n
+# optional pin: git checkout main0807o
 ```
 
 ## What this deploy includes
 
+- PR #185: Count legacy topic↔event binders (`linkedTopicIds`/`linkedEventIds`); Topics = status pills + one Filters menu; Chronicle filter removed
 - PR #183: Empty topics respect event links (linked-only → Quiet); Topics status pills only (no duplicate tabs/Filters); deprecate Chronicle filter chips
 - PR #182: Network status chips only (no duplicate metric cards); Intelligence Treemap first / Tags third; Topic↔Event link mirror
 - PR #181: Tag universe on Intelligence → Tags (filter/search/Flag/Remove + recency×recurrence); Portfolio bubble separation
