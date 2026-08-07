@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
@@ -114,6 +115,7 @@ export function V2TopicDetailPanel({
   allProgress?: RunbookProgress[];
   signalTags?: string[];
 } & V2DeleteGateProps) {
+  const router = useRouter();
   const [panelTab, setPanelTab] = useState<PanelTab>("chronicle");
   const [chronicleFilter, setChronicleFilter] = useState<ChronicleFilter>("all");
   const [showGraph, setShowGraph] = useState(true);
@@ -273,7 +275,13 @@ export function V2TopicDetailPanel({
                     icon="📅"
                     label="Events"
                     count={selected.eventCount}
-                    onClick={() => setPanelTab("connections")}
+                    onClick={() => {
+                      if (selected.eventCount > 0) {
+                        router.push(`/argus/v2/browse/events?entity=${selected.id}`);
+                        return;
+                      }
+                      setPanelTab("connections");
+                    }}
                   />
                   <MetricPill
                     icon="🏢"
@@ -404,11 +412,50 @@ export function V2TopicDetailPanel({
 
           {panelTab === "connections" ? (
             <div className="space-y-4">
-              {selected.linkedEntities.length > 0 ? (
-                <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">Linked entities</h3>
+              <div>
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                    Events ({selected.linkedEvents.length})
+                  </h3>
+                  {selected.linkedEvents.length > 0 ? (
+                    <Link
+                      href={`/argus/v2/browse/events?entity=${selected.id}`}
+                      className="text-[11px] font-medium text-violet-300 hover:text-violet-200"
+                    >
+                      Browse related events →
+                    </Link>
+                  ) : null}
+                </div>
+                {selected.linkedEvents.length > 0 ? (
                   <ul className="flex flex-wrap gap-2">
-                    {selected.linkedEntities.map((entity) => (
+                    {selected.linkedEvents.map((event) => (
+                      <li key={event.id}>
+                        <Link
+                          href={event.href}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-100 hover:border-rose-400/50"
+                        >
+                          <span aria-hidden>📅</span>
+                          {event.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-zinc-500">
+                    No related events yet. Use Link to attach events — they appear here from either side.
+                  </p>
+                )}
+              </div>
+
+              {selected.linkedEntities.filter((e) => e.icon !== "📅").length > 0 ? (
+                <div>
+                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+                    Orgs · Projects · People
+                  </h3>
+                  <ul className="flex flex-wrap gap-2">
+                    {selected.linkedEntities
+                      .filter((entity) => entity.icon !== "📅")
+                      .map((entity) => (
                       <li key={entity.id}>
                         <Link
                           href={entity.href}

@@ -236,7 +236,8 @@ export function buildV2EventDetails(
       projectCount: linkCounts.projectCount,
       peopleCount: linkCounts.peopleCount,
       topicCount: nodeCounts.topicCount,
-      linkedEntityIds: [...relatedIds],
+      // Link modal edits outbound only; scopeLinkIds/neighbors drive filters + metrics.
+      linkedEntityIds: [...new Set(event.linkedEntityIds ?? [])],
       linkedEntries,
       relatedEmails,
       evidence,

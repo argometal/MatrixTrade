@@ -995,6 +995,27 @@ export async function createEntityInlineAction(
   return persistNewEntity(kind, name, notes, linkedEntityIds, options);
 }
 
+/**
+ * Topic↔Event binders should reflect each other on both records.
+ * When A links to B, ensure B.linkedEntityIds includes A (add-only; never auto-unlink).
+ */
+async function mirrorTopicEventLinks(centerId: string, linkedIds: string[]): Promise<void> {
+  const data = await readArgus();
+  const center = data.entities.find((e) => e.id === centerId && !e.deletedAt);
+  if (!center) return;
+  const centerKind = referenceKindFromNotes(center.notes ?? "");
+  if (centerKind !== "topic" && centerKind !== "event") return;
+  const targetKind = centerKind === "topic" ? "event" : "topic";
+
+  for (const id of linkedIds) {
+    const other = data.entities.find((e) => e.id === id && !e.deletedAt);
+    if (!other || referenceKindFromNotes(other.notes ?? "") !== targetKind) continue;
+    const current = other.linkedEntityIds ?? [];
+    if (current.includes(centerId)) continue;
+    await updateEntity(other.id, { linkedEntityIds: [...current, centerId] });
+  }
+}
+
 export async function setEntityLinkedIdsAction(entityId: string, linkedEntityIds: string[]): Promise<void> {
   const entity = await getEntity(entityId);
   if (!entity) {
@@ -1019,6 +1040,7 @@ export async function setEntityLinkedIdsAction(entityId: string, linkedEntityIds
         : { linkedEntityIds: validIds };
 
   await updateEntity(entityId, patch);
+  await mirrorTopicEventLinks(entityId, validIds);
   revalidateArgus();
   revalidatePath(`/argus/network/${entityId}`);
   revalidatePath(`/argus/v2/organizations/${entityId}`);
@@ -1086,11 +1108,16 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
         }
       : {}),
   });
+  if (kind === "topic" || kind === "event") {
+    await mirrorTopicEventLinks(entityId, linkedEntityIds);
+  }
 
   revalidateArgus();
   revalidatePath(`/argus/network/${entityId}`);
   revalidatePath(`/argus/v2/network/${entityId}`);
   revalidatePath("/argus/v2/browse/network");
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/browse/events");
   redirect(`/argus/v2/network/${entityId}`);
 }
 

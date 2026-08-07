@@ -807,6 +807,7 @@ export function V2NetworkBrowserShell({
                 />
               </div>
 
+              {/* Status filters once — chips only (no duplicate Total/Active/… metric cards). */}
               <div className="mb-3 flex flex-wrap gap-2">
                 {STATUS_TABS.map((tab) => (
                   <button
@@ -825,41 +826,6 @@ export function V2NetworkBrowserShell({
                     {tab.label} ({tabCount(tab.key)})
                   </button>
                 ))}
-              </div>
-
-              <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                <SummaryPill label="Total People" value={summary.total} />
-                <SummaryPill
-                  label="Active"
-                  value={summary.active}
-                  sub={`${summary.activePercent}%`}
-                  active={statusTab === "Active" && smartView === "all"}
-                  onClick={() => selectStatusTab("Active")}
-                />
-                <SummaryPill
-                  label="Dormant"
-                  value={summary.dormant}
-                  active={statusTab === "Dormant" && smartView === "all"}
-                  onClick={() => selectStatusTab("Dormant")}
-                />
-                <SummaryPill
-                  label="New"
-                  value={summary.new}
-                  active={statusTab === "New" && smartView === "all"}
-                  onClick={() => selectStatusTab("New")}
-                />
-                <SummaryPill
-                  label="Lost"
-                  value={summary.lost}
-                  active={statusTab === "Lost" && smartView === "all"}
-                  onClick={() => selectStatusTab("Lost")}
-                />
-                <SummaryPill
-                  label="Archived"
-                  value={summary.archived}
-                  active={statusTab === "Archived" && smartView === "all"}
-                  onClick={() => selectStatusTab("Archived")}
-                />
               </div>
 
               <div className="mb-3">

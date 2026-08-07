@@ -61,8 +61,12 @@ export interface V2TopicDetail {
   fileCount: number;
   photoCount: number;
   evidenceCount: number;
+  /** Outbound structural ids only — for Link modal (not reverse/neighbors). */
   linkedEntityIds: string[];
+  /** Neighbor set for filters / Connections (outbound + reverse + bridge + co-mention). */
+  neighborEntityIds: string[];
   linkedEntities: V2TopicLinkedEntity[];
+  linkedEvents: Array<{ id: string; name: string; href: string }>;
   aliases: string[];
   lifecycleStatus?: EntityLifecycleStatus;
   hasPrivateEvidence: boolean;
