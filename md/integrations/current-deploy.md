@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807k` |
-| **Commit** | Always `git rev-parse main0807k` after fetch (must match `origin/main`) |
+| **Tag** | `main0807l` |
+| **Commit** | Always `git rev-parse main0807l` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-07 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807k
+# optional pin: git checkout main0807l
 ```
 
 ## What this deploy includes
 
+- PR #181: Tag universe on Intelligence → Tags (filter/search/Flag/Remove + recency×recurrence); Portfolio bubble separation
 - PR #180: Focus Tags portfolio on Home (recency × recurrence, filter, Flag/Unflag)
 - PR #178: Single sidebar expand arrow (remove duplicate TopBar `»`)
 - PR #176: Topic↔Event metric/filter parity + Focus-trigger graph halos (neighbor policy shared both sides; Event attendees = People)
