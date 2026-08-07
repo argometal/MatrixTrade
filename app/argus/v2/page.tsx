@@ -48,6 +48,7 @@ export default async function V2HomePage({
           <V2HomeClient
             nodes={knowledgeNodes}
             tags={tags}
+            signalTags={data.signalTags ?? []}
             signals={navSignals}
             initialView={viewParam}
             followUps={followUps}

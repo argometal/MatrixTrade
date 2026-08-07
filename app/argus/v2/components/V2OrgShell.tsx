@@ -48,6 +48,7 @@ export type V2OrgShellProps = {
   orgProjects: Entity[];
   recentProjects: Array<{ id: string; name: string; status: string; year: string }>;
   tagPatterns: TagPattern[];
+  signalTags?: string[];
   stats: {
     emails: number;
     emailsDelta: string;
@@ -95,6 +96,7 @@ export function V2OrgShell(props: V2OrgShellProps) {
     orgProjects,
     recentProjects,
     tagPatterns,
+    signalTags = [],
     stats,
     networkStatus,
     relationshipFacts,
@@ -354,6 +356,7 @@ export function V2OrgShell(props: V2OrgShellProps) {
           topics={linkedTopics}
           eventsCount={stats.events}
           tagPatterns={tagPatterns}
+          signalTags={signalTags}
           manualTags={(entity.linkedTags ?? []).map((t) => t.trim()).filter(Boolean)}
           tagHref={(tag) => `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`}
         />

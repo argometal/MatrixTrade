@@ -88,7 +88,7 @@ ORPHAN / UNUSED PATHS (defined; no page mount found)
 |---------|---------|---------|---------|----------|-----------|---------------------------|
 | **Evidence Tag** | `Log.topics[]`, `InboxItem.topics[]` | `types.ts` | Capture / triage / chronicle Save | Patterns, intel topics, Deliver filters | Tag pickers, clouds, badges | Yes — Patterns, filters, opportunity regex on topics |
 | **Topic Alias** | Topic `Entity.linkedTags` | `vocabulary-policy.md`, `TOPIC_ALIASES` | `updateTopicAliasesAction` | `buildTopicSignalIndex`, search text | Topic Aliases tab | Yes — inbox entity suggestions |
-| **Event Signal** | Event `Entity.linkedTags` | `EVENT_SIGNALS` copy | `updateEventSignalsAction`; chronicle also copies to `Log.topics` | Patterns **only after** on evidence | Event Signals tab / chips | Indirect — only via evidence Tags after Save |
+| **Focus Tag (Signal)** | Journal `ArgusData.signalTags` | `SIGNAL_TAGS` copy | `updateSignalTagsAction` / `toggleSignalTagAction` — not stamped onto Notes | Highlight when Pattern matches | Home → Tags · pattern/cloud highlight | Indirect — watchlist only; Patterns still from evidence Tags |
 | **Entity.alias** | `Entity.alias` string | `types.ts` | Entity edit | Display / search | Subtitles | Display/search only |
 | **contactValue** | `Entity.contactValue[]` | `network-relationship-metrics.ts` | Entity update / AI apply | `contactValueWeight` → health/attention | Contact metrics UI | Yes — grace windows |
 | **myValue** | `Entity.myValue[]` | same | same | Display / AI context | Contact metrics UI | No scoring use found |
@@ -380,7 +380,7 @@ Prefer removal and consolidation. No new behavioral model.
 | Intelligence viz | `lib/argus/v2/intelligence-viz.ts` |
 | Nav counts | `lib/argus/v2/loaders.ts` `buildV2NavCounts` |
 | Types | `lib/argus/types.ts` |
-| Event signal actions | `app/argus/actions.ts` (`updateEventSignalsAction`, `appendEventChronicleEntryAction`) |
+| Focus Tag actions | `app/argus/actions.ts` (`updateSignalTagsAction`, `toggleSignalTagAction`, `appendEventChronicleEntryAction`) |
 | Known weaknesses | `md/argus/README.md` |
 
 ---

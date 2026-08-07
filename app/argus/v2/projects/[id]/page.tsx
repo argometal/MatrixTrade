@@ -132,6 +132,7 @@ export default async function V2ProjectPage({
                 {page.tagPatterns.length > 0 ? (
                   <V2TagPatternBadges
                     patterns={page.tagPatterns}
+                    signalTags={data.signalTags ?? []}
                     className="mt-3"
                     tagHref={(tag) =>
                       `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&project=${entity.id}`
@@ -194,6 +195,7 @@ export default async function V2ProjectPage({
             linkedTopics={page.linkedTopics}
             linkedEventsCount={page.linkedEventsCount}
             tagPatterns={page.tagPatterns}
+            signalTags={data.signalTags ?? []}
             keyMetrics={page.keyMetrics}
             org={page.org ? { id: page.org.id, name: page.org.name } : undefined}
             stats={page.stats}

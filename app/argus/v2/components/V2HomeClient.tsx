@@ -13,6 +13,7 @@ import { V2HomePageHeader } from "./V2HomePulse";
 import { V2IntelligenceLens, V2IntelligenceLensEmpty } from "./V2IntelligenceLens";
 import { V2TabBar } from "./V2TabBar";
 import { V2TagCloud, type V2TagCloudItem } from "./V2TagCloud";
+import { V2SignalTagsEditor } from "./V2SignalTagsEditor";
 import { V2Timeline, V2TimelineRail } from "./V2Timeline";
 import {
   BrowseQuickLinks,
@@ -68,6 +69,7 @@ function IconBox({ icon, boxClass }: { icon: string; boxClass: string }) {
 export function V2HomeClient({
   nodes,
   tags,
+  signalTags = [],
   signals,
   initialView,
   followUps,
@@ -77,6 +79,7 @@ export function V2HomeClient({
 }: {
   nodes: V2KnowledgeNode[];
   tags: V2TagCloudItem[];
+  signalTags?: string[];
   signals: V2NavCounts;
   initialView?: string;
   followUps: FollowUpItem[];
@@ -209,6 +212,9 @@ export function V2HomeClient({
           <div id="tags">
             <V2Card className="p-5">
               <V2SectionTitle>Tags</V2SectionTitle>
+              <div className="mb-4">
+                <V2SignalTagsEditor initialTags={signalTags} returnTo="/argus/v2#tags" compact />
+              </div>
               <V2TagCloud tags={tags.slice(0, 16)} />
             </V2Card>
           </div>

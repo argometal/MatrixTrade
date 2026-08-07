@@ -23,7 +23,7 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 | Dates / follow-ups | log dates, `followUpDate`, project start/end |
 | Entities / Topics / Events | `Entity` (+ reference kind in notes) |
 | Contact / my value marks | `Entity.contactValue[]`, `Entity.myValue[]` |
-| Event Signals (binder marks) | Event `Entity.linkedTags[]` — binder only |
+| Focus Tags (flagged Signals) | Journal `ArgusData.signalTags[]` — highlight-critical watchlist |
 | Topic Aliases | Topic `Entity.linkedTags[]` |
 
 **Not persisted as metrics:** Patterns, Network status, attention sort keys, health bands, strength%, outcomeScore.
@@ -54,7 +54,7 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 
 `buildTagPatternsForScope` — Tags on evidence in scope, count ≥ 3, recent within 90d.
 
-Event **Signals** stay on the event binder. They do **not** auto-copy onto every chronicle Note (that inflated Patterns). Add Tags on a Note when that entry should count toward Patterns.
+**Focus Tags** (`signalTags`) are a journal-level watchlist. When flagged, they highlight as critical focus in Patterns / tag cloud. They do **not** auto-copy onto evidence (that would inflate Patterns). Add Tags on a Note when that entry should count toward Patterns.
 
 Topic **Aliases** are vocabulary for match/suggest — never Patterns.
 
@@ -62,7 +62,7 @@ Topic **Aliases** are vocabulary for match/suggest — never Patterns.
 
 `buildV2NavCounts`: inbox debt · network follow-ups due · needs classification.
 
-These badges are **not** Event Signals and **not** Patterns.
+These badges are **not** Focus Tags and **not** Patterns.
 
 ### 4) Org relationship panel
 
@@ -95,7 +95,7 @@ Shows Network **status** + evidence facts (last interaction, open follow-ups, li
 | Org page data | `lib/argus/v2/loaders.ts` → `loadOrganizationPageData` |
 | Tag Patterns | `lib/argus/v2/tag-patterns.ts` |
 | Nav triage counts | `buildV2NavCounts` in `lib/argus/v2/loaders.ts` |
-| Event Signals copy | `EVENT_SIGNALS` in `lib/argus/ux-copy.ts` (binder UI; not stamped onto Notes) |
+| Focus Tags | `ArgusData.signalTags`, `lib/argus/signal-tags.ts`, `SIGNAL_TAGS` in `lib/argus/ux-copy.ts` |
 | Vocabulary policy | [`vocabulary-policy.md`](vocabulary-policy.md) |
 
 ---
@@ -104,7 +104,8 @@ Shows Network **status** + evidence facts (last interaction, open follow-ups, li
 
 - Behavior Engine / stored behavioral profiles  
 - New score types (mistakeScore, successScore, …)  
-- Flag as first-class entity  
+- Flag as first-class entity (Focus Tags are journal `signalTags` on existing Tag strings — not a new entity type)  
+
 - CRM KPI dashboards of stored relationship scores  
 - AI-inferred persistent traits  
 

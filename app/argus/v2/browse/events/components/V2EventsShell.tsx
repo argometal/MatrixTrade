@@ -37,6 +37,7 @@ export function V2EventsShell({
   neighborhood,
   allRunbooks = [],
   allProgress = [],
+  signalTags = [],
   privateConfigured = false,
   privateUnlocked = false,
   deleteUnlocked = false,
@@ -56,6 +57,7 @@ export function V2EventsShell({
   neighborhood?: V2EntityNeighborhoodGraph | null;
   allRunbooks?: Runbook[];
   allProgress?: RunbookProgress[];
+  signalTags?: string[];
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
 } & Omit<V2DeleteGateProps, "requiresAuthenticator">) {
@@ -128,6 +130,7 @@ export function V2EventsShell({
             inboxOptions={inboxOptionsByEvent[selected.id] ?? []}
             returnTo={returnTo}
             neighborhood={neighborhood}
+            signalTags={signalTags}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
             allRunbooks={allRunbooks}
@@ -263,6 +266,7 @@ export function V2EventsShell({
             returnTo={returnTo}
             neighborhood={neighborhood}
             onBack={mobileDetailOpen ? backToList : undefined}
+            signalTags={signalTags}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
             allRunbooks={allRunbooks}

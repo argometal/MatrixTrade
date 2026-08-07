@@ -18,7 +18,6 @@ import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNei
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
-import { V2EventSignalEditor } from "./V2EventSignalEditor";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
 import {
   V2ChronicleSelectableList,
@@ -27,7 +26,7 @@ import {
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
-type PanelTab = "note" | "chronicle" | "runbooks" | "metrics" | "signals";
+type PanelTab = "note" | "chronicle" | "runbooks" | "metrics";
 type ChronicleFilter = "all" | "photo" | "file" | "email" | "journal";
 
 function EvidenceIcon({ kind }: { kind: V2EventDetail["evidence"][0]["kind"] }) {
@@ -61,6 +60,7 @@ export function V2EventDetailPanel({
   privateUnlocked = false,
   allRunbooks = [],
   allProgress = [],
+  signalTags = [],
   ...deleteGate
 }: {
   selected: V2EventDetail;
@@ -72,6 +72,7 @@ export function V2EventDetailPanel({
   privateUnlocked?: boolean;
   allRunbooks?: Runbook[];
   allProgress?: RunbookProgress[];
+  signalTags?: string[];
 } & V2DeleteGateProps) {
   const router = useRouter();
   const [panelTab, setPanelTab] = useState<PanelTab>("note");
@@ -152,7 +153,6 @@ export function V2EventDetailPanel({
     { id: "note", label: "Note" },
     { id: "chronicle", label: "Chronicle" },
     { id: "runbooks", label: "Runbooks" },
-    { id: "signals", label: "Signals" },
     { id: "metrics", label: "Metrics" },
   ];
 
@@ -190,22 +190,14 @@ export function V2EventDetailPanel({
                 <div className="min-w-0">
                   <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
                   <p className="mt-1 text-sm text-zinc-400">{selected.dateTimeLabel}</p>
-                  {selected.linkedTags.length > 0 ? (
-                    <div className="mt-2 flex flex-wrap gap-1.5" aria-label="Signals">
-                      {selected.linkedTags.map((signal) => (
-                        <span
-                          key={signal}
-                          className="inline-flex rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-200 ring-1 ring-amber-500/25"
-                        >
-                          {signal}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
                   <p className="mt-1.5 text-[11px] text-zinc-600">{selected.description}</p>
                 </div>
                 {selected.tagPatterns.length > 0 ? (
-                  <V2TagPatternBadges patterns={selected.tagPatterns} className="mt-3" />
+                  <V2TagPatternBadges
+                    patterns={selected.tagPatterns}
+                    signalTags={signalTags}
+                    className="mt-3"
+                  />
                 ) : null}
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <V2QuickDeliverButton scopeType="event" scopeId={selected.id} scopeName={selected.name} />
@@ -288,8 +280,8 @@ export function V2EventDetailPanel({
                 <div>
                   <p className="text-xs font-medium text-zinc-300">Add to chronicle</p>
                   <p className="mt-0.5 text-[11px] text-zinc-600">
-                    Write and save — entry moves to Chronicle. Composer clears for the next note. Signals stay on the
-                    Signals tab (not copied onto every note).
+                    Write and save — entry moves to Chronicle. Composer clears for the next note. Add Tags on a note
+                    when that entry should count toward Patterns. Focus Tags are flagged on Home → Tags.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -384,15 +376,6 @@ export function V2EventDetailPanel({
                 }))}
               />
             </div>
-          ) : null}
-
-          {panelTab === "signals" ? (
-            <V2EventSignalEditor
-              eventId={selected.id}
-              eventName={selected.name}
-              initialSignals={selected.linkedTags}
-              returnTo={returnTo}
-            />
           ) : null}
 
           {panelTab === "runbooks" ? (

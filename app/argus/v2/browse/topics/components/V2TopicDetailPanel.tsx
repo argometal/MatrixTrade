@@ -101,6 +101,7 @@ export function V2TopicDetailPanel({
   privateUnlocked = false,
   allRunbooks = [],
   allProgress = [],
+  signalTags = [],
   ...deleteGate
 }: {
   selected: V2TopicDetail;
@@ -111,6 +112,7 @@ export function V2TopicDetailPanel({
   privateUnlocked?: boolean;
   allRunbooks?: Runbook[];
   allProgress?: RunbookProgress[];
+  signalTags?: string[];
 } & V2DeleteGateProps) {
   const [panelTab, setPanelTab] = useState<PanelTab>("chronicle");
   const [chronicleFilter, setChronicleFilter] = useState<ChronicleFilter>("all");
@@ -226,6 +228,7 @@ export function V2TopicDetailPanel({
               {selected.tagPatterns.length > 0 ? (
                 <V2TagPatternBadges
                   patterns={selected.tagPatterns}
+                  signalTags={signalTags}
                   className="mb-3"
                   tagHref={(tag) =>
                     `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&selected=${selected.id}`

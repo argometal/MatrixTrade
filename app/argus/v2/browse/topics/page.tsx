@@ -60,6 +60,7 @@ export default async function V2BrowseTopicsPage({
         neighborhood={neighborhood}
         allRunbooks={data.runbooks ?? []}
         allProgress={data.runbookProgress ?? []}
+        signalTags={data.signalTags ?? []}
         privateConfigured={argusPrivateConfigured()}
         privateUnlocked={includePrivate}
         deleteUnlocked={deleteUnlocked}

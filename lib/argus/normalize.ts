@@ -7,6 +7,7 @@ import {
   normalizeContactValueKeys,
   normalizeMyValueKeys,
 } from "./network-relationship-metrics";
+import { migrateEventSignalsToSignalTags, normalizeSignalTags } from "./signal-tags";
 
 export function resolveClassificationStatus(entityIds: string[]): ClassificationStatus {
   return entityIds.length > 0 ? "classified" : "needs_classification";
@@ -110,22 +111,24 @@ export function normalizeRunbook(runbook: Runbook): Runbook {
 }
 
 export function normalizeArgusData(data: ArgusData): ArgusData {
-  const logs = (data.logs ?? []).map(normalizeLog);
-  const inboxItems = (data.inboxItems ?? []).map(normalizeInboxItem);
+  const migrated = migrateEventSignalsToSignalTags(data).data;
+  const logs = (migrated.logs ?? []).map(normalizeLog);
+  const inboxItems = (migrated.inboxItems ?? []).map(normalizeInboxItem);
   const attachments = backfillAttachmentParents(
-    (data.attachments ?? []).map(normalizeAttachment),
+    (migrated.attachments ?? []).map(normalizeAttachment),
     logs,
     inboxItems
   );
 
   return {
-    ...data,
+    ...migrated,
     logs,
-    entities: (data.entities ?? []).map(normalizeEntity),
+    entities: (migrated.entities ?? []).map(normalizeEntity),
     inboxItems,
     attachments,
-    runbooks: (data.runbooks ?? []).map(normalizeRunbook),
-    runbookProgress: Array.isArray(data.runbookProgress) ? data.runbookProgress : [],
+    runbooks: (migrated.runbooks ?? []).map(normalizeRunbook),
+    runbookProgress: Array.isArray(migrated.runbookProgress) ? migrated.runbookProgress : [],
+    signalTags: normalizeSignalTags(migrated.signalTags),
     version: 3,
   };
 }

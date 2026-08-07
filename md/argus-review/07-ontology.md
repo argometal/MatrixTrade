@@ -124,7 +124,7 @@ From `lib/argus/ux-copy.ts`:
 - `ARGUS_TAGLINE = "Work Tracker"`
 - `ARGUS_SUBTITLE = "Track items, documents, and follow-ups."`
 - `TOPIC_ALIASES.*` — Aliases copy
-- `EVENT_SIGNALS.*` — Signals copy
+- `SIGNAL_TAGS.*` / `EVENT_SIGNALS` alias — Focus Tags copy
 
 From `lib/argus/labels.ts`: `ENTITY_TYPE_LABELS`, `JOURNAL_KIND_LABELS`, inbox labels, etc.
 

@@ -399,18 +399,22 @@ export const TOPIC_ALIASES = {
 } as const;
 
 /**
- * Event Signals — binder marks on the event.
- * They are NOT copied onto every chronicle Note (that inflated Patterns).
- * Add Tags on a specific note when you want them to count toward Patterns.
+ * Focus Tags — journal-level flagged Tags (highlight-critical / reason to focus).
+ * Not copied onto evidence. Patterns still require Tags on Notes/inbox items.
+ * @deprecated EVENT_SIGNALS name kept as alias for any leftover imports.
  */
-export const EVENT_SIGNALS = {
-  heading: "Signals",
-  hint: "Marks for this event binder. They do not auto-copy onto chronicle Notes — tag a Note only when that entry should count toward Patterns.",
-  placeholder: "Add signal…",
-  add: "Add",
-  empty: "No signals yet.",
-  removeAria: (item: string) => `Remove signal ${item}`,
+export const SIGNAL_TAGS = {
+  heading: "Focus Tags",
+  hint: "Flag Tags you are watching. Flagged Tags highlight as critical focus across Patterns and the tag cloud — they do not auto-copy onto Notes.",
+  placeholder: "Flag a tag…",
+  add: "Flag",
+  empty: "No focus Tags yet — flag Tags you want to watch.",
+  removeAria: (item: string) => `Unflag focus tag ${item}`,
+  save: "Save focus Tags",
 } as const;
+
+/** @deprecated Use SIGNAL_TAGS — Event binder Signals removed. */
+export const EVENT_SIGNALS = SIGNAL_TAGS;
 
 export const DELETE_AUTH = {
   deleteInbox: "Delete email",

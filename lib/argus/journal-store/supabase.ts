@@ -1,6 +1,7 @@
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { migrateToV3 } from "../migrate";
 import { normalizeArgusData } from "../normalize";
+import { journalNeedsSignalTagsMigration } from "../signal-tags";
 import type { ArgusData } from "../types";
 
 const JOURNAL_ROW_ID = "primary";
@@ -16,7 +17,13 @@ export async function readJournalFromSupabase(): Promise<ArgusData | null> {
   const { data, error } = await supabase.from("argus_journal").select("data").eq("id", JOURNAL_ROW_ID).maybeSingle();
   if (error) throw new Error(`Supabase journal read failed: ${error.message}`);
   if (!data?.data) return null;
-  return normalizeArgusData(migrateToV3(data.data));
+  const raw = data.data as ArgusData;
+  const needsPersist = journalNeedsSignalTagsMigration(raw);
+  const normalized = normalizeArgusData(migrateToV3(raw));
+  if (needsPersist) {
+    await writeJournalToSupabase(normalized);
+  }
+  return normalized;
 }
 
 export async function writeJournalToSupabase(data: ArgusData): Promise<void> {

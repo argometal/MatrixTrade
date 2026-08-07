@@ -15,7 +15,7 @@
 | Inbox triage / link | v2 inbox UI → `linkInboxAction`, `setInboxLinksAction`, `updateInboxTriageAction`, `convertInboxAction`, … |
 | Attachments | `saveAttachment` / `appendLogAttachment` / `appendInboxAttachment`; files at `{ARGUS_DATA_DIR}/files/{id}` or Supabase `argus-files` |
 | Event chronicle | `appendEventChronicleEntryAction` → may `createLog` with `entityIds: [eventId]` and `topics` from Signals |
-| Topic aliases / Event signals | `updateTopicAliasesAction` / `updateEventSignalsAction` → `updateEntity({ linkedTags })` |
+| Topic aliases / Focus Tags | `updateTopicAliasesAction` → `updateEntity({ linkedTags })` · `updateSignalTagsAction` → `ArgusData.signalTags` |
 | Network AI apply | `apply-network-ai-block.ts` + related actions |
 | Runbooks | create/update/copy/progress actions in `actions.ts` |
 

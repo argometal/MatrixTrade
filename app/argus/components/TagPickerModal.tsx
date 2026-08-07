@@ -20,6 +20,9 @@ interface TagPickerModalProps {
   /** When set, Done applies tags through this callback instead of only closing. */
   onConfirm?: (tags: string[]) => void;
   confirmLabel?: string;
+  /** Journal focus Tags — shown with flag affordance when onToggleSignal is set. */
+  signalTags?: string[];
+  onToggleSignal?: (tag: string) => void;
 }
 
 function normalizeTag(raw: string): string {
@@ -30,12 +33,44 @@ function tagKey(tag: string): string {
   return tag.toLowerCase();
 }
 
-function TagRow({ tag, checked, onToggle }: { tag: string; checked: boolean; onToggle: () => void }) {
+function TagRow({
+  tag,
+  checked,
+  onToggle,
+  isSignal,
+  onToggleSignal,
+}: {
+  tag: string;
+  checked: boolean;
+  onToggle: () => void;
+  isSignal?: boolean;
+  onToggleSignal?: () => void;
+}) {
   return (
-    <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 hover:bg-zinc-800/60">
-      <input type="checkbox" checked={checked} onChange={onToggle} className="shrink-0" />
-      <span className="text-sm text-zinc-200">#{tag}</span>
-    </label>
+    <div className="flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-zinc-800/60">
+      <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
+        <input type="checkbox" checked={checked} onChange={onToggle} className="shrink-0" />
+        <span className={`truncate text-sm ${isSignal ? "font-semibold text-rose-300" : "text-zinc-200"}`}>
+          {isSignal ? "⚑ " : ""}#{tag}
+        </span>
+      </label>
+      {onToggleSignal ? (
+        <button
+          type="button"
+          onClick={onToggleSignal}
+          className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${
+            isSignal
+              ? "bg-rose-950/50 text-rose-300 ring-1 ring-rose-500/40"
+              : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
+          }`}
+          title={isSignal ? "Unflag focus Tag" : "Flag as focus Tag"}
+          aria-label={isSignal ? `Unflag ${tag}` : `Flag ${tag} as focus`}
+          aria-pressed={isSignal}
+        >
+          Focus
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -47,24 +82,35 @@ export function TagPickerModal({
   onClose,
   onConfirm,
   confirmLabel,
+  signalTags,
+  onToggleSignal,
 }: TagPickerModalProps) {
   const [query, setQuery] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [newTagName, setNewTagName] = useState("");
 
   const selectedKeys = useMemo(() => new Set(selectedTags.map(tagKey)), [selectedTags]);
+  const signalKeys = useMemo(
+    () => new Set((signalTags ?? []).map(tagKey).filter(Boolean)),
+    [signalTags]
+  );
 
   const allTags = useMemo(() => {
     const seen = new Set<string>();
     const merged: string[] = [];
-    for (const tag of [...selectedTags, ...buckets.all]) {
+    for (const tag of [...selectedTags, ...(signalTags ?? []), ...buckets.all]) {
       const key = tagKey(tag);
       if (!key || seen.has(key)) continue;
       seen.add(key);
       merged.push(tag);
     }
-    return merged.sort((a, b) => a.localeCompare(b));
-  }, [buckets.all, selectedTags]);
+    return merged.sort((a, b) => {
+      const aFocus = signalKeys.has(tagKey(a)) ? 1 : 0;
+      const bFocus = signalKeys.has(tagKey(b)) ? 1 : 0;
+      if (aFocus !== bFocus) return bFocus - aFocus;
+      return a.localeCompare(b);
+    });
+  }, [buckets.all, selectedTags, signalTags, signalKeys]);
 
   const searchResults = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -186,6 +232,8 @@ export function TagPickerModal({
                   tag={tag}
                   checked={selectedKeys.has(tagKey(tag))}
                   onToggle={() => toggle(tag)}
+                  isSignal={signalKeys.has(tagKey(tag))}
+                  onToggleSignal={onToggleSignal ? () => onToggleSignal(tag) : undefined}
                 />
               ))
             )}

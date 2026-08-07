@@ -174,6 +174,7 @@ export default async function V2OrganizationPage({
                 {page.tagPatterns.length > 0 ? (
                   <V2TagPatternBadges
                     patterns={page.tagPatterns}
+                    signalTags={data.signalTags ?? []}
                     className="mt-3"
                     tagHref={(tag) =>
                       `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`
@@ -210,6 +211,7 @@ export default async function V2OrganizationPage({
             orgProjects={page.orgProjects}
             recentProjects={page.recentProjects}
             tagPatterns={page.tagPatterns}
+            signalTags={data.signalTags ?? []}
             stats={page.stats}
             networkStatus={page.networkStatus}
             relationshipFacts={page.relationshipFacts}

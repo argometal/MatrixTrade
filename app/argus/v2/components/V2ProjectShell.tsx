@@ -54,6 +54,7 @@ export type V2ProjectShellProps = {
   linkedTopics: string[];
   linkedEventsCount: number;
   tagPatterns: TagPattern[];
+  signalTags?: string[];
   keyMetrics: Array<{ label: string; value: string; highlight?: boolean }>;
   org?: { id: string; name: string };
   stats: {
@@ -87,6 +88,7 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
     linkedTopics,
     linkedEventsCount,
     tagPatterns,
+    signalTags = [],
     keyMetrics,
     org,
     stats,
@@ -275,6 +277,7 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
           topics={linkedTopics}
           eventsCount={linkedEventsCount}
           tagPatterns={tagPatterns}
+          signalTags={signalTags}
           manualTags={(entity.linkedTags ?? []).map((t) => t.trim()).filter(Boolean)}
           tagHref={(tag) =>
             `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&project=${entity.id}`

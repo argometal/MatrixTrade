@@ -179,6 +179,12 @@ export interface ArgusData {
   runbooks: Runbook[];
   /** Execution progress per (runbook × entity). */
   runbookProgress?: RunbookProgress[];
+  /**
+   * Flagged focus Tags (journal-level watchlist).
+   * When active, treated as highlight-critical — reason to focus.
+   * Not Event binder Signals; not auto-copied onto evidence.
+   */
+  signalTags?: string[];
   version: 3;
 }
 

@@ -21,6 +21,7 @@ export function V2EntityLinksTab({
   tagPatterns,
   manualTags,
   tagHref,
+  signalTags,
 }: {
   entityId: string;
   linkedIds: string[];
@@ -32,6 +33,7 @@ export function V2EntityLinksTab({
   tagPatterns: TagPattern[];
   manualTags: string[];
   tagHref?: (tag: string) => string;
+  signalTags?: string[];
 }) {
   const allTags = [...new Set([...manualTags, ...topics])];
 
@@ -132,7 +134,12 @@ export function V2EntityLinksTab({
           <h3 className="mb-1 text-sm font-semibold text-zinc-100">Tags</h3>
           <p className="mb-4 text-[11px] text-zinc-600">Labels and patterns from links and evidence.</p>
           {tagPatterns.length > 0 ? (
-            <V2TagPatternBadges patterns={tagPatterns} className="mb-4" tagHref={tagHref} />
+            <V2TagPatternBadges
+              patterns={tagPatterns}
+              signalTags={signalTags}
+              className="mb-4"
+              tagHref={tagHref}
+            />
           ) : null}
           {allTags.length > 0 ? (
             <div className="flex flex-wrap gap-2">

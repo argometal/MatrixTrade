@@ -46,6 +46,11 @@ import * as cloudInbox from "./inbox-store/supabase";
 import { isCloudJournalStore } from "./journal-store/config";
 import * as cloudJournal from "./journal-store/supabase";
 import * as cloudJournalFiles from "./journal-store/attachments";
+import {
+  journalNeedsSignalTagsMigration,
+  normalizeSignalTags,
+  signalTagKey,
+} from "./signal-tags";
 
 function paths() {
   return getArgusStoragePaths();
@@ -56,7 +61,16 @@ function generateId(): string {
 }
 
 function emptyArgus(): ArgusData {
-  return { entities: [], logs: [], inboxItems: [], attachments: [], runbooks: [], runbookProgress: [], version: 3 };
+  return {
+    entities: [],
+    logs: [],
+    inboxItems: [],
+    attachments: [],
+    runbooks: [],
+    runbookProgress: [],
+    signalTags: [],
+    version: 3,
+  };
 }
 
 async function ensureFilesDir(): Promise<void> {
@@ -72,8 +86,8 @@ async function readRawJournal(): Promise<ArgusData> {
     await ensureArgusStorageReady();
     const p = paths();
     try {
-      const raw = await fs.readFile(p.journalFile, "utf-8");
-      const migrated = migrateToV3(JSON.parse(raw));
+      const raw = JSON.parse(await fs.readFile(p.journalFile, "utf-8")) as ArgusData;
+      const migrated = migrateToV3(raw);
       await writeArgus(migrated, "bootstrap");
       return migrated;
     } catch (err) {
@@ -87,8 +101,11 @@ async function readRawJournal(): Promise<ArgusData> {
   const p = paths();
 
   try {
-    const raw = await fs.readFile(p.journalFile, "utf-8");
-    return migrateToV3(JSON.parse(raw));
+    const raw = JSON.parse(await fs.readFile(p.journalFile, "utf-8")) as ArgusData;
+    const needsPersist = journalNeedsSignalTagsMigration(raw);
+    const migrated = migrateToV3(raw);
+    if (needsPersist) await writeArgus(migrated, "bootstrap");
+    return migrated;
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code !== "ENOENT") throw err;
@@ -1063,6 +1080,32 @@ export async function clearAllArgusData(): Promise<void> {
   await writeArgus(emptyArgus(), "destructive");
 }
 
+/** Replace the journal-level focus Tag watchlist (`signalTags`). */
+export async function updateSignalTags(tags: string[]): Promise<string[]> {
+  const data = await readArgus();
+  data.signalTags = normalizeSignalTags(tags);
+  await writeArgus(data);
+  return data.signalTags;
+}
+
+/** Flag or unflag a Tag as highlight-critical focus. */
+export async function toggleSignalTag(tag: string): Promise<{ signalTags: string[]; active: boolean }> {
+  const display = tag.trim().replace(/\s+/g, " ");
+  if (!display) {
+    const data = await readArgus();
+    return { signalTags: normalizeSignalTags(data.signalTags), active: false };
+  }
+  const data = await readArgus();
+  const current = normalizeSignalTags(data.signalTags);
+  const key = signalTagKey(display);
+  const exists = current.some((t) => signalTagKey(t) === key);
+  data.signalTags = exists
+    ? current.filter((t) => signalTagKey(t) !== key)
+    : normalizeSignalTags([...current, display]);
+  await writeArgus(data);
+  return { signalTags: data.signalTags ?? [], active: !exists };
+}
+
 /** Rename a tag string across all register entries and inbox rows. */
 export async function renameTagGlobally(oldTag: string, newTag: string): Promise<number> {
   const oldKey = oldTag.trim().toLowerCase();
@@ -1071,6 +1114,14 @@ export async function renameTagGlobally(oldTag: string, newTag: string): Promise
 
   const data = await readArgus();
   let touched = 0;
+
+  const signalTags = data.signalTags ?? [];
+  if (signalTags.some((t) => t.trim().toLowerCase() === oldKey)) {
+    data.signalTags = normalizeSignalTags(
+      signalTags.map((t) => (t.trim().toLowerCase() === oldKey ? newDisplay : t))
+    );
+    touched += 1;
+  }
 
   for (let i = 0; i < data.logs.length; i++) {
     const log = data.logs[i];

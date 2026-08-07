@@ -362,41 +362,69 @@ export function buildV2EntityRows(
 }
 
 export function buildV2TagCloud(data: ArgusData, inboxItems: InboxItem[], includePrivate: boolean, limit = TAG_CLOUD_DISPLAY_LIMIT) {
-  const counts = new Map<string, number>();
+  const counts = new Map<string, { display: string; count: number }>();
   for (const log of visibleLogs(data, includePrivate)) {
     for (const t of log.topics) {
       const key = t.trim().toLowerCase();
-      if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
+      if (!key) continue;
+      const row = counts.get(key) ?? { display: t.trim(), count: 0 };
+      row.count += 1;
+      counts.set(key, row);
     }
   }
   for (const item of visibleInbox(inboxItems, includePrivate)) {
     for (const t of item.topics ?? []) {
       const key = t.trim().toLowerCase();
-      if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
+      if (!key) continue;
+      const row = counts.get(key) ?? { display: t.trim(), count: 0 };
+      row.count += 1;
+      counts.set(key, row);
     }
   }
-  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+
+  const focusKeys = new Set(
+    (data.signalTags ?? []).map((t) => t.trim().toLowerCase()).filter(Boolean)
+  );
+  // Ensure flagged focus Tags appear even with zero evidence uses yet.
+  for (const tag of data.signalTags ?? []) {
+    const key = tag.trim().toLowerCase();
+    if (!key || counts.has(key)) continue;
+    counts.set(key, { display: tag.trim(), count: 0 });
+  }
+
+  const sorted = [...counts.entries()]
+    .sort((a, b) => {
+      const aFocus = focusKeys.has(a[0]) ? 1 : 0;
+      const bFocus = focusKeys.has(b[0]) ? 1 : 0;
+      if (aFocus !== bFocus) return bFocus - aFocus;
+      return b[1].count - a[1].count || a[1].display.localeCompare(b[1].display);
+    })
+    .slice(0, limit);
   if (sorted.length === 0) return [];
 
-  const max = sorted[0][1];
-  const min = sorted[sorted.length - 1][1];
+  const max = Math.max(...sorted.map(([, row]) => row.count), 1);
+  const min = Math.min(...sorted.map(([, row]) => row.count));
   const colors = ["violet", "emerald", "amber", "sky", "orange"] as const;
 
   const topics = entitiesByKind(data).topics;
 
-  return sorted.map(([name, count], i) => {
+  return sorted.map(([, row], i) => {
+    const name = row.display;
+    const count = row.count;
     const topicId = findTopicEntityIdForTag(topics, name);
+    const isSignal = focusKeys.has(name.trim().toLowerCase());
     return {
       name,
       count,
-      color: colors[i % colors.length],
+      color: isSignal ? "rose" : colors[i % colors.length],
       weight: max === min ? 1 : (count - min) / (max - min),
       href: intelligenceTagHref(name, topicId),
+      isSignal,
     };
   });
 }
 
-/** Action-only nav triage counts — never entity totals, never Event Signals. */
+/** Action-only nav triage counts — never entity totals, never Focus Tags. */
 export type V2NavCounts = {
   /** Unprocessed inbox evidence (pending + linked awaiting triage). */
   inbox: number;

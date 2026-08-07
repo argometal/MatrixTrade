@@ -49,15 +49,15 @@ Evidence item types in filters: **Email · Notes · Files · Photos**.
 
 ---
 
-## Event Signals vs Note Tags
+## Focus Tags vs Note Tags
 
-| | Event Signals | Note Tags |
+| | Focus Tags (`signalTags`) | Note Tags |
 |--|---------------|-----------|
-| Stored on | Event entity `linkedTags` | `Log.topics` |
-| Purpose | Binder vocabulary | Marks on that evidence row |
-| Patterns | **No** — until on a Note | **Yes** — Tags on evidence |
+| Stored on | Journal root | `Log.topics` / inbox `topics` |
+| Purpose | Flag what to watch (highlight-critical) | Marks on that evidence row |
+| Patterns | Highlight when a Pattern matches a Focus Tag | **Yes** — recurrence from evidence Tags |
 
-**Bug fixed (2026-08-07):** chronicle Save no longer copies all Event Signals onto every Note (that multiplied Pattern counts).
+**Retired:** Event binder Signals on `Entity.linkedTags`. **Bug fixed (2026-08-07):** chronicle Save does not stamp focus/signal labels onto every Note.
 
 ---
 

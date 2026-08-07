@@ -94,7 +94,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Alert badges",
-        body: "Sidebar and bell counts are triage debt (inbox to process, follow-ups due, unclassified evidence) — not Event Signals or Patterns.",
+        body: "Sidebar and bell counts are triage debt (inbox to process, follow-ups due, unclassified evidence) — not Focus Tags or Patterns.",
       },
     ],
   },
@@ -170,7 +170,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Recurring patterns",
-        body: "When the same tag appears on 3 or more evidence items in a scope — with at least one in the last 90 days — a small pattern badge appears. Event Signals become Tags only after chronicle Save. One-off tags are stored but not alerted.",
+        body: "When the same tag appears on 3 or more evidence items in a scope — with at least one in the last 90 days — a small pattern badge appears. Focus Tags (Home → Tags) highlight matching Patterns as critical — they do not auto-copy onto Notes. One-off tags are stored but not alerted.",
       },
       {
         title: "Your definitions",
@@ -202,7 +202,7 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "Network",
-        body: "People portfolio with status from evidence (New / Active / Dormant / Lost / Archived), organizations, and follow-ups. Badge shows follow-ups due soon or recently overdue — triage debt, not Signals.",
+        body: "People portfolio with status from evidence (New / Active / Dormant / Lost / Archived), organizations, and follow-ups. Badge shows follow-ups due soon or recently overdue — triage debt, not Focus Tags.",
       },
       {
         title: "Topics",

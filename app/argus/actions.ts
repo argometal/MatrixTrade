@@ -38,6 +38,8 @@ import {
   updateLog,
   updateRunbook,
   renameTagGlobally,
+  updateSignalTags,
+  toggleSignalTag,
 } from "@/lib/argus/server-storage";
 import type { EntityType, JournalKind, LogSource, RunbookItem } from "@/lib/argus/types";
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
@@ -502,8 +504,7 @@ export async function bulkDeleteInboxAction(
 }
 
 /** Append a chronicle note on an event (text + optional file attachments).
- * Event Signals stay on the binder (`linkedTags`) — they are NOT copied onto every note.
- * Stamping all signals onto each note inflated Patterns and made one note look like many tagged items.
+ * Focus Tags (`ArgusData.signalTags`) are journal-level — they are NOT copied onto every note.
  * Entry-specific Tags may be passed via `entryTags` (optional).
  */
 export async function appendEventChronicleEntryAction(
@@ -1465,23 +1466,32 @@ export async function updateTopicAliasesAction(formData: FormData): Promise<void
   redirect(returnTo);
 }
 
-export async function updateEventSignalsAction(formData: FormData): Promise<void> {
+/** Replace the journal-level focus Tag watchlist (flagged Tags → highlight-critical). */
+export async function updateSignalTagsAction(formData: FormData): Promise<void> {
   await requireArgusSession();
-  const entityId = String(formData.get("entityId") ?? "");
-  const linkedTags = normalizeEventTags(parseTopics(String(formData.get("linkedTags") ?? "")));
-  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/browse/events");
+  const signalTags = normalizeEventTags(parseTopics(String(formData.get("signalTags") ?? "")));
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
 
-  const entity = await getEntity(entityId);
-  if (!entity || entity.type !== "other" || referenceKindFromNotes(entity.notes ?? "") !== "event") {
-    redirect(returnTo);
-  }
-
-  await updateEntity(entityId, { linkedTags });
+  await updateSignalTags(signalTags);
   revalidateArgus();
-  revalidatePath("/argus/v2/browse/events");
-  revalidatePath("/argus/v2/inbox");
   revalidatePath("/argus/v2");
-  redirect(returnTo);
+  revalidatePath("/argus/v2/inbox");
+  revalidatePath("/argus/v2/browse/events");
+  redirect(returnTo.startsWith("/argus/") ? returnTo : "/argus/v2");
+}
+
+/** Flag or unflag a Tag as focus (highlight-critical). */
+export async function toggleSignalTagAction(
+  tag: string
+): Promise<{ ok: true; signalTags: string[]; active: boolean } | { error: string }> {
+  await requireArgusSession();
+  const trimmed = tag.trim();
+  if (!trimmed) return { error: "empty_tag" };
+  const result = await toggleSignalTag(trimmed);
+  revalidateArgus();
+  revalidatePath("/argus/v2");
+  revalidatePath("/argus/v2/inbox");
+  return { ok: true, ...result };
 }
 
 export async function deleteLogAction(formData: FormData): Promise<void> {

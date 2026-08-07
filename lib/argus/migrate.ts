@@ -62,6 +62,7 @@ export function migrateToV3(raw: unknown): ArgusData {
       attachments: data.attachments ?? [],
       runbooks: data.runbooks ?? [],
       runbookProgress: data.runbookProgress ?? [],
+      signalTags: data.signalTags,
       version: 3,
     });
   }
@@ -131,6 +132,7 @@ export function migrateToV3(raw: unknown): ArgusData {
       })),
     runbooks: [],
     runbookProgress: [],
+    signalTags: [],
     version: 3,
   });
 }

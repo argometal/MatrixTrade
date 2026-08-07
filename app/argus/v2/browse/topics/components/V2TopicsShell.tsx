@@ -441,6 +441,7 @@ export function V2TopicsShell({
   neighborhood,
   allRunbooks = [],
   allProgress = [],
+  signalTags = [],
   privateConfigured = false,
   privateUnlocked = false,
   deleteUnlocked = false,
@@ -460,6 +461,7 @@ export function V2TopicsShell({
   neighborhood?: V2EntityNeighborhoodGraph | null;
   allRunbooks?: Runbook[];
   allProgress?: RunbookProgress[];
+  signalTags?: string[];
   privateConfigured?: boolean;
   privateUnlocked?: boolean;
 } & Omit<V2DeleteGateProps, "requiresAuthenticator">) {
@@ -822,6 +824,7 @@ export function V2TopicsShell({
             neighborhood={neighborhood}
             returnTo={returnTo}
             onBack={backToList}
+            signalTags={signalTags}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}
             allRunbooks={allRunbooks}
