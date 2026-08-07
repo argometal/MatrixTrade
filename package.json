@@ -56,6 +56,7 @@
     "test:scout-execution-instruction": "tsx tools/test-scout-execution-instruction.ts",
     "test:execution-instruction-mandatory": "tsx tools/test-execution-instruction-mandatory.ts",
     "test:apply-failure-snapshot": "tsx tools/test-apply-failure-snapshot.ts",
+    "test:argus-recent-linkage": "tsx tools/test-argus-recent-linkage-24-33.ts",
     "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"
   },
   "dependencies": {
