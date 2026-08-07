@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { unlockArgusDeleteAction, unlockArgusDeleteAuthAction } from "@/app/auth/actions";
 import { bulkDeleteLogsAction } from "@/app/argus/actions";
+import { resolveLinkedDeleteUnlockMode } from "@/lib/argus/delete-unlock-mode";
 import { DELETE_AUTH } from "@/lib/argus/ux-copy";
 import type { V2ChronicleDeleteLockProps } from "./V2ChronicleNoteDeleteButton";
 
@@ -33,7 +34,13 @@ export function V2ChronicleBulkBar({
   const [code, setCode] = useState("");
   const [totp, setTotp] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [unlockAsAuth, setUnlockAsAuth] = useState(requiresAuthenticator);
+
+  const unlockMode = resolveLinkedDeleteUnlockMode({
+    linkedRequiresAuthenticator: requiresAuthenticator,
+    totpConfigured,
+    deleteCodeConfigured,
+  });
+  const [unlockAsAuth, setUnlockAsAuth] = useState(unlockMode === "totp");
 
   async function runDelete() {
     setBusy(true);
@@ -43,7 +50,13 @@ export function V2ChronicleBulkBar({
       if ("error" in result) {
         setDeleteConfirmOpen(false);
         if (result.error === "totp_not_configured") {
-          setError(DELETE_AUTH.totpNotConfigured);
+          // Prefer PIN path — open code unlock if available.
+          if (deleteCodeConfigured) {
+            setUnlockAsAuth(false);
+            setUnlockOpen(true);
+            return;
+          }
+          setError("Configure a deletion PIN in security settings.");
           return;
         }
         setUnlockAsAuth(result.error === "delete_auth_locked");
@@ -59,19 +72,17 @@ export function V2ChronicleBulkBar({
   }
 
   function requestDelete() {
-    if (!deleteAuthConfigured) {
+    if (!deleteAuthConfigured || unlockMode === "none") {
       setDeleteConfirmOpen(true);
       return;
     }
-    if (requiresAuthenticator && !totpConfigured) {
-      setError(DELETE_AUTH.totpNotConfigured);
+    if (unlockMode === "totp" && !deleteAuthUnlocked) {
+      setUnlockAsAuth(true);
+      setUnlockOpen(true);
       return;
     }
-    const needsUnlock = requiresAuthenticator
-      ? !deleteAuthUnlocked
-      : deleteCodeConfigured && !deleteUnlocked;
-    if (needsUnlock) {
-      setUnlockAsAuth(requiresAuthenticator);
+    if (unlockMode === "pin" && !deleteUnlocked) {
+      setUnlockAsAuth(false);
       setUnlockOpen(true);
       return;
     }

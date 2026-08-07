@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { unlockArgusDeleteAction, unlockArgusDeleteAuthAction } from "@/app/auth/actions";
 import { deleteLogAction } from "@/app/argus/actions";
+import { resolveLinkedDeleteUnlockMode } from "@/lib/argus/delete-unlock-mode";
 import { DELETE_AUTH } from "@/lib/argus/ux-copy";
 
 export type V2ChronicleDeleteLockProps = {
+  /** Notes linked to topic/event/org prefer authenticator when TOTP exists. */
   requiresAuthenticator?: boolean;
   deleteUnlocked?: boolean;
   deleteAuthUnlocked?: boolean;
@@ -17,7 +19,7 @@ export type V2ChronicleDeleteLockProps = {
   totpRequired?: boolean;
 };
 
-/** Soft-delete a chronicle Note (Log) — gated by deletion code / authenticator when configured. */
+/** Soft-delete a chronicle Note (Log) — PIN unlock, or authenticator when TOTP is set. */
 export function V2ChronicleNoteDeleteButton({
   logId,
   returnTo,
@@ -41,7 +43,20 @@ export function V2ChronicleNoteDeleteButton({
   const [code, setCode] = useState("");
   const [totp, setTotp] = useState("");
 
-  if (!deleteAuthConfigured) {
+  const unlockMode = resolveLinkedDeleteUnlockMode({
+    linkedRequiresAuthenticator: requiresAuthenticator,
+    totpConfigured,
+    deleteCodeConfigured,
+  });
+  const useAuth = unlockMode === "totp";
+  const needsUnlock =
+    unlockMode === "totp"
+      ? !deleteAuthUnlocked
+      : unlockMode === "pin"
+        ? !deleteUnlocked
+        : false;
+
+  if (!deleteAuthConfigured || unlockMode === "none") {
     return (
       <form
         action={deleteLogAction}
@@ -65,20 +80,6 @@ export function V2ChronicleNoteDeleteButton({
     );
   }
 
-  if (requiresAuthenticator && !totpConfigured) {
-    return (
-      <div
-        className="max-w-[9rem] rounded-lg border border-amber-900/40 bg-amber-950/20 px-2 py-1 text-[10px] leading-snug text-amber-200/90"
-        onClick={(event) => event.stopPropagation()}
-      >
-        {DELETE_AUTH.totpNotConfigured}
-      </div>
-    );
-  }
-
-  const needsUnlock = requiresAuthenticator ? !deleteAuthUnlocked : deleteCodeConfigured && !deleteUnlocked;
-  const isAuth = requiresAuthenticator;
-
   if (needsUnlock) {
     return (
       <>
@@ -90,11 +91,11 @@ export function V2ChronicleNoteDeleteButton({
           }}
           className="shrink-0 rounded-lg border border-red-900/40 bg-red-950/15 px-2 py-1 text-[10px] font-medium text-red-300/90 hover:bg-red-950/30"
         >
-          {isAuth ? DELETE_AUTH.unlockAuthenticator : DELETE_AUTH.unlockCode}
+          {useAuth ? DELETE_AUTH.unlockAuthenticator : DELETE_AUTH.unlockCode}
         </button>
         {unlockOpen ? (
           <UnlockModal
-            isAuth={isAuth}
+            isAuth={useAuth}
             returnTo={returnTo}
             code={code}
             totp={totp}

@@ -13,6 +13,7 @@ export {
   entityDeleteRequiresAuthenticator,
   linkedEntityIdsRequireAuthenticator,
 } from "@/lib/argus/delete-link-check";
+export { resolveLinkedDeleteUnlockMode } from "@/lib/argus/delete-unlock-mode";
 
 export type DeleteGateError = "delete_code_locked" | "delete_auth_locked" | "totp_not_configured";
 
@@ -24,12 +25,12 @@ export async function assertDeleteAllowed(
   if (!deleteAuthConfigured()) return { ok: true };
 
   const needsAuthenticator = linkedEntityIdsRequireAuthenticator(entities, linkedEntityIds);
-  if (needsAuthenticator) {
-    if (!argusTotpConfigured()) return { error: "totp_not_configured" };
+  if (needsAuthenticator && argusTotpConfigured()) {
     if (!(await hasArgusDeleteAuthUnlock())) return { error: "delete_auth_locked" };
     return { ok: true };
   }
 
+  // No TOTP (or not linked): deletion PIN when configured — no env-legend hard stop.
   if (argusDeleteCodeConfigured() && !(await hasArgusDeleteUnlock())) {
     return { error: "delete_code_locked" };
   }
