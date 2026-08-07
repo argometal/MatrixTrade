@@ -4,10 +4,10 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0806b` |
-| **Commit** | Always `git rev-parse main0806b` after fetch (must match `origin/main`) |
+| **Tag** | `main0807a` |
+| **Commit** | Always `git rev-parse main0807a` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
-| **Date** | 2026-08-06 |
+| **Date** | 2026-08-07 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
 
 ## Sync local (avoid conflicts / lost work)
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0806b
+# optional pin: git checkout main0807a
 ```
 
 ## What this deploy includes
 
+- PR #166: Evidence Engine (A–D) — sealed Network status vocab; remove strength%/decorative trust scores; chronicle signal-stamp fix + Note soft-delete; Timeline/Chronicle ontology; graph ego focus (click node → neighbors)
 - PR #159: Runbook ··· Delete (check or section block) + board default on Runbooks library
 - PR #157: A08 Export JSON; runbooks grid/list/board; section check-all; Turn into section
 - PR #156: Archive is hide (not delete); persist browse view + status chips
