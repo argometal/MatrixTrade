@@ -79,7 +79,12 @@ export function referenceDisplayLabel(entity: { type: EntityType; name: string; 
 /** Topic/Event persist as EntityType other with Kind prefix in notes (no schema change). */
 export function buildReferenceNotes(kind: ReferenceKind, notes: string): string {
   const trimmed = notes.trim();
-  if (kind === "topic" || kind === "event") {
+  if (kind === "event") {
+    // Chronicle v2 shell — narrative lives in linked logs, not entity.notes.
+    // Keep optional create-time blurb below --- so one-time migration can move it once.
+    return trimmed ? `Kind: Event\n---\n${trimmed}` : "Kind: Event\n---";
+  }
+  if (kind === "topic") {
     const label = REFERENCE_KIND_LABELS[kind];
     return trimmed ? `Kind: ${label}\n${trimmed}` : `Kind: ${label}`;
   }
