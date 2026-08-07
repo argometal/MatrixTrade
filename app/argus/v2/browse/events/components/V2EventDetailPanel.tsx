@@ -30,7 +30,6 @@ import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
 type PanelTab = "note" | "chronicle" | "runbooks" | "tags" | "metrics";
-type ChronicleFilter = "all" | "photo" | "file" | "email" | "journal";
 
 function EvidenceIcon({ kind }: { kind: V2EventDetail["evidence"][0]["kind"] }) {
   if (kind === "email") return <>✉</>;
@@ -86,7 +85,6 @@ export function V2EventDetailPanel({
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const [focusTags, setFocusTags] = useState<string[]>(signalTags);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [chronicleFilter, setChronicleFilter] = useState<ChronicleFilter>("all");
   const [saving, setSaving] = useState(false);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
@@ -171,22 +169,6 @@ export function V2EventDetailPanel({
       setSaving(false);
     }
   }
-
-  const filteredEvidence = selected.evidence.filter((item) => {
-    if (chronicleFilter === "all") return true;
-    if (chronicleFilter === "photo") return item.kind === "photo";
-    if (chronicleFilter === "file") return item.kind === "file";
-    if (chronicleFilter === "email") return item.kind === "email";
-    return item.kind === "journal";
-  });
-
-  const chronicleFilters: { id: ChronicleFilter; label: string }[] = [
-    { id: "all", label: "All" },
-    { id: "journal", label: "Notes" },
-    { id: "email", label: "Emails" },
-    { id: "photo", label: "Photos" },
-    { id: "file", label: "Files" },
-  ];
 
   const tabs: { id: PanelTab; label: string }[] = [
     { id: "note", label: "Note" },
@@ -381,27 +363,9 @@ export function V2EventDetailPanel({
 
           {panelTab === "chronicle" ? (
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs text-zinc-500">
-                  Chronicle — notes, emails, photos, and files in chronological order.
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {chronicleFilters.map((filter) => (
-                    <button
-                      key={filter.id}
-                      type="button"
-                      onClick={() => setChronicleFilter(filter.id)}
-                      className={`rounded-full px-2 py-0.5 text-[10px] ${
-                        chronicleFilter === filter.id
-                          ? "bg-violet-500/15 text-violet-300"
-                          : "bg-zinc-800 text-zinc-500 hover:text-zinc-300"
-                      }`}
-                    >
-                      {filter.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <p className="text-xs text-zinc-500">
+                Chronicle — notes, emails, photos, and files in chronological order.
+              </p>
               <V2ChronicleSelectableList
                 key={selected.id}
                 returnTo={returnTo}
@@ -416,12 +380,10 @@ export function V2EventDetailPanel({
                 totpRequired={deleteGate.totpRequired}
                 empty={
                   <p className="text-sm text-zinc-500">
-                    {selected.evidence.length === 0
-                      ? "No entries yet. Write a note, attach files, or link an email."
-                      : "No items match this filter."}
+                    No entries yet. Write a note, attach files, or link an email.
                   </p>
                 }
-                items={filteredEvidence.map((item) => ({
+                items={selected.evidence.map((item) => ({
                   key: item.id,
                   logId: chronicleLogIdFromEvidenceId(item.id),
                   title: item.title,

@@ -31,6 +31,8 @@ export interface V2TopicRow {
   emailCount: number;
   fileCount: number;
   evidenceCount: number;
+  /** Structural linked events (outbound + reverse + bridge + co-mention). */
+  eventCount: number;
   aliases: string[];
   evidenceTags: string[];
   patternCount: number;
@@ -38,6 +40,11 @@ export interface V2TopicRow {
   linkedProjectIds: string[];
   linkedEntityIds: string[];
   searchText: string;
+}
+
+/** Empty = no evidence and no structural neighbors (esp. events). Linked-only topics are Quiet. */
+export function topicRowIsEmpty(row: Pick<V2TopicRow, "evidenceCount" | "eventCount" | "linkedEntityIds">): boolean {
+  return row.evidenceCount === 0 && row.eventCount === 0 && row.linkedEntityIds.length === 0;
 }
 
 export interface V2TopicLinkedEntity {
@@ -99,7 +106,7 @@ export function buildV2TopicTabCounts(rows: V2TopicRow[]) {
   return {
     all: rows.length,
     active: rows.filter((r) => r.evidenceCount > 0 && r.lastSort.slice(0, 10) >= cutoff).length,
-    empty: rows.filter((r) => r.evidenceCount === 0).length,
+    empty: rows.filter((r) => topicRowIsEmpty(r)).length,
     patterns: rows.filter((r) => r.patternCount > 0).length,
   };
 }
@@ -115,7 +122,7 @@ export function filterV2TopicRows(
   if (tab === "active") {
     result = result.filter((r) => r.evidenceCount > 0 && r.lastSort.slice(0, 10) >= cutoff);
   } else if (tab === "empty") {
-    result = result.filter((r) => r.evidenceCount === 0);
+    result = result.filter((r) => topicRowIsEmpty(r));
   } else if (tab === "patterns") {
     result = result.filter((r) => r.patternCount > 0);
   }
@@ -299,7 +306,11 @@ function deriveTopicBrowseStatus(
   detail: V2TopicDetail | undefined
 ): V2TopicBrowseStatus {
   if (detail?.lifecycleStatus === "archived") return "Archived";
-  if (row.evidenceCount === 0) return "Empty";
+  const eventCount = detail?.eventCount ?? row.eventCount;
+  const linkedCount = detail?.neighborEntityIds?.length ?? row.linkedEntityIds.length;
+  // Linked to events/orgs/projects/people is not Empty — Quiet until evidence arrives.
+  if (row.evidenceCount === 0 && eventCount === 0 && linkedCount === 0) return "Empty";
+  if (row.evidenceCount === 0) return "Quiet";
   const cutoff = activeCutoffIso();
   if (row.lastSort.slice(0, 10) >= cutoff) return "Active";
   return "Quiet";

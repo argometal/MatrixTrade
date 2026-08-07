@@ -143,6 +143,7 @@ function topicRowFilterMeta(
 
   const tagPatterns = buildTagPatternsForScope(history, inbox, today);
   const neighborIds = collectNeighborEntityIds(data, topic, history);
+  const nodeCounts = countTopicsAndEventsInScope(data, topic, history);
   const linkedOrgIds: string[] = [];
   const linkedProjectIds: string[] = [];
   const linkedEntityIds = [...neighborIds];
@@ -158,6 +159,7 @@ function topicRowFilterMeta(
     aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
     evidenceTags: [...evidenceTags],
     patternCount: tagPatterns.length,
+    eventCount: nodeCounts.eventCount,
     linkedOrgIds,
     linkedProjectIds,
     linkedEntityIds,
@@ -218,7 +220,13 @@ export function buildV2TopicDetails(
     const neighborIds = collectNeighborEntityIds(data, topic, history);
     const linkCounts = countLinkKinds(data, neighborIds);
     const nodeCounts = countTopicsAndEventsInScope(data, topic, history);
-    const linkedEvents = linkedEventRefs(data, nodeCounts.eventIds);
+    // Belt-and-suspenders: union scope event ids with any event neighbors.
+    const eventIds = new Set(nodeCounts.eventIds);
+    for (const id of neighborIds) {
+      const entity = data.entities.find((e) => e.id === id);
+      if (entity && isEventEntity(entity)) eventIds.add(id);
+    }
+    const linkedEvents = linkedEventRefs(data, eventIds);
 
     return {
       id: topic.id,
@@ -228,7 +236,7 @@ export function buildV2TopicDetails(
       orgCount: linkCounts.orgCount,
       projectCount: linkCounts.projectCount,
       peopleCount: linkCounts.peopleCount,
-      eventCount: nodeCounts.eventCount,
+      eventCount: eventIds.size,
       journalCount: counts.journalCount,
       emailCount: counts.emailCount,
       fileCount: counts.fileCount + counts.photoCount,
