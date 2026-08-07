@@ -293,7 +293,7 @@ function TopicCard({
             <span className="text-zinc-400">{card.lastActivity}</span>
           </div>
           {card.aliases.length > 0 ? (
-            <p className="mt-1 truncate text-zinc-500">Aliases: {card.aliases.slice(0, 3).join(", ")}</p>
+            <p className="mt-1 truncate text-zinc-500">Match tags: {card.aliases.slice(0, 3).join(", ")}</p>
           ) : null}
         </div>
       </button>
@@ -903,7 +903,7 @@ export function V2TopicsShell({
               type="search"
               value={searchDraft}
               onChange={(event) => setSearchDraft(event.target.value)}
-              placeholder="Search topics, aliases, notes…"
+              placeholder="Search topics, match tags, notes…"
               className="w-full max-w-xl rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none"
             />
           </div>

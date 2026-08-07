@@ -212,6 +212,10 @@ export function V2HomeClient({
           <div id="tags">
             <V2Card className="p-5">
               <V2SectionTitle>Tags</V2SectionTitle>
+              <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
+                Flag Focus Tags below (what you are watching). Cloud shows Tags from Notes and emails — Patterns come from
+                those, not from Focus alone.
+              </p>
               <div className="mb-4">
                 <V2SignalTagsEditor initialTags={signalTags} returnTo="/argus/v2#tags" compact />
               </div>

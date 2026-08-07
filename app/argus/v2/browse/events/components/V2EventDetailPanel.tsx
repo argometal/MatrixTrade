@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
-import { appendEventChronicleEntryAction } from "@/app/argus/actions";
+import { appendEventChronicleEntryAction, toggleSignalTagAction } from "@/app/argus/actions";
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
 import { V2AttachmentComposer } from "@/app/argus/v2/components/V2AttachmentComposer";
 import { V2EventLinkEmailModal } from "./V2EventLinkEmailModal";
@@ -19,14 +19,17 @@ import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz"
 import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
+import { V2SignalTagsEditor } from "@/app/argus/v2/components/V2SignalTagsEditor";
 import {
   V2ChronicleSelectableList,
   chronicleLogIdFromEvidenceId,
 } from "@/app/argus/v2/components/V2ChronicleSelectableList";
+import { TagPickerModal } from "@/app/argus/components/TagPickerModal";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
-type PanelTab = "note" | "chronicle" | "runbooks" | "metrics";
+type PanelTab = "note" | "chronicle" | "runbooks" | "tags" | "metrics";
 type ChronicleFilter = "all" | "photo" | "file" | "email" | "journal";
 
 function EvidenceIcon({ kind }: { kind: V2EventDetail["evidence"][0]["kind"] }) {
@@ -75,9 +78,13 @@ export function V2EventDetailPanel({
   signalTags?: string[];
 } & V2DeleteGateProps) {
   const router = useRouter();
+  const { tagBuckets } = useArgusAdd();
   const [panelTab, setPanelTab] = useState<PanelTab>("note");
   const [showGraph, setShowGraph] = useState(true);
   const [composer, setComposer] = useState("");
+  const [entryTags, setEntryTags] = useState<string[]>([]);
+  const [tagPickerOpen, setTagPickerOpen] = useState(false);
+  const [focusTags, setFocusTags] = useState<string[]>(signalTags);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [chronicleFilter, setChronicleFilter] = useState<ChronicleFilter>("all");
   const [saving, setSaving] = useState(false);
@@ -85,9 +92,13 @@ export function V2EventDetailPanel({
   const [emailOpen, setEmailOpen] = useState(false);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
   const mobileDetail = Boolean(onBack);
-  const compactChrome = mobileDetail && panelTab !== "note";
+  const compactChrome = mobileDetail && panelTab !== "note" && panelTab !== "tags";
   // Bottom manage bar when private unlock is active; otherwise Edit stays in the header.
   const showMobileManageBar = mobileDetail && privateUnlocked;
+
+  useEffect(() => {
+    setFocusTags(signalTags);
+  }, [signalTags]);
 
   const lifecycle = (
     <V2EntityLifecycleActions
@@ -122,9 +133,18 @@ export function V2EventDetailPanel({
 
   useEffect(() => {
     setComposer("");
+    setEntryTags([]);
     setPendingFiles([]);
     setSaveNote(null);
   }, [selected.id]);
+
+  async function toggleFocusTag(tag: string) {
+    const result = await toggleSignalTagAction(tag);
+    if ("ok" in result && result.ok) {
+      setFocusTags(result.signalTags);
+      router.refresh();
+    }
+  }
 
   async function saveEntry() {
     if (!canSave) return;
@@ -134,11 +154,13 @@ export function V2EventDetailPanel({
       const formData = new FormData();
       formData.set("eventId", selected.id);
       formData.set("body", composer);
+      formData.set("entryTags", entryTags.join(", "));
       for (const file of pendingFiles) {
         formData.append("attachments", file);
       }
       const result = await appendEventChronicleEntryAction(formData);
       setComposer("");
+      setEntryTags([]);
       setPendingFiles([]);
       setSaveNote(result.appended ? "Added to chronicle" : "Nothing to save");
       if (result.appended) setPanelTab("chronicle");
@@ -170,6 +192,7 @@ export function V2EventDetailPanel({
     { id: "note", label: "Note" },
     { id: "chronicle", label: "Chronicle" },
     { id: "runbooks", label: "Runbooks" },
+    { id: "tags", label: "Tags" },
     { id: "metrics", label: "Metrics" },
   ];
 
@@ -289,8 +312,8 @@ export function V2EventDetailPanel({
                 <div>
                   <p className="text-xs font-medium text-zinc-300">Add to chronicle</p>
                   <p className="mt-0.5 text-[11px] text-zinc-600">
-                    Write and save — entry moves to Chronicle. Composer clears for the next note. Add Tags on a note
-                    when that entry should count toward Patterns. Focus Tags are flagged on Home → Tags.
+                    Write and save — entry moves to Chronicle. Tag this note when it should count toward Patterns.
+                    Flag Focus Tags on the Tags tab (what you are watching).
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -316,7 +339,43 @@ export function V2EventDetailPanel({
                 />
               </div>
 
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTagPickerOpen(true)}
+                  className="rounded-lg border border-teal-800/50 bg-teal-950/30 px-3 py-1.5 text-xs font-semibold text-teal-300 hover:bg-teal-900/40"
+                >
+                  Tags{entryTags.length > 0 ? ` (${entryTags.length})` : ""}
+                </button>
+                {entryTags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-full bg-teal-950/40 px-2.5 py-0.5 text-[11px] font-medium text-teal-200 ring-1 ring-teal-500/30"
+                  >
+                    #{tag}
+                    <button
+                      type="button"
+                      onClick={() => setEntryTags((current) => current.filter((t) => t !== tag))}
+                      className="text-teal-400/80 hover:text-teal-100"
+                      aria-label={`Remove tag ${tag}`}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+
               <V2AttachmentComposer files={pendingFiles} onChange={setPendingFiles} enablePaste />
+
+              <TagPickerModal
+                open={tagPickerOpen}
+                buckets={tagBuckets}
+                selectedTags={entryTags}
+                onChange={setEntryTags}
+                onClose={() => setTagPickerOpen(false)}
+                signalTags={focusTags}
+                onToggleSignal={(tag) => void toggleFocusTag(tag)}
+              />
             </div>
           ) : null}
 
@@ -395,6 +454,29 @@ export function V2EventDetailPanel({
               libraryRunbooks={libraryRunbooks}
               progressRecords={progressRecords}
             />
+          ) : null}
+
+          {panelTab === "tags" ? (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-medium text-zinc-300">Tags on this Event</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
+                  <span className="text-zinc-400">Note Tags</span> — add on the Note tab when saving; they count toward
+                  Patterns.{" "}
+                  <span className="text-zinc-400">Focus Tags</span> — flag what you are watching (highlight-critical).
+                  Focus Tags are journal-wide; they are not copied onto every note.
+                </p>
+              </div>
+              {selected.tagPatterns.length > 0 ? (
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+                    Patterns in this event
+                  </p>
+                  <V2TagPatternBadges patterns={selected.tagPatterns} signalTags={focusTags} />
+                </div>
+              ) : null}
+              <V2SignalTagsEditor initialTags={focusTags} returnTo={returnTo} />
+            </div>
           ) : null}
 
           {panelTab === "metrics" ? (

@@ -11,7 +11,7 @@ export type V2VocabularyListCopy = {
   removeAria: (item: string) => string;
 };
 
-/** Shared chip list for Topic Aliases and Focus Tags — same mechanic, product copy differs. */
+/** Shared chip list for Topic Match tags and Focus Tags — same mechanic, product copy differs. */
 export function V2VocabularyListEditor({
   items,
   draft,

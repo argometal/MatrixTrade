@@ -1,25 +1,38 @@
-# ARGUS vocabulary — Topic, Tag, Alias, Focus Tag (Signal)
+# ARGUS vocabulary — Topic, Tag, Match tag, Focus Tag
 
 **Status:** Canonical (2026-08-07)  
 **Mechanics:** [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md)
 
+Keep the product word **TAGS**. Sub-roles stay under that family:
+
 | Term | Where | Role |
 |------|--------|------|
 | **Topic** | Entity (`Kind: topic`) | Evidence binder |
-| **Tag** | Evidence only (`inbox.topics[]`, `log.topics[]`) | User marks on items; Patterns / filters / Deliver |
-| **Alias** | Topic entity (`linkedTags` storage) | Synonyms for matching inbox/search — not Patterns |
-| **Focus Tag** (Signal) | Journal `ArgusData.signalTags[]` | Flagged Tags → highlight-critical / reason to focus. **Not** auto-copied onto evidence |
-| **Note** | `Log` row in Chronicle / Timeline | Narrative evidence (user label; code may say journal) |
+| **Tag** (evidence) | `inbox.topics[]`, `log.topics[]` | Marks on Notes/emails → Patterns / filters / Deliver |
+| **Match tag** | Topic entity (`linkedTags` storage) | Synonyms so inbox/search suggest this Topic — **not** Patterns |
+| **Focus Tag** | Journal `ArgusData.signalTags[]` | Flagged Tags → highlight-critical / reason to focus. **Not** auto-copied onto evidence |
+| **Note** | `Log` row in Chronicle / Timeline | Narrative evidence |
 | **Event** | Entity (`Kind: event`) | Case binder — not a Journal type |
 
-**Retired:** Event binder Signals on Event `Entity.linkedTags` — migrated into journal `signalTags`. Topic Aliases remain on Topic `linkedTags`.
+**Retired names**
 
-Nav badge counts are **not** Focus Tags (see `buildV2NavCounts`) — they are **triage debt**.
+| Old | Use |
+|-----|-----|
+| Event Signals (Event `linkedTags`) | Focus Tags + Note Tags |
+| Aliases (Topic UI) | **Match tags** (same storage) |
+
+### How to flag / tag in the UI
+
+| Intent | Where |
+|--------|--------|
+| Tag a Note on an Event (Patterns) | Event → **Note** → Tags button → Save |
+| Flag what you are watching | Event → **Tags** tab (Focus Tags), or Home → Tags |
+| Help inbox find a Topic | Topic → **Tags** tab → Match tags |
+
+Nav badge counts are **not** Focus Tags (`buildV2NavCounts`) — triage debt only.
 
 **Network status** (New / Active / Dormant / Lost / Archived) is derived retrieval vocabulary — not a Tag/Focus Tag/Pattern.
 
-**Reading modes:** Timeline (org/project) · Chronicle (topic/event/person). Narrative rows = **Notes**. See [`timeline-chronicle-model.md`](timeline-chronicle-model.md).
+**Reading modes:** Timeline (org/project) · Chronicle (topic/event/person). See [`timeline-chronicle-model.md`](timeline-chronicle-model.md).
 
-UI: chip-list editor for Topic Aliases; Home → Tags for Focus Tags.
-
-**Timeline vs Chronicle:** [`timeline-chronicle-model.md`](timeline-chronicle-model.md) · **Storage growth:** [`storage-archive-export.md`](storage-archive-export.md) · **Deprecated handoffs:** [`DEPRECATED-HANDOFFS.md`](DEPRECATED-HANDOFFS.md)
+**Storage growth:** [`storage-archive-export.md`](storage-archive-export.md) · **Deprecated handoffs:** [`DEPRECATED-HANDOFFS.md`](DEPRECATED-HANDOFFS.md)

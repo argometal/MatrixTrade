@@ -23,8 +23,8 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 | Dates / follow-ups | log dates, `followUpDate`, project start/end |
 | Entities / Topics / Events | `Entity` (+ reference kind in notes) |
 | Contact / my value marks | `Entity.contactValue[]`, `Entity.myValue[]` |
-| Focus Tags (flagged Signals) | Journal `ArgusData.signalTags[]` — highlight-critical watchlist |
-| Topic Aliases | Topic `Entity.linkedTags[]` |
+| Focus Tags (flagged watchlist) | Journal `ArgusData.signalTags[]` — highlight-critical |
+| Match tags (Topic) | Topic `Entity.linkedTags[]` — inbox/search synonyms (not Patterns) |
 
 **Not persisted as metrics:** Patterns, Network status, attention sort keys, health bands, strength%, outcomeScore.
 
@@ -56,7 +56,7 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 
 **Focus Tags** (`signalTags`) are a journal-level watchlist. When flagged, they highlight as critical focus in Patterns / tag cloud. They do **not** auto-copy onto evidence (that would inflate Patterns). Add Tags on a Note when that entry should count toward Patterns.
 
-Topic **Aliases** are vocabulary for match/suggest — never Patterns.
+Topic **Match tags** (formerly Aliases) are vocabulary for match/suggest — never Patterns.
 
 ### 3) What needs triage? — **nav counts only**
 

@@ -27,7 +27,7 @@ import {
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
-type PanelTab = "chronicle" | "timeline" | "runbooks" | "connections" | "aliases";
+type PanelTab = "chronicle" | "timeline" | "runbooks" | "connections" | "tags";
 type ChronicleFilter = "all" | V2EvidenceStreamKind | "attachments";
 
 const PANEL_TABS: { id: PanelTab; label: string }[] = [
@@ -35,7 +35,7 @@ const PANEL_TABS: { id: PanelTab; label: string }[] = [
   { id: "timeline", label: "Timeline" },
   { id: "runbooks", label: "Runbooks" },
   { id: "connections", label: "Connections" },
-  { id: "aliases", label: "Aliases" },
+  { id: "tags", label: "Tags" },
 ];
 
 const CHRONICLE_FILTERS: { id: ChronicleFilter; label: string }[] = [
@@ -119,7 +119,7 @@ export function V2TopicDetailPanel({
   const [showGraph, setShowGraph] = useState(true);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
   const mobileDetail = Boolean(onBack);
-  const compactChrome = mobileDetail && panelTab !== "aliases";
+  const compactChrome = mobileDetail && panelTab !== "tags";
   const showMobileManageBar = mobileDetail && privateUnlocked;
   const attachmentCount = selected.fileCount + selected.photoCount;
 
@@ -439,13 +439,20 @@ export function V2TopicDetailPanel({
             </div>
           ) : null}
 
-          {panelTab === "aliases" ? (
-            <V2TopicAliasEditor
-              topicId={selected.id}
-              topicName={selected.name}
-              initialAliases={selected.aliases}
-              returnTo={returnTo}
-            />
+          {panelTab === "tags" ? (
+            <div className="space-y-4">
+              <p className="text-[11px] leading-relaxed text-zinc-600">
+                <span className="text-zinc-400">Match tags</span> help inbox/search find this Topic. They are not Tags on
+                Notes and do not create Patterns. Tag evidence (emails/notes) separately when something should count toward
+                Patterns. Flag Focus Tags on Home → Tags when you want highlight-critical watch items.
+              </p>
+              <V2TopicAliasEditor
+                topicId={selected.id}
+                topicName={selected.name}
+                initialAliases={selected.aliases}
+                returnTo={returnTo}
+              />
+            </div>
           ) : null}
         </V2PrivateEvidenceGate>
       </div>
