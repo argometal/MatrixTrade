@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AppExchangeActions } from "@/app/components/AppExchangeActions";
@@ -91,33 +90,10 @@ export function V2TopBar({
         </form>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-          <Link
-            href="/argus/v2/help"
-            className="hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 lg:flex"
-            aria-label="How Argus works"
-            title="How Argus works"
-          >
-            ?
-          </Link>
-          <Link
-            href="/argus/v2/settings/security"
-            className="hidden h-9 w-9 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:border-violet-500/40 hover:text-violet-200 lg:flex"
-            aria-label="Security settings"
-            title="Guest workstation lock"
-          >
-            🛡
-          </Link>
+          {/* Help + Guest workstation / Security live once under System in the sidebar/drawer — not duplicated here. */}
           {privateConfigured ? (
             <PrivateLockMenu configured={privateConfigured} unlocked={privateUnlocked} />
-          ) : (
-            <Link
-              href="/argus/v2/settings/security"
-              className="hidden items-center gap-1.5 rounded-xl border border-zinc-800 px-3 py-2 text-xs font-medium text-zinc-500 hover:border-violet-500/40 hover:text-violet-200 lg:inline-flex"
-              title="Guest workstation lock"
-            >
-              <span aria-hidden>🛡</span> Security
-            </Link>
-          )}
+          ) : null}
           <V2PageIdBadge />
           <V2BuildBadge className="hidden min-[420px]:inline" />
           <V2TopBarAddMenu className="shrink-0" />

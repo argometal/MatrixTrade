@@ -32,20 +32,24 @@ export function V2Sidebar({
     >
       <div className={`shrink-0 border-b border-zinc-800/80 ${collapsed ? "px-2 py-4" : "px-5 py-5"}`}>
         <div className={`flex items-start ${collapsed ? "flex-col items-center gap-2" : "justify-between gap-2"}`}>
-          <Link
-            href="/argus/v2"
-            className={collapsed ? "flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600/20 text-lg ring-1 ring-violet-500/30" : "block min-w-0 flex-1"}
-            title="Argus Home"
+          {/* Brand mark only — Home nav row is the single entry to /argus/v2 */}
+          <div
+            className={
+              collapsed
+                ? "flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-violet-800 text-sm font-bold text-white ring-1 ring-violet-400/30"
+                : "min-w-0 flex-1"
+            }
+            aria-hidden={collapsed}
           >
             {collapsed ? (
-              <span aria-hidden>🌐</span>
+              <span>A</span>
             ) : (
               <>
                 <span className="text-lg font-bold tracking-tight text-zinc-50">Argus</span>
                 <span className="mt-0.5 block text-xs text-zinc-500">Evidence organization</span>
               </>
             )}
-          </Link>
+          </div>
           {onToggle ? (
             <button
               type="button"
