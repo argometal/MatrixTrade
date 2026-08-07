@@ -17,7 +17,7 @@ import {
   collectNeighborEntityIds,
   countTopicsAndEventsInScope,
 } from "./scope-node-counts";
-import { countLinkKinds } from "./entity-link-counts";
+import { countLinkKinds, linkedEventRefs } from "./entity-link-counts";
 import type {
   V2TopicDetail,
   V2TopicLinkedEntity,
@@ -218,6 +218,7 @@ export function buildV2TopicDetails(
     const neighborIds = collectNeighborEntityIds(data, topic, history);
     const linkCounts = countLinkKinds(data, neighborIds);
     const nodeCounts = countTopicsAndEventsInScope(data, topic, history);
+    const linkedEvents = linkedEventRefs(data, nodeCounts.eventIds);
 
     return {
       id: topic.id,
@@ -233,8 +234,11 @@ export function buildV2TopicDetails(
       fileCount: counts.fileCount + counts.photoCount,
       photoCount: counts.photoCount,
       evidenceCount: counts.evidenceCount,
-      linkedEntityIds: [...neighborIds],
+      // Link modal must edit outbound only — neighbors stay for filters/Connections.
+      linkedEntityIds: [...new Set(topic.linkedEntityIds ?? [])],
+      neighborEntityIds: [...neighborIds],
       linkedEntities,
+      linkedEvents,
       aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
       lifecycleStatus: topic.lifecycleStatus,
       hasPrivateEvidence: entityHasPrivateEvidence(data, inboxItems, topic.id),

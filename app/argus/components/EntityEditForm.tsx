@@ -42,8 +42,8 @@ function EntityLinkGroup({
   buckets: EntityPickerBuckets;
   selectedIds: string[];
   onChange: (ids: string[]) => void;
-  allowedKinds: Array<"person" | "event">;
-  defaultKind: "person" | "event";
+  allowedKinds: Array<"person" | "event" | "topic">;
+  defaultKind: "person" | "event" | "topic";
   createLabel: string;
 }) {
   const { openLinkModal } = useArgusAdd();
@@ -97,9 +97,22 @@ export function EntityEditForm({
 
   const initialPersonIds = idsMatchingKind(allEntities, entity.linkedEntityIds ?? [], "person");
   const initialEventIds = idsMatchingKind(allEntities, entity.linkedEntityIds ?? [], "event");
+  const initialTopicIds = (entity.linkedEntityIds ?? []).filter((id) => {
+    const entry = entityMap.get(id);
+    return entry && referenceKindFromNotes(entry.notes ?? "") === "topic";
+  });
+  /** Preserve org/project links the form does not edit (avoid wipe on save). */
+  const preservedStructuralIds = (entity.linkedEntityIds ?? []).filter((id) => {
+    const entry = entityMap.get(id);
+    if (!entry) return false;
+    if (entry.type === "project") return true;
+    if (entry.type === "company") return sourceKind === "topic" || sourceKind === "event";
+    return false;
+  });
 
   const [linkedPersonIds, setLinkedPersonIds] = useState(initialPersonIds);
   const [linkedEventIds, setLinkedEventIds] = useState(initialEventIds);
+  const [linkedTopicIds, setLinkedTopicIds] = useState(initialTopicIds);
   const [eventDate, setEventDate] = useState(entity.startDate ?? "");
   const [eventEndDate, setEventEndDate] = useState(entity.endDate ?? "");
 
@@ -123,16 +136,32 @@ export function EntityEditForm({
     };
   }, [allBuckets]);
 
+  const topicBuckets = useMemo(() => {
+    const filtered = filterEntityPickerBuckets(allBuckets, "event");
+    const keepTopic = (entry: Entity) => referenceKindFromNotes(entry.notes ?? "") === "topic";
+    return {
+      recent: filtered.recent.filter(keepTopic),
+      frequent: filtered.frequent.filter(keepTopic),
+      alphabetical: filtered.alphabetical.filter(keepTopic),
+    };
+  }, [allBuckets]);
+
   const linkedPeople = linkedPersonIds
     .map((id) => entityMap.get(id))
     .filter((entry): entry is Entity => Boolean(entry));
   const linkedEvents = linkedEventIds
     .map((id) => entityMap.get(id))
     .filter((entry): entry is Entity => Boolean(entry));
+  const linkedTopics = linkedTopicIds
+    .map((id) => entityMap.get(id))
+    .filter((entry): entry is Entity => Boolean(entry));
 
-  const mergedLinkedIds = [...new Set([...linkedPersonIds, ...linkedEventIds])];
+  const mergedLinkedIds = [
+    ...new Set([...linkedPersonIds, ...linkedEventIds, ...linkedTopicIds, ...preservedStructuralIds]),
+  ];
   const showPersonLinks = true;
   const showEventLinks = sourceKind === "topic";
+  const showTopicLinks = sourceKind === "event";
 
   return (
     <form action={updateEntityAction} className="mb-6 space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900 p-4">
@@ -225,6 +254,20 @@ export function EntityEditForm({
           allowedKinds={["event"]}
           defaultKind="event"
           createLabel={LINK_HIERARCHY.newEvent}
+        />
+      ) : null}
+
+      {showTopicLinks ? (
+        <EntityLinkGroup
+          label="Linked Topics"
+          hint="Topics related to this event — mirrored both ways so the Topic Connections list stays in sync."
+          linkedEntities={linkedTopics}
+          buckets={topicBuckets}
+          selectedIds={linkedTopicIds}
+          onChange={setLinkedTopicIds}
+          allowedKinds={["topic"]}
+          defaultKind="topic"
+          createLabel="+ Topic"
         />
       ) : null}
 

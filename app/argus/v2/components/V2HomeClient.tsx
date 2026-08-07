@@ -30,9 +30,9 @@ const HOME_VIEW_TABS: { id: V2HomeView; label: string }[] = [
 ];
 
 const INTELLIGENCE_TABS: { id: IntelligenceTab; label: string }[] = [
-  { id: "tags", label: "Tags" },
   { id: "treemap", label: "Treemap" },
   { id: "portfolio", label: "Portfolio" },
+  { id: "tags", label: "Tags" },
 ];
 
 const TAB_SOURCE: Record<IntelligenceTab, IntelligenceFrom> = {
@@ -93,7 +93,7 @@ export function V2HomeClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const view = parseV2HomeView(searchParams.get("view") ?? initialView);
-  const [intelTab, setIntelTab] = useState<IntelligenceTab>("tags");
+  const [intelTab, setIntelTab] = useState<IntelligenceTab>("treemap");
   const [lensId, setLensId] = useState<string | null>(null);
 
   const lensNode = lensId ? nodes.find((node) => node.id === lensId) : undefined;
