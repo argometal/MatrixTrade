@@ -117,7 +117,8 @@ export function GuestWorkstationLockPanel({
           <GuestLockTimeField name="dailyEnd" label="Daily end" value={dailyEnd} onChange={setDailyEnd} />
         </div>
         <p className="text-[11px] text-zinc-600">
-          Tap to open the clock (24h). Optional work window in local time. Outside hours → login required.
+          Tap to open the clock (24h). Optional work window in <span className="text-zinc-400">this
+          computer&apos;s local timezone</span> (not UTC). Outside hours → login required.
         </p>
 
         <label className="flex items-center gap-3">
