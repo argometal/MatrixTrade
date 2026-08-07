@@ -124,18 +124,20 @@ function MiniMatrix({ rows }: { rows: V2FocusTagStat[] }) {
   );
 }
 
+/** Canonical Tag universe graph + list — Home Intelligence → Tags only (aside duplicate deprecated). */
 export function V2FocusTagPortfolio({
   rows,
   initialFocusTags,
-  variant = "aside",
+  variant: _variant = "universe",
 }: {
   rows: V2FocusTagStat[];
   initialFocusTags: string[];
-  /** aside = Home rail; universe = Intelligence Tags tab (primary manage surface). */
+  /** @deprecated aside removed from Home rail — only `universe` is used. */
   variant?: "aside" | "universe";
 }) {
+  void _variant;
   const router = useRouter();
-  const [filter, setFilter] = useState<FocusFilter>(variant === "universe" ? "all" : "focus");
+  const [filter, setFilter] = useState<FocusFilter>("all");
   const [query, setQuery] = useState("");
   const [focusTags, setFocusTags] = useState(initialFocusTags);
   const [pendingTag, setPendingTag] = useState<string | null>(null);
@@ -172,22 +174,16 @@ export function V2FocusTagPortfolio({
     });
   }
 
-  const listMax = variant === "universe" ? "max-h-[min(420px,48vh)]" : "max-h-72";
-
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            {variant === "universe" ? "Tag universe" : "Focus portfolio"}
-          </p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Tag universe</p>
           <p className="text-[10px] text-zinc-600">
             Recency × recurrence · Flag to watch · Remove to unflag Focus
           </p>
         </div>
-        {variant === "universe" ? (
-          <p className="text-[10px] text-zinc-600">Notion-style list · Obsidian tag pages on click</p>
-        ) : null}
+        <p className="text-[10px] text-zinc-600">Notion-style list · Obsidian tag pages on click</p>
       </div>
 
       <MiniMatrix
@@ -241,7 +237,10 @@ export function V2FocusTagPortfolio({
               : "No tags match this filter."}
         </p>
       ) : (
-        <ul className={`${listMax} space-y-1 overflow-y-auto`} aria-label="Tag portfolio list">
+        <ul
+          className="max-h-[min(420px,48vh)] space-y-1 overflow-y-auto"
+          aria-label="Tag portfolio list"
+        >
           {visible.map((row) => {
             const busy = isPending && pendingTag === row.name;
             const score = Math.round((row.recencyScore * 0.55 + row.recurrenceScore * 0.45) * 100);
@@ -269,11 +268,9 @@ export function V2FocusTagPortfolio({
                         Pattern
                       </span>
                     ) : null}
-                    {variant === "universe" ? (
-                      <span className="ml-auto shrink-0 tabular-nums text-[10px] text-zinc-600">
-                        {score}
-                      </span>
-                    ) : null}
+                    <span className="ml-auto shrink-0 tabular-nums text-[10px] text-zinc-600">
+                      {score}
+                    </span>
                   </div>
                   <p className="mt-0.5 truncate text-[10px] text-zinc-600">
                     {row.count} total · {row.recurrence30d} in 30d ·{" "}

@@ -14,7 +14,6 @@ import { V2IntelligenceLens, V2IntelligenceLensEmpty } from "./V2IntelligenceLen
 import { V2TabBar } from "./V2TabBar";
 import type { V2TagCloudItem } from "./V2TagCloud";
 import { V2SignalTagsEditor } from "./V2SignalTagsEditor";
-import { V2FocusTagPortfolio } from "./V2FocusTagPortfolio";
 import { V2Timeline, V2TimelineRail } from "./V2Timeline";
 import {
   BrowseQuickLinks,
@@ -216,16 +215,12 @@ export function V2HomeClient({
 
           <div id="tags">
             <V2Card className="p-5">
-              <V2SectionTitle>Tags</V2SectionTitle>
+              <V2SectionTitle>Focus Tags</V2SectionTitle>
               <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
-                Quick Focus manage. Full Tag universe (filter, search, Flag/Remove, recency × recurrence) lives under
-                Intelligence → Tags.
+                Quick flag/unflag. Tag universe graph (recency × recurrence) lives only under Intelligence → Tags.
               </p>
-              <div className="mb-4">
+              <div className="mb-3">
                 <V2SignalTagsEditor initialTags={signalTags} returnTo="/argus/v2#tags" compact />
-              </div>
-              <div className="mb-3 border-t border-zinc-800/80 pt-4">
-                <V2FocusTagPortfolio rows={focusTagPortfolio} initialFocusTags={signalTags} variant="aside" />
               </div>
               <button
                 type="button"
