@@ -77,6 +77,7 @@ export function V2ProjectActions({
     setBusy(true);
     const formData = new FormData();
     formData.set("entityId", projectId);
+    formData.set("entityKind", "project");
     formData.set("confirmName", confirmName.trim());
     formData.set("pin", pin);
     formData.set("returnTo", "/argus/v2/browse/projects");
