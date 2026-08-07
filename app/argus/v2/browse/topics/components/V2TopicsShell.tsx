@@ -13,7 +13,6 @@ import {
 } from "react";
 import { archiveEntityAction, restoreEntityAction } from "@/app/argus/actions";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
-import { V2BrowseStatusFilter } from "@/app/argus/v2/components/V2BrowseStatusFilter";
 import { V2Badge } from "../../../components/v2-ui";
 import {
   applyBrowseOrder,
@@ -63,13 +62,6 @@ const ACTIVITY_OPTIONS: { id: V2TopicActivityFilter; label: string }[] = [
   { id: "30d", label: "Last 30 days" },
   { id: "90d", label: "Last 90 days" },
   { id: "older", label: "Older than 90 days" },
-];
-
-const TABS: { id: V2TopicTab; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "active", label: "Active" },
-  { id: "empty", label: "Empty" },
-  { id: "patterns", label: "Patterns" },
 ];
 
 function badgeTone(
@@ -632,20 +624,6 @@ export function V2TopicsShell({
     return groups;
   }, [sorted, columnOverrides, statusFilter]);
 
-  function setTab(next: V2TopicTab, syncStatus = true) {
-    replaceTopicParams((params) => {
-      if (next === "all") params.delete("tab");
-      else params.set("tab", next);
-      params.delete("status");
-      params.delete("page");
-    });
-    if (!syncStatus) return;
-    const nextStatus =
-      next === "active" ? "Active" : next === "empty" ? "Empty" : next === "patterns" ? "patterns" : "all";
-    setStatusFilter(nextStatus);
-    writeBrowseViewPrefs(ORDER_SCOPE, { status: nextStatus });
-  }
-
   function applyStatusFilter(value: V2TopicBrowseStatus | "all" | "patterns") {
     setStatusFilter(value);
     writeBrowseViewPrefs(ORDER_SCOPE, { status: value });
@@ -878,19 +856,6 @@ export function V2TopicsShell({
                   </button>
                 ))}
               </div>
-              <V2BrowseStatusFilter<V2TopicBrowseStatus | "patterns">
-                label="Filters"
-                value={statusFilter}
-                onChange={applyStatusFilter}
-                options={[
-                  { value: "all", label: "All statuses" },
-                  { value: "Active", label: "Active" },
-                  { value: "Quiet", label: "Quiet" },
-                  { value: "Empty", label: "Empty" },
-                  { value: "Archived", label: "Archived" },
-                  { value: "patterns", label: "Patterns" },
-                ]}
-              />
               <V2CreateEntityButton
                 kind="topic"
                 label="+ Topic"
@@ -909,19 +874,13 @@ export function V2TopicsShell({
             />
           </div>
 
-          <div className="mb-4 flex gap-1 overflow-x-auto">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setTab(t.id)}
-                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-medium ${
-                  tab === t.id ? "bg-violet-500/15 text-violet-300" : "text-zinc-600 hover:text-zinc-400"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
+          {/* Status once — summary pills (no duplicate All/Active/Empty tabs or Filters dropdown). */}
+          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <SummaryPill label="Total" value={summary.total} active={statusFilter === "all"} onClick={() => applyStatusFilter("all")} />
+            <SummaryPill label="Active" value={summary.active} tone="green" active={statusFilter === "Active"} onClick={() => applyStatusFilter("Active")} />
+            <SummaryPill label="Quiet" value={summary.quiet} tone="amber" active={statusFilter === "Quiet"} onClick={() => applyStatusFilter("Quiet")} />
+            <SummaryPill label="Empty" value={summary.empty} tone="blue" active={statusFilter === "Empty"} onClick={() => applyStatusFilter("Empty")} />
+            <SummaryPill label="Archived" value={summary.archived} active={statusFilter === "Archived"} onClick={() => applyStatusFilter("Archived")} />
           </div>
 
           {tagChips.length > 0 ? (
@@ -1032,6 +991,18 @@ export function V2TopicsShell({
               </FilterMenuPanel>
             </div>
 
+            <button
+              type="button"
+              onClick={() => applyStatusFilter("patterns")}
+              className={`rounded-lg px-2.5 py-1 text-[10px] font-medium ${
+                statusFilter === "patterns"
+                  ? "bg-violet-500/15 text-violet-300"
+                  : "bg-zinc-800/80 text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              Patterns
+            </button>
+
             {filtersActive ? (
               <button
                 type="button"
@@ -1041,14 +1012,6 @@ export function V2TopicsShell({
                 Clear filters
               </button>
             ) : null}
-          </div>
-
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <SummaryPill label="Total" value={summary.total} active={statusFilter === "all"} onClick={() => applyStatusFilter("all")} />
-            <SummaryPill label="Active" value={summary.active} tone="green" active={statusFilter === "Active"} onClick={() => applyStatusFilter("Active")} />
-            <SummaryPill label="Quiet" value={summary.quiet} tone="amber" active={statusFilter === "Quiet"} onClick={() => applyStatusFilter("Quiet")} />
-            <SummaryPill label="Empty" value={summary.empty} tone="blue" active={statusFilter === "Empty"} onClick={() => applyStatusFilter("Empty")} />
-            <SummaryPill label="Archived" value={summary.archived} active={statusFilter === "Archived"} onClick={() => applyStatusFilter("Archived")} />
           </div>
 
           {filtered.length === 0 ? (

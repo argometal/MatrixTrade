@@ -39,13 +39,6 @@ const PANEL_TABS: { id: PanelTab; label: string }[] = [
   { id: "tags", label: "Tags" },
 ];
 
-const CHRONICLE_FILTERS: { id: ChronicleFilter; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "email", label: "Email" },
-  { id: "journal", label: "Notes" },
-  { id: "attachments", label: "Attachments" },
-];
-
 function EvidenceIcon({ kind }: { kind: V2EvidenceStreamKind }) {
   if (kind === "email") return <>✉</>;
   if (kind === "photo") return <>📷</>;
@@ -335,25 +328,20 @@ export function V2TopicDetailPanel({
         >
           {panelTab === "chronicle" ? (
             <div className="space-y-3">
-              <div className="flex flex-wrap gap-1">
-                {CHRONICLE_FILTERS.map((f) => (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs text-zinc-500">
+                  Evidence on this topic — use Notes / Email / Attachments pills above to focus the list.
+                </p>
+                {chronicleFilter !== "all" ? (
                   <button
-                    key={f.id}
                     type="button"
-                    onClick={() => setChronicleFilter(f.id)}
-                    className={`rounded-lg px-2.5 py-1 text-[11px] font-medium ${
-                      chronicleFilter === f.id
-                        ? "bg-violet-500/15 text-violet-300"
-                        : "text-zinc-600 hover:text-zinc-400"
-                    }`}
+                    onClick={() => setChronicleFilter("all")}
+                    className="rounded-lg border border-zinc-700 px-2 py-1 text-[10px] font-medium text-zinc-400 hover:text-zinc-200"
                   >
-                    {f.label}
+                    Show all
                   </button>
-                ))}
+                ) : null}
               </div>
-              <p className="text-xs text-zinc-500">
-                Full evidence on this topic — emails, notes, and attachments for analysis.
-              </p>
               <V2ChronicleSelectableList
                 key={selected.id}
                 returnTo={returnTo}
