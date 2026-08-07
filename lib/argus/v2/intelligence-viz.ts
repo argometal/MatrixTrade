@@ -1,13 +1,18 @@
 import type { ArgusData, Entity, InboxItem, Log } from "../types";
 import { referenceKindFromNotes } from "../reference-types";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
+import { signalTagKey, signalTagKeySet } from "../signal-tags";
 import { buildTagPatternsForScope, tagPatternCount } from "./tag-patterns";
 import { entitiesByKind } from "./hierarchy";
 import { isEntityArchived } from "../entity-lifecycle";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
 import { intelligenceEntityHref } from "./intelligence-nav";
-import { outboundStructuralIds } from "./scope-node-counts";
+import {
+  collectNeighborEntityIds,
+  countTopicsAndEventsInScope,
+  outboundStructuralIds,
+} from "./scope-node-counts";
 
 export type V2KnowledgeNodeKind = "topic" | "project" | "organization";
 
@@ -42,9 +47,16 @@ export type V2GraphNode = {
   y: number;
   evidenceCount: number;
   href: string;
+  /**
+   * True when scoped evidence carries a journal Focus Tag (`signalTags`).
+   * Visual: rose dashed halo — Focus trigger / watch blast-radius (not a new entity).
+   */
+  focusCritical?: boolean;
+  /** Matching Focus Tag display names on this node's evidence. */
+  focusTags?: string[];
 };
 
-export type V2GraphEdgeKind = "linked" | "co-mentioned" | "project-link";
+export type V2GraphEdgeKind = "linked" | "co-mentioned" | "project-link" | "focus-affinity";
 
 export type V2GraphEdge = {
   from: string;
@@ -105,43 +117,11 @@ function entityHref(entity: Entity, from: "intelligence" | "treemap" | "portfoli
   return `/argus/v2/network/${entity.id}`;
 }
 
-function isEventEntity(data: ArgusData, entityId: string): boolean {
-  const entity = data.entities.find((e) => e.id === entityId && !e.deletedAt);
-  return (
-    entity != null &&
-    entity.type === "other" &&
-    referenceKindFromNotes(entity.notes ?? "") === "event"
-  );
-}
-
 function getLinkedEventIdsForTopic(data: ArgusData, topicId: string, logs: Log[]): Set<string> {
-  const eventIds = new Set<string>();
   const topic = data.entities.find((e) => e.id === topicId && !e.deletedAt);
-  if (!topic) return eventIds;
-
-  for (const id of topic.linkedEntityIds ?? []) {
-    if (isEventEntity(data, id)) eventIds.add(id);
-  }
-
-  for (const project of data.entities) {
-    if (project.deletedAt || project.type !== "project") continue;
-    if (!(project.linkedTopicIds ?? []).includes(topicId)) continue;
-    for (const id of project.linkedEventIds ?? []) {
-      if (isEventEntity(data, id)) eventIds.add(id);
-    }
-    for (const id of project.linkedEntityIds ?? []) {
-      if (isEventEntity(data, id)) eventIds.add(id);
-    }
-  }
-
-  for (const log of logs) {
-    if (!log.entityIds.includes(topicId)) continue;
-    for (const id of log.entityIds) {
-      if (id !== topicId && isEventEntity(data, id)) eventIds.add(id);
-    }
-  }
-
-  return eventIds;
+  if (!topic) return new Set();
+  // Same policy as metrics / Connections — outbound + reverse + project bridge + co-mention
+  return new Set(countTopicsAndEventsInScope(data, topic, logs).eventIds);
 }
 
 function countEvidenceForEntity(
@@ -172,20 +152,33 @@ function countEvidenceForTopicIncludingEvents(
   today: string,
   logs: Log[]
 ): { total: number; recent: number; dates: string[] } {
-  const base = countEvidenceForEntity(data, inboxItems, topicId, includePrivate, today);
-  const linkedEventIds = getLinkedEventIdsForTopic(data, topicId, logs);
-  let total = base.total;
-  let recent = base.recent;
-  const dates = [...base.dates];
+  // Union evidence across topic + linked events (shared topic+event logs count once).
+  const scopeIds = new Set<string>([topicId, ...getLinkedEventIdsForTopic(data, topicId, logs)]);
+  const seenLog = new Set<string>();
+  const seenInbox = new Set<string>();
+  const dates: string[] = [];
 
-  for (const eventId of linkedEventIds) {
-    const eventEvidence = countEvidenceForEntity(data, inboxItems, eventId, includePrivate, today);
-    total += eventEvidence.total;
-    recent += eventEvidence.recent;
-    dates.push(...eventEvidence.dates);
+  for (const entityId of scopeIds) {
+    for (const log of visibleLogs(data, includePrivate)) {
+      if (!log.entityIds.includes(entityId) || seenLog.has(log.id)) continue;
+      seenLog.add(log.id);
+      dates.push((log.updatedAt || log.date).slice(0, 10));
+    }
+    for (const item of getLinkedInboxForEntity(inboxItems, entityId, includePrivate)) {
+      if (seenInbox.has(item.id)) continue;
+      seenInbox.add(item.id);
+      dates.push(item.receivedAt.slice(0, 10));
+    }
   }
 
-  return { total, recent, dates };
+  const weekAgo = new Date(`${today}T12:00:00`);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+  const cutoff = weekAgo.toISOString().slice(0, 10);
+  return {
+    total: seenLog.size + seenInbox.size,
+    recent: dates.filter((d) => d >= cutoff).length,
+    dates,
+  };
 }
 
 const RECENCY_WINDOW_DAYS = 90;
@@ -459,6 +452,37 @@ function collectLinkedNeighborIds(entity: Entity, entityMap: Map<string, Entity>
   return [...ids];
 }
 
+/** Focus Tags that appear on this entity's evidence (trigger / watch blast-radius). */
+function focusTagsOnEntity(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  entityId: string,
+  includePrivate: boolean,
+  focusKeys: Set<string>
+): string[] {
+  if (focusKeys.size === 0) return [];
+  const matched = new Map<string, string>();
+
+  for (const log of visibleLogs(data, includePrivate)) {
+    if (!log.entityIds.includes(entityId)) continue;
+    for (const raw of log.topics ?? []) {
+      const key = signalTagKey(raw);
+      if (!focusKeys.has(key) || matched.has(key)) continue;
+      matched.set(key, raw.trim().replace(/\s+/g, " "));
+    }
+  }
+
+  for (const item of getLinkedInboxForEntity(inboxItems, entityId, includePrivate)) {
+    for (const raw of item.topics ?? []) {
+      const key = signalTagKey(raw);
+      if (!focusKeys.has(key) || matched.has(key)) continue;
+      matched.set(key, raw.trim().replace(/\s+/g, " "));
+    }
+  }
+
+  return [...matched.values()].sort((a, b) => a.localeCompare(b));
+}
+
 /** Local 1–2 hop subgraph from one entity — Kumu / Obsidian neighborhood pattern. */
 export function buildV2EntityNeighborhoodGraph(
   data: ArgusData,
@@ -474,10 +498,15 @@ export function buildV2EntityNeighborhoodGraph(
   const center = entityMap.get(centerEntityId);
   if (!center) return { nodes: [], edges: [], centerId: centerEntityId };
 
+  const logs = visibleLogs(data, includePrivate);
   const neighborIds = new Set<string>([centerEntityId]);
 
-  for (const id of collectLinkedNeighborIds(center, entityMap)) neighborIds.add(id);
+  // Same neighbor policy as Topic/Event metrics (bridge + parent org + co-mention).
+  for (const id of collectNeighborEntityIds(data, center, logs)) {
+    if (entityMap.has(id)) neighborIds.add(id);
+  }
 
+  // Hop-2 stays structural (outbound/reverse) so the canvas does not explode.
   const hopOne = [...neighborIds];
   for (const id of hopOne) {
     if (id === centerEntityId) continue;
@@ -486,28 +515,27 @@ export function buildV2EntityNeighborhoodGraph(
     for (const linkedId of collectLinkedNeighborIds(entity, entityMap)) neighborIds.add(linkedId);
   }
 
-  for (const log of visibleLogs(data, includePrivate)) {
-    if (!log.entityIds.includes(centerEntityId)) continue;
-    for (const id of log.entityIds) {
-      if (entityMap.has(id)) neighborIds.add(id);
-    }
-  }
-
+  const focusKeys = signalTagKeySet(data.signalTags);
   const scored = [...neighborIds]
     .map((id) => {
       const entity = entityMap.get(id)!;
       const { total } = countEvidenceForEntity(data, inboxItems, id, includePrivate, today);
-      return { entity, total, isCenter: id === centerEntityId };
+      const focusTags = focusTagsOnEntity(data, inboxItems, id, includePrivate, focusKeys);
+      return { entity, total, focusTags, isCenter: id === centerEntityId };
     })
     .sort((a, b) => {
       if (a.isCenter) return -1;
       if (b.isCenter) return 1;
+      // Prefer Focus-trigger nodes when trimming the neighborhood.
+      if (a.focusTags.length > 0 !== b.focusTags.length > 0) {
+        return b.focusTags.length > 0 ? 1 : -1;
+      }
       return b.total - a.total || a.entity.name.localeCompare(b.entity.name);
     })
     .slice(0, maxNodes);
 
   const idSet = new Set(scored.map((s) => s.entity.id));
-  const rawNodes: V2GraphNode[] = scored.map(({ entity, total }) => ({
+  const rawNodes: V2GraphNode[] = scored.map(({ entity, total, focusTags }) => ({
     id: entity.id,
     name: entity.name,
     kind: graphKindForEntity(entity),
@@ -515,6 +543,8 @@ export function buildV2EntityNeighborhoodGraph(
     y: 0,
     evidenceCount: total,
     href: entityHref(entity),
+    focusCritical: focusTags.length > 0,
+    focusTags,
   }));
 
   const edgeMap = new Map<string, V2GraphEdge>();
@@ -528,18 +558,25 @@ export function buildV2EntityNeighborhoodGraph(
   };
 
   for (const { entity } of scored) {
-    for (const id of entity.linkedEntityIds ?? []) addEdge(entity.id, id, 2, "linked");
-    if (entity.type === "project") {
-      for (const id of entity.linkedPersonIds ?? []) addEdge(entity.id, id, 2, "project-link");
-      for (const id of entity.linkedTopicIds ?? []) addEdge(entity.id, id, 2, "project-link");
-      for (const id of entity.linkedEventIds ?? []) addEdge(entity.id, id, 1, "project-link");
-    }
+    for (const id of outboundStructuralIds(entity)) addEdge(entity.id, id, 2, "linked");
   }
 
-  for (const log of visibleLogs(data, includePrivate)) {
+  for (const log of logs) {
     const linked = log.entityIds.filter((id) => idSet.has(id));
     for (let i = 0; i < linked.length; i++) {
       for (let j = i + 1; j < linked.length; j++) addEdge(linked[i], linked[j], 1, "co-mentioned");
+    }
+  }
+
+  // Focus-affinity: dashed suggestion when two nodes share a Focus Tag (Forge affinity ≠ confirmed).
+  for (let i = 0; i < scored.length; i++) {
+    for (let j = i + 1; j < scored.length; j++) {
+      const a = scored[i];
+      const b = scored[j];
+      if (a.focusTags.length === 0 || b.focusTags.length === 0) continue;
+      const aKeys = new Set(a.focusTags.map(signalTagKey));
+      if (!b.focusTags.some((tag) => aKeys.has(signalTagKey(tag)))) continue;
+      addEdge(a.entity.id, b.entity.id, 0.5, "focus-affinity");
     }
   }
 

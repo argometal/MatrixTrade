@@ -18,7 +18,7 @@ import {
 import type { ProjectScopeOptions } from "../project-evidence-scope";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
-import { collectProjectLinkIds, collectRelatedEntityIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
+import { collectProjectLinkIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
 import { countTopicsAndEventsInScope } from "./scope-node-counts";
 import { findTopicEntityIdForTag, intelligenceTagHref } from "./intelligence-nav";
 

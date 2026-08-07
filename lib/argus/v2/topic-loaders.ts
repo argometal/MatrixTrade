@@ -13,6 +13,11 @@ import {
   latestEvidenceIso,
 } from "./evidence-stream";
 import { buildTagPatternsForScope } from "./tag-patterns";
+import {
+  collectNeighborEntityIds,
+  countTopicsAndEventsInScope,
+} from "./scope-node-counts";
+import { countLinkKinds } from "./entity-link-counts";
 import type {
   V2TopicDetail,
   V2TopicLinkedEntity,
@@ -66,13 +71,7 @@ function linkedEntityIcon(entity: Entity): string {
 }
 
 function collectLinkedEntities(data: ArgusData, topic: Entity, logs: Log[]): V2TopicLinkedEntity[] {
-  const ids = new Set<string>(topic.linkedEntityIds ?? []);
-  for (const log of logs) {
-    if (!log.entityIds.includes(topic.id)) continue;
-    for (const id of log.entityIds) {
-      if (id !== topic.id) ids.add(id);
-    }
-  }
+  const ids = collectNeighborEntityIds(data, topic, logs);
 
   const entities: V2TopicLinkedEntity[] = [];
   for (const id of ids) {
@@ -89,18 +88,6 @@ function collectLinkedEntities(data: ArgusData, topic: Entity, logs: Log[]): V2T
   }
 
   return entities.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-function countLinkedByKind(entities: V2TopicLinkedEntity[]) {
-  let orgCount = 0;
-  let projectCount = 0;
-  let peopleCount = 0;
-  for (const entity of entities) {
-    if (entity.icon === "🏢") orgCount += 1;
-    else if (entity.icon === "📁") projectCount += 1;
-    else if (entity.icon === "👤") peopleCount += 1;
-  }
-  return { orgCount, projectCount, peopleCount };
 }
 
 function topicCategory(topic: Entity, logs: Log[]): string {
@@ -155,16 +142,16 @@ function topicRowFilterMeta(
   }
 
   const tagPatterns = buildTagPatternsForScope(history, inbox, today);
-  const linkedEntities = collectLinkedEntities(data, topic, history);
+  const neighborIds = collectNeighborEntityIds(data, topic, history);
   const linkedOrgIds: string[] = [];
   const linkedProjectIds: string[] = [];
-  const linkedEntityIds = [
-    ...new Set([...(topic.linkedEntityIds ?? []), ...linkedEntities.map((entity) => entity.id)]),
-  ];
+  const linkedEntityIds = [...neighborIds];
 
-  for (const entity of linkedEntities) {
-    if (entity.icon === "🏢") linkedOrgIds.push(entity.id);
-    else if (entity.icon === "📁") linkedProjectIds.push(entity.id);
+  for (const id of neighborIds) {
+    const entity = data.entities.find((e) => e.id === id && !e.deletedAt);
+    if (!entity) continue;
+    if (entity.type === "company") linkedOrgIds.push(entity.id);
+    else if (entity.type === "project") linkedProjectIds.push(entity.id);
   }
 
   return {
@@ -228,20 +215,25 @@ export function buildV2TopicDetails(
       today
     );
     const linkedEntities = collectLinkedEntities(data, topic, history);
-    const linkCounts = countLinkedByKind(linkedEntities);
+    const neighborIds = collectNeighborEntityIds(data, topic, history);
+    const linkCounts = countLinkKinds(data, neighborIds);
+    const nodeCounts = countTopicsAndEventsInScope(data, topic, history);
 
     return {
       id: topic.id,
       name: topic.name,
       category: topicCategory(topic, history),
       description: entityNotesForDisplay(topic.notes ?? "") || "No description yet.",
-      ...linkCounts,
+      orgCount: linkCounts.orgCount,
+      projectCount: linkCounts.projectCount,
+      peopleCount: linkCounts.peopleCount,
+      eventCount: nodeCounts.eventCount,
       journalCount: counts.journalCount,
       emailCount: counts.emailCount,
       fileCount: counts.fileCount + counts.photoCount,
       photoCount: counts.photoCount,
       evidenceCount: counts.evidenceCount,
-      linkedEntityIds: topic.linkedEntityIds ?? [],
+      linkedEntityIds: [...neighborIds],
       linkedEntities,
       aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
       lifecycleStatus: topic.lifecycleStatus,

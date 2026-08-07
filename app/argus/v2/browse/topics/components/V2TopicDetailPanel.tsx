@@ -241,7 +241,7 @@ export function V2TopicDetailPanel({
                   Protected evidence on this topic — unlock with PIN to view counts and linked data.
                 </p>
               ) : (
-                <div className="mb-3 inline-grid grid-cols-3 gap-1.5 sm:grid-cols-6">
+                <div className="mb-3 grid grid-cols-4 gap-1.5 sm:grid-cols-7">
                   <MetricPill
                     icon="📓"
                     label="Notes"
@@ -268,6 +268,12 @@ export function V2TopicDetailPanel({
                       setPanelTab("chronicle");
                       setChronicleFilter("attachments");
                     }}
+                  />
+                  <MetricPill
+                    icon="📅"
+                    label="Events"
+                    count={selected.eventCount}
+                    onClick={() => setPanelTab("connections")}
                   />
                   <MetricPill
                     icon="🏢"

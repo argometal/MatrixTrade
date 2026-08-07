@@ -55,6 +55,7 @@ export interface V2TopicDetail {
   orgCount: number;
   projectCount: number;
   peopleCount: number;
+  eventCount: number;
   journalCount: number;
   emailCount: number;
   fileCount: number;
@@ -270,6 +271,7 @@ export interface V2TopicBrowseCard {
     journals: number;
     emails: number;
     files: number;
+    events: number;
     orgs: number;
     projects: number;
     people: number;
@@ -329,6 +331,7 @@ export function buildV2TopicBrowseCards(
         journals: row.journalCount,
         emails: row.emailCount,
         files: row.fileCount,
+        events: detail?.eventCount ?? 0,
         orgs: detail?.orgCount ?? row.linkedOrgIds.length,
         projects: detail?.projectCount ?? row.linkedProjectIds.length,
         people: detail?.peopleCount ?? 0,
