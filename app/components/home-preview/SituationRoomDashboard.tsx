@@ -390,13 +390,8 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
           <h2 className="text-sm font-semibold text-violet-200">AI Blocks</h2>
           <p className="mt-2 text-xs text-zinc-400">
             Control → Apply on any page. Copy context from the Control panel.
+            Dashboard Paste AI Block (legacy) is removed.
           </p>
-          <Link
-            href="/exchange"
-            className="mt-3 inline-block rounded-lg bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-500"
-          >
-            Exchange (legacy) →
-          </Link>
         </section>
 
         {/* 5. Alerts */}
