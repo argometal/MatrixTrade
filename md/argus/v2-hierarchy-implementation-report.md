@@ -45,7 +45,7 @@ Implemented in `lib/argus/v2/timeline-builders.ts` → `logToTimelineEntry()`.
 | Timeline | Merged logs + inbox from org scope only |
 | Linked people | `entity.linkedPersonIds` + person ids from `entity.linkedEntityIds` |
 | Linked projects | `projectsForOrganization()` — `project.linkedEntityIds` includes org **or** `org.linkedEntityIds` includes project |
-| Relationship panel | `buildEntityIntelligence()` — `strategicValue`, `relationshipHealth`, `outcomeScore` |
+| Relationship panel | Network **status** + evidence facts via `loadOrganizationPageData()` — see [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md). **Retired:** relationshipScore / Trust / Future / outcomeScore display |
 | Protected entries | Hidden unless PIN unlock (`includePrivate`) |
 
 **Module:** `lib/argus/v2/hierarchy.ts`, `lib/argus/v2/loaders.ts` → `loadOrganizationPageData()`

@@ -1,8 +1,10 @@
 # 13 — Evidence Engine implementation notes
 
-**Status:** Implemented on branch `cursor/argus-evidence-engine-implement-e1a0` (merge to `main` for Chat access)  
+**Status:** Implemented — canonical on `main` after merge of this pack  
 **Date:** 2026-08-06  
-**Depends on:** [`12-evidence-engine-principles-solution.md`](12-evidence-engine-principles-solution.md)
+**Depends on:** [`12-evidence-engine-principles-solution.md`](12-evidence-engine-principles-solution.md)  
+**Living mechanics (Argus library):** [`../argus/evidence-engine-mechanics.md`](../argus/evidence-engine-mechanics.md)  
+**Deprecated handoffs:** [`../argus/DEPRECATED-HANDOFFS.md`](../argus/DEPRECATED-HANDOFFS.md)
 
 ---
 
@@ -10,7 +12,7 @@
 
 ### Phase A — Seal the surface
 
-* Deleted unused metric UIs: `NetworkEntityCard` / `NetworkHomeSections`, `NetworkRelationshipMetricsDisplay`, `JournalHome`
+* Deleted unused metric UIs: `NetworkEntityCard` / `NetworkHomeSections`, `NetworkRelationshipMetricsDisplay`, `JournalHome`, `HomeNetworkCard`
 * Removed dead builders: `buildNetworkHomeSections`, `buildHomeNetworkSummaries`, `buildEntityNetworkViews`
 * Event Signals copy clarifies: Patterns count Tags on evidence after chronicle Save
 * Nav badge comments/help: triage debt ≠ Event Signals
@@ -33,6 +35,7 @@
 
 * Help: Network / badges / Patterns wording aligned with Evidence Engine
 * AI network snapshots: status + evidence counts, no strength/outcome KPIs
+* Library: `evidence-engine-mechanics.md` + `DEPRECATED-HANDOFFS.md`
 
 ---
 

@@ -6,11 +6,15 @@
 **Prod:** https://matrix-trade-theta.vercel.app  
 **Deploy pin:** `md/integrations/current-deploy.md` (tag on `origin/main`)  
 **ARGUS architecture review pack (external AI — `main` only):** `md/argus-review/00-PUBLIC-STATUS.md`  
-**Date:** 2026-08-06
+**Evidence Engine mechanics:** `md/argus/evidence-engine-mechanics.md`  
+**Deprecated handoffs list:** `md/argus/DEPRECATED-HANDOFFS.md`  
+**Date:** 2026-08-07
 
 External analysis text was **not** attached to the request that created this file. This handoff is **runtime truth from `main`**, not a transcript of an external memo.
 
-**Deprecated:** feature-branch / draft-PR / screenshot URL handoffs for Argus architecture review. Use `md/argus-review/` on `main`.
+**Deprecated:** feature-branch / draft-PR / screenshot URL handoffs for Argus architecture review. Use `md/argus-review/` on `main` + `md/argus/evidence-engine-mechanics.md`.  
+**Deprecated as live architecture:** `md/argus-review/11-behavioral-evaluation-review.md` (historical inventory; use `12`/`13`/mechanics).  
+**Deprecated for access:** draft PR #162 Signals/metrics branch handoff.
 
 ---
 
@@ -73,6 +77,14 @@ Living capability table: `md/argusforge/capability-map.md`. Consolidation histor
 
 ---
 
+## ARGUS Evidence Engine (pointer)
+
+Runtime mechanics (status vocabulary, Patterns, triage — not CRM scores): `md/argus/evidence-engine-mechanics.md`.  
+Principles + ship notes: `md/argus-review/12` · `13`.  
+Deliver v1: Quick Package (HTML + MD) + Evidence Vault — `md/argus/export-delivery-handoff.md`. Charter: `md/argus/ai-charter.md`.
+
+---
+
 ## ARGUS deliver (pointer)
 
 Deliver v1 is live: Quick Package (HTML + MD) + Evidence Vault. Details: `md/argus/export-delivery-handoff.md`. Charter: `md/argus/ai-charter.md`.
@@ -91,11 +103,12 @@ Deliver v1 is live: Quick Package (HTML + MD) + Evidence Vault. Details: `md/arg
 
 ## Hard rules for agents
 
-1. Prefer `current-deploy.md` + this file + `capability-map.md` over old `*handoff*` dumps.
+1. Prefer `current-deploy.md` + this file + `capability-map.md` + `md/argus/evidence-engine-mechanics.md` over old `*handoff*` dumps.
 2. Do not merge superseded PRs (#108, #112 closed into #113).
 3. Do not touch MTA Apply / Scout / Capital / trading P&L when working ArgusForge UI.
 4. Do not claim shipped without merge + production Ready.
 5. If a handoff contradicts code, **code wins** — fix or delete the handoff.
+6. Do not revive Behavior Engine / strength% / outcomeScore / org Trust·Future as product metrics.
 
 ---
 

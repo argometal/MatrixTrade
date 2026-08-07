@@ -155,14 +155,16 @@
 | `organization-browse-utils.ts` / `project-browse-utils.ts` | Org/project browse |
 | `loaders.ts` | Shared loaders |
 | `timeline-builders.ts` / `evidence-stream.ts` | Timeline / evidence streams |
-| `nav-items.ts` | Sidebar nav + signals badges |
+| `nav-items.ts` | Sidebar nav + **triage** badges (not Event Signals) |
 | `delete-gate-props.ts` | Delete gate props for UI |
 
 ---
 
 ## `app/argus/components/` file names
 
-ActivityEditPanel, AddContextFlow, AddRegisterCaptureButtons, ArgusAddLauncher, ArgusAddProvider, ArgusAppHeader, ArgusCreateItemDrawer, ArgusCreateLinkMobile, ArgusCreateLinkWindow, ArgusDeleteForm, ArgusInboxStatusRow, ArgusLinkModal, ArgusStatusAlert, ArgusStatusPanel, ArgusUnifiedLinkPanel, AttachmentField, BottomNav, CaptureFab, CaptureSheet, Cards, ClassifyLogForm, CompactRows, create-link-shared, EmailViewer, EntityCreateForm, EntityCreateLauncher, EntityEditForm, EntityEvidenceSection, EntityPicker, EvidenceEmailCard, HomeDetailHeader, HomeExpandableCard, HomeInboxCard, HomeNetworkCard, HomeProjectCard, HomeSectionNav, InboxAttachmentList, InboxTriagePanel, JournalEntryForm, JournalHome, JournalKindTokens, MemoryComposer, MemoryStreamRow, NetworkEntityCard, NetworkRelationshipMetricsDisplay, NetworkRelationshipMetricsFields, PinnedEntities, PrivateLockMenu, PrivatePanel, ProjectEditForm, ReferenceCreateModal, ReferenceLinkPanel, ReferencePickerModal, StorageWarningBanner, TagPickerModal, ui.
+ActivityEditPanel, AddContextFlow, AddRegisterCaptureButtons, ArgusAddLauncher, ArgusAddProvider, ArgusAppHeader, ArgusCreateItemDrawer, ArgusCreateLinkMobile, ArgusCreateLinkWindow, ArgusDeleteForm, ArgusInboxStatusRow, ArgusLinkModal, ArgusStatusAlert, ArgusStatusPanel, ArgusUnifiedLinkPanel, AttachmentField, BottomNav, CaptureFab, CaptureSheet, Cards, ClassifyLogForm, CompactRows, create-link-shared, EmailViewer, EntityCreateForm, EntityCreateLauncher, EntityEditForm, EntityEvidenceSection, EntityPicker, EvidenceEmailCard, HomeDetailHeader, HomeExpandableCard, HomeInboxCard, HomeProjectCard, HomeSectionNav, InboxAttachmentList, InboxTriagePanel, JournalEntryForm, JournalKindTokens, MemoryComposer, MemoryStreamRow, NetworkRelationshipMetricsFields, PinnedEntities, PrivateLockMenu, PrivatePanel, ProjectEditForm, ReferenceCreateModal, ReferenceLinkPanel, ReferencePickerModal, StorageWarningBanner, TagPickerModal, ui.
+
+*(Removed Evidence Engine Phase A orphans: HomeNetworkCard, JournalHome, NetworkEntityCard, NetworkRelationshipMetricsDisplay.)*
 
 ---
 

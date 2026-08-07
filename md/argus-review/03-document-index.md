@@ -7,32 +7,46 @@ Architecture and Argus product documents under `md/argus/*.md` and `md/integrati
 ### Track A — Principles & architecture (read first)
 
 0. `evidence-organization-vision.md`
-1. `observation-engine-vision.md`
-2. `../integrations/argus-design-principles.md`
-3. `../integrations/argus-architecture.md`
-4. `ai-charter.md`
-5. `correlation-guide.md`
-6. `vision-review-protocol.md`
+1. `../argus-review/12-evidence-engine-principles-solution.md`
+2. `evidence-engine-mechanics.md`
+3. `observation-engine-vision.md`
+4. `../integrations/argus-design-principles.md`
+5. `../integrations/argus-architecture.md`
+6. `ai-charter.md`
+7. `correlation-guide.md`
+8. `vision-review-protocol.md`
+9. `DEPRECATED-HANDOFFS.md`
 
 ### Track B — Product & lenses
 
-7. `knowledge-model-v01.md`
-8. `knowledge-execution-model.md`
-9. `timeline-vision.md`
-10. `event-chronicle-v2.md`
-11. `design-matrix-stage.md`
-12. `product-flow-proposal.md`
-13. `v2-hierarchy-implementation-report.md`
+10. `knowledge-model-v01.md`
+11. `knowledge-execution-model.md`
+12. `timeline-vision.md`
+13. `event-chronicle-v2.md`
+14. `design-matrix-stage.md`
+15. `product-flow-proposal.md`
+16. `v2-hierarchy-implementation-report.md`
+17. `network-browse-spec.md`
 
 ### Track C — Build, QA, export
 
-14. `v2-design-checklist.md` + `checklist-protocol.md`
-15. `v2-checklist-solutions.md`
-16. `deliver-formats-plan.md`
-17. `export-delivery-handoff.md`
-18. `model-alignment-audit.md`
+18. `v2-design-checklist.md` + `checklist-protocol.md`
+19. `v2-checklist-solutions.md`
+20. `deliver-formats-plan.md`
+21. `export-delivery-handoff.md`
+22. `model-alignment-audit.md`
 
 ## Documents
+
+### `md/argus/evidence-engine-mechanics.md`
+- **title:** Evidence Engine — runtime mechanics
+- **purpose / status line:** Canonical runtime for status vocabulary, Patterns, triage (2026-08-06)
+- **references:** `md/argus-review/12`, `md/argus-review/13`, `md/argus/vocabulary-policy.md`
+
+### `md/argus/DEPRECATED-HANDOFFS.md`
+- **title:** Deprecated handoffs (do not use)
+- **purpose / status line:** Branch/PR and obsolete metric handoffs — use `main` pack + mechanics
+- **references:** `md/argus-review/00`, `md/argus/evidence-engine-mechanics.md`
 
 ### `md/argus/README.md`
 - **title:** ARGUS — Documentation Index

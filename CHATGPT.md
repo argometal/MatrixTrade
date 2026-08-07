@@ -31,6 +31,8 @@ No ARGUS. Fuente de verdad: data/trades.json + Obsidian local.
 **Bridge detail:** [`md/integrations/cloudflare-worker-bridge.md`](md/integrations/cloudflare-worker-bridge.md)  
 **Apps · ARGUS · ArgusForge (runtime):** [`md/argusforge/IA-HANDOFF.md`](md/argusforge/IA-HANDOFF.md)  
 **ARGUS architecture review pack (main only):** [`md/argus-review/00-PUBLIC-STATUS.md`](md/argus-review/00-PUBLIC-STATUS.md) — branch/PR handoffs deprecated  
+**ARGUS Evidence Engine mechanics:** [`md/argus/evidence-engine-mechanics.md`](md/argus/evidence-engine-mechanics.md)  
+**ARGUS deprecated handoffs:** [`md/argus/DEPRECATED-HANDOFFS.md`](md/argus/DEPRECATED-HANDOFFS.md)  
 **ARGUS for ChatGPT:** [`md/integrations/argus-chatgpt-handoff.md`](md/integrations/argus-chatgpt-handoff.md)  
 **ARGUS architecture (constitution):** [`md/integrations/argus-architecture.md`](md/integrations/argus-architecture.md) · [`md/integrations/argus-design-principles.md`](md/integrations/argus-design-principles.md) · [`md/argus/ai-charter.md`](md/argus/ai-charter.md)
 
