@@ -135,7 +135,8 @@ function resolveScoutCardPlannedRR(
 
 /**
  * Scout war room — one selected case in detail (radiografía + execute).
- * Migrated Enter Trade capabilities live in ScoutExecutePanel → Control.
+ * Execution extras (funding summary, Trade boot, technical) live on the
+ * yellow Scout card via ScoutExecutePanel → Control.
  */
 export function PreviewPlanning({
   plans,
@@ -903,6 +904,9 @@ export function PreviewPlanning({
                                 "Execution readiness",
                                 plan?.executionReadiness ?? "—",
                               ],
+                              ...(shares !== undefined
+                                ? ([["Shares", String(shares)]] as const)
+                                : []),
                             ] as const
                           ).map(([label, value]) => (
                             <div
@@ -1135,6 +1139,23 @@ export function PreviewPlanning({
                           />
                         ) : null}
 
+                        {plan ? (
+                          <ScoutExecutePanel
+                            key={plan.id}
+                            plan={plan}
+                            prospect={selectedProspect}
+                            prospects={prospects}
+                            playbooks={playbooks}
+                            suggestedTradeId={suggestedTradeId}
+                            monthlyLossRoom={monthly.monthlyLossRoom}
+                            reservations={reservations}
+                            capitalAccount={capitalAccount}
+                            capitalConfigurationPresent={
+                              capitalConfigurationPresent
+                            }
+                          />
+                        ) : null}
+
                         <div
                           className="mt-3 border-t border-current/15 pt-2"
                           data-scout-case-details
@@ -1308,23 +1329,6 @@ export function PreviewPlanning({
               {outcomePanelPlan && !mapFocusCompact ? (
                 <div className="mt-4" data-scout-outcome-panel>
                   <PlanRecordOutcomePanel plan={outcomePanelPlan} />
-                </div>
-              ) : null}
-
-              {!focusedScoutCard?.orphan ? (
-                <div className={mapFocusCompact ? "hidden lg:block" : undefined}>
-                  <ScoutExecutePanel
-                    key={focusPlan?.id ?? scoutThesis?.id ?? "execute"}
-                    plan={focusPlan}
-                    prospect={selectedProspect}
-                    prospects={prospects}
-                    playbooks={playbooks}
-                    suggestedTradeId={suggestedTradeId}
-                    monthlyLossRoom={monthly.monthlyLossRoom}
-                    reservations={reservations}
-                    capitalAccount={capitalAccount}
-                    capitalConfigurationPresent={capitalConfigurationPresent}
-                  />
                 </div>
               ) : null}
             </>

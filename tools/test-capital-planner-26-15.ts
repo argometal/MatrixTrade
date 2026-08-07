@@ -879,16 +879,15 @@ async function main() {
       "snapshot creates no reservation mutation"
     );
 
-    const execute = await fs.readFile(
+    const fundingMenu = await fs.readFile(
       path.join(
         process.cwd(),
-        "app/components/planning-preview/ScoutExecutePanel.tsx"
+        "app/components/planning-preview/ScoutFundingExecutionMenu.tsx"
       ),
       "utf-8"
     );
-    assert.match(execute, /Scout Funding Snapshot/);
-    assert.match(execute, /scoutFundingSnapshotItem/);
-    assert.match(execute, /data-scout-funding-snapshot/);
+    assert.match(fundingMenu, /Scout Funding Snapshot/);
+    assert.match(fundingMenu, /data-scout-funding-snapshot/);
 
     const preview = await fs.readFile(
       path.join(

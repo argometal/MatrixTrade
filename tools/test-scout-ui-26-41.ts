@@ -93,9 +93,17 @@ async function main() {
   assert.match(page, /getCapitalAccountSnapshot/);
   assert.match(planning, /reservations=\{reservations\}/);
   assert.match(planning, /capitalAccount=\{capitalAccount\}/);
-  // Lower Execute no longer duplicates snapshot / prepare
+  // Execute extras embedded in yellow Scout card; no duplicate snapshot / prepare
+  assert.match(planning, /data-scout-case-summary/);
+  assert.match(planning, /<ScoutExecutePanel/);
   assert.doesNotMatch(execute, /Scout Funding Snapshot/);
   assert.doesNotMatch(execute, /data-scout-prepare-trade/);
+  // Bottom Execute strip removed — only one mount inside case summary
+  assert.equal(
+    (planning.match(/<ScoutExecutePanel/g) ?? []).length,
+    1,
+    "ScoutExecutePanel must mount once inside the Scout card"
+  );
 
   // 6 / 7 — stockFileId unconfigured; no thesis→file alias
   assert.doesNotMatch(planning, /stockFileId:\s*scoutThesis\?\.id/);
@@ -108,7 +116,7 @@ async function main() {
     /stockFileId omitted — StockThesis has no authoritative Stock File ID|stockFileId omitted — no authoritative Stock File ID/
   );
 
-  // 8 / 9 — Compact funding summary visible on Execute (read-only summary)
+  // 8 / 9 — Compact funding summary on Scout card Execute extras (not primary tiles)
   assert.match(execute, /data-scout-funding-summary/);
   assert.match(execute, /Capital required/);
   assert.match(execute, /Estimated risk/);
@@ -116,13 +124,16 @@ async function main() {
   assert.match(execute, /Risk room/);
   assert.match(execute, /Funding status/);
   assert.match(execute, /Unconfigured/);
+  // Duplicate level tiles removed from Execute extras
+  assert.doesNotMatch(execute, /primaryLevelRows/);
+  assert.doesNotMatch(execute, /buildTradeLevelsView/);
 
   // 10 — Manual 10 shares placeholder does not drive funding
   assert.match(execute, /MANUAL_SHARES_PLACEHOLDER/);
   assert.match(execute, /never authoritative for funding|not funding data/i);
   assert.match(execute, /shares: MANUAL_SHARES_PLACEHOLDER/);
-  // Primary levels omit Shares unless canonical shareCount exists
-  assert.match(execute, /row\.label !== \"Shares\"/);
+  // Canonical shares surface on yellow case summary when configured
+  assert.match(planning, /\["Shares"/);
 
   // 11 / 12 — Example / Trades book off primary; technical menu present
   assert.match(execute, /data-scout-execute/);
