@@ -57,7 +57,7 @@ import {
   createInputToReferenceKind,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
-import { buildEventShellNotes, eventAnchorDate, normalizeEventTags } from "@/lib/argus/v2/event-chronicle";
+import { eventAnchorDate, normalizeEventTags } from "@/lib/argus/v2/event-chronicle";
 import { migrateLegacyEventRecordIfNeeded } from "@/lib/argus/v2/migrate-event-chronicle";
 import { attachFilesToLog, attachmentSummaryNames, filesFromFormData } from "@/lib/argus/attachment-log";
 import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
@@ -501,14 +501,18 @@ export async function bulkDeleteInboxAction(
   return { ok: true, count };
 }
 
-/** Append a chronicle note on an event (tags, text, optional file attachments). */
+/** Append a chronicle note on an event (text + optional file attachments).
+ * Event Signals stay on the binder (`linkedTags`) — they are NOT copied onto every note.
+ * Stamping all signals onto each note inflated Patterns and made one note look like many tagged items.
+ * Entry-specific Tags may be passed via `entryTags` (optional).
+ */
 export async function appendEventChronicleEntryAction(
   formData: FormData
 ): Promise<{ ok: true; appended: boolean }> {
   await requireArgusSession();
   const eventId = String(formData.get("eventId") ?? "").trim();
   const body = String(formData.get("body") ?? "");
-  const linkedTags = parseTopics(String(formData.get("linkedTags") ?? ""));
+  const entryTags = normalizeEventTags(parseTopics(String(formData.get("entryTags") ?? "")));
   const files = filesFromFormData(formData);
 
   if (!eventId) throw new Error("Event not found");
@@ -520,15 +524,9 @@ export async function appendEventChronicleEntryAction(
     throw new Error("Event not found");
   }
 
-  const tags = normalizeEventTags(linkedTags);
   const trimmed = body.trim();
   const eventDate = eventAnchorDate(entity);
   const hasFiles = files.length > 0;
-
-  await updateEntity(eventId, {
-    notes: buildEventShellNotes(),
-    linkedTags: tags,
-  });
 
   if (trimmed || hasFiles) {
     const logBody = trimmed || `Attached: ${attachmentSummaryNames(files)}`;
@@ -538,7 +536,7 @@ export async function appendEventChronicleEntryAction(
       title: autoTitleFromBody(logBody),
       body: logBody,
       entityIds: [eventId],
-      topics: tags,
+      topics: entryTags,
       source: "manual",
       private: false,
       attachmentIds: [],

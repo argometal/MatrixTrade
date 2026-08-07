@@ -30,6 +30,7 @@ import { V2Badge, V2Card } from "@/app/argus/v2/components/v2-ui";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
+import { V2ChronicleNoteDeleteButton } from "@/app/argus/v2/components/V2ChronicleNoteDeleteButton";
 import { NetworkDialogueGuide } from "./NetworkDialogueGuide";
 import { NetworkPanelProvider } from "./NetworkPanelProvider";
 import { NetworkPanelButton } from "./NetworkPanelButton";
@@ -39,7 +40,7 @@ import type { NetworkPanelPackage } from "@/lib/argus/network-ai-mechanics";
 const TABS = ["Overview", "Relationship", "Links"] as const;
 type ContactTab = (typeof TABS)[number];
 
-const CHRONICLE_FILTERS = ["All", "Records", "Email", "Topics"] as const;
+const CHRONICLE_FILTERS = ["All", "Notes", "Email", "Topics"] as const;
 
 function ValueCheckboxList({
   title,
@@ -259,14 +260,16 @@ function TagsSection({
 function ContactChronicleSection({
   items,
   relatedTopics,
+  returnTo,
 }: {
   items: NetworkContactTimelineItem[];
   relatedTopics: NetworkContactPageData["relatedTopics"];
+  returnTo: string;
 }) {
   const [filter, setFilter] = useState<(typeof CHRONICLE_FILTERS)[number]>("All");
   const filtered = useMemo(() => {
     if (filter === "All") return items;
-    if (filter === "Records") return items.filter((item) => item.kind === "journal");
+    if (filter === "Notes") return items.filter((item) => item.kind === "journal");
     if (filter === "Email") return items.filter((item) => item.kind === "email");
     return items.filter((item) => item.kind === "journal" && (item.topics?.length ?? 0) > 0);
   }, [items, filter]);
@@ -277,7 +280,7 @@ function ContactChronicleSection({
         <div>
           <h3 className="text-sm font-semibold text-zinc-100">Chronicle</h3>
           <p className="mt-0.5 text-[11px] text-zinc-600">
-            What happened, when — records, emails, and topic threads as they accumulate.
+            What happened, when — notes, emails, and topic threads as they accumulate.
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -317,33 +320,37 @@ function ContactChronicleSection({
         <ul className="space-y-3">
           {filtered.map((item) => (
             <li key={`${item.kind}-${item.id}`}>
-              <a
-                href={item.href}
-                className="block rounded-xl border border-zinc-800/80 px-4 py-3 transition hover:border-zinc-700 hover:bg-zinc-900/60"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <V2Badge tone={item.kind === "journal" ? "purple" : "blue"}>
-                        {item.kind === "journal" ? "Note" : "Email"}
-                      </V2Badge>
-                      <span className="text-[11px] text-zinc-600">{formatDate(item.date)}</span>
-                    </div>
-                    <p className="font-medium text-zinc-100">{item.title}</p>
-                    <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{item.preview}</p>
-                    {item.kind === "journal" && item.topics && item.topics.length > 0 ? (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {item.topics.map((topic) => (
-                          <V2Badge key={topic} tone="green">
-                            {topic}
-                          </V2Badge>
-                        ))}
+              <div className="flex items-stretch gap-2 rounded-xl border border-zinc-800/80 transition hover:border-zinc-700 hover:bg-zinc-900/60">
+                <a href={item.href} className="block min-w-0 flex-1 px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="mb-1 flex flex-wrap items-center gap-2">
+                        <V2Badge tone={item.kind === "journal" ? "purple" : "blue"}>
+                          {item.kind === "journal" ? "Note" : "Email"}
+                        </V2Badge>
+                        <span className="text-[11px] text-zinc-600">{formatDate(item.date)}</span>
                       </div>
-                    ) : null}
+                      <p className="font-medium text-zinc-100">{item.title}</p>
+                      <p className="mt-1 line-clamp-2 text-sm text-zinc-500">{item.preview}</p>
+                      {item.kind === "journal" && item.topics && item.topics.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {item.topics.map((topic) => (
+                            <V2Badge key={topic} tone="green">
+                              {topic}
+                            </V2Badge>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                    <span className="text-zinc-600">›</span>
                   </div>
-                  <span className="text-zinc-600">›</span>
-                </div>
-              </a>
+                </a>
+                {item.kind === "journal" ? (
+                  <div className="flex items-center pr-3">
+                    <V2ChronicleNoteDeleteButton logId={item.id} returnTo={returnTo} />
+                  </div>
+                ) : null}
+              </div>
             </li>
           ))}
         </ul>
@@ -628,7 +635,7 @@ export function NetworkContactShell({
           ) : null}
           <ContactAside page={page} />
           {hasContact ? (
-            <ContactChronicleSection items={page.timeline} relatedTopics={page.relatedTopics} />
+            <ContactChronicleSection items={page.timeline} relatedTopics={page.relatedTopics} returnTo={`/argus/v2/network/${entity.id}`} />
           ) : null}
         </div>
       ) : null}

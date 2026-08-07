@@ -27,7 +27,7 @@ export function V2TagPatternBadges({
           href={hrefFor(pattern.tag)}
           role="listitem"
           className="inline-flex items-center gap-1 rounded-full bg-red-950/40 px-2.5 py-1 text-[11px] font-medium text-red-300/95 ring-1 ring-red-500/35 transition hover:bg-red-950/55 hover:text-red-200"
-          title={`#${pattern.tag} — ${pattern.count} evidence items in scope (${pattern.recentCount} recent)`}
+          title={`#${pattern.tag} — ${pattern.count} notes/emails tagged in scope (${pattern.recentCount} recent). Same evidence is not counted once per Signal.`}
         >
           <span aria-hidden>⚑</span>
           <span>#{pattern.tag}</span>

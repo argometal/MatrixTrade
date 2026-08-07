@@ -36,6 +36,8 @@ export function getEntityHistory(
   entityId: Entity["id"],
   includePrivate: boolean
 ): Log[] {
-  const visibleLogs = includePrivate ? data.logs : data.logs.filter((l) => !l.private);
+  const visibleLogs = (includePrivate ? data.logs : data.logs.filter((l) => !l.private)).filter(
+    (l) => !l.deletedAt
+  );
   return logsForEntity(visibleLogs, entityId).sort((a, b) => b.date.localeCompare(a.date));
 }

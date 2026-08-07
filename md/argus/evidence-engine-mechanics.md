@@ -23,7 +23,7 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 | Dates / follow-ups | log dates, `followUpDate`, project start/end |
 | Entities / Topics / Events | `Entity` (+ reference kind in notes) |
 | Contact / my value marks | `Entity.contactValue[]`, `Entity.myValue[]` |
-| Event Signals (binder marks) | Event `Entity.linkedTags[]` until chronicle Save |
+| Event Signals (binder marks) | Event `Entity.linkedTags[]` — binder only |
 | Topic Aliases | Topic `Entity.linkedTags[]` |
 
 **Not persisted as metrics:** Patterns, Network status, attention sort keys, health bands, strength%, outcomeScore.
@@ -54,7 +54,7 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 
 `buildTagPatternsForScope` — Tags on evidence in scope, count ≥ 3, recent within 90d.
 
-Event **Signals** become Patterns only after chronicle **Save** copies them onto log Tags.
+Event **Signals** stay on the event binder. They do **not** auto-copy onto every chronicle Note (that inflated Patterns). Add Tags on a Note when that entry should count toward Patterns.
 
 Topic **Aliases** are vocabulary for match/suggest — never Patterns.
 
@@ -95,7 +95,7 @@ Shows Network **status** + evidence facts (last interaction, open follow-ups, li
 | Org page data | `lib/argus/v2/loaders.ts` → `loadOrganizationPageData` |
 | Tag Patterns | `lib/argus/v2/tag-patterns.ts` |
 | Nav triage counts | `buildV2NavCounts` in `lib/argus/v2/loaders.ts` |
-| Event Signals copy | `EVENT_SIGNALS` in `lib/argus/ux-copy.ts` |
+| Event Signals copy | `EVENT_SIGNALS` in `lib/argus/ux-copy.ts` (binder UI; not stamped onto Notes) |
 | Vocabulary policy | [`vocabulary-policy.md`](vocabulary-policy.md) |
 
 ---

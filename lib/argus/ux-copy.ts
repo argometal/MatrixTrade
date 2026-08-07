@@ -399,13 +399,13 @@ export const TOPIC_ALIASES = {
 } as const;
 
 /**
- * Event Signals — user marks on the event binder.
- * They become evidence Tags (and thus Patterns) only after chronicle Save copies them onto logs.
- * Nav triage badges are not Signals.
+ * Event Signals — binder marks on the event.
+ * They are NOT copied onto every chronicle Note (that inflated Patterns).
+ * Add Tags on a specific note when you want them to count toward Patterns.
  */
 export const EVENT_SIGNALS = {
   heading: "Signals",
-  hint: "Marks for this event only. After you Save a chronicle entry, they copy onto that evidence as Tags — Patterns count Tags on evidence, not these binder marks alone.",
+  hint: "Marks for this event binder. They do not auto-copy onto chronicle Notes — tag a Note only when that entry should count toward Patterns.",
   placeholder: "Add signal…",
   add: "Add",
   empty: "No signals yet.",
@@ -436,8 +436,8 @@ export const DELETE_AUTH = {
 export const TESTING = {
   sectionLabel: "Testing",
   delete: "Delete",
-  deleteLog: "Delete record",
-  deleteLogConfirm: "Delete this record permanently? Attachments will be removed.",
+  deleteLog: "Delete note",
+  deleteLogConfirm: "Delete this note permanently? Soft-delete — recoverable from backup only. Attachments will be removed.",
   deleteEntity: "Delete reference",
   deleteEntityConfirm: "Delete this reference permanently? It will be unlinked from all records.",
   deleteInbox: "Delete email",

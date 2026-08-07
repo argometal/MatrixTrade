@@ -269,20 +269,20 @@ function TopicCard({
         <div className="mt-4 grid grid-cols-3 gap-1 sm:grid-cols-6">
           {(
             [
-              ["journals", "📓"],
-              ["emails", "✉"],
-              ["files", "📎"],
-              ["orgs", "🏢"],
-              ["projects", "📁"],
-              ["people", "👤"],
+              ["journals", "📓", "Notes"],
+              ["emails", "✉", "Emails"],
+              ["files", "📎", "Files"],
+              ["orgs", "🏢", "Orgs"],
+              ["projects", "📁", "Projects"],
+              ["people", "👤", "People"],
             ] as const
-          ).map(([key, icon]) => (
+          ).map(([key, icon, label]) => (
             <div key={key} className="text-center">
               <div className="text-sm" aria-hidden>
                 {icon}
               </div>
               <p className="mt-0.5 text-sm font-semibold tabular-nums text-violet-300">{card.metrics[key]}</p>
-              <p className="text-[8px] capitalize text-zinc-600">{key}</p>
+              <p className="text-[8px] text-zinc-600">{label}</p>
             </div>
           ))}
         </div>

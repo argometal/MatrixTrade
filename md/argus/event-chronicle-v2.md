@@ -23,22 +23,24 @@ Result: text stayed in Record after save, Register opened another window, Chroni
 
 ```
 Event entity     = anchor (name, date, linkedTags, shell notes only)
-Record tab       = composer (tags + textarea) — always empty after Save
-Save             = append journal log linked to event + update linkedTags
-Chronicle tab    = buildEntityEvidenceStream (notes, emails, files, photos)
+Note tab         = composer (textarea + files) — always empty after Save
+Save             = append Note (`Log`) linked to event — does **not** stamp Signals onto the Note
+Signals tab      = edit Event binder Signals (`linkedTags`) only
+Chronicle tab    = buildEntityEvidenceStream (notes, emails, files, photos) + Delete on Notes
 ```
 
 ### Rules
 
-1. **Append-only** — Save creates a `Log` with `entityIds: [eventId]`, dated to the event anchor date. No overwrite of prior entries.
+1. **Append by default** — Save creates a `Log` with `entityIds: [eventId]`, dated to the event anchor date. No overwrite of prior entries.
 2. **Composer clears** — After Save, textarea resets; next write is a new chronicle line.
- 3. **Signals on event** — `entity.linkedTags` holds user-defined Signals (any label). Copied into each appended log's `topics` for pattern detection.
-4. **No Register on event page** — Link email / inbox still adds evidence to Chronicle. Attachments arrive via linked emails or inbox flow.
-5. **Migration** — Legacy text in `entity.notes` is converted once to the first chronicle log; notes reduced to `Kind: Event` shell.
+3. **Signals on event** — `entity.linkedTags` holds user-defined Signals (any label). They stay on the binder — **not** copied onto every Note (copying all signals inflated Patterns).
+4. **No Register on event page** — Link email / inbox still adds evidence to Chronicle. Attachments arrive via Note composer, linked emails, or inbox flow.
+5. **Migration** — Legacy text in `entity.notes` is converted once to the first chronicle Note; notes reduced to `Kind: Event` shell. Auto-stamped signal sets on Notes are repaired when the event is opened.
+6. **Delete** — Chronicle Notes can be soft-deleted from the Event/Topic/Network chronicle UI (delete auth gate applies).
 
 ### Immutability
 
-Chronicle entries are not edited or deleted from the event UI. Corrections are new append entries (audit trail). Destructive delete remains behind existing Argus delete gates elsewhere — not promoted on the event surface.
+Prefer append for corrections (new Note). Soft-delete is available when a Note must be removed; destructive delete stays behind Argus delete gates.
 
 ---
 
@@ -55,9 +57,9 @@ Chronicle entries are not edited or deleted from the event UI. Corrections are n
 
 ## UI
 
-- **Note** tab (was Record): tags + **Save** at top, composer below
-- **Chronicle**: chronological evidence stream
-- **Metrics**: unchanged counts
+- **Note** tab: composer + **Save** at top (Signals edited on Signals tab)
+- **Chronicle**: chronological evidence stream + Delete on Notes
+- **Metrics**: Notes / Emails / Photos (unique sources; attachments not double-counted in evidence totals)
 - Footer **Register evidence** removed from event detail
 - **Files** dropdown on Note tab: choose files or **Ctrl+V** paste; saved with chronicle entry
 - Chronicle filter: All · Notes · Emails · Photos · Files
