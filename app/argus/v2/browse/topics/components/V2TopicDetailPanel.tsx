@@ -7,7 +7,6 @@ import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNei
 import { V2OrgTimeline } from "@/app/argus/v2/components/V2OrgTimeline";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type {
-  V2EvidenceStreamItem,
   V2EvidenceStreamKind,
 } from "@/lib/argus/v2/evidence-stream";
 import type { V2TopicDetail } from "@/lib/argus/v2/topic-browse-utils";
@@ -22,9 +21,9 @@ import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompact
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
 import {
-  V2ChronicleNoteDeleteButton,
+  V2ChronicleSelectableList,
   chronicleLogIdFromEvidenceId,
-} from "@/app/argus/v2/components/V2ChronicleNoteDeleteButton";
+} from "@/app/argus/v2/components/V2ChronicleSelectableList";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
@@ -338,15 +337,42 @@ export function V2TopicDetailPanel({
               <p className="text-xs text-zinc-500">
                 Full evidence on this topic — emails, notes, and attachments for analysis.
               </p>
-              {filteredChronicle.length === 0 ? (
-                <p className="text-sm text-zinc-500">No evidence yet. Link emails from inbox or register evidence.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {filteredChronicle.map((item) => (
-                    <EvidenceRow key={item.id} item={item} returnTo={returnTo} />
-                  ))}
-                </ul>
-              )}
+              <V2ChronicleSelectableList
+                key={selected.id}
+                returnTo={returnTo}
+                requiresAuthenticator
+                deleteUnlocked={deleteGate.deleteUnlocked}
+                deleteAuthUnlocked={deleteGate.deleteAuthUnlocked}
+                deleteCodeConfigured={deleteGate.deleteCodeConfigured}
+                totpConfigured={deleteGate.totpConfigured}
+                deleteAuthConfigured={deleteGate.deleteAuthConfigured}
+                deleteError={deleteGate.deleteError}
+                deleteAuthError={deleteGate.deleteAuthError}
+                totpRequired={deleteGate.totpRequired}
+                empty={
+                  <p className="text-sm text-zinc-500">
+                    No evidence yet. Link emails from inbox or register evidence.
+                  </p>
+                }
+                items={filteredChronicle.map((item) => ({
+                  key: item.id,
+                  logId: chronicleLogIdFromEvidenceId(item.id),
+                  title: item.title,
+                  href: item.href,
+                  external: item.kind === "photo" || item.kind === "file",
+                  body: (
+                    <>
+                      <span className="mt-0.5 text-sm text-zinc-500">
+                        <EvidenceIcon kind={item.kind} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-medium text-zinc-200">{item.title}</span>
+                        <span className="mt-0.5 block text-xs text-zinc-600">{item.meta}</span>
+                      </span>
+                    </>
+                  ),
+                }))}
+              />
             </div>
           ) : null}
 
@@ -435,35 +461,5 @@ export function V2TopicDetailPanel({
         {...deleteGate}
       />
     </div>
-  );
-}
-
-function EvidenceRow({ item, returnTo }: { item: V2EvidenceStreamItem; returnTo: string }) {
-  const external = item.kind === "photo" || item.kind === "file";
-  const noteId = chronicleLogIdFromEvidenceId(item.id);
-  return (
-    <li>
-      <div className="flex items-stretch gap-2 rounded-xl border border-zinc-800/80 transition hover:border-zinc-700">
-        <Link
-          href={item.href}
-          target={external ? "_blank" : undefined}
-          rel={external ? "noreferrer" : undefined}
-          className="flex min-w-0 flex-1 items-start gap-3 px-3 py-3"
-        >
-          <span className="mt-0.5 text-sm text-zinc-500">
-            <EvidenceIcon kind={item.kind} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-zinc-200">{item.title}</span>
-            <span className="mt-0.5 block text-xs text-zinc-600">{item.meta}</span>
-          </span>
-        </Link>
-        {noteId ? (
-          <div className="flex items-center pr-2">
-            <V2ChronicleNoteDeleteButton logId={noteId} returnTo={returnTo} />
-          </div>
-        ) : null}
-      </div>
-    </li>
   );
 }

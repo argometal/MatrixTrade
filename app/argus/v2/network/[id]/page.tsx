@@ -1,5 +1,12 @@
 import { redirect } from "next/navigation";
-import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
+import {
+  hasArgusDeleteAuthUnlock,
+  hasArgusDeleteUnlock,
+  hasArgusPrivateUnlock,
+} from "@/lib/auth/cookies";
+import { argusDeleteCodeConfigured } from "@/lib/auth/passwords";
+import { argusTotpConfigured } from "@/lib/auth/totp";
+import { deleteAuthConfigured } from "@/lib/argus/delete-link-check";
 import { EmptyState } from "@/app/argus/components/ui";
 import { buildEntityPickerBuckets } from "@/lib/argus/journal-helpers";
 import { loadEnrichedEntityEvidence } from "@/lib/argus/entity-evidence";
@@ -9,9 +16,25 @@ import { buildNetworkContactPageData } from "@/lib/argus/v2/network-contact-load
 import { buildNetworkContactPanelPackage } from "@/lib/argus/v2/network-snapshot-packages";
 import { NetworkContactShell } from "../components/NetworkContactShell";
 
-export default async function V2NetworkContactPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function V2NetworkContactPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{
+    delete_error?: string;
+    delete_auth_error?: string;
+    totp_required?: string;
+    error?: string;
+  }>;
+}) {
   const { id } = await params;
-  const includePrivate = await hasArgusPrivateUnlock();
+  const sp = await searchParams;
+  const [includePrivate, deleteUnlocked, deleteAuthUnlocked] = await Promise.all([
+    hasArgusPrivateUnlock(),
+    hasArgusDeleteUnlock(),
+    hasArgusDeleteAuthUnlock(),
+  ]);
   const entity = await getEntity(id);
 
   if (!entity) {
@@ -60,5 +83,21 @@ export default async function V2NetworkContactPage({ params }: { params: Promise
   const buckets = buildEntityPickerBuckets(data, includePrivate);
   const panelPackage = buildNetworkContactPanelPackage(page);
 
-  return <NetworkContactShell page={page} buckets={buckets} panelPackage={panelPackage} />;
+  return (
+    <NetworkContactShell
+      page={page}
+      buckets={buckets}
+      panelPackage={panelPackage}
+      deleteLock={{
+        deleteUnlocked,
+        deleteAuthUnlocked,
+        deleteCodeConfigured: argusDeleteCodeConfigured(),
+        totpConfigured: argusTotpConfigured(),
+        deleteAuthConfigured: deleteAuthConfigured(),
+        deleteError: sp.delete_error === "1" || sp.error === "pin",
+        deleteAuthError: sp.delete_auth_error === "1",
+        totpRequired: sp.totp_required === "1",
+      }}
+    />
+  );
 }
