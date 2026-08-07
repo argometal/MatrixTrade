@@ -4,7 +4,7 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807o` |
+| **Tag** | `main0807p` |
 | **Commit** | Always `git rev-parse main0807o` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-07 |
@@ -21,6 +21,7 @@ git reset --hard origin/main
 
 ## What this deploy includes
 
+- PR #187: Deprecate Home aside Tag portfolio graph; Tag universe only under Intelligence → Tags
 - PR #185: Count legacy topic↔event binders (`linkedTopicIds`/`linkedEventIds`); Topics = status pills + one Filters menu; Chronicle filter removed
 - PR #183: Empty topics respect event links (linked-only → Quiet); Topics status pills only (no duplicate tabs/Filters); deprecate Chronicle filter chips
 - PR #182: Network status chips only (no duplicate metric cards); Intelligence Treemap first / Tags third; Topic↔Event link mirror
