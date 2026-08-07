@@ -72,9 +72,22 @@ export function V2EntityLifecycleActions({
   const menuRef = useRef<HTMLDivElement>(null);
 
   const isArchived = lifecycleStatus === "archived";
-  const deleteLabel = entityKind === "project" ? TESTING.deleteProject : TESTING.deleteEntity;
+  const deleteLabel =
+    entityKind === "project"
+      ? TESTING.deleteProject
+      : entityKind === "event"
+        ? TESTING.deleteEvent
+        : entityKind === "topic"
+          ? TESTING.deleteTopic
+          : TESTING.deleteEntity;
   const deleteHint =
-    entityKind === "project" ? TESTING.deleteProjectConfirmHint : TESTING.deleteEntityConfirmHint;
+    entityKind === "project"
+      ? TESTING.deleteProjectConfirmHint
+      : entityKind === "event"
+        ? TESTING.deleteEventConfirmHint
+        : entityKind === "topic"
+          ? TESTING.deleteTopicConfirmHint
+          : TESTING.deleteEntityConfirmHint;
   const typeNameLabel =
     entityKind === "project" ? TESTING.deleteProjectTypeName : TESTING.deleteEntityTypeName;
   const pinHint =
@@ -102,11 +115,14 @@ export function V2EntityLifecycleActions({
   const deleteBlockedNoTotp = Boolean(
     showDelete && deleteAuthConfigured && requiresAuthenticator && !totpConfigured
   );
+  // Prefer PIN when configured (same as chronicle note delete); TOTP only if PIN unavailable.
+  const unlockWithPin = Boolean(deleteCodeConfigured);
+  const unlockWithTotp = Boolean(requiresAuthenticator && totpConfigured && !unlockWithPin);
   const needsDeleteUnlock = Boolean(
     showDelete &&
       deleteAuthConfigured &&
       !deleteBlockedNoTotp &&
-      (requiresAuthenticator ? !deleteAuthUnlocked : deleteCodeConfigured && !deleteUnlocked)
+      ((unlockWithPin && !deleteUnlocked) || (unlockWithTotp && !deleteAuthUnlocked))
   );
 
   function openDeleteFlow() {
@@ -176,7 +192,7 @@ export function V2EntityLifecycleActions({
         className="rounded-xl border border-red-900/50 bg-red-950/20 px-4 py-2 text-sm text-red-300 hover:bg-red-950/40"
       >
         {needsDeleteUnlock
-          ? requiresAuthenticator
+          ? unlockWithTotp
             ? DELETE_AUTH.unlockAuthenticator
             : DELETE_AUTH.unlockCode
           : deleteLabel}
@@ -224,14 +240,17 @@ export function V2EntityLifecycleActions({
           event.stopPropagation();
           setMenuOpen((open) => !open);
         }}
-        className="rounded-lg px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
-        aria-label={`Actions for ${entityName}`}
+        className="rounded-lg border border-zinc-700 bg-zinc-900/70 px-2.5 py-1.5 text-xs font-semibold text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
+        aria-label={`Edit ${entityKind}: rename, archive, or delete`}
+        aria-expanded={menuOpen}
+        aria-haspopup="menu"
       >
-        ···
+        Edit
       </button>
       {menuOpen ? (
         <div
-          className="absolute right-0 top-full z-20 mt-1 min-w-[160px] rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl"
+          className="absolute right-0 top-full z-20 mt-1 min-w-[180px] rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl"
+          role="menu"
           onClick={(event) => event.stopPropagation()}
         >
           {href ? (
@@ -239,12 +258,14 @@ export function V2EntityLifecycleActions({
               href={href}
               className="block rounded-lg px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800"
               onClick={() => setMenuOpen(false)}
+              role="menuitem"
             >
               Open
             </Link>
           ) : null}
           <button
             type="button"
+            role="menuitem"
             onClick={() => {
               setMenuOpen(false);
               setRenameOpen(true);
@@ -256,6 +277,7 @@ export function V2EntityLifecycleActions({
           {isArchived ? (
             <button
               type="button"
+              role="menuitem"
               onClick={() => {
                 setMenuOpen(false);
                 void submitRestore();
@@ -267,6 +289,7 @@ export function V2EntityLifecycleActions({
           ) : (
             <button
               type="button"
+              role="menuitem"
               onClick={() => {
                 setMenuOpen(false);
                 void submitArchive();
@@ -279,11 +302,12 @@ export function V2EntityLifecycleActions({
           {showDelete && !deleteBlockedNoTotp ? (
             <button
               type="button"
+              role="menuitem"
               onClick={openDeleteFlow}
               className="block w-full rounded-lg px-3 py-2 text-left text-sm text-red-300 hover:bg-red-950/40"
             >
               {needsDeleteUnlock
-                ? requiresAuthenticator
+                ? unlockWithTotp
                   ? DELETE_AUTH.unlockAuthenticator
                   : DELETE_AUTH.unlockCode
                 : deleteLabel}
@@ -334,40 +358,38 @@ export function V2EntityLifecycleActions({
 
       {unlockOpen && needsDeleteUnlock ? (
         <Modal
-          title={requiresAuthenticator ? DELETE_AUTH.authenticatorTitle : DELETE_AUTH.codeTitle}
+          title={unlockWithTotp ? DELETE_AUTH.authenticatorTitle : DELETE_AUTH.codeTitle}
           onClose={() => setUnlockOpen(false)}
         >
           <form
-            action={requiresAuthenticator ? unlockArgusDeleteAuthAction : unlockArgusDeleteAction}
+            action={unlockWithTotp ? unlockArgusDeleteAuthAction : unlockArgusDeleteAction}
             className="space-y-4"
           >
             <p className="text-sm text-zinc-400">
-              {requiresAuthenticator ? DELETE_AUTH.authenticatorHint : DELETE_AUTH.codeHint}
+              {unlockWithTotp ? DELETE_AUTH.authenticatorHint : DELETE_AUTH.codeHint}
             </p>
             <input type="hidden" name="returnTo" value={returnTo} />
             <input
-              name={requiresAuthenticator ? "totp" : "code"}
-              type={requiresAuthenticator ? "text" : "password"}
-              inputMode={requiresAuthenticator ? "numeric" : undefined}
-              autoComplete={requiresAuthenticator ? "one-time-code" : "off"}
-              placeholder={requiresAuthenticator ? "000000" : DELETE_AUTH.codePlaceholder}
-              value={requiresAuthenticator ? unlockTotp : unlockCode}
+              name={unlockWithTotp ? "totp" : "code"}
+              type={unlockWithTotp ? "text" : "password"}
+              inputMode={unlockWithTotp ? "numeric" : undefined}
+              autoComplete={unlockWithTotp ? "one-time-code" : "off"}
+              placeholder={unlockWithTotp ? "000000" : DELETE_AUTH.codePlaceholder}
+              value={unlockWithTotp ? unlockTotp : unlockCode}
               onChange={(event) =>
-                requiresAuthenticator
-                  ? setUnlockTotp(event.target.value)
-                  : setUnlockCode(event.target.value)
+                unlockWithTotp ? setUnlockTotp(event.target.value) : setUnlockCode(event.target.value)
               }
               className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 focus:border-red-500/40 focus:outline-none"
               autoFocus
               required
             />
-            {deleteAuthError && requiresAuthenticator ? (
+            {deleteAuthError && unlockWithTotp ? (
               <p className="text-xs text-red-400">{DELETE_AUTH.wrongAuthenticator}</p>
             ) : null}
-            {deleteError && !requiresAuthenticator ? (
+            {deleteError && !unlockWithTotp ? (
               <p className="text-xs text-red-400">{DELETE_AUTH.wrongCode}</p>
             ) : null}
-            {totpRequired && requiresAuthenticator ? (
+            {totpRequired && unlockWithTotp ? (
               <p className="text-xs text-amber-400">{DELETE_AUTH.linkedRequiresAuth}</p>
             ) : null}
             <div className="flex justify-end gap-2">

@@ -86,7 +86,24 @@ export function V2EventDetailPanel({
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
   const mobileDetail = Boolean(onBack);
   const compactChrome = mobileDetail && panelTab !== "note";
+  // Bottom manage bar when private unlock is active; otherwise Edit stays in the header.
   const showMobileManageBar = mobileDetail && privateUnlocked;
+
+  const lifecycle = (
+    <V2EntityLifecycleActions
+      entityId={selected.id}
+      entityName={selected.name}
+      entityKind="event"
+      lifecycleStatus={selected.lifecycleStatus}
+      returnTo={returnTo}
+      hasPrivateEvidence={selected.hasPrivateEvidence}
+      privateConfigured={privateConfigured}
+      privateUnlocked={privateUnlocked}
+      showDelete
+      variant="menu"
+      {...deleteGate}
+    />
+  );
 
   const linkedRunbooks = useMemo(
     () => runbooksForEntity(allRunbooks, selected.id),
@@ -182,13 +199,20 @@ export function V2EventDetailPanel({
           title={selected.name}
           subtitle={selected.dateTimeLabel}
           collapsedExtra={
-            <V2QuickDeliverButton scopeType="event" scopeId={selected.id} scopeName={selected.name} label="PDF" />
+            <>
+              <V2QuickDeliverButton scopeType="event" scopeId={selected.id} scopeName={selected.name} label="PDF" />
+              {/* Compact chrome used to hide Edit; keep rename/delete reachable */}
+              {!showMobileManageBar ? lifecycle : null}
+            </>
           }
           expanded={
             <>
               <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
+                    <div className={showMobileManageBar ? "hidden lg:block" : undefined}>{lifecycle}</div>
+                  </div>
                   <p className="mt-1 text-sm text-zinc-400">{selected.dateTimeLabel}</p>
                   <p className="mt-1.5 text-[11px] text-zinc-600">{selected.description}</p>
                 </div>
@@ -201,21 +225,6 @@ export function V2EventDetailPanel({
                 ) : null}
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <V2QuickDeliverButton scopeType="event" scopeId={selected.id} scopeName={selected.name} />
-                  <div className={showMobileManageBar ? "hidden lg:block" : undefined}>
-                    <V2EntityLifecycleActions
-                      entityId={selected.id}
-                      entityName={selected.name}
-                      entityKind="event"
-                      lifecycleStatus={selected.lifecycleStatus}
-                      returnTo={returnTo}
-                      hasPrivateEvidence={selected.hasPrivateEvidence}
-                      privateConfigured={privateConfigured}
-                      privateUnlocked={privateUnlocked}
-                      showDelete
-                      variant="menu"
-                      {...deleteGate}
-                    />
-                  </div>
                   <button
                     type="button"
                     onClick={() => setEmailOpen(true)}

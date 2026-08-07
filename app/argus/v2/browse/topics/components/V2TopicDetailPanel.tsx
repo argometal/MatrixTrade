@@ -206,6 +206,7 @@ export function V2TopicDetailPanel({
                     <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] text-amber-300 ring-1 ring-amber-500/25">
                       {selected.category}
                     </span>
+                    <div className={showMobileManageBar ? "hidden lg:block" : undefined}>{lifecycle}</div>
                   </div>
                   <p className="max-w-xl text-sm leading-relaxed text-zinc-400">{selected.description}</p>
                 </div>
@@ -215,7 +216,6 @@ export function V2TopicDetailPanel({
                     scopeId={selected.id}
                     scopeName={selected.name}
                   />
-                  <div className={showMobileManageBar ? "hidden lg:block" : undefined}>{lifecycle}</div>
                   <V2EntityLinkButton
                     entityId={selected.id}
                     linkedIds={selected.linkedEntityIds}

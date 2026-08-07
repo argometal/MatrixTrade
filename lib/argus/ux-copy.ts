@@ -449,6 +449,12 @@ export const TESTING = {
   deleteLogConfirm: "Delete this note permanently? Soft-delete — recoverable from backup only. Attachments will be removed.",
   deleteEntity: "Delete reference",
   deleteEntityConfirm: "Delete this reference permanently? It will be unlinked from all records.",
+  deleteEvent: "Delete event",
+  deleteEventConfirmHint:
+    "This removes the event binder from your knowledge base and unlinks it from evidence. Chronicle notes and emails are kept.",
+  deleteTopic: "Delete topic",
+  deleteTopicConfirmHint:
+    "This removes the topic binder from your knowledge base and unlinks it from evidence. Linked notes and emails are kept.",
   deleteInbox: "Delete email",
   deleteInboxConfirm: "Delete this inbox item permanently? Attachments will be removed.",
   deleteProject: "Delete project",

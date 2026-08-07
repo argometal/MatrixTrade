@@ -136,11 +136,11 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "Rename",
-        body: "Fix the display name on organizations, projects, topics, events, and contacts — links and evidence stay intact.",
+        body: "Open an Event or Topic → Edit (next to the title) → Rename. Same for organizations, projects, and contacts — links and evidence stay intact.",
       },
       {
-        title: "Archive",
-        body: "Archived hides from Active views — it does not delete. Evidence and links stay. Drag off Archived (or Restore) to bring them back. Delete only happens behind the delete lock. Your board layout and chip filters (Quiet, Empty, Archived, Completed) persist per browser like card order.",
+        title: "Archive / Delete event",
+        body: "Edit → Archive hides from Active views (evidence kept). Edit → Delete event removes the binder after PIN unlock and typing the name — notes/emails stay. Your board layout and chip filters persist per browser like card order.",
       },
       {
         title: "Guest workstation lock",
