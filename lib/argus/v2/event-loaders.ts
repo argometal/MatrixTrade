@@ -8,7 +8,11 @@ import { browseEntitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { relativeActivityLabel } from "./timeline-builders";
 import { countLinkKinds, linkedTopicNames, linkedTopicRefs } from "./entity-link-counts";
-import { collectNeighborEntityIds, countTopicsAndEventsInScope } from "./scope-node-counts";
+import {
+  collectNeighborEntityIds,
+  countTopicsAndEventsInScope,
+  outboundStructuralIds,
+} from "./scope-node-counts";
 import { buildTagPatternsForScope } from "./tag-patterns";
 import type {
   V2EventDetail,
@@ -236,8 +240,8 @@ export function buildV2EventDetails(
       projectCount: linkCounts.projectCount,
       peopleCount: linkCounts.peopleCount,
       topicCount: nodeCounts.topicCount,
-      // Link modal edits outbound only; scopeLinkIds/neighbors drive filters + metrics.
-      linkedEntityIds: [...new Set(event.linkedEntityIds ?? [])],
+      // Link modal edits outbound only — include every outbound bag (legacy binders too).
+      linkedEntityIds: outboundStructuralIds(event),
       linkedEntries,
       relatedEmails,
       evidence,

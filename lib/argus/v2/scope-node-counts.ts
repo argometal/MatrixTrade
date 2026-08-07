@@ -23,12 +23,13 @@ export function isEventEntity(entity: Entity | undefined): boolean {
   return Boolean(entity && !entity.deletedAt && referenceKindFromNotes(entity.notes ?? "") === "event");
 }
 
-/** All outbound structural link ids for neighborhood / counting. */
+/**
+ * All outbound structural link ids for neighborhood / counting.
+ * Union every link bag — legacy topic/event rows may store binders in
+ * linkedTopicIds / linkedEventIds instead of (or in addition to) linkedEntityIds.
+ */
 export function outboundStructuralIds(entity: Entity): string[] {
-  if (entity.type === "project") return collectProjectLinkIds(entity);
-  return [
-    ...new Set([...(entity.linkedEntityIds ?? []), ...(entity.linkedPersonIds ?? [])]),
-  ];
+  return collectProjectLinkIds(entity);
 }
 
 /** Entities that point at `targetId` (reverse links). */

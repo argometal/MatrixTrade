@@ -55,8 +55,6 @@ const ORDER_SCOPE = "topics";
 const COLUMN_SCOPE = "topics:columns";
 const BOARD_COLUMNS: V2TopicBrowseStatus[] = ["Active", "Quiet", "Empty", "Archived"];
 
-type FilterMenu = "org" | "project" | "activity" | null;
-
 const ACTIVITY_OPTIONS: { id: V2TopicActivityFilter; label: string }[] = [
   { id: "7d", label: "Last 7 days" },
   { id: "30d", label: "Last 30 days" },
@@ -141,7 +139,7 @@ function FilterMenuPanel({
   return (
     <div
       ref={panelRef}
-      className="absolute left-0 top-full z-30 mt-1 max-h-56 min-w-[180px] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl"
+      className="absolute left-0 top-full z-30 mt-1 max-h-80 min-w-[180px] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl"
     >
       {children}
     </div>
@@ -494,7 +492,7 @@ export function V2TopicsShell({
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropBeforeId, setDropBeforeId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const [openFilter, setOpenFilter] = useState<FilterMenu>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchDraft, setSearchDraft] = useState(filters.q ?? "");
 
   const deleteGate = {
@@ -618,7 +616,12 @@ export function V2TopicsShell({
     };
     for (const card of sorted) {
       if (statusFilter === "patterns" && card.patternCount === 0) continue;
-      const status = columnOverrides[card.id] ?? card.status;
+      // Board DnD overrides must not park linked/evidence topics in Empty.
+      const override = columnOverrides[card.id];
+      const status =
+        override && !(override === "Empty" && card.status !== "Empty")
+          ? override
+          : card.status;
       groups[status].push(card);
     }
     return groups;
@@ -656,15 +659,10 @@ export function V2TopicsShell({
       else params.set(paramKey, value);
       params.delete("page");
     });
-    setOpenFilter(null);
   }
 
   function setTagFilter(tag?: string) {
-    replaceTopicParams((params) => {
-      if (!tag) params.delete("tag");
-      else params.set("tag", tag);
-      params.delete("page");
-    });
+    setFilter("tag", tag);
   }
 
   function clearFilters() {
@@ -678,7 +676,7 @@ export function V2TopicsShell({
       params.delete("page");
     });
     setSearchDraft("");
-    setOpenFilter(null);
+    setFiltersOpen(false);
   }
 
   function selectItem(id: string) {
@@ -874,7 +872,7 @@ export function V2TopicsShell({
             />
           </div>
 
-          {/* Status once — summary pills (no duplicate All/Active/Empty tabs or Filters dropdown). */}
+          {/* Status pills only for Active/Quiet/Empty — one Filters menu for the rest. */}
           <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <SummaryPill label="Total" value={summary.total} active={statusFilter === "all"} onClick={() => applyStatusFilter("all")} />
             <SummaryPill label="Active" value={summary.active} tone="green" active={statusFilter === "Active"} onClick={() => applyStatusFilter("Active")} />
@@ -883,135 +881,122 @@ export function V2TopicsShell({
             <SummaryPill label="Archived" value={summary.archived} active={statusFilter === "Archived"} onClick={() => applyStatusFilter("Archived")} />
           </div>
 
-          {tagChips.length > 0 ? (
-            <div className="mb-4 flex flex-wrap gap-1.5">
-              {tagChips.map((chip) => {
-                const active = filters.tag?.toLowerCase() === chip.name.toLowerCase();
-                return (
-                  <button
-                    key={chip.name}
-                    type="button"
-                    onClick={() => setTagFilter(active ? undefined : chip.name)}
-                    className={`rounded-full px-2 py-0.5 text-[10px] transition ${
-                      active
-                        ? "bg-violet-500/20 text-violet-200 ring-1 ring-violet-500/40"
-                        : "bg-zinc-800/80 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-300"
-                    }`}
-                  >
-                    {chip.name} {chip.count}
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-
-          <div className="mb-6 flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setOpenFilter(openFilter === "org" ? null : "org")}
-                className={`rounded-lg px-2.5 py-1 text-[10px] font-medium ${
-                  filters.org ? "bg-violet-500/15 text-violet-300" : "bg-zinc-800/80 text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                Org{filters.org ? " ✓" : ""}
-              </button>
-              <FilterMenuPanel open={openFilter === "org"} onClose={() => setOpenFilter(null)}>
-                {filterOptions.organizations.length === 0 ? (
-                  <p className="px-3 py-2 text-[10px] text-zinc-600">No linked organizations</p>
-                ) : (
-                  filterOptions.organizations.map((org) => (
-                    <FilterOption
-                      key={org.id}
-                      active={filters.org === org.id}
-                      onClick={() => setFilter("org", filters.org === org.id ? undefined : org.id)}
-                    >
-                      {org.name}
-                    </FilterOption>
-                  ))
-                )}
-              </FilterMenuPanel>
-            </div>
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setOpenFilter(openFilter === "project" ? null : "project")}
-                className={`rounded-lg px-2.5 py-1 text-[10px] font-medium ${
-                  filters.project
-                    ? "bg-violet-500/15 text-violet-300"
-                    : "bg-zinc-800/80 text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                Project{filters.project ? " ✓" : ""}
-              </button>
-              <FilterMenuPanel open={openFilter === "project"} onClose={() => setOpenFilter(null)}>
-                {filterOptions.projects.length === 0 ? (
-                  <p className="px-3 py-2 text-[10px] text-zinc-600">No linked projects</p>
-                ) : (
-                  filterOptions.projects.map((project) => (
-                    <FilterOption
-                      key={project.id}
-                      active={filters.project === project.id}
-                      onClick={() =>
-                        setFilter("project", filters.project === project.id ? undefined : project.id)
-                      }
-                    >
-                      {project.name}
-                    </FilterOption>
-                  ))
-                )}
-              </FilterMenuPanel>
-            </div>
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setOpenFilter(openFilter === "activity" ? null : "activity")}
-                className={`rounded-lg px-2.5 py-1 text-[10px] font-medium ${
-                  filters.activity
-                    ? "bg-violet-500/15 text-violet-300"
-                    : "bg-zinc-800/80 text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                Date{filters.activity ? " ✓" : ""}
-              </button>
-              <FilterMenuPanel open={openFilter === "activity"} onClose={() => setOpenFilter(null)}>
-                {ACTIVITY_OPTIONS.map((option) => (
-                  <FilterOption
-                    key={option.id}
-                    active={filters.activity === option.id}
-                    onClick={() =>
-                      setFilter("activity", filters.activity === option.id ? undefined : option.id)
-                    }
-                  >
-                    {option.label}
-                  </FilterOption>
-                ))}
-              </FilterMenuPanel>
-            </div>
-
+          <div className="relative mb-6 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => applyStatusFilter("patterns")}
-              className={`rounded-lg px-2.5 py-1 text-[10px] font-medium ${
-                statusFilter === "patterns"
-                  ? "bg-violet-500/15 text-violet-300"
-                  : "bg-zinc-800/80 text-zinc-500 hover:text-zinc-300"
+              onClick={() => setFiltersOpen((open) => !open)}
+              className={`rounded-lg border px-3 py-1.5 text-[11px] font-medium ${
+                filtersActive || statusFilter === "patterns"
+                  ? "border-violet-500/40 bg-violet-500/15 text-violet-200"
+                  : "border-zinc-700 bg-zinc-900/60 text-zinc-400 hover:text-zinc-200"
               }`}
+              aria-expanded={filtersOpen}
             >
-              Patterns
+              Filters{(filtersActive || statusFilter === "patterns") ? " ✓" : ""}
             </button>
-
-            {filtersActive ? (
+            {filtersActive || statusFilter === "patterns" ? (
               <button
                 type="button"
-                onClick={clearFilters}
-                className="rounded-lg px-2.5 py-1 text-[10px] font-medium text-amber-300/90 hover:text-amber-200"
+                onClick={() => {
+                  clearFilters();
+                  if (statusFilter === "patterns") applyStatusFilter("all");
+                }}
+                className="rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-amber-300/90 hover:text-amber-200"
               >
-                Clear filters
+                Clear
               </button>
             ) : null}
+            <FilterMenuPanel open={filtersOpen} onClose={() => setFiltersOpen(false)}>
+              <div className="min-w-[240px] space-y-2 p-2">
+                <div>
+                  <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+                    Patterns
+                  </p>
+                  <FilterOption
+                    active={statusFilter === "patterns"}
+                    onClick={() => {
+                      applyStatusFilter(statusFilter === "patterns" ? "all" : "patterns");
+                      setFiltersOpen(false);
+                    }}
+                  >
+                    Has patterns
+                  </FilterOption>
+                </div>
+                <div>
+                  <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+                    Organization
+                  </p>
+                  {filterOptions.organizations.length === 0 ? (
+                    <p className="px-3 py-1 text-[10px] text-zinc-600">No linked organizations</p>
+                  ) : (
+                    filterOptions.organizations.map((org) => (
+                      <FilterOption
+                        key={org.id}
+                        active={filters.org === org.id}
+                        onClick={() => setFilter("org", filters.org === org.id ? undefined : org.id)}
+                      >
+                        {org.name}
+                      </FilterOption>
+                    ))
+                  )}
+                </div>
+                <div>
+                  <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+                    Project
+                  </p>
+                  {filterOptions.projects.length === 0 ? (
+                    <p className="px-3 py-1 text-[10px] text-zinc-600">No linked projects</p>
+                  ) : (
+                    filterOptions.projects.map((project) => (
+                      <FilterOption
+                        key={project.id}
+                        active={filters.project === project.id}
+                        onClick={() =>
+                          setFilter("project", filters.project === project.id ? undefined : project.id)
+                        }
+                      >
+                        {project.name}
+                      </FilterOption>
+                    ))
+                  )}
+                </div>
+                <div>
+                  <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+                    Activity
+                  </p>
+                  {ACTIVITY_OPTIONS.map((option) => (
+                    <FilterOption
+                      key={option.id}
+                      active={filters.activity === option.id}
+                      onClick={() =>
+                        setFilter("activity", filters.activity === option.id ? undefined : option.id)
+                      }
+                    >
+                      {option.label}
+                    </FilterOption>
+                  ))}
+                </div>
+                {tagChips.length > 0 ? (
+                  <div>
+                    <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+                      Tags
+                    </p>
+                    {tagChips.map((chip) => {
+                      const active = filters.tag?.toLowerCase() === chip.name.toLowerCase();
+                      return (
+                        <FilterOption
+                          key={chip.name}
+                          active={active}
+                          onClick={() => setTagFilter(active ? undefined : chip.name)}
+                        >
+                          {chip.name} ({chip.count})
+                        </FilterOption>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            </FilterMenuPanel>
           </div>
 
           {filtered.length === 0 ? (

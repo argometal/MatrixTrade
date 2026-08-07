@@ -1024,6 +1024,7 @@ export async function setEntityLinkedIdsAction(entityId: string, linkedEntityIds
   const data = await readArgus();
   const validIds = filterLinkIdsForSource(data.entities, "create", linkedEntityIds);
   const partitioned = partitionIdsByEntityKind(data.entities, validIds);
+  const kind = referenceKindFromNotes(entity.notes ?? "");
   const patch =
     entity.type === "project"
       ? {
@@ -1032,12 +1033,21 @@ export async function setEntityLinkedIdsAction(entityId: string, linkedEntityIds
           linkedTopicIds: partitioned.topicIds,
           linkedEventIds: partitioned.eventIds,
         }
-      : referenceKindFromNotes(entity.notes ?? "") === "event"
+      : kind === "event"
         ? {
+            // Canonical outbound bag is linkedEntityIds; clear legacy topic/event arrays.
             linkedEntityIds: validIds,
             linkedPersonIds: partitioned.personIds,
+            linkedTopicIds: [] as string[],
+            linkedEventIds: [] as string[],
           }
-        : { linkedEntityIds: validIds };
+        : kind === "topic"
+          ? {
+              linkedEntityIds: validIds,
+              linkedTopicIds: [] as string[],
+              linkedEventIds: [] as string[],
+            }
+          : { linkedEntityIds: validIds };
 
   await updateEntity(entityId, patch);
   await mirrorTopicEventLinks(entityId, validIds);
