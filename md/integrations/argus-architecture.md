@@ -175,7 +175,7 @@ Relationships are **derived**, not stored as standalone records.
 - `id`, `type`, `name`, `notes`
 - Timestamps
 
-Do not duplicate Journal facts on the Entity record. Relationship strength, history, and narrative live in Journal — Network reads them.
+Do not duplicate Journal facts on the Entity record. Relationship **status** and narrative live in derived views over Journal — Network reads them. Do not store strength% / outcome scores.
 
 ---
 

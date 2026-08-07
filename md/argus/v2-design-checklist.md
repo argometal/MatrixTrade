@@ -349,20 +349,22 @@ Mark items:
 - [c] Role + organization (when linked)
 - [c] Expertise tags from journal topics
 - [c] Last interaction + relationship since
-- [c] **Strength %** bar — computed from evidence (not manual)
-- [c] Footer metrics: Emails, Journal, Events
-- [c] Opens `/argus/network/[id]`
+- [c] **Network status** badge (New / Active / Dormant / Lost / Archived) — derived from evidence
+- [~] ~~Strength % bar~~ — **retired** (Evidence Engine Phase B); do not restore
+- [c] Footer metrics: Emails, Topics, Events
+- [c] Opens `/argus/v2/network/[id]`
 
 ### Right sidebar analytics
 
-- [c] Status donut (Active / Dormant / New / Lost)
+- [c] Status donut (Active / Dormant / New / Lost / Archived)
 - [c] Top organizations bar chart
-- [c] Average relationship strength
+- [c] Needs-a-touch count (Dormant + Lost) — not average strength
+- [~] ~~Average relationship strength~~ — **retired**
 - [c] Recent interactions feed
 
 ### Smart filters
 
-- [c] Key influencers, Decision makers, Technical experts, Recent activity, High value network, Dormant
+- [c] Key influencers, Decision makers, Technical experts, Recent activity, High-evidence network, Dormant
 - [c] Each shows people count; clicking filters the grid
 - [c] Filters are views only (no new objects created)
 
@@ -513,7 +515,8 @@ Mark items:
 - [c] Org timeline excludes person-only evidence (roster only on sidebar)
 - [c] Project timeline includes contact-linked evidence within project dates
 - [c] Person evidence is direct links only
-- [c] Relationship strength / org status derived from evidence, not manual CRM fields
+- [c] Relationship **status** / org status derived from evidence, not manual CRM fields
+- [~] ~~Relationship strength KPI~~ — retired; use status + evidence facts
 
 ### AI Charter alignment
 

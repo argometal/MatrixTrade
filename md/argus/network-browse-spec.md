@@ -1,7 +1,8 @@
 # ARGUS Network Browser
 
 **Status:** Implemented at `/argus/v2/browse/network`  
-**AI rule of construction:** [`ai-charter.md`](ai-charter.md) — metrics prioritize attention; people are never reduced to scores.
+**Mechanics:** [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md)  
+**AI rule of construction:** [`ai-charter.md`](ai-charter.md) — people are never reduced to scores; prefer status vocabulary over KPIs.
 
 ---
 
@@ -9,9 +10,9 @@
 
 The Network browser is your professional capital.
 
-It answers: **“Who should I talk to, trust, or involve?”**
+It answers: **“Who should I talk to next — and who has gone quiet?”**
 
-It is not a CRM. It is a relationship intelligence system.
+It is not a CRM. It is an evidence-derived relationship retrieval surface (Evidence Engine).
 
 ---
 
@@ -22,25 +23,29 @@ Each card should answer in seconds:
 - Who is this person?
 - Where do they work?
 - What do they do?
-- How strong is our relationship?
+- What is their **Network status** (New / Active / Dormant / Lost / Archived)?
 - When did we last interact?
-- Why are they important?
+- What evidence volume is linked (emails, topics, events, projects)?
+
+**Retired:** relationship **strength%** bars and average-strength KPIs (Evidence Engine Phase B).
 
 ---
 
-## Relationship status
+## Relationship status (single vocabulary)
 
-Represents the current relationship: **New**, **Active**, **Dormant**, **Lost**.
+Represents the current relationship: **New**, **Active**, **Dormant**, **Lost**, **Archived**.
 
-Derived from evidence and recency — not project status.
+Derived from evidence dates, follow-ups, contactValue weight, evidence volume, and lifecycle — **not stored**, not project status.
+
+Implementation: `lib/argus/v2/network-browse-utils.ts` → `deriveNetworkStatus()`.
+
+Same vocabulary on person contact Attention and organization overview.
 
 ---
 
-## Relationship strength
+## Evidence volume (smart views only)
 
-A dynamic indicator built from evidence. Influenced by emails, journal entries, meetings, projects together, and recent interactions. **Not entered manually.**
-
-Implementation: `lib/argus/v2/network-browse-utils.ts` → `computeRelationshipStrength()`.
+Smart views may filter on linked evidence density (emails, logs, events, shared projects). That is a **filter aid**, not a user-facing strength score.
 
 ---
 
@@ -58,7 +63,7 @@ Shows where the person currently belongs. The organization remains independent; 
 
 ## Smart views
 
-Predefined filters (not new objects): key influencers, decision makers, technical experts, recent activity, high-value network, dormant relationships.
+Predefined filters (not new objects): key influencers, decision makers, technical experts, recent activity, high-evidence network, dormant relationships.
 
 ---
 
@@ -70,7 +75,7 @@ Predefined filters (not new objects): key influencers, decision makers, technica
 | Organizations | Which company? |
 | Projects | Which engagement? |
 | Network | Which person? |
-| Person detail (`/argus/network/[id]`) | Everything known about this individual |
+| Person detail (`/argus/v2/network/[id]`) | Everything known about this individual |
 
 ---
 
@@ -78,7 +83,7 @@ Predefined filters (not new objects): key influencers, decision makers, technica
 
 | Path | Role |
 |------|------|
-| `lib/argus/v2/network-browse-utils.ts` | Card data, strength, status, smart views |
 | `app/argus/v2/browse/network/` | Browser UI |
-| `lib/argus/v2/hierarchy.ts` | Person evidence scope (direct links only) |
-| `lib/argus/network-intelligence.ts` | Underlying relationship health signals |
+| `lib/argus/v2/network-browse-utils.ts` | Cards, **status**, evidence volume, smart views |
+| `lib/argus/network-intelligence.ts` | Internal intel (dates, follow-ups); not a second status product |
+| [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md) | Canonical mechanics |

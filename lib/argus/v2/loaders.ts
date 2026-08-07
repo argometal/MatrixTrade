@@ -2,6 +2,7 @@ import type { ArgusData, Entity, InboxItem, Log } from "../types";
 import { TAG_CLOUD_DISPLAY_LIMIT } from "../tag-limits";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import { buildEntityIntelligence } from "../network-intelligence";
+import { isEntityArchived } from "../entity-lifecycle";
 import { getNeedsClassificationLogs } from "../journal-helpers";
 import { buildTagPatternsForScope } from "./tag-patterns";
 import { effectiveInboxStatus } from "./inbox-loaders";
@@ -395,11 +396,11 @@ export function buildV2TagCloud(data: ArgusData, inboxItems: InboxItem[], includ
   });
 }
 
-/** Action-only nav signals — never entity totals. */
+/** Action-only nav triage counts — never entity totals, never Event Signals. */
 export type V2NavCounts = {
   /** Unprocessed inbox evidence (pending + linked awaiting triage). */
   inbox: number;
-  /** Follow-ups due today or overdue — relationship attention. */
+  /** Follow-ups due soon or recently overdue — retrieval of commitment debt. */
   network: number;
   /** Evidence rows still needing classification. */
   topics: number;
@@ -459,10 +460,8 @@ export function loadOrganizationPageData(
   const emailsThisMonth = scope.inbox.filter((i) => i.receivedAt.slice(0, 7) === monthPrefix).length;
 
   const sparkline = buildMonthlyActivitySparkline(scope.logs, scope.inbox, 12);
-  const relationshipMetrics = buildRelationshipMetrics(intel, org.strategicValue ?? 3);
-  const sv = org.strategicValue ?? 3;
-  const relationshipScore = Math.max(1, Math.min(5, sv + 0.3)).toFixed(1);
-  const relationshipLabel = relationshipDisplayLabel(sv, intel.relationshipHealth);
+  const networkStatus = deriveOrgNetworkStatus(org, intel, scope.totalCount, today);
+  const relationshipFacts = buildRelationshipFacts(intel, linkedPeople.length, scope.totalCount);
   const chartEndYear = Number(today.slice(0, 4));
   const chartStartYear = chartEndYear - 1;
 
@@ -484,9 +483,8 @@ export function loadOrganizationPageData(
     orgProjects,
     recentProjects,
     sparkline,
-    relationshipMetrics,
-    relationshipScore,
-    relationshipLabel,
+    networkStatus,
+    relationshipFacts,
     chartStartYear,
     chartEndYear,
     tagPatterns,
@@ -538,29 +536,46 @@ function buildMonthlyActivitySparkline(logs: Log[], inbox: InboxItem[], months: 
   return counts;
 }
 
-function buildRelationshipMetrics(
+function buildRelationshipFacts(
   intel: ReturnType<typeof buildEntityIntelligence>,
-  strategicValue: number
+  peopleCount: number,
+  evidenceCount: number
 ) {
-  const high = (n: number) => (n >= 4 ? "High" : n >= 3 ? "Strong" : "Moderate");
+  const days =
+    intel.daysSinceLastInteraction === null
+      ? "No interactions yet"
+      : intel.daysSinceLastInteraction === 0
+        ? "Today"
+        : `${intel.daysSinceLastInteraction}d since last`;
   return [
-    { label: "Engagement", value: intel.relationshipHealth === "active" ? "High" : "Moderate" },
-    { label: "Collaboration", value: intel.outcomeScore >= 20 ? "Strong" : "Moderate" },
-    { label: "Trust", value: high(strategicValue) },
-    { label: "Future Potential", value: strategicValue >= 4 ? "High" : "Moderate" },
+    { label: "Last interaction", value: days },
+    { label: "Open follow-ups", value: String(intel.openFollowUps) },
+    { label: "Linked people", value: String(peopleCount) },
+    { label: "Evidence in scope", value: String(evidenceCount) },
   ];
 }
 
-function relationshipDisplayLabel(
-  strategicValue: number,
-  health: ReturnType<typeof buildEntityIntelligence>["relationshipHealth"]
-): string {
-  if (strategicValue >= 4 && health === "active") return "Strong Relationship";
-  if (strategicValue >= 4) return "High Priority Relationship";
-  if (health === "active") return "Active Relationship";
-  if (health === "cooling") return "Cooling Relationship";
-  if (health === "dormant") return "Dormant Relationship";
-  return "Needs Attention";
+function deriveOrgNetworkStatus(
+  org: Entity,
+  intel: ReturnType<typeof buildEntityIntelligence>,
+  totalEvidence: number,
+  today: string
+): "New" | "Active" | "Dormant" | "Lost" | "Archived" {
+  if (org.lifecycleStatus === "archived" || isEntityArchived(org, today)) return "Archived";
+  if (org.deletedAt || /status:\s*lost/i.test(org.notes ?? "")) return "Lost";
+
+  const ageDays = (() => {
+    const a = Date.parse(org.createdAt.slice(0, 10));
+    const b = Date.parse(today);
+    return Math.floor((b - a) / 86400000);
+  })();
+
+  if (totalEvidence <= 1 && ageDays <= 60) return "New";
+  if (intel.daysSinceLastInteraction !== null && intel.daysSinceLastInteraction <= 90) return "Active";
+  if (intel.relationshipHealth === "active" || intel.relationshipHealth === "cooling") return "Active";
+  if (totalEvidence === 0 && ageDays <= 30) return "New";
+  if (intel.relationshipHealth === "neglected" && (intel.daysSinceLastInteraction ?? 0) > 180) return "Lost";
+  return "Dormant";
 }
 
 export function loadProjectPageData(

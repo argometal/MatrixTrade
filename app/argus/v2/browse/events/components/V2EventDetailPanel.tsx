@@ -20,6 +20,10 @@ import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompact
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EventSignalEditor } from "./V2EventSignalEditor";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
+import {
+  V2ChronicleNoteDeleteButton,
+  chronicleLogIdFromEvidenceId,
+} from "@/app/argus/v2/components/V2ChronicleNoteDeleteButton";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
@@ -45,15 +49,6 @@ function MetricPill({ icon, label, count }: { icon: string; label: string; count
       <span className="mt-1 text-[8px] uppercase tracking-wide text-zinc-600">{label}</span>
     </div>
   );
-}
-
-function normalizeEventTag(value: string): string {
-  return value.trim();
-}
-
-function tagsEqual(a: string[], b: string[]): boolean {
-  if (a.length !== b.length) return false;
-  return a.every((tag, index) => tag === b[index]);
 }
 
 export function V2EventDetailPanel({
@@ -111,7 +106,7 @@ export function V2EventDetailPanel({
     setComposer("");
     setPendingFiles([]);
     setSaveNote(null);
-  }, [selected.id, selected.linkedTags.join("|")]);
+  }, [selected.id]);
 
   async function saveEntry() {
     if (!canSave) return;
@@ -121,14 +116,13 @@ export function V2EventDetailPanel({
       const formData = new FormData();
       formData.set("eventId", selected.id);
       formData.set("body", composer);
-      formData.set("linkedTags", selected.linkedTags.join(", "));
       for (const file of pendingFiles) {
         formData.append("attachments", file);
       }
       const result = await appendEventChronicleEntryAction(formData);
       setComposer("");
       setPendingFiles([]);
-      setSaveNote(result.appended ? "Added to chronicle" : "Tags saved");
+      setSaveNote(result.appended ? "Added to chronicle" : "Nothing to save");
       if (result.appended) setPanelTab("chronicle");
       router.refresh();
     } catch {
@@ -294,7 +288,8 @@ export function V2EventDetailPanel({
                 <div>
                   <p className="text-xs font-medium text-zinc-300">Add to chronicle</p>
                   <p className="mt-0.5 text-[11px] text-zinc-600">
-                    Write and save — entry moves to Chronicle. Composer clears for the next note. Append-only.
+                    Write and save — entry moves to Chronicle. Composer clears for the next note. Signals stay on the
+                    Signals tab (not copied onto every note).
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -355,26 +350,36 @@ export function V2EventDetailPanel({
                 </p>
               ) : (
                 <ul className="space-y-2">
-                  {filteredEvidence.map((item) => (
-                    <li key={item.id}>
-                      <Link
-                        href={item.href}
-                        target={item.kind === "photo" ? "_blank" : undefined}
-                        className="flex items-start gap-3 rounded-xl border border-zinc-800/80 px-3 py-3 transition hover:border-zinc-700"
-                      >
-                        <span className="mt-0.5 text-sm text-zinc-500">
-                          <EvidenceIcon kind={item.kind} />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-medium text-zinc-100">{item.title}</span>
-                          <span className="block text-xs text-zinc-500">{item.meta}</span>
-                        </span>
-                        <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-600">
-                          {item.kind}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
+                  {filteredEvidence.map((item) => {
+                    const noteId = chronicleLogIdFromEvidenceId(item.id);
+                    return (
+                      <li key={item.id}>
+                        <div className="flex items-stretch gap-2 rounded-xl border border-zinc-800/80 transition hover:border-zinc-700">
+                          <Link
+                            href={item.href}
+                            target={item.kind === "photo" ? "_blank" : undefined}
+                            className="flex min-w-0 flex-1 items-start gap-3 px-3 py-3"
+                          >
+                            <span className="mt-0.5 text-sm text-zinc-500">
+                              <EvidenceIcon kind={item.kind} />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-sm font-medium text-zinc-100">{item.title}</span>
+                              <span className="block text-xs text-zinc-500">{item.meta}</span>
+                            </span>
+                            <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-600">
+                              {item.kind === "journal" ? "note" : item.kind}
+                            </span>
+                          </Link>
+                          {noteId ? (
+                            <div className="flex items-center pr-2">
+                              <V2ChronicleNoteDeleteButton logId={noteId} returnTo={returnTo} />
+                            </div>
+                          ) : null}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

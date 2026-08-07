@@ -9,7 +9,6 @@ import {
 import {
   attentionSummaryMessage,
   relationshipReasonLabel,
-  relationshipStatusLabel,
 } from "./network-relationship-metrics";
 import type {
   V2NetworkBrowseCard,
@@ -22,15 +21,13 @@ export type NetworkAiSnapshotScope = "network-desk" | "network-person";
 
 function formatDeskHighlights(cards: V2NetworkBrowseCard[]): string {
   const dormant = cards.filter((c) => c.status === "Dormant" || c.status === "Lost").slice(0, 5);
-  const due = cards
-    .filter((c) => c.status === "Active" && c.strength >= 60)
-    .slice(0, 5);
+  const active = cards.filter((c) => c.status === "Active" || c.status === "New").slice(0, 5);
 
   const lines = ["=== HIGHLIGHTS ==="];
-  if (due.length) {
-    lines.push("", "Active / high-value:");
-    for (const c of due) {
-      lines.push(`- ${c.name} (${c.status}, strength ${c.strength}%) — ${c.lastInteraction.timeLabel}`);
+  if (active.length) {
+    lines.push("", "Active / new:");
+    for (const c of active) {
+      lines.push(`- ${c.name} (${c.status}) — ${c.lastInteraction.timeLabel}`);
     }
   }
   if (dormant.length) {
@@ -39,7 +36,7 @@ function formatDeskHighlights(cards: V2NetworkBrowseCard[]): string {
       lines.push(`- ${c.name} (${c.status}) — last: ${c.lastInteraction.timeLabel}`);
     }
   }
-  if (!due.length && !dormant.length) lines.push("(no highlights — add people or log contact)");
+  if (!active.length && !dormant.length) lines.push("(no highlights — add people or log contact)");
   return lines.join("\n");
 }
 
@@ -61,7 +58,7 @@ export function buildNetworkDeskBody(input: {
   return [
     "=== NETWORK DESK ===",
     `people:${summary.total} active:${summary.active} dormant:${summary.dormant} new:${summary.new} lost:${summary.lost}`,
-    `orgs:${summary.organizations} projects_together:${summary.projectsTogether} avg_strength:${summary.averageStrength}%`,
+    `orgs:${summary.organizations} projects_together:${summary.projectsTogether} needs_touch:${summary.needsTouch}`,
     `status_counts: ${statusLine}`,
     "",
     "=== RECENT INTERACTIONS ===",
@@ -91,7 +88,7 @@ function dialogueGuideSection(personName: string): string {
 }
 
 function relationshipOverviewSection(page: NetworkContactPageData): string {
-  const { entity, intel, attention, timeline } = page;
+  const { entity, intel, attention, networkStatus, timeline } = page;
   const timelineSnippet = timeline
     .slice(0, 5)
     .map((t) => `- [${t.kind}] ${t.date.slice(0, 10)}: ${t.title}`)
@@ -99,8 +96,8 @@ function relationshipOverviewSection(page: NetworkContactPageData): string {
 
   return [
     `=== RELATIONSHIP OVERVIEW · ${entity.name} ===`,
-    `health:${intel.relationshipHealth} days_since:${intel.daysSinceLastInteraction ?? "—"} open_followups:${intel.openFollowUps}`,
-    `attention:${relationshipStatusLabel(attention.status)} — ${relationshipReasonLabel(attention.reason)}`,
+    `network_status:${networkStatus} days_since:${intel.daysSinceLastInteraction ?? "—"} open_followups:${intel.openFollowUps}`,
+    `attention_reason:${relationshipReasonLabel(attention.reason)}`,
     attentionSummaryMessage(attention),
     "",
     `contact_value:${(entity.contactValue ?? []).join(", ") || "—"}`,
@@ -121,7 +118,7 @@ export function buildNetworkPersonBody(page: NetworkContactPageData): string {
     `id:${entity.id}`,
     `role:${role}`,
     `org:${organization?.name ?? "—"}`,
-    `strength_signals: logs=${intel.logCount} evidence=${intel.evidenceCount} outcome=${intel.outcomeScore}`,
+    `evidence: logs=${intel.logCount} attachments=${intel.evidenceCount}`,
     `tags:${tags.slice(0, 10).join(", ") || "—"}`,
     "",
     hasContact ? relationshipOverviewSection(page) : dialogueGuideSection(entity.name),

@@ -63,7 +63,7 @@ const SMART_VIEWS: { key: V2NetworkSmartView; label: string; description: string
   { key: "decision-makers", label: "Decision makers", description: "Roles and topics tied to authority" },
   { key: "technical-experts", label: "Technical experts", description: "Capability tags from evidence" },
   { key: "recent-activity", label: "Recent activity", description: "Active relationships right now" },
-  { key: "high-value-network", label: "High value network", description: "Highest evidence-backed strength" },
+  { key: "high-value-network", label: "High evidence network", description: "Shared projects and denser linked evidence" },
   { key: "dormant", label: "Dormant relationships", description: "Worth revisiting when timing is right" },
 ];
 
@@ -344,26 +344,15 @@ function PersonCard({
         </div>
         <p className="mb-3 truncate text-xs text-zinc-500">{card.lastInteraction.label}</p>
 
-        {card.strength >= 75 ? (
+        {card.status === "Dormant" || card.status === "Lost" ? (
           <p className="mb-3 text-[11px] leading-snug text-amber-200/90">
-            High-value contact — evidence-backed relationship worth maintaining.
+            Quiet relationship — open the contact to see follow-ups and last evidence.
           </p>
         ) : null}
 
-        <div className="mb-3 flex items-center justify-between text-xs">
+        <div className="mb-4 flex items-center justify-between text-xs">
           <span className="text-zinc-600">Relationship since</span>
           <span className="text-zinc-400">{card.relationshipSince}</span>
-        </div>
-
-        <div className="mb-1 flex items-center justify-between text-xs">
-          <span className="text-zinc-600">Strength</span>
-          <span className="font-semibold tabular-nums text-violet-300">{card.strength}%</span>
-        </div>
-        <div className="mb-4 h-2 overflow-hidden rounded-full bg-zinc-800">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-violet-600 to-violet-400"
-            style={{ width: `${card.strength}%` }}
-          />
         </div>
 
         <div className="flex justify-around border-t border-zinc-800/80 pt-3 text-center text-xs text-zinc-500">
@@ -437,9 +426,6 @@ function PersonListRow({
             {card.organization ? ` · ${card.organization}` : ""} · {card.lastInteraction.timeLabel}
           </p>
         </div>
-        <span className="relative z-10 hidden shrink-0 text-sm font-semibold tabular-nums text-violet-300 pointer-events-none sm:block">
-          {card.strength}%
-        </span>
       </Link>
       <div className="relative z-20 flex shrink-0 items-center gap-1 pr-3">
         <NetworkLastContactPicker personId={card.id} compact />
@@ -532,9 +518,11 @@ function NetworkInsightsSidebar({
         </div>
 
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
-          <h2 className="text-sm font-semibold text-zinc-200">Relationship strength</h2>
-          <p className="mt-2 text-3xl font-bold tabular-nums text-violet-300">{summary.averageStrength}%</p>
-          <p className="mt-1 text-xs text-zinc-600">Average strength score from evidence — not entered manually</p>
+          <h2 className="text-sm font-semibold text-zinc-200">Needs a touch</h2>
+          <p className="mt-2 text-3xl font-bold tabular-nums text-amber-200/90">{summary.needsTouch}</p>
+          <p className="mt-1 text-xs text-zinc-600">
+            Dormant or Lost — derived from last evidence and follow-ups, not a stored score
+          </p>
         </div>
 
         <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-5">
@@ -897,7 +885,7 @@ export function V2NetworkBrowserShell({
                       <SummaryPill label="Interactions Logged" value={summary.interactionsLogged} />
                     </div>
                     <p className="text-[10px] leading-relaxed text-zinc-600">
-                      Status and strength come from linked emails, records, and projects. Use 📅 on a card to log last
+                      Status comes from linked emails, records, follow-ups, and projects. Use 📅 on a card to log last
                       contact.
                     </p>
                   </div>

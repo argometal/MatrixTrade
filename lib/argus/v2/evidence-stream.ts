@@ -23,12 +23,11 @@ export type V2EvidenceStreamCounts = {
 };
 
 function logKindLabel(kind: Log["kind"]): string {
-  if (kind === "log") return "Log";
   if (kind === "follow_up") return "Follow-up";
   return "Note";
 }
 
-/** Unified chronological evidence for any entity — journal, inbox, attachments. */
+/** Unified chronological evidence for any entity — notes, inbox, attachments. */
 export function buildEntityEvidenceStream(
   data: ArgusData,
   entityId: string,
@@ -68,7 +67,7 @@ export function buildEntityEvidenceStream(
     items.push({
       id: `journal-${log.id}`,
       kind: "journal",
-      title: log.title || "Journal entry",
+      title: log.title || "Note",
       meta: `${logKindLabel(log.kind)} · ${relativeActivityLabel(log.updatedAt || log.date, today)}`,
       sortIso: log.updatedAt || log.date,
       href: `/argus/logs/${log.id}`,
@@ -81,7 +80,7 @@ export function buildEntityEvidenceStream(
         id: `att-${att.id}`,
         kind: isPhoto ? "photo" : "file",
         title: att.fileName,
-        meta: `${isPhoto ? "Photo" : "File"} from journal · ${relativeActivityLabel(log.date, today)}`,
+        meta: `${isPhoto ? "Photo" : "File"} from note · ${relativeActivityLabel(log.date, today)}`,
         sortIso: log.date,
         href: isPhoto ? `/api/argus/files/${att.id}?inline=1` : `/api/argus/files/${att.id}`,
       });
@@ -91,6 +90,10 @@ export function buildEntityEvidenceStream(
   return items.sort((a, b) => b.sortIso.localeCompare(a.sortIso));
 }
 
+/**
+ * Headline counts: Notes + Emails are unique evidence sources.
+ * Photos/files are attachment drill-downs — not double-counted into evidenceCount.
+ */
 export function countEvidenceStream(items: V2EvidenceStreamItem[]): V2EvidenceStreamCounts {
   let journalCount = 0;
   let emailCount = 0;
@@ -107,7 +110,7 @@ export function countEvidenceStream(items: V2EvidenceStreamItem[]): V2EvidenceSt
     emailCount,
     fileCount,
     photoCount,
-    evidenceCount: items.length,
+    evidenceCount: journalCount + emailCount,
   };
 }
 

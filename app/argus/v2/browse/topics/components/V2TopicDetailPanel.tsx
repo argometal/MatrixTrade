@@ -21,6 +21,10 @@ import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEn
 import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
+import {
+  V2ChronicleNoteDeleteButton,
+  chronicleLogIdFromEvidenceId,
+} from "@/app/argus/v2/components/V2ChronicleNoteDeleteButton";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
@@ -339,7 +343,7 @@ export function V2TopicDetailPanel({
               ) : (
                 <ul className="space-y-2">
                   {filteredChronicle.map((item) => (
-                    <EvidenceRow key={item.id} item={item} />
+                    <EvidenceRow key={item.id} item={item} returnTo={returnTo} />
                   ))}
                 </ul>
               )}
@@ -434,24 +438,32 @@ export function V2TopicDetailPanel({
   );
 }
 
-function EvidenceRow({ item }: { item: V2EvidenceStreamItem }) {
+function EvidenceRow({ item, returnTo }: { item: V2EvidenceStreamItem; returnTo: string }) {
   const external = item.kind === "photo" || item.kind === "file";
+  const noteId = chronicleLogIdFromEvidenceId(item.id);
   return (
     <li>
-      <Link
-        href={item.href}
-        target={external ? "_blank" : undefined}
-        rel={external ? "noreferrer" : undefined}
-        className="flex items-start gap-3 rounded-xl border border-zinc-800/80 px-3 py-3 transition hover:border-zinc-700"
-      >
-        <span className="mt-0.5 text-sm text-zinc-500">
-          <EvidenceIcon kind={item.kind} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-medium text-zinc-200">{item.title}</span>
-          <span className="mt-0.5 block text-xs text-zinc-600">{item.meta}</span>
-        </span>
-      </Link>
+      <div className="flex items-stretch gap-2 rounded-xl border border-zinc-800/80 transition hover:border-zinc-700">
+        <Link
+          href={item.href}
+          target={external ? "_blank" : undefined}
+          rel={external ? "noreferrer" : undefined}
+          className="flex min-w-0 flex-1 items-start gap-3 px-3 py-3"
+        >
+          <span className="mt-0.5 text-sm text-zinc-500">
+            <EvidenceIcon kind={item.kind} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium text-zinc-200">{item.title}</span>
+            <span className="mt-0.5 block text-xs text-zinc-600">{item.meta}</span>
+          </span>
+        </Link>
+        {noteId ? (
+          <div className="flex items-center pr-2">
+            <V2ChronicleNoteDeleteButton logId={noteId} returnTo={returnTo} />
+          </div>
+        ) : null}
+      </div>
     </li>
   );
 }

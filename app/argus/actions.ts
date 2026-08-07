@@ -39,7 +39,7 @@ import {
   updateRunbook,
   renameTagGlobally,
 } from "@/lib/argus/server-storage";
-import type { EntityType, JournalKind, LogSource, RunbookItem, StrategicValue } from "@/lib/argus/types";
+import type { EntityType, JournalKind, LogSource, RunbookItem } from "@/lib/argus/types";
 import { JOURNAL_KINDS } from "@/lib/argus/labels";
 import { inferJournalKind, resolveLogDate, autoTitleFromBody } from "@/lib/argus/journal-helpers";
 import { resolveClassificationStatus } from "@/lib/argus/normalize";
@@ -57,7 +57,7 @@ import {
   createInputToReferenceKind,
   type ReferenceKind,
 } from "@/lib/argus/reference-types";
-import { buildEventShellNotes, eventAnchorDate, normalizeEventTags } from "@/lib/argus/v2/event-chronicle";
+import { eventAnchorDate, normalizeEventTags } from "@/lib/argus/v2/event-chronicle";
 import { migrateLegacyEventRecordIfNeeded } from "@/lib/argus/v2/migrate-event-chronicle";
 import { attachFilesToLog, attachmentSummaryNames, filesFromFormData } from "@/lib/argus/attachment-log";
 import { filterLinkIdsForSource } from "@/lib/argus/link-hierarchy";
@@ -501,14 +501,18 @@ export async function bulkDeleteInboxAction(
   return { ok: true, count };
 }
 
-/** Append a chronicle note on an event (tags, text, optional file attachments). */
+/** Append a chronicle note on an event (text + optional file attachments).
+ * Event Signals stay on the binder (`linkedTags`) — they are NOT copied onto every note.
+ * Stamping all signals onto each note inflated Patterns and made one note look like many tagged items.
+ * Entry-specific Tags may be passed via `entryTags` (optional).
+ */
 export async function appendEventChronicleEntryAction(
   formData: FormData
 ): Promise<{ ok: true; appended: boolean }> {
   await requireArgusSession();
   const eventId = String(formData.get("eventId") ?? "").trim();
   const body = String(formData.get("body") ?? "");
-  const linkedTags = parseTopics(String(formData.get("linkedTags") ?? ""));
+  const entryTags = normalizeEventTags(parseTopics(String(formData.get("entryTags") ?? "")));
   const files = filesFromFormData(formData);
 
   if (!eventId) throw new Error("Event not found");
@@ -520,15 +524,9 @@ export async function appendEventChronicleEntryAction(
     throw new Error("Event not found");
   }
 
-  const tags = normalizeEventTags(linkedTags);
   const trimmed = body.trim();
   const eventDate = eventAnchorDate(entity);
   const hasFiles = files.length > 0;
-
-  await updateEntity(eventId, {
-    notes: buildEventShellNotes(),
-    linkedTags: tags,
-  });
 
   if (trimmed || hasFiles) {
     const logBody = trimmed || `Attached: ${attachmentSummaryNames(files)}`;
@@ -538,7 +536,7 @@ export async function appendEventChronicleEntryAction(
       title: autoTitleFromBody(logBody),
       body: logBody,
       entityIds: [eventId],
-      topics: tags,
+      topics: entryTags,
       source: "manual",
       private: false,
       attachmentIds: [],
@@ -1059,10 +1057,6 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
     redirect("/argus/network");
   }
 
-  const rawValue = Number(formData.get("strategicValue") ?? entity.strategicValue ?? 3);
-  const strategicValue = (
-    rawValue >= 1 && rawValue <= 5 ? rawValue : entity.strategicValue ?? 3
-  ) as StrategicValue;
   const contactValue = normalizeContactValueKeys(formData.getAll("contactValue").map(String));
   const myValue = normalizeMyValueKeys(formData.getAll("myValue").map(String));
 
@@ -1076,9 +1070,9 @@ export async function updateEntityAction(formData: FormData): Promise<void> {
   const startDate = String(formData.get("startDate") ?? "").trim();
   const endDate = String(formData.get("endDate") ?? "").trim();
 
+  // strategicValue is deprecated — omit from patch (read-fallback only via contactValueWeight).
   await updateEntity(entityId, {
     name: String(formData.get("name") ?? "").trim() || entity.name,
-    strategicValue,
     contactValue,
     myValue,
     alias: String(formData.get("alias") ?? "").trim(),

@@ -398,10 +398,14 @@ export const TOPIC_ALIASES = {
   removeAria: (item: string) => `Remove alias ${item}`,
 } as const;
 
-/** Event signals — user-defined markers; copied to evidence on chronicle save. */
+/**
+ * Event Signals — binder marks on the event.
+ * They are NOT copied onto every chronicle Note (that inflated Patterns).
+ * Add Tags on a specific note when you want them to count toward Patterns.
+ */
 export const EVENT_SIGNALS = {
   heading: "Signals",
-  hint: "Your markers for this event — gaps, quality, follow-ups, or anything you track. Repeats surface as patterns in evidence.",
+  hint: "Marks for this event binder. They do not auto-copy onto chronicle Notes — tag a Note only when that entry should count toward Patterns.",
   placeholder: "Add signal…",
   add: "Add",
   empty: "No signals yet.",
@@ -432,8 +436,8 @@ export const DELETE_AUTH = {
 export const TESTING = {
   sectionLabel: "Testing",
   delete: "Delete",
-  deleteLog: "Delete record",
-  deleteLogConfirm: "Delete this record permanently? Attachments will be removed.",
+  deleteLog: "Delete note",
+  deleteLogConfirm: "Delete this note permanently? Soft-delete — recoverable from backup only. Attachments will be removed.",
   deleteEntity: "Delete reference",
   deleteEntityConfirm: "Delete this reference permanently? It will be unlinked from all records.",
   deleteInbox: "Delete email",

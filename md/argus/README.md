@@ -10,6 +10,8 @@
 | **Parent index** | [`md/README.md`](../README.md) |
 | **ChatGPT entry** | [`CHATGPT.md`](../../CHATGPT.md) · [`argus-chatgpt-handoff.md`](../integrations/argus-chatgpt-handoff.md) |
 | **Architecture review pack (`main` only)** | [`../argus-review/00-PUBLIC-STATUS.md`](../argus-review/00-PUBLIC-STATUS.md) — branch/PR handoffs deprecated |
+| **Evidence Engine mechanics** | [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md) — runtime status / Patterns / triage |
+| **Deprecated handoffs** | [`DEPRECATED-HANDOFFS.md`](DEPRECATED-HANDOFFS.md) |
 
 ---
 
@@ -53,30 +55,34 @@ Use these labels in docs and checklists. Update when reality changes.
 ### Track A — Principles & architecture (read first)
 
 0. [`evidence-organization-vision.md`](evidence-organization-vision.md) — **what** ARGUS is (Evidence Organization System; not authoring)
-1. [`observation-engine-vision.md`](observation-engine-vision.md) — **how** ARGUS behaves (observation engine)
-2. [`../integrations/argus-design-principles.md`](../integrations/argus-design-principles.md) — 10 design rules
-3. [`../integrations/argus-architecture.md`](../integrations/argus-architecture.md) — objects, information flow
-4. [`ai-charter.md`](ai-charter.md) — AI must trace to evidence; never fabricate
-5. [`correlation-guide.md`](correlation-guide.md) — capture once, link everywhere
-6. [`vision-review-protocol.md`](vision-review-protocol.md) — periodic vision alignment (AI + human)
+1. [`../argus-review/12-evidence-engine-principles-solution.md`](../argus-review/12-evidence-engine-principles-solution.md) — sealed Evidence Engine principles
+2. [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md) — **runtime mechanics** (status vocabulary, Patterns, triage)
+3. [`observation-engine-vision.md`](observation-engine-vision.md) — **how** ARGUS behaves (observation engine)
+4. [`../integrations/argus-design-principles.md`](../integrations/argus-design-principles.md) — 10 design rules
+5. [`../integrations/argus-architecture.md`](../integrations/argus-architecture.md) — objects, information flow
+6. [`ai-charter.md`](ai-charter.md) — AI must trace to evidence; never fabricate
+7. [`correlation-guide.md`](correlation-guide.md) — capture once, link everywhere
+8. [`vision-review-protocol.md`](vision-review-protocol.md) — periodic vision alignment (AI + human)
+9. [`DEPRECATED-HANDOFFS.md`](DEPRECATED-HANDOFFS.md) — do not revive branch/PR handoffs
 
 ### Track B — Product & lenses
 
-7. [`knowledge-model-v01.md`](knowledge-model-v01.md) — **target** ontology (Evidence graph)
-8. [`knowledge-execution-model.md`](knowledge-execution-model.md) — Evidence registration, entities, Execution
-9. [`timeline-vision.md`](timeline-vision.md) — Timeline scope and placement
-10. [`event-chronicle-v2.md`](event-chronicle-v2.md) — Event append-only chronicle (Note → Chronicle)
-11. [`design-matrix-stage.md`](design-matrix-stage.md) — org / project / person lenses
-12. [`product-flow-proposal.md`](product-flow-proposal.md) — evidence → relations → narrative
-13. [`v2-hierarchy-implementation-report.md`](v2-hierarchy-implementation-report.md) — **implemented** linking rules + code map
+10. [`knowledge-model-v01.md`](knowledge-model-v01.md) — **target** ontology (Evidence graph)
+11. [`knowledge-execution-model.md`](knowledge-execution-model.md) — Evidence registration, entities, Execution
+12. [`timeline-vision.md`](timeline-vision.md) — Timeline scope and placement
+13. [`event-chronicle-v2.md`](event-chronicle-v2.md) — Event append-only chronicle (Note → Chronicle)
+14. [`design-matrix-stage.md`](design-matrix-stage.md) — org / project / person lenses
+15. [`product-flow-proposal.md`](product-flow-proposal.md) — evidence → relations → narrative
+16. [`v2-hierarchy-implementation-report.md`](v2-hierarchy-implementation-report.md) — **implemented** linking rules + code map
+17. [`network-browse-spec.md`](network-browse-spec.md) — Network browse (status vocabulary; no strength%)
 
 ### Track C — Build, QA, export
 
-14. [`v2-design-checklist.md`](v2-design-checklist.md) + [`checklist-protocol.md`](checklist-protocol.md)
-15. [`v2-checklist-solutions.md`](v2-checklist-solutions.md) — fixed vs deferred
-16. [`deliver-formats-plan.md`](deliver-formats-plan.md) — **canonical** output ladder (MD → HTML → PDF → link → ZIP)
-17. [`export-delivery-handoff.md`](export-delivery-handoff.md) — delivery layer analysis + package catalog
-18. [`model-alignment-audit.md`](model-alignment-audit.md) — v3 runtime vs v01 target gaps
+18. [`v2-design-checklist.md`](v2-design-checklist.md) + [`checklist-protocol.md`](checklist-protocol.md)
+19. [`v2-checklist-solutions.md`](v2-checklist-solutions.md) — fixed vs deferred
+20. [`deliver-formats-plan.md`](deliver-formats-plan.md) — **canonical** output ladder (MD → HTML → PDF → link → ZIP)
+21. [`export-delivery-handoff.md`](export-delivery-handoff.md) — delivery layer analysis + package catalog
+22. [`model-alignment-audit.md`](model-alignment-audit.md) — v3 runtime vs v01 target gaps
 
 ---
 
@@ -132,6 +138,9 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 | Doc | Status |
 |-----|--------|
 | [evidence-organization-vision.md](evidence-organization-vision.md) | Canonical (product identity) |
+| [evidence-engine-mechanics.md](evidence-engine-mechanics.md) | **Canonical runtime** — Evidence Engine mechanics |
+| [../argus-review/12-evidence-engine-principles-solution.md](../argus-review/12-evidence-engine-principles-solution.md) | Sealed principles |
+| [DEPRECATED-HANDOFFS.md](DEPRECATED-HANDOFFS.md) | Deprecated branch/PR handoffs |
 | [observation-engine-vision.md](observation-engine-vision.md) | Canonical |
 | [ai-charter.md](ai-charter.md) | Canonical |
 | [vision-review-protocol.md](vision-review-protocol.md) | Canonical |
@@ -155,7 +164,7 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 | [timeline-vision.md](timeline-vision.md) | Canonical |
 | [design-matrix-stage.md](design-matrix-stage.md) | Canonical lenses |
 | [product-flow-proposal.md](product-flow-proposal.md) | Canonical flow |
-| [network-browse-spec.md](network-browse-spec.md) | Spec |
+| [network-browse-spec.md](network-browse-spec.md) | Spec — status vocabulary (no strength%) |
 | [network-intelligence-thesis.md](network-intelligence-thesis.md) | **Design base** — contact-first networking thesis |
 | [network-future-architecture.md](network-future-architecture.md) | **Design base** — Network as Argus of the future |
 | [v2-design-checklist.md](v2-design-checklist.md) | QA — update every UI change |
@@ -177,11 +186,13 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 
 | Doc | Status |
 |-----|--------|
-| [../integrations/argus-chatgpt-handoff.md](../integrations/argus-chatgpt-handoff.md) | External AI |
+| [DEPRECATED-HANDOFFS.md](DEPRECATED-HANDOFFS.md) | **Start here before any old `*handoff*`** |
+| [../integrations/argus-chatgpt-handoff.md](../integrations/argus-chatgpt-handoff.md) | External AI (v2-first) |
 | [../argusforge/IA-HANDOFF.md](../argusforge/IA-HANDOFF.md) | Apps · ARGUS · ArgusForge runtime |
 | [email-intake-e2e.md](email-intake-e2e.md) | Email pipeline |
 | [phase-0-1-stabilization-audit.md](phase-0-1-stabilization-audit.md) | Stabilization |
 | [phase-1-gate.md](phase-1-gate.md) | Gate criteria |
+| [export-delivery-handoff.md](export-delivery-handoff.md) | Deliver packages only (not EE architecture) |
 
 ---
 
@@ -195,7 +206,7 @@ Explicit debt — fix or re-acknowledge each pass:
 | 2 | v3 runtime vs v01 target confuses readers | [Runtime truth](#runtime-truth-developers) section above |
 | 3 | Checklist lags code (person v2, export, inbox Process) | Update `v2-design-checklist.md` when touching those areas |
 | 4 | Deliver layer only partially built | **Export Center UI** + Vault API; other packages + history deferred |
-| 5 | Inbox follow-up does not feed person Attention metrics | Documented in product design; wire in a later iteration |
+| 5 | Inbox follow-up vs log follow-up in the same “needs attention” query | Prefer one query; see Evidence Engine mechanics — do not invent a second attention metric |
 | 6 | Legacy routes still exist | Redirects where safe; remove when v2 parity confirmed |
 | 7 | Production data on Vercel needs Supabase | See vercel handoff; local dev is source of truth for iteration |
 

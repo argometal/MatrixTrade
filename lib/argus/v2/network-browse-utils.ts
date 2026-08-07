@@ -1,7 +1,7 @@
 import type { ArgusData, Entity, EntityLifecycleStatus, InboxItem, Log } from "../types";
 import { isEntityArchived } from "../entity-lifecycle";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
-import { buildEntityIntelligence } from "../network-intelligence";
+import { buildEntityIntelligence, computeRelationshipHealth, contactValueWeight } from "../network-intelligence";
 import { browseEntitiesByKind, entitiesByKind, personEvidenceScope } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
 import { countTopicsAndEventsInScope } from "./scope-node-counts";
@@ -20,7 +20,8 @@ export interface V2NetworkBrowseCard {
   statusTone: "green" | "blue" | "amber" | "default";
   lifecycleStatus?: EntityLifecycleStatus;
   expertise: string[];
-  strength: number;
+  /** Evidence volume for filters — not a strength KPI. */
+  evidenceVolume: number;
   lastInteraction: {
     label: string;
     timeLabel: string;
@@ -48,7 +49,8 @@ export interface V2NetworkBrowseSummary {
   projectsTogether: number;
   emailsExchanged: number;
   interactionsLogged: number;
-  averageStrength: number;
+  /** People in Active or New — retrieval count, not a score. */
+  needsTouch: number;
 }
 
 export interface V2NetworkBrowseInsight {
@@ -133,35 +135,32 @@ function daysSince(iso: string, today: string): number {
   return Math.floor((b - a) / 86400000);
 }
 
-function computeRelationshipStrength(
+function evidenceVolume(
   emailCount: number,
   logCount: number,
   projectsCount: number,
-  eventCount: number,
-  daysSinceLast: number | null
+  eventCount: number
 ): number {
-  const emailPts = Math.min(emailCount * 4, 24);
-  const journalPts = Math.min(logCount * 5, 30);
-  const projectPts = Math.min(projectsCount * 12, 24);
-  const eventPts = Math.min(eventCount * 6, 18);
-  let recency = 0;
-  if (daysSinceLast !== null) {
-    if (daysSinceLast <= 7) recency = 24;
-    else if (daysSinceLast <= 30) recency = 16;
-    else if (daysSinceLast <= 90) recency = 8;
-  }
-  return Math.min(100, emailPts + journalPts + projectPts + eventPts + recency);
+  return emailCount + logCount + projectsCount * 2 + eventCount;
 }
 
-function deriveNetworkStatus(
-  person: Entity,
-  totalEvidence: number,
-  daysSinceLast: number | null,
-  today: string,
-  health: ReturnType<typeof buildEntityIntelligence>["relationshipHealth"]
-): V2NetworkBrowseStatus {
+/**
+ * Single user-facing Network status vocabulary (Evidence Engine P3/P4).
+ * Derived from evidence dates, follow-ups, contactValue weight, and lifecycle — not stored.
+ */
+export function deriveNetworkStatus(input: {
+  person: Entity;
+  totalEvidence: number;
+  daysSinceLast: number | null;
+  openFollowUps: number;
+  today: string;
+}): V2NetworkBrowseStatus {
+  const { person, totalEvidence, daysSinceLast, openFollowUps, today } = input;
   if (person.lifecycleStatus === "archived" || isEntityArchived(person, today)) return "Archived";
   if (person.deletedAt || /status:\s*lost/i.test(person.notes ?? "")) return "Lost";
+
+  const valueWeight = contactValueWeight(person);
+  const health = computeRelationshipHealth(valueWeight, daysSinceLast, openFollowUps);
   if (health === "neglected" && daysSinceLast !== null && daysSinceLast > 180) return "Lost";
 
   const ageDays = daysSince(person.createdAt, today);
@@ -255,13 +254,13 @@ export function buildV2NetworkBrowseCards(
       const nodeCounts = countTopicsAndEventsInScope(data, person, scope.logs);
       const org = personOrganization(data, person);
       const daysSinceLast = intel.daysSinceLastInteraction;
-      const status = deriveNetworkStatus(
+      const status = deriveNetworkStatus({
         person,
-        scope.totalCount,
+        totalEvidence: scope.totalCount,
         daysSinceLast,
+        openFollowUps: intel.openFollowUps,
         today,
-        intel.relationshipHealth
-      );
+      });
       const sinceIso = relationshipStartIso(person, scope.logs, scope.inbox);
       const lastInteraction = resolveLastInteraction(person, scope.logs, scope.inbox, today);
 
@@ -277,12 +276,11 @@ export function buildV2NetworkBrowseCards(
         statusTone: statusTone(status),
         lifecycleStatus: person.lifecycleStatus,
         expertise: expertiseTags(person, scope.logs, data),
-        strength: computeRelationshipStrength(
+        evidenceVolume: evidenceVolume(
           scope.emailCount,
           scope.logCount,
           sharedProjects.length,
-          journalEvents,
-          daysSinceLast
+          journalEvents
         ),
         lastInteraction,
         relationshipSince: formatRelationshipSince(sinceIso),
@@ -315,9 +313,7 @@ export function buildV2NetworkBrowseSummary(cards: V2NetworkBrowseCard[]): V2Net
     projectsTogether: projectTotal,
     emailsExchanged: cards.reduce((n, c) => n + c.metrics.emails, 0),
     interactionsLogged: cards.reduce((n, c) => n + c.metrics.topics + c.metrics.events, 0),
-    averageStrength: cards.length
-      ? Math.round(cards.reduce((n, c) => n + c.strength, 0) / cards.length)
-      : 0,
+    needsTouch: cards.filter((c) => c.status === "Dormant" || c.status === "Lost").length,
   };
 }
 
@@ -363,9 +359,13 @@ export function applyNetworkSmartView(cards: V2NetworkBrowseCard[], view: V2Netw
   if (view === "all") return cards;
   if (view === "dormant") return cards.filter((c) => c.status === "Dormant" || c.status === "Lost");
   if (view === "recent-activity") return cards.filter((c) => c.status === "Active");
-  if (view === "high-value-network") return cards.filter((c) => c.strength >= 70);
+  if (view === "high-value-network") {
+    return cards.filter(
+      (c) => c.evidenceVolume >= 8 || (c.metrics.projects >= 1 && c.metrics.emails + c.metrics.events >= 3)
+    );
+  }
   if (view === "key-influencers") {
-    return cards.filter((c) => c.strength >= 60 && c.metrics.projects >= 1);
+    return cards.filter((c) => c.metrics.projects >= 1 && c.evidenceVolume >= 6);
   }
   if (view === "decision-makers") {
     return cards.filter(

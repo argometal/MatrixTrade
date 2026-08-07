@@ -37,8 +37,9 @@ This directory (`md/argus-review/`) is a **read-only evidence pack** for externa
 | [`08-dependencies.md`](08-dependencies.md) | Internal and external dependencies |
 | [`09-open-items.md`](09-open-items.md) | TODOs, known limitations, incomplete implementations, identified debt |
 | [`10-source-index.md`](10-source-index.md) | Traceability: statements → source paths |
-| [`11-behavioral-evaluation-review.md`](11-behavioral-evaluation-review.md) | Behavioral evaluation inventory + prioritized refinement |
+| [`11-behavioral-evaluation-review.md`](11-behavioral-evaluation-review.md) | Historical behavioral inventory (pre-Evidence-Engine impl) |
 | [`12-evidence-engine-principles-solution.md`](12-evidence-engine-principles-solution.md) | Sealed principles + Evidence Engine solution |
+| [`13-evidence-engine-implementation.md`](13-evidence-engine-implementation.md) | Implementation notes for principles solution (phases A–D) |
 | [`appendix-app-argus-files.txt`](appendix-app-argus-files.txt) | Complete `app/argus` `.ts`/`.tsx` paths (172) |
 | [`appendix-lib-argus-files.txt`](appendix-lib-argus-files.txt) | Complete `lib/argus` `.ts`/`.tsx` paths (128) |
 | [`appendix-actions-exports.txt`](appendix-actions-exports.txt) | All `export async function` names in `actions.ts` (73) |
@@ -48,18 +49,11 @@ This directory (`md/argus-review/`) is a **read-only evidence pack** for externa
 ## Reading order (for ChatGPT)
 
 1. `00-PUBLIC-STATUS.md`
-2. `01-README.md`
-3. `02-system-map.md`
-4. `03-document-index.md`
-5. `04-architecture.md`
-6. `05-data-flow.md`
-7. `06-decision-flow.md`
-8. `07-ontology.md`
-9. `08-dependencies.md`
-10. `09-open-items.md`
-11. `10-source-index.md`
-12. `11-behavioral-evaluation-review.md` (behavioral metrics refinement)
-13. `12-evidence-engine-principles-solution.md` (sealed principles + solution)
+2. `12-evidence-engine-principles-solution.md` (sealed principles + solution)
+3. `13-evidence-engine-implementation.md` (what shipped)
+4. `../argus/evidence-engine-mechanics.md` (living runtime mechanics)
+5. `01-README.md` then `02`–`10` for evidence-pack detail
+6. `11-behavioral-evaluation-review.md` — **historical inventory only**
 
 **Canonical product reading order** (from `md/argus/README.md`, Tracks A–C) is catalogued in `03-document-index.md`.
 
@@ -71,7 +65,7 @@ This directory (`md/argus-review/`) is a **read-only evidence pack** for externa
 |------|-------|--------|
 | Runtime data schema | `ArgusData.version: 3` | `lib/argus/types.ts` |
 | Target schema (not applied as read path) | Knowledge Model v01 (DDL draft) | `md/argus/knowledge-model-v01.md`, `supabase/argus-v01-schema.sql` |
-| Product identity | Evidence Organization System | `md/argus/evidence-organization-vision.md` |
+| Product identity | Evidence Organization System / Evidence Engine | `md/argus/evidence-organization-vision.md`, `md/argus/evidence-engine-mechanics.md` |
 | Architecture constitution | Canonical — accepted constitution | `md/integrations/argus-architecture.md` |
 
 ---

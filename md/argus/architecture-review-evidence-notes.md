@@ -1,6 +1,8 @@
 # ARGUS Architecture Review — Evidence Notes (extraction only)
 
 **Extracted:** 2026-08-06  
+**Status:** **Historical snapshot** — component lists predate Evidence Engine Phase A deletions.  
+**Current runtime:** [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md) · pack `12`/`13` · regenerate lists via `argus-review/appendix-*.txt`.  
 **Scope:** `/workspace` facts only — no invention, redesign, or recommendation.  
 **Method:** directory listing, file headers/exports/imports, and quoted docs.  
 **UNKNOWN** marks anything not verified in-repo.

@@ -1,9 +1,12 @@
 # 11 — Behavioral evaluation model review
 
-**Status:** Review complete (implementation + docs)  
-**Date:** 2026-08-06  
+**Status:** **Historical inventory** (2026-08-06) — describes pre-implementation state  
 **Canonical path:** `main` → `md/argus-review/11-behavioral-evaluation-review.md`  
-**Objective:** Refine the existing behavioral evaluation model. Not an architecture redesign. Not a new behavioral system.
+**Superseded as runtime truth by:** [`12-evidence-engine-principles-solution.md`](12-evidence-engine-principles-solution.md) · [`13-evidence-engine-implementation.md`](13-evidence-engine-implementation.md) · [`../argus/evidence-engine-mechanics.md`](../argus/evidence-engine-mechanics.md)
+
+> **Do not treat this file as current architecture.** It was the audit that motivated the Evidence Engine solution. Sections below that say “still written / strength% / outcomeScore live / orphan UIs” refer to the codebase **before** phases A–D. For what ships now, read `12` → `13` → `evidence-engine-mechanics.md`.
+
+**Original objective:** Refine the existing behavioral evaluation model. Not an architecture redesign. Not a new behavioral system.
 
 **Method:** Read `md/argus-review/00`–`10`, then inspected `lib/argus/**` and `app/argus/**`. Implementation is the source of truth for what exists; docs are cited for intent.
 

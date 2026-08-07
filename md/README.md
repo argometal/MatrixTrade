@@ -132,14 +132,18 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 
 **Start here:** [`argus/README.md`](argus/README.md) — index, reading order, runtime truth, known weaknesses.
 
-**External AI architecture review pack (`main` only):** [`argus-review/00-PUBLIC-STATUS.md`](argus-review/00-PUBLIC-STATUS.md) — branch/PR handoffs deprecated.
+**External AI architecture review pack (`main` only):** [`argus-review/00-PUBLIC-STATUS.md`](argus-review/00-PUBLIC-STATUS.md) — branch/PR handoffs deprecated.  
+**Evidence Engine mechanics:** [`argus/evidence-engine-mechanics.md`](argus/evidence-engine-mechanics.md).  
+**Deprecated handoffs list:** [`argus/DEPRECATED-HANDOFFS.md`](argus/DEPRECATED-HANDOFFS.md).
 
-**Rule of construction for AI:** [`argus/evidence-organization-vision.md`](argus/evidence-organization-vision.md) — product identity; then [`argus/observation-engine-vision.md`](argus/observation-engine-vision.md) for engine behavior; [`argus/ai-charter.md`](argus/ai-charter.md) for operational AI rules. Periodic review: [`argus/vision-review-protocol.md`](argus/vision-review-protocol.md).
+**Rule of construction for AI:** [`argus/evidence-organization-vision.md`](argus/evidence-organization-vision.md) — product identity; then [`argus/evidence-engine-mechanics.md`](argus/evidence-engine-mechanics.md) for runtime; [`argus/observation-engine-vision.md`](argus/observation-engine-vision.md) for engine behavior; [`argus/ai-charter.md`](argus/ai-charter.md) for operational AI rules. Periodic review: [`argus/vision-review-protocol.md`](argus/vision-review-protocol.md).
 
 | Document | Contents |
 |----------|----------|
 | [README.md](argus/README.md) | **ARGUS doc index** — product loop, status legend, routes, mobile QA |
 | [evidence-organization-vision.md](argus/evidence-organization-vision.md) | **Evidence Organization System** — product identity; not authoring |
+| [evidence-engine-mechanics.md](argus/evidence-engine-mechanics.md) | **Evidence Engine runtime** — status vocabulary, Patterns, triage |
+| [DEPRECATED-HANDOFFS.md](argus/DEPRECATED-HANDOFFS.md) | Deprecated branch/PR / obsolete metric handoffs |
 | [observation-engine-vision.md](argus/observation-engine-vision.md) | **Observation Engine** — how the system behaves |
 | [ai-charter.md](argus/ai-charter.md) | **AI Charter v1.0** — preserve professional truth; evidence before conclusions |
 | [vision-review-protocol.md](argus/vision-review-protocol.md) | **Vision review** — cadence + alignment checklist |
@@ -147,7 +151,7 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 | [knowledge-execution-model.md](argus/knowledge-execution-model.md) | **Knowledge vs Execution** — Runbook, entities, Create menu |
 | [timeline-vision.md](argus/timeline-vision.md) | **Timeline UX** — entity-scoped evidence stream |
 | [v2-hierarchy-implementation-report.md](argus/v2-hierarchy-implementation-report.md) | **v2 linking rules** — org direct-only scope, project via contacts, code map |
-| [network-browse-spec.md](argus/network-browse-spec.md) | **Network browser** — relationship intelligence, strength from evidence |
+| [network-browse-spec.md](argus/network-browse-spec.md) | **Network browser** — status vocabulary from evidence (no strength%) |
 | [v2-design-checklist.md](argus/v2-design-checklist.md) | **v2 design QA checklist** — verify each screen; reset on redesign |
 | [correlation-guide.md](argus/correlation-guide.md) | **ARGUS correlation guide v1.0** — capture once, link everywhere |
 | [create-link-mobile-checklist.md](argus/create-link-mobile-checklist.md) | Create & Link mobile wizard QA |

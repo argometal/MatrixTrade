@@ -145,7 +145,7 @@ All journal-side relationship mutations go through `writeArgus()` → `writeArgu
 | Path | Module | Operation | Safety gate |
 |------|--------|-----------|-------------|
 | `createEntity()` | `server-storage.ts` | Insert entity | `writeArgusSafe` |
-| `updateEntity()` | same | Patch name, notes, alias, strategicValue, project fields | same |
+| `updateEntity()` | same | Patch name, notes, alias, contactValue, myValue, project fields (**not** `strategicValue` — deprecated write path) | same |
 | `createEntity` via `resolveEntityIds()` | `app/argus/actions.ts` | Inline create from capture/inbox/link forms | same |
 | Reference create modals | UI → server actions | Client collects name/type; server creates entity | same |
 

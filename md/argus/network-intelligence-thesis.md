@@ -157,6 +157,7 @@ Not spontaneous — **technique with respect**, like customer care. Systematized
 
 ## Related docs
 
-- [network-browse-spec.md](network-browse-spec.md) — browse cards and strength
+- [network-browse-spec.md](network-browse-spec.md) — browse cards and **status** vocabulary (no strength%)
+- [evidence-engine-mechanics.md](evidence-engine-mechanics.md) — Evidence Engine runtime
 - [observation-engine-vision.md](observation-engine-vision.md) — cross-conversation patterns
-- [ai-charter.md](ai-charter.md) — metrics serve attention, not vanity
+- [ai-charter.md](ai-charter.md) — people never reduced to scores; status over vanity KPIs

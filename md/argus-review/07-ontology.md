@@ -50,7 +50,7 @@ From `md/argus/timeline-chronicle-model.md` (**Status:** Canonical UX vocabulary
 
 | Record | Key fields (non-exhaustive) |
 |--------|-----------------------------|
-| `Entity` | `id`, `type`, `name`, `alias?`, `notes`, `strategicValue`, `contactValue?`, `myValue?`, `startDate?`, `endDate?`, `linkedPersonIds?`, `linkedTopicIds?`, `linkedEventIds?`, `linkedEntityIds?`, `linkedTags?`, `lifecycleStatus?`, `createdAt`, `updatedAt`, `deletedAt?` |
+| `Entity` | `id`, `type`, `name`, `alias?`, `notes`, `strategicValue` (**deprecated metric** — create default / read-fallback only), `contactValue?`, `myValue?`, `startDate?`, `endDate?`, `linkedPersonIds?`, `linkedTopicIds?`, `linkedEventIds?`, `linkedEntityIds?`, `linkedTags?`, `lifecycleStatus?`, `createdAt`, `updatedAt`, `deletedAt?` |
 | `Log` | `id`, `kind`, `date`, `title`, `body`, `entityIds[]`, `classificationStatus`, `private`, `source`, `attachmentIds[]`, `inboxItemId?`, `followUpDate?`, `topics[]`, timestamps, `deletedAt?` |
 | `InboxItem` | `id`, `receivedAt`, `source`, `rawText`, `rawEmail?`, `subject?`, `from?`, `to?`, `attachmentIds[]`, `linkedEntityIds?`, `private?`, `status`, `followUpDate?`, `topics?`, `convertedLogId?`, `createdAt` |
 | `Attachment` | `id`, `fileName`, `mimeType`, `createdAt`, `parentType`, `parentId`, `deletedAt?` |
