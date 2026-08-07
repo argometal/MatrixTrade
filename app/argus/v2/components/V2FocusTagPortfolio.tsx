@@ -128,13 +128,14 @@ function MiniMatrix({ rows }: { rows: V2FocusTagStat[] }) {
 export function V2FocusTagPortfolio({
   rows,
   initialFocusTags,
-  variant = "universe",
+  variant: _variant = "universe",
 }: {
   rows: V2FocusTagStat[];
   initialFocusTags: string[];
   /** @deprecated aside removed from Home rail — only `universe` is used. */
   variant?: "aside" | "universe";
 }) {
+  void _variant;
   const router = useRouter();
   const [filter, setFilter] = useState<FocusFilter>("all");
   const [query, setQuery] = useState("");
