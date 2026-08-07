@@ -452,7 +452,7 @@ export function buildV2FocusTagPortfolio(
   inboxItems: InboxItem[],
   includePrivate: boolean,
   today: string,
-  limit = 40
+  limit = 80
 ): V2FocusTagStat[] {
   type Acc = { display: string; dates: string[] };
   const acc = new Map<string, Acc>();

@@ -12,7 +12,7 @@ import { V2HomeIntelligencePanel, type IntelligenceTab } from "./V2HomeIntellige
 import { V2HomePageHeader } from "./V2HomePulse";
 import { V2IntelligenceLens, V2IntelligenceLensEmpty } from "./V2IntelligenceLens";
 import { V2TabBar } from "./V2TabBar";
-import { V2TagCloud, type V2TagCloudItem } from "./V2TagCloud";
+import type { V2TagCloudItem } from "./V2TagCloud";
 import { V2SignalTagsEditor } from "./V2SignalTagsEditor";
 import { V2FocusTagPortfolio } from "./V2FocusTagPortfolio";
 import { V2Timeline, V2TimelineRail } from "./V2Timeline";
@@ -30,9 +30,9 @@ const HOME_VIEW_TABS: { id: V2HomeView; label: string }[] = [
 ];
 
 const INTELLIGENCE_TABS: { id: IntelligenceTab; label: string }[] = [
+  { id: "tags", label: "Tags" },
   { id: "treemap", label: "Treemap" },
   { id: "portfolio", label: "Portfolio" },
-  { id: "tags", label: "Tags" },
 ];
 
 const TAB_SOURCE: Record<IntelligenceTab, IntelligenceFrom> = {
@@ -93,7 +93,7 @@ export function V2HomeClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const view = parseV2HomeView(searchParams.get("view") ?? initialView);
-  const [intelTab, setIntelTab] = useState<IntelligenceTab>("treemap");
+  const [intelTab, setIntelTab] = useState<IntelligenceTab>("tags");
   const [lensId, setLensId] = useState<string | null>(null);
 
   const lensNode = lensId ? nodes.find((node) => node.id === lensId) : undefined;
@@ -148,6 +148,8 @@ export function V2HomeClient({
                 <V2HomeIntelligencePanel
                   nodes={treemapNodes}
                   tags={tags}
+                  focusTagPortfolio={focusTagPortfolio}
+                  signalTags={signalTags}
                   tab={intelTab}
                   onLensChange={setLensId}
                 />
@@ -216,21 +218,26 @@ export function V2HomeClient({
             <V2Card className="p-5">
               <V2SectionTitle>Tags</V2SectionTitle>
               <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
-                Manage Focus Tags here — flag what you are watching, triage by recency × recurrence (same axes as
-                Portfolio), unflag when done. Cloud below is evidence context; Patterns still come from Note/email Tags.
+                Quick Focus manage. Full Tag universe (filter, search, Flag/Remove, recency × recurrence) lives under
+                Intelligence → Tags.
               </p>
               <div className="mb-4">
                 <V2SignalTagsEditor initialTags={signalTags} returnTo="/argus/v2#tags" compact />
               </div>
-              <div className="mb-4 border-t border-zinc-800/80 pt-4">
-                <V2FocusTagPortfolio rows={focusTagPortfolio} initialFocusTags={signalTags} />
+              <div className="mb-3 border-t border-zinc-800/80 pt-4">
+                <V2FocusTagPortfolio rows={focusTagPortfolio} initialFocusTags={signalTags} variant="aside" />
               </div>
-              <div className="border-t border-zinc-800/80 pt-3">
-                <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
-                  Evidence cloud
-                </p>
-                <V2TagCloud tags={tags.slice(0, 16)} />
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setView("intelligence");
+                  changeIntelTab("tags");
+                  document.getElementById("intelligence")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="w-full rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-left text-[11px] font-medium text-violet-300 transition hover:border-violet-500/40 hover:bg-zinc-900"
+              >
+                Open Tag universe in Intelligence →
+              </button>
             </V2Card>
           </div>
 

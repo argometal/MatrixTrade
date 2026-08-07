@@ -217,6 +217,85 @@ export function scoreEvidenceDates(dates: string[], today: string): {
   };
 }
 
+export type BubbleLayoutPoint = {
+  id: string;
+  x: number;
+  y: number;
+  r: number;
+};
+
+function hashUnit(id: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) / 4294967295;
+}
+
+/**
+ * Separate overlapping portfolio bubbles (Notion board / Observable scatter pattern).
+ * Deterministic jitter + short repulsion so identical scores do not stack.
+ */
+export function resolveBubblePositions(
+  points: BubbleLayoutPoint[],
+  bounds: { minX: number; maxX: number; minY: number; maxY: number },
+  options: { iterations?: number; padding?: number; jitter?: number } = {}
+): BubbleLayoutPoint[] {
+  const iterations = options.iterations ?? 10;
+  const padding = options.padding ?? 0.35;
+  const jitter = options.jitter ?? 1.4;
+  const out = points.map((p) => {
+    const jx = (hashUnit(p.id) - 0.5) * jitter;
+    const jy = (hashUnit(`${p.id}:y`) - 0.5) * jitter;
+    return {
+      id: p.id,
+      x: p.x + jx,
+      y: p.y + jy,
+      r: p.r,
+    };
+  });
+
+  const clamp = (p: BubbleLayoutPoint) => {
+    const maxR = Math.min(p.r, (bounds.maxX - bounds.minX) / 4, (bounds.maxY - bounds.minY) / 4);
+    p.r = Math.max(0.8, maxR);
+    p.x = Math.min(bounds.maxX - p.r, Math.max(bounds.minX + p.r, p.x));
+    p.y = Math.min(bounds.maxY - p.r, Math.max(bounds.minY + p.r, p.y));
+  };
+
+  for (const p of out) clamp(p);
+
+  for (let iter = 0; iter < iterations; iter++) {
+    for (let i = 0; i < out.length; i++) {
+      for (let j = i + 1; j < out.length; j++) {
+        const a = out[i]!;
+        const b = out[j]!;
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let dist = Math.hypot(dx, dy);
+        const minDist = a.r + b.r + padding;
+        if (dist >= minDist) continue;
+        if (dist < 0.001) {
+          const angle = hashUnit(`${a.id}|${b.id}`) * Math.PI * 2;
+          dx = Math.cos(angle);
+          dy = Math.sin(angle);
+          dist = 0.001;
+        }
+        const push = (minDist - dist) / 2;
+        const ux = dx / dist;
+        const uy = dy / dist;
+        a.x -= ux * push;
+        a.y -= uy * push;
+        b.x += ux * push;
+        b.y += uy * push;
+      }
+    }
+    for (const p of out) clamp(p);
+  }
+
+  return out;
+}
+
 function normalizeRecurrenceScores(nodes: V2KnowledgeNode[]): void {
   const portfolio = nodes.filter(
     (n) => n.kind === "topic" || n.kind === "project" || n.kind === "organization"
