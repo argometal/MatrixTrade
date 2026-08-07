@@ -7,12 +7,8 @@ import { entityDeleteRequiresAuthenticator } from "../delete-link-check";
 import { entitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { relativeActivityLabel } from "./timeline-builders";
-import {
-  collectRelatedEntityIds,
-  countLinkKinds,
-  linkedTopicNames,
-} from "./entity-link-counts";
-import { countTopicsAndEventsInScope } from "./scope-node-counts";
+import { countLinkKinds, linkedTopicNames, linkedTopicRefs } from "./entity-link-counts";
+import { collectNeighborEntityIds, countTopicsAndEventsInScope } from "./scope-node-counts";
 import { buildTagPatternsForScope } from "./tag-patterns";
 import type {
   V2EventDetail,
@@ -152,7 +148,7 @@ export function buildV2EventRows(data: ArgusData, includePrivate: boolean, today
       const project = linkedProject(data, event);
       const history = getEntityHistory(data, event.id, includePrivate);
       const people = attendeePeople(data, event, history);
-      const scopeLinkIds = [...collectRelatedEntityIds(event, history)];
+      const scopeLinkIds = [...collectNeighborEntityIds(data, event, history)];
 
       return {
         id: event.id,
@@ -199,10 +195,11 @@ export function buildV2EventDetails(
     const inbox = getLinkedInboxForEntity(inboxItems, event.id, includePrivate);
 
     const topicTags = [...new Set(history.flatMap((l) => l.topics).filter(Boolean))].slice(0, 6);
-    const relatedIds = collectRelatedEntityIds(event, history);
+    const relatedIds = collectNeighborEntityIds(data, event, history);
     const linkCounts = countLinkKinds(data, relatedIds);
     const nodeCounts = countTopicsAndEventsInScope(data, event, history);
-    const linkedTopicNamesList = linkedTopicNames(data, relatedIds, topicTags);
+    const linkedTopicNamesList = linkedTopicNames(data, nodeCounts.topicIds);
+    const linkedTopics = linkedTopicRefs(data, nodeCounts.topicIds);
 
     const linkedEntries = history.slice(0, 5).map((log) => ({
       id: log.id,
@@ -233,6 +230,7 @@ export function buildV2EventDetails(
       projectHref: project?.href,
       topicTags,
       linkedTopicNames: linkedTopicNamesList,
+      linkedTopics,
       description:
         history.length > 0
           ? `${history.length} chronicle entr${history.length === 1 ? "y" : "ies"}`
@@ -248,7 +246,7 @@ export function buildV2EventDetails(
       projectCount: linkCounts.projectCount,
       peopleCount: linkCounts.peopleCount,
       topicCount: nodeCounts.topicCount,
-      linkedEntityIds: event.linkedEntityIds ?? [],
+      linkedEntityIds: [...relatedIds],
       linkedEntries,
       relatedEmails,
       evidence,

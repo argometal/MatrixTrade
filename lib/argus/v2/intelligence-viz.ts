@@ -7,7 +7,7 @@ import { isEntityArchived } from "../entity-lifecycle";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
 import { intelligenceEntityHref } from "./intelligence-nav";
-import { outboundStructuralIds } from "./scope-node-counts";
+import { countTopicsAndEventsInScope, outboundStructuralIds } from "./scope-node-counts";
 
 export type V2KnowledgeNodeKind = "topic" | "project" | "organization";
 
@@ -115,33 +115,10 @@ function isEventEntity(data: ArgusData, entityId: string): boolean {
 }
 
 function getLinkedEventIdsForTopic(data: ArgusData, topicId: string, logs: Log[]): Set<string> {
-  const eventIds = new Set<string>();
   const topic = data.entities.find((e) => e.id === topicId && !e.deletedAt);
-  if (!topic) return eventIds;
-
-  for (const id of topic.linkedEntityIds ?? []) {
-    if (isEventEntity(data, id)) eventIds.add(id);
-  }
-
-  for (const project of data.entities) {
-    if (project.deletedAt || project.type !== "project") continue;
-    if (!(project.linkedTopicIds ?? []).includes(topicId)) continue;
-    for (const id of project.linkedEventIds ?? []) {
-      if (isEventEntity(data, id)) eventIds.add(id);
-    }
-    for (const id of project.linkedEntityIds ?? []) {
-      if (isEventEntity(data, id)) eventIds.add(id);
-    }
-  }
-
-  for (const log of logs) {
-    if (!log.entityIds.includes(topicId)) continue;
-    for (const id of log.entityIds) {
-      if (id !== topicId && isEventEntity(data, id)) eventIds.add(id);
-    }
-  }
-
-  return eventIds;
+  if (!topic) return new Set();
+  // Same policy as metrics / Connections — outbound + reverse + project bridge + co-mention
+  return new Set(countTopicsAndEventsInScope(data, topic, logs).eventIds);
 }
 
 function countEvidenceForEntity(

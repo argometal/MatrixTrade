@@ -9,6 +9,10 @@ export type LinkKindCounts = {
   eventCount: number;
 };
 
+/**
+ * Outbound + journal co-mention only.
+ * Prefer `collectNeighborEntityIds` from `scope-node-counts.ts` for reverse + project bridge parity.
+ */
 export function collectRelatedEntityIds(entity: Entity, logs: Log[]): Set<string> {
   const ids = new Set<string>(entity.linkedEntityIds ?? []);
   for (const log of logs) {
@@ -65,13 +69,31 @@ export function collectProjectLinkIds(project: Entity): string[] {
   ];
 }
 
-export function linkedTopicNames(data: ArgusData, ids: Iterable<string>, tagStrings: string[] = []): string[] {
-  const names = new Set<string>(tagStrings.filter(Boolean));
+/** Topic entity names only — do not mix evidence tag strings into link metrics. */
+export function linkedTopicNames(data: ArgusData, ids: Iterable<string>, _tagStrings: string[] = []): string[] {
+  const names = new Set<string>();
   for (const id of ids) {
     const entity = data.entities.find((e) => e.id === id && !e.deletedAt);
     if (entity && referenceKindFromNotes(entity.notes ?? "") === "topic") {
       names.add(entity.name);
     }
   }
-  return [...names];
+  return [...names].sort((a, b) => a.localeCompare(b));
+}
+
+export function linkedTopicRefs(
+  data: ArgusData,
+  ids: Iterable<string>
+): Array<{ id: string; name: string; href: string }> {
+  const refs: Array<{ id: string; name: string; href: string }> = [];
+  for (const id of ids) {
+    const entity = data.entities.find((e) => e.id === id && !e.deletedAt);
+    if (!entity || referenceKindFromNotes(entity.notes ?? "") !== "topic") continue;
+    refs.push({
+      id: entity.id,
+      name: entity.name,
+      href: `/argus/v2/browse/topics?selected=${entity.id}`,
+    });
+  }
+  return refs.sort((a, b) => a.name.localeCompare(b.name));
 }

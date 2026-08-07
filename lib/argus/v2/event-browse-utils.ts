@@ -61,6 +61,8 @@ export interface V2EventDetail {
   projectHref?: string;
   topicTags: string[];
   linkedTopicNames: string[];
+  /** Linked topic entities (structural — not evidence tag strings). */
+  linkedTopics: Array<{ id: string; name: string; href: string }>;
   description: string;
   linkedTags: string[];
   chronicleCount: number;

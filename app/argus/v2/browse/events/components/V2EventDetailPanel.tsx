@@ -489,6 +489,19 @@ export function V2EventDetailPanel({
                   <MetricPill icon="👤" label="People" count={selected.peopleCount} />
                   <MetricPill icon="🏷" label="Topics" count={selected.topicCount} />
                 </div>
+                {selected.linkedTopics.length > 0 ? (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {selected.linkedTopics.map((topic) => (
+                      <Link
+                        key={topic.id}
+                        href={topic.href}
+                        className="rounded-md border border-zinc-800 bg-zinc-900/50 px-2 py-1 text-[11px] text-zinc-400 hover:border-violet-500/40 hover:text-zinc-200"
+                      >
+                        {topic.name}
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               <div>

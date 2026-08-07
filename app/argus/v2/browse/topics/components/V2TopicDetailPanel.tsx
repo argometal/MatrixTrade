@@ -270,6 +270,12 @@ export function V2TopicDetailPanel({
                     }}
                   />
                   <MetricPill
+                    icon="📅"
+                    label="Events"
+                    count={selected.eventCount}
+                    onClick={() => setPanelTab("connections")}
+                  />
+                  <MetricPill
                     icon="🏢"
                     label="Orgs"
                     count={selected.orgCount}

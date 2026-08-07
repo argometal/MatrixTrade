@@ -266,12 +266,13 @@ function TopicCard({
 
         <p className="line-clamp-2 text-sm leading-relaxed text-zinc-400">{card.description}</p>
 
-        <div className="mt-4 grid grid-cols-3 gap-1 sm:grid-cols-6">
+        <div className="mt-4 grid grid-cols-4 gap-1 sm:grid-cols-7">
           {(
             [
               ["journals", "📓", "Notes"],
               ["emails", "✉", "Emails"],
               ["files", "📎", "Files"],
+              ["events", "📅", "Events"],
               ["orgs", "🏢", "Orgs"],
               ["projects", "📁", "Projects"],
               ["people", "👤", "People"],
@@ -370,8 +371,8 @@ function TopicListRow({
             Emails
           </span>
           <span className="text-xs text-zinc-500">
-            <span className="block font-semibold text-violet-300">{card.metrics.journals}</span>
-            Notes
+            <span className="block font-semibold text-violet-300">{card.metrics.events}</span>
+            Events
           </span>
           <span className="text-xs text-zinc-500">
             <span className="block font-semibold text-violet-300">{card.metrics.projects}</span>
