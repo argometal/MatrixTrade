@@ -550,7 +550,7 @@ export function buildV2EntityNeighborhoodGraph(
   };
 }
 
-/** Radial layout — center entity in the middle, neighbors on a ring. */
+/** Radial layout — center entity in the middle, neighbors on a ring (or dual ring when crowded). */
 export function layoutNeighborhoodGraphNodes(nodes: V2GraphNode[], centerId: string): V2GraphNode[] {
   const center = nodes.find((n) => n.id === centerId);
   const neighbors = nodes.filter((n) => n.id !== centerId);
@@ -558,9 +558,17 @@ export function layoutNeighborhoodGraphNodes(nodes: V2GraphNode[], centerId: str
 
   if (center) laidOut.push({ ...center, x: 50, y: 50 });
 
+  const n = neighbors.length;
   neighbors.forEach((node, index) => {
-    const angle = (index / neighbors.length) * Math.PI * 2 - Math.PI / 2;
-    const radius = neighbors.length <= 4 ? 28 : 32;
+    const angle = (index / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2;
+    // Ego views with few nodes get more breathing room; crowded sets use inner+outer rings.
+    let radius = 30;
+    if (n <= 3) radius = 22;
+    else if (n <= 6) radius = 28;
+    else if (n <= 10) radius = 32;
+    else {
+      radius = index % 2 === 0 ? 26 : 36;
+    }
     laidOut.push({
       ...node,
       x: 50 + radius * Math.cos(angle),

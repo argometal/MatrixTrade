@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type { V2GraphEdge, V2GraphNode } from "@/lib/argus/v2/intelligence-viz";
+import { layoutNeighborhoodGraphNodes } from "@/lib/argus/v2/intelligence-viz";
 
 const NODE_COLORS: Record<V2GraphNode["kind"], string> = {
   organization: "rgb(56, 189, 248)",
@@ -48,6 +49,25 @@ const SIZE_CONFIG: Record<
   },
 };
 
+/** Direct neighbors of focusId within the given edge set (ego view). */
+export function buildEgoNeighborhood(
+  nodes: V2GraphNode[],
+  edges: V2GraphEdge[],
+  focusId: string
+): { nodes: V2GraphNode[]; edges: V2GraphEdge[] } {
+  const neighborIds = new Set<string>([focusId]);
+  for (const edge of edges) {
+    if (edge.from === focusId) neighborIds.add(edge.to);
+    if (edge.to === focusId) neighborIds.add(edge.from);
+  }
+  const subNodes = nodes.filter((n) => neighborIds.has(n.id));
+  const subEdges = edges.filter((e) => neighborIds.has(e.from) && neighborIds.has(e.to));
+  return {
+    nodes: layoutNeighborhoodGraphNodes(subNodes, focusId),
+    edges: subEdges,
+  };
+}
+
 function GraphLegend() {
   return (
     <div className="flex flex-wrap gap-3 text-[11px] text-zinc-500">
@@ -69,6 +89,7 @@ function GraphCanvas({
   onHover,
   centerId,
   layout,
+  onFocusNode,
 }: {
   nodes: V2GraphNode[];
   edges: V2GraphEdge[];
@@ -77,6 +98,8 @@ function GraphCanvas({
   onHover: (id: string | null) => void;
   centerId?: string;
   layout: "columns" | "neighborhood";
+  /** Click focuses ego neighborhood. Meta/Ctrl+click opens the entity. */
+  onFocusNode?: (id: string) => void;
 }) {
   const cfg = SIZE_CONFIG[displaySize];
   const nodeMap = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
@@ -101,34 +124,34 @@ function GraphCanvas({
       role="img"
       aria-label={
         layout === "neighborhood"
-          ? "Entity neighborhood graph — local connections from evidence links"
+          ? "Entity neighborhood graph — click a node to focus its neighbors"
           : "Relationship graph of linked entities"
       }
     >
-      {layout === "columns"
-        ? [14, 32, 50, 68, 86].map((x) => (
-            <line
-              key={x}
-              x1={x}
-              y1={10}
-              x2={x}
-              y2={90}
-              stroke="rgba(39, 39, 42, 0.35)"
-              strokeWidth={0.3}
-              strokeDasharray="1 2"
-            />
-          ))
-        : (
-          <circle
-            cx={50}
-            cy={50}
-            r={32}
-            fill="none"
+      {layout === "columns" ? (
+        [14, 32, 50, 68, 86].map((x) => (
+          <line
+            key={x}
+            x1={x}
+            y1={10}
+            x2={x}
+            y2={90}
             stroke="rgba(39, 39, 42, 0.35)"
             strokeWidth={0.3}
             strokeDasharray="1 2"
           />
-        )}
+        ))
+      ) : (
+        <circle
+          cx={50}
+          cy={50}
+          r={32}
+          fill="none"
+          stroke="rgba(39, 39, 42, 0.35)"
+          strokeWidth={0.3}
+          strokeDasharray="1 2"
+        />
+      )}
 
       {edges.map((edge) => {
         const from = nodeMap.get(edge.from);
@@ -169,7 +192,15 @@ function GraphCanvas({
             onMouseEnter={() => onHover(node.id)}
             onMouseLeave={() => onHover(null)}
           >
-            <a href={node.href}>
+            <a
+              href={node.href}
+              onClick={(event) => {
+                if (!onFocusNode) return;
+                if (event.metaKey || event.ctrlKey) return;
+                event.preventDefault();
+                onFocusNode(node.id);
+              }}
+            >
               <circle
                 cx={node.x}
                 cy={node.y}
@@ -178,10 +209,11 @@ function GraphCanvas({
                 fillOpacity={isHovered || isCenter ? 0.95 : 0.75}
                 stroke={isCenter ? "rgb(251, 191, 36)" : isHovered ? "rgb(216, 180, 254)" : "rgb(9, 9, 11)"}
                 strokeWidth={isCenter ? 1 : isHovered ? 0.8 : 0.4}
-                className="transition-all duration-150"
+                className="cursor-pointer transition-all duration-150"
               />
               <title>
                 {node.name} ({KIND_LABELS[node.kind]}) — {node.evidenceCount} evidence
+                {onFocusNode ? " · click to focus neighbors · ⌘/Ctrl+click to open" : ""}
               </title>
             </a>
             <text
@@ -229,11 +261,47 @@ export function V2KnowledgeGraph({
 }) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  /** null = full neighborhood; otherwise ego center id */
+  const [focusId, setFocusId] = useState<string | null>(null);
+  /** Previous focus centers for Back */
+  const [focusStack, setFocusStack] = useState<string[]>([]);
+
+  useEffect(() => {
+    setFocusId(null);
+    setFocusStack([]);
+    setHoveredId(null);
+  }, [centerId]);
+
+  const goBack = useCallback(() => {
+    setFocusStack((stack) => {
+      if (stack.length === 0) {
+        setFocusId(null);
+        return stack;
+      }
+      const next = [...stack];
+      const prev = next.pop()!;
+      setFocusId(prev);
+      return next;
+    });
+    setHoveredId(null);
+  }, []);
+
+  const showFull = useCallback(() => {
+    setFocusId(null);
+    setFocusStack([]);
+    setHoveredId(null);
+  }, []);
 
   useEffect(() => {
     if (!expanded) return;
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") setExpanded(false);
+      if (event.key === "Escape") {
+        if (focusId) {
+          goBack();
+          return;
+        }
+        setExpanded(false);
+      }
     }
     document.body.style.overflow = "hidden";
     window.addEventListener("keydown", onKey);
@@ -241,7 +309,26 @@ export function V2KnowledgeGraph({
       document.body.style.overflow = "";
       window.removeEventListener("keydown", onKey);
     };
-  }, [expanded]);
+  }, [expanded, focusId, goBack]);
+
+  const focusedView = useMemo(() => {
+    if (!focusId || layout !== "neighborhood") {
+      return { nodes, edges, centerId };
+    }
+    const ego = buildEgoNeighborhood(nodes, edges, focusId);
+    return { nodes: ego.nodes, edges: ego.edges, centerId: focusId };
+  }, [nodes, edges, focusId, layout, centerId]);
+
+  const focusNode = nodes.find((n) => n.id === focusId);
+  const canFocus = layout === "neighborhood";
+
+  function goFocus(id: string) {
+    if (!canFocus) return;
+    if (id === focusId) return;
+    setFocusStack((stack) => (focusId ? [...stack, focusId] : stack));
+    setFocusId(id);
+    setHoveredId(null);
+  }
 
   if (nodes.length === 0) {
     const heightClass = size === "full" ? SIZE_CONFIG.full.heightClass : SIZE_CONFIG.compact.heightClass;
@@ -255,30 +342,78 @@ export function V2KnowledgeGraph({
   }
 
   const displaySize: GraphDisplaySize = size === "full" ? "full" : "compact";
+  const focusControls =
+    canFocus && (focusId || size === "full") ? (
+      <div className="flex flex-wrap items-center gap-2">
+        {focusId ? (
+          <>
+            <button
+              type="button"
+              onClick={goBack}
+              className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] font-medium text-zinc-300 hover:bg-zinc-800"
+            >
+              ← Back
+            </button>
+            <button
+              type="button"
+              onClick={showFull}
+              className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-2.5 py-1 text-[11px] font-semibold text-violet-300 hover:bg-violet-600/25"
+            >
+              Full neighborhood
+            </button>
+            {focusNode ? (
+              <a
+                href={focusNode.href}
+                className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] font-medium text-zinc-400 hover:text-zinc-200"
+              >
+                Open {focusNode.name} →
+              </a>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+    ) : null;
+
+  const hint = canFocus
+    ? focusId
+      ? `Focused on ${focusNode?.name ?? "node"} — only direct neighbors. Esc or Back to return.`
+      : "Click a node to focus its neighbors · ⌘/Ctrl+click to open · Expand for a larger canvas"
+    : "Hover to highlight connections · click node to open entity";
 
   return (
     <>
       <div>
         {size === "full" ? (
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[11px] text-zinc-600">Hover to highlight connections · click node to open entity</p>
-            <button
-              type="button"
-              onClick={() => setExpanded(true)}
-              className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 transition hover:bg-violet-600/25"
-            >
-              Expand graph
-            </button>
+            <p className="text-[11px] text-zinc-600">{hint}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              {focusControls}
+              <button
+                type="button"
+                onClick={() => setExpanded(true)}
+                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 transition hover:bg-violet-600/25"
+              >
+                Expand graph
+              </button>
+            </div>
           </div>
         ) : null}
+        {focusId && size !== "full" ? <div className="mb-2">{focusControls}</div> : null}
+        {focusId ? (
+          <p className="mb-2 rounded-lg border border-amber-500/20 bg-amber-950/20 px-2.5 py-1.5 text-[11px] text-amber-200/90">
+            Ego view — <span className="font-semibold">{focusNode?.name}</span> and direct neighbors only (
+            {focusedView.nodes.length} nodes). Not the full universe.
+          </p>
+        ) : null}
         <GraphCanvas
-          nodes={nodes}
-          edges={edges}
+          nodes={focusedView.nodes}
+          edges={focusedView.edges}
           displaySize={displaySize}
           hoveredId={hoveredId}
           onHover={setHoveredId}
-          centerId={centerId}
+          centerId={focusedView.centerId}
           layout={layout}
+          onFocusNode={canFocus ? goFocus : undefined}
         />
         <div className="mt-3">
           <GraphLegend />
@@ -292,30 +427,34 @@ export function V2KnowledgeGraph({
           aria-modal="true"
           aria-label="Expanded relationship graph"
         >
-          <div className="mb-4 flex shrink-0 items-center justify-between gap-3">
+          <div className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-semibold text-zinc-100">Relationship graph</h3>
-              <p className="mt-0.5 text-xs text-zinc-500">
-                Obsidian-style view — hover highlights links, Esc to close
-              </p>
+              <h3 className="text-sm font-semibold text-zinc-100">
+                {focusId ? `Neighbors of ${focusNode?.name ?? "node"}` : "Relationship graph"}
+              </h3>
+              <p className="mt-0.5 text-xs text-zinc-500">{hint}</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setExpanded(false)}
-              className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-800"
-            >
-              Close
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              {focusControls}
+              <button
+                type="button"
+                onClick={() => setExpanded(false)}
+                className="rounded-lg border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-300 hover:bg-zinc-800"
+              >
+                Close
+              </button>
+            </div>
           </div>
           <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-3">
             <GraphCanvas
-              nodes={nodes}
-              edges={edges}
+              nodes={focusedView.nodes}
+              edges={focusedView.edges}
               displaySize="expanded"
               hoveredId={hoveredId}
               onHover={setHoveredId}
-              centerId={centerId}
+              centerId={focusedView.centerId}
               layout={layout}
+              onFocusNode={canFocus ? goFocus : undefined}
             />
           </div>
           <div className="mt-3 shrink-0">

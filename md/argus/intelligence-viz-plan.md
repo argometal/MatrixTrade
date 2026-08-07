@@ -26,7 +26,8 @@ Status: **implemented** (treemap + portfolio axes as of 2026-07). Tag pattern ov
 - Pattern: Kumu / Obsidian — local 1–2 hop subgraph around the open entity, not a universe map.
 - **Layout:** radial — center entity in the middle (gold ring), neighbors on a ring.
 - **Edges:** `linked`, `project-link`, `co-mentioned` (from journal `entityIds`).
-- **Future:** typed edge tooltips, expand-on-click.
+- **Future:** typed edge tooltips.
+- **Shipped:** expand-on-click ego focus — click a node to show only that node + direct neighbors; Back / Full neighborhood / Esc returns. ⌘/Ctrl+click opens the entity. Dual-ring layout when crowded.
 
 ### Topic ↔ event linkage (recurrence / recency / evidence)
 For **topics**, metrics include evidence on the topic entity **plus** linked events discovered via:
