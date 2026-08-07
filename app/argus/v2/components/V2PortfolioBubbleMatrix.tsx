@@ -1,6 +1,10 @@
 "use client";
 
-import type { V2KnowledgeNode } from "@/lib/argus/v2/intelligence-viz";
+import { useMemo } from "react";
+import {
+  resolveBubblePositions,
+  type V2KnowledgeNode,
+} from "@/lib/argus/v2/intelligence-viz";
 
 const KIND_COLORS: Record<V2KnowledgeNode["kind"], string> = {
   topic: "rgb(139, 92, 246)",
@@ -19,12 +23,47 @@ export function V2PortfolioBubbleMatrix({
   size?: "compact" | "full";
   onSelect?: (id: string) => void;
 }) {
-  const portfolio = nodes.filter(
-    (n) => n.kind === "topic" || n.kind === "project" || n.kind === "organization"
-  );
   const heightClass = size === "full" ? "min-h-[min(560px,65vh)] h-[min(560px,65vh)]" : "h-56";
 
-  if (portfolio.length === 0) {
+  const plotLeft = 8;
+  const plotRight = 92;
+  const plotTop = 8;
+  const plotBottom = 92;
+  const plotWidth = plotRight - plotLeft;
+  const plotHeight = plotBottom - plotTop;
+
+  const { layout, maxPatterns, empty } = useMemo(() => {
+    const portfolio = nodes.filter(
+      (n) => n.kind === "topic" || n.kind === "project" || n.kind === "organization"
+    );
+    if (portfolio.length === 0) {
+      return { layout: [] as Array<{ point: { id: string; x: number; y: number; r: number }; node: V2KnowledgeNode }>, maxPatterns: 1, empty: true };
+    }
+    const maxEvidence = Math.max(...portfolio.map((n) => n.evidenceCount), 1);
+    const byId = new Map(portfolio.map((n) => [n.id, n]));
+    const raw = portfolio.map((node) => ({
+      id: node.id,
+      x: plotLeft + node.recurrenceScore * plotWidth,
+      y: plotBottom - node.recencyScore * plotHeight,
+      r: 2 + Math.sqrt(node.evidenceCount / maxEvidence) * 5,
+    }));
+    const resolved = resolveBubblePositions(raw, {
+      minX: plotLeft,
+      maxX: plotRight,
+      minY: plotTop,
+      maxY: plotBottom,
+    });
+    return {
+      empty: false,
+      maxPatterns: Math.max(...portfolio.map((n) => n.tagPatternCount), 1),
+      layout: resolved
+        .map((p) => ({ point: p, node: byId.get(p.id)! }))
+        .filter((row) => row.node)
+        .sort((a, b) => a.point.r - b.point.r),
+    };
+  }, [nodes, plotHeight, plotWidth]);
+
+  if (empty) {
     return (
       <div
         className={`flex items-center justify-center rounded-xl border border-dashed border-zinc-800 text-sm text-zinc-500 ${heightClass}`}
@@ -33,15 +72,6 @@ export function V2PortfolioBubbleMatrix({
       </div>
     );
   }
-
-  const maxEvidence = Math.max(...portfolio.map((n) => n.evidenceCount), 1);
-  const maxPatterns = Math.max(...portfolio.map((n) => n.tagPatternCount), 1);
-  const plotLeft = 8;
-  const plotRight = 92;
-  const plotTop = 8;
-  const plotBottom = 92;
-  const plotWidth = plotRight - plotLeft;
-  const plotHeight = plotBottom - plotTop;
 
   function handleActivate(node: V2KnowledgeNode, metaKey: boolean) {
     if (metaKey) {
@@ -105,10 +135,7 @@ export function V2PortfolioBubbleMatrix({
           Recency →
         </text>
 
-        {portfolio.map((node) => {
-          const cx = plotLeft + node.recurrenceScore * plotWidth;
-          const cy = plotBottom - node.recencyScore * plotHeight;
-          const r = 2 + Math.sqrt(node.evidenceCount / maxEvidence) * 5;
+        {layout.map(({ point, node }) => {
           const patternIntensity = node.tagPatternCount / maxPatterns;
           const hasPatterns = node.tagPatternCount > 0;
           const stroke = hasPatterns
@@ -133,9 +160,9 @@ export function V2PortfolioBubbleMatrix({
               }}
             >
               <circle
-                cx={cx}
-                cy={cy}
-                r={r}
+                cx={point.x}
+                cy={point.y}
+                r={point.r}
                 fill={KIND_COLORS[node.kind]}
                 fillOpacity={0.55}
                 stroke={stroke}
@@ -147,10 +174,10 @@ export function V2PortfolioBubbleMatrix({
                 {Math.round(node.recencyScore * 100)}%, {node.evidenceCount} total evidence
                 {hasPatterns ? `, ${node.tagPatternCount} tag patterns` : ""}
               </title>
-              {r >= 3.5 ? (
+              {point.r >= 3.5 ? (
                 <text
-                  x={cx}
-                  y={cy + 0.6}
+                  x={point.x}
+                  y={point.y + 0.6}
                   textAnchor="middle"
                   fill="rgb(244, 244, 245)"
                   fontSize={2}
@@ -170,6 +197,7 @@ export function V2PortfolioBubbleMatrix({
         <span>X = recurrence (30d)</span>
         <span>Size = evidence</span>
         <span>Amber ring = tag-pattern intensity</span>
+        <span>Bubbles auto-separate when scores pile up</span>
       </div>
     </div>
   );
