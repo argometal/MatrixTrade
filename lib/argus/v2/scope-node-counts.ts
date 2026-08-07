@@ -124,6 +124,15 @@ export function collectNeighborEntityIds(
 
   for (const id of outboundStructuralIds(entity)) {
     if (id !== entity.id) ids.add(id);
+    // Center → project outbound: pull sibling structural links (same as reverse bridge)
+    if (centerUsesProjectBridge(entity)) {
+      const linked = data.entities.find((e) => e.id === id && !e.deletedAt);
+      if (linked?.type === "project") {
+        for (const siblingId of outboundStructuralIds(linked)) {
+          if (siblingId !== entity.id) ids.add(siblingId);
+        }
+      }
+    }
   }
 
   for (const other of entitiesLinkingTo(data, entity.id)) {
@@ -157,7 +166,15 @@ export function collectTopicAndEventIdsForEntity(
   const topicIds = new Set<string>();
   const eventIds = new Set<string>();
 
-  collectFromIdList(data, outboundStructuralIds(entity), topicIds, eventIds);
+  for (const id of outboundStructuralIds(entity)) {
+    addIfTopicOrEvent(data, id, topicIds, eventIds);
+    if (centerUsesProjectBridge(entity)) {
+      const linked = data.entities.find((e) => e.id === id && !e.deletedAt);
+      if (linked?.type === "project") {
+        collectFromIdList(data, outboundStructuralIds(linked), topicIds, eventIds);
+      }
+    }
+  }
 
   for (const other of entitiesLinkingTo(data, entity.id)) {
     if (isTopicEntity(other)) topicIds.add(other.id);

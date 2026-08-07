@@ -4,7 +4,7 @@ import { getEntityHistory } from "../network";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import { entityHasPrivateEvidence } from "../entity-private-evidence";
 import { entityDeleteRequiresAuthenticator } from "../delete-link-check";
-import { entitiesByKind } from "./hierarchy";
+import { browseEntitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { relativeActivityLabel } from "./timeline-builders";
 import { countLinkKinds, linkedTopicNames, linkedTopicRefs } from "./entity-link-counts";
@@ -136,7 +136,7 @@ export function buildV2EventInboxOptions(
 }
 
 export function buildV2EventRows(data: ArgusData, includePrivate: boolean, today: string): V2EventRow[] {
-  const events = entitiesByKind(data).events;
+  const events = browseEntitiesByKind(data).events;
 
   return events
     .map((event) => {
@@ -179,7 +179,7 @@ export function buildV2EventDetails(
   includePrivate: boolean,
   today: string
 ): V2EventDetail[] {
-  const events = entitiesByKind(data).events;
+  const events = browseEntitiesByKind(data).events;
   const entityMap = new Map(data.entities.filter(isActiveRecord).map((e) => [e.id, e]));
 
   return events.map((event) => {

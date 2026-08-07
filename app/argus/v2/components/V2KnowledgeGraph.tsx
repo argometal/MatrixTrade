@@ -68,7 +68,7 @@ export function buildEgoNeighborhood(
   };
 }
 
-function GraphLegend() {
+function GraphLegend({ showFocusTrigger = false }: { showFocusTrigger?: boolean }) {
   return (
     <div className="flex flex-wrap gap-3 text-[11px] text-zinc-500">
       {(["organization", "project", "person", "topic", "event"] as const).map((kind) => (
@@ -77,6 +77,15 @@ function GraphLegend() {
           {KIND_LABELS[kind]}
         </span>
       ))}
+      {showFocusTrigger ? (
+        <span className="inline-flex items-center gap-1.5" title="Evidence on this node carries a Focus Tag">
+          <span
+            className="h-2.5 w-2.5 rounded-full border border-dashed border-rose-400/80 bg-transparent"
+            aria-hidden
+          />
+          Focus trigger
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -157,17 +166,35 @@ function GraphCanvas({
         const from = nodeMap.get(edge.from);
         const to = nodeMap.get(edge.to);
         if (!from || !to) return null;
+        const isAffinity = edge.kind === "focus-affinity";
         const active =
           !hoveredId || edge.from === hoveredId || edge.to === hoveredId || connectedToHover.has(edge.from);
         return (
           <line
-            key={`${edge.from}-${edge.to}`}
+            key={`${edge.from}-${edge.to}-${edge.kind ?? "edge"}`}
             x1={from.x}
             y1={from.y}
             x2={to.x}
             y2={to.y}
-            stroke={active && hoveredId ? "rgba(139, 92, 246, 0.55)" : "rgba(113, 113, 122, 0.4)"}
-            strokeWidth={active && hoveredId ? 0.9 : Math.min(1.4, 0.5 + edge.weight * 0.25)}
+            stroke={
+              isAffinity
+                ? active && hoveredId
+                  ? "rgba(251, 113, 133, 0.7)"
+                  : "rgba(251, 113, 133, 0.35)"
+                : active && hoveredId
+                  ? "rgba(139, 92, 246, 0.55)"
+                  : "rgba(113, 113, 122, 0.4)"
+            }
+            strokeWidth={
+              isAffinity
+                ? active && hoveredId
+                  ? 0.7
+                  : 0.45
+                : active && hoveredId
+                  ? 0.9
+                  : Math.min(1.4, 0.5 + edge.weight * 0.25)
+            }
+            strokeDasharray={isAffinity ? "1.2 1.4" : undefined}
           />
         );
       })}
@@ -180,10 +207,15 @@ function GraphCanvas({
         const isHovered = hoveredId === node.id;
         const isConnected = connectedToHover.has(node.id);
         const dimmed = hoveredId && !isHovered && !isConnected;
+        const isFocusCritical = Boolean(node.focusCritical);
         const label =
           node.name.length > (displaySize === "expanded" ? 18 : 14)
             ? `${node.name.slice(0, displaySize === "expanded" ? 16 : 12)}…`
             : node.name;
+        const focusLabel =
+          node.focusTags && node.focusTags.length > 0
+            ? ` · Focus trigger: ${node.focusTags.map((t) => `#${t}`).join(", ")}`
+            : "";
 
         return (
           <g
@@ -201,18 +233,41 @@ function GraphCanvas({
                 onFocusNode(node.id);
               }}
             >
+              {isFocusCritical ? (
+                <circle
+                  cx={node.x}
+                  cy={node.y}
+                  r={(isHovered ? r * 1.15 : r) + 2.2}
+                  fill="none"
+                  stroke="rgb(251, 113, 133)"
+                  strokeOpacity={0.85}
+                  strokeWidth={0.7}
+                  strokeDasharray="1.4 1.2"
+                  className="pointer-events-none"
+                  aria-hidden
+                />
+              ) : null}
               <circle
                 cx={node.x}
                 cy={node.y}
                 r={isHovered ? r * 1.15 : r}
                 fill={NODE_COLORS[node.kind]}
                 fillOpacity={isHovered || isCenter ? 0.95 : 0.75}
-                stroke={isCenter ? "rgb(251, 191, 36)" : isHovered ? "rgb(216, 180, 254)" : "rgb(9, 9, 11)"}
-                strokeWidth={isCenter ? 1 : isHovered ? 0.8 : 0.4}
+                stroke={
+                  isCenter
+                    ? "rgb(251, 191, 36)"
+                    : isFocusCritical
+                      ? "rgb(251, 113, 133)"
+                      : isHovered
+                        ? "rgb(216, 180, 254)"
+                        : "rgb(9, 9, 11)"
+                }
+                strokeWidth={isCenter || isFocusCritical ? 1 : isHovered ? 0.8 : 0.4}
                 className="cursor-pointer transition-all duration-150"
               />
               <title>
                 {node.name} ({KIND_LABELS[node.kind]}) — {node.evidenceCount} evidence
+                {focusLabel}
                 {onFocusNode ? " · click to focus neighbors · ⌘/Ctrl+click to open" : ""}
               </title>
             </a>
@@ -416,7 +471,7 @@ export function V2KnowledgeGraph({
           onFocusNode={canFocus ? goFocus : undefined}
         />
         <div className="mt-3">
-          <GraphLegend />
+          <GraphLegend showFocusTrigger={nodes.some((n) => n.focusCritical)} />
         </div>
       </div>
 
@@ -458,7 +513,7 @@ export function V2KnowledgeGraph({
             />
           </div>
           <div className="mt-3 shrink-0">
-            <GraphLegend />
+            <GraphLegend showFocusTrigger={nodes.some((n) => n.focusCritical)} />
           </div>
         </div>
       ) : null}
