@@ -5,7 +5,7 @@
 | Field | Value |
 |--------|--------|
 | **Tag** | `main0807p` |
-| **Commit** | Always `git rev-parse main0807o` after fetch (must match `origin/main`) |
+| **Commit** | Always `git rev-parse main0807p` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-07 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
