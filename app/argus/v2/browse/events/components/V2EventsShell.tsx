@@ -169,9 +169,6 @@ export function V2EventsShell({
                 label="+ Event"
                 className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
               />
-              <button type="button" className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400">
-                Filters
-              </button>
             </div>
           </div>
 

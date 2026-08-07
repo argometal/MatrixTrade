@@ -306,8 +306,16 @@ function deriveTopicBrowseStatus(
   detail: V2TopicDetail | undefined
 ): V2TopicBrowseStatus {
   if (detail?.lifecycleStatus === "archived") return "Archived";
-  const eventCount = detail?.eventCount ?? row.eventCount;
-  const linkedCount = detail?.neighborEntityIds?.length ?? row.linkedEntityIds.length;
+  const eventCount = Math.max(
+    detail?.eventCount ?? 0,
+    detail?.linkedEvents?.length ?? 0,
+    row.eventCount
+  );
+  const linkedCount = Math.max(
+    detail?.neighborEntityIds?.length ?? 0,
+    detail?.linkedEntities?.length ?? 0,
+    row.linkedEntityIds.length
+  );
   // Linked to events/orgs/projects/people is not Empty — Quiet until evidence arrives.
   if (row.evidenceCount === 0 && eventCount === 0 && linkedCount === 0) return "Empty";
   if (row.evidenceCount === 0) return "Quiet";

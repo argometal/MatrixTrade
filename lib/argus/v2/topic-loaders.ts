@@ -16,6 +16,7 @@ import { buildTagPatternsForScope } from "./tag-patterns";
 import {
   collectNeighborEntityIds,
   countTopicsAndEventsInScope,
+  outboundStructuralIds,
 } from "./scope-node-counts";
 import { countLinkKinds, linkedEventRefs } from "./entity-link-counts";
 import type {
@@ -220,13 +221,19 @@ export function buildV2TopicDetails(
     const neighborIds = collectNeighborEntityIds(data, topic, history);
     const linkCounts = countLinkKinds(data, neighborIds);
     const nodeCounts = countTopicsAndEventsInScope(data, topic, history);
-    // Belt-and-suspenders: union scope event ids with any event neighbors.
+    // Belt-and-suspenders: union scope event ids with any event neighbors + outbound bags.
     const eventIds = new Set(nodeCounts.eventIds);
     for (const id of neighborIds) {
       const entity = data.entities.find((e) => e.id === id);
       if (entity && isEventEntity(entity)) eventIds.add(id);
     }
+    for (const id of outboundStructuralIds(topic)) {
+      const entity = data.entities.find((e) => e.id === id);
+      if (entity && isEventEntity(entity)) eventIds.add(id);
+    }
     const linkedEvents = linkedEventRefs(data, eventIds);
+    // Link modal edits outbound only — include every outbound bag so legacy binders are visible.
+    const outboundIds = outboundStructuralIds(topic);
 
     return {
       id: topic.id,
@@ -242,8 +249,7 @@ export function buildV2TopicDetails(
       fileCount: counts.fileCount + counts.photoCount,
       photoCount: counts.photoCount,
       evidenceCount: counts.evidenceCount,
-      // Link modal must edit outbound only — neighbors stay for filters/Connections.
-      linkedEntityIds: [...new Set(topic.linkedEntityIds ?? [])],
+      linkedEntityIds: outboundIds,
       neighborEntityIds: [...neighborIds],
       linkedEntities,
       linkedEvents,

@@ -7,9 +7,7 @@ import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/compone
 import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
 import { V2OrgTimeline } from "@/app/argus/v2/components/V2OrgTimeline";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
-import type {
-  V2EvidenceStreamKind,
-} from "@/lib/argus/v2/evidence-stream";
+import type { V2EvidenceStreamKind } from "@/lib/argus/v2/evidence-stream";
 import type { V2TopicDetail } from "@/lib/argus/v2/topic-browse-utils";
 import { V2TopicAliasEditor } from "./V2TopicAliasEditor";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
@@ -29,7 +27,6 @@ import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
 type PanelTab = "chronicle" | "timeline" | "runbooks" | "connections" | "tags";
-type ChronicleFilter = "all" | V2EvidenceStreamKind | "attachments";
 
 const PANEL_TABS: { id: PanelTab; label: string }[] = [
   { id: "chronicle", label: "Chronicle" },
@@ -110,7 +107,6 @@ export function V2TopicDetailPanel({
 } & V2DeleteGateProps) {
   const router = useRouter();
   const [panelTab, setPanelTab] = useState<PanelTab>("chronicle");
-  const [chronicleFilter, setChronicleFilter] = useState<ChronicleFilter>("all");
   const [showGraph, setShowGraph] = useState(true);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
   const mobileDetail = Boolean(onBack);
@@ -130,14 +126,6 @@ export function V2TopicDetailPanel({
     () => progressForEntity(allProgress, selected.id),
     [allProgress, selected.id]
   );
-
-  const filteredChronicle = useMemo(() => {
-    if (chronicleFilter === "all") return selected.evidence;
-    if (chronicleFilter === "attachments") {
-      return selected.evidence.filter((item) => item.kind === "file" || item.kind === "photo");
-    }
-    return selected.evidence.filter((item) => item.kind === chronicleFilter);
-  }, [chronicleFilter, selected.evidence]);
 
   const lifecycle = (
     <V2EntityLifecycleActions
@@ -241,28 +229,19 @@ export function V2TopicDetailPanel({
                     icon="📓"
                     label="Notes"
                     count={selected.journalCount}
-                    onClick={() => {
-                      setPanelTab("chronicle");
-                      setChronicleFilter("journal");
-                    }}
+                    onClick={() => setPanelTab("chronicle")}
                   />
                   <MetricPill
                     icon="✉"
                     label="Email"
                     count={selected.emailCount}
-                    onClick={() => {
-                      setPanelTab("chronicle");
-                      setChronicleFilter("email");
-                    }}
+                    onClick={() => setPanelTab("chronicle")}
                   />
                   <MetricPill
                     icon="📎"
                     label="Attachments"
                     count={attachmentCount}
-                    onClick={() => {
-                      setPanelTab("chronicle");
-                      setChronicleFilter("attachments");
-                    }}
+                    onClick={() => setPanelTab("chronicle")}
                   />
                   <MetricPill
                     icon="📅"
@@ -328,20 +307,7 @@ export function V2TopicDetailPanel({
         >
           {panelTab === "chronicle" ? (
             <div className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs text-zinc-500">
-                  Evidence on this topic — use Notes / Email / Attachments pills above to focus the list.
-                </p>
-                {chronicleFilter !== "all" ? (
-                  <button
-                    type="button"
-                    onClick={() => setChronicleFilter("all")}
-                    className="rounded-lg border border-zinc-700 px-2 py-1 text-[10px] font-medium text-zinc-400 hover:text-zinc-200"
-                  >
-                    Show all
-                  </button>
-                ) : null}
-              </div>
+              <p className="text-xs text-zinc-500">Evidence linked to this topic.</p>
               <V2ChronicleSelectableList
                 key={selected.id}
                 returnTo={returnTo}
@@ -359,7 +325,7 @@ export function V2TopicDetailPanel({
                     No evidence yet. Link emails from inbox or register evidence.
                   </p>
                 }
-                items={filteredChronicle.map((item) => ({
+                items={selected.evidence.map((item) => ({
                   key: item.id,
                   logId: chronicleLogIdFromEvidenceId(item.id),
                   title: item.title,
