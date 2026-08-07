@@ -12,7 +12,7 @@ import { V2HomeIntelligencePanel, type IntelligenceTab } from "./V2HomeIntellige
 import { V2HomePageHeader } from "./V2HomePulse";
 import { V2IntelligenceLens, V2IntelligenceLensEmpty } from "./V2IntelligenceLens";
 import { V2TabBar } from "./V2TabBar";
-import { V2TagCloud, type V2TagCloudItem } from "./V2TagCloud";
+import type { V2TagCloudItem } from "./V2TagCloud";
 import { V2SignalTagsEditor } from "./V2SignalTagsEditor";
 import { V2FocusTagPortfolio } from "./V2FocusTagPortfolio";
 import { V2Timeline, V2TimelineRail } from "./V2Timeline";
