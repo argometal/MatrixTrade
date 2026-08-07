@@ -1,9 +1,14 @@
 import type { ArgusData, Entity, InboxItem, Log } from "../types";
-import { TAG_CLOUD_DISPLAY_LIMIT } from "../tag-limits";
+import {
+  TAG_CLOUD_DISPLAY_LIMIT,
+  TAG_PATTERN_FRESHNESS_DAYS,
+  TAG_PATTERN_MIN_COUNT,
+} from "../tag-limits";
 import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
 import { buildEntityIntelligence } from "../network-intelligence";
 import { isEntityArchived } from "../entity-lifecycle";
 import { getNeedsClassificationLogs } from "../journal-helpers";
+import { normalizeSignalTags, signalTagKey } from "../signal-tags";
 import { buildTagPatternsForScope } from "./tag-patterns";
 import { effectiveInboxStatus } from "./inbox-loaders";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
@@ -21,6 +26,7 @@ import { filterPrivateInbox } from "../private-access";
 import { collectProjectLinkIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
 import { countTopicsAndEventsInScope } from "./scope-node-counts";
 import { findTopicEntityIdForTag, intelligenceTagHref } from "./intelligence-nav";
+import { scoreEvidenceDates } from "./intelligence-viz";
 
 import {
   buildTimelineFromLogsAndInbox,
@@ -422,6 +428,97 @@ export function buildV2TagCloud(data: ArgusData, inboxItems: InboxItem[], includ
       isSignal,
     };
   });
+}
+
+/** Focus Tag watchlist row — same recency/recurrence axes as the entity portfolio. */
+export type V2FocusTagStat = {
+  name: string;
+  count: number;
+  recurrence30d: number;
+  recurrenceScore: number;
+  recencyScore: number;
+  lastSeen: string;
+  isFocus: boolean;
+  isPattern: boolean;
+  href: string;
+};
+
+/**
+ * Portfolio-style stats for Tags — Focus Tags always included; frequent evidence Tags fill in.
+ * Reuses portfolio scoring windows (90d recency, 30d recurrence).
+ */
+export function buildV2FocusTagPortfolio(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  includePrivate: boolean,
+  today: string,
+  limit = 40
+): V2FocusTagStat[] {
+  type Acc = { display: string; dates: string[] };
+  const acc = new Map<string, Acc>();
+
+  function bump(raw: string, iso: string) {
+    const display = raw.trim().replace(/\s+/g, " ");
+    if (!display) return;
+    const key = signalTagKey(display);
+    const row = acc.get(key) ?? { display, dates: [] };
+    row.dates.push(iso.slice(0, 10));
+    acc.set(key, row);
+  }
+
+  for (const log of visibleLogs(data, includePrivate)) {
+    const iso = log.updatedAt || log.date;
+    for (const tag of log.topics ?? []) bump(tag, iso);
+  }
+  for (const item of visibleInbox(inboxItems, includePrivate)) {
+    for (const tag of item.topics ?? []) bump(tag, item.receivedAt);
+  }
+
+  for (const tag of normalizeSignalTags(data.signalTags)) {
+    const key = signalTagKey(tag);
+    if (!acc.has(key)) acc.set(key, { display: tag, dates: [] });
+  }
+
+  const focusKeys = new Set(normalizeSignalTags(data.signalTags).map(signalTagKey));
+  const topics = entitiesByKind(data).topics;
+  const freshnessCutoff = (() => {
+    const d = new Date(`${today}T12:00:00`);
+    d.setDate(d.getDate() - TAG_PATTERN_FRESHNESS_DAYS);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const rows = [...acc.entries()].map(([key, row]) => {
+    const scored = scoreEvidenceDates(row.dates, today);
+    const recentFresh = row.dates.filter((d) => d >= freshnessCutoff).length;
+    return {
+      key,
+      name: row.display,
+      count: row.dates.length,
+      recurrence30d: scored.recurrence30d,
+      recurrenceScore: 0,
+      recencyScore: scored.recencyScore,
+      lastSeen: scored.lastSeen,
+      isFocus: focusKeys.has(key),
+      isPattern: row.dates.length >= TAG_PATTERN_MIN_COUNT && recentFresh >= 1,
+      href: intelligenceTagHref(row.display, findTopicEntityIdForTag(topics, row.display)),
+    } satisfies V2FocusTagStat & { key: string };
+  });
+
+  const maxRecurrence = Math.max(...rows.map((r) => r.recurrence30d), 1);
+  for (const row of rows) {
+    row.recurrenceScore = Math.min(1, row.recurrence30d / maxRecurrence);
+  }
+
+  return rows
+    .sort((a, b) => {
+      if (a.isFocus !== b.isFocus) return a.isFocus ? -1 : 1;
+      const aScore = a.recencyScore * 0.55 + a.recurrenceScore * 0.45;
+      const bScore = b.recencyScore * 0.55 + b.recurrenceScore * 0.45;
+      if (aScore !== bScore) return bScore - aScore;
+      return b.count - a.count || a.name.localeCompare(b.name);
+    })
+    .slice(0, limit)
+    .map(({ key: _key, ...row }) => row);
 }
 
 /** Action-only nav triage counts — never entity totals, never Focus Tags. */

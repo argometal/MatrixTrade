@@ -184,7 +184,7 @@ function countEvidenceForTopicIncludingEvents(
 const RECENCY_WINDOW_DAYS = 90;
 const RECURRENCE_WINDOW_DAYS = 30;
 
-function recencyScoreFromDates(dates: string[], today: string): number {
+export function recencyScoreFromDates(dates: string[], today: string): number {
   if (dates.length === 0) return 0;
   const lastDate = [...dates].sort().pop()!;
   const daysSince = Math.max(
@@ -196,11 +196,25 @@ function recencyScoreFromDates(dates: string[], today: string): number {
   return 1 - daysSince / RECENCY_WINDOW_DAYS;
 }
 
-function countRecurrence30d(dates: string[], today: string): number {
+export function countRecurrence30d(dates: string[], today: string): number {
   const windowStart = new Date(`${today}T12:00:00`);
   windowStart.setDate(windowStart.getDate() - RECURRENCE_WINDOW_DAYS);
   const cutoff = windowStart.toISOString().slice(0, 10);
   return dates.filter((d) => d >= cutoff).length;
+}
+
+/** Shared activity scores for entity portfolio and Focus Tag portfolio. */
+export function scoreEvidenceDates(dates: string[], today: string): {
+  recencyScore: number;
+  recurrence30d: number;
+  lastSeen: string;
+} {
+  const sorted = [...dates].filter(Boolean).sort();
+  return {
+    recencyScore: recencyScoreFromDates(sorted, today),
+    recurrence30d: countRecurrence30d(sorted, today),
+    lastSeen: sorted.length > 0 ? sorted[sorted.length - 1]! : "",
+  };
 }
 
 function normalizeRecurrenceScores(nodes: V2KnowledgeNode[]): void {
