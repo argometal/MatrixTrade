@@ -79,24 +79,14 @@ function linkedProject(data: ArgusData, event: Entity) {
   return undefined;
 }
 
+/** People from the same neighbor set as metrics (outbound + reverse + project bridge + co-mention). */
 function attendeePeople(data: ArgusData, event: Entity, logs: Log[]): string[] {
   const people = new Set<string>();
-  for (const id of event.linkedPersonIds ?? []) {
-    const p = data.entities.find((e) => e.id === id && e.type === "person");
+  for (const id of collectNeighborEntityIds(data, event, logs)) {
+    const p = data.entities.find((e) => e.id === id && !e.deletedAt && e.type === "person");
     if (p) people.add(p.name);
   }
-  for (const id of event.linkedEntityIds ?? []) {
-    const p = data.entities.find((e) => e.id === id && e.type === "person");
-    if (p) people.add(p.name);
-  }
-  for (const log of logs) {
-    if (!log.entityIds.includes(event.id)) continue;
-    for (const id of log.entityIds) {
-      const p = data.entities.find((e) => e.id === id && e.type === "person");
-      if (p) people.add(p.name);
-    }
-  }
-  return [...people];
+  return [...people].sort((a, b) => a.localeCompare(b));
 }
 
 function attendeeInitials(names: string[]): string[] {

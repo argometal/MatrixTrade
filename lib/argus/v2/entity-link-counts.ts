@@ -10,11 +10,15 @@ export type LinkKindCounts = {
 };
 
 /**
- * Outbound + journal co-mention only.
- * Prefer `collectNeighborEntityIds` from `scope-node-counts.ts` for reverse + project bridge parity.
+ * @deprecated Use `collectNeighborEntityIds` from `scope-node-counts.ts`
+ * (outbound + reverse + project bridge + co-mention + parent orgs).
+ * Kept as a thin outbound+journal helper for legacy call sites only.
  */
 export function collectRelatedEntityIds(entity: Entity, logs: Log[]): Set<string> {
-  const ids = new Set<string>(entity.linkedEntityIds ?? []);
+  const ids = new Set<string>([
+    ...(entity.linkedEntityIds ?? []),
+    ...(entity.linkedPersonIds ?? []),
+  ]);
   for (const log of logs) {
     if (!log.entityIds.includes(entity.id)) continue;
     for (const id of log.entityIds) {
