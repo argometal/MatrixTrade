@@ -7,7 +7,6 @@ import { V2TopBarAddMenu } from "@/app/argus/v2/components/V2TopBarAddMenu";
 import { PrivateLockMenu } from "@/app/argus/components/PrivateLockMenu";
 import { V2BuildBadge } from "@/app/argus/v2/components/V2BuildBadge";
 import { V2PageIdBadge } from "@/app/argus/v2/components/V2PageIdBadge";
-import { useV2SidebarCollapse } from "@/app/argus/v2/components/V2DesktopShell";
 import { useV2MobileMenu } from "@/app/argus/v2/components/V2MobileMenuProvider";
 import { getV2NavPageLabel } from "@/lib/argus/v2/nav-items";
 
@@ -23,7 +22,6 @@ export function V2TopBar({
   const router = useRouter();
   const pathname = usePathname();
   const { toggle, open } = useV2MobileMenu();
-  const { collapsed, toggle: toggleSidebar } = useV2SidebarCollapse();
   const pageLabel = getV2NavPageLabel(pathname);
 
   useEffect(() => {
@@ -65,15 +63,7 @@ export function V2TopBar({
           </span>
         </button>
 
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200 lg:flex"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? "»" : "«"}
-        </button>
+        {/* Sidebar expand/collapse lives once on the left rail — do not duplicate » here. */}
 
         <form action="/argus/search" method="get" className="mx-auto hidden max-w-xl flex-1 lg:block">
           <div className="relative">
