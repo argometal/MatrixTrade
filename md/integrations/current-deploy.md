@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807h` |
-| **Commit** | Always `git rev-parse main0807h` after fetch (must match `origin/main`) |
+| **Tag** | `main0807i` |
+| **Commit** | Always `git rev-parse main0807i` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-07 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,12 +16,13 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807h
+# optional pin: git checkout main0807i
 ```
 
 ## What this deploy includes
 
-- PR #176: Dedupe Help / Security / Home nav icons (TopBar + sidebar brand)
+- PR #176: Topic↔Event metric/filter parity + Focus-trigger graph halos (neighbor policy shared both sides; Event attendees = People)
+- `main0807h`: Dedupe Help / Security / Home nav icons (TopBar + sidebar brand)
 - PR #175: Event Tags restored (Note Tags + Focus Tags tab); Topic Aliases → Match tags; keep TAGS ontology
 - PR #174: Event/Topic **Edit** menu — Rename / Archive / Delete event (visible next to title)
 - PR #173: Focus Tags replace Event Signals — journal `signalTags` watchlist; highlight-critical in Patterns/cloud
