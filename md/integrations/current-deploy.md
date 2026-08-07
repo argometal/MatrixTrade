@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807f` |
-| **Commit** | Always `git rev-parse main0807f` after fetch (must match `origin/main`) |
+| **Tag** | `main0807g` |
+| **Commit** | Always `git rev-parse main0807g` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-07 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807f
+# optional pin: git checkout main0807g
 ```
 
 ## What this deploy includes
 
+- PR #175: Event Tags restored (Note Tags + Focus Tags tab); Topic Aliases → Match tags; keep TAGS ontology
 - PR #174: Event/Topic **Edit** menu — Rename / Archive / Delete event (visible next to title)
 - PR #173: Focus Tags replace Event Signals — journal `signalTags` watchlist; highlight-critical in Patterns/cloud
 - PR #172: Chronicle PIN delete for linked notes + stop note resurrection (`Chronicle: v2` marker; soft-deleted counts as migrated)
