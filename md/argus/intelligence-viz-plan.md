@@ -55,6 +55,22 @@ Picker shows top **10** frequent tags; tag cloud shows top **20**. User can crea
 
 ---
 
+## ArgusForge graph — comparison only (do not port)
+
+ArgusForge has richer graph infra (`/forge/argus/units` 3D + realm React Flow). **Do not copy Forge code into Argus.** Useful advantages to steal as *ideas*:
+
+| Advantage | Forge | Argus today |
+|-----------|-------|-------------|
+| Explicit Focus / ego | Dim or show selected + neighbors | **Shipped** click-to-focus ego in neighborhood SVG |
+| 3D force layout | `react-force-graph-3d` | Not implemented — SVG radial only |
+| Filters / search dimming | Multi-axis | Not on neighborhood graph |
+| Camera Fit / Reset | Orbit + reheat | Expand fullscreen only |
+| Typed relations UI | Drag-to-relate | Evidence-derived edges only |
+
+**3D:** never implemented in Argus v2. Forge proves 3D helps dense molecules; Argus stays 2D SVG for Evidence Engine simplicity until a dedicated graph infra pass.
+
+---
+
 ## Key files
 - `lib/argus/v2/intelligence-viz.ts` — node building, treemap layout, graph
 - `app/argus/v2/components/V2KnowledgeTreemap.tsx`
