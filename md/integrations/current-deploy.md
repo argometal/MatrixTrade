@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807p` |
-| **Commit** | Always `git rev-parse main0807p` after fetch (must match `origin/main`) |
+| **Tag** | `main0807q` |
+| **Commit** | Always `git rev-parse main0807q` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-07 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -21,6 +21,7 @@ git reset --hard origin/main
 
 ## What this deploy includes
 
+- PR #189: Treemap includes full org/project/topic portfolio (no top-24 cut; empty projects like Exxon appear)
 - PR #187: Deprecate Home aside Tag portfolio graph; Tag universe only under Intelligence → Tags
 - PR #185: Count legacy topic↔event binders (`linkedTopicIds`/`linkedEventIds`); Topics = status pills + one Filters menu; Chronicle filter removed
 - PR #183: Empty topics respect event links (linked-only → Quiet); Topics status pills only (no duplicate tabs/Filters); deprecate Chronicle filter chips
