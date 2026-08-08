@@ -515,8 +515,8 @@ async function main() {
   assert.match(planning, /canonicalShareCount/);
   assert.match(prepareNote, /Allocation selected · share count still unconfigured/);
   assert.match(prepareNote, /Share count unconfigured — calculate allocation first/);
-  assert.match(execute, /canonicalShareCount/);
   assert.match(execute, /MANUAL_SHARES_PLACEHOLDER/);
+  assert.doesNotMatch(execute, /canonicalShareCount/);
 
   // 28 — no placeholder 10 in allocation calculations
   assert.doesNotMatch(simulateSrc, /shares:\s*10|MANUAL_SHARES_PLACEHOLDER/);
@@ -533,8 +533,8 @@ async function main() {
   assert.doesNotMatch(planning, /stockFileId:\s*scoutThesis\?\.id/);
   assert.doesNotMatch(boardPage, /stockFileId:\s*.*stockThesisId/);
 
-  // 30 — mobile safe-area remains
-  assert.match(
+  // 30 — mobile safe-area: layout owns Scout padding; board keeps its own
+  assert.doesNotMatch(
     planning,
     /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/
   );

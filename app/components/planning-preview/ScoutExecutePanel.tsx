@@ -7,7 +7,6 @@ import {
   type TradeProposalFields,
 } from "@/lib/build-trade-proposal-block";
 import { buildTradeBootPackage } from "@/lib/trade-boot";
-import { buildTradeLevelsView } from "@/lib/trade-levels-preview";
 import type { TradeProspect } from "@/lib/trade-prospects";
 import { prospectToPrefill } from "@/lib/trade-prospects";
 import type { Playbook } from "@/lib/playbook-types";
@@ -16,7 +15,6 @@ import type { CapitalAccountSnapshot } from "@/lib/capital-account";
 import type { CapitalReservation } from "@/lib/capital-types";
 import {
   buildScoutFundingSnapshot,
-  canonicalShareCount,
   type ScoutFundingSnapshotField,
 } from "@/lib/scout-funding-snapshot";
 import {
@@ -87,9 +85,9 @@ function textOrUnconfigured(
 }
 
 /**
- * Execution strip — decision/numbers + funding first (26-41 / 26-48).
- * Manual JSON and experiment panels live under Technical actions.
- * Default form shares are never canonical funding inputs.
+ * Scout card execution extras — funding summary, alerts, Trade boot, technical
+ * actions. Levels / Prepare trade / Funding Snapshot live on the yellow Scout
+ * card (29-48); this panel is embedded there so the bottom Execute strip is gone.
  */
 export function ScoutExecutePanel({
   plan,
@@ -172,38 +170,6 @@ export function ScoutExecutePanel({
     [suggestedTradeId, playbooks, monthlyLossRoom, prospects, plan, prefill]
   );
 
-  const formMatchesPlan =
-    !plan?.ticker ||
-    !form.ticker ||
-    form.ticker.toUpperCase() === plan.ticker.toUpperCase();
-
-  /** Plan-level view for primary surface — omit hard-coded shares row. */
-  const levelsView =
-    plan?.plannedEntry !== undefined && plan.stopPrice !== undefined
-      ? buildTradeLevelsView({
-          id: plan.id,
-          ticker: plan.ticker,
-          entry: plan.plannedEntry,
-          stop: plan.stopPrice,
-          target: plan.targetPrice,
-          // Canonical share count is not the manual placeholder; use 0 so UI can hide Shares.
-          shares: 0,
-        })
-      : formMatchesPlan && form.entry && form.stop
-        ? buildTradeLevelsView({
-            id: form.id || "—",
-            ticker: form.ticker || plan?.ticker || "",
-            entry: parseFloat(form.entry),
-            stop: parseFloat(form.stop),
-            target: form.target ? parseFloat(form.target) : undefined,
-            shares: 0,
-          })
-        : null;
-
-  const primaryLevelRows = (levelsView?.rows ?? []).filter(
-    (row) => row.label !== "Shares"
-  );
-
   async function copyTextClipboard(
     text: string,
     kind: "boot" | "sample" | "proposal"
@@ -264,14 +230,7 @@ export function ScoutExecutePanel({
   }
 
   if (!plan) {
-    return (
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
-        <h2 className="text-sm font-semibold text-zinc-300">Execute</h2>
-        <p className="mt-1 text-xs text-zinc-500">
-          Select a stock file with an active scout.
-        </p>
-      </section>
-    );
+    return null;
   }
 
   const fundingInput = {
@@ -327,8 +286,6 @@ export function ScoutExecutePanel({
     fundingSnap.blockingReasons[0]
   );
 
-  const canonicalShares = canonicalShareCount(fundingSnap.shareCount);
-
   const fundingFollowUp = assessFundingFollowUp({
     plan,
     reservations,
@@ -344,71 +301,34 @@ export function ScoutExecutePanel({
     : false;
 
   return (
-    <section
-      className="rounded-2xl border border-emerald-500/30 bg-emerald-950/10 p-4"
+    <div
+      className="mt-3 space-y-3 border-t border-current/15 pt-3"
       data-scout-execute
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-emerald-200">
-          Execute · {plan.id}
+        <h2 className="text-xs font-semibold uppercase tracking-wide opacity-70">
+          Capital / funding
         </h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void copyTextClipboard(bootPackage, "boot")}
-            className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
-          >
-            {copiedBoot ? "Copied" : "Trade boot"}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => void copyTextClipboard(bootPackage, "boot")}
+          className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
+        >
+          {copiedBoot ? "Copied" : "Trade boot"}
+        </button>
       </div>
 
       {plan.status === "expired" ? (
-        <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
+        <p className="rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
           Plan expired — revive via Control with watching + fresh validUntil.
         </p>
       ) : null}
 
-      {primaryLevelRows.length > 0 ? (
-        <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
-          {primaryLevelRows.map((row) => (
-            <div
-              key={row.label}
-              className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-2 py-1.5"
-            >
-              <dt className="text-zinc-600">{row.label}</dt>
-              <dd className="tabular-nums text-zinc-200">{row.value}</dd>
-            </div>
-          ))}
-          {plan.plannedRR !== undefined ? (
-            <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-2 py-1.5">
-              <dt className="text-zinc-600">Planned R:R</dt>
-              <dd className="font-medium text-emerald-400">
-                {plan.plannedRR.toFixed(1)}R
-              </dd>
-            </div>
-          ) : null}
-          {canonicalShares !== undefined ? (
-            <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 px-2 py-1.5">
-              <dt className="text-zinc-600">Shares</dt>
-              <dd className="tabular-nums text-zinc-200">{canonicalShares}</dd>
-            </div>
-          ) : null}
-        </dl>
-      ) : (
-        <p className="mt-3 text-xs text-amber-400/90">
-          Set entry + stop on this scout for levels.
-        </p>
-      )}
-
       <div
-        className="mt-3 rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-3 py-2.5"
+        className="rounded-xl border border-current/15 bg-black/10 px-3 py-2.5"
         data-scout-funding-summary
       >
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-          Capital / funding
-        </p>
-        <dl className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3 lg:grid-cols-5">
+        <dl className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-3 lg:grid-cols-5">
           {(
             [
               ["Capital required", capitalRequired],
@@ -419,14 +339,12 @@ export function ScoutExecutePanel({
             ] as const
           ).map(([label, cell]) => (
             <div key={label} className="min-w-0">
-              <dt className="text-[10px] uppercase tracking-wide text-zinc-600">
+              <dt className="text-[10px] uppercase tracking-wide opacity-60">
                 {label}
               </dt>
-              <dd className="mt-0.5 font-medium tabular-nums text-zinc-100">
-                {cell.value}
-              </dd>
+              <dd className="mt-0.5 font-medium tabular-nums">{cell.value}</dd>
               {cell.value === "Unconfigured" && cell.reason ? (
-                <p className="mt-0.5 text-[10px] leading-snug text-zinc-500">
+                <p className="mt-0.5 text-[10px] leading-snug opacity-60">
                   {cell.reason}
                 </p>
               ) : null}
@@ -437,7 +355,7 @@ export function ScoutExecutePanel({
 
       {reservationStale ? (
         <p
-          className="mt-2 rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-100"
+          className="rounded-lg border border-amber-500/30 bg-amber-950/30 px-3 py-2 text-xs text-amber-100"
           data-scout-reservation-stale
         >
           Reservation stale — Scout funding parameters changed. Release the old
@@ -447,7 +365,7 @@ export function ScoutExecutePanel({
 
       {!activeReservation && fundingFollowUp.eligible ? (
         <p
-          className="mt-2 rounded-lg border border-sky-500/30 bg-sky-950/20 px-3 py-2 text-xs text-sky-100"
+          className="rounded-lg border border-sky-500/30 bg-sky-950/20 px-3 py-2 text-xs text-sky-100"
           data-scout-funding-follow-up-pending
         >
           Funding follow-up pending — Accept a decision-update (or reopen Control
@@ -456,15 +374,15 @@ export function ScoutExecutePanel({
         </p>
       ) : null}
 
-      {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}
+      {error ? <p className="text-xs text-red-400">{error}</p> : null}
 
       {/* Prepare trade / Funding Snapshot live once in Scout card Funding & execution (29-48). */}
 
-      <div className="mt-3 border-t border-zinc-800/80 pt-2">
+      <div>
         <button
           type="button"
           onClick={() => setTechOpen((v) => !v)}
-          className="flex w-full items-center justify-between gap-2 py-1.5 text-left text-xs text-zinc-500 hover:text-zinc-300"
+          className="flex w-full items-center justify-between gap-2 py-1.5 text-left text-xs opacity-70 hover:opacity-100"
           aria-expanded={techOpen}
           data-scout-tech-menu
         >
@@ -501,27 +419,27 @@ export function ScoutExecutePanel({
               />
             ) : null}
 
-            <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40">
+            <div className="rounded-xl border border-current/15 bg-black/10">
               <button
                 type="button"
                 onClick={() => setShowManual((v) => !v)}
                 className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left"
               >
                 <div>
-                  <p className="text-xs font-medium text-zinc-400">
+                  <p className="text-xs font-medium opacity-80">
                     Manual levels → JSON
                   </p>
-                  <p className="mt-0.5 text-[10px] text-zinc-600">
+                  <p className="mt-0.5 text-[10px] opacity-50">
                     Shares default ({MANUAL_SHARES_PLACEHOLDER}) is a form
                     placeholder only — not funding data.
                   </p>
                 </div>
-                <span className="text-[11px] text-zinc-500">
+                <span className="text-[11px] opacity-50">
                   {showManual ? "Hide" : "Show"}
                 </span>
               </button>
               {showManual ? (
-                <div className="border-t border-zinc-800 px-3 pb-3 pt-2">
+                <div className="border-t border-current/15 px-3 pb-3 pt-2">
                   <div className="grid gap-2 sm:grid-cols-2">
                     {(
                       [
@@ -534,7 +452,7 @@ export function ScoutExecutePanel({
                       ] as const
                     ).map(([key, label]) => (
                       <label key={key} className="block text-xs">
-                        <span className="text-zinc-500">{label}</span>
+                        <span className="opacity-60">{label}</span>
                         <input
                           value={form[key]}
                           onChange={(e) =>
@@ -545,7 +463,7 @@ export function ScoutExecutePanel({
                       </label>
                     ))}
                     <label className="block text-xs sm:col-span-2">
-                      <span className="text-zinc-500">Playbook</span>
+                      <span className="opacity-60">Playbook</span>
                       <select
                         value={form.playbookId}
                         onChange={(e) =>
@@ -594,6 +512,6 @@ export function ScoutExecutePanel({
           </div>
         ) : null}
       </div>
-    </section>
+    </div>
   );
 }

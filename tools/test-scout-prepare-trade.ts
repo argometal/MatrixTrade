@@ -162,7 +162,8 @@ async function main() {
   assert.match(fundingMenu, /data-scout-funding-execution-menu/);
   assert.match(execute, /Manual levels → JSON/);
   assert.match(execute, /Copy trade-proposal JSON/);
-  assert.match(execute, /row\.label !== \"Shares\"/);
+  assert.doesNotMatch(execute, /buildTradeLevelsView/);
+  assert.match(planning, /\["Shares"/);
 
   // 7 — Funding Snapshot remains read-only
   assert.equal(allocated.mutatesCapital, false);
@@ -176,9 +177,10 @@ async function main() {
   assert.notEqual(allocated.stockThesisId, allocated.stockFileId);
   assert.equal(allocated.stockFileId, "unconfigured");
 
-  // 9 — Visual declutter markers remain
+  // 9 — Visual declutter markers remain; Execute extras on Scout card
   assert.match(planning, /data-scout-case-summary/);
   assert.match(planning, /data-scout-case-details/);
+  assert.match(planning, /<ScoutExecutePanel/);
   assert.match(execute, /data-scout-funding-summary/);
   assert.match(execute, /data-scout-tech-menu/);
 
