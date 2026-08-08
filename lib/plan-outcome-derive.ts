@@ -59,6 +59,36 @@ export function planEligibleForOutcomeClosure(plan: TradePlan): boolean {
   return false;
 }
 
+/**
+ * expired_window — closes only the tactical PLAN window.
+ * No counterfactual loss, no Trade, Stock File unchanged.
+ */
+export function validateExpiredWindowEligibility(
+  plan: TradePlan,
+  opts?: { linkedTradeIds?: string[] }
+): { ok: true } | { ok: false; errors: string[] } {
+  const errors: string[] = [];
+
+  if (!planEligibleForOutcomeClosure(plan)) {
+    errors.push(
+      `Plan ${plan.id} is not terminal or eligible for outcome closure (status=${plan.status})`
+    );
+  }
+  if (plan.linkedTradeId) {
+    errors.push(
+      `Plan ${plan.id} has linkedTradeId ${plan.linkedTradeId} — use executed outcome path, not expired_window`
+    );
+  }
+  if (opts?.linkedTradeIds?.length) {
+    errors.push(
+      `Plan ${plan.id} has linked Trade/fill (${opts.linkedTradeIds.join(", ")}) — expired_window rejected`
+    );
+  }
+
+  if (errors.length) return { ok: false, errors };
+  return { ok: true };
+}
+
 export type UplEligibilityInput = {
   entryReached: boolean;
   stopReachedBeforeTarget: boolean;

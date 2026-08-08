@@ -7,7 +7,9 @@ import {
 } from "@/app/actions";
 import {
   AUTOMATIC_EXECUTION_ENABLED,
+  EXPIRED_WINDOW_EXPLANATION,
   NON_EXECUTION_REASONS,
+  PLAN_OUTCOME_KIND_LABELS,
   PLAN_OUTCOME_KINDS,
 } from "@/lib/plan-outcome-types";
 import { deriveUnexecutedPlanLossServerValues } from "@/lib/plan-outcome-derive";
@@ -22,7 +24,9 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
       plan.outcome?.recordedAt && plan.outcome.learningSyncStatus === "complete"
     )
   );
-  const [outcomeKind, setOutcomeKind] = useState<string>("unexecuted_plan_loss");
+  const defaultKind =
+    plan.status === "expired" ? "expired_window" : "unexecuted_plan_loss";
+  const [outcomeKind, setOutcomeKind] = useState<string>(defaultKind);
   const [entryReached, setEntryReached] = useState(true);
   const [stopBeforeTarget, setStopBeforeTarget] = useState(true);
   const [targetBeforeStop, setTargetBeforeStop] = useState(false);
@@ -44,18 +48,27 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
     plan.outcome?.recordedAt &&
     !syncNeedsRepair
   ) {
+    const kindLabel =
+      plan.outcome.outcomeKind &&
+      plan.outcome.outcomeKind in PLAN_OUTCOME_KIND_LABELS
+        ? PLAN_OUTCOME_KIND_LABELS[
+            plan.outcome.outcomeKind as keyof typeof PLAN_OUTCOME_KIND_LABELS
+          ]
+        : plan.outcome.outcomeKind ?? plan.outcome.status ?? "legacy";
     return (
       <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-3 py-2 text-xs text-emerald-200">
-        Outcome recorded · {plan.outcome.outcomeKind ?? plan.outcome.status ?? "legacy"} ·
-        learning sync complete · realizedR {plan.outcome.realizedResultR ?? 0}
-        {plan.outcome.theoreticalResultR !== undefined &&
+        Outcome recorded · {kindLabel} · learning sync complete · realizedR{" "}
+        {plan.outcome.realizedResultR ?? 0}
+        {plan.outcome.outcomeKind !== "expired_window" &&
+        plan.outcome.theoreticalResultR !== undefined &&
         plan.outcome.theoreticalResultR !== null
           ? ` · counterfactualR ${plan.outcome.theoreticalResultR}`
           : ""}
-        {plan.outcome.counterfactualDollarResult !== undefined &&
+        {plan.outcome.outcomeKind !== "expired_window" &&
+        plan.outcome.counterfactualDollarResult !== undefined &&
         plan.outcome.counterfactualDollarResult !== null
           ? ` · counterfactual$ ${plan.outcome.counterfactualDollarResult}`
-          : " · counterfactual$ unavailable"}
+          : ""}
       </div>
     );
   }
@@ -145,7 +158,7 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
         >
           {PLAN_OUTCOME_KINDS.map((k) => (
             <option key={k} value={k}>
-              {k}
+              {PLAN_OUTCOME_KIND_LABELS[k]}
             </option>
           ))}
         </select>
@@ -222,6 +235,8 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
             </div>
           ) : null}
         </>
+      ) : outcomeKind === "expired_window" ? (
+        <p className="text-xs text-zinc-400">{EXPIRED_WINDOW_EXPLANATION}</p>
       ) : (
         <p className="text-xs text-zinc-400">
           Duplicate creation closes this plan record with excludedFromMetrics — does not
@@ -244,7 +259,11 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
           name="notes"
           rows={3}
           className="mt-1 w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm"
-          placeholder="Human-confirmed event order only — do not invent prices."
+          placeholder={
+            outcomeKind === "expired_window"
+              ? EXPIRED_WINDOW_EXPLANATION
+              : "Human-confirmed event order only — do not invent prices."
+          }
         />
       </label>
 
