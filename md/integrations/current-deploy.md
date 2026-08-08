@@ -16,7 +16,7 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807o
+# optional pin: git checkout main0807q
 ```
 
 ## What this deploy includes
