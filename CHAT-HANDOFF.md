@@ -14,8 +14,8 @@
 
 ## Pending — Deprecate Dashboard Paste AI Block (legacy)
 
-PR branch: `cursor/deprecate-dashboard-ai-block-b0a5` · tip `9fea880`  
-Removes bottom **Paste AI Block (legacy)** from `/home-preview`. AI Blocks → Control → Apply only. `/exchange` and `/ai-workspace` redirect to dashboard.
+PR: #177 · branch `cursor/deprecate-dashboard-ai-block-b0a5` (rebased on main)  
+Removes bottom **Paste AI Block (legacy)** from `/home-preview`. AI Blocks → Control → Apply only.
 
 ## Pending — ArgusForge 24-33 Recent linkage
 
