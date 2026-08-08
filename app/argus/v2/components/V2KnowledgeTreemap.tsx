@@ -102,7 +102,7 @@ export function V2KnowledgeTreemap({
                     fontSize={1.8}
                     pointerEvents="none"
                   >
-                    {rect.evidenceCount} evidence
+                    {rect.evidenceCount > 0 ? `${rect.evidenceCount} evidence` : "empty"}
                   </text>
                 </>
               ) : null}
