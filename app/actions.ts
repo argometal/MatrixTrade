@@ -2,8 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { applyTradingProposal } from "@/lib/apply-trading-inbox";
-import { verifyApplyPersistence } from "@/lib/apply-verify";
+import { runCanonicalApplyPipeline } from "@/lib/apply-pipeline";
 import { requireTradingSession } from "@/lib/auth/require-session";
 import { isApplyImplemented } from "@/lib/ai-bridge-types";
 import {
@@ -75,9 +74,17 @@ export type AcceptAiBlockActionResult =
       planId?: string;
       inboxItemId?: string;
       alreadyApplied?: boolean;
+      verifyDetail?: string;
       fundingFollowUp?: import("@/lib/scout-funding-follow-up").FundingFollowUpResult;
     }
-  | { ok: false; error: string; details?: string[] };
+  | {
+      ok: false;
+      error: string;
+      details?: string[];
+      /** Canonical pipeline stage that failed. */
+      stage?: "parse" | "apply" | "verify";
+      verifyDetail?: string;
+    };
 
 export type CreateAiSessionActionResult =
   | { token: string; connectUrl: string; qrDataUrl: string }
@@ -129,20 +136,21 @@ export async function importAiBlockAction(formData: FormData): Promise<ImportAiB
   };
 }
 
-/** Parse, audit-log to inbox, and apply — inline Accept from Connect wizard. */
+/** Parse, audit-log to inbox, Apply → Verify — inline Accept from Control / Connect. */
 export async function acceptAiBlockAction(formData: FormData): Promise<AcceptAiBlockActionResult> {
   await requireTradingSession();
 
   const raw = String(formData.get("aiBlock") ?? "");
   const parsed = parseAiBlock(raw);
   if (!parsed.ok) {
-    return { ok: false, error: parsed.error, details: parsed.details };
+    return { ok: false, error: parsed.error, details: parsed.details, stage: "parse" };
   }
 
   if (!isApplyImplemented(parsed.payload.type)) {
     return {
       ok: false,
       error: `Apply is not implemented for type ${parsed.payload.type}.`,
+      stage: "apply",
     };
   }
 
@@ -151,18 +159,15 @@ export async function acceptAiBlockAction(formData: FormData): Promise<AcceptAiB
     source: "ai-block",
   });
 
-  let applyResult;
-  try {
-    applyResult = await applyTradingProposal(parsed.body);
-  } catch (err) {
+  const pipeline = await runCanonicalApplyPipeline(parsed.body);
+  if (!pipeline.ok) {
     return {
       ok: false,
-      error: err instanceof Error ? err.message : "Apply failed unexpectedly.",
+      error: pipeline.error,
+      details: pipeline.details,
+      stage: pipeline.stage,
+      verifyDetail: pipeline.verify?.detail,
     };
-  }
-
-  if (!applyResult.ok) {
-    return { ok: false, error: applyResult.errors.join("; ") };
   }
 
   if (inboxResult.ok) {
@@ -173,6 +178,7 @@ export async function acceptAiBlockAction(formData: FormData): Promise<AcceptAiB
     }
   }
 
+  const applyResult = pipeline.apply;
   revalidateTradingPaths();
   if (applyResult.tradeId) revalidatePath(`/trades/${applyResult.tradeId}`);
   if (applyResult.stockFileId) revalidatePath(`/stock-theses/${applyResult.stockFileId}`);
@@ -188,6 +194,7 @@ export async function acceptAiBlockAction(formData: FormData): Promise<AcceptAiB
     planId: applyResult.planId,
     inboxItemId: inboxResult.ok ? inboxResult.inboxItemId : undefined,
     alreadyApplied: applyResult.alreadyApplied,
+    verifyDetail: pipeline.verify.detail,
     fundingFollowUp: applyResult.fundingFollowUp,
   };
 }
@@ -369,27 +376,22 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
     );
   }
 
-  const parsed = parseTradingInboxPayload(payload);
-  if (!parsed) {
+  const shape = parseTradingInboxPayload(payload);
+  if (!shape) {
     redirect(
       `/inbox/${id}?origin=${origin}&error=${encodeURIComponent("Invalid inbox payload shape.")}`
     );
   }
 
-  let result;
-  try {
-    result = await applyTradingProposal(payload);
-  } catch (err) {
-    const msg =
-      err instanceof Error
-        ? err.message
-        : "Apply failed unexpectedly.";
-    redirect(`/inbox/${id}?origin=${origin}&error=${encodeURIComponent(msg)}`);
-  }
-  if (!result.ok) {
-    redirect(`/inbox/${id}?origin=${origin}&error=${encodeURIComponent(result.errors.join("; "))}`);
+  // Canonical lifecycle: Apply → Verify, then Inbox ack only on verified success.
+  const pipeline = await runCanonicalApplyPipeline(payload);
+  if (!pipeline.ok) {
+    redirect(
+      `/inbox/${id}?origin=${origin}&error=${encodeURIComponent(pipeline.error)}`
+    );
   }
 
+  const result = pipeline.apply;
   let inboxError: string | undefined;
   if (origin === "worker") {
     const ack = await ackBridgeInboxItem(id, "applied");
@@ -407,7 +409,6 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
     }
   }
 
-  const verify = await verifyApplyPersistence(parsed);
   const params = new URLSearchParams({
     applied: "1",
     origin,
@@ -415,11 +416,11 @@ export async function applyInboxItemAction(formData: FormData): Promise<void> {
     tradeId: result.tradeId ?? "",
     playbookId: result.playbookId ?? "",
     store: getTradesStoreMode(),
-    verified: verify.ok ? "1" : "0",
+    verified: "1",
     message: result.message,
   });
   if (result.alreadyApplied) params.set("alreadyApplied", "1");
-  if (verify.detail) params.set("verifyDetail", verify.detail);
+  if (pipeline.verify.detail) params.set("verifyDetail", pipeline.verify.detail);
   if (inboxError) params.set("inboxError", inboxError);
 
   revalidateTradingPaths();
