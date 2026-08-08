@@ -144,16 +144,13 @@ function countEvidenceForEntity(
   return { total: logs.length + inbox.length, recent, dates };
 }
 
-function countEvidenceForTopicIncludingEvents(
+function countEvidenceAcrossEntityIds(
   data: ArgusData,
   inboxItems: InboxItem[],
-  topicId: string,
+  scopeIds: Iterable<string>,
   includePrivate: boolean,
-  today: string,
-  logs: Log[]
+  today: string
 ): { total: number; recent: number; dates: string[] } {
-  // Union evidence across topic + linked events (shared topic+event logs count once).
-  const scopeIds = new Set<string>([topicId, ...getLinkedEventIdsForTopic(data, topicId, logs)]);
   const seenLog = new Set<string>();
   const seenInbox = new Set<string>();
   const dates: string[] = [];
@@ -179,6 +176,33 @@ function countEvidenceForTopicIncludingEvents(
     recent: dates.filter((d) => d >= cutoff).length,
     dates,
   };
+}
+
+function countEvidenceForTopicIncludingEvents(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  topicId: string,
+  includePrivate: boolean,
+  today: string,
+  logs: Log[]
+): { total: number; recent: number; dates: string[] } {
+  // Union evidence across topic + linked events (shared topic+event logs count once).
+  const scopeIds = new Set<string>([topicId, ...getLinkedEventIdsForTopic(data, topicId, logs)]);
+  return countEvidenceAcrossEntityIds(data, inboxItems, scopeIds, includePrivate, today);
+}
+
+/** Project volume = direct evidence ∪ evidence on linked topics/events (same binder neighborhood). */
+function countEvidenceForProjectIncludingLinks(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  project: Entity,
+  includePrivate: boolean,
+  today: string,
+  logs: Log[]
+): { total: number; recent: number; dates: string[] } {
+  const { topicIds, eventIds } = countTopicsAndEventsInScope(data, project, logs);
+  const scopeIds = new Set<string>([project.id, ...topicIds, ...eventIds]);
+  return countEvidenceAcrossEntityIds(data, inboxItems, scopeIds, includePrivate, today);
 }
 
 const RECENCY_WINDOW_DAYS = 90;
@@ -307,25 +331,29 @@ function normalizeRecurrenceScores(nodes: V2KnowledgeNode[]): void {
 }
 
 function primaryGroupForEntity(data: ArgusData, entity: Entity, logs: Log[]): string {
-  const linked = new Set(entity.linkedEntityIds ?? []);
-  for (const log of logs) {
-    if (!log.entityIds.includes(entity.id)) continue;
-    for (const id of log.entityIds) linked.add(id);
-  }
-  for (const id of linked) {
+  // Prefer org neighbors, then project (outbound + reverse + bridge + co-mention).
+  const neighbors = collectNeighborEntityIds(data, entity, logs);
+  let projectName: string | null = null;
+  for (const id of neighbors) {
     const other = data.entities.find((e) => e.id === id && !e.deletedAt);
-    if (other?.type === "company") return other.name;
-    if (other?.type === "project") return other.name;
+    if (!other) continue;
+    if (other.type === "company") return other.name;
+    if (other.type === "project" && !projectName) projectName = other.name;
   }
-  return "General";
+  return projectName ?? "General";
 }
 
+/**
+ * Knowledge nodes for Home Treemap / Portfolio.
+ * Includes every non-archived organization, project, and topic (empty binders keep a
+ * minimum tile weight). No hard top-N cut — Treemap must reflect the full portfolio.
+ */
 export function buildV2KnowledgeNodes(
   data: ArgusData,
   inboxItems: InboxItem[],
   includePrivate: boolean,
   today: string,
-  limit = 24
+  limit?: number
 ): V2KnowledgeNode[] {
   const logs = visibleLogs(data, includePrivate);
   const entities = data.entities.filter((e) => !e.deletedAt);
@@ -346,10 +374,18 @@ export function buildV2KnowledgeNodes(
             today,
             logs
           )
-        : countEvidenceForEntity(data, inboxItems, entity.id, includePrivate, today);
+        : kind === "project"
+          ? countEvidenceForProjectIncludingLinks(
+              data,
+              inboxItems,
+              entity,
+              includePrivate,
+              today,
+              logs
+            )
+          : countEvidenceForEntity(data, inboxItems, entity.id, includePrivate, today);
 
     const { total, recent, dates } = evidence;
-    if (total === 0 && kind !== "organization") continue;
 
     const recurrence30d = countRecurrence30d(dates, today);
 
@@ -361,7 +397,8 @@ export function buildV2KnowledgeNodes(
       id: entity.id,
       name: entity.name,
       kind,
-      evidenceCount: Math.max(total, 1),
+      // Keep true volume; layoutTreemap applies a floor so empty binders still draw.
+      evidenceCount: total,
       recentCount: recent,
       recentActivity: total ? recent / total : 0,
       recencyScore: recencyScoreFromDates(dates, today),
@@ -375,9 +412,10 @@ export function buildV2KnowledgeNodes(
 
   normalizeRecurrenceScores(nodes);
 
-  return nodes
-    .sort((a, b) => b.evidenceCount - a.evidenceCount || a.name.localeCompare(b.name))
-    .slice(0, limit);
+  const sorted = nodes.sort(
+    (a, b) => b.evidenceCount - a.evidenceCount || a.name.localeCompare(b.name)
+  );
+  return typeof limit === "number" && limit > 0 ? sorted.slice(0, limit) : sorted;
 }
 
 /** Slice-and-dice treemap — stable enough for Home experiment. */
@@ -416,12 +454,13 @@ export function layoutTreemap(
       return;
     }
 
-    const total = items.reduce((sum, n) => sum + n.evidenceCount, 0) || 1;
+    const weight = (n: V2KnowledgeNode) => Math.max(n.evidenceCount, 1);
+    const total = items.reduce((sum, n) => sum + weight(n), 0) || 1;
     const horizontal = w >= h;
     const mid = Math.ceil(items.length / 2);
     const left = items.slice(0, mid);
     const right = items.slice(mid);
-    const leftWeight = left.reduce((sum, n) => sum + n.evidenceCount, 0) / total;
+    const leftWeight = left.reduce((sum, n) => sum + weight(n), 0) / total;
 
     if (horizontal) {
       const lw = w * leftWeight;

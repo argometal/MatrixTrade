@@ -35,6 +35,17 @@ export function V2HomeIntelligencePanel({
     [nodes]
   );
   const treemapRects = useMemo(() => layoutTreemap(treemapNodes, 100, 72), [treemapNodes]);
+  const treemapCounts = useMemo(() => {
+    let organizations = 0;
+    let projects = 0;
+    let topics = 0;
+    for (const node of treemapNodes) {
+      if (node.kind === "organization") organizations += 1;
+      else if (node.kind === "project") projects += 1;
+      else topics += 1;
+    }
+    return { organizations, projects, topics, total: treemapNodes.length };
+  }, [treemapNodes]);
 
   /** Cloud sorted by the same triage score as the Tag universe list. */
   const scoredCloud = useMemo(() => {
@@ -54,7 +65,14 @@ export function V2HomeIntelligencePanel({
   return (
     <div>
       {tab === "treemap" ? (
-        <V2KnowledgeTreemap rects={treemapRects} size="full" onSelect={onLensChange} />
+        <div className="space-y-2">
+          <p className="text-[11px] text-zinc-600">
+            Full portfolio — {treemapCounts.organizations} orgs · {treemapCounts.projects} projects ·{" "}
+            {treemapCounts.topics} topics ({treemapCounts.total} tiles). Size = evidence volume; empty
+            binders still appear as minimum tiles.
+          </p>
+          <V2KnowledgeTreemap rects={treemapRects} size="full" onSelect={onLensChange} />
+        </div>
       ) : null}
       {tab === "portfolio" ? (
         <div className="space-y-2">

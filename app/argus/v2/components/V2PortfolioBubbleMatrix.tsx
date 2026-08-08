@@ -39,13 +39,13 @@ export function V2PortfolioBubbleMatrix({
     if (portfolio.length === 0) {
       return { layout: [] as Array<{ point: { id: string; x: number; y: number; r: number }; node: V2KnowledgeNode }>, maxPatterns: 1, empty: true };
     }
-    const maxEvidence = Math.max(...portfolio.map((n) => n.evidenceCount), 1);
+    const maxEvidence = Math.max(...portfolio.map((n) => Math.max(n.evidenceCount, 1)), 1);
     const byId = new Map(portfolio.map((n) => [n.id, n]));
     const raw = portfolio.map((node) => ({
       id: node.id,
       x: plotLeft + node.recurrenceScore * plotWidth,
       y: plotBottom - node.recencyScore * plotHeight,
-      r: 2 + Math.sqrt(node.evidenceCount / maxEvidence) * 5,
+      r: 2 + Math.sqrt(Math.max(node.evidenceCount, 1) / maxEvidence) * 5,
     }));
     const resolved = resolveBubblePositions(raw, {
       minX: plotLeft,
