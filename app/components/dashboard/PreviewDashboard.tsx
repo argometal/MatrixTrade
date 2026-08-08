@@ -1,14 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import type { ImportAiBlockActionResult } from "@/app/actions";
-import { HomeDashboardMain } from "@/app/components/home-dashboard/HomeDashboardMain";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
 import type { EquityPoint } from "@/lib/review";
-import type { AiBridgeOverviewData } from "@/lib/ai-bridge-overview";
 import { formatDashboardPf, formatDashboardUsd } from "@/lib/dashboard-display";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
@@ -64,11 +59,7 @@ function pnlTone(value: number): string {
 }
 
 type ExchangeProps = {
-  snapshotText: string;
-  overview: AiBridgeOverviewData;
-  pendingInboxCount: number;
-  cycleLabel: string;
-  importAction: (formData: FormData) => Promise<ImportAiBlockActionResult>;
+  /** Snapshot menu only — Paste AI Block (legacy) removed from Dashboard. Use Control → Apply. */
   dashboardSnapshots: SnapshotMenuItem[];
 };
 
@@ -79,15 +70,6 @@ export function PreviewDashboard({
   data: DashboardData;
   exchange?: ExchangeProps;
 }) {
-  const searchParams = useSearchParams();
-  const [assistantOpen, setAssistantOpen] = useState(false);
-
-  useEffect(() => {
-    if (searchParams.get("panel") === "assistant") {
-      setAssistantOpen(true);
-    }
-  }, [searchParams]);
-
   const { experiment, monthly, mistakeStats } = data;
   const topMistake = mistakeStats[0];
 
@@ -376,37 +358,6 @@ export function PreviewDashboard({
               </section>
             )}
 
-            {exchange && (
-              <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50">
-                <button
-                  type="button"
-                  onClick={() => setAssistantOpen((v) => !v)}
-                  className="flex w-full items-center justify-between px-5 py-4 text-left"
-                >
-                  <div>
-                    <h2 className="text-sm font-semibold text-zinc-100">Paste AI Block (legacy)</h2>
-                    <p className="mt-0.5 text-xs text-zinc-500">
-                      Prefer Control → Apply. This imports to History for review.
-                    </p>
-                  </div>
-                  <span className="text-zinc-500">{assistantOpen ? "▾" : "▸"}</span>
-                </button>
-                {assistantOpen && (
-                  <div className="border-t border-zinc-800 px-4 py-4 lg:px-6">
-                    <HomeDashboardMain
-                      snapshotText={exchange.snapshotText}
-                      overview={exchange.overview}
-                      pendingInboxCount={exchange.pendingInboxCount}
-                      cycleLabel={exchange.cycleLabel}
-                      importAction={exchange.importAction}
-                      theme="dark"
-                      hideHeader
-                      variant="assistant-only"
-                    />
-                  </div>
-                )}
-              </section>
-            )}
           </div>
         </div>
       </div>

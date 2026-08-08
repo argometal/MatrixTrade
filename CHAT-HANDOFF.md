@@ -12,6 +12,11 @@
 
 ---
 
+## Pending — Deprecate Dashboard Paste AI Block (legacy)
+
+PR: #177 · branch `cursor/deprecate-dashboard-ai-block-b0a5` (rebased on main)  
+Removes bottom **Paste AI Block (legacy)** from `/home-preview`. AI Blocks → Control → Apply only.
+
 ## Pending — ArgusForge 24-33 Recent linkage
 
 PR: #110 (draft)  
