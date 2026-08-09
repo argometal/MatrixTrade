@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
+import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 import {
   V2_EVENT_PAGE_SIZE,
   buildV2EventTriageCounts,
@@ -209,7 +210,8 @@ export function V2EventsShell({
               <h1 className="text-xl font-bold text-zinc-50">Events</h1>
               <p className="mt-0.5 text-xs text-zinc-500">Meetings, calls, milestones — latest first</p>
             </div>
-            <div className="flex shrink-0 gap-2">
+            <div className="flex shrink-0 items-center gap-2">
+              <V2IntelHelpLink topic="browse-events" label="Events" />
               <V2CreateEntityButton
                 kind="event"
                 label="+ Event"
@@ -232,9 +234,6 @@ export function V2EventsShell({
               </button>
             ))}
           </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
-            Orphans = no Topic/Org/Project/Person links (needs attention). Linked = wired into the graph.
-          </p>
           <div className="mt-2 flex gap-1 overflow-x-auto">
             {WHEN_TABS.map((t) => (
               <button

@@ -11,6 +11,7 @@ import {
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
 import { V2DayPicker } from "@/app/argus/v2/components/V2DayPicker";
+import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 import { V2Badge } from "../../../components/v2-ui";
 import type {
   V2NetworkBrowseCard,
@@ -767,13 +768,13 @@ export function V2NetworkBrowserShell({
                       ◉
                     </span>
                     <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Network</h1>
+                    {isPending ? (
+                      <span className="text-xs text-zinc-500">Saving…</span>
+                    ) : null}
                   </div>
-                  <p className="mt-1 text-sm text-zinc-500">
-                    Status is automatic from evidence. Drag ⋮⋮ to reorder; board pins are optional.
-                    {isPending ? " Saving…" : ""}
-                  </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                  <V2IntelHelpLink topic="browse-network" label="Network" />
                   <NetworkPanelButton />
                   <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5">
                     {(
@@ -859,10 +860,6 @@ export function V2NetworkBrowserShell({
                       <SummaryPill label="Emails Exchanged" value={summary.emailsExchanged} />
                       <SummaryPill label="Interactions Logged" value={summary.interactionsLogged} />
                     </div>
-                    <p className="text-[10px] leading-relaxed text-zinc-600">
-                      Status comes from linked emails, records, follow-ups, and projects. Use 📅 on a card to log last
-                      contact.
-                    </p>
                   </div>
                 ) : null}
               </div>

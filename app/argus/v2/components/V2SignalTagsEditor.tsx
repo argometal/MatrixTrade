@@ -18,8 +18,8 @@ export function V2SignalTagsEditor({
     <V2TrackerTogglePanel
       evidenceTags={[]}
       signalTags={initialTags}
-      heading="Trackers (click to Flag / Disable)"
-      hint="Flag / Disable Tracker only — never deletes Tags from Notes."
+      heading="Trackers"
+      helpTopic="tags-patterns"
       addPlaceholder="Tag name → Flag as Tracker"
     />
   );

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toggleSignalTagAction } from "@/app/argus/actions";
 import { signalTagKey } from "@/lib/argus/signal-tags";
 import { confirmTrackerConvert } from "@/lib/argus/tracker-confirm";
+import { V2IntelHelpLink } from "./V2IntelHelpLink";
 import {
   V2FlaggableTagChip,
   focusKeySet,
@@ -54,8 +55,10 @@ export function V2TrackerTogglePanel({
   evidenceTags,
   signalTags,
   onSignalTagsChange,
-  heading = "Tags (click to Flag / Disable Tracker)",
-  hint = "Flag turns a Tag into a Tracker. Disable Tracker turns watch off — the Tag stays so you can Flag it again. This never deletes Tags from Notes.",
+  heading = "Tags · Trackers",
+  /** @deprecated Explanations live behind ? — ignored when helpTopic is set. */
+  hint: _hint,
+  helpTopic = "tags-patterns",
   addPlaceholder = "Tag name to Flag as Tracker…",
   /** When set, split inventory (“on this …”) from other Trackers. */
   surfaceLabel,
@@ -67,6 +70,8 @@ export function V2TrackerTogglePanel({
   onSignalTagsChange?: (next: string[]) => void;
   heading?: string;
   hint?: string;
+  /** Contextual ? topic id (Help index). */
+  helpTopic?: string;
   addPlaceholder?: string;
   surfaceLabel?: string;
   emptyEvidenceHint?: string;
@@ -219,9 +224,9 @@ export function V2TrackerTogglePanel({
 
   return (
     <div className="space-y-3">
-      <div>
+      <div className="flex items-center justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-600">{heading}</p>
-        <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">{hint}</p>
+        <V2IntelHelpLink topic={helpTopic} label={heading} />
       </div>
 
       {split ? (
@@ -230,17 +235,11 @@ export function V2TrackerTogglePanel({
             <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-600/90">
               On {surfaceLabel}
             </p>
-            <p className="text-[11px] leading-relaxed text-zinc-600">
-              Tags that already appear on Notes or emails here (count = uses). This is the inventory for{" "}
-              {surfaceLabel} — not the global Note → Tags picker pool. Click a chip to Flag / Disable Tracker
-              (confirm first).
-            </p>
             {evidenceRows.length > 0 ? (
               renderChips(evidenceRows)
             ) : (
               <p className="text-sm text-zinc-600">
-                {emptyEvidenceHint ??
-                  "No Tags on Notes here yet. Open the Note tab → Tags to pick from the pool (checkmarks show what’s already on the note you’re writing)."}
+                {emptyEvidenceHint ?? "No Tags on Notes here yet."}
               </p>
             )}
           </div>
@@ -248,10 +247,6 @@ export function V2TrackerTogglePanel({
           <div className="space-y-2 border-t border-zinc-800/80 pt-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
               Other Trackers
-            </p>
-            <p className="text-[11px] leading-relaxed text-zinc-600">
-              Journal-wide watch names that are not on {surfaceLabel}’s Notes yet. Flag / Disable still asks to
-              confirm.
             </p>
             {otherTrackerRows.length > 0 ? (
               renderChips(otherTrackerRows)
@@ -263,7 +258,7 @@ export function V2TrackerTogglePanel({
       ) : flatRows.length > 0 ? (
         renderChips(flatRows)
       ) : (
-        <p className="text-sm text-zinc-600">No Tags yet. Add Tags on a Note, or Flag a Tracker name below.</p>
+        <p className="text-sm text-zinc-600">No Tags yet.</p>
       )}
 
       <div className="flex flex-wrap items-center gap-2">

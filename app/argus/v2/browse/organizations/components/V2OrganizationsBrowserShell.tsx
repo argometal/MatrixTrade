@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { archiveEntityAction, restoreEntityAction } from "@/app/argus/actions";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2BrowseStatusFilter } from "@/app/argus/v2/components/V2BrowseStatusFilter";
+import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 import { V2RelationshipChart } from "@/app/argus/v2/components/V2RelationshipChart";
 import { V2Badge } from "../../../components/v2-ui";
 import {
@@ -407,13 +408,13 @@ export function V2OrganizationsBrowserShell({
                     🏢
                   </span>
                   <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Organizations</h1>
+                  {isPending ? (
+                    <span className="text-xs text-zinc-500">Saving…</span>
+                  ) : null}
                 </div>
-                <p className="mt-1 text-sm text-zinc-500">
-                  Drag ⋮⋮ to reorder cards or move them onto status labels (board).
-                  {isPending ? " Saving…" : ""}
-                </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                <V2IntelHelpLink topic="browse-orgs" label="Organizations" />
                 <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5">
                   {(
                     [

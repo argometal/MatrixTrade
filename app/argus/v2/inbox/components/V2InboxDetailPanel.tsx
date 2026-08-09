@@ -10,7 +10,7 @@ import type { TagBuckets } from "@/app/argus/components/TagPickerModal";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import type { ArgusLinkFilter, ArgusLinkResult } from "@/app/argus/components/ArgusLinkModal";
 import type { CreateFlowOpenOptions } from "@/lib/argus/create-flow-types";
-import { INBOX, LINK_HIERARCHY } from "@/lib/argus/ux-copy";
+import { INBOX } from "@/lib/argus/ux-copy";
 import {
   archiveInboxAction,
   saveInboxLinksAction,
@@ -375,18 +375,10 @@ export function V2InboxDetailPanel({
 
   const linksWorkspace = (
     <div className="space-y-5">
-      <p className="text-sm leading-relaxed text-zinc-500">
-        Connect this email to people, projects, topics, and events. Status updates when you link or unlink — no manual
-        triage.
-      </p>
-
       {convertedLog ? (
         <div className="rounded-xl border border-violet-500/25 bg-violet-950/20 px-3 py-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-300/90">
             Finished as journal note
-          </p>
-          <p className="mt-1 text-xs text-zinc-500">
-            Convert-to-record is deprecated. Continue in the note — not a dead end.
           </p>
           <Link
             href={`/argus/logs/${convertedLog.id}`}
@@ -398,12 +390,7 @@ export function V2InboxDetailPanel({
       ) : null}
 
       <div>
-        <h3 className="mb-1 text-sm font-semibold text-zinc-100">Linked entities</h3>
-        {canTriage ? (
-          <p className="mb-3 text-[11px] leading-snug text-zinc-500">{LINK_HIERARCHY.inboxLinkHint}</p>
-        ) : (
-          <div className="mb-3" />
-        )}
+        <h3 className="mb-3 text-sm font-semibold text-zinc-100">Linked entities</h3>
         <div className="flex flex-wrap gap-2">
           {selectedLinked.map((entity) => (
             <span
@@ -466,10 +453,7 @@ export function V2InboxDetailPanel({
       </div>
 
       <div>
-        <h3 className="mb-1 text-sm font-semibold text-zinc-100">Tags</h3>
-        <p className="mb-3 text-[11px] leading-snug text-zinc-500">
-          Suggestions are inferred from the email — click to add. Only tags you select are saved.
-        </p>
+        <h3 className="mb-3 text-sm font-semibold text-zinc-100">Tags</h3>
         <div className="flex flex-wrap gap-1.5">
           {selectedTags.map((tag) => (
             <span
