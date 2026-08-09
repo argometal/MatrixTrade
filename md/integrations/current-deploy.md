@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807v` |
-| **Commit** | Always `git rev-parse main0807v` after fetch (must match `origin/main`) |
+| **Tag** | `main0807w` |
+| **Commit** | Always `git rev-parse main0807w` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-09 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,13 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807v
+# optional pin: git checkout main0807w
 ```
 
 ## What this deploy includes
 
+- PR #200: Tags + **Trackers** (Flag = action); Home Tags control center; neighborhood docks on Treemap/Portfolio/Tags; library MD aligned (no radioactive / Focus Tags wording)
+- PR #201: Topics browse evidence = Topic ∪ linked Events; Grid / List / Manage hover names
 - PR #198: Topic Chronicle only (drop Timeline); Tags tab rolls up Patterns + Note Tags from linked Events; Connections Event chips show dates
 - PR #196: Topic/Event binder chips + reverse links on all levels (Org/Project/Person Links; Link modal outbound∪reverse; Kind parsing harden; create/save mirror)
 - PR #192 / #194: Tags Universe exploration workspace (+ Vercel typecheck fix for test fixtures)
@@ -31,13 +33,13 @@ git reset --hard origin/main
 - PR #183: Empty topics respect event links (linked-only → Quiet); Topics status pills only (no duplicate tabs/Filters); deprecate Chronicle filter chips
 - PR #182: Network status chips only (no duplicate metric cards); Intelligence Treemap first / Tags third; Topic↔Event link mirror
 - PR #181: Tag universe on Intelligence → Tags (filter/search/Flag/Remove + recency×recurrence); Portfolio bubble separation
-- PR #180: Focus Tags portfolio on Home (recency × recurrence, filter, Flag/Unflag)
+- PR #180: Focus Tags portfolio on Home (recency × recurrence, filter, Flag/Unflag) — superseded by Trackers in #200
 - PR #178: Single sidebar expand arrow (remove duplicate TopBar `»`)
 - PR #176: Topic↔Event metric/filter parity + Focus-trigger graph halos (neighbor policy shared both sides; Event attendees = People)
 - `main0807h`: Dedupe Help / Security / Home nav icons (TopBar + sidebar brand)
 - PR #175: Event Tags restored (Note Tags + Focus Tags tab); Topic Aliases → Match tags; keep TAGS ontology
 - PR #174: Event/Topic **Edit** menu — Rename / Archive / Delete event (visible next to title)
-- PR #173: Focus Tags replace Event Signals — journal `signalTags` watchlist; highlight-critical in Patterns/cloud
+- PR #173: Focus Tags replace Event Signals — journal `signalTags` (now **Trackers** / Flag action — see #200)
 - PR #172: Chronicle PIN delete for linked notes + stop note resurrection (`Chronicle: v2` marker; soft-deleted counts as migrated)
 - PR #171: Stop ghost chronicle notes on every Event open (idempotent legacy migration)
 - PR #170: Clean Argus/trading login — drop Work Tracker tagline and guest-lock banner
