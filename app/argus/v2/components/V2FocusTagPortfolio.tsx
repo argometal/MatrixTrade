@@ -211,26 +211,23 @@ export function V2FocusTagPortfolio({
     <div className="space-y-4">
       {/* Trackers strip — watch-on Tags (not a separate ontology) */}
       <div className="rounded-xl border border-rose-500/25 bg-rose-950/15 px-3 py-3 sm:px-4">
-        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-300/90">
-              Trackers
-            </p>
-            <p className="mt-0.5 text-[11px] text-zinc-500">
-              Tracker = watch on for a Tag. Disable Tracker leaves the Tag in Universe. Zero-evidence Tags (new / Topic
-              Tags) are still Tags — not a separate “quiet” mode.
-            </p>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-300/90">
+            Trackers
+          </p>
+          <div className="flex items-center gap-2">
+            <V2IntelHelpLink topic="tags-patterns" label="Trackers" />
+            <button
+              type="button"
+              onClick={() => setFilter("focus")}
+              className="text-[11px] font-medium text-rose-300/90 hover:text-rose-200"
+            >
+              View Trackers only →
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => setFilter("focus")}
-            className="text-[11px] font-medium text-rose-300/90 hover:text-rose-200"
-          >
-            View Trackers only →
-          </button>
         </div>
         {trackerRows.length === 0 ? (
-          <p className="text-xs text-zinc-600">No Trackers yet — pick a Tag below and Flag it, or add one under Manage.</p>
+          <p className="text-xs text-zinc-600">No Trackers yet.</p>
         ) : (
           <ul className="flex flex-wrap gap-1.5" aria-label="Flagged Trackers">
             {trackerRows.slice(0, 36).map((row) => (
@@ -430,10 +427,6 @@ export function V2FocusTagPortfolio({
       {!selected ? (
         <div className="rounded-xl border border-dashed border-zinc-800/90 bg-zinc-950/40 px-4 py-6 text-center">
           <p className="text-sm font-medium text-zinc-400">Select a tag in the Universe</p>
-          <p className="mt-1 text-xs text-zinc-600">
-            See the evidence that created it. If it isn’t a Tracker yet, Flag it as one. Binders open a
-            neighborhood view.
-          </p>
         </div>
       ) : (
         <div className="space-y-4 rounded-xl border border-violet-500/25 bg-zinc-950/50 p-4 sm:p-5">
@@ -610,7 +603,7 @@ export function V2FocusTagPortfolio({
           signalTags={focusTags}
           onSignalTagsChange={setFocusTags}
           heading="Manage universe · Tag ↔ Tracker"
-          hint="Click to Flag / Disable Tracker. No delete — Tags on Notes and Topic Tags stay. Type a name to Flag a new Tracker."
+          helpTopic="tags-universe"
           addPlaceholder="Tag name → Flag as Tracker"
         />
       </div>

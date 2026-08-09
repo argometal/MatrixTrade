@@ -436,22 +436,14 @@ export function V2EventDetailPanel({
 
           {panelTab === "tags" ? (
             <div className="space-y-4">
-              <div>
-                <p className="text-xs font-medium text-zinc-300">Tags · Trackers</p>
-                <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
-                  <span className="text-zinc-400">On this Event</span> lists Tags already used on its Notes/emails —
-                  that answers “what tags are on my event?”. To put a Tag on evidence, use Note → Tags (picker pool with
-                  checkmarks). Click a chip here only to Flag / Disable Tracker (confirm first) — never deletes Tags.
-                </p>
-              </div>
               <V2TrackerTogglePanel
                 evidenceTags={eventTagCounts}
                 signalTags={focusTags}
                 onSignalTagsChange={setFocusTags}
                 surfaceLabel="this Event"
                 heading="Event Tags · Trackers"
-                hint="⚑ = Tracker (journal-wide watch). Plain chip = Tag on this Event only. Convert asks for confirmation both ways."
-                emptyEvidenceHint="No Tags on this Event’s Notes yet. Open Note → Tags — the picker pool shows the universe; checkmarks mean the tag is on the note you’re writing. After Save, those Tags show up here."
+                helpTopic="event-tags"
+                emptyEvidenceHint="No Tags on this Event’s Notes yet."
                 addPlaceholder="Type a Tag name → Flag as Tracker"
               />
             </div>

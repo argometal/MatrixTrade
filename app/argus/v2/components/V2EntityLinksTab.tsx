@@ -143,8 +143,7 @@ export function V2EntityLinksTab({
         </LinksColumn>
 
         <V2Card className="p-4 lg:col-span-2 xl:col-span-3">
-          <h3 className="mb-1 text-sm font-semibold text-zinc-100">Tags</h3>
-          <p className="mb-4 text-[11px] text-zinc-600">Labels and patterns from evidence — not Topic binders.</p>
+          <h3 className="mb-4 text-sm font-semibold text-zinc-100">Tags</h3>
           {tagPatterns.length > 0 ? (
             <V2TagPatternBadges
               patterns={tagPatterns}

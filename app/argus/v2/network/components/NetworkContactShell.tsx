@@ -117,9 +117,6 @@ function AttentionPanel({
           <div className="flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-200">
             <span>{networkStatus}</span>
           </div>
-          <p className="mt-1.5 text-[11px] text-zinc-600">
-            Same vocabulary as Network browse — derived from evidence and follow-ups.
-          </p>
         </div>
         {attention.reason !== "no_action_required" ? (
           <div>
@@ -147,8 +144,7 @@ function ContactAside({
 }) {
   return (
     <V2Card className="p-4">
-      <h3 className="mb-1 text-sm font-semibold text-zinc-100">Contact</h3>
-      <p className="mb-3 text-[11px] text-zinc-600">General details — edit to update role, company, and notes.</p>
+      <h3 className="mb-3 text-sm font-semibold text-zinc-100">Contact</h3>
       <dl className="grid gap-2.5 text-sm sm:grid-cols-2">
         <div className="flex justify-between gap-3 sm:flex-col sm:justify-start">
           <dt className="text-zinc-500">Company</dt>
@@ -199,10 +195,7 @@ function TagsSection({
 
   return (
     <V2Card className="p-4">
-      <h3 className="mb-1 text-sm font-semibold text-zinc-100">Topics · Events · Tags</h3>
-      <p className="mb-4 text-[11px] text-zinc-600">
-        Structural binders first; tags stay evidence labels.
-      </p>
+      <h3 className="mb-4 text-sm font-semibold text-zinc-100">Topics · Events · Tags</h3>
 
       {page.relatedTopics.length > 0 ? (
         <div className="mb-5">
@@ -399,7 +392,6 @@ function RelationshipTab({
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Relationship</h2>
-          <p className="mt-1 text-[11px] text-zinc-600">Post-hoc value exchange — not a pre-contact scorecard.</p>
         </div>
         <p className="text-xs tabular-nums text-zinc-500">
           Contact value {countOfFive(contactValue)} · Yours {countOfFive(myValue)}

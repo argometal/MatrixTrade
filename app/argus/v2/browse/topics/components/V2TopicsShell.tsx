@@ -13,6 +13,7 @@ import {
 } from "react";
 import { archiveEntityAction, restoreEntityAction } from "@/app/argus/actions";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
+import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 import { V2Badge } from "../../../components/v2-ui";
 import {
   applyBrowseOrder,
@@ -843,13 +844,13 @@ export function V2TopicsShell({
                   🏷
                 </span>
                 <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Topics</h1>
+                {isPending ? (
+                  <span className="text-xs text-zinc-500">Saving…</span>
+                ) : null}
               </div>
-              <p className="mt-1 text-sm text-zinc-500">
-                Drag ⋮⋮ to reorder within search results, or move onto board columns.
-                {isPending ? " Saving…" : ""}
-              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <V2IntelHelpLink topic="browse-topics" label="Topics" />
               <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5">
                 {(
                   [
@@ -899,10 +900,6 @@ export function V2TopicsShell({
             <SummaryPill label="Orphans" value={summary.empty} tone="blue" active={statusFilter === "Orphans"} onClick={() => applyStatusFilter("Orphans")} />
             <SummaryPill label="Archived" value={summary.archived} active={statusFilter === "Archived"} onClick={() => applyStatusFilter("Archived")} />
           </div>
-          <p className="mb-4 text-[11px] leading-relaxed text-zinc-600">
-            Active = recent evidence · Quiet = linked or stale · Orphans = no evidence and no links.
-            Board moves Active↔Quiet update these chips.
-          </p>
 
           <div className="relative mb-6 flex flex-wrap items-center gap-2">
             <button

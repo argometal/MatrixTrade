@@ -40,12 +40,6 @@ export function V2IntelligenceUniverseFilters({
           );
         })}
       </div>
-      {filter === "stale" ? (
-        <p className="text-[11px] text-zinc-500">
-          <span className="font-medium text-zinc-400">Stale</span> means there was evidence before, but none in the
-          last 90 days — still in the universe, not deleted.
-        </p>
-      ) : null}
     </div>
   );
 }
