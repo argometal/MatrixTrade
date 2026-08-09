@@ -70,10 +70,10 @@ export function V2HomeIntelligencePanel({
       {tab === "tags" ? (
         <div className="space-y-3">
           <div>
-            <h3 className="text-sm font-semibold text-zinc-100">Tags · Trackers</h3>
+            <h3 className="text-sm font-semibold text-zinc-100">Tags · universe</h3>
             <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-              Control center for Tags and Trackers. Browse the universe, Flag a tag that isn’t a Tracker yet, and open
-              a binder neighborhood from its evidence.
+              Manage the Tag universe (Universe / Hot / Patterns / Stale / Trackers). Flag or Disable Tracker without
+              deleting Tags. Create Topic Tags on Topic → Tags; create Note Tags on Event → Note.
             </p>
           </div>
           <V2FocusTagPortfolio

@@ -75,7 +75,7 @@ export function V2SignalTagsEditor({
           empty: SIGNAL_TAGS.empty,
           removeAria: SIGNAL_TAGS.removeAria,
         }}
-        inputAriaLabel="Flag a focus Tag"
+        inputAriaLabel="Add Tracker tag"
         footer={
           <button
             type="button"

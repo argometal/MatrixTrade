@@ -17,11 +17,12 @@ Status: **implemented** (treemap + portfolio axes as of 2026-07). Tag pattern ov
 - No BCG quadrant labels or manual strategic/completion axes.
 
 ### Tags tab (Home → Intelligence → Tags)
-- **Tag universe** workspace (`V2FocusTagPortfolio`) — primary navigation for Tags + Trackers (not the old top-20 cloud alone).
-- **Trackers strip** — Flagged Tags (journal `signalTags`) shown together; Flag a Tag that isn’t a Tracker yet.
+- **Tag universe** workspace (`V2FocusTagPortfolio`) — Universe / Hot / Patterns / Stale / Trackers.
+- **Stale** = has evidence but none in the last 90 days (still a Tag).
+- Universe includes evidence Tags + Topic Tags (`linkedTags`) + Trackers (`signalTags`).
+- **Trackers strip** + Manage editor — Flag / Disable Tracker never deletes Note or Topic Tags.
 - Bubble plot: recency × recurrence; ⚑ / amber ring = Tracker; gold ring = Pattern.
 - Selection shows evidence + binders; binder click loads **connection neighborhood**.
-- Tag cloud helper (`buildV2TagCloud`) may still feed other surfaces; Patterns use the same evidence Tag strings.
 
 ### Graph (neighborhood views)
 - **Removed** global graph tab from Home Intelligence — whole-graph view was premature without graph infra.

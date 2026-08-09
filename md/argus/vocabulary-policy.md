@@ -3,37 +3,48 @@
 **Status:** Canonical (2026-08-09)  
 **Mechanics:** [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md)
 
-Two Tag roles only:
+## One Tag system
 
 | Term | Where | Role |
 |------|--------|------|
-| **Tag** | On Notes/emails (`log.topics[]`, `inbox.topics[]`) | Accumulates evidence. Repetition → stronger Patterns / larger chips. |
-| **Tracker** | Journal `ArgusData.signalTags[]` | Flag a Tag to watch it. Always visibly marked (⚑). Does **not** copy onto Notes. |
+| **Tag** | Notes/emails (`topics[]`) **and** Topic binder (`entity.linkedTags`) | Same Tag names. Notes accumulate evidence / Patterns. Topic Tags keep the binder findable and stay in the Home universe. |
+| **Tracker** | Journal `ArgusData.signalTags[]` | Watch-on for a Tag (⚑). **Flag / Disable Tracker** never deletes the Tag. |
 | **Topic** | Entity (`Kind: topic`) | Evidence binder |
 | **Event** | Entity (`Kind: event`) | Case binder |
 | **Note** | `Log` row in Chronicle | Narrative evidence |
 
-**Flag** = the action (Flag / Unflag). **Tracker** = the role after you Flag a Tag.
+**Flag** = turn Tracker on. **Disable Tracker** = turn watch off. Tag remains unless explicitly removed from Notes or Topic Tags.
+
+### Home → Intelligence → Tags filters
+
+| Filter | Meaning |
+|--------|---------|
+| **Universe** | All Tags (evidence + Topic Tags + Trackers) |
+| **Hot** | Used on evidence in the last **30 days** |
+| **Patterns** | Recurring evidence Tags (Pattern floor) |
+| **Stale** | Has evidence, but **none in the last 90 days** (dormant — still a Tag) |
+| **Trackers** | Tags with watch-on |
+
+There is no separate “Quiet Tracker” mode — a Tag with no evidence yet is still a Tag (often a new Topic Tag or a Tracker waiting for notes).
 
 ### How to use
 
 | Intent | Where |
 |--------|--------|
 | Put a Tag on evidence | Event → **Note** → Tags → Save |
-| Flag / unflag a Tracker | **Click the Tag** (Topic Tags, Event Tags) or **Home → Tags** (control center — Flag if it isn’t a Tracker yet) |
-| See Tags + Trackers together | **Home → Intelligence → Tags** (Universe + Trackers strip) |
-| See Tags for a Topic | Topic → **Tags** (rolls up notes on the Topic + linked Events) |
-| Connection neighborhood | Home Treemap/Portfolio lens dock · Tags binder · org/project/topic/event detail |
-| Topics browse evidence total | Notes + emails on the Topic **and** linked Events (Chronicle stays topic-direct) |
-| Topics viewers | Grid · cards · List · rows · Manage (Active / Quiet / Empty / Archived) |
+| Create Topic Tags | Topic → **Tags** → Topic Tags editor (Save) |
+| Flag / Disable Tracker | Click the Tag chip, or Home → Tags / Event → Tags Trackers editor |
+| Manage universe | **Home → Intelligence → Tags** (Universe filters + Trackers strip + Manage) |
+| See Tags for a Topic | Topic → **Tags** (notes ∪ linked Events ∪ Topic Tags) |
 
-### Deprecated
+### Trimmed / retired labels
 
 | Old | Status |
 |-----|--------|
-| **Match tags** (Topic `linkedTags` / Aliases) | **Deprecated** — UI removed. Search uses evidence Tags from notes. Storage ignored for product behavior. |
-| Event Signals | Replaced by Tracker (Flag on Tags) |
-| Separate “Focus Tags” list editor on Event | Replaced by click-to-Flag on Tag chips |
+| “Match tags” as a separate ontology | **Retired as a name** — same storage (`linkedTags`), now **Topic Tags** in the one Tag system |
+| Quiet Tracker filter | **Removed** — zero-evidence names are Tags |
+| Event Signals | Replaced by Tracker |
+| Radioactive / critical marker wording | Use **Tracker** |
 
 Nav badge counts are **not** Trackers (`buildV2NavCounts`) — triage debt only.
 

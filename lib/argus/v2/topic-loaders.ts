@@ -295,8 +295,8 @@ function topicRowFilterMeta(
   }
 
   return {
-    // Match tags deprecated — browse/search use evidence Tags from notes.
-    aliases: [],
+    // Topic Tags (binder) — entity.linkedTags; same Tag strings as evidence/Trackers.
+    aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
     evidenceTags: evidenceTagCounts.map((row) => row.tag),
     patternCount: tagPatterns.length,
     eventCount: nodeCounts.eventCount,
@@ -410,7 +410,7 @@ export function buildV2TopicDetails(
       neighborEntityIds: [...neighborIds],
       linkedEntities,
       linkedEvents,
-      aliases: [],
+      aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
       lifecycleStatus: topic.lifecycleStatus,
       hasPrivateEvidence: entityHasPrivateEvidence(data, inboxItems, topic.id),
       deleteRequiresAuthenticator: entityDeleteRequiresAuthenticator(topic),

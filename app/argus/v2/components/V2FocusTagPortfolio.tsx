@@ -9,17 +9,26 @@ import { signalTagKey } from "@/lib/argus/signal-tags";
 import { resolveBubblePositions } from "@/lib/argus/v2/intelligence-viz";
 import { SIGNAL_TAGS } from "@/lib/argus/ux-copy";
 import { V2HomeNeighborhoodViewer } from "./V2HomeNeighborhoodViewer";
+import { V2SignalTagsEditor } from "./V2SignalTagsEditor";
 import { V2Timeline } from "./V2Timeline";
 
-type FocusFilter = "all" | "hot" | "stale" | "patterns" | "focus" | "quiet";
+type FocusFilter = "all" | "hot" | "stale" | "patterns" | "focus";
 
+/**
+ * Universe filters (Home → Tags).
+ * Stale = Tag has evidence, but none in the last 90 days (dormant, not deleted).
+ * Tags with zero evidence yet (Topic Tags / new names) stay in Universe — not a separate “quiet” mode.
+ */
 const FILTERS: { id: FocusFilter; label: string; title: string }[] = [
   { id: "all", label: "Universe", title: "All Tags in the journal universe" },
-  { id: "hot", label: "Hot", title: "Used in the last 30 days" },
+  { id: "hot", label: "Hot", title: "Used on evidence in the last 30 days" },
   { id: "patterns", label: "Patterns", title: "Recurring evidence Tags (Pattern floor)" },
-  { id: "stale", label: "Stale", title: "No activity in the last 90 days" },
-  { id: "focus", label: "Trackers", title: "Flagged Tracker Tags only" },
-  { id: "quiet", label: "Quiet tracker", title: "Flagged Tracker but never used on evidence" },
+  {
+    id: "stale",
+    label: "Stale",
+    title: "Has evidence, but none in the last 90 days",
+  },
+  { id: "focus", label: "Trackers", title: "Tags Flagged as Trackers (watch on)" },
 ];
 
 function filterRows(rows: V2FocusTagStat[], filter: FocusFilter): V2FocusTagStat[] {
@@ -30,8 +39,6 @@ function filterRows(rows: V2FocusTagStat[], filter: FocusFilter): V2FocusTagStat
       return rows.filter((r) => r.recurrence30d > 0);
     case "stale":
       return rows.filter((r) => r.count > 0 && r.recencyScore === 0);
-    case "quiet":
-      return rows.filter((r) => r.isFocus && r.count === 0);
     case "patterns":
       return rows.filter((r) => r.isPattern);
     case "all":
@@ -219,7 +226,7 @@ export function V2FocusTagPortfolio({
 
   return (
     <div className="space-y-4">
-      {/* Trackers strip — Tags + Trackers in one place */}
+      {/* Trackers strip — watch-on Tags (not a separate ontology) */}
       <div className="rounded-xl border border-rose-500/25 bg-rose-950/15 px-3 py-3 sm:px-4">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
           <div>
@@ -227,7 +234,8 @@ export function V2FocusTagPortfolio({
               Trackers
             </p>
             <p className="mt-0.5 text-[11px] text-zinc-500">
-              Flagged Tags stay marked as Trackers (⚑). Select any Universe tag that isn’t a Tracker yet, then Flag it.
+              Tracker = watch on for a Tag. Disable Tracker leaves the Tag in Universe. Zero-evidence Tags (new / Topic
+              Tags) are still Tags — not a separate “quiet” mode.
             </p>
           </div>
           <button
@@ -239,7 +247,7 @@ export function V2FocusTagPortfolio({
           </button>
         </div>
         {trackerRows.length === 0 ? (
-          <p className="text-xs text-zinc-600">No Trackers yet — pick a Tag below and Flag it.</p>
+          <p className="text-xs text-zinc-600">No Trackers yet — pick a Tag below and Flag it, or add one under Manage.</p>
         ) : (
           <ul className="flex flex-wrap gap-1.5" aria-label="Flagged Trackers">
             {trackerRows.slice(0, 36).map((row) => (
@@ -258,7 +266,7 @@ export function V2FocusTagPortfolio({
                   {row.count > 0 ? (
                     <span className="tabular-nums text-amber-200/70">· {row.count}</span>
                   ) : (
-                    <span className="text-amber-200/50">quiet</span>
+                    <span className="text-amber-200/50">no evidence yet</span>
                   )}
                 </button>
               </li>
@@ -281,7 +289,7 @@ export function V2FocusTagPortfolio({
                 onClick={() => setFilter(item.id)}
                 className={`rounded-lg border px-2 py-1 text-[10px] font-semibold transition ${
                   active
-                    ? item.id === "focus" || item.id === "quiet"
+                    ? item.id === "focus"
                       ? "border-rose-500/40 bg-rose-950/30 text-rose-200"
                       : "border-violet-500/40 bg-violet-950/30 text-violet-200"
                     : "border-zinc-800 bg-zinc-900/40 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
@@ -303,6 +311,12 @@ export function V2FocusTagPortfolio({
           />
         </label>
       </div>
+      {filter === "stale" ? (
+        <p className="text-[11px] text-zinc-500">
+          <span className="font-medium text-zinc-400">Stale</span> means the Tag was used on notes/email before, but not
+          in the last 90 days. It is still a Tag — not deleted.
+        </p>
+      ) : null}
 
       {/* Priority 1 — Universe is the workspace (Treemap-class height). */}
       <div>
@@ -510,7 +524,7 @@ export function V2FocusTagPortfolio({
                     : `Flag ${selected.name} as Tracker`
                 }
               >
-                {focusBusy ? "…" : selectedIsFocus ? "Unflag tracker" : "⚑ Flag Tracker"}
+                {focusBusy ? "…" : selectedIsFocus ? "Disable Tracker" : "⚑ Flag Tracker"}
               </button>
               <Link
                 href={selectedEvidence?.openHref ?? selected.href}
@@ -537,7 +551,8 @@ export function V2FocusTagPortfolio({
                 <V2Timeline entries={selectedEvidence.evidence} compact />
               ) : (
                 <p className="rounded-xl border border-dashed border-zinc-800 px-3 py-4 text-xs text-zinc-500">
-                  No notes or email carry this tag yet. You can still Flag it as a quiet Tracker.
+                  No notes or email carry this tag yet. It can still live as a Topic Tag or Tracker — Disable Tracker
+                  does not delete it if it is saved on a Topic.
                 </p>
               )}
             </div>
@@ -626,6 +641,15 @@ export function V2FocusTagPortfolio({
           ) : null}
         </div>
       )}
+
+      <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-4">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-600">Manage universe · Trackers</p>
+        <p className="mt-1 mb-3 text-[11px] text-zinc-500">
+          Add a Tag name here to Flag it as a Tracker (appears in Universe). Removing from this list only disables
+          Tracker — Tags on Notes and Topic Tags stay. For binder create, use Topic → Tags.
+        </p>
+        <V2SignalTagsEditor initialTags={focusTags} returnTo="/argus/v2" compact />
+      </div>
     </div>
   );
 }
