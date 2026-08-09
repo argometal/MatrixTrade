@@ -23,7 +23,7 @@ const org = entity({ id: "o1", name: "Exxon", type: "company" });
 const project = entity({ id: "p1", name: "Exxon Project", type: "project", linkedEntityIds: ["o1"] });
 const person = entity({ id: "h1", name: "Alex", type: "person" });
 
-const log: Log = {
+const log = {
   id: "l1",
   title: "Follow-up call",
   body: "Discussed delays",
@@ -34,9 +34,9 @@ const log: Log = {
   private: false,
   createdAt: "2026-08-01T10:00:00.000Z",
   updatedAt: "2026-08-01T10:00:00.000Z",
-} as Log;
+} as unknown as Log;
 
-const inbox: InboxItem = {
+const inbox = {
   id: "i1",
   subject: "Risk note",
   from: "ops@example.com",
@@ -47,7 +47,7 @@ const inbox: InboxItem = {
   linkedEntityIds: ["p1"],
   private: false,
   createdAt: "2026-08-05T12:00:00.000Z",
-} as InboxItem;
+} as unknown as InboxItem;
 
 const data = {
   entities: [org, project, person],
