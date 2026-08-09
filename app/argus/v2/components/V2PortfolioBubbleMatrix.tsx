@@ -23,7 +23,7 @@ export function V2PortfolioBubbleMatrix({
   size?: "compact" | "full";
   onSelect?: (id: string) => void;
 }) {
-  const heightClass = size === "full" ? "min-h-[min(560px,65vh)] h-[min(560px,65vh)]" : "h-56";
+  const heightClass = size === "full" ? "min-h-[min(640px,72vh)] h-[min(640px,72vh)]" : "h-56";
 
   const plotLeft = 8;
   const plotRight = 92;
