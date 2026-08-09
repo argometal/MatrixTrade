@@ -11,6 +11,7 @@ import {
   buildEntityEvidenceStream,
   countEvidenceStream,
   latestEvidenceIso,
+  type V2EvidenceStreamItem,
 } from "./evidence-stream";
 import { buildTagPatternsForScope } from "./tag-patterns";
 import {
@@ -109,6 +110,40 @@ function topicCategory(topic: Entity, logs: Log[]): string {
   return "General";
 }
 
+/** Linked Event ids for a Topic — same binder scope as Tags rollup / Home treemap. */
+function collectTopicLinkedEventIds(data: ArgusData, topic: Entity, history: Log[]): Set<string> {
+  const neighborIds = collectNeighborEntityIds(data, topic, history);
+  const nodeCounts = countTopicsAndEventsInScope(data, topic, history);
+  const eventIds = new Set(nodeCounts.eventIds);
+  for (const id of neighborIds) {
+    const entity = data.entities.find((e) => e.id === id && !e.deletedAt);
+    if (entity && isEventEntity(entity)) eventIds.add(id);
+  }
+  for (const id of outboundStructuralIds(topic)) {
+    const entity = data.entities.find((e) => e.id === id && !e.deletedAt);
+    if (entity && isEventEntity(entity)) eventIds.add(id);
+  }
+  return eventIds;
+}
+
+function mergeEvidenceStreams(streams: V2EvidenceStreamItem[][]): V2EvidenceStreamItem[] {
+  const seen = new Set<string>();
+  const out: V2EvidenceStreamItem[] = [];
+  for (const stream of streams) {
+    for (const item of stream) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      out.push(item);
+    }
+  }
+  return out.sort((a, b) => b.sortIso.localeCompare(a.sortIso));
+}
+
+/**
+ * Topic-direct Chronicle stream + portfolio counts (topic ∪ linked Events).
+ * Browse cards / metric pills use portfolio counts so Notes on linked Events
+ * are not shown as 0 evidence. Chronicle `evidence` stays topic-direct.
+ */
 function topicEvidenceBundle(
   data: ArgusData,
   topicId: string,
@@ -116,11 +151,23 @@ function topicEvidenceBundle(
   includePrivate: boolean,
   today: string
 ) {
+  const topic = data.entities.find((e) => e.id === topicId && !e.deletedAt);
   const history = getEntityHistory(data, topicId, includePrivate);
   const inbox = getLinkedInboxForEntity(inboxItems, topicId, includePrivate);
   const evidence = buildEntityEvidenceStream(data, topicId, inboxItems, includePrivate, today);
-  const counts = countEvidenceStream(evidence);
-  const lastIso = latestEvidenceIso(evidence, history[0]?.date || inbox[0]?.receivedAt || "");
+
+  const streams: V2EvidenceStreamItem[][] = [evidence];
+  if (topic) {
+    for (const eventId of collectTopicLinkedEventIds(data, topic, history)) {
+      streams.push(buildEntityEvidenceStream(data, eventId, inboxItems, includePrivate, today));
+    }
+  }
+  const portfolioEvidence = mergeEvidenceStreams(streams);
+  const counts = countEvidenceStream(portfolioEvidence);
+  const lastIso = latestEvidenceIso(
+    portfolioEvidence,
+    history[0]?.date || inbox[0]?.receivedAt || ""
+  );
   return { history, inbox, evidence, counts, lastIso };
 }
 
