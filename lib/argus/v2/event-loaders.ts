@@ -1,4 +1,5 @@
 import type { ArgusData, Entity, InboxItem, Log } from "../types";
+import { resolveEntityLifecycleStatus } from "../entity-lifecycle";
 import { entityNotesForDisplay } from "../reference-types";
 import { getEntityHistory } from "../network";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
@@ -22,6 +23,8 @@ import type {
   V2EventInboxOption,
   V2EventRow,
   V2EventTab,
+  V2EventTriageTab,
+  V2EventWhenTab,
 } from "./event-browse-utils";
 import { parseEventRecord } from "./event-record";
 import { buildEntityEvidenceStream } from "./evidence-stream";
@@ -33,12 +36,22 @@ export type {
   V2EventInboxOption,
   V2EventRow,
   V2EventTab,
+  V2EventTriageTab,
+  V2EventWhenTab,
 } from "./event-browse-utils";
 export {
+  V2_EVENT_PAGE_SIZE,
   buildV2EventTabCounts,
+  buildV2EventTriageCounts,
+  buildV2EventWhenCounts,
+  eventRowIsOrphan,
   filterV2EventRows,
   groupV2EventRows,
   parseV2EventTab,
+  parseV2EventTriageTab,
+  parseV2EventWhenTab,
+  resolveV2EventBrowseParams,
+  sortV2EventRows,
 } from "./event-browse-utils";
 
 function visibleLogs(data: ArgusData, includePrivate: boolean): Log[] {
@@ -143,6 +156,8 @@ export function buildV2EventRows(data: ArgusData, includePrivate: boolean, today
       const history = getEntityHistory(data, event.id, includePrivate);
       const people = attendeePeople(data, event, history);
       const scopeLinkIds = [...collectNeighborEntityIds(data, event, history)];
+      const lifecycleStatus = resolveEntityLifecycleStatus(event, today);
+      const isOrphan = lifecycleStatus !== "archived" && scopeLinkIds.length === 0;
 
       return {
         id: event.id,
@@ -157,14 +172,12 @@ export function buildV2EventRows(data: ArgusData, includePrivate: boolean, today
         isUpcoming,
         sortDate,
         scopeLinkIds,
+        lifecycleStatus,
+        isOrphan,
       };
     })
-    .sort((a, b) => {
-      if (a.isUpcoming !== b.isUpcoming) return a.isUpcoming ? -1 : 1;
-      return a.isUpcoming
-        ? a.sortDate.localeCompare(b.sortDate)
-        : b.sortDate.localeCompare(a.sortDate);
-    });
+    // Latest first — Upcoming filter re-sorts soonest-first in filterV2EventRows.
+    .sort((a, b) => b.sortDate.localeCompare(a.sortDate) || a.name.localeCompare(b.name));
 }
 
 export function buildV2EventDetails(

@@ -555,7 +555,7 @@ export function V2InboxDetailPanel({
                 type="submit"
                 className="rounded-xl bg-zinc-800 px-4 py-2.5 text-sm font-semibold text-zinc-200 hover:bg-zinc-700"
               >
-                Done — archive
+                Archive
               </button>
             </form>
             <V2InboxDeleteControl

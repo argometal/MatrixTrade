@@ -4,7 +4,7 @@ import type { V2EvidenceStreamItem } from "./evidence-stream";
 import type { EntityLifecycleStatus } from "../types";
 import type { TagPattern } from "./tag-patterns";
 
-export type V2TopicTab = "all" | "active" | "empty" | "patterns";
+export type V2TopicTab = "all" | "active" | "empty" | "orphans" | "patterns";
 
 export type V2TopicEvidenceKind = "email" | "journal" | "file";
 
@@ -43,7 +43,10 @@ export interface V2TopicRow {
   searchText: string;
 }
 
-/** Empty = no evidence and no structural neighbors (esp. events). Linked-only topics are Quiet. */
+/**
+ * Orphans (legacy helper name `topicRowIsEmpty`) = no evidence and no structural neighbors.
+ * Linked-only topics are Quiet — homologated with Events/Inbox Orphans.
+ */
 export function topicRowIsEmpty(row: Pick<V2TopicRow, "evidenceCount" | "eventCount" | "linkedEntityIds">): boolean {
   return row.evidenceCount === 0 && row.eventCount === 0 && row.linkedEntityIds.length === 0;
 }
@@ -136,7 +139,7 @@ export function filterV2TopicRows(
 
   if (tab === "active") {
     result = result.filter((r) => r.evidenceCount > 0 && r.lastSort.slice(0, 10) >= cutoff);
-  } else if (tab === "empty") {
+  } else if (tab === "empty" || tab === "orphans") {
     result = result.filter((r) => topicRowIsEmpty(r));
   } else if (tab === "patterns") {
     result = result.filter((r) => r.patternCount > 0);
@@ -204,7 +207,9 @@ export function filterV2TopicRows(
 }
 
 export function parseV2TopicTab(value: string | undefined): V2TopicTab {
-  if (value === "active" || value === "empty" || value === "patterns") return value;
+  if (value === "active" || value === "empty" || value === "orphans" || value === "patterns") {
+    return value;
+  }
   if (value === "mine" || value === "followed") return "active";
   return "all";
 }
@@ -285,7 +290,7 @@ export function v2TopicPageCount(rowCount: number, pageSize = V2_TOPIC_PAGE_SIZE
 }
 
 /** Portfolio board / filter status for topics (exclusive buckets). */
-export type V2TopicBrowseStatus = "Active" | "Quiet" | "Empty" | "Archived";
+export type V2TopicBrowseStatus = "Active" | "Quiet" | "Orphans" | "Archived";
 
 export interface V2TopicBrowseCard {
   id: string;
@@ -336,8 +341,8 @@ function deriveTopicBrowseStatus(
     detail?.linkedEntities?.length ?? 0,
     row.linkedEntityIds.length
   );
-  // Linked to events/orgs/projects/people is not Empty — Quiet until evidence arrives.
-  if (row.evidenceCount === 0 && eventCount === 0 && linkedCount === 0) return "Empty";
+  // Linked to events/orgs/projects/people is not Orphans — Quiet until evidence arrives.
+  if (row.evidenceCount === 0 && eventCount === 0 && linkedCount === 0) return "Orphans";
   if (row.evidenceCount === 0) return "Quiet";
   const cutoff = activeCutoffIso();
   if (row.lastSort.slice(0, 10) >= cutoff) return "Active";
@@ -347,28 +352,30 @@ function deriveTopicBrowseStatus(
 function topicStatusTone(status: V2TopicBrowseStatus): V2TopicBrowseCard["statusTone"] {
   if (status === "Active") return "green";
   if (status === "Quiet") return "amber";
-  if (status === "Empty") return "blue";
+  if (status === "Orphans") return "blue";
   return "default";
 }
 
 /**
  * Board / pill column status.
  * Active↔Quiet (and Archive) pins may override derived activity.
- * Empty stays orphan-only — never park a linked/evidence topic there.
+ * Orphans stays orphan-only — never park a linked/evidence topic there.
+ * Legacy pin "Empty" migrates to Orphans.
  */
 export function resolveTopicColumnStatus(
   derived: V2TopicBrowseStatus,
-  override?: V2TopicBrowseStatus | null
+  override?: V2TopicBrowseStatus | "Empty" | null
 ): V2TopicBrowseStatus {
-  if (!override || override === derived) return derived;
-  if (override === "Empty" && derived !== "Empty") return derived;
-  return override;
+  const pin = override === "Empty" ? "Orphans" : override;
+  if (!pin || pin === derived) return derived;
+  if (pin === "Orphans" && derived !== "Orphans") return derived;
+  return pin;
 }
 
 /** Apply a board pin so badges, pills, and filters share one status. */
 export function applyTopicColumnStatus(
   card: V2TopicBrowseCard,
-  override?: V2TopicBrowseStatus | null
+  override?: V2TopicBrowseStatus | "Empty" | null
 ): V2TopicBrowseCard {
   const status = resolveTopicColumnStatus(card.status, override);
   if (status === card.status) return card;
@@ -421,7 +428,7 @@ export function buildV2TopicBrowseSummary(cards: V2TopicBrowseCard[]): V2TopicBr
     total: cards.length,
     active: cards.filter((c) => c.status === "Active").length,
     quiet: cards.filter((c) => c.status === "Quiet").length,
-    empty: cards.filter((c) => c.status === "Empty").length,
+    empty: cards.filter((c) => c.status === "Orphans").length,
     archived: cards.filter((c) => c.status === "Archived").length,
   };
 }

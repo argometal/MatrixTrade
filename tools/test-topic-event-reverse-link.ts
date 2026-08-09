@@ -87,6 +87,6 @@ const cards = buildV2TopicBrowseCards(rows, details);
 const card = cards.find((c) => c.id === "topic-vic");
 assert.ok(card);
 assert.equal(card!.metrics.events, 1, "browse card Events pill");
-assert.notEqual(card!.status, "Empty", "linked topic is not Empty");
+assert.notEqual(card!.status, "Orphans", "linked topic is not Orphans");
 
 console.log("ok: topic-event-reverse-link");

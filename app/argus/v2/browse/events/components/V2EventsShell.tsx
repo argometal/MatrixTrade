@@ -1,17 +1,20 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import {
-  buildV2EventTabCounts,
+  V2_EVENT_PAGE_SIZE,
+  buildV2EventTriageCounts,
+  buildV2EventWhenCounts,
   filterV2EventRows,
   groupV2EventRows,
-  parseV2EventTab,
+  resolveV2EventBrowseParams,
   type V2EventDetail,
   type V2EventInboxOption,
   type V2EventRow,
-  type V2EventTab,
+  type V2EventTriageTab,
+  type V2EventWhenTab,
 } from "@/lib/argus/v2/event-browse-utils";
 import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
 import { parseIntelligenceFocus, intelligenceBrowseAllHref } from "@/lib/argus/v2/intelligence-nav";
@@ -22,8 +25,15 @@ import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz"
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { V2EventDetailPanel } from "./V2EventDetailPanel";
 
-const TABS: { id: V2EventTab; label: string }[] = [
+const TRIAGE_TABS: { id: V2EventTriageTab; label: string }[] = [
   { id: "all", label: "All" },
+  { id: "orphans", label: "Orphans" },
+  { id: "linked", label: "Linked" },
+  { id: "archived", label: "Archived" },
+];
+
+const WHEN_TABS: { id: V2EventWhenTab; label: string }[] = [
+  { id: "all", label: "Any time" },
   { id: "upcoming", label: "Upcoming" },
   { id: "past", label: "Past" },
 ];
@@ -33,7 +43,6 @@ export function V2EventsShell({
   details,
   inboxOptionsByEvent,
   initialSelectedId,
-  initialTab,
   neighborhood,
   allRunbooks = [],
   allProgress = [],
@@ -53,6 +62,7 @@ export function V2EventsShell({
   details: V2EventDetail[];
   inboxOptionsByEvent: Record<string, V2EventInboxOption[]>;
   initialSelectedId?: string;
+  /** @deprecated URL `tab` / `when` drive triage — kept for older pages. */
   initialTab?: string;
   neighborhood?: V2EntityNeighborhoodGraph | null;
   allRunbooks?: Runbook[];
@@ -63,49 +73,85 @@ export function V2EventsShell({
 } & Omit<V2DeleteGateProps, "requiresAuthenticator">) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tab = parseV2EventTab(searchParams.get("tab") ?? initialTab);
+  const { triage, when } = resolveV2EventBrowseParams(
+    searchParams.get("tab") ?? undefined,
+    searchParams.get("when") ?? undefined
+  );
   const entityScope = searchParams.get("entity")?.trim() || undefined;
   const urlSelected = searchParams.get("selected");
   const mobileDetailOpen = Boolean(urlSelected);
   const selectedId = resolveV2SelectedId(urlSelected, initialSelectedId);
-  const counts = useMemo(
-    () => buildV2EventTabCounts(filterV2EventRows(rows, "all", entityScope)),
+  const [visibleCount, setVisibleCount] = useState(V2_EVENT_PAGE_SIZE);
+
+  const scoped = useMemo(
+    () => filterV2EventRows(rows, "all", "all", entityScope),
     [rows, entityScope]
   );
-  const filtered = useMemo(() => filterV2EventRows(rows, tab, entityScope), [rows, tab, entityScope]);
-  const groups = useMemo(() => groupV2EventRows(filtered), [filtered]);
+  const triageCounts = useMemo(() => buildV2EventTriageCounts(scoped), [scoped]);
+  const filtered = useMemo(
+    () => filterV2EventRows(rows, triage, when, entityScope),
+    [rows, triage, when, entityScope]
+  );
+  const whenCounts = useMemo(() => buildV2EventWhenCounts(
+    filterV2EventRows(rows, triage, "all", entityScope)
+  ), [rows, triage, entityScope]);
+
+  useEffect(() => {
+    setVisibleCount(V2_EVENT_PAGE_SIZE);
+  }, [triage, when, entityScope]);
+
+  const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  const groups = useMemo(() => {
+    // Upcoming cut keeps calendar groups; otherwise one Latest list.
+    if (when === "upcoming" || when === "past") return groupV2EventRows(visible);
+    return [{ label: "Latest", rows: visible }];
+  }, [visible, when]);
   const selected = selectedId ? details.find((d) => d.id === selectedId) : undefined;
 
   useScrollToSelected(selectedId);
 
-  function setTab(next: V2EventTab) {
+  function replaceParams(mutate: (params: URLSearchParams) => void) {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", next);
+    mutate(params);
     router.replace(`/argus/v2/browse/events?${params.toString()}`);
   }
 
+  function setTriage(next: V2EventTriageTab) {
+    replaceParams((params) => {
+      if (next === "all") params.delete("tab");
+      else params.set("tab", next);
+    });
+  }
+
+  function setWhen(next: V2EventWhenTab) {
+    replaceParams((params) => {
+      if (next === "all") params.delete("when");
+      else params.set("when", next);
+      // Migrate legacy tab=upcoming|past off triage slot
+      const t = params.get("tab");
+      if (t === "upcoming" || t === "past") params.delete("tab");
+    });
+  }
+
   function selectItem(id: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("selected", id);
-    router.replace(`/argus/v2/browse/events?${params.toString()}`);
+    replaceParams((params) => {
+      params.set("selected", id);
+    });
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function backToList() {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("selected");
-    router.replace(`/argus/v2/browse/events?${params.toString()}`);
+    replaceParams((params) => {
+      params.delete("selected");
+    });
   }
 
   useEffect(() => {
     if (!urlSelected) return;
-    if (filtered.length === 0) {
-      backToList();
-      return;
-    }
-    if (!filtered.some((row) => row.id === urlSelected)) {
+    if (filtered.length === 0 || !filtered.some((row) => row.id === urlSelected)) {
       backToList();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- backToList is stable enough via searchParams
   }, [filtered, urlSelected]);
 
   const returnTo = `/argus/v2/browse/events?${searchParams.toString()}`;
@@ -161,7 +207,7 @@ export function V2EventsShell({
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-zinc-50">Events</h1>
-              <p className="mt-0.5 text-xs text-zinc-500">Meetings, calls, milestones and occurrences</p>
+              <p className="mt-0.5 text-xs text-zinc-500">Meetings, calls, milestones — latest first</p>
             </div>
             <div className="flex shrink-0 gap-2">
               <V2CreateEntityButton
@@ -173,16 +219,36 @@ export function V2EventsShell({
           </div>
 
           <div className="flex gap-1 overflow-x-auto">
-            {TABS.map((t) => (
+            {TRIAGE_TABS.map((t) => (
               <button
                 key={t.id}
                 type="button"
-                onClick={() => setTab(t.id)}
+                onClick={() => setTriage(t.id)}
                 className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-medium ${
-                  tab === t.id ? "bg-violet-500/15 text-violet-300" : "text-zinc-600 hover:text-zinc-400"
+                  triage === t.id ? "bg-violet-500/15 text-violet-300" : "text-zinc-600 hover:text-zinc-400"
                 }`}
               >
-                {t.label} {counts[t.id]}
+                {t.label} {triageCounts[t.id]}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
+            Orphans = no Topic/Org/Project/Person links (needs attention). Linked = wired into the graph.
+          </p>
+          <div className="mt-2 flex gap-1 overflow-x-auto">
+            {WHEN_TABS.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setWhen(t.id)}
+                className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-medium ${
+                  when === t.id
+                    ? "bg-zinc-800 text-zinc-200"
+                    : "text-zinc-600 hover:text-zinc-400"
+                }`}
+              >
+                {t.label}
+                {t.id !== "all" ? ` ${whenCounts[t.id]}` : ""}
               </button>
             ))}
           </div>
@@ -191,60 +257,99 @@ export function V2EventsShell({
         <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto px-4 py-3 lg:px-5">
           {filtered.length === 0 ? (
             <div className="py-16 text-center">
-              <p className="text-sm text-zinc-500">No events yet.</p>
-              <p className="mt-1 text-xs text-zinc-600">Capture an event and link it to projects, orgs, people, or topics.</p>
-              <div className="mt-4">
-                <V2CreateEntityButton
-                  kind="event"
-                  label="+ Event"
-                  className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
-                />
-              </div>
+              <p className="text-sm text-zinc-500">
+                {rows.length === 0
+                  ? "No events yet."
+                  : triage === "orphans"
+                    ? "No orphan events."
+                    : "No events match these filters."}
+              </p>
+              <p className="mt-1 text-xs text-zinc-600">
+                {rows.length === 0
+                  ? "Capture an event and link it to projects, orgs, people, or topics."
+                  : triage === "orphans"
+                    ? "Orphans are events with no structural links — link one from the detail panel."
+                    : "Try All, Orphans, or a different time cut."}
+              </p>
+              {rows.length === 0 ? (
+                <div className="mt-4">
+                  <V2CreateEntityButton
+                    kind="event"
+                    label="+ Event"
+                    className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500"
+                  />
+                </div>
+              ) : null}
             </div>
           ) : (
-            groups.map((group) => (
-              <div key={group.label} className="mb-6">
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">{group.label}</p>
-                <ul className="space-y-2">
-                  {group.rows.map((row) => (
-                    <li key={row.id} data-v2-selected-id={row.id}>
-                      <button
-                        type="button"
-                        onClick={() => selectItem(row.id)}
-                        className={`flex w-full gap-3 rounded-xl border px-3 py-3 text-left transition hover:border-zinc-700 ${v2ActiveListItemClass(
-                          selectedId === row.id
-                        )}`}
-                      >
-                        <div className="w-12 shrink-0 text-center">
-                          <p className="text-[10px] font-bold tracking-wide text-violet-400">{row.dateLabel}</p>
-                          <p className="text-[10px] text-zinc-600">{row.timeLabel}</p>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-zinc-100">{row.name}</p>
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
-                            {row.meetingUrl ? <span>Webex</span> : null}
-                            {row.projectName ? <span>{row.projectName}</span> : null}
-                            <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
-                              {row.typeLabel}
-                            </span>
+            <>
+              {groups.map((group) => (
+                <div key={group.label} className="mb-6">
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
+                    {group.label}
+                  </p>
+                  <ul className="space-y-2">
+                    {group.rows.map((row) => (
+                      <li key={row.id} data-v2-selected-id={row.id}>
+                        <button
+                          type="button"
+                          onClick={() => selectItem(row.id)}
+                          className={`flex w-full gap-3 rounded-xl border px-3 py-3 text-left transition hover:border-zinc-700 ${v2ActiveListItemClass(
+                            selectedId === row.id
+                          )}`}
+                        >
+                          <div className="w-12 shrink-0 text-center">
+                            <p className="text-[10px] font-bold tracking-wide text-violet-400">{row.dateLabel}</p>
+                            <p className="text-[10px] text-zinc-600">{row.timeLabel}</p>
                           </div>
-                        </div>
-                        <div className="flex shrink-0 -space-x-1">
-                          {row.attendeeInitials.slice(0, 3).map((initials, i) => (
-                            <span
-                              key={`${row.id}-${initials}-${i}`}
-                              className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-700 text-[9px] font-bold text-zinc-200"
-                            >
-                              {initials}
-                            </span>
-                          ))}
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-medium text-zinc-100">{row.name}</p>
+                              {row.isOrphan ? (
+                                <span className="rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-medium text-sky-300">
+                                  Orphan
+                                </span>
+                              ) : null}
+                              {row.lifecycleStatus === "archived" ? (
+                                <span className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-500">
+                                  Archived
+                                </span>
+                              ) : null}
+                            </div>
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
+                              {row.meetingUrl ? <span>Webex</span> : null}
+                              {row.projectName ? <span>{row.projectName}</span> : null}
+                              <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
+                                {row.typeLabel}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex shrink-0 -space-x-1">
+                            {row.attendeeInitials.slice(0, 3).map((initials, i) => (
+                              <span
+                                key={`${row.id}-${initials}-${i}`}
+                                className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-700 text-[9px] font-bold text-zinc-200"
+                              >
+                                {initials}
+                              </span>
+                            ))}
+                          </div>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              {visibleCount < filtered.length ? (
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((n) => n + V2_EVENT_PAGE_SIZE)}
+                  className="mb-4 w-full rounded-xl border border-zinc-800 bg-zinc-900/50 py-2.5 text-xs font-medium text-zinc-300 hover:border-zinc-700 hover:text-zinc-100"
+                >
+                  Show more ({filtered.length - visibleCount} remaining)
+                </button>
+              ) : null}
+            </>
           )}
         </div>
       </section>

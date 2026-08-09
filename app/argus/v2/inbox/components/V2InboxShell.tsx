@@ -37,9 +37,9 @@ import { V2InboxSwipeRow } from "./V2InboxSwipeRow";
 
 const TABS: { id: V2InboxTab; label: string }[] = [
   { id: "all", label: "All" },
-  { id: "unread", label: "New" },
+  { id: "unread", label: "Orphans" },
   { id: "in_progress", label: "Linked" },
-  { id: "processed", label: "Done" },
+  { id: "processed", label: "Converted" },
   { id: "archived", label: "Archived" },
 ];
 
@@ -249,7 +249,17 @@ export function V2InboxShell({
     setChecked(new Set());
     setSelectMode(false);
     replaceInboxParams((params) => {
-      params.set("tab", next);
+      // Homologated URL labels; parseV2InboxTab keeps legacy ids.
+      const pretty =
+        next === "unread"
+          ? "orphans"
+          : next === "in_progress"
+            ? "linked"
+            : next === "processed"
+              ? "converted"
+              : next;
+      if (pretty === "all") params.delete("tab");
+      else params.set("tab", pretty);
     });
   }
 
@@ -367,6 +377,10 @@ export function V2InboxShell({
               </button>
             ))}
           </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
+            Orphans = unlinked email (needs attention). Linked = wired · Archive when triage is done. Converted is
+            legacy process.
+          </p>
         </div>
 
         {checked.size > 0 ? (
