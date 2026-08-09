@@ -36,11 +36,12 @@ Receive → Register → Link → Retrieve → Deliver
 
 | Tab | Meaning |
 |-----|---------|
-| New | Unlinked / pending triage |
-| Linked | Entity links exist; may still need register or topics |
-| Done | Processed — excluded from alert counts |
+| Orphans | Unlinked evidence — needs attention (homologated with Topics/Events Orphans) |
+| Linked | Entity links exist; may still need Tags or Archive |
+| Converted | Legacy process graveyard — excluded from alert counts |
+| Archived | Triage finished — excluded from alert counts |
 
-Alert badges (sidebar, top bar) count only active triage: new + linked inbox, follow-ups due within 3 days (or overdue up to 30 days), and register entries without entity or topic classification.
+Alert badges (sidebar, top bar) count only active triage: Orphans + Linked inbox, follow-ups due within 3 days (or overdue up to 30 days), and register entries without entity or topic classification.
 
 ---
 

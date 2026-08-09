@@ -10,7 +10,6 @@ import {
   buildV2EventDetails,
   buildV2EventInboxOptions,
   buildV2EventRows,
-  parseV2EventTab,
 } from "@/lib/argus/v2/event-loaders";
 import { V2EventsShell } from "./components/V2EventsShell";
 
@@ -20,6 +19,7 @@ export default async function V2BrowseEventsPage({
   searchParams: Promise<{
     selected?: string;
     tab?: string;
+    when?: string;
     delete_error?: string;
     delete_auth_error?: string;
     totp_required?: string;
@@ -27,7 +27,7 @@ export default async function V2BrowseEventsPage({
   }>;
 }) {
   const sp = await searchParams;
-  const { selected, tab: tabParam } = sp;
+  const { selected } = sp;
   const [includePrivate, deleteUnlocked, deleteAuthUnlocked] = await Promise.all([
     hasArgusPrivateUnlock(),
     hasArgusDeleteUnlock(),
@@ -41,7 +41,6 @@ export default async function V2BrowseEventsPage({
   const inboxOptionsByEvent = Object.fromEntries(
     details.map((d) => [d.id, buildV2EventInboxOptions(inboxItems, d.id, includePrivate, today)])
   );
-  const tab = parseV2EventTab(tabParam);
   const neighborhood = selected
     ? buildV2EntityNeighborhoodGraph(data, inboxItems, selected, includePrivate, today)
     : null;
@@ -53,7 +52,6 @@ export default async function V2BrowseEventsPage({
         details={details}
         inboxOptionsByEvent={inboxOptionsByEvent}
         initialSelectedId={selected}
-        initialTab={tab}
         neighborhood={neighborhood}
         allRunbooks={data.runbooks ?? []}
         allProgress={data.runbookProgress ?? []}

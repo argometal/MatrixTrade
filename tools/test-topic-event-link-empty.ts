@@ -1,5 +1,5 @@
 /**
- * Topic Empty status must respect event binders stored in any outbound bag
+ * Topic Orphans status must respect event binders stored in any outbound bag
  * (linkedEntityIds, linkedTopicIds, linkedEventIds) and reverse links.
  */
 import assert from "node:assert/strict";
@@ -97,7 +97,7 @@ const linkedRow: V2TopicRow = {
   linkedEntityIds: ["e1", "e2"],
   searchText: "",
 };
-assert.equal(topicRowIsEmpty(linkedRow), false, "linked topic is not Empty");
+assert.equal(topicRowIsEmpty(linkedRow), false, "linked topic is not Orphans");
 
 const emptyRow: V2TopicRow = {
   ...linkedRow,
@@ -106,7 +106,7 @@ const emptyRow: V2TopicRow = {
   eventCount: 0,
   linkedEntityIds: [],
 };
-assert.equal(topicRowIsEmpty(emptyRow), true, "lonely topic is Empty");
+assert.equal(topicRowIsEmpty(emptyRow), true, "lonely topic is Orphans");
 
 const detail: V2TopicDetail = {
   id: "t1",
@@ -140,6 +140,6 @@ const detail: V2TopicDetail = {
 
 const cards = buildV2TopicBrowseCards([linkedRow, emptyRow], [detail]);
 assert.equal(cards.find((c) => c.id === "t1")?.status, "Quiet");
-assert.equal(cards.find((c) => c.id === "t2")?.status, "Empty");
+assert.equal(cards.find((c) => c.id === "t2")?.status, "Orphans");
 
 console.log("ok: topic-event-link-empty");

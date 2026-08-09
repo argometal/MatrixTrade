@@ -50,7 +50,7 @@ Linked events discovered via:
 Events never appear as treemap nodes but can boost a topic’s size, color, recency, recurrence, and browse “evidence” totals.
 
 ### Topics browse viewers
-- **Grid · cards** / **List · rows** / **Manage · Active / Quiet / Empty / Archived** (hover names on the icon switcher; board id stays `board` in prefs).
+- **Grid · cards** / **List · rows** / **Manage · Active / Quiet / Orphans / Archived** (hover names on the icon switcher; board id stays `board` in prefs).
 
 ---
 

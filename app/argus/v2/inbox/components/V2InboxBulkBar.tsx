@@ -139,7 +139,7 @@ export function V2InboxBulkBar({
             }}
             className="rounded-lg border border-violet-500/35 bg-violet-600/15 px-2.5 py-1.5 text-[11px] font-semibold text-violet-200 hover:bg-violet-600/25 disabled:opacity-50"
           >
-            Assign topic
+            Assign tags
           </button>
           <button
             type="button"

@@ -53,7 +53,7 @@ import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLife
 
 const ORDER_SCOPE = "topics";
 const COLUMN_SCOPE = "topics:columns";
-const BOARD_COLUMNS: V2TopicBrowseStatus[] = ["Active", "Quiet", "Empty", "Archived"];
+const BOARD_COLUMNS: V2TopicBrowseStatus[] = ["Active", "Quiet", "Orphans", "Archived"];
 
 const ACTIVITY_OPTIONS: { id: V2TopicActivityFilter; label: string }[] = [
   { id: "7d", label: "Last 7 days" },
@@ -480,11 +480,12 @@ export function V2TopicsShell({
   const [view, setViewState] = useState<BrowseLayoutView>("grid");
   const [statusFilter, setStatusFilter] = useState<V2TopicBrowseStatus | "all" | "patterns">(() => {
     if (tab === "active") return "Active";
-    if (tab === "empty") return "Empty";
+    if (tab === "empty" || tab === "orphans") return "Orphans";
     if (tab === "patterns") return "patterns";
-    if (urlStatus === "Quiet" || urlStatus === "Archived" || urlStatus === "Active" || urlStatus === "Empty") {
+    if (urlStatus === "Quiet" || urlStatus === "Archived" || urlStatus === "Active" || urlStatus === "Orphans") {
       return urlStatus;
     }
+    if (urlStatus === "Empty") return "Orphans";
     return "all";
   });
   const [order, setOrder] = useState<string[]>([]);
@@ -510,7 +511,16 @@ export function V2TopicsShell({
     setOrder(readBrowseCardOrder(ORDER_SCOPE));
     try {
       const raw = localStorage.getItem(`argus-v2-browse-columns:${COLUMN_SCOPE}`);
-      if (raw) setColumnOverrides(JSON.parse(raw) as Record<string, V2TopicBrowseStatus>);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, string>;
+        const migrated = Object.fromEntries(
+          Object.entries(parsed).map(([id, status]) => [
+            id,
+            status === "Empty" ? "Orphans" : status,
+          ])
+        ) as Record<string, V2TopicBrowseStatus>;
+        setColumnOverrides(migrated);
+      }
     } catch {
       /* ignore */
     }
@@ -524,10 +534,11 @@ export function V2TopicsShell({
         prefs.status === "Archived" ||
         prefs.status === "Active" ||
         prefs.status === "Empty" ||
+        prefs.status === "Orphans" ||
         prefs.status === "patterns" ||
         prefs.status === "all")
     ) {
-      setStatusFilter(prefs.status);
+      setStatusFilter(prefs.status === "Empty" ? "Orphans" : prefs.status);
     }
   }, []);
 
@@ -582,7 +593,7 @@ export function V2TopicsShell({
   const rowTab: V2TopicTab =
     statusFilter === "Active"
       ? "active"
-      : statusFilter === "Empty"
+      : statusFilter === "Orphans"
         ? "empty"
         : statusFilter === "patterns"
           ? "patterns"
@@ -611,15 +622,18 @@ export function V2TopicsShell({
     const groups: Record<V2TopicBrowseStatus, V2TopicBrowseCard[]> = {
       Active: [],
       Quiet: [],
-      Empty: [],
+      Orphans: [],
       Archived: [],
     };
     for (const card of sorted) {
       if (statusFilter === "patterns" && card.patternCount === 0) continue;
-      // Board DnD overrides must not park linked/evidence topics in Empty.
-      const override = columnOverrides[card.id];
+      // Board DnD overrides must not park linked/evidence topics in Orphans.
+      const rawOverride = columnOverrides[card.id] as V2TopicBrowseStatus | "Empty" | undefined;
+      const override = (rawOverride === "Empty" ? "Orphans" : rawOverride) as
+        | V2TopicBrowseStatus
+        | undefined;
       const status =
-        override && !(override === "Empty" && card.status !== "Empty")
+        override && !(override === "Orphans" && card.status !== "Orphans")
           ? override
           : card.status;
       groups[status].push(card);
@@ -635,7 +649,7 @@ export function V2TopicsShell({
       if (value === "Active") {
         params.set("tab", "active");
         params.delete("status");
-      } else if (value === "Empty") {
+      } else if (value === "Orphans") {
         params.set("tab", "empty");
         params.delete("status");
       } else if (value === "patterns") {
@@ -837,7 +851,7 @@ export function V2TopicsShell({
                   [
                     ["grid", "▦", "Grid", "Grid · cards"],
                     ["list", "☰", "List", "List · rows"],
-                    ["board", "▥", "Manage", "Manage · Active / Quiet / Empty / Archived"],
+                    ["board", "▥", "Manage", "Manage · Active / Quiet / Orphans / Archived"],
                   ] as const
                 ).map(([id, icon, label, tip]) => (
                   <button
@@ -873,12 +887,12 @@ export function V2TopicsShell({
             />
           </div>
 
-          {/* Status pills only for Active/Quiet/Empty — one Filters menu for the rest. */}
+          {/* Status pills — Orphans homologated with Events/Inbox. */}
           <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <SummaryPill label="Total" value={summary.total} active={statusFilter === "all"} onClick={() => applyStatusFilter("all")} />
             <SummaryPill label="Active" value={summary.active} tone="green" active={statusFilter === "Active"} onClick={() => applyStatusFilter("Active")} />
             <SummaryPill label="Quiet" value={summary.quiet} tone="amber" active={statusFilter === "Quiet"} onClick={() => applyStatusFilter("Quiet")} />
-            <SummaryPill label="Empty" value={summary.empty} tone="blue" active={statusFilter === "Empty"} onClick={() => applyStatusFilter("Empty")} />
+            <SummaryPill label="Orphans" value={summary.empty} tone="blue" active={statusFilter === "Orphans"} onClick={() => applyStatusFilter("Orphans")} />
             <SummaryPill label="Archived" value={summary.archived} active={statusFilter === "Archived"} onClick={() => applyStatusFilter("Archived")} />
           </div>
 

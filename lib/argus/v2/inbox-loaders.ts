@@ -75,9 +75,10 @@ const STATUS_UI: Record<
   InboxStatus,
   { tab: V2InboxTab; label: string; tone: V2InboxRow["statusTone"] }
 > = {
-  pending: { tab: "unread", label: "New", tone: "violet" },
+  /** Orphans ≈ Topics Empty / Events Orphans — unlinked evidence needing attention. */
+  pending: { tab: "unread", label: "Orphans", tone: "violet" },
   linked: { tab: "in_progress", label: "Linked", tone: "amber" },
-  converted: { tab: "processed", label: "Done", tone: "emerald" },
+  converted: { tab: "processed", label: "Converted", tone: "emerald" },
   archived: { tab: "archived", label: "Archived", tone: "zinc" },
 };
 
@@ -336,9 +337,17 @@ function formatInboxTime(iso: string, today: string): string {
 }
 
 export function parseV2InboxTab(value: string | undefined): V2InboxTab {
-  if (value === "unread" || value === "in_progress" || value === "processed" || value === "archived") {
-    return value;
+  if (
+    value === "unread" ||
+    value === "orphans" ||
+    value === "orphan" ||
+    value === "new"
+  ) {
+    return "unread";
   }
+  if (value === "in_progress" || value === "linked") return "in_progress";
+  if (value === "processed" || value === "converted" || value === "done") return "processed";
+  if (value === "archived") return "archived";
   return "all";
 }
 

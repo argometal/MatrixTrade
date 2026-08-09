@@ -81,20 +81,20 @@ const SECTIONS: HelpSection[] = [
     title: "Inbox triage",
     items: [
       {
-        title: "New",
-        body: "Unprocessed evidence — email or intake not yet linked. The inbox badge counts new and in-progress items awaiting triage.",
+        title: "Orphans",
+        body: "Unlinked email / intake — same orphan idea as Topics Orphans and Events Orphans. The inbox badge counts Orphans + Linked awaiting triage.",
       },
       {
         title: "Linked",
-        body: "Entity links exist but triage may continue — register evidence from the email, add topics, or mark done when complete.",
+        body: "Entity links exist but triage may continue — register evidence, add Tags, or Archive when complete.",
       },
       {
-        title: "Done",
-        body: "Converted or fully processed — no longer counts toward the inbox alert. Process tab shows ranked link suggestions.",
+        title: "Archive / Converted",
+        body: "Archive finishes triage (no longer in the alert count). Converted is the legacy process graveyard.",
       },
       {
         title: "Alert badges",
-        body: "Sidebar and bell counts are triage debt (inbox to process, follow-ups due, unclassified evidence) — not Focus Tags or Patterns.",
+        body: "Sidebar and bell counts are triage debt (inbox to process, follow-ups due, unclassified evidence) — not Trackers or Patterns.",
       },
     ],
   },

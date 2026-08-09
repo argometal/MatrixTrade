@@ -48,4 +48,16 @@ There is no separate “Quiet Tracker” mode — a Tag with no evidence yet is 
 
 Nav badge counts are **not** Trackers (`buildV2NavCounts`) — triage debt only.
 
+### Orphans · Linked (homologated triage)
+
+Same attention vocabulary across binders and intake:
+
+| Surface | Orphans | Linked / Quiet | Done hiding |
+|---------|---------|----------------|-------------|
+| **Topics** | Orphans — no evidence and no structural links | Quiet (linked or stale) · Active (recent evidence) | Archived |
+| **Events** | Orphans — no Topic/Org/Project/Person neighbors | Linked | Archived |
+| **Inbox** | Orphans — unlinked email (`pending`) | Linked | Archived (Converted = legacy) |
+
+Events default to **latest first** with a Show more page; Upcoming/Past is a secondary time cut (`?when=`).
+
 **Reading modes:** Timeline (org/project) · Chronicle (topic/event/person). See [`timeline-chronicle-model.md`](timeline-chronicle-model.md).
