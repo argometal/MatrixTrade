@@ -10,7 +10,9 @@ import {
   outboundStructuralIds,
 } from "../lib/argus/v2/scope-node-counts";
 import {
+  applyTopicColumnStatus,
   buildV2TopicBrowseCards,
+  resolveTopicColumnStatus,
   topicRowIsEmpty,
   type V2TopicDetail,
   type V2TopicRow,
@@ -141,5 +143,17 @@ const detail: V2TopicDetail = {
 const cards = buildV2TopicBrowseCards([linkedRow, emptyRow], [detail]);
 assert.equal(cards.find((c) => c.id === "t1")?.status, "Quiet");
 assert.equal(cards.find((c) => c.id === "t2")?.status, "Empty");
+
+assert.equal(resolveTopicColumnStatus("Active", "Quiet"), "Quiet");
+assert.equal(resolveTopicColumnStatus("Quiet", "Active"), "Active");
+assert.equal(
+  resolveTopicColumnStatus("Active", "Empty"),
+  "Active",
+  "cannot pin a non-orphan topic into Empty"
+);
+assert.equal(resolveTopicColumnStatus("Empty", "Empty"), "Empty");
+const pinned = applyTopicColumnStatus(cards.find((c) => c.id === "t1")!, "Active");
+assert.equal(pinned.status, "Active");
+assert.equal(pinned.statusTone, "green");
 
 console.log("ok: topic-event-link-empty");

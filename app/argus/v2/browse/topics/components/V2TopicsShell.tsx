@@ -27,6 +27,7 @@ import {
 } from "@/lib/argus/v2/browse-view-prefs";
 import { BrowseBoardColumnHeader } from "@/app/argus/v2/components/BrowseBoardColumnHeader";
 import {
+  applyTopicColumnStatus,
   buildV2TopicBrowseCards,
   buildV2TopicBrowseSummary,
   buildV2TopicFilterOptions,
@@ -40,7 +41,6 @@ import {
   type V2TopicDetail,
   type V2TopicFilters,
   type V2TopicRow,
-  type V2TopicTab,
   type V2TopicTagChip,
 } from "@/lib/argus/v2/topic-browse-utils";
 import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
@@ -579,21 +579,20 @@ export function V2TopicsShell({
   }
 
   const filterOptions = useMemo(() => buildV2TopicFilterOptions(details), [details]);
-  const rowTab: V2TopicTab =
-    statusFilter === "Active"
-      ? "active"
-      : statusFilter === "Empty"
-        ? "empty"
-        : statusFilter === "patterns"
-          ? "patterns"
-          : "all";
+  /** Status pills filter cards — do not pre-narrow rows (Active/Empty row tabs disagreed with Quiet + board pins). */
   const filteredRows = useMemo(
-    () => filterV2TopicRows(rows, rowTab, filters),
-    [rows, rowTab, filters]
+    () =>
+      filterV2TopicRows(rows, statusFilter === "patterns" ? "patterns" : "all", filters),
+    [rows, statusFilter, filters]
   );
-  const cards = useMemo(
+  const derivedCards = useMemo(
     () => buildV2TopicBrowseCards(filteredRows, details),
     [filteredRows, details]
+  );
+  const cards = useMemo(
+    () =>
+      derivedCards.map((card) => applyTopicColumnStatus(card, columnOverrides[card.id])),
+    [derivedCards, columnOverrides]
   );
   const sorted = useMemo(() => applyBrowseOrder(cards, order), [cards, order]);
   const filtered = useMemo(() => {
@@ -601,10 +600,13 @@ export function V2TopicsShell({
     if (statusFilter === "patterns") return sorted.filter((c) => c.patternCount > 0);
     return sorted.filter((c) => c.status === statusFilter);
   }, [sorted, statusFilter]);
-  const summary = useMemo(
-    () => buildV2TopicBrowseSummary(buildV2TopicBrowseCards(rows, details)),
-    [rows, details]
-  );
+  const summary = useMemo(() => {
+    const allDerived = buildV2TopicBrowseCards(rows, details);
+    const effective = allDerived.map((card) =>
+      applyTopicColumnStatus(card, columnOverrides[card.id])
+    );
+    return buildV2TopicBrowseSummary(effective);
+  }, [rows, details, columnOverrides]);
   const filtersActive = hasActiveV2TopicFilters(filters);
 
   const boardGroups = useMemo(() => {
@@ -616,16 +618,17 @@ export function V2TopicsShell({
     };
     for (const card of sorted) {
       if (statusFilter === "patterns" && card.patternCount === 0) continue;
-      // Board DnD overrides must not park linked/evidence topics in Empty.
-      const override = columnOverrides[card.id];
-      const status =
-        override && !(override === "Empty" && card.status !== "Empty")
-          ? override
-          : card.status;
-      groups[status].push(card);
+      if (
+        statusFilter !== "all" &&
+        statusFilter !== "patterns" &&
+        card.status !== statusFilter
+      ) {
+        continue;
+      }
+      groups[card.status].push(card);
     }
     return groups;
-  }, [sorted, columnOverrides, statusFilter]);
+  }, [sorted, statusFilter]);
 
   function applyStatusFilter(value: V2TopicBrowseStatus | "all" | "patterns") {
     setStatusFilter(value);
@@ -694,18 +697,13 @@ export function V2TopicsShell({
 
   useEffect(() => {
     if (!urlSelected) return;
-    if (filteredRows.length === 0) {
-      replaceTopicParams((params) => {
-        params.delete("selected");
-      });
-      return;
-    }
-    if (!filteredRows.some((row) => row.id === urlSelected)) {
+    // Honor status pills (incl. Empty) — selection must remain in the visible set.
+    if (filtered.length === 0 || !filtered.some((card) => card.id === urlSelected)) {
       replaceTopicParams((params) => {
         params.delete("selected");
       });
     }
-  }, [filteredRows, urlSelected, replaceTopicParams]);
+  }, [filtered, urlSelected, replaceTopicParams]);
 
   const returnTo = selected
     ? `/argus/v2/browse/topics?${searchParams.toString()}`
@@ -755,10 +753,18 @@ export function V2TopicsShell({
     }
     const knownIds = cards.map((c) => c.id);
     persistOrder(placeInBrowseOrder(order, id, beforeId, knownIds));
-    persistColumns({ ...columnOverrides, [id]: column });
 
-    const card = cards.find((c) => c.id === id);
-    if (card && column === "Archived" && card.status !== "Archived") {
+    const derived = derivedCards.find((c) => c.id === id);
+    const derivedStatus = derived?.status;
+    // Empty = orphan binders only — Active↔Quiet pins are fine.
+    if (!(column === "Empty" && derivedStatus && derivedStatus !== "Empty")) {
+      const next = { ...columnOverrides };
+      if (derivedStatus && column === derivedStatus) delete next[id];
+      else next[id] = column;
+      persistColumns(next);
+    }
+
+    if (derived && column === "Archived" && derivedStatus !== "Archived") {
       startTransition(async () => {
         const fd = new FormData();
         fd.set("entityId", id);
@@ -767,7 +773,7 @@ export function V2TopicsShell({
         await archiveEntityAction(fd);
         router.refresh();
       });
-    } else if (card && column === "Active" && card.status === "Archived") {
+    } else if (derived && column === "Active" && derivedStatus === "Archived") {
       startTransition(async () => {
         const fd = new FormData();
         fd.set("entityId", id);
@@ -873,7 +879,7 @@ export function V2TopicsShell({
             />
           </div>
 
-          {/* Status pills only for Active/Quiet/Empty — one Filters menu for the rest. */}
+          {/* Status pills — counts/filters match board pins (Active↔Quiet). Empty = orphan only. */}
           <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <SummaryPill label="Total" value={summary.total} active={statusFilter === "all"} onClick={() => applyStatusFilter("all")} />
             <SummaryPill label="Active" value={summary.active} tone="green" active={statusFilter === "Active"} onClick={() => applyStatusFilter("Active")} />
@@ -881,6 +887,10 @@ export function V2TopicsShell({
             <SummaryPill label="Empty" value={summary.empty} tone="blue" active={statusFilter === "Empty"} onClick={() => applyStatusFilter("Empty")} />
             <SummaryPill label="Archived" value={summary.archived} active={statusFilter === "Archived"} onClick={() => applyStatusFilter("Archived")} />
           </div>
+          <p className="mb-4 text-[11px] leading-relaxed text-zinc-600">
+            Active = recent evidence · Quiet = linked or stale · Empty = no evidence and no links (orphan binders).
+            Board moves Active↔Quiet update these chips.
+          </p>
 
           <div className="relative mb-6 flex flex-wrap items-center gap-2">
             <button
@@ -1003,12 +1013,18 @@ export function V2TopicsShell({
           {filtered.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
               <p className="text-sm text-zinc-500">
-                {rows.length === 0 ? "No topics yet." : "No topics match these filters."}
+                {rows.length === 0
+                  ? "No topics yet."
+                  : statusFilter === "Empty"
+                    ? "No empty topics."
+                    : "No topics match these filters."}
               </p>
               <p className="mt-1 text-xs text-zinc-600">
                 {rows.length === 0
                   ? "Capture a topic and link emails or records to it."
-                  : "Try a different view, tag, or clear filters."}
+                  : statusFilter === "Empty"
+                    ? "Empty is for orphan binders — no notes/emails and no linked events, orgs, projects, or people. Linked-only topics stay Quiet."
+                    : "Try a different view, tag, or clear filters."}
               </p>
             </div>
           ) : view === "grid" ? (

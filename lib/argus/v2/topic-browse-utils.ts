@@ -351,6 +351,30 @@ function topicStatusTone(status: V2TopicBrowseStatus): V2TopicBrowseCard["status
   return "default";
 }
 
+/**
+ * Board / pill column status.
+ * Active↔Quiet (and Archive) pins may override derived activity.
+ * Empty stays orphan-only — never park a linked/evidence topic there.
+ */
+export function resolveTopicColumnStatus(
+  derived: V2TopicBrowseStatus,
+  override?: V2TopicBrowseStatus | null
+): V2TopicBrowseStatus {
+  if (!override || override === derived) return derived;
+  if (override === "Empty" && derived !== "Empty") return derived;
+  return override;
+}
+
+/** Apply a board pin so badges, pills, and filters share one status. */
+export function applyTopicColumnStatus(
+  card: V2TopicBrowseCard,
+  override?: V2TopicBrowseStatus | null
+): V2TopicBrowseCard {
+  const status = resolveTopicColumnStatus(card.status, override);
+  if (status === card.status) return card;
+  return { ...card, status, statusTone: topicStatusTone(status) };
+}
+
 export function buildV2TopicBrowseCards(
   rows: V2TopicRow[],
   details: V2TopicDetail[]
