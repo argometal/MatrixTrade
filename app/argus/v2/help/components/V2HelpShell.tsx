@@ -216,23 +216,33 @@ const SECTIONS: HelpSection[] = [
     id: "inbox",
     title: "Inbox triage",
     group: "browse",
-    keywords: ["inbox", "orphans", "linked", "archive", "converted", "badge"],
+    keywords: ["inbox", "orphans", "linked", "archive", "converted", "badge", "filters", "email"],
+    intro:
+      "Status dropdown + grouped Filters keep the list tall. Use Help here instead of on-screen legends.",
     items: [
       {
         title: "Orphans",
-        body: "Unlinked email / intake — same orphan idea as Topics Orphans and Events Orphans. The inbox badge counts Orphans + Linked awaiting triage.",
+        body: "Unlinked email / intake — same orphan idea as Topics Orphans and Events Orphans. Needs Link (or Archive). Badge counts Orphans + Linked awaiting triage.",
       },
       {
         title: "Linked",
-        body: "Entity links exist but triage may continue — register evidence, add Tags, or Archive when complete.",
+        body: "Wired to people / projects / orgs / topics / events. Keep triaging Tags if needed, then Archive when done.",
       },
       {
-        title: "Archive / Converted",
-        body: "Archive finishes triage (no longer in the alert count). Converted is the legacy process graveyard.",
+        title: "Archived",
+        body: "Modern “done.” Leaves the alert count. Evidence stays; you can still open it from the Archived status.",
+      },
+      {
+        title: "Converted (legacy)",
+        body: "Old path: email was turned into a journal Note (`convertedLogId`). Not the normal finish anymore — prefer Link + Archive. Keep the Converted status only to find those historical items (often empty).",
+      },
+      {
+        title: "Grouped Filters",
+        body: "One Filters menu holds Source · Sender · Type · Entity · Tag. Set several at once; Clear removes them.",
       },
       {
         title: "Alert badges",
-        body: "Sidebar and bell counts are triage debt (inbox to process, follow-ups due, unclassified evidence) — not Trackers or Patterns.",
+        body: "Sidebar and bell counts are triage debt — not Trackers or Patterns.",
       },
     ],
   },

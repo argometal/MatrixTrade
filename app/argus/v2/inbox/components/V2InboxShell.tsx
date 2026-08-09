@@ -34,16 +34,22 @@ import { V2InboxBulkBar } from "./V2InboxBulkBar";
 import { linkedEntityIdsRequireAuthenticator } from "@/lib/argus/delete-link-check";
 import { V2InboxDetailPanel } from "./V2InboxDetailPanel";
 import { V2InboxSwipeRow } from "./V2InboxSwipeRow";
+import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 
-const TABS: { id: V2InboxTab; label: string }[] = [
+const TABS: { id: V2InboxTab; label: string; hint?: string }[] = [
   { id: "all", label: "All" },
-  { id: "unread", label: "Orphans" },
-  { id: "in_progress", label: "Linked" },
-  { id: "processed", label: "Converted" },
-  { id: "archived", label: "Archived" },
+  { id: "unread", label: "Orphans", hint: "Unlinked — needs attention" },
+  { id: "in_progress", label: "Linked", hint: "Wired to entities" },
+  { id: "archived", label: "Archived", hint: "Triage done" },
+  {
+    id: "processed",
+    label: "Converted",
+    hint: "Legacy — email turned into a journal note",
+  },
 ];
 
-type FilterMenu = "source" | "sender" | "type" | "entity" | "tag" | null;
+const selectClass =
+  "min-w-0 max-w-[11rem] flex-1 rounded-lg border border-zinc-800 bg-zinc-950/80 px-2 py-1.5 text-[11px] font-semibold text-zinc-200 focus:border-violet-500/40 focus:outline-none sm:max-w-[13rem] sm:text-xs";
 
 type DetailBundle = {
   item: InboxItem;
@@ -62,7 +68,7 @@ function statusClass(tone: V2InboxRow["statusTone"]): string {
   return "bg-zinc-800 text-zinc-500";
 }
 
-function FilterMenuPanel({
+function FilterPanel({
   open,
   children,
   onClose,
@@ -87,7 +93,7 @@ function FilterMenuPanel({
   return (
     <div
       ref={panelRef}
-      className="absolute left-0 top-full z-30 mt-1 max-h-56 min-w-[180px] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl"
+      className="absolute left-0 right-0 top-full z-30 mt-1 max-h-[min(70vh,28rem)] overflow-y-auto rounded-xl border border-zinc-700 bg-zinc-900 p-3 shadow-xl sm:left-auto sm:right-auto sm:min-w-[22rem]"
     >
       {children}
     </div>
@@ -107,12 +113,23 @@ function FilterOption({
     <button
       type="button"
       onClick={onClick}
-      className={`block w-full rounded-lg px-3 py-2 text-left text-[11px] ${
+      className={`block w-full rounded-lg px-2.5 py-1.5 text-left text-[11px] ${
         active ? "bg-violet-500/15 text-violet-200" : "text-zinc-300 hover:bg-zinc-800"
       }`}
     >
       {children}
     </button>
+  );
+}
+
+function FilterGroup({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="space-y-1">
+      <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">{title}</p>
+      <div className="max-h-28 overflow-y-auto rounded-lg border border-zinc-800/80 bg-zinc-950/40 p-0.5">
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -178,7 +195,7 @@ export function V2InboxShell({
   const selectedDetail = selectedId ? details.find((d) => d.item.id === selectedId) : undefined;
   const [selectMode, setSelectMode] = useState(false);
   const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [openFilter, setOpenFilter] = useState<FilterMenu>(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const { openCreateFlow } = useArgusAdd();
   const filtersActive = hasActiveV2InboxFilters(filters);
   const bulkReturnTo = useMemo(() => {
@@ -231,7 +248,7 @@ export function V2InboxShell({
       if (!value) params.delete(paramKey);
       else params.set(paramKey, value);
     });
-    setOpenFilter(null);
+    // Keep Filters panel open so several groups can be set in one pass.
   }
 
   function clearFilters() {
@@ -242,8 +259,16 @@ export function V2InboxShell({
       params.delete("entity");
       params.delete("tag");
     });
-    setOpenFilter(null);
+    setFiltersOpen(false);
   }
+
+  const activeFilterCount = [
+    filters.source,
+    filters.sender,
+    filters.type,
+    filters.entityId,
+    filters.tag,
+  ].filter(Boolean).length;
 
   function setTab(next: V2InboxTab) {
     setChecked(new Set());
@@ -327,13 +352,14 @@ export function V2InboxShell({
           mobileDetailOpen ? "hidden lg:flex" : "flex"
         }`}
       >
-        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-4 lg:px-5">
-          <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-3 lg:px-5">
+          <div className="mb-2.5 flex items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-zinc-50">Inbox</h1>
               <p className="mt-0.5 text-xs text-zinc-500">Evidence — read, link, act</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
+              <V2IntelHelpLink topic="inbox" label="Help" />
               {selectMode || checked.size > 0 ? (
                 <>
                   <button
@@ -363,24 +389,140 @@ export function V2InboxShell({
             </div>
           </div>
 
-          <div className="flex gap-1 overflow-x-auto pb-1">
-            {TABS.map((t) => (
+          <div className="relative flex items-center gap-1.5 sm:gap-2">
+            <label className="sr-only" htmlFor="inbox-status">
+              Inbox status
+            </label>
+            <select
+              id="inbox-status"
+              value={tab}
+              onChange={(event) => setTab(event.target.value as V2InboxTab)}
+              className={selectClass}
+              aria-label="Inbox status"
+              title={TABS.find((t) => t.id === tab)?.hint}
+            >
+              {TABS.map((t) => (
+                <option key={t.id} value={t.id} title={t.hint}>
+                  {t.label} · {counts[t.id]}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((open) => !open)}
+              aria-expanded={filtersOpen}
+              className={`shrink-0 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold sm:text-xs ${
+                filtersActive || filtersOpen
+                  ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
+                  : "border-zinc-800 bg-zinc-950/80 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+              }`}
+            >
+              Filters{activeFilterCount > 0 ? ` · ${activeFilterCount}` : ""} ▾
+            </button>
+
+            {filtersActive ? (
               <button
-                key={t.id}
                 type="button"
-                onClick={() => setTab(t.id)}
-                className={`shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-medium ${
-                  tab === t.id ? "bg-violet-500/15 text-violet-300" : "text-zinc-600 hover:text-zinc-400"
-                }`}
+                onClick={clearFilters}
+                className="shrink-0 rounded-lg border border-zinc-700 px-2 py-1.5 text-[11px] text-zinc-300 hover:bg-zinc-800"
               >
-                {t.label} {counts[t.id]}
+                Clear
               </button>
-            ))}
+            ) : null}
+
+            <FilterPanel open={filtersOpen} onClose={() => setFiltersOpen(false)}>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold text-zinc-300">Group filters</p>
+                  {filtersActive ? (
+                    <button
+                      type="button"
+                      onClick={clearFilters}
+                      className="text-[11px] text-violet-300 hover:text-violet-200"
+                    >
+                      Clear all
+                    </button>
+                  ) : null}
+                </div>
+
+                <FilterGroup title="Source">
+                  <FilterOption active={!filters.source} onClick={() => setFilter("source")}>
+                    Any source
+                  </FilterOption>
+                  {filterOptions.sources.map((source) => (
+                    <FilterOption
+                      key={source}
+                      active={filters.source === source}
+                      onClick={() => setFilter("source", source)}
+                    >
+                      {inboxSourceLabel(source)}
+                    </FilterOption>
+                  ))}
+                </FilterGroup>
+
+                <FilterGroup title="Sender">
+                  <FilterOption active={!filters.sender} onClick={() => setFilter("sender")}>
+                    Any sender
+                  </FilterOption>
+                  {filterOptions.senders.map((sender) => (
+                    <FilterOption
+                      key={sender.key}
+                      active={filters.sender === sender.key}
+                      onClick={() => setFilter("sender", sender.key)}
+                    >
+                      {sender.label}
+                    </FilterOption>
+                  ))}
+                </FilterGroup>
+
+                <FilterGroup title="Type">
+                  <FilterOption active={!filters.type} onClick={() => setFilter("type")}>
+                    Any type
+                  </FilterOption>
+                  {filterOptions.types.map((type) => (
+                    <FilterOption
+                      key={type}
+                      active={filters.type === type}
+                      onClick={() => setFilter("type", type)}
+                    >
+                      {inboxEntityKindLabel(type)}
+                    </FilterOption>
+                  ))}
+                </FilterGroup>
+
+                <FilterGroup title="Entity">
+                  <FilterOption active={!filters.entityId} onClick={() => setFilter("entityId")}>
+                    Any entity
+                  </FilterOption>
+                  {filterOptions.entities.map((entity) => (
+                    <FilterOption
+                      key={entity.id}
+                      active={filters.entityId === entity.id}
+                      onClick={() => setFilter("entityId", entity.id)}
+                    >
+                      {entity.name}
+                    </FilterOption>
+                  ))}
+                </FilterGroup>
+
+                <FilterGroup title="Tag">
+                  <FilterOption active={!filters.tag} onClick={() => setFilter("tag")}>
+                    Any tag
+                  </FilterOption>
+                  {filterOptions.tags.map((tag) => (
+                    <FilterOption
+                      key={tag}
+                      active={filters.tag === tag}
+                      onClick={() => setFilter("tag", tag)}
+                    >
+                      {tag}
+                    </FilterOption>
+                  ))}
+                </FilterGroup>
+              </div>
+            </FilterPanel>
           </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-zinc-600">
-            Orphans = unlinked email (needs attention). Linked = wired · Archive when triage is done. Converted is
-            legacy process.
-          </p>
         </div>
 
         {checked.size > 0 ? (
@@ -407,159 +549,6 @@ export function V2InboxShell({
             onDone={finishBulkAction}
           />
         ) : null}
-
-        <div className="shrink-0 flex flex-wrap gap-2 border-b border-zinc-800/80 px-4 py-2 lg:px-5">
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenFilter((current) => (current === "source" ? null : "source"))}
-              className={`rounded-md border px-2 py-1 text-[10px] ${
-                filters.source
-                  ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                  : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
-              }`}
-            >
-              {filters.source ? inboxSourceLabel(filters.source) : "Source"} ▾
-            </button>
-            <FilterMenuPanel open={openFilter === "source"} onClose={() => setOpenFilter(null)}>
-              <FilterOption active={!filters.source} onClick={() => setFilter("source")}>
-                Any source
-              </FilterOption>
-              {filterOptions.sources.map((source) => (
-                <FilterOption
-                  key={source}
-                  active={filters.source === source}
-                  onClick={() => setFilter("source", source)}
-                >
-                  {inboxSourceLabel(source)}
-                </FilterOption>
-              ))}
-            </FilterMenuPanel>
-          </div>
-
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenFilter((current) => (current === "sender" ? null : "sender"))}
-              className={`max-w-[160px] truncate rounded-md border px-2 py-1 text-[10px] ${
-                filters.sender
-                  ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                  : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
-              }`}
-            >
-              {filters.sender
-                ? filterOptions.senders.find((sender) => sender.key === filters.sender)?.label ?? filters.sender
-                : "Sender"}{" "}
-              ▾
-            </button>
-            <FilterMenuPanel open={openFilter === "sender"} onClose={() => setOpenFilter(null)}>
-              <FilterOption active={!filters.sender} onClick={() => setFilter("sender")}>
-                Any sender
-              </FilterOption>
-              {filterOptions.senders.map((sender) => (
-                <FilterOption
-                  key={sender.key}
-                  active={filters.sender === sender.key}
-                  onClick={() => setFilter("sender", sender.key)}
-                >
-                  {sender.label}
-                </FilterOption>
-              ))}
-            </FilterMenuPanel>
-          </div>
-
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenFilter((current) => (current === "type" ? null : "type"))}
-              className={`rounded-md border px-2 py-1 text-[10px] ${
-                filters.type
-                  ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                  : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
-              }`}
-            >
-              {filters.type ? inboxEntityKindLabel(filters.type) : "Type"} ▾
-            </button>
-            <FilterMenuPanel open={openFilter === "type"} onClose={() => setOpenFilter(null)}>
-              <FilterOption active={!filters.type} onClick={() => setFilter("type")}>
-                Any type
-              </FilterOption>
-              {filterOptions.types.map((type) => (
-                <FilterOption key={type} active={filters.type === type} onClick={() => setFilter("type", type)}>
-                  {inboxEntityKindLabel(type)}
-                </FilterOption>
-              ))}
-            </FilterMenuPanel>
-          </div>
-
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenFilter((current) => (current === "entity" ? null : "entity"))}
-              className={`max-w-[160px] truncate rounded-md border px-2 py-1 text-[10px] ${
-                filters.entityId
-                  ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                  : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
-              }`}
-            >
-              {filters.entityId
-                ? filterOptions.entities.find((entity) => entity.id === filters.entityId)?.name ?? "Entity"
-                : "Entity"}{" "}
-              ▾
-            </button>
-            <FilterMenuPanel open={openFilter === "entity"} onClose={() => setOpenFilter(null)}>
-              <FilterOption active={!filters.entityId} onClick={() => setFilter("entityId")}>
-                Any entity
-              </FilterOption>
-              {filterOptions.entities.map((entity) => (
-                <FilterOption
-                  key={entity.id}
-                  active={filters.entityId === entity.id}
-                  onClick={() => setFilter("entityId", entity.id)}
-                >
-                  {entity.name}
-                </FilterOption>
-              ))}
-            </FilterMenuPanel>
-          </div>
-
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpenFilter((current) => (current === "tag" ? null : "tag"))}
-              className={`max-w-[140px] truncate rounded-md border px-2 py-1 text-[10px] ${
-                filters.tag
-                  ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
-                  : "border-zinc-800 bg-zinc-900/50 text-zinc-500 hover:border-zinc-700"
-              }`}
-            >
-              {filters.tag ?? "Tag"} ▾
-            </button>
-            <FilterMenuPanel open={openFilter === "tag"} onClose={() => setOpenFilter(null)}>
-              <FilterOption active={!filters.tag} onClick={() => setFilter("tag")}>
-                Any tag
-              </FilterOption>
-              {filterOptions.tags.map((tag) => (
-                <FilterOption key={tag} active={filters.tag === tag} onClick={() => setFilter("tag", tag)}>
-                  {tag}
-                </FilterOption>
-              ))}
-            </FilterMenuPanel>
-          </div>
-
-          <button
-            type="button"
-            onClick={clearFilters}
-            disabled={!filtersActive}
-            className={`rounded-md border px-2 py-1 text-[10px] ${
-              filtersActive
-                ? "border-zinc-700 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800"
-                : "border-zinc-800 bg-zinc-900/50 text-zinc-600"
-            }`}
-          >
-            Clear filters
-          </button>
-        </div>
 
         <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
           {filtered.length === 0 ? (
