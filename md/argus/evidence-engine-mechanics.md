@@ -23,8 +23,8 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 | Dates / follow-ups | log dates, `followUpDate`, project start/end |
 | Entities / Topics / Events | `Entity` (+ reference kind in notes) |
 | Contact / my value marks | `Entity.contactValue[]`, `Entity.myValue[]` |
-| Focus Tags (flagged watchlist) | Journal `ArgusData.signalTags[]` — highlight-critical |
-| Match tags (Topic) | Topic `Entity.linkedTags[]` — inbox/search synonyms (not Patterns) |
+| Flag (watchlist on a Tag) | Journal `ArgusData.signalTags[]` — highlight-critical; click Tag to toggle |
+| ~~Match tags (Topic)~~ | **Deprecated** — use evidence Tags from notes |
 
 **Not persisted as metrics:** Patterns, Network status, attention sort keys, health bands, strength%, outcomeScore.
 
@@ -54,9 +54,9 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 
 `buildTagPatternsForScope` — Tags on evidence in scope, count ≥ 3, recent within 90d.
 
-**Focus Tags** (`signalTags`) are a journal-level watchlist. When flagged, they highlight as critical focus in Patterns / tag cloud. They do **not** auto-copy onto evidence (that would inflate Patterns). Add Tags on a Note when that entry should count toward Patterns.
+**Flags** (`signalTags`) are a journal-level watchlist on existing Tags. Click a Tag chip to Flag/Unflag — flagged Tags shine in Patterns / cloud. They do **not** auto-copy onto evidence. Add Tags on a Note to accumulate evidence / Patterns.
 
-Topic **Match tags** (formerly Aliases) are vocabulary for match/suggest — never Patterns.
+**Match tags** (Topic `linkedTags`) are **deprecated** — product uses Tags from notes only.
 
 ### 3) What needs triage? — **nav counts only**
 

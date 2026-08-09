@@ -65,6 +65,8 @@ assert.equal(detail!.eventEvidenceTags.length, 1);
 assert.equal(detail!.eventEvidenceTags[0]?.id, "e1");
 assert.deepEqual(detail!.eventEvidenceTags[0]?.tags, ["handoff", "latency"]);
 assert.equal(detail!.eventEvidenceTags[0]?.dateLabel, "2026-03-15");
+assert.ok(detail!.evidenceTagCounts.some((row) => row.tag === "latency" && row.count === 1));
+assert.ok(detail!.evidenceTagCounts.some((row) => row.tag === "handoff" && row.count === 1));
 // Patterns need min count — two distinct tags once each → no pattern yet, but rollup list works.
 assert.ok(Array.isArray(detail!.tagPatterns));
 

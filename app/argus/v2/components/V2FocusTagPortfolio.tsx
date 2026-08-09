@@ -17,8 +17,8 @@ const FILTERS: { id: FocusFilter; label: string; title: string }[] = [
   { id: "hot", label: "Hot", title: "Used in the last 30 days" },
   { id: "patterns", label: "Patterns", title: "Recurring evidence Tags (Pattern floor)" },
   { id: "stale", label: "Stale", title: "No activity in the last 90 days" },
-  { id: "focus", label: "Focus", title: "Flagged Focus Tags only (watchlist)" },
-  { id: "quiet", label: "Quiet Focus", title: "Flagged but never used on evidence" },
+  { id: "focus", label: "Flagged", title: "Flagged Tags only (watchlist)" },
+  { id: "quiet", label: "Quiet Flag", title: "Flagged but never used on evidence" },
 ];
 
 function filterRows(rows: V2FocusTagStat[], filter: FocusFilter): V2FocusTagStat[] {

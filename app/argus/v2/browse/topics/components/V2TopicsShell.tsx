@@ -284,7 +284,7 @@ function TopicCard({
             <span className="text-zinc-400">{card.lastActivity}</span>
           </div>
           {card.aliases.length > 0 ? (
-            <p className="mt-1 truncate text-zinc-500">Match tags: {card.aliases.slice(0, 3).join(", ")}</p>
+            <p className="mt-1 truncate text-zinc-500">Tags: {card.aliases.slice(0, 3).join(", ")}</p>
           ) : null}
         </div>
       </button>

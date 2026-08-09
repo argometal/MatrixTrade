@@ -1,39 +1,34 @@
-# ARGUS vocabulary — Topic, Tag, Match tag, Focus Tag
+# ARGUS vocabulary — Topic, Tag, Flag
 
-**Status:** Canonical (2026-08-07)  
+**Status:** Canonical (2026-08-09)  
 **Mechanics:** [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md)
 
-Keep the product word **TAGS**. Sub-roles stay under that family:
+Two Tag roles only:
 
 | Term | Where | Role |
 |------|--------|------|
+| **Tag** | On Notes/emails (`log.topics[]`, `inbox.topics[]`) | Accumulates evidence. Repetition → stronger Patterns / larger chips. |
+| **Flag** | Journal `ArgusData.signalTags[]` | Click a Tag to Flag it — shines (highlight-critical) so you can track it. Does **not** copy onto Notes. |
 | **Topic** | Entity (`Kind: topic`) | Evidence binder |
-| **Tag** (evidence) | `inbox.topics[]`, `log.topics[]` | Marks on Notes/emails → Patterns / filters / Deliver |
-| **Match tag** | Topic entity (`linkedTags` storage) | Synonyms so inbox/search suggest this Topic — **not** Patterns |
-| **Focus Tag** | Journal `ArgusData.signalTags[]` | Flagged Tags → highlight-critical / reason to focus. **Not** auto-copied onto evidence |
-| **Note** | `Log` row in Chronicle / Timeline | Narrative evidence |
-| **Event** | Entity (`Kind: event`) | Case binder — not a Journal type |
+| **Event** | Entity (`Kind: event`) | Case binder |
+| **Note** | `Log` row in Chronicle | Narrative evidence |
 
-**Retired names**
-
-| Old | Use |
-|-----|-----|
-| Event Signals (Event `linkedTags`) | Focus Tags + Note Tags |
-| Aliases (Topic UI) | **Match tags** (same storage) |
-
-### How to flag / tag in the UI
+### How to use
 
 | Intent | Where |
 |--------|--------|
-| Tag a Note on an Event (Patterns) | Event → **Note** → Tags button → Save |
-| Flag what you are watching | Event → **Tags** tab (Focus Tags), or Home → Tags |
-| Help inbox find a Topic | Topic → **Tags** tab → Match tags |
-| See tags/Patterns from linked Events | Topic → **Tags** tab (rollup; edit Note Tags on the Event) |
+| Put a Tag on evidence | Event → **Note** → Tags → Save |
+| Flag / unflag a Tag | **Click the Tag** (Topic Tags, Event Tags, or Home → Tags) |
+| See Tags for a Topic | Topic → **Tags** (rolls up notes on the Topic + linked Events) |
 
-Nav badge counts are **not** Focus Tags (`buildV2NavCounts`) — triage debt only.
+### Deprecated
 
-**Network status** (New / Active / Dormant / Lost / Archived) is derived retrieval vocabulary — not a Tag/Focus Tag/Pattern.
+| Old | Status |
+|-----|--------|
+| **Match tags** (Topic `linkedTags` / Aliases) | **Deprecated** — UI removed. Search uses evidence Tags from notes. Storage ignored for product behavior. |
+| Event Signals | Replaced by Flag on Tags |
+| Separate “Focus Tags” list editor on Event | Replaced by click-to-Flag on Tag chips |
+
+Nav badge counts are **not** Flags (`buildV2NavCounts`) — triage debt only.
 
 **Reading modes:** Timeline (org/project) · Chronicle (topic/event/person). See [`timeline-chronicle-model.md`](timeline-chronicle-model.md).
-
-**Storage growth:** [`storage-archive-export.md`](storage-archive-export.md) · **Deprecated handoffs:** [`DEPRECATED-HANDOFFS.md`](DEPRECATED-HANDOFFS.md)

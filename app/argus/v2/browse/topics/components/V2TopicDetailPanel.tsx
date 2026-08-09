@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { V2EvidenceStreamKind } from "@/lib/argus/v2/evidence-stream";
 import type { V2TopicDetail } from "@/lib/argus/v2/topic-browse-utils";
-import { V2TopicAliasEditor } from "./V2TopicAliasEditor";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
+import {
+  V2FlaggableTagChip,
+  focusKeySet,
+  tagIsFlagged,
+} from "@/app/argus/v2/components/V2FlaggableTagChip";
 import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
 import { V2PrivateEvidenceGate } from "@/app/argus/v2/components/V2PrivateEvidenceGate";
 import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
@@ -107,7 +111,13 @@ export function V2TopicDetailPanel({
   const router = useRouter();
   const [panelTab, setPanelTab] = useState<PanelTab>("chronicle");
   const [showGraph, setShowGraph] = useState(true);
+  const [focusTags, setFocusTags] = useState<string[]>(signalTags);
+  const focusKeys = useMemo(() => focusKeySet(focusTags), [focusTags]);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
+
+  useEffect(() => {
+    setFocusTags(signalTags);
+  }, [signalTags, selected.id]);
   const mobileDetail = Boolean(onBack);
   const compactChrome = mobileDetail && panelTab !== "tags";
   const showMobileManageBar = mobileDetail && privateUnlocked;
@@ -210,7 +220,7 @@ export function V2TopicDetailPanel({
               {selected.tagPatterns.length > 0 ? (
                 <V2TagPatternBadges
                   patterns={selected.tagPatterns}
-                  signalTags={signalTags}
+                  signalTags={focusTags}
                   className="mb-3"
                   tagHref={(tag) =>
                     `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&selected=${selected.id}`
@@ -446,36 +456,39 @@ export function V2TopicDetailPanel({
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <p className="text-[11px] leading-relaxed text-zinc-600">
-                <span className="text-zinc-400">Patterns</span> and tags roll up from this Topic’s evidence and linked
-                Events. <span className="text-zinc-400">Match tags</span> only help inbox/search find this Topic — they
-                are not Note Tags. Flag Focus Tags on Home → Tags (or an Event → Tags).
+                <span className="text-zinc-400">Tags</span> come from notes and emails — they grow with repetition.{" "}
+                <span className="text-zinc-400">Click a Tag</span> to Flag it (shine) so you can track it. Add Tags when
+                saving a Note on a linked Event.
               </p>
-
-              {selected.tagPatterns.length > 0 ? (
-                <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
-                    Patterns (topic + linked events)
-                  </p>
-                  <V2TagPatternBadges
-                    patterns={selected.tagPatterns}
-                    signalTags={signalTags}
-                    tagHref={(tag) =>
-                      `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&selected=${selected.id}`
-                    }
-                  />
-                </div>
-              ) : (
-                <p className="text-sm text-zinc-600">
-                  No recurring Patterns yet. Tag notes on linked Events (or on this Topic’s evidence) when they should
-                  count.
-                </p>
-              )}
 
               <div>
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
-                  From linked Events
+                  Tags (click to Flag)
                 </p>
-                {selected.eventEvidenceTags.length > 0 ? (
+                {selected.evidenceTagCounts.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selected.evidenceTagCounts.map((row) => (
+                      <V2FlaggableTagChip
+                        key={row.tag}
+                        tag={row.tag}
+                        count={row.count}
+                        flagged={tagIsFlagged(row.tag, focusKeys)}
+                        onFlaggedChange={(next) => setFocusTags(next)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-zinc-600">
+                    No Tags yet. Open a linked Event → Note, add Tags, Save.
+                  </p>
+                )}
+              </div>
+
+              {selected.eventEvidenceTags.length > 0 ? (
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+                    By linked Event
+                  </p>
                   <ul className="space-y-3">
                     {selected.eventEvidenceTags.map((event) => (
                       <li key={event.id} className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-3 py-2.5">
@@ -491,34 +504,27 @@ export function V2TopicDetailPanel({
                           ) : null}
                         </div>
                         <div className="flex flex-wrap gap-1.5">
-                          {event.tags.map((tag) => (
-                            <span
-                              key={tag}
-                              className="rounded-full border border-zinc-700/80 bg-zinc-950/50 px-2 py-0.5 text-[11px] text-zinc-300"
-                            >
-                              {tag}
-                            </span>
-                          ))}
+                          {event.tags.map((tag) => {
+                            const count =
+                              selected.evidenceTagCounts.find(
+                                (row) => row.tag.toLowerCase() === tag.toLowerCase()
+                              )?.count ?? 1;
+                            return (
+                              <V2FlaggableTagChip
+                                key={tag}
+                                tag={tag}
+                                count={count}
+                                flagged={tagIsFlagged(tag, focusKeys)}
+                                onFlaggedChange={(next) => setFocusTags(next)}
+                              />
+                            );
+                          })}
                         </div>
                       </li>
                     ))}
                   </ul>
-                ) : (
-                  <p className="text-sm text-zinc-600">
-                    No Note Tags on linked Events yet. Open an Event → Note, add Tags, Save.
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">Match tags</p>
-                <V2TopicAliasEditor
-                  topicId={selected.id}
-                  topicName={selected.name}
-                  initialAliases={selected.aliases}
-                  returnTo={returnTo}
-                />
-              </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </V2PrivateEvidenceGate>
