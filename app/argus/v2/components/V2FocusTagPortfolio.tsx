@@ -8,43 +8,14 @@ import type { V2FocusTagStat, V2TagEvidenceContext, V2TagEvidenceEntity } from "
 import { signalTagKey } from "@/lib/argus/signal-tags";
 import { resolveBubblePositions } from "@/lib/argus/v2/intelligence-viz";
 import { SIGNAL_TAGS } from "@/lib/argus/ux-copy";
+import {
+  filterIntelligenceTags,
+  type IntelligenceUniverseFilter,
+} from "@/lib/argus/v2/intelligence-filters";
 import { V2HomeNeighborhoodViewer } from "./V2HomeNeighborhoodViewer";
+import { V2IntelligenceUniverseFilters } from "./V2IntelligenceUniverseFilters";
 import { V2SignalTagsEditor } from "./V2SignalTagsEditor";
 import { V2Timeline } from "./V2Timeline";
-
-type FocusFilter = "all" | "hot" | "stale" | "patterns" | "focus";
-
-/**
- * Universe filters (Home → Tags).
- * Stale = Tag has evidence, but none in the last 90 days (dormant, not deleted).
- * Tags with zero evidence yet (Topic Tags / new names) stay in Universe — not a separate “quiet” mode.
- */
-const FILTERS: { id: FocusFilter; label: string; title: string }[] = [
-  { id: "all", label: "Universe", title: "All Tags in the journal universe" },
-  { id: "hot", label: "Hot", title: "Used on evidence in the last 30 days" },
-  { id: "patterns", label: "Patterns", title: "Recurring evidence Tags (Pattern floor)" },
-  {
-    id: "stale",
-    label: "Stale",
-    title: "Has evidence, but none in the last 90 days",
-  },
-  { id: "focus", label: "Trackers", title: "Tags Flagged as Trackers (watch on)" },
-];
-
-function filterRows(rows: V2FocusTagStat[], filter: FocusFilter): V2FocusTagStat[] {
-  switch (filter) {
-    case "focus":
-      return rows.filter((r) => r.isFocus);
-    case "hot":
-      return rows.filter((r) => r.recurrence30d > 0);
-    case "stale":
-      return rows.filter((r) => r.count > 0 && r.recencyScore === 0);
-    case "patterns":
-      return rows.filter((r) => r.isPattern);
-    case "all":
-      return rows;
-  }
-}
 
 function pickDefaultNeighborhoodCenter(evidence: V2TagEvidenceContext | null): V2TagEvidenceEntity | null {
   if (!evidence) return null;
@@ -129,7 +100,7 @@ export function V2FocusTagPortfolio({
   variant?: "aside" | "universe";
 }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<FocusFilter>("all");
+  const [filter, setFilter] = useState<IntelligenceUniverseFilter>("all");
   const [query, setQuery] = useState("");
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [focusTags, setFocusTags] = useState(initialFocusTags);
@@ -158,7 +129,7 @@ export function V2FocusTagPortfolio({
       ...row,
       isFocus: focusKeySet.has(signalTagKey(row.name)),
     }));
-    const filtered = filterRows(withLiveFocus, filter);
+    const filtered = filterIntelligenceTags(withLiveFocus, filter);
     const q = query.trim().toLowerCase();
     if (!q) return filtered;
     return filtered.filter((row) => row.name.toLowerCase().includes(q));
@@ -275,32 +246,15 @@ export function V2FocusTagPortfolio({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex flex-wrap gap-1" role="tablist" aria-label="Filter Tags">
-          {FILTERS.map((item) => {
-            const active = filter === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                title={item.title}
-                onClick={() => setFilter(item.id)}
-                className={`rounded-lg border px-2 py-1 text-[10px] font-semibold transition ${
-                  active
-                    ? item.id === "focus"
-                      ? "border-rose-500/40 bg-rose-950/30 text-rose-200"
-                      : "border-violet-500/40 bg-violet-950/30 text-violet-200"
-                    : "border-zinc-800 bg-zinc-900/40 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
+      <div className="flex flex-wrap items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <V2IntelligenceUniverseFilters
+            filter={filter}
+            onChange={setFilter}
+            ariaLabel="Filter Tags universe"
+          />
         </div>
-        <label className="ml-auto block min-w-[10rem] flex-1 sm:max-w-xs">
+        <label className="block min-w-[10rem] flex-1 sm:max-w-xs">
           <span className="sr-only">Filter tags by name</span>
           <input
             type="search"
@@ -311,12 +265,6 @@ export function V2FocusTagPortfolio({
           />
         </label>
       </div>
-      {filter === "stale" ? (
-        <p className="text-[11px] text-zinc-500">
-          <span className="font-medium text-zinc-400">Stale</span> means the Tag was used on notes/email before, but not
-          in the last 90 days. It is still a Tag — not deleted.
-        </p>
-      ) : null}
 
       {/* Priority 1 — Universe is the workspace (Treemap-class height). */}
       <div>

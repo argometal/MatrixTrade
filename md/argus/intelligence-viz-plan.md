@@ -8,12 +8,14 @@ Status: **implemented** (treemap + portfolio axes as of 2026-07). Tag pattern ov
 - **Nodes:** organizations, projects, topics only (no events, tags, people).
 - **Size:** evidence volume (journal logs + linked inbox emails).
 - **Color:** recent activity share in the last 7 days (green = active, gray = quiet).
+- **Universe filters (same as Tags):** Universe · Hot · Patterns · Stale · Trackers.
 
 ### Portfolio matrix
 - **Nodes:** organizations, projects, topics.
 - **Y axis:** recency — days since last evidence, mapped 0–1 (0d → 1, 90d+ → 0).
 - **X axis:** recurrence — evidence item count in the last 30 days, normalized 0–1 within the portfolio set.
 - **Bubble size:** total evidence count.
+- **Universe filters (same as Tags):** Universe · Hot · Patterns · Stale · Trackers.
 - No BCG quadrant labels or manual strategic/completion axes.
 
 ### Tags tab (Home → Intelligence → Tags)

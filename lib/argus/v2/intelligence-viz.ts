@@ -35,6 +35,8 @@ export type V2KnowledgeNode = {
   completion?: number;
   /** Number of recurring tag patterns on scope evidence (≥3 items, fresh within 90d). */
   tagPatternCount: number;
+  /** True when scoped evidence carries a journal Tracker Tag. */
+  hasTracker: boolean;
   href: string;
   group: string;
 };
@@ -357,6 +359,7 @@ export function buildV2KnowledgeNodes(
 ): V2KnowledgeNode[] {
   const logs = visibleLogs(data, includePrivate);
   const entities = data.entities.filter((e) => !e.deletedAt);
+  const focusKeys = signalTagKeySet(data.signalTags);
   const nodes: V2KnowledgeNode[] = [];
 
   for (const entity of entities) {
@@ -392,6 +395,8 @@ export function buildV2KnowledgeNodes(
     const entityLogs = logs.filter((l) => l.entityIds.includes(entity.id));
     const entityInbox = getLinkedInboxForEntity(inboxItems, entity.id, includePrivate);
     const patterns = buildTagPatternsForScope(entityLogs, entityInbox, today);
+    const hasTracker =
+      focusTagsOnEntity(data, inboxItems, entity.id, includePrivate, focusKeys).length > 0;
 
     nodes.push({
       id: entity.id,
@@ -407,6 +412,7 @@ export function buildV2KnowledgeNodes(
       href: entityHref(entity),
       group: primaryGroupForEntity(data, entity, logs),
       tagPatternCount: tagPatternCount(patterns),
+      hasTracker,
     });
   }
 
