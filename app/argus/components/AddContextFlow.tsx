@@ -86,46 +86,52 @@ export function AddContextFlow({
 
   return (
     <div
-      className="fixed inset-0 z-[9998] flex items-end justify-center bg-black/50 p-4 pb-24 sm:items-center sm:pb-4"
+      className="fixed inset-0 z-[9998] flex items-end justify-center bg-black/50 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:items-center sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-label={ADD_CONTEXT.title}
     >
       <div
-        className="flex max-h-[min(520px,88vh)] w-full max-w-lg flex-col rounded-2xl border border-zinc-700/80 bg-zinc-950 p-4 shadow-2xl"
+        className={`flex w-full max-w-lg flex-col rounded-2xl border border-zinc-700/80 bg-zinc-950 p-4 shadow-2xl ${
+          step === "pick"
+            ? "max-h-[min(94dvh,720px)]"
+            : "max-h-[min(88dvh,640px)]"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="mb-3 shrink-0">
+        <header className="mb-2 shrink-0 sm:mb-3">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400">
             {ADD_CONTEXT.title}
           </p>
-          <h2 className="text-base font-bold text-zinc-50">
+          <h2 className="text-base font-bold text-zinc-50 sm:text-lg">
             {step === "pick" ? ADD_CONTEXT.pickKind : REFERENCE_KIND_LABELS[kind]}
           </h2>
-          <p className="mt-1 text-[11px] text-zinc-500">
+          <p className="mt-0.5 text-[11px] leading-snug text-zinc-500 sm:mt-1">
             {step === "pick" ? ADD_CONTEXT.hint : CREATE_ITEM_HINTS[kind]}
           </p>
         </header>
 
         {error ? (
-          <p className="mb-3 rounded-lg bg-amber-950/40 px-3 py-2 text-sm text-amber-300">{error}</p>
+          <p className="mb-2 rounded-lg bg-amber-950/40 px-3 py-2 text-sm text-amber-300 sm:mb-3">{error}</p>
         ) : null}
 
         {step === "pick" ? (
-          <nav className="argus-overlay-scroll min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
+          <nav className="argus-overlay-scroll min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain sm:space-y-2">
             {CONTEXT_KINDS.map((k) => (
               <button
                 key={k}
                 type="button"
                 onClick={() => pickKind(k)}
-                className="flex w-full items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-4 py-3 text-left transition hover:border-violet-500/30 hover:bg-zinc-900"
+                className="flex w-full items-center gap-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-3 py-2.5 text-left transition hover:border-violet-500/30 hover:bg-zinc-900 sm:px-4 sm:py-3"
               >
-                <KindIcon kind={k} className="!h-10 !w-10" />
+                <KindIcon kind={k} className="!h-10 !w-10 shrink-0" />
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-zinc-100">
                     {REFERENCE_KIND_LABELS[k]}
                   </span>
-                  <span className="mt-0.5 block text-xs text-zinc-500">{CREATE_ITEM_HINTS[k]}</span>
+                  <span className="mt-0.5 block text-xs leading-snug text-zinc-500">
+                    {CREATE_ITEM_HINTS[k]}
+                  </span>
                 </span>
               </button>
             ))}
@@ -165,7 +171,7 @@ export function AddContextFlow({
           </div>
         )}
 
-        <footer className="mt-4 flex gap-3 border-t border-zinc-800 pt-4">
+        <footer className="mt-3 flex shrink-0 gap-3 border-t border-zinc-800 pt-3 sm:mt-4 sm:pt-4">
           <button
             type="button"
             onClick={() => {
