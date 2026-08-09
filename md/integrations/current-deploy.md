@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807w` |
-| **Commit** | Always `git rev-parse main0807w` after fetch (must match `origin/main`) |
+| **Tag** | `main0807x` |
+| **Commit** | Always `git rev-parse main0807x` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-09 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807w
+# optional pin: git checkout main0807x
 ```
 
 ## What this deploy includes
 
+- PR #203: Topic Tags back in one Tag system; Tracker = Flag/Disable (never deletes); dual neighborhood (main zoom + small one-level-up dock); Home **Browser** rename; Universe/Hot/Patterns/Stale/Trackers on Treemap · Portfolio · Tags
 - PR #200: Tags + **Trackers** (Flag = action); Home Tags control center; neighborhood docks on Treemap/Portfolio/Tags; library MD aligned (no radioactive / Focus Tags wording)
 - PR #201: Topics browse evidence = Topic ∪ linked Events; Grid / List / Manage hover names
 - PR #198: Topic Chronicle only (drop Timeline); Tags tab rolls up Patterns + Note Tags from linked Events; Connections Event chips show dates
