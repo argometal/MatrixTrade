@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807u` |
-| **Commit** | Always `git rev-parse main0807u` after fetch (must match `origin/main`) |
+| **Tag** | `main0807v` |
+| **Commit** | Always `git rev-parse main0807v` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-09 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807u
+# optional pin: git checkout main0807v
 ```
 
 ## What this deploy includes
 
+- PR #198: Topic Chronicle only (drop Timeline); Tags tab rolls up Patterns + Note Tags from linked Events; Connections Event chips show dates
 - PR #196: Topic/Event binder chips + reverse links on all levels (Org/Project/Person Links; Link modal outbound∪reverse; Kind parsing harden; create/save mirror)
 - PR #192 / #194: Tags Universe exploration workspace (+ Vercel typecheck fix for test fixtures)
 - PR #177: Remove Dashboard **Paste AI Block (legacy)** — AI Blocks via Control → Apply only
