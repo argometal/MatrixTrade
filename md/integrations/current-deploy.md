@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0808f` |
-| **Commit** | Always `git rev-parse main0808f` after fetch (must match `origin/main`) |
+| **Tag** | `main0808g` |
+| **Commit** | Always `git rev-parse main0808g` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-09 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0808f
+# optional pin: git checkout main0808g
 ```
 
 ## What this deploy includes
 
+- PR #215: Deprecate Inbox Converted — fold into Archived (Journal) with Open note path
 - PR #214: Create pick sheet taller on phone — five levels + Exit visible without scroll
 - PR #213: Mobile top bar — space private lock away from menu A
 - PR #212: Inbox Status dropdown + grouped Filters; Converted clarified as legacy email→journal
