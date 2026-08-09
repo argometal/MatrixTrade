@@ -6,9 +6,9 @@ import { toggleSignalTagAction } from "@/app/argus/actions";
 import { signalTagKey } from "@/lib/argus/signal-tags";
 
 /**
- * Evidence Tag chip — click toggles Flag (critical / radioactive QC marker).
+ * Evidence Tag chip — click toggles Tracker (Flag / Unflag).
  * Size steps with repetition so Patterns and one-offs share one control.
- * Flagged state is always visually obvious — not a soft hover glow.
+ * Trackers stay visibly marked — not a soft hover glow.
  */
 export function V2FlaggableTagChip({
   tag,
@@ -54,11 +54,7 @@ export function V2FlaggableTagChip({
       type="button"
       onClick={toggle}
       disabled={pending}
-      title={
-        localFlagged
-          ? `Unflag “${tag}” — remove critical marker`
-          : `Flag “${tag}” as critical marker`
-      }
+      title={localFlagged ? `Unflag “${tag}” tracker` : `Flag “${tag}” as Tracker`}
       aria-pressed={localFlagged}
       className={`inline-flex items-center gap-1 rounded-full border font-medium transition disabled:opacity-50 ${size} ${
         localFlagged
@@ -68,7 +64,7 @@ export function V2FlaggableTagChip({
     >
       {localFlagged ? (
         <span className="font-semibold text-amber-300" aria-hidden>
-          ☢
+          ⚑
         </span>
       ) : null}
       <span>{tag}</span>

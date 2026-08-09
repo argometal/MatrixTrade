@@ -70,10 +70,10 @@ export function V2HomeIntelligencePanel({
       {tab === "tags" ? (
         <div className="space-y-3">
           <div>
-            <h3 className="text-sm font-semibold text-zinc-100">Tags · critical markers</h3>
+            <h3 className="text-sm font-semibold text-zinc-100">Tags · Trackers</h3>
             <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-              Control center for Tags and ☢ Flag markers. Browse the universe, Flag a tag that isn’t a tracker yet,
-              and open a binder neighborhood from its evidence.
+              Control center for Tags and Trackers. Browse the universe, Flag a tag that isn’t a Tracker yet, and open
+              a binder neighborhood from its evidence.
             </p>
           </div>
           <V2FocusTagPortfolio

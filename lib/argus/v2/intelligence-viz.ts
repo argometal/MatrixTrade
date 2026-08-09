@@ -48,11 +48,11 @@ export type V2GraphNode = {
   evidenceCount: number;
   href: string;
   /**
-   * True when scoped evidence carries a journal Flag (`signalTags`).
-   * Visual: rose/amber halo — critical Flag marker (not a new entity).
+   * True when scoped evidence carries a journal Tracker (`signalTags`).
+   * Visual: rose/amber halo — Tracker on evidence (not a new entity).
    */
   focusCritical?: boolean;
-  /** Matching Flagged Tag display names on this node's evidence. */
+  /** Matching Tracker Tag display names on this node's evidence. */
   focusTags?: string[];
 };
 

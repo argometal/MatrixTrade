@@ -1574,7 +1574,7 @@ export async function updateTopicAliasesAction(formData: FormData): Promise<void
   redirect(returnTo);
 }
 
-/** Replace the journal-level Flag markers (critical Tags → `signalTags`). */
+/** Replace the journal-level Trackers (Flagged Tags → `signalTags`). */
 export async function updateSignalTagsAction(formData: FormData): Promise<void> {
   await requireArgusSession();
   const signalTags = normalizeEventTags(parseTopics(String(formData.get("signalTags") ?? "")));
@@ -1588,7 +1588,7 @@ export async function updateSignalTagsAction(formData: FormData): Promise<void> 
   redirect(returnTo.startsWith("/argus/") ? returnTo : "/argus/v2");
 }
 
-/** Flag or unflag a Tag as critical marker (journal `signalTags`). */
+/** Flag or unflag a Tag as a Tracker (journal `signalTags`). */
 export async function toggleSignalTagAction(
   tag: string
 ): Promise<{ ok: true; signalTags: string[]; active: boolean } | { error: string }> {

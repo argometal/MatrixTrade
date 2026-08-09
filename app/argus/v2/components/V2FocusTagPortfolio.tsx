@@ -18,8 +18,8 @@ const FILTERS: { id: FocusFilter; label: string; title: string }[] = [
   { id: "hot", label: "Hot", title: "Used in the last 30 days" },
   { id: "patterns", label: "Patterns", title: "Recurring evidence Tags (Pattern floor)" },
   { id: "stale", label: "Stale", title: "No activity in the last 90 days" },
-  { id: "focus", label: "Markers", title: "Flagged critical Tags (☢ markers)" },
-  { id: "quiet", label: "Quiet marker", title: "Flagged but never used on evidence" },
+  { id: "focus", label: "Trackers", title: "Flagged Tracker Tags only" },
+  { id: "quiet", label: "Quiet tracker", title: "Flagged Tracker but never used on evidence" },
 ];
 
 function filterRows(rows: V2FocusTagStat[], filter: FocusFilter): V2FocusTagStat[] {
@@ -108,7 +108,7 @@ function EntityChipList({
 }
 
 /**
- * Tags control center — Universe browse + Flag critical markers + binder neighborhood.
+ * Tags control center — Universe browse + Flag Trackers + binder neighborhood.
  */
 export function V2FocusTagPortfolio({
   rows,
@@ -219,15 +219,15 @@ export function V2FocusTagPortfolio({
 
   return (
     <div className="space-y-4">
-      {/* Markers strip — Tags + Flag markers in one place */}
+      {/* Trackers strip — Tags + Trackers in one place */}
       <div className="rounded-xl border border-rose-500/25 bg-rose-950/15 px-3 py-3 sm:px-4">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-300/90">
-              Critical markers
+              Trackers
             </p>
             <p className="mt-0.5 text-[11px] text-zinc-500">
-              Flagged Tags stay marked with ☢. Select any Universe tag that isn’t a tracker yet, then Flag it.
+              Flagged Tags stay marked as Trackers (⚑). Select any Universe tag that isn’t a Tracker yet, then Flag it.
             </p>
           </div>
           <button
@@ -235,13 +235,13 @@ export function V2FocusTagPortfolio({
             onClick={() => setFilter("focus")}
             className="text-[11px] font-medium text-rose-300/90 hover:text-rose-200"
           >
-            View markers only →
+            View Trackers only →
           </button>
         </div>
         {markerRows.length === 0 ? (
-          <p className="text-xs text-zinc-600">No markers yet — pick a Tag below and Flag it.</p>
+          <p className="text-xs text-zinc-600">No Trackers yet — pick a Tag below and Flag it.</p>
         ) : (
-          <ul className="flex flex-wrap gap-1.5" aria-label="Flagged critical markers">
+          <ul className="flex flex-wrap gap-1.5" aria-label="Flagged Trackers">
             {markerRows.slice(0, 36).map((row) => (
               <li key={row.name}>
                 <button
@@ -251,9 +251,9 @@ export function V2FocusTagPortfolio({
                     setSelectedName(row.name);
                   }}
                   className="inline-flex items-center gap-1 rounded-full border border-amber-400/70 bg-rose-950/60 px-2.5 py-1 text-[11px] font-semibold text-amber-100 ring-1 ring-rose-500/50"
-                  title={`${row.name} — critical marker`}
+                  title={`${row.name} — Tracker`}
                 >
-                  <span aria-hidden>☢</span>
+                  <span aria-hidden>⚑</span>
                   <span>{row.name}</span>
                   {row.count > 0 ? (
                     <span className="tabular-nums text-amber-200/70">· {row.count}</span>
@@ -315,7 +315,7 @@ export function V2FocusTagPortfolio({
             viewBox="0 0 100 100"
             className="w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60 min-h-[min(560px,65vh)] h-[min(560px,65vh)]"
             role="img"
-            aria-label="Tag universe — click a tag to explore evidence or Flag it as a critical marker. Recency vertical, recurrence horizontal."
+            aria-label="Tag universe — click a tag to explore evidence or Flag it as a Tracker. Recency vertical, recurrence horizontal."
           >
             <text x="50" y="97" textAnchor="middle" fill="rgb(113, 113, 122)" fontSize="2.8">
               Recurrence (30d) →
@@ -359,7 +359,7 @@ export function V2FocusTagPortfolio({
                   className="cursor-pointer"
                   role="button"
                   tabIndex={0}
-                  aria-label={`${row.name}${row.isFocus ? ", critical marker" : ""}${row.isPattern ? ", Pattern" : ""}`}
+                  aria-label={`${row.name}${row.isFocus ? ", Tracker" : ""}${row.isPattern ? ", Pattern" : ""}`}
                   aria-pressed={isSelected}
                   onClick={() => selectTag(row.name)}
                   onKeyDown={(event) => {
@@ -412,7 +412,7 @@ export function V2FocusTagPortfolio({
                       pointerEvents="none"
                       aria-hidden
                     >
-                      ☢
+                      ⚑
                     </text>
                   ) : null}
                   {showLabel ? (
@@ -436,7 +436,7 @@ export function V2FocusTagPortfolio({
                   ) : null}
                   <title>
                     {row.name}
-                    {row.isFocus ? " · Critical marker ☢" : ""}
+                    {row.isFocus ? " · Tracker" : ""}
                     {row.isPattern ? " · Pattern" : ""}
                     {" — click to explore; Flag below if not a tracker yet"}
                   </title>
@@ -446,7 +446,7 @@ export function V2FocusTagPortfolio({
           </svg>
         )}
         <p className="mt-2 text-[10px] text-zinc-500">
-          Click a tag to inspect · ☢ / amber ring = critical Flag marker · Gold ring (unflagged) = Pattern · Axes are
+          Click a tag to inspect · ⚑ / amber ring = Tracker · Gold ring (unflagged) = Pattern · Axes are
           evidence windows, not scores
         </p>
       </div>
@@ -456,7 +456,7 @@ export function V2FocusTagPortfolio({
         <div className="rounded-xl border border-dashed border-zinc-800/90 bg-zinc-950/40 px-4 py-6 text-center">
           <p className="text-sm font-medium text-zinc-400">Select a tag in the Universe</p>
           <p className="mt-1 text-xs text-zinc-600">
-            See the evidence that created it. If it isn’t a tracker yet, Flag it as a critical marker. Binders open a
+            See the evidence that created it. If it isn’t a Tracker yet, Flag it as one. Binders open a
             neighborhood view.
           </p>
         </div>
@@ -465,7 +465,7 @@ export function V2FocusTagPortfolio({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-400/90">
-                Tags · marker control
+                Tags · Tracker control
               </p>
               <h3 className="mt-0.5 text-lg font-semibold text-zinc-50">{selected.name}</h3>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -476,11 +476,11 @@ export function V2FocusTagPortfolio({
                 ) : null}
                 {selectedIsFocus ? (
                   <span className="inline-flex items-center gap-1 rounded bg-rose-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-amber-100 ring-1 ring-amber-400/50">
-                    <span aria-hidden>☢</span> Critical marker
+                    <span aria-hidden>⚑</span> Tracker
                   </span>
                 ) : (
                   <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] text-zinc-500 ring-1 ring-zinc-700">
-                    Not a tracker yet
+                    Not a Tracker yet
                   </span>
                 )}
                 {selected.lastSeen ? (
@@ -507,10 +507,10 @@ export function V2FocusTagPortfolio({
                 title={
                   selectedIsFocus
                     ? SIGNAL_TAGS.removeAria(selected.name)
-                    : `Flag ${selected.name} as critical marker`
+                    : `Flag ${selected.name} as Tracker`
                 }
               >
-                {focusBusy ? "…" : selectedIsFocus ? "Unflag marker" : "☢ Flag critical"}
+                {focusBusy ? "…" : selectedIsFocus ? "Unflag tracker" : "⚑ Flag Tracker"}
               </button>
               <Link
                 href={selectedEvidence?.openHref ?? selected.href}
@@ -537,7 +537,7 @@ export function V2FocusTagPortfolio({
                 <V2Timeline entries={selectedEvidence.evidence} compact />
               ) : (
                 <p className="rounded-xl border border-dashed border-zinc-800 px-3 py-4 text-xs text-zinc-500">
-                  No notes or email carry this tag yet. You can still Flag it as a quiet critical marker.
+                  No notes or email carry this tag yet. You can still Flag it as a quiet Tracker.
                 </p>
               )}
             </div>
@@ -616,7 +616,7 @@ export function V2FocusTagPortfolio({
                             : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-violet-500/40 hover:text-zinc-200"
                         }`}
                       >
-                        {row.isFocus ? "☢ " : ""}
+                        {row.isFocus ? "⚑ " : ""}
                         {row.name}
                       </button>
                     </li>

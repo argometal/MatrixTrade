@@ -404,18 +404,18 @@ export const TOPIC_MATCH_TAGS = {
 export const TOPIC_ALIASES = TOPIC_MATCH_TAGS;
 
 /**
- * Flag — critical / radioactive QC marker on a Tag (journal `signalTags`).
+ * Tracker — Flag a Tag to watch it (journal `signalTags`).
  * Not copied onto evidence. Tags on Notes still drive Patterns.
- * Home → Tags is the control center to create and watch markers.
+ * Home → Tags is the control center to create and watch Trackers.
  */
 export const SIGNAL_TAGS = {
-  heading: "Flags",
-  hint: "Click a Tag to Flag it as a critical marker (☢). Flagged Tags stay visibly marked across Patterns, the universe, and neighborhoods — they do not auto-copy onto every Note.",
+  heading: "Trackers",
+  hint: "Click a Tag to Flag it as a Tracker. Trackers stay visibly marked across Patterns, the universe, and neighborhoods — they do not auto-copy onto every Note.",
   placeholder: "Flag a tag…",
   add: "Flag",
-  empty: "No Flags yet — open Home → Tags and Flag a Tag.",
-  removeAria: (item: string) => `Unflag critical marker ${item}`,
-  save: "Save Flags",
+  empty: "No Trackers yet — open Home → Tags and Flag a Tag.",
+  removeAria: (item: string) => `Unflag tracker ${item}`,
+  save: "Save Trackers",
 } as const;
 
 /** @deprecated Use SIGNAL_TAGS — Event binder Signals removed; Focus Tags replace them. */

@@ -39,8 +39,8 @@ export function V2EntityNeighborhoodPanel({
         <p className={`mt-1 text-zinc-500 ${docked ? "text-[10px] leading-snug" : "text-xs"}`}>
           Local view around {entityName}
           {docked
-            ? ". ☢ halo = Flag marker on evidence. Dashed rose edges = shared Flag (affinity)."
-            : " — not the full universe. ☢ / rose halo = Flag marker (evidence carries a flagged Tag). Dashed rose edges = shared Flag (affinity, not a confirmed link). Click a node to focus its neighbors; ⌘/Ctrl+click opens the entity."}
+            ? ". Halo = Tracker on evidence. Dashed rose edges = shared Tracker (affinity)."
+            : " — not the full universe. Rose/amber halo = Tracker (evidence carries a Flagged Tag). Dashed rose edges = shared Tracker (affinity, not a confirmed link). Click a node to focus its neighbors; ⌘/Ctrl+click opens the entity."}
         </p>
       </div>
       <V2KnowledgeGraph

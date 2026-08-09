@@ -23,7 +23,7 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 | Dates / follow-ups | log dates, `followUpDate`, project start/end |
 | Entities / Topics / Events | `Entity` (+ reference kind in notes) |
 | Contact / my value marks | `Entity.contactValue[]`, `Entity.myValue[]` |
-| Flag (critical marker on a Tag) | Journal `ArgusData.signalTags[]` — radioactive/QC marker; click Tag to toggle; Home → Tags is the control center |
+| Tracker (Flag on a Tag) | Journal `ArgusData.signalTags[]` — watch a Tag; click Tag to toggle; Home → Tags is the control center |
 | ~~Match tags (Topic)~~ | **Deprecated** — use evidence Tags from notes |
 
 **Not persisted as metrics:** Patterns, Network status, attention sort keys, health bands, strength%, outcomeScore.
@@ -54,7 +54,7 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 
 `buildTagPatternsForScope` — Tags on evidence in scope, count ≥ 3, recent within 90d.
 
-**Flags** (`signalTags`) are journal-level **critical markers** on existing Tags. Click a Tag chip to Flag/Unflag — flagged Tags stay visibly marked (☢) in Patterns, the Tag universe, and neighborhoods. They do **not** auto-copy onto evidence. Home → Tags is the place to promote a Tag that isn’t a tracker yet. Add Tags on a Note to accumulate evidence / Patterns.
+**Trackers** (`signalTags`) are journal-level watches on existing Tags. Click a Tag chip to Flag/Unflag — Trackers stay visibly marked (⚑) in Patterns, the Tag universe, and neighborhoods. They do **not** auto-copy onto evidence. Home → Tags is the place to promote a Tag that isn’t a Tracker yet. Add Tags on a Note to accumulate evidence / Patterns.
 
 **Match tags** (Topic `linkedTags`) are **deprecated** — product uses Tags from notes only.
 

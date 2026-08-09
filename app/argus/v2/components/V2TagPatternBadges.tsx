@@ -47,11 +47,11 @@ export function V2TagPatternBadges({
             }
             title={
               isFocus
-                ? `#${pattern.tag} — critical Flag marker. ${pattern.count} notes/emails in scope (${pattern.recentCount} recent).`
+                ? `#${pattern.tag} — Tracker. ${pattern.count} notes/emails in scope (${pattern.recentCount} recent).`
                 : `#${pattern.tag} — ${pattern.count} notes/emails tagged in scope (${pattern.recentCount} recent).`
             }
           >
-            <span aria-hidden>{isFocus ? "☢" : "⚑"}</span>
+            <span aria-hidden>⚑</span>
             <span>#{pattern.tag}</span>
             <span className={`tabular-nums ${isFocus ? "text-amber-200/85" : "text-red-400/80"}`}>
               ({pattern.count})

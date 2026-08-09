@@ -225,10 +225,9 @@ export function V2HomeClient({
 
           <div id="tags">
             <V2Card className="p-5">
-              <V2SectionTitle>Tags · markers</V2SectionTitle>
+              <V2SectionTitle>Tags · Trackers</V2SectionTitle>
               <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
-                Home Tags is the control center: watch the universe, Flag critical ☢ markers, and open binder
-                neighborhoods.
+                Home Tags is the control center: watch the universe, Flag Trackers, and open binder neighborhoods.
               </p>
               <button
                 type="button"
@@ -239,7 +238,7 @@ export function V2HomeClient({
                 }}
                 className="w-full rounded-lg border border-rose-500/30 bg-rose-950/20 px-3 py-2 text-left text-[11px] font-medium text-rose-200 transition hover:border-rose-400/45 hover:bg-rose-950/35"
               >
-                Open Tags · markers →
+                Open Tags · Trackers →
               </button>
             </V2Card>
           </div>

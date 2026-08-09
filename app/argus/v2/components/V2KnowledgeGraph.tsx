@@ -78,12 +78,12 @@ function GraphLegend({ showFocusTrigger = false }: { showFocusTrigger?: boolean 
         </span>
       ))}
       {showFocusTrigger ? (
-        <span className="inline-flex items-center gap-1.5" title="Evidence on this node carries a Flagged Tag (critical marker)">
+        <span className="inline-flex items-center gap-1.5" title="Evidence on this node carries a Tracker Tag">
           <span
             className="h-2.5 w-2.5 rounded-full border border-dashed border-amber-400/90 bg-rose-500/20"
             aria-hidden
           />
-          Flag marker
+          Tracker
         </span>
       ) : null}
     </div>
@@ -214,7 +214,7 @@ function GraphCanvas({
             : node.name;
         const focusLabel =
           node.focusTags && node.focusTags.length > 0
-            ? ` · Flag marker: ${node.focusTags.map((t) => `#${t}`).join(", ")}`
+            ? ` · Tracker: ${node.focusTags.map((t) => `#${t}`).join(", ")}`
             : "";
 
         return (
