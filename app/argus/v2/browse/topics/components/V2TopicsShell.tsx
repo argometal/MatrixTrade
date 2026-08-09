@@ -768,8 +768,8 @@ export function V2TopicsShell({
 
     const derived = derivedCards.find((c) => c.id === id);
     const derivedStatus = derived?.status;
-    // Empty = orphan binders only — Active↔Quiet pins are fine.
-    if (!(column === "Empty" && derivedStatus && derivedStatus !== "Empty")) {
+    // Orphans = orphan binders only — Active↔Quiet pins are fine.
+    if (!(column === "Orphans" && derivedStatus && derivedStatus !== "Orphans")) {
       const next = { ...columnOverrides };
       if (derivedStatus && column === derivedStatus) delete next[id];
       else next[id] = column;
@@ -1027,15 +1027,15 @@ export function V2TopicsShell({
               <p className="text-sm text-zinc-500">
                 {rows.length === 0
                   ? "No topics yet."
-                  : statusFilter === "Empty"
-                    ? "No empty topics."
+                  : statusFilter === "Orphans"
+                    ? "No orphan topics."
                     : "No topics match these filters."}
               </p>
               <p className="mt-1 text-xs text-zinc-600">
                 {rows.length === 0
                   ? "Capture a topic and link emails or records to it."
-                  : statusFilter === "Empty"
-                    ? "Empty is for orphan binders — no notes/emails and no linked events, orgs, projects, or people. Linked-only topics stay Quiet."
+                  : statusFilter === "Orphans"
+                    ? "Orphans are binders with no notes/emails and no linked events, orgs, projects, or people. Linked-only topics stay Quiet."
                     : "Try a different view, tag, or clear filters."}
               </p>
             </div>

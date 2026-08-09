@@ -149,9 +149,10 @@ assert.equal(resolveTopicColumnStatus("Quiet", "Active"), "Active");
 assert.equal(
   resolveTopicColumnStatus("Active", "Empty"),
   "Active",
-  "cannot pin a non-orphan topic into Empty"
+  "cannot pin a non-orphan topic into Orphans (legacy Empty pin)"
 );
-assert.equal(resolveTopicColumnStatus("Empty", "Empty"), "Empty");
+assert.equal(resolveTopicColumnStatus("Orphans", "Orphans"), "Orphans");
+assert.equal(resolveTopicColumnStatus("Orphans", "Empty"), "Orphans");
 const pinned = applyTopicColumnStatus(cards.find((c) => c.id === "t1")!, "Active");
 assert.equal(pinned.status, "Active");
 assert.equal(pinned.statusTone, "green");
