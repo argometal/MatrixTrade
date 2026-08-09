@@ -28,6 +28,7 @@ Keep the product word **TAGS**. Sub-roles stay under that family:
 | Tag a Note on an Event (Patterns) | Event → **Note** → Tags button → Save |
 | Flag what you are watching | Event → **Tags** tab (Focus Tags), or Home → Tags |
 | Help inbox find a Topic | Topic → **Tags** tab → Match tags |
+| See tags/Patterns from linked Events | Topic → **Tags** tab (rollup; edit Note Tags on the Event) |
 
 Nav badge counts are **not** Focus Tags (`buildV2NavCounts`) — triage debt only.
 

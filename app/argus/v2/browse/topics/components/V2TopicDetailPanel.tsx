@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
-import { V2OrgTimeline } from "@/app/argus/v2/components/V2OrgTimeline";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { V2EvidenceStreamKind } from "@/lib/argus/v2/evidence-stream";
 import type { V2TopicDetail } from "@/lib/argus/v2/topic-browse-utils";
@@ -26,11 +25,11 @@ import {
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
-type PanelTab = "chronicle" | "timeline" | "runbooks" | "connections" | "tags";
+/** Topic = evidence binder → Chronicle only (Timeline stays on Org/Project). */
+type PanelTab = "chronicle" | "runbooks" | "connections" | "tags";
 
 const PANEL_TABS: { id: PanelTab; label: string }[] = [
   { id: "chronicle", label: "Chronicle" },
-  { id: "timeline", label: "Timeline" },
   { id: "runbooks", label: "Runbooks" },
   { id: "connections", label: "Connections" },
   { id: "tags", label: "Tags" },
@@ -307,7 +306,9 @@ export function V2TopicDetailPanel({
         >
           {panelTab === "chronicle" ? (
             <div className="space-y-3">
-              <p className="text-xs text-zinc-500">Evidence linked to this topic.</p>
+              <p className="text-xs text-zinc-500">
+                Dated notes, emails, and files on this topic. Linked Events live under Connections — not here.
+              </p>
               <V2ChronicleSelectableList
                 key={selected.id}
                 returnTo={returnTo}
@@ -322,7 +323,7 @@ export function V2TopicDetailPanel({
                 totpRequired={deleteGate.totpRequired}
                 empty={
                   <p className="text-sm text-zinc-500">
-                    No evidence yet. Link emails from inbox or register evidence.
+                    No evidence yet. Link emails from inbox or register a note.
                   </p>
                 }
                 items={selected.evidence.map((item) => ({
@@ -344,13 +345,6 @@ export function V2TopicDetailPanel({
                   ),
                 }))}
               />
-            </div>
-          ) : null}
-
-          {panelTab === "timeline" ? (
-            <div>
-              <p className="mb-4 text-xs text-zinc-500">Quick scan — activity on this topic over time.</p>
-              <V2OrgTimeline entries={selected.timeline} />
             </div>
           ) : null}
 
@@ -389,7 +383,10 @@ export function V2TopicDetailPanel({
                           className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-100 hover:border-rose-400/50"
                         >
                           <span aria-hidden>📅</span>
-                          {event.name}
+                          <span>{event.name}</span>
+                          {event.dateLabel ? (
+                            <span className="text-rose-200/60">{event.dateLabel}</span>
+                          ) : null}
                         </Link>
                       </li>
                     ))}
@@ -449,16 +446,79 @@ export function V2TopicDetailPanel({
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <p className="text-[11px] leading-relaxed text-zinc-600">
-                <span className="text-zinc-400">Match tags</span> help inbox/search find this Topic. They are not Tags on
-                Notes and do not create Patterns. Tag evidence (emails/notes) separately when something should count toward
-                Patterns. Flag Focus Tags on Home → Tags when you want highlight-critical watch items.
+                <span className="text-zinc-400">Patterns</span> and tags roll up from this Topic’s evidence and linked
+                Events. <span className="text-zinc-400">Match tags</span> only help inbox/search find this Topic — they
+                are not Note Tags. Flag Focus Tags on Home → Tags (or an Event → Tags).
               </p>
-              <V2TopicAliasEditor
-                topicId={selected.id}
-                topicName={selected.name}
-                initialAliases={selected.aliases}
-                returnTo={returnTo}
-              />
+
+              {selected.tagPatterns.length > 0 ? (
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+                    Patterns (topic + linked events)
+                  </p>
+                  <V2TagPatternBadges
+                    patterns={selected.tagPatterns}
+                    signalTags={signalTags}
+                    tagHref={(tag) =>
+                      `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&selected=${selected.id}`
+                    }
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-zinc-600">
+                  No recurring Patterns yet. Tag notes on linked Events (or on this Topic’s evidence) when they should
+                  count.
+                </p>
+              )}
+
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+                  From linked Events
+                </p>
+                {selected.eventEvidenceTags.length > 0 ? (
+                  <ul className="space-y-3">
+                    {selected.eventEvidenceTags.map((event) => (
+                      <li key={event.id} className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-3 py-2.5">
+                        <div className="mb-2 flex flex-wrap items-baseline gap-2">
+                          <Link
+                            href={event.href}
+                            className="text-sm font-medium text-rose-100 hover:text-rose-50"
+                          >
+                            📅 {event.name}
+                          </Link>
+                          {event.dateLabel ? (
+                            <span className="text-[11px] text-zinc-600">{event.dateLabel}</span>
+                          ) : null}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {event.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full border border-zinc-700/80 bg-zinc-950/50 px-2 py-0.5 text-[11px] text-zinc-300"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-zinc-600">
+                    No Note Tags on linked Events yet. Open an Event → Note, add Tags, Save.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">Match tags</p>
+                <V2TopicAliasEditor
+                  topicId={selected.id}
+                  topicName={selected.name}
+                  initialAliases={selected.aliases}
+                  returnTo={returnTo}
+                />
+              </div>
             </div>
           ) : null}
         </V2PrivateEvidenceGate>

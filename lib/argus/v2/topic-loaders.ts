@@ -6,7 +6,7 @@ import { entityHasPrivateEvidence } from "../entity-private-evidence";
 import { entityDeleteRequiresAuthenticator } from "../delete-link-check";
 import { browseEntitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
-import { relativeActivityLabel, buildTimelineFromLogsAndInbox } from "./timeline-builders";
+import { relativeActivityLabel } from "./timeline-builders";
 import {
   buildEntityEvidenceStream,
   countEvidenceStream,
@@ -124,13 +124,96 @@ function topicEvidenceBundle(
   return { history, inbox, evidence, counts, lastIso };
 }
 
+function normalizeEvidenceTag(raw: string): string {
+  return raw.trim().replace(/\s+/g, " ");
+}
+
+/**
+ * Union topic + linked-event evidence for Patterns, and per-event tag lists for the Tags tab.
+ * Chronicle stays topic-direct; Tags roll up binders so Event note tags are visible here.
+ */
+function topicTagRollup(
+  data: ArgusData,
+  topic: Entity,
+  topicHistory: Log[],
+  topicInbox: InboxItem[],
+  eventIds: Iterable<string>,
+  inboxItems: InboxItem[],
+  includePrivate: boolean,
+  today: string
+) {
+  const logs: Log[] = [...topicHistory];
+  const inbox: InboxItem[] = [...topicInbox];
+  const seenLog = new Set(topicHistory.map((log) => log.id));
+  const seenInbox = new Set(topicInbox.map((item) => item.id));
+  const eventEvidenceTags: V2TopicDetail["eventEvidenceTags"] = [];
+
+  for (const eventId of eventIds) {
+    const event = data.entities.find((e) => e.id === eventId && !e.deletedAt);
+    if (!event || !isEventEntity(event)) continue;
+    const eHistory = getEntityHistory(data, eventId, includePrivate);
+    const eInbox = getLinkedInboxForEntity(inboxItems, eventId, includePrivate);
+    const tags = new Set<string>();
+    for (const log of eHistory) {
+      if (!seenLog.has(log.id)) {
+        logs.push(log);
+        seenLog.add(log.id);
+      }
+      for (const raw of log.topics ?? []) {
+        const tag = normalizeEvidenceTag(raw);
+        if (tag) tags.add(tag);
+      }
+    }
+    for (const item of eInbox) {
+      if (!seenInbox.has(item.id)) {
+        inbox.push(item);
+        seenInbox.add(item.id);
+      }
+      for (const raw of item.topics ?? []) {
+        const tag = normalizeEvidenceTag(raw);
+        if (tag) tags.add(tag);
+      }
+    }
+    if (tags.size === 0) continue;
+    const date = event.startDate || event.endDate || event.createdAt;
+    eventEvidenceTags.push({
+      id: event.id,
+      name: event.name,
+      href: `/argus/v2/browse/events?selected=${event.id}`,
+      dateLabel: date ? date.slice(0, 10) : undefined,
+      tags: [...tags].sort((a, b) => a.localeCompare(b)),
+    });
+  }
+
+  eventEvidenceTags.sort((a, b) => a.name.localeCompare(b.name));
+  return {
+    tagPatterns: buildTagPatternsForScope(logs, inbox, today),
+    eventEvidenceTags,
+  };
+}
+
 function topicRowFilterMeta(
   data: ArgusData,
   topic: Entity,
   history: Log[],
   inbox: InboxItem[],
+  inboxItems: InboxItem[],
+  includePrivate: boolean,
   today: string
 ) {
+  const neighborIds = collectNeighborEntityIds(data, topic, history);
+  const nodeCounts = countTopicsAndEventsInScope(data, topic, history);
+  const { tagPatterns } = topicTagRollup(
+    data,
+    topic,
+    history,
+    inbox,
+    nodeCounts.eventIds,
+    inboxItems,
+    includePrivate,
+    today
+  );
+
   const evidenceTags = new Set<string>();
   for (const log of history) {
     for (const tag of log.topics) {
@@ -145,9 +228,6 @@ function topicRowFilterMeta(
     }
   }
 
-  const tagPatterns = buildTagPatternsForScope(history, inbox, today);
-  const neighborIds = collectNeighborEntityIds(data, topic, history);
-  const nodeCounts = countTopicsAndEventsInScope(data, topic, history);
   const linkedOrgIds: string[] = [];
   const linkedProjectIds: string[] = [];
   const linkedEntityIds = [...neighborIds];
@@ -188,7 +268,15 @@ export function buildV2TopicRows(
         includePrivate,
         today
       );
-      const filterMeta = topicRowFilterMeta(data, topic, history, inbox, today);
+      const filterMeta = topicRowFilterMeta(
+        data,
+        topic,
+        history,
+        inbox,
+        inboxItems,
+        includePrivate,
+        today
+      );
       return {
         id: topic.id,
         name: topic.name,
@@ -237,6 +325,16 @@ export function buildV2TopicDetails(
     const linkedEvents = linkedEventRefs(data, eventIds);
     // Link modal: outbound bags ∪ reverse Event binders (one-way Event→Topic stays visible/healable).
     const linkModalIds = linkModalStructuralIds(data, topic);
+    const { tagPatterns, eventEvidenceTags } = topicTagRollup(
+      data,
+      topic,
+      history,
+      inbox,
+      eventIds,
+      inboxItems,
+      includePrivate,
+      today
+    );
 
     return {
       id: topic.id,
@@ -261,8 +359,8 @@ export function buildV2TopicDetails(
       hasPrivateEvidence: entityHasPrivateEvidence(data, inboxItems, topic.id),
       deleteRequiresAuthenticator: entityDeleteRequiresAuthenticator(topic),
       evidence,
-      timeline: buildTimelineFromLogsAndInbox(history, inbox),
-      tagPatterns: buildTagPatternsForScope(history, inbox, today),
+      tagPatterns,
+      eventEvidenceTags,
     };
   });
 }

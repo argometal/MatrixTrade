@@ -105,15 +105,17 @@ export function linkedTopicRefs(
 export function linkedEventRefs(
   data: ArgusData,
   ids: Iterable<string>
-): Array<{ id: string; name: string; href: string }> {
-  const refs: Array<{ id: string; name: string; href: string }> = [];
+): Array<{ id: string; name: string; href: string; dateLabel?: string }> {
+  const refs: Array<{ id: string; name: string; href: string; dateLabel?: string }> = [];
   for (const id of ids) {
     const entity = data.entities.find((e) => e.id === id && !e.deletedAt);
     if (!entity || referenceKindFromNotes(entity.notes ?? "") !== "event") continue;
+    const date = entity.startDate || entity.endDate || entity.createdAt;
     refs.push({
       id: entity.id,
       name: entity.name,
       href: `/argus/v2/browse/events?selected=${entity.id}`,
+      dateLabel: date ? date.slice(0, 10) : undefined,
     });
   }
   return refs.sort((a, b) => a.name.localeCompare(b.name));

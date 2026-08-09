@@ -2,7 +2,6 @@ import { TAG_PATTERN_FRESHNESS_DAYS } from "../tag-limits";
 import { textMatchesBrowseQuery, topicBrowseTagMatch } from "./browse-filter-utils";
 import type { V2EvidenceStreamItem } from "./evidence-stream";
 import type { EntityLifecycleStatus } from "../types";
-import type { V2TimelineEntry } from "./mock-data";
 import type { TagPattern } from "./tag-patterns";
 
 export type V2TopicTab = "all" | "active" | "empty" | "patterns";
@@ -76,14 +75,22 @@ export interface V2TopicDetail {
   /** Neighbor set for filters / Connections (outbound + reverse + bridge + co-mention). */
   neighborEntityIds: string[];
   linkedEntities: V2TopicLinkedEntity[];
-  linkedEvents: Array<{ id: string; name: string; href: string }>;
+  linkedEvents: Array<{ id: string; name: string; href: string; dateLabel?: string }>;
   aliases: string[];
   lifecycleStatus?: EntityLifecycleStatus;
   hasPrivateEvidence: boolean;
   deleteRequiresAuthenticator: boolean;
   evidence: V2EvidenceStreamItem[];
-  timeline: V2TimelineEntry[];
+  /** Patterns from topic evidence ∪ linked-event evidence. */
   tagPatterns: TagPattern[];
+  /** Note/email tags grouped by linked Event (read-only rollup). */
+  eventEvidenceTags: Array<{
+    id: string;
+    name: string;
+    href: string;
+    dateLabel?: string;
+    tags: string[];
+  }>;
 }
 
 export interface V2TopicTagChip {

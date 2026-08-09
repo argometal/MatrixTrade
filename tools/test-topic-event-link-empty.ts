@@ -133,8 +133,8 @@ const detail: V2TopicDetail = {
   hasPrivateEvidence: false,
   deleteRequiresAuthenticator: false,
   evidence: [],
-  timeline: [],
   tagPatterns: [],
+  eventEvidenceTags: [],
 };
 
 const cards = buildV2TopicBrowseCards([linkedRow, emptyRow], [detail]);
