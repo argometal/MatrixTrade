@@ -6,7 +6,7 @@ import { entityHasPrivateEvidence } from "../entity-private-evidence";
 import { entityDeleteRequiresAuthenticator } from "../delete-link-check";
 import { browseEntitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
-import { relativeActivityLabel, buildTimelineFromLogsAndInbox } from "./timeline-builders";
+import { relativeActivityLabel } from "./timeline-builders";
 import {
   buildEntityEvidenceStream,
   countEvidenceStream,
@@ -261,7 +261,6 @@ export function buildV2TopicDetails(
       hasPrivateEvidence: entityHasPrivateEvidence(data, inboxItems, topic.id),
       deleteRequiresAuthenticator: entityDeleteRequiresAuthenticator(topic),
       evidence,
-      timeline: buildTimelineFromLogsAndInbox(history, inbox),
       tagPatterns: buildTagPatternsForScope(history, inbox, today),
     };
   });

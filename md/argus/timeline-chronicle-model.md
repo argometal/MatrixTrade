@@ -12,7 +12,7 @@
 | **Organization** | **Timeline** | **Notes** | `Log` rows linked to org |
 | **Project** | **Timeline** | **Notes** | `Log` rows in project scope |
 | **Person (Network)** | **Chronicle** | **Notes** | `Log` rows linked to person |
-| **Topic** | **Chronicle** (deep) + optional Timeline scan | **Notes** | `Log` / inbox linked to topic |
+| **Topic** | **Chronicle** only | **Notes** | `Log` / inbox linked to topic (Events stay under Connections) |
 | **Event** | **Chronicle** + Note composer | **Notes** | Chronicle `Log` rows linked to event |
 
 **Event** is a **binder entity** (case / meeting / incident). It is **not** a Journal type.  
@@ -35,7 +35,8 @@ Reading modes:   Timeline (glance) · Chronicle (full story)
 
 **Timeline** is the default on **organizations** and **projects**.
 
-**Chronicle** is the deep view on **topics**, **events**, and **network people**.
+**Chronicle** is the deep view on **topics**, **events**, and **network people**.  
+**Do not** keep a second Timeline tab on Topics — same evidence stream, thinner skin (trimmed 2026-08-09). Linked **Event** binders show under **Connections** with dates, not as Chronicle rows.
 
 ---
 
@@ -68,6 +69,7 @@ Evidence item types in filters: **Email · Notes · Files · Photos**.
 | Records (counts/filters) | Notes |
 | Journal / Log / journals (user-facing) | Notes |
 | Chronicle tab on org/project | Timeline |
+| Timeline tab on Topic | Chronicle (Events → Connections) |
 | “Append-only forever” without delete | Soft-delete Note from Chronicle when allowed |
 
 Internal code may keep `journal` as a stream kind until a later refactor.

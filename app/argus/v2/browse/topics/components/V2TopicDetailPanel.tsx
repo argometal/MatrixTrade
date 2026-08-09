@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
-import { V2OrgTimeline } from "@/app/argus/v2/components/V2OrgTimeline";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { V2EvidenceStreamKind } from "@/lib/argus/v2/evidence-stream";
 import type { V2TopicDetail } from "@/lib/argus/v2/topic-browse-utils";
@@ -26,11 +25,11 @@ import {
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
-type PanelTab = "chronicle" | "timeline" | "runbooks" | "connections" | "tags";
+/** Topic = evidence binder → Chronicle only (Timeline stays on Org/Project). */
+type PanelTab = "chronicle" | "runbooks" | "connections" | "tags";
 
 const PANEL_TABS: { id: PanelTab; label: string }[] = [
   { id: "chronicle", label: "Chronicle" },
-  { id: "timeline", label: "Timeline" },
   { id: "runbooks", label: "Runbooks" },
   { id: "connections", label: "Connections" },
   { id: "tags", label: "Tags" },
@@ -307,7 +306,9 @@ export function V2TopicDetailPanel({
         >
           {panelTab === "chronicle" ? (
             <div className="space-y-3">
-              <p className="text-xs text-zinc-500">Evidence linked to this topic.</p>
+              <p className="text-xs text-zinc-500">
+                Dated notes, emails, and files on this topic. Linked Events live under Connections — not here.
+              </p>
               <V2ChronicleSelectableList
                 key={selected.id}
                 returnTo={returnTo}
@@ -322,7 +323,7 @@ export function V2TopicDetailPanel({
                 totpRequired={deleteGate.totpRequired}
                 empty={
                   <p className="text-sm text-zinc-500">
-                    No evidence yet. Link emails from inbox or register evidence.
+                    No evidence yet. Link emails from inbox or register a note.
                   </p>
                 }
                 items={selected.evidence.map((item) => ({
@@ -344,13 +345,6 @@ export function V2TopicDetailPanel({
                   ),
                 }))}
               />
-            </div>
-          ) : null}
-
-          {panelTab === "timeline" ? (
-            <div>
-              <p className="mb-4 text-xs text-zinc-500">Quick scan — activity on this topic over time.</p>
-              <V2OrgTimeline entries={selected.timeline} />
             </div>
           ) : null}
 
@@ -389,7 +383,10 @@ export function V2TopicDetailPanel({
                           className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-100 hover:border-rose-400/50"
                         >
                           <span aria-hidden>📅</span>
-                          {event.name}
+                          <span>{event.name}</span>
+                          {event.dateLabel ? (
+                            <span className="text-rose-200/60">{event.dateLabel}</span>
+                          ) : null}
                         </Link>
                       </li>
                     ))}

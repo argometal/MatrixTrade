@@ -133,7 +133,6 @@ const detail: V2TopicDetail = {
   hasPrivateEvidence: false,
   deleteRequiresAuthenticator: false,
   evidence: [],
-  timeline: [],
   tagPatterns: [],
 };
 
