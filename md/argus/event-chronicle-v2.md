@@ -33,7 +33,7 @@ Chronicle tab    = buildEntityEvidenceStream (notes, emails, files, photos) + De
 
 1. **Append by default** — Save creates a `Log` with `entityIds: [eventId]`, dated to the event anchor date. No overwrite of prior entries.
 2. **Composer clears** — After Save, textarea resets; next write is a new chronicle line.
-3. **Trackers** — Flag a Tag on the journal (`ArgusData.signalTags`). Visibly marked (⚑) across Patterns / universe / neighborhoods — **not** copied onto every Note. Event Tags tab: click a Tag chip to Flag/Unflag.
+3. **Trackers** — Flag a Tag on the journal (`ArgusData.signalTags`). Visibly marked (⚑) across Patterns / universe / neighborhoods — **not** copied onto every Note. Event Tags tab: click a Tag chip to Flag / Disable Tracker (chip stays for re-Flag; never deletes Note Tags).
 4. **No Register on event page** — Link email / inbox still adds evidence to Chronicle. Attachments arrive via Note composer, linked emails, or inbox flow.
 5. **Migration** — Legacy text in `entity.notes` is converted once to the first chronicle Note; notes reduced to `Kind: Event` shell. Former Event binder Signals migrate into `signalTags` (Trackers).
 6. **Delete** — Chronicle Notes can be soft-deleted from the Event/Topic/Network chronicle UI (delete auth gate applies).
