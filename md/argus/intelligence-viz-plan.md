@@ -26,8 +26,11 @@ Status: **implemented** (treemap + portfolio axes as of 2026-07). Tag pattern ov
 
 ### Graph (neighborhood views)
 - **Removed** global graph tab from Home Intelligence — whole-graph view was premature without graph infra.
-- **Home Intelligence:** selecting a Treemap tile / Portfolio bubble / Tags binder loads a local neighborhood in the lens dock (`getEntityNeighborhoodAction` + `V2HomeNeighborhoodViewer`).
-- **Entity detail:** Connection neighborhood on organization, project, topic, and event browse detail.
+- **Home model (Tags is the template):**
+  - **Main (center):** full Connection neighborhood around the selection — zoom / explore (`scope: local`).
+  - **Right dock (small):** context neighborhood — **one level up** (Org above Project/Topic when linked), else a wider neighborhood (`scope: context`).
+  - Applies on Treemap, Portfolio, and Tags binder selection.
+- **Entity detail:** Connection neighborhood on organization, project, topic, and event browse detail (same main graph).
 - Pattern: Kumu / Obsidian — local 1–2 hop subgraph around the open entity, not a universe map.
 - **Layout:** radial — center entity in the middle (gold ring), neighbors on a ring.
 - **Edges:** `linked`, `project-link`, `co-mentioned`, `focus-affinity` (shared Tracker).

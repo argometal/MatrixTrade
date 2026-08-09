@@ -607,6 +607,7 @@ export function V2FocusTagPortfolio({
                 entityId={neighborhoodCenter.id}
                 entityName={neighborhoodCenter.name}
                 variant="inline"
+                scope="local"
               />
             </div>
           ) : null}

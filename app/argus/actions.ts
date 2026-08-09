@@ -1602,28 +1602,63 @@ export async function toggleSignalTagAction(
   return { ok: true, ...result };
 }
 
-/** Local connection neighborhood for Home Intelligence (Treemap / Portfolio / Tags). */
+/**
+ * Connection neighborhood for Home Intelligence.
+ * - `local` — Tags-model main graph (zoom around the selected entity).
+ * - `context` — small dock: one level above when possible, else wider neighborhood.
+ */
 export async function getEntityNeighborhoodAction(
-  entityId: string
+  entityId: string,
+  options: { scope?: "local" | "context" } = {}
 ): Promise<
-  | { ok: true; graph: import("@/lib/argus/v2/intelligence-viz").V2EntityNeighborhoodGraph }
+  | {
+      ok: true;
+      graph: import("@/lib/argus/v2/intelligence-viz").V2EntityNeighborhoodGraph;
+      scope: "local" | "context";
+      contextLabel?: "parent" | "self";
+      contextTitle?: string;
+    }
   | { error: string }
 > {
   await requireArgusSession();
   const id = entityId.trim();
   if (!id) return { error: "empty_entity" };
+  const scope = options.scope === "context" ? "context" : "local";
 
   const includePrivate = await hasArgusPrivateUnlock();
   const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
   const exists = data.entities.some((e) => e.id === id && !e.deletedAt);
   if (!exists) return { error: "not_found" };
 
-  const { buildV2EntityNeighborhoodGraph } = await import("@/lib/argus/v2/intelligence-viz");
+  const {
+    buildV2EntityNeighborhoodGraph,
+    resolveNeighborhoodContextCenter,
+  } = await import("@/lib/argus/v2/intelligence-viz");
   const today = new Date().toISOString().slice(0, 10);
-  const graph = buildV2EntityNeighborhoodGraph(data, inboxItems, id, includePrivate, today, {
-    maxNodes: 12,
+
+  if (scope === "local") {
+    const graph = buildV2EntityNeighborhoodGraph(data, inboxItems, id, includePrivate, today, {
+      maxNodes: 14,
+    });
+    return { ok: true, graph, scope };
+  }
+
+  const ctx = resolveNeighborhoodContextCenter(data, id, includePrivate);
+  const graph = buildV2EntityNeighborhoodGraph(data, inboxItems, ctx.centerId, includePrivate, today, {
+    maxNodes: ctx.label === "self" ? 18 : 14,
   });
-  return { ok: true, graph };
+  const centerName =
+    graph.nodes.find((n) => n.id === ctx.centerId)?.name || ctx.parentName || "context";
+  return {
+    ok: true,
+    graph,
+    scope,
+    contextLabel: ctx.label,
+    contextTitle:
+      ctx.label === "parent"
+        ? `One level up · ${centerName}`
+        : `Wider neighborhood · ${centerName}`,
+  };
 }
 
 export async function deleteLogAction(formData: FormData): Promise<void> {

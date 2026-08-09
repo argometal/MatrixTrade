@@ -153,6 +153,7 @@ export function V2HomeClient({
                   signalTags={signalTags}
                   tagEvidenceByTag={tagEvidenceByTag}
                   tab={intelTab}
+                  lensId={lensId}
                   onLensChange={setLensId}
                 />
               )}
@@ -175,6 +176,7 @@ export function V2HomeClient({
                     entityId={lensNode.id}
                     entityName={lensNode.name}
                     variant="dock"
+                    scope="context"
                   />
                 </>
               ) : (

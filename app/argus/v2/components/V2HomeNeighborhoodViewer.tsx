@@ -6,47 +6,61 @@ import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz"
 import { V2EntityNeighborhoodPanel } from "./V2EntityNeighborhoodPanel";
 
 /**
- * Lazy-loads an entity neighborhood for Home Intelligence docks (Treemap / Portfolio / Tags).
+ * Home Intelligence neighborhood.
+ * - `local` + inline = Tags-model main graph (zoom / explore).
+ * - `context` + dock = small right rail (one level up, or wider neighborhood).
  */
 export function V2HomeNeighborhoodViewer({
   entityId,
   entityName,
   variant = "dock",
+  scope = "local",
 }: {
   entityId: string | null;
   entityName?: string;
   variant?: "dock" | "inline";
+  /** local = selected entity; context = parent / wider (dock). */
+  scope?: "local" | "context";
 }) {
   const [graph, setGraph] = useState<V2EntityNeighborhoodGraph | null>(null);
+  const [contextTitle, setContextTitle] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   useEffect(() => {
     if (!entityId) {
       setGraph(null);
+      setContextTitle(null);
       setError(null);
       return;
     }
     let cancelled = false;
     startTransition(async () => {
       setError(null);
-      const result = await getEntityNeighborhoodAction(entityId);
+      const result = await getEntityNeighborhoodAction(entityId, { scope });
       if (cancelled) return;
       if ("error" in result) {
         setGraph(null);
+        setContextTitle(null);
         setError(result.error);
         return;
       }
       setGraph(result.graph);
+      setContextTitle(result.contextTitle ?? null);
     });
     return () => {
       cancelled = true;
     };
-  }, [entityId]);
+  }, [entityId, scope]);
 
   if (!entityId) return null;
 
-  const name = entityName?.trim() || graph?.nodes.find((n) => n.id === entityId)?.name || "entity";
+  const name =
+    entityName?.trim() || graph?.nodes.find((n) => n.id === entityId)?.name || "entity";
+  const panelName =
+    scope === "context" && contextTitle
+      ? contextTitle.replace(/^[^·]+·\s*/, "")
+      : name;
 
   if (pending && !graph) {
     return (
@@ -76,7 +90,23 @@ export function V2HomeNeighborhoodViewer({
 
   return (
     <div className={variant === "dock" ? "mt-3" : "mt-4"}>
-      <V2EntityNeighborhoodPanel graph={graph} entityName={name} variant={variant === "dock" ? "dock" : "full"} />
+      {scope === "context" && contextTitle ? (
+        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+          {contextTitle}
+        </p>
+      ) : null}
+      {scope === "local" && variant === "inline" ? (
+        <p className="mb-2 text-[11px] text-zinc-500">
+          Connection neighborhood around <span className="text-zinc-300">{name}</span> — main graph to zoom and
+          explore. The small dock on the right shows one level up when available.
+        </p>
+      ) : null}
+      <V2EntityNeighborhoodPanel
+        graph={graph}
+        entityName={panelName}
+        variant={variant === "dock" ? "dock" : "full"}
+        title={scope === "context" ? "Context neighborhood" : "Connection neighborhood"}
+      />
     </div>
   );
 }

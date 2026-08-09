@@ -615,6 +615,45 @@ function focusTagsOnEntity(
   return [...matched.values()].sort((a, b) => a.localeCompare(b));
 }
 
+/**
+ * Context center for the small Home dock: one level above the selection when possible
+ * (Topic/Project → parent Org; Topic → Project; else the entity itself with a wider graph).
+ */
+export function resolveNeighborhoodContextCenter(
+  data: ArgusData,
+  entityId: string,
+  includePrivate: boolean
+): { centerId: string; label: "parent" | "self"; parentName?: string } {
+  const entities = data.entities.filter((e) => !e.deletedAt);
+  const entityMap = new Map(entities.map((e) => [e.id, e]));
+  const center = entityMap.get(entityId);
+  if (!center) return { centerId: entityId, label: "self" };
+
+  const logs = visibleLogs(data, includePrivate);
+  const neighbors = collectNeighborEntityIds(data, center, logs);
+
+  let orgId: string | undefined;
+  let projectId: string | undefined;
+  for (const id of neighbors) {
+    const other = entityMap.get(id);
+    if (!other) continue;
+    if (!orgId && other.type === "company") orgId = other.id;
+    if (!projectId && other.type === "project") projectId = other.id;
+  }
+
+  // Prefer organization (one level above project/topic), else project above topic.
+  if (orgId && center.type !== "company") {
+    return { centerId: orgId, label: "parent", parentName: entityMap.get(orgId)?.name };
+  }
+  if (projectId && center.type !== "project" && center.type !== "company") {
+    const ref = referenceKindFromNotes(center.notes ?? "");
+    if (ref === "topic" || ref === "event" || center.type === "person") {
+      return { centerId: projectId, label: "parent", parentName: entityMap.get(projectId)?.name };
+    }
+  }
+  return { centerId: entityId, label: "self" };
+}
+
 /** Local 1–2 hop subgraph from one entity — Kumu / Obsidian neighborhood pattern. */
 export function buildV2EntityNeighborhoodGraph(
   data: ArgusData,

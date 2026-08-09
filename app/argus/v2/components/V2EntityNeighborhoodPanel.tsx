@@ -7,11 +7,13 @@ export function V2EntityNeighborhoodPanel({
   graph,
   entityName,
   variant = "full",
+  title = "Connection neighborhood",
 }: {
   graph: V2EntityNeighborhoodGraph;
   entityName: string;
-  /** Dock = compact Home Intelligence aside; full = entity detail / Tags inline. */
+  /** Dock = compact Home Intelligence aside; full = Tags-model main / entity detail. */
   variant?: "full" | "dock";
+  title?: string;
 }) {
   const docked = variant === "dock";
 
@@ -33,14 +35,11 @@ export function V2EntityNeighborhoodPanel({
   return (
     <div>
       <div className={docked ? "mb-2" : "mb-3"}>
-        <h2 className={`font-semibold text-zinc-100 ${docked ? "text-sm" : "text-base"}`}>
-          Connection neighborhood
-        </h2>
+        <h2 className={`font-semibold text-zinc-100 ${docked ? "text-sm" : "text-base"}`}>{title}</h2>
         <p className={`mt-1 text-zinc-500 ${docked ? "text-[10px] leading-snug" : "text-xs"}`}>
-          Local view around {entityName}
           {docked
-            ? ". Halo = Tracker on evidence. Dashed rose edges = shared Tracker (affinity)."
-            : " — not the full universe. Rose/amber halo = Tracker (evidence carries a Flagged Tag). Dashed rose edges = shared Tracker (affinity, not a confirmed link). Click a node to focus its neighbors; ⌘/Ctrl+click opens the entity."}
+            ? `Wider context around ${entityName}. Halo = Tracker on evidence.`
+            : `Local view around ${entityName} — main graph to zoom and explore. Rose/amber halo = Tracker. Dashed rose edges = shared Tracker (affinity). Click a node to focus neighbors; ⌘/Ctrl+click opens the entity.`}
         </p>
       </div>
       <V2KnowledgeGraph
