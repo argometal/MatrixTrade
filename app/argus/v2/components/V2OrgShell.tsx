@@ -65,7 +65,9 @@ export type V2OrgShellProps = {
   sparkline: number[];
   chartStartYear: number;
   chartEndYear: number;
-  linkedTopics: string[];
+  linkedTopics: Array<{ id: string; name: string; href: string }>;
+  linkedEvents: Array<{ id: string; name: string; href: string }>;
+  linkModalIds: string[];
   runbooks?: Runbook[];
   progressRecords?: RunbookProgress[];
   peerOrganizations?: Array<{ id: string; name: string }>;
@@ -104,6 +106,8 @@ export function V2OrgShell(props: V2OrgShellProps) {
     chartStartYear,
     chartEndYear,
     linkedTopics,
+    linkedEvents,
+    linkModalIds,
     runbooks = [],
     progressRecords = [],
     peerOrganizations = [],
@@ -340,7 +344,7 @@ export function V2OrgShell(props: V2OrgShellProps) {
       {tab === "Links" ? (
         <V2EntityLinksTab
           entityId={entity.id}
-          linkedIds={entity.linkedEntityIds ?? []}
+          linkedIds={linkModalIds}
           people={linkedPeople.map((p) => ({
             id: p.id,
             name: p.name,
@@ -354,7 +358,7 @@ export function V2OrgShell(props: V2OrgShellProps) {
             meta: p.endDate?.slice(0, 4) || p.startDate?.slice(0, 4),
           }))}
           topics={linkedTopics}
-          eventsCount={stats.events}
+          events={linkedEvents}
           tagPatterns={tagPatterns}
           signalTags={signalTags}
           manualTags={(entity.linkedTags ?? []).map((t) => t.trim()).filter(Boolean)}

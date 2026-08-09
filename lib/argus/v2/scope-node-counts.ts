@@ -41,17 +41,14 @@ export function entitiesLinkingTo(data: ArgusData, targetId: string): Entity[] {
 }
 
 /**
- * Ids for the Link modal on a Topic/Event: outbound bags plus reverse Topic↔Event binders.
- * Seeding reverse binders makes one-way Event→Topic visible on the Topic Link control;
- * saving then heals the mirror into linkedEntityIds (add-only).
+ * Ids for the Link modal: outbound bags ∪ every entity that points here.
+ * One-way Project/Org/Event→Topic (and the reverse) stay visible on both sides;
+ * saving heals the missing outbound id (add-only mirror for Topic↔Event still runs separately).
  */
 export function linkModalStructuralIds(data: ArgusData, entity: Entity): string[] {
   const ids = new Set(outboundStructuralIds(entity));
-  const kind = referenceKindFromNotes(entity.notes ?? "");
-  if (kind !== "topic" && kind !== "event") return [...ids];
-  const accept = kind === "topic" ? isEventEntity : isTopicEntity;
   for (const other of entitiesLinkingTo(data, entity.id)) {
-    if (accept(other)) ids.add(other.id);
+    ids.add(other.id);
   }
   return [...ids];
 }

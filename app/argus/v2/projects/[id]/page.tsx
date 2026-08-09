@@ -193,7 +193,9 @@ export default async function V2ProjectPage({
             dateRangeLabel={page.dateRangeLabel}
             peopleWithRoles={page.peopleWithRoles}
             linkedTopics={page.linkedTopics}
+            linkedEvents={page.linkedEvents}
             linkedEventsCount={page.linkedEventsCount}
+            linkModalIds={page.linkModalIds}
             tagPatterns={page.tagPatterns}
             signalTags={data.signalTags ?? []}
             keyMetrics={page.keyMetrics}

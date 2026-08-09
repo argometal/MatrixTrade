@@ -51,8 +51,10 @@ export type V2ProjectShellProps = {
   durationDays?: number;
   dateRangeLabel?: string;
   peopleWithRoles: Array<{ id: string; name: string; initials: string; role: string }>;
-  linkedTopics: string[];
+  linkedTopics: Array<{ id: string; name: string; href: string }>;
+  linkedEvents: Array<{ id: string; name: string; href: string }>;
   linkedEventsCount: number;
+  linkModalIds: string[];
   tagPatterns: TagPattern[];
   signalTags?: string[];
   keyMetrics: Array<{ label: string; value: string; highlight?: boolean }>;
@@ -86,7 +88,9 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
     durationDays,
     peopleWithRoles,
     linkedTopics,
+    linkedEvents,
     linkedEventsCount,
+    linkModalIds,
     tagPatterns,
     signalTags = [],
     keyMetrics,
@@ -264,7 +268,7 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
       {tab === "Links" ? (
         <V2EntityLinksTab
           entityId={entity.id}
-          linkedIds={entity.linkedEntityIds ?? []}
+          linkedIds={linkModalIds}
           people={peopleWithRoles.map((p) => ({
             id: p.id,
             name: p.name,
@@ -275,7 +279,7 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
             org ? [{ id: org.id, name: org.name, href: `/argus/v2/organizations/${org.id}` }] : []
           }
           topics={linkedTopics}
-          eventsCount={linkedEventsCount}
+          events={linkedEvents}
           tagPatterns={tagPatterns}
           signalTags={signalTags}
           manualTags={(entity.linkedTags ?? []).map((t) => t.trim()).filter(Boolean)}

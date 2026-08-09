@@ -83,7 +83,6 @@ export default async function V2OrganizationPage({
   if (sp.returnTo) returnQs.set("returnTo", sp.returnTo);
   const returnQuery = returnQs.toString();
   const returnTo = `/argus/v2/organizations/${entity.id}${returnQuery ? `?${returnQuery}` : ""}`;
-  const linkedTopics = page.tagPatterns.map((pattern) => pattern.tag);
   const orgRunbooks = runbooksForEntity(data.runbooks ?? [], entity.id);
   const progressRecords = progressForEntity(data.runbookProgress, entity.id);
   const peerOrganizations = data.entities
@@ -218,7 +217,9 @@ export default async function V2OrganizationPage({
             sparkline={page.sparkline}
             chartStartYear={page.chartStartYear}
             chartEndYear={page.chartEndYear}
-            linkedTopics={linkedTopics}
+            linkedTopics={page.linkedTopics}
+            linkedEvents={page.linkedEvents}
+            linkModalIds={page.linkModalIds}
             runbooks={orgRunbooks}
             progressRecords={progressRecords}
             peerOrganizations={peerOrganizations}

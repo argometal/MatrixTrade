@@ -192,68 +192,73 @@ function ContactAside({
 function TagsSection({
   page,
 }: {
-  page: Pick<NetworkContactPageData, "tags" | "relatedTopics" | "entity" | "intel">;
+  page: Pick<NetworkContactPageData, "tags" | "relatedTopics" | "relatedEvents" | "entity" | "intel">;
 }) {
   const manualTags = (page.entity.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean);
   const evidenceTags = [...new Set(page.intel.topics.map((tag) => tag.trim()).filter(Boolean))];
 
   return (
     <V2Card className="p-4">
-      <h3 className="mb-1 text-sm font-semibold text-zinc-100">Associated tags</h3>
-      <p className="mb-4 text-[11px] text-zinc-600">Labels and topics tied to this contact through links and evidence.</p>
-
-      {page.tags.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {page.tags.map((tag, index) => (
-            <V2Badge key={tag} tone={index % 3 === 0 ? "blue" : index % 3 === 1 ? "green" : "purple"}>
-              {tag}
-            </V2Badge>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-zinc-600">No tags yet. Link topics or add labels on the contact to build context.</p>
-      )}
-
-      {manualTags.length > 0 ? (
-        <div className="mt-5">
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Manual labels</p>
-          <div className="flex flex-wrap gap-2">
-            {manualTags.map((tag) => (
-              <V2Badge key={`manual-${tag}`} tone="blue">
-                {tag}
-              </V2Badge>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {evidenceTags.length > 0 ? (
-        <div className="mt-5">
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500">From evidence</p>
-          <div className="flex flex-wrap gap-2">
-            {evidenceTags.map((tag) => (
-              <V2Badge key={`evidence-${tag}`} tone="purple">
-                {tag}
-              </V2Badge>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      <h3 className="mb-1 text-sm font-semibold text-zinc-100">Topics · Events · Tags</h3>
+      <p className="mb-4 text-[11px] text-zinc-600">
+        Structural binders first; tags stay evidence labels.
+      </p>
 
       {page.relatedTopics.length > 0 ? (
-        <div className="mt-5">
+        <div className="mb-5">
           <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Linked topics</p>
-          <ul className="space-y-2">
+          <div className="flex flex-wrap gap-2">
             {page.relatedTopics.map((topic) => (
-              <li key={topic.id}>
-                <a href={topic.href} className="text-sm text-violet-400 hover:text-violet-300">
-                  {topic.name}
-                </a>
-              </li>
+              <a
+                key={topic.id}
+                href={topic.href}
+                className="rounded-full border border-violet-500/30 bg-violet-950/30 px-2.5 py-0.5 text-[11px] text-violet-200 hover:border-violet-400/50"
+              >
+                {topic.name}
+              </a>
             ))}
-          </ul>
+          </div>
         </div>
-      ) : null}
+      ) : (
+        <p className="mb-5 text-sm text-zinc-600">No linked topics yet.</p>
+      )}
+
+      {page.relatedEvents.length > 0 ? (
+        <div className="mb-5">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Linked events</p>
+          <div className="flex flex-wrap gap-2">
+            {page.relatedEvents.map((event) => (
+              <a
+                key={event.id}
+                href={event.href}
+                className="rounded-full border border-rose-500/30 bg-rose-950/30 px-2.5 py-0.5 text-[11px] text-rose-100 hover:border-rose-400/50"
+              >
+                📅 {event.name}
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="mb-5 text-sm text-zinc-600">No linked events yet.</p>
+      )}
+
+      {manualTags.length > 0 || evidenceTags.length > 0 || page.tags.length > 0 ? (
+        <div>
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500">Tags</p>
+          <div className="flex flex-wrap gap-2">
+            {(manualTags.length > 0 || evidenceTags.length > 0
+              ? [...new Set([...manualTags, ...evidenceTags])]
+              : page.tags
+            ).map((tag, index) => (
+              <V2Badge key={tag} tone={index % 3 === 0 ? "blue" : index % 3 === 1 ? "green" : "purple"}>
+                {tag}
+              </V2Badge>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-zinc-600">No tags yet.</p>
+      )}
     </V2Card>
   );
 }
@@ -580,7 +585,7 @@ export function NetworkContactShell({
             </button>
             <V2EntityLinkButton
               entityId={entity.id}
-              linkedIds={entity.linkedEntityIds ?? []}
+              linkedIds={page.linkModalIds}
               className="rounded-xl border border-violet-500/40 bg-violet-600/15 px-4 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-600/25"
             />
             <V2EntityCreateButton className="rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-800" />

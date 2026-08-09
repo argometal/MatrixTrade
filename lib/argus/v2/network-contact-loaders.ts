@@ -1,7 +1,7 @@
 import type { ArgusData, Entity, InboxItem, Log } from "../types";
 import type { EnrichedInboxItem } from "../inbox-enrich";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
-import { entityNotesForDisplay, referenceKindFromNotes } from "../reference-types";
+import { entityNotesForDisplay } from "../reference-types";
 import { buildEntityIntelligence, type EntityIntelligence } from "../network-intelligence";
 import {
   deriveRelationshipAttention,
@@ -9,6 +9,8 @@ import {
 } from "../network-relationship-metrics";
 import { getInboxCardsForEntity } from "../inbox-entity-links";
 import { entitiesByKind, personEvidenceScope } from "./hierarchy";
+import { linkedEventRefs, linkedTopicRefs } from "./entity-link-counts";
+import { countTopicsAndEventsInScope, linkModalStructuralIds } from "./scope-node-counts";
 import { deriveNetworkStatus, type V2NetworkBrowseStatus } from "./network-browse-utils";
 
 export type NetworkContactTimelineItem =
@@ -43,6 +45,9 @@ export type NetworkContactPageData = {
   relatedOrganizations: NetworkContactRelatedOrg[];
   relatedProjects: Array<{ id: string; name: string; href: string }>;
   relatedTopics: Array<{ id: string; name: string; href: string }>;
+  relatedEvents: Array<{ id: string; name: string; href: string }>;
+  /** Outbound ∪ reverse — Link modal seed. */
+  linkModalIds: string[];
   intel: EntityIntelligence;
   /** Single Network status vocabulary (browse + contact). */
   networkStatus: V2NetworkBrowseStatus;
@@ -137,16 +142,12 @@ function relatedProjects(data: ArgusData, personId: string) {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function relatedTopics(data: ArgusData, person: Entity) {
-  return (person.linkedEntityIds ?? [])
-    .map((id) => data.entities.find((e) => e.id === id && !e.deletedAt))
-    .filter((e): e is Entity => Boolean(e))
-    .filter((e) => referenceKindFromNotes(e.notes ?? "") === "topic")
-    .map((topic) => ({
-      id: topic.id,
-      name: topic.name,
-      href: `/argus/v2/browse/topics?selected=${topic.id}`,
-    }));
+function relatedTopicsAndEvents(data: ArgusData, person: Entity, logs: Log[]) {
+  const nodeCounts = countTopicsAndEventsInScope(data, person, logs);
+  return {
+    relatedTopics: linkedTopicRefs(data, nodeCounts.topicIds),
+    relatedEvents: linkedEventRefs(data, nodeCounts.eventIds),
+  };
 }
 
 function buildTimeline(logs: Log[], enrichedInbox: EnrichedInboxItem[]): NetworkContactTimelineItem[] {
@@ -201,6 +202,7 @@ export function buildNetworkContactPageData(input: {
   });
   const organization = personOrganization(data, entity);
   const fileCount = logs.reduce((sum, log) => sum + log.attachmentIds.length, 0);
+  const { relatedTopics, relatedEvents } = relatedTopicsAndEvents(data, entity, logs);
 
   return {
     entity,
@@ -215,7 +217,9 @@ export function buildNetworkContactPageData(input: {
     tags: [...new Set([...(entity.linkedTags ?? []), ...intel.topics])].slice(0, 12),
     relatedOrganizations: relatedOrganizations(data, entity),
     relatedProjects: relatedProjects(data, entity.id),
-    relatedTopics: relatedTopics(data, entity),
+    relatedTopics,
+    relatedEvents,
+    linkModalIds: linkModalStructuralIds(data, entity),
     intel,
     networkStatus,
     attention,

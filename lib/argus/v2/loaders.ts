@@ -23,8 +23,13 @@ import {
 import type { ProjectScopeOptions } from "../project-evidence-scope";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
-import { collectProjectLinkIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
-import { countTopicsAndEventsInScope } from "./scope-node-counts";
+import {
+  collectProjectLinkIds,
+  countLinkKinds,
+  linkedEventRefs,
+  linkedTopicRefs,
+} from "./entity-link-counts";
+import { countTopicsAndEventsInScope, linkModalStructuralIds } from "./scope-node-counts";
 import {
   findTopicEntityIdForTag,
   intelligenceEntityHref,
@@ -775,6 +780,10 @@ export function loadOrganizationPageData(
 
   const tagPatterns = buildTagPatternsForScope(scope.logs, scope.inbox, today);
   const nodeCounts = countTopicsAndEventsInScope(data, org, scope.logs);
+  // Structural Topic/Event chips — never evidence tagPatterns.
+  const linkedTopics = linkedTopicRefs(data, nodeCounts.topicIds);
+  const linkedEvents = linkedEventRefs(data, nodeCounts.eventIds);
+  const linkModalIds = linkModalStructuralIds(data, org);
 
   return {
     scope,
@@ -789,6 +798,9 @@ export function loadOrganizationPageData(
     chartStartYear,
     chartEndYear,
     tagPatterns,
+    linkedTopics,
+    linkedEvents,
+    linkModalIds,
     stats: {
       emails: scope.emailCount,
       emailsDelta: emailsThisMonth > 0 ? `+${emailsThisMonth} this month` : "No change",
@@ -923,9 +935,10 @@ export function loadProjectPageData(
     .map((id) => data.entities.find((e) => e.id === id && e.type === "company"))
     .find(Boolean);
 
-  const topicNames = linkedTopicNames(data, nodeCounts.topicIds, []);
-
+  const linkedTopics = linkedTopicRefs(data, nodeCounts.topicIds);
+  const linkedEvents = linkedEventRefs(data, nodeCounts.eventIds);
   const linkedEventsCount = nodeCounts.eventCount;
+  const linkModalIds = linkModalStructuralIds(data, project);
   const status = projectStatus(project, today);
   const dateRangeLabel = formatProjectDateRange(project);
 
@@ -942,8 +955,10 @@ export function loadProjectPageData(
     org,
     status,
     dateRangeLabel,
-    linkedTopics: [...new Set(topicNames)],
+    linkedTopics,
+    linkedEvents,
     linkedEventsCount,
+    linkModalIds,
     keyMetrics: buildProjectKeyMetrics(scope, topicCount, linkedEventsCount),
     tagPatterns,
     stats: {
