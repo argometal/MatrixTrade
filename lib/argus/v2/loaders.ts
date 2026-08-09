@@ -25,8 +25,14 @@ import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
 import { collectProjectLinkIds, countLinkKinds, linkedTopicNames } from "./entity-link-counts";
 import { countTopicsAndEventsInScope } from "./scope-node-counts";
-import { findTopicEntityIdForTag, intelligenceTagHref } from "./intelligence-nav";
+import {
+  findTopicEntityIdForTag,
+  intelligenceEntityHref,
+  intelligenceEventHref,
+  intelligenceTagHref,
+} from "./intelligence-nav";
 import { scoreEvidenceDates } from "./intelligence-viz";
+import type { V2TimelineEntry } from "./mock-data";
 
 import {
   buildTimelineFromLogsAndInbox,
@@ -511,7 +517,7 @@ export function buildV2FocusTagPortfolio(
 
   return rows
     .sort((a, b) => {
-      if (a.isFocus !== b.isFocus) return a.isFocus ? -1 : 1;
+      // Exploration order: recurrence × recency, not Focus-first (Focus is a filter).
       const aScore = a.recencyScore * 0.55 + a.recurrenceScore * 0.45;
       const bScore = b.recencyScore * 0.55 + b.recurrenceScore * 0.45;
       if (aScore !== bScore) return bScore - aScore;
@@ -519,6 +525,176 @@ export function buildV2FocusTagPortfolio(
     })
     .slice(0, limit)
     .map(({ key: _key, ...row }) => row);
+}
+
+export type V2TagEvidenceEntity = {
+  id: string;
+  name: string;
+  kind: "organization" | "project" | "person" | "topic" | "event";
+  href: string;
+};
+
+/** Why this tag exists — evidence + binders that carry it (no new metrics). */
+export type V2TagEvidenceContext = {
+  tag: string;
+  openHref: string;
+  evidence: V2TimelineEntry[];
+  organizations: V2TagEvidenceEntity[];
+  projects: V2TagEvidenceEntity[];
+  people: V2TagEvidenceEntity[];
+  topics: V2TagEvidenceEntity[];
+  events: V2TagEvidenceEntity[];
+};
+
+function tagEvidenceEntityRef(entity: Entity): V2TagEvidenceEntity | null {
+  if (entity.deletedAt) return null;
+  if (entity.type === "company") {
+    return {
+      id: entity.id,
+      name: entity.name,
+      kind: "organization",
+      href: intelligenceEntityHref("organization", entity.id, "tags"),
+    };
+  }
+  if (entity.type === "project") {
+    return {
+      id: entity.id,
+      name: entity.name,
+      kind: "project",
+      href: intelligenceEntityHref("project", entity.id, "tags"),
+    };
+  }
+  if (entity.type === "person") {
+    return {
+      id: entity.id,
+      name: entity.name,
+      kind: "person",
+      href: `/argus/v2/network/${entity.id}`,
+    };
+  }
+  const ref = referenceKindFromNotes(entity.notes ?? "");
+  if (ref === "topic") {
+    return {
+      id: entity.id,
+      name: entity.name,
+      kind: "topic",
+      href: intelligenceEntityHref("topic", entity.id, "tags"),
+    };
+  }
+  if (ref === "event") {
+    return {
+      id: entity.id,
+      name: entity.name,
+      kind: "event",
+      href: intelligenceEventHref(entity.id, "tags"),
+    };
+  }
+  return null;
+}
+
+/**
+ * Evidence contexts keyed by canonical tag key — reused by Tags exploration workspace.
+ * Built from existing journal/inbox Tags only (no new ontology).
+ */
+export function buildV2TagEvidenceMap(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  includePrivate: boolean,
+  evidenceLimit = 12
+): Record<string, V2TagEvidenceContext> {
+  const logs = visibleLogs(data, includePrivate);
+  const inbox = visibleInbox(inboxItems, includePrivate);
+  const topics = entitiesByKind(data).topics;
+  const byKey = new Map<
+    string,
+    {
+      display: string;
+      logs: Log[];
+      inbox: InboxItem[];
+      entityIds: Set<string>;
+    }
+  >();
+
+  function bucket(raw: string) {
+    const display = raw.trim().replace(/\s+/g, " ");
+    if (!display) return null;
+    const key = signalTagKey(display);
+    let row = byKey.get(key);
+    if (!row) {
+      row = { display, logs: [], inbox: [], entityIds: new Set() };
+      byKey.set(key, row);
+    }
+    return row;
+  }
+
+  for (const log of logs) {
+    for (const tag of log.topics ?? []) {
+      const row = bucket(tag);
+      if (!row) continue;
+      row.logs.push(log);
+      for (const id of log.entityIds ?? []) row.entityIds.add(id);
+    }
+  }
+  for (const item of inbox) {
+    for (const tag of item.topics ?? []) {
+      const row = bucket(tag);
+      if (!row) continue;
+      row.inbox.push(item);
+      for (const id of item.linkedEntityIds ?? []) row.entityIds.add(id);
+    }
+  }
+
+  for (const tag of normalizeSignalTags(data.signalTags)) {
+    bucket(tag);
+  }
+
+  const result: Record<string, V2TagEvidenceContext> = {};
+  for (const [key, row] of byKey) {
+    const evidence = mergeTimelineEntries([
+      ...row.logs.map(logToTimelineEntry),
+      ...row.inbox.map(inboxToTimelineEntry),
+    ]).slice(0, evidenceLimit);
+
+    const organizations: V2TagEvidenceEntity[] = [];
+    const projects: V2TagEvidenceEntity[] = [];
+    const people: V2TagEvidenceEntity[] = [];
+    const topicLinks: V2TagEvidenceEntity[] = [];
+    const events: V2TagEvidenceEntity[] = [];
+    const seen = new Set<string>();
+
+    for (const id of row.entityIds) {
+      if (seen.has(id)) continue;
+      const entity = data.entities.find((e) => e.id === id);
+      if (!entity) continue;
+      const ref = tagEvidenceEntityRef(entity);
+      if (!ref) continue;
+      seen.add(id);
+      if (ref.kind === "organization") organizations.push(ref);
+      else if (ref.kind === "project") projects.push(ref);
+      else if (ref.kind === "person") people.push(ref);
+      else if (ref.kind === "topic") topicLinks.push(ref);
+      else events.push(ref);
+    }
+
+    organizations.sort((a, b) => a.name.localeCompare(b.name));
+    projects.sort((a, b) => a.name.localeCompare(b.name));
+    people.sort((a, b) => a.name.localeCompare(b.name));
+    topicLinks.sort((a, b) => a.name.localeCompare(b.name));
+    events.sort((a, b) => a.name.localeCompare(b.name));
+
+    result[key] = {
+      tag: row.display,
+      openHref: intelligenceTagHref(row.display, findTopicEntityIdForTag(topics, row.display)),
+      evidence,
+      organizations,
+      projects,
+      people,
+      topics: topicLinks,
+      events,
+    };
+  }
+
+  return result;
 }
 
 /** Action-only nav triage counts — never entity totals, never Focus Tags. */

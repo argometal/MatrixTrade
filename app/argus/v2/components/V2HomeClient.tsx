@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import type { V2FocusTagStat, V2NavCounts } from "@/lib/argus/v2/loaders";
+import type { V2FocusTagStat, V2NavCounts, V2TagEvidenceContext } from "@/lib/argus/v2/loaders";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import type { IntelligenceFrom } from "@/lib/argus/v2/intelligence-nav";
 import { type V2KnowledgeNode } from "@/lib/argus/v2/intelligence-viz";
@@ -13,7 +13,6 @@ import { V2HomePageHeader } from "./V2HomePulse";
 import { V2IntelligenceLens, V2IntelligenceLensEmpty } from "./V2IntelligenceLens";
 import { V2TabBar } from "./V2TabBar";
 import type { V2TagCloudItem } from "./V2TagCloud";
-import { V2SignalTagsEditor } from "./V2SignalTagsEditor";
 import { V2Timeline, V2TimelineRail } from "./V2Timeline";
 import {
   BrowseQuickLinks,
@@ -71,6 +70,7 @@ export function V2HomeClient({
   tags,
   focusTagPortfolio = [],
   signalTags = [],
+  tagEvidenceByTag = {},
   signals,
   initialView,
   followUps,
@@ -82,6 +82,7 @@ export function V2HomeClient({
   tags: V2TagCloudItem[];
   focusTagPortfolio?: V2FocusTagStat[];
   signalTags?: string[];
+  tagEvidenceByTag?: Record<string, V2TagEvidenceContext>;
   signals: V2NavCounts;
   initialView?: string;
   followUps: FollowUpItem[];
@@ -149,6 +150,7 @@ export function V2HomeClient({
                   tags={tags}
                   focusTagPortfolio={focusTagPortfolio}
                   signalTags={signalTags}
+                  tagEvidenceByTag={tagEvidenceByTag}
                   tab={intelTab}
                   onLensChange={setLensId}
                 />
@@ -215,13 +217,10 @@ export function V2HomeClient({
 
           <div id="tags">
             <V2Card className="p-5">
-              <V2SectionTitle>Focus Tags</V2SectionTitle>
+              <V2SectionTitle>Tags</V2SectionTitle>
               <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
-                Quick flag/unflag. Tag universe graph (recency × recurrence) lives only under Intelligence → Tags.
+                Explore behavioral evidence in the Tag universe. Focus is a watchlist action inside that workspace.
               </p>
-              <div className="mb-3">
-                <V2SignalTagsEditor initialTags={signalTags} returnTo="/argus/v2#tags" compact />
-              </div>
               <button
                 type="button"
                 onClick={() => {
@@ -231,7 +230,7 @@ export function V2HomeClient({
                 }}
                 className="w-full rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-left text-[11px] font-medium text-violet-300 transition hover:border-violet-500/40 hover:bg-zinc-900"
               >
-                Open Tag universe in Intelligence →
+                Open Tag universe →
               </button>
             </V2Card>
           </div>
