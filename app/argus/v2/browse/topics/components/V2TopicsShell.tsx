@@ -352,7 +352,7 @@ function TopicListRow({
             <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
           </div>
           <p className="mt-0.5 truncate text-xs text-zinc-500">
-            {card.lastActivity} · {card.metrics.journals + card.metrics.emails + card.metrics.files} evidence
+            {card.lastActivity} · {card.metrics.journals + card.metrics.emails} evidence
           </p>
         </div>
         <div className="hidden shrink-0 gap-4 text-center sm:flex">
@@ -835,11 +835,11 @@ export function V2TopicsShell({
               <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5">
                 {(
                   [
-                    ["grid", "▦", "Grid view"],
-                    ["list", "☰", "List view"],
-                    ["board", "▥", "Board view"],
+                    ["grid", "▦", "Grid", "Grid · cards"],
+                    ["list", "☰", "List", "List · rows"],
+                    ["board", "▥", "Manage", "Manage · Active / Quiet / Empty / Archived"],
                   ] as const
-                ).map(([id, icon, label]) => (
+                ).map(([id, icon, label, tip]) => (
                   <button
                     key={id}
                     type="button"
@@ -848,6 +848,7 @@ export function V2TopicsShell({
                       view === id ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
                     }`}
                     aria-label={label}
+                    title={tip}
                     aria-pressed={view === id}
                   >
                     {icon}
