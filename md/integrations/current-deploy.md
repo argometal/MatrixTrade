@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807s` |
-| **Commit** | Always `git rev-parse main0807s` after fetch (must match `origin/main`) |
+| **Tag** | `main0807t` |
+| **Commit** | Always `git rev-parse main0807t` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-08 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,12 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807s
+# optional pin: git checkout main0807t
 ```
 
 ## What this deploy includes
 
-- PR #192: Tags Universe as evidence exploration workspace (select → evidence; no cloud/score/dup Focus editors)
+- PR #192 / #194: Tags Universe exploration workspace (+ Vercel typecheck fix for test fixtures)
 - PR #177: Remove Dashboard **Paste AI Block (legacy)** — AI Blocks via Control → Apply only
 - PR #189: Treemap includes full org/project/topic portfolio (no top-24 cut; empty projects like Exxon appear)
 - PR #187: Deprecate Home aside Tag portfolio graph; Tag universe only under Intelligence → Tags
