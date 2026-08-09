@@ -68,7 +68,10 @@ export interface V2TopicDetail {
   fileCount: number;
   photoCount: number;
   evidenceCount: number;
-  /** Outbound structural ids only — for Link modal (not reverse/neighbors). */
+  /**
+   * Link modal seed: outbound structural ids ∪ reverse Topic↔Event binders.
+   * Broader neighbor sets stay on neighborEntityIds / Connections.
+   */
   linkedEntityIds: string[];
   /** Neighbor set for filters / Connections (outbound + reverse + bridge + co-mention). */
   neighborEntityIds: string[];
@@ -354,7 +357,11 @@ export function buildV2TopicBrowseCards(
         journals: row.journalCount,
         emails: row.emailCount,
         files: row.fileCount,
-        events: detail?.eventCount ?? 0,
+        events: Math.max(
+          detail?.eventCount ?? 0,
+          detail?.linkedEvents?.length ?? 0,
+          row.eventCount
+        ),
         orgs: detail?.orgCount ?? row.linkedOrgIds.length,
         projects: detail?.projectCount ?? row.linkedProjectIds.length,
         people: detail?.peopleCount ?? 0,

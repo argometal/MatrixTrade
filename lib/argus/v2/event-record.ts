@@ -1,6 +1,7 @@
 /** Event entity shell — chronicle entries live in linked logs (see event-chronicle.ts). */
 
-const KIND_PREFIX = /^Kind:\s*Event\s*\n?/i;
+/** Tolerates BOM / leading blank lines — same spirit as referenceKindFromNotes. */
+const KIND_PREFIX = /(?:^|\n)\s*Kind:\s*Event\b[^\n]*\n?/i;
 const LEGACY_PURPOSE_LINE = /^Purpose:\s*(hr|performance|incident|general)\s*$/gim;
 const CHRONICLE_V2_MARKER = /^Chronicle:\s*v2\s*$/gim;
 const HR_LINE = /^---\s*$/gm;

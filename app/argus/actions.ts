@@ -689,6 +689,11 @@ async function persistNewEntity(
     );
   }
 
+  // Create-with-links used to stay one-way; Topic↔Event binders must mirror both sides.
+  if (kind === "topic" || kind === "event") {
+    await mirrorTopicEventLinks(entity.id, validIds);
+  }
+
   revalidateArgus();
   revalidatePath(`/argus/network/${entity.id}`);
   revalidatePath(`/argus/projects/${entity.id}`);

@@ -30,8 +30,10 @@ const DISPLAY_KIND_LABELS: Record<DisplayReferenceKind, string> = {
   other: "Other",
 };
 
-const KIND_PREFIX =
-  /^Kind:\s*(Person|Organization|Project|Topic|Event|Place|Document|Other)\s*(?:\n|$)/i;
+const KIND_TOKEN = "Person|Organization|Project|Topic|Event|Place|Document|Other";
+
+/** First `Kind:` line — tolerates BOM, leading blank lines, and Kind not at byte 0. */
+const KIND_LINE = new RegExp(`(?:^|\\n)\\s*Kind:\\s*(${KIND_TOKEN})\\b`, "i");
 
 function parseKindToken(token: string): DisplayReferenceKind | null {
   const key = token.toLowerCase();
@@ -47,7 +49,9 @@ function parseKindToken(token: string): DisplayReferenceKind | null {
 }
 
 export function referenceKindFromNotes(notes: string): DisplayReferenceKind | null {
-  const match = notes.match(KIND_PREFIX);
+  if (!notes) return null;
+  const text = notes.replace(/^\uFEFF/, "");
+  const match = text.match(KIND_LINE);
   if (!match) return null;
   return parseKindToken(match[1]);
 }
@@ -131,5 +135,11 @@ export function entityDetailHref(entity: { id: string; type: EntityType }): stri
 }
 
 export function entityNotesForDisplay(notes: string): string {
-  return notes.replace(KIND_PREFIX, "").trim();
+  const text = notes.replace(/^\uFEFF/, "");
+  // Drop the Kind line used for type discrimination (same match as referenceKindFromNotes).
+  const stripped = text.replace(
+    new RegExp(`(?:^|\\n)\\s*Kind:\\s*(${KIND_TOKEN})\\b[^\\n]*`, "i"),
+    (full) => (full.startsWith("\n") ? "" : "")
+  );
+  return stripped.replace(/^\n+/, "").trim();
 }

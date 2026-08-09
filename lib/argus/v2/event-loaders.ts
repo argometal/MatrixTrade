@@ -11,7 +11,7 @@ import { countLinkKinds, linkedTopicNames, linkedTopicRefs } from "./entity-link
 import {
   collectNeighborEntityIds,
   countTopicsAndEventsInScope,
-  outboundStructuralIds,
+  linkModalStructuralIds,
 } from "./scope-node-counts";
 import { buildTagPatternsForScope } from "./tag-patterns";
 import type {
@@ -240,8 +240,8 @@ export function buildV2EventDetails(
       projectCount: linkCounts.projectCount,
       peopleCount: linkCounts.peopleCount,
       topicCount: nodeCounts.topicCount,
-      // Link modal edits outbound only — include every outbound bag (legacy binders too).
-      linkedEntityIds: outboundStructuralIds(event),
+      // Link modal: outbound bags ∪ reverse Topic binders (one-way links stay visible/healable).
+      linkedEntityIds: linkModalStructuralIds(data, event),
       linkedEntries,
       relatedEmails,
       evidence,

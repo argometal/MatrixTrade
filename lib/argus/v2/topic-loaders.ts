@@ -16,6 +16,9 @@ import { buildTagPatternsForScope } from "./tag-patterns";
 import {
   collectNeighborEntityIds,
   countTopicsAndEventsInScope,
+  isEventEntity as scopeIsEventEntity,
+  isTopicEntity as scopeIsTopicEntity,
+  linkModalStructuralIds,
   outboundStructuralIds,
 } from "./scope-node-counts";
 import { countLinkKinds, linkedEventRefs } from "./entity-link-counts";
@@ -232,8 +235,8 @@ export function buildV2TopicDetails(
       if (entity && isEventEntity(entity)) eventIds.add(id);
     }
     const linkedEvents = linkedEventRefs(data, eventIds);
-    // Link modal edits outbound only — include every outbound bag so legacy binders are visible.
-    const outboundIds = outboundStructuralIds(topic);
+    // Link modal: outbound bags ∪ reverse Event binders (one-way Event→Topic stays visible/healable).
+    const linkModalIds = linkModalStructuralIds(data, topic);
 
     return {
       id: topic.id,
@@ -249,7 +252,7 @@ export function buildV2TopicDetails(
       fileCount: counts.fileCount + counts.photoCount,
       photoCount: counts.photoCount,
       evidenceCount: counts.evidenceCount,
-      linkedEntityIds: outboundIds,
+      linkedEntityIds: linkModalIds,
       neighborEntityIds: [...neighborIds],
       linkedEntities,
       linkedEvents,
@@ -290,10 +293,11 @@ export function buildV2GlobalTopicChips(data: ArgusData, includePrivate: boolean
     .map(([name, count]) => ({ name, count }));
 }
 
+/** Kind-based — same policy as scope-node-counts (do not require type === "other"). */
 export function isTopicEntity(entity: Entity): boolean {
-  return entity.type === "other" && referenceKindFromNotes(entity.notes ?? "") === "topic";
+  return scopeIsTopicEntity(entity);
 }
 
 export function isEventEntity(entity: Entity): boolean {
-  return entity.type === "other" && referenceKindFromNotes(entity.notes ?? "") === "event";
+  return scopeIsEventEntity(entity);
 }
