@@ -170,7 +170,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Recurring patterns",
-        body: "When the same tag appears on 3 or more evidence items in a scope — with at least one in the last 90 days — a small pattern badge appears. Tag Notes on Events (Note → Tags). Home → Intelligence → Tags is the exploration workspace: click a tag to see the evidence that created it. Focus Tags are a watchlist filter there (also on Event → Tags) — they do not auto-copy onto Notes. Topic → Tags are Match tags for inbox/search only.",
+        body: "When the same tag appears on 3 or more evidence items in a scope — with at least one in the last 90 days — a small pattern badge appears. One Tag system: Notes accumulate Tags; Topic Tags keep binders findable; Tracker = watch-on (Flag / Disable — never deletes the Tag). Home → Intelligence → Tags filters: Universe, Hot (30d), Patterns, Stale (evidence but none in 90d), Trackers.",
       },
       {
         title: "Your definitions",

@@ -25,7 +25,7 @@ import type { V2EntityRow, V2EntityTab } from "@/lib/argus/v2/loaders";
 
 const HOME_VIEW_TABS: { id: V2HomeView; label: string }[] = [
   { id: "intelligence", label: "Intelligence" },
-  { id: "browse", label: "Browse" },
+  { id: "browse", label: "Browser" },
 ];
 
 const INTELLIGENCE_TABS: { id: IntelligenceTab; label: string }[] = [
@@ -153,6 +153,7 @@ export function V2HomeClient({
                   signalTags={signalTags}
                   tagEvidenceByTag={tagEvidenceByTag}
                   tab={intelTab}
+                  lensId={lensId}
                   onLensChange={setLensId}
                 />
               )}
@@ -163,7 +164,7 @@ export function V2HomeClient({
         <aside className="space-y-6">
           {showLensDock ? (
             <div>
-              {lensNode ? (
+              {lensNode && (intelTab === "treemap" || intelTab === "portfolio") ? (
                 <>
                   <V2IntelligenceLens
                     node={lensNode}
@@ -175,6 +176,7 @@ export function V2HomeClient({
                     entityId={lensNode.id}
                     entityName={lensNode.name}
                     variant="dock"
+                    scope="context"
                   />
                 </>
               ) : (

@@ -490,8 +490,18 @@ export function buildV2FocusTagPortfolio(
     if (!acc.has(key)) acc.set(key, { display: tag, dates: [] });
   }
 
-  const focusKeys = new Set(normalizeSignalTags(data.signalTags).map(signalTagKey));
+  // Topic binder Tags (`linkedTags`) stay in the universe even when not Trackers / no notes yet.
   const topics = entitiesByKind(data).topics;
+  for (const topic of topics) {
+    for (const tag of topic.linkedTags ?? []) {
+      const display = tag.trim().replace(/\s+/g, " ");
+      if (!display) continue;
+      const key = signalTagKey(display);
+      if (!acc.has(key)) acc.set(key, { display, dates: [] });
+    }
+  }
+
+  const focusKeys = new Set(normalizeSignalTags(data.signalTags).map(signalTagKey));
   const freshnessCutoff = (() => {
     const d = new Date(`${today}T12:00:00`);
     d.setDate(d.getDate() - TAG_PATTERN_FRESHNESS_DAYS);

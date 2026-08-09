@@ -8,25 +8,31 @@ Status: **implemented** (treemap + portfolio axes as of 2026-07). Tag pattern ov
 - **Nodes:** organizations, projects, topics only (no events, tags, people).
 - **Size:** evidence volume (journal logs + linked inbox emails).
 - **Color:** recent activity share in the last 7 days (green = active, gray = quiet).
+- **Universe filters (same as Tags):** Universe · Hot · Patterns · Stale · Trackers.
 
 ### Portfolio matrix
 - **Nodes:** organizations, projects, topics.
 - **Y axis:** recency — days since last evidence, mapped 0–1 (0d → 1, 90d+ → 0).
 - **X axis:** recurrence — evidence item count in the last 30 days, normalized 0–1 within the portfolio set.
 - **Bubble size:** total evidence count.
+- **Universe filters (same as Tags):** Universe · Hot · Patterns · Stale · Trackers.
 - No BCG quadrant labels or manual strategic/completion axes.
 
 ### Tags tab (Home → Intelligence → Tags)
-- **Tag universe** workspace (`V2FocusTagPortfolio`) — primary navigation for Tags + Trackers (not the old top-20 cloud alone).
-- **Trackers strip** — Flagged Tags (journal `signalTags`) shown together; Flag a Tag that isn’t a Tracker yet.
+- **Tag universe** workspace (`V2FocusTagPortfolio`) — Universe / Hot / Patterns / Stale / Trackers.
+- **Stale** = has evidence but none in the last 90 days (still a Tag).
+- Universe includes evidence Tags + Topic Tags (`linkedTags`) + Trackers (`signalTags`).
+- **Trackers strip** + Manage editor — Flag / Disable Tracker never deletes Note or Topic Tags.
 - Bubble plot: recency × recurrence; ⚑ / amber ring = Tracker; gold ring = Pattern.
 - Selection shows evidence + binders; binder click loads **connection neighborhood**.
-- Tag cloud helper (`buildV2TagCloud`) may still feed other surfaces; Patterns use the same evidence Tag strings.
 
 ### Graph (neighborhood views)
 - **Removed** global graph tab from Home Intelligence — whole-graph view was premature without graph infra.
-- **Home Intelligence:** selecting a Treemap tile / Portfolio bubble / Tags binder loads a local neighborhood in the lens dock (`getEntityNeighborhoodAction` + `V2HomeNeighborhoodViewer`).
-- **Entity detail:** Connection neighborhood on organization, project, topic, and event browse detail.
+- **Home model (Tags is the template):**
+  - **Main (center):** full Connection neighborhood around the selection — zoom / explore (`scope: local`).
+  - **Right dock (small):** context neighborhood — **one level up** (Org above Project/Topic when linked), else a wider neighborhood (`scope: context`).
+  - Applies on Treemap, Portfolio, and Tags binder selection.
+- **Entity detail:** Connection neighborhood on organization, project, topic, and event browse detail (same main graph).
 - Pattern: Kumu / Obsidian — local 1–2 hop subgraph around the open entity, not a universe map.
 - **Layout:** radial — center entity in the middle (gold ring), neighbors on a ring.
 - **Edges:** `linked`, `project-link`, `co-mentioned`, `focus-affinity` (shared Tracker).

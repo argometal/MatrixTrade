@@ -13,7 +13,8 @@ const BROWSE_LINKS = [
 ] as const;
 
 export function parseV2HomeView(value: string | null | undefined): V2HomeView {
-  if (value === "browse" || value === "entities") return "browse";
+  // URL keeps `browse` for compatibility; UI label is Browser.
+  if (value === "browse" || value === "browser" || value === "entities") return "browse";
   return "intelligence";
 }
 

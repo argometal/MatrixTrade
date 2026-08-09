@@ -81,7 +81,7 @@ export function V2TopicAliasEditor({
         onAdd={addMatchTag}
         onRemove={removeMatchTag}
         copy={copy}
-        inputAriaLabel={`Add match tag for ${topicName}`}
+        inputAriaLabel={`Add Topic Tag for ${topicName}`}
         footer={
           <button
             type="button"

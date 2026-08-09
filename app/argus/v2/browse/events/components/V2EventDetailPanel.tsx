@@ -24,6 +24,7 @@ import {
   focusKeySet,
   tagIsFlagged,
 } from "@/app/argus/v2/components/V2FlaggableTagChip";
+import { V2SignalTagsEditor } from "@/app/argus/v2/components/V2SignalTagsEditor";
 import {
   V2ChronicleSelectableList,
   chronicleLogIdFromEvidenceId,
@@ -442,26 +443,36 @@ export function V2EventDetailPanel({
               <div>
                 <p className="text-xs font-medium text-zinc-300">Tags</p>
                 <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
-                  Tags come from Notes — they accumulate with repetition.{" "}
-                  <span className="text-zinc-400">Click a Tag</span> to Flag it (shine) and track it across the journal.
-                  Add Tags on the Note tab when you Save.
+                  Create Tags on the Note tab (accumulate evidence) or manage Trackers below. Click a Tag to Flag /
+                  Disable Tracker — that never deletes the Tag.
                 </p>
               </div>
               {eventTagCounts.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {eventTagCounts.map((row) => (
-                    <V2FlaggableTagChip
-                      key={row.tag}
-                      tag={row.tag}
-                      count={row.count}
-                      flagged={tagIsFlagged(row.tag, focusKeys)}
-                      onFlaggedChange={(next) => setFocusTags(next)}
-                    />
-                  ))}
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+                    From notes (click to Flag Tracker)
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {eventTagCounts.map((row) => (
+                      <V2FlaggableTagChip
+                        key={row.tag}
+                        tag={row.tag}
+                        count={row.count}
+                        flagged={tagIsFlagged(row.tag, focusKeys)}
+                        onFlaggedChange={(next) => setFocusTags(next)}
+                      />
+                    ))}
+                  </div>
                 </div>
               ) : (
-                <p className="text-sm text-zinc-600">No Tags on this Event yet. Add Tags when saving a Note.</p>
+                <p className="text-sm text-zinc-600">No Note Tags yet. Add Tags when saving a Note.</p>
               )}
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+                  Trackers (create / manage)
+                </p>
+                <V2SignalTagsEditor initialTags={focusTags} returnTo={returnTo} compact />
+              </div>
             </div>
           ) : null}
 

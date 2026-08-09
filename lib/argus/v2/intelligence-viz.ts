@@ -35,6 +35,8 @@ export type V2KnowledgeNode = {
   completion?: number;
   /** Number of recurring tag patterns on scope evidence (≥3 items, fresh within 90d). */
   tagPatternCount: number;
+  /** True when scoped evidence carries a journal Tracker Tag. */
+  hasTracker: boolean;
   href: string;
   group: string;
 };
@@ -357,6 +359,7 @@ export function buildV2KnowledgeNodes(
 ): V2KnowledgeNode[] {
   const logs = visibleLogs(data, includePrivate);
   const entities = data.entities.filter((e) => !e.deletedAt);
+  const focusKeys = signalTagKeySet(data.signalTags);
   const nodes: V2KnowledgeNode[] = [];
 
   for (const entity of entities) {
@@ -392,6 +395,8 @@ export function buildV2KnowledgeNodes(
     const entityLogs = logs.filter((l) => l.entityIds.includes(entity.id));
     const entityInbox = getLinkedInboxForEntity(inboxItems, entity.id, includePrivate);
     const patterns = buildTagPatternsForScope(entityLogs, entityInbox, today);
+    const hasTracker =
+      focusTagsOnEntity(data, inboxItems, entity.id, includePrivate, focusKeys).length > 0;
 
     nodes.push({
       id: entity.id,
@@ -407,6 +412,7 @@ export function buildV2KnowledgeNodes(
       href: entityHref(entity),
       group: primaryGroupForEntity(data, entity, logs),
       tagPatternCount: tagPatternCount(patterns),
+      hasTracker,
     });
   }
 
@@ -613,6 +619,45 @@ function focusTagsOnEntity(
   }
 
   return [...matched.values()].sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Context center for the small Home dock: one level above the selection when possible
+ * (Topic/Project → parent Org; Topic → Project; else the entity itself with a wider graph).
+ */
+export function resolveNeighborhoodContextCenter(
+  data: ArgusData,
+  entityId: string,
+  includePrivate: boolean
+): { centerId: string; label: "parent" | "self"; parentName?: string } {
+  const entities = data.entities.filter((e) => !e.deletedAt);
+  const entityMap = new Map(entities.map((e) => [e.id, e]));
+  const center = entityMap.get(entityId);
+  if (!center) return { centerId: entityId, label: "self" };
+
+  const logs = visibleLogs(data, includePrivate);
+  const neighbors = collectNeighborEntityIds(data, center, logs);
+
+  let orgId: string | undefined;
+  let projectId: string | undefined;
+  for (const id of neighbors) {
+    const other = entityMap.get(id);
+    if (!other) continue;
+    if (!orgId && other.type === "company") orgId = other.id;
+    if (!projectId && other.type === "project") projectId = other.id;
+  }
+
+  // Prefer organization (one level above project/topic), else project above topic.
+  if (orgId && center.type !== "company") {
+    return { centerId: orgId, label: "parent", parentName: entityMap.get(orgId)?.name };
+  }
+  if (projectId && center.type !== "project" && center.type !== "company") {
+    const ref = referenceKindFromNotes(center.notes ?? "");
+    if (ref === "topic" || ref === "event" || center.type === "person") {
+      return { centerId: projectId, label: "parent", parentName: entityMap.get(projectId)?.name };
+    }
+  }
+  return { centerId: entityId, label: "self" };
 }
 
 /** Local 1–2 hop subgraph from one entity — Kumu / Obsidian neighborhood pattern. */

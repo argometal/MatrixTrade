@@ -388,16 +388,17 @@ export const ENTITY_DETAIL = {
 } as const;
 
 /**
- * @deprecated Match tags removed — evidence Tags from notes only.
+ * Topic Tags on the binder (`entity.linkedTags`) — same Tag system as Notes.
+ * Used for search / inbox matching and appear in the Home Tag universe.
  */
 export const TOPIC_MATCH_TAGS = {
-  heading: "Tags",
-  hint: "Deprecated. Tags come from Notes; click a Tag to Flag it.",
-  placeholder: "Tag…",
+  heading: "Topic Tags",
+  hint: "Tags on this Topic binder. Same Tag names as Notes — add here so the Topic stays findable; Flag as Tracker from the chips above or Home → Tags.",
+  placeholder: "Add a tag…",
   add: "Add",
-  save: "Save",
-  empty: "No Tags yet.",
-  removeAria: (item: string) => `Remove ${item}`,
+  save: "Save Tags",
+  empty: "No Topic Tags yet — add one, or Save Tags on a linked Event Note.",
+  removeAria: (item: string) => `Remove ${item} from Topic Tags`,
 } as const;
 
 /** @deprecated Use TOPIC_MATCH_TAGS */
@@ -405,16 +406,16 @@ export const TOPIC_ALIASES = TOPIC_MATCH_TAGS;
 
 /**
  * Tracker — Flag a Tag to watch it (journal `signalTags`).
- * Not copied onto evidence. Tags on Notes still drive Patterns.
- * Home → Tags is the control center to create and watch Trackers.
+ * Does not delete the Tag. Not copied onto evidence. Notes still drive Patterns.
+ * Home → Tags manages the universe; each binder can create Tags too.
  */
 export const SIGNAL_TAGS = {
   heading: "Trackers",
-  hint: "Click a Tag to Flag it as a Tracker. Trackers stay visibly marked across Patterns, the universe, and neighborhoods — they do not auto-copy onto every Note.",
-  placeholder: "Flag a tag…",
-  add: "Flag",
-  empty: "No Trackers yet — open Home → Tags and Flag a Tag.",
-  removeAria: (item: string) => `Unflag tracker ${item}`,
+  hint: "Flag a Tag as a Tracker to watch it. Disable Tracker leaves the Tag in the universe — it does not delete the Tag.",
+  placeholder: "Add Tracker tag…",
+  add: "Add",
+  empty: "No Trackers yet — add a Tag and Flag it, or Flag an existing Tag.",
+  removeAria: (item: string) => `Disable Tracker on ${item}`,
   save: "Save Trackers",
 } as const;
 

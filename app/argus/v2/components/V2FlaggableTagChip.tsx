@@ -54,7 +54,11 @@ export function V2FlaggableTagChip({
       type="button"
       onClick={toggle}
       disabled={pending}
-      title={localFlagged ? `Unflag “${tag}” tracker` : `Flag “${tag}” as Tracker`}
+      title={
+        localFlagged
+          ? `Disable Tracker on “${tag}” — Tag stays in the universe`
+          : `Flag “${tag}” as Tracker`
+      }
       aria-pressed={localFlagged}
       className={`inline-flex items-center gap-1 rounded-full border font-medium transition disabled:opacity-50 ${size} ${
         localFlagged

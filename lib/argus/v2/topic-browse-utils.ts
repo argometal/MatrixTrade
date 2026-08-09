@@ -32,7 +32,7 @@ export interface V2TopicRow {
   evidenceCount: number;
   /** Structural linked events (outbound + reverse + bridge + co-mention). */
   eventCount: number;
-  /** @deprecated Match tags removed — kept empty for browse card shape. */
+  /** Topic Tags on the binder (`entity.linkedTags`) — part of the Tag system. */
   aliases: string[];
   /** Evidence Tags from notes/emails (topic ∪ linked events). */
   evidenceTags: string[];
@@ -78,7 +78,7 @@ export interface V2TopicDetail {
   neighborEntityIds: string[];
   linkedEntities: V2TopicLinkedEntity[];
   linkedEvents: Array<{ id: string; name: string; href: string; dateLabel?: string }>;
-  /** @deprecated Match tags removed. */
+  /** Topic Tags on the binder (`entity.linkedTags`). */
   aliases: string[];
   lifecycleStatus?: EntityLifecycleStatus;
   hasPrivateEvidence: boolean;
@@ -144,12 +144,17 @@ export function filterV2TopicRows(
 
   if (filters.q) {
     result = result.filter((row) =>
-      textMatchesBrowseQuery(filters.q!, [row.name, row.searchText, ...row.evidenceTags])
+      textMatchesBrowseQuery(filters.q!, [
+        row.name,
+        row.searchText,
+        ...row.aliases,
+        ...row.evidenceTags,
+      ])
     );
   }
   if (filters.tag) {
     result = result.filter((row) =>
-      topicBrowseTagMatch(row.evidenceTags, row.name, filters.tag!)
+      topicBrowseTagMatch([...row.aliases, ...row.evidenceTags], row.name, filters.tag!)
     );
   }
   if (filters.org) {
@@ -364,8 +369,8 @@ export function buildV2TopicBrowseCards(
       lastActivity: row.lastActivity,
       lastSort: row.lastSort,
       patternCount: row.patternCount,
-      // Card chips: evidence Tags from notes (Match tags deprecated).
-      aliases: row.evidenceTags.slice(0, 6),
+      // Card chips: Topic Tags ∪ evidence Tags (one Tag system).
+      aliases: [...new Set([...row.aliases, ...row.evidenceTags])].slice(0, 6),
       metrics: {
         journals: row.journalCount,
         emails: row.emailCount,

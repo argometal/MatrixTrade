@@ -14,6 +14,7 @@ import {
   focusKeySet,
   tagIsFlagged,
 } from "@/app/argus/v2/components/V2FlaggableTagChip";
+import { V2TopicAliasEditor } from "./V2TopicAliasEditor";
 import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
 import { V2PrivateEvidenceGate } from "@/app/argus/v2/components/V2PrivateEvidenceGate";
 import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
@@ -456,22 +457,31 @@ export function V2TopicDetailPanel({
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <p className="text-[11px] leading-relaxed text-zinc-600">
-                <span className="text-zinc-400">Tags</span> come from notes and emails — they grow with repetition.{" "}
-                <span className="text-zinc-400">Click a Tag</span> to Flag it (shine) so you can track it. Add Tags when
-                saving a Note on a linked Event.
+                One Tag system: Notes accumulate Tags · Topic Tags keep this binder findable · click a Tag to Flag / Disable
+                Tracker (does not delete the Tag).
               </p>
 
               <div>
                 <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
-                  Tags (click to Flag)
+                  From notes (click to Flag Tracker)
                 </p>
-                {selected.evidenceTagCounts.length > 0 ? (
+                {selected.evidenceTagCounts.length > 0 || selected.aliases.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
-                    {selected.evidenceTagCounts.map((row) => (
+                    {[
+                      ...selected.evidenceTagCounts,
+                      ...selected.aliases
+                        .filter(
+                          (alias) =>
+                            !selected.evidenceTagCounts.some(
+                              (row) => row.tag.toLowerCase() === alias.toLowerCase()
+                            )
+                        )
+                        .map((tag) => ({ tag, count: 0 })),
+                    ].map((row) => (
                       <V2FlaggableTagChip
                         key={row.tag}
                         tag={row.tag}
-                        count={row.count}
+                        count={row.count > 0 ? row.count : undefined}
                         flagged={tagIsFlagged(row.tag, focusKeys)}
                         onFlaggedChange={(next) => setFocusTags(next)}
                       />
@@ -479,7 +489,7 @@ export function V2TopicDetailPanel({
                   </div>
                 ) : (
                   <p className="text-sm text-zinc-600">
-                    No Tags yet. Open a linked Event → Note, add Tags, Save.
+                    No Tags yet. Add Topic Tags below, or Save Tags on a linked Event Note.
                   </p>
                 )}
               </div>
@@ -525,6 +535,18 @@ export function V2TopicDetailPanel({
                   </ul>
                 </div>
               ) : null}
+
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+                  Topic Tags (create / manage)
+                </p>
+                <V2TopicAliasEditor
+                  topicId={selected.id}
+                  topicName={selected.name}
+                  initialAliases={selected.aliases}
+                  returnTo={returnTo}
+                />
+              </div>
             </div>
           ) : null}
         </V2PrivateEvidenceGate>
