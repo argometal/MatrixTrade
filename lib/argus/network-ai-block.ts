@@ -34,7 +34,7 @@ Required shape:
   "proposal": { ... }
 }
 
-Primary block types (Network panel — human must click Apply):
+Primary block types (Network panel — human must Validate, then Accept):
 - network-create-person: NEW contact from desk — name (required); optional role, organization, email, notes, tags[]
 - network-capture: AFTER conversation on existing person — entityId (required), body (required); optional title, followUpDate (YYYY-MM-DD), tags[]
 
@@ -43,11 +43,15 @@ Legacy types (still supported):
 - network-follow-up: follow_up log — entityId, body, followUpDate
 - network-tags: merge linkedTags — entityId, tags[]
 - network-analysis: note log only — entityId, body
-- network-metrics: contactValue / myValue arrays — entityId
+- network-metrics: contactValue[] / myValue[] only — entityId
+  contactValue keys: knowledge | opportunity | support | inspiration | alignment
+  myValue keys: help | knowledge | opportunity | connection | trust
+
+Do NOT set Network status (Active / Dormant / Archived) or Hot — those are derived from evidence.
 
 Rules:
 - Return exactly one block. No arrays of blocks.
-- Do not apply changes — human imports in Network Panel → Apply.
+- Do not apply changes — human imports in Network Panel → Validate → Accept.
 - For network-capture, entityId must match a person in the snapshot.
 - If context is insufficient, name the exact Library UI label to copy next (from AVAILABLE_CONTEXT_BLOCKS), then stop. Do not invent.`;
 
@@ -130,10 +134,25 @@ export function validateNetworkAiBlockProposal(
       break;
     }
     case "network-metrics": {
-      const contactValue = normalizeContactValueKeys(strArray(proposal.contactValue));
-      const myValue = normalizeMyValueKeys(strArray(proposal.myValue));
+      const rawContact = strArray(proposal.contactValue);
+      const rawMine = strArray(proposal.myValue);
+      const contactValue = normalizeContactValueKeys(rawContact);
+      const myValue = normalizeMyValueKeys(rawMine);
+      if (rawContact.length > 0 && contactValue.length === 0) {
+        errors.push(
+          `proposal.contactValue has no valid keys (allowed: ${CONTACT_VALUE_KEYS.join(", ")})`
+        );
+      }
+      if (rawMine.length > 0 && myValue.length === 0) {
+        errors.push(`proposal.myValue has no valid keys (allowed: ${MY_VALUE_KEYS.join(", ")})`);
+      }
       if (contactValue.length === 0 && myValue.length === 0) {
         errors.push("network-metrics requires at least one of contactValue[] or myValue[]");
+      }
+      if ("status" in proposal || "networkStatus" in proposal || "isHot" in proposal) {
+        errors.push(
+          "Do not set status / networkStatus / isHot — Active, Dormant, Archived, and Hot are derived"
+        );
       }
       break;
     }
@@ -144,7 +163,11 @@ export function validateNetworkAiBlockProposal(
   return errors.length === 0 ? { ok: true } : { ok: false, errors };
 }
 
-export function parseNetworkAiBlock(raw: string):
+/**
+ * Structure-only parse (type + proposal object) — MTA-style Validate can preview
+ * even when field validation fails (“Fix before Accept”).
+ */
+export function parseNetworkAiBlockStructure(raw: string):
   | { ok: true; payload: NetworkAiBlockPayload }
   | { ok: false; error: string; details?: string[] } {
   const jsonText = extractJsonFromNetworkAiBlock(raw);
@@ -181,12 +204,24 @@ export function parseNetworkAiBlock(raw: string):
     return { ok: false, error: "proposal must be a JSON object." };
   }
 
-  const validation = validateNetworkAiBlockProposal(type, proposal as Record<string, unknown>);
+  return { ok: true, payload: { type, proposal: proposal as Record<string, unknown> } };
+}
+
+export function parseNetworkAiBlock(raw: string):
+  | { ok: true; payload: NetworkAiBlockPayload }
+  | { ok: false; error: string; details?: string[] } {
+  const structure = parseNetworkAiBlockStructure(raw);
+  if (!structure.ok) return structure;
+
+  const validation = validateNetworkAiBlockProposal(
+    structure.payload.type,
+    structure.payload.proposal
+  );
   if (!validation.ok) {
     return { ok: false, error: "Validation failed", details: validation.errors };
   }
 
-  return { ok: true, payload: { type, proposal: proposal as Record<string, unknown> } };
+  return structure;
 }
 
 export function previewNetworkAiBlock(payload: NetworkAiBlockPayload): string {

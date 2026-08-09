@@ -64,7 +64,7 @@ function ApplyButton({ onClick }: { onClick: () => void }) {
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-emerald-100">Apply</span>
         <span className="mt-0.5 block text-xs text-emerald-200/70">
-          Paste AI JSON — create or capture after human review
+          Paste AI JSON — Validate, then Accept (MTA-style review)
         </span>
       </span>
     </button>
@@ -107,7 +107,7 @@ export function NetworkPanel() {
   const title = step === "apply" ? "Apply AI response" : panelTitle;
   const hint =
     step === "apply"
-      ? "Paste the Apply JSON your AI returned — validate, then Apply"
+      ? "Paste the AI Block — Validate, fix if needed, then Accept. Snap Failure copies a report."
       : "Copy Mechanics · write naturally in chat · copy Library blocks only when the AI asks";
 
   return (

@@ -79,8 +79,8 @@ export function NetworkRelationshipMetricsFields({ entity }: { entity: Entity })
       />
 
       <p className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3 text-[11px] leading-snug text-zinc-600">
-        Network status (New / Active / Dormant / Lost / Archived) updates from follow-ups, linked inbox items, and
-        interaction history — it is derived, not edited here.
+        Editable here: Contact value and My value only. Network status (Active / Dormant / Archived) and Hot are
+        derived from evidence — use Network → Apply (Validate → Accept) for AI blocks that update these fields.
       </p>
     </div>
   );
