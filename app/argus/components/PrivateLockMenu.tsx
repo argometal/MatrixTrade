@@ -22,7 +22,7 @@ export function PrivateLockMenu({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`rounded-lg p-2 text-lg transition ${
+        className={`rounded-lg px-2.5 py-2 text-lg transition ${
           unlocked ? "text-violet-400 hover:bg-violet-950/40" : "text-zinc-500 hover:bg-zinc-800"
         }`}
         aria-label={unlocked ? PRIVATE.hide : PRIVATE.unlock}
