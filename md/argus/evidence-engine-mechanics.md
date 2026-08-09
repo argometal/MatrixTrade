@@ -62,7 +62,7 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 
 `buildV2NavCounts`: inbox debt · network follow-ups due · needs classification.
 
-These badges are **not** Focus Tags and **not** Patterns.
+These badges are **not** Trackers and **not** Patterns.
 
 ### 4) Org relationship panel
 
@@ -95,7 +95,7 @@ Shows Network **status** + evidence facts (last interaction, open follow-ups, li
 | Org page data | `lib/argus/v2/loaders.ts` → `loadOrganizationPageData` |
 | Tag Patterns | `lib/argus/v2/tag-patterns.ts` |
 | Nav triage counts | `buildV2NavCounts` in `lib/argus/v2/loaders.ts` |
-| Focus Tags | `ArgusData.signalTags`, `lib/argus/signal-tags.ts`, `SIGNAL_TAGS` in `lib/argus/ux-copy.ts` |
+| Trackers | `ArgusData.signalTags`, `lib/argus/signal-tags.ts`, `SIGNAL_TAGS` in `lib/argus/ux-copy.ts` |
 | Vocabulary policy | [`vocabulary-policy.md`](vocabulary-policy.md) |
 
 ---
@@ -104,7 +104,7 @@ Shows Network **status** + evidence facts (last interaction, open follow-ups, li
 
 - Behavior Engine / stored behavioral profiles  
 - New score types (mistakeScore, successScore, …)  
-- Flag as first-class entity (Focus Tags are journal `signalTags` on existing Tag strings — not a new entity type)  
+- Tracker as first-class entity (Trackers are journal `signalTags` on existing Tag strings — not a new entity type)  
 
 - CRM KPI dashboards of stored relationship scores  
 - AI-inferred persistent traits  

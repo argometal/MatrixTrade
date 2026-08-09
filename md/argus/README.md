@@ -57,6 +57,7 @@ Use these labels in docs and checklists. Update when reality changes.
 0. [`evidence-organization-vision.md`](evidence-organization-vision.md) — **what** ARGUS is (Evidence Organization System; not authoring)
 1. [`../argus-review/12-evidence-engine-principles-solution.md`](../argus-review/12-evidence-engine-principles-solution.md) — sealed Evidence Engine principles
 2. [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md) — **runtime mechanics** (status vocabulary, Patterns, triage)
+2a. [`vocabulary-policy.md`](vocabulary-policy.md) — **Tag vs Tracker** (Flag = action; Match tags deprecated)
 3. [`observation-engine-vision.md`](observation-engine-vision.md) — **how** ARGUS behaves (observation engine)
 4. [`../integrations/argus-design-principles.md`](../integrations/argus-design-principles.md) — 10 design rules
 5. [`../integrations/argus-architecture.md`](../integrations/argus-architecture.md) — objects, information flow

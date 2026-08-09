@@ -23,6 +23,9 @@ Two Tag roles only:
 | Flag / unflag a Tracker | **Click the Tag** (Topic Tags, Event Tags) or **Home → Tags** (control center — Flag if it isn’t a Tracker yet) |
 | See Tags + Trackers together | **Home → Intelligence → Tags** (Universe + Trackers strip) |
 | See Tags for a Topic | Topic → **Tags** (rolls up notes on the Topic + linked Events) |
+| Connection neighborhood | Home Treemap/Portfolio lens dock · Tags binder · org/project/topic/event detail |
+| Topics browse evidence total | Notes + emails on the Topic **and** linked Events (Chronicle stays topic-direct) |
+| Topics viewers | Grid · cards · List · rows · Manage (Active / Quiet / Empty / Archived) |
 
 ### Deprecated
 
