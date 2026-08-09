@@ -28,6 +28,45 @@ function bucketsForKind(buckets: EntityPickerBuckets, kind: "person" | "topic" |
   };
 }
 
+/** Union every outbound bag + reverse pointers so Topic chips are not blank when only linkedEntityIds/reverse exist. */
+function projectBinderIds(
+  project: Entity,
+  all: Entity[],
+  kind: "person" | "topic" | "event"
+): string[] {
+  const outbound = [
+    ...new Set([
+      ...(project.linkedEntityIds ?? []),
+      ...(project.linkedPersonIds ?? []),
+      ...(project.linkedTopicIds ?? []),
+      ...(project.linkedEventIds ?? []),
+    ]),
+  ];
+  const byId = new Map(all.map((entry) => [entry.id, entry]));
+  const ids = new Set<string>();
+  const accept = (entry: Entity) => {
+    if (kind === "person") return entry.type === "person";
+    if (kind === "topic") return referenceKindFromNotes(entry.notes ?? "") === "topic";
+    return referenceKindFromNotes(entry.notes ?? "") === "event";
+  };
+  for (const id of outbound) {
+    const entry = byId.get(id);
+    if (entry && accept(entry)) ids.add(id);
+  }
+  for (const other of all) {
+    if (other.id === project.id || other.deletedAt) continue;
+    if (!accept(other)) continue;
+    const pointsHere = [
+      ...(other.linkedEntityIds ?? []),
+      ...(other.linkedPersonIds ?? []),
+      ...(other.linkedTopicIds ?? []),
+      ...(other.linkedEventIds ?? []),
+    ].includes(project.id);
+    if (pointsHere) ids.add(other.id);
+  }
+  return [...ids];
+}
+
 export function ProjectEditForm({
   entity,
   allBuckets,
@@ -40,9 +79,6 @@ export function ProjectEditForm({
   const [name, setName] = useState(entity.name);
   const [startDate, setStartDate] = useState(entity.startDate ?? "");
   const [endDate, setEndDate] = useState(entity.endDate ?? "");
-  const [linkedPersonIds, setLinkedPersonIds] = useState<string[]>(entity.linkedPersonIds ?? []);
-  const [linkedTopicIds, setLinkedTopicIds] = useState<string[]>(entity.linkedTopicIds ?? []);
-  const [linkedEventIds, setLinkedEventIds] = useState<string[]>(entity.linkedEventIds ?? []);
   const [linkedTags, setLinkedTags] = useState<string[]>(entity.linkedTags ?? []);
   const { openLinkModal } = useArgusAdd();
 
@@ -63,6 +99,16 @@ export function ProjectEditForm({
   const entityMap = useMemo(
     () => new Map(allBuckets.alphabetical.map((entry) => [entry.id, entry])),
     [allBuckets.alphabetical]
+  );
+
+  const [linkedPersonIds, setLinkedPersonIds] = useState<string[]>(() =>
+    projectBinderIds(entity, allBuckets.alphabetical, "person")
+  );
+  const [linkedTopicIds, setLinkedTopicIds] = useState<string[]>(() =>
+    projectBinderIds(entity, allBuckets.alphabetical, "topic")
+  );
+  const [linkedEventIds, setLinkedEventIds] = useState<string[]>(() =>
+    projectBinderIds(entity, allBuckets.alphabetical, "event")
   );
 
   const linkedPeople = linkedPersonIds

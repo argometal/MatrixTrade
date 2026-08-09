@@ -689,6 +689,9 @@ async function persistNewEntity(
     );
   }
 
+  // Create-with-links used to stay one-way; heal Topic/Event ↔ Org/Project/Person binders.
+  await mirrorTopicEventLinks(entity.id, validIds);
+
   revalidateArgus();
   revalidatePath(`/argus/network/${entity.id}`);
   revalidatePath(`/argus/projects/${entity.id}`);
@@ -996,22 +999,70 @@ export async function createEntityInlineAction(
 }
 
 /**
- * Topic↔Event binders should reflect each other on both records.
- * When A links to B, ensure B.linkedEntityIds includes A (add-only; never auto-unlink).
+ * Structural binder back-links (add-only; never auto-unlink):
+ * - Topic↔Event both directions
+ * - Org/Project/Person → Topic/Event (binder gains the parent id)
+ * - Topic/Event → Org/Project/Person (parent gains the binder id + project bags)
  */
 async function mirrorTopicEventLinks(centerId: string, linkedIds: string[]): Promise<void> {
   const data = await readArgus();
   const center = data.entities.find((e) => e.id === centerId && !e.deletedAt);
   if (!center) return;
   const centerKind = referenceKindFromNotes(center.notes ?? "");
-  if (centerKind !== "topic" && centerKind !== "event") return;
-  const targetKind = centerKind === "topic" ? "event" : "topic";
 
-  for (const id of linkedIds) {
+  for (const id of [...new Set(linkedIds)]) {
+    if (id === centerId) continue;
     const other = data.entities.find((e) => e.id === id && !e.deletedAt);
-    if (!other || referenceKindFromNotes(other.notes ?? "") !== targetKind) continue;
+    if (!other) continue;
+    const otherKind = referenceKindFromNotes(other.notes ?? "");
     const current = other.linkedEntityIds ?? [];
-    if (current.includes(centerId)) continue;
+    if (current.includes(centerId)) {
+      // Still heal project topic/event bags when missing.
+      if (other.type === "project" && (centerKind === "topic" || centerKind === "event")) {
+        if (centerKind === "topic") {
+          const topics = other.linkedTopicIds ?? [];
+          if (!topics.includes(centerId)) {
+            await updateEntity(other.id, { linkedTopicIds: [...topics, centerId] });
+          }
+        } else {
+          const events = other.linkedEventIds ?? [];
+          if (!events.includes(centerId)) {
+            await updateEntity(other.id, { linkedEventIds: [...events, centerId] });
+          }
+        }
+      }
+      continue;
+    }
+
+    const topicEventPair =
+      (centerKind === "topic" && otherKind === "event") ||
+      (centerKind === "event" && otherKind === "topic");
+    const parentToBinder =
+      (otherKind === "topic" || otherKind === "event") &&
+      (center.type === "company" || center.type === "project" || center.type === "person");
+    const binderToParent =
+      (centerKind === "topic" || centerKind === "event") &&
+      (other.type === "company" || other.type === "project" || other.type === "person");
+
+    if (!topicEventPair && !parentToBinder && !binderToParent) continue;
+
+    if (other.type === "project" && (centerKind === "topic" || centerKind === "event")) {
+      if (centerKind === "topic") {
+        const topics = other.linkedTopicIds ?? [];
+        await updateEntity(other.id, {
+          linkedEntityIds: [...current, centerId],
+          linkedTopicIds: topics.includes(centerId) ? topics : [...topics, centerId],
+        });
+      } else {
+        const events = other.linkedEventIds ?? [];
+        await updateEntity(other.id, {
+          linkedEntityIds: [...current, centerId],
+          linkedEventIds: events.includes(centerId) ? events : [...events, centerId],
+        });
+      }
+      continue;
+    }
+
     await updateEntity(other.id, { linkedEntityIds: [...current, centerId] });
   }
 }
@@ -1282,18 +1333,38 @@ export async function updateProjectAction(formData: FormData): Promise<void> {
   const linkedEventIds = formData.getAll("linkedEventIds").map(String);
   const linkedTags = parseTopics(String(formData.get("linkedTags") ?? ""));
 
+  const data = await readArgus();
+  const current = data.entities.find((e) => e.id === entityId && !e.deletedAt);
+  // Preserve org (and other non-form) links already on linkedEntityIds.
+  const preservedStructural = (current?.linkedEntityIds ?? []).filter((id) => {
+    const other = data.entities.find((e) => e.id === id && !e.deletedAt);
+    if (!other) return false;
+    if (other.type === "company") return true;
+    if (other.type === "person") return false;
+    const kind = referenceKindFromNotes(other.notes ?? "");
+    return kind !== "topic" && kind !== "event";
+  });
+  const linkedEntityIds = [
+    ...new Set([...preservedStructural, ...linkedPersonIds, ...linkedTopicIds, ...linkedEventIds]),
+  ];
+
   await updateEntity(entityId, {
     name,
     startDate,
     endDate,
+    linkedEntityIds,
     linkedPersonIds,
     linkedTopicIds,
     linkedEventIds,
     linkedTags,
   });
+  await mirrorTopicEventLinks(entityId, [...linkedTopicIds, ...linkedEventIds]);
 
   revalidateArgus();
   revalidatePath(`/argus/projects/${entityId}`);
+  revalidatePath(`/argus/v2/projects/${entityId}`);
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/browse/events");
   redirect(`/argus/projects/${entityId}`);
 }
 

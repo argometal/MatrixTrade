@@ -40,6 +40,19 @@ export function entitiesLinkingTo(data: ArgusData, targetId: string): Entity[] {
   });
 }
 
+/**
+ * Ids for the Link modal: outbound bags ∪ every entity that points here.
+ * One-way Project/Org/Event→Topic (and the reverse) stay visible on both sides;
+ * saving heals the missing outbound id (add-only mirror for Topic↔Event still runs separately).
+ */
+export function linkModalStructuralIds(data: ArgusData, entity: Entity): string[] {
+  const ids = new Set(outboundStructuralIds(entity));
+  for (const other of entitiesLinkingTo(data, entity.id)) {
+    ids.add(other.id);
+  }
+  return [...ids];
+}
+
 function addIfTopicOrEvent(
   data: ArgusData,
   id: string,

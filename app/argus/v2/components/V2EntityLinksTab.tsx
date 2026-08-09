@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "./V2CreateEntityButton";
 import { V2Badge, V2Card } from "./v2-ui";
 import { V2TagPatternBadges } from "./V2TagPatternBadges";
@@ -9,6 +9,8 @@ import type { TagPattern } from "@/lib/argus/v2/tag-patterns";
 
 type LinkPerson = { id: string; name: string; subtitle?: string; href: string };
 type LinkProject = { id: string; name: string; href: string; meta?: string };
+/** Structural Topic/Event binders — never evidence tag strings. */
+type LinkBinder = { id: string; name: string; href: string };
 
 export function V2EntityLinksTab({
   entityId,
@@ -17,7 +19,7 @@ export function V2EntityLinksTab({
   projects,
   organizations,
   topics,
-  eventsCount,
+  events,
   tagPatterns,
   manualTags,
   tagHref,
@@ -28,15 +30,13 @@ export function V2EntityLinksTab({
   people: LinkPerson[];
   projects?: LinkProject[];
   organizations?: LinkProject[];
-  topics: string[];
-  eventsCount: number;
+  topics: LinkBinder[];
+  events: LinkBinder[];
   tagPatterns: TagPattern[];
   manualTags: string[];
   tagHref?: (tag: string) => string;
   signalTags?: string[];
 }) {
-  const allTags = [...new Set([...manualTags, ...topics])];
-
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -109,30 +109,42 @@ export function V2EntityLinksTab({
           ) : (
             <div className="flex flex-wrap gap-2">
               {topics.map((topic) => (
-                <V2Badge key={topic} tone="purple">
-                  {topic}
-                </V2Badge>
+                <Link
+                  key={topic.id}
+                  href={topic.href}
+                  className="inline-flex"
+                >
+                  <V2Badge tone="purple">{topic.name}</V2Badge>
+                </Link>
               ))}
             </div>
           )}
         </LinksColumn>
 
         <LinksColumn title="Events">
-          {eventsCount === 0 ? (
+          {events.length === 0 ? (
             <EmptyLinks />
           ) : (
-            <p className="text-sm text-zinc-300">
-              {eventsCount} linked event{eventsCount === 1 ? "" : "s"} ·{" "}
-              <Link href="/argus/v2/browse/events" className="text-violet-400 hover:text-violet-300">
-                Browse
-              </Link>
-            </p>
+            <div className="flex flex-wrap gap-2">
+              {events.map((event) => (
+                <Link
+                  key={event.id}
+                  href={event.href}
+                  className="inline-flex rounded-full border border-rose-500/30 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-100 hover:border-rose-400/50"
+                >
+                  <span aria-hidden className="mr-1">
+                    📅
+                  </span>
+                  {event.name}
+                </Link>
+              ))}
+            </div>
           )}
         </LinksColumn>
 
         <V2Card className="p-4 lg:col-span-2 xl:col-span-3">
           <h3 className="mb-1 text-sm font-semibold text-zinc-100">Tags</h3>
-          <p className="mb-4 text-[11px] text-zinc-600">Labels and patterns from links and evidence.</p>
+          <p className="mb-4 text-[11px] text-zinc-600">Labels and patterns from evidence — not Topic binders.</p>
           {tagPatterns.length > 0 ? (
             <V2TagPatternBadges
               patterns={tagPatterns}
@@ -141,24 +153,24 @@ export function V2EntityLinksTab({
               tagHref={tagHref}
             />
           ) : null}
-          {allTags.length > 0 ? (
+          {manualTags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {allTags.map((tag, index) => (
+              {manualTags.map((tag, index) => (
                 <V2Badge key={tag} tone={index % 3 === 0 ? "blue" : index % 3 === 1 ? "green" : "purple"}>
                   {tag}
                 </V2Badge>
               ))}
             </div>
-          ) : (
-            <p className="text-sm text-zinc-600">No tags yet. Link topics or add labels on the record.</p>
-          )}
+          ) : tagPatterns.length === 0 ? (
+            <p className="text-sm text-zinc-600">No tags yet. Add labels on evidence or the record.</p>
+          ) : null}
         </V2Card>
       </div>
     </div>
   );
 }
 
-function LinksColumn({ title, children }: { title: string; children: React.ReactNode }) {
+function LinksColumn({ title, children }: { title: string; children: ReactNode }) {
   return (
     <V2Card className="p-4">
       <h3 className="mb-3 text-sm font-semibold text-zinc-100">{title}</h3>

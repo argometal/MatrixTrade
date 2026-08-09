@@ -25,6 +25,29 @@ function idsMatchingKind(entities: Entity[], ids: string[], kind: "person" | "ev
   });
 }
 
+function structuralSeedIds(center: Entity, all: Entity[]): string[] {
+  const outbound = [
+    ...new Set([
+      ...(center.linkedEntityIds ?? []),
+      ...(center.linkedPersonIds ?? []),
+      ...(center.linkedTopicIds ?? []),
+      ...(center.linkedEventIds ?? []),
+    ]),
+  ];
+  const reverse = all
+    .filter((other) => {
+      if (other.id === center.id || other.deletedAt) return false;
+      return [
+        ...(other.linkedEntityIds ?? []),
+        ...(other.linkedPersonIds ?? []),
+        ...(other.linkedTopicIds ?? []),
+        ...(other.linkedEventIds ?? []),
+      ].includes(center.id);
+    })
+    .map((other) => other.id);
+  return [...new Set([...outbound, ...reverse])];
+}
+
 function EntityLinkGroup({
   label,
   hint,
@@ -95,14 +118,15 @@ export function EntityEditForm({
   const allEntities = allBuckets.alphabetical;
   const entityMap = useMemo(() => new Map(allEntities.map((entry) => [entry.id, entry])), [allEntities]);
 
-  const initialPersonIds = idsMatchingKind(allEntities, entity.linkedEntityIds ?? [], "person");
-  const initialEventIds = idsMatchingKind(allEntities, entity.linkedEntityIds ?? [], "event");
-  const initialTopicIds = (entity.linkedEntityIds ?? []).filter((id) => {
+  const seedIds = structuralSeedIds(entity, allEntities);
+  const initialPersonIds = idsMatchingKind(allEntities, seedIds, "person");
+  const initialEventIds = idsMatchingKind(allEntities, seedIds, "event");
+  const initialTopicIds = seedIds.filter((id) => {
     const entry = entityMap.get(id);
     return entry && referenceKindFromNotes(entry.notes ?? "") === "topic";
   });
   /** Preserve org/project links the form does not edit (avoid wipe on save). */
-  const preservedStructuralIds = (entity.linkedEntityIds ?? []).filter((id) => {
+  const preservedStructuralIds = seedIds.filter((id) => {
     const entry = entityMap.get(id);
     if (!entry) return false;
     if (entry.type === "project") return true;
