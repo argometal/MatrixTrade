@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807x` |
-| **Commit** | Always `git rev-parse main0807x` after fetch (must match `origin/main`) |
+| **Tag** | `main0807y` |
+| **Commit** | Always `git rev-parse main0807y` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-09 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,16 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807x
+# optional pin: git checkout main0807y
 ```
 
 ## What this deploy includes
 
+- PR #208: Network Apply = MTA Validate → Accept (Clear, Snap Failure, Fix before Accept); Contact/My value fields only
+- PR #207: Network status simplified to Active / Dormant / Archived + Hot priority filter (New⊂Active, Lost⊂Dormant); viewer hover names
+- PR #206: Orphans triage homologated (Topics · Events · Inbox); Events latest-first + Show more
+- PR #205: Topic Active/Quiet/Orphans chips sync with board pins
+- PR #204: Tag ↔ Tracker toggle without easy delete (Event/Topic/Home Manage)
 - PR #203: Topic Tags back in one Tag system; Tracker = Flag/Disable (never deletes); dual neighborhood (main zoom + small one-level-up dock); Home **Browser** rename; Universe/Hot/Patterns/Stale/Trackers on Treemap · Portfolio · Tags
 - PR #200: Tags + **Trackers** (Flag = action); Home Tags control center; neighborhood docks on Treemap/Portfolio/Tags; library MD aligned (no radioactive / Focus Tags wording)
 - PR #201: Topics browse evidence = Topic ∪ linked Events; Grid / List / Manage hover names
