@@ -1574,7 +1574,7 @@ export async function updateTopicAliasesAction(formData: FormData): Promise<void
   redirect(returnTo);
 }
 
-/** Replace the journal-level focus Tag watchlist (flagged Tags → highlight-critical). */
+/** Replace the journal-level Flag markers (critical Tags → `signalTags`). */
 export async function updateSignalTagsAction(formData: FormData): Promise<void> {
   await requireArgusSession();
   const signalTags = normalizeEventTags(parseTopics(String(formData.get("signalTags") ?? "")));
@@ -1588,7 +1588,7 @@ export async function updateSignalTagsAction(formData: FormData): Promise<void> 
   redirect(returnTo.startsWith("/argus/") ? returnTo : "/argus/v2");
 }
 
-/** Flag or unflag a Tag as focus (highlight-critical). */
+/** Flag or unflag a Tag as critical marker (journal `signalTags`). */
 export async function toggleSignalTagAction(
   tag: string
 ): Promise<{ ok: true; signalTags: string[]; active: boolean } | { error: string }> {
@@ -1600,6 +1600,30 @@ export async function toggleSignalTagAction(
   revalidatePath("/argus/v2");
   revalidatePath("/argus/v2/inbox");
   return { ok: true, ...result };
+}
+
+/** Local connection neighborhood for Home Intelligence (Treemap / Portfolio / Tags). */
+export async function getEntityNeighborhoodAction(
+  entityId: string
+): Promise<
+  | { ok: true; graph: import("@/lib/argus/v2/intelligence-viz").V2EntityNeighborhoodGraph }
+  | { error: string }
+> {
+  await requireArgusSession();
+  const id = entityId.trim();
+  if (!id) return { error: "empty_entity" };
+
+  const includePrivate = await hasArgusPrivateUnlock();
+  const [data, inboxItems] = await Promise.all([readArgus(), getInboxItems(undefined, true)]);
+  const exists = data.entities.some((e) => e.id === id && !e.deletedAt);
+  if (!exists) return { error: "not_found" };
+
+  const { buildV2EntityNeighborhoodGraph } = await import("@/lib/argus/v2/intelligence-viz");
+  const today = new Date().toISOString().slice(0, 10);
+  const graph = buildV2EntityNeighborhoodGraph(data, inboxItems, id, includePrivate, today, {
+    maxNodes: 12,
+  });
+  return { ok: true, graph };
 }
 
 export async function deleteLogAction(formData: FormData): Promise<void> {

@@ -78,12 +78,12 @@ function GraphLegend({ showFocusTrigger = false }: { showFocusTrigger?: boolean 
         </span>
       ))}
       {showFocusTrigger ? (
-        <span className="inline-flex items-center gap-1.5" title="Evidence on this node carries a Focus Tag">
+        <span className="inline-flex items-center gap-1.5" title="Evidence on this node carries a Flagged Tag (critical marker)">
           <span
-            className="h-2.5 w-2.5 rounded-full border border-dashed border-rose-400/80 bg-transparent"
+            className="h-2.5 w-2.5 rounded-full border border-dashed border-amber-400/90 bg-rose-500/20"
             aria-hidden
           />
-          Focus trigger
+          Flag marker
         </span>
       ) : null}
     </div>
@@ -214,7 +214,7 @@ function GraphCanvas({
             : node.name;
         const focusLabel =
           node.focusTags && node.focusTags.length > 0
-            ? ` · Focus trigger: ${node.focusTags.map((t) => `#${t}`).join(", ")}`
+            ? ` · Flag marker: ${node.focusTags.map((t) => `#${t}`).join(", ")}`
             : "";
 
         return (
@@ -234,18 +234,31 @@ function GraphCanvas({
               }}
             >
               {isFocusCritical ? (
-                <circle
-                  cx={node.x}
-                  cy={node.y}
-                  r={(isHovered ? r * 1.15 : r) + 2.2}
-                  fill="none"
-                  stroke="rgb(251, 113, 133)"
-                  strokeOpacity={0.85}
-                  strokeWidth={0.7}
-                  strokeDasharray="1.4 1.2"
-                  className="pointer-events-none"
-                  aria-hidden
-                />
+                <>
+                  <circle
+                    cx={node.x}
+                    cy={node.y}
+                    r={(isHovered ? r * 1.15 : r) + 2.8}
+                    fill="none"
+                    stroke="rgb(251, 191, 36)"
+                    strokeOpacity={0.9}
+                    strokeWidth={0.55}
+                    strokeDasharray="1.1 0.85"
+                    className="pointer-events-none"
+                    aria-hidden
+                  />
+                  <circle
+                    cx={node.x}
+                    cy={node.y}
+                    r={(isHovered ? r * 1.15 : r) + 1.6}
+                    fill="none"
+                    stroke="rgb(244, 63, 94)"
+                    strokeOpacity={0.9}
+                    strokeWidth={0.65}
+                    className="pointer-events-none"
+                    aria-hidden
+                  />
+                </>
               ) : null}
               <circle
                 cx={node.x}

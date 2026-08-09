@@ -11,6 +11,7 @@ import { V2Card, V2SectionTitle } from "./v2-ui";
 import { V2HomeIntelligencePanel, type IntelligenceTab } from "./V2HomeIntelligencePanel";
 import { V2HomePageHeader } from "./V2HomePulse";
 import { V2IntelligenceLens, V2IntelligenceLensEmpty } from "./V2IntelligenceLens";
+import { V2HomeNeighborhoodViewer } from "./V2HomeNeighborhoodViewer";
 import { V2TabBar } from "./V2TabBar";
 import type { V2TagCloudItem } from "./V2TagCloud";
 import { V2Timeline, V2TimelineRail } from "./V2Timeline";
@@ -163,12 +164,19 @@ export function V2HomeClient({
           {showLensDock ? (
             <div>
               {lensNode ? (
-                <V2IntelligenceLens
-                  node={lensNode}
-                  source={TAB_SOURCE[intelTab]}
-                  onClose={() => setLensId(null)}
-                  variant="dock"
-                />
+                <>
+                  <V2IntelligenceLens
+                    node={lensNode}
+                    source={TAB_SOURCE[intelTab]}
+                    onClose={() => setLensId(null)}
+                    variant="dock"
+                  />
+                  <V2HomeNeighborhoodViewer
+                    entityId={lensNode.id}
+                    entityName={lensNode.name}
+                    variant="dock"
+                  />
+                </>
               ) : (
                 <V2IntelligenceLensEmpty />
               )}
@@ -217,9 +225,10 @@ export function V2HomeClient({
 
           <div id="tags">
             <V2Card className="p-5">
-              <V2SectionTitle>Tags</V2SectionTitle>
+              <V2SectionTitle>Tags · markers</V2SectionTitle>
               <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
-                Explore behavioral evidence in the Tag universe. Focus is a watchlist action inside that workspace.
+                Home Tags is the control center: watch the universe, Flag critical ☢ markers, and open binder
+                neighborhoods.
               </p>
               <button
                 type="button"
@@ -228,9 +237,9 @@ export function V2HomeClient({
                   changeIntelTab("tags");
                   document.getElementById("intelligence")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
-                className="w-full rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-left text-[11px] font-medium text-violet-300 transition hover:border-violet-500/40 hover:bg-zinc-900"
+                className="w-full rounded-lg border border-rose-500/30 bg-rose-950/20 px-3 py-2 text-left text-[11px] font-medium text-rose-200 transition hover:border-rose-400/45 hover:bg-rose-950/35"
               >
-                Open Tag universe →
+                Open Tags · markers →
               </button>
             </V2Card>
           </div>

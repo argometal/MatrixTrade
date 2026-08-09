@@ -8,7 +8,7 @@ Two Tag roles only:
 | Term | Where | Role |
 |------|--------|------|
 | **Tag** | On Notes/emails (`log.topics[]`, `inbox.topics[]`) | Accumulates evidence. Repetition → stronger Patterns / larger chips. |
-| **Flag** | Journal `ArgusData.signalTags[]` | Click a Tag to Flag it — shines (highlight-critical) so you can track it. Does **not** copy onto Notes. |
+| **Flag** | Journal `ArgusData.signalTags[]` | Critical / radioactive QC marker on a Tag. Always visibly marked (☢). Does **not** copy onto Notes. |
 | **Topic** | Entity (`Kind: topic`) | Evidence binder |
 | **Event** | Entity (`Kind: event`) | Case binder |
 | **Note** | `Log` row in Chronicle | Narrative evidence |
@@ -18,7 +18,8 @@ Two Tag roles only:
 | Intent | Where |
 |--------|--------|
 | Put a Tag on evidence | Event → **Note** → Tags → Save |
-| Flag / unflag a Tag | **Click the Tag** (Topic Tags, Event Tags, or Home → Tags) |
+| Flag / unflag a Tag | **Click the Tag** (Topic Tags, Event Tags) or **Home → Tags** (control center — Flag if it isn’t a tracker yet) |
+| See Tags + markers together | **Home → Intelligence → Tags** (Universe + Critical markers strip) |
 | See Tags for a Topic | Topic → **Tags** (rolls up notes on the Topic + linked Events) |
 
 ### Deprecated

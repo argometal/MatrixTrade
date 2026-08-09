@@ -404,16 +404,17 @@ export const TOPIC_MATCH_TAGS = {
 export const TOPIC_ALIASES = TOPIC_MATCH_TAGS;
 
 /**
- * Flag — click a Tag to shine / track it (journal `signalTags`).
+ * Flag — critical / radioactive QC marker on a Tag (journal `signalTags`).
  * Not copied onto evidence. Tags on Notes still drive Patterns.
+ * Home → Tags is the control center to create and watch markers.
  */
 export const SIGNAL_TAGS = {
   heading: "Flags",
-  hint: "Click a Tag to Flag it. Flagged Tags shine across Patterns and the tag cloud — they do not auto-copy onto every Note.",
+  hint: "Click a Tag to Flag it as a critical marker (☢). Flagged Tags stay visibly marked across Patterns, the universe, and neighborhoods — they do not auto-copy onto every Note.",
   placeholder: "Flag a tag…",
   add: "Flag",
-  empty: "No Flags yet — click a Tag to Flag it.",
-  removeAria: (item: string) => `Unflag ${item}`,
+  empty: "No Flags yet — open Home → Tags and Flag a Tag.",
+  removeAria: (item: string) => `Unflag critical marker ${item}`,
   save: "Save Flags",
 } as const;
 

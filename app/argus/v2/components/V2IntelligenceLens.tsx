@@ -26,7 +26,7 @@ export function V2IntelligenceLensEmpty({ className = "" }: { className?: string
       className={`flex min-h-[4.25rem] flex-col justify-center rounded-xl border border-dashed border-zinc-800/90 bg-zinc-950/40 px-4 py-3 ${className}`}
     >
       <p className="text-[11px] font-medium text-zinc-500">Lens</p>
-      <p className="mt-0.5 text-xs text-zinc-600">Click a tile or bubble to inspect and open.</p>
+      <p className="mt-0.5 text-xs text-zinc-600">Click a tile or bubble to inspect, open, and see its neighborhood.</p>
     </div>
   );
 }

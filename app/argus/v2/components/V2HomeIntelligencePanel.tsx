@@ -52,8 +52,8 @@ export function V2HomeIntelligencePanel({
         <div className="space-y-2">
           <p className="text-[11px] text-zinc-600">
             Full portfolio — {treemapCounts.organizations} orgs · {treemapCounts.projects} projects ·{" "}
-            {treemapCounts.topics} topics ({treemapCounts.total} tiles). Size = evidence volume; empty
-            binders still appear as minimum tiles.
+            {treemapCounts.topics} topics ({treemapCounts.total} tiles). Size = evidence volume; select a tile for
+            metrics + connection neighborhood.
           </p>
           <V2KnowledgeTreemap rects={treemapRects} size="full" onSelect={onLensChange} />
         </div>
@@ -61,8 +61,8 @@ export function V2HomeIntelligencePanel({
       {tab === "portfolio" ? (
         <div className="space-y-2">
           <p className="text-[11px] text-zinc-600">
-            Entity triage scatter (recency × recurrence). Prefer the neighborhood graph on org/project/topic detail
-            for relationships — this view is for scanning volume and freshness.
+            Entity triage scatter (recency × recurrence). Select a bubble to inspect metrics and its connection
+            neighborhood in the lens dock.
           </p>
           <V2PortfolioBubbleMatrix nodes={nodes} size="full" onSelect={onLensChange} />
         </div>
@@ -70,10 +70,10 @@ export function V2HomeIntelligencePanel({
       {tab === "tags" ? (
         <div className="space-y-3">
           <div>
-            <h3 className="text-sm font-semibold text-zinc-100">Tag universe</h3>
+            <h3 className="text-sm font-semibold text-zinc-100">Tags · critical markers</h3>
             <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-              Primary navigation for behavioral evidence. Click a tag to see the notes and email that created it —
-              Focus is a watchlist filter, not the purpose of this page.
+              Control center for Tags and ☢ Flag markers. Browse the universe, Flag a tag that isn’t a tracker yet,
+              and open a binder neighborhood from its evidence.
             </p>
           </div>
           <V2FocusTagPortfolio

@@ -6,8 +6,9 @@ import { toggleSignalTagAction } from "@/app/argus/actions";
 import { signalTagKey } from "@/lib/argus/signal-tags";
 
 /**
- * Evidence Tag chip — click toggles Focus Flag (shine / track).
+ * Evidence Tag chip — click toggles Flag (critical / radioactive QC marker).
  * Size steps with repetition so Patterns and one-offs share one control.
+ * Flagged state is always visually obvious — not a soft hover glow.
  */
 export function V2FlaggableTagChip({
   tag,
@@ -53,19 +54,27 @@ export function V2FlaggableTagChip({
       type="button"
       onClick={toggle}
       disabled={pending}
-      title={localFlagged ? `Unflag “${tag}”` : `Flag “${tag}” to track`}
+      title={
+        localFlagged
+          ? `Unflag “${tag}” — remove critical marker`
+          : `Flag “${tag}” as critical marker`
+      }
       aria-pressed={localFlagged}
       className={`inline-flex items-center gap-1 rounded-full border font-medium transition disabled:opacity-50 ${size} ${
         localFlagged
-          ? "border-rose-400/50 bg-rose-950/45 text-rose-100 shadow-[0_0_12px_rgba(251,113,133,0.25)]"
-          : "border-zinc-700/80 bg-zinc-950/50 text-zinc-300 hover:border-rose-500/35 hover:text-rose-100"
+          ? "border-amber-400/80 bg-rose-950/70 text-amber-100 ring-2 ring-rose-500/55 shadow-[0_0_0_1px_rgba(251,191,36,0.45),0_0_18px_rgba(244,63,94,0.35)]"
+          : "border-zinc-700/80 bg-zinc-950/50 text-zinc-300 hover:border-rose-500/45 hover:text-rose-100"
       }`}
     >
+      {localFlagged ? (
+        <span className="font-semibold text-amber-300" aria-hidden>
+          ☢
+        </span>
+      ) : null}
       <span>{tag}</span>
       {count != null && count > 0 ? (
-        <span className={localFlagged ? "text-rose-200/70" : "text-zinc-600"}>· {count}</span>
+        <span className={localFlagged ? "text-amber-200/75" : "text-zinc-600"}>· {count}</span>
       ) : null}
-      {localFlagged ? <span aria-hidden>⚑</span> : null}
     </button>
   );
 }
