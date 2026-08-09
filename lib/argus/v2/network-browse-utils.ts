@@ -6,7 +6,11 @@ import { browseEntitiesByKind, entitiesByKind, personEvidenceScope } from "./hie
 import { relativeActivityLabel } from "./timeline-builders";
 import { countTopicsAndEventsInScope } from "./scope-node-counts";
 
-export type V2NetworkBrowseStatus = "New" | "Active" | "Dormant" | "Lost" | "Archived";
+/**
+ * Simplified Network status (auto-derived — do not manually maintain for 1000 contacts).
+ * New⊂Active · Lost⊂Dormant. Hot is a priority filter, not a status.
+ */
+export type V2NetworkBrowseStatus = "Active" | "Dormant" | "Archived";
 
 export interface V2NetworkBrowseCard {
   id: string;
@@ -22,6 +26,11 @@ export interface V2NetworkBrowseCard {
   expertise: string[];
   /** Evidence volume for filters — not a strength KPI. */
   evidenceVolume: number;
+  /**
+   * Priority signal (Affinity-style): recent + frequent evidence.
+   * Filter/sort aid — never a 4th status chip.
+   */
+  isHot: boolean;
   lastInteraction: {
     label: string;
     timeLabel: string;
@@ -42,15 +51,18 @@ export interface V2NetworkBrowseSummary {
   active: number;
   activePercent: number;
   dormant: number;
+  /** @deprecated Always 0 — New merged into Active. */
   new: number;
+  /** @deprecated Always 0 — Lost merged into Dormant. */
   lost: number;
   archived: number;
   organizations: number;
   projectsTogether: number;
   emailsExchanged: number;
   interactionsLogged: number;
-  /** People in Active or New — retrieval count, not a score. */
+  /** People in Dormant — retrieval count, not a score. */
   needsTouch: number;
+  hot: number;
 }
 
 export interface V2NetworkBrowseInsight {
@@ -66,7 +78,37 @@ export type V2NetworkSmartView =
   | "technical-experts"
   | "recent-activity"
   | "high-value-network"
-  | "dormant";
+  | "dormant"
+  | "hot";
+
+/** Migrate legacy board pins / prefs (New→Active, Lost→Dormant). */
+export function normalizeNetworkBrowseStatus(
+  value: string | undefined | null
+): V2NetworkBrowseStatus | "all" | null {
+  if (!value) return null;
+  if (value === "all") return "all";
+  if (value === "Active" || value === "New") return "Active";
+  if (value === "Dormant" || value === "Lost") return "Dormant";
+  if (value === "Archived") return "Archived";
+  return null;
+}
+
+/** Hot ≈ Affinity “strong relationship”: recent contact + denser evidence. */
+export function networkCardIsHot(
+  input: {
+    status: V2NetworkBrowseStatus;
+    evidenceVolume: number;
+    lastInteractionIso: string;
+  },
+  today: string
+): boolean {
+  if (input.status === "Archived") return false;
+  const days = daysSince(input.lastInteractionIso, today);
+  if (Number.isNaN(days)) return false;
+  if (days <= 30 && input.evidenceVolume >= 2) return true;
+  if (days <= 60 && input.evidenceVolume >= 8) return true;
+  return false;
+}
 
 function initialsFromName(name: string): string {
   return name
@@ -145,8 +187,8 @@ function evidenceVolume(
 }
 
 /**
- * Single user-facing Network status vocabulary (Evidence Engine P3/P4).
- * Derived from evidence dates, follow-ups, contactValue weight, and lifecycle — not stored.
+ * Auto Network status — evidence-driven; never manually filed for 1000 contacts.
+ * Active = warm (includes former New). Dormant = quiet / neglected (includes former Lost).
  */
 export function deriveNetworkStatus(input: {
   person: Entity;
@@ -155,29 +197,27 @@ export function deriveNetworkStatus(input: {
   openFollowUps: number;
   today: string;
 }): V2NetworkBrowseStatus {
-  const { person, totalEvidence, daysSinceLast, openFollowUps, today } = input;
+  const { person, daysSinceLast, openFollowUps, today } = input;
   if (person.lifecycleStatus === "archived" || isEntityArchived(person, today)) return "Archived";
-  if (person.deletedAt || /status:\s*lost/i.test(person.notes ?? "")) return "Lost";
 
   const valueWeight = contactValueWeight(person);
   const health = computeRelationshipHealth(valueWeight, daysSinceLast, openFollowUps);
-  if (health === "neglected" && daysSinceLast !== null && daysSinceLast > 180) return "Lost";
 
-  const ageDays = daysSince(person.createdAt, today);
-  if (totalEvidence <= 1 && ageDays <= 60) return "New";
-
+  // Warm: recent evidence, cooling health, or open follow-ups (health active).
   if (daysSinceLast !== null && daysSinceLast <= 90) return "Active";
   if (health === "active" || health === "cooling") return "Active";
-  if (totalEvidence === 0 && ageDays <= 30) return "New";
+
+  // Thin / brand-new contacts stay Active (not a separate New bucket) until they go quiet.
+  const ageDays = daysSince(person.createdAt, today);
+  if (input.totalEvidence <= 1 && ageDays <= 60) return "Active";
+  if (input.totalEvidence === 0 && ageDays <= 30) return "Active";
 
   return "Dormant";
 }
 
 function statusTone(status: V2NetworkBrowseStatus): V2NetworkBrowseCard["statusTone"] {
   if (status === "Active") return "green";
-  if (status === "New") return "blue";
   if (status === "Dormant") return "amber";
-  if (status === "Archived") return "default";
   return "default";
 }
 
@@ -263,6 +303,12 @@ export function buildV2NetworkBrowseCards(
       });
       const sinceIso = relationshipStartIso(person, scope.logs, scope.inbox);
       const lastInteraction = resolveLastInteraction(person, scope.logs, scope.inbox, today);
+      const volume = evidenceVolume(
+        scope.emailCount,
+        scope.logCount,
+        sharedProjects.length,
+        journalEvents
+      );
 
       return {
         id: person.id,
@@ -276,11 +322,14 @@ export function buildV2NetworkBrowseCards(
         statusTone: statusTone(status),
         lifecycleStatus: person.lifecycleStatus,
         expertise: expertiseTags(person, scope.logs, data),
-        evidenceVolume: evidenceVolume(
-          scope.emailCount,
-          scope.logCount,
-          sharedProjects.length,
-          journalEvents
+        evidenceVolume: volume,
+        isHot: networkCardIsHot(
+          {
+            status,
+            evidenceVolume: volume,
+            lastInteractionIso: lastInteraction.sortIso,
+          },
+          today
         ),
         lastInteraction,
         relationshipSince: formatRelationshipSince(sinceIso),
@@ -306,23 +355,22 @@ export function buildV2NetworkBrowseSummary(cards: V2NetworkBrowseCard[]): V2Net
     active,
     activePercent: cards.length ? Math.round((active / cards.length) * 100) : 0,
     dormant: cards.filter((c) => c.status === "Dormant").length,
-    new: cards.filter((c) => c.status === "New").length,
-    lost: cards.filter((c) => c.status === "Lost").length,
+    new: 0,
+    lost: 0,
     archived: cards.filter((c) => c.status === "Archived").length,
     organizations: orgIds.size,
     projectsTogether: projectTotal,
     emailsExchanged: cards.reduce((n, c) => n + c.metrics.emails, 0),
     interactionsLogged: cards.reduce((n, c) => n + c.metrics.topics + c.metrics.events, 0),
-    needsTouch: cards.filter((c) => c.status === "Dormant" || c.status === "Lost").length,
+    needsTouch: cards.filter((c) => c.status === "Dormant").length,
+    hot: cards.filter((c) => c.isHot).length,
   };
 }
 
 export function buildV2NetworkBrowseInsights(cards: V2NetworkBrowseCard[]): V2NetworkBrowseInsight {
   const statusCounts: Record<V2NetworkBrowseStatus, number> = {
-    New: 0,
     Active: 0,
     Dormant: 0,
-    Lost: 0,
     Archived: 0,
   };
   for (const card of cards) statusCounts[card.status] += 1;
@@ -357,7 +405,8 @@ const TECHNICAL_KEYWORDS =
 
 export function applyNetworkSmartView(cards: V2NetworkBrowseCard[], view: V2NetworkSmartView): V2NetworkBrowseCard[] {
   if (view === "all") return cards;
-  if (view === "dormant") return cards.filter((c) => c.status === "Dormant" || c.status === "Lost");
+  if (view === "hot") return cards.filter((c) => c.isHot);
+  if (view === "dormant") return cards.filter((c) => c.status === "Dormant");
   if (view === "recent-activity") return cards.filter((c) => c.status === "Active");
   if (view === "high-value-network") {
     return cards.filter(

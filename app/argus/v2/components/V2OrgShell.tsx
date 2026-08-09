@@ -61,7 +61,7 @@ export type V2OrgShellProps = {
     isActiveToday: boolean;
   };
   relationshipFacts: Array<{ label: string; value: string }>;
-  networkStatus: "New" | "Active" | "Dormant" | "Lost" | "Archived";
+  networkStatus: "Active" | "Dormant" | "Archived";
   sparkline: number[];
   chartStartYear: number;
   chartEndYear: number;

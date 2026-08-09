@@ -36,7 +36,7 @@ Persist only what the user records. Derive retrieval answers on read. One user q
 
 ### 1) Who needs attention? — **one status vocabulary**
 
-**User-facing:** `New` | `Active` | `Dormant` | `Lost` | `Archived`
+**User-facing:** `Active` | `Dormant` | `Archived` (+ **Hot** priority filter). Former New⊂Active, Lost⊂Dormant.
 
 | Surface | Function |
 |---------|----------|

@@ -21,6 +21,7 @@ import type {
 } from "@/lib/argus/v2/network-browse-utils";
 import {
   applyNetworkSmartView,
+  normalizeNetworkBrowseStatus,
   smartViewCount,
 } from "@/lib/argus/v2/network-browse-utils";
 import {
@@ -43,22 +44,22 @@ import type { NetworkPanelPackage } from "@/lib/argus/network-ai-mechanics";
 
 const ORDER_SCOPE = "network";
 const COLUMN_SCOPE = "network:columns";
-const BOARD_COLUMNS: V2NetworkBrowseStatus[] = ["Active", "Dormant", "New", "Lost", "Archived"];
+const BOARD_COLUMNS: V2NetworkBrowseStatus[] = ["Active", "Dormant", "Archived"];
 
 function badgeTone(tone: V2NetworkBrowseCard["statusTone"]): "default" | "green" | "blue" | "amber" {
-  return tone;
+  return tone === "blue" ? "default" : tone;
 }
 
-const STATUS_TABS: { key: V2NetworkBrowseStatus | "all"; label: string }[] = [
+const STATUS_TABS: { key: V2NetworkBrowseStatus | "all" | "hot"; label: string }[] = [
   { key: "all", label: "All People" },
   { key: "Active", label: "Active" },
   { key: "Dormant", label: "Dormant" },
-  { key: "New", label: "New" },
-  { key: "Lost", label: "Lost" },
+  { key: "hot", label: "Hot" },
   { key: "Archived", label: "Archived" },
 ];
 
 const SMART_VIEWS: { key: V2NetworkSmartView; label: string; description: string }[] = [
+  { key: "hot", label: "Hot relationships", description: "Recent + denser evidence (Affinity-style priority)" },
   { key: "key-influencers", label: "Key influencers", description: "Strong ties with shared project history" },
   { key: "decision-makers", label: "Decision makers", description: "Roles and topics tied to authority" },
   { key: "technical-experts", label: "Technical experts", description: "Capability tags from evidence" },
@@ -115,8 +116,6 @@ function StatusDonut({ counts, total }: { counts: Record<V2NetworkBrowseStatus, 
   const segments: { status: V2NetworkBrowseStatus; color: string }[] = [
     { status: "Active", color: "#34d399" },
     { status: "Dormant", color: "#fbbf24" },
-    { status: "New", color: "#38bdf8" },
-    { status: "Lost", color: "#71717a" },
     { status: "Archived", color: "#a1a1aa" },
   ];
 
@@ -312,8 +311,13 @@ function PersonCard({
                 />
               </div>
             </div>
-            <div className="mt-2">
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
               <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
+              {card.isHot ? (
+                <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-[9px] font-medium text-rose-200 ring-1 ring-rose-500/30">
+                  Hot
+                </span>
+              ) : null}
             </div>
           </div>
         </div>
@@ -344,7 +348,7 @@ function PersonCard({
         </div>
         <p className="mb-3 truncate text-xs text-zinc-500">{card.lastInteraction.label}</p>
 
-        {card.status === "Dormant" || card.status === "Lost" ? (
+        {card.status === "Dormant" ? (
           <p className="mb-3 text-[11px] leading-snug text-amber-200/90">
             Quiet relationship — open the contact to see follow-ups and last evidence.
           </p>
@@ -521,7 +525,7 @@ function NetworkInsightsSidebar({
           <h2 className="text-sm font-semibold text-zinc-200">Needs a touch</h2>
           <p className="mt-2 text-3xl font-bold tabular-nums text-amber-200/90">{summary.needsTouch}</p>
           <p className="mt-1 text-xs text-zinc-600">
-            Dormant or Lost — derived from last evidence and follow-ups, not a stored score
+            Dormant — quiet relationships derived from last evidence (auto; not a score)
           </p>
         </div>
 
@@ -564,7 +568,7 @@ export function V2NetworkBrowserShell({
     [cards, orgScope]
   );
   const [view, setViewState] = useState<BrowseLayoutView>("grid");
-  const [statusTab, setStatusTabState] = useState<V2NetworkBrowseStatus | "all">("all");
+  const [statusTab, setStatusTabState] = useState<V2NetworkBrowseStatus | "all" | "hot">("all");
   const [smartView, setSmartView] = useState<V2NetworkSmartView>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -579,21 +583,25 @@ export function V2NetworkBrowserShell({
     setOrder(readBrowseCardOrder(ORDER_SCOPE));
     try {
       const raw = localStorage.getItem(`argus-v2-browse-columns:${COLUMN_SCOPE}`);
-      if (raw) setColumnOverrides(JSON.parse(raw) as Record<string, V2NetworkBrowseStatus>);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, string>;
+        const migrated = Object.fromEntries(
+          Object.entries(parsed).map(([id, status]) => {
+            const next = normalizeNetworkBrowseStatus(status);
+            return [id, next && next !== "all" ? next : "Active"];
+          })
+        ) as Record<string, V2NetworkBrowseStatus>;
+        setColumnOverrides(migrated);
+      }
     } catch {
       /* ignore */
     }
     const prefs = readBrowseViewPrefs(ORDER_SCOPE);
     if (prefs.view) setViewState(prefs.view);
-    if (
-      prefs.status === "all" ||
-      prefs.status === "Active" ||
-      prefs.status === "Dormant" ||
-      prefs.status === "New" ||
-      prefs.status === "Lost" ||
-      prefs.status === "Archived"
-    ) {
-      setStatusTabState(prefs.status);
+    if (prefs.status === "hot") setStatusTabState("hot");
+    else {
+      const next = normalizeNetworkBrowseStatus(prefs.status);
+      if (next) setStatusTabState(next);
     }
   }, []);
 
@@ -602,7 +610,7 @@ export function V2NetworkBrowserShell({
     writeBrowseViewPrefs(ORDER_SCOPE, { view: next });
   }
 
-  function setStatusTab(next: V2NetworkBrowseStatus | "all") {
+  function setStatusTab(next: V2NetworkBrowseStatus | "all" | "hot") {
     setStatusTabState(next);
     writeBrowseViewPrefs(ORDER_SCOPE, { status: next });
   }
@@ -625,7 +633,8 @@ export function V2NetworkBrowserShell({
 
   const filtered = useMemo(() => {
     let rows = sorted;
-    if (statusTab !== "all") rows = rows.filter((c) => c.status === statusTab);
+    if (statusTab === "hot") rows = rows.filter((c) => c.isHot);
+    else if (statusTab !== "all") rows = rows.filter((c) => c.status === statusTab);
     if (smartView !== "all") rows = applyNetworkSmartView(rows, smartView);
     const q = searchQuery.trim();
     if (q) {
@@ -646,8 +655,6 @@ export function V2NetworkBrowserShell({
     const groups: Record<V2NetworkBrowseStatus, V2NetworkBrowseCard[]> = {
       Active: [],
       Dormant: [],
-      New: [],
-      Lost: [],
       Archived: [],
     };
     const q = searchQuery.trim();
@@ -736,12 +743,13 @@ export function V2NetworkBrowserShell({
     onDragEnd();
   }
 
-  const tabCount = (key: V2NetworkBrowseStatus | "all") => {
+  const tabCount = (key: V2NetworkBrowseStatus | "all" | "hot") => {
     if (key === "all") return scopedCards.length;
+    if (key === "hot") return scopedCards.filter((c) => c.isHot).length;
     return scopedCards.filter((c) => c.status === key).length;
   };
 
-  function selectStatusTab(key: V2NetworkBrowseStatus) {
+  function selectStatusTab(key: V2NetworkBrowseStatus | "hot") {
     setStatusTab(key);
     setSmartView("all");
   }
@@ -761,7 +769,7 @@ export function V2NetworkBrowserShell({
                     <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Network</h1>
                   </div>
                   <p className="mt-1 text-sm text-zinc-500">
-                    Drag ⋮⋮ to reorder cards or move them onto status labels (board).
+                    Status is automatic from evidence. Drag ⋮⋮ to reorder; board pins are optional.
                     {isPending ? " Saving…" : ""}
                   </p>
                 </div>
@@ -770,11 +778,11 @@ export function V2NetworkBrowserShell({
                   <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5">
                     {(
                       [
-                        ["grid", "▦", "Grid view"],
-                        ["list", "☰", "List view"],
-                        ["board", "▥", "Board view"],
+                        ["grid", "▦", "Grid", "Grid · cards"],
+                        ["list", "☰", "List", "List · rows"],
+                        ["board", "▥", "Manage", "Manage · Active / Dormant / Archived"],
                       ] as const
-                    ).map(([id, icon, label]) => (
+                    ).map(([id, icon, label, tip]) => (
                       <button
                         key={id}
                         type="button"
@@ -783,6 +791,7 @@ export function V2NetworkBrowserShell({
                           view === id ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
                         }`}
                         aria-label={label}
+                        title={tip}
                         aria-pressed={view === id}
                       >
                         {icon}

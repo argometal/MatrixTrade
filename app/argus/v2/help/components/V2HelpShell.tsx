@@ -60,7 +60,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "People / Network",
-        body: "Contacts with one derived status (New / Active / Dormant / Lost / Archived), follow-ups, and linked evidence — not strength scores.",
+        body: "Contacts with auto status (Active / Dormant / Archived), optional Hot priority from recent dense evidence, follow-ups — not strength scores. Do not hand-file 1000 contacts.",
       },
       {
         title: "Events",
@@ -202,7 +202,7 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "Network",
-        body: "People portfolio with status from evidence (New / Active / Dormant / Lost / Archived), organizations, and follow-ups. Badge shows follow-ups due soon or recently overdue — triage debt, not Focus Tags.",
+        body: "People portfolio with auto status from evidence (Active / Dormant / Archived + Hot filter), organizations, and follow-ups. Badge shows follow-ups due soon or recently overdue — triage debt, not Trackers.",
       },
       {
         title: "Topics",
