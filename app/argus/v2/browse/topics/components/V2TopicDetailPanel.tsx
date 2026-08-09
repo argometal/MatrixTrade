@@ -14,6 +14,7 @@ import {
   focusKeySet,
   tagIsFlagged,
 } from "@/app/argus/v2/components/V2FlaggableTagChip";
+import { V2TrackerTogglePanel } from "@/app/argus/v2/components/V2TrackerTogglePanel";
 import { V2TopicAliasEditor } from "./V2TopicAliasEditor";
 import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
 import { V2PrivateEvidenceGate } from "@/app/argus/v2/components/V2PrivateEvidenceGate";
@@ -457,42 +458,29 @@ export function V2TopicDetailPanel({
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <p className="text-[11px] leading-relaxed text-zinc-600">
-                One Tag system: Notes accumulate Tags · Topic Tags keep this binder findable · click a Tag to Flag / Disable
-                Tracker (does not delete the Tag).
+                One Tag system: Notes accumulate Tags · Topic Tags keep this binder findable · click a Tag to Flag /
+                Disable Tracker (never deletes — re-Flag anytime). Topic Tags editor below is the only place that
+                removes a binder Tag (explicit Save).
               </p>
 
-              <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
-                  From notes (click to Flag Tracker)
-                </p>
-                {selected.evidenceTagCounts.length > 0 || selected.aliases.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      ...selected.evidenceTagCounts,
-                      ...selected.aliases
-                        .filter(
-                          (alias) =>
-                            !selected.evidenceTagCounts.some(
-                              (row) => row.tag.toLowerCase() === alias.toLowerCase()
-                            )
+              <V2TrackerTogglePanel
+                evidenceTags={[
+                  ...selected.evidenceTagCounts,
+                  ...selected.aliases
+                    .filter(
+                      (alias) =>
+                        !selected.evidenceTagCounts.some(
+                          (row) => row.tag.toLowerCase() === alias.toLowerCase()
                         )
-                        .map((tag) => ({ tag, count: 0 })),
-                    ].map((row) => (
-                      <V2FlaggableTagChip
-                        key={row.tag}
-                        tag={row.tag}
-                        count={row.count > 0 ? row.count : undefined}
-                        flagged={tagIsFlagged(row.tag, focusKeys)}
-                        onFlaggedChange={(next) => setFocusTags(next)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-zinc-600">
-                    No Tags yet. Add Topic Tags below, or Save Tags on a linked Event Note.
-                  </p>
-                )}
-              </div>
+                    )
+                    .map((tag) => ({ tag, count: 0 })),
+                ]}
+                signalTags={focusTags}
+                onSignalTagsChange={setFocusTags}
+                heading="Topic Tags (click to Flag / Disable Tracker)"
+                hint="⚑ = Tracker on. Disable Tracker keeps the Tag visible so you can Flag again."
+                addPlaceholder="Tag name → Flag as Tracker"
+              />
 
               {selected.eventEvidenceTags.length > 0 ? (
                 <div>

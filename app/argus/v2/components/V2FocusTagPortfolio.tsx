@@ -14,7 +14,7 @@ import {
 } from "@/lib/argus/v2/intelligence-filters";
 import { V2HomeNeighborhoodViewer } from "./V2HomeNeighborhoodViewer";
 import { V2IntelligenceUniverseFilters } from "./V2IntelligenceUniverseFilters";
-import { V2SignalTagsEditor } from "./V2SignalTagsEditor";
+import { V2TrackerTogglePanel } from "./V2TrackerTogglePanel";
 import { V2Timeline } from "./V2Timeline";
 
 function pickDefaultNeighborhoodCenter(evidence: V2TagEvidenceContext | null): V2TagEvidenceEntity | null {
@@ -592,12 +592,14 @@ export function V2FocusTagPortfolio({
       )}
 
       <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-4">
-        <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-600">Manage universe · Trackers</p>
-        <p className="mt-1 mb-3 text-[11px] text-zinc-500">
-          Add a Tag name here to Flag it as a Tracker (appears in Universe). Removing from this list only disables
-          Tracker — Tags on Notes and Topic Tags stay. For binder create, use Topic → Tags.
-        </p>
-        <V2SignalTagsEditor initialTags={focusTags} returnTo="/argus/v2" compact />
+        <V2TrackerTogglePanel
+          evidenceTags={rows.map((row) => ({ tag: row.name, count: row.count }))}
+          signalTags={focusTags}
+          onSignalTagsChange={setFocusTags}
+          heading="Manage universe · Tag ↔ Tracker"
+          hint="Click to Flag / Disable Tracker. No delete — Tags on Notes and Topic Tags stay. Type a name to Flag a new Tracker."
+          addPlaceholder="Tag name → Flag as Tracker"
+        />
       </div>
     </div>
   );

@@ -19,12 +19,8 @@ import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz"
 import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
-import {
-  V2FlaggableTagChip,
-  focusKeySet,
-  tagIsFlagged,
-} from "@/app/argus/v2/components/V2FlaggableTagChip";
-import { V2SignalTagsEditor } from "@/app/argus/v2/components/V2SignalTagsEditor";
+import { focusKeySet } from "@/app/argus/v2/components/V2FlaggableTagChip";
+import { V2TrackerTogglePanel } from "@/app/argus/v2/components/V2TrackerTogglePanel";
 import {
   V2ChronicleSelectableList,
   chronicleLogIdFromEvidenceId,
@@ -441,38 +437,20 @@ export function V2EventDetailPanel({
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <div>
-                <p className="text-xs font-medium text-zinc-300">Tags</p>
+                <p className="text-xs font-medium text-zinc-300">Tags · Trackers</p>
                 <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
-                  Create Tags on the Note tab (accumulate evidence) or manage Trackers below. Click a Tag to Flag /
-                  Disable Tracker — that never deletes the Tag.
+                  Click any Tag to Flag it as a Tracker, or click again to Disable Tracker. You can always re-Flag.
+                  There is no delete here — Note Tags stay on evidence; use Note tab to add Tags onto Notes.
                 </p>
               </div>
-              {eventTagCounts.length > 0 ? (
-                <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
-                    From notes (click to Flag Tracker)
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {eventTagCounts.map((row) => (
-                      <V2FlaggableTagChip
-                        key={row.tag}
-                        tag={row.tag}
-                        count={row.count}
-                        flagged={tagIsFlagged(row.tag, focusKeys)}
-                        onFlaggedChange={(next) => setFocusTags(next)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <p className="text-sm text-zinc-600">No Note Tags yet. Add Tags when saving a Note.</p>
-              )}
-              <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
-                  Trackers (create / manage)
-                </p>
-                <V2SignalTagsEditor initialTags={focusTags} returnTo={returnTo} compact />
-              </div>
+              <V2TrackerTogglePanel
+                evidenceTags={eventTagCounts}
+                signalTags={focusTags}
+                onSignalTagsChange={setFocusTags}
+                heading="Event Tags (click to Flag / Disable Tracker)"
+                hint="⚑ = Tracker on. Plain chip = Tag only. Disable Tracker never removes the Tag — Flag again anytime."
+                addPlaceholder="Type a Tag name → Flag as Tracker"
+              />
             </div>
           ) : null}
 
