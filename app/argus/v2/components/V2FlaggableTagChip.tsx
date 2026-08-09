@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toggleSignalTagAction } from "@/app/argus/actions";
 import { signalTagKey } from "@/lib/argus/signal-tags";
+import { confirmTrackerConvert } from "@/lib/argus/tracker-confirm";
 
 /**
- * Evidence Tag chip — click toggles Tracker (Flag / Unflag).
+ * Evidence Tag chip — click toggles Tracker (Flag / Disable) after confirm.
  * Size steps with repetition so Patterns and one-offs share one control.
  * Trackers stay visibly marked — not a soft hover glow.
  */
@@ -40,6 +41,7 @@ export function V2FlaggableTagChip({
         : "px-2 py-0.5 text-[11px]";
 
   function toggle() {
+    if (!confirmTrackerConvert(tag, localFlagged)) return;
     startTransition(async () => {
       const result = await toggleSignalTagAction(tag);
       if ("error" in result) return;
@@ -56,8 +58,8 @@ export function V2FlaggableTagChip({
       disabled={pending}
       title={
         localFlagged
-          ? `Disable Tracker on “${tag}” — Tag stays in the universe`
-          : `Flag “${tag}” as Tracker`
+          ? `Disable Tracker on “${tag}” — Tag stays (asks to confirm)`
+          : `Flag “${tag}” as Tracker (asks to confirm)`
       }
       aria-pressed={localFlagged}
       className={`inline-flex items-center gap-1 rounded-full border font-medium transition disabled:opacity-50 ${size} ${

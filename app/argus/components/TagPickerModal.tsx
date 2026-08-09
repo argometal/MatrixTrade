@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { CAPTURE, TAGS } from "@/lib/argus/ux-copy";
 import { TAG_PICKER_SUGGESTION_LIMIT } from "@/lib/argus/tag-limits";
+import { confirmTrackerConvert } from "@/lib/argus/tracker-confirm";
 import { inputClass } from "./ui";
 
 export interface TagBuckets {
@@ -57,17 +58,20 @@ function TagRow({
       {onToggleSignal ? (
         <button
           type="button"
-          onClick={onToggleSignal}
+          onClick={() => {
+            if (!confirmTrackerConvert(tag, Boolean(isSignal))) return;
+            onToggleSignal();
+          }}
           className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${
             isSignal
               ? "bg-rose-950/50 text-rose-300 ring-1 ring-rose-500/40"
               : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
           }`}
-          title={isSignal ? "Unflag focus Tag" : "Flag as focus Tag"}
-          aria-label={isSignal ? `Unflag ${tag}` : `Flag ${tag} as focus`}
+          title={isSignal ? "Disable Tracker (confirm)" : "Flag as Tracker (confirm)"}
+          aria-label={isSignal ? `Disable Tracker on ${tag}` : `Flag ${tag} as Tracker`}
           aria-pressed={isSignal}
         >
-          Focus
+          {isSignal ? "Tracker" : "Flag"}
         </button>
       ) : null}
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toggleSignalTagAction } from "@/app/argus/actions";
 import { signalTagKey } from "@/lib/argus/signal-tags";
+import { confirmTrackerConvert } from "@/lib/argus/tracker-confirm";
 import {
   V2FlaggableTagChip,
   focusKeySet,
@@ -42,8 +43,12 @@ function writeKnownExtras(tags: string[]) {
 
 /**
  * Tag ↔ Tracker without delete.
- * Click a chip to Flag / Disable Tracker. Add Flagged name via the input.
+ * Click a chip to Flag / Disable Tracker (confirms first). Add Flagged name via the input.
  * Tags stay visible so you can re-Flag after Disable.
+ *
+ * When `surfaceLabel` is set (e.g. "this Event"), chips split into:
+ * - Tags on this surface (from Notes/emails) — answers “what tags are mine here?”
+ * - Other Trackers — journal watch names not yet on this surface’s evidence
  */
 export function V2TrackerTogglePanel({
   evidenceTags,
@@ -52,6 +57,9 @@ export function V2TrackerTogglePanel({
   heading = "Tags (click to Flag / Disable Tracker)",
   hint = "Flag turns a Tag into a Tracker. Disable Tracker turns watch off — the Tag stays so you can Flag it again. This never deletes Tags from Notes.",
   addPlaceholder = "Tag name to Flag as Tracker…",
+  /** When set, split inventory (“on this …”) from other Trackers. */
+  surfaceLabel,
+  emptyEvidenceHint,
 }: {
   /** Tags from Notes/emails on this surface — always listed. */
   evidenceTags: V2TrackerToggleTag[];
@@ -60,6 +68,8 @@ export function V2TrackerTogglePanel({
   heading?: string;
   hint?: string;
   addPlaceholder?: string;
+  surfaceLabel?: string;
+  emptyEvidenceHint?: string;
 }) {
   const router = useRouter();
   const [focusTags, setFocusTags] = useState(signalTags);
@@ -101,25 +111,53 @@ export function V2TrackerTogglePanel({
 
   const focusKeys = useMemo(() => focusKeySet(focusTags), [focusTags]);
 
-  const rows = useMemo(() => {
+  const evidenceRows = useMemo(() => {
     const byKey = new Map<string, V2TrackerToggleTag>();
     for (const row of evidenceTags) {
       const key = signalTagKey(row.tag);
       if (!key) continue;
       byKey.set(key, { tag: row.tag.trim(), count: row.count });
     }
+    return [...byKey.values()].sort((a, b) => {
+      const ac = a.count ?? 0;
+      const bc = b.count ?? 0;
+      if (ac !== bc) return bc - ac;
+      return a.tag.localeCompare(b.tag);
+    });
+  }, [evidenceTags]);
+
+  const evidenceKeys = useMemo(
+    () => new Set(evidenceRows.map((row) => signalTagKey(row.tag)).filter(Boolean)),
+    [evidenceRows]
+  );
+
+  const otherTrackerRows = useMemo(() => {
+    const byKey = new Map<string, V2TrackerToggleTag>();
     for (const tag of focusTags) {
       const key = signalTagKey(tag);
-      if (!key || byKey.has(key)) continue;
+      if (!key || evidenceKeys.has(key)) continue;
       byKey.set(key, { tag: tag.trim() });
     }
     for (const tag of knownExtras) {
       const key = signalTagKey(tag);
-      if (!key || byKey.has(key)) continue;
+      if (!key || evidenceKeys.has(key) || byKey.has(key)) continue;
       byKey.set(key, { tag: tag.trim() });
     }
     return [...byKey.values()].sort((a, b) => a.tag.localeCompare(b.tag));
-  }, [evidenceTags, focusTags, knownExtras]);
+  }, [focusTags, knownExtras, evidenceKeys]);
+
+  /** Flat list when not splitting by surface. */
+  const flatRows = useMemo(() => {
+    const byKey = new Map<string, V2TrackerToggleTag>();
+    for (const row of evidenceRows) {
+      byKey.set(signalTagKey(row.tag), row);
+    }
+    for (const row of otherTrackerRows) {
+      const key = signalTagKey(row.tag);
+      if (!byKey.has(key)) byKey.set(key, row);
+    }
+    return [...byKey.values()].sort((a, b) => a.tag.localeCompare(b.tag));
+  }, [evidenceRows, otherTrackerRows]);
 
   function rememberExtra(tag: string) {
     const key = signalTagKey(tag);
@@ -132,9 +170,16 @@ export function V2TrackerTogglePanel({
     });
   }
 
+  function onChipFlaggedChange(tag: string, next: string[]) {
+    setFocusTags(next);
+    onSignalTagsChange?.(next);
+    rememberExtra(tag);
+  }
+
   function flagFromDraft() {
     const next = draft.trim().replace(/\s+/g, " ");
     if (!next) return;
+    if (!confirmTrackerConvert(next, false)) return;
     rememberExtra(next);
     setDraft("");
     startTransition(async () => {
@@ -154,6 +199,24 @@ export function V2TrackerTogglePanel({
     });
   }
 
+  function renderChips(rows: V2TrackerToggleTag[]) {
+    return (
+      <div className="flex flex-wrap gap-1.5">
+        {rows.map((row) => (
+          <V2FlaggableTagChip
+            key={signalTagKey(row.tag)}
+            tag={row.tag}
+            count={row.count}
+            flagged={tagIsFlagged(row.tag, focusKeys)}
+            onFlaggedChange={(next) => onChipFlaggedChange(row.tag, next)}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  const split = Boolean(surfaceLabel);
+
   return (
     <div className="space-y-3">
       <div>
@@ -161,22 +224,44 @@ export function V2TrackerTogglePanel({
         <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">{hint}</p>
       </div>
 
-      {rows.length > 0 ? (
-        <div className="flex flex-wrap gap-1.5">
-          {rows.map((row) => (
-            <V2FlaggableTagChip
-              key={signalTagKey(row.tag)}
-              tag={row.tag}
-              count={row.count}
-              flagged={tagIsFlagged(row.tag, focusKeys)}
-              onFlaggedChange={(next) => {
-                setFocusTags(next);
-                onSignalTagsChange?.(next);
-                rememberExtra(row.tag);
-              }}
-            />
-          ))}
-        </div>
+      {split ? (
+        <>
+          <div className="space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-600/90">
+              On {surfaceLabel}
+            </p>
+            <p className="text-[11px] leading-relaxed text-zinc-600">
+              Tags that already appear on Notes or emails here (count = uses). This is the inventory for{" "}
+              {surfaceLabel} — not the global Note → Tags picker pool. Click a chip to Flag / Disable Tracker
+              (confirm first).
+            </p>
+            {evidenceRows.length > 0 ? (
+              renderChips(evidenceRows)
+            ) : (
+              <p className="text-sm text-zinc-600">
+                {emptyEvidenceHint ??
+                  "No Tags on Notes here yet. Open the Note tab → Tags to pick from the pool (checkmarks show what’s already on the note you’re writing)."}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2 border-t border-zinc-800/80 pt-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+              Other Trackers
+            </p>
+            <p className="text-[11px] leading-relaxed text-zinc-600">
+              Journal-wide watch names that are not on {surfaceLabel}’s Notes yet. Flag / Disable still asks to
+              confirm.
+            </p>
+            {otherTrackerRows.length > 0 ? (
+              renderChips(otherTrackerRows)
+            ) : (
+              <p className="text-sm text-zinc-600">No extra Trackers beyond Tags already on {surfaceLabel}.</p>
+            )}
+          </div>
+        </>
+      ) : flatRows.length > 0 ? (
+        renderChips(flatRows)
       ) : (
         <p className="text-sm text-zinc-600">No Tags yet. Add Tags on a Note, or Flag a Tracker name below.</p>
       )}

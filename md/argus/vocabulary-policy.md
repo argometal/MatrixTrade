@@ -33,7 +33,8 @@ There is no separate “Quiet Tracker” mode — a Tag with no evidence yet is 
 |--------|--------|
 | Put a Tag on evidence | Event → **Note** → Tags → Save |
 | Create Topic Tags | Topic → **Tags** → Topic Tags editor (Save) |
-| Flag / Disable Tracker | Click the Tag chip (Event / Topic / Home → Tags). Disable keeps the chip so you can re-Flag. |
+| Flag / Disable Tracker | Click the Tag chip (Event / Topic / Home → Tags). **Confirms both ways** before convert. Disable keeps the chip so you can re-Flag. |
+| Tags on an Event | **Event → Tags → On this Event** = Tags already used on that Event’s Notes/emails. Put Tags on evidence via **Note → Tags** (picker pool + checkmarks). |
 | Manage universe | **Home → Intelligence → Tags** (Universe filters + Trackers strip + Manage) — no easy delete of Tags |
 | See Tags for a Topic | Topic → **Tags** (notes ∪ linked Events ∪ Topic Tags) |
 

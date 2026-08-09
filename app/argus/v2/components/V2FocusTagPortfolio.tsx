@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toggleSignalTagAction } from "@/app/argus/actions";
+import { confirmTrackerConvert } from "@/lib/argus/tracker-confirm";
 import type { V2FocusTagStat, V2TagEvidenceContext, V2TagEvidenceEntity } from "@/lib/argus/v2/loaders";
 import { signalTagKey } from "@/lib/argus/signal-tags";
 import { resolveBubblePositions } from "@/lib/argus/v2/intelligence-viz";
@@ -182,6 +183,8 @@ export function V2FocusTagPortfolio({
   }
 
   function toggleFocus(tag: string) {
+    const currentlyFlagged = focusKeySet.has(signalTagKey(tag));
+    if (!confirmTrackerConvert(tag, currentlyFlagged)) return;
     setPendingTag(tag);
     startTransition(async () => {
       const result = await toggleSignalTagAction(tag);

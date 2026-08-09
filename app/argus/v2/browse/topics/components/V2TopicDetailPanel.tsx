@@ -458,9 +458,10 @@ export function V2TopicDetailPanel({
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <p className="text-[11px] leading-relaxed text-zinc-600">
-                One Tag system: Notes accumulate Tags · Topic Tags keep this binder findable · click a Tag to Flag /
-                Disable Tracker (never deletes — re-Flag anytime). Topic Tags editor below is the only place that
-                removes a binder Tag (explicit Save).
+                One Tag system: <span className="text-zinc-400">On this Topic</span> is the inventory (evidence + Topic
+                Tags). Note → Tags is the picker pool when writing. Click a chip to Flag / Disable Tracker (confirm both
+                ways — never deletes). Topic Tags editor below is the only place that removes a binder Tag (explicit
+                Save).
               </p>
 
               <V2TrackerTogglePanel
@@ -477,8 +478,10 @@ export function V2TopicDetailPanel({
                 ]}
                 signalTags={focusTags}
                 onSignalTagsChange={setFocusTags}
-                heading="Topic Tags (click to Flag / Disable Tracker)"
-                hint="⚑ = Tracker on. Disable Tracker keeps the Tag visible so you can Flag again."
+                surfaceLabel="this Topic"
+                heading="Topic Tags · Trackers"
+                hint="On this Topic = evidence Tags + Topic Tags. Click to Flag / Disable Tracker (confirm both ways)."
+                emptyEvidenceHint="No evidence Tags or Topic Tags yet. Add Topic Tags below, or tag Notes on linked Events."
                 addPlaceholder="Tag name → Flag as Tracker"
               />
 
