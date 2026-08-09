@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0807z` |
-| **Commit** | Always `git rev-parse main0807z` after fetch (must match `origin/main`) |
+| **Tag** | `main0808a` |
+| **Commit** | Always `git rev-parse main0808a` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-09 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0807z
+# optional pin: git checkout main0808a
 ```
 
 ## What this deploy includes
 
+- PR #209: Confirm Tag↔Tracker Flag/Disable both ways; Event/Topic Tags split “On this …” inventory vs Other Trackers
 - Hotfix: remove merge conflict markers from Network relationship metrics help (`NetworkRelationshipMetricsFields`)
 - PR #208: Network Apply = MTA Validate → Accept (Clear, Snap Failure, Fix before Accept); Contact/My value fields only
 - PR #207: Network status simplified to Active / Dormant / Archived + Hot priority filter (New⊂Active, Lost⊂Dormant); viewer hover names
