@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import type { V2FocusTagStat, V2TagEvidenceContext } from "@/lib/argus/v2/loaders";
 import {
   filterIntelligenceNodes,
@@ -10,7 +10,6 @@ import { V2KnowledgeTreemap } from "./V2KnowledgeTreemap";
 import { V2PortfolioBubbleMatrix } from "./V2PortfolioBubbleMatrix";
 import { V2FocusTagPortfolio } from "./V2FocusTagPortfolio";
 import { V2HomeNeighborhoodViewer } from "./V2HomeNeighborhoodViewer";
-import { V2IntelligenceUniverseFilters } from "./V2IntelligenceUniverseFilters";
 import {
   layoutTreemap,
   type V2KnowledgeNode,
@@ -26,6 +25,8 @@ export function V2HomeIntelligencePanel({
   tab,
   lensId = null,
   onLensChange,
+  universeFilter = "all",
+  onUniverseFilterChange,
 }: {
   nodes: V2KnowledgeNode[];
   /** @deprecated Tags cloud removed from Tags tab — kept optional for call-site compat. */
@@ -37,11 +38,11 @@ export function V2HomeIntelligencePanel({
   /** Selected Treemap/Portfolio entity — drives main Tags-model neighborhood below. */
   lensId?: string | null;
   onLensChange: (id: string | null) => void;
+  /** Controlled from Home one-line toolbar (Universe / Hot / …). */
+  universeFilter?: IntelligenceUniverseFilter;
+  onUniverseFilterChange?: (next: IntelligenceUniverseFilter) => void;
 }) {
-  const [universeFilter, setUniverseFilter] = useState<IntelligenceUniverseFilter>("all");
-
   useEffect(() => {
-    setUniverseFilter("all");
     onLensChange(null);
     // Reset selection when switching Intelligence tabs / filter surfaces.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only when tab changes
@@ -79,19 +80,6 @@ export function V2HomeIntelligencePanel({
 
   return (
     <div>
-      {tab === "treemap" || tab === "portfolio" ? (
-        <div className="mb-3">
-          <V2IntelligenceUniverseFilters
-            filter={universeFilter}
-            onChange={(next) => {
-              setUniverseFilter(next);
-              onLensChange(null);
-            }}
-            ariaLabel={tab === "treemap" ? "Filter Treemap universe" : "Filter Portfolio universe"}
-          />
-        </div>
-      ) : null}
-
       {tab === "treemap" ? (
         <div className="space-y-2">
           <p className="text-[11px] text-zinc-600">
@@ -162,6 +150,8 @@ export function V2HomeIntelligencePanel({
             rows={focusTagPortfolio}
             initialFocusTags={signalTags}
             evidenceByTag={tagEvidenceByTag}
+            filter={universeFilter}
+            onFilterChange={onUniverseFilterChange}
           />
         </div>
       ) : null}

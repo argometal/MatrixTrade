@@ -22,7 +22,7 @@ export function V2KnowledgeTreemap({
     return (
       <div
         className={`flex items-center justify-center rounded-xl border border-dashed border-zinc-800 text-sm text-zinc-500 ${
-          size === "full" ? "min-h-[min(560px,65vh)]" : "h-56"
+          size === "full" ? "min-h-[min(640px,72vh)]" : "h-56"
         }`}
       >
         Link evidence to topics and projects to populate the knowledge map.
@@ -32,7 +32,7 @@ export function V2KnowledgeTreemap({
 
   const width = 100;
   const height = size === "full" ? 72 : 56;
-  const heightClass = size === "full" ? "min-h-[min(560px,65vh)] h-[min(560px,65vh)]" : "h-56";
+  const heightClass = size === "full" ? "min-h-[min(640px,72vh)] h-[min(640px,72vh)]" : "h-56";
 
   function handleActivate(id: string, href: string, metaKey: boolean) {
     if (metaKey) {

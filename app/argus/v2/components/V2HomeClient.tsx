@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { V2FocusTagStat, V2NavCounts, V2TagEvidenceContext } from "@/lib/argus/v2/loaders";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import type { IntelligenceFrom } from "@/lib/argus/v2/intelligence-nav";
+import type { IntelligenceUniverseFilter } from "@/lib/argus/v2/intelligence-filters";
 import { type V2KnowledgeNode } from "@/lib/argus/v2/intelligence-viz";
 import { V2Card, V2SectionTitle } from "./v2-ui";
 import { V2HomeIntelligencePanel, type IntelligenceTab } from "./V2HomeIntelligencePanel";
+import { V2HomeIntelToolbar } from "./V2HomeIntelToolbar";
 import { V2HomePageHeader } from "./V2HomePulse";
 import { V2IntelligenceLens, V2IntelligenceLensEmpty } from "./V2IntelligenceLens";
 import { V2HomeNeighborhoodViewer } from "./V2HomeNeighborhoodViewer";
-import { V2TabBar } from "./V2TabBar";
 import type { V2TagCloudItem } from "./V2TagCloud";
 import { V2Timeline, V2TimelineRail } from "./V2Timeline";
 import {
@@ -22,17 +23,6 @@ import {
 } from "./V2HomeMainShell";
 import { V2EntityViewer } from "./V2EntityViewer";
 import type { V2EntityRow, V2EntityTab } from "@/lib/argus/v2/loaders";
-
-const HOME_VIEW_TABS: { id: V2HomeView; label: string }[] = [
-  { id: "intelligence", label: "Intelligence" },
-  { id: "browse", label: "Browser" },
-];
-
-const INTELLIGENCE_TABS: { id: IntelligenceTab; label: string }[] = [
-  { id: "treemap", label: "Treemap" },
-  { id: "portfolio", label: "Portfolio" },
-  { id: "tags", label: "Tags" },
-];
 
 const TAB_SOURCE: Record<IntelligenceTab, IntelligenceFrom> = {
   treemap: "treemap",
@@ -95,11 +85,17 @@ export function V2HomeClient({
   const searchParams = useSearchParams();
   const view = parseV2HomeView(searchParams.get("view") ?? initialView);
   const [intelTab, setIntelTab] = useState<IntelligenceTab>("treemap");
+  const [universeFilter, setUniverseFilter] = useState<IntelligenceUniverseFilter>("all");
   const [lensId, setLensId] = useState<string | null>(null);
 
   const lensNode = lensId ? nodes.find((node) => node.id === lensId) : undefined;
   const showLensDock = view === "intelligence" && intelTab !== "tags";
   const browseRows = entityRowsByTab?.[entityTab] ?? [];
+
+  useEffect(() => {
+    setUniverseFilter("all");
+    setLensId(null);
+  }, [intelTab]);
 
   function setView(next: V2HomeView) {
     const params = new URLSearchParams(searchParams.toString());
@@ -120,6 +116,11 @@ export function V2HomeClient({
     if (next === "tags") setLensId(null);
   }
 
+  function changeUniverseFilter(next: IntelligenceUniverseFilter) {
+    setUniverseFilter(next);
+    setLensId(null);
+  }
+
   const treemapNodes = useMemo(() => nodes, [nodes]);
 
   return (
@@ -128,13 +129,17 @@ export function V2HomeClient({
 
       <div className="grid gap-6 xl:grid-cols-[1fr_280px]">
         <div className="space-y-6">
-          <V2Card className="p-5 sm:p-6">
+          <V2Card className="p-4 sm:p-6">
             <div id="intelligence">
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                <V2TabBar tabs={HOME_VIEW_TABS} active={view} onChange={setView} size="md" />
-                {view === "intelligence" ? (
-                  <V2TabBar tabs={INTELLIGENCE_TABS} active={intelTab} onChange={changeIntelTab} />
-                ) : null}
+              <div className="mb-3">
+                <V2HomeIntelToolbar
+                  view={view}
+                  onViewChange={setView}
+                  intelTab={intelTab}
+                  onIntelTabChange={changeIntelTab}
+                  universeFilter={universeFilter}
+                  onUniverseFilterChange={changeUniverseFilter}
+                />
               </div>
 
               {view === "browse" ? (
@@ -155,6 +160,8 @@ export function V2HomeClient({
                   tab={intelTab}
                   lensId={lensId}
                   onLensChange={setLensId}
+                  universeFilter={universeFilter}
+                  onUniverseFilterChange={changeUniverseFilter}
                 />
               )}
             </div>

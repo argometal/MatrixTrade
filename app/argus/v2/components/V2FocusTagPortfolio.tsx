@@ -93,15 +93,23 @@ export function V2FocusTagPortfolio({
   rows,
   initialFocusTags,
   evidenceByTag = {},
+  filter: filterProp,
+  onFilterChange,
 }: {
   rows: V2FocusTagStat[];
   initialFocusTags: string[];
   evidenceByTag?: Record<string, V2TagEvidenceContext>;
   /** @deprecated aside removed — ignored. */
   variant?: "aside" | "universe";
+  /** When set with onFilterChange, chips hide — Home toolbar owns the filter. */
+  filter?: IntelligenceUniverseFilter;
+  onFilterChange?: (next: IntelligenceUniverseFilter) => void;
 }) {
   const router = useRouter();
-  const [filter, setFilter] = useState<IntelligenceUniverseFilter>("all");
+  const [localFilter, setLocalFilter] = useState<IntelligenceUniverseFilter>("all");
+  const filter = filterProp ?? localFilter;
+  const setFilter = onFilterChange ?? setLocalFilter;
+  const filterControlled = filterProp != null && onFilterChange != null;
   const [query, setQuery] = useState("");
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [focusTags, setFocusTags] = useState(initialFocusTags);
@@ -250,14 +258,16 @@ export function V2FocusTagPortfolio({
       </div>
 
       <div className="flex flex-wrap items-start gap-2">
-        <div className="min-w-0 flex-1">
-          <V2IntelligenceUniverseFilters
-            filter={filter}
-            onChange={setFilter}
-            ariaLabel="Filter Tags universe"
-          />
-        </div>
-        <label className="block min-w-[10rem] flex-1 sm:max-w-xs">
+        {filterControlled ? null : (
+          <div className="min-w-0 flex-1">
+            <V2IntelligenceUniverseFilters
+              filter={filter}
+              onChange={setFilter}
+              ariaLabel="Filter Tags universe"
+            />
+          </div>
+        )}
+        <label className={`block min-w-[10rem] flex-1 sm:max-w-xs ${filterControlled ? "w-full sm:max-w-none" : ""}`}>
           <span className="sr-only">Filter tags by name</span>
           <input
             type="search"
