@@ -500,11 +500,11 @@ export function V2ProjectsBrowserShell({
               <div className="flex rounded-lg border border-zinc-800 bg-zinc-900/60 p-0.5">
                 {(
                   [
-                    ["grid", "▦", "Grid view"],
-                    ["list", "☰", "List view"],
-                    ["board", "▥", "Board view"],
+                    ["grid", "▦", "Grid", "Grid · cards"],
+                    ["list", "☰", "List", "List · rows"],
+                    ["board", "▥", "Manage", "Manage · Planning / Active / On Hold / Completed / Archived"],
                   ] as const
-                ).map(([id, icon, label]) => (
+                ).map(([id, icon, label, tip]) => (
                   <button
                     key={id}
                     type="button"
@@ -513,6 +513,7 @@ export function V2ProjectsBrowserShell({
                       view === id ? "bg-zinc-800 text-zinc-200" : "text-zinc-500 hover:text-zinc-300"
                     }`}
                     aria-label={label}
+                    title={tip}
                     aria-pressed={view === id}
                   >
                     {icon}

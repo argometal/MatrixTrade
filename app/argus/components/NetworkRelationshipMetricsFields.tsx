@@ -79,8 +79,8 @@ export function NetworkRelationshipMetricsFields({ entity }: { entity: Entity })
       />
 
       <p className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 px-4 py-3 text-[11px] leading-snug text-zinc-600">
-        Network status (New / Active / Dormant / Lost / Archived) updates from follow-ups, linked inbox items, and
-        interaction history — it is derived, not edited here.
+        Network status (Active / Dormant / Archived) updates from follow-ups, linked inbox, and interaction history —
+        derived automatically. Hot is a priority filter from recent dense evidence — not edited here.
       </p>
     </div>
   );

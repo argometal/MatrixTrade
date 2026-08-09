@@ -20,8 +20,8 @@ import type { NetworkContactPageData } from "./v2/network-contact-loaders";
 export type NetworkAiSnapshotScope = "network-desk" | "network-person";
 
 function formatDeskHighlights(cards: V2NetworkBrowseCard[]): string {
-  const dormant = cards.filter((c) => c.status === "Dormant" || c.status === "Lost").slice(0, 5);
-  const active = cards.filter((c) => c.status === "Active" || c.status === "New").slice(0, 5);
+  const dormant = cards.filter((c) => c.status === "Dormant").slice(0, 5);
+  const active = cards.filter((c) => c.status === "Active").slice(0, 5);
 
   const lines = ["=== HIGHLIGHTS ==="];
   if (active.length) {

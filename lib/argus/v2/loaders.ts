@@ -883,9 +883,8 @@ function deriveOrgNetworkStatus(
   intel: ReturnType<typeof buildEntityIntelligence>,
   totalEvidence: number,
   today: string
-): "New" | "Active" | "Dormant" | "Lost" | "Archived" {
+): "Active" | "Dormant" | "Archived" {
   if (org.lifecycleStatus === "archived" || isEntityArchived(org, today)) return "Archived";
-  if (org.deletedAt || /status:\s*lost/i.test(org.notes ?? "")) return "Lost";
 
   const ageDays = (() => {
     const a = Date.parse(org.createdAt.slice(0, 10));
@@ -893,11 +892,11 @@ function deriveOrgNetworkStatus(
     return Math.floor((b - a) / 86400000);
   })();
 
-  if (totalEvidence <= 1 && ageDays <= 60) return "New";
   if (intel.daysSinceLastInteraction !== null && intel.daysSinceLastInteraction <= 90) return "Active";
   if (intel.relationshipHealth === "active" || intel.relationshipHealth === "cooling") return "Active";
-  if (totalEvidence === 0 && ageDays <= 30) return "New";
-  if (intel.relationshipHealth === "neglected" && (intel.daysSinceLastInteraction ?? 0) > 180) return "Lost";
+  // Thin / new orgs stay Active (New merged away).
+  if (totalEvidence <= 1 && ageDays <= 60) return "Active";
+  if (totalEvidence === 0 && ageDays <= 30) return "Active";
   return "Dormant";
 }
 
