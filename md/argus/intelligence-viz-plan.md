@@ -16,26 +16,35 @@ Status: **implemented** (treemap + portfolio axes as of 2026-07). Tag pattern ov
 - **Bubble size:** total evidence count.
 - No BCG quadrant labels or manual strategic/completion axes.
 
-### Tags tab
-- Tag cloud from `buildV2TagCloud` — top **20** tags by frequency (industry folksonomy cap).
-- Separate from knowledge nodes; patterns use the same tag strings on evidence.
+### Tags tab (Home → Intelligence → Tags)
+- **Tag universe** workspace (`V2FocusTagPortfolio`) — primary navigation for Tags + Trackers (not the old top-20 cloud alone).
+- **Trackers strip** — Flagged Tags (journal `signalTags`) shown together; Flag a Tag that isn’t a Tracker yet.
+- Bubble plot: recency × recurrence; ⚑ / amber ring = Tracker; gold ring = Pattern.
+- Selection shows evidence + binders; binder click loads **connection neighborhood**.
+- Tag cloud helper (`buildV2TagCloud`) may still feed other surfaces; Patterns use the same evidence Tag strings.
 
 ### Graph (neighborhood views)
 - **Removed** global graph tab from Home Intelligence — whole-graph view was premature without graph infra.
-- **Added** per-entity **Connection neighborhood** on organization, project, and topic detail views.
+- **Home Intelligence:** selecting a Treemap tile / Portfolio bubble / Tags binder loads a local neighborhood in the lens dock (`getEntityNeighborhoodAction` + `V2HomeNeighborhoodViewer`).
+- **Entity detail:** Connection neighborhood on organization, project, topic, and event browse detail.
 - Pattern: Kumu / Obsidian — local 1–2 hop subgraph around the open entity, not a universe map.
 - **Layout:** radial — center entity in the middle (gold ring), neighbors on a ring.
-- **Edges:** `linked`, `project-link`, `co-mentioned` (from journal `entityIds`).
-- **Future:** typed edge tooltips.
+- **Edges:** `linked`, `project-link`, `co-mentioned`, `focus-affinity` (shared Tracker).
+- **Halo:** rose/amber = evidence carries a Tracker Tag.
 - **Shipped:** expand-on-click ego focus — click a node to show only that node + direct neighbors; Back / Full neighborhood / Esc returns. ⌘/Ctrl+click opens the entity. Dual-ring layout when crowded.
 
 ### Topic ↔ event linkage (recurrence / recency / evidence)
-For **topics**, metrics include evidence on the topic entity **plus** linked events discovered via:
-1. `topic.linkedEntityIds` → event entities
-2. `project.linkedTopicIds` + `project.linkedEventIds` / `project.linkedEntityIds`
+For **topics**, Home treemap/portfolio **and Topics browse cards** count evidence on the topic entity **plus** linked events (Notes/emails on Event binders). Topic **Chronicle** stays topic-direct; Event notes remain under Connections / Event.
+
+Linked events discovered via:
+1. `topic.linkedEntityIds` / outbound bags → event entities
+2. Reverse Event→Topic links (`linkedTopicIds` / `linkedEntityIds`)
 3. Journal logs that link both the topic and an event in `entityIds`
 
-Events never appear as treemap nodes but can boost a topic’s size, color, recency, and recurrence.
+Events never appear as treemap nodes but can boost a topic’s size, color, recency, recurrence, and browse “evidence” totals.
+
+### Topics browse viewers
+- **Grid · cards** / **List · rows** / **Manage · Active / Quiet / Empty / Archived** (hover names on the icon switcher; board id stays `board` in prefs).
 
 ---
 
@@ -73,7 +82,11 @@ ArgusForge has richer graph infra (`/forge/argus/units` 3D + realm React Flow). 
 
 ## Key files
 - `lib/argus/v2/intelligence-viz.ts` — node building, treemap layout, graph
+- `lib/argus/v2/topic-loaders.ts` — Topic browse rows (portfolio evidence = Topic ∪ Events)
 - `app/argus/v2/components/V2KnowledgeTreemap.tsx`
 - `app/argus/v2/components/V2PortfolioBubbleMatrix.tsx`
+- `app/argus/v2/components/V2FocusTagPortfolio.tsx` — Tags · Trackers universe
+- `app/argus/v2/components/V2HomeNeighborhoodViewer.tsx` — Home lens neighborhood
 - `app/argus/v2/components/V2EntityNeighborhoodPanel.tsx`
 - `app/argus/v2/components/V2KnowledgeGraph.tsx`
+- [`vocabulary-policy.md`](vocabulary-policy.md) — Tag vs Tracker

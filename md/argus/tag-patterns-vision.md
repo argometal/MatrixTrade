@@ -19,9 +19,10 @@ ARGUS gathers evidence from stronger applications, groups it by **topics** and *
 |---|-----------|---------|
 | Role | Permanent grouping lens | Lightweight mark on evidence |
 | Question | “What is this about?” | “How do I process / classify this?” |
-| Flag? | **Never** | Yes — when recurrence threshold met |
+| Becomes a Pattern? | **Never** (binder not flagged as a whole) | Yes — when recurrence threshold met |
+| Becomes a Tracker? | N/A | Optional — Flag the Tag on Home → Tags / click chip (journal `signalTags`) |
 
-User defines what `#gap`, `#quality`, `#failure`, or any custom tag means. Argus only counts repetition and surfaces drill-down.
+User defines what `#gap`, `#quality`, `#failure`, or any custom tag means. Argus only counts repetition and surfaces drill-down. **Tracker** (⚑) is separate from Pattern — see [`vocabulary-policy.md`](vocabulary-policy.md).
 
 ---
 

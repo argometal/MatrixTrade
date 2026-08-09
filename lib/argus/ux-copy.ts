@@ -388,34 +388,34 @@ export const ENTITY_DETAIL = {
 } as const;
 
 /**
- * Topic Match tags — synonyms that help match this topic in inbox/search.
- * Stored on Topic `linkedTags`. Not evidence Tags; do not feed Patterns.
+ * @deprecated Match tags removed — evidence Tags from notes only.
  */
 export const TOPIC_MATCH_TAGS = {
-  heading: "Match tags",
-  hint: "Words from emails that should suggest this Topic. These are Tags for matching only — not Tags on Notes, and not Patterns.",
-  placeholder: "Add match tag…",
+  heading: "Tags",
+  hint: "Deprecated. Tags come from Notes; click a Tag to Flag it.",
+  placeholder: "Tag…",
   add: "Add",
-  save: "Save match tags",
-  empty: "No match tags yet — add words from emails that should suggest this topic.",
-  removeAria: (item: string) => `Remove match tag ${item}`,
+  save: "Save",
+  empty: "No Tags yet.",
+  removeAria: (item: string) => `Remove ${item}`,
 } as const;
 
-/** @deprecated Use TOPIC_MATCH_TAGS — “Aliases” renamed under the TAGS family. */
+/** @deprecated Use TOPIC_MATCH_TAGS */
 export const TOPIC_ALIASES = TOPIC_MATCH_TAGS;
 
 /**
- * Focus Tags — journal-level flagged Tags (highlight-critical / reason to focus).
- * Not copied onto evidence. Patterns still require Tags on Notes/inbox items.
+ * Tracker — Flag a Tag to watch it (journal `signalTags`).
+ * Not copied onto evidence. Tags on Notes still drive Patterns.
+ * Home → Tags is the control center to create and watch Trackers.
  */
 export const SIGNAL_TAGS = {
-  heading: "Focus Tags",
-  hint: "Flag Tags you are watching. Flagged Tags highlight as critical focus across Patterns and the tag cloud — they do not auto-copy onto every Note.",
+  heading: "Trackers",
+  hint: "Click a Tag to Flag it as a Tracker. Trackers stay visibly marked across Patterns, the universe, and neighborhoods — they do not auto-copy onto every Note.",
   placeholder: "Flag a tag…",
   add: "Flag",
-  empty: "No focus Tags yet — flag Tags you want to watch.",
-  removeAria: (item: string) => `Unflag focus tag ${item}`,
-  save: "Save focus Tags",
+  empty: "No Trackers yet — open Home → Tags and Flag a Tag.",
+  removeAria: (item: string) => `Unflag tracker ${item}`,
+  save: "Save Trackers",
 } as const;
 
 /** @deprecated Use SIGNAL_TAGS — Event binder Signals removed; Focus Tags replace them. */

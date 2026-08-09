@@ -42,18 +42,18 @@ export function V2TagPatternBadges({
             role="listitem"
             className={
               isFocus
-                ? "inline-flex items-center gap-1 rounded-full bg-rose-950/55 px-2.5 py-1 text-[11px] font-semibold text-rose-200 ring-1 ring-rose-400/55 transition hover:bg-rose-950/70 hover:text-rose-100"
+                ? "inline-flex items-center gap-1 rounded-full border border-amber-400/70 bg-rose-950/65 px-2.5 py-1 text-[11px] font-semibold text-amber-100 ring-2 ring-rose-500/50 transition hover:bg-rose-950/80 hover:text-amber-50"
                 : "inline-flex items-center gap-1 rounded-full bg-red-950/40 px-2.5 py-1 text-[11px] font-medium text-red-300/95 ring-1 ring-red-500/35 transition hover:bg-red-950/55 hover:text-red-200"
             }
             title={
               isFocus
-                ? `#${pattern.tag} — focus Tag (critical). ${pattern.count} notes/emails in scope (${pattern.recentCount} recent).`
+                ? `#${pattern.tag} — Tracker. ${pattern.count} notes/emails in scope (${pattern.recentCount} recent).`
                 : `#${pattern.tag} — ${pattern.count} notes/emails tagged in scope (${pattern.recentCount} recent).`
             }
           >
             <span aria-hidden>⚑</span>
             <span>#{pattern.tag}</span>
-            <span className={`tabular-nums ${isFocus ? "text-rose-300/90" : "text-red-400/80"}`}>
+            <span className={`tabular-nums ${isFocus ? "text-amber-200/85" : "text-red-400/80"}`}>
               ({pattern.count})
             </span>
           </Link>

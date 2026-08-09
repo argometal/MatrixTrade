@@ -19,7 +19,11 @@ import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz"
 import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
-import { V2SignalTagsEditor } from "@/app/argus/v2/components/V2SignalTagsEditor";
+import {
+  V2FlaggableTagChip,
+  focusKeySet,
+  tagIsFlagged,
+} from "@/app/argus/v2/components/V2FlaggableTagChip";
 import {
   V2ChronicleSelectableList,
   chronicleLogIdFromEvidenceId,
@@ -135,6 +139,21 @@ export function V2EventDetailPanel({
     setPendingFiles([]);
     setSaveNote(null);
   }, [selected.id]);
+
+  const eventTagCounts = useMemo(() => {
+    const map = new Map<string, { tag: string; count: number }>();
+    for (const pattern of selected.tagPatterns) {
+      map.set(pattern.tag.toLowerCase(), { tag: pattern.tag, count: pattern.count });
+    }
+    for (const raw of selected.topicTags) {
+      const tag = raw.trim().replace(/\s+/g, " ");
+      if (!tag) continue;
+      const key = tag.toLowerCase();
+      if (!map.has(key)) map.set(key, { tag, count: 1 });
+    }
+    return [...map.values()].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+  }, [selected.tagPatterns, selected.topicTags]);
+  const focusKeys = useMemo(() => focusKeySet(focusTags), [focusTags]);
 
   async function toggleFocusTag(tag: string) {
     const result = await toggleSignalTagAction(tag);
@@ -295,7 +314,7 @@ export function V2EventDetailPanel({
                   <p className="text-xs font-medium text-zinc-300">Add to chronicle</p>
                   <p className="mt-0.5 text-[11px] text-zinc-600">
                     Write and save — entry moves to Chronicle. Tag this note when it should count toward Patterns.
-                    Flag Focus Tags on the Tags tab (what you are watching).
+                    After Save, open Tags and click a Tag to Flag it.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -421,23 +440,28 @@ export function V2EventDetailPanel({
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <div>
-                <p className="text-xs font-medium text-zinc-300">Tags on this Event</p>
+                <p className="text-xs font-medium text-zinc-300">Tags</p>
                 <p className="mt-1 text-[11px] leading-relaxed text-zinc-600">
-                  <span className="text-zinc-400">Note Tags</span> — add on the Note tab when saving; they count toward
-                  Patterns.{" "}
-                  <span className="text-zinc-400">Focus Tags</span> — flag what you are watching (highlight-critical).
-                  Focus Tags are journal-wide; they are not copied onto every note.
+                  Tags come from Notes — they accumulate with repetition.{" "}
+                  <span className="text-zinc-400">Click a Tag</span> to Flag it (shine) and track it across the journal.
+                  Add Tags on the Note tab when you Save.
                 </p>
               </div>
-              {selected.tagPatterns.length > 0 ? (
-                <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
-                    Patterns in this event
-                  </p>
-                  <V2TagPatternBadges patterns={selected.tagPatterns} signalTags={focusTags} />
+              {eventTagCounts.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {eventTagCounts.map((row) => (
+                    <V2FlaggableTagChip
+                      key={row.tag}
+                      tag={row.tag}
+                      count={row.count}
+                      flagged={tagIsFlagged(row.tag, focusKeys)}
+                      onFlaggedChange={(next) => setFocusTags(next)}
+                    />
+                  ))}
                 </div>
-              ) : null}
-              <V2SignalTagsEditor initialTags={focusTags} returnTo={returnTo} />
+              ) : (
+                <p className="text-sm text-zinc-600">No Tags on this Event yet. Add Tags when saving a Note.</p>
+              )}
             </div>
           ) : null}
 

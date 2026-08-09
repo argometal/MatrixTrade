@@ -6,7 +6,7 @@ export type V2TagCloudItem = {
   color: string;
   weight: number;
   href: string;
-  /** Flagged focus Tag — highlight-critical. */
+  /** Flagged Tag — Tracker. */
   isSignal?: boolean;
 };
 
@@ -39,18 +39,18 @@ export function V2TagCloud({ tags }: { tags: V2TagCloudItem[] }) {
           role="listitem"
           className={
             tag.isSignal
-              ? "font-semibold text-rose-300 underline decoration-rose-500/50 underline-offset-2 transition hover:text-rose-200"
+              ? "rounded-sm bg-rose-950/50 px-1 font-semibold text-amber-100 ring-1 ring-amber-400/55 transition hover:bg-rose-950/70 hover:text-amber-50"
               : `font-medium transition hover:underline ${TAG_COLORS[tag.color] ?? "text-zinc-300 hover:text-zinc-100"}`
           }
           style={{ fontSize: tagFontSize(tag.isSignal ? Math.max(tag.weight, 0.85) : tag.weight) }}
           title={
             tag.isSignal
-              ? `${tag.name} — focus Tag (critical). ${tag.count} ${tag.count === 1 ? "use" : "uses"}`
+              ? `${tag.name} — Tracker. ${tag.count} ${tag.count === 1 ? "use" : "uses"}`
               : `${tag.name} — ${tag.count} ${tag.count === 1 ? "use" : "uses"}`
           }
           aria-label={
             tag.isSignal
-              ? `${tag.name}, focus Tag, used ${tag.count} times`
+              ? `${tag.name}, Tracker, used ${tag.count} times`
               : `${tag.name}, used ${tag.count} times`
           }
         >

@@ -186,9 +186,31 @@ function topicTagRollup(
   }
 
   eventEvidenceTags.sort((a, b) => a.name.localeCompare(b.name));
+
+  const tagCounts = new Map<string, { tag: string; count: number }>();
+  function bump(raw: string) {
+    const tag = normalizeEvidenceTag(raw);
+    if (!tag) return;
+    const key = tag.toLowerCase();
+    const row = tagCounts.get(key) ?? { tag, count: 0 };
+    row.count += 1;
+    tagCounts.set(key, row);
+  }
+  for (const log of logs) {
+    for (const raw of log.topics ?? []) bump(raw);
+  }
+  for (const item of inbox) {
+    for (const raw of item.topics ?? []) bump(raw);
+  }
+
+  const evidenceTagCounts = [...tagCounts.values()].sort(
+    (a, b) => b.count - a.count || a.tag.localeCompare(b.tag)
+  );
+
   return {
     tagPatterns: buildTagPatternsForScope(logs, inbox, today),
     eventEvidenceTags,
+    evidenceTagCounts,
   };
 }
 
@@ -203,7 +225,7 @@ function topicRowFilterMeta(
 ) {
   const neighborIds = collectNeighborEntityIds(data, topic, history);
   const nodeCounts = countTopicsAndEventsInScope(data, topic, history);
-  const { tagPatterns } = topicTagRollup(
+  const { tagPatterns, evidenceTagCounts } = topicTagRollup(
     data,
     topic,
     history,
@@ -213,20 +235,6 @@ function topicRowFilterMeta(
     includePrivate,
     today
   );
-
-  const evidenceTags = new Set<string>();
-  for (const log of history) {
-    for (const tag of log.topics) {
-      const key = tag.trim().toLowerCase();
-      if (key) evidenceTags.add(key);
-    }
-  }
-  for (const item of inbox) {
-    for (const tag of item.topics ?? []) {
-      const key = tag.trim().toLowerCase();
-      if (key) evidenceTags.add(key);
-    }
-  }
 
   const linkedOrgIds: string[] = [];
   const linkedProjectIds: string[] = [];
@@ -240,8 +248,9 @@ function topicRowFilterMeta(
   }
 
   return {
-    aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
-    evidenceTags: [...evidenceTags],
+    // Match tags deprecated — browse/search use evidence Tags from notes.
+    aliases: [],
+    evidenceTags: evidenceTagCounts.map((row) => row.tag),
     patternCount: tagPatterns.length,
     eventCount: nodeCounts.eventCount,
     linkedOrgIds,
@@ -325,7 +334,7 @@ export function buildV2TopicDetails(
     const linkedEvents = linkedEventRefs(data, eventIds);
     // Link modal: outbound bags ∪ reverse Event binders (one-way Event→Topic stays visible/healable).
     const linkModalIds = linkModalStructuralIds(data, topic);
-    const { tagPatterns, eventEvidenceTags } = topicTagRollup(
+    const { tagPatterns, eventEvidenceTags, evidenceTagCounts } = topicTagRollup(
       data,
       topic,
       history,
@@ -354,13 +363,14 @@ export function buildV2TopicDetails(
       neighborEntityIds: [...neighborIds],
       linkedEntities,
       linkedEvents,
-      aliases: (topic.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
+      aliases: [],
       lifecycleStatus: topic.lifecycleStatus,
       hasPrivateEvidence: entityHasPrivateEvidence(data, inboxItems, topic.id),
       deleteRequiresAuthenticator: entityDeleteRequiresAuthenticator(topic),
       evidence,
       tagPatterns,
       eventEvidenceTags,
+      evidenceTagCounts,
     };
   });
 }

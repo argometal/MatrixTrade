@@ -8,6 +8,7 @@ import type { V2FocusTagStat, V2TagEvidenceContext, V2TagEvidenceEntity } from "
 import { signalTagKey } from "@/lib/argus/signal-tags";
 import { resolveBubblePositions } from "@/lib/argus/v2/intelligence-viz";
 import { SIGNAL_TAGS } from "@/lib/argus/ux-copy";
+import { V2HomeNeighborhoodViewer } from "./V2HomeNeighborhoodViewer";
 import { V2Timeline } from "./V2Timeline";
 
 type FocusFilter = "all" | "hot" | "stale" | "patterns" | "focus" | "quiet";
@@ -17,8 +18,8 @@ const FILTERS: { id: FocusFilter; label: string; title: string }[] = [
   { id: "hot", label: "Hot", title: "Used in the last 30 days" },
   { id: "patterns", label: "Patterns", title: "Recurring evidence Tags (Pattern floor)" },
   { id: "stale", label: "Stale", title: "No activity in the last 90 days" },
-  { id: "focus", label: "Focus", title: "Flagged Focus Tags only (watchlist)" },
-  { id: "quiet", label: "Quiet Focus", title: "Flagged but never used on evidence" },
+  { id: "focus", label: "Trackers", title: "Flagged Tracker Tags only" },
+  { id: "quiet", label: "Quiet tracker", title: "Flagged Tracker but never used on evidence" },
 ];
 
 function filterRows(rows: V2FocusTagStat[], filter: FocusFilter): V2FocusTagStat[] {
@@ -38,36 +39,76 @@ function filterRows(rows: V2FocusTagStat[], filter: FocusFilter): V2FocusTagStat
   }
 }
 
+function pickDefaultNeighborhoodCenter(evidence: V2TagEvidenceContext | null): V2TagEvidenceEntity | null {
+  if (!evidence) return null;
+  return (
+    evidence.organizations[0] ??
+    evidence.projects[0] ??
+    evidence.topics[0] ??
+    evidence.events[0] ??
+    evidence.people[0] ??
+    null
+  );
+}
+
 function EntityChipList({
   label,
   items,
+  activeId,
+  onSelect,
 }: {
   label: string;
   items: V2TagEvidenceEntity[];
+  activeId?: string | null;
+  onSelect?: (item: V2TagEvidenceEntity) => void;
 }) {
   if (items.length === 0) return null;
   return (
     <div>
       <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">{label}</p>
       <ul className="flex flex-wrap gap-1.5">
-        {items.slice(0, 12).map((item) => (
-          <li key={item.id}>
-            <Link
-              href={item.href}
-              className="inline-flex rounded-lg border border-zinc-800 bg-zinc-950/60 px-2 py-1 text-[11px] text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
-            >
-              {item.name}
-            </Link>
-          </li>
-        ))}
+        {items.slice(0, 12).map((item) => {
+          const selected = activeId === item.id;
+          return (
+            <li key={item.id} className="flex items-center gap-1">
+              {onSelect ? (
+                <button
+                  type="button"
+                  onClick={() => onSelect(item)}
+                  className={`inline-flex rounded-lg border px-2 py-1 text-[11px] ${
+                    selected
+                      ? "border-amber-400/50 bg-amber-950/30 text-amber-100"
+                      : "border-zinc-800 bg-zinc-950/60 text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
+                  }`}
+                  title={`Show neighborhood around ${item.name}`}
+                >
+                  {item.name}
+                </button>
+              ) : (
+                <Link
+                  href={item.href}
+                  className="inline-flex rounded-lg border border-zinc-800 bg-zinc-950/60 px-2 py-1 text-[11px] text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
+                >
+                  {item.name}
+                </Link>
+              )}
+              <Link
+                href={item.href}
+                className="text-[10px] text-zinc-600 hover:text-violet-300"
+                title={`Open ${item.name}`}
+              >
+                →
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
 }
 
 /**
- * Tags exploration workspace — Universe graph is primary navigation.
- * Selection explains why the tag exists via existing evidence (no new metrics).
+ * Tags control center — Universe browse + Flag Trackers + binder neighborhood.
  */
 export function V2FocusTagPortfolio({
   rows,
@@ -86,6 +127,7 @@ export function V2FocusTagPortfolio({
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [focusTags, setFocusTags] = useState(initialFocusTags);
   const [pendingTag, setPendingTag] = useState<string | null>(null);
+  const [neighborhoodCenter, setNeighborhoodCenter] = useState<V2TagEvidenceEntity | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -96,6 +138,13 @@ export function V2FocusTagPortfolio({
     () => new Set(focusTags.map((t) => signalTagKey(t))),
     [focusTags]
   );
+
+  const trackerRows = useMemo(() => {
+    return rows
+      .map((row) => ({ ...row, isFocus: focusKeySet.has(signalTagKey(row.name)) }))
+      .filter((row) => row.isFocus)
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+  }, [rows, focusKeySet]);
 
   const visible = useMemo(() => {
     const withLiveFocus = rows.map((row) => ({
@@ -117,6 +166,16 @@ export function V2FocusTagPortfolio({
   const selectedEvidence: V2TagEvidenceContext | null = selectedKey
     ? evidenceByTag[selectedKey] ?? null
     : null;
+
+  useEffect(() => {
+    if (!selectedName) {
+      setNeighborhoodCenter(null);
+      return;
+    }
+    const key = signalTagKey(selectedName);
+    const evidence = evidenceByTag[key] ?? null;
+    setNeighborhoodCenter(pickDefaultNeighborhoodCenter(evidence));
+  }, [selectedName, evidenceByTag]);
 
   const plotLayout = useMemo(() => {
     const plot = visible.slice(0, 64);
@@ -160,6 +219,54 @@ export function V2FocusTagPortfolio({
 
   return (
     <div className="space-y-4">
+      {/* Trackers strip — Tags + Trackers in one place */}
+      <div className="rounded-xl border border-rose-500/25 bg-rose-950/15 px-3 py-3 sm:px-4">
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-300/90">
+              Trackers
+            </p>
+            <p className="mt-0.5 text-[11px] text-zinc-500">
+              Flagged Tags stay marked as Trackers (⚑). Select any Universe tag that isn’t a Tracker yet, then Flag it.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFilter("focus")}
+            className="text-[11px] font-medium text-rose-300/90 hover:text-rose-200"
+          >
+            View Trackers only →
+          </button>
+        </div>
+        {trackerRows.length === 0 ? (
+          <p className="text-xs text-zinc-600">No Trackers yet — pick a Tag below and Flag it.</p>
+        ) : (
+          <ul className="flex flex-wrap gap-1.5" aria-label="Flagged Trackers">
+            {trackerRows.slice(0, 36).map((row) => (
+              <li key={row.name}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilter("all");
+                    setSelectedName(row.name);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-full border border-amber-400/70 bg-rose-950/60 px-2.5 py-1 text-[11px] font-semibold text-amber-100 ring-1 ring-rose-500/50"
+                  title={`${row.name} — Tracker`}
+                >
+                  <span aria-hidden>⚑</span>
+                  <span>{row.name}</span>
+                  {row.count > 0 ? (
+                    <span className="tabular-nums text-amber-200/70">· {row.count}</span>
+                  ) : (
+                    <span className="text-amber-200/50">quiet</span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex flex-wrap gap-1" role="tablist" aria-label="Filter Tags">
           {FILTERS.map((item) => {
@@ -208,7 +315,7 @@ export function V2FocusTagPortfolio({
             viewBox="0 0 100 100"
             className="w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60 min-h-[min(560px,65vh)] h-[min(560px,65vh)]"
             role="img"
-            aria-label="Tag universe — click a tag to explore its evidence. Recency vertical, recurrence horizontal."
+            aria-label="Tag universe — click a tag to explore evidence or Flag it as a Tracker. Recency vertical, recurrence horizontal."
           >
             <text x="50" y="97" textAnchor="middle" fill="rgb(113, 113, 122)" fontSize="2.8">
               Recurrence (30d) →
@@ -245,14 +352,14 @@ export function V2FocusTagPortfolio({
             ))}
             {plotLayout.map(({ point, row }) => {
               const isSelected = selectedName === row.name;
-              const showLabel = point.r >= 2.4 || isSelected;
+              const showLabel = point.r >= 2.4 || isSelected || row.isFocus;
               return (
                 <g
                   key={row.name}
                   className="cursor-pointer"
                   role="button"
                   tabIndex={0}
-                  aria-label={`${row.name}${row.isFocus ? ", Focus" : ""}${row.isPattern ? ", Pattern" : ""}`}
+                  aria-label={`${row.name}${row.isFocus ? ", Tracker" : ""}${row.isPattern ? ", Pattern" : ""}`}
                   aria-pressed={isSelected}
                   onClick={() => selectTag(row.name)}
                   onKeyDown={(event) => {
@@ -262,30 +369,66 @@ export function V2FocusTagPortfolio({
                     }
                   }}
                 >
+                  {row.isFocus ? (
+                    <circle
+                      cx={point.x}
+                      cy={point.y}
+                      r={(isSelected ? point.r + 0.9 : point.r) + 1.35}
+                      fill="none"
+                      stroke="rgb(251, 191, 36)"
+                      strokeOpacity={0.9}
+                      strokeWidth={0.55}
+                      strokeDasharray="1.1 0.9"
+                      className="pointer-events-none"
+                      aria-hidden
+                    />
+                  ) : null}
                   <circle
                     cx={point.x}
                     cy={point.y}
                     r={isSelected ? point.r + 0.9 : point.r}
-                    fill={row.isFocus ? "rgb(251, 113, 133)" : "rgb(167, 139, 250)"}
-                    fillOpacity={isSelected ? 0.95 : 0.72}
+                    fill={row.isFocus ? "rgb(244, 63, 94)" : "rgb(167, 139, 250)"}
+                    fillOpacity={isSelected || row.isFocus ? 0.95 : 0.72}
                     stroke={
                       isSelected
                         ? "rgb(255, 255, 255)"
-                        : row.isPattern
+                        : row.isFocus
                           ? "rgb(251, 191, 36)"
-                          : "rgb(63, 63, 70)"
+                          : row.isPattern
+                            ? "rgb(251, 191, 36)"
+                            : "rgb(63, 63, 70)"
                     }
-                    strokeWidth={isSelected ? 0.85 : row.isPattern ? 0.55 : 0.25}
+                    strokeWidth={isSelected ? 0.85 : row.isFocus || row.isPattern ? 0.6 : 0.25}
                     className="transition hover:brightness-125"
                   />
+                  {row.isFocus ? (
+                    <text
+                      x={point.x}
+                      y={point.y + 0.85}
+                      textAnchor="middle"
+                      fill="rgb(254, 243, 199)"
+                      fontSize={Math.max(2.4, point.r * 0.95)}
+                      fontWeight={700}
+                      pointerEvents="none"
+                      aria-hidden
+                    >
+                      ⚑
+                    </text>
+                  ) : null}
                   {showLabel ? (
                     <text
                       x={point.x}
                       y={point.y + point.r + 2.2}
                       textAnchor="middle"
-                      fill={isSelected ? "rgb(244, 244, 245)" : "rgb(161, 161, 170)"}
-                      fontSize={isSelected ? 2.6 : 2.2}
-                      fontWeight={isSelected ? 600 : 500}
+                      fill={
+                        isSelected
+                          ? "rgb(244, 244, 245)"
+                          : row.isFocus
+                            ? "rgb(254, 205, 211)"
+                            : "rgb(161, 161, 170)"
+                      }
+                      fontSize={isSelected || row.isFocus ? 2.6 : 2.2}
+                      fontWeight={isSelected || row.isFocus ? 600 : 500}
                       pointerEvents="none"
                     >
                       {row.name.length > 16 ? `${row.name.slice(0, 14)}…` : row.name}
@@ -293,9 +436,9 @@ export function V2FocusTagPortfolio({
                   ) : null}
                   <title>
                     {row.name}
-                    {row.isFocus ? " · Focus" : ""}
+                    {row.isFocus ? " · Tracker" : ""}
                     {row.isPattern ? " · Pattern" : ""}
-                    {" — click to explore evidence"}
+                    {" — click to explore; Flag below if not a tracker yet"}
                   </title>
                 </g>
               );
@@ -303,17 +446,18 @@ export function V2FocusTagPortfolio({
           </svg>
         )}
         <p className="mt-2 text-[10px] text-zinc-500">
-          Click a tag to explore evidence · Rose = Focus watchlist · Gold ring = Pattern · Axes are evidence
-          windows, not scores
+          Click a tag to inspect · ⚑ / amber ring = Tracker · Gold ring (unflagged) = Pattern · Axes are
+          evidence windows, not scores
         </p>
       </div>
 
-      {/* Priority 2–3 — Selection transforms the page into evidence explanation. */}
+      {/* Priority 2–3 — Selection: Flag control + evidence + neighborhood */}
       {!selected ? (
         <div className="rounded-xl border border-dashed border-zinc-800/90 bg-zinc-950/40 px-4 py-6 text-center">
           <p className="text-sm font-medium text-zinc-400">Select a tag in the Universe</p>
           <p className="mt-1 text-xs text-zinc-600">
-            The workspace will show the evidence that created it — notes, email, and linked binders.
+            See the evidence that created it. If it isn’t a Tracker yet, Flag it as one. Binders open a
+            neighborhood view.
           </p>
         </div>
       ) : (
@@ -321,7 +465,7 @@ export function V2FocusTagPortfolio({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-400/90">
-                Why this tag exists
+                Tags · Tracker control
               </p>
               <h3 className="mt-0.5 text-lg font-semibold text-zinc-50">{selected.name}</h3>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -331,10 +475,14 @@ export function V2FocusTagPortfolio({
                   </span>
                 ) : null}
                 {selectedIsFocus ? (
-                  <span className="rounded bg-rose-950/50 px-1.5 py-0.5 text-[10px] font-medium text-rose-200 ring-1 ring-rose-500/30">
-                    Focus
+                  <span className="inline-flex items-center gap-1 rounded bg-rose-950/60 px-1.5 py-0.5 text-[10px] font-semibold text-amber-100 ring-1 ring-amber-400/50">
+                    <span aria-hidden>⚑</span> Tracker
                   </span>
-                ) : null}
+                ) : (
+                  <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] text-zinc-500 ring-1 ring-zinc-700">
+                    Not a Tracker yet
+                  </span>
+                )}
                 {selected.lastSeen ? (
                   <span className="rounded bg-zinc-900 px-1.5 py-0.5 text-[10px] text-zinc-500">
                     Last seen {selected.lastSeen}
@@ -351,18 +499,18 @@ export function V2FocusTagPortfolio({
                 type="button"
                 onClick={() => toggleFocus(selected.name)}
                 disabled={focusBusy}
-                className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-medium disabled:opacity-40 ${
+                className={`rounded-lg border px-3 py-1.5 text-[11px] font-semibold disabled:opacity-40 ${
                   selectedIsFocus
                     ? "border-zinc-700 text-zinc-400 hover:border-rose-500/40 hover:text-rose-200"
-                    : "border-rose-500/40 bg-rose-950/25 text-rose-200 hover:bg-rose-950/40"
+                    : "border-amber-400/60 bg-rose-950/40 text-amber-100 shadow-[0_0_14px_rgba(244,63,94,0.25)] hover:bg-rose-950/55"
                 }`}
                 title={
                   selectedIsFocus
                     ? SIGNAL_TAGS.removeAria(selected.name)
-                    : `Flag ${selected.name} as Focus Tag`
+                    : `Flag ${selected.name} as Tracker`
                 }
               >
-                {focusBusy ? "…" : selectedIsFocus ? "Unflag Focus" : "Flag Focus"}
+                {focusBusy ? "…" : selectedIsFocus ? "Unflag tracker" : "⚑ Flag Tracker"}
               </button>
               <Link
                 href={selectedEvidence?.openHref ?? selected.href}
@@ -389,19 +537,44 @@ export function V2FocusTagPortfolio({
                 <V2Timeline entries={selectedEvidence.evidence} compact />
               ) : (
                 <p className="rounded-xl border border-dashed border-zinc-800 px-3 py-4 text-xs text-zinc-500">
-                  No notes or email carry this tag yet. Flag Focus only if you want to watch for it.
+                  No notes or email carry this tag yet. You can still Flag it as a quiet Tracker.
                 </p>
               )}
             </div>
             <div className="space-y-3">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
-                Binders linked on that evidence
+                Binders · click to show neighborhood
               </p>
-              <EntityChipList label="Organizations" items={selectedEvidence?.organizations ?? []} />
-              <EntityChipList label="Projects" items={selectedEvidence?.projects ?? []} />
-              <EntityChipList label="People" items={selectedEvidence?.people ?? []} />
-              <EntityChipList label="Topics" items={selectedEvidence?.topics ?? []} />
-              <EntityChipList label="Events" items={selectedEvidence?.events ?? []} />
+              <EntityChipList
+                label="Organizations"
+                items={selectedEvidence?.organizations ?? []}
+                activeId={neighborhoodCenter?.id}
+                onSelect={setNeighborhoodCenter}
+              />
+              <EntityChipList
+                label="Projects"
+                items={selectedEvidence?.projects ?? []}
+                activeId={neighborhoodCenter?.id}
+                onSelect={setNeighborhoodCenter}
+              />
+              <EntityChipList
+                label="People"
+                items={selectedEvidence?.people ?? []}
+                activeId={neighborhoodCenter?.id}
+                onSelect={setNeighborhoodCenter}
+              />
+              <EntityChipList
+                label="Topics"
+                items={selectedEvidence?.topics ?? []}
+                activeId={neighborhoodCenter?.id}
+                onSelect={setNeighborhoodCenter}
+              />
+              <EntityChipList
+                label="Events"
+                items={selectedEvidence?.events ?? []}
+                activeId={neighborhoodCenter?.id}
+                onSelect={setNeighborhoodCenter}
+              />
               {!selectedEvidence ||
               (selectedEvidence.organizations.length === 0 &&
                 selectedEvidence.projects.length === 0 &&
@@ -413,7 +586,16 @@ export function V2FocusTagPortfolio({
             </div>
           </div>
 
-          {/* Contextual roster — filtered peers, not a permanent ranked dashboard. */}
+          {neighborhoodCenter ? (
+            <div className="border-t border-zinc-800/80 pt-4">
+              <V2HomeNeighborhoodViewer
+                entityId={neighborhoodCenter.id}
+                entityName={neighborhoodCenter.name}
+                variant="inline"
+              />
+            </div>
+          ) : null}
+
           {visible.length > 1 ? (
             <div className="border-t border-zinc-800/80 pt-3">
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
@@ -428,7 +610,11 @@ export function V2FocusTagPortfolio({
                       <button
                         type="button"
                         onClick={() => selectTag(row.name)}
-                        className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-2 py-1 text-[11px] text-zinc-400 hover:border-violet-500/40 hover:text-zinc-200"
+                        className={`rounded-lg border px-2 py-1 text-[11px] ${
+                          row.isFocus
+                            ? "border-amber-400/40 bg-rose-950/30 text-amber-100"
+                            : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-violet-500/40 hover:text-zinc-200"
+                        }`}
                       >
                         {row.isFocus ? "⚑ " : ""}
                         {row.name}

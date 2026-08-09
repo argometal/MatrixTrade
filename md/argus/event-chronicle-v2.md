@@ -24,8 +24,8 @@ Result: text stayed in Record after save, Register opened another window, Chroni
 ```
 Event entity     = anchor (name, date, shell notes only)
 Note tab         = composer (textarea + files) — always empty after Save
-Save             = append Note (`Log`) linked to event — does **not** stamp Focus Tags onto the Note
-Focus Tags       = journal `signalTags` (Home → Tags) — not on the Event binder
+Save             = append Note (`Log`) linked to event — does **not** stamp Trackers onto the Note
+Trackers         = journal `signalTags` (Home → Tags · Flag a Tag) — not on the Event binder
 Chronicle tab    = buildEntityEvidenceStream (notes, emails, files, photos) + Delete on Notes
 ```
 
@@ -33,9 +33,9 @@ Chronicle tab    = buildEntityEvidenceStream (notes, emails, files, photos) + De
 
 1. **Append by default** — Save creates a `Log` with `entityIds: [eventId]`, dated to the event anchor date. No overwrite of prior entries.
 2. **Composer clears** — After Save, textarea resets; next write is a new chronicle line.
-3. **Focus Tags** — Flagged on the journal (`ArgusData.signalTags`). Highlight-critical across Patterns / cloud — **not** copied onto every Note.
+3. **Trackers** — Flag a Tag on the journal (`ArgusData.signalTags`). Visibly marked (⚑) across Patterns / universe / neighborhoods — **not** copied onto every Note. Event Tags tab: click a Tag chip to Flag/Unflag.
 4. **No Register on event page** — Link email / inbox still adds evidence to Chronicle. Attachments arrive via Note composer, linked emails, or inbox flow.
-5. **Migration** — Legacy text in `entity.notes` is converted once to the first chronicle Note; notes reduced to `Kind: Event` shell. Former Event binder Signals migrate into `signalTags`.
+5. **Migration** — Legacy text in `entity.notes` is converted once to the first chronicle Note; notes reduced to `Kind: Event` shell. Former Event binder Signals migrate into `signalTags` (Trackers).
 6. **Delete** — Chronicle Notes can be soft-deleted from the Event/Topic/Network chronicle UI (delete auth gate applies).
 
 ### Immutability
@@ -49,7 +49,7 @@ Prefer append for corrections (new Note). Soft-delete is available when a Note m
 | Field | Role |
 |-------|------|
 | `Entity.notes` | `Kind: Event\n---` only (metadata shell) |
-| `ArgusData.signalTags` | Focus Tags (journal watchlist; migrated from legacy Event Signals) |
+| `ArgusData.signalTags` | Trackers (Flag a Tag; migrated from legacy Event Signals) |
 | `Log` (linked) | Each composer Save = one chronicle entry |
 | Inbox (linked) | Email evidence in Chronicle |
 
@@ -57,7 +57,8 @@ Prefer append for corrections (new Note). Soft-delete is available when a Note m
 
 ## UI
 
-- **Note** tab: composer + **Save** at top (Focus Tags edited on Home → Tags)
+- **Note** tab: composer + **Save** at top (Trackers: click Tags on Event Tags tab, or Home → Tags)
+- **Tags** tab: evidence Tags + click-to-Flag Tracker (no separate Match-tags / Focus list editor)
 - **Chronicle**: chronological evidence stream + Delete on Notes
 - **Metrics**: Notes / Emails / Photos (unique sources; attachments not double-counted in evidence totals)
 - Footer **Register evidence** removed from event detail

@@ -50,15 +50,17 @@ Evidence item types in filters: **Email · Notes · Files · Photos**.
 
 ---
 
-## Focus Tags vs Note Tags
+## Trackers vs Note Tags
 
-| | Focus Tags (`signalTags`) | Note Tags |
+| | Tracker (`signalTags`) | Note Tags |
 |--|---------------|-----------|
 | Stored on | Journal root | `Log.topics` / inbox `topics` |
-| Purpose | Flag what to watch (highlight-critical) | Marks on that evidence row |
-| Patterns | Highlight when a Pattern matches a Focus Tag | **Yes** — recurrence from evidence Tags |
+| Purpose | Flag a Tag to watch it (⚑ Tracker) | Marks on that evidence row |
+| Patterns | Tracker highlight when a Pattern matches a Flagged Tag | **Yes** — recurrence from evidence Tags |
+| Where to manage | Home → Intelligence → Tags (control center) · click Tag chips on Topic/Event Tags | Note / email Tags fields |
 
-**Retired:** Event binder Signals on `Entity.linkedTags`. **Bug fixed (2026-08-07):** chronicle Save does not stamp focus/signal labels onto every Note.
+**Flag** = action (Flag / Unflag). **Tracker** = role after Flag.  
+**Retired:** Event binder Signals on `Entity.linkedTags`; “Focus Tags” / Match tags UI. Chronicle Save does **not** stamp Trackers onto every Note.
 
 ---
 
