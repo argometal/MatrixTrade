@@ -139,7 +139,7 @@ export function V2FocusTagPortfolio({
     [focusTags]
   );
 
-  const markerRows = useMemo(() => {
+  const trackerRows = useMemo(() => {
     return rows
       .map((row) => ({ ...row, isFocus: focusKeySet.has(signalTagKey(row.name)) }))
       .filter((row) => row.isFocus)
@@ -238,11 +238,11 @@ export function V2FocusTagPortfolio({
             View Trackers only →
           </button>
         </div>
-        {markerRows.length === 0 ? (
+        {trackerRows.length === 0 ? (
           <p className="text-xs text-zinc-600">No Trackers yet — pick a Tag below and Flag it.</p>
         ) : (
           <ul className="flex flex-wrap gap-1.5" aria-label="Flagged Trackers">
-            {markerRows.slice(0, 36).map((row) => (
+            {trackerRows.slice(0, 36).map((row) => (
               <li key={row.name}>
                 <button
                   type="button"
