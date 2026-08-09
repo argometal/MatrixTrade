@@ -81,7 +81,16 @@ export interface V2TopicDetail {
   hasPrivateEvidence: boolean;
   deleteRequiresAuthenticator: boolean;
   evidence: V2EvidenceStreamItem[];
+  /** Patterns from topic evidence ∪ linked-event evidence. */
   tagPatterns: TagPattern[];
+  /** Note/email tags grouped by linked Event (read-only rollup). */
+  eventEvidenceTags: Array<{
+    id: string;
+    name: string;
+    href: string;
+    dateLabel?: string;
+    tags: string[];
+  }>;
 }
 
 export interface V2TopicTagChip {

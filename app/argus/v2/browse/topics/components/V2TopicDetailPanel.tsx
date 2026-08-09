@@ -446,16 +446,79 @@ export function V2TopicDetailPanel({
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <p className="text-[11px] leading-relaxed text-zinc-600">
-                <span className="text-zinc-400">Match tags</span> help inbox/search find this Topic. They are not Tags on
-                Notes and do not create Patterns. Tag evidence (emails/notes) separately when something should count toward
-                Patterns. Flag Focus Tags on Home → Tags when you want highlight-critical watch items.
+                <span className="text-zinc-400">Patterns</span> and tags roll up from this Topic’s evidence and linked
+                Events. <span className="text-zinc-400">Match tags</span> only help inbox/search find this Topic — they
+                are not Note Tags. Flag Focus Tags on Home → Tags (or an Event → Tags).
               </p>
-              <V2TopicAliasEditor
-                topicId={selected.id}
-                topicName={selected.name}
-                initialAliases={selected.aliases}
-                returnTo={returnTo}
-              />
+
+              {selected.tagPatterns.length > 0 ? (
+                <div>
+                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+                    Patterns (topic + linked events)
+                  </p>
+                  <V2TagPatternBadges
+                    patterns={selected.tagPatterns}
+                    signalTags={signalTags}
+                    tagHref={(tag) =>
+                      `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&selected=${selected.id}`
+                    }
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-zinc-600">
+                  No recurring Patterns yet. Tag notes on linked Events (or on this Topic’s evidence) when they should
+                  count.
+                </p>
+              )}
+
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+                  From linked Events
+                </p>
+                {selected.eventEvidenceTags.length > 0 ? (
+                  <ul className="space-y-3">
+                    {selected.eventEvidenceTags.map((event) => (
+                      <li key={event.id} className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-3 py-2.5">
+                        <div className="mb-2 flex flex-wrap items-baseline gap-2">
+                          <Link
+                            href={event.href}
+                            className="text-sm font-medium text-rose-100 hover:text-rose-50"
+                          >
+                            📅 {event.name}
+                          </Link>
+                          {event.dateLabel ? (
+                            <span className="text-[11px] text-zinc-600">{event.dateLabel}</span>
+                          ) : null}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {event.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="rounded-full border border-zinc-700/80 bg-zinc-950/50 px-2 py-0.5 text-[11px] text-zinc-300"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-zinc-600">
+                    No Note Tags on linked Events yet. Open an Event → Note, add Tags, Save.
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">Match tags</p>
+                <V2TopicAliasEditor
+                  topicId={selected.id}
+                  topicName={selected.name}
+                  initialAliases={selected.aliases}
+                  returnTo={returnTo}
+                />
+              </div>
             </div>
           ) : null}
         </V2PrivateEvidenceGate>

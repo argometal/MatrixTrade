@@ -134,6 +134,7 @@ const detail: V2TopicDetail = {
   deleteRequiresAuthenticator: false,
   evidence: [],
   tagPatterns: [],
+  eventEvidenceTags: [],
 };
 
 const cards = buildV2TopicBrowseCards([linkedRow, emptyRow], [detail]);
