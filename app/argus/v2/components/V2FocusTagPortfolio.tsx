@@ -282,13 +282,13 @@ export function V2FocusTagPortfolio({
       {/* Priority 1 — Universe is the workspace (Treemap-class height). */}
       <div>
         {plotLayout.length === 0 ? (
-          <div className="flex min-h-[min(560px,65vh)] items-center justify-center rounded-xl border border-dashed border-zinc-800 text-sm text-zinc-500">
+          <div className="flex min-h-[min(640px,72vh)] items-center justify-center rounded-xl border border-dashed border-zinc-800 text-sm text-zinc-500">
             No tags match this filter. Clear search or switch filter.
           </div>
         ) : (
           <svg
             viewBox="0 0 100 100"
-            className="w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60 min-h-[min(560px,65vh)] h-[min(560px,65vh)]"
+            className="w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60 min-h-[min(640px,72vh)] h-[min(640px,72vh)]"
             role="img"
             aria-label="Tag universe — click a tag to explore evidence or Flag it as a Tracker. Recency vertical, recurrence horizontal."
           >
