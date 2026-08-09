@@ -40,11 +40,10 @@ const TABS: { id: V2InboxTab; label: string; hint?: string }[] = [
   { id: "all", label: "All" },
   { id: "unread", label: "Orphans", hint: "Unlinked — needs attention" },
   { id: "in_progress", label: "Linked", hint: "Wired to entities" },
-  { id: "archived", label: "Archived", hint: "Triage done" },
   {
-    id: "processed",
-    label: "Converted",
-    hint: "Legacy — email turned into a journal note",
+    id: "archived",
+    label: "Archived",
+    hint: "Triage done — includes legacy email→journal items (open the note)",
   },
 ];
 
@@ -276,13 +275,7 @@ export function V2InboxShell({
     replaceInboxParams((params) => {
       // Homologated URL labels; parseV2InboxTab keeps legacy ids.
       const pretty =
-        next === "unread"
-          ? "orphans"
-          : next === "in_progress"
-            ? "linked"
-            : next === "processed"
-              ? "converted"
-              : next;
+        next === "unread" ? "orphans" : next === "in_progress" ? "linked" : next;
       if (pretty === "all") params.delete("tab");
       else params.set("tab", pretty);
     });

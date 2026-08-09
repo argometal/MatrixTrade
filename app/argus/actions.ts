@@ -588,6 +588,10 @@ function parseInboxTriagePatch(formData: FormData) {
   return patch;
 }
 
+/**
+ * @deprecated Prefer Link + Archive (+ Event Note). Kept so legacy callers never
+ * leave a dead end — always redirects to the created journal note.
+ */
 export async function convertInboxAction(formData: FormData): Promise<void> {
   const inboxId = String(formData.get("inboxId") ?? "");
   const entityIds = await resolveEntityIds(formData);
@@ -607,8 +611,7 @@ export async function convertInboxAction(formData: FormData): Promise<void> {
   revalidateArgus();
   revalidatePath(`/argus/inbox/${inboxId}`);
   revalidatePath("/argus/v2/inbox");
-  const returnTo = String(formData.get("returnTo") ?? "");
-  if (returnTo.startsWith("/argus/")) redirect(returnTo);
+  // Always land on the note — never leave the user on a Converted graveyard tab.
   redirect(`/argus/logs/${log.id}`);
 }
 

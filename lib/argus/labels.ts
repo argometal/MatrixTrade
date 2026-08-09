@@ -38,7 +38,8 @@ export const INBOX_SOURCES: InboxSource[] = ["manual", "api", "email", "file"];
 export const INBOX_STATUS_LABELS: Record<InboxStatus, string> = {
   pending: "New",
   linked: "Linked",
-  converted: "Done",
+  /** Legacy email→journal — browse under Archived; open the note. */
+  converted: "Journal",
   archived: "Archived",
 };
 

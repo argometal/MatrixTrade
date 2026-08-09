@@ -38,7 +38,7 @@ Receive → Register → Link → Retrieve → Deliver
 |-----|---------|
 | Orphans | Unlinked evidence — needs attention (homologated with Topics/Events Orphans) |
 | Linked | Entity links exist; may still need Tags or Archive |
-| Converted | Legacy process graveyard — excluded from alert counts |
+| Converted | **Deprecated** — folded into Archived as Journal; open the note (`convertedLogId`). Prefer Link + Archive. |
 | Archived | Triage finished — excluded from alert counts |
 
 Alert badges (sidebar, top bar) count only active triage: Orphans + Linked inbox, follow-ups due within 3 days (or overdue up to 30 days), and register entries without entity or topic classification.

@@ -1,20 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import type { Entity, InboxItem, Log } from "@/lib/argus/types";
 import { referenceDisplayLabel, entityDetailHref } from "@/lib/argus/reference-types";
-import { INBOX_STATUS_LABELS } from "@/lib/argus/labels";
 import { INBOX, TESTING } from "@/lib/argus/ux-copy";
 import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
-import { CaptureSheet } from "./CaptureSheet";
+import { inboxStatusDisplay } from "@/lib/argus/v2/inbox-loaders";
 import type { EntityPickerBuckets } from "./ReferencePickerModal";
 import type { TagBuckets } from "./TagPickerModal";
 import { Card } from "./ui";
 import {
   archiveInboxAction,
-  convertInboxAction,
   deleteInboxAction,
   linkInboxAction,
   setInboxPrivateAction,
@@ -26,9 +24,12 @@ interface InboxTriagePanelProps {
   item: InboxItem;
   linkedEntities: Entity[];
   buckets: EntityPickerBuckets;
+  /** @deprecated Convert UI removed — kept for call-site compat. */
   tagBuckets: TagBuckets;
   convertedLog?: Log;
+  /** @deprecated Convert UI removed — kept for call-site compat. */
   defaultTitle: string;
+  /** @deprecated Convert UI removed — kept for call-site compat. */
   defaultBody: string;
 }
 
@@ -42,16 +43,12 @@ export function InboxTriagePanel({
   item,
   linkedEntities,
   buckets,
-  tagBuckets,
   convertedLog,
-  defaultTitle,
-  defaultBody,
 }: InboxTriagePanelProps) {
   const { openLinkModal } = useArgusAdd();
-  const [showConvert, setShowConvert] = useState(false);
 
   const canTriage = item.status === "pending" || item.status === "linked";
-  const statusLabel = INBOX_STATUS_LABELS[item.status];
+  const statusLabel = inboxStatusDisplay(item.status).label;
   const inboxBuckets = useMemo(() => filterEntityPickerBuckets(buckets, "inbox"), [buckets]);
 
   async function persistLinks(ids: string[]) {
@@ -90,13 +87,6 @@ export function InboxTriagePanel({
               <button type="button" onClick={openLinkPicker} className={compactActionClass(true)}>
                 {INBOX.linkReference}
               </button>
-              <button
-                type="button"
-                onClick={() => setShowConvert((open) => !open)}
-                className={compactActionClass()}
-              >
-                {INBOX.convertRecord}
-              </button>
               <form action={setInboxPrivateAction} className="inline">
                 <input type="hidden" name="inboxId" value={item.id} />
                 <input type="hidden" name="private" value={item.private ? "false" : "true"} />
@@ -121,26 +111,6 @@ export function InboxTriagePanel({
             </div>
           </Card>
 
-          {showConvert ? (
-            <div className="mb-4">
-              <p className="mb-2 text-sm font-medium text-zinc-200">{INBOX.convertHeading}</p>
-              <p className="mb-3 text-xs text-zinc-500">{INBOX.convertHint}</p>
-              <CaptureSheet
-                open
-                action={convertInboxAction}
-                buckets={buckets}
-                tagBuckets={tagBuckets}
-                mode="embedded"
-                onClose={() => setShowConvert(false)}
-                initial={{
-                  title: defaultTitle,
-                  body: defaultBody,
-                  inboxId: item.id,
-                  entityIds: item.linkedEntityIds ?? [],
-                }}
-              />
-            </div>
-          ) : null}
         </>
       ) : null}
 
@@ -160,14 +130,27 @@ export function InboxTriagePanel({
           </ul>
         )}
 
-        {!canTriage && item.status === "converted" && convertedLog && (
-          <p className="mt-4 text-sm text-zinc-400">
-            Converted to{" "}
-            <Link href={`/argus/logs/${convertedLog.id}`} className="text-teal-500 underline">
-              {convertedLog.title}
+        {!canTriage && item.status === "converted" && convertedLog ? (
+          <div className="mt-4 rounded-xl border border-violet-500/25 bg-violet-950/20 px-3 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-300/90">
+              Finished as journal note
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              Convert-to-record is deprecated. Open the note — this email is not a dead end.
+            </p>
+            <Link
+              href={`/argus/logs/${convertedLog.id}`}
+              className="mt-2 inline-flex rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
+            >
+              Open note →
             </Link>
+          </div>
+        ) : null}
+        {!canTriage && item.status === "converted" && !convertedLog ? (
+          <p className="mt-4 text-sm text-zinc-500">
+            Legacy converted email — journal note missing. Prefer Archive + Event Note going forward.
           </p>
-        )}
+        ) : null}
         {!canTriage && item.status === "archived" && (
           <p className="mt-4 text-sm text-zinc-500">{INBOX.noActions}</p>
         )}

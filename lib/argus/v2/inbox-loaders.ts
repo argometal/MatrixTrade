@@ -14,7 +14,7 @@ import {
   type InboxTopicContext,
 } from "./topic-signals";
 
-export type V2InboxTab = "all" | "unread" | "in_progress" | "processed" | "archived";
+export type V2InboxTab = "all" | "unread" | "in_progress" | "archived";
 
 export interface V2InboxTag {
   id: string;
@@ -78,7 +78,11 @@ const STATUS_UI: Record<
   /** Orphans ≈ Topics Empty / Events Orphans — unlinked evidence needing attention. */
   pending: { tab: "unread", label: "Orphans", tone: "violet" },
   linked: { tab: "in_progress", label: "Linked", tone: "amber" },
-  converted: { tab: "processed", label: "Converted", tone: "emerald" },
+  /**
+   * Legacy email→journal. Folded into Archived for browse — open the journal note via
+   * `convertedLogId` (never a dead-end tab).
+   */
+  converted: { tab: "archived", label: "Journal", tone: "emerald" },
   archived: { tab: "archived", label: "Archived", tone: "zinc" },
 };
 
@@ -219,8 +223,8 @@ export function buildV2InboxTabCounts(rows: V2InboxRow[]) {
     all: rows.length,
     unread: rows.filter((r) => r.status === "pending").length,
     in_progress: rows.filter((r) => r.status === "linked").length,
-    processed: rows.filter((r) => r.status === "converted").length,
-    archived: rows.filter((r) => r.status === "archived").length,
+    /** Archived + legacy converted (email→journal). */
+    archived: rows.filter((r) => r.status === "archived" || r.status === "converted").length,
   };
 }
 
@@ -228,8 +232,9 @@ export function filterV2InboxRows(rows: V2InboxRow[], tab: V2InboxTab, filters: 
   let result = rows;
   if (tab === "unread") result = result.filter((r) => r.status === "pending");
   else if (tab === "in_progress") result = result.filter((r) => r.status === "linked");
-  else if (tab === "processed") result = result.filter((r) => r.status === "converted");
-  else if (tab === "archived") result = result.filter((r) => r.status === "archived");
+  else if (tab === "archived") {
+    result = result.filter((r) => r.status === "archived" || r.status === "converted");
+  }
 
   if (filters.source) result = result.filter((row) => row.source === filters.source);
   if (filters.sender) result = result.filter((row) => row.senderKey === filters.sender);
@@ -346,8 +351,15 @@ export function parseV2InboxTab(value: string | undefined): V2InboxTab {
     return "unread";
   }
   if (value === "in_progress" || value === "linked") return "in_progress";
-  if (value === "processed" || value === "converted" || value === "done") return "processed";
-  if (value === "archived") return "archived";
+  // Converted / Done / processed were a separate tab — fold into Archived.
+  if (
+    value === "archived" ||
+    value === "processed" ||
+    value === "converted" ||
+    value === "done"
+  ) {
+    return "archived";
+  }
   return "all";
 }
 

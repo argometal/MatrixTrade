@@ -358,7 +358,7 @@ export function V2InboxDetailPanel({
               className="block rounded-lg px-3 py-2 text-sm text-violet-400 hover:bg-zinc-800"
               onClick={() => setMenuOpen(false)}
             >
-              View record
+              Open journal note
             </Link>
           ) : null}
           <Link
@@ -381,10 +381,18 @@ export function V2InboxDetailPanel({
       </p>
 
       {convertedLog ? (
-        <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
-          <p className="text-[11px] uppercase tracking-wide text-zinc-600">Converted to record</p>
-          <Link href={`/argus/logs/${convertedLog.id}`} className="text-sm text-violet-400 hover:text-violet-300">
-            {convertedLog.title}
+        <div className="rounded-xl border border-violet-500/25 bg-violet-950/20 px-3 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-300/90">
+            Finished as journal note
+          </p>
+          <p className="mt-1 text-xs text-zinc-500">
+            Convert-to-record is deprecated. Continue in the note — not a dead end.
+          </p>
+          <Link
+            href={`/argus/logs/${convertedLog.id}`}
+            className="mt-2 inline-flex text-sm font-semibold text-violet-300 hover:text-violet-200"
+          >
+            {convertedLog.title} →
           </Link>
         </div>
       ) : null}
@@ -591,6 +599,22 @@ export function V2InboxDetailPanel({
         </div>
       ) : null}
       <div className="shrink-0 border-b border-zinc-800/80 px-5 py-4">
+        {convertedLog ? (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-500/30 bg-violet-950/25 px-3 py-2.5">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-300/90">
+                Journal note (legacy convert)
+              </p>
+              <p className="truncate text-xs text-zinc-400">{convertedLog.title}</p>
+            </div>
+            <Link
+              href={`/argus/logs/${convertedLog.id}`}
+              className="shrink-0 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
+            >
+              Open note →
+            </Link>
+          </div>
+        ) : null}
         <V2DetailCompactHeader
           mobileDetail={mobileDetail}
           compact={compactChrome}
@@ -605,6 +629,13 @@ export function V2InboxDetailPanel({
               >
                 Connect
               </button>
+            ) : convertedLog ? (
+              <Link
+                href={`/argus/logs/${convertedLog.id}`}
+                className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-2.5 py-1 text-[11px] font-semibold text-violet-300"
+              >
+                Note →
+              </Link>
             ) : undefined
           }
           expanded={

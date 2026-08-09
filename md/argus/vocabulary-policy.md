@@ -57,7 +57,7 @@ Same attention vocabulary across binders and intake:
 |---------|---------|----------------|-------------|
 | **Topics** | Orphans — no evidence and no structural links | Quiet (linked or stale) · Active (recent evidence) | Archived |
 | **Events** | Orphans — no Topic/Org/Project/Person neighbors | Linked | Archived |
-| **Inbox** | Orphans — unlinked email (`pending`) | Linked | Archived (Converted = legacy) |
+| **Inbox** | Orphans — unlinked email (`pending`) | Linked | Archived (legacy Converted folded here as Journal → open note) |
 
 Events default to **latest first** with a Show more page; Upcoming/Past is a secondary time cut (`?when=`).
 

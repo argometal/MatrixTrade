@@ -13,9 +13,8 @@ import {
 } from "@/lib/argus/email-view";
 import { HOME_INBOX_ACTIONS, INBOX, TESTING } from "@/lib/argus/ux-copy";
 import { filterEntityPickerBuckets } from "@/lib/argus/link-hierarchy";
-import { convertInboxAction, deleteInboxAction, linkInboxAction, setInboxPrivateAction, type CreatedEntityResult } from "@/app/argus/actions";
+import { deleteInboxAction, linkInboxAction, setInboxPrivateAction, type CreatedEntityResult } from "@/app/argus/actions";
 import { ArgusDeleteForm } from "./ArgusDeleteForm";
-import { CaptureSheet } from "./CaptureSheet";
 import { InboxAttachmentList } from "./InboxAttachmentList";
 import type { EntityPickerBuckets } from "./ReferencePickerModal";
 import type { TagBuckets } from "./TagPickerModal";
@@ -46,17 +45,17 @@ export function HomeInboxCard({
   attachments,
   linkedEntities,
   buckets,
-  tagBuckets,
+  tagBuckets: _tagBuckets,
 }: {
   item: InboxItem;
   view: EmailViewModel;
   attachments: AttachmentViewModel[];
   linkedEntities: Entity[];
   buckets: EntityPickerBuckets;
+  /** @deprecated Convert UI removed — kept for call-site compat. */
   tagBuckets: TagBuckets;
 }) {
   const { openLinkModal } = useArgusAdd();
-  const [showConvert, setShowConvert] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
 
   const canTriage = item.status === "pending" || item.status === "linked";
@@ -149,13 +148,6 @@ export function HomeInboxCard({
         <button type="button" onClick={openLinkPicker} className={primaryActionClass()}>
           {INBOX.linkReference}
         </button>
-        <button
-          type="button"
-          onClick={() => setShowConvert((open) => !open)}
-          className={actionButtonClass(true)}
-        >
-          {INBOX.convertRecord}
-        </button>
         {primaryAttachment ? (
           <Link href={attachmentDownloadUrl(primaryAttachment.id)} className={actionButtonClass(true)}>
             {HOME_INBOX_ACTIONS.downloadOriginal}
@@ -218,24 +210,6 @@ export function HomeInboxCard({
           </Link>
         )}
 
-        {canTriage && showConvert ? (
-          <div className="border-t border-zinc-800/80 px-4 py-4">
-            <CaptureSheet
-              open
-              action={convertInboxAction}
-              buckets={buckets}
-              tagBuckets={tagBuckets}
-              mode="embedded"
-              onClose={() => setShowConvert(false)}
-              initial={{
-                title: view.subject || view.textBody.slice(0, 120),
-                body: view.textBody,
-                inboxId: item.id,
-                entityIds: item.linkedEntityIds ?? [],
-              }}
-            />
-          </div>
-        ) : null}
       </div>
     </>
   );

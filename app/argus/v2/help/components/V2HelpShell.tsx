@@ -230,11 +230,11 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Archived",
-        body: "Modern “done.” Leaves the alert count. Evidence stays; you can still open it from the Archived status.",
+        body: "Modern “done.” Leaves the alert count. Evidence stays under Archived. Legacy email→journal items also appear here with a Journal badge — open the note from the email detail (never a dead end).",
       },
       {
-        title: "Converted (legacy)",
-        body: "Old path: email was turned into a journal Note (`convertedLogId`). Not the normal finish anymore — prefer Link + Archive. Keep the Converted status only to find those historical items (often empty).",
+        title: "Converted (deprecated)",
+        body: "Removed as an Inbox status. Old converts still exist as data (`convertedLogId`) and show under Archived as Journal. Do not convert emails anymore — Link + Archive; put narrative on Event → Note.",
       },
       {
         title: "Grouped Filters",

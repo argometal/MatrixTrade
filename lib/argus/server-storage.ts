@@ -884,6 +884,10 @@ export async function updateInboxTriage(inboxId: string, patch: InboxTriagePatch
   return data.inboxItems[idx];
 }
 
+/**
+ * @deprecated Prefer Link + Archive (+ Event Note). Still creates a journal note and
+ * sets `convertedLogId` so callers can deep-link — never a dead-end graveyard.
+ */
 export async function convertInboxToLog(
   inboxId: string,
   input: {

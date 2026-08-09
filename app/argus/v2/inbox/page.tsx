@@ -61,10 +61,9 @@ export default async function V2InboxPage({
   const details = await Promise.all(
     enriched.map(async ({ item, view, attachments: atts }) => {
       const linkedEntities = buildV2InboxDetailEntities(item, data.entities);
-      const convertedLog =
-        item.status === "converted" && item.convertedLogId
-          ? await getLog(item.convertedLogId, includePrivate)
-          : undefined;
+      const convertedLog = item.convertedLogId
+        ? await getLog(item.convertedLogId, includePrivate)
+        : undefined;
 
       const storedPayload = parseStoredEmailPayload(item.rawEmail);
       const attachmentViews: AttachmentViewModel[] = (
