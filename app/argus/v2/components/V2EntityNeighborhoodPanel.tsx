@@ -1,6 +1,7 @@
 "use client";
 
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
+import { V2IntelHelpLink } from "./V2IntelHelpLink";
 import { V2KnowledgeGraph } from "./V2KnowledgeGraph";
 
 export function V2EntityNeighborhoodPanel({
@@ -34,13 +35,12 @@ export function V2EntityNeighborhoodPanel({
 
   return (
     <div>
-      <div className={docked ? "mb-2" : "mb-3"}>
-        <h2 className={`font-semibold text-zinc-100 ${docked ? "text-sm" : "text-base"}`}>{title}</h2>
-        <p className={`mt-1 text-zinc-500 ${docked ? "text-[10px] leading-snug" : "text-xs"}`}>
-          {docked
-            ? `Wider context around ${entityName}. Halo = Tracker on evidence.`
-            : `Local view around ${entityName} — main graph to zoom and explore. Rose/amber halo = Tracker. Dashed rose edges = shared Tracker (affinity). Click a node to focus neighbors; ⌘/Ctrl+click opens the entity.`}
-        </p>
+      <div className={`mb-2 flex items-center justify-between gap-2 ${docked ? "" : "mb-3"}`}>
+        <h2 className={`min-w-0 truncate font-semibold text-zinc-100 ${docked ? "text-sm" : "text-base"}`}>
+          {title}
+          <span className="ml-1.5 font-normal text-zinc-500">· {entityName}</span>
+        </h2>
+        <V2IntelHelpLink topic="neighborhood" label="Graph help" />
       </div>
       <V2KnowledgeGraph
         nodes={graph.nodes}

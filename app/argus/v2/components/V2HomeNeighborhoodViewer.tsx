@@ -95,12 +95,6 @@ export function V2HomeNeighborhoodViewer({
           {contextTitle}
         </p>
       ) : null}
-      {scope === "local" && variant === "inline" ? (
-        <p className="mb-2 text-[11px] text-zinc-500">
-          Connection neighborhood around <span className="text-zinc-300">{name}</span> — main graph to zoom and
-          explore. The small dock on the right shows one level up when available.
-        </p>
-      ) : null}
       <V2EntityNeighborhoodPanel
         graph={graph}
         entityName={panelName}

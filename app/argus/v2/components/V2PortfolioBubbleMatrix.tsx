@@ -5,6 +5,7 @@ import {
   resolveBubblePositions,
   type V2KnowledgeNode,
 } from "@/lib/argus/v2/intelligence-viz";
+import { V2IntelHelpLink } from "./V2IntelHelpLink";
 
 const KIND_COLORS: Record<V2KnowledgeNode["kind"], string> = {
   topic: "rgb(139, 92, 246)",
@@ -191,13 +192,8 @@ export function V2PortfolioBubbleMatrix({
           );
         })}
       </svg>
-      <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-zinc-500">
-        <span>Click = lens below · ⌘/Ctrl+click = open focused view</span>
-        <span>Y = recency</span>
-        <span>X = recurrence (30d)</span>
-        <span>Size = evidence</span>
-        <span>Amber ring = tag-pattern intensity</span>
-        <span>Bubbles auto-separate when scores pile up</span>
+      <div className="mt-1.5 flex justify-end">
+        <V2IntelHelpLink topic="portfolio" label="Portfolio legend" />
       </div>
     </div>
   );

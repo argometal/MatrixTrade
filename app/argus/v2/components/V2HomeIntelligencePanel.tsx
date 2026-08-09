@@ -10,6 +10,7 @@ import { V2KnowledgeTreemap } from "./V2KnowledgeTreemap";
 import { V2PortfolioBubbleMatrix } from "./V2PortfolioBubbleMatrix";
 import { V2FocusTagPortfolio } from "./V2FocusTagPortfolio";
 import { V2HomeNeighborhoodViewer } from "./V2HomeNeighborhoodViewer";
+import { V2IntelHelpLink } from "./V2IntelHelpLink";
 import {
   layoutTreemap,
   type V2KnowledgeNode,
@@ -82,15 +83,17 @@ export function V2HomeIntelligencePanel({
     <div>
       {tab === "treemap" ? (
         <div className="space-y-2">
-          <p className="text-[11px] text-zinc-600">
-            Full portfolio — {treemapCounts.organizations} orgs · {treemapCounts.projects} projects ·{" "}
-            {treemapCounts.topics} topics ({treemapCounts.total} tiles
-            {universeFilter !== "all" ? ` · ${INTELLIGENCE_FILTER_SHORT[universeFilter]}` : ""}). Size =
-            evidence volume; select a tile for the main connection neighborhood. Small dock = one level up.
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-zinc-600">
+              {treemapCounts.organizations} orgs · {treemapCounts.projects} projects · {treemapCounts.topics}{" "}
+              topics ({treemapCounts.total}
+              {universeFilter !== "all" ? ` · ${INTELLIGENCE_FILTER_SHORT[universeFilter]}` : ""})
+            </p>
+            <V2IntelHelpLink topic="treemap" label="Help" />
+          </div>
           {treemapRects.length === 0 ? (
             <p className="rounded-xl border border-dashed border-zinc-800/80 px-3 py-8 text-center text-sm text-zinc-500">
-              No entities match this filter. Switch to Universe or another filter.
+              No entities match this filter.
             </p>
           ) : (
             <V2KnowledgeTreemap rects={treemapRects} size="full" onSelect={onLensChange} />
@@ -103,22 +106,24 @@ export function V2HomeIntelligencePanel({
               scope="local"
             />
           ) : (
-            <p className="rounded-xl border border-dashed border-zinc-800/80 px-3 py-4 text-center text-xs text-zinc-600">
-              Select a tile to open the main connection neighborhood here.
+            <p className="rounded-xl border border-dashed border-zinc-800/80 px-3 py-3 text-center text-xs text-zinc-600">
+              Select a tile for its neighborhood
             </p>
           )}
         </div>
       ) : null}
       {tab === "portfolio" ? (
         <div className="space-y-2">
-          <p className="text-[11px] text-zinc-600">
-            Entity triage scatter (recency × recurrence)
-            {universeFilter !== "all" ? ` · ${INTELLIGENCE_FILTER_SHORT[universeFilter]}` : ""}. Select a bubble for
-            the main connection neighborhood; the small right dock shows one level up when available.
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-zinc-600">
+              {filteredNodes.length} entities
+              {universeFilter !== "all" ? ` · ${INTELLIGENCE_FILTER_SHORT[universeFilter]}` : ""}
+            </p>
+            <V2IntelHelpLink topic="portfolio" label="Help" />
+          </div>
           {filteredNodes.length === 0 ? (
             <p className="rounded-xl border border-dashed border-zinc-800/80 px-3 py-8 text-center text-sm text-zinc-500">
-              No entities match this filter. Switch to Universe or another filter.
+              No entities match this filter.
             </p>
           ) : (
             <V2PortfolioBubbleMatrix nodes={filteredNodes} size="full" onSelect={onLensChange} />
@@ -131,20 +136,17 @@ export function V2HomeIntelligencePanel({
               scope="local"
             />
           ) : (
-            <p className="rounded-xl border border-dashed border-zinc-800/80 px-3 py-4 text-center text-xs text-zinc-600">
-              Select a bubble to open the main connection neighborhood here.
+            <p className="rounded-xl border border-dashed border-zinc-800/80 px-3 py-3 text-center text-xs text-zinc-600">
+              Select a bubble for its neighborhood
             </p>
           )}
         </div>
       ) : null}
       {tab === "tags" ? (
         <div className="space-y-3">
-          <div>
+          <div className="flex items-center justify-between gap-2">
             <h3 className="text-sm font-semibold text-zinc-100">Tags · universe</h3>
-            <p className="mt-1 text-xs leading-relaxed text-zinc-500">
-              Manage the Tag universe (Universe / Hot / Patterns / Stale / Trackers). Flag or Disable Tracker without
-              deleting Tags. Create Topic Tags on Topic → Tags; create Note Tags on Event → Note.
-            </p>
+            <V2IntelHelpLink topic="tags-universe" label="Help" />
           </div>
           <V2FocusTagPortfolio
             rows={focusTagPortfolio}

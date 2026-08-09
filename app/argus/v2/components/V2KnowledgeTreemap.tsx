@@ -1,6 +1,7 @@
 "use client";
 
 import type { V2TreemapRect } from "@/lib/argus/v2/intelligence-viz";
+import { V2IntelHelpLink } from "./V2IntelHelpLink";
 
 function activityColor(recentActivity: number): string {
   if (recentActivity >= 0.5) return "rgba(16, 185, 129, 0.75)";
@@ -110,12 +111,8 @@ export function V2KnowledgeTreemap({
           );
         })}
       </svg>
-      <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-zinc-500">
-        <span>Click = lens below · ⌘/Ctrl+click = open focused view</span>
-        <span>Size = evidence volume</span>
-        <span className="inline-flex items-center gap-1">
-          <span className="h-2 w-2 rounded-sm bg-emerald-500/70" /> Active (7d)
-        </span>
+      <div className="mt-1.5 flex justify-end">
+        <V2IntelHelpLink topic="treemap" label="Treemap legend" />
       </div>
     </div>
   );

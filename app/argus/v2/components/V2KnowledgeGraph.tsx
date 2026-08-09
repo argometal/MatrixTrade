@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { V2GraphEdge, V2GraphNode } from "@/lib/argus/v2/intelligence-viz";
 import { layoutNeighborhoodGraphNodes } from "@/lib/argus/v2/intelligence-viz";
+import { V2IntelHelpLink } from "./V2IntelHelpLink";
 
 const NODE_COLORS: Record<V2GraphNode["kind"], string> = {
   organization: "rgb(56, 189, 248)",
@@ -442,37 +443,34 @@ export function V2KnowledgeGraph({
       </div>
     ) : null;
 
-  const hint = canFocus
-    ? focusId
-      ? `Focused on ${focusNode?.name ?? "node"} — only direct neighbors. Esc or Back to return.`
-      : "Click a node to focus its neighbors · ⌘/Ctrl+click to open · Expand for a larger canvas"
-    : "Hover to highlight connections · click node to open entity";
+  const expandHint = focusId
+    ? "Ego view — direct neighbors only. Esc or Back to return."
+    : "Click node to focus · ⌘/Ctrl+click to open";
 
   return (
     <>
       <div>
         {size === "full" ? (
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[11px] text-zinc-600">{hint}</p>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-[11px] text-zinc-600">
+              {focusId
+                ? `Focused · ${focusNode?.name ?? "node"} (${focusedView.nodes.length})`
+                : `${focusedView.nodes.length} nodes`}
+            </p>
             <div className="flex flex-wrap items-center gap-2">
+              <V2IntelHelpLink topic="neighborhood" label="Help" />
               {focusControls}
               <button
                 type="button"
                 onClick={() => setExpanded(true)}
                 className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 transition hover:bg-violet-600/25"
               >
-                Expand graph
+                Expand
               </button>
             </div>
           </div>
         ) : null}
         {focusId && size !== "full" ? <div className="mb-2">{focusControls}</div> : null}
-        {focusId ? (
-          <p className="mb-2 rounded-lg border border-amber-500/20 bg-amber-950/20 px-2.5 py-1.5 text-[11px] text-amber-200/90">
-            Ego view — <span className="font-semibold">{focusNode?.name}</span> and direct neighbors only (
-            {focusedView.nodes.length} nodes). Not the full universe.
-          </p>
-        ) : null}
         <GraphCanvas
           nodes={focusedView.nodes}
           edges={focusedView.edges}
@@ -500,7 +498,7 @@ export function V2KnowledgeGraph({
               <h3 className="text-sm font-semibold text-zinc-100">
                 {focusId ? `Neighbors of ${focusNode?.name ?? "node"}` : "Relationship graph"}
               </h3>
-              <p className="mt-0.5 text-xs text-zinc-500">{hint}</p>
+              <p className="mt-0.5 text-xs text-zinc-500">{expandHint}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {focusControls}

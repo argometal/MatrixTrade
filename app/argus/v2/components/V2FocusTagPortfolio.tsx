@@ -14,6 +14,7 @@ import {
   type IntelligenceUniverseFilter,
 } from "@/lib/argus/v2/intelligence-filters";
 import { V2HomeNeighborhoodViewer } from "./V2HomeNeighborhoodViewer";
+import { V2IntelHelpLink } from "./V2IntelHelpLink";
 import { V2IntelligenceUniverseFilters } from "./V2IntelligenceUniverseFilters";
 import { V2TrackerTogglePanel } from "./V2TrackerTogglePanel";
 import { V2Timeline } from "./V2Timeline";
@@ -420,10 +421,9 @@ export function V2FocusTagPortfolio({
             })}
           </svg>
         )}
-        <p className="mt-2 text-[10px] text-zinc-500">
-          Click a tag to inspect · ⚑ / amber ring = Tracker · Gold ring (unflagged) = Pattern · Axes are
-          evidence windows, not scores
-        </p>
+        <div className="mt-1.5 flex justify-end">
+          <V2IntelHelpLink topic="tags-universe" label="Tags legend" />
+        </div>
       </div>
 
       {/* Priority 2–3 — Selection: Flag control + evidence + neighborhood */}
