@@ -79,7 +79,9 @@ export function ProjectEditForm({
   const [name, setName] = useState(entity.name);
   const [startDate, setStartDate] = useState(entity.startDate ?? "");
   const [endDate, setEndDate] = useState(entity.endDate ?? "");
-  const [linkedTags, setLinkedTags] = useState<string[]>(entity.linkedTags ?? []);
+  const [linkedTags, setLinkedTags] = useState<string[]>(
+    entity.projectTags?.length ? entity.projectTags : (entity.linkedTags ?? [])
+  );
   const { openLinkModal } = useArgusAdd();
 
   const linkContext: LinkContext = useMemo(

@@ -175,6 +175,34 @@ export function V2EventDetailPanel({
       return [...current, tag];
     });
   }
+
+  /** Evidence-scoped buckets first (ORDER 001) — not the raw journal-wide list alone. */
+  const noteTagBuckets = useMemo(() => {
+    const local = noteQuickTags;
+    const topicPool = selected.topicContextTags
+      .map((t) => t.trim().replace(/\s+/g, " "))
+      .filter(Boolean);
+    const seen = new Set<string>();
+    const merge = (...lists: string[][]) => {
+      const out: string[] = [];
+      for (const list of lists) {
+        for (const tag of list) {
+          const key = tag.toLowerCase();
+          if (!key || seen.has(key)) continue;
+          seen.add(key);
+          out.push(tag);
+        }
+      }
+      return out;
+    };
+    const recent = local.length > 0 ? local : merge(topicPool).slice(0, 10);
+    return {
+      recent,
+      frequent: recent,
+      all: merge(local, topicPool, tagBuckets.all),
+    };
+  }, [noteQuickTags, selected.topicContextTags, tagBuckets.all]);
+
   async function saveEntry() {
     if (!canSave) return;
     setSaving(true);
@@ -406,7 +434,9 @@ export function V2EventDetailPanel({
                   </div>
                 ) : (
                   <p className="text-[11px] text-zinc-600">
-                    No Topic Tags yet — browse to create one on this Note (does not Flag a Tracker).
+                    {selected.linkedTopics.length === 0
+                      ? "No Topic linked — browse to create Evidence Tags on this Note, or Link a Topic for a Topic pool."
+                      : "No Topic Tags yet — browse to create one on this Note (does not Flag a Tracker)."}
                   </p>
                 )}
 
@@ -437,7 +467,7 @@ export function V2EventDetailPanel({
 
               <TagPickerModal
                 open={tagPickerOpen}
-                buckets={tagBuckets}
+                buckets={noteTagBuckets}
                 selectedTags={entryTags}
                 onChange={setEntryTags}
                 onClose={() => setTagPickerOpen(false)}
@@ -448,7 +478,9 @@ export function V2EventDetailPanel({
                     ? `In ${selected.linkedTopics[0].name}`
                     : selected.linkedTopics.length > 1
                       ? TAGS.sectionTopicLinked
-                      : undefined
+                      : selected.linkedTopics.length === 0
+                        ? "Link a Topic to unlock Topic pool"
+                        : undefined
                 }
               />
             </div>
@@ -520,9 +552,10 @@ export function V2EventDetailPanel({
                 signalTags={focusTags}
                 onSignalTagsChange={setFocusTags}
                 surfaceLabel="this Event"
+                scopeId={selected.id}
                 heading="Tags · Trackers"
                 helpTopic="event-tags"
-                emptyEvidenceHint="No Tags on this Event’s Notes yet — add them on Note, or Add Tag below."
+                emptyEvidenceHint="No Tags on this Event’s Notes yet — add them on Note, or Draft below (session only)."
                 addPlaceholder="Name a Tag…"
                 noteCta={
                   <button

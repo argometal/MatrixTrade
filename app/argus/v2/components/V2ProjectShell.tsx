@@ -316,7 +316,9 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
             entityName={entity.name}
             tagPatterns={tagPatterns}
             signalTags={signalTags}
-            manualTags={(entity.linkedTags ?? []).map((t) => t.trim()).filter(Boolean)}
+            manualTags={(entity.projectTags ?? entity.linkedTags ?? [])
+              .map((t) => t.trim())
+              .filter(Boolean)}
             tagHref={(tag) =>
               `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&project=${entity.id}`
             }

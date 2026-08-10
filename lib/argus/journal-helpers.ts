@@ -1,5 +1,12 @@
 import type { ArgusData, Entity, JournalKind, Log } from "./types";
 import { TAG_PICKER_SUGGESTION_LIMIT } from "./tag-limits";
+import {
+  collectTagsForBuckets,
+  normalizeTagDisplay,
+  tagKey,
+  type TagBucketOptions,
+  type TagRole,
+} from "./tag-ontology";
 
 const FAVORITES_KEY = "argus-favorite-entities";
 
@@ -83,7 +90,32 @@ export interface TagBuckets {
   all: string[];
 }
 
-export function buildTagBuckets(data: ArgusData, includePrivate: boolean): TagBuckets {
+/**
+ * Tag buckets for pickers.
+ * Pass `role` + optional `scopeId` (ORDER 001). Legacy call = all evidence Tags.
+ */
+export function buildTagBuckets(
+  data: ArgusData,
+  includePrivate: boolean,
+  options?: { role?: TagRole; scopeId?: string }
+): TagBuckets {
+  const role = options?.role ?? "evidence";
+  const scopeId = options?.scopeId;
+
+  if (options?.role || options?.scopeId) {
+    const collected = collectTagsForBuckets(data, {
+      role,
+      scopeId,
+      includePrivate,
+    } satisfies TagBucketOptions);
+    const frequent = collected.recent.slice(0, TAG_PICKER_SUGGESTION_LIMIT);
+    return {
+      recent: collected.recent.slice(0, TAG_PICKER_SUGGESTION_LIMIT),
+      frequent,
+      all: collected.all,
+    };
+  }
+
   const visibleLogs = includePrivate ? data.logs : data.logs.filter((l) => !l.private);
   const counts = new Map<string, number>();
   const recent: string[] = [];
@@ -92,9 +124,9 @@ export function buildTagBuckets(data: ArgusData, includePrivate: boolean): TagBu
 
   for (const log of [...visibleLogs].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))) {
     for (const raw of log.topics) {
-      const tag = raw.trim().replace(/\s+/g, " ");
+      const tag = normalizeTagDisplay(raw);
       if (!tag) continue;
-      const key = tag.toLowerCase();
+      const key = tagKey(tag);
       if (!canonical.has(key)) canonical.set(key, tag);
       counts.set(key, (counts.get(key) ?? 0) + 1);
       if (!seenRecent.has(key)) {
@@ -107,9 +139,9 @@ export function buildTagBuckets(data: ArgusData, includePrivate: boolean): TagBu
 
   for (const log of visibleLogs) {
     for (const raw of log.topics) {
-      const tag = raw.trim().replace(/\s+/g, " ");
+      const tag = normalizeTagDisplay(raw);
       if (!tag) continue;
-      const key = tag.toLowerCase();
+      const key = tagKey(tag);
       if (!canonical.has(key)) canonical.set(key, tag);
       counts.set(key, (counts.get(key) ?? 0) + 1);
     }

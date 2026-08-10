@@ -54,6 +54,9 @@ export function normalizeEntity(entity: Entity): Entity {
     linkedEventIds: entity.linkedEventIds ?? [],
     linkedEntityIds: entity.linkedEntityIds ?? [],
     linkedTags: entity.linkedTags ?? [],
+    projectTags: entity.projectTags ?? [],
+    topicTags: entity.topicTags ?? [],
+    eventTags: entity.eventTags ?? [],
     startDate: entity.startDate?.slice(0, 10),
     endDate: entity.endDate?.slice(0, 10),
     lifecycleStatus: entity.lifecycleStatus,
@@ -129,6 +132,7 @@ export function normalizeArgusData(data: ArgusData): ArgusData {
     runbooks: (migrated.runbooks ?? []).map(normalizeRunbook),
     runbookProgress: Array.isArray(migrated.runbookProgress) ? migrated.runbookProgress : [],
     signalTags: normalizeSignalTags(migrated.signalTags),
+    globalTags: Array.isArray(migrated.globalTags) ? migrated.globalTags : [],
     version: 3,
   };
 }

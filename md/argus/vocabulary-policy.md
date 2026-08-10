@@ -1,64 +1,55 @@
-# ARGUS vocabulary — Topic, Tag, Tracker
+# ARGUS vocabulary — Topic, Tag, Tracker, Roles
 
-**Status:** Canonical (2026-08-09)  
-**Mechanics:** [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md)
+**Status:** Canonical (ORDER 001 — 2026-08-10)  
+**Mechanics:** [`evidence-engine-mechanics.md`](evidence-engine-mechanics.md) · **Ontology:** [`tag-ontology-001.md`](tag-ontology-001.md)
 
-## One Tag system
+## Tag roles (one infra, typed callers)
 
-| Term | Where | Role |
-|------|--------|------|
-| **Tag** | Notes/emails (`topics[]`) **and** Topic binder (`entity.linkedTags`) | Same Tag names. Notes accumulate evidence / Patterns. Topic Tags keep the binder findable and stay in the Home universe. |
-| **Tracker** | Journal `ArgusData.signalTags[]` | Watch-on for a Tag (⚑). **Flag / Disable Tracker** never deletes the Tag. |
-| **Topic** | Entity (`Kind: topic`) | Evidence binder |
-| **Event** | Entity (`Kind: event`) | Case binder |
-| **Note** | `Log` row in Chronicle | Narrative evidence |
+| Role | Storage | Purpose |
+|------|---------|---------|
+| **evidence** | `Log.topics[]` / `InboxItem.topics[]` | Classify Notes/emails. Patterns mine only these. |
+| **topic** | `Entity.topicTags[]` (dual-read `linkedTags` on Topics) | Classify Topic binders / findability |
+| **project** | `Entity.projectTags[]` (legacy dual-read `linkedTags` on Projects) | Classify Projects |
+| **event** | `Entity.eventTags[]` | Classify Event binders (not Note Tags) |
+| **global** | `ArgusData.globalTags[]` | Cross-cutting only when shared meaning is intentional |
 
-**Flag** = turn Tracker on. **Disable Tracker** = turn watch off. Tag remains unless explicitly removed from Notes or Topic Tags.
+**Tracker** is **not** a role. Journal `ArgusData.signalTags[]` = Flag / Disable watch on an existing Tag key.
 
-### Home → Intelligence → Tags filters
+### Structural relations are not Tags
 
-| Filter | Meaning |
-|--------|---------|
-| **Universe** | All Tags (evidence + Topic Tags + Trackers) |
-| **Hot** | Used on evidence in the last **30 days** |
-| **Patterns** | Recurring evidence Tags (Pattern floor) |
-| **Stale** | Has evidence, but **none in the last 90 days** (dormant — still a Tag) |
-| **Trackers** | Tags with watch-on |
+Keep as IDs: `linkedTopicIds`, `linkedEventIds`, `linkedEntityIds`, `Log.entityIds`, `InboxItem.linkedEntityIds`.
 
-There is no separate “Quiet Tracker” mode — a Tag with no evidence yet is still a Tag (often a new Topic Tag or a Tracker waiting for notes).
+### Org / Person
+
+No binder Tags by default — use structural links. Do not write `linkedTags` as classification.
 
 ### How to use
 
 | Intent | Where |
 |--------|--------|
-| Put a Tag on evidence | Event → **Note** → Tags → Save |
-| Create Topic Tags | Topic → **Tags** → Topic Tags editor (Save) |
-| Flag / Disable Tracker | Click the Tag chip (Event / Topic / Home → Tags). **Confirms both ways** before convert. Disable keeps the chip so you can re-Flag. |
-| Tags on an Event | **Event → Tags → On this Event** = Tags already used on that Event’s Notes/emails. Put Tags on evidence via **Note → Tags** (picker pool + checkmarks). |
-| Manage universe | **Home → Intelligence → Tags** (Universe filters + Trackers strip + Manage) — no easy delete of Tags |
-| See Tags for a Topic | Topic → **Tags** (notes ∪ linked Events ∪ Topic Tags) |
+| Evidence Tag on a Note | Event → **Note** → Tags (scoped to this Event + Topic pool) → Save |
+| Topic Tags | Topic → Tags → Topic Tags editor |
+| Project Tags | Project edit → Tags (writes `projectTags`) |
+| Event binder Tags | Event Tags role (binder classification) — separate from Note evidence |
+| Flag Tracker | Chip Flag on Tags manager / Home Tags |
+| Manage by role | Home → Intelligence → Tags (manager evolving to role buckets) |
 
-### Trimmed / retired labels
+### Filters (Home Tags)
 
-| Old | Status |
-|-----|--------|
-| “Match tags” as a separate ontology | **Retired as a name** — same storage (`linkedTags`), now **Topic Tags** in the one Tag system |
-| Quiet Tracker filter | **Removed** — zero-evidence names are Tags |
-| Event Signals | Replaced by Tracker |
-| Radioactive / critical marker wording | Use **Tracker** |
+| Filter | Meaning |
+|--------|---------|
+| **Universe** | Role-aware inventory (migration still unions evidence + topic + trackers) |
+| **Hot / Patterns / Stale** | Evidence Tags only |
+| **Trackers** | Flagged keys in `signalTags` |
+
+### Retired / forbidden
+
+| Pattern | Status |
+|---------|--------|
+| Generic `linkedTags` with mixed semantics | **Deprecated** — dual-read only |
+| Session `knownExtras` merged into “Tags on this…” | **Forbidden** — scoped session draft only |
+| Four independent pickers / normalize stacks | **Forbidden** |
+| Patterns from project/event/topic binder tags | **Forbidden** |
+| IDs stored as Tags | **Forbidden** |
 
 Nav badge counts are **not** Trackers (`buildV2NavCounts`) — triage debt only.
-
-### Orphans · Linked (homologated triage)
-
-Same attention vocabulary across binders and intake:
-
-| Surface | Orphans | Linked / Quiet | Done hiding |
-|---------|---------|----------------|-------------|
-| **Topics** | Orphans — no evidence and no structural links | Quiet (linked or stale) · Active (recent evidence) | Archived |
-| **Events** | Orphans — no Topic/Org/Project/Person neighbors | Linked | Archived |
-| **Inbox** | Orphans — unlinked email (`pending`) | Linked | Archived (legacy Converted folded here as Journal → open note) |
-
-Events default to **latest first** with a Show more page; Upcoming/Past is a secondary time cut (`?when=`).
-
-**Reading modes:** Timeline (org/project) · Chronicle (topic/event/person). See [`timeline-chronicle-model.md`](timeline-chronicle-model.md).

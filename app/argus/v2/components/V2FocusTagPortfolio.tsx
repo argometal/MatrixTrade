@@ -602,6 +602,7 @@ export function V2FocusTagPortfolio({
           evidenceTags={rows.map((row) => ({ tag: row.name, count: row.count }))}
           signalTags={focusTags}
           onSignalTagsChange={setFocusTags}
+          scopeId="home-universe"
           heading="Manage universe · Tag ↔ Tracker"
           helpTopic="tags-universe"
           addPlaceholder="Tag name → Flag as Tracker"

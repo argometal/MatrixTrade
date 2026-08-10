@@ -69,6 +69,7 @@ function emptyArgus(): ArgusData {
     runbooks: [],
     runbookProgress: [],
     signalTags: [],
+    globalTags: [],
     version: 3,
   };
 }
@@ -234,6 +235,9 @@ export type EntityUpdatePatch = Partial<
     | "linkedEventIds"
     | "linkedEntityIds"
     | "linkedTags"
+    | "projectTags"
+    | "topicTags"
+    | "eventTags"
     | "lifecycleStatus"
   >
 >;
@@ -335,6 +339,12 @@ export async function updateEntity(id: string, patch: EntityUpdatePatch): Promis
         : current.linkedEntityIds ?? [],
     linkedTags:
       patch.linkedTags !== undefined ? normalizeLinkedTags(patch.linkedTags) : current.linkedTags ?? [],
+    projectTags:
+      patch.projectTags !== undefined ? normalizeLinkedTags(patch.projectTags) : current.projectTags ?? [],
+    topicTags:
+      patch.topicTags !== undefined ? normalizeLinkedTags(patch.topicTags) : current.topicTags ?? [],
+    eventTags:
+      patch.eventTags !== undefined ? normalizeLinkedTags(patch.eventTags) : current.eventTags ?? [],
     lifecycleStatus:
       patch.lifecycleStatus !== undefined ? patch.lifecycleStatus : current.lifecycleStatus,
     updatedAt: new Date().toISOString(),
@@ -1110,8 +1120,12 @@ export async function toggleSignalTag(tag: string): Promise<{ signalTags: string
   return { signalTags: data.signalTags ?? [], active: !exists };
 }
 
-/** Rename a tag string across all register entries and inbox rows. */
-export async function renameTagGlobally(oldTag: string, newTag: string): Promise<number> {
+/** Rename a tag string. Pass `role` to limit scope (ORDER 001); omit = legacy evidence+trackers+topic dual fields. */
+export async function renameTagGlobally(
+  oldTag: string,
+  newTag: string,
+  role?: import("./tag-ontology").TagRole
+): Promise<number> {
   const oldKey = oldTag.trim().toLowerCase();
   const newDisplay = newTag.trim().replace(/\s+/g, " ");
   if (!oldKey || !newDisplay) return 0;
@@ -1119,41 +1133,113 @@ export async function renameTagGlobally(oldTag: string, newTag: string): Promise
   const data = await readArgus();
   let touched = 0;
 
-  const signalTags = data.signalTags ?? [];
-  if (signalTags.some((t) => t.trim().toLowerCase() === oldKey)) {
-    data.signalTags = normalizeSignalTags(
-      signalTags.map((t) => (t.trim().toLowerCase() === oldKey ? newDisplay : t))
-    );
-    touched += 1;
-  }
-
-  for (let i = 0; i < data.logs.length; i++) {
-    const log = data.logs[i];
-    const topics = log.topics ?? [];
+  const renameInList = (list: string[] | undefined): string[] | undefined => {
+    if (!list?.length) return list;
     let changed = false;
-    const next = topics.map((tag) => {
+    const next = list.map((tag) => {
       if (tag.trim().toLowerCase() !== oldKey) return tag;
       changed = true;
       return newDisplay;
     });
-    if (changed) {
-      data.logs[i] = { ...log, topics: [...new Set(next)] };
+    return changed ? [...new Set(next)] : list;
+  };
+
+  const touchEvidence = !role || role === "evidence";
+  const touchGlobal = !role || role === "global";
+  const touchProject = !role || role === "project";
+  const touchTopic = !role || role === "topic";
+  const touchEvent = !role || role === "event";
+  // Trackers follow evidence/global renames when unscoped or evidence/global
+  const touchTrackers = !role || role === "evidence" || role === "global";
+
+  if (touchTrackers) {
+    const signalTags = data.signalTags ?? [];
+    if (signalTags.some((t) => t.trim().toLowerCase() === oldKey)) {
+      data.signalTags = normalizeSignalTags(
+        signalTags.map((t) => (t.trim().toLowerCase() === oldKey ? newDisplay : t))
+      );
       touched += 1;
     }
   }
 
-  for (let i = 0; i < data.inboxItems.length; i++) {
-    const item = data.inboxItems[i];
-    const topics = item.topics ?? [];
-    if (topics.length === 0) continue;
-    let changed = false;
-    const next = topics.map((tag) => {
-      if (tag.trim().toLowerCase() !== oldKey) return tag;
-      changed = true;
-      return newDisplay;
-    });
-    if (changed) {
-      data.inboxItems[i] = { ...item, topics: [...new Set(next)] };
+  if (touchGlobal) {
+    const next = renameInList(data.globalTags);
+    if (next && next !== data.globalTags) {
+      data.globalTags = next;
+      touched += 1;
+    }
+  }
+
+  if (touchEvidence) {
+    for (let i = 0; i < data.logs.length; i++) {
+      const log = data.logs[i];
+      const topics = log.topics ?? [];
+      let changed = false;
+      const next = topics.map((tag) => {
+        if (tag.trim().toLowerCase() !== oldKey) return tag;
+        changed = true;
+        return newDisplay;
+      });
+      if (changed) {
+        data.logs[i] = { ...log, topics: [...new Set(next)] };
+        touched += 1;
+      }
+    }
+
+    for (let i = 0; i < data.inboxItems.length; i++) {
+      const item = data.inboxItems[i];
+      const topics = item.topics ?? [];
+      if (topics.length === 0) continue;
+      let changed = false;
+      const next = topics.map((tag) => {
+        if (tag.trim().toLowerCase() !== oldKey) return tag;
+        changed = true;
+        return newDisplay;
+      });
+      if (changed) {
+        data.inboxItems[i] = { ...item, topics: [...new Set(next)] };
+        touched += 1;
+      }
+    }
+  }
+
+  for (let i = 0; i < data.entities.length; i++) {
+    const entity = data.entities[i];
+    if (entity.deletedAt) continue;
+    let patch: Partial<(typeof data.entities)[0]> | null = null;
+    const kind = referenceKindFromNotes(entity.notes ?? "");
+
+    if (touchTopic && kind === "topic") {
+      const topicTags = renameInList(entity.topicTags);
+      const linkedTags = renameInList(entity.linkedTags);
+      if (topicTags !== entity.topicTags || linkedTags !== entity.linkedTags) {
+        patch = {
+          ...(patch ?? {}),
+          topicTags: topicTags ?? entity.topicTags,
+          linkedTags: linkedTags ?? entity.linkedTags,
+        };
+      }
+    }
+    if (touchProject && entity.type === "project") {
+      const projectTags = renameInList(entity.projectTags);
+      const linkedTags = renameInList(entity.linkedTags);
+      if (projectTags !== entity.projectTags || linkedTags !== entity.linkedTags) {
+        patch = {
+          ...(patch ?? {}),
+          projectTags: projectTags ?? entity.projectTags,
+          linkedTags: linkedTags ?? entity.linkedTags,
+        };
+      }
+    }
+    if (touchEvent && kind === "event") {
+      const eventTags = renameInList(entity.eventTags);
+      if (eventTags !== entity.eventTags) {
+        patch = { ...(patch ?? {}), eventTags: eventTags ?? entity.eventTags };
+      }
+    }
+
+    if (patch) {
+      data.entities[i] = { ...entity, ...patch };
       touched += 1;
     }
   }
