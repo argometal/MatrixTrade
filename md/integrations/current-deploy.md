@@ -4,10 +4,10 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0808l` |
+| **Tag** | `main0808m` |
 | **Commit** | Always `git rev-parse main0808h` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
-| **Date** | 2026-08-09 |
+| **Date** | 2026-08-10 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
 
 ## Sync local (avoid conflicts / lost work)
@@ -21,6 +21,7 @@ git reset --hard origin/main
 
 ## What this deploy includes
 
+- PR #226: Topic Connections — clear Link CTAs per relation (Events / orgs / projects / people)
 - PR #224: Topic Chronicle aggregates linked Event evidence (Event-first lens)
 - PR #222: Event UI explanations behind contextual ? (Note / Chronicle / Metrics)
 - PR #220: Guided Note Tag picker — Topic reuse → recent → universe → create last
