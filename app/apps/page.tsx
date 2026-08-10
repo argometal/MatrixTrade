@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 /**
  * ARGUS FORGE portal home.
  * - Left A mark = Home (this page)
- * - ··· = quick navigate menu (no “Open Forge Home” footer; no right-side app icons)
+ * - ··· = quick navigate menu (systems only; no right-side app icons)
  */
 export default function AppsHubPage() {
   return <ForgeHomePortal />;
