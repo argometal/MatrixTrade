@@ -325,8 +325,7 @@ export function V2TopicDetailPanel({
         >
           {panelTab === "chronicle" ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-zinc-300">Chronicle</p>
+              <div className="flex justify-end">
                 <V2IntelHelpLink topic="topic-chronicle" label="Topic Chronicle" />
               </div>
               <V2ChronicleSelectableList
@@ -444,15 +443,22 @@ export function V2TopicDetailPanel({
               ]}
               neighborhood={neighborhood}
               entityName={selected.name}
+              manualTags={selected.aliases}
+              tagPatterns={selected.tagPatterns}
+              signalTags={focusTags}
+              tagsHeading="Linked to this Topic"
+              tagHref={(tag) =>
+                `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
+              }
             />
           ) : null}
 
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <V2BinderTagsTab
-                attachedHeading="Tags on this Topic"
-                attachedBadge="What kind of Topic is this?"
-                attachedHint="These Tags classify this Topic binder. They do not come from Notes."
+                attachedHeading="Linked to this Topic"
+                attachedBadge="Linked"
+                attachedHint="These Tags are saved on this Topic binder — not Note Tags."
                 attachedTags={selected.aliases}
                 attachedTagHref={(tag) =>
                   `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
@@ -471,9 +477,9 @@ export function V2TopicDetailPanel({
                 branchGroups={[
                   {
                     id: "topic",
-                    label: "Topic",
+                    label: "Notes on this Topic",
                     tone: "topic" as const,
-                    contextName: "this Topic",
+                    contextName: "evidence",
                     tags: selected.evidenceTagCounts.map((row) => ({
                       ...row,
                       href: `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(row.tag)}&focus=1&from=tags`,

@@ -398,8 +398,10 @@ export function V2OrgShell(props: V2OrgShellProps) {
             tagPatterns={tagPatterns}
             signalTags={signalTags}
             // ORDER 001: Org does not use binder Tags — structural links only.
+            // Surface evidence/pattern tags from the org neighborhood as linked tags.
             manualTags={[]}
             tagHref={(tag) => `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`}
+            tagsHeading="Linked to this Organization"
           />
         </V2PrivateEvidenceGate>
       ) : null}

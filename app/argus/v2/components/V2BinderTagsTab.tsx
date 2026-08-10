@@ -113,7 +113,7 @@ function groupAccent(tone: V2BinderBranchGroup["tone"]): string {
 
 export function V2BinderTagsTab({
   attachedHeading,
-  attachedBadge = "Attached",
+  attachedBadge = "Linked",
   attachedHint,
   attachedTags,
   attachedTagHref,
@@ -217,21 +217,17 @@ export function V2BinderTagsTab({
 
   const main = (
     <div className="space-y-3 sm:space-y-4">
-      {helpTopic ? (
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-medium text-zinc-300">Tags</p>
-          <V2IntelHelpLink topic={helpTopic} label="Tags" />
-        </div>
-      ) : null}
-
-      {/* 1 — Attached */}
+      {/* 1 — Tags linked to this binder (editor list is the human-facing inventory) */}
       <section className="rounded-2xl border border-violet-500/25 bg-gradient-to-b from-violet-950/30 to-zinc-950/80 p-3 sm:p-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <StepBadge n={1} tone="violet" />
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
-            {attachedHeading}
-          </h3>
-          <PillLabel tone="violet">{attachedBadge}</PillLabel>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <StepBadge n={1} tone="violet" />
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
+              {attachedHeading}
+            </h3>
+            <PillLabel tone="violet">{attachedBadge}</PillLabel>
+          </div>
+          {helpTopic ? <V2IntelHelpLink topic={helpTopic} label="Tags" /> : null}
         </div>
         {!helpTopic && attachedHint ? (
           <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{attachedHint}</p>
@@ -239,32 +235,8 @@ export function V2BinderTagsTab({
 
         <div className="mt-3">{attachedEditor}</div>
 
-        {/* Open-links for attached Tags (Links-style rows). Skip when editor already lists them. */}
-        {attachedTags.length > 0 && attachedTagHref && !attachedEditor ? (
-          <ul className="mt-3 flex flex-col gap-1.5" aria-label="Open attached Tags">
-            {attachedTags.map((tag) => {
-              const href = attachedTagHref(tag);
-              if (!href) return null;
-              return (
-                <li key={`link-${tag}`}>
-                  <Link
-                    href={href}
-                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-violet-500/30 bg-violet-950/40 px-2.5 py-1.5 text-[12px] text-violet-200/90 hover:border-violet-400/50 hover:text-violet-50"
-                    title={`Open ${tag}`}
-                  >
-                    <span className="min-w-0 truncate">#{tag}</span>
-                    <span className="shrink-0 text-violet-300/80" aria-hidden>
-                      →
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        ) : null}
-
         <p className="mt-2 text-[11px] tabular-nums text-zinc-500">
-          {attachedTags.length} tag{attachedTags.length === 1 ? "" : "s"}
+          {attachedTags.length} linked tag{attachedTags.length === 1 ? "" : "s"}
         </p>
       </section>
 

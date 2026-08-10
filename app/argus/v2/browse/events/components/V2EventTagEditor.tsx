@@ -137,10 +137,6 @@ export function V2EventTagEditor({
           <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-200/90">
             On Notes — attach to this Event
           </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
-            Evidence Tags already on chronicle Notes. Attach to classify this Event binder, then Save
-            Tags.
-          </p>
           <ul className="mt-2 flex flex-col gap-1.5" aria-label="Evidence Tags to attach">
             {suggestions.map((tag) => (
               <li key={tag}>

@@ -477,8 +477,7 @@ export function V2EventDetailPanel({
 
           {panelTab === "chronicle" ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-zinc-300">Chronicle</p>
+              <div className="flex justify-end">
                 <V2IntelHelpLink topic="event-chronicle" label="Event Chronicle" />
               </div>
               {urlTag ? (
@@ -554,9 +553,9 @@ export function V2EventDetailPanel({
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <V2BinderTagsTab
-                attachedHeading="Tags on this Event"
-                attachedBadge="What kind of Event is this?"
-                attachedHint="These Tags classify this Event. They do not come from Notes."
+                attachedHeading="Linked to this Event"
+                attachedBadge="Linked"
+                attachedHint="These Tags are saved on this Event binder — not Note Tags."
                 attachedTags={selected.eventTags}
                 attachedTagHref={(tag) =>
                   `/argus/v2/browse/events?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
@@ -688,6 +687,13 @@ export function V2EventDetailPanel({
               ]}
               neighborhood={neighborhood}
               entityName={selected.name}
+              manualTags={selected.eventTags}
+              tagPatterns={selected.tagPatterns}
+              signalTags={focusTags}
+              tagsHeading="Linked to this Event"
+              tagHref={(tag) =>
+                `/argus/v2/browse/events?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
+              }
             />
           ) : null}
         </V2PrivateEvidenceGate>

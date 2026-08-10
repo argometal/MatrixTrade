@@ -136,10 +136,6 @@ export function V2TopicAliasEditor({
           <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-200/90">
             On Notes — attach to this Topic
           </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
-            Evidence Tags already on Notes in this Topic branch. Attach to classify this Topic, then
-            Save Tags.
-          </p>
           <ul className="mt-2 flex flex-col gap-1.5" aria-label="Evidence Tags to attach">
             {suggestions.map((tag) => (
               <li key={tag}>
