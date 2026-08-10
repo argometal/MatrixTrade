@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0808t` |
-| **Commit** | Always `git rev-parse main0808h` after fetch (must match `origin/main`) |
+| **Tag** | `main0808u` |
+| **Commit** | Always `git rev-parse main0808u` after fetch (must match `origin/main` tip at pin; ship merge `0473297`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-10 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,19 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0808h
+# optional pin: git checkout main0808u
 ```
 
 ## What this deploy includes
 
+- **PR #251 (ship):** Manage status counts wire; Org/Project Active·On Hold·Archived; Tags/Links vertical sweeps; Event notes phone legacy (no `/argus/logs` editor); Events detail header overlap; ARGUS FORGE Home (`/apps` — A=Home, ··· quick-nav)
+- PR #250: ARGUS FORGE Home portal + chrome (folded into #251)
+- PR #249: Events detail header overlap fix (folded into #251)
+- PR #247: Event notes — drop phone `/argus/logs` legacy path (folded into #251)
+- PR #246: Manage status counts — effective status → boardGroups/pills (folded into #251)
+- PR #245: Links tab vertical sweep (folded into #251)
+- PR #244 / #243: Tags tab vertical + level recall (folded into #251)
+- PR #242: Org/Project status trim Active·On Hold·Archived (folded into #251)
 - PR #240: Tags tab render style + clickable Event/branch Tags
 - PR #238: Tags tab hierarchy — attached → branch → Trackers → universe
 - PR #236: Event binder Event Tags editor (`eventTags`) — separate from Note evidence
