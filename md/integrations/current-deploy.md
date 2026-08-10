@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0808v` |
-| **Commit** | Always `git rev-parse main0808v` after fetch (must match `origin/main` tip at pin; ship merge `25bd78c`) |
+| **Tag** | `main0808w` |
+| **Commit** | Always `git rev-parse main0808w` after fetch (must match `origin/main` tip at pin; ship merge `c0c842f`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-10 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0808v
+# optional pin: git checkout main0808w
 ```
 
 ## What this deploy includes
 
+- **PR #255:** Tags menus use **Manage List · rows** (OrganizationListRow family); Event/Topic/Project/Org Tags wired to entity-scoped tags; Project Tags tab + `updateProjectTagsAction`; Org Tags tab shows neighborhood patterns
 - **PR #253:** ARGUS Logo=Home; phone detail density (uncrush title/date); vertical Tags rows; Intel Tags full universe (no top-80); Chronicle/Tags/Links drop redundant titles; Event/Topic/Org/Project show **Linked to this …** binder tags clearly
 - **PR #251 (ship):** Manage status counts wire; Org/Project Active·On Hold·Archived; Tags/Links vertical sweeps; Event notes phone legacy (no `/argus/logs` editor); Events detail header overlap; ARGUS FORGE Home (`/apps` — A=Home, ··· quick-nav)
 - PR #250: ARGUS FORGE Home portal + chrome (folded into #251)
