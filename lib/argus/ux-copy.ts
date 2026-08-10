@@ -422,6 +422,17 @@ export const TOPIC_MATCH_TAGS = {
 /** @deprecated Use TOPIC_MATCH_TAGS */
 export const TOPIC_ALIASES = TOPIC_MATCH_TAGS;
 
+/** Event binder classification Tags (`Entity.eventTags`) — not Note evidence, not Trackers. */
+export const EVENT_MATCH_TAGS = {
+  heading: "Event Tags",
+  hint: "Classify this Event binder (findability). Separate from Tags on Notes. Flag as Tracker from the chips above or Home → Tags.",
+  placeholder: "Add a tag…",
+  add: "Add",
+  save: "Save Tags",
+  empty: "No Event Tags yet — add one to classify this Event (Notes still use Evidence Tags).",
+  removeAria: (item: string) => `Remove ${item} from Event Tags`,
+} as const;
+
 /**
  * Tracker — Flag a Tag to watch it (journal `signalTags`).
  * Does not delete the Tag. Not copied onto evidence. Notes still drive Patterns.

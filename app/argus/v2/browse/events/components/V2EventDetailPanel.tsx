@@ -20,6 +20,7 @@ import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnl
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
 import { V2EntityLinksTab } from "@/app/argus/v2/components/V2EntityLinksTab";
 import { V2TrackerTogglePanel } from "@/app/argus/v2/components/V2TrackerTogglePanel";
+import { V2EventTagEditor } from "./V2EventTagEditor";
 import {
   V2ChronicleSelectableList,
   chronicleLogIdFromEvidenceId,
@@ -567,6 +568,18 @@ export function V2EventDetailPanel({
                   </button>
                 }
               />
+
+              <div>
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+                  Event Tags (create / manage)
+                </p>
+                <V2EventTagEditor
+                  eventId={selected.id}
+                  eventName={selected.name}
+                  initialTags={selected.eventTags}
+                  returnTo={returnTo}
+                />
+              </div>
             </div>
           ) : null}
 

@@ -1,7 +1,7 @@
 # ARGUS Tag System · IMPLEMENTATION ORDER 001
 
-**Status:** In progress (Phase 1–7 + Home Tags role chips)  
-**Branch:** `cursor/tag-ontology-roles-e1a0`  
+**Status:** In progress (Phase 1–7 + Home role chips + Event binder editor)  
+**Branch:** `cursor/event-binder-tags-e1a0` (after `main0808q`)  
 **Rule:** One reusable infra; caller passes `TagRole` + scope. Trackers are flags, not a role.
 
 ## Phase 1 · Field map
@@ -74,9 +74,10 @@ Structural IDs unchanged: `linkedTopicIds`, `linkedEventIds`, `linkedEntityIds`,
 4. Stop Project/Org ambiguous Tag writes; Project → `projectTags`  
 5. Topic editor dual-write `topicTags`  
 6. Role-aware rename  
-7. Home Tags manager (role chips + annotated portfolio) — this PR  
-8. Full picker/role on all binders — next PR  
-9. Retire `linkedTags` writes — later  
+7. Home Tags manager (role chips + annotated portfolio) — shipped `#234`  
+8. Event binder `eventTags` editor + Topic dual-read aliases — this PR  
+9. Full picker/role on remaining binders — next  
+10. Retire `linkedTags` writes — later  
 
 ### 5. Regression risks
 

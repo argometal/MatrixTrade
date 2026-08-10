@@ -81,7 +81,13 @@ export interface V2EventDetail {
    */
   topicContextTags: string[];
   description: string;
+  /**
+   * @deprecated Legacy Signals leftover — do not treat as Event Tags.
+   * Prefer `eventTags` (`TagRole: event`).
+   */
   linkedTags: string[];
+  /** Event binder classification Tags (`TagRole: event`). */
+  eventTags: string[];
   chronicleCount: number;
   attendeeInitials: string[];
   attendeeNames: string[];

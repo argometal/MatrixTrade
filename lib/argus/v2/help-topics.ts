@@ -209,15 +209,19 @@ const SECTIONS: HelpSection[] = [
     group: "intelligence",
     keywords: ["event", "tags", "trackers", "on this event", "note", "flag", "pool"],
     intro:
-      "Tags classify Notes. Trackers are optional Flags on Tag names. Create Tags on Note first — Flag later from Tags.",
+      "Evidence Tags classify Notes. Event Tags classify the binder. Trackers are optional Flags on Tag names.",
     items: [
       {
         title: "Put a Tag on a Note",
         body: "Event → Note → quick Topic chips or Browse / create. Checkbox only — tagging never Flags a Tracker.",
       },
       {
+        title: "Event Tags (binder)",
+        body: "Tags tab → Event Tags editor. Classifies this Event for findability — separate from Tags on Notes.",
+      },
+      {
         title: "Tags tab (manager)",
-        body: "Inventory of Tags on this Event, Topic Tag pool, and other Trackers. Add Tag remembers a name without Flagging.",
+        body: "Inventory of Tags on this Event’s Notes, Topic Tag pool, Event Tags, and Trackers. Draft remembers a name without Flagging.",
       },
       {
         title: "Convert Topic Tag → Tracker",
