@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
-import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { V2EvidenceStreamKind } from "@/lib/argus/v2/evidence-stream";
-import type { V2TopicDetail } from "@/lib/argus/v2/topic-browse-utils";
+import type { V2TopicDetail, V2TopicLinkedEntity } from "@/lib/argus/v2/topic-browse-utils";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
 import {
   V2FlaggableTagChip,
@@ -24,6 +22,7 @@ import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEn
 import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
+import { V2EntityLinksTab } from "@/app/argus/v2/components/V2EntityLinksTab";
 import {
   V2ChronicleSelectableList,
   chronicleLogIdFromEvidenceId,
@@ -32,115 +31,16 @@ import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
-import type { LinkPanelFilter } from "@/lib/argus/create-flow-types";
-import type { V2TopicLinkedEntity } from "@/lib/argus/v2/topic-browse-utils";
 
 /** Topic = evidence binder → Chronicle only (Timeline stays on Org/Project). */
-type PanelTab = "chronicle" | "runbooks" | "connections" | "tags";
+type PanelTab = "chronicle" | "runbooks" | "links" | "tags";
 
 const PANEL_TABS: { id: PanelTab; label: string }[] = [
   { id: "chronicle", label: "Chronicle" },
   { id: "runbooks", label: "Runbooks" },
-  { id: "connections", label: "Connections" },
+  { id: "links", label: "Links" },
   { id: "tags", label: "Tags" },
 ];
-
-const SECTION_LINK_BTN =
-  "rounded-md border border-violet-500/35 bg-violet-600/10 px-2 py-1 text-[11px] font-semibold text-violet-300 hover:bg-violet-600/20";
-const EMPTY_LINK_BTN =
-  "mt-2 inline-flex rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25";
-
-function TopicConnectionChips({
-  entities,
-  accentClass,
-}: {
-  entities: Array<{ id: string; name: string; href: string; icon?: string; dateLabel?: string }>;
-  accentClass: string;
-}) {
-  return (
-    <ul className="flex flex-wrap gap-2">
-      {entities.map((entity) => (
-        <li key={entity.id}>
-          <Link href={entity.href} className={accentClass}>
-            {entity.icon ? <span aria-hidden>{entity.icon}</span> : null}
-            <span>{entity.name}</span>
-            {"dateLabel" in entity && entity.dateLabel ? (
-              <span className="opacity-60">{entity.dateLabel}</span>
-            ) : null}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function TopicConnectionSection({
-  title,
-  count,
-  entityId,
-  linkedIds,
-  linkLabel,
-  initialFilter,
-  subtitle,
-  browseHref,
-  entities,
-  chipClass,
-  emptyHint,
-}: {
-  title: string;
-  count: number;
-  entityId: string;
-  linkedIds: string[];
-  linkLabel: string;
-  initialFilter: LinkPanelFilter;
-  subtitle: string;
-  browseHref?: string;
-  entities: Array<{ id: string; name: string; href: string; icon?: string; dateLabel?: string }>;
-  chipClass: string;
-  emptyHint: string;
-}) {
-  return (
-    <div>
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-600">
-          {title} ({count})
-        </h3>
-        <div className="flex flex-wrap items-center gap-2">
-          {browseHref && count > 0 ? (
-            <Link href={browseHref} className="text-[11px] font-medium text-violet-300 hover:text-violet-200">
-              Browse →
-            </Link>
-          ) : null}
-          <V2EntityLinkButton
-            entityId={entityId}
-            linkedIds={linkedIds}
-            label={linkLabel}
-            initialFilter={initialFilter}
-            subtitle={subtitle}
-            className={SECTION_LINK_BTN}
-            buttonTitle={subtitle}
-          />
-        </div>
-      </div>
-      {entities.length > 0 ? (
-        <TopicConnectionChips entities={entities} accentClass={chipClass} />
-      ) : (
-        <div>
-          <p className="text-sm text-zinc-500">{emptyHint}</p>
-          <V2EntityLinkButton
-            entityId={entityId}
-            linkedIds={linkedIds}
-            label={linkLabel}
-            initialFilter={initialFilter}
-            subtitle={subtitle}
-            className={EMPTY_LINK_BTN}
-            buttonTitle={subtitle}
-          />
-        </div>
-      )}
-    </div>
-  );
-}
 
 function splitLinkedByKind(linked: V2TopicLinkedEntity[]) {
   const orgs: V2TopicLinkedEntity[] = [];
@@ -156,6 +56,7 @@ function splitLinkedByKind(linked: V2TopicLinkedEntity[]) {
   }
   return { orgs, projects, people, other };
 }
+
 function EvidenceIcon({ kind }: { kind: V2EvidenceStreamKind }) {
   if (kind === "email") return <>✉</>;
   if (kind === "photo") return <>📷</>;
@@ -225,9 +126,7 @@ export function V2TopicDetailPanel({
   allProgress?: RunbookProgress[];
   signalTags?: string[];
 } & V2DeleteGateProps) {
-  const router = useRouter();
   const [panelTab, setPanelTab] = useState<PanelTab>("chronicle");
-  const [showGraph, setShowGraph] = useState(true);
   const [focusTags, setFocusTags] = useState<string[]>(signalTags);
   const focusKeys = useMemo(() => focusKeySet(focusTags), [focusTags]);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
@@ -298,7 +197,7 @@ export function V2TopicDetailPanel({
           subtitle={selected.category}
           collapsedExtra={
             <>
-              {panelTab === "connections" ? (
+              {panelTab === "links" ? (
                 <V2EntityLinkButton
                   entityId={selected.id}
                   linkedIds={selected.linkedEntityIds}
@@ -363,7 +262,7 @@ export function V2TopicDetailPanel({
                   Protected evidence on this topic — unlock with PIN to view counts and linked data.
                 </p>
               ) : (
-                <div className="mb-3 grid grid-cols-4 gap-1.5 sm:grid-cols-7">
+                <div className="mb-3 grid grid-cols-4 gap-1.5 sm:grid-cols-4">
                   <MetricPill
                     icon="📓"
                     label="Notes"
@@ -383,34 +282,15 @@ export function V2TopicDetailPanel({
                     onClick={() => setPanelTab("chronicle")}
                   />
                   <MetricPill
-                    icon="📅"
-                    label="Events"
-                    count={selected.eventCount}
-                    onClick={() => {
-                      if (selected.eventCount > 0) {
-                        router.push(`/argus/v2/browse/events?entity=${selected.id}`);
-                        return;
-                      }
-                      setPanelTab("connections");
-                    }}
-                  />
-                  <MetricPill
-                    icon="🏢"
-                    label="Orgs"
-                    count={selected.orgCount}
-                    onClick={() => setPanelTab("connections")}
-                  />
-                  <MetricPill
-                    icon="📁"
-                    label="Projects"
-                    count={selected.projectCount}
-                    onClick={() => setPanelTab("connections")}
-                  />
-                  <MetricPill
-                    icon="👤"
-                    label="People"
-                    count={selected.peopleCount}
-                    onClick={() => setPanelTab("connections")}
+                    icon="🔗"
+                    label="Links"
+                    count={
+                      selected.eventCount +
+                      selected.orgCount +
+                      selected.projectCount +
+                      selected.peopleCount
+                    }
+                    onClick={() => setPanelTab("links")}
                   />
                 </div>
               )}
@@ -495,114 +375,76 @@ export function V2TopicDetailPanel({
             />
           ) : null}
 
-          {panelTab === "connections" ? (
-            <div className="space-y-5">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0 max-w-xl">
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    <p className="text-xs font-medium text-zinc-300">Connections</p>
-                    <V2IntelHelpLink topic="topic-connections" label="Topic Connections" />
-                  </div>
-                  <p className="text-sm text-zinc-500">{LINK_HIERARCHY.topicEventsHint}</p>
-                </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <V2EntityLinkButton
-                    entityId={selected.id}
-                    linkedIds={selected.linkedEntityIds}
-                    subtitle={LINK_HIERARCHY.topicEventsHint}
-                    className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
-                    buttonTitle={LINK_HIERARCHY.topicEventsHint}
-                  />
-                  <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
-                </div>
-              </div>
-
-              <TopicConnectionSection
-                title="Events"
-                count={selected.linkedEvents.length}
-                entityId={selected.id}
-                linkedIds={selected.linkedEntityIds}
-                linkLabel="Link event"
-                initialFilter="event"
-                subtitle={LINK_HIERARCHY.topicLinkEvents}
-                browseHref={`/argus/v2/browse/events?entity=${selected.id}`}
-                entities={selected.linkedEvents.map((event) => ({
-                  ...event,
-                  icon: "📅",
-                }))}
-                chipClass="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-100 hover:border-rose-400/50"
-                emptyHint="No Events linked yet. Link an Event so its Notes appear in Chronicle."
-              />
-
-              <TopicConnectionSection
-                title="Organizations"
-                count={linkedOrgs.length}
-                entityId={selected.id}
-                linkedIds={selected.linkedEntityIds}
-                linkLabel="Link org"
-                initialFilter="organization"
-                subtitle={LINK_HIERARCHY.topicLinkOrgs}
-                entities={linkedOrgs}
-                chipClass="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
-                emptyHint="No organizations linked yet."
-              />
-
-              <TopicConnectionSection
-                title="Projects"
-                count={linkedProjects.length}
-                entityId={selected.id}
-                linkedIds={selected.linkedEntityIds}
-                linkLabel="Link project"
-                initialFilter="project"
-                subtitle={LINK_HIERARCHY.topicLinkProjects}
-                entities={linkedProjects}
-                chipClass="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
-                emptyHint="No projects linked yet."
-              />
-
-              <TopicConnectionSection
-                title="People"
-                count={linkedPeople.length}
-                entityId={selected.id}
-                linkedIds={selected.linkedEntityIds}
-                linkLabel="Link person"
-                initialFilter="person"
-                subtitle={LINK_HIERARCHY.topicLinkPeople}
-                entities={linkedPeople}
-                chipClass="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
-                emptyHint="No people linked yet."
-              />
-
-              {linkedOther.length > 0 ? (
-                <div>
-                  <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                    Other ({linkedOther.length})
-                  </h3>
-                  <TopicConnectionChips
-                    entities={linkedOther}
-                    accentClass="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
-                  />
-                </div>
-              ) : null}
-
-              {neighborhood ? (
-                <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
-                  <div className="mb-3 flex items-center justify-between gap-2">
-                    <p className="text-xs text-zinc-500">Local graph — 1–2 hops from co-mentions and explicit links.</p>
-                    <button
-                      type="button"
-                      onClick={() => setShowGraph((v) => !v)}
-                      className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-400 hover:text-zinc-200"
-                    >
-                      {showGraph ? "Hide graph" : "Show graph"}
-                    </button>
-                  </div>
-                  {showGraph ? (
-                    <V2EntityNeighborhoodPanel graph={neighborhood} entityName={selected.name} />
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
+          {panelTab === "links" ? (
+            <V2EntityLinksTab
+              entityId={selected.id}
+              linkedIds={selected.linkedEntityIds}
+              helpTopic="topic-links"
+              helpLabel="Topic Links"
+              intro={LINK_HIERARCHY.topicEventsHint}
+              metrics={[
+                { icon: "📅", label: "Events", count: selected.eventCount },
+                { icon: "🏢", label: "Orgs", count: selected.orgCount },
+                { icon: "📁", label: "Proj", count: selected.projectCount },
+                { icon: "👤", label: "People", count: selected.peopleCount },
+              ]}
+              sections={[
+                {
+                  title: "Events",
+                  linkLabel: "Link event",
+                  initialFilter: "event",
+                  subtitle: LINK_HIERARCHY.topicLinkEvents,
+                  browseHref: `/argus/v2/browse/events?entity=${selected.id}`,
+                  entities: selected.linkedEvents.map((event) => ({
+                    id: event.id,
+                    name: event.name,
+                    href: event.href,
+                    icon: "📅",
+                    meta: event.dateLabel,
+                  })),
+                  tone: "event",
+                },
+                {
+                  title: "Organizations",
+                  linkLabel: "Link org",
+                  initialFilter: "organization",
+                  subtitle: LINK_HIERARCHY.topicLinkOrgs,
+                  entities: linkedOrgs,
+                },
+                {
+                  title: "Projects",
+                  linkLabel: "Link project",
+                  initialFilter: "project",
+                  subtitle: LINK_HIERARCHY.topicLinkProjects,
+                  entities: linkedProjects,
+                },
+                {
+                  title: "People",
+                  linkLabel: "Link person",
+                  initialFilter: "person",
+                  subtitle: LINK_HIERARCHY.topicLinkPeople,
+                  entities: linkedPeople,
+                },
+                ...(linkedOther.length > 0
+                  ? [
+                      {
+                        title: "Other",
+                        linkLabel: "Link",
+                        initialFilter: "all" as const,
+                        subtitle: LINK_HIERARCHY.inboxLinkHint,
+                        entities: linkedOther,
+                      },
+                    ]
+                  : []),
+              ]}
+              evidenceCounts={[
+                { label: "Notes", value: selected.journalCount },
+                { label: "Emails", value: selected.emailCount },
+                { label: "Attachments", value: attachmentCount },
+              ]}
+              neighborhood={neighborhood}
+              entityName={selected.name}
+            />
           ) : null}
 
           {panelTab === "tags" ? (

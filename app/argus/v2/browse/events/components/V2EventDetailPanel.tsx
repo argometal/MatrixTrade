@@ -14,11 +14,11 @@ import { V2PrivateEvidenceGate } from "@/app/argus/v2/components/V2PrivateEviden
 import type { V2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
 import { V2TagPatternBadges } from "@/app/argus/v2/components/V2TagPatternBadges";
 import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEntity";
-import { V2EntityNeighborhoodPanel } from "@/app/argus/v2/components/V2EntityNeighborhoodPanel";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
+import { V2EntityLinksTab } from "@/app/argus/v2/components/V2EntityLinksTab";
 import { V2TrackerTogglePanel } from "@/app/argus/v2/components/V2TrackerTogglePanel";
 import {
   V2ChronicleSelectableList,
@@ -27,31 +27,17 @@ import {
 import { TagPickerModal } from "@/app/argus/components/TagPickerModal";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
-import { TAGS } from "@/lib/argus/ux-copy";
+import { LINK_HIERARCHY, TAGS } from "@/lib/argus/ux-copy";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
-type PanelTab = "note" | "chronicle" | "runbooks" | "tags" | "metrics";
+type PanelTab = "note" | "chronicle" | "runbooks" | "tags" | "links";
 
 function EvidenceIcon({ kind }: { kind: V2EventDetail["evidence"][0]["kind"] }) {
   if (kind === "email") return <>✉</>;
   if (kind === "photo") return <>📷</>;
   if (kind === "file") return <>📎</>;
   return <>📓</>;
-}
-
-function MetricPill({ icon, label, count }: { icon: string; label: string; count: number }) {
-  return (
-    <div className="flex flex-col items-center justify-center rounded-lg bg-zinc-900/50 px-2 py-2 ring-1 ring-zinc-800/70">
-      <span className="text-[11px] leading-none" aria-hidden>
-        {icon}
-      </span>
-      <span className="mt-1 text-[11px] font-semibold tabular-nums leading-none text-violet-300/90">
-        {count}
-      </span>
-      <span className="mt-1 text-[8px] uppercase tracking-wide text-zinc-600">{label}</span>
-    </div>
-  );
 }
 
 export function V2EventDetailPanel({
@@ -81,7 +67,6 @@ export function V2EventDetailPanel({
   const router = useRouter();
   const { tagBuckets } = useArgusAdd();
   const [panelTab, setPanelTab] = useState<PanelTab>("note");
-  const [showGraph, setShowGraph] = useState(true);
   const [composer, setComposer] = useState("");
   const [entryTags, setEntryTags] = useState<string[]>([]);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
@@ -183,7 +168,7 @@ export function V2EventDetailPanel({
     { id: "chronicle", label: "Chronicle" },
     { id: "runbooks", label: "Runbooks" },
     { id: "tags", label: "Trackers" },
-    { id: "metrics", label: "Metrics" },
+    { id: "links", label: "Links" },
   ];
 
   return (
@@ -213,6 +198,14 @@ export function V2EventDetailPanel({
           subtitle={selected.dateTimeLabel}
           collapsedExtra={
             <>
+              {panelTab === "links" ? (
+                <V2EntityLinkButton
+                  entityId={selected.id}
+                  linkedIds={selected.linkedEntityIds}
+                  subtitle={LINK_HIERARCHY.inboxLinkHint}
+                  className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-2.5 py-1 text-[11px] font-semibold text-violet-300 hover:bg-violet-600/25"
+                />
+              ) : null}
               <V2QuickDeliverButton scopeType="event" scopeId={selected.id} scopeName={selected.name} label="PDF" />
               {/* Compact chrome used to hide Edit; keep rename/delete reachable */}
               {!showMobileManageBar ? lifecycle : null}
@@ -446,91 +439,66 @@ export function V2EventDetailPanel({
             </div>
           ) : null}
 
-          {panelTab === "metrics" ? (
-            <div className="space-y-5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-zinc-300">Metrics</p>
-                <V2IntelHelpLink topic="event-metrics" label="Event Metrics" />
-              </div>
-              <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">Linked entities</h3>
-                <div className="inline-grid w-[14rem] grid-cols-4 gap-1.5">
-                  <MetricPill icon="🏢" label="Orgs" count={selected.orgCount} />
-                  <MetricPill icon="📁" label="Proj" count={selected.projectCount} />
-                  <MetricPill icon="👤" label="People" count={selected.peopleCount} />
-                  <MetricPill icon="🏷" label="Topics" count={selected.topicCount} />
-                </div>
-                {selected.linkedTopics.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {selected.linkedTopics.map((topic) => (
-                      <Link
-                        key={topic.id}
-                        href={topic.href}
-                        className="rounded-md border border-zinc-800 bg-zinc-900/50 px-2 py-1 text-[11px] text-zinc-400 hover:border-violet-500/40 hover:text-zinc-200"
-                      >
-                        {topic.name}
-                      </Link>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-
-              <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                  Attendees ({selected.attendeeCount})
-                </h3>
-                {selected.attendeeNames.length === 0 ? (
-                  <p className="text-sm text-zinc-500">No people linked.</p>
-                ) : (
-                  <ul className="space-y-1 text-sm text-zinc-400">
-                    {selected.attendeeNames.map((name) => (
-                      <li key={name} className="flex items-center gap-2">
-                        <span className="h-1 w-1 rounded-full bg-zinc-600" aria-hidden />
-                        {name}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              <div>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">Evidence counts</h3>
-                <dl className="grid gap-2 text-sm sm:grid-cols-2">
-                  <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
-                    <dt className="text-xs text-zinc-600">Emails</dt>
-                    <dd className="font-semibold tabular-nums text-zinc-200">{selected.relatedEmails.length}</dd>
-                  </div>
-                  <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
-                    <dt className="text-xs text-zinc-600">Notes</dt>
-                    <dd className="font-semibold tabular-nums text-zinc-200">{selected.chronicleCount}</dd>
-                  </div>
-                  <div className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
-                    <dt className="text-xs text-zinc-600">Photos</dt>
-                    <dd className="font-semibold tabular-nums text-zinc-200">
-                      {selected.evidence.filter((e) => e.kind === "photo").length}
-                    </dd>
-                  </div>
-                </dl>
-              </div>
-
-              {neighborhood ? (
-                <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
-                  <div className="mb-3 flex items-center justify-between gap-2">
-                    <p className="text-xs font-medium text-zinc-300">Local graph</p>
-                    <button
-                      type="button"
-                      onClick={() => setShowGraph((v) => !v)}
-                      className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-400 hover:text-zinc-200"
-                    >
-                      {showGraph ? "Hide" : "Show"}
-                    </button>
-                  </div>
-                  {showGraph ? (
-                    <V2EntityNeighborhoodPanel graph={neighborhood} entityName={selected.name} />
-                  ) : null}
-                </div>
-              ) : null}
-            </div>
+          {panelTab === "links" ? (
+            <V2EntityLinksTab
+              entityId={selected.id}
+              linkedIds={selected.linkedEntityIds}
+              helpTopic="event-links"
+              helpLabel="Event Links"
+              intro={LINK_HIERARCHY.inboxLinkHint}
+              metrics={[
+                { icon: "🏢", label: "Orgs", count: selected.orgCount },
+                { icon: "📁", label: "Proj", count: selected.projectCount },
+                { icon: "👤", label: "People", count: selected.peopleCount },
+                { icon: "🏷", label: "Topics", count: selected.topicCount },
+              ]}
+              sections={[
+                {
+                  title: "Topics",
+                  linkLabel: "Link topic",
+                  initialFilter: "topic",
+                  subtitle: "Link Topics so this Event's Notes roll into Topic Chronicle.",
+                  entities: selected.linkedTopics.map((t) => ({
+                    id: t.id,
+                    name: t.name,
+                    href: t.href,
+                    icon: "🏷",
+                  })),
+                  tone: "topic",
+                },
+                {
+                  title: "Organizations",
+                  linkLabel: "Link org",
+                  initialFilter: "organization",
+                  subtitle: LINK_HIERARCHY.topicLinkOrgs,
+                  entities: selected.linkedOrgs,
+                },
+                {
+                  title: "Projects",
+                  linkLabel: "Link project",
+                  initialFilter: "project",
+                  subtitle: LINK_HIERARCHY.topicLinkProjects,
+                  entities: selected.linkedProjects,
+                },
+                {
+                  title: "People",
+                  linkLabel: "Link person",
+                  initialFilter: "person",
+                  subtitle: LINK_HIERARCHY.topicLinkPeople,
+                  entities: selected.linkedPeople,
+                },
+              ]}
+              evidenceCounts={[
+                { label: "Emails", value: selected.relatedEmails.length },
+                { label: "Notes", value: selected.chronicleCount },
+                {
+                  label: "Photos",
+                  value: selected.evidence.filter((e) => e.kind === "photo").length,
+                },
+              ]}
+              neighborhood={neighborhood}
+              entityName={selected.name}
+            />
           ) : null}
         </V2PrivateEvidenceGate>
       </div>

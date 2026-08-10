@@ -453,19 +453,19 @@ const SECTIONS: HelpSection[] = [
     ],
   },
   {
-    id: "event-metrics",
-    title: "Event · Metrics",
+    id: "event-links",
+    title: "Event · Links",
     group: "browse",
-    keywords: ["event", "metrics", "graph", "neighborhood", "attendees", "counts"],
-    intro: "Counts and local connection neighborhood around this Event.",
+    keywords: ["event", "links", "metrics", "graph", "neighborhood", "attendees", "counts"],
+    intro: "Relations, evidence counts, and local graph around this Event — same Links pattern as Topics, Orgs, and Projects.",
     items: [
       {
-        title: "Linked entities & attendees",
-        body: "Orgs, projects, people, and topics in the structural/co-mention neighbor set. Attendees = people in that set.",
+        title: "Linked entities",
+        body: "Metric pills summarize Orgs, Projects, People, and Topics. Use Link in each section to attach or create.",
       },
       {
         title: "Evidence counts",
-        body: "Emails, Notes, and Photos linked to this Event.",
+        body: "Emails, Notes, and Photos on this Event (Chronicle owns the narrative list).",
       },
       {
         title: "Local graph",
@@ -474,11 +474,24 @@ const SECTIONS: HelpSection[] = [
     ],
   },
   {
+    id: "event-metrics",
+    title: "Event · Links (formerly Metrics)",
+    group: "browse",
+    keywords: ["event", "metrics", "links"],
+    intro: "Renamed to Links — open Event · Links for the same counts and graph.",
+    items: [
+      {
+        title: "Where it moved",
+        body: "Event detail → Links tab (metric pills, relation sections, evidence counts, local graph).",
+      },
+    ],
+  },
+  {
     id: "browse-topics",
     title: "Topics browse",
     group: "browse",
     keywords: ["topics", "active", "quiet", "orphans", "board", "binders"],
-    intro: "Knowledge binders — board or list, then open a Topic for Chronicle, Tags, and connections.",
+    intro: "Knowledge binders — board or list, then open a Topic for Chronicle, Tags, and Links.",
     items: [
       {
         title: "Status chips",
@@ -511,8 +524,8 @@ const SECTIONS: HelpSection[] = [
         body: "Event-first: Notes are created on Events. When an Event is linked to this Topic, its Chronicle entries appear here (meta shows the Event name).",
       },
       {
-        title: "Connections vs Chronicle",
-        body: "Connections lists linked Events, orgs, projects, and people. Chronicle lists the evidence story across those Events (and any topic-direct evidence).",
+        title: "Links vs Chronicle",
+        body: "Links lists linked Events, orgs, projects, and people (with metric pills and graph). Chronicle lists the evidence story across those Events (and any topic-direct evidence).",
       },
       {
         title: "Not an audit log",
@@ -521,24 +534,71 @@ const SECTIONS: HelpSection[] = [
     ],
   },
   {
-    id: "topic-connections",
-    title: "Topic · Connections",
+    id: "topic-links",
+    title: "Topic · Links",
     group: "browse",
-    keywords: ["topic", "connections", "link", "events", "orgs", "projects", "people", "relations"],
+    keywords: ["topic", "links", "connections", "events", "orgs", "projects", "people", "relations", "graph"],
     intro:
-      "Explicit links from this Topic to Events, organizations, projects, and people — use Link in each section (or the header).",
+      "Same Links pattern as Events, Orgs, and Projects: metric pills, per-kind Link CTAs, evidence counts, and local graph.",
     items: [
       {
         title: "Events",
-        body: "Link Events here so Notes and evidence born on those Events roll into Topic Chronicle. Same link works from the Event side.",
+        body: "Link Events so Notes born on those Events roll into Topic Chronicle. Same link works from the Event side.",
       },
       {
         title: "Orgs · Projects · People",
         body: "Structural relations for context and navigation — not evidence owners. Link from each section (opens Link filtered to that kind).",
       },
       {
-        title: "How to link",
-        body: "Connections tab → Link event / Link org / …, or header Link. Create new entities from inside the Link panel.",
+        title: "Local graph",
+        body: "1–2 hops from explicit links and co-mentions — same graph surface as Event / Org / Project Links.",
+      },
+    ],
+  },
+  {
+    id: "topic-connections",
+    title: "Topic · Links (formerly Connections)",
+    group: "browse",
+    keywords: ["topic", "connections", "links"],
+    intro: "Renamed to Links — open Topic · Links for relations and graph.",
+    items: [
+      {
+        title: "Where it moved",
+        body: "Topic detail → Links tab.",
+      },
+    ],
+  },
+  {
+    id: "org-links",
+    title: "Organization · Links",
+    group: "browse",
+    keywords: ["organization", "links", "people", "projects", "topics", "events", "graph"],
+    intro: "Relations for this organization — metric pills, Link CTAs, and local graph (moved here from Overview).",
+    items: [
+      {
+        title: "What to link",
+        body: "People, Projects, Topics, and Events. Create new from inside Link.",
+      },
+      {
+        title: "Local graph",
+        body: "Neighborhood graph lives on Links (not Overview) so relations stay in one place.",
+      },
+    ],
+  },
+  {
+    id: "project-links",
+    title: "Project · Links",
+    group: "browse",
+    keywords: ["project", "links", "org", "people", "topics", "events", "graph"],
+    intro: "Relations for this project — metric pills, Link CTAs, and local graph (moved here from Overview).",
+    items: [
+      {
+        title: "What to link",
+        body: "Organization, People, Topics, and Events within the project story.",
+      },
+      {
+        title: "Local graph",
+        body: "Neighborhood graph lives on Links (not Overview) so relations stay in one place.",
       },
     ],
   },

@@ -1,150 +1,208 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "./V2CreateEntityButton";
+import { V2EntityNeighborhoodPanel } from "./V2EntityNeighborhoodPanel";
+import { V2IntelHelpLink } from "./V2IntelHelpLink";
 import { V2Badge, V2Card } from "./v2-ui";
 import { V2TagPatternBadges } from "./V2TagPatternBadges";
+import type { LinkPanelFilter } from "@/lib/argus/create-flow-types";
+import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { TagPattern } from "@/lib/argus/v2/tag-patterns";
+import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 
-type LinkPerson = { id: string; name: string; subtitle?: string; href: string };
-type LinkProject = { id: string; name: string; href: string; meta?: string };
-/** Structural Topic/Event binders — never evidence tag strings. */
-type LinkBinder = { id: string; name: string; href: string };
+export type V2LinksMetric = {
+  icon: string;
+  label: string;
+  count: number;
+};
 
+export type V2LinksEntity = {
+  id: string;
+  name: string;
+  href: string;
+  icon?: string;
+  meta?: string;
+};
+
+export type V2LinksSection = {
+  title: string;
+  linkLabel: string;
+  initialFilter: LinkPanelFilter;
+  subtitle: string;
+  browseHref?: string;
+  entities: V2LinksEntity[];
+  tone?: "event" | "topic" | "default";
+};
+
+export type V2LinksEvidenceCount = {
+  label: string;
+  value: number | string;
+};
+
+const SECTION_LINK_BTN =
+  "rounded-md border border-violet-500/35 bg-violet-600/10 px-2 py-1 text-[11px] font-semibold text-violet-300 hover:bg-violet-600/20";
+const EMPTY_LINK_BTN =
+  "mt-2 inline-flex rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25";
+
+const CHIP_CLASS: Record<NonNullable<V2LinksSection["tone"]>, string> = {
+  event:
+    "inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-100 hover:border-rose-400/50",
+  topic:
+    "inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-950/20 px-3 py-1.5 text-xs text-amber-100 hover:border-amber-400/40",
+  default:
+    "inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 hover:border-violet-500/40 hover:text-violet-200",
+};
+
+/** Event-style metric pill — shared across Links tabs. */
+export function V2LinksMetricPill({ icon, label, count }: V2LinksMetric) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-lg bg-zinc-900/50 px-2 py-2 ring-1 ring-zinc-800/70">
+      <span className="text-[11px] leading-none" aria-hidden>
+        {icon}
+      </span>
+      <span className="mt-1 text-[11px] font-semibold tabular-nums leading-none text-violet-300/90">
+        {count}
+      </span>
+      <span className="mt-1 text-[8px] uppercase tracking-wide text-zinc-600">{label}</span>
+    </div>
+  );
+}
+
+/**
+ * Shared Links tab — Event metric pills + per-kind Link CTAs + local graph.
+ * Used by Event, Topic, Organization, and Project.
+ */
 export function V2EntityLinksTab({
   entityId,
   linkedIds,
-  people,
-  projects,
-  organizations,
-  topics,
-  events,
+  helpTopic,
+  helpLabel = "Links",
+  intro = LINK_HIERARCHY.inboxLinkHint,
+  metrics,
+  sections,
+  evidenceCounts,
+  neighborhood,
+  entityName,
   tagPatterns,
   manualTags,
   tagHref,
   signalTags,
+  showCreate = true,
 }: {
   entityId: string;
   linkedIds: string[];
-  people: LinkPerson[];
-  projects?: LinkProject[];
-  organizations?: LinkProject[];
-  topics: LinkBinder[];
-  events: LinkBinder[];
-  tagPatterns: TagPattern[];
-  manualTags: string[];
+  helpTopic?: string;
+  helpLabel?: string;
+  intro?: string;
+  metrics?: V2LinksMetric[];
+  sections: V2LinksSection[];
+  evidenceCounts?: V2LinksEvidenceCount[];
+  neighborhood?: V2EntityNeighborhoodGraph | null;
+  entityName?: string;
+  tagPatterns?: TagPattern[];
+  manualTags?: string[];
   tagHref?: (tag: string) => string;
   signalTags?: string[];
+  showCreate?: boolean;
 }) {
+  const [showGraph, setShowGraph] = useState(true);
+  const showTags =
+    (tagPatterns && tagPatterns.length > 0) ||
+    (manualTags && manualTags.length > 0) ||
+    Boolean(tagPatterns || manualTags);
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <V2EntityLinkButton
-          entityId={entityId}
-          linkedIds={linkedIds}
-          className="rounded-xl border border-violet-500/40 bg-violet-600/15 px-4 py-2 text-sm font-semibold text-violet-300 hover:bg-violet-600/25"
-        />
-        <V2EntityCreateButton className="rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-800" />
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0 max-w-xl">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <p className="text-xs font-medium text-zinc-300">Links</p>
+            {helpTopic ? <V2IntelHelpLink topic={helpTopic} label={helpLabel} /> : null}
+          </div>
+          <p className="text-sm text-zinc-500">{intro}</p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <V2EntityLinkButton
+            entityId={entityId}
+            linkedIds={linkedIds}
+            subtitle={intro}
+            className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+            buttonTitle={intro}
+          />
+          {showCreate ? (
+            <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
+          ) : null}
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        <LinksColumn title="People">
-          {people.length === 0 ? (
-            <EmptyLinks />
-          ) : (
-            <ul className="space-y-2">
-              {people.map((person) => (
-                <li key={person.id}>
-                  <Link href={person.href} className="text-sm text-violet-400 hover:text-violet-300">
-                    {person.name}
-                    {person.subtitle ? <span className="text-zinc-600"> · {person.subtitle}</span> : null}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </LinksColumn>
+      {metrics && metrics.length > 0 ? (
+        <div>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+            Linked entities
+          </h3>
+          <div
+            className="inline-grid gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${Math.min(metrics.length, 6)}, minmax(0, 3.5rem))` }}
+          >
+            {metrics.map((metric) => (
+              <V2LinksMetricPill key={metric.label} {...metric} />
+            ))}
+          </div>
+        </div>
+      ) : null}
 
-        {organizations ? (
-          <LinksColumn title="Organizations">
-            {organizations.length === 0 ? (
-              <EmptyLinks />
-            ) : (
-              <ul className="space-y-2">
-                {organizations.map((org) => (
-                  <li key={org.id}>
-                    <Link href={org.href} className="text-sm text-violet-400 hover:text-violet-300">
-                      {org.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </LinksColumn>
-        ) : null}
+      {sections.map((section) => (
+        <LinksSectionBlock
+          key={section.title}
+          entityId={entityId}
+          linkedIds={linkedIds}
+          section={section}
+        />
+      ))}
 
-        {projects ? (
-          <LinksColumn title="Projects">
-            {projects.length === 0 ? (
-              <EmptyLinks />
-            ) : (
-              <ul className="space-y-2">
-                {projects.map((project) => (
-                  <li key={project.id}>
-                    <Link href={project.href} className="text-sm text-violet-400 hover:text-violet-300">
-                      {project.name}
-                      {project.meta ? <span className="text-zinc-600"> · {project.meta}</span> : null}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </LinksColumn>
-        ) : null}
+      {evidenceCounts && evidenceCounts.length > 0 ? (
+        <div>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+            Evidence counts
+          </h3>
+          <dl className="grid gap-2 text-sm sm:grid-cols-2">
+            {evidenceCounts.map((row) => (
+              <div
+                key={row.label}
+                className="rounded-lg border border-zinc-800/80 bg-zinc-900/30 px-3 py-2"
+              >
+                <dt className="text-xs text-zinc-600">{row.label}</dt>
+                <dd className="font-semibold tabular-nums text-zinc-200">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ) : null}
 
-        <LinksColumn title="Topics">
-          {topics.length === 0 ? (
-            <EmptyLinks />
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {topics.map((topic) => (
-                <Link
-                  key={topic.id}
-                  href={topic.href}
-                  className="inline-flex"
-                >
-                  <V2Badge tone="purple">{topic.name}</V2Badge>
-                </Link>
-              ))}
-            </div>
-          )}
-        </LinksColumn>
+      {neighborhood ? (
+        <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <p className="text-xs font-medium text-zinc-300">Local graph</p>
+            <button
+              type="button"
+              onClick={() => setShowGraph((v) => !v)}
+              className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-400 hover:text-zinc-200"
+            >
+              {showGraph ? "Hide" : "Show"}
+            </button>
+          </div>
+          {showGraph ? (
+            <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entityName ?? "Entity"} />
+          ) : null}
+        </div>
+      ) : null}
 
-        <LinksColumn title="Events">
-          {events.length === 0 ? (
-            <EmptyLinks />
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {events.map((event) => (
-                <Link
-                  key={event.id}
-                  href={event.href}
-                  className="inline-flex rounded-full border border-rose-500/30 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-100 hover:border-rose-400/50"
-                >
-                  <span aria-hidden className="mr-1">
-                    📅
-                  </span>
-                  {event.name}
-                </Link>
-              ))}
-            </div>
-          )}
-        </LinksColumn>
-
-        <V2Card className="p-4 lg:col-span-2 xl:col-span-3">
+      {showTags ? (
+        <V2Card className="p-4">
           <h3 className="mb-4 text-sm font-semibold text-zinc-100">Tags</h3>
-          {tagPatterns.length > 0 ? (
+          {tagPatterns && tagPatterns.length > 0 ? (
             <V2TagPatternBadges
               patterns={tagPatterns}
               signalTags={signalTags}
@@ -152,7 +210,7 @@ export function V2EntityLinksTab({
               tagHref={tagHref}
             />
           ) : null}
-          {manualTags.length > 0 ? (
+          {manualTags && manualTags.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {manualTags.map((tag, index) => (
                 <V2Badge key={tag} tone={index % 3 === 0 ? "blue" : index % 3 === 1 ? "green" : "purple"}>
@@ -160,24 +218,89 @@ export function V2EntityLinksTab({
                 </V2Badge>
               ))}
             </div>
-          ) : tagPatterns.length === 0 ? (
+          ) : tagPatterns && tagPatterns.length === 0 ? (
             <p className="text-sm text-zinc-600">No tags yet. Add labels on evidence or the record.</p>
           ) : null}
         </V2Card>
-      </div>
+      ) : null}
     </div>
   );
 }
 
-function LinksColumn({ title, children }: { title: string; children: ReactNode }) {
+function LinksSectionBlock({
+  entityId,
+  linkedIds,
+  section,
+}: {
+  entityId: string;
+  linkedIds: string[];
+  section: V2LinksSection;
+}) {
+  const tone = section.tone ?? "default";
+  const count = section.entities.length;
+
+  return (
+    <div>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-600">
+          {section.title} ({count})
+        </h3>
+        <div className="flex flex-wrap items-center gap-2">
+          {section.browseHref && count > 0 ? (
+            <Link
+              href={section.browseHref}
+              className="text-[11px] font-medium text-violet-300 hover:text-violet-200"
+            >
+              Browse →
+            </Link>
+          ) : null}
+          <V2EntityLinkButton
+            entityId={entityId}
+            linkedIds={linkedIds}
+            label={section.linkLabel}
+            initialFilter={section.initialFilter}
+            subtitle={section.subtitle}
+            className={SECTION_LINK_BTN}
+            buttonTitle={section.subtitle}
+          />
+        </div>
+      </div>
+      {count > 0 ? (
+        <ul className="flex flex-wrap gap-2">
+          {section.entities.map((entity) => (
+            <li key={entity.id}>
+              <Link href={entity.href} className={CHIP_CLASS[tone]}>
+                {entity.icon ? <span aria-hidden>{entity.icon}</span> : null}
+                <span>{entity.name}</span>
+                {entity.meta ? <span className="opacity-60">{entity.meta}</span> : null}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div>
+          <p className="text-sm text-zinc-500">None linked yet.</p>
+          <V2EntityLinkButton
+            entityId={entityId}
+            linkedIds={linkedIds}
+            label={section.linkLabel}
+            initialFilter={section.initialFilter}
+            subtitle={section.subtitle}
+            className={EMPTY_LINK_BTN}
+            buttonTitle={section.subtitle}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** @deprecated kept for any stray imports — prefer V2EntityLinksTab sections. */
+export function LinksColumn({ title, children }: { title: string; children: ReactNode }) {
   return (
     <V2Card className="p-4">
       <h3 className="mb-3 text-sm font-semibold text-zinc-100">{title}</h3>
       {children}
     </V2Card>
   );
-}
-
-function EmptyLinks() {
-  return <p className="text-sm text-zinc-600">None linked yet.</p>;
 }

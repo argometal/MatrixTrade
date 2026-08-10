@@ -90,6 +90,10 @@ export interface V2EventDetail {
   projectCount: number;
   peopleCount: number;
   topicCount: number;
+  /** Structural Links tab lists (neighbor set). */
+  linkedOrgs: Array<{ id: string; name: string; href: string; icon: string }>;
+  linkedProjects: Array<{ id: string; name: string; href: string; icon: string }>;
+  linkedPeople: Array<{ id: string; name: string; href: string; icon: string }>;
   linkedEntityIds: string[];
   linkedEntries: V2EventEntry[];
   relatedEmails: V2EventEmail[];
