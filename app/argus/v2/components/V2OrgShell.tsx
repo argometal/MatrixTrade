@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Entity, Runbook, RunbookProgress } from "@/lib/argus/types";
