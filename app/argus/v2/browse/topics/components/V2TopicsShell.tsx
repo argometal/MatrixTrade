@@ -707,13 +707,14 @@ export function V2TopicsShell({
 
   useEffect(() => {
     if (!urlSelected) return;
-    // Honor status pills (incl. Empty) — selection must remain in the visible set.
-    if (filtered.length === 0 || !filtered.some((card) => card.id === urlSelected)) {
+    // Keep deep-links / Manage-board opens. Status pills may hide the card in the
+    // list, but the entity still exists — only clear when the id is unknown.
+    if (!details.some((d) => d.id === urlSelected)) {
       replaceTopicParams((params) => {
         params.delete("selected");
       });
     }
-  }, [filtered, urlSelected, replaceTopicParams]);
+  }, [details, urlSelected, replaceTopicParams]);
 
   const returnTo = selected
     ? `/argus/v2/browse/topics?${searchParams.toString()}`

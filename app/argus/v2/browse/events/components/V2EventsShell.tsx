@@ -149,11 +149,13 @@ export function V2EventsShell({
 
   useEffect(() => {
     if (!urlSelected) return;
-    if (filtered.length === 0 || !filtered.some((row) => row.id === urlSelected)) {
+    // Keep deep-links open when triage/when filters hide the row in the list.
+    // Only clear selection when the Event id is unknown.
+    if (!details.some((d) => d.id === urlSelected)) {
       backToList();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- backToList is stable enough via searchParams
-  }, [filtered, urlSelected]);
+  }, [details, urlSelected]);
 
   const returnTo = `/argus/v2/browse/events?${searchParams.toString()}`;
   const { focus, from } = parseIntelligenceFocus(searchParams);
