@@ -1581,6 +1581,25 @@ export async function updateTopicAliasesAction(formData: FormData): Promise<void
   redirect(returnTo);
 }
 
+/** Event binder Tags (`eventTags`) — not evidence Notes; never dual-write linkedTags (legacy Signals). */
+export async function updateEventTagsAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const eventTags = parseTopics(String(formData.get("eventTags") ?? ""));
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/browse/events");
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.type !== "other" || referenceKindFromNotes(entity.notes ?? "") !== "event") {
+    redirect(returnTo);
+  }
+
+  await updateEntity(entityId, { eventTags });
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/events");
+  revalidatePath("/argus/v2");
+  redirect(returnTo);
+}
+
 /** Replace the journal-level Trackers (Flagged Tags → `signalTags`). */
 export async function updateSignalTagsAction(formData: FormData): Promise<void> {
   await requireArgusSession();

@@ -16,6 +16,7 @@ import {
 } from "./scope-node-counts";
 import { buildTagPatternsForScope } from "./tag-patterns";
 import { collectEvidenceTagsForTopicIds } from "./topic-loaders";
+import { readTagsForRole } from "../tag-ontology";
 import type {
   V2EventDetail,
   V2EventEmail,
@@ -254,6 +255,7 @@ export function buildV2EventDetails(
             ? "Legacy note pending migration"
             : "No chronicle entries yet.",
       linkedTags: (event.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
+      eventTags: readTagsForRole(data, "event", { entityId: event.id }),
       chronicleCount: history.length,
       attendeeInitials: initials,
       attendeeNames: people,

@@ -30,7 +30,7 @@ No binder Tags by default — use structural links. Do not write `linkedTags` as
 | Evidence Tag on a Note | Event → **Note** → Tags (scoped to this Event + Topic pool) → Save |
 | Topic Tags | Topic → Tags → Topic Tags editor |
 | Project Tags | Project edit → Tags (writes `projectTags`) |
-| Event binder Tags | Event Tags role (binder classification) — separate from Note evidence |
+| Event binder Tags | Event → Tags → **Event Tags** editor (`eventTags`) — separate from Note evidence |
 | Flag Tracker | Chip Flag on Tags manager / Home Tags |
 | Manage by role | Home → Intelligence → Tags → **Tag roles** chips (Evidence / Topic / Project / Event / Global) |
 
