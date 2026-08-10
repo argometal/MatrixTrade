@@ -299,7 +299,12 @@ export const LINK_HIERARCHY = {
   eventDate: "Event date",
   eventEndDate: "End date (optional)",
   projectEventsHint: "Only events within the project date range can be linked.",
-  topicEventsHint: "Topics can link people and dated events.",
+  topicEventsHint:
+    "Link Events (Chronicle evidence), organizations, projects, and people to this Topic. Create new from inside Link.",
+  topicLinkEvents: "Link Events so Notes born on those Events appear in this Topic’s Chronicle.",
+  topicLinkOrgs: "Link organizations related to this Topic.",
+  topicLinkProjects: "Link projects related to this Topic.",
+  topicLinkPeople: "Link people related to this Topic.",
   linkEmail: "Link",
   inboxLinkHint: "Link to people, organizations, projects, topics, or events. Create new from inside Link.",
   multiLinkHint: "Link a person and a project together to file email under both.",

@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { createEntityInlineAction } from "@/app/argus/actions";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { ReferenceCreateModal } from "@/app/argus/components/ReferenceCreateModal";
+import type { LinkPanelFilter } from "@/lib/argus/create-flow-types";
 import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 import type { ReferenceKind } from "@/lib/argus/reference-types";
 
@@ -56,11 +57,23 @@ export function V2EntityLinkButton({
   linkedIds,
   label = "Link",
   className,
+  title,
+  subtitle,
+  initialFilter,
+  buttonTitle = "Link to people, organizations, projects, topics, or events",
 }: {
   entityId: string;
   linkedIds: string[];
   label?: string;
   className?: string;
+  /** Link modal title (default "Link"). */
+  title?: string;
+  /** Link modal subtitle. */
+  subtitle?: string;
+  /** Open the link panel filtered to one kind (e.g. "event"). */
+  initialFilter?: LinkPanelFilter;
+  /** Native button tooltip. */
+  buttonTitle?: string;
 }) {
   const { openLinkModal } = useArgusAdd();
 
@@ -71,13 +84,14 @@ export function V2EntityLinkButton({
         openLinkModal({
           entityId,
           linkedEntityIds: linkedIds,
-          title: "Link",
-          subtitle: LINK_HIERARCHY.inboxLinkHint,
+          title: title ?? "Link",
+          subtitle: subtitle ?? LINK_HIERARCHY.inboxLinkHint,
           showTags: false,
+          initialFilter,
         })
       }
       className={className}
-      title="Link to people, projects, topics, or events"
+      title={buttonTitle}
     >
       {label}
     </button>

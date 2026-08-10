@@ -31,6 +31,9 @@ import {
 import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
+import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
+import type { LinkPanelFilter } from "@/lib/argus/create-flow-types";
+import type { V2TopicLinkedEntity } from "@/lib/argus/v2/topic-browse-utils";
 
 /** Topic = evidence binder → Chronicle only (Timeline stays on Org/Project). */
 type PanelTab = "chronicle" | "runbooks" | "connections" | "tags";
@@ -42,6 +45,117 @@ const PANEL_TABS: { id: PanelTab; label: string }[] = [
   { id: "tags", label: "Tags" },
 ];
 
+const SECTION_LINK_BTN =
+  "rounded-md border border-violet-500/35 bg-violet-600/10 px-2 py-1 text-[11px] font-semibold text-violet-300 hover:bg-violet-600/20";
+const EMPTY_LINK_BTN =
+  "mt-2 inline-flex rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25";
+
+function TopicConnectionChips({
+  entities,
+  accentClass,
+}: {
+  entities: Array<{ id: string; name: string; href: string; icon?: string; dateLabel?: string }>;
+  accentClass: string;
+}) {
+  return (
+    <ul className="flex flex-wrap gap-2">
+      {entities.map((entity) => (
+        <li key={entity.id}>
+          <Link href={entity.href} className={accentClass}>
+            {entity.icon ? <span aria-hidden>{entity.icon}</span> : null}
+            <span>{entity.name}</span>
+            {"dateLabel" in entity && entity.dateLabel ? (
+              <span className="opacity-60">{entity.dateLabel}</span>
+            ) : null}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function TopicConnectionSection({
+  title,
+  count,
+  entityId,
+  linkedIds,
+  linkLabel,
+  initialFilter,
+  subtitle,
+  browseHref,
+  entities,
+  chipClass,
+  emptyHint,
+}: {
+  title: string;
+  count: number;
+  entityId: string;
+  linkedIds: string[];
+  linkLabel: string;
+  initialFilter: LinkPanelFilter;
+  subtitle: string;
+  browseHref?: string;
+  entities: Array<{ id: string; name: string; href: string; icon?: string; dateLabel?: string }>;
+  chipClass: string;
+  emptyHint: string;
+}) {
+  return (
+    <div>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-600">
+          {title} ({count})
+        </h3>
+        <div className="flex flex-wrap items-center gap-2">
+          {browseHref && count > 0 ? (
+            <Link href={browseHref} className="text-[11px] font-medium text-violet-300 hover:text-violet-200">
+              Browse →
+            </Link>
+          ) : null}
+          <V2EntityLinkButton
+            entityId={entityId}
+            linkedIds={linkedIds}
+            label={linkLabel}
+            initialFilter={initialFilter}
+            subtitle={subtitle}
+            className={SECTION_LINK_BTN}
+            buttonTitle={subtitle}
+          />
+        </div>
+      </div>
+      {entities.length > 0 ? (
+        <TopicConnectionChips entities={entities} accentClass={chipClass} />
+      ) : (
+        <div>
+          <p className="text-sm text-zinc-500">{emptyHint}</p>
+          <V2EntityLinkButton
+            entityId={entityId}
+            linkedIds={linkedIds}
+            label={linkLabel}
+            initialFilter={initialFilter}
+            subtitle={subtitle}
+            className={EMPTY_LINK_BTN}
+            buttonTitle={subtitle}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function splitLinkedByKind(linked: V2TopicLinkedEntity[]) {
+  const orgs: V2TopicLinkedEntity[] = [];
+  const projects: V2TopicLinkedEntity[] = [];
+  const people: V2TopicLinkedEntity[] = [];
+  const other: V2TopicLinkedEntity[] = [];
+  for (const entity of linked) {
+    if (entity.icon === "🏢") orgs.push(entity);
+    else if (entity.icon === "📁") projects.push(entity);
+    else if (entity.icon === "👤") people.push(entity);
+    else if (entity.icon === "📅") continue;
+    else other.push(entity);
+  }
+  return { orgs, projects, people, other };
+}
 function EvidenceIcon({ kind }: { kind: V2EvidenceStreamKind }) {
   if (kind === "email") return <>✉</>;
   if (kind === "photo") return <>📷</>;
@@ -125,6 +239,8 @@ export function V2TopicDetailPanel({
   const compactChrome = mobileDetail && panelTab !== "tags";
   const showMobileManageBar = mobileDetail && privateUnlocked;
   const attachmentCount = selected.fileCount + selected.photoCount;
+  const { orgs: linkedOrgs, projects: linkedProjects, people: linkedPeople, other: linkedOther } =
+    useMemo(() => splitLinkedByKind(selected.linkedEntities), [selected.linkedEntities]);
 
   const linkedRunbooks = useMemo(
     () => runbooksForEntity(allRunbooks, selected.id),
@@ -182,6 +298,15 @@ export function V2TopicDetailPanel({
           subtitle={selected.category}
           collapsedExtra={
             <>
+              {panelTab === "connections" ? (
+                <V2EntityLinkButton
+                  entityId={selected.id}
+                  linkedIds={selected.linkedEntityIds}
+                  subtitle={LINK_HIERARCHY.topicEventsHint}
+                  className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-2.5 py-1 text-[11px] font-semibold text-violet-300 hover:bg-violet-600/25"
+                  buttonTitle={LINK_HIERARCHY.topicEventsHint}
+                />
+              ) : null}
               <V2QuickDeliverButton
                 scopeType="topic"
                 scopeId={selected.id}
@@ -214,7 +339,9 @@ export function V2TopicDetailPanel({
                   <V2EntityLinkButton
                     entityId={selected.id}
                     linkedIds={selected.linkedEntityIds}
+                    subtitle={LINK_HIERARCHY.topicEventsHint}
                     className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+                    buttonTitle={LINK_HIERARCHY.topicEventsHint}
                   />
                   <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
                 </div>
@@ -369,69 +496,94 @@ export function V2TopicDetailPanel({
           ) : null}
 
           {panelTab === "connections" ? (
-            <div className="space-y-4">
-              <div>
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                    Events ({selected.linkedEvents.length})
-                  </h3>
-                  {selected.linkedEvents.length > 0 ? (
-                    <Link
-                      href={`/argus/v2/browse/events?entity=${selected.id}`}
-                      className="text-[11px] font-medium text-violet-300 hover:text-violet-200"
-                    >
-                      Browse related events →
-                    </Link>
-                  ) : null}
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0 max-w-xl">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <p className="text-xs font-medium text-zinc-300">Connections</p>
+                    <V2IntelHelpLink topic="topic-connections" label="Topic Connections" />
+                  </div>
+                  <p className="text-sm text-zinc-500">{LINK_HIERARCHY.topicEventsHint}</p>
                 </div>
-                {selected.linkedEvents.length > 0 ? (
-                  <ul className="flex flex-wrap gap-2">
-                    {selected.linkedEvents.map((event) => (
-                      <li key={event.id}>
-                        <Link
-                          href={event.href}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-100 hover:border-rose-400/50"
-                        >
-                          <span aria-hidden>📅</span>
-                          <span>{event.name}</span>
-                          {event.dateLabel ? (
-                            <span className="text-rose-200/60">{event.dateLabel}</span>
-                          ) : null}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-zinc-500">
-                    No related events yet. Use Link to attach events — they appear here from either side.
-                  </p>
-                )}
+                <div className="flex shrink-0 flex-wrap gap-2">
+                  <V2EntityLinkButton
+                    entityId={selected.id}
+                    linkedIds={selected.linkedEntityIds}
+                    subtitle={LINK_HIERARCHY.topicEventsHint}
+                    className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+                    buttonTitle={LINK_HIERARCHY.topicEventsHint}
+                  />
+                  <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
+                </div>
               </div>
 
-              {selected.linkedEntities.filter((e) => e.icon !== "📅").length > 0 ? (
+              <TopicConnectionSection
+                title="Events"
+                count={selected.linkedEvents.length}
+                entityId={selected.id}
+                linkedIds={selected.linkedEntityIds}
+                linkLabel="Link event"
+                initialFilter="event"
+                subtitle={LINK_HIERARCHY.topicLinkEvents}
+                browseHref={`/argus/v2/browse/events?entity=${selected.id}`}
+                entities={selected.linkedEvents.map((event) => ({
+                  ...event,
+                  icon: "📅",
+                }))}
+                chipClass="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-100 hover:border-rose-400/50"
+                emptyHint="No Events linked yet. Link an Event so its Notes appear in Chronicle."
+              />
+
+              <TopicConnectionSection
+                title="Organizations"
+                count={linkedOrgs.length}
+                entityId={selected.id}
+                linkedIds={selected.linkedEntityIds}
+                linkLabel="Link org"
+                initialFilter="organization"
+                subtitle={LINK_HIERARCHY.topicLinkOrgs}
+                entities={linkedOrgs}
+                chipClass="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
+                emptyHint="No organizations linked yet."
+              />
+
+              <TopicConnectionSection
+                title="Projects"
+                count={linkedProjects.length}
+                entityId={selected.id}
+                linkedIds={selected.linkedEntityIds}
+                linkLabel="Link project"
+                initialFilter="project"
+                subtitle={LINK_HIERARCHY.topicLinkProjects}
+                entities={linkedProjects}
+                chipClass="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
+                emptyHint="No projects linked yet."
+              />
+
+              <TopicConnectionSection
+                title="People"
+                count={linkedPeople.length}
+                entityId={selected.id}
+                linkedIds={selected.linkedEntityIds}
+                linkLabel="Link person"
+                initialFilter="person"
+                subtitle={LINK_HIERARCHY.topicLinkPeople}
+                entities={linkedPeople}
+                chipClass="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
+                emptyHint="No people linked yet."
+              />
+
+              {linkedOther.length > 0 ? (
                 <div>
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">
-                    Orgs · Projects · People
+                    Other ({linkedOther.length})
                   </h3>
-                  <ul className="flex flex-wrap gap-2">
-                    {selected.linkedEntities
-                      .filter((entity) => entity.icon !== "📅")
-                      .map((entity) => (
-                      <li key={entity.id}>
-                        <Link
-                          href={entity.href}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
-                        >
-                          <span aria-hidden>{entity.icon}</span>
-                          {entity.name}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  <TopicConnectionChips
+                    entities={linkedOther}
+                    accentClass="inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 hover:border-violet-500/40 hover:text-violet-200"
+                  />
                 </div>
-              ) : (
-                <p className="text-sm text-zinc-500">No linked organizations, projects, or people yet.</p>
-              )}
+              ) : null}
 
               {neighborhood ? (
                 <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">

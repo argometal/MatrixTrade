@@ -512,11 +512,33 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Connections vs Chronicle",
-        body: "Connections lists the Event binders. Chronicle lists the evidence story across those Events (and any topic-direct evidence).",
+        body: "Connections lists linked Events, orgs, projects, and people. Chronicle lists the evidence story across those Events (and any topic-direct evidence).",
       },
       {
         title: "Not an audit log",
         body: "Rename, link/unlink, and Tag Flag changes are not Chronicle rows — Chronicle is narrative evidence only.",
+      },
+    ],
+  },
+  {
+    id: "topic-connections",
+    title: "Topic · Connections",
+    group: "browse",
+    keywords: ["topic", "connections", "link", "events", "orgs", "projects", "people", "relations"],
+    intro:
+      "Explicit links from this Topic to Events, organizations, projects, and people — use Link in each section (or the header).",
+    items: [
+      {
+        title: "Events",
+        body: "Link Events here so Notes and evidence born on those Events roll into Topic Chronicle. Same link works from the Event side.",
+      },
+      {
+        title: "Orgs · Projects · People",
+        body: "Structural relations for context and navigation — not evidence owners. Link from each section (opens Link filtered to that kind).",
+      },
+      {
+        title: "How to link",
+        body: "Connections tab → Link event / Link org / …, or header Link. Create new entities from inside the Link panel.",
       },
     ],
   },
