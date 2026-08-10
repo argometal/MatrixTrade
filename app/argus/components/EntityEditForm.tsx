@@ -244,15 +244,22 @@ export function EntityEditForm({
         </div>
       ) : null}
 
-      <label className="block">
-        <span className="text-xs text-zinc-500">Notes</span>
-        <textarea
-          name="notes"
-          defaultValue={entityNotesForDisplay(entity.notes)}
-          rows={3}
-          className={`${inputClass} mt-1 resize-none`}
-        />
-      </label>
+      {notesKind === "event" ? (
+        <p className="rounded-lg border border-zinc-800/80 bg-zinc-950/40 px-3 py-2 text-[11px] leading-relaxed text-zinc-500">
+          Event narrative lives on <span className="text-zinc-400">Event → Note</span> (Chronicle).
+          Entity notes stay a Kind shell only — do not edit the Record blob here.
+        </p>
+      ) : (
+        <label className="block">
+          <span className="text-xs text-zinc-500">Notes</span>
+          <textarea
+            name="notes"
+            defaultValue={entityNotesForDisplay(entity.notes)}
+            rows={3}
+            className={`${inputClass} mt-1 resize-none`}
+          />
+        </label>
+      )}
 
       {showPersonLinks ? (
         <EntityLinkGroup

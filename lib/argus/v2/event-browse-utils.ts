@@ -52,7 +52,9 @@ export interface V2EventEvidenceItem {
   title: string;
   meta: string;
   sortIso: string;
-  href: string;
+  /** Emails/files/photos only — journal notes are read in Chronicle (`preview`). */
+  href?: string;
+  preview?: string;
 }
 
 export interface V2EventInboxOption {

@@ -21,7 +21,8 @@ export type NetworkContactTimelineItem =
       preview: string;
       date: string;
       sortIso: string;
-      href: string;
+      /** Omitted — notes read in Chronicle; legacy phone editor deprecated for this path. */
+      href?: string;
       topics?: string[];
     }
   | { kind: "email"; id: string; title: string; preview: string; date: string; sortIso: string; href: string };
@@ -160,7 +161,7 @@ function buildTimeline(logs: Log[], enrichedInbox: EnrichedInboxItem[]): Network
       preview: log.body.replace(/\s+/g, " ").slice(0, 140),
       date: log.date,
       sortIso: log.date,
-      href: `/argus/logs/${log.id}`,
+      // No phone edit href — Chronicle reads notes in place (append-only on Events).
       topics: log.topics.length > 0 ? log.topics : undefined,
     });
   }

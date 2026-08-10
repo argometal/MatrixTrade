@@ -9,6 +9,7 @@ import {
   LOG_SOURCE_LABELS,
 } from "@/lib/argus/labels";
 
+/** @deprecated Legacy phone search/list card — prefer Chronicle in-list note preview. */
 export function LogCard({ log, entities }: { log: Log; entities?: Entity[] }) {
   const names =
     entities?.filter((e) => log.entityIds.includes(e.id)).map((e) => e.name) ?? [];

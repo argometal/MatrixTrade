@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
-import { archiveEntityAction, restoreEntityAction } from "@/app/argus/actions";
+import { setPortfolioBrowseStatusAction } from "@/app/argus/actions";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2BrowseStatusFilter } from "@/app/argus/v2/components/V2BrowseStatusFilter";
 import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
@@ -26,6 +26,11 @@ import type {
   V2OrganizationBrowseStatus,
   V2OrganizationBrowseSummary,
 } from "@/lib/argus/v2/organization-browse-utils";
+import {
+  isPortfolioBrowseStatus,
+  V2_PORTFOLIO_BOARD_COLUMNS,
+  type V2PortfolioBrowseStatus,
+} from "@/lib/argus/v2/portfolio-browse-status";
 
 function badgeTone(tone: V2OrganizationBrowseCard["statusTone"]): "default" | "green" | "blue" | "amber" {
   return tone;
@@ -41,7 +46,15 @@ const METRIC_ICONS = {
 
 const ORDER_SCOPE = "organizations";
 const COLUMN_SCOPE = "organizations:columns";
-const BOARD_COLUMNS: V2OrganizationBrowseStatus[] = ["Prospect", "Active", "Inactive", "Archived"];
+const BOARD_COLUMNS = V2_PORTFOLIO_BOARD_COLUMNS;
+
+function normalizeOrgColumn(raw: string): V2PortfolioBrowseStatus {
+  if (raw === "Prospect" || raw === "Planning") return "Active";
+  if (raw === "Inactive") return "On Hold";
+  if (raw === "Completed") return "Archived";
+  if (isPortfolioBrowseStatus(raw)) return raw;
+  return "Active";
+}
 
 function SummaryPill({
   label,
@@ -268,20 +281,23 @@ export function V2OrganizationsBrowserShell({
     setOrder(readBrowseCardOrder(ORDER_SCOPE));
     try {
       const raw = localStorage.getItem(`argus-v2-browse-columns:${COLUMN_SCOPE}`);
-      if (raw) setColumnOverrides(JSON.parse(raw) as Record<string, V2OrganizationBrowseStatus>);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, string>;
+        const next: Record<string, V2OrganizationBrowseStatus> = {};
+        for (const [id, status] of Object.entries(parsed)) {
+          next[id] = normalizeOrgColumn(status);
+        }
+        setColumnOverrides(next);
+      }
     } catch {
       /* ignore */
     }
     const prefs = readBrowseViewPrefs(ORDER_SCOPE);
     if (prefs.view) setViewState(prefs.view);
-    if (
-      prefs.status === "all" ||
-      prefs.status === "Prospect" ||
-      prefs.status === "Active" ||
-      prefs.status === "Inactive" ||
-      prefs.status === "Archived"
-    ) {
-      setStatusFilterState(prefs.status);
+    if (prefs.status === "all") {
+      setStatusFilterState("all");
+    } else if (prefs.status) {
+      setStatusFilterState(normalizeOrgColumn(prefs.status));
     }
   }, []);
 
@@ -310,24 +326,54 @@ export function V2OrganizationsBrowserShell({
   }
 
   const sorted = useMemo(() => applyBrowseOrder(cards, order), [cards, order]);
+  const effectiveCards = useMemo(
+    () =>
+      sorted.map((card) => {
+        const status = normalizeOrgColumn(columnOverrides[card.id] ?? card.status);
+        if (status === card.status) return card;
+        return {
+          ...card,
+          status,
+          statusTone:
+            status === "Active"
+              ? ("green" as const)
+              : status === "On Hold"
+                ? ("amber" as const)
+                : ("default" as const),
+        };
+      }),
+    [sorted, columnOverrides]
+  );
   const filtered = useMemo(
-    () => (statusFilter === "all" ? sorted : sorted.filter((c) => c.status === statusFilter)),
-    [sorted, statusFilter]
+    () =>
+      statusFilter === "all"
+        ? effectiveCards
+        : effectiveCards.filter((c) => c.status === statusFilter),
+    [effectiveCards, statusFilter]
   );
 
   const boardGroups = useMemo(() => {
     const groups: Record<V2OrganizationBrowseStatus, V2OrganizationBrowseCard[]> = {
-      Prospect: [],
       Active: [],
-      Inactive: [],
+      "On Hold": [],
       Archived: [],
     };
-    for (const card of sorted) {
-      const status = columnOverrides[card.id] ?? card.status;
-      groups[status].push(card);
+    for (const card of effectiveCards) {
+      groups[card.status].push(card);
     }
     return groups;
-  }, [sorted, columnOverrides]);
+  }, [effectiveCards]);
+
+  const statusCounts = useMemo(
+    () => ({
+      total: effectiveCards.length,
+      active: boardGroups.Active.length,
+      onHold: boardGroups["On Hold"].length,
+      archived: boardGroups.Archived.length,
+      totalProjects: summary.totalProjects,
+    }),
+    [boardGroups, effectiveCards.length, summary.totalProjects]
+  );
 
   function onDragStart(event: DragEvent, id: string) {
     event.dataTransfer.setData("text/plain", id);
@@ -371,25 +417,18 @@ export function V2OrganizationsBrowserShell({
     }
     const knownIds = cards.map((c) => c.id);
     persistOrder(placeInBrowseOrder(order, id, beforeId, knownIds));
-    persistColumns({ ...columnOverrides, [id]: column });
+    const nextColumn = normalizeOrgColumn(column);
+    persistColumns({ ...columnOverrides, [id]: nextColumn });
 
     const card = cards.find((c) => c.id === id);
-    if (card && column === "Archived" && card.status !== "Archived") {
+    if (card && nextColumn !== card.status) {
       startTransition(async () => {
         const fd = new FormData();
         fd.set("entityId", id);
+        fd.set("status", nextColumn);
         fd.set("returnTo", "/argus/v2/browse/organizations");
         fd.set("quiet", "1");
-        await archiveEntityAction(fd);
-        router.refresh();
-      });
-    } else if (card && column === "Active" && card.status === "Archived") {
-      startTransition(async () => {
-        const fd = new FormData();
-        fd.set("entityId", id);
-        fd.set("returnTo", "/argus/v2/browse/organizations");
-        fd.set("quiet", "1");
-        await restoreEntityAction(fd);
+        await setPortfolioBrowseStatusAction(fd);
         router.refresh();
       });
     }
@@ -420,7 +459,7 @@ export function V2OrganizationsBrowserShell({
                     [
                       ["grid", "▦", "Grid", "Grid · cards"],
                       ["list", "☰", "List", "List · rows"],
-                      ["board", "▥", "Manage", "Manage · Prospect / Active / Inactive / Archived"],
+                      ["board", "▥", "Manage", "Manage · Active / On Hold / Archived"],
                     ] as const
                   ).map(([id, icon, label, tip]) => (
                     <button
@@ -444,9 +483,8 @@ export function V2OrganizationsBrowserShell({
                   onChange={setStatusFilter}
                   options={[
                     { value: "all", label: "All statuses" },
-                    { value: "Prospect", label: "Prospect" },
                     { value: "Active", label: "Active" },
-                    { value: "Inactive", label: "Inactive" },
+                    { value: "On Hold", label: "On Hold" },
                     { value: "Archived", label: "Archived" },
                   ]}
                 />
@@ -459,14 +497,14 @@ export function V2OrganizationsBrowserShell({
             </header>
 
             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              <SummaryPill label="Total Organizations" value={summary.total} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} />
-              <SummaryPill label="Active" value={summary.active} icon="✓" tone="green" active={statusFilter === "Active"} onClick={() => setStatusFilter("Active")} />
-              <SummaryPill label="Inactive" value={summary.inactive} icon="◷" tone="amber" active={statusFilter === "Inactive"} onClick={() => setStatusFilter("Inactive")} />
-              <SummaryPill label="Archived" value={summary.archived} icon="▣" tone="default" active={statusFilter === "Archived"} onClick={() => setStatusFilter("Archived")} />
-              <SummaryPill label="Total Projects" value={summary.totalProjects} icon="📁" tone="blue" />
+              <SummaryPill label="Total Organizations" value={statusCounts.total} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} />
+              <SummaryPill label="Active" value={statusCounts.active} icon="✓" tone="green" active={statusFilter === "Active"} onClick={() => setStatusFilter("Active")} />
+              <SummaryPill label="On Hold" value={statusCounts.onHold} icon="◷" tone="amber" active={statusFilter === "On Hold"} onClick={() => setStatusFilter("On Hold")} />
+              <SummaryPill label="Archived" value={statusCounts.archived} icon="▣" tone="default" active={statusFilter === "Archived"} onClick={() => setStatusFilter("Archived")} />
+              <SummaryPill label="Total Projects" value={statusCounts.totalProjects} icon="📁" tone="blue" />
             </div>
 
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && view !== "board" ? (
               <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
                 <p className="text-sm text-zinc-500">No organizations yet.</p>
                 <p className="mt-1 text-xs text-zinc-600">

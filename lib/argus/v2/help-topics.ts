@@ -213,7 +213,7 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "Tags on this Event",
-        body: "Binder Tags (eventTags) only — not Note Tags. Add Tag attaches to this Event.",
+        body: "Binder Tags (eventTags) only — not Note Tags. Add Tag attaches to this Event. Evidence already on Notes appears under Attach from Notes until you Save Tags.",
       },
       {
         title: "Tags in this branch",
@@ -221,7 +221,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Trackers",
-        body: "Flags on Tag names ARGUS is watching in this context. Manage Trackers here; full journal list is in Go to Tags.",
+        body: "Flagged Tags in context (Attached/Branch) plus other journal Trackers for recall (legacy Event Signals). Manage Trackers here; full list is Go to Tags.",
       },
       {
         title: "Go to Tags",
@@ -297,12 +297,16 @@ const SECTIONS: HelpSection[] = [
     id: "browse-orgs",
     title: "Organizations browse",
     group: "browse",
-    keywords: ["organizations", "browse", "relationship", "metrics"],
+    keywords: ["organizations", "browse", "relationship", "metrics", "active", "on hold", "archived"],
     intro: "Long-term memory — not a CRM. Which organization do you want to analyze?",
     items: [
       {
         title: "Organization overview",
         body: "Name, status, and a short description — health and context of the relationship at a glance.",
+      },
+      {
+        title: "Status board",
+        body: "Active · On Hold · Archived — same portfolio ontology as Projects. Working states are Active or On Hold; Archived hides without deleting.",
       },
       {
         title: "Quick metrics",
@@ -325,13 +329,13 @@ const SECTIONS: HelpSection[] = [
         body: "Open the organization that needs attention — the detail page holds everything across years.",
       },
     ],
-    tip: "Drag ⋮⋮ to reorder cards or move them onto status labels (board). Use Filters when your portfolio grows.",
+    tip: "Drag ⋮⋮ to reorder cards or move them onto status labels (board). Drops persist Active / On Hold / Archived. Use Filters when your portfolio grows.",
   },
   {
     id: "browse-projects",
     title: "Projects browse",
     group: "browse",
-    keywords: ["projects", "planning", "active", "duration"],
+    keywords: ["projects", "active", "on hold", "archived", "duration"],
     items: [
       {
         title: "Portfolio view",
@@ -339,7 +343,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Status filters",
-        body: "Planning, Active, On Hold, Completed, Archived — match the engagement lifecycle.",
+        body: "Active · On Hold · Archived — same ontology as Organizations. Completed folds into Archived; there is no separate Planning column.",
       },
       {
         title: "Duration progress",
@@ -347,7 +351,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Reorder",
-        body: "Drag ⋮⋮ to reorder cards or move them onto status labels (board).",
+        body: "Drag ⋮⋮ to reorder cards or move them onto status labels (board). Drops persist Active / On Hold / Archived.",
       },
     ],
   },
@@ -443,8 +447,8 @@ const SECTIONS: HelpSection[] = [
         body: "Restore to active reopens the case. Delete (PIN + name) is optional trimming after Completed — not required to finish work.",
       },
       {
-        title: "Not Project Completed",
-        body: "A Project past its end date can show Completed and still count in metrics. Event Completed = Archive (out of metrics).",
+        title: "Not Org/Project Archived",
+        body: "Org and Project boards use Active · On Hold · Archived. Past end date or lifecycle completed on a Project folds into Archived on that board. Event Completed = Archive for case triage — separate surface.",
       },
     ],
   },
@@ -467,6 +471,10 @@ const SECTIONS: HelpSection[] = [
         title: "Link email",
         body: "Attach existing inbox evidence to this Event from the header action.",
       },
+      {
+        title: "Corrections",
+        body: "Append a new Note (or delete). Chronicle notes are not edited in the old phone log editor.",
+      },
     ],
   },
   {
@@ -483,6 +491,10 @@ const SECTIONS: HelpSection[] = [
       {
         title: "Add more",
         body: "Use the Note tab to append, or Link email for inbox items.",
+      },
+      {
+        title: "Read notes here",
+        body: "Note body shows in the list. Delete when needed. Do not open the legacy phone note editor from Chronicle.",
       },
     ],
   },
@@ -656,7 +668,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Archive elsewhere",
-        body: "Topics, projects, orgs, and people use Archive / Restore with the same lifecycle field. Project “Completed” from end date is different — those still count in metrics.",
+        body: "Topics, projects, orgs, and people use Archive / Restore with the same lifecycle field. Org/Project boards fold completed / past end date into Archived (Active · On Hold · Archived).",
       },
       {
         title: "Guest workstation lock",

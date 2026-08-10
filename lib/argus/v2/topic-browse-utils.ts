@@ -119,11 +119,18 @@ function activeCutoffIso(): string {
   return cutoff.toISOString().slice(0, 10);
 }
 
+function topicRowIsActive(row: Pick<V2TopicRow, "evidenceCount" | "lastSort">, cutoff: string): boolean {
+  if (row.evidenceCount <= 0) return false;
+  const lastDay = row.lastSort.slice(0, 10);
+  // Evidence without a usable date still counts as Active (same as browse cards).
+  return !lastDay || lastDay >= cutoff;
+}
+
 export function buildV2TopicTabCounts(rows: V2TopicRow[]) {
   const cutoff = activeCutoffIso();
   return {
     all: rows.length,
-    active: rows.filter((r) => r.evidenceCount > 0 && r.lastSort.slice(0, 10) >= cutoff).length,
+    active: rows.filter((r) => topicRowIsActive(r, cutoff)).length,
     empty: rows.filter((r) => topicRowIsEmpty(r)).length,
     patterns: rows.filter((r) => r.patternCount > 0).length,
   };
@@ -138,7 +145,7 @@ export function filterV2TopicRows(
   let result = rows;
 
   if (tab === "active") {
-    result = result.filter((r) => r.evidenceCount > 0 && r.lastSort.slice(0, 10) >= cutoff);
+    result = result.filter((r) => topicRowIsActive(r, cutoff));
   } else if (tab === "empty" || tab === "orphans") {
     result = result.filter((r) => topicRowIsEmpty(r));
   } else if (tab === "patterns") {
@@ -331,6 +338,7 @@ function deriveTopicBrowseStatus(
   detail: V2TopicDetail | undefined
 ): V2TopicBrowseStatus {
   if (detail?.lifecycleStatus === "archived") return "Archived";
+  const evidenceCount = Math.max(row.evidenceCount, detail?.evidenceCount ?? 0);
   const eventCount = Math.max(
     detail?.eventCount ?? 0,
     detail?.linkedEvents?.length ?? 0,
@@ -342,10 +350,12 @@ function deriveTopicBrowseStatus(
     row.linkedEntityIds.length
   );
   // Linked to events/orgs/projects/people is not Orphans — Quiet until evidence arrives.
-  if (row.evidenceCount === 0 && eventCount === 0 && linkedCount === 0) return "Orphans";
-  if (row.evidenceCount === 0) return "Quiet";
+  if (evidenceCount === 0 && eventCount === 0 && linkedCount === 0) return "Orphans";
+  if (evidenceCount === 0) return "Quiet";
   const cutoff = activeCutoffIso();
-  if (row.lastSort.slice(0, 10) >= cutoff) return "Active";
+  const lastDay = row.lastSort.slice(0, 10);
+  // Evidence without a usable date still counts as Active (wired recall).
+  if (!lastDay || lastDay >= cutoff) return "Active";
   return "Quiet";
 }
 

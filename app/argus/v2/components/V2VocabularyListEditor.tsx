@@ -22,6 +22,8 @@ export function V2VocabularyListEditor({
   footer,
   inputAriaLabel,
   onEnterAdd = true,
+  /** Vertical stack (default) for sweepable Tag rows; wrap = classic chip cloud. */
+  orientation = "stack",
   chipClassName = "inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200",
   removeClassName = "text-amber-400/70 hover:text-amber-100",
   addButtonClassName = "rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40",
@@ -35,31 +37,47 @@ export function V2VocabularyListEditor({
   footer?: ReactNode;
   inputAriaLabel?: string;
   onEnterAdd?: boolean;
+  orientation?: "stack" | "wrap";
   chipClassName?: string;
   removeClassName?: string;
   addButtonClassName?: string;
 }) {
+  const listClass =
+    orientation === "stack"
+      ? "flex flex-col gap-1.5"
+      : "flex flex-wrap gap-1.5";
+  const rowClass =
+    orientation === "stack"
+      ? `${chipClassName} w-full justify-between`
+      : chipClassName;
+
   return (
     <div>
       {copy.heading ? <h3 className="text-sm font-semibold text-zinc-100">{copy.heading}</h3> : null}
       {copy.hint ? <p className="mt-1 text-xs leading-relaxed text-zinc-500">{copy.hint}</p> : null}
 
-      <div className={`flex flex-wrap gap-1.5 ${copy.heading || copy.hint ? "mt-3" : ""}`}>
+      <ul className={`${listClass} ${copy.heading || copy.hint ? "mt-3" : ""}`} aria-label="Tags">
         {items.map((item) => (
-          <span key={item} className={chipClassName}>
-            {item}
-            <button
-              type="button"
-              onClick={() => onRemove(item)}
-              className={removeClassName}
-              aria-label={copy.removeAria(item)}
-            >
-              ×
-            </button>
-          </span>
+          <li key={item}>
+            <span className={rowClass}>
+              <span className="min-w-0 truncate">{item}</span>
+              <button
+                type="button"
+                onClick={() => onRemove(item)}
+                className={`shrink-0 ${removeClassName}`}
+                aria-label={copy.removeAria(item)}
+              >
+                ×
+              </button>
+            </span>
+          </li>
         ))}
-        {items.length === 0 ? <p className="text-xs text-zinc-600">{copy.empty}</p> : null}
-      </div>
+        {items.length === 0 ? (
+          <li className="list-none">
+            <p className="text-xs text-zinc-600">{copy.empty}</p>
+          </li>
+        ) : null}
+      </ul>
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <input

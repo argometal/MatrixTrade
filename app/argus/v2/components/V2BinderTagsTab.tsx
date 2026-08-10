@@ -161,6 +161,40 @@ export function V2BinderTagsTab({
       .sort((a, b) => a.localeCompare(b));
   }, [signalTags, attachedKeys, branchTagKeys]);
 
+  /** Journal Trackers not yet on this binder/branch — still recall them (legacy Event Signals). */
+  const otherTrackers = useMemo(() => {
+    const contextKeys = new Set(
+      [...contextTrackers].map(signalTagKey).filter(Boolean)
+    );
+    return signalTags
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+      .filter((tag) => {
+        const key = signalTagKey(tag);
+        return key && !contextKeys.has(key);
+      })
+      .sort((a, b) => a.localeCompare(b));
+  }, [signalTags, contextTrackers]);
+
+  const manageInventory = useMemo(() => {
+    const byKey = new Map<string, string>();
+    for (const tag of attachedTags) {
+      const key = signalTagKey(tag);
+      if (key) byKey.set(key, tag.trim());
+    }
+    for (const group of branchGroups) {
+      for (const row of group.tags) {
+        const key = signalTagKey(row.tag);
+        if (key && !byKey.has(key)) byKey.set(key, row.tag.trim());
+      }
+    }
+    for (const tag of signalTags) {
+      const key = signalTagKey(tag);
+      if (key && !byKey.has(key)) byKey.set(key, tag.trim());
+    }
+    return [...byKey.values()].sort((a, b) => a.localeCompare(b)).slice(0, 60);
+  }, [attachedTags, branchGroups, signalTags]);
+
   const visibleGroups = branchGroups.filter((g) => g.tags.length > 0 || g.href);
   const hasAnyBranchTags = branchGroups.some((g) => g.tags.length > 0);
 
@@ -199,7 +233,7 @@ export function V2BinderTagsTab({
         <div className="mt-4">{attachedEditor}</div>
 
         {attachedTags.length > 0 && attachedTagHref ? (
-          <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Open attached Tags">
+          <ul className="mt-3 flex flex-col gap-1.5" aria-label="Open attached Tags">
             {attachedTags.map((tag) => {
               const href = attachedTagHref(tag);
               if (!href) return null;
@@ -207,10 +241,13 @@ export function V2BinderTagsTab({
                 <li key={`link-${tag}`}>
                   <Link
                     href={href}
-                    className="inline-flex rounded-md border border-violet-500/30 bg-violet-950/40 px-2 py-0.5 text-[10px] text-violet-200/90 hover:border-violet-400/50 hover:text-violet-50"
+                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-violet-500/30 bg-violet-950/40 px-2.5 py-1.5 text-[12px] text-violet-200/90 hover:border-violet-400/50 hover:text-violet-50"
                     title={`Open ${tag}`}
                   >
-                    #{tag} →
+                    <span className="min-w-0 truncate">#{tag}</span>
+                    <span className="shrink-0 text-violet-300/80" aria-hidden>
+                      →
+                    </span>
                   </Link>
                 </li>
               );
@@ -253,15 +290,7 @@ export function V2BinderTagsTab({
         {!hasAnyBranchTags ? (
           <p className="mt-4 text-xs text-zinc-600">{branchEmptyHint}</p>
         ) : (
-          <div
-            className={`mt-4 grid gap-3 ${
-              visibleGroups.length >= 3
-                ? "sm:grid-cols-3"
-                : visibleGroups.length === 2
-                  ? "sm:grid-cols-2"
-                  : "grid-cols-1"
-            }`}
-          >
+          <div className="mt-4 grid grid-cols-1 gap-3">
             {visibleGroups.map((group) => {
               const tone = group.tone ?? (group.id as V2BinderBranchGroup["tone"]) ?? "default";
               return (
@@ -371,39 +400,54 @@ export function V2BinderTagsTab({
           </button>
         </div>
 
-        {contextTrackers.length === 0 ? (
+        {contextTrackers.length === 0 && otherTrackers.length === 0 ? (
           <p className="mt-4 text-xs text-zinc-600">No Trackers on Tags in this context yet.</p>
         ) : (
-          <ul className="mt-4 flex flex-wrap gap-2" aria-label="Trackers in this context">
-            {contextTrackers.map((tag) => (
-              <li key={tag}>
-                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/50 bg-zinc-950/60 px-2.5 py-1 text-[11px] font-semibold text-amber-100">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" aria-hidden />
-                  {tag}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-4 space-y-3">
+            {contextTrackers.length > 0 ? (
+              <ul className="flex flex-col gap-1.5" aria-label="Trackers in this context">
+                {contextTrackers.map((tag) => (
+                  <li key={tag}>
+                    <span className="flex w-full items-center gap-2 rounded-lg border border-amber-400/50 bg-zinc-950/60 px-2.5 py-1.5 text-[12px] font-semibold text-amber-100">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-hidden />
+                      <span className="min-w-0 truncate">{tag}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {otherTrackers.length > 0 ? (
+              <div>
+                <p className="mb-1.5 text-[11px] font-medium text-zinc-500">
+                  Other journal Trackers
+                </p>
+                <ul className="flex flex-col gap-1.5" aria-label="Other journal Trackers">
+                  {otherTrackers.map((tag) => (
+                    <li key={tag}>
+                      <span className="flex w-full items-center gap-2 rounded-lg border border-amber-400/30 bg-zinc-950/40 px-2.5 py-1.5 text-[12px] text-amber-100/90">
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400/70" aria-hidden />
+                        <span className="min-w-0 truncate">{tag}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
         )}
         <p className="mt-3 text-[11px] tabular-nums text-zinc-500">
-          {contextTrackers.length} tracker{contextTrackers.length === 1 ? "" : "s"}
+          {contextTrackers.length + otherTrackers.length} tracker
+          {contextTrackers.length + otherTrackers.length === 1 ? "" : "s"}
         </p>
 
         {manageOpen ? (
           <div className="mt-3 space-y-2 rounded-xl border border-amber-500/20 bg-zinc-950/70 p-3">
             <p className="text-[11px] text-zinc-500">
-              Flag or disable Trackers for Tags attached or seen in this branch.
+              Flag or disable Trackers for Tags attached, seen in this branch, or already tracked in
+              the journal.
             </p>
-            <ul className="flex flex-wrap gap-1.5">
-              {[
-                ...new Set([
-                  ...attachedTags,
-                  ...branchGroups.flatMap((g) => g.tags.map((t) => t.tag)),
-                ]),
-              ]
-                .sort((a, b) => a.localeCompare(b))
-                .slice(0, 40)
-                .map((tag) => {
+            <ul className="flex flex-col gap-1.5">
+              {manageInventory.map((tag) => {
                   const flagged = focusKeys.has(signalTagKey(tag));
                   const busy = pending && pendingTag === tag;
                   return (
@@ -412,17 +456,22 @@ export function V2BinderTagsTab({
                         type="button"
                         disabled={busy}
                         onClick={() => toggleTracker(tag)}
-                        className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] disabled:opacity-40 ${
+                        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[12px] disabled:opacity-40 ${
                           flagged
                             ? "border-amber-400/60 bg-amber-950/50 text-amber-100"
                             : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-amber-500/40 hover:text-amber-100"
                         }`}
                       >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${flagged ? "bg-amber-400" : "bg-zinc-600"}`}
-                          aria-hidden
-                        />
-                        {tag}
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span
+                            className={`h-1.5 w-1.5 shrink-0 rounded-full ${flagged ? "bg-amber-400" : "bg-zinc-600"}`}
+                            aria-hidden
+                          />
+                          <span className="truncate">{tag}</span>
+                        </span>
+                        <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-500">
+                          {flagged ? "Flagged" : "Flag"}
+                        </span>
                       </button>
                     </li>
                   );

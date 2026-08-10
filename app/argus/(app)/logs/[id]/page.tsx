@@ -7,6 +7,11 @@ import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-h
 import { TESTING } from "@/lib/argus/ux-copy";
 import { getAttachment, getInboxItem, getLog, readArgus } from "@/lib/argus/server-storage";
 
+/**
+ * @deprecated Legacy note editor for Inbox-converted journals only.
+ * Chronicle v2 (Events/Topics/Network) reads/deletes notes in place — no phone BottomNav
+ * on this route. Append corrections via Event → Note.
+ */
 export default async function LogDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const includePrivate = await hasArgusPrivateUnlock();
@@ -38,7 +43,14 @@ export default async function LogDetailPage({ params }: { params: Promise<{ id: 
 
   return (
     <>
-      <PageHeader title={log.title} backHref="/argus/v2" />
+      <PageHeader
+        title={log.title}
+        backHref={
+          inboxSource
+            ? `/argus/v2/inbox?selected=${encodeURIComponent(inboxSource.id)}`
+            : "/argus/v2"
+        }
+      />
       <ActivityEditPanel
         log={log}
         buckets={buckets}

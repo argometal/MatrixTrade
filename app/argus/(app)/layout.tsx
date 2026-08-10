@@ -1,6 +1,5 @@
 import { ArgusAddProvider } from "@/app/argus/components/ArgusAddProvider";
-import { BottomNav } from "@/app/argus/components/BottomNav";
-import { SignOutButton } from "@/app/components/SignOutButton";
+import { ArgusAppChrome } from "@/app/argus/components/ArgusAppChrome";
 import { hasArgusPrivateUnlock } from "@/lib/auth/cookies";
 import { requireArgusSession } from "@/lib/auth/require-session";
 import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-helpers";
@@ -17,13 +16,7 @@ export default async function ArgusAppLayout({ children }: { children: React.Rea
 
   return (
     <ArgusAddProvider buckets={buckets} tagBuckets={tagBuckets} journalRows={journalRows}>
-      <div className="mx-auto min-h-screen max-w-lg px-5 pb-24 pt-4 md:max-w-4xl">
-        <div className="mb-3 flex justify-end">
-          <SignOutButton className="text-xs font-medium text-zinc-500 hover:text-zinc-300" />
-        </div>
-        {children}
-        <BottomNav />
-      </div>
+      <ArgusAppChrome>{children}</ArgusAppChrome>
     </ArgusAddProvider>
   );
 }

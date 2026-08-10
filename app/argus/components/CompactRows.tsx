@@ -3,6 +3,7 @@ import { formatDate } from "./ui";
 import type { Entity, Log } from "@/lib/argus/types";
 import { JOURNAL_KIND_LABELS } from "@/lib/argus/labels";
 
+/** @deprecated Prefer Chronicle in-list note preview — do not add new links to `/argus/logs`. */
 export function CompactLogRow({ log, entities }: { log: Log; entities: Entity[] }) {
   const names = entities.filter((e) => log.entityIds.includes(e.id)).map((e) => e.name);
   const touchDate = log.kind === "follow_up" && log.followUpDate ? log.followUpDate : log.date;

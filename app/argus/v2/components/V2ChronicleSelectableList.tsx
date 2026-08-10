@@ -18,6 +18,8 @@ export type V2ChronicleSelectableItem = {
   title: ReactNode;
   href?: string;
   external?: boolean;
+  /** Optional note body shown under the title (journal rows; no phone edit link). */
+  preview?: string;
   body: ReactNode;
 };
 
@@ -163,12 +165,24 @@ export function V2ChronicleSelectableList({
                     href={item.href}
                     target={item.external ? "_blank" : undefined}
                     rel={item.external ? "noreferrer" : undefined}
-                    className="flex min-w-0 flex-1 items-start gap-3 px-3 py-3"
+                    className="flex min-w-0 flex-1 flex-col gap-1 px-3 py-3"
                   >
-                    {item.body}
+                    <span className="flex min-w-0 items-start gap-3">{item.body}</span>
+                    {item.preview ? (
+                      <p className="whitespace-pre-wrap pl-8 text-xs leading-relaxed text-zinc-400">
+                        {item.preview}
+                      </p>
+                    ) : null}
                   </Link>
                 ) : (
-                  <div className="flex min-w-0 flex-1 items-start gap-3 px-3 py-3">{item.body}</div>
+                  <div className="flex min-w-0 flex-1 flex-col gap-1 px-3 py-3">
+                    <span className="flex min-w-0 items-start gap-3">{item.body}</span>
+                    {item.preview ? (
+                      <p className="whitespace-pre-wrap pl-8 text-xs leading-relaxed text-zinc-400">
+                        {item.preview}
+                      </p>
+                    ) : null}
+                  </div>
                 )}
                 {item.logId && !selectMode ? (
                   <div className="flex items-center pr-2">

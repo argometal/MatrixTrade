@@ -1,4 +1,4 @@
-/** Board column title — clarifies Archived/Completed never delete. */
+/** Board column title — clarifies Archived never deletes. */
 
 export function BrowseBoardColumnHeader({
   column,
@@ -10,9 +10,7 @@ export function BrowseBoardColumnHeader({
   const safety =
     column === "Archived"
       ? "Hide only — not delete. Drag back or Restore anytime."
-      : column === "Completed"
-        ? "Completed view — does not delete."
-        : null;
+      : null;
 
   return (
     <div className="border-b border-zinc-800/80 px-3 py-2.5">
