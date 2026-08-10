@@ -144,6 +144,33 @@ const cards = buildV2TopicBrowseCards([linkedRow, emptyRow], [detail]);
 assert.equal(cards.find((c) => c.id === "t1")?.status, "Quiet");
 assert.equal(cards.find((c) => c.id === "t2")?.status, "Orphans");
 
+const activeWithEvidenceNoDate = buildV2TopicBrowseCards(
+  [
+    {
+      ...linkedRow,
+      id: "t-active",
+      evidenceCount: 3,
+      lastSort: "",
+    },
+  ],
+  [
+    {
+      ...detail,
+      id: "t-active",
+      evidenceCount: 3,
+      eventCount: 0,
+      linkedEvents: [],
+      neighborEntityIds: [],
+      linkedEntities: [],
+    },
+  ]
+);
+assert.equal(
+  activeWithEvidenceNoDate[0]?.status,
+  "Active",
+  "evidence without lastSort still counts as Active"
+);
+
 assert.equal(resolveTopicColumnStatus("Active", "Quiet"), "Quiet");
 assert.equal(resolveTopicColumnStatus("Quiet", "Active"), "Active");
 assert.equal(

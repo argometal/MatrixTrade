@@ -312,7 +312,7 @@ function ProjectBoardCard({
 
 export function V2ProjectsBrowserShell({
   cards,
-  summary,
+  summary: _summary,
   privateConfigured,
   privateUnlocked,
 }: {
@@ -381,8 +381,30 @@ export function V2ProjectsBrowserShell({
 
   const scopedCards = useMemo(() => filterV2ProjectBrowseCards(cards, orgScope), [cards, orgScope]);
   const sorted = useMemo(() => applyBrowseOrder(scopedCards, order), [scopedCards, order]);
+  const effectiveCards = useMemo(
+    () =>
+      sorted.map((card) => {
+        const status = columnOverrides[card.id] ?? card.status;
+        if (status === card.status) return card;
+        const statusTone: V2ProjectBrowseCard["statusTone"] =
+          status === "Active"
+            ? "green"
+            : status === "Planning"
+              ? "blue"
+              : status === "Completed"
+                ? "zinc"
+                : status === "On Hold"
+                  ? "orange"
+                  : "amber";
+        return { ...card, status, statusTone };
+      }),
+    [sorted, columnOverrides]
+  );
   const filtered = useMemo(() => {
-    let next = statusFilter === "all" ? sorted : sorted.filter((c) => c.status === statusFilter);
+    let next =
+      statusFilter === "all"
+        ? effectiveCards
+        : effectiveCards.filter((c) => c.status === statusFilter);
     const q = searchDraft.trim();
     if (q) {
       next = next.filter((c) =>
@@ -390,7 +412,7 @@ export function V2ProjectsBrowserShell({
       );
     }
     return next;
-  }, [sorted, statusFilter, searchDraft]);
+  }, [effectiveCards, statusFilter, searchDraft]);
 
   const boardGroups = useMemo(() => {
     const groups: Record<V2ProjectBrowseStatus, V2ProjectBrowseCard[]> = {
@@ -400,18 +422,31 @@ export function V2ProjectsBrowserShell({
       Completed: [],
       Archived: [],
     };
+    // Manage board always shows the full status distribution (same counts as summary pills).
+    // Status pills filter grid/list only — do not empty other columns here.
     const q = searchDraft.trim();
     const boardSource = q
-      ? sorted.filter((c) =>
+      ? effectiveCards.filter((c) =>
           textMatchesBrowseQuery(q, [c.name, c.description, c.lastActivity.label, c.status])
         )
-      : sorted;
+      : effectiveCards;
     for (const card of boardSource) {
-      const status = columnOverrides[card.id] ?? card.status;
-      groups[status].push(card);
+      groups[card.status].push(card);
     }
     return groups;
-  }, [sorted, columnOverrides, searchDraft]);
+  }, [effectiveCards, searchDraft]);
+
+  const statusCounts = useMemo(
+    () => ({
+      total: effectiveCards.length,
+      active: boardGroups.Active.length,
+      planning: boardGroups.Planning.length,
+      onHold: boardGroups["On Hold"].length,
+      completed: boardGroups.Completed.length,
+      archived: boardGroups.Archived.length,
+    }),
+    [boardGroups, effectiveCards.length]
+  );
 
   function onDragStart(event: DragEvent, id: string) {
     event.dataTransfer.setData("text/plain", id);
@@ -553,15 +588,15 @@ export function V2ProjectsBrowserShell({
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <SummaryPill label="Total" value={summary.total} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} />
-            <SummaryPill label="Active" value={summary.active} active={statusFilter === "Active"} onClick={() => setStatusFilter("Active")} />
-            <SummaryPill label="Planning" value={summary.planning} active={statusFilter === "Planning"} onClick={() => setStatusFilter("Planning")} />
-            <SummaryPill label="On Hold" value={summary.onHold} active={statusFilter === "On Hold"} onClick={() => setStatusFilter("On Hold")} />
-            <SummaryPill label="Completed" value={summary.completed} active={statusFilter === "Completed"} onClick={() => setStatusFilter("Completed")} />
-            <SummaryPill label="Archived" value={summary.archived} active={statusFilter === "Archived"} onClick={() => setStatusFilter("Archived")} />
+            <SummaryPill label="Total" value={statusCounts.total} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} />
+            <SummaryPill label="Active" value={statusCounts.active} active={statusFilter === "Active"} onClick={() => setStatusFilter("Active")} />
+            <SummaryPill label="Planning" value={statusCounts.planning} active={statusFilter === "Planning"} onClick={() => setStatusFilter("Planning")} />
+            <SummaryPill label="On Hold" value={statusCounts.onHold} active={statusFilter === "On Hold"} onClick={() => setStatusFilter("On Hold")} />
+            <SummaryPill label="Completed" value={statusCounts.completed} active={statusFilter === "Completed"} onClick={() => setStatusFilter("Completed")} />
+            <SummaryPill label="Archived" value={statusCounts.archived} active={statusFilter === "Archived"} onClick={() => setStatusFilter("Archived")} />
           </div>
 
-          {filtered.length === 0 ? (
+          {filtered.length === 0 && view !== "board" ? (
             <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
               <p className="text-sm text-zinc-500">
                 {scopedCards.length === 0 ? "No projects yet." : "No projects match this search."}

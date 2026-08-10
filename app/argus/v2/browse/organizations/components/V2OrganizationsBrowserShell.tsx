@@ -310,9 +310,32 @@ export function V2OrganizationsBrowserShell({
   }
 
   const sorted = useMemo(() => applyBrowseOrder(cards, order), [cards, order]);
+  const effectiveCards = useMemo(
+    () =>
+      sorted.map((card) => {
+        const status = columnOverrides[card.id] ?? card.status;
+        if (status === card.status) return card;
+        return {
+          ...card,
+          status,
+          statusTone:
+            status === "Active"
+              ? ("green" as const)
+              : status === "Prospect"
+                ? ("blue" as const)
+                : status === "Inactive"
+                  ? ("amber" as const)
+                  : ("default" as const),
+        };
+      }),
+    [sorted, columnOverrides]
+  );
   const filtered = useMemo(
-    () => (statusFilter === "all" ? sorted : sorted.filter((c) => c.status === statusFilter)),
-    [sorted, statusFilter]
+    () =>
+      statusFilter === "all"
+        ? effectiveCards
+        : effectiveCards.filter((c) => c.status === statusFilter),
+    [effectiveCards, statusFilter]
   );
 
   const boardGroups = useMemo(() => {
@@ -322,12 +345,23 @@ export function V2OrganizationsBrowserShell({
       Inactive: [],
       Archived: [],
     };
-    for (const card of sorted) {
-      const status = columnOverrides[card.id] ?? card.status;
-      groups[status].push(card);
+    for (const card of effectiveCards) {
+      groups[card.status].push(card);
     }
     return groups;
-  }, [sorted, columnOverrides]);
+  }, [effectiveCards]);
+
+  const statusCounts = useMemo(
+    () => ({
+      total: effectiveCards.length,
+      active: boardGroups.Active.length,
+      inactive: boardGroups.Inactive.length,
+      archived: boardGroups.Archived.length,
+      prospect: boardGroups.Prospect.length,
+      totalProjects: summary.totalProjects,
+    }),
+    [boardGroups, effectiveCards.length, summary.totalProjects]
+  );
 
   function onDragStart(event: DragEvent, id: string) {
     event.dataTransfer.setData("text/plain", id);
@@ -458,15 +492,16 @@ export function V2OrganizationsBrowserShell({
               </div>
             </header>
 
-            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              <SummaryPill label="Total Organizations" value={summary.total} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} />
-              <SummaryPill label="Active" value={summary.active} icon="✓" tone="green" active={statusFilter === "Active"} onClick={() => setStatusFilter("Active")} />
-              <SummaryPill label="Inactive" value={summary.inactive} icon="◷" tone="amber" active={statusFilter === "Inactive"} onClick={() => setStatusFilter("Inactive")} />
-              <SummaryPill label="Archived" value={summary.archived} icon="▣" tone="default" active={statusFilter === "Archived"} onClick={() => setStatusFilter("Archived")} />
-              <SummaryPill label="Total Projects" value={summary.totalProjects} icon="📁" tone="blue" />
+            <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              <SummaryPill label="Total Organizations" value={statusCounts.total} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} />
+              <SummaryPill label="Active" value={statusCounts.active} icon="✓" tone="green" active={statusFilter === "Active"} onClick={() => setStatusFilter("Active")} />
+              <SummaryPill label="Prospect" value={statusCounts.prospect} icon="◇" tone="blue" active={statusFilter === "Prospect"} onClick={() => setStatusFilter("Prospect")} />
+              <SummaryPill label="Inactive" value={statusCounts.inactive} icon="◷" tone="amber" active={statusFilter === "Inactive"} onClick={() => setStatusFilter("Inactive")} />
+              <SummaryPill label="Archived" value={statusCounts.archived} icon="▣" tone="default" active={statusFilter === "Archived"} onClick={() => setStatusFilter("Archived")} />
+              <SummaryPill label="Total Projects" value={statusCounts.totalProjects} icon="📁" tone="blue" />
             </div>
 
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && view !== "board" ? (
               <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
                 <p className="text-sm text-zinc-500">No organizations yet.</p>
                 <p className="mt-1 text-xs text-zinc-600">

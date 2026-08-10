@@ -41,6 +41,7 @@ export interface V2OrganizationBrowseCard {
 
 export interface V2OrganizationBrowseSummary {
   total: number;
+  prospect: number;
   active: number;
   inactive: number;
   archived: number;
@@ -207,6 +208,7 @@ export function buildV2OrganizationBrowseSummary(
   const totalProjects = entitiesByKind(data).projects.length;
   return {
     total: cards.length,
+    prospect: cards.filter((c) => c.status === "Prospect").length,
     active: cards.filter((c) => c.status === "Active").length,
     inactive: cards.filter((c) => c.status === "Inactive").length,
     archived: cards.filter((c) => c.status === "Archived").length,
