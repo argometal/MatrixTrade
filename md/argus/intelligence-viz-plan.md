@@ -40,7 +40,7 @@ Status: **implemented** (treemap + portfolio axes as of 2026-07). Tag pattern ov
 - **Shipped:** expand-on-click ego focus — click a node to show only that node + direct neighbors; Back / Full neighborhood / Esc returns. ⌘/Ctrl+click opens the entity. Dual-ring layout when crowded.
 
 ### Topic ↔ event linkage (recurrence / recency / evidence)
-For **topics**, Home treemap/portfolio **and Topics browse cards** count evidence on the topic entity **plus** linked events (Notes/emails on Event binders). Topic **Chronicle** stays topic-direct; Event notes remain under Connections / Event.
+For **topics**, Home treemap/portfolio **and Topics browse cards** count evidence on the topic entity **plus** linked events (Notes/emails on Event binders). Topic **Chronicle** uses the same portfolio stream (aggregation lens); Event binders remain listed under Connections.
 
 Linked events discovered via:
 1. `topic.linkedEntityIds` / outbound bags → event entities

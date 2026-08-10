@@ -140,9 +140,8 @@ function mergeEvidenceStreams(streams: V2EvidenceStreamItem[][]): V2EvidenceStre
 }
 
 /**
- * Topic-direct Chronicle stream + portfolio counts (topic ∪ linked Events).
- * Browse cards / metric pills use portfolio counts so Notes on linked Events
- * are not shown as 0 evidence. Chronicle `evidence` stays topic-direct.
+ * Topic Chronicle + metric counts = portfolio evidence (topic ∪ linked Events).
+ * Notes are born on Events; Topic is the aggregation lens — Chronicle must show that story.
  */
 function topicEvidenceBundle(
   data: ArgusData,
@@ -154,18 +153,30 @@ function topicEvidenceBundle(
   const topic = data.entities.find((e) => e.id === topicId && !e.deletedAt);
   const history = getEntityHistory(data, topicId, includePrivate);
   const inbox = getLinkedInboxForEntity(inboxItems, topicId, includePrivate);
-  const evidence = buildEntityEvidenceStream(data, topicId, inboxItems, includePrivate, today);
+  const topicDirect = buildEntityEvidenceStream(data, topicId, inboxItems, includePrivate, today);
 
-  const streams: V2EvidenceStreamItem[][] = [evidence];
+  const streams: V2EvidenceStreamItem[][] = [topicDirect];
   if (topic) {
     for (const eventId of collectTopicLinkedEventIds(data, topic, history)) {
-      streams.push(buildEntityEvidenceStream(data, eventId, inboxItems, includePrivate, today));
+      const event = data.entities.find((e) => e.id === eventId && !e.deletedAt);
+      const eventStream = buildEntityEvidenceStream(data, eventId, inboxItems, includePrivate, today);
+      if (!event) {
+        streams.push(eventStream);
+        continue;
+      }
+      // Annotate source Event so the Topic lens shows where evidence was born.
+      streams.push(
+        eventStream.map((item) => ({
+          ...item,
+          meta: `${event.name} · ${item.meta}`,
+        }))
+      );
     }
   }
-  const portfolioEvidence = mergeEvidenceStreams(streams);
-  const counts = countEvidenceStream(portfolioEvidence);
+  const evidence = mergeEvidenceStreams(streams);
+  const counts = countEvidenceStream(evidence);
   const lastIso = latestEvidenceIso(
-    portfolioEvidence,
+    evidence,
     history[0]?.date || inbox[0]?.receivedAt || ""
   );
   return { history, inbox, evidence, counts, lastIso };
@@ -229,7 +240,7 @@ export function collectEvidenceTagsForTopicIds(
 
 /**
  * Union topic + linked-event evidence for Patterns, and per-event tag lists for the Tags tab.
- * Chronicle stays topic-direct; Tags roll up binders so Event note tags are visible here.
+ * Chronicle stays topic ∪ linked Events (aggregation lens); Tags roll up binders so Event note tags are visible here.
  */
 function topicTagRollup(
   data: ArgusData,

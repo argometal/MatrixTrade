@@ -499,6 +499,28 @@ const SECTIONS: HelpSection[] = [
     ],
   },
   {
+    id: "topic-chronicle",
+    title: "Topic · Chronicle",
+    group: "browse",
+    keywords: ["topic", "chronicle", "evidence", "events", "notes", "aggregation"],
+    intro:
+      "Aggregation lens: Notes, emails, and files on this Topic plus evidence born on linked Events — chronological.",
+    items: [
+      {
+        title: "Where evidence comes from",
+        body: "Event-first: Notes are created on Events. When an Event is linked to this Topic, its Chronicle entries appear here (meta shows the Event name).",
+      },
+      {
+        title: "Connections vs Chronicle",
+        body: "Connections lists the Event binders. Chronicle lists the evidence story across those Events (and any topic-direct evidence).",
+      },
+      {
+        title: "Not an audit log",
+        body: "Rename, link/unlink, and Tag Flag changes are not Chronicle rows — Chronicle is narrative evidence only.",
+      },
+    ],
+  },
+  {
     id: "lifecycle",
     title: "Rename & archive",
     group: "ops",

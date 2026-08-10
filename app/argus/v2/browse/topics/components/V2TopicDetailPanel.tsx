@@ -28,6 +28,7 @@ import {
   V2ChronicleSelectableList,
   chronicleLogIdFromEvidenceId,
 } from "@/app/argus/v2/components/V2ChronicleSelectableList";
+import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
@@ -318,9 +319,10 @@ export function V2TopicDetailPanel({
         >
           {panelTab === "chronicle" ? (
             <div className="space-y-3">
-              <p className="text-xs text-zinc-500">
-                Dated notes, emails, and files on this topic. Linked Events live under Connections — not here.
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium text-zinc-300">Chronicle</p>
+                <V2IntelHelpLink topic="topic-chronicle" label="Topic Chronicle" />
+              </div>
               <V2ChronicleSelectableList
                 key={selected.id}
                 returnTo={returnTo}
@@ -333,11 +335,7 @@ export function V2TopicDetailPanel({
                 deleteError={deleteGate.deleteError}
                 deleteAuthError={deleteGate.deleteAuthError}
                 totpRequired={deleteGate.totpRequired}
-                empty={
-                  <p className="text-sm text-zinc-500">
-                    No evidence yet. Link emails from inbox or register a note.
-                  </p>
-                }
+                empty={<p className="text-sm text-zinc-500">No evidence yet.</p>}
                 items={selected.evidence.map((item) => ({
                   key: item.id,
                   logId: chronicleLogIdFromEvidenceId(item.id),
