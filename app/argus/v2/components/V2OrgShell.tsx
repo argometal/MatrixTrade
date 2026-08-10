@@ -16,13 +16,16 @@ import { V2IntelHelpLink } from "./V2IntelHelpLink";
 import { V2EntityRunbooksTab } from "./V2EntityRunbooksTab";
 import { V2RelationshipChart } from "./V2RelationshipChart";
 import {
+  V2ContactPill,
   V2LegacyLink,
+  V2MetricRows,
   V2MorePeopleHint,
   V2PanelCard,
   V2PanelHeader,
   V2PanelLinkAction,
   V2PersonListItem,
   V2ProjectListItem,
+  V2SummaryStatCard,
 } from "./V2RightPanel";
 import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 
