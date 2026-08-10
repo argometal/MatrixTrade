@@ -394,7 +394,7 @@ const SECTIONS: HelpSection[] = [
     group: "browse",
     keywords: ["events", "orphans", "linked", "upcoming", "past", "case", "meeting", "milestone"],
     intro:
-      "Events are dated occurrences (meetings, jobs, handovers) — latest first. Pick one, then work Notes, Chronicle, Trackers, and Metrics.",
+      "Events are dated occurrences (meetings, jobs, handovers) — latest first. Pick one, then work Notes, Chronicle, Tags, and Links.",
     items: [
       {
         title: "Orphans vs Linked",
@@ -402,7 +402,11 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "When filters",
-        body: "Upcoming / Past narrow by event date. Archived hides from Active triage.",
+        body: "Upcoming / Past narrow by event date. Completed (Archive) leaves Active triage and metric counts.",
+      },
+      {
+        title: "Completed",
+        body: "Edit → Mark completed writes Archive. The Event moves to the Completed tab — Notes and Chronicle stay. Delete later only if you need to trim live data.",
       },
       {
         title: "Empty list",
@@ -411,6 +415,32 @@ const SECTIONS: HelpSection[] = [
       {
         title: "Tags on an Event",
         body: "Put Tags on evidence via Note. Detail → Tags manages inventory and optional Flag as Tracker.",
+      },
+    ],
+  },
+  {
+    id: "event-completed",
+    title: "Event · Completed (Archive)",
+    group: "browse",
+    keywords: ["event", "completed", "archive", "metrics", "delete", "trim"],
+    intro:
+      "Mark completed uses Archive — the Event leaves active triage and metric counts without deleting evidence.",
+    items: [
+      {
+        title: "How to complete",
+        body: "Event → Edit → Mark completed. Same lifecycle field as Archive elsewhere; Events just use clearer copy.",
+      },
+      {
+        title: "What moves",
+        body: "Out of Orphans/Linked; into Events → Completed. Project/Topic/Org event pills stop counting it. Notes, Chronicle, Tags, and Links stay.",
+      },
+      {
+        title: "Restore or delete later",
+        body: "Restore to active reopens the case. Delete (PIN + name) is optional trimming after Completed — not required to finish work.",
+      },
+      {
+        title: "Not Project Completed",
+        body: "A Project past its end date can show Completed and still count in metrics. Event Completed = Archive (out of metrics).",
       },
     ],
   },
@@ -606,15 +636,23 @@ const SECTIONS: HelpSection[] = [
     id: "lifecycle",
     title: "Rename & archive",
     group: "ops",
-    keywords: ["rename", "archive", "delete", "guest", "lock", "security"],
+    keywords: ["rename", "archive", "delete", "completed", "guest", "lock", "security", "event"],
     items: [
       {
         title: "Rename",
         body: "Open an Event or Topic → Edit (next to the title) → Rename. Same for organizations, projects, and contacts — links and evidence stay intact.",
       },
       {
-        title: "Archive / Delete event",
-        body: "Edit → Archive hides from Active views (evidence kept). Edit → Delete event removes the binder after PIN unlock and typing the name — notes/emails stay. Your board layout and chip filters persist per browser like card order.",
+        title: "Event · Mark completed (Archive)",
+        body: "Edit → Mark completed stores Archive on the Event. It leaves Orphans/Linked triage and Project/Topic/Org event metric counts, and appears under Events → Completed. Notes, Chronicle, Tags, and Links stay. Restore to active brings it back.",
+      },
+      {
+        title: "Event · Delete (trim later)",
+        body: "Optional after Completed. Edit → Delete removes the binder after PIN unlock and typing the name — notes/emails stay. Use when you need to thin live data; prefer Completed first.",
+      },
+      {
+        title: "Archive elsewhere",
+        body: "Topics, projects, orgs, and people use Archive / Restore with the same lifecycle field. Project “Completed” from end date is different — those still count in metrics.",
       },
       {
         title: "Guest workstation lock",

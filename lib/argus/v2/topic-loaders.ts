@@ -18,6 +18,7 @@ import {
   collectNeighborEntityIds,
   countTopicsAndEventsInScope,
   isEventEntity as scopeIsEventEntity,
+  isEventEntityForMetrics as scopeIsEventEntityForMetrics,
   isTopicEntity as scopeIsTopicEntity,
   linkModalStructuralIds,
   outboundStructuralIds,
@@ -463,7 +464,9 @@ export function buildV2TopicDetails(
       orgCount: linkCounts.orgCount,
       projectCount: linkCounts.projectCount,
       peopleCount: linkCounts.peopleCount,
-      eventCount: eventIds.size,
+      eventCount: [...eventIds].filter((id) =>
+        scopeIsEventEntityForMetrics(data.entities.find((e) => e.id === id))
+      ).length,
       journalCount: counts.journalCount,
       emailCount: counts.emailCount,
       fileCount: counts.fileCount + counts.photoCount,

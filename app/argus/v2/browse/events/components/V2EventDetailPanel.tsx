@@ -255,6 +255,17 @@ export function V2EventDetailPanel({
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
+                    {selected.lifecycleStatus === "archived" ? (
+                      <span
+                        className="rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] font-medium text-zinc-400"
+                        title="Completed uses Archive — out of active triage and metric counts"
+                      >
+                        Completed
+                      </span>
+                    ) : null}
+                    {selected.lifecycleStatus === "archived" ? (
+                      <V2IntelHelpLink topic="event-completed" label="Completed" />
+                    ) : null}
                     <div className={showMobileManageBar ? "hidden lg:block" : undefined}>{lifecycle}</div>
                   </div>
                   <p className="mt-1 text-sm text-zinc-400">{selected.dateTimeLabel}</p>
