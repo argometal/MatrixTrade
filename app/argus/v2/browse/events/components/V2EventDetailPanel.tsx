@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { appendEventChronicleEntryAction } from "@/app/argus/actions";
@@ -29,6 +29,7 @@ import { TagPickerModal } from "@/app/argus/components/TagPickerModal";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 import { LINK_HIERARCHY, TAGS } from "@/lib/argus/ux-copy";
+import { intelligenceTagHref } from "@/lib/argus/v2/intelligence-nav";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
@@ -66,8 +67,10 @@ export function V2EventDetailPanel({
   signalTags?: string[];
 } & V2DeleteGateProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlTag = (searchParams.get("tag") ?? "").trim();
   const { tagBuckets } = useArgusAdd();
-  const [panelTab, setPanelTab] = useState<PanelTab>("note");
+  const [panelTab, setPanelTab] = useState<PanelTab>(urlTag ? "chronicle" : "note");
   const [composer, setComposer] = useState("");
   const [entryTags, setEntryTags] = useState<string[]>([]);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
@@ -123,6 +126,10 @@ export function V2EventDetailPanel({
     setPendingFiles([]);
     setSaveNote(null);
   }, [selected.id]);
+
+  useEffect(() => {
+    if (urlTag) setPanelTab("chronicle");
+  }, [urlTag, selected.id]);
 
   const eventTagCounts = useMemo(() => {
     const map = new Map<string, { tag: string; count: number }>();
@@ -479,6 +486,23 @@ export function V2EventDetailPanel({
                 <p className="text-xs font-medium text-zinc-300">Chronicle</p>
                 <V2IntelHelpLink topic="event-chronicle" label="Event Chronicle" />
               </div>
+              {urlTag ? (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-500/30 bg-violet-950/25 px-3 py-2">
+                  <p className="text-xs text-violet-100">
+                    Tag link · <span className="font-semibold">#{urlTag}</span>
+                    {selected.topicTags.some((t) => t.toLowerCase() === urlTag.toLowerCase()) ||
+                    selected.eventTags.some((t) => t.toLowerCase() === urlTag.toLowerCase())
+                      ? " — on this Event"
+                      : ""}
+                  </p>
+                  <Link
+                    href={`/argus/v2/browse/events?selected=${encodeURIComponent(selected.id)}&focus=1&from=tags`}
+                    className="text-[11px] text-violet-300/90 hover:text-violet-100"
+                  >
+                    Clear
+                  </Link>
+                </div>
+              ) : null}
               <V2ChronicleSelectableList
                 key={selected.id}
                 returnTo={returnTo}
@@ -535,8 +559,12 @@ export function V2EventDetailPanel({
             <div className="space-y-4">
               <V2BinderTagsTab
                 attachedHeading="Tags on this Event"
+                attachedBadge="What kind of Event is this?"
                 attachedHint="These Tags classify this Event. They do not come from Notes."
                 attachedTags={selected.eventTags}
+                attachedTagHref={(tag) =>
+                  `/argus/v2/browse/events?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
+                }
                 helpTopic="event-tags"
                 attachedEditor={
                   <V2EventTagEditor
@@ -547,10 +575,35 @@ export function V2EventDetailPanel({
                     compact
                   />
                 }
-                branchGroups={selected.branchTagGroups}
+                branchGroups={selected.branchTagGroups.map((group) => {
+                  const tone =
+                    group.id === "event" || group.id === "topic" || group.id === "project"
+                      ? group.id
+                      : "default";
+                  return {
+                    ...group,
+                    tone,
+                    tags: group.tags.map((row) => {
+                      let href: string | undefined;
+                      if (group.id === "event") {
+                        href = `/argus/v2/browse/events?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(row.tag)}&focus=1&from=tags`;
+                      } else if (group.id === "topic") {
+                        const topicId = selected.linkedTopics[0]?.id;
+                        href = intelligenceTagHref(row.tag, topicId);
+                      } else if (group.id === "project") {
+                        href = group.href
+                          ? group.href
+                          : intelligenceTagHref(row.tag);
+                      } else {
+                        href = intelligenceTagHref(row.tag);
+                      }
+                      return { ...row, href };
+                    }),
+                  };
+                })}
                 branchEmptyHint="No contextual Tags yet — link a Topic or Project, or put Tags on Notes."
                 onBrowseBranch={() => setPanelTab("note")}
-                browseBranchLabel="Put Tags on a Note"
+                browseBranchLabel="Browse branch"
                 signalTags={focusTags}
                 onSignalTagsChange={setFocusTags}
               />

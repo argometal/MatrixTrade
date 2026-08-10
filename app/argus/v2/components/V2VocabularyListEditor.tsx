@@ -24,6 +24,7 @@ export function V2VocabularyListEditor({
   onEnterAdd = true,
   chipClassName = "inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200",
   removeClassName = "text-amber-400/70 hover:text-amber-100",
+  addButtonClassName = "rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40",
 }: {
   items: string[];
   draft: string;
@@ -36,6 +37,7 @@ export function V2VocabularyListEditor({
   onEnterAdd?: boolean;
   chipClassName?: string;
   removeClassName?: string;
+  addButtonClassName?: string;
 }) {
   return (
     <div>
@@ -78,7 +80,7 @@ export function V2VocabularyListEditor({
           type="button"
           onClick={onAdd}
           disabled={!draft.trim()}
-          className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+          className={`${addButtonClassName} disabled:opacity-40`}
         >
           {copy.add}
         </button>

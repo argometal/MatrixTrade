@@ -445,8 +445,12 @@ export function V2TopicDetailPanel({
             <div className="space-y-4">
               <V2BinderTagsTab
                 attachedHeading="Tags on this Topic"
+                attachedBadge="What kind of Topic is this?"
                 attachedHint="These Tags classify this Topic binder. They do not come from Notes."
                 attachedTags={selected.aliases}
+                attachedTagHref={(tag) =>
+                  `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
+                }
                 helpTopic="topic-tags"
                 attachedEditor={
                   <V2TopicAliasEditor
@@ -461,14 +465,19 @@ export function V2TopicDetailPanel({
                   {
                     id: "topic",
                     label: "Topic",
+                    tone: "topic" as const,
                     contextName: "this Topic",
-                    tags: selected.evidenceTagCounts,
+                    tags: selected.evidenceTagCounts.map((row) => ({
+                      ...row,
+                      href: `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(row.tag)}&focus=1&from=tags`,
+                    })),
                   },
                   ...(selected.linkedEvents.length > 0
                     ? [
                         {
                           id: "event",
                           label: "Event",
+                          tone: "event" as const,
                           contextName:
                             selected.linkedEvents.length === 1
                               ? selected.linkedEvents[0].name
@@ -478,20 +487,28 @@ export function V2TopicDetailPanel({
                               ? selected.linkedEvents[0].href
                               : undefined,
                           tags: (() => {
-                            const map = new Map<string, { tag: string; count: number }>();
+                            const map = new Map<
+                              string,
+                              { tag: string; count: number; href?: string; eventId?: string }
+                            >();
                             for (const event of selected.eventEvidenceTags) {
                               for (const raw of event.tags) {
                                 const tag = raw.trim();
                                 if (!tag) continue;
                                 const key = tag.toLowerCase();
-                                const row = map.get(key) ?? { tag, count: 0 };
+                                const row = map.get(key) ?? {
+                                  tag,
+                                  count: 0,
+                                  eventId: event.id,
+                                  href: `/argus/v2/browse/events?selected=${encodeURIComponent(event.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`,
+                                };
                                 row.count += 1;
                                 map.set(key, row);
                               }
                             }
-                            return [...map.values()].sort(
-                              (a, b) => b.count - a.count || a.tag.localeCompare(b.tag)
-                            );
+                            return [...map.values()]
+                              .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+                              .map(({ tag, count, href }) => ({ tag, count, href }));
                           })(),
                         },
                       ]
