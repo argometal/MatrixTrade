@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import type { V2FocusTagStat, V2NavCounts, V2TagEvidenceContext } from "@/lib/argus/v2/loaders";
+import type { V2FocusTagStat, V2NavCounts, V2TagEvidenceContext, V2TagRoleBucketSummary } from "@/lib/argus/v2/loaders";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import type { IntelligenceFrom } from "@/lib/argus/v2/intelligence-nav";
 import type { IntelligenceUniverseFilter } from "@/lib/argus/v2/intelligence-filters";
@@ -62,6 +62,7 @@ export function V2HomeClient({
   focusTagPortfolio = [],
   signalTags = [],
   tagEvidenceByTag = {},
+  tagRoleBuckets = [],
   signals,
   initialView,
   followUps,
@@ -74,6 +75,7 @@ export function V2HomeClient({
   focusTagPortfolio?: V2FocusTagStat[];
   signalTags?: string[];
   tagEvidenceByTag?: Record<string, V2TagEvidenceContext>;
+  tagRoleBuckets?: V2TagRoleBucketSummary[];
   signals: V2NavCounts;
   initialView?: string;
   followUps: FollowUpItem[];
@@ -157,6 +159,7 @@ export function V2HomeClient({
                   focusTagPortfolio={focusTagPortfolio}
                   signalTags={signalTags}
                   tagEvidenceByTag={tagEvidenceByTag}
+                  tagRoleBuckets={tagRoleBuckets}
                   tab={intelTab}
                   lensId={lensId}
                   onLensChange={setLensId}

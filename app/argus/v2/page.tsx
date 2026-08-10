@@ -9,6 +9,7 @@ import {
   buildV2FocusTagPortfolio,
   buildV2TagCloud,
   buildV2TagEvidenceMap,
+  buildV2TagRoleBucketSummary,
   parseV2EntityTab,
   V2_ENTITY_TABS,
   type V2EntityRow,
@@ -36,6 +37,7 @@ export default async function V2HomePage({
   const homeTimeline = buildV2HomeTimeline(data, inboxItems, includePrivate);
   const tags = buildV2TagCloud(data, inboxItems, includePrivate);
   const focusTagPortfolio = buildV2FocusTagPortfolio(data, inboxItems, includePrivate, today);
+  const tagRoleBuckets = buildV2TagRoleBucketSummary(data);
   const tagEvidenceByTag = buildV2TagEvidenceMap(data, inboxItems, includePrivate);
   const knowledgeNodes = buildV2KnowledgeNodes(data, inboxItems, includePrivate, today);
   const entityRowsByTab = Object.fromEntries(
@@ -55,6 +57,7 @@ export default async function V2HomePage({
             focusTagPortfolio={focusTagPortfolio}
             signalTags={data.signalTags ?? []}
             tagEvidenceByTag={tagEvidenceByTag}
+            tagRoleBuckets={tagRoleBuckets}
             signals={navSignals}
             initialView={viewParam}
             followUps={followUps}

@@ -61,12 +61,16 @@ export function clearIntelligenceFocusHref(pathname: string, searchParams: URLSe
   return query ? `${pathname}?${query}` : pathname;
 }
 
-/** Match tag string to a topic entity by name or alias. */
-export function findTopicEntityIdForTag(topics: { id: string; name: string; linkedTags?: string[] }[], tagName: string): string | null {
+/** Match tag string to a topic entity by name or Topic Tags (legacy linkedTags). */
+export function findTopicEntityIdForTag(
+  topics: { id: string; name: string; linkedTags?: string[]; topicTags?: string[] }[],
+  tagName: string
+): string | null {
   const key = tagName.trim().toLowerCase();
   for (const topic of topics) {
     if (topic.name.trim().toLowerCase() === key) return topic.id;
-    for (const alias of topic.linkedTags ?? []) {
+    const aliases = topic.topicTags?.length ? topic.topicTags : (topic.linkedTags ?? []);
+    for (const alias of aliases) {
       if (alias.trim().toLowerCase() === key) return topic.id;
     }
   }

@@ -32,14 +32,15 @@ No binder Tags by default — use structural links. Do not write `linkedTags` as
 | Project Tags | Project edit → Tags (writes `projectTags`) |
 | Event binder Tags | Event Tags role (binder classification) — separate from Note evidence |
 | Flag Tracker | Chip Flag on Tags manager / Home Tags |
-| Manage by role | Home → Intelligence → Tags (manager evolving to role buckets) |
+| Manage by role | Home → Intelligence → Tags → **Tag roles** chips (Evidence / Topic / Project / Event / Global) |
 
 ### Filters (Home Tags)
 
 | Filter | Meaning |
 |--------|---------|
-| **Universe** | Role-aware inventory (migration still unions evidence + topic + trackers) |
-| **Hot / Patterns / Stale** | Evidence Tags only |
+| **Universe** | All roles (evidence + binder + global + trackers-in-universe) |
+| **Tag roles** | Filter inventory by `TagRole` (Trackers remain a Flag strip, not a role) |
+| **Hot / Patterns / Stale** | Evidence Tags only (activity scores) |
 | **Trackers** | Flagged keys in `signalTags` |
 
 ### Retired / forbidden

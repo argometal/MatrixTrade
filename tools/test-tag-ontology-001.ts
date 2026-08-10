@@ -10,6 +10,11 @@ import {
   tagKey,
 } from "../lib/argus/tag-ontology";
 import type { ArgusData, Entity } from "../lib/argus/types";
+import {
+  buildV2FocusTagPortfolio,
+  buildV2TagRoleBucketSummary,
+  filterFocusTagsByRole,
+} from "../lib/argus/v2/loaders";
 
 function entity(partial: Partial<Entity> & Pick<Entity, "id" | "type" | "name">): Entity {
   return {
@@ -92,5 +97,17 @@ const counts = countTagsByRole(data);
 assert.equal(counts.topic >= 1, true);
 assert.equal(counts.evidence >= 1, true);
 assert.equal(counts.global, 1);
+
+const roleSummary = buildV2TagRoleBucketSummary(data);
+assert.equal(roleSummary.find((b) => b.role === "global")?.count, 1);
+assert.equal(roleSummary.find((b) => b.role === "event")?.count, 1);
+
+const portfolio = buildV2FocusTagPortfolio(data, [], true, "2026-08-10");
+const evidenceOnly = filterFocusTagsByRole(portfolio, "evidence");
+assert.ok(evidenceOnly.some((r) => r.name === "EvidenceA"));
+assert.ok(portfolio.some((r) => r.roles.includes("topic") && r.name === "Risk Mgmt"));
+assert.ok(portfolio.some((r) => r.roles.includes("project") && r.name === "Trading"));
+assert.ok(portfolio.some((r) => r.roles.includes("event") && r.name === "Trade Entry"));
+assert.ok(!portfolio.some((r) => r.name === "should-not-read"));
 
 console.log("ok: tag-ontology-001");

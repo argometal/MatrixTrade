@@ -9,6 +9,14 @@ import { buildEntityIntelligence } from "../network-intelligence";
 import { isEntityArchived } from "../entity-lifecycle";
 import { getNeedsClassificationLogs } from "../journal-helpers";
 import { normalizeSignalTags, signalTagKey } from "../signal-tags";
+import {
+  countTagsByRole,
+  normalizeTagDisplay,
+  readTagsForRole,
+  tagKey,
+  type TagRole,
+  TAG_ROLES,
+} from "../tag-ontology";
 import { buildTagPatternsForScope } from "./tag-patterns";
 import { effectiveInboxStatus } from "./inbox-loaders";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
@@ -452,11 +460,39 @@ export type V2FocusTagStat = {
   isFocus: boolean;
   isPattern: boolean;
   href: string;
+  /** ORDER 001 — which TagRole stores carry this key (Trackers are flags, not a role). */
+  roles: TagRole[];
 };
+
+export type V2TagRoleFilter = "all" | TagRole;
+
+export type V2TagRoleBucketSummary = {
+  role: TagRole;
+  label: string;
+  count: number;
+};
+
+const TAG_ROLE_LABELS: Record<TagRole, string> = {
+  evidence: "Evidence",
+  topic: "Topic",
+  project: "Project",
+  event: "Event",
+  global: "Global",
+};
+
+/** Counts for Home Tags role manager chips. */
+export function buildV2TagRoleBucketSummary(data: ArgusData): V2TagRoleBucketSummary[] {
+  const counts = countTagsByRole(data);
+  return TAG_ROLES.map((role) => ({
+    role,
+    label: TAG_ROLE_LABELS[role],
+    count: counts[role],
+  }));
+}
 
 /**
  * Portfolio-style stats for Tags — Focus Tags always included; frequent evidence Tags fill in.
- * Reuses portfolio scoring windows (90d recency, 30d recurrence).
+ * Reuses portfolio scoring windows (90d recency, 30d recurrence). Role-aware (ORDER 001).
  */
 export function buildV2FocusTagPortfolio(
   data: ArgusData,
@@ -465,40 +501,55 @@ export function buildV2FocusTagPortfolio(
   today: string,
   limit = 80
 ): V2FocusTagStat[] {
-  type Acc = { display: string; dates: string[] };
+  type Acc = { display: string; dates: string[]; roles: Set<TagRole> };
   const acc = new Map<string, Acc>();
 
-  function bump(raw: string, iso: string) {
-    const display = raw.trim().replace(/\s+/g, " ");
-    if (!display) return;
-    const key = signalTagKey(display);
-    const row = acc.get(key) ?? { display, dates: [] };
+  function ensure(raw: string, role: TagRole): Acc | null {
+    const display = normalizeTagDisplay(raw);
+    if (!display) return null;
+    const key = tagKey(display);
+    const row = acc.get(key) ?? { display, dates: [], roles: new Set<TagRole>() };
+    row.roles.add(role);
+    if (!acc.has(key)) acc.set(key, row);
+    return row;
+  }
+
+  function bump(raw: string, iso: string, role: TagRole) {
+    const row = ensure(raw, role);
+    if (!row) return;
     row.dates.push(iso.slice(0, 10));
-    acc.set(key, row);
   }
 
   for (const log of visibleLogs(data, includePrivate)) {
     const iso = log.updatedAt || log.date;
-    for (const tag of log.topics ?? []) bump(tag, iso);
+    for (const tag of log.topics ?? []) bump(tag, iso, "evidence");
   }
   for (const item of visibleInbox(inboxItems, includePrivate)) {
-    for (const tag of item.topics ?? []) bump(tag, item.receivedAt);
+    for (const tag of item.topics ?? []) bump(tag, item.receivedAt, "evidence");
   }
 
   for (const tag of normalizeSignalTags(data.signalTags)) {
-    const key = signalTagKey(tag);
-    if (!acc.has(key)) acc.set(key, { display: tag, dates: [] });
+    ensure(tag, "evidence"); // Tracker keys stay in universe; Flag is separate
   }
 
-  // Topic binder Tags (`linkedTags`) stay in the universe even when not Trackers / no notes yet.
   const topics = entitiesByKind(data).topics;
   for (const topic of topics) {
-    for (const tag of topic.linkedTags ?? []) {
-      const display = tag.trim().replace(/\s+/g, " ");
-      if (!display) continue;
-      const key = signalTagKey(display);
-      if (!acc.has(key)) acc.set(key, { display, dates: [] });
+    for (const tag of readTagsForRole(data, "topic", { entityId: topic.id })) {
+      ensure(tag, "topic");
     }
+  }
+  for (const project of entitiesByKind(data).projects) {
+    for (const tag of readTagsForRole(data, "project", { entityId: project.id })) {
+      ensure(tag, "project");
+    }
+  }
+  for (const event of entitiesByKind(data).events) {
+    for (const tag of readTagsForRole(data, "event", { entityId: event.id })) {
+      ensure(tag, "event");
+    }
+  }
+  for (const tag of readTagsForRole(data, "global")) {
+    ensure(tag, "global");
   }
 
   const focusKeys = new Set(normalizeSignalTags(data.signalTags).map(signalTagKey));
@@ -511,6 +562,7 @@ export function buildV2FocusTagPortfolio(
   const rows = [...acc.entries()].map(([key, row]) => {
     const scored = scoreEvidenceDates(row.dates, today);
     const recentFresh = row.dates.filter((d) => d >= freshnessCutoff).length;
+    const roles = TAG_ROLES.filter((role) => row.roles.has(role));
     return {
       key,
       name: row.display,
@@ -520,8 +572,12 @@ export function buildV2FocusTagPortfolio(
       recencyScore: scored.recencyScore,
       lastSeen: scored.lastSeen,
       isFocus: focusKeys.has(key),
-      isPattern: row.dates.length >= TAG_PATTERN_MIN_COUNT && recentFresh >= 1,
+      isPattern:
+        row.roles.has("evidence") &&
+        row.dates.length >= TAG_PATTERN_MIN_COUNT &&
+        recentFresh >= 1,
       href: intelligenceTagHref(row.display, findTopicEntityIdForTag(topics, row.display)),
+      roles,
     } satisfies V2FocusTagStat & { key: string };
   });
 
@@ -540,6 +596,15 @@ export function buildV2FocusTagPortfolio(
     })
     .slice(0, limit)
     .map(({ key: _key, ...row }) => row);
+}
+
+/** Filter portfolio rows by TagRole (ORDER 001). Hot/Patterns/Stale still evidence-activity based. */
+export function filterFocusTagsByRole<T extends { roles: TagRole[] }>(
+  rows: T[],
+  role: V2TagRoleFilter
+): T[] {
+  if (role === "all") return rows;
+  return rows.filter((row) => row.roles.includes(role));
 }
 
 export type V2TagEvidenceEntity = {
