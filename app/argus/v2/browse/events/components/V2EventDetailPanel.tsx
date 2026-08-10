@@ -137,6 +137,44 @@ export function V2EventDetailPanel({
     return [...map.values()].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
   }, [selected.tagPatterns, selected.topicTags]);
 
+  const topicPoolTags = useMemo(() => {
+    const evidenceKeys = new Set(eventTagCounts.map((row) => row.tag.toLowerCase()));
+    const rows: Array<{ tag: string; count?: number }> = [];
+    for (const raw of selected.topicContextTags) {
+      const tag = raw.trim().replace(/\s+/g, " ");
+      if (!tag) continue;
+      const key = tag.toLowerCase();
+      if (evidenceKeys.has(key)) continue;
+      if (rows.some((r) => r.tag.toLowerCase() === key)) continue;
+      rows.push({ tag });
+    }
+    return rows.sort((a, b) => a.tag.localeCompare(b.tag));
+  }, [selected.topicContextTags, eventTagCounts]);
+
+  const noteQuickTags = useMemo(() => {
+    const fromTopic = selected.topicContextTags.map((t) => t.trim().replace(/\s+/g, " ")).filter(Boolean);
+    const fromEvidence = eventTagCounts.map((r) => r.tag);
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const tag of [...fromTopic, ...fromEvidence]) {
+      const key = tag.toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(tag);
+      if (out.length >= 10) break;
+    }
+    return out;
+  }, [selected.topicContextTags, eventTagCounts]);
+
+  function toggleEntryTag(tag: string) {
+    const key = tag.toLowerCase();
+    setEntryTags((current) => {
+      if (current.some((t) => t.toLowerCase() === key)) {
+        return current.filter((t) => t.toLowerCase() !== key);
+      }
+      return [...current, tag];
+    });
+  }
   async function saveEntry() {
     if (!canSave) return;
     setSaving(true);
@@ -167,7 +205,7 @@ export function V2EventDetailPanel({
     { id: "note", label: "Note" },
     { id: "chronicle", label: "Chronicle" },
     { id: "runbooks", label: "Runbooks" },
-    { id: "tags", label: "Trackers" },
+    { id: "tags", label: "Tags" },
     { id: "links", label: "Links" },
   ];
 
@@ -319,30 +357,69 @@ export function V2EventDetailPanel({
                 />
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTagPickerOpen(true)}
-                  className="rounded-lg border border-teal-800/50 bg-teal-950/30 px-3 py-1.5 text-xs font-semibold text-teal-300 hover:bg-teal-900/40"
-                >
-                  Tags{entryTags.length > 0 ? ` (${entryTags.length})` : ""}
-                </button>
-                {entryTags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 rounded-full bg-teal-950/40 px-2.5 py-0.5 text-[11px] font-medium text-teal-200 ring-1 ring-teal-500/30"
+              <div className="space-y-2 rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-zinc-300">{TAGS.titleOnNote}</p>
+                    <p className="mt-0.5 text-[11px] text-zinc-500">{TAGS.pickerHintOnNote}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTagPickerOpen(true)}
+                    className="shrink-0 rounded-lg border border-teal-500/40 bg-teal-950/40 px-3 py-1.5 text-xs font-semibold text-teal-200 hover:bg-teal-900/50"
                   >
-                    #{tag}
-                    <button
-                      type="button"
-                      onClick={() => setEntryTags((current) => current.filter((t) => t !== tag))}
-                      className="text-teal-400/80 hover:text-teal-100"
-                      aria-label={`Remove tag ${tag}`}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
+                    {entryTags.length > 0 ? `Browse tags (${entryTags.length})` : "Browse / create tags"}
+                  </button>
+                </div>
+
+                {noteQuickTags.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {noteQuickTags.map((tag) => {
+                      const selectedOnNote = entryTags.some((t) => t.toLowerCase() === tag.toLowerCase());
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => toggleEntryTag(tag)}
+                          aria-pressed={selectedOnNote}
+                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 transition ${
+                            selectedOnNote
+                              ? "bg-teal-950/60 text-teal-100 ring-teal-400/50"
+                              : "bg-zinc-950/40 text-zinc-400 ring-zinc-700/80 hover:text-zinc-200"
+                          }`}
+                        >
+                          #{tag}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-zinc-600">
+                    No Topic Tags yet — browse to create one on this Note (does not Flag a Tracker).
+                  </p>
+                )}
+
+                {entryTags.length > 0 ? (
+                  <div className="flex flex-wrap items-center gap-1.5 border-t border-zinc-800/70 pt-2">
+                    <span className="text-[10px] uppercase tracking-wide text-zinc-600">On this note</span>
+                    {entryTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 rounded-full bg-teal-950/40 px-2.5 py-0.5 text-[11px] font-medium text-teal-200 ring-1 ring-teal-500/30"
+                      >
+                        #{tag}
+                        <button
+                          type="button"
+                          onClick={() => setEntryTags((current) => current.filter((t) => t !== tag))}
+                          className="text-teal-400/80 hover:text-teal-100"
+                          aria-label={`Remove tag ${tag}`}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
 
               <V2AttachmentComposer files={pendingFiles} onChange={setPendingFiles} enablePaste />
@@ -428,13 +505,23 @@ export function V2EventDetailPanel({
             <div className="space-y-4">
               <V2TrackerTogglePanel
                 evidenceTags={eventTagCounts}
+                poolTags={topicPoolTags}
                 signalTags={focusTags}
                 onSignalTagsChange={setFocusTags}
                 surfaceLabel="this Event"
-                heading="Flag Trackers"
+                heading="Tags · Trackers"
                 helpTopic="event-tags"
-                emptyEvidenceHint="No Tags on this Event’s Notes yet."
-                addPlaceholder="Type a Tag name → Flag as Tracker"
+                emptyEvidenceHint="No Tags on this Event’s Notes yet — add them on Note, or Add Tag below."
+                addPlaceholder="Name a Tag…"
+                noteCta={
+                  <button
+                    type="button"
+                    onClick={() => setPanelTab("note")}
+                    className="font-medium text-teal-300/90 hover:text-teal-200"
+                  >
+                    Put Tags on a Note →
+                  </button>
+                }
               />
             </div>
           ) : null}

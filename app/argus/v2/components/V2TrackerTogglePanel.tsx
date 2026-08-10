@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { toggleSignalTagAction } from "@/app/argus/actions";
 import { signalTagKey } from "@/lib/argus/signal-tags";
@@ -42,30 +42,37 @@ function writeKnownExtras(tags: string[]) {
   }
 }
 
+function normalizeDraft(raw: string): string {
+  return raw.trim().replace(/\s+/g, " ");
+}
+
 /**
- * Tag ↔ Tracker without delete.
- * Click a chip to Flag / Disable Tracker (confirms first). Add Flagged name via the input.
- * Tags stay visible so you can re-Flag after Disable.
- *
- * When `surfaceLabel` is set (e.g. "this Event"), chips split into:
- * - Tags on this surface (from Notes/emails) — answers “what tags are mine here?”
- * - Other Trackers — journal watch names not yet on this surface’s evidence
+ * Tag ↔ Tracker manager (no delete).
+ * Tags are inventory first; click a chip to Flag / Disable Tracker (optional).
+ * Draft “Add Tag” remembers a name without Flagging — Flag is a separate action.
  */
 export function V2TrackerTogglePanel({
   evidenceTags,
+  poolTags = [],
   signalTags,
   onSignalTagsChange,
   heading = "Tags · Trackers",
   /** @deprecated Explanations live behind ? — ignored when helpTopic is set. */
   hint: _hint,
   helpTopic = "tags-patterns",
-  addPlaceholder = "Tag name to Flag as Tracker…",
-  /** When set, split inventory (“on this …”) from other Trackers. */
+  addPlaceholder = "Name a Tag…",
+  /** When set, split inventory (“on this …”) from Topic pool and other Trackers. */
   surfaceLabel,
   emptyEvidenceHint,
+  noteCta,
 }: {
   /** Tags from Notes/emails on this surface — always listed. */
   evidenceTags: V2TrackerToggleTag[];
+  /**
+   * Topic-derived Tag pool (not necessarily on this surface yet).
+   * Click to Flag as Tracker — Tag-first conversion from the Topic universe.
+   */
+  poolTags?: V2TrackerToggleTag[];
   signalTags: string[];
   onSignalTagsChange?: (next: string[]) => void;
   heading?: string;
@@ -75,10 +82,12 @@ export function V2TrackerTogglePanel({
   addPlaceholder?: string;
   surfaceLabel?: string;
   emptyEvidenceHint?: string;
+  /** Optional CTA to put Tags on evidence via Note. */
+  noteCta?: ReactNode;
 }) {
   const router = useRouter();
   const [focusTags, setFocusTags] = useState(signalTags);
-  /** Tracker-only names Flagged here (no note count yet) — kept after Disable so you can re-Flag. */
+  /** Names added here without Flag — stay visible so you can Flag later. */
   const [knownExtras, setKnownExtras] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [pending, startTransition] = useTransition();
@@ -123,33 +132,48 @@ export function V2TrackerTogglePanel({
       if (!key) continue;
       byKey.set(key, { tag: row.tag.trim(), count: row.count });
     }
+    for (const tag of knownExtras) {
+      const key = signalTagKey(tag);
+      if (!key || byKey.has(key)) continue;
+      byKey.set(key, { tag: tag.trim(), count: 0 });
+    }
     return [...byKey.values()].sort((a, b) => {
       const ac = a.count ?? 0;
       const bc = b.count ?? 0;
       if (ac !== bc) return bc - ac;
       return a.tag.localeCompare(b.tag);
     });
-  }, [evidenceTags]);
+  }, [evidenceTags, knownExtras]);
 
   const evidenceKeys = useMemo(
     () => new Set(evidenceRows.map((row) => signalTagKey(row.tag)).filter(Boolean)),
     [evidenceRows]
   );
 
+  const poolRows = useMemo(() => {
+    const byKey = new Map<string, V2TrackerToggleTag>();
+    for (const row of poolTags) {
+      const key = signalTagKey(row.tag);
+      if (!key || evidenceKeys.has(key)) continue;
+      byKey.set(key, { tag: row.tag.trim(), count: row.count });
+    }
+    return [...byKey.values()].sort((a, b) => a.tag.localeCompare(b.tag));
+  }, [poolTags, evidenceKeys]);
+
+  const poolKeys = useMemo(
+    () => new Set(poolRows.map((row) => signalTagKey(row.tag)).filter(Boolean)),
+    [poolRows]
+  );
+
   const otherTrackerRows = useMemo(() => {
     const byKey = new Map<string, V2TrackerToggleTag>();
     for (const tag of focusTags) {
       const key = signalTagKey(tag);
-      if (!key || evidenceKeys.has(key)) continue;
-      byKey.set(key, { tag: tag.trim() });
-    }
-    for (const tag of knownExtras) {
-      const key = signalTagKey(tag);
-      if (!key || evidenceKeys.has(key) || byKey.has(key)) continue;
+      if (!key || evidenceKeys.has(key) || poolKeys.has(key)) continue;
       byKey.set(key, { tag: tag.trim() });
     }
     return [...byKey.values()].sort((a, b) => a.tag.localeCompare(b.tag));
-  }, [focusTags, knownExtras, evidenceKeys]);
+  }, [focusTags, evidenceKeys, poolKeys]);
 
   /** Flat list when not splitting by surface. */
   const flatRows = useMemo(() => {
@@ -157,12 +181,16 @@ export function V2TrackerTogglePanel({
     for (const row of evidenceRows) {
       byKey.set(signalTagKey(row.tag), row);
     }
+    for (const row of poolRows) {
+      const key = signalTagKey(row.tag);
+      if (!byKey.has(key)) byKey.set(key, row);
+    }
     for (const row of otherTrackerRows) {
       const key = signalTagKey(row.tag);
       if (!byKey.has(key)) byKey.set(key, row);
     }
     return [...byKey.values()].sort((a, b) => a.tag.localeCompare(b.tag));
-  }, [evidenceRows, otherTrackerRows]);
+  }, [evidenceRows, poolRows, otherTrackerRows]);
 
   function rememberExtra(tag: string) {
     const key = signalTagKey(tag);
@@ -181,16 +209,24 @@ export function V2TrackerTogglePanel({
     rememberExtra(tag);
   }
 
-  function flagFromDraft() {
-    const next = draft.trim().replace(/\s+/g, " ");
+  /** Tag-first: remember name in inventory without Flagging. */
+  function addTagFromDraft() {
+    const next = normalizeDraft(draft);
     if (!next) return;
-    if (!confirmTrackerConvert(next, false)) return;
+    rememberExtra(next);
+    setDraft("");
+  }
+
+  /** Optional: Flag as Tracker after naming (or Flag an existing name). */
+  function flagFromDraft() {
+    const next = normalizeDraft(draft);
+    if (!next) return;
+    if (!confirmTrackerConvert(next, tagIsFlagged(next, focusKeys))) return;
     rememberExtra(next);
     setDraft("");
     startTransition(async () => {
       const result = await toggleSignalTagAction(next);
       if ("error" in result) return;
-      // Ensure Flagged on (toggle might have disabled if already active)
       if (!result.active) {
         const again = await toggleSignalTagAction(next);
         if ("error" in again) return;
@@ -221,19 +257,27 @@ export function V2TrackerTogglePanel({
   }
 
   const split = Boolean(surfaceLabel);
+  const draftReady = Boolean(normalizeDraft(draft));
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-600">{heading}</p>
         <V2IntelHelpLink topic={helpTopic} label={heading} />
       </div>
+
+      <p className="text-xs text-zinc-500">
+        Tags classify evidence. Click a chip to Flag / Disable as Tracker when you want journal-wide
+        watch — most Tags stay unflagged.
+      </p>
+
+      {noteCta ? <div className="text-xs text-zinc-400">{noteCta}</div> : null}
 
       {split ? (
         <>
           <div className="space-y-2">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-teal-600/90">
-              On {surfaceLabel}
+              Tags on {surfaceLabel}
             </p>
             {evidenceRows.length > 0 ? (
               renderChips(evidenceRows)
@@ -244,6 +288,18 @@ export function V2TrackerTogglePanel({
             )}
           </div>
 
+          {poolRows.length > 0 ? (
+            <div className="space-y-2 border-t border-zinc-800/80 pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+                From linked Topics
+              </p>
+              <p className="text-[11px] text-zinc-600">
+                Topic Tag pool — click to Flag as Tracker (optional).
+              </p>
+              {renderChips(poolRows)}
+            </div>
+          ) : null}
+
           <div className="space-y-2 border-t border-zinc-800/80 pt-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
               Other Trackers
@@ -251,7 +307,9 @@ export function V2TrackerTogglePanel({
             {otherTrackerRows.length > 0 ? (
               renderChips(otherTrackerRows)
             ) : (
-              <p className="text-sm text-zinc-600">No extra Trackers beyond Tags already on {surfaceLabel}.</p>
+              <p className="text-sm text-zinc-600">
+                No extra Trackers beyond Tags already listed above.
+              </p>
             )}
           </div>
         </>
@@ -269,7 +327,7 @@ export function V2TrackerTogglePanel({
           onKeyDown={(event) => {
             if (event.key === "Enter") {
               event.preventDefault();
-              flagFromDraft();
+              addTagFromDraft();
             }
           }}
           placeholder={addPlaceholder}
@@ -279,11 +337,20 @@ export function V2TrackerTogglePanel({
         />
         <button
           type="button"
-          onClick={flagFromDraft}
-          disabled={pending || !draft.trim()}
-          className="rounded-lg border border-rose-500/40 bg-rose-950/30 px-3 py-2 text-xs font-semibold text-rose-100 hover:bg-rose-950/50 disabled:opacity-40"
+          onClick={addTagFromDraft}
+          disabled={pending || !draftReady}
+          className="rounded-lg border border-teal-500/40 bg-teal-950/30 px-3 py-2 text-xs font-semibold text-teal-100 hover:bg-teal-950/50 disabled:opacity-40"
         >
-          {pending ? "…" : "⚑ Flag Tracker"}
+          Add Tag
+        </button>
+        <button
+          type="button"
+          onClick={flagFromDraft}
+          disabled={pending || !draftReady}
+          className="rounded-lg border border-rose-500/35 bg-rose-950/20 px-3 py-2 text-xs font-medium text-rose-200/90 hover:bg-rose-950/40 disabled:opacity-40"
+          title="Optional — Flag this name as a journal Tracker"
+        >
+          {pending ? "…" : "Flag Tracker"}
         </button>
       </div>
     </div>
