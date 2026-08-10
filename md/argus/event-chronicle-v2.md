@@ -68,7 +68,7 @@ Prefer append for corrections (new Note). Soft-delete is available when a Note m
 
 ### Deprecated (do not remount)
 
-- Phone-width `/argus/logs/[id]` + `ActivityEditPanel` for Event Chronicle note edit — Inbox-converted journals only
+- Phone-width `/argus/logs/[id]` + `ActivityEditPanel` for Event Chronicle note edit — Inbox-converted journals only; that route no longer shows the phone `BottomNav`
 - Unused composers removed: `JournalEntryForm`, `MemoryComposer`, `CaptureFab`, `V2OpenCaptureButton`, `AddRegisterCaptureButtons`
 
 ---

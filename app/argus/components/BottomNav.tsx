@@ -69,6 +69,11 @@ function NavLink({
   );
 }
 
+/**
+ * @deprecated Phone bottom nav for the legacy `(app)` shell (search / old inbox list).
+ * Not shown on `/argus/logs` note edit — that path no longer uses phone chrome.
+ * Prefer v2 sidebar / top bar for navigation.
+ */
 export function BottomNav() {
   const pathname = usePathname();
 

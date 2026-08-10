@@ -238,7 +238,10 @@ export function ActivityEditPanel({
         {inboxLink && (
           <p className="mt-4 border-t border-zinc-800 pt-3 text-xs text-zinc-500">
             {ACTIVITY_EDIT.fromInbox}:{" "}
-            <Link href={`/argus/inbox/${inboxLink.id}`} className="text-teal-500 underline">
+            <Link
+              href={`/argus/v2/inbox?selected=${encodeURIComponent(inboxLink.id)}`}
+              className="text-teal-500 underline"
+            >
               {ACTIVITY_EDIT.viewOriginal}
             </Link>
             {inboxLink.hasRaw && ` · ${ACTIVITY_EDIT.rawPreserved}`}
@@ -248,17 +251,17 @@ export function ActivityEditPanel({
 
       <JournalKindActions log={log} />
 
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Link
-          href="/argus/v2"
-          className="flex-1 rounded-xl border border-zinc-700 py-2.5 text-center text-[15px] text-zinc-400 hover:bg-zinc-800"
+          href={inboxLink ? `/argus/v2/inbox?selected=${encodeURIComponent(inboxLink.id)}` : "/argus/v2"}
+          className="min-w-[8rem] flex-1 rounded-lg border border-zinc-700 px-4 py-2.5 text-center text-sm text-zinc-300 hover:bg-zinc-800"
         >
           {ACTIVITY_EDIT.cancel}
         </Link>
         <button
           type="submit"
           disabled={!canSave}
-          className="flex-1 rounded-xl bg-teal-600 py-2.5 text-[15px] font-semibold text-white hover:bg-teal-500 disabled:opacity-35"
+          className="min-w-[8rem] flex-1 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-35"
         >
           {ACTIVITY_EDIT.save}
         </button>
