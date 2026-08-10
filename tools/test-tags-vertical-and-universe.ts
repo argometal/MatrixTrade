@@ -1,5 +1,6 @@
 /**
- * Smoke: binder Tags rows are Links-style vertical; Intel Tags portfolio is uncapped.
+ * Smoke: binder Tags use Manage List · rows; Intel Tags portfolio is uncapped;
+ * Project/Org Tags tabs are wired to entity-scoped data.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -8,8 +9,11 @@ import type { ArgusData, Entity } from "../lib/argus/types";
 import { buildV2FocusTagPortfolio } from "../lib/argus/v2/loaders";
 
 const root = join(process.cwd());
+const manage = readFileSync(join(root, "app/argus/v2/components/tag-manage-list.ts"), "utf8");
 const vocab = readFileSync(join(root, "app/argus/v2/components/V2VocabularyListEditor.tsx"), "utf8");
 const binder = readFileSync(join(root, "app/argus/v2/components/V2BinderTagsTab.tsx"), "utf8");
+const badges = readFileSync(join(root, "app/argus/v2/components/V2TagPatternBadges.tsx"), "utf8");
+const flaggable = readFileSync(join(root, "app/argus/v2/components/V2FlaggableTagChip.tsx"), "utf8");
 const eventEd = readFileSync(
   join(root, "app/argus/v2/browse/events/components/V2EventTagEditor.tsx"),
   "utf8"
@@ -18,28 +22,56 @@ const topicEd = readFileSync(
   join(root, "app/argus/v2/browse/topics/components/V2TopicAliasEditor.tsx"),
   "utf8"
 );
+const projectShell = readFileSync(join(root, "app/argus/v2/components/V2ProjectShell.tsx"), "utf8");
+const orgShell = readFileSync(join(root, "app/argus/v2/components/V2OrgShell.tsx"), "utf8");
+const projectEd = readFileSync(join(root, "app/argus/v2/components/V2ProjectTagEditor.tsx"), "utf8");
+const actions = readFileSync(join(root, "app/argus/actions.ts"), "utf8");
+const help = readFileSync(join(root, "lib/argus/v2/help-topics.ts"), "utf8");
 const portfolioUi = readFileSync(
   join(root, "app/argus/v2/components/V2FocusTagPortfolio.tsx"),
   "utf8"
 );
 const loaders = readFileSync(join(root, "lib/argus/v2/loaders.ts"), "utf8");
 
-assert.match(vocab, /orientation = "stack"/, "vocabulary defaults to stack");
-assert.match(vocab, /flex w-full items-center justify-between/, "stack rows are full-width flex");
+assert.match(
+  manage,
+  /rounded-xl border border-zinc-800\/80 bg-zinc-900\/40 px-4 py-3/,
+  "Manage row matches OrganizationListRow family"
+);
+assert.match(manage, /TAG_MANAGE_LIST_CLASS = "space-y-2"/, "Manage list is vertical stack");
+
+assert.match(vocab, /orientation: _orientation = "stack"/, "vocabulary defaults to stack");
+assert.match(vocab, /TAG_MANAGE_ROW_CLASS/, "vocabulary uses Manage rows");
 assert.doesNotMatch(
   vocab,
   /chipClassName = "inline-flex/,
   "default chip class must not be inline-flex chip"
 );
 
-assert.match(eventEd, /chipClassName="flex w-full/, "Event Tags editor uses full-width rows");
-assert.match(topicEd, /chipClassName="flex w-full/, "Topic Tags editor uses full-width rows");
-assert.match(
-  binder,
-  /flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-800/,
-  "branch tags are Links-style rows"
-);
+assert.match(eventEd, /TAG_MANAGE_ROW_CLASS/, "Event Tags editor uses Manage rows");
+assert.match(topicEd, /TAG_MANAGE_ROW_CLASS/, "Topic Tags editor uses Manage rows");
+assert.match(projectEd, /TAG_MANAGE_ROW_CLASS/, "Project Tags editor uses Manage rows");
+assert.match(binder, /TAG_MANAGE_ROW_CLASS/, "branch tags are Manage rows");
 assert.match(binder, /const PREVIEW = 40/, "branch preview is not a tiny chip strip");
+assert.match(badges, /TAG_MANAGE_LIST_CLASS/, "pattern badges are Manage stack");
+assert.match(flaggable, /TAG_MANAGE_ROW_CLASS/, "flaggable tags are Manage rows");
+
+assert.match(projectShell, /\["Overview", "Timeline", "Runbooks", "Tags", "Links"\]/, "Project has Tags tab");
+assert.match(projectShell, /V2BinderTagsTab/, "Project Tags tab uses binder Tags");
+assert.match(projectShell, /entity\.projectTags/, "Project Tags wired to projectTags");
+assert.match(projectShell, /V2ProjectTagEditor/, "Project Tags editor mounted");
+assert.match(projectShell, /helpTopic="project-tags"/, "Project Tags help topic");
+
+assert.match(orgShell, /\["Overview", "Timeline", "Runbooks", "Tags", "Links"\]/, "Org has Tags tab");
+assert.match(orgShell, /tab === "Tags"/, "Org Tags tab renders");
+assert.match(orgShell, /V2TagPatternBadges/, "Org Tags show scoped patterns");
+assert.match(orgShell, /tagPatterns/, "Org Tags wired to org neighborhood patterns");
+assert.match(orgShell, /helpTopic="org-tags"|topic="org-tags"/, "Org Tags help topic");
+assert.match(orgShell, /manualTags=\{\[\]\}/, "Org Links keeps ORDER 001 — no binder Tags");
+
+assert.match(actions, /updateProjectTagsAction/, "projectTags write action exists");
+assert.match(help, /id: "project-tags"/, "project-tags help registered");
+assert.match(help, /id: "org-tags"/, "org-tags help registered");
 
 assert.match(loaders, /Number\.POSITIVE_INFINITY/, "portfolio default is uncapped");
 assert.doesNotMatch(loaders, /limit = 80/, "top-80 cut must be gone");

@@ -11,23 +11,22 @@ import { V2PrivateEvidenceGate } from "./V2PrivateEvidenceGate";
 import { V2EntityTimelineSection } from "./V2EntityTimelineSection";
 import { V2EntityChronicleRail } from "./V2EntityChronicleRail";
 import { V2EntityLinksTab } from "./V2EntityLinksTab";
+import { V2TagPatternBadges } from "./V2TagPatternBadges";
+import { V2IntelHelpLink } from "./V2IntelHelpLink";
 import { V2EntityRunbooksTab } from "./V2EntityRunbooksTab";
 import { V2RelationshipChart } from "./V2RelationshipChart";
 import {
-  V2ContactPill,
   V2LegacyLink,
-  V2MetricRows,
   V2MorePeopleHint,
   V2PanelCard,
   V2PanelHeader,
   V2PanelLinkAction,
   V2PersonListItem,
   V2ProjectListItem,
-  V2SummaryStatCard,
 } from "./V2RightPanel";
 import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 
-const TABS = ["Overview", "Timeline", "Runbooks", "Links"] as const;
+const TABS = ["Overview", "Timeline", "Runbooks", "Tags", "Links"] as const;
 type OrgTab = (typeof TABS)[number];
 
 function parseOrgTab(raw: string | null): OrgTab {
@@ -328,6 +327,34 @@ export function V2OrgShell(props: V2OrgShellProps) {
           progressRecords={progressRecords}
           peerOrganizations={peerOrganizations}
         />
+      ) : null}
+
+      {tab === "Tags" ? (
+        <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
+          <section className="space-y-4" aria-label="Organization tags">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-zinc-100">Tags on this Organization</h2>
+                <p className="mt-1 text-xs text-zinc-500">
+                  Evidence and pattern tags detected in this organization&apos;s neighborhood. Organizations do not
+                  carry binder tags — structural links stay on Links.
+                </p>
+              </div>
+              <V2IntelHelpLink topic="org-tags" label="Organization Tags" />
+            </div>
+            {tagPatterns.length === 0 ? (
+              <p className="text-sm text-zinc-500">No tags detected for this organization yet.</p>
+            ) : (
+              <V2TagPatternBadges
+                patterns={tagPatterns}
+                signalTags={signalTags}
+                tagHref={(tag) =>
+                  `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`
+                }
+              />
+            )}
+          </section>
+        </V2PrivateEvidenceGate>
       ) : null}
 
       {tab === "Links" ? (

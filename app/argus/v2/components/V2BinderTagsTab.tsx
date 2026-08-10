@@ -7,6 +7,11 @@ import { toggleSignalTagAction } from "@/app/argus/actions";
 import { confirmTrackerConvert } from "@/lib/argus/tracker-confirm";
 import { signalTagKey } from "@/lib/argus/signal-tags";
 import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
+import {
+  TAG_MANAGE_LIST_CLASS,
+  TAG_MANAGE_ROW_CLASS,
+  TAG_MANAGE_ROW_TRACKER_CLASS,
+} from "@/app/argus/v2/components/tag-manage-list";
 
 export type V2BinderBranchTag = {
   tag: string;
@@ -299,33 +304,33 @@ export function V2BinderTagsTab({
                   {group.tags.length === 0 ? (
                     <p className="text-[11px] text-zinc-600">None yet</p>
                   ) : (
-                    <ul className="flex flex-col gap-1.5">
+                    <ul className={TAG_MANAGE_LIST_CLASS}>
                       {group.tags.slice(0, PREVIEW).map((row) => (
                         <li key={row.tag}>
                           {row.href ? (
                             <Link
                               href={row.href}
-                              className="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1.5 text-[12px] text-zinc-200 hover:border-sky-500/40 hover:text-sky-100"
+                              className={TAG_MANAGE_ROW_CLASS}
                               title={`Open ${row.tag}`}
                             >
-                              <span className="min-w-0 truncate font-medium">{row.tag}</span>
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200" aria-hidden>
+                                #
+                              </span>
+                              <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{row.tag}</span>
                               {row.count > 0 ? (
-                                <span className="shrink-0 rounded bg-zinc-950/50 px-1.5 py-0.5 text-[10px] tabular-nums text-zinc-500">
-                                  {row.count}
-                                </span>
+                                <span className="shrink-0 tabular-nums text-xs text-violet-300">{row.count}</span>
                               ) : (
-                                <span className="shrink-0 text-sky-300/80" aria-hidden>
-                                  →
-                                </span>
+                                <span className="shrink-0 text-zinc-500" aria-hidden>→</span>
                               )}
                             </Link>
                           ) : (
-                            <span className="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1.5 text-[12px] text-zinc-300">
-                              <span className="min-w-0 truncate">{row.tag}</span>
+                            <span className={TAG_MANAGE_ROW_CLASS}>
+                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200" aria-hidden>
+                                #
+                              </span>
+                              <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{row.tag}</span>
                               {row.count > 0 ? (
-                                <span className="shrink-0 rounded bg-zinc-950/50 px-1.5 py-0.5 text-[10px] tabular-nums text-zinc-500">
-                                  {row.count}
-                                </span>
+                                <span className="shrink-0 tabular-nums text-xs text-violet-300">{row.count}</span>
                               ) : null}
                             </span>
                           )}
@@ -378,12 +383,14 @@ export function V2BinderTagsTab({
         ) : (
           <div className="mt-4 space-y-3">
             {contextTrackers.length > 0 ? (
-              <ul className="flex flex-col gap-1.5" aria-label="Trackers in this context">
+              <ul className={TAG_MANAGE_LIST_CLASS} aria-label="Trackers in this context">
                 {contextTrackers.map((tag) => (
                   <li key={tag}>
-                    <span className="flex w-full items-center gap-2 rounded-lg border border-amber-400/50 bg-zinc-950/60 px-2.5 py-1.5 text-[12px] font-semibold text-amber-100">
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-hidden />
-                      <span className="min-w-0 truncate">{tag}</span>
+                    <span className={TAG_MANAGE_ROW_TRACKER_CLASS}>
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/20 text-xs font-bold text-amber-100" aria-hidden>
+                        ⚑
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-semibold">{tag}</span>
                     </span>
                   </li>
                 ))}
@@ -394,12 +401,14 @@ export function V2BinderTagsTab({
                 <p className="mb-1.5 text-[11px] font-medium text-zinc-500">
                   Other journal Trackers
                 </p>
-                <ul className="flex flex-col gap-1.5" aria-label="Other journal Trackers">
+                <ul className={TAG_MANAGE_LIST_CLASS} aria-label="Other journal Trackers">
                   {otherTrackers.map((tag) => (
                     <li key={tag}>
-                      <span className="flex w-full items-center gap-2 rounded-lg border border-amber-400/30 bg-zinc-950/40 px-2.5 py-1.5 text-[12px] text-amber-100/90">
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400/70" aria-hidden />
-                        <span className="min-w-0 truncate">{tag}</span>
+                      <span className={TAG_MANAGE_ROW_TRACKER_CLASS}>
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/20 text-xs font-bold text-amber-100" aria-hidden>
+                          ⚑
+                        </span>
+                        <span className="min-w-0 flex-1 truncate font-semibold">{tag}</span>
                       </span>
                     </li>
                   ))}
@@ -415,7 +424,7 @@ export function V2BinderTagsTab({
 
         {manageOpen ? (
           <div className="mt-3 space-y-2 rounded-xl border border-amber-500/20 bg-zinc-950/70 p-3">
-            <ul className="flex flex-col gap-1.5">
+            <ul className={TAG_MANAGE_LIST_CLASS}>
               {manageInventory.map((tag) => {
                   const flagged = focusKeys.has(signalTagKey(tag));
                   const busy = pending && pendingTag === tag;
@@ -425,19 +434,17 @@ export function V2BinderTagsTab({
                         type="button"
                         disabled={busy}
                         onClick={() => toggleTracker(tag)}
-                        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[12px] disabled:opacity-40 ${
-                          flagged
-                            ? "border-amber-400/60 bg-amber-950/50 text-amber-100"
-                            : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-amber-500/40 hover:text-amber-100"
-                        }`}
+                        className={`${flagged ? TAG_MANAGE_ROW_TRACKER_CLASS : TAG_MANAGE_ROW_CLASS} disabled:opacity-40`}
                       >
-                        <span className="flex min-w-0 items-center gap-2">
-                          <span
-                            className={`h-1.5 w-1.5 shrink-0 rounded-full ${flagged ? "bg-amber-400" : "bg-zinc-600"}`}
-                            aria-hidden
-                          />
-                          <span className="truncate">{tag}</span>
+                        <span
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                            flagged ? "bg-amber-500/20 text-amber-100" : "bg-violet-600/20 text-violet-200"
+                          }`}
+                          aria-hidden
+                        >
+                          {flagged ? "⚑" : "#"}
                         </span>
+                        <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{tag}</span>
                         <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-500">
                           {flagged ? "Flagged" : "Flag"}
                         </span>

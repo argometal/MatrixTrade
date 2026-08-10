@@ -2,8 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { updateTopicAliasesAction } from "@/app/argus/actions";
-import { TOPIC_MATCH_TAGS } from "@/lib/argus/ux-copy";
+import { updateProjectTagsAction } from "@/app/argus/actions";
 import { V2VocabularyListEditor } from "@/app/argus/v2/components/V2VocabularyListEditor";
 import { TAG_MANAGE_LIST_CLASS, TAG_MANAGE_ROW_CLASS } from "@/app/argus/v2/components/tag-manage-list";
 
@@ -15,31 +14,28 @@ function tagKey(value: string): string {
   return normalizeDisplayTag(value).toLowerCase();
 }
 
-export function V2TopicAliasEditor({
-  topicId,
-  topicName,
-  initialAliases,
+export function V2ProjectTagEditor({
+  projectId,
+  projectName,
+  initialTags,
   returnTo,
-  compact = false,
   suggestedFromNotes = [],
 }: {
-  topicId: string;
-  topicName: string;
-  initialAliases: string[];
+  projectId: string;
+  projectName: string;
+  initialTags: string[];
   returnTo: string;
-  compact?: boolean;
-  /** Evidence Tags on Notes not yet attached as Topic Tags — recall / attach. */
   suggestedFromNotes?: string[];
 }) {
   const router = useRouter();
-  const [matchTags, setMatchTags] = useState<string[]>(initialAliases);
+  const [matchTags, setMatchTags] = useState<string[]>(initialTags);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    setMatchTags(initialAliases);
+    setMatchTags(initialTags);
     setDraft("");
-  }, [topicId, initialAliases]);
+  }, [projectId, initialTags]);
 
   const attachedKeys = useMemo(
     () => new Set(matchTags.map(tagKey).filter(Boolean)),
@@ -83,10 +79,10 @@ export function V2TopicAliasEditor({
     setBusy(true);
     try {
       const formData = new FormData();
-      formData.set("entityId", topicId);
-      formData.set("linkedTags", matchTags.join(", "));
+      formData.set("entityId", projectId);
+      formData.set("projectTags", matchTags.join(", "));
       formData.set("returnTo", returnTo);
-      await updateTopicAliasesAction(formData);
+      await updateProjectTagsAction(formData);
       router.refresh();
     } finally {
       setBusy(false);
@@ -94,31 +90,25 @@ export function V2TopicAliasEditor({
   }
 
   const dirty =
-    matchTags.length !== initialAliases.length ||
-    matchTags.some((tag, index) => tag !== initialAliases[index]);
-
-  const copy = {
-    heading: compact ? undefined : TOPIC_MATCH_TAGS.heading,
-    hint: compact ? undefined : TOPIC_MATCH_TAGS.hint,
-    placeholder: TOPIC_MATCH_TAGS.placeholder,
-    add: "+ Add Tag",
-    empty: TOPIC_MATCH_TAGS.empty,
-    removeAria: TOPIC_MATCH_TAGS.removeAria,
-  };
+    matchTags.length !== initialTags.length ||
+    matchTags.some((tag, index) => tag !== initialTags[index]);
 
   return (
-    <div className={compact ? undefined : "rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4"}>
+    <div>
       <V2VocabularyListEditor
         items={matchTags}
         draft={draft}
         onDraftChange={setDraft}
         onAdd={addMatchTag}
         onRemove={removeMatchTag}
-        copy={copy}
+        copy={{
+          placeholder: "Add a tag linked to this Project…",
+          add: "+ Add Tag",
+          empty: "No tags linked to this Project yet — add one below.",
+          removeAria: (item) => `Remove ${item} from Project Tags`,
+        }}
         orientation="stack"
-        removeClassName="text-violet-300/70 hover:text-violet-50"
-        addButtonClassName="rounded-lg border border-violet-500/50 bg-transparent px-3 py-2 text-xs font-semibold text-violet-200 hover:bg-violet-950/40"
-        inputAriaLabel={`Add Topic Tag for ${topicName}`}
+        inputAriaLabel={`Add Project Tag for ${projectName}`}
         footer={
           <button
             type="button"
@@ -126,7 +116,7 @@ export function V2TopicAliasEditor({
             disabled={!dirty || busy}
             className="rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-40"
           >
-            {busy ? "Saving…" : TOPIC_MATCH_TAGS.save}
+            {busy ? "Saving…" : "Save Tags"}
           </button>
         }
       />
@@ -134,7 +124,7 @@ export function V2TopicAliasEditor({
       {suggestions.length > 0 ? (
         <div className="mt-3 rounded-xl border border-sky-500/25 bg-sky-950/20 p-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-200/90">
-            On Notes — attach to this Topic
+            On Notes — attach to this Project
           </p>
           <ul className={`mt-2 ${TAG_MANAGE_LIST_CLASS}`} aria-label="Evidence Tags to attach">
             {suggestions.map((tag) => (
@@ -144,10 +134,7 @@ export function V2TopicAliasEditor({
                   onClick={() => attachSuggestion(tag)}
                   className={`${TAG_MANAGE_ROW_CLASS} hover:border-sky-500/40`}
                 >
-                  <span
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-600/20 text-xs font-bold text-sky-100"
-                    aria-hidden
-                  >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-600/20 text-xs font-bold text-sky-100">
                     #
                   </span>
                   <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{tag}</span>

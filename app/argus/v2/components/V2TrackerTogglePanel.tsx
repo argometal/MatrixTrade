@@ -255,7 +255,7 @@ export function V2TrackerTogglePanel({
 
   function renderChips(rows: V2TrackerToggleTag[]) {
     return (
-      <div className="flex flex-wrap gap-1.5">
+      <div className="space-y-2">
         {rows.map((row) => (
           <V2FlaggableTagChip
             key={signalTagKey(row.tag)}
@@ -278,11 +278,6 @@ export function V2TrackerTogglePanel({
         <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-600">{heading}</p>
         <V2IntelHelpLink topic={helpTopic} label={heading} />
       </div>
-
-      <p className="text-xs text-zinc-500">
-        Tags classify evidence. Click a chip to Flag / Disable as Tracker when you want journal-wide
-        watch — most Tags stay unflagged.
-      </p>
 
       {noteCta ? <div className="text-xs text-zinc-400">{noteCta}</div> : null}
 
