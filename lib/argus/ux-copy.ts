@@ -121,6 +121,10 @@ export const ACTIVITY_SORT = {
 
 export const TAGS = {
   title: "Tags",
+  /** Note / evidence picker — checkbox only; Flag is elsewhere. */
+  titleOnNote: "Tags on this note",
+  pickerHintOnNote: "Check a Tag to put it on this note. Flag as Tracker is optional — use the Trackers tab.",
+  pickerHintWithFlag: "Checkbox = on this note. Flag = journal-wide Tracker (optional).",
   linkLabel: "Tagged",
   createNew: "Create new tag",
   namePlaceholder: "Tag name",

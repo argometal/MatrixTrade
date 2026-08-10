@@ -472,9 +472,9 @@ export function V2TopicDetailPanel({
                 signalTags={focusTags}
                 onSignalTagsChange={setFocusTags}
                 surfaceLabel="this Topic"
-                heading="Topic Tags · Trackers"
+                heading="Flag Trackers"
                 helpTopic="topic-tags"
-                emptyEvidenceHint="No evidence Tags or Topic Tags yet."
+                emptyEvidenceHint="No evidence Tags or Topic Tags yet — tag Notes on linked Events, or add Topic Tags below."
                 addPlaceholder="Tag name → Flag as Tracker"
               />
 
