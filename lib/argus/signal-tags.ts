@@ -41,7 +41,8 @@ export function journalNeedsSignalTagsMigration(raw: ArgusData): boolean {
 }
 
 /**
- * Move Event entity `linkedTags` (legacy Signals) → journal `signalTags` (flagged focus Tags).
+ * Move Event entity `linkedTags` (legacy Signals) → journal `signalTags` (flagged focus Tags)
+ * and seed `eventTags` when empty so Tags tab Attached still recalls binder classification.
  * Topic Aliases on Topic `linkedTags` are untouched.
  */
 export function migrateEventSignalsToSignalTags(data: ArgusData): {
@@ -59,13 +60,20 @@ export function migrateEventSignalsToSignalTags(data: ArgusData): {
     const tags = entity.linkedTags ?? [];
     if (tags.length === 0) return entity;
     cleared = true;
+    const seeded: string[] = [];
     for (const raw of tags) {
       const tag = raw.trim().replace(/\s+/g, " ");
       if (!tag) continue;
       const key = signalTagKey(tag);
       if (!signalMap.has(key)) signalMap.set(key, tag);
+      seeded.push(tag);
     }
-    return { ...entity, linkedTags: [] };
+    const existingEventTags = entity.eventTags ?? [];
+    const eventTags =
+      existingEventTags.length > 0
+        ? existingEventTags
+        : normalizeSignalTags(seeded);
+    return { ...entity, linkedTags: [], eventTags };
   });
 
   const signalTags = [...signalMap.values()].sort((a, b) => a.localeCompare(b));

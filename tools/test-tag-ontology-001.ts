@@ -15,6 +15,7 @@ import {
   buildV2TagRoleBucketSummary,
   filterFocusTagsByRole,
 } from "../lib/argus/v2/loaders";
+import { migrateEventSignalsToSignalTags } from "../lib/argus/signal-tags";
 
 function entity(partial: Partial<Entity> & Pick<Entity, "id" | "type" | "name">): Entity {
   return {
@@ -86,8 +87,32 @@ assert.deepEqual(readTagsForRole(data, "event", { entityId: "e1" }), ["Trade Ent
 assert.deepEqual(readTagsForRole(data, "global"), ["Important"]);
 assert.deepEqual(readTagsForRole(data, "evidence", { entityId: "e1" }), ["EvidenceA"]);
 
-// Event linkedTags must not leak as Event Tags
+// Event linkedTags must not leak as Event Tags while eventTags is set
 assert.ok(!readTagsForRole(data, "event", { entityId: "e1" }).includes("should-not-read"));
+
+{
+  const legacy: ArgusData = {
+    ...data,
+    signalTags: undefined,
+    entities: [
+      ...data.entities.filter((e) => e.id !== "e1"),
+      entity({
+        id: "e1",
+        type: "other",
+        name: "Call",
+        notes: "Kind: event",
+        linkedTags: ["Legacy Signal"],
+        eventTags: [],
+      }),
+    ],
+  };
+  const migrated = migrateEventSignalsToSignalTags(legacy);
+  assert.equal(migrated.changed, true);
+  const event = migrated.data.entities.find((e) => e.id === "e1")!;
+  assert.deepEqual(event.linkedTags, []);
+  assert.ok((event.eventTags ?? []).some((t) => t.toLowerCase() === "legacy signal"));
+  assert.ok(migrated.data.signalTags?.some((t) => t.toLowerCase() === "legacy signal"));
+}
 
 const topicPatch = binderTagWritePatch(data.entities[0], "topic", ["New"]);
 assert.deepEqual(topicPatch.topicTags, ["New"]);
