@@ -88,6 +88,17 @@ export interface V2EventDetail {
   linkedTags: string[];
   /** Event binder classification Tags (`TagRole: event`). */
   eventTags: string[];
+  /**
+   * Structural neighborhood Tag pools for Tags tab Branch section.
+   * Evidence/binder tags from this Event + linked Topics + linked Projects — not attached.
+   */
+  branchTagGroups: Array<{
+    id: string;
+    label: string;
+    contextName?: string;
+    href?: string;
+    tags: Array<{ tag: string; count: number }>;
+  }>;
   chronicleCount: number;
   attendeeInitials: string[];
   attendeeNames: string[];

@@ -27,12 +27,13 @@ No binder Tags by default — use structural links. Do not write `linkedTags` as
 
 | Intent | Where |
 |--------|--------|
-| Evidence Tag on a Note | Event → **Note** → Tags (scoped to this Event + Topic pool) → Save |
-| Topic Tags | Topic → Tags → Topic Tags editor |
+| Evidence Tag on a Note | Event → **Note** → Tags → Save |
+| Topic Tags | Topic → Tags → **Tags on this Topic** |
 | Project Tags | Project edit → Tags (writes `projectTags`) |
-| Event binder Tags | Event → Tags → **Event Tags** editor (`eventTags`) — separate from Note evidence |
-| Flag Tracker | Chip Flag on Tags manager / Home Tags |
-| Manage by role | Home → Intelligence → Tags → **Tag roles** chips (Evidence / Topic / Project / Event / Global) |
+| Event binder Tags | Event → Tags → **Tags on this Event** (`eventTags`) |
+| Branch / context | Event/Topic Tags tab → **Tags in this branch** (structural neighbors; not attached) |
+| Flag Tracker | Trackers section on binder Tags tab, or Home → Tags |
+| Manage by role | Home → Intelligence → Tags (`?intel=tags`) |
 
 ### Filters (Home Tags)
 

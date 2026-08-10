@@ -7,12 +7,7 @@ import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz"
 import type { V2EvidenceStreamKind } from "@/lib/argus/v2/evidence-stream";
 import type { V2TopicDetail, V2TopicLinkedEntity } from "@/lib/argus/v2/topic-browse-utils";
 import { V2QuickDeliverButton } from "@/app/argus/v2/components/V2QuickDeliverModal";
-import {
-  V2FlaggableTagChip,
-  focusKeySet,
-  tagIsFlagged,
-} from "@/app/argus/v2/components/V2FlaggableTagChip";
-import { V2TrackerTogglePanel } from "@/app/argus/v2/components/V2TrackerTogglePanel";
+import { V2BinderTagsTab } from "@/app/argus/v2/components/V2BinderTagsTab";
 import { V2TopicAliasEditor } from "./V2TopicAliasEditor";
 import { V2EntityLifecycleActions } from "@/app/argus/v2/components/V2EntityLifecycleActions";
 import { V2PrivateEvidenceGate } from "@/app/argus/v2/components/V2PrivateEvidenceGate";
@@ -128,7 +123,6 @@ export function V2TopicDetailPanel({
 } & V2DeleteGateProps) {
   const [panelTab, setPanelTab] = useState<PanelTab>("chronicle");
   const [focusTags, setFocusTags] = useState<string[]>(signalTags);
-  const focusKeys = useMemo(() => focusKeySet(focusTags), [focusTags]);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
 
   useEffect(() => {
@@ -449,81 +443,64 @@ export function V2TopicDetailPanel({
 
           {panelTab === "tags" ? (
             <div className="space-y-4">
-              <V2TrackerTogglePanel
-                evidenceTags={[
-                  ...selected.evidenceTagCounts,
-                  ...selected.aliases
-                    .filter(
-                      (alias) =>
-                        !selected.evidenceTagCounts.some(
-                          (row) => row.tag.toLowerCase() === alias.toLowerCase()
-                        )
-                    )
-                    .map((tag) => ({ tag, count: 0 })),
+              <V2BinderTagsTab
+                attachedHeading="Tags on this Topic"
+                attachedHint="These Tags classify this Topic binder. They do not come from Notes."
+                attachedTags={selected.aliases}
+                helpTopic="topic-tags"
+                attachedEditor={
+                  <V2TopicAliasEditor
+                    topicId={selected.id}
+                    topicName={selected.name}
+                    initialAliases={selected.aliases}
+                    returnTo={returnTo}
+                    compact
+                  />
+                }
+                branchGroups={[
+                  {
+                    id: "topic",
+                    label: "Topic",
+                    contextName: "this Topic",
+                    tags: selected.evidenceTagCounts,
+                  },
+                  ...(selected.linkedEvents.length > 0
+                    ? [
+                        {
+                          id: "event",
+                          label: "Event",
+                          contextName:
+                            selected.linkedEvents.length === 1
+                              ? selected.linkedEvents[0].name
+                              : `${selected.linkedEvents.length} linked`,
+                          href:
+                            selected.linkedEvents.length === 1
+                              ? selected.linkedEvents[0].href
+                              : undefined,
+                          tags: (() => {
+                            const map = new Map<string, { tag: string; count: number }>();
+                            for (const event of selected.eventEvidenceTags) {
+                              for (const raw of event.tags) {
+                                const tag = raw.trim();
+                                if (!tag) continue;
+                                const key = tag.toLowerCase();
+                                const row = map.get(key) ?? { tag, count: 0 };
+                                row.count += 1;
+                                map.set(key, row);
+                              }
+                            }
+                            return [...map.values()].sort(
+                              (a, b) => b.count - a.count || a.tag.localeCompare(b.tag)
+                            );
+                          })(),
+                        },
+                      ]
+                    : []),
                 ]}
+                branchEmptyHint="No contextual Tags yet — link Events or tag Notes on this Topic."
                 signalTags={focusTags}
                 onSignalTagsChange={setFocusTags}
-                surfaceLabel="this Topic"
-                scopeId={selected.id}
-                heading="Tags · Trackers"
-                helpTopic="topic-tags"
-                emptyEvidenceHint="No evidence Tags or Topic Tags yet — tag Notes on linked Events, or add Topic Tags below."
-                addPlaceholder="Name a Tag…"
               />
-
-              {selected.eventEvidenceTags.length > 0 ? (
-                <div>
-                  <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
-                    By linked Event
-                  </p>
-                  <ul className="space-y-3">
-                    {selected.eventEvidenceTags.map((event) => (
-                      <li key={event.id} className="rounded-xl border border-zinc-800/80 bg-zinc-900/40 px-3 py-2.5">
-                        <div className="mb-2 flex flex-wrap items-baseline gap-2">
-                          <Link
-                            href={event.href}
-                            className="text-sm font-medium text-rose-100 hover:text-rose-50"
-                          >
-                            📅 {event.name}
-                          </Link>
-                          {event.dateLabel ? (
-                            <span className="text-[11px] text-zinc-600">{event.dateLabel}</span>
-                          ) : null}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {event.tags.map((tag) => {
-                            const count =
-                              selected.evidenceTagCounts.find(
-                                (row) => row.tag.toLowerCase() === tag.toLowerCase()
-                              )?.count ?? 1;
-                            return (
-                              <V2FlaggableTagChip
-                                key={tag}
-                                tag={tag}
-                                count={count}
-                                flagged={tagIsFlagged(tag, focusKeys)}
-                                onFlaggedChange={(next) => setFocusTags(next)}
-                              />
-                            );
-                          })}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
-                  Topic Tags (create / manage)
-                </p>
-                <V2TopicAliasEditor
-                  topicId={selected.id}
-                  topicName={selected.name}
-                  initialAliases={selected.aliases}
-                  returnTo={returnTo}
-                />
-              </div>
             </div>
           ) : null}
         </V2PrivateEvidenceGate>

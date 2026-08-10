@@ -15,11 +15,13 @@ export function V2TopicAliasEditor({
   topicName,
   initialAliases,
   returnTo,
+  compact = false,
 }: {
   topicId: string;
   topicName: string;
   initialAliases: string[];
   returnTo: string;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const [matchTags, setMatchTags] = useState<string[]>(initialAliases);
@@ -64,16 +66,16 @@ export function V2TopicAliasEditor({
     matchTags.some((tag, index) => tag !== initialAliases[index]);
 
   const copy = {
-    heading: TOPIC_MATCH_TAGS.heading,
-    hint: TOPIC_MATCH_TAGS.hint,
+    heading: compact ? undefined : TOPIC_MATCH_TAGS.heading,
+    hint: compact ? undefined : TOPIC_MATCH_TAGS.hint,
     placeholder: TOPIC_MATCH_TAGS.placeholder,
-    add: TOPIC_MATCH_TAGS.add,
+    add: "+ Add Tag",
     empty: TOPIC_MATCH_TAGS.empty,
     removeAria: TOPIC_MATCH_TAGS.removeAria,
   };
 
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4">
+    <div className={compact ? undefined : "rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4"}>
       <V2VocabularyListEditor
         items={matchTags}
         draft={draft}
@@ -81,6 +83,8 @@ export function V2TopicAliasEditor({
         onAdd={addMatchTag}
         onRemove={removeMatchTag}
         copy={copy}
+        chipClassName="inline-flex items-center gap-1 rounded-md border border-violet-500/35 bg-violet-500/10 px-2 py-1 text-[11px] text-violet-100"
+        removeClassName="text-violet-300/70 hover:text-violet-50"
         inputAriaLabel={`Add Topic Tag for ${topicName}`}
         footer={
           <button

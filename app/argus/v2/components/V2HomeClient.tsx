@@ -86,7 +86,9 @@ export function V2HomeClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const view = parseV2HomeView(searchParams.get("view") ?? initialView);
-  const [intelTab, setIntelTab] = useState<IntelligenceTab>("treemap");
+  const [intelTab, setIntelTab] = useState<IntelligenceTab>(() =>
+    searchParams.get("intel") === "tags" ? "tags" : "treemap"
+  );
   const [universeFilter, setUniverseFilter] = useState<IntelligenceUniverseFilter>("all");
   const [lensId, setLensId] = useState<string | null>(null);
 

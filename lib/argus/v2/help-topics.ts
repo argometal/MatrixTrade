@@ -209,27 +209,27 @@ const SECTIONS: HelpSection[] = [
     group: "intelligence",
     keywords: ["event", "tags", "trackers", "on this event", "note", "flag", "pool"],
     intro:
-      "Evidence Tags classify Notes. Event Tags classify the binder. Trackers are optional Flags on Tag names.",
+      "Attached Tags classify this Event. Branch shows neighborhood vocabulary. Trackers watch. Universe is global analysis.",
     items: [
       {
-        title: "Put a Tag on a Note",
-        body: "Event → Note → quick Topic chips or Browse / create. Checkbox only — tagging never Flags a Tracker.",
+        title: "Tags on this Event",
+        body: "Binder Tags (eventTags) only — not Note Tags. Add Tag attaches to this Event.",
       },
       {
-        title: "Event Tags (binder)",
-        body: "Tags tab → Event Tags editor. Classifies this Event for findability — separate from Tags on Notes.",
+        title: "Tags in this branch",
+        body: "Evidence Tags on this Event’s Notes, plus Tags from structurally linked Topics and Projects. Not attached until you Add Tag.",
       },
       {
-        title: "Tags tab (manager)",
-        body: "Inventory of Tags on this Event’s Notes, Topic Tag pool, Event Tags, and Trackers. Draft remembers a name without Flagging.",
+        title: "Trackers",
+        body: "Flags on Tag names ARGUS is watching in this context. Manage Trackers here; full journal list is in Go to Tags.",
       },
       {
-        title: "Convert Topic Tag → Tracker",
-        body: "From linked Topics section — click a chip to Flag as Tracker (confirm). Same for Tags already on Notes.",
+        title: "Go to Tags",
+        body: "Opens Home → Intelligence → Tags for the full universe (roles, Patterns, search).",
       },
       {
-        title: "Flag Tracker (optional)",
-        body: "Only when you want journal-wide watch. Chip click or the secondary Flag Tracker button — never required to keep a Tag.",
+        title: "Put Tags on a Note",
+        body: "Evidence Tags still live on Notes — use Browse branch / Note tab to write Log.topics.",
       },
     ],
   },

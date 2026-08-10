@@ -15,8 +15,8 @@ import {
   linkModalStructuralIds,
 } from "./scope-node-counts";
 import { buildTagPatternsForScope } from "./tag-patterns";
-import { collectEvidenceTagsForTopicIds } from "./topic-loaders";
-import { readTagsForRole } from "../tag-ontology";
+import { collectEvidenceTagsForTopicIds, collectEvidenceTagCountsForTopicIds } from "./topic-loaders";
+import { readTagsForRole, tagKey, normalizeTagDisplay } from "../tag-ontology";
 import type {
   V2EventDetail,
   V2EventEmail,
@@ -233,6 +233,56 @@ export function buildV2EventDetails(
     }));
 
     const evidence = buildEntityEvidenceStream(data, event.id, inboxItems, includePrivate, today) as V2EventEvidenceItem[];
+    const linkedProjects = linkedProjectRefs(data, relatedIds);
+
+    const eventEvidenceCounts = countTagOccurrences([
+      ...history.flatMap((log) => log.topics ?? []),
+      ...inbox.flatMap((item) => item.topics ?? []),
+    ]);
+    const topicContextCounted = collectEvidenceTagCountsForTopicIds(
+      data,
+      inboxItems,
+      linkedTopics.map((t) => t.id),
+      includePrivate,
+      today
+    );
+    const projectBranchCounts = accumulateProjectNeighborhoodTags(
+      data,
+      inboxItems,
+      linkedProjects.map((p) => p.id),
+      includePrivate
+    );
+
+    const branchTagGroups: V2EventDetail["branchTagGroups"] = [
+      {
+        id: "event",
+        label: "Event",
+        contextName: "this Event",
+        tags: eventEvidenceCounts,
+      },
+    ];
+    if (linkedTopics.length > 0) {
+      branchTagGroups.push({
+        id: "topic",
+        label: "Topic",
+        contextName:
+          linkedTopics.length === 1 ? linkedTopics[0].name : `${linkedTopics.length} linked`,
+        href: linkedTopics.length === 1 ? linkedTopics[0].href : undefined,
+        tags: topicContextCounted,
+      });
+    }
+    if (linkedProjects.length > 0) {
+      branchTagGroups.push({
+        id: "project",
+        label: "Project",
+        contextName:
+          linkedProjects.length === 1
+            ? linkedProjects[0].name
+            : `${linkedProjects.length} linked`,
+        href: linkedProjects.length === 1 ? linkedProjects[0].href : undefined,
+        tags: projectBranchCounts,
+      });
+    }
 
     const dateTimeLabel = `${formatEventDate(eventDate).dateLabel} · ${formatEventDate(eventDate).timeLabel}`;
 
@@ -256,6 +306,7 @@ export function buildV2EventDetails(
             : "No chronicle entries yet.",
       linkedTags: (event.linkedTags ?? []).map((tag) => tag.trim()).filter(Boolean),
       eventTags: readTagsForRole(data, "event", { entityId: event.id }),
+      branchTagGroups,
       chronicleCount: history.length,
       attendeeInitials: initials,
       attendeeNames: people,
@@ -265,9 +316,8 @@ export function buildV2EventDetails(
       peopleCount: linkCounts.peopleCount,
       topicCount: nodeCounts.topicCount,
       linkedOrgs: linkedOrgRefs(data, relatedIds),
-      linkedProjects: linkedProjectRefs(data, relatedIds),
+      linkedProjects,
       linkedPeople: linkedPersonRefs(data, relatedIds),
-      // Link modal: outbound bags ∪ reverse Topic binders (one-way links stay visible/healable).
       linkedEntityIds: linkModalStructuralIds(data, event),
       linkedEntries,
       relatedEmails,
@@ -278,4 +328,37 @@ export function buildV2EventDetails(
       tagPatterns: buildTagPatternsForScope(history, inbox, today),
     };
   });
+}
+
+function countTagOccurrences(rawTags: string[]): Array<{ tag: string; count: number }> {
+  const counts = new Map<string, { tag: string; count: number }>();
+  for (const raw of rawTags) {
+    const tag = normalizeTagDisplay(raw);
+    if (!tag) continue;
+    const key = tagKey(tag);
+    const row = counts.get(key) ?? { tag, count: 0 };
+    row.count += 1;
+    counts.set(key, row);
+  }
+  return [...counts.values()].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+}
+
+function accumulateProjectNeighborhoodTags(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  projectIds: string[],
+  includePrivate: boolean
+): Array<{ tag: string; count: number }> {
+  if (projectIds.length === 0) return [];
+  const raw: string[] = [];
+  for (const projectId of projectIds) {
+    for (const tag of readTagsForRole(data, "project", { entityId: projectId })) {
+      raw.push(tag);
+    }
+    const history = getEntityHistory(data, projectId, includePrivate);
+    for (const log of history) raw.push(...(log.topics ?? []));
+    const linkedInbox = getLinkedInboxForEntity(inboxItems, projectId, includePrivate);
+    for (const item of linkedInbox) raw.push(...(item.topics ?? []));
+  }
+  return countTagOccurrences(raw);
 }
