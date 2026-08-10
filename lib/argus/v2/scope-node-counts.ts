@@ -11,6 +11,7 @@
  */
 
 import type { ArgusData, Entity, Log } from "../types";
+import { isEntityArchived } from "../entity-lifecycle";
 import { referenceKindFromNotes } from "../reference-types";
 import { projectsForOrganization } from "./hierarchy";
 import { collectProjectLinkIds } from "./entity-link-counts";
@@ -21,6 +22,11 @@ export function isTopicEntity(entity: Entity | undefined): boolean {
 
 export function isEventEntity(entity: Entity | undefined): boolean {
   return Boolean(entity && !entity.deletedAt && referenceKindFromNotes(entity.notes ?? "") === "event");
+}
+
+/** Active Events only — archived Events stay linkable/Chronicle but leave metric pills. */
+export function isEventEntityForMetrics(entity: Entity | undefined): boolean {
+  return Boolean(entity && isEventEntity(entity) && !isEntityArchived(entity));
 }
 
 /**
@@ -214,6 +220,7 @@ export type ScopeNodeCounts = {
 /**
  * Standard counters for any entity surface.
  * Org: also unions topics/events from associated projects (hierarchical set rollup).
+ * eventCount excludes archived Events (Completed); eventIds still include them for Chronicle.
  */
 export function countTopicsAndEventsInScope(
   data: ArgusData,
@@ -230,9 +237,15 @@ export function countTopicsAndEventsInScope(
     }
   }
 
+  let activeEventCount = 0;
+  for (const id of eventIds) {
+    const event = data.entities.find((e) => e.id === id);
+    if (isEventEntityForMetrics(event)) activeEventCount += 1;
+  }
+
   return {
     topicCount: topicIds.size,
-    eventCount: eventIds.size,
+    eventCount: activeEventCount,
     topicIds: [...topicIds],
     eventIds: [...eventIds],
   };

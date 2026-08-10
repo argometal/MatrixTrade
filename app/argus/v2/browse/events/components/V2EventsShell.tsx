@@ -30,7 +30,7 @@ const TRIAGE_TABS: { id: V2EventTriageTab; label: string }[] = [
   { id: "all", label: "All" },
   { id: "orphans", label: "Orphans" },
   { id: "linked", label: "Linked" },
-  { id: "archived", label: "Archived" },
+  { id: "archived", label: "Completed" },
 ];
 
 const WHEN_TABS: { id: V2EventWhenTab; label: string }[] = [
@@ -260,7 +260,9 @@ export function V2EventsShell({
                   ? "No events yet."
                   : triage === "orphans"
                     ? "No orphan events."
-                    : "No events match these filters."}
+                    : triage === "archived"
+                      ? "No completed events."
+                      : "No events match these filters."}
               </p>
               {rows.length === 0 ? (
                 <div className="mt-4">
@@ -302,8 +304,11 @@ export function V2EventsShell({
                                 </span>
                               ) : null}
                               {row.lifecycleStatus === "archived" ? (
-                                <span className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-500">
-                                  Archived
+                                <span
+                                  className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-500"
+                                  title="Completed (archived) — out of active triage and metric counts"
+                                >
+                                  Completed
                                 </span>
                               ) : null}
                             </div>
