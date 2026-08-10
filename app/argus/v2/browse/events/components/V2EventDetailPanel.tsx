@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
-import { appendEventChronicleEntryAction, toggleSignalTagAction } from "@/app/argus/actions";
+import { appendEventChronicleEntryAction } from "@/app/argus/actions";
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
 import { V2AttachmentComposer } from "@/app/argus/v2/components/V2AttachmentComposer";
 import { V2EventLinkEmailModal } from "./V2EventLinkEmailModal";
@@ -19,7 +19,6 @@ import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz"
 import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
-import { focusKeySet } from "@/app/argus/v2/components/V2FlaggableTagChip";
 import { V2TrackerTogglePanel } from "@/app/argus/v2/components/V2TrackerTogglePanel";
 import {
   V2ChronicleSelectableList,
@@ -150,15 +149,6 @@ export function V2EventDetailPanel({
     }
     return [...map.values()].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
   }, [selected.tagPatterns, selected.topicTags]);
-  const focusKeys = useMemo(() => focusKeySet(focusTags), [focusTags]);
-
-  async function toggleFocusTag(tag: string) {
-    const result = await toggleSignalTagAction(tag);
-    if ("ok" in result && result.ok) {
-      setFocusTags(result.signalTags);
-      router.refresh();
-    }
-  }
 
   async function saveEntry() {
     if (!canSave) return;
@@ -190,7 +180,7 @@ export function V2EventDetailPanel({
     { id: "note", label: "Note" },
     { id: "chronicle", label: "Chronicle" },
     { id: "runbooks", label: "Runbooks" },
-    { id: "tags", label: "Tags" },
+    { id: "tags", label: "Trackers" },
     { id: "metrics", label: "Metrics" },
   ];
 
@@ -310,8 +300,8 @@ export function V2EventDetailPanel({
                 <div>
                   <p className="text-xs font-medium text-zinc-300">Add to chronicle</p>
                   <p className="mt-0.5 text-[11px] text-zinc-600">
-                    Write and save — entry moves to Chronicle. Tag this note when it should count toward Patterns.
-                    After Save, open Tags and click a Tag to Flag it.
+                    Write, optionally tag this note, then Save — entry moves to Chronicle. Tagging does not Flag a
+                    Tracker.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -371,8 +361,7 @@ export function V2EventDetailPanel({
                 selectedTags={entryTags}
                 onChange={setEntryTags}
                 onClose={() => setTagPickerOpen(false)}
-                signalTags={focusTags}
-                onToggleSignal={(tag) => void toggleFocusTag(tag)}
+                mode="note"
               />
             </div>
           ) : null}
@@ -441,9 +430,9 @@ export function V2EventDetailPanel({
                 signalTags={focusTags}
                 onSignalTagsChange={setFocusTags}
                 surfaceLabel="this Event"
-                heading="Event Tags · Trackers"
+                heading="Flag Trackers"
                 helpTopic="event-tags"
-                emptyEvidenceHint="No Tags on this Event’s Notes yet."
+                emptyEvidenceHint="No Tags on this Event’s Notes yet — add Tags on Note, then Flag here only if you want watch."
                 addPlaceholder="Type a Tag name → Flag as Tracker"
               />
             </div>

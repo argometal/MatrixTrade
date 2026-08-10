@@ -21,7 +21,12 @@ interface TagPickerModalProps {
   /** When set, Done applies tags through this callback instead of only closing. */
   onConfirm?: (tags: string[]) => void;
   confirmLabel?: string;
-  /** Journal focus Tags — shown with flag affordance when onToggleSignal is set. */
+  /**
+   * `note` = put Tags on evidence only (no Flag in picker).
+   * `default` / omitted = may show Flag when onToggleSignal is set.
+   */
+  mode?: "note" | "default";
+  /** Journal Trackers — Flag affordance when onToggleSignal is set (ignored in mode=note). */
   signalTags?: string[];
   onToggleSignal?: (tag: string) => void;
 }
@@ -86,6 +91,7 @@ export function TagPickerModal({
   onClose,
   onConfirm,
   confirmLabel,
+  mode = "default",
   signalTags,
   onToggleSignal,
 }: TagPickerModalProps) {
@@ -93,16 +99,20 @@ export function TagPickerModal({
   const [createOpen, setCreateOpen] = useState(false);
   const [newTagName, setNewTagName] = useState("");
 
+  const noteOnly = mode === "note";
+  const showFlag = !noteOnly && Boolean(onToggleSignal);
+
   const selectedKeys = useMemo(() => new Set(selectedTags.map(tagKey)), [selectedTags]);
   const signalKeys = useMemo(
-    () => new Set((signalTags ?? []).map(tagKey).filter(Boolean)),
-    [signalTags]
+    () => new Set((showFlag ? signalTags : undefined)?.map(tagKey).filter(Boolean) ?? []),
+    [signalTags, showFlag]
   );
 
   const allTags = useMemo(() => {
     const seen = new Set<string>();
     const merged: string[] = [];
-    for (const tag of [...selectedTags, ...(signalTags ?? []), ...buckets.all]) {
+    const extras = showFlag ? (signalTags ?? []) : [];
+    for (const tag of [...selectedTags, ...extras, ...buckets.all]) {
       const key = tagKey(tag);
       if (!key || seen.has(key)) continue;
       seen.add(key);
@@ -114,7 +124,7 @@ export function TagPickerModal({
       if (aFocus !== bFocus) return bFocus - aFocus;
       return a.localeCompare(b);
     });
-  }, [buckets.all, selectedTags, signalTags, signalKeys]);
+  }, [buckets.all, selectedTags, signalTags, signalKeys, showFlag]);
 
   const searchResults = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -158,7 +168,14 @@ export function TagPickerModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="border-b border-zinc-800 px-4 py-3">
-          <h3 className="text-[15px] font-semibold text-zinc-100">{TAGS.title}</h3>
+          <h3 className="text-[15px] font-semibold text-zinc-100">
+            {noteOnly ? TAGS.titleOnNote : TAGS.title}
+          </h3>
+          {noteOnly || showFlag ? (
+            <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+              {noteOnly ? TAGS.pickerHintOnNote : TAGS.pickerHintWithFlag}
+            </p>
+          ) : null}
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col p-4">
@@ -236,8 +253,8 @@ export function TagPickerModal({
                   tag={tag}
                   checked={selectedKeys.has(tagKey(tag))}
                   onToggle={() => toggle(tag)}
-                  isSignal={signalKeys.has(tagKey(tag))}
-                  onToggleSignal={onToggleSignal ? () => onToggleSignal(tag) : undefined}
+                  isSignal={showFlag && signalKeys.has(tagKey(tag))}
+                  onToggleSignal={showFlag && onToggleSignal ? () => onToggleSignal(tag) : undefined}
                 />
               ))
             )}

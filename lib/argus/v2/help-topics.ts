@@ -149,7 +149,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Flag / Disable",
-        body: "Confirm both ways. Disable turns watch off — the Tag stays on Notes and Topic Tags. Never an easy delete here.",
+        body: "Optional watch. Confirm both ways. Disable turns watch off — the Tag stays on Notes and Topic Tags. Never an easy delete here. Most Tags never need Flag.",
       },
       {
         title: "Filters",
@@ -194,11 +194,11 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Trackers (your watch)",
-        body: "Flag a Tag journal-wide (⚑). Separate from Pattern. Confirm before Flag or Disable. Disable never deletes the Tag.",
+        body: "Optional. Flag a Tag journal-wide (⚑) only when you want watch. Separate from putting a Tag on a Note. Confirm before Flag or Disable. Disable never deletes the Tag.",
       },
       {
         title: "Where Tags live on an Event",
-        body: "Event → Tags → On this Event = inventory from Notes/emails. Put Tags on evidence via Note → Tags (picker pool + checkmarks).",
+        body: "Event → Note → Tags (checkbox) puts Tags on evidence. Event → Trackers shows inventory and optional Flag. Put Tags on evidence via Note — not by Flagging.",
       },
     ],
   },
@@ -209,19 +209,19 @@ const SECTIONS: HelpSection[] = [
     group: "intelligence",
     keywords: ["event", "tags", "trackers", "on this event", "note", "flag"],
     intro:
-      "Event → Tags. Inventory of Tags on this Event’s Notes/emails, plus Flag Trackers (confirm both ways).",
+      "Put Tags on evidence via Note → Tags (checkbox). Flag as Tracker is optional — Event → Trackers tab.",
     items: [
       {
-        title: "On this Event",
-        body: "Tags already used on Notes or emails here (count = uses). Answers “what tags are on my event?”",
+        title: "Put a Tag on a Note",
+        body: "Event → Note → Tags → check the Tag → Save. That labels the note for Chronicle, Patterns, and inventory. It does not Flag a Tracker.",
       },
       {
-        title: "Put a Tag on evidence",
-        body: "Use Note → Tags — the picker pool with checkmarks for the note you’re writing. After Save, those Tags show up here.",
+        title: "On this Event (inventory)",
+        body: "Trackers tab lists Tags already used on Notes/emails here (count = uses). Answers “what tags are on my event?”",
       },
       {
-        title: "Flag / Disable Tracker",
-        body: "Click a chip only to convert Tag ↔ Tracker (journal-wide). Confirms both ways. Never deletes Note Tags.",
+        title: "Flag / Disable Tracker (optional)",
+        body: "Only if you want journal-wide watch. Click a chip or use Flag Tracker — confirms both ways. Never deletes Note Tags. Most Tags stay unflagged.",
       },
       {
         title: "Other Trackers",
@@ -235,15 +235,19 @@ const SECTIONS: HelpSection[] = [
     group: "intelligence",
     keywords: ["topic", "tags", "trackers", "topic tags", "aliases", "flag"],
     intro:
-      "Topic → Tags. Evidence Tags + Topic Tags inventory, Flag Trackers, and the Topic Tags editor (only place that removes a binder Tag).",
+      "Evidence Tags come from Notes on linked Events. Flag as Tracker is optional. Topic Tags editor below is the only place that removes a binder Tag.",
     items: [
       {
         title: "On this Topic",
-        body: "Evidence Tags from notes/emails ∪ Topic Tags (binder aliases). Same Tag system as Events.",
+        body: "Evidence Tags from notes/emails ∪ Topic Tags (binder aliases). Same Tag system as Events — Tags can exist without Flag.",
       },
       {
         title: "Topic Tags editor",
         body: "Explicit Save — the only place that removes a binder Tag. Flag/Disable Tracker never deletes Tags.",
+      },
+      {
+        title: "Flag / Disable Tracker (optional)",
+        body: "Watch only when you want it. Click a chip to Flag/Disable with confirm — never required to keep a Tag on evidence.",
       },
       {
         title: "By linked Event",
@@ -401,7 +405,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Tags on an Event",
-        body: "Detail → Tags shows inventory from Notes/emails. Flag chips to make Trackers. Put Tags on evidence via Note → Tags.",
+        body: "Detail → Trackers shows inventory from Notes/emails and optional Flag. Put Tags on evidence via Note → Tags (checkbox) — Flag is not required.",
       },
     ],
   },
