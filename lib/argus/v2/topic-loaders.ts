@@ -176,6 +176,58 @@ function normalizeEvidenceTag(raw: string): string {
 }
 
 /**
+ * Derived Tag pool for Note pickers — Tags already used on Notes/emails in Topic scope
+ * (topic-direct ∪ linked Events). Not persisted; no Topic Tag ownership.
+ */
+export function collectEvidenceTagsForTopicIds(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  topicIds: string[],
+  includePrivate: boolean,
+  today: string
+): string[] {
+  const counts = new Map<string, { tag: string; count: number }>();
+
+  for (const topicId of topicIds) {
+    const topic = data.entities.find((entity) => entity.id === topicId && !entity.deletedAt);
+    if (!topic || !isTopicEntity(topic)) continue;
+    const history = getEntityHistory(data, topic.id, includePrivate);
+    const inbox = getLinkedInboxForEntity(inboxItems, topic.id, includePrivate);
+    const neighborIds = collectNeighborEntityIds(data, topic, history);
+    const nodeCounts = countTopicsAndEventsInScope(data, topic, history);
+    const eventIds = new Set(nodeCounts.eventIds);
+    for (const id of neighborIds) {
+      const entity = data.entities.find((e) => e.id === id);
+      if (entity && isEventEntity(entity)) eventIds.add(id);
+    }
+    for (const id of outboundStructuralIds(topic)) {
+      const entity = data.entities.find((e) => e.id === id);
+      if (entity && isEventEntity(entity)) eventIds.add(id);
+    }
+    const { evidenceTagCounts } = topicTagRollup(
+      data,
+      topic,
+      history,
+      inbox,
+      eventIds,
+      inboxItems,
+      includePrivate,
+      today
+    );
+    for (const row of evidenceTagCounts) {
+      const key = row.tag.toLowerCase();
+      const existing = counts.get(key);
+      if (existing) existing.count += row.count;
+      else counts.set(key, { tag: row.tag, count: row.count });
+    }
+  }
+
+  return [...counts.values()]
+    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+    .map((row) => row.tag);
+}
+
+/**
  * Union topic + linked-event evidence for Patterns, and per-event tag lists for the Tags tab.
  * Chronicle stays topic-direct; Tags roll up binders so Event note tags are visible here.
  */
