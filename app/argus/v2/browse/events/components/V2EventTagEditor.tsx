@@ -15,11 +15,14 @@ export function V2EventTagEditor({
   eventName,
   initialTags,
   returnTo,
+  compact = false,
 }: {
   eventId: string;
   eventName: string;
   initialTags: string[];
   returnTo: string;
+  /** When embedded in V2BinderTagsTab — parent owns heading/hint. */
+  compact?: boolean;
 }) {
   const router = useRouter();
   const [matchTags, setMatchTags] = useState<string[]>(initialTags);
@@ -64,16 +67,16 @@ export function V2EventTagEditor({
     matchTags.some((tag, index) => tag !== initialTags[index]);
 
   const copy = {
-    heading: EVENT_MATCH_TAGS.heading,
-    hint: EVENT_MATCH_TAGS.hint,
+    heading: compact ? undefined : EVENT_MATCH_TAGS.heading,
+    hint: compact ? undefined : EVENT_MATCH_TAGS.hint,
     placeholder: EVENT_MATCH_TAGS.placeholder,
-    add: EVENT_MATCH_TAGS.add,
+    add: "+ Add Tag",
     empty: EVENT_MATCH_TAGS.empty,
     removeAria: EVENT_MATCH_TAGS.removeAria,
   };
 
   return (
-    <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4">
+    <div className={compact ? undefined : "rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4"}>
       <V2VocabularyListEditor
         items={matchTags}
         draft={draft}
@@ -81,6 +84,8 @@ export function V2EventTagEditor({
         onAdd={addMatchTag}
         onRemove={removeMatchTag}
         copy={copy}
+        chipClassName="inline-flex items-center gap-1 rounded-md border border-violet-500/35 bg-violet-500/10 px-2 py-1 text-[11px] text-violet-100"
+        removeClassName="text-violet-300/70 hover:text-violet-50"
         inputAriaLabel={`Add Event Tag for ${eventName}`}
         footer={
           <button

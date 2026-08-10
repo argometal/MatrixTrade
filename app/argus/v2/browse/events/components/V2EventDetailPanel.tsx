@@ -19,7 +19,7 @@ import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompact
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
 import { V2EntityLinksTab } from "@/app/argus/v2/components/V2EntityLinksTab";
-import { V2TrackerTogglePanel } from "@/app/argus/v2/components/V2TrackerTogglePanel";
+import { V2BinderTagsTab } from "@/app/argus/v2/components/V2BinderTagsTab";
 import { V2EventTagEditor } from "./V2EventTagEditor";
 import {
   V2ChronicleSelectableList,
@@ -137,20 +137,6 @@ export function V2EventDetailPanel({
     }
     return [...map.values()].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
   }, [selected.tagPatterns, selected.topicTags]);
-
-  const topicPoolTags = useMemo(() => {
-    const evidenceKeys = new Set(eventTagCounts.map((row) => row.tag.toLowerCase()));
-    const rows: Array<{ tag: string; count?: number }> = [];
-    for (const raw of selected.topicContextTags) {
-      const tag = raw.trim().replace(/\s+/g, " ");
-      if (!tag) continue;
-      const key = tag.toLowerCase();
-      if (evidenceKeys.has(key)) continue;
-      if (rows.some((r) => r.tag.toLowerCase() === key)) continue;
-      rows.push({ tag });
-    }
-    return rows.sort((a, b) => a.tag.localeCompare(b.tag));
-  }, [selected.topicContextTags, eventTagCounts]);
 
   const noteQuickTags = useMemo(() => {
     const fromTopic = selected.topicContextTags.map((t) => t.trim().replace(/\s+/g, " ")).filter(Boolean);
@@ -547,39 +533,27 @@ export function V2EventDetailPanel({
 
           {panelTab === "tags" ? (
             <div className="space-y-4">
-              <V2TrackerTogglePanel
-                evidenceTags={eventTagCounts}
-                poolTags={topicPoolTags}
+              <V2BinderTagsTab
+                attachedHeading="Tags on this Event"
+                attachedHint="These Tags classify this Event. They do not come from Notes."
+                attachedTags={selected.eventTags}
+                helpTopic="event-tags"
+                attachedEditor={
+                  <V2EventTagEditor
+                    eventId={selected.id}
+                    eventName={selected.name}
+                    initialTags={selected.eventTags}
+                    returnTo={returnTo}
+                    compact
+                  />
+                }
+                branchGroups={selected.branchTagGroups}
+                branchEmptyHint="No contextual Tags yet — link a Topic or Project, or put Tags on Notes."
+                onBrowseBranch={() => setPanelTab("note")}
+                browseBranchLabel="Put Tags on a Note"
                 signalTags={focusTags}
                 onSignalTagsChange={setFocusTags}
-                surfaceLabel="this Event"
-                scopeId={selected.id}
-                heading="Tags · Trackers"
-                helpTopic="event-tags"
-                emptyEvidenceHint="No Tags on this Event’s Notes yet — add them on Note, or Draft below (session only)."
-                addPlaceholder="Name a Tag…"
-                noteCta={
-                  <button
-                    type="button"
-                    onClick={() => setPanelTab("note")}
-                    className="font-medium text-teal-300/90 hover:text-teal-200"
-                  >
-                    Put Tags on a Note →
-                  </button>
-                }
               />
-
-              <div>
-                <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
-                  Event Tags (create / manage)
-                </p>
-                <V2EventTagEditor
-                  eventId={selected.id}
-                  eventName={selected.name}
-                  initialTags={selected.eventTags}
-                  returnTo={returnTo}
-                />
-              </div>
             </div>
           ) : null}
 

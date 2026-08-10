@@ -199,6 +199,19 @@ export function collectEvidenceTagsForTopicIds(
   includePrivate: boolean,
   today: string
 ): string[] {
+  return collectEvidenceTagCountsForTopicIds(data, inboxItems, topicIds, includePrivate, today).map(
+    (row) => row.tag
+  );
+}
+
+/** Same as collectEvidenceTagsForTopicIds with trustworthy evidence counts. */
+export function collectEvidenceTagCountsForTopicIds(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  topicIds: string[],
+  includePrivate: boolean,
+  today: string
+): Array<{ tag: string; count: number }> {
   const counts = new Map<string, { tag: string; count: number }>();
 
   for (const topicId of topicIds) {
@@ -235,9 +248,7 @@ export function collectEvidenceTagsForTopicIds(
     }
   }
 
-  return [...counts.values()]
-    .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
-    .map((row) => row.tag);
+  return [...counts.values()].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
 }
 
 /**

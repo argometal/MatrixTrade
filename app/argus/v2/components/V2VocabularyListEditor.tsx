@@ -22,6 +22,8 @@ export function V2VocabularyListEditor({
   footer,
   inputAriaLabel,
   onEnterAdd = true,
+  chipClassName = "inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200",
+  removeClassName = "text-amber-400/70 hover:text-amber-100",
 }: {
   items: string[];
   draft: string;
@@ -32,6 +34,8 @@ export function V2VocabularyListEditor({
   footer?: ReactNode;
   inputAriaLabel?: string;
   onEnterAdd?: boolean;
+  chipClassName?: string;
+  removeClassName?: string;
 }) {
   return (
     <div>
@@ -40,15 +44,12 @@ export function V2VocabularyListEditor({
 
       <div className={`flex flex-wrap gap-1.5 ${copy.heading || copy.hint ? "mt-3" : ""}`}>
         {items.map((item) => (
-          <span
-            key={item}
-            className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200"
-          >
+          <span key={item} className={chipClassName}>
             {item}
             <button
               type="button"
               onClick={() => onRemove(item)}
-              className="text-amber-400/70 hover:text-amber-100"
+              className={removeClassName}
               aria-label={copy.removeAria(item)}
             >
               ×
