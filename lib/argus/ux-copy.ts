@@ -429,10 +429,10 @@ export const TOPIC_ALIASES = TOPIC_MATCH_TAGS;
  */
 export const SIGNAL_TAGS = {
   heading: "Trackers",
-  hint: "Flag a Tag as a Tracker to watch it. Disable Tracker leaves the Tag in the universe — it does not delete the Tag.",
-  placeholder: "Add Tracker tag…",
-  add: "Add",
-  empty: "No Trackers yet — add a Tag and Flag it, or Flag an existing Tag.",
+  hint: "A Tracker is an optional Flag on a Tag. Add the Tag first (on a Note or Tags tab); Flag only when you want journal-wide watch. Disable Tracker leaves the Tag.",
+  placeholder: "Name a Tag…",
+  add: "Add Tag",
+  empty: "No Trackers yet — create Tags on Notes, then Flag one from Tags.",
   removeAria: (item: string) => `Disable Tracker on ${item}`,
   save: "Save Trackers",
 } as const;

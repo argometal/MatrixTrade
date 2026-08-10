@@ -198,7 +198,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Where Tags live on an Event",
-        body: "Event → Note → Tags (checkbox) puts Tags on evidence. Event → Trackers shows inventory and optional Flag. Put Tags on evidence via Note — not by Flagging.",
+        body: "Event → Note puts Tags on evidence. Event → Tags manages the universe and optional Flag as Tracker.",
       },
     ],
   },
@@ -207,25 +207,25 @@ const SECTIONS: HelpSection[] = [
     id: "event-tags",
     title: "Event · Tags & Trackers",
     group: "intelligence",
-    keywords: ["event", "tags", "trackers", "on this event", "note", "flag"],
+    keywords: ["event", "tags", "trackers", "on this event", "note", "flag", "pool"],
     intro:
-      "Put Tags on evidence via Note → Tags (checkbox). Flag as Tracker is optional — Event → Trackers tab.",
+      "Tags classify Notes. Trackers are optional Flags on Tag names. Create Tags on Note first — Flag later from Tags.",
     items: [
       {
         title: "Put a Tag on a Note",
-        body: "Event → Note → Tags. Picker shows Tags already used in linked Topics first, then recent, then search the global universe. Create new only if nothing matches. Tagging does not Flag a Tracker.",
+        body: "Event → Note → quick Topic chips or Browse / create. Checkbox only — tagging never Flags a Tracker.",
       },
       {
-        title: "On this Event (inventory)",
-        body: "Trackers tab lists Tags already used on Notes/emails here (count = uses). Answers “what tags are on my event?”",
+        title: "Tags tab (manager)",
+        body: "Inventory of Tags on this Event, Topic Tag pool, and other Trackers. Add Tag remembers a name without Flagging.",
       },
       {
-        title: "Flag / Disable Tracker (optional)",
-        body: "Only if you want journal-wide watch. Click a chip or use Flag Tracker — confirms both ways. Never deletes Note Tags. Most Tags stay unflagged.",
+        title: "Convert Topic Tag → Tracker",
+        body: "From linked Topics section — click a chip to Flag as Tracker (confirm). Same for Tags already on Notes.",
       },
       {
-        title: "Other Trackers",
-        body: "Watch names not yet on this Event’s Notes — still Flag/Disable with confirm.",
+        title: "Flag Tracker (optional)",
+        body: "Only when you want journal-wide watch. Chip click or the secondary Flag Tracker button — never required to keep a Tag.",
       },
     ],
   },
@@ -235,7 +235,7 @@ const SECTIONS: HelpSection[] = [
     group: "intelligence",
     keywords: ["topic", "tags", "trackers", "topic tags", "aliases", "flag"],
     intro:
-      "Evidence Tags come from Notes on linked Events. Flag as Tracker is optional. Topic Tags editor below is the only place that removes a binder Tag.",
+      "Evidence Tags come from Notes on linked Events. Flag as Tracker is optional (Tags tab). Topic Tags editor below is the only place that removes a binder Tag.",
     items: [
       {
         title: "On this Topic",
@@ -247,7 +247,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Flag / Disable Tracker (optional)",
-        body: "Watch only when you want it. Click a chip to Flag/Disable with confirm — never required to keep a Tag on evidence.",
+        body: "Add Tag remembers a name; Flag Tracker or chip click watches it. Never required to keep a Tag on evidence.",
       },
       {
         title: "By linked Event",
@@ -410,7 +410,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Tags on an Event",
-        body: "Put Tags on evidence via Note → Tags. Detail → Trackers is optional Flag only.",
+        body: "Put Tags on evidence via Note. Detail → Tags manages inventory and optional Flag as Tracker.",
       },
     ],
   },
@@ -427,7 +427,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Tags",
-        body: "Optional. Opens the reuse picker (Topic → recent → universe → create). Tagging does not Flag a Tracker.",
+        body: "Optional. Quick chips from linked Topics, or Browse / create. Tagging does not Flag a Tracker — Flag later on Tags.",
       },
       {
         title: "Link email",
