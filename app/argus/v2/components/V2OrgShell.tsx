@@ -7,8 +7,7 @@ import type { Entity, Runbook, RunbookProgress } from "@/lib/argus/types";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import type { TagPattern } from "@/lib/argus/v2/tag-patterns";
-import { V2Badge, V2Card } from "./v2-ui";
-import { V2EntityNeighborhoodPanel } from "./V2EntityNeighborhoodPanel";
+import { V2Badge } from "./v2-ui";
 import { V2PrivateEvidenceGate } from "./V2PrivateEvidenceGate";
 import { V2EntityTimelineSection } from "./V2EntityTimelineSection";
 import { V2EntityChronicleRail } from "./V2EntityChronicleRail";
@@ -27,6 +26,7 @@ import {
   V2ProjectListItem,
   V2SummaryStatCard,
 } from "./V2RightPanel";
+import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 
 const TABS = ["Overview", "Timeline", "Runbooks", "Links"] as const;
 type OrgTab = (typeof TABS)[number];
@@ -209,16 +209,6 @@ export function V2OrgShell(props: V2OrgShellProps) {
                 <V2ContactPill label="Last activity" value={stats.lastActivity} active={stats.isActiveToday} />
               </div>
             </div>
-
-            <V2Card className="p-5 sm:p-6">
-              <V2PrivateEvidenceGate
-                locked={privateLocked}
-                privateConfigured={privateConfigured}
-                returnTo={returnTo}
-              >
-                <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entity.name} />
-              </V2PrivateEvidenceGate>
-            </V2Card>
           </div>
 
           <aside className="space-y-4">
@@ -342,28 +332,76 @@ export function V2OrgShell(props: V2OrgShellProps) {
       ) : null}
 
       {tab === "Links" ? (
-        <V2EntityLinksTab
-          entityId={entity.id}
-          linkedIds={linkModalIds}
-          people={linkedPeople.map((p) => ({
-            id: p.id,
-            name: p.name,
-            subtitle: p.alias || "Contact",
-            href: `/argus/v2/network/${p.id}`,
-          }))}
-          projects={orgProjects.map((p) => ({
-            id: p.id,
-            name: p.name,
-            href: `/argus/v2/projects/${p.id}`,
-            meta: p.endDate?.slice(0, 4) || p.startDate?.slice(0, 4),
-          }))}
-          topics={linkedTopics}
-          events={linkedEvents}
-          tagPatterns={tagPatterns}
-          signalTags={signalTags}
-          manualTags={(entity.linkedTags ?? []).map((t) => t.trim()).filter(Boolean)}
-          tagHref={(tag) => `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`}
-        />
+        <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
+          <V2EntityLinksTab
+            entityId={entity.id}
+            linkedIds={linkModalIds}
+            helpTopic="org-links"
+            helpLabel="Organization Links"
+            intro={LINK_HIERARCHY.inboxLinkHint}
+            metrics={[
+              { icon: "👤", label: "People", count: stats.people },
+              { icon: "📁", label: "Proj", count: stats.projects },
+              { icon: "🏷", label: "Topics", count: stats.topics },
+              { icon: "📅", label: "Events", count: stats.events },
+            ]}
+            sections={[
+              {
+                title: "People",
+                linkLabel: "Link person",
+                initialFilter: "person",
+                subtitle: LINK_HIERARCHY.topicLinkPeople,
+                browseHref: `/argus/v2/browse/network?org=${entity.id}`,
+                entities: linkedPeople.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  href: `/argus/v2/network/${p.id}`,
+                  icon: "👤",
+                  meta: p.alias || undefined,
+                })),
+              },
+              {
+                title: "Projects",
+                linkLabel: "Link project",
+                initialFilter: "project",
+                subtitle: LINK_HIERARCHY.topicLinkProjects,
+                browseHref: `/argus/v2/browse/projects?org=${entity.id}`,
+                entities: orgProjects.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  href: `/argus/v2/projects/${p.id}`,
+                  icon: "📁",
+                  meta: p.endDate?.slice(0, 4) || p.startDate?.slice(0, 4),
+                })),
+              },
+              {
+                title: "Topics",
+                linkLabel: "Link topic",
+                initialFilter: "topic",
+                subtitle: "Link Topics related to this organization.",
+                browseHref: `/argus/v2/browse/topics?org=${entity.id}`,
+                entities: linkedTopics.map((t) => ({ ...t, icon: "🏷" })),
+                tone: "topic",
+              },
+              {
+                title: "Events",
+                linkLabel: "Link event",
+                initialFilter: "event",
+                subtitle: LINK_HIERARCHY.topicLinkEvents,
+                browseHref: `/argus/v2/browse/events?entity=${entity.id}`,
+                entities: linkedEvents.map((e) => ({ ...e, icon: "📅" })),
+                tone: "event",
+              },
+            ]}
+            evidenceCounts={[{ label: "Emails", value: stats.emails }]}
+            neighborhood={neighborhood}
+            entityName={entity.name}
+            tagPatterns={tagPatterns}
+            signalTags={signalTags}
+            manualTags={(entity.linkedTags ?? []).map((t) => t.trim()).filter(Boolean)}
+            tagHref={(tag) => `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`}
+          />
+        </V2PrivateEvidenceGate>
       ) : null}
     </>
   );

@@ -8,7 +8,7 @@ import { entityDeleteRequiresAuthenticator } from "../delete-link-check";
 import { browseEntitiesByKind } from "./hierarchy";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { relativeActivityLabel } from "./timeline-builders";
-import { countLinkKinds, linkedTopicNames, linkedTopicRefs } from "./entity-link-counts";
+import { countLinkKinds, linkedOrgRefs, linkedPersonRefs, linkedProjectRefs, linkedTopicNames, linkedTopicRefs } from "./entity-link-counts";
 import {
   collectNeighborEntityIds,
   countTopicsAndEventsInScope,
@@ -262,6 +262,9 @@ export function buildV2EventDetails(
       projectCount: linkCounts.projectCount,
       peopleCount: linkCounts.peopleCount,
       topicCount: nodeCounts.topicCount,
+      linkedOrgs: linkedOrgRefs(data, relatedIds),
+      linkedProjects: linkedProjectRefs(data, relatedIds),
+      linkedPeople: linkedPersonRefs(data, relatedIds),
       // Link modal: outbound bags ∪ reverse Topic binders (one-way links stay visible/healable).
       linkedEntityIds: linkModalStructuralIds(data, event),
       linkedEntries,

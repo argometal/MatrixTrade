@@ -120,3 +120,34 @@ export function linkedEventRefs(
   }
   return refs.sort((a, b) => a.name.localeCompare(b.name));
 }
+
+export type LinkedKindRef = { id: string; name: string; href: string; icon: string };
+
+/** Structural org/project/person refs for Links tabs (same neighbor id set as counts). */
+export function linkedOrgRefs(data: ArgusData, ids: Iterable<string>): LinkedKindRef[] {
+  return linkedTypeRefs(data, ids, "company", "🏢", (e) => `/argus/v2/organizations/${e.id}`);
+}
+
+export function linkedProjectRefs(data: ArgusData, ids: Iterable<string>): LinkedKindRef[] {
+  return linkedTypeRefs(data, ids, "project", "📁", (e) => `/argus/v2/projects/${e.id}`);
+}
+
+export function linkedPersonRefs(data: ArgusData, ids: Iterable<string>): LinkedKindRef[] {
+  return linkedTypeRefs(data, ids, "person", "👤", (e) => `/argus/v2/network/${e.id}`);
+}
+
+function linkedTypeRefs(
+  data: ArgusData,
+  ids: Iterable<string>,
+  type: Entity["type"],
+  icon: string,
+  hrefFor: (entity: Entity) => string
+): LinkedKindRef[] {
+  const refs: LinkedKindRef[] = [];
+  for (const id of ids) {
+    const entity = data.entities.find((e) => e.id === id && !e.deletedAt && e.type === type);
+    if (!entity) continue;
+    refs.push({ id: entity.id, name: entity.name, href: hrefFor(entity), icon });
+  }
+  return refs.sort((a, b) => a.name.localeCompare(b.name));
+}

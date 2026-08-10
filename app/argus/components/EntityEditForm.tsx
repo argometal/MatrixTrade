@@ -284,7 +284,7 @@ export function EntityEditForm({
       {showTopicLinks ? (
         <EntityLinkGroup
           label="Linked Topics"
-          hint="Topics related to this event — mirrored both ways so the Topic Connections list stays in sync."
+          hint="Topics related to this event — mirrored both ways so the Topic Links list stays in sync."
           linkedEntities={linkedTopics}
           buckets={topicBuckets}
           selectedIds={linkedTopicIds}

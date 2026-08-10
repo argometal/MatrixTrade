@@ -10,7 +10,6 @@ import type { TagPattern } from "@/lib/argus/v2/tag-patterns";
 import { applyRunbookProgress, findRunbookProgress, runbookProgress } from "@/lib/argus/runbook-helpers";
 import { formatDate } from "@/app/argus/components/ui";
 import { V2Card } from "./v2-ui";
-import { V2EntityNeighborhoodPanel } from "./V2EntityNeighborhoodPanel";
 import { V2PrivateEvidenceGate } from "./V2PrivateEvidenceGate";
 import { V2ProjectScopeToggle } from "./V2ProjectScopeToggle";
 import { V2EntityTimelineSection } from "./V2EntityTimelineSection";
@@ -26,6 +25,7 @@ import {
   V2PanelLinkAction,
   V2PersonListItem,
 } from "./V2RightPanel";
+import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 
 const TABS = ["Overview", "Timeline", "Runbooks", "Links"] as const;
 type ProjectTab = (typeof TABS)[number];
@@ -177,16 +177,6 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
                 onClick={() => setTab("Runbooks")}
               />
             </div>
-
-            <V2Card className="p-5 sm:p-6">
-              <V2PrivateEvidenceGate
-                locked={privateLocked}
-                privateConfigured={privateConfigured}
-                returnTo={returnTo}
-              >
-                <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entity.name} />
-              </V2PrivateEvidenceGate>
-            </V2Card>
           </div>
 
           <aside className="space-y-4">
@@ -266,27 +256,72 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
       ) : null}
 
       {tab === "Links" ? (
-        <V2EntityLinksTab
-          entityId={entity.id}
-          linkedIds={linkModalIds}
-          people={peopleWithRoles.map((p) => ({
-            id: p.id,
-            name: p.name,
-            subtitle: p.role,
-            href: `/argus/v2/network/${p.id}`,
-          }))}
-          organizations={
-            org ? [{ id: org.id, name: org.name, href: `/argus/v2/organizations/${org.id}` }] : []
-          }
-          topics={linkedTopics}
-          events={linkedEvents}
-          tagPatterns={tagPatterns}
-          signalTags={signalTags}
-          manualTags={(entity.linkedTags ?? []).map((t) => t.trim()).filter(Boolean)}
-          tagHref={(tag) =>
-            `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&project=${entity.id}`
-          }
-        />
+        <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
+          <V2EntityLinksTab
+            entityId={entity.id}
+            linkedIds={linkModalIds}
+            helpTopic="project-links"
+            helpLabel="Project Links"
+            intro={LINK_HIERARCHY.inboxLinkHint}
+            metrics={[
+              { icon: "🏢", label: "Orgs", count: org ? 1 : 0 },
+              { icon: "👤", label: "People", count: stats.people },
+              { icon: "🏷", label: "Topics", count: stats.topics },
+              { icon: "📅", label: "Events", count: stats.events },
+            ]}
+            sections={[
+              {
+                title: "Organizations",
+                linkLabel: "Link org",
+                initialFilter: "organization",
+                subtitle: LINK_HIERARCHY.topicLinkOrgs,
+                entities: org
+                  ? [{ id: org.id, name: org.name, href: `/argus/v2/organizations/${org.id}`, icon: "🏢" }]
+                  : [],
+              },
+              {
+                title: "People",
+                linkLabel: "Link person",
+                initialFilter: "person",
+                subtitle: LINK_HIERARCHY.topicLinkPeople,
+                entities: peopleWithRoles.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  href: `/argus/v2/network/${p.id}`,
+                  icon: "👤",
+                  meta: p.role,
+                })),
+              },
+              {
+                title: "Topics",
+                linkLabel: "Link topic",
+                initialFilter: "topic",
+                subtitle: "Link Topics related to this project.",
+                browseHref: `/argus/v2/browse/topics?project=${entity.id}`,
+                entities: linkedTopics.map((t) => ({ ...t, icon: "🏷" })),
+                tone: "topic",
+              },
+              {
+                title: "Events",
+                linkLabel: "Link event",
+                initialFilter: "event",
+                subtitle: LINK_HIERARCHY.topicLinkEvents,
+                browseHref: `/argus/v2/browse/events?entity=${entity.id}`,
+                entities: linkedEvents.map((e) => ({ ...e, icon: "📅" })),
+                tone: "event",
+              },
+            ]}
+            evidenceCounts={[{ label: "Emails", value: stats.emails }]}
+            neighborhood={neighborhood}
+            entityName={entity.name}
+            tagPatterns={tagPatterns}
+            signalTags={signalTags}
+            manualTags={(entity.linkedTags ?? []).map((t) => t.trim()).filter(Boolean)}
+            tagHref={(tag) =>
+              `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&project=${entity.id}`
+            }
+          />
+        </V2PrivateEvidenceGate>
       ) : null}
     </>
   );
