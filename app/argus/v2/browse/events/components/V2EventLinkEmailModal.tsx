@@ -58,7 +58,6 @@ export function V2EventLinkEmailModal({
       >
         <div className="border-b border-zinc-800 px-4 py-3">
           <h3 className="text-[15px] font-semibold text-zinc-100">Link email to event</h3>
-          <p className="mt-1 text-xs text-zinc-500">Attach inbox evidence to this occurrence.</p>
         </div>
         <div className="p-4">
           <input

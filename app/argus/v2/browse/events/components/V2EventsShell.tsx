@@ -208,7 +208,6 @@ export function V2EventsShell({
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <h1 className="text-xl font-bold text-zinc-50">Events</h1>
-              <p className="mt-0.5 text-xs text-zinc-500">Meetings, calls, milestones — latest first</p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <V2IntelHelpLink topic="browse-events" label="Events" />
@@ -262,13 +261,6 @@ export function V2EventsShell({
                   : triage === "orphans"
                     ? "No orphan events."
                     : "No events match these filters."}
-              </p>
-              <p className="mt-1 text-xs text-zinc-600">
-                {rows.length === 0
-                  ? "Capture an event and link it to projects, orgs, people, or topics."
-                  : triage === "orphans"
-                    ? "Orphans are events with no structural links — link one from the detail panel."
-                    : "Try All, Orphans, or a different time cut."}
               </p>
               {rows.length === 0 ? (
                 <div className="mt-4">
