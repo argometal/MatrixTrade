@@ -221,7 +221,8 @@ export function buildV2EventDetails(
       id: log.id,
       title: log.title || "Journal entry",
       kind: log.kind === "log" ? "Log" : log.kind === "follow_up" ? "Follow-up" : "Note",
-      href: `/argus/logs/${log.id}`,
+      // Deprecated phone editor — Chronicle reads notes in place.
+      href: "",
     }));
 
     const relatedEmails = inbox.slice(0, 8).map((item) => ({

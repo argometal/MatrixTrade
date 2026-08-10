@@ -11,7 +11,14 @@ export interface V2EvidenceStreamItem {
   title: string;
   meta: string;
   sortIso: string;
-  href: string;
+  /**
+   * Navigation target for the row.
+   * Journal notes intentionally omit this — Chronicle v2 is append-only; body is shown in-list
+   * (`preview`). The phone `/argus/logs/[id]` editor remains for Inbox-converted journals only.
+   */
+  href?: string;
+  /** Full note body when `kind === "journal"` (read in Chronicle; no edit shell). */
+  preview?: string;
 }
 
 export type V2EvidenceStreamCounts = {
@@ -70,7 +77,8 @@ export function buildEntityEvidenceStream(
       title: log.title || "Note",
       meta: `${logKindLabel(log.kind)} · ${relativeActivityLabel(log.updatedAt || log.date, today)}`,
       sortIso: log.updatedAt || log.date,
-      href: `/argus/logs/${log.id}`,
+      // No href — do not open the legacy phone ActivityEditPanel from Chronicle.
+      preview: log.body?.trim() || undefined,
     });
     for (const aid of log.attachmentIds ?? []) {
       const att = data.attachments.find((a) => a.id === aid && !a.deletedAt);

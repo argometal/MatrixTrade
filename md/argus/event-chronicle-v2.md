@@ -59,12 +59,17 @@ Prefer append for corrections (new Note). Soft-delete is available when a Note m
 
 - **Note** tab: composer + **Save** at top (Trackers: click Tags on Event Tags tab, or Home → Tags)
 - **Tags** tab: evidence Tags + click-to-Flag Tracker (no separate Match-tags / Focus list editor)
-- **Chronicle**: chronological evidence stream + Delete on Notes
+- **Chronicle**: chronological evidence stream + Delete on Notes; note body is shown in-list (no link to the legacy phone `/argus/logs` editor)
 - **Metrics**: Notes / Emails / Photos (unique sources; attachments not double-counted in evidence totals)
 - Footer **Register evidence** removed from event detail
 - **Files** dropdown on Note tab: choose files or **Ctrl+V** paste; saved with chronicle entry
 - Chronicle filter: All · Notes · Emails · Photos · Files
 - Global **Register** sheet: same Files dropdown + paste (topics, orgs, projects via entity links)
+
+### Deprecated (do not remount)
+
+- Phone-width `/argus/logs/[id]` + `ActivityEditPanel` for Event Chronicle note edit — Inbox-converted journals only; that route no longer shows the phone `BottomNav`
+- Unused composers removed: `JournalEntryForm`, `MemoryComposer`, `CaptureFab`, `V2OpenCaptureButton`, `AddRegisterCaptureButtons`
 
 ---
 
