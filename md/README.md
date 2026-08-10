@@ -21,7 +21,7 @@ Private repo: `github.com/argometal/MatrixTrade`
 | **Integrations** | `integrations/`, `protocols/` | ChatGPT, Obsidian, Worker, Supabase, Vercel |
 | **Concepts** | `concepts/` | Ideas worth keeping — **apply later**, not shipped |
 | **ARGUS** | `argus/` | Separate product — own index and lifecycle |
-| **ArgusForge** | `argusforge/` | Sealed vision + Phase 0 technical map (formation transfer) |
+| **ArgusForge** | `argusforge/` | Sealed vision + Phase 0 technical map (formation transfer) · Platform Vision 001 (Workspace proposal) |
 | **Topics / Research** | `topics/`, `research/` | Deep dives and product research |
 
 **Rule:** If it is not deployed, it belongs in `concepts/` (or marked *Deferred* in the source doc).  
@@ -49,7 +49,7 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 2. **What ships today?** `architecture/matrixtrade-app.md` + `rules/`
 3. **What to build next?** `phases/roadmap.md` + `concepts/README.md`
 4. **Working on ARGUS?** [`argus/README.md`](argus/README.md)
-5. **ArgusForge vision / Chaos / engines?** [`argusforge/argusforge-contract.md`](argusforge/argusforge-contract.md) → [`argusforge/phase-0-architecture.md`](argusforge/phase-0-architecture.md)
+5. **ArgusForge vision / Chaos / engines?** [`argusforge/IA-HANDOFF.md`](argusforge/IA-HANDOFF.md) → [`argusforge/platform-vision-001.md`](argusforge/platform-vision-001.md) (Workspace proposal) → [`argusforge/argusforge-contract.md`](argusforge/argusforge-contract.md) → [`argusforge/phase-0-architecture.md`](argusforge/phase-0-architecture.md)
 6. **Matrix product + AI?** [`matrix/README.md`](matrix/README.md) → [`matrix/ai-engineering.md`](matrix/ai-engineering.md)
 7. **Integrations** → `integrations/` · **Protocols** → `protocols/`
 8. **New topic** → `topics/your-topic.md` + one row in this index

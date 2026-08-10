@@ -8,9 +8,11 @@
 **ARGUS architecture review pack (external AI — `main` only):** `md/argus-review/00-PUBLIC-STATUS.md`  
 **Evidence Engine mechanics:** `md/argus/evidence-engine-mechanics.md`  
 **Deprecated handoffs list:** `md/argus/DEPRECATED-HANDOFFS.md`  
-**Date:** 2026-08-07
+**Date:** 2026-08-10
 
 External analysis text was **not** attached to the request that created this file. This handoff is **runtime truth from `main`**, not a transcript of an external memo.
+
+**Long-term Forge Workspace objective (library only — do not implement from it):** [`platform-vision-001.md`](platform-vision-001.md). Use it as the north star for Forge home / launcher / control-plane branches. Runtime below remains authoritative for what ships today.
 
 **Deprecated:** feature-branch / draft-PR / screenshot URL handoffs for Argus architecture review. Use `md/argus-review/` on `main` + `md/argus/evidence-engine-mechanics.md`.  
 **Deprecated as live architecture:** `md/argus-review/11-behavioral-evaluation-review.md` (historical inventory; use `12`/`13`/mechanics).  
@@ -104,11 +106,12 @@ Deliver v1 is live: Quick Package (HTML + MD) + Evidence Vault. Details: `md/arg
 ## Hard rules for agents
 
 1. Prefer `current-deploy.md` + this file + `capability-map.md` + `md/argus/evidence-engine-mechanics.md` over old `*handoff*` dumps.
-2. Do not merge superseded PRs (#108, #112 closed into #113).
-3. Do not touch MTA Apply / Scout / Capital / trading P&L when working ArgusForge UI.
-4. Do not claim shipped without merge + production Ready.
-5. If a handoff contradicts code, **code wins** — fix or delete the handoff.
-6. Do not revive Behavior Engine / strength% / outcomeScore / org Trust·Future as product metrics.
+2. For Forge **home / launcher / ecosystem control-plane** direction, keep [`platform-vision-001.md`](platform-vision-001.md) in mind — proposal only; do not implement UI from it unless the task explicitly asks.
+3. Do not merge superseded PRs (#108, #112 closed into #113).
+4. Do not touch MTA Apply / Scout / Capital / trading P&L when working ArgusForge UI.
+5. Do not claim shipped without merge + production Ready.
+6. If a handoff contradicts code, **code wins** — fix or delete the handoff.
+7. Do not revive Behavior Engine / strength% / outcomeScore / org Trust·Future as product metrics.
 
 ---
 

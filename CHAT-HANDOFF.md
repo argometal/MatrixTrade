@@ -12,6 +12,15 @@
 
 ---
 
+## Objective — Argus Forge Platform Vision 001 (library)
+
+**Doc:** [`md/argusforge/platform-vision-001.md`](md/argusforge/platform-vision-001.md)  
+**Status:** Proposal only — **no implementation** from this handoff.  
+
+North star for Forge *Workspace / home / launcher* development branches: quiet ecosystem control plane (Applications + Continue + one global Forge Access). Keep Knowledge Explorer (24-1E) as deep work inside Forge; do not hard-code today’s app list; sealed AF contracts + IA-HANDOFF still win on runtime truth.
+
+---
+
 ## Pending — ArgusForge 24-33 Recent linkage
 
 PR: #110 (draft)  
@@ -28,6 +37,7 @@ Four statuses: Unlinked · In Realm · In related Deck · Related. Do not treat 
 | Topic | Doc |
 |-------|-----|
 | Apps · ARGUS · ArgusForge runtime | [`md/argusforge/IA-HANDOFF.md`](md/argusforge/IA-HANDOFF.md) |
+| **Argus Forge Platform Vision 001** (Workspace / control plane — proposal) | [`md/argusforge/platform-vision-001.md`](md/argusforge/platform-vision-001.md) |
 | **ARGUS architecture review pack (`main` only)** | [`md/argus-review/00-PUBLIC-STATUS.md`](md/argus-review/00-PUBLIC-STATUS.md) — branch/PR handoffs **deprecated** |
 | ARGUS Evidence Engine mechanics | [`md/argus/evidence-engine-mechanics.md`](md/argus/evidence-engine-mechanics.md) |
 | ARGUS deprecated handoffs | [`md/argus/DEPRECATED-HANDOFFS.md`](md/argus/DEPRECATED-HANDOFFS.md) |
