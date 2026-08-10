@@ -5,7 +5,7 @@ import { useState, type ReactNode } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "./V2CreateEntityButton";
 import { V2EntityNeighborhoodPanel } from "./V2EntityNeighborhoodPanel";
 import { V2IntelHelpLink } from "./V2IntelHelpLink";
-import { V2Badge, V2Card } from "./v2-ui";
+import { V2Card } from "./v2-ui";
 import { V2TagPatternBadges } from "./V2TagPatternBadges";
 import type { LinkPanelFilter } from "@/lib/argus/create-flow-types";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
@@ -48,11 +48,11 @@ const EMPTY_LINK_BTN =
 
 const CHIP_CLASS: Record<NonNullable<V2LinksSection["tone"]>, string> = {
   event:
-    "inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-950/30 px-3 py-1.5 text-xs text-rose-100 hover:border-rose-400/50",
+    "flex w-full items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-950/30 px-2.5 py-1.5 text-[12px] text-rose-100 hover:border-rose-400/50",
   topic:
-    "inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-950/20 px-3 py-1.5 text-xs text-amber-100 hover:border-amber-400/40",
+    "flex w-full items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-950/20 px-2.5 py-1.5 text-[12px] text-amber-100 hover:border-amber-400/40",
   default:
-    "inline-flex items-center gap-1.5 rounded-full border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 hover:border-violet-500/40 hover:text-violet-200",
+    "flex w-full items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1.5 text-[12px] text-zinc-300 hover:border-violet-500/40 hover:text-violet-200",
 };
 
 /** Event-style metric pill — shared across Links tabs. */
@@ -208,16 +208,19 @@ export function V2EntityLinksTab({
               signalTags={signalTags}
               className="mb-4"
               tagHref={tagHref}
+              orientation="stack"
             />
           ) : null}
           {manualTags && manualTags.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {manualTags.map((tag, index) => (
-                <V2Badge key={tag} tone={index % 3 === 0 ? "blue" : index % 3 === 1 ? "green" : "purple"}>
-                  {tag}
-                </V2Badge>
+            <ul className="flex flex-col gap-1.5" aria-label="Manual tags">
+              {manualTags.map((tag) => (
+                <li key={tag}>
+                  <span className="flex w-full items-center rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1.5 text-[12px] text-zinc-200">
+                    <span className="min-w-0 truncate">#{tag}</span>
+                  </span>
+                </li>
               ))}
-            </div>
+            </ul>
           ) : tagPatterns && tagPatterns.length === 0 ? (
             <p className="text-sm text-zinc-600">No tags yet. Add labels on evidence or the record.</p>
           ) : null}
@@ -266,13 +269,23 @@ function LinksSectionBlock({
         </div>
       </div>
       {count > 0 ? (
-        <ul className="flex flex-wrap gap-2">
+        <ul className="flex flex-col gap-1.5" aria-label={`${section.title} links`}>
           {section.entities.map((entity) => (
             <li key={entity.id}>
               <Link href={entity.href} className={CHIP_CLASS[tone]}>
-                {entity.icon ? <span aria-hidden>{entity.icon}</span> : null}
-                <span>{entity.name}</span>
-                {entity.meta ? <span className="opacity-60">{entity.meta}</span> : null}
+                {entity.icon ? (
+                  <span className="shrink-0" aria-hidden>
+                    {entity.icon}
+                  </span>
+                ) : null}
+                <span className="min-w-0 flex-1 truncate font-medium">{entity.name}</span>
+                {entity.meta ? (
+                  <span className="shrink-0 text-[10px] tabular-nums opacity-60">{entity.meta}</span>
+                ) : (
+                  <span className="shrink-0 text-zinc-500" aria-hidden>
+                    →
+                  </span>
+                )}
               </Link>
             </li>
           ))}
