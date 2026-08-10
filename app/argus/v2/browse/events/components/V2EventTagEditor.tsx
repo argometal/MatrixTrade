@@ -86,6 +86,7 @@ export function V2EventTagEditor({
         copy={copy}
         chipClassName="inline-flex items-center gap-1 rounded-md border border-violet-500/35 bg-violet-500/10 px-2 py-1 text-[11px] text-violet-100"
         removeClassName="text-violet-300/70 hover:text-violet-50"
+        addButtonClassName="rounded-lg border border-violet-500/50 bg-transparent px-3 py-2 text-xs font-semibold text-violet-200 hover:bg-violet-950/40"
         inputAriaLabel={`Add Event Tag for ${eventName}`}
         footer={
           <button
