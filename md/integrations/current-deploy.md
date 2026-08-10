@@ -4,7 +4,7 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0808o` |
+| **Tag** | `main0808p` |
 | **Commit** | Always `git rev-parse main0808h` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-10 |
@@ -21,6 +21,7 @@ git reset --hard origin/main
 
 ## What this deploy includes
 
+- PR #232: Event Mark completed uses Archive — out of metrics; help explained
 - PR #230: Tag-first Event flow — create Tag on Note, Flag Tracker later
 - PR #228: Unify Links tab (Event/Topic/Org/Project) — metric pills + graph
 - PR #226: Topic Connections — clear Link CTAs per relation (Events / orgs / projects / people)
