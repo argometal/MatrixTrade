@@ -28,6 +28,8 @@ External analysis text was **not** attached to the request that created this fil
 
 **Chooser:** `/apps` is **ARGUS FORGE** Home (A mark = Home; ··· quick-nav). Chrome switches live in `AppExchangeActions` (A + ··· menu — no flat per-app icons).
 
+**ARGUS Home:** Sidebar / mobile-drawer **Logo (A · Argus)** = Home (`/argus/v2`). Main nav no longer duplicates a Home row.
+
 **Root:** `/` → `/home-preview` (not `/apps`).
 
 Auth is **fail-open**: if the password env is unset, that gate does not redirect.

@@ -499,7 +499,8 @@ export function buildV2FocusTagPortfolio(
   inboxItems: InboxItem[],
   includePrivate: boolean,
   today: string,
-  limit = 80
+  /** Omit or Infinity = full journal universe (no top-N cut). */
+  limit: number = Number.POSITIVE_INFINITY
 ): V2FocusTagStat[] {
   type Acc = { display: string; dates: string[]; roles: Set<TagRole> };
   const acc = new Map<string, Acc>();
@@ -594,7 +595,7 @@ export function buildV2FocusTagPortfolio(
       if (aScore !== bScore) return bScore - aScore;
       return b.count - a.count || a.name.localeCompare(b.name);
     })
-    .slice(0, limit)
+    .slice(0, Number.isFinite(limit) ? Math.max(0, limit) : undefined)
     .map(({ key: _key, ...row }) => row);
 }
 

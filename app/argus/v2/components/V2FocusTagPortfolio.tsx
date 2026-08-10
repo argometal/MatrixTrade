@@ -198,6 +198,7 @@ export function V2FocusTagPortfolio({
   }, [selectedName, evidenceByTag]);
 
   const plotLayout = useMemo(() => {
+    // Bubble plot stays capped for readability; full inventory is searchable below.
     const plot = visible.slice(0, 64);
     if (plot.length === 0) return [];
     const maxEvidence = Math.max(...plot.map((r) => Math.max(r.count, 1)), 1);
@@ -314,8 +315,8 @@ export function V2FocusTagPortfolio({
         {trackerRows.length === 0 ? (
           <p className="text-xs text-zinc-600">No Trackers yet.</p>
         ) : (
-          <ul className="flex flex-wrap gap-1.5" aria-label="Flagged Trackers">
-            {trackerRows.slice(0, 36).map((row) => (
+          <ul className="flex max-h-48 flex-col gap-1.5 overflow-y-auto" aria-label="Flagged Trackers">
+            {trackerRows.map((row) => (
               <li key={row.name}>
                 <button
                   type="button"
@@ -324,15 +325,15 @@ export function V2FocusTagPortfolio({
                     setRoleFilter("all");
                     setSelectedName(row.name);
                   }}
-                  className="inline-flex items-center gap-1 rounded-full border border-amber-400/70 bg-rose-950/60 px-2.5 py-1 text-[11px] font-semibold text-amber-100 ring-1 ring-rose-500/50"
+                  className="flex w-full items-center gap-2 rounded-lg border border-amber-400/70 bg-rose-950/60 px-2.5 py-1.5 text-left text-[12px] font-semibold text-amber-100 ring-1 ring-rose-500/50"
                   title={`${row.name} — Tracker`}
                 >
                   <span aria-hidden>⚑</span>
-                  <span>{row.name}</span>
+                  <span className="min-w-0 flex-1 truncate">{row.name}</span>
                   {row.count > 0 ? (
-                    <span className="tabular-nums text-amber-200/70">· {row.count}</span>
+                    <span className="shrink-0 tabular-nums text-amber-200/70">· {row.count}</span>
                   ) : (
-                    <span className="text-amber-200/50">no evidence yet</span>
+                    <span className="shrink-0 text-amber-200/50">no evidence yet</span>
                   )}
                 </button>
               </li>
@@ -504,15 +505,58 @@ export function V2FocusTagPortfolio({
             })}
           </svg>
         )}
-        <div className="mt-1.5 flex justify-end">
+        <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[11px] tabular-nums text-zinc-500">
+            {visible.length} tag{visible.length === 1 ? "" : "s"} in this filter
+            {rows.length !== visible.length ? ` · ${rows.length} in full universe` : ""}
+            {visible.length > 64 ? " · plot shows top 64 by score" : ""}
+          </p>
           <V2IntelHelpLink topic="tags-universe" label="Tags legend" />
         </div>
       </div>
 
       {/* Priority 2–3 — Selection: Flag control + evidence + neighborhood */}
       {!selected ? (
-        <div className="rounded-xl border border-dashed border-zinc-800/90 bg-zinc-950/40 px-4 py-6 text-center">
-          <p className="text-sm font-medium text-zinc-400">Select a tag in the Universe</p>
+        <div className="space-y-3">
+          <div className="rounded-xl border border-dashed border-zinc-800/90 bg-zinc-950/40 px-4 py-6 text-center">
+            <p className="text-sm font-medium text-zinc-400">Select a tag in the Universe</p>
+            <p className="mt-1 text-xs text-zinc-600">
+              Plot shows the densest tags; the list below is the full filtered inventory.
+            </p>
+          </div>
+          {visible.length > 0 ? (
+            <div>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
+                All tags in this filter ({visible.length})
+              </p>
+              <ul
+                className="flex max-h-72 flex-col gap-1 overflow-y-auto"
+                aria-label="Full tag inventory for this filter"
+              >
+                {visible.map((row) => (
+                  <li key={row.name}>
+                    <button
+                      type="button"
+                      onClick={() => selectTag(row.name)}
+                      className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[12px] ${
+                        row.isFocus
+                          ? "border-amber-400/40 bg-rose-950/30 text-amber-100"
+                          : "border-zinc-800 bg-zinc-900/50 text-zinc-300 hover:border-violet-500/40 hover:text-zinc-100"
+                      }`}
+                    >
+                      <span className="min-w-0 truncate">
+                        {row.isFocus ? "⚑ " : ""}
+                        {row.name}
+                      </span>
+                      {row.count > 0 ? (
+                        <span className="shrink-0 tabular-nums text-zinc-500">{row.count}</span>
+                      ) : null}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       ) : (
         <div className="space-y-4 rounded-xl border border-violet-500/25 bg-zinc-950/50 p-4 sm:p-5">
@@ -663,25 +707,29 @@ export function V2FocusTagPortfolio({
           {visible.length > 1 ? (
             <div className="border-t border-zinc-800/80 pt-3">
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
-                Also in this filter
+                All tags in this filter
               </p>
-              <ul className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto">
+              <ul className="flex max-h-56 flex-col gap-1 overflow-y-auto" aria-label="All tags in this filter">
                 {visible
                   .filter((row) => row.name !== selected.name)
-                  .slice(0, 24)
                   .map((row) => (
                     <li key={row.name}>
                       <button
                         type="button"
                         onClick={() => selectTag(row.name)}
-                        className={`rounded-lg border px-2 py-1 text-[11px] ${
+                        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[12px] ${
                           row.isFocus
                             ? "border-amber-400/40 bg-rose-950/30 text-amber-100"
                             : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-violet-500/40 hover:text-zinc-200"
                         }`}
                       >
-                        {row.isFocus ? "⚑ " : ""}
-                        {row.name}
+                        <span className="min-w-0 truncate">
+                          {row.isFocus ? "⚑ " : ""}
+                          {row.name}
+                        </span>
+                        {row.count > 0 ? (
+                          <span className="shrink-0 tabular-nums text-zinc-500">{row.count}</span>
+                        ) : null}
                       </button>
                     </li>
                   ))}

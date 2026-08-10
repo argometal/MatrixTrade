@@ -51,7 +51,7 @@ export type V2BinderTagsTabProps = {
   showAboutRail?: boolean;
 };
 
-const PREVIEW = 5;
+const PREVIEW = 40;
 
 function focusKeySet(tags: string[]): Set<string> {
   return new Set(tags.map(signalTagKey).filter(Boolean));
@@ -232,7 +232,8 @@ export function V2BinderTagsTab({
 
         <div className="mt-4">{attachedEditor}</div>
 
-        {attachedTags.length > 0 && attachedTagHref ? (
+        {/* Open-links for attached Tags (Links-style rows). Skip when editor already lists them. */}
+        {attachedTags.length > 0 && attachedTagHref && !attachedEditor ? (
           <ul className="mt-3 flex flex-col gap-1.5" aria-label="Open attached Tags">
             {attachedTags.map((tag) => {
               const href = attachedTagHref(tag);
@@ -321,28 +322,36 @@ export function V2BinderTagsTab({
                   {group.tags.length === 0 ? (
                     <p className="text-[11px] text-zinc-600">None yet</p>
                   ) : (
-                    <ul className="space-y-1.5">
+                    <ul className="flex flex-col gap-1.5">
                       {group.tags.slice(0, PREVIEW).map((row) => (
-                        <li
-                          key={row.tag}
-                          className="flex items-center justify-between gap-2 text-[12px]"
-                        >
+                        <li key={row.tag}>
                           {row.href ? (
                             <Link
                               href={row.href}
-                              className="truncate font-medium text-zinc-200 underline-offset-2 hover:text-sky-200 hover:underline"
+                              className="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1.5 text-[12px] text-zinc-200 hover:border-sky-500/40 hover:text-sky-100"
                               title={`Open ${row.tag}`}
                             >
-                              {row.tag}
+                              <span className="min-w-0 truncate font-medium">{row.tag}</span>
+                              {row.count > 0 ? (
+                                <span className="shrink-0 rounded bg-zinc-950/50 px-1.5 py-0.5 text-[10px] tabular-nums text-zinc-500">
+                                  {row.count}
+                                </span>
+                              ) : (
+                                <span className="shrink-0 text-sky-300/80" aria-hidden>
+                                  →
+                                </span>
+                              )}
                             </Link>
                           ) : (
-                            <span className="truncate text-zinc-300">{row.tag}</span>
-                          )}
-                          {row.count > 0 ? (
-                            <span className="shrink-0 rounded bg-zinc-950/50 px-1.5 py-0.5 text-[10px] tabular-nums text-zinc-500">
-                              {row.count}
+                            <span className="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1.5 text-[12px] text-zinc-300">
+                              <span className="min-w-0 truncate">{row.tag}</span>
+                              {row.count > 0 ? (
+                                <span className="shrink-0 rounded bg-zinc-950/50 px-1.5 py-0.5 text-[10px] tabular-nums text-zinc-500">
+                                  {row.count}
+                                </span>
+                              ) : null}
                             </span>
-                          ) : null}
+                          )}
                         </li>
                       ))}
                     </ul>

@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { V2NavCounts } from "@/lib/argus/v2/loaders";
 import {
+  ARGUS_HOME_HREF,
   buildV2NavSections,
+  isArgusHomePath,
   isV2NavItemActive,
   type V2NavLinkItem,
 } from "@/lib/argus/v2/nav-items";
@@ -60,6 +62,7 @@ function NavRow({
 function V2MobileMenuDrawer({ counts, open, onClose }: { counts: V2NavCounts; open: boolean; onClose: () => void }) {
   const pathname = usePathname();
   const sections = buildV2NavSections(counts);
+  const onHome = isArgusHomePath(pathname);
 
   useOverlayLock(open);
 
@@ -82,15 +85,24 @@ function V2MobileMenuDrawer({ counts, open, onClose }: { counts: V2NavCounts; op
       >
         <div className="border-b border-zinc-800/80 px-5 py-5">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
+            <Link
+              href={ARGUS_HOME_HREF}
+              onClick={onClose}
+              aria-label="Argus Home"
+              title="Home"
+              aria-current={onHome ? "page" : undefined}
+              className={`flex min-w-0 flex-1 items-center gap-3 rounded-xl px-1 py-0.5 transition ${
+                onHome ? "bg-violet-500/10 ring-1 ring-violet-500/30" : "hover:bg-zinc-900/80"
+              }`}
+            >
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-violet-800 text-base font-bold text-white shadow-sm shadow-violet-950/50 ring-1 ring-violet-400/30">
                 A
               </span>
-              <div>
+              <div className="min-w-0">
                 <p className="text-lg font-bold tracking-tight text-zinc-50">Argus</p>
                 <p className="mt-0.5 text-xs text-zinc-500">Home · Browse · Inbox · more</p>
               </div>
-            </div>
+            </Link>
             <button
               type="button"
               onClick={onClose}
