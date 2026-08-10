@@ -15,6 +15,7 @@ import {
   linkModalStructuralIds,
 } from "./scope-node-counts";
 import { buildTagPatternsForScope } from "./tag-patterns";
+import { collectEvidenceTagsForTopicIds } from "./topic-loaders";
 import type {
   V2EventDetail,
   V2EventEmail,
@@ -207,6 +208,13 @@ export function buildV2EventDetails(
     const nodeCounts = countTopicsAndEventsInScope(data, event, history);
     const linkedTopicNamesList = linkedTopicNames(data, nodeCounts.topicIds);
     const linkedTopics = linkedTopicRefs(data, nodeCounts.topicIds);
+    const topicContextTags = collectEvidenceTagsForTopicIds(
+      data,
+      inboxItems,
+      linkedTopics.map((topic) => topic.id),
+      includePrivate,
+      today
+    );
 
     const linkedEntries = history.slice(0, 5).map((log) => ({
       id: log.id,
@@ -238,6 +246,7 @@ export function buildV2EventDetails(
       topicTags,
       linkedTopicNames: linkedTopicNamesList,
       linkedTopics,
+      topicContextTags,
       description:
         history.length > 0
           ? `${history.length} chronicle entr${history.length === 1 ? "y" : "ies"}`

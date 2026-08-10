@@ -26,6 +26,7 @@ import {
 } from "@/app/argus/v2/components/V2ChronicleSelectableList";
 import { TagPickerModal } from "@/app/argus/components/TagPickerModal";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
+import { TAGS } from "@/lib/argus/ux-copy";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 
@@ -362,6 +363,14 @@ export function V2EventDetailPanel({
                 onChange={setEntryTags}
                 onClose={() => setTagPickerOpen(false)}
                 mode="note"
+                topicContextTags={selected.topicContextTags}
+                topicContextLabel={
+                  selected.linkedTopics.length === 1
+                    ? `In ${selected.linkedTopics[0].name}`
+                    : selected.linkedTopics.length > 1
+                      ? TAGS.sectionTopicLinked
+                      : undefined
+                }
               />
             </div>
           ) : null}

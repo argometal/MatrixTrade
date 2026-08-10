@@ -213,7 +213,7 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "Put a Tag on a Note",
-        body: "Event → Note → Tags → check the Tag → Save. That labels the note for Chronicle, Patterns, and inventory. It does not Flag a Tracker.",
+        body: "Event → Note → Tags. Picker shows Tags already used in linked Topics first, then recent, then search the global universe. Create new only if nothing matches. Tagging does not Flag a Tracker.",
       },
       {
         title: "On this Event (inventory)",

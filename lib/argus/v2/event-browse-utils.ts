@@ -75,6 +75,11 @@ export interface V2EventDetail {
   linkedTopicNames: string[];
   /** Linked topic entities (structural — not evidence tag strings). */
   linkedTopics: Array<{ id: string; name: string; href: string }>;
+  /**
+   * Derived Tags from Notes on linked Topics (topic ∪ their Events) — picker reuse only.
+   * Not a Topic-owned Tag store.
+   */
+  topicContextTags: string[];
   description: string;
   linkedTags: string[];
   chronicleCount: number;
