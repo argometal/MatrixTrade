@@ -129,7 +129,7 @@ export function V2TopicDetailPanel({
     setFocusTags(signalTags);
   }, [signalTags, selected.id]);
   const mobileDetail = Boolean(onBack);
-  const compactChrome = mobileDetail && panelTab !== "tags";
+  const compactChrome = mobileDetail;
   const showMobileManageBar = mobileDetail && privateUnlocked;
   const attachmentCount = selected.fileCount + selected.photoCount;
   const { orgs: linkedOrgs, projects: linkedProjects, people: linkedPeople, other: linkedOther } =
@@ -183,7 +183,7 @@ export function V2TopicDetailPanel({
         label={selected.name}
         href={`/argus/v2/browse/topics?selected=${selected.id}`}
       />
-      <div className="shrink-0 border-b border-zinc-800/80 p-5">
+      <div className="shrink-0 border-b border-zinc-800/80 p-3 sm:p-5">
         <V2DetailCompactHeader
           mobileDetail={mobileDetail}
           compact={compactChrome}
@@ -212,18 +212,22 @@ export function V2TopicDetailPanel({
           }
           expanded={
             <>
-              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+              <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between">
+                <div className="min-w-0 w-full lg:flex-1">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
+                    <h2 className="min-w-0 max-w-full break-words text-xl font-bold text-zinc-50 sm:truncate">
+                      {selected.name}
+                    </h2>
                     <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] text-amber-300 ring-1 ring-amber-500/25">
                       {selected.category}
                     </span>
                     <div className={showMobileManageBar ? "hidden lg:block" : undefined}>{lifecycle}</div>
                   </div>
-                  <p className="max-w-xl text-sm leading-relaxed text-zinc-400">{selected.description}</p>
+                  <p className="hidden max-w-xl text-sm leading-relaxed text-zinc-400 sm:block">
+                    {selected.description}
+                  </p>
                 </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
+                <div className="flex w-full flex-wrap gap-2 lg:w-auto lg:shrink-0">
                   <V2QuickDeliverButton
                     scopeType="topic"
                     scopeId={selected.id}
@@ -245,6 +249,7 @@ export function V2TopicDetailPanel({
                   patterns={selected.tagPatterns}
                   signalTags={focusTags}
                   className="mb-3"
+                  orientation="stack"
                   tagHref={(tag) =>
                     `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&selected=${selected.id}`
                   }
@@ -292,13 +297,13 @@ export function V2TopicDetailPanel({
           }
         />
 
-        <div className="flex gap-1 border-b border-zinc-800/80">
+        <div className="flex gap-1 overflow-x-auto border-b border-zinc-800/80">
           {PANEL_TABS.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setPanelTab(t.id)}
-              className={`border-b-2 px-3 py-2 text-xs font-medium ${
+              className={`shrink-0 border-b-2 px-3 py-2 text-xs font-medium ${
                 panelTab === t.id
                   ? "border-violet-500 text-violet-300"
                   : "border-transparent text-zinc-500 hover:text-zinc-300"
@@ -311,7 +316,7 @@ export function V2TopicDetailPanel({
       </div>
 
       <div
-        className={`argus-v2-scroll min-h-0 flex-1 overflow-y-auto p-5 ${showMobileManageBar ? "pb-24 lg:pb-5" : ""}`}
+        className={`argus-v2-scroll min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 ${showMobileManageBar ? "pb-24 lg:pb-5" : ""}`}
       >
         <V2PrivateEvidenceGate
           locked={privateLocked}

@@ -114,10 +114,12 @@ export default async function V2ProjectPage({
           </div>
 
           <header className="mb-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
+            <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between lg:gap-4">
+              <div className="min-w-0 w-full lg:flex-1">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold tracking-tight text-zinc-50">{entity.name}</h1>
+                  <h1 className="min-w-0 max-w-full break-words text-2xl font-bold tracking-tight text-zinc-50">
+                    {entity.name}
+                  </h1>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <V2Badge tone={statusTone}>{page.status}</V2Badge>
@@ -134,13 +136,14 @@ export default async function V2ProjectPage({
                     patterns={page.tagPatterns}
                     signalTags={data.signalTags ?? []}
                     className="mt-3"
+                    orientation="stack"
                     tagHref={(tag) =>
                       `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&project=${entity.id}`
                     }
                   />
                 ) : null}
               </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:shrink-0">
                 <V2EntityLifecycleActions
                   entityId={entity.id}
                   entityName={entity.name}

@@ -105,13 +105,15 @@ export default async function V2OrganizationPage({
           </div>
 
           <header className="mb-6">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0 flex-1">
+            <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between lg:gap-4">
+              <div className="min-w-0 w-full lg:flex-1">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
                   <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/15 text-xl ring-1 ring-orange-500/30">
                     🏢
                   </span>
-                  <h1 className="text-2xl font-bold tracking-tight text-zinc-50">{entity.name}</h1>
+                  <h1 className="min-w-0 max-w-full break-words text-2xl font-bold tracking-tight text-zinc-50">
+                    {entity.name}
+                  </h1>
                   <Link
                     href={`/argus/v2/network/${entity.id}`}
                     className="rounded-lg p-1.5 text-zinc-600 transition hover:bg-zinc-800 hover:text-zinc-300"
@@ -175,13 +177,14 @@ export default async function V2OrganizationPage({
                     patterns={page.tagPatterns}
                     signalTags={data.signalTags ?? []}
                     className="mt-3"
+                    orientation="stack"
                     tagHref={(tag) =>
                       `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`
                     }
                   />
                 ) : null}
               </div>
-              <div className="flex shrink-0 gap-2">
+              <div className="flex w-full shrink-0 gap-2 lg:w-auto">
                 <V2EntityLifecycleActions
                   entityId={entity.id}
                   entityName={entity.name}

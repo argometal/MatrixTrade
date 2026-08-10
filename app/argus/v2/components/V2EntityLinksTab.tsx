@@ -116,12 +116,9 @@ export function V2EntityLinksTab({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0 max-w-xl">
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            <p className="text-xs font-medium text-zinc-300">Links</p>
-            {helpTopic ? <V2IntelHelpLink topic={helpTopic} label={helpLabel} /> : null}
-          </div>
-          <p className="text-sm text-zinc-500">{intro}</p>
+        <div className="min-w-0 flex items-center gap-2">
+          <p className="text-xs font-medium text-zinc-300">Links</p>
+          {helpTopic ? <V2IntelHelpLink topic={helpTopic} label={helpLabel} /> : null}
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           <V2EntityLinkButton
