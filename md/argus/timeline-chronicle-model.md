@@ -12,7 +12,7 @@
 | **Organization** | **Timeline** | **Notes** | `Log` rows linked to org |
 | **Project** | **Timeline** | **Notes** | `Log` rows in project scope |
 | **Person (Network)** | **Chronicle** | **Notes** | `Log` rows linked to person |
-| **Topic** | **Chronicle** only | **Notes** | `Log` / inbox linked to topic (Events stay under Connections) |
+| **Topic** | **Chronicle** only | **Notes** | Topic-direct evidence **∪** Notes/emails on linked Events (aggregation lens). Event binders listed under Connections. |
 | **Event** | **Chronicle** + Note composer | **Notes** | Chronicle `Log` rows linked to event |
 
 **Event** is a **binder entity** (case / meeting / incident). It is **not** a Journal type.  
@@ -36,7 +36,7 @@ Reading modes:   Timeline (glance) · Chronicle (full story)
 **Timeline** is the default on **organizations** and **projects**.
 
 **Chronicle** is the deep view on **topics**, **events**, and **network people**.  
-**Do not** keep a second Timeline tab on Topics — same evidence stream, thinner skin (trimmed 2026-08-09). Linked **Event** binders show under **Connections** with dates, not as Chronicle rows.
+**Do not** keep a second Timeline tab on Topics — same evidence stream, thinner skin (trimmed 2026-08-09). Linked **Event** binders show under **Connections**; their **Notes/emails** roll into Topic **Chronicle** (Event-first aggregation).
 
 ---
 
