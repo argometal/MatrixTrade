@@ -4,7 +4,7 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0808s` |
+| **Tag** | `main0808t` |
 | **Commit** | Always `git rev-parse main0808h` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-10 |
@@ -21,6 +21,7 @@ git reset --hard origin/main
 
 ## What this deploy includes
 
+- PR #240: Tags tab render style + clickable Event/branch Tags
 - PR #238: Tags tab hierarchy — attached → branch → Trackers → universe
 - PR #236: Event binder Event Tags editor (`eventTags`) — separate from Note evidence
 - PR #234: Tag ontology ORDER 001 — TagRole fields, scoped pickers, Home role chips
