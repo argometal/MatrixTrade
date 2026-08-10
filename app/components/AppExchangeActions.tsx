@@ -1,21 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { ArgusMark } from "@/app/components/ArgusMark";
-import { TradingMark } from "@/app/components/TradingMark";
+import { ForgeQuickNavMenu, type ForgeSystemId } from "@/app/apps/components/ForgePortalNav";
 
 const actionClass =
   "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200";
 
-function AfMark({ className = "" }: { className?: string }) {
-  return (
-    <span className={`text-[10px] font-bold tracking-wide text-zinc-300 ${className}`} aria-hidden>
-      AF
-    </span>
-  );
-}
-
-/** Inbox (when relevant) + switches to the other product apps. */
+/**
+ * Inbox (when relevant) + ··· quick-nav.
+ * Per-app MTA / ARGUS / AF icons removed — navigate via ··· menu (or Forge Home A mark).
+ */
 export function AppExchangeActions({
   app,
   inboxCount = 0,
@@ -28,6 +22,8 @@ export function AppExchangeActions({
   const showInbox = app === "matrix" || app === "argus";
   const inboxHref = app === "matrix" ? "/inbox" : "/argus/v2/inbox";
   const inboxLabel = app === "matrix" ? "History" : "Inbox";
+  const currentId: ForgeSystemId =
+    app === "matrix" ? "matrixtrade" : app === "argus" ? "argus" : "argusforge";
 
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
@@ -44,32 +40,13 @@ export function AppExchangeActions({
         </Link>
       ) : null}
 
-      {app !== "matrix" ? (
-        <Link href="/home-preview" aria-label="Open MTA" title="MTA" className={actionClass}>
-          <TradingMark size={28} />
-        </Link>
-      ) : null}
-
-      {app !== "argus" ? (
-        <Link href="/argus/v2" aria-label="Open ARGUS" title="ARGUS" className={`${actionClass} p-0.5`}>
-          <ArgusMark size={32} className="block h-full w-full" />
-        </Link>
-      ) : null}
-
-      {app !== "forge" ? (
-        <Link href="/forge" aria-label="Open ArgusForge" title="ArgusForge" className={actionClass}>
-          <AfMark />
-        </Link>
-      ) : null}
-
-      <Link
-        href="/apps"
-        aria-label="All apps"
-        title="All apps"
-        className={`${actionClass} text-[10px] font-semibold tracking-wide`}
-      >
-        ···
+      <Link href="/apps" aria-label="ARGUS FORGE Home" title="Forge Home" className={actionClass}>
+        <span className="text-[11px] font-bold tracking-tight text-zinc-200" aria-hidden>
+          A
+        </span>
       </Link>
+
+      <ForgeQuickNavMenu currentId={currentId} theme="dark" />
     </div>
   );
 }

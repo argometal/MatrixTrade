@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ArgusMark } from "@/app/components/ArgusMark";
-import { TradingMark } from "@/app/components/TradingMark";
+import { ForgeQuickNavMenu, type ForgeSystemId } from "@/app/apps/components/ForgePortalNav";
 
 const iconBtn =
   "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200";
 
-/** MTA chrome: inbox + switch to Argus and ArgusForge. */
+/** MTA chrome: inbox + Forge Home + ··· quick-nav (no flat app icons). */
 export function MatrixAppChromeActions({ pendingInboxCount = 0 }: { pendingInboxCount?: number }) {
   return (
     <>
@@ -19,25 +18,17 @@ export function MatrixAppChromeActions({ pendingInboxCount = 0 }: { pendingInbox
           </span>
         ) : null}
       </Link>
-      <Link href="/argus/v2" aria-label="Open ARGUS" title="ARGUS" className={`${iconBtn} p-0`}>
-        <ArgusMark size={28} />
+      <Link href="/apps" aria-label="ARGUS FORGE Home" title="Forge Home" className={iconBtn}>
+        <span className="text-[11px] font-bold tracking-tight text-zinc-200" aria-hidden>
+          A
+        </span>
       </Link>
-      <Link
-        href="/forge"
-        aria-label="Open ArgusForge"
-        title="ArgusForge"
-        className={`${iconBtn} text-[10px] font-bold tracking-wide text-zinc-300`}
-      >
-        AF
-      </Link>
-      <Link href="/apps" aria-label="All apps" title="All apps" className={`${iconBtn} text-[10px] font-semibold`}>
-        ···
-      </Link>
+      <ForgeQuickNavMenu currentId={"matrixtrade" satisfies ForgeSystemId} theme="dark" />
     </>
   );
 }
 
-/** Argus chrome: inbox + switch to MTA and ArgusForge. */
+/** Argus chrome: inbox + Forge Home + ··· quick-nav (no flat app icons). */
 export function ArgusAppChromeActions({ inboxCount = 0 }: { inboxCount?: number }) {
   return (
     <>
@@ -49,20 +40,12 @@ export function ArgusAppChromeActions({ inboxCount = 0 }: { inboxCount?: number 
           </span>
         ) : null}
       </Link>
-      <Link href="/home-preview" aria-label="MTA" title="MTA" className={`${iconBtn} p-0`}>
-        <TradingMark size={28} />
+      <Link href="/apps" aria-label="ARGUS FORGE Home" title="Forge Home" className={iconBtn}>
+        <span className="text-[11px] font-bold tracking-tight text-zinc-200" aria-hidden>
+          A
+        </span>
       </Link>
-      <Link
-        href="/forge"
-        aria-label="Open ArgusForge"
-        title="ArgusForge"
-        className={`${iconBtn} text-[10px] font-bold tracking-wide text-zinc-300`}
-      >
-        AF
-      </Link>
-      <Link href="/apps" aria-label="All apps" title="All apps" className={`${iconBtn} text-[10px] font-semibold`}>
-        ···
-      </Link>
+      <ForgeQuickNavMenu currentId={"argus" satisfies ForgeSystemId} theme="dark" />
     </>
   );
 }
