@@ -1359,7 +1359,8 @@ export async function updateProjectAction(formData: FormData): Promise<void> {
     linkedPersonIds,
     linkedTopicIds,
     linkedEventIds,
-    linkedTags,
+    projectTags: linkedTags,
+    linkedTags, // dual-write legacy during ORDER 001
   });
   await mirrorTopicEventLinks(entityId, [...linkedTopicIds, ...linkedEventIds]);
 
@@ -1569,7 +1570,10 @@ export async function updateTopicAliasesAction(formData: FormData): Promise<void
     redirect(returnTo);
   }
 
-  await updateEntity(entityId, { linkedTags });
+  await updateEntity(entityId, {
+    topicTags: linkedTags,
+    linkedTags, // dual-write legacy during ORDER 001
+  });
   revalidateArgus();
   revalidatePath("/argus/v2/browse/topics");
   revalidatePath("/argus/v2/inbox");

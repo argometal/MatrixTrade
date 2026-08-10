@@ -5,7 +5,14 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toggleSignalTagAction } from "@/app/argus/actions";
 import { confirmTrackerConvert } from "@/lib/argus/tracker-confirm";
-import type { V2FocusTagStat, V2TagEvidenceContext, V2TagEvidenceEntity } from "@/lib/argus/v2/loaders";
+import type {
+  V2FocusTagStat,
+  V2TagEvidenceContext,
+  V2TagEvidenceEntity,
+  V2TagRoleBucketSummary,
+  V2TagRoleFilter,
+} from "@/lib/argus/v2/loaders";
+import { filterFocusTagsByRole } from "@/lib/argus/v2/loaders";
 import { signalTagKey } from "@/lib/argus/signal-tags";
 import { resolveBubblePositions } from "@/lib/argus/v2/intelligence-viz";
 import { SIGNAL_TAGS } from "@/lib/argus/ux-copy";
@@ -18,6 +25,15 @@ import { V2IntelHelpLink } from "./V2IntelHelpLink";
 import { V2IntelligenceUniverseFilters } from "./V2IntelligenceUniverseFilters";
 import { V2TrackerTogglePanel } from "./V2TrackerTogglePanel";
 import { V2Timeline } from "./V2Timeline";
+
+const ROLE_FILTERS: { id: V2TagRoleFilter; label: string }[] = [
+  { id: "all", label: "All roles" },
+  { id: "evidence", label: "Evidence" },
+  { id: "topic", label: "Topic" },
+  { id: "project", label: "Project" },
+  { id: "event", label: "Event" },
+  { id: "global", label: "Global" },
+];
 
 function pickDefaultNeighborhoodCenter(evidence: V2TagEvidenceContext | null): V2TagEvidenceEntity | null {
   if (!evidence) return null;
@@ -89,17 +105,21 @@ function EntityChipList({
 
 /**
  * Tags control center — Universe browse + Flag Trackers + binder neighborhood.
+ * Role chips (ORDER 001) filter Project / Topic / Event / Global / Evidence.
  */
 export function V2FocusTagPortfolio({
   rows,
   initialFocusTags,
   evidenceByTag = {},
+  roleBuckets = [],
   filter: filterProp,
   onFilterChange,
 }: {
   rows: V2FocusTagStat[];
   initialFocusTags: string[];
   evidenceByTag?: Record<string, V2TagEvidenceContext>;
+  /** Home Tags role manager counts (ORDER 001). */
+  roleBuckets?: V2TagRoleBucketSummary[];
   /** @deprecated aside removed — ignored. */
   variant?: "aside" | "universe";
   /** When set with onFilterChange, chips hide — Home toolbar owns the filter. */
@@ -111,6 +131,7 @@ export function V2FocusTagPortfolio({
   const filter = filterProp ?? localFilter;
   const setFilter = onFilterChange ?? setLocalFilter;
   const filterControlled = filterProp != null && onFilterChange != null;
+  const [roleFilter, setRoleFilter] = useState<V2TagRoleFilter>("all");
   const [query, setQuery] = useState("");
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [focusTags, setFocusTags] = useState(initialFocusTags);
@@ -127,6 +148,15 @@ export function V2FocusTagPortfolio({
     [focusTags]
   );
 
+  const roleCountById = useMemo(() => {
+    const map = new Map<V2TagRoleFilter, number>();
+    map.set("all", rows.length);
+    for (const bucket of roleBuckets) {
+      map.set(bucket.role, bucket.count);
+    }
+    return map;
+  }, [roleBuckets, rows.length]);
+
   const trackerRows = useMemo(() => {
     return rows
       .map((row) => ({ ...row, isFocus: focusKeySet.has(signalTagKey(row.name)) }))
@@ -138,12 +168,14 @@ export function V2FocusTagPortfolio({
     const withLiveFocus = rows.map((row) => ({
       ...row,
       isFocus: focusKeySet.has(signalTagKey(row.name)),
+      roles: row.roles ?? [],
     }));
-    const filtered = filterIntelligenceTags(withLiveFocus, filter);
+    const byRole = filterFocusTagsByRole(withLiveFocus, roleFilter);
+    const filtered = filterIntelligenceTags(byRole, filter);
     const q = query.trim().toLowerCase();
     if (!q) return filtered;
     return filtered.filter((row) => row.name.toLowerCase().includes(q));
-  }, [rows, filter, focusKeySet, query]);
+  }, [rows, filter, roleFilter, focusKeySet, query]);
 
   const selected = useMemo(() => {
     if (!selectedName) return null;
@@ -206,9 +238,62 @@ export function V2FocusTagPortfolio({
 
   const selectedIsFocus = selected ? focusKeySet.has(signalTagKey(selected.name)) : false;
   const focusBusy = isPending && pendingTag === selected?.name;
+  const evidenceIntelActive =
+    filter === "hot" || filter === "patterns" || filter === "stale";
 
   return (
     <div className="space-y-4">
+      {/* Role manager — ORDER 001 */}
+      <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/50 px-3 py-3 sm:px-4">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+            Tag roles
+          </p>
+          <V2IntelHelpLink topic="tags-universe" label="Roles" />
+        </div>
+        <ul className="flex flex-wrap gap-1.5" aria-label="Filter Tags by role">
+          {ROLE_FILTERS.map((chip) => {
+            const active = roleFilter === chip.id;
+            const count =
+              chip.id === "all"
+                ? roleCountById.get("all")
+                : roleCountById.get(chip.id);
+            return (
+              <li key={chip.id}>
+                <button
+                  type="button"
+                  onClick={() => setRoleFilter(chip.id)}
+                  className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                    active
+                      ? "border-sky-500/50 bg-sky-950/40 text-sky-100"
+                      : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                  }`}
+                  title={
+                    chip.id === "all"
+                      ? "All Tag roles in the universe"
+                      : `${chip.label} Tags only`
+                  }
+                  aria-pressed={active}
+                >
+                  <span>{chip.label}</span>
+                  {typeof count === "number" ? (
+                    <span className={`tabular-nums ${active ? "text-sky-300/80" : "text-zinc-600"}`}>
+                      {count}
+                    </span>
+                  ) : null}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        {roleFilter !== "all" && roleFilter !== "evidence" && evidenceIntelActive ? (
+          <p className="mt-2 text-[11px] text-zinc-600">
+            Hot / Patterns / Stale score Evidence activity — binder roles may look empty under those
+            filters.
+          </p>
+        ) : null}
+      </div>
+
       {/* Trackers strip — watch-on Tags (not a separate ontology) */}
       <div className="rounded-xl border border-rose-500/25 bg-rose-950/15 px-3 py-3 sm:px-4">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -236,6 +321,7 @@ export function V2FocusTagPortfolio({
                   type="button"
                   onClick={() => {
                     setFilter("all");
+                    setRoleFilter("all");
                     setSelectedName(row.name);
                   }}
                   className="inline-flex items-center gap-1 rounded-full border border-amber-400/70 bg-rose-950/60 px-2.5 py-1 text-[11px] font-semibold text-amber-100 ring-1 ring-rose-500/50"
@@ -437,6 +523,14 @@ export function V2FocusTagPortfolio({
               </p>
               <h3 className="mt-0.5 text-lg font-semibold text-zinc-50">{selected.name}</h3>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {(selected.roles ?? []).map((role) => (
+                  <span
+                    key={role}
+                    className="rounded bg-sky-950/40 px-1.5 py-0.5 text-[10px] font-medium capitalize text-sky-200/90 ring-1 ring-sky-500/30"
+                  >
+                    {role}
+                  </span>
+                ))}
                 {selected.isPattern ? (
                   <span className="rounded bg-amber-950/50 px-1.5 py-0.5 text-[10px] font-medium text-amber-300/90 ring-1 ring-amber-500/30">
                     Pattern
@@ -602,6 +696,7 @@ export function V2FocusTagPortfolio({
           evidenceTags={rows.map((row) => ({ tag: row.name, count: row.count }))}
           signalTags={focusTags}
           onSignalTagsChange={setFocusTags}
+          scopeId="home-universe"
           heading="Manage universe · Tag ↔ Tracker"
           helpTopic="tags-universe"
           addPlaceholder="Tag name → Flag as Tracker"

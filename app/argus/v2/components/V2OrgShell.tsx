@@ -397,7 +397,8 @@ export function V2OrgShell(props: V2OrgShellProps) {
             entityName={entity.name}
             tagPatterns={tagPatterns}
             signalTags={signalTags}
-            manualTags={(entity.linkedTags ?? []).map((t) => t.trim()).filter(Boolean)}
+            // ORDER 001: Org does not use binder Tags — structural links only.
+            manualTags={[]}
             tagHref={(tag) => `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`}
           />
         </V2PrivateEvidenceGate>

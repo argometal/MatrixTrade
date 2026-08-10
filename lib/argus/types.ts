@@ -53,8 +53,17 @@ export interface Entity {
   linkedEventIds?: string[];
   /** Outbound entity links for person, organization, topic, and event records */
   linkedEntityIds?: string[];
-  /** Tag strings linked to this project — same canonical form as log.topics */
+  /**
+   * @deprecated Legacy untyped binder tags. Prefer projectTags / topicTags / eventTags.
+   * Dual-read only during ORDER 001 migration — do not use for new mixed semantics.
+   */
   linkedTags?: string[];
+  /** Project classification tags (`TagRole: project`). */
+  projectTags?: string[];
+  /** Topic classification tags (`TagRole: topic`). Dual-writes linkedTags during migration. */
+  topicTags?: string[];
+  /** Event binder classification (`TagRole: event`). Not evidence Tags; not legacy Signals. */
+  eventTags?: string[];
   /** active | completed (project past end) | archived (hidden from metrics) */
   lifecycleStatus?: EntityLifecycleStatus;
   createdAt: string;
@@ -180,11 +189,12 @@ export interface ArgusData {
   /** Execution progress per (runbook × entity). */
   runbookProgress?: RunbookProgress[];
   /**
-   * Flagged focus Tags (journal-level watchlist).
-   * When active, treated as highlight-critical — reason to focus.
-   * Not Event binder Signals; not auto-copied onto evidence.
+   * Flagged Trackers (journal-level watchlist) — flags on Tag keys, not a TagRole.
+   * Not auto-copied onto evidence.
    */
   signalTags?: string[];
+  /** Cross-cutting Global Tags (`TagRole: global`). */
+  globalTags?: string[];
   version: 3;
 }
 

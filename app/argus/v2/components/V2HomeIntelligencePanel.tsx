@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import type { V2FocusTagStat, V2TagEvidenceContext } from "@/lib/argus/v2/loaders";
+import type { V2FocusTagStat, V2TagEvidenceContext, V2TagRoleBucketSummary } from "@/lib/argus/v2/loaders";
 import {
   filterIntelligenceNodes,
   type IntelligenceUniverseFilter,
@@ -23,6 +23,7 @@ export function V2HomeIntelligencePanel({
   focusTagPortfolio = [],
   signalTags = [],
   tagEvidenceByTag = {},
+  tagRoleBuckets = [],
   tab,
   lensId = null,
   onLensChange,
@@ -35,6 +36,7 @@ export function V2HomeIntelligencePanel({
   focusTagPortfolio?: V2FocusTagStat[];
   signalTags?: string[];
   tagEvidenceByTag?: Record<string, V2TagEvidenceContext>;
+  tagRoleBuckets?: V2TagRoleBucketSummary[];
   tab: IntelligenceTab;
   /** Selected Treemap/Portfolio entity — drives main Tags-model neighborhood below. */
   lensId?: string | null;
@@ -152,6 +154,7 @@ export function V2HomeIntelligencePanel({
             rows={focusTagPortfolio}
             initialFocusTags={signalTags}
             evidenceByTag={tagEvidenceByTag}
+            roleBuckets={tagRoleBuckets}
             filter={universeFilter}
             onFilterChange={onUniverseFilterChange}
           />

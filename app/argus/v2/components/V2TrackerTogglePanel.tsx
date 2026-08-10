@@ -18,12 +18,16 @@ export type V2TrackerToggleTag = {
   count?: number;
 };
 
-const KNOWN_EXTRAS_KEY = "argus:v2:tracker-known-extras";
+const KNOWN_EXTRAS_PREFIX = "argus:v2:tracker-known-extras:";
 
-function readKnownExtras(): string[] {
+function extrasStorageKey(scopeId?: string): string {
+  return `${KNOWN_EXTRAS_PREFIX}${scopeId?.trim() || "session"}`;
+}
+
+function readKnownExtras(scopeId?: string): string[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = sessionStorage.getItem(KNOWN_EXTRAS_KEY);
+    const raw = sessionStorage.getItem(extrasStorageKey(scopeId));
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
@@ -33,10 +37,10 @@ function readKnownExtras(): string[] {
   }
 }
 
-function writeKnownExtras(tags: string[]) {
+function writeKnownExtras(tags: string[], scopeId?: string) {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.setItem(KNOWN_EXTRAS_KEY, JSON.stringify(tags.slice(0, 200)));
+    sessionStorage.setItem(extrasStorageKey(scopeId), JSON.stringify(tags.slice(0, 200)));
   } catch {
     /* ignore quota */
   }
@@ -65,6 +69,8 @@ export function V2TrackerTogglePanel({
   surfaceLabel,
   emptyEvidenceHint,
   noteCta,
+  /** Scope id for session drafts / disabled-Tracker memory (ORDER 001). */
+  scopeId,
 }: {
   /** Tags from Notes/emails on this surface — always listed. */
   evidenceTags: V2TrackerToggleTag[];
@@ -84,24 +90,25 @@ export function V2TrackerTogglePanel({
   emptyEvidenceHint?: string;
   /** Optional CTA to put Tags on evidence via Note. */
   noteCta?: ReactNode;
+  scopeId?: string;
 }) {
   const router = useRouter();
   const [focusTags, setFocusTags] = useState(signalTags);
-  /** Names added here without Flag — stay visible so you can Flag later. */
-  const [knownExtras, setKnownExtras] = useState<string[]>([]);
+  /** Session-only names (keyed by scope) — never merged into persistent “Tags on this…”. */
+  const [sessionDrafts, setSessionDrafts] = useState<string[]>([]);
   const [draft, setDraft] = useState("");
   const [pending, startTransition] = useTransition();
   const prevFocusRef = useRef<string[]>(signalTags);
 
   useEffect(() => {
-    setKnownExtras(readKnownExtras());
-  }, []);
+    setSessionDrafts(readKnownExtras(scopeId));
+  }, [scopeId]);
 
   useEffect(() => {
     setFocusTags(signalTags);
   }, [signalTags]);
 
-  /** When a Tracker is Disabled, keep the name in the chip list for re-Flag. */
+  /** When a Tracker is Disabled, keep the name in session drafts for re-Flag (scoped). */
   useEffect(() => {
     const prev = prevFocusRef.current;
     const nextKeys = new Set(focusTags.map(signalTagKey).filter(Boolean));
@@ -111,17 +118,17 @@ export function V2TrackerTogglePanel({
     });
     prevFocusRef.current = focusTags;
     if (dropped.length === 0) return;
-    setKnownExtras((current) => {
+    setSessionDrafts((current) => {
       const byKey = new Map(current.map((t) => [signalTagKey(t), t] as const));
       for (const tag of dropped) {
         const key = signalTagKey(tag);
         if (key && !byKey.has(key)) byKey.set(key, tag.trim());
       }
       const next = [...byKey.values()];
-      writeKnownExtras(next);
+      writeKnownExtras(next, scopeId);
       return next;
     });
-  }, [focusTags]);
+  }, [focusTags, scopeId]);
 
   const focusKeys = useMemo(() => focusKeySet(focusTags), [focusTags]);
 
@@ -132,18 +139,13 @@ export function V2TrackerTogglePanel({
       if (!key) continue;
       byKey.set(key, { tag: row.tag.trim(), count: row.count });
     }
-    for (const tag of knownExtras) {
-      const key = signalTagKey(tag);
-      if (!key || byKey.has(key)) continue;
-      byKey.set(key, { tag: tag.trim(), count: 0 });
-    }
     return [...byKey.values()].sort((a, b) => {
       const ac = a.count ?? 0;
       const bc = b.count ?? 0;
       if (ac !== bc) return bc - ac;
       return a.tag.localeCompare(b.tag);
     });
-  }, [evidenceTags, knownExtras]);
+  }, [evidenceTags]);
 
   const evidenceKeys = useMemo(
     () => new Set(evidenceRows.map((row) => signalTagKey(row.tag)).filter(Boolean)),
@@ -175,6 +177,17 @@ export function V2TrackerTogglePanel({
     return [...byKey.values()].sort((a, b) => a.tag.localeCompare(b.tag));
   }, [focusTags, evidenceKeys, poolKeys]);
 
+  const sessionRows = useMemo(() => {
+    const byKey = new Map<string, V2TrackerToggleTag>();
+    for (const tag of sessionDrafts) {
+      const key = signalTagKey(tag);
+      if (!key || evidenceKeys.has(key) || poolKeys.has(key)) continue;
+      if (focusKeys.has(key)) continue;
+      byKey.set(key, { tag: tag.trim() });
+    }
+    return [...byKey.values()].sort((a, b) => a.tag.localeCompare(b.tag));
+  }, [sessionDrafts, evidenceKeys, poolKeys, focusKeys]);
+
   /** Flat list when not splitting by surface. */
   const flatRows = useMemo(() => {
     const byKey = new Map<string, V2TrackerToggleTag>();
@@ -192,13 +205,13 @@ export function V2TrackerTogglePanel({
     return [...byKey.values()].sort((a, b) => a.tag.localeCompare(b.tag));
   }, [evidenceRows, poolRows, otherTrackerRows]);
 
-  function rememberExtra(tag: string) {
+  function rememberSession(tag: string) {
     const key = signalTagKey(tag);
     if (!key) return;
-    setKnownExtras((current) => {
+    setSessionDrafts((current) => {
       if (current.some((t) => signalTagKey(t) === key)) return current;
       const next = [...current, tag.trim()];
-      writeKnownExtras(next);
+      writeKnownExtras(next, scopeId);
       return next;
     });
   }
@@ -206,14 +219,14 @@ export function V2TrackerTogglePanel({
   function onChipFlaggedChange(tag: string, next: string[]) {
     setFocusTags(next);
     onSignalTagsChange?.(next);
-    rememberExtra(tag);
+    rememberSession(tag);
   }
 
-  /** Tag-first: remember name in inventory without Flagging. */
+  /** Session-only draft — not a persisted Tag on this binder. */
   function addTagFromDraft() {
     const next = normalizeDraft(draft);
     if (!next) return;
-    rememberExtra(next);
+    rememberSession(next);
     setDraft("");
   }
 
@@ -222,7 +235,7 @@ export function V2TrackerTogglePanel({
     const next = normalizeDraft(draft);
     if (!next) return;
     if (!confirmTrackerConvert(next, tagIsFlagged(next, focusKeys))) return;
-    rememberExtra(next);
+    rememberSession(next);
     setDraft("");
     startTransition(async () => {
       const result = await toggleSignalTagAction(next);
@@ -312,6 +325,18 @@ export function V2TrackerTogglePanel({
               </p>
             )}
           </div>
+
+          {sessionRows.length > 0 ? (
+            <div className="space-y-2 border-t border-zinc-800/80 pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700/80">
+                Session draft (not saved)
+              </p>
+              <p className="text-[11px] text-zinc-600">
+                Local only for this binder — put on a Note to persist, or Flag as Tracker.
+              </p>
+              {renderChips(sessionRows)}
+            </div>
+          ) : null}
         </>
       ) : flatRows.length > 0 ? (
         renderChips(flatRows)
@@ -340,8 +365,9 @@ export function V2TrackerTogglePanel({
           onClick={addTagFromDraft}
           disabled={pending || !draftReady}
           className="rounded-lg border border-teal-500/40 bg-teal-950/30 px-3 py-2 text-xs font-semibold text-teal-100 hover:bg-teal-950/50 disabled:opacity-40"
+          title="Session draft only — not written to Notes"
         >
-          Add Tag
+          Draft
         </button>
         <button
           type="button"
