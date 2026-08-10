@@ -26,7 +26,7 @@ External analysis text was **not** attached to the request that created this fil
 | **ARGUS** | `/argus/v2` | `/argus/login` | `argus-auth` · `ARGUS_PASSWORD` (legacy `HEALTH_VAULT_PASSWORD`) |
 | **ArgusForge** | `/forge` | same as ARGUS (`requireArgusSession`) | same `argus-auth` |
 
-**Chooser:** `/apps` lists MTA · ARGUS · ArgusForge. Chrome switches live in `AppExchangeActions` (MTA / ARGUS / Forge headers).
+**Chooser:** `/apps` is **ARGUS FORGE** Home (A mark = Home; ··· quick-nav). Chrome switches live in `AppExchangeActions` (A + ··· menu — no flat per-app icons).
 
 **Root:** `/` → `/home-preview` (not `/apps`).
 
