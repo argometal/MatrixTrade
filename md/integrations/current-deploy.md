@@ -4,7 +4,7 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0808j` |
+| **Tag** | `main0808k` |
 | **Commit** | Always `git rev-parse main0808h` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-09 |
@@ -21,6 +21,7 @@ git reset --hard origin/main
 
 ## What this deploy includes
 
+- PR #222: Event UI explanations behind contextual ? (Note / Chronicle / Metrics)
 - PR #220: Guided Note Tag picker — Topic reuse → recent → universe → create last
 - PR #218: Separate Note Tags (checkbox) from Flag Trackers; Event tab Trackers
 - PR #216: Contextual `?` help popover (per-view sheet) + Help index; strip on-screen explanation chrome
