@@ -198,7 +198,7 @@ export function V2EventsShell({
   }
 
   return (
-    <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
+    <div className="v2-browse-shell relative flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
       <section
         className={`flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:w-[min(480px,44%)] lg:flex-none lg:border-b-0 lg:border-r ${
           mobileDetailOpen ? "hidden lg:flex" : "flex"
@@ -353,7 +353,8 @@ export function V2EventsShell({
       <section
         className={`min-h-0 min-w-0 flex-1 bg-zinc-950/50 ${
           mobileDetailOpen
-            ? "fixed inset-x-0 bottom-0 top-14 z-40 flex min-h-0 flex-col overflow-hidden lg:static lg:z-auto"
+            ? // Fill the browse shell (below TopBar) — avoid fixed top-14 which slides under the Argus menu/title chrome.
+              "absolute inset-0 z-40 flex min-h-0 flex-col overflow-hidden bg-zinc-950 lg:static lg:z-auto lg:bg-zinc-950/50"
             : "hidden min-h-0 flex-col overflow-hidden lg:flex"
         }`}
       >

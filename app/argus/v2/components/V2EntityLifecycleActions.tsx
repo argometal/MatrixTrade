@@ -258,7 +258,7 @@ export function V2EntityLifecycleActions({
       </button>
       {menuOpen ? (
         <div
-          className="absolute right-0 top-full z-20 mt-1 min-w-[180px] rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl"
+          className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-xl border border-zinc-700 bg-zinc-900 p-1 shadow-xl"
           role="menu"
           onClick={(event) => event.stopPropagation()}
         >

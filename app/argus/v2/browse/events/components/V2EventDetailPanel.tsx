@@ -250,7 +250,7 @@ export function V2EventDetailPanel({
         label={selected.name}
         href={`/argus/v2/browse/events?selected=${selected.id}`}
       />
-      <div className="shrink-0 border-b border-zinc-800/80 p-5">
+      <div className="relative z-10 shrink-0 overflow-visible border-b border-zinc-800/80 p-5">
         <V2DetailCompactHeader
           mobileDetail={mobileDetail}
           compact={compactChrome}
@@ -274,9 +274,9 @@ export function V2EventDetailPanel({
           expanded={
             <>
               <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-xl font-bold text-zinc-50">{selected.name}</h2>
+                    <h2 className="min-w-0 truncate text-xl font-bold text-zinc-50">{selected.name}</h2>
                     {selected.lifecycleStatus === "archived" ? (
                       <span
                         className="rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] font-medium text-zinc-400"
@@ -288,19 +288,12 @@ export function V2EventDetailPanel({
                     {selected.lifecycleStatus === "archived" ? (
                       <V2IntelHelpLink topic="event-completed" label="Completed" />
                     ) : null}
-                    <div className={showMobileManageBar ? "hidden lg:block" : undefined}>{lifecycle}</div>
                   </div>
                   <p className="mt-1 text-sm text-zinc-400">{selected.dateTimeLabel}</p>
                   <p className="mt-1.5 text-[11px] text-zinc-600">{selected.description}</p>
                 </div>
-                {selected.tagPatterns.length > 0 ? (
-                  <V2TagPatternBadges
-                    patterns={selected.tagPatterns}
-                    signalTags={signalTags}
-                    className="mt-3"
-                  />
-                ) : null}
-                <div className="flex shrink-0 flex-wrap gap-2">
+                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                  <div className={showMobileManageBar ? "hidden lg:block" : undefined}>{lifecycle}</div>
                   <V2QuickDeliverButton scopeType="event" scopeId={selected.id} scopeName={selected.name} />
                   <button
                     type="button"
@@ -317,6 +310,14 @@ export function V2EventDetailPanel({
                   <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
                 </div>
               </div>
+
+              {selected.tagPatterns.length > 0 ? (
+                <V2TagPatternBadges
+                  patterns={selected.tagPatterns}
+                  signalTags={signalTags}
+                  className="mb-3"
+                />
+              ) : null}
 
               {selected.meetingUrl ? (
                 <a
