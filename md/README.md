@@ -109,11 +109,13 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 ## ArgusForge
 
 **Sealed vision:** [`argusforge/argusforge-contract.md`](argusforge/argusforge-contract.md)  
+**Platform Workspace proposal:** [`argusforge/platform-vision-001.md`](argusforge/platform-vision-001.md) (not sealed · no implementation)  
 **Phase 0 technical map:** [`argusforge/phase-0-architecture.md`](argusforge/phase-0-architecture.md)
 
 | Document | Contents |
 |----------|----------|
 | [README.md](argusforge/README.md) | Index — links only |
+| [platform-vision-001.md](argusforge/platform-vision-001.md) | **Proposal** — Forge as quiet ecosystem home / control plane |
 | [argusforge-contract.md](argusforge/argusforge-contract.md) | **SEALED** — vision, formation transfer, component duties |
 | [perpetual-evolution-contract.md](argusforge/perpetual-evolution-contract.md) | **SEALED addendum** — perpetual evolution; evidence; user agency |
 | [af03-chaos-interface-contract.md](argusforge/af03-chaos-interface-contract.md) | **Working checklist** — Chaos interfaces → Vault boundary |
