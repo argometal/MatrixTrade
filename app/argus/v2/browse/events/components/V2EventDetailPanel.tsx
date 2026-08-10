@@ -526,6 +526,7 @@ export function V2EventDetailPanel({
                   title: item.title,
                   href: item.href,
                   external: item.kind === "photo",
+                  preview: item.preview,
                   body: (
                     <>
                       <span className="mt-0.5 text-sm text-zinc-500">

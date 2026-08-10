@@ -7,6 +7,11 @@ import { buildEntityPickerBuckets, buildTagBuckets } from "@/lib/argus/journal-h
 import { TESTING } from "@/lib/argus/ux-copy";
 import { getAttachment, getInboxItem, getLog, readArgus } from "@/lib/argus/server-storage";
 
+/**
+ * @deprecated Legacy phone edit shell for a single journal note.
+ * Chronicle v2 (Events/Topics/Network) no longer links here for notes — read/delete in place;
+ * append corrections via Event → Note. Still used from Inbox “open journal note”.
+ */
 export default async function LogDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const includePrivate = await hasArgusPrivateUnlock();

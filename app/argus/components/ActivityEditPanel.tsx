@@ -48,6 +48,11 @@ function initialFollowUpDate(log: Log): string {
   return "";
 }
 
+/**
+ * @deprecated Legacy phone-width note editor (`/argus/logs/[id]` under `(app)` max-w-lg shell).
+ * Event / Topic / Network Chronicle notes are append-only and read in place — do not link new
+ * surfaces here. Kept for Inbox-converted journals and direct legacy URLs until those migrate.
+ */
 export function ActivityEditPanel({
   log,
   buckets,

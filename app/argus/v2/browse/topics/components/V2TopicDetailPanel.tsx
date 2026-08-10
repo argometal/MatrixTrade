@@ -343,6 +343,7 @@ export function V2TopicDetailPanel({
                   title: item.title,
                   href: item.href,
                   external: item.kind === "photo" || item.kind === "file",
+                  preview: item.preview,
                   body: (
                     <>
                       <span className="mt-0.5 text-sm text-zinc-500">

@@ -67,14 +67,3 @@ export function AddCreateButton({
 
 /** @deprecated Use AddCreateButton */
 export const AddJournalMenuButton = AddCreateButton;
-
-/** @deprecated Use AddMenuButton in BottomNav */
-export function ArgusAddLauncher() {
-  return (
-    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-5 z-40">
-      <AddMenuButton variant="floating" align="end" />
-    </div>
-  );
-}
-
-export const EntityCreateLauncher = ArgusAddLauncher;

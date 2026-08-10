@@ -467,6 +467,10 @@ const SECTIONS: HelpSection[] = [
         title: "Link email",
         body: "Attach existing inbox evidence to this Event from the header action.",
       },
+      {
+        title: "Corrections",
+        body: "Append a new Note (or delete). Chronicle notes are not edited in the old phone log editor.",
+      },
     ],
   },
   {
@@ -483,6 +487,10 @@ const SECTIONS: HelpSection[] = [
       {
         title: "Add more",
         body: "Use the Note tab to append, or Link email for inbox items.",
+      },
+      {
+        title: "Read notes here",
+        body: "Note body shows in the list. Delete when needed. Do not open the legacy phone note editor from Chronicle.",
       },
     ],
   },
