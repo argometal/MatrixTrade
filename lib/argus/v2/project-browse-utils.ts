@@ -1,5 +1,5 @@
 import type { ArgusData, Entity, InboxItem } from "../types";
-import { isEntityArchived } from "../entity-lifecycle";
+import { isEntityArchived, resolveEntityLifecycleStatus } from "../entity-lifecycle";
 import { entityNotesForDisplay } from "../reference-types";
 import { getAllProjectScopeInbox, getProjectEvidenceScope } from "../project-evidence-scope";
 import { browseEntitiesByKind } from "./hierarchy";
@@ -7,8 +7,13 @@ import { relativeActivityLabel } from "./timeline-builders";
 import { collectProjectLinkIds, countLinkKinds } from "./entity-link-counts";
 import { projectHasPrivateEvidence } from "./project-private";
 import { countTopicsAndEventsInScope } from "./scope-node-counts";
+import {
+  notesHaveOnHold,
+  type V2PortfolioBrowseStatus,
+} from "./portfolio-browse-status";
 
-export type V2ProjectBrowseStatus = "Planning" | "Active" | "On Hold" | "Completed" | "Archived";
+/** @deprecated Alias — Project board uses shared portfolio ontology. */
+export type V2ProjectBrowseStatus = V2PortfolioBrowseStatus;
 
 export interface V2ProjectBrowseTeamMember {
   id: string;
@@ -20,7 +25,7 @@ export interface V2ProjectBrowseCard {
   id: string;
   name: string;
   href: string;
-  status: V2ProjectBrowseStatus;
+  status: V2PortfolioBrowseStatus;
   statusTone: "green" | "blue" | "amber" | "zinc" | "orange";
   dateRangeLabel: string | undefined;
   description: string;
@@ -46,9 +51,7 @@ export interface V2ProjectBrowseCard {
 export interface V2ProjectBrowseSummary {
   total: number;
   active: number;
-  planning: number;
   onHold: number;
-  completed: number;
   archived: number;
 }
 
@@ -80,32 +83,30 @@ function deriveProjectBrowseStatus(
   project: Entity,
   today: string,
   lastActivityIso: string
-): V2ProjectBrowseStatus {
+): V2PortfolioBrowseStatus {
   if (isEntityArchived(project, today)) return "Archived";
   if (project.deletedAt) return "Archived";
-
-  const notes = project.notes ?? "";
-  if (/status:\s*on hold|on hold/i.test(notes)) return "On Hold";
-
+  // Completed folded into Archived (no separate Completed column)
+  if (resolveEntityLifecycleStatus(project, today) === "completed") return "Archived";
   const end = project.endDate?.slice(0, 10);
+  if (end && end < today) return "Archived";
+
+  if (notesHaveOnHold(project.notes)) return "On Hold";
+
   const start = project.startDate?.slice(0, 10);
-  if (end && end < today) return "Completed";
-  if (start && start > today) return "Planning";
   if (start && start <= today) {
     const staleCutoff = new Date(`${today}T12:00:00`);
     staleCutoff.setDate(staleCutoff.getDate() - 45);
     if (lastActivityIso.slice(0, 10) < staleCutoff.toISOString().slice(0, 10)) {
       return "On Hold";
     }
-    return "Active";
   }
-  return "Planning";
+  // Former Planning (future / missing start) → Active
+  return "Active";
 }
 
-function statusTone(status: V2ProjectBrowseStatus): V2ProjectBrowseCard["statusTone"] {
+function statusTone(status: V2PortfolioBrowseStatus): V2ProjectBrowseCard["statusTone"] {
   if (status === "Active") return "green";
-  if (status === "Planning") return "blue";
-  if (status === "Completed") return "zinc";
   if (status === "On Hold") return "orange";
   return "amber";
 }
@@ -227,9 +228,7 @@ export function buildV2ProjectBrowseSummary(cards: V2ProjectBrowseCard[]): V2Pro
   return {
     total: cards.length,
     active: cards.filter((c) => c.status === "Active").length,
-    planning: cards.filter((c) => c.status === "Planning").length,
     onHold: cards.filter((c) => c.status === "On Hold").length,
-    completed: cards.filter((c) => c.status === "Completed").length,
     archived: cards.filter((c) => c.status === "Archived").length,
   };
 }

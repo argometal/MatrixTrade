@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
-import { archiveEntityAction, restoreEntityAction } from "@/app/argus/actions";
+import { setPortfolioBrowseStatusAction } from "@/app/argus/actions";
 import { V2CreateEntityButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { V2ProjectActions } from "@/app/argus/v2/components/V2ProjectActions";
 import { V2BrowseStatusFilter } from "@/app/argus/v2/components/V2BrowseStatusFilter";
@@ -29,6 +29,11 @@ import {
   type V2ProjectBrowseStatus,
   type V2ProjectBrowseSummary,
 } from "@/lib/argus/v2/project-browse-utils";
+import {
+  isPortfolioBrowseStatus,
+  V2_PORTFOLIO_BOARD_COLUMNS,
+  type V2PortfolioBrowseStatus,
+} from "@/lib/argus/v2/portfolio-browse-status";
 
 function badgeTone(tone: V2ProjectBrowseCard["statusTone"]): "default" | "green" | "blue" | "amber" | "orange" {
   if (tone === "zinc") return "default";
@@ -44,13 +49,15 @@ const METRIC_ICONS = {
 
 const ORDER_SCOPE = "projects";
 const COLUMN_SCOPE = "projects:columns";
-const BOARD_COLUMNS: V2ProjectBrowseStatus[] = [
-  "Planning",
-  "Active",
-  "On Hold",
-  "Completed",
-  "Archived",
-];
+const BOARD_COLUMNS = V2_PORTFOLIO_BOARD_COLUMNS;
+
+function normalizeProjectColumn(raw: string): V2PortfolioBrowseStatus {
+  if (raw === "Planning" || raw === "Prospect") return "Active";
+  if (raw === "Inactive") return "On Hold";
+  if (raw === "Completed") return "Archived";
+  if (isPortfolioBrowseStatus(raw)) return raw;
+  return "Active";
+}
 
 function SummaryPill({
   label,
@@ -337,21 +344,23 @@ export function V2ProjectsBrowserShell({
     setOrder(readBrowseCardOrder(ORDER_SCOPE));
     try {
       const raw = localStorage.getItem(`argus-v2-browse-columns:${COLUMN_SCOPE}`);
-      if (raw) setColumnOverrides(JSON.parse(raw) as Record<string, V2ProjectBrowseStatus>);
+      if (raw) {
+        const parsed = JSON.parse(raw) as Record<string, string>;
+        const next: Record<string, V2ProjectBrowseStatus> = {};
+        for (const [id, status] of Object.entries(parsed)) {
+          next[id] = normalizeProjectColumn(status);
+        }
+        setColumnOverrides(next);
+      }
     } catch {
       /* ignore */
     }
     const prefs = readBrowseViewPrefs(ORDER_SCOPE);
     if (prefs.view) setViewState(prefs.view);
-    if (
-      prefs.status === "all" ||
-      prefs.status === "Planning" ||
-      prefs.status === "Active" ||
-      prefs.status === "On Hold" ||
-      prefs.status === "Completed" ||
-      prefs.status === "Archived"
-    ) {
-      setStatusFilterState(prefs.status);
+    if (prefs.status === "all") {
+      setStatusFilterState("all");
+    } else if (prefs.status) {
+      setStatusFilterState(normalizeProjectColumn(prefs.status));
     }
   }, []);
 
@@ -394,10 +403,8 @@ export function V2ProjectsBrowserShell({
 
   const boardGroups = useMemo(() => {
     const groups: Record<V2ProjectBrowseStatus, V2ProjectBrowseCard[]> = {
-      Planning: [],
       Active: [],
       "On Hold": [],
-      Completed: [],
       Archived: [],
     };
     const q = searchDraft.trim();
@@ -407,7 +414,7 @@ export function V2ProjectsBrowserShell({
         )
       : sorted;
     for (const card of boardSource) {
-      const status = columnOverrides[card.id] ?? card.status;
+      const status = normalizeProjectColumn(columnOverrides[card.id] ?? card.status);
       groups[status].push(card);
     }
     return groups;
@@ -455,25 +462,18 @@ export function V2ProjectsBrowserShell({
     }
     const knownIds = scopedCards.map((c) => c.id);
     persistOrder(placeInBrowseOrder(order, id, beforeId, knownIds));
-    persistColumns({ ...columnOverrides, [id]: column });
+    const nextColumn = normalizeProjectColumn(column);
+    persistColumns({ ...columnOverrides, [id]: nextColumn });
 
     const card = cards.find((c) => c.id === id);
-    if (card && column === "Archived" && card.status !== "Archived") {
+    if (card && nextColumn !== card.status) {
       startTransition(async () => {
         const fd = new FormData();
         fd.set("entityId", id);
+        fd.set("status", nextColumn);
         fd.set("returnTo", "/argus/v2/browse/projects");
         fd.set("quiet", "1");
-        await archiveEntityAction(fd);
-        router.refresh();
-      });
-    } else if (card && column === "Active" && card.status === "Archived") {
-      startTransition(async () => {
-        const fd = new FormData();
-        fd.set("entityId", id);
-        fd.set("returnTo", "/argus/v2/browse/projects");
-        fd.set("quiet", "1");
-        await restoreEntityAction(fd);
+        await setPortfolioBrowseStatusAction(fd);
         router.refresh();
       });
     }
@@ -503,7 +503,7 @@ export function V2ProjectsBrowserShell({
                   [
                     ["grid", "▦", "Grid", "Grid · cards"],
                     ["list", "☰", "List", "List · rows"],
-                    ["board", "▥", "Manage", "Manage · Planning / Active / On Hold / Completed / Archived"],
+                    ["board", "▥", "Manage", "Manage · Active / On Hold / Archived"],
                   ] as const
                 ).map(([id, icon, label, tip]) => (
                   <button
@@ -527,10 +527,8 @@ export function V2ProjectsBrowserShell({
                 onChange={setStatusFilter}
                 options={[
                   { value: "all", label: "All statuses" },
-                  { value: "Planning", label: "Planning" },
                   { value: "Active", label: "Active" },
                   { value: "On Hold", label: "On Hold" },
-                  { value: "Completed", label: "Completed" },
                   { value: "Archived", label: "Archived" },
                 ]}
               />
@@ -552,12 +550,10 @@ export function V2ProjectsBrowserShell({
             />
           </div>
 
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <SummaryPill label="Total" value={summary.total} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} />
             <SummaryPill label="Active" value={summary.active} active={statusFilter === "Active"} onClick={() => setStatusFilter("Active")} />
-            <SummaryPill label="Planning" value={summary.planning} active={statusFilter === "Planning"} onClick={() => setStatusFilter("Planning")} />
             <SummaryPill label="On Hold" value={summary.onHold} active={statusFilter === "On Hold"} onClick={() => setStatusFilter("On Hold")} />
-            <SummaryPill label="Completed" value={summary.completed} active={statusFilter === "Completed"} onClick={() => setStatusFilter("Completed")} />
             <SummaryPill label="Archived" value={summary.archived} active={statusFilter === "Archived"} onClick={() => setStatusFilter("Archived")} />
           </div>
 

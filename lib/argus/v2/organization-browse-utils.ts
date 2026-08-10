@@ -10,14 +10,19 @@ import {
 } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
 import { countTopicsAndEventsInScope } from "./scope-node-counts";
+import {
+  notesHaveOnHold,
+  type V2PortfolioBrowseStatus,
+} from "./portfolio-browse-status";
 
-export type V2OrganizationBrowseStatus = "Prospect" | "Active" | "Inactive" | "Archived";
+/** @deprecated Alias — Org board uses shared portfolio ontology. */
+export type V2OrganizationBrowseStatus = V2PortfolioBrowseStatus;
 
 export interface V2OrganizationBrowseCard {
   id: string;
   name: string;
   href: string;
-  status: V2OrganizationBrowseStatus;
+  status: V2PortfolioBrowseStatus;
   statusTone: "green" | "blue" | "amber" | "default";
   description: string;
   metrics: {
@@ -42,7 +47,7 @@ export interface V2OrganizationBrowseCard {
 export interface V2OrganizationBrowseSummary {
   total: number;
   active: number;
-  inactive: number;
+  onHold: number;
   archived: number;
   totalProjects: number;
 }
@@ -90,23 +95,20 @@ function deriveOrganizationStatus(
   org: Entity,
   lastActivityIso: string,
   today: string,
-  totalEvidence: number
-): V2OrganizationBrowseStatus {
+  _totalEvidence: number
+): V2PortfolioBrowseStatus {
   if (isEntityArchived(org, today)) return "Archived";
   if (org.deletedAt) return "Archived";
-  if (/status:\s*prospect/i.test(org.notes ?? "")) return "Prospect";
-
-  if (totalEvidence === 0) return "Prospect";
+  if (notesHaveOnHold(org.notes)) return "On Hold";
 
   const staleDays = daysSince(lastActivityIso, today);
-  if (staleDays <= 90) return "Active";
-  return "Inactive";
+  if (staleDays > 90) return "On Hold";
+  return "Active";
 }
 
-function statusTone(status: V2OrganizationBrowseStatus): V2OrganizationBrowseCard["statusTone"] {
+function statusTone(status: V2PortfolioBrowseStatus): V2OrganizationBrowseCard["statusTone"] {
   if (status === "Active") return "green";
-  if (status === "Prospect") return "blue";
-  if (status === "Inactive") return "amber";
+  if (status === "On Hold") return "amber";
   return "default";
 }
 
@@ -208,7 +210,7 @@ export function buildV2OrganizationBrowseSummary(
   return {
     total: cards.length,
     active: cards.filter((c) => c.status === "Active").length,
-    inactive: cards.filter((c) => c.status === "Inactive").length,
+    onHold: cards.filter((c) => c.status === "On Hold").length,
     archived: cards.filter((c) => c.status === "Archived").length,
     totalProjects,
   };

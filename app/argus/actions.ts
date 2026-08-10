@@ -1469,6 +1469,57 @@ export async function restoreEntityAction(formData: FormData): Promise<void> {
   redirect(returnTo);
 }
 
+/**
+ * Org/Project board: Active | On Hold | Archived (shared portfolio ontology).
+ * On Hold persists via notes `Status: on hold`. Archived uses lifecycleStatus.
+ */
+export async function setPortfolioBrowseStatusAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const status = String(formData.get("status") ?? "");
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
+  const quiet = String(formData.get("quiet") ?? "") === "1";
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.deletedAt) {
+    if (quiet) return;
+    redirect(returnTo);
+  }
+
+  const { notesClearedBrowseHold, notesWithOnHold, isPortfolioBrowseStatus } = await import(
+    "@/lib/argus/v2/portfolio-browse-status"
+  );
+  if (!isPortfolioBrowseStatus(status)) {
+    if (quiet) return;
+    redirect(returnTo);
+  }
+
+  if (status === "Archived") {
+    await updateEntity(entityId, { lifecycleStatus: "archived" });
+  } else if (status === "On Hold") {
+    await updateEntity(entityId, {
+      lifecycleStatus: "active",
+      notes: notesWithOnHold(entity.notes),
+    });
+  } else {
+    // Active — clear hold markers; reopen completed/archived into working set
+    await updateEntity(entityId, {
+      lifecycleStatus: "active",
+      notes: notesClearedBrowseHold(entity.notes),
+    });
+  }
+
+  revalidateArgus();
+  revalidatePath("/argus/v2");
+  revalidatePath("/argus/v2/browse/organizations");
+  revalidatePath("/argus/v2/browse/projects");
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/browse/network");
+  revalidatePath("/argus/v2/browse/events");
+  if (quiet) return;
+  redirect(returnTo);
+}
+
 export async function renameTagAction(formData: FormData): Promise<void> {
   await requireArgusSession();
   const oldTag = String(formData.get("oldTag") ?? "").trim();
