@@ -457,6 +457,7 @@ export function V2TopicDetailPanel({
                     topicId={selected.id}
                     topicName={selected.name}
                     initialAliases={selected.aliases}
+                    suggestedFromNotes={selected.evidenceTagCounts.map((row) => row.tag)}
                     returnTo={returnTo}
                     compact
                   />

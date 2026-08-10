@@ -571,36 +571,59 @@ export function V2EventDetailPanel({
                     eventId={selected.id}
                     eventName={selected.name}
                     initialTags={selected.eventTags}
+                    suggestedFromNotes={[
+                      ...eventTagCounts.map((row) => row.tag),
+                      ...selected.topicTags,
+                    ]}
                     returnTo={returnTo}
                     compact
                   />
                 }
-                branchGroups={selected.branchTagGroups.map((group) => {
-                  const tone =
-                    group.id === "event" || group.id === "topic" || group.id === "project"
-                      ? group.id
-                      : "default";
-                  return {
-                    ...group,
-                    tone,
-                    tags: group.tags.map((row) => {
-                      let href: string | undefined;
-                      if (group.id === "event") {
-                        href = `/argus/v2/browse/events?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(row.tag)}&focus=1&from=tags`;
-                      } else if (group.id === "topic") {
-                        const topicId = selected.linkedTopics[0]?.id;
-                        href = intelligenceTagHref(row.tag, topicId);
-                      } else if (group.id === "project") {
-                        href = group.href
-                          ? group.href
-                          : intelligenceTagHref(row.tag);
-                      } else {
-                        href = intelligenceTagHref(row.tag);
+                branchGroups={(() => {
+                  const evidenceByKey = new Map(
+                    eventTagCounts.map((row) => [row.tag.toLowerCase(), row] as const)
+                  );
+                  return selected.branchTagGroups.map((group) => {
+                    const tone =
+                      group.id === "event" || group.id === "topic" || group.id === "project"
+                        ? group.id
+                        : "default";
+                    let tags = group.tags;
+                    if (group.id === "event") {
+                      // Merge loader evidence with panel Note Tags so Branch recalls data even if
+                      // a count path diverges.
+                      const merged = new Map<string, { tag: string; count: number }>();
+                      for (const row of group.tags) {
+                        merged.set(row.tag.toLowerCase(), row);
                       }
-                      return { ...row, href };
-                    }),
-                  };
-                })}
+                      for (const [key, row] of evidenceByKey) {
+                        const prev = merged.get(key);
+                        if (!prev || row.count > prev.count) merged.set(key, row);
+                      }
+                      tags = [...merged.values()].sort(
+                        (a, b) => b.count - a.count || a.tag.localeCompare(b.tag)
+                      );
+                    }
+                    return {
+                      ...group,
+                      tone,
+                      tags: tags.map((row) => {
+                        let href: string | undefined;
+                        if (group.id === "event") {
+                          href = `/argus/v2/browse/events?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(row.tag)}&focus=1&from=tags`;
+                        } else if (group.id === "topic") {
+                          const topicId = selected.linkedTopics[0]?.id;
+                          href = intelligenceTagHref(row.tag, topicId);
+                        } else if (group.id === "project") {
+                          href = group.href ? group.href : intelligenceTagHref(row.tag);
+                        } else {
+                          href = intelligenceTagHref(row.tag);
+                        }
+                        return { ...row, href };
+                      }),
+                    };
+                  });
+                })()}
                 branchEmptyHint="No contextual Tags yet — link a Topic or Project, or put Tags on Notes."
                 onBrowseBranch={() => setPanelTab("note")}
                 browseBranchLabel="Browse branch"

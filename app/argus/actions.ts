@@ -1644,7 +1644,8 @@ export async function updateEventTagsAction(formData: FormData): Promise<void> {
     redirect(returnTo);
   }
 
-  await updateEntity(entityId, { eventTags });
+  const { binderTagWritePatch } = await import("@/lib/argus/tag-ontology");
+  await updateEntity(entityId, binderTagWritePatch(entity, "event", eventTags));
   revalidateArgus();
   revalidatePath("/argus/v2/browse/events");
   revalidatePath("/argus/v2");
