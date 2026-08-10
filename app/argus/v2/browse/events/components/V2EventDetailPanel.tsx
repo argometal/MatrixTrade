@@ -26,6 +26,7 @@ import {
 } from "@/app/argus/v2/components/V2ChronicleSelectableList";
 import { TagPickerModal } from "@/app/argus/components/TagPickerModal";
 import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
+import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 import { TAGS } from "@/lib/argus/ux-copy";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
@@ -298,12 +299,9 @@ export function V2EventDetailPanel({
           {panelTab === "note" ? (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
+                <div className="flex items-center gap-2">
                   <p className="text-xs font-medium text-zinc-300">Add to chronicle</p>
-                  <p className="mt-0.5 text-[11px] text-zinc-600">
-                    Write, optionally tag this note, then Save — entry moves to Chronicle. Tagging does not Flag a
-                    Tracker.
-                  </p>
+                  <V2IntelHelpLink topic="event-note" label="Event Note" />
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -377,9 +375,10 @@ export function V2EventDetailPanel({
 
           {panelTab === "chronicle" ? (
             <div className="space-y-3">
-              <p className="text-xs text-zinc-500">
-                Chronicle — notes, emails, photos, and files in chronological order.
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium text-zinc-300">Chronicle</p>
+                <V2IntelHelpLink topic="event-chronicle" label="Event Chronicle" />
+              </div>
               <V2ChronicleSelectableList
                 key={selected.id}
                 returnTo={returnTo}
@@ -441,7 +440,7 @@ export function V2EventDetailPanel({
                 surfaceLabel="this Event"
                 heading="Flag Trackers"
                 helpTopic="event-tags"
-                emptyEvidenceHint="No Tags on this Event’s Notes yet — add Tags on Note, then Flag here only if you want watch."
+                emptyEvidenceHint="No Tags on this Event’s Notes yet."
                 addPlaceholder="Type a Tag name → Flag as Tracker"
               />
             </div>
@@ -449,6 +448,10 @@ export function V2EventDetailPanel({
 
           {panelTab === "metrics" ? (
             <div className="space-y-5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-medium text-zinc-300">Metrics</p>
+                <V2IntelHelpLink topic="event-metrics" label="Event Metrics" />
+              </div>
               <div>
                 <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-600">Linked entities</h3>
                 <div className="inline-grid w-[14rem] grid-cols-4 gap-1.5">
@@ -477,7 +480,7 @@ export function V2EventDetailPanel({
                   Attendees ({selected.attendeeCount})
                 </h3>
                 {selected.attendeeNames.length === 0 ? (
-                  <p className="text-sm text-zinc-500">No people linked — link contacts to establish who was present.</p>
+                  <p className="text-sm text-zinc-500">No people linked.</p>
                 ) : (
                   <ul className="space-y-1 text-sm text-zinc-400">
                     {selected.attendeeNames.map((name) => (
@@ -513,15 +516,13 @@ export function V2EventDetailPanel({
               {neighborhood ? (
                 <div className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-4">
                   <div className="mb-3 flex items-center justify-between gap-2">
-                    <p className="text-xs text-zinc-500">
-                      Local graph — 1–2 hops from co-mentions and explicit links.
-                    </p>
+                    <p className="text-xs font-medium text-zinc-300">Local graph</p>
                     <button
                       type="button"
                       onClick={() => setShowGraph((v) => !v)}
                       className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-400 hover:text-zinc-200"
                     >
-                      {showGraph ? "Hide graph" : "Show graph"}
+                      {showGraph ? "Hide" : "Show"}
                     </button>
                   </div>
                   {showGraph ? (

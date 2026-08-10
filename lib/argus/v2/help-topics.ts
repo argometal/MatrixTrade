@@ -392,8 +392,9 @@ const SECTIONS: HelpSection[] = [
     id: "browse-events",
     title: "Events browse",
     group: "browse",
-    keywords: ["events", "orphans", "linked", "upcoming", "past", "case"],
-    intro: "Case anchors — pick an Event, then work evidence, Tags, and links in the detail panel.",
+    keywords: ["events", "orphans", "linked", "upcoming", "past", "case", "meeting", "milestone"],
+    intro:
+      "Events are dated occurrences (meetings, jobs, handovers) — latest first. Pick one, then work Notes, Chronicle, Trackers, and Metrics.",
     items: [
       {
         title: "Orphans vs Linked",
@@ -404,8 +405,71 @@ const SECTIONS: HelpSection[] = [
         body: "Upcoming / Past narrow by event date. Archived hides from Active triage.",
       },
       {
+        title: "Empty list",
+        body: "No events yet → create one and link it. Orphans empty → nothing needs structural links. Otherwise try All or another time cut.",
+      },
+      {
         title: "Tags on an Event",
-        body: "Detail → Trackers shows inventory from Notes/emails and optional Flag. Put Tags on evidence via Note → Tags (checkbox) — Flag is not required.",
+        body: "Put Tags on evidence via Note → Tags. Detail → Trackers is optional Flag only.",
+      },
+    ],
+  },
+  {
+    id: "event-note",
+    title: "Event · Note",
+    group: "browse",
+    keywords: ["event", "note", "chronicle", "save", "tag", "attachment"],
+    intro: "Write atomic evidence for this occurrence. Save appends to Chronicle — it does not overwrite prior Notes.",
+    items: [
+      {
+        title: "Save",
+        body: "Body and/or attachments become a Chronicle entry dated to this Event.",
+      },
+      {
+        title: "Tags",
+        body: "Optional. Opens the reuse picker (Topic → recent → universe → create). Tagging does not Flag a Tracker.",
+      },
+      {
+        title: "Link email",
+        body: "Attach existing inbox evidence to this Event from the header action.",
+      },
+    ],
+  },
+  {
+    id: "event-chronicle",
+    title: "Event · Chronicle",
+    group: "browse",
+    keywords: ["event", "chronicle", "timeline", "notes", "emails", "photos"],
+    intro: "All notes, emails, photos, and files on this Event in chronological order.",
+    items: [
+      {
+        title: "What belongs here",
+        body: "Evidence hung from this occurrence — not the long-lived Topic stream (that lives on the Topic).",
+      },
+      {
+        title: "Add more",
+        body: "Use the Note tab to append, or Link email for inbox items.",
+      },
+    ],
+  },
+  {
+    id: "event-metrics",
+    title: "Event · Metrics",
+    group: "browse",
+    keywords: ["event", "metrics", "graph", "neighborhood", "attendees", "counts"],
+    intro: "Counts and local connection neighborhood around this Event.",
+    items: [
+      {
+        title: "Linked entities & attendees",
+        body: "Orgs, projects, people, and topics in the structural/co-mention neighbor set. Attendees = people in that set.",
+      },
+      {
+        title: "Evidence counts",
+        body: "Emails, Notes, and Photos linked to this Event.",
+      },
+      {
+        title: "Local graph",
+        body: "1–2 hops from explicit links and co-mentions. Click a node to focus; ⌘/Ctrl+click opens it. Tracker affinity shows as dashed rose edges.",
       },
     ],
   },
