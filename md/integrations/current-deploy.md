@@ -4,7 +4,7 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0808h` |
+| **Tag** | `main0808i` |
 | **Commit** | Always `git rev-parse main0808h` after fetch (must match `origin/main`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-09 |
@@ -21,6 +21,7 @@ git reset --hard origin/main
 
 ## What this deploy includes
 
+- PR #218: Separate Note Tags (checkbox) from Flag Trackers; Event tab Trackers
 - PR #216: Contextual `?` help popover (per-view sheet) + Help index; strip on-screen explanation chrome
 - PR #215: Deprecate Inbox Converted — fold into Archived (Journal) with Open note path
 - PR #214: Create pick sheet taller on phone — five levels + Exit visible without scroll
