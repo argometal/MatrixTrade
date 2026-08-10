@@ -260,6 +260,46 @@ const SECTIONS: HelpSection[] = [
     ],
   },
   {
+    id: "project-tags",
+    title: "Project · Tags & Trackers",
+    group: "intelligence",
+    keywords: ["project", "tags", "trackers", "project tags", "binder", "flag"],
+    intro:
+      "Tags linked to this Project (projectTags) plus evidence Tags detected in this project’s neighborhood.",
+    items: [
+      {
+        title: "Linked to this Project",
+        body: "Binder Tags saved on this Project — not Note Tags. Add Tag + Save Tags attaches them to this Project only.",
+      },
+      {
+        title: "Notes on this Project",
+        body: "Evidence / pattern Tags counted in this Project’s scope. Attach ones you want on the binder from the editor suggestions.",
+      },
+      {
+        title: "Trackers",
+        body: "Optional Flag on Tags in this Project context. Disable never deletes the Tag.",
+      },
+    ],
+  },
+  {
+    id: "org-tags",
+    title: "Organization · Tags",
+    group: "intelligence",
+    keywords: ["organization", "org", "tags", "patterns", "evidence", "neighborhood"],
+    intro:
+      "Organizations do not carry binder Tags. The Tags tab shows evidence and pattern Tags detected in this organization’s neighborhood.",
+    items: [
+      {
+        title: "Detected in scope",
+        body: "Signal / pattern Tags from Notes and linked activity under this Organization — Manage List rows, same orientation as Organizations browse List.",
+      },
+      {
+        title: "No binder Tags",
+        body: "Structural wiring stays on Links. Binder Tags live on Events, Topics, and Projects.",
+      },
+    ],
+  },
+  {
     id: "inbox",
     title: "Inbox triage",
     group: "browse",

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { updateEventTagsAction } from "@/app/argus/actions";
 import { EVENT_MATCH_TAGS } from "@/lib/argus/ux-copy";
 import { V2VocabularyListEditor } from "@/app/argus/v2/components/V2VocabularyListEditor";
+import { TAG_MANAGE_LIST_CLASS, TAG_MANAGE_ROW_CLASS } from "@/app/argus/v2/components/tag-manage-list";
 
 function normalizeDisplayTag(value: string): string {
   return value.trim().replace(/\s+/g, " ");
@@ -116,7 +117,6 @@ export function V2EventTagEditor({
         onRemove={removeMatchTag}
         copy={copy}
         orientation="stack"
-        chipClassName="flex w-full items-center justify-between gap-2 rounded-lg border border-violet-500/35 bg-violet-500/10 px-2.5 py-1.5 text-[12px] text-violet-100"
         removeClassName="text-violet-300/70 hover:text-violet-50"
         addButtonClassName="rounded-lg border border-violet-500/50 bg-transparent px-3 py-2 text-xs font-semibold text-violet-200 hover:bg-violet-950/40"
         inputAriaLabel={`Add Event Tag for ${eventName}`}
@@ -137,15 +137,21 @@ export function V2EventTagEditor({
           <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-200/90">
             On Notes — attach to this Event
           </p>
-          <ul className="mt-2 flex flex-col gap-1.5" aria-label="Evidence Tags to attach">
+          <ul className={`mt-2 ${TAG_MANAGE_LIST_CLASS}`} aria-label="Evidence Tags to attach">
             {suggestions.map((tag) => (
               <li key={tag}>
                 <button
                   type="button"
                   onClick={() => attachSuggestion(tag)}
-                  className="flex w-full items-center justify-between gap-2 rounded-lg border border-sky-500/30 bg-zinc-950/50 px-2.5 py-1.5 text-left text-[12px] text-sky-100 hover:border-sky-400/50 hover:bg-sky-950/40"
+                  className={`${TAG_MANAGE_ROW_CLASS} hover:border-sky-500/40`}
                 >
-                  <span className="min-w-0 truncate">#{tag}</span>
+                  <span
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-600/20 text-xs font-bold text-sky-100"
+                    aria-hidden
+                  >
+                    #
+                  </span>
+                  <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{tag}</span>
                   <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-sky-300/90">
                     Attach
                   </span>

@@ -11,6 +11,7 @@ import type { LinkPanelFilter } from "@/lib/argus/create-flow-types";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import type { TagPattern } from "@/lib/argus/v2/tag-patterns";
 import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
+import { TAG_MANAGE_LIST_CLASS, TAG_MANAGE_ROW_CLASS } from "./tag-manage-list";
 
 export type V2LinksMetric = {
   icon: string;
@@ -198,22 +199,31 @@ export function V2EntityLinksTab({
         <V2Card className="p-4">
           <h3 className="mb-4 text-sm font-semibold text-zinc-100">{tagsHeading}</h3>
           {manualTags && manualTags.length > 0 ? (
-            <ul className="mb-4 flex flex-col gap-1.5" aria-label={tagsHeading}>
+            <ul className={`mb-4 ${TAG_MANAGE_LIST_CLASS}`} aria-label={tagsHeading}>
               {manualTags.map((tag) => (
                 <li key={tag}>
                   {tagHref ? (
-                    <Link
-                      href={tagHref(tag)}
-                      className="flex w-full items-center justify-between gap-2 rounded-lg border border-violet-500/35 bg-violet-950/40 px-2.5 py-1.5 text-[12px] text-violet-100 hover:border-violet-400/50"
-                    >
-                      <span className="min-w-0 truncate font-medium">#{tag}</span>
-                      <span className="shrink-0 text-violet-300/80" aria-hidden>
+                    <Link href={tagHref(tag)} className={TAG_MANAGE_ROW_CLASS}>
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200"
+                        aria-hidden
+                      >
+                        #
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">#{tag}</span>
+                      <span className="shrink-0 text-zinc-500" aria-hidden>
                         →
                       </span>
                     </Link>
                   ) : (
-                    <span className="flex w-full items-center rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1.5 text-[12px] text-zinc-200">
-                      <span className="min-w-0 truncate font-medium">#{tag}</span>
+                    <span className={TAG_MANAGE_ROW_CLASS}>
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200"
+                        aria-hidden
+                      >
+                        #
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">#{tag}</span>
                     </span>
                   )}
                 </li>

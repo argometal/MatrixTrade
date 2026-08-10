@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { TAG_MANAGE_LIST_CLASS, TAG_MANAGE_ROW_CLASS } from "./tag-manage-list";
 
 export type V2VocabularyListCopy = {
   heading?: string;
@@ -11,7 +12,7 @@ export type V2VocabularyListCopy = {
   removeAria: (item: string) => string;
 };
 
-/** Shared chip list for Topic Match tags and Focus Tags — same mechanic, product copy differs. */
+/** Shared Tag list — Manage List · rows (vertical full-width). */
 export function V2VocabularyListEditor({
   items,
   draft,
@@ -22,10 +23,10 @@ export function V2VocabularyListEditor({
   footer,
   inputAriaLabel,
   onEnterAdd = true,
-  /** Vertical stack (default) for sweepable Tag rows; wrap = classic chip cloud. */
-  orientation = "stack",
-  chipClassName = "flex w-full items-center justify-between gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-[12px] text-amber-200",
-  removeClassName = "text-amber-400/70 hover:text-amber-100",
+  /** Always Manage stack; wrap kept for type compat only. */
+  orientation: _orientation = "stack",
+  chipClassName = TAG_MANAGE_ROW_CLASS,
+  removeClassName = "text-zinc-500 hover:text-zinc-100",
   addButtonClassName = "rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:bg-zinc-800 disabled:opacity-40",
 }: {
   items: string[];
@@ -42,28 +43,29 @@ export function V2VocabularyListEditor({
   removeClassName?: string;
   addButtonClassName?: string;
 }) {
-  const listClass =
-    orientation === "stack"
-      ? "flex flex-col gap-1.5"
-      : "flex flex-wrap gap-1.5";
-  /** Stack = Links-style full-width rows (not stretched chips). */
-  const rowClass =
-    orientation === "stack"
-      ? `${chipClassName.replace(/\binline-flex\b/g, "flex")}${
-          chipClassName.includes("w-full") ? "" : " w-full justify-between"
-        }`
-      : chipClassName;
+  const rowClass = chipClassName.includes("rounded-xl") ? chipClassName : TAG_MANAGE_ROW_CLASS;
 
   return (
     <div>
       {copy.heading ? <h3 className="text-sm font-semibold text-zinc-100">{copy.heading}</h3> : null}
       {copy.hint ? <p className="mt-1 text-xs leading-relaxed text-zinc-500">{copy.hint}</p> : null}
 
-      <ul className={`${listClass} ${copy.heading || copy.hint ? "mt-3" : ""}`} aria-label="Tags">
+      <ul
+        className={`${TAG_MANAGE_LIST_CLASS} ${copy.heading || copy.hint ? "mt-3" : ""}`}
+        aria-label="Tags"
+      >
         {items.map((item) => (
           <li key={item}>
-            <span className={rowClass}>
-              <span className="min-w-0 truncate">{item}</span>
+            <span className={`${rowClass} justify-between`}>
+              <span className="flex min-w-0 flex-1 items-center gap-3">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200"
+                  aria-hidden
+                >
+                  #
+                </span>
+                <span className="min-w-0 truncate font-semibold text-zinc-100">{item}</span>
+              </span>
               <button
                 type="button"
                 onClick={() => onRemove(item)}

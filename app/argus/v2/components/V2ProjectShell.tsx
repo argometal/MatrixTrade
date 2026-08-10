@@ -15,6 +15,8 @@ import { V2ProjectScopeToggle } from "./V2ProjectScopeToggle";
 import { V2EntityTimelineSection } from "./V2EntityTimelineSection";
 import { V2EntityChronicleRail } from "./V2EntityChronicleRail";
 import { V2EntityLinksTab } from "./V2EntityLinksTab";
+import { V2BinderTagsTab } from "./V2BinderTagsTab";
+import { V2ProjectTagEditor } from "./V2ProjectTagEditor";
 import { V2ProjectRunbooksTab } from "./V2ProjectRunbooksTab";
 import {
   V2LegacyLink,
@@ -27,7 +29,7 @@ import {
 } from "./V2RightPanel";
 import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 
-const TABS = ["Overview", "Timeline", "Runbooks", "Links"] as const;
+const TABS = ["Overview", "Timeline", "Runbooks", "Tags", "Links"] as const;
 type ProjectTab = (typeof TABS)[number];
 
 function parseProjectTab(raw: string | null): ProjectTab {
@@ -253,6 +255,50 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
           organizationId={org?.id}
           organizationName={org?.name}
         />
+      ) : null}
+
+      {tab === "Tags" ? (
+        <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
+          <V2BinderTagsTab
+            attachedHeading="Linked to this Project"
+            attachedBadge="Linked"
+            attachedTags={(entity.projectTags ?? entity.linkedTags ?? [])
+              .map((t) => t.trim())
+              .filter(Boolean)}
+            attachedTagHref={(tag) =>
+              `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&project=${entity.id}`
+            }
+            helpTopic="project-tags"
+            attachedEditor={
+              <V2ProjectTagEditor
+                projectId={entity.id}
+                projectName={entity.name}
+                initialTags={(entity.projectTags ?? entity.linkedTags ?? [])
+                  .map((t) => t.trim())
+                  .filter(Boolean)}
+                returnTo={returnTo}
+                suggestedFromNotes={tagPatterns.map((p) => p.tag)}
+              />
+            }
+            branchHeading="Tags in this project scope"
+            branchGroups={[
+              {
+                id: "project",
+                label: "Notes on this Project",
+                tone: "project",
+                contextName: "evidence",
+                tags: tagPatterns.map((p) => ({
+                  tag: p.tag,
+                  count: p.count,
+                  href: `/argus/v2/browse/topics?tag=${encodeURIComponent(p.tag)}&project=${entity.id}`,
+                })),
+              },
+            ]}
+            branchEmptyHint="No evidence tags in this Project scope yet."
+            signalTags={signalTags}
+            universeHref="/argus/v2?intel=tags"
+          />
+        </V2PrivateEvidenceGate>
       ) : null}
 
       {tab === "Links" ? (

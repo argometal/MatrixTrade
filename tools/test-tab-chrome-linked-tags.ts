@@ -44,7 +44,11 @@ assert.match(event, /attachedTags=\{selected\.eventTags\}/, "Event attached = bi
 assert.match(topic, /attachedTags=\{selected\.aliases\}/, "Topic attached = binder aliases");
 assert.match(loaders, /Notes on this Event/, "Branch evidence labeled Notes on this Event");
 assert.match(project, /Linked to this Project/, "Project linked tags heading");
+assert.match(project, /tab === "Tags"/, "Project has Tags tab");
+assert.match(project, /entity\.projectTags/, "Project Tags use projectTags");
 assert.match(org, /Linked to this Organization/, "Org linked tags heading");
+assert.match(org, /tab === "Tags"/, "Org has Tags tab");
+assert.match(org, /Tags on this Organization/, "Org Tags tab heading");
 assert.match(ux, /No tags linked to this Event yet/, "Event empty copy says linked");
 assert.match(ux, /No tags linked to this Topic yet/, "Topic empty copy says linked");
 

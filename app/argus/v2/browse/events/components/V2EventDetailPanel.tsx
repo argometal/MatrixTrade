@@ -20,6 +20,11 @@ import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnl
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
 import { V2EntityLinksTab } from "@/app/argus/v2/components/V2EntityLinksTab";
 import { V2BinderTagsTab } from "@/app/argus/v2/components/V2BinderTagsTab";
+import {
+  TAG_MANAGE_LIST_CLASS,
+  TAG_MANAGE_ROW_ACTIVE_CLASS,
+  TAG_MANAGE_ROW_CLASS,
+} from "@/app/argus/v2/components/tag-manage-list";
 import { V2EventTagEditor } from "./V2EventTagEditor";
 import {
   V2ChronicleSelectableList,
@@ -407,47 +412,64 @@ export function V2EventDetailPanel({
                 </div>
 
                 {noteQuickTags.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
+                  <ul className={TAG_MANAGE_LIST_CLASS} aria-label="Quick tags for this Event">
                     {noteQuickTags.map((tag) => {
                       const selectedOnNote = entryTags.some((t) => t.toLowerCase() === tag.toLowerCase());
                       return (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => toggleEntryTag(tag)}
-                          aria-pressed={selectedOnNote}
-                          className={`rounded-full px-2.5 py-1 text-[11px] font-medium ring-1 transition ${
-                            selectedOnNote
-                              ? "bg-teal-950/60 text-teal-100 ring-teal-400/50"
-                              : "bg-zinc-950/40 text-zinc-400 ring-zinc-700/80 hover:text-zinc-200"
-                          }`}
-                        >
-                          #{tag}
-                        </button>
+                        <li key={tag}>
+                          <button
+                            type="button"
+                            onClick={() => toggleEntryTag(tag)}
+                            aria-pressed={selectedOnNote}
+                            className={selectedOnNote ? TAG_MANAGE_ROW_ACTIVE_CLASS : TAG_MANAGE_ROW_CLASS}
+                          >
+                            <span
+                              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                                selectedOnNote ? "bg-teal-500/20 text-teal-100" : "bg-violet-600/20 text-violet-200"
+                              }`}
+                              aria-hidden
+                            >
+                              #
+                            </span>
+                            <span className="min-w-0 flex-1 truncate font-semibold">{tag}</span>
+                            <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-500">
+                              {selectedOnNote ? "On note" : "Add"}
+                            </span>
+                          </button>
+                        </li>
                       );
                     })}
-                  </div>
+                  </ul>
                 ) : null}
 
                 {entryTags.length > 0 ? (
-                  <div className="flex flex-wrap items-center gap-1.5 border-t border-zinc-800/70 pt-2">
-                    <span className="text-[10px] uppercase tracking-wide text-zinc-600">On this note</span>
-                    {entryTags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center gap-1 rounded-full bg-teal-950/40 px-2.5 py-0.5 text-[11px] font-medium text-teal-200 ring-1 ring-teal-500/30"
-                      >
-                        #{tag}
-                        <button
-                          type="button"
-                          onClick={() => setEntryTags((current) => current.filter((t) => t !== tag))}
-                          className="text-teal-400/80 hover:text-teal-100"
-                          aria-label={`Remove tag ${tag}`}
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
+                  <div className="border-t border-zinc-800/70 pt-2">
+                    <p className="mb-2 text-[10px] uppercase tracking-wide text-zinc-600">On this note</p>
+                    <ul className={TAG_MANAGE_LIST_CLASS} aria-label="Tags on this note">
+                      {entryTags.map((tag) => (
+                        <li key={tag}>
+                          <span className={`${TAG_MANAGE_ROW_ACTIVE_CLASS} justify-between`}>
+                            <span className="flex min-w-0 flex-1 items-center gap-3">
+                              <span
+                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-500/20 text-xs font-bold text-teal-100"
+                                aria-hidden
+                              >
+                                #
+                              </span>
+                              <span className="min-w-0 truncate font-semibold">{tag}</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setEntryTags((current) => current.filter((t) => t !== tag))}
+                              className="shrink-0 text-teal-300/80 hover:text-teal-100"
+                              aria-label={`Remove tag ${tag}`}
+                            >
+                              ×
+                            </button>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 ) : null}
               </div>

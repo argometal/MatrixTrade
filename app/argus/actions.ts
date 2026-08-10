@@ -1652,6 +1652,27 @@ export async function updateEventTagsAction(formData: FormData): Promise<void> {
   redirect(returnTo);
 }
 
+/** Project binder Tags (`projectTags`) — scoped to the project you are on. */
+export async function updateProjectTagsAction(formData: FormData): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "");
+  const projectTags = parseTopics(String(formData.get("projectTags") ?? ""));
+  const returnTo = String(formData.get("returnTo") ?? "/argus/v2/browse/projects");
+
+  const entity = await getEntity(entityId);
+  if (!entity || entity.type !== "project") {
+    redirect(returnTo);
+  }
+
+  const { binderTagWritePatch } = await import("@/lib/argus/tag-ontology");
+  await updateEntity(entityId, binderTagWritePatch(entity, "project", projectTags));
+  revalidateArgus();
+  revalidatePath(`/argus/v2/projects/${entityId}`);
+  revalidatePath("/argus/v2/browse/projects");
+  revalidatePath("/argus/v2");
+  redirect(returnTo);
+}
+
 /** Replace the journal-level Trackers (Flagged Tags → `signalTags`). */
 export async function updateSignalTagsAction(formData: FormData): Promise<void> {
   await requireArgusSession();
