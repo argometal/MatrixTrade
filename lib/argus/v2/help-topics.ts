@@ -213,7 +213,7 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "Tags on this Event",
-        body: "Binder Tags (eventTags) only — not Note Tags. Add Tag attaches to this Event.",
+        body: "Binder Tags (eventTags) only — not Note Tags. Add Tag attaches to this Event. Evidence already on Notes appears under Attach from Notes until you Save Tags.",
       },
       {
         title: "Tags in this branch",
@@ -221,7 +221,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Trackers",
-        body: "Flags on Tag names ARGUS is watching in this context. Manage Trackers here; full journal list is in Go to Tags.",
+        body: "Flagged Tags in context (Attached/Branch) plus other journal Trackers for recall (legacy Event Signals). Manage Trackers here; full list is Go to Tags.",
       },
       {
         title: "Go to Tags",
