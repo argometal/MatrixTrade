@@ -326,9 +326,30 @@ export function V2OrganizationsBrowserShell({
   }
 
   const sorted = useMemo(() => applyBrowseOrder(cards, order), [cards, order]);
+  const effectiveCards = useMemo(
+    () =>
+      sorted.map((card) => {
+        const status = normalizeOrgColumn(columnOverrides[card.id] ?? card.status);
+        if (status === card.status) return card;
+        return {
+          ...card,
+          status,
+          statusTone:
+            status === "Active"
+              ? ("green" as const)
+              : status === "On Hold"
+                ? ("amber" as const)
+                : ("default" as const),
+        };
+      }),
+    [sorted, columnOverrides]
+  );
   const filtered = useMemo(
-    () => (statusFilter === "all" ? sorted : sorted.filter((c) => c.status === statusFilter)),
-    [sorted, statusFilter]
+    () =>
+      statusFilter === "all"
+        ? effectiveCards
+        : effectiveCards.filter((c) => c.status === statusFilter),
+    [effectiveCards, statusFilter]
   );
 
   const boardGroups = useMemo(() => {
@@ -337,13 +358,22 @@ export function V2OrganizationsBrowserShell({
       "On Hold": [],
       Archived: [],
     };
-    for (const card of sorted) {
-      const raw = columnOverrides[card.id] ?? card.status;
-      const status = normalizeOrgColumn(raw);
-      groups[status].push(card);
+    for (const card of effectiveCards) {
+      groups[card.status].push(card);
     }
     return groups;
-  }, [sorted, columnOverrides]);
+  }, [effectiveCards]);
+
+  const statusCounts = useMemo(
+    () => ({
+      total: effectiveCards.length,
+      active: boardGroups.Active.length,
+      onHold: boardGroups["On Hold"].length,
+      archived: boardGroups.Archived.length,
+      totalProjects: summary.totalProjects,
+    }),
+    [boardGroups, effectiveCards.length, summary.totalProjects]
+  );
 
   function onDragStart(event: DragEvent, id: string) {
     event.dataTransfer.setData("text/plain", id);
@@ -467,14 +497,14 @@ export function V2OrganizationsBrowserShell({
             </header>
 
             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              <SummaryPill label="Total Organizations" value={summary.total} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} />
-              <SummaryPill label="Active" value={summary.active} icon="✓" tone="green" active={statusFilter === "Active"} onClick={() => setStatusFilter("Active")} />
-              <SummaryPill label="On Hold" value={summary.onHold} icon="◷" tone="amber" active={statusFilter === "On Hold"} onClick={() => setStatusFilter("On Hold")} />
-              <SummaryPill label="Archived" value={summary.archived} icon="▣" tone="default" active={statusFilter === "Archived"} onClick={() => setStatusFilter("Archived")} />
-              <SummaryPill label="Total Projects" value={summary.totalProjects} icon="📁" tone="blue" />
+              <SummaryPill label="Total Organizations" value={statusCounts.total} active={statusFilter === "all"} onClick={() => setStatusFilter("all")} />
+              <SummaryPill label="Active" value={statusCounts.active} icon="✓" tone="green" active={statusFilter === "Active"} onClick={() => setStatusFilter("Active")} />
+              <SummaryPill label="On Hold" value={statusCounts.onHold} icon="◷" tone="amber" active={statusFilter === "On Hold"} onClick={() => setStatusFilter("On Hold")} />
+              <SummaryPill label="Archived" value={statusCounts.archived} icon="▣" tone="default" active={statusFilter === "Archived"} onClick={() => setStatusFilter("Archived")} />
+              <SummaryPill label="Total Projects" value={statusCounts.totalProjects} icon="📁" tone="blue" />
             </div>
 
-            {filtered.length === 0 ? (
+            {filtered.length === 0 && view !== "board" ? (
               <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
                 <p className="text-sm text-zinc-500">No organizations yet.</p>
                 <p className="mt-1 text-xs text-zinc-600">

@@ -30,7 +30,6 @@ import { BrowseBoardColumnHeader } from "@/app/argus/v2/components/BrowseBoardCo
 import {
   applyTopicColumnStatus,
   buildV2TopicBrowseCards,
-  buildV2TopicBrowseSummary,
   buildV2TopicFilterOptions,
   filterV2TopicRows,
   hasActiveV2TopicFilters,
@@ -612,13 +611,6 @@ export function V2TopicsShell({
     if (statusFilter === "patterns") return sorted.filter((c) => c.patternCount > 0);
     return sorted.filter((c) => c.status === statusFilter);
   }, [sorted, statusFilter]);
-  const summary = useMemo(() => {
-    const allDerived = buildV2TopicBrowseCards(rows, details);
-    const effective = allDerived.map((card) =>
-      applyTopicColumnStatus(card, columnOverrides[card.id])
-    );
-    return buildV2TopicBrowseSummary(effective);
-  }, [rows, details, columnOverrides]);
   const filtersActive = hasActiveV2TopicFilters(filters);
 
   const boardGroups = useMemo(() => {
@@ -628,20 +620,25 @@ export function V2TopicsShell({
       Orphans: [],
       Archived: [],
     };
+    // Manage board always shows the full status distribution (same counts as summary pills).
+    // Status pills filter grid/list only — do not empty other columns here.
     for (const card of sorted) {
-      if (statusFilter === "patterns" && card.patternCount === 0) continue;
-      if (
-        statusFilter !== "all" &&
-        statusFilter !== "patterns" &&
-        card.status !== statusFilter
-      ) {
-        continue;
-      }
-      // Cards already carry effective status (board pins via applyTopicColumnStatus).
       groups[card.status].push(card);
     }
     return groups;
-  }, [sorted, statusFilter]);
+  }, [sorted]);
+
+  /** Pill counts stay in lockstep with Manage column headers. */
+  const statusCounts = useMemo(
+    () => ({
+      total: sorted.length,
+      active: boardGroups.Active.length,
+      quiet: boardGroups.Quiet.length,
+      empty: boardGroups.Orphans.length,
+      archived: boardGroups.Archived.length,
+    }),
+    [boardGroups, sorted.length]
+  );
 
   function applyStatusFilter(value: V2TopicBrowseStatus | "all" | "patterns") {
     setStatusFilter(value);
@@ -894,11 +891,11 @@ export function V2TopicsShell({
 
           {/* Status pills — Orphans homologated with Events/Inbox; counts match board pins. */}
           <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <SummaryPill label="Total" value={summary.total} active={statusFilter === "all"} onClick={() => applyStatusFilter("all")} />
-            <SummaryPill label="Active" value={summary.active} tone="green" active={statusFilter === "Active"} onClick={() => applyStatusFilter("Active")} />
-            <SummaryPill label="Quiet" value={summary.quiet} tone="amber" active={statusFilter === "Quiet"} onClick={() => applyStatusFilter("Quiet")} />
-            <SummaryPill label="Orphans" value={summary.empty} tone="blue" active={statusFilter === "Orphans"} onClick={() => applyStatusFilter("Orphans")} />
-            <SummaryPill label="Archived" value={summary.archived} active={statusFilter === "Archived"} onClick={() => applyStatusFilter("Archived")} />
+            <SummaryPill label="Total" value={statusCounts.total} active={statusFilter === "all"} onClick={() => applyStatusFilter("all")} />
+            <SummaryPill label="Active" value={statusCounts.active} tone="green" active={statusFilter === "Active"} onClick={() => applyStatusFilter("Active")} />
+            <SummaryPill label="Quiet" value={statusCounts.quiet} tone="amber" active={statusFilter === "Quiet"} onClick={() => applyStatusFilter("Quiet")} />
+            <SummaryPill label="Orphans" value={statusCounts.empty} tone="blue" active={statusFilter === "Orphans"} onClick={() => applyStatusFilter("Orphans")} />
+            <SummaryPill label="Archived" value={statusCounts.archived} active={statusFilter === "Archived"} onClick={() => applyStatusFilter("Archived")} />
           </div>
 
           <div className="relative mb-6 flex flex-wrap items-center gap-2">
@@ -1019,7 +1016,7 @@ export function V2TopicsShell({
             </FilterMenuPanel>
           </div>
 
-          {filtered.length === 0 ? (
+          {filtered.length === 0 && view !== "board" ? (
             <div className="rounded-2xl border border-dashed border-zinc-800 px-6 py-16 text-center">
               <p className="text-sm text-zinc-500">
                 {rows.length === 0

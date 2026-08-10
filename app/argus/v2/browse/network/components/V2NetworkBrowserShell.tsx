@@ -631,9 +631,20 @@ export function V2NetworkBrowserShell({
   }
 
   const sorted = useMemo(() => applyBrowseOrder(scopedCards, order), [scopedCards, order]);
+  const effectiveCards = useMemo(
+    () =>
+      sorted.map((card) => {
+        const status = columnOverrides[card.id] ?? card.status;
+        if (status === card.status) return card;
+        const statusTone: V2NetworkBrowseCard["statusTone"] =
+          status === "Active" ? "green" : status === "Dormant" ? "amber" : "default";
+        return { ...card, status, statusTone };
+      }),
+    [sorted, columnOverrides]
+  );
 
   const filtered = useMemo(() => {
-    let rows = sorted;
+    let rows = effectiveCards;
     if (statusTab === "hot") rows = rows.filter((c) => c.isHot);
     else if (statusTab !== "all") rows = rows.filter((c) => c.status === statusTab);
     if (smartView !== "all") rows = applyNetworkSmartView(rows, smartView);
@@ -650,7 +661,7 @@ export function V2NetworkBrowserShell({
       );
     }
     return rows;
-  }, [sorted, statusTab, smartView, searchQuery]);
+  }, [effectiveCards, statusTab, smartView, searchQuery]);
 
   const boardGroups = useMemo(() => {
     const groups: Record<V2NetworkBrowseStatus, V2NetworkBrowseCard[]> = {
@@ -658,9 +669,10 @@ export function V2NetworkBrowserShell({
       Dormant: [],
       Archived: [],
     };
+    // Manage board always shows the full status distribution (same counts as status chips).
     const q = searchQuery.trim();
     const boardSource = q
-      ? sorted.filter((c) =>
+      ? effectiveCards.filter((c) =>
           textMatchesBrowseQuery(q, [
             c.name,
             c.role,
@@ -669,13 +681,43 @@ export function V2NetworkBrowserShell({
             ...c.expertise,
           ])
         )
-      : sorted;
+      : effectiveCards;
     for (const card of boardSource) {
-      const status = columnOverrides[card.id] ?? card.status;
-      groups[status].push(card);
+      groups[card.status].push(card);
     }
     return groups;
-  }, [sorted, columnOverrides, searchQuery]);
+  }, [effectiveCards, searchQuery]);
+
+  const statusCounts = useMemo(
+    () => ({
+      total: effectiveCards.length,
+      Active: boardGroups.Active.length,
+      Dormant: boardGroups.Dormant.length,
+      Archived: boardGroups.Archived.length,
+    }),
+    [boardGroups, effectiveCards.length]
+  );
+
+  const liveInsights = useMemo(
+    () => ({
+      ...insights,
+      statusCounts: {
+        Active: statusCounts.Active,
+        Dormant: statusCounts.Dormant,
+        Archived: statusCounts.Archived,
+      },
+    }),
+    [insights, statusCounts]
+  );
+
+  const liveSummary = useMemo(
+    () => ({
+      ...summary,
+      total: statusCounts.total,
+      needsTouch: statusCounts.Dormant,
+    }),
+    [summary, statusCounts]
+  );
 
   function onDragStart(event: DragEvent, id: string) {
     event.dataTransfer.setData("text/plain", id);
@@ -745,9 +787,9 @@ export function V2NetworkBrowserShell({
   }
 
   const tabCount = (key: V2NetworkBrowseStatus | "all" | "hot") => {
-    if (key === "all") return scopedCards.length;
-    if (key === "hot") return scopedCards.filter((c) => c.isHot).length;
-    return scopedCards.filter((c) => c.status === key).length;
+    if (key === "all") return statusCounts.total;
+    if (key === "hot") return effectiveCards.filter((c) => c.isHot).length;
+    return statusCounts[key];
   };
 
   function selectStatusTab(key: V2NetworkBrowseStatus | "hot") {
@@ -967,7 +1009,7 @@ export function V2NetworkBrowserShell({
               ) : null}
             </div>
 
-            <NetworkInsightsSidebar summary={summary} insights={insights} />
+            <NetworkInsightsSidebar summary={liveSummary} insights={liveInsights} />
           </div>
         </div>
 
