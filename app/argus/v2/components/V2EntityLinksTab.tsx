@@ -90,6 +90,8 @@ export function V2EntityLinksTab({
   tagHref,
   signalTags,
   showCreate = true,
+  /** Heading for binder/evidence tags block (avoid repeating tab name “Links”). */
+  tagsHeading = "Linked tags",
 }: {
   entityId: string;
   linkedIds: string[];
@@ -106,6 +108,7 @@ export function V2EntityLinksTab({
   tagHref?: (tag: string) => string;
   signalTags?: string[];
   showCreate?: boolean;
+  tagsHeading?: string;
 }) {
   const [showGraph, setShowGraph] = useState(true);
   const showTags =
@@ -115,26 +118,18 @@ export function V2EntityLinksTab({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0 max-w-xl">
-          <div className="mb-1 flex flex-wrap items-center gap-2">
-            <p className="text-xs font-medium text-zinc-300">Links</p>
-            {helpTopic ? <V2IntelHelpLink topic={helpTopic} label={helpLabel} /> : null}
-          </div>
-          <p className="text-sm text-zinc-500">{intro}</p>
-        </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <V2EntityLinkButton
-            entityId={entityId}
-            linkedIds={linkedIds}
-            subtitle={intro}
-            className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
-            buttonTitle={intro}
-          />
-          {showCreate ? (
-            <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
-          ) : null}
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {helpTopic ? <V2IntelHelpLink topic={helpTopic} label={helpLabel} /> : null}
+        <V2EntityLinkButton
+          entityId={entityId}
+          linkedIds={linkedIds}
+          subtitle={intro}
+          className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
+          buttonTitle={intro}
+        />
+        {showCreate ? (
+          <V2EntityCreateButton className="rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:bg-zinc-800" />
+        ) : null}
       </div>
 
       {metrics && metrics.length > 0 ? (
@@ -201,28 +196,41 @@ export function V2EntityLinksTab({
 
       {showTags ? (
         <V2Card className="p-4">
-          <h3 className="mb-4 text-sm font-semibold text-zinc-100">Tags</h3>
+          <h3 className="mb-4 text-sm font-semibold text-zinc-100">{tagsHeading}</h3>
+          {manualTags && manualTags.length > 0 ? (
+            <ul className="mb-4 flex flex-col gap-1.5" aria-label={tagsHeading}>
+              {manualTags.map((tag) => (
+                <li key={tag}>
+                  {tagHref ? (
+                    <Link
+                      href={tagHref(tag)}
+                      className="flex w-full items-center justify-between gap-2 rounded-lg border border-violet-500/35 bg-violet-950/40 px-2.5 py-1.5 text-[12px] text-violet-100 hover:border-violet-400/50"
+                    >
+                      <span className="min-w-0 truncate font-medium">#{tag}</span>
+                      <span className="shrink-0 text-violet-300/80" aria-hidden>
+                        →
+                      </span>
+                    </Link>
+                  ) : (
+                    <span className="flex w-full items-center rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1.5 text-[12px] text-zinc-200">
+                      <span className="min-w-0 truncate font-medium">#{tag}</span>
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {tagPatterns && tagPatterns.length > 0 ? (
             <V2TagPatternBadges
               patterns={tagPatterns}
               signalTags={signalTags}
-              className="mb-4"
+              className={manualTags && manualTags.length > 0 ? "mb-0" : "mb-0"}
               tagHref={tagHref}
               orientation="stack"
             />
           ) : null}
-          {manualTags && manualTags.length > 0 ? (
-            <ul className="flex flex-col gap-1.5" aria-label="Manual tags">
-              {manualTags.map((tag) => (
-                <li key={tag}>
-                  <span className="flex w-full items-center rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1.5 text-[12px] text-zinc-200">
-                    <span className="min-w-0 truncate">#{tag}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : tagPatterns && tagPatterns.length === 0 ? (
-            <p className="text-sm text-zinc-600">No tags yet. Add labels on evidence or the record.</p>
+          {(!manualTags || manualTags.length === 0) && (!tagPatterns || tagPatterns.length === 0) ? (
+            <p className="text-sm text-zinc-600">No tags linked yet.</p>
           ) : null}
         </V2Card>
       ) : null}

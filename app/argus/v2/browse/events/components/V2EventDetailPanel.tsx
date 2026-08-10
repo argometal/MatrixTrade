@@ -81,7 +81,7 @@ export function V2EventDetailPanel({
   const [emailOpen, setEmailOpen] = useState(false);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
   const mobileDetail = Boolean(onBack);
-  const compactChrome = mobileDetail && panelTab !== "note" && panelTab !== "tags";
+  const compactChrome = mobileDetail;
   // Bottom manage bar when private unlock is active; otherwise Edit stays in the header.
   const showMobileManageBar = mobileDetail && privateUnlocked;
 
@@ -250,7 +250,7 @@ export function V2EventDetailPanel({
         label={selected.name}
         href={`/argus/v2/browse/events?selected=${selected.id}`}
       />
-      <div className="relative z-10 shrink-0 overflow-visible border-b border-zinc-800/80 p-5">
+      <div className="relative z-10 shrink-0 overflow-visible border-b border-zinc-800/80 p-3 sm:p-5">
         <V2DetailCompactHeader
           mobileDetail={mobileDetail}
           compact={compactChrome}
@@ -273,10 +273,12 @@ export function V2EventDetailPanel({
           }
           expanded={
             <>
-              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
+              <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-start lg:justify-between">
+                <div className="min-w-0 w-full lg:flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="min-w-0 truncate text-xl font-bold text-zinc-50">{selected.name}</h2>
+                    <h2 className="min-w-0 max-w-full break-words text-xl font-bold text-zinc-50 sm:truncate">
+                      {selected.name}
+                    </h2>
                     {selected.lifecycleStatus === "archived" ? (
                       <span
                         className="rounded-full bg-zinc-800 px-2 py-0.5 text-[11px] font-medium text-zinc-400"
@@ -290,9 +292,9 @@ export function V2EventDetailPanel({
                     ) : null}
                   </div>
                   <p className="mt-1 text-sm text-zinc-400">{selected.dateTimeLabel}</p>
-                  <p className="mt-1.5 text-[11px] text-zinc-600">{selected.description}</p>
+                  <p className="mt-1.5 hidden text-[11px] text-zinc-600 sm:block">{selected.description}</p>
                 </div>
-                <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <div className="flex w-full flex-wrap items-center gap-2 lg:w-auto lg:shrink-0 lg:justify-end">
                   <div className={showMobileManageBar ? "hidden lg:block" : undefined}>{lifecycle}</div>
                   <V2QuickDeliverButton scopeType="event" scopeId={selected.id} scopeName={selected.name} />
                   <button
@@ -316,6 +318,7 @@ export function V2EventDetailPanel({
                   patterns={selected.tagPatterns}
                   signalTags={signalTags}
                   className="mb-3"
+                  orientation="stack"
                 />
               ) : null}
 
@@ -339,13 +342,13 @@ export function V2EventDetailPanel({
           }
         />
 
-        <div className="flex gap-1 border-b border-zinc-800/80">
+        <div className="flex gap-1 overflow-x-auto border-b border-zinc-800/80">
           {tabs.map((t) => (
             <button
               key={t.id}
               type="button"
               onClick={() => setPanelTab(t.id)}
-              className={`border-b-2 px-3 py-2 text-xs font-medium ${
+              className={`shrink-0 border-b-2 px-3 py-2 text-xs font-medium ${
                 panelTab === t.id
                   ? "border-violet-500 text-violet-300"
                   : "border-transparent text-zinc-500 hover:text-zinc-300"
@@ -358,7 +361,7 @@ export function V2EventDetailPanel({
       </div>
 
       <div
-        className={`argus-v2-scroll min-h-0 flex-1 overflow-y-auto p-5 ${showMobileManageBar ? "pb-24 lg:pb-5" : ""}`}
+        className={`argus-v2-scroll min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 ${showMobileManageBar ? "pb-24 lg:pb-5" : ""}`}
       >
         <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
           {panelTab === "note" ? (
@@ -385,18 +388,15 @@ export function V2EventDetailPanel({
                 <textarea
                   value={composer}
                   onChange={(e) => setComposer(e.target.value)}
-                  rows={12}
+                  rows={10}
                   placeholder="What happened, who was involved, decisions, open items…"
-                  className="w-full resize-y rounded-xl border-0 bg-transparent px-5 py-4 text-[15px] leading-[1.7] text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-0"
+                  className="w-full resize-y rounded-xl border-0 bg-transparent px-4 py-3 text-[15px] leading-[1.7] text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-0 sm:px-5 sm:py-4"
                 />
               </div>
 
               <div className="space-y-2 rounded-xl border border-zinc-800/80 bg-zinc-900/30 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-zinc-300">{TAGS.titleOnNote}</p>
-                    <p className="mt-0.5 text-[11px] text-zinc-500">{TAGS.pickerHintOnNote}</p>
-                  </div>
+                  <p className="text-xs font-medium text-zinc-300">{TAGS.titleOnNote}</p>
                   <button
                     type="button"
                     onClick={() => setTagPickerOpen(true)}
@@ -427,13 +427,7 @@ export function V2EventDetailPanel({
                       );
                     })}
                   </div>
-                ) : (
-                  <p className="text-[11px] text-zinc-600">
-                    {selected.linkedTopics.length === 0
-                      ? "No Topic linked — browse to create Evidence Tags on this Note, or Link a Topic for a Topic pool."
-                      : "No Topic Tags yet — browse to create one on this Note (does not Flag a Tracker)."}
-                  </p>
-                )}
+                ) : null}
 
                 {entryTags.length > 0 ? (
                   <div className="flex flex-wrap items-center gap-1.5 border-t border-zinc-800/70 pt-2">
@@ -483,8 +477,7 @@ export function V2EventDetailPanel({
 
           {panelTab === "chronicle" ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-medium text-zinc-300">Chronicle</p>
+              <div className="flex justify-end">
                 <V2IntelHelpLink topic="event-chronicle" label="Event Chronicle" />
               </div>
               {urlTag ? (
@@ -560,9 +553,9 @@ export function V2EventDetailPanel({
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <V2BinderTagsTab
-                attachedHeading="Tags on this Event"
-                attachedBadge="What kind of Event is this?"
-                attachedHint="These Tags classify this Event. They do not come from Notes."
+                attachedHeading="Linked to this Event"
+                attachedBadge="Linked"
+                attachedHint="These Tags are saved on this Event binder — not Note Tags."
                 attachedTags={selected.eventTags}
                 attachedTagHref={(tag) =>
                   `/argus/v2/browse/events?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
@@ -694,6 +687,13 @@ export function V2EventDetailPanel({
               ]}
               neighborhood={neighborhood}
               entityName={selected.name}
+              manualTags={selected.eventTags}
+              tagPatterns={selected.tagPatterns}
+              signalTags={focusTags}
+              tagsHeading="Linked to this Event"
+              tagHref={(tag) =>
+                `/argus/v2/browse/events?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
+              }
             />
           ) : null}
         </V2PrivateEvidenceGate>

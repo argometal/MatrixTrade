@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toggleSignalTagAction } from "@/app/argus/actions";
 import { confirmTrackerConvert } from "@/lib/argus/tracker-confirm";
 import { signalTagKey } from "@/lib/argus/signal-tags";
+import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 
 export type V2BinderBranchTag = {
   tag: string;
@@ -27,11 +28,13 @@ export type V2BinderBranchGroup = {
 export type V2BinderTagsTabProps = {
   attachedHeading: string;
   attachedBadge?: string;
-  attachedHint: string;
+  /** @deprecated Prefer helpTopic — inline hints are hidden when help is wired. */
+  attachedHint?: string;
   attachedTags: string[];
   /** Optional link target for each attached Tag name */
   attachedTagHref?: (tag: string) => string | undefined;
   attachedEditor: ReactNode;
+  /** One contextual ? for the whole Tags tab (preferred over inline paragraphs). */
   helpTopic?: string;
 
   branchHeading?: string;
@@ -47,11 +50,11 @@ export type V2BinderTagsTabProps = {
   manageTrackersHref?: string;
 
   universeHref?: string;
-  /** Show compact about rail on wide screens (render-style). */
+  /** Show compact about rail on wide screens (off by default — help lives in ?). */
   showAboutRail?: boolean;
 };
 
-const PREVIEW = 5;
+const PREVIEW = 40;
 
 function focusKeySet(tags: string[]): Set<string> {
   return new Set(tags.map(signalTagKey).filter(Boolean));
@@ -110,23 +113,24 @@ function groupAccent(tone: V2BinderBranchGroup["tone"]): string {
 
 export function V2BinderTagsTab({
   attachedHeading,
-  attachedBadge = "What kind is this?",
+  attachedBadge = "Linked",
   attachedHint,
   attachedTags,
   attachedTagHref,
   attachedEditor,
+  helpTopic,
   branchHeading = "Tags in this branch",
-  branchBadge = "What exists in context?",
-  branchHint = "Tags used in the context of this binder — not attached until you Add Tag.",
+  branchBadge = "Branch",
+  branchHint,
   branchGroups,
-  branchEmptyHint = "No contextual Tags yet — link a Topic or Project, or tag Notes.",
+  branchEmptyHint = "No contextual Tags yet.",
   onBrowseBranch,
   browseBranchLabel = "Browse branch",
   signalTags,
   onSignalTagsChange,
   manageTrackersHref = "/argus/v2?intel=tags",
   universeHref = "/argus/v2?intel=tags",
-  showAboutRail = true,
+  showAboutRail = false,
 }: V2BinderTagsTabProps) {
   const router = useRouter();
   const [manageOpen, setManageOpen] = useState(false);
@@ -212,68 +216,39 @@ export function V2BinderTagsTab({
   }
 
   const main = (
-    <div className="space-y-4">
-      {/* 1 — Attached */}
-      <section className="rounded-2xl border border-violet-500/25 bg-gradient-to-b from-violet-950/30 to-zinc-950/80 p-4 sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex items-start gap-2.5">
+    <div className="space-y-3 sm:space-y-4">
+      {/* 1 — Tags linked to this binder (editor list is the human-facing inventory) */}
+      <section className="rounded-2xl border border-violet-500/25 bg-gradient-to-b from-violet-950/30 to-zinc-950/80 p-3 sm:p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <StepBadge n={1} tone="violet" />
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
-                  {attachedHeading}
-                </h3>
-                <PillLabel tone="violet">{attachedBadge}</PillLabel>
-              </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{attachedHint}</p>
-            </div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
+              {attachedHeading}
+            </h3>
+            <PillLabel tone="violet">{attachedBadge}</PillLabel>
           </div>
+          {helpTopic ? <V2IntelHelpLink topic={helpTopic} label="Tags" /> : null}
         </div>
-
-        <div className="mt-4">{attachedEditor}</div>
-
-        {attachedTags.length > 0 && attachedTagHref ? (
-          <ul className="mt-3 flex flex-col gap-1.5" aria-label="Open attached Tags">
-            {attachedTags.map((tag) => {
-              const href = attachedTagHref(tag);
-              if (!href) return null;
-              return (
-                <li key={`link-${tag}`}>
-                  <Link
-                    href={href}
-                    className="flex w-full items-center justify-between gap-2 rounded-lg border border-violet-500/30 bg-violet-950/40 px-2.5 py-1.5 text-[12px] text-violet-200/90 hover:border-violet-400/50 hover:text-violet-50"
-                    title={`Open ${tag}`}
-                  >
-                    <span className="min-w-0 truncate">#{tag}</span>
-                    <span className="shrink-0 text-violet-300/80" aria-hidden>
-                      →
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+        {!helpTopic && attachedHint ? (
+          <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{attachedHint}</p>
         ) : null}
 
-        <p className="mt-3 text-[11px] tabular-nums text-zinc-500">
-          {attachedTags.length} tag{attachedTags.length === 1 ? "" : "s"}
+        <div className="mt-3">{attachedEditor}</div>
+
+        <p className="mt-2 text-[11px] tabular-nums text-zinc-500">
+          {attachedTags.length} linked tag{attachedTags.length === 1 ? "" : "s"}
         </p>
       </section>
 
       {/* 2 — Branch */}
-      <section className="rounded-2xl border border-sky-500/20 bg-gradient-to-b from-sky-950/20 to-zinc-950/80 p-4 sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex items-start gap-2.5">
+      <section className="rounded-2xl border border-sky-500/20 bg-gradient-to-b from-sky-950/20 to-zinc-950/80 p-3 sm:p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <StepBadge n={2} tone="sky" />
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
-                  {branchHeading}
-                </h3>
-                <PillLabel tone="sky">{branchBadge}</PillLabel>
-              </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{branchHint}</p>
-            </div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
+              {branchHeading}
+            </h3>
+            <PillLabel tone="sky">{branchBadge}</PillLabel>
           </div>
           {onBrowseBranch ? (
             <button
@@ -286,11 +261,14 @@ export function V2BinderTagsTab({
             </button>
           ) : null}
         </div>
+        {!helpTopic && branchHint ? (
+          <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{branchHint}</p>
+        ) : null}
 
         {!hasAnyBranchTags ? (
-          <p className="mt-4 text-xs text-zinc-600">{branchEmptyHint}</p>
+          <p className="mt-3 text-xs text-zinc-600">{branchEmptyHint}</p>
         ) : (
-          <div className="mt-4 grid grid-cols-1 gap-3">
+          <div className="mt-3 grid grid-cols-1 gap-3">
             {visibleGroups.map((group) => {
               const tone = group.tone ?? (group.id as V2BinderBranchGroup["tone"]) ?? "default";
               return (
@@ -321,28 +299,36 @@ export function V2BinderTagsTab({
                   {group.tags.length === 0 ? (
                     <p className="text-[11px] text-zinc-600">None yet</p>
                   ) : (
-                    <ul className="space-y-1.5">
+                    <ul className="flex flex-col gap-1.5">
                       {group.tags.slice(0, PREVIEW).map((row) => (
-                        <li
-                          key={row.tag}
-                          className="flex items-center justify-between gap-2 text-[12px]"
-                        >
+                        <li key={row.tag}>
                           {row.href ? (
                             <Link
                               href={row.href}
-                              className="truncate font-medium text-zinc-200 underline-offset-2 hover:text-sky-200 hover:underline"
+                              className="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1.5 text-[12px] text-zinc-200 hover:border-sky-500/40 hover:text-sky-100"
                               title={`Open ${row.tag}`}
                             >
-                              {row.tag}
+                              <span className="min-w-0 truncate font-medium">{row.tag}</span>
+                              {row.count > 0 ? (
+                                <span className="shrink-0 rounded bg-zinc-950/50 px-1.5 py-0.5 text-[10px] tabular-nums text-zinc-500">
+                                  {row.count}
+                                </span>
+                              ) : (
+                                <span className="shrink-0 text-sky-300/80" aria-hidden>
+                                  →
+                                </span>
+                              )}
                             </Link>
                           ) : (
-                            <span className="truncate text-zinc-300">{row.tag}</span>
-                          )}
-                          {row.count > 0 ? (
-                            <span className="shrink-0 rounded bg-zinc-950/50 px-1.5 py-0.5 text-[10px] tabular-nums text-zinc-500">
-                              {row.count}
+                            <span className="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2.5 py-1.5 text-[12px] text-zinc-300">
+                              <span className="min-w-0 truncate">{row.tag}</span>
+                              {row.count > 0 ? (
+                                <span className="shrink-0 rounded bg-zinc-950/50 px-1.5 py-0.5 text-[10px] tabular-nums text-zinc-500">
+                                  {row.count}
+                                </span>
+                              ) : null}
                             </span>
-                          ) : null}
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -365,30 +351,17 @@ export function V2BinderTagsTab({
             })}
           </div>
         )}
-        <p className="mt-3 flex items-start gap-1.5 text-[11px] leading-relaxed text-zinc-500">
-          <span aria-hidden className="mt-0.5 text-sky-400/80">
-            ⓘ
-          </span>
-          These are not automatically attached. Use + Add Tag to attach to this binder.
-        </p>
       </section>
 
       {/* 3 — Trackers */}
-      <section className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-950/25 to-zinc-950/80 p-4 sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex items-start gap-2.5">
+      <section className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-950/25 to-zinc-950/80 p-3 sm:p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <StepBadge n={3} tone="amber" />
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
-                  Trackers
-                </h3>
-                <PillLabel tone="amber">What ARGUS is watching</PillLabel>
-              </div>
-              <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">
-                These Tags are being tracked. ARGUS will surface related content.
-              </p>
-            </div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
+              Trackers
+            </h3>
+            <PillLabel tone="amber">Watching</PillLabel>
           </div>
           <button
             type="button"
@@ -442,10 +415,6 @@ export function V2BinderTagsTab({
 
         {manageOpen ? (
           <div className="mt-3 space-y-2 rounded-xl border border-amber-500/20 bg-zinc-950/70 p-3">
-            <p className="text-[11px] text-zinc-500">
-              Flag or disable Trackers for Tags attached, seen in this branch, or already tracked in
-              the journal.
-            </p>
             <ul className="flex flex-col gap-1.5">
               {manageInventory.map((tag) => {
                   const flagged = focusKeys.has(signalTagKey(tag));
@@ -481,26 +450,15 @@ export function V2BinderTagsTab({
               href={manageTrackersHref}
               className="inline-block text-[11px] font-medium text-amber-200/90 hover:text-amber-100"
             >
-              All Trackers in Tags universe →
+              All Trackers →
             </Link>
           </div>
         ) : null}
       </section>
 
       {/* 4 — Universe */}
-      <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-950/35 via-zinc-950/80 to-zinc-950/60 px-4 py-4 sm:px-5">
-        <div className="flex min-w-0 items-start gap-3">
-          <span
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-violet-500/30 bg-violet-950/50 text-lg"
-            aria-hidden
-          >
-            ✳
-          </span>
-          <p className="text-xs leading-relaxed text-zinc-400">
-            Explore the complete Tag universe. See all Tags, statistics, relationships and Patterns
-            across your journal.
-          </p>
-        </div>
+      <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-950/35 via-zinc-950/80 to-zinc-950/60 px-3 py-3 sm:px-4">
+        <p className="text-xs font-medium text-zinc-300">Tag universe</p>
         <Link
           href={universeHref}
           className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-violet-400/50 bg-violet-600/90 px-3 py-2 text-[11px] font-semibold text-white hover:bg-violet-500"

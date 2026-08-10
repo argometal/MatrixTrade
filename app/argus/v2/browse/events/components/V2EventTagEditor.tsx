@@ -116,7 +116,7 @@ export function V2EventTagEditor({
         onRemove={removeMatchTag}
         copy={copy}
         orientation="stack"
-        chipClassName="inline-flex items-center gap-2 rounded-lg border border-violet-500/35 bg-violet-500/10 px-2.5 py-1.5 text-[12px] text-violet-100"
+        chipClassName="flex w-full items-center justify-between gap-2 rounded-lg border border-violet-500/35 bg-violet-500/10 px-2.5 py-1.5 text-[12px] text-violet-100"
         removeClassName="text-violet-300/70 hover:text-violet-50"
         addButtonClassName="rounded-lg border border-violet-500/50 bg-transparent px-3 py-2 text-xs font-semibold text-violet-200 hover:bg-violet-950/40"
         inputAriaLabel={`Add Event Tag for ${eventName}`}
@@ -136,10 +136,6 @@ export function V2EventTagEditor({
         <div className="mt-3 rounded-xl border border-sky-500/25 bg-sky-950/20 p-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-200/90">
             On Notes — attach to this Event
-          </p>
-          <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
-            Evidence Tags already on chronicle Notes. Attach to classify this Event binder, then Save
-            Tags.
           </p>
           <ul className="mt-2 flex flex-col gap-1.5" aria-label="Evidence Tags to attach">
             {suggestions.map((tag) => (

@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { V2NavCounts } from "@/lib/argus/v2/loaders";
 import {
+  ARGUS_HOME_HREF,
   buildV2NavSections,
+  isArgusHomePath,
   isV2NavItemActive,
   type V2NavLinkItem,
 } from "@/lib/argus/v2/nav-items";
@@ -23,6 +25,7 @@ export function V2Sidebar({
 }) {
   const pathname = usePathname();
   const sections = buildV2NavSections(counts);
+  const onHome = isArgusHomePath(pathname);
 
   return (
     <aside
@@ -32,24 +35,31 @@ export function V2Sidebar({
     >
       <div className={`shrink-0 border-b border-zinc-800/80 ${collapsed ? "px-2 py-4" : "px-5 py-5"}`}>
         <div className={`flex items-start ${collapsed ? "flex-col items-center gap-2" : "justify-between gap-2"}`}>
-          {/* Brand mark only — Home nav row is the single entry to /argus/v2 */}
-          <div
+          {/* Logo / A mark = Home — Main nav no longer duplicates a Home row */}
+          <Link
+            href={ARGUS_HOME_HREF}
+            aria-label="Argus Home"
+            title="Home"
+            aria-current={onHome ? "page" : undefined}
             className={
               collapsed
-                ? "flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-violet-800 text-sm font-bold text-white ring-1 ring-violet-400/30"
-                : "min-w-0 flex-1"
+                ? `flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-violet-800 text-sm font-bold text-white ring-1 transition ${
+                    onHome ? "ring-violet-300/70" : "ring-violet-400/30 hover:ring-violet-300/50"
+                  }`
+                : `min-w-0 flex-1 rounded-xl px-1 py-0.5 transition ${
+                    onHome ? "bg-violet-500/10 ring-1 ring-violet-500/30" : "hover:bg-zinc-900/80"
+                  }`
             }
-            aria-hidden={collapsed}
           >
             {collapsed ? (
               <span>A</span>
             ) : (
               <>
                 <span className="text-lg font-bold tracking-tight text-zinc-50">Argus</span>
-                <span className="mt-0.5 block text-xs text-zinc-500">Evidence organization</span>
+                <span className="mt-0.5 block text-xs text-zinc-500">Home · Evidence</span>
               </>
             )}
-          </div>
+          </Link>
           {onToggle ? (
             <button
               type="button"

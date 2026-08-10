@@ -257,8 +257,8 @@ export function buildV2EventDetails(
     const branchTagGroups: V2EventDetail["branchTagGroups"] = [
       {
         id: "event",
-        label: "Event",
-        contextName: "this Event",
+        label: "Notes on this Event",
+        contextName: "evidence",
         tags: eventEvidenceCounts,
       },
     ];

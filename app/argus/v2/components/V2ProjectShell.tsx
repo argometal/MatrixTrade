@@ -322,6 +322,7 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
             tagHref={(tag) =>
               `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&project=${entity.id}`
             }
+            tagsHeading="Linked to this Project"
           />
         </V2PrivateEvidenceGate>
       ) : null}

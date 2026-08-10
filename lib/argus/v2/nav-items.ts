@@ -45,7 +45,7 @@ export function isBrowseNavActive(pathname: string, href: string, label: string)
 }
 
 export function isV2NavItemActive(pathname: string, item: V2NavLinkItem): boolean {
-  if (item.label === "Home") return pathname === "/argus/v2";
+  if (item.label === "Home") return isArgusHomePath(pathname);
   if (item.label === "Inbox") return pathname.startsWith("/argus/v2/inbox");
   if (item.label === "Deliver") return pathname.startsWith("/argus/v2/deliver");
   if (item.label === "Diagnostics") {
@@ -56,13 +56,20 @@ export function isV2NavItemActive(pathname: string, item: V2NavLinkItem): boolea
   return isBrowseNavActive(pathname, item.href, item.label);
 }
 
+/** ARGUS Home — Logo / A mark only (not a Main nav row). */
+export const ARGUS_HOME_HREF = "/argus/v2";
+
+export function isArgusHomePath(pathname: string): boolean {
+  return pathname === ARGUS_HOME_HREF || pathname === `${ARGUS_HOME_HREF}/`;
+}
+
 /** Sidebar + mobile drawer — navigation only; triage counts on select items (not Event Signals). */
 export function buildV2NavSections(signals: V2NavCounts): V2NavSection[] {
   return [
     {
       title: "Main",
       items: [
-        { href: "/argus/v2", label: "Home", icon: navIcon("Home") },
+        // Home lives on the Logo / A mark — not duplicated here.
         { href: "/argus/v2/inbox", label: "Inbox", icon: navIcon("Inbox"), signal: signals.inbox },
       ],
     },
@@ -90,7 +97,7 @@ export function buildV2NavSections(signals: V2NavCounts): V2NavSection[] {
 
 /** Short label for the mobile top-bar menu button (current section). */
 export function getV2NavPageLabel(pathname: string): string {
-  if (pathname === "/argus/v2") return "Home";
+  if (isArgusHomePath(pathname)) return "Home";
   if (pathname.startsWith("/argus/v2/inbox")) return "Inbox";
   if (pathname.startsWith("/argus/search")) return "Search";
   if (
