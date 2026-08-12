@@ -17,7 +17,10 @@ import { V2RecordRecentEntity } from "@/app/argus/v2/components/V2RecordRecentEn
 import { V2DetailCompactHeader } from "@/app/argus/v2/components/V2DetailCompactHeader";
 import { V2MobileUnlockedManageBar } from "@/app/argus/v2/components/V2MobileUnlockedManageBar";
 import { V2EntityRunbooksTab } from "@/app/argus/v2/components/V2EntityRunbooksTab";
-import { V2EntityLinksTab } from "@/app/argus/v2/components/V2EntityLinksTab";
+import {
+  V2EntityLinksTab,
+  type V2LinksEntity,
+} from "@/app/argus/v2/components/V2EntityLinksTab";
 import {
   V2ChronicleSelectableList,
   chronicleLogIdFromEvidenceId,
@@ -26,6 +29,7 @@ import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
+import { TAG_MANAGE_LIST_CLASS, TAG_MANAGE_ROW_CLASS } from "@/app/argus/v2/components/tag-manage-list";
 
 /** Topic = evidence binder → Chronicle only (Timeline stays on Org/Project). */
 type PanelTab = "chronicle" | "runbooks" | "links" | "tags";
@@ -123,11 +127,27 @@ export function V2TopicDetailPanel({
 } & V2DeleteGateProps) {
   const [panelTab, setPanelTab] = useState<PanelTab>("chronicle");
   const [focusTags, setFocusTags] = useState<string[]>(signalTags);
+  const [inspectEventId, setInspectEventId] = useState<string | null>(null);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
 
   useEffect(() => {
     setFocusTags(signalTags);
   }, [signalTags, selected.id]);
+
+  useEffect(() => {
+    setInspectEventId(null);
+  }, [selected.id]);
+
+  const inspectEvent = useMemo(() => {
+    if (!inspectEventId) return null;
+    const linked = selected.linkedEvents.find((event) => event.id === inspectEventId);
+    if (!linked) return null;
+    const rollup = selected.eventEvidenceTags.find((event) => event.id === inspectEventId);
+    return {
+      ...linked,
+      tags: rollup?.tags ?? [],
+    };
+  }, [inspectEventId, selected.linkedEvents, selected.eventEvidenceTags]);
   const mobileDetail = Boolean(onBack);
   const compactChrome = mobileDetail;
   const showMobileManageBar = mobileDetail && privateUnlocked;
@@ -387,6 +407,75 @@ export function V2TopicDetailPanel({
                 { icon: "📁", label: "Proj", count: selected.projectCount },
                 { icon: "👤", label: "People", count: selected.peopleCount },
               ]}
+              selectedEntityId={inspectEventId}
+              onSelectEntity={(entity: V2LinksEntity | null) => {
+                setInspectEventId(entity?.id ?? null);
+              }}
+              inspectSlot={
+                inspectEvent ? (
+                  <section
+                    className="rounded-xl border border-rose-500/30 bg-rose-950/20 p-3"
+                    aria-label={`Selected event ${inspectEvent.name}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-200/80">
+                          Selected event
+                        </p>
+                        <h4 className="mt-0.5 truncate text-sm font-semibold text-zinc-50">
+                          {inspectEvent.name}
+                        </h4>
+                        {inspectEvent.dateLabel ? (
+                          <p className="mt-0.5 text-xs text-zinc-500">{inspectEvent.dateLabel}</p>
+                        ) : null}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <Link
+                          href={inspectEvent.href}
+                          className="rounded-lg border border-rose-400/40 bg-rose-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-rose-100 hover:bg-rose-950/70"
+                        >
+                          Open →
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setInspectEventId(null)}
+                          className="rounded-lg border border-zinc-700 px-2 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200"
+                        >
+                          Clear
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                        Tags on this Event
+                      </p>
+                      {inspectEvent.tags.length === 0 ? (
+                        <p className="mt-1.5 text-xs text-zinc-600">No tags on this Event yet.</p>
+                      ) : (
+                        <ul className={`mt-2 ${TAG_MANAGE_LIST_CLASS}`} aria-label="Tags on selected Event">
+                          {inspectEvent.tags.map((tag) => (
+                            <li key={tag}>
+                              <span className={TAG_MANAGE_ROW_CLASS}>
+                                <span
+                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200"
+                                  aria-hidden
+                                >
+                                  #
+                                </span>
+                                <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">
+                                  {tag}
+                                </span>
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </section>
+                ) : selected.linkedEvents.length > 0 ? (
+                  <p className="text-xs text-zinc-600">Select an Event above to inspect its properties.</p>
+                ) : null
+              }
               sections={[
                 {
                   title: "Events",
@@ -402,6 +491,7 @@ export function V2TopicDetailPanel({
                     meta: event.dateLabel,
                   })),
                   tone: "event",
+                  selectToInspect: true,
                 },
                 {
                   title: "Organizations",
@@ -485,47 +575,18 @@ export function V2TopicDetailPanel({
                       href: `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(row.tag)}&focus=1&from=tags`,
                     })),
                   },
-                  ...(selected.linkedEvents.length > 0
-                    ? [
-                        {
-                          id: "event",
-                          label: "Event",
-                          tone: "event" as const,
-                          contextName:
-                            selected.linkedEvents.length === 1
-                              ? selected.linkedEvents[0].name
-                              : `${selected.linkedEvents.length} linked`,
-                          href:
-                            selected.linkedEvents.length === 1
-                              ? selected.linkedEvents[0].href
-                              : undefined,
-                          tags: (() => {
-                            const map = new Map<
-                              string,
-                              { tag: string; count: number; href?: string; eventId?: string }
-                            >();
-                            for (const event of selected.eventEvidenceTags) {
-                              for (const raw of event.tags) {
-                                const tag = raw.trim();
-                                if (!tag) continue;
-                                const key = tag.toLowerCase();
-                                const row = map.get(key) ?? {
-                                  tag,
-                                  count: 0,
-                                  eventId: event.id,
-                                  href: `/argus/v2/browse/events?selected=${encodeURIComponent(event.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`,
-                                };
-                                row.count += 1;
-                                map.set(key, row);
-                              }
-                            }
-                            return [...map.values()]
-                              .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
-                              .map(({ tag, count, href }) => ({ tag, count, href }));
-                          })(),
-                        },
-                      ]
-                    : []),
+                  ...selected.eventEvidenceTags.map((event) => ({
+                    id: `event-${event.id}`,
+                    label: event.name,
+                    tone: "event" as const,
+                    contextName: event.dateLabel ?? "linked Event",
+                    href: undefined as string | undefined,
+                    tags: event.tags.map((tag) => ({
+                      tag,
+                      count: 1,
+                      href: `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`,
+                    })),
+                  })),
                 ]}
                 branchEmptyHint="No contextual Tags yet — link Events or tag Notes on this Topic."
                 signalTags={focusTags}
