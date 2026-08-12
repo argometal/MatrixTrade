@@ -40,7 +40,7 @@ const noteOnEvent: Log = {
   kind: "note",
   date: "2026-08-01",
   entityIds: ["e1"],
-  topics: ["look-ahead"],
+  topics: ["look-ahead", "gap"],
   attachmentIds: [],
   createdAt: "2026-08-01T12:00:00.000Z",
   updatedAt: "2026-08-01T12:00:00.000Z",
@@ -64,5 +64,13 @@ assert.equal(vic!.evidence.length, 1, "Event Note appears in Topic Chronicle");
 assert.equal(vic!.evidence[0]?.title, "Complacent look-ahead");
 assert.match(vic!.evidence[0]?.meta ?? "", /Look Ahead/, "meta annotates source Event");
 assert.equal(vic!.journalCount, 1, "pills match Chronicle portfolio");
+assert.deepEqual(vic!.evidence[0]?.tags, ["look-ahead", "gap"], "Chronicle row carries Note tags");
+assert.equal(vic!.evidence[0]?.sourceEventId, "e1", "Chronicle row links source Event id");
+assert.equal(
+  vic!.evidence[0]?.sourceEventHref,
+  "/argus/v2/browse/events?selected=e1",
+  "Chronicle row has Open Event href"
+);
+assert.equal(vic!.evidence[0]?.sourceEventName, "Look Ahead · 2026-08-01");
 
 console.log("ok: topic-chronicle-includes-event-notes");

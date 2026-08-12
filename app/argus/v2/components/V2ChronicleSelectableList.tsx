@@ -21,6 +21,11 @@ export type V2ChronicleSelectableItem = {
   /** Optional note body shown under the title (journal rows; no phone edit link). */
   preview?: string;
   body: ReactNode;
+  /**
+   * Extra row chrome outside the primary href (tags, Open Event) —
+   * avoids nested links when the row itself navigates (email/file).
+   */
+  footer?: ReactNode;
 };
 
 export function V2ChronicleSelectableList({
@@ -161,19 +166,22 @@ export function V2ChronicleSelectableList({
                   </div>
                 ) : null}
                 {item.href ? (
-                  <Link
-                    href={item.href}
-                    target={item.external ? "_blank" : undefined}
-                    rel={item.external ? "noreferrer" : undefined}
-                    className="flex min-w-0 flex-1 flex-col gap-1 px-3 py-3"
-                  >
-                    <span className="flex min-w-0 items-start gap-3">{item.body}</span>
-                    {item.preview ? (
-                      <p className="whitespace-pre-wrap pl-8 text-xs leading-relaxed text-zinc-400">
-                        {item.preview}
-                      </p>
-                    ) : null}
-                  </Link>
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <Link
+                      href={item.href}
+                      target={item.external ? "_blank" : undefined}
+                      rel={item.external ? "noreferrer" : undefined}
+                      className="flex min-w-0 flex-col gap-1 px-3 py-3"
+                    >
+                      <span className="flex min-w-0 items-start gap-3">{item.body}</span>
+                      {item.preview ? (
+                        <p className="whitespace-pre-wrap pl-8 text-xs leading-relaxed text-zinc-400">
+                          {item.preview}
+                        </p>
+                      ) : null}
+                    </Link>
+                    {item.footer ? <div className="px-3 pb-3 pl-11">{item.footer}</div> : null}
+                  </div>
                 ) : (
                   <div className="flex min-w-0 flex-1 flex-col gap-1 px-3 py-3">
                     <span className="flex min-w-0 items-start gap-3">{item.body}</span>
@@ -182,6 +190,7 @@ export function V2ChronicleSelectableList({
                         {item.preview}
                       </p>
                     ) : null}
+                    {item.footer ? <div className="pl-8 pt-1">{item.footer}</div> : null}
                   </div>
                 )}
                 {item.logId && !selectMode ? (

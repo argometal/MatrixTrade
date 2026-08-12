@@ -19,6 +19,12 @@ export interface V2EvidenceStreamItem {
   href?: string;
   /** Full note body when `kind === "journal"` (read in Chronicle; no edit shell). */
   preview?: string;
+  /** Note/email Tags on this evidence item. */
+  tags?: string[];
+  /** When rolled into a Topic Chronicle from a linked Event. */
+  sourceEventId?: string;
+  sourceEventName?: string;
+  sourceEventHref?: string;
 }
 
 export type V2EvidenceStreamCounts = {
@@ -32,6 +38,21 @@ export type V2EvidenceStreamCounts = {
 function logKindLabel(kind: Log["kind"]): string {
   if (kind === "follow_up") return "Follow-up";
   return "Note";
+}
+
+function normalizeStreamTags(raw: string[] | undefined): string[] | undefined {
+  if (!raw?.length) return undefined;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const value of raw) {
+    const tag = value.trim().replace(/\s+/g, " ");
+    if (!tag) continue;
+    const key = tag.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(tag);
+  }
+  return out.length ? out : undefined;
 }
 
 /** Unified chronological evidence for any entity — notes, inbox, attachments. */
@@ -54,6 +75,7 @@ export function buildEntityEvidenceStream(
       meta: `${item.from?.replace(/<.*>/, "").trim() || "Unknown"} · ${relativeActivityLabel(item.receivedAt, today)}`,
       sortIso: item.receivedAt,
       href: `/argus/v2/inbox?selected=${item.id}`,
+      tags: normalizeStreamTags(item.topics),
     });
     for (const aid of item.attachmentIds ?? []) {
       const att = data.attachments.find((a) => a.id === aid && !a.deletedAt);
@@ -79,6 +101,7 @@ export function buildEntityEvidenceStream(
       sortIso: log.updatedAt || log.date,
       // No href — do not open the legacy phone ActivityEditPanel from Chronicle.
       preview: log.body?.trim() || undefined,
+      tags: normalizeStreamTags(log.topics),
     });
     for (const aid of log.attachmentIds ?? []) {
       const att = data.attachments.find((a) => a.id === aid && !a.deletedAt);
