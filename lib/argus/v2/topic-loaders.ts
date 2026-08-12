@@ -166,11 +166,14 @@ function topicEvidenceBundle(
         streams.push(eventStream);
         continue;
       }
-      // Annotate source Event so the Topic lens shows where evidence was born.
+      // Annotate source Event so the Topic lens shows where evidence was born + Open Event.
       streams.push(
         eventStream.map((item) => ({
           ...item,
           meta: `${event.name} · ${item.meta}`,
+          sourceEventId: event.id,
+          sourceEventName: event.name,
+          sourceEventHref: `/argus/v2/browse/events?selected=${event.id}`,
         }))
       );
     }

@@ -379,6 +379,39 @@ export function V2TopicDetailPanel({
                       </span>
                     </>
                   ),
+                  footer:
+                    (item.tags && item.tags.length > 0) || item.sourceEventHref ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {item.tags?.slice(0, 8).map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-md border border-zinc-700/80 bg-zinc-900/70 px-1.5 py-0.5 text-[10px] font-medium text-zinc-300"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                        {item.tags && item.tags.length > 8 ? (
+                          <span className="text-[10px] text-zinc-600">+{item.tags.length - 8}</span>
+                        ) : null}
+                        {item.sourceEventHref ? (
+                          <Link
+                            href={item.sourceEventHref}
+                            className="inline-flex items-center gap-1 rounded-md border border-rose-500/35 bg-rose-950/30 px-2 py-0.5 text-[10px] font-semibold text-rose-100 hover:bg-rose-950/55"
+                            title={
+                              item.sourceEventName
+                                ? `Open Event · ${item.sourceEventName}`
+                                : "Open Event"
+                            }
+                          >
+                            <span aria-hidden>📅</span>
+                            {item.sourceEventName
+                              ? `Open Event · ${item.sourceEventName}`
+                              : "Open Event"}
+                            <span aria-hidden>→</span>
+                          </Link>
+                        ) : null}
+                      </div>
+                    ) : undefined,
                 }))}
               />
             </div>
@@ -428,22 +461,31 @@ export function V2TopicDetailPanel({
                         {inspectEvent.dateLabel ? (
                           <p className="mt-0.5 text-xs text-zinc-500">{inspectEvent.dateLabel}</p>
                         ) : null}
+                        <p className="mt-1 text-[11px] text-zinc-500">
+                          Inspect properties here · open the Event to read its Chronicle.
+                        </p>
                       </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <Link
-                          href={inspectEvent.href}
-                          className="rounded-lg border border-rose-400/40 bg-rose-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-rose-100 hover:bg-rose-950/70"
-                        >
-                          Open →
-                        </Link>
-                        <button
-                          type="button"
-                          onClick={() => setInspectEventId(null)}
-                          className="rounded-lg border border-zinc-700 px-2 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200"
-                        >
-                          Clear
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setInspectEventId(null)}
+                        className="shrink-0 rounded-lg border border-zinc-700 px-2 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link
+                        href={inspectEvent.href}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/50 bg-rose-600/25 px-3 py-2 text-xs font-semibold text-rose-50 hover:bg-rose-600/40"
+                      >
+                        Open Event →
+                      </Link>
+                      <Link
+                        href={inspectEvent.href}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-600 bg-zinc-900/60 px-3 py-2 text-xs font-semibold text-zinc-200 hover:bg-zinc-800"
+                      >
+                        View Event Chronicle →
+                      </Link>
                     </div>
                     <div className="mt-3">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
@@ -473,7 +515,9 @@ export function V2TopicDetailPanel({
                     </div>
                   </section>
                 ) : selected.linkedEvents.length > 0 ? (
-                  <p className="text-xs text-zinc-600">Select an Event above to inspect its properties.</p>
+                  <p className="text-xs text-zinc-600">
+                    Click an Event to inspect · Open Event / double-click / ··· to enter.
+                  </p>
                 ) : null
               }
               sections={[
