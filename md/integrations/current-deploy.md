@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0808z` |
-| **Commit** | Always `git rev-parse main0808z` after fetch (must match `origin/main` tip at pin; ship merge `d705176`) |
+| **Tag** | `main0812a` |
+| **Commit** | Always `git rev-parse main0812a` after fetch (must match `origin/main` tip at pin; ship merge `0fe7067`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-12 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0808z
+# optional pin: git checkout main0812a
 ```
 
 ## What this deploy includes
 
+- **PR #263:** Topic Chronicle tags + Open Event link; Links inspect clearer Open Event / View Chronicle CTAs
 - **PR #261:** Project/Org Timeline portfolio — linked Topics/Events anchors + their Notes/emails (Topics filter chip)
 - **PR #259:** Topic Links Events select-to-inspect (···/Open/double-click to enter); Topic Tags show all Event tags (notes + binder) per Event
 - **PR #257:** Fix Topics/Events selected bounce — opening entity no longer loops to browse home when status/triage filter hid the card
