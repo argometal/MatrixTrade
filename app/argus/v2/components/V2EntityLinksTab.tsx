@@ -35,6 +35,11 @@ export type V2LinksSection = {
   browseHref?: string;
   entities: V2LinksEntity[];
   tone?: "event" | "topic" | "default";
+  /**
+   * Click selects in-panel (inspect properties); Open → / double-click navigates.
+   * Mirrors Events browse select-then-open.
+   */
+  selectToInspect?: boolean;
 };
 
 export type V2LinksEvidenceCount = {
@@ -93,6 +98,9 @@ export function V2EntityLinksTab({
   showCreate = true,
   /** Heading for binder/evidence tags block (avoid repeating tab name “Links”). */
   tagsHeading = "Linked tags",
+  selectedEntityId,
+  onSelectEntity,
+  inspectSlot,
 }: {
   entityId: string;
   linkedIds: string[];
@@ -110,6 +118,11 @@ export function V2EntityLinksTab({
   signalTags?: string[];
   showCreate?: boolean;
   tagsHeading?: string;
+  /** Selected linked entity (select-to-inspect sections). */
+  selectedEntityId?: string | null;
+  onSelectEntity?: (entity: V2LinksEntity | null) => void;
+  /** Property panel under select-to-inspect sections (e.g. Event inspect on Topic). */
+  inspectSlot?: ReactNode;
 }) {
   const [showGraph, setShowGraph] = useState(true);
   const showTags =
@@ -150,12 +163,16 @@ export function V2EntityLinksTab({
       ) : null}
 
       {sections.map((section) => (
-        <LinksSectionBlock
-          key={section.title}
-          entityId={entityId}
-          linkedIds={linkedIds}
-          section={section}
-        />
+        <div key={section.title} className="space-y-3">
+          <LinksSectionBlock
+            entityId={entityId}
+            linkedIds={linkedIds}
+            section={section}
+            selectedEntityId={section.selectToInspect ? selectedEntityId : undefined}
+            onSelectEntity={section.selectToInspect ? onSelectEntity : undefined}
+          />
+          {section.selectToInspect && inspectSlot ? inspectSlot : null}
+        </div>
       ))}
 
       {evidenceCounts && evidenceCounts.length > 0 ? (
@@ -252,13 +269,18 @@ function LinksSectionBlock({
   entityId,
   linkedIds,
   section,
+  selectedEntityId,
+  onSelectEntity,
 }: {
   entityId: string;
   linkedIds: string[];
   section: V2LinksSection;
+  selectedEntityId?: string | null;
+  onSelectEntity?: (entity: V2LinksEntity | null) => void;
 }) {
   const tone = section.tone ?? "default";
   const count = section.entities.length;
+  const selectMode = Boolean(section.selectToInspect && onSelectEntity);
 
   return (
     <div>
@@ -286,27 +308,72 @@ function LinksSectionBlock({
           />
         </div>
       </div>
+      {selectMode && count > 0 ? (
+        <p className="mb-2 text-[11px] text-zinc-500">
+          Click to inspect · Open → or double-click to enter
+        </p>
+      ) : null}
       {count > 0 ? (
         <ul className="flex flex-col gap-1.5" aria-label={`${section.title} links`}>
-          {section.entities.map((entity) => (
-            <li key={entity.id}>
-              <Link href={entity.href} className={CHIP_CLASS[tone]}>
-                {entity.icon ? (
-                  <span className="shrink-0" aria-hidden>
-                    {entity.icon}
-                  </span>
-                ) : null}
-                <span className="min-w-0 flex-1 truncate font-medium">{entity.name}</span>
-                {entity.meta ? (
-                  <span className="shrink-0 text-[10px] tabular-nums opacity-60">{entity.meta}</span>
-                ) : (
-                  <span className="shrink-0 text-zinc-500" aria-hidden>
-                    →
-                  </span>
-                )}
-              </Link>
-            </li>
-          ))}
+          {section.entities.map((entity) => {
+            if (selectMode) {
+              const isSelected = selectedEntityId === entity.id;
+              return (
+                <li key={entity.id}>
+                  <div
+                    className={`${CHIP_CLASS[tone]} ${
+                      isSelected
+                        ? "ring-2 ring-violet-500/50 border-violet-400/50"
+                        : ""
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                      onClick={() => onSelectEntity?.(isSelected ? null : entity)}
+                      onDoubleClick={() => {
+                        window.location.assign(entity.href);
+                      }}
+                      aria-pressed={isSelected}
+                      title="Click to inspect properties"
+                    >
+                      {entity.icon ? (
+                        <span className="shrink-0" aria-hidden>
+                          {entity.icon}
+                        </span>
+                      ) : null}
+                      <span className="min-w-0 flex-1 truncate font-medium">{entity.name}</span>
+                      {entity.meta ? (
+                        <span className="shrink-0 text-[10px] tabular-nums opacity-60">
+                          {entity.meta}
+                        </span>
+                      ) : null}
+                    </button>
+                    <LinkedEntityOpenMenu href={entity.href} name={entity.name} />
+                  </div>
+                </li>
+              );
+            }
+            return (
+              <li key={entity.id}>
+                <Link href={entity.href} className={CHIP_CLASS[tone]}>
+                  {entity.icon ? (
+                    <span className="shrink-0" aria-hidden>
+                      {entity.icon}
+                    </span>
+                  ) : null}
+                  <span className="min-w-0 flex-1 truncate font-medium">{entity.name}</span>
+                  {entity.meta ? (
+                    <span className="shrink-0 text-[10px] tabular-nums opacity-60">{entity.meta}</span>
+                  ) : (
+                    <span className="shrink-0 text-zinc-500" aria-hidden>
+                      →
+                    </span>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <div>
@@ -322,6 +389,53 @@ function LinksSectionBlock({
           />
         </div>
       )}
+    </div>
+  );
+}
+
+/** Corner ··· — Open linked entity (select-to-inspect rows). */
+function LinkedEntityOpenMenu({ href, name }: { href: string; name: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative shrink-0">
+      <button
+        type="button"
+        className="rounded-md px-1.5 py-0.5 text-xs font-bold text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+        aria-label={`More actions for ${name}`}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setOpen((v) => !v);
+        }}
+      >
+        ···
+      </button>
+      {open ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-40 cursor-default"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            role="menu"
+            className="absolute right-0 top-full z-50 mt-1 min-w-[9rem] rounded-lg border border-zinc-700 bg-zinc-950 py-1 shadow-xl"
+          >
+                    <Link
+              href={href}
+              role="menuitem"
+              className="block px-3 py-2 text-xs font-medium text-zinc-200 hover:bg-zinc-900"
+              onClick={() => setOpen(false)}
+            >
+              Open →
+            </Link>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

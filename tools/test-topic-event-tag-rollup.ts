@@ -1,5 +1,5 @@
 /**
- * Topic Tags tab rolls up Note Tags / Patterns from linked Events.
+ * Topic Tags rollup includes Note Tags + Event binder eventTags from linked Events.
  */
 import assert from "node:assert/strict";
 import type { ArgusData, Entity, Log } from "../lib/argus/types";
@@ -31,6 +31,16 @@ const event = entity({
   notes: "Kind: Event\nChronicle: v2\n---",
   startDate: "2026-03-15",
   linkedEntityIds: ["t1"],
+  eventTags: ["BinderOnly", "latency"],
+});
+const eventEmpty = entity({
+  id: "e2",
+  name: "Kickoff",
+  type: "other",
+  notes: "Kind: Event\nChronicle: v2\n---",
+  startDate: "2026-02-01",
+  linkedEntityIds: ["t1"],
+  eventTags: ["KickoffTag"],
 });
 
 const note: Log = {
@@ -50,7 +60,7 @@ const note: Log = {
 } as Log;
 
 const data: ArgusData = {
-  entities: [topic, event],
+  entities: [topic, event, eventEmpty],
   logs: [note],
   inbox: [],
   attachments: [],
@@ -61,13 +71,18 @@ const data: ArgusData = {
 
 const detail = buildV2TopicDetails(data, [], true, "2026-08-09").find((d) => d.id === "t1");
 assert.ok(detail);
-assert.equal(detail!.eventEvidenceTags.length, 1);
-assert.equal(detail!.eventEvidenceTags[0]?.id, "e1");
-assert.deepEqual(detail!.eventEvidenceTags[0]?.tags, ["handoff", "latency"]);
-assert.equal(detail!.eventEvidenceTags[0]?.dateLabel, "2026-03-15");
+assert.equal(detail!.eventEvidenceTags.length, 2, "every linked Event appears in rollup");
+const q1 = detail!.eventEvidenceTags.find((e) => e.id === "e1");
+assert.ok(q1);
+assert.deepEqual(q1!.tags, ["BinderOnly", "handoff", "latency"]);
+assert.ok(q1!.tags.includes("BinderOnly"), "binder Event Tags appear on Topic");
+const kickoff = detail!.eventEvidenceTags.find((e) => e.id === "e2");
+assert.ok(kickoff);
+assert.deepEqual(kickoff!.tags, ["KickoffTag"]);
+assert.ok(detail!.evidenceTagCounts.some((row) => row.tag === "BinderOnly"));
+assert.ok(detail!.evidenceTagCounts.some((row) => row.tag === "KickoffTag"));
 assert.ok(detail!.evidenceTagCounts.some((row) => row.tag === "latency" && row.count === 1));
 assert.ok(detail!.evidenceTagCounts.some((row) => row.tag === "handoff" && row.count === 1));
-// Patterns need min count — two distinct tags once each → no pattern yet, but rollup list works.
 assert.ok(Array.isArray(detail!.tagPatterns));
 
 console.log("ok: topic-event-tag-rollup");

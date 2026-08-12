@@ -253,7 +253,8 @@ export function collectEvidenceTagCountsForTopicIds(
 
 /**
  * Union topic + linked-event evidence for Patterns, and per-event tag lists for the Tags tab.
- * Chronicle stays topic ∪ linked Events (aggregation lens); Tags roll up binders so Event note tags are visible here.
+ * Chronicle stays topic ∪ linked Events (aggregation lens). Tags roll up Note/email evidence
+ * plus Event binder `eventTags` so Topic shows the full Event vocabulary.
  */
 function topicTagRollup(
   data: ArgusData,
@@ -276,7 +277,7 @@ function topicTagRollup(
     if (!event || !isEventEntity(event)) continue;
     const eHistory = getEntityHistory(data, eventId, includePrivate);
     const eInbox = getLinkedInboxForEntity(inboxItems, eventId, includePrivate);
-    const tags = new Set<string>();
+    const evidenceTags = new Set<string>();
     for (const log of eHistory) {
       if (!seenLog.has(log.id)) {
         logs.push(log);
@@ -284,7 +285,7 @@ function topicTagRollup(
       }
       for (const raw of log.topics ?? []) {
         const tag = normalizeEvidenceTag(raw);
-        if (tag) tags.add(tag);
+        if (tag) evidenceTags.add(tag);
       }
     }
     for (const item of eInbox) {
@@ -294,10 +295,17 @@ function topicTagRollup(
       }
       for (const raw of item.topics ?? []) {
         const tag = normalizeEvidenceTag(raw);
-        if (tag) tags.add(tag);
+        if (tag) evidenceTags.add(tag);
       }
     }
-    if (tags.size === 0) continue;
+    // Include Event binder Tags (eventTags) so Topic Tags shows the full Event vocabulary —
+    // not only Note/email evidence. Patterns still mine evidence only (ORDER 001).
+    const binderTags = readTagsForRole(data, "event", { entityId: event.id });
+    const tags = new Set<string>(evidenceTags);
+    for (const raw of binderTags) {
+      const tag = normalizeEvidenceTag(raw);
+      if (tag) tags.add(tag);
+    }
     const date = event.startDate || event.endDate || event.createdAt;
     eventEvidenceTags.push({
       id: event.id,
@@ -324,6 +332,23 @@ function topicTagRollup(
   }
   for (const item of inbox) {
     for (const raw of item.topics ?? []) bump(raw);
+  }
+  // Binder-only Event Tags (not already on notes/emails) still appear in the inventory.
+  const evidenceKeys = new Set(tagCounts.keys());
+  const binderOnly = new Map<string, { tag: string; count: number }>();
+  for (const eventId of eventIds) {
+    for (const raw of readTagsForRole(data, "event", { entityId: eventId })) {
+      const tag = normalizeEvidenceTag(raw);
+      if (!tag) continue;
+      const key = tag.toLowerCase();
+      if (evidenceKeys.has(key)) continue;
+      const row = binderOnly.get(key) ?? { tag, count: 0 };
+      row.count += 1;
+      binderOnly.set(key, row);
+    }
+  }
+  for (const [key, row] of binderOnly) {
+    tagCounts.set(key, row);
   }
 
   const evidenceTagCounts = [...tagCounts.values()].sort(
