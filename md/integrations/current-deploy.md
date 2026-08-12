@@ -4,10 +4,10 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0808x` |
-| **Commit** | Always `git rev-parse main0808x` after fetch (must match `origin/main` tip at pin; ship merge `aaaa021`) |
+| **Tag** | `main0808y` |
+| **Commit** | Always `git rev-parse main0808y` after fetch (must match `origin/main` tip at pin; ship merge `77cb4dc`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
-| **Date** | 2026-08-10 |
+| **Date** | 2026-08-12 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
 
 ## Sync local (avoid conflicts / lost work)
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0808x
+# optional pin: git checkout main0808y
 ```
 
 ## What this deploy includes
 
+- **PR #259:** Topic Links Events select-to-inspect (···/Open/double-click to enter); Topic Tags show all Event tags (notes + binder) per Event
 - **PR #257:** Fix Topics/Events selected bounce — opening entity no longer loops to browse home when status/triage filter hid the card
 - **PR #255:** Tags menus use **Manage List · rows** (OrganizationListRow family); Event/Topic/Project/Org Tags wired to entity-scoped tags; Project Tags tab + `updateProjectTagsAction`; Org Tags tab shows neighborhood patterns
 - **PR #253:** ARGUS Logo=Home; phone detail density (uncrush title/date); vertical Tags rows; Intel Tags full universe (no top-80); Chronicle/Tags/Links drop redundant titles; Event/Topic/Org/Project show **Linked to this …** binder tags clearly
