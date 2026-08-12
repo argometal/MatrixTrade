@@ -317,7 +317,7 @@ export function V2OrgShell(props: V2OrgShellProps) {
         <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
           <V2EntityTimelineSection
             entries={timeline}
-            subtitle="All time · Quick scan of activity on this organization"
+            subtitle="All time · Notes, emails, and linked Topics / Events"
           />
         </V2PrivateEvidenceGate>
       ) : null}

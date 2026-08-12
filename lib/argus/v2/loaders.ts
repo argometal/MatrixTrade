@@ -54,6 +54,8 @@ import {
   mergeTimelineEntries,
   relativeActivityLabel,
 } from "./timeline-builders";
+import { buildPortfolioEntityTimeline } from "./portfolio-timeline";
+import { isDateWithinRange } from "../link-hierarchy";
 
 function visibleLogs(data: ArgusData, includePrivate: boolean): Log[] {
   const logs = data.logs.filter((l) => !l.deletedAt);
@@ -824,7 +826,17 @@ export function loadOrganizationPageData(
   today: string
 ) {
   const scope = organizationEvidenceScope(data, inboxItems, org, includePrivate);
-  const timeline = buildTimelineFromLogsAndInbox(scope.logs, scope.inbox);
+  const nodeCounts = countTopicsAndEventsInScope(data, org, scope.logs);
+  let timeline = buildPortfolioEntityTimeline({
+    data,
+    inboxItems,
+    includePrivate,
+    baseLogs: scope.logs,
+    baseInbox: scope.inbox,
+    topicIds: nodeCounts.topicIds,
+    eventIds: nodeCounts.eventIds,
+  });
+  timeline = enrichTimelineMeta(timeline, scope.logs, scope.inbox, data.entities);
   const intel = buildEntityIntelligence(data, org, includePrivate, today);
   const linkedPersonIds = [
     ...new Set([...(org.linkedPersonIds ?? []), ...(org.linkedEntityIds ?? [])]),
@@ -855,7 +867,6 @@ export function loadOrganizationPageData(
   }));
 
   const tagPatterns = buildTagPatternsForScope(scope.logs, scope.inbox, today);
-  const nodeCounts = countTopicsAndEventsInScope(data, org, scope.logs);
   // Structural Topic/Event chips — never evidence tagPatterns.
   const linkedTopics = linkedTopicRefs(data, nodeCounts.topicIds);
   const linkedEvents = linkedEventRefs(data, nodeCounts.eventIds);
@@ -977,12 +988,26 @@ export function loadProjectPageData(
   const scope = getProjectEvidenceScope(data, inboxItems, project, includePrivate, scopeOptions);
   const allInbox = getAllProjectScopeInbox(inboxItems, project, includePrivate, scopeOptions);
   const allLogs = [...scope.directLogs, ...scope.viaContactLogs];
-  let timeline = buildTimelineFromLogsAndInbox(allLogs, allInbox);
+  const nodeCounts = countTopicsAndEventsInScope(data, project, allLogs);
+  const respectDates = scopeOptions?.respectProjectDates !== false;
+  let timeline = buildPortfolioEntityTimeline({
+    data,
+    inboxItems,
+    includePrivate,
+    baseLogs: allLogs,
+    baseInbox: allInbox,
+    topicIds: nodeCounts.topicIds,
+    eventIds: nodeCounts.eventIds,
+    dateInScope: (iso) => {
+      if (!respectDates) return true;
+      if (!project.startDate && !project.endDate) return true;
+      return isDateWithinRange(iso.slice(0, 10), project.startDate, project.endDate);
+    },
+  });
   timeline = enrichTimelineMeta(timeline, allLogs, allInbox, data.entities);
 
   const linkIds = collectProjectLinkIds(project);
   const linkCounts = countLinkKinds(data, linkIds);
-  const nodeCounts = countTopicsAndEventsInScope(data, project, allLogs);
 
   const linkedPeople = linkIds
     .map((id) => data.entities.find((e) => e.id === id && e.type === "person"))

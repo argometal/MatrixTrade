@@ -120,8 +120,8 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
 
   const morePeople = Math.max(0, peopleWithRoles.length - 4);
   const chronicleSubtitle = respectProjectDates
-    ? "Bounded by project dates · direct links + via project contacts"
-    : "All dates · includes evidence outside the project window";
+    ? "Bounded by project dates · Notes/emails + linked Topics / Events"
+    : "All dates · Notes/emails + linked Topics / Events (including outside the window)";
   const runbookOpen = runbooks.reduce((sum, rb) => {
     const prog = findRunbookProgress(progressRecords, rb.id, entity.id);
     const items = applyRunbookProgress(rb, prog ?? null);

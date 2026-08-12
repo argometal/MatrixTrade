@@ -5,13 +5,14 @@ import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import { V2Card } from "./v2-ui";
 import { V2OrgTimeline } from "./V2OrgTimeline";
 
-const TIMELINE_FILTERS = ["All", "Notes", "Email", "Events"] as const;
+const TIMELINE_FILTERS = ["All", "Notes", "Email", "Events", "Topics"] as const;
 type TimelineFilter = (typeof TIMELINE_FILTERS)[number];
 
 function filterEntries(entries: V2TimelineEntry[], filter: TimelineFilter): V2TimelineEntry[] {
   if (filter === "All") return entries;
   if (filter === "Notes") return entries.filter((e) => e.kind === "journal");
   if (filter === "Email") return entries.filter((e) => e.kind === "email");
+  if (filter === "Topics") return entries.filter((e) => e.kind === "topic");
   return entries.filter((e) => e.kind === "event" || e.kind === "meeting");
 }
 

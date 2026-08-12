@@ -1,6 +1,6 @@
 /** Static preview data for /argus/v2 design shells — replace with live data during migration. */
 
-export type V2TimelineKind = "journal" | "email" | "meeting" | "event";
+export type V2TimelineKind = "journal" | "email" | "meeting" | "event" | "topic";
 
 export interface V2TimelineEntry {
   id: string;
