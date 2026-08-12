@@ -6,13 +6,15 @@ function kindLabel(entry: V2TimelineEntry): string {
   if (entry.kind === "journal") return "Note";
   if (entry.kind === "email") return "Email";
   if (entry.kind === "meeting") return "Meeting";
+  if (entry.kind === "topic") return "Topic";
   return "Event";
 }
 
-function kindTone(entry: V2TimelineEntry): "purple" | "blue" | "green" | "orange" {
+function kindTone(entry: V2TimelineEntry): "purple" | "blue" | "green" | "orange" | "default" {
   if (entry.kind === "journal") return "purple";
   if (entry.kind === "email") return "blue";
   if (entry.kind === "meeting") return "green";
+  if (entry.kind === "topic") return "default";
   return "orange";
 }
 
@@ -20,6 +22,7 @@ function kindIcon(entry: V2TimelineEntry): string {
   if (entry.kind === "journal") return "📓";
   if (entry.kind === "email") return "✉";
   if (entry.kind === "meeting") return "📅";
+  if (entry.kind === "topic") return "🏷";
   return "📌";
 }
 
@@ -75,7 +78,7 @@ export function V2OrgTimeline({
   const hasMore = limit ? entries.length > limit : false;
 
   if (shown.length === 0) {
-    return <p className="py-8 text-center text-sm text-zinc-500">No linked notes or emails yet.</p>;
+    return <p className="py-8 text-center text-sm text-zinc-500">No timeline activity yet.</p>;
   }
 
   return (
