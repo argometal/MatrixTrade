@@ -89,15 +89,31 @@ export interface V2TopicDetail {
   evidence: V2EvidenceStreamItem[];
   /** Patterns from topic evidence ∪ linked-event evidence. */
   tagPatterns: TagPattern[];
-  /** Flat evidence Tag counts (notes/emails) — click-to-flag in UI. */
+  /**
+   * Legacy aggregate Tag inventory (Topic-direct ∪ Event evidence ∪ binder-only Event tags).
+   * Retained for suggestions / Patterns helpers — not the primary Topic Tags inventory.
+   */
   evidenceTagCounts: Array<{ tag: string; count: number }>;
-  /** Note/email tags grouped by linked Event. */
+  /**
+   * Tags from Notes/emails directly linked to this Topic only
+   * (excludes evidence that arrives solely through linked Events).
+   */
+  topicDirectEvidenceTagCounts: Array<{ tag: string; count: number }>;
+  /**
+   * Per linked Event: binder Event Tags vs Note/email evidence Tags (split for provenance UI).
+   * `tags` remains the merged union for backward compatibility.
+   */
   eventEvidenceTags: Array<{
     id: string;
     name: string;
     href: string;
     dateLabel?: string;
+    /** @deprecated Prefer eventTags + noteTags — merged binder ∪ evidence. */
     tags: string[];
+    /** Event binder `eventTags`. */
+    eventTags: string[];
+    /** Log.topics / inbox topics on this Event. */
+    noteTags: string[];
   }>;
 }
 

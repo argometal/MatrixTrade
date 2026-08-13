@@ -39,7 +39,8 @@ assert.doesNotMatch(
 );
 
 assert.match(event, /Linked to this Event/, "Event Tags heading is Linked to this Event");
-assert.match(topic, /Linked to this Topic/, "Topic Tags heading is Linked to this Topic");
+assert.match(topic, /Topic Tags/, "Topic Tags heading names the binder section");
+assert.match(topic, /Tags in this Topic/, "Topic Tags shows Topic-direct evidence section");
 assert.match(event, /attachedTags=\{selected\.eventTags\}/, "Event attached = binder eventTags");
 assert.match(topic, /attachedTags=\{selected\.aliases\}/, "Topic attached = binder aliases");
 assert.match(loaders, /Notes on this Event/, "Branch evidence labeled Notes on this Event");
