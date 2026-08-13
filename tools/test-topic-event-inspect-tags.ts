@@ -20,9 +20,12 @@ assert.match(links, /onDoubleClick/, "double-click opens entity");
 assert.match(topic, /selectToInspect:\s*true/, "Topic Events section selects to inspect");
 assert.match(topic, /inspectEventId/, "Topic holds inspected Event id");
 assert.match(topic, /Selected event/, "Topic shows Event property panel");
+assert.match(topic, /provenance=\{\{/, "Tags tab uses provenance layout");
 assert.match(topic, /eventEvidenceTags\.map/, "Tags tab lists per-Event groups");
+assert.match(topic, /event\.href/, "Open Event uses loader route");
 
 assert.match(loaders, /readTagsForRole\(data, "event"/, "rollup includes Event binder tags");
+assert.match(loaders, /noteTags/, "rollup splits Event Note tags");
 assert.doesNotMatch(
   loaders,
   /if \(tags\.size === 0\) continue/,

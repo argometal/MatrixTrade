@@ -590,9 +590,9 @@ export function V2TopicDetailPanel({
           {panelTab === "tags" ? (
             <div className="space-y-4">
               <V2BinderTagsTab
-                attachedHeading="Linked to this Topic"
-                attachedBadge="Linked"
-                attachedHint="These Tags are saved on this Topic binder — not Note Tags."
+                attachedHeading="Topic Tags"
+                attachedBadge="Binder"
+                attachedHint="Tags attached to this Topic binder — not Note Tags."
                 attachedTags={selected.aliases}
                 attachedTagHref={(tag) =>
                   `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
@@ -603,36 +603,42 @@ export function V2TopicDetailPanel({
                     topicId={selected.id}
                     topicName={selected.name}
                     initialAliases={selected.aliases}
-                    suggestedFromNotes={selected.evidenceTagCounts.map((row) => row.tag)}
+                    suggestedFromNotes={[
+                      ...selected.topicDirectEvidenceTagCounts.map((row) => row.tag),
+                      ...selected.eventEvidenceTags.flatMap((event) => event.noteTags),
+                    ]}
                     returnTo={returnTo}
                     compact
                   />
                 }
-                branchGroups={[
-                  {
-                    id: "topic",
-                    label: "Notes on this Topic",
-                    tone: "topic" as const,
-                    contextName: "evidence",
-                    tags: selected.evidenceTagCounts.map((row) => ({
-                      ...row,
-                      href: `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(row.tag)}&focus=1&from=tags`,
-                    })),
-                  },
-                  ...selected.eventEvidenceTags.map((event) => ({
-                    id: `event-${event.id}`,
-                    label: event.name,
-                    tone: "event" as const,
-                    contextName: event.dateLabel ?? "linked Event",
-                    href: undefined as string | undefined,
-                    tags: event.tags.map((tag) => ({
+                provenance={{
+                  directHeading: "Tags in this Topic",
+                  directBadge: "Evidence",
+                  directEmptyHint:
+                    "No Tags on Notes or emails linked directly to this Topic.",
+                  directTags: selected.topicDirectEvidenceTagCounts.map((row) => ({
+                    ...row,
+                    href: `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(row.tag)}&focus=1&from=tags`,
+                  })),
+                  byEventHeading: "By Event",
+                  eventsEmptyHint: "No linked Events yet.",
+                  events: selected.eventEvidenceTags.map((event) => ({
+                    id: event.id,
+                    name: event.name,
+                    dateLabel: event.dateLabel,
+                    href: event.href,
+                    eventTags: event.eventTags.map((tag) => ({
                       tag,
-                      count: 1,
+                      count: 0,
+                      href: `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`,
+                    })),
+                    noteTags: event.noteTags.map((tag) => ({
+                      tag,
+                      count: 0,
                       href: `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`,
                     })),
                   })),
-                ]}
-                branchEmptyHint="No contextual Tags yet — link Events or tag Notes on this Topic."
+                }}
                 signalTags={focusTags}
                 onSignalTagsChange={setFocusTags}
               />

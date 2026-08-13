@@ -137,6 +137,7 @@ const detail: V2TopicDetail = {
   evidence: [],
   tagPatterns: [],
   evidenceTagCounts: [],
+  topicDirectEvidenceTagCounts: [],
   eventEvidenceTags: [],
 };
 

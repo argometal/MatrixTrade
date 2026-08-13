@@ -254,10 +254,30 @@ export function collectEvidenceTagCountsForTopicIds(
   return [...counts.values()].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
 }
 
+function bumpEvidenceTagCount(
+  tagCounts: Map<string, { tag: string; count: number }>,
+  raw: string
+) {
+  const tag = normalizeEvidenceTag(raw);
+  if (!tag) return;
+  const key = tag.toLowerCase();
+  const row = tagCounts.get(key) ?? { tag, count: 0 };
+  row.count += 1;
+  tagCounts.set(key, row);
+}
+
+function sortedEvidenceTagCounts(
+  tagCounts: Map<string, { tag: string; count: number }>
+): Array<{ tag: string; count: number }> {
+  return [...tagCounts.values()].sort(
+    (a, b) => b.count - a.count || a.tag.localeCompare(b.tag)
+  );
+}
+
 /**
  * Union topic + linked-event evidence for Patterns, and per-event tag lists for the Tags tab.
- * Chronicle stays topic ∪ linked Events (aggregation lens). Tags roll up Note/email evidence
- * plus Event binder `eventTags` so Topic shows the full Event vocabulary.
+ * Chronicle stays topic ∪ linked Events (aggregation lens).
+ * Provenance UI splits Topic-direct evidence vs Event binder vs Event Note tags.
  */
 function topicTagRollup(
   data: ArgusData,
@@ -275,12 +295,22 @@ function topicTagRollup(
   const seenInbox = new Set(topicInbox.map((item) => item.id));
   const eventEvidenceTags: V2TopicDetail["eventEvidenceTags"] = [];
 
+  // Topic-direct evidence only — Notes/emails linked to the Topic binder itself.
+  const topicDirectCounts = new Map<string, { tag: string; count: number }>();
+  for (const log of topicHistory) {
+    for (const raw of log.topics ?? []) bumpEvidenceTagCount(topicDirectCounts, raw);
+  }
+  for (const item of topicInbox) {
+    for (const raw of item.topics ?? []) bumpEvidenceTagCount(topicDirectCounts, raw);
+  }
+  const topicDirectEvidenceTagCounts = sortedEvidenceTagCounts(topicDirectCounts);
+
   for (const eventId of eventIds) {
     const event = data.entities.find((e) => e.id === eventId && !e.deletedAt);
     if (!event || !isEventEntity(event)) continue;
     const eHistory = getEntityHistory(data, eventId, includePrivate);
     const eInbox = getLinkedInboxForEntity(inboxItems, eventId, includePrivate);
-    const evidenceTags = new Set<string>();
+    const noteTagSet = new Set<string>();
     for (const log of eHistory) {
       if (!seenLog.has(log.id)) {
         logs.push(log);
@@ -288,7 +318,7 @@ function topicTagRollup(
       }
       for (const raw of log.topics ?? []) {
         const tag = normalizeEvidenceTag(raw);
-        if (tag) evidenceTags.add(tag);
+        if (tag) noteTagSet.add(tag);
       }
     }
     for (const item of eInbox) {
@@ -298,45 +328,43 @@ function topicTagRollup(
       }
       for (const raw of item.topics ?? []) {
         const tag = normalizeEvidenceTag(raw);
-        if (tag) evidenceTags.add(tag);
+        if (tag) noteTagSet.add(tag);
       }
     }
-    // Include Event binder Tags (eventTags) so Topic Tags shows the full Event vocabulary —
-    // not only Note/email evidence. Patterns still mine evidence only (ORDER 001).
+    // Event binder Tags — kept separate from Note evidence for provenance UI.
+    // Patterns still mine evidence only (ORDER 001).
     const binderTags = readTagsForRole(data, "event", { entityId: event.id });
-    const tags = new Set<string>(evidenceTags);
+    const eventTagSet = new Set<string>();
     for (const raw of binderTags) {
       const tag = normalizeEvidenceTag(raw);
-      if (tag) tags.add(tag);
+      if (tag) eventTagSet.add(tag);
     }
+    const noteTags = [...noteTagSet].sort((a, b) => a.localeCompare(b));
+    const eventTags = [...eventTagSet].sort((a, b) => a.localeCompare(b));
+    const tags = [...new Set([...eventTags, ...noteTags])].sort((a, b) => a.localeCompare(b));
     const date = event.startDate || event.endDate || event.createdAt;
     eventEvidenceTags.push({
       id: event.id,
       name: event.name,
       href: `/argus/v2/browse/events?selected=${event.id}`,
       dateLabel: date ? date.slice(0, 10) : undefined,
-      tags: [...tags].sort((a, b) => a.localeCompare(b)),
+      tags,
+      eventTags,
+      noteTags,
     });
   }
 
   eventEvidenceTags.sort((a, b) => a.name.localeCompare(b.name));
 
+  // Legacy aggregate: Topic-direct ∪ Event evidence ∪ binder-only Event tags.
+  // Kept for suggestions / helpers — not the primary Tags tab inventory.
   const tagCounts = new Map<string, { tag: string; count: number }>();
-  function bump(raw: string) {
-    const tag = normalizeEvidenceTag(raw);
-    if (!tag) return;
-    const key = tag.toLowerCase();
-    const row = tagCounts.get(key) ?? { tag, count: 0 };
-    row.count += 1;
-    tagCounts.set(key, row);
-  }
   for (const log of logs) {
-    for (const raw of log.topics ?? []) bump(raw);
+    for (const raw of log.topics ?? []) bumpEvidenceTagCount(tagCounts, raw);
   }
   for (const item of inbox) {
-    for (const raw of item.topics ?? []) bump(raw);
+    for (const raw of item.topics ?? []) bumpEvidenceTagCount(tagCounts, raw);
   }
-  // Binder-only Event Tags (not already on notes/emails) still appear in the inventory.
   const evidenceKeys = new Set(tagCounts.keys());
   const binderOnly = new Map<string, { tag: string; count: number }>();
   for (const eventId of eventIds) {
@@ -354,14 +382,13 @@ function topicTagRollup(
     tagCounts.set(key, row);
   }
 
-  const evidenceTagCounts = [...tagCounts.values()].sort(
-    (a, b) => b.count - a.count || a.tag.localeCompare(b.tag)
-  );
+  const evidenceTagCounts = sortedEvidenceTagCounts(tagCounts);
 
   return {
     tagPatterns: buildTagPatternsForScope(logs, inbox, today),
     eventEvidenceTags,
     evidenceTagCounts,
+    topicDirectEvidenceTagCounts,
   };
 }
 
@@ -485,7 +512,12 @@ export function buildV2TopicDetails(
     const linkedEvents = linkedEventRefs(data, eventIds);
     // Link modal: outbound bags ∪ reverse Event binders (one-way Event→Topic stays visible/healable).
     const linkModalIds = linkModalStructuralIds(data, topic);
-    const { tagPatterns, eventEvidenceTags, evidenceTagCounts } = topicTagRollup(
+    const {
+      tagPatterns,
+      eventEvidenceTags,
+      evidenceTagCounts,
+      topicDirectEvidenceTagCounts,
+    } = topicTagRollup(
       data,
       topic,
       history,
@@ -524,6 +556,7 @@ export function buildV2TopicDetails(
       tagPatterns,
       eventEvidenceTags,
       evidenceTagCounts,
+      topicDirectEvidenceTagCounts,
     };
   });
 }

@@ -30,6 +30,24 @@ export type V2BinderBranchGroup = {
   tone?: "event" | "topic" | "project" | "default";
 };
 
+/** Topic Tags provenance: Topic-direct evidence + per-Event binder vs Note tags. */
+export type V2BinderTagProvenance = {
+  directHeading?: string;
+  directBadge?: string;
+  directEmptyHint?: string;
+  directTags: V2BinderBranchTag[];
+  byEventHeading?: string;
+  eventsEmptyHint?: string;
+  events: Array<{
+    id: string;
+    name: string;
+    dateLabel?: string;
+    href: string;
+    eventTags: V2BinderBranchTag[];
+    noteTags: V2BinderBranchTag[];
+  }>;
+};
+
 export type V2BinderTagsTabProps = {
   attachedHeading: string;
   attachedBadge?: string;
@@ -45,10 +63,16 @@ export type V2BinderTagsTabProps = {
   branchHeading?: string;
   branchBadge?: string;
   branchHint?: string;
-  branchGroups: V2BinderBranchGroup[];
+  /** Flat branch groups (Event/Project). Ignored when `provenance` is set. */
+  branchGroups?: V2BinderBranchGroup[];
   branchEmptyHint?: string;
   onBrowseBranch?: () => void;
   browseBranchLabel?: string;
+  /**
+   * Topic Tags provenance layout: Tags in this Topic + By Event (Event Tags / On Notes).
+   * Replaces the flat branch section when provided.
+   */
+  provenance?: V2BinderTagProvenance;
 
   signalTags: string[];
   onSignalTagsChange?: (next: string[]) => void;
@@ -116,6 +140,61 @@ function groupAccent(tone: V2BinderBranchGroup["tone"]): string {
   return "border-zinc-800 bg-zinc-900/40";
 }
 
+function TagManageRows({
+  tags,
+  emptyHint,
+}: {
+  tags: V2BinderBranchTag[];
+  emptyHint?: string;
+}) {
+  if (tags.length === 0) {
+    return <p className="text-[11px] text-zinc-600">{emptyHint ?? "None yet"}</p>;
+  }
+  return (
+    <ul className={TAG_MANAGE_LIST_CLASS}>
+      {tags.slice(0, PREVIEW).map((row) => (
+        <li key={row.tag}>
+          {row.href ? (
+            <Link
+              href={row.href}
+              className={TAG_MANAGE_ROW_CLASS}
+              title={`Open ${row.tag}`}
+            >
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200"
+                aria-hidden
+              >
+                #
+              </span>
+              <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{row.tag}</span>
+              {row.count > 0 ? (
+                <span className="shrink-0 tabular-nums text-xs text-violet-300">{row.count}</span>
+              ) : (
+                <span className="shrink-0 text-zinc-500" aria-hidden>
+                  →
+                </span>
+              )}
+            </Link>
+          ) : (
+            <span className={TAG_MANAGE_ROW_CLASS}>
+              <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200"
+                aria-hidden
+              >
+                #
+              </span>
+              <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{row.tag}</span>
+              {row.count > 0 ? (
+                <span className="shrink-0 tabular-nums text-xs text-violet-300">{row.count}</span>
+              ) : null}
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function V2BinderTagsTab({
   attachedHeading,
   attachedBadge = "Linked",
@@ -127,10 +206,11 @@ export function V2BinderTagsTab({
   branchHeading = "Tags in this branch",
   branchBadge = "Branch",
   branchHint,
-  branchGroups,
+  branchGroups = [],
   branchEmptyHint = "No contextual Tags yet.",
   onBrowseBranch,
   browseBranchLabel = "Browse branch",
+  provenance,
   signalTags,
   onSignalTagsChange,
   manageTrackersHref = "/argus/v2?intel=tags",
@@ -145,6 +225,19 @@ export function V2BinderTagsTab({
 
   const branchTagKeys = useMemo(() => {
     const keys = new Set<string>();
+    if (provenance) {
+      for (const row of provenance.directTags) {
+        const key = signalTagKey(row.tag);
+        if (key) keys.add(key);
+      }
+      for (const event of provenance.events) {
+        for (const row of [...event.eventTags, ...event.noteTags]) {
+          const key = signalTagKey(row.tag);
+          if (key) keys.add(key);
+        }
+      }
+      return keys;
+    }
     for (const group of branchGroups) {
       for (const row of group.tags) {
         const key = signalTagKey(row.tag);
@@ -152,7 +245,7 @@ export function V2BinderTagsTab({
       }
     }
     return keys;
-  }, [branchGroups]);
+  }, [branchGroups, provenance]);
 
   const attachedKeys = useMemo(
     () => new Set(attachedTags.map(signalTagKey).filter(Boolean)),
@@ -191,10 +284,23 @@ export function V2BinderTagsTab({
       const key = signalTagKey(tag);
       if (key) byKey.set(key, tag.trim());
     }
-    for (const group of branchGroups) {
-      for (const row of group.tags) {
+    if (provenance) {
+      for (const row of provenance.directTags) {
         const key = signalTagKey(row.tag);
         if (key && !byKey.has(key)) byKey.set(key, row.tag.trim());
+      }
+      for (const event of provenance.events) {
+        for (const row of [...event.eventTags, ...event.noteTags]) {
+          const key = signalTagKey(row.tag);
+          if (key && !byKey.has(key)) byKey.set(key, row.tag.trim());
+        }
+      }
+    } else {
+      for (const group of branchGroups) {
+        for (const row of group.tags) {
+          const key = signalTagKey(row.tag);
+          if (key && !byKey.has(key)) byKey.set(key, row.tag.trim());
+        }
       }
     }
     for (const tag of signalTags) {
@@ -202,7 +308,7 @@ export function V2BinderTagsTab({
       if (key && !byKey.has(key)) byKey.set(key, tag.trim());
     }
     return [...byKey.values()].sort((a, b) => a.localeCompare(b)).slice(0, 60);
-  }, [attachedTags, branchGroups, signalTags]);
+  }, [attachedTags, branchGroups, provenance, signalTags]);
 
   const visibleGroups = branchGroups.filter((g) => g.tags.length > 0 || g.href);
   const hasAnyBranchTags = branchGroups.some((g) => g.tags.length > 0);
@@ -245,124 +351,181 @@ export function V2BinderTagsTab({
         </p>
       </section>
 
-      {/* 2 — Branch */}
-      <section className="rounded-2xl border border-sky-500/20 bg-gradient-to-b from-sky-950/20 to-zinc-950/80 p-3 sm:p-4">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <StepBadge n={2} tone="sky" />
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
-              {branchHeading}
-            </h3>
-            <PillLabel tone="sky">{branchBadge}</PillLabel>
-          </div>
-          {onBrowseBranch ? (
-            <button
-              type="button"
-              onClick={onBrowseBranch}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-sky-500/35 bg-sky-950/30 px-2.5 py-1.5 text-[11px] font-semibold text-sky-100 hover:bg-sky-950/50"
-            >
-              {browseBranchLabel}
-              <span aria-hidden>↗</span>
-            </button>
-          ) : null}
-        </div>
-        {!helpTopic && branchHint ? (
-          <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{branchHint}</p>
-        ) : null}
+      {/* 2 — Branch (legacy) OR Tags in this Topic + By Event (provenance) */}
+      {provenance ? (
+        <>
+          <section className="rounded-2xl border border-sky-500/20 bg-gradient-to-b from-sky-950/20 to-zinc-950/80 p-3 sm:p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <StepBadge n={2} tone="sky" />
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
+                {provenance.directHeading ?? "Tags in this Topic"}
+              </h3>
+              <PillLabel tone="sky">{provenance.directBadge ?? "Evidence"}</PillLabel>
+            </div>
+            <div className="mt-3">
+              <TagManageRows
+                tags={provenance.directTags}
+                emptyHint={
+                  provenance.directEmptyHint ??
+                  "No Tags on Notes or emails linked directly to this Topic."
+                }
+              />
+            </div>
+            {provenance.directTags.length > 0 ? (
+              <p className="mt-2 text-[11px] tabular-nums text-zinc-500">
+                {provenance.directTags.length} tag
+                {provenance.directTags.length === 1 ? "" : "s"} on Topic evidence
+              </p>
+            ) : null}
+          </section>
 
-        {!hasAnyBranchTags ? (
-          <p className="mt-3 text-xs text-zinc-600">{branchEmptyHint}</p>
-        ) : (
-          <div className="mt-3 grid grid-cols-1 gap-3">
-            {visibleGroups.map((group) => {
-              const tone = group.tone ?? (group.id as V2BinderBranchGroup["tone"]) ?? "default";
-              return (
-                <div
-                  key={group.id}
-                  className={`rounded-xl border px-3 py-3 ${groupAccent(tone)}`}
-                >
-                  <div className="mb-2.5 flex items-center gap-2">
-                    <span className="text-base" aria-hidden>
-                      {groupIcon(tone)}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-semibold text-zinc-100">{group.label}</p>
-                      {group.contextName ? (
-                        group.href ? (
-                          <Link
-                            href={group.href}
-                            className="block truncate text-[10px] text-zinc-400 hover:text-sky-200"
-                          >
-                            {group.contextName}
-                          </Link>
-                        ) : (
-                          <p className="truncate text-[10px] text-zinc-500">{group.contextName}</p>
-                        )
-                      ) : null}
+          <section className="rounded-2xl border border-violet-500/20 bg-gradient-to-b from-violet-950/20 to-zinc-950/80 p-3 sm:p-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <StepBadge n={3} tone="violet" />
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
+                {provenance.byEventHeading ?? "By Event"}
+              </h3>
+              <PillLabel tone="violet">Linked</PillLabel>
+            </div>
+
+            {provenance.events.length === 0 ? (
+              <p className="mt-3 text-xs text-zinc-600">
+                {provenance.eventsEmptyHint ?? "No linked Events yet."}
+              </p>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {provenance.events.map((event) => (
+                  <div
+                    key={event.id}
+                    className={`rounded-xl border px-3 py-3 ${groupAccent("event")}`}
+                  >
+                    <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-zinc-100">{event.name}</p>
+                        {event.dateLabel ? (
+                          <p className="mt-0.5 text-[11px] tabular-nums text-zinc-500">
+                            {event.dateLabel}
+                          </p>
+                        ) : null}
+                      </div>
+                      <Link
+                        href={event.href}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-violet-500/35 bg-violet-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-violet-100 hover:bg-violet-950/60"
+                      >
+                        Open Event
+                        <span aria-hidden>→</span>
+                      </Link>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div>
+                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                          Event Tags
+                        </p>
+                        <TagManageRows
+                          tags={event.eventTags}
+                          emptyHint="No Event Tags on this binder."
+                        />
+                      </div>
+                      <div>
+                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                          On Notes
+                        </p>
+                        <TagManageRows
+                          tags={event.noteTags}
+                          emptyHint="No Tags on Notes for this Event."
+                        />
+                      </div>
                     </div>
                   </div>
-                  {group.tags.length === 0 ? (
-                    <p className="text-[11px] text-zinc-600">None yet</p>
-                  ) : (
-                    <ul className={TAG_MANAGE_LIST_CLASS}>
-                      {group.tags.slice(0, PREVIEW).map((row) => (
-                        <li key={row.tag}>
-                          {row.href ? (
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      ) : (
+        <section className="rounded-2xl border border-sky-500/20 bg-gradient-to-b from-sky-950/20 to-zinc-950/80 p-3 sm:p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <StepBadge n={2} tone="sky" />
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
+                {branchHeading}
+              </h3>
+              <PillLabel tone="sky">{branchBadge}</PillLabel>
+            </div>
+            {onBrowseBranch ? (
+              <button
+                type="button"
+                onClick={onBrowseBranch}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-sky-500/35 bg-sky-950/30 px-2.5 py-1.5 text-[11px] font-semibold text-sky-100 hover:bg-sky-950/50"
+              >
+                {browseBranchLabel}
+                <span aria-hidden>↗</span>
+              </button>
+            ) : null}
+          </div>
+          {!helpTopic && branchHint ? (
+            <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{branchHint}</p>
+          ) : null}
+
+          {!hasAnyBranchTags ? (
+            <p className="mt-3 text-xs text-zinc-600">{branchEmptyHint}</p>
+          ) : (
+            <div className="mt-3 grid grid-cols-1 gap-3">
+              {visibleGroups.map((group) => {
+                const tone = group.tone ?? (group.id as V2BinderBranchGroup["tone"]) ?? "default";
+                return (
+                  <div
+                    key={group.id}
+                    className={`rounded-xl border px-3 py-3 ${groupAccent(tone)}`}
+                  >
+                    <div className="mb-2.5 flex items-center gap-2">
+                      <span className="text-base" aria-hidden>
+                        {groupIcon(tone)}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-semibold text-zinc-100">{group.label}</p>
+                        {group.contextName ? (
+                          group.href ? (
                             <Link
-                              href={row.href}
-                              className={TAG_MANAGE_ROW_CLASS}
-                              title={`Open ${row.tag}`}
+                              href={group.href}
+                              className="block truncate text-[10px] text-zinc-400 hover:text-sky-200"
                             >
-                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200" aria-hidden>
-                                #
-                              </span>
-                              <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{row.tag}</span>
-                              {row.count > 0 ? (
-                                <span className="shrink-0 tabular-nums text-xs text-violet-300">{row.count}</span>
-                              ) : (
-                                <span className="shrink-0 text-zinc-500" aria-hidden>→</span>
-                              )}
+                              {group.contextName}
                             </Link>
                           ) : (
-                            <span className={TAG_MANAGE_ROW_CLASS}>
-                              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200" aria-hidden>
-                                #
-                              </span>
-                              <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{row.tag}</span>
-                              {row.count > 0 ? (
-                                <span className="shrink-0 tabular-nums text-xs text-violet-300">{row.count}</span>
-                              ) : null}
-                            </span>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {group.tags.length > PREVIEW ? (
-                    <p className="mt-2.5 text-[10px] text-zinc-500">
-                      View all {group.tags.length}
-                      {group.href ? (
-                        <>
-                          {" "}
-                          <Link href={group.href} className="text-sky-300/80 hover:text-sky-200">
-                            →
-                          </Link>
-                        </>
-                      ) : null}
-                    </p>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                            <p className="truncate text-[10px] text-zinc-500">{group.contextName}</p>
+                          )
+                        ) : null}
+                      </div>
+                    </div>
+                    <TagManageRows tags={group.tags} emptyHint="None yet" />
+                    {group.tags.length > PREVIEW ? (
+                      <p className="mt-2.5 text-[10px] text-zinc-500">
+                        View all {group.tags.length}
+                        {group.href ? (
+                          <>
+                            {" "}
+                            <Link href={group.href} className="text-sky-300/80 hover:text-sky-200">
+                              →
+                            </Link>
+                          </>
+                        ) : null}
+                      </p>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+      )}
 
-      {/* 3 — Trackers */}
+      {/* Trackers — secondary; step 4 with provenance, step 3 otherwise */}
       <section className="rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-950/25 to-zinc-950/80 p-3 sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <StepBadge n={3} tone="amber" />
+            <StepBadge n={provenance ? 4 : 3} tone="amber" />
             <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-50">
               Trackers
             </h3>
