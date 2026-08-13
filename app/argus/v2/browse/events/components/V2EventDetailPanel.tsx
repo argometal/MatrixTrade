@@ -592,10 +592,12 @@ export function V2EventDetailPanel({
                       ...eventTagCounts.map((row) => row.tag),
                       ...selected.topicTags,
                     ]}
+                    signalTags={focusTags}
                     returnTo={returnTo}
                     compact
                   />
                 }
+                ownershipBranchGroupIds={["event"]}
                 branchGroups={(() => {
                   const evidenceByKey = new Map(
                     eventTagCounts.map((row) => [row.tag.toLowerCase(), row] as const)

@@ -23,6 +23,7 @@ export function V2EventTagEditor({
   compact = false,
   /** Evidence Tags on Notes not yet attached as Event Tags — recall / attach. */
   suggestedFromNotes = [],
+  signalTags = [],
 }: {
   eventId: string;
   eventName: string;
@@ -31,6 +32,8 @@ export function V2EventTagEditor({
   /** When embedded in V2BinderTagsTab — parent owns heading/hint. */
   compact?: boolean;
   suggestedFromNotes?: string[];
+  /** Journal Trackers — passive ⚑ on binder rows (no click-to-Flag). */
+  signalTags?: string[];
 }) {
   const router = useRouter();
   const [matchTags, setMatchTags] = useState<string[]>(initialTags);
@@ -45,6 +48,11 @@ export function V2EventTagEditor({
   const attachedKeys = useMemo(
     () => new Set(matchTags.map(tagKey).filter(Boolean)),
     [matchTags]
+  );
+
+  const trackedKeys = useMemo(
+    () => new Set(signalTags.map(tagKey).filter(Boolean)),
+    [signalTags]
   );
 
   const suggestions = useMemo(() => {
@@ -117,6 +125,7 @@ export function V2EventTagEditor({
         onRemove={removeMatchTag}
         copy={copy}
         orientation="stack"
+        trackedKeys={trackedKeys}
         removeClassName="text-violet-300/70 hover:text-violet-50"
         addButtonClassName="rounded-lg border border-violet-500/50 bg-transparent px-3 py-2 text-xs font-semibold text-violet-200 hover:bg-violet-950/40"
         inputAriaLabel={`Add Event Tag for ${eventName}`}
@@ -138,26 +147,36 @@ export function V2EventTagEditor({
             On Notes — attach to this Event
           </p>
           <ul className={`mt-2 ${TAG_MANAGE_LIST_CLASS}`} aria-label="Evidence Tags to attach">
-            {suggestions.map((tag) => (
+            {suggestions.map((tag) => {
+              const tracked = trackedKeys.has(tagKey(tag));
+              return (
               <li key={tag}>
                 <button
                   type="button"
                   onClick={() => attachSuggestion(tag)}
-                  className={`${TAG_MANAGE_ROW_CLASS} hover:border-sky-500/40`}
+                  className={`${tracked ? "flex w-full items-center gap-4 rounded-xl border border-amber-400/40 bg-rose-950/30 px-4 py-3 text-left text-sm hover:border-sky-500/40" : TAG_MANAGE_ROW_CLASS} hover:border-sky-500/40`}
                 >
                   <span
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-600/20 text-xs font-bold text-sky-100"
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                      tracked ? "bg-amber-500/20 text-amber-100" : "bg-sky-600/20 text-sky-100"
+                    }`}
                     aria-hidden
                   >
-                    #
+                    {tracked ? "⚑" : "#"}
                   </span>
                   <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{tag}</span>
+                  {tracked ? (
+                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-amber-200/90">
+                      Tracked
+                    </span>
+                  ) : null}
                   <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-sky-300/90">
                     Attach
                   </span>
                 </button>
               </li>
-            ))}
+            );
+            })}
           </ul>
         </div>
       ) : null}

@@ -209,7 +209,7 @@ const SECTIONS: HelpSection[] = [
     group: "intelligence",
     keywords: ["event", "tags", "trackers", "on this event", "note", "flag", "pool"],
     intro:
-      "Attached Tags classify this Event. Branch shows neighborhood vocabulary. Trackers watch. Universe is global analysis.",
+      "Event Tags classify this Event. Notes carry evidence Tags. Trackers are journal Flags — ⚑ shows when a Tag on this Event is Flagged. Branch Topic/Project pools are vocabulary only.",
     items: [
       {
         title: "Tags on this Event",
@@ -217,11 +217,11 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Tags in this branch",
-        body: "Evidence Tags on this Event’s Notes, plus Tags from structurally linked Topics and Projects. Not attached until you Add Tag.",
+        body: "Evidence Tags on this Event’s Notes, plus Tags from structurally linked Topics and Projects. Neighborhood rows are suggestions — they do not make this Event Watched.",
       },
       {
         title: "Trackers",
-        body: "Flagged Tags in context (Attached/Branch) plus other journal Trackers for recall (legacy Event Signals). Manage Trackers here; full list is Go to Tags.",
+        body: "Journal Flags that intersect this Event’s binder or Note Tags. Branch Topic/Project Tags do not count. ⚑ on rows is passive; Flag / Disable only via Manage Trackers. Other journal Trackers are recall only.",
       },
       {
         title: "Go to Tags",
@@ -237,25 +237,29 @@ const SECTIONS: HelpSection[] = [
     id: "topic-tags",
     title: "Topic · Tags & Trackers",
     group: "intelligence",
-    keywords: ["topic", "tags", "trackers", "topic tags", "aliases", "flag"],
+    keywords: ["topic", "tags", "trackers", "topic tags", "aliases", "flag", "provenance"],
     intro:
-      "Evidence Tags come from Notes on linked Events. Flag as Tracker is optional (Tags tab). Topic Tags editor below is the only place that removes a binder Tag.",
+      "Topic Tags classify this Topic. Tags in this Topic are Topic-direct evidence only. By Event separates each linked Event’s binder Tags from its Note Tags. Trackers are journal Flags — Topic does not own Event Trackers.",
     items: [
       {
-        title: "On this Topic",
-        body: "Evidence Tags from notes/emails ∪ Topic Tags (binder aliases). Same Tag system as Events — Tags can exist without Flag.",
+        title: "Topic Tags",
+        body: "Binder Tags on this Topic (topicTags). Add Tag + Save attaches here. Flag never deletes a binder Tag.",
       },
       {
-        title: "Topic Tags editor",
-        body: "Explicit Save — the only place that removes a binder Tag. Flag/Disable Tracker never deletes Tags.",
+        title: "Tags in this Topic",
+        body: "Tags on Notes/emails linked directly to this Topic — not Tags that arrive only through linked Events.",
       },
       {
-        title: "Flag / Disable Tracker (optional)",
-        body: "Add Tag remembers a name; Flag Tracker or chip click watches it. Never required to keep a Tag on evidence.",
+        title: "By Event",
+        body: "One group per linked Event: Event Tags (binder) and On Notes (evidence), with Open Event. ⚑ means that Tag string is Flagged in the journal — not that the Topic owns the Tracker.",
       },
       {
-        title: "By linked Event",
-        body: "Rollup of Tags from Events linked to this Topic — click to Flag/Disable Tracker with confirm.",
+        title: "Trackers",
+        body: "Journal Flags that intersect this Topic’s binder or Topic-direct evidence only. Event Trackers appear as ⚑ under By Event, not as Topic-owned Trackers. Manage Trackers to Flag / Disable; row clicks do not toggle.",
+      },
+      {
+        title: "Go to Tags",
+        body: "Home → Intelligence → Tags for the full universe. Watched entities use binder ∪ direct evidence ∩ Flags (branch pools excluded).",
       },
     ],
   },

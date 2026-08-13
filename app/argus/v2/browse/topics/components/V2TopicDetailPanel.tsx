@@ -607,6 +607,7 @@ export function V2TopicDetailPanel({
                       ...selected.topicDirectEvidenceTagCounts.map((row) => row.tag),
                       ...selected.eventEvidenceTags.flatMap((event) => event.noteTags),
                     ]}
+                    signalTags={focusTags}
                     returnTo={returnTo}
                     compact
                   />

@@ -73,6 +73,13 @@ export type V2BinderTagsTabProps = {
    * Replaces the flat branch section when provided.
    */
   provenance?: V2BinderTagProvenance;
+  /**
+   * Branch group ids that count as this entity’s ownership vocabulary for the
+   * Trackers section (definition D). Neighborhood groups (e.g. Event→Topic) are excluded.
+   * Ignored when `provenance` is set (Topic uses attached + direct only).
+   * Default: ["event", "project"] — Notes-on-entity groups.
+   */
+  ownershipBranchGroupIds?: string[];
 
   signalTags: string[];
   onSignalTagsChange?: (next: string[]) => void;
@@ -143,54 +150,65 @@ function groupAccent(tone: V2BinderBranchGroup["tone"]): string {
 function TagManageRows({
   tags,
   emptyHint,
+  focusKeys,
 }: {
   tags: V2BinderBranchTag[];
   emptyHint?: string;
+  focusKeys: Set<string>;
 }) {
   if (tags.length === 0) {
     return <p className="text-[11px] text-zinc-600">{emptyHint ?? "None yet"}</p>;
   }
   return (
     <ul className={TAG_MANAGE_LIST_CLASS}>
-      {tags.slice(0, PREVIEW).map((row) => (
-        <li key={row.tag}>
-          {row.href ? (
-            <Link
-              href={row.href}
-              className={TAG_MANAGE_ROW_CLASS}
-              title={`Open ${row.tag}`}
+      {tags.slice(0, PREVIEW).map((row) => {
+        const tracked = focusKeys.has(signalTagKey(row.tag));
+        const inner = (
+          <>
+            <span
+              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                tracked ? "bg-amber-500/20 text-amber-100" : "bg-violet-600/20 text-violet-200"
+              }`}
+              aria-hidden
             >
-              <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200"
-                aria-hidden
-              >
-                #
-              </span>
-              <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{row.tag}</span>
-              {row.count > 0 ? (
-                <span className="shrink-0 tabular-nums text-xs text-violet-300">{row.count}</span>
-              ) : (
-                <span className="shrink-0 text-zinc-500" aria-hidden>
-                  →
-                </span>
-              )}
-            </Link>
-          ) : (
-            <span className={TAG_MANAGE_ROW_CLASS}>
-              <span
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200"
-                aria-hidden
-              >
-                #
-              </span>
-              <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{row.tag}</span>
-              {row.count > 0 ? (
-                <span className="shrink-0 tabular-nums text-xs text-violet-300">{row.count}</span>
-              ) : null}
+              {tracked ? "⚑" : "#"}
             </span>
-          )}
-        </li>
-      ))}
+            <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{row.tag}</span>
+            {tracked ? (
+              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-amber-200/90">
+                Tracked
+              </span>
+            ) : null}
+            {row.count > 0 ? (
+              <span className="shrink-0 tabular-nums text-xs text-violet-300">{row.count}</span>
+            ) : row.href && !tracked ? (
+              <span className="shrink-0 text-zinc-500" aria-hidden>
+                →
+              </span>
+            ) : null}
+          </>
+        );
+        return (
+          <li key={row.tag}>
+            {row.href ? (
+              <Link
+                href={row.href}
+                className={tracked ? TAG_MANAGE_ROW_TRACKER_CLASS : TAG_MANAGE_ROW_CLASS}
+                title={tracked ? `${row.tag} · Tracked` : `Open ${row.tag}`}
+              >
+                {inner}
+              </Link>
+            ) : (
+              <span
+                className={tracked ? TAG_MANAGE_ROW_TRACKER_CLASS : TAG_MANAGE_ROW_CLASS}
+                title={tracked ? `${row.tag} · Tracked` : undefined}
+              >
+                {inner}
+              </span>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -211,6 +229,7 @@ export function V2BinderTagsTab({
   onBrowseBranch,
   browseBranchLabel = "Browse branch",
   provenance,
+  ownershipBranchGroupIds = ["event", "project"],
   signalTags,
   onSignalTagsChange,
   manageTrackersHref = "/argus/v2?intel=tags",
@@ -223,34 +242,34 @@ export function V2BinderTagsTab({
   const [pendingTag, setPendingTag] = useState<string | null>(null);
   const focusKeys = useMemo(() => focusKeySet(signalTags), [signalTags]);
 
-  const branchTagKeys = useMemo(() => {
+  /**
+   * Definition D ownership vocabulary for Trackers section:
+   * binder + direct evidence only. Topic provenance excludes By Event Tags
+   * (⚑ stays on Event rows; Topic does not inherit Event Tracker ownership).
+   */
+  const ownershipTagKeys = useMemo(() => {
     const keys = new Set<string>();
+    for (const tag of attachedTags) {
+      const key = signalTagKey(tag);
+      if (key) keys.add(key);
+    }
     if (provenance) {
       for (const row of provenance.directTags) {
         const key = signalTagKey(row.tag);
         if (key) keys.add(key);
       }
-      for (const event of provenance.events) {
-        for (const row of [...event.eventTags, ...event.noteTags]) {
-          const key = signalTagKey(row.tag);
-          if (key) keys.add(key);
-        }
-      }
       return keys;
     }
+    const owned = new Set(ownershipBranchGroupIds);
     for (const group of branchGroups) {
+      if (!owned.has(group.id)) continue;
       for (const row of group.tags) {
         const key = signalTagKey(row.tag);
         if (key) keys.add(key);
       }
     }
     return keys;
-  }, [branchGroups, provenance]);
-
-  const attachedKeys = useMemo(
-    () => new Set(attachedTags.map(signalTagKey).filter(Boolean)),
-    [attachedTags]
-  );
+  }, [attachedTags, branchGroups, ownershipBranchGroupIds, provenance]);
 
   const contextTrackers = useMemo(() => {
     return signalTags
@@ -258,12 +277,12 @@ export function V2BinderTagsTab({
       .filter(Boolean)
       .filter((tag) => {
         const key = signalTagKey(tag);
-        return key && (attachedKeys.has(key) || branchTagKeys.has(key));
+        return key && ownershipTagKeys.has(key);
       })
       .sort((a, b) => a.localeCompare(b));
-  }, [signalTags, attachedKeys, branchTagKeys]);
+  }, [signalTags, ownershipTagKeys]);
 
-  /** Journal Trackers not yet on this binder/branch — still recall them (legacy Event Signals). */
+  /** Journal Trackers not on this entity’s ownership vocabulary — recall only. */
   const otherTrackers = useMemo(() => {
     const contextKeys = new Set(
       [...contextTrackers].map(signalTagKey).filter(Boolean)
@@ -365,6 +384,7 @@ export function V2BinderTagsTab({
             <div className="mt-3">
               <TagManageRows
                 tags={provenance.directTags}
+                focusKeys={focusKeys}
                 emptyHint={
                   provenance.directEmptyHint ??
                   "No Tags on Notes or emails linked directly to this Topic."
@@ -424,6 +444,7 @@ export function V2BinderTagsTab({
                         </p>
                         <TagManageRows
                           tags={event.eventTags}
+                          focusKeys={focusKeys}
                           emptyHint="No Event Tags on this binder."
                         />
                       </div>
@@ -433,6 +454,7 @@ export function V2BinderTagsTab({
                         </p>
                         <TagManageRows
                           tags={event.noteTags}
+                          focusKeys={focusKeys}
                           emptyHint="No Tags on Notes for this Event."
                         />
                       </div>
@@ -499,7 +521,7 @@ export function V2BinderTagsTab({
                         ) : null}
                       </div>
                     </div>
-                    <TagManageRows tags={group.tags} emptyHint="None yet" />
+                    <TagManageRows tags={group.tags} focusKeys={focusKeys} emptyHint="None yet" />
                     {group.tags.length > PREVIEW ? (
                       <p className="mt-2.5 text-[10px] text-zinc-500">
                         View all {group.tags.length}
@@ -541,12 +563,19 @@ export function V2BinderTagsTab({
           </button>
         </div>
 
+        <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">
+          Journal Flags that appear on this binder or its direct evidence. Branch
+          suggestions nearby do not count. Flag / Disable only via Manage Trackers.
+        </p>
+
         {contextTrackers.length === 0 && otherTrackers.length === 0 ? (
-          <p className="mt-4 text-xs text-zinc-600">No Trackers on Tags in this context yet.</p>
+          <p className="mt-4 text-xs text-zinc-600">
+            No journal Flags intersect this entity’s Tags yet.
+          </p>
         ) : (
           <div className="mt-4 space-y-3">
             {contextTrackers.length > 0 ? (
-              <ul className={TAG_MANAGE_LIST_CLASS} aria-label="Trackers in this context">
+              <ul className={TAG_MANAGE_LIST_CLASS} aria-label="Trackers on this entity">
                 {contextTrackers.map((tag) => (
                   <li key={tag}>
                     <span className={TAG_MANAGE_ROW_TRACKER_CLASS}>
@@ -581,8 +610,10 @@ export function V2BinderTagsTab({
           </div>
         )}
         <p className="mt-3 text-[11px] tabular-nums text-zinc-500">
-          {contextTrackers.length + otherTrackers.length} tracker
-          {contextTrackers.length + otherTrackers.length === 1 ? "" : "s"}
+          {contextTrackers.length} on this entity
+          {otherTrackers.length > 0
+            ? ` · ${otherTrackers.length} other journal`
+            : ""}
         </p>
 
         {manageOpen ? (
