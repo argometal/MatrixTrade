@@ -519,6 +519,11 @@ export function NetworkContactShell({
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         <div className="network-contact-shell px-4 py-6 lg:px-8">
       <div className="mb-4 text-xs text-zinc-600">
+        <a href="/argus/v2/browse/network" className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition hover:text-zinc-300">
+          <span aria-hidden>←</span>
+          Back to Network
+        </a>
+        <span className="mx-2 text-zinc-700">·</span>
         <a href="/argus/v2/browse/network" className="hover:text-zinc-400">
           Network
         </a>
