@@ -4,10 +4,10 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0812b` |
-| **Commit** | Always `git rev-parse main0812b` after fetch (must match `origin/main` tip at pin; ship merge `f3e02ae`) |
+| **Tag** | `main0812c` |
+| **Commit** | Always `git rev-parse main0812c` after fetch (must match `origin/main` tip at pin; ship merge `fef4d3f`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
-| **Date** | 2026-08-13 |
+| **Date** | 2026-08-14 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
 
 ## Sync local (avoid conflicts / lost work)
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0812b
+# optional pin: git checkout main0812c
 ```
 
 ## What this deploy includes
 
+- **PR #267:** Tracker Watched truth (definition D) — passive ⚑ on binder/evidence rows; Trackers = journal Flags ∩ ownership; Home `hasTracker` binder ∪ direct evidence
 - **PR #265:** Topic Tags provenance UI — binder / Tags in this Topic / By Event (Event Tags · On Notes · Open Event) / Trackers; demote aggregate evidence soup
 - **PR #263:** Topic Chronicle tags + Open Event link; Links inspect clearer Open Event / View Chronicle CTAs
 - **PR #261:** Project/Org Timeline portfolio — linked Topics/Events anchors + their Notes/emails (Topics filter chip)
