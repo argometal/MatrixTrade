@@ -2,70 +2,70 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="900" height="900">
 <rect width="100" height="100" fill="#09090b"/>
 <text x="50" y="4" text-anchor="middle" fill="#a1a1aa" font-size="3">Radial (production)</text>
-<line x1="50" y1="50" x2="68" y2="18.823085463760208" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="68" y1="18.823085463760208" x2="86" y2="50" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="68" y1="18.823085463760208" x2="72.51666049839541" y2="63" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="86" y1="50" x2="31.999999999999993" y2="81.17691453623979" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="72.51666049839541" y1="63" x2="27.4833395016046" y2="63.00000000000001" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="50" y1="50" x2="31.999999999999986" y2="18.823085463760215" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="50" y1="24" x2="72.5166604983954" y2="37" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="72.5166604983954" y1="37" x2="68" y2="81.17691453623979" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="72.5166604983954" y1="37" x2="50" y2="76" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="68" y1="81.17691453623979" x2="14" y2="50.00000000000001" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="50" y1="76" x2="27.483339501604597" y2="37" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="72.51666049839541" y1="63" x2="68" y2="81.17691453623979" stroke="rgba(113,113,122,0.45)" stroke-width="0.8" opacity="1"/>
-<line x1="50" y1="50" x2="50" y2="24" stroke="rgba(251,113,133,0.5)" stroke-width="0.5" opacity="1" stroke-dasharray="1.2 1.4"/>
-<line x1="31.999999999999986" y1="18.823085463760215" x2="72.5166604983954" y2="37" stroke="rgba(113,113,122,0.45)" stroke-width="0.8" opacity="1"/>
+<line x1="50" y1="50" x2="68.96249999999999" y2="17.155986561475167" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="68.96249999999999" y1="17.155986561475167" x2="87.925" y2="50" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="68.96249999999999" y1="17.155986561475167" x2="74.18375940068046" y2="63.96249999999999" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="87.925" y1="50" x2="31.037499999999994" y2="82.84401343852483" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="74.18375940068046" y1="63.96249999999999" x2="25.816240599319556" y2="63.962500000000006" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="50" y1="50" x2="31.037499999999984" y2="17.155986561475174" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="50" y1="22.075" x2="75.85085830296549" y2="35.075" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="75.85085830296549" y1="35.075" x2="68.96249999999999" y2="82.84401343852483" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="75.85085830296549" y1="35.075" x2="50" y2="77.925" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="68.96249999999999" y1="82.84401343852483" x2="12.075000000000003" y2="50.00000000000001" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="50" y1="77.925" x2="25.816240599319553" y2="36.037499999999994" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="74.18375940068046" y1="63.96249999999999" x2="68.96249999999999" y2="82.84401343852483" stroke="rgba(113,113,122,0.45)" stroke-width="0.8" opacity="1"/>
+<line x1="50" y1="50" x2="50" y2="22.075" stroke="rgba(251,113,133,0.5)" stroke-width="0.5" opacity="1" stroke-dasharray="1.2 1.4"/>
+<line x1="31.037499999999984" y1="17.155986561475174" x2="75.85085830296549" y2="35.075" stroke="rgba(113,113,122,0.45)" stroke-width="0.8" opacity="1"/>
 <g opacity="1">
 <circle cx="50" cy="50" r="4" fill="rgb(56,189,248)" stroke="rgb(251,191,36)" stroke-width="0.6"/>
 <text x="50" y="55.5" text-anchor="middle" fill="#c8c8d2" font-size="2.4">ExxonMobil</text>
 </g>
 <g opacity="1">
-<circle cx="50" cy="24" r="3.2" fill="rgb(56,189,248)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="50" y="29.5" text-anchor="middle" fill="#c8c8d2" font-size="2.4">SLB</text>
+<circle cx="50" cy="22.075" r="3.2" fill="rgb(56,189,248)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="50" y="27.575" text-anchor="middle" fill="#c8c8d2" font-size="2.4">SLB</text>
 </g>
 <g opacity="1">
-<circle cx="68" cy="18.823085463760208" r="3.2" fill="rgb(245,158,11)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="68" y="24.323085463760208" text-anchor="middle" fill="#c8c8d2" font-size="2.4">XOM Ops</text>
+<circle cx="68.96249999999999" cy="17.155986561475167" r="3.2" fill="rgb(245,158,11)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="68.96249999999999" y="22.655986561475167" text-anchor="middle" fill="#c8c8d2" font-size="2.4">XOM Ops</text>
 </g>
 <g opacity="1">
-<circle cx="72.5166604983954" cy="37" r="3.2" fill="rgb(245,158,11)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="72.5166604983954" y="42.5" text-anchor="middle" fill="#c8c8d2" font-size="2.4">SLB Digi</text>
+<circle cx="75.85085830296549" cy="35.075" r="3.2" fill="rgb(245,158,11)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="75.85085830296549" y="40.575" text-anchor="middle" fill="#c8c8d2" font-size="2.4">SLB Digi</text>
 </g>
 <g opacity="1">
-<circle cx="86" cy="50" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="86" y="55.5" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Wells</text>
+<circle cx="87.925" cy="50" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="87.925" y="55.5" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Wells</text>
 </g>
 <g opacity="1">
-<circle cx="72.51666049839541" cy="63" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="72.51666049839541" y="68.5" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Latency</text>
+<circle cx="74.18375940068046" cy="63.96249999999999" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="74.18375940068046" y="69.46249999999999" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Latency</text>
 </g>
 <g opacity="1">
-<circle cx="68" cy="81.17691453623979" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="68" y="86.67691453623979" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Handoff</text>
+<circle cx="68.96249999999999" cy="82.84401343852483" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="68.96249999999999" y="88.34401343852483" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Handoff</text>
 </g>
 <g opacity="1">
-<circle cx="50" cy="76" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="50" y="81.5" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Supply</text>
+<circle cx="50" cy="77.925" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="50" y="83.425" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Supply</text>
 </g>
 <g opacity="1">
-<circle cx="31.999999999999993" cy="81.17691453623979" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="31.999999999999993" y="86.67691453623979" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Q1 Review</text>
+<circle cx="31.037499999999994" cy="82.84401343852483" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="31.037499999999994" y="88.34401343852483" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Q1 Review</text>
 </g>
 <g opacity="1">
-<circle cx="27.4833395016046" cy="63.00000000000001" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="27.4833395016046" y="68.5" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Kickoff</text>
+<circle cx="25.816240599319556" cy="63.962500000000006" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="25.816240599319556" y="69.4625" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Kickoff</text>
 </g>
 <g opacity="1">
-<circle cx="14" cy="50.00000000000001" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="14" y="55.50000000000001" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Sync</text>
+<circle cx="12.075000000000003" cy="50.00000000000001" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="12.075000000000003" y="55.50000000000001" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Sync</text>
 </g>
 <g opacity="1">
-<circle cx="27.483339501604597" cy="37" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="27.483339501604597" y="42.5" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Drill</text>
+<circle cx="25.816240599319553" cy="36.037499999999994" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="25.816240599319553" y="41.537499999999994" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Drill</text>
 </g>
 <g opacity="1">
-<circle cx="31.999999999999986" cy="18.823085463760215" r="3.2" fill="rgb(139,92,246)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="31.999999999999986" y="24.323085463760215" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Alice</text>
+<circle cx="31.037499999999984" cy="17.155986561475174" r="3.2" fill="rgb(139,92,246)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="31.037499999999984" y="22.655986561475174" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Alice</text>
 </g>
 </svg>
