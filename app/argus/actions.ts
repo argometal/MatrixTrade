@@ -1904,7 +1904,7 @@ async function revalidateRunbookSurfaces(runbookId: string, linkedEntityIds: str
 }
 
 async function loadOrSeedProgress(runbookId: string, entityId: string) {
-  const { findRunbookProgress, seedProgressFromTemplateItems } = await import(
+  const { emptyRunbookProgress, findRunbookProgress } = await import(
     "@/lib/argus/runbook-helpers"
   );
   const data = await readArgus();
@@ -1912,7 +1912,8 @@ async function loadOrSeedProgress(runbookId: string, entityId: string) {
   if (!runbook) return null;
   const existing = findRunbookProgress(data.runbookProgress, runbookId, entityId);
   if (existing) return existing;
-  const seeded = seedProgressFromTemplateItems(runbook, entityId);
+  // Empty scope — do not import template item.done (pollutes child-project checks).
+  const seeded = emptyRunbookProgress(runbookId, entityId);
   await upsertRunbookProgress(seeded);
   return seeded;
 }

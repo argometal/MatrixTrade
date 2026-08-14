@@ -42,6 +42,7 @@ import {
   runbookItemSectionId,
   runbookItemsToText,
   runbookProgress,
+  runbookSectionCheckIds,
   runbookSectionChildStats,
 } from "@/lib/argus/runbook-helpers";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
@@ -308,7 +309,9 @@ export function V2RunbookWorkPanel({
 }) {
   const router = useRouter();
   const importRef = useRef<HTMLInputElement>(null);
-  const [showDone, setShowDone] = useState(false);
+  // Execute mode (Project/Topic/Event): keep accomplished visible so a check does not
+  // vanish mid-click and look like “cannot check on child projects”.
+  const [showDone, setShowDone] = useState(executeMode);
   const [bulkText, setBulkText] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -318,13 +321,28 @@ export function V2RunbookWorkPanel({
   const [menuId, setMenuId] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const [optimisticDone, setOptimisticDone] = useState<Record<string, boolean>>({});
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (!editingTitle) setTitleDraft(runbook.title);
   }, [runbook.title, editingTitle]);
 
-  const progress = useMemo(() => runbookProgress(runbook.items), [runbook.items]);
+  useEffect(() => {
+    setOptimisticDone({});
+  }, [runbook.id, runbook.updatedAt]);
+
+  const displayItems = useMemo(
+    () =>
+      runbook.items.map((item) =>
+        item.type === "item" && optimisticDone[item.id] !== undefined
+          ? { ...item, done: optimisticDone[item.id] }
+          : item
+      ),
+    [runbook.items, optimisticDone]
+  );
+
+  const progress = useMemo(() => runbookProgress(displayItems), [displayItems]);
   const hasNestedSubtasks = useMemo(() => runbookHasNestedSubtasks(runbook.items), [runbook.items]);
   const peers = useMemo(
     () => peerLists.filter((list) => list.id !== runbook.id),
@@ -332,9 +350,9 @@ export function V2RunbookWorkPanel({
   );
 
   const hasVisibleCards = useMemo(() => {
-    if (showDone) return runbook.items.some(isRunbookCheck);
-    return runbook.items.some((item) => isRunbookCheck(item) && !item.done);
-  }, [runbook.items, showDone]);
+    if (showDone) return displayItems.some(isRunbookCheck);
+    return displayItems.some((item) => isRunbookCheck(item) && !item.done);
+  }, [displayItems, showDone]);
 
   function run(action: () => Promise<void>, successMessage?: string) {
     setError(null);
@@ -344,6 +362,7 @@ export function V2RunbookWorkPanel({
         if (successMessage) setStatus(successMessage);
         router.refresh();
       } catch (err) {
+        setOptimisticDone({});
         const { layer, message } = formatArgusError(err);
         setError(`${layer.toUpperCase()}: ${message}`);
       }
@@ -351,6 +370,7 @@ export function V2RunbookWorkPanel({
   }
 
   function handleToggle(itemId: string, done: boolean) {
+    setOptimisticDone((current) => ({ ...current, [itemId]: done }));
     run(() => toggleRunbookItemAction(runbook.id, itemId, done, scopeEntityId));
   }
 
@@ -434,6 +454,14 @@ export function V2RunbookWorkPanel({
   }
 
   function handleCheckAll() {
+    const ids = displayItems.filter(isRunbookCheck).map((item) => item.id);
+    if (ids.length > 0) {
+      setOptimisticDone((current) => {
+        const next = { ...current };
+        for (const id of ids) next[id] = true;
+        return next;
+      });
+    }
     if (scopeEntityId) {
       run(() => checkAllRunbookItemsScopedAction(runbook.id, scopeEntityId), "All checks done.");
       return;
@@ -442,6 +470,14 @@ export function V2RunbookWorkPanel({
   }
 
   function handleUncheckAll() {
+    const ids = displayItems.filter(isRunbookCheck).map((item) => item.id);
+    if (ids.length > 0) {
+      setOptimisticDone((current) => {
+        const next = { ...current };
+        for (const id of ids) next[id] = false;
+        return next;
+      });
+    }
     if (scopeEntityId) {
       run(() => uncheckAllRunbookItemsScopedAction(runbook.id, scopeEntityId), "All checks cleared.");
       return;
@@ -450,6 +486,14 @@ export function V2RunbookWorkPanel({
   }
 
   function handleSectionCheckAll(sectionId: string, done: boolean) {
+    const ids = runbookSectionCheckIds(displayItems, sectionId);
+    if (ids.length > 0) {
+      setOptimisticDone((current) => {
+        const next = { ...current };
+        for (const id of ids) next[id] = done;
+        return next;
+      });
+    }
     if (scopeEntityId) {
       run(
         () => setRunbookSectionChecksScopedAction(runbook.id, sectionId, scopeEntityId, done),
@@ -544,7 +588,7 @@ export function V2RunbookWorkPanel({
 
   function isCollapsedAway(item: RunbookItem): boolean {
     if (item.type === "section") return false;
-    const sectionId = runbookItemSectionId(runbook.items, item.id);
+    const sectionId = runbookItemSectionId(displayItems, item.id);
     if (!sectionId) return false;
     return !!collapsedSections[sectionId];
   }
@@ -815,7 +859,7 @@ export function V2RunbookWorkPanel({
         </p>
       ) : (
         <div className="rounded-xl border border-zinc-800/60 bg-zinc-950/40 px-2 sm:px-3">
-          {runbook.items.map((item, itemIndex) => {
+          {displayItems.map((item, itemIndex) => {
             const collapsedAway = isCollapsedAway(item);
             const hideDone = !showDone && item.type === "item" && item.done;
             const hiddenOnScreen = collapsedAway || hideDone;
@@ -838,7 +882,7 @@ export function V2RunbookWorkPanel({
 
             if (item.type === "section") {
               const collapsed = !!collapsedSections[item.id];
-              const stats = runbookSectionChildStats(runbook.items, item.id);
+              const stats = runbookSectionChildStats(displayItems, item.id);
               const sectionAllDone = stats.total > 0 && stats.open === 0;
               const sectionPartial = stats.done > 0 && stats.open > 0;
               return (

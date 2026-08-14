@@ -258,7 +258,23 @@ export function applyRunbookProgress(
   });
 }
 
-/** Seed progress from legacy item.done flags (one-time migration aid). */
+/** Fresh per-entity progress — never copy template `item.done` into project/topic scopes. */
+export function emptyRunbookProgress(runbookId: string, entityId: string): RunbookProgress {
+  return {
+    id: runbookProgressRecordId(runbookId, entityId),
+    runbookId,
+    entityId,
+    checks: {},
+    closed: false,
+    updatedAt: runbookStamp(),
+  };
+}
+
+/**
+ * Seed progress from legacy item.done flags (one-time migration aid only).
+ * Do not use for normal Project/Topic/Event execute toggles — that copied org-template
+ * checkmarks onto child projects and made checks look broken / instantly “all done”.
+ */
 export function seedProgressFromTemplateItems(
   runbook: Runbook,
   entityId: string

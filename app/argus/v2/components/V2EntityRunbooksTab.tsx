@@ -102,12 +102,13 @@ export function V2EntityRunbooksTab({
 
   const displayRunbook = useMemo(() => {
     if (!selected) return null;
-    if (isLibrary && !progressForSelected) return selected;
+    // Always merge scoped progress. Never show raw template item.done — that made
+    // Organization library and first Project toggles disagree with saved progress.
     return {
       ...selected,
       items: applyRunbookProgress(selected, progressForSelected ?? null),
     };
-  }, [selected, progressForSelected, isLibrary]);
+  }, [selected, progressForSelected]);
 
   const linkable = useMemo(
     () => libraryRunbooks.filter((rb) => !rb.linkedEntityIds.includes(entityId)),
