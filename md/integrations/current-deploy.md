@@ -2,10 +2,10 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0814f`
+Pinned revision: `main0814g`
 
-Ship commit: `d636d45`
+Ship commit: `d4bc20a`
 
 Includes:
-- Runbook ↔ Tag glue (PR #280) — existing ARGUS tags classify runbooks; Pattern/binder match suggests assign; progress stays per entity
-- Prior: child-project runbook checks (PR #278 / main0814e), Event delete PIN lock (#276), entity Back (#275)
+- Degree-aware longer hub links — Radial + Molecule (PR #282)
+- Prior: Runbook ↔ Tag glue (#280 / main0814f), child-project runbook checks (#278), Event delete PIN (#276)
