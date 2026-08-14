@@ -2,10 +2,10 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0814e`
+Pinned revision: `main0814f`
 
-Ship commit: `b625231`
+Ship commit: `d636d45`
 
 Includes:
-- Runbook checks on child projects (PR #278) — empty scope seed, scoped UI, execute-mode show accomplished + optimistic checks
-- Prior: Event delete PIN lock (PR #276 / main0814d), entity Back (#275), tag rename (#274), Topic runbook org edit (#272), neighbors Molecule (#271)
+- Runbook ↔ Tag glue (PR #280) — existing ARGUS tags classify runbooks; Pattern/binder match suggests assign; progress stays per entity
+- Prior: child-project runbook checks (PR #278 / main0814e), Event delete PIN lock (#276), entity Back (#275)
