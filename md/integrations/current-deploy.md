@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0814b` |
-| **Commit** | Always `git rev-parse main0814b` after fetch (must match `origin/main` tip at pin; ship merge `f63250e`) |
+| **Tag** | `main0814c` |
+| **Commit** | Always `git rev-parse main0814c` after fetch (must match `origin/main` tip at pin; ship merge `6a88868`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-14 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0814b
+# optional pin: git checkout main0814c
 ```
 
 ## What this deploy includes
 
+- **PR #275:** Topic/Event/Inbox Back visible on desktop; clear focus; Network Back to Network
 - **PR #274:** Rename Tags from Home Tags universe (Notes/binders/Trackers; not Flag/Disable)
 - **PR #272:** Topic/Event Runbooks pass linked `organizationId` — “Edit on organization” works when org is linked (execute mode unchanged)
 - **PR #271:** Neighbors Molecule A/B (Radial default; Molecule experimental) + Tag Intel small dots + AI-readable investigation doc
