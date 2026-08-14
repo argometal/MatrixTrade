@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="900" height="900">
+<rect width="100" height="100" fill="#09090b"/>
+<text x="50" y="4" text-anchor="middle" fill="#a1a1aa" font-size="3">Molecule · select Exxon (positions kept)</text>
+<line x1="58.26568263541423" y1="23.42528312620829" x2="65.43810792139902" y2="37.521423473222804" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="65.43810792139902" y1="37.521423473222804" x2="79.10546394189414" y2="41.67379329987683" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="65.43810792139902" y1="37.521423473222804" x2="62.79418604515555" y2="54.725394262405615" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="79.10546394189414" y1="41.67379329987683" x2="92" y2="50.617474085015" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="62.79418604515555" y1="54.725394262405615" x2="66.45715721284256" y2="70.519556858655" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="58.26568263541423" y1="23.42528312620829" x2="44.94594833267258" y2="27.243986888806926" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="23.37671567378355" y1="33.2620475481343" x2="24.68893190668396" y2="47.233419095244344" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="24.68893190668396" y1="47.233419095244344" x2="34.983622772131255" y2="60.813119697284336" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="24.68893190668396" y1="47.233419095244344" x2="15.150260299969283" y2="58.87276081640338" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="34.983622772131255" y1="60.813119697284336" x2="39.91735830195247" y2="76.57471687379171" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="15.150260299969283" y1="58.87276081640338" x2="8" y2="73.10704038938172" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="62.79418604515555" y1="54.725394262405615" x2="34.983622772131255" y2="60.813119697284336" stroke="rgba(63,63,70,0.25)" stroke-width="0.8" opacity="0.35"/>
+<line x1="58.26568263541423" y1="23.42528312620829" x2="23.37671567378355" y2="33.2620475481343" stroke="rgba(251,113,133,0.5)" stroke-width="0.5" opacity="1" stroke-dasharray="1.2 1.4"/>
+<line x1="44.94594833267258" y1="27.243986888806926" x2="24.68893190668396" y2="47.233419095244344" stroke="rgba(63,63,70,0.25)" stroke-width="0.8" opacity="0.35"/>
+<g opacity="1">
+<circle cx="58.26568263541423" cy="23.42528312620829" r="4" fill="rgb(56,189,248)" stroke="rgb(251,191,36)" stroke-width="0.6"/>
+<text x="58.26568263541423" y="28.92528312620829" text-anchor="middle" fill="#c8c8d2" font-size="2.4">ExxonMobil</text>
+</g>
+<g opacity="1">
+<circle cx="23.37671567378355" cy="33.2620475481343" r="3.2" fill="rgb(56,189,248)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="23.37671567378355" y="38.7620475481343" text-anchor="middle" fill="#c8c8d2" font-size="2.4">SLB</text>
+</g>
+<g opacity="1">
+<circle cx="65.43810792139902" cy="37.521423473222804" r="3.2" fill="rgb(245,158,11)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="65.43810792139902" y="43.021423473222804" text-anchor="middle" fill="#c8c8d2" font-size="2.4">XOM Ops</text>
+</g>
+<g opacity="0.22">
+<circle cx="24.68893190668396" cy="47.233419095244344" r="3.2" fill="rgb(245,158,11)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="24.68893190668396" y="52.733419095244344" text-anchor="middle" fill="#c8c8d2" font-size="2.4">SLB Digi</text>
+</g>
+<g opacity="0.22">
+<circle cx="79.10546394189414" cy="41.67379329987683" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="79.10546394189414" y="47.17379329987683" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Wells</text>
+</g>
+<g opacity="0.22">
+<circle cx="62.79418604515555" cy="54.725394262405615" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="62.79418604515555" y="60.225394262405615" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Latency</text>
+</g>
+<g opacity="0.22">
+<circle cx="34.983622772131255" cy="60.813119697284336" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="34.983622772131255" y="66.31311969728434" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Handoff</text>
+</g>
+<g opacity="0.22">
+<circle cx="15.150260299969283" cy="58.87276081640338" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="15.150260299969283" y="64.37276081640337" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Supply</text>
+</g>
+<g opacity="0.22">
+<circle cx="92" cy="50.617474085015" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="92" y="56.117474085015" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Q1 Review</text>
+</g>
+<g opacity="0.22">
+<circle cx="66.45715721284256" cy="70.519556858655" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="66.45715721284256" y="76.019556858655" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Kickoff</text>
+</g>
+<g opacity="0.22">
+<circle cx="39.91735830195247" cy="76.57471687379171" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="39.91735830195247" y="82.07471687379171" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Sync</text>
+</g>
+<g opacity="0.22">
+<circle cx="8" cy="73.10704038938172" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="8" y="78.60704038938172" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Drill</text>
+</g>
+<g opacity="1">
+<circle cx="44.94594833267258" cy="27.243986888806926" r="3.2" fill="rgb(139,92,246)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="44.94594833267258" y="32.74398688880693" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Alice</text>
+</g>
+</svg>
