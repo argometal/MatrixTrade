@@ -15,7 +15,11 @@ import {
   forceY,
 } from "d3-force-3d";
 import type { V2GraphEdge, V2GraphNode } from "./intelligence-viz";
-import { layoutNeighborhoodGraphNodes } from "./intelligence-viz";
+import {
+  degreeLinkLengthExtra,
+  layoutNeighborhoodGraphNodes,
+  neighborhoodDegreeMap,
+} from "./intelligence-viz";
 
 export type NeighborhoodLayoutMode = "radial" | "molecule";
 
@@ -33,11 +37,20 @@ type SimLink = {
   kind?: V2GraphEdge["kind"];
 };
 
-/** Preferred link distance from existing evidence edge weight. */
+/** Preferred link distance from existing evidence edge weight (base). */
 export function moleculeLinkDistance(weight: number): number {
   if (weight >= 2) return 14; // linked — tight molecule bond
   if (weight >= 1) return 26; // co-mentioned
   return 42; // focus-affinity — weak / longer
+}
+
+/** Weight base + extra length when either endpoint is a high-degree hub. */
+export function moleculeLinkDistanceForDegrees(
+  weight: number,
+  degreeA: number,
+  degreeB: number
+): number {
+  return moleculeLinkDistance(weight) + degreeLinkLengthExtra(degreeA, degreeB);
 }
 
 /** Link spring strength from weight (stronger in-community pull). */
@@ -63,9 +76,10 @@ export function layoutNeighborhoodMoleculeNodes(
   }
 
   const iterations = options.iterations ?? 280;
+  const degrees = neighborhoodDegreeMap(edges);
 
-  // Seed from radial so the sim starts from a stable ARGUS arrangement (not random).
-  const seeded = layoutNeighborhoodGraphNodes(nodes, centerId);
+  // Seed from radial (degree-aware) so the sim starts from a stable ARGUS arrangement.
+  const seeded = layoutNeighborhoodGraphNodes(nodes, centerId, edges);
   const simNodes: SimNode[] = seeded.map((n) => ({
     ...n,
     z: 0,
@@ -86,7 +100,15 @@ export function layoutNeighborhoodMoleculeNodes(
 
   const linkForce = forceLink<SimNode, SimLink>(simLinks)
     .id((d) => d.id)
-    .distance((d) => moleculeLinkDistance(d.weight))
+    .distance((d) => {
+      const sourceId = typeof d.source === "string" ? d.source : d.source.id;
+      const targetId = typeof d.target === "string" ? d.target : d.target.id;
+      return moleculeLinkDistanceForDegrees(
+        d.weight,
+        degrees.get(sourceId) ?? 1,
+        degrees.get(targetId) ?? 1
+      );
+    })
     .strength((d) => moleculeLinkStrength(d.weight));
 
   const simulation = forceSimulation<SimNode>(simNodes)

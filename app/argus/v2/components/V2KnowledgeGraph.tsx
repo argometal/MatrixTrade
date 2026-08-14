@@ -69,7 +69,7 @@ export function buildEgoNeighborhood(
   const subNodes = nodes.filter((n) => neighborIds.has(n.id));
   const subEdges = edges.filter((e) => neighborIds.has(e.from) && neighborIds.has(e.to));
   return {
-    nodes: layoutNeighborhoodGraphNodes(subNodes, focusId),
+    nodes: layoutNeighborhoodGraphNodes(subNodes, focusId, subEdges),
     edges: subEdges,
   };
 }

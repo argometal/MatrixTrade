@@ -1,15 +1,20 @@
 /**
- * Molecule layout experiment — same nodes/edges; weighted-force positions.
+ * Molecule + Radial — high-degree hubs get longer links.
  */
 import assert from "node:assert/strict";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import type { V2GraphEdge, V2GraphNode } from "../lib/argus/v2/intelligence-viz";
-import { layoutNeighborhoodGraphNodes } from "../lib/argus/v2/intelligence-viz";
+import {
+  degreeLinkLengthExtra,
+  layoutNeighborhoodGraphNodes,
+  neighborhoodDegreeMap,
+} from "../lib/argus/v2/intelligence-viz";
 import {
   buildEgoNeighborhoodPreservePositions,
   layoutNeighborhoodMoleculeNodes,
   moleculeLinkDistance,
+  moleculeLinkDistanceForDegrees,
   moleculeLinkStrength,
 } from "../lib/argus/v2/neighborhood-molecule-layout";
 
@@ -18,6 +23,13 @@ assert.equal(moleculeLinkDistance(1), 26);
 assert.equal(moleculeLinkDistance(0.5), 42);
 assert.ok(moleculeLinkStrength(2) > moleculeLinkStrength(1));
 assert.ok(moleculeLinkStrength(1) > moleculeLinkStrength(0.5));
+
+assert.equal(degreeLinkLengthExtra(1, 2), 0);
+assert.ok(degreeLinkLengthExtra(8, 1) > degreeLinkLengthExtra(3, 1));
+assert.ok(
+  moleculeLinkDistanceForDegrees(2, 8, 1) > moleculeLinkDistance(2),
+  "hub-linked edges are longer than base weight distance"
+);
 
 function denseNeighborhood(): { nodes: V2GraphNode[]; edges: V2GraphEdge[]; centerId: string } {
   const centerId = "xom";
@@ -125,12 +137,28 @@ function renderSvg(
 }
 
 const { nodes, edges, centerId } = denseNeighborhood();
-const radial = layoutNeighborhoodGraphNodes(nodes, centerId);
+const degrees = neighborhoodDegreeMap(edges);
+assert.ok((degrees.get("xom") ?? 0) >= 3, "fixture center is a hub");
+
+const radial = layoutNeighborhoodGraphNodes(nodes, centerId, edges);
+const radialFlat = layoutNeighborhoodGraphNodes(nodes, centerId, []);
 const molecule = layoutNeighborhoodMoleculeNodes(nodes, edges, centerId);
 
 assert.equal(radial.length, 13);
 assert.equal(molecule.length, 13);
 assert.ok(molecule.every((n) => n.x >= 0 && n.x <= 100 && n.y >= 0 && n.y <= 100));
+
+// Degree-aware radial: mean distance from center should grow vs edges ignored.
+function meanRadius(laid: V2GraphNode[], cid: string): number {
+  const c = laid.find((n) => n.id === cid)!;
+  const others = laid.filter((n) => n.id !== cid);
+  const sum = others.reduce((acc, n) => acc + Math.hypot(n.x - c.x, n.y - c.y), 0);
+  return sum / Math.max(others.length, 1);
+}
+assert.ok(
+  meanRadius(radial, centerId) > meanRadius(radialFlat, centerId),
+  "Radial: high-degree hub gets longer spokes when edges are known"
+);
 
 const xs = new Set(molecule.map((n) => Math.round(n.x * 10)));
 const ys = new Set(molecule.map((n) => Math.round(n.y * 10)));

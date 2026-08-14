@@ -746,17 +746,45 @@ export function buildV2EntityNeighborhoodGraph(
   }
 
   return {
-    nodes: layoutNeighborhoodGraphNodes(rawNodes, centerEntityId),
+    nodes: layoutNeighborhoodGraphNodes(rawNodes, centerEntityId, [...edgeMap.values()]),
     edges: [...edgeMap.values()],
     centerId: centerEntityId,
   };
 }
 
+/** Undirected link count per node in a neighborhood edge set. */
+export function neighborhoodDegreeMap(edges: V2GraphEdge[]): Map<string, number> {
+  const deg = new Map<string, number>();
+  for (const edge of edges) {
+    if (edge.from === edge.to) continue;
+    deg.set(edge.from, (deg.get(edge.from) ?? 0) + 1);
+    deg.set(edge.to, (deg.get(edge.to) ?? 0) + 1);
+  }
+  return deg;
+}
+
+/**
+ * Extra length when either endpoint is a busy hub (many links).
+ * Rule: links touching high-degree nodes should be longer.
+ */
+export function degreeLinkLengthExtra(degreeA: number, degreeB: number): number {
+  const hub = Math.max(degreeA, degreeB);
+  if (hub <= 2) return 0;
+  return Math.min(28, (hub - 2) * 3.5);
+}
+
 /** Radial layout — center entity in the middle, neighbors on a ring (or dual ring when crowded). */
-export function layoutNeighborhoodGraphNodes(nodes: V2GraphNode[], centerId: string): V2GraphNode[] {
+export function layoutNeighborhoodGraphNodes(
+  nodes: V2GraphNode[],
+  centerId: string,
+  edges: V2GraphEdge[] = []
+): V2GraphNode[] {
   const center = nodes.find((n) => n.id === centerId);
   const neighbors = nodes.filter((n) => n.id !== centerId);
   const laidOut: V2GraphNode[] = [];
+  const degrees = neighborhoodDegreeMap(edges);
+  const hasEdges = edges.length > 0;
+  const centerDeg = hasEdges ? (degrees.get(centerId) ?? neighbors.length) : 0;
 
   if (center) laidOut.push({ ...center, x: 50, y: 50 });
 
@@ -770,6 +798,11 @@ export function layoutNeighborhoodGraphNodes(nodes: V2GraphNode[], centerId: str
     else if (n <= 10) radius = 32;
     else {
       radius = index % 2 === 0 ? 26 : 36;
+    }
+    // Longer spokes for busy hubs (center and/or highly linked neighbor).
+    if (hasEdges) {
+      const neighborDeg = degrees.get(node.id) ?? 1;
+      radius = Math.min(46, radius + degreeLinkLengthExtra(centerDeg, neighborDeg) * 0.55);
     }
     laidOut.push({
       ...node,
