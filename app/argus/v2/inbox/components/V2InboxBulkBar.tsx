@@ -8,6 +8,7 @@ import {
   bulkMergeInboxTopicsAction,
 } from "@/app/argus/actions";
 import { TagPickerModal, type TagBuckets } from "@/app/argus/components/TagPickerModal";
+import { resolveLinkedDeleteUnlockMode } from "@/lib/argus/delete-unlock-mode";
 import { DELETE_AUTH } from "@/lib/argus/ux-copy";
 
 export function V2InboxBulkBar({
@@ -106,11 +107,17 @@ export function V2InboxBulkBar({
       setDeleteConfirmOpen(true);
       return;
     }
-    if (requiresAuthenticator && !totpConfigured) {
-      setError(DELETE_AUTH.totpNotConfigured);
+    const unlockMode = resolveLinkedDeleteUnlockMode({
+      linkedRequiresAuthenticator: requiresAuthenticator,
+      totpConfigured,
+      deleteCodeConfigured,
+    });
+    if (unlockMode === "none") {
+      setDeleteConfirmOpen(true);
       return;
     }
-    const needsUnlock = requiresAuthenticator ? !deleteAuthUnlocked : deleteCodeConfigured && !deleteUnlocked;
+    const needsUnlock =
+      unlockMode === "totp" ? !deleteAuthUnlocked : unlockMode === "pin" ? !deleteUnlocked : false;
     if (needsUnlock) {
       setUnlockOpen(true);
       return;
@@ -118,7 +125,12 @@ export function V2InboxBulkBar({
     setDeleteConfirmOpen(true);
   }
 
-  const isAuthUnlock = requiresAuthenticator;
+  const unlockMode = resolveLinkedDeleteUnlockMode({
+    linkedRequiresAuthenticator: requiresAuthenticator,
+    totpConfigured,
+    deleteCodeConfigured,
+  });
+  const isAuthUnlock = unlockMode === "totp";
 
   return (
     <>

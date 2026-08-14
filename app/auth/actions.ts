@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { verifyArgusPassword, verifyArgusPrivatePin, verifyDeletionCode, verifyTradingPassword } from "@/lib/auth/passwords";
+import { verifyArgusPassword, verifyArgusPrivatePin, verifyDeletionCode, verifyTradingPassword, argusPrivateConfigured } from "@/lib/auth/passwords";
 import {
   clearAllSessions,
   clearArgusPrivateUnlock,
@@ -73,6 +73,11 @@ export async function unlockArgusDeleteAction(formData: FormData): Promise<void>
   }
 
   await setArgusDeleteUnlock();
+  // Private PIN often doubles as delete code — unlock both so Event/Topic delete
+  // confirm does not still demand a protected-evidence PIN after Unlock delete.
+  if (argusPrivateConfigured() && verifyArgusPrivatePin(code)) {
+    await setArgusPrivateUnlock();
+  }
   redirect(returnTo.startsWith("/") ? returnTo : "/argus/v2/inbox");
 }
 

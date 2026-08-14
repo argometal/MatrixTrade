@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { unlockArgusDeleteAction, unlockArgusDeleteAuthAction } from "@/app/auth/actions";
 import { deleteInboxAction } from "@/app/argus/actions";
+import { resolveLinkedDeleteUnlockMode } from "@/lib/argus/delete-unlock-mode";
 import { DELETE_AUTH } from "@/lib/argus/ux-copy";
 
 export function V2InboxDeleteControl({
@@ -35,7 +36,20 @@ export function V2InboxDeleteControl({
   const [code, setCode] = useState("");
   const [totp, setTotp] = useState("");
 
-  if (!deleteAuthConfigured) {
+  const unlockMode = resolveLinkedDeleteUnlockMode({
+    linkedRequiresAuthenticator: requiresAuthenticator,
+    totpConfigured,
+    deleteCodeConfigured,
+  });
+  const useAuth = unlockMode === "totp";
+  const needsUnlock =
+    unlockMode === "totp"
+      ? !deleteAuthUnlocked
+      : unlockMode === "pin"
+        ? !deleteUnlocked
+        : false;
+
+  if (!deleteAuthConfigured || unlockMode === "none") {
     return (
       <form
         action={deleteInboxAction}
@@ -56,18 +70,7 @@ export function V2InboxDeleteControl({
     );
   }
 
-  if (requiresAuthenticator && !totpConfigured) {
-    return (
-      <div className="rounded-xl border border-amber-900/40 bg-amber-950/20 px-4 py-2.5 text-xs text-amber-200/90">
-        {DELETE_AUTH.totpNotConfigured}
-      </div>
-    );
-  }
-
-  const needsUnlock = requiresAuthenticator ? !deleteAuthUnlocked : deleteCodeConfigured && !deleteUnlocked;
-
   if (needsUnlock) {
-    const isAuth = requiresAuthenticator;
     return (
       <>
         <button
@@ -75,7 +78,7 @@ export function V2InboxDeleteControl({
           onClick={() => setUnlockOpen(true)}
           className="rounded-xl border border-red-900/40 bg-red-950/15 px-4 py-2.5 text-sm font-medium text-red-300/90 hover:bg-red-950/30"
         >
-          {isAuth ? DELETE_AUTH.unlockAuthenticator : DELETE_AUTH.unlockCode}
+          {useAuth ? DELETE_AUTH.unlockAuthenticator : DELETE_AUTH.unlockCode}
         </button>
         {unlockOpen ? (
           <div
@@ -83,35 +86,38 @@ export function V2InboxDeleteControl({
             onClick={() => setUnlockOpen(false)}
           >
             <form
-              action={isAuth ? unlockArgusDeleteAuthAction : unlockArgusDeleteAction}
+              action={useAuth ? unlockArgusDeleteAuthAction : unlockArgusDeleteAction}
               className="w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
             >
               <p className="text-sm font-medium text-zinc-100">
-                {isAuth ? DELETE_AUTH.authenticatorTitle : DELETE_AUTH.codeTitle}
+                {useAuth ? DELETE_AUTH.authenticatorTitle : DELETE_AUTH.codeTitle}
               </p>
               <p className="mt-1 text-xs text-zinc-500">
-                {isAuth ? DELETE_AUTH.authenticatorHint : DELETE_AUTH.codeHint}
+                {useAuth ? DELETE_AUTH.authenticatorHint : DELETE_AUTH.codeHint}
               </p>
               <input type="hidden" name="returnTo" value={returnTo} />
               <input
-                name={isAuth ? "totp" : "code"}
-                type={isAuth ? "text" : "password"}
-                inputMode={isAuth ? "numeric" : undefined}
-                autoComplete={isAuth ? "one-time-code" : "off"}
-                placeholder={isAuth ? "000000" : DELETE_AUTH.codePlaceholder}
-                value={isAuth ? totp : code}
-                onChange={(e) => (isAuth ? setTotp(e.target.value) : setCode(e.target.value))}
+                name={useAuth ? "totp" : "code"}
+                type={useAuth ? "text" : "password"}
+                inputMode={useAuth ? "numeric" : undefined}
+                autoComplete={useAuth ? "one-time-code" : "off"}
+                placeholder={useAuth ? "000000" : DELETE_AUTH.codePlaceholder}
+                value={useAuth ? totp : code}
+                onChange={(event) =>
+                  useAuth ? setTotp(event.target.value) : setCode(event.target.value)
+                }
                 className="mt-3 w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm"
                 autoFocus
+                required
               />
-              {deleteAuthError && isAuth ? (
+              {deleteAuthError && useAuth ? (
                 <p className="mt-2 text-xs text-red-400">{DELETE_AUTH.wrongAuthenticator}</p>
               ) : null}
-              {deleteError && !isAuth ? (
+              {deleteError && !useAuth ? (
                 <p className="mt-2 text-xs text-red-400">{DELETE_AUTH.wrongCode}</p>
               ) : null}
-              {totpRequired && isAuth ? (
+              {totpRequired && useAuth ? (
                 <p className="mt-2 text-xs text-amber-400">{DELETE_AUTH.linkedRequiresAuth}</p>
               ) : null}
               <div className="mt-4 flex gap-2">
@@ -153,12 +159,10 @@ export function V2InboxDeleteControl({
           <form
             action={deleteInboxAction}
             className="w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-900 p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
           >
             <p className="text-sm font-medium text-zinc-100">{DELETE_AUTH.deleteInbox}</p>
-            <p className="mt-2 text-xs text-zinc-500">
-              {requiresAuthenticator ? DELETE_AUTH.deleteLinkedConfirm : DELETE_AUTH.deleteInboxConfirm}
-            </p>
+            <p className="mt-2 text-xs text-zinc-500">{DELETE_AUTH.deleteInboxConfirm}</p>
             <input type="hidden" name="inboxId" value={inboxId} />
             <input type="hidden" name="returnTo" value={returnTo} />
             <div className="mt-4 flex gap-2">

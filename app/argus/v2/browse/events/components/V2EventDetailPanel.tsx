@@ -522,7 +522,7 @@ export function V2EventDetailPanel({
               <V2ChronicleSelectableList
                 key={selected.id}
                 returnTo={returnTo}
-                requiresAuthenticator={false}
+                requiresAuthenticator
                 deleteUnlocked={deleteGate.deleteUnlocked}
                 deleteAuthUnlocked={deleteGate.deleteAuthUnlocked}
                 deleteCodeConfigured={deleteGate.deleteCodeConfigured}

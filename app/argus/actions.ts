@@ -1578,15 +1578,23 @@ export async function deleteEntityV2Action(formData: FormData): Promise<void> {
   const confirmName = String(formData.get("confirmName") ?? "").trim();
   const pin = String(formData.get("pin") ?? "");
   const returnTo = String(formData.get("returnTo") ?? "/argus/v2");
+  const entityKindHint = String(formData.get("entityKind") ?? "").trim().toLowerCase();
 
   const entity = await getEntity(entityId);
   if (!entity || entity.deletedAt) {
     redirect(returnTo);
   }
 
-  const kind = entityTypeToReferenceKind(entity.type, entity.notes ?? "");
+  const kindFromNotes = entityTypeToReferenceKind(entity.type, entity.notes ?? "");
+  const kind =
+    ["project", "organization", "topic", "event"].includes(kindFromNotes)
+      ? kindFromNotes
+      : ["project", "organization", "topic", "event"].includes(entityKindHint)
+        ? entityKindHint
+        : kindFromNotes;
   if (!["project", "organization", "topic", "event"].includes(kind)) {
-    redirect(returnTo);
+    const separator = returnTo.includes("?") ? "&" : "?";
+    redirect(`${returnTo}${separator}error=kind`);
   }
 
   if (confirmName.toLowerCase() !== entity.name.trim().toLowerCase()) {
@@ -1624,6 +1632,17 @@ export async function deleteEntityV2Action(formData: FormData): Promise<void> {
   revalidatePath("/argus/v2/browse/events");
   revalidatePath(`/argus/v2/projects/${entityId}`);
   revalidatePath(`/argus/v2/organizations/${entityId}`);
+  // Drop selected= so browse does not keep a missing id after soft-delete.
+  try {
+    const url = new URL(returnTo, "http://local");
+    if (url.searchParams.get("selected") === entityId) {
+      url.searchParams.delete("selected");
+      const q = url.searchParams.toString();
+      redirect(q ? `${url.pathname}?${q}` : url.pathname);
+    }
+  } catch {
+    /* relative returnTo without base — fall through */
+  }
   redirect(returnTo);
 }
 

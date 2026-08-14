@@ -172,6 +172,7 @@ export function V2EntityLifecycleActions({
     setBusy(true);
     const formData = new FormData();
     formData.set("entityId", entityId);
+    formData.set("entityKind", entityKind);
     formData.set("confirmName", confirmName.trim());
     formData.set("pin", pin);
     formData.set("returnTo", returnTo);
