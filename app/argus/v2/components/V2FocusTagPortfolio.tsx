@@ -198,7 +198,8 @@ export function V2FocusTagPortfolio({
   }, [selectedName, evidenceByTag]);
 
   const plotLayout = useMemo(() => {
-    // Bubble plot stays capped for readability; full inventory is searchable below.
+    // Dot plot (Linear / Obsidian-style): small marks so tag names stay readable.
+    // Axes still encode recurrence × recency; evidence volume is a faint size hint only.
     const plot = visible.slice(0, 64);
     if (plot.length === 0) return [];
     const maxEvidence = Math.max(...plot.map((r) => Math.max(r.count, 1)), 1);
@@ -207,12 +208,13 @@ export function V2FocusTagPortfolio({
       id: row.name,
       x: 10 + row.recurrenceScore * 86,
       y: 88 - row.recencyScore * 76,
-      r: 1.6 + Math.sqrt(Math.max(row.count, 1) / maxEvidence) * 3.2,
+      // Tiny dots (~1.05–1.55 viewBox units) — not Gapminder bubbles.
+      r: 1.05 + Math.sqrt(Math.max(row.count, 1) / maxEvidence) * 0.5,
     }));
     const resolved = resolveBubblePositions(
       raw,
-      { minX: 10, maxX: 96, minY: 10, maxY: 88 },
-      { iterations: 10, padding: 0.35, jitter: 1.2 }
+      { minX: 10, maxX: 96, minY: 12, maxY: 86 },
+      { iterations: 12, padding: 1.8, jitter: 0.9 }
     );
     return resolved
       .map((p) => ({ point: p, row: byName.get(p.id)! }))
@@ -375,7 +377,7 @@ export function V2FocusTagPortfolio({
             viewBox="0 0 100 100"
             className="w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60 min-h-[min(640px,72vh)] h-[min(640px,72vh)]"
             role="img"
-            aria-label="Tag universe — click a tag to explore evidence or Flag it as a Tracker. Recency vertical, recurrence horizontal."
+            aria-label="Tag universe — small dots by recency × recurrence; click a tag name or dot to explore or Flag as Tracker."
           >
             <text x="50" y="97" textAnchor="middle" fill="rgb(113, 113, 122)" fontSize="2.8">
               Recurrence (30d) →
@@ -412,7 +414,8 @@ export function V2FocusTagPortfolio({
             ))}
             {plotLayout.map(({ point, row }) => {
               const isSelected = selectedName === row.name;
-              const showLabel = point.r >= 2.4 || isSelected || row.isFocus;
+              const dotR = isSelected ? point.r + 0.35 : point.r;
+              const label = row.name.length > 16 ? `${row.name.slice(0, 14)}…` : row.name;
               return (
                 <g
                   key={row.name}
@@ -429,16 +432,18 @@ export function V2FocusTagPortfolio({
                     }
                   }}
                 >
+                  {/* Invisible hit target — dots stay small, taps stay usable (map-pin pattern). */}
+                  <circle cx={point.x} cy={point.y} r={3.4} fill="transparent" />
                   {row.isFocus ? (
                     <circle
                       cx={point.x}
                       cy={point.y}
-                      r={(isSelected ? point.r + 0.9 : point.r) + 1.35}
+                      r={dotR + 0.55}
                       fill="none"
                       stroke="rgb(251, 191, 36)"
-                      strokeOpacity={0.9}
-                      strokeWidth={0.55}
-                      strokeDasharray="1.1 0.9"
+                      strokeOpacity={0.95}
+                      strokeWidth={0.4}
+                      strokeDasharray="0.7 0.55"
                       className="pointer-events-none"
                       aria-hidden
                     />
@@ -446,9 +451,9 @@ export function V2FocusTagPortfolio({
                   <circle
                     cx={point.x}
                     cy={point.y}
-                    r={isSelected ? point.r + 0.9 : point.r}
+                    r={dotR}
                     fill={row.isFocus ? "rgb(244, 63, 94)" : "rgb(167, 139, 250)"}
-                    fillOpacity={isSelected || row.isFocus ? 0.95 : 0.72}
+                    fillOpacity={isSelected || row.isFocus ? 0.98 : 0.88}
                     stroke={
                       isSelected
                         ? "rgb(255, 255, 255)"
@@ -456,44 +461,28 @@ export function V2FocusTagPortfolio({
                           ? "rgb(251, 191, 36)"
                           : row.isPattern
                             ? "rgb(251, 191, 36)"
-                            : "rgb(63, 63, 70)"
+                            : "rgb(39, 39, 42)"
                     }
-                    strokeWidth={isSelected ? 0.85 : row.isFocus || row.isPattern ? 0.6 : 0.25}
+                    strokeWidth={isSelected ? 0.55 : row.isFocus || row.isPattern ? 0.45 : 0.3}
                     className="transition hover:brightness-125"
                   />
-                  {row.isFocus ? (
-                    <text
-                      x={point.x}
-                      y={point.y + 0.85}
-                      textAnchor="middle"
-                      fill="rgb(254, 243, 199)"
-                      fontSize={Math.max(2.4, point.r * 0.95)}
-                      fontWeight={700}
-                      pointerEvents="none"
-                      aria-hidden
-                    >
-                      ⚑
-                    </text>
-                  ) : null}
-                  {showLabel ? (
-                    <text
-                      x={point.x}
-                      y={point.y + point.r + 2.2}
-                      textAnchor="middle"
-                      fill={
-                        isSelected
-                          ? "rgb(244, 244, 245)"
-                          : row.isFocus
-                            ? "rgb(254, 205, 211)"
-                            : "rgb(161, 161, 170)"
-                      }
-                      fontSize={isSelected || row.isFocus ? 2.6 : 2.2}
-                      fontWeight={isSelected || row.isFocus ? 600 : 500}
-                      pointerEvents="none"
-                    >
-                      {row.name.length > 16 ? `${row.name.slice(0, 14)}…` : row.name}
-                    </text>
-                  ) : null}
+                  <text
+                    x={point.x}
+                    y={point.y + dotR + 2.35}
+                    textAnchor="middle"
+                    fill={
+                      isSelected
+                        ? "rgb(244, 244, 245)"
+                        : row.isFocus
+                          ? "rgb(254, 205, 211)"
+                          : "rgb(212, 212, 216)"
+                    }
+                    fontSize={isSelected || row.isFocus ? 2.45 : 2.15}
+                    fontWeight={isSelected || row.isFocus ? 600 : 500}
+                    pointerEvents="none"
+                  >
+                    {row.isFocus ? `⚑ ${label}` : label}
+                  </text>
                   <title>
                     {row.name}
                     {row.isFocus ? " · Tracker" : ""}
@@ -510,6 +499,7 @@ export function V2FocusTagPortfolio({
             {visible.length} tag{visible.length === 1 ? "" : "s"} in this filter
             {rows.length !== visible.length ? ` · ${rows.length} in full universe` : ""}
             {visible.length > 64 ? " · plot shows top 64 by score" : ""}
+            {" · small dots (labels always on)"}
           </p>
           <V2IntelHelpLink topic="tags-universe" label="Tags legend" />
         </div>
