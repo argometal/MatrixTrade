@@ -170,9 +170,15 @@ Architecture and Argus product documents under `md/argus/*.md` and `md/integrati
 
 ### `md/argus/intelligence-viz-plan.md`
 - **title:** Intelligence visualization — plan & future work
-- **purpose / status line:** Status: **implemented** (treemap + portfolio axes as of 2026-07). Tag pattern overlays implemented 2026-07-10 — see [`tag-patterns-vision.md`](tag-patterns-vision.md).
-- **references:** `md/argus/tag-patterns-vision.md`
-- **referenced-by:** `md/argus/evidence-organization-vision.md`, `md/argus/tag-patterns-vision.md`
+- **purpose / status line:** Status: **implemented** (treemap + portfolio axes as of 2026-07). Tag pattern overlays implemented 2026-07-10 — see [`tag-patterns-vision.md`](tag-patterns-vision.md). Updated 2026-08-14: Molecule A/B + Tag small dots.
+- **references:** `md/argus/tag-patterns-vision.md`, `md/argus/intel-neighbors-tags-2026-08-14.md`, `md/argus/vocabulary-policy.md`
+- **referenced-by:** `md/argus/evidence-organization-vision.md`, `md/argus/tag-patterns-vision.md`, `md/argus/README.md`
+
+### `md/argus/intel-neighbors-tags-2026-08-14.md`
+- **title:** Intel viz investigations — Neighbors Molecule + Tag dots
+- **purpose / status line:** Visual OK 2026-08-14 — Radial default; Molecule toggle; Tag universe = small dots (AI-readable)
+- **references:** `md/argus/intelligence-viz-plan.md`, `md/argus-review/00-PUBLIC-STATUS.md`
+- **referenced-by:** `md/argus/intelligence-viz-plan.md`, `md/argus/README.md`, `md/argus-review/00-PUBLIC-STATUS.md`
 
 ### `md/argus/knowledge-execution-model.md`
 - **title:** ARGUS — Knowledge & Execution Model

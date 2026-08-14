@@ -76,6 +76,8 @@ Use these labels in docs and checklists. Update when reality changes.
 15. [`product-flow-proposal.md`](product-flow-proposal.md) — evidence → relations → narrative
 16. [`v2-hierarchy-implementation-report.md`](v2-hierarchy-implementation-report.md) — **implemented** linking rules + code map
 17. [`network-browse-spec.md`](network-browse-spec.md) — Network browse (status vocabulary; no strength%)
+17a. [`intelligence-viz-plan.md`](intelligence-viz-plan.md) — Treemap / Portfolio / Tags / neighborhood viz
+17b. [`intel-neighbors-tags-2026-08-14.md`](intel-neighbors-tags-2026-08-14.md) — Neighbors Molecule A/B + Tag small-dots (AI-readable)
 
 ### Track C — Build, QA, export
 

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="900" height="900">
+<rect width="100" height="100" fill="#09090b"/>
+<text x="50" y="5" text-anchor="middle" fill="#a1a1aa" font-size="3">After · small dots (labels always on)</text>
+<line x1="10" y1="69" x2="96" y2="69" stroke="rgba(63,63,70,0.35)" stroke-width="0.25"/>
+<line x1="31.5" y1="10" x2="31.5" y2="88" stroke="rgba(63,63,70,0.35)" stroke-width="0.25"/>
+<line x1="10" y1="50" x2="96" y2="50" stroke="rgba(63,63,70,0.35)" stroke-width="0.25"/>
+<line x1="53" y1="10" x2="53" y2="88" stroke="rgba(63,63,70,0.35)" stroke-width="0.25"/>
+<line x1="10" y1="31" x2="96" y2="31" stroke="rgba(63,63,70,0.35)" stroke-width="0.25"/>
+<line x1="74.5" y1="10" x2="74.5" y2="88" stroke="rgba(63,63,70,0.35)" stroke-width="0.25"/>
+<circle cx="57.464759371433125" cy="33.31141239825204" r="1.8522670168666453" fill="rgb(167,139,250)" fill-opacity="0.98" stroke="#fff" stroke-width="0.35"/>
+<text x="57.464759371433125" y="37.51367941511869" text-anchor="middle" fill="#f4f4f5" font-size="2.2">handover</text>
+<circle cx="72.32423525668545" cy="45.7694968633399" r="1.9692744729379983" fill="none" stroke="rgb(251,191,36)" stroke-width="0.4" stroke-dasharray="0.7 0.55"/>
+<circle cx="72.32423525668545" cy="45.7694968633399" r="1.4192744729379982" fill="rgb(244,63,94)" fill-opacity="0.88" stroke="#27272a" stroke-width="0.35"/>
+<text x="72.32423525668545" y="49.538771336277904" text-anchor="middle" fill="#d4d4d8" font-size="2.2">⚑ latency</text>
+<circle cx="40.281797662477885" cy="51.25134569359975" r="1.55" fill="rgb(167,139,250)" fill-opacity="0.88" stroke="#27272a" stroke-width="0.35"/>
+<text x="40.281797662477885" y="55.15134569359975" text-anchor="middle" fill="#d4d4d8" font-size="2.2">wells</text>
+<circle cx="51.35586715005475" cy="61.46057408964508" r="1.3515113445777636" fill="rgb(167,139,250)" fill-opacity="0.88" stroke="#27272a" stroke-width="0.35"/>
+<text x="51.35586715005475" y="65.16208543422285" text-anchor="middle" fill="#d4d4d8" font-size="2.2">supply</text>
+<circle cx="63.573800349380775" cy="66.61961438506134" r="1.288365647311398" fill="rgb(167,139,250)" fill-opacity="0.88" stroke="#27272a" stroke-width="0.35"/>
+<text x="63.573800349380775" y="70.25798003237273" text-anchor="middle" fill="#d4d4d8" font-size="2.2">kickoff</text>
+<circle cx="33.66332717666247" cy="38.60902213881701" r="1.3698010745334157" fill="rgb(167,139,250)" fill-opacity="0.88" stroke="#27272a" stroke-width="0.35"/>
+<text x="33.66332717666247" y="42.328823213350425" text-anchor="middle" fill="#d4d4d8" font-size="2.2">sync</text>
+</svg>

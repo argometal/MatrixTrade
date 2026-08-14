@@ -141,11 +141,11 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "Universe plot",
-        body: "Axes are evidence windows (recency × recurrence), not scores. Click a tag to inspect evidence and binders.",
+        body: "Small dots on recency × recurrence axes (not large bubbles). Tag names stay visible under each mark. Click a dot or label to inspect evidence and binders.",
       },
       {
-        title: "Tracker vs Pattern rings",
-        body: "⚑ / amber ring = Tracker (you Flagged watch-on). Gold ring on an unflagged tag = Pattern (system-derived recurrence).",
+        title: "Tracker vs Pattern marks",
+        body: "⚑ on the label + thin amber ring = Tracker (you Flagged watch-on). Gold stroke on an unflagged tag = Pattern (system-derived recurrence). Dot size is only a faint evidence hint.",
       },
       {
         title: "Flag / Disable",

@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { V2GraphEdge, V2GraphNode } from "@/lib/argus/v2/intelligence-viz";
 import { layoutNeighborhoodGraphNodes } from "@/lib/argus/v2/intelligence-viz";
+import {
+  buildEgoNeighborhoodPreservePositions,
+  layoutNeighborhoodMoleculeNodes,
+  type NeighborhoodLayoutMode,
+} from "@/lib/argus/v2/neighborhood-molecule-layout";
 import { V2IntelHelpLink } from "./V2IntelHelpLink";
 
 const NODE_COLORS: Record<V2GraphNode["kind"], string> = {
@@ -50,7 +55,7 @@ const SIZE_CONFIG: Record<
   },
 };
 
-/** Direct neighbors of focusId within the given edge set (ego view). */
+/** Direct neighbors of focusId within the given edge set (ego view). Radial re-layout. */
 export function buildEgoNeighborhood(
   nodes: V2GraphNode[],
   edges: V2GraphEdge[],
@@ -100,6 +105,8 @@ function GraphCanvas({
   centerId,
   layout,
   onFocusNode,
+  layoutMode = "radial",
+  emphasizeIds,
 }: {
   nodes: V2GraphNode[];
   edges: V2GraphEdge[];
@@ -110,6 +117,9 @@ function GraphCanvas({
   layout: "columns" | "neighborhood";
   /** Click focuses ego neighborhood. Meta/Ctrl+click opens the entity. */
   onFocusNode?: (id: string) => void;
+  layoutMode?: NeighborhoodLayoutMode;
+  /** When set (Molecule microscope), non-members are subdued in place. */
+  emphasizeIds?: Set<string> | null;
 }) {
   const cfg = SIZE_CONFIG[displaySize];
   const nodeMap = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
@@ -125,6 +135,7 @@ function GraphCanvas({
   }, [edges, hoveredId]);
 
   const maxEvidence = Math.max(...nodes.map((n) => n.evidenceCount), 1);
+  const showRadialGuide = layout === "neighborhood" && layoutMode === "radial" && !emphasizeIds?.size;
 
   return (
     <svg
@@ -134,7 +145,9 @@ function GraphCanvas({
       role="img"
       aria-label={
         layout === "neighborhood"
-          ? "Entity neighborhood graph — click a node to focus its neighbors"
+          ? layoutMode === "molecule"
+            ? "Entity neighborhood molecule layout — click a node to emphasize its neighbors"
+            : "Entity neighborhood graph — click a node to focus its neighbors"
           : "Relationship graph of linked entities"
       }
     >
@@ -151,7 +164,7 @@ function GraphCanvas({
             strokeDasharray="1 2"
           />
         ))
-      ) : (
+      ) : showRadialGuide ? (
         <circle
           cx={50}
           cy={50}
@@ -161,15 +174,20 @@ function GraphCanvas({
           strokeWidth={0.3}
           strokeDasharray="1 2"
         />
-      )}
+      ) : null}
 
       {edges.map((edge) => {
         const from = nodeMap.get(edge.from);
         const to = nodeMap.get(edge.to);
         if (!from || !to) return null;
         const isAffinity = edge.kind === "focus-affinity";
+        const inEmphasize =
+          !emphasizeIds ||
+          emphasizeIds.size === 0 ||
+          (emphasizeIds.has(edge.from) && emphasizeIds.has(edge.to));
         const active =
           !hoveredId || edge.from === hoveredId || edge.to === hoveredId || connectedToHover.has(edge.from);
+        const subdued = Boolean(emphasizeIds && emphasizeIds.size > 0 && !inEmphasize);
         return (
           <line
             key={`${edge.from}-${edge.to}-${edge.kind ?? "edge"}`}
@@ -178,24 +196,29 @@ function GraphCanvas({
             x2={to.x}
             y2={to.y}
             stroke={
-              isAffinity
-                ? active && hoveredId
-                  ? "rgba(251, 113, 133, 0.7)"
-                  : "rgba(251, 113, 133, 0.35)"
-                : active && hoveredId
-                  ? "rgba(139, 92, 246, 0.55)"
-                  : "rgba(113, 113, 122, 0.4)"
+              subdued
+                ? "rgba(63, 63, 70, 0.2)"
+                : isAffinity
+                  ? active && hoveredId
+                    ? "rgba(251, 113, 133, 0.7)"
+                    : "rgba(251, 113, 133, 0.35)"
+                  : active && hoveredId
+                    ? "rgba(139, 92, 246, 0.55)"
+                    : "rgba(113, 113, 122, 0.4)"
             }
             strokeWidth={
-              isAffinity
-                ? active && hoveredId
-                  ? 0.7
-                  : 0.45
-                : active && hoveredId
-                  ? 0.9
-                  : Math.min(1.4, 0.5 + edge.weight * 0.25)
+              subdued
+                ? 0.35
+                : isAffinity
+                  ? active && hoveredId
+                    ? 0.7
+                    : 0.45
+                  : active && hoveredId
+                    ? 0.9
+                    : Math.min(1.4, 0.5 + edge.weight * 0.25)
             }
             strokeDasharray={isAffinity ? "1.2 1.4" : undefined}
+            opacity={subdued ? 0.35 : 1}
           />
         );
       })}
@@ -207,7 +230,9 @@ function GraphCanvas({
         const isCenter = centerId === node.id;
         const isHovered = hoveredId === node.id;
         const isConnected = connectedToHover.has(node.id);
-        const dimmed = hoveredId && !isHovered && !isConnected;
+        const outOfEmphasize =
+          Boolean(emphasizeIds && emphasizeIds.size > 0 && !emphasizeIds.has(node.id));
+        const dimmed = (hoveredId && !isHovered && !isConnected) || outOfEmphasize;
         const isFocusCritical = Boolean(node.focusCritical);
         const label =
           node.name.length > (displaySize === "expanded" ? 18 : 14)
@@ -221,7 +246,7 @@ function GraphCanvas({
         return (
           <g
             key={node.id}
-            opacity={dimmed ? 0.35 : 1}
+            opacity={outOfEmphasize ? 0.22 : dimmed ? 0.35 : 1}
             onMouseEnter={() => onHover(node.id)}
             onMouseLeave={() => onHover(null)}
           >
@@ -334,6 +359,8 @@ export function V2KnowledgeGraph({
   const [focusId, setFocusId] = useState<string | null>(null);
   /** Previous focus centers for Back */
   const [focusStack, setFocusStack] = useState<string[]>([]);
+  /** Temporary A/B review toggle — Radial remains production default. */
+  const [layoutMode, setLayoutMode] = useState<NeighborhoodLayoutMode>("radial");
 
   useEffect(() => {
     setFocusId(null);
@@ -380,15 +407,40 @@ export function V2KnowledgeGraph({
     };
   }, [expanded, focusId, goBack]);
 
+  const moleculeNodes = useMemo(() => {
+    if (layout !== "neighborhood" || layoutMode !== "molecule" || !centerId) return null;
+    return layoutNeighborhoodMoleculeNodes(nodes, edges, centerId);
+  }, [nodes, edges, centerId, layout, layoutMode]);
+
+  const worldNodes = layoutMode === "molecule" && moleculeNodes ? moleculeNodes : nodes;
+
   const focusedView = useMemo(() => {
     if (!focusId || layout !== "neighborhood") {
-      return { nodes, edges, centerId };
+      return {
+        nodes: worldNodes,
+        edges,
+        centerId,
+        emphasizeIds: null as Set<string> | null,
+      };
     }
-    const ego = buildEgoNeighborhood(nodes, edges, focusId);
-    return { nodes: ego.nodes, edges: ego.edges, centerId: focusId };
-  }, [nodes, edges, focusId, layout, centerId]);
 
-  const focusNode = nodes.find((n) => n.id === focusId);
+    if (layoutMode === "molecule") {
+      // Map → microscope: keep full Molecule world, subdue non-1-hop (no re-layout).
+      const ego = buildEgoNeighborhoodPreservePositions(worldNodes, edges, focusId);
+      const emphasizeIds = new Set(ego.nodes.map((n) => n.id));
+      return {
+        nodes: worldNodes,
+        edges,
+        centerId: focusId,
+        emphasizeIds,
+      };
+    }
+
+    const ego = buildEgoNeighborhood(worldNodes, edges, focusId);
+    return { nodes: ego.nodes, edges: ego.edges, centerId: focusId, emphasizeIds: null };
+  }, [worldNodes, edges, focusId, layout, centerId, layoutMode]);
+
+  const focusNode = worldNodes.find((n) => n.id === focusId);
   const canFocus = layout === "neighborhood";
 
   function goFocus(id: string) {
@@ -411,6 +463,44 @@ export function V2KnowledgeGraph({
   }
 
   const displaySize: GraphDisplaySize = size === "full" ? "full" : "compact";
+  const layoutToggle =
+    layout === "neighborhood" ? (
+      <div
+        className="flex items-center gap-0.5 rounded-lg border border-zinc-800 bg-zinc-950/70 p-0.5"
+        role="group"
+        aria-label="Neighborhood layout experiment"
+      >
+        {(
+          [
+            { id: "radial" as const, label: "Radial" },
+            { id: "molecule" as const, label: "Molecule" },
+          ] as const
+        ).map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            aria-pressed={layoutMode === option.id}
+            onClick={() => {
+              setLayoutMode(option.id);
+              // Keep focus id; Molecule preserves world, Radial re-layouts ego.
+            }}
+            className={`rounded-md px-2 py-1 text-[10px] font-semibold ${
+              layoutMode === option.id
+                ? "bg-violet-600/25 text-violet-200"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+            title={
+              option.id === "radial"
+                ? "Production radial layout"
+                : "Experimental weighted-force molecule layout (A/B review)"
+            }
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    ) : null;
+
   const focusControls =
     canFocus && (focusId || size === "full") ? (
       <div className="flex flex-wrap items-center gap-2">
@@ -444,7 +534,9 @@ export function V2KnowledgeGraph({
     ) : null;
 
   const expandHint = focusId
-    ? "Ego view — direct neighbors only. Esc or Back to return."
+    ? layoutMode === "molecule"
+      ? "Microscope — selected + 1-hop emphasized; world positions kept. Esc or Back."
+      : "Ego view — direct neighbors only. Esc or Back to return."
     : "Click node to focus · ⌘/Ctrl+click to open";
 
   return (
@@ -454,10 +546,15 @@ export function V2KnowledgeGraph({
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <p className="text-[11px] text-zinc-600">
               {focusId
-                ? `Focused · ${focusNode?.name ?? "node"} (${focusedView.nodes.length})`
+                ? `Focused · ${focusNode?.name ?? "node"} (${
+                    layoutMode === "molecule" && focusedView.emphasizeIds
+                      ? focusedView.emphasizeIds.size
+                      : focusedView.nodes.length
+                  })`
                 : `${focusedView.nodes.length} nodes`}
             </p>
             <div className="flex flex-wrap items-center gap-2">
+              {layoutToggle}
               <V2IntelHelpLink topic="neighborhood" label="Help" />
               {focusControls}
               <button
@@ -469,8 +566,12 @@ export function V2KnowledgeGraph({
               </button>
             </div>
           </div>
-        ) : null}
-        {focusId && size !== "full" ? <div className="mb-2">{focusControls}</div> : null}
+        ) : (
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            {layoutToggle}
+            {focusId ? focusControls : null}
+          </div>
+        )}
         <GraphCanvas
           nodes={focusedView.nodes}
           edges={focusedView.edges}
@@ -479,6 +580,8 @@ export function V2KnowledgeGraph({
           onHover={setHoveredId}
           centerId={focusedView.centerId}
           layout={layout}
+          layoutMode={layoutMode}
+          emphasizeIds={focusedView.emphasizeIds}
           onFocusNode={canFocus ? goFocus : undefined}
         />
         <div className="mt-3">
@@ -501,6 +604,7 @@ export function V2KnowledgeGraph({
               <p className="mt-0.5 text-xs text-zinc-500">{expandHint}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              {layoutToggle}
               {focusControls}
               <button
                 type="button"
@@ -520,6 +624,8 @@ export function V2KnowledgeGraph({
               onHover={setHoveredId}
               centerId={focusedView.centerId}
               layout={layout}
+              layoutMode={layoutMode}
+              emphasizeIds={focusedView.emphasizeIds}
               onFocusNode={canFocus ? goFocus : undefined}
             />
           </div>
