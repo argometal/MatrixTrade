@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { toggleSignalTagAction } from "@/app/argus/actions";
+import { toggleSignalTagAction, renameTagInlineAction } from "@/app/argus/actions";
 import { confirmTrackerConvert } from "@/lib/argus/tracker-confirm";
 import type {
   V2FocusTagStat,
@@ -136,12 +136,22 @@ export function V2FocusTagPortfolio({
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [focusTags, setFocusTags] = useState(initialFocusTags);
   const [pendingTag, setPendingTag] = useState<string | null>(null);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [renameBusy, setRenameBusy] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
   const [neighborhoodCenter, setNeighborhoodCenter] = useState<V2TagEvidenceEntity | null>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     setFocusTags(initialFocusTags);
   }, [initialFocusTags]);
+
+  useEffect(() => {
+    setRenameOpen(false);
+    setRenameError(null);
+    if (selectedName) setRenameDraft(selectedName);
+  }, [selectedName]);
 
   const focusKeySet = useMemo(
     () => new Set(focusTags.map((t) => signalTagKey(t))),
@@ -237,6 +247,46 @@ export function V2FocusTagPortfolio({
       setFocusTags(result.signalTags);
       router.refresh();
     });
+  }
+
+  function openRename() {
+    if (!selected) return;
+    setRenameDraft(selected.name);
+    setRenameError(null);
+    setRenameOpen(true);
+  }
+
+  async function submitRename(event: React.FormEvent) {
+    event.preventDefault();
+    if (!selected) return;
+    const next = renameDraft.trim().replace(/\s+/g, " ");
+    if (!next) {
+      setRenameError("Enter a tag name.");
+      return;
+    }
+    if (next === selected.name) {
+      setRenameOpen(false);
+      return;
+    }
+    const ok = window.confirm(
+      `Rename “${selected.name}” to “${next}” everywhere?\n\nUpdates Notes, email Topics, Topic/Project/Event Tags, and Trackers. This is not Flag/Disable.`
+    );
+    if (!ok) return;
+    setRenameBusy(true);
+    setRenameError(null);
+    const result = await renameTagInlineAction(selected.name, next);
+    setRenameBusy(false);
+    if ("error" in result) {
+      setRenameError(result.error === "empty_tag" ? "Enter a tag name." : "Rename failed.");
+      return;
+    }
+    const oldKey = signalTagKey(result.oldTag);
+    setFocusTags((prev) =>
+      prev.map((tag) => (signalTagKey(tag) === oldKey ? result.newTag : tag))
+    );
+    setSelectedName(result.newTag);
+    setRenameOpen(false);
+    router.refresh();
   }
 
   const selectedIsFocus = selected ? focusKeySet.has(signalTagKey(selected.name)) : false;
@@ -593,6 +643,15 @@ export function V2FocusTagPortfolio({
             <div className="flex shrink-0 flex-wrap gap-2">
               <button
                 type="button"
+                onClick={openRename}
+                disabled={renameBusy || focusBusy}
+                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-[11px] font-semibold text-zinc-300 hover:border-violet-500/40 hover:text-violet-200 disabled:opacity-40"
+                title={`Rename ${selected.name} everywhere (Notes, binders, Trackers)`}
+              >
+                Rename
+              </button>
+              <button
+                type="button"
                 onClick={() => toggleFocus(selected.name)}
                 disabled={focusBusy}
                 className={`rounded-lg border px-3 py-1.5 text-[11px] font-semibold disabled:opacity-40 ${
@@ -740,6 +799,61 @@ export function V2FocusTagPortfolio({
           addPlaceholder="Tag name → Flag as Tracker"
         />
       </div>
+
+      {renameOpen && selected ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => !renameBusy && setRenameOpen(false)}
+          role="presentation"
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="rename-tag-title"
+          >
+            <h3 id="rename-tag-title" className="text-lg font-semibold text-zinc-50">
+              Rename tag
+            </h3>
+            <p className="mt-2 text-xs text-zinc-500">
+              Changes the string everywhere it appears — Notes, email Topics, Topic/Project/Event Tags,
+              and Trackers. Flag/Disable is separate.
+            </p>
+            <form onSubmit={(event) => void submitRename(event)} className="mt-4 space-y-4">
+              <label className="block text-sm text-zinc-400">
+                New name
+                <input
+                  value={renameDraft}
+                  onChange={(event) => setRenameDraft(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2.5 text-sm text-zinc-100 focus:border-violet-500/50 focus:outline-none"
+                  autoFocus
+                  required
+                  disabled={renameBusy}
+                />
+              </label>
+              {renameError ? <p className="text-xs text-rose-300">{renameError}</p> : null}
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRenameOpen(false)}
+                  disabled={renameBusy}
+                  className="rounded-xl border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-40"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={renameBusy || !renameDraft.trim()}
+                  className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50"
+                >
+                  {renameBusy ? "…" : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

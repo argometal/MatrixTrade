@@ -1537,6 +1537,27 @@ export async function renameTagAction(formData: FormData): Promise<void> {
   redirect(returnTo);
 }
 
+/** Inline rename for Home Tags universe — no redirect; refreshes client selection. */
+export async function renameTagInlineAction(
+  oldTag: string,
+  newTag: string
+): Promise<{ ok: true; oldTag: string; newTag: string; touched: number } | { error: string }> {
+  await requireArgusSession();
+  const from = oldTag.trim();
+  const to = newTag.trim().replace(/\s+/g, " ");
+  if (!from || !to) return { error: "empty_tag" };
+  if (from === to) return { ok: true, oldTag: from, newTag: to, touched: 0 };
+
+  const touched = await renameTagGlobally(from, to);
+  revalidateArgus();
+  revalidatePath("/argus/v2");
+  revalidatePath("/argus/v2/inbox");
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/browse/events");
+  revalidatePath("/argus/v2/browse/projects");
+  return { ok: true, oldTag: from, newTag: to, touched };
+}
+
 export async function updateInboxSubjectAction(formData: FormData): Promise<void> {
   await requireArgusSession();
   const inboxId = String(formData.get("inboxId") ?? "");
