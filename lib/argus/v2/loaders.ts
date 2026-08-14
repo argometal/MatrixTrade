@@ -26,13 +26,13 @@ import {
   getProjectEvidenceScope,
   getProjectHomeCounts,
   organizationEvidenceScope,
+  organizationRosterPersonIds,
   projectsForOrganization,
 } from "./hierarchy";
 import type { ProjectScopeOptions } from "../project-evidence-scope";
 import { isActiveRecord } from "../supabase-protection/protected-counts";
 import { filterPrivateInbox } from "../private-access";
 import {
-  collectProjectLinkIds,
   countLinkKinds,
   linkedEventRefs,
   linkedTopicRefs,
@@ -333,13 +333,13 @@ export function buildV2EntityRows(
           scope.logs[0]?.date ||
           scope.inbox[0]?.receivedAt ||
           entity.updatedAt;
-        peopleCount = (entity.linkedPersonIds ?? []).length + (entity.linkedEntityIds ?? []).filter((id) => {
-          const p = data.entities.find((e) => e.id === id);
+        peopleCount = organizationRosterPersonIds(data, entity).length;
+      } else if (tab === "projects") {
+        const counts = getProjectHomeCounts(data, entity, inboxItems, includePrivate);
+        peopleCount = linkModalStructuralIds(data, entity).filter((id) => {
+          const p = data.entities.find((e) => e.id === id && !e.deletedAt);
           return p?.type === "person";
         }).length;
-      } else if (tab === "projects") {
-        const counts = getProjectHomeCounts(entity, data.logs, inboxItems, includePrivate);
-        peopleCount = (entity.linkedPersonIds ?? []).length;
         lastIso = entity.updatedAt;
         void counts;
       } else {
@@ -838,11 +838,9 @@ export function loadOrganizationPageData(
   });
   timeline = enrichTimelineMeta(timeline, scope.logs, scope.inbox, data.entities);
   const intel = buildEntityIntelligence(data, org, includePrivate, today);
-  const linkedPersonIds = [
-    ...new Set([...(org.linkedPersonIds ?? []), ...(org.linkedEntityIds ?? [])]),
-  ];
+  const linkedPersonIds = organizationRosterPersonIds(data, org);
   const linkedPeople = linkedPersonIds
-    .map((id) => data.entities.find((e) => e.id === id && e.type === "person"))
+    .map((id) => data.entities.find((e) => e.id === id && e.type === "person" && !e.deletedAt))
     .filter((e): e is Entity => Boolean(e));
   const orgProjects = projectsForOrganization(data, org);
 
@@ -986,7 +984,7 @@ export function loadProjectPageData(
   scopeOptions?: ProjectScopeOptions
 ) {
   const scope = getProjectEvidenceScope(data, inboxItems, project, includePrivate, scopeOptions);
-  const allInbox = getAllProjectScopeInbox(inboxItems, project, includePrivate, scopeOptions);
+  const allInbox = getAllProjectScopeInbox(data, inboxItems, project, includePrivate, scopeOptions);
   const allLogs = [...scope.directLogs, ...scope.viaContactLogs];
   const nodeCounts = countTopicsAndEventsInScope(data, project, allLogs);
   const respectDates = scopeOptions?.respectProjectDates !== false;
@@ -1006,11 +1004,12 @@ export function loadProjectPageData(
   });
   timeline = enrichTimelineMeta(timeline, allLogs, allInbox, data.entities);
 
-  const linkIds = collectProjectLinkIds(project);
+  // Bidirectional structural ids (outbound ∪ reverse) — same set as Link modal.
+  const linkIds = linkModalStructuralIds(data, project);
   const linkCounts = countLinkKinds(data, linkIds);
 
   const linkedPeople = linkIds
-    .map((id) => data.entities.find((e) => e.id === id && e.type === "person"))
+    .map((id) => data.entities.find((e) => e.id === id && e.type === "person" && !e.deletedAt))
     .filter((e): e is Entity => Boolean(e));
 
   const peopleWithRoles = linkedPeople.map((person, index) => ({

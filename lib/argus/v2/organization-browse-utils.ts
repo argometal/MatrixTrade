@@ -5,7 +5,7 @@ import {
   browseEntitiesByKind,
   entitiesByKind,
   organizationEvidenceScope,
-  organizationLinkedPersonIds,
+  organizationRosterPersonIds,
   projectsForOrganization,
 } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
@@ -166,10 +166,7 @@ export function buildV2OrganizationBrowseCards(
     .map((org) => {
       const scope = organizationEvidenceScope(data, inboxItems, org, includePrivate);
       const orgProjects = projectsForOrganization(data, org);
-      const peopleIds = organizationLinkedPersonIds(org).filter((id) => {
-        const entity = data.entities.find((e) => e.id === id);
-        return entity?.type === "person";
-      });
+      const peopleIds = organizationRosterPersonIds(data, org);
       const lastContact = resolveLastContact(org, scope.logs, scope.inbox, today);
       const totalEvidence = scope.totalCount;
       const status = deriveOrganizationStatus(org, lastContact.sortIso, today, totalEvidence);

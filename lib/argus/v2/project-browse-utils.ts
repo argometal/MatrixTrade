@@ -4,9 +4,9 @@ import { entityNotesForDisplay } from "../reference-types";
 import { getAllProjectScopeInbox, getProjectEvidenceScope } from "../project-evidence-scope";
 import { browseEntitiesByKind } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
-import { collectProjectLinkIds, countLinkKinds } from "./entity-link-counts";
+import { countLinkKinds } from "./entity-link-counts";
 import { projectHasPrivateEvidence } from "./project-private";
-import { countTopicsAndEventsInScope } from "./scope-node-counts";
+import { countTopicsAndEventsInScope, linkModalStructuralIds } from "./scope-node-counts";
 import {
   notesHaveOnHold,
   type V2PortfolioBrowseStatus,
@@ -174,11 +174,11 @@ export function buildV2ProjectBrowseCards(
   return projects
     .map((project) => {
       const scope = getProjectEvidenceScope(data, inboxItems, project, includePrivate);
-      const allInbox = getAllProjectScopeInbox(inboxItems, project, includePrivate);
+      const allInbox = getAllProjectScopeInbox(data, inboxItems, project, includePrivate);
       const allLogs = [...scope.directLogs, ...scope.viaContactLogs];
       const lastActivity = resolveLastActivity(project, allInbox, allLogs, today);
       const status = deriveProjectBrowseStatus(project, today, lastActivity.sortIso);
-      const linkIds = collectProjectLinkIds(project);
+      const linkIds = linkModalStructuralIds(data, project);
       const linkedOrgIds = linkIds.filter((id) => {
         const e = data.entities.find((ent) => ent.id === id);
         return e?.type === "company";
