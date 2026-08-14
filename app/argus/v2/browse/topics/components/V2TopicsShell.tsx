@@ -473,7 +473,8 @@ export function V2TopicsShell({
   );
   const urlSelected = searchParams.get("selected");
   const urlStatus = searchParams.get("status");
-  const selectedId = urlSelected?.trim() || initialSelectedId;
+  // URL is source of truth — do not resurrect SSR initialSelectedId after Back clears ?selected=
+  const selectedId = urlSelected?.trim() || undefined;
   const selected = selectedId ? details.find((d) => d.id === selectedId) : undefined;
   const mobileDetailOpen = Boolean(urlSelected);
 
@@ -702,6 +703,8 @@ export function V2TopicsShell({
   function backToList() {
     replaceTopicParams((params) => {
       params.delete("selected");
+      params.delete("focus");
+      params.delete("from");
     });
   }
 

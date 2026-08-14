@@ -572,7 +572,7 @@ export function V2InboxDetailPanel({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {onBack ? (
-        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-3 lg:hidden">
+        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-3">
           <button
             type="button"
             onClick={onBack}

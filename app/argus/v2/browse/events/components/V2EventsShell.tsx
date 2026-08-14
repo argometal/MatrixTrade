@@ -144,6 +144,8 @@ export function V2EventsShell({
   function backToList() {
     replaceParams((params) => {
       params.delete("selected");
+      params.delete("focus");
+      params.delete("from");
     });
   }
 
@@ -193,6 +195,7 @@ export function V2EventsShell({
             deleteError={deleteError}
             deleteAuthError={deleteAuthError}
             totpRequired={totpRequired}
+            onBack={backToList}
           />
         </section>
       </div>
