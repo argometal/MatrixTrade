@@ -63,7 +63,7 @@ App: https://matrix-trade-theta.vercel.app/argus
 
 | Item | Note |
 |------|------|
-| Intel viz — Neighbors Molecule + Tag dots (2026-08-14) | [`../argus/intel-neighbors-tags-2026-08-14.md`](../argus/intel-neighbors-tags-2026-08-14.md) — visual OK; Radial default; Tag universe = small dots |
+| Intel viz — Neighbors Molecule + Tag dots (2026-08-14) | [`../argus/intel-neighbors-tags-2026-08-14.md`](../argus/intel-neighbors-tags-2026-08-14.md) — **sealed:** Radial default; Molecule experimental; Tag universe = small dots; no Forge graph port |
 | Delete events (product) | Draft PR #161 — separate from this pack |
 | Signals↔topic Pattern rollup (optional) | Decisions D1–D5 below — **optional query widen later**; not a new metric type |
 

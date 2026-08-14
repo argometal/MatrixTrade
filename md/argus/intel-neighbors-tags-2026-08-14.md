@@ -1,17 +1,25 @@
 # Intel viz investigations — Neighbors Molecule + Tag dots
 
 **Date:** 2026-08-14  
-**Status:** Visual OK — approved to ship (Radial remains neighborhood default; Molecule is A/B toggle only)  
+**Status:** **MERGED / sealed** — visual OK; ship approved for `#271`  
 **Audience:** humans + AI agents  
-**Canonical after merge:** `main` → this file  
+**Canonical:** `main` → this file  
 
-Related PRs (feature branches; prefer this ship once merged):
+### Post-merge decision (2026-08-14 — do not reopen casually)
+
+1. **Molecule remains experimental** — UI toggle only (`Radial | Molecule`).
+2. **Radial remains production default.**
+3. **Do not** convert Molecule to default until real-data use near the ~18-node cap proves it consistently wins — then flip with a **minimal** one-line default change.
+4. **No further graph architecture** now (no Forge motor port, no React Flow, no shared ARGUS/Forge graph infra, no ontology/edge surgery).
+5. Forge already donated the valuable idea (weighted forces + soft clustering) without contaminating ARGUS — **that was the goal; stop.**
+
+Related PRs:
 
 | Slice | PR | Branch |
 |-------|-----|--------|
 | Neighbors Molecule A/B | [#269](https://github.com/argometal/MatrixTrade/pull/269) | `cursor/graph-molecule-layout-e1a0` |
 | Tag Intel small dots | [#270](https://github.com/argometal/MatrixTrade/pull/270) | `cursor/tag-intel-small-dots-e1a0` |
-| Combined ship (this pack + both) | (this PR) | `cursor/intel-neighbors-tags-ship-e1a0` |
+| Combined ship | [#271](https://github.com/argometal/MatrixTrade/pull/271) | `cursor/intel-neighbors-tags-ship-e1a0` |
 
 ---
 
@@ -55,9 +63,10 @@ Add a second layout mode beside production Radial:
 - Observed: two organic branches (XOM vs SLB) with weak bridge; cooled sim stable on 13 nodes; coords fit 0–100.
 
 ### Explicit non-goals
-- Molecule is **not** the new default
+- Molecule is **not** the new default (**sealed** 2026-08-14)
 - Do not delete edges to improve appearance
-- Do not declare engine replacement until Molecule fails after force tuning
+- Do not declare engine replacement; do not port Forge graph stack
+- Next default flip only after real-data comparison near ~18-node topologies — minimal change
 
 ---
 
