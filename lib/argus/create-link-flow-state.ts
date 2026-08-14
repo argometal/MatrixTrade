@@ -115,7 +115,7 @@ export function useCreateLinkFlowState({
   const lockItemKind = options.lockItemKind ?? false;
   const isInboxEvidence = mode === "inbox-evidence";
   const [linkOnly, setLinkOnly] = useState(Boolean(options.linkOnly));
-  const defaultItemKind: CreateItemKind = options.entityCaptureOnly ? "topic" : "journal";
+  const defaultItemKind: CreateItemKind = "topic";
   const [itemKind, setItemKind] = useState<CreateItemKind>(options.itemKind ?? defaultItemKind);
   const [itemKindChosen, setItemKindChosen] = useState(flowPreselectsItemKind(options));
   const [name, setName] = useState("");
@@ -146,7 +146,7 @@ export function useCreateLinkFlowState({
   useEffect(() => {
     if (!open) return;
     setLinkOnly(Boolean(options.linkOnly));
-    const resetKind: CreateItemKind = options.entityCaptureOnly ? "topic" : "journal";
+    const resetKind: CreateItemKind = "topic";
     setItemKind(options.itemKind ?? resetKind);
     setItemKindChosen(flowPreselectsItemKind(options));
     setName("");

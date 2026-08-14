@@ -152,7 +152,7 @@ export function ArgusLinkModal({
   const filteredEntities = useMemo(() => {
     const byKind =
       kindFilter === "all" || kindFilter === "tags"
-        ? allEntities
+        ? allEntities.filter((entity) => entityReferenceKind(entity) != null)
         : allEntities.filter((entity) => entityReferenceKind(entity) === kindFilter);
 
     const q = query.trim().toLowerCase();

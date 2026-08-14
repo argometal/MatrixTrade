@@ -3,6 +3,7 @@ import type { CreateItemKind, JournalLinkRow, LinkFilterKind } from "@/lib/argus
 import { CREATE_ITEM_LABELS } from "@/lib/argus/create-flow-types";
 import { entityLinkCardMeta, entityLinkFilterKind } from "@/lib/argus/create-flow-helpers";
 
+/** Structural graph kinds only — matches ArgusLinkModal (no Docs / Journal). */
 export const LINK_TABS: LinkFilterKind[] = [
   "all",
   "person",
@@ -10,8 +11,6 @@ export const LINK_TABS: LinkFilterKind[] = [
   "project",
   "event",
   "topic",
-  "document",
-  "journal",
 ];
 
 export const TAB_ICONS: Record<LinkFilterKind, string> = {
@@ -96,7 +95,7 @@ export function KindBadge({ kind }: { kind: string }) {
     kind === "organization"
       ? "Organization"
       : kind === "journal"
-        ? "Journal"
+        ? "Note"
         : kind.charAt(0).toUpperCase() + kind.slice(1);
   return (
     <span
@@ -108,7 +107,6 @@ export function KindBadge({ kind }: { kind: string }) {
 }
 
 export function createItemDisplayLabel(kind: CreateItemKind): string {
-  if (kind === "journal") return "Journal Note";
   return CREATE_ITEM_LABELS[kind];
 }
 

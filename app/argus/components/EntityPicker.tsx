@@ -108,6 +108,7 @@ export function EntityPicker({
     openCreateFlow({
       itemKind: quickCreateKind,
       lockItemKind: true,
+      entityCaptureOnly: true,
       onSaved: (result) => {
         onChange(selectedIds.includes(result.id) ? selectedIds : [...selectedIds, result.id]);
         onQuickCreateNameChange("");
@@ -167,6 +168,7 @@ export function EntityPicker({
     openCreateFlow({
       itemKind: quickCreateKind,
       lockItemKind: true,
+      entityCaptureOnly: true,
       onSaved: (result) => handleEntityCreated(result),
     });
   }

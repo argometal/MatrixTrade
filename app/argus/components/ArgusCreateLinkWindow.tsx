@@ -36,7 +36,7 @@ import { usesLinkModalShell } from "@/lib/argus/link-modal-adapter";
 
 const STEPS = [
   { key: "create", label: "Create", sub: "Fill in your new item" },
-  { key: "link", label: "Link", sub: "Connect to existing ARGUS records" },
+  { key: "link", label: "Link", sub: "Link to people, orgs, projects, topics, events" },
   { key: "save", label: "Save", sub: "Review and save" },
 ] as const;
 
@@ -214,7 +214,7 @@ function ArgusCreateLinkWindowBody({
     flow.isInboxEvidence && flow.linkOnly
       ? flow.title.trim() || "Link email to records"
       : flow.itemKind === "journal"
-        ? flow.title.trim() || "Untitled journal note"
+        ? flow.title.trim() || "Untitled note"
         : flow.name.trim() || `New ${createItemDisplayLabel(flow.itemKind)}`;
 
   const itemPreviewBody =
@@ -513,7 +513,7 @@ function ArgusCreateLinkWindowBody({
             <div className="py-6">
               <h2 className="text-xl font-bold text-zinc-100">Link &amp; Connect</h2>
               <p className="mt-2 max-w-lg text-sm leading-relaxed text-zinc-400">
-                Select people, organizations, projects, events, topics, documents, or journal evidence. Capture
+                Select people, organizations, projects, events, or topics. Capture
                 anything missing — it links automatically.
               </p>
             </div>
@@ -653,7 +653,6 @@ function ArgusCreateLinkWindowBody({
                     ["project", "Projects"],
                     ["event", "Events"],
                     ["topic", "Topics"],
-                    ["document", "Documents"],
                   ] as const
                 ).map(([key, label]) => (
                   <div key={key} className="flex justify-between gap-4">
@@ -661,10 +660,6 @@ function ArgusCreateLinkWindowBody({
                     <dd className="font-semibold tabular-nums text-zinc-300">{flow.linkCounts[key]}</dd>
                   </div>
                 ))}
-                <div className="flex justify-between gap-4 border-t border-zinc-800 pt-2">
-                  <dt className="text-zinc-600">Journal</dt>
-                  <dd className="font-semibold tabular-nums text-zinc-300">{flow.linkCounts.journal}</dd>
-                </div>
               </dl>
             </div>
           </div>

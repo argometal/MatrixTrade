@@ -12,13 +12,12 @@ import type { useCreateLinkFlowState } from "@/lib/argus/create-link-flow-state"
 import { createItemDisplayLabel, KindIcon } from "@/app/argus/components/create-link-shared";
 import { ADD_CONTEXT } from "@/lib/argus/ux-copy";
 
-const MISSING_KINDS: Array<{ kind: ReferenceKind | "document"; title: string; fields: string[] }> = [
+const MISSING_KINDS: Array<{ kind: ReferenceKind; title: string; fields: string[] }> = [
   { kind: "person", title: "Person", fields: ["Full name", "Role", "Organization"] },
   { kind: "organization", title: "Organization", fields: ["Name", "Type", "Country"] },
   { kind: "project", title: "Project", fields: ["Name", "Description", "Status"] },
   { kind: "event", title: "Event", fields: ["Title", "Date", "Type"] },
   { kind: "topic", title: "Topic", fields: ["Name", "Category", "Description"] },
-  { kind: "document", title: "Document", fields: ["Name", "Description", "Source"] },
 ];
 
 type FlowState = ReturnType<typeof useCreateLinkFlowState>;
@@ -46,9 +45,7 @@ export function ArgusCreateItemDrawer({
 }) {
   if (!open) return null;
 
-  const menuSections = entityCaptureOnly
-    ? CREATE_MENU_SECTIONS.filter((section) => section.id !== "knowledge")
-    : CREATE_MENU_SECTIONS;
+  const menuSections = CREATE_MENU_SECTIONS;
 
   return (
     <>
@@ -74,7 +71,7 @@ export function ArgusCreateItemDrawer({
             </span>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400">
-                {entityCaptureOnly ? ADD_CONTEXT.title : "Capture"}
+                {ADD_CONTEXT.title}
               </p>
               <h2 className="text-sm font-bold text-zinc-50">ARGUS</h2>
             </div>

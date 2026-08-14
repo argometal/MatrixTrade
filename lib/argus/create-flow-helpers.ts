@@ -10,7 +10,7 @@ export function buildJournalLinkRows(data: ArgusData, includePrivate: boolean, l
 
   return logs.map((log) => ({
     id: log.id,
-    title: log.title || "Journal entry",
+    title: log.title || "Note",
     date: log.date.slice(0, 10),
     preview: log.body.slice(0, 120).replace(/\s+/g, " "),
     kind: log.kind === "log" ? "Log" : log.kind === "follow_up" ? "Follow-up" : "Note",
@@ -29,7 +29,10 @@ export function entityLinkFilterKind(entity: Entity): LinkFilterKind | null {
 }
 
 export function filterEntitiesForLinkTab(entities: Entity[], tab: LinkFilterKind): Entity[] {
-  if (tab === "all" || tab === "journal") return entities;
+  if (tab === "journal") return entities;
+  if (tab === "all") {
+    return entities.filter((entity) => entityLinkFilterKind(entity) !== "document");
+  }
   return entities.filter((entity) => entityLinkFilterKind(entity) === tab);
 }
 
