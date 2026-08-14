@@ -13,6 +13,7 @@ import {
   countTopicsAndEventsInScope,
   outboundStructuralIds,
 } from "./scope-node-counts";
+import { watchedTrackerTagsOnEntity } from "./entity-watched";
 
 export type V2KnowledgeNodeKind = "topic" | "project" | "organization";
 
@@ -35,7 +36,10 @@ export type V2KnowledgeNode = {
   completion?: number;
   /** Number of recurring tag patterns on scope evidence (≥3 items, fresh within 90d). */
   tagPatternCount: number;
-  /** True when scoped evidence carries a journal Tracker Tag. */
+  /**
+   * True when binder ∪ direct evidence intersects journal Trackers (definition D).
+   * Branch / neighborhood vocabulary does not count.
+   */
   hasTracker: boolean;
   href: string;
   group: string;
@@ -396,7 +400,7 @@ export function buildV2KnowledgeNodes(
     const entityInbox = getLinkedInboxForEntity(inboxItems, entity.id, includePrivate);
     const patterns = buildTagPatternsForScope(entityLogs, entityInbox, today);
     const hasTracker =
-      focusTagsOnEntity(data, inboxItems, entity.id, includePrivate, focusKeys).length > 0;
+      watchedTrackerTagsOnEntity(data, inboxItems, entity.id, includePrivate, focusKeys).length > 0;
 
     nodes.push({
       id: entity.id,
@@ -590,7 +594,11 @@ function collectLinkedNeighborIds(entity: Entity, entityMap: Map<string, Entity>
   return [...ids];
 }
 
-/** Focus Tags that appear on this entity's evidence (trigger / watch blast-radius). */
+/**
+ * Journal Trackers that appear on this entity under definition D
+ * (binder ∪ direct evidence; Topic includes linked Event rollup).
+ * Branch / neighborhood vocabulary never counts.
+ */
 function focusTagsOnEntity(
   data: ArgusData,
   inboxItems: InboxItem[],
@@ -598,27 +606,7 @@ function focusTagsOnEntity(
   includePrivate: boolean,
   focusKeys: Set<string>
 ): string[] {
-  if (focusKeys.size === 0) return [];
-  const matched = new Map<string, string>();
-
-  for (const log of visibleLogs(data, includePrivate)) {
-    if (!log.entityIds.includes(entityId)) continue;
-    for (const raw of log.topics ?? []) {
-      const key = signalTagKey(raw);
-      if (!focusKeys.has(key) || matched.has(key)) continue;
-      matched.set(key, raw.trim().replace(/\s+/g, " "));
-    }
-  }
-
-  for (const item of getLinkedInboxForEntity(inboxItems, entityId, includePrivate)) {
-    for (const raw of item.topics ?? []) {
-      const key = signalTagKey(raw);
-      if (!focusKeys.has(key) || matched.has(key)) continue;
-      matched.set(key, raw.trim().replace(/\s+/g, " "));
-    }
-  }
-
-  return [...matched.values()].sort((a, b) => a.localeCompare(b));
+  return watchedTrackerTagsOnEntity(data, inboxItems, entityId, includePrivate, focusKeys);
 }
 
 /**
