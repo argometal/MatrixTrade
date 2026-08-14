@@ -424,6 +424,8 @@ export function V2TopicDetailPanel({
               linkedRunbooks={linkedRunbooks}
               libraryRunbooks={libraryRunbooks}
               progressRecords={progressRecords}
+              organizationId={linkedOrgs[0]?.id}
+              organizationName={linkedOrgs[0]?.name}
             />
           ) : null}
 

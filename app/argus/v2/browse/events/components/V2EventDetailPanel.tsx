@@ -569,6 +569,8 @@ export function V2EventDetailPanel({
               linkedRunbooks={linkedRunbooks}
               libraryRunbooks={libraryRunbooks}
               progressRecords={progressRecords}
+              organizationId={selected.linkedOrgs[0]?.id}
+              organizationName={selected.linkedOrgs[0]?.name}
             />
           ) : null}
 
