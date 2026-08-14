@@ -2,10 +2,10 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0814d`
+Pinned revision: `main0814e`
 
-Ship commit: `189beda`
+Ship commit: `b625231`
 
 Includes:
-- Event delete with PIN lock (PR #276) — Inbox/Chronicle/entity delete no longer require TOTP when PIN is set; entityKind fallback; delete PIN also unlocks private session
-- Prior: entity Back (PR #275), tag rename (PR #274), Topic runbook org edit (PR #272), neighbors Molecule A/B (PR #271)
+- Runbook checks on child projects (PR #278) — empty scope seed, scoped UI, execute-mode show accomplished + optimistic checks
+- Prior: Event delete PIN lock (PR #276 / main0814d), entity Back (#275), tag rename (#274), Topic runbook org edit (#272), neighbors Molecule (#271)
