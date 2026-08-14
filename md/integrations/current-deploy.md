@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0812c` |
-| **Commit** | Always `git rev-parse main0812c` after fetch (must match `origin/main` tip at pin; ship merge `fef4d3f`) |
+| **Tag** | `main0814a` |
+| **Commit** | Always `git rev-parse main0814a` after fetch (must match `origin/main` tip at pin; ship merge `8a9a78f`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-14 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,13 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0812c
+# optional pin: git checkout main0814a
 ```
 
 ## What this deploy includes
 
+- **PR #272:** Topic/Event Runbooks pass linked `organizationId` — “Edit on organization” works when org is linked (execute mode unchanged)
+- **PR #271:** Neighbors Molecule A/B (Radial default; Molecule experimental) + Tag Intel small dots + AI-readable investigation doc
 - **PR #267:** Tracker Watched truth (definition D) — passive ⚑ on binder/evidence rows; Trackers = journal Flags ∩ ownership; Home `hasTracker` binder ∪ direct evidence
 - **PR #265:** Topic Tags provenance UI — binder / Tags in this Topic / By Event (Event Tags · On Notes · Open Event) / Trackers; demote aggregate evidence soup
 - **PR #263:** Topic Chronicle tags + Open Event link; Links inspect clearer Open Event / View Chronicle CTAs
