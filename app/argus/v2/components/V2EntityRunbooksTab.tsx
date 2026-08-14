@@ -45,7 +45,7 @@ export function V2EntityRunbooksTab({
   progressRecords?: RunbookProgress[];
   /** Other orgs — used on organization library for copy/move runbook. */
   peerOrganizations?: RunbookPeerOrg[];
-  /** Project's linked organization — enables "Edit on organization". */
+  /** Linked organization — enables "Edit on organization" from Project/Topic/Event execute mode. */
   organizationId?: string;
   organizationName?: string;
 }) {
