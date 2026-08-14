@@ -4,8 +4,8 @@
 
 | Field | Value |
 |--------|--------|
-| **Tag** | `main0814a` |
-| **Commit** | Always `git rev-parse main0814a` after fetch (must match `origin/main` tip at pin; ship merge `8a9a78f`) |
+| **Tag** | `main0814b` |
+| **Commit** | Always `git rev-parse main0814b` after fetch (must match `origin/main` tip at pin; ship merge `f63250e`) |
 | **Production URL** | https://matrix-trade-theta.vercel.app |
 | **Date** | 2026-08-14 |
 | **IA handoff** | [`md/argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) |
@@ -16,11 +16,12 @@
 git fetch origin --tags
 git checkout main
 git reset --hard origin/main
-# optional pin: git checkout main0814a
+# optional pin: git checkout main0814b
 ```
 
 ## What this deploy includes
 
+- **PR #274:** Rename Tags from Home Tags universe (Notes/binders/Trackers; not Flag/Disable)
 - **PR #272:** Topic/Event Runbooks pass linked `organizationId` — “Edit on organization” works when org is linked (execute mode unchanged)
 - **PR #271:** Neighbors Molecule A/B (Radial default; Molecule experimental) + Tag Intel small dots + AI-readable investigation doc
 - **PR #267:** Tracker Watched truth (definition D) — passive ⚑ on binder/evidence rows; Trackers = journal Flags ∩ ownership; Home `hasTracker` binder ∪ direct evidence
