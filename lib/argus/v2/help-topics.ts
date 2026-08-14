@@ -152,6 +152,10 @@ const SECTIONS: HelpSection[] = [
         body: "Optional watch. Confirm both ways. Disable turns watch off — the Tag stays on Notes and Topic Tags. Never an easy delete here. Most Tags never need Flag.",
       },
       {
+        title: "Rename",
+        body: "Select a tag → Rename. Updates the string everywhere (Notes, binders, Trackers). Not the same as Flag/Disable.",
+      },
+      {
         title: "Filters",
         body: "Universe · Hot (30d) · Patterns · Stale (had evidence, none in 90d) · Trackers — shared with Treemap / Portfolio.",
       },
