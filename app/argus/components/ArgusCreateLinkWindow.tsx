@@ -511,7 +511,7 @@ function ArgusCreateLinkWindowBody({
             </div>
           ) : (
             <div className="py-6">
-              <h2 className="text-xl font-bold text-zinc-100">Link &amp; Connect</h2>
+              <h2 className="text-xl font-bold text-zinc-100">Link</h2>
               <p className="mt-2 max-w-lg text-sm leading-relaxed text-zinc-400">
                 Select people, organizations, projects, events, or topics. Capture
                 anything missing — it links automatically.
