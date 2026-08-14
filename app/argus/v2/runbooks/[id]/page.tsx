@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getEntity, getRunbook, readArgus } from "@/lib/argus/server-storage";
 import { runbookProgress } from "@/lib/argus/runbook-helpers";
+import { collectKnownTagVocabulary } from "@/lib/argus/tag-ontology";
 import { V2BackLink, V2Badge } from "../../components/v2-ui";
 import { V2RecordRecentEntity } from "../../components/V2RecordRecentEntity";
 import { V2RunbookWorkPanel } from "../../components/V2RunbookWorkPanel";
@@ -86,7 +87,7 @@ export default async function V2RunbookPage({ params }: { params: Promise<{ id: 
         </div>
       </header>
 
-      <V2RunbookWorkPanel runbook={runbook} />
+      <V2RunbookWorkPanel runbook={runbook} tagVocabulary={collectKnownTagVocabulary(data)} />
         </div>
       </div>
     </div>

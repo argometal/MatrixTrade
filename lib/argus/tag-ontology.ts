@@ -224,3 +224,17 @@ export function countTagsByRole(data: ArgusData): Record<TagRole, number> {
     evidence: readTagsForRole(data, "evidence").length,
   };
 }
+
+/**
+ * Existing ARGUS tag strings for pickers (binder + global + evidence).
+ * Does not include Runbook classification tags — those reuse these keys, they are not a TagRole.
+ */
+export function collectKnownTagVocabulary(data: ArgusData): string[] {
+  return normalizeTagList([
+    ...collectAllBinderTags(data, "project"),
+    ...collectAllBinderTags(data, "topic"),
+    ...collectAllBinderTags(data, "event"),
+    ...readTagsForRole(data, "global"),
+    ...readTagsForRole(data, "evidence"),
+  ]);
+}

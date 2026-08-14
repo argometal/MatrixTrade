@@ -7,14 +7,11 @@ import { formatArgusError } from "@/lib/argus/persistence/errors";
 
 export function V2RunbookCreateStrip({
   entityId,
-  projectId,
   onCreated,
   onCancel,
 }: {
-  /** Preferred — org / project / topic / event to link on create. */
+  /** Org / project / topic / event to link on create. */
   entityId?: string;
-  /** @deprecated use entityId */
-  projectId?: string;
   onCreated?: (runbookId: string) => void;
   onCancel?: () => void;
 }) {
@@ -23,7 +20,7 @@ export function V2RunbookCreateStrip({
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const linkId = entityId ?? projectId ?? "";
+  const linkId = entityId ?? "";
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();

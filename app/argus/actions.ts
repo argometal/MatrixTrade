@@ -2303,6 +2303,17 @@ export async function renameRunbookTitleAction(runbookId: string, title: string)
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
 }
 
+/** Classification tags on a runbook template — existing ARGUS tag strings, not evidence. */
+export async function updateRunbookTagsAction(runbookId: string, tags: string[]): Promise<void> {
+  await requireArgusSession();
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+  await updateRunbook(runbookId, { tags });
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
 export async function appendRunbookCardsFromTextAction(runbookId: string, text: string): Promise<void> {
   await requireArgusSession();
   const runbook = await getRunbook(runbookId);
@@ -2592,7 +2603,11 @@ export async function importRunbookJsonAction(
       throw new ArgusPersistenceError("validation", "Runbook not found.");
     }
 
-    await updateRunbook(targetRunbookId, { title, items });
+    await updateRunbook(targetRunbookId, {
+      title,
+      items,
+      ...(Array.isArray(payload.tags) ? { tags: payload.tags.map((tag) => String(tag)) } : {}),
+    });
     await revalidateRunbookSurfaces(targetRunbookId, runbook.linkedEntityIds);
     return {
       id: targetRunbookId,
@@ -2605,6 +2620,7 @@ export async function importRunbookJsonAction(
     title,
     items,
     linkedEntityIds,
+    ...(Array.isArray(payload.tags) ? { tags: payload.tags.map((tag) => String(tag)) } : {}),
   });
   await revalidateRunbookSurfaces(runbook.id, runbook.linkedEntityIds);
   return {

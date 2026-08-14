@@ -4,6 +4,7 @@ import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
+import { collectKnownTagVocabulary } from "@/lib/argus/tag-ontology";
 import { entityHasPrivateEvidence } from "@/lib/argus/entity-private-evidence";
 import { loadOrganizationPageData } from "@/lib/argus/v2/loaders";
 import { buildV2DeleteGateProps } from "@/lib/argus/v2/delete-gate-props";
@@ -226,6 +227,7 @@ export default async function V2OrganizationPage({
             runbooks={orgRunbooks}
             progressRecords={progressRecords}
             peerOrganizations={peerOrganizations}
+            tagVocabulary={collectKnownTagVocabulary(data)}
           />
         </div>
       </div>

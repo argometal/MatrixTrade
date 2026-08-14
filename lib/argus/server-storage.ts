@@ -23,6 +23,7 @@ import type {
   RunbookInput,
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
+import { normalizeTagList } from "./tag-ontology";
 import { inboxStatusAfterLinkChange } from "./v2/inbox-loaders";
 import {
   filterLinkIdsForSource,
@@ -616,6 +617,7 @@ export async function createRunbook(input: RunbookInput): Promise<Runbook> {
     title: input.title.trim(),
     items: input.items ?? [],
     linkedEntityIds: validIds,
+    tags: normalizeTagList(input.tags),
     createdAt: now,
     updatedAt: now,
   };
@@ -632,7 +634,7 @@ export async function createRunbook(input: RunbookInput): Promise<Runbook> {
 
 export async function updateRunbook(
   id: string,
-  patch: Partial<Pick<Runbook, "title" | "items" | "linkedEntityIds">>
+  patch: Partial<Pick<Runbook, "title" | "items" | "linkedEntityIds" | "tags">>
 ): Promise<Runbook> {
   const data = await readArgus();
   const runbook = data.runbooks.find((entry) => entry.id === id);
@@ -646,6 +648,7 @@ export async function updateRunbook(
   if (patch.linkedEntityIds !== undefined) {
     runbook.linkedEntityIds = filterLinkIdsForSource(data.entities, "create", patch.linkedEntityIds);
   }
+  if (patch.tags !== undefined) runbook.tags = normalizeTagList(patch.tags);
   runbook.updatedAt = now;
 
   await writeArgus(data);
@@ -705,6 +708,7 @@ export async function copyRunbook(
     title: `${source.title} (copy)`,
     items,
     linkedEntityIds,
+    tags: source.tags ?? [],
   });
 }
 

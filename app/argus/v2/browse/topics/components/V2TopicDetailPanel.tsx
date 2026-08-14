@@ -426,6 +426,10 @@ export function V2TopicDetailPanel({
               progressRecords={progressRecords}
               organizationId={linkedOrgs[0]?.id}
               organizationName={linkedOrgs[0]?.name}
+              suggestionTags={[
+                ...selected.tagPatterns.map((pattern) => pattern.tag),
+                ...selected.aliases,
+              ]}
             />
           ) : null}
 

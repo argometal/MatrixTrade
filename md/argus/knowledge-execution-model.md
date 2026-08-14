@@ -100,7 +100,7 @@ Capture (quick note) stays separate from the full Create workspace.
 ## Runbook (implementation)
 
 - Stored in `ArgusData.runbooks[]` — shared checklist **templates** (Execution), separate from entities and logs.
-- Fields: `title`, `items[]` (`text`, `done` = template default only, `doneAt`, `type: item|sep`), `linkedEntityIds`.
+- Fields: `title`, `items[]` (`text`, `done` = template default only, `doneAt`, `type: item|sep`), `linkedEntityIds`, `tags[]` (optional classification — existing ARGUS tag strings; not evidence; not a TagRole).
 - Vocabulary: each checklist row is a **check** (not a “card”).
 - **Organization** = Runbooks library (create/edit templates). Templates are assigned by linking (`linkedEntityIds`) to Project / Topic / Event (and may stay linked to the org).
 - **Project / Topic / Event** = Runbooks tab — assign or copy from library, then execute.

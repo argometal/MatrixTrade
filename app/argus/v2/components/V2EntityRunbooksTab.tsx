@@ -8,7 +8,10 @@ import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import {
   applyRunbookProgress,
   findRunbookProgress,
+  runbookClassificationTags,
+  runbookMatchesSuggestionKeys,
   runbookProgress as calcProgress,
+  scopeRunbookSuggestionKeys,
 } from "@/lib/argus/runbook-helpers";
 import {
   copyRunbookToEntityAction,
@@ -36,6 +39,8 @@ export function V2EntityRunbooksTab({
   peerOrganizations = [],
   organizationId,
   organizationName,
+  suggestionTags = [],
+  tagVocabulary = [],
 }: {
   level: Level;
   entityId: string;
@@ -48,6 +53,10 @@ export function V2EntityRunbooksTab({
   /** Linked organization — enables "Edit on organization" from Project/Topic/Event execute mode. */
   organizationId?: string;
   organizationName?: string;
+  /** Pattern + binder tags on this entity — used to suggest unassigned runbooks. */
+  suggestionTags?: string[];
+  /** Existing ARGUS tag vocabulary for template classification (org library). */
+  tagVocabulary?: string[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -113,6 +122,18 @@ export function V2EntityRunbooksTab({
   const linkable = useMemo(
     () => libraryRunbooks.filter((rb) => !rb.linkedEntityIds.includes(entityId)),
     [libraryRunbooks, entityId]
+  );
+
+  const suggestionKeys = useMemo(() => scopeRunbookSuggestionKeys(suggestionTags), [suggestionTags]);
+
+  const suggestedLinkable = useMemo(
+    () => linkable.filter((rb) => runbookMatchesSuggestionKeys(rb, suggestionKeys)),
+    [linkable, suggestionKeys]
+  );
+
+  const otherLinkable = useMemo(
+    () => linkable.filter((rb) => !runbookMatchesSuggestionKeys(rb, suggestionKeys)),
+    [linkable, suggestionKeys]
   );
 
   const peerLists: RunbookPeerList[] = useMemo(() => {
@@ -232,6 +253,7 @@ export function V2EntityRunbooksTab({
         returnToProjectLabel={
           organizationName ? `Back to project` : "Back to project"
         }
+        tagVocabulary={tagVocabulary}
       />
     );
   }
@@ -253,7 +275,7 @@ export function V2EntityRunbooksTab({
           <p className="mt-1 text-xs text-zinc-500">
             {isLibrary
               ? "Organization library — create checklists, then link them to projects, topics, or events. Copy or move lists between organizations."
-              : "Checklists linked here. Progress (checks / closed) is saved only for this level. Edit the shared template on the organization."}
+              : "Checklists linked here. Progress (checks / closed) is saved only for this level. Edit the shared template on the organization. Matching tags suggest runbooks — assign stays explicit."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -319,26 +341,68 @@ export function V2EntityRunbooksTab({
       {assignOpen && !isLibrary ? (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
           <p className="mb-3 text-xs text-zinc-500">
-            Select runbooks from the organization library (or other linked templates), then assign.
+            Select runbooks from the organization library, then assign. Suggestions match Patterns and
+            tags on this entity — assignment stays explicit.
           </p>
           {linkable.length === 0 ? (
             <p className="text-sm text-zinc-500">No more runbooks to assign — create them on the Organization.</p>
           ) : (
-            <ul className="mb-3 max-h-48 space-y-1 overflow-y-auto">
-              {linkable.map((rb) => (
-                <li key={rb.id}>
-                  <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800/80">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(rb.id)}
-                      onChange={() => toggleSelect(rb.id)}
-                      className="rounded border-zinc-600"
-                    />
-                    {rb.title}
-                  </label>
-                </li>
-              ))}
-            </ul>
+            <div className="mb-3 max-h-56 space-y-3 overflow-y-auto">
+              {suggestedLinkable.length > 0 ? (
+                <div>
+                  <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wide text-lime-300/80">
+                    Suggested from tags
+                  </p>
+                  <ul className="space-y-1">
+                    {suggestedLinkable.map((rb) => (
+                      <li key={rb.id}>
+                        <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800/80">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(rb.id)}
+                            onChange={() => toggleSelect(rb.id)}
+                            className="rounded border-zinc-600"
+                          />
+                          <span className="min-w-0 flex-1 truncate">{rb.title}</span>
+                          {runbookClassificationTags(rb).length > 0 ? (
+                            <span className="shrink-0 text-[10px] text-zinc-500">
+                              {runbookClassificationTags(rb)
+                                .slice(0, 3)
+                                .map((tag) => `#${tag}`)
+                                .join(" ")}
+                            </span>
+                          ) : null}
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              {otherLinkable.length > 0 ? (
+                <div>
+                  {suggestedLinkable.length > 0 ? (
+                    <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                      Other library runbooks
+                    </p>
+                  ) : null}
+                  <ul className="space-y-1">
+                    {otherLinkable.map((rb) => (
+                      <li key={rb.id}>
+                        <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800/80">
+                          <input
+                            type="checkbox"
+                            checked={selectedIds.includes(rb.id)}
+                            onChange={() => toggleSelect(rb.id)}
+                            className="rounded border-zinc-600"
+                          />
+                          <span className="min-w-0 flex-1 truncate">{rb.title}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
           )}
           <div className="flex flex-wrap gap-2">
             <button
@@ -568,6 +632,14 @@ function RunbookHomeCard({
           <span className="mt-2 block text-[10px] tabular-nums text-zinc-500">
             {stats.open} open · {stats.done}/{stats.total} checks
           </span>
+          {runbookClassificationTags(runbook).length > 0 ? (
+            <span className="mt-1.5 block truncate text-[10px] text-zinc-500">
+              {runbookClassificationTags(runbook)
+                .slice(0, 4)
+                .map((tag) => `#${tag}`)
+                .join(" ")}
+            </span>
+          ) : null}
         </button>
         {isLibrary ? (
           <div ref={menuOpen ? menuRef : undefined} className="relative shrink-0">

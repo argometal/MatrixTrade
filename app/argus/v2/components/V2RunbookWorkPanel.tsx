@@ -47,6 +47,8 @@ import {
 } from "@/lib/argus/runbook-helpers";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
 import { RunbookAiBulkPanel } from "./RunbookAiBulkPanel";
+import { V2RunbookTagEditor } from "./V2RunbookTagEditor";
+import { runbookClassificationTags } from "@/lib/argus/runbook-helpers";
 
 export type RunbookPeerList = { id: string; title: string };
 
@@ -292,6 +294,7 @@ export function V2RunbookWorkPanel({
   editOnOrganizationHref,
   returnToProjectHref,
   returnToProjectLabel = "Back to project",
+  tagVocabulary = [],
 }: {
   runbook: Runbook;
   onBack?: () => void;
@@ -306,6 +309,8 @@ export function V2RunbookWorkPanel({
   /** Organization edit opened from a project → return link. */
   returnToProjectHref?: string | null;
   returnToProjectLabel?: string;
+  /** Existing ARGUS tag strings for classification suggestions. */
+  tagVocabulary?: string[];
 }) {
   const router = useRouter();
   const importRef = useRef<HTMLInputElement>(null);
@@ -512,6 +517,7 @@ export function V2RunbookWorkPanel({
       runbook: {
         title: runbook.title,
         linkedEntityIds: runbook.linkedEntityIds,
+        tags: runbook.tags ?? [],
         items: runbook.items,
       },
     };
@@ -711,6 +717,26 @@ export function V2RunbookWorkPanel({
         <span className="rounded-full bg-lime-500/10 px-3 py-1 text-xs text-lime-300">{progress.open} open</span>
         <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-500">{progress.done} done</span>
       </div>
+
+      {canEdit ? (
+        <V2RunbookTagEditor
+          runbookId={runbook.id}
+          runbookTitle={runbook.title}
+          initialTags={runbookClassificationTags(runbook)}
+          suggestedTags={tagVocabulary}
+        />
+      ) : runbookClassificationTags(runbook).length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {runbookClassificationTags(runbook).map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full border border-zinc-800 bg-zinc-900/80 px-2 py-0.5 text-[11px] text-zinc-400"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       {canEdit ? (
         <div className="runbook-no-print rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">

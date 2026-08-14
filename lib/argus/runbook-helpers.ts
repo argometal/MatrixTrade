@@ -1,4 +1,5 @@
 import type { Runbook, RunbookItem, RunbookProgress, RunbookSubtask } from "./types";
+import { normalizeTagList, tagKey } from "./tag-ontology";
 
 export function normRunbookLine(line: string): string {
   return String(line || "")
@@ -170,6 +171,23 @@ export function libraryRunbooksForRelated(
     runbook.linkedEntityIds.some((id) => related.has(id))
   );
   return fromRelated.length > 0 ? fromRelated : active;
+}
+
+export function runbookClassificationTags(runbook: Pick<Runbook, "tags">): string[] {
+  return normalizeTagList(runbook.tags);
+}
+
+/** Pattern tags ∪ entity binder tags — keys used to suggest unassigned runbooks. */
+export function scopeRunbookSuggestionKeys(tags: string[] | undefined): Set<string> {
+  return new Set(normalizeTagList(tags).map(tagKey));
+}
+
+export function runbookMatchesSuggestionKeys(
+  runbook: Pick<Runbook, "tags">,
+  keys: Set<string>
+): boolean {
+  if (keys.size === 0) return false;
+  return runbookClassificationTags(runbook).some((tag) => keys.has(tagKey(tag)));
 }
 
 export function progressForEntity(

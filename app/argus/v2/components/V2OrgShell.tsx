@@ -72,6 +72,7 @@ export type V2OrgShellProps = {
   runbooks?: Runbook[];
   progressRecords?: RunbookProgress[];
   peerOrganizations?: Array<{ id: string; name: string }>;
+  tagVocabulary?: string[];
 };
 
 function initials(name: string): string {
@@ -112,6 +113,7 @@ export function V2OrgShell(props: V2OrgShellProps) {
     runbooks = [],
     progressRecords = [],
     peerOrganizations = [],
+    tagVocabulary = [],
   } = props;
 
   const replaceParams = useCallback(
@@ -329,6 +331,7 @@ export function V2OrgShell(props: V2OrgShellProps) {
           linkedRunbooks={runbooks}
           progressRecords={progressRecords}
           peerOrganizations={peerOrganizations}
+          tagVocabulary={tagVocabulary}
         />
       ) : null}
 

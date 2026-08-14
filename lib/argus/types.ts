@@ -163,6 +163,11 @@ export interface Runbook {
   title: string;
   items: RunbookItem[];
   linkedEntityIds: string[];
+  /**
+   * Classification metadata — existing ARGUS tag strings (same keys as evidence/binder Tags).
+   * Not a TagRole. Not evidence. Patterns still derive only from evidence Tags.
+   */
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;

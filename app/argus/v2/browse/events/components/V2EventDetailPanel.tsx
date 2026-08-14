@@ -571,6 +571,10 @@ export function V2EventDetailPanel({
               progressRecords={progressRecords}
               organizationId={selected.linkedOrgs[0]?.id}
               organizationName={selected.linkedOrgs[0]?.name}
+              suggestionTags={[
+                ...selected.tagPatterns.map((pattern) => pattern.tag),
+                ...selected.eventTags,
+              ]}
             />
           ) : null}
 

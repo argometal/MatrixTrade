@@ -4,6 +4,7 @@ import { argusPrivateConfigured } from "@/lib/auth/passwords";
 import { entityNotesForDisplay } from "@/lib/argus/reference-types";
 import { getEntity, getInboxItems, readArgus } from "@/lib/argus/server-storage";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
+import { collectKnownTagVocabulary, normalizeTagList } from "@/lib/argus/tag-ontology";
 import { loadProjectPageData } from "@/lib/argus/v2/loaders";
 import { buildV2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
 import { projectHasPrivateEvidence } from "@/lib/argus/v2/project-private";
@@ -192,6 +193,11 @@ export default async function V2ProjectPage({
             runbooks={projectRunbooks}
             libraryRunbooks={libraryRunbooks}
             progressRecords={progressRecords}
+            suggestionTags={normalizeTagList([
+              ...page.tagPatterns.map((pattern) => pattern.tag),
+              ...((entity.projectTags?.length ? entity.projectTags : entity.linkedTags) ?? []),
+            ])}
+            tagVocabulary={collectKnownTagVocabulary(data)}
             durationDays={page.durationDays}
             dateRangeLabel={page.dateRangeLabel}
             peopleWithRoles={page.peopleWithRoles}

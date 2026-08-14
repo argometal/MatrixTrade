@@ -10,6 +10,7 @@ export function serializeRunbookForExport(runbook: Runbook) {
     id: runbook.id,
     title: runbook.title,
     linkedEntityIds: runbook.linkedEntityIds,
+    tags: runbook.tags ?? [],
     items: runbook.items.map((item) => ({
       id: item.id,
       text: item.text,

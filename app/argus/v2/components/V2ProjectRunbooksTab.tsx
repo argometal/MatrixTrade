@@ -11,6 +11,8 @@ export function V2ProjectRunbooksTab({
   progressRecords = [],
   organizationId,
   organizationName,
+  suggestionTags = [],
+  tagVocabulary = [],
 }: {
   runbooks: Runbook[];
   projectId: string;
@@ -18,6 +20,8 @@ export function V2ProjectRunbooksTab({
   progressRecords?: RunbookProgress[];
   organizationId?: string;
   organizationName?: string;
+  suggestionTags?: string[];
+  tagVocabulary?: string[];
 }) {
   return (
     <V2EntityRunbooksTab
@@ -28,6 +32,8 @@ export function V2ProjectRunbooksTab({
       progressRecords={progressRecords}
       organizationId={organizationId}
       organizationName={organizationName}
+      suggestionTags={suggestionTags}
+      tagVocabulary={tagVocabulary}
     />
   );
 }

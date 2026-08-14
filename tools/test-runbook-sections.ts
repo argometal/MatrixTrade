@@ -27,7 +27,7 @@ assert.equal(runbookProgress(items).total, 4);
 const range = runbookSectionBlockRange(items, items[1].id);
 assert.deepEqual(range, { start: 1, end: 5 });
 assert.equal(runbookItemSectionId(items, items[4].id), items[1].id);
-assert.deepEqual(runbookSectionChildStats(items, items[1].id), { total: 2, open: 2 });
+assert.deepEqual(runbookSectionChildStats(items, items[1].id), { total: 2, open: 2, done: 0 });
 
 assert.equal(canMoveRunbookSection(items, items[1].id, 1), true);
 assert.equal(canMoveRunbookSection(items, items[1].id, -1), false);

@@ -1,4 +1,5 @@
 import type { ArgusData, Attachment, ClassificationStatus, Entity, InboxItem, Log, Runbook } from "./types";
+import { normalizeTagList } from "./tag-ontology";
 import {
   legacyArchivedFromNotes,
   resolveEntityLifecycleStatus,
@@ -109,6 +110,7 @@ export function normalizeRunbook(runbook: Runbook): Runbook {
         : [],
     })),
     linkedEntityIds: runbook.linkedEntityIds ?? [],
+    tags: normalizeTagList(runbook.tags),
     deletedAt: runbook.deletedAt,
   };
 }
