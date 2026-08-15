@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { GuestLockDateField } from "@/app/components/settings/GuestLockDateField";
 import {
   PIPELINE_OUTCOME_BUCKETS,
   PIPELINE_OUTCOME_BUCKET_LABELS,
@@ -100,24 +101,20 @@ export function PreviewPipelinePerformance({
         className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 sm:grid-cols-2 lg:grid-cols-3"
         data-pipeline-filters
       >
-        <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
-          From
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm normal-case text-zinc-200"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
-          To
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm normal-case text-zinc-200"
-          />
-        </label>
+        <GuestLockDateField
+          name="pipelineFrom"
+          label="From"
+          value={from}
+          onChange={setFrom}
+          max={to || undefined}
+        />
+        <GuestLockDateField
+          name="pipelineTo"
+          label="To"
+          value={to}
+          onChange={setTo}
+          min={from || undefined}
+        />
         <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
           Ticker
           <select
