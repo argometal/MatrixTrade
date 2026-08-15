@@ -243,6 +243,12 @@ assert.match(graphUi, /HOVER_SCALE = 1\.55/, "icons enlarge on hover");
 assert.match(graphUi, /Large view/, "expand is a large local view, not giant icons");
 assert.match(graphUi, /nodeBase: 2\.[0-9]/, "default icons stay small");
 assert.doesNotMatch(graphUi, /nodeBase: 7\.5/, "expanded view no longer uses huge nodeBase");
+assert.match(graphUi, /aria-label="Zoom in"/, "graph exposes + zoom control");
+assert.match(graphUi, /aria-label="Zoom out"/, "graph exposes − zoom control");
+assert.match(graphUi, /aria-label="Turn left"/, "graph exposes turn left");
+assert.match(graphUi, /aria-label="Toggle 3D turn"/, "graph exposes optional 3D tilt");
+assert.match(graphUi, /rotateLayoutPoint/, "turn rotates layout around center");
+assert.doesNotMatch(graphUi, /ForceGraph3D|react-force-graph-3d/, "ARGUS neighborhood stays SVG — no Forge 3D port");
 assert.doesNotMatch(graphUi, /3 links · mid/, "old mid-band legend removed");
 
 const orgShell = readFileSync(join(process.cwd(), "app/argus/v2/components/V2OrgShell.tsx"), "utf8");

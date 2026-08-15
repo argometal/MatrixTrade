@@ -186,7 +186,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Pan & zoom",
-        body: "Drag empty canvas to pan, scroll to zoom, Fit resets — same camera idea as Neo4j Bloom and Obsidian Graph. Explore depth 3/5 without losing the molecule off-screen.",
+        body: "−/+ zoom, ↺↻ turn the molecule, optional 3D tilt (Shift+drag orbits). Drag empty canvas to pan; Fit resets. Same camera idea as Neo4j Bloom / Obsidian — not Forge force-3D.",
       },
       {
         title: "Focus & open",
