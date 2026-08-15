@@ -2,13 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0814l`
+Pinned revision: `main0814m`
 
-Ship commit: `6387b08`
+Ship commit: `17a8ffe`
 
 Includes:
-- Runbook suggestions B+C: match tags, ranking, create-from-match prefill (PR #297)
-- Topics Chronicle Event quick/expand + collapsible detail (PR #298)
-- Topic/Event expand-collapse + Topics desktop split (PR #295)
+- Topic/Event preview fully disappears when hidden (no leftover overlapping pane)
+- Topics Chronicle Event quick/expand + note Show/Hide (PR #298)
+- Runbook suggestions B+C (PR #297)
 
 IA handoffs: [`../argus/consolidated-product-direction.md`](../argus/consolidated-product-direction.md) · [`../argus/overview-pulse-experiment-handoff.md`](../argus/overview-pulse-experiment-handoff.md)
