@@ -15,7 +15,7 @@ import {
   nextLearningOutcomeId,
   upsertLearningOutcome,
 } from "./learning-outcome-store";
-import { deriveUnexecutedPlanLossServerValues } from "./plan-outcome-derive";
+import { deriveUnexecutedPlanLossServerValues, deriveMissedOpportunityServerValues } from "./plan-outcome-derive";
 
 export function deriveLearningOutcomeKindFromTrade(trade: Trade): LearningOutcomeKind | null {
   if (trade.status !== "closed") return null;
@@ -31,6 +31,9 @@ export function deriveLearningOutcomeKindFromPlan(plan: TradePlan): LearningOutc
   if (plan.outcome?.outcomeKind === "unexecuted_plan_loss") {
     return "unexecuted_plan_loss";
   }
+  if (plan.outcome?.outcomeKind === "missed_opportunity") {
+    return "missed_opportunity";
+  }
   if (plan.linkedTradeId) return null;
   const outcomeStatus = plan.outcome?.status;
   if (outcomeStatus === "theoretical_loss" && plan.outcome?.tradeExecuted === false) {
@@ -44,12 +47,27 @@ export function deriveLearningOutcomeKindFromPlan(plan: TradePlan): LearningOutc
   if (plan.status === "failed") {
     const reason = plan.outcome?.reason;
     if (reason === "discipline") return "cancelled";
+    // Apply missed_opportunity uses status entry_not_triggered — prefer kind above.
+    if (
+      outcomeStatus === "entry_not_triggered" &&
+      plan.outcome?.targetReachedBeforeStop === true &&
+      plan.outcome?.entryReached === false
+    ) {
+      return "missed_opportunity";
+    }
     if (outcomeStatus === "entry_not_triggered") return "expired";
     if (outcomeStatus === "theoretical_loss") return "unexecuted_plan_loss";
     return "missed_opportunity";
   }
   if (plan.status === "expired") {
     if (outcomeStatus === "theoretical_loss") return "unexecuted_plan_loss";
+    if (
+      outcomeStatus === "entry_not_triggered" &&
+      plan.outcome?.targetReachedBeforeStop === true &&
+      plan.outcome?.entryReached === false
+    ) {
+      return "missed_opportunity";
+    }
     if (outcomeStatus === "entry_not_triggered") return "expired";
     return "expired";
   }
@@ -122,7 +140,11 @@ export async function upsertLearningOutcomeFromPlan(
   const o = plan.outcome;
 
   const isUpl = kind === "unexecuted_plan_loss";
-  const server = isUpl ? deriveUnexecutedPlanLossServerValues(plan) : null;
+  const isMiss = kind === "missed_opportunity";
+  const serverUpl = isUpl ? deriveUnexecutedPlanLossServerValues(plan) : null;
+  const missDerived = isMiss ? deriveMissedOpportunityServerValues(plan) : null;
+  const serverMissOk =
+    missDerived && !("error" in missDerived) ? missDerived : null;
 
   const row: LearningOutcome = {
     id: existing?.id ?? nextLearningOutcomeId(all, plan.ticker),
@@ -135,18 +157,30 @@ export async function upsertLearningOutcomeFromPlan(
     playbookId: plan.playbookId ?? existing?.playbookId,
     observationId: existing?.observationId,
     mafExperimentId: existing?.mafExperimentId,
-    realizedR: server ? server.realizedR : o?.tradeExecuted ? o.realizedResultR : 0,
-    realizedPnL: server
-      ? server.realizedPnL
-      : o?.realizedPnL ?? (o?.tradeExecuted ? undefined : 0),
-    counterfactualR: server
-      ? server.counterfactualR
-      : o?.theoreticalResultR !== undefined && o?.theoreticalResultR !== null
-        ? o.theoreticalResultR
-        : existing?.counterfactualR,
-    counterfactualDollarResult: server
-      ? server.counterfactualDollarResult
-      : o?.counterfactualDollarResult ?? existing?.counterfactualDollarResult ?? null,
+    realizedR: serverUpl
+      ? serverUpl.realizedR
+      : serverMissOk
+        ? serverMissOk.realizedR
+        : o?.tradeExecuted
+          ? o.realizedResultR
+          : 0,
+    realizedPnL: serverUpl
+      ? serverUpl.realizedPnL
+      : serverMissOk
+        ? serverMissOk.realizedPnL
+        : o?.realizedPnL ?? (o?.tradeExecuted ? undefined : 0),
+    counterfactualR: serverUpl
+      ? serverUpl.counterfactualR
+      : serverMissOk
+        ? serverMissOk.counterfactualR
+        : o?.theoreticalResultR !== undefined && o?.theoreticalResultR !== null
+          ? o.theoreticalResultR
+          : existing?.counterfactualR,
+    counterfactualDollarResult: serverUpl
+      ? serverUpl.counterfactualDollarResult
+      : serverMissOk
+        ? serverMissOk.counterfactualDollarResult
+        : o?.counterfactualDollarResult ?? existing?.counterfactualDollarResult ?? null,
     entryReached: o?.entryReached ?? o?.entryTriggered ?? existing?.entryReached,
     stopReachedBeforeTarget:
       o?.stopReachedBeforeTarget ??

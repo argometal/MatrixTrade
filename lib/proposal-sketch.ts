@@ -221,6 +221,7 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
       break;
     }
     case "plan-outcome": {
+      const kind = String(p.outcomeKind ?? p.status ?? "—");
       fields.push({
         label: "Plan",
         value: String(p.planId ?? "—").toUpperCase(),
@@ -228,7 +229,7 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
       });
       fields.push({
         label: "Kind",
-        value: String(p.outcomeKind ?? p.status ?? "—"),
+        value: kind,
       });
       if (p.entryReached !== undefined || p.entryTriggered !== undefined) {
         fields.push({
@@ -243,16 +244,38 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
           tone: "risk",
         });
       }
+      if (
+        p.targetReachedBeforeStop !== undefined ||
+        p.targetTriggered !== undefined
+      ) {
+        fields.push({
+          label: "Target before stop",
+          value: String(p.targetReachedBeforeStop ?? p.targetTriggered),
+        });
+      }
       if (p.nonExecutionReason) {
         fields.push({ label: "Non-execution", value: String(p.nonExecutionReason) });
       }
       fields.push({ label: "Realized R (server)", value: "0" });
-      fields.push({ label: "Counterfactual R (server)", value: "−1", tone: "risk" });
+      if (kind === "missed_opportunity") {
+        fields.push({
+          label: "Counterfactual R (server)",
+          value: "+planned R",
+          tone: "accent",
+        });
+        expectation = "up";
+      } else {
+        fields.push({
+          label: "Counterfactual R (server)",
+          value: "−1",
+          tone: "risk",
+        });
+        expectation = "down";
+      }
       fields.push({
         label: "Note",
-        value: "Counterfactual ≠ account P/L; no Trade created",
+        value: "Counterfactual ≠ account P/L; no Trade created; no chase",
       });
-      expectation = "down";
       break;
     }
     default:

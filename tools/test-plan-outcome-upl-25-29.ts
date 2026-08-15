@@ -51,7 +51,8 @@ const VALID_UPL = {
   assert.equal(v.ok, true, v.ok ? "" : (v as { errors: string[] }).errors.join("; "));
   const contract = buildApplySchemaContractText();
   assert.ok(contract.includes("plan-outcome"));
-  assert.ok(contract.includes("counterfactualR is server-derived"));
+  assert.ok(contract.includes("counterfactualR"));
+  assert.ok(contract.includes("unexecuted_plan_loss"));
   assert.deepEqual(getAllowedApplyBlocksForNeedsAttentionTask("evaluate_expired_plan"), [
     "plan-outcome",
   ]);

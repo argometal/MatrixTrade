@@ -1,9 +1,10 @@
 import {
-  NON_EXECUTION_REASONS,
+  MISS_NON_EXECUTION_REASONS,
   PLAN_OUTCOME_EVIDENCE_STATUSES,
   PLAN_OUTCOME_KINDS,
   PLAN_OUTCOME_SOURCES,
   PLAN_OUTCOME_STATUSES,
+  UPL_NON_EXECUTION_REASONS,
   type NonExecutionReason,
   type PlanOutcomeKind,
   type PlanOutcomeProposalInput,
@@ -58,7 +59,8 @@ function parseOptionalNumber(
 function rejectNonzeroWithoutTrade(
   proposal: Record<string, unknown>,
   tradeExecuted: boolean | undefined,
-  errors: string[]
+  errors: string[],
+  opts?: { outcomeKind?: PlanOutcomeKind }
 ): void {
   if (tradeExecuted !== false) return;
   for (const key of ["realizedR", "realizedResultR", "realizedPnL"] as const) {
@@ -70,14 +72,27 @@ function rejectNonzeroWithoutTrade(
       errors.push(`${key} must be 0 when no Trade/fill exists (server-derived)`);
     }
   }
-  // AI-supplied counterfactualR is ignored as source of truth; reject only if contradictory nonzero claim with wrong sign for UPL is not needed — we overwrite. Still reject inventing wins.
-  if (proposal.counterfactualR !== undefined && proposal.counterfactualR !== null) {
+  // AI-supplied counterfactualR is ignored as source of truth for UPL; reject wrong values.
+  if (
+    opts?.outcomeKind === "unexecuted_plan_loss" &&
+    proposal.counterfactualR !== undefined &&
+    proposal.counterfactualR !== null
+  ) {
     const n = Number(proposal.counterfactualR);
     if (Number.isFinite(n) && n !== -1) {
       errors.push(
         "counterfactualR is server-derived for unexecuted_plan_loss (−1); do not supply a different value"
       );
     }
+  }
+  if (
+    opts?.outcomeKind === "missed_opportunity" &&
+    proposal.counterfactualR !== undefined &&
+    proposal.counterfactualR !== null
+  ) {
+    errors.push(
+      "counterfactualR is server-derived for missed_opportunity (+planned R); do not supply it"
+    );
   }
 }
 
@@ -121,6 +136,95 @@ function validateUplProposal(
     };
   }
 
+  if (outcomeKind === "missed_opportunity") {
+    const entryReached = parseRequiredBoolean(
+      proposal.entryReached ?? proposal.entryTriggered,
+      "entryReached",
+      errors
+    );
+    const stopReachedBeforeTarget = parseRequiredBoolean(
+      proposal.stopReachedBeforeTarget ?? proposal.stopTriggered,
+      "stopReachedBeforeTarget",
+      errors
+    );
+    const targetReachedBeforeStop = parseRequiredBoolean(
+      proposal.targetReachedBeforeStop ??
+        (proposal.targetTriggered !== undefined
+          ? proposal.targetTriggered
+          : undefined),
+      "targetReachedBeforeStop",
+      errors
+    );
+
+    const reasonRaw = String(proposal.nonExecutionReason ?? "").trim();
+    if (!(MISS_NON_EXECUTION_REASONS as readonly string[]).includes(reasonRaw)) {
+      errors.push(
+        `missed_opportunity requires nonExecutionReason: ${MISS_NON_EXECUTION_REASONS.join(", ")} (not an execution-failure reason)`
+      );
+    }
+
+    rejectNonzeroWithoutTrade(proposal, false, errors, {
+      outcomeKind: "missed_opportunity",
+    });
+
+    if (entryReached === true) {
+      errors.push("missed_opportunity requires entryReached: false");
+    }
+    if (targetReachedBeforeStop === false) {
+      errors.push("missed_opportunity requires targetReachedBeforeStop: true");
+    }
+    if (stopReachedBeforeTarget === true) {
+      errors.push("missed_opportunity requires stopReachedBeforeTarget: false");
+    }
+    if (
+      stopReachedBeforeTarget === true &&
+      targetReachedBeforeStop === true
+    ) {
+      errors.push(
+        "stopReachedBeforeTarget and targetReachedBeforeStop cannot both be true"
+      );
+    }
+
+    if (errors.length) return { ok: false, errors };
+
+    const evidenceRefs = Array.isArray(proposal.evidenceRefs)
+      ? proposal.evidenceRefs.map((r) => String(r).trim()).filter(Boolean)
+      : [];
+
+    return {
+      ok: true,
+      value: {
+        planId,
+        status: "entry_not_triggered",
+        outcomeKind: "missed_opportunity",
+        tradeExecuted: false,
+        entryTriggered: false,
+        stopTriggered: false,
+        targetTriggered: true,
+        entryReached: false,
+        stopReachedBeforeTarget: false,
+        targetReachedBeforeStop: true,
+        nonExecutionReason: reasonRaw as NonExecutionReason,
+        // Server overwrites theoreticalResultR at persist from plan geometry.
+        theoreticalResultR: null,
+        realizedResultR: 0,
+        realizedPnL: 0,
+        outcomeSource: "counterfactual_observation",
+        evidenceStatus: "verified",
+        notes:
+          proposal.notes !== undefined
+            ? String(proposal.notes).trim() || undefined
+            : undefined,
+        evidenceRefs,
+        createdBy:
+          proposal.createdBy !== undefined
+            ? String(proposal.createdBy).trim() || undefined
+            : undefined,
+        uplContract: true,
+      },
+    };
+  }
+
   // unexecuted_plan_loss
   const entryReached = parseRequiredBoolean(
     proposal.entryReached ?? proposal.entryTriggered,
@@ -142,13 +246,15 @@ function validateUplProposal(
   );
 
   const reasonRaw = String(proposal.nonExecutionReason ?? "").trim();
-  if (!(NON_EXECUTION_REASONS as readonly string[]).includes(reasonRaw)) {
+  if (!(UPL_NON_EXECUTION_REASONS as readonly string[]).includes(reasonRaw)) {
     errors.push(
-      `nonExecutionReason must be one of: ${NON_EXECUTION_REASONS.join(", ")}`
+      `unexecuted_plan_loss nonExecutionReason must be one of: ${UPL_NON_EXECUTION_REASONS.join(", ")} (not entry_not_reached)`
     );
   }
 
-  rejectNonzeroWithoutTrade(proposal, false, errors);
+  rejectNonzeroWithoutTrade(proposal, false, errors, {
+    outcomeKind: "unexecuted_plan_loss",
+  });
 
   if (entryReached === false) {
     errors.push("unexecuted_plan_loss requires entryReached: true");
@@ -420,7 +526,7 @@ export function validatePlanOutcomeProposal(
   return {
     ok: false,
     errors: [
-      "proposal.outcomeKind or proposal.status required (prefer outcomeKind=unexecuted_plan_loss)",
+      "proposal.outcomeKind or proposal.status required (prefer outcomeKind=unexecuted_plan_loss|missed_opportunity)",
     ],
   };
 }

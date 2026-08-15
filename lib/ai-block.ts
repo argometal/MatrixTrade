@@ -32,7 +32,7 @@ Trade layer (use only when scouting approves):
 - trade-update: id required; at least one field to change. Legacy closed completion may set playbookId=__legacy_none__, planId=__LEGACY_NONE__, thesis, riskRewardPlanned, lossClassification, postStopStudy — never invent real Playbook/PLAN links
 - attribution: MAF component attribution — tradeId and/or planId (or experimentId); components[] with component, classification, aiInterpretationConfidence (0-100), reasoning; optional tag, suggestedImprovement, summary, primaryDragComponent, observation{mfe,mae,…}. NEVER invent prices — only supply observation numbers the human stated.
 - observation-update: Observation Engine — observationId or tradeId or planId; at least one of targetReached, targetReachedAt, thesisInvalidated, invalidationReachedAt, firstTerminalEvent, maxPrice, minPrice, mfe, mae, betterEntryAvailable, status (observing|concluded). Never invent prices.
-- plan-outcome: terminal Scout plan without Trade — planId, outcomeKind (unexecuted_plan_loss|duplicate_creation), entryReached, stopReachedBeforeTarget, targetReachedBeforeStop, nonExecutionReason required for UPL; server derives realizedR=0, counterfactualR=-1; never invent fills/risk; do not use decision-update or fictitious Trade
+- plan-outcome: terminal Scout plan without Trade — planId, outcomeKind (unexecuted_plan_loss|missed_opportunity|duplicate_creation). UPL: entryReached=true, stopReachedBeforeTarget=true, targetReachedBeforeStop=false, nonExecutionReason from execution-failure enum; server derives realizedR=0, counterfactualR=-1. Missed opportunity: entryReached=false, targetReachedBeforeStop=true, stopReachedBeforeTarget=false, nonExecutionReason=entry_not_reached; server derives realizedR=0, counterfactualR=+planned R. Never invent fills/risk; do not chase; do not use decision-update or fictitious Trade
 - playbook-create / playbook-update: playbook CRUD
 
 Rules:
@@ -222,8 +222,8 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
   },
   {
     type: "plan-outcome",
-    label: "plan-outcome — Unexecuted Plan Loss / Scout outcome (no Trade)",
-    hint: "outcomeKind=unexecuted_plan_loss + human-confirmed event order; server derives R — never invent fills",
+    label: "plan-outcome — Scout terminal outcome (no Trade)",
+    hint: "UPL or missed_opportunity — human-confirmed event order; server derives R — never invent fills",
   },
   {
     type: "analysis",

@@ -103,7 +103,9 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "Legacy date correction: trade-update with datesReconstructed:true + dateCorrectionNote; closed legacy only; audit prior dates.",
       "observation-update: one of observationId|tradeId|planId + at least one measurable field; never invent prices; observation ≠ attribution.",
       "plan-outcome: one mutation per block; human-confirmed event order; AI must not invent prices, timestamps, fills or risk.",
-      "plan-outcome: counterfactualR is server-derived (−1 for unexecuted_plan_loss); no Trade created; realized P/L unchanged; Stock File thesis unchanged; MAF separate.",
+      "plan-outcome: unexecuted_plan_loss = entry reached + stop before target + execution-failure reason; counterfactualR server −1.",
+      "plan-outcome: missed_opportunity = entry never reached + target before stop + entry_not_reached; counterfactualR server +planned R; no Trade; no chase.",
+      "plan-outcome: no Trade created; realized P/L unchanged; Stock File thesis unchanged; MAF separate.",
       "External Position: outside Scout→Trade pipeline; experimentEligible=false; never creates Trade/MAF; capital only via Capital Planner.",
       "external-position-reduction: requires reductionId|executionReference; server computes proceeds/realized P/L; proceeds start pending_settlement (not settled cash).",
       "external-position-settle: credits settled cash once via settlement ledger; pending ≠ settled.",
@@ -162,7 +164,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       ],
       "plan-outcome": [
         "planId",
-        "outcomeKind (unexecuted_plan_loss|duplicate_creation)",
+        "outcomeKind (unexecuted_plan_loss|missed_opportunity|duplicate_creation)",
         "entryReached",
         "stopReachedBeforeTarget",
         "targetReachedBeforeStop",
@@ -227,7 +229,11 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "capital-ledger-adjustment": ["idempotencyKey", "amount", "notes?"],
     },
     allowedEnums: {
-      "plan-outcome.outcomeKind": ["unexecuted_plan_loss", "duplicate_creation"],
+      "plan-outcome.outcomeKind": [
+        "unexecuted_plan_loss",
+        "missed_opportunity",
+        "duplicate_creation",
+      ],
       "external-position.acquisitionSource": [
         "external_program",
         "legacy_holding",
@@ -270,6 +276,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "broker_rejection",
         "insufficient_buying_power",
         "unknown",
+        "entry_not_reached",
       ],
       "decision.verdict": ["go", "wait", "probe", "no"],
       "stockThesis.status": [

@@ -1,6 +1,11 @@
 /**
- * Plan Outcome + Unexecuted Plan Loss (CURSOR-MTA-PLAN-OUTCOME-UPL-25-29).
+ * Plan Outcome + Unexecuted Plan Loss (CURSOR-MTA-PLAN-OUTCOME-UPL-25-29)
+ * + Missed Opportunity (CURSOR-MTA-15-07).
  * Scout outcome ≠ realized account P/L. MAF remains a separate attribution layer.
+ *
+ * Distinguish:
+ * - unexecuted_plan_loss: entry reached → execution failed → stop before target
+ * - missed_opportunity: entry never reached → target before stop (no fill possible)
  */
 
 export const PLAN_OUTCOME_STATUSES = [
@@ -17,12 +22,20 @@ export type PlanOutcomeStatus = (typeof PLAN_OUTCOME_STATUSES)[number];
 /** Canonical Apply outcome kinds for Scout closure without a Trade. */
 export const PLAN_OUTCOME_KINDS = [
   "unexecuted_plan_loss",
+  "missed_opportunity",
   "duplicate_creation",
 ] as const;
 
 export type PlanOutcomeKind = (typeof PLAN_OUTCOME_KINDS)[number];
 
-export const NON_EXECUTION_REASONS = [
+export const PLAN_OUTCOME_KIND_LABELS: Record<PlanOutcomeKind, string> = {
+  unexecuted_plan_loss: "Unexecuted plan loss",
+  missed_opportunity: "Missed opportunity",
+  duplicate_creation: "Duplicate creation",
+};
+
+/** Execution-failure reasons — for unexecuted_plan_loss only (entry was available). */
+export const UPL_NON_EXECUTION_REASONS = [
   "order_not_staged",
   "discretionary_skip",
   "operational_unavailable",
@@ -32,7 +45,17 @@ export const NON_EXECUTION_REASONS = [
   "unknown",
 ] as const;
 
+/** Missed opportunity — entry never available under the plan. */
+export const MISS_NON_EXECUTION_REASONS = ["entry_not_reached"] as const;
+
+export const NON_EXECUTION_REASONS = [
+  ...UPL_NON_EXECUTION_REASONS,
+  ...MISS_NON_EXECUTION_REASONS,
+] as const;
+
 export type NonExecutionReason = (typeof NON_EXECUTION_REASONS)[number];
+export type UplNonExecutionReason = (typeof UPL_NON_EXECUTION_REASONS)[number];
+export type MissNonExecutionReason = (typeof MISS_NON_EXECUTION_REASONS)[number];
 
 export const PLAN_OUTCOME_SOURCES = [
   "trade",
