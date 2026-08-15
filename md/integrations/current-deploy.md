@@ -2,12 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0814o`
+Pinned revision: `main0814p`
 
-Ship commit: `7f45137`
+Ship commit: `a0c88d4`
 
 Includes:
-- Connection neighborhood: small hover-expand icons + degree-bucket distances (1–2 / 3 / 4+)
+- Chem-lite neighborhood distances (1–3 @ 1×, 4+ @ 1.4×)
+- Connection neighborhood: small hover-expand icons
 - Home Runbooks aside (not on Treemap)
 - Topic/Event preview fully hides when closed
 
