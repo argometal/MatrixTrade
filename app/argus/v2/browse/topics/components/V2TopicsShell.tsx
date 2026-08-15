@@ -515,7 +515,6 @@ export function V2TopicsShell({
   // URL is source of truth — do not resurrect SSR initialSelectedId after Back clears ?selected=
   const selectedId = urlSelected?.trim() || undefined;
   const selected = selectedId ? details.find((d) => d.id === selectedId) : undefined;
-  const mobileDetailOpen = Boolean(urlSelected);
 
   const [view, setViewState] = useState<BrowseLayoutView>("grid");
   const [statusFilter, setStatusFilter] = useState<V2TopicBrowseStatus | "all" | "patterns">(() => {
@@ -733,11 +732,7 @@ export function V2TopicsShell({
   }
 
   function selectItem(id: string) {
-    // Re-clicking the open Topic collapses the detail viewer so it cannot keep overlapping the list.
-    if (urlSelected === id) {
-      backToList();
-      return;
-    }
+    // Two interfaces: open Topic as a full detail screen (not a side preview).
     replaceTopicParams((params) => {
       params.set("selected", id);
     });
@@ -844,20 +839,23 @@ export function V2TopicsShell({
     onDragEnd();
   }
 
-  if (focus && selected) {
+  // Detached detail screen — list and Topic are two interfaces (navigate, no side overlap).
+  if (selected) {
     return (
       <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden">
         <section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-950/50">
-          <div className="border-b border-zinc-800/80 px-4 py-3 lg:px-5">
-            <V2IntelligenceFocusBanner
-              entityName={selected.name}
-              from={from}
-              pathname="/argus/v2/browse/topics"
-              searchParams={new URLSearchParams(searchParams.toString())}
-              browseAllHref={intelligenceBrowseAllHref("topics")}
-              browseAllLabel="Browse all topics"
-            />
-          </div>
+          {focus ? (
+            <div className="border-b border-zinc-800/80 px-4 py-3 lg:px-5">
+              <V2IntelligenceFocusBanner
+                entityName={selected.name}
+                from={from}
+                pathname="/argus/v2/browse/topics"
+                searchParams={new URLSearchParams(searchParams.toString())}
+                browseAllHref={intelligenceBrowseAllHref("topics")}
+                browseAllLabel="Browse all topics"
+              />
+            </div>
+          ) : null}
           <V2TopicDetailPanel
             selected={selected}
             neighborhood={neighborhood}
@@ -877,14 +875,8 @@ export function V2TopicsShell({
   }
 
   return (
-    <div className="v2-browse-shell relative flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
-      <section
-        className={`flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:border-b-0 ${
-          selected
-            ? "lg:w-[min(520px,46%)] lg:flex-none lg:border-r"
-            : "lg:flex-1"
-        } ${mobileDetailOpen ? "hidden lg:flex" : "flex"}`}
-      >
+    <div className="v2-browse-shell relative flex h-full min-h-0 flex-col overflow-hidden">
+      <section className="flex min-h-0 w-full flex-1 flex-col">
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         <div className="px-4 py-6 lg:px-5">
           <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
@@ -1186,30 +1178,6 @@ export function V2TopicsShell({
         </div>
       </div>
       </section>
-
-      {selected ? (
-        <section
-          className={`min-h-0 min-w-0 flex-1 bg-zinc-950/50 ${
-            mobileDetailOpen
-              ? "absolute inset-0 z-40 flex min-h-0 flex-col overflow-hidden bg-zinc-950 lg:static lg:z-auto lg:bg-zinc-950/50"
-              : "hidden min-h-0 flex-col overflow-hidden lg:flex"
-          }`}
-        >
-          <V2TopicDetailPanel
-            selected={selected}
-            neighborhood={neighborhood}
-            returnTo={returnTo}
-            onBack={backToList}
-            signalTags={signalTags}
-            privateConfigured={privateConfigured}
-            privateUnlocked={privateUnlocked}
-            allRunbooks={allRunbooks}
-            allProgress={allProgress}
-            requiresAuthenticator={selected.deleteRequiresAuthenticator}
-            {...deleteGate}
-          />
-        </section>
-      ) : null}
     </div>
   );
 }

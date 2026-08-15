@@ -1782,12 +1782,12 @@ export async function getEntityNeighborhoodAction(
   const {
     buildV2EntityNeighborhoodGraph,
     isNeighborhoodHopDepth,
+    neighborhoodMaxNodesForDepth,
     resolveNeighborhoodContextCenter,
   } = await import("@/lib/argus/v2/intelligence-viz");
   const today = new Date().toISOString().slice(0, 10);
   const maxHops = isNeighborhoodHopDepth(options.maxHops) ? options.maxHops : 2;
-  // Extended depth discovers more candidates — slightly higher canvas budget, still trims.
-  const maxNodes = maxHops >= 5 ? 22 : maxHops >= 3 ? 18 : 14;
+  const maxNodes = neighborhoodMaxNodesForDepth(maxHops);
 
   if (scope === "local") {
     const graph = buildV2EntityNeighborhoodGraph(data, inboxItems, id, includePrivate, today, {
@@ -1799,7 +1799,7 @@ export async function getEntityNeighborhoodAction(
 
   const ctx = resolveNeighborhoodContextCenter(data, id, includePrivate);
   const graph = buildV2EntityNeighborhoodGraph(data, inboxItems, ctx.centerId, includePrivate, today, {
-    maxNodes: ctx.label === "self" ? Math.max(maxNodes, 18) : maxNodes,
+    maxNodes: ctx.label === "self" ? Math.max(maxNodes, neighborhoodMaxNodesForDepth(3)) : maxNodes,
     maxHops,
   });
   const centerName =

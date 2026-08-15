@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import Link from "next/link";
 import { getEntityNeighborhoodAction } from "@/app/argus/actions";
 import type {
   NeighborhoodHopDepth,
@@ -17,12 +16,12 @@ const DEPTH_OPTIONS: Array<{
 }> = [
   { depth: 2, label: "2", title: "Local · coherent default" },
   { depth: 3, label: "3", title: "Wide · Topics→Events ring" },
-  { depth: 5, label: "5 Ext", title: "Extended · incomplete after trim — expect missing links" },
+  { depth: 5, label: "5", title: "Extended · farther structural neighbors" },
 ];
 
 /**
- * Connection neighborhood with hop-depth experiment + Universe escape hatch.
- * Universe = Home Intelligence Treemap (portfolio scale), not deeper local hops.
+ * Connection neighborhood with hop-depth controls (2 / 3 / 5).
+ * Trim always restores structural bridges so visible nodes stay connected.
  */
 export function V2EntityNeighborhoodPanel({
   graph: initialGraph,
@@ -83,9 +82,7 @@ export function V2EntityNeighborhoodPanel({
   }
 
   const meta = graph.meta;
-  const showExtendedWarn =
-    depth >= 5 || Boolean(meta?.trimmed && (meta?.maxHops ?? depth) >= 3);
-  const universeHref = "/argus/v2?intel=treemap";
+  const showTrimNote = Boolean(meta?.trimmed);
 
   return (
     <div>
@@ -114,9 +111,7 @@ export function V2EntityNeighborhoodPanel({
                 onClick={() => selectDepth(option.depth)}
                 className={`rounded-md px-2 py-1 text-[10px] font-semibold ${
                   depth === option.depth
-                    ? option.depth >= 5
-                      ? "bg-amber-600/25 text-amber-100"
-                      : "bg-violet-600/25 text-violet-200"
+                    ? "bg-violet-600/25 text-violet-200"
                     : "text-zinc-500 hover:text-zinc-300 disabled:opacity-40"
                 }`}
               >
@@ -124,39 +119,18 @@ export function V2EntityNeighborhoodPanel({
               </button>
             ))}
           </div>
-          <Link
-            href={universeHref}
-            className="rounded-md border border-zinc-700 px-2 py-1 text-[10px] font-semibold text-zinc-400 hover:border-violet-500/40 hover:text-violet-200"
-            title="Universe = Home Intelligence Treemap — portfolio scale, not deeper local hops"
-          >
-            Universe ↗
-          </Link>
           <V2IntelHelpLink topic="neighborhood" label="Graph help" />
         </div>
       </div>
 
-      {showExtendedWarn ? (
+      {showTrimNote ? (
         <p
-          className={`mb-2 rounded-lg border border-amber-500/30 bg-amber-950/25 px-2.5 py-1.5 text-amber-100/90 ${
+          className={`mb-2 rounded-lg border border-zinc-800 bg-zinc-950/50 px-2.5 py-1.5 text-zinc-400 ${
             docked ? "text-[10px]" : "text-[11px]"
           }`}
         >
-          {depth >= 5 ? (
-            <>
-              Extended (5 hops) discovers more binders than the canvas can show —{" "}
-              <span className="font-semibold">expect missing links / incomplete paths</span>
-              {meta?.trimmed
-                ? ` (kept ${meta.keptCount} of ${meta.candidateCount}).`
-                : "."}{" "}
-              Prefer depth 2–3, or open Universe for the full portfolio.
-            </>
-          ) : (
-            <>
-              Depth {depth} was trimmed to fit the canvas
-              {meta ? ` (${meta.keptCount}/${meta.candidateCount})` : ""}. Some relations may be
-              incomplete — try depth 2 or Universe.
-            </>
-          )}
+          Showing {meta?.keptCount}/{meta?.candidateCount} neighbors at depth {meta?.maxHops ?? depth}.
+          Structural bridges to visible nodes are kept so connections stay drawn.
         </p>
       ) : null}
 

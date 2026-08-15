@@ -160,7 +160,8 @@ export function ForgeHomeMark({ size = 36 }: { size?: number }) {
 }
 
 /**
- * Quick navigate menu (···). Lists systems only — Home is the A mark on /apps, not a menu row.
+ * Quick navigate menu. Trigger is the triangular A mark (replaces ···).
+ * Opens the systems list — including Forge Home — so chrome needs no second A link.
  */
 export function ForgeQuickNavMenu({
   currentId,
@@ -197,26 +198,26 @@ export function ForgeQuickNavMenu({
     <div className={`relative ${className}`} ref={rootRef}>
       <button
         type="button"
-        aria-label="Quick navigate"
+        aria-label="Open systems"
         aria-expanded={open}
         aria-haspopup="menu"
-        title="Quick navigate"
+        title="Systems"
         onClick={() => setOpen((v) => !v)}
         className={
           dark
-            ? `relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border text-[10px] font-semibold tracking-wide transition ${
+            ? `relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition ${
                 open
-                  ? "border-zinc-600 bg-zinc-800 text-zinc-100"
-                  : "border-zinc-800 bg-zinc-900/80 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                  ? "border-violet-500/50 bg-violet-500/15 ring-2 ring-violet-500/20"
+                  : "border-zinc-800 bg-zinc-900/80 hover:border-zinc-700 hover:bg-zinc-900"
               }`
-            : `flex h-10 w-10 items-center justify-center rounded-xl border text-sm font-semibold tracking-widest transition ${
+            : `flex h-10 w-10 items-center justify-center rounded-xl border transition ${
                 open
-                  ? "border-blue-300 bg-blue-50 text-blue-700"
-                  : "border-zinc-200 bg-white text-zinc-500 shadow-sm hover:border-zinc-300 hover:text-zinc-800"
+                  ? "border-blue-300 bg-blue-50 shadow-sm"
+                  : "border-zinc-200 bg-white shadow-sm hover:border-zinc-300"
               }`
         }
       >
-        ···
+        <ForgeHomeMark size={dark ? 22 : 26} />
       </button>
       {open ? (
         <div
@@ -238,6 +239,38 @@ export function ForgeQuickNavMenu({
             ARGUS FORGE Systems
           </p>
           <ul className="max-h-[min(22rem,70vh)] overflow-y-auto py-1">
+            <li>
+              <Link
+                href="/apps"
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className={
+                  dark
+                    ? `flex items-center gap-3 px-3.5 py-2.5 text-sm transition hover:bg-zinc-800/80 ${
+                        currentId === "home" ? "bg-zinc-800" : ""
+                      }`
+                    : `flex items-center gap-3 px-3.5 py-2.5 text-sm transition hover:bg-zinc-50 ${
+                        currentId === "home" ? "bg-blue-50/80" : ""
+                      }`
+                }
+              >
+                <ForgeHomeMark size={28} />
+                <span className="min-w-0 flex-1">
+                  <span className={`block font-medium ${dark ? "text-zinc-100" : "text-zinc-900"}`}>
+                    Forge Home
+                  </span>
+                  <span className={`block truncate text-[11px] ${dark ? "text-zinc-500" : "text-zinc-500"}`}>
+                    All systems · one workspace
+                  </span>
+                </span>
+                {currentId === "home" ? (
+                  <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                    Active
+                  </span>
+                ) : null}
+              </Link>
+            </li>
             {FORGE_SYSTEMS.filter((s) => s.status !== "planned").map((system) => {
               const active = currentId === system.id;
               return (
@@ -276,7 +309,6 @@ export function ForgeQuickNavMenu({
               );
             })}
           </ul>
-          {/* Home lives on the A mark — not as a menu footer row. */}
         </div>
       ) : null}
     </div>

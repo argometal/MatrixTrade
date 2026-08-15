@@ -165,7 +165,7 @@ const SECTIONS: HelpSection[] = [
     id: "neighborhood",
     title: "Connection neighborhood",
     group: "intelligence",
-    keywords: ["neighborhood", "graph", "halo", "tracker", "affinity", "expand", "ego", "depth", "universe"],
+    keywords: ["neighborhood", "graph", "halo", "tracker", "affinity", "expand", "ego", "depth"],
     intro: "Local graph around a selected entity on Home Intelligence (and on entity detail).",
     items: [
       {
@@ -174,11 +174,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Hop depth",
-        body: "2 = local coherent default. 3 = wider (Topics→Events). 5 Extended discovers more than the canvas can keep — expect missing links after trim. Prefer 2–3.",
-      },
-      {
-        title: "Universe",
-        body: "Opens Home Intelligence Treemap — portfolio scale. Not the same as deeper local hops.",
+        body: "2 = local default. 3 = wider (Topics→Events). 5 = farther structural neighbors. Canvas budget scales with depth; bridges to visible nodes are always kept so connections stay drawn.",
       },
       {
         title: "Visual cues",
@@ -186,7 +182,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Pan & zoom",
-        body: "Drag empty canvas to pan, scroll to zoom, Fit resets — same camera idea as Neo4j Bloom and Obsidian Graph. Explore depth 3/5 without losing the molecule off-screen.",
+        body: "Drag a node to pin it; Relax soft-reflows the rest; Reset restores the computed layout (session-only). −/+ zoom, ↺↻ turn, optional 3D tilt; Fit resets the camera only.",
       },
       {
         title: "Focus & open",
@@ -583,7 +579,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Local graph",
-        body: "Default depth 2 from explicit links and co-mentions (3 / 5 Ext available on the graph). Click a node to focus; ⌘/Ctrl+click opens it. Tracker affinity shows as dashed rose edges.",
+        body: "Default depth 2 from explicit links and co-mentions (3 / 5 on the graph). Click a node to focus; ⌘/Ctrl+click opens it. Tracker affinity shows as dashed rose edges.",
       },
     ],
   },
@@ -605,7 +601,7 @@ const SECTIONS: HelpSection[] = [
     title: "Topics browse",
     group: "browse",
     keywords: ["topics", "active", "quiet", "orphans", "board", "binders"],
-    intro: "Knowledge binders — board or list, then open a Topic for Chronicle, Tags, and Links.",
+    intro: "Knowledge binders — board or list, then open a Topic (full screen). ← Topics returns to the browse list.",
     items: [
       {
         title: "Status chips",
@@ -665,7 +661,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Local graph",
-        body: "Default depth 2 (3 / 5 Ext on the graph) — same surface as Event / Org / Project Links. Universe opens Treemap.",
+        body: "Default depth 2 (3 / 5 on the graph) — same surface as Event / Org / Project Links. Structural bridges stay drawn for visible nodes.",
       },
     ],
   },
