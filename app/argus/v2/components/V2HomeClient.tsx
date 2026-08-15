@@ -156,12 +156,6 @@ export function V2HomeClient({
                 />
               </div>
 
-              {view === "intelligence" && homeRunbooks ? (
-                <div className="mb-4">
-                  <V2HomeRunbooksAccess recent={homeRunbooks.recent} frequent={homeRunbooks.frequent} />
-                </div>
-              ) : null}
-
               {view === "browse" ? (
                 <div className="space-y-6">
                   {entityRowsByTab ? (
@@ -190,6 +184,10 @@ export function V2HomeClient({
         </div>
 
         <aside className="space-y-6">
+          {view === "intelligence" && homeRunbooks ? (
+            <V2HomeRunbooksAccess recent={homeRunbooks.recent} frequent={homeRunbooks.frequent} />
+          ) : null}
+
           {showLensDock ? (
             <div>
               {lensNode && (intelTab === "treemap" || intelTab === "portfolio") ? (

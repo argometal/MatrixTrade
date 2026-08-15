@@ -57,4 +57,19 @@ assert.ok(access.recent.some((row) => row.id === "r-hot"));
 const empty = buildV2HomeRunbookAccess([], [], 5);
 assert.deepEqual(empty, { recent: [], frequent: [] });
 
+const homeClient = require("node:fs").readFileSync(
+  require("node:path").join(process.cwd(), "app/argus/v2/components/V2HomeClient.tsx"),
+  "utf8"
+);
+assert.match(
+  homeClient,
+  /<aside[\s\S]*V2HomeRunbooksAccess/,
+  "Home Runbooks sit in the side column, not above the Treemap"
+);
+assert.doesNotMatch(
+  homeClient,
+  /intelligence"[\s\S]*V2HomeRunbooksAccess[\s\S]*V2HomeIntelligencePanel/,
+  "Home Runbooks must not stack on top of the Treemap panel"
+);
+
 console.log("ok: home-runbook-access");
