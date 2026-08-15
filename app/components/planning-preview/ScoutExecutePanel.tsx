@@ -28,6 +28,7 @@ import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 import { FamilyBBullTrendPanel } from "@/app/components/planning-preview/FamilyBBullTrendPanel";
 import { LayeredEntryPanel } from "@/app/components/planning-preview/LayeredEntryPanel";
 import { ModifiedKellyPanel } from "@/app/components/planning-preview/ModifiedKellyPanel";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 
 /** Manual form placeholder only — never authoritative for funding (26-48). */
 const MANUAL_SHARES_PLACEHOLDER = "10";
@@ -266,7 +267,10 @@ export function ScoutExecutePanel({
   if (!plan) {
     return (
       <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
-        <h2 className="text-sm font-semibold text-zinc-300">Execute</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-zinc-300">Execute</h2>
+          <MtaHelpLink topic="scout-execute" label="Execute" />
+        </div>
         <p className="mt-1 text-xs text-zinc-500">
           Select a stock file with an active scout.
         </p>
@@ -349,9 +353,12 @@ export function ScoutExecutePanel({
       data-scout-execute
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-sm font-semibold text-emerald-200">
-          Execute · {plan.id}
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-emerald-200">
+            Execute · {plan.id}
+          </h2>
+          <MtaHelpLink topic="scout-execute" label="Execute" />
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
