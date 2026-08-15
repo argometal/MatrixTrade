@@ -561,7 +561,7 @@ export function PreviewPlanning({
                   </summary>
                   <div className="mt-2">
                     <ActiveScoutsComparisonTable
-                      plans={plans}
+                      plans={allocationPlans}
                       onFocusPlan={focusPlanFromAllocation}
                     />
                   </div>

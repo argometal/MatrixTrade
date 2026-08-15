@@ -20,7 +20,9 @@ export function planNeedsLearningSyncRepair(plan: TradePlan): boolean {
 
 /**
  * War-ready Scout: live tactical window for the Case / allocation “go to war” menus.
+ * Canonical War Menu predicate (PROMPT 15-06): watching|ready AND no outcome.recordedAt.
  * Closed outcomes (missed_opportunity, UPL, etc.) are learning archive — not war ammo.
+ * Stock File stays active; a new Scout Plan can open a future battle on the same ticker.
  */
 export function isWarReadyScoutPlan(plan: TradePlan): boolean {
   return (
