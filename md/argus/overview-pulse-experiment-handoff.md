@@ -2,7 +2,7 @@
 
 **Status:** shipped experiment · for IA analysis  
 **Audience:** product / architecture IA reviewing ARGUS binder UX  
-**Production pin:** see [`../integrations/current-deploy.md`](../integrations/current-deploy.md)
+**Production pin:** `main0814h` @ `f99defd` — see [`../integrations/current-deploy.md`](../integrations/current-deploy.md)
 
 ---
 
