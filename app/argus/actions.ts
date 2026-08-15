@@ -747,7 +747,8 @@ async function persistDocumentEntity(
 async function persistRunbookFromPayload(
   title: string,
   stepsText: string,
-  linkedEntityIds: string[]
+  linkedEntityIds: string[],
+  tags: string[] = []
 ): Promise<UnifiedCreateResult> {
   const trimmedTitle = title.trim();
   if (!trimmedTitle) {
@@ -762,6 +763,7 @@ async function persistRunbookFromPayload(
     title: trimmedTitle,
     items,
     linkedEntityIds,
+    tags,
   });
 
   revalidateArgus();
@@ -896,7 +898,12 @@ export async function saveUnifiedCreateFlowAction(
     }
 
     if (payload.itemKind === "runbook") {
-      const result = await persistRunbookFromPayload(payload.name, payload.body, mergedEntityIds);
+      const result = await persistRunbookFromPayload(
+        payload.name,
+        payload.body,
+        mergedEntityIds,
+        payload.tags
+      );
       await saveInboxEvidenceLinks(payload.inboxId, mergedEntityIds);
       revalidatePath("/argus/v2/inbox");
       return result;
@@ -962,7 +969,7 @@ export async function saveUnifiedCreateFlowAction(
   }
 
   if (payload.itemKind === "runbook") {
-    return persistRunbookFromPayload(payload.name, payload.body, linkedEntityIds);
+    return persistRunbookFromPayload(payload.name, payload.body, linkedEntityIds, payload.tags);
   }
 
   const trimmedName = payload.name.trim();

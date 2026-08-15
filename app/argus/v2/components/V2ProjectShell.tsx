@@ -52,6 +52,7 @@ export type V2ProjectShellProps = {
   libraryRunbooks?: Runbook[];
   progressRecords?: RunbookProgress[];
   suggestionTags?: string[];
+  suggestionPriorityTags?: string[];
   tagVocabulary?: string[];
   durationDays?: number;
   dateRangeLabel?: string;
@@ -96,6 +97,7 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
     libraryRunbooks = [],
     progressRecords = [],
     suggestionTags = [],
+    suggestionPriorityTags = [],
     tagVocabulary = [],
     durationDays,
     peopleWithRoles,
@@ -279,6 +281,7 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
           organizationId={org?.id}
           organizationName={org?.name}
           suggestionTags={suggestionTags}
+          suggestionPriorityTags={suggestionPriorityTags}
           tagVocabulary={tagVocabulary}
         />
       ) : null}

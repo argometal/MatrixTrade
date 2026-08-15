@@ -575,6 +575,7 @@ export function V2EventDetailPanel({
                 ...selected.tagPatterns.map((pattern) => pattern.tag),
                 ...selected.eventTags,
               ]}
+              suggestionPriorityTags={selected.tagPatterns.map((pattern) => pattern.tag)}
             />
           ) : null}
 

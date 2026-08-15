@@ -182,12 +182,78 @@ export function scopeRunbookSuggestionKeys(tags: string[] | undefined): Set<stri
   return new Set(normalizeTagList(tags).map(tagKey));
 }
 
+/**
+ * Runbook classification tags that overlap the suggestion scope (display form from the runbook).
+ * Empty when scope is empty or there is no real overlap — never invent matches.
+ */
+export function matchingRunbookSuggestionTags(
+  runbook: Pick<Runbook, "tags">,
+  keys: Set<string>
+): string[] {
+  if (keys.size === 0) return [];
+  return runbookClassificationTags(runbook).filter((tag) => keys.has(tagKey(tag)));
+}
+
 export function runbookMatchesSuggestionKeys(
   runbook: Pick<Runbook, "tags">,
   keys: Set<string>
 ): boolean {
-  if (keys.size === 0) return false;
-  return runbookClassificationTags(runbook).some((tag) => keys.has(tagKey(tag)));
+  return matchingRunbookSuggestionTags(runbook, keys).length > 0;
+}
+
+/**
+ * Quantity = overlap size; quality = extra weight when matches hit priority (Pattern) tags.
+ * Score 0 means no real match — callers must hide those rows from Suggested.
+ */
+export function scoreRunbookSuggestionMatch(
+  matchingTags: string[],
+  priorityKeys: Set<string> = new Set()
+): number {
+  if (matchingTags.length === 0) return 0;
+  const priorityHits = matchingTags.filter((tag) => priorityKeys.has(tagKey(tag))).length;
+  return matchingTags.length * 100 + priorityHits;
+}
+
+export type RankedRunbookSuggestion<T extends Pick<Runbook, "tags">> = {
+  runbook: T;
+  matchingTags: string[];
+  score: number;
+};
+
+/**
+ * Rank library runbooks by meaningful tag overlap. Omits non-matches.
+ * `priorityTags` (usually Pattern tags) boost quality without inventing work.
+ */
+export function rankRunbookSuggestions<T extends Pick<Runbook, "tags" | "title" | "updatedAt">>(
+  runbooks: T[],
+  suggestionTags: string[] | undefined,
+  priorityTags: string[] | undefined = []
+): RankedRunbookSuggestion<T>[] {
+  const keys = scopeRunbookSuggestionKeys(suggestionTags);
+  if (keys.size === 0) return [];
+  const priorityKeys = scopeRunbookSuggestionKeys(priorityTags);
+
+  const ranked: RankedRunbookSuggestion<T>[] = [];
+  for (const runbook of runbooks) {
+    const matchingTags = matchingRunbookSuggestionTags(runbook, keys);
+    const score = scoreRunbookSuggestionMatch(matchingTags, priorityKeys);
+    if (score <= 0) continue;
+    ranked.push({ runbook, matchingTags, score });
+  }
+
+  return ranked.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    const updated = b.runbook.updatedAt.localeCompare(a.runbook.updatedAt);
+    if (updated !== 0) return updated;
+    return a.runbook.title.localeCompare(b.runbook.title);
+  });
+}
+
+/** Tags that actually caused at least one suggestion match — safe to prefill on create. */
+export function suggestionTagsForCreate(
+  ranked: Array<Pick<RankedRunbookSuggestion<Pick<Runbook, "tags">>, "matchingTags">>
+): string[] {
+  return normalizeTagList(ranked.flatMap((row) => row.matchingTags));
 }
 
 export function progressForEntity(

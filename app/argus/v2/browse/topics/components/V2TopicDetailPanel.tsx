@@ -466,6 +466,7 @@ export function V2TopicDetailPanel({
                 ...selected.tagPatterns.map((pattern) => pattern.tag),
                 ...selected.aliases,
               ]}
+              suggestionPriorityTags={selected.tagPatterns.map((pattern) => pattern.tag)}
             />
           ) : null}
 

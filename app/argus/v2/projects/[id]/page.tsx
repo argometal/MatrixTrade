@@ -197,6 +197,7 @@ export default async function V2ProjectPage({
               ...page.tagPatterns.map((pattern) => pattern.tag),
               ...((entity.projectTags?.length ? entity.projectTags : entity.linkedTags) ?? []),
             ])}
+            suggestionPriorityTags={normalizeTagList(page.tagPatterns.map((pattern) => pattern.tag))}
             tagVocabulary={collectKnownTagVocabulary(data)}
             durationDays={page.durationDays}
             dateRangeLabel={page.dateRangeLabel}

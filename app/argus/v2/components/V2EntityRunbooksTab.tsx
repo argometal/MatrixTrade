@@ -8,10 +8,10 @@ import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import {
   applyRunbookProgress,
   findRunbookProgress,
+  rankRunbookSuggestions,
   runbookClassificationTags,
-  runbookMatchesSuggestionKeys,
   runbookProgress as calcProgress,
-  scopeRunbookSuggestionKeys,
+  suggestionTagsForCreate,
 } from "@/lib/argus/runbook-helpers";
 import {
   copyRunbookToEntityAction,
@@ -40,6 +40,7 @@ export function V2EntityRunbooksTab({
   organizationId,
   organizationName,
   suggestionTags = [],
+  suggestionPriorityTags = [],
   tagVocabulary = [],
 }: {
   level: Level;
@@ -55,6 +56,8 @@ export function V2EntityRunbooksTab({
   organizationName?: string;
   /** Pattern + binder tags on this entity — used to suggest unassigned runbooks. */
   suggestionTags?: string[];
+  /** Pattern tags only — boost ranking quality without inventing work. */
+  suggestionPriorityTags?: string[];
   /** Existing ARGUS tag vocabulary for template classification (org library). */
   tagVocabulary?: string[];
 }) {
@@ -71,6 +74,7 @@ export function V2EntityRunbooksTab({
   const [screen, setScreen] = useState<"home" | "runbook">(urlRunbookId ? "runbook" : "home");
   const [selectedId, setSelectedId] = useState(urlRunbookId);
   const [showCreate, setShowCreate] = useState(level === "organization" && linkedRunbooks.length === 0);
+  const [createFromSuggestionTags, setCreateFromSuggestionTags] = useState<string[] | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [assignOpen, setAssignOpen] = useState(false);
   const [cardMenuId, setCardMenuId] = useState<string | null>(null);
@@ -124,17 +128,29 @@ export function V2EntityRunbooksTab({
     [libraryRunbooks, entityId]
   );
 
-  const suggestionKeys = useMemo(() => scopeRunbookSuggestionKeys(suggestionTags), [suggestionTags]);
+  const rankedSuggestions = useMemo(
+    () => rankRunbookSuggestions(linkable, suggestionTags, suggestionPriorityTags),
+    [linkable, suggestionTags, suggestionPriorityTags]
+  );
 
-  const suggestedLinkable = useMemo(
-    () => linkable.filter((rb) => runbookMatchesSuggestionKeys(rb, suggestionKeys)),
-    [linkable, suggestionKeys]
+  const suggestedIds = useMemo(
+    () => new Set(rankedSuggestions.map((row) => row.runbook.id)),
+    [rankedSuggestions]
   );
 
   const otherLinkable = useMemo(
-    () => linkable.filter((rb) => !runbookMatchesSuggestionKeys(rb, suggestionKeys)),
-    [linkable, suggestionKeys]
+    () => linkable.filter((rb) => !suggestedIds.has(rb.id)),
+    [linkable, suggestedIds]
   );
+
+  const createPrefillTags = useMemo(() => {
+    if (createFromSuggestionTags && createFromSuggestionTags.length > 0) {
+      return createFromSuggestionTags;
+    }
+    return suggestionTagsForCreate(rankedSuggestions);
+  }, [createFromSuggestionTags, rankedSuggestions]);
+
+  const libraryCreateEntityId = organizationId || (isLibrary ? entityId : undefined);
 
   const peerLists: RunbookPeerList[] = useMemo(() => {
     const map = new Map<string, string>();
@@ -317,7 +333,12 @@ export function V2EntityRunbooksTab({
           ) : (
             <button
               type="button"
-              onClick={() => setAssignOpen((v) => !v)}
+              onClick={() => {
+                setAssignOpen((v) => {
+                  if (v) setCreateFromSuggestionTags(null);
+                  return !v;
+                });
+              }}
               className="rounded-xl border border-lime-500/30 bg-lime-500/10 px-3 py-1.5 text-xs font-semibold text-lime-300 hover:bg-lime-500/15"
             >
               {assignOpen ? "Hide assign" : "Assign from library"}
@@ -333,30 +354,67 @@ export function V2EntityRunbooksTab({
       {showCreate && isLibrary ? (
         <V2RunbookCreateStrip
           entityId={entityId}
-          onCreated={(id) => openRunbook(id)}
-          onCancel={() => setShowCreate(false)}
+          onCreated={(id) => {
+            setCreateFromSuggestionTags(null);
+            openRunbook(id);
+          }}
+          onCancel={() => {
+            setShowCreate(false);
+            setCreateFromSuggestionTags(null);
+          }}
         />
       ) : null}
 
       {assignOpen && !isLibrary ? (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
           <p className="mb-3 text-xs text-zinc-500">
-            Select runbooks from the organization library, then assign. Suggestions match Patterns and
-            tags on this entity — assignment stays explicit.
+            Select runbooks from the organization library, then assign. Suggestions show the tags that
+            matched Patterns and binders on this entity — assignment stays explicit.
           </p>
+          {createFromSuggestionTags ? (
+            libraryCreateEntityId ? (
+              <V2RunbookCreateStrip
+                entityId={libraryCreateEntityId}
+                initialTags={createPrefillTags}
+                onCreated={() => {
+                  setCreateFromSuggestionTags(null);
+                  setSelectedIds([]);
+                }}
+                onCancel={() => setCreateFromSuggestionTags(null)}
+              />
+            ) : (
+              <p className="mb-3 rounded-lg border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-xs text-amber-100">
+                Link an organization before creating a classified library runbook. Assign remains a
+                separate step.
+              </p>
+            )
+          ) : null}
           {linkable.length === 0 ? (
             <p className="text-sm text-zinc-500">No more runbooks to assign — create them on the Organization.</p>
           ) : (
             <div className="mb-3 max-h-56 space-y-3 overflow-y-auto">
-              {suggestedLinkable.length > 0 ? (
+              {rankedSuggestions.length > 0 ? (
                 <div>
-                  <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wide text-lime-300/80">
-                    Suggested from tags
-                  </p>
+                  <div className="mb-1 flex flex-wrap items-center justify-between gap-2 px-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-lime-300/80">
+                      Suggested from tags
+                    </p>
+                    {libraryCreateEntityId ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCreateFromSuggestionTags(suggestionTagsForCreate(rankedSuggestions))
+                        }
+                        className="text-[10px] font-medium text-lime-300/90 hover:text-lime-200"
+                      >
+                        Create with match tags
+                      </button>
+                    ) : null}
+                  </div>
                   <ul className="space-y-1">
-                    {suggestedLinkable.map((rb) => (
-                      <li key={rb.id}>
-                        <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800/80">
+                    {rankedSuggestions.map(({ runbook: rb, matchingTags }) => (
+                      <li key={rb.id} className="flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-zinc-800/80">
+                        <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-sm text-zinc-300">
                           <input
                             type="checkbox"
                             checked={selectedIds.includes(rb.id)}
@@ -364,15 +422,23 @@ export function V2EntityRunbooksTab({
                             className="rounded border-zinc-600"
                           />
                           <span className="min-w-0 flex-1 truncate">{rb.title}</span>
-                          {runbookClassificationTags(rb).length > 0 ? (
-                            <span className="shrink-0 text-[10px] text-zinc-500">
-                              {runbookClassificationTags(rb)
-                                .slice(0, 3)
-                                .map((tag) => `#${tag}`)
-                                .join(" ")}
-                            </span>
-                          ) : null}
+                          <span
+                            className="shrink-0 text-[10px] text-lime-300/70"
+                            title={`Matched: ${matchingTags.map((tag) => `#${tag}`).join(" ")}`}
+                          >
+                            {matchingTags.map((tag) => `#${tag}`).join(" ")}
+                          </span>
                         </label>
+                        {libraryCreateEntityId ? (
+                          <button
+                            type="button"
+                            title="Create a library runbook with these match tags"
+                            onClick={() => setCreateFromSuggestionTags(matchingTags)}
+                            className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-lime-300"
+                          >
+                            Use tags
+                          </button>
+                        ) : null}
                       </li>
                     ))}
                   </ul>
@@ -380,7 +446,7 @@ export function V2EntityRunbooksTab({
               ) : null}
               {otherLinkable.length > 0 ? (
                 <div>
-                  {suggestedLinkable.length > 0 ? (
+                  {rankedSuggestions.length > 0 ? (
                     <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
                       Other library runbooks
                     </p>

@@ -12,6 +12,7 @@ export function V2ProjectRunbooksTab({
   organizationId,
   organizationName,
   suggestionTags = [],
+  suggestionPriorityTags = [],
   tagVocabulary = [],
 }: {
   runbooks: Runbook[];
@@ -21,6 +22,7 @@ export function V2ProjectRunbooksTab({
   organizationId?: string;
   organizationName?: string;
   suggestionTags?: string[];
+  suggestionPriorityTags?: string[];
   tagVocabulary?: string[];
 }) {
   return (
@@ -33,6 +35,7 @@ export function V2ProjectRunbooksTab({
       organizationId={organizationId}
       organizationName={organizationName}
       suggestionTags={suggestionTags}
+      suggestionPriorityTags={suggestionPriorityTags}
       tagVocabulary={tagVocabulary}
     />
   );
