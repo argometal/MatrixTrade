@@ -65,13 +65,23 @@ assert.match(projectShell, /helpTopic="project-tags"/, "Project Tags help topic"
 assert.match(orgShell, /\["Overview", "Timeline", "Runbooks", "Tags", "Links"\]/, "Org has Tags tab");
 assert.match(orgShell, /tab === "Tags"/, "Org Tags tab renders");
 assert.match(orgShell, /V2TagPatternBadges/, "Org Tags show scoped patterns");
-assert.match(orgShell, /tagPatterns/, "Org Tags wired to org neighborhood patterns");
+assert.match(orgShell, /directEvidenceTags/, "Org Tags show direct evidence inventory");
+assert.match(orgShell, /watchedHere/, "Org Tags show watched intersection");
+assert.match(orgShell, /tagPatterns/, "Org Tags wired to direct-scope patterns");
 assert.match(orgShell, /helpTopic="org-tags"|topic="org-tags"/, "Org Tags help topic");
 assert.match(orgShell, /manualTags=\{\[\]\}/, "Org Links keeps ORDER 001 — no binder Tags");
+assert.match(orgShell, /Go to Tags →/, "Org Tags links to global Tags management");
+assert.doesNotMatch(
+  orgShell,
+  /organization'?s neighborhood|detected in this organization/,
+  "Org Tags no longer claims neighborhood inheritance"
+);
 
 assert.match(actions, /updateProjectTagsAction/, "projectTags write action exists");
 assert.match(help, /id: "project-tags"/, "project-tags help registered");
 assert.match(help, /id: "org-tags"/, "org-tags help registered");
+assert.match(help, /linked directly to this Organization/, "org-tags help is direct-evidence truthful");
+assert.doesNotMatch(help, /organization'?s neighborhood/, "org-tags help drops neighborhood language");
 
 assert.match(loaders, /Number\.POSITIVE_INFINITY/, "portfolio default is uncapped");
 assert.doesNotMatch(loaders, /limit = 80/, "top-80 cut must be gone");

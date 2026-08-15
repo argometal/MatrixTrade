@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { Entity, Runbook, RunbookProgress } from "@/lib/argus/types";
 import type { V2EntityNeighborhoodGraph } from "@/lib/argus/v2/intelligence-viz";
@@ -30,6 +31,11 @@ import {
 import { V2OverviewBinderPulse } from "./V2OverviewBinderPulse";
 import type { EvidenceMixSegment } from "@/lib/argus/v2/evidence-mix";
 import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
+import {
+  TAG_MANAGE_LIST_CLASS,
+  TAG_MANAGE_ROW_CLASS,
+  TAG_MANAGE_ROW_TRACKER_CLASS,
+} from "./tag-manage-list";
 
 const TABS = ["Overview", "Timeline", "Runbooks", "Tags", "Links"] as const;
 type OrgTab = (typeof TABS)[number];
@@ -51,6 +57,10 @@ export type V2OrgShellProps = {
   orgProjects: Entity[];
   recentProjects: Array<{ id: string; name: string; status: string; year: string }>;
   tagPatterns: TagPattern[];
+  /** Unique Tags on Notes/emails linked directly to this Organization. */
+  directEvidenceTags?: string[];
+  /** signalTags ∩ direct Organization evidence (passive Trackers present here). */
+  watchedHere?: string[];
   signalTags?: string[];
   stats: {
     emails: number;
@@ -104,6 +114,8 @@ export function V2OrgShell(props: V2OrgShellProps) {
     orgProjects,
     recentProjects,
     tagPatterns,
+    directEvidenceTags = [],
+    watchedHere = [],
     signalTags = [],
     stats,
     networkStatus,
@@ -353,28 +365,109 @@ export function V2OrgShell(props: V2OrgShellProps) {
 
       {tab === "Tags" ? (
         <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
-          <section className="space-y-4" aria-label="Organization tags">
+          <section className="space-y-6" aria-label="Organization tags">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-zinc-100">Tags on this Organization</h2>
+                <h2 className="text-sm font-semibold text-zinc-100">Tags in this Organization</h2>
                 <p className="mt-1 text-xs text-zinc-500">
-                  Evidence and pattern tags detected in this organization&apos;s neighborhood. Organizations do not
-                  carry binder tags — structural links stay on Links.
+                  Evidence Tags from Notes and emails linked directly to this Organization. Organizations do not
+                  carry binder Tags — structural links stay on Links.
                 </p>
               </div>
               <V2IntelHelpLink topic="org-tags" label="Organization Tags" />
             </div>
-            {tagPatterns.length === 0 ? (
-              <p className="text-sm text-zinc-500">No tags detected for this organization yet.</p>
-            ) : (
-              <V2TagPatternBadges
-                patterns={tagPatterns}
-                signalTags={signalTags}
-                tagHref={(tag) =>
-                  `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`
-                }
-              />
-            )}
+
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-600">Direct evidence</p>
+              {directEvidenceTags.length === 0 ? (
+                <p className="text-sm text-zinc-500">
+                  No Tags on evidence linked directly to this Organization.
+                </p>
+              ) : (
+                <div className={TAG_MANAGE_LIST_CLASS} role="list" aria-label="Direct evidence tags">
+                  {directEvidenceTags.map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`}
+                      role="listitem"
+                      className={TAG_MANAGE_ROW_CLASS}
+                    >
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200"
+                        aria-hidden
+                      >
+                        #
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">#{tag}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2 border-t border-zinc-800/80 pt-5">
+              <div>
+                <h3 className="text-sm font-semibold text-zinc-100">Patterns</h3>
+                <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
+                  Recurring evidence
+                </p>
+              </div>
+              {tagPatterns.length === 0 ? (
+                <p className="text-sm text-zinc-500">
+                  {directEvidenceTags.length === 0
+                    ? "No recurring Pattern has formed yet — Patterns need repeated Tags on direct evidence."
+                    : "Direct evidence Tags are present, but no recurring Pattern has formed yet."}
+                </p>
+              ) : (
+                <V2TagPatternBadges
+                  patterns={tagPatterns}
+                  signalTags={signalTags}
+                  tagHref={(tag) =>
+                    `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`
+                  }
+                />
+              )}
+            </div>
+
+            <div className="space-y-2 border-t border-zinc-800/80 pt-5">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-semibold text-zinc-100">Watched here</h3>
+                  <p className="mt-0.5 text-xs text-zinc-500">
+                    Journal Trackers that also appear on direct Organization evidence. This Organization does not
+                    own Trackers — Flag and Disable stay on Tags.
+                  </p>
+                </div>
+                <Link
+                  href="/argus/v2?intel=tags"
+                  className="shrink-0 text-[11px] font-medium text-amber-200/90 hover:text-amber-100"
+                >
+                  Go to Tags →
+                </Link>
+              </div>
+              {watchedHere.length === 0 ? (
+                <p className="text-sm text-zinc-500">
+                  No watched Tags intersect direct evidence for this Organization.
+                </p>
+              ) : (
+                <div className={TAG_MANAGE_LIST_CLASS} role="list" aria-label="Watched tags here">
+                  {watchedHere.map((tag) => (
+                    <div key={tag} role="listitem" className={TAG_MANAGE_ROW_TRACKER_CLASS}>
+                      <span
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/20 text-xs font-bold text-amber-100"
+                        aria-hidden
+                      >
+                        ⚑
+                      </span>
+                      <span className="min-w-0 flex-1 truncate font-semibold text-amber-100">#{tag}</span>
+                      <span className="shrink-0 text-[10px] uppercase tracking-wide text-amber-200/70">
+                        Tracker
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </section>
         </V2PrivateEvidenceGate>
       ) : null}
@@ -447,7 +540,6 @@ export function V2OrgShell(props: V2OrgShellProps) {
             tagPatterns={tagPatterns}
             signalTags={signalTags}
             // ORDER 001: Org does not use binder Tags — structural links only.
-            // Surface evidence/pattern tags from the org neighborhood as linked tags.
             manualTags={[]}
             tagHref={(tag) => `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&org=${entity.id}`}
             tagsHeading="Linked to this Organization"
