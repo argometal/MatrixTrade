@@ -2,18 +2,14 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0815a` (auth ship) — see latest `main` for terminology correction after #312 revert
+Pinned revision: `main0815b`
 
-Ship commits:
-- `21cb4a7` — PR #309 Forge → Argus login / guest-lock
-- `0ea237a` — PR #312 trading `?` help (**reverted** — wrong “MTA” meaning for Forge workstream)
+Ship commit: `43e59d2`
 
-Includes (still live from prior pins + #309):
-- PR #309: `/forge` uses Argus login + guest-lock path (`argus-auth`)
-- Topics list ↔ full detail (no side preview overlap)
-- Neighborhood +/− zoom, turn, 3D tilt, drag-to-pin / Relax / Reset
-- Depth 2 / 3 / 5 with structural bridge trim fix; Universe button removed
-- A mark systems menu (replaces ··· + duplicate A)
+Includes:
+- PR #313 — Trades UI English + Scout→Trades pipeline proposal (`scout-trades-pipeline-001.md`)
+- PR #314 — MTA-SAMPLE-001 Scout corpus probe (`mta-sample-001.md`) — Capture not ready; needs prod export
+- Prior `main0815a` / #309: `/forge` Argus login + guest-lock; neighborhood camera/pins; Topics detach
 
 **Terminology:** In ArgusForge docs, **MTA** = matrix/time engine (`argusforge-contract.md` §10). Trading product = **MatrixTrade**. See [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md).
 
