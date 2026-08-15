@@ -1,5 +1,5 @@
-import type { Entity, InboxItem, Log } from "./types";
 import { getProjectHomeCounts } from "./project-evidence-scope";
+import type { ArgusData, Entity, InboxItem, Log } from "./types";
 
 export type HomeActivityItem =
   | { type: "entity"; entity: Entity; at: string }
@@ -34,10 +34,11 @@ export function buildHomeProjectSummaries(
   inboxItems: InboxItem[],
   includePrivate: boolean
 ): HomeProjectSummary[] {
+  const data = { entities, logs } as ArgusData;
   return entities
     .filter((e) => e.type === "project")
     .map((entity) => {
-      const counts = getProjectHomeCounts(entity, logs, inboxItems, includePrivate);
+      const counts = getProjectHomeCounts(data, entity, inboxItems, includePrivate);
       return { entity, ...counts };
     })
     .sort((a, b) => b.linkedCount - a.linkedCount || a.entity.name.localeCompare(b.entity.name));

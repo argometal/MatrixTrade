@@ -10,8 +10,36 @@ export type ProjectScopeOptions = {
   respectProjectDates?: boolean;
 };
 
-function projectPeople(project: Entity): Set<string> {
-  return new Set(project.linkedPersonIds ?? []);
+/** Outbound bags that may point at a project (same union as structural outbound). */
+function entityPointsAt(entity: Entity, targetId: string): boolean {
+  return (
+    (entity.linkedEntityIds ?? []).includes(targetId) ||
+    (entity.linkedPersonIds ?? []).includes(targetId) ||
+    (entity.linkedTopicIds ?? []).includes(targetId) ||
+    (entity.linkedEventIds ?? []).includes(targetId)
+  );
+}
+
+/**
+ * Project contacts for via-contact evidence: outbound people (person bag + entity bag)
+ * plus people who point at the project (reverse links).
+ */
+export function projectLinkedPersonIds(data: ArgusData, project: Entity): string[] {
+  const ids = new Set<string>();
+  for (const id of project.linkedPersonIds ?? []) ids.add(id);
+  for (const id of project.linkedEntityIds ?? []) {
+    const entity = data.entities.find((e) => e.id === id && !e.deletedAt);
+    if (entity?.type === "person") ids.add(id);
+  }
+  for (const other of data.entities) {
+    if (other.deletedAt || other.type !== "person" || other.id === project.id) continue;
+    if (entityPointsAt(other, project.id)) ids.add(other.id);
+  }
+  return [...ids];
+}
+
+function projectPeople(data: ArgusData, project: Entity): Set<string> {
+  return new Set(projectLinkedPersonIds(data, project));
 }
 
 function inProjectDateRange(iso: string, project: Entity, respectProjectDates: boolean): boolean {
@@ -44,12 +72,13 @@ export function getDirectProjectInbox(
 
 /** Emails linked to project contacts (not the project) within the project date range. */
 export function getViaContactProjectInbox(
+  data: ArgusData,
   inboxItems: InboxItem[],
   project: Entity,
   includePrivate = false,
   options?: ProjectScopeOptions
 ): InboxItem[] {
-  const people = projectPeople(project);
+  const people = projectPeople(data, project);
   if (people.size === 0) return [];
   const respect = scopeOpts(options);
 
@@ -71,6 +100,7 @@ export function getViaContactProjectInbox(
 }
 
 export function getAllProjectScopeInbox(
+  data: ArgusData,
   inboxItems: InboxItem[],
   project: Entity,
   includePrivate = false,
@@ -78,23 +108,24 @@ export function getAllProjectScopeInbox(
 ): InboxItem[] {
   return [
     ...getDirectProjectInbox(inboxItems, project.id, includePrivate, project, options),
-    ...getViaContactProjectInbox(inboxItems, project, includePrivate, options),
+    ...getViaContactProjectInbox(data, inboxItems, project, includePrivate, options),
   ];
 }
 
 export function getProjectHomeCounts(
+  data: ArgusData,
   project: Entity,
-  logs: Log[],
   inboxItems: InboxItem[],
   includePrivate = false,
   options?: ProjectScopeOptions
 ): { logCount: number; inboxCount: number; linkedCount: number } {
-  const inboxCount = getAllProjectScopeInbox(inboxItems, project, includePrivate, options).length;
+  const inboxCount = getAllProjectScopeInbox(data, inboxItems, project, includePrivate, options).length;
   const respect = scopeOpts(options);
+  const logs = includePrivate ? data.logs : data.logs.filter((log) => !log.private);
   const directLogCount = logs.filter(
     (log) => log.entityIds.includes(project.id) && inProjectDateRange(log.date, project, respect)
   ).length;
-  const people = projectPeople(project);
+  const people = projectPeople(data, project);
   const viaLogCount =
     people.size === 0
       ? 0
@@ -126,7 +157,7 @@ function getViaContactProjectLogs(
   includePrivate: boolean,
   options?: ProjectScopeOptions
 ): Log[] {
-  const people = projectPeople(project);
+  const people = projectPeople(data, project);
   if (people.size === 0) return [];
   const respect = scopeOpts(options);
 
@@ -151,7 +182,7 @@ export function getProjectEvidenceScope(
   options?: ProjectScopeOptions
 ) {
   const directInboxAll = getDirectProjectInbox(inboxItems, project.id, includePrivate, project, options);
-  const viaContactInboxAll = getViaContactProjectInbox(inboxItems, project, includePrivate, options);
+  const viaContactInboxAll = getViaContactProjectInbox(data, inboxItems, project, includePrivate, options);
   const directInbox = getInboxCardsForEntity(inboxItems, project.id, includePrivate).filter((item) =>
     inProjectDateRange(item.receivedAt, project, scopeOpts(options))
   );

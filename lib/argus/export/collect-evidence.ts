@@ -65,7 +65,7 @@ function collectScopedLogsAndInbox(
     const scope = getProjectEvidenceScope(data, inboxItems, entity, includePrivate);
     return {
       logs: uniqueById([...scope.directLogs, ...scope.viaContactLogs]),
-      inbox: uniqueById(getAllProjectScopeInbox(inboxItems, entity, includePrivate)),
+      inbox: uniqueById(getAllProjectScopeInbox(data, inboxItems, entity, includePrivate)),
     };
   }
 

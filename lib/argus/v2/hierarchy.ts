@@ -32,10 +32,34 @@ export function isPersonEntity(entity: Entity): boolean {
   return entity.type === "person";
 }
 
-/** Org shell: people linked on the entity record (roster), not inferred from journal. */
+/** Org shell: outbound people ids on the entity record (may include non-person entity ids). */
 export function organizationLinkedPersonIds(entity: Entity): string[] {
   if (!isOrganizationEntity(entity)) return [];
   return [...new Set([...(entity.linkedPersonIds ?? []), ...(entity.linkedEntityIds ?? [])])];
+}
+
+/**
+ * Org roster people: outbound person links ∪ people who point at the org.
+ * Same bidirectional policy as Link modal / project chips.
+ */
+export function organizationRosterPersonIds(data: ArgusData, org: Entity): string[] {
+  if (!isOrganizationEntity(org)) return [];
+  const ids = new Set(organizationLinkedPersonIds(org));
+  for (const other of data.entities) {
+    if (other.deletedAt || other.type !== "person" || other.id === org.id) continue;
+    if (
+      (other.linkedEntityIds ?? []).includes(org.id) ||
+      (other.linkedPersonIds ?? []).includes(org.id) ||
+      (other.linkedTopicIds ?? []).includes(org.id) ||
+      (other.linkedEventIds ?? []).includes(org.id)
+    ) {
+      ids.add(other.id);
+    }
+  }
+  return [...ids].filter((id) => {
+    const entity = data.entities.find((e) => e.id === id && !e.deletedAt);
+    return entity?.type === "person";
+  });
 }
 
 /** Projects associated with an org via project.linkedEntityIds or org.linkedEntityIds. */
