@@ -21,7 +21,7 @@ export function UiWindowIdBadge() {
 
   return (
     <div
-      className="pointer-events-none fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] left-2 z-[70] lg:bottom-3 lg:left-3"
+      className="pointer-events-none fixed bottom-[calc(var(--mt-mobile-tabbar)+0.25rem+env(safe-area-inset-bottom))] left-2 z-[70] lg:bottom-3 lg:left-3"
       data-ui-window-id={id}
       aria-hidden="true"
     >

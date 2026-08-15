@@ -21,6 +21,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  viewportFit: "cover",
 };
 
 /** Read data/*.json at request time (required for Vercel serverless). */
@@ -33,7 +34,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-zinc-50 text-zinc-900 antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} min-h-dvh max-w-[100vw] overflow-x-hidden bg-zinc-50 text-zinc-900 antialiased`}
+      >
         <GuestLocalTimeZoneSync />
         {children}
       </body>

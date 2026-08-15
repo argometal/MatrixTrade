@@ -66,10 +66,10 @@ export function V2DesktopShell({
 
   return (
     <V2SidebarCollapseContext.Provider value={{ collapsed, toggle }}>
-      <div className="argus-v2 min-h-screen bg-zinc-950">
+      <div className="argus-v2 min-h-dvh max-w-[100vw] overflow-x-hidden bg-zinc-950">
         <V2Sidebar counts={counts} collapsed={ready && collapsed} onToggle={toggle} />
         <div
-          className={`flex h-dvh min-h-0 flex-col overflow-hidden transition-[padding] duration-200 ease-out ${paddingClass}`}
+          className={`flex h-dvh min-h-0 max-w-[100vw] flex-col overflow-hidden transition-[padding] duration-200 ease-out ${paddingClass}`}
         >
           <V2TopBar
             inboxCount={inboxCount}

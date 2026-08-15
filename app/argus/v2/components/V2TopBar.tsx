@@ -36,15 +36,15 @@ export function V2TopBar({
   }, [router]);
 
   return (
-    <header className="sticky top-0 z-40 shrink-0 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
-      <div className="flex items-center gap-2.5 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3 lg:px-6">
+    <header className="sticky top-0 z-40 max-w-[100vw] shrink-0 overflow-x-hidden border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
+      <div className="flex min-w-0 items-center gap-2.5 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3 lg:px-6">
         <button
           type="button"
           onClick={toggle}
           aria-expanded={open}
           aria-controls="v2-mobile-menu"
           aria-label={open ? "Close Argus menu" : "Open Argus menu"}
-          className={`flex shrink-0 items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition lg:hidden ${
+          className={`flex min-w-0 shrink-0 items-center gap-2 rounded-xl border px-2 py-1.5 text-left transition lg:hidden ${
             open
               ? "border-violet-500/50 bg-violet-500/10 ring-2 ring-violet-500/25"
               : "border-zinc-800 bg-zinc-900/80 hover:border-violet-500/40 hover:bg-zinc-900"
@@ -79,7 +79,7 @@ export function V2TopBar({
           </div>
         </form>
 
-        <div className="ml-auto flex items-center gap-1.5 pl-1 sm:gap-2 sm:pl-0">
+        <div className="ml-auto flex min-w-0 shrink-0 items-center gap-1.5 pl-1 sm:gap-2 sm:pl-0">
           {/* Help + Guest workstation / Security live once under System in the sidebar/drawer — not duplicated here. */}
           {privateConfigured ? (
             <span className="ml-0.5 shrink-0 sm:ml-0">

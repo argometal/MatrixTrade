@@ -21,7 +21,7 @@ export function PreviewMobileNav({ nav }: { nav: PreviewNavContext }) {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-4 gap-1 border-t border-zinc-800 bg-zinc-950/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 grid h-[calc(var(--mt-mobile-tabbar)+env(safe-area-inset-bottom))] max-w-[100vw] grid-cols-4 gap-1 overflow-hidden border-t border-zinc-800 bg-zinc-950/95 px-2 pb-[env(safe-area-inset-bottom)] pt-1.5 backdrop-blur lg:hidden"
       aria-label="Mobile dashboard"
     >
       {PREVIEW_MOBILE_TABS.map((tab) => (

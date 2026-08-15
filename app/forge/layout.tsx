@@ -22,7 +22,7 @@ export default async function ForgeRootLayout({ children }: { children: React.Re
   await requireArgusSession({ next: "/forge" });
 
   return (
-    <div className={`${geist.variable} min-h-screen bg-zinc-950 text-zinc-100 antialiased`}>
+    <div className={`${geist.variable} min-h-dvh max-w-[100vw] overflow-x-hidden bg-zinc-950 text-zinc-100 antialiased`}>
       <ForgeSystemProvider>
         <ForgeShell>{children}</ForgeShell>
       </ForgeSystemProvider>
