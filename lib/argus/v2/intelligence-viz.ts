@@ -594,6 +594,111 @@ function collectLinkedNeighborIds(entity: Entity, entityMap: Map<string, Entity>
   return [...ids];
 }
 
+/** Undirected structural adjacency for neighborhood connectivity repairs. */
+function buildStructuralAdjacency(
+  ids: Iterable<string>,
+  entityMap: Map<string, Entity>
+): Map<string, Set<string>> {
+  const idSet = new Set(ids);
+  const adj = new Map<string, Set<string>>();
+  function link(a: string, b: string) {
+    if (a === b || !idSet.has(a) || !idSet.has(b)) return;
+    if (!adj.has(a)) adj.set(a, new Set());
+    if (!adj.has(b)) adj.set(b, new Set());
+    adj.get(a)!.add(b);
+    adj.get(b)!.add(a);
+  }
+  for (const id of idSet) {
+    const entity = entityMap.get(id);
+    if (!entity) continue;
+    for (const other of outboundStructuralIds(entity)) link(id, other);
+  }
+  return adj;
+}
+
+function structuralPath(
+  fromId: string,
+  toId: string,
+  adj: Map<string, Set<string>>
+): string[] | null {
+  if (fromId === toId) return [fromId];
+  const prev = new Map<string, string | null>([[fromId, null]]);
+  const queue = [fromId];
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    for (const next of adj.get(id) ?? []) {
+      if (prev.has(next)) continue;
+      prev.set(next, id);
+      if (next === toId) {
+        const path = [toId];
+        let cur: string | null = toId;
+        while (cur && cur !== fromId) {
+          cur = prev.get(cur) ?? null;
+          if (cur) path.push(cur);
+        }
+        path.reverse();
+        return path;
+      }
+      queue.push(next);
+    }
+  }
+  return null;
+}
+
+function isReachable(
+  fromId: string,
+  toId: string,
+  keep: Set<string>,
+  adj: Map<string, Set<string>>
+): boolean {
+  if (fromId === toId) return true;
+  const seen = new Set<string>([fromId]);
+  const queue = [fromId];
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    for (const next of adj.get(id) ?? []) {
+      if (!keep.has(next) || seen.has(next)) continue;
+      if (next === toId) return true;
+      seen.add(next);
+      queue.push(next);
+    }
+  }
+  return false;
+}
+
+/**
+ * After maxNodes trim, Events/Topics can remain while their bridge was dropped —
+ * leaving a visible node with no drawn relation. Promote shortest structural
+ * path hops so every kept structural neighbor stays connected to center.
+ */
+export function promoteNeighborhoodBridgeIds(
+  centerId: string,
+  keptIds: Set<string>,
+  candidateIds: Set<string>,
+  entityMap: Map<string, Entity>,
+  options: { maxExtra?: number } = {}
+): Set<string> {
+  const maxExtra = options.maxExtra ?? 6;
+  const adj = buildStructuralAdjacency(candidateIds, entityMap);
+  const result = new Set(keptIds);
+  if (!result.has(centerId)) result.add(centerId);
+
+  let extra = 0;
+  for (const id of [...keptIds]) {
+    if (id === centerId) continue;
+    if (isReachable(centerId, id, result, adj)) continue;
+    const path = structuralPath(centerId, id, adj);
+    if (!path || path.length < 2) continue;
+    for (const hop of path) {
+      if (result.has(hop)) continue;
+      if (extra >= maxExtra) break;
+      result.add(hop);
+      extra += 1;
+    }
+  }
+  return result;
+}
+
 /**
  * Journal Trackers that appear on this entity under definition D
  * (binder ∪ direct evidence; Topic includes linked Event rollup).
@@ -681,7 +786,7 @@ export function buildV2EntityNeighborhoodGraph(
   }
 
   const focusKeys = signalTagKeySet(data.signalTags);
-  const scored = [...neighborIds]
+  const scoredAll = [...neighborIds]
     .map((id) => {
       const entity = entityMap.get(id)!;
       const { total } = countEvidenceForEntity(data, inboxItems, id, includePrivate, today);
@@ -696,8 +801,29 @@ export function buildV2EntityNeighborhoodGraph(
         return b.focusTags.length > 0 ? 1 : -1;
       }
       return b.total - a.total || a.entity.name.localeCompare(b.entity.name);
-    })
-    .slice(0, maxNodes);
+    });
+
+  const trimmed = scoredAll.slice(0, maxNodes);
+  const keptIds = new Set(trimmed.map((s) => s.entity.id));
+  // If an Event (or any hop-2 binder) survived the cut, keep its structural path
+  // so the relation stays drawable when the node is on canvas.
+  const connectedIds = promoteNeighborhoodBridgeIds(
+    centerEntityId,
+    keptIds,
+    neighborIds,
+    entityMap,
+    { maxExtra: Math.max(4, Math.ceil(maxNodes / 3)) }
+  );
+
+  const byId = new Map(scoredAll.map((s) => [s.entity.id, s]));
+  const scored = [...connectedIds]
+    .map((id) => byId.get(id))
+    .filter((row): row is (typeof scoredAll)[number] => Boolean(row))
+    .sort((a, b) => {
+      if (a.isCenter) return -1;
+      if (b.isCenter) return 1;
+      return b.total - a.total || a.entity.name.localeCompare(b.entity.name);
+    });
 
   const idSet = new Set(scored.map((s) => s.entity.id));
   const rawNodes: V2GraphNode[] = scored.map(({ entity, total, focusTags }) => ({
@@ -722,8 +848,14 @@ export function buildV2EntityNeighborhoodGraph(
     }
   };
 
-  for (const { entity } of scored) {
-    for (const id of outboundStructuralIds(entity)) addEdge(entity.id, id, 2, "linked");
+  // Structural edges both ways (outbound ∪ reverse) so Topic→Event always draws
+  // when both nodes are present — even if only one bag stores the link.
+  for (const id of idSet) {
+    const entity = entityMap.get(id);
+    if (!entity) continue;
+    for (const otherId of outboundStructuralIds(entity)) {
+      addEdge(id, otherId, 2, "linked");
+    }
   }
 
   for (const log of logs) {

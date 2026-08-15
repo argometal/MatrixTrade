@@ -190,13 +190,16 @@ function GraphCanvas({
         const to = nodeMap.get(edge.to);
         if (!from || !to) return null;
         const isAffinity = edge.kind === "focus-affinity";
-        const inEmphasize =
+        // Keep a drawn bond whenever it touches the focused ego — so an Event
+        // that stays on-canvas (even dimmed) still shows its relation.
+        const touchesEmphasize =
           !emphasizeIds ||
           emphasizeIds.size === 0 ||
-          (emphasizeIds.has(edge.from) && emphasizeIds.has(edge.to));
+          emphasizeIds.has(edge.from) ||
+          emphasizeIds.has(edge.to);
         const active =
           !hoveredId || edge.from === hoveredId || edge.to === hoveredId || connectedToHover.has(edge.from);
-        const subdued = Boolean(emphasizeIds && emphasizeIds.size > 0 && !inEmphasize);
+        const subdued = Boolean(emphasizeIds && emphasizeIds.size > 0 && !touchesEmphasize);
         return (
           <line
             key={`${edge.from}-${edge.to}-${edge.kind ?? "edge"}`}
