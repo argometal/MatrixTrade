@@ -224,6 +224,8 @@ export default async function V2OrganizationPage({
             linkedTopics={page.linkedTopics}
             linkedEvents={page.linkedEvents}
             linkModalIds={page.linkModalIds}
+            evidenceMix={page.evidenceMix}
+            structuralMix={page.structuralMix}
             runbooks={orgRunbooks}
             progressRecords={progressRecords}
             peerOrganizations={peerOrganizations}

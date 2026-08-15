@@ -18,6 +18,7 @@ import {
   TAG_ROLES,
 } from "../tag-ontology";
 import { buildTagPatternsForScope } from "./tag-patterns";
+import { buildEvidenceMix } from "./evidence-mix";
 import { effectiveInboxStatus } from "./inbox-loaders";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
 import {
@@ -869,6 +870,15 @@ export function loadOrganizationPageData(
   const linkedTopics = linkedTopicRefs(data, nodeCounts.topicIds);
   const linkedEvents = linkedEventRefs(data, nodeCounts.eventIds);
   const linkModalIds = linkModalStructuralIds(data, org);
+  const evidenceMix = buildEvidenceMix({
+    notes: scope.logCount,
+    emails: scope.emailCount,
+  });
+  const structuralMix = buildEvidenceMix({
+    people: linkedPeople.length,
+    topics: nodeCounts.topicCount,
+    events: nodeCounts.eventCount,
+  });
 
   return {
     scope,
@@ -886,6 +896,8 @@ export function loadOrganizationPageData(
     linkedTopics,
     linkedEvents,
     linkModalIds,
+    evidenceMix,
+    structuralMix,
     stats: {
       emails: scope.emailCount,
       emailsDelta: emailsThisMonth > 0 ? `+${emailsThisMonth} this month` : "No change",
@@ -1044,6 +1056,18 @@ export function loadProjectPageData(
   const tagPatterns = buildTagPatternsForScope(allLogs, allInbox, today);
 
   const topicCount = nodeCounts.topicCount;
+  const sparkline = buildMonthlyActivitySparkline(allLogs, allInbox, 12);
+  const chartEndYear = Number(today.slice(0, 4));
+  const chartStartYear = chartEndYear - 1;
+  const evidenceMix = buildEvidenceMix({
+    notes: scope.logCount,
+    emails: scope.emailCount,
+  });
+  const structuralMix = buildEvidenceMix({
+    people: linkCounts.peopleCount,
+    topics: topicCount,
+    events: linkedEventsCount,
+  });
 
   return {
     scope,
@@ -1060,6 +1084,11 @@ export function loadProjectPageData(
     linkModalIds,
     keyMetrics: buildProjectKeyMetrics(scope, topicCount, linkedEventsCount),
     tagPatterns,
+    sparkline,
+    chartStartYear,
+    chartEndYear,
+    evidenceMix,
+    structuralMix,
     stats: {
       people: linkCounts.peopleCount,
       topics: topicCount,

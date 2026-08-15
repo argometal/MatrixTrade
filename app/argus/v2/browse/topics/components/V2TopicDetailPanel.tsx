@@ -26,6 +26,7 @@ import {
   chronicleLogIdFromEvidenceId,
 } from "@/app/argus/v2/components/V2ChronicleSelectableList";
 import { V2IntelHelpLink } from "@/app/argus/v2/components/V2IntelHelpLink";
+import { V2EvidenceMixDonut } from "@/app/argus/v2/components/V2EvidenceMixDonut";
 import type { Runbook, RunbookProgress } from "@/lib/argus/types";
 import { libraryRunbooksForRelated, progressForEntity, runbooksForEntity } from "@/lib/argus/runbook-helpers";
 import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
@@ -146,8 +147,43 @@ export function V2TopicDetailPanel({
     return {
       ...linked,
       tags: rollup?.tags ?? [],
+      noteCount: rollup?.noteCount ?? 0,
+      emailCount: rollup?.emailCount ?? 0,
+      eventTagCount: rollup?.eventTags?.length ?? 0,
+      noteTagCount: rollup?.noteTags?.length ?? 0,
     };
   }, [inspectEventId, selected.linkedEvents, selected.eventEvidenceTags]);
+
+  const inspectEventMix = useMemo(() => {
+    if (!inspectEvent) return [];
+    const segments = [
+      {
+        key: "notes",
+        label: "Notes",
+        value: inspectEvent.noteCount,
+        color: "#a78bfa",
+      },
+      {
+        key: "emails",
+        label: "Emails",
+        value: inspectEvent.emailCount,
+        color: "#38bdf8",
+      },
+      {
+        key: "event-tags",
+        label: "Event tags",
+        value: inspectEvent.eventTagCount,
+        color: "#fb7185",
+      },
+      {
+        key: "note-tags",
+        label: "Note tags",
+        value: inspectEvent.noteTagCount,
+        color: "#fbbf24",
+      },
+    ];
+    return segments.filter((seg) => seg.value > 0);
+  }, [inspectEvent]);
   const mobileDetail = Boolean(onBack);
   const compactChrome = mobileDetail;
   const showMobileManageBar = mobileDetail && privateUnlocked;
@@ -492,6 +528,21 @@ export function V2TopicDetailPanel({
                       >
                         View Event Chronicle →
                       </Link>
+                    </div>
+                    <div className="mt-4 rounded-xl border border-rose-500/20 bg-zinc-950/50 p-3">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-rose-200/70">
+                        Quick view · evidence mix
+                      </p>
+                      <V2EvidenceMixDonut
+                        segments={inspectEventMix}
+                        size="sm"
+                        emptyLabel="No notes, emails, or tags on this Event yet"
+                        centerLabel={
+                          inspectEvent.noteCount + inspectEvent.emailCount > 0
+                            ? String(inspectEvent.noteCount + inspectEvent.emailCount)
+                            : undefined
+                        }
+                      />
                     </div>
                     <div className="mt-3">
                       <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">

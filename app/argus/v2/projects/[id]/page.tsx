@@ -209,6 +209,11 @@ export default async function V2ProjectPage({
             signalTags={data.signalTags ?? []}
             keyMetrics={page.keyMetrics}
             org={page.org ? { id: page.org.id, name: page.org.name } : undefined}
+            sparkline={page.sparkline}
+            chartStartYear={page.chartStartYear}
+            chartEndYear={page.chartEndYear}
+            evidenceMix={page.evidenceMix}
+            structuralMix={page.structuralMix}
             stats={page.stats}
           />
         </div>

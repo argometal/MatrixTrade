@@ -108,6 +108,10 @@ export interface V2TopicDetail {
     name: string;
     href: string;
     dateLabel?: string;
+    /** Notes (logs) linked to this Event. */
+    noteCount: number;
+    /** Emails linked to this Event. */
+    emailCount: number;
     /** @deprecated Prefer eventTags + noteTags — merged binder ∪ evidence. */
     tags: string[];
     /** Event binder `eventTags`. */
