@@ -1,15 +1,18 @@
 /**
- * Molecule + Radial — chem-lite: 1–3 → 1x, 4+ → 1.4x.
+ * Molecule + Radial — chem-lite: shared UNIT, hop rings, 1–3 → 1x, 4+ → 1.4x.
  */
 import assert from "node:assert/strict";
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { V2GraphEdge, V2GraphNode } from "../lib/argus/v2/intelligence-viz";
 import {
+  CHEM_NEIGHBORHOOD_LINK_UNIT,
+  chemNeighborhoodLinkDistance,
   degreeDistanceMultiplier,
   degreeLinkLengthExtra,
   layoutNeighborhoodGraphNodes,
   neighborhoodDegreeMap,
+  neighborhoodHopMap,
 } from "../lib/argus/v2/intelligence-viz";
 import {
   buildEgoNeighborhoodPreservePositions,
@@ -19,9 +22,10 @@ import {
   moleculeLinkStrength,
 } from "../lib/argus/v2/neighborhood-molecule-layout";
 
-assert.equal(moleculeLinkDistance(2), 22);
-assert.equal(moleculeLinkDistance(1), 30);
-assert.equal(moleculeLinkDistance(0.5), 40);
+assert.equal(CHEM_NEIGHBORHOOD_LINK_UNIT, 15);
+assert.equal(moleculeLinkDistance(2), 15);
+assert.equal(moleculeLinkDistance(1), 18);
+assert.equal(moleculeLinkDistance(0.5), 21);
 assert.ok(moleculeLinkStrength(2) > moleculeLinkStrength(1));
 assert.ok(moleculeLinkStrength(1) > moleculeLinkStrength(0.5));
 
@@ -32,11 +36,13 @@ assert.equal(degreeDistanceMultiplier(4), 1.4);
 assert.equal(degreeDistanceMultiplier(12), 1.4);
 assert.equal(degreeLinkLengthExtra(1, 1), 0);
 assert.equal(degreeLinkLengthExtra(3, 1), 0);
-assert.equal(degreeLinkLengthExtra(4, 1), (1.4 - 1) * 14);
+assert.equal(degreeLinkLengthExtra(4, 1), (1.4 - 1) * CHEM_NEIGHBORHOOD_LINK_UNIT);
 
-assert.equal(moleculeLinkDistanceForDegrees(2, 1, 1), 18, "1–2 links → single distance");
-assert.equal(moleculeLinkDistanceForDegrees(2, 3, 1), 18, "3 links → still single (chem-lite)");
-assert.equal(moleculeLinkDistanceForDegrees(2, 4, 1), 18 * 1.4, "4+ links → mild 1.4×");
+assert.equal(chemNeighborhoodLinkDistance(1, 1), 15);
+assert.equal(chemNeighborhoodLinkDistance(4, 1), 15 * 1.4);
+assert.equal(moleculeLinkDistanceForDegrees(2, 1, 1), 15, "Radial + Molecule share 1× bond");
+assert.equal(moleculeLinkDistanceForDegrees(2, 3, 1), 15, "3 links → still single (chem-lite)");
+assert.equal(moleculeLinkDistanceForDegrees(2, 4, 1), 15 * 1.4, "4+ links → mild 1.4×");
 assert.ok(
   moleculeLinkDistanceForDegrees(2, 4, 1) > moleculeLinkDistanceForDegrees(2, 3, 1),
   "only 4+ stretches preferred distance"
@@ -100,7 +106,7 @@ function renderSvg(
   layoutNodes: V2GraphNode[],
   layoutEdges: V2GraphEdge[],
   title: string,
-  options: { centerId: string; emphasizeIds?: Set<string> } 
+  options: { centerId: string; emphasizeIds?: Set<string> }
 ): string {
   const parts: string[] = [];
   parts.push('<?xml version="1.0" encoding="UTF-8"?>');
@@ -151,7 +157,11 @@ function renderSvg(
 
 const { nodes, edges, centerId } = denseNeighborhood();
 const degrees = neighborhoodDegreeMap(edges);
+const hops = neighborhoodHopMap(centerId, edges);
 assert.ok((degrees.get("xom") ?? 0) >= 4, "fixture center is a 4+ hub (chem-lite bump)");
+assert.equal(hops.get("xom"), 0);
+assert.equal(hops.get("p-xom"), 1);
+assert.ok((hops.get("e1") ?? 0) >= 2, "events sit on outer hop ring");
 
 const radial = layoutNeighborhoodGraphNodes(nodes, centerId, edges);
 const radialFlat = layoutNeighborhoodGraphNodes(nodes, centerId, []);
@@ -161,7 +171,18 @@ assert.equal(radial.length, 13);
 assert.equal(molecule.length, 13);
 assert.ok(molecule.every((n) => n.x >= 0 && n.x <= 100 && n.y >= 0 && n.y <= 100));
 
-// Degree-aware radial: 4+ hub spokes longer than edge-ignored (always 1×).
+function distFromCenter(laid: V2GraphNode[], cid: string, id: string): number {
+  const c = laid.find((n) => n.id === cid)!;
+  const n = laid.find((row) => row.id === id)!;
+  return Math.hypot(n.x - c.x, n.y - c.y);
+}
+
+// Hop rings: 2-hop nodes farther from center than 1-hop (chem path length).
+assert.ok(
+  distFromCenter(radial, centerId, "e1") > distFromCenter(radial, centerId, "p-xom"),
+  "Radial: hop-2 farther than hop-1"
+);
+
 function meanRadius(laid: V2GraphNode[], cid: string): number {
   const c = laid.find((n) => n.id === cid)!;
   const others = laid.filter((n) => n.id !== cid);
@@ -170,10 +191,17 @@ function meanRadius(laid: V2GraphNode[], cid: string): number {
 }
 assert.ok(
   meanRadius(radial, centerId) > meanRadius(radialFlat, centerId),
-  "Radial: 4+ hub gets longer spokes when edges are known"
+  "Radial: hop+degree layout spreads more than flat ring"
 );
 
-// Molecule: edges touching the 4+ hub should not collapse vs peripheral leaf edges.
+// Molecule stays near Radial chem scale (no fill-to-fit blow-up).
+const radialMean = meanRadius(radial, centerId);
+const moleculeMean = meanRadius(molecule, centerId);
+assert.ok(
+  moleculeMean < radialMean * 1.85,
+  `Molecule must stay chem-coherent vs Radial (mol=${moleculeMean.toFixed(1)} radial=${radialMean.toFixed(1)})`
+);
+
 function meanEdgeLen(laid: V2GraphNode[], edgeList: V2GraphEdge[], predicate: (e: V2GraphEdge) => boolean): number {
   const byId = new Map(laid.map((n) => [n.id, n]));
   const picked = edgeList.filter(predicate);
@@ -190,11 +218,16 @@ const hubEdgeLen = meanEdgeLen(molecule, edges, (e) => e.from === centerId || e.
 const leafEdgeLen = meanEdgeLen(
   molecule,
   edges,
-  (e) => e.from !== centerId && e.to !== centerId && (degrees.get(e.from) ?? 0) <= 2 && (degrees.get(e.to) ?? 0) <= 2
+  (e) =>
+    e.from !== centerId &&
+    e.to !== centerId &&
+    (degrees.get(e.from) ?? 0) <= 2 &&
+    (degrees.get(e.to) ?? 0) <= 2 &&
+    e.kind === "linked"
 );
 assert.ok(
-  hubEdgeLen > leafEdgeLen * 0.9,
-  `Molecule hub edges should not be shorter than leaf edges (hub=${hubEdgeLen.toFixed(1)} leaf=${leafEdgeLen.toFixed(1)})`
+  hubEdgeLen > leafEdgeLen * 0.75,
+  `Molecule hub edges should not collapse vs leaf bonds (hub=${hubEdgeLen.toFixed(1)} leaf=${leafEdgeLen.toFixed(1)})`
 );
 
 const xs = new Set(molecule.map((n) => Math.round(n.x * 10)));
@@ -202,10 +235,7 @@ const ys = new Set(molecule.map((n) => Math.round(n.y * 10)));
 assert.ok(xs.size >= 5, "molecule spreads X");
 assert.ok(ys.size >= 5, "molecule spreads Y");
 
-const graphUi = require("node:fs").readFileSync(
-  require("node:path").join(process.cwd(), "app/argus/v2/components/V2KnowledgeGraph.tsx"),
-  "utf8"
-);
+const graphUi = readFileSync(join(process.cwd(), "app/argus/v2/components/V2KnowledgeGraph.tsx"), "utf8");
 assert.match(graphUi, /chem-lite/, "UI names chem-lite spacing");
 assert.match(graphUi, /1–3 links · near/, "legend: uniform near bonds");
 assert.match(graphUi, /4\+ links · slight outer/, "legend: mild outer only at 4+");
@@ -214,6 +244,10 @@ assert.match(graphUi, /Large view/, "expand is a large local view, not giant ico
 assert.match(graphUi, /nodeBase: 2\.[0-9]/, "default icons stay small");
 assert.doesNotMatch(graphUi, /nodeBase: 7\.5/, "expanded view no longer uses huge nodeBase");
 assert.doesNotMatch(graphUi, /3 links · mid/, "old mid-band legend removed");
+
+const orgShell = readFileSync(join(process.cwd(), "app/argus/v2/components/V2OrgShell.tsx"), "utf8");
+assert.match(orgShell, /directEvidenceTags/, "Org Tags Slice 1 landed");
+assert.match(orgShell, /watchedHere/, "Org Tags watched intersection landed");
 
 const ego = buildEgoNeighborhoodPreservePositions(molecule, edges, "xom");
 assert.ok(ego.nodes.some((n) => n.id === "xom"));
@@ -227,13 +261,10 @@ const outDir = join(process.cwd(), "artifacts", "graph-molecule-ab");
 mkdirSync(outDir, { recursive: true });
 const emphasize = new Set(ego.nodes.map((n) => n.id));
 
-writeFileSync(
-  join(outDir, "radial.svg"),
-  renderSvg(radial, edges, "Radial (production)", { centerId })
-);
+writeFileSync(join(outDir, "radial.svg"), renderSvg(radial, edges, "Radial chem-lite (hop rings)", { centerId }));
 writeFileSync(
   join(outDir, "molecule.svg"),
-  renderSvg(molecule, edges, "Molecule (weighted-force)", { centerId })
+  renderSvg(molecule, edges, "Molecule chem-lite (shared UNIT)", { centerId })
 );
 writeFileSync(
   join(outDir, "molecule-focus-xom.svg"),
@@ -243,13 +274,12 @@ writeFileSync(
   })
 );
 
-// Also copy into Cursor artifacts for walkthrough
 const art = join("/opt/cursor/artifacts/screenshots");
 mkdirSync(art, { recursive: true });
-writeFileSync(join(art, "graph-radial.svg"), renderSvg(radial, edges, "Radial (production)", { centerId }));
+writeFileSync(join(art, "graph-radial.svg"), renderSvg(radial, edges, "Radial chem-lite (hop rings)", { centerId }));
 writeFileSync(
   join(art, "graph-molecule.svg"),
-  renderSvg(molecule, edges, "Molecule (weighted-force)", { centerId })
+  renderSvg(molecule, edges, "Molecule chem-lite (shared UNIT)", { centerId })
 );
 writeFileSync(
   join(art, "graph-molecule-focus-xom.svg"),

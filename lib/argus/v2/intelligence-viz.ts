@@ -764,6 +764,46 @@ export function neighborhoodDegreeMap(edges: V2GraphEdge[]): Map<string, number>
 }
 
 /**
+ * Chem-lite shared bond length (viewBox units).
+ * Radial rings and Molecule springs must use the same unit so layouts stay coherent.
+ */
+export const CHEM_NEIGHBORHOOD_LINK_UNIT = 15;
+
+/**
+ * Shortest-hop distance from center (undirected). Missing nodes default to 1 for layout.
+ * Prefer structural / strong edges when present so co-mention shortcuts do not flatten the molecule.
+ */
+export function neighborhoodHopMap(
+  centerId: string,
+  edges: V2GraphEdge[]
+): Map<string, number> {
+  const adj = new Map<string, Set<string>>();
+  function link(a: string, b: string) {
+    if (a === b) return;
+    if (!adj.has(a)) adj.set(a, new Set());
+    if (!adj.has(b)) adj.set(b, new Set());
+    adj.get(a)!.add(b);
+    adj.get(b)!.add(a);
+  }
+  const structural = edges.filter((e) => e.kind === "linked" || e.weight >= 2);
+  const useEdges = structural.length > 0 ? structural : edges;
+  for (const edge of useEdges) link(edge.from, edge.to);
+
+  const hops = new Map<string, number>([[centerId, 0]]);
+  const queue = [centerId];
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    const base = hops.get(id) ?? 0;
+    for (const next of adj.get(id) ?? []) {
+      if (hops.has(next)) continue;
+      hops.set(next, base + 1);
+      queue.push(next);
+    }
+  }
+  return hops;
+}
+
+/**
  * Chem-lite link-distance multiplier (uniform short bonds; mild bump only for hubs).
  * 1–3 links → 1× · 4+ links → 1.4×
  * Crowding at degree 3 uses angles / collide / charge — not bond stretch.
@@ -780,11 +820,23 @@ export function degreeDistanceMultiplier(degree: number): number {
 export function degreeLinkLengthExtra(degreeA: number, degreeB: number): number {
   const hub = Math.max(degreeA, degreeB);
   const mult = degreeDistanceMultiplier(hub);
-  // Unit ≈ 14 → extras: 1x→0, 4+ → ~5.6
-  return (mult - 1) * 14;
+  // Unit ≈ CHEM_NEIGHBORHOOD_LINK_UNIT → extras: 1x→0, 4+ → ~6
+  return (mult - 1) * CHEM_NEIGHBORHOOD_LINK_UNIT;
 }
 
-/** Radial layout — center entity in the middle; spoke length scales by link degree. */
+/**
+ * Preferred chem bond length for one edge (shared by Radial radius math + Molecule springs).
+ */
+export function chemNeighborhoodLinkDistance(
+  degreeA: number,
+  degreeB: number,
+  weightNudge = 0
+): number {
+  const mult = degreeDistanceMultiplier(Math.max(degreeA, degreeB));
+  return Math.min(52, CHEM_NEIGHBORHOOD_LINK_UNIT * mult + weightNudge);
+}
+
+/** Radial layout — center in the middle; hop rings × chem-lite bond length. */
 export function layoutNeighborhoodGraphNodes(
   nodes: V2GraphNode[],
   centerId: string,
@@ -794,32 +846,44 @@ export function layoutNeighborhoodGraphNodes(
   const neighbors = nodes.filter((n) => n.id !== centerId);
   const laidOut: V2GraphNode[] = [];
   const degrees = neighborhoodDegreeMap(edges);
+  const hops = edges.length > 0 ? neighborhoodHopMap(centerId, edges) : new Map<string, number>();
   const hasEdges = edges.length > 0;
   const centerDeg = hasEdges ? (degrees.get(centerId) ?? neighbors.length) : 0;
 
   if (center) laidOut.push({ ...center, x: 50, y: 50 });
 
-  const n = neighbors.length;
-  /** Single-distance unit in viewBox coords — chem-lite 1× / 1.4× by degree. */
-  const UNIT = 15;
-  neighbors.forEach((node, index) => {
-    const angle = (index / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2;
-    const neighborDeg = hasEdges ? (degrees.get(node.id) ?? 1) : 1;
-    const hubDeg = hasEdges ? Math.max(centerDeg, neighborDeg) : 1;
-    const mult = degreeDistanceMultiplier(hubDeg);
-    let radius = UNIT * mult;
-    // Crowded ego: alternate slightly so same-ring nodes do not stack.
-    if (n > 8) {
-      radius = Math.min(52, radius + (index % 2 === 0 ? -1.5 : 1.5));
-    } else {
-      radius = Math.min(52, radius);
-    }
-    laidOut.push({
-      ...node,
-      x: 50 + radius * Math.cos(angle),
-      y: 50 + radius * Math.sin(angle),
+  // Place each hop ring evenly so 2-hop nodes sit farther than 1-hop (chem path length).
+  const byHop = new Map<number, V2GraphNode[]>();
+  for (const node of neighbors) {
+    const hop = hasEdges ? Math.max(1, hops.get(node.id) ?? 1) : 1;
+    const list = byHop.get(hop) ?? [];
+    list.push(node);
+    byHop.set(hop, list);
+  }
+
+  const hopKeys = [...byHop.keys()].sort((a, b) => a - b);
+  for (const hop of hopKeys) {
+    const ring = byHop.get(hop) ?? [];
+    const n = ring.length;
+    ring.forEach((node, index) => {
+      const angle = (index / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2;
+      const neighborDeg = hasEdges ? (degrees.get(node.id) ?? 1) : 1;
+      const hubDeg = hasEdges ? Math.max(hop === 1 ? centerDeg : 0, neighborDeg) : 1;
+      const bond = chemNeighborhoodLinkDistance(hubDeg, neighborDeg);
+      let radius = hop * bond;
+      // Crowded ego: slight alternate so same-ring nodes do not stack.
+      if (n > 8) {
+        radius = Math.min(48, radius + (index % 2 === 0 ? -1.2 : 1.2));
+      } else {
+        radius = Math.min(48, radius);
+      }
+      laidOut.push({
+        ...node,
+        x: 50 + radius * Math.cos(angle),
+        y: 50 + radius * Math.sin(angle),
+      });
     });
-  });
+  }
 
   return laidOut;
 }

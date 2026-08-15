@@ -3,10 +3,9 @@
  *
  * Same nodes + edges as Radial — only positions change.
  * Uses existing edge weights: linked=2, co-mentioned=1, focus-affinity=0.5.
- * Inspired by Forge forceTowardCenters / unequal link strengths (ideas only).
  *
- * Spacing rule (chem-lite): bonds stay short and mostly uniform.
- * Mild length bump only when an endpoint has 4+ links; degree-3 uses angles/charge.
+ * Chem-lite: same bond UNIT as Radial (`CHEM_NEIGHBORHOOD_LINK_UNIT`).
+ * Soft charge + shrink-only fit so force layout cannot explode spacing.
  */
 import {
   forceCenter,
@@ -19,7 +18,8 @@ import {
 } from "d3-force-3d";
 import type { V2GraphEdge, V2GraphNode } from "./intelligence-viz";
 import {
-  degreeDistanceMultiplier,
+  CHEM_NEIGHBORHOOD_LINK_UNIT,
+  chemNeighborhoodLinkDistance,
   layoutNeighborhoodGraphNodes,
   neighborhoodDegreeMap,
 } from "./intelligence-viz";
@@ -31,6 +31,8 @@ type SimNode = V2GraphNode & {
   vy?: number;
   vz?: number;
   z?: number;
+  fx?: number;
+  fy?: number;
 };
 
 type SimLink = {
@@ -41,17 +43,16 @@ type SimLink = {
 };
 
 /**
- * Weight-only base (legacy). Prefer `moleculeLinkDistanceForDegrees` —
- * distance must grow with link count, not shrink for strong edges.
+ * Weight-only base (legacy). Prefer `moleculeLinkDistanceForDegrees`.
  */
 export function moleculeLinkDistance(weight: number): number {
-  if (weight >= 2) return 22;
-  if (weight >= 1) return 30;
-  return 40;
+  if (weight >= 2) return CHEM_NEIGHBORHOOD_LINK_UNIT;
+  if (weight >= 1) return CHEM_NEIGHBORHOOD_LINK_UNIT + 3;
+  return CHEM_NEIGHBORHOOD_LINK_UNIT + 6;
 }
 
 /**
- * Preferred link length: chem-lite (1–3 → 1x, 4+ → 1.4x).
+ * Preferred link length — shared chem-lite math with Radial.
  * Weight is only a small nudge so linked/co-mention/affinity stay slightly distinct.
  */
 export function moleculeLinkDistanceForDegrees(
@@ -59,17 +60,15 @@ export function moleculeLinkDistanceForDegrees(
   degreeA: number,
   degreeB: number
 ): number {
-  const UNIT = 18;
-  const mult = degreeDistanceMultiplier(Math.max(degreeA, degreeB));
-  const weightNudge = weight >= 2 ? 0 : weight >= 1 ? 3 : 6;
-  return Math.min(78, UNIT * mult + weightNudge);
+  const weightNudge = weight >= 2 ? 0 : weight >= 1 ? 2 : 4;
+  return chemNeighborhoodLinkDistance(degreeA, degreeB, weightNudge);
 }
 
-/** Link spring strength — soften on busy hubs so degree distance can win. */
+/** Link spring strength — stronger than legacy so chem distance wins over charge. */
 export function moleculeLinkStrength(weight: number): number {
-  if (weight >= 2) return 0.55;
-  if (weight >= 1) return 0.32;
-  return 0.12;
+  if (weight >= 2) return 0.75;
+  if (weight >= 1) return 0.45;
+  return 0.2;
 }
 
 export function moleculeLinkStrengthForDegrees(
@@ -79,8 +78,8 @@ export function moleculeLinkStrengthForDegrees(
 ): number {
   const base = moleculeLinkStrength(weight);
   const hub = Math.max(degreeA, degreeB);
-  if (hub >= 4) return base * 0.4;
-  if (hub === 3) return base * 0.65;
+  // Soften only true hubs so collide/angles can breathe without stretching bonds.
+  if (hub >= 4) return base * 0.55;
   return base;
 }
 
@@ -99,10 +98,10 @@ export function layoutNeighborhoodMoleculeNodes(
     return nodes.map((n) => ({ ...n, x: 50, y: 50 }));
   }
 
-  const iterations = options.iterations ?? 300;
+  const iterations = options.iterations ?? 220;
   const degrees = neighborhoodDegreeMap(edges);
 
-  // Seed from radial (degree-aware) so the sim starts from a stable ARGUS arrangement.
+  // Seed from hop-aware chem radial so Molecule starts coherent with production Radial.
   const seeded = layoutNeighborhoodGraphNodes(nodes, centerId, edges);
   const simNodes: SimNode[] = seeded.map((n) => ({
     ...n,
@@ -110,6 +109,8 @@ export function layoutNeighborhoodMoleculeNodes(
     vz: 0,
     vx: 0,
     vy: 0,
+    // Pin the ego center — chem depictions keep the focus atom stable.
+    ...(n.id === centerId ? { fx: n.x, fy: n.y } : {}),
   }));
   const byId = new Map(simNodes.map((n) => [n.id, n]));
 
@@ -145,30 +146,30 @@ export function layoutNeighborhoodMoleculeNodes(
 
   const simulation = forceSimulation<SimNode>(simNodes)
     .force("link", linkForce)
-    // Stronger / longer-range charge so hubs push neighbors outward.
-    .force("charge", forceManyBody<SimNode>().strength(-110).distanceMax(140))
-    .force("collide", forceCollide<SimNode>().radius(4.5).strength(0.85))
-    .force("center", forceCenter(50, 50, 0).strength(0.035))
-    .force("x", forceX(50).strength(0.012))
-    .force("y", forceY(50).strength(0.012))
+    // Very soft local charge — unstack only; chem bond length must win.
+    .force("charge", forceManyBody<SimNode>().strength(-12).distanceMax(40))
+    .force("collide", forceCollide<SimNode>().radius(2.8).strength(0.95))
+    .force("center", forceCenter(50, 50, 0).strength(0.02))
+    .force("x", forceX(50).strength(0.03))
+    .force("y", forceY(50).strength(0.03))
     .stop();
 
-  // Soft structural parent pulls — weak enough not to crush high-degree hubs.
+  // Soft structural parent pulls — keep hierarchy without stretching spokes.
   const orgIds = new Set(simNodes.filter((n) => n.kind === "organization").map((n) => n.id));
   const projectIds = new Set(simNodes.filter((n) => n.kind === "project").map((n) => n.id));
   const linkedPairs = edges.filter((e) => e.kind === "linked" || e.weight >= 2);
 
   function forceTowardParents(alpha: number) {
-    const kOrg = 0.03 * alpha;
-    const kProj = 0.02 * alpha;
+    const kOrg = 0.018 * alpha;
+    const kProj = 0.012 * alpha;
     for (const edge of linkedPairs) {
       const a = byId.get(edge.from);
       const b = byId.get(edge.to);
       if (!a || !b) continue;
       const pull = (child: SimNode, parent: SimNode, k: number) => {
+        if (child.fx != null) return;
         const parentDeg = degrees.get(parent.id) ?? 1;
-        // Busy parents attract less (keeps spokes long).
-        const soften = parentDeg >= 5 ? 0.35 : parentDeg >= 3 ? 0.6 : 1;
+        const soften = parentDeg >= 4 ? 0.45 : 1;
         const kk = k * soften;
         child.vx = (child.vx ?? 0) + (parent.x - child.x) * kk;
         child.vy = (child.vy ?? 0) + (parent.y - child.y) * kk;
@@ -185,7 +186,6 @@ export function layoutNeighborhoodMoleculeNodes(
 
   simulation.force("parents", forceTowardParents);
 
-  // Pin simulation to 2D (existing dep is 3d-capable).
   simulation.numDimensions(2);
 
   for (let i = 0; i < iterations; i++) {
@@ -196,11 +196,21 @@ export function layoutNeighborhoodMoleculeNodes(
     }
   }
 
-  // Fit into viewBox with padding — preserve aspect so hub spacing isn't crushed.
-  return fitNodesToViewBox(simNodes, 6, 94);
+  // Drop pins before export.
+  for (const n of simNodes) {
+    delete n.fx;
+    delete n.fy;
+  }
+
+  // Chem rule: never enlarge tiny molecules to fill the canvas (CDK/RDKit).
+  // Only shrink when the layout overflows the padded viewBox.
+  return fitNodesToViewBoxShrinkOnly(simNodes, 6, 94);
 }
 
-function fitNodesToViewBox(nodes: SimNode[], min: number, max: number): V2GraphNode[] {
+/**
+ * Shrink-only fit. Scale ≤ 1 preserves chem bond lengths; overflow is compressed.
+ */
+function fitNodesToViewBoxShrinkOnly(nodes: SimNode[], min: number, max: number): V2GraphNode[] {
   if (nodes.length === 0) return [];
   let minX = Infinity;
   let maxX = -Infinity;
@@ -218,7 +228,7 @@ function fitNodesToViewBox(nodes: SimNode[], min: number, max: number): V2GraphN
   const midX = (minX + maxX) / 2;
   const midY = (minY + maxY) / 2;
   const targetSpan = max - min;
-  const scale = targetSpan / span;
+  const scale = Math.min(1, targetSpan / span);
   const cx = (min + max) / 2;
   const cy = (min + max) / 2;
 
