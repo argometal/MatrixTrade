@@ -72,10 +72,10 @@ Modes (not ancestors): Viewer ⇄ Classic ⇄ Builder. Fullscreen = capture over
 
 Living capability table: `md/argusforge/capability-map.md`. Consolidation history: `md/argusforge/change-24-47.md`.
 
-### Auth note (current main)
+### Auth note
 
 - Forge **layout** calls `requireArgusSession({ next: "/forge" })`.
-- Middleware Argus cookie check currently covers `/argus/*` only; guest-lock expiry on `/forge` may send users to **MTA** `/login` instead of `/argus/login`. Prefer fixing middleware to treat `/forge` like Argus when changing auth again.
+- Middleware treats `/forge` like `/argus/*` for `argus-auth` and guest-lock expiry → `/argus/login?next=…` (not MTA `/login`).
 
 ---
 
