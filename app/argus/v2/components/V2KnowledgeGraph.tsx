@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from "react";
 import type { V2GraphEdge, V2GraphNode } from "@/lib/argus/v2/intelligence-viz";
 import { layoutNeighborhoodGraphNodes } from "@/lib/argus/v2/intelligence-viz";
 import {
@@ -105,6 +105,13 @@ function GraphLegend({ showFocusTrigger = false }: { showFocusTrigger?: boolean 
   );
 }
 
+/** Bloom / Obsidian-style camera: pan empty canvas, wheel zoom, Fit resets. */
+type GraphCamera = { x: number; y: number; w: number; h: number };
+
+const DEFAULT_CAMERA: GraphCamera = { x: 0, y: 0, w: 100, h: 100 };
+const MIN_VIEW = 28;
+const MAX_VIEW = 160;
+
 function GraphCanvas({
   nodes,
   edges,
@@ -132,6 +139,24 @@ function GraphCanvas({
 }) {
   const cfg = SIZE_CONFIG[displaySize];
   const nodeMap = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
+  const canNavigate = layout === "neighborhood";
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const dragRef = useRef<{
+    pointerId: number;
+    originX: number;
+    originY: number;
+    cameraX: number;
+    cameraY: number;
+  } | null>(null);
+  const [camera, setCamera] = useState<GraphCamera>(DEFAULT_CAMERA);
+  const [panning, setPanning] = useState(false);
+
+  // New molecule / depth / focus world → reset camera (Fit).
+  useEffect(() => {
+    setCamera(DEFAULT_CAMERA);
+    dragRef.current = null;
+    setPanning(false);
+  }, [centerId, nodes, layoutMode, emphasizeIds?.size]);
 
   const connectedToHover = useMemo(() => {
     if (!hoveredId) return new Set<string>();
@@ -145,21 +170,129 @@ function GraphCanvas({
 
   const maxEvidence = Math.max(...nodes.map((n) => n.evidenceCount), 1);
   const showRadialGuide = layout === "neighborhood" && layoutMode === "radial" && !emphasizeIds?.size;
+  const cameraMoved =
+    canNavigate &&
+    (Math.abs(camera.x) > 0.2 ||
+      Math.abs(camera.y) > 0.2 ||
+      Math.abs(camera.w - 100) > 0.2 ||
+      Math.abs(camera.h - 100) > 0.2);
+
+  function fitCamera() {
+    setCamera(DEFAULT_CAMERA);
+  }
+
+  function onPointerDownBackground(event: PointerEvent<SVGRectElement>) {
+    if (!canNavigate || event.button !== 0) return;
+    const svg = svgRef.current;
+    if (!svg) return;
+    event.preventDefault();
+    svg.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      originX: event.clientX,
+      originY: event.clientY,
+      cameraX: camera.x,
+      cameraY: camera.y,
+    };
+    setPanning(true);
+  }
+
+  function onPointerMove(event: PointerEvent<SVGSVGElement>) {
+    const drag = dragRef.current;
+    const svg = svgRef.current;
+    if (!drag || !svg || drag.pointerId !== event.pointerId) return;
+    const rect = svg.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const dx = ((event.clientX - drag.originX) / rect.width) * camera.w;
+    const dy = ((event.clientY - drag.originY) / rect.height) * camera.h;
+    setCamera((prev) => ({
+      ...prev,
+      x: drag.cameraX - dx,
+      y: drag.cameraY - dy,
+    }));
+  }
+
+  function endPan(event: PointerEvent<SVGSVGElement>) {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    setPanning(false);
+    try {
+      svgRef.current?.releasePointerCapture(event.pointerId);
+    } catch {
+      /* already released */
+    }
+  }
+
+  function onWheel(event: WheelEvent<SVGSVGElement>) {
+    if (!canNavigate) return;
+    event.preventDefault();
+    const svg = svgRef.current;
+    if (!svg) return;
+    const rect = svg.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    const mx = camera.x + ((event.clientX - rect.left) / rect.width) * camera.w;
+    const my = camera.y + ((event.clientY - rect.top) / rect.height) * camera.h;
+    const factor = event.deltaY > 0 ? 1.08 : 1 / 1.08;
+    setCamera((prev) => {
+      const nextW = Math.min(MAX_VIEW, Math.max(MIN_VIEW, prev.w * factor));
+      const nextH = Math.min(MAX_VIEW, Math.max(MIN_VIEW, prev.h * factor));
+      const scale = nextW / prev.w;
+      return {
+        x: mx - (mx - prev.x) * scale,
+        y: my - (my - prev.y) * scale,
+        w: nextW,
+        h: nextH,
+      };
+    });
+  }
 
   return (
-    <svg
-      viewBox="0 0 100 100"
-      preserveAspectRatio="xMidYMid meet"
-      className={`w-full rounded-xl border border-zinc-800/80 bg-zinc-950/80 ${cfg.heightClass}`}
-      role="img"
-      aria-label={
-        layout === "neighborhood"
-          ? layoutMode === "molecule"
-            ? "Entity neighborhood molecule layout — click a node to emphasize its neighbors"
-            : "Entity neighborhood graph — click a node to focus its neighbors"
-          : "Relationship graph of linked entities"
-      }
-    >
+    <div className="relative">
+      {canNavigate ? (
+        <div className="pointer-events-none absolute right-2 top-2 z-10 flex gap-1">
+          <button
+            type="button"
+            onClick={fitCamera}
+            disabled={!cameraMoved}
+            className="pointer-events-auto rounded-md border border-zinc-700 bg-zinc-950/90 px-2 py-1 text-[10px] font-semibold text-zinc-300 hover:border-violet-500/40 hover:text-violet-200 disabled:opacity-40"
+            title="Fit molecule to view (Bloom / Obsidian reset)"
+          >
+            Fit
+          </button>
+        </div>
+      ) : null}
+      <svg
+        ref={svgRef}
+        viewBox={`${camera.x} ${camera.y} ${camera.w} ${camera.h}`}
+        preserveAspectRatio="xMidYMid meet"
+        className={`w-full rounded-xl border border-zinc-800/80 bg-zinc-950/80 ${cfg.heightClass} ${
+          panning ? "cursor-grabbing" : canNavigate ? "cursor-grab" : ""
+        }`}
+        role="img"
+        aria-label={
+          layout === "neighborhood"
+            ? layoutMode === "molecule"
+              ? "Entity neighborhood molecule — drag background to pan, scroll to zoom"
+              : "Entity neighborhood graph — drag background to pan, scroll to zoom"
+            : "Relationship graph of linked entities"
+        }
+        onPointerMove={onPointerMove}
+        onPointerUp={endPan}
+        onPointerCancel={endPan}
+        onWheel={onWheel}
+      >
+        {canNavigate ? (
+          <rect
+            x={camera.x - camera.w}
+            y={camera.y - camera.h}
+            width={camera.w * 3}
+            height={camera.h * 3}
+            fill="transparent"
+            className="cursor-grab"
+            onPointerDown={onPointerDownBackground}
+          />
+        ) : null}
       {layout === "columns" ? (
         [14, 32, 50, 68, 86].map((x) => (
           <line
@@ -350,7 +483,14 @@ function GraphCanvas({
           </g>
         );
       })}
-    </svg>
+      </svg>
+      {canNavigate ? (
+        <p className="mt-1.5 text-[10px] text-zinc-600">
+          Drag background to pan · scroll to zoom · Fit resets — same camera idea as Neo4j Bloom /
+          Obsidian Graph
+        </p>
+      ) : null}
+    </div>
   );
 }
 

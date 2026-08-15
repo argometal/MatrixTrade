@@ -185,6 +185,10 @@ const SECTIONS: HelpSection[] = [
         body: "Rose/amber halo = Tracker on evidence. Dashed rose edges = shared Tracker (affinity).",
       },
       {
+        title: "Pan & zoom",
+        body: "Drag empty canvas to pan, scroll to zoom, Fit resets — same camera idea as Neo4j Bloom and Obsidian Graph. Explore depth 3/5 without losing the molecule off-screen.",
+      },
+      {
         title: "Focus & open",
         body: "Click a node to focus its direct neighbors (ego view). ⌘/Ctrl+click opens the entity. Expand graph for a larger canvas. Esc / Back leaves focus.",
       },
