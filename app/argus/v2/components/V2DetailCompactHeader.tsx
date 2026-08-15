@@ -19,21 +19,32 @@ export function V2DetailCompactHeader({
   collapsedExtra?: ReactNode;
 }) {
   const [expandedManual, setExpandedManual] = useState(false);
+  /** Compact chrome is for narrow viewports only — desktop split keeps the full header. */
+  const [isNarrow, setIsNarrow] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const apply = () => setIsNarrow(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
 
   useEffect(() => {
     if (!compact) setExpandedManual(false);
   }, [compact]);
 
-  const showCompact = mobileDetail && compact && !expandedManual;
+  const showCompact = mobileDetail && compact && isNarrow && !expandedManual;
 
   if (!showCompact) {
     return (
       <div>
-        {mobileDetail && compact && expandedManual ? (
+        {mobileDetail && compact && isNarrow && expandedManual ? (
           <button
             type="button"
             onClick={() => setExpandedManual(false)}
-            className="mb-2 text-[11px] font-medium text-violet-400 lg:hidden"
+            className="mb-2 text-[11px] font-medium text-violet-400"
           >
             Hide header · more room to read
           </button>

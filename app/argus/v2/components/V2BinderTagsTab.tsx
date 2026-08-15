@@ -96,6 +96,17 @@ function focusKeySet(tags: string[]): Set<string> {
   return new Set(tags.map(signalTagKey).filter(Boolean));
 }
 
+function DisclosureChevron({ open }: { open: boolean }) {
+  return (
+    <span
+      className={`inline-block text-[10px] text-zinc-500 transition-transform ${open ? "rotate-90" : ""}`}
+      aria-hidden
+    >
+      ▶
+    </span>
+  );
+}
+
 function StepBadge({
   n,
   tone,
@@ -156,60 +167,74 @@ function TagManageRows({
   emptyHint?: string;
   focusKeys: Set<string>;
 }) {
+  const [showAll, setShowAll] = useState(false);
   if (tags.length === 0) {
     return <p className="text-[11px] text-zinc-600">{emptyHint ?? "None yet"}</p>;
   }
+  const truncated = tags.length > PREVIEW && !showAll;
+  const visible = truncated ? tags.slice(0, PREVIEW) : tags;
   return (
-    <ul className={TAG_MANAGE_LIST_CLASS}>
-      {tags.slice(0, PREVIEW).map((row) => {
-        const tracked = focusKeys.has(signalTagKey(row.tag));
-        const inner = (
-          <>
-            <span
-              className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                tracked ? "bg-amber-500/20 text-amber-100" : "bg-violet-600/20 text-violet-200"
-              }`}
-              aria-hidden
-            >
-              {tracked ? "⚑" : "#"}
-            </span>
-            <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{row.tag}</span>
-            {tracked ? (
-              <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-amber-200/90">
-                Tracked
-              </span>
-            ) : null}
-            {row.count > 0 ? (
-              <span className="shrink-0 tabular-nums text-xs text-violet-300">{row.count}</span>
-            ) : row.href && !tracked ? (
-              <span className="shrink-0 text-zinc-500" aria-hidden>
-                →
-              </span>
-            ) : null}
-          </>
-        );
-        return (
-          <li key={row.tag}>
-            {row.href ? (
-              <Link
-                href={row.href}
-                className={tracked ? TAG_MANAGE_ROW_TRACKER_CLASS : TAG_MANAGE_ROW_CLASS}
-                title={tracked ? `${row.tag} · Tracked` : `Open ${row.tag}`}
-              >
-                {inner}
-              </Link>
-            ) : (
+    <div>
+      <ul className={TAG_MANAGE_LIST_CLASS}>
+        {visible.map((row) => {
+          const tracked = focusKeys.has(signalTagKey(row.tag));
+          const inner = (
+            <>
               <span
-                className={tracked ? TAG_MANAGE_ROW_TRACKER_CLASS : TAG_MANAGE_ROW_CLASS}
-                title={tracked ? `${row.tag} · Tracked` : undefined}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                  tracked ? "bg-amber-500/20 text-amber-100" : "bg-violet-600/20 text-violet-200"
+                }`}
+                aria-hidden
               >
-                {inner}
+                {tracked ? "⚑" : "#"}
               </span>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+              <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{row.tag}</span>
+              {tracked ? (
+                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-amber-200/90">
+                  Tracked
+                </span>
+              ) : null}
+              {row.count > 0 ? (
+                <span className="shrink-0 tabular-nums text-xs text-violet-300">{row.count}</span>
+              ) : row.href && !tracked ? (
+                <span className="shrink-0 text-zinc-500" aria-hidden>
+                  →
+                </span>
+              ) : null}
+            </>
+          );
+          return (
+            <li key={row.tag}>
+              {row.href ? (
+                <Link
+                  href={row.href}
+                  className={tracked ? TAG_MANAGE_ROW_TRACKER_CLASS : TAG_MANAGE_ROW_CLASS}
+                  title={tracked ? `${row.tag} · Tracked` : `Open ${row.tag}`}
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <span
+                  className={tracked ? TAG_MANAGE_ROW_TRACKER_CLASS : TAG_MANAGE_ROW_CLASS}
+                  title={tracked ? `${row.tag} · Tracked` : undefined}
+                >
+                  {inner}
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {tags.length > PREVIEW ? (
+        <button
+          type="button"
+          onClick={() => setShowAll((v) => !v)}
+          className="mt-2 text-[11px] font-medium text-sky-300/90 hover:text-sky-200"
+        >
+          {showAll ? "Show less" : `Show all ${tags.length} tags`}
+        </button>
+      ) : null}
+    </div>
   );
 }
 
@@ -240,7 +265,29 @@ export function V2BinderTagsTab({
   const [manageOpen, setManageOpen] = useState(false);
   const [pending, startTransition] = useTransition();
   const [pendingTag, setPendingTag] = useState<string | null>(null);
+  /** Topic Tags → By Event: each Event starts collapsed so large binders don't obscure the rest. */
+  const [expandedEventIds, setExpandedEventIds] = useState<Set<string>>(() => new Set());
+  /** Event Tags → Branch groups: each group starts collapsed; toggle independently. */
+  const [expandedBranchIds, setExpandedBranchIds] = useState<Set<string>>(() => new Set());
   const focusKeys = useMemo(() => focusKeySet(signalTags), [signalTags]);
+
+  function toggleEventExpanded(id: string) {
+    setExpandedEventIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleBranchExpanded(id: string) {
+    setExpandedBranchIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   /**
    * Definition D ownership vocabulary for Trackers section:
@@ -413,54 +460,88 @@ export function V2BinderTagsTab({
                 {provenance.eventsEmptyHint ?? "No linked Events yet."}
               </p>
             ) : (
-              <div className="mt-3 space-y-3">
-                {provenance.events.map((event) => (
-                  <div
-                    key={event.id}
-                    className={`rounded-xl border px-3 py-3 ${groupAccent("event")}`}
-                  >
-                    <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-zinc-100">{event.name}</p>
-                        {event.dateLabel ? (
-                          <p className="mt-0.5 text-[11px] tabular-nums text-zinc-500">
-                            {event.dateLabel}
-                          </p>
-                        ) : null}
-                      </div>
-                      <Link
-                        href={event.href}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-violet-500/35 bg-violet-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-violet-100 hover:bg-violet-950/60"
-                      >
-                        Open Event
-                        <span aria-hidden>→</span>
-                      </Link>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div>
-                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-                          Event Tags
-                        </p>
-                        <TagManageRows
-                          tags={event.eventTags}
-                          focusKeys={focusKeys}
-                          emptyHint="No Event Tags on this binder."
-                        />
-                      </div>
-                      <div>
-                        <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-                          On Notes
-                        </p>
-                        <TagManageRows
-                          tags={event.noteTags}
-                          focusKeys={focusKeys}
-                          emptyHint="No Tags on Notes for this Event."
-                        />
-                      </div>
-                    </div>
+              <div className="mt-3 space-y-2">
+                {provenance.events.length > 1 ? (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setExpandedEventIds(new Set(provenance.events.map((event) => event.id)))
+                      }
+                      className="text-[11px] font-medium text-violet-300/90 hover:text-violet-200"
+                    >
+                      Expand all
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedEventIds(new Set())}
+                      className="text-[11px] font-medium text-zinc-500 hover:text-zinc-300"
+                    >
+                      Collapse all
+                    </button>
                   </div>
-                ))}
+                ) : null}
+                {provenance.events.map((event) => {
+                  const open = expandedEventIds.has(event.id);
+                  const tagCount = event.eventTags.length + event.noteTags.length;
+                  return (
+                    <div
+                      key={event.id}
+                      className={`rounded-xl border px-3 py-2.5 ${groupAccent("event")}`}
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() => toggleEventExpanded(event.id)}
+                          className="flex min-w-0 flex-1 items-start gap-2 text-left"
+                          aria-expanded={open}
+                        >
+                          <DisclosureChevron open={open} />
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-zinc-100">{event.name}</p>
+                            <p className="mt-0.5 text-[11px] tabular-nums text-zinc-500">
+                              {event.dateLabel ? `${event.dateLabel} · ` : ""}
+                              {tagCount} tag{tagCount === 1 ? "" : "s"}
+                              {open ? "" : " — expand to review"}
+                            </p>
+                          </div>
+                        </button>
+                        <Link
+                          href={event.href}
+                          className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-violet-500/35 bg-violet-950/40 px-2.5 py-1.5 text-[11px] font-semibold text-violet-100 hover:bg-violet-950/60"
+                        >
+                          Open Event
+                          <span aria-hidden>→</span>
+                        </Link>
+                      </div>
+
+                      {open ? (
+                        <div className="mt-3 space-y-3 border-t border-violet-500/20 pt-3">
+                          <div>
+                            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                              Event Tags
+                            </p>
+                            <TagManageRows
+                              tags={event.eventTags}
+                              focusKeys={focusKeys}
+                              emptyHint="No Event Tags on this binder."
+                            />
+                          </div>
+                          <div>
+                            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                              On Notes
+                            </p>
+                            <TagManageRows
+                              tags={event.noteTags}
+                              focusKeys={focusKeys}
+                              emptyHint="No Tags on Notes for this Event."
+                            />
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -493,47 +574,56 @@ export function V2BinderTagsTab({
           {!hasAnyBranchTags ? (
             <p className="mt-3 text-xs text-zinc-600">{branchEmptyHint}</p>
           ) : (
-            <div className="mt-3 grid grid-cols-1 gap-3">
+            <div className="mt-3 grid grid-cols-1 gap-2">
               {visibleGroups.map((group) => {
                 const tone = group.tone ?? (group.id as V2BinderBranchGroup["tone"]) ?? "default";
+                const open = expandedBranchIds.has(group.id);
                 return (
                   <div
                     key={group.id}
-                    className={`rounded-xl border px-3 py-3 ${groupAccent(tone)}`}
+                    className={`rounded-xl border px-3 py-2.5 ${groupAccent(tone)}`}
                   >
-                    <div className="mb-2.5 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleBranchExpanded(group.id)}
+                      className="flex w-full items-center gap-2 text-left"
+                      aria-expanded={open}
+                    >
+                      <DisclosureChevron open={open} />
                       <span className="text-base" aria-hidden>
                         {groupIcon(tone)}
                       </span>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="text-[11px] font-semibold text-zinc-100">{group.label}</p>
                         {group.contextName ? (
-                          group.href ? (
-                            <Link
-                              href={group.href}
-                              className="block truncate text-[10px] text-zinc-400 hover:text-sky-200"
-                            >
-                              {group.contextName}
-                            </Link>
-                          ) : (
-                            <p className="truncate text-[10px] text-zinc-500">{group.contextName}</p>
-                          )
+                          <p className="truncate text-[10px] text-zinc-500">{group.contextName}</p>
                         ) : null}
+                        <p className="mt-0.5 text-[10px] tabular-nums text-zinc-500">
+                          {group.tags.length} tag{group.tags.length === 1 ? "" : "s"}
+                          {open ? "" : " — expand to review"}
+                        </p>
                       </div>
-                    </div>
-                    <TagManageRows tags={group.tags} focusKeys={focusKeys} emptyHint="None yet" />
-                    {group.tags.length > PREVIEW ? (
-                      <p className="mt-2.5 text-[10px] text-zinc-500">
-                        View all {group.tags.length}
-                        {group.href ? (
-                          <>
-                            {" "}
+                    </button>
+                    {open ? (
+                      <div className="mt-2.5 border-t border-zinc-800/60 pt-2.5">
+                        {group.href && group.contextName ? (
+                          <Link
+                            href={group.href}
+                            className="mb-2 block truncate text-[10px] text-sky-300/90 hover:text-sky-200"
+                          >
+                            {group.contextName} →
+                          </Link>
+                        ) : null}
+                        <TagManageRows tags={group.tags} focusKeys={focusKeys} emptyHint="None yet" />
+                        {group.tags.length > PREVIEW && group.href ? (
+                          <p className="mt-2.5 text-[10px] text-zinc-500">
+                            Open binder{" "}
                             <Link href={group.href} className="text-sky-300/80 hover:text-sky-200">
                               →
                             </Link>
-                          </>
+                          </p>
                         ) : null}
-                      </p>
+                      </div>
                     ) : null}
                   </div>
                 );

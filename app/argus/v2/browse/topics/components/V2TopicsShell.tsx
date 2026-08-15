@@ -294,6 +294,7 @@ function TopicCard({
 
 function TopicListRow({
   card,
+  events,
   selected,
   onOpen,
   onDragStart,
@@ -307,6 +308,7 @@ function TopicListRow({
   deleteGate,
 }: {
   card: V2TopicBrowseCard;
+  events: Array<{ id: string; name: string; href: string; dateLabel?: string }>;
   selected: boolean;
   onOpen: () => void;
   onDragStart: (event: DragEvent, id: string) => void;
@@ -319,9 +321,10 @@ function TopicListRow({
   privateUnlocked: boolean;
   deleteGate: Omit<V2DeleteGateProps, "requiresAuthenticator">;
 }) {
+  const [eventsOpen, setEventsOpen] = useState(false);
   return (
     <div
-      className={`flex items-center gap-1 rounded-xl border bg-zinc-900/40 transition ${
+      className={`rounded-xl border bg-zinc-900/40 transition ${
         isDropTarget
           ? "border-violet-400/60"
           : selected
@@ -331,61 +334,97 @@ function TopicListRow({
       onDragOver={(event) => onDragOver(event, card.id)}
       onDrop={(event) => onDrop(event, card.id)}
     >
-      <button
-        type="button"
-        draggable
-        onDragStart={(event) => onDragStart(event, card.id)}
-        onDragEnd={onDragEnd}
-        className="ml-2 cursor-grab rounded-md px-1.5 py-2 text-[10px] text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300 active:cursor-grabbing"
-        aria-label={`Move ${card.name}`}
-        title="Drag to reorder"
-      >
-        ⋮⋮
-      </button>
-      <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 px-2 py-3 text-left sm:gap-4 sm:px-4">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-600/20 text-xs font-bold text-amber-200">
-          {topicInitials(card.name)}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-semibold text-zinc-100">{card.name}</p>
-            <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          draggable
+          onDragStart={(event) => onDragStart(event, card.id)}
+          onDragEnd={onDragEnd}
+          className="ml-2 cursor-grab rounded-md px-1.5 py-2 text-[10px] text-zinc-600 hover:bg-zinc-800 hover:text-zinc-300 active:cursor-grabbing"
+          aria-label={`Move ${card.name}`}
+          title="Drag to reorder"
+        >
+          ⋮⋮
+        </button>
+        <button
+          type="button"
+          onClick={() => setEventsOpen((v) => !v)}
+          className="rounded-md px-1.5 py-2 text-[10px] text-zinc-500 hover:bg-zinc-800 hover:text-zinc-200"
+          aria-expanded={eventsOpen}
+          aria-label={eventsOpen ? "Collapse events" : "Expand events"}
+          title={events.length ? `${events.length} events` : "No linked events"}
+          disabled={events.length === 0}
+        >
+          <span className={`inline-block transition-transform ${eventsOpen ? "rotate-90" : ""}`} aria-hidden>
+            ▶
+          </span>
+        </button>
+        <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-center gap-3 px-2 py-3 text-left sm:gap-4 sm:px-4">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-600/20 text-xs font-bold text-amber-200">
+            {topicInitials(card.name)}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-semibold text-zinc-100">{card.name}</p>
+              <V2Badge tone={badgeTone(card.statusTone)}>{card.status}</V2Badge>
+            </div>
+            <p className="mt-0.5 truncate text-xs text-zinc-500">
+              {card.lastActivity} · {card.metrics.journals + card.metrics.emails} evidence ·{" "}
+              {card.metrics.events} events
+            </p>
           </div>
-          <p className="mt-0.5 truncate text-xs text-zinc-500">
-            {card.lastActivity} · {card.metrics.journals + card.metrics.emails} evidence
-          </p>
+          <div className="hidden shrink-0 gap-4 text-center sm:flex">
+            <span className="text-xs text-zinc-500">
+              <span className="block font-semibold text-violet-300">{card.metrics.emails}</span>
+              Emails
+            </span>
+            <span className="text-xs text-zinc-500">
+              <span className="block font-semibold text-violet-300">{card.metrics.events}</span>
+              Events
+            </span>
+            <span className="text-xs text-zinc-500">
+              <span className="block font-semibold text-violet-300">{card.metrics.projects}</span>
+              Projects
+            </span>
+          </div>
+        </button>
+        <div className="shrink-0 pr-3">
+          <V2EntityLifecycleActions
+            entityId={card.id}
+            entityName={card.name}
+            entityKind="topic"
+            lifecycleStatus={card.lifecycleStatus}
+            returnTo={returnTo}
+            hasPrivateEvidence={card.hasPrivateEvidence}
+            privateConfigured={privateConfigured}
+            privateUnlocked={privateUnlocked}
+            showDelete
+            variant="menu"
+            requiresAuthenticator={card.deleteRequiresAuthenticator}
+            {...deleteGate}
+          />
         </div>
-        <div className="hidden shrink-0 gap-4 text-center sm:flex">
-          <span className="text-xs text-zinc-500">
-            <span className="block font-semibold text-violet-300">{card.metrics.emails}</span>
-            Emails
-          </span>
-          <span className="text-xs text-zinc-500">
-            <span className="block font-semibold text-violet-300">{card.metrics.events}</span>
-            Events
-          </span>
-          <span className="text-xs text-zinc-500">
-            <span className="block font-semibold text-violet-300">{card.metrics.projects}</span>
-            Projects
-          </span>
-        </div>
-      </button>
-      <div className="shrink-0 pr-3">
-        <V2EntityLifecycleActions
-          entityId={card.id}
-          entityName={card.name}
-          entityKind="topic"
-          lifecycleStatus={card.lifecycleStatus}
-          returnTo={returnTo}
-          hasPrivateEvidence={card.hasPrivateEvidence}
-          privateConfigured={privateConfigured}
-          privateUnlocked={privateUnlocked}
-          showDelete
-          variant="menu"
-          requiresAuthenticator={card.deleteRequiresAuthenticator}
-          {...deleteGate}
-        />
       </div>
+      {eventsOpen && events.length > 0 ? (
+        <ul className="space-y-1 border-t border-zinc-800/80 px-3 py-2 sm:px-4">
+          {events.map((event) => (
+            <li key={event.id}>
+              <a
+                href={event.href}
+                className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-left text-xs text-zinc-300 hover:bg-zinc-900 hover:text-violet-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <span className="min-w-0 truncate">📅 {event.name}</span>
+                {event.dateLabel ? (
+                  <span className="shrink-0 tabular-nums text-[10px] text-zinc-500">
+                    {event.dateLabel}
+                  </span>
+                ) : null}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }
@@ -800,22 +839,20 @@ export function V2TopicsShell({
     onDragEnd();
   }
 
-  if ((focus && selected) || (selected && mobileDetailOpen)) {
+  if (focus && selected) {
     return (
       <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden">
         <section className="min-h-0 min-w-0 flex-1 overflow-hidden bg-zinc-950/50">
-          {focus ? (
-            <div className="border-b border-zinc-800/80 px-4 py-3 lg:px-5">
-              <V2IntelligenceFocusBanner
-                entityName={selected.name}
-                from={from}
-                pathname="/argus/v2/browse/topics"
-                searchParams={new URLSearchParams(searchParams.toString())}
-                browseAllHref={intelligenceBrowseAllHref("topics")}
-                browseAllLabel="Browse all topics"
-              />
-            </div>
-          ) : null}
+          <div className="border-b border-zinc-800/80 px-4 py-3 lg:px-5">
+            <V2IntelligenceFocusBanner
+              entityName={selected.name}
+              from={from}
+              pathname="/argus/v2/browse/topics"
+              searchParams={new URLSearchParams(searchParams.toString())}
+              browseAllHref={intelligenceBrowseAllHref("topics")}
+              browseAllLabel="Browse all topics"
+            />
+          </div>
           <V2TopicDetailPanel
             selected={selected}
             neighborhood={neighborhood}
@@ -835,9 +872,14 @@ export function V2TopicsShell({
   }
 
   return (
-    <div className="v2-browse-shell flex h-full min-h-0 flex-col overflow-hidden">
+    <div className="v2-browse-shell relative flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
+      <section
+        className={`flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:w-[min(520px,46%)] lg:flex-none lg:border-b-0 lg:border-r ${
+          mobileDetailOpen ? "hidden lg:flex" : "flex"
+        }`}
+      >
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
-        <div className="px-4 py-6 lg:px-8">
+        <div className="px-4 py-6 lg:px-5">
           <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
@@ -1063,6 +1105,7 @@ export function V2TopicsShell({
                 <TopicListRow
                   key={card.id}
                   card={card}
+                  events={details.find((d) => d.id === card.id)?.linkedEvents ?? []}
                   selected={selectedId === card.id}
                   onOpen={() => selectItem(card.id)}
                   onDragStart={onDragStart}
@@ -1135,6 +1178,35 @@ export function V2TopicsShell({
           ) : null}
         </div>
       </div>
+      </section>
+
+      <section
+        className={`min-h-0 min-w-0 flex-1 bg-zinc-950/50 ${
+          mobileDetailOpen
+            ? "absolute inset-0 z-40 flex min-h-0 flex-col overflow-hidden bg-zinc-950 lg:static lg:z-auto lg:bg-zinc-950/50"
+            : "hidden min-h-0 flex-col overflow-hidden lg:flex"
+        }`}
+      >
+        {selected ? (
+          <V2TopicDetailPanel
+            selected={selected}
+            neighborhood={neighborhood}
+            returnTo={returnTo}
+            onBack={mobileDetailOpen ? backToList : undefined}
+            signalTags={signalTags}
+            privateConfigured={privateConfigured}
+            privateUnlocked={privateUnlocked}
+            allRunbooks={allRunbooks}
+            allProgress={allProgress}
+            requiresAuthenticator={selected.deleteRequiresAuthenticator}
+            {...deleteGate}
+          />
+        ) : (
+          <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">
+            Select a topic to review evidence and linked Events.
+          </div>
+        )}
+      </section>
     </div>
   );
 }

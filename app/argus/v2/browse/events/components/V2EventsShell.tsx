@@ -39,6 +39,104 @@ const WHEN_TABS: { id: V2EventWhenTab; label: string }[] = [
   { id: "past", label: "Past" },
 ];
 
+function EventListRow({
+  row,
+  topics,
+  selected,
+  onSelect,
+}: {
+  row: V2EventRow;
+  topics: Array<{ id: string; name: string; href: string }>;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const [topicsOpen, setTopicsOpen] = useState(false);
+  return (
+    <li data-v2-selected-id={row.id} className="rounded-xl border border-transparent">
+      <div
+        className={`rounded-xl border transition hover:border-zinc-700 ${v2ActiveListItemClass(selected)}`}
+      >
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => setTopicsOpen((v) => !v)}
+            className="rounded-l-xl px-1.5 text-[10px] text-zinc-500 hover:bg-zinc-900 hover:text-zinc-200 disabled:opacity-30"
+            aria-expanded={topicsOpen}
+            aria-label={topicsOpen ? "Collapse topics" : "Expand topics"}
+            title={topics.length ? `${topics.length} topics` : "No linked topics"}
+            disabled={topics.length === 0}
+          >
+            <span className={`inline-block transition-transform ${topicsOpen ? "rotate-90" : ""}`} aria-hidden>
+              ▶
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={onSelect}
+            className="flex min-w-0 flex-1 gap-3 px-2 py-3 text-left sm:px-3"
+          >
+            <div className="w-12 shrink-0 text-center">
+              <p className="text-[10px] font-bold tracking-wide text-violet-400">{row.dateLabel}</p>
+              <p className="text-[10px] text-zinc-600">{row.timeLabel}</p>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-medium text-zinc-100">{row.name}</p>
+                {row.isOrphan ? (
+                  <span className="rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-medium text-sky-300">
+                    Orphan
+                  </span>
+                ) : null}
+                {row.lifecycleStatus === "archived" ? (
+                  <span
+                    className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-500"
+                    title="Completed (archived) — out of active triage and metric counts"
+                  >
+                    Completed
+                  </span>
+                ) : null}
+              </div>
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
+                {row.meetingUrl ? <span>Webex</span> : null}
+                {row.projectName ? <span>{row.projectName}</span> : null}
+                {topics.length > 0 ? <span>{topics.length} topics</span> : null}
+                <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
+                  {row.typeLabel}
+                </span>
+              </div>
+            </div>
+            <div className="flex shrink-0 -space-x-1">
+              {row.attendeeInitials.slice(0, 3).map((initials, i) => (
+                <span
+                  key={`${row.id}-${initials}-${i}`}
+                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-700 text-[9px] font-bold text-zinc-200"
+                >
+                  {initials}
+                </span>
+              ))}
+            </div>
+          </button>
+        </div>
+        {topicsOpen && topics.length > 0 ? (
+          <ul className="space-y-1 border-t border-zinc-800/80 px-3 py-2">
+            {topics.map((topic) => (
+              <li key={topic.id}>
+                <a
+                  href={topic.href}
+                  className="block truncate rounded-lg px-2 py-1.5 text-xs text-zinc-300 hover:bg-zinc-900 hover:text-violet-200"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  🏷 {topic.name}
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    </li>
+  );
+}
+
 export function V2EventsShell({
   rows,
   details,
@@ -287,57 +385,19 @@ export function V2EventsShell({
                     {group.label}
                   </p>
                   <ul className="space-y-2">
-                    {group.rows.map((row) => (
-                      <li key={row.id} data-v2-selected-id={row.id}>
-                        <button
-                          type="button"
-                          onClick={() => selectItem(row.id)}
-                          className={`flex w-full gap-3 rounded-xl border px-3 py-3 text-left transition hover:border-zinc-700 ${v2ActiveListItemClass(
-                            selectedId === row.id
-                          )}`}
-                        >
-                          <div className="w-12 shrink-0 text-center">
-                            <p className="text-[10px] font-bold tracking-wide text-violet-400">{row.dateLabel}</p>
-                            <p className="text-[10px] text-zinc-600">{row.timeLabel}</p>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="font-medium text-zinc-100">{row.name}</p>
-                              {row.isOrphan ? (
-                                <span className="rounded-full bg-sky-500/15 px-1.5 py-0.5 text-[9px] font-medium text-sky-300">
-                                  Orphan
-                                </span>
-                              ) : null}
-                              {row.lifecycleStatus === "archived" ? (
-                                <span
-                                  className="rounded-full bg-zinc-800 px-1.5 py-0.5 text-[9px] font-medium text-zinc-500"
-                                  title="Completed (archived) — out of active triage and metric counts"
-                                >
-                                  Completed
-                                </span>
-                              ) : null}
-                            </div>
-                            <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-zinc-500">
-                              {row.meetingUrl ? <span>Webex</span> : null}
-                              {row.projectName ? <span>{row.projectName}</span> : null}
-                              <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-[10px] text-zinc-400">
-                                {row.typeLabel}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex shrink-0 -space-x-1">
-                            {row.attendeeInitials.slice(0, 3).map((initials, i) => (
-                              <span
-                                key={`${row.id}-${initials}-${i}`}
-                                className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-zinc-950 bg-zinc-700 text-[9px] font-bold text-zinc-200"
-                              >
-                                {initials}
-                              </span>
-                            ))}
-                          </div>
-                        </button>
-                      </li>
-                    ))}
+                    {group.rows.map((row) => {
+                      const detail = details.find((d) => d.id === row.id);
+                      const topics = detail?.linkedTopics ?? [];
+                      return (
+                        <EventListRow
+                          key={row.id}
+                          row={row}
+                          topics={topics}
+                          selected={selectedId === row.id}
+                          onSelect={() => selectItem(row.id)}
+                        />
+                      );
+                    })}
                   </ul>
                 </div>
               ))}
