@@ -55,7 +55,7 @@ create index if not exists trades_reviewed_at_idx on public.trades (reviewed_at)
 
 -- Trade plans (pre-trade planning — see md/design/planning-module-proposal.md)
 create table if not exists public.trade_plans (
-  id text primary key check (id ~ '^PLAN-[0-9]{3}$'),
+  id text primary key check (id ~ '^PLAN-[0-9]+$'),
   ticker text not null,
   playbook_id text references public.playbooks (id) on delete set null,
   status text not null check (

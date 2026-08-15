@@ -1,5 +1,6 @@
 import type { PlanStatus } from "./plan-types";
 import { parseLayeredEntryInput, validateLayeredEntry } from "./layered-entry";
+import { rejectClientSuppliedPlanId } from "./plan-id";
 import { validateScoutContract } from "./scout-contract";
 import type { DecisionVerdict } from "./scout-decision-types";
 import { requireExecutionInstructionForGeometry } from "./scout-execution-instruction";
@@ -52,6 +53,9 @@ export function validateScoutPlanCreateProposal(
   proposal: Record<string, unknown>
 ): { ok: true } | { ok: false; errors: string[] } {
   const errors: string[] = [];
+  const clientIdErr = rejectClientSuppliedPlanId(proposal);
+  if (clientIdErr) errors.push(clientIdErr);
+
   const stockFileId = String(proposal.stockFileId ?? proposal.stockThesisId ?? "")
     .trim()
     .toUpperCase();
