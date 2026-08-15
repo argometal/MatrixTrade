@@ -12,12 +12,13 @@
 
 ---
 
-## Shipped — Forge Argus auth path + MTA ? help (#309 · #312)
+## Shipped — Forge Argus auth path (#309)
 
-Merge: `0ea237a` · tag `main0815a` · prod https://matrix-trade-theta.vercel.app
+Merge: `21cb4a7` · prod https://matrix-trade-theta.vercel.app
 
 - `/forge` → `/argus/login?next=…` (guest-lock too)
-- MTA section `?` help registry (`lib/mta/help-topics.ts`)
+
+**Correction:** PR #312 (trading `?` help labeled “MTA”) was a **name collision** — AF **MTA** = temporal/matrix engine toward Alexandria, not MatrixTrade trading UI. #312 is reverted; do not revive as Forge work.
 
 ---
 

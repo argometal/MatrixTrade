@@ -22,9 +22,17 @@ External analysis text was **not** attached to the request that created this fil
 
 | App | Entry | Login | Cookie / env |
 |-----|-------|-------|----------------|
-| **MTA** (trading) | `/home-preview` | `/login` | `mt-auth` · `MATRIXTRADE_PASSWORD` |
+| **MatrixTrade (trading)** | `/home-preview` | `/login` | `mt-auth` · `MATRIXTRADE_PASSWORD` |
 | **ARGUS** | `/argus/v2` | `/argus/login` | `argus-auth` · `ARGUS_PASSWORD` (legacy `HEALTH_VAULT_PASSWORD`) |
 | **ArgusForge** | `/forge` | same as ARGUS (`requireArgusSession`) | same `argus-auth` |
+
+**Name collision — do not confuse:**
+
+| Term | Meaning in ArgusForge contracts |
+|------|----------------------------------|
+| **MTA** (AF) | Matrix / time engine — change, repetition, temporal evolution toward Alexandria +1 (`argusforge-contract.md` §10). **Not** the trading app. |
+| **Memory** (AF) | Consolidated identity / knowledge. Vault ≠ Memory. |
+| **MatrixTrade** | Trading lab (Scout · Capital · Trades). Prefer this name in docs — do not call it “MTA” when discussing Forge. |
 
 **Chooser:** `/apps` is **ARGUS FORGE** Home (A mark = Home; ··· quick-nav). Chrome switches live in `AppExchangeActions` (A + ··· menu — no flat per-app icons).
 
@@ -40,7 +48,7 @@ Auth is **fail-open**: if the password env is unset, that gate does not redirect
 
 ## ArgusForge — what it is
 
-Coordination / capture shell under `/forge`. Local-first repo (`localStorage` + IndexedDB assets). **Do not** mix ArgusForge store logic with MTA trading or ARGUS journal Supabase tables.
+Coordination / capture shell under `/forge`. Local-first repo (`localStorage` + IndexedDB assets). **Do not** mix ArgusForge store logic with MatrixTrade trading tables or ARGUS journal Supabase tables.
 
 ### Visible ontology
 
@@ -75,7 +83,7 @@ Living capability table: `md/argusforge/capability-map.md`. Consolidation histor
 ### Auth note
 
 - Forge **layout** calls `requireArgusSession({ next: "/forge" })`.
-- Middleware treats `/forge` like `/argus/*` for `argus-auth` and guest-lock expiry → `/argus/login?next=…` (not MTA `/login`).
+- Middleware treats `/forge` like `/argus/*` for `argus-auth` and guest-lock expiry → `/argus/login?next=…` (not trading `/login`).
 
 ---
 
@@ -107,10 +115,13 @@ Deliver v1 is live: Quick Package (HTML + MD) + Evidence Vault. Details: `md/arg
 
 1. Prefer `current-deploy.md` + this file + `capability-map.md` + `md/argus/evidence-engine-mechanics.md` over old `*handoff*` dumps.
 2. Do not merge superseded PRs (#108, #112 closed into #113).
-3. Do not touch MTA Apply / Scout / Capital / trading P&L when working ArgusForge UI.
-4. Do not claim shipped without merge + production Ready.
-5. If a handoff contradicts code, **code wins** — fix or delete the handoff.
-6. Do not revive Behavior Engine / strength% / outcomeScore / org Trust·Future as product metrics.
+3. Do not touch MatrixTrade Apply / Scout / Capital / trading P&L when working ArgusForge UI (unless the task is explicitly trading).
+4. In Forge work, **MTA** means the contract temporal/matrix engine (`argusforge-contract.md` §10) — not the trading app. Prefer saying **MatrixTrade** for trading.
+5. Do not claim shipped without merge + production Ready.
+6. If a handoff contradicts code, **code wins** — fix or delete the handoff.
+7. Do not revive Behavior Engine / strength% / outcomeScore / org Trust·Future as product metrics.
+
+**Known naming debt:** Forge shell toggle `mta` + `MtaScopedPanel` currently deep-links MatrixTrade trading routes. That conflates AF-MTA (time engine) with trading — do not extend that pattern; correct toward Memory/MTA/Alexandria framing when touching the shell.
 
 ---
 
