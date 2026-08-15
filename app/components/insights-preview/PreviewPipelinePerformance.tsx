@@ -200,36 +200,39 @@ export function PreviewPipelinePerformance({
 
       {view.empty ? (
         <p
-          className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-8 text-center text-sm text-zinc-500"
+          className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-6 text-center text-sm text-zinc-500"
           data-pipeline-empty
         >
-          No pipeline outcomes match these filters. Record Learning Outcomes,
-          plan outcomes, or MAF attributions to populate this view.
+          No drill-down rows match these filters. Summary counts below still show
+          (zeros when empty). Record Learning Outcomes or plan outcomes to fill
+          the table.
         </p>
-      ) : (
-        <>
-          <section data-pipeline-summary>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Summary by outcome type
-            </h2>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-              {PIPELINE_OUTCOME_BUCKETS.map((id) => (
-                <div
-                  key={id}
-                  className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-3"
-                  data-pipeline-summary-count={id}
-                >
-                  <p className="text-[10px] uppercase tracking-wide text-zinc-500">
-                    {PIPELINE_OUTCOME_BUCKET_LABELS[id]}
-                  </p>
-                  <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-100">
-                    {view.summaryCounts[id]}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
+      ) : null}
 
+      <section data-pipeline-summary>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          Summary by outcome type
+        </h2>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          {PIPELINE_OUTCOME_BUCKETS.map((id) => (
+            <div
+              key={id}
+              className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-3"
+              data-pipeline-summary-count={id}
+            >
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+                {PIPELINE_OUTCOME_BUCKET_LABELS[id]}
+              </p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-100">
+                {view.summaryCounts[id]}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {!view.empty ? (
+        <>
           <section className="grid gap-4 lg:grid-cols-2">
             <div
               className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4"

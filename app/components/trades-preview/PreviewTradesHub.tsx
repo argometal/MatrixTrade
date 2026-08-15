@@ -218,7 +218,11 @@ export function PreviewTradesHub({
                             {row.ticker} · {row.planId}
                           </p>
                           <p className="mt-0.5 text-xs text-amber-100/70">
-                            {row.outcome} · {row.strategyState} · {row.requiredAction}
+                            {row.outcome}
+                            {row.counterfactualR
+                              ? ` · CF ${row.counterfactualR}`
+                              : ""}{" "}
+                            · {row.strategyState} · {row.requiredAction}
                           </p>
                         </Link>
                       </li>
@@ -254,7 +258,11 @@ export function PreviewTradesHub({
                             {row.ticker} · {row.planId}
                           </p>
                           <p className="mt-0.5 text-xs text-zinc-500">
-                            {row.outcome} · {row.strategyState} · Original {row.originalR} · Current{" "}
+                            {row.outcome}
+                            {row.counterfactualR
+                              ? ` · CF ${row.counterfactualR}`
+                              : ""}{" "}
+                            · {row.strategyState} · Original {row.originalR} · Current{" "}
                             {row.executableR}
                           </p>
                           <p className="mt-0.5 text-[11px] text-zinc-600">
