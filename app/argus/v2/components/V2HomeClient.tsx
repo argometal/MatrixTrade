@@ -23,6 +23,8 @@ import {
 } from "./V2HomeMainShell";
 import { V2EntityViewer } from "./V2EntityViewer";
 import type { V2EntityRow, V2EntityTab } from "@/lib/argus/v2/loaders";
+import type { V2HomeRunbookLink } from "@/lib/argus/v2/home-runbook-access";
+import { V2HomeRunbooksAccess } from "./V2HomeRunbooksAccess";
 
 const TAB_SOURCE: Record<IntelligenceTab, IntelligenceFrom> = {
   treemap: "treemap",
@@ -67,6 +69,7 @@ export function V2HomeClient({
   initialView,
   followUps,
   homeTimeline,
+  homeRunbooks,
   entityTab = "organizations",
   entityRowsByTab,
 }: {
@@ -80,6 +83,7 @@ export function V2HomeClient({
   initialView?: string;
   followUps: FollowUpItem[];
   homeTimeline: V2TimelineEntry[];
+  homeRunbooks?: { recent: V2HomeRunbookLink[]; frequent: V2HomeRunbookLink[] };
   entityTab?: V2EntityTab;
   entityRowsByTab?: Record<V2EntityTab, V2EntityRow[]>;
 }) {
@@ -145,6 +149,12 @@ export function V2HomeClient({
                   onUniverseFilterChange={changeUniverseFilter}
                 />
               </div>
+
+              {view === "intelligence" && homeRunbooks ? (
+                <div className="mb-4">
+                  <V2HomeRunbooksAccess recent={homeRunbooks.recent} frequent={homeRunbooks.frequent} />
+                </div>
+              ) : null}
 
               {view === "browse" ? (
                 <div className="space-y-6">
