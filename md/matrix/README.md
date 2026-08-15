@@ -25,6 +25,7 @@
 | 4b4b | [mtae-participation-layer.md](mtae-participation-layer.md) | **MTAE** — structure + participation (volume/wicks/character) — **Phase A shipped**; VP/AVWAP/L2 deferred |
 | 4b5 | [adr-0004-maf.md](adr-0004-maf.md) | **ADR** — Matrix Attribution Framework (**V1 + LO + OBS shipped**) |
 | 4b6 | [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md) | **MAF** — component attribution after Trade |
+| 4b7 | [matrix-trading-analytics-gap-001.md](matrix-trading-analytics-gap-001.md) | **Analytics gap** — Opportunity · Execution · Attribution · Sample Quality (no implementation) |
 | 4c | [monday-nflx-experiment.md](monday-nflx-experiment.md) | First live test — ops note, not Stock File |
 | 4d | [external-ai-policy.md](external-ai-policy.md) | **No vendor brands** — external AI + Apply-only mutations |
 | 4e | [thesis-ownership.md](thesis-ownership.md) | Thesis on Stock Profile, not Playbook |
@@ -61,4 +62,4 @@ Recording trades is necessary; **not the mission**.
 | Trade | `/trades` | Execution + **TradeEvaluation** on close |
 | Learning | stores + Apply | **LO / OBS / MAF** foundation (not Statistics Coach UI) |
 
-**Coding (program truth — see [runtime-truth.md](runtime-truth.md)):** Probe→Trade + TradeEvaluation (ADR-0002); MTAE foundation + Participation Phase A; MAF V1 + Learning Outcome + Observation; Control IA. **Still vision / next:** Evidence Engine append UX, Statistics dashboards, Coach, Observation closed-trade UX, expectancy aggregation.
+**Coding (program truth — see [runtime-truth.md](runtime-truth.md)):** Probe→Trade + TradeEvaluation (ADR-0002); MTAE foundation + Participation Phase A; MAF V1 + Learning Outcome + Observation; Control IA. **Still vision / next:** Evidence Engine append UX, Statistics dashboards, Coach, Observation closed-trade UX, expectancy aggregation. **Analytics formalization:** [matrix-trading-analytics-gap-001.md](matrix-trading-analytics-gap-001.md).

@@ -19,6 +19,8 @@ El problema no es “cero métricas”. Es que hay **varios ledgers** y la UI/h�
 | **2. Scout / plan counterfactual** | ¿Qué hubiéramos perdido/ganado sin trade? | UPL / counterfactual R — libs + Pipeline; **no** en WR |
 | **3. Pipeline / attribution** | ¿Dónde se rompe la expectancy? | `/stats` → **Pipeline Performance** (LO / OBS / MAF) |
 
+**Motor Analytics (gap formal):** Opportunity · Execution · Attribution · Sample Quality — [`matrix-trading-analytics-gap-001.md`](matrix-trading-analytics-gap-001.md) (library only; no implementation).
+
 Más el **desk vivo** (`/planning`): monetary *ex-ante* y OA — **no** es outcome ledger.
 
 **Regla dura:** Scout ≠ Trade. Win rate / P/L solo de trades cerrados.
