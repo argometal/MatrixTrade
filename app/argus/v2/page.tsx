@@ -16,6 +16,7 @@ import {
   type V2EntityTab,
 } from "@/lib/argus/v2/loaders";
 import { buildV2KnowledgeNodes } from "@/lib/argus/v2/intelligence-viz";
+import { buildV2HomeRunbookAccess } from "@/lib/argus/v2/home-runbook-access";
 import { V2HomeClient } from "./components/V2HomeClient";
 
 export default async function V2HomePage({
@@ -40,6 +41,7 @@ export default async function V2HomePage({
   const tagRoleBuckets = buildV2TagRoleBucketSummary(data);
   const tagEvidenceByTag = buildV2TagEvidenceMap(data, inboxItems, includePrivate);
   const knowledgeNodes = buildV2KnowledgeNodes(data, inboxItems, includePrivate, today);
+  const homeRunbooks = buildV2HomeRunbookAccess(data.runbooks ?? [], data.runbookProgress, 5);
   const entityRowsByTab = Object.fromEntries(
     V2_ENTITY_TABS.map((tab) => [
       tab,
@@ -62,6 +64,7 @@ export default async function V2HomePage({
             initialView={viewParam}
             followUps={followUps}
             homeTimeline={homeTimeline}
+            homeRunbooks={homeRunbooks}
             entityTab={entityTab}
             entityRowsByTab={entityRowsByTab}
           />
