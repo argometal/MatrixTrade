@@ -2,15 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0814h`
+Pinned revision: `main0814i`
 
-Ship commit: `f99defd`
+Ship commit: `ad41cc7`
 
 Includes:
-- Overview pulse donut + Topic Event quick view (PR #287)
-- Molecule link length scales with degree (PR #286)
-- Inbox Connect → Link modal; no Docs/Journal capture (PR #285)
-- Project/Org chips recognize reverse links (PR #284)
-- Prior: degree-aware hub links (#282 / main0814g)
+- Home Intelligence Runbooks quick access (PR #289)
+- Overview pulse + Topic Event donut (PR #287 / main0814h)
+- Molecule degree spacing (#286), inbox Link trim (#285), reverse chips (#284)
 
 IA handoff (Overview experiment): [`../argus/overview-pulse-experiment-handoff.md`](../argus/overview-pulse-experiment-handoff.md)
