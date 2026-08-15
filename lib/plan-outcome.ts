@@ -9,6 +9,7 @@ import {
   deriveUnexecutedPlanLossServerValues,
   planEligibleForOutcomeClosure,
   planHasCounterfactualGeometry,
+  validateExpiredWindowEligibility,
   validateUnexecutedPlanLossEligibility,
 } from "./plan-outcome-derive";
 import { syncPlanOutcomeLearning } from "./plan-outcome-learning-sync";
@@ -108,7 +109,10 @@ export async function persistPlanOutcome(
     };
   }
 
-  if (input.outcomeKind === "unexecuted_plan_loss" || input.uplContract) {
+  if (input.outcomeKind === "expired_window") {
+    const elig = validateExpiredWindowEligibility(plan, { linkedTradeIds });
+    if (!elig.ok) return { errors: elig.errors };
+  } else if (input.outcomeKind === "unexecuted_plan_loss" || input.uplContract) {
     if (input.outcomeKind === "unexecuted_plan_loss") {
       const elig = validateUnexecutedPlanLossEligibility(
         plan,
@@ -147,7 +151,11 @@ export async function persistPlanOutcome(
   }
 
   const now = new Date().toISOString();
-  const nextStatus = resolveTerminalStatus(plan);
+  // Preserve expired; never invent a different terminal for expired_window.
+  const nextStatus =
+    input.outcomeKind === "expired_window" && plan.status === "expired"
+      ? "expired"
+      : resolveTerminalStatus(plan);
 
   const server =
     input.outcomeKind === "unexecuted_plan_loss" ||
@@ -155,20 +163,32 @@ export async function persistPlanOutcome(
       ? deriveUnexecutedPlanLossServerValues(plan)
       : null;
 
-  const theoreticalResultR = server
-    ? server.counterfactualR
-    : input.theoreticalResultR;
-  const realizedResultR = server
-    ? server.realizedR
-    : input.tradeExecuted
-      ? input.realizedResultR
-      : 0;
-  const realizedPnL = server
-    ? server.realizedPnL
-    : input.realizedPnL ?? (input.tradeExecuted ? undefined : 0);
-  const counterfactualDollarResult = server
-    ? server.counterfactualDollarResult
-    : input.counterfactualDollarResult;
+  const theoreticalResultR =
+    input.outcomeKind === "expired_window"
+      ? null
+      : server
+        ? server.counterfactualR
+        : input.theoreticalResultR;
+  const realizedResultR =
+    input.outcomeKind === "expired_window"
+      ? 0
+      : server
+        ? server.realizedR
+        : input.tradeExecuted
+          ? input.realizedResultR
+          : 0;
+  const realizedPnL =
+    input.outcomeKind === "expired_window"
+      ? 0
+      : server
+        ? server.realizedPnL
+        : input.realizedPnL ?? (input.tradeExecuted ? undefined : 0);
+  const counterfactualDollarResult =
+    input.outcomeKind === "expired_window"
+      ? null
+      : server
+        ? server.counterfactualDollarResult
+        : input.counterfactualDollarResult;
 
   const outcome: NonNullable<TradePlan["outcome"]> = {
     planId: plan.id,

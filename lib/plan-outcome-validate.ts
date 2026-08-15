@@ -121,6 +121,66 @@ function validateUplProposal(
     };
   }
 
+  if (outcomeKind === "expired_window") {
+    // UPL event-order fields are not required. Reject inventing non-zero realized or counterfactual loss.
+    for (const key of ["realizedR", "realizedResultR", "realizedPnL"] as const) {
+      if (
+        proposal[key] === undefined ||
+        proposal[key] === null ||
+        proposal[key] === ""
+      ) {
+        continue;
+      }
+      const n = Number(proposal[key]);
+      if (Number.isFinite(n) && n !== 0) {
+        errors.push(`${key} must be 0 for expired_window (no Trade/fill)`);
+      }
+    }
+    if (proposal.counterfactualR !== undefined && proposal.counterfactualR !== null) {
+      const n = Number(proposal.counterfactualR);
+      if (Number.isFinite(n) && n !== 0) {
+        errors.push(
+          "expired_window does not assign counterfactual loss; omit counterfactualR"
+        );
+      }
+    }
+    if (errors.length) return { ok: false, errors };
+
+    const notesRaw =
+      proposal.notes !== undefined ? String(proposal.notes).trim() : "";
+    const notes =
+      notesRaw ||
+      "The tactical plan window ended without execution. The linked Stock File and opportunity may remain active and can be evaluated through a new Scout Plan.";
+
+    return {
+      ok: true,
+      value: {
+        planId,
+        status: "entry_not_triggered",
+        outcomeKind: "expired_window",
+        tradeExecuted: false,
+        entryTriggered: null,
+        stopTriggered: null,
+        targetTriggered: null,
+        entryReached: null,
+        stopReachedBeforeTarget: null,
+        targetReachedBeforeStop: null,
+        theoreticalResultR: null,
+        realizedResultR: 0,
+        realizedPnL: 0,
+        counterfactualDollarResult: null,
+        outcomeSource: "manual_review",
+        evidenceStatus: "partial",
+        notes,
+        evidenceRefs: Array.isArray(proposal.evidenceRefs)
+          ? proposal.evidenceRefs.map((r) => String(r).trim()).filter(Boolean)
+          : [],
+        strategyStillValid: true,
+        uplContract: true,
+      },
+    };
+  }
+
   // unexecuted_plan_loss
   const entryReached = parseRequiredBoolean(
     proposal.entryReached ?? proposal.entryTriggered,
@@ -420,7 +480,7 @@ export function validatePlanOutcomeProposal(
   return {
     ok: false,
     errors: [
-      "proposal.outcomeKind or proposal.status required (prefer outcomeKind=unexecuted_plan_loss)",
+      "proposal.outcomeKind or proposal.status required (prefer outcomeKind=unexecuted_plan_loss|expired_window|duplicate_creation)",
     ],
   };
 }

@@ -31,6 +31,8 @@ function resolveFillStatus(trade?: Trade, plan?: TradePlan): MafFillStatus {
       if (reason === "discipline" || reason === "other") return "cancelled";
       return "missed";
     }
+    // expired_window closes the PLAN window only — not a missed Scout fill.
+    if (plan.outcome?.outcomeKind === "expired_window") return "unknown";
     if (plan.status === "expired") return "missed";
     if (plan.layeredEntry?.status === "missed") return "missed";
   }

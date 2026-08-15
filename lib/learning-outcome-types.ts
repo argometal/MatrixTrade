@@ -67,7 +67,7 @@ export const LEARNING_OUTCOME_KIND_LABELS: Record<LearningOutcomeKind, string> =
   executed_loss: "Executed loss",
   missed_opportunity: "Missed opportunity",
   cancelled: "Cancelled",
-  expired: "Expired",
+  expired: "Execution window expired",
   unexecuted_plan_loss: "Unexecuted Plan Loss",
   duplicate_creation: "Duplicate Creation",
 };
