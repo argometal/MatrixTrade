@@ -879,9 +879,11 @@ export function V2TopicsShell({
   return (
     <div className="v2-browse-shell relative flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
       <section
-        className={`flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:w-[min(520px,46%)] lg:flex-none lg:border-b-0 lg:border-r ${
-          mobileDetailOpen ? "hidden lg:flex" : "flex"
-        }`}
+        className={`flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:border-b-0 ${
+          selected
+            ? "lg:w-[min(520px,46%)] lg:flex-none lg:border-r"
+            : "lg:flex-1"
+        } ${mobileDetailOpen ? "hidden lg:flex" : "flex"}`}
       >
       <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
         <div className="px-4 py-6 lg:px-5">
@@ -1185,14 +1187,14 @@ export function V2TopicsShell({
       </div>
       </section>
 
-      <section
-        className={`min-h-0 min-w-0 flex-1 bg-zinc-950/50 ${
-          mobileDetailOpen
-            ? "absolute inset-0 z-40 flex min-h-0 flex-col overflow-hidden bg-zinc-950 lg:static lg:z-auto lg:bg-zinc-950/50"
-            : "hidden min-h-0 flex-col overflow-hidden lg:flex"
-        }`}
-      >
-        {selected ? (
+      {selected ? (
+        <section
+          className={`min-h-0 min-w-0 flex-1 bg-zinc-950/50 ${
+            mobileDetailOpen
+              ? "absolute inset-0 z-40 flex min-h-0 flex-col overflow-hidden bg-zinc-950 lg:static lg:z-auto lg:bg-zinc-950/50"
+              : "hidden min-h-0 flex-col overflow-hidden lg:flex"
+          }`}
+        >
           <V2TopicDetailPanel
             selected={selected}
             neighborhood={neighborhood}
@@ -1206,12 +1208,8 @@ export function V2TopicsShell({
             requiresAuthenticator={selected.deleteRequiresAuthenticator}
             {...deleteGate}
           />
-        ) : (
-          <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">
-            Select a topic to review evidence and linked Events.
-          </div>
-        )}
-      </section>
+        </section>
+      ) : null}
     </div>
   );
 }

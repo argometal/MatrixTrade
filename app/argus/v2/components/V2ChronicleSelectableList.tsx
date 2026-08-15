@@ -28,11 +28,11 @@ export type V2ChronicleSelectableItem = {
   footer?: ReactNode;
 };
 
-/** Long note bodies stay compact until the user expands — avoids filling the panel. */
+/** Note body stays hidden until expanded — collapsed preview must disappear, not overlap. */
 function ChroniclePreview({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
-  const lineCount = text.split("\n").length;
-  const long = text.length > 140 || lineCount > 2;
+  const body = text.trim();
+  if (!body) return null;
 
   function toggle(event: MouseEvent) {
     event.preventDefault();
@@ -40,25 +40,32 @@ function ChroniclePreview({ text }: { text: string }) {
     setExpanded((value) => !value);
   }
 
-  return (
-    <div className="pl-8">
-      <p
-        className={`text-xs leading-relaxed text-zinc-400 ${
-          expanded ? "whitespace-pre-wrap" : "line-clamp-2 whitespace-pre-wrap"
-        }`}
-      >
-        {text}
-      </p>
-      {long ? (
+  if (!expanded) {
+    return (
+      <div className="pl-8">
         <button
           type="button"
           onClick={toggle}
-          className="mt-1 text-[11px] font-medium text-violet-300/90 hover:text-violet-200"
-          aria-expanded={expanded}
+          className="text-[11px] font-medium text-violet-300/90 hover:text-violet-200"
+          aria-expanded={false}
         >
-          {expanded ? "Show less" : "Expand note"}
+          Show note
         </button>
-      ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="pl-8">
+      <p className="whitespace-pre-wrap text-xs leading-relaxed text-zinc-400">{body}</p>
+      <button
+        type="button"
+        onClick={toggle}
+        className="mt-1 text-[11px] font-medium text-violet-300/90 hover:text-violet-200"
+        aria-expanded={true}
+      >
+        Hide note
+      </button>
     </div>
   );
 }

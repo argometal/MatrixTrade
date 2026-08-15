@@ -307,9 +307,11 @@ export function V2EventsShell({
   return (
     <div className="v2-browse-shell relative flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
       <section
-        className={`flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:w-[min(480px,44%)] lg:flex-none lg:border-b-0 lg:border-r ${
-          mobileDetailOpen ? "hidden lg:flex" : "flex"
-        }`}
+        className={`flex min-h-0 w-full flex-col border-b border-zinc-800/80 lg:border-b-0 ${
+          selected
+            ? "lg:w-[min(480px,44%)] lg:flex-none lg:border-r"
+            : "lg:flex-1"
+        } ${mobileDetailOpen ? "hidden lg:flex" : "flex"}`}
       >
         <div className="border-b border-zinc-800/80 px-4 py-4 lg:px-5">
           <div className="mb-3 flex items-start justify-between gap-3">
@@ -419,15 +421,15 @@ export function V2EventsShell({
         </div>
       </section>
 
-      <section
-        className={`min-h-0 min-w-0 flex-1 bg-zinc-950/50 ${
-          mobileDetailOpen
-            ? // Fill the browse shell (below TopBar) — avoid fixed top-14 which slides under the Argus menu/title chrome.
-              "absolute inset-0 z-40 flex min-h-0 flex-col overflow-hidden bg-zinc-950 lg:static lg:z-auto lg:bg-zinc-950/50"
-            : "hidden min-h-0 flex-col overflow-hidden lg:flex"
-        }`}
-      >
-        {selected ? (
+      {selected ? (
+        <section
+          className={`min-h-0 min-w-0 flex-1 bg-zinc-950/50 ${
+            mobileDetailOpen
+              ? // Fill the browse shell (below TopBar) — avoid fixed top-14 which slides under the Argus menu/title chrome.
+                "absolute inset-0 z-40 flex min-h-0 flex-col overflow-hidden bg-zinc-950 lg:static lg:z-auto lg:bg-zinc-950/50"
+              : "hidden min-h-0 flex-col overflow-hidden lg:flex"
+          }`}
+        >
           <V2EventDetailPanel
             selected={selected}
             inboxOptions={inboxOptionsByEvent[selected.id] ?? []}
@@ -449,12 +451,8 @@ export function V2EventsShell({
             deleteAuthError={deleteAuthError}
             totpRequired={totpRequired}
           />
-        ) : (
-          <div className="flex h-full min-h-[320px] items-center justify-center p-8 text-sm text-zinc-500">
-            Select an event to document and review evidence.
-          </div>
-        )}
-      </section>
+        </section>
+      ) : null}
     </div>
   );
 }

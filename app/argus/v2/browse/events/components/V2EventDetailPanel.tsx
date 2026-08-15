@@ -244,10 +244,10 @@ export function V2EventDetailPanel({
             type="button"
             onClick={onBack}
             className="text-sm font-medium text-violet-400 hover:text-violet-300"
-            aria-label="Collapse event detail"
+            aria-label="Hide event preview"
           >
             <span className="lg:hidden">← Events</span>
-            <span className="hidden lg:inline">Collapse panel</span>
+            <span className="hidden lg:inline">Hide preview</span>
           </button>
         </div>
       ) : null}

@@ -31,10 +31,20 @@ assert.match(topicsShell, /Collapse events|Expand events/, "Topic event disclosu
 assert.match(eventsShell, /topicsOpen/, "Event list rows expand Topics");
 assert.match(eventsShell, /EventListRow/, "Event list uses expandable row");
 
-assert.match(topicsShell, /Collapse panel|backToList/, "Topics detail panel can collapse");
-assert.match(topicsShell, /urlSelected === id/, "Re-selecting a Topic collapses the detail viewer");
-assert.match(eventsShell, /Collapse panel|backToList/, "Events detail panel can collapse");
-assert.match(eventsShell, /urlSelected === id/, "Re-selecting an Event collapses the detail viewer");
+assert.match(topicsShell, /Hide preview|backToList|selected \?/, "Topics preview can fully hide");
+assert.match(topicsShell, /urlSelected === id/, "Re-selecting a Topic hides the detail viewer");
+assert.match(
+  topicsShell,
+  /selected\s*\?\s*\([\s\S]*V2TopicDetailPanel/,
+  "Topic preview pane mounts only while a Topic is selected"
+);
+assert.match(eventsShell, /Hide preview|backToList|selected \?/, "Events preview can fully hide");
+assert.match(eventsShell, /urlSelected === id/, "Re-selecting an Event hides the detail viewer");
+assert.match(
+  eventsShell,
+  /selected\s*\?\s*\([\s\S]*V2EventDetailPanel/,
+  "Event preview pane mounts only while an Event is selected"
+);
 
 const topicDetail = readFileSync(
   join(root, "app/argus/v2/browse/topics/components/V2TopicDetailPanel.tsx"),
@@ -43,7 +53,7 @@ const topicDetail = readFileSync(
 assert.doesNotMatch(
   topicDetail,
   /onBack \? \(\s*<div className="[^"]*lg:hidden/,
-  "Topic collapse control is available on desktop, not mobile-only"
+  "Topic hide-preview control is available on desktop, not mobile-only"
 );
 assert.match(
   topicDetail,
@@ -51,6 +61,7 @@ assert.match(
   "Topic Chronicle Event blocks are expandable"
 );
 assert.match(topicDetail, /From linked Events/, "Event evidence is grouped in Chronicle");
+assert.match(topicDetail, /Hide preview/, "Topic desktop control hides the preview pane");
 
 const linksTab = readFileSync(
   join(root, "app/argus/v2/components/V2EntityLinksTab.tsx"),
@@ -63,7 +74,11 @@ const chronicleList = readFileSync(
   join(root, "app/argus/v2/components/V2ChronicleSelectableList.tsx"),
   "utf8"
 );
-assert.match(chronicleList, /line-clamp-2/, "Chronicle note preview starts compact");
-assert.match(chronicleList, /Expand note/, "Chronicle notes can expand to full body");
+assert.match(chronicleList, /Show note/, "Chronicle note body stays hidden until shown");
+assert.doesNotMatch(
+  chronicleList,
+  /line-clamp-2/,
+  "Collapsed Chronicle notes do not leave a clamped preview overlapping the UI"
+);
 
 console.log("ok: topic-event-expand-collapse");

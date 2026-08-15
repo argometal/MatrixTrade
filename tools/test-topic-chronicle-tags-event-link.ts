@@ -28,6 +28,7 @@ assert.match(topic, /quick view · expand to read/, "Event blocks start as quick
 assert.match(topic, /Quick view · Event/, "Links inspect is compact quick view");
 assert.match(topic, /inspectExpanded/, "Links inspect expands for mix & tags");
 assert.match(list, /footer\?:/, "Chronicle list supports footer outside primary href");
-assert.match(list, /Expand note|line-clamp-2/, "Chronicle note bodies are compact until expanded");
+assert.match(list, /Show note|Hide note/, "Chronicle note bodies stay hidden until shown");
+assert.doesNotMatch(list, /line-clamp-2/, "collapsed notes leave no clamped preview");
 
 console.log("ok: topic-chronicle-tags-event-link");
