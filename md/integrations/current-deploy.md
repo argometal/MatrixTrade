@@ -2,13 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0814i`
+Pinned revision: `main0814j`
 
-Ship commit: `ad41cc7`
+Ship commit: `d84e543`
 
 Includes:
-- Home Intelligence Runbooks quick access (PR #289)
+- Home Intelligence defaults to Hot (not Universe) + Hot status note (PR #291)
+- Home Intelligence Runbooks quick access (PR #289 / main0814i)
 - Overview pulse + Topic Event donut (PR #287 / main0814h)
-- Molecule degree spacing (#286), inbox Link trim (#285), reverse chips (#284)
 
 IA handoff (Overview experiment): [`../argus/overview-pulse-experiment-handoff.md`](../argus/overview-pulse-experiment-handoff.md)
