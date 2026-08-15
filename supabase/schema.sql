@@ -55,7 +55,7 @@ create index if not exists trades_reviewed_at_idx on public.trades (reviewed_at)
 
 -- Trade plans (pre-trade planning — see md/design/planning-module-proposal.md)
 create table if not exists public.trade_plans (
-  id text primary key check (id ~ '^PLAN-[0-9]{3}$'),
+  id text primary key check (id ~ '^PLAN-[0-9]+$'),
   ticker text not null,
   playbook_id text references public.playbooks (id) on delete set null,
   status text not null check (
@@ -81,6 +81,7 @@ create table if not exists public.trade_plans (
 create index if not exists trade_plans_status_idx on public.trade_plans (status);
 create index if not exists trade_plans_ticker_idx on public.trade_plans (ticker);
 create index if not exists trade_plans_valid_until_idx on public.trade_plans (valid_until);
+-- Plan ID sequence + allocate_trade_plan_id(): supabase/trade-plans-plan-id-seq.sql
 
 create or replace function public.set_updated_at()
 returns trigger

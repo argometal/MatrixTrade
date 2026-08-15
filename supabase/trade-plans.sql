@@ -2,7 +2,7 @@
 -- Run in Supabase SQL Editor when TRADES_STORE=supabase.
 
 create table if not exists public.trade_plans (
-  id text primary key check (id ~ '^PLAN-[0-9]{3}$'),
+  id text primary key check (id ~ '^PLAN-[0-9]+$'),
   ticker text not null,
   playbook_id text references public.playbooks (id) on delete set null,
   status text not null check (
@@ -36,3 +36,7 @@ create trigger trade_plans_set_updated_at
 
 alter table public.trade_plans enable row level security;
 revoke all on table public.trade_plans from anon, authenticated;
+
+-- Plan ID allocation (PROMPT 15-01): see trade-plans-plan-id-seq.sql
+-- CHECK allows PLAN-<digits>+ (min 3-digit pad is application/RPC formatting).
+-- Fresh installs should also run trade-plans-plan-id-seq.sql for the sequence + RPC.

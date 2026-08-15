@@ -23,6 +23,10 @@ import {
 } from "./layered-entry";
 import { canLinkThesisToPlan, getStockThesisById } from "./stock-theses";
 import {
+  isCanonicalPlanId,
+  PlanIdCollisionError,
+} from "./plan-id";
+import {
   PLAN_TIMEFRAME_ORDER,
   PLAN_TIMEFRAMES,
   type PlanTimeframe,
@@ -30,6 +34,16 @@ import {
   type SavePlanInput,
   type TradePlan,
 } from "./plan-types";
+
+export {
+  formatPlanId,
+  isCanonicalPlanId,
+  maxPlanIdNumber,
+  nextPlanId,
+  parsePlanIdNumber,
+  PlanIdCollisionError,
+  PLAN_ID_PATTERN,
+} from "./plan-id";
 
 export function smallestTimeframe(frames: PlanTimeframe[]): PlanTimeframe | null {
   if (frames.length === 0) return null;
@@ -96,15 +110,6 @@ export async function getPlanById(id: string): Promise<TradePlan | undefined> {
   return plans.find((p) => p.id === id.toUpperCase());
 }
 
-export function nextPlanId(plans: TradePlan[]): string {
-  let max = 0;
-  for (const plan of plans) {
-    const match = /^PLAN-(\d+)$/i.exec(plan.id);
-    if (match) max = Math.max(max, Number(match[1]));
-  }
-  return `PLAN-${String(max + 1).padStart(3, "0")}`;
-}
-
 function parseOptionalNumber(value: unknown): number | undefined {
   if (value === undefined || value === null || value === "") return undefined;
   const n = Number(value);
@@ -147,9 +152,17 @@ export async function savePlan(input: SavePlanInput): Promise<{
 
   if (errors.length > 0) return { errors };
 
+  const store = getPlansStore();
   const plans = await getPlans();
   const now = new Date().toISOString();
-  const existing = input.id ? plans.find((p) => p.id === input.id!.toUpperCase()) : undefined;
+  const requestedId = input.id?.trim() ? input.id.trim().toUpperCase() : undefined;
+  const existing = requestedId
+    ? plans.find((p) => p.id === requestedId)
+    : undefined;
+
+  if (requestedId && !existing && !isCanonicalPlanId(requestedId)) {
+    return { errors: [`Invalid plan id ${requestedId}; expected PLAN-<number>.`] };
+  }
 
   const plannedEntry = parseOptionalNumber(input.plannedEntry);
   const stopPrice = parseOptionalNumber(input.stopPrice);
@@ -161,8 +174,19 @@ export async function savePlan(input: SavePlanInput): Promise<{
     if (computed) plannedRR = computed.rr;
   }
 
+  const isCreate = !existing;
+  let planId: string;
+  if (existing) {
+    planId = existing.id;
+  } else if (requestedId) {
+    // Explicit new id (imports/tests): insert-only; never overwrite.
+    planId = requestedId;
+  } else {
+    planId = await store.allocateNextPlanId();
+  }
+
   const plan: TradePlan = {
-    id: existing?.id ?? nextPlanId(plans),
+    id: planId,
     ticker,
     playbookId: input.playbookId?.trim() || undefined,
     stockThesisId: input.stockThesisId?.trim().toUpperCase() || existing?.stockThesisId,
@@ -193,7 +217,18 @@ export async function savePlan(input: SavePlanInput): Promise<{
     updatedAt: now,
   };
 
-  await getPlansStore().upsert(plan);
+  try {
+    if (isCreate) {
+      await store.insert(plan);
+    } else {
+      await store.upsert(plan);
+    }
+  } catch (err) {
+    if (err instanceof PlanIdCollisionError) {
+      return { errors: [err.message] };
+    }
+    throw err;
+  }
 
   const warnings: string[] = [];
   if (linkedThesis) {
