@@ -18,6 +18,7 @@ import { resolveBubblePositions } from "@/lib/argus/v2/intelligence-viz";
 import { SIGNAL_TAGS } from "@/lib/argus/ux-copy";
 import {
   filterIntelligenceTags,
+  INTELLIGENCE_DEFAULT_FILTER,
   type IntelligenceUniverseFilter,
 } from "@/lib/argus/v2/intelligence-filters";
 import { V2HomeNeighborhoodViewer } from "./V2HomeNeighborhoodViewer";
@@ -127,7 +128,7 @@ export function V2FocusTagPortfolio({
   onFilterChange?: (next: IntelligenceUniverseFilter) => void;
 }) {
   const router = useRouter();
-  const [localFilter, setLocalFilter] = useState<IntelligenceUniverseFilter>("all");
+  const [localFilter, setLocalFilter] = useState<IntelligenceUniverseFilter>(INTELLIGENCE_DEFAULT_FILTER);
   const filter = filterProp ?? localFilter;
   const setFilter = onFilterChange ?? setLocalFilter;
   const filterControlled = filterProp != null && onFilterChange != null;

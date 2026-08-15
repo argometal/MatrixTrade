@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import type { V2FocusTagStat, V2TagEvidenceContext, V2TagRoleBucketSummary } from "@/lib/argus/v2/loaders";
 import {
   filterIntelligenceNodes,
+  INTELLIGENCE_DEFAULT_FILTER,
   type IntelligenceUniverseFilter,
 } from "@/lib/argus/v2/intelligence-filters";
 import { V2KnowledgeTreemap } from "./V2KnowledgeTreemap";
@@ -27,7 +28,7 @@ export function V2HomeIntelligencePanel({
   tab,
   lensId = null,
   onLensChange,
-  universeFilter = "all",
+  universeFilter = INTELLIGENCE_DEFAULT_FILTER,
   onUniverseFilterChange,
 }: {
   nodes: V2KnowledgeNode[];
@@ -41,7 +42,7 @@ export function V2HomeIntelligencePanel({
   /** Selected Treemap/Portfolio entity — drives main Tags-model neighborhood below. */
   lensId?: string | null;
   onLensChange: (id: string | null) => void;
-  /** Controlled from Home one-line toolbar (Universe / Hot / …). */
+  /** Controlled from Home one-line toolbar (Universe / Hot / …). Default Hot from Home client. */
   universeFilter?: IntelligenceUniverseFilter;
   onUniverseFilterChange?: (next: IntelligenceUniverseFilter) => void;
 }) {

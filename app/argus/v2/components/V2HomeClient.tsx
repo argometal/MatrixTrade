@@ -6,7 +6,10 @@ import { useEffect, useMemo, useState } from "react";
 import type { V2FocusTagStat, V2NavCounts, V2TagEvidenceContext, V2TagRoleBucketSummary } from "@/lib/argus/v2/loaders";
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import type { IntelligenceFrom } from "@/lib/argus/v2/intelligence-nav";
-import type { IntelligenceUniverseFilter } from "@/lib/argus/v2/intelligence-filters";
+import {
+  INTELLIGENCE_DEFAULT_FILTER,
+  type IntelligenceUniverseFilter,
+} from "@/lib/argus/v2/intelligence-filters";
 import { type V2KnowledgeNode } from "@/lib/argus/v2/intelligence-viz";
 import { V2Card, V2SectionTitle } from "./v2-ui";
 import { V2HomeIntelligencePanel, type IntelligenceTab } from "./V2HomeIntelligencePanel";
@@ -93,7 +96,9 @@ export function V2HomeClient({
   const [intelTab, setIntelTab] = useState<IntelligenceTab>(() =>
     searchParams.get("intel") === "tags" ? "tags" : "treemap"
   );
-  const [universeFilter, setUniverseFilter] = useState<IntelligenceUniverseFilter>("all");
+  const [universeFilter, setUniverseFilter] = useState<IntelligenceUniverseFilter>(
+    INTELLIGENCE_DEFAULT_FILTER
+  );
   const [lensId, setLensId] = useState<string | null>(null);
 
   const lensNode = lensId ? nodes.find((node) => node.id === lensId) : undefined;
@@ -101,7 +106,8 @@ export function V2HomeClient({
   const browseRows = entityRowsByTab?.[entityTab] ?? [];
 
   useEffect(() => {
-    setUniverseFilter("all");
+    // Home default surface is Hot (activity in last 30 days), not full Universe.
+    setUniverseFilter(INTELLIGENCE_DEFAULT_FILTER);
     setLensId(null);
   }, [intelTab]);
 

@@ -11,8 +11,8 @@ export const INTELLIGENCE_UNIVERSE_FILTERS: {
   label: string;
   title: string;
 }[] = [
+  { id: "hot", label: "Hot", title: "Activity in the last 30 days — Home default" },
   { id: "all", label: "Universe", title: "All items in this view" },
-  { id: "hot", label: "Hot", title: "Activity in the last 30 days" },
   { id: "patterns", label: "Patterns", title: "Recurring Tag Patterns in scope" },
   {
     id: "stale",
@@ -21,6 +21,9 @@ export const INTELLIGENCE_UNIVERSE_FILTERS: {
   },
   { id: "focus", label: "Trackers", title: "Carries a Flagged Tracker Tag" },
 ];
+
+/** Home Intelligence opens on Hot, not full Universe. */
+export const INTELLIGENCE_DEFAULT_FILTER: IntelligenceUniverseFilter = "hot";
 
 export type IntelligenceFilterableNode = {
   evidenceCount: number;
