@@ -235,4 +235,5 @@ Method: `playbook-create`, `playbook-update`
 | **EVALUATION** | MAF expectancy aggregation by component/Playbook — only if enough attributed rows exist |
 | **OUT OF SCOPE now** | Request layer, Library schema, Volume profile / AVWAP, L2 / heatmap, empty dashboards, Coach, broker automation |
 
+**Analytics formalization (library only):** [matrix-trading-analytics-gap-001.md](matrix-trading-analytics-gap-001.md) — Opportunity · Execution · Attribution · Sample Quality gap vs current LO/OBS/MAF/Pipeline.
 Do not reintroduce Control → Closed trade, Session, Case, or Update labels. Do not bury Stock Files under Library.
