@@ -50,4 +50,9 @@ export type ControlPanelData = {
     mafProtocolBrief: string;
     snapshotItems: SnapshotMenuItem[];
   };
+  /**
+   * Same payload as Dashboard window “Dashboard snapshot” — one-tap on Control home.
+   * Label must stay exactly “Dashboard snapshot” (SNAPSHOT MENU / Needs Attention).
+   */
+  dashboardSnapshot: SnapshotMenuItem;
 };

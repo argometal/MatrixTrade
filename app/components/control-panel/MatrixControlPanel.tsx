@@ -389,6 +389,7 @@ export function MatrixControlPanel() {
 
         {step === "pick" ? (
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain">
+            <SnapshotCopyRow item={data.dashboardSnapshot} />
             <nav className="space-y-2">
               {PRIMARY.map((entry) => (
                 <NavRow

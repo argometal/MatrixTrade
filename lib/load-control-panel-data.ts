@@ -12,6 +12,7 @@ import { getMtaeTimeframeMaps } from "./mtae-store";
 import { getPlans } from "./plans";
 import { getPlaybooks } from "./playbooks";
 import {
+  dashboardSnapshotItems,
   mechanicsSnapshotItem,
   playbookSnapshotItems,
   scoutDeskSnapshotItems,
@@ -24,7 +25,14 @@ import { listAllPendingInboxItems } from "./trading-inbox-storage";
 import type { TradePlan } from "./plan-types";
 import type { StockThesis } from "./stock-thesis-types";
 import type { MtaeTimeframeMapPreset } from "./mtae-types";
-import { fetchBridgeInbox } from "./bridge";
+import { fetchBridgeInbox, getBridgeConfig } from "./bridge";
+import { getSetups } from "./setups";
+import { listAiNotes } from "./ai-notes";
+import { getSnapshotRevisionState } from "./snapshot-revision-read";
+import { checkWorkerReachable } from "./system-status";
+import { getSyncHistory } from "./sync-history";
+import { getTradesStoreMode } from "./trades-json";
+import { resolveInboxBackendLabel } from "./trading-inbox-submit";
 
 function groupActiveEvidence(rows: MarketEvidence[]): Map<string, MarketEvidence[]> {
   const superseded = new Set(rows.map((row) => row.supersededBy).filter(Boolean) as string[]);
@@ -79,6 +87,11 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     marketEvidence,
     workerInbox,
     mtaePresets,
+    setups,
+    aiNotes,
+    revision,
+    workerStatus,
+    syncHistory,
   ] = await Promise.all([
     getExperiment(),
     getMonthlyRisk(),
@@ -89,6 +102,11 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     getMarketEvidence(),
     fetchBridgeInbox(),
     getMtaeTimeframeMaps(),
+    getSetups(),
+    listAiNotes(20),
+    getSnapshotRevisionState(),
+    checkWorkerReachable(),
+    getSyncHistory(),
   ]);
 
   const pendingInbox = await listAllPendingInboxItems(workerInbox);
@@ -110,11 +128,34 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     marketEvidence,
   }).filter((item) => item.id === "scout-desk");
 
+  const bridge = getBridgeConfig();
+  const lastSync = syncHistory.find((e) => e.ok);
+  const snapshotRevision = workerStatus.snapshotRevision ?? revision?.revision ?? 0;
+  const dashboardSnapshot = dashboardSnapshotItems({
+    experiment,
+    monthly,
+    trades,
+    setups,
+    playbooks,
+    snapshotRevision,
+    priorAiNotes: aiNotes,
+    plans,
+    stockTheses,
+    systemNotes: {
+      tradesStore: getTradesStoreMode(),
+      bridgeConfigured: bridge.configured,
+      workerReachable: workerStatus.reachable,
+      inboxBackend: resolveInboxBackendLabel(),
+      lastSyncAt: lastSync?.at ?? null,
+    },
+  })[0]!;
+
   return {
     playbooks,
     activeThesisCount: activeTheses.length,
     activePlanCount: activePlans.length,
     pendingInboxCount: pendingInbox.length,
+    dashboardSnapshot,
     trainAi: {
       mechanicsBrief: buildMatrixMechanicsBrief(),
       schemaContractBrief: buildApplySchemaContractText(),
