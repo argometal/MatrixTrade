@@ -12,6 +12,7 @@ import {
   normalizeGuestTimeZone,
   type GuestLockPolicy,
 } from "@/lib/auth/guest-workstation-lock";
+import { isArgusSessionPath } from "@/lib/auth/argus-session-path";
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/login" || pathname === "/argus/login") return true;
@@ -48,6 +49,7 @@ function isTradingRoute(pathname: string): boolean {
 
   return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
+
 
 function clearSessionCookies(response: NextResponse): void {
   response.cookies.delete("mt-auth");
@@ -120,14 +122,14 @@ export async function middleware(request: NextRequest) {
 
   if (guestLockBlocks(policy, request)) {
     const loginPath =
-      pathname.startsWith("/argus") && argusPasswordSet
+      isArgusSessionPath(pathname) && argusPasswordSet
         ? "/argus/login"
         : tradingPasswordSet
           ? "/login"
           : null;
     if (loginPath) {
       const login = new URL(loginPath, request.url);
-      if (loginPath === "/login") login.searchParams.set("next", pathname);
+      login.searchParams.set("next", pathname);
       login.searchParams.set("guest_expired", "1");
       const response = NextResponse.redirect(login);
       clearSessionCookies(response);
@@ -145,13 +147,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (
-    argusPasswordSet &&
-    pathname.startsWith("/argus") &&
-    pathname !== "/argus/login" &&
-    !request.cookies.get("argus-auth")?.value
-  ) {
-    return NextResponse.redirect(new URL("/argus/login", request.url));
+  if (argusPasswordSet && isArgusSessionPath(pathname) && !request.cookies.get("argus-auth")?.value) {
+    const login = new URL("/argus/login", request.url);
+    login.searchParams.set("next", pathname);
+    return NextResponse.redirect(login);
   }
 
   return NextResponse.next();
