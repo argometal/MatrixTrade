@@ -2,20 +2,24 @@
 
 **IA runtime handoff (read first):** [`IA-HANDOFF.md`](IA-HANDOFF.md)
 
+**Long-term Workspace / control-plane proposal (not sealed, no implementation):** [`platform-vision-001.md`](platform-vision-001.md)
+
 **Role:** Index for ArgusForge (AF) documentation inside MatrixTrade.  
 **Runtime truth for agents:** [`IA-HANDOFF.md`](IA-HANDOFF.md) · [`capability-map.md`](capability-map.md)  
+**Platform growth objective (branches):** [`platform-vision-001.md`](platform-vision-001.md) — Forge as quiet ecosystem home; do not implement from that file alone  
 **Sealed vision contract (prevails):** [`argusforge-contract.md`](argusforge-contract.md)  
 **Sealed evolution addendum:** [`perpetual-evolution-contract.md`](perpetual-evolution-contract.md)  
 **Working interface checklist:** [`af03-chaos-interface-contract.md`](af03-chaos-interface-contract.md)  
 **Technical Phase 0:** [`phase-0-architecture.md`](phase-0-architecture.md)  
 **Vault detail:** [`vault-training-layer-contract.md`](vault-training-layer-contract.md)  
-**Rule:** Do not contradict the sealed contracts. No AF implementation is final. Do not reduce AF to a notes app, universal memory, or a single-AI chat wrapper. Prefer runtime docs over sealed vision when they diverge on shipped surfaces.
+**Rule:** Do not contradict the sealed contracts. No AF implementation is final. Do not reduce AF to a notes app, universal memory, or a single-AI chat wrapper. Prefer runtime docs over sealed vision when they diverge on shipped surfaces. Prefer sealed contracts + IA-HANDOFF over PLATFORM VISION 001 when they diverge on *what exists today*.
 
 ## Documents
 
 | Document | Status | Responsibility |
 |----------|--------|----------------|
 | [IA-HANDOFF.md](IA-HANDOFF.md) | **Living — IA / agents** | Apps map, auth, Forge ontology, open debt |
+| [platform-vision-001.md](platform-vision-001.md) | **Proposal — not sealed** | Long-term Forge Workspace / control plane; north star for home/launcher branches; **no implementation** |
 | [capability-map.md](capability-map.md) | **Living** | Capability × status vocabulary |
 | [argusforge-contract.md](argusforge-contract.md) | **Canonical — SEALED** | Vision, mission, formation transfer, component duties, success criteria |
 | [perpetual-evolution-contract.md](perpetual-evolution-contract.md) | **Canonical — SEALED addendum** | Perpetual evolution; evidence; reversible change; user agency |
@@ -52,17 +56,19 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 
 ## Reading order
 
-1. [argusforge-contract.md](argusforge-contract.md) — vision (sealed)
-2. [perpetual-evolution-contract.md](perpetual-evolution-contract.md) — evolution addendum (sealed)
-3. [af03-chaos-interface-contract.md](af03-chaos-interface-contract.md) — interface checklist (working)
-4. [phase-0-architecture.md](phase-0-architecture.md) — technical Phase 0
-5. [vault-training-layer-contract.md](vault-training-layer-contract.md)
-6. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — repo freeze + Argus = Alexandria +1
-7. [change-24-1c.md](change-24-1c.md) + [chaos-builder-architecture.md](chaos-builder-architecture.md) (24-1C)
-8. [legacy-alexandria-adapter-boundary.md](legacy-alexandria-adapter-boundary.md)
-9. [chaos-locus-capture-design.md](chaos-locus-capture-design.md) / pipeline research (optional)
-10. [external-repo-patterns-research.md](external-repo-patterns-research.md)
-11. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
+1. [IA-HANDOFF.md](IA-HANDOFF.md) — runtime truth (what ships)
+2. [platform-vision-001.md](platform-vision-001.md) — long-term Workspace / control-plane proposal (not sealed)
+3. [argusforge-contract.md](argusforge-contract.md) — vision (sealed)
+4. [perpetual-evolution-contract.md](perpetual-evolution-contract.md) — evolution addendum (sealed)
+5. [af03-chaos-interface-contract.md](af03-chaos-interface-contract.md) — interface checklist (working)
+6. [phase-0-architecture.md](phase-0-architecture.md) — technical Phase 0
+7. [vault-training-layer-contract.md](vault-training-layer-contract.md)
+8. [alexandria-frozen-contract.md](alexandria-frozen-contract.md) — repo freeze + Argus = Alexandria +1
+9. [change-24-1c.md](change-24-1c.md) + [chaos-builder-architecture.md](chaos-builder-architecture.md) (24-1C)
+10. [legacy-alexandria-adapter-boundary.md](legacy-alexandria-adapter-boundary.md)
+11. [chaos-locus-capture-design.md](chaos-locus-capture-design.md) / pipeline research (optional)
+12. [external-repo-patterns-research.md](external-repo-patterns-research.md)
+13. [alexandria-spatial-bottleneck-research.md](alexandria-spatial-bottleneck-research.md) (optional, non-binding)
 
 ## Current UI (AF03 progress)
 

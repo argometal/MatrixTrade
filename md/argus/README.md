@@ -192,6 +192,7 @@ Source: [`lib/argus/v2/hierarchy.ts`](../../lib/argus/v2/hierarchy.ts)
 | [DEPRECATED-HANDOFFS.md](DEPRECATED-HANDOFFS.md) | **Start here before any old `*handoff*`** |
 | [../integrations/argus-chatgpt-handoff.md](../integrations/argus-chatgpt-handoff.md) | External AI (v2-first) |
 | [../argusforge/IA-HANDOFF.md](../argusforge/IA-HANDOFF.md) | Apps · ARGUS · ArgusForge runtime |
+| [../argusforge/platform-vision-001.md](../argusforge/platform-vision-001.md) | Forge Workspace / control-plane proposal (library only) |
 | [email-intake-e2e.md](email-intake-e2e.md) | Email pipeline |
 | [phase-0-1-stabilization-audit.md](phase-0-1-stabilization-audit.md) | Stabilization |
 | [phase-1-gate.md](phase-1-gate.md) | Gate criteria |
