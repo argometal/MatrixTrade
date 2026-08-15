@@ -14,7 +14,7 @@ export function TradesViewSwitch() {
         href="/trades"
         className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
       >
-        Trades histórico
+        Trades history
       </Link>
     </div>
   );
