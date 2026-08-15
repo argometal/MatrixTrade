@@ -18,7 +18,6 @@ import { resolveBubblePositions } from "@/lib/argus/v2/intelligence-viz";
 import { SIGNAL_TAGS } from "@/lib/argus/ux-copy";
 import {
   filterIntelligenceTags,
-  INTELLIGENCE_DEFAULT_FILTER,
   type IntelligenceUniverseFilter,
 } from "@/lib/argus/v2/intelligence-filters";
 import { V2HomeNeighborhoodViewer } from "./V2HomeNeighborhoodViewer";
@@ -128,13 +127,14 @@ export function V2FocusTagPortfolio({
   onFilterChange?: (next: IntelligenceUniverseFilter) => void;
 }) {
   const router = useRouter();
-  const [localFilter, setLocalFilter] = useState<IntelligenceUniverseFilter>(INTELLIGENCE_DEFAULT_FILTER);
+  const [localFilter, setLocalFilter] = useState<IntelligenceUniverseFilter>("all");
   const filter = filterProp ?? localFilter;
   const setFilter = onFilterChange ?? setLocalFilter;
   const filterControlled = filterProp != null && onFilterChange != null;
   const [roleFilter, setRoleFilter] = useState<V2TagRoleFilter>("all");
   const [query, setQuery] = useState("");
   const [selectedName, setSelectedName] = useState<string | null>(null);
+  const [hoveredName, setHoveredName] = useState<string | null>(null);
   const [focusTags, setFocusTags] = useState(initialFocusTags);
   const [pendingTag, setPendingTag] = useState<string | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -209,8 +209,7 @@ export function V2FocusTagPortfolio({
   }, [selectedName, evidenceByTag]);
 
   const plotLayout = useMemo(() => {
-    // Dot plot (Linear / Obsidian-style): small marks so tag names stay readable.
-    // Axes still encode recurrence × recency; evidence volume is a faint size hint only.
+    // Dot plot: axes encode recurrence × recency. Labels only on hover/select to avoid pile-up.
     const plot = visible.slice(0, 64);
     if (plot.length === 0) return [];
     const maxEvidence = Math.max(...plot.map((r) => Math.max(r.count, 1)), 1);
@@ -219,19 +218,44 @@ export function V2FocusTagPortfolio({
       id: row.name,
       x: 10 + row.recurrenceScore * 86,
       y: 88 - row.recencyScore * 76,
-      // Tiny dots (~1.05–1.55 viewBox units) — not Gapminder bubbles.
-      r: 1.05 + Math.sqrt(Math.max(row.count, 1) / maxEvidence) * 0.5,
+      r: 1.15 + Math.sqrt(Math.max(row.count, 1) / maxEvidence) * 0.55,
     }));
     const resolved = resolveBubblePositions(
       raw,
       { minX: 10, maxX: 96, minY: 12, maxY: 86 },
-      { iterations: 12, padding: 1.8, jitter: 0.9 }
+      { iterations: 18, padding: 2.4, jitter: 1.1 }
     );
     return resolved
       .map((p) => ({ point: p, row: byName.get(p.id)! }))
       .filter((x) => x.row)
       .sort((a, b) => a.point.r - b.point.r);
   }, [visible]);
+
+  const topByRecurrence = useMemo(
+    () =>
+      [...visible]
+        .sort(
+          (a, b) =>
+            b.recurrence30d - a.recurrence30d ||
+            b.recurrenceScore - a.recurrenceScore ||
+            a.name.localeCompare(b.name)
+        )
+        .slice(0, 8),
+    [visible]
+  );
+
+  const topByRecency = useMemo(
+    () =>
+      [...visible]
+        .sort(
+          (a, b) =>
+            b.recencyScore - a.recencyScore ||
+            b.recurrence30d - a.recurrence30d ||
+            a.name.localeCompare(b.name)
+        )
+        .slice(0, 8),
+    [visible]
+  );
 
   function selectTag(name: string) {
     setSelectedName((current) => (current === name ? null : name));
@@ -401,6 +425,7 @@ export function V2FocusTagPortfolio({
             <V2IntelligenceUniverseFilters
               filter={filter}
               onChange={setFilter}
+              surface="tags"
               ariaLabel="Filter Tags universe"
             />
           </div>
@@ -428,7 +453,7 @@ export function V2FocusTagPortfolio({
             viewBox="0 0 100 100"
             className="w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60 min-h-[min(640px,72vh)] h-[min(640px,72vh)]"
             role="img"
-            aria-label="Tag universe — small dots by recency × recurrence; click a tag name or dot to explore or Flag as Tracker."
+            aria-label="Tag universe — dots by recurrence × recency; hover for name, click to select and rename"
           >
             <text x="50" y="97" textAnchor="middle" fill="rgb(113, 113, 122)" fontSize="2.8">
               Recurrence (30d) →
@@ -465,8 +490,10 @@ export function V2FocusTagPortfolio({
             ))}
             {plotLayout.map(({ point, row }) => {
               const isSelected = selectedName === row.name;
-              const dotR = isSelected ? point.r + 0.35 : point.r;
-              const label = row.name.length > 16 ? `${row.name.slice(0, 14)}…` : row.name;
+              const isHovered = hoveredName === row.name;
+              const showLabel = isSelected || isHovered;
+              const dotR = isSelected || isHovered ? point.r + 0.4 : point.r;
+              const label = row.name.length > 18 ? `${row.name.slice(0, 16)}…` : row.name;
               return (
                 <g
                   key={row.name}
@@ -476,6 +503,10 @@ export function V2FocusTagPortfolio({
                   aria-label={`${row.name}${row.isFocus ? ", Tracker" : ""}${row.isPattern ? ", Pattern" : ""}`}
                   aria-pressed={isSelected}
                   onClick={() => selectTag(row.name)}
+                  onMouseEnter={() => setHoveredName(row.name)}
+                  onMouseLeave={() => setHoveredName((current) => (current === row.name ? null : current))}
+                  onFocus={() => setHoveredName(row.name)}
+                  onBlur={() => setHoveredName((current) => (current === row.name ? null : current))}
                   onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
@@ -483,8 +514,7 @@ export function V2FocusTagPortfolio({
                     }
                   }}
                 >
-                  {/* Invisible hit target — dots stay small, taps stay usable (map-pin pattern). */}
-                  <circle cx={point.x} cy={point.y} r={3.4} fill="transparent" />
+                  <circle cx={point.x} cy={point.y} r={3.6} fill="transparent" />
                   {row.isFocus ? (
                     <circle
                       cx={point.x}
@@ -504,7 +534,7 @@ export function V2FocusTagPortfolio({
                     cy={point.y}
                     r={dotR}
                     fill={row.isFocus ? "rgb(244, 63, 94)" : "rgb(167, 139, 250)"}
-                    fillOpacity={isSelected || row.isFocus ? 0.98 : 0.88}
+                    fillOpacity={isSelected || isHovered || row.isFocus ? 0.98 : 0.82}
                     stroke={
                       isSelected
                         ? "rgb(255, 255, 255)"
@@ -517,28 +547,36 @@ export function V2FocusTagPortfolio({
                     strokeWidth={isSelected ? 0.55 : row.isFocus || row.isPattern ? 0.45 : 0.3}
                     className="transition hover:brightness-125"
                   />
-                  <text
-                    x={point.x}
-                    y={point.y + dotR + 2.35}
-                    textAnchor="middle"
-                    fill={
-                      isSelected
-                        ? "rgb(244, 244, 245)"
-                        : row.isFocus
-                          ? "rgb(254, 205, 211)"
-                          : "rgb(212, 212, 216)"
-                    }
-                    fontSize={isSelected || row.isFocus ? 2.45 : 2.15}
-                    fontWeight={isSelected || row.isFocus ? 600 : 500}
-                    pointerEvents="none"
-                  >
-                    {row.isFocus ? `⚑ ${label}` : label}
-                  </text>
+                  {showLabel ? (
+                    <g className="pointer-events-none">
+                      <rect
+                        x={point.x - Math.min(22, label.length * 1.15 + 2) / 2}
+                        y={point.y - dotR - 5.2}
+                        width={Math.min(22, label.length * 1.15 + 2)}
+                        height={3.6}
+                        rx={0.7}
+                        fill="rgba(9, 9, 11, 0.92)"
+                        stroke="rgba(113, 113, 122, 0.55)"
+                        strokeWidth={0.2}
+                      />
+                      <text
+                        x={point.x}
+                        y={point.y - dotR - 2.55}
+                        textAnchor="middle"
+                        fill="rgb(244, 244, 245)"
+                        fontSize={2.35}
+                        fontWeight={600}
+                      >
+                        {row.isFocus ? `⚑ ${label}` : label}
+                      </text>
+                    </g>
+                  ) : null}
                   <title>
                     {row.name}
                     {row.isFocus ? " · Tracker" : ""}
                     {row.isPattern ? " · Pattern" : ""}
-                    {" — click to explore; Flag below if not a tracker yet"}
+                    {` · recurrence ${row.recurrence30d}/30d · recency ${Math.round(row.recencyScore * 100)}%`}
+                    {" — click to select / rename"}
                   </title>
                 </g>
               );
@@ -550,10 +588,69 @@ export function V2FocusTagPortfolio({
             {visible.length} tag{visible.length === 1 ? "" : "s"} in this filter
             {rows.length !== visible.length ? ` · ${rows.length} in full universe` : ""}
             {visible.length > 64 ? " · plot shows top 64 by score" : ""}
-            {" · small dots (labels always on)"}
+            {" · hover for name (labels off by default)"}
           </p>
           <V2IntelHelpLink topic="tags-universe" label="Tags legend" />
         </div>
+
+        {visible.length > 0 ? (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                Top by recurrence (30d)
+              </p>
+              <ul className="mt-2 space-y-1" aria-label="Tags ranked by recurrence">
+                {topByRecurrence.map((row) => (
+                  <li key={`rec-${row.name}`}>
+                    <button
+                      type="button"
+                      onClick={() => selectTag(row.name)}
+                      className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1 text-left text-[12px] ${
+                        selectedName === row.name
+                          ? "bg-violet-500/15 text-violet-100"
+                          : "text-zinc-300 hover:bg-zinc-900/80"
+                      }`}
+                    >
+                      <span className="min-w-0 truncate">
+                        {row.isFocus ? "⚑ " : ""}
+                        {row.name}
+                      </span>
+                      <span className="shrink-0 tabular-nums text-zinc-500">{row.recurrence30d}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                Top by recency
+              </p>
+              <ul className="mt-2 space-y-1" aria-label="Tags ranked by recency">
+                {topByRecency.map((row) => (
+                  <li key={`recy-${row.name}`}>
+                    <button
+                      type="button"
+                      onClick={() => selectTag(row.name)}
+                      className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-1 text-left text-[12px] ${
+                        selectedName === row.name
+                          ? "bg-violet-500/15 text-violet-100"
+                          : "text-zinc-300 hover:bg-zinc-900/80"
+                      }`}
+                    >
+                      <span className="min-w-0 truncate">
+                        {row.isFocus ? "⚑ " : ""}
+                        {row.name}
+                      </span>
+                      <span className="shrink-0 tabular-nums text-zinc-500">
+                        {Math.round(row.recencyScore * 100)}%
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Priority 2–3 — Selection: Flag control + evidence + neighborhood */}
@@ -562,7 +659,8 @@ export function V2FocusTagPortfolio({
           <div className="rounded-xl border border-dashed border-zinc-800/90 bg-zinc-950/40 px-4 py-6 text-center">
             <p className="text-sm font-medium text-zinc-400">Select a tag in the Universe</p>
             <p className="mt-1 text-xs text-zinc-600">
-              Plot shows the densest tags; the list below is the full filtered inventory.
+              Plot = recurrence × recency (hover for name). Lists below separate the two rankings. Select a
+              tag to Rename or Flag.
             </p>
           </div>
           {visible.length > 0 ? (
@@ -604,9 +702,38 @@ export function V2FocusTagPortfolio({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-400/90">
-                Tags · Tracker control
+                Selected tag
               </p>
-              <h3 className="mt-0.5 text-lg font-semibold text-zinc-50">{selected.name}</h3>
+              <div className="mt-0.5 flex flex-wrap items-center gap-2">
+                <h3 className="text-lg font-semibold text-zinc-50">{selected.name}</h3>
+                <button
+                  type="button"
+                  onClick={openRename}
+                  disabled={renameBusy || focusBusy}
+                  className="rounded-md border border-violet-500/40 bg-violet-950/30 px-2 py-0.5 text-[11px] font-semibold text-violet-200 hover:border-violet-400/60 hover:text-violet-100 disabled:opacity-40"
+                  title={`Rename ${selected.name} everywhere (Notes, binders, Trackers)`}
+                >
+                  ✎ Rename
+                </button>
+              </div>
+              <div className="mt-2 grid max-w-sm grid-cols-2 gap-2">
+                <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-2.5 py-2">
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-zinc-600">
+                    Recurrence (30d)
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-zinc-100">
+                    {selected.recurrence30d}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-2.5 py-2">
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-zinc-600">
+                    Recency
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-zinc-100">
+                    {Math.round(selected.recencyScore * 100)}%
+                  </p>
+                </div>
+              </div>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {(selected.roles ?? []).map((role) => (
                   <span
@@ -646,10 +773,10 @@ export function V2FocusTagPortfolio({
                 type="button"
                 onClick={openRename}
                 disabled={renameBusy || focusBusy}
-                className="rounded-lg border border-zinc-700 px-3 py-1.5 text-[11px] font-semibold text-zinc-300 hover:border-violet-500/40 hover:text-violet-200 disabled:opacity-40"
+                className="rounded-lg border border-violet-500/45 bg-violet-600/20 px-3 py-1.5 text-[11px] font-semibold text-violet-100 hover:bg-violet-600/30 disabled:opacity-40"
                 title={`Rename ${selected.name} everywhere (Notes, binders, Trackers)`}
               >
-                Rename
+                Rename tag
               </button>
               <button
                 type="button"

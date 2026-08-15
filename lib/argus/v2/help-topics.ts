@@ -102,7 +102,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Universe filters",
-        body: "Toolbar dropdown: Universe · Hot · Patterns · Stale · Trackers — same filters as Portfolio and Tags.",
+        body: "Toolbar: Universe · Hot · Patterns · Stale · Trackers. Hot is Treemap-only — Portfolio and Tags stay on Universe.",
       },
     ],
     tip: "Tap ? on any canvas for this explanation. Help index has every topic.",
@@ -128,7 +128,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Universe filters",
-        body: "Same toolbar dropdown as Treemap / Tags (Universe · Hot · Patterns · Stale · Trackers).",
+        body: "Universe · Patterns · Stale · Trackers (no Hot — Hot is Treemap-only). Default is full Universe.",
       },
     ],
   },
@@ -136,16 +136,16 @@ const SECTIONS: HelpSection[] = [
     id: "tags-universe",
     title: "Intelligence · Tags",
     group: "intelligence",
-    keywords: ["tags", "universe", "trackers", "flag", "gold", "pattern", "home"],
-    intro: "Home → Intelligence → Tags. Tag universe control center — inventory + Flag Trackers.",
+    keywords: ["tags", "universe", "trackers", "flag", "gold", "pattern", "home", "rename"],
+    intro: "Home → Intelligence → Tags. Tag universe control center — inventory + Flag Trackers + Rename.",
     items: [
       {
         title: "Universe plot",
-        body: "Small dots on recency × recurrence axes (not large bubbles). Tag names stay visible under each mark. Click a dot or label to inspect evidence and binders.",
+        body: "Dots on recurrence (X) × recency (Y). Names appear on hover/select only so marks do not pile up. Ranked lists under the plot separate Top by recurrence vs Top by recency.",
       },
       {
         title: "Tracker vs Pattern marks",
-        body: "⚑ on the label + thin amber ring = Tracker (you Flagged watch-on). Gold stroke on an unflagged tag = Pattern (system-derived recurrence). Dot size is only a faint evidence hint.",
+        body: "Amber dashed ring = Tracker. Gold stroke on an unflagged tag = Pattern. Dot size is only a faint evidence hint.",
       },
       {
         title: "Flag / Disable",
@@ -153,11 +153,11 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Rename",
-        body: "Select a tag → Rename. Updates the string everywhere (Notes, binders, Trackers). Not the same as Flag/Disable.",
+        body: "Select a tag → Rename tag (or ✎ Rename beside the title). Updates the string everywhere (Notes, binders, Trackers). Not the same as Flag/Disable.",
       },
       {
         title: "Filters",
-        body: "Universe · Hot (30d) · Patterns · Stale (had evidence, none in 90d) · Trackers — shared with Treemap / Portfolio.",
+        body: "Universe · Patterns · Stale · Trackers. Default Universe. Hot is Treemap-only.",
       },
     ],
   },
