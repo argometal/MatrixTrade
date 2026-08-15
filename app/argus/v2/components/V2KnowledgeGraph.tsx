@@ -32,28 +32,37 @@ const SIZE_CONFIG: Record<
   GraphDisplaySize,
   { heightClass: string; nodeBase: number; nodeScale: number; fontSize: number; labelOffset: number }
 > = {
+  /** Dock / context rail — small icons; hover expands. */
   compact: {
     heightClass: "h-56",
-    nodeBase: 3.5,
-    nodeScale: 1.8,
-    fontSize: 2.2,
-    labelOffset: 7,
+    nodeBase: 2.1,
+    nodeScale: 0.9,
+    fontSize: 1.7,
+    labelOffset: 4.5,
   },
+  /** Inline local neighborhood — still compact; spacing carries hierarchy. */
   full: {
-    heightClass: "min-h-[min(560px,65vh)] h-[min(560px,65vh)]",
-    nodeBase: 5.5,
-    nodeScale: 2.5,
-    fontSize: 3.4,
-    labelOffset: 9,
+    heightClass: "min-h-[min(480px,55vh)] h-[min(480px,55vh)]",
+    nodeBase: 2.4,
+    nodeScale: 1.0,
+    fontSize: 1.9,
+    labelOffset: 5,
   },
+  /**
+   * Large view — more canvas, NOT bigger icons (context dock separation is clearer).
+   * Same small node language as full; hover still expands the icon.
+   */
   expanded: {
     heightClass: "min-h-0 flex-1 w-full",
-    nodeBase: 7.5,
-    nodeScale: 3,
-    fontSize: 4.2,
-    labelOffset: 11,
+    nodeBase: 2.6,
+    nodeScale: 1.1,
+    fontSize: 2.1,
+    labelOffset: 5.5,
   },
 };
+
+/** Hover grows the icon; default stays small so degree spacing stays readable. */
+const HOVER_SCALE = 1.55;
 
 /** Direct neighbors of focusId within the given edge set (ego view). Radial re-layout. */
 export function buildEgoNeighborhood(
@@ -225,23 +234,24 @@ function GraphCanvas({
 
       {nodes.map((node) => {
         const r =
-          (centerId === node.id ? cfg.nodeBase * 1.15 : cfg.nodeBase) +
+          (centerId === node.id ? cfg.nodeBase * 1.12 : cfg.nodeBase) +
           Math.sqrt(node.evidenceCount / maxEvidence) * cfg.nodeScale;
         const isCenter = centerId === node.id;
         const isHovered = hoveredId === node.id;
+        const drawR = isHovered ? r * HOVER_SCALE : r;
         const isConnected = connectedToHover.has(node.id);
         const outOfEmphasize =
           Boolean(emphasizeIds && emphasizeIds.size > 0 && !emphasizeIds.has(node.id));
         const dimmed = (hoveredId && !isHovered && !isConnected) || outOfEmphasize;
         const isFocusCritical = Boolean(node.focusCritical);
+        const labelMax = isHovered ? 20 : displaySize === "compact" ? 10 : 14;
         const label =
-          node.name.length > (displaySize === "expanded" ? 18 : 14)
-            ? `${node.name.slice(0, displaySize === "expanded" ? 16 : 12)}…`
-            : node.name;
+          node.name.length > labelMax ? `${node.name.slice(0, labelMax - 1)}…` : node.name;
         const focusLabel =
           node.focusTags && node.focusTags.length > 0
             ? ` · Tracker: ${node.focusTags.map((t) => `#${t}`).join(", ")}`
             : "";
+        const showDetailLabel = isHovered || isCenter || displaySize === "expanded";
 
         return (
           <g
@@ -264,11 +274,11 @@ function GraphCanvas({
                   <circle
                     cx={node.x}
                     cy={node.y}
-                    r={(isHovered ? r * 1.15 : r) + 2.8}
+                    r={drawR + 2.2}
                     fill="none"
                     stroke="rgb(251, 191, 36)"
                     strokeOpacity={0.9}
-                    strokeWidth={0.55}
+                    strokeWidth={0.45}
                     strokeDasharray="1.1 0.85"
                     className="pointer-events-none"
                     aria-hidden
@@ -276,11 +286,11 @@ function GraphCanvas({
                   <circle
                     cx={node.x}
                     cy={node.y}
-                    r={(isHovered ? r * 1.15 : r) + 1.6}
+                    r={drawR + 1.2}
                     fill="none"
                     stroke="rgb(244, 63, 94)"
                     strokeOpacity={0.9}
-                    strokeWidth={0.65}
+                    strokeWidth={0.5}
                     className="pointer-events-none"
                     aria-hidden
                   />
@@ -289,9 +299,9 @@ function GraphCanvas({
               <circle
                 cx={node.x}
                 cy={node.y}
-                r={isHovered ? r * 1.15 : r}
+                r={drawR}
                 fill={NODE_COLORS[node.kind]}
-                fillOpacity={isHovered || isCenter ? 0.95 : 0.75}
+                fillOpacity={isHovered || isCenter ? 0.95 : 0.72}
                 stroke={
                   isCenter
                     ? "rgb(251, 191, 36)"
@@ -301,8 +311,9 @@ function GraphCanvas({
                         ? "rgb(216, 180, 254)"
                         : "rgb(9, 9, 11)"
                 }
-                strokeWidth={isCenter || isFocusCritical ? 1 : isHovered ? 0.8 : 0.4}
-                className="cursor-pointer transition-all duration-150"
+                strokeWidth={isCenter || isFocusCritical ? 0.85 : isHovered ? 0.7 : 0.35}
+                className="cursor-pointer"
+                style={{ transition: "r 120ms ease, fill-opacity 120ms ease" }}
               />
               <title>
                 {node.name} ({KIND_LABELS[node.kind]}) — {node.evidenceCount} evidence
@@ -312,22 +323,22 @@ function GraphCanvas({
             </a>
             <text
               x={node.x}
-              y={node.y + cfg.labelOffset}
+              y={node.y + (isHovered ? cfg.labelOffset + 1.5 : cfg.labelOffset)}
               textAnchor="middle"
               fill={isHovered ? "rgb(244, 244, 245)" : "rgb(161, 161, 170)"}
-              fontSize={cfg.fontSize}
+              fontSize={isHovered ? cfg.fontSize * 1.25 : cfg.fontSize}
               fontWeight={isHovered ? 600 : 500}
               pointerEvents="none"
             >
               {label}
             </text>
-            {displaySize !== "compact" ? (
+            {showDetailLabel ? (
               <text
                 x={node.x}
-                y={node.y + cfg.labelOffset + cfg.fontSize * 0.9}
+                y={node.y + cfg.labelOffset + cfg.fontSize * (isHovered ? 1.35 : 0.95)}
                 textAnchor="middle"
                 fill="rgb(113, 113, 122)"
-                fontSize={cfg.fontSize * 0.65}
+                fontSize={cfg.fontSize * 0.7}
                 pointerEvents="none"
               >
                 {node.evidenceCount} evidence
@@ -535,9 +546,9 @@ export function V2KnowledgeGraph({
 
   const expandHint = focusId
     ? layoutMode === "molecule"
-      ? "Microscope — selected + 1-hop emphasized; world positions kept. Esc or Back."
-      : "Ego view — direct neighbors only. Esc or Back to return."
-    : "Click node to focus · ⌘/Ctrl+click to open";
+      ? "Focused neighbors stay in place; others fade. Esc or Back."
+      : "Direct neighbors only — spaced by link count. Esc or Back."
+    : "Small icons · hover to enlarge · farther nodes have more links";
 
   return (
     <>
@@ -551,7 +562,7 @@ export function V2KnowledgeGraph({
                       ? focusedView.emphasizeIds.size
                       : focusedView.nodes.length
                   })`
-                : `${focusedView.nodes.length} nodes`}
+                : `${focusedView.nodes.length} nodes · 1–2 links near · 3 farther · 4+ outer`}
             </p>
             <div className="flex flex-wrap items-center gap-2">
               {layoutToggle}
@@ -562,7 +573,7 @@ export function V2KnowledgeGraph({
                 onClick={() => setExpanded(true)}
                 className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 transition hover:bg-violet-600/25"
               >
-                Expand
+                Large view
               </button>
             </div>
           </div>
@@ -594,14 +605,18 @@ export function V2KnowledgeGraph({
           className="fixed inset-0 z-50 flex flex-col bg-zinc-950/98 p-4 backdrop-blur-sm sm:p-6"
           role="dialog"
           aria-modal="true"
-          aria-label="Expanded relationship graph"
+          aria-label="Neighborhood large view"
         >
-          <div className="mb-4 flex shrink-0 flex-wrap items-center justify-between gap-3">
-            <div>
+          <div className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
               <h3 className="text-sm font-semibold text-zinc-100">
-                {focusId ? `Neighbors of ${focusNode?.name ?? "node"}` : "Relationship graph"}
+                {focusId
+                  ? `Local neighborhood · ${focusNode?.name ?? "node"}`
+                  : "Local neighborhood"}
               </h3>
-              <p className="mt-0.5 text-xs text-zinc-500">{expandHint}</p>
+              <p className="mt-0.5 text-xs text-zinc-500">
+                {expandHint} · Context (parent frame) stays in the side rail — this view stays local.
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {layoutToggle}
@@ -614,6 +629,20 @@ export function V2KnowledgeGraph({
                 Close
               </button>
             </div>
+          </div>
+          <div className="mb-3 flex shrink-0 flex-wrap gap-3 text-[11px] text-zinc-500">
+            <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1">
+              1–2 links · near
+            </span>
+            <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1">
+              3 links · mid
+            </span>
+            <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1">
+              4+ links · outer
+            </span>
+            <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1">
+              Hover icon to enlarge
+            </span>
           </div>
           <div className="flex min-h-0 flex-1 flex-col rounded-2xl border border-zinc-800/80 bg-zinc-900/40 p-3">
             <GraphCanvas

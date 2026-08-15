@@ -1,11 +1,12 @@
 /**
- * Molecule + Radial — high-degree hubs get longer links.
+ * Molecule + Radial — degree buckets: 1–2 → 1x, 3 → 2x, 4+ → 3x.
  */
 import assert from "node:assert/strict";
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import type { V2GraphEdge, V2GraphNode } from "../lib/argus/v2/intelligence-viz";
 import {
+  degreeDistanceMultiplier,
   degreeLinkLengthExtra,
   layoutNeighborhoodGraphNodes,
   neighborhoodDegreeMap,
@@ -24,15 +25,21 @@ assert.equal(moleculeLinkDistance(0.5), 40);
 assert.ok(moleculeLinkStrength(2) > moleculeLinkStrength(1));
 assert.ok(moleculeLinkStrength(1) > moleculeLinkStrength(0.5));
 
+assert.equal(degreeDistanceMultiplier(1), 1);
+assert.equal(degreeDistanceMultiplier(2), 1);
+assert.equal(degreeDistanceMultiplier(3), 2);
+assert.equal(degreeDistanceMultiplier(4), 3);
+assert.equal(degreeDistanceMultiplier(12), 3);
 assert.equal(degreeLinkLengthExtra(1, 1), 0);
-assert.ok(degreeLinkLengthExtra(8, 1) > degreeLinkLengthExtra(3, 1));
+assert.equal(degreeLinkLengthExtra(3, 1), 14);
+assert.equal(degreeLinkLengthExtra(4, 1), 28);
+
+assert.equal(moleculeLinkDistanceForDegrees(2, 1, 1), 18, "1–2 links → single distance");
+assert.equal(moleculeLinkDistanceForDegrees(2, 3, 1), 36, "3 links → double distance");
+assert.equal(moleculeLinkDistanceForDegrees(2, 4, 1), 54, "4+ links → triple distance");
 assert.ok(
-  moleculeLinkDistanceForDegrees(2, 8, 1) > moleculeLinkDistanceForDegrees(2, 2, 1),
+  moleculeLinkDistanceForDegrees(2, 4, 1) > moleculeLinkDistanceForDegrees(2, 2, 1),
   "higher degree → longer preferred distance"
-);
-assert.ok(
-  moleculeLinkDistanceForDegrees(2, 8, 1) > moleculeLinkDistance(2),
-  "hub-linked edges are longer than weight-only base"
 );
 
 function denseNeighborhood(): { nodes: V2GraphNode[]; edges: V2GraphEdge[]; centerId: string } {
@@ -192,6 +199,15 @@ const xs = new Set(molecule.map((n) => Math.round(n.x * 10)));
 const ys = new Set(molecule.map((n) => Math.round(n.y * 10)));
 assert.ok(xs.size >= 5, "molecule spreads X");
 assert.ok(ys.size >= 5, "molecule spreads Y");
+
+const graphUi = require("node:fs").readFileSync(
+  require("node:path").join(process.cwd(), "app/argus/v2/components/V2KnowledgeGraph.tsx"),
+  "utf8"
+);
+assert.match(graphUi, /HOVER_SCALE = 1\.55/, "icons enlarge on hover");
+assert.match(graphUi, /Large view/, "expand is a large local view, not giant icons");
+assert.match(graphUi, /nodeBase: 2\.[0-9]/, "default icons stay small");
+assert.doesNotMatch(graphUi, /nodeBase: 7\.5/, "expanded view no longer uses huge nodeBase");
 
 const ego = buildEgoNeighborhoodPreservePositions(molecule, edges, "xom");
 assert.ok(ego.nodes.some((n) => n.id === "xom"));

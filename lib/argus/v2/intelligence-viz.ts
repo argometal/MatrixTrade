@@ -764,17 +764,27 @@ export function neighborhoodDegreeMap(edges: V2GraphEdge[]): Map<string, number>
 }
 
 /**
- * Extra length when either endpoint is a busy hub (many links).
- * Rule: links touching high-degree nodes should be longer — proportional to degree.
+ * Link-distance multiplier from endpoint degree (busy hubs sit farther out).
+ * 1–2 links → single · 3 links → double · 4+ links → triple.
+ */
+export function degreeDistanceMultiplier(degree: number): number {
+  if (degree <= 2) return 1;
+  if (degree === 3) return 2;
+  return 3;
+}
+
+/**
+ * Extra length beyond a single unit — kept for callers that add onto a base radius.
+ * Prefer `degreeDistanceMultiplier` for new layout math.
  */
 export function degreeLinkLengthExtra(degreeA: number, degreeB: number): number {
   const hub = Math.max(degreeA, degreeB);
-  if (hub <= 1) return 0;
-  // deg2→4, deg4→12, deg8→28, deg12→40 (cap)
-  return Math.min(40, (hub - 1) * 4);
+  const mult = degreeDistanceMultiplier(hub);
+  // Unit ≈ 14 → extras: 1x→0, 2x→14, 3x→28
+  return (mult - 1) * 14;
 }
 
-/** Radial layout — center entity in the middle, neighbors on a ring (or dual ring when crowded). */
+/** Radial layout — center entity in the middle; spoke length scales by link degree. */
 export function layoutNeighborhoodGraphNodes(
   nodes: V2GraphNode[],
   centerId: string,
@@ -790,20 +800,19 @@ export function layoutNeighborhoodGraphNodes(
   if (center) laidOut.push({ ...center, x: 50, y: 50 });
 
   const n = neighbors.length;
+  /** Single-distance unit in viewBox coords — 1x / 2x / 3x by degree. */
+  const UNIT = 15;
   neighbors.forEach((node, index) => {
     const angle = (index / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2;
-    // Ego views with few nodes get more breathing room; crowded sets use inner+outer rings.
-    let radius = 34;
-    if (n <= 3) radius = 28;
-    else if (n <= 6) radius = 32;
-    else if (n <= 10) radius = 36;
-    else {
-      radius = index % 2 === 0 ? 30 : 42;
-    }
-    // Longer spokes for busy hubs (center and/or highly linked neighbor).
-    if (hasEdges) {
-      const neighborDeg = degrees.get(node.id) ?? 1;
-      radius = Math.min(52, radius + degreeLinkLengthExtra(centerDeg, neighborDeg) * 0.75);
+    const neighborDeg = hasEdges ? (degrees.get(node.id) ?? 1) : 1;
+    const hubDeg = hasEdges ? Math.max(centerDeg, neighborDeg) : 1;
+    const mult = degreeDistanceMultiplier(hubDeg);
+    let radius = UNIT * mult;
+    // Crowded ego: alternate slightly so same-ring nodes do not stack.
+    if (n > 8) {
+      radius = Math.min(52, radius + (index % 2 === 0 ? -1.5 : 1.5));
+    } else {
+      radius = Math.min(52, radius);
     }
     laidOut.push({
       ...node,

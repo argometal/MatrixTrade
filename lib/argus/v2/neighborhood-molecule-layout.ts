@@ -19,7 +19,7 @@ import {
 } from "d3-force-3d";
 import type { V2GraphEdge, V2GraphNode } from "./intelligence-viz";
 import {
-  degreeLinkLengthExtra,
+  degreeDistanceMultiplier,
   layoutNeighborhoodGraphNodes,
   neighborhoodDegreeMap,
 } from "./intelligence-viz";
@@ -51,20 +51,18 @@ export function moleculeLinkDistance(weight: number): number {
 }
 
 /**
- * Preferred link length: degree is primary, weight is a small nudge.
- * More links on either end → longer spring rest length.
+ * Preferred link length: degree buckets are primary (1–2 → 1x, 3 → 2x, 4+ → 3x).
+ * Weight is only a small nudge so linked/co-mention/affinity stay slightly distinct.
  */
 export function moleculeLinkDistanceForDegrees(
   weight: number,
   degreeA: number,
   degreeB: number
 ): number {
-  const hub = Math.max(degreeA, degreeB);
-  const load = degreeA + degreeB;
-  // Proportional to link count: deg1+1→18, hub8 leaf→~52, hub12+12→cap 78
-  const degreeSpan = 14 + hub * 4 + Math.max(0, load - hub - 1) * 1.5;
-  const weightNudge = weight >= 2 ? 0 : weight >= 1 ? 4 : 8;
-  return Math.min(78, degreeSpan + weightNudge + degreeLinkLengthExtra(degreeA, degreeB) * 0.25);
+  const UNIT = 18;
+  const mult = degreeDistanceMultiplier(Math.max(degreeA, degreeB));
+  const weightNudge = weight >= 2 ? 0 : weight >= 1 ? 3 : 6;
+  return Math.min(78, UNIT * mult + weightNudge);
 }
 
 /** Link spring strength — soften on busy hubs so degree distance can win. */
@@ -81,9 +79,8 @@ export function moleculeLinkStrengthForDegrees(
 ): number {
   const base = moleculeLinkStrength(weight);
   const hub = Math.max(degreeA, degreeB);
-  if (hub >= 8) return base * 0.35;
-  if (hub >= 5) return base * 0.5;
-  if (hub >= 3) return base * 0.7;
+  if (hub >= 4) return base * 0.4;
+  if (hub === 3) return base * 0.65;
   return base;
 }
 
@@ -150,7 +147,7 @@ export function layoutNeighborhoodMoleculeNodes(
     .force("link", linkForce)
     // Stronger / longer-range charge so hubs push neighbors outward.
     .force("charge", forceManyBody<SimNode>().strength(-110).distanceMax(140))
-    .force("collide", forceCollide<SimNode>().radius(7).strength(0.9))
+    .force("collide", forceCollide<SimNode>().radius(4.5).strength(0.85))
     .force("center", forceCenter(50, 50, 0).strength(0.035))
     .force("x", forceX(50).strength(0.012))
     .force("y", forceY(50).strength(0.012))
