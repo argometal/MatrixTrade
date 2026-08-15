@@ -214,6 +214,8 @@ export default async function V2OrganizationPage({
             orgProjects={page.orgProjects}
             recentProjects={page.recentProjects}
             tagPatterns={page.tagPatterns}
+            directEvidenceTags={page.directEvidenceTags}
+            watchedHere={page.watchedHere}
             signalTags={data.signalTags ?? []}
             stats={page.stats}
             networkStatus={page.networkStatus}

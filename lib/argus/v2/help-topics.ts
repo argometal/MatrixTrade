@@ -293,13 +293,21 @@ const SECTIONS: HelpSection[] = [
     id: "org-tags",
     title: "Organization · Tags",
     group: "intelligence",
-    keywords: ["organization", "org", "tags", "patterns", "evidence", "neighborhood"],
+    keywords: ["organization", "org", "tags", "patterns", "evidence", "trackers", "watched"],
     intro:
-      "Organizations do not carry binder Tags. The Tags tab shows evidence and pattern Tags detected in this organization’s neighborhood.",
+      "Organizations do not carry binder Tags. This tab shows Tags on Notes/emails linked directly to this Organization, recurring Patterns from that same evidence, and which of those Tags are journal Trackers (passive ⚑ only).",
     items: [
       {
-        title: "Detected in scope",
-        body: "Signal / pattern Tags from Notes and linked activity under this Organization — Manage List rows, same orientation as Organizations browse List.",
+        title: "Tags in this Organization",
+        body: "Evidence Tags from Notes and emails linked directly to this Organization. Tags that exist only on linked Projects, Topics, or Events do not appear here.",
+      },
+      {
+        title: "Patterns",
+        body: "Recurring evidence Tags in that same direct scope (unchanged Pattern thresholds). A Tag can appear as both evidence and Pattern — the sections answer different questions.",
+      },
+      {
+        title: "Watched here",
+        body: "Intersection of journal Trackers (signalTags) with direct Organization evidence Tags. The Organization does not own Trackers; Flag/Disable stays on Go to Tags.",
       },
       {
         title: "No binder Tags",

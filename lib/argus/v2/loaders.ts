@@ -18,6 +18,10 @@ import {
   TAG_ROLES,
 } from "../tag-ontology";
 import { buildTagPatternsForScope } from "./tag-patterns";
+import {
+  directEvidenceTagsForEntity,
+  watchedTrackerTagsOnEntity,
+} from "./entity-watched";
 import { buildEvidenceMix } from "./evidence-mix";
 import { effectiveInboxStatus } from "./inbox-loaders";
 import { getLinkedInboxForEntity } from "../inbox-entity-links";
@@ -866,6 +870,20 @@ export function loadOrganizationPageData(
   }));
 
   const tagPatterns = buildTagPatternsForScope(scope.logs, scope.inbox, today);
+  // Direct org evidence Tags only — not linked Project/Topic/Event Tags.
+  const directEvidenceTags = directEvidenceTagsForEntity(
+    data,
+    inboxItems,
+    org.id,
+    includePrivate
+  );
+  // Org has no binder Tags; watchedHere === signalTags ∩ direct evidence.
+  const watchedHere = watchedTrackerTagsOnEntity(
+    data,
+    inboxItems,
+    org.id,
+    includePrivate
+  );
   // Structural Topic/Event chips — never evidence tagPatterns.
   const linkedTopics = linkedTopicRefs(data, nodeCounts.topicIds);
   const linkedEvents = linkedEventRefs(data, nodeCounts.eventIds);
@@ -893,6 +911,8 @@ export function loadOrganizationPageData(
     chartStartYear,
     chartEndYear,
     tagPatterns,
+    directEvidenceTags,
+    watchedHere,
     linkedTopics,
     linkedEvents,
     linkModalIds,
