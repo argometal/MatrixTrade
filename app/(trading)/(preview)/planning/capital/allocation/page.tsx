@@ -4,6 +4,7 @@ import { getCapitalAccountSnapshot } from "@/lib/capital-account";
 import { getActiveCapitalConfiguration } from "@/lib/capital-configuration";
 import { listCapitalReservations } from "@/lib/capital-reservation";
 import { getPlans } from "@/lib/plans";
+import { isWarReadyScoutPlan } from "@/lib/plan-helpers";
 import { resolvePlannedRRFromPlan } from "@/lib/plan-risk";
 import { getMonthlyRisk } from "@/lib/storage";
 import type { CapitalAccountSnapshot } from "@/lib/capital-account";
@@ -43,9 +44,7 @@ export default async function ScoutAllocationBoardPage({
     configurationResult && configurationResult.status === "active"
   );
 
-  const activePlans = plans.filter(
-    (p) => p.status === "watching" || p.status === "ready" || p.status === "expired"
-  );
+  const activePlans = plans.filter(isWarReadyScoutPlan);
 
   const plannedRRByPlanId: Record<string, number | undefined> = {};
   for (const p of activePlans) {

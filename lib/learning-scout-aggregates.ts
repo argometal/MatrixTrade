@@ -10,6 +10,8 @@ import type { TradePlan } from "./plan-types";
 export type ScoutLearningAggregates = {
   evaluatedScoutCount: number;
   unexecutedPlanLossCount: number;
+  /** LO kind=missed_opportunity — entry never reached; distinct from UPL. */
+  missedOpportunityCount: number;
   counterfactualScoutR: number;
   triggeredPlansWithoutTrade: number;
   /** MAF-only — never inferred from unexecuted_plan_loss alone. */
@@ -62,6 +64,7 @@ export function computeScoutLearningAggregates(input: {
 
   let evaluatedScoutCount = 0;
   let unexecutedPlanLossCount = 0;
+  let missedOpportunityCount = 0;
   let counterfactualScoutR = 0;
   let triggeredPlansWithoutTrade = 0;
 
@@ -74,6 +77,9 @@ export function computeScoutLearningAggregates(input: {
     }
     if (lo.kind === "unexecuted_plan_loss") {
       unexecutedPlanLossCount += 1;
+    }
+    if (lo.kind === "missed_opportunity") {
+      missedOpportunityCount += 1;
     }
     if (
       SCOUT_EVALUATED_LO_KINDS.has(lo.kind) &&
@@ -124,6 +130,7 @@ export function computeScoutLearningAggregates(input: {
   return {
     evaluatedScoutCount,
     unexecutedPlanLossCount,
+    missedOpportunityCount,
     counterfactualScoutR: Math.round(counterfactualScoutR * 1000) / 1000,
     triggeredPlansWithoutTrade,
     thesisEvaluationCount,

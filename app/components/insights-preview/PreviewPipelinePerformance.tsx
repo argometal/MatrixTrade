@@ -288,6 +288,15 @@ export function PreviewPipelinePerformance({
                   </dd>
                 </div>
                 <div>
+                  <dt className="text-zinc-500">Missed opportunities</dt>
+                  <dd
+                    className="tabular-nums text-zinc-100"
+                    data-pipeline-missed-opportunity-count
+                  >
+                    {view.counterfactual.missedOpportunityCount}
+                  </dd>
+                </div>
+                <div>
                   <dt className="text-zinc-500">Triggered, no Trade</dt>
                   <dd
                     className="tabular-nums text-zinc-100"
