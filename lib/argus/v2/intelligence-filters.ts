@@ -2,16 +2,19 @@
  * Shared Home Intelligence universe filters — Tags, Treemap, Portfolio.
  *
  * Stale = has evidence, but none in the last 90 days (dormant, not deleted).
+ * Hot is Treemap-only; Portfolio and Tags stay on Universe by default.
  */
 
 export type IntelligenceUniverseFilter = "all" | "hot" | "stale" | "patterns" | "focus";
+
+export type IntelligenceSurface = "treemap" | "portfolio" | "tags";
 
 export const INTELLIGENCE_UNIVERSE_FILTERS: {
   id: IntelligenceUniverseFilter;
   label: string;
   title: string;
 }[] = [
-  { id: "hot", label: "Hot", title: "Activity in the last 30 days — Home default" },
+  { id: "hot", label: "Hot", title: "Activity in the last 30 days — Treemap only" },
   { id: "all", label: "Universe", title: "All items in this view" },
   { id: "patterns", label: "Patterns", title: "Recurring Tag Patterns in scope" },
   {
@@ -22,8 +25,29 @@ export const INTELLIGENCE_UNIVERSE_FILTERS: {
   { id: "focus", label: "Trackers", title: "Carries a Flagged Tracker Tag" },
 ];
 
-/** Home Intelligence opens on Hot, not full Universe. */
+/** Treemap opens on Hot. Portfolio / Tags open on full Universe. */
 export const INTELLIGENCE_DEFAULT_FILTER: IntelligenceUniverseFilter = "hot";
+
+export function intelligenceDefaultFilterForSurface(
+  surface: IntelligenceSurface
+): IntelligenceUniverseFilter {
+  return surface === "treemap" ? "hot" : "all";
+}
+
+/** Hot appears only on Treemap; Portfolio / Tags keep Universe · Patterns · Stale · Trackers. */
+export function intelligenceFiltersForSurface(surface: IntelligenceSurface) {
+  if (surface === "treemap") return INTELLIGENCE_UNIVERSE_FILTERS;
+  return INTELLIGENCE_UNIVERSE_FILTERS.filter((item) => item.id !== "hot");
+}
+
+export function coerceIntelligenceFilterForSurface(
+  surface: IntelligenceSurface,
+  filter: IntelligenceUniverseFilter
+): IntelligenceUniverseFilter {
+  const allowed = new Set(intelligenceFiltersForSurface(surface).map((item) => item.id));
+  if (allowed.has(filter)) return filter;
+  return intelligenceDefaultFilterForSurface(surface);
+}
 
 export type IntelligenceFilterableNode = {
   evidenceCount: number;

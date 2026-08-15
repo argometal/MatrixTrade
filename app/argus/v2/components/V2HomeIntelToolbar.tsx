@@ -1,7 +1,8 @@
 "use client";
 
 import {
-  INTELLIGENCE_UNIVERSE_FILTERS,
+  coerceIntelligenceFilterForSurface,
+  intelligenceFiltersForSurface,
   type IntelligenceUniverseFilter,
 } from "@/lib/argus/v2/intelligence-filters";
 import type { IntelligenceTab } from "./V2HomeIntelligencePanel";
@@ -23,7 +24,7 @@ const selectClass =
 
 /**
  * One-line Home controls: Intel/Browser toggle + view/filter selects.
- * Keeps vertical space for Treemap / Portfolio / Tags viewers.
+ * Hot filter is Treemap-only — Portfolio / Tags stay on Universe.
  */
 export function V2HomeIntelToolbar({
   view,
@@ -40,6 +41,9 @@ export function V2HomeIntelToolbar({
   universeFilter: IntelligenceUniverseFilter;
   onUniverseFilterChange: (next: IntelligenceUniverseFilter) => void;
 }) {
+  const filterOptions = intelligenceFiltersForSurface(intelTab);
+  const safeFilter = coerceIntelligenceFilterForSurface(intelTab, universeFilter);
+
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-1.5 sm:gap-2" role="toolbar" aria-label="Home view controls">
@@ -94,14 +98,14 @@ export function V2HomeIntelToolbar({
             </label>
             <select
               id="home-intel-universe"
-              value={universeFilter}
+              value={safeFilter}
               onChange={(event) =>
                 onUniverseFilterChange(event.target.value as IntelligenceUniverseFilter)
               }
               className={selectClass}
               aria-label="Universe filter"
             >
-              {INTELLIGENCE_UNIVERSE_FILTERS.map((item) => (
+              {filterOptions.map((item) => (
                 <option key={item.id} value={item.id} title={item.title}>
                   {item.label}
                 </option>
@@ -111,17 +115,24 @@ export function V2HomeIntelToolbar({
         ) : null}
       </div>
 
-      {view === "intelligence" && universeFilter === "hot" ? (
+      {view === "intelligence" && intelTab === "treemap" && safeFilter === "hot" ? (
         <p className="text-[10px] leading-snug text-orange-400/90 sm:text-[11px]" role="status">
-          You are on <span className="font-semibold text-orange-300">Hot</span>
+          Treemap · <span className="font-semibold text-orange-300">Hot</span>
           {" "}
-          — activity in the last 30 days (Home default). Switch to Universe for the full map.
+          — activity in the last 30 days. Switch to Universe for the full map. Portfolio and Tags stay on
+          Universe.
         </p>
       ) : null}
-      {view === "intelligence" && universeFilter === "stale" ? (
+      {view === "intelligence" && safeFilter === "stale" ? (
         <p className="text-[10px] leading-snug text-zinc-500 sm:text-[11px]">
           <span className="font-medium text-zinc-400">Stale</span> — had evidence before, none in the last 90 days
           (still in the universe).
+        </p>
+      ) : null}
+      {view === "intelligence" && intelTab !== "treemap" && safeFilter === "all" ? (
+        <p className="text-[10px] leading-snug text-zinc-500 sm:text-[11px]">
+          {intelTab === "tags" ? "Tags" : "Portfolio"} ·{" "}
+          <span className="font-medium text-zinc-400">Universe</span> — full inventory (Hot is Treemap-only).
         </p>
       ) : null}
     </div>

@@ -19,12 +19,17 @@ assert.match(actions, /export async function renameTagAction/, "form rename acti
 assert.match(actions, /export async function renameTagInlineAction/, "inline rename action");
 assert.match(portfolio, /renameTagInlineAction/, "Home Tags imports inline rename");
 assert.match(portfolio, /onClick=\{openRename\}/, "Rename opens modal");
-assert.match(portfolio, /Rename/, "Rename label present");
+assert.match(portfolio, /Rename tag/, "Rename CTA present on selection");
+assert.match(portfolio, /✎ Rename/, "Inline rename beside title");
 assert.match(
   portfolio,
   /Updates Notes, email Topics, Topic\/Project\/Event Tags, and Trackers/,
   "confirm explains global rewrite"
 );
+assert.match(portfolio, /Top by recurrence/, "recurrence ranking list");
+assert.match(portfolio, /Top by recency/, "recency ranking list");
+assert.match(portfolio, /hoveredName|showLabel/, "plot labels only on hover/select");
 assert.match(help, /Select a tag → Rename/, "help documents rename");
+assert.match(help, /Hot is Treemap-only/, "help documents Hot scope");
 
 console.log("ok: tag-rename-ui");

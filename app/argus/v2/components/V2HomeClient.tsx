@@ -7,7 +7,7 @@ import type { V2FocusTagStat, V2NavCounts, V2TagEvidenceContext, V2TagRoleBucket
 import type { V2TimelineEntry } from "@/lib/argus/v2/mock-data";
 import type { IntelligenceFrom } from "@/lib/argus/v2/intelligence-nav";
 import {
-  INTELLIGENCE_DEFAULT_FILTER,
+  intelligenceDefaultFilterForSurface,
   type IntelligenceUniverseFilter,
 } from "@/lib/argus/v2/intelligence-filters";
 import { type V2KnowledgeNode } from "@/lib/argus/v2/intelligence-viz";
@@ -96,8 +96,10 @@ export function V2HomeClient({
   const [intelTab, setIntelTab] = useState<IntelligenceTab>(() =>
     searchParams.get("intel") === "tags" ? "tags" : "treemap"
   );
-  const [universeFilter, setUniverseFilter] = useState<IntelligenceUniverseFilter>(
-    INTELLIGENCE_DEFAULT_FILTER
+  const [universeFilter, setUniverseFilter] = useState<IntelligenceUniverseFilter>(() =>
+    intelligenceDefaultFilterForSurface(
+      searchParams.get("intel") === "tags" ? "tags" : "treemap"
+    )
   );
   const [lensId, setLensId] = useState<string | null>(null);
 
@@ -106,8 +108,8 @@ export function V2HomeClient({
   const browseRows = entityRowsByTab?.[entityTab] ?? [];
 
   useEffect(() => {
-    // Home default surface is Hot (activity in last 30 days), not full Universe.
-    setUniverseFilter(INTELLIGENCE_DEFAULT_FILTER);
+    // Treemap → Hot. Portfolio / Tags → Universe (Hot is Treemap-only).
+    setUniverseFilter(intelligenceDefaultFilterForSurface(intelTab));
     setLensId(null);
   }, [intelTab]);
 
