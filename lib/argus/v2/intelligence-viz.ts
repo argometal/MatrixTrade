@@ -764,13 +764,13 @@ export function neighborhoodDegreeMap(edges: V2GraphEdge[]): Map<string, number>
 }
 
 /**
- * Link-distance multiplier from endpoint degree (busy hubs sit farther out).
- * 1–2 links → single · 3 links → double · 4+ links → triple.
+ * Chem-lite link-distance multiplier (uniform short bonds; mild bump only for hubs).
+ * 1–3 links → 1× · 4+ links → 1.4×
+ * Crowding at degree 3 uses angles / collide / charge — not bond stretch.
  */
 export function degreeDistanceMultiplier(degree: number): number {
-  if (degree <= 2) return 1;
-  if (degree === 3) return 2;
-  return 3;
+  if (degree <= 3) return 1;
+  return 1.4;
 }
 
 /**
@@ -780,7 +780,7 @@ export function degreeDistanceMultiplier(degree: number): number {
 export function degreeLinkLengthExtra(degreeA: number, degreeB: number): number {
   const hub = Math.max(degreeA, degreeB);
   const mult = degreeDistanceMultiplier(hub);
-  // Unit ≈ 14 → extras: 1x→0, 2x→14, 3x→28
+  // Unit ≈ 14 → extras: 1x→0, 4+ → ~5.6
   return (mult - 1) * 14;
 }
 
@@ -800,7 +800,7 @@ export function layoutNeighborhoodGraphNodes(
   if (center) laidOut.push({ ...center, x: 50, y: 50 });
 
   const n = neighbors.length;
-  /** Single-distance unit in viewBox coords — 1x / 2x / 3x by degree. */
+  /** Single-distance unit in viewBox coords — chem-lite 1× / 1.4× by degree. */
   const UNIT = 15;
   neighbors.forEach((node, index) => {
     const angle = (index / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2;

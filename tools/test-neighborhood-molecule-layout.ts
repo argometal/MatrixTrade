@@ -1,5 +1,5 @@
 /**
- * Molecule + Radial — degree buckets: 1–2 → 1x, 3 → 2x, 4+ → 3x.
+ * Molecule + Radial — chem-lite: 1–3 → 1x, 4+ → 1.4x.
  */
 import assert from "node:assert/strict";
 import { writeFileSync, mkdirSync } from "node:fs";
@@ -27,19 +27,19 @@ assert.ok(moleculeLinkStrength(1) > moleculeLinkStrength(0.5));
 
 assert.equal(degreeDistanceMultiplier(1), 1);
 assert.equal(degreeDistanceMultiplier(2), 1);
-assert.equal(degreeDistanceMultiplier(3), 2);
-assert.equal(degreeDistanceMultiplier(4), 3);
-assert.equal(degreeDistanceMultiplier(12), 3);
+assert.equal(degreeDistanceMultiplier(3), 1, "degree 3 stays 1× (chem-lite)");
+assert.equal(degreeDistanceMultiplier(4), 1.4);
+assert.equal(degreeDistanceMultiplier(12), 1.4);
 assert.equal(degreeLinkLengthExtra(1, 1), 0);
-assert.equal(degreeLinkLengthExtra(3, 1), 14);
-assert.equal(degreeLinkLengthExtra(4, 1), 28);
+assert.equal(degreeLinkLengthExtra(3, 1), 0);
+assert.equal(degreeLinkLengthExtra(4, 1), (1.4 - 1) * 14);
 
 assert.equal(moleculeLinkDistanceForDegrees(2, 1, 1), 18, "1–2 links → single distance");
-assert.equal(moleculeLinkDistanceForDegrees(2, 3, 1), 36, "3 links → double distance");
-assert.equal(moleculeLinkDistanceForDegrees(2, 4, 1), 54, "4+ links → triple distance");
+assert.equal(moleculeLinkDistanceForDegrees(2, 3, 1), 18, "3 links → still single (chem-lite)");
+assert.equal(moleculeLinkDistanceForDegrees(2, 4, 1), 18 * 1.4, "4+ links → mild 1.4×");
 assert.ok(
-  moleculeLinkDistanceForDegrees(2, 4, 1) > moleculeLinkDistanceForDegrees(2, 2, 1),
-  "higher degree → longer preferred distance"
+  moleculeLinkDistanceForDegrees(2, 4, 1) > moleculeLinkDistanceForDegrees(2, 3, 1),
+  "only 4+ stretches preferred distance"
 );
 
 function denseNeighborhood(): { nodes: V2GraphNode[]; edges: V2GraphEdge[]; centerId: string } {
@@ -73,6 +73,8 @@ function denseNeighborhood(): { nodes: V2GraphNode[]; edges: V2GraphEdge[]; cent
     { from: "t-wells", to: "e1", weight: 2, kind: "linked" },
     { from: "t-latency", to: "e2", weight: 2, kind: "linked" },
     { from: "xom", to: "alice", weight: 2, kind: "linked" },
+    // Fourth spoke — chem-lite only bumps length at degree ≥4
+    { from: "xom", to: "t-wells", weight: 2, kind: "linked" },
     { from: "slb", to: "p-slb", weight: 2, kind: "linked" },
     { from: "p-slb", to: "t-handoff", weight: 2, kind: "linked" },
     { from: "p-slb", to: "t-supply", weight: 2, kind: "linked" },
@@ -149,7 +151,7 @@ function renderSvg(
 
 const { nodes, edges, centerId } = denseNeighborhood();
 const degrees = neighborhoodDegreeMap(edges);
-assert.ok((degrees.get("xom") ?? 0) >= 3, "fixture center is a hub");
+assert.ok((degrees.get("xom") ?? 0) >= 4, "fixture center is a 4+ hub (chem-lite bump)");
 
 const radial = layoutNeighborhoodGraphNodes(nodes, centerId, edges);
 const radialFlat = layoutNeighborhoodGraphNodes(nodes, centerId, []);
@@ -159,7 +161,7 @@ assert.equal(radial.length, 13);
 assert.equal(molecule.length, 13);
 assert.ok(molecule.every((n) => n.x >= 0 && n.x <= 100 && n.y >= 0 && n.y <= 100));
 
-// Degree-aware radial: mean distance from center should grow vs edges ignored.
+// Degree-aware radial: 4+ hub spokes longer than edge-ignored (always 1×).
 function meanRadius(laid: V2GraphNode[], cid: string): number {
   const c = laid.find((n) => n.id === cid)!;
   const others = laid.filter((n) => n.id !== cid);
@@ -168,10 +170,10 @@ function meanRadius(laid: V2GraphNode[], cid: string): number {
 }
 assert.ok(
   meanRadius(radial, centerId) > meanRadius(radialFlat, centerId),
-  "Radial: high-degree hub gets longer spokes when edges are known"
+  "Radial: 4+ hub gets longer spokes when edges are known"
 );
 
-// Molecule: edges touching the hub should be longer than peripheral leaf edges (in viewBox units).
+// Molecule: edges touching the 4+ hub should not collapse vs peripheral leaf edges.
 function meanEdgeLen(laid: V2GraphNode[], edgeList: V2GraphEdge[], predicate: (e: V2GraphEdge) => boolean): number {
   const byId = new Map(laid.map((n) => [n.id, n]));
   const picked = edgeList.filter(predicate);
@@ -204,10 +206,14 @@ const graphUi = require("node:fs").readFileSync(
   require("node:path").join(process.cwd(), "app/argus/v2/components/V2KnowledgeGraph.tsx"),
   "utf8"
 );
+assert.match(graphUi, /chem-lite/, "UI names chem-lite spacing");
+assert.match(graphUi, /1–3 links · near/, "legend: uniform near bonds");
+assert.match(graphUi, /4\+ links · slight outer/, "legend: mild outer only at 4+");
 assert.match(graphUi, /HOVER_SCALE = 1\.55/, "icons enlarge on hover");
 assert.match(graphUi, /Large view/, "expand is a large local view, not giant icons");
 assert.match(graphUi, /nodeBase: 2\.[0-9]/, "default icons stay small");
 assert.doesNotMatch(graphUi, /nodeBase: 7\.5/, "expanded view no longer uses huge nodeBase");
+assert.doesNotMatch(graphUi, /3 links · mid/, "old mid-band legend removed");
 
 const ego = buildEgoNeighborhoodPreservePositions(molecule, edges, "xom");
 assert.ok(ego.nodes.some((n) => n.id === "xom"));
