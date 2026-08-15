@@ -45,7 +45,7 @@ type FlowState = ReturnType<typeof useCreateLinkFlowState>;
 
 function initialMobileStep(options: CreateFlowOpenOptions): MobileStep {
   if (options.mode === "link") return "link";
-  if (options.mode === "inbox-evidence" && options.linkOnly) return "link";
+  if (options.mode === "inbox-evidence") return "link";
   if (options.lockItemKind) return "details";
   if (flowNeedsItemKindPicker(options)) return "choose-type";
   return "details";
@@ -113,25 +113,19 @@ function ChooseTypeStep({
   onClose: () => void;
   entityCaptureOnly?: boolean;
 }) {
-  const menuSections = entityCaptureOnly
-    ? CREATE_MENU_SECTIONS.filter((section) => section.id !== "knowledge")
-    : CREATE_MENU_SECTIONS;
+  const menuSections = CREATE_MENU_SECTIONS;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-zinc-800/80 px-4 py-4">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">
-            {flow.isInboxEvidence ? "Email evidence" : entityCaptureOnly ? ADD_CONTEXT.title : "Create"}
+            {flow.isInboxEvidence ? "Email evidence" : ADD_CONTEXT.title}
           </p>
           <h2 className="text-lg font-bold text-zinc-50">
-            {flow.isInboxEvidence
-              ? "Capture or link this email"
-              : entityCaptureOnly
-                ? ADD_CONTEXT.pickKind
-                : "What do you want to capture?"}
+            {flow.isInboxEvidence ? "Link this email" : ADD_CONTEXT.pickKind}
           </h2>
-          {entityCaptureOnly && !flow.isInboxEvidence && ADD_CONTEXT.useRegisterHint ? (
+          {!flow.isInboxEvidence && ADD_CONTEXT.useRegisterHint ? (
             <p className="mt-0.5 text-xs text-zinc-500">{ADD_CONTEXT.useRegisterHint}</p>
           ) : null}
         </div>
@@ -401,7 +395,7 @@ function LinkStep({
           onChange={(e) => flow.setLinkQuery(e.target.value)}
         />
         <div className="mt-2 flex gap-1 overflow-x-auto pb-1">
-          {LINK_TABS.filter((t) => t !== "journal").map((tab) => (
+          {LINK_TABS.map((tab) => (
             <button
               key={tab}
               type="button"
@@ -571,7 +565,6 @@ function ReviewLinksStep({
               ["project", "Project"],
               ["event", "Event"],
               ["topic", "Topic"],
-              ["document", "Document"],
             ] as const
           ).map(([key, label]) => (
             <div key={key} className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-3 py-2 text-center">
@@ -667,7 +660,7 @@ function ProcessingStep({ flow, missingTopicCount }: { flow: FlowState; missingT
   }, []);
 
   const tasks = [
-    { label: "Creating journal note", done: tick >= 1 },
+    { label: "Creating note", done: tick >= 1 },
     { label: `Linking to ${flow.totalLinks} items`, done: tick >= 2 },
     ...(missingTopicCount > 0
       ? [{ label: `Creating ${missingTopicCount} missing topics`, done: tick >= 3 }]
@@ -807,7 +800,7 @@ export function ArgusCreateLinkMobile({
     flow.isInboxEvidence && flow.linkOnly
       ? flow.title.trim() || "Link email to records"
       : flow.itemKind === "journal"
-        ? flow.title.trim() || "Untitled journal note"
+        ? flow.title.trim() || "Untitled note"
         : flow.name.trim() || `New ${createItemDisplayLabel(flow.itemKind)}`;
 
   const itemBody =

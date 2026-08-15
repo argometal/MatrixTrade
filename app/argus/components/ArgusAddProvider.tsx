@@ -137,7 +137,10 @@ export function ArgusAddProvider({
 
   const openCreateFlow = useCallback((options: CreateFlowState = {}) => {
     onSavedRef.current = options.onSaved;
-    const { onSaved: _onSaved, ...flowOptions } = options;
+    const { onSaved: _onSaved, ...raw } = options;
+    // Inbox email: link-only shell only — Register note is CaptureSheet via ··· menu.
+    const flowOptions =
+      raw.mode === "inbox-evidence" ? { ...raw, linkOnly: true as const } : raw;
     setCreateFlowState(flowOptions);
     setCreateFlowOpen(true);
   }, []);

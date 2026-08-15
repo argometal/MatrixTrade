@@ -133,7 +133,7 @@ export function InboxTriagePanel({
         {!canTriage && item.status === "converted" && convertedLog ? (
           <div className="mt-4 rounded-xl border border-violet-500/25 bg-violet-950/20 px-3 py-3">
             <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-300/90">
-              Finished as journal note
+              Finished as note
             </p>
             <p className="mt-1 text-xs text-zinc-500">
               Convert-to-record is deprecated. Open the note — this email is not a dead end.

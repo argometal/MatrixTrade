@@ -128,7 +128,7 @@ export function V2InboxDetailPanel({
   const [selectedTags, setSelectedTags] = useState<string[]>(detail.item.topics ?? []);
   const [linkSaving, setLinkSaving] = useState(false);
   const [triageSaving, setTriageSaving] = useState(false);
-  const { openCreateFlow } = useArgusAdd();
+  const { openCreateFlow, openCapture } = useArgusAdd();
   const router = useRouter();
 
   useEffect(() => {
@@ -290,12 +290,11 @@ export function V2InboxDetailPanel({
   }
 
   function buildInboxConnectOptions(
-    filter: ArgusLinkFilter = "all",
-    linkOnly = false
+    filter: ArgusLinkFilter = "all"
   ): CreateFlowOpenOptions {
-    const base: CreateFlowOpenOptions = {
+    return {
       mode: "inbox-evidence",
-      linkOnly,
+      linkOnly: true,
       inboxId: item.id,
       prefillTitle: defaultTitle,
       prefillBody: defaultBody,
@@ -307,15 +306,20 @@ export function V2InboxDetailPanel({
       showTags: true,
       linkTitle: "Link email",
       onEntityCreated: linkCreatedEntity,
+      onLinkConfirm: confirmEntityLinks,
     };
-    if (linkOnly) {
-      base.onLinkConfirm = confirmEntityLinks;
-    }
-    return base;
   }
 
-  function openInboxConnect(filter: ArgusLinkFilter = "all", linkOnly = false) {
-    openCreateFlow(buildInboxConnectOptions(filter, linkOnly));
+  function openInboxConnect(filter: ArgusLinkFilter = "all") {
+    openCreateFlow(buildInboxConnectOptions(filter));
+  }
+
+  function openInboxRegisterNote() {
+    openCapture({
+      title: defaultTitle,
+      body: defaultBody,
+      entityIds: linkIds,
+    });
   }
 
   const detailTabs = [
@@ -333,10 +337,10 @@ export function V2InboxDetailPanel({
       {canTriage ? (
         <button
           type="button"
-          onClick={() => openInboxConnect("all", false)}
+          onClick={() => openInboxConnect("all")}
           className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-semibold text-violet-300 hover:bg-violet-600/25"
         >
-          Connect
+          Link
         </button>
       ) : null}
       <button type="button" className="text-zinc-600 hover:text-zinc-400" title="Share">
@@ -358,15 +362,27 @@ export function V2InboxDetailPanel({
               className="block rounded-lg px-3 py-2 text-sm text-violet-400 hover:bg-zinc-800"
               onClick={() => setMenuOpen(false)}
             >
-              Open journal note
+              Open note
             </Link>
+          ) : null}
+          {canTriage ? (
+            <button
+              type="button"
+              className="block w-full rounded-lg px-3 py-2 text-left text-sm text-zinc-400 hover:bg-zinc-800"
+              onClick={() => {
+                setMenuOpen(false);
+                openInboxRegisterNote();
+              }}
+            >
+              Register note
+            </button>
           ) : null}
           <Link
             href={`/argus/inbox/${item.id}`}
             className="block rounded-lg px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800"
             onClick={() => setMenuOpen(false)}
           >
-            Open legacy view
+            Open classic inbox
           </Link>
         </div>
       ) : null}
@@ -378,7 +394,7 @@ export function V2InboxDetailPanel({
       {convertedLog ? (
         <div className="rounded-xl border border-violet-500/25 bg-violet-950/20 px-3 py-3">
           <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-300/90">
-            Finished as journal note
+            Finished as note
           </p>
           <Link
             href={`/argus/logs/${convertedLog.id}`}
@@ -415,7 +431,7 @@ export function V2InboxDetailPanel({
           {canTriage ? (
             <button
               type="button"
-              onClick={() => openInboxConnect("all", true)}
+              onClick={() => openInboxConnect("all")}
               className="rounded-xl border border-dashed border-zinc-700 px-3 py-2 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
             >
               Link
@@ -476,7 +492,7 @@ export function V2InboxDetailPanel({
           {canTriage ? (
             <button
               type="button"
-              onClick={() => openInboxConnect("tags", true)}
+              onClick={() => openInboxConnect("tags")}
               className="rounded-md border border-dashed border-zinc-700 px-2 py-1 text-[11px] text-zinc-500 hover:border-zinc-600 hover:text-zinc-300"
             >
               + Add tag
@@ -587,7 +603,7 @@ export function V2InboxDetailPanel({
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-500/30 bg-violet-950/25 px-3 py-2.5">
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-300/90">
-                Journal note (legacy convert)
+                Converted note
               </p>
               <p className="truncate text-xs text-zinc-400">{convertedLog.title}</p>
             </div>
@@ -608,10 +624,10 @@ export function V2InboxDetailPanel({
             canTriage ? (
               <button
                 type="button"
-                onClick={() => openInboxConnect("all", false)}
+                onClick={() => openInboxConnect("all")}
                 className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-2.5 py-1 text-[11px] font-semibold text-violet-300"
               >
-                Connect
+                Link
               </button>
             ) : convertedLog ? (
               <Link
@@ -719,10 +735,10 @@ export function V2InboxDetailPanel({
         <div className="shrink-0 border-t border-zinc-800/80 bg-zinc-950 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:hidden">
           <button
             type="button"
-            onClick={() => openInboxConnect("all", false)}
+            onClick={() => openInboxConnect("all")}
             className="w-full rounded-xl border border-violet-500/40 bg-violet-600/20 py-3 text-sm font-semibold text-violet-300"
           >
-            Connect
+            Link
           </button>
         </div>
       ) : null}

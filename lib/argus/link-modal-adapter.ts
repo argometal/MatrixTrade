@@ -18,7 +18,8 @@ export type LinkModalOpenOptions = {
 /** True when the unified flow should render ArgusLinkModal instead of the full create workspace. */
 export function usesLinkModalShell(options: CreateFlowOpenOptions): boolean {
   if (options.mode === "link") return true;
-  if (options.mode === "inbox-evidence" && options.linkOnly) return true;
+  // Inbox never uses the CREATE→LINK→SAVE wizard (no Journal/Document capture).
+  if (options.mode === "inbox-evidence") return true;
   if (options.linkPanelOnly) return true;
   return false;
 }

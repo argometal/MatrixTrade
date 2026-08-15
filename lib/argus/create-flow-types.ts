@@ -88,9 +88,12 @@ export type UnifiedCreateResult = {
   name: string;
 };
 
-/** Grouped create menu — Knowledge / Entity / Execution intents. */
+/**
+ * Grouped create menu — Entity + Execution only.
+ * Register (CaptureSheet) owns notes; documents arrive via inbox/attachments.
+ * `journal` / `document` kinds remain creatable via locked internal paths only.
+ */
 export const CREATE_MENU_SECTIONS: { id: CreateMenuSection; label: string; kinds: CreateItemKind[] }[] = [
-  { id: "knowledge", label: "Knowledge", kinds: ["journal", "document"] },
   { id: "entity", label: "Entity", kinds: ["person", "organization", "project", "topic", "event", "tag"] },
   { id: "execution", label: "Execution", kinds: ["runbook"] },
 ];
@@ -98,7 +101,7 @@ export const CREATE_MENU_SECTIONS: { id: CreateMenuSection; label: string; kinds
 export const CREATE_ITEM_KINDS: CreateItemKind[] = CREATE_MENU_SECTIONS.flatMap((section) => section.kinds);
 
 export const CREATE_ITEM_LABELS: Record<CreateItemKind, string> = {
-  journal: "Journal Entry",
+  journal: "Note",
   person: "Person",
   organization: "Organization",
   project: "Project",
@@ -121,6 +124,7 @@ export const CREATE_ITEM_HINTS: Record<CreateItemKind, string> = {
   runbook: "Procedure checklist — one line becomes one card",
 };
 
+/** Labels for link filter chips — structural kinds match ArgusLinkModal. */
 export const LINK_FILTER_LABELS: Record<LinkFilterKind, string> = {
   all: "All",
   person: "People",
@@ -129,5 +133,5 @@ export const LINK_FILTER_LABELS: Record<LinkFilterKind, string> = {
   event: "Events",
   topic: "Topics",
   document: "Docs",
-  journal: "Journal",
+  journal: "Notes",
 };
