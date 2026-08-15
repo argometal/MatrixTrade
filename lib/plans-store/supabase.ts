@@ -41,17 +41,21 @@ export function createSupabasePlansStore(): PlansStore {
       }
     },
     async allocateNextPlanId() {
+      // FAIL-CLOSED: no max+1 / client-side fallback. Missing RPC ⇒ hard error.
+      // Deploy order: migration → verify RPC → app (see trade-plans-plan-id-seq.sql).
       const supabase = createSupabaseAdmin();
       const { data, error } = await supabase.rpc("allocate_trade_plan_id");
       if (error) {
         throw new Error(
-          `Supabase allocate_trade_plan_id failed: ${error.message}. ` +
-            `Apply migration supabase/trade-plans-plan-id-seq.sql`
+          `Supabase allocate_trade_plan_id failed (fail-closed; no max+1 fallback): ${error.message}. ` +
+            `Apply supabase/trade-plans-plan-id-seq.sql, verify RPC, then redeploy.`
         );
       }
       const id = String(data ?? "").trim().toUpperCase();
-      if (!id.startsWith("PLAN-")) {
-        throw new Error(`allocate_trade_plan_id returned unexpected value: ${data}`);
+      if (!/^PLAN-[0-9]+$/.test(id)) {
+        throw new Error(
+          `allocate_trade_plan_id returned unexpected value (fail-closed): ${data}`
+        );
       }
       return id;
     },

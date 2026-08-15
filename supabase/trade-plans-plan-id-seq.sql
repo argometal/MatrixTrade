@@ -1,8 +1,34 @@
 -- PROMPT 15-01 — Scout Plan ID architecture
 -- Widen CHECK from exactly 3 digits to PLAN-<digits>+ (min pad is app-level).
 -- Add global sequence + allocate_trade_plan_id() for concurrency-safe allocation.
--- Run in Supabase SQL Editor when TRADES_STORE=supabase.
 -- Preserves existing rows (PLAN-001 …); no renumbering.
+--
+-- ============================================================================
+-- DEPLOYMENT ORDER (required when TRADES_STORE=supabase)
+-- ============================================================================
+--   1) Run THIS migration in Supabase SQL Editor
+--   2) Verify RPC (SQL below) — must pass before any app deploy
+--   3) Deploy application code that calls allocate_trade_plan_id()
+--
+-- Deploying app code BEFORE this migration breaks every Supabase Scout create.
+-- Application allocation is FAIL-CLOSED: no fallback to max+1 / unsafe minting.
+-- Sequence gaps (including a verify call that allocates once) are acceptable.
+--
+-- VERIFY after step 1 (SQL Editor) — preferred, no side effects:
+--   select to_regprocedure('public.allocate_trade_plan_id()') is not null
+--     as allocator_rpc_present;
+--   select pg_get_constraintdef(c.oid) as id_check
+--     from pg_constraint c
+--     where c.conrelid = 'public.trade_plans'::regclass
+--       and c.contype = 'c'
+--       and pg_get_constraintdef(c.oid) ilike '%PLAN%';
+--   -- expect: allocator_rpc_present = true
+--   -- expect: id_check contains ^PLAN-[0-9]+$  (NOT {3})
+--
+-- Optional live probe (burns one id; gap OK):
+--   select public.allocate_trade_plan_id();  -- expect PLAN-<n>
+--   -- or: npm run verify:plan-id-rpc
+-- ============================================================================
 
 -- 1) Relax id CHECK (drop legacy 3-digit-only constraint, add unbounded digits)
 do $$

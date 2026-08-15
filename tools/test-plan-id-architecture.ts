@@ -139,12 +139,25 @@ async function main() {
     assert.match(mig, /\^PLAN-\[0-9\]\+\$/);
     assert.match(mig, /allocate_trade_plan_id/);
     assert.match(mig, /trade_plan_id_seq/);
+    assert.match(mig, /DEPLOYMENT ORDER/);
+    assert.match(mig, /FAIL-CLOSED|fail-closed|no fallback/i);
     const schema = await fs.readFile(
       path.join(process.cwd(), "supabase/trade-plans.sql"),
       "utf-8"
     );
     assert.match(schema, /\^PLAN-\[0-9\]\+\$/);
     assert.doesNotMatch(schema, /\^PLAN-\[0-9\]\{3\}\$/);
+
+    const supabaseStore = await fs.readFile(
+      path.join(process.cwd(), "lib/plans-store/supabase.ts"),
+      "utf-8"
+    );
+    const alloc = supabaseStore.slice(
+      supabaseStore.indexOf("async allocateNextPlanId"),
+      supabaseStore.indexOf("async insert")
+    );
+    assert.match(alloc, /allocate_trade_plan_id/);
+    assert.doesNotMatch(alloc, /nextPlanId|maxPlanIdNumber|padStart/);
   }
 
   // PLAN-999 → PLAN-1000 via savePlan allocate
