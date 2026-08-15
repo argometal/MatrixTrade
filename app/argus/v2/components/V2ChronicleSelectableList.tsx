@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode, type MouseEvent } from "react";
 import { useRouter } from "next/navigation";
 import { V2ChronicleBulkBar } from "./V2ChronicleBulkBar";
 import {
@@ -27,6 +27,41 @@ export type V2ChronicleSelectableItem = {
    */
   footer?: ReactNode;
 };
+
+/** Long note bodies stay compact until the user expands — avoids filling the panel. */
+function ChroniclePreview({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const lineCount = text.split("\n").length;
+  const long = text.length > 140 || lineCount > 2;
+
+  function toggle(event: MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    setExpanded((value) => !value);
+  }
+
+  return (
+    <div className="pl-8">
+      <p
+        className={`text-xs leading-relaxed text-zinc-400 ${
+          expanded ? "whitespace-pre-wrap" : "line-clamp-2 whitespace-pre-wrap"
+        }`}
+      >
+        {text}
+      </p>
+      {long ? (
+        <button
+          type="button"
+          onClick={toggle}
+          className="mt-1 text-[11px] font-medium text-violet-300/90 hover:text-violet-200"
+          aria-expanded={expanded}
+        >
+          {expanded ? "Show less" : "Expand note"}
+        </button>
+      ) : null}
+    </div>
+  );
+}
 
 export function V2ChronicleSelectableList({
   items,
@@ -108,7 +143,7 @@ export function V2ChronicleSelectableList({
             <button
               type="button"
               onClick={() => (allSelected ? setChecked(new Set()) : selectAllNotes())}
-              className="text-[11px] text-zinc-500 hover:text-zinc-300"
+              className="text-[11px] font-medium text-zinc-500 hover:text-zinc-300"
             >
               {allSelected ? "Deselect all notes" : "Select all notes"}
             </button>
@@ -174,22 +209,18 @@ export function V2ChronicleSelectableList({
                       className="flex min-w-0 flex-col gap-1 px-3 py-3"
                     >
                       <span className="flex min-w-0 items-start gap-3">{item.body}</span>
-                      {item.preview ? (
-                        <p className="whitespace-pre-wrap pl-8 text-xs leading-relaxed text-zinc-400">
-                          {item.preview}
-                        </p>
-                      ) : null}
                     </Link>
+                    {item.preview ? (
+                      <div className="px-3 pb-1">
+                        <ChroniclePreview text={item.preview} />
+                      </div>
+                    ) : null}
                     {item.footer ? <div className="px-3 pb-3 pl-11">{item.footer}</div> : null}
                   </div>
                 ) : (
                   <div className="flex min-w-0 flex-1 flex-col gap-1 px-3 py-3">
                     <span className="flex min-w-0 items-start gap-3">{item.body}</span>
-                    {item.preview ? (
-                      <p className="whitespace-pre-wrap pl-8 text-xs leading-relaxed text-zinc-400">
-                        {item.preview}
-                      </p>
-                    ) : null}
+                    {item.preview ? <ChroniclePreview text={item.preview} /> : null}
                     {item.footer ? <div className="pl-8 pt-1">{item.footer}</div> : null}
                   </div>
                 )}
