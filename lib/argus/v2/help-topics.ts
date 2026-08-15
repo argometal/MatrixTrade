@@ -605,7 +605,7 @@ const SECTIONS: HelpSection[] = [
     title: "Topics browse",
     group: "browse",
     keywords: ["topics", "active", "quiet", "orphans", "board", "binders"],
-    intro: "Knowledge binders — board or list, then open a Topic for Chronicle, Tags, and Links.",
+    intro: "Knowledge binders — board or list, then open a Topic (full screen). ← Topics returns to the browse list.",
     items: [
       {
         title: "Status chips",
