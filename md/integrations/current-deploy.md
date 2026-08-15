@@ -2,13 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0815b`
+Pinned revision: `main0815c`
 
-Ship commit: `43e59d2`
+Ship commit: `c752888`
 
 Includes:
-- PR #313 — Trades UI English + Scout→Trades pipeline proposal (`scout-trades-pipeline-001.md`)
-- PR #314 — MTA-SAMPLE-001 Scout corpus probe (`mta-sample-001.md`) — Capture not ready; needs prod export
+- PR #317 — Hot filter Treemap-only; Portfolio/Tags stay Universe; Tags rename + clearer recurrence/recency plot
+- Prior `main0815b` / #313–#314: Trades EN + Scout pipeline proposal; MTA-SAMPLE-001 probe
 - Prior `main0815a` / #309: `/forge` Argus login + guest-lock; neighborhood camera/pins; Topics detach
 
 **Terminology:** In ArgusForge docs, **MTA** = matrix/time engine (`argusforge-contract.md` §10). Trading product = **MatrixTrade**. See [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md).
