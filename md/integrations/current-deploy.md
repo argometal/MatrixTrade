@@ -4,7 +4,7 @@ Production: https://matrix-trade-theta.vercel.app
 
 Pinned revision: `main0815c`
 
-Ship commit: `e8adae0`
+Ship commit: `c752888`
 
 Includes:
 - PR #317 — Hot filter Treemap-only; Portfolio/Tags stay Universe; Tags rename + clearer recurrence/recency plot
