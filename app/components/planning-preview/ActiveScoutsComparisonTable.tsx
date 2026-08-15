@@ -16,6 +16,7 @@ import {
   SCOUT_ALLOCATION_RELATIONSHIP_LABELS,
 } from "@/lib/scout-allocation-types";
 import { useScoutAllocationSelection } from "./ScoutAllocationProvider";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 
 const SORT_OPTIONS: Array<{ key: ScoutMonetarySortKey; label: string }> = [
   { key: "ticker", label: "Ticker" },
@@ -85,14 +86,14 @@ export function ActiveScoutsComparisonTable({
       data-scout-compare-allocation
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
+        <div className="flex items-center gap-2">
           <h2 className="text-sm font-semibold text-zinc-200">
             Scouts activos — comparación
           </h2>
-          <p className="mt-0.5 text-xs text-zinc-500">
-            Funding before/after selection and relationship from the shared
-            allocation simulator.
-          </p>
+          <MtaHelpLink
+            topic="scout-allocation-board"
+            label="Scout comparison"
+          />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <label htmlFor="scout-money-sort" className="text-[11px] text-zinc-500">

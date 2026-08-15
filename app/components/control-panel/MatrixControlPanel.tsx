@@ -12,6 +12,7 @@ import {
   buildAggregateSnapshotItem,
   collectEligibleSnapshotItems,
 } from "@/lib/snapshot-aggregate";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 
 /** Local step machine — "apply" is user-facing; internal ControlPanelUpdate unchanged. */
 type Step = "pick" | "apply" | "stock-pick" | "detail";
@@ -376,15 +377,18 @@ export function MatrixControlPanel() {
         onClick={(event) => event.stopPropagation()}
       >
         <header className="mb-3 shrink-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400">
-            Control
-          </p>
-          <h2 className="text-base font-bold text-zinc-50">{detailTitle}</h2>
-          <p className="mt-1 text-[11px] text-zinc-500">
-            {step === "pick"
-              ? "Mechanics once per chat → task in natural language → copy only the block AI asks for → Apply."
-              : detailHint}
-          </p>
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-400">
+                Control
+              </p>
+              <h2 className="text-base font-bold text-zinc-50">{detailTitle}</h2>
+            </div>
+            <MtaHelpLink topic="control-apply" label="Control" />
+          </div>
+          {step !== "pick" && detailHint ? (
+            <p className="mt-1 text-[11px] text-zinc-500">{detailHint}</p>
+          ) : null}
         </header>
 
         {step === "pick" ? (

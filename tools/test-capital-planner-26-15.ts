@@ -667,7 +667,8 @@ async function main() {
       /pb-\[calc\(5\.5rem\+env\(safe-area-inset-bottom\)\)\]/
     );
     assert.match(planner, /data-allocation-flow-help/);
-    assert.match(planner, /CAPITAL_ALLOCATION_FLOW/);
+    assert.match(planner, /MtaHelpLink/);
+    assert.match(planner, /capital-planner/);
     const helpLib = await fs.readFile(
       path.join(process.cwd(), "lib/capital-help.ts"),
       "utf-8"
@@ -676,6 +677,11 @@ async function main() {
       helpLib,
       /Scout Plan → Scout Funding Snapshot → evaluation → capital-reservation-create/
     );
+    const mtaHelp = await fs.readFile(
+      path.join(process.cwd(), "lib/mta-help-topics.ts"),
+      "utf-8"
+    );
+    assert.match(mtaHelp, /CAPITAL_ALLOCATION_FLOW/);
     assert.match(planner, /data-capital-settings-cta/);
     assert.match(planner, /min-h-11/);
     assert.match(planner, /Technical notes/);

@@ -6,12 +6,12 @@ import {
   retryPlanOutcomeLearningSyncAction,
 } from "@/app/actions";
 import {
-  AUTOMATIC_EXECUTION_ENABLED,
   NON_EXECUTION_REASONS,
   PLAN_OUTCOME_KINDS,
 } from "@/lib/plan-outcome-types";
 import { deriveUnexecutedPlanLossServerValues } from "@/lib/plan-outcome-derive";
 import type { TradePlan } from "@/lib/plan-types";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 
 /** Record Outcome for terminal/expired Scout plans — UPL event order is human-confirmed. */
 export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
@@ -69,22 +69,16 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
           </p>
           <p className="mt-1 text-xs text-zinc-400">
             Partial failure after Apply/Save: plan outcome is persisted (
-            evaluate_expired_plan stays closed). Learning Outcome / Observation
-            synchronization is{" "}
+            evaluate_expired_plan stays closed). Learning sync is{" "}
             <span className="text-rose-200">
               {plan.outcome?.learningSyncStatus ?? "pending"}
             </span>
-            .
             {plan.outcome?.learningSyncError
-              ? ` Error: ${plan.outcome.learningSyncError}`
-              : ""}
-          </p>
-          <p className="mt-1 text-xs text-zinc-500">
-            Use Retry Learning Sync only — do not re-Apply a new outcome. Execution path
-            remains: approved → armed → alert → human confirmation → submitted
-            (automaticExecutionEnabled={String(AUTOMATIC_EXECUTION_ENABLED)}).
+              ? ` — ${plan.outcome.learningSyncError}`
+              : "."}
           </p>
         </div>
+        <MtaHelpLink topic="plan-record-outcome" label="Record Outcome" />
         {error ? <p className="text-xs text-red-300">{error}</p> : null}
         <button
           type="button"
@@ -123,15 +117,11 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
         });
       }}
     >
-      <div>
+      <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">
           Record Outcome · {plan.id}
         </p>
-        <p className="mt-1 text-xs text-zinc-400">
-          Scout outcome ≠ account P/L. No fictitious Trade. Stock File thesis is not
-          invalidated. MAF remains a separate later action. Armed ≠ submitted
-          (automaticExecutionEnabled={String(AUTOMATIC_EXECUTION_ENABLED)}).
-        </p>
+        <MtaHelpLink topic="plan-record-outcome" label="Record Outcome" />
       </div>
 
       <label className="block text-xs text-zinc-300">

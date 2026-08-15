@@ -6,6 +6,7 @@ import {
   formatSituationPct,
   formatSituationUsd,
 } from "@/lib/situation-room";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 
 const QUICK_NAV = [
   { href: "/planning", label: "Scout" },
@@ -387,11 +388,10 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
       {/* Right panel */}
       <aside className="hidden w-72 shrink-0 flex-col gap-4 border-l border-zinc-800 bg-zinc-950 p-4 xl:flex">
         <section className="rounded-2xl border border-violet-500/30 bg-gradient-to-br from-violet-950/80 to-zinc-900 p-4">
-          <h2 className="text-sm font-semibold text-violet-200">AI Blocks</h2>
-          <p className="mt-2 text-xs text-zinc-400">
-            Control → Apply on any page. Copy context from the Control panel.
-            Dashboard Paste AI Block (legacy) is removed.
-          </p>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-violet-200">AI Blocks</h2>
+            <MtaHelpLink topic="ai-blocks-home" label="AI Blocks" />
+          </div>
         </section>
 
         {/* 5. Alerts */}

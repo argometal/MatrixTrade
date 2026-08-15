@@ -6,6 +6,7 @@ import {
   formatCapitalReservationProposalBlock,
   type FundingFollowUpResult,
 } from "@/lib/scout-funding-follow-up";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 
 /**
  * Post-Accept funding readiness panel (29-21).
@@ -41,14 +42,17 @@ export function FundingFollowUpPanel({
             {model.title}
           </h3>
         </div>
-        {followUp.planId ? (
-          <Link
-            href={`/planning?plan=${encodeURIComponent(followUp.planId)}`}
-            className="rounded-lg border border-sky-500/40 px-2.5 py-1 text-[10px] font-medium text-sky-200 hover:bg-sky-500/10"
-          >
-            Review Scout
-          </Link>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <MtaHelpLink topic="funding-follow-up" label="Funding follow-up" />
+          {followUp.planId ? (
+            <Link
+              href={`/planning?plan=${encodeURIComponent(followUp.planId)}`}
+              className="rounded-lg border border-sky-500/40 px-2.5 py-1 text-[10px] font-medium text-sky-200 hover:bg-sky-500/10"
+            >
+              Review Scout
+            </Link>
+          ) : null}
+        </div>
       </div>
 
       <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
@@ -116,11 +120,6 @@ export function FundingFollowUpPanel({
           </button>
         ) : null}
       </div>
-
-      <p className="mt-2 text-[10px] text-zinc-500">
-        Prepared proposal does not reserve capital. Control → Apply → Validate →
-        Accept remains mandatory.
-      </p>
     </section>
   );
 }

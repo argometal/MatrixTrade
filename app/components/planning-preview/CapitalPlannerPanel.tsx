@@ -8,8 +8,8 @@ import {
   isOpenExternalPosition,
   isValuationStale,
 } from "@/lib/external-position-types";
-import { CAPITAL_ALLOCATION_FLOW } from "@/lib/capital-help";
 import { formatCapitalStoreError } from "@/lib/capital-store-recovery";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 
 function money(n: number | undefined): string {
   if (n === undefined || !Number.isFinite(n)) return "—";
@@ -163,13 +163,12 @@ export function CapitalPlannerPanel({
         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
           Scouting Desk · Capital Planner
         </p>
-        <h1 className="font-serif text-2xl tracking-tight text-zinc-50 sm:text-4xl">
-          Capital Planner
-        </h1>
-        <p className="max-w-2xl text-sm text-zinc-400">
-          Model A cash-ledger. Settled cash and equity are independent. Scout
-          approval does not auto-reserve capital.
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="font-serif text-2xl tracking-tight text-zinc-50 sm:text-4xl">
+            Capital Planner
+          </h1>
+          <MtaHelpLink topic="capital-planner" label="Capital Planner" />
+        </div>
         <div className="flex flex-wrap gap-2 pt-1">
           <Link
             href="/planning"
@@ -194,19 +193,13 @@ export function CapitalPlannerPanel({
       </header>
 
       <section
-        className="rounded-xl border border-zinc-800 bg-zinc-900/30 px-3 py-2.5"
+        className="flex items-center justify-between gap-2 rounded-xl border border-zinc-800 bg-zinc-900/30 px-3 py-2.5"
         data-allocation-flow-help
       >
         <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
           Allocation flow
         </h2>
-        <p className="mt-1 text-sm leading-snug text-zinc-300">
-          {CAPITAL_ALLOCATION_FLOW}
-        </p>
-        <p className="mt-1 text-[11px] text-zinc-500">
-          Use Scout Funding Snapshot on a Scout Plan — do not gather identifiers
-          manually from separate screens.
-        </p>
+        <MtaHelpLink topic="capital-planner" label="Allocation flow" />
       </section>
 
       {capitalErrorDisplay ? (

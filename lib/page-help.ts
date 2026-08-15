@@ -26,7 +26,13 @@ export type PageHelpContent = {
 export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
   dashboard: {
     title: "Dashboard",
+    panelLabel: "Help",
     summary: "Hoy: riesgo y atención. Insights = aprender.",
+    principles: [
+      "Needs attention: Copy for AI → one Apply block → Control → Apply.",
+      "Scout monitoring is detection only — no automatic Scout mutation.",
+      "Experiment P/L ≠ Account Equity; monthly risk cap is separate.",
+    ],
     steps: [
       "Revisa room y Needs attention.",
       "AI Blocks: Control → Apply.",
@@ -35,8 +41,13 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
   },
   trades: {
     title: "Trades",
+    panelLabel: "Help",
     summary:
       "Histórico filtrable. Closed ≠ complete — alerta cuando falta review o campos de aprendizaje.",
+    principles: [
+      "Review and missing fields stay on Trades — not Scout war room.",
+      "Use the Review tab for pending human review on closed fills.",
+    ],
     steps: [
       "Si hay banner ámbar: cierra el loop (review / playbook / PLAN / R / post-stop).",
       "Filtra por veredicto para mejorar data.",
@@ -45,8 +56,12 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
   },
   insights: {
     title: "Insights",
+    panelLabel: "Help",
     summary:
       "Stats / journal / mistakes / pipeline performance — realized Trade P/L separate from Scout counterfactuals.",
+    principles: [
+      "Scout R and plan outcomes are counterfactual learning — not account P/L.",
+    ],
     steps: [
       "Review Statistics for cycle P/L.",
       "Use Pipeline Performance for component drag and Scout outcomes.",
@@ -60,6 +75,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
   },
   inbox: {
     title: "History",
+    panelLabel: "Help",
     summary: "Propuestas. Preferir Control → Apply.",
     steps: ["Apply / Reject en pendientes."],
   },
@@ -73,6 +89,8 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
       "Un caso seleccionado a la vez.",
       "Full thesis / invalidation / evidence live in Details or Snapshot.",
       "Fills cerrados incompletos → Trades, no misión de Scout.",
+      "Learning queue: record outcome or Retry Learning Sync before new Scouts.",
+      "Scout outcome ≠ account P/L; no fictitious Trade from Record Outcome.",
     ],
     copyButtons: [
       {
@@ -93,6 +111,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
   },
   playbook: {
     title: "Playbook",
+    panelLabel: "Help",
     summary: "Trade books — políticas (HOW).",
     steps: ["Asigna playbook a cada fill.", "P/L por playbook en Insights."],
   },

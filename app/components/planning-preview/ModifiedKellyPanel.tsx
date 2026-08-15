@@ -18,6 +18,7 @@ import {
   MODIFIED_KELLY_PLAYBOOK_ID,
   type ModifiedKellyLayerRole,
 } from "@/lib/modified-kelly-types";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 
 function formatPrice(value?: number): string {
   if (value === undefined || !Number.isFinite(value)) return "—";
@@ -137,11 +138,12 @@ export function ModifiedKellyPanel({
   if (!entry) {
     return (
       <div className="rounded-xl border border-amber-500/30 bg-amber-950/20 p-3">
-        <p className="text-xs font-semibold text-amber-300">Modified Kelly Layered Entry</p>
-        <p className="mt-1 text-xs text-zinc-400">
-          Select this playbook and Apply a Scout layeredEntry with executionModel
-          &quot;modified_kelly&quot;, plannedEntry, stopPrice, and targetPrice.
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold text-amber-300">
+            Modified Kelly Layered Entry
+          </p>
+          <MtaHelpLink topic="modified-kelly" label="Modified Kelly" />
+        </div>
         {!compact ? (
           <ul className="mt-2 space-y-1 text-[11px] text-zinc-500">
             {MODIFIED_KELLY_CHECKLIST.slice(0, 5).map((item) => (
@@ -167,26 +169,26 @@ export function ModifiedKellyPanel({
           <p className={`font-medium text-sky-200 ${compact ? "text-xs" : "text-sm"}`}>
             Layered Entry · Modified Kelly
           </p>
-          <p className="mt-0.5 text-[11px] text-zinc-500">
-            Experiment · risk distribution only · no broker automation
-          </p>
         </div>
-        <label className="text-[11px] text-zinc-500">
-          Execution Model
-          <select
-            className="ml-2 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-xs text-zinc-200"
-            value={model}
-            disabled
-            aria-label="Execution Model"
-            title="Set via Apply on layeredEntry.executionModel"
-          >
-            {EXECUTION_MODEL_OPTIONS.map((opt) => (
-              <option key={opt} value={opt}>
-                {LAYERED_EXECUTION_MODEL_LABELS[opt]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex flex-wrap items-center gap-2">
+          <MtaHelpLink topic="modified-kelly" label="Modified Kelly" />
+          <label className="text-[11px] text-zinc-500">
+            Execution Model
+            <select
+              className="ml-2 rounded-md border border-zinc-700 bg-zinc-950 px-2 py-1 text-xs text-zinc-200"
+              value={model}
+              disabled
+              aria-label="Execution Model"
+              title="Set via Apply on layeredEntry.executionModel"
+            >
+              {EXECUTION_MODEL_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>
+                  {LAYERED_EXECUTION_MODEL_LABELS[opt]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       <dl className="mt-3 grid grid-cols-2 gap-2 text-[11px] sm:grid-cols-3">

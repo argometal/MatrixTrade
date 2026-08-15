@@ -17,6 +17,7 @@ import {
 import { buildFillStatesForPlan } from "@/lib/scout-monetary-metrics";
 import { FillStateMonetaryMetrics } from "@/app/components/planning-preview/MonetaryMetricsBlock";
 import { ModifiedKellyPanel } from "@/app/components/planning-preview/ModifiedKellyPanel";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 
 function formatPrice(value?: number): string {
   if (value === undefined || !Number.isFinite(value)) return "—";
@@ -65,22 +66,22 @@ export function LayeredEntryPanel({
             : "border-teal-500/20 p-4"
       }`}
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <p className={`font-medium text-teal-200 ${compact ? "text-xs" : "text-sm"}`}>
-          Layered entry · R potencial / dinero
-        </p>
-        <LayeredEntryBadge entry={entry} />
-        <span className="text-xs text-zinc-500">
-          {entry.executionMethod.replace(/_/g, " ")}
-          {` · ${LAYERED_EXECUTION_MODEL_LABELS[executionModel]}`}
-          {entry.authorizedRiskAmount !== undefined
-            ? ` · risk $${entry.authorizedRiskAmount}`
-            : ""}
-        </span>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className={`font-medium text-teal-200 ${compact ? "text-xs" : "text-sm"}`}>
+            Layered entry · R potencial / dinero
+          </p>
+          <LayeredEntryBadge entry={entry} />
+          <span className="text-xs text-zinc-500">
+            {entry.executionMethod.replace(/_/g, " ")}
+            {` · ${LAYERED_EXECUTION_MODEL_LABELS[executionModel]}`}
+            {entry.authorizedRiskAmount !== undefined
+              ? ` · risk $${entry.authorizedRiskAmount}`
+              : ""}
+          </span>
+        </div>
+        <MtaHelpLink topic="layered-entry" label="Layered entry" />
       </div>
-      <p className="mt-1 text-[11px] text-zinc-500">
-        Proposed by human/AI · MTA-calculated R and risk · Final human approval required
-      </p>
       {!sharesAvailability.available ? (
         <p className="mt-2 text-xs text-amber-200/80">
           Shares unavailable — missing {sharesAvailability.missingFields.join(", ")}.

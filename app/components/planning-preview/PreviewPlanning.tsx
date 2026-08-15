@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 import { ScoutExecutePanel } from "@/app/components/planning-preview/ScoutExecutePanel";
 import { PlanRecordOutcomePanel } from "@/app/components/planning-preview/PlanRecordOutcomePanel";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
@@ -523,13 +524,15 @@ export function PreviewPlanning({
                   className="rounded-xl border border-amber-500/35 bg-amber-950/25 px-3 py-3"
                   data-scout-learning-queue
                 >
-                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">
-                    Scout learning queue
-                  </p>
-                  <p className="mt-1 text-[11px] text-zinc-400">
-                    Close the circuit before new Scouts: record outcome, or Retry Learning
-                    Sync when outcome already persisted.
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">
+                      Scout learning queue
+                    </p>
+                    <MtaHelpLink
+                      topic="scout-learning-queue"
+                      label="Learning queue"
+                    />
+                  </div>
                   {learningQueue.needsOutcome.length > 0 ? (
                     <ul className="mt-2 space-y-1" data-scout-needs-outcome>
                       {learningQueue.needsOutcome.map((plan) => (

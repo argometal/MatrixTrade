@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PreviewReview } from "@/app/components/review-preview/PreviewReview";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 import type { AttentionItem } from "@/lib/dashboard-attention";
 import type { BridgeInboxItem } from "@/lib/bridge";
 import {
@@ -121,11 +122,11 @@ export function PreviewTradesHub({
   ];
 
   return (
-    <PageHelpPanel pageId="trades">
+    <PageHelpPanel pageId="trades" trigger="icon">
       <div className="flex h-full min-h-0 w-full overflow-hidden">
         <div className="min-w-0 flex-1 overflow-y-auto">
           <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 pr-10">
               <div>
                 <h1 className="text-xl font-semibold text-zinc-100">Trades</h1>
                 <p className="mt-0.5 text-sm text-zinc-500">{subtitle}</p>
@@ -150,13 +151,13 @@ export function PreviewTradesHub({
                 className="mt-4 rounded-xl border border-amber-500/35 bg-amber-950/25 p-4"
                 aria-label="Closed trades incomplete"
               >
-                <p className="text-sm font-semibold text-amber-100">
-                  Closed ≠ complete · {incompleteClosed.length} trade
-                  {incompleteClosed.length === 1 ? "" : "s"} need finishing
-                </p>
-                <p className="mt-1 text-xs text-amber-100/70">
-                  Review and missing fields stay on Trades — not Scout war room.
-                </p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold text-amber-100">
+                    Closed ≠ complete · {incompleteClosed.length} trade
+                    {incompleteClosed.length === 1 ? "" : "s"} need finishing
+                  </p>
+                  <MtaHelpLink topic="trades-incomplete" label="Incomplete trades" />
+                </div>
                 <ul className="mt-3 space-y-2">
                   {incompleteClosed.map((row) => (
                     <li key={row.trade.id}>
