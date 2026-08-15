@@ -13,6 +13,7 @@ import type { StockThesis } from "./stock-thesis-types";
 import type { TradePlan } from "./plan-types";
 import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment } from "./types";
+import { formatSnapshotMenuForMechanics } from "./visible-snapshot-menu";
 
 export interface MatrixTrainingContextInput {
   playbooks?: Playbook[];
@@ -150,9 +151,9 @@ export function buildMatrixMechanicsBrief(): string {
     "Playbook → Stock File (optionally filled via MTAE) → Scouting Desk → Trade → Attribution (MAF).",
     "",
     "SCHEMA-FIRST / APPLY DISCIPLINE",
-    "Before ANY Apply JSON: copy Control → MTA Mechanics → Apply schema contract (same drawer as Mechanics).",
+    "Before ANY Apply JSON: open Control → MTA Mechanics, then copy the visible row labeled Apply schema contract (not a primary nav item).",
     "Never invent JSON keys, enums, nesting, or formats. Use only schema / accepted example / validator feedback.",
-    "If the exact contract is unavailable: stop. Ask for Apply schema contract — deliver conceptual analysis only.",
+    "If that exact copy row is unavailable: stop. Ask the human to open MTA Mechanics and copy Apply schema contract — deliver conceptual analysis only.",
     "A single validator error does NOT validate the rest of the object — re-check the full contract.",
     "Separate CONCEPTUAL analysis from SERIALIZATION to exact MTA keys.",
     "Write path: Control → Apply → Validate → Accept (human only). No other mutate menu.",
@@ -427,7 +428,7 @@ export function buildMatrixMechanicsBrief(): string {
     "- Do not place account balances in Stock File, Scout, Trade, MTAE, Learning, or general trading snapshots.",
     "- To create or update capital, consult:",
     "  1. Settings → Capital → Configuration Guide",
-    "  2. Control → MTA Mechanics → Apply schema contract",
+    "  2. Control → MTA Mechanics → copy row Apply schema contract",
     "- All persisted mutations still use Control → Apply → Validate → Accept.",
     "- Settings may prepare a valid proposal but must not bypass Apply.",
     "- capital-configuration-create: complete cash+as-of or equity+as-of pair required; orphan balance/as-of rejected; null invalid; never invent timestamps.",
@@ -466,26 +467,7 @@ export function buildMatrixMechanicsBrief(): string {
     "Strategy stop may be tighter OR wider than structural invalidation — intentional choice to maximize R or test the entry hypothesis. Record it; evolve from outcomes.",
     "If the PLAN has no strategy stop, do not invent R:R from profile levels — ask the human to set entry, strategy stop, and target on the PLAN.",
     "",
-    "SNAPSHOT MENU (ask human to copy ONLY these exact visible labels)",
-    "There is NO Request / Universal Request layer — the human already stated the task in chat.",
-    "Control primary: MTA Mechanics · Stock Files · Apply.",
-    "Control Library: Technical Analysis · Playbook · Scout Desk · Learning.",
-    "Human copies via Control, Dashboard, or the Trade window.",
-    "- MTA Mechanics — rules primer (Control → MTA Mechanics; paste once per chat)",
-    "- Apply schema contract — schema-first keys/enums (Control → MTA Mechanics → Apply schema contract)",
-    "- Dashboard snapshot — global budget / experiment / attention summary (Dashboard)",
-    "- MTAE protocol — technical analysis (Control → Library → Technical Analysis)",
-    "- Playbook — method + stats (Control → Library → Playbook)",
-    "- Scout Desk — stock files + scouts + monthly risk room (Control → Library → Scout Desk)",
-    "- Learning — MAF attribution protocol (Control → Library → Learning)",
-    "- Stock Files — {TICKER} profile + MTAE request + scouts (Control → Stock Files)",
-    "- Trades snapshot / {ID} trade snapshot — execution records (Trades window)",
-    "- {ID} forensic snapshot — closed trade EVIDENCE only on /trades/{ID}",
-    "- Apply — paste → Validate → Accept (write path; not a snapshot paste)",
-    "Request a specific slice by its visible label instead of guessing missing context.",
-    "FORBIDDEN: do not ask the human to open Control → Closed trade / Session / Case / Request — those labels are retired.",
-    "FORBIDDEN: do not ask for Control → Update — the write path label is Control → Apply.",
-    "FORBIDDEN: do not ask for Control → Train AI — that label is retired; use MTA Mechanics.",
+    formatSnapshotMenuForMechanics(),
     "",
     "EXPORT ORDER (when user pastes context)",
     "1. MATRIX MECHANICS (this block)",

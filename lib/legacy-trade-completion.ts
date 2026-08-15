@@ -11,21 +11,8 @@ export const LEGACY_ABSENT_PLAYBOOK_ID = "__legacy_none__";
 /** Persisted sentinel: Scout PLAN was historically absent — do not invent PLAN-xxx. */
 export const LEGACY_ABSENT_PLAN_ID = "__LEGACY_NONE__";
 
-/** Visible Control / window labels the AI may ask the human to copy. */
-export const VISIBLE_SNAPSHOT_MENU_LABELS = [
-  "MTA Mechanics",
-  "Apply schema contract",
-  "Stock Files",
-  "Apply",
-  "Technical Analysis",
-  "Playbook",
-  "Scout Desk",
-  "Learning",
-  "Dashboard snapshot",
-  "Trades snapshot",
-  "{ID} trade snapshot",
-  "{ID} forensic snapshot",
-] as const;
+/** @deprecated Prefer VISIBLE_SNAPSHOT_MENU_LABELS from visible-snapshot-menu (canonical 15-12). */
+export { VISIBLE_SNAPSHOT_MENU_LABELS } from "./visible-snapshot-menu";
 
 /** Paths that must never appear as current instructions in Mechanics / schema text. */
 export const FORBIDDEN_SNAPSHOT_PATH_PATTERNS: RegExp[] = [

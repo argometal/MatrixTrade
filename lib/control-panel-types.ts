@@ -9,8 +9,8 @@ export type ControlPanelThesisEntry = {
 
 /**
  * Control section ids.
- * Primary: train-ai (Matrix Mechanics), stock-file (direct access).
- * Library: mtae, playbook, scouting, learning.
+ * Primary: train-ai (MTA Mechanics), stock-file (direct access).
+ * Library: mtae, playbook, scouting, learning (UI label MAF).
  * Apply is a step, not a section id.
  * Forensic closed-trade export lives on `/trades/[id]`, never here.
  */

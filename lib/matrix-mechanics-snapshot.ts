@@ -2,11 +2,12 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 37;
+export const MATRIX_MECHANICS_REVISION = 38;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
  * Window snapshots use the brief prefix automatically; this is the expanded constitution.
+ * SNAPSHOT MENU lives only in buildMatrixMechanicsBrief() (canonical via visible-snapshot-menu).
  */
 export function buildMatrixMechanicsSnapshot(): string {
   return [
@@ -20,7 +21,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "Apply Mode: only after explicit intent (Save, Create, Update, Record, Apply, Import, Propose JSON, Persist to MTA).",
     "External AI proposes. MTA never auto-writes.",
     "Flow: Copy snapshot → discuss in Analysis Mode → user requests Apply → ONE JSON block → Control → Apply → Validate → Accept.",
-    "SCHEMA-FIRST: before Apply JSON, copy Control → MTA Mechanics → Apply schema contract. Never invent keys. stock-case-create requires entry+stop+target.",
+    "SCHEMA-FIRST: before Apply JSON, open Control → MTA Mechanics and copy the visible row Apply schema contract. Never invent keys. stock-case-create requires entry+stop+target.",
     "",
     "=== AI BLOCK TYPES ===",
     "Scouting layer:",
@@ -80,6 +81,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- Using trade-update before a Scout Plan and Trade exist",
     "- Creating duplicate Scout Plans during a repair",
     "- Rejecting a valid repair when the Stock File exists but the linked Scout Plan is missing",
+    "- Asking the human to copy a Control Library nav name (Technical Analysis, Playbook, Scout Desk, Learning) instead of the exact copy-row label",
     "",
     "=== LAYER OWNERSHIP ===",
     "- Playbook (HOW): reusable method, checklist, horizons",
@@ -89,12 +91,11 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- MAF experiment: ONE learning record after close/observation — component attribution, not a journal",
     "",
     "=== SNAPSHOT MENU ===",
-    "Preferred Stock File loop (MTA-002A): Analyze with AI → chat → Apply AI Result → Open Scout.",
-    "Analyze with AI copies one package: operative prompt + Mechanics + MTAE + dossier + active Scout.",
-    "Ask ONLY for visible labels: MTA Mechanics · Apply schema contract · Stock Files · Apply ·",
-    "Library Technical Analysis · Playbook · Scout Desk · Learning · Dashboard snapshot · Trade forensic.",
-    "Closed-trade forensic export lives ONLY on /trades/{ID} — never as a Control home section.",
-    "MTAE is Control → Library → Technical Analysis — not Playbook, not Mechanics.",
+    "Canonical list is in MATRIX MECHANICS above (generated from lib/visible-snapshot-menu.ts).",
+    "Do not maintain a second divergent menu here.",
+    "Closed-trade forensic export lives ONLY on the trade detail window — never as a Control home section.",
+    "MTAE copy row is MTAE protocol under Control → Library → Technical Analysis.",
+    "MAF copy row is MAF attribution protocol under Control → Library → MAF.",
     "Scout PLAN snapshot includes strategy_stop + planned_rr (never structural stop for R).",
     "Stock profile snapshot includes thesis_invalidation (structural) — do not substitute for strategy stop.",
     "",
