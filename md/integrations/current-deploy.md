@@ -2,14 +2,15 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0815c`
+Pinned revision: `main0815d`
 
-Ship commit: `c752888`
+Ship commit: `3cea926`
 
 Includes:
-- PR #317 — Hot filter Treemap-only; Portfolio/Tags stay Universe; Tags rename + clearer recurrence/recency plot
-- Prior `main0815b` / #313–#314: Trades EN + Scout pipeline proposal; MTA-SAMPLE-001 probe
-- Prior `main0815a` / #309: `/forge` Argus login + guest-lock; neighborhood camera/pins; Topics detach
+- PR #325 — `missed_opportunity` Scout outcome (entry never reached; distinct from UPL)
+- PR #326 — build fix (exclude miss test from Next typecheck)
+- PR #324 — PLAN-ID architecture (min pad 3; sequence; insert-only create)
+- Prior `main0815c` / #317: Hot Treemap-only + Tags rename/plot
 
 **Terminology:** In ArgusForge docs, **MTA** = matrix/time engine (`argusforge-contract.md` §10). Trading product = **MatrixTrade**. See [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md).
 
@@ -21,3 +22,4 @@ git fetch origin --tags
 git checkout main
 git reset --hard origin/main
 ```
+
