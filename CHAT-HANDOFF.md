@@ -12,6 +12,15 @@
 
 ---
 
+## Objective — Matrix Trading Analytics (library)
+
+**Doc:** [`md/matrix/matrix-trading-analytics-gap-001.md`](md/matrix/matrix-trading-analytics-gap-001.md)  
+**Status:** Gap analysis only — **no implementation**.  
+
+North star for Analytics work: Opportunity (Scout) · Execution (capture) · Attribution (MAF) · Sample Quality. Do not rebuild MTA; formalize the motor on existing plan-outcome / LO / OBS / MAF / Pipeline pieces. Edge = learn which process components produce/destroy expectancy — not journal WR alone.
+
+---
+
 ## Pending — ArgusForge 24-33 Recent linkage
 
 PR: #110 (draft)  
@@ -33,6 +42,7 @@ Four statuses: Unlinked · In Realm · In related Deck · Related. Do not treat 
 | ARGUS deprecated handoffs | [`md/argus/DEPRECATED-HANDOFFS.md`](md/argus/DEPRECATED-HANDOFFS.md) |
 | ArgusForge capabilities | [`md/argusforge/capability-map.md`](md/argusforge/capability-map.md) |
 | Scout / Trade / Pipeline ledgers | [`md/matrix/metrics-analysis-planteamiento-handoff.md`](md/matrix/metrics-analysis-planteamiento-handoff.md) |
+| **Matrix Trading Analytics gap** (Opportunity · Execution · Attribution · Sample Quality) | [`md/matrix/matrix-trading-analytics-gap-001.md`](md/matrix/matrix-trading-analytics-gap-001.md) |
 | Scout Learning circuit audit | [`md/matrix/scout-learning-circuit-audit-handoff.md`](md/matrix/scout-learning-circuit-audit-handoff.md) |
 | Plan Map execution sentence (shipped #132) | [`md/matrix/execution-instruction-spec.md`](md/matrix/execution-instruction-spec.md) |
 | ARGUS export / deliver | [`md/argus/export-delivery-handoff.md`](md/argus/export-delivery-handoff.md) |
