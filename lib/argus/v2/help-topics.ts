@@ -186,7 +186,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Pan & zoom",
-        body: "−/+ zoom, ↺↻ turn the molecule, optional 3D tilt (Shift+drag orbits). Drag empty canvas to pan; Fit resets. Same camera idea as Neo4j Bloom / Obsidian — not Forge force-3D.",
+        body: "Drag a node to pin it; Relax soft-reflows the rest; Reset restores the computed layout (session-only). −/+ zoom, ↺↻ turn, optional 3D tilt; Fit resets the camera only.",
       },
       {
         title: "Focus & open",

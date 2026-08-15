@@ -20,6 +20,7 @@ import {
   moleculeLinkDistance,
   moleculeLinkDistanceForDegrees,
   moleculeLinkStrength,
+  relaxNeighborhoodLayout,
 } from "../lib/argus/v2/neighborhood-molecule-layout";
 
 assert.equal(CHEM_NEIGHBORHOOD_LINK_UNIT, 15);
@@ -235,6 +236,18 @@ const ys = new Set(molecule.map((n) => Math.round(n.y * 10)));
 assert.ok(xs.size >= 5, "molecule spreads X");
 assert.ok(ys.size >= 5, "molecule spreads Y");
 
+{
+  const moved = molecule.map((n) =>
+    n.id === "p-xom" ? { ...n, x: n.x + 12, y: n.y - 8 } : { ...n }
+  );
+  const pinned = new Set(["p-xom"]);
+  const relaxed = relaxNeighborhoodLayout(moved, edges, pinned);
+  const pinBefore = moved.find((n) => n.id === "p-xom")!;
+  const pinAfter = relaxed.find((n) => n.id === "p-xom")!;
+  assert.ok(Math.hypot(pinAfter.x - pinBefore.x, pinAfter.y - pinBefore.y) < 0.05, "relax keeps pins fixed");
+  assert.equal(relaxed.length, moved.length, "relax keeps all nodes");
+}
+
 const graphUi = readFileSync(join(process.cwd(), "app/argus/v2/components/V2KnowledgeGraph.tsx"), "utf8");
 assert.match(graphUi, /chem-lite/, "UI names chem-lite spacing");
 assert.match(graphUi, /1–3 links · near/, "legend: uniform near bonds");
@@ -247,7 +260,11 @@ assert.match(graphUi, /aria-label="Zoom in"/, "graph exposes + zoom control");
 assert.match(graphUi, /aria-label="Zoom out"/, "graph exposes − zoom control");
 assert.match(graphUi, /aria-label="Turn left"/, "graph exposes turn left");
 assert.match(graphUi, /aria-label="Toggle 3D turn"/, "graph exposes optional 3D tilt");
+assert.match(graphUi, /aria-label="Reset layout"/, "graph can clear session pins");
+assert.match(graphUi, /aria-label="Relax layout around pins"/, "graph can soft-reflow around pins");
 assert.match(graphUi, /rotateLayoutPoint/, "turn rotates layout around center");
+assert.match(graphUi, /relaxNeighborhoodLayout/, "drag realign uses relax helper");
+assert.match(graphUi, /onPointerDownNode/, "nodes are draggable");
 assert.doesNotMatch(graphUi, /ForceGraph3D|react-force-graph-3d/, "ARGUS neighborhood stays SVG — no Forge 3D port");
 assert.doesNotMatch(graphUi, /3 links · mid/, "old mid-band legend removed");
 

@@ -208,6 +208,95 @@ export function layoutNeighborhoodMoleculeNodes(
 }
 
 /**
+ * Session realign: keep pinned nodes fixed, gently reflow the rest around them.
+ * Does not mutate inputs. Positions stay in the same 0–100 layout space.
+ */
+export function relaxNeighborhoodLayout(
+  nodes: V2GraphNode[],
+  edges: V2GraphEdge[],
+  pinnedIds: ReadonlySet<string>,
+  options: { iterations?: number } = {}
+): V2GraphNode[] {
+  if (nodes.length === 0) return [];
+  if (nodes.length === 1 || pinnedIds.size === 0) {
+    return nodes.map((n) => ({ ...n }));
+  }
+
+  const iterations = options.iterations ?? 90;
+  const degrees = neighborhoodDegreeMap(edges);
+  const simNodes: SimNode[] = nodes.map((n) => ({
+    ...n,
+    z: 0,
+    vz: 0,
+    vx: 0,
+    vy: 0,
+    ...(pinnedIds.has(n.id) ? { fx: n.x, fy: n.y } : {}),
+  }));
+  const byId = new Map(simNodes.map((n) => [n.id, n]));
+
+  const simLinks: SimLink[] = edges
+    .filter((e) => byId.has(e.from) && byId.has(e.to) && e.from !== e.to)
+    .map((e) => ({
+      source: e.from,
+      target: e.to,
+      weight: e.weight,
+      kind: e.kind,
+    }));
+
+  const linkForce = forceLink<SimNode, SimLink>(simLinks)
+    .id((d) => d.id)
+    .distance((d) => {
+      const sourceId = typeof d.source === "string" ? d.source : d.source.id;
+      const targetId = typeof d.target === "string" ? d.target : d.target.id;
+      return moleculeLinkDistanceForDegrees(
+        d.weight,
+        degrees.get(sourceId) ?? 1,
+        degrees.get(targetId) ?? 1
+      );
+    })
+    .strength((d) => {
+      const sourceId = typeof d.source === "string" ? d.source : d.source.id;
+      const targetId = typeof d.target === "string" ? d.target : d.target.id;
+      return moleculeLinkStrengthForDegrees(
+        d.weight,
+        degrees.get(sourceId) ?? 1,
+        degrees.get(targetId) ?? 1
+      );
+    });
+
+  const simulation = forceSimulation<SimNode>(simNodes)
+    .force("link", linkForce)
+    .force("charge", forceManyBody<SimNode>().strength(-10).distanceMax(36))
+    .force("collide", forceCollide<SimNode>().radius(2.6).strength(0.9))
+    .force("center", forceCenter(50, 50, 0).strength(0.015))
+    .stop();
+
+  simulation.numDimensions(2);
+
+  for (let i = 0; i < iterations; i++) {
+    simulation.tick();
+    for (const n of simNodes) {
+      n.z = 0;
+      n.vz = 0;
+      n.x = Math.min(94, Math.max(6, n.x));
+      n.y = Math.min(94, Math.max(6, n.y));
+    }
+  }
+
+  return simNodes.map((n) => ({
+    id: n.id,
+    name: n.name,
+    kind: n.kind,
+    evidenceCount: n.evidenceCount,
+    href: n.href,
+    x: n.x,
+    y: n.y,
+    ...(n.focusCritical ? { focusCritical: n.focusCritical } : {}),
+    ...(n.focusTags ? { focusTags: n.focusTags } : {}),
+  }));
+}
+
+/**
  * Shrink-only fit. Scale ≤ 1 preserves chem bond lengths; overflow is compressed.
  */
 function fitNodesToViewBoxShrinkOnly(nodes: SimNode[], min: number, max: number): V2GraphNode[] {

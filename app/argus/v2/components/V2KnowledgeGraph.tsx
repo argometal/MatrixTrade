@@ -6,6 +6,7 @@ import { layoutNeighborhoodGraphNodes } from "@/lib/argus/v2/intelligence-viz";
 import {
   buildEgoNeighborhoodPreservePositions,
   layoutNeighborhoodMoleculeNodes,
+  relaxNeighborhoodLayout,
   type NeighborhoodLayoutMode,
 } from "@/lib/argus/v2/neighborhood-molecule-layout";
 import { V2IntelHelpLink } from "./V2IntelHelpLink";
@@ -105,8 +106,9 @@ function GraphLegend({ showFocusTrigger = false }: { showFocusTrigger?: boolean 
   );
 }
 
-/** Bloom / Obsidian-style camera: pan, +/− zoom, turn, optional 3D tilt. */
+/** Bloom / Obsidian-style camera: pan, +/− zoom, turn, optional 3D tilt, drag pins. */
 type GraphCamera = { x: number; y: number; w: number; h: number };
+type LayoutPoint = { x: number; y: number };
 
 const DEFAULT_CAMERA: GraphCamera = { x: 0, y: 0, w: 100, h: 100 };
 const MIN_VIEW = 28;
@@ -115,8 +117,9 @@ const ZOOM_STEP = 1.18;
 const TURN_STEP_DEG = 18;
 const LAYOUT_CENTER = { x: 50, y: 50 };
 const TILT_3D_DEG = 34;
+const NODE_DRAG_THRESHOLD_PX = 4;
 
-function rotateLayoutPoint(x: number, y: number, deg: number): { x: number; y: number } {
+function rotateLayoutPoint(x: number, y: number, deg: number): LayoutPoint {
   if (!deg) return { x, y };
   const rad = (deg * Math.PI) / 180;
   const cos = Math.cos(rad);
@@ -159,36 +162,62 @@ function GraphCanvas({
   const svgRef = useRef<SVGSVGElement | null>(null);
   const dragRef = useRef<{
     pointerId: number;
-    mode: "pan" | "orbit";
+    mode: "pan" | "orbit" | "node" | "pending-node";
+    nodeId?: string;
     originX: number;
     originY: number;
     cameraX: number;
     cameraY: number;
     turn: number;
     pitch: number;
+    moved: boolean;
   } | null>(null);
   const [camera, setCamera] = useState<GraphCamera>(DEFAULT_CAMERA);
   const [turnDeg, setTurnDeg] = useState(0);
   const [pitchDeg, setPitchDeg] = useState(TILT_3D_DEG);
   const [tilt3d, setTilt3d] = useState(false);
   const [panning, setPanning] = useState(false);
+  const [overrides, setOverrides] = useState<Record<string, LayoutPoint>>({});
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => new Set());
+  const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
 
-  // New molecule / resize / focus world → reset camera (Fit).
+  const nodeIdKey = useMemo(
+    () =>
+      nodes
+        .map((n) => n.id)
+        .sort()
+        .join("|"),
+    [nodes]
+  );
+
+  // New molecule / focus world → reset camera + session pins.
   useEffect(() => {
     setCamera(DEFAULT_CAMERA);
     setTurnDeg(0);
     setPitchDeg(TILT_3D_DEG);
+    setOverrides({});
+    setPinnedIds(new Set());
+    setDraggingNodeId(null);
     dragRef.current = null;
     setPanning(false);
-  }, [centerId, nodes, layoutMode, emphasizeIds?.size]);
+  }, [centerId, layoutMode, nodeIdKey]);
+
+  const layoutNodes = useMemo(
+    () =>
+      nodes.map((node) => {
+        const point = overrides[node.id];
+        return point ? { ...node, x: point.x, y: point.y } : node;
+      }),
+    [nodes, overrides]
+  );
 
   const drawnNodes = useMemo(
     () =>
-      nodes.map((node) => {
+      layoutNodes.map((node) => {
         const point = rotateLayoutPoint(node.x, node.y, turnDeg);
         return { ...node, x: point.x, y: point.y };
       }),
-    [nodes, turnDeg]
+    [layoutNodes, turnDeg]
   );
   const nodeMap = useMemo(() => new Map(drawnNodes.map((n) => [n.id, n])), [drawnNodes]);
 
@@ -212,11 +241,39 @@ function GraphCanvas({
       Math.abs(camera.h - 100) > 0.2 ||
       Math.abs(turnDeg) > 0.5 ||
       (tilt3d && Math.abs(pitchDeg - TILT_3D_DEG) > 0.5));
+  const hasPins = pinnedIds.size > 0 || Object.keys(overrides).length > 0;
+
+  function clientToSvg(clientX: number, clientY: number): LayoutPoint | null {
+    const svg = svgRef.current;
+    if (!svg) return null;
+    const rect = svg.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
+    return {
+      x: camera.x + ((clientX - rect.left) / rect.width) * camera.w,
+      y: camera.y + ((clientY - rect.top) / rect.height) * camera.h,
+    };
+  }
 
   function fitCamera() {
     setCamera(DEFAULT_CAMERA);
     setTurnDeg(0);
     setPitchDeg(TILT_3D_DEG);
+  }
+
+  function resetLayout() {
+    setOverrides({});
+    setPinnedIds(new Set());
+    setDraggingNodeId(null);
+  }
+
+  function relaxAroundPins(nextPinned: Set<string>, seed: V2GraphNode[]) {
+    if (nextPinned.size === 0) return;
+    const relaxed = relaxNeighborhoodLayout(seed, edges, nextPinned);
+    const next: Record<string, LayoutPoint> = {};
+    for (const node of relaxed) {
+      next[node.id] = { x: node.x, y: node.y };
+    }
+    setOverrides(next);
   }
 
   function zoomAt(factor: number, clientX?: number, clientY?: number) {
@@ -259,6 +316,30 @@ function GraphCanvas({
       cameraY: camera.y,
       turn: turnDeg,
       pitch: pitchDeg,
+      moved: false,
+    };
+    setPanning(true);
+  }
+
+  function onPointerDownNode(event: PointerEvent<SVGGElement>, nodeId: string) {
+    if (!canNavigate || event.button !== 0) return;
+    if (event.metaKey || event.ctrlKey) return;
+    const svg = svgRef.current;
+    if (!svg) return;
+    event.preventDefault();
+    event.stopPropagation();
+    svg.setPointerCapture(event.pointerId);
+    dragRef.current = {
+      pointerId: event.pointerId,
+      mode: "pending-node",
+      nodeId,
+      originX: event.clientX,
+      originY: event.clientY,
+      cameraX: camera.x,
+      cameraY: camera.y,
+      turn: turnDeg,
+      pitch: pitchDeg,
+      moved: false,
     };
     setPanning(true);
   }
@@ -269,6 +350,27 @@ function GraphCanvas({
     if (!drag || !svg || drag.pointerId !== event.pointerId) return;
     const rect = svg.getBoundingClientRect();
     if (rect.width <= 0 || rect.height <= 0) return;
+
+    if (drag.mode === "pending-node" && drag.nodeId) {
+      const dist = Math.hypot(event.clientX - drag.originX, event.clientY - drag.originY);
+      if (dist < NODE_DRAG_THRESHOLD_PX) return;
+      drag.mode = "node";
+      drag.moved = true;
+      setDraggingNodeId(drag.nodeId);
+    }
+
+    if (drag.mode === "node" && drag.nodeId) {
+      const svgPoint = clientToSvg(event.clientX, event.clientY);
+      if (!svgPoint) return;
+      const layoutPoint = rotateLayoutPoint(svgPoint.x, svgPoint.y, -turnDeg);
+      const clamped = {
+        x: Math.min(94, Math.max(6, layoutPoint.x)),
+        y: Math.min(94, Math.max(6, layoutPoint.y)),
+      };
+      setOverrides((prev) => ({ ...prev, [drag.nodeId!]: clamped }));
+      return;
+    }
+
     if (drag.mode === "orbit") {
       const dx = event.clientX - drag.originX;
       const dy = event.clientY - drag.originY;
@@ -276,6 +378,8 @@ function GraphCanvas({
       setPitchDeg(Math.min(62, Math.max(8, drag.pitch - dy * 0.25)));
       return;
     }
+
+    if (drag.mode !== "pan") return;
     const dx = ((event.clientX - drag.originX) / rect.width) * camera.w;
     const dy = ((event.clientY - drag.originY) / rect.height) * camera.h;
     setCamera((prev) => ({
@@ -290,10 +394,32 @@ function GraphCanvas({
     if (!drag || drag.pointerId !== event.pointerId) return;
     dragRef.current = null;
     setPanning(false);
+    setDraggingNodeId(null);
     try {
       svgRef.current?.releasePointerCapture(event.pointerId);
     } catch {
       /* already released */
+    }
+
+    if (drag.mode === "pending-node" && drag.nodeId && !drag.moved) {
+      onFocusNode?.(drag.nodeId);
+      return;
+    }
+
+    if (drag.mode === "node" && drag.nodeId && drag.moved) {
+      const nextPinned = new Set(pinnedIds);
+      nextPinned.add(drag.nodeId);
+      setPinnedIds(nextPinned);
+      setOverrides((prev) => {
+        const seeded = nodes.map((node) => {
+          const point = prev[node.id];
+          return point ? { ...node, x: point.x, y: point.y } : { ...node };
+        });
+        const relaxed = relaxNeighborhoodLayout(seeded, edges, nextPinned);
+        const next: Record<string, LayoutPoint> = {};
+        for (const node of relaxed) next[node.id] = { x: node.x, y: node.y };
+        return next;
+      });
     }
   }
 
@@ -358,6 +484,26 @@ function GraphCanvas({
           </button>
           <button
             type="button"
+            onClick={() => relaxAroundPins(pinnedIds, layoutNodes)}
+            disabled={pinnedIds.size === 0}
+            className={controlBtn}
+            title="Soft-reflow unpinned nodes around your pins"
+            aria-label="Relax layout around pins"
+          >
+            Relax
+          </button>
+          <button
+            type="button"
+            onClick={resetLayout}
+            disabled={!hasPins}
+            className={controlBtn}
+            title="Clear dragged pins and restore computed layout"
+            aria-label="Reset layout"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
             onClick={fitCamera}
             disabled={!cameraMoved}
             className={controlBtn}
@@ -394,14 +540,18 @@ function GraphCanvas({
             viewBox={`${camera.x} ${camera.y} ${camera.w} ${camera.h}`}
             preserveAspectRatio="xMidYMid meet"
             className={`w-full rounded-xl border border-zinc-800/80 bg-zinc-950/80 ${cfg.heightClass} ${
-              panning ? "cursor-grabbing" : canNavigate ? "cursor-grab" : ""
+              draggingNodeId
+                ? "cursor-grabbing"
+                : panning
+                  ? "cursor-grabbing"
+                  : canNavigate
+                    ? "cursor-grab"
+                    : ""
             }`}
             role="img"
             aria-label={
               layout === "neighborhood"
-                ? layoutMode === "molecule"
-                  ? "Entity neighborhood molecule — pan, +/− zoom, turn, optional 3D tilt"
-                  : "Entity neighborhood graph — pan, +/− zoom, turn, optional 3D tilt"
+                ? "Entity neighborhood — drag nodes to pin, Relax to realign, Reset restores layout"
                 : "Relationship graph of linked entities"
             }
             onPointerMove={onPointerMove}
@@ -450,8 +600,6 @@ function GraphCanvas({
               const to = nodeMap.get(edge.to);
               if (!from || !to) return null;
               const isAffinity = edge.kind === "focus-affinity";
-              // Keep a drawn bond whenever it touches the focused ego — so an Event
-              // that stays on-canvas (even dimmed) still shows its relation.
               const touchesEmphasize =
                 !emphasizeIds ||
                 emphasizeIds.size === 0 ||
@@ -504,7 +652,9 @@ function GraphCanvas({
                 Math.sqrt(node.evidenceCount / maxEvidence) * cfg.nodeScale;
               const isCenter = centerId === node.id;
               const isHovered = hoveredId === node.id;
-              const drawR = isHovered ? r * HOVER_SCALE : r;
+              const isPinned = pinnedIds.has(node.id);
+              const isDragging = draggingNodeId === node.id;
+              const drawR = isHovered || isDragging ? r * HOVER_SCALE : r;
               const isConnected = connectedToHover.has(node.id);
               const outOfEmphasize = Boolean(
                 emphasizeIds && emphasizeIds.size > 0 && !emphasizeIds.has(node.id)
@@ -526,16 +676,32 @@ function GraphCanvas({
                   opacity={outOfEmphasize ? 0.22 : dimmed ? 0.35 : 1}
                   onMouseEnter={() => onHover(node.id)}
                   onMouseLeave={() => onHover(null)}
+                  onPointerDown={(event) => onPointerDownNode(event, node.id)}
+                  style={{ cursor: canNavigate ? (isDragging ? "grabbing" : "grab") : undefined }}
                 >
                   <a
                     href={node.href}
                     onClick={(event) => {
+                      // Focus / open handled on pointerup (click) or ⌘/Ctrl+click native nav.
                       if (!onFocusNode) return;
                       if (event.metaKey || event.ctrlKey) return;
                       event.preventDefault();
-                      onFocusNode(node.id);
                     }}
                   >
+                    {isPinned ? (
+                      <circle
+                        cx={node.x}
+                        cy={node.y}
+                        r={drawR + 1.6}
+                        fill="none"
+                        stroke="rgb(167, 139, 250)"
+                        strokeOpacity={0.85}
+                        strokeWidth={0.45}
+                        strokeDasharray="0.9 0.7"
+                        className="pointer-events-none"
+                        aria-hidden
+                      />
+                    ) : null}
                     {isFocusCritical ? (
                       <>
                         <circle
@@ -568,24 +734,29 @@ function GraphCanvas({
                       cy={node.y}
                       r={drawR}
                       fill={NODE_COLORS[node.kind]}
-                      fillOpacity={isHovered || isCenter ? 0.95 : 0.72}
+                      fillOpacity={isHovered || isCenter || isDragging ? 0.95 : 0.72}
                       stroke={
                         isCenter
                           ? "rgb(251, 191, 36)"
-                          : isFocusCritical
-                            ? "rgb(251, 113, 133)"
-                            : isHovered
-                              ? "rgb(216, 180, 254)"
-                              : "rgb(9, 9, 11)"
+                          : isPinned
+                            ? "rgb(167, 139, 250)"
+                            : isFocusCritical
+                              ? "rgb(251, 113, 133)"
+                              : isHovered
+                                ? "rgb(216, 180, 254)"
+                                : "rgb(9, 9, 11)"
                       }
-                      strokeWidth={isCenter || isFocusCritical ? 0.85 : isHovered ? 0.7 : 0.35}
+                      strokeWidth={isCenter || isFocusCritical || isPinned ? 0.85 : isHovered ? 0.7 : 0.35}
                       className="cursor-pointer"
-                      style={{ transition: "r 120ms ease, fill-opacity 120ms ease" }}
+                      style={{ transition: isDragging ? undefined : "r 120ms ease, fill-opacity 120ms ease" }}
                     />
                     <title>
                       {node.name} ({KIND_LABELS[node.kind]}) — {node.evidenceCount} evidence
                       {focusLabel}
-                      {onFocusNode ? " · click to focus neighbors · ⌘/Ctrl+click to open" : ""}
+                      {isPinned ? " · pinned" : ""}
+                      {canNavigate
+                        ? " · drag to move · click to focus · ⌘/Ctrl+click to open"
+                        : ""}
                     </title>
                   </a>
                   <text
@@ -619,8 +790,8 @@ function GraphCanvas({
       </div>
       {canNavigate ? (
         <p className="mt-1.5 text-[10px] text-zinc-600">
-          −/+ zoom · ↺↻ turn · 3D tilts the map (Shift+drag orbits) · drag to pan · Fit resets. True
-          Forge-style 3D force stays out of ARGUS neighborhood.
+          Drag a node to pin · Relax realigns around pins · Reset restores layout · −/+ zoom · ↺↻
+          turn · 3D tilt · Fit is camera only. Session-only — not saved.
         </p>
       ) : null}
     </div>
