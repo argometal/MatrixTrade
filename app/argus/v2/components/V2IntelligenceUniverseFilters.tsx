@@ -1,7 +1,8 @@
 "use client";
 
 import {
-  INTELLIGENCE_UNIVERSE_FILTERS,
+  intelligenceFiltersForSurface,
+  type IntelligenceSurface,
   type IntelligenceUniverseFilter,
 } from "@/lib/argus/v2/intelligence-filters";
 
@@ -9,15 +10,19 @@ export function V2IntelligenceUniverseFilters({
   filter,
   onChange,
   ariaLabel = "Filter universe",
+  surface = "treemap",
 }: {
   filter: IntelligenceUniverseFilter;
   onChange: (next: IntelligenceUniverseFilter) => void;
   ariaLabel?: string;
+  /** Hot is omitted for Portfolio / Tags. */
+  surface?: IntelligenceSurface;
 }) {
+  const options = intelligenceFiltersForSurface(surface);
   return (
     <div className="space-y-1.5">
       <div className="flex flex-wrap gap-1" role="tablist" aria-label={ariaLabel}>
-        {INTELLIGENCE_UNIVERSE_FILTERS.map((item) => {
+        {options.map((item) => {
           const active = filter === item.id;
           return (
             <button
