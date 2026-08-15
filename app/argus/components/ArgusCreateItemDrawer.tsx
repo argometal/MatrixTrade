@@ -131,9 +131,9 @@ export function ArgusCreateItemDrawer({
 
           <div className="mt-6 border-t border-zinc-800/80 pt-4">
             <p className="mb-1 px-1 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
-              Capture missing (if needed)
+              Create missing (if needed)
             </p>
-            <p className="mb-3 px-1 text-[11px] text-zinc-600">Quick-capture and link in one step</p>
+            <p className="mb-3 px-1 text-[11px] text-zinc-600">Quick-create and link in one step</p>
 
             {suggestedTopics.length > 0 ? (
               <div className="mb-3 space-y-2">

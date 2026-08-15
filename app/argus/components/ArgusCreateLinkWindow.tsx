@@ -254,7 +254,7 @@ function ArgusCreateLinkWindowBody({
                     ? ADD_CONTEXT.pickKind
                     : "Choose what to add"
                   : flow.mode === "link"
-                    ? "Link & Connect"
+                    ? "Link"
                     : createItemDisplayLabel(flow.itemKind)}
               </h1>
               {entityCaptureOnly && needsKindPicker && ADD_CONTEXT.useRegisterHint ? (
@@ -496,9 +496,9 @@ function ArgusCreateLinkWindowBody({
               <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-600/20 text-2xl ring-1 ring-violet-500/30">
                 ◉
               </span>
-              <h2 className="text-lg font-bold text-zinc-100">Choose what to capture</h2>
+              <h2 className="text-lg font-bold text-zinc-100">Choose what to create</h2>
               <p className="mt-2 max-w-sm text-sm leading-relaxed text-zinc-500">
-                Pick an intent — Knowledge, Entity, or Execution. The form unlocks once you choose.
+                Pick a person, organization, project, topic, event, tag, or runbook. The form unlocks once you choose.
               </p>
             </div>
           ) : flow.isInboxEvidence && flow.linkOnly ? (

@@ -31,10 +31,11 @@ assert.equal(
 );
 assert.equal(
   usesLinkModalShell({ mode: "inbox-evidence", linkOnly: false }),
-  false,
-  "full wizard only when not link-only"
+  true,
+  "inbox never opens CREATE→LINK→SAVE wizard"
 );
 assert.equal(usesLinkModalShell({ mode: "link" }), true);
+assert.equal(usesLinkModalShell({ mode: "create" }), false);
 
 const doc = {
   id: "d1",
