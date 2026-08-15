@@ -18,17 +18,21 @@ import {
   moleculeLinkStrength,
 } from "../lib/argus/v2/neighborhood-molecule-layout";
 
-assert.equal(moleculeLinkDistance(2), 14);
-assert.equal(moleculeLinkDistance(1), 26);
-assert.equal(moleculeLinkDistance(0.5), 42);
+assert.equal(moleculeLinkDistance(2), 22);
+assert.equal(moleculeLinkDistance(1), 30);
+assert.equal(moleculeLinkDistance(0.5), 40);
 assert.ok(moleculeLinkStrength(2) > moleculeLinkStrength(1));
 assert.ok(moleculeLinkStrength(1) > moleculeLinkStrength(0.5));
 
-assert.equal(degreeLinkLengthExtra(1, 2), 0);
+assert.equal(degreeLinkLengthExtra(1, 1), 0);
 assert.ok(degreeLinkLengthExtra(8, 1) > degreeLinkLengthExtra(3, 1));
 assert.ok(
+  moleculeLinkDistanceForDegrees(2, 8, 1) > moleculeLinkDistanceForDegrees(2, 2, 1),
+  "higher degree → longer preferred distance"
+);
+assert.ok(
   moleculeLinkDistanceForDegrees(2, 8, 1) > moleculeLinkDistance(2),
-  "hub-linked edges are longer than base weight distance"
+  "hub-linked edges are longer than weight-only base"
 );
 
 function denseNeighborhood(): { nodes: V2GraphNode[]; edges: V2GraphEdge[]; centerId: string } {
@@ -158,6 +162,30 @@ function meanRadius(laid: V2GraphNode[], cid: string): number {
 assert.ok(
   meanRadius(radial, centerId) > meanRadius(radialFlat, centerId),
   "Radial: high-degree hub gets longer spokes when edges are known"
+);
+
+// Molecule: edges touching the hub should be longer than peripheral leaf edges (in viewBox units).
+function meanEdgeLen(laid: V2GraphNode[], edgeList: V2GraphEdge[], predicate: (e: V2GraphEdge) => boolean): number {
+  const byId = new Map(laid.map((n) => [n.id, n]));
+  const picked = edgeList.filter(predicate);
+  assert.ok(picked.length > 0);
+  let sum = 0;
+  for (const e of picked) {
+    const a = byId.get(e.from)!;
+    const b = byId.get(e.to)!;
+    sum += Math.hypot(a.x - b.x, a.y - b.y);
+  }
+  return sum / picked.length;
+}
+const hubEdgeLen = meanEdgeLen(molecule, edges, (e) => e.from === centerId || e.to === centerId);
+const leafEdgeLen = meanEdgeLen(
+  molecule,
+  edges,
+  (e) => e.from !== centerId && e.to !== centerId && (degrees.get(e.from) ?? 0) <= 2 && (degrees.get(e.to) ?? 0) <= 2
+);
+assert.ok(
+  hubEdgeLen > leafEdgeLen * 0.9,
+  `Molecule hub edges should not be shorter than leaf edges (hub=${hubEdgeLen.toFixed(1)} leaf=${leafEdgeLen.toFixed(1)})`
 );
 
 const xs = new Set(molecule.map((n) => Math.round(n.x * 10)));

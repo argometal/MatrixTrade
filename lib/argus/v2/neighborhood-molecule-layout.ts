@@ -4,6 +4,9 @@
  * Same nodes + edges as Radial — only positions change.
  * Uses existing edge weights: linked=2, co-mentioned=1, focus-affinity=0.5.
  * Inspired by Forge forceTowardCenters / unequal link strengths (ideas only).
+ *
+ * Spacing rule: preferred link length grows with endpoint degree (number of links).
+ * High-degree hubs must not collapse into a tight ball.
  */
 import {
   forceCenter,
@@ -37,27 +40,51 @@ type SimLink = {
   kind?: V2GraphEdge["kind"];
 };
 
-/** Preferred link distance from existing evidence edge weight (base). */
+/**
+ * Weight-only base (legacy). Prefer `moleculeLinkDistanceForDegrees` —
+ * distance must grow with link count, not shrink for strong edges.
+ */
 export function moleculeLinkDistance(weight: number): number {
-  if (weight >= 2) return 14; // linked — tight molecule bond
-  if (weight >= 1) return 26; // co-mentioned
-  return 42; // focus-affinity — weak / longer
+  if (weight >= 2) return 22;
+  if (weight >= 1) return 30;
+  return 40;
 }
 
-/** Weight base + extra length when either endpoint is a high-degree hub. */
+/**
+ * Preferred link length: degree is primary, weight is a small nudge.
+ * More links on either end → longer spring rest length.
+ */
 export function moleculeLinkDistanceForDegrees(
   weight: number,
   degreeA: number,
   degreeB: number
 ): number {
-  return moleculeLinkDistance(weight) + degreeLinkLengthExtra(degreeA, degreeB);
+  const hub = Math.max(degreeA, degreeB);
+  const load = degreeA + degreeB;
+  // Proportional to link count: deg1+1→18, hub8 leaf→~52, hub12+12→cap 78
+  const degreeSpan = 14 + hub * 4 + Math.max(0, load - hub - 1) * 1.5;
+  const weightNudge = weight >= 2 ? 0 : weight >= 1 ? 4 : 8;
+  return Math.min(78, degreeSpan + weightNudge + degreeLinkLengthExtra(degreeA, degreeB) * 0.25);
 }
 
-/** Link spring strength from weight (stronger in-community pull). */
+/** Link spring strength — soften on busy hubs so degree distance can win. */
 export function moleculeLinkStrength(weight: number): number {
-  if (weight >= 2) return 0.85;
-  if (weight >= 1) return 0.4;
+  if (weight >= 2) return 0.55;
+  if (weight >= 1) return 0.32;
   return 0.12;
+}
+
+export function moleculeLinkStrengthForDegrees(
+  weight: number,
+  degreeA: number,
+  degreeB: number
+): number {
+  const base = moleculeLinkStrength(weight);
+  const hub = Math.max(degreeA, degreeB);
+  if (hub >= 8) return base * 0.35;
+  if (hub >= 5) return base * 0.5;
+  if (hub >= 3) return base * 0.7;
+  return base;
 }
 
 /**
@@ -75,7 +102,7 @@ export function layoutNeighborhoodMoleculeNodes(
     return nodes.map((n) => ({ ...n, x: 50, y: 50 }));
   }
 
-  const iterations = options.iterations ?? 280;
+  const iterations = options.iterations ?? 300;
   const degrees = neighborhoodDegreeMap(edges);
 
   // Seed from radial (degree-aware) so the sim starts from a stable ARGUS arrangement.
@@ -109,33 +136,45 @@ export function layoutNeighborhoodMoleculeNodes(
         degrees.get(targetId) ?? 1
       );
     })
-    .strength((d) => moleculeLinkStrength(d.weight));
+    .strength((d) => {
+      const sourceId = typeof d.source === "string" ? d.source : d.source.id;
+      const targetId = typeof d.target === "string" ? d.target : d.target.id;
+      return moleculeLinkStrengthForDegrees(
+        d.weight,
+        degrees.get(sourceId) ?? 1,
+        degrees.get(targetId) ?? 1
+      );
+    });
 
   const simulation = forceSimulation<SimNode>(simNodes)
     .force("link", linkForce)
-    .force("charge", forceManyBody<SimNode>().strength(-48).distanceMax(70))
-    .force("collide", forceCollide<SimNode>().radius(5.5).strength(0.85))
-    .force("center", forceCenter(50, 50, 0).strength(0.06))
-    .force("x", forceX(50).strength(0.02))
-    .force("y", forceY(50).strength(0.02))
+    // Stronger / longer-range charge so hubs push neighbors outward.
+    .force("charge", forceManyBody<SimNode>().strength(-110).distanceMax(140))
+    .force("collide", forceCollide<SimNode>().radius(7).strength(0.9))
+    .force("center", forceCenter(50, 50, 0).strength(0.035))
+    .force("x", forceX(50).strength(0.012))
+    .force("y", forceY(50).strength(0.012))
     .stop();
 
-  // Weak structural parent pulls: Orgs / Projects act as soft community anchors
-  // for nodes they already have a `linked` edge to — no new ontology.
+  // Soft structural parent pulls — weak enough not to crush high-degree hubs.
   const orgIds = new Set(simNodes.filter((n) => n.kind === "organization").map((n) => n.id));
   const projectIds = new Set(simNodes.filter((n) => n.kind === "project").map((n) => n.id));
   const linkedPairs = edges.filter((e) => e.kind === "linked" || e.weight >= 2);
 
   function forceTowardParents(alpha: number) {
-    const kOrg = 0.08 * alpha;
-    const kProj = 0.06 * alpha;
+    const kOrg = 0.03 * alpha;
+    const kProj = 0.02 * alpha;
     for (const edge of linkedPairs) {
       const a = byId.get(edge.from);
       const b = byId.get(edge.to);
       if (!a || !b) continue;
       const pull = (child: SimNode, parent: SimNode, k: number) => {
-        child.vx = (child.vx ?? 0) + (parent.x - child.x) * k;
-        child.vy = (child.vy ?? 0) + (parent.y - child.y) * k;
+        const parentDeg = degrees.get(parent.id) ?? 1;
+        // Busy parents attract less (keeps spokes long).
+        const soften = parentDeg >= 5 ? 0.35 : parentDeg >= 3 ? 0.6 : 1;
+        const kk = k * soften;
+        child.vx = (child.vx ?? 0) + (parent.x - child.x) * kk;
+        child.vy = (child.vy ?? 0) + (parent.y - child.y) * kk;
       };
       if (orgIds.has(a.id) && !orgIds.has(b.id)) pull(b, a, kOrg);
       if (orgIds.has(b.id) && !orgIds.has(a.id)) pull(a, b, kOrg);
@@ -160,8 +199,8 @@ export function layoutNeighborhoodMoleculeNodes(
     }
   }
 
-  // Fit into viewBox with padding (keep nodes readable in 0–100 space).
-  return fitNodesToViewBox(simNodes, 8, 92);
+  // Fit into viewBox with padding — preserve aspect so hub spacing isn't crushed.
+  return fitNodesToViewBox(simNodes, 6, 94);
 }
 
 function fitNodesToViewBox(nodes: SimNode[], min: number, max: number): V2GraphNode[] {

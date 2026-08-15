@@ -765,12 +765,13 @@ export function neighborhoodDegreeMap(edges: V2GraphEdge[]): Map<string, number>
 
 /**
  * Extra length when either endpoint is a busy hub (many links).
- * Rule: links touching high-degree nodes should be longer.
+ * Rule: links touching high-degree nodes should be longer — proportional to degree.
  */
 export function degreeLinkLengthExtra(degreeA: number, degreeB: number): number {
   const hub = Math.max(degreeA, degreeB);
-  if (hub <= 2) return 0;
-  return Math.min(28, (hub - 2) * 3.5);
+  if (hub <= 1) return 0;
+  // deg2→4, deg4→12, deg8→28, deg12→40 (cap)
+  return Math.min(40, (hub - 1) * 4);
 }
 
 /** Radial layout — center entity in the middle, neighbors on a ring (or dual ring when crowded). */
@@ -792,17 +793,17 @@ export function layoutNeighborhoodGraphNodes(
   neighbors.forEach((node, index) => {
     const angle = (index / Math.max(n, 1)) * Math.PI * 2 - Math.PI / 2;
     // Ego views with few nodes get more breathing room; crowded sets use inner+outer rings.
-    let radius = 30;
-    if (n <= 3) radius = 22;
-    else if (n <= 6) radius = 28;
-    else if (n <= 10) radius = 32;
+    let radius = 34;
+    if (n <= 3) radius = 28;
+    else if (n <= 6) radius = 32;
+    else if (n <= 10) radius = 36;
     else {
-      radius = index % 2 === 0 ? 26 : 36;
+      radius = index % 2 === 0 ? 30 : 42;
     }
     // Longer spokes for busy hubs (center and/or highly linked neighbor).
     if (hasEdges) {
       const neighborDeg = degrees.get(node.id) ?? 1;
-      radius = Math.min(46, radius + degreeLinkLengthExtra(centerDeg, neighborDeg) * 0.55);
+      radius = Math.min(52, radius + degreeLinkLengthExtra(centerDeg, neighborDeg) * 0.75);
     }
     laidOut.push({
       ...node,
