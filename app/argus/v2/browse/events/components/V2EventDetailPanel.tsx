@@ -239,7 +239,7 @@ export function V2EventDetailPanel({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {onBack ? (
-        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-3">
+        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-3 lg:hidden">
           <button
             type="button"
             onClick={onBack}

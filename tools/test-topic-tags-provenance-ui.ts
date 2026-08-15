@@ -37,6 +37,11 @@ assert.match(binder, /V2BinderTagProvenance/, "binder tab exports provenance typ
 assert.match(binder, /Event Tags/, "By Event shows Event Tags label");
 assert.match(binder, /On Notes/, "By Event shows On Notes label");
 assert.match(binder, /Open Event/, "Open Event CTA");
+assert.match(binder, /expandedEventIds/, "By Event sections expand/collapse");
+assert.match(binder, /Expand all/, "By Event expand-all control");
+assert.match(binder, /Collapse all/, "By Event collapse-all control");
+assert.match(binder, /expandedBranchIds/, "Event branch groups expand/collapse");
+assert.match(binder, /aria-expanded=\{open\}/, "Disclosure buttons expose aria-expanded");
 
 assert.match(loaders, /topicDirectEvidenceTagCounts/, "loader exposes Topic-direct slice");
 assert.match(loaders, /eventTags,/, "loader exposes Event binder tags");
