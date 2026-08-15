@@ -1755,7 +1755,10 @@ export async function toggleSignalTagAction(
  */
 export async function getEntityNeighborhoodAction(
   entityId: string,
-  options: { scope?: "local" | "context" } = {}
+  options: {
+    scope?: "local" | "context";
+    maxHops?: import("@/lib/argus/v2/intelligence-viz").NeighborhoodHopDepth;
+  } = {}
 ): Promise<
   | {
       ok: true;
@@ -1778,20 +1781,26 @@ export async function getEntityNeighborhoodAction(
 
   const {
     buildV2EntityNeighborhoodGraph,
+    isNeighborhoodHopDepth,
     resolveNeighborhoodContextCenter,
   } = await import("@/lib/argus/v2/intelligence-viz");
   const today = new Date().toISOString().slice(0, 10);
+  const maxHops = isNeighborhoodHopDepth(options.maxHops) ? options.maxHops : 2;
+  // Extended depth discovers more candidates — slightly higher canvas budget, still trims.
+  const maxNodes = maxHops >= 5 ? 22 : maxHops >= 3 ? 18 : 14;
 
   if (scope === "local") {
     const graph = buildV2EntityNeighborhoodGraph(data, inboxItems, id, includePrivate, today, {
-      maxNodes: 14,
+      maxNodes,
+      maxHops,
     });
     return { ok: true, graph, scope };
   }
 
   const ctx = resolveNeighborhoodContextCenter(data, id, includePrivate);
   const graph = buildV2EntityNeighborhoodGraph(data, inboxItems, ctx.centerId, includePrivate, today, {
-    maxNodes: ctx.label === "self" ? 18 : 14,
+    maxNodes: ctx.label === "self" ? Math.max(maxNodes, 18) : maxNodes,
+    maxHops,
   });
   const centerName =
     graph.nodes.find((n) => n.id === ctx.centerId)?.name || ctx.parentName || "context";

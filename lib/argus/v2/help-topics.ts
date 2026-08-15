@@ -165,12 +165,20 @@ const SECTIONS: HelpSection[] = [
     id: "neighborhood",
     title: "Connection neighborhood",
     group: "intelligence",
-    keywords: ["neighborhood", "graph", "halo", "tracker", "affinity", "expand", "ego"],
+    keywords: ["neighborhood", "graph", "halo", "tracker", "affinity", "expand", "ego", "depth", "universe"],
     intro: "Local graph around a selected entity on Home Intelligence (and on entity detail).",
     items: [
       {
         title: "Main graph vs dock",
         body: "Inline main graph = zoom and explore around the selection. Small right dock = one level up / wider context when available.",
+      },
+      {
+        title: "Hop depth",
+        body: "2 = local coherent default. 3 = wider (Topics→Events). 5 Extended discovers more than the canvas can keep — expect missing links after trim. Prefer 2–3.",
+      },
+      {
+        title: "Universe",
+        body: "Opens Home Intelligence Treemap — portfolio scale. Not the same as deeper local hops.",
       },
       {
         title: "Visual cues",
@@ -571,7 +579,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Local graph",
-        body: "1–2 hops from explicit links and co-mentions. Click a node to focus; ⌘/Ctrl+click opens it. Tracker affinity shows as dashed rose edges.",
+        body: "Default depth 2 from explicit links and co-mentions (3 / 5 Ext available on the graph). Click a node to focus; ⌘/Ctrl+click opens it. Tracker affinity shows as dashed rose edges.",
       },
     ],
   },
@@ -653,7 +661,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Local graph",
-        body: "1–2 hops from explicit links and co-mentions — same graph surface as Event / Org / Project Links.",
+        body: "Default depth 2 (3 / 5 Ext on the graph) — same surface as Event / Org / Project Links. Universe opens Treemap.",
       },
     ],
   },

@@ -97,9 +97,11 @@ export function V2HomeNeighborhoodViewer({
       ) : null}
       <V2EntityNeighborhoodPanel
         graph={graph}
+        entityId={entityId ?? undefined}
         entityName={panelName}
         variant={variant === "dock" ? "dock" : "full"}
         title={scope === "context" ? "Context neighborhood" : "Connection neighborhood"}
+        scope={scope}
       />
     </div>
   );

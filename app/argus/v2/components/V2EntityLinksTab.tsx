@@ -208,7 +208,11 @@ export function V2EntityLinksTab({
             </button>
           </div>
           {showGraph ? (
-            <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entityName ?? "Entity"} />
+            <V2EntityNeighborhoodPanel
+              graph={neighborhood}
+              entityId={entityId}
+              entityName={entityName ?? "Entity"}
+            />
           ) : (
             <p className="text-[11px] text-zinc-600">
               Graph stays collapsed so it does not cover linked entities — expand when you need it.

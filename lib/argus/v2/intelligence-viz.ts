@@ -75,7 +75,23 @@ export type V2EntityNeighborhoodGraph = {
   nodes: V2GraphNode[];
   edges: V2GraphEdge[];
   centerId: string;
+  /** Depth experiment metadata — UI can warn when Extended trim is incomplete. */
+  meta?: {
+    maxHops: NeighborhoodHopDepth;
+    candidateCount: number;
+    keptCount: number;
+    trimmed: boolean;
+  };
 };
+
+/** Local neighborhood hop depth. 2 = coherent default; 5 = Extended (trim errors likely). */
+export type NeighborhoodHopDepth = 2 | 3 | 5;
+
+export const NEIGHBORHOOD_HOP_DEPTHS: NeighborhoodHopDepth[] = [2, 3, 5];
+
+export function isNeighborhoodHopDepth(value: unknown): value is NeighborhoodHopDepth {
+  return value === 2 || value === 3 || value === 5;
+}
 
 export type V2TreemapRect = {
   id: string;
@@ -753,16 +769,19 @@ export function resolveNeighborhoodContextCenter(
   return { centerId: entityId, label: "self" };
 }
 
-/** Local 1–2 hop subgraph from one entity — Kumu / Obsidian neighborhood pattern. */
+/** Local N-hop subgraph from one entity — Kumu / Obsidian neighborhood pattern. */
 export function buildV2EntityNeighborhoodGraph(
   data: ArgusData,
   inboxItems: InboxItem[],
   centerEntityId: string,
   includePrivate: boolean,
   today: string,
-  options: { maxNodes?: number } = {}
+  options: { maxNodes?: number; maxHops?: NeighborhoodHopDepth } = {}
 ): V2EntityNeighborhoodGraph {
   const maxNodes = options.maxNodes ?? 14;
+  const maxHops: NeighborhoodHopDepth = isNeighborhoodHopDepth(options.maxHops)
+    ? options.maxHops
+    : 2;
   const entities = data.entities.filter((e) => !e.deletedAt);
   const entityMap = new Map(entities.map((e) => [e.id, e]));
   const center = entityMap.get(centerEntityId);
@@ -771,18 +790,26 @@ export function buildV2EntityNeighborhoodGraph(
   const logs = visibleLogs(data, includePrivate);
   const neighborIds = new Set<string>([centerEntityId]);
 
-  // Same neighbor policy as Topic/Event metrics (bridge + parent org + co-mention).
+  // Hop 1 — rich neighbor policy (bridge + parent org + co-mention).
   for (const id of collectNeighborEntityIds(data, center, logs)) {
     if (entityMap.has(id)) neighborIds.add(id);
   }
 
-  // Hop-2 stays structural (outbound/reverse) so the canvas does not explode.
-  const hopOne = [...neighborIds];
-  for (const id of hopOne) {
-    if (id === centerEntityId) continue;
-    const entity = entityMap.get(id);
-    if (!entity) continue;
-    for (const linkedId of collectLinkedNeighborIds(entity, entityMap)) neighborIds.add(linkedId);
+  // Hops 2..maxHops — structural only (outbound/reverse) so co-mention does not explode.
+  let frontier = [...neighborIds].filter((id) => id !== centerEntityId);
+  for (let hop = 2; hop <= maxHops; hop++) {
+    const next: string[] = [];
+    for (const id of frontier) {
+      const entity = entityMap.get(id);
+      if (!entity) continue;
+      for (const linkedId of collectLinkedNeighborIds(entity, entityMap)) {
+        if (neighborIds.has(linkedId)) continue;
+        neighborIds.add(linkedId);
+        next.push(linkedId);
+      }
+    }
+    frontier = next;
+    if (frontier.length === 0) break;
   }
 
   const focusKeys = signalTagKeySet(data.signalTags);
@@ -803,6 +830,7 @@ export function buildV2EntityNeighborhoodGraph(
       return b.total - a.total || a.entity.name.localeCompare(b.entity.name);
     });
 
+  const candidateCount = scoredAll.length;
   const trimmed = scoredAll.slice(0, maxNodes);
   const keptIds = new Set(trimmed.map((s) => s.entity.id));
   // If an Event (or any hop-2 binder) survived the cut, keep its structural path
@@ -877,10 +905,17 @@ export function buildV2EntityNeighborhoodGraph(
     }
   }
 
+  const keptCount = scored.length;
   return {
     nodes: layoutNeighborhoodGraphNodes(rawNodes, centerEntityId, [...edgeMap.values()]),
     edges: [...edgeMap.values()],
     centerId: centerEntityId,
+    meta: {
+      maxHops,
+      candidateCount,
+      keptCount,
+      trimmed: candidateCount > keptCount,
+    },
   };
 }
 
