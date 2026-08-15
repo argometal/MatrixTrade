@@ -12,6 +12,15 @@
 
 ---
 
+## Shipped — Forge Argus auth path + MTA ? help (#309 · #312)
+
+Merge: `0ea237a` · tag `main0815a` · prod https://matrix-trade-theta.vercel.app
+
+- `/forge` → `/argus/login?next=…` (guest-lock too)
+- MTA section `?` help registry (`lib/mta/help-topics.ts`)
+
+---
+
 ## Pending — ArgusForge 24-33 Recent linkage
 
 PR: #110 (draft)  
