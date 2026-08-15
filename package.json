@@ -56,7 +56,8 @@
     "test:scout-execution-instruction": "tsx tools/test-scout-execution-instruction.ts",
     "test:execution-instruction-mandatory": "tsx tools/test-execution-instruction-mandatory.ts",
     "test:apply-failure-snapshot": "tsx tools/test-apply-failure-snapshot.ts",
-    "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT"
+    "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT",
+    "test:argus-session-path": "tsx tools/test-argus-session-path.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",
