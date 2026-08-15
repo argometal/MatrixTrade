@@ -111,6 +111,13 @@ export function V2HomeIntelToolbar({
         ) : null}
       </div>
 
+      {view === "intelligence" && universeFilter === "hot" ? (
+        <p className="text-[10px] leading-snug text-orange-400/90 sm:text-[11px]" role="status">
+          You are on <span className="font-semibold text-orange-300">Hot</span>
+          {" "}
+          — activity in the last 30 days (Home default). Switch to Universe for the full map.
+        </p>
+      ) : null}
       {view === "intelligence" && universeFilter === "stale" ? (
         <p className="text-[10px] leading-snug text-zinc-500 sm:text-[11px]">
           <span className="font-medium text-zinc-400">Stale</span> — had evidence before, none in the last 90 days
