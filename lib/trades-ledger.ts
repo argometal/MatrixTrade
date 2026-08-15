@@ -1,5 +1,5 @@
 /**
- * Trades ledger — histórico filtrable (veredictos).
+ * Trades ledger — filterable history (verdicts).
  * Incomplete hypotheses stay in data as `incomplete` (Scout war room).
  */
 
@@ -16,11 +16,11 @@ export type LedgerVerdict =
   | "incomplete";
 
 export const LEDGER_VERDICT_LABELS: Record<LedgerVerdict, string> = {
-  completed_win: "Completado con éxito",
-  completed_loss: "Completado perdido",
-  late_entry_miss: "Perdido por entrada tardía",
-  never_executed: "Jamás se ejecutó",
-  incomplete: "Sin veredicto",
+  completed_win: "Completed win",
+  completed_loss: "Completed loss",
+  late_entry_miss: "Late entry miss",
+  never_executed: "Never executed",
+  incomplete: "No verdict",
 };
 
 export type LedgerRow = {

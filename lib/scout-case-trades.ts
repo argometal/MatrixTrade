@@ -4,8 +4,8 @@ import type { StockThesis } from "./stock-thesis-types";
 import type { Trade } from "./types";
 
 /**
- * Completado (sale del war room) = fill cerrado + review/análisis hecho.
- * Cerrado ≠ completado: closed sin review sigue en Scout.
+ * Complete (leaves war room) = closed fill + review/analysis done.
+ * Closed ≠ complete: closed without review stays in Scout.
  */
 export function isTradeCompleteForScout(trade: Trade): boolean {
   return trade.status === "closed" && isTradeReviewed(trade);
@@ -17,7 +17,7 @@ export function isTradeActiveInScout(trade: Trade): boolean {
 
 /**
  * Trades for a Scout case: explicit plan links OR same ticker as the stock file.
- * Incomplete only — completed fills belong in Trades histórico.
+ * Incomplete only — completed fills belong in Trades history.
  */
 export function tradesForScoutCase(args: {
   thesis: StockThesis;

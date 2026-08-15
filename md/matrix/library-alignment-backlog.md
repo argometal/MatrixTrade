@@ -6,6 +6,8 @@
 
 **Metrics planteamiento (AI handoff):** [metrics-analysis-planteamiento-handoff.md](metrics-analysis-planteamiento-handoff.md) — tres ledgers Trade / Scout counterfactual / Pipeline.
 
+**Scout → Trades pipeline (proposal):** [scout-trades-pipeline-001.md](scout-trades-pipeline-001.md) — Scouts as pipeline units; miss realized P/L = 0; sample-quality filter before expectancy.
+
 **Scout Learning circuit audit + P0:** [scout-learning-circuit-audit-handoff.md](scout-learning-circuit-audit-handoff.md) — alcance acotado, evidencia obligatoria, PLAN P0 (aggregates + discovery + Retry Sync).
 
 ---

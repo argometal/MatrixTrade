@@ -7,7 +7,7 @@ export type PreviewNavContext = {
 };
 
 /**
- * Scout = war room (case). Trades = histórico filtrable. Playbook = policies.
+ * Scout = war room (case). Trades = filterable history. Playbook = policies.
  * Enter Trade removed — execute via Scout + Control.
  */
 export const PREVIEW_NAV_SECTIONS = [

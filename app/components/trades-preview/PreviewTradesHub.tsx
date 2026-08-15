@@ -81,37 +81,37 @@ export function PreviewTradesHub({
     tab === "review"
       ? `${pendingReviewCount} waiting for review`
       : tab === "historico"
-        ? "Executed / No ejecutados / Review"
+        ? "Executed / Never executed / Review"
         : tab === "never_executed"
-          ? "No ejecutados — operational outcomes and required action"
+          ? "Never executed — operational outcomes and required action"
         : LEDGER_VERDICT_LABELS[tab as LedgerVerdict];
 
   const tabs: { id: TradesHubTab; href: string; label: string }[] = [
-    { id: "historico", href: "/trades", label: "Histórico" },
+    { id: "historico", href: "/trades", label: "History" },
     {
       id: "completed_win",
       href: "/trades?tab=completed_win",
-      label: `Éxito (${counts.completed_win})`,
+      label: `Win (${counts.completed_win})`,
     },
     {
       id: "completed_loss",
       href: "/trades?tab=completed_loss",
-      label: `Perdido (${counts.completed_loss})`,
+      label: `Loss (${counts.completed_loss})`,
     },
     {
       id: "late_entry_miss",
       href: "/trades?tab=late_entry_miss",
-      label: `Tarde (${counts.late_entry_miss})`,
+      label: `Late (${counts.late_entry_miss})`,
     },
     {
       id: "never_executed",
       href: "/trades?tab=never_executed",
-      label: `No ejecutados (${nonExecutedRows.length})`,
+      label: `Never executed (${nonExecutedRows.length})`,
     },
     {
       id: "incomplete",
       href: "/trades?tab=incomplete",
-      label: `Sin veredicto (${counts.incomplete})`,
+      label: `No verdict (${counts.incomplete})`,
     },
     {
       id: "review",
@@ -271,7 +271,7 @@ export function PreviewTradesHub({
             <div className="px-4 py-4 lg:px-6">
               {rows.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-zinc-700 px-4 py-10 text-center text-sm text-zinc-500">
-                  Nothing in this filter. Scout owns live cases; veredictos land here.
+                  Nothing in this filter. Scout owns live cases; verdicts land here.
                 </p>
               ) : (
                 <ul className="divide-y divide-zinc-800 rounded-xl border border-zinc-800 bg-zinc-900/50">

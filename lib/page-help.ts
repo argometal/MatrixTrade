@@ -30,17 +30,22 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
     steps: [
       "Revisa room y Needs attention.",
       "AI Blocks: Control → Apply.",
-      "Casos vivos: Scout. Histórico: Trades.",
+      "Casos vivos: Scout. History: Trades.",
     ],
   },
   trades: {
     title: "Trades",
+    panelLabel: "Help",
     summary:
-      "Histórico filtrable. Closed ≠ complete — alerta cuando falta review o campos de aprendizaje.",
+      "Filterable history. Closed ≠ complete — alert when review or learning fields are missing.",
+    principles: [
+      "Review and missing fields stay on Trades — not Scout war room.",
+      "Use the Review tab for pending human review on closed fills.",
+    ],
     steps: [
-      "Si hay banner ámbar: cierra el loop (review / playbook / PLAN / R / post-stop).",
-      "Filtra por veredicto para mejorar data.",
-      "Hipótesis incompletas siguen en data (filtro Sin veredicto).",
+      "If the amber banner is up: close the loop (review / playbook / PLAN / R / post-stop).",
+      "Filter by verdict to improve data quality.",
+      "Incomplete hypotheses stay in data (No verdict filter).",
     ],
   },
   insights: {
