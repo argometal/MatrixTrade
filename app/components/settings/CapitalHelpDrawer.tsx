@@ -152,14 +152,12 @@ export function CapitalHelpDrawer({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-zinc-400 ring-1 ring-zinc-700/80 transition hover:bg-zinc-900 hover:text-violet-200 hover:ring-violet-500/40"
+        className="inline-flex min-h-11 items-center justify-center rounded-lg border border-zinc-600 bg-zinc-900 px-4 py-2.5 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
         aria-expanded={open}
         aria-haspopup="dialog"
-        aria-label="Capital help"
-        title="Capital help"
         data-capital-help-trigger
       >
-        ?
+        Help
       </button>
       {overlay}
     </>

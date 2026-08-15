@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
-import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 import { ScoutExecutePanel } from "@/app/components/planning-preview/ScoutExecutePanel";
 import { PlanRecordOutcomePanel } from "@/app/components/planning-preview/PlanRecordOutcomePanel";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
@@ -457,16 +456,13 @@ export function PreviewPlanning({
         >
           <div className="flex items-start justify-between gap-3 pr-10">
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h1
-                  className={`font-semibold text-zinc-100 ${
-                    mapFocusCompact ? "text-base lg:text-xl" : "text-xl"
-                  }`}
-                >
-                  Scout
-                </h1>
-                <MtaHelpLink topic="scout-war-room" label="Scout war room" />
-              </div>
+              <h1
+                className={`font-semibold text-zinc-100 ${
+                  mapFocusCompact ? "text-base lg:text-xl" : "text-xl"
+                }`}
+              >
+                Scout
+              </h1>
               <p
                 className={`mt-0.5 text-sm text-zinc-500 ${
                   mapFocusCompact ? "hidden lg:block" : ""

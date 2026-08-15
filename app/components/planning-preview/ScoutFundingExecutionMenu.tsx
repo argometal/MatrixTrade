@@ -3,7 +3,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
-import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
 /**
@@ -28,19 +27,7 @@ export function ScoutFundingExecutionMenu({
       <details className="rounded-xl border border-current/20 bg-black/10">
         <summary className="cursor-pointer list-none px-3 py-2 text-xs font-medium opacity-90 hover:opacity-100 [&::-webkit-details-marker]:hidden">
           <span className="flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5">
-              <span>Funding &amp; execution</span>
-              <span
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                onKeyDown={(e) => e.stopPropagation()}
-                className="inline-flex"
-              >
-                <MtaHelpLink topic="scout-funding" label="Funding & execution" />
-              </span>
-            </span>
+            <span>Funding &amp; execution</span>
             <span className="opacity-60">▾</span>
           </span>
         </summary>

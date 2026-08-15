@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
-import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 import type { EquityPoint } from "@/lib/review";
 import { formatDashboardPf, formatDashboardUsd } from "@/lib/dashboard-display";
 import type { DashboardData } from "@/lib/dashboard-types";
@@ -106,12 +105,9 @@ export function PreviewDashboard({
 
           <div className="space-y-6 p-4 lg:p-6">
             <section>
-              <div className="mb-3 flex items-center gap-2">
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                  Today&apos;s status
-                </h2>
-                <MtaHelpLink topic="dashboard-status" label="Today's status" />
-              </div>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                Today&apos;s status
+              </h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <StatusTile label="Closed trades" value={String(experiment.closedTrades)} />
                 <StatusTile
@@ -183,12 +179,13 @@ export function PreviewDashboard({
             </section>
 
             <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-                  Needs attention
-                </h2>
-                <MtaHelpLink topic="dashboard-attention" label="Needs attention" />
-              </div>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
+                Needs attention
+              </h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                Copy for AI → diagnose → one Apply block → Control → Apply. Global context: Dashboard
+                snapshot.
+              </p>
               {data.attentionItems.length === 0 ? (
                 <p className="mt-3 text-sm text-zinc-500">Nothing pending — cycle is on track.</p>
               ) : (
@@ -201,12 +198,13 @@ export function PreviewDashboard({
             </section>
 
             <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-                  Scout monitoring
-                </h2>
-                <MtaHelpLink topic="dashboard-scout-monitoring" label="Scout monitoring" />
-              </div>
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
+                Scout monitoring
+              </h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                Detection surface only. Review Scout / Prepare status update / Open Plan Map —
+                no automatic Scout mutation.
+              </p>
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 {(
                   [
@@ -289,12 +287,13 @@ export function PreviewDashboard({
             )}
 
             <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-zinc-200">
-                  Experiment cumulative P/L
-                </h2>
-                <MtaHelpLink topic="dashboard-experiment-pnl" label="Experiment P/L" />
-              </div>
+              <h2 className="text-sm font-semibold text-zinc-200">
+                Experiment cumulative P/L
+              </h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                Closed-trade experiment P/L only — not Account Equity. Monthly
+                risk cap is a separate control.
+              </p>
               <div className="mt-4">
                 <DarkExperimentPnLChart points={data.equityPoints} />
               </div>
