@@ -5,8 +5,8 @@
  * Uses existing edge weights: linked=2, co-mentioned=1, focus-affinity=0.5.
  * Inspired by Forge forceTowardCenters / unequal link strengths (ideas only).
  *
- * Spacing rule: preferred link length grows with endpoint degree (number of links).
- * High-degree hubs must not collapse into a tight ball.
+ * Spacing rule (chem-lite): bonds stay short and mostly uniform.
+ * Mild length bump only when an endpoint has 4+ links; degree-3 uses angles/charge.
  */
 import {
   forceCenter,
@@ -51,7 +51,7 @@ export function moleculeLinkDistance(weight: number): number {
 }
 
 /**
- * Preferred link length: degree buckets are primary (1–2 → 1x, 3 → 2x, 4+ → 3x).
+ * Preferred link length: chem-lite (1–3 → 1x, 4+ → 1.4x).
  * Weight is only a small nudge so linked/co-mention/affinity stay slightly distinct.
  */
 export function moleculeLinkDistanceForDegrees(

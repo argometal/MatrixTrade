@@ -2,70 +2,71 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="900" height="900">
 <rect width="100" height="100" fill="#09090b"/>
 <text x="50" y="4" text-anchor="middle" fill="#a1a1aa" font-size="3">Molecule · select Exxon (positions kept)</text>
-<line x1="36.848070419272645" y1="37.95602601992795" x2="58.432137788164475" y2="51.82233293226711" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="58.432137788164475" y1="51.82233293226711" x2="79.77091675053764" y2="49.28260422692997" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
-<line x1="58.432137788164475" y1="51.82233293226711" x2="65.3731863620336" y2="73.64966411710319" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
-<line x1="79.77091675053764" y1="49.28260422692997" x2="93.17717723160891" y2="51.19136140681871" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
-<line x1="65.3731863620336" y1="73.64966411710319" x2="73.52360422350577" y2="94" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
-<line x1="36.848070419272645" y1="37.95602601992795" x2="19.564853314940002" y2="26.728586120292707" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
-<line x1="49.67439443194249" y1="6" x2="47.393866798415026" y2="30.96271521694496" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
-<line x1="47.393866798415026" y1="30.96271521694496" x2="43.18904722949887" y2="71.27894909575824" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
-<line x1="47.393866798415026" y1="30.96271521694496" x2="18.528015424760394" y2="53.44821893557219" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
-<line x1="43.18904722949887" y1="71.27894909575824" x2="36.07869133504192" y2="92.09811639158407" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
-<line x1="18.528015424760394" y1="53.44821893557219" x2="6.822822768391099" y2="62.22860347978406" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
-<line x1="65.3731863620336" y1="73.64966411710319" x2="43.18904722949887" y2="71.27894909575824" stroke="rgba(63,63,70,0.25)" stroke-width="0.8" opacity="0.35"/>
-<line x1="36.848070419272645" y1="37.95602601992795" x2="49.67439443194249" y2="6" stroke="rgba(251,113,133,0.5)" stroke-width="0.5" opacity="1" stroke-dasharray="1.2 1.4"/>
-<line x1="19.564853314940002" y1="26.728586120292707" x2="47.393866798415026" y2="30.96271521694496" stroke="rgba(63,63,70,0.25)" stroke-width="0.8" opacity="0.35"/>
+<line x1="68.52869718657955" y1="15.994677737304016" x2="82.39063782852998" y2="38.28912538948764" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="82.39063782852998" y1="38.28912538948764" x2="86.72506820558182" y2="17.46798602618832" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="82.39063782852998" y1="38.28912538948764" x2="79.81554157116298" y2="59.89241919913809" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="86.72506820558182" y1="17.46798602618832" x2="94" y2="26.785062918659104" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="79.81554157116298" y1="59.89241919913809" x2="86.67344354814547" y2="76.67935395286513" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="68.52869718657955" y1="15.994677737304016" x2="47.48887402926147" y2="16.57947971736089" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="68.52869718657955" y1="15.994677737304016" x2="86.72506820558182" y2="17.46798602618832" stroke="rgba(139,92,246,0.55)" stroke-width="1.2" opacity="1"/>
+<line x1="25.082393125797807" y1="26.770601221281268" x2="31.396185305286068" y2="46.63429657696353" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="31.396185305286068" y1="46.63429657696353" x2="52.37326390347968" y2="66.96233699181921" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="31.396185305286068" y1="46.63429657696353" x2="16.627602518601122" y2="62.38962027222443" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="52.37326390347968" y1="66.96233699181921" x2="54.86876286618657" y2="84.00532226269598" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="16.627602518601122" y1="62.38962027222443" x2="6" y2="72.26862430607444" stroke="rgba(63,63,70,0.25)" stroke-width="1.2" opacity="0.35"/>
+<line x1="79.81554157116298" y1="59.89241919913809" x2="52.37326390347968" y2="66.96233699181921" stroke="rgba(63,63,70,0.25)" stroke-width="0.8" opacity="0.35"/>
+<line x1="68.52869718657955" y1="15.994677737304016" x2="25.082393125797807" y2="26.770601221281268" stroke="rgba(251,113,133,0.5)" stroke-width="0.5" opacity="1" stroke-dasharray="1.2 1.4"/>
+<line x1="47.48887402926147" y1="16.57947971736089" x2="31.396185305286068" y2="46.63429657696353" stroke="rgba(63,63,70,0.25)" stroke-width="0.8" opacity="0.35"/>
 <g opacity="1">
-<circle cx="36.848070419272645" cy="37.95602601992795" r="4" fill="rgb(56,189,248)" stroke="rgb(251,191,36)" stroke-width="0.6"/>
-<text x="36.848070419272645" y="43.45602601992795" text-anchor="middle" fill="#c8c8d2" font-size="2.4">ExxonMobil</text>
-</g>
-<g opacity="1">
-<circle cx="49.67439443194249" cy="6" r="3.2" fill="rgb(56,189,248)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="49.67439443194249" y="11.5" text-anchor="middle" fill="#c8c8d2" font-size="2.4">SLB</text>
+<circle cx="68.52869718657955" cy="15.994677737304016" r="4" fill="rgb(56,189,248)" stroke="rgb(251,191,36)" stroke-width="0.6"/>
+<text x="68.52869718657955" y="21.494677737304016" text-anchor="middle" fill="#c8c8d2" font-size="2.4">ExxonMobil</text>
 </g>
 <g opacity="1">
-<circle cx="58.432137788164475" cy="51.82233293226711" r="3.2" fill="rgb(245,158,11)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="58.432137788164475" y="57.32233293226711" text-anchor="middle" fill="#c8c8d2" font-size="2.4">XOM Ops</text>
-</g>
-<g opacity="0.22">
-<circle cx="47.393866798415026" cy="30.96271521694496" r="3.2" fill="rgb(245,158,11)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="47.393866798415026" y="36.46271521694496" text-anchor="middle" fill="#c8c8d2" font-size="2.4">SLB Digi</text>
-</g>
-<g opacity="0.22">
-<circle cx="79.77091675053764" cy="49.28260422692997" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="79.77091675053764" y="54.78260422692997" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Wells</text>
-</g>
-<g opacity="0.22">
-<circle cx="65.3731863620336" cy="73.64966411710319" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="65.3731863620336" y="79.14966411710319" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Latency</text>
-</g>
-<g opacity="0.22">
-<circle cx="43.18904722949887" cy="71.27894909575824" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="43.18904722949887" y="76.77894909575824" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Handoff</text>
-</g>
-<g opacity="0.22">
-<circle cx="18.528015424760394" cy="53.44821893557219" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="18.528015424760394" y="58.94821893557219" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Supply</text>
-</g>
-<g opacity="0.22">
-<circle cx="93.17717723160891" cy="51.19136140681871" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="93.17717723160891" y="56.69136140681871" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Q1 Review</text>
-</g>
-<g opacity="0.22">
-<circle cx="73.52360422350577" cy="94" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="73.52360422350577" y="99.5" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Kickoff</text>
-</g>
-<g opacity="0.22">
-<circle cx="36.07869133504192" cy="92.09811639158407" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="36.07869133504192" y="97.59811639158407" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Sync</text>
-</g>
-<g opacity="0.22">
-<circle cx="6.822822768391099" cy="62.22860347978406" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="6.822822768391099" y="67.72860347978406" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Drill</text>
+<circle cx="25.082393125797807" cy="26.770601221281268" r="3.2" fill="rgb(56,189,248)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="25.082393125797807" y="32.27060122128127" text-anchor="middle" fill="#c8c8d2" font-size="2.4">SLB</text>
 </g>
 <g opacity="1">
-<circle cx="19.564853314940002" cy="26.728586120292707" r="3.2" fill="rgb(139,92,246)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
-<text x="19.564853314940002" y="32.228586120292704" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Alice</text>
+<circle cx="82.39063782852998" cy="38.28912538948764" r="3.2" fill="rgb(245,158,11)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="82.39063782852998" y="43.78912538948764" text-anchor="middle" fill="#c8c8d2" font-size="2.4">XOM Ops</text>
+</g>
+<g opacity="0.22">
+<circle cx="31.396185305286068" cy="46.63429657696353" r="3.2" fill="rgb(245,158,11)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="31.396185305286068" y="52.13429657696353" text-anchor="middle" fill="#c8c8d2" font-size="2.4">SLB Digi</text>
+</g>
+<g opacity="1">
+<circle cx="86.72506820558182" cy="17.46798602618832" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="86.72506820558182" y="22.96798602618832" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Wells</text>
+</g>
+<g opacity="0.22">
+<circle cx="79.81554157116298" cy="59.89241919913809" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="79.81554157116298" y="65.39241919913809" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Latency</text>
+</g>
+<g opacity="0.22">
+<circle cx="52.37326390347968" cy="66.96233699181921" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="52.37326390347968" y="72.46233699181921" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Handoff</text>
+</g>
+<g opacity="0.22">
+<circle cx="16.627602518601122" cy="62.38962027222443" r="3.2" fill="rgb(52,211,153)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="16.627602518601122" y="67.88962027222442" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Supply</text>
+</g>
+<g opacity="0.22">
+<circle cx="94" cy="26.785062918659104" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="94" y="32.28506291865911" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Q1 Review</text>
+</g>
+<g opacity="0.22">
+<circle cx="86.67344354814547" cy="76.67935395286513" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="86.67344354814547" y="82.17935395286513" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Kickoff</text>
+</g>
+<g opacity="0.22">
+<circle cx="54.86876286618657" cy="84.00532226269598" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="54.86876286618657" y="89.50532226269598" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Sync</text>
+</g>
+<g opacity="0.22">
+<circle cx="6" cy="72.26862430607444" r="3.2" fill="rgb(251,113,133)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="6" y="77.76862430607444" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Drill</text>
+</g>
+<g opacity="1">
+<circle cx="47.48887402926147" cy="16.57947971736089" r="3.2" fill="rgb(139,92,246)" stroke="rgb(9,9,11)" stroke-width="0.6"/>
+<text x="47.48887402926147" y="22.07947971736089" text-anchor="middle" fill="#c8c8d2" font-size="2.4">Alice</text>
 </g>
 </svg>

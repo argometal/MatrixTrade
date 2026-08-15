@@ -548,7 +548,7 @@ export function V2KnowledgeGraph({
     ? layoutMode === "molecule"
       ? "Focused neighbors stay in place; others fade. Esc or Back."
       : "Direct neighbors only — spaced by link count. Esc or Back."
-    : "Small icons · hover to enlarge · farther nodes have more links";
+    : "Small icons · hover to enlarge · 4+ link hubs sit slightly farther";
 
   return (
     <>
@@ -562,7 +562,7 @@ export function V2KnowledgeGraph({
                       ? focusedView.emphasizeIds.size
                       : focusedView.nodes.length
                   })`
-                : `${focusedView.nodes.length} nodes · 1–2 links near · 3 farther · 4+ outer`}
+                : `${focusedView.nodes.length} nodes · chem-lite · 1–3 near · 4+ slight outer`}
             </p>
             <div className="flex flex-wrap items-center gap-2">
               {layoutToggle}
@@ -632,13 +632,10 @@ export function V2KnowledgeGraph({
           </div>
           <div className="mb-3 flex shrink-0 flex-wrap gap-3 text-[11px] text-zinc-500">
             <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1">
-              1–2 links · near
+              1–3 links · near (uniform)
             </span>
             <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1">
-              3 links · mid
-            </span>
-            <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1">
-              4+ links · outer
+              4+ links · slight outer
             </span>
             <span className="rounded-md border border-zinc-800 bg-zinc-900/60 px-2 py-1">
               Hover icon to enlarge
