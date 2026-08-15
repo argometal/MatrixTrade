@@ -6,6 +6,7 @@ import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { useControlPanel } from "@/app/components/control-panel/MatrixControlPanelProvider";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { CapitalHelpDrawer } from "@/app/components/settings/CapitalHelpDrawer";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 import type { CapitalAccountSnapshot } from "@/lib/capital-account";
 import {
   buildCapitalConfigurationCreateProposal,
@@ -361,14 +362,12 @@ export function CapitalSettingsPanel({
         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">
           Settings · Capital
         </p>
-        <h1 className="font-serif text-3xl tracking-tight text-zinc-50">
-          Capital Settings
-        </h1>
-        <p className="max-w-2xl text-sm text-zinc-400">
-          Account-level capital configuration and policy. Global system state —
-          not ticker evidence. Settings prepares proposals; Control → Apply
-          validates and persists.
-        </p>
+        <div className="flex items-center gap-2">
+          <h1 className="font-serif text-3xl tracking-tight text-zinc-50">
+            Capital Settings
+          </h1>
+          <MtaHelpLink topic="capital-settings" label="Capital Settings" />
+        </div>
         <div className="flex flex-wrap items-stretch gap-2 pt-2 sm:gap-3">
           <Link
             href="/planning/capital"
