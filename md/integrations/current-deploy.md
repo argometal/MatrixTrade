@@ -2,15 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0815d`
+Pinned revision: `main0815e`
 
-Ship commit: `3cea926`
+Ship commit: `1c36e91`
 
 Includes:
-- PR #325 — `missed_opportunity` Scout outcome (entry never reached; distinct from UPL)
-- PR #326 — build fix (exclude miss test from Next typecheck)
-- PR #324 — PLAN-ID architecture (min pad 3; sequence; insert-only create)
-- Prior `main0815c` / #317: Hot Treemap-only + Tags rename/plot
+- PR #329 — 15-12 MTA Control language / SNAPSHOT MENU ontology (visible labels 1:1; Learning→MAF)
+- Prior `main0815d` / #327: missed_opportunity + PLAN-ID (#324–#326)
 
 **Terminology:** In ArgusForge docs, **MTA** = matrix/time engine (`argusforge-contract.md` §10). Trading product = **MatrixTrade**. See [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md).
 
@@ -22,4 +20,3 @@ git fetch origin --tags
 git checkout main
 git reset --hard origin/main
 ```
-
