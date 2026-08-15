@@ -11,4 +11,4 @@ Includes:
 - Home Intelligence Runbooks quick access (PR #289 / main0814i)
 - Overview pulse + Topic Event donut (PR #287 / main0814h)
 
-IA handoff (Overview experiment): [`../argus/overview-pulse-experiment-handoff.md`](../argus/overview-pulse-experiment-handoff.md)
+IA handoffs: [`../argus/consolidated-product-direction.md`](../argus/consolidated-product-direction.md) · [`../argus/overview-pulse-experiment-handoff.md`](../argus/overview-pulse-experiment-handoff.md)
