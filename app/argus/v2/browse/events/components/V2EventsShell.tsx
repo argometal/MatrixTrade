@@ -233,6 +233,10 @@ export function V2EventsShell({
   }
 
   function selectItem(id: string) {
+    if (urlSelected === id) {
+      backToList();
+      return;
+    }
     replaceParams((params) => {
       params.set("selected", id);
     });
@@ -429,7 +433,7 @@ export function V2EventsShell({
             inboxOptions={inboxOptionsByEvent[selected.id] ?? []}
             returnTo={returnTo}
             neighborhood={neighborhood}
-            onBack={mobileDetailOpen ? backToList : undefined}
+            onBack={backToList}
             signalTags={signalTags}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}

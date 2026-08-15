@@ -733,6 +733,11 @@ export function V2TopicsShell({
   }
 
   function selectItem(id: string) {
+    // Re-clicking the open Topic collapses the detail viewer so it cannot keep overlapping the list.
+    if (urlSelected === id) {
+      backToList();
+      return;
+    }
     replaceTopicParams((params) => {
       params.set("selected", id);
     });
@@ -1192,7 +1197,7 @@ export function V2TopicsShell({
             selected={selected}
             neighborhood={neighborhood}
             returnTo={returnTo}
-            onBack={mobileDetailOpen ? backToList : undefined}
+            onBack={backToList}
             signalTags={signalTags}
             privateConfigured={privateConfigured}
             privateUnlocked={privateUnlocked}

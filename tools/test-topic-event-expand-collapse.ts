@@ -31,7 +31,26 @@ assert.match(topicsShell, /Collapse events|Expand events/, "Topic event disclosu
 assert.match(eventsShell, /topicsOpen/, "Event list rows expand Topics");
 assert.match(eventsShell, /EventListRow/, "Event list uses expandable row");
 
-assert.match(header, /isNarrow/, "Compact header is viewport-aware");
-assert.doesNotMatch(header, /lg:hidden/, "Hide-header control is available when expanded");
+assert.match(topicsShell, /Collapse panel|backToList/, "Topics detail panel can collapse");
+assert.match(topicsShell, /urlSelected === id/, "Re-selecting a Topic collapses the detail viewer");
+assert.match(eventsShell, /Collapse panel|backToList/, "Events detail panel can collapse");
+assert.match(eventsShell, /urlSelected === id/, "Re-selecting an Event collapses the detail viewer");
+
+const topicDetail = readFileSync(
+  join(root, "app/argus/v2/browse/topics/components/V2TopicDetailPanel.tsx"),
+  "utf8"
+);
+assert.doesNotMatch(
+  topicDetail,
+  /onBack \? \(\s*<div className="[^"]*lg:hidden/,
+  "Topic collapse control is available on desktop, not mobile-only"
+);
+
+const linksTab = readFileSync(
+  join(root, "app/argus/v2/components/V2EntityLinksTab.tsx"),
+  "utf8"
+);
+assert.match(linksTab, /useState\(false\)/, "Local graph starts collapsed");
+assert.match(linksTab, /Collapse|Expand/, "Local graph expand/collapse labels");
 
 console.log("ok: topic-event-expand-collapse");

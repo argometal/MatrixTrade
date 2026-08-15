@@ -124,7 +124,7 @@ export function V2EntityLinksTab({
   /** Property panel under select-to-inspect sections (e.g. Event inspect on Topic). */
   inspectSlot?: ReactNode;
 }) {
-  const [showGraph, setShowGraph] = useState(true);
+  const [showGraph, setShowGraph] = useState(false);
   const showTags =
     (tagPatterns && tagPatterns.length > 0) ||
     (manualTags && manualTags.length > 0) ||
@@ -202,13 +202,18 @@ export function V2EntityLinksTab({
               type="button"
               onClick={() => setShowGraph((v) => !v)}
               className="rounded-lg border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-400 hover:text-zinc-200"
+              aria-expanded={showGraph}
             >
-              {showGraph ? "Hide" : "Show"}
+              {showGraph ? "Collapse" : "Expand"}
             </button>
           </div>
           {showGraph ? (
             <V2EntityNeighborhoodPanel graph={neighborhood} entityName={entityName ?? "Entity"} />
-          ) : null}
+          ) : (
+            <p className="text-[11px] text-zinc-600">
+              Graph stays collapsed so it does not cover linked entities — expand when you need it.
+            </p>
+          )}
         </div>
       ) : null}
 
