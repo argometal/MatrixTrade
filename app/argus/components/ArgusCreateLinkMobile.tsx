@@ -45,7 +45,7 @@ type FlowState = ReturnType<typeof useCreateLinkFlowState>;
 
 function initialMobileStep(options: CreateFlowOpenOptions): MobileStep {
   if (options.mode === "link") return "link";
-  if (options.mode === "inbox-evidence" && options.linkOnly) return "link";
+  if (options.mode === "inbox-evidence") return "link";
   if (options.lockItemKind) return "details";
   if (flowNeedsItemKindPicker(options)) return "choose-type";
   return "details";
