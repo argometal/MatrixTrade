@@ -3,6 +3,7 @@ import { PreviewJournal } from "@/app/components/journal-preview/PreviewJournal"
 import { PreviewMistakes } from "@/app/components/mistakes-preview/PreviewMistakes";
 import { PreviewPipelinePerformance } from "@/app/components/insights-preview/PreviewPipelinePerformance";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 import {
   PreviewStats,
   type PreviewStatsData,
@@ -47,21 +48,23 @@ export function PreviewInsightsHub({
   pipelineInput: Omit<PipelinePerformanceInput, "filters">;
 }) {
   const subtitles: Record<InsightsTabId, string> = {
-    stats: "Cycle metrics — decide what to improve next.",
-    journal: "Closed trades, lessons, and review notes — your trading log.",
-    mistakes: "What errors cost you money — tagged in trade reviews.",
-    pipeline:
-      "Results by pipeline component — realized Trade P/L separate from Scout counterfactuals.",
+    stats: "Cycle metrics",
+    journal: "Trading log",
+    mistakes: "Error cost",
+    pipeline: "Pipeline components",
   };
 
   return (
-    <PageHelpPanel pageId="insights">
+    <PageHelpPanel pageId="insights" trigger="icon">
       <div className="flex h-full min-h-0 w-full overflow-hidden">
         <div className="min-w-0 flex-1 overflow-y-auto">
           <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
-            <div>
-              <h1 className="text-xl font-semibold text-zinc-100">Insights</h1>
-              <p className="mt-0.5 text-sm text-zinc-500">{subtitles[tab]}</p>
+            <div className="flex items-center gap-2 pr-10">
+              <div>
+                <h1 className="text-xl font-semibold text-zinc-100">Insights</h1>
+                <p className="mt-0.5 text-sm text-zinc-500">{subtitles[tab]}</p>
+              </div>
+              <MtaHelpLink topic="insights-pipeline" label="Insights" />
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {TABS.map(({ id, label, href }) => (

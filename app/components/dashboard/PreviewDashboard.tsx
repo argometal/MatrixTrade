@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
 import type { EquityPoint } from "@/lib/review";
 import { formatDashboardPf, formatDashboardUsd } from "@/lib/dashboard-display";
@@ -74,7 +75,7 @@ export function PreviewDashboard({
   const topMistake = mistakeStats[0];
 
   return (
-    <PageHelpPanel pageId="dashboard">
+    <PageHelpPanel pageId="dashboard" trigger="icon">
       <div className="flex h-full min-h-0 w-full overflow-hidden">
         <div className="min-w-0 flex-1 overflow-y-auto">
           <div className="border-b border-zinc-800 px-4 py-4 lg:px-6">
@@ -85,7 +86,7 @@ export function PreviewDashboard({
                   {data.cycleLabel} · experiment control
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-3 lg:mr-[14rem]">
+              <div className="flex flex-wrap items-center gap-3 pr-10">
                 {exchange ? (
                   <SnapshotButton
                     title="Dashboard snapshot"
@@ -179,13 +180,12 @@ export function PreviewDashboard({
             </section>
 
             <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-                Needs attention
-              </h2>
-              <p className="mt-1 text-xs text-zinc-500">
-                Copy for AI → diagnose → one Apply block → Control → Apply. Global context: Dashboard
-                snapshot.
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
+                  Needs attention
+                </h2>
+                <MtaHelpLink topic="dashboard-attention" label="Needs attention" />
+              </div>
               {data.attentionItems.length === 0 ? (
                 <p className="mt-3 text-sm text-zinc-500">Nothing pending — cycle is on track.</p>
               ) : (
@@ -198,13 +198,15 @@ export function PreviewDashboard({
             </section>
 
             <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-                Scout monitoring
-              </h2>
-              <p className="mt-1 text-xs text-zinc-500">
-                Detection surface only. Review Scout / Prepare status update / Open Plan Map —
-                no automatic Scout mutation.
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
+                  Scout monitoring
+                </h2>
+                <MtaHelpLink
+                  topic="dashboard-scout-monitoring"
+                  label="Scout monitoring"
+                />
+              </div>
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 {(
                   [
@@ -287,13 +289,15 @@ export function PreviewDashboard({
             )}
 
             <section className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
-              <h2 className="text-sm font-semibold text-zinc-200">
-                Experiment cumulative P/L
-              </h2>
-              <p className="mt-1 text-xs text-zinc-500">
-                Closed-trade experiment P/L only — not Account Equity. Monthly
-                risk cap is a separate control.
-              </p>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-zinc-200">
+                  Experiment cumulative P/L
+                </h2>
+                <MtaHelpLink
+                  topic="dashboard-experiment-pnl"
+                  label="Experiment P/L"
+                />
+              </div>
               <div className="mt-4">
                 <DarkExperimentPnLChart points={data.equityPoints} />
               </div>

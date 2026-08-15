@@ -15,7 +15,7 @@ export default async function InboxPage({
 
   return (
     <Suspense fallback={null}>
-      <PageHelpPanel pageId="inbox">
+      <PageHelpPanel pageId="inbox" trigger="icon">
         <PreviewInbox items={items} applied={params.applied} error={params.error} />
       </PageHelpPanel>
     </Suspense>

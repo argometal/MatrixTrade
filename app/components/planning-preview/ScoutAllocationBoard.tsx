@@ -17,6 +17,7 @@ import {
   useScoutAllocationSelection,
 } from "./ScoutAllocationProvider";
 import type { CapitalReservation } from "@/lib/capital-types";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 
 function money(value: number | undefined | null): string {
   if (value === undefined || value === null || !Number.isFinite(value)) {
@@ -137,13 +138,15 @@ export function ScoutAllocationBoard({
             <span className="mx-1.5 opacity-40">/</span>
             Allocation Board
           </p>
-          <h1 className="mt-1 text-xl font-semibold text-zinc-100">
-            Scout Allocation Board
-          </h1>
-          <p className="mt-0.5 text-sm text-zinc-500">
-            Advisory simulation only — does not reserve capital or create
-            trades.
-          </p>
+          <div className="mt-1 flex items-center gap-2">
+            <h1 className="text-xl font-semibold text-zinc-100">
+              Scout Allocation Board
+            </h1>
+            <MtaHelpLink
+              topic="scout-allocation-board"
+              label="Allocation Board"
+            />
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <button

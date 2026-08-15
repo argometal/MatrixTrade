@@ -18,6 +18,7 @@ import {
 import { consumeControlApplyDraft, clearControlApplyDraft } from "@/lib/control-apply-draft";
 import { buildProposalSketch } from "@/lib/proposal-sketch";
 import { validateProposalPayload, type TradingInboxPayload } from "@/lib/bridge";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 import type { FundingFollowUpResult } from "@/lib/scout-funding-follow-up";
 
 type UpdatePhase = "paste" | "success";
@@ -403,10 +404,10 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain">
-        <p className="text-xs text-zinc-500">
-          Paste AI Block. Validate, then Accept writes to MTA. Editor clears after every Apply
-          attempt. On invalid JSON or validation errors, use Snap Failure to copy the report.
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-medium text-zinc-300">Paste AI Block</p>
+          <MtaHelpLink topic="control-apply" label="Apply" />
+        </div>
 
         {isBusy ? (
           <div className="rounded-xl border border-violet-500/30 bg-violet-950/30 px-3 py-2 text-xs text-violet-200">

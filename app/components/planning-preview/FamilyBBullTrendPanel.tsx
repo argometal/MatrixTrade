@@ -11,6 +11,7 @@ import {
 import { BULL_TREND_STATE_LABELS } from "@/lib/family-b-types";
 import { isSecularTrendContinuationPlaybook } from "@/lib/playbook-family-b";
 import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 
 /** Scout Family B bull-trend panel — only for secular-trend-continuation. */
 export function FamilyBBullTrendPanel({
@@ -48,12 +49,12 @@ export function FamilyBBullTrendPanel({
           : "rounded-xl border border-sky-500/35 bg-sky-950/25 p-4"
       }
     >
-      <p className="text-xs font-semibold uppercase tracking-wide text-sky-200">
-        Family B · Bull trend continuation
-      </p>
-      <p className="mt-1 text-[11px] text-sky-100/55">
-        Levels proposed by human/AI · MTA calculates R · Scout GO/WAIT/NO unchanged
-      </p>
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-sky-200">
+          Family B · Bull trend continuation
+        </p>
+        <MtaHelpLink topic="family-b-bull-trend" label="Family B" />
+      </div>
 
       <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
         <div className="rounded-lg border border-sky-500/20 bg-zinc-950/40 px-2 py-1.5">
