@@ -1,5 +1,5 @@
 /**
- * Smoke: Topic/Event browse expand-collapse + Topics desktop split.
+ * Smoke: Topic/Event browse expand-collapse + Topics full-screen detail (no side preview).
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -19,11 +19,20 @@ const header = readFileSync(
   "utf8"
 );
 
-assert.match(topicsShell, /lg:flex-row/, "Topics browse uses desktop split");
 assert.doesNotMatch(
   topicsShell,
-  /\(focus && selected\) \|\| \(selected && mobileDetailOpen\)/,
-  "Topics no longer full-replaces list on every selection"
+  /lg:flex-row/,
+  "Topics browse is not a desktop list+preview split"
+);
+assert.match(
+  topicsShell,
+  /if \(selected\) \{\s*return \(/,
+  "Topics opens selected Topic as a full detail screen"
+);
+assert.doesNotMatch(
+  topicsShell,
+  /function selectItem[\s\S]*?params\.set\("focus", "1"\)/,
+  "Normal Topic open does not force Intelligence focus banner"
 );
 assert.match(topicsShell, /eventsOpen/, "Topic list rows expand Events");
 assert.match(topicsShell, /Collapse events|Expand events/, "Topic event disclosure labels");
@@ -31,12 +40,11 @@ assert.match(topicsShell, /Collapse events|Expand events/, "Topic event disclosu
 assert.match(eventsShell, /topicsOpen/, "Event list rows expand Topics");
 assert.match(eventsShell, /EventListRow/, "Event list uses expandable row");
 
-assert.match(topicsShell, /Hide preview|backToList|selected \?/, "Topics preview can fully hide");
-assert.match(topicsShell, /urlSelected === id/, "Re-selecting a Topic hides the detail viewer");
+assert.match(topicsShell, /backToList/, "Topics detail can return to the list");
 assert.match(
   topicsShell,
-  /selected\s*\?\s*\([\s\S]*V2TopicDetailPanel/,
-  "Topic preview pane mounts only while a Topic is selected"
+  /if \(selected\) \{[\s\S]*V2TopicDetailPanel/,
+  "Topic detail mounts only while a Topic is selected"
 );
 assert.match(eventsShell, /Hide preview|backToList|selected \?/, "Events preview can fully hide");
 assert.match(eventsShell, /urlSelected === id/, "Re-selecting an Event hides the detail viewer");
@@ -53,7 +61,7 @@ const topicDetail = readFileSync(
 assert.doesNotMatch(
   topicDetail,
   /onBack \? \(\s*<div className="[^"]*lg:hidden/,
-  "Topic hide-preview control is available on desktop, not mobile-only"
+  "Topic back control is available on desktop, not mobile-only"
 );
 assert.match(
   topicDetail,
@@ -61,7 +69,10 @@ assert.match(
   "Topic Chronicle Event blocks are expandable"
 );
 assert.match(topicDetail, /From linked Events/, "Event evidence is grouped in Chronicle");
-assert.match(topicDetail, /Hide preview/, "Topic desktop control hides the preview pane");
+assert.match(topicDetail, /Back to Topics|← Topics/, "Topic detail navigates back to the list");
+assert.doesNotMatch(topicDetail, /Hide preview/, "Topic detail is not a hideable preview pane");
+
+assert.match(header, /V2DetailCompactHeader|compact/, "Compact header still present");
 
 const linksTab = readFileSync(
   join(root, "app/argus/v2/components/V2EntityLinksTab.tsx"),

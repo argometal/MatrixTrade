@@ -117,7 +117,7 @@ export function ForgeHomePortal() {
 
       <header className="relative z-20 border-b border-zinc-200/80 bg-white/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:gap-4 sm:px-6">
-          {/* A mark = Home (this page). Home is not duplicated in the ··· menu. */}
+          {/* Brand A + wordmark = Home (this page). Right A opens systems. */}
           <Link
             href="/apps"
             aria-label="ARGUS FORGE Home"
@@ -163,7 +163,7 @@ export function ForgeHomePortal() {
                 🔔
               </span>
             </button>
-            {/* No per-app icons here — ··· opens quick navigate. */}
+            {/* A mark opens systems (incl. Forge Home). Brand A on the left stays Home. */}
             <ForgeQuickNavMenu currentId="home" />
           </div>
         </div>

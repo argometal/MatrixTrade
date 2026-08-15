@@ -93,6 +93,13 @@ export function isNeighborhoodHopDepth(value: unknown): value is NeighborhoodHop
   return value === 2 || value === 3 || value === 5;
 }
 
+/** Canvas budget scales with hop depth — pan/zoom can hold more than the old 14-cap. */
+export function neighborhoodMaxNodesForDepth(maxHops: NeighborhoodHopDepth): number {
+  if (maxHops >= 5) return 28;
+  if (maxHops >= 3) return 22;
+  return 16;
+}
+
 export type V2TreemapRect = {
   id: string;
   name: string;
@@ -684,32 +691,35 @@ function isReachable(
 
 /**
  * After maxNodes trim, Events/Topics can remain while their bridge was dropped —
- * leaving a visible node with no drawn relation. Promote shortest structural
- * path hops so every kept structural neighbor stays connected to center.
+ * leaving a visible node with no drawn relation. Always restore the shortest
+ * structural path hops so every kept neighbor stays connected to center.
+ * Prefer a slightly larger canvas over orphan nodes (budget no longer aborts mid-path).
  */
 export function promoteNeighborhoodBridgeIds(
   centerId: string,
   keptIds: Set<string>,
   candidateIds: Set<string>,
   entityMap: Map<string, Entity>,
-  options: { maxExtra?: number } = {}
+  _options: { maxExtra?: number } = {}
 ): Set<string> {
-  const maxExtra = options.maxExtra ?? 6;
   const adj = buildStructuralAdjacency(candidateIds, entityMap);
   const result = new Set(keptIds);
   if (!result.has(centerId)) result.add(centerId);
 
-  let extra = 0;
-  for (const id of [...keptIds]) {
-    if (id === centerId) continue;
-    if (isReachable(centerId, id, result, adj)) continue;
-    const path = structuralPath(centerId, id, adj);
-    if (!path || path.length < 2) continue;
-    for (const hop of path) {
-      if (result.has(hop)) continue;
-      if (extra >= maxExtra) break;
-      result.add(hop);
-      extra += 1;
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const id of [...result]) {
+      if (id === centerId) continue;
+      if (isReachable(centerId, id, result, adj)) continue;
+      const path = structuralPath(centerId, id, adj);
+      if (!path || path.length < 2) continue;
+      for (const hop of path) {
+        if (result.has(hop)) continue;
+        if (!candidateIds.has(hop) && hop !== centerId) continue;
+        result.add(hop);
+        changed = true;
+      }
     }
   }
   return result;
@@ -778,10 +788,10 @@ export function buildV2EntityNeighborhoodGraph(
   today: string,
   options: { maxNodes?: number; maxHops?: NeighborhoodHopDepth } = {}
 ): V2EntityNeighborhoodGraph {
-  const maxNodes = options.maxNodes ?? 14;
   const maxHops: NeighborhoodHopDepth = isNeighborhoodHopDepth(options.maxHops)
     ? options.maxHops
     : 2;
+  const maxNodes = options.maxNodes ?? neighborhoodMaxNodesForDepth(maxHops);
   const entities = data.entities.filter((e) => !e.deletedAt);
   const entityMap = new Map(entities.map((e) => [e.id, e]));
   const center = entityMap.get(centerEntityId);
@@ -839,8 +849,7 @@ export function buildV2EntityNeighborhoodGraph(
     centerEntityId,
     keptIds,
     neighborIds,
-    entityMap,
-    { maxExtra: Math.max(4, Math.ceil(maxNodes / 3)) }
+    entityMap
   );
 
   const byId = new Map(scoredAll.map((s) => [s.entity.id, s]));

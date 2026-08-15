@@ -7,8 +7,8 @@ const actionClass =
   "relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-zinc-800 bg-zinc-900/80 text-zinc-400 transition hover:border-zinc-700 hover:text-zinc-200";
 
 /**
- * Inbox (when relevant) + ··· quick-nav.
- * Per-app MTA / ARGUS / AF icons removed — navigate via ··· menu (or Forge Home A mark).
+ * Inbox (when relevant) + A mark systems menu.
+ * No separate A home link and no ··· — the triangular A opens systems (incl. Forge Home).
  */
 export function AppExchangeActions({
   app,
@@ -39,12 +39,6 @@ export function AppExchangeActions({
           ) : null}
         </Link>
       ) : null}
-
-      <Link href="/apps" aria-label="ARGUS FORGE Home" title="Forge Home" className={actionClass}>
-        <span className="text-[11px] font-bold tracking-tight text-zinc-200" aria-hidden>
-          A
-        </span>
-      </Link>
 
       <ForgeQuickNavMenu currentId={currentId} theme="dark" />
     </div>

@@ -327,10 +327,9 @@ export function V2TopicDetailPanel({
             type="button"
             onClick={onBack}
             className="text-sm font-medium text-violet-400 hover:text-violet-300"
-            aria-label="Hide topic preview"
+            aria-label="Back to Topics"
           >
-            <span className="lg:hidden">← Topics</span>
-            <span className="hidden lg:inline">Hide preview</span>
+            <span>← Topics</span>
           </button>
         </div>
       ) : null}
