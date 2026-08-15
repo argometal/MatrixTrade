@@ -121,7 +121,7 @@ Deliver v1 is live: Quick Package (HTML + MD) + Evidence Vault. Details: `md/arg
 6. If a handoff contradicts code, **code wins** — fix or delete the handoff.
 7. Do not revive Behavior Engine / strength% / outcomeScore / org Trust·Future as product metrics.
 
-**Known naming debt:** Forge shell toggle `mta` + `MtaScopedPanel` currently deep-links MatrixTrade trading routes. That conflates AF-MTA (time engine) with trading — do not extend that pattern; correct toward Memory/MTA/Alexandria framing when touching the shell.
+**Shell (done):** Forge no longer toggles or deep-links MatrixTrade as “MTA”. The old `mta` system id is forced to ArgusForge; `MtaScopedPanel` is a disabled stub. Real AF-MTA (temporal/matrix engine) remains contract-only — not that trading UI.
 
 ---
 

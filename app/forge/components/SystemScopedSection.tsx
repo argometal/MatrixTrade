@@ -2,24 +2,22 @@
 
 import type { ReactNode } from "react";
 import { useForgeSystem } from "./ForgeSystemProvider";
-import { MtaScopedPanel } from "./MtaScopedPanel";
 
-/** Renders AF children or MTA scoped panel based on selectedSystem. */
+/**
+ * Always renders ArgusForge children.
+ * Trading deep-link “MTA” shell mode is disabled (name collision with AF-MTA).
+ */
 export function SystemScopedSection({
-  section,
+  section: _section,
   children,
 }: {
   section: "home" | "library" | "active" | "archive";
   children: ReactNode;
 }) {
-  const { system, ready } = useForgeSystem();
+  const { ready } = useForgeSystem();
 
   if (!ready) {
     return <p className="text-sm text-zinc-500">Loading system…</p>;
-  }
-
-  if (system === "mta") {
-    return <MtaScopedPanel section={section} />;
   }
 
   return <>{children}</>;
