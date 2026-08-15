@@ -1,11 +1,15 @@
 /**
- * Neighborhood hop depth: 2 default, 3 wide, 5 Extended (trim / incomplete).
+ * Neighborhood hop depth: 2 default, 3 wide, 5 extended — bridges survive trim.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ArgusData, Entity, Log } from "../lib/argus/types";
-import { buildV2EntityNeighborhoodGraph } from "../lib/argus/v2/intelligence-viz";
+import {
+  buildV2EntityNeighborhoodGraph,
+  neighborhoodMaxNodesForDepth,
+  promoteNeighborhoodBridgeIds,
+} from "../lib/argus/v2/intelligence-viz";
 
 function entity(partial: Partial<Entity> & Pick<Entity, "id" | "name" | "type">): Entity {
   return {
@@ -94,17 +98,18 @@ const data = {
 
 const today = "2026-08-15";
 
+assert.equal(neighborhoodMaxNodesForDepth(2), 16);
+assert.equal(neighborhoodMaxNodesForDepth(3), 22);
+assert.equal(neighborhoodMaxNodesForDepth(5), 28);
+
 const d2 = buildV2EntityNeighborhoodGraph(data, [], "org1", true, today, {
   maxHops: 2,
-  maxNodes: 20,
 });
 const d3 = buildV2EntityNeighborhoodGraph(data, [], "org1", true, today, {
   maxHops: 3,
-  maxNodes: 20,
 });
 const d5 = buildV2EntityNeighborhoodGraph(data, [], "org1", true, today, {
   maxHops: 5,
-  maxNodes: 20,
 });
 
 assert.equal(d2.meta?.maxHops, 2);
@@ -113,8 +118,6 @@ assert.equal(d5.meta?.maxHops, 5);
 
 assert.ok(d2.nodes.some((n) => n.id === "p1"), "depth 2 includes project");
 assert.ok(d2.nodes.some((n) => n.id === "t1"), "depth 2 includes topic via project");
-// Event is hop-3 from org via project→topic→event depending on discovery;
-// with hop1 rich neighbors, project siblings may pull topic; event needs hop≥3 structural.
 assert.ok(
   d3.nodes.some((n) => n.id === "e1") || d5.nodes.some((n) => n.id === "e1"),
   "deeper depth can reach Event under Topic"
@@ -132,19 +135,38 @@ const trimmed = buildV2EntityNeighborhoodGraph(data, [], "org1", true, today, {
   maxHops: 5,
   maxNodes: 3,
 });
-assert.equal(trimmed.meta?.trimmed, true, "Extended with tiny maxNodes reports trimmed");
+assert.equal(trimmed.meta?.trimmed, true, "tiny maxNodes reports trimmed");
+// Even under aggressive trim, any kept non-center structural node must stay linked.
+for (const node of trimmed.nodes) {
+  if (node.id === "org1") continue;
+  const linked = trimmed.edges.some(
+    (e) => e.kind === "linked" && (e.from === node.id || e.to === node.id)
+  );
+  assert.ok(linked, `trimmed graph keeps a structural edge for ${node.id}`);
+}
+
+const entityMap = new Map(data.entities.map((e) => [e.id, e]));
+const promoted = promoteNeighborhoodBridgeIds(
+  "org1",
+  new Set(["org1", "e1"]),
+  new Set(["org1", "p1", "t1", "e1"]),
+  entityMap,
+  { maxExtra: 0 }
+);
+assert.ok(promoted.has("p1") && promoted.has("t1"), "bridge promote ignores maxExtra budget");
 
 const panel = readFileSync(
   join(process.cwd(), "app/argus/v2/components/V2EntityNeighborhoodPanel.tsx"),
   "utf8"
 );
-assert.match(panel, /5 Ext/, "UI exposes Extended depth");
-assert.match(panel, /expect missing links|incomplete/i, "Extended warns about errors");
-assert.match(panel, /Universe/, "Universe escape hatch present");
-assert.match(panel, /intel=treemap/, "Universe opens Treemap portfolio scale");
+assert.match(panel, /Neighborhood hop depth/, "UI exposes hop depth controls");
+assert.match(panel, /depth: 5/, "UI exposes depth 5");
+assert.doesNotMatch(panel, /Universe/, "Universe escape hatch removed");
+assert.doesNotMatch(panel, /intel=treemap/, "no Treemap Universe link on neighborhood");
+assert.match(panel, /Structural bridges/, "trim note explains bridges are kept");
 
 const actions = readFileSync(join(process.cwd(), "app/argus/actions.ts"), "utf8");
-assert.match(actions, /maxHops/, "neighborhood action accepts maxHops");
+assert.match(actions, /neighborhoodMaxNodesForDepth/, "action uses depth-scaled canvas budget");
 
 console.log("ok: neighborhood-hop-depth");
 console.log(
