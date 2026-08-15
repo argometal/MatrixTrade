@@ -2,13 +2,12 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0814q`
+Pinned revision: `main0814r`
 
-Ship commit: `4f7aa1a`
+Ship commit: `1fd5978`
 
 Includes:
-- Coherent chem-lite neighborhood (shared bond UNIT, hop rings, no fill-to-fit blow-up)
-- Organization Tags Slice 1 — Direct evidence / Patterns / Watched here
-- Home Runbooks aside; Topic/Event preview hide
+- Neighborhood: visible Events keep structural relations (bridge promote)
+- Chem-lite coherent graph + Organization Tags Slice 1
 
 IA handoffs: [`../argus/consolidated-product-direction.md`](../argus/consolidated-product-direction.md) · [`../argus/overview-pulse-experiment-handoff.md`](../argus/overview-pulse-experiment-handoff.md)
