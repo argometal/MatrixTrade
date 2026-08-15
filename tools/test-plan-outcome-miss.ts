@@ -164,7 +164,7 @@ async function main() {
     const plan = msftPlan();
     const derived = deriveMissedOpportunityServerValues(plan);
     assert.ok(!("error" in derived));
-    if ("error" in derived) throw new Error(derived.error);
+    if ("error" in derived) throw new Error(String(derived.error));
     assert.equal(derived.realizedR, 0);
     assert.equal(derived.counterfactualR, 6.25);
 
