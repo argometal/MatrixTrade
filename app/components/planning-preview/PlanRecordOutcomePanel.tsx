@@ -7,13 +7,18 @@ import {
 } from "@/app/actions";
 import {
   AUTOMATIC_EXECUTION_ENABLED,
-  NON_EXECUTION_REASONS,
+  MISS_NON_EXECUTION_REASONS,
+  PLAN_OUTCOME_KIND_LABELS,
   PLAN_OUTCOME_KINDS,
+  UPL_NON_EXECUTION_REASONS,
 } from "@/lib/plan-outcome-types";
-import { deriveUnexecutedPlanLossServerValues } from "@/lib/plan-outcome-derive";
+import {
+  deriveMissedOpportunityServerValues,
+  deriveUnexecutedPlanLossServerValues,
+} from "@/lib/plan-outcome-derive";
 import type { TradePlan } from "@/lib/plan-types";
 
-/** Record Outcome for terminal/expired Scout plans — UPL event order is human-confirmed. */
+/** Record Outcome for terminal/expired Scout plans — event order is human-confirmed. */
 export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -27,11 +32,29 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
   const [stopBeforeTarget, setStopBeforeTarget] = useState(true);
   const [targetBeforeStop, setTargetBeforeStop] = useState(false);
 
-  const preview = useMemo(() => {
-    if (outcomeKind !== "unexecuted_plan_loss") {
-      return null;
+  function onKindChange(next: string) {
+    setOutcomeKind(next);
+    if (next === "missed_opportunity") {
+      setEntryReached(false);
+      setStopBeforeTarget(false);
+      setTargetBeforeStop(true);
+    } else if (next === "unexecuted_plan_loss") {
+      setEntryReached(true);
+      setStopBeforeTarget(true);
+      setTargetBeforeStop(false);
     }
-    return deriveUnexecutedPlanLossServerValues(plan);
+  }
+
+  const preview = useMemo(() => {
+    if (outcomeKind === "unexecuted_plan_loss") {
+      return { kind: "upl" as const, ...deriveUnexecutedPlanLossServerValues(plan) };
+    }
+    if (outcomeKind === "missed_opportunity") {
+      const derived = deriveMissedOpportunityServerValues(plan);
+      if ("error" in derived) return { kind: "miss_error" as const, error: derived.error };
+      return { kind: "miss" as const, ...derived };
+    }
+    return null;
   }, [plan, outcomeKind]);
 
   const syncNeedsRepair =
@@ -108,6 +131,9 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
     );
   }
 
+  const showGeometry =
+    outcomeKind === "unexecuted_plan_loss" || outcomeKind === "missed_opportunity";
+
   return (
     <form
       className="space-y-3 rounded-xl border border-amber-500/30 bg-amber-950/20 p-4 text-sm"
@@ -140,18 +166,18 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
           name="outcomeKind"
           required
           value={outcomeKind}
-          onChange={(e) => setOutcomeKind(e.target.value)}
+          onChange={(e) => onKindChange(e.target.value)}
           className="mt-1 w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm"
         >
           {PLAN_OUTCOME_KINDS.map((k) => (
             <option key={k} value={k}>
-              {k}
+              {PLAN_OUTCOME_KIND_LABELS[k]}
             </option>
           ))}
         </select>
       </label>
 
-      {outcomeKind === "unexecuted_plan_loss" ? (
+      {showGeometry ? (
         <>
           <div className="grid gap-2 sm:grid-cols-2">
             <label className="flex items-center gap-2 text-xs text-zinc-300">
@@ -185,16 +211,34 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
               Target reached before stop?
             </label>
           </div>
+          {/* Unchecked checkboxes omit the field — send explicit false for miss/UPL. */}
+          {!entryReached ? (
+            <input type="hidden" name="entryReached" value="false" />
+          ) : null}
+          {!stopBeforeTarget ? (
+            <input type="hidden" name="stopReachedBeforeTarget" value="false" />
+          ) : null}
+          {!targetBeforeStop ? (
+            <input type="hidden" name="targetReachedBeforeStop" value="false" />
+          ) : null}
 
           <label className="block text-xs text-zinc-300">
             Non-execution reason
             <select
               name="nonExecutionReason"
               required
-              defaultValue="order_not_staged"
+              defaultValue={
+                outcomeKind === "missed_opportunity"
+                  ? "entry_not_reached"
+                  : "order_not_staged"
+              }
+              key={outcomeKind}
               className="mt-1 w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm"
             >
-              {NON_EXECUTION_REASONS.map((r) => (
+              {(outcomeKind === "missed_opportunity"
+                ? MISS_NON_EXECUTION_REASONS
+                : UPL_NON_EXECUTION_REASONS
+              ).map((r) => (
                 <option key={r} value={r}>
                   {r}
                 </option>
@@ -202,7 +246,7 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
             </select>
           </label>
 
-          {preview ? (
+          {preview && preview.kind === "upl" ? (
             <div className="rounded-lg border border-zinc-700/80 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-300">
               <p className="font-semibold text-zinc-200">Derived preview (server)</p>
               <ul className="mt-1 space-y-0.5">
@@ -220,6 +264,28 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
                 Counterfactual results do not affect account P/L.
               </p>
             </div>
+          ) : null}
+          {preview && preview.kind === "miss" ? (
+            <div className="rounded-lg border border-zinc-700/80 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-300">
+              <p className="font-semibold text-zinc-200">Derived preview (server)</p>
+              <ul className="mt-1 space-y-0.5">
+                <li>Realized R: {preview.realizedR}</li>
+                <li>Realized P/L: {preview.realizedPnL}</li>
+                <li>Counterfactual R (missed move): +{preview.counterfactualR}</li>
+                <li>
+                  Counterfactual dollar result:{" "}
+                  {preview.counterfactualDollarResult === null
+                    ? "unavailable (no authorizedRiskAmount)"
+                    : preview.counterfactualDollarResult}
+                </li>
+              </ul>
+              <p className="mt-2 text-amber-200/90">
+                Entry never reached — no chase. Counterfactual ≠ account P/L.
+              </p>
+            </div>
+          ) : null}
+          {preview && preview.kind === "miss_error" ? (
+            <p className="text-xs text-red-300">{preview.error}</p>
           ) : null}
         </>
       ) : (

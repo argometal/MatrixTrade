@@ -451,6 +451,32 @@ async function verifyPlanOutcomePersistence(
     }
   }
 
+  if (kind === "missed_opportunity") {
+    const lo = verify.learningOutcome;
+    const obs = verify.observation;
+    if (!lo || lo.kind !== "missed_opportunity") {
+      return { ok: false, detail: `Plan ${plan.id}: LO missed_opportunity missing after apply.` };
+    }
+    if (lo.tradeId) {
+      return { ok: false, detail: `Plan ${plan.id}: missed_opportunity LO must not have tradeId.` };
+    }
+    if (lo.realizedR !== 0 || !(lo.counterfactualR != null && lo.counterfactualR > 0)) {
+      return {
+        ok: false,
+        detail: `Plan ${plan.id}: missed_opportunity LO R must be realized 0 / counterfactual +planned R.`,
+      };
+    }
+    if (lo.entryReached !== false || lo.targetReachedBeforeStop !== true) {
+      return {
+        ok: false,
+        detail: `Plan ${plan.id}: missed_opportunity geometry not persisted on LO.`,
+      };
+    }
+    if (!obs || obs.learningOutcomeId !== lo.id || lo.observationId !== obs.id) {
+      return { ok: false, detail: `Plan ${plan.id}: LO↔OBS links inconsistent.` };
+    }
+  }
+
   if (kind === "duplicate_creation") {
     const lo = verify.learningOutcome;
     if (!lo || lo.kind !== "duplicate_creation" || lo.excludedFromMetrics !== true) {

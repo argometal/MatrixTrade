@@ -85,6 +85,10 @@ function isUnexecutedPlanLoss(plan: TradePlan): boolean {
   return o.status === "theoretical_loss" && o.tradeExecuted === false;
 }
 
+function isMissedOpportunity(plan: TradePlan): boolean {
+  return plan.outcome?.outcomeKind === "missed_opportunity";
+}
+
 function isDuplicateCreation(plan: TradePlan): boolean {
   return plan.outcome?.outcomeKind === "duplicate_creation";
 }
@@ -92,6 +96,7 @@ function isDuplicateCreation(plan: TradePlan): boolean {
 function observationRequired(plan: TradePlan): boolean {
   if (isDuplicateCreation(plan)) return false;
   if (isUnexecutedPlanLoss(plan)) return true;
+  if (isMissedOpportunity(plan)) return true;
   // Other counterfactual / no-trade outcomes that seed OBS today.
   return plan.outcome?.tradeExecuted === false && !plan.linkedTradeId;
 }
@@ -184,6 +189,98 @@ export function verifyPlanOutcomeLearningLinks(
         issues.push({
           code: "lo_obs_link",
           message: "LO.observationId does not match Observation",
+        });
+      }
+    }
+  } else if (isMissedOpportunity(plan)) {
+    if (!learningOutcome) {
+      issues.push({
+        code: "missing_lo",
+        message: "Learning Outcome missing for missed_opportunity",
+      });
+    } else {
+      if (learningOutcome.kind !== "missed_opportunity") {
+        issues.push({
+          code: "wrong_lo_kind",
+          message: `Expected LO kind missed_opportunity, got ${learningOutcome.kind}`,
+        });
+      }
+      if (learningOutcome.tradeId) {
+        issues.push({
+          code: "lo_has_trade",
+          message: "missed_opportunity LO must not have tradeId",
+        });
+      }
+      if (learningOutcome.realizedR !== 0) {
+        issues.push({
+          code: "realized_r",
+          message: `Expected realizedR=0, got ${String(learningOutcome.realizedR)}`,
+        });
+      }
+      if (
+        learningOutcome.counterfactualR === undefined ||
+        learningOutcome.counterfactualR === null ||
+        !(learningOutcome.counterfactualR > 0)
+      ) {
+        issues.push({
+          code: "counterfactual_r",
+          message: `Expected counterfactualR=+planned R (>0), got ${String(learningOutcome.counterfactualR)}`,
+        });
+      }
+      if (learningOutcome.entryReached !== false) {
+        issues.push({
+          code: "entry_reached",
+          message: "missed_opportunity requires entryReached=false",
+        });
+      }
+      if (learningOutcome.targetReachedBeforeStop !== true) {
+        issues.push({
+          code: "target_before_stop",
+          message: "missed_opportunity requires targetReachedBeforeStop=true",
+        });
+      }
+      if (learningOutcome.stopReachedBeforeTarget !== false) {
+        issues.push({
+          code: "stop_before_target",
+          message: "missed_opportunity requires stopReachedBeforeTarget=false",
+        });
+      }
+      if (learningOutcome.nonExecutionReason !== "entry_not_reached") {
+        issues.push({
+          code: "non_execution_reason",
+          message: "missed_opportunity requires nonExecutionReason=entry_not_reached",
+        });
+      }
+    }
+
+    if (!observation) {
+      issues.push({
+        code: "missing_obs",
+        message: "Counterfactual Observation missing for missed_opportunity",
+      });
+    } else if (learningOutcome) {
+      if (observation.learningOutcomeId !== learningOutcome.id) {
+        issues.push({
+          code: "obs_lo_link",
+          message: "Observation.learningOutcomeId does not match LO",
+        });
+      }
+      if (learningOutcome.observationId !== observation.id) {
+        issues.push({
+          code: "lo_obs_link",
+          message: "LO.observationId does not match Observation",
+        });
+      }
+      if (observation.entryTriggered === true) {
+        issues.push({
+          code: "obs_entry",
+          message: "missed_opportunity Observation must not set entryTriggered=true",
+        });
+      }
+      if (observation.learningUnitKind === TRIGGERED_UNEXECUTED_PLAN_UNIT) {
+        issues.push({
+          code: "obs_unit",
+          message: "missed_opportunity must not use triggered_unexecuted_plan unit",
         });
       }
     }

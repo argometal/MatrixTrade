@@ -1,14 +1,17 @@
 /**
  * Persist Plan Outcome, then durable Learning sync (no fictitious Trade).
- * UPL: unexecuted_plan_loss — server-derived realized/counterfactual R.
+ * UPL: unexecuted_plan_loss — server-derived realized/counterfactual R (−1).
+ * Miss: missed_opportunity — realized 0; counterfactual +planned R.
  */
 import type { TradePlan } from "./plan-types";
 import type { PlanOutcomeProposalInput } from "./plan-outcome-types";
 import { validatePlanOutcomeProposal } from "./plan-outcome-validate";
 import {
+  deriveMissedOpportunityServerValues,
   deriveUnexecutedPlanLossServerValues,
   planEligibleForOutcomeClosure,
   planHasCounterfactualGeometry,
+  validateMissedOpportunityEligibility,
   validateUnexecutedPlanLossEligibility,
 } from "./plan-outcome-derive";
 import { syncPlanOutcomeLearning } from "./plan-outcome-learning-sync";
@@ -122,6 +125,19 @@ export async function persistPlanOutcome(
       );
       if (!elig.ok) return { errors: elig.errors };
     }
+    if (input.outcomeKind === "missed_opportunity") {
+      const elig = validateMissedOpportunityEligibility(
+        plan,
+        {
+          entryReached: input.entryReached === true,
+          stopReachedBeforeTarget: input.stopReachedBeforeTarget === true,
+          targetReachedBeforeStop: input.targetReachedBeforeStop === true,
+          nonExecutionReason: input.nonExecutionReason,
+        },
+        { linkedTradeIds }
+      );
+      if (!elig.ok) return { errors: elig.errors };
+    }
   } else if (input.status === "theoretical_loss" && input.tradeExecuted === false) {
     if (plan.linkedTradeId || linkedTradeIds.length) {
       return {
@@ -149,26 +165,28 @@ export async function persistPlanOutcome(
   const now = new Date().toISOString();
   const nextStatus = resolveTerminalStatus(plan);
 
-  const server =
+  let theoreticalResultR = input.theoreticalResultR;
+  let realizedResultR = input.tradeExecuted ? input.realizedResultR : 0;
+  let realizedPnL = input.realizedPnL ?? (input.tradeExecuted ? undefined : 0);
+  let counterfactualDollarResult = input.counterfactualDollarResult;
+
+  if (
     input.outcomeKind === "unexecuted_plan_loss" ||
     (input.status === "theoretical_loss" && input.tradeExecuted === false)
-      ? deriveUnexecutedPlanLossServerValues(plan)
-      : null;
-
-  const theoreticalResultR = server
-    ? server.counterfactualR
-    : input.theoreticalResultR;
-  const realizedResultR = server
-    ? server.realizedR
-    : input.tradeExecuted
-      ? input.realizedResultR
-      : 0;
-  const realizedPnL = server
-    ? server.realizedPnL
-    : input.realizedPnL ?? (input.tradeExecuted ? undefined : 0);
-  const counterfactualDollarResult = server
-    ? server.counterfactualDollarResult
-    : input.counterfactualDollarResult;
+  ) {
+    const server = deriveUnexecutedPlanLossServerValues(plan);
+    theoreticalResultR = server.counterfactualR;
+    realizedResultR = server.realizedR;
+    realizedPnL = server.realizedPnL;
+    counterfactualDollarResult = server.counterfactualDollarResult;
+  } else if (input.outcomeKind === "missed_opportunity") {
+    const server = deriveMissedOpportunityServerValues(plan);
+    if ("error" in server) return { errors: [server.error] };
+    theoreticalResultR = server.counterfactualR;
+    realizedResultR = server.realizedR;
+    realizedPnL = server.realizedPnL;
+    counterfactualDollarResult = server.counterfactualDollarResult;
+  }
 
   const outcome: NonNullable<TradePlan["outcome"]> = {
     planId: plan.id,
