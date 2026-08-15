@@ -45,6 +45,12 @@ assert.doesNotMatch(
   /onBack \? \(\s*<div className="[^"]*lg:hidden/,
   "Topic collapse control is available on desktop, not mobile-only"
 );
+assert.match(
+  topicDetail,
+  /expandedChronicleEventIds/,
+  "Topic Chronicle Event blocks are expandable"
+);
+assert.match(topicDetail, /From linked Events/, "Event evidence is grouped in Chronicle");
 
 const linksTab = readFileSync(
   join(root, "app/argus/v2/components/V2EntityLinksTab.tsx"),
@@ -52,5 +58,12 @@ const linksTab = readFileSync(
 );
 assert.match(linksTab, /useState\(false\)/, "Local graph starts collapsed");
 assert.match(linksTab, /Collapse|Expand/, "Local graph expand/collapse labels");
+
+const chronicleList = readFileSync(
+  join(root, "app/argus/v2/components/V2ChronicleSelectableList.tsx"),
+  "utf8"
+);
+assert.match(chronicleList, /line-clamp-2/, "Chronicle note preview starts compact");
+assert.match(chronicleList, /Expand note/, "Chronicle notes can expand to full body");
 
 console.log("ok: topic-event-expand-collapse");

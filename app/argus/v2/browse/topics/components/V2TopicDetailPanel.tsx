@@ -64,6 +64,61 @@ function EvidenceIcon({ kind }: { kind: V2EvidenceStreamKind }) {
   return <>📓</>;
 }
 
+function topicEvidenceToChronicleItem(item: V2TopicDetail["evidence"][number]) {
+  return {
+    key: item.id,
+    logId: chronicleLogIdFromEvidenceId(item.id),
+    title: item.title,
+    href: item.href,
+    external: item.kind === "photo" || item.kind === "file",
+    preview: item.preview,
+    body: (
+      <>
+        <span className="mt-0.5 text-sm text-zinc-500">
+          <EvidenceIcon kind={item.kind} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium text-zinc-200">{item.title}</span>
+          <span className="mt-0.5 block text-xs text-zinc-600">{item.meta}</span>
+        </span>
+      </>
+    ),
+    footer:
+      (item.tags && item.tags.length > 0) || item.sourceEventHref ? (
+        <div className="flex flex-wrap items-center gap-2">
+          {item.tags?.slice(0, 8).map((tag) => (
+            <span
+              key={tag}
+              className="rounded-md border border-zinc-700/80 bg-zinc-900/70 px-1.5 py-0.5 text-[10px] font-medium text-zinc-300"
+            >
+              #{tag}
+            </span>
+          ))}
+          {item.tags && item.tags.length > 8 ? (
+            <span className="text-[10px] text-zinc-600">+{item.tags.length - 8}</span>
+          ) : null}
+          {item.sourceEventHref ? (
+            <Link
+              href={item.sourceEventHref}
+              className="inline-flex items-center gap-1 rounded-md border border-rose-500/35 bg-rose-950/30 px-2 py-0.5 text-[10px] font-semibold text-rose-100 hover:bg-rose-950/55"
+              title={
+                item.sourceEventName
+                  ? `Open Event · ${item.sourceEventName}`
+                  : "Open Event"
+              }
+            >
+              <span aria-hidden>📅</span>
+              {item.sourceEventName
+                ? `Open Event · ${item.sourceEventName}`
+                : "Open Event"}
+              <span aria-hidden>→</span>
+            </Link>
+          ) : null}
+        </div>
+      ) : undefined,
+  };
+}
+
 function MetricPill({
   icon,
   label,
@@ -129,6 +184,11 @@ export function V2TopicDetailPanel({
   const [panelTab, setPanelTab] = useState<PanelTab>("chronicle");
   const [focusTags, setFocusTags] = useState<string[]>(signalTags);
   const [inspectEventId, setInspectEventId] = useState<string | null>(null);
+  const [inspectExpanded, setInspectExpanded] = useState(false);
+  /** Event-sourced Chronicle blocks start collapsed (quick view). */
+  const [expandedChronicleEventIds, setExpandedChronicleEventIds] = useState<Set<string>>(
+    () => new Set()
+  );
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
 
   useEffect(() => {
@@ -137,7 +197,46 @@ export function V2TopicDetailPanel({
 
   useEffect(() => {
     setInspectEventId(null);
+    setInspectExpanded(false);
+    setExpandedChronicleEventIds(new Set());
   }, [selected.id]);
+
+  const chronicleGroups = useMemo(() => {
+    type EventGroup = {
+      id: string;
+      name: string;
+      href: string;
+      latestIso: string;
+      items: V2TopicDetail["evidence"];
+    };
+    const direct: V2TopicDetail["evidence"] = [];
+    const byEvent = new Map<string, EventGroup>();
+
+    for (const item of selected.evidence) {
+      if (!item.sourceEventId || !item.sourceEventHref) {
+        direct.push(item);
+        continue;
+      }
+      const existing = byEvent.get(item.sourceEventId);
+      if (existing) {
+        existing.items.push(item);
+        if (item.sortIso > existing.latestIso) existing.latestIso = item.sortIso;
+        continue;
+      }
+      byEvent.set(item.sourceEventId, {
+        id: item.sourceEventId,
+        name: item.sourceEventName || "Event",
+        href: item.sourceEventHref,
+        latestIso: item.sortIso,
+        items: [item],
+      });
+    }
+
+    const eventGroups = [...byEvent.values()].sort((a, b) =>
+      b.latestIso.localeCompare(a.latestIso)
+    );
+    return { direct, eventGroups };
+  }, [selected.evidence]);
 
   const inspectEvent = useMemo(() => {
     if (!inspectEventId) return null;
@@ -382,76 +481,135 @@ export function V2TopicDetailPanel({
           returnTo={returnTo}
         >
           {panelTab === "chronicle" ? (
-            <div className="space-y-3">
-              <div className="flex justify-end">
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[11px] text-zinc-500">
+                  Event evidence stays in quick view — expand a block to read notes.
+                </p>
                 <V2IntelHelpLink topic="topic-chronicle" label="Topic Chronicle" />
               </div>
-              <V2ChronicleSelectableList
-                key={selected.id}
-                returnTo={returnTo}
-                requiresAuthenticator
-                deleteUnlocked={deleteGate.deleteUnlocked}
-                deleteAuthUnlocked={deleteGate.deleteAuthUnlocked}
-                deleteCodeConfigured={deleteGate.deleteCodeConfigured}
-                totpConfigured={deleteGate.totpConfigured}
-                deleteAuthConfigured={deleteGate.deleteAuthConfigured}
-                deleteError={deleteGate.deleteError}
-                deleteAuthError={deleteGate.deleteAuthError}
-                totpRequired={deleteGate.totpRequired}
-                empty={<p className="text-sm text-zinc-500">No evidence yet.</p>}
-                items={selected.evidence.map((item) => ({
-                  key: item.id,
-                  logId: chronicleLogIdFromEvidenceId(item.id),
-                  title: item.title,
-                  href: item.href,
-                  external: item.kind === "photo" || item.kind === "file",
-                  preview: item.preview,
-                  body: (
-                    <>
-                      <span className="mt-0.5 text-sm text-zinc-500">
-                        <EvidenceIcon kind={item.kind} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-medium text-zinc-200">{item.title}</span>
-                        <span className="mt-0.5 block text-xs text-zinc-600">{item.meta}</span>
-                      </span>
-                    </>
-                  ),
-                  footer:
-                    (item.tags && item.tags.length > 0) || item.sourceEventHref ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        {item.tags?.slice(0, 8).map((tag) => (
-                          <span
-                            key={tag}
-                            className="rounded-md border border-zinc-700/80 bg-zinc-900/70 px-1.5 py-0.5 text-[10px] font-medium text-zinc-300"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                        {item.tags && item.tags.length > 8 ? (
-                          <span className="text-[10px] text-zinc-600">+{item.tags.length - 8}</span>
-                        ) : null}
-                        {item.sourceEventHref ? (
-                          <Link
-                            href={item.sourceEventHref}
-                            className="inline-flex items-center gap-1 rounded-md border border-rose-500/35 bg-rose-950/30 px-2 py-0.5 text-[10px] font-semibold text-rose-100 hover:bg-rose-950/55"
-                            title={
-                              item.sourceEventName
-                                ? `Open Event · ${item.sourceEventName}`
-                                : "Open Event"
+
+              {chronicleGroups.eventGroups.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                      From linked Events
+                    </h3>
+                    {chronicleGroups.eventGroups.length > 1 ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedChronicleEventIds(
+                              new Set(chronicleGroups.eventGroups.map((group) => group.id))
+                            )
+                          }
+                          className="text-[11px] font-medium text-violet-300/90 hover:text-violet-200"
+                        >
+                          Expand all
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setExpandedChronicleEventIds(new Set())}
+                          className="text-[11px] font-medium text-zinc-500 hover:text-zinc-300"
+                        >
+                          Collapse all
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                  {chronicleGroups.eventGroups.map((group) => {
+                    const open = expandedChronicleEventIds.has(group.id);
+                    const dateLabel =
+                      selected.linkedEvents.find((event) => event.id === group.id)?.dateLabel ?? "";
+                    return (
+                      <div
+                        key={group.id}
+                        className="rounded-xl border border-rose-500/25 bg-rose-950/15 px-3 py-2.5"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedChronicleEventIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(group.id)) next.delete(group.id);
+                                else next.add(group.id);
+                                return next;
+                              })
                             }
+                            className="flex min-w-0 flex-1 items-start gap-2 text-left"
+                            aria-expanded={open}
                           >
-                            <span aria-hidden>📅</span>
-                            {item.sourceEventName
-                              ? `Open Event · ${item.sourceEventName}`
-                              : "Open Event"}
+                            <span className="mt-0.5 text-[10px] text-rose-200/80" aria-hidden>
+                              {open ? "▼" : "▶"}
+                            </span>
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-zinc-100">{group.name}</p>
+                              <p className="mt-0.5 text-[11px] tabular-nums text-zinc-500">
+                                {dateLabel ? `${dateLabel} · ` : ""}
+                                {group.items.length} item{group.items.length === 1 ? "" : "s"}
+                                {open ? "" : " — quick view · expand to read"}
+                              </p>
+                            </div>
+                          </button>
+                          <Link
+                            href={group.href}
+                            className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-rose-400/40 bg-rose-600/20 px-2.5 py-1.5 text-[11px] font-semibold text-rose-50 hover:bg-rose-600/35"
+                          >
+                            Open Event
                             <span aria-hidden>→</span>
                           </Link>
+                        </div>
+                        {open ? (
+                          <div className="mt-3 border-t border-rose-500/20 pt-3">
+                            <V2ChronicleSelectableList
+                              key={`${selected.id}-${group.id}`}
+                              returnTo={returnTo}
+                              requiresAuthenticator
+                              deleteUnlocked={deleteGate.deleteUnlocked}
+                              deleteAuthUnlocked={deleteGate.deleteAuthUnlocked}
+                              deleteCodeConfigured={deleteGate.deleteCodeConfigured}
+                              totpConfigured={deleteGate.totpConfigured}
+                              deleteAuthConfigured={deleteGate.deleteAuthConfigured}
+                              deleteError={deleteGate.deleteError}
+                              deleteAuthError={deleteGate.deleteAuthError}
+                              totpRequired={deleteGate.totpRequired}
+                              empty={<p className="text-sm text-zinc-500">No evidence in this Event.</p>}
+                              items={group.items.map(topicEvidenceToChronicleItem)}
+                            />
+                          </div>
                         ) : null}
                       </div>
-                    ) : undefined,
-                }))}
-              />
+                    );
+                  })}
+                </div>
+              ) : null}
+
+              {chronicleGroups.direct.length > 0 || chronicleGroups.eventGroups.length === 0 ? (
+                <div className="space-y-2">
+                  {chronicleGroups.eventGroups.length > 0 ? (
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                      On this Topic
+                    </h3>
+                  ) : null}
+                  <V2ChronicleSelectableList
+                    key={`${selected.id}-direct`}
+                    returnTo={returnTo}
+                    requiresAuthenticator
+                    deleteUnlocked={deleteGate.deleteUnlocked}
+                    deleteAuthUnlocked={deleteGate.deleteAuthUnlocked}
+                    deleteCodeConfigured={deleteGate.deleteCodeConfigured}
+                    totpConfigured={deleteGate.totpConfigured}
+                    deleteAuthConfigured={deleteGate.deleteAuthConfigured}
+                    deleteError={deleteGate.deleteError}
+                    deleteAuthError={deleteGate.deleteAuthError}
+                    totpRequired={deleteGate.totpRequired}
+                    empty={<p className="text-sm text-zinc-500">No evidence yet.</p>}
+                    items={chronicleGroups.direct.map(topicEvidenceToChronicleItem)}
+                  />
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -487,6 +645,7 @@ export function V2TopicDetailPanel({
               selectedEntityId={inspectEventId}
               onSelectEntity={(entity: V2LinksEntity | null) => {
                 setInspectEventId(entity?.id ?? null);
+                setInspectExpanded(false);
               }}
               inspectSlot={
                 inspectEvent ? (
@@ -495,27 +654,45 @@ export function V2TopicDetailPanel({
                     aria-label={`Selected event ${inspectEvent.name}`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => setInspectExpanded((value) => !value)}
+                        className="min-w-0 flex-1 text-left"
+                        aria-expanded={inspectExpanded}
+                      >
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-rose-200/80">
-                          Selected event
+                          Quick view · Event
                         </p>
                         <h4 className="mt-0.5 truncate text-sm font-semibold text-zinc-50">
                           {inspectEvent.name}
                         </h4>
-                        {inspectEvent.dateLabel ? (
-                          <p className="mt-0.5 text-xs text-zinc-500">{inspectEvent.dateLabel}</p>
-                        ) : null}
-                        <p className="mt-1 text-[11px] text-zinc-500">
-                          Inspect properties here · open the Event to read its Chronicle.
+                        <p className="mt-0.5 text-[11px] tabular-nums text-zinc-500">
+                          {inspectEvent.dateLabel ? `${inspectEvent.dateLabel} · ` : ""}
+                          {inspectEvent.noteCount} notes · {inspectEvent.emailCount} emails ·{" "}
+                          {inspectEvent.tags.length} tags
+                          {inspectExpanded ? "" : " — expand for mix & tags"}
                         </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setInspectEventId(null)}
-                        className="shrink-0 rounded-lg border border-zinc-700 px-2 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200"
-                      >
-                        Clear
                       </button>
+                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setInspectExpanded((value) => !value)}
+                          className="rounded-lg border border-zinc-700 px-2 py-1.5 text-[11px] text-zinc-300 hover:text-zinc-100"
+                          aria-expanded={inspectExpanded}
+                        >
+                          {inspectExpanded ? "Collapse" : "Expand"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInspectEventId(null);
+                            setInspectExpanded(false);
+                          }}
+                          className="rounded-lg border border-zinc-700 px-2 py-1.5 text-[11px] text-zinc-400 hover:text-zinc-200"
+                        >
+                          Clear
+                        </button>
+                      </div>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Link
@@ -531,51 +708,58 @@ export function V2TopicDetailPanel({
                         View Event Chronicle →
                       </Link>
                     </div>
-                    <div className="mt-4 rounded-xl border border-rose-500/20 bg-zinc-950/50 p-3">
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-rose-200/70">
-                        Quick view · evidence mix
-                      </p>
-                      <V2EvidenceMixDonut
-                        segments={inspectEventMix}
-                        size="sm"
-                        emptyLabel="No notes, emails, or tags on this Event yet"
-                        centerLabel={
-                          inspectEvent.noteCount + inspectEvent.emailCount > 0
-                            ? String(inspectEvent.noteCount + inspectEvent.emailCount)
-                            : undefined
-                        }
-                      />
-                    </div>
-                    <div className="mt-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                        Tags on this Event
-                      </p>
-                      {inspectEvent.tags.length === 0 ? (
-                        <p className="mt-1.5 text-xs text-zinc-600">No tags on this Event yet.</p>
-                      ) : (
-                        <ul className={`mt-2 ${TAG_MANAGE_LIST_CLASS}`} aria-label="Tags on selected Event">
-                          {inspectEvent.tags.map((tag) => (
-                            <li key={tag}>
-                              <span className={TAG_MANAGE_ROW_CLASS}>
-                                <span
-                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200"
-                                  aria-hidden
-                                >
-                                  #
-                                </span>
-                                <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">
-                                  {tag}
-                                </span>
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
+                    {inspectExpanded ? (
+                      <div className="mt-4 space-y-3 border-t border-rose-500/20 pt-3">
+                        <div className="rounded-xl border border-rose-500/20 bg-zinc-950/50 p-3">
+                          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-rose-200/70">
+                            Evidence mix
+                          </p>
+                          <V2EvidenceMixDonut
+                            segments={inspectEventMix}
+                            size="sm"
+                            emptyLabel="No notes, emails, or tags on this Event yet"
+                            centerLabel={
+                              inspectEvent.noteCount + inspectEvent.emailCount > 0
+                                ? String(inspectEvent.noteCount + inspectEvent.emailCount)
+                                : undefined
+                            }
+                          />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                            Tags on this Event
+                          </p>
+                          {inspectEvent.tags.length === 0 ? (
+                            <p className="mt-1.5 text-xs text-zinc-600">No tags on this Event yet.</p>
+                          ) : (
+                            <ul
+                              className={`mt-2 ${TAG_MANAGE_LIST_CLASS}`}
+                              aria-label="Tags on selected Event"
+                            >
+                              {inspectEvent.tags.map((tag) => (
+                                <li key={tag}>
+                                  <span className={TAG_MANAGE_ROW_CLASS}>
+                                    <span
+                                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-600/20 text-xs font-bold text-violet-200"
+                                      aria-hidden
+                                    >
+                                      #
+                                    </span>
+                                    <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">
+                                      {tag}
+                                    </span>
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                    ) : null}
                   </section>
                 ) : selected.linkedEvents.length > 0 ? (
                   <p className="text-xs text-zinc-600">
-                    Click an Event to inspect · Open Event / double-click / ··· to enter.
+                    Click an Event for quick view · Expand for mix & tags · Open Event to enter.
                   </p>
                 ) : null
               }

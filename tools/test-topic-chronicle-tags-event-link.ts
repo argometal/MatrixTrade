@@ -1,5 +1,5 @@
 /**
- * Smoke: Topic Chronicle shows tags + Open Event; Links inspect has clear Open CTAs.
+ * Smoke: Topic Chronicle shows tags + Open Event; Event blocks are quick/expandable.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -22,7 +22,12 @@ assert.match(stream, /sourceEventHref\?: string/, "evidence stream carries Event
 assert.match(loaders, /sourceEventHref:/, "Topic rollup sets sourceEventHref");
 assert.match(topic, /Open Event/, "Topic Chronicle/inspect expose Open Event");
 assert.match(topic, /View Event Chronicle/, "Links inspect has View Event Chronicle CTA");
-assert.match(topic, /item\.tags\?\.slice/, "Topic Chronicle renders tag chips");
+assert.match(topic, /From linked Events/, "Topic Chronicle groups Event evidence");
+assert.match(topic, /expandedChronicleEventIds/, "Event chronicle blocks expand/collapse");
+assert.match(topic, /quick view · expand to read/, "Event blocks start as quick view");
+assert.match(topic, /Quick view · Event/, "Links inspect is compact quick view");
+assert.match(topic, /inspectExpanded/, "Links inspect expands for mix & tags");
 assert.match(list, /footer\?:/, "Chronicle list supports footer outside primary href");
+assert.match(list, /Expand note|line-clamp-2/, "Chronicle note bodies are compact until expanded");
 
 console.log("ok: topic-chronicle-tags-event-link");
