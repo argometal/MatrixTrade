@@ -100,9 +100,23 @@ export async function lockArgusPrivateAction(): Promise<void> {
   redirect("/argus/v2");
 }
 
-export async function logoutAction(): Promise<void> {
+/** Login landing after global logout — trading `/login` or Argus `/argus/login`. */
+function safeLogoutLoginPath(raw: string): string {
+  const next = raw.trim() || "/login";
+  if (next === "/argus/login" || next.startsWith("/argus/login?")) return "/argus/login";
+  if (next === "/login" || next.startsWith("/login?")) return "/login";
+  if (next.startsWith("/argus") || next.startsWith("/forge")) return "/argus/login";
+  return "/login";
+}
+
+/**
+ * Signs out of MatrixTrade, Argus, and Forge (and private/delete unlocks).
+ * Optional form field `next` = preferred login path (`/login` or `/argus/login`).
+ */
+export async function logoutAction(formData?: FormData): Promise<void> {
   await clearAllSessions();
-  redirect("/login");
+  const next = formData ? String(formData.get("next") ?? "/login") : "/login";
+  redirect(safeLogoutLoginPath(next));
 }
 
 export async function saveGuestWorkstationLockAction(formData: FormData): Promise<void> {

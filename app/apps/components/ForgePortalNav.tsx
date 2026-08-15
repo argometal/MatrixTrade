@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import { SignOutButton } from "@/app/components/SignOutButton";
 
 export type ForgeSystemId =
   | "argus"
@@ -175,6 +176,10 @@ export function ForgeQuickNavMenu({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const dark = theme === "dark";
+  const logoutLoginPath =
+    currentId === "argus" || currentId === "argusforge" || currentId === "vault"
+      ? ("/argus/login" as const)
+      : ("/login" as const);
 
   useEffect(() => {
     if (!open) return;
@@ -309,6 +314,26 @@ export function ForgeQuickNavMenu({
               );
             })}
           </ul>
+          <div
+            className={
+              dark
+                ? "border-t border-zinc-800 px-3.5 py-2.5"
+                : "border-t border-zinc-100 px-3.5 py-2.5"
+            }
+          >
+            <SignOutButton
+              loginPath={logoutLoginPath}
+              label="Sign out everywhere"
+              className={
+                dark
+                  ? "w-full text-left text-sm font-medium text-zinc-400 transition hover:text-zinc-100"
+                  : "w-full text-left text-sm font-medium text-zinc-600 transition hover:text-zinc-900"
+              }
+            />
+            <p className={`mt-1 text-[10px] ${dark ? "text-zinc-600" : "text-zinc-400"}`}>
+              MatrixTrade · Argus · Forge
+            </p>
+          </div>
         </div>
       ) : null}
     </div>

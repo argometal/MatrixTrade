@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { lockArgusPrivateAction, unlockArgusPrivateAction } from "@/app/auth/actions";
+import { SignOutButton } from "@/app/components/SignOutButton";
 import { PRIVATE } from "@/lib/argus/ux-copy";
 
 export function PrivateLockMenu({
@@ -32,7 +33,10 @@ export function PrivateLockMenu({
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-end bg-black/40 p-4 pt-16" onClick={() => setOpen(false)}>
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-end bg-black/40 p-4 pt-16"
+          onClick={() => setOpen(false)}
+        >
           <div
             className="w-full max-w-xs rounded-2xl border border-zinc-700 bg-zinc-900 p-4 shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -67,6 +71,14 @@ export function PrivateLockMenu({
                 {privateError && <p className="mt-2 text-xs text-red-400">Wrong PIN</p>}
               </form>
             )}
+            <div className="mt-4 border-t border-zinc-800 pt-3">
+              <SignOutButton
+                loginPath="/argus/login"
+                label="Sign out everywhere"
+                className="w-full text-left text-sm font-medium text-zinc-400 hover:text-zinc-200"
+              />
+              <p className="mt-1 text-[10px] text-zinc-600">MatrixTrade · Argus · Forge</p>
+            </div>
             <a
               href="/argus/v2/settings/security"
               className="mt-3 block text-center text-[11px] text-violet-400 hover:text-violet-300"
