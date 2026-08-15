@@ -6,7 +6,7 @@ export type V2TagCloudItem = {
   color: string;
   weight: number;
   href: string;
-  /** Flagged Tag — Tracker. */
+  /** Flagged Tag — Tracker (no cloud highlight; Flag UI lives elsewhere). */
   isSignal?: boolean;
 };
 
@@ -16,6 +16,7 @@ const TAG_COLORS: Record<string, string> = {
   amber: "text-amber-300 hover:text-amber-200",
   sky: "text-sky-300 hover:text-sky-200",
   orange: "text-orange-300 hover:text-orange-200",
+  rose: "text-violet-300 hover:text-violet-200",
 };
 
 /** Font size scales with recurrence — horizontal tag cloud (WCAG-friendly rem units). */
@@ -25,6 +26,7 @@ function tagFontSize(weight: number): string {
   return `${(min + weight * (max - min)).toFixed(3)}rem`;
 }
 
+/** Tag cloud — uniform weight styling; Trackers are not highlighted here. */
 export function V2TagCloud({ tags }: { tags: V2TagCloudItem[] }) {
   if (tags.length === 0) {
     return <p className="text-sm text-zinc-500">Tags appear on registered records and inbox items.</p>;
@@ -37,12 +39,8 @@ export function V2TagCloud({ tags }: { tags: V2TagCloudItem[] }) {
           key={tag.name}
           href={tag.href}
           role="listitem"
-          className={
-            tag.isSignal
-              ? "rounded-sm bg-rose-950/50 px-1 font-semibold text-amber-100 ring-1 ring-amber-400/55 transition hover:bg-rose-950/70 hover:text-amber-50"
-              : `font-medium transition hover:underline ${TAG_COLORS[tag.color] ?? "text-zinc-300 hover:text-zinc-100"}`
-          }
-          style={{ fontSize: tagFontSize(tag.isSignal ? Math.max(tag.weight, 0.85) : tag.weight) }}
+          className={`font-medium transition hover:underline ${TAG_COLORS[tag.color] ?? "text-zinc-300 hover:text-zinc-100"}`}
+          style={{ fontSize: tagFontSize(tag.weight) }}
           title={
             tag.isSignal
               ? `${tag.name} — Tracker. ${tag.count} ${tag.count === 1 ? "use" : "uses"}`
@@ -54,7 +52,7 @@ export function V2TagCloud({ tags }: { tags: V2TagCloudItem[] }) {
               : `${tag.name}, used ${tag.count} times`
           }
         >
-          {tag.isSignal ? `⚑ ${tag.name}` : tag.name}
+          {tag.name}
         </Link>
       ))}
     </div>
