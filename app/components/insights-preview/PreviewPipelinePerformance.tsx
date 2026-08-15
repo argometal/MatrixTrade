@@ -13,6 +13,7 @@ import {
   type PipelinePerformanceInput,
   type PipelinePerformanceFilters,
 } from "@/lib/insights-pipeline-performance";
+import { MtaHelpLink } from "@/app/components/preview/MtaHelpLink";
 import { MAF_COMPONENT_LABELS, type MafComponentId } from "@/lib/maf-types";
 
 function formatR(value: number): string {
@@ -86,15 +87,12 @@ export function PreviewPipelinePerformance({
       className="space-y-6 px-4 py-4 lg:px-6 lg:py-6"
       data-insights-pipeline-performance
     >
-      <p className="text-sm text-zinc-500">
-        Pipeline component results across executed trades and Scout outcomes.
-        Realized P/L stays separate from counterfactual Scout R. Missed Scouts
-        are never counted as Trade wins or losses.
-      </p>
-      <p className="text-[11px] text-zinc-600">
-        Future note: Mistakes may become a cross-tab filter instead of a full
-        Insights tab.
-      </p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-medium text-zinc-300">
+          Pipeline component results
+        </p>
+        <MtaHelpLink topic="insights-pipeline" label="Pipeline" />
+      </div>
 
       <section
         className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 sm:grid-cols-2 lg:grid-cols-3"
