@@ -348,6 +348,8 @@ function topicTagRollup(
       name: event.name,
       href: `/argus/v2/browse/events?selected=${event.id}`,
       dateLabel: date ? date.slice(0, 10) : undefined,
+      noteCount: eHistory.length,
+      emailCount: eInbox.length,
       tags,
       eventTags,
       noteTags,

@@ -27,6 +27,8 @@ import {
   V2ProjectListItem,
   V2SummaryStatCard,
 } from "./V2RightPanel";
+import { V2OverviewBinderPulse } from "./V2OverviewBinderPulse";
+import type { EvidenceMixSegment } from "@/lib/argus/v2/evidence-mix";
 import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 
 const TABS = ["Overview", "Timeline", "Runbooks", "Tags", "Links"] as const;
@@ -69,6 +71,8 @@ export type V2OrgShellProps = {
   linkedTopics: Array<{ id: string; name: string; href: string }>;
   linkedEvents: Array<{ id: string; name: string; href: string }>;
   linkModalIds: string[];
+  evidenceMix: EvidenceMixSegment[];
+  structuralMix: EvidenceMixSegment[];
   runbooks?: Runbook[];
   progressRecords?: RunbookProgress[];
   peerOrganizations?: Array<{ id: string; name: string }>;
@@ -110,6 +114,8 @@ export function V2OrgShell(props: V2OrgShellProps) {
     linkedTopics,
     linkedEvents,
     linkModalIds,
+    evidenceMix,
+    structuralMix,
     runbooks = [],
     progressRecords = [],
     peerOrganizations = [],
@@ -212,6 +218,16 @@ export function V2OrgShell(props: V2OrgShellProps) {
                 <V2ContactPill label="Last activity" value={stats.lastActivity} active={stats.isActiveToday} />
               </div>
             </div>
+
+            <V2OverviewBinderPulse
+              title="What this organization is made of"
+              subtitle="Evidence vs graph binders — same counts as the chips, as one pulse."
+              evidenceMix={evidenceMix}
+              structuralMix={structuralMix}
+              tagPatterns={tagPatterns}
+              onOpenTimeline={() => setTab("Timeline")}
+              onOpenTags={() => setTab("Tags")}
+            />
           </div>
 
           <aside className="space-y-4">

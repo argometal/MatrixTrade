@@ -20,13 +20,14 @@ import { V2ProjectTagEditor } from "./V2ProjectTagEditor";
 import { V2ProjectRunbooksTab } from "./V2ProjectRunbooksTab";
 import {
   V2LegacyLink,
-  V2MetricRows,
   V2MorePeopleHint,
   V2PanelCard,
   V2PanelHeader,
   V2PanelLinkAction,
   V2PersonListItem,
 } from "./V2RightPanel";
+import { V2OverviewBinderPulse } from "./V2OverviewBinderPulse";
+import type { EvidenceMixSegment } from "@/lib/argus/v2/evidence-mix";
 import { LINK_HIERARCHY } from "@/lib/argus/ux-copy";
 
 const TABS = ["Overview", "Timeline", "Runbooks", "Tags", "Links"] as const;
@@ -63,6 +64,11 @@ export type V2ProjectShellProps = {
   signalTags?: string[];
   keyMetrics: Array<{ label: string; value: string; highlight?: boolean }>;
   org?: { id: string; name: string };
+  sparkline: number[];
+  chartStartYear: number;
+  chartEndYear: number;
+  evidenceMix: EvidenceMixSegment[];
+  structuralMix: EvidenceMixSegment[];
   stats: {
     people: number;
     topics: number;
@@ -99,10 +105,16 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
     linkModalIds,
     tagPatterns,
     signalTags = [],
-    keyMetrics,
+    keyMetrics: _keyMetrics,
     org,
+    sparkline,
+    chartStartYear,
+    chartEndYear,
+    evidenceMix,
+    structuralMix,
     stats,
   } = props;
+  void _keyMetrics;
 
   const replaceParams = useCallback(
     (mutate: (params: URLSearchParams) => void) => {
@@ -183,6 +195,19 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
                 onClick={() => setTab("Runbooks")}
               />
             </div>
+
+            <V2OverviewBinderPulse
+              title="What this project is made of"
+              subtitle="Evidence in the date window vs linked people, topics, and events."
+              evidenceMix={evidenceMix}
+              structuralMix={structuralMix}
+              tagPatterns={tagPatterns}
+              sparkline={sparkline}
+              chartStartYear={chartStartYear}
+              chartEndYear={chartEndYear}
+              onOpenTimeline={() => setTab("Timeline")}
+              onOpenTags={() => setTab("Tags")}
+            />
           </div>
 
           <aside className="space-y-4">
@@ -226,11 +251,6 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
                   <V2MorePeopleHint people={peopleWithRoles.slice(4)} moreCount={morePeople} />
                 </>
               )}
-            </V2PanelCard>
-
-            <V2PanelCard>
-              <V2PanelHeader title="Key metrics" />
-              <V2MetricRows metrics={keyMetrics} />
             </V2PanelCard>
 
             <V2LegacyLink href={`/argus/projects/${entity.id}`}>Open legacy project view →</V2LegacyLink>
