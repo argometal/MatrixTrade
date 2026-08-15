@@ -62,8 +62,8 @@ const LIBRARY: {
   },
   {
     id: "learning",
-    label: "Learning",
-    hint: "MAF attribution protocol (existing)",
+    label: "MAF",
+    hint: "MAF attribution protocol — copy row inside",
   },
 ];
 

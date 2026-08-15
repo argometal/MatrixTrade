@@ -13,8 +13,8 @@
 Dashboard snapshot (global, once per session)
   → Needs Attention Task Snapshot (one item)
   → AI readiness diagnosis (READY | NEEDS_MECHANICS | NEEDS_LIBRARY | NEEDS_DATA | AMBIGUOUS | UNSUPPORTED)
-  → if needed: Matrix Mechanics
-  → if needed: Library Index → one Library section
+  → if needed: MTA Mechanics
+  → if needed: Library Index → one exact copy-row label
   → factual questions only (never invent prices/dates/outcomes)
   → ONE Apply-ready JSON
   → Control → Apply → Validate → Accept → verify
@@ -83,7 +83,7 @@ No Apply JSON until READY (protocol understood + evidence sufficient + zero unve
 | Status | Meaning |
 |--------|---------|
 | READY | Protocol + evidence enough → one existing Apply block |
-| NEEDS_MECHANICS | Request visible block **Matrix Mechanics** |
+| NEEDS_MECHANICS | Request visible block **MTA Mechanics** |
 | NEEDS_LIBRARY | Request **Library Index**, then one section |
 | NEEDS_DATA | Ask precise factual questions — do not invent |
 | AMBIGUOUS | Explain alternatives; human chooses |
@@ -100,7 +100,7 @@ Copyable lightweight index of Control Library labels (not full protocols):
 - Technical Analysis — MTAE (no capital)
 - Playbook — methods / families / checklists
 - Scout Desk — decision / R / capital gate
-- Learning — Observation / LO / MAF
+- MAF — copy row MAF attribution protocol (Observation / LO live elsewhere)
 
 AI requests Index first, then one exact section.
 

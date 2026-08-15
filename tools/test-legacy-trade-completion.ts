@@ -46,17 +46,46 @@ import type { Trade } from "../lib/types";
 
   assert.ok(brief.includes("Apply schema contract"), "brief lists Apply schema contract");
   assert.ok(brief.includes("Dashboard snapshot"), "brief lists Dashboard snapshot");
+  assert.ok(brief.includes("MAF attribution protocol"), "brief lists MAF attribution protocol copy row");
+  assert.ok(brief.includes("MTAE protocol"), "brief lists MTAE protocol copy row");
+  assert.ok(
+    /FORBIDDEN:.*copy nav names.*Learning/i.test(brief),
+    "brief forbids copying Learning as a nav name"
+  );
+  assert.ok(!/\n- Learning —/.test(brief), "brief must not list Learning as a copy target");
   assert.ok(brief.includes("__legacy_none__"), "brief documents playbook absence sentinel");
   assert.ok(brief.includes("__LEGACY_NONE__"), "brief documents plan absence sentinel");
   assert.ok(contract.includes("LEGACY TRADE COMPLETION"), "contract has legacy section");
-  assert.ok(contract.includes("Control → MTA Mechanics → Apply schema contract"));
+  assert.ok(
+    contract.includes("Apply schema contract") && contract.includes("MTA Mechanics"),
+    "contract points at visible MTA Mechanics copy row"
+  );
+  assert.ok(
+    snap.includes("Canonical list is in MATRIX MECHANICS above"),
+    "full snapshot must not maintain a second hand-written SNAPSHOT MENU"
+  );
 
-  for (const label of ["MTA Mechanics", "Apply schema contract", "Dashboard snapshot", "Apply"] as const) {
+  for (const label of [
+    "MTA Mechanics",
+    "Apply schema contract",
+    "Dashboard snapshot",
+    "Apply",
+    "MAF attribution protocol",
+    "MTAE protocol",
+  ] as const) {
     assert.ok(
       VISIBLE_SNAPSHOT_MENU_LABELS.includes(label),
       `visible menu missing ${label}`
     );
   }
+  assert.ok(
+    !VISIBLE_SNAPSHOT_MENU_LABELS.includes("Learning"),
+    "Learning is not a copy label"
+  );
+  assert.ok(
+    !VISIBLE_SNAPSHOT_MENU_LABELS.includes("Stock Files"),
+    "Stock Files is nav-only, not a copy label"
+  );
 }
 
 // ---------------------------------------------------------------------------

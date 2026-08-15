@@ -529,7 +529,7 @@ export function buildNeedsAttentionTaskSnapshot(
       snapshotSupport: support,
       availableVisibleBlocks: {
         dashboardSnapshot: "Dashboard snapshot",
-        mechanics: "Matrix Mechanics",
+        mechanics: "MTA Mechanics",
         libraryIndex: "Library Index",
       },
     },
@@ -545,8 +545,8 @@ export function buildNeedsAttentionTaskSnapshot(
           ]
         : [
             "Respond first with MATRIX TASK DIAGNOSIS (STATUS before any JSON).",
-            "If NEEDS_MECHANICS: ask human to copy the visible block Matrix Mechanics.",
-            "If NEEDS_LIBRARY: ask for Library Index, then one exact Library section.",
+            "If NEEDS_MECHANICS: ask human to copy the visible block MTA Mechanics.",
+            "If NEEDS_LIBRARY: ask for Library Index, then one exact copy-row label (e.g. MTAE protocol, Playbook snapshot, Scout desk overview, MAF attribution protocol).",
             "If NEEDS_DATA: ask precise factual questions — never invent answers.",
             "Only when READY with zero unverified assumptions: output ONE Apply-ready JSON block.",
             "Paste into Control → Apply → Validate → Accept.",

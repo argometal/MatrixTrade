@@ -103,7 +103,7 @@ export type NeedsAttentionSnapshot = {
     snapshotSupport: "SUPPORTED" | "UNSUPPORTED" | "SUMMARY";
     availableVisibleBlocks: {
       dashboardSnapshot: "Dashboard snapshot";
-      mechanics: "Matrix Mechanics";
+      mechanics: "MTA Mechanics";
       libraryIndex: "Library Index";
     };
   };

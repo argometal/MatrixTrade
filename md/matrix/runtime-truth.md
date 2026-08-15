@@ -4,7 +4,7 @@
 **Rule:** This doc must match deployed code. V2 target lives in [v2-engine-architecture.md](v2-engine-architecture.md). Control naming lives in [control-panel-ia.md](control-panel-ia.md).
 
 **Production:** https://matrix-trade-theta.vercel.app  
-**Branch of truth for this refresh:** `main` + Control IA (Matrix Mechanics · Stock Files · Apply · Library).
+**Branch of truth for this refresh:** `main` + Control IA (MTA Mechanics · Stock Files · Apply · Library).
 
 ---
 
@@ -50,7 +50,7 @@ There is **no Request layer** in Control — the human states the task in chat; 
 
 | Entry | Job |
 |-------|-----|
-| **Matrix Mechanics** | Copy Matrix constitution once for a new AI chat |
+| **MTA Mechanics** | Copy Matrix constitution once for a new AI chat (+ Apply schema contract copy row) |
 | **Stock Files** | Pick one ticker → MTAE request + profile + linked scouts (direct access) |
 | **Apply** | Paste AI Block → Validate → Accept |
 
@@ -61,7 +61,7 @@ There is **no Request layer** in Control — the human states the task in chat; 
 | **Technical Analysis** | MTAE protocol + TF role maps (no capital) |
 | **Playbook** | Method rules / checklists / stats |
 | **Scout Desk** | Desk overview + monthly risk room |
-| **Learning** | MAF attribution protocol (existing `buildMafProtocolBrief`) |
+| **MAF** | **MAF attribution protocol** copy row (`buildMafProtocolBrief`) |
 
 **Not in Control:** Closed-trade forensic picker. Forensic lives on `/trades/{id}` (evidence only — no embedded Mechanics / Request).
 
