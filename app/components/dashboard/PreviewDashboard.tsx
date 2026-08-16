@@ -202,8 +202,8 @@ export function PreviewDashboard({
                 Scout monitoring
               </h2>
               <p className="mt-1 text-xs text-zinc-500">
-                Human decision surface. Needs review = geometry / mismatch / explicit review —
-                not market-data telemetry. No automatic Scout mutation.
+                Dashboard signal only — Action now = act/prepare; Waiting = near-term
+                approaching. Full Scout list lives on Scout Desk. No automatic mutation.
               </p>
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 {(
@@ -233,18 +233,14 @@ export function PreviewDashboard({
                           <li key={`${label}-${row.planId}`}>
                             <Link
                               href={row.href}
+                              title={row.traceLine}
                               className="block rounded-lg border border-zinc-800 bg-zinc-950/60 px-3 py-2 hover:border-zinc-700"
                             >
                               <p className="text-sm font-medium text-zinc-100">
                                 {row.ticker} · {row.planId}
                               </p>
-                              <p className="mt-0.5 text-xs text-zinc-400">
-                                Detected {row.detectedState} · Confirmed {row.confirmedState} ·{" "}
-                                {row.nextAction}
-                              </p>
-                              <p className="mt-0.5 text-[11px] text-zinc-500">
-                                {row.reason} · last reviewed {row.lastReviewed}
-                              </p>
+                              <p className="mt-0.5 text-xs text-zinc-300">{row.headline}</p>
+                              <p className="mt-0.5 text-[11px] text-zinc-500">{row.detail}</p>
                             </Link>
                           </li>
                         ))}
