@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
 import { appendEventChronicleEntryAction } from "@/app/argus/actions";
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
@@ -25,7 +25,7 @@ import {
   TAG_MANAGE_ROW_ACTIVE_CLASS,
   TAG_MANAGE_ROW_CLASS,
 } from "@/app/argus/v2/components/tag-manage-list";
-import { V2EventTagEditor } from "./V2EventTagEditor";
+import { V2EventTagEditor, type V2EventTagEditorHandle } from "./V2EventTagEditor";
 import {
   V2ChronicleSelectableList,
   chronicleLogIdFromEvidenceId,
@@ -84,6 +84,7 @@ export function V2EventDetailPanel({
   const [saving, setSaving] = useState(false);
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
+  const eventTagEditorRef = useRef<V2EventTagEditorHandle>(null);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
   const mobileDetail = Boolean(onBack);
   // Compact / pinned upper chrome disabled — header scrolls with content.
@@ -594,8 +595,10 @@ export function V2EventDetailPanel({
                   `/argus/v2/browse/events?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
                 }
                 helpTopic="event-tags"
+                onAttachTag={(tag) => eventTagEditorRef.current?.attachTag(tag)}
                 attachedEditor={
                   <V2EventTagEditor
+                    ref={eventTagEditorRef}
                     eventId={selected.id}
                     eventName={selected.name}
                     initialTags={selected.eventTags}
