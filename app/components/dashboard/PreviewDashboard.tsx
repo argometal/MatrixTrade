@@ -202,8 +202,8 @@ export function PreviewDashboard({
                 Scout monitoring
               </h2>
               <p className="mt-1 text-xs text-zinc-500">
-                Detection surface only. Review Scout / Prepare status update / Open Plan Map —
-                no automatic Scout mutation.
+                Human decision surface. Needs review = geometry / mismatch / explicit review —
+                not market-data telemetry. No automatic Scout mutation.
               </p>
               <div className="mt-4 grid gap-4 lg:grid-cols-2">
                 {(
