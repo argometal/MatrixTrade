@@ -1,5 +1,5 @@
 import type { Runbook, RunbookItem, RunbookProgress, RunbookSubtask } from "./types";
-import { normalizeTagList, tagKey } from "./tag-ontology";
+import { normalizeTagDisplay, normalizeTagList, tagKey } from "./tag-ontology";
 
 export function normRunbookLine(line: string): string {
   return String(line || "")
@@ -175,6 +175,23 @@ export function libraryRunbooksForRelated(
 
 export function runbookClassificationTags(runbook: Pick<Runbook, "tags">): string[] {
   return normalizeTagList(runbook.tags);
+}
+
+/** Soft cap so checklist prose does not become a paragraph-length Tag. */
+export const RUNBOOK_PROMOTE_TAG_MAX_LEN = 48;
+
+/**
+ * Promote a checklist row's text into a Tag display string.
+ * Returns null when empty after normalize. Long lines truncate at a word boundary.
+ */
+export function promoteRunbookCheckTextToTag(text: string): string | null {
+  let display = normalizeTagDisplay(normRunbookLine(text));
+  if (!display) return null;
+  if (display.length <= RUNBOOK_PROMOTE_TAG_MAX_LEN) return display;
+  const slice = display.slice(0, RUNBOOK_PROMOTE_TAG_MAX_LEN);
+  const breakAt = slice.lastIndexOf(" ");
+  display = (breakAt > 16 ? slice.slice(0, breakAt) : slice).trim();
+  return display || null;
 }
 
 /** Pattern tags ∪ entity binder tags — keys used to suggest unassigned runbooks. */

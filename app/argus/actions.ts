@@ -2330,6 +2330,82 @@ export async function updateRunbookTagsAction(runbookId: string, tags: string[])
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
 }
 
+/**
+ * Append one Tag to Topic / Event / Project binders (merge, no redirect).
+ * Orgs and people are skipped — they do not carry binder Tags by default.
+ */
+export async function appendBinderTagToEntitiesAction(
+  tag: string,
+  entityIds: string[]
+): Promise<{ attached: number; skipped: number }> {
+  await requireArgusSession();
+  const { binderTagWritePatch, isEventBinder, isTopicBinder, normalizeTagDisplay, normalizeTagList, tagKey } =
+    await import("@/lib/argus/tag-ontology");
+  const display = normalizeTagDisplay(tag);
+  if (!display) {
+    throw new ArgusPersistenceError("validation", "Tag is required.");
+  }
+  const key = tagKey(display);
+  let attached = 0;
+  let skipped = 0;
+
+  for (const entityId of entityIds) {
+    const entity = await getEntity(entityId);
+    if (!entity || entity.deletedAt) {
+      skipped += 1;
+      continue;
+    }
+
+    if (entity.type === "project") {
+      const current = normalizeTagList(
+        entity.projectTags?.length ? entity.projectTags : entity.linkedTags
+      );
+      if (current.some((t) => tagKey(t) === key)) {
+        attached += 1;
+        continue;
+      }
+      await updateEntity(entityId, binderTagWritePatch(entity, "project", [...current, display]));
+      revalidatePath(`/argus/v2/projects/${entityId}`);
+      revalidatePath("/argus/v2/browse/projects");
+      attached += 1;
+      continue;
+    }
+
+    if (isTopicBinder(entity)) {
+      const current = normalizeTagList(entity.topicTags?.length ? entity.topicTags : entity.linkedTags);
+      if (current.some((t) => tagKey(t) === key)) {
+        attached += 1;
+        continue;
+      }
+      await updateEntity(entityId, binderTagWritePatch(entity, "topic", [...current, display]));
+      revalidatePath("/argus/v2/browse/topics");
+      attached += 1;
+      continue;
+    }
+
+    if (isEventBinder(entity)) {
+      const current = normalizeTagList(entity.eventTags);
+      if (current.some((t) => tagKey(t) === key)) {
+        attached += 1;
+        continue;
+      }
+      await updateEntity(entityId, binderTagWritePatch(entity, "event", [...current, display]));
+      revalidatePath("/argus/v2/browse/events");
+      attached += 1;
+      continue;
+    }
+
+    skipped += 1;
+  }
+
+  if (attached > 0) {
+    revalidateArgus();
+    revalidatePath("/argus/v2");
+    revalidatePath("/argus/v2/inbox");
+  }
+  return { attached, skipped };
+}
+
 export async function appendRunbookCardsFromTextAction(runbookId: string, text: string): Promise<void> {
   await requireArgusSession();
   const runbook = await getRunbook(runbookId);

@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import type { Runbook, RunbookItem } from "@/lib/argus/types";
 import {
   addRunbookSectionAction,
+  appendBinderTagToEntitiesAction,
   appendRunbookCardsFromTextAction,
   checkAllRunbookItemsAction,
   checkAllRunbookItemsScopedAction,
@@ -35,9 +36,14 @@ import {
   toggleRunbookItemAction,
   uncheckAllRunbookItemsAction,
   uncheckAllRunbookItemsScopedAction,
+  updateRunbookTagsAction,
 } from "@/app/argus/actions";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
+import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import {
   isRunbookCheck,
+  promoteRunbookCheckTextToTag,
+  runbookClassificationTags,
   runbookHasNestedSubtasks,
   runbookItemSectionId,
   runbookItemsToText,
@@ -46,11 +52,24 @@ import {
   runbookSectionChildStats,
 } from "@/lib/argus/runbook-helpers";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
+import { isEventBinder, isTopicBinder, normalizeTagList, tagKey } from "@/lib/argus/tag-ontology";
+import type { Entity } from "@/lib/argus/types";
 import { RunbookAiBulkPanel } from "./RunbookAiBulkPanel";
 import { V2RunbookTagEditor } from "./V2RunbookTagEditor";
-import { runbookClassificationTags } from "@/lib/argus/runbook-helpers";
 
 export type RunbookPeerList = { id: string; title: string };
+
+function isBinderTagTarget(entity: Entity): boolean {
+  return entity.type === "project" || isTopicBinder(entity) || isEventBinder(entity);
+}
+
+function binderTagLinkBuckets(buckets: EntityPickerBuckets): EntityPickerBuckets {
+  return {
+    recent: buckets.recent.filter(isBinderTagTarget),
+    frequent: buckets.frequent.filter(isBinderTagTarget),
+    alphabetical: buckets.alphabetical.filter(isBinderTagTarget),
+  };
+}
 
 function toolbarButtonClass(variant: "default" | "danger" | "primary" = "default") {
   if (variant === "danger") {
@@ -142,6 +161,7 @@ function RowActionMenu({
   peerLists,
   onTurnIntoSection,
   onTurnIntoCheck,
+  onUseAsTag,
   onCopyToList,
   onMoveToList,
   onDelete,
@@ -153,6 +173,8 @@ function RowActionMenu({
   peerLists: RunbookPeerList[];
   onTurnIntoSection: () => void;
   onTurnIntoCheck: () => void;
+  /** Promote check text → Tag (runbook + optional binder link). Checks only. */
+  onUseAsTag?: () => void;
   onCopyToList: (targetId: string) => void;
   onMoveToList: (targetId: string) => void;
   onDelete: () => void;
@@ -215,6 +237,18 @@ function RowActionMenu({
                   <p className="border-b border-zinc-800 px-3 pb-2 text-[10px] leading-snug text-zinc-600">
                     Items below become part of this section until the next one.
                   </p>
+                  {onUseAsTag ? (
+                    <button
+                      type="button"
+                      className="block w-full px-3 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+                      onClick={() => {
+                        onUseAsTag();
+                        onToggle();
+                      }}
+                    >
+                      Use as tag…
+                    </button>
+                  ) : null}
                 </>
               )}
               <button
@@ -313,6 +347,7 @@ export function V2RunbookWorkPanel({
   tagVocabulary?: string[];
 }) {
   const router = useRouter();
+  const { openLinkModal, buckets } = useArgusAdd();
   const importRef = useRef<HTMLInputElement>(null);
   // Execute mode (Project/Topic/Event): keep accomplished visible so a check does not
   // vanish mid-click and look like “cannot check on child projects”.
@@ -410,6 +445,61 @@ export function V2RunbookWorkPanel({
         : "Delete this check?";
     if (!window.confirm(message)) return;
     run(() => deleteRunbookItemsAction(runbook.id, itemId), "Deleted.");
+  }
+
+  function handleUseAsTag(itemId: string) {
+    const item = runbook.items.find((row) => row.id === itemId);
+    if (!item || item.type !== "item") return;
+    const tag = promoteRunbookCheckTextToTag(item.text);
+    if (!tag) {
+      setError("VALIDATION: Check text is empty — rename the check before promoting.");
+      return;
+    }
+    const existing = runbookClassificationTags(runbook);
+    const alreadyOnRunbook = existing.some((t) => tagKey(t) === tagKey(tag));
+    const nextTags = normalizeTagList([...existing, tag]);
+
+    setError(null);
+    startTransition(async () => {
+      try {
+        if (!alreadyOnRunbook) {
+          await updateRunbookTagsAction(runbook.id, nextTags);
+        }
+        setStatus(
+          alreadyOnRunbook
+            ? `#${tag} already on this runbook — pick binders to link, or cancel.`
+            : `Added #${tag} to this runbook — optionally link it to binders.`
+        );
+        router.refresh();
+        openLinkModal({
+          title: `Link #${tag}`,
+          subtitle:
+            "Optional — attach this Tag to Topics, Events, or Projects. Cancel keeps it on this runbook only.",
+          linkedEntityIds: [],
+          selectedTags: [tag],
+          showTags: false,
+          initialFilter: "topic",
+          buckets: binderTagLinkBuckets(buckets),
+          onConfirm: async (result) => {
+            if (result.entityIds.length === 0) return;
+            const outcome = await appendBinderTagToEntitiesAction(tag, result.entityIds);
+            setStatus(
+              outcome.attached > 0
+                ? `Linked #${tag} to ${outcome.attached} binder${outcome.attached === 1 ? "" : "s"}${
+                    outcome.skipped > 0 ? ` (${outcome.skipped} skipped)` : ""
+                  }.`
+                : outcome.skipped > 0
+                  ? `No binders updated — Orgs/People do not take binder Tags.`
+                  : `No binders selected.`
+            );
+            router.refresh();
+          },
+        });
+      } catch (err) {
+        const { layer, message } = formatArgusError(err);
+        setError(`${layer.toUpperCase()}: ${message}`);
+      }
+    });
   }
 
   function handleAddSection() {
@@ -1082,6 +1172,7 @@ export function V2RunbookWorkPanel({
                       peerLists={peers}
                       onTurnIntoSection={() => handleSetType(item.id, "section")}
                       onTurnIntoCheck={() => handleSetType(item.id, "item")}
+                      onUseAsTag={() => handleUseAsTag(item.id)}
                       onCopyToList={(targetId) => handleCopyToList(item.id, targetId)}
                       onMoveToList={(targetId) => handleMoveToList(item.id, targetId)}
                       onDelete={() => handleDeleteRow(item.id)}
