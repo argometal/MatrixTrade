@@ -2,15 +2,16 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0815h`
+Pinned revision: `main0815i`
 
-Ship commit: `cbe1f4a`
+Ship commit: `42dc8bd`
 
 Includes:
-- PR #341 — Disable pinned detail compact chrome (A06 Topics / Events / Inbox scroll with header)
-- Prior `main0815g` / #339–#340: War Universe 16-04 + Scout build typecheck
+- PR #346 — 16-08 Scout trim & convergence (Watching scan · Open Scout · Execute)
+- PR #345 — 16-07 Scout convergence audit (diagnose)
+- Prior `main0815h` / #341–#342: A06 Topics scroll / no pinned detail chrome
+- Prior `main0815g` / #339–#340: War Universe 16-04 + 16-01 + 16-03 Dashboard consolidation
 - Prior `main0815f` / #334: 15-0C Needs review human-only (#333)
-- Prior `main0815e` / #330: 15-12 Control language / SNAPSHOT MENU ontology (#329)
 
 **Terminology:** In ArgusForge docs, **MTA** = matrix/time engine (`argusforge-contract.md` §10). Trading product = **MatrixTrade**. See [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md).
 
