@@ -86,7 +86,8 @@ export function V2EventDetailPanel({
   const [emailOpen, setEmailOpen] = useState(false);
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
   const mobileDetail = Boolean(onBack);
-  const compactChrome = mobileDetail;
+  // Compact / pinned upper chrome disabled — header scrolls with content.
+  const compactChrome = false;
   // Bottom manage bar when private unlock is active; otherwise Edit stays in the header.
   const showMobileManageBar = mobileDetail && privateUnlocked;
 
@@ -238,8 +239,11 @@ export function V2EventDetailPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <div
+        className={`argus-v2-scroll min-h-0 flex-1 overflow-y-auto ${showMobileManageBar ? "pb-24 lg:pb-5" : ""}`}
+      >
       {onBack ? (
-        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-3">
+        <div className="border-b border-zinc-800/80 px-4 py-3">
           <button
             type="button"
             onClick={onBack}
@@ -257,7 +261,7 @@ export function V2EventDetailPanel({
         label={selected.name}
         href={`/argus/v2/browse/events?selected=${selected.id}`}
       />
-      <div className="relative z-10 shrink-0 overflow-visible border-b border-zinc-800/80 p-3 sm:p-5">
+      <div className="relative z-10 overflow-visible border-b border-zinc-800/80 p-3 sm:p-5">
         <V2DetailCompactHeader
           mobileDetail={mobileDetail}
           compact={compactChrome}
@@ -367,9 +371,7 @@ export function V2EventDetailPanel({
         </div>
       </div>
 
-      <div
-        className={`argus-v2-scroll min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 ${showMobileManageBar ? "pb-24 lg:pb-5" : ""}`}
-      >
+      <div className="p-3 sm:p-5">
         <V2PrivateEvidenceGate locked={privateLocked} privateConfigured={privateConfigured} returnTo={returnTo}>
           {panelTab === "note" ? (
             <div className="space-y-4">
@@ -730,6 +732,7 @@ export function V2EventDetailPanel({
             />
           ) : null}
         </V2PrivateEvidenceGate>
+      </div>
       </div>
 
       <V2MobileUnlockedManageBar

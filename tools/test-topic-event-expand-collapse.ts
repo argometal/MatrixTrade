@@ -72,7 +72,8 @@ assert.match(topicDetail, /From linked Events/, "Event evidence is grouped in Ch
 assert.match(topicDetail, /Back to Topics|← Topics/, "Topic detail navigates back to the list");
 assert.doesNotMatch(topicDetail, /Hide preview/, "Topic detail is not a hideable preview pane");
 
-assert.match(header, /V2DetailCompactHeader|compact/, "Compact header still present");
+assert.match(header, /Always render the full expanded header/, "Compact pinned header disabled");
+assert.doesNotMatch(header, /Hide header · more room to read/, "No Hide header persistent control");
 
 const linksTab = readFileSync(
   join(root, "app/argus/v2/components/V2EntityLinksTab.tsx"),
