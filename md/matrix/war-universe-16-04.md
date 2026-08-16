@@ -16,7 +16,9 @@ Geometry, proximity, and readiness do **not** decide membership. They only parti
 
 ## Consumers (must use the same function)
 
-Case dropdown · Compare active scouts · Allocation · Trade prospects · Dashboard/Control active counts · Scout monetary rows · operational snapshots / focus picks that mean open battles.
+Case dropdown (**one option per war-ready plan**, not one per Stock File/ticker) · Compare active scouts · Allocation · Trade prospects · Dashboard/Control active counts · Scout monetary rows · operational snapshots / focus picks that mean open battles.
+
+Same ticker / Stock File may host multiple independent tactical windows (e.g. PLAN-010 and PLAN-012). Selector keys are plan ids (`listScoutWarCases` in `lib/scout-war-cases.ts`).
 
 ## Not consumers
 
