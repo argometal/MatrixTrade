@@ -22,36 +22,27 @@ export interface AttentionItem {
   taskType?: NeedsAttentionTaskType;
   /** Prebuilt Needs Attention task snapshot for Copy for AI. */
   taskSnapshotText?: string;
+  /**
+   * Apply block types this row can actually use (PROMPT 16-01).
+   * Empty / omitted → UI must not show an Apply button.
+   */
+  allowedApplyBlockTypes?: string[];
+  /** Prefill Control → Apply when opening from this row (optional). */
+  suggestedApplyJson?: string;
 }
 
-const MIN_PLAYBOOK_SAMPLES = 3;
-
+/**
+ * Needs Attention builders — human intervention only (PROMPT 16-01).
+ * Removed from this queue: playbook samples, monthly risk nags, plan window closing,
+ * Enter-plan ready (ops live in Scout), first-pass learning sync noise.
+ */
 export function buildAttentionItems(
   trades: Trade[],
   pendingInbox: BridgeInboxItem[],
-  playbooks: Playbook[],
-  monthly?: MonthlyRisk
+  _playbooks?: Playbook[],
+  _monthly?: MonthlyRisk
 ): AttentionItem[] {
   const items: AttentionItem[] = [];
-
-  if (monthly?.monthlyCapBreached) {
-    items.push({
-      id: "monthly-loss-limit",
-      label: `Monthly loss limit reached (${monthly.monthKey})`,
-      href: "/stats",
-      priority: 0,
-    });
-  } else if (
-    monthly &&
-    monthly.monthlyLossRoom <= monthly.monthlyAllowance * 0.25
-  ) {
-    items.push({
-      id: "monthly-loss-warning",
-      label: "Monthly loss room running low",
-      href: "/stats",
-      priority: 0,
-    });
-  }
 
   const incompleteClosed = listIncompleteClosedTrades(trades);
   if (incompleteClosed.length > 0) {
@@ -87,25 +78,16 @@ export function buildAttentionItems(
     });
   }
 
-  for (const trade of trades.filter((t) => !t.playbookId && t.status !== "pending")) {
+  // Assign playbook only when it blocks completing a closed trade record.
+  for (const trade of trades.filter(
+    (t) => t.status === "closed" && !t.playbookId && !t.playbookHistoricallyAbsent
+  )) {
     items.push({
       id: `playbook-${trade.id}`,
       label: `Assign playbook · ${trade.id} ${trade.ticker}`,
       href: `/trades/${trade.id}`,
       priority: 3,
     });
-  }
-
-  for (const pb of playbooks.filter((p) => p.status === "TESTING")) {
-    const count = trades.filter((t) => t.playbookId === pb.id && t.status === "closed").length;
-    if (count > 0 && count < MIN_PLAYBOOK_SAMPLES) {
-      items.push({
-        id: `samples-${pb.id}`,
-        label: `${pb.name} requires more samples (${count}/${MIN_PLAYBOOK_SAMPLES})`,
-        href: "/playbook",
-        priority: 4,
-      });
-    }
   }
 
   return items.sort((a, b) => a.priority - b.priority);

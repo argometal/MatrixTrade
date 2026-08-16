@@ -16,6 +16,7 @@
     "test:scout-repair": "tsx tools/test-scout-repair-path.ts",
     "test:scout-contract": "tsx tools/test-scout-contract.ts",
     "test:needs-attention-ai": "tsx tools/test-needs-attention-ai.ts",
+    "test:needs-attention-cleanup": "tsx tools/test-needs-attention-cleanup-16-01.ts",
     "test:layered-entry-risk": "tsx tools/test-layered-entry-risk.ts",
     "test:layered-execution-persist": "tsx tools/test-layered-execution-persist.ts",
     "test:modified-kelly": "tsx tools/test-modified-kelly.ts",

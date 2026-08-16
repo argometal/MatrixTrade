@@ -398,11 +398,15 @@ export function buildExpiredReservationAttentionItems(
   priority: number;
   title: string;
   detail: string;
+  planId: string;
+  reservationId: string;
 }> {
   return listExpiredActiveReservations(reservations).map((r) => ({
     id: `capital-reservation-expired-${r.id}`,
     priority: 35,
-    title: `Expired capital reservation ${r.id}`,
-    detail: `Plan ${r.planId} reservation expired — release unused reserved capital.`,
+    title: `Expired capital reservation · ${r.id}${r.ticker ? ` · ${r.ticker}` : ""}`,
+    detail: `Plan ${r.planId} — release unused reserved capital, cancel, or extend expiresAt.`,
+    planId: r.planId,
+    reservationId: r.id,
   }));
 }

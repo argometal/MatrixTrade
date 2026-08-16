@@ -40,6 +40,8 @@ export type NeedsAttentionBuildContext = {
   monthly?: MonthlyRisk;
   experiment?: Experiment;
   openAttentionCount?: number;
+  /** Optional — used for capital reservation expired tasks. */
+  reservations?: import("./capital-types").CapitalReservation[];
 };
 
 const FORBIDDEN = [
@@ -64,6 +66,7 @@ export function classifyNeedsAttentionTaskType(itemId: string): NeedsAttentionTa
   if (itemId.startsWith("plan-window-")) return "plan_window_closing";
   if (itemId.startsWith("observation-")) return "closed_missing_observation";
   if (itemId.startsWith("attribution-")) return "missing_attribution";
+  if (itemId.startsWith("capital-reservation-expired-")) return "capital_reservation_expired";
   return "unknown";
 }
 
@@ -97,6 +100,8 @@ export function buildNeedsAttentionTaskId(itemId: string): string {
       return "ATTN-MONTHLY-LIMIT";
     case "monthly_loss_warning":
       return "ATTN-MONTHLY-WARNING";
+    case "capital_reservation_expired":
+      return `ATTN-CAPRES-EXPIRED-${itemId.replace(/^capital-reservation-expired-/, "").toUpperCase()}`;
     default:
       return `ATTN-UNKNOWN-${itemId.toUpperCase().replace(/[^A-Z0-9-]/g, "")}`;
   }
@@ -126,6 +131,9 @@ export function getAllowedApplyBlocksForNeedsAttentionTask(
       return ["observation-update"];
     case "missing_attribution":
       return ["attribution"];
+    case "capital_reservation_expired":
+      // Release/cancel via release; extend via update (expiresAt).
+      return ["capital-reservation-release", "capital-reservation-update"];
     case "playbook_samples":
     case "monthly_loss_limit":
     case "monthly_loss_warning":
@@ -162,6 +170,8 @@ export function getNeedsAttentionCompletionCondition(type: NeedsAttentionTaskTyp
     case "monthly_loss_limit":
     case "monthly_loss_warning":
       return "UNSUPPORTED via Apply — monthly risk room / calendar reset.";
+    case "capital_reservation_expired":
+      return "Reservation released/cancelled (capital-reservation-release) or expiresAt extended past now (capital-reservation-update).";
     default:
       return "Underlying source condition becomes false.";
   }
@@ -229,6 +239,12 @@ function extractEntityIds(itemId: string, type: NeedsAttentionTaskType): NeedsAt
   }
   if (type === "playbook_samples")
     return { playbookId: itemId.replace(/^samples-/, "") };
+  if (type === "capital_reservation_expired")
+    return {
+      capitalReservationId: itemId
+        .replace(/^capital-reservation-expired-/, "")
+        .toUpperCase(),
+    };
   return {};
 }
 
@@ -295,6 +311,21 @@ export function buildNeedsAttentionTaskSnapshot(
     // Live unique pending IDs only — never echo historical inboxProposalIds.
     const liveIds = pendingInboxProposalIds(ctx.pendingInbox ?? []);
     if (liveIds.length) linked.inboxProposalIds = liveIds;
+  }
+
+  const reservation =
+    type === "capital_reservation_expired" && linked.capitalReservationId
+      ? ctx.reservations?.find(
+          (r) =>
+            r.id.toUpperCase() === linked.capitalReservationId!.toUpperCase()
+        )
+      : undefined;
+  if (reservation) {
+    linked.capitalReservationId = reservation.id;
+    linked.planId = reservation.planId;
+    if (reservation.ticker) linked.ticker = reservation.ticker;
+    if (reservation.stockFileId) linked.stockFileId = reservation.stockFileId;
+    if (reservation.stockThesisId) linked.stockFileId = linked.stockFileId ?? reservation.stockThesisId;
   }
 
   const available: NeedsAttentionSnapshot["evidence"]["available"] = [];
@@ -501,9 +532,61 @@ export function buildNeedsAttentionTaskSnapshot(
     }));
   }
 
+  if (type === "capital_reservation_expired") {
+    if (reservation) {
+      currentState.reservation = {
+        id: reservation.id,
+        planId: reservation.planId,
+        ticker: reservation.ticker ?? null,
+        status: reservation.status,
+        reservedCapital: reservation.reservedCapital,
+        requestedCapital: reservation.requestedCapital,
+        expiresAt: reservation.expiresAt ?? null,
+        fundingDecision: reservation.fundingDecision,
+      };
+      available.push({
+        field: "reservation.id",
+        value: reservation.id,
+        source: "Capital reservation store",
+        verified: true,
+      });
+      available.push({
+        field: "reservation.expiresAt",
+        value: reservation.expiresAt ?? null,
+        source: "Capital reservation store",
+        verified: Boolean(reservation.expiresAt),
+      });
+      available.push({
+        field: "allowedApply",
+        value: "capital-reservation-release | capital-reservation-update",
+        source: "Needs Attention contract",
+        verified: true,
+      });
+      missing.push({
+        field: "active_funding_window",
+        reason:
+          "Reservation expired while still active — release unused capital or extend expiresAt",
+        requiredFor: "capital_reservation_expired",
+      });
+    } else {
+      missing.push({
+        field: "capitalReservation",
+        reason: "Reservation id from Attention row not found in live store",
+        requiredFor: "capital_reservation_expired",
+      });
+    }
+  }
+
   const allowed = getAllowedApplyBlocksForNeedsAttentionTask(type);
   const support = getNeedsAttentionSnapshotSupport(type);
-  const sourceCondition = describeSourceCondition(type, item, trade, plan, lo);
+  const sourceCondition = describeSourceCondition(
+    type,
+    item,
+    trade,
+    plan,
+    lo,
+    reservation
+  );
 
   return {
     snapshotType: "matrix-needs-attention",
@@ -543,16 +626,26 @@ export function buildNeedsAttentionTaskSnapshot(
             "Do not invent LO/OBS fields, prices, or fills.",
             "Full global context is available under the visible label: Dashboard snapshot.",
           ]
-        : [
-            "Respond first with MATRIX TASK DIAGNOSIS (STATUS before any JSON).",
-            "If NEEDS_MECHANICS: ask human to copy the visible block MTA Mechanics.",
-            "If NEEDS_LIBRARY: ask for Library Index, then one exact copy-row label (e.g. MTAE protocol, Playbook snapshot, Scout desk overview, MAF attribution protocol).",
-            "If NEEDS_DATA: ask precise factual questions — never invent answers.",
-            "Only when READY with zero unverified assumptions: output ONE Apply-ready JSON block.",
-            "Paste into Control → Apply → Validate → Accept.",
-            "Full global context is available under the visible label: Dashboard snapshot.",
-            "Do not embed or request a duplicate of this entire Dashboard inside the task reply.",
-          ],
+        : type === "capital_reservation_expired"
+          ? [
+              "Respond first with MATRIX TASK DIAGNOSIS (STATUS before any JSON).",
+              "Primary action: capital-reservation-release with the verified reservation id (release unused reserved capital).",
+              "Alternative: capital-reservation-update with a new expiresAt if the Scout plan should keep funding.",
+              "Do not invent reservation ids, amounts, or plan ids — use CURRENT STATE only.",
+              "Only when READY: output ONE Apply-ready JSON block (release or update).",
+              "Paste into Control → Apply → Validate → Accept.",
+              "Full global context is available under the visible label: Dashboard snapshot.",
+            ]
+          : [
+              "Respond first with MATRIX TASK DIAGNOSIS (STATUS before any JSON).",
+              "If NEEDS_MECHANICS: ask human to copy the visible block MTA Mechanics.",
+              "If NEEDS_LIBRARY: ask for Library Index, then one exact copy-row label (e.g. MTAE protocol, Playbook snapshot, Scout desk overview, MAF attribution protocol).",
+              "If NEEDS_DATA: ask precise factual questions — never invent answers.",
+              "Only when READY with zero unverified assumptions: output ONE Apply-ready JSON block.",
+              "Paste into Control → Apply → Validate → Accept.",
+              "Full global context is available under the visible label: Dashboard snapshot.",
+              "Do not embed or request a duplicate of this entire Dashboard inside the task reply.",
+            ],
   };
 }
 
@@ -561,7 +654,8 @@ function describeSourceCondition(
   item: AttentionItem,
   trade?: Trade,
   plan?: TradePlan,
-  lo?: LearningOutcome
+  lo?: LearningOutcome,
+  reservation?: import("./capital-types").CapitalReservation
 ): string {
   switch (type) {
     case "assign_playbook":
@@ -590,9 +684,15 @@ function describeSourceCondition(
       return "Monthly loss cap breached";
     case "monthly_loss_warning":
       return "Monthly loss room ≤ 25% of allowance";
+    case "capital_reservation_expired":
+      return `Capital reservation ${reservation?.id ?? linkedFallbackId(item.id)} expired while still holding reserved capital`;
     default:
       return item.label;
   }
+}
+
+function linkedFallbackId(itemId: string): string {
+  return itemId.replace(/^capital-reservation-expired-/, "").toUpperCase() || "?";
 }
 
 function formatEvidenceList(
@@ -710,11 +810,33 @@ export function enrichAttentionItemWithAiSnapshot(
   ctx: NeedsAttentionBuildContext
 ): AttentionItem {
   const snapshot = buildNeedsAttentionTaskSnapshot(item, ctx);
+  const allowed = snapshot.aiContract.allowedApplyBlockTypes;
+  let suggestedApplyJson = item.suggestedApplyJson;
+  if (
+    snapshot.task.type === "capital_reservation_expired" &&
+    !suggestedApplyJson &&
+    snapshot.linkedEntities.capitalReservationId
+  ) {
+    suggestedApplyJson = JSON.stringify(
+      {
+        type: "capital-reservation-release",
+        source: "needs-attention",
+        proposal: {
+          id: snapshot.linkedEntities.capitalReservationId,
+          reason: "Expired reservation — release unused reserved capital",
+        },
+      },
+      null,
+      2
+    );
+  }
   return {
     ...item,
     taskId: snapshot.task.id,
     taskType: snapshot.task.type,
     taskSnapshotText: buildNeedsAttentionSnapshotText(snapshot),
+    allowedApplyBlockTypes: allowed,
+    ...(suggestedApplyJson ? { suggestedApplyJson } : {}),
   };
 }
 
