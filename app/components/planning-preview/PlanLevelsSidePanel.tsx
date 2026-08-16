@@ -18,7 +18,7 @@ export function PlanLevelsSidePanel({
 
   return (
     <aside
-      className="fixed inset-x-0 top-14 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 flex min-h-0 flex-col border-t border-zinc-800 bg-zinc-950 lg:static lg:inset-auto lg:z-auto lg:w-[min(400px,38%)] lg:flex-none lg:border-l lg:border-t-0 lg:bg-zinc-950/95"
+      className="fixed inset-x-0 top-[var(--mt-mobile-header)] bottom-[calc(var(--mt-mobile-tabbar)+env(safe-area-inset-bottom))] z-40 flex min-h-0 flex-col border-t border-zinc-800 bg-zinc-950 lg:static lg:inset-auto lg:z-auto lg:w-[min(400px,38%)] lg:flex-none lg:border-l lg:border-t-0 lg:bg-zinc-950/95"
       aria-label={`Plan map for ${view.ticker}`}
       data-scout-plan-map-panel
     >

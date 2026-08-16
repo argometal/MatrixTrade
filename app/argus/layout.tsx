@@ -14,10 +14,15 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#09090b",
+  viewportFit: "cover",
 };
 
 export default function ArgusRootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`${geist.variable} min-h-screen bg-zinc-950 text-zinc-100 antialiased`}>{children}</div>
+    <div
+      className={`${geist.variable} min-h-dvh max-w-[100vw] overflow-x-hidden bg-zinc-950 text-zinc-100 antialiased`}
+    >
+      {children}
+    </div>
   );
 }

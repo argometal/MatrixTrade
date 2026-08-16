@@ -22,7 +22,11 @@ export default async function TradingLayout({ children }: { children: React.Reac
         <MobileMenuProvider>
         <PreviewMobileHeader pendingInboxCount={nav.pendingInboxCount} />
         <PreviewMobileMenu nav={nav} />
-        <div className="pt-14 pb-[calc(4.5rem+env(safe-area-inset-bottom))] lg:pt-0 lg:pb-0">
+        {/*
+          Preview routes use a fixed shell sized between header + tab bar.
+          Do not add pt/pb here — double chrome made the phone viewport feel “off.”
+        */}
+        <div className="min-h-dvh max-w-[100vw] overflow-x-hidden lg:min-h-0">
           {children}
         </div>
         <PreviewMobileNav nav={nav} />

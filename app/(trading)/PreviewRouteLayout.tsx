@@ -10,8 +10,11 @@ export default async function PreviewRouteLayout({
   const nav = await loadPreviewNavContext();
 
   return (
-    <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] top-14 z-20 overflow-hidden bg-zinc-950 lg:inset-0 lg:bottom-0 lg:top-0 lg:z-30">
-      <div className="h-full min-h-0 w-full overflow-hidden">
+    <div
+      className="fixed inset-x-0 top-[var(--mt-mobile-header)] bottom-[calc(var(--mt-mobile-tabbar)+env(safe-area-inset-bottom))] z-20 max-w-[100vw] overflow-hidden bg-zinc-950 lg:inset-0 lg:bottom-0 lg:top-0 lg:z-30"
+      data-mt-mobile-shell
+    >
+      <div className="h-full min-h-0 w-full min-w-0 overflow-hidden">
         <PreviewShell nav={nav}>{children}</PreviewShell>
       </div>
     </div>

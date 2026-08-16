@@ -193,7 +193,7 @@ async function main() {
   assert.match(side, /Hide plan map|Plan map/);
   assert.match(side, /data-scout-plan-map-panel/);
   assert.match(side, /data-scout-plan-map-hide/);
-  assert.match(side, /fixed inset-x-0 top-14/);
+  assert.match(side, /fixed inset-x-0 top-\[var\(--mt-mobile-header\)\]/);
   // Hide must sit above page-help "?" (z-20) on mobile
   assert.match(side, /z-40/);
 

@@ -3,13 +3,24 @@
 :root {
   --background: #fafafa;
   --foreground: #18181b;
+  /* Shared mobile chrome — keep shell / Plan Map / tab bar aligned */
+  --mt-mobile-header: 3.5rem; /* matches Tailwind top-14 / h-14 */
+  --mt-mobile-tabbar: 4.5rem;
+}
+
+html {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  max-width: 100%;
+  overflow-x: hidden;
 }
+
 
 /* CHANGE 24-0F — subtle activity pulse for Realm graph deck nodes */
 @keyframes realmDeckPulse {

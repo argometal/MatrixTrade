@@ -99,9 +99,9 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
     "flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400";
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col overflow-x-hidden bg-zinc-950 lg:max-w-3xl">
-      <header className="sticky top-0 z-20 border-b border-zinc-800 bg-zinc-950/95 px-3 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
-        <div className="flex items-center justify-between gap-2">
+    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col overflow-x-hidden bg-zinc-950 lg:max-w-3xl">
+      <header className="sticky top-0 z-20 max-w-[100vw] overflow-x-hidden border-b border-zinc-800 bg-zinc-950/95 px-3 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
+        <div className="flex min-w-0 items-center justify-between gap-2">
           <div className="min-w-0">
             <p className={`text-[10px] font-medium uppercase tracking-[0.14em] ${AF_TEXT.metadata}`}>
               System
