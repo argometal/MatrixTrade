@@ -1,7 +1,18 @@
 # MatrixTrade — building backlog
 
-**Last updated:** 2026-07-22  
+**Last updated:** 2026-08-16  
 **Purpose:** Active product/ops work — priorities, blockers, resume targets. Not library doc debt (see [library-alignment-backlog.md](library-alignment-backlog.md)).
+
+---
+
+## Scout Desk — convergence (diagnose before trim)
+
+| Field | Value |
+|-------|-------|
+| **Status** | **16-07 diagnosis only** — no UI code yet |
+| **Doc** | [scout-convergence-audit-16-07.md](scout-convergence-audit-16-07.md) |
+| **Focus** | Learning Queue vs ATTN; Watching dump vs Execute density; confirm 16-04 lean |
+| **Do not** | Add Scout states/pages; re-filter war universe; build before trim decisions |
 
 ---
 
