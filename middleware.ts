@@ -143,14 +143,20 @@ export async function middleware(request: NextRequest) {
     if (!(isSharedSecurity && request.cookies.get("argus-auth")?.value)) {
       const login = new URL("/login", request.url);
       login.searchParams.set("next", pathname);
-      return NextResponse.redirect(login);
+      // Missing trading session → clear sibling Argus/Forge sessions too (logout everywhere).
+      const response = NextResponse.redirect(login);
+      clearSessionCookies(response);
+      return response;
     }
   }
 
   if (argusPasswordSet && isArgusSessionPath(pathname) && !request.cookies.get("argus-auth")?.value) {
     const login = new URL("/argus/login", request.url);
     login.searchParams.set("next", pathname);
-    return NextResponse.redirect(login);
+    // Missing Argus/Forge session → clear trading session too (logout everywhere).
+    const response = NextResponse.redirect(login);
+    clearSessionCookies(response);
+    return response;
   }
 
   return NextResponse.next();

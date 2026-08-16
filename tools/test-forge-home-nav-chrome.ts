@@ -26,6 +26,7 @@ assert.doesNotMatch(nav, /Open Forge Home/, "no Open Forge Home CTA in menu");
 assert.match(nav, /ForgeHomeMark size=\{dark \? 22 : 26\}/, "menu trigger is triangular A mark");
 assert.match(nav, /aria-label="Open systems"/, "A mark opens systems menu");
 assert.match(nav, /Forge Home/, "menu includes Forge Home row");
+assert.match(nav, /Sign out everywhere/, "menu includes global logout");
 assert.doesNotMatch(nav, />···</, "··· trigger removed from systems menu");
 
 assert.match(exchange, /ForgeQuickNavMenu/, "exchange uses A systems menu");

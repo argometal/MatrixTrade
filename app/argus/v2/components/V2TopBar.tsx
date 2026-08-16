@@ -3,6 +3,7 @@
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AppExchangeActions } from "@/app/components/AppExchangeActions";
+import { SignOutButton } from "@/app/components/SignOutButton";
 import { V2TopBarAddMenu } from "@/app/argus/v2/components/V2TopBarAddMenu";
 import { PrivateLockMenu } from "@/app/argus/components/PrivateLockMenu";
 import { V2BuildBadge } from "@/app/argus/v2/components/V2BuildBadge";
@@ -86,6 +87,11 @@ export function V2TopBar({
               <PrivateLockMenu configured={privateConfigured} unlocked={privateUnlocked} />
             </span>
           ) : null}
+          <SignOutButton
+            loginPath="/argus/login"
+            label="Sign out"
+            className="hidden rounded-lg px-2 py-1.5 text-xs text-zinc-500 transition hover:bg-zinc-900 hover:text-zinc-200 sm:inline"
+          />
           <V2PageIdBadge />
           <V2BuildBadge className="hidden min-[420px]:inline" />
           <V2TopBarAddMenu className="shrink-0" />
