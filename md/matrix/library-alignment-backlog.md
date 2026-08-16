@@ -1,6 +1,6 @@
 # Library alignment backlog — Matrix strategic vision
 
-**Status:** Partial (updated 2026-08-03).  
+**Status:** Partial (updated 2026-08-16).  
 **V2 docs:** **Done** as target architecture — see [v2-engine-architecture.md](v2-engine-architecture.md).  
 **Program truth:** [runtime-truth.md](runtime-truth.md) · **Queue:** [building-backlog.md](building-backlog.md).
 
@@ -9,6 +9,14 @@
 **Scout → Trades pipeline (proposal):** [scout-trades-pipeline-001.md](scout-trades-pipeline-001.md) — Scouts as pipeline units; miss realized P/L = 0; sample-quality filter before expectancy.
 
 **Scout Learning circuit audit + P0:** [scout-learning-circuit-audit-handoff.md](scout-learning-circuit-audit-handoff.md) — alcance acotado, evidencia obligatoria, PLAN P0 (aggregates + discovery + Retry Sync).
+
+**Scout convergence (16-07 diagnosis):** [scout-convergence-audit-16-07.md](scout-convergence-audit-16-07.md) — Learning Queue / Watching / Execute; trim before more Scout features. No code until review.
+
+---
+
+## Done (2026-08-16)
+
+- `md/matrix/scout-convergence-audit-16-07.md` — Learning Queue vs ATTN; Watching dump vs Execute reference; 16-04 lean confirmation
 
 ---
 
