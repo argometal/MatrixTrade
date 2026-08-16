@@ -25,7 +25,10 @@ export type ScoutMonitoringItem = {
 };
 
 export type ScoutMonitoringSections = {
-  /** Entry opportunity already passed (confirmed missed / entry_passed). */
+  /**
+   * Entry opportunity already passed (authoritative OA `missed`).
+   * Open missed (no outcome) stays here; recorded outcome leaves Dashboard projection (15-11).
+   */
   passed: ScoutMonitoringItem[];
   actionNow: ScoutMonitoringItem[];
   /**
@@ -119,6 +122,22 @@ export function scoutNeedsHumanReview(
 }
 
 /**
+ * Authoritative OA says entry already passed (`missed`).
+ * With outcome.recordedAt the battle is Learning archive — omit from Scout Monitoring (15-11).
+ * Without outcome, keep in PASSED (still needs replace-plan / terminal close attention).
+ */
+export function isPassedMonitoringArchive(
+  plan: TradePlan,
+  evaluation: ScoutOperationalEvaluation
+): boolean {
+  const confirmed = evaluation.confirmedAssessment;
+  const detected = evaluation.detectedAssessment;
+  const state: ScoutOperationalState =
+    confirmed?.operationalState ?? detected.operationalState;
+  return state === "missed" && Boolean(plan.outcome?.recordedAt);
+}
+
+/**
  * Authoritative filter state for monitoring buckets.
  * Prefers confirmed manual/human operationalAssessment when present;
  * Armed is driven by plan.executionReadiness.
@@ -133,9 +152,10 @@ export function resolveScoutMonitoringBucket(
     confirmed?.operationalState ?? detected.operationalState;
   const authWaitHorizon = confirmed?.waitHorizon ?? detected.waitHorizon;
 
-  // Passed — confirmed missed / entry_passed (authoritative OA), not detection alone when
-  // a conflicting confirmed state exists.
+  // Passed — entry opportunity already gone (OA missed). Not "validation passed".
+  // Recorded outcome → Learning/History; drop from Dashboard Scout Monitoring (15-11).
   if (state === "missed") {
+    if (plan.outcome?.recordedAt) return null;
     return "passed";
   }
 

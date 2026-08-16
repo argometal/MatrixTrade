@@ -5,6 +5,7 @@
 import assert from "node:assert/strict";
 import {
   buildScoutMonitoringSections,
+  isPassedMonitoringArchive,
   resolveScoutMonitoringBucket,
   scoutNeedsHumanReview,
 } from "../lib/scout-monitoring";
@@ -169,6 +170,110 @@ function evalPlan(plan: TradePlan, now = NOW) {
   const evaluation = evalPlan(review1d);
   assert.equal(scoutNeedsHumanReview(review1d, evaluation), true);
   assert.equal(resolveScoutMonitoringBucket(review1d, evaluation), "needsReview");
+}
+
+function missedOa(planId: string): NonNullable<TradePlan["decision"]> {
+  return {
+    id: `DEC-${planId}`,
+    verdict: "wait",
+    decisionConfidence: 55,
+    challenges: ["timing"],
+    decidedAt: NOW,
+    operationalAssessment: {
+      thesisState: "unknown",
+      operationalState: "missed",
+      waitHorizon: "unknown",
+      nextAction: "replace_plan",
+      freshness: "stale",
+      reviewRequired: false,
+      reasonCodes: ["entry_passed_without_execution", "manual_override"],
+      source: "manual_override",
+      confirmedAt: NOW,
+    },
+  };
+}
+
+// --- PROMPT 15-11: open missed OA (no outcome) → PASSED ---
+{
+  const openMiss: TradePlan = {
+    ...base,
+    id: "PLAN-OPEN-MISS",
+    ticker: "AAPL",
+    status: "watching",
+    decision: missedOa("PLAN-OPEN-MISS"),
+  };
+  const evaluation = evalPlan(openMiss);
+  assert.equal(isPassedMonitoringArchive(openMiss, evaluation), false);
+  assert.equal(resolveScoutMonitoringBucket(openMiss, evaluation), "passed");
+  const sections = buildScoutMonitoringSections({
+    plans: [openMiss],
+    trades: [],
+    reservations: [],
+    now: NOW,
+  });
+  assert.equal(sections.passed.some((r) => r.planId === "PLAN-OPEN-MISS"), true);
+}
+
+// --- PROMPT 15-11: MSFT PLAN-003 missed OA + recorded missed_opportunity → excluded ---
+{
+  const plan003: TradePlan = {
+    ...base,
+    id: "PLAN-003",
+    ticker: "MSFT",
+    stockThesisId: "ST-MSFT-001",
+    status: "failed",
+    plannedEntry: 350,
+    stopPrice: 334,
+    targetPrice: 450,
+    plannedRR: 6.25,
+    decision: missedOa("PLAN-003"),
+    outcome: {
+      planId: "PLAN-003",
+      recordedAt: NOW,
+      outcomeKind: "missed_opportunity",
+      tradeExecuted: false,
+      entryTriggered: false,
+      stopTriggered: false,
+      targetTriggered: true,
+      entryReached: false,
+      stopReachedBeforeTarget: false,
+      targetReachedBeforeStop: true,
+      nonExecutionReason: "entry_not_reached",
+      theoreticalResultR: 6.25,
+      realizedResultR: 0,
+      outcomeSource: "counterfactual_observation",
+      evidenceStatus: "verified",
+      evidenceRefs: [],
+      updatedAt: NOW,
+    },
+  };
+  const evaluation = evalPlan(plan003);
+  assert.equal(
+    evaluation.confirmedAssessment?.operationalState,
+    "missed",
+    "OA history intact"
+  );
+  assert.equal(isPassedMonitoringArchive(plan003, evaluation), true);
+  assert.equal(
+    resolveScoutMonitoringBucket(plan003, evaluation),
+    null,
+    "recorded outcome leaves Scout Monitoring"
+  );
+  const sections = buildScoutMonitoringSections({
+    plans: [plan003],
+    trades: [],
+    reservations: [],
+    now: NOW,
+  });
+  assert.equal(sections.passed.some((r) => r.planId === "PLAN-003"), false);
+  assert.equal(
+    Object.values(sections).flat().some((r) => r.planId === "PLAN-003"),
+    false,
+    "PLAN-003 absent from every monitoring section"
+  );
+  // Persistence projection only — plan object still has OA + outcome
+  assert.ok(plan003.decision?.operationalAssessment?.operationalState === "missed");
+  assert.ok(plan003.outcome?.recordedAt);
 }
 
 console.log("test-scout-monitoring: ok");
