@@ -1,6 +1,6 @@
 # Library alignment backlog — Matrix strategic vision
 
-**Status:** Partial (updated 2026-08-03).  
+**Status:** Partial (updated 2026-08-16).  
 **V2 docs:** **Done** as target architecture — see [v2-engine-architecture.md](v2-engine-architecture.md).  
 **Program truth:** [runtime-truth.md](runtime-truth.md) · **Queue:** [building-backlog.md](building-backlog.md).
 
@@ -9,6 +9,16 @@
 **Scout → Trades pipeline (proposal):** [scout-trades-pipeline-001.md](scout-trades-pipeline-001.md) — Scouts as pipeline units; miss realized P/L = 0; sample-quality filter before expectancy.
 
 **Scout Learning circuit audit + P0:** [scout-learning-circuit-audit-handoff.md](scout-learning-circuit-audit-handoff.md) — alcance acotado, evidencia obligatoria, PLAN P0 (aggregates + discovery + Retry Sync).
+
+**Market data / Volume Profile (16-06 diagnosis):** [market-data-volume-profile-16-06.md](market-data-volume-profile-16-06.md) — **Now:** VP for MTA Swing (Alpaca Free candidate). **Future debt:** L2 / order book / heatmaps for scalping. No Alpaca code until review.
+
+---
+
+## Done (2026-08-16)
+
+- `md/matrix/market-data-volume-profile-16-06.md` — full repo audit + Alpaca Free limits + minimal integration proposal (docs only)
+- `md/matrix/building-backlog.md` — Now VP vs Future L2 branches separated
+- `md/matrix/mtae-participation-layer.md` + ADR-0005 / MTAE engine — Phase B (VP) vs Phase C (microstructure) clarified against 16-06
 
 ---
 

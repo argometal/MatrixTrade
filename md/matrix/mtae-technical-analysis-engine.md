@@ -350,8 +350,8 @@ MTAE does **not** overwrite Playbook or Scout plans.
 - Auto-running Scout Entry Solver after Accept
 - Supabase table for assessments (JSON file first; cloud later)
 - Replacing Playbook structural-pullback experiment docs (MTAE feeds zones; Playbook still owns HOW)
-- Heatmap / Level 2 inside MTAE (future Execution Microstructure Engine)
-- Volume profile / Anchored VWAP (Phase B)
+- Heatmap / Level 2 / order book inside MTAE (future Execution Microstructure Engine — **scalping debt**)
+- Volume profile **implementation** / Anchored VWAP (Phase B) — diagnosis: [market-data-volume-profile-16-06.md](market-data-volume-profile-16-06.md); no Alpaca until review
 
 ---
 

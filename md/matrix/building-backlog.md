@@ -1,7 +1,18 @@
 # MatrixTrade — building backlog
 
-**Last updated:** 2026-07-22  
+**Last updated:** 2026-08-16  
 **Purpose:** Active product/ops work — priorities, blockers, resume targets. Not library doc debt (see [library-alignment-backlog.md](library-alignment-backlog.md)).
+
+---
+
+## Market data — two branches (do not mix)
+
+| Branch | Status | Doc |
+|--------|--------|-----|
+| **Now — Volume Profile for MTA Swing** | **Diagnosis only** (16-06) — Alpaca Free as candidate source; **no implementation until review** | [market-data-volume-profile-16-06.md](market-data-volume-profile-16-06.md) |
+| **Future — Level 2 / Order Book / Heatmaps for Scalping** | **Explicit debt** — L2 depth, bid/ask levels, liquidity heatmaps, imbalance/persistence, optional L3 | Same doc § Future debt · [mtae-participation-layer.md](mtae-participation-layer.md) Phase C |
+
+**Rules:** Market data → VP evidence → MTAE → Stock File → Scout. Never VP → automatic entry. Do not contaminate current MTAE/Scout with microstructure.
 
 ---
 
@@ -20,7 +31,7 @@
 | **Shipped (plan-outcome UPL 25-29)** | Apply `plan-outcome` (`unexecuted_plan_loss`) · server-derived R · Scout metrics · [plan-outcome-upl-25-29.md](plan-outcome-upl-25-29.md) |
 | **Shipped (Observation UX)** | Closed-trade Observation form on `/trades/[id]`; ensure OBS on save; Apply path can seed OBS for closed fills |
 | **Shipped (002C UI)** | Family B checklist on Scout / Stock File / Trade when playbook = `secular-trend-continuation` |
-| **Do not build now** | Coach, wide MAF dashboards, VP/AVWAP, more Control categories, parallel prompt systems, parallel AI workflow DB |
+| **Do not build now** | Coach, wide MAF dashboards, Alpaca/VP **code** until 16-06 diagnosis reviewed, L2/heatmap, more Control categories, parallel prompt systems, parallel AI workflow DB |
 | **Also shipped** | Scout Case list ordered by planned R high→low (`lib/scout-case-sort.ts`) |
 | **Shipped (layered R/risk)** | `lib/layered-entry-risk.ts`; `rules.defaultRiskBudget`; Plan map R/risk fill states; MAF layered fill fields; Mechanics rev **24→25** |
 | **Shipped (Family B bull-trend)** | `lib/family-b-assessment.ts`; Scout `FamilyBBullTrendPanel`; `familyBAssessment` on decision-update; Analyze package section |
@@ -48,7 +59,7 @@
 | **Status** | **Foundation + Participation Phase A shipped** |
 | **Doc** | [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) · [mtae-participation-layer.md](mtae-participation-layer.md) · [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md) |
 | **Shipped** | Geometry assessment + optional `participation` / `participationSynthesis`; validate + protocol; Mechanics **rev 20**; calibration errorTypes for overclaims |
-| **Next** | Include participation lane in **MTA-002** master prompt; live chart-pack loops. Phase B (VP / AVWAP) still deferred |
+| **Next** | Include participation lane in **MTA-002** master prompt; live chart-pack loops. Phase B (VP) — **diagnosis landed** ([16-06](market-data-volume-profile-16-06.md)); implementation blocked pending review. AVWAP still deferred. L2/heatmap = Future scalping debt only |
 
 ---
 

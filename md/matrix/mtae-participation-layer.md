@@ -1,6 +1,6 @@
 # MTAE — Participation Layer (structure + participation)
 
-**Status:** Phase A **implemented** in schema/validate/protocol (2026-07-22). Heatmap/L2 still deferred.  
+**Status:** Phase A **implemented** in schema/validate/protocol (2026-07-22). Phase B (Volume Profile) — **diagnosis only** ([16-06](market-data-volume-profile-16-06.md)); Heatmap/L2 = Future scalping debt.  
 **ADR:** [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md)  
 **Parent:** [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md)
 **Code:** `lib/mtae-types.ts`, `lib/mtae-validate.ts`, `lib/mtae-brief.ts`
@@ -265,25 +265,31 @@ Hierarchy rules still apply: lower TF participation never invalidates higher TF 
 5. Contextual candle signals (small set)  
 6. Large-participant footprint (possible_*)
 
-### Phase B — advanced technical (still MTAE-adjacent)
+### Phase B — Now branch: Volume Profile for MTA Swing (still MTAE-adjacent)
 
-7. Volume profile  
-8. Anchored VWAP  
+7. Volume profile / Volume at Price → POC, HVN, LVN, Value Area as **evidence** (validates/questions zones)  
+8. Anchored VWAP (still deferred after VP)  
 9. Relative volume series (numeric, when feed exists)
 
-### Phase C — separate modules (do not fold into MTAE JSON)
+**16-06:** Diagnosis + Alpaca Free candidacy documented — **no provider code yet**.  
+Flow: `Market data → VP evidence → MTAE → Stock File → Scout`. Never `VP → automatic entry`.  
+See [market-data-volume-profile-16-06.md](market-data-volume-profile-16-06.md).
 
-10. Heatmap liquidity persistence  
-11. Level 2 / order-flow microstructure  
+### Phase C — Future debt: Scalping / Market Microstructure (do not fold into MTAE JSON)
+
+10. Liquidity heatmaps (persistence)  
+11. Level 2 / Market Depth · order-book bid/ask by level  
+12. Order-book imbalance + persistence  
+13. Level 3 / individual orders — only if utility is later proven  
 
 ```text
-MTAE (structure + participation)
+MTAE (structure + participation + optional VP evidence)
   → Stock File
   → Scout (capital)
-  → Execution Microstructure Engine  ← Level 2 / heatmap live here
+  → Execution Microstructure Engine  ← Level 2 / heatmap / book live here
 ```
 
-For multi-month swing, Level 2 value is low vs 6M/3M/1M structure. Keep it out of strategic MTAE.
+For multi-month swing, Level 2 value is low vs 6M/3M/1M structure. Keep it out of strategic MTAE and current Scout.
 
 ---
 
@@ -324,5 +330,8 @@ MAF still requires deterministic prices/dates; participation classifications rem
 - Do not mix Level 2 into 6M structure assessments.
 - Do not let participation invent capital decisions.
 - Do not require heatmap vendors before Phase A.
+- Do not treat OHLCV aggregates as volume-at-price.
+- Do not present IEX / single-exchange volume as consolidated market volume.
+- Do not wire Volume Profile to automatic Scout entry.
 
 The important upgrade is a **disciplined block**: Volume + Wicks + Candle behavior + Movement character + Historical reaction — visually extractable now, calibratable later.
