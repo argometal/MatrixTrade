@@ -5,14 +5,13 @@
 
 ---
 
-## Scout Desk — UI trim (16-08)
+## Scout Desk — convergence (16-07 → 16-08)
 
 | Field | Value |
 |-------|-------|
-| **Status** | **Shipped** — Watching scan · Open Scout · Execute; Learning Queue removed from Desk UI |
-| **Doc** | [scout-trim-16-08.md](scout-trim-16-08.md) |
-| **Do not** | Re-add Learning Queue banner; dump funding onto Watching; new Scout states |
-
+| **Status** | **16-08 shipped** (after 16-07 diagnosis) — Watching scan · Open Scout · Execute; Learning Queue removed from Desk UI |
+| **Doc** | [scout-convergence-audit-16-07.md](scout-convergence-audit-16-07.md) · [scout-trim-16-08.md](scout-trim-16-08.md) |
+| **Do not** | Re-add Learning Queue banner; dump funding onto Watching; new Scout states; re-filter war universe |
 ---
 
 ## FORWARD — MTA-002 Operability (priority north star)
