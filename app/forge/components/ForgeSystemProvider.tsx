@@ -40,8 +40,10 @@ export function ForgeSystemProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setSystem = useCallback((next: ForgeSystemId) => {
-    setSystemState(next);
-    writeSelectedSystem(next);
+    // Trading-scope “mta” is disabled — stay on ArgusForge.
+    const safe = next === "mta" ? "argusforge" : next;
+    setSystemState(safe);
+    writeSelectedSystem(safe);
   }, []);
 
   const setVaultMode = useCallback((next: VaultModeId) => {

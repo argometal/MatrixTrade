@@ -15,20 +15,29 @@ export type ForgeBottomSection =
 export const AF03_SYSTEM_KEY = "argusforge-selected-system-v1";
 export const AF03_VAULT_MODE_KEY = "argusforge-vault-mode-v1";
 
+/**
+ * Trading deep-link “MTA” shell mode is disabled.
+ * AF MTA (contract) = temporal/matrix engine — not MatrixTrade.
+ * Always ArgusForge until a real AF-MTA surface exists.
+ */
 export function readSelectedSystem(): ForgeSystemId {
   if (typeof window === "undefined") return "argusforge";
   try {
-    const v = localStorage.getItem(AF03_SYSTEM_KEY);
-    return v === "mta" ? "mta" : "argusforge";
+    // Clear legacy trading-scope selection so it cannot reappear.
+    if (localStorage.getItem(AF03_SYSTEM_KEY) === "mta") {
+      localStorage.setItem(AF03_SYSTEM_KEY, "argusforge");
+    }
   } catch {
-    return "argusforge";
+    /* quota / private mode */
   }
+  return "argusforge";
 }
 
 export function writeSelectedSystem(system: ForgeSystemId): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(AF03_SYSTEM_KEY, system);
+    // Refuse to persist trading-scope “mta”.
+    localStorage.setItem(AF03_SYSTEM_KEY, system === "mta" ? "argusforge" : system);
   } catch {
     /* quota */
   }

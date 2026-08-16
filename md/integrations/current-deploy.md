@@ -16,6 +16,8 @@ Includes:
 
 **Terminology:** In ArgusForge docs, **MTA** = matrix/time engine (`argusforge-contract.md` §10). Trading product = **MatrixTrade**. See [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md).
 
+**Forge shell:** ArgusForge|MTA trading toggle + `MtaScopedPanel` deep-links are **disabled** (this branch / pending PR). Forge stays ArgusForge-only; open MatrixTrade via app switcher.
+
 IA handoffs: [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) · [`../argus/consolidated-product-direction.md`](../argus/consolidated-product-direction.md)
 
 Sync:
