@@ -13,6 +13,20 @@ export default function V2DiagnosticsPage() {
             </p>
           </header>
           <div className="space-y-6">
+            <div className="rounded-xl border border-amber-500/25 bg-amber-950/20 px-4 py-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-300/90">
+                UI drafts
+              </p>
+              <p className="mt-1 text-sm text-zinc-300">
+                <a
+                  href="/argus/v2/drafts/topic001"
+                  className="font-semibold text-violet-300 hover:text-violet-200"
+                >
+                  topic001 · Topic UI simplification
+                </a>
+                <span className="text-zinc-500"> — density draft (not live A06)</span>
+              </p>
+            </div>
             <V2StorageGaugePanel />
             <ArgusStatusPanel />
           </div>
