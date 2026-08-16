@@ -2,12 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0815j`
+Pinned revision: `main0815k`
 
-Ship commit: `a0fe6b5`
+Ship commit: `a2ec8c1`
 
 Includes:
-- PR #348 — 16-0E Scout Case selector: one option per war-ready plan (same ticker/Stock File coexistence)
+- PR #351 — Neighborhood graph size stable on scroll (no wheel zoom; fixed 480px canvas)
+- Prior `main0815j` / #348–#349: 16-0E Scout Case multi-plan selector
 - Prior `main0815i` / #347: 16-08 Scout trim & convergence + 16-07 audit
 - Prior `main0815h` / #341–#342: A06 Topics scroll / no pinned detail chrome
 - Prior `main0815g` / #339–#340: War Universe 16-04 + 16-01 + 16-03 Dashboard consolidation
