@@ -7,6 +7,7 @@ import { ScoutExecutePanel } from "@/app/components/planning-preview/ScoutExecut
 import { PlanRecordOutcomePanel } from "@/app/components/planning-preview/PlanRecordOutcomePanel";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
 import {
+  isWarReadyScoutPlan,
   planNeedsLearningSyncRepair,
   planNeedsStrategyReview,
 } from "@/lib/plan-helpers";
@@ -195,27 +196,21 @@ export function PreviewPlanning({
   const prospects = useMemo(() => buildTradeProspects(plans), [plans]);
 
   const scoutCards = useMemo((): ScoutCard[] => {
-    const fromTheses: ScoutCard[] = activeTheses.map((thesis) => {
+    const fromTheses: ScoutCard[] = activeTheses
+      .map((thesis) => {
       const thesisPlans = plans.filter((p) => p.stockThesisId === thesis.id);
-      const activePlans = thesisPlans.filter((p) => p.status === "watching" || p.status === "ready");
-      // Prefer live plan; else close the learning loop before stale entered/expired picks.
-      const needsLearningClose =
-        thesisPlans.find(planNeedsStrategyReview) ??
-        thesisPlans.find(planNeedsLearningSyncRepair);
-      const primaryPlan =
-        activePlans[0] ??
-        needsLearningClose ??
-        thesisPlans.find((p) => p.status === "entered") ??
-        thesisPlans.find((p) => p.status === "expired") ??
-        thesisPlans[0];
+      const activePlans = thesisPlans.filter(isWarReadyScoutPlan);
+      // War Case menu: live Scouts only. Closed outcomes (miss / UPL) stay in Learning queue / Insights.
+      if (activePlans.length === 0) return null;
+      const primaryPlan = activePlans[0];
       const levelsView = buildPlanLevelsView(thesis, primaryPlan);
       const decisionPlan = thesisPlans.find((p) => p.decision) ?? primaryPlan;
       const verdict = resolveScoutingVerdict(thesis, decisionPlan);
       const linkedTrades = tradesForScoutCase({ thesis, thesisPlans, trades });
       const evaluation =
-        primaryPlan ?? thesisPlans[0]
+        primaryPlan
           ? evaluateScoutOperationalState({
-              plan: (primaryPlan ?? thesisPlans[0]) as TradePlan,
+              plan: primaryPlan,
               linkedTrades,
               reservations,
               now: new Date().toISOString(),
@@ -236,12 +231,14 @@ export function PreviewPlanning({
         orphan: false,
         operational: evaluation,
       };
-    });
+    })
+      .filter((card): card is ScoutCard => card !== null);
 
     const orphanTickers = orphanIncompleteTradeTickers(trades, activeTheses);
     const orphans: ScoutCard[] = orphanTickers.map((ticker) => {
       const tickerPlans = plans.filter((p) => p.ticker.toUpperCase() === ticker);
-      const primaryPlan = tickerPlans[0];
+      const warPlans = tickerPlans.filter(isWarReadyScoutPlan);
+      const primaryPlan = warPlans[0] ?? tickerPlans[0];
       const evaluation = primaryPlan
         ? evaluateScoutOperationalState({
             plan: primaryPlan,
@@ -260,8 +257,7 @@ export function PreviewPlanning({
         levelsView: null,
         plannedRR: resolveScoutCardPlannedRR(primaryPlan, null),
         verdict: null,
-        activeScoutCount: tickerPlans.filter((p) => p.status === "watching" || p.status === "ready")
-          .length,
+        activeScoutCount: warPlans.length,
         linkedTrades: incompleteTradesForTicker(trades, ticker),
         orphan: true,
         operational: evaluation,
@@ -397,13 +393,7 @@ export function PreviewPlanning({
   const mapFocusCompact = planPanelOpen;
 
   const allocationPlans = useMemo(
-    () =>
-      plans.filter(
-        (p) =>
-          p.status === "watching" ||
-          p.status === "ready" ||
-          p.status === "expired"
-      ),
+    () => plans.filter(isWarReadyScoutPlan),
     [plans]
   );
 
@@ -527,8 +517,9 @@ export function PreviewPlanning({
                     Scout learning queue
                   </p>
                   <p className="mt-1 text-[11px] text-zinc-400">
-                    Close the circuit before new Scouts: record outcome, or Retry Learning
-                    Sync when outcome already persisted.
+                    Learning archive — not the Case war menu. Close the circuit before new
+                    Scouts: record outcome, or Retry Learning Sync when outcome already
+                    persisted. Closed misses stay out of Case until a new war-ready PLAN.
                   </p>
                   {learningQueue.needsOutcome.length > 0 ? (
                     <ul className="mt-2 space-y-1" data-scout-needs-outcome>
@@ -570,7 +561,7 @@ export function PreviewPlanning({
                   </summary>
                   <div className="mt-2">
                     <ActiveScoutsComparisonTable
-                      plans={plans}
+                      plans={allocationPlans}
                       onFocusPlan={focusPlanFromAllocation}
                     />
                   </div>

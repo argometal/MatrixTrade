@@ -14,6 +14,7 @@ import type { TradePlan } from "./plan-types";
 import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment } from "./types";
 import { formatSnapshotMenuForMechanics } from "./visible-snapshot-menu";
+import { isWarReadyScoutPlan } from "./plan-helpers";
 
 export interface MatrixTrainingContextInput {
   playbooks?: Playbook[];
@@ -629,7 +630,7 @@ function formatScoutingStateSection(
     }
   }
 
-  const tickerPlans = plans.filter((p) => p.status === "watching" || p.status === "ready");
+  const tickerPlans = plans.filter(isWarReadyScoutPlan);
   lines.push("");
   if (tickerPlans.length === 0) {
     lines.push("active_scouts:0");

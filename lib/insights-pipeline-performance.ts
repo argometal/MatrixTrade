@@ -132,6 +132,7 @@ export type PipelinePerformanceView = {
   counterfactual: {
     scoutEvaluatedCount: number;
     unexecutedPlanLossCount: number;
+    missedOpportunityCount: number;
     counterfactualRSum: number;
     /** entryReached without trade — Scout metric, never Trade P/L. */
     triggeredPlansWithoutTrade: number;
@@ -497,6 +498,7 @@ export function computePipelinePerformance(
     counterfactual: {
       scoutEvaluatedCount: scoutAgg.evaluatedScoutCount,
       unexecutedPlanLossCount: scoutAgg.unexecutedPlanLossCount,
+      missedOpportunityCount: scoutAgg.missedOpportunityCount,
       counterfactualRSum: Math.round(counterfactualRSum * 1000) / 1000,
       triggeredPlansWithoutTrade: scoutAgg.triggeredPlansWithoutTrade,
       thesisEvaluationCount: scoutAgg.thesisEvaluationCount,

@@ -9,6 +9,7 @@ import {
   type LayeredFillStateProjection,
 } from "./layered-entry-risk";
 import type { LayeredEntryPlan } from "./layered-entry-types";
+import { isWarReadyScoutPlan } from "./plan-helpers";
 
 export type ScoutMonetarySortKey =
   | "potentialR"
@@ -134,7 +135,7 @@ export function buildScoutMonetaryRow(plan: TradePlan): ScoutMonetaryRow | null 
 
 export function buildActiveScoutMonetaryRows(plans: TradePlan[]): ScoutMonetaryRow[] {
   return plans
-    .filter((p) => p.status === "watching" || p.status === "ready")
+    .filter(isWarReadyScoutPlan)
     .map((p) => buildScoutMonetaryRow(p))
     .filter((row): row is ScoutMonetaryRow => row !== null);
 }

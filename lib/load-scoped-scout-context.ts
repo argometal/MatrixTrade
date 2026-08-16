@@ -18,6 +18,7 @@ import { getStockThesisById } from "./stock-theses";
 import type { ScopedAiGrant } from "./scoped-ai-grant-types";
 import { isBootstrapGrant } from "./scoped-ai-grant-types";
 import { loadBootstrapCreateContext } from "./load-bootstrap-create-context";
+import { isWarReadyScoutPlan } from "./plan-helpers";
 
 const SCOPED_AI_REQUEST = `Return ONE AI Block only — plain JSON or a single \`\`\`json fenced block.
 SCOPED ACCESS — you may ONLY act on the stock profile in this package.
@@ -59,7 +60,7 @@ export async function loadScopedScoutContext(grant: ScopedAiGrant): Promise<{
   const tickerPlans = plans.filter((p) => p.stockThesisId === profile.id);
   const focusPlan = grant.planId
     ? tickerPlans.find((p) => p.id === grant.planId)
-    : tickerPlans.find((p) => p.status === "watching" || p.status === "ready");
+    : tickerPlans.find(isWarReadyScoutPlan);
 
   const body = buildAiContextPackage({
     scope: "scouting-ticker",

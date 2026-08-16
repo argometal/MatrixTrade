@@ -25,6 +25,7 @@ import type { TradePlan } from "./plan-types";
 import type { StockThesis } from "./stock-thesis-types";
 import type { MtaeTimeframeMapPreset } from "./mtae-types";
 import { fetchBridgeInbox } from "./bridge";
+import { isWarReadyScoutPlan } from "./plan-helpers";
 
 function groupActiveEvidence(rows: MarketEvidence[]): Map<string, MarketEvidence[]> {
   const superseded = new Set(rows.map((row) => row.supersededBy).filter(Boolean) as string[]);
@@ -37,10 +38,6 @@ function groupActiveEvidence(rows: MarketEvidence[]): Map<string, MarketEvidence
     map.set(key, list);
   }
   return map;
-}
-
-function isActiveScoutPlan(plan: TradePlan): boolean {
-  return plan.status === "watching" || plan.status === "ready";
 }
 
 function buildThesisEntries(
@@ -93,7 +90,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
 
   const pendingInbox = await listAllPendingInboxItems(workerInbox);
   const activeTheses = stockTheses.filter((t) => isActiveStockThesisStatus(t.status));
-  const activePlans = plans.filter(isActiveScoutPlan);
+  const activePlans = plans.filter(isWarReadyScoutPlan);
   const evidenceByProfile = groupActiveEvidence(marketEvidence);
 
   const mechanicsSnapshot = mechanicsSnapshotItem();
