@@ -11,6 +11,7 @@ import {
 import { buildStockThesisContextText } from "./stock-thesis-snapshot";
 import type { StockThesis } from "./stock-thesis-types";
 import type { TradePlan } from "./plan-types";
+import { isWarReadyScoutPlan } from "./plan-helpers";
 import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment } from "./types";
 import { formatSnapshotMenuForMechanics } from "./visible-snapshot-menu";
@@ -629,7 +630,7 @@ function formatScoutingStateSection(
     }
   }
 
-  const tickerPlans = plans.filter((p) => p.status === "watching" || p.status === "ready");
+  const tickerPlans = plans.filter(isWarReadyScoutPlan);
   lines.push("");
   if (tickerPlans.length === 0) {
     lines.push("active_scouts:0");

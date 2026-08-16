@@ -7,6 +7,7 @@ import { ScoutExecutePanel } from "@/app/components/planning-preview/ScoutExecut
 import { PlanRecordOutcomePanel } from "@/app/components/planning-preview/PlanRecordOutcomePanel";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
 import {
+  isWarReadyScoutPlan,
   planNeedsLearningSyncRepair,
   planNeedsStrategyReview,
 } from "@/lib/plan-helpers";
@@ -195,53 +196,46 @@ export function PreviewPlanning({
   const prospects = useMemo(() => buildTradeProspects(plans), [plans]);
 
   const scoutCards = useMemo((): ScoutCard[] => {
-    const fromTheses: ScoutCard[] = activeTheses.map((thesis) => {
-      const thesisPlans = plans.filter((p) => p.stockThesisId === thesis.id);
-      const activePlans = thesisPlans.filter((p) => p.status === "watching" || p.status === "ready");
-      // Prefer live plan; else close the learning loop before stale entered/expired picks.
-      const needsLearningClose =
-        thesisPlans.find(planNeedsStrategyReview) ??
-        thesisPlans.find(planNeedsLearningSyncRepair);
-      const primaryPlan =
-        activePlans[0] ??
-        needsLearningClose ??
-        thesisPlans.find((p) => p.status === "entered") ??
-        thesisPlans.find((p) => p.status === "expired") ??
-        thesisPlans[0];
-      const levelsView = buildPlanLevelsView(thesis, primaryPlan);
-      const decisionPlan = thesisPlans.find((p) => p.decision) ?? primaryPlan;
-      const verdict = resolveScoutingVerdict(thesis, decisionPlan);
-      const linkedTrades = tradesForScoutCase({ thesis, thesisPlans, trades });
-      const evaluation =
-        primaryPlan ?? thesisPlans[0]
-          ? evaluateScoutOperationalState({
-              plan: (primaryPlan ?? thesisPlans[0]) as TradePlan,
-              linkedTrades,
-              reservations,
-              now: new Date().toISOString(),
-              minimumRR: thesis.riskRules?.minimumRR ?? 3,
-            })
-          : fallbackOperationalEvaluation();
-      return {
-        key: thesis.id,
-        thesis,
-        ticker: thesis.ticker,
-        thesisPlans,
-        primaryPlan,
-        levelsView,
-        plannedRR: resolveScoutCardPlannedRR(primaryPlan, levelsView),
-        verdict,
-        activeScoutCount: activePlans.length,
-        linkedTrades,
-        orphan: false,
-        operational: evaluation,
-      };
-    });
+    const fromTheses: ScoutCard[] = activeTheses
+      .map((thesis) => {
+        const thesisPlans = plans.filter((p) => p.stockThesisId === thesis.id);
+        const activePlans = thesisPlans.filter(isWarReadyScoutPlan);
+        // War Case menu: live Scouts only. Closed / missed / sync stay in Learning queue.
+        if (activePlans.length === 0) return null;
+        const primaryPlan = activePlans[0];
+        const levelsView = buildPlanLevelsView(thesis, primaryPlan);
+        const decisionPlan = thesisPlans.find((p) => p.decision) ?? primaryPlan;
+        const verdict = resolveScoutingVerdict(thesis, decisionPlan);
+        const linkedTrades = tradesForScoutCase({ thesis, thesisPlans, trades });
+        const evaluation = evaluateScoutOperationalState({
+          plan: primaryPlan,
+          linkedTrades,
+          reservations,
+          now: new Date().toISOString(),
+          minimumRR: thesis.riskRules?.minimumRR ?? 3,
+        });
+        return {
+          key: thesis.id,
+          thesis,
+          ticker: thesis.ticker,
+          thesisPlans,
+          primaryPlan,
+          levelsView,
+          plannedRR: resolveScoutCardPlannedRR(primaryPlan, levelsView),
+          verdict,
+          activeScoutCount: activePlans.length,
+          linkedTrades,
+          orphan: false,
+          operational: evaluation,
+        };
+      })
+      .filter((card): card is ScoutCard => card !== null);
 
     const orphanTickers = orphanIncompleteTradeTickers(trades, activeTheses);
     const orphans: ScoutCard[] = orphanTickers.map((ticker) => {
       const tickerPlans = plans.filter((p) => p.ticker.toUpperCase() === ticker);
-      const primaryPlan = tickerPlans[0];
+      const warPlans = tickerPlans.filter(isWarReadyScoutPlan);
+      const primaryPlan = warPlans[0];
       const evaluation = primaryPlan
         ? evaluateScoutOperationalState({
             plan: primaryPlan,
@@ -260,8 +254,7 @@ export function PreviewPlanning({
         levelsView: null,
         plannedRR: resolveScoutCardPlannedRR(primaryPlan, null),
         verdict: null,
-        activeScoutCount: tickerPlans.filter((p) => p.status === "watching" || p.status === "ready")
-          .length,
+        activeScoutCount: warPlans.length,
         linkedTrades: incompleteTradesForTicker(trades, ticker),
         orphan: true,
         operational: evaluation,
@@ -397,13 +390,7 @@ export function PreviewPlanning({
   const mapFocusCompact = planPanelOpen;
 
   const allocationPlans = useMemo(
-    () =>
-      plans.filter(
-        (p) =>
-          p.status === "watching" ||
-          p.status === "ready" ||
-          p.status === "expired"
-      ),
+    () => plans.filter(isWarReadyScoutPlan),
     [plans]
   );
 
@@ -570,7 +557,7 @@ export function PreviewPlanning({
                   </summary>
                   <div className="mt-2">
                     <ActiveScoutsComparisonTable
-                      plans={plans}
+                      plans={allocationPlans}
                       onFocusPlan={focusPlanFromAllocation}
                     />
                   </div>
@@ -611,16 +598,6 @@ export function PreviewPlanning({
                         verdict: card.verdict,
                         assessment: displayOp,
                       });
-                      const learningHint = card.thesisPlans.some(planNeedsStrategyReview)
-                        ? " · needs outcome"
-                        : card.thesisPlans.some(planNeedsLearningSyncRepair)
-                          ? " · sync repair"
-                          : card.primaryPlan && planNeedsStrategyReview(card.primaryPlan)
-                            ? " · needs outcome"
-                            : card.primaryPlan &&
-                                planNeedsLearningSyncRepair(card.primaryPlan)
-                              ? " · sync repair"
-                              : "";
                       return (
                         <option key={card.key} value={card.key}>
                           {card.ticker}
@@ -630,7 +607,6 @@ export function PreviewPlanning({
                           {card.linkedTrades.length
                             ? ` · ${card.linkedTrades.length} open loop`
                             : ""}
-                          {learningHint}
                           {card.primaryPlan ? ` · ${card.primaryPlan.id}` : ""}
                         </option>
                       );

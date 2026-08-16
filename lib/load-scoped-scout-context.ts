@@ -8,6 +8,7 @@ import {
   getActiveEvidenceForProfile,
 } from "./market-evidence";
 import { getPlans } from "./plans";
+import { isWarReadyScoutPlan } from "./plan-helpers";
 import { getPlaybooks } from "./playbooks";
 import { getMonthlyRisk, getExperiment } from "./storage";
 import {
@@ -59,7 +60,7 @@ export async function loadScopedScoutContext(grant: ScopedAiGrant): Promise<{
   const tickerPlans = plans.filter((p) => p.stockThesisId === profile.id);
   const focusPlan = grant.planId
     ? tickerPlans.find((p) => p.id === grant.planId)
-    : tickerPlans.find((p) => p.status === "watching" || p.status === "ready");
+    : tickerPlans.find(isWarReadyScoutPlan);
 
   const body = buildAiContextPackage({
     scope: "scouting-ticker",

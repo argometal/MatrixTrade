@@ -21,6 +21,7 @@ import { getExperiment, getMonthlyRisk, getTrades } from "./storage";
 import { getStockTheses } from "./stock-theses";
 import { isActiveStockThesisStatus } from "./stock-thesis-types";
 import { listAllPendingInboxItems } from "./trading-inbox-storage";
+import { isWarReadyScoutPlan } from "./plan-helpers";
 import type { TradePlan } from "./plan-types";
 import type { StockThesis } from "./stock-thesis-types";
 import type { MtaeTimeframeMapPreset } from "./mtae-types";
@@ -37,10 +38,6 @@ function groupActiveEvidence(rows: MarketEvidence[]): Map<string, MarketEvidence
     map.set(key, list);
   }
   return map;
-}
-
-function isActiveScoutPlan(plan: TradePlan): boolean {
-  return plan.status === "watching" || plan.status === "ready";
 }
 
 function buildThesisEntries(
@@ -93,7 +90,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
 
   const pendingInbox = await listAllPendingInboxItems(workerInbox);
   const activeTheses = stockTheses.filter((t) => isActiveStockThesisStatus(t.status));
-  const activePlans = plans.filter(isActiveScoutPlan);
+  const activePlans = plans.filter(isWarReadyScoutPlan);
   const evidenceByProfile = groupActiveEvidence(marketEvidence);
 
   const mechanicsSnapshot = mechanicsSnapshotItem();

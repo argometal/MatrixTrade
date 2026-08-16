@@ -10,6 +10,7 @@ import type { MtaeTimeframeMapPreset } from "./mtae-types";
 import { formatPlansSnapshotSection } from "./plan-snapshot";
 import type { Playbook } from "./playbook-types";
 import type { TradePlan } from "./plan-types";
+import { isWarReadyScoutPlan } from "./plan-helpers";
 import { formatDecisionSection } from "./scout-decision";
 import { formatProbeSection } from "./scout-probe";
 import { formatLayeredEntrySection } from "./layered-entry-types";
@@ -99,7 +100,7 @@ export type StockFileAnalyzeInput = {
 function pickFocusPlan(thesisId: string, plans: TradePlan[]): TradePlan | undefined {
   const linked = plans.filter((p) => p.stockThesisId === thesisId);
   return (
-    linked.find((p) => p.status === "watching" || p.status === "ready") ??
+    linked.find(isWarReadyScoutPlan) ??
     linked.find((p) => p.status === "entered") ??
     linked.find((p) => p.status === "expired") ??
     linked[0]

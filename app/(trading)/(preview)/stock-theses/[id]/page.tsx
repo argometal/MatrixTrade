@@ -5,6 +5,7 @@ import {
 } from "@/lib/market-evidence";
 import { getLatestMtaeAssessmentForProfile, getMtaeTimeframeMaps } from "@/lib/mtae-store";
 import { getPlans } from "@/lib/plans";
+import { isWarReadyScoutPlan } from "@/lib/plan-helpers";
 import { getPlaybooks } from "@/lib/playbooks";
 import { stockProfileSnapshotItems } from "@/lib/snapshot-packages";
 import { buildStockFileAnalyzePackage } from "@/lib/stock-file-analyze";
@@ -32,9 +33,7 @@ export default async function StockThesisDetailPage({
   const activeEvidence = await getActiveEvidenceForProfile(thesis.id);
   const synthesis = buildStockProfileSynthesis(thesis, activeEvidence);
   const activePlans = plans.filter(
-    (p) =>
-      p.stockThesisId === thesis.id &&
-      (p.status === "watching" || p.status === "ready")
+    (p) => p.stockThesisId === thesis.id && isWarReadyScoutPlan(p)
   );
   const snapshotItems = stockProfileSnapshotItems({
     thesis,
