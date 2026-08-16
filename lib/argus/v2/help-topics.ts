@@ -229,7 +229,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Tags in this branch",
-        body: "Evidence Tags on this Event’s Notes, plus Tags from structurally linked Topics and Projects. Neighborhood rows are suggestions — they do not make this Event Watched.",
+        body: "Evidence Tags on this Event’s Notes, plus Tags from structurally linked Topics and Projects. Drag ⠿ onto Linked to this Event to attach (then Save Tags). Neighborhood rows are suggestions — they do not make this Event Watched.",
       },
       {
         title: "Trackers",

@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition, type ReactNode } from "react";
+import {
+  useMemo,
+  useState,
+  useTransition,
+  type DragEvent,
+  type ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
 import { toggleSignalTagAction } from "@/app/argus/actions";
 import { confirmTrackerConvert } from "@/lib/argus/tracker-confirm";
@@ -12,6 +18,9 @@ import {
   TAG_MANAGE_ROW_CLASS,
   TAG_MANAGE_ROW_TRACKER_CLASS,
 } from "@/app/argus/v2/components/tag-manage-list";
+
+/** Drag payload for branch → Linked binder Tags. */
+export const ARGUS_BINDER_TAG_MIME = "application/x-argus-binder-tag";
 
 export type V2BinderBranchTag = {
   tag: string;
@@ -59,6 +68,11 @@ export type V2BinderTagsTabProps = {
   attachedEditor: ReactNode;
   /** One contextual ? for the whole Tags tab (preferred over inline paragraphs). */
   helpTopic?: string;
+  /**
+   * When set, branch Tag rows expose a drag handle and section 1 accepts drops
+   * to attach that Tag to the binder (Event Tags / Topic Tags editor).
+   */
+  onAttachTag?: (tag: string) => void;
 
   branchHeading?: string;
   branchBadge?: string;
@@ -162,10 +176,13 @@ function TagManageRows({
   tags,
   emptyHint,
   focusKeys,
+  draggableToAttach = false,
 }: {
   tags: V2BinderBranchTag[];
   emptyHint?: string;
   focusKeys: Set<string>;
+  /** Show drag handle — drop onto Linked section when onAttachTag is wired. */
+  draggableToAttach?: boolean;
 }) {
   const [showAll, setShowAll] = useState(false);
   if (tags.length === 0) {
@@ -178,8 +195,27 @@ function TagManageRows({
       <ul className={TAG_MANAGE_LIST_CLASS}>
         {visible.map((row) => {
           const tracked = focusKeys.has(signalTagKey(row.tag));
+          const dragHandle = draggableToAttach ? (
+            <span
+              draggable
+              onDragStart={(event) => {
+                event.dataTransfer.setData(ARGUS_BINDER_TAG_MIME, row.tag);
+                event.dataTransfer.setData("text/plain", row.tag);
+                event.dataTransfer.effectAllowed = "copy";
+              }}
+              className="flex h-9 w-7 shrink-0 cursor-grab items-center justify-center rounded-lg text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 active:cursor-grabbing"
+              title={`Drag “${row.tag}” to Linked`}
+              aria-label={`Drag ${row.tag} to Linked`}
+              onClick={(event) => event.preventDefault()}
+            >
+              <span aria-hidden className="text-[11px] leading-none">
+                ⠿
+              </span>
+            </span>
+          ) : null;
           const inner = (
             <>
+              {dragHandle}
               <span
                 className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
                   tracked ? "bg-amber-500/20 text-amber-100" : "bg-violet-600/20 text-violet-200"
@@ -209,14 +245,26 @@ function TagManageRows({
                 <Link
                   href={row.href}
                   className={tracked ? TAG_MANAGE_ROW_TRACKER_CLASS : TAG_MANAGE_ROW_CLASS}
-                  title={tracked ? `${row.tag} · Tracked` : `Open ${row.tag}`}
+                  title={
+                    tracked
+                      ? `${row.tag} · Tracked`
+                      : draggableToAttach
+                        ? `Open ${row.tag} · drag ⠿ to Linked`
+                        : `Open ${row.tag}`
+                  }
                 >
                   {inner}
                 </Link>
               ) : (
                 <span
                   className={tracked ? TAG_MANAGE_ROW_TRACKER_CLASS : TAG_MANAGE_ROW_CLASS}
-                  title={tracked ? `${row.tag} · Tracked` : undefined}
+                  title={
+                    tracked
+                      ? `${row.tag} · Tracked`
+                      : draggableToAttach
+                        ? `Drag ⠿ to Linked`
+                        : undefined
+                  }
                 >
                   {inner}
                 </span>
@@ -246,6 +294,7 @@ export function V2BinderTagsTab({
   attachedTagHref,
   attachedEditor,
   helpTopic,
+  onAttachTag,
   branchHeading = "Tags in this branch",
   branchBadge = "Branch",
   branchHint,
@@ -269,7 +318,39 @@ export function V2BinderTagsTab({
   const [expandedEventIds, setExpandedEventIds] = useState<Set<string>>(() => new Set());
   /** Event Tags → Branch groups: each group starts collapsed; toggle independently. */
   const [expandedBranchIds, setExpandedBranchIds] = useState<Set<string>>(() => new Set());
+  const [dropActive, setDropActive] = useState(false);
   const focusKeys = useMemo(() => focusKeySet(signalTags), [signalTags]);
+
+  function readDroppedTag(event: DragEvent): string | null {
+    const mime = event.dataTransfer.getData(ARGUS_BINDER_TAG_MIME).trim();
+    if (mime) return mime;
+    const plain = event.dataTransfer.getData("text/plain").trim();
+    return plain || null;
+  }
+
+  function handleAttachDragOver(event: DragEvent) {
+    if (!onAttachTag) return;
+    const types = Array.from(event.dataTransfer.types);
+    if (!types.includes(ARGUS_BINDER_TAG_MIME) && !types.includes("text/plain")) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    setDropActive(true);
+  }
+
+  function handleAttachDragLeave(event: DragEvent) {
+    if (!onAttachTag) return;
+    const related = event.relatedTarget as Node | null;
+    if (related && event.currentTarget.contains(related)) return;
+    setDropActive(false);
+  }
+
+  function handleAttachDrop(event: DragEvent) {
+    if (!onAttachTag) return;
+    event.preventDefault();
+    setDropActive(false);
+    const tag = readDroppedTag(event);
+    if (tag) onAttachTag(tag);
+  }
 
   function toggleEventExpanded(id: string) {
     setExpandedEventIds((prev) => {
@@ -395,7 +476,21 @@ export function V2BinderTagsTab({
   const main = (
     <div className="space-y-3 sm:space-y-4">
       {/* 1 — Tags linked to this binder (editor list is the human-facing inventory) */}
-      <section className="rounded-2xl border border-violet-500/25 bg-gradient-to-b from-violet-950/30 to-zinc-950/80 p-3 sm:p-4">
+      <section
+        className={`rounded-2xl border bg-gradient-to-b p-3 sm:p-4 ${
+          dropActive
+            ? "border-violet-400/70 from-violet-900/40 to-zinc-950/80 ring-2 ring-violet-500/40"
+            : "border-violet-500/25 from-violet-950/30 to-zinc-950/80"
+        }`}
+        onDragOver={handleAttachDragOver}
+        onDragLeave={handleAttachDragLeave}
+        onDrop={handleAttachDrop}
+        aria-label={
+          onAttachTag
+            ? `${attachedHeading} — drop zone for branch Tags`
+            : attachedHeading
+        }
+      >
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <StepBadge n={1} tone="violet" />
@@ -408,6 +503,13 @@ export function V2BinderTagsTab({
         </div>
         {!helpTopic && attachedHint ? (
           <p className="mt-1.5 text-xs leading-relaxed text-zinc-400">{attachedHint}</p>
+        ) : null}
+        {onAttachTag ? (
+          <p className="mt-1.5 text-[11px] text-violet-300/80">
+            {dropActive
+              ? "Drop to link this Tag — then Save Tags."
+              : "Drag ⠿ from Tags in this branch onto this section to link."}
+          </p>
         ) : null}
 
         <div className="mt-3">{attachedEditor}</div>
@@ -614,7 +716,12 @@ export function V2BinderTagsTab({
                             {group.contextName} →
                           </Link>
                         ) : null}
-                        <TagManageRows tags={group.tags} focusKeys={focusKeys} emptyHint="None yet" />
+                        <TagManageRows
+                          tags={group.tags}
+                          focusKeys={focusKeys}
+                          emptyHint="None yet"
+                          draggableToAttach={Boolean(onAttachTag)}
+                        />
                         {group.tags.length > PREVIEW && group.href ? (
                           <p className="mt-2.5 text-[10px] text-zinc-500">
                             Open binder{" "}

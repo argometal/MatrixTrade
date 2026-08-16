@@ -1,7 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import { updateEventTagsAction } from "@/app/argus/actions";
 import { EVENT_MATCH_TAGS } from "@/lib/argus/ux-copy";
 import { V2VocabularyListEditor } from "@/app/argus/v2/components/V2VocabularyListEditor";
@@ -15,26 +21,36 @@ function tagKey(value: string): string {
   return normalizeDisplayTag(value).toLowerCase();
 }
 
-export function V2EventTagEditor({
-  eventId,
-  eventName,
-  initialTags,
-  returnTo,
-  compact = false,
-  /** Evidence Tags on Notes not yet attached as Event Tags — recall / attach. */
-  suggestedFromNotes = [],
-  signalTags = [],
-}: {
-  eventId: string;
-  eventName: string;
-  initialTags: string[];
-  returnTo: string;
-  /** When embedded in V2BinderTagsTab — parent owns heading/hint. */
-  compact?: boolean;
-  suggestedFromNotes?: string[];
-  /** Journal Trackers — passive ⚑ on binder rows (no click-to-Flag). */
-  signalTags?: string[];
-}) {
+export type V2EventTagEditorHandle = {
+  /** Attach a Tag from branch drag/drop (or other recall). No-op if already linked. */
+  attachTag: (tag: string) => void;
+};
+
+export const V2EventTagEditor = forwardRef<
+  V2EventTagEditorHandle,
+  {
+    eventId: string;
+    eventName: string;
+    initialTags: string[];
+    returnTo: string;
+    /** When embedded in V2BinderTagsTab — parent owns heading/hint. */
+    compact?: boolean;
+    suggestedFromNotes?: string[];
+    /** Journal Trackers — passive ⚑ on binder rows (no click-to-Flag). */
+    signalTags?: string[];
+  }
+>(function V2EventTagEditor(
+  {
+    eventId,
+    eventName,
+    initialTags,
+    returnTo,
+    compact = false,
+    suggestedFromNotes = [],
+    signalTags = [],
+  },
+  ref
+) {
   const router = useRouter();
   const [matchTags, setMatchTags] = useState<string[]>(initialTags);
   const [draft, setDraft] = useState("");
@@ -68,6 +84,22 @@ export function V2EventTagEditor({
     return out.sort((a, b) => a.localeCompare(b));
   }, [suggestedFromNotes, attachedKeys]);
 
+  function attachSuggestion(tag: string) {
+    const next = normalizeDisplayTag(tag);
+    if (!next || matchTags.some((t) => tagKey(t) === tagKey(next))) return;
+    setMatchTags((current) => [...current, next]);
+  }
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      attachTag: (tag: string) => attachSuggestion(tag),
+    }),
+    // Recreate when list changes so duplicates stay correct
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [matchTags]
+  );
+
   function addMatchTag() {
     const next = normalizeDisplayTag(draft);
     if (!next || matchTags.some((tag) => tagKey(tag) === tagKey(next))) {
@@ -76,12 +108,6 @@ export function V2EventTagEditor({
     }
     setMatchTags((current) => [...current, next]);
     setDraft("");
-  }
-
-  function attachSuggestion(tag: string) {
-    const next = normalizeDisplayTag(tag);
-    if (!next || matchTags.some((t) => tagKey(t) === tagKey(next))) return;
-    setMatchTags((current) => [...current, next]);
   }
 
   function removeMatchTag(tag: string) {
@@ -150,36 +176,36 @@ export function V2EventTagEditor({
             {suggestions.map((tag) => {
               const tracked = trackedKeys.has(tagKey(tag));
               return (
-              <li key={tag}>
-                <button
-                  type="button"
-                  onClick={() => attachSuggestion(tag)}
-                  className={`${tracked ? "flex w-full items-center gap-4 rounded-xl border border-amber-400/40 bg-rose-950/30 px-4 py-3 text-left text-sm hover:border-sky-500/40" : TAG_MANAGE_ROW_CLASS} hover:border-sky-500/40`}
-                >
-                  <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                      tracked ? "bg-amber-500/20 text-amber-100" : "bg-sky-600/20 text-sky-100"
-                    }`}
-                    aria-hidden
+                <li key={tag}>
+                  <button
+                    type="button"
+                    onClick={() => attachSuggestion(tag)}
+                    className={`${tracked ? "flex w-full items-center gap-4 rounded-xl border border-amber-400/40 bg-rose-950/30 px-4 py-3 text-left text-sm hover:border-sky-500/40" : TAG_MANAGE_ROW_CLASS} hover:border-sky-500/40`}
                   >
-                    {tracked ? "⚑" : "#"}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{tag}</span>
-                  {tracked ? (
-                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-amber-200/90">
-                      Tracked
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                        tracked ? "bg-amber-500/20 text-amber-100" : "bg-sky-600/20 text-sky-100"
+                      }`}
+                      aria-hidden
+                    >
+                      {tracked ? "⚑" : "#"}
                     </span>
-                  ) : null}
-                  <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-sky-300/90">
-                    Attach
-                  </span>
-                </button>
-              </li>
-            );
+                    <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{tag}</span>
+                    {tracked ? (
+                      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-amber-200/90">
+                        Tracked
+                      </span>
+                    ) : null}
+                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-sky-300/90">
+                      Attach
+                    </span>
+                  </button>
+                </li>
+              );
             })}
           </ul>
         </div>
       ) : null}
     </div>
   );
-}
+});
