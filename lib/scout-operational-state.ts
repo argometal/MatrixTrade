@@ -724,6 +724,44 @@ export function formatConsolidatedOperationalTag(input: {
   return parts.join(" · ");
 }
 
+/**
+ * One-line Watching scan copy — what must happen before action.
+ * Presentation only; never persisted.
+ */
+export function formatScoutWatchTriggerLine(
+  assessment: Pick<
+    ScoutOperationalAssessment,
+    "operationalState" | "nextAction" | "waitHorizon"
+  >
+): string {
+  const state = assessment.operationalState;
+  const action = assessment.nextAction;
+  const wait = assessment.waitHorizon;
+
+  if (action === "act" || state === "armed" || state === "in_zone") {
+    return "Ready to act — open Execute to fund and prepare the trade.";
+  }
+  if (action === "prepare") {
+    return "Price is in play — prepare allocation/funding before acting.";
+  }
+  if (state === "approaching" || action === "monitor") {
+    return `Watch until price reaches the entry zone (${wait} horizon), then act.`;
+  }
+  if (action === "reassess" || state === "needs_reanalysis") {
+    return "Reassess geometry or thesis before treating this as a live battle.";
+  }
+  if (state === "missed" || action === "replace_plan") {
+    return "Entry window passed — replace or archive; do not chase.";
+  }
+  if (state === "improbable" || wait === "improbable") {
+    return "Distance is improbable on this plan — do not wait passively.";
+  }
+  if (action === "none") {
+    return `No near-term action (${wait} horizon) — keep on scan only.`;
+  }
+  return `Waiting (${wait}) — next: ${formatOperationalActionLabel(action)}.`;
+}
+
 export function normalizeOperationalAssessmentInput(
   raw: unknown
 ): ScoutOperationalAssessment | null {

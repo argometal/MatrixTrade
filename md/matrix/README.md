@@ -13,6 +13,7 @@
 | 3 | [stock-profile-design.md](stock-profile-design.md) | Suspect dossier — append, light, chat patches |
 | 4 | [scout-execution-model.md](scout-execution-model.md) | Scout vs Trade vs Probe |
 | 4z | [scout-trades-pipeline-001.md](scout-trades-pipeline-001.md) | **Proposal** — Scouts as pipeline executions; miss P/L = 0, other data counts |
+| 4z2 | [scout-trim-16-08.md](scout-trim-16-08.md) | **16-08** — Scout UI trim: Watching scan · Open Scout · Execute |
 | 4a | [asymmetric-entry-confirmation-cost.md](asymmetric-entry-confirmation-cost.md) | **Expectancy & asymmetry** — Playbook layer only |
 | 4a2 | [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md) | **Layered entry** — strategy vs execution, no chase |
 | 4a3 | [risk-weighted-layered-entry.md](risk-weighted-layered-entry.md) | **Risk-weighted layered entry** — R budget by expectancy, common stop |
