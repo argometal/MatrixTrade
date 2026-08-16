@@ -82,8 +82,8 @@ export const VISIBLE_SNAPSHOT_MENU = [
   },
   {
     label: "Dashboard snapshot",
-    kind: "window_menu",
-    where: "Dashboard (snapshot menu)",
+    kind: "copy_row",
+    where: "Control (home, first copy row) or Dashboard (snapshot menu)",
     purpose: "global budget / experiment / attention summary",
   },
   {

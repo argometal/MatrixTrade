@@ -37,7 +37,7 @@ function item(id: string, label: string, body: string): SnapshotMenuItem {
   assert.ok(brief.includes("traceability only"));
   assert.ok(snap.includes("PROMPT ID PROTOCOL"));
   assert.ok(snap.includes(`mechanics_revision:${MATRIX_MECHANICS_REVISION}`));
-  assert.equal(MATRIX_MECHANICS_REVISION, 37);
+  assert.equal(MATRIX_MECHANICS_REVISION, 39);
 }
 
 const children = [

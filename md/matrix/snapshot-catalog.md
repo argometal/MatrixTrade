@@ -44,6 +44,7 @@ Primary Control copy of Mechanics = brief (no REQUEST). **Apply schema contract*
 
 | Window | Menu label | Data slice | Notes |
 |--------|------------|------------|-------|
+| Control (home) | Dashboard snapshot | Same global context as Dashboard window | First copy row — easy access |
 | Dashboard | Dashboard snapshot | Budget, experiment, attention **summary**, trades overview | Global context only — do not embed inside every task paste |
 | Dashboard → Needs Attention | Copy for AI (per row) | One derived task: entities, evidence, allowed blocks, completion | `lib/needs-attention-ai.ts`; references Dashboard snapshot label |
 | Control → Library | Library Index | Nav vs copy-row map | Then copy one row — `lib/library-index.ts` |

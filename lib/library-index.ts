@@ -29,7 +29,7 @@ export function buildLibraryIndexBrief(): string {
     "- Apply schema contract — second copy row under MTA Mechanics (not primary nav)",
     "- Analyze with AI — Stock File window CTA (preferred ticker loop)",
     "- Apply — paste Validate Accept (write path)",
-    "- Dashboard snapshot — Dashboard window menu",
+    "- Dashboard snapshot — Control home (first copy row) or Dashboard window menu",
     "",
     "=== REQUEST ===",
     "Ask the human to copy the exact visible copy-row label you need next.",
