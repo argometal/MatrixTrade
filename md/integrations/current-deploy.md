@@ -4,10 +4,11 @@ Production: https://matrix-trade-theta.vercel.app
 
 Pinned revision: `main0815g`
 
-Ship commit: `fc02da0`
+Ship commit: `69c5b5d`
 
 Includes:
 - PR #339 — 16-04 Operational War Universe + 16-01 Needs Attention cleanup + 16-03 Scout Monitoring Action now / Waiting
+- PR #340 — Production build typecheck fix (ScoutCard Case filter)
 - Prior `main0815f` / #334: 15-0C Needs review human-only (#333)
 - Prior `main0815e` / #330: 15-12 Control language / SNAPSHOT MENU ontology (#329)
 
