@@ -61,14 +61,14 @@ async function main() {
   // Manual shares placeholder is not funding input / primary Prepare trade
   assert.match(execute, /MANUAL_SHARES_PLACEHOLDER/);
   assert.doesNotMatch(execute, /handlePrepareTradeCanonical/);
-  assert.match(execute, /canonicalShareCount/);
+  // Canonical shares live on yellow Scout card; Execute extras stay form-only
+  assert.match(planning, /canonicalShareCount/);
   assert.match(planning, /buildTradeProposalBlock/);
   assert.doesNotMatch(
     execute,
     /buildScoutFundingSnapshot\([\s\S]*shares:\s*form\.shares/
   );
   assert.doesNotMatch(planning, /shares:\s*10/);
-  assert.match(planning, /canonicalShareCount/);
   assert.match(planning, /Prepare trade · allocation required/);
 
   // Snapshot ontology: thesis present, no file source → file unconfigured
