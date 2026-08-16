@@ -141,11 +141,11 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "Universe plot",
-        body: "Dots on recurrence (X) × recency (Y). Names appear on hover/select only so marks do not pile up. Ranked lists under the plot separate Top by recurrence vs Top by recency.",
+        body: "Dots on recurrence (X) × recency (Y). No Tracker/Pattern highlight on the plot — Flag status lives in the Trackers strip and the selection panel. Names on hover/select; ranked lists separate Top by recurrence vs Top by recency.",
       },
       {
-        title: "Tracker vs Pattern marks",
-        body: "Amber dashed ring = Tracker. Gold stroke on an unflagged tag = Pattern. Dot size is only a faint evidence hint.",
+        title: "No plot highlight",
+        body: "Unlike Treemap/Portfolio pattern rings, Tags dots stay uniform. Trackers are managed in the Trackers strip and via Flag on a selected tag — not by coloring the universe.",
       },
       {
         title: "Flag / Disable",

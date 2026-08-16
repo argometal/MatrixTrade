@@ -453,7 +453,7 @@ export function V2FocusTagPortfolio({
             viewBox="0 0 100 100"
             className="w-full rounded-xl border border-zinc-800/80 bg-zinc-950/60 min-h-[min(640px,72vh)] h-[min(640px,72vh)]"
             role="img"
-            aria-label="Tag universe — dots by recurrence × recency; hover for name, click to select and rename"
+            aria-label="Tag universe — dots by recurrence × recency; no Tracker highlight; hover for name, click to select"
           >
             <text x="50" y="97" textAnchor="middle" fill="rgb(113, 113, 122)" fontSize="2.8">
               Recurrence (30d) →
@@ -492,7 +492,7 @@ export function V2FocusTagPortfolio({
               const isSelected = selectedName === row.name;
               const isHovered = hoveredName === row.name;
               const showLabel = isSelected || isHovered;
-              const dotR = isSelected || isHovered ? point.r + 0.4 : point.r;
+              const dotR = isSelected || isHovered ? point.r + 0.35 : point.r;
               const label = row.name.length > 18 ? `${row.name.slice(0, 16)}…` : row.name;
               return (
                 <g
@@ -515,37 +515,15 @@ export function V2FocusTagPortfolio({
                   }}
                 >
                   <circle cx={point.x} cy={point.y} r={3.6} fill="transparent" />
-                  {row.isFocus ? (
-                    <circle
-                      cx={point.x}
-                      cy={point.y}
-                      r={dotR + 0.55}
-                      fill="none"
-                      stroke="rgb(251, 191, 36)"
-                      strokeOpacity={0.95}
-                      strokeWidth={0.4}
-                      strokeDasharray="0.7 0.55"
-                      className="pointer-events-none"
-                      aria-hidden
-                    />
-                  ) : null}
+                  {/* Tags plot: no Tracker/Pattern highlight — Flag status lives in Trackers strip + selection. */}
                   <circle
                     cx={point.x}
                     cy={point.y}
                     r={dotR}
-                    fill={row.isFocus ? "rgb(244, 63, 94)" : "rgb(167, 139, 250)"}
-                    fillOpacity={isSelected || isHovered || row.isFocus ? 0.98 : 0.82}
-                    stroke={
-                      isSelected
-                        ? "rgb(255, 255, 255)"
-                        : row.isFocus
-                          ? "rgb(251, 191, 36)"
-                          : row.isPattern
-                            ? "rgb(251, 191, 36)"
-                            : "rgb(39, 39, 42)"
-                    }
-                    strokeWidth={isSelected ? 0.55 : row.isFocus || row.isPattern ? 0.45 : 0.3}
-                    className="transition hover:brightness-125"
+                    fill="rgb(167, 139, 250)"
+                    fillOpacity={isSelected || isHovered ? 0.98 : 0.82}
+                    stroke={isSelected ? "rgb(255, 255, 255)" : "rgb(39, 39, 42)"}
+                    strokeWidth={isSelected ? 0.55 : 0.3}
                   />
                   {showLabel ? (
                     <g className="pointer-events-none">
@@ -567,7 +545,7 @@ export function V2FocusTagPortfolio({
                         fontSize={2.35}
                         fontWeight={600}
                       >
-                        {row.isFocus ? `⚑ ${label}` : label}
+                        {label}
                       </text>
                     </g>
                   ) : null}
@@ -588,7 +566,7 @@ export function V2FocusTagPortfolio({
             {visible.length} tag{visible.length === 1 ? "" : "s"} in this filter
             {rows.length !== visible.length ? ` · ${rows.length} in full universe` : ""}
             {visible.length > 64 ? " · plot shows top 64 by score" : ""}
-            {" · hover for name (labels off by default)"}
+            {" · no Tracker/Pattern highlight on plot (Flag stays in Trackers + selection)"}
           </p>
           <V2IntelHelpLink topic="tags-universe" label="Tags legend" />
         </div>
@@ -611,10 +589,7 @@ export function V2FocusTagPortfolio({
                           : "text-zinc-300 hover:bg-zinc-900/80"
                       }`}
                     >
-                      <span className="min-w-0 truncate">
-                        {row.isFocus ? "⚑ " : ""}
-                        {row.name}
-                      </span>
+                      <span className="min-w-0 truncate">{row.name}</span>
                       <span className="shrink-0 tabular-nums text-zinc-500">{row.recurrence30d}</span>
                     </button>
                   </li>
@@ -637,10 +612,7 @@ export function V2FocusTagPortfolio({
                           : "text-zinc-300 hover:bg-zinc-900/80"
                       }`}
                     >
-                      <span className="min-w-0 truncate">
-                        {row.isFocus ? "⚑ " : ""}
-                        {row.name}
-                      </span>
+                      <span className="min-w-0 truncate">{row.name}</span>
                       <span className="shrink-0 tabular-nums text-zinc-500">
                         {Math.round(row.recencyScore * 100)}%
                       </span>
@@ -659,8 +631,8 @@ export function V2FocusTagPortfolio({
           <div className="rounded-xl border border-dashed border-zinc-800/90 bg-zinc-950/40 px-4 py-6 text-center">
             <p className="text-sm font-medium text-zinc-400">Select a tag in the Universe</p>
             <p className="mt-1 text-xs text-zinc-600">
-              Plot = recurrence × recency (hover for name). Lists below separate the two rankings. Select a
-              tag to Rename or Flag.
+              Plot = recurrence × recency (no Tracker/Pattern highlight on dots). Lists separate rankings.
+              Select a tag to Rename or Flag.
             </p>
           </div>
           {visible.length > 0 ? (
@@ -677,16 +649,9 @@ export function V2FocusTagPortfolio({
                     <button
                       type="button"
                       onClick={() => selectTag(row.name)}
-                      className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[12px] ${
-                        row.isFocus
-                          ? "border-amber-400/40 bg-rose-950/30 text-amber-100"
-                          : "border-zinc-800 bg-zinc-900/50 text-zinc-300 hover:border-violet-500/40 hover:text-zinc-100"
-                      }`}
+                      className="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-2.5 py-1.5 text-left text-[12px] text-zinc-300 hover:border-violet-500/40 hover:text-zinc-100"
                     >
-                      <span className="min-w-0 truncate">
-                        {row.isFocus ? "⚑ " : ""}
-                        {row.name}
-                      </span>
+                      <span className="min-w-0 truncate">{row.name}</span>
                       {row.count > 0 ? (
                         <span className="shrink-0 tabular-nums text-zinc-500">{row.count}</span>
                       ) : null}
@@ -894,16 +859,9 @@ export function V2FocusTagPortfolio({
                       <button
                         type="button"
                         onClick={() => selectTag(row.name)}
-                        className={`flex w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-left text-[12px] ${
-                          row.isFocus
-                            ? "border-amber-400/40 bg-rose-950/30 text-amber-100"
-                            : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-violet-500/40 hover:text-zinc-200"
-                        }`}
+                        className="flex w-full items-center justify-between gap-2 rounded-lg border border-zinc-800 bg-zinc-900/50 px-2.5 py-1.5 text-left text-[12px] text-zinc-400 hover:border-violet-500/40 hover:text-zinc-200"
                       >
-                        <span className="min-w-0 truncate">
-                          {row.isFocus ? "⚑ " : ""}
-                          {row.name}
-                        </span>
+                        <span className="min-w-0 truncate">{row.name}</span>
                         {row.count > 0 ? (
                           <span className="shrink-0 tabular-nums text-zinc-500">{row.count}</span>
                         ) : null}
