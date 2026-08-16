@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import type { V2GraphEdge, V2GraphNode } from "@/lib/argus/v2/intelligence-viz";
 import { layoutNeighborhoodGraphNodes } from "@/lib/argus/v2/intelligence-viz";
 import {
@@ -41,9 +41,9 @@ const SIZE_CONFIG: Record<
     fontSize: 1.7,
     labelOffset: 4.5,
   },
-  /** Inline local neighborhood — still compact; spacing carries hierarchy. */
+  /** Inline local neighborhood — fixed px height so scroll/vh chrome cannot resize the canvas. */
   full: {
-    heightClass: "min-h-[min(480px,55vh)] h-[min(480px,55vh)]",
+    heightClass: "min-h-[480px] h-[480px]",
     nodeBase: 2.4,
     nodeScale: 1.0,
     fontSize: 1.9,
@@ -201,6 +201,21 @@ function GraphCanvas({
     dragRef.current = null;
     setPanning(false);
   }, [centerId, layoutMode, nodeIdKey]);
+
+  // Wheel/trackpad scroll must not zoom the camera (that felt like the graph resizing).
+  // Ctrl/Cmd+wheel (and trackpad pinch) are swallowed so the browser does not page-zoom either.
+  // Camera zoom stays on the −/+ controls only.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg || !canNavigate) return;
+    const onWheelNative = (event: globalThis.WheelEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault();
+      }
+    };
+    svg.addEventListener("wheel", onWheelNative, { passive: false });
+    return () => svg.removeEventListener("wheel", onWheelNative);
+  }, [canNavigate]);
 
   const layoutNodes = useMemo(
     () =>
@@ -423,12 +438,6 @@ function GraphCanvas({
     }
   }
 
-  function onWheel(event: WheelEvent<SVGSVGElement>) {
-    if (!canNavigate) return;
-    event.preventDefault();
-    zoomAt(event.deltaY > 0 ? 1.08 : 1 / 1.08, event.clientX, event.clientY);
-  }
-
   const controlBtn =
     "pointer-events-auto rounded-md border border-zinc-700 bg-zinc-950/90 px-2 py-1 text-[10px] font-semibold text-zinc-300 hover:border-violet-500/40 hover:text-violet-200 disabled:opacity-40";
 
@@ -557,7 +566,6 @@ function GraphCanvas({
             onPointerMove={onPointerMove}
             onPointerUp={endPan}
             onPointerCancel={endPan}
-            onWheel={onWheel}
           >
             {canNavigate ? (
               <rect
