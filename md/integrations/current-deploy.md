@@ -2,13 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0815i`
+Pinned revision: `main0815j`
 
-Ship commit: `42dc8bd`
+Ship commit: `a0fe6b5`
 
 Includes:
-- PR #346 — 16-08 Scout trim & convergence (Watching scan · Open Scout · Execute)
-- PR #345 — 16-07 Scout convergence audit (diagnose)
+- PR #348 — 16-0E Scout Case selector: one option per war-ready plan (same ticker/Stock File coexistence)
+- Prior `main0815i` / #347: 16-08 Scout trim & convergence + 16-07 audit
 - Prior `main0815h` / #341–#342: A06 Topics scroll / no pinned detail chrome
 - Prior `main0815g` / #339–#340: War Universe 16-04 + 16-01 + 16-03 Dashboard consolidation
 - Prior `main0815f` / #334: 15-0C Needs review human-only (#333)
