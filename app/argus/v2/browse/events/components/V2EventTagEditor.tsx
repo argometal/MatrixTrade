@@ -86,8 +86,11 @@ export const V2EventTagEditor = forwardRef<
 
   function attachSuggestion(tag: string) {
     const next = normalizeDisplayTag(tag);
-    if (!next || matchTags.some((t) => tagKey(t) === tagKey(next))) return;
-    setMatchTags((current) => [...current, next]);
+    if (!next) return;
+    setMatchTags((current) => {
+      if (current.some((t) => tagKey(t) === tagKey(next))) return current;
+      return [...current, next];
+    });
   }
 
   useImperativeHandle(
@@ -95,9 +98,7 @@ export const V2EventTagEditor = forwardRef<
     () => ({
       attachTag: (tag: string) => attachSuggestion(tag),
     }),
-    // Recreate when list changes so duplicates stay correct
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [matchTags]
+    []
   );
 
   function addMatchTag() {
