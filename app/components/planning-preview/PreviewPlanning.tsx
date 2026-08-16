@@ -196,8 +196,8 @@ export function PreviewPlanning({
   const prospects = useMemo(() => buildTradeProspects(plans), [plans]);
 
   const scoutCards = useMemo((): ScoutCard[] => {
-    const fromTheses: ScoutCard[] = activeTheses
-      .map((thesis) => {
+    const fromTheses = activeTheses
+      .map((thesis): ScoutCard | null => {
         const thesisPlans = plans.filter((p) => p.stockThesisId === thesis.id);
         const activePlans = thesisPlans.filter(isWarReadyScoutPlan);
         // War Case menu: live Scouts only. Closed / missed / sync stay in Learning queue.
