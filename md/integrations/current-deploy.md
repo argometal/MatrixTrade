@@ -2,13 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0815e`
+Pinned revision: `main0815f`
 
-Ship commit: `1c36e91`
+Ship commit: `02db2c1`
 
 Includes:
-- PR #329 — 15-12 MTA Control language / SNAPSHOT MENU ontology (visible labels 1:1; Learning→MAF)
-- Prior `main0815d` / #327: missed_opportunity + PLAN-ID (#324–#326)
+- PR #333 — 15-0C Scout monitoring Needs review = human decisions only (no market-data noise)
+- Prior `main0815e` / #330: 15-12 Control language / SNAPSHOT MENU ontology (#329)
 
 **Terminology:** In ArgusForge docs, **MTA** = matrix/time engine (`argusforge-contract.md` §10). Trading product = **MatrixTrade**. See [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md).
 
