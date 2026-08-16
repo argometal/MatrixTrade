@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
+import { GuestLockDateField } from "@/app/components/settings/GuestLockDateField";
 import {
   PIPELINE_OUTCOME_BUCKETS,
   PIPELINE_OUTCOME_BUCKET_LABELS,
@@ -100,24 +101,20 @@ export function PreviewPipelinePerformance({
         className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 sm:grid-cols-2 lg:grid-cols-3"
         data-pipeline-filters
       >
-        <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
-          From
-          <input
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm normal-case text-zinc-200"
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
-          To
-          <input
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm normal-case text-zinc-200"
-          />
-        </label>
+        <GuestLockDateField
+          name="pipelineFrom"
+          label="From"
+          value={from}
+          onChange={setFrom}
+          max={to || undefined}
+        />
+        <GuestLockDateField
+          name="pipelineTo"
+          label="To"
+          value={to}
+          onChange={setTo}
+          min={from || undefined}
+        />
         <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
           Ticker
           <select
@@ -200,36 +197,39 @@ export function PreviewPipelinePerformance({
 
       {view.empty ? (
         <p
-          className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-8 text-center text-sm text-zinc-500"
+          className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-6 text-center text-sm text-zinc-500"
           data-pipeline-empty
         >
-          No pipeline outcomes match these filters. Record Learning Outcomes,
-          plan outcomes, or MAF attributions to populate this view.
+          No drill-down rows match these filters. Summary counts below still show
+          (zeros when empty). Record Learning Outcomes or plan outcomes to fill
+          the table.
         </p>
-      ) : (
-        <>
-          <section data-pipeline-summary>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Summary by outcome type
-            </h2>
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
-              {PIPELINE_OUTCOME_BUCKETS.map((id) => (
-                <div
-                  key={id}
-                  className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-3"
-                  data-pipeline-summary-count={id}
-                >
-                  <p className="text-[10px] uppercase tracking-wide text-zinc-500">
-                    {PIPELINE_OUTCOME_BUCKET_LABELS[id]}
-                  </p>
-                  <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-100">
-                    {view.summaryCounts[id]}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
+      ) : null}
 
+      <section data-pipeline-summary>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          Summary by outcome type
+        </h2>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          {PIPELINE_OUTCOME_BUCKETS.map((id) => (
+            <div
+              key={id}
+              className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-3"
+              data-pipeline-summary-count={id}
+            >
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+                {PIPELINE_OUTCOME_BUCKET_LABELS[id]}
+              </p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-100">
+                {view.summaryCounts[id]}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {!view.empty ? (
+        <>
           <section className="grid gap-4 lg:grid-cols-2">
             <div
               className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4"
@@ -285,6 +285,15 @@ export function PreviewPipelinePerformance({
                   <dt className="text-zinc-500">UPL count</dt>
                   <dd className="tabular-nums text-zinc-100">
                     {view.counterfactual.unexecutedPlanLossCount}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-500">Missed opportunities</dt>
+                  <dd
+                    className="tabular-nums text-zinc-100"
+                    data-pipeline-missed-opportunity-count
+                  >
+                    {view.counterfactual.missedOpportunityCount}
                   </dd>
                 </div>
                 <div>

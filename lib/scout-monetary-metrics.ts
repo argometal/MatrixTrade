@@ -134,7 +134,11 @@ export function buildScoutMonetaryRow(plan: TradePlan): ScoutMonetaryRow | null 
 
 export function buildActiveScoutMonetaryRows(plans: TradePlan[]): ScoutMonetaryRow[] {
   return plans
-    .filter((p) => p.status === "watching" || p.status === "ready")
+    .filter((p) => {
+      // Align with war-ready Case menu: no closed outcomes.
+      if (p.outcome?.recordedAt) return false;
+      return p.status === "watching" || p.status === "ready";
+    })
     .map((p) => buildScoutMonetaryRow(p))
     .filter((row): row is ScoutMonetaryRow => row !== null);
 }

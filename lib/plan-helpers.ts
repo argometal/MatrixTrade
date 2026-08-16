@@ -18,8 +18,24 @@ export function planNeedsLearningSyncRepair(plan: TradePlan): boolean {
   );
 }
 
+/**
+ * War-ready Scout: live tactical window for the Case / allocation “go to war” menus.
+ * Closed outcomes (missed_opportunity, UPL, etc.) are learning archive — not war ammo.
+ */
+export function isWarReadyScoutPlan(plan: TradePlan): boolean {
+  return (
+    (plan.status === "watching" || plan.status === "ready") &&
+    !plan.outcome?.recordedAt
+  );
+}
+
+/** Scout window has a recorded terminal outcome — keep data; exclude from war menus. */
+export function isClosedScoutLearningUnit(plan: TradePlan): boolean {
+  return Boolean(plan.outcome?.recordedAt);
+}
+
 export function countActivePlans(plans: TradePlan[]): number {
-  return plans.filter((p) => p.status === "watching" || p.status === "ready").length;
+  return plans.filter(isWarReadyScoutPlan).length;
 }
 
 export function countPlansNeedingReview(plans: TradePlan[]): number {
