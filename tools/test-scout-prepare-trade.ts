@@ -54,6 +54,9 @@ async function main() {
   const planning = await read(
     "app/components/planning-preview/PreviewPlanning.tsx"
   );
+  const watching = await read(
+    "app/components/planning-preview/ScoutWatchingScan.tsx"
+  );
   const fundingMenu = await read(
     "app/components/planning-preview/ScoutFundingExecutionMenu.tsx"
   );
@@ -65,41 +68,31 @@ async function main() {
   );
   const fundingLib = await read("lib/scout-funding-snapshot.ts");
 
-  // 1 — Case-summary Prepare trade must not hard-code shares: 10
-  assert.doesNotMatch(planning, /shares:\s*10/);
-  assert.match(planning, /canonicalShareCount/);
-  assert.match(planning, /buildScoutFundingSnapshot/);
+  // 1 — Execute Prepare trade must not hard-code shares: 10 (16-08 moved off Watching)
+  assert.doesNotMatch(execute, /shares:\s*10/);
+  assert.match(execute, /canonicalShareCount/);
+  assert.match(execute, /buildScoutFundingSnapshot/);
   assert.match(fundingMenu, /data-scout-prepare-trade/);
-  assert.match(planning, /Prepare trade · allocation required/);
+  assert.match(execute, /Prepare trade · allocation required/);
   assert.match(
     prepareNote,
     /Share count unconfigured — calculate allocation first/
   );
   assert.match(fundingMenu, /Canonical share count is required/);
 
-  // Funding input matches Execute (no false stockFileId)
-  assert.match(
-    planning,
-    /authorizableLossRoom:\s*monthly\.monthlyLossRoom/
-  );
-  assert.match(planning, /account:\s*capitalAccount/);
-  assert.match(planning, /capitalConfigurationPresent/);
-  assert.match(
-    planning,
-    /stockFileId omitted — no authoritative Stock File ID/
-  );
-  assert.doesNotMatch(planning, /stockFileId:\s*thesis\.id/);
+  assert.match(execute, /capitalConfigurationPresent/);
+  assert.doesNotMatch(execute, /stockFileId:\s*plan\.stockThesisId/);
   assert.doesNotMatch(planning, /stockFileId:\s*scoutThesis\?\.id/);
 
-  // Primary metrics remain (declutter intact); funding cells moved to menu
-  assert.match(planning, /"Zone"/);
-  assert.match(planning, /"Entry"/);
-  assert.match(planning, /"Stop"/);
-  assert.match(planning, /"Target"/);
-  assert.match(planning, /"Plan R:R"/);
-  assert.match(planning, /"Executable R"/);
-  assert.match(planning, /"Wait Horizon"/);
-  assert.match(planning, /"Room"/);
+  // Watching scan metrics (Open Scout language); funding not on Watching
+  assert.match(watching, /"Zone"/);
+  assert.match(watching, /"Entry"/);
+  assert.match(watching, /"Stop"/);
+  assert.match(watching, /"Target"/);
+  assert.match(watching, /"R"/);
+  assert.match(watching, /"Wait horizon"/);
+  assert.doesNotMatch(watching, /"Room"/);
+  assert.doesNotMatch(watching, /Prepare trade/);
   assert.doesNotMatch(planning, /\["Capital required"/);
   assert.doesNotMatch(planning, /\["Estimated risk"/);
   assert.doesNotMatch(planning, /\["Funding status"/);
@@ -144,21 +137,21 @@ async function main() {
   assert.match(proposal, /"shares": 6/);
   assert.doesNotMatch(proposal, /"shares": 10/);
 
-  // 5 — Manual placeholder 10 remains form-only; primary prepare is on Scout card
+  // 5 — Manual placeholder 10 remains form-only; primary prepare is on Execute (16-08)
   assert.match(execute, /MANUAL_SHARES_PLACEHOLDER\s*=\s*"10"/);
   assert.match(execute, /never authoritative for funding|not funding data/i);
   assert.match(execute, /handleCopyManualProposal/);
   assert.doesNotMatch(execute, /handlePrepareTradeCanonical/);
-  assert.doesNotMatch(execute, /data-scout-prepare-trade/);
-  assert.match(planning, /canonicalShareCount\(/);
-  assert.match(planning, /buildTradeProposalBlock/);
+  assert.match(fundingMenu, /data-scout-prepare-trade/);
+  assert.match(execute, /canonicalShareCount\(/);
+  assert.match(execute, /buildTradeProposalBlock/);
   assert.doesNotMatch(
     execute,
     /buildScoutFundingSnapshot\([\s\S]*shares:\s*form\.shares/
   );
   assert.match(prepareNote, /data-scout-prepare-allocation-msg/);
-  assert.match(planning, /Prepare trade · allocation required/);
-  assert.match(planning, /ScoutFundingExecutionMenu/);
+  assert.match(execute, /Prepare trade · allocation required/);
+  assert.match(execute, /ScoutFundingExecutionMenu/);
   assert.match(fundingMenu, /data-scout-funding-execution-menu/);
   assert.match(execute, /Manual levels → JSON/);
   assert.match(execute, /Copy trade-proposal JSON/);
@@ -177,8 +170,8 @@ async function main() {
   assert.equal(allocated.stockFileId, "unconfigured");
 
   // 9 — Visual declutter markers remain
-  assert.match(planning, /data-scout-case-summary/);
-  assert.match(planning, /data-scout-case-details/);
+  assert.match(watching, /data-scout-case-summary/);
+  assert.doesNotMatch(watching, /data-scout-case-details/);
   assert.match(execute, /data-scout-funding-summary/);
   assert.match(execute, /data-scout-tech-menu/);
 

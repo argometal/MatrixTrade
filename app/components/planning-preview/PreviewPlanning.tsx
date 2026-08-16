@@ -2,17 +2,15 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import { ScoutExecutePanel } from "@/app/components/planning-preview/ScoutExecutePanel";
 import { PlanRecordOutcomePanel } from "@/app/components/planning-preview/PlanRecordOutcomePanel";
+import { ScoutWatchingScan } from "@/app/components/planning-preview/ScoutWatchingScan";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
 import {
   isWarReadyScoutPlan,
   planNeedsLearningSyncRepair,
   planNeedsStrategyReview,
 } from "@/lib/plan-helpers";
-import { scoutingVerdictStyle } from "@/lib/matrix-mechanics-brief";
-import type { MarketEvidence } from "@/lib/market-evidence-types";
 import type { MonthlyRisk } from "@/lib/monthly-risk";
 import type { TradePlan } from "@/lib/plan-types";
 import type { Playbook } from "@/lib/playbook-types";
@@ -22,30 +20,15 @@ import {
 } from "@/lib/scouting-types";
 import {
   isActiveStockThesisStatus,
-  STOCK_THESIS_STATUS_LABELS,
-  formatStockThesisZone,
   type StockThesis,
 } from "@/lib/stock-thesis-types";
 import {
   PlanLevelsSidePanel,
-  PlanMapSummaryLine,
   PlanMapToggleButton,
 } from "./PlanLevelsSidePanel";
-import { scoutDeskSnapshotItems, stockProfileSnapshotItems } from "@/lib/snapshot-packages";
-import { snapshotButtonTitle } from "@/lib/snapshot-verification";
-import type { SnapshotMenuItem } from "@/lib/snapshot-types";
-import type { Experiment, Trade } from "@/lib/types";
+import type { Trade } from "@/lib/types";
 import type { CapitalAccountSnapshot } from "@/lib/capital-account";
 import type { CapitalReservation } from "@/lib/capital-types";
-import {
-  buildScoutFundingSnapshot,
-  canonicalShareCount,
-  scoutFundingSnapshotItem,
-} from "@/lib/scout-funding-snapshot";
-import { copyText } from "@/app/components/ai-bridge/copy-text";
-import { useControlPanel } from "@/app/components/control-panel/MatrixControlPanelProvider";
-import { buildTradeProposalBlock } from "@/lib/build-trade-proposal-block";
-import { stashControlApplyDraft } from "@/lib/control-apply-draft";
 import {
   incompleteTradesForTicker,
   orphanIncompleteTradeTickers,
@@ -57,9 +40,6 @@ import {
   formatConsolidatedOperationalTag,
   formatOperationalR,
   formatOperationalStateLabel,
-  buildOperationalStatusPreview,
-  SCOUT_OPERATIONAL_STATUS_ACTIONS,
-  type OperationalStatusPreview,
   type ScoutOperationalEvaluation,
 } from "@/lib/scout-operational-state";
 import { resolvePlannedRRFromPlan } from "@/lib/plan-risk";
@@ -70,18 +50,7 @@ import {
 } from "@/lib/trade-prospects";
 import { ActiveScoutsComparisonTable } from "@/app/components/planning-preview/ActiveScoutsComparisonTable";
 import { ScoutAllocationProvider } from "@/app/components/planning-preview/ScoutAllocationProvider";
-import { ScoutAllocationImpact } from "@/app/components/planning-preview/ScoutAllocationImpact";
 import { ScoutAllocationStrip } from "@/app/components/planning-preview/ScoutAllocationStrip";
-import { ScoutFundingExecutionMenu } from "@/app/components/planning-preview/ScoutFundingExecutionMenu";
-import { ScoutPrepareAllocationNote } from "@/app/components/planning-preview/ScoutPrepareAllocationNote";
-
-const thesisStatusStyles: Record<string, string> = {
-  draft: "bg-zinc-700/50 text-zinc-400",
-  watching: "bg-sky-500/15 text-sky-300",
-  actionable: "bg-emerald-500/15 text-emerald-400",
-  invalidated: "bg-red-500/15 text-red-400",
-  archived: "bg-zinc-700/50 text-zinc-500",
-};
 
 type ScoutCard = {
   key: string;
@@ -142,14 +111,11 @@ export function PreviewPlanning({
   plans,
   playbooks,
   stockTheses,
-  marketEvidence,
   monthly,
-  experiment,
   trades,
   suggestedTradeId,
   focusPlanId,
   focusThesisId,
-  snapshotItems: initialSnapshotItems,
   reservations = [],
   capitalAccount = null,
   capitalConfigurationPresent,
@@ -157,36 +123,19 @@ export function PreviewPlanning({
   plans: TradePlan[];
   playbooks: Playbook[];
   stockTheses: StockThesis[];
-  marketEvidence: MarketEvidence[];
   monthly: MonthlyRisk;
-  experiment: Experiment;
   trades: Trade[];
   suggestedTradeId: string;
   focusPlanId?: string;
   focusThesisId?: string;
-  snapshotItems: SnapshotMenuItem[];
   reservations?: CapitalReservation[];
   capitalAccount?: CapitalAccountSnapshot | null;
   capitalConfigurationPresent?: boolean;
 }) {
-  const { openPanel } = useControlPanel();
   const [scoutCaseKey, setScoutCaseKey] = useState<string | null>(focusThesisId ?? null);
-  /** Explicit plan for Record Outcome / Retry Sync when primaryPlan is a live Scout. */
+  /** Deep-link focus for Record Outcome / Retry Sync (ATTN → /planning?plan=). */
   const [learningFocusPlanId, setLearningFocusPlanId] = useState<string | null>(null);
   const [planPanelOpen, setPlanPanelOpen] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
-  const [detailsSection, setDetailsSection] = useState<
-    "thesis" | "invalidation" | "fills" | "evidence" | null
-  >(null);
-  const [prepareMsg, setPrepareMsg] = useState("");
-  const [quickOperationalPhrase, setQuickOperationalPhrase] = useState("");
-  const [quickOperationalMsg, setQuickOperationalMsg] = useState("");
-  const [quickOperationalError, setQuickOperationalError] = useState("");
-  const [operationalClipboardOk, setOperationalClipboardOk] = useState<boolean | null>(
-    null
-  );
-  const [operationalPreview, setOperationalPreview] =
-    useState<OperationalStatusPreview | null>(null);
 
   const activeTheses = useMemo(
     () => stockTheses.filter((t) => isActiveStockThesisStatus(t.status)),
@@ -200,7 +149,7 @@ export function PreviewPlanning({
       .map((thesis): ScoutCard | null => {
         const thesisPlans = plans.filter((p) => p.stockThesisId === thesis.id);
         const activePlans = thesisPlans.filter(isWarReadyScoutPlan);
-        // War Case menu: live Scouts only. Closed / missed / sync stay in Learning queue.
+        // War Case menu: live Scouts only. Terminal / sync repair stay on Needs Attention.
         if (activePlans.length === 0) return null;
         const primaryPlan = activePlans[0];
         const levelsView = buildPlanLevelsView(thesis, primaryPlan);
@@ -277,12 +226,6 @@ export function PreviewPlanning({
   const scoutThesis = focusedScoutCard?.thesis ?? null;
   const scoutPrimaryPlan = focusedScoutCard?.primaryPlan ?? null;
 
-  const learningQueue = useMemo(() => {
-    const needsOutcome = plans.filter(planNeedsStrategyReview);
-    const needsSync = plans.filter(planNeedsLearningSyncRepair);
-    return { needsOutcome, needsSync };
-  }, [plans]);
-
   const outcomePanelPlan = useMemo(() => {
     if (learningFocusPlanId) {
       const targeted = plans.find((p) => p.id === learningFocusPlanId);
@@ -315,44 +258,6 @@ export function PreviewPlanning({
 
   const panelLevelsView = focusedScoutCard?.levelsView ?? null;
 
-  const snapshotItems = useMemo(() => {
-    const items = scoutDeskSnapshotItems({
-      playbooks,
-      stockTheses: activeTheses,
-      plans,
-      monthly,
-      experiment,
-      marketEvidence,
-      focusThesis: scoutThesis ?? undefined,
-      focusPlan: focusPlan ?? undefined,
-    });
-    if (focusPlan) {
-      items.push(
-        scoutFundingSnapshotItem({
-          plan: focusPlan,
-          // stockFileId omitted — StockThesis has no authoritative Stock File ID (26-40)
-          reservations,
-          account: capitalAccount,
-          authorizableLossRoom: monthly.monthlyLossRoom,
-          capitalConfigurationPresent,
-        })
-      );
-    }
-    return items;
-  }, [
-    scoutThesis,
-    focusPlan,
-    playbooks,
-    activeTheses,
-    plans,
-    monthly,
-    experiment,
-    marketEvidence,
-    reservations,
-    capitalAccount,
-    capitalConfigurationPresent,
-  ]);
-
   useEffect(() => {
     if (!focusThesisId) return;
     setScoutCaseKey(focusThesisId);
@@ -374,19 +279,7 @@ export function PreviewPlanning({
     }
   }, [focusPlanId, plans]);
 
-  const activeEvidence =
-    scoutThesis != null
-      ? marketEvidence.filter(
-          (row) =>
-            row.stockProfileId.toUpperCase() === scoutThesis.id.toUpperCase() && !row.supersededBy
-        )
-      : [];
-
   const hasCases = scoutCards.length > 0;
-
-  const focusedRr = formatOperationalR(
-    focusedScoutCard?.operational.detectedAssessment.currentExecutableRR
-  );
   const mapFocusCompact = planPanelOpen;
 
   const allocationPlans = useMemo(
@@ -503,53 +396,6 @@ export function PreviewPlanning({
             </section>
           ) : (
             <>
-              {!mapFocusCompact &&
-              (learningQueue.needsOutcome.length > 0 ||
-                learningQueue.needsSync.length > 0) ? (
-                <section
-                  className="rounded-xl border border-amber-500/35 bg-amber-950/25 px-3 py-3"
-                  data-scout-learning-queue
-                >
-                  <p className="text-xs font-semibold uppercase tracking-wide text-amber-200">
-                    Scout learning queue
-                  </p>
-                  <p className="mt-1 text-[11px] text-zinc-400">
-                    Close the circuit before new Scouts: record outcome, or Retry Learning
-                    Sync when outcome already persisted.
-                  </p>
-                  {learningQueue.needsOutcome.length > 0 ? (
-                    <ul className="mt-2 space-y-1" data-scout-needs-outcome>
-                      {learningQueue.needsOutcome.map((plan) => (
-                        <li key={plan.id}>
-                          <button
-                            type="button"
-                            className="text-left text-xs text-amber-100 underline-offset-2 hover:underline"
-                            onClick={() => focusPlanFromAllocation(plan.id)}
-                          >
-                            {plan.ticker} · {plan.id} · {plan.status} · needs outcome
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {learningQueue.needsSync.length > 0 ? (
-                    <ul className="mt-2 space-y-1" data-scout-needs-sync-repair>
-                      {learningQueue.needsSync.map((plan) => (
-                        <li key={plan.id}>
-                          <button
-                            type="button"
-                            className="text-left text-xs text-rose-200 underline-offset-2 hover:underline"
-                            onClick={() => focusPlanFromAllocation(plan.id)}
-                          >
-                            {plan.ticker} · {plan.id} · sync{" "}
-                            {plan.outcome?.learningSyncStatus ?? "pending"} · Retry Sync
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </section>
-              ) : null}
               {!mapFocusCompact ? (
                 <details className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-3 py-2">
                   <summary className="cursor-pointer text-xs font-medium text-zinc-500 hover:text-zinc-300">
@@ -662,24 +508,9 @@ export function PreviewPlanning({
               ) : null}
 
               {focusedScoutCard && !focusedScoutCard.orphan && focusedScoutCard.thesis ? (
-                <section
-                  className={`rounded-2xl border p-4 ${scoutingVerdictStyle(focusedScoutCard.verdict ?? "wait")} ${
-                    mapFocusCompact ? "hidden lg:block" : ""
-                  }`}
-                  data-scout-case-summary
-                >
+                <div className={mapFocusCompact ? "hidden lg:block" : undefined}>
                   {(() => {
-                    const thesis = focusedScoutCard.thesis!;
                     const plan = focusedScoutCard.primaryPlan;
-                    const le = plan?.layeredEntry;
-                    const entry =
-                      plan?.plannedEntry ?? le?.limits?.[0]?.price;
-                    const stop =
-                      plan?.stopPrice ?? le?.commonStopPrice;
-                    const target =
-                      plan?.targetPrice ?? le?.primaryTargetPrice;
-                    const zone = formatStockThesisZone(thesis.levels?.primaryZone);
-                    const rr = focusedScoutCard.plannedRR;
                     const operational = focusedScoutCard.operational.detectedAssessment;
                     const confirmedOperational =
                       focusedScoutCard.operational.confirmedAssessment;
@@ -692,593 +523,28 @@ export function PreviewPlanning({
                             waitHorizon: "now" as const,
                           }
                         : confirmedOperational ?? operational;
-                    const fundingInput = plan
-                      ? {
-                          plan,
-                          // stockFileId omitted — no authoritative Stock File ID (26-40)
-                          reservations,
-                          account: capitalAccount,
-                          authorizableLossRoom: monthly.monthlyLossRoom,
-                          capitalConfigurationPresent,
-                        }
-                      : null;
-                    const fundingSnap = fundingInput
-                      ? buildScoutFundingSnapshot(fundingInput)
-                      : null;
-                    const shares = fundingSnap
-                      ? canonicalShareCount(fundingSnap.shareCount)
-                      : undefined;
-                    const fundingSnapshotForCase = fundingInput
-                      ? scoutFundingSnapshotItem(fundingInput)
-                      : null;
-
-                    const snapshotItemsForCase = stockProfileSnapshotItems({
-                      thesis,
-                      playbooks,
-                      plans,
-                      activeEvidence,
-                    }).filter((item) => item.id !== "mechanics");
-
-                    async function prepareTrade() {
-                      if (!plan || entry === undefined || stop === undefined) {
-                        setPrepareMsg("Need entry + stop on the scout plan.");
-                        return;
-                      }
-                      if (shares === undefined) {
-                        setPrepareMsg(
-                          "Share count unconfigured — calculate allocation first"
-                        );
-                        return;
-                      }
-                      const ok = await copyText(
-                        buildTradeProposalBlock({
-                          id: suggestedTradeId,
-                          ticker: plan.ticker,
-                          entry,
-                          stop,
-                          target,
-                          shares,
-                          playbookId: plan.playbookId,
-                          thesis: `From plan ${plan.id}`,
-                          direction: "long",
-                        })
-                      );
-                      setPrepareMsg(
-                        ok
-                          ? "Copied trade-proposal — paste in Control → Apply"
-                          : "Clipboard blocked"
-                      );
-                      setTimeout(() => setPrepareMsg(""), 2500);
-                    }
-
-                    async function prepareOperationalStatusUpdate(
-                      phrase: string
-                    ) {
-                      if (!plan) {
-                        setQuickOperationalError(
-                          "No Scout Plan selected — cannot prepare status update."
-                        );
-                        setOperationalPreview(null);
-                        setQuickOperationalMsg("");
-                        setOperationalClipboardOk(null);
-                        return;
-                      }
-                      const prepared = buildOperationalStatusPreview(plan, phrase);
-                      if (!prepared.ok) {
-                        setQuickOperationalError(prepared.error);
-                        setOperationalPreview(null);
-                        setQuickOperationalMsg("");
-                        setOperationalClipboardOk(null);
-                        return;
-                      }
-                      const json = prepared.preview.json;
-                      setQuickOperationalError("");
-                      setOperationalPreview(prepared.preview);
-                      // Copy while still in the user-gesture async chain (mobile Safari).
-                      const copied = await copyText(json);
-                      setOperationalClipboardOk(copied);
-                      stashControlApplyDraft(json);
-                      openPanel({ step: "apply", applyJson: json });
-                      if (copied) {
-                        setQuickOperationalMsg(
-                          "JSON copied — Control → Apply opened. Validate → Accept."
-                        );
-                      } else {
-                        setQuickOperationalMsg("");
-                        setQuickOperationalError(
-                          "Clipboard blocked — JSON is ready below and loaded in Apply. Use Copy JSON if needed, then Validate → Accept."
-                        );
-                      }
-                    }
-
-                    async function copyOperationalJsonAgain() {
-                      if (!operationalPreview?.json) return;
-                      const copied = await copyText(operationalPreview.json);
-                      setOperationalClipboardOk(copied);
-                      if (copied) {
-                        setQuickOperationalError("");
-                        setQuickOperationalMsg("JSON copied to clipboard.");
-                      } else {
-                        setQuickOperationalMsg("");
-                        setQuickOperationalError(
-                          "Clipboard still blocked — select the JSON below and copy manually, or use the JSON already loaded in Apply."
-                        );
-                      }
-                    }
-
-                    function openOperationalApply() {
-                      if (!operationalPreview?.json) return;
-                      stashControlApplyDraft(operationalPreview.json);
-                      openPanel({
-                        step: "apply",
-                        applyJson: operationalPreview.json,
-                      });
-                    }
-
                     return (
-                      <>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-xl font-semibold">
-                            {thesis.ticker}
-                          </span>
-                          <span className="text-xs opacity-70">{thesis.id}</span>
-                          <span
-                            className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase ${
-                              thesisStatusStyles[thesis.status] ??
-                              "bg-zinc-800 text-zinc-400"
-                            }`}
-                          >
-                            {STOCK_THESIS_STATUS_LABELS[thesis.status]}
-                          </span>
-                          <span
-                            className="rounded-full border border-current/40 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-                            data-scout-operational-tag
-                          >
-                            {formatConsolidatedOperationalTag({
-                              verdict: focusedScoutCard.verdict,
-                              assessment: displayOperational,
-                            })}
-                          </span>
-                        </div>
-
-                        <dl className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3">
-                          {(
-                            [
-                              ["Zone", zone],
-                              [
-                                "Entry",
-                                entry !== undefined ? String(entry) : "—",
-                              ],
-                              [
-                                "Stop",
-                                stop !== undefined ? String(stop) : "—",
-                              ],
-                              [
-                                "Target",
-                                target !== undefined ? String(target) : "—",
-                              ],
-                              [
-                                "Plan R:R",
-                                rr !== undefined ? `${rr.toFixed(1)}R` : "—",
-                              ],
-                              [
-                                "Executable R",
-                                formatOperationalR(
-                                  displayOperational.currentExecutableRR
-                                ),
-                              ],
-                              [
-                                "Wait Horizon",
-                                displayOperational.waitHorizon,
-                              ],
-                              [
-                                "Room",
-                                `$${monthly.monthlyLossRoom.toFixed(0)}`,
-                              ],
-                              [
-                                "Execution readiness",
-                                plan?.executionReadiness ?? "—",
-                              ],
-                            ] as const
-                          ).map(([label, value]) => (
-                            <div
-                              key={label}
-                              className="rounded-lg border border-current/15 bg-black/10 px-2.5 py-1.5"
-                            >
-                              <dt className="text-[10px] uppercase tracking-wide opacity-60">
-                                {label}
-                              </dt>
-                              <dd className="mt-0.5 text-sm font-medium tabular-nums">
-                                {value}
-                              </dd>
-                            </div>
-                          ))}
-                        </dl>
-
-                        <ScoutAllocationImpact
-                          planId={plan?.id}
-                          onFocusPlan={focusPlanFromAllocation}
-                        />
-
-                        {focusedScoutCard.operational.mismatch ? (
-                          <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-950/20 px-3 py-2 text-xs text-amber-100">
-                            Detected:{" "}
-                            {formatOperationalStateLabel(
-                              operational.operationalState
-                            )}{" "}
-                            · Confirmed:{" "}
-                            {confirmedOperational
-                              ? formatOperationalStateLabel(
-                                  confirmedOperational.operationalState
-                                )
-                              : "none"}{" "}
-                            · Review required
-                          </div>
-                        ) : null}
-
-                        {plan ? (
-                          <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/40 p-3">
-                            <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                              Update operational state
-                            </p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {SCOUT_OPERATIONAL_STATUS_ACTIONS.map((phrase) => (
-                                <button
-                                  key={phrase}
-                                  type="button"
-                                  data-scout-operational-preset
-                                  className="rounded-full border border-zinc-700 px-2.5 py-1 text-[11px] text-zinc-300 hover:bg-zinc-900"
-                                  onClick={() => {
-                                    setQuickOperationalPhrase(phrase);
-                                    void prepareOperationalStatusUpdate(phrase);
-                                  }}
-                                >
-                                  {phrase}
-                                </button>
-                              ))}
-                            </div>
-                            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-                              <input
-                                value={quickOperationalPhrase}
-                                onChange={(e) =>
-                                  setQuickOperationalPhrase(e.target.value)
-                                }
-                                placeholder="Passed / Review 1D / Review 1W / Reanalyze / Unlikely / Armed"
-                                className="min-w-0 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs text-zinc-200"
-                                data-scout-operational-phrase-input
-                              />
-                              <button
-                                type="button"
-                                data-scout-prepare-status-update
-                                className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
-                                onClick={() =>
-                                  void prepareOperationalStatusUpdate(
-                                    quickOperationalPhrase
-                                  )
-                                }
-                              >
-                                Prepare status update
-                              </button>
-                            </div>
-                            {quickOperationalError ? (
-                              <p
-                                className="mt-2 text-xs text-red-300"
-                                data-scout-operational-error
-                                role="alert"
-                              >
-                                {quickOperationalError}
-                              </p>
-                            ) : null}
-                            {quickOperationalMsg ? (
-                              <p
-                                className="mt-2 text-xs text-emerald-300/90"
-                                data-scout-operational-success
-                              >
-                                {quickOperationalMsg}
-                              </p>
-                            ) : null}
-                            {operationalPreview ? (
-                              <div
-                                className="mt-3 space-y-2 rounded-lg border border-zinc-800 bg-black/30 p-3"
-                                data-scout-operational-preview
-                              >
-                                <p className="text-xs font-medium text-zinc-200">
-                                  Action: {operationalPreview.action}
-                                </p>
-                                <p className="text-[10px] uppercase tracking-wide text-zinc-500">
-                                  Changes
-                                </p>
-                                {operationalPreview.changes.length === 0 ? (
-                                  <p className="text-xs text-zinc-500">
-                                    No field changes vs current persisted values.
-                                  </p>
-                                ) : (
-                                  <ul className="space-y-1 text-xs text-zinc-300">
-                                    {operationalPreview.changes.map((change) => (
-                                      <li key={change.field}>
-                                        <span className="font-mono text-zinc-400">
-                                          {change.field}
-                                        </span>
-                                        : {String(change.from)} →{" "}
-                                        {String(change.to)}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                )}
-                                <p className="text-[10px] uppercase tracking-wide text-zinc-500">
-                                  Generated JSON
-                                </p>
-                                <pre
-                                  className="max-h-48 overflow-auto rounded-md border border-zinc-800 bg-zinc-950 p-2 text-[10px] leading-relaxed text-zinc-300"
-                                  data-scout-operational-json
-                                >
-                                  {operationalPreview.json}
-                                </pre>
-                                <div className="flex flex-wrap gap-2">
-                                  {operationalClipboardOk === false ? (
-                                    <button
-                                      type="button"
-                                      data-scout-operational-copy-json
-                                      className="inline-flex rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-1.5 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
-                                      onClick={() => void copyOperationalJsonAgain()}
-                                    >
-                                      Copy JSON
-                                    </button>
-                                  ) : null}
-                                  <button
-                                    type="button"
-                                    data-scout-operational-apply-link
-                                    className="inline-flex rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-500/20"
-                                    onClick={openOperationalApply}
-                                  >
-                                    Open Apply
-                                  </button>
-                                </div>
-                              </div>
-                            ) : null}
-                          </div>
-                        ) : null}
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Link
-                            href={`/stock-theses/${thesis.id}`}
-                            className="rounded-lg border border-current/30 px-3 py-2 text-xs font-medium opacity-90 hover:opacity-100"
-                          >
-                            Open Scout
-                          </Link>
-                          <SnapshotButton
-                            title={snapshotButtonTitle(thesis.ticker, "snapshot")}
-                            description="Profile + evidence + scout"
-                            className="!px-3 !py-2"
-                            items={
-                              snapshotItemsForCase.length > 0
-                                ? snapshotItemsForCase
-                                : snapshotItems.length > 0
-                                  ? snapshotItems
-                                  : initialSnapshotItems
-                            }
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setDetailsOpen(true);
-                              setDetailsSection(null);
-                            }}
-                            className="rounded-lg border border-current/30 px-3 py-2 text-xs font-medium opacity-90 hover:opacity-100"
-                          >
-                            Details
-                          </button>
-                        </div>
-
-                        <ScoutFundingExecutionMenu
-                          fundingSnapshotItem={fundingSnapshotForCase}
-                          prepareTrade={() => void prepareTrade()}
-                          prepareDisabled={shares === undefined}
-                          prepareLabel={
-                            shares === undefined
-                              ? "Prepare trade · allocation required"
-                              : "Prepare trade"
-                          }
-                          blockers={[
-                            ...(shares === undefined
-                              ? ["Share count unconfigured"]
-                              : []),
-                            ...(shares === undefined
-                              ? ["Allocation required"]
-                              : []),
-                            ...(fundingSnap &&
-                            fundingSnap.currentFundingDecision !==
-                              "unconfigured" &&
-                            fundingSnap.currentFundingDecision !== "unknown"
-                              ? [
-                                  String(fundingSnap.currentFundingDecision)
-                                    .replace(/_/g, " ")
-                                    .replace(/\b\w/g, (c) => c.toUpperCase()),
-                                ]
-                              : []),
-                            ...(fundingSnap?.blockingReasons?.some((r) =>
-                              r.toLowerCase().includes("reservation")
-                            )
-                              ? ["Reservation required"]
-                              : []),
-                          ].filter((v, i, a) => a.indexOf(v) === i)}
-                        />
-                        {shares === undefined || prepareMsg ? (
-                          <ScoutPrepareAllocationNote
-                            hasCanonicalShares={shares !== undefined}
-                            prepareMsg={prepareMsg}
-                            linksInNote={false}
-                          />
-                        ) : null}
-
-                        <div
-                          className="mt-3 border-t border-current/15 pt-2"
-                          data-scout-case-details
-                        >
-                          <button
-                            type="button"
-                            onClick={() => setDetailsOpen((v) => !v)}
-                            className="flex w-full items-center justify-between gap-2 py-1.5 text-left text-xs font-medium opacity-80 hover:opacity-100"
-                            aria-expanded={detailsOpen}
-                          >
-                            <span>
-                              Details
-                              <span className="ml-2 font-normal opacity-60">
-                                Thesis, invalidation, fills, evidence
-                              </span>
-                            </span>
-                            <span>{detailsOpen ? "▾" : "▸"}</span>
-                          </button>
-                          {detailsOpen ? (
-                            <div className="mt-2 space-y-2">
-                              {(
-                                [
-                                  {
-                                    id: "thesis" as const,
-                                    title: "Thesis",
-                                    blurb: "Market structure and scenario.",
-                                    body: (
-                                      <div className="space-y-2 text-sm opacity-90">
-                                        {thesis.currentHypothesis ? (
-                                          <p>{thesis.currentHypothesis}</p>
-                                        ) : null}
-                                        {thesis.thesis ? (
-                                          <p className="text-xs opacity-70">
-                                            {thesis.thesis}
-                                          </p>
-                                        ) : (
-                                          <p className="text-xs opacity-60">
-                                            No extended thesis.
-                                          </p>
-                                        )}
-                                      </div>
-                                    ),
-                                  },
-                                  {
-                                    id: "invalidation" as const,
-                                    title: "Invalidation",
-                                    blurb: "Conditions that void the plan.",
-                                    body: (
-                                      <p className="text-sm opacity-90">
-                                        {thesis.riskRules.invalidation ||
-                                          "Unconfigured"}
-                                      </p>
-                                    ),
-                                  },
-                                  {
-                                    id: "fills" as const,
-                                    title: "Fills in war room",
-                                    blurb: "Open-loop fills and re-entries.",
-                                    body:
-                                      focusedScoutCard.linkedTrades.length ===
-                                      0 ? (
-                                        <p className="text-xs opacity-70">
-                                          No open-loop fills for this ticker.
-                                        </p>
-                                      ) : (
-                                        <ul className="space-y-1 text-xs">
-                                          {focusedScoutCard.linkedTrades.map(
-                                            (t) => (
-                                              <li
-                                                key={t.id}
-                                                className="flex flex-wrap justify-between gap-2"
-                                              >
-                                                <Link
-                                                  href={`/trades/${t.id}`}
-                                                  className="underline opacity-90 hover:opacity-100"
-                                                >
-                                                  {t.id} · {t.status}
-                                                  {t.status === "closed"
-                                                    ? " · review pending"
-                                                    : ""}
-                                                </Link>
-                                                <span className="opacity-70">
-                                                  {t.entry}
-                                                  {t.target !== undefined
-                                                    ? ` → ${t.target}`
-                                                    : ""}
-                                                </span>
-                                              </li>
-                                            )
-                                          )}
-                                        </ul>
-                                      ),
-                                  },
-                                  {
-                                    id: "evidence" as const,
-                                    title: "Evidence",
-                                    blurb: "Charts, notes and references.",
-                                    body: (
-                                      <div className="space-y-1 text-xs opacity-80">
-                                        {activeEvidence.length === 0 ? (
-                                          <p>No active evidence linked.</p>
-                                        ) : (
-                                          <ul className="space-y-1">
-                                            {activeEvidence
-                                              .slice(0, 8)
-                                              .map((ev) => (
-                                                <li key={ev.id}>
-                                                  {ev.category}
-                                                  {ev.value
-                                                    ? ` · ${ev.value.slice(0, 80)}`
-                                                    : ""}
-                                                </li>
-                                              ))}
-                                          </ul>
-                                        )}
-                                        {focusedScoutCard.levelsView ? (
-                                          <p className="pt-1 opacity-70">
-                                            <PlanMapSummaryLine
-                                              view={focusedScoutCard.levelsView}
-                                            />
-                                          </p>
-                                        ) : null}
-                                      </div>
-                                    ),
-                                  },
-                                ] as const
-                              ).map((row) => {
-                                const open = detailsSection === row.id;
-                                return (
-                                  <div
-                                    key={row.id}
-                                    className="rounded-lg border border-current/15 bg-black/10"
-                                  >
-                                    <button
-                                      type="button"
-                                      className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left"
-                                      onClick={() =>
-                                        setDetailsSection(open ? null : row.id)
-                                      }
-                                      aria-expanded={open}
-                                    >
-                                      <div>
-                                        <p className="text-xs font-medium">
-                                          {row.title}
-                                        </p>
-                                        <p className="text-[11px] opacity-60">
-                                          {row.blurb}
-                                        </p>
-                                      </div>
-                                      <span className="text-xs opacity-50">
-                                        {open ? "▾" : "▸"}
-                                      </span>
-                                    </button>
-                                    {open ? (
-                                      <div className="border-t border-current/10 px-3 py-2">
-                                        {row.body}
-                                      </div>
-                                    ) : null}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : null}
-                        </div>
-                      </>
+                      <ScoutWatchingScan
+                        thesis={focusedScoutCard.thesis}
+                        plan={plan}
+                        verdict={focusedScoutCard.verdict}
+                        plannedRR={focusedScoutCard.plannedRR}
+                        displayOperational={displayOperational}
+                        mismatch={focusedScoutCard.operational.mismatch}
+                        detectedStateLabel={formatOperationalStateLabel(
+                          operational.operationalState
+                        )}
+                        confirmedStateLabel={
+                          confirmedOperational
+                            ? formatOperationalStateLabel(
+                                confirmedOperational.operationalState
+                              )
+                            : undefined
+                        }
+                      />
                     );
                   })()}
-                </section>
+                </div>
               ) : null}
 
               {outcomePanelPlan && !mapFocusCompact ? (

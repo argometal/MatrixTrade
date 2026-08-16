@@ -439,9 +439,7 @@ async function main() {
   const planning = await read(
     "app/components/planning-preview/PreviewPlanning.tsx"
   );
-  const impact = await read(
-    "app/components/planning-preview/ScoutAllocationImpact.tsx"
-  );
+  // ScoutAllocationImpact UI removed in 16-08 (Watching trim); Compare/Board keep selection UX.
   const strip = await read(
     "app/components/planning-preview/ScoutAllocationStrip.tsx"
   );
@@ -465,15 +463,15 @@ async function main() {
   );
   const simulateSrc = await read("lib/scout-allocation-simulate.ts");
 
-  // 18 — Scout card displays relationship
-  assert.match(impact, /Allocation impact/);
-  assert.match(impact, /Relationship|Order sensitive/);
-  assert.match(impact, /data-scout-allocation-impact/);
-  assert.match(planning, /ScoutAllocationImpact/);
+  // 18 — Watching no longer mounts Allocation Impact (16-08)
+  assert.doesNotMatch(planning, /ScoutAllocationImpact/);
+  assert.doesNotMatch(
+    await read("app/components/planning-preview/ScoutWatchingScan.tsx"),
+    /ScoutAllocationImpact|Allocation impact/
+  );
 
-  // 19 / 20 — Add / Remove
-  assert.match(impact, /Add to allocation/);
-  assert.match(impact, /Remove from allocation/);
+  // 19 / 20 — Add / Remove live on Compare / Board
+  assert.match(compare, /add\(row\.planId\)|remove\(row\.planId\)/);
   assert.match(provider, /const add = useCallback/);
   assert.match(provider, /const remove = useCallback/);
 
@@ -494,8 +492,12 @@ async function main() {
   assert.match(strip, /Risk left/);
   assert.match(planning, /ScoutAllocationStrip/);
 
-  // focused UI exposes order_sensitive directional preview
-  assert.match(impact, /selected first/i);
+  // order_sensitive label stays in allocation ontology (Compare uses RELATIONSHIP_LABELS)
+  assert.match(
+    await read("lib/scout-allocation-types.ts"),
+    /order_sensitive:\s*"Order sensitive"/
+  );
+  assert.match(compare, /SCOUT_ALLOCATION_RELATIONSHIP_LABELS/);
 
   // 24 — Board groups relationships
   assert.match(board, /Relationship groups/);
@@ -512,7 +514,7 @@ async function main() {
   assert.match(provider, /Does not persist across reloads/);
 
   // 27 — canonical-share restriction intact
-  assert.match(planning, /canonicalShareCount/);
+  assert.match(execute, /canonicalShareCount/);
   assert.match(prepareNote, /Allocation selected · share count still unconfigured/);
   assert.match(prepareNote, /Share count unconfigured — calculate allocation first/);
   assert.match(execute, /canonicalShareCount/);
@@ -533,11 +535,7 @@ async function main() {
   assert.doesNotMatch(planning, /stockFileId:\s*scoutThesis\?\.id/);
   assert.doesNotMatch(boardPage, /stockFileId:\s*.*stockThesisId/);
 
-  // 30 — mobile safe-area remains
-  assert.match(
-    planning,
-    /pb-\[calc\(6rem\+env\(safe-area-inset-bottom\)\)\]/
-  );
+  // 30 — Board mobile safe-area remains
   assert.match(
     board,
     /pb-\[calc\(4rem\+env\(safe-area-inset-bottom\)\)\]/

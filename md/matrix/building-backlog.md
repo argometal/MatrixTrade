@@ -1,7 +1,17 @@
 # MatrixTrade — building backlog
 
-**Last updated:** 2026-07-22  
+**Last updated:** 2026-08-16  
 **Purpose:** Active product/ops work — priorities, blockers, resume targets. Not library doc debt (see [library-alignment-backlog.md](library-alignment-backlog.md)).
+
+---
+
+## Scout Desk — UI trim (16-08)
+
+| Field | Value |
+|-------|-------|
+| **Status** | **Shipped** — Watching scan · Open Scout · Execute; Learning Queue removed from Desk UI |
+| **Doc** | [scout-trim-16-08.md](scout-trim-16-08.md) |
+| **Do not** | Re-add Learning Queue banner; dump funding onto Watching; new Scout states |
 
 ---
 
@@ -24,7 +34,7 @@
 | **Also shipped** | Scout Case list ordered by planned R high→low (`lib/scout-case-sort.ts`) |
 | **Shipped (layered R/risk)** | `lib/layered-entry-risk.ts`; `rules.defaultRiskBudget`; Plan map R/risk fill states; MAF layered fill fields; Mechanics rev **24→25** |
 | **Shipped (Family B bull-trend)** | `lib/family-b-assessment.ts`; Scout `FamilyBBullTrendPanel`; `familyBAssessment` on decision-update; Analyze package section |
-| **Shipped (Scout Learning P0 visibility)** | Planning **Scout learning queue** + `learningFocusPlanId` — retry sync on PLAN-006 when PLAN-008 is live; `/planning?plan=PLAN-xxx` from Needs Attention; P0 shipped on main — see [`scout-learning-circuit-audit-handoff.md`](scout-learning-circuit-audit-handoff.md) |
+| **Shipped (Scout Learning P0 visibility)** | Planning deep-link `/planning?plan=` + outcome panel; Desk Learning Queue **removed in 16-08** (ATTN owns inbox) — see [scout-trim-16-08.md](scout-trim-16-08.md) |
 
 ---
 
