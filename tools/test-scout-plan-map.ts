@@ -214,31 +214,22 @@ async function main() {
     planning,
     /scoutCards\.map\(\(card\) => \{\s*const selected = card\.key/
   );
-  assert.match(planning, /Update operational state/);
-  assert.match(planning, /Passed/);
-  assert.match(planning, /Review 1D/);
-  assert.match(planning, /Review 1W/);
-  assert.match(planning, /Reanalyze/);
-  assert.match(planning, /Unlikely/);
-  assert.match(planning, /Armed/);
-  assert.match(planning, /Prepare status update/);
-  assert.match(planning, /prepareOperationalStatusUpdate/);
-  assert.match(planning, /buildOperationalStatusPreview/);
-  assert.match(planning, /data-scout-operational-preset/);
-  assert.match(planning, /data-scout-operational-preview/);
-  assert.match(planning, /data-scout-operational-error/);
-  assert.match(planning, /data-scout-operational-json/);
-  assert.match(planning, /openPanel\(\{\s*step:\s*"apply",\s*applyJson:/);
-  assert.match(planning, /data-scout-operational-apply-link/);
-  assert.match(planning, /Open Apply/);
-  assert.match(planning, /stashControlApplyDraft/);
-  assert.match(
-    planning,
-    /setQuickOperationalPhrase\(phrase\);\s*void prepareOperationalStatusUpdate\(phrase\)/
+  // 16-08 — operational Apply workshop removed from Watching; lib contract remains
+  const opsLib = await read("lib/scout-operational-state.ts");
+  assert.match(opsLib, /buildOperationalStatusPreview/);
+  assert.match(opsLib, /SCOUT_OPERATIONAL_STATUS_ACTIONS/);
+  assert.match(opsLib, /Passed/);
+  assert.match(opsLib, /Review 1D/);
+  assert.match(opsLib, /formatScoutWatchTriggerLine/);
+  const watching = await read(
+    "app/components/planning-preview/ScoutWatchingScan.tsx"
   );
-  assert.match(planning, /data-scout-operational-tag/);
-  assert.match(planning, /formatConsolidatedOperationalTag/);
-  assert.match(planning, /ScoutFundingExecutionMenu/);
+  assert.match(watching, /data-scout-operational-tag/);
+  assert.match(watching, /formatConsolidatedOperationalTag/);
+  const execute = await read(
+    "app/components/planning-preview/ScoutExecutePanel.tsx"
+  );
+  assert.match(execute, /ScoutFundingExecutionMenu/);
   assert.match(fundingMenu, /data-scout-funding-execution-menu/);
   assert.match(fundingMenu, /Funding &amp; execution|Funding & execution/);
 

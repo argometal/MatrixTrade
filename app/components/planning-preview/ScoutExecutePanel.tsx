@@ -28,6 +28,11 @@ import { FamilyBChecklist } from "@/app/components/playbook/FamilyBChecklist";
 import { FamilyBBullTrendPanel } from "@/app/components/planning-preview/FamilyBBullTrendPanel";
 import { LayeredEntryPanel } from "@/app/components/planning-preview/LayeredEntryPanel";
 import { ModifiedKellyPanel } from "@/app/components/planning-preview/ModifiedKellyPanel";
+import { ScoutFundingExecutionMenu } from "@/app/components/planning-preview/ScoutFundingExecutionMenu";
+import { ScoutPrepareAllocationNote } from "@/app/components/planning-preview/ScoutPrepareAllocationNote";
+import { scoutFundingSnapshotItem } from "@/lib/scout-funding-snapshot";
+import { copyText } from "@/app/components/ai-bridge/copy-text";
+
 
 /** Manual form placeholder only — never authoritative for funding (26-48). */
 const MANUAL_SHARES_PLACEHOLDER = "10";
@@ -124,6 +129,8 @@ export function ScoutExecutePanel({
   const [techOpen, setTechOpen] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [prepareMsg, setPrepareMsg] = useState("");
+
 
   const prefill = useMemo(
     () => (prospect ? prospectToPrefill(prospect) : undefined),
@@ -274,8 +281,10 @@ export function ScoutExecutePanel({
     );
   }
 
+  const activePlan = plan;
+
   const fundingInput = {
-    plan,
+    plan: activePlan,
     stockFileId,
     reservations,
     account: capitalAccount,
@@ -330,18 +339,55 @@ export function ScoutExecutePanel({
   const canonicalShares = canonicalShareCount(fundingSnap.shareCount);
 
   const fundingFollowUp = assessFundingFollowUp({
-    plan,
+    plan: activePlan,
     reservations,
     account: capitalAccount,
     authorizableLossRoom: monthlyLossRoom,
     capitalConfigurationPresent,
   });
   const activeReservation = reservations.find(
-    (r) => r.planId === plan.id && isActiveReservation(r)
+    (r) => r.planId === activePlan.id && isActiveReservation(r)
   );
   const reservationStale = activeReservation
-    ? isReservationStaleRelativeToPlan(activeReservation, plan)
+    ? isReservationStaleRelativeToPlan(activeReservation, activePlan)
     : false;
+
+  const entry =
+    activePlan.plannedEntry ?? activePlan.layeredEntry?.limits?.[0]?.price;
+  const stop = activePlan.stopPrice ?? activePlan.layeredEntry?.commonStopPrice;
+  const target =
+    activePlan.targetPrice ?? activePlan.layeredEntry?.primaryTargetPrice;
+  const fundingSnapshotForCase = scoutFundingSnapshotItem(fundingInput);
+
+  async function prepareTrade() {
+    if (entry === undefined || stop === undefined) {
+      setPrepareMsg("Need entry + stop on the scout plan.");
+      return;
+    }
+    if (canonicalShares === undefined) {
+      setPrepareMsg("Share count unconfigured — calculate allocation first");
+      return;
+    }
+    const ok = await copyText(
+      buildTradeProposalBlock({
+        id: suggestedTradeId,
+        ticker: activePlan.ticker,
+        entry,
+        stop,
+        target,
+        shares: canonicalShares,
+        playbookId: activePlan.playbookId,
+        thesis: `From plan ${activePlan.id}`,
+        direction: "long",
+      })
+    );
+    setPrepareMsg(
+      ok
+        ? "Copied trade-proposal — paste in Control → Apply"
+        : "Clipboard blocked"
+    );
+    setTimeout(() => setPrepareMsg(""), 2500);
+  }
 
   return (
     <section
@@ -458,7 +504,41 @@ export function ScoutExecutePanel({
 
       {error ? <p className="mt-2 text-xs text-red-400">{error}</p> : null}
 
-      {/* Prepare trade / Funding Snapshot live once in Scout card Funding & execution (29-48). */}
+      <ScoutFundingExecutionMenu
+        fundingSnapshotItem={fundingSnapshotForCase}
+        prepareTrade={() => void prepareTrade()}
+        prepareDisabled={canonicalShares === undefined}
+        prepareLabel={
+          canonicalShares === undefined
+            ? "Prepare trade · allocation required"
+            : "Prepare trade"
+        }
+        blockers={[
+          ...(canonicalShares === undefined
+            ? ["Share count unconfigured", "Allocation required"]
+            : []),
+          ...(fundingSnap.currentFundingDecision !== "unconfigured" &&
+          fundingSnap.currentFundingDecision !== "unknown"
+            ? [
+                String(fundingSnap.currentFundingDecision)
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (c) => c.toUpperCase()),
+              ]
+            : []),
+          ...(fundingSnap.blockingReasons?.some((r) =>
+            r.toLowerCase().includes("reservation")
+          )
+            ? ["Reservation required"]
+            : []),
+        ].filter((v, i, a) => a.indexOf(v) === i)}
+      />
+      {canonicalShares === undefined || prepareMsg ? (
+        <ScoutPrepareAllocationNote
+          hasCanonicalShares={canonicalShares !== undefined}
+          prepareMsg={prepareMsg}
+          linksInNote={false}
+        />
+      ) : null}
 
       <div className="mt-3 border-t border-zinc-800/80 pt-2">
         <button

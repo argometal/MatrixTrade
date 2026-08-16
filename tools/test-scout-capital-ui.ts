@@ -39,14 +39,13 @@ async function main() {
   assert.match(execute, /capitalAccount/);
   assert.match(execute, /capitalConfigurationPresent/);
 
-  // Visible funding summary on Execute; snapshot/prepare once in Funding & execution
+  // Visible funding summary on Execute; snapshot/prepare in Funding & execution (16-08 on Execute)
   assert.match(execute, /data-scout-funding-summary/);
   assert.match(fundingMenu, /data-scout-funding-snapshot/);
   assert.match(fundingMenu, /Scout Funding Snapshot/);
   assert.match(fundingMenu, /data-scout-prepare-trade/);
-  assert.match(planning, /ScoutFundingExecutionMenu/);
-  assert.doesNotMatch(execute, /Scout Funding Snapshot/);
-  assert.doesNotMatch(execute, /data-scout-prepare-trade/);
+  assert.match(execute, /ScoutFundingExecutionMenu/);
+  assert.doesNotMatch(planning, /ScoutFundingExecutionMenu/);
   assert.match(execute, /Capital required/);
   assert.match(execute, /Estimated risk/);
   assert.match(execute, /Available capital/);
@@ -62,14 +61,13 @@ async function main() {
   assert.match(execute, /MANUAL_SHARES_PLACEHOLDER/);
   assert.doesNotMatch(execute, /handlePrepareTradeCanonical/);
   assert.match(execute, /canonicalShareCount/);
-  assert.match(planning, /buildTradeProposalBlock/);
+  assert.match(execute, /buildTradeProposalBlock/);
   assert.doesNotMatch(
     execute,
     /buildScoutFundingSnapshot\([\s\S]*shares:\s*form\.shares/
   );
   assert.doesNotMatch(planning, /shares:\s*10/);
-  assert.match(planning, /canonicalShareCount/);
-  assert.match(planning, /Prepare trade · allocation required/);
+  assert.match(execute, /Prepare trade · allocation required/);
 
   // Snapshot ontology: thesis present, no file source → file unconfigured
   __setCapitalPlannerStoreForTests({

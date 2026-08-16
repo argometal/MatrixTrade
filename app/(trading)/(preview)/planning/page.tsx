@@ -4,13 +4,10 @@ import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
 import { getCapitalAccountSnapshot } from "@/lib/capital-account";
 import { getActiveCapitalConfiguration } from "@/lib/capital-configuration";
 import { listCapitalReservations } from "@/lib/capital-reservation";
-import { getMarketEvidence } from "@/lib/market-evidence";
 import { getPlans } from "@/lib/plans";
 import { getPlaybooks } from "@/lib/playbooks";
-import { scoutDeskSnapshotItems } from "@/lib/snapshot-packages";
 import { getStockTheses } from "@/lib/stock-theses";
-import { isActiveStockThesisStatus } from "@/lib/stock-thesis-types";
-import { getExperiment, getMonthlyRisk, getTrades } from "@/lib/storage";
+import { getMonthlyRisk, getTrades } from "@/lib/storage";
 import { suggestNextTradeId } from "@/lib/trades-workspace";
 import type { CapitalAccountSnapshot } from "@/lib/capital-account";
 import type { CapitalReservation } from "@/lib/capital-types";
@@ -33,8 +30,6 @@ export default async function PlanningPage({
     playbooks,
     stockTheses,
     monthly,
-    experiment,
-    marketEvidence,
     trades,
     params,
     reservationsResult,
@@ -45,8 +40,6 @@ export default async function PlanningPage({
     getPlaybooks(),
     getStockTheses(),
     getMonthlyRisk(),
-    getExperiment(),
-    getMarketEvidence(),
     getTrades(),
     searchParams,
     settle(listCapitalReservations()),
@@ -54,13 +47,8 @@ export default async function PlanningPage({
     settle(getActiveCapitalConfiguration()),
   ]);
 
-  const focusPlanId = params.plan?.toUpperCase();
-  const focusThesisId = params.thesis?.toUpperCase();
-  const activeTheses = stockTheses.filter((t) => isActiveStockThesisStatus(t.status));
-  const focusPlan = focusPlanId ? plans.find((p) => p.id === focusPlanId) : undefined;
-  const focusThesis =
-    (focusThesisId ? stockTheses.find((t) => t.id === focusThesisId) : undefined) ??
-    activeTheses[0];
+  const focusPlanId = params.plan?.trim() || undefined;
+  const focusThesisId = params.thesis?.trim() || undefined;
   const suggestedTradeId = suggestNextTradeId(trades);
 
   const reservations: CapitalReservation[] = reservationsResult ?? [];
@@ -69,17 +57,6 @@ export default async function PlanningPage({
     configurationResult && configurationResult.status === "active"
   );
 
-  const snapshotItems = scoutDeskSnapshotItems({
-    playbooks,
-    stockTheses: activeTheses,
-    plans,
-    monthly,
-    experiment,
-    marketEvidence,
-    focusThesis,
-    focusPlan,
-  });
-
   return (
     <Suspense fallback={null}>
       <PageHelpPanel pageId="planning" trigger="icon">
@@ -87,14 +64,11 @@ export default async function PlanningPage({
           plans={plans}
           playbooks={playbooks}
           stockTheses={stockTheses}
-          marketEvidence={marketEvidence}
           monthly={monthly}
-          experiment={experiment}
           trades={trades}
           suggestedTradeId={suggestedTradeId}
           focusPlanId={focusPlanId}
           focusThesisId={focusThesisId}
-          snapshotItems={snapshotItems}
           reservations={reservations}
           capitalAccount={capitalAccount}
           capitalConfigurationPresent={capitalConfigurationPresent}

@@ -5,15 +5,13 @@
 
 ---
 
-## Scout Desk — convergence (diagnose before trim)
+## Scout Desk — convergence (16-07 → 16-08)
 
 | Field | Value |
 |-------|-------|
-| **Status** | **16-07 diagnosis only** — no UI code yet |
-| **Doc** | [scout-convergence-audit-16-07.md](scout-convergence-audit-16-07.md) |
-| **Focus** | Learning Queue vs ATTN; Watching dump vs Execute density; confirm 16-04 lean |
-| **Do not** | Add Scout states/pages; re-filter war universe; build before trim decisions |
-
+| **Status** | **16-08 shipped** (after 16-07 diagnosis) — Watching scan · Open Scout · Execute; Learning Queue removed from Desk UI |
+| **Doc** | [scout-convergence-audit-16-07.md](scout-convergence-audit-16-07.md) · [scout-trim-16-08.md](scout-trim-16-08.md) |
+| **Do not** | Re-add Learning Queue banner; dump funding onto Watching; new Scout states; re-filter war universe |
 ---
 
 ## FORWARD — MTA-002 Operability (priority north star)
@@ -35,7 +33,7 @@
 | **Also shipped** | Scout Case list ordered by planned R high→low (`lib/scout-case-sort.ts`) |
 | **Shipped (layered R/risk)** | `lib/layered-entry-risk.ts`; `rules.defaultRiskBudget`; Plan map R/risk fill states; MAF layered fill fields; Mechanics rev **24→25** |
 | **Shipped (Family B bull-trend)** | `lib/family-b-assessment.ts`; Scout `FamilyBBullTrendPanel`; `familyBAssessment` on decision-update; Analyze package section |
-| **Shipped (Scout Learning P0 visibility)** | Planning **Scout learning queue** + `learningFocusPlanId` — retry sync on PLAN-006 when PLAN-008 is live; `/planning?plan=PLAN-xxx` from Needs Attention; P0 shipped on main — see [`scout-learning-circuit-audit-handoff.md`](scout-learning-circuit-audit-handoff.md) |
+| **Shipped (Scout Learning P0 visibility)** | Planning deep-link `/planning?plan=` + outcome panel; Desk Learning Queue **removed in 16-08** (ATTN owns inbox) — see [scout-trim-16-08.md](scout-trim-16-08.md) |
 
 ---
 
