@@ -284,7 +284,8 @@ export function V2TopicDetailPanel({
     return segments.filter((seg) => seg.value > 0);
   }, [inspectEvent]);
   const mobileDetail = Boolean(onBack);
-  const compactChrome = mobileDetail;
+  // Compact / pinned upper chrome disabled — header scrolls with content.
+  const compactChrome = false;
   const showMobileManageBar = mobileDetail && privateUnlocked;
   const attachmentCount = selected.fileCount + selected.photoCount;
   const { orgs: linkedOrgs, projects: linkedProjects, people: linkedPeople, other: linkedOther } =
@@ -321,8 +322,11 @@ export function V2TopicDetailPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <div
+        className={`argus-v2-scroll min-h-0 flex-1 overflow-y-auto ${showMobileManageBar ? "pb-24 lg:pb-5" : ""}`}
+      >
       {onBack ? (
-        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-3">
+        <div className="border-b border-zinc-800/80 px-4 py-3">
           <button
             type="button"
             onClick={onBack}
@@ -339,7 +343,7 @@ export function V2TopicDetailPanel({
         label={selected.name}
         href={`/argus/v2/browse/topics?selected=${selected.id}`}
       />
-      <div className="shrink-0 border-b border-zinc-800/80 p-3 sm:p-5">
+      <div className="border-b border-zinc-800/80 p-3 sm:p-5">
         <V2DetailCompactHeader
           mobileDetail={mobileDetail}
           compact={compactChrome}
@@ -471,9 +475,7 @@ export function V2TopicDetailPanel({
         </div>
       </div>
 
-      <div
-        className={`argus-v2-scroll min-h-0 flex-1 overflow-y-auto p-3 sm:p-5 ${showMobileManageBar ? "pb-24 lg:pb-5" : ""}`}
-      >
+      <div className="p-3 sm:p-5">
         <V2PrivateEvidenceGate
           locked={privateLocked}
           privateConfigured={privateConfigured}
@@ -889,6 +891,7 @@ export function V2TopicDetailPanel({
             </div>
           ) : null}
         </V2PrivateEvidenceGate>
+      </div>
       </div>
 
       <V2MobileUnlockedManageBar

@@ -330,7 +330,8 @@ export function V2InboxDetailPanel({
 
   const statusDisplay = inboxStatusDisplay(status);
   const mobileDetail = Boolean(onBack);
-  const compactChrome = mobileDetail && panelTab === "email";
+  // Compact / pinned upper chrome disabled — header scrolls with content.
+  const compactChrome = false;
 
   const desktopActions = (
     <div ref={menuRef} className="relative hidden shrink-0 items-center gap-2 lg:flex">
@@ -587,8 +588,9 @@ export function V2InboxDetailPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
+      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto">
       {onBack ? (
-        <div className="shrink-0 border-b border-zinc-800/80 px-4 py-3">
+        <div className="border-b border-zinc-800/80 px-4 py-3">
           <button
             type="button"
             onClick={onBack}
@@ -598,7 +600,7 @@ export function V2InboxDetailPanel({
           </button>
         </div>
       ) : null}
-      <div className="shrink-0 border-b border-zinc-800/80 px-5 py-4">
+      <div className="border-b border-zinc-800/80 px-5 py-4">
         {convertedLog ? (
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-500/30 bg-violet-950/25 px-3 py-2.5">
             <div className="min-w-0">
@@ -684,7 +686,7 @@ export function V2InboxDetailPanel({
         </div>
       </div>
 
-      <div className="argus-v2-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4">
+      <div className="px-5 py-4">
         {panelTab === "email" ? (
           <div className="space-y-4">
             <dl className="grid gap-1.5 rounded-xl border border-zinc-800/60 bg-zinc-900/20 px-4 py-3 text-xs sm:grid-cols-[5rem_1fr]">
@@ -729,6 +731,7 @@ export function V2InboxDetailPanel({
         ) : null}
         {panelTab === "links" ? linksWorkspace : null}
         <p className="mt-6 text-center text-[11px] text-zinc-600">✨ Created for you by Argus AI</p>
+      </div>
       </div>
 
       {canTriage ? (
