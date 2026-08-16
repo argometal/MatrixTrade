@@ -2,12 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0815k`
+Pinned revision: `main0815l`
 
-Ship commit: `a2ec8c1`
+Ship commit: `73f9d36`
 
 Includes:
-- PR #351 — Neighborhood graph size stable on scroll (no wheel zoom; fixed 480px canvas)
+- PR #350 — Events → Tags: drag branch Tags onto Linked to this Event
+- Prior `main0815k` / #351–#352: Neighborhood graph size stable on scroll
 - Prior `main0815j` / #348–#349: 16-0E Scout Case multi-plan selector
 - Prior `main0815i` / #347: 16-08 Scout trim & convergence + 16-07 audit
 - Prior `main0815h` / #341–#342: A06 Topics scroll / no pinned detail chrome
