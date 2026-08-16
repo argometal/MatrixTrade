@@ -72,7 +72,7 @@ async function main() {
     status: "expired",
     outcome: {
       planId: "PLAN-099",
-      outcomeKind: "expired_no_trigger",
+      outcomeKind: "unexecuted_plan_loss",
       recordedAt: "2026-08-16T00:00:00.000Z",
       tradeExecuted: false,
       entryTriggered: false,
