@@ -4,6 +4,7 @@
  */
 
 import type { TradePlan } from "./plan-types";
+import { isWarReadyScoutPlan } from "./plan-helpers";
 import {
   projectFillStates,
   type LayeredFillStateProjection,
@@ -134,7 +135,7 @@ export function buildScoutMonetaryRow(plan: TradePlan): ScoutMonetaryRow | null 
 
 export function buildActiveScoutMonetaryRows(plans: TradePlan[]): ScoutMonetaryRow[] {
   return plans
-    .filter((p) => p.status === "watching" || p.status === "ready")
+    .filter(isWarReadyScoutPlan)
     .map((p) => buildScoutMonetaryRow(p))
     .filter((row): row is ScoutMonetaryRow => row !== null);
 }

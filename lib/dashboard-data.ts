@@ -29,6 +29,7 @@ import { listCapitalReservations } from "./capital-reservation";
 import type { DashboardData } from "./dashboard-types";
 import type { Experiment } from "./types";
 import type { MonthlyRisk } from "./monthly-risk";
+import { autoRetryPlansNeedingLearningSync } from "./plan-outcome-learning-sync";
 
 export type { DashboardData } from "./dashboard-types";
 export { formatDashboardUsd, formatDashboardPf } from "./dashboard-display";
@@ -109,10 +110,10 @@ export async function loadDashboardData(): Promise<DashboardData> {
   const monthly = monthlyR.value;
   const trades = tradesR.value;
   const playbooks = playbooksR.value;
-  const plans = plansR.value;
+  let plans = plansR.value;
   const stockTheses = stockThesesR.value;
-  const observations = observationsR.value;
-  const learningOutcomes = learningOutcomesR.value;
+  let observations = observationsR.value;
+  let learningOutcomes = learningOutcomesR.value;
   const reservations = reservationsR.value;
 
   let pendingInbox: Awaited<ReturnType<typeof listAllPendingInboxItems>> = [];
@@ -122,6 +123,19 @@ export async function loadDashboardData(): Promise<DashboardData> {
     console.error("loadDashboardData inbox pending failed:", err);
   }
 
+  // 16-01: auto-retry idempotent LO/OBS sync; ATTN only if still broken after.
+  try {
+    plans = await autoRetryPlansNeedingLearningSync(plans);
+    const [loRefresh, obsRefresh] = await Promise.all([
+      settledValue(getLearningOutcomes(), learningOutcomes, "learning-refresh"),
+      settledValue(getObservations(), observations, "observations-refresh"),
+    ]);
+    learningOutcomes = loRefresh.value;
+    observations = obsRefresh.value;
+  } catch (err) {
+    console.error("loadDashboardData learning sync auto-retry failed:", err);
+  }
+
   const rawItems = [
     ...buildAttentionItems(trades, pendingInbox, playbooks, monthly),
     ...buildPlanAttentionItems(plans, learningOutcomes, observations),
@@ -129,7 +143,7 @@ export async function loadDashboardData(): Promise<DashboardData> {
     ...buildExpiredReservationAttentionItems(reservations).map((item) => ({
       id: item.id,
       label: item.title,
-      href: "/planning/capital",
+      href: `/planning/capital`,
       priority: item.priority,
     })),
   ].sort((a, b) => a.priority - b.priority);
@@ -146,6 +160,7 @@ export async function loadDashboardData(): Promise<DashboardData> {
       pendingInbox,
       monthly,
       experiment,
+      reservations,
     });
   } catch (err) {
     console.error("loadDashboardData attention enrich failed:", err);

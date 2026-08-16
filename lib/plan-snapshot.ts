@@ -1,4 +1,5 @@
 import type { TradePlan } from "./plan-types";
+import { isWarReadyScoutPlan } from "./plan-helpers";
 import { resolvePlannedRRFromPlan } from "./plan-risk";
 import { formatDecisionSection } from "./scout-decision";
 import { formatLayeredEntrySection } from "./layered-entry-types";
@@ -9,7 +10,7 @@ import {
 } from "./scout-execution-instruction";
 
 export function formatPlansSnapshotSection(plans: TradePlan[]): string {
-  const active = plans.filter((p) => p.status === "watching" || p.status === "ready");
+  const active = plans.filter(isWarReadyScoutPlan);
   const evaluate = plans.filter(
     (p) =>
       (p.status === "failed" || p.status === "expired") &&

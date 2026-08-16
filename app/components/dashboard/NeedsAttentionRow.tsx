@@ -6,10 +6,11 @@ import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { useControlPanel } from "@/app/components/control-panel/MatrixControlPanelProvider";
 import type { AttentionItem } from "@/lib/dashboard-attention";
 
-/** One Needs Attention row: Copy for AI · Apply · Go */
+/** One Needs Attention row: Copy for AI · Apply (only when valid) · Go */
 export function NeedsAttentionRow({ item }: { item: AttentionItem }) {
   const { openPanel } = useControlPanel();
   const [copied, setCopied] = useState(false);
+  const canApply = (item.allowedApplyBlockTypes?.length ?? 0) > 0;
 
   async function handleCopy() {
     if (!item.taskSnapshotText) return;
@@ -37,13 +38,22 @@ export function NeedsAttentionRow({ item }: { item: AttentionItem }) {
             {copied ? "Copied ✓" : "Copy for AI"}
           </button>
         ) : null}
-        <button
-          type="button"
-          onClick={() => openPanel({ step: "apply" })}
-          className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-600/25"
-        >
-          Apply
-        </button>
+        {canApply ? (
+          <button
+            type="button"
+            onClick={() =>
+              openPanel({
+                step: "apply",
+                ...(item.suggestedApplyJson
+                  ? { applyJson: item.suggestedApplyJson }
+                  : {}),
+              })
+            }
+            className="rounded-lg border border-violet-500/40 bg-violet-600/15 px-3 py-1.5 text-xs font-medium text-violet-200 hover:bg-violet-600/25"
+          >
+            Apply
+          </button>
+        ) : null}
         <Link
           href={item.href}
           className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"

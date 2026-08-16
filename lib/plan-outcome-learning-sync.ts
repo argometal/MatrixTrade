@@ -597,3 +597,37 @@ export function planNeedsLearningSyncRepair(
   }
   return !verify.ok || verify.effectiveStatus !== "complete";
 }
+
+/**
+ * PROMPT 16-01 — idempotent auto-retry of LO/OBS sync before Needs Attention.
+ * Safe to call from Dashboard load: syncPlanOutcomeLearning is idempotent and preserves MAF links.
+ * Returns refreshed plan list; Attention should only surface remaining failed/broken sync.
+ */
+export async function autoRetryPlansNeedingLearningSync(
+  plans: TradePlan[]
+): Promise<TradePlan[]> {
+  const candidates = plans.filter(
+    (p) =>
+      Boolean(p.outcome?.recordedAt) &&
+      (p.outcome?.learningSyncStatus === "pending" ||
+        p.outcome?.learningSyncStatus === "failed" ||
+        p.outcome?.learningSyncStatus === undefined)
+  );
+  if (candidates.length === 0) return plans;
+
+  const byId = new Map(plans.map((p) => [p.id.toUpperCase(), p]));
+  for (const plan of candidates) {
+    try {
+      await syncPlanOutcomeLearning(plan.id);
+    } catch (err) {
+      console.error(`autoRetryPlansNeedingLearningSync ${plan.id} failed:`, err);
+    }
+    try {
+      const refreshed = await getPlanById(plan.id);
+      if (refreshed) byId.set(plan.id.toUpperCase(), refreshed);
+    } catch {
+      /* keep prior */
+    }
+  }
+  return plans.map((p) => byId.get(p.id.toUpperCase()) ?? p);
+}

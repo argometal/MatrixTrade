@@ -1,7 +1,7 @@
-import { buildPlanEnterHref } from "./plan-helpers";
+import { buildPlanEnterHref, isWarReadyScoutPlan } from "./plan-helpers";
 import { PLAN_STATUS_LABELS, type PlanStatus, type TradePlan } from "./plan-types";
 
-/** Scout plan ready for execution layer — one row per active prospect. */
+/** Scout plan ready for execution layer — one row per active war-ready prospect. */
 export type TradeProspect = {
   planId: string;
   ticker: string;
@@ -18,7 +18,7 @@ export type TradeProspect = {
 };
 
 function isExecutableProspect(plan: TradePlan): boolean {
-  if (plan.status !== "watching" && plan.status !== "ready") return false;
+  if (!isWarReadyScoutPlan(plan)) return false;
   if (plan.plannedEntry === undefined || plan.stopPrice === undefined) return false;
   return true;
 }

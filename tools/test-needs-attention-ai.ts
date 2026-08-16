@@ -24,7 +24,7 @@ import type { BridgeInboxItem } from "../lib/bridge";
 
 /** Fixtures — one per audited task type. */
 const openTrade = {
-  id: "H001",
+  id: "H001-OPEN",
   ticker: "AMZN",
   status: "open",
   entry: 100,
@@ -39,6 +39,13 @@ const closedUnreviewed = {
   status: "closed",
   closedAt: "2026-07-10T00:00:00.000Z",
   exit: 95,
+} as Trade;
+
+/** Closed without playbook — assign_playbook only fires for closed (16-01). */
+const closedNoPlaybook = {
+  ...closedUnreviewed,
+  id: "H001",
+  reviewedAt: "2026-07-11T00:00:00.000Z",
 } as Trade;
 
 const closedNoObs = {
@@ -103,6 +110,11 @@ const idCases: Array<[string, string, string]> = [
   ["samples-secular-trend-continuation", "playbook_samples", "ATTN-SAMPLES-SECULAR-TREND-CONTINUATION"],
   ["monthly-loss-limit", "monthly_loss_limit", "ATTN-MONTHLY-LIMIT"],
   ["monthly-loss-warning", "monthly_loss_warning", "ATTN-MONTHLY-WARNING"],
+  [
+    "capital-reservation-expired-CAPRES-PLAN-001",
+    "capital_reservation_expired",
+    "ATTN-CAPRES-EXPIRED-CAPRES-PLAN-001",
+  ],
 ];
 
 for (const [itemId, type, taskId] of idCases) {
@@ -130,6 +142,10 @@ assert.deepEqual(
   []
 );
 assert.deepEqual(getAllowedApplyBlocksForNeedsAttentionTask("playbook_samples"), []);
+assert.deepEqual(getAllowedApplyBlocksForNeedsAttentionTask("capital_reservation_expired"), [
+  "capital-reservation-release",
+  "capital-reservation-update",
+]);
 assert.equal(getNeedsAttentionSnapshotSupport("evaluate_expired_plan"), "SUPPORTED");
 assert.equal(getNeedsAttentionSnapshotSupport("sync_plan_outcome_learning"), "SUPPORTED");
 assert.equal(getNeedsAttentionSnapshotSupport("monthly_loss_limit"), "UNSUPPORTED");
@@ -137,7 +153,7 @@ assert.equal(getNeedsAttentionSnapshotSupport("assign_playbook"), "SUPPORTED");
 
 function snap(item: AttentionItem, extra?: Partial<Parameters<typeof buildNeedsAttentionTaskSnapshot>[1]>) {
   return buildNeedsAttentionTaskSnapshot(item, {
-    trades: [openTrade, closedUnreviewed, closedNoObs],
+    trades: [openTrade, closedNoPlaybook, closedUnreviewed, closedNoObs],
     plans: [expiredPlan, readyPlan, windowPlan],
     playbooks,
     pendingInbox: inbox,
@@ -294,21 +310,64 @@ function snap(item: AttentionItem, extra?: Partial<Parameters<typeof buildNeedsA
 {
   const enriched = enrichAttentionItemWithAiSnapshot(
     { id: "playbook-H001", label: "x", href: "/trades/H001", priority: 3 },
-    { trades: [openTrade], plans: [], playbooks }
+    { trades: [closedNoPlaybook], plans: [], playbooks }
   );
   assert.ok(enriched.taskSnapshotText?.includes("ATTN-ASSIGN-PLAYBOOK-H001"));
+  assert.deepEqual(enriched.allowedApplyBlockTypes, ["trade-update"]);
   const lib = buildLibraryIndexBrief();
   assert.match(lib, /LIBRARY INDEX/);
   assert.match(lib, /Technical Analysis/);
   assert.match(lib, /Learning/);
 }
 
+// --- capital reservation expired ---
+{
+  const reservation = {
+    id: "CAPRES-PLAN-001",
+    planId: "PLAN-001",
+    ticker: "NFLX",
+    status: "reserved" as const,
+    requestedCapital: 5000,
+    reservedCapital: 5000,
+    estimatedRisk: 300,
+    expiresAt: "2020-01-01T00:00:00.000Z",
+    fundingDecision: "fully_funded" as const,
+    blockingReasons: [] as string[],
+    createdAt: "2020-01-01T00:00:00.000Z",
+    updatedAt: "2020-01-01T00:00:00.000Z",
+  };
+  const enriched = enrichAttentionItemWithAiSnapshot(
+    {
+      id: "capital-reservation-expired-CAPRES-PLAN-001",
+      label: "Expired capital reservation · CAPRES-PLAN-001",
+      href: "/planning/capital",
+      priority: 35,
+    },
+    {
+      trades: [],
+      plans: [expiredPlan],
+      playbooks: [],
+      reservations: [reservation],
+    }
+  );
+  assert.equal(enriched.taskType, "capital_reservation_expired");
+  assert.ok(enriched.allowedApplyBlockTypes?.includes("capital-reservation-release"));
+  assert.ok(enriched.suggestedApplyJson?.includes("capital-reservation-release"));
+  assert.ok(enriched.suggestedApplyJson?.includes("CAPRES-PLAN-001"));
+  assert.match(enriched.taskSnapshotText ?? "", /capital-reservation-release/);
+}
+
 // --- disappearance after underlying mutation (derived queue) ---
 {
-  const before = buildAttentionItems([openTrade], [], playbooks);
+  const before = buildAttentionItems([closedNoPlaybook], [], playbooks);
   assert.ok(before.some((i) => i.id === "playbook-H001"));
+  const openNoPb = buildAttentionItems([openTrade], [], playbooks);
+  assert.ok(
+    !openNoPb.some((i) => i.id.startsWith("playbook-")),
+    "open trade without playbook is not Needs Attention (16-01)"
+  );
   const afterAssign = buildAttentionItems(
-    [{ ...openTrade, playbookId: "secular-trend-continuation" }],
+    [{ ...closedNoPlaybook, playbookId: "secular-trend-continuation" }],
     [],
     playbooks
   );

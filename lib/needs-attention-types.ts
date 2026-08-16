@@ -27,6 +27,7 @@ export const NEEDS_ATTENTION_TASK_TYPES = [
   "playbook_samples",
   "monthly_loss_limit",
   "monthly_loss_warning",
+  "capital_reservation_expired",
   "unknown",
 ] as const;
 
@@ -63,6 +64,7 @@ export type NeedsAttentionLinkedEntities = {
   learningOutcomeId?: string;
   mafExperimentId?: string;
   inboxProposalIds?: string[];
+  capitalReservationId?: string;
 };
 
 export type NeedsAttentionGlobalContextSummary = {
