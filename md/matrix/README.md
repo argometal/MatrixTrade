@@ -23,7 +23,8 @@
 | 4b3 | [adr-0003-mtae.md](adr-0003-mtae.md) | **ADR** — Matrix Technical Analysis Engine (**foundation shipped**) |
 | 4b4 | [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md) | **MTAE** — multi-TF technical module (not Scout) |
 | 4b4a | [adr-0005-mtae-participation.md](adr-0005-mtae-participation.md) | **ADR** — MTAE Participation Layer (**Phase A coded**) |
-| 4b4b | [mtae-participation-layer.md](mtae-participation-layer.md) | **MTAE** — structure + participation (volume/wicks/character) — **Phase A shipped**; VP/AVWAP/L2 deferred |
+| 4b4b | [mtae-participation-layer.md](mtae-participation-layer.md) | **MTAE** — structure + participation (volume/wicks/character) — **Phase A shipped**; VP = Now diagnosis / L2 = Future debt |
+| 4b4c | [market-data-volume-profile-16-06.md](market-data-volume-profile-16-06.md) | **16-06** — Market data audit + Volume Profile (Swing) vs L2 scalping debt; Alpaca Free candidacy — **no code yet** |
 | 4b5 | [adr-0004-maf.md](adr-0004-maf.md) | **ADR** — Matrix Attribution Framework (**V1 + LO + OBS shipped**) |
 | 4b6 | [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md) | **MAF** — component attribution after Trade |
 | 4c | [monday-nflx-experiment.md](monday-nflx-experiment.md) | First live test — ops note, not Stock File |

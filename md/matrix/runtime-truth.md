@@ -233,6 +233,6 @@ Method: `playbook-create`, `playbook-update`
 | **Shipped** | `plan-outcome` UPL (`unexecuted_plan_loss`) — [plan-outcome-upl-25-29.md](plan-outcome-upl-25-29.md) · Scout metrics separate from Trade P/L |
 | **POSTPONED** | MTA-002B prompt validation log (10–20 chats) — until dedicated test sessions |
 | **EVALUATION** | MAF expectancy aggregation by component/Playbook — only if enough attributed rows exist |
-| **OUT OF SCOPE now** | Request layer, Library schema, Volume profile / AVWAP, L2 / heatmap, empty dashboards, Coach, broker automation |
+| **OUT OF SCOPE now** | Request layer, Library schema, VP/Alpaca **code** (16-06 diagnosis only — [market-data-volume-profile-16-06.md](market-data-volume-profile-16-06.md)), AVWAP, L2 / heatmap / book, empty dashboards, Coach, broker automation |
 
 Do not reintroduce Control → Closed trade, Session, Case, or Update labels. Do not bury Stock Files under Library.

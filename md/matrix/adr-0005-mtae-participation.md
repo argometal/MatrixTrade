@@ -22,8 +22,9 @@ We need a second MTAE dimension — **participation** — without collapsing MTA
 1. Add **Participation Layer** as additive optional MTAE schema: per-TF `participation{}` + integrated `participationSynthesis{}`.
 2. Keep language probabilistic and anti-overclaim: no `whalesAreBuying`, no absolute candle rules, squeeze/correction as classifications with confidence.
 3. **Phase A coded:** volume, wicks, movement character, historical reaction zones, small candle-signal set, large-participant footprint — validate + protocol + sample block.
-4. Heatmap and Level 2 remain **deferred to a future Execution Microstructure Engine**.
+4. Heatmap and Level 2 remain **deferred to a future Execution Microstructure Engine** (scalping / microstructure debt — not Swing VP).
 5. Participation fields are **optional** for backward compatibility; when present they must validate.
+6. **Volume Profile (Phase B)** is the **Now** market-data branch for MTA Swing: diagnosis in [market-data-volume-profile-16-06.md](market-data-volume-profile-16-06.md); Alpaca Free is a candidate source only — **no implementation until review**. VP must stay Evidence First (never auto-entry).
 
 ---
 
@@ -35,7 +36,7 @@ We need a second MTAE dimension — **participation** — without collapsing MTA
 | Protocol / Mechanics | `lib/mtae-brief.ts`, Mechanics **rev 20** |
 | Calibration errorTypes | volume_behavior, movement_character, wick_hierarchy, candle_signal_context, historical_reaction_rank, participant_footprint_overclaim |
 | Boundary | MTAE still forbids Entry Solver / RR / Scout verdict / whale identity |
-| Scope deferred | Volume profile, AVWAP, heatmap, L2 |
+| Scope deferred | VP **code** (diagnosis 16-06 done), AVWAP, heatmap, L2 / book / L3 |
 
 ---
 
@@ -53,6 +54,7 @@ We need a second MTAE dimension — **participation** — without collapsing MTA
 ## Related
 
 - [mtae-participation-layer.md](mtae-participation-layer.md)
+- [market-data-volume-profile-16-06.md](market-data-volume-profile-16-06.md)
 - [mtae-technical-analysis-engine.md](mtae-technical-analysis-engine.md)
 - [adr-0003-mtae.md](adr-0003-mtae.md)
 - [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md)
