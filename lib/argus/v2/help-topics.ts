@@ -145,7 +145,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Counters",
-        body: "Evidence = Notes/emails carrying the Tag (this drives Patterns). In 30d = recent activity only. Binder Tags on Events/Topics with no Notes show Evidence 0 until you tag Notes.",
+        body: "Evidence = Notes/emails carrying the Tag (this drives Patterns). In 30d = recent activity only. Creating a Tag on a binder tab also writes a Note so Evidence is not stuck at 0.",
       },
       {
         title: "Tracker vs Pattern marks",
@@ -153,7 +153,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Create",
-        body: "Create tag adds a durable Global Tag to the universe. Flag as Tracker afterward if you want to watch it.",
+        body: "Create tag adds a durable Global Tag to the universe. Flag as Tracker afterward if you want to watch it. Binder Tag tabs use the same create pipeline (Notes + Home vocabulary).",
       },
       {
         title: "Rename",
@@ -161,11 +161,11 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Delete",
-        body: "Select a tag → Delete. Strips the Tag from Notes/binders/Trackers — Notes stay; only the Tag membership is removed. Confirm before applying.",
+        body: "Select a tag → Delete. Strips the Tag from Notes/binders/Trackers — Notes stay; only the Tag membership is removed. Confirm before applying. Removing a Tag from an Event/Topic/Project Tags tab strips it from that entity’s Notes only.",
       },
       {
         title: "Flag / Disable",
-        body: "Optional watch. Confirm both ways. Disable turns watch off — the Tag stays on Notes and Topic Tags.",
+        body: "Optional watch. Confirm both ways. Flag registers the Tag on Home Tags vocabulary. Disable turns watch off — the Tag stays on Notes and Topic Tags.",
       },
       {
         title: "Filters",
@@ -210,7 +210,7 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "One Tag system",
-        body: "Tags live on Notes/emails and as Topic Tags on binders. Same strings. Notes drive evidence; Topic Tags keep binders findable.",
+        body: "Tags are one pipeline: Tag tabs, Notes, and Home Tags share the same strings. Add or delete on a Tag tab updates Notes on that entity. Flag a Tracker to watch it on Home Tags.",
       },
       {
         title: "Patterns (system-derived)",
@@ -222,7 +222,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Where Tags live on an Event",
-        body: "Event → Tags and Event → Note Add both dual-write binder + Note evidence. Trackers are Flag-only on Tags / Home.",
+        body: "Event → Tags and Event → Note Add are the same pipeline (binder + Notes + Home vocabulary). Removing a Tag from the Tags tab strips it from this Event’s Notes. Trackers Flag the same strings on Home Tags.",
       },
     ],
   },
@@ -233,11 +233,11 @@ const SECTIONS: HelpSection[] = [
     group: "intelligence",
     keywords: ["event", "tags", "trackers", "on this event", "note", "flag", "pool"],
     intro:
-      "Event Tags classify this Event and dual-write onto Note evidence so Patterns count without a separate note body. Trackers are journal Flags — ⚑ shows when a Tag on this Event is Flagged. Branch Topic/Project pools are vocabulary only.",
+      "Event Tags are the same system as Notes. Add or Save on this tab writes Notes + Home vocabulary; remove strips the Tag from this Event’s Notes. Trackers are journal Flags — ⚑ shows when a Tag on this Event is Flagged. Branch Topic/Project pools are vocabulary only.",
     items: [
       {
         title: "Tags on this Event",
-        body: "Add Tag + Save Tags attaches to this Event and creates a lightweight Note Tag when missing — so Patterns and Home counts see it. Evidence already on Notes appears under Attach from Notes until you Save Tags.",
+        body: "Add Tag + Save Tags attaches to this Event, creates a lightweight Note Tag when missing, and registers the Tag on Home Tags. Remove + Save strips the Tag from this Event’s Notes (Notes stay). Evidence already on Notes appears under Attach from Notes until you Save Tags.",
       },
       {
         title: "Tags in this branch",
@@ -245,7 +245,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Trackers",
-        body: "Journal Flags that intersect this Event’s binder or Note Tags. Branch Topic/Project Tags do not count. ⚑ on rows is passive; Flag / Disable only via Manage Trackers. Other journal Trackers are recall only.",
+        body: "Journal Flags that intersect this Event’s binder or Note Tags — the same watch list as Home → Tags. Branch Topic/Project Tags do not count. ⚑ on rows is passive; Flag / Disable only via Manage Trackers. Flagging registers the Tag on Home Tags. Other journal Trackers are recall only.",
       },
       {
         title: "Go to Tags",
@@ -253,7 +253,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Note tab Add",
-        body: "Clicking Add on the Note tab saves the Tag immediately on Notes and the Tags tab — no note text required. Save on Note is for writing or attachments.",
+        body: "Clicking Add on the Note tab saves the Tag immediately on Notes, the Tags tab, and Home Tags vocabulary — no note text required. Save on Note is for writing or attachments.",
       },
     ],
   },
@@ -263,11 +263,11 @@ const SECTIONS: HelpSection[] = [
     group: "intelligence",
     keywords: ["topic", "tags", "trackers", "topic tags", "aliases", "flag", "provenance"],
     intro:
-      "Topic Tags classify this Topic. Tags in this Topic are Topic-direct evidence only. By Event separates each linked Event’s binder Tags from its Note Tags. Trackers are journal Flags — Topic does not own Event Trackers.",
+      "Topic Tags are the same pipeline as Notes. Add/Save writes Notes + Home vocabulary; remove strips the Tag from this Topic’s Notes. Tags in this Topic are Topic-direct evidence. By Event separates each linked Event’s binder Tags from its Note Tags. Trackers are journal Flags — Topic does not own Event Trackers.",
     items: [
       {
         title: "Topic Tags",
-        body: "Binder Tags on this Topic (topicTags). Add Tag + Save attaches here. Flag never deletes a binder Tag.",
+        body: "Binder Tags on this Topic (topicTags). Add Tag + Save attaches here, on Notes, and on Home Tags. Remove + Save strips the Tag from this Topic’s Notes. Flag never deletes a binder Tag.",
       },
       {
         title: "Tags in this Topic",
@@ -297,7 +297,7 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "Linked to this Project",
-        body: "Binder Tags saved on this Project — not Note Tags. Add Tag + Save Tags attaches them to this Project only.",
+        body: "Same Tag system as Notes. Add Tag + Save Tags attaches to this Project, Notes, and Home Tags. Remove + Save strips the Tag from this Project’s Notes.",
       },
       {
         title: "Notes on this Project",
@@ -305,7 +305,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Trackers",
-        body: "Optional Flag on Tags in this Project context. Disable never deletes the Tag.",
+        body: "Optional Flag on Tags in this Project context — the same journal watch list as Home → Tags. Flagging registers the Tag on Home Tags. Disable never deletes the Tag.",
       },
     ],
   },

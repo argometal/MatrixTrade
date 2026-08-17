@@ -307,6 +307,7 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
                   .filter(Boolean)}
                 returnTo={returnTo}
                 suggestedFromNotes={tagPatterns.map((p) => p.tag)}
+                signalTags={signalTags}
               />
             }
             branchHeading="Tags in this project scope"

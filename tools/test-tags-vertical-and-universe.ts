@@ -50,7 +50,8 @@ assert.doesNotMatch(
 
 assert.match(eventEd, /TAG_MANAGE_ROW_CLASS/, "Event Tags editor uses Manage rows");
 assert.match(topicEd, /TAG_MANAGE_ROW_CLASS/, "Topic Tags editor uses Manage rows");
-assert.match(projectEd, /TAG_MANAGE_ROW_CLASS/, "Project Tags editor uses Manage rows");
+assert.match(projectEd, /signalTags = \[\]/, "Project Tags editor can show Home Trackers");
+assert.match(projectShell, /signalTags=\{signalTags\}/, "Project Tags editor receives journal Trackers");
 assert.match(binder, /TAG_MANAGE_ROW_CLASS/, "branch tags are Manage rows");
 assert.match(binder, /const PREVIEW = 40/, "branch preview is not a tiny chip strip");
 assert.match(badges, /TAG_MANAGE_LIST_CLASS/, "pattern badges are Manage stack");

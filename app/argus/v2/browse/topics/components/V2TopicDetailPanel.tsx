@@ -837,7 +837,7 @@ export function V2TopicDetailPanel({
               <V2BinderTagsTab
                 attachedHeading="Topic Tags"
                 attachedBadge="Binder"
-                attachedHint="Tags attached to this Topic binder — not Note Tags."
+                attachedHint="Same Tag system as Notes — add or remove here and it updates Notes on this Topic."
                 attachedTags={selected.aliases}
                 attachedTagHref={(tag) =>
                   `/argus/v2/browse/topics?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
