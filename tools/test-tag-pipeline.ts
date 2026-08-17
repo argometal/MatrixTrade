@@ -10,12 +10,16 @@ import {
   diffTagLists,
   ensureTagsInPipeline,
   evidenceTagKeysForEntity,
+  journalNeedsTagPipelineLink,
   mergeEvidenceTagsIntoBinders,
   pruneBinderTagsMissingEvidence,
+  reconcileTagPipeline,
   registerHomeVocabulary,
   stripTagsFromEntityEvidence,
 } from "../lib/argus/v2/tag-pipeline";
 import { readTagsForRole } from "../lib/argus/tag-ontology";
+import { buildV2FocusTagPortfolio } from "../lib/argus/v2/loaders";
+import { filterIntelligenceTags } from "../lib/argus/v2/intelligence-filters";
 
 const root = process.cwd();
 const actions = readFileSync(join(root, "app/argus/actions.ts"), "utf8");
@@ -27,6 +31,7 @@ const portfolio = readFileSync(
 
 assert.match(storage, /export async function applyBinderTagPipeline/, "server applyBinderTagPipeline");
 assert.match(storage, /export async function ensureTagsInPipeline/, "server ensureTagsInPipeline");
+assert.match(storage, /reconcileTagPipeline/, "journal read links existing Tag tabs to Notes");
 assert.match(storage, /registerHomeVocabulary\(data, \[display\]\)/, "Flag registers Home Tags");
 assert.match(storage, /mergeEvidenceTagsIntoBinders/, "createLog merges Note Tags onto binders");
 assert.match(storage, /pruneBinderTagsMissingEvidence/, "updateLog prunes binder when Notes drop a Tag");
@@ -199,5 +204,52 @@ assert.ok(
 const home = fixture();
 assert.equal(registerHomeVocabulary(home, ["WatchMe"]), 1);
 assert.equal(registerHomeVocabulary(home, ["WatchMe"]), 0, "Home register is idempotent");
+
+const alreadyOnBinder = fixture();
+assert.equal(evidenceTagKeysForEntity(alreadyOnBinder, "e1").has("binder-only"), false);
+assert.equal(journalNeedsTagPipelineLink(alreadyOnBinder), true);
+applyBinderTagSync(alreadyOnBinder, "e1", ["latency", "binder-only"], ids);
+assert.ok(
+  evidenceTagKeysForEntity(alreadyOnBinder, "e1").has("binder-only"),
+  "saving the Tags tab links existing binder Tags onto Notes"
+);
+
+const split = fixture();
+const linked = reconcileTagPipeline(split, ids);
+assert.ok(linked.changed, "reconcile links existing split inventories");
+assert.equal(journalNeedsTagPipelineLink(split), false);
+assert.ok(evidenceTagKeysForEntity(split, "e1").has("binder-only"));
+assert.ok(readTagsForRole(split, "event", { entityId: "e1" }).includes("latency"));
+
+const repeatEvents: ArgusData = {
+  version: 3,
+  entities: ["e1", "e2", "e3"].map((id) =>
+    entity({
+      id,
+      name: id,
+      type: "other",
+      notes: "Kind: Event\nChronicle: v2\n---",
+      eventTags: ["repeat"],
+      updatedAt: "2026-08-10T00:00:00.000Z",
+    })
+  ),
+  logs: [],
+  inboxItems: [],
+  runbooks: [],
+  runbookProgress: [],
+  signalTags: [],
+  globalTags: [],
+  attachments: [],
+};
+const homeRows = buildV2FocusTagPortfolio(repeatEvents, [], true, "2026-08-16");
+const repeat = homeRows.find((row) => row.name.toLowerCase() === "repeat");
+assert.ok(repeat);
+assert.equal(repeat!.count, 3, "Home Tags counts Tag-tab repetition across Events");
+assert.equal(repeat!.isPattern, true, "Home Patterns filter registers ≥3 linked uses");
+const patterned = filterIntelligenceTags(homeRows, "patterns");
+assert.ok(
+  patterned.some((row) => row.name.toLowerCase() === "repeat"),
+  "Home Patterns filter includes the repeating Tag"
+);
 
 console.log("ok: tag-pipeline");

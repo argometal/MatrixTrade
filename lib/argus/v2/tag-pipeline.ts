@@ -249,10 +249,11 @@ export function applyBinderTagSync(
   if (removed.length > 0) {
     stripTagsFromEntityEvidence(data, entityId, removed);
   }
-  if (added.length > 0) {
-    placeholderCount = pushPlaceholderEvidence(data, data.entities[data.entities.findIndex((e) => e.id === entityId)]!, added, options);
+  const live = data.entities.find((entry) => entry.id === entityId);
+  if (live && next.length > 0) {
+    placeholderCount = pushPlaceholderEvidence(data, live, next, options);
   }
-  const homeRegistered = added.length > 0 ? registerHomeVocabulary(data, added) : 0;
+  const homeRegistered = next.length > 0 ? registerHomeVocabulary(data, next) : 0;
 
   return { added, removed, placeholderCount, homeRegistered };
 }
@@ -281,8 +282,8 @@ export function ensureTagsInPipeline(
   const { added } = diffTagLists(prev, next);
   writeBinderTags(data, entity, role, next, options.nowIso);
   const live = data.entities.find((entry) => entry.id === entityId)!;
-  const placeholderCount = pushPlaceholderEvidence(data, live, incoming, options);
-  const homeRegistered = registerHomeVocabulary(data, incoming);
+  const placeholderCount = pushPlaceholderEvidence(data, live, next, options);
+  const homeRegistered = registerHomeVocabulary(data, next);
   return { added, removed: [], placeholderCount, homeRegistered };
 }
 
@@ -342,3 +343,68 @@ export function pruneBinderTagsMissingEvidence(
   }
   return touched;
 }
+
+/** Display Tags already on this entity’s Notes / emails. */
+export function evidenceDisplayTagsForEntity(data: ArgusData, entityId: string): string[] {
+  const out: string[] = [];
+  for (const log of data.logs ?? []) {
+    if (log.deletedAt || !(log.entityIds ?? []).includes(entityId)) continue;
+    out.push(...(log.topics ?? []));
+  }
+  for (const item of data.inboxItems ?? []) {
+    if (item.deletedAt || !(item.linkedEntityIds ?? []).includes(entityId)) continue;
+    out.push(...(item.topics ?? []));
+  }
+  return normalizeTagList(out);
+}
+
+/** One linked inventory: binder Tags ∪ Note/email Tags on this entity. */
+export function linkedTagsForEntity(data: ArgusData, entityId: string): string[] {
+  const entity = data.entities.find((entry) => entry.id === entityId && !entry.deletedAt);
+  if (!entity) return [];
+  const role = binderRoleForEntity(entity);
+  const binder = role ? readTagsForRole(data, role, { entityId }) : [];
+  return normalizeTagList([...binder, ...evidenceDisplayTagsForEntity(data, entityId)]);
+}
+
+function entityNeedsTagLink(data: ArgusData, entity: Entity): boolean {
+  const role = binderRoleForEntity(entity);
+  if (!role) return false;
+  const binder = readTagsForRole(data, role, { entityId: entity.id });
+  const evidence = evidenceDisplayTagsForEntity(data, entity.id);
+  const union = normalizeTagList([...binder, ...evidence]);
+  if (diffTagLists(binder, union).added.length > 0) return true;
+  return tagsMissingFromEntityEvidence(data, entity.id, union).length > 0;
+}
+
+/** True when any Event/Topic/Project still has Tags-tab inventory split from Notes. */
+export function journalNeedsTagPipelineLink(data: ArgusData): boolean {
+  for (const entity of data.entities ?? []) {
+    if (entity.deletedAt) continue;
+    if (entityNeedsTagLink(data, entity)) return true;
+  }
+  return false;
+}
+
+/**
+ * Link existing Tag tabs ↔ Notes: union onto the binder and create missing Note evidence.
+ * Idempotent — no-op when already linked.
+ */
+export function reconcileTagPipeline(
+  data: ArgusData,
+  options: { nowIso: string; newId: () => string }
+): { changed: boolean; linked: number } {
+  let linked = 0;
+  const ids = (data.entities ?? [])
+    .filter((entity) => !entity.deletedAt && binderRoleForEntity(entity))
+    .map((entity) => entity.id);
+  for (const entityId of ids) {
+    const entity = data.entities.find((entry) => entry.id === entityId);
+    if (!entity || !entityNeedsTagLink(data, entity)) continue;
+    const union = linkedTagsForEntity(data, entityId);
+    applyBinderTagSync(data, entityId, union, options);
+    linked += 1;
+  }
+  return { changed: linked > 0, linked };
+}
+

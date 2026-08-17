@@ -30,6 +30,7 @@ import {
   ensureTagsInPipeline as ensureTagsInPipelineSync,
   mergeEvidenceTagsIntoBinders,
   pruneBinderTagsMissingEvidence,
+  reconcileTagPipeline,
   registerHomeVocabulary,
   type TagPipelineResult,
 } from "./v2/tag-pipeline";
@@ -89,17 +90,33 @@ async function ensureFilesDir(): Promise<void> {
   await fs.mkdir(paths().filesDir, { recursive: true });
 }
 
+function applyJournalMigrations(data: ArgusData): { data: ArgusData; changed: boolean } {
+  const linked = reconcileTagPipeline(data, {
+    nowIso: new Date().toISOString(),
+    newId: generateId,
+  });
+  return { data, changed: linked.changed };
+}
+
 async function readRawJournal(): Promise<ArgusData> {
   if (isCloudJournalStore()) {
     const cloud = await cloudJournal.readJournalFromSupabase();
-    if (cloud) return cloud;
+    if (cloud) {
+      const needsSignal = journalNeedsSignalTagsMigration(cloud);
+      const migrated = migrateToV3(cloud);
+      const { changed } = applyJournalMigrations(migrated);
+      if (needsSignal || changed) await writeArgus(migrated, "bootstrap");
+      return migrated;
+    }
 
     await ensureArgusStorageReady();
     const p = paths();
     try {
       const raw = JSON.parse(await fs.readFile(p.journalFile, "utf-8")) as ArgusData;
+      const needsSignal = journalNeedsSignalTagsMigration(raw);
       const migrated = migrateToV3(raw);
-      await writeArgus(migrated, "bootstrap");
+      const { changed } = applyJournalMigrations(migrated);
+      if (needsSignal || changed) await writeArgus(migrated, "bootstrap");
       return migrated;
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code;
@@ -113,9 +130,10 @@ async function readRawJournal(): Promise<ArgusData> {
 
   try {
     const raw = JSON.parse(await fs.readFile(p.journalFile, "utf-8")) as ArgusData;
-    const needsPersist = journalNeedsSignalTagsMigration(raw);
+    const needsSignal = journalNeedsSignalTagsMigration(raw);
     const migrated = migrateToV3(raw);
-    if (needsPersist) await writeArgus(migrated, "bootstrap");
+    const { changed } = applyJournalMigrations(migrated);
+    if (needsSignal || changed) await writeArgus(migrated, "bootstrap");
     return migrated;
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;

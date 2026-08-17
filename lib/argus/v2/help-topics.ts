@@ -145,11 +145,11 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Counters",
-        body: "Evidence = Notes/emails carrying the Tag (this drives Patterns). In 30d = recent activity only. Creating a Tag on a binder tab also writes a Note so Evidence is not stuck at 0.",
+        body: "Count = linked uses (Notes/emails, plus a Tag-tab use when that entity has no Note yet). In 30d = recent repetition. Home filters (Patterns / Stale / Trackers) use this same count.",
       },
       {
         title: "Tracker vs Pattern marks",
-        body: "Amber dashed ring = Tracker (Flag). Gold stroke = Pattern (≥3 evidence Tags, fresh within 90d). Pattern is automatic — not Flag.",
+        body: "Amber dashed ring = Tracker (Flag). Gold stroke = Pattern (≥3 linked uses, fresh within 90d). Pattern is automatic — not Flag.",
       },
       {
         title: "Create",
@@ -169,7 +169,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Filters",
-        body: "Universe · Patterns · Stale · Trackers. Default Universe. Hot is Treemap-only.",
+        body: "Universe · Patterns · Stale · Trackers. Default Universe. Hot is Treemap-only. Patterns = same Tag on ≥3 linked uses (Notes or Tag tabs), with at least one in 90 days. Repetition is one count per entity after Tags and Notes are linked.",
       },
     ],
   },
