@@ -33,7 +33,7 @@ type ProfileTab = "snapshot" | "evidence" | "history";
 
 const statusStyles: Record<string, string> = {
   draft: "bg-zinc-700/50 text-zinc-400",
-  watching: "bg-sky-500/15 text-sky-300",
+  watching: "border border-sky-500/30 bg-zinc-900 text-sky-200",
   actionable: "bg-emerald-500/15 text-emerald-400",
   invalidated: "bg-red-500/15 text-red-400",
   archived: "bg-zinc-700/50 text-zinc-500",
@@ -199,8 +199,11 @@ export function PreviewStockThesis({
           </div>
 
           {primaryPlan ? (
-            <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 text-sm">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            <div
+              className="mt-3 rounded-xl border border-zinc-700 bg-zinc-900 p-4 text-sm"
+              data-stock-active-scout
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-300">
                 Active scout
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">

@@ -17,8 +17,8 @@ export function PreviewMobileMenu({ nav }: { nav: PreviewNavContext }) {
 
   const linkClass = (href: string) =>
     isPreviewNavActive(pathname, href)
-      ? "bg-violet-600/20 font-medium text-violet-300"
-      : "text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100";
+      ? "border-l-2 border-violet-400 bg-zinc-800 font-medium text-zinc-100"
+      : "border-l-2 border-transparent text-zinc-300 hover:bg-zinc-900 hover:text-zinc-100";
 
   return (
     <>

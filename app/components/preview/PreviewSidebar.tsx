@@ -14,8 +14,8 @@ export function PreviewSidebar({ nav }: { nav: PreviewNavContext }) {
 
   const linkClass = (href: string) =>
     isPreviewNavActive(pathname, href)
-      ? "bg-violet-600/20 font-medium text-violet-300"
-      : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200";
+      ? "border-l-2 border-violet-400 bg-zinc-800 font-medium text-zinc-100"
+      : "border-l-2 border-transparent text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200";
 
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 p-4 lg:flex xl:w-60">
