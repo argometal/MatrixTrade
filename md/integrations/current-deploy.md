@@ -2,12 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0815l`
+Pinned revision: `main0815m`
 
-Ship commit: `73f9d36`
+Ship commit: `b6f04b1`
 
 Includes:
-- PR #350 — Events → Tags: drag branch Tags onto Linked to this Event
+- PR #354 — Runbook check → Use as tag… (promote + optional binder Link modal)
+- Prior `main0815l` / #350–#353: Events → Tags branch drag onto Linked
 - Prior `main0815k` / #351–#352: Neighborhood graph size stable on scroll
 - Prior `main0815j` / #348–#349: 16-0E Scout Case multi-plan selector
 - Prior `main0815i` / #347: 16-08 Scout trim & convergence + 16-07 audit
