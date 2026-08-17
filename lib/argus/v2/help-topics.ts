@@ -144,8 +144,12 @@ const SECTIONS: HelpSection[] = [
         body: "Dots on recurrence (X) × recency (Y). Names appear on hover/select only so marks do not pile up. Ranked lists under the plot separate Top by recurrence vs Top by recency.",
       },
       {
+        title: "Counters",
+        body: "Evidence = Notes/emails carrying the Tag (this drives Patterns). In 30d = recent activity only. Binder Tags on Events/Topics with no Notes show Evidence 0 until you tag Notes.",
+      },
+      {
         title: "Tracker vs Pattern marks",
-        body: "Amber dashed ring = Tracker. Gold stroke on an unflagged tag = Pattern. Dot size is only a faint evidence hint.",
+        body: "Amber dashed ring = Tracker (Flag). Gold stroke = Pattern (≥3 evidence Tags, fresh within 90d). Pattern is automatic — not Flag.",
       },
       {
         title: "Create",

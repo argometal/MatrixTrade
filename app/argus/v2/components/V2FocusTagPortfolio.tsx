@@ -717,7 +717,7 @@ export function V2FocusTagPortfolio({
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-3">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                Top by recurrence (30d)
+                Top by recurrence (evidence / 30d)
               </p>
               <ul className="mt-2 space-y-1" aria-label="Tags ranked by recurrence">
                 {topByRecurrence.map((row) => (
@@ -735,7 +735,10 @@ export function V2FocusTagPortfolio({
                         {row.isFocus ? "⚑ " : ""}
                         {row.name}
                       </span>
-                      <span className="shrink-0 tabular-nums text-zinc-500">{row.recurrence30d}</span>
+                      <span className="shrink-0 tabular-nums text-zinc-500">
+                        {row.count}
+                        <span className="text-zinc-600">/{row.recurrence30d}</span>
+                      </span>
                     </button>
                   </li>
                 ))}
@@ -805,11 +808,15 @@ export function V2FocusTagPortfolio({
                     >
                       <span className="min-w-0 truncate">
                         {row.isFocus ? "⚑ " : ""}
+                        {row.isPattern ? "◈ " : ""}
                         {row.name}
                       </span>
-                      {row.count > 0 ? (
-                        <span className="shrink-0 tabular-nums text-zinc-500">{row.count}</span>
-                      ) : null}
+                      <span className="shrink-0 tabular-nums text-zinc-500" title="Evidence count">
+                        {row.count}
+                        {row.recurrence30d > 0 ? (
+                          <span className="text-zinc-600"> · {row.recurrence30d}d30</span>
+                        ) : null}
+                      </span>
                     </button>
                   </li>
                 ))}
@@ -845,10 +852,18 @@ export function V2FocusTagPortfolio({
                   {deleteBusy ? "…" : "Delete"}
                 </button>
               </div>
-              <div className="mt-2 grid max-w-sm grid-cols-2 gap-2">
+              <div className="mt-2 grid max-w-sm grid-cols-3 gap-2">
                 <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-2.5 py-2">
                   <p className="text-[9px] font-semibold uppercase tracking-wide text-zinc-600">
-                    Recurrence (30d)
+                    Evidence
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums text-zinc-100">
+                    {selected.count}
+                  </p>
+                </div>
+                <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 px-2.5 py-2">
+                  <p className="text-[9px] font-semibold uppercase tracking-wide text-zinc-600">
+                    In 30d
                   </p>
                   <p className="mt-0.5 text-sm font-semibold tabular-nums text-zinc-100">
                     {selected.recurrence30d}
@@ -863,6 +878,21 @@ export function V2FocusTagPortfolio({
                   </p>
                 </div>
               </div>
+              {selected.count === 0 &&
+              (selected.roles ?? []).some((role) => role === "event" || role === "topic" || role === "project" || role === "global") ? (
+                <p className="mt-2 text-[11px] text-amber-200/90">
+                  Binder-only Tag — Patterns need this Tag on Notes or emails (≥3 evidence, fresh within 90d).
+                </p>
+              ) : null}
+              {selected.isPattern ? (
+                <p className="mt-2 text-[11px] text-zinc-500">
+                  Pattern = {selected.count} evidence Tags (≥3) with activity in the last 90d — not the same as Flag Tracker.
+                </p>
+              ) : selected.count > 0 && selected.count < 3 ? (
+                <p className="mt-2 text-[11px] text-zinc-500">
+                  Need {3 - selected.count} more tagged Note/email{3 - selected.count === 1 ? "" : "s"} for a Pattern.
+                </p>
+              ) : null}
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {(selected.roles ?? []).map((role) => (
                   <span
@@ -1038,13 +1068,17 @@ export function V2FocusTagPortfolio({
                             : "border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-violet-500/40 hover:text-zinc-200"
                         }`}
                       >
-                        <span className="min-w-0 truncate">
-                          {row.isFocus ? "⚑ " : ""}
-                          {row.name}
-                        </span>
-                        {row.count > 0 ? (
-                          <span className="shrink-0 tabular-nums text-zinc-500">{row.count}</span>
+                      <span className="min-w-0 truncate">
+                        {row.isFocus ? "⚑ " : ""}
+                        {row.isPattern ? "◈ " : ""}
+                        {row.name}
+                      </span>
+                      <span className="shrink-0 tabular-nums text-zinc-500" title="Evidence count">
+                        {row.count}
+                        {row.recurrence30d > 0 ? (
+                          <span className="text-zinc-600"> · {row.recurrence30d}d30</span>
                         ) : null}
+                      </span>
                       </button>
                     </li>
                   ))}
