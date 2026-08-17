@@ -23,7 +23,7 @@ import type {
   RunbookInput,
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
-import { normalizeTagList } from "./tag-ontology";
+import { normalizeTagList, normalizeTagDisplay, tagKey } from "./tag-ontology";
 import { inboxStatusAfterLinkChange } from "./v2/inbox-loaders";
 import {
   filterLinkIdsForSource,
@@ -1124,7 +1124,7 @@ export async function toggleSignalTag(tag: string): Promise<{ signalTags: string
   return { signalTags: data.signalTags ?? [], active: !exists };
 }
 
-/** Rename a tag string. Pass `role` to limit scope (ORDER 001); omit = legacy evidence+trackers+topic dual fields. */
+/** Rename a tag string. Pass `role` to limit scope (ORDER 001); omit = all tag surfaces. */
 export async function renameTagGlobally(
   oldTag: string,
   newTag: string,
@@ -1137,15 +1137,17 @@ export async function renameTagGlobally(
   const data = await readArgus();
   let touched = 0;
 
+  /** Case-aware rewrite + dedupe (normalizeTagList) so Bar→foo merges with existing Foo. */
   const renameInList = (list: string[] | undefined): string[] | undefined => {
     if (!list?.length) return list;
     let changed = false;
-    const next = list.map((tag) => {
+    const mapped = list.map((tag) => {
       if (tag.trim().toLowerCase() !== oldKey) return tag;
       changed = true;
       return newDisplay;
     });
-    return changed ? [...new Set(next)] : list;
+    if (!changed) return list;
+    return normalizeTagList(mapped);
   };
 
   const touchEvidence = !role || role === "evidence";
@@ -1185,7 +1187,7 @@ export async function renameTagGlobally(
         return newDisplay;
       });
       if (changed) {
-        data.logs[i] = { ...log, topics: [...new Set(next)] };
+        data.logs[i] = { ...log, topics: normalizeTagList(next) };
         touched += 1;
       }
     }
@@ -1201,7 +1203,7 @@ export async function renameTagGlobally(
         return newDisplay;
       });
       if (changed) {
-        data.inboxItems[i] = { ...item, topics: [...new Set(next)] };
+        data.inboxItems[i] = { ...item, topics: normalizeTagList(next) };
         touched += 1;
       }
     }
@@ -1248,8 +1250,146 @@ export async function renameTagGlobally(
     }
   }
 
+  // Runbook classification tags (promoted from checks) — same string vocabulary.
+  if (!role || role === "global" || role === "evidence") {
+    for (let i = 0; i < (data.runbooks ?? []).length; i++) {
+      const runbook = data.runbooks[i];
+      if (!runbook || runbook.deletedAt) continue;
+      const next = renameInList(runbook.tags);
+      if (next && next !== runbook.tags) {
+        data.runbooks[i] = { ...runbook, tags: next };
+        touched += 1;
+      }
+    }
+  }
+
   if (touched > 0) await writeArgus(data);
   return touched;
+}
+
+/**
+ * Remove a tag string everywhere (Notes, inbox, binders, Trackers, global, runbooks).
+ * Does not delete Notes — only strips the Tag membership.
+ */
+export async function deleteTagGlobally(tag: string): Promise<number> {
+  const key = tag.trim().toLowerCase();
+  if (!key) return 0;
+
+  const data = await readArgus();
+  let touched = 0;
+
+  const removeFromList = (list: string[] | undefined): string[] | undefined => {
+    if (!list?.length) return list;
+    const next = list.filter((t) => t.trim().toLowerCase() !== key);
+    if (next.length === list.length) return list;
+    return normalizeTagList(next);
+  };
+
+  const signalTags = data.signalTags ?? [];
+  if (signalTags.some((t) => t.trim().toLowerCase() === key)) {
+    data.signalTags = normalizeSignalTags(signalTags.filter((t) => t.trim().toLowerCase() !== key));
+    touched += 1;
+  }
+
+  const nextGlobal = removeFromList(data.globalTags);
+  if (nextGlobal && nextGlobal !== data.globalTags) {
+    data.globalTags = nextGlobal;
+    touched += 1;
+  }
+
+  for (let i = 0; i < data.logs.length; i++) {
+    const log = data.logs[i];
+    const topics = log.topics ?? [];
+    if (!topics.some((t) => t.trim().toLowerCase() === key)) continue;
+    data.logs[i] = {
+      ...log,
+      topics: normalizeTagList(topics.filter((t) => t.trim().toLowerCase() !== key)),
+    };
+    touched += 1;
+  }
+
+  for (let i = 0; i < data.inboxItems.length; i++) {
+    const item = data.inboxItems[i];
+    const topics = item.topics ?? [];
+    if (!topics.some((t) => t.trim().toLowerCase() === key)) continue;
+    data.inboxItems[i] = {
+      ...item,
+      topics: normalizeTagList(topics.filter((t) => t.trim().toLowerCase() !== key)),
+    };
+    touched += 1;
+  }
+
+  for (let i = 0; i < data.entities.length; i++) {
+    const entity = data.entities[i];
+    if (entity.deletedAt) continue;
+    let patch: Partial<(typeof data.entities)[0]> | null = null;
+    const kind = referenceKindFromNotes(entity.notes ?? "");
+
+    if (kind === "topic") {
+      const topicTags = removeFromList(entity.topicTags);
+      const linkedTags = removeFromList(entity.linkedTags);
+      if (topicTags !== entity.topicTags || linkedTags !== entity.linkedTags) {
+        patch = {
+          ...(patch ?? {}),
+          topicTags: topicTags ?? [],
+          linkedTags: linkedTags ?? [],
+        };
+      }
+    }
+    if (entity.type === "project") {
+      const projectTags = removeFromList(entity.projectTags);
+      const linkedTags = removeFromList(entity.linkedTags);
+      if (projectTags !== entity.projectTags || linkedTags !== entity.linkedTags) {
+        patch = {
+          ...(patch ?? {}),
+          projectTags: projectTags ?? [],
+          linkedTags: linkedTags ?? [],
+        };
+      }
+    }
+    if (kind === "event") {
+      const eventTags = removeFromList(entity.eventTags);
+      if (eventTags !== entity.eventTags) {
+        patch = { ...(patch ?? {}), eventTags: eventTags ?? [] };
+      }
+    }
+
+    if (patch) {
+      data.entities[i] = { ...entity, ...patch };
+      touched += 1;
+    }
+  }
+
+  for (let i = 0; i < (data.runbooks ?? []).length; i++) {
+    const runbook = data.runbooks[i];
+    if (!runbook || runbook.deletedAt) continue;
+    const next = removeFromList(runbook.tags);
+    if (next && next !== runbook.tags) {
+      data.runbooks[i] = { ...runbook, tags: next };
+      touched += 1;
+    }
+  }
+
+  if (touched > 0) await writeArgus(data);
+  return touched;
+}
+
+/** Add a Tag to the durable global vocabulary (Home Tags manager Create). */
+export async function createGlobalTag(tag: string): Promise<{ tag: string; created: boolean }> {
+  const display = normalizeTagDisplay(tag);
+  if (!display) {
+    throw new ArgusPersistenceError("validation", "Tag is required.");
+  }
+  const data = await readArgus();
+  const key = tagKey(display);
+  const existing = normalizeTagList(data.globalTags);
+  const found = existing.find((t) => tagKey(t) === key);
+  if (found) {
+    return { tag: found, created: false };
+  }
+  data.globalTags = normalizeTagList([...existing, display]);
+  await writeArgus(data);
+  return { tag: display, created: true };
 }
 
 export { ArgusWriteBlockedError } from "./data-safety";

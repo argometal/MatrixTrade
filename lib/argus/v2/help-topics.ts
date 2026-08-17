@@ -137,7 +137,7 @@ const SECTIONS: HelpSection[] = [
     title: "Intelligence · Tags",
     group: "intelligence",
     keywords: ["tags", "universe", "trackers", "flag", "gold", "pattern", "home", "rename"],
-    intro: "Home → Intelligence → Tags. Tag universe control center — inventory + Flag Trackers + Rename.",
+    intro: "Home → Intelligence → Tags. Tag manager — Create, Rename, Delete, and Flag Trackers.",
     items: [
       {
         title: "Universe plot",
@@ -148,12 +148,20 @@ const SECTIONS: HelpSection[] = [
         body: "Amber dashed ring = Tracker. Gold stroke on an unflagged tag = Pattern. Dot size is only a faint evidence hint.",
       },
       {
-        title: "Flag / Disable",
-        body: "Optional watch. Confirm both ways. Disable turns watch off — the Tag stays on Notes and Topic Tags. Never an easy delete here. Most Tags never need Flag.",
+        title: "Create",
+        body: "Create tag adds a durable Global Tag to the universe. Flag as Tracker afterward if you want to watch it.",
       },
       {
         title: "Rename",
-        body: "Select a tag → Rename tag (or ✎ Rename beside the title). Updates the string everywhere (Notes, binders, Trackers). Not the same as Flag/Disable.",
+        body: "Select a tag → Rename (or ✎). Updates the string everywhere (Notes, binders, Trackers, Global, runbooks). Not the same as Flag/Disable.",
+      },
+      {
+        title: "Delete",
+        body: "Select a tag → Delete. Strips the Tag from Notes/binders/Trackers — Notes stay; only the Tag membership is removed. Confirm before applying.",
+      },
+      {
+        title: "Flag / Disable",
+        body: "Optional watch. Confirm both ways. Disable turns watch off — the Tag stays on Notes and Topic Tags.",
       },
       {
         title: "Filters",

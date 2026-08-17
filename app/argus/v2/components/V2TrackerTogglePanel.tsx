@@ -51,9 +51,10 @@ function normalizeDraft(raw: string): string {
 }
 
 /**
- * Tag ↔ Tracker manager (no delete).
+ * Tag ↔ Tracker manager.
  * Tags are inventory first; click a chip to Flag / Disable Tracker (optional).
  * Draft “Add Tag” remembers a name without Flagging — Flag is a separate action.
+ * Durable Create lives on Home Tags manager (global vocabulary).
  */
 export function V2TrackerTogglePanel({
   evidenceTags,
@@ -71,6 +72,8 @@ export function V2TrackerTogglePanel({
   noteCta,
   /** Scope id for session drafts / disabled-Tracker memory (ORDER 001). */
   scopeId,
+  /** Home flat mode: show session drafts in the chip list. */
+  showSessionDrafts = false,
 }: {
   /** Tags from Notes/emails on this surface — always listed. */
   evidenceTags: V2TrackerToggleTag[];
@@ -91,6 +94,7 @@ export function V2TrackerTogglePanel({
   /** Optional CTA to put Tags on evidence via Note. */
   noteCta?: ReactNode;
   scopeId?: string;
+  showSessionDrafts?: boolean;
 }) {
   const router = useRouter();
   const [focusTags, setFocusTags] = useState(signalTags);
@@ -202,8 +206,14 @@ export function V2TrackerTogglePanel({
       const key = signalTagKey(row.tag);
       if (!byKey.has(key)) byKey.set(key, row);
     }
+    if (showSessionDrafts) {
+      for (const row of sessionRows) {
+        const key = signalTagKey(row.tag);
+        if (!byKey.has(key)) byKey.set(key, row);
+      }
+    }
     return [...byKey.values()].sort((a, b) => a.tag.localeCompare(b.tag));
-  }, [evidenceRows, poolRows, otherTrackerRows]);
+  }, [evidenceRows, poolRows, otherTrackerRows, sessionRows, showSessionDrafts]);
 
   function rememberSession(tag: string) {
     const key = signalTagKey(tag);
@@ -230,25 +240,24 @@ export function V2TrackerTogglePanel({
     setDraft("");
   }
 
-  /** Optional: Flag as Tracker after naming (or Flag an existing name). */
+  /** Flag as Tracker after naming (or Flag an existing name). One toggle only — never force-ON. */
   function flagFromDraft() {
     const next = normalizeDraft(draft);
     if (!next) return;
-    if (!confirmTrackerConvert(next, tagIsFlagged(next, focusKeys))) return;
+    const already = tagIsFlagged(next, focusKeys);
+    if (already) {
+      // Already a Tracker — do not invert via Flag button.
+      setDraft("");
+      return;
+    }
+    if (!confirmTrackerConvert(next, false)) return;
     rememberSession(next);
     setDraft("");
     startTransition(async () => {
       const result = await toggleSignalTagAction(next);
       if ("error" in result) return;
-      if (!result.active) {
-        const again = await toggleSignalTagAction(next);
-        if ("error" in again) return;
-        setFocusTags(again.signalTags);
-        onSignalTagsChange?.(again.signalTags);
-      } else {
-        setFocusTags(result.signalTags);
-        onSignalTagsChange?.(result.signalTags);
-      }
+      setFocusTags(result.signalTags);
+      onSignalTagsChange?.(result.signalTags);
       router.refresh();
     });
   }
