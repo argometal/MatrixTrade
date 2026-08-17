@@ -505,9 +505,10 @@ export async function bulkDeleteInboxAction(
   return { ok: true, count };
 }
 
-/** Append a chronicle note on an event (text + optional file attachments).
+/** Append a chronicle note on an event (text + optional file attachments + optional Tags).
  * Focus Tags (`ArgusData.signalTags`) are journal-level — they are NOT copied onto every note.
  * Entry-specific Tags may be passed via `entryTags` (optional).
+ * Tags alone are enough to save — dual-writes binder `eventTags` so Tags tab + Patterns stay aligned.
  */
 export async function appendEventChronicleEntryAction(
   formData: FormData
@@ -530,9 +531,14 @@ export async function appendEventChronicleEntryAction(
   const trimmed = body.trim();
   const eventDate = eventAnchorDate(entity);
   const hasFiles = files.length > 0;
+  const hasTags = entryTags.length > 0;
+  const shouldAppend = Boolean(trimmed || hasFiles || hasTags);
 
-  if (trimmed || hasFiles) {
-    const logBody = trimmed || `Attached: ${attachmentSummaryNames(files)}`;
+  if (shouldAppend) {
+    const { placeholderBodyForEventTags } = await import("@/lib/argus/v2/event-tag-sync");
+    const logBody =
+      trimmed ||
+      (hasFiles ? `Attached: ${attachmentSummaryNames(files)}` : placeholderBodyForEventTags(entryTags));
     const log = await createLog({
       kind: "log",
       date: eventDate,
@@ -546,11 +552,77 @@ export async function appendEventChronicleEntryAction(
       classificationStatus: "classified",
     });
     await attachFilesToLog(log.id, files);
+
+    if (hasTags) {
+      const { binderTagWritePatch } = await import("@/lib/argus/tag-ontology");
+      const { mergeBinderTagLists } = await import("@/lib/argus/v2/event-tag-sync");
+      await updateEntity(
+        eventId,
+        binderTagWritePatch(entity, "event", mergeBinderTagLists(entity.eventTags, entryTags))
+      );
+    }
   }
 
   revalidateArgus();
   revalidatePath("/argus/v2/browse/events");
-  return { ok: true, appended: Boolean(trimmed || hasFiles) };
+  revalidatePath("/argus/v2");
+  return { ok: true, appended: shouldAppend };
+}
+
+/**
+ * Attach Tag(s) on an Event immediately — Note evidence + Tags tab binder.
+ * Used when clicking Add on the Note tab (no body required).
+ */
+export async function attachEventTagsAction(
+  eventId: string,
+  tags: string[]
+): Promise<{ ok: true; attached: string[] } | { error: string }> {
+  await requireArgusSession();
+  const id = eventId.trim();
+  const incoming = normalizeEventTags(tags);
+  if (!id) return { error: "missing_event" };
+  if (incoming.length === 0) return { error: "empty_tag" };
+
+  await migrateLegacyEventRecordIfNeeded(id);
+  const entity = await getEntity(id);
+  if (!entity || referenceKindFromNotes(entity.notes ?? "") !== "event") {
+    return { error: "missing_event" };
+  }
+
+  const data = await readArgus();
+  const {
+    placeholderBodyForEventTags,
+    tagsMissingFromEventEvidence,
+    mergeBinderTagLists,
+  } = await import("@/lib/argus/v2/event-tag-sync");
+  const { binderTagWritePatch } = await import("@/lib/argus/tag-ontology");
+
+  const missingEvidence = tagsMissingFromEventEvidence(data, id, incoming);
+  if (missingEvidence.length > 0) {
+    const logBody = placeholderBodyForEventTags(missingEvidence);
+    await createLog({
+      kind: "log",
+      date: eventAnchorDate(entity),
+      title: autoTitleFromBody(logBody),
+      body: logBody,
+      entityIds: [id],
+      topics: missingEvidence,
+      source: "manual",
+      private: false,
+      attachmentIds: [],
+      classificationStatus: "classified",
+    });
+  }
+
+  await updateEntity(
+    id,
+    binderTagWritePatch(entity, "event", mergeBinderTagLists(entity.eventTags, incoming))
+  );
+
+  revalidateArgus();
+  revalidatePath("/argus/v2/browse/events");
+  revalidatePath("/argus/v2");
+  return { ok: true, attached: incoming };
 }
 
 /** Link an inbox email to an event (evidence chain). */
@@ -1713,7 +1785,7 @@ export async function updateTopicAliasesAction(formData: FormData): Promise<void
   redirect(returnTo);
 }
 
-/** Event binder Tags (`eventTags`) — not evidence Notes; never dual-write linkedTags (legacy Signals). */
+/** Event binder Tags (`eventTags`) — dual-writes new Tags onto Note evidence so Patterns track. */
 export async function updateEventTagsAction(formData: FormData): Promise<void> {
   await requireArgusSession();
   const entityId = String(formData.get("entityId") ?? "");
@@ -1725,8 +1797,37 @@ export async function updateEventTagsAction(formData: FormData): Promise<void> {
     redirect(returnTo);
   }
 
-  const { binderTagWritePatch } = await import("@/lib/argus/tag-ontology");
-  await updateEntity(entityId, binderTagWritePatch(entity, "event", eventTags));
+  const { binderTagWritePatch, normalizeTagList, tagKey } = await import("@/lib/argus/tag-ontology");
+  const nextTags = normalizeTagList(eventTags);
+  const prevKeys = new Set((entity.eventTags ?? []).map((t) => tagKey(t)));
+  const newlyAdded = nextTags.filter((t) => !prevKeys.has(tagKey(t)));
+
+  await updateEntity(entityId, binderTagWritePatch(entity, "event", nextTags));
+
+  if (newlyAdded.length > 0) {
+    const data = await readArgus();
+    const {
+      placeholderBodyForEventTags,
+      tagsMissingFromEventEvidence,
+    } = await import("@/lib/argus/v2/event-tag-sync");
+    const missingEvidence = tagsMissingFromEventEvidence(data, entityId, newlyAdded);
+    if (missingEvidence.length > 0) {
+      const logBody = placeholderBodyForEventTags(missingEvidence);
+      await createLog({
+        kind: "log",
+        date: eventAnchorDate(entity),
+        title: autoTitleFromBody(logBody),
+        body: logBody,
+        entityIds: [entityId],
+        topics: missingEvidence,
+        source: "manual",
+        private: false,
+        attachmentIds: [],
+        classificationStatus: "classified",
+      });
+    }
+  }
+
   revalidateArgus();
   revalidatePath("/argus/v2/browse/events");
   revalidatePath("/argus/v2");

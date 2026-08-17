@@ -222,7 +222,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Where Tags live on an Event",
-        body: "Event → Note puts Tags on evidence. Event → Tags manages the universe and optional Flag as Tracker.",
+        body: "Event → Tags and Event → Note Add both dual-write binder + Note evidence. Trackers are Flag-only on Tags / Home.",
       },
     ],
   },
@@ -233,11 +233,11 @@ const SECTIONS: HelpSection[] = [
     group: "intelligence",
     keywords: ["event", "tags", "trackers", "on this event", "note", "flag", "pool"],
     intro:
-      "Event Tags classify this Event. Notes carry evidence Tags. Trackers are journal Flags — ⚑ shows when a Tag on this Event is Flagged. Branch Topic/Project pools are vocabulary only.",
+      "Event Tags classify this Event and dual-write onto Note evidence so Patterns count without a separate note body. Trackers are journal Flags — ⚑ shows when a Tag on this Event is Flagged. Branch Topic/Project pools are vocabulary only.",
     items: [
       {
         title: "Tags on this Event",
-        body: "Binder Tags (eventTags) only — not Note Tags. Add Tag attaches to this Event. Evidence already on Notes appears under Attach from Notes until you Save Tags.",
+        body: "Add Tag + Save Tags attaches to this Event and creates a lightweight Note Tag when missing — so Patterns and Home counts see it. Evidence already on Notes appears under Attach from Notes until you Save Tags.",
       },
       {
         title: "Tags in this branch",
@@ -252,8 +252,8 @@ const SECTIONS: HelpSection[] = [
         body: "Opens Home → Intelligence → Tags for the full universe (roles, Patterns, search).",
       },
       {
-        title: "Put Tags on a Note",
-        body: "Evidence Tags still live on Notes — use Browse branch / Note tab to write Log.topics.",
+        title: "Note tab Add",
+        body: "Clicking Add on the Note tab saves the Tag immediately on Notes and the Tags tab — no note text required. Save on Note is for writing or attachments.",
       },
     ],
   },
@@ -537,11 +537,11 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "Save",
-        body: "Body and/or attachments become a Chronicle entry dated to this Event.",
+        body: "Body and/or attachments become a Chronicle entry dated to this Event. Tags alone are not required for Save — use Add on Tags instead.",
       },
       {
         title: "Tags",
-        body: "Optional. Quick chips from linked Topics, or Browse / create. Tagging does not Flag a Tracker — Flag later on Tags.",
+        body: "Click Add (or Browse) to save a Tag immediately on Notes and the Tags tab — no note text needed. Both surfaces stay aligned for Patterns.",
       },
       {
         title: "Link email",
