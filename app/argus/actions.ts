@@ -38,6 +38,8 @@ import {
   updateLog,
   updateRunbook,
   renameTagGlobally,
+  deleteTagGlobally,
+  createGlobalTag,
   updateSignalTags,
   toggleSignalTag,
 } from "@/lib/argus/server-storage";
@@ -1563,6 +1565,38 @@ export async function renameTagInlineAction(
   revalidatePath("/argus/v2/browse/events");
   revalidatePath("/argus/v2/browse/projects");
   return { ok: true, oldTag: from, newTag: to, touched };
+}
+
+/** Remove a Tag everywhere (Notes / binders / Trackers / global / runbooks). */
+export async function deleteTagInlineAction(
+  tag: string
+): Promise<{ ok: true; tag: string; touched: number } | { error: string }> {
+  await requireArgusSession();
+  const target = tag.trim();
+  if (!target) return { error: "empty_tag" };
+  const touched = await deleteTagGlobally(target);
+  revalidateArgus();
+  revalidatePath("/argus/v2");
+  revalidatePath("/argus/v2/inbox");
+  revalidatePath("/argus/v2/browse/topics");
+  revalidatePath("/argus/v2/browse/events");
+  revalidatePath("/argus/v2/browse/projects");
+  return { ok: true, tag: target, touched };
+}
+
+/** Create a durable Global Tag on Home Tags manager. */
+export async function createGlobalTagAction(
+  tag: string
+): Promise<{ ok: true; tag: string; created: boolean } | { error: string }> {
+  await requireArgusSession();
+  try {
+    const result = await createGlobalTag(tag);
+    revalidateArgus();
+    revalidatePath("/argus/v2");
+    return { ok: true, tag: result.tag, created: result.created };
+  } catch {
+    return { error: "empty_tag" };
+  }
 }
 
 export async function updateInboxSubjectAction(formData: FormData): Promise<void> {

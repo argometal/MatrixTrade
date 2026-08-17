@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { toggleSignalTagAction, renameTagInlineAction } from "@/app/argus/actions";
+import { toggleSignalTagAction, renameTagInlineAction, deleteTagInlineAction, createGlobalTagAction } from "@/app/argus/actions";
 import { confirmTrackerConvert } from "@/lib/argus/tracker-confirm";
 import type {
   V2FocusTagStat,
@@ -141,6 +141,17 @@ export function V2FocusTagPortfolio({
   const [renameDraft, setRenameDraft] = useState("");
   const [renameBusy, setRenameBusy] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [createDraft, setCreateDraft] = useState("");
+  const [createBusy, setCreateBusy] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [managerStatus, setManagerStatus] = useState<string | null>(null);
+  /** After rename, keep selection visible until server rows catch up. */
+  const [pendingRename, setPendingRename] = useState<{
+    oldKey: string;
+    newName: string;
+    base: V2FocusTagStat;
+  } | null>(null);
   const [neighborhoodCenter, setNeighborhoodCenter] = useState<V2TagEvidenceEntity | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -159,24 +170,58 @@ export function V2FocusTagPortfolio({
     [focusTags]
   );
 
+  const rowsWithPending = useMemo(() => {
+    if (!pendingRename) return rows;
+    const { oldKey, newName, base } = pendingRename;
+    const newKey = signalTagKey(newName);
+    let sawNew = false;
+    const mapped = rows.map((row) => {
+      const key = signalTagKey(row.name);
+      if (key === newKey) {
+        sawNew = true;
+        return { ...row, name: newName };
+      }
+      if (key === oldKey) {
+        return { ...row, name: newName };
+      }
+      return row;
+    });
+    if (!sawNew && !mapped.some((r) => signalTagKey(r.name) === newKey)) {
+      mapped.unshift({ ...base, name: newName, isFocus: focusKeySet.has(newKey) });
+    }
+    const byKey = new Map<string, V2FocusTagStat>();
+    for (const row of mapped) {
+      byKey.set(signalTagKey(row.name), row);
+    }
+    return [...byKey.values()];
+  }, [rows, pendingRename, focusKeySet]);
+
+  useEffect(() => {
+    if (!pendingRename) return;
+    const newKey = signalTagKey(pendingRename.newName);
+    if (rows.some((r) => signalTagKey(r.name) === newKey)) {
+      setPendingRename(null);
+    }
+  }, [rows, pendingRename]);
+
   const roleCountById = useMemo(() => {
     const map = new Map<V2TagRoleFilter, number>();
-    map.set("all", rows.length);
+    map.set("all", rowsWithPending.length);
     for (const bucket of roleBuckets) {
       map.set(bucket.role, bucket.count);
     }
     return map;
-  }, [roleBuckets, rows.length]);
+  }, [roleBuckets, rowsWithPending.length]);
 
   const trackerRows = useMemo(() => {
-    return rows
+    return rowsWithPending
       .map((row) => ({ ...row, isFocus: focusKeySet.has(signalTagKey(row.name)) }))
       .filter((row) => row.isFocus)
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
-  }, [rows, focusKeySet]);
+  }, [rowsWithPending, focusKeySet]);
 
   const visible = useMemo(() => {
-    const withLiveFocus = rows.map((row) => ({
+    const withLiveFocus = rowsWithPending.map((row) => ({
       ...row,
       isFocus: focusKeySet.has(signalTagKey(row.name)),
       roles: row.roles ?? [],
@@ -186,12 +231,17 @@ export function V2FocusTagPortfolio({
     const q = query.trim().toLowerCase();
     if (!q) return filtered;
     return filtered.filter((row) => row.name.toLowerCase().includes(q));
-  }, [rows, filter, roleFilter, focusKeySet, query]);
+  }, [rowsWithPending, filter, roleFilter, focusKeySet, query]);
 
   const selected = useMemo(() => {
     if (!selectedName) return null;
-    return visible.find((r) => r.name === selectedName) ?? rows.find((r) => r.name === selectedName) ?? null;
-  }, [selectedName, visible, rows]);
+    const key = signalTagKey(selectedName);
+    return (
+      visible.find((r) => signalTagKey(r.name) === key) ??
+      rowsWithPending.find((r) => signalTagKey(r.name) === key) ??
+      null
+    );
+  }, [selectedName, visible, rowsWithPending]);
 
   const selectedKey = selected ? signalTagKey(selected.name) : "";
   const selectedEvidence: V2TagEvidenceContext | null = selectedKey
@@ -294,24 +344,94 @@ export function V2FocusTagPortfolio({
       return;
     }
     const ok = window.confirm(
-      `Rename “${selected.name}” to “${next}” everywhere?\n\nUpdates Notes, email Topics, Topic/Project/Event Tags, and Trackers. This is not Flag/Disable.`
+      `Rename “${selected.name}” to “${next}” everywhere?\n\nUpdates Notes, email Topics, Topic/Project/Event Tags, Trackers, Global Tags, and runbook Tags. This is not Flag/Disable.`
     );
     if (!ok) return;
     setRenameBusy(true);
     setRenameError(null);
-    const result = await renameTagInlineAction(selected.name, next);
-    setRenameBusy(false);
-    if ("error" in result) {
-      setRenameError(result.error === "empty_tag" ? "Enter a tag name." : "Rename failed.");
+    try {
+      const result = await renameTagInlineAction(selected.name, next);
+      if ("error" in result) {
+        setRenameError(result.error === "empty_tag" ? "Enter a tag name." : "Rename failed.");
+        return;
+      }
+      if (result.touched === 0) {
+        setRenameError("No matching tags found to rename.");
+        return;
+      }
+      const oldKey = signalTagKey(result.oldTag);
+      setFocusTags((prev) =>
+        prev.map((tag) => (signalTagKey(tag) === oldKey ? result.newTag : tag))
+      );
+      setPendingRename({ oldKey, newName: result.newTag, base: selected });
+      setSelectedName(result.newTag);
+      setRenameOpen(false);
+      setManagerStatus(`Renamed to #${result.newTag} (${result.touched} place${result.touched === 1 ? "" : "s"}).`);
+      router.refresh();
+    } catch {
+      setRenameError("Rename failed — try again.");
+    } finally {
+      setRenameBusy(false);
+    }
+  }
+
+  async function submitDelete() {
+    if (!selected) return;
+    const ok = window.confirm(
+      `Delete “${selected.name}” everywhere?\n\nRemoves this Tag from Notes, email Topics, Topic/Project/Event Tags, Trackers, Global Tags, and runbooks. Notes themselves stay — only the Tag is stripped.`
+    );
+    if (!ok) return;
+    setDeleteBusy(true);
+    setManagerStatus(null);
+    try {
+      const result = await deleteTagInlineAction(selected.name);
+      if ("error" in result) {
+        setManagerStatus("Delete failed.");
+        return;
+      }
+      const key = signalTagKey(result.tag);
+      setFocusTags((prev) => prev.filter((tag) => signalTagKey(tag) !== key));
+      setSelectedName(null);
+      setPendingRename(null);
+      setManagerStatus(
+        result.touched > 0
+          ? `Deleted #${result.tag} from ${result.touched} place${result.touched === 1 ? "" : "s"}.`
+          : `No places held #${result.tag}.`
+      );
+      router.refresh();
+    } catch {
+      setManagerStatus("Delete failed — try again.");
+    } finally {
+      setDeleteBusy(false);
+    }
+  }
+
+  async function submitCreate(event: React.FormEvent) {
+    event.preventDefault();
+    const next = createDraft.trim().replace(/\s+/g, " ");
+    if (!next) {
+      setCreateError("Enter a tag name.");
       return;
     }
-    const oldKey = signalTagKey(result.oldTag);
-    setFocusTags((prev) =>
-      prev.map((tag) => (signalTagKey(tag) === oldKey ? result.newTag : tag))
-    );
-    setSelectedName(result.newTag);
-    setRenameOpen(false);
-    router.refresh();
+    setCreateBusy(true);
+    setCreateError(null);
+    try {
+      const result = await createGlobalTagAction(next);
+      if ("error" in result) {
+        setCreateError("Enter a tag name.");
+        return;
+      }
+      setCreateDraft("");
+      setSelectedName(result.tag);
+      setManagerStatus(
+        result.created ? `Created global Tag #${result.tag}.` : `#${result.tag} already existed — selected.`
+      );
+      router.refresh();
+    } catch {
+      setCreateError("Create failed — try again.");
+    } finally {
+      setCreateBusy(false);
+    }
   }
 
   const selectedIsFocus = selected ? focusKeySet.has(signalTagKey(selected.name)) : false;
@@ -709,11 +829,20 @@ export function V2FocusTagPortfolio({
                 <button
                   type="button"
                   onClick={openRename}
-                  disabled={renameBusy || focusBusy}
+                  disabled={renameBusy || deleteBusy || focusBusy}
                   className="rounded-md border border-violet-500/40 bg-violet-950/30 px-2 py-0.5 text-[11px] font-semibold text-violet-200 hover:border-violet-400/60 hover:text-violet-100 disabled:opacity-40"
                   title={`Rename ${selected.name} everywhere (Notes, binders, Trackers)`}
                 >
                   ✎ Rename
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void submitDelete()}
+                  disabled={renameBusy || deleteBusy || focusBusy}
+                  className="rounded-md border border-rose-500/40 bg-rose-950/30 px-2 py-0.5 text-[11px] font-semibold text-rose-200 hover:border-rose-400/60 hover:text-rose-100 disabled:opacity-40"
+                  title={`Delete ${selected.name} everywhere (strips Tag; Notes stay)`}
+                >
+                  {deleteBusy ? "…" : "Delete"}
                 </button>
               </div>
               <div className="mt-2 grid max-w-sm grid-cols-2 gap-2">
@@ -772,11 +901,20 @@ export function V2FocusTagPortfolio({
               <button
                 type="button"
                 onClick={openRename}
-                disabled={renameBusy || focusBusy}
+                disabled={renameBusy || deleteBusy || focusBusy}
                 className="rounded-lg border border-violet-500/45 bg-violet-600/20 px-3 py-1.5 text-[11px] font-semibold text-violet-100 hover:bg-violet-600/30 disabled:opacity-40"
                 title={`Rename ${selected.name} everywhere (Notes, binders, Trackers)`}
               >
                 Rename tag
+              </button>
+              <button
+                type="button"
+                onClick={() => void submitDelete()}
+                disabled={renameBusy || deleteBusy || focusBusy}
+                className="rounded-lg border border-rose-500/40 bg-rose-950/40 px-3 py-1.5 text-[11px] font-semibold text-rose-200 hover:bg-rose-950/55 disabled:opacity-40"
+                title={`Delete ${selected.name} everywhere`}
+              >
+                {deleteBusy ? "…" : "Delete tag"}
               </button>
               <button
                 type="button"
@@ -916,15 +1054,48 @@ export function V2FocusTagPortfolio({
         </div>
       )}
 
-      <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-4">
+      {managerStatus ? (
+        <p className="rounded-xl border border-lime-500/20 bg-lime-950/20 px-3 py-2 text-xs text-lime-200">
+          {managerStatus}
+        </p>
+      ) : null}
+
+      <div className="rounded-xl border border-zinc-800/80 bg-zinc-950/40 p-4 space-y-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-600">
+            Create tag
+          </p>
+          <p className="mt-1 text-[11px] text-zinc-500">
+            Adds a durable Global Tag to the universe. Flag as Tracker is optional afterward.
+          </p>
+          <form onSubmit={(event) => void submitCreate(event)} className="mt-2 flex flex-wrap gap-2">
+            <input
+              value={createDraft}
+              onChange={(event) => setCreateDraft(event.target.value)}
+              placeholder="New tag name…"
+              disabled={createBusy}
+              className="min-w-[12rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 focus:border-violet-500/50 focus:outline-none disabled:opacity-40"
+            />
+            <button
+              type="submit"
+              disabled={createBusy || !createDraft.trim()}
+              className="rounded-lg border border-sky-500/40 bg-sky-950/40 px-3 py-2 text-[11px] font-semibold text-sky-100 hover:bg-sky-950/60 disabled:opacity-40"
+            >
+              {createBusy ? "…" : "Create"}
+            </button>
+          </form>
+          {createError ? <p className="mt-1.5 text-xs text-rose-300">{createError}</p> : null}
+        </div>
+
         <V2TrackerTogglePanel
-          evidenceTags={rows.map((row) => ({ tag: row.name, count: row.count }))}
+          evidenceTags={rowsWithPending.map((row) => ({ tag: row.name, count: row.count }))}
           signalTags={focusTags}
           onSignalTagsChange={setFocusTags}
           scopeId="home-universe"
-          heading="Manage universe · Tag ↔ Tracker"
+          heading="Trackers · Flag / Disable"
           helpTopic="tags-universe"
           addPlaceholder="Tag name → Flag as Tracker"
+          showSessionDrafts
         />
       </div>
 
@@ -946,7 +1117,7 @@ export function V2FocusTagPortfolio({
             </h3>
             <p className="mt-2 text-xs text-zinc-500">
               Changes the string everywhere it appears — Notes, email Topics, Topic/Project/Event Tags,
-              and Trackers. Flag/Disable is separate.
+              Trackers, Global Tags, and runbooks. Flag/Disable is separate.
             </p>
             <form onSubmit={(event) => void submitRename(event)} className="mt-4 space-y-4">
               <label className="block text-sm text-zinc-400">
