@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { V2EntityCreateButton, V2EntityLinkButton } from "@/app/argus/v2/components/V2CreateEntityButton";
-import { appendEventChronicleEntryAction } from "@/app/argus/actions";
+import { appendEventChronicleEntryAction, attachEventTagsAction } from "@/app/argus/actions";
 import type { V2EventDetail, V2EventInboxOption } from "@/lib/argus/v2/event-browse-utils";
 import { V2AttachmentComposer } from "@/app/argus/v2/components/V2AttachmentComposer";
 import { V2EventLinkEmailModal } from "./V2EventLinkEmailModal";
@@ -78,6 +78,8 @@ export function V2EventDetailPanel({
   const [panelTab, setPanelTab] = useState<PanelTab>(urlTag ? "chronicle" : "note");
   const [composer, setComposer] = useState("");
   const [entryTags, setEntryTags] = useState<string[]>([]);
+  /** Keys saved via Add before `selected.eventTags` refreshes from the server. */
+  const [justSavedTagKeys, setJustSavedTagKeys] = useState<string[]>([]);
   const [tagPickerOpen, setTagPickerOpen] = useState(false);
   const [focusTags, setFocusTags] = useState<string[]>(signalTags);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
@@ -85,6 +87,8 @@ export function V2EventDetailPanel({
   const [saveNote, setSaveNote] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
   const eventTagEditorRef = useRef<V2EventTagEditorHandle>(null);
+  const entryTagsRef = useRef(entryTags);
+  entryTagsRef.current = entryTags;
   const privateLocked = selected.hasPrivateEvidence && !privateUnlocked;
   const mobileDetail = Boolean(onBack);
   // Compact / pinned upper chrome disabled — header scrolls with content.
@@ -125,11 +129,29 @@ export function V2EventDetailPanel({
     [allProgress, selected.id]
   );
 
-  const canSave = composer.trim().length > 0 || pendingFiles.length > 0;
+  const binderTagKeys = useMemo(() => {
+    const keys = new Set<string>();
+    for (const raw of selected.eventTags ?? []) {
+      const key = raw.trim().replace(/\s+/g, " ").toLowerCase();
+      if (key) keys.add(key);
+    }
+    for (const key of justSavedTagKeys) keys.add(key);
+    return keys;
+  }, [selected.eventTags, justSavedTagKeys]);
+
+  const pendingNoteTags = useMemo(
+    () => entryTags.filter((tag) => !binderTagKeys.has(tag.trim().replace(/\s+/g, " ").toLowerCase())),
+    [entryTags, binderTagKeys]
+  );
+
+  /** Tags save on Add; Save is for body/files (or rare unsaved tag drafts). */
+  const canSave =
+    composer.trim().length > 0 || pendingFiles.length > 0 || pendingNoteTags.length > 0;
 
   useEffect(() => {
     setComposer("");
     setEntryTags([]);
+    setJustSavedTagKeys([]);
     setPendingFiles([]);
     setSaveNote(null);
   }, [selected.id]);
@@ -155,9 +177,10 @@ export function V2EventDetailPanel({
   const noteQuickTags = useMemo(() => {
     const fromTopic = selected.topicContextTags.map((t) => t.trim().replace(/\s+/g, " ")).filter(Boolean);
     const fromEvidence = eventTagCounts.map((r) => r.tag);
+    const fromBinder = (selected.eventTags ?? []).map((t) => t.trim().replace(/\s+/g, " ")).filter(Boolean);
     const seen = new Set<string>();
     const out: string[] = [];
-    for (const tag of [...fromTopic, ...fromEvidence]) {
+    for (const tag of [...fromTopic, ...fromEvidence, ...fromBinder]) {
       const key = tag.toLowerCase();
       if (!key || seen.has(key)) continue;
       seen.add(key);
@@ -165,16 +188,58 @@ export function V2EventDetailPanel({
       if (out.length >= 10) break;
     }
     return out;
-  }, [selected.topicContextTags, eventTagCounts]);
+  }, [selected.topicContextTags, eventTagCounts, selected.eventTags]);
+
+  async function persistAddedTags(added: string[]) {
+    if (added.length === 0) return;
+    setSaving(true);
+    setSaveNote(null);
+    try {
+      const result = await attachEventTagsAction(selected.id, added);
+      if ("error" in result) {
+        setSaveNote("Tag save failed");
+        return;
+      }
+      setJustSavedTagKeys((prev) => {
+        const next = new Set(prev);
+        for (const tag of result.attached) {
+          const key = tag.trim().replace(/\s+/g, " ").toLowerCase();
+          if (key) next.add(key);
+        }
+        return [...next];
+      });
+      setSaveNote(
+        result.attached.length === 1
+          ? `Saved #${result.attached[0]} on Note + Tags`
+          : `Saved ${result.attached.length} tags on Note + Tags`
+      );
+      router.refresh();
+    } catch {
+      setSaveNote("Tag save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   function toggleEntryTag(tag: string) {
     const key = tag.toLowerCase();
-    setEntryTags((current) => {
-      if (current.some((t) => t.toLowerCase() === key)) {
-        return current.filter((t) => t.toLowerCase() !== key);
-      }
-      return [...current, tag];
-    });
+    const already = entryTags.some((t) => t.toLowerCase() === key);
+    if (already) {
+      setEntryTags((current) => current.filter((t) => t.toLowerCase() !== key));
+      return;
+    }
+    setEntryTags((current) => [...current, tag]);
+    if (!binderTagKeys.has(key)) {
+      void persistAddedTags([tag]);
+    }
+  }
+
+  function onEntryTagsChange(next: string[]) {
+    const prevKeys = new Set(entryTagsRef.current.map((t) => t.toLowerCase()));
+    const added = next.filter((t) => !prevKeys.has(t.toLowerCase()));
+    setEntryTags(next);
+    const toPersist = added.filter((t) => !binderTagKeys.has(t.toLowerCase()));
+    if (toPersist.length > 0) void persistAddedTags(toPersist);
   }
 
   /** Evidence-scoped buckets first (ORDER 001) — not the raw journal-wide list alone. */
@@ -212,7 +277,9 @@ export function V2EventDetailPanel({
       const formData = new FormData();
       formData.set("eventId", selected.id);
       formData.set("body", composer);
-      formData.set("entryTags", entryTags.join(", "));
+      const tagsForSave =
+        composer.trim().length > 0 || pendingFiles.length > 0 ? entryTags : pendingNoteTags;
+      formData.set("entryTags", tagsForSave.join(", "));
       for (const file of pendingFiles) {
         formData.append("attachments", file);
       }
@@ -409,28 +476,39 @@ export function V2EventDetailPanel({
                   <p className="text-xs font-medium text-zinc-300">{TAGS.titleOnNote}</p>
                   <button
                     type="button"
+                    disabled={saving}
                     onClick={() => setTagPickerOpen(true)}
-                    className="shrink-0 rounded-lg border border-teal-500/40 bg-teal-950/40 px-3 py-1.5 text-xs font-semibold text-teal-200 hover:bg-teal-900/50"
+                    className="shrink-0 rounded-lg border border-teal-500/40 bg-teal-950/40 px-3 py-1.5 text-xs font-semibold text-teal-200 hover:bg-teal-900/50 disabled:opacity-50"
                   >
-                    {entryTags.length > 0 ? `Browse tags (${entryTags.length})` : "Browse / create tags"}
+                    {entryTags.length > 0 || binderTagKeys.size > 0
+                      ? `Browse tags (${Math.max(entryTags.length, binderTagKeys.size)})`
+                      : "Browse / create tags"}
                   </button>
                 </div>
+                <p className="text-[11px] leading-snug text-zinc-500">
+                  Click Add to save a tag on Notes and the Tags tab — no note text required. Save is for
+                  writing or attaching files.
+                </p>
 
                 {noteQuickTags.length > 0 ? (
                   <ul className={TAG_MANAGE_LIST_CLASS} aria-label="Quick tags for this Event">
                     {noteQuickTags.map((tag) => {
-                      const selectedOnNote = entryTags.some((t) => t.toLowerCase() === tag.toLowerCase());
+                      const key = tag.toLowerCase();
+                      const selectedOnNote = entryTags.some((t) => t.toLowerCase() === key);
+                      const savedOnEvent = binderTagKeys.has(key);
+                      const active = selectedOnNote || savedOnEvent;
                       return (
                         <li key={tag}>
                           <button
                             type="button"
+                            disabled={saving}
                             onClick={() => toggleEntryTag(tag)}
-                            aria-pressed={selectedOnNote}
-                            className={selectedOnNote ? TAG_MANAGE_ROW_ACTIVE_CLASS : TAG_MANAGE_ROW_CLASS}
+                            aria-pressed={active}
+                            className={active ? TAG_MANAGE_ROW_ACTIVE_CLASS : TAG_MANAGE_ROW_CLASS}
                           >
                             <span
                               className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                                selectedOnNote ? "bg-teal-500/20 text-teal-100" : "bg-violet-600/20 text-violet-200"
+                                active ? "bg-teal-500/20 text-teal-100" : "bg-violet-600/20 text-violet-200"
                               }`}
                               aria-hidden
                             >
@@ -438,7 +516,7 @@ export function V2EventDetailPanel({
                             </span>
                             <span className="min-w-0 flex-1 truncate font-semibold">{tag}</span>
                             <span className="shrink-0 text-[10px] uppercase tracking-wide text-zinc-500">
-                              {selectedOnNote ? "On note" : "Add"}
+                              {savedOnEvent ? "Saved" : selectedOnNote ? "On note" : "Add"}
                             </span>
                           </button>
                         </li>
@@ -449,31 +527,44 @@ export function V2EventDetailPanel({
 
                 {entryTags.length > 0 ? (
                   <div className="border-t border-zinc-800/70 pt-2">
-                    <p className="mb-2 text-[10px] uppercase tracking-wide text-zinc-600">On this note</p>
-                    <ul className={TAG_MANAGE_LIST_CLASS} aria-label="Tags on this note">
-                      {entryTags.map((tag) => (
-                        <li key={tag}>
-                          <span className={`${TAG_MANAGE_ROW_ACTIVE_CLASS} justify-between`}>
-                            <span className="flex min-w-0 flex-1 items-center gap-3">
-                              <span
-                                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-500/20 text-xs font-bold text-teal-100"
-                                aria-hidden
-                              >
-                                #
+                    <p className="mb-2 text-[10px] uppercase tracking-wide text-zinc-600">Selected</p>
+                    <ul className={TAG_MANAGE_LIST_CLASS} aria-label="Selected tags">
+                      {entryTags.map((tag) => {
+                        const savedOnEvent = binderTagKeys.has(tag.toLowerCase());
+                        return (
+                          <li key={tag}>
+                            <span className={`${TAG_MANAGE_ROW_ACTIVE_CLASS} justify-between`}>
+                              <span className="flex min-w-0 flex-1 items-center gap-3">
+                                <span
+                                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-500/20 text-xs font-bold text-teal-100"
+                                  aria-hidden
+                                >
+                                  #
+                                </span>
+                                <span className="min-w-0 truncate font-semibold">
+                                  {tag}
+                                  {savedOnEvent ? (
+                                    <span className="ml-2 text-[10px] font-normal uppercase tracking-wide text-zinc-500">
+                                      Note + Tags
+                                    </span>
+                                  ) : null}
+                                </span>
                               </span>
-                              <span className="min-w-0 truncate font-semibold">{tag}</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setEntryTags((current) => current.filter((t) => t !== tag))
+                                }
+                                className="shrink-0 text-teal-300/80 hover:text-teal-100"
+                                aria-label={`Clear tag ${tag} from selection`}
+                                title="Clears selection only — does not remove from Event Tags"
+                              >
+                                ×
+                              </button>
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => setEntryTags((current) => current.filter((t) => t !== tag))}
-                              className="shrink-0 text-teal-300/80 hover:text-teal-100"
-                              aria-label={`Remove tag ${tag}`}
-                            >
-                              ×
-                            </button>
-                          </span>
-                        </li>
-                      ))}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 ) : null}
@@ -485,7 +576,7 @@ export function V2EventDetailPanel({
                 open={tagPickerOpen}
                 buckets={noteTagBuckets}
                 selectedTags={entryTags}
-                onChange={setEntryTags}
+                onChange={onEntryTagsChange}
                 onClose={() => setTagPickerOpen(false)}
                 mode="note"
                 topicContextTags={selected.topicContextTags}

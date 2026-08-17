@@ -425,7 +425,7 @@ export const TOPIC_ALIASES = TOPIC_MATCH_TAGS;
 /** Event binder classification Tags (`Entity.eventTags`) — not Note evidence, not Trackers. */
 export const EVENT_MATCH_TAGS = {
   heading: "Event Tags",
-  hint: "Tags linked to this Event binder — separate from Tags on Notes. Flag as Tracker from Trackers or Home → Tags.",
+  hint: "Tags on this Event. Saving also writes a Note Tag so Patterns stay aligned — same as Add on the Note tab.",
   placeholder: "Add a tag…",
   add: "Add",
   save: "Save Tags",
