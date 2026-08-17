@@ -54,7 +54,7 @@ function normalizeDraft(raw: string): string {
  * Tag ↔ Tracker manager.
  * Tags are inventory first; click a chip to Flag / Disable Tracker (optional).
  * Draft “Add Tag” remembers a name without Flagging — Flag is a separate action.
- * Durable Create lives on Home Tags manager (global vocabulary).
+ * Durable Create/Delete live on Home Tags manager (same pipeline as binder Tag tabs).
  */
 export function V2TrackerTogglePanel({
   evidenceTags,
