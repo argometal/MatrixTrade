@@ -81,7 +81,7 @@ const SECTIONS: HelpSection[] = [
       },
       {
         title: "Runbooks / procedures",
-        body: "Execution checklist with per-entity progress. Existing ARGUS tags classify the template; Patterns still come only from evidence. Matching tags suggest a runbook — you assign it.",
+        body: "Execution checklist with per-entity progress. Existing ARGUS tags classify the template; Patterns still come only from evidence. Matching tags suggest a runbook — you assign it. On a check, ··· → Use as tag… promotes the wording onto the runbook and optionally opens Link to attach it to Topics, Events, or Projects.",
       },
     ],
   },
