@@ -2,13 +2,13 @@
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0815n`
+Pinned revision: `main0815o`
 
-Ship commit: `a2b992a`
+Ship commit: `b45f229`
 
 Includes:
-- PR #357 — Patterns + Home Tags counts roll Event evidence up
-- PR #356 — Home Tags manager: rename, create, delete
+- PR #359 — Event Note Add ↔ Tags tab dual-write (save tag without note body)
+- Prior `main0815n` / #356–#358: Home Tags manager + Pattern counts
 - Prior `main0815m` / #354–#355: Runbook check → Use as tag…
 - Prior `main0815l` / #350–#353: Events → Tags branch drag onto Linked
 - Prior `main0815k` / #351–#352: Neighborhood graph size stable on scroll
