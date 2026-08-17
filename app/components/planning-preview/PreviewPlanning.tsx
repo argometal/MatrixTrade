@@ -450,7 +450,7 @@ export function PreviewPlanning({
                     id="scout-case"
                     value={focusedScoutCard?.key ?? ""}
                     onChange={(e) => setScoutCaseKey(e.target.value)}
-                    className="min-w-[10rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
+                    className="min-w-[10rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 [color-scheme:dark]"
                   >
                     {scoutCards.map((card) => {
                       const op =
