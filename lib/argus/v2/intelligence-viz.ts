@@ -207,6 +207,34 @@ function countEvidenceAcrossEntityIds(
   };
 }
 
+/** Logs + inbox for Pattern mining across a binder neighborhood (deduped). */
+function collectEvidenceForPatternScope(
+  data: ArgusData,
+  inboxItems: InboxItem[],
+  scopeIds: Iterable<string>,
+  includePrivate: boolean,
+  allLogs: Log[]
+): { logs: Log[]; inbox: InboxItem[] } {
+  const logs: Log[] = [];
+  const inbox: InboxItem[] = [];
+  const seenLog = new Set<string>();
+  const seenInbox = new Set<string>();
+
+  for (const entityId of scopeIds) {
+    for (const log of allLogs) {
+      if (!log.entityIds.includes(entityId) || seenLog.has(log.id)) continue;
+      seenLog.add(log.id);
+      logs.push(log);
+    }
+    for (const item of getLinkedInboxForEntity(inboxItems, entityId, includePrivate)) {
+      if (seenInbox.has(item.id)) continue;
+      seenInbox.add(item.id);
+      inbox.push(item);
+    }
+  }
+  return { logs, inbox };
+}
+
 function countEvidenceForTopicIncludingEvents(
   data: ArgusData,
   inboxItems: InboxItem[],
@@ -419,9 +447,26 @@ export function buildV2KnowledgeNodes(
 
     const recurrence30d = countRecurrence30d(dates, today);
 
-    const entityLogs = logs.filter((l) => l.entityIds.includes(entity.id));
-    const entityInbox = getLinkedInboxForEntity(inboxItems, entity.id, includePrivate);
-    const patterns = buildTagPatternsForScope(entityLogs, entityInbox, today);
+    // Patterns mine evidence Tags only — for Topics/Projects use the same neighborhood
+    // as evidenceCount (Topic ∪ linked Events; Project ∪ linked Topics/Events).
+    let patternLogs: Log[];
+    let patternInbox: InboxItem[];
+    if (kind === "topic") {
+      const scopeIds = new Set<string>([entity.id, ...getLinkedEventIdsForTopic(data, entity.id, logs)]);
+      const scoped = collectEvidenceForPatternScope(data, inboxItems, scopeIds, includePrivate, logs);
+      patternLogs = scoped.logs;
+      patternInbox = scoped.inbox;
+    } else if (kind === "project") {
+      const { topicIds, eventIds } = countTopicsAndEventsInScope(data, entity, logs);
+      const scopeIds = new Set<string>([entity.id, ...topicIds, ...eventIds]);
+      const scoped = collectEvidenceForPatternScope(data, inboxItems, scopeIds, includePrivate, logs);
+      patternLogs = scoped.logs;
+      patternInbox = scoped.inbox;
+    } else {
+      patternLogs = logs.filter((l) => l.entityIds.includes(entity.id));
+      patternInbox = getLinkedInboxForEntity(inboxItems, entity.id, includePrivate);
+    }
+    const patterns = buildTagPatternsForScope(patternLogs, patternInbox, today);
     const hasTracker =
       watchedTrackerTagsOnEntity(data, inboxItems, entity.id, includePrivate, focusKeys).length > 0;
 

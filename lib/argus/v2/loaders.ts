@@ -537,7 +537,13 @@ export function buildV2FocusTagPortfolio(
   }
 
   for (const tag of normalizeSignalTags(data.signalTags)) {
-    ensure(tag, "evidence"); // Tracker keys stay in universe; Flag is separate
+    // Keep Tracker keys in the universe without inventing an Evidence role.
+    const display = normalizeTagDisplay(tag);
+    if (!display) continue;
+    const key = tagKey(display);
+    if (!acc.has(key)) {
+      acc.set(key, { display, dates: [], roles: new Set<TagRole>() });
+    }
   }
 
   const topics = entitiesByKind(data).topics;
@@ -730,6 +736,23 @@ export function buildV2TagEvidenceMap(
       row.inbox.push(item);
       for (const id of item.linkedEntityIds ?? []) row.entityIds.add(id);
     }
+  }
+
+  // Event-born Notes should also surface linked Topics (aggregation lens).
+  for (const row of byKey.values()) {
+    const extra = new Set<string>();
+    for (const id of row.entityIds) {
+      const entity = data.entities.find((e) => e.id === id && !e.deletedAt);
+      if (!entity || referenceKindFromNotes(entity.notes ?? "") !== "event") continue;
+      for (const topicId of entity.linkedTopicIds ?? []) extra.add(topicId);
+      for (const linkedId of entity.linkedEntityIds ?? []) {
+        const linked = data.entities.find((e) => e.id === linkedId && !e.deletedAt);
+        if (linked && referenceKindFromNotes(linked.notes ?? "") === "topic") {
+          extra.add(linkedId);
+        }
+      }
+    }
+    for (const topicId of extra) row.entityIds.add(topicId);
   }
 
   for (const tag of normalizeSignalTags(data.signalTags)) {
