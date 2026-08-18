@@ -144,5 +144,11 @@ const contract = buildApplySchemaContract();
 assert.ok(contract.schemaVersion);
 assert.ok(contract.stockCaseCreate.required.includes("initialScout.plannedEntry"));
 assert.ok(contract.rules.some((r) => r.toLowerCase().includes("schema-first")));
+assert.ok(contract.requiredFields["layered-entry-update"]?.includes("planId"));
+assert.deepEqual(
+  [...contract.allowedEnums["layered-entry-update.status"]!],
+  ["planned", "partial", "full", "missed", "active", "cancelled"]
+);
+assert.ok(contract.layeredEntryUpdate.allowedProposalKeys.includes("filledThroughIndex"));
 
 console.log("schema-discipline: ok");

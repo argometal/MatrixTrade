@@ -15,6 +15,14 @@ import {
   OBSERVATION_UPDATE_ALLOWED_KEYS,
 } from "./observation-validate";
 import {
+  buildLayeredEntryUpdateContractText,
+  LAYERED_ENTRY_CONFIGURE_WITHOUT_FILL_EXAMPLE,
+  LAYERED_ENTRY_UPDATE_ALLOWED_KEYS,
+  LAYERED_ENTRY_UPDATE_FILL_EXAMPLE,
+  LAYERED_ENTRY_UPDATE_FORBIDDEN_PLANNING_KEYS,
+  LAYERED_ENTRY_UPDATE_STATUS,
+} from "./layered-entry-update-schema";
+import {
   STOCK_CASE_CREATE_ALLOWED_KEYS,
   STOCK_CASE_LEVELS_ALLOWED_KEYS,
   STOCK_CASE_RISK_ALLOWED_KEYS,
@@ -80,12 +88,22 @@ export type ApplySchemaContract = {
     required: string[];
     notes: string[];
   };
+  layeredEntryUpdate: {
+    allowedProposalKeys: readonly string[];
+    required: string[];
+    statusEnum: readonly string[];
+    filledThroughIndex: string[];
+    forbiddenPlanningKeys: readonly string[];
+    notes: string[];
+    configureWithoutFillExample: Record<string, unknown>;
+    fillExample: Record<string, unknown>;
+  };
   examples: Partial<Record<AiBlockType, Record<string, unknown>>>;
 };
 
 export function buildApplySchemaContract(): ApplySchemaContract {
   return {
-    schemaVersion: "2026-07-25.obs-legacy-dates",
+    schemaVersion: "2026-08-18.layered-entry-update",
     product: "MTA",
     rules: [
       "SCHEMA-FIRST: before any Apply JSON, open Control → MTA Mechanics and copy the visible row Apply schema contract.",
@@ -102,6 +120,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       `Legacy closed trades: never invent playbookId/planId — use ${LEGACY_ABSENT_PLAYBOOK_ID} / ${LEGACY_ABSENT_PLAN_ID} for historical absence.`,
       "Legacy date correction: trade-update with datesReconstructed:true + dateCorrectionNote; closed legacy only; audit prior dates.",
       "observation-update: one of observationId|tradeId|planId + at least one measurable field; never invent prices; observation ≠ attribution.",
+      "layered-entry-update: fill/status only — required planId + filledThroughIndex OR status. Do not configure limits/risk here. filledThroughIndex is 0-based integer >= -1 (-1=none). status enum: planned|partial|full|missed|active|cancelled. Configure ladders via scout-plan-create or decision-update.layeredEntry without fill fields.",
       "plan-outcome: one mutation per block; human-confirmed event order; AI must not invent prices, timestamps, fills or risk.",
       "plan-outcome: unexecuted_plan_loss = entry reached + stop before target + execution-failure reason; counterfactualR server −1.",
       "plan-outcome: missed_opportunity = entry never reached + target before stop + entry_not_reached; counterfactualR server +planned R; no Trade; no chase.",
@@ -143,6 +162,11 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       ],
       "file-update": ["id", "at least one updatable field"],
       "decision-update": ["planId", "decision mode OR tactical fields (including operationalAssessment)"],
+      "layered-entry-update": [
+        "planId",
+        "filledThroughIndex OR status",
+        `allowed keys: ${LAYERED_ENTRY_UPDATE_ALLOWED_KEYS.join(", ")}`,
+      ],
       "technical-assessment": [
         "stockProfileId",
         "ticker",
@@ -279,6 +303,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "entry_not_reached",
       ],
       "decision.verdict": ["go", "wait", "probe", "no"],
+      "layered-entry-update.status": [...LAYERED_ENTRY_UPDATE_STATUS],
       "stockThesis.status": [
         "draft",
         "watching",
@@ -322,11 +347,33 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "invalidation example: Weekly close below 130 — not 130 alone",
       ],
     },
+    layeredEntryUpdate: {
+      allowedProposalKeys: LAYERED_ENTRY_UPDATE_ALLOWED_KEYS,
+      required: ["planId", "filledThroughIndex OR status"],
+      statusEnum: LAYERED_ENTRY_UPDATE_STATUS,
+      filledThroughIndex: [
+        "integer >= -1",
+        "0-based inclusive: k fills limits[0] through limits[k]",
+        "-1 = none filled (derived status missed)",
+        "last layer index = all filled (derived status full)",
+        "if both fields sent, filledThroughIndex derives status",
+      ],
+      forbiddenPlanningKeys: LAYERED_ENTRY_UPDATE_FORBIDDEN_PLANNING_KEYS,
+      notes: [
+        "Fill/lifecycle only on an existing plan that already has layeredEntry.",
+        "Does not create plans or edit prices, allocations, stops, targets, or authorizedRiskAmount.",
+        "Configure without inventing fills: scout-plan-create or decision-update.layeredEntry; omit filledThroughIndex, filled, fillPercent, status.",
+        "Do not use layered-entry-update to authorize a ladder.",
+      ],
+      configureWithoutFillExample: LAYERED_ENTRY_CONFIGURE_WITHOUT_FILL_EXAMPLE,
+      fillExample: LAYERED_ENTRY_UPDATE_FILL_EXAMPLE,
+    },
     examples: {
       "stock-case-create": AI_BLOCK_SAMPLES["stock-case-create"],
       "scout-plan-create": AI_BLOCK_SAMPLES["scout-plan-create"],
       "technical-assessment": AI_BLOCK_SAMPLES["technical-assessment"],
       "decision-update": AI_BLOCK_SAMPLES["decision-update"],
+      "layered-entry-update": AI_BLOCK_SAMPLES["layered-entry-update"],
       "trade-update": buildLegacyTradeUpdateExample("H002"),
       "trade-review": AI_BLOCK_SAMPLES["trade-review"],
       "observation-update": AI_BLOCK_SAMPLES["observation-update"],
@@ -392,6 +439,8 @@ export function buildApplySchemaContractText(): string {
     buildLegacyDateCorrectionContractText(),
     "",
     buildObservationUpdateContractText(),
+    "",
+    buildLayeredEntryUpdateContractText(),
     "",
     "Before producing Apply JSON: read this contract. Do not rely on memory or semantic guesses.",
     "Full JSON examples are in this contract (examples.*) and in Mechanics samples when pasted.",
