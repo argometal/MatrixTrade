@@ -154,7 +154,7 @@ mustPass("status cancelled", { planId: "PLAN-002", status: "cancelled" });
 
 {
   const contract = buildApplySchemaContract();
-  assert.equal(contract.schemaVersion, "2026-08-18.layered-entry-update");
+  assert.equal(contract.schemaVersion, "2026-08-18.apply-json-paste");
   assert.deepEqual(
     [...contract.layeredEntryUpdate.allowedProposalKeys],
     [...LAYERED_ENTRY_UPDATE_ALLOWED_KEYS]
@@ -203,7 +203,9 @@ mustPass("status cancelled", { planId: "PLAN-002", status: "cancelled" });
   assert.ok(text.includes("-1 = no layer filled"));
   assert.ok(text.includes("planned | partial | full | missed | active | cancelled"));
   assert.ok(text.includes("Configure a layered entry WITHOUT marking execution progress"));
-  assert.ok(text.includes('"type": "decision-update"'));
+  assert.ok(text.includes("=== APPLY JSON PASTE DISCIPLINE ==="));
+  assert.ok(text.includes("Buy 1 share at $315"));
+  assert.ok(text.includes("Do not send plannedQuantity"));
   assert.ok(!JSON.stringify(LAYERED_ENTRY_CONFIGURE_WITHOUT_FILL_EXAMPLE).includes("filledThroughIndex"));
   assert.ok(text.includes('"filledThroughIndex": 1'));
   assert.equal(LAYERED_ENTRY_UPDATE_FILL_EXAMPLE.proposal.filledThroughIndex, 1);

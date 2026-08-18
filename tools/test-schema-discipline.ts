@@ -3,7 +3,7 @@
  * Run: npm run test:schema-discipline
  */
 import assert from "node:assert/strict";
-import { AI_BLOCK_SAMPLES } from "../lib/ai-block";
+import { AI_BLOCK_SAMPLES, parseAiBlock } from "../lib/ai-block";
 import { parseTradingInboxPayload, validateProposalPayload } from "../lib/bridge";
 import { buildApplySchemaContract } from "../lib/apply-schema-contract";
 import { validateScoutPlanCreateProposal } from "../lib/scout-plan-create-validate";
@@ -150,5 +150,27 @@ assert.deepEqual(
   ["planned", "partial", "full", "missed", "active", "cancelled"]
 );
 assert.ok(contract.layeredEntryUpdate.allowedProposalKeys.includes("filledThroughIndex"));
+assert.ok(contract.rules.some((r) => r.includes("opening { through the matching }")));
+assert.ok(contract.rules.some((r) => r.includes("plannedQuantity")));
+assert.ok(
+  contract.layeredEntryUpdate.notes.some((n) => n.includes("plannedQuantity"))
+);
+
+{
+  const json = JSON.stringify({
+    type: "file-update",
+    source: "ai-block",
+    proposal: { id: "ST-TSLA-001", notes: "schema paste check" },
+  });
+  const wrapped = `Here is the JSON you asked for:\n${json}\nLet me know if you want changes.`;
+  const rejected = parseAiBlock(wrapped);
+  assert.equal(rejected.ok, false, "parser must still reject prose around JSON");
+  const fenced = parseAiBlock("```json\n" + json + "\n```");
+  assert.equal(
+    fenced.ok,
+    true,
+    fenced.ok ? "" : (fenced as { error: string; details?: string[] }).error
+  );
+}
 
 console.log("schema-discipline: ok");

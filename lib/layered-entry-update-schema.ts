@@ -79,7 +79,7 @@ export const LAYERED_ENTRY_CONFIGURE_WITHOUT_FILL_EXAMPLE = {
       ],
     },
     executionInstruction:
-      "Buy {qty} shares (20%) at $315. Buy {qty} shares (50%) at $310. Buy {qty} shares (30%) at $305. Use the common stop at $294 for the full position. Hold until the primary target at $380. Any layer not reached remains unfilled. Do not chase.",
+      "Buy 1 share at $315. Buy 2 shares at $310. Buy 2 shares at $305. Use the common stop at $294 for the full position. Hold until the primary target at $380. Any layer not reached remains unfilled. Do not chase.",
   },
 } as const;
 
@@ -200,6 +200,8 @@ export function buildLayeredEntryUpdateContractText(): string {
     "Use scout-plan-create (new PLAN) or decision-update (existing PLAN) with layeredEntry{}.",
     "Omit filledThroughIndex, filled, fillPercent, averageEntry, and status on that block.",
     "Matrix sets layeredEntry.status=planned after authorization.",
+    "AI writes share quantities in executionInstruction. allocationPercent stays on limits[] (structural). Do not send plannedQuantity.",
+    "Example instruction: Buy 1 share at $315. Buy 2 shares at $310. Buy 2 shares at $305.",
     "Canonical configure example (decision-update — not layered-entry-update):",
     JSON.stringify(LAYERED_ENTRY_CONFIGURE_WITHOUT_FILL_EXAMPLE, null, 2),
     "",

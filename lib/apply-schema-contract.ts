@@ -28,6 +28,11 @@ import {
   STOCK_CASE_RISK_ALLOWED_KEYS,
   STOCK_CASE_SCOUT_ALLOWED_KEYS,
 } from "./stock-case-schema";
+import {
+  APPLY_JSON_PASTE_RULES,
+  LAYERED_ENTRY_EXECUTION_INSTRUCTION_RULES,
+  buildApplyJsonPasteDisciplineText,
+} from "./apply-json-paste-discipline";
 
 export {
   STOCK_CASE_CREATE_ALLOWED_KEYS,
@@ -103,10 +108,12 @@ export type ApplySchemaContract = {
 
 export function buildApplySchemaContract(): ApplySchemaContract {
   return {
-    schemaVersion: "2026-08-18.layered-entry-update",
+    schemaVersion: "2026-08-18.apply-json-paste",
     product: "MTA",
     rules: [
       "SCHEMA-FIRST: before any Apply JSON, open Control → MTA Mechanics and copy the visible row Apply schema contract.",
+      ...APPLY_JSON_PASTE_RULES,
+      ...LAYERED_ENTRY_EXECUTION_INSTRUCTION_RULES,
       "Never invent JSON keys, enum values, nesting, or field formats.",
       "If that exact copy row is unavailable, stop and ask the human to open MTA Mechanics and copy Apply schema contract — do not guess.",
       "Separate analysis (conceptual levels) from serialization (exact MTA keys).",
@@ -364,6 +371,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "Does not create plans or edit prices, allocations, stops, targets, or authorizedRiskAmount.",
         "Configure without inventing fills: scout-plan-create or decision-update.layeredEntry; omit filledThroughIndex, filled, fillPercent, status.",
         "Do not use layered-entry-update to authorize a ladder.",
+        "AI writes share counts in executionInstruction; allocationPercent is structural; never send plannedQuantity.",
       ],
       configureWithoutFillExample: LAYERED_ENTRY_CONFIGURE_WITHOUT_FILL_EXAMPLE,
       fillExample: LAYERED_ENTRY_UPDATE_FILL_EXAMPLE,
@@ -441,6 +449,8 @@ export function buildApplySchemaContractText(): string {
     buildObservationUpdateContractText(),
     "",
     buildLayeredEntryUpdateContractText(),
+    "",
+    buildApplyJsonPasteDisciplineText(),
     "",
     "Before producing Apply JSON: read this contract. Do not rely on memory or semantic guesses.",
     "Full JSON examples are in this contract (examples.*) and in Mechanics samples when pasted.",
