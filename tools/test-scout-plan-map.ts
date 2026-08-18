@@ -120,7 +120,9 @@ const layeredPlan: TradePlan = {
   assert.equal(model.layers[0].role, "Starter");
   assert.equal(model.layers[1].fillStatus, "filled");
   assert.equal(model.layers[0].allocationMeaning, "risk");
-  assert.equal(model.layers[0].shares, undefined);
+  assert.equal(model.layers[0].shares, 0);
+  assert.equal(model.layers[0].sharesUnavailable, false);
+  assert.equal(model.layers[1].shares, 3);
   assert.equal(model.layers[0].rrToPrimaryTarget, 3.1);
   assert.equal(model.extendedTargets.join(","), "400,390");
   assert.ok((model.referencePlanRR ?? 0) > 0);
@@ -185,6 +187,9 @@ async function main() {
   assert.match(board, /Primary target/);
   assert.match(board, /Common stop/);
   assert.match(board, /Shares unconfigured/);
+  assert.match(board, /allocationPercent}%/);
+  assert.match(board, /shares} sh\./);
+  assert.match(board, /shares n\/a/);
   assert.match(board, /data-scout-plan-map-operational/);
   assert.match(board, /model\.operationalParagraph/);
   assert.doesNotMatch(board, /PlanMapLevelRow/);

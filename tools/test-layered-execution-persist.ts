@@ -170,10 +170,12 @@ async function main() {
   }
 }
 
-// 4 — missing risk preserves layers; shares unavailable
+// 4 — Apply without explicit authorizedRiskAmount sizes from configured defaultRiskBudget
 {
+  const { getRules } = await import("../lib/storage");
+  const configured = (await getRules()).defaultRiskBudget;
   resetStores([basePlan()]);
-  const noRisk = {
+  const noExplicitAmount = {
     executionMethod: "layered_limits",
     stopModel: "common",
     sizingMode: "position_percent",
@@ -186,24 +188,49 @@ async function main() {
   };
   const applied = await updatePlanTacticsFromProposal({
     planId: "PLAN-LAYER-001",
-    layeredEntry: noRisk,
+    layeredEntry: noExplicitAmount,
   });
   assert.equal(applied.errors, undefined, String(applied.errors));
   const le = applied.plan!.layeredEntry!;
   assert.equal(le.limits.length, 2);
-  assert.equal(le.authorizedRiskAmount, undefined);
-  assert.equal(le.limits[0].derived?.plannedQuantity, undefined);
+  assert.equal(le.authorizedRiskAmount, configured);
+  const expected = sizeLayerQuantities(
+    le.limits,
+    le.primaryTargetPrice!,
+    le.stopModel ?? "common",
+    le.commonStopPrice,
+    le.sizingMode ?? "position_percent",
+    configured!
+  );
+  assert.deepEqual(
+    le.limits.map((l) => l.derived?.plannedQuantity),
+    expected
+  );
   const availability = layeredSharesAvailability(le);
-  assert.equal(availability.available, false);
-  assert.ok(availability.missingFields.includes("authorizedRiskAmount"));
+  assert.equal(availability.available, true);
 
   const view = buildPlanLevelsView(thesis, applied.plan!);
   const model = buildPlanMapModel(view);
   assert.equal(model.mode, "layered");
   assert.equal(model.layerCount, 2);
   assert.equal(model.layers[0].allocationPercent, 50);
-  assert.equal(model.layers[0].shares, undefined);
-  assert.ok(model.sharesUnavailableReason?.includes("authorizedRiskAmount"));
+  assert.equal(model.layers[0].shares, expected[0]);
+  assert.equal(model.sharesUnavailableReason, undefined);
+
+  // Direct authorize without ctx still does not infer a silent USD 100.
+  const unsized = authorizeLayeredEntry({
+    executionMethod: "layered_limits",
+    stopModel: "common",
+    sizingMode: "position_percent",
+    commonStopPrice: 200,
+    primaryTargetPrice: 270,
+    limits: [
+      { price: 240, allocationPercent: 50, role: "starter" },
+      { price: 230, allocationPercent: 50, role: "preferred" },
+    ],
+  });
+  assert.equal(unsized.authorizedRiskAmount, undefined);
+  assert.equal(unsized.limits[0].derived, undefined);
 }
 
 // 5 — no layers reconstructed from reasoning / notes / thesis text

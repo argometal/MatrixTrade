@@ -64,13 +64,15 @@ Omit any block whose facts are unavailable:
 
 ## Optional information
 
-- Exact shares — only if Matrix-derived or human-supplied (never invent)  
-- Allocation % and meaning (risk vs position)  
-- Authorized / max planned risk $  
-- Partial-fill / add rules  
-- Scaling / hold rules  
-- OA or playbook constraints already on the plan  
-- Special operational notes  
+- Exact shares — **only** Matrix `plannedQuantity` via `{qty}` slots, or human-supplied (never invent, never compute)
+- Allocation % and meaning (risk vs position)
+- Authorized / max planned risk $
+- Partial-fill / add rules
+- Scaling / hold rules
+- OA or playbook constraints already on the plan
+- Special operational notes
+
+**`{qty}` slot:** write the token `{qty}` where share count belongs. After Apply, Matrix binds each `{qty}` in layer order from `limits[i].derived.plannedQuantity` (including `0`). Matrix does not persist a rewritten sentence; Plan Map / snapshots bind at projection. If a slot has no canonical qty, `{qty}` stays. Never teach or use a sizing formula.
 
 ---
 
@@ -85,6 +87,10 @@ Exact entry, stop, target; risk if known; hold rule; no-chase if applicable.
 Sequence: first size/price → adds if reached → completion.  
 Shared stop or per-layer stops as modeled.  
 Unfilled layers remain inactive / unfilled.
+
+Per layer, when Matrix qty is available:
+
+`Buy {qty} shares ({allocationPercent}%) at ${price}`
 
 ### Allocation
 
@@ -136,9 +142,11 @@ From plan notes only when operational.
 
 > Buy 8 shares at exactly $310.00. Place the stop immediately at $294.00. Maximum planned risk is approximately $100. Hold until the primary target at $380. Do not chase above the planned entry. If price never reaches the planned entry, do not execute the trade.
 
-**Layered**
+**Layered (AI-authored; `{qty}` bound from Matrix `plannedQuantity`)**
 
-> Buy the first 30% at $310. Add 40% at $305 if reached and complete the position at $300. Use the common stop at $294 for the full position. Hold until the primary target unless the thesis changes. Any layer not reached remains unfilled. Do not chase.
+> Buy {qty} shares (20%) at $315. Buy {qty} shares (50%) at $310. Buy {qty} shares (30%) at $305. Use the common stop at $294 for the full position. Hold until the primary target at $380. Any layer not reached remains unfilled. Do not chase.
+
+After binding (example at configured 1R, risk_percent): `Buy 0 shares (20%) at $315. …` — `0` is a real size, not “unavailable”.
 
 ---
 
