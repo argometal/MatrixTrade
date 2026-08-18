@@ -28,6 +28,7 @@
     "test:plan-trade-map": "tsx tools/test-plan-trade-map.ts",
     "test:mtae-participation": "tsx tools/test-mtae-participation.ts",
     "test:schema-discipline": "tsx tools/test-schema-discipline.ts",
+    "test:layered-entry-update-schema": "tsx tools/test-layered-entry-update-schema-17-10.ts",
     "test:mtae-evidence-first": "tsx tools/test-mtae-evidence-first.ts",
     "test:control-sanity-snapshots": "tsx tools/test-control-sanity-snapshots.ts",
     "test:legacy-trade-completion": "tsx tools/test-legacy-trade-completion.ts",
