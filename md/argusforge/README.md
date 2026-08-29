@@ -16,6 +16,7 @@
 | Document | Status | Responsibility |
 |----------|--------|----------------|
 | [IA-HANDOFF.md](IA-HANDOFF.md) | **Living — IA / agents** | Apps map, auth, Forge ontology, open debt |
+| [PRODUCT-OWNERSHIP.md](PRODUCT-OWNERSHIP.md) | **Living — MTA 010** | Product boundaries + lint guardrails (no apps/* yet) |
 | [capability-map.md](capability-map.md) | **Living** | Capability × status vocabulary |
 | [argusforge-contract.md](argusforge-contract.md) | **Canonical — SEALED** | Vision, mission, formation transfer, component duties, success criteria |
 | [perpetual-evolution-contract.md](perpetual-evolution-contract.md) | **Canonical — SEALED addendum** | Perpetual evolution; evidence; reversible change; user agency |

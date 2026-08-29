@@ -1,3 +1,163 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "overrides": [
+    {
+      "files": ["app/forge/**/*.{ts,tsx,js,jsx}", "lib/argusforge/**/*.{ts,tsx,js,jsx}"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@/lib/argus",
+                "message": "ARGUS FORGE must not import ARGUS domain. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "name": "@/app/argus",
+                "message": "ARGUS FORGE must not import ARGUS domain. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["@/lib/argus/*"],
+                "message": "ARGUS FORGE must not import ARGUS domain (lib/argus). See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "group": ["@/app/argus/*"],
+                "message": "ARGUS FORGE must not import ARGUS routes/components. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "group": ["@/app/(trading)/*"],
+                "message": "ARGUS FORGE must not import MATRIXTRADE routes. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "group": [
+                  "@/lib/trades*",
+                  "@/lib/scout*",
+                  "@/lib/capital*",
+                  "@/lib/playbook*",
+                  "@/lib/trading*",
+                  "@/lib/plans*",
+                  "@/lib/plan-*",
+                  "@/lib/mtae*",
+                  "@/lib/stock-*",
+                  "@/lib/layered-*",
+                  "@/lib/modified-kelly*"
+                ],
+                "message": "ARGUS FORGE must not import MATRIXTRADE domain libs. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "app/argus/**/*.{ts,tsx,js,jsx}",
+        "lib/argus/**/*.{ts,tsx,js,jsx}",
+        "app/api/argus/**/*.{ts,tsx,js,jsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@/lib/argusforge",
+                "message": "ARGUS must not import ARGUS FORGE domain. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "name": "@/app/forge",
+                "message": "ARGUS must not import ARGUS FORGE routes. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["@/lib/argusforge/*"],
+                "message": "ARGUS must not import ARGUS FORGE domain (lib/argusforge). See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "group": ["@/app/forge/*"],
+                "message": "ARGUS must not import ARGUS FORGE routes/components. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "group": ["@/app/(trading)/*"],
+                "message": "ARGUS must not import MATRIXTRADE routes. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "group": [
+                  "@/lib/trades*",
+                  "@/lib/scout*",
+                  "@/lib/capital*",
+                  "@/lib/playbook*",
+                  "@/lib/trading*",
+                  "@/lib/plans*",
+                  "@/lib/plan-*",
+                  "@/lib/mtae*",
+                  "@/lib/stock-*",
+                  "@/lib/layered-*",
+                  "@/lib/modified-kelly*"
+                ],
+                "message": "ARGUS must not import MATRIXTRADE domain libs. Known snapshot/copy-text exceptions are outside these prefixes. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "app/(trading)/**/*.{ts,tsx,js,jsx}",
+        "app/api/ai/**/*.{ts,tsx,js,jsx}",
+        "app/api/matrix/**/*.{ts,tsx,js,jsx}",
+        "app/api/trading/**/*.{ts,tsx,js,jsx}",
+        "app/login/**/*.{ts,tsx,js,jsx}",
+        "app/scout-access/**/*.{ts,tsx,js,jsx}",
+        "app/components/**/*.{ts,tsx,js,jsx}"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {
+                "name": "@/lib/argus",
+                "message": "MATRIXTRADE must not import ARGUS domain. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "name": "@/app/argus",
+                "message": "MATRIXTRADE must not import ARGUS routes. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "name": "@/lib/argusforge",
+                "message": "MATRIXTRADE must not import ARGUS FORGE domain. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "name": "@/app/forge",
+                "message": "MATRIXTRADE must not import ARGUS FORGE routes. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              }
+            ],
+            "patterns": [
+              {
+                "group": ["@/lib/argus/*"],
+                "message": "MATRIXTRADE must not import ARGUS domain (lib/argus). See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "group": ["@/app/argus/*"],
+                "message": "MATRIXTRADE must not import ARGUS routes/components. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "group": ["@/lib/argusforge/*"],
+                "message": "MATRIXTRADE must not import ARGUS FORGE domain (lib/argusforge). See md/argusforge/PRODUCT-OWNERSHIP.md"
+              },
+              {
+                "group": ["@/app/forge/*"],
+                "message": "MATRIXTRADE must not import ARGUS FORGE routes/components. See md/argusforge/PRODUCT-OWNERSHIP.md"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }
