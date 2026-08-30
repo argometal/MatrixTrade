@@ -19,8 +19,6 @@ assert.match(topic, /provenance=\{\{/, "Topic Tags uses provenance layout");
 assert.match(topic, /directHeading:\s*"Tags in this Topic"/, "Tags in this Topic section");
 assert.match(topic, /topicDirectEvidenceTagCounts/, "UI reads Topic-direct evidence counts");
 assert.match(topic, /byEventHeading:\s*"By Event"/, "By Event section");
-assert.match(topic, /event\.eventTags/, "Event Tags row from split field");
-assert.match(topic, /event\.noteTags/, "On Notes row from split field");
 assert.match(topic, /href:\s*event\.href/, "Open Event uses loader href");
 assert.doesNotMatch(
   topic,
@@ -34,8 +32,8 @@ assert.doesNotMatch(
 );
 
 assert.match(binder, /V2BinderTagProvenance/, "binder tab exports provenance type");
-assert.match(binder, /Event Tags/, "By Event shows Event Tags label");
-assert.match(binder, /On Notes/, "By Event shows On Notes label");
+assert.match(binder, /mergeProvenanceTags/, "By Event merges Event Tags + Notes into one list");
+assert.match(binder, /No Tags on this Event yet/, "By Event uses one linked inventory");
 assert.match(binder, /Open Event/, "Open Event CTA");
 assert.match(binder, /expandedEventIds/, "By Event sections expand/collapse");
 assert.match(binder, /Expand all/, "By Event expand-all control");

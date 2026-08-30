@@ -118,6 +118,17 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
   } = props;
   void _keyMetrics;
 
+  const linkedProjectTags = (() => {
+    const byKey = new Map<string, string>();
+    for (const raw of [...(entity.projectTags ?? entity.linkedTags ?? []), ...tagPatterns.map((row) => row.tag)]) {
+      const tag = raw.trim().replace(/\s+/g, " ");
+      if (!tag) continue;
+      const key = tag.toLowerCase();
+      if (!byKey.has(key)) byKey.set(key, tag);
+    }
+    return [...byKey.values()].sort((a, b) => a.localeCompare(b));
+  })();
+
   const replaceParams = useCallback(
     (mutate: (params: URLSearchParams) => void) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -291,9 +302,7 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
           <V2BinderTagsTab
             attachedHeading="Linked to this Project"
             attachedBadge="Linked"
-            attachedTags={(entity.projectTags ?? entity.linkedTags ?? [])
-              .map((t) => t.trim())
-              .filter(Boolean)}
+            attachedTags={linkedProjectTags}
             attachedTagHref={(tag) =>
               `/argus/v2/browse/topics?tag=${encodeURIComponent(tag)}&project=${entity.id}`
             }
@@ -302,11 +311,10 @@ export function V2ProjectShell(props: V2ProjectShellProps) {
               <V2ProjectTagEditor
                 projectId={entity.id}
                 projectName={entity.name}
-                initialTags={(entity.projectTags ?? entity.linkedTags ?? [])
-                  .map((t) => t.trim())
-                  .filter(Boolean)}
+                initialTags={linkedProjectTags}
                 returnTo={returnTo}
                 suggestedFromNotes={tagPatterns.map((p) => p.tag)}
+                signalTags={signalTags}
               />
             }
             branchHeading="Tags in this project scope"
