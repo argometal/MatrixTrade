@@ -33,6 +33,7 @@ Prefer short codes over long hex. Hex is hard to read aloud and mistype on mobil
 | A13 | Diagnostics | `/argus/v2/diagnostics` |
 | A14 | Help | `/argus/v2/help` |
 | A15 | Search | `/argus/search` |
+| A16 | topic001 | `/argus/v2/drafts/topic001` (draft — Topic UI density) |
 | A00 | Argus | fallback |
 
 ## Code locations (Argus)
