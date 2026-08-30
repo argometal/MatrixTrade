@@ -372,6 +372,12 @@ export async function recordScoutDecision(
     scoutLifecycle: deriveLifecycleFromPlan(result.plan),
   };
   await getPlansStore().upsert(withLifecycle);
+  try {
+    const { ensureThesisT0OnScoutDecision } = await import("./thesis-t0");
+    await ensureThesisT0OnScoutDecision({ plan: withLifecycle });
+  } catch {
+    // Best-effort T0 freeze — never block Scout decision commit.
+  }
   return { plan: withLifecycle };
 }
 
