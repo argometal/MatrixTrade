@@ -304,7 +304,7 @@ export function NewTradeScoutFlow({
         {importSuccess ? (
           <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">
             Sent to History ·{" "}
-            <Link href={`/mta/inbox/${importSuccess.id}`} className="font-semibold underline">
+            <Link href={`/mxt/inbox/${importSuccess.id}`} className="font-semibold underline">
               Review proposal →
             </Link>
           </div>

@@ -52,7 +52,7 @@ export function buildAttentionItems(
         incompleteClosed.length === 1
           ? `Closed incomplete · ${incompleteClosed[0].trade.id} ${incompleteClosed[0].trade.ticker} (${formatIncompleteClosedSummary(incompleteClosed[0])})`
           : `Closed ≠ complete · ${incompleteClosed.length} trades need finishing`,
-      href: "/mta/trades",
+      href: "/mxt/trades",
       priority: 1,
     });
   }
@@ -62,7 +62,7 @@ export function buildAttentionItems(
     items.push({
       id: `review-${row.trade.id}`,
       label: `Review ${row.trade.id} · ${row.trade.ticker}`,
-      href: `/mta/trades/${row.trade.id}/review`,
+      href: `/mxt/trades/${row.trade.id}/review`,
       priority: 1,
     });
   }
@@ -73,7 +73,7 @@ export function buildAttentionItems(
     items.push({
       id: "inbox",
       label: inboxAttentionLabel(livePending.length),
-      href: "/mta/inbox",
+      href: "/mxt/inbox",
       priority: 2,
     });
   }
@@ -85,7 +85,7 @@ export function buildAttentionItems(
     items.push({
       id: `playbook-${trade.id}`,
       label: `Assign playbook · ${trade.id} ${trade.ticker}`,
-      href: `/mta/trades/${trade.id}`,
+      href: `/mxt/trades/${trade.id}`,
       priority: 3,
     });
   }

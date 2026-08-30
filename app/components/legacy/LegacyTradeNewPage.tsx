@@ -14,7 +14,7 @@ export function LegacyTradeNewPage({
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <header>
-        <Link href="/mta/trades" className="text-sm text-zinc-500 hover:underline">
+        <Link href="/mxt/trades" className="text-sm text-zinc-500 hover:underline">
           ← Back to trades
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">New trade</h1>

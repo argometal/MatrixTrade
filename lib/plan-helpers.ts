@@ -77,5 +77,5 @@ export function buildPlanEnterHref(plan: TradePlan): string {
   const params = new URLSearchParams();
   params.set("plan", plan.id);
   if (plan.stockThesisId) params.set("thesis", plan.stockThesisId);
-  return `/mta/planning?${params.toString()}`;
+  return `/mxt/planning?${params.toString()}`;
 }

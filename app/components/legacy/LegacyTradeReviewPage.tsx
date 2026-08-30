@@ -17,7 +17,7 @@ export function LegacyTradeReviewPage({
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <header>
-        <Link href={`/mta/trades/${trade.id}`} className="text-sm text-zinc-500 hover:underline">
+        <Link href={`/mxt/trades/${trade.id}`} className="text-sm text-zinc-500 hover:underline">
           ← Back to trade
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">

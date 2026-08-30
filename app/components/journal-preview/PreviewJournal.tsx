@@ -47,7 +47,7 @@ export function PreviewJournal({
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div>
                         <Link
-                          href={`/mta/trades/${trade.id}`}
+                          href={`/mxt/trades/${trade.id}`}
                           className="text-lg font-semibold text-violet-400 hover:text-violet-300 hover:underline"
                         >
                           {trade.id} · {trade.ticker}
@@ -69,7 +69,7 @@ export function PreviewJournal({
                           <span className="text-xs text-emerald-400">Reviewed</span>
                         ) : (
                           <Link
-                            href={`/mta/trades/${trade.id}/review`}
+                            href={`/mxt/trades/${trade.id}/review`}
                             className="text-xs text-amber-400 underline hover:text-amber-300"
                           >
                             Review pending
@@ -108,13 +108,13 @@ export function PreviewJournal({
 
         {!embedded && (
         <nav className="flex gap-4 border-t border-zinc-800 px-4 py-4 text-sm lg:px-6">
-          <Link href="/mta/trades?tab=review" className="text-zinc-500 hover:text-violet-400">
+          <Link href="/mxt/trades?tab=review" className="text-zinc-500 hover:text-violet-400">
             Review queue →
           </Link>
-          <Link href="/mta/trades" className="text-zinc-500 hover:text-violet-400">
+          <Link href="/mxt/trades" className="text-zinc-500 hover:text-violet-400">
             All trades →
           </Link>
-          <Link href="/mta/stats" className="text-zinc-500 hover:text-violet-400">
+          <Link href="/mxt/stats" className="text-zinc-500 hover:text-violet-400">
             Statistics →
           </Link>
         </nav>
@@ -137,14 +137,14 @@ export function PreviewJournal({
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
-                href="/mta/trades?tab=review"
+                href="/mxt/trades?tab=review"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
               >
                 Review queue
                 {pendingReview > 0 ? ` (${pendingReview})` : ""}
               </Link>
               <Link
-                href="/mta/trades"
+                href="/mxt/trades"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
               >
                 All trades

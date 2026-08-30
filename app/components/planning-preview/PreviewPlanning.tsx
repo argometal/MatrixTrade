@@ -380,19 +380,19 @@ export function PreviewPlanning({
             data-scout-header-actions
           >
             <Link
-              href="/mta/stock-theses/new"
+              href="/mxt/stock-theses/new"
               className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-2 text-center text-[11px] font-medium leading-tight text-emerald-300 hover:bg-emerald-500/20 sm:px-3 sm:text-xs"
             >
               New stock case
             </Link>
             <Link
-              href="/mta/planning/capital"
+              href="/mxt/planning/capital"
               className="rounded-lg border border-zinc-600 bg-zinc-900 px-2 py-2 text-center text-[11px] font-medium leading-tight text-zinc-200 hover:bg-zinc-800 sm:px-3 sm:text-xs"
             >
               Capital Planner
             </Link>
             <Link
-              href="/mta/planning/capital/allocation"
+              href="/mxt/planning/capital/allocation"
               className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-2 py-2 text-center text-[11px] font-medium leading-tight text-sky-200 hover:bg-sky-500/20 sm:px-3 sm:text-xs"
             >
               Allocation Board
@@ -409,7 +409,7 @@ export function PreviewPlanning({
             <section className="rounded-2xl border border-dashed border-zinc-700 px-4 py-10 text-center">
               <p className="text-sm text-zinc-500">No scout cases yet.</p>
               <Link
-                href="/mta/stock-theses/new"
+                href="/mxt/stock-theses/new"
                 className="mt-3 inline-block text-sm text-violet-300 hover:underline"
               >
                 New stock case →
@@ -508,7 +508,7 @@ export function PreviewPlanning({
                   <ul className="mt-4 space-y-2 text-sm">
                     {focusedScoutCard.linkedTrades.map((t) => (
                       <li key={t.id} className="flex justify-between gap-3">
-                        <Link href={`/mta/trades/${t.id}`} className="text-violet-300 hover:underline">
+                        <Link href={`/mxt/trades/${t.id}`} className="text-violet-300 hover:underline">
                           {t.id} · {t.status}
                           {t.status === "closed" ? " · needs review" : ""}
                         </Link>
@@ -520,7 +520,7 @@ export function PreviewPlanning({
                     ))}
                   </ul>
                   <Link
-                    href="/mta/stock-theses/new"
+                    href="/mxt/stock-theses/new"
                     className="mt-4 inline-block rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300"
                   >
                     New stock case for {focusedScoutCard.ticker}

@@ -11,7 +11,7 @@ export type PreviewNavContext = {
 /**
  * Scout = war room (case). Trades = filterable history. Playbook = policies.
  * Enter Trade removed — execute via Scout + Control.
- * Hrefs are canonical /mta/* product paths.
+ * Hrefs are canonical /mxt/* product paths.
  */
 export const PREVIEW_NAV_SECTIONS = [
   {

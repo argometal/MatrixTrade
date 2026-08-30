@@ -87,7 +87,7 @@ export function PreviewNewStockCase() {
               </p>
             </div>
             <Link
-              href="/mta/planning"
+              href="/mxt/planning"
               className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200 lg:mr-[14rem]"
             >
               ← Scouting Desk
@@ -200,11 +200,11 @@ export function PreviewNewStockCase() {
             {importSuccess ? (
               <div className="mt-3 rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">
                 Sent to History ·{" "}
-                <Link href={`/mta/inbox/${importSuccess.id}`} className="font-semibold underline">
+                <Link href={`/mxt/inbox/${importSuccess.id}`} className="font-semibold underline">
                   Review & Apply →
                 </Link>
                 {" · "}
-                <Link href="/mta/planning" className="underline">
+                <Link href="/mxt/planning" className="underline">
                   Scouting Desk
                 </Link>
               </div>

@@ -33,13 +33,13 @@ export function ScoutPrepareAllocationNote({
         {linksInNote ? (
           <span className="mt-1 flex flex-wrap gap-2">
             <Link
-              href="/mta/planning/capital/allocation"
+              href="/mxt/planning/capital/allocation"
               className="underline opacity-90 hover:opacity-100"
             >
               Allocation Board
             </Link>
             <Link
-              href="/mta/planning/capital"
+              href="/mxt/planning/capital"
               className="underline opacity-90 hover:opacity-100"
             >
               Capital Planner

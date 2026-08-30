@@ -19,13 +19,13 @@ export type InsightsTabId =
   | "pipeline";
 
 const TABS: { id: InsightsTabId; label: string; href: string }[] = [
-  { id: "stats", label: "Statistics", href: "/mta/stats" },
-  { id: "journal", label: "Journal", href: "/mta/stats?tab=journal" },
-  { id: "mistakes", label: "Mistakes", href: "/mta/stats?tab=mistakes" },
+  { id: "stats", label: "Statistics", href: "/mxt/stats" },
+  { id: "journal", label: "Journal", href: "/mxt/stats?tab=journal" },
+  { id: "mistakes", label: "Mistakes", href: "/mxt/stats?tab=mistakes" },
   {
     id: "pipeline",
     label: "Pipeline Performance",
-    href: "/mta/stats?tab=pipeline",
+    href: "/mxt/stats?tab=pipeline",
   },
 ];
 

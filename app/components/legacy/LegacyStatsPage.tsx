@@ -116,16 +116,16 @@ export function LegacyStatsPage({ data }: { data: PreviewStatsData }) {
       )}
 
       <nav className="flex gap-4 text-sm">
-        <Link href="/mta/playbook" className="text-zinc-600 hover:underline">
+        <Link href="/mxt/playbook" className="text-zinc-600 hover:underline">
           Playbook Lab →
         </Link>
-        <Link href="/mta/mistakes" className="text-zinc-600 hover:underline">
+        <Link href="/mxt/mistakes" className="text-zinc-600 hover:underline">
           Mistakes →
         </Link>
-        <Link href="/mta/journal" className="text-zinc-600 hover:underline">
+        <Link href="/mxt/journal" className="text-zinc-600 hover:underline">
           Journal
         </Link>
-        <Link href="/mta/home-preview" className="text-zinc-600 hover:underline">
+        <Link href="/mxt/home-preview" className="text-zinc-600 hover:underline">
           Dashboard
         </Link>
       </nav>

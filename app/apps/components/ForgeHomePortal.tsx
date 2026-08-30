@@ -41,7 +41,7 @@ const CONTINUE: ContinueItem[] = [
     badge: "Analysis",
     badgeTone: "green",
     when: "Yesterday",
-    href: "/mta/home-preview",
+    href: "/mxt/home-preview",
   },
   {
     id: "c3",

@@ -11,7 +11,7 @@ export function ArgusCornerEntry() {
   if (pathname.startsWith("/argus") || pathname.startsWith("/forge")) return null;
 
   return (
-    <AppCornerDock bellHref="/mta/inbox" bellLabel="MTA inbox" placement="matrix">
+    <AppCornerDock bellHref="/mxt/inbox" bellLabel="MTA inbox" placement="matrix">
       <Link
         href="/argus/v2"
         title="ARGUS"

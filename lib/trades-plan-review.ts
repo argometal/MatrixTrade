@@ -69,7 +69,7 @@ export function buildNonExecutedPlanRows(
         requiredAction: formatOperationalActionLabel(
           evaluation.detectedAssessment.nextAction
         ),
-        href: `/mta/planning?plan=${plan.id}`,
+        href: `/mxt/planning?plan=${plan.id}`,
       };
     })
     .sort((a, b) => a.ticker.localeCompare(b.ticker) || a.planId.localeCompare(b.planId));

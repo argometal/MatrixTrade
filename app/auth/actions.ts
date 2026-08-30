@@ -15,7 +15,7 @@ import { verifyArgusTotp } from "@/lib/auth/totp";
 
 export async function loginTradingAction(formData: FormData): Promise<void> {
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/mta/home-preview");
+  const next = String(formData.get("next") ?? "/mxt/home-preview");
   const timeZone = String(formData.get("timeZone") ?? "");
 
   if (!verifyTradingPassword(password)) {
@@ -26,9 +26,9 @@ export async function loginTradingAction(formData: FormData): Promise<void> {
   const dest =
     next.startsWith("/") && !next.startsWith("//") && !next.includes("\\")
       ? next === "/"
-        ? "/mta/home-preview"
+        ? "/mxt/home-preview"
         : next
-      : "/mta/home-preview";
+      : "/mxt/home-preview";
   redirect(dest);
 }
 
@@ -112,7 +112,7 @@ export async function logoutAction(): Promise<void> {
 }
 
 export async function saveGuestWorkstationLockAction(formData: FormData): Promise<void> {
-  const returnTo = String(formData.get("returnTo") ?? "/mta/settings/security");
+  const returnTo = String(formData.get("returnTo") ?? "/mxt/settings/security");
   const password = String(formData.get("password") ?? "");
   const enabled = String(formData.get("enabled") ?? "") === "1";
 

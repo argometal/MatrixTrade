@@ -117,7 +117,7 @@ function buildRecentActivity(trades: Trade[], playbooks: Playbook[]): SituationR
         at: trade.closedAt ?? trade.createdAt,
         kind: "trade-closed",
         label: `Trade closed · ${trade.id} ${trade.ticker}`,
-        href: `/mta/trades/${trade.id}`,
+        href: `/mxt/trades/${trade.id}`,
       });
     }
     if (trade.reviewedAt) {
@@ -126,7 +126,7 @@ function buildRecentActivity(trades: Trade[], playbooks: Playbook[]): SituationR
         at: trade.reviewedAt,
         kind: "review-completed",
         label: `Review completed · ${trade.id} ${trade.ticker}`,
-        href: `/mta/trades/${trade.id}/review`,
+        href: `/mxt/trades/${trade.id}/review`,
       });
     }
     events.push({
@@ -134,7 +134,7 @@ function buildRecentActivity(trades: Trade[], playbooks: Playbook[]): SituationR
       at: trade.createdAt,
       kind: "trade-logged",
       label: `Trade logged · ${trade.id} ${trade.ticker}`,
-      href: `/mta/trades/${trade.id}`,
+      href: `/mxt/trades/${trade.id}`,
     });
   }
 
@@ -144,7 +144,7 @@ function buildRecentActivity(trades: Trade[], playbooks: Playbook[]): SituationR
       at: new Date(0).toISOString(),
       kind: "playbook",
       label: `Playbook · ${pb.name} (${pb.status})`,
-      href: "/mta/playbook",
+      href: "/mxt/playbook",
     });
   }
 
@@ -167,14 +167,14 @@ function buildAlerts(
       id: "loss-limit",
       severity: "danger",
       label: `Monthly loss limit reached (${monthly.monthKey})`,
-      href: "/mta/stats",
+      href: "/mxt/stats",
     });
   } else if (monthly.monthlyLossRoom <= monthly.monthlyAllowance * 0.25) {
     alerts.push({
       id: "loss-warning",
       severity: "warning",
       label: "Monthly loss room running low",
-      href: "/mta/stats",
+      href: "/mxt/stats",
     });
   }
 
@@ -198,7 +198,7 @@ function buildAlerts(
         id: `pb-under-${row.playbookId}`,
         severity: "warning",
         label: `Playbook underperforming · ${row.playbook?.name ?? "Unknown"}`,
-        href: "/mta/playbook",
+        href: "/mxt/playbook",
       });
     }
   }
@@ -209,7 +209,7 @@ function buildAlerts(
         id: `stop-${trade.id}`,
         severity: "danger",
         label: `Stop not set · ${trade.id} ${trade.ticker}`,
-        href: `/mta/trades/${trade.id}`,
+        href: `/mxt/trades/${trade.id}`,
       });
     }
   }

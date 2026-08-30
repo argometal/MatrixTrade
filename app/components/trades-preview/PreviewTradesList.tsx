@@ -66,7 +66,7 @@ export function PreviewTradesList({
                   <tr key={trade.id} className="hover:bg-zinc-800/50">
                     <td className="px-4 py-3 font-medium">
                       <Link
-                        href={`/mta/trades/${trade.id}`}
+                        href={`/mxt/trades/${trade.id}`}
                         className="text-violet-400 hover:text-violet-300 hover:underline"
                       >
                         {trade.id}
@@ -97,7 +97,7 @@ export function PreviewTradesList({
                           <span className="text-emerald-400">Done</span>
                         ) : (
                           <Link
-                            href={`/mta/trades/${trade.id}/review`}
+                            href={`/mxt/trades/${trade.id}/review`}
                             className="text-amber-400 underline hover:text-amber-300"
                           >
                             Pending
@@ -155,7 +155,7 @@ export function PreviewTradesList({
             </div>
             <div className="flex flex-wrap gap-2 lg:mr-[14rem]">
               <Link
-                href="/mta/planning"
+                href="/mxt/planning"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
               >
                 Scout

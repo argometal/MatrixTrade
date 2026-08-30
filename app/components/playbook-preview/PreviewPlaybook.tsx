@@ -439,7 +439,7 @@ export function PreviewPlaybook({
                 items={snapshotItems}
               />
               <Link
-                href="/mta/planning"
+                href="/mxt/planning"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
               >
                 Scout
@@ -644,7 +644,7 @@ export function PreviewPlaybook({
                           {row.tradeIds.map((id) => (
                             <li key={id}>
                               <Link
-                                href={`/mta/trades/${id}`}
+                                href={`/mxt/trades/${id}`}
                                 className="rounded-md border border-zinc-700 bg-zinc-800/50 px-2 py-1 text-violet-400 hover:border-zinc-600 hover:text-violet-300"
                               >
                                 {id}
@@ -661,10 +661,10 @@ export function PreviewPlaybook({
           )}
 
           <nav className="flex gap-4 border-t border-zinc-800 pt-4 text-sm">
-            <Link href="/mta/stats" className="text-violet-400 hover:text-violet-300">
+            <Link href="/mxt/stats" className="text-violet-400 hover:text-violet-300">
               Statistics →
             </Link>
-            <Link href="/mta/trades" className="text-zinc-400 hover:text-zinc-200">
+            <Link href="/mxt/trades" className="text-zinc-400 hover:text-zinc-200">
               Trades
             </Link>
           </nav>

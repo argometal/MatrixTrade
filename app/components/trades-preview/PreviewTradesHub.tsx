@@ -87,35 +87,35 @@ export function PreviewTradesHub({
         : LEDGER_VERDICT_LABELS[tab as LedgerVerdict];
 
   const tabs: { id: TradesHubTab; href: string; label: string }[] = [
-    { id: "historico", href: "/mta/trades", label: "History" },
+    { id: "historico", href: "/mxt/trades", label: "History" },
     {
       id: "completed_win",
-      href: "/mta/trades?tab=completed_win",
+      href: "/mxt/trades?tab=completed_win",
       label: `Win (${counts.completed_win})`,
     },
     {
       id: "completed_loss",
-      href: "/mta/trades?tab=completed_loss",
+      href: "/mxt/trades?tab=completed_loss",
       label: `Loss (${counts.completed_loss})`,
     },
     {
       id: "late_entry_miss",
-      href: "/mta/trades?tab=late_entry_miss",
+      href: "/mxt/trades?tab=late_entry_miss",
       label: `Late (${counts.late_entry_miss})`,
     },
     {
       id: "never_executed",
-      href: "/mta/trades?tab=never_executed",
+      href: "/mxt/trades?tab=never_executed",
       label: `Never executed (${nonExecutedRows.length})`,
     },
     {
       id: "incomplete",
-      href: "/mta/trades?tab=incomplete",
+      href: "/mxt/trades?tab=incomplete",
       label: `No verdict (${counts.incomplete})`,
     },
     {
       id: "review",
-      href: "/mta/trades?tab=review",
+      href: "/mxt/trades?tab=review",
       label: `Review${pendingReviewCount ? ` (${pendingReviewCount})` : ""}`,
     },
   ];
@@ -137,7 +137,7 @@ export function PreviewTradesHub({
                   items={snapshotItems}
                 />
                 <Link
-                  href="/mta/planning"
+                  href="/mxt/planning"
                   className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
                 >
                   Scout war room
@@ -175,7 +175,7 @@ export function PreviewTradesHub({
                   ))}
                 </ul>
                 <Link
-                  href="/mta/trades?tab=review"
+                  href="/mxt/trades?tab=review"
                   className="mt-3 inline-block text-xs font-medium text-amber-200 hover:underline"
                 >
                   Open Review queue →

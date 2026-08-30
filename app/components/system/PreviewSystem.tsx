@@ -155,7 +155,7 @@ export function PreviewSystem({
                 pendingInboxCount === 0 ? (
                   "None"
                 ) : (
-                  <Link href="/mta/inbox" className="text-violet-400 hover:text-violet-300 hover:underline">
+                  <Link href="/mxt/inbox" className="text-violet-400 hover:text-violet-300 hover:underline">
                     {pendingInboxCount} pending · open History
                   </Link>
                 )

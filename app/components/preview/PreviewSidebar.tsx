@@ -20,7 +20,7 @@ export function PreviewSidebar({ nav }: { nav: PreviewNavContext }) {
 
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 p-4 lg:flex xl:w-60">
-      <Link href="/mta/home-preview" className="mb-4 block">
+      <Link href="/mxt/home-preview" className="mb-4 block">
         <MxtBrandLockup />
       </Link>
 

@@ -10,7 +10,7 @@ export function MobileAccessBanner() {
         </p>
       </div>
       <Link
-        href="/mta/connect"
+        href="/mxt/connect"
         className="rounded-md bg-blue-700 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-600"
       >
         Show QR codes

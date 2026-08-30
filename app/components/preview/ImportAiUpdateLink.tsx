@@ -12,7 +12,7 @@ export function ImportAiUpdateLink({
       <span className="text-[11px] text-zinc-500">
         Updates: <span className="text-emerald-400/90">Control → Apply</span>
       </span>
-      <Link href="/mta/inbox" className="text-[11px] text-zinc-500 hover:text-zinc-300">
+      <Link href="/mxt/inbox" className="text-[11px] text-zinc-500 hover:text-zinc-300">
         History →
       </Link>
     </div>

@@ -9,7 +9,8 @@ function trimSlash(url: string): string {
 }
 
 /** MXT product path prefix on the monolith. */
-const MXT_BASE = "/mta";
+const MXT_BASE = "/mxt";
+const MXT_COMPAT_BASE = "/mta";
 
 function withMxtBase(path: string): string {
   const raw = (path.split("?")[0] || path).trim() || "/";
@@ -17,6 +18,10 @@ function withMxtBase(path: string): string {
   let p = raw.startsWith("/") ? raw : `/${raw}`;
   if (p === "/") return `${MXT_BASE}/home-preview${q}`;
   if (p === MXT_BASE || p.startsWith(`${MXT_BASE}/`)) return `${p}${q}`;
+  if (p === MXT_COMPAT_BASE || p.startsWith(`${MXT_COMPAT_BASE}/`)) {
+    const rest = p === MXT_COMPAT_BASE ? "" : p.slice(MXT_COMPAT_BASE.length);
+    return `${MXT_BASE}${rest}${q}`;
+  }
   return `${MXT_BASE}${p}${q}`;
 }
 

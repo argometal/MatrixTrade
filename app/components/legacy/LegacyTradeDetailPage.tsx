@@ -63,7 +63,7 @@ export function LegacyTradeDetailPage({
         </div>
       )}
       <header>
-        <Link href="/mta/trades" className="text-sm text-zinc-500 hover:underline">
+        <Link href="/mxt/trades" className="text-sm text-zinc-500 hover:underline">
           ← Back to trades
         </Link>
         <h1 className="mt-2 text-2xl font-semibold">
@@ -180,7 +180,7 @@ export function LegacyTradeDetailPage({
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Review</h2>
             <Link
-              href={`/mta/trades/${trade.id}/review`}
+              href={`/mxt/trades/${trade.id}/review`}
               className="text-sm font-medium text-zinc-900 underline"
             >
               {reviewed ? "Edit review" : "Start review →"}

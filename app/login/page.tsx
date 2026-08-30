@@ -9,7 +9,7 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; next?: string; guest_expired?: string }>;
 }) {
   const { error, next } = await searchParams;
-  const defaultNext = "/mta/home-preview";
+  const defaultNext = "/mxt/home-preview";
 
   return (
     <>

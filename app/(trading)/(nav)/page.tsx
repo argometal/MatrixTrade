@@ -2,5 +2,5 @@ import { redirect } from "next/navigation";
 
 /** Legacy `/` trading page → canonical MXT dashboard. */
 export default function DashboardPage() {
-  redirect("/mta/home-preview");
+  redirect("/mxt/home-preview");
 }

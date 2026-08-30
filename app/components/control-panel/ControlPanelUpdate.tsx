@@ -342,7 +342,7 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
           <div className="flex flex-wrap gap-2 text-xs">
             {outcome.tradeId ? (
               <Link
-                href={`/mta/trades/${outcome.tradeId}`}
+                href={`/mxt/trades/${outcome.tradeId}`}
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-violet-400 hover:text-violet-300"
               >
                 Open trade {outcome.tradeId}
@@ -350,7 +350,7 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
             ) : null}
             {outcome.stockFileId ? (
               <Link
-                href={`/mta/stock-theses/${outcome.stockFileId}`}
+                href={`/mxt/stock-theses/${outcome.stockFileId}`}
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-violet-400 hover:text-violet-300"
               >
                 Open profile {outcome.stockFileId}
@@ -358,7 +358,7 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
             ) : null}
             {outcome.planId ? (
               <Link
-                href="/mta/planning"
+                href="/mxt/planning"
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-violet-400 hover:text-violet-300"
               >
                 Scouting desk · {outcome.planId}
@@ -366,14 +366,14 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
             ) : null}
             {outcome.playbookId ? (
               <Link
-                href="/mta/playbook"
+                href="/mxt/playbook"
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-violet-400 hover:text-violet-300"
               >
                 Playbook · {outcome.playbookId}
               </Link>
             ) : null}
             <Link
-              href="/mta/inbox"
+              href="/mxt/inbox"
               className="rounded-lg border border-zinc-700 px-3 py-1.5 text-zinc-400 hover:text-zinc-200"
             >
               View history

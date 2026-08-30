@@ -15,6 +15,7 @@ import {
 import { isArgusSessionPath } from "@/lib/auth/argus-session-path";
 import {
   isMxtTradingPath,
+  isUnderMtaCompatBase,
   isUnderMxtBase,
   mxtPath,
   stripMxtPrefix,
@@ -88,7 +89,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/apps", request.url));
   }
 
-  // Legacy unprefixed trading URLs → canonical /mta/* (belt; next.config also redirects).
+  // Temporary /mta/* → canonical /mxt/*.
+  if (isUnderMtaCompatBase(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = mxtPath(pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Legacy unprefixed trading URLs → canonical /mxt/* (belt; next.config also redirects).
   if (isMxtTradingPath(pathname) && !isUnderMxtBase(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = mxtPath(pathname);

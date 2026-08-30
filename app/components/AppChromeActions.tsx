@@ -10,7 +10,7 @@ const iconBtn =
 export function MatrixAppChromeActions({ pendingInboxCount = 0 }: { pendingInboxCount?: number }) {
   return (
     <>
-      <Link href="/mta/inbox" aria-label="History" title="History" className={iconBtn}>
+      <Link href="/mxt/inbox" aria-label="History" title="History" className={iconBtn}>
         🔔
         {pendingInboxCount > 0 ? (
           <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">

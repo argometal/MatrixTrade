@@ -73,7 +73,7 @@ export function PreviewTradeDetail({
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <Link href="/mta/trades" className="text-sm text-zinc-500 hover:text-violet-400">
+              <Link href="/mxt/trades" className="text-sm text-zinc-500 hover:text-violet-400">
                 ← Trades
               </Link>
               <h1 className="mt-2 text-xl font-semibold text-zinc-100">
@@ -142,7 +142,7 @@ export function PreviewTradeDetail({
                 <dt className="text-xs uppercase tracking-wide text-zinc-500">Scout</dt>
                 <dd className="mt-0.5">
                   <Link
-                    href={`/mta/planning?plan=${trade.planId}`}
+                    href={`/mxt/planning?plan=${trade.planId}`}
                     className="font-medium text-violet-400 hover:underline"
                   >
                     {trade.planId}
@@ -251,7 +251,7 @@ export function PreviewTradeDetail({
                   Review
                 </h2>
                 <Link
-                  href={`/mta/trades/${trade.id}/review`}
+                  href={`/mxt/trades/${trade.id}/review`}
                   className="text-sm font-medium text-violet-400 hover:text-violet-300"
                 >
                   {reviewed ? "Edit review" : "Start review →"}

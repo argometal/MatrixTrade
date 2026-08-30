@@ -36,7 +36,7 @@ export const FORGE_SYSTEMS: ForgeSystem[] = [
     id: "matrixtrade",
     name: "MatrixTrade",
     description: "Trading · Scout · Capital",
-    href: "/mta/home-preview",
+    href: "/mxt/home-preview",
     status: "ready",
     statusLabel: "Ready",
     tone: "green",

@@ -36,7 +36,7 @@ export function TradeProspectPicker({
   function handleChange(planId: string) {
     if (!planId) {
       onSelect(null);
-      router.replace("/mta/trades-preview", { scroll: false });
+      router.replace("/mxt/trades-preview", { scroll: false });
       return;
     }
     const prospect = prospects.find((p) => p.planId === planId);
@@ -58,7 +58,7 @@ export function TradeProspectPicker({
         </div>
         {prospects.length > 0 ? (
           <Link
-            href="/mta/planning"
+            href="/mxt/planning"
             className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
           >
             Scouting Desk
@@ -96,14 +96,14 @@ export function TradeProspectPicker({
                 <div className="flex flex-wrap gap-2">
                   {selected.stockThesisId ? (
                     <Link
-                      href={`/mta/stock-theses/${selected.stockThesisId}`}
+                      href={`/mxt/stock-theses/${selected.stockThesisId}`}
                       className="text-violet-300 hover:underline"
                     >
                       Profile
                     </Link>
                   ) : null}
                   <Link
-                    href={`/mta/planning?plan=${selected.planId}`}
+                    href={`/mxt/planning?plan=${selected.planId}`}
                     className="text-zinc-400 hover:underline"
                   >
                     Scout map
@@ -136,7 +136,7 @@ export function TradeProspectPicker({
         </>
       ) : (
         <Link
-          href="/mta/stock-theses/new"
+          href="/mxt/stock-theses/new"
           className="mt-3 inline-block text-xs text-violet-300 hover:underline"
         >
           + New stock case

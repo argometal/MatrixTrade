@@ -75,7 +75,7 @@ export async function InboxApplyResult({
       <div className="flex flex-wrap gap-3 pt-1">
         {tradeId && !isPlaybookType && (
           <Link
-            href={`/mta/trades/${tradeId}`}
+            href={`/mxt/trades/${tradeId}`}
             className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-500"
           >
             Open trade {tradeId}
@@ -83,20 +83,20 @@ export async function InboxApplyResult({
         )}
         {playbookId && isPlaybookType && (
           <Link
-            href="/mta/playbook"
+            href="/mxt/playbook"
             className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-violet-500"
           >
             Open Playbooks
           </Link>
         )}
         <Link
-          href="/mta/home-preview"
+          href="/mxt/home-preview"
           className="rounded-lg border border-zinc-700 px-3 py-1.5 text-sm font-medium text-zinc-300 hover:border-zinc-600 hover:bg-zinc-900"
         >
           Back to Dashboard
         </Link>
         <Link
-          href="/mta/inbox"
+          href="/mxt/inbox"
           className="text-sm font-medium text-violet-400 hover:text-violet-300 hover:underline"
         >
           Inbox list

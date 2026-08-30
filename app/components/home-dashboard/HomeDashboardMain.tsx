@@ -372,7 +372,7 @@ export function HomeDashboardMain({
           </div>
           {pendingInboxCount > 0 && (
             <Link
-              href="/mta/inbox"
+              href="/mxt/inbox"
               className={
                 dark
                   ? "rounded-full bg-violet-600/20 px-3 py-1 text-xs font-medium text-violet-300 hover:bg-violet-600/30"
@@ -431,7 +431,7 @@ export function HomeDashboardMain({
               </div>
             </dl>
             <Link
-              href={`/mta/inbox/${importResult.inboxItemId}?origin=${importResult.origin}`}
+              href={`/mxt/inbox/${importResult.inboxItemId}?origin=${importResult.origin}`}
               className={
                 dark
                   ? "inline-block rounded-md bg-emerald-700 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-600"

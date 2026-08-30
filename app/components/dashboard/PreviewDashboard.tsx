@@ -94,7 +94,7 @@ export function PreviewDashboard({
                   />
                 ) : null}
                 <Link
-                  href="/mta/planning"
+                  href="/mxt/planning"
                   className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
                 >
                   Scout
@@ -258,7 +258,7 @@ export function PreviewDashboard({
                     label="Best strategy"
                     title={data.bestPlaybook.playbook?.name ?? "—"}
                     value={formatDashboardUsd(data.bestPlaybook.netPnL)}
-                    href="/mta/playbook"
+                    href="/mxt/playbook"
                   />
                 )}
                 {data.worstPlaybook &&
@@ -267,7 +267,7 @@ export function PreviewDashboard({
                       label="Weakest strategy"
                       title={data.worstPlaybook.playbook?.name ?? "—"}
                       value={formatDashboardUsd(data.worstPlaybook.netPnL)}
-                      href="/mta/playbook"
+                      href="/mxt/playbook"
                     />
                   )}
                 {topMistake && (
@@ -276,7 +276,7 @@ export function PreviewDashboard({
                     title={topMistake.label}
                     value={formatDashboardUsd(topMistake.totalCost)}
                     sub={`${topMistake.count} trade${topMistake.count === 1 ? "" : "s"}`}
-                    href="/mta/stats?tab=mistakes"
+                    href="/mxt/stats?tab=mistakes"
                   />
                 )}
               </section>
@@ -335,7 +335,7 @@ export function PreviewDashboard({
                           {" "}
                           · worst{" "}
                           <Link
-                            href={`/mta/trades/${topMistake.worstTrade.id}`}
+                            href={`/mxt/trades/${topMistake.worstTrade.id}`}
                             className="font-medium text-violet-300 hover:text-violet-200"
                           >
                             {topMistake.worstTrade.id} {topMistake.worstTrade.ticker}
@@ -345,7 +345,7 @@ export function PreviewDashboard({
                     </p>
                   </div>
                   <Link
-                    href="/mta/stats?tab=mistakes"
+                    href="/mxt/stats?tab=mistakes"
                     className="text-sm text-red-300 hover:text-red-200"
                   >
                     Details →

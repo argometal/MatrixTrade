@@ -166,9 +166,9 @@ function drillHref(ids: {
   tradeId?: string;
   planId?: string;
 }): string {
-  if (ids.tradeId) return `/mta/trades/${ids.tradeId}`;
-  if (ids.planId) return `/mta/planning?plan=${ids.planId}`;
-  return "/mta/planning";
+  if (ids.tradeId) return `/mxt/trades/${ids.tradeId}`;
+  if (ids.planId) return `/mxt/planning?plan=${ids.planId}`;
+  return "/mxt/planning";
 }
 
 function emptyCounts(): Record<PipelineOutcomeBucket, number> {

@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 import { execSync } from "node:child_process";
-import { MXT_LEGACY_PREFIXES } from "./lib/mxt-paths";
+import { MXT_BASE, MXT_COMPAT_BASE, MXT_LEGACY_PREFIXES } from "./lib/mxt-paths";
 
 function resolveBuildSha(): string {
   const vercel = process.env.VERCEL_GIT_COMMIT_SHA?.trim();
@@ -17,8 +17,8 @@ function resolveBuildSha(): string {
 
 const buildSha = resolveBuildSha();
 
-/** Legacy trading URLs → canonical /mta/* (query strings preserved by Next). */
-function legacyMxtRedirects() {
+/** Unprefixed trading URLs → canonical /mxt/* (query strings preserved by Next). */
+function legacyRootRedirects() {
   const redirects: {
     source: string;
     destination: string;
@@ -28,17 +28,29 @@ function legacyMxtRedirects() {
   for (const prefix of MXT_LEGACY_PREFIXES) {
     redirects.push({
       source: prefix,
-      destination: `/mta${prefix}`,
+      destination: `${MXT_BASE}${prefix}`,
       permanent: false,
     });
     redirects.push({
       source: `${prefix}/:path*`,
-      destination: `/mta${prefix}/:path*`,
+      destination: `${MXT_BASE}${prefix}/:path*`,
       permanent: false,
     });
   }
 
   return redirects;
+}
+
+/** Temporary /mta/* → canonical /mxt/*. */
+function mtaCompatRedirects() {
+  return [
+    { source: MXT_COMPAT_BASE, destination: `${MXT_BASE}/home-preview`, permanent: false },
+    {
+      source: `${MXT_COMPAT_BASE}/:path*`,
+      destination: `${MXT_BASE}/:path*`,
+      permanent: false,
+    },
+  ];
 }
 
 const nextConfig: NextConfig = {
@@ -48,24 +60,30 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      { source: "/mta", destination: "/mta/home-preview", permanent: false },
-      { source: "/ai-workspace", destination: "/mta/ai-bridge", permanent: true },
-      { source: "/mta/ai-workspace", destination: "/mta/ai-bridge", permanent: true },
-      { source: "/exchange", destination: "/mta/ai-bridge", permanent: false },
-      { source: "/mta/exchange", destination: "/mta/ai-bridge", permanent: false },
-      { source: "/review", destination: "/mta/trades?tab=review", permanent: false },
-      { source: "/mta/review", destination: "/mta/trades?tab=review", permanent: false },
-      { source: "/journal", destination: "/mta/stats?tab=journal", permanent: false },
-      { source: "/mta/journal", destination: "/mta/stats?tab=journal", permanent: false },
-      { source: "/mistakes", destination: "/mta/stats?tab=mistakes", permanent: false },
-      { source: "/mta/mistakes", destination: "/mta/stats?tab=mistakes", permanent: false },
-      ...legacyMxtRedirects(),
+      { source: MXT_BASE, destination: `${MXT_BASE}/home-preview`, permanent: false },
+      { source: "/ai-workspace", destination: `${MXT_BASE}/ai-bridge`, permanent: true },
+      { source: `${MXT_BASE}/ai-workspace`, destination: `${MXT_BASE}/ai-bridge`, permanent: true },
+      { source: `${MXT_COMPAT_BASE}/ai-workspace`, destination: `${MXT_BASE}/ai-bridge`, permanent: true },
+      { source: "/exchange", destination: `${MXT_BASE}/ai-bridge`, permanent: false },
+      { source: `${MXT_BASE}/exchange`, destination: `${MXT_BASE}/ai-bridge`, permanent: false },
+      { source: `${MXT_COMPAT_BASE}/exchange`, destination: `${MXT_BASE}/ai-bridge`, permanent: false },
+      { source: "/review", destination: `${MXT_BASE}/trades?tab=review`, permanent: false },
+      { source: `${MXT_BASE}/review`, destination: `${MXT_BASE}/trades?tab=review`, permanent: false },
+      { source: `${MXT_COMPAT_BASE}/review`, destination: `${MXT_BASE}/trades?tab=review`, permanent: false },
+      { source: "/journal", destination: `${MXT_BASE}/stats?tab=journal`, permanent: false },
+      { source: `${MXT_BASE}/journal`, destination: `${MXT_BASE}/stats?tab=journal`, permanent: false },
+      { source: `${MXT_COMPAT_BASE}/journal`, destination: `${MXT_BASE}/stats?tab=journal`, permanent: false },
+      { source: "/mistakes", destination: `${MXT_BASE}/stats?tab=mistakes`, permanent: false },
+      { source: `${MXT_BASE}/mistakes`, destination: `${MXT_BASE}/stats?tab=mistakes`, permanent: false },
+      { source: `${MXT_COMPAT_BASE}/mistakes`, destination: `${MXT_BASE}/stats?tab=mistakes`, permanent: false },
+      ...mtaCompatRedirects(),
+      ...legacyRootRedirects(),
     ];
   },
   async rewrites() {
     return [
-      // Internal: serve existing App Router pages under /mta URL space.
-      { source: "/mta/:path*", destination: "/:path*" },
+      // Internal: serve existing App Router pages under /mxt URL space.
+      { source: `${MXT_BASE}/:path*`, destination: "/:path*" },
     ];
   },
 };

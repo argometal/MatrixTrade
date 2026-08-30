@@ -43,7 +43,7 @@ export function FundingFollowUpPanel({
         </div>
         {followUp.planId ? (
           <Link
-            href={`/mta/planning?plan=${encodeURIComponent(followUp.planId)}`}
+            href={`/mxt/planning?plan=${encodeURIComponent(followUp.planId)}`}
             className="rounded-lg border border-sky-500/40 px-2.5 py-1 text-[10px] font-medium text-sky-200 hover:bg-sky-500/10"
           >
             Review Scout

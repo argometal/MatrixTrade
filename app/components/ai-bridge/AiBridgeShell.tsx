@@ -79,7 +79,7 @@ export function AiBridgeShell({
       }
       const params = new URLSearchParams(searchParams.toString());
       params.set("view", next);
-      router.replace(`/mta/ai-bridge?${params.toString()}`, { scroll: false });
+      router.replace(`/mxt/ai-bridge?${params.toString()}`, { scroll: false });
     },
     [router, searchParams]
   );

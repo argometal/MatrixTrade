@@ -21,7 +21,7 @@ export function ScoutAllocationStrip() {
       ? `/planning/capital/allocation?selected=${encodeURIComponent(
           selectionOrder.join(",")
         )}`
-      : "/mta/planning/capital/allocation";
+      : "/mxt/planning/capital/allocation";
 
   const selectedCount = selectionOrder.length;
 

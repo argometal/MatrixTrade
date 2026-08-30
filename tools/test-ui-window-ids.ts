@@ -32,15 +32,17 @@ const cases: Array<[string, string]> = [
 
 for (const [path, expected] of cases) {
   assert.equal(resolveUiWindowId(path), expected, path);
-  // Canonical /mta/* product URLs resolve to the same window ids.
+  // Canonical /mxt/* and temporary /mta/* resolve to the same window ids.
   if (path !== "/") {
+    assert.equal(resolveUiWindowId(`/mxt${path}`), expected, `/mxt${path}`);
     assert.equal(resolveUiWindowId(`/mta${path}`), expected, `/mta${path}`);
   }
 }
 
+assert.equal(resolveUiWindowId("/mxt/home-preview"), "UI·dashboard");
 assert.equal(resolveUiWindowId("/mta/home-preview"), "UI·dashboard");
 assert.equal(resolveUiWindowId("/trades/H002/"), "UI·trade-detail");
-assert.equal(resolveUiWindowId("/mta/trades/H002/"), "UI·trade-detail");
+assert.equal(resolveUiWindowId("/mxt/trades/H002/"), "UI·trade-detail");
 assert.equal(resolveUiWindowId(null), null);
 
 console.log("test-ui-window-ids: ok");

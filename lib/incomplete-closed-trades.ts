@@ -70,7 +70,7 @@ export function formatIncompleteClosedSummary(row: IncompleteClosedTrade): strin
 
 export function incompleteClosedHref(row: IncompleteClosedTrade): string {
   if (row.gaps.includes("needs_review")) {
-    return `/mta/trades/${row.trade.id}/review`;
+    return `/mxt/trades/${row.trade.id}/review`;
   }
-  return `/mta/trades/${row.trade.id}`;
+  return `/mxt/trades/${row.trade.id}`;
 }

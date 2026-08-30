@@ -12,7 +12,7 @@ export function PreviewMobileHeader({ pendingInboxCount = 0 }: { pendingInboxCou
 
   return (
     <header className="fixed inset-x-0 top-0 z-30 flex items-center justify-between gap-2 border-b border-zinc-800 bg-zinc-950/95 px-3 py-3 backdrop-blur lg:hidden">
-      <Link href="/mta/home-preview" className="min-w-0">
+      <Link href="/mxt/home-preview" className="min-w-0">
         <MxtBrandLockup />
       </Link>
 
