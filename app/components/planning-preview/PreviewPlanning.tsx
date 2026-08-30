@@ -569,8 +569,14 @@ export function PreviewPlanning({
               ) : null}
 
               {outcomePanelPlan && !mapFocusCompact ? (
-                <div className="mt-4" data-scout-outcome-panel>
+                <div className="mt-4 space-y-2" data-scout-outcome-panel>
                   <PlanRecordOutcomePanel plan={outcomePanelPlan} />
+                  <Link
+                    href={`/mxt/planning/case?plan=${encodeURIComponent(outcomePanelPlan.id)}`}
+                    className="inline-block text-xs text-zinc-500 hover:text-zinc-300"
+                  >
+                    Case review (Blind / Reveal)
+                  </Link>
                 </div>
               ) : null}
 

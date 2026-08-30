@@ -8,6 +8,7 @@ import { stripMxtPrefix } from "@/lib/mxt-paths";
 export type UiWindowId =
   | "UI·dashboard"
   | "UI·scout"
+  | "UI·case-review"
   | "UI·capital-planner"
   | "UI·capital-settings"
   | "UI·trades"
@@ -52,6 +53,9 @@ export function resolveUiWindowId(pathname: string | null | undefined): UiWindow
   }
   if (path === "/settings/security" || path.startsWith("/settings/security/")) {
     return "UI·capital-settings";
+  }
+  if (path === "/planning/case" || path.startsWith("/planning/case/")) {
+    return "UI·case-review";
   }
   if (path === "/planning") return "UI·scout";
   if (path === "/stock-theses/new") return "UI·stock-file-new";

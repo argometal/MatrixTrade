@@ -8,6 +8,7 @@ import { resolveUiWindowId } from "../lib/ui-window-ids";
 const cases: Array<[string, string]> = [
   ["/home-preview", "UI·dashboard"],
   ["/planning", "UI·scout"],
+  ["/planning/case", "UI·case-review"],
   ["/planning/capital", "UI·capital-planner"],
   ["/settings/capital", "UI·capital-settings"],
   ["/trades", "UI·trades"],
