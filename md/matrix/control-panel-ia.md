@@ -13,6 +13,7 @@
 
 | Entry | Job |
 |-------|-----|
+| **Dashboard snapshot** | Same global context as Dashboard — one-tap copy on Control home (not a nav section) |
 | **MTA Mechanics** | Copy Matrix constitution once for a new AI chat (+ **Apply schema contract** copy row in the same drawer) |
 | **Stock Files** | Pick one ticker → MTAE request + profile + linked scouts |
 | **Apply** | Paste AI Block → Validate → Accept |
