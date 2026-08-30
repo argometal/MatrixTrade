@@ -65,7 +65,7 @@ export function PreviewReview({
                       <span className="ml-2 text-zinc-500">closed</span>
                     </div>
                     <Link
-                      href={`/trades/${trade.id}/review`}
+                      href={`/mta/trades/${trade.id}/review`}
                       className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
                     >
                       Review
@@ -96,7 +96,7 @@ export function PreviewReview({
                         <p className="text-xs text-zinc-500">{item.origin}</p>
                       </div>
                       <Link
-                        href={`/inbox/${item.id}?origin=${item.origin}`}
+                        href={`/mta/inbox/${item.id}?origin=${item.origin}`}
                         className="text-violet-400 hover:text-violet-300 hover:underline"
                       >
                         Preview
@@ -105,7 +105,7 @@ export function PreviewReview({
                   );
                 })}
               </ul>
-              <Link href="/inbox" className="text-sm text-zinc-500 hover:text-zinc-300">
+              <Link href="/mta/inbox" className="text-sm text-zinc-500 hover:text-zinc-300">
                 Open full inbox →
               </Link>
             </section>
@@ -126,7 +126,7 @@ export function PreviewReview({
                       {trade.id} · {trade.ticker}
                     </span>
                     <Link
-                      href={`/trades/${trade.id}`}
+                      href={`/mta/trades/${trade.id}`}
                       className="text-violet-400 hover:text-violet-300 hover:underline"
                     >
                       Assign →
@@ -149,13 +149,13 @@ export function PreviewReview({
                   <li key={trade.id} className="px-4 py-3 text-sm">
                     <div className="flex items-center justify-between">
                       <Link
-                        href={`/trades/${trade.id}`}
+                        href={`/mta/trades/${trade.id}`}
                         className="font-medium text-violet-400 hover:text-violet-300 hover:underline"
                       >
                         {trade.id} · {trade.ticker}
                       </Link>
                       <Link
-                        href={`/trades/${trade.id}/review`}
+                        href={`/mta/trades/${trade.id}/review`}
                         className="text-xs text-zinc-500 hover:text-zinc-300"
                       >
                         Edit

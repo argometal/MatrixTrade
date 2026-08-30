@@ -2,5 +2,5 @@ import { redirect } from "next/navigation";
 
 /** Legacy /exchange — AI Block paste lives in Control → Apply, not Dashboard. */
 export default function ExchangePage() {
-  redirect("/home-preview");
+  redirect("/mta/home-preview");
 }

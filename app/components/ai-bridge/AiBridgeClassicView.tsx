@@ -46,7 +46,7 @@ export function AiBridgeClassicView({
             )}
           </p>
           <Link
-            href="/inbox"
+            href="/mta/inbox"
             className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
           >
             Open History
@@ -57,7 +57,7 @@ export function AiBridgeClassicView({
             {pendingInboxPreview.map((item) => (
               <li key={`${item.origin}-${item.id}`} className="flex justify-between gap-3 px-4 py-2">
                 <span>{item.summary}</span>
-                <Link href={`/inbox/${item.id}?origin=${item.origin}`} className="underline">
+                <Link href={`/mta/inbox/${item.id}?origin=${item.origin}`} className="underline">
                   Review
                 </Link>
               </li>
@@ -67,10 +67,10 @@ export function AiBridgeClassicView({
       </SystemSection>
 
       <nav className="flex gap-4 text-sm">
-        <Link href="/system" className="text-zinc-600 hover:underline">
+        <Link href="/mta/system" className="text-zinc-600 hover:underline">
           System (sync) →
         </Link>
-        <Link href="/" className="text-zinc-600 hover:underline">
+        <Link href="/mta/home-preview" className="text-zinc-600 hover:underline">
           Dashboard
         </Link>
       </nav>

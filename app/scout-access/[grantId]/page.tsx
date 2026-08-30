@@ -116,13 +116,13 @@ export default async function ScoutAccessPage({
           <h2 className="text-sm font-semibold text-zinc-200">Context package</h2>
           {!bootstrap ? (
             <Link
-              href={`/stock-theses/${grant.stockProfileId}`}
+              href={`/mta/stock-theses/${grant.stockProfileId}`}
               className="text-xs text-violet-400 hover:text-violet-300"
             >
               Open Stock Profile →
             </Link>
           ) : (
-            <Link href="/stock-theses/new" className="text-xs text-violet-400 hover:text-violet-300">
+            <Link href="/mta/stock-theses/new" className="text-xs text-violet-400 hover:text-violet-300">
               New stock case →
             </Link>
           )}

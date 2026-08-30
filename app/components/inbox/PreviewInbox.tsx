@@ -70,7 +70,7 @@ export function PreviewInbox({
                       </p>
                     </div>
                     <Link
-                      href={`/inbox/${item.id}?origin=${item.origin}`}
+                      href={`/mta/inbox/${item.id}?origin=${item.origin}`}
                       className="shrink-0 rounded-lg bg-violet-600/20 px-3 py-1.5 text-xs font-medium text-violet-300 hover:bg-violet-600/30"
                     >
                       Review

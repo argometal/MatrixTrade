@@ -175,7 +175,7 @@ export function AiBridgeV2Panel({
               >
                 Examples
               </button>
-              <Link href="/system" className="text-xs font-medium text-zinc-500 hover:underline">
+              <Link href="/mta/system" className="text-xs font-medium text-zinc-500 hover:underline">
                 Docs
               </Link>
               <button
@@ -375,7 +375,7 @@ export function AiBridgeV2Panel({
                 <div className="mt-2 space-y-2 rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-950">
                   <p className="font-medium">Sent to History</p>
                   <Link
-                    href={`/inbox/${importResult.inboxItemId}?origin=${importResult.origin}`}
+                    href={`/mta/inbox/${importResult.inboxItemId}?origin=${importResult.origin}`}
                     className="inline-block rounded-md bg-emerald-800 px-3 py-1.5 text-xs font-medium text-white"
                   >
                     Review in History →

@@ -18,10 +18,10 @@ export function MtaScopedPanel({
         title="MTA · Overview"
         blurb="Trading operational domain. ArgusForge and MTA objects stay separate."
       >
-        <LinkCard href="/home-preview" title="Situation Room" hint="MTA dashboard" />
-        <LinkCard href="/trades" title="Trades" hint="Open and closed trades" />
-        <LinkCard href="/stats" title="Stats" hint="Performance & journal tabs" />
-        <LinkCard href="/inbox" title="Inbox" hint="History / intake" />
+        <LinkCard href="/mta/home-preview" title="Situation Room" hint="MTA dashboard" />
+        <LinkCard href="/mta/trades" title="Trades" hint="Open and closed trades" />
+        <LinkCard href="/mta/stats" title="Stats" hint="Performance & journal tabs" />
+        <LinkCard href="/mta/inbox" title="Inbox" hint="History / intake" />
       </ScopedShell>
     );
   }
@@ -32,10 +32,10 @@ export function MtaScopedPanel({
         title="MTA · Library"
         blurb="Browse MTA reference surfaces — not ArgusForge Chaos Decks."
       >
-        <LinkCard href="/stock-theses/new" title="Stock Files" hint="New thesis / stock file" />
-        <LinkCard href="/planning" title="Planning" hint="Scouting & proposals hub" />
-        <LinkCard href="/playbook" title="Playbook" hint="Playbook library" />
-        <LinkCard href="/journal" title="Journal" hint="Trading journal" />
+        <LinkCard href="/mta/stock-theses/new" title="Stock Files" hint="New thesis / stock file" />
+        <LinkCard href="/mta/planning" title="Planning" hint="Scouting & proposals hub" />
+        <LinkCard href="/mta/playbook" title="Playbook" hint="Playbook library" />
+        <LinkCard href="/mta/journal" title="Journal" hint="Trading journal" />
       </ScopedShell>
     );
   }
@@ -46,10 +46,10 @@ export function MtaScopedPanel({
         title="MTA · Active"
         blurb="Working set: open trades, review queue, live planning — existing MTA routes only."
       >
-        <LinkCard href="/trades" title="Open trades" hint="Active trade workspace" />
-        <LinkCard href="/trades?tab=review" title="Review queue" hint="Pending reviews" />
-        <LinkCard href="/planning" title="Scouting Desk" hint="Active proposals / planning" />
-        <LinkCard href="/home-preview" title="Needs attention" hint="Situation Room attention" />
+        <LinkCard href="/mta/trades" title="Open trades" hint="Active trade workspace" />
+        <LinkCard href="/mta/trades?tab=review" title="Review queue" hint="Pending reviews" />
+        <LinkCard href="/mta/planning" title="Scouting Desk" hint="Active proposals / planning" />
+        <LinkCard href="/mta/home-preview" title="Needs attention" hint="Situation Room attention" />
       </ScopedShell>
     );
   }
@@ -59,10 +59,10 @@ export function MtaScopedPanel({
       title="MTA · Archive"
       blurb="Closed / preserved MTA material — not deletion. No ArgusForge archive mix."
     >
-      <LinkCard href="/trades" title="Closed trades" hint="Use trades workspace filters" />
-      <LinkCard href="/stats?tab=journal" title="Journal archive" hint="Historical journal" />
-      <LinkCard href="/stats?tab=mistakes" title="Mistakes" hint="Preserved mistake log" />
-      <LinkCard href="/playbook" title="Playbooks" hint="Stored playbook definitions" />
+      <LinkCard href="/mta/trades" title="Closed trades" hint="Use trades workspace filters" />
+      <LinkCard href="/mta/stats?tab=journal" title="Journal archive" hint="Historical journal" />
+      <LinkCard href="/mta/stats?tab=mistakes" title="Mistakes" hint="Preserved mistake log" />
+      <LinkCard href="/mta/playbook" title="Playbooks" hint="Stored playbook definitions" />
     </ScopedShell>
   );
 }

@@ -18,7 +18,7 @@ export function PreviewTradeReview({
       <div className="min-w-0 flex-1 overflow-y-auto">
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <Link
-            href={`/trades/${trade.id}`}
+            href={`/mta/trades/${trade.id}`}
             className="text-sm text-zinc-500 hover:text-violet-400"
           >
             ← {trade.id} · {trade.ticker}

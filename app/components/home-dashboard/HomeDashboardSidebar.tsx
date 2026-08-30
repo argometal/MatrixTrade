@@ -74,7 +74,7 @@ export function HomeDashboardSidebar({
       <section className={sectionClass}>
         <div className="flex items-center justify-between gap-2">
           <h2 className={headingClass}>Quick overview</h2>
-          <Link href="/inbox" className={linkClass}>
+          <Link href="/mta/inbox" className={linkClass}>
             History{pendingInboxCount > 0 ? ` (${pendingInboxCount})` : ""}
           </Link>
         </div>
@@ -126,7 +126,7 @@ export function HomeDashboardSidebar({
           <ul className={`mt-2 ${divideClass} text-xs`}>
             {overview.pendingReviews.map((t) => (
               <li key={t.id} className="py-2">
-                <Link href={`/trades/${t.id}/review`} className={linkClass}>
+                <Link href={`/mta/trades/${t.id}/review`} className={linkClass}>
                   {t.id} · {t.ticker}
                 </Link>
               </li>
@@ -143,7 +143,7 @@ export function HomeDashboardSidebar({
           <ul className={`mt-2 ${divideClass} text-xs`}>
             {overview.unassignedTrades.map((t) => (
               <li key={t.id} className="py-2">
-                <Link href={`/trades/${t.id}`} className={linkClass}>
+                <Link href={`/mta/trades/${t.id}`} className={linkClass}>
                   {t.id} · {t.ticker} ({t.status})
                 </Link>
               </li>

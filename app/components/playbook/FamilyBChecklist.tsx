@@ -35,7 +35,7 @@ export function FamilyBChecklist({
           Family B · Trend continuation
         </p>
         <Link
-          href="/playbook"
+          href="/mta/playbook"
           className="text-[11px] text-sky-300/80 hover:underline"
         >
           Playbook →

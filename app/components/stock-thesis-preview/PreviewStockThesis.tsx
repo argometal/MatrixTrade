@@ -137,8 +137,8 @@ export function PreviewStockThesis({
     { id: "history", label: "History" },
   ];
   const scoutHref = primaryPlan
-    ? `/planning?plan=${primaryPlan.id}`
-    : `/planning?thesis=${thesis.id}`;
+    ? `/mta/planning?plan=${primaryPlan.id}`
+    : `/mta/planning?thesis=${thesis.id}`;
 
   return (
     <div className="flex h-full min-h-0 w-full overflow-hidden">
@@ -205,7 +205,7 @@ export function PreviewStockThesis({
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Link
-                  href={`/planning?plan=${primaryPlan.id}`}
+                  href={`/mta/planning?plan=${primaryPlan.id}`}
                   className="font-medium text-violet-400 hover:text-violet-300"
                 >
                   {primaryPlan.id}

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { MxtBrandLockup } from "@/app/components/MxtBrandMark";
 import { SignOutButton } from "@/app/components/SignOutButton";
 import {
   isPreviewNavActive,
@@ -19,11 +20,8 @@ export function PreviewSidebar({ nav }: { nav: PreviewNavContext }) {
 
   return (
     <aside className="hidden w-56 shrink-0 flex-col border-r border-zinc-800 bg-zinc-950 p-4 lg:flex xl:w-60">
-      <Link href="/home-preview" className="mb-4 flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-sm font-bold">
-          M
-        </span>
-        <span className="font-semibold">MTA</span>
+      <Link href="/mta/home-preview" className="mb-4 block">
+        <MxtBrandLockup />
       </Link>
 
       {PREVIEW_NAV_SECTIONS.map((section) => (

@@ -12,9 +12,9 @@ import {
 } from "@/lib/trades-workspace-types";
 
 const QUICK_ACTIONS = [
-  { label: "Scouting Desk", href: "/planning" },
-  { label: "History", href: "/inbox" },
-  { label: "New stock case", href: "/stock-theses/new" },
+  { label: "Scouting Desk", href: "/mta/planning" },
+  { label: "History", href: "/mta/inbox" },
+  { label: "New stock case", href: "/mta/stock-theses/new" },
 ] as const;
 
 type TabId = "new" | "open" | "pending" | "closed" | "all";
@@ -81,19 +81,19 @@ export function TradesWorkspace({
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
-                href="/planning"
+                href="/mta/planning"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200"
               >
                 ← Scouting Desk
               </Link>
               <Link
-                href="/trades"
+                href="/mta/trades"
                 className="hidden rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-500 hover:text-zinc-300 sm:inline-block"
               >
                 Trades →
               </Link>
               <Link
-                href="/inbox"
+                href="/mta/inbox"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:border-zinc-600"
               >
                 History{data.pendingInboxCount > 0 ? ` (${data.pendingInboxCount})` : ""}
@@ -167,7 +167,7 @@ export function TradesWorkspace({
                         <tr key={row.id} className="hover:bg-zinc-900/50">
                           <td className="py-2.5 pr-3">
                             <Link
-                              href={`/trades/${row.id}`}
+                              href={`/mta/trades/${row.id}`}
                               className="font-medium text-violet-300 hover:underline"
                             >
                               {row.ticker}
@@ -236,7 +236,7 @@ export function TradesWorkspace({
               <ul className="mt-3 space-y-2 text-sm">
                 {data.openSummary.positions.map((p) => (
                   <li key={p.id} className="flex justify-between text-zinc-400">
-                    <Link href={`/trades/${p.id}`} className="hover:text-violet-300">
+                    <Link href={`/mta/trades/${p.id}`} className="hover:text-violet-300">
                       {p.ticker} · {p.direction}
                     </Link>
                     <span className="text-zinc-500">
@@ -305,7 +305,7 @@ export function TradesWorkspace({
             ) : (
               data.recentClosed.map((t) => (
                 <li key={t.id} className="flex justify-between">
-                  <Link href={`/trades/${t.id}`} className="text-zinc-400 hover:text-violet-300">
+                  <Link href={`/mta/trades/${t.id}`} className="text-zinc-400 hover:text-violet-300">
                     {t.ticker}
                   </Link>
                   <span className={t.pnl >= 0 ? "text-emerald-400" : "text-red-400"}>

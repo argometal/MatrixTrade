@@ -342,7 +342,7 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
           <div className="flex flex-wrap gap-2 text-xs">
             {outcome.tradeId ? (
               <Link
-                href={`/trades/${outcome.tradeId}`}
+                href={`/mta/trades/${outcome.tradeId}`}
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-violet-400 hover:text-violet-300"
               >
                 Open trade {outcome.tradeId}
@@ -350,7 +350,7 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
             ) : null}
             {outcome.stockFileId ? (
               <Link
-                href={`/stock-theses/${outcome.stockFileId}`}
+                href={`/mta/stock-theses/${outcome.stockFileId}`}
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-violet-400 hover:text-violet-300"
               >
                 Open profile {outcome.stockFileId}
@@ -358,7 +358,7 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
             ) : null}
             {outcome.planId ? (
               <Link
-                href="/planning"
+                href="/mta/planning"
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-violet-400 hover:text-violet-300"
               >
                 Scouting desk · {outcome.planId}
@@ -366,14 +366,14 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
             ) : null}
             {outcome.playbookId ? (
               <Link
-                href="/playbook"
+                href="/mta/playbook"
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-violet-400 hover:text-violet-300"
               >
                 Playbook · {outcome.playbookId}
               </Link>
             ) : null}
             <Link
-              href="/inbox"
+              href="/mta/inbox"
               className="rounded-lg border border-zinc-700 px-3 py-1.5 text-zinc-400 hover:text-zinc-200"
             >
               View history

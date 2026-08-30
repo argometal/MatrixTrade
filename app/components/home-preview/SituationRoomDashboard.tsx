@@ -8,11 +8,11 @@ import {
 } from "@/lib/situation-room";
 
 const QUICK_NAV = [
-  { href: "/planning", label: "Scout" },
-  { href: "/review", label: "Review" },
-  { href: "/inbox", label: "History" },
-  { href: "/stats", label: "Statistics" },
-  { href: "/playbook", label: "Playbooks" },
+  { href: "/mta/planning", label: "Scout" },
+  { href: "/mta/review", label: "Review" },
+  { href: "/mta/inbox", label: "History" },
+  { href: "/mta/stats", label: "Statistics" },
+  { href: "/mta/playbook", label: "Playbooks" },
 ] as const;
 
 function KpiCard({
@@ -183,7 +183,7 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
                 {data.cycleLabel} (Current)
               </span>
               <Link
-                href="/planning"
+                href="/mta/planning"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
               >
                 + Scout
@@ -283,7 +283,7 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
                 <TradeStatusDonut data={data.tradeStatus} />
               </div>
               <Link
-                href="/trades"
+                href="/mta/trades"
                 className="mt-4 inline-block text-xs font-medium text-violet-400 hover:text-violet-300"
               >
                 View all trades →
@@ -316,7 +316,7 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
                     {data.recentClosed.map((row) => (
                       <tr key={row.id}>
                         <td className="py-2.5 pr-4">
-                          <Link href={`/trades/${row.id}`} className="font-medium hover:text-violet-300">
+                          <Link href={`/mta/trades/${row.id}`} className="font-medium hover:text-violet-300">
                             {row.ticker}
                           </Link>
                         </td>
@@ -446,7 +446,7 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
               ))}
             </ul>
           )}
-          <Link href="/playbook" className="mt-3 inline-block text-xs text-violet-400 hover:text-violet-300">
+          <Link href="/mta/playbook" className="mt-3 inline-block text-xs text-violet-400 hover:text-violet-300">
             All playbooks →
           </Link>
         </section>

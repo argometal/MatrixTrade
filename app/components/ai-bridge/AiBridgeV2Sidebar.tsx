@@ -3,13 +3,13 @@ import { usePathname } from "next/navigation";
 import { ArgusMark } from "@/app/components/ArgusMark";
 
 const MAIN_LINKS = [
-  { href: "/ai-bridge", label: "AI Bridge", icon: "✦", activePrefix: "/ai-bridge" },
-  { href: "/", label: "Dashboard", icon: "▦" },
-  { href: "/trades", label: "Trades", icon: "↗" },
-  { href: "/playbook", label: "Playbook", icon: "☰" },
-  { href: "/review", label: "Review", icon: "◎" },
-  { href: "/stats", label: "Statistics", icon: "📊" },
-  { href: "/journal", label: "Journal", icon: "📝" },
+  { href: "/mta/ai-bridge", label: "AI Bridge", icon: "✦", activePrefix: "/mta/ai-bridge" },
+  { href: "/mta/home-preview", label: "Dashboard", icon: "▦" },
+  { href: "/mta/trades", label: "Trades", icon: "↗" },
+  { href: "/mta/playbook", label: "Playbook", icon: "☰" },
+  { href: "/mta/trades?tab=review", label: "Review", icon: "◎" },
+  { href: "/mta/stats", label: "Statistics", icon: "📊" },
+  { href: "/mta/stats?tab=journal", label: "Journal", icon: "📝" },
 ] as const;
 
 const SYSTEM_LINKS: {
@@ -17,9 +17,9 @@ const SYSTEM_LINKS: {
   label: string;
   badge?: boolean;
 }[] = [
-  { href: "/inbox", label: "Inbox", badge: true },
-  { href: "/inbox", label: "Apply" },
-  { href: "/system", label: "Settings" },
+  { href: "/mta/inbox", label: "Inbox", badge: true },
+  { href: "/mta/inbox", label: "Apply" },
+  { href: "/mta/system", label: "Settings" },
 ];
 
 export function AiBridgeV2Sidebar({
@@ -50,8 +50,8 @@ export function AiBridgeV2Sidebar({
         <ul className="mt-2 space-y-0.5">
           {MAIN_LINKS.map((link) => {
             const active =
-              link.href === "/ai-bridge"
-                ? pathname.startsWith("/ai-bridge")
+              link.href === "/mta/ai-bridge"
+                ? pathname.startsWith("/mta/ai-bridge")
                 : pathname === link.href;
             return (
               <li key={link.href + link.label}>

@@ -371,14 +371,14 @@ export function CapitalSettingsPanel({
         </p>
         <div className="flex flex-wrap items-stretch gap-2 pt-2 sm:gap-3">
           <Link
-            href="/planning/capital"
+            href="/mta/planning/capital"
             data-capital-planner-cta
             className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg border border-emerald-500/50 bg-emerald-500/15 px-4 py-2.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/25 sm:flex-none"
           >
             Open Capital Planner
           </Link>
           <Link
-            href="/settings/security"
+            href="/mta/settings/security"
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-violet-500/40 bg-violet-500/10 px-4 py-2.5 text-sm font-medium text-violet-200 hover:bg-violet-500/20"
           >
             Security / Guest lock

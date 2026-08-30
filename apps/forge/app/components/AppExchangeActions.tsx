@@ -69,7 +69,7 @@ export function AppExchangeActions({
       id: "matrixtrade",
       name: "MatriXTrade",
       description: "Trading (external)",
-      href: matrixTradeHref("/home-preview"),
+      href: matrixTradeHref("/mta/home-preview"),
       external: true,
     },
   ];

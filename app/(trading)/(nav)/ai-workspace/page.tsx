@@ -2,5 +2,5 @@ import { redirect } from "next/navigation";
 
 /** Legacy /ai-workspace — use Control → Apply for AI Blocks. */
 export default function AiWorkspaceRedirectPage() {
-  redirect("/home-preview");
+  redirect("/mta/home-preview");
 }

@@ -165,7 +165,7 @@ export function getNextAction(
     const t = unreviewed[0];
     return {
       label: `Review ${t.id} · ${t.ticker}`,
-      href: `/trades/${t.id}/review`,
+      href: `/mta/trades/${t.id}/review`,
       kind: "review",
     };
   }
@@ -174,7 +174,7 @@ export function getNextAction(
   if (open) {
     return {
       label: `Manage ${open.id} · ${open.ticker}`,
-      href: `/trades/${open.id}`,
+      href: `/mta/trades/${open.id}`,
       kind: "open",
     };
   }
@@ -183,13 +183,13 @@ export function getNextAction(
   if (pending) {
     return {
       label: `Open ${pending.id} · ${pending.ticker}`,
-      href: `/trades/${pending.id}`,
+      href: `/mta/trades/${pending.id}`,
       kind: "close",
     };
   }
 
   if (!monthly.monthlyCapBreached && monthly.monthlyLossRoom > 0) {
-    return { label: "Open Scout war room", href: "/planning", kind: "new" };
+    return { label: "Open Scout war room", href: "/mta/planning", kind: "new" };
   }
 
   return null;

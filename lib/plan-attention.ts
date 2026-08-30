@@ -26,7 +26,7 @@ export function buildPlanAttentionItems(
     items.push({
       id: `plan-review-${plan.id}`,
       label: `Evaluate ${statusLabel.toLowerCase()} plan · ${plan.ticker} (${plan.id})`,
-      href: `/planning?plan=${plan.id}`,
+      href: `/mta/planning?plan=${plan.id}`,
       priority: 16,
     });
   }
@@ -53,7 +53,7 @@ export function buildPlanAttentionItems(
     items.push({
       id: `plan-outcome-sync-${plan.id}`,
       label: `Learning Sync failed · ${plan.ticker} (${plan.id})`,
-      href: `/planning?plan=${plan.id}`,
+      href: `/mta/planning?plan=${plan.id}`,
       priority: 14,
     });
   }

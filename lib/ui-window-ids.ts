@@ -31,7 +31,10 @@ export type UiWindowId =
 
 export function resolveUiWindowId(pathname: string | null | undefined): UiWindowId | null {
   if (!pathname) return null;
-  const path = (pathname.split("?")[0] || pathname).replace(/\/+$/, "") || "/";
+  let path = (pathname.split("?")[0] || pathname).replace(/\/+$/, "") || "/";
+  // Canonical /mta/* URLs map to the same window ids as filesystem routes.
+  if (path === "/mta") path = "/";
+  else if (path.startsWith("/mta/")) path = path.slice("/mta".length) || "/";
 
   if (/^\/trades\/[^/]+\/review$/.test(path)) return "UI·trade-review";
   if (path === "/trades/new") return "UI·enter-trade";

@@ -20,7 +20,7 @@ export function AppExchangeActions({
   className?: string;
 }) {
   const showInbox = app === "matrix" || app === "argus";
-  const inboxHref = app === "matrix" ? "/inbox" : "/argus/v2/inbox";
+  const inboxHref = app === "matrix" ? "/mta/inbox" : "/argus/v2/inbox";
   const inboxLabel = app === "matrix" ? "History" : "Inbox";
   const currentId: ForgeSystemId =
     app === "matrix" ? "matrixtrade" : app === "argus" ? "argus" : "argusforge";
