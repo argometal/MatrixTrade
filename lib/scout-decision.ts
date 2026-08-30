@@ -233,7 +233,8 @@ export function appendDecision(
   plan: TradePlan,
   input: DecisionInput,
   probeInput?: ProbeInput,
-  layeredEntryInput?: LayeredEntryInput
+  layeredEntryInput?: LayeredEntryInput,
+  authorizeCtx?: { defaultRiskBudget?: number }
 ): { plan: TradePlan; errors?: string[] } {
   const layeredErrors = layeredEntryInput ? validateLayeredEntry(layeredEntryInput) : [];
   const errors = [
@@ -289,6 +290,7 @@ export function appendDecision(
       primaryTargetPrice:
         layeredEntryInput.primaryTargetPrice ?? plan.targetPrice,
       planStopPrice: layeredEntryInput.commonStopPrice ?? plan.stopPrice,
+      defaultRiskBudget: authorizeCtx?.defaultRiskBudget,
     });
     executionMethod = layeredEntry.executionMethod;
   }

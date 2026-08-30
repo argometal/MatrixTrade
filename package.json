@@ -25,6 +25,7 @@
     "test:scout-case-selector": "tsx tools/test-scout-case-selector-16-0e.ts",
     "test:layered-entry-risk": "tsx tools/test-layered-entry-risk.ts",
     "test:layered-execution-persist": "tsx tools/test-layered-execution-persist.ts",
+    "test:layered-qty-default-risk": "tsx tools/test-layered-qty-default-risk-17-0b.ts",
     "test:modified-kelly": "tsx tools/test-modified-kelly.ts",
     "test:family-b-bull-trend": "tsx tools/test-family-b-bull-trend.ts",
     "test:plan-id-architecture": "tsx tools/test-plan-id-architecture.ts",
