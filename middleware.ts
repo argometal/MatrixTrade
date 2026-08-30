@@ -40,6 +40,18 @@ function clearSessionCookies(response: NextResponse): void {
   response.cookies.delete(GUEST_LOCK_OVERRIDE_COOKIE);
 }
 
+/**
+ * Host → product root for "/" only.
+ * Explicit paths are untouched. alexandria.* is reserved (no special case).
+ */
+function productRootForHostname(hostname: string): string {
+  const host = hostname.toLowerCase().split(":")[0] || "";
+  if (host === "mxt.argusforge.dev") return "/mxt/home-preview";
+  if (host === "argus.argusforge.dev") return "/argus/v2";
+  // argusforge.dev, matrix-trade-theta.vercel.app, localhost, etc.
+  return "/apps";
+}
+
 function guestLockBlocks(policy: GuestLockPolicy, request: NextRequest): boolean {
   if (!policy.enabled) return false;
 
@@ -84,9 +96,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(argusLegacy);
   }
 
-  // Neutral product root — not MXT.
+  // Host-aware product root — only for "/".
   if (pathname === "/") {
-    return NextResponse.redirect(new URL("/apps", request.url));
+    const dest = productRootForHostname(request.nextUrl.hostname);
+    return NextResponse.redirect(new URL(dest, request.url));
   }
 
   // Temporary /mta/* → canonical /mxt/*.
