@@ -3,7 +3,7 @@ import { sampleAiBlock } from "./ai-block";
 
 import { formatTradeProspectLabel, type TradeProspect } from "./trade-prospects";
 
-export const TRADE_BOOT_REQUEST = `Return ONE AI Block only — plain JSON or a single \`\`\`json fenced block.
+export const TRADE_BOOT_REQUEST = `Return ONE Apply JSON object only — copyable from { through }. No explanation, Prompt IDs, Markdown fences, or comments in the paste payload.
 Use straight ASCII double quotes only — never curly “smart” quotes.
 
 Block type: trade-proposal

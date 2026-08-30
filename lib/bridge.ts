@@ -18,6 +18,7 @@ import {
 } from "./mtae-validate";
 import { validateAttributionProposal } from "./maf-validate";
 import { validateObservationUpdateProposal } from "./observation-validate";
+import { validateLayeredEntryUpdateProposal } from "./layered-entry-update-schema";
 import { validatePlanOutcomeProposal } from "./plan-outcome-validate";
 import { EXECUTION_READINESS_STATES } from "./plan-outcome-types";
 import {
@@ -737,22 +738,8 @@ export function validateProposalPayload(
   }
 
   if (parsed.type === "layered-entry-update") {
-    if (!p.planId) errors.push("proposal.planId required");
-    const hasUpdate =
-      p.filledThroughIndex !== undefined ||
-      (p.status &&
-        ["missed", "partial", "full", "active", "planned", "cancelled"].includes(
-          String(p.status)
-        ));
-    if (!hasUpdate) {
-      errors.push("proposal.filledThroughIndex or proposal.status required");
-    }
-    if (p.filledThroughIndex !== undefined) {
-      const idx = Number(p.filledThroughIndex);
-      if (!Number.isFinite(idx) || idx < -1) {
-        errors.push("proposal.filledThroughIndex must be >= -1");
-      }
-    }
+    const check = validateLayeredEntryUpdateProposal(p);
+    if (!check.ok) errors.push(...check.errors);
   }
 
   if (parsed.type === "file-update") {
