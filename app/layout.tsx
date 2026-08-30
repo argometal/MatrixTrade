@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MTA",
+  title: "MXT",
   description: "Trading lab — conductual journal and risk control",
 };
 

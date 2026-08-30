@@ -48,7 +48,7 @@ export function PreviewInboxDetail({
       <div className="flex h-full min-h-0 w-full overflow-hidden">
         <div className="min-w-0 flex-1 overflow-y-auto">
           <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
-            <Link href="/inbox" className="text-sm text-zinc-500 hover:text-violet-400">
+            <Link href="/mxt/inbox" className="text-sm text-zinc-500 hover:text-violet-400">
               ← History
             </Link>
             <h1 className="mt-2 text-xl font-semibold text-zinc-100">Already processed</h1>
@@ -58,7 +58,7 @@ export function PreviewInboxDetail({
               This inbox item was already processed ({item.status}).
             </div>
             <Link
-              href="/inbox"
+              href="/mxt/inbox"
               className="mt-4 inline-block text-sm font-medium text-violet-400 hover:text-violet-300 hover:underline"
             >
               Back to History
@@ -74,7 +74,7 @@ export function PreviewInboxDetail({
       <div className="flex h-full min-h-0 w-full overflow-hidden">
         <div className="min-w-0 flex-1 overflow-y-auto">
           <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
-            <Link href="/inbox" className="text-sm text-zinc-500 hover:text-violet-400">
+            <Link href="/mxt/inbox" className="text-sm text-zinc-500 hover:text-violet-400">
               ← History
             </Link>
             <h1 className="mt-2 text-xl font-semibold text-zinc-100">Apply result</h1>
@@ -124,7 +124,7 @@ export function PreviewInboxDetail({
     <div className="flex h-full min-h-0 w-full overflow-hidden">
       <div className="min-w-0 flex-1 overflow-y-auto">
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
-          <Link href="/inbox" className="text-sm text-zinc-500 hover:text-violet-400">
+          <Link href="/mxt/inbox" className="text-sm text-zinc-500 hover:text-violet-400">
             ← History
           </Link>
           <h1 className="mt-2 text-xl font-semibold text-zinc-100">Review proposal</h1>

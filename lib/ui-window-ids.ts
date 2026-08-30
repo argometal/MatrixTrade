@@ -3,6 +3,8 @@
  * Shown as a small badge on every trading surface — not product copy.
  */
 
+import { stripMxtPrefix } from "@/lib/mxt-paths";
+
 export type UiWindowId =
   | "UI·dashboard"
   | "UI·scout"
@@ -31,7 +33,11 @@ export type UiWindowId =
 
 export function resolveUiWindowId(pathname: string | null | undefined): UiWindowId | null {
   if (!pathname) return null;
-  const path = (pathname.split("?")[0] || pathname).replace(/\/+$/, "") || "/";
+  let path = (pathname.split("?")[0] || pathname).replace(/\/+$/, "") || "/";
+  // Canonical /mxt/* (and temporary /mta/*) map to filesystem route window ids.
+  path = stripMxtPrefix(path);
+
+  if (path === "/") return "UI·home";
 
   if (/^\/trades\/[^/]+\/review$/.test(path)) return "UI·trade-review";
   if (path === "/trades/new") return "UI·enter-trade";
@@ -66,7 +72,6 @@ export function resolveUiWindowId(pathname: string | null | undefined): UiWindow
   if (path === "/ai-workspace") return "UI·ai-workspace";
   if (path === "/ai-bridge") return "UI·ai-bridge";
   if (path === "/connect") return "UI·connect";
-  if (path === "/") return "UI·home";
 
   return null;
 }

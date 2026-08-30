@@ -21,7 +21,7 @@ export function buildLearningAttentionItems(
     items.push({
       id: `observation-${trade.id}`,
       label: `Observation missing · ${trade.id} ${trade.ticker}`,
-      href: `/trades/${trade.id}`,
+      href: `/mxt/trades/${trade.id}`,
       priority: 2,
     });
   }
@@ -33,7 +33,7 @@ export function buildLearningAttentionItems(
     items.push({
       id: `attribution-${key}`,
       label: `Attribution ready · ${lo.id}${lo.ticker ? ` · ${lo.ticker}` : ""}`,
-      href: lo.tradeId ? `/trades/${lo.tradeId}` : lo.planId ? `/planning?plan=${lo.planId}` : "/trades",
+      href: lo.tradeId ? `/mxt/trades/${lo.tradeId}` : lo.planId ? `/mxt/planning?plan=${lo.planId}` : "/mxt/trades",
       priority: 2,
     });
   }

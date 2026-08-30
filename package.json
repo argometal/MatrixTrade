@@ -4,9 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack --hostname 0.0.0.0 -p 3002",
+    "dev:forge": "npm --prefix apps/forge run dev",
     "build": "next build",
+    "build:forge": "npm --prefix apps/forge run build",
     "start": "next start --hostname 0.0.0.0",
     "lint": "next lint",
+    "lint:forge": "npm --prefix apps/forge run lint",
+
     "seed:supabase": "tsx tools/seed-supabase.ts",
     "validate:supabase": "tsx tools/validate-supabase-trades.ts",
     "verify:supabase-rls": "tsx tools/verify-supabase-rls.ts",

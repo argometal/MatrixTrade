@@ -10,7 +10,7 @@ import { GuestLocalTimeZoneField } from "@/app/components/GuestLocalTimeZone";
 export function GuestWorkstationLockPanel({
   initialPolicy,
   passwordsConfigured,
-  returnTo = "/settings/security",
+  returnTo = "/mxt/settings/security",
 }: {
   initialPolicy: GuestLockPolicy;
   passwordsConfigured: boolean;

@@ -65,7 +65,7 @@ export function LegacyReviewPage({
                   <span className="ml-2 text-zinc-400">closed</span>
                 </div>
                 <Link
-                  href={`/trades/${trade.id}/review`}
+                  href={`/mxt/trades/${trade.id}/review`}
                   className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800"
                 >
                   Review
@@ -93,7 +93,7 @@ export function LegacyReviewPage({
                     <p className="text-xs text-zinc-400">{item.origin}</p>
                   </div>
                   <Link
-                    href={`/inbox/${item.id}?origin=${item.origin}`}
+                    href={`/mxt/inbox/${item.id}?origin=${item.origin}`}
                     className="font-medium underline"
                   >
                     Preview
@@ -102,7 +102,7 @@ export function LegacyReviewPage({
               );
             })}
           </ul>
-          <Link href="/inbox" className="text-sm text-zinc-600 hover:underline">
+          <Link href="/mxt/inbox" className="text-sm text-zinc-600 hover:underline">
             Open full inbox →
           </Link>
         </section>
@@ -119,7 +119,7 @@ export function LegacyReviewPage({
                 <span className="font-medium">
                   {trade.id} · {trade.ticker}
                 </span>
-                <Link href={`/trades/${trade.id}`} className="font-medium underline">
+                <Link href={`/mxt/trades/${trade.id}`} className="font-medium underline">
                   Assign →
                 </Link>
               </li>
@@ -139,11 +139,11 @@ export function LegacyReviewPage({
             {reviewedTrades.map((trade) => (
               <li key={trade.id} className="px-4 py-3 text-sm">
                 <div className="flex items-center justify-between">
-                  <Link href={`/trades/${trade.id}`} className="font-medium hover:underline">
+                  <Link href={`/mxt/trades/${trade.id}`} className="font-medium hover:underline">
                     {trade.id} · {trade.ticker}
                   </Link>
                   <Link
-                    href={`/trades/${trade.id}/review`}
+                    href={`/mxt/trades/${trade.id}/review`}
                     className="text-xs text-zinc-500 hover:underline"
                   >
                     Edit

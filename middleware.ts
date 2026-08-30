@@ -13,43 +13,22 @@ import {
   type GuestLockPolicy,
 } from "@/lib/auth/guest-workstation-lock";
 import { isArgusSessionPath } from "@/lib/auth/argus-session-path";
+import {
+  isMxtTradingPath,
+  isUnderMtaCompatBase,
+  isUnderMxtBase,
+  mxtPath,
+  stripMxtPrefix,
+} from "@/lib/mxt-paths";
 
 function isPublicPath(pathname: string): boolean {
   if (pathname === "/login" || pathname === "/argus/login") return true;
+  if (pathname === "/apps" || pathname.startsWith("/apps/")) return true;
   if (pathname.startsWith("/_next")) return true;
   if (pathname.startsWith("/api/")) return true;
   if (/\.(?:svg|png|jpg|jpeg|gif|webp|ico)$/.test(pathname)) return true;
   return false;
 }
-
-function isTradingRoute(pathname: string): boolean {
-  if (pathname === "/") return true;
-
-  const prefixes = [
-    "/home-preview",
-    "/trades-preview",
-    "/trades",
-    "/connect",
-    "/inbox",
-    "/exchange",
-    "/ai-bridge",
-    "/ai-workspace",
-    "/planning",
-    "/playbook",
-    "/review",
-    "/journal",
-    "/system",
-    "/stats",
-    "/mistakes",
-    "/planning",
-    "/stock-theses",
-    "/scout-access",
-    "/settings",
-  ];
-
-  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-}
-
 
 function clearSessionCookies(response: NextResponse): void {
   response.cookies.delete("mt-auth");
@@ -68,7 +47,6 @@ function guestLockBlocks(policy: GuestLockPolicy, request: NextRequest): boolean
 
   const override = request.cookies.get(GUEST_LOCK_OVERRIDE_COOKIE)?.value;
   if (isGuestOverrideActive(override)) {
-    // 30-min password override — schedule ignored; honor absolute session end.
     const until = request.cookies.get(GUEST_SESSION_UNTIL_COOKIE)?.value;
     if (until) {
       const ts = Date.parse(until);
@@ -77,7 +55,6 @@ function guestLockBlocks(policy: GuestLockPolicy, request: NextRequest): boolean
     return false;
   }
 
-  // No override: enforce account schedule (this computer's timezone) + timed session cookie.
   if (!isGuestLockWindowOpen(policy, new Date(), timeZone)) return true;
   const until = request.cookies.get(GUEST_SESSION_UNTIL_COOKIE)?.value;
   if (!until) return true;
@@ -107,8 +84,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(argusLegacy);
   }
 
+  // Neutral product root — not MXT.
   if (pathname === "/") {
-    return NextResponse.redirect(new URL("/home-preview", request.url));
+    return NextResponse.redirect(new URL("/apps", request.url));
+  }
+
+  // Temporary /mta/* → canonical /mxt/*.
+  if (isUnderMtaCompatBase(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = mxtPath(pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Legacy unprefixed trading URLs → canonical /mxt/* (belt; next.config also redirects).
+  if (isMxtTradingPath(pathname) && !isUnderMxtBase(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = mxtPath(pathname);
+    return NextResponse.redirect(url);
   }
 
   const tradingPasswordSet = Boolean(process.env.MATRIXTRADE_PASSWORD);
@@ -124,9 +116,11 @@ export async function middleware(request: NextRequest) {
     const loginPath =
       isArgusSessionPath(pathname) && argusPasswordSet
         ? "/argus/login"
-        : tradingPasswordSet
+        : tradingPasswordSet && isMxtTradingPath(pathname)
           ? "/login"
-          : null;
+          : tradingPasswordSet && !isArgusSessionPath(pathname)
+            ? "/login"
+            : null;
     if (loginPath) {
       const login = new URL(loginPath, request.url);
       login.searchParams.set("next", pathname);
@@ -137,9 +131,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  if (tradingPasswordSet && isTradingRoute(pathname) && !request.cookies.get("mt-auth")?.value) {
+  if (tradingPasswordSet && isMxtTradingPath(pathname) && !request.cookies.get("mt-auth")?.value) {
+    const inner = stripMxtPrefix(pathname);
     const isSharedSecurity =
-      pathname === "/settings/security" || pathname.startsWith("/settings/security/");
+      inner === "/settings/security" || inner.startsWith("/settings/security/");
     if (!(isSharedSecurity && request.cookies.get("argus-auth")?.value)) {
       const login = new URL("/login", request.url);
       login.searchParams.set("next", pathname);

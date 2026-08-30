@@ -393,7 +393,7 @@ export function MatrixConnectWindow({
                 </div>
                 <p className="text-xs text-zinc-500">
                   Proposal saved to history if you need to audit later.{" "}
-                  <Link href="/inbox" className="text-violet-400 hover:underline">
+                  <Link href="/mxt/inbox" className="text-violet-400 hover:underline">
                     View history
                   </Link>
                 </p>

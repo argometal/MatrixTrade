@@ -57,7 +57,7 @@ export function PreviewMistakes({
                         <td className="px-4 py-3">
                           {row.worstTrade ? (
                             <Link
-                              href={`/trades/${row.worstTrade.id}`}
+                              href={`/mxt/trades/${row.worstTrade.id}`}
                               className="text-violet-400 hover:text-violet-300 hover:underline"
                             >
                               {row.worstTrade.id} {row.worstTrade.ticker}{" "}
@@ -94,7 +94,7 @@ export function PreviewMistakes({
                           {matching.map((t) => (
                             <li key={t.id}>
                               <Link
-                                href={`/trades/${t.id}`}
+                                href={`/mxt/trades/${t.id}`}
                                 className="text-violet-400 hover:text-violet-300 hover:underline"
                               >
                                 {t.id} · {t.ticker}
@@ -112,10 +112,10 @@ export function PreviewMistakes({
 
           {!embedded && (
           <nav className="flex flex-wrap gap-4 border-t border-zinc-800 pt-4 text-sm">
-            <Link href="/stats" className="text-zinc-500 hover:text-zinc-300">
+            <Link href="/mxt/stats" className="text-zinc-500 hover:text-zinc-300">
               Statistics →
             </Link>
-            <Link href="/playbook" className="text-zinc-500 hover:text-zinc-300">
+            <Link href="/mxt/playbook" className="text-zinc-500 hover:text-zinc-300">
               Playbook Lab →
             </Link>
           </nav>
@@ -143,13 +143,13 @@ export function PreviewMistakes({
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
-                href="/trades?tab=review"
+                href="/mxt/trades?tab=review"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
               >
                 Review queue
               </Link>
               <Link
-                href="/stats?tab=journal"
+                href="/mxt/stats?tab=journal"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:border-zinc-600 hover:text-zinc-200"
               >
                 Journal

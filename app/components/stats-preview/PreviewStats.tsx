@@ -198,13 +198,13 @@ export function PreviewStats({ data, embedded = false }: { data: PreviewStatsDat
           )}
 
           <nav className="flex flex-wrap gap-4 border-t border-zinc-800 pt-4 text-sm">
-            <Link href="/playbook" className="text-zinc-500 hover:text-zinc-300">
+            <Link href="/mxt/playbook" className="text-zinc-500 hover:text-zinc-300">
               Playbook Lab →
             </Link>
-            <Link href="/stats?tab=mistakes" className="text-zinc-500 hover:text-zinc-300">
+            <Link href="/mxt/stats?tab=mistakes" className="text-zinc-500 hover:text-zinc-300">
               Mistakes →
             </Link>
-            <Link href="/stats?tab=journal" className="text-zinc-500 hover:text-zinc-300">
+            <Link href="/mxt/stats?tab=journal" className="text-zinc-500 hover:text-zinc-300">
               Journal →
             </Link>
           </nav>

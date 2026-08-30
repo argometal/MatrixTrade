@@ -172,19 +172,19 @@ export function CapitalPlannerPanel({
         </p>
         <div className="flex flex-wrap gap-2 pt-1">
           <Link
-            href="/planning"
+            href="/mxt/planning"
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
           >
             ← Scout desk
           </Link>
           <Link
-            href="/planning/capital/allocation"
+            href="/mxt/planning/capital/allocation"
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm font-medium text-sky-200 hover:bg-sky-500/20"
           >
             Allocation Board
           </Link>
           <Link
-            href="/settings/capital"
+            href="/mxt/settings/capital"
             data-capital-settings-cta
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-200 hover:bg-emerald-500/20"
           >
@@ -384,7 +384,7 @@ export function CapitalPlannerPanel({
                   >
                     <td className="py-2 pr-3">
                       <Link
-                        href={`/planning/capital?position=${p.id}`}
+                        href={`/mxt/planning/capital?position=${p.id}`}
                         className="inline-flex rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs font-medium text-zinc-100 hover:bg-zinc-800"
                       >
                         {p.ticker}

@@ -76,7 +76,7 @@ export function buildTradesLedger(trades: Trade[], plans: TradePlan[]): LedgerRo
       ticker: trade.ticker,
       verdict,
       label: `${trade.ticker} · ${trade.id}`,
-      href: `/trades/${trade.id}`,
+      href: `/mxt/trades/${trade.id}`,
       date:
         trade.closedAt?.slice(0, 10) ??
         trade.openedAt?.slice(0, 10) ??
@@ -103,7 +103,7 @@ export function buildTradesLedger(trades: Trade[], plans: TradePlan[]): LedgerRo
       ticker: plan.ticker,
       verdict,
       label: `${plan.ticker} · ${plan.id}`,
-      href: `/planning?plan=${plan.id}`,
+      href: `/mxt/planning?plan=${plan.id}`,
       date: plan.updatedAt?.slice(0, 10) ?? plan.createdAt.slice(0, 10),
       pnl: null,
       detail: plan.outcome?.lesson ?? plan.status,

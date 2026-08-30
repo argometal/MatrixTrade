@@ -52,7 +52,7 @@ export function ScoutFundingExecutionMenu({
           )}
           <MenuRow>
             <Link
-              href="/planning/capital"
+              href="/mxt/planning/capital"
               className="block w-full rounded-lg px-2.5 py-1.5 text-xs hover:bg-black/20"
             >
               Calculate allocation
@@ -60,7 +60,7 @@ export function ScoutFundingExecutionMenu({
           </MenuRow>
           <MenuRow>
             <Link
-              href="/planning/capital/allocation"
+              href="/mxt/planning/capital/allocation"
               className="block w-full rounded-lg px-2.5 py-1.5 text-xs hover:bg-black/20"
             >
               Open Allocation Board
@@ -68,7 +68,7 @@ export function ScoutFundingExecutionMenu({
           </MenuRow>
           <MenuRow>
             <Link
-              href="/planning/capital"
+              href="/mxt/planning/capital"
               className="block w-full rounded-lg px-2.5 py-1.5 text-xs hover:bg-black/20"
             >
               Open Capital Planner

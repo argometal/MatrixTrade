@@ -1,5 +1,6 @@
 import { loginTradingAction } from "@/app/auth/actions";
 import { MatrixPublicTopBar } from "@/app/components/MatrixPublicTopBar";
+import { MxtBrandMark } from "@/app/components/MxtBrandMark";
 import { GuestLocalTimeZoneField, GuestLocalTimeZoneSync } from "@/app/components/GuestLocalTimeZone";
 
 export default async function LoginPage({
@@ -8,14 +9,16 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; next?: string; guest_expired?: string }>;
 }) {
   const { error, next } = await searchParams;
-  const defaultNext = "/home-preview";
+  const defaultNext = "/mxt/home-preview";
 
   return (
     <>
       <GuestLocalTimeZoneSync />
       <MatrixPublicTopBar />
       <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4 pt-16">
-        <h1 className="text-2xl font-semibold">MTA</h1>
+        <h1 className="text-2xl font-semibold">
+          <MxtBrandMark size="md" tone="light" />
+        </h1>
         <p className="mt-1 text-sm text-zinc-500">Trading access</p>
         <form action={loginTradingAction} className="mt-8 space-y-4">
           <input type="hidden" name="next" value={next ?? defaultNext} />

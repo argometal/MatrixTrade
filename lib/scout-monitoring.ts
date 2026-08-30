@@ -412,7 +412,7 @@ export function buildScoutMonitoringSections(input: {
         preferConfirmed: Boolean(evaluation.confirmedAssessment),
       }),
       lastReviewed,
-      href: `/planning?plan=${plan.id}`,
+      href: `/mxt/planning?plan=${plan.id}`,
       alerts: evaluation.alerts,
     };
 

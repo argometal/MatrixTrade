@@ -111,7 +111,7 @@ export function ScoutWatchingScan({
 
       <div className="mt-3">
         <Link
-          href={`/stock-theses/${thesis.id}`}
+          href={`/mxt/stock-theses/${thesis.id}`}
           className="inline-flex flex-col rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-3 text-left transition hover:border-zinc-500 hover:bg-zinc-900"
           data-scout-open-scout
         >

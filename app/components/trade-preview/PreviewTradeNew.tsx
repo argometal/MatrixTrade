@@ -17,7 +17,7 @@ export function PreviewTradeNew({
     <div className="flex h-full min-h-0 w-full overflow-hidden">
       <div className="min-w-0 flex-1 overflow-y-auto">
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
-          <Link href="/trades" className="text-sm text-zinc-500 hover:text-violet-400">
+          <Link href="/mxt/trades" className="text-sm text-zinc-500 hover:text-violet-400">
             ← Trades
           </Link>
           <h1 className="mt-2 text-xl font-semibold text-zinc-100">New trade</h1>

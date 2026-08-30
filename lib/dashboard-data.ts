@@ -143,7 +143,7 @@ export async function loadDashboardData(): Promise<DashboardData> {
     ...buildExpiredReservationAttentionItems(reservations).map((item) => ({
       id: item.id,
       label: item.title,
-      href: `/planning/capital`,
+      href: `/mxt/planning/capital`,
       priority: item.priority,
     })),
   ].sort((a, b) => a.priority - b.priority);
