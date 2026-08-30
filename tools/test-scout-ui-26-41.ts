@@ -115,7 +115,8 @@ async function main() {
 
   // Plan map panel chrome
   assert.match(sidePanel, /data-scout-plan-map-panel/);
-  assert.match(planning, /data-scout-map-focus/);
+  assert.match(planning, /data-scout-case-selector/);
+  assert.match(planning, /\[color-scheme:dark\]/);
   assert.match(
     help,
     /has-\[\[data-scout-map-focus=true\]\]:\[&_\[data-page-help-trigger=icon\]\]:max-lg:hidden/
