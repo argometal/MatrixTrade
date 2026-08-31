@@ -1,0 +1,104 @@
+---
+description: MXT Agent Entry Contract — mandatory sealed governance before material MXT work
+globs: md/matrix/**,app/(trading)/**,app/components/planning-preview/**,app/components/case-review/**,app/components/stock-thesis-preview/**,app/components/trades-preview/**,app/components/trade-preview/**,lib/thesis-*.ts,lib/plans.ts,lib/plans-store/**,lib/scout-*.ts,lib/plan-*.ts,lib/stock-thesis*.ts,lib/stock-theses.ts,lib/learning-*.ts,lib/observation*.ts,lib/maf-*.ts,lib/mxt-*.ts,lib/trade-evaluation*.ts,middleware.ts,tools/test-thesis-*.ts
+alwaysApply: false
+---
+
+# MXT Agent Entry Contract
+
+**Not an audit.** Sealed governance is authoritative. Do not reopen doctrine, reconcile old docs, or expand scope opportunistically.
+
+## Mandatory read before material MXT work
+
+1. [`md/matrix/mxt-edge-learning-mission-governance.md`](md/matrix/mxt-edge-learning-mission-governance.md) — **SEALED PRODUCT GOVERNANCE** (what MXT must achieve)
+2. [`md/matrix/mxt-core-learning-adaptation-doctrine.md`](md/matrix/mxt-core-learning-adaptation-doctrine.md) — **SEALED CORE GOVERNANCE** (what class of system + pillars)
+3. [`md/matrix/README.md`](md/matrix/README.md) — MXT/Matrix documentation index
+
+Do **not** duplicate those texts here. The sealed files remain authoritative.
+
+## Recoverable Core model (must be answerable quickly)
+
+| Question | Answer |
+|----------|--------|
+| What is MXT? | A **learning and adaptation engine** operating in a market decision environment — **not** fundamentally a trading app |
+| What is it trying to learn? | Where edge exists, where the process loses it, whether controlled adaptations improve results |
+| Primary external pillars? | NASA RIDM/PRA · Aviation FOQA · NTSB Case Learning · Process safety / barrier management |
+| Learning unit? | **Case** (includes no-trade) — not merely Trade |
+| Why T0 / Blind-Reveal? | Epistemic integrity; prevent hindsight contamination |
+| Can MXT auto-mutate rules from a pattern? | **No** — evidence → hypothesis → human-authorized controlled change → new evidence |
+| Next at this checkpoint? | **Real Case evaluation** before speculative Cross-Case architecture |
+
+## Canonical learning loop
+
+```text
+THESIS → DECISION → EXECUTION / NO EXECUTION → MARKET REALITY
+→ MEASUREMENT → CROSS-CASE LEARNING → HYPOTHESIS
+→ CONTROLLED CHANGE → NEW CASES → DID WE IMPROVE?
+```
+
+## Non-negotiable distinctions
+
+`THESIS QUALITY ≠ DECISION QUALITY ≠ EXECUTION QUALITY ≠ OUTCOME QUALITY`
+
+- No-trade is still a learning Case
+- Loss ≠ automatically bad decision; win ≠ automatically good decision
+- Repeated avoidance ≠ automatically success
+- Repeated non-participation in correctly anticipated moves may evidence **lost edge**
+- **Measure before attribution**
+
+## Foundation map (no re-audit)
+
+| Concept | Role |
+|---------|------|
+| T0 | Immutable decision-time epistemic state |
+| Evaluation Horizon | Finite observation boundary |
+| Case | Fundamental learning unit (incl. no-trade) |
+| Blind / Reveal | Hindsight control |
+| Thesis → Reality | Observation chain |
+| Cross-Case Learning | Future FOQA-like population layer |
+| Controlled experimentation | Future adaptation mechanism |
+
+## Implementation checkpoint (pointers only)
+
+| Item | Status |
+|------|--------|
+| Prompt #8 T0 + Horizon | PASS · commit `96f9613` |
+| Prompt #9 Case + Blind/Reveal | PASS · commit `f198a75` |
+| Sealed Mission + Doctrine | commits include `1a63cd6` |
+| Production | Intentionally unchanged during this local learning checkpoint |
+
+## Construction discipline
+
+```text
+UNDERSTAND GOVERNANCE
+→ IDENTIFY CURRENT AUTHORIZED OBJECTIVE
+→ IMPLEMENT MINIMUM NECESSARY CHANGE
+→ TEST → VALIDATE → COMMIT → STOP
+```
+
+**Forbidden default loop:** audit → redesign → audit → expand → refactor → audit.
+
+Re-audit only when a real contradiction or blocker makes implementation unsafe.
+
+## Do not
+
+- Reduce MXT to a trading journal
+- Optimize only for avoiding trades / equate risk avoidance with success
+- Invent metrics or root cause from isolated outcomes
+- Silently mutate Playbook/rules; contaminate history with hindsight
+- Duplicate Stock File / Scout / Trade; invent architecture for modelable concepts
+- Deploy production without an explicit release checkpoint
+
+## Human vs system
+
+**Owner:** intent, material decisions, adaptation authorization, rule changes, production release.  
+**Agent:** evidence reconstruction, comparison, measurement, patterns, hypotheses, supported counterfactuals, experiment evaluation — do not dump routine analytical work back on the human.
+
+## Older docs
+
+Narrower superseded framings (strategic planning system, expectation database, gatekeeper/stop-you, capital-preservation-as-absolute-objective) may remain in the Library. **Do not delete or silently rewrite them.** Sealed Mission + Core Doctrine take precedence for identity and success criteria.
+
+## After governance is recovered
+
+**STOP** documentation/governance passes. Do not start Prompt #10 from this contract.  
+**Next authorized phase:** real Case evaluation.

@@ -6,6 +6,9 @@
 - [mxt-edge-learning-mission-governance.md](mxt-edge-learning-mission-governance.md) — **what MXT must achieve** · `SEALED PRODUCT GOVERNANCE`  
 - [mxt-core-learning-adaptation-doctrine.md](mxt-core-learning-adaptation-doctrine.md) — **what class of system MXT is** · `SEALED CORE GOVERNANCE`
 
+**Agent entry (discoverability — do not duplicate seals):**  
+repo root [`AGENTS.md`](../../AGENTS.md) · Cursor [`.cursor/rules/mxt-agent-entry.mdc`](../../.cursor/rules/mxt-agent-entry.mdc)
+
 ---
 
 ## Reading order
