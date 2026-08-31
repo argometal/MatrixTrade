@@ -32,13 +32,14 @@ async function main() {
     "app/components/planning-preview/PlanLevelsSidePanel.tsx"
   );
 
-  // 1 — Header short subtitle
-  assert.match(planning, /Active plans and execution readiness/);
+  // 1 — Quiet header: identity + subordinate related links (not equal action cards)
+  assert.match(planning, /Active plans · decision · readiness/);
   assert.doesNotMatch(planning, /War room — cases to watch/);
   assert.match(planning, /New stock case/);
   assert.match(planning, /Capital Planner/);
+  assert.match(planning, /Allocation Board/);
   assert.match(planning, /data-scout-header-actions/);
-  assert.match(planning, /grid grid-cols-3/);
+  assert.doesNotMatch(planning, /data-scout-header-actions[\s\S]*grid grid-cols-3/);
   assert.doesNotMatch(
     planning,
     /header[\s\S]*SnapshotButton[\s\S]*<\/header>/
@@ -59,7 +60,7 @@ async function main() {
   assert.match(watching, /\["Target"/);
   assert.match(watching, /\["R"/);
   assert.match(watching, /\["Wait horizon"/);
-  assert.match(watching, /View Stock Profile/);
+  assert.match(watching, /Open Stock Thesis/);
   assert.match(watching, /data-scout-open-scout/);
   assert.match(watching, /formatScoutWatchTriggerLine/);
   assert.doesNotMatch(watching, /Room/);
@@ -76,9 +77,10 @@ async function main() {
   assert.match(fundingMenu, /Funding &amp; execution/);
   assert.match(fundingMenu, /Scout Funding Snapshot/);
   assert.match(fundingMenu, /data-scout-funding-snapshot/);
-  assert.match(fundingMenu, /Calculate allocation/);
   assert.match(fundingMenu, /Open Allocation Board/);
   assert.match(fundingMenu, /Open Capital Planner/);
+  assert.match(fundingMenu, /\/mxt\/scout\/capital/);
+  assert.doesNotMatch(fundingMenu, /Calculate allocation/);
   assert.match(fundingMenu, /data-scout-prepare-trade/);
   assert.match(execute, /scoutFundingSnapshotItem/);
   assert.match(execute, /buildScoutFundingSnapshot/);

@@ -159,7 +159,7 @@ export function PreviewStockThesis({
                 </span>
               </div>
               <p className="mt-0.5 text-sm text-zinc-500">
-                Stock Profile · {thesis.style} · v{thesis.version}
+                What we currently believe · {thesis.style} · v{thesis.version}
                 {synthesis ? ` · confidence ${synthesis.thesisConfidence}` : ""}
               </p>
             </div>
@@ -269,16 +269,16 @@ export function PreviewStockThesis({
               ) : null}
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
-                  href={scoutHref}
-                  className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
-                >
-                  Open in Scout
-                </Link>
-                <Link
                   href={mxtPath(`/scout/case?plan=${primaryPlan.id}`)}
                   className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-200 hover:border-violet-400/60 hover:bg-violet-500/15"
                 >
                   Case Review
+                </Link>
+                <Link
+                  href={scoutHref}
+                  className="px-1 py-2 text-xs text-zinc-500 hover:text-zinc-300"
+                >
+                  Open in Scout →
                 </Link>
               </div>
               {activePlans.length > 1 ? (

@@ -334,6 +334,21 @@ export function CaseReviewClient({
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
       <header className="space-y-2 border-b border-zinc-800 pb-4">
+        <p className="text-[11px] text-zinc-600">
+          {thesisHref ? (
+            <>
+              <Link href={thesisHref} className="hover:text-zinc-400">
+                Stock Thesis
+              </Link>
+              <span className="mx-1.5">→</span>
+            </>
+          ) : null}
+          <Link href={scoutHref} className="hover:text-zinc-400">
+            Scout
+          </Link>
+          <span className="mx-1.5">→</span>
+          <span className="text-zinc-500">Case</span>
+        </p>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h1 className="text-lg font-semibold text-zinc-100">Case</h1>
           <div className="flex flex-wrap gap-3 text-sm">
@@ -351,6 +366,9 @@ export function CaseReviewClient({
           </div>
         </div>
         <p className="text-sm text-zinc-400">
+          What we believed · what happened · what we learn
+        </p>
+        <p className="text-xs text-zinc-500">
           {c.identity.ticker} · {c.identity.anchorPlanId}
           {c.identity.stockThesisId ? ` · ${c.identity.stockThesisId}` : ""}
         </p>

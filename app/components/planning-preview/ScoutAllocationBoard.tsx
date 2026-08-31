@@ -127,11 +127,11 @@ export function ScoutAllocationBoard({
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs text-zinc-500">
-            <Link href="/mxt/planning" className="hover:underline">
+            <Link href="/mxt/scout" className="hover:underline">
               Scout
             </Link>
             <span className="mx-1.5 opacity-40">/</span>
-            <Link href="/mxt/planning/capital" className="hover:underline">
+            <Link href="/mxt/scout/capital" className="hover:underline">
               Capital Planner
             </Link>
             <span className="mx-1.5 opacity-40">/</span>

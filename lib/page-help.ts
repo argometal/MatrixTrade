@@ -72,7 +72,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
     title: "Scout",
     panelLabel: "Help",
     workflowTitle: "Workflow",
-    summary: "Active cases and execution readiness — decision and numbers first.",
+    summary: "Active plans · decision · readiness — numbers first; thesis and capital via links.",
     principles: [
       "Casos ordenados por planned R alto → bajo.",
       "Un caso seleccionado a la vez.",

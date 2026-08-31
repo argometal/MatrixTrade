@@ -172,13 +172,13 @@ export function CapitalPlannerPanel({
         </p>
         <div className="flex flex-wrap gap-2 pt-1">
           <Link
-            href="/mxt/planning"
+            href="/mxt/scout"
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800"
           >
             ← Scout desk
           </Link>
           <Link
-            href="/mxt/planning/capital/allocation"
+            href="/mxt/scout/capital/allocation"
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-sky-500/40 bg-sky-500/10 px-3 py-2 text-sm font-medium text-sky-200 hover:bg-sky-500/20"
           >
             Allocation Board

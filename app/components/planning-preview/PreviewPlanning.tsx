@@ -355,7 +355,7 @@ export function PreviewPlanning({
             mapFocusCompact ? "py-2 lg:py-3" : "py-3"
           }`}
         >
-          <div className="flex items-start justify-between gap-3 pr-10">
+          <div className="flex flex-wrap items-end justify-between gap-3 pr-10">
             <div className="min-w-0">
               <h1
                 className={`font-semibold text-zinc-100 ${
@@ -369,34 +369,38 @@ export function PreviewPlanning({
                   mapFocusCompact ? "hidden lg:block" : ""
                 }`}
               >
-                Active plans and execution readiness
+                Active plans · decision · readiness
               </p>
             </div>
-          </div>
-          <div
-            className={`mt-2 grid grid-cols-3 gap-1.5 sm:gap-2 ${
-              mapFocusCompact ? "hidden lg:grid" : ""
-            }`}
-            data-scout-header-actions
-          >
-            <Link
-              href="/mxt/stock-theses/new"
-              className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2 py-2 text-center text-[11px] font-medium leading-tight text-emerald-300 hover:bg-emerald-500/20 sm:px-3 sm:text-xs"
+            <nav
+              className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500 ${
+                mapFocusCompact ? "hidden lg:flex" : ""
+              }`}
+              data-scout-header-actions
+              aria-label="Scout related destinations"
             >
-              New stock case
-            </Link>
-            <Link
-              href="/mxt/scout/capital"
-              className="rounded-lg border border-zinc-600 bg-zinc-900 px-2 py-2 text-center text-[11px] font-medium leading-tight text-zinc-200 hover:bg-zinc-800 sm:px-3 sm:text-xs"
-            >
-              Capital Planner
-            </Link>
-            <Link
-              href="/mxt/scout/capital/allocation"
-              className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-2 py-2 text-center text-[11px] font-medium leading-tight text-sky-200 hover:bg-sky-500/20 sm:px-3 sm:text-xs"
-            >
-              Allocation Board
-            </Link>
+              <Link
+                href="/mxt/stock-theses/new"
+                className="hover:text-zinc-200"
+              >
+                New stock case
+              </Link>
+              <span className="text-zinc-700" aria-hidden>
+                ·
+              </span>
+              <Link href="/mxt/scout/capital" className="hover:text-zinc-200">
+                Capital Planner
+              </Link>
+              <span className="text-zinc-700" aria-hidden>
+                ·
+              </span>
+              <Link
+                href="/mxt/scout/capital/allocation"
+                className="hover:text-zinc-200"
+              >
+                Allocation Board
+              </Link>
+            </nav>
           </div>
         </header>
 
@@ -555,39 +559,76 @@ export function PreviewPlanning({
                           }
                         : confirmedOperational ?? operational;
                     return (
-                      <ScoutWatchingScan
-                        thesis={focusedScoutCard.thesis}
-                        plan={plan}
-                        verdict={focusedScoutCard.verdict}
-                        plannedRR={focusedScoutCard.plannedRR}
-                        displayOperational={displayOperational}
-                        mismatch={focusedScoutCard.operational.mismatch}
-                        detectedStateLabel={formatOperationalStateLabel(
-                          operational.operationalState
-                        )}
-                        confirmedStateLabel={
-                          confirmedOperational
-                            ? formatOperationalStateLabel(
-                                confirmedOperational.operationalState
-                              )
-                            : undefined
-                        }
-                      />
+                      <>
+                        <ScoutWatchingScan
+                          thesis={focusedScoutCard.thesis}
+                          plan={plan}
+                          verdict={focusedScoutCard.verdict}
+                          plannedRR={focusedScoutCard.plannedRR}
+                          displayOperational={displayOperational}
+                          mismatch={focusedScoutCard.operational.mismatch}
+                          detectedStateLabel={formatOperationalStateLabel(
+                            operational.operationalState
+                          )}
+                          confirmedStateLabel={
+                            confirmedOperational
+                              ? formatOperationalStateLabel(
+                                  confirmedOperational.operationalState
+                                )
+                              : undefined
+                          }
+                        />
+                        {focusedScoutCard.linkedTrades.length > 0 ? (
+                          <p className="mt-2 text-xs text-zinc-500">
+                            Linked trades:{" "}
+                            {focusedScoutCard.linkedTrades.map((t, i) => (
+                              <span key={t.id}>
+                                {i > 0 ? " · " : null}
+                                <Link
+                                  href={`/mxt/trades/${t.id}`}
+                                  className="text-violet-300 hover:underline"
+                                >
+                                  {t.id}
+                                </Link>
+                                <span className="text-zinc-600"> ({t.status})</span>
+                              </span>
+                            ))}
+                          </p>
+                        ) : null}
+                      </>
                     );
                   })()}
                 </div>
               ) : null}
 
               {outcomePanelPlan && !mapFocusCompact ? (
-                <div className="mt-4 space-y-2" data-scout-outcome-panel>
-                  <PlanRecordOutcomePanel plan={outcomePanelPlan} />
-                  <Link
-                    href={`/mxt/scout/case?plan=${encodeURIComponent(outcomePanelPlan.id)}`}
-                    className="inline-block text-xs text-zinc-500 hover:text-zinc-300"
-                  >
-                    Case Review
-                  </Link>
-                </div>
+                <details
+                  className="rounded-xl border border-amber-500/25 bg-amber-950/15 px-3 py-2"
+                  data-scout-outcome-panel
+                  open={learningFocusPlanId === outcomePanelPlan.id}
+                >
+                  <summary className="cursor-pointer text-xs font-medium text-amber-100/90 hover:text-amber-50">
+                    Record plan outcome
+                    <span className="ml-2 font-normal text-amber-200/50">
+                      learning · {outcomePanelPlan.id}
+                    </span>
+                  </summary>
+                  <div className="mt-3 space-y-2 border-t border-amber-500/20 pt-3">
+                    <PlanRecordOutcomePanel plan={outcomePanelPlan} />
+                    <p className="text-xs text-zinc-500">
+                      Full evaluation lives on{" "}
+                      <Link
+                        href={`/mxt/scout/case?plan=${encodeURIComponent(
+                          outcomePanelPlan.id
+                        )}`}
+                        className="text-violet-300 hover:underline"
+                      >
+                        Case Review
+                      </Link>
+                      .
+                    </p>
+                  </div>
+                </details>
               ) : null}
 
               {!focusedScoutCard?.orphan ? (

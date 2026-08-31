@@ -109,17 +109,15 @@ export function ScoutWatchingScan({
         </p>
       ) : null}
 
-      <div className="mt-3">
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
         <Link
           href={`/mxt/stock-theses/${thesis.id}`}
-          className="inline-flex flex-col rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-3 text-left transition hover:border-zinc-500 hover:bg-zinc-900"
+          className="text-violet-300 hover:underline"
           data-scout-open-scout
         >
-          <span className="text-sm font-semibold text-zinc-100">View Stock Profile</span>
-          <span className="mt-0.5 text-xs text-zinc-500">
-            Thesis · evidence · plan context
-          </span>
+          Open Stock Thesis
         </Link>
+        <span className="text-zinc-600">belief · evidence · MTAE</span>
       </div>
     </section>
   );

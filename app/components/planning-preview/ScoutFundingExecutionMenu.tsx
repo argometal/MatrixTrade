@@ -6,8 +6,8 @@ import { SnapshotButton } from "@/app/components/preview/SnapshotButton";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
 
 /**
- * Single Funding & execution control for the Scout card (29-48).
- * Presentation only — reuses existing handlers / links.
+ * Funding & execution control for the Scout desk.
+ * Capital destinations are links to Capital-owned surfaces — not embedded config.
  */
 export function ScoutFundingExecutionMenu({
   fundingSnapshotItem,
@@ -51,30 +51,6 @@ export function ScoutFundingExecutionMenu({
             <MenuRow muted>Scout Funding Snapshot unavailable</MenuRow>
           )}
           <MenuRow>
-            <Link
-              href="/mxt/planning/capital"
-              className="block w-full rounded-lg px-2.5 py-1.5 text-xs hover:bg-black/20"
-            >
-              Calculate allocation
-            </Link>
-          </MenuRow>
-          <MenuRow>
-            <Link
-              href="/mxt/planning/capital/allocation"
-              className="block w-full rounded-lg px-2.5 py-1.5 text-xs hover:bg-black/20"
-            >
-              Open Allocation Board
-            </Link>
-          </MenuRow>
-          <MenuRow>
-            <Link
-              href="/mxt/planning/capital"
-              className="block w-full rounded-lg px-2.5 py-1.5 text-xs hover:bg-black/20"
-            >
-              Open Capital Planner
-            </Link>
-          </MenuRow>
-          <MenuRow>
             <button
               type="button"
               data-scout-prepare-trade
@@ -93,6 +69,22 @@ export function ScoutFundingExecutionMenu({
             >
               {prepareLabel}
             </button>
+          </MenuRow>
+          <MenuRow>
+            <Link
+              href="/mxt/scout/capital"
+              className="block w-full rounded-lg px-2.5 py-1.5 text-xs hover:bg-black/20"
+            >
+              Open Capital Planner
+            </Link>
+          </MenuRow>
+          <MenuRow>
+            <Link
+              href="/mxt/scout/capital/allocation"
+              className="block w-full rounded-lg px-2.5 py-1.5 text-xs hover:bg-black/20"
+            >
+              Open Allocation Board
+            </Link>
           </MenuRow>
         </div>
       </details>

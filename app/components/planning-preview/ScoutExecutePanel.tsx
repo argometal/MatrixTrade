@@ -452,7 +452,7 @@ export function ScoutExecutePanel({
         data-scout-funding-summary
       >
         <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-          Capital / funding
+          Capital context
         </p>
         <dl className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-3 lg:grid-cols-5">
           {(

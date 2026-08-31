@@ -97,7 +97,8 @@ async function main() {
   assert.doesNotMatch(planning, /\["Estimated risk"/);
   assert.doesNotMatch(planning, /\["Funding status"/);
   assert.match(fundingMenu, /data-scout-case-funding-snapshot/);
-  assert.match(fundingMenu, /href="\/planning\/capital"/);
+  assert.match(fundingMenu, /href="\/mxt\/scout\/capital"/);
+  assert.match(fundingMenu, /href="\/mxt\/scout\/capital\/allocation"/);
 
   // 2 / 3 / 4 — Helper + snapshot behavior
   assert.match(fundingLib, /export function canonicalShareCount/);
