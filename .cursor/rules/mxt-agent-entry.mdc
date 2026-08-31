@@ -1,12 +1,49 @@
 ---
 description: MXT Agent Entry Contract — mandatory sealed governance before material MXT work
-globs: md/matrix/**,app/(trading)/**,app/components/planning-preview/**,app/components/case-review/**,app/components/stock-thesis-preview/**,app/components/trades-preview/**,app/components/trade-preview/**,lib/thesis-*.ts,lib/plans.ts,lib/plans-store/**,lib/scout-*.ts,lib/plan-*.ts,lib/stock-thesis*.ts,lib/stock-theses.ts,lib/learning-*.ts,lib/observation*.ts,lib/maf-*.ts,lib/mxt-*.ts,lib/trade-evaluation*.ts,middleware.ts,tools/test-thesis-*.ts
+globs: md/matrix/**,app/(trading)/**,app/components/planning-preview/**,app/components/case-review/**,app/components/stock-thesis-preview/**,app/components/trades-preview/**,app/components/trade-preview/**,lib/thesis-*.ts,lib/edge-decomposition*.ts,lib/plans.ts,lib/plans-store/**,lib/scout-*.ts,lib/plan-*.ts,lib/stock-thesis*.ts,lib/stock-theses.ts,lib/learning-*.ts,lib/observation*.ts,lib/maf-*.ts,lib/mxt-*.ts,lib/trade-evaluation*.ts,middleware.ts,tools/test-thesis-*.ts,tools/test-edge-decomposition*.ts
 alwaysApply: false
 ---
 
 # MXT Agent Entry Contract
 
 **Not an audit.** Sealed governance is authoritative. Do not reopen doctrine, reconcile old docs, or expand scope opportunistically.
+
+## Argus Index (coordination efficiency)
+
+**ARGUS INDEX** measures how efficiently:
+
+```text
+PRODUCT INTENT
+→ AI REASONING
+→ CURSOR INSTRUCTION
+→ IMPLEMENTATION / EVIDENCE
+→ VALIDATION
+```
+
+occurs without unnecessary iteration, scope drift, misunderstanding, or rework.
+
+It is **not** code quality, test coverage, trading performance, task PASS rate, or an incentive to hide blockers.
+
+| Score | Meaning |
+|-------|---------|
+| **1.00** | Clear objective, aligned interpretation, minimum necessary work, little/no rework |
+| **0.75** | Good alignment; minor correction or clarification |
+| **0.50** | Material rework or repeated prompts; objective becoming unclear |
+| **0.25** | Significant drift, redesign loops, implementation on unresolved assumptions |
+| **0.00** | No reliable shared operational objective — **STOP and realign** |
+
+**Important:** A technically correct **BLOCKED** result does **not** reduce the Argus Index. Discovering that required evidence does not exist and stopping without fabrication may be excellent coordination.
+
+At the end of every material MXT task, report:
+
+```text
+ARGUS INDEX: [0.00–1.00]
+Reason: [one short sentence]
+```
+
+If the estimated index is **below 0.50**: STOP before substantial additional implementation and report the alignment problem.
+
+Do not game the index. Do not maximize it by hiding uncertainty or blockers.
 
 ## Mandatory read before material MXT work
 
@@ -65,6 +102,8 @@ THESIS → DECISION → EXECUTION / NO EXECUTION → MARKET REALITY
 | Prompt #8 T0 + Horizon | PASS · commit `96f9613` |
 | Prompt #9 Case + Blind/Reveal | PASS · commit `f198a75` |
 | Sealed Mission + Doctrine | commits include `1a63cd6` |
+| Agent entry contract | commit `cdf7b16` |
+| Edge Decomposition Engine | Prompt #10 — see `lib/edge-decomposition.ts` |
 | Production | Intentionally unchanged during this local learning checkpoint |
 
 ## Construction discipline
@@ -100,5 +139,8 @@ Narrower superseded framings (strategic planning system, expectation database, g
 
 ## After governance is recovered
 
-**STOP** documentation/governance passes. Do not start Prompt #10 from this contract.  
-**Next authorized phase:** real Case evaluation.
+Do not reopen sealed Mission/Doctrine or run documentation cleanup passes.
+
+**Authorized learning path:** accumulate valid forward Cases (Scout → T0 → reality) → Edge Decomposition → human/AI analysis → hypotheses only with evidence → controlled change only when authorized.
+
+Do not invent historical Cases or fabricate T0.

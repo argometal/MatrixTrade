@@ -70,7 +70,8 @@
     "dedupe:preview": "tsx tools/preview-stock-case-dedupe.ts --ticker MSFT",
     "test:argus-session-path": "tsx tools/test-argus-session-path.ts",
     "test:thesis-t0-horizon": "tsx tools/test-thesis-t0-horizon.ts",
-    "test:thesis-case-blind-reveal": "tsx tools/test-thesis-case-blind-reveal.ts"
+    "test:thesis-case-blind-reveal": "tsx tools/test-thesis-case-blind-reveal.ts",
+    "test:edge-decomposition": "tsx tools/test-edge-decomposition.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",
