@@ -21,14 +21,16 @@
 ## Visible ontology (runtime)
 
 ```text
-Realm (root folder)
-└── Folder (nested folder, when present)
-    └── Chaos Deck
-        └── Fragment
-            └── Block
+Realm (root folder)     — practical location only
+└── Folder (nested)     — practical location only
+    └── Chaos Deck      — multi-Fragment container (no implied topic/Parcour)
+        └── Fragment    — raw capture
+            └── Block   — optional internal structure
 ```
 
 Folders are real persisted `Af03Folder` records. Nested folders appear as Folder crumbs; root folders as Realm.
+
+**CHANGE 24-50:** Deck does **not** mean coherent knowledge unit. Global Find → Fragment Viewer (Deck = provenance).
 
 Avoid as competing primary entities: Note · Item · Content · Document · Collection · Section.
 

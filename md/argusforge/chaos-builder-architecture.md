@@ -53,13 +53,13 @@ Completed AF capabilities should later be tested through the thin Legacy Adapter
 
 | Name | Meaning |
 |------|---------|
-| **Realm** | Organizational / structural label in AF UI (exchange-domain later) |
-| **Chaos Deck** | Progressive container |
-| **Fragment** | Independently meaningful captured material inside a deck |
-| **Block** | Ordered presentation/construction unit inside a Fragment |
+| **Realm** | Practical browse location in AF UI — not intellectual meaning |
+| **Chaos Deck** | Container of multiple Fragments — **convenience only**; no implied topic, order, study unit, or Parcour |
+| **Fragment** | Raw capture / idea — may be incomplete, disordered, temporary, or useless |
+| **Block** | Optional internal structure when a Fragment evolves — does **not** require Alexandria |
 | **Asset** | Binary resource referenced by a block |
 
-Do **not** call every block a Locus. A future Locus may reference one or more blocks; B0 does not force that.
+**Sealed (CHANGE 24-50):** Chaos may contain without understanding. Do **not** equate Deck↔Parcour or Fragment↔Locus. Do **not** call every block a Locus. A future Locus may reference one or more blocks; B0 does not force that.
 
 ---
 

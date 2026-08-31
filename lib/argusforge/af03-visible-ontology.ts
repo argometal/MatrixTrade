@@ -1,6 +1,8 @@
 /**
  * CHANGE 24-47 — Canonical visible ontology labels (UI only).
- * Persisted fields may still say folder/item/content internally.
+ * CHANGE 24-50 — Semantics: Fragment = raw capture; Deck = container only
+ * (no topic / Parcour / coherence); Block = optional internal structure;
+ * Realm = practical location. Persisted fields may still say folder/item/content.
  */
 
 export const AF_LABEL = {
