@@ -141,7 +141,7 @@ function MarketRealityChart({
         })}
         <text x={pad} y={hPrice + hVol + 12} fill="#71717a" fontSize={9}>
           Price (close + H/L) · Volume bars below · dashed = ex-ante levels
-          (Reveal overlay only)
+          (post-decision overlay)
         </text>
       </svg>
     </div>
@@ -171,8 +171,8 @@ export function MarketRealityPanel({
       <div>
         <h2 className="text-sm font-medium text-zinc-100">Market Reality</h2>
         <p className="mt-1 text-xs text-zinc-500">
-          POST-DECISION Reveal only. Does not upgrade Blind / T0. OHLCV is
-          computational Reality; screenshots remain contextual.
+          POST-DECISION Market Reality. Does not upgrade or rewrite T0.
+          OHLCV is computational Reality; screenshots remain contextual.
         </p>
       </div>
 

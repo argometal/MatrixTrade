@@ -66,7 +66,7 @@ function emptyControllable(
 }
 
 function thesisLayer(c: ThesisCase): EdgeThesisLayer {
-  const blind = c.blind;
+  const blind = c.t0Evidence;
   if (!blind.available || blind.integrity === "unavailable") {
     return {
       evidenceAvailable: "unavailable",
@@ -104,10 +104,10 @@ function thesisLayer(c: ThesisCase): EdgeThesisLayer {
 
 /**
  * Descriptive only. Never invent consistency without market/outcome evidence.
- * Does not rewrite Blind thesis assessment.
+ * Does not rewrite T0 thesis assessment.
  */
 function relateThesisToReality(c: ThesisCase): ThesisRealityRelationship {
-  const mr = c.reveal.marketReality;
+  const mr = c.postDecision.marketReality;
   const hasObsSignal =
     mr.observations.some(
       (o) =>
@@ -119,8 +119,8 @@ function relateThesisToReality(c: ThesisCase): ThesisRealityRelationship {
     ) || mr.horizonExpired;
 
   const hasOutcomeSignal =
-    c.reveal.outcome.planOutcome != null ||
-    c.reveal.learningEvidence.learningOutcome != null;
+    c.postDecision.outcome.planOutcome != null ||
+    c.postDecision.learningEvidence.learningOutcome != null;
 
   if (!hasObsSignal && !hasOutcomeSignal) {
     return "unknown";
@@ -128,7 +128,7 @@ function relateThesisToReality(c: ThesisCase): ThesisRealityRelationship {
 
   const invalidated = mr.observations.some((o) => o.thesisInvalidated === true);
   const targetHit = mr.observations.some((o) => o.targetReached === true);
-  const lo = c.reveal.learningEvidence.learningOutcome;
+  const lo = c.postDecision.learningEvidence.learningOutcome;
 
   if (invalidated) return "inconsistent";
   if (targetHit) return "consistent";
@@ -146,11 +146,11 @@ function relateThesisToReality(c: ThesisCase): ThesisRealityRelationship {
 }
 
 function controllableLayer(c: ThesisCase): EdgeControllableLayer {
-  const blind = c.blind;
-  const reveal = c.reveal;
+  const blind = c.t0Evidence;
+  const reveal = c.postDecision;
 
-  // Execution may be known from Reveal even when Blind/T0 is unavailable.
-  const executionFromReveal = (): EdgeControllableLayer["execution"] => {
+  // Execution may be known from post-decision even when T0 is unavailable.
+  const executionFromPostDecision = (): EdgeControllableLayer["execution"] => {
     if (reveal.execution.kind === "trade") {
       return {
         kind: "trade",
@@ -187,10 +187,10 @@ function controllableLayer(c: ThesisCase): EdgeControllableLayer {
   if (!blind.available || blind.integrity === "unavailable") {
     const base = emptyControllable("unavailable");
     // E: unavailable T0 cannot fabricate plan/decision/risk from live Stock File.
-    // Execution kind from Reveal is allowed (factual post-event), not Blind geometry.
+    // Execution kind from post-decision is allowed (factual post-event), not T0 geometry.
     return {
       ...base,
-      execution: executionFromReveal(),
+      execution: executionFromPostDecision(),
     };
   }
 
@@ -219,7 +219,7 @@ function controllableLayer(c: ThesisCase): EdgeControllableLayer {
       reasoning: decision?.reasoning ?? null,
       challenges: decision?.challenges ? [...decision.challenges] : [],
     },
-    execution: executionFromReveal(),
+    execution: executionFromPostDecision(),
     risk: {
       plannedStop: plan?.stopPrice ?? null,
       plannedTarget: plan?.targetPrice ?? null,
@@ -231,7 +231,7 @@ function controllableLayer(c: ThesisCase): EdgeControllableLayer {
 }
 
 function externalLayer(c: ThesisCase): EdgeExternalConditionsLayer {
-  const mr = c.reveal.marketReality;
+  const mr = c.postDecision.marketReality;
   const obs = mr.observations;
   if (mr.completeness === "unavailable" && obs.length === 0) {
     return {
@@ -303,9 +303,9 @@ function externalLayer(c: ThesisCase): EdgeExternalConditionsLayer {
 }
 
 function outcomeLayer(c: ThesisCase): EdgeOutcomeLayer {
-  const po = c.reveal.outcome.planOutcome;
-  const lo = c.reveal.learningEvidence.learningOutcome;
-  const exec = c.reveal.execution;
+  const po = c.postDecision.outcome.planOutcome;
+  const lo = c.postDecision.learningEvidence.learningOutcome;
+  const exec = c.postDecision.execution;
   const execKind = exec.kind;
   const hasCanonicalOutcome = po != null || lo != null || execKind === "trade";
   const hasNoTradeOnly = execKind === "no_trade";
@@ -325,7 +325,7 @@ function outcomeLayer(c: ThesisCase): EdgeOutcomeLayer {
         nonExecutionReason: null,
         episodeStatus: c.identity.episodeStatus,
         t1: c.identity.t1,
-        horizonExpired: c.reveal.marketReality.horizonExpired,
+        horizonExpired: c.postDecision.marketReality.horizonExpired,
         learningOutcomeKind: null,
       },
     };
@@ -354,7 +354,7 @@ function outcomeLayer(c: ThesisCase): EdgeOutcomeLayer {
       nonExecutionReason: po?.nonExecutionReason ?? null,
       episodeStatus: c.identity.episodeStatus,
       t1: c.identity.t1,
-      horizonExpired: c.reveal.marketReality.horizonExpired,
+      horizonExpired: c.postDecision.marketReality.horizonExpired,
       learningOutcomeKind: lo?.kind ?? null,
     },
   };
@@ -370,7 +370,7 @@ function uncertaintyLayer(
   const reasons: string[] = [];
 
   if (!c.temporalIntegrity.freezeAvailable) {
-    reasons.push("No T0 freeze — Blind / thesis-at-decision unavailable.");
+    reasons.push("No T0 freeze — thesis-at-decision unavailable.");
   } else if (c.temporalIntegrity.confidence === "unavailable") {
     reasons.push("T0 reconstruction unavailable — no hindsight Stock File fill.");
   } else if (c.temporalIntegrity.confidence === "partial") {

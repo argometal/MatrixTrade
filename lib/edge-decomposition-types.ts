@@ -40,7 +40,7 @@ export type EdgeThesisLayer = {
     evaluationHorizonDays: number | null;
     evaluationHorizonEndsAt: string | null;
   };
-  /** Descriptive relationship only when Reveal market/outcome evidence exists. */
+  /** Descriptive relationship only when post-decision market/outcome evidence exists. */
   realityRelationship: ThesisRealityRelationship;
 };
 

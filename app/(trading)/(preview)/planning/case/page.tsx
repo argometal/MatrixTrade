@@ -1,5 +1,6 @@
 import { CaseReviewClient } from "@/app/components/case-review/CaseReviewClient";
 import { buildCase } from "@/lib/thesis-case";
+import { decomposeEdge } from "@/lib/edge-decomposition";
 import { loadMarketRealityForCase } from "@/lib/market-reality";
 import { mxtPath } from "@/lib/mxt-paths";
 import Link from "next/link";
@@ -45,9 +46,16 @@ export default async function PlanningCasePage({
     );
   }
 
-  const marketReality = await loadMarketRealityForCase(id);
+  const [marketReality, evaluation] = await Promise.all([
+    loadMarketRealityForCase(id),
+    Promise.resolve(decomposeEdge(thesisCase)),
+  ]);
 
   return (
-    <CaseReviewClient thesisCase={thesisCase} marketReality={marketReality} />
+    <CaseReviewClient
+      thesisCase={thesisCase}
+      marketReality={marketReality}
+      evaluation={evaluation}
+    />
   );
 }

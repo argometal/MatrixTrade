@@ -1,6 +1,7 @@
 /**
- * Prompt #9 — Case builder (read projection).
+ * Case builder (read projection).
  * Deterministic, no mutation, no hindsight Stock File backfill.
+ * T0 evidence is preserved; Reality/Outcome are always assembled when possessed.
  */
 
 import { getPlanById, getPlans } from "./plans";
@@ -21,16 +22,16 @@ import {
 } from "./thesis-t0";
 import type { ThesisT0Confidence, ThesisT0Freeze } from "./thesis-t0-types";
 import type {
-  CaseBlindDecision,
-  CaseBlindPacket,
-  CaseBlindPlan,
-  CaseBlindPreEvent,
+  CaseT0Decision,
+  CaseT0Evidence,
+  CaseT0Plan,
+  CaseT0PreEvent,
   CaseExecutionNoTrade,
   CaseExecutionTrade,
   CaseLearningEvidence,
   CaseMarketReality,
   CaseOutcomeSlice,
-  CaseRevealPacket,
+  CasePostDecision,
   CaseT0Source,
   CaseTemporalIntegrity,
   ThesisCase,
@@ -147,7 +148,7 @@ export function findFreezeForPlan(
   return [...forThesis].sort((a, b) => b.t0.localeCompare(a.t0))[0] ?? null;
 }
 
-function buildBlindPreEvent(freeze: ThesisT0Freeze): CaseBlindPreEvent | null {
+function buildT0PreEvent(freeze: ThesisT0Freeze): CaseT0PreEvent | null {
   const s = freeze.stock;
   if (
     s.thesis == null &&
@@ -166,7 +167,7 @@ function buildBlindPreEvent(freeze: ThesisT0Freeze): CaseBlindPreEvent | null {
   };
 }
 
-function buildBlindPlan(freeze: ThesisT0Freeze): CaseBlindPlan {
+function buildT0Plan(freeze: ThesisT0Freeze): CaseT0Plan {
   const p = freeze.plan;
   return {
     planId: p.planId,
@@ -180,7 +181,7 @@ function buildBlindPlan(freeze: ThesisT0Freeze): CaseBlindPlan {
   };
 }
 
-function buildBlindDecision(freeze: ThesisT0Freeze): CaseBlindDecision | null {
+function buildT0Decision(freeze: ThesisT0Freeze): CaseT0Decision | null {
   if (!freeze.decision) return null;
   return {
     decisionId: freeze.decision.decisionId,
@@ -192,17 +193,18 @@ function buildBlindDecision(freeze: ThesisT0Freeze): CaseBlindDecision | null {
 }
 
 /**
- * Blind packet from immutable T0 freeze only.
+ * T0 / original evidence from immutable freeze only.
  * unavailable → no fabricated packet; never read live Stock File.
  */
-export function buildBlindPacket(
+export function buildT0EvidencePacket(
   freeze: ThesisT0Freeze | null
-): CaseBlindPacket {
+): CaseT0Evidence {
   if (!freeze) {
     return {
       available: false,
       integrity: "unavailable",
-      reason: "No T0 freeze for this plan — Blind unavailable.",
+      reason:
+        "No T0 freeze for this plan — decision-time snapshot not preserved.",
       preEvent: null,
       plan: null,
       decision: null,
@@ -214,16 +216,16 @@ export function buildBlindPacket(
       available: false,
       integrity: "unavailable",
       reason:
-        "Historical T0 reconstruction unavailable — Blind not fabricated from current Stock File.",
+        "Historical T0 reconstruction unavailable — not fabricated from current Stock File.",
       preEvent: null,
       plan: null,
       decision: null,
     };
   }
 
-  const preEvent = buildBlindPreEvent(freeze);
-  const decision = buildBlindDecision(freeze);
-  const plan = buildBlindPlan(freeze);
+  const preEvent = buildT0PreEvent(freeze);
+  const decision = buildT0Decision(freeze);
+  const plan = buildT0Plan(freeze);
 
   if (freeze.confidence === "partial") {
     return {
@@ -250,7 +252,7 @@ function buildTemporalIntegrity(
   freeze: ThesisT0Freeze | null
 ): CaseTemporalIntegrity {
   const confidence: ThesisT0Confidence = freeze?.confidence ?? "unavailable";
-  const blindSafeForStrictReview =
+  const t0VerifiedForReconstruction =
     confidence === "verified" &&
     freeze != null &&
     freeze.decision != null &&
@@ -263,7 +265,7 @@ function buildTemporalIntegrity(
     freezeId: freeze?.id ?? null,
     freezeAvailable: freeze != null,
     confidence,
-    blindSafeForStrictReview,
+    t0VerifiedForReconstruction,
   };
 }
 
@@ -401,30 +403,26 @@ function laterDecisions(plan: TradePlan, t0: string | null): ScoutDecision[] {
   return out.sort((a, b) => a.decidedAt.localeCompare(b.decidedAt));
 }
 
-function observationsForReveal(
+function observationsForCase(
   all: ObservationRecord[],
   relatedPlanIds: string[],
-  tradeId: string | undefined,
-  t0: string | null
+  tradeId: string | undefined
 ): ObservationRecord[] {
   const planKeys = new Set(relatedPlanIds.map((id) => id.toUpperCase()));
   return all.filter((o) => {
-    const linked =
+    return (
       (o.planId && planKeys.has(o.planId.toUpperCase())) ||
-      (tradeId && o.tradeId?.toUpperCase() === tradeId.toUpperCase());
-    if (!linked) return false;
-    if (!t0) return true;
-    // Reveal may include post-T0 evidence; also include contemporaneous.
-    return true;
+      (tradeId && o.tradeId?.toUpperCase() === tradeId.toUpperCase())
+    );
   });
 }
 
-export async function buildRevealPacket(
+export async function buildPostDecisionPacket(
   plan: TradePlan,
   freeze: ThesisT0Freeze | null,
   relatedPlanIds: string[],
   deps?: BuildCaseDeps
-): Promise<CaseRevealPacket> {
+): Promise<CasePostDecision> {
   const d = depsOrDefault(deps);
   const [trades, observations, learning, maf] = await Promise.all([
     d.getTrades(),
@@ -456,12 +454,7 @@ export async function buildRevealPacket(
 
   const learningEvidence: CaseLearningEvidence = {
     learningOutcome: learning ?? null,
-    observations: observationsForReveal(
-      observations,
-      relatedPlanIds,
-      trade?.id,
-      freeze?.t0 ?? null
-    ),
+    observations: observationsForCase(observations, relatedPlanIds, trade?.id),
     mafExperiment: maf ?? null,
     laterDecisions: laterDecisions(plan, freeze?.t0 ?? null),
   };
@@ -492,8 +485,13 @@ export async function buildCase(
   const freeze = findFreezeForPlan(plan, freezes);
   const relatedPlanIds = reconstructPlanChain(plan, allPlans, freeze);
   const temporalIntegrity = buildTemporalIntegrity(freeze);
-  const blind = buildBlindPacket(freeze);
-  const reveal = await buildRevealPacket(plan, freeze, relatedPlanIds, deps);
+  const t0Evidence = buildT0EvidencePacket(freeze);
+  const postDecision = await buildPostDecisionPacket(
+    plan,
+    freeze,
+    relatedPlanIds,
+    deps
+  );
 
   return {
     identity: {
@@ -510,29 +508,29 @@ export async function buildCase(
     },
     temporalIntegrity,
     freeze,
-    blind,
-    reveal,
+    t0Evidence,
+    postDecision,
   };
 }
 
-export async function buildBlindPacketForPlan(
+export async function buildT0EvidenceForPlan(
   planId: string,
   deps?: BuildCaseDeps
-): Promise<CaseBlindPacket | null> {
+): Promise<CaseT0Evidence | null> {
   const c = await buildCase(planId, deps);
-  return c?.blind ?? null;
+  return c?.t0Evidence ?? null;
 }
 
-export async function buildRevealPacketForPlan(
+export async function buildPostDecisionForPlan(
   planId: string,
   deps?: BuildCaseDeps
-): Promise<CaseRevealPacket | null> {
+): Promise<CasePostDecision | null> {
   const c = await buildCase(planId, deps);
-  return c?.reveal ?? null;
+  return c?.postDecision ?? null;
 }
 
-/** Forbidden substrings / keys that must not appear in Blind serialization. */
-export const BLIND_HINDSIGHT_FORBIDDEN_KEYS = [
+/** Forbidden keys that must not appear in T0 evidence serialization. */
+export const T0_HINDSIGHT_FORBIDDEN_KEYS = [
   "realizedPnL",
   "realizedResultR",
   "realizedR",
@@ -554,23 +552,21 @@ export const BLIND_HINDSIGHT_FORBIDDEN_KEYS = [
   "thesisInvalidated",
 ] as const;
 
-/**
- * Serialize Blind for leak inspection — structural keys only from Blind packet.
- */
-export function serializeBlindForLeakTest(blind: CaseBlindPacket): string {
-  return JSON.stringify(blind);
+/** Serialize T0 evidence for leak inspection. */
+export function serializeT0EvidenceForLeakTest(
+  t0Evidence: CaseT0Evidence
+): string {
+  return JSON.stringify(t0Evidence);
 }
 
-export function findBlindHindsightLeaks(blind: CaseBlindPacket): string[] {
-  const raw = serializeBlindForLeakTest(blind);
+export function findT0HindsightLeaks(t0Evidence: CaseT0Evidence): string[] {
+  const raw = serializeT0EvidenceForLeakTest(t0Evidence);
   const leaks: string[] = [];
-  for (const key of BLIND_HINDSIGHT_FORBIDDEN_KEYS) {
-    // Match JSON keys only: "key":
+  for (const key of T0_HINDSIGHT_FORBIDDEN_KEYS) {
     if (new RegExp(`"${key}"\\s*:`).test(raw)) {
       leaks.push(key);
     }
   }
-  // Outcome / P&L language in string values
   if (/\b(pnl|p&l|realized\s*r)\b/i.test(raw)) {
     leaks.push("pnl_language");
   }

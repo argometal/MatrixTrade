@@ -27,7 +27,7 @@ export type MarketRealityCaseWindow = {
   ticker: string;
   timeframe: "1d";
   source: MarketRealitySourceId;
-  /** Decision-boundary / Reveal start (ISO). */
+  /** Decision-boundary / post-decision window start (ISO). */
   decisionBoundaryAt: string;
   windowStart: string;
   windowEnd: string;

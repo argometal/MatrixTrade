@@ -19,11 +19,11 @@ import {
   setThesisT0StoreForTests,
 } from "../lib/thesis-t0-store";
 import {
-  buildBlindPacket,
+  buildT0EvidencePacket,
   buildCase,
-  findBlindHindsightLeaks,
+  findT0HindsightLeaks,
   reconstructPlanChain,
-  serializeBlindForLeakTest,
+  serializeT0EvidenceForLeakTest,
   type BuildCaseDeps,
 } from "../lib/thesis-case";
 
@@ -126,21 +126,21 @@ async function run() {
       makeDeps({ plans: [plan], freezes: [freeze] })
     );
     assert.ok(c);
-    assert.equal(c!.blind.available, true);
-    assert.equal(c!.blind.integrity, "verified");
-    assert.equal(c!.blind.preEvent?.thesis, thesis.thesis);
-    assert.equal(c!.blind.plan?.plannedEntry, 105);
-    assert.equal(c!.blind.decision?.verdict, "wait");
-    assert.equal(findBlindHindsightLeaks(c!.blind).length, 0);
-    console.log("A verified Blind: ok");
+    assert.equal(c!.t0Evidence.available, true);
+    assert.equal(c!.t0Evidence.integrity, "verified");
+    assert.equal(c!.t0Evidence.preEvent?.thesis, thesis.thesis);
+    assert.equal(c!.t0Evidence.plan?.plannedEntry, 105);
+    assert.equal(c!.t0Evidence.decision?.verdict, "wait");
+    assert.equal(findT0HindsightLeaks(c!.t0Evidence).length, 0);
+    console.log("A verified T0: ok");
   }
 
-  // B — Stock File mutation does not change Blind
+  // B — Stock File mutation does not change T0
   {
     const thesis = baseThesis();
     const { plan, freeze } = await seedVerifiedFreeze(basePlan(), thesis);
     const mutatedFreeze = structuredClone(freeze);
-    // Simulate that live Stock File changed — freeze body must stay; Blind uses freeze.
+    // Simulate that live Stock File changed — freeze body must stay; T0 uses freeze.
     const liveThesis = baseThesis({
       thesis: "MUTATED AFTER T0",
       version: 99,
@@ -150,12 +150,12 @@ async function run() {
       plan.id,
       makeDeps({ plans: [plan], freezes: [mutatedFreeze] })
     );
-    assert.equal(c!.blind.preEvent?.thesis, "Bullish continuation above zone");
-    assert.notEqual(c!.blind.preEvent?.thesis, "MUTATED AFTER T0");
+    assert.equal(c!.t0Evidence.preEvent?.thesis, "Bullish continuation above zone");
+    assert.notEqual(c!.t0Evidence.preEvent?.thesis, "MUTATED AFTER T0");
     console.log("B Stock File mutation: ok");
   }
 
-  // C — later Scout decision: Blind keeps T0 decision; Reveal may list later
+  // C — later Scout decision: T0 keeps decision; postDecision may list later
   {
     setThesisT0StoreForTests(createMemoryThesisT0Store());
     const thesis = baseThesis();
@@ -184,15 +184,15 @@ async function run() {
       laterPlan.id,
       makeDeps({ plans: [laterPlan], freezes: [freeze!] })
     );
-    assert.equal(c!.blind.decision?.decisionId, freeze!.decision?.decisionId);
-    assert.equal(c!.blind.decision?.verdict, "wait");
+    assert.equal(c!.t0Evidence.decision?.decisionId, freeze!.decision?.decisionId);
+    assert.equal(c!.t0Evidence.decision?.verdict, "wait");
     assert.ok(
-      c!.reveal.learningEvidence.laterDecisions.some((d) => d.verdict === "go")
+      c!.postDecision.learningEvidence.laterDecisions.some((d) => d.verdict === "go")
     );
     console.log("C later Scout decision: ok");
   }
 
-  // D — late evidence excluded from Blind, may appear in Reveal
+  // D — late evidence excluded from T0, may appear in postDecision
   {
     const thesis = baseThesis();
     const { plan, freeze } = await seedVerifiedFreeze(basePlan(), thesis);
@@ -217,20 +217,20 @@ async function run() {
         observations: [lateObs],
       })
     );
-    assert.equal(findBlindHindsightLeaks(c!.blind).length, 0);
+    assert.equal(findT0HindsightLeaks(c!.t0Evidence).length, 0);
     assert.ok(
-      !serializeBlindForLeakTest(c!.blind).includes("OBS-TEST-001")
+      !serializeT0EvidenceForLeakTest(c!.t0Evidence).includes("OBS-TEST-001")
     );
     assert.ok(
-      !serializeBlindForLeakTest(c!.blind).includes("999")
+      !serializeT0EvidenceForLeakTest(c!.t0Evidence).includes("999")
     );
     assert.ok(
-      c!.reveal.marketReality.observations.some((o) => o.id === "OBS-TEST-001")
+      c!.postDecision.marketReality.observations.some((o) => o.id === "OBS-TEST-001")
     );
     console.log("D late evidence: ok");
   }
 
-  // E — Trade case: Reveal has trade; Blind has no result
+  // E — Trade case: postDecision has trade; T0 has no result
   {
     const thesis = baseThesis();
     const { plan, freeze } = await seedVerifiedFreeze(
@@ -256,14 +256,14 @@ async function run() {
       plan.id,
       makeDeps({ plans: [plan], freezes: [freeze], trades: [trade] })
     );
-    assert.equal(c!.reveal.execution.kind, "trade");
-    if (c!.reveal.execution.kind === "trade") {
-      assert.equal(c!.reveal.execution.entry, 106);
-      assert.equal(c!.reveal.execution.riskRewardActual, 1.5);
+    assert.equal(c!.postDecision.execution.kind, "trade");
+    if (c!.postDecision.execution.kind === "trade") {
+      assert.equal(c!.postDecision.execution.entry, 106);
+      assert.equal(c!.postDecision.execution.riskRewardActual, 1.5);
     }
-    assert.equal(findBlindHindsightLeaks(c!.blind).length, 0);
-    assert.ok(!serializeBlindForLeakTest(c!.blind).includes("H-TEST-1"));
-    assert.ok(!serializeBlindForLeakTest(c!.blind).includes("riskRewardActual"));
+    assert.equal(findT0HindsightLeaks(c!.t0Evidence).length, 0);
+    assert.ok(!serializeT0EvidenceForLeakTest(c!.t0Evidence).includes("H-TEST-1"));
+    assert.ok(!serializeT0EvidenceForLeakTest(c!.t0Evidence).includes("riskRewardActual"));
     console.log("E trade case: ok");
   }
 
@@ -275,9 +275,9 @@ async function run() {
       plan.id,
       makeDeps({ plans: [plan], freezes: [freeze], trades: [] })
     );
-    assert.equal(c!.reveal.execution.kind, "no_trade");
-    if (c!.reveal.execution.kind === "no_trade") {
-      assert.match(c!.reveal.execution.disposition ?? "", /NO TRADE|WAIT/i);
+    assert.equal(c!.postDecision.execution.kind, "no_trade");
+    if (c!.postDecision.execution.kind === "no_trade") {
+      assert.match(c!.postDecision.execution.disposition ?? "", /NO TRADE|WAIT/i);
     }
     console.log("F no-trade: ok");
   }
@@ -312,8 +312,8 @@ async function run() {
       "PLAN-002",
       makeDeps({ plans: [p1linked, p2], freezes: [linkedFreeze] })
     );
-    assert.equal(c!.blind.plan?.planId, "PLAN-001");
-    assert.equal(c!.blind.plan?.plannedEntry, 105);
+    assert.equal(c!.t0Evidence.plan?.planId, "PLAN-001");
+    assert.equal(c!.t0Evidence.plan?.plannedEntry, 105);
     assert.deepEqual(c!.identity.relatedPlanIds.slice(0, 2), [
       "PLAN-001",
       "PLAN-002",
@@ -339,7 +339,7 @@ async function run() {
         riskRules: null,
       },
     };
-    const blind = buildBlindPacket(freeze);
+    const blind = buildT0EvidencePacket(freeze);
     assert.equal(blind.available, true);
     assert.equal(blind.integrity, "partial");
     assert.ok(blind.reason?.includes("PARTIAL"));
@@ -350,7 +350,7 @@ async function run() {
 
   // I — legacy unavailable — no Stock File backfill
   {
-    const blind = buildBlindPacket(null);
+    const blind = buildT0EvidencePacket(null);
     assert.equal(blind.available, false);
     assert.equal(blind.integrity, "unavailable");
     assert.equal(blind.preEvent, null);
@@ -375,7 +375,7 @@ async function run() {
         riskRules: null,
       },
     };
-    const b2 = buildBlindPacket(forced);
+    const b2 = buildT0EvidencePacket(forced);
     assert.equal(b2.available, false);
     assert.equal(b2.integrity, "unavailable");
     console.log("I legacy unavailable: ok");
@@ -411,13 +411,13 @@ async function run() {
     assert.equal(expiredCase!.identity.episodeStatus, "expired_inconclusive");
     assert.equal(expiredCase!.identity.t1, freeze.evaluationHorizonEndsAt);
     assert.equal(
-      expiredCase!.reveal.marketReality.horizonExpired,
+      expiredCase!.postDecision.marketReality.horizonExpired,
       true
     );
     console.log("J horizon: ok");
   }
 
-  // K — hindsight leak test on Blind serialization
+  // K — hindsight leak test on T0 serialization
   {
     const thesis = baseThesis();
     const { plan, freeze } = await seedVerifiedFreeze(basePlan(), thesis);
@@ -450,9 +450,9 @@ async function run() {
         learning,
       })
     );
-    const leaks = findBlindHindsightLeaks(c!.blind);
+    const leaks = findT0HindsightLeaks(c!.t0Evidence);
     assert.equal(leaks.length, 0, `leaks: ${leaks.join(",")}`);
-    const raw = serializeBlindForLeakTest(c!.blind);
+    const raw = serializeT0EvidenceForLeakTest(c!.t0Evidence);
     assert.ok(!raw.includes("realizedPnL"));
     assert.ok(!raw.includes("LearningOutcome"));
     assert.ok(!/"mafExperiment"\s*:/.test(raw));

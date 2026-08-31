@@ -585,7 +585,7 @@ export function PreviewPlanning({
                     href={`/mxt/scout/case?plan=${encodeURIComponent(outcomePanelPlan.id)}`}
                     className="inline-block text-xs text-zinc-500 hover:text-zinc-300"
                   >
-                    Case review (Blind / Reveal)
+                    Case Review
                   </Link>
                 </div>
               ) : null}

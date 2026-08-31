@@ -1,6 +1,6 @@
 /**
  * Prompt #12C — Market Reality MVP orchestrator.
- * Acquire Case-bound OHLCV; never write into T0 / Blind.
+ * Acquire Case-bound OHLCV; never write into T0 / decision-time evidence.
  */
 
 import { createHash } from "crypto";

@@ -1,6 +1,9 @@
 /**
- * Prompt #9 — Thesis Case read projection (Blind / Reveal).
+ * Thesis Case read projection.
  * Case is NOT a source of truth — derived from T0 freeze + canonical records.
+ *
+ * Product IA (MTA 012): T0 / Original evidence · Reality · Outcome · Evaluation
+ * Blind/Reveal ceremony is DEPRECATED — do not reintroduce hide/reveal gates.
  */
 
 import type { DecisionVerdict, ScoutDecision } from "./scout-decision-types";
@@ -42,10 +45,10 @@ export type CaseTemporalIntegrity = {
   freezeAvailable: boolean;
   confidence: ThesisT0Confidence;
   /** True only when confidence === verified and freeze has decision + stock snapshot. */
-  blindSafeForStrictReview: boolean;
+  t0VerifiedForReconstruction: boolean;
 };
 
-export type CaseBlindPreEvent = {
+export type CaseT0PreEvent = {
   thesis: string | null;
   currentHypothesis: string | null;
   levels: StockThesisLevels | null;
@@ -53,7 +56,7 @@ export type CaseBlindPreEvent = {
   stockThesisVersion: number | null;
 };
 
-export type CaseBlindPlan = {
+export type CaseT0Plan = {
   planId: string;
   plannedEntry: number | null;
   maximumEntryProxy: number | null;
@@ -64,7 +67,7 @@ export type CaseBlindPlan = {
   executionInstruction: string | null;
 };
 
-export type CaseBlindDecision = {
+export type CaseT0Decision = {
   decisionId: string;
   decidedAt: string;
   verdict: DecisionVerdict;
@@ -73,16 +76,16 @@ export type CaseBlindDecision = {
 };
 
 /**
- * Blind packet — ONLY T0-knowable information from the immutable freeze.
+ * T0 / original evidence — ONLY decision-time information from the immutable freeze.
  * Never populated from live Stock File.
  */
-export type CaseBlindPacket = {
+export type CaseT0Evidence = {
   available: boolean;
   integrity: ThesisT0Confidence;
   reason?: string;
-  preEvent: CaseBlindPreEvent | null;
-  plan: CaseBlindPlan | null;
-  decision: CaseBlindDecision | null;
+  preEvent: CaseT0PreEvent | null;
+  plan: CaseT0Plan | null;
+  decision: CaseT0Decision | null;
 };
 
 export type CaseExecutionTrade = {
@@ -137,7 +140,8 @@ export type CaseLearningEvidence = {
   laterDecisions: ScoutDecision[];
 };
 
-export type CaseRevealPacket = {
+/** Post-decision evidence: execution, reality summaries, outcomes, learning links. */
+export type CasePostDecision = {
   execution: CaseExecutionTrade | CaseExecutionNoTrade;
   marketReality: CaseMarketReality;
   outcome: CaseOutcomeSlice;
@@ -149,6 +153,6 @@ export type ThesisCase = {
   identity: CaseIdentity;
   temporalIntegrity: CaseTemporalIntegrity;
   freeze: ThesisT0Freeze | null;
-  blind: CaseBlindPacket;
-  reveal: CaseRevealPacket;
+  t0Evidence: CaseT0Evidence;
+  postDecision: CasePostDecision;
 };
