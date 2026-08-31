@@ -3,7 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { ThesisCase } from "@/lib/thesis-case-types";
+import type { MarketRealityViewModel } from "@/lib/market-reality-types";
+import type { ExAnteLegacyPacket } from "@/lib/market-reality";
 import { mxtPath } from "@/lib/mxt-paths";
+import { MarketRealityPanel } from "@/app/components/case-review/MarketRealityPanel";
 
 function Field({
   label,
@@ -257,8 +260,20 @@ function RevealPanel({ c }: { c: ThesisCase }) {
 /**
  * Minimal Case review: Blind first; Reveal only after deliberate click.
  * Ephemeral UI state — Reveal click is not persisted.
+ * Market Reality (OHLCV) is Reveal-only — never Blind.
  */
-export function CaseReviewClient({ thesisCase }: { thesisCase: ThesisCase }) {
+export function CaseReviewClient({
+  thesisCase,
+  marketReality,
+}: {
+  thesisCase: ThesisCase;
+  marketReality: {
+    exAnte: ExAnteLegacyPacket | null;
+    primary: MarketRealityViewModel;
+    retrospective: MarketRealityViewModel;
+    errors: string[];
+  } | null;
+}) {
   const [revealed, setRevealed] = useState(false);
   const c = thesisCase;
 
@@ -358,6 +373,14 @@ export function CaseReviewClient({ thesisCase }: { thesisCase: ThesisCase }) {
             </p>
             <RevealPanel c={c} />
           </div>
+          {marketReality && (
+            <MarketRealityPanel
+              exAnte={marketReality.exAnte}
+              primary={marketReality.primary}
+              retrospective={marketReality.retrospective}
+              errors={marketReality.errors}
+            />
+          )}
         </div>
       )}
     </div>

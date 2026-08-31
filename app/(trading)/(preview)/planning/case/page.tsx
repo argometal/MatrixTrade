@@ -1,5 +1,6 @@
 import { CaseReviewClient } from "@/app/components/case-review/CaseReviewClient";
 import { buildCase } from "@/lib/thesis-case";
+import { loadMarketRealityForCase } from "@/lib/market-reality";
 import { mxtPath } from "@/lib/mxt-paths";
 import Link from "next/link";
 
@@ -44,5 +45,9 @@ export default async function PlanningCasePage({
     );
   }
 
-  return <CaseReviewClient thesisCase={thesisCase} />;
+  const marketReality = await loadMarketRealityForCase(id);
+
+  return (
+    <CaseReviewClient thesisCase={thesisCase} marketReality={marketReality} />
+  );
 }
