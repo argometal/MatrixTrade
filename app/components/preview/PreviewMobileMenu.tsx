@@ -78,7 +78,10 @@ export function PreviewMobileMenu({ nav }: { nav: PreviewNavContext }) {
         </div>
 
         <div className="border-t border-zinc-800 p-4">
-          <SignOutButton className="w-full text-left text-sm text-zinc-500 hover:text-zinc-300" />
+          <SignOutButton
+            label="Sign out everywhere"
+            className="w-full text-left text-sm text-zinc-500 hover:text-zinc-300"
+          />
         </div>
       </aside>
     </>

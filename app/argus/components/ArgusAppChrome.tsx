@@ -21,7 +21,11 @@ export function ArgusAppChrome({ children }: { children: React.ReactNode }) {
       }
     >
       <div className="mb-3 flex justify-end">
-        <SignOutButton className="text-xs font-medium text-zinc-500 hover:text-zinc-300" />
+        <SignOutButton
+          loginPath="/argus/login"
+          label="Sign out everywhere"
+          className="text-xs font-medium text-zinc-500 hover:text-zinc-300"
+        />
       </div>
       {children}
       {isNoteEdit ? null : <BottomNav />}

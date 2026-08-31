@@ -54,7 +54,10 @@ export function PreviewSidebar({ nav }: { nav: PreviewNavContext }) {
           <p className="mt-2 text-xs text-zinc-500">Monthly room {nav.monthlyLossRoomLabel}</p>
         </div>
 
-        <SignOutButton className="text-xs text-zinc-500 transition hover:text-zinc-300" />
+        <SignOutButton
+          label="Sign out everywhere"
+          className="text-xs text-zinc-500 transition hover:text-zinc-300"
+        />
       </div>
     </aside>
   );

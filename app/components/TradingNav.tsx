@@ -43,7 +43,10 @@ export function TradingNav() {
       <Link href="/mxt/connect" className="hover:text-zinc-600">
         Connect
       </Link>
-      <SignOutButton className="ml-auto text-sm font-medium text-zinc-500 hover:text-zinc-800" />
+      <SignOutButton
+        label="Sign out everywhere"
+        className="ml-auto text-sm font-medium text-zinc-500 hover:text-zinc-800"
+      />
     </nav>
   );
 }
