@@ -232,9 +232,9 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
         if (!result.ok) {
           recordFailure({
             submittedJson: submitted,
-            kind: "server",
+            kind: result.stage === "verify" ? "server" : result.stage === "parse" ? "parse" : "server",
             errorMessage: result.error,
-            details: result.details,
+            details: result.details ?? (result.verifyDetail ? [result.verifyDetail] : undefined),
             blockType: payload.type,
           });
           return;
