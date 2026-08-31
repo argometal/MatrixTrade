@@ -47,6 +47,7 @@
     "test:capital-planner": "tsx tools/test-capital-planner-26-15.ts",
     "test:capital-settings": "tsx tools/test-capital-settings-26-1a.ts",
     "test:chaos-deck-24-39": "tsx tools/test-chaos-deck-24-39.ts",
+    "test:chaos-global-find": "tsx tools/test-chaos-global-find-24-50.ts",
     "test:chaos-dump-images": "tsx tools/test-chaos-dump-images-24-2e.ts",
     "test:argusforge-24-47": "tsx tools/test-argusforge-24-47.ts",
     "test:ui-window-ids": "tsx tools/test-ui-window-ids.ts",

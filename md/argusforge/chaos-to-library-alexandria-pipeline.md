@@ -51,11 +51,13 @@ It does **not** mean: put all of LibraryBuild into Chaos; edit 3D corridors from
 
 | ArgusForge (Chaos / AF) | Alexandria line (Library / motor) |
 |-------------------------|-----------------------------------|
-| AF Realm (folder theme) | Alexandria Realm (`R1` …) — spatial world root |
-| Chaos Deck | *No 1:1* — often maps to **Parcour** or to a **bundle of loci** |
-| Fragment | Material for **Object / locus** `body_text` blocks |
-| Molecule (affinity) | Hint for which Fragments share a Parcour — not a GK edge |
+| AF Realm (folder theme) | Alexandria Realm (`R1` …) — spatial world root — **different namespace** |
+| Chaos Deck | Convenience multi-Fragment **container only** — **not** Parcour; may later feed **zero, one, or many** Parcours (or none) |
+| Fragment | Raw capture; optional Blocks. **Not** assumed = Locus. Future bridge may map flexibly |
+| Molecule (affinity) | Hint only — not a GK edge; not Deck=theme |
 | Argus (AF lab / +1 host) | Host of evolved Alexandria as **I. Motor** after reopen |
+
+**Sealed (CHANGE 24-50):** Do **not** treat `Deck ↔ Parcour` or `Fragment ↔ Locus` as equivalences. Chaos may contain without understanding; Alexandria structures when structure adds value.
 
 Names collide on “Realm” and “Argus”. Until reopen, treat AF Realm vs Alexandria Realm as **different namespaces**. A future bridge must use explicit prefixing (`af_realm_*` vs `R1`).
 
