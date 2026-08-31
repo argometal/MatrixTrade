@@ -6,6 +6,9 @@
 - [mxt-edge-learning-mission-governance.md](mxt-edge-learning-mission-governance.md) — **what MXT must achieve** · `SEALED PRODUCT GOVERNANCE`  
 - [mxt-core-learning-adaptation-doctrine.md](mxt-core-learning-adaptation-doctrine.md) — **what class of system MXT is** · `SEALED CORE GOVERNANCE`
 
+**Evidence contracts:**  
+- [mxt-market-reality-evidence-contract.md](mxt-market-reality-evidence-contract.md) — Market Reality (OHLCV + Volume Reality) · `SEALED EVIDENCE CONTRACT` (#12A)
+
 **Agent entry (discoverability — do not duplicate seals):**  
 repo root [`AGENTS.md`](../../AGENTS.md) · Cursor [`.cursor/rules/mxt-agent-entry.mdc`](../../.cursor/rules/mxt-agent-entry.mdc)
 
@@ -17,6 +20,7 @@ repo root [`AGENTS.md`](../../AGENTS.md) · Cursor [`.cursor/rules/mxt-agent-ent
 |---|----------|------|
 | **0a** | [mxt-edge-learning-mission-governance.md](mxt-edge-learning-mission-governance.md) | **SEALED** — Edge Learning Mission (success criterion / feature filter) |
 | **0b** | [mxt-core-learning-adaptation-doctrine.md](mxt-core-learning-adaptation-doctrine.md) | **SEALED** — Core Learning & Adaptation Doctrine (identity + external pillars) |
+| **0c** | [mxt-market-reality-evidence-contract.md](mxt-market-reality-evidence-contract.md) | **SEALED** — Market Reality Evidence Contract (OHLCV + Volume; no provider yet) |
 | 1 | [strategic-planning-vision.md](strategic-planning-vision.md) | Architecture layers — Playbook → Stock File → Scout → Trade (mission/identity superseded by 0a/0b for Core) |
 | 2 | [v2-engine-architecture.md](v2-engine-architecture.md) | **V2 target** — five engines + Probe |
 | 3 | [stock-profile-design.md](stock-profile-design.md) | Suspect dossier — append, light, chat patches |

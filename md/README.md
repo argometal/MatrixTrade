@@ -64,6 +64,7 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 |----------|----------|
 | [matrix/mxt-edge-learning-mission-governance.md](matrix/mxt-edge-learning-mission-governance.md) | **SEALED PRODUCT GOVERNANCE** — Edge Learning Mission (what MXT must achieve) |
 | [matrix/mxt-core-learning-adaptation-doctrine.md](matrix/mxt-core-learning-adaptation-doctrine.md) | **SEALED CORE GOVERNANCE** — Learning & Adaptation Doctrine (what class of system + pillars) |
+| [matrix/mxt-market-reality-evidence-contract.md](matrix/mxt-market-reality-evidence-contract.md) | **SEALED EVIDENCE CONTRACT** — Market Reality (OHLCV + Volume Reality); no provider yet |
 | [matrix/README.md](matrix/README.md) | **Index** — reading order, code vs vision map |
 | [matrix/strategic-planning-vision.md](matrix/strategic-planning-vision.md) | Architecture layers — Playbook → Stock File → Scouting Desk → Trade |
 | [matrix/v2-engine-architecture.md](matrix/v2-engine-architecture.md) | **V2** — five engines + Probe |

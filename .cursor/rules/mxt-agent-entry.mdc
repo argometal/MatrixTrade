@@ -49,9 +49,12 @@ Do not game the index. Do not maximize it by hiding uncertainty or blockers.
 
 1. [`md/matrix/mxt-edge-learning-mission-governance.md`](md/matrix/mxt-edge-learning-mission-governance.md) — **SEALED PRODUCT GOVERNANCE** (what MXT must achieve)
 2. [`md/matrix/mxt-core-learning-adaptation-doctrine.md`](md/matrix/mxt-core-learning-adaptation-doctrine.md) — **SEALED CORE GOVERNANCE** (what class of system + pillars)
-3. [`md/matrix/README.md`](md/matrix/README.md) — MXT/Matrix documentation index
+3. [`md/matrix/mxt-market-reality-evidence-contract.md`](md/matrix/mxt-market-reality-evidence-contract.md) — **SEALED EVIDENCE CONTRACT** (Market Reality OHLCV + Volume; no provider yet)
+4. [`md/matrix/README.md`](md/matrix/README.md) — MXT/Matrix documentation index
 
 Do **not** duplicate those texts here. The sealed files remain authoritative.
+
+**#12 framing correction:** Failure to find usable Reality for a specific Case in inspected sources ≠ “MXT has no Market Reality layer.” See the Market Reality Evidence Contract.
 
 ## Recoverable Core model (must be answerable quickly)
 

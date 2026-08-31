@@ -10,7 +10,8 @@ Sealed governance (authoritative; do not duplicate):
 
 1. [`md/matrix/mxt-edge-learning-mission-governance.md`](md/matrix/mxt-edge-learning-mission-governance.md) — Edge Learning Mission · `SEALED PRODUCT GOVERNANCE`
 2. [`md/matrix/mxt-core-learning-adaptation-doctrine.md`](md/matrix/mxt-core-learning-adaptation-doctrine.md) — Core Learning & Adaptation Doctrine · `SEALED CORE GOVERNANCE`
-3. [`md/matrix/README.md`](md/matrix/README.md) — documentation index
+3. [`md/matrix/mxt-market-reality-evidence-contract.md`](md/matrix/mxt-market-reality-evidence-contract.md) — Market Reality Evidence Contract · `SEALED EVIDENCE CONTRACT`
+4. [`md/matrix/README.md`](md/matrix/README.md) — documentation index
 
 **Identity (one line):** MXT is a learning and adaptation engine in a market decision environment — not fundamentally a trading application.
 
