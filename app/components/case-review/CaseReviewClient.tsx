@@ -286,7 +286,7 @@ export function CaseReviewClient({
             href={mxtPath(`/scout?plan=${encodeURIComponent(c.identity.anchorPlanId)}`)}
             className="text-sm text-zinc-400 hover:text-zinc-200"
           >
-            ← Scout
+            Back to Scout
           </Link>
         </div>
         <p className="text-sm text-zinc-400">

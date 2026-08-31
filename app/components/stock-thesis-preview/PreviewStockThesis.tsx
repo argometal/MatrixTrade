@@ -192,7 +192,7 @@ export function PreviewStockThesis({
               href={scoutHref}
               className="rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-3 text-left transition hover:border-zinc-500 hover:bg-zinc-900"
             >
-              <span className="block text-sm font-semibold text-zinc-100">Open Scout</span>
+              <span className="block text-sm font-semibold text-zinc-100">Open in Scout</span>
               <span className="mt-0.5 block text-xs text-zinc-500">
                 Decision · entry · stop · targets · R
               </span>
@@ -267,6 +267,20 @@ export function PreviewStockThesis({
                   {primaryPlan.decision.reasoning}
                 </p>
               ) : null}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  href={scoutHref}
+                  className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-2 text-xs font-medium text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800"
+                >
+                  Open in Scout
+                </Link>
+                <Link
+                  href={mxtPath(`/scout/case?plan=${primaryPlan.id}`)}
+                  className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-200 hover:border-violet-400/60 hover:bg-violet-500/15"
+                >
+                  Case Review
+                </Link>
+              </div>
               {activePlans.length > 1 ? (
                 <div className="mt-3 border-t border-zinc-800 pt-2">
                   <label

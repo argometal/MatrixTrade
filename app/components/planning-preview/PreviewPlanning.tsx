@@ -369,7 +369,7 @@ export function PreviewPlanning({
                   mapFocusCompact ? "hidden lg:block" : ""
                 }`}
               >
-                Active cases and execution readiness
+                Active plans and execution readiness
               </p>
             </div>
           </div>
@@ -407,7 +407,7 @@ export function PreviewPlanning({
         >
           {!hasCases ? (
             <section className="rounded-2xl border border-dashed border-zinc-700 px-4 py-10 text-center">
-              <p className="text-sm text-zinc-500">No scout cases yet.</p>
+              <p className="text-sm text-zinc-500">No active plans yet.</p>
               <Link
                 href="/mxt/stock-theses/new"
                 className="mt-3 inline-block text-sm text-violet-300 hover:underline"

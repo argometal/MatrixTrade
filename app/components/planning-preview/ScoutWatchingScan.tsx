@@ -115,9 +115,9 @@ export function ScoutWatchingScan({
           className="inline-flex flex-col rounded-xl border border-zinc-700 bg-zinc-900/60 px-4 py-3 text-left transition hover:border-zinc-500 hover:bg-zinc-900"
           data-scout-open-scout
         >
-          <span className="text-sm font-semibold text-zinc-100">Open Scout</span>
+          <span className="text-sm font-semibold text-zinc-100">View Stock Profile</span>
           <span className="mt-0.5 text-xs text-zinc-500">
-            Decision · entry · stop · targets · R
+            Thesis · evidence · plan context
           </span>
         </Link>
       </div>

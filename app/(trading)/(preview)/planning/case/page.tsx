@@ -24,7 +24,7 @@ export default async function PlanningCasePage({
           href={mxtPath("/scout")}
           className="mt-4 inline-block text-zinc-300 hover:underline"
         >
-          ← Scout
+          Back to Scout
         </Link>
       </div>
     );
@@ -39,7 +39,7 @@ export default async function PlanningCasePage({
           href={mxtPath("/scout")}
           className="mt-4 inline-block text-zinc-300 hover:underline"
         >
-          ← Scout
+          Back to Scout
         </Link>
       </div>
     );

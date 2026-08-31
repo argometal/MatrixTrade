@@ -33,7 +33,7 @@ async function main() {
   );
 
   // 1 — Header short subtitle
-  assert.match(planning, /Active cases and execution readiness/);
+  assert.match(planning, /Active plans and execution readiness/);
   assert.doesNotMatch(planning, /War room — cases to watch/);
   assert.match(planning, /New stock case/);
   assert.match(planning, /Capital Planner/);
@@ -49,7 +49,7 @@ async function main() {
   assert.doesNotMatch(planning, /Scout learning queue/);
   assert.doesNotMatch(planning, /needs outcome/);
 
-  // Watching scan — Open Scout language; no funding dump
+  // Watching scan — Stock Profile link; no funding dump
   assert.match(planning, /ScoutWatchingScan/);
   assert.match(watching, /data-scout-case-summary/);
   assert.match(watching, /data-scout-watching-scan/);
@@ -59,7 +59,7 @@ async function main() {
   assert.match(watching, /\["Target"/);
   assert.match(watching, /\["R"/);
   assert.match(watching, /\["Wait horizon"/);
-  assert.match(watching, /Open Scout/);
+  assert.match(watching, /View Stock Profile/);
   assert.match(watching, /data-scout-open-scout/);
   assert.match(watching, /formatScoutWatchTriggerLine/);
   assert.doesNotMatch(watching, /Room/);
