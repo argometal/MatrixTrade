@@ -49,7 +49,7 @@ export function PreviewInboxDetail({
         <div className="min-w-0 flex-1 overflow-y-auto">
           <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
             <Link href="/mxt/inbox" className="text-sm text-zinc-500 hover:text-violet-400">
-              ← History
+              ← Proposals
             </Link>
             <h1 className="mt-2 text-xl font-semibold text-zinc-100">Already processed</h1>
           </header>
@@ -61,7 +61,7 @@ export function PreviewInboxDetail({
               href="/mxt/inbox"
               className="mt-4 inline-block text-sm font-medium text-violet-400 hover:text-violet-300 hover:underline"
             >
-              Back to History
+              Back to Proposals
             </Link>
           </div>
         </div>
@@ -75,7 +75,7 @@ export function PreviewInboxDetail({
         <div className="min-w-0 flex-1 overflow-y-auto">
           <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
             <Link href="/mxt/inbox" className="text-sm text-zinc-500 hover:text-violet-400">
-              ← History
+              ← Proposals
             </Link>
             <h1 className="mt-2 text-xl font-semibold text-zinc-100">Apply result</h1>
             <p className="mt-0.5 text-sm text-zinc-500">
@@ -125,7 +125,7 @@ export function PreviewInboxDetail({
       <div className="min-w-0 flex-1 overflow-y-auto">
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <Link href="/mxt/inbox" className="text-sm text-zinc-500 hover:text-violet-400">
-            ← History
+            ← Proposals
           </Link>
           <h1 className="mt-2 text-xl font-semibold text-zinc-100">Review proposal</h1>
           <p className="mt-0.5 text-sm text-zinc-500">

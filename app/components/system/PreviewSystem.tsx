@@ -142,7 +142,7 @@ export function PreviewSystem({
             description={
               isVercel
                 ? "Phone LAN access — available when running MTA locally."
-                : "Local WiFi access to full MTA UI."
+                : "Local WiFi access to full MXT UI."
             }
           >
             <SystemRow
@@ -150,13 +150,13 @@ export function PreviewSystem({
               value={<span className="font-mono text-xs text-zinc-300">{inboxBackend}</span>}
             />
             <SystemRow
-              label="History (pending)"
+              label="Proposals (pending)"
               value={
                 pendingInboxCount === 0 ? (
                   "None"
                 ) : (
                   <Link href="/mxt/inbox" className="text-violet-400 hover:text-violet-300 hover:underline">
-                    {pendingInboxCount} pending · open History
+                    {pendingInboxCount} pending · open Proposals
                   </Link>
                 )
               }

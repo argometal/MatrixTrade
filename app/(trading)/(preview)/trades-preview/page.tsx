@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 
 /**
- * Enter Trade deprecated — execution lives in Scout war room + Control → Apply.
- * Preserve query (plan / ticker / thesis) onto /planning.
+ * Enter Trade deprecated — execution lives in Scout + Control → Apply.
+ * Preserve query (plan / ticker / thesis) onto /mxt/scout.
  */
 export default async function TradesPreviewRedirectPage({
   searchParams,
@@ -16,8 +16,7 @@ export default async function TradesPreviewRedirectPage({
   const thesis = typeof sp.thesis === "string" ? sp.thesis : undefined;
   if (plan) params.set("plan", plan);
   if (thesis) params.set("thesis", thesis);
-  // ticker alone: planning focuses via plan; keep as hint unused for now
   void ticker;
   const qs = params.toString();
-  redirect(qs ? `/planning?${qs}` : "/planning");
+  redirect(qs ? `/mxt/scout?${qs}` : "/mxt/scout");
 }

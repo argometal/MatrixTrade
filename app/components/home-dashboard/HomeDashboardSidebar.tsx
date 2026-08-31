@@ -44,7 +44,7 @@ export function HomeDashboardSidebar({
           <li>1. Copy snapshot (Control panel)</li>
           <li>2. Discuss in your AI chat</li>
           <li>3. Control → Apply → paste AI Block</li>
-          <li>4. Validate → Accept (or History → Apply)</li>
+          <li>4. Validate → Accept (or Proposals → Apply)</li>
         </ol>
       </section>
 

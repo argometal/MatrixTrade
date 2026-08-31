@@ -384,7 +384,7 @@ export function CapitalPlannerPanel({
                   >
                     <td className="py-2 pr-3">
                       <Link
-                        href={`/mxt/planning/capital?position=${p.id}`}
+                        href={`/mxt/scout/capital?position=${p.id}`}
                         className="inline-flex rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs font-medium text-zinc-100 hover:bg-zinc-800"
                       >
                         {p.ticker}

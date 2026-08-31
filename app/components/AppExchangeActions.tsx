@@ -21,7 +21,7 @@ export function AppExchangeActions({
 }) {
   const showInbox = app === "matrix" || app === "argus";
   const inboxHref = app === "matrix" ? "/mxt/inbox" : "/argus/v2/inbox";
-  const inboxLabel = app === "matrix" ? "History" : "Inbox";
+  const inboxLabel = app === "matrix" ? "Proposals" : "Inbox";
   const currentId: ForgeSystemId =
     app === "matrix" ? "matrixtrade" : app === "argus" ? "argus" : "argusforge";
 

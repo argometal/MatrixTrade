@@ -13,7 +13,7 @@ export function ImportAiUpdateLink({
         Updates: <span className="text-emerald-400/90">Control → Apply</span>
       </span>
       <Link href="/mxt/inbox" className="text-[11px] text-zinc-500 hover:text-zinc-300">
-        History →
+        Proposals →
       </Link>
     </div>
   );

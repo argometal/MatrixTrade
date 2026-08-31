@@ -115,7 +115,7 @@ export function AiBridgeV2RightPanel({ snapshot }: { snapshot: AiBridgeLiveSnaps
         href="/mxt/inbox"
         className="block rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-center text-xs font-medium text-violet-900 hover:bg-violet-100"
       >
-        Open History →
+        Open Proposals →
       </Link>
     </aside>
   );

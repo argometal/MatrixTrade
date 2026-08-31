@@ -12,8 +12,8 @@ import {
 } from "@/lib/trades-workspace-types";
 
 const QUICK_ACTIONS = [
-  { label: "Scouting Desk", href: "/mxt/planning" },
-  { label: "History", href: "/mxt/inbox" },
+  { label: "Scouting Desk", href: "/mxt/scout" },
+  { label: "Proposals", href: "/mxt/inbox" },
   { label: "New stock case", href: "/mxt/stock-theses/new" },
 ] as const;
 
@@ -69,7 +69,7 @@ export function TradesWorkspace({
             <div>
               <h1 className="text-xl font-semibold text-zinc-100">New Trade</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                AI chat → <code className="text-violet-300">trade-proposal</code> → Control → Apply or History.
+                AI chat → <code className="text-violet-300">trade-proposal</code> → Control → Apply or Proposals.
                 {data.prospects.length > 0 ? (
                   <span className="text-sky-400">
                     {" "}
@@ -81,7 +81,7 @@ export function TradesWorkspace({
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
-                href="/mxt/planning"
+                href="/mxt/scout"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200"
               >
                 ← Scouting Desk
@@ -96,7 +96,7 @@ export function TradesWorkspace({
                 href="/mxt/inbox"
                 className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-300 hover:border-zinc-600"
               >
-                History{data.pendingInboxCount > 0 ? ` (${data.pendingInboxCount})` : ""}
+                Proposals{data.pendingInboxCount > 0 ? ` (${data.pendingInboxCount})` : ""}
               </Link>
             </div>
           </div>

@@ -58,7 +58,7 @@ export function TradeProspectPicker({
         </div>
         {prospects.length > 0 ? (
           <Link
-            href="/mxt/planning"
+            href="/mxt/scout"
             className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
           >
             Scouting Desk
@@ -103,7 +103,7 @@ export function TradeProspectPicker({
                     </Link>
                   ) : null}
                   <Link
-                    href={`/mxt/planning?plan=${selected.planId}`}
+                    href={`/mxt/scout?plan=${selected.planId}`}
                     className="text-zinc-400 hover:underline"
                   >
                     Scout map

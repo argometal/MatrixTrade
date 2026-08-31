@@ -27,9 +27,9 @@ export function PreviewInbox({
         <header className="border-b border-zinc-800 px-4 py-4 lg:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-xl font-semibold text-zinc-100">History</h1>
+              <h1 className="text-xl font-semibold text-zinc-100">Proposals</h1>
               <p className="mt-0.5 text-sm text-zinc-500">
-                Past AI Blocks and bridge items. New updates: Control → Apply → Validate → Accept.
+                Pending and past AI Blocks for MXT. Preferred path: Control → Apply → Validate → Accept.
               </p>
             </div>
           </div>

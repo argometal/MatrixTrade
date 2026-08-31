@@ -142,7 +142,7 @@ export function PreviewTradeDetail({
                 <dt className="text-xs uppercase tracking-wide text-zinc-500">Scout</dt>
                 <dd className="mt-0.5">
                   <Link
-                    href={`/mxt/planning?plan=${trade.planId}`}
+                    href={`/mxt/scout?plan=${trade.planId}`}
                     className="font-medium text-violet-400 hover:underline"
                   >
                     {trade.planId}

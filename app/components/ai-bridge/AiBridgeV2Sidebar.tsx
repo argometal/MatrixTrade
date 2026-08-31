@@ -17,7 +17,7 @@ const SYSTEM_LINKS: {
   label: string;
   badge?: boolean;
 }[] = [
-  { href: "/mxt/inbox", label: "Inbox", badge: true },
+  { href: "/mxt/inbox", label: "Proposals", badge: true },
   { href: "/mxt/inbox", label: "Apply" },
   { href: "/mxt/system", label: "Settings" },
 ];

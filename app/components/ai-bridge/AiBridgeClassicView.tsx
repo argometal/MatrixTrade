@@ -22,7 +22,7 @@ export function AiBridgeClassicView({
         <div>
           <h1 className="text-2xl font-semibold">AI Bridge</h1>
           <p className="mt-1 text-sm text-zinc-500">
-            Classic view — Control → Apply, or paste here → History → Apply.
+            Classic view — Control → Apply, or paste here → Proposals → Apply.
           </p>
         </div>
         {viewToggle}
@@ -36,7 +36,7 @@ export function AiBridgeClassicView({
         <AiBlockPanel snapshotText={snapshotText} importAction={importAction} />
       </SystemSection>
 
-      <SystemSection id="inbox" title="History" description="Pending proposals — Apply to write Supabase.">
+      <SystemSection id="inbox" title="Proposals" description="Pending proposals — Apply to write Supabase.">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-sm text-zinc-700">
             {pendingInboxCount === 0 ? (
@@ -49,7 +49,7 @@ export function AiBridgeClassicView({
             href="/mxt/inbox"
             className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800"
           >
-            Open History
+            Open Proposals
           </Link>
         </div>
         {pendingInboxPreview.length > 0 && (

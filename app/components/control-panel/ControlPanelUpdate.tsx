@@ -358,7 +358,7 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
             ) : null}
             {outcome.planId ? (
               <Link
-                href="/mxt/planning"
+                href="/mxt/scout"
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-violet-400 hover:text-violet-300"
               >
                 Scouting desk · {outcome.planId}

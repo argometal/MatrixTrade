@@ -371,7 +371,7 @@ export function CapitalSettingsPanel({
         </p>
         <div className="flex flex-wrap items-stretch gap-2 pt-2 sm:gap-3">
           <Link
-            href="/mxt/planning/capital"
+            href="/mxt/scout/capital"
             data-capital-planner-cta
             className="inline-flex min-h-11 flex-1 items-center justify-center rounded-lg border border-emerald-500/50 bg-emerald-500/15 px-4 py-2.5 text-sm font-medium text-emerald-200 hover:bg-emerald-500/25 sm:flex-none"
           >

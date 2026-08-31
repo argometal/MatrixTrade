@@ -42,7 +42,7 @@ export function InboxApplyActions({
     return (
       <div className="space-y-3">
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-4 py-3 text-sm text-emerald-200">
-          Apply submitted. Refresh History if needed — duplicates are blocked.
+          Apply submitted. Refresh Proposals if needed — duplicates are blocked.
           server-side.
         </div>
       </div>
@@ -63,7 +63,7 @@ export function InboxApplyActions({
           onClick={handleApply}
           className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {pending ? "Applying…" : "Apply to MTA"}
+          {pending ? "Applying…" : "Apply to MXT"}
         </button>
         <form action={rejectInboxItemAction}>
           <input type="hidden" name="id" value={id} />

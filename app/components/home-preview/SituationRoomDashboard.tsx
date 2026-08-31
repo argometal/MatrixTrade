@@ -10,7 +10,7 @@ import {
 const QUICK_NAV = [
   { href: "/mxt/scout", label: "Scout" },
   { href: "/mxt/review", label: "Review" },
-  { href: "/mxt/inbox", label: "History" },
+  { href: "/mxt/inbox", label: "Proposals" },
   { href: "/mxt/stats", label: "Statistics" },
   { href: "/mxt/playbook", label: "Playbooks" },
 ] as const;

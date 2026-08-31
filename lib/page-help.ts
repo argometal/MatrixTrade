@@ -64,7 +64,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
     steps: ["Usa Scout war room."],
   },
   inbox: {
-    title: "History",
+    title: "Proposals",
     summary: "Propuestas. Preferir Control → Apply.",
     steps: ["Apply / Reject en pendientes."],
   },

@@ -368,7 +368,7 @@ export function HomeDashboardMain({
           <SectionBadge n={assistantOnly ? 2 : 3} />
           <div className="flex-1">
             <h2 className={headingClass}>AI will respond with a proposal</h2>
-            <p className={subtextClass}>Paste AI Block. Validate in Control or review in History.</p>
+            <p className={subtextClass}>Paste AI Block. Validate in Control or review in Proposals.</p>
           </div>
           {pendingInboxCount > 0 && (
             <Link
@@ -379,7 +379,7 @@ export function HomeDashboardMain({
                   : "rounded-full bg-violet-100 px-3 py-1 text-xs font-medium text-violet-800 hover:bg-violet-200"
               }
             >
-              {pendingInboxCount} in History
+              {pendingInboxCount} in Proposals
             </Link>
           )}
         </div>
@@ -419,7 +419,7 @@ export function HomeDashboardMain({
                 : "mb-4 space-y-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
             }
           >
-            <p className="font-medium">Sent to History — Review → Apply</p>
+            <p className="font-medium">Sent to Proposals — Review → Apply</p>
             <dl className="grid gap-2 font-mono text-xs sm:grid-cols-2">
               <div>
                 <dt className={dark ? "text-emerald-400" : "text-emerald-800"}>inboxItemId</dt>
@@ -438,7 +438,7 @@ export function HomeDashboardMain({
                   : "inline-block rounded-md bg-emerald-800 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
               }
             >
-              Open History
+              Open Proposals
             </Link>
           </div>
         )}
@@ -487,7 +487,7 @@ export function HomeDashboardMain({
               </select>
             </label>
           </div>
-          <p className="text-xs text-zinc-500">Nothing writes until you Accept or Apply in History.</p>
+          <p className="text-xs text-zinc-500">Nothing writes until you Accept or Apply in Proposals.</p>
         </form>
       </section>
 

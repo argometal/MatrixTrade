@@ -36,7 +36,7 @@ export const PREVIEW_NAV_SECTIONS = [
     id: "system",
     label: "System",
     items: [
-      { href: mxtPath("/inbox"), label: "Inbox", badge: "inbox" as const },
+      { href: mxtPath("/inbox"), label: "Proposals", badge: "inbox" as const },
       { href: mxtPath("/settings/capital"), label: "Capital Settings" },
       { href: mxtPath("/settings/security"), label: "Security" },
       { href: mxtPath("/system"), label: "System" },

@@ -21,7 +21,7 @@ export function MtaScopedPanel({
         <LinkCard href="/mxt/home-preview" title="Situation Room" hint="MTA dashboard" />
         <LinkCard href="/mxt/trades" title="Trades" hint="Open and closed trades" />
         <LinkCard href="/mxt/stats" title="Stats" hint="Performance & journal tabs" />
-        <LinkCard href="/mxt/inbox" title="Inbox" hint="History / intake" />
+        <LinkCard href="/mxt/inbox" title="Proposals" hint="AI Blocks · Apply queue" />
       </ScopedShell>
     );
   }
@@ -33,7 +33,7 @@ export function MtaScopedPanel({
         blurb="Browse MTA reference surfaces — not ArgusForge Chaos Decks."
       >
         <LinkCard href="/mxt/stock-theses/new" title="Stock Files" hint="New thesis / stock file" />
-        <LinkCard href="/mxt/planning" title="Planning" hint="Scouting & proposals hub" />
+        <LinkCard href="/mxt/scout" title="Scout" hint="Active plans · decision desk" />
         <LinkCard href="/mxt/playbook" title="Playbook" hint="Playbook library" />
         <LinkCard href="/mxt/journal" title="Journal" hint="Trading journal" />
       </ScopedShell>
@@ -48,7 +48,7 @@ export function MtaScopedPanel({
       >
         <LinkCard href="/mxt/trades" title="Open trades" hint="Active trade workspace" />
         <LinkCard href="/mxt/trades?tab=review" title="Review queue" hint="Pending reviews" />
-        <LinkCard href="/mxt/planning" title="Scouting Desk" hint="Active proposals / planning" />
+        <LinkCard href="/mxt/scout" title="Scouting Desk" hint="Active proposals / planning" />
         <LinkCard href="/mxt/home-preview" title="Needs attention" hint="Situation Room attention" />
       </ScopedShell>
     );

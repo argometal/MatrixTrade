@@ -5,7 +5,7 @@ export function TradesViewSwitch() {
   return (
     <div className="flex flex-wrap gap-2">
       <Link
-        href="/mxt/planning"
+        href="/mxt/scout"
         className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500"
       >
         Scout war room
