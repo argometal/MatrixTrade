@@ -15,7 +15,7 @@ Private repo: `github.com/argometal/MatrixTrade`
 
 | Tier | Path | What it holds |
 |------|------|---------------|
-| **Matrix (vision)** | `matrix/` | **Product identity** — strategic planning mission; read before designing features |
+| **Matrix (vision)** | `matrix/` | **Product identity** — sealed Edge Learning Mission first; then strategic layers |
 | **Runtime** | `architecture/`, `rules/`, `design/` | What the app **does today** — must match deployed code |
 | **Phases** | `phases/` | Roadmap status — update when a phase completes |
 | **Integrations** | `integrations/`, `protocols/` | ChatGPT, Obsidian, Worker, Supabase, Vercel |
@@ -45,7 +45,7 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 
 ## How to use
 
-1. **New to the project?** [`matrix/strategic-planning-vision.md`](matrix/strategic-planning-vision.md) → `architecture/system-overview.md` → `phases/roadmap.md`
+1. **New to the project?** [`matrix/mxt-edge-learning-mission-governance.md`](matrix/mxt-edge-learning-mission-governance.md) + [`matrix/mxt-core-learning-adaptation-doctrine.md`](matrix/mxt-core-learning-adaptation-doctrine.md) (**SEALED** Core) → [`matrix/strategic-planning-vision.md`](matrix/strategic-planning-vision.md) → `architecture/system-overview.md` → `phases/roadmap.md`
 2. **What ships today?** `architecture/matrixtrade-app.md` + `rules/`
 3. **What to build next?** `phases/roadmap.md` + `concepts/README.md`
 4. **Working on ARGUS?** [`argus/README.md`](argus/README.md)
@@ -58,12 +58,14 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 
 ## Matrix (product vision)
 
-**Start here for MatrixTrade mission** — not ARGUS.
+**Start here for MXT / MatrixTrade mission** — not ARGUS.
 
 | Document | Contents |
 |----------|----------|
+| [matrix/mxt-edge-learning-mission-governance.md](matrix/mxt-edge-learning-mission-governance.md) | **SEALED PRODUCT GOVERNANCE** — Edge Learning Mission (what MXT must achieve) |
+| [matrix/mxt-core-learning-adaptation-doctrine.md](matrix/mxt-core-learning-adaptation-doctrine.md) | **SEALED CORE GOVERNANCE** — Learning & Adaptation Doctrine (what class of system + pillars) |
 | [matrix/README.md](matrix/README.md) | **Index** — reading order, code vs vision map |
-| [matrix/strategic-planning-vision.md](matrix/strategic-planning-vision.md) | **Identity** — Playbook → Stock File → Scouting Desk → Trade |
+| [matrix/strategic-planning-vision.md](matrix/strategic-planning-vision.md) | Architecture layers — Playbook → Stock File → Scouting Desk → Trade |
 | [matrix/v2-engine-architecture.md](matrix/v2-engine-architecture.md) | **V2** — five engines + Probe |
 | [matrix/stock-profile-design.md](matrix/stock-profile-design.md) | Profile dossier — append, light |
 | [matrix/scout-execution-model.md](matrix/scout-execution-model.md) | Scout vs Trade vs Probe |

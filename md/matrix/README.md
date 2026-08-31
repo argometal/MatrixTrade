@@ -1,6 +1,10 @@
 # Matrix — product vision & strategic core
 
-**Start here for MatrixTrade identity** (not ARGUS).
+**Start here for MatrixTrade / MXT identity** (not ARGUS).
+
+**Sealed MXT Core (two complementary documents):**  
+- [mxt-edge-learning-mission-governance.md](mxt-edge-learning-mission-governance.md) — **what MXT must achieve** · `SEALED PRODUCT GOVERNANCE`  
+- [mxt-core-learning-adaptation-doctrine.md](mxt-core-learning-adaptation-doctrine.md) — **what class of system MXT is** · `SEALED CORE GOVERNANCE`
 
 ---
 
@@ -8,7 +12,9 @@
 
 | # | Document | Role |
 |---|----------|------|
-| 1 | [strategic-planning-vision.md](strategic-planning-vision.md) | Mission — four layers |
+| **0a** | [mxt-edge-learning-mission-governance.md](mxt-edge-learning-mission-governance.md) | **SEALED** — Edge Learning Mission (success criterion / feature filter) |
+| **0b** | [mxt-core-learning-adaptation-doctrine.md](mxt-core-learning-adaptation-doctrine.md) | **SEALED** — Core Learning & Adaptation Doctrine (identity + external pillars) |
+| 1 | [strategic-planning-vision.md](strategic-planning-vision.md) | Architecture layers — Playbook → Stock File → Scout → Trade (mission/identity superseded by 0a/0b for Core) |
 | 2 | [v2-engine-architecture.md](v2-engine-architecture.md) | **V2 target** — five engines + Probe |
 | 3 | [stock-profile-design.md](stock-profile-design.md) | Suspect dossier — append, light, chat patches |
 | 4 | [scout-execution-model.md](scout-execution-model.md) | Scout vs Trade vs Probe |
@@ -46,9 +52,12 @@
 
 ## One sentence
 
-> Expectation database + decision-learning architecture — Playbook → Evidence → Stock Profile → Scout/Decision → Execution → MAF Attribution.
+> **MXT is a learning and adaptation engine in a market decision environment** — discovering where edge exists, where it is lost, and whether controlled adaptations improve results.  
+> Sealed Core: [mission](mxt-edge-learning-mission-governance.md) · [doctrine](mxt-core-learning-adaptation-doctrine.md)
 
-Recording trades is necessary; **not the mission**.
+Supporting architecture: Playbook → Evidence → Stock Profile → Scout/Decision → Execution → MAF Attribution.
+
+Recording trades is necessary; **not the mission**. “Avoided losses” alone is **not** success. Trading-app features may serve MXT; they do **not** define it.
 
 ---
 
