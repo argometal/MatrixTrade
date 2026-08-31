@@ -15,6 +15,8 @@ Sealed governance (authoritative; do not duplicate):
 
 **Identity (one line):** MXT is a learning and adaptation engine in a market decision environment — not fundamentally a trading application.
 
+**Canonical direction:** Thesis + Plan → Reality + Outcome → Evaluation → Learning → Future Improvement. T0 preserves decision-time evidence; Blind/Reveal as required workflow is **deprecated** (MTA 012).
+
 **Argus Index:** report coordination efficiency (0–1) after material MXT work — see [`.cursor/rules/mxt-agent-entry.mdc`](.cursor/rules/mxt-agent-entry.mdc). Correct BLOCKED ≠ low index.
 
 **Authorized path:** accumulate valid forward Cases → Edge Decomposition → evidence-backed hypotheses — not fabricated history.

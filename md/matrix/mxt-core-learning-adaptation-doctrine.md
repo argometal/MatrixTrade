@@ -356,10 +356,10 @@ If the answer to all seven is **NO**, the feature is probably peripheral to MXT 
 
 | Component | Role in the learning engine |
 |-----------|-----------------------------|
-| **T0** | Epistemic integrity |
+| **T0** | Epistemic integrity — preserve decision-time knowledge (not a hide-later-evidence rule) |
 | **Evaluation Horizon** | Finite observation boundary |
 | **Case** | Learning unit |
-| **Blind / Reveal** | Hindsight control |
+| **Reality + Outcome → Evaluation** | Use possessed/acquired evidence for measurement (Edge Decomposition substrate); Blind/Reveal ceremony **DEPRECATED** |
 | **Thesis → Reality** | Observation chain |
 | **Future Cross-Case Learning** | FOQA-like population learning |
 | **Future controlled experimentation** | Adaptation loop |
@@ -381,3 +381,5 @@ These components are **infrastructure for the learning engine** — not isolated
 ---
 
 **SEALED CORE GOVERNANCE.** Reopening requires explicit product-owner authorization — not feature drift.
+
+**MTA 012 correction (this re-seal):** Blind/Reveal as required product workflow is deprecated. T0 remains valid. Do not interpret temporal integrity as authorization to hide Reality/Outcome from evaluation.

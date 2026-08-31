@@ -23,7 +23,8 @@ Historical Library documents that describe Matrix/MatrixTrade identity, risk pos
 - Autonomous trading
 - Silent Playbook / rule mutation
 - Skipping measurement to jump to automated optimization
-- Treating T0 / Case / Blind-Reveal as the end goal
+- Treating T0 / Case reconstruction as the end goal
+- Treating Blind / Reveal as a required product workflow (DEPRECATED — see Role of T0 / Case below)
 
 ---
 
@@ -190,19 +191,37 @@ MXT must eventually distinguish these outcomes **empirically**.
 
 ---
 
-## Role of T0 / Case / Blind-Reveal
+## Role of T0 / Case (temporal integrity ≠ hiding)
 
-T0, Case, and Blind/Reveal are **infrastructure** serving this mission — not the final objective.
+T0 and Case reconstruction are **infrastructure** serving this mission — not the final objective.
 
 | Piece | Purpose |
 |-------|---------|
-| **T0** | What was actually known? |
-| **Blind** | Was the decision defensible from information available then? |
-| **Reveal** | What actually happened? |
+| **T0** | Preserve what was known, believed, planned, and decided at decision time — without retrospective rewriting |
+| **Case** | Learning unit that assembles Thesis → Plan → Decision → Execution/No-execution → Reality → Outcome |
+| **Reality + Outcome** | Information the system possesses or acquires — must remain visible to evaluation/learning where relevant |
+| **Evaluation** | Measure and compare evidence (e.g. Edge Decomposition) without inventing root cause |
 | **Cross-Case** | What repeatedly happens across decisions? |
 | **Learning** | Where is edge created, preserved, or lost? |
 
-They exist so MXT can learn from historical decisions **without hindsight contamination**.
+**Canonical learning direction:**
+
+```text
+Thesis + Plan → Reality + Outcome → Evaluation → Learning → Future Improvement
+```
+
+**T0 is VALID. Blind as a required product state is NOT.**
+
+- Historical integrity means: **preserve what we knew then**.
+- It does **not** mean: **hide what we know now**.
+- Preserving historical evidence must **not** require hiding later evidence.
+- **Blind** as a required product workflow = **DEPRECATED**.
+- **Reveal** as a required ceremony = **DEPRECATED**.
+- Market Reality must not be withheld merely because a Reveal ceremony has not occurred.
+- Do **not** replace Blind/Reveal with another ceremony.
+- Do **not** delete T0, horizons, anti-retrospective-mutation protections, observations, or outcomes merely because they were previously associated with Blind/Reveal.
+
+They exist so MXT can learn from historical decisions **without contaminating or rewriting decision-time evidence** — while still using Reality and Outcome for evaluation.
 
 ---
 
@@ -269,9 +288,9 @@ Do not allow MXT to evolve into a complex trading journal whose primary achievem
 
 | Stage | Role |
 |-------|------|
-| **Prompt #8** — T0 + finite horizon | Trustworthy temporal evidence |
-| **Prompt #9** — Case + Blind/Reveal | Trustworthy individual-case reconstruction |
-| **NEXT** — Real cases | Validate the measurement substrate |
+| **Prompt #8** — T0 + finite horizon | Trustworthy temporal evidence (preserve what was known) |
+| **Prompt #9** — Case reconstruction | Individual-case assembly substrate (Blind/Reveal UI ceremony = **DEPRECATED**) |
+| **NEXT** — Real cases + Evaluation | Validate Reality + Outcome → Evaluation (e.g. Edge Decomposition) |
 | **THEN** — Cross-case learning | Test whether MXT can discover where edge is created, preserved, or lost |
 
 Do **not** skip directly to automated optimization.
@@ -305,10 +324,12 @@ No other sealed ArgusForge / Alexandria governance docs are treated as MXT missi
 | Doc / work | Relation |
 |------------|----------|
 | Prompt #8 T0 + horizon | Temporal integrity substrate |
-| Prompt #9 Case Blind/Reveal | Individual-case reconstruction substrate |
+| Prompt #9 Case reconstruction | Individual-case assembly substrate (Blind/Reveal ceremony deprecated) |
 | [`maf-matrix-attribution-framework.md`](maf-matrix-attribution-framework.md) | Component attribution after experiment — measurement aid, not auto-root-cause |
 | [`asymmetric-entry-confirmation-cost.md`](asymmetric-entry-confirmation-cost.md) | Thesis quality ≠ opportunity quality (Playbook layer) — aligned distinction |
 
 ---
 
-**SEALED.** Changes to this mission require explicit product-owner re-seal — not feature drift.
+**SEALED.** Product-owner re-seal required for mission changes — not feature drift.
+
+**MTA 012 correction (this re-seal):** Blind/Reveal as required product workflow is deprecated. T0 temporal preservation remains valid. Canonical direction: Thesis + Plan → Reality + Outcome → Evaluation → Learning → Future Improvement.

@@ -14,7 +14,7 @@ That is **not** equivalent to:
 
 > “MXT lacks Market Reality as a concept / learning layer.”
 
-MXT’s learning chain already includes Market Reality (Reveal). Observation records already contemplate price extrema, terminal events, and a `market_feed` data-source enum. The open question is **acquisition, binding to Cases, and retention** — not whether Reality belongs in the model.
+MXT’s learning chain already includes Market Reality (post-decision evidence). Observation records already contemplate price extrema, terminal events, and a `market_feed` data-source enum. The open question is **acquisition, binding to Cases, and retention** — not whether Reality belongs in the model.
 
 **Do not** treat #12 as proof that Reality is out of scope.
 
@@ -38,13 +38,16 @@ This contract deliberately **does not** choose a data provider.
 ```text
 EX-ANTE  (Thesis / Plan / Decision / T0 or SUPPORTED LEGACY)
     ≠
-POST-DECISION  (Market Reality / Reveal)
+POST-DECISION  (Market Reality / Outcome)
 ```
 
-- Post-decision OHLCV/Volume is **Reveal**.
+- Post-decision OHLCV/Volume is **Market Reality** (post-decision evidence).
 - Fetching or attaching Reality **after** decision time does **not** upgrade historical T0 confidence.
-- Do **not** retroactively create an immutable #8 T0 freeze from Reveal.
-- Do **not** rewrite Blind packets from Reality.
+- Do **not** retroactively create an immutable #8 T0 freeze from post-decision Reality.
+- Do **not** rewrite T0 / decision-time evidence packets from Reality.
+- **T0 preserves what was known then.** It does **not** authorize hiding what the system knows now.
+- Market Reality must remain available to evaluation/learning systems; it must **not** be withheld merely because a deprecated Blind/Reveal ceremony has not occurred.
+- **Blind** as a required product workflow and **Reveal** as a required ceremony are **DEPRECATED** (MTA 012). Do not invent a replacement ceremony.
 
 ---
 
@@ -158,7 +161,7 @@ Forbidden by this contract:
 
 ---
 
-## Binding to Case / Reveal
+## Binding to Case / Market Reality
 
 Market Reality for a Case must be bindable to:
 
@@ -193,7 +196,7 @@ Existing Observation fields (`maxPrice`, `minPrice`, `mfe`, `mae`, terminal even
 #12C Acquisition Strategy
      → compare existing mechanism vs external API vs import/export vs manual/chart
      → least-friction path; retention policy draft
-#12 retry                      → reconstruct Case 1 Reveal with legitimate source
+#12 retry                      → reconstruct Case 1 Market Reality with legitimate source
 #13 Case 1 Edge Decomposition  → only when Reality integrity is at least PARTIAL/VERIFIED
 ```
 
