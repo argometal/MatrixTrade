@@ -283,7 +283,7 @@ export function CaseReviewClient({
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h1 className="text-lg font-semibold text-zinc-100">Case review</h1>
           <Link
-            href={mxtPath(`/planning?plan=${encodeURIComponent(c.identity.anchorPlanId)}`)}
+            href={mxtPath(`/scout?plan=${encodeURIComponent(c.identity.anchorPlanId)}`)}
             className="text-sm text-zinc-400 hover:text-zinc-200"
           >
             ← Scout

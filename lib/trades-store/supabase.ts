@@ -1,4 +1,5 @@
 import { createSupabaseAdmin } from "../supabase/server";
+import { assertMxtPersistenceWriteAllowed } from "../mxt-readonly";
 import {
   isMissingDateCorrectionColumnError,
   isMissingLearningColumnError,
@@ -33,6 +34,7 @@ export function createSupabaseTradesStore(): TradesStore {
       return (data ?? []).map((row) => tradeRowToTrade(row));
     },
     async upsert(trade) {
+      assertMxtPersistenceWriteAllowed("trades.upsert");
       const supabase = createSupabaseAdmin();
       const { error } = await supabase
         .from("trades")

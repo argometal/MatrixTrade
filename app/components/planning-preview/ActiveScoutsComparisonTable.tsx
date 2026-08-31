@@ -266,7 +266,7 @@ export function ActiveScoutsComparisonTable({
                   </td>
                   <td className="py-2 pr-3">
                     <Link
-                      href={`/mxt/planning?plan=${encodeURIComponent(row.planId)}`}
+                      href={`/mxt/scout?plan=${encodeURIComponent(row.planId)}`}
                       className="text-violet-300 hover:underline"
                     >
                       {row.planId}

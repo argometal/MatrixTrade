@@ -76,6 +76,19 @@ const nextConfig: NextConfig = {
       { source: "/mistakes", destination: `${MXT_BASE}/stats?tab=mistakes`, permanent: false },
       { source: `${MXT_BASE}/mistakes`, destination: `${MXT_BASE}/stats?tab=mistakes`, permanent: false },
       { source: `${MXT_COMPAT_BASE}/mistakes`, destination: `${MXT_BASE}/stats?tab=mistakes`, permanent: false },
+      // Legacy Planning URLs → canonical Scout ontology (#12D).
+      { source: `${MXT_BASE}/planning`, destination: `${MXT_BASE}/scout`, permanent: false },
+      {
+        source: `${MXT_BASE}/planning/:path*`,
+        destination: `${MXT_BASE}/scout/:path*`,
+        permanent: false,
+      },
+      { source: "/planning", destination: `${MXT_BASE}/scout`, permanent: false },
+      {
+        source: "/planning/:path*",
+        destination: `${MXT_BASE}/scout/:path*`,
+        permanent: false,
+      },
       ...mtaCompatRedirects(),
       ...legacyRootRedirects(),
     ];

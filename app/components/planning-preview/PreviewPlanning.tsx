@@ -386,13 +386,13 @@ export function PreviewPlanning({
               New stock case
             </Link>
             <Link
-              href="/mxt/planning/capital"
+              href="/mxt/scout/capital"
               className="rounded-lg border border-zinc-600 bg-zinc-900 px-2 py-2 text-center text-[11px] font-medium leading-tight text-zinc-200 hover:bg-zinc-800 sm:px-3 sm:text-xs"
             >
               Capital Planner
             </Link>
             <Link
-              href="/mxt/planning/capital/allocation"
+              href="/mxt/scout/capital/allocation"
               className="rounded-lg border border-sky-500/40 bg-sky-500/10 px-2 py-2 text-center text-[11px] font-medium leading-tight text-sky-200 hover:bg-sky-500/20 sm:px-3 sm:text-xs"
             >
               Allocation Board
@@ -572,7 +572,7 @@ export function PreviewPlanning({
                 <div className="mt-4 space-y-2" data-scout-outcome-panel>
                   <PlanRecordOutcomePanel plan={outcomePanelPlan} />
                   <Link
-                    href={`/mxt/planning/case?plan=${encodeURIComponent(outcomePanelPlan.id)}`}
+                    href={`/mxt/scout/case?plan=${encodeURIComponent(outcomePanelPlan.id)}`}
                     className="inline-block text-xs text-zinc-500 hover:text-zinc-300"
                   >
                     Case review (Blind / Reveal)

@@ -1,4 +1,5 @@
 import { createSupabaseAdmin } from "../supabase/server";
+import { assertMxtPersistenceWriteAllowed } from "../mxt-readonly";
 import { formatPlanId, PlanIdCollisionError } from "../plan-id";
 import { planRowToPlan, planToSupabaseRow } from "./mapping";
 import type { TradePlan } from "../plan-types";
@@ -22,6 +23,7 @@ export function createSupabasePlansStore(): PlansStore {
       return (data ?? []).map((row) => planRowToPlan(row as never));
     },
     async upsert(plan) {
+      assertMxtPersistenceWriteAllowed("trade_plans.upsert");
       const supabase = createSupabaseAdmin();
       const { error } = await supabase
         .from("trade_plans")
@@ -32,6 +34,7 @@ export function createSupabasePlansStore(): PlansStore {
     },
     async upsertMany(plans) {
       if (plans.length === 0) return;
+      assertMxtPersistenceWriteAllowed("trade_plans.upsertMany");
       const supabase = createSupabaseAdmin();
       const { error } = await supabase
         .from("trade_plans")
@@ -41,6 +44,7 @@ export function createSupabasePlansStore(): PlansStore {
       }
     },
     async allocateNextPlanId() {
+      assertMxtPersistenceWriteAllowed("allocate_trade_plan_id");
       // FAIL-CLOSED: no max+1 / client-side fallback. Missing RPC ⇒ hard error.
       // Deploy order: migration → verify RPC → app (see trade-plans-plan-id-seq.sql).
       const supabase = createSupabaseAdmin();
@@ -60,6 +64,7 @@ export function createSupabasePlansStore(): PlansStore {
       return id;
     },
     async insert(plan) {
+      assertMxtPersistenceWriteAllowed("trade_plans.insert");
       const supabase = createSupabaseAdmin();
       const { error } = await supabase.from("trade_plans").insert(planToSupabaseRow(plan));
       if (error) {

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack --hostname 0.0.0.0 -p 3002",
+    "dev": "node tools/register-local-env.cjs && next dev --turbopack --hostname 0.0.0.0 -p 3002",
     "dev:forge": "npm --prefix apps/forge run dev",
     "build": "next build",
     "build:forge": "npm --prefix apps/forge run build",
@@ -72,7 +72,9 @@
     "test:thesis-t0-horizon": "tsx tools/test-thesis-t0-horizon.ts",
     "test:thesis-case-blind-reveal": "tsx tools/test-thesis-case-blind-reveal.ts",
     "test:edge-decomposition": "tsx tools/test-edge-decomposition.ts",
-    "test:market-reality-mvp": "tsx tools/test-market-reality-mvp.ts"
+    "test:market-reality-mvp": "tsx tools/test-market-reality-mvp.ts",
+    "test:mxt-readonly-gate": "tsx tools/test-mxt-readonly-gate.ts",
+    "mxt:data-counts": "tsx tools/mxt-data-counts.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",

@@ -18,10 +18,10 @@ export default async function PlanningCasePage({
         <p>Select a plan to open Case review.</p>
         <p className="mt-2 text-xs text-zinc-600">
           Use{" "}
-          <code className="text-zinc-500">/mxt/planning/case?plan=PLAN-…</code>
+          <code className="text-zinc-500">/mxt/scout/case?plan=PLAN-…</code>
         </p>
         <Link
-          href={mxtPath("/planning")}
+          href={mxtPath("/scout")}
           className="mt-4 inline-block text-zinc-300 hover:underline"
         >
           ← Scout
@@ -36,7 +36,7 @@ export default async function PlanningCasePage({
       <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-zinc-400">
         <p>Plan not found: {id}</p>
         <Link
-          href={mxtPath("/planning")}
+          href={mxtPath("/scout")}
           className="mt-4 inline-block text-zinc-300 hover:underline"
         >
           ← Scout

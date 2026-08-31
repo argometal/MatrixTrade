@@ -1,4 +1,5 @@
 import { createSupabaseAdmin } from "../supabase/server";
+import { assertMxtPersistenceWriteAllowed } from "../mxt-readonly";
 import { observationRowToRecord, observationToRow } from "./mapping";
 import type { ObservationsStore } from "./types";
 
@@ -18,6 +19,7 @@ export function createSupabaseObservationsStore(): ObservationsStore {
       );
     },
     async upsert(row) {
+      assertMxtPersistenceWriteAllowed("observations.upsert");
       const supabase = createSupabaseAdmin();
       const { error } = await supabase
         .from("observations")

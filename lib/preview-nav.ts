@@ -19,8 +19,8 @@ export const PREVIEW_NAV_SECTIONS = [
     label: "Pipeline",
     items: [
       { href: mxtPath("/home-preview"), label: "Dashboard" },
-      { href: mxtPath("/planning"), label: "Scout" },
-      { href: mxtPath("/planning/capital"), label: "Capital" },
+      { href: mxtPath("/scout"), label: "Scout" },
+      { href: mxtPath("/scout/capital"), label: "Capital" },
     ],
   },
   {
@@ -47,7 +47,7 @@ export const PREVIEW_NAV_SECTIONS = [
 
 export const PREVIEW_MOBILE_TABS = [
   { href: mxtPath("/home-preview"), label: "Dashboard" },
-  { href: mxtPath("/planning"), label: "Scout" },
+  { href: mxtPath("/scout"), label: "Scout" },
   { href: mxtPath("/trades"), label: "Trades" },
 ] as const;
 
@@ -56,9 +56,10 @@ export function isPreviewNavActive(pathname: string, href: string): boolean {
   const target = stripMxtPrefix(href);
 
   if (target === "/home-preview") return path === "/home-preview";
-  if (target === "/trades-preview") return path === "/trades-preview" || path === "/planning";
-  if (target === "/planning/capital") {
-    return path === "/planning/capital" || path.startsWith("/planning/capital/");
+  if (target === "/trades-preview") return path === "/trades-preview" || path === "/scout" || path === "/planning";
+  if (target === "/scout/capital" || target === "/planning/capital") {
+    return path === "/scout/capital" || path.startsWith("/scout/capital/") ||
+      path === "/planning/capital" || path.startsWith("/planning/capital/");
   }
   if (target === "/settings/capital") {
     return path === "/settings/capital" || path.startsWith("/settings/capital/");
@@ -66,9 +67,11 @@ export function isPreviewNavActive(pathname: string, href: string): boolean {
   if (target === "/settings/security") {
     return path === "/settings/security" || path.startsWith("/settings/security/");
   }
-  if (target === "/planning") {
+  if (target === "/scout" || target === "/planning") {
     return (
+      path === "/scout" ||
       path === "/planning" ||
+      (path.startsWith("/scout/") && !path.startsWith("/scout/capital")) ||
       (path.startsWith("/planning/") && !path.startsWith("/planning/capital"))
     );
   }

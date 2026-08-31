@@ -22,11 +22,17 @@ function hasSupabaseEnv(): boolean {
   );
 }
 
+/** True when TRADES_STORE requests Supabase (including supabase-readonly alias). */
+function isSupabaseStoreRequested(): boolean {
+  const raw = process.env.TRADES_STORE?.trim().toLowerCase();
+  return raw === "supabase" || raw === "supabase-readonly";
+}
+
 export function getTradesStoreMode(): TradesStoreMode {
   const raw = process.env.TRADES_STORE?.trim().toLowerCase();
   if (raw === "json") return "json";
   if (!hasSupabaseEnv()) return "json";
-  if (raw === "supabase") return "supabase";
+  if (isSupabaseStoreRequested()) return "supabase";
   if (process.env.VERCEL_ENV === "production") return "supabase";
   return "json";
 }

@@ -20,6 +20,7 @@ export const MXT_LEGACY_PREFIXES = [
   "/exchange",
   "/ai-bridge",
   "/ai-workspace",
+  "/scout",
   "/planning",
   "/playbook",
   "/review",

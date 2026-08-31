@@ -1,4 +1,5 @@
 import { createSupabaseAdmin } from "../supabase/server";
+import { assertMxtPersistenceWriteAllowed } from "../mxt-readonly";
 import type { StockThesis } from "../stock-thesis-types";
 import { thesisRowToThesis, thesisToRow } from "./mapping";
 import type { StockThesesStore } from "./types";
@@ -14,6 +15,7 @@ export function createSupabaseStockThesesStore(): StockThesesStore {
       return (data ?? []).map((row) => thesisRowToThesis(row as never));
     },
     async upsert(thesis) {
+      assertMxtPersistenceWriteAllowed("stock_theses.upsert");
       const supabase = createSupabaseAdmin();
       const { error } = await supabase
         .from("stock_theses")
@@ -24,6 +26,7 @@ export function createSupabaseStockThesesStore(): StockThesesStore {
     },
     async upsertMany(theses) {
       if (theses.length === 0) return;
+      assertMxtPersistenceWriteAllowed("stock_theses.upsertMany");
       const supabase = createSupabaseAdmin();
       const { error } = await supabase
         .from("stock_theses")

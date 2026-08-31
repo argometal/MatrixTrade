@@ -8,7 +8,7 @@ import {
 } from "@/lib/situation-room";
 
 const QUICK_NAV = [
-  { href: "/mxt/planning", label: "Scout" },
+  { href: "/mxt/scout", label: "Scout" },
   { href: "/mxt/review", label: "Review" },
   { href: "/mxt/inbox", label: "History" },
   { href: "/mxt/stats", label: "Statistics" },
@@ -183,7 +183,7 @@ export function SituationRoomDashboard({ data }: { data: SituationRoomData }) {
                 {data.cycleLabel} (Current)
               </span>
               <Link
-                href="/mxt/planning"
+                href="/mxt/scout"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"
               >
                 + Scout

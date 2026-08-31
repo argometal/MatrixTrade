@@ -1,4 +1,5 @@
 import { createSupabaseAdmin } from "../supabase/server";
+import { assertMxtPersistenceWriteAllowed } from "../mxt-readonly";
 import {
   learningOutcomeRowToRecord,
   learningOutcomeToRow,
@@ -63,6 +64,7 @@ async function loadCanonicalByIdentity(
 }
 
 async function writeById(row: LearningOutcome): Promise<LearningOutcome> {
+  assertMxtPersistenceWriteAllowed("learning_outcomes.upsert");
   const supabase = createSupabaseAdmin();
   const { error } = await supabase
     .from("learning_outcomes")
@@ -103,6 +105,7 @@ export function createSupabaseLearningOutcomesStore(): LearningOutcomesStore {
       );
     },
     async upsert(row) {
+      assertMxtPersistenceWriteAllowed("learning_outcomes.upsert");
       // Independent loads — never skip the ID read via null-coalescing.
       const existingById = await loadById(row.id);
       const existingByIdentity = await loadCanonicalByIdentity(row);

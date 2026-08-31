@@ -13,7 +13,7 @@ export function TradingNav() {
       <Link href="/mxt/ai-bridge" className="hover:text-zinc-600">
         Assistant
       </Link>
-      <Link href="/mxt/planning" className="hover:text-zinc-600">
+      <Link href="/mxt/scout" className="hover:text-zinc-600">
         Scout
       </Link>
       <Link href="/mxt/trades" className="hover:text-zinc-600">
