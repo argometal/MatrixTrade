@@ -208,8 +208,9 @@ async function main() {
   // Mobile: Scout chrome collapses when plan map focuses
   assert.match(planning, /data-scout-map-focus/);
   assert.match(planning, /hidden lg:flex lg:flex-1 lg:flex-col/);
-  assert.match(planning, /htmlFor=\"scout-case\"/);
-  assert.match(planning, />\s*Case\s*</);
+  assert.match(planning, /htmlFor=\"scout-plan\"/);
+  assert.match(planning, />\s*Plan\s*</);
+  assert.match(planning, /Case Review/);
   assert.doesNotMatch(
     planning,
     /scoutCards\.map\(\(card\) => \{\s*const selected = card\.key/

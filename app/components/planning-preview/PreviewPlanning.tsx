@@ -268,7 +268,7 @@ export function PreviewPlanning({
   }, [learningFocusPlanId, plans, scoutPrimaryPlan]);
 
   const focusPlan = useMemo(() => {
-    // Case selector is the source of truth; URL ?plan= only seeds scoutCaseKey.
+    // Plan selector is the source of truth; URL ?plan= only seeds scoutCaseKey.
     if (scoutPrimaryPlan) return scoutPrimaryPlan;
     if (focusPlanId) return plans.find((p) => p.id === focusPlanId) ?? null;
     return null;
@@ -439,15 +439,15 @@ export function PreviewPlanning({
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <label
-                    htmlFor="scout-case"
+                    htmlFor="scout-plan"
                     className={`text-xs font-medium text-zinc-500 ${
                       mapFocusCompact ? "sr-only lg:not-sr-only" : ""
                     }`}
                   >
-                    Case
+                    Plan
                   </label>
                   <select
-                    id="scout-case"
+                    id="scout-plan"
                     value={focusedScoutCard?.key ?? ""}
                     onChange={(e) => setScoutCaseKey(e.target.value)}
                     className="min-w-[10rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
@@ -485,6 +485,16 @@ export function PreviewPlanning({
                       onClick={() => setPlanPanelOpen((v) => !v)}
                       view={panelLevelsView}
                     />
+                  ) : null}
+                  {focusedScoutCard?.primaryPlan ? (
+                    <Link
+                      href={`/mxt/scout/case?plan=${encodeURIComponent(
+                        focusedScoutCard.primaryPlan.id
+                      )}`}
+                      className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-200 hover:border-violet-400/60 hover:bg-violet-500/15"
+                    >
+                      Case Review
+                    </Link>
                   ) : null}
                 </div>
               </section>

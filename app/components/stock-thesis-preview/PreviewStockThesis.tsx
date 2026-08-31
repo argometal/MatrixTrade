@@ -15,6 +15,7 @@ import { buildPlanLevelsView } from "@/lib/plan-levels-board";
 import type { Playbook } from "@/lib/playbook-types";
 import type { StockProfileSynthesis } from "@/lib/stock-profile-synthesis";
 import type { TradePlan } from "@/lib/plan-types";
+import { mxtPath } from "@/lib/mxt-paths";
 import { DECISION_VERDICT_LABELS } from "@/lib/scout-decision-types";
 import {
   formatStockThesisZone,
@@ -137,8 +138,8 @@ export function PreviewStockThesis({
     { id: "history", label: "History" },
   ];
   const scoutHref = primaryPlan
-    ? `/mxt/planning?plan=${primaryPlan.id}`
-    : `/mxt/planning?thesis=${thesis.id}`;
+    ? mxtPath(`/scout?plan=${primaryPlan.id}`)
+    : mxtPath(`/scout?thesis=${thesis.id}`);
 
   return (
     <div className="flex h-full min-h-0 w-full overflow-hidden">
@@ -201,11 +202,11 @@ export function PreviewStockThesis({
           {primaryPlan ? (
             <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-4 text-sm">
               <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Active scout
+                Active plan
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Link
-                  href={`/mxt/planning?plan=${primaryPlan.id}`}
+                  href={mxtPath(`/scout?plan=${primaryPlan.id}`)}
                   className="font-medium text-violet-400 hover:text-violet-300"
                 >
                   {primaryPlan.id}
@@ -272,7 +273,7 @@ export function PreviewStockThesis({
                     htmlFor="stock-file-scout-plan"
                     className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500"
                   >
-                    Scout plan
+                    Plan
                   </label>
                   <select
                     id="stock-file-scout-plan"
@@ -422,7 +423,7 @@ export function PreviewStockThesis({
                 </p>
                 {activePlans.length > 1 ? (
                   <label className="mt-3 block text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
-                    Scout plan
+                    Plan
                     <select
                       value={primaryPlan?.id ?? ""}
                       onChange={(e) => setSelectedPlanId(e.target.value)}
