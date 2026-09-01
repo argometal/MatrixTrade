@@ -7,11 +7,30 @@ import {
   DEFAULT_THESIS_HORIZON_DAYS,
   type ThesisEpisodeStatus,
   type ThesisT0Confidence,
+  type ThesisT0DecisionSlice,
   type ThesisT0Freeze,
   type ThesisT0PlanGeometry,
   type ThesisT0StockContext,
 } from "./thesis-t0-types";
 import { getThesisT0Store } from "./thesis-t0-store";
+
+/** Episode key when Plan has no Stock Thesis — reuses freeze store, no new table. */
+export const PLAN_ONLY_THESIS_PREFIX = "PLAN-ONLY:";
+
+export function planOnlyThesisAnchor(planId: string): string {
+  return `${PLAN_ONLY_THESIS_PREFIX}${planId.trim().toUpperCase()}`;
+}
+
+export function isPlanOnlyThesisAnchor(id: string): boolean {
+  return id.toUpperCase().startsWith(PLAN_ONLY_THESIS_PREFIX);
+}
+
+/** Resolve freeze episode key: linked Stock Thesis, else plan-anchored id. */
+export function resolveThesisEpisodeKey(plan: TradePlan): string {
+  const linked = plan.stockThesisId?.trim();
+  if (linked) return linked.toUpperCase();
+  return planOnlyThesisAnchor(plan.id);
+}
 
 export function newThesisT0FreezeId(): string {
   return `T0-${randomBytes(6).toString("hex")}`;
@@ -79,7 +98,7 @@ function planGeometryFromPlan(plan: TradePlan): ThesisT0PlanGeometry {
   };
 }
 
-function decisionSlice(decision: ScoutDecision) {
+export function decisionSlice(decision: ScoutDecision): ThesisT0DecisionSlice {
   return {
     decisionId: decision.id,
     decidedAt: decision.decidedAt,
@@ -87,6 +106,35 @@ function decisionSlice(decision: ScoutDecision) {
     reasoning: decision.reasoning ?? null,
     challenges: [...decision.challenges],
     decidedBy: decision.decidedBy ?? null,
+    decisionConfidence:
+      decision.decisionConfidence != null &&
+      Number.isFinite(decision.decisionConfidence)
+        ? decision.decisionConfidence
+        : null,
+    opportunityQuality:
+      decision.opportunityQuality != null &&
+      Number.isFinite(decision.opportunityQuality)
+        ? decision.opportunityQuality
+        : null,
+    thesisQuality:
+      decision.thesisQuality != null && Number.isFinite(decision.thesisQuality)
+        ? decision.thesisQuality
+        : null,
+    planningRisk: decision.planningRisk
+      ? structuredClone(decision.planningRisk)
+      : null,
+    executionRisk: decision.executionRisk
+      ? structuredClone(decision.executionRisk)
+      : null,
+    locationEvidence: decision.locationEvidence?.trim()
+      ? decision.locationEvidence.trim()
+      : null,
+    confirmationEvidence: decision.confirmationEvidence?.trim()
+      ? decision.confirmationEvidence.trim()
+      : null,
+    confirmationCost: decision.confirmationCost
+      ? structuredClone(decision.confirmationCost)
+      : null,
   };
 }
 
@@ -113,12 +161,12 @@ export function buildThesisT0Freeze(input: {
   evaluationHorizonDays?: number;
   nowIso?: string;
 }): ThesisT0Freeze {
-  const stockThesisId = (input.plan.stockThesisId ?? "").toUpperCase();
+  const episodeKey = resolveThesisEpisodeKey(input.plan);
   const { t0, confidence: timeConfidence } = resolveT0Timestamp(
     input.plan,
     input.decision
   );
-  const stock = stockContextFromThesis(input.thesis, stockThesisId || "UNKNOWN");
+  const stock = stockContextFromThesis(input.thesis, episodeKey);
   const hasStockSnapshot =
     stock.thesis != null &&
     stock.currentHypothesis != null &&
@@ -171,28 +219,25 @@ export function buildThesisT0Freeze(input: {
 }
 
 /**
- * First committed Scout decision for a thesis creates an immutable T0 freeze.
+ * First committed Scout decision creates an immutable T0 freeze.
+ * Plans without stockThesisId use PLAN-ONLY:{planId} episode key (same store).
  * Later decisions / Stock File edits must not rewrite an existing open freeze body.
- * PLAN-002: append planId only; freeze stock/decision/geometry stay historical.
  */
 export async function ensureThesisT0OnScoutDecision(input: {
   plan: TradePlan;
   thesis?: StockThesis | null;
   evaluationHorizonDays?: number;
 }): Promise<{ freeze: ThesisT0Freeze | null; created: boolean }> {
-  const stockThesisId = input.plan.stockThesisId?.trim();
-  if (!stockThesisId) {
-    return { freeze: null, created: false };
-  }
   const decision = input.plan.decision;
   if (!decision) {
     return { freeze: null, created: false };
   }
 
+  const episodeKey = resolveThesisEpisodeKey(input.plan);
   const store = getThesisT0Store();
   await expireOpenEpisodesDue({ nowIso: new Date().toISOString() });
 
-  const open = await store.findOpenByStockThesisId(stockThesisId);
+  const open = await store.findOpenByStockThesisId(episodeKey);
   if (open) {
     // Immutability: never rewrite freeze payload. Optionally link new plan id.
     if (
@@ -211,9 +256,13 @@ export async function ensureThesisT0OnScoutDecision(input: {
   }
 
   let thesis = input.thesis;
-  if (thesis === undefined) {
+  const linkedThesisId = input.plan.stockThesisId?.trim();
+  if (thesis === undefined && linkedThesisId) {
     const { getStockThesisById } = await import("./stock-theses");
-    thesis = await getStockThesisById(stockThesisId);
+    thesis = await getStockThesisById(linkedThesisId);
+  }
+  if (!linkedThesisId) {
+    thesis = null;
   }
 
   const freeze = buildThesisT0Freeze({

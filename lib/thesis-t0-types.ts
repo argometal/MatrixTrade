@@ -4,7 +4,13 @@
  * Compact immutable freeze at first committed Scout decision.
  */
 
-import type { DecisionVerdict, ScoutDecisionSource } from "./scout-decision-types";
+import type { ConfirmationCost } from "./asymmetry-types";
+import type {
+  DecisionVerdict,
+  ExecutionRisk,
+  PlanningRisk,
+  ScoutDecisionSource,
+} from "./scout-decision-types";
 import type { LayeredEntryPlan } from "./layered-entry-types";
 import type { StockThesisLevels, StockThesisRiskRules } from "./stock-thesis-types";
 
@@ -37,6 +43,15 @@ export type ThesisT0DecisionSlice = {
   reasoning: string | null;
   challenges: string[];
   decidedBy: ScoutDecisionSource | null;
+  /** Criteria fields from ScoutDecision — frozen when present at commit. */
+  decisionConfidence?: number | null;
+  opportunityQuality?: number | null;
+  thesisQuality?: number | null;
+  planningRisk?: PlanningRisk | null;
+  executionRisk?: ExecutionRisk | null;
+  locationEvidence?: string | null;
+  confirmationEvidence?: string | null;
+  confirmationCost?: ConfirmationCost | null;
 };
 
 export type ThesisT0PlanGeometry = {

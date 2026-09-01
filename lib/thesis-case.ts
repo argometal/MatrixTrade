@@ -183,12 +183,22 @@ function buildT0Plan(freeze: ThesisT0Freeze): CaseT0Plan {
 
 function buildT0Decision(freeze: ThesisT0Freeze): CaseT0Decision | null {
   if (!freeze.decision) return null;
+  const d = freeze.decision;
   return {
-    decisionId: freeze.decision.decisionId,
-    decidedAt: freeze.decision.decidedAt,
-    verdict: freeze.decision.verdict,
-    reasoning: freeze.decision.reasoning,
-    challenges: [...freeze.decision.challenges],
+    decisionId: d.decisionId,
+    decidedAt: d.decidedAt,
+    verdict: d.verdict,
+    reasoning: d.reasoning,
+    challenges: [...d.challenges],
+    decidedBy: d.decidedBy ?? null,
+    decisionConfidence: d.decisionConfidence ?? null,
+    opportunityQuality: d.opportunityQuality ?? null,
+    thesisQuality: d.thesisQuality ?? null,
+    planningRisk: d.planningRisk ?? null,
+    executionRisk: d.executionRisk ?? null,
+    locationEvidence: d.locationEvidence ?? null,
+    confirmationEvidence: d.confirmationEvidence ?? null,
+    confirmationCost: d.confirmationCost ?? null,
   };
 }
 

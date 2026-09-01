@@ -73,6 +73,15 @@ export type CaseT0Decision = {
   verdict: DecisionVerdict;
   reasoning: string | null;
   challenges: string[];
+  decidedBy?: ScoutDecision["decidedBy"] | null;
+  decisionConfidence?: number | null;
+  opportunityQuality?: number | null;
+  thesisQuality?: number | null;
+  planningRisk?: ScoutDecision["planningRisk"] | null;
+  executionRisk?: ScoutDecision["executionRisk"] | null;
+  locationEvidence?: string | null;
+  confirmationEvidence?: string | null;
+  confirmationCost?: import("./asymmetry-types").ConfirmationCost | null;
 };
 
 /**

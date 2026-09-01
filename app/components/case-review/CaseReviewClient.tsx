@@ -4,7 +4,7 @@ import Link from "next/link";
 import type { ThesisCase } from "@/lib/thesis-case-types";
 import type { MarketRealityViewModel } from "@/lib/market-reality-types";
 import type { ExAnteLegacyPacket } from "@/lib/market-reality";
-import type { EdgeDecomposition } from "@/lib/edge-decomposition-types";
+import type { CaseEvaluation } from "@/lib/case-evaluation-types";
 import { mxtPath } from "@/lib/mxt-paths";
 import { MarketRealityPanel } from "@/app/components/case-review/MarketRealityPanel";
 
@@ -125,6 +125,42 @@ function T0EvidencePanel({ c }: { c: ThesisCase }) {
             value={
               t0Evidence.decision?.challenges?.length
                 ? t0Evidence.decision.challenges.join("\n")
+                : null
+            }
+          />
+          <Field
+            label="Confidence"
+            value={t0Evidence.decision?.decisionConfidence}
+          />
+          <Field
+            label="Opportunity Q"
+            value={t0Evidence.decision?.opportunityQuality}
+          />
+          <Field
+            label="Thesis Q"
+            value={t0Evidence.decision?.thesisQuality}
+          />
+          <Field
+            label="Location evidence"
+            value={t0Evidence.decision?.locationEvidence}
+          />
+          <Field
+            label="Confirmation evidence"
+            value={t0Evidence.decision?.confirmationEvidence}
+          />
+          <Field
+            label="Planning risk"
+            value={
+              t0Evidence.decision?.planningRisk
+                ? JSON.stringify(t0Evidence.decision.planningRisk, null, 2)
+                : null
+            }
+          />
+          <Field
+            label="Execution risk"
+            value={
+              t0Evidence.decision?.executionRisk
+                ? JSON.stringify(t0Evidence.decision.executionRisk, null, 2)
                 : null
             }
           />
@@ -269,37 +305,75 @@ function OutcomePanel({ c }: { c: ThesisCase }) {
   );
 }
 
-function EvaluationPanel({ d }: { d: EdgeDecomposition }) {
+function EvaluationPanel({ e }: { e: CaseEvaluation }) {
   return (
     <div className="space-y-4">
       <p className="text-xs text-zinc-500">
-        Edge Decomposition — evidence organization only. No scores or quality
-        labels.
+        Four independent lanes. Outcome never sets Decision Quality. Non-INDETERMINATE
+        conclusions show T0 → Reality evidence.
       </p>
-      <dl className="space-y-2">
+      <dl className="space-y-3">
+        <Field label="Decision Quality" value={e.decisionQuality.value} />
         <Field
-          label="Thesis evidence"
-          value={`${d.thesis.evidenceAvailable} · reality ${d.thesis.realityRelationship}`}
+          label="Decision evidence"
+          value={
+            e.decisionQuality.evidence.length
+              ? e.decisionQuality.evidence
+                  .map(
+                    (x) =>
+                      `T0: ${x.t0Ref}\nReality: ${x.realityRef}\n→ ${x.note}`
+                  )
+                  .join("\n\n")
+              : null
+          }
+        />
+        <Field label="Execution Quality" value={e.executionQuality.value} />
+        <Field
+          label="Execution evidence"
+          value={
+            e.executionQuality.evidence.length
+              ? e.executionQuality.evidence
+                  .map(
+                    (x) =>
+                      `T0: ${x.t0Ref}\nReality: ${x.realityRef}\n→ ${x.note}`
+                  )
+                  .join("\n\n")
+              : null
+          }
         />
         <Field
-          label="Controllable"
-          value={`${d.controllable.evidenceAvailable} · verdict ${d.controllable.decision.verdict ?? "—"} · exec ${d.controllable.execution.kind}`}
+          label="Reality Relationship"
+          value={e.realityRelationship.value}
         />
         <Field
-          label="External / reality"
-          value={`${d.externalConditions.evidenceAvailable} · obs ${d.externalConditions.variables.observationCount} · terminal ${d.externalConditions.variables.firstTerminalEvent ?? "—"}`}
+          label="Reality evidence"
+          value={
+            e.realityRelationship.evidence.length
+              ? e.realityRelationship.evidence
+                  .map(
+                    (x) =>
+                      `T0: ${x.t0Ref}\nReality: ${x.realityRef}\n→ ${x.note}`
+                  )
+                  .join("\n\n")
+              : null
+          }
         />
         <Field
-          label="Outcome"
-          value={`${d.outcome.evidenceAvailable} · ${d.outcome.variables.planOutcomeKind ?? d.outcome.variables.executionKind} · R ${d.outcome.variables.realizedResultR ?? d.outcome.variables.theoreticalResultR ?? "—"}`}
+          label="Outcome (facts)"
+          value={e.outcome.facts.join("\n")}
         />
       </dl>
-      {d.uncertainty.reasons.length > 0 ? (
-        <ul className="list-disc space-y-1 pl-4 text-xs text-zinc-400">
-          {d.uncertainty.reasons.map((r) => (
-            <li key={r}>{r}</li>
-          ))}
-        </ul>
+      {e.uncertainty.length > 0 ? (
+        <div>
+          <p className="mb-1 text-xs uppercase tracking-wide text-zinc-500">
+            Uncertainty
+          </p>
+          <ul className="list-disc space-y-1 pl-4 text-xs text-zinc-400">
+            {e.uncertainty.map((r) => (
+              <li key={r}>{r}</li>
+            ))}
+          </ul>
+        </div>
       ) : null}
     </div>
   );
@@ -321,7 +395,7 @@ export function CaseReviewClient({
     retrospective: MarketRealityViewModel;
     errors: string[];
   } | null;
-  evaluation: EdgeDecomposition;
+  evaluation: CaseEvaluation;
 }) {
   const c = thesisCase;
   const thesisHref = c.identity.stockThesisId
@@ -436,7 +510,7 @@ export function CaseReviewClient({
 
       <section className="space-y-3 border-t border-zinc-800 pt-6">
         <h2 className="text-sm font-medium text-zinc-200">Evaluation</h2>
-        <EvaluationPanel d={evaluation} />
+        <EvaluationPanel e={evaluation} />
       </section>
     </div>
   );
