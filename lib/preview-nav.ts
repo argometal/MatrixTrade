@@ -28,6 +28,7 @@ export const PREVIEW_NAV_SECTIONS = [
     label: "Book",
     items: [
       { href: mxtPath("/trades"), label: "Trades" },
+      { href: mxtPath("/learning"), label: "Learning" },
       { href: mxtPath("/playbook"), label: "Playbook" },
       { href: mxtPath("/stats"), label: "Insights" },
     ],
@@ -75,6 +76,9 @@ export function isPreviewNavActive(pathname: string, href: string): boolean {
     );
   }
   if (target === "/trades") return path === "/trades" || path.startsWith("/trades/");
+  if (target === "/learning") {
+    return path === "/learning" || path.startsWith("/learning/");
+  }
   if (target === "/stats") return path === "/stats" || path.startsWith("/stats/");
   return path === target || path.startsWith(`${target}/`);
 }
