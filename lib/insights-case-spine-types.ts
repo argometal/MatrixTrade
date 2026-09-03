@@ -22,8 +22,8 @@ import type { HistoricalCaseAttribution } from "./historical-case-attribution";
 /** Product Case family for Insights cards / filters. */
 export type InsightsCaseFamily = "A" | "B" | "C" | "D" | "INDETERMINATE";
 
-/** Provenance of MAF rows in canonical Insights runtime (local JSON today). */
-export type MafEvidenceSource = "local_json";
+/** Provenance of MAF rows — follows configured MAF store (JSON vs Supabase). */
+export type MafEvidenceSource = "local_json" | "supabase";
 
 /**
  * Optional MAF attribution evidence attached to a Case row.

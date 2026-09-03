@@ -65,7 +65,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
       "Decision Quality evaluates whether the original T0 decision was supported by frozen evidence — Outcome does not rewrite DQ.",
       "Execution Quality: whether actual execution respected frozen Plan geometry/constraints.",
       "Counterfactual R is hypothetical plan-path magnitude — not realized P/L, not DQ, not proof a No Entry was wrong.",
-      "MAF attribution describes possible component drag; it does not independently determine Case Family or DQ. Canonical runtime uses local MAF JSON until a cloud store is authorized.",
+      "MAF attribution describes possible component drag; it does not independently determine Case Family or DQ. Persistence follows the Matrix store gate (local JSON or Supabase maf_experiments).",
       "False Virtuous Loop: the system may look disciplined because it often avoids entries, while evidence suggests excessive filtering may suppress valid participation and learning. High No Entry alone is not failure.",
       "Case Review shows T0 → Reality → Execution → Outcome → Evaluation → Equation → Diagnosis for one Case.",
       "Historical/pre-MXT closed trades may contribute reconstructed review/MAF attribution inside Pipeline — never as verified T0.",

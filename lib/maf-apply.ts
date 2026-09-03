@@ -125,10 +125,35 @@ export async function applyAttribution(
     source: "attribution",
   };
 
-  await upsertMafExperiment(experiment);
+  try {
+    await upsertMafExperiment(experiment);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (message.includes("[MXT_READ_ONLY]") || message.includes("MXT_READ_ONLY")) {
+      return {
+        errors: [
+          message,
+          "Canonical MAF persistence is read-only in this runtime — Accept attribution was not applied.",
+        ],
+      };
+    }
+    throw err;
+  }
 
   if (learningOutcome?.id) {
-    await markLearningOutcomeAttributed(learningOutcome.id, experiment.id);
+    try {
+      await markLearningOutcomeAttributed(learningOutcome.id, experiment.id);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes("[MXT_READ_ONLY]") || message.includes("MXT_READ_ONLY")) {
+        return {
+          errors: [
+            `MAF ${experiment.id} write blocked or LO link blocked under read-only: ${message}`,
+          ],
+        };
+      }
+      throw err;
+    }
   }
 
   return { experiment };

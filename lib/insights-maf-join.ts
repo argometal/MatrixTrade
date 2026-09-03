@@ -2,11 +2,11 @@
  * MAF → Insights Case join (MXT 016-P09 S5).
  * Attribution evidence only — never Case family / DQ / EQ authority.
  *
- * Persistence today: local JSON (`data/maf-experiments.json`).
- * No Supabase MAF table — do not present MAF as canonical cloud evidence.
+ * Persistence follows Matrix store gate (JSON local or Supabase maf_experiments).
  */
 
 import type { MafExperiment } from "./maf-types";
+import { getMafExperimentsStoreMode } from "./maf-store";
 import type {
   InsightsCaseMafAttribution,
   InsightsCaseRow,
@@ -15,10 +15,15 @@ import type {
 
 export type { InsightsCaseMafAttribution, MafEvidenceSource };
 
+/** @deprecated Prefer resolveMafEvidenceSource() — kept for callers that need a constant. */
 export const MAF_EVIDENCE_SOURCE: MafEvidenceSource = "local_json";
 
+export function resolveMafEvidenceSource(): MafEvidenceSource {
+  return getMafExperimentsStoreMode() === "supabase" ? "supabase" : "local_json";
+}
+
 export const MAF_SOURCE_HELP =
-  "Attribution source: local MAF evidence. MAF explains possible component drag; it does not independently determine Case Family or Decision Quality.";
+  "Attribution source: accepted MAF experiments from the active Matrix store. MAF explains possible component drag; it does not independently determine Case Family or Decision Quality.";
 
 /**
  * Unambiguous join only: planId match, or LO mafExperimentId / tradeId
@@ -41,12 +46,14 @@ export function resolveMafForCase(input: {
       : input.experiments.filter(
           (e) => e.learningOutcomeId?.toUpperCase() === loNeedle
         );
+  const source = resolveMafEvidenceSource();
+
   if (byLo.length === 1) {
     const e = byLo[0]!;
     return {
       mafExperimentId: e.id,
       primaryDragComponent: e.primaryDragComponent ?? null,
-      source: MAF_EVIDENCE_SOURCE,
+      source,
     };
   }
 
@@ -61,7 +68,7 @@ export function resolveMafForCase(input: {
     return {
       mafExperimentId: e.id,
       primaryDragComponent: e.primaryDragComponent ?? null,
-      source: MAF_EVIDENCE_SOURCE,
+      source,
     };
   }
 
@@ -73,7 +80,7 @@ export function resolveMafForCase(input: {
     return {
       mafExperimentId: e.id,
       primaryDragComponent: e.primaryDragComponent ?? null,
-      source: MAF_EVIDENCE_SOURCE,
+      source,
     };
   }
 
