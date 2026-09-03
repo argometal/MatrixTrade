@@ -14,6 +14,14 @@ import {
   type PipelinePerformanceFilters,
 } from "@/lib/insights-pipeline-performance";
 import { MAF_COMPONENT_LABELS, type MafComponentId } from "@/lib/maf-types";
+import {
+  buildInsightsCaseSpineView,
+  type InsightsCaseFamily,
+} from "@/lib/insights-case-spine-view";
+import type { InsightsCaseRow } from "@/lib/insights-case-spine-types";
+import type { InsightsCaseCardMetric } from "@/lib/insights-case-spine-types";
+import type { DecisionQuality } from "@/lib/case-evaluation-types";
+import type { NoEntryDiagnosisClass } from "@/lib/case-diagnosis-types";
 
 function formatR(value: number): string {
   const sign = value > 0 ? "+" : "";
@@ -25,10 +33,82 @@ function formatUsd(value: number): string {
   return `${sign}$${value.toFixed(2)}`;
 }
 
+function formatPct(rate: number | null): string {
+  if (rate === null) return "—";
+  return `${(rate * 100).toFixed(1)}%`;
+}
+
 function tone(value: number): string {
   if (value > 0) return "text-emerald-400";
   if (value < 0) return "text-red-400";
   return "text-zinc-300";
+}
+
+function diagnosisLabel(row: InsightsCaseRow): string {
+  if (row.family === "B" && row.noEntryDiagnosis) {
+    if (row.noEntryDiagnosis === "GOOD_FILTER") return "Good Filter";
+    if (row.noEntryDiagnosis === "OVER_OPTIMIZATION") {
+      return "Possible Over-Optimization";
+    }
+    return "Indeterminate";
+  }
+  if (row.family === "INDETERMINATE") return "Indeterminate";
+  return row.family;
+}
+
+function MetricCard({
+  metric,
+  active,
+  onClick,
+  testId,
+}: {
+  metric: InsightsCaseCardMetric;
+  active?: boolean;
+  onClick?: () => void;
+  testId?: string;
+}) {
+  const interactive = Boolean(onClick);
+  const className = `rounded-xl border px-3 py-3 text-left ${
+    active
+      ? "border-violet-600/60 bg-violet-950/30"
+      : "border-zinc-800 bg-zinc-950/50"
+  } ${interactive ? "cursor-pointer hover:border-zinc-600" : ""}`;
+
+  const body = (
+    <>
+      <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+        {metric.label}
+      </p>
+      <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-100">
+        {metric.numerator}
+        <span className="ml-1 text-xs font-normal text-zinc-500">
+          / {metric.denominator}
+        </span>
+      </p>
+      <p className="mt-0.5 text-xs tabular-nums text-zinc-400">
+        {formatPct(metric.rate)}
+      </p>
+    </>
+  );
+
+  if (interactive) {
+    return (
+      <button
+        type="button"
+        className={className}
+        onClick={onClick}
+        data-case-card={testId ?? metric.label}
+        aria-pressed={active}
+      >
+        {body}
+      </button>
+    );
+  }
+  return (
+    <div className={className} data-case-card={testId ?? metric.label}>
+      {body}
+    </div>
+  );
 }
 
 export type PipelinePerformancePlaybookOption = {
@@ -36,12 +116,21 @@ export type PipelinePerformancePlaybookOption = {
   name: string;
 };
 
+const DQ_OPTIONS: DecisionQuality[] = [
+  "supported",
+  "weakly_supported",
+  "not_supported",
+  "INDETERMINATE",
+];
+
 export function PreviewPipelinePerformance({
   input,
   playbooks,
+  caseSpine = [],
 }: {
   input: Omit<PipelinePerformanceInput, "filters">;
   playbooks: PipelinePerformancePlaybookOption[];
+  caseSpine?: InsightsCaseRow[];
 }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -53,6 +142,15 @@ export function PreviewPipelinePerformance({
   const [executedMode, setExecutedMode] = useState<PipelineExecutedMode>("all");
   const [pipelineComponent, setPipelineComponent] = useState<
     MafComponentId | "all"
+  >("all");
+  const [caseFamily, setCaseFamily] = useState<InsightsCaseFamily | "all">(
+    "all"
+  );
+  const [noEntryDiagnosis, setNoEntryDiagnosis] = useState<
+    NoEntryDiagnosisClass | "all"
+  >("all");
+  const [decisionQuality, setDecisionQuality] = useState<
+    DecisionQuality | "all"
   >("all");
 
   const filters: PipelinePerformanceFilters = useMemo(
@@ -73,13 +171,50 @@ export function PreviewPipelinePerformance({
     [input, filters]
   );
 
+  const caseView = useMemo(
+    () =>
+      buildInsightsCaseSpineView(caseSpine, {
+        from: filters.from,
+        to: filters.to,
+        ticker: filters.ticker,
+        playbookId: filters.playbookId,
+        caseFamily,
+        noEntryDiagnosis,
+        decisionQuality,
+      }),
+    [
+      caseSpine,
+      filters.from,
+      filters.to,
+      filters.ticker,
+      filters.playbookId,
+      caseFamily,
+      noEntryDiagnosis,
+      decisionQuality,
+    ]
+  );
+
   const tickers = useMemo(() => {
     const set = new Set<string>();
     for (const lo of input.learningOutcomes) set.add(lo.ticker.toUpperCase());
     for (const p of input.plans) set.add(p.ticker.toUpperCase());
     for (const t of input.trades) set.add(t.ticker.toUpperCase());
+    for (const r of caseSpine) set.add(r.ticker.toUpperCase());
     return [...set].sort();
-  }, [input]);
+  }, [input, caseSpine]);
+
+  const fvl = caseView.aggregate.falseVirtuousLoop;
+  const condition = caseView.aggregate.currentCondition;
+
+  function applyFamilyFilter(family: InsightsCaseFamily) {
+    setCaseFamily((prev) => (prev === family ? "all" : family));
+    if (family !== "B") setNoEntryDiagnosis("all");
+  }
+
+  function applyNoEntryFilter(dx: NoEntryDiagnosisClass) {
+    setCaseFamily("B");
+    setNoEntryDiagnosis((prev) => (prev === dx ? "all" : dx));
+  }
 
   return (
     <div
@@ -87,13 +222,9 @@ export function PreviewPipelinePerformance({
       data-insights-pipeline-performance
     >
       <p className="text-sm text-zinc-500">
-        Pipeline component results across executed trades and Scout outcomes.
-        Realized P/L stays separate from counterfactual Scout R. Missed Scouts
-        are never counted as Trade wins or losses.
-      </p>
-      <p className="text-[11px] text-zinc-600">
-        Future note: Mistakes may become a cross-tab filter instead of a full
-        Insights tab.
+        Case equations feed this surface. Realized P/L stays separate from
+        counterfactual Scout R. Missed Scouts are never counted as Trade wins or
+        losses.
       </p>
 
       <section
@@ -179,6 +310,60 @@ export function PreviewPipelinePerformance({
             <option value="non_executed">Non-executed only</option>
           </select>
         </label>
+        <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
+          Case family
+          <select
+            value={caseFamily}
+            onChange={(e) =>
+              setCaseFamily(e.target.value as InsightsCaseFamily | "all")
+            }
+            className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm normal-case text-zinc-200"
+            data-filter-case-family
+          >
+            <option value="all">All</option>
+            <option value="A">A</option>
+            <option value="B">B — No entry</option>
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="INDETERMINATE">Indeterminate</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
+          No-entry diagnosis
+          <select
+            value={noEntryDiagnosis}
+            onChange={(e) =>
+              setNoEntryDiagnosis(
+                e.target.value as NoEntryDiagnosisClass | "all"
+              )
+            }
+            className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm normal-case text-zinc-200"
+            data-filter-no-entry-diagnosis
+          >
+            <option value="all">All</option>
+            <option value="GOOD_FILTER">Good Filter</option>
+            <option value="OVER_OPTIMIZATION">Possible Over-Optimization</option>
+            <option value="INDETERMINATE">Indeterminate</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
+          Decision Quality
+          <select
+            value={decisionQuality}
+            onChange={(e) =>
+              setDecisionQuality(e.target.value as DecisionQuality | "all")
+            }
+            className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm normal-case text-zinc-200"
+            data-filter-decision-quality
+          >
+            <option value="all">All</option>
+            {DQ_OPTIONS.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500 sm:col-span-2 lg:col-span-3">
           Pipeline component
           <select
@@ -198,13 +383,122 @@ export function PreviewPipelinePerformance({
         </label>
       </section>
 
-      {view.empty ? (
+      {/* Condición Actual */}
+      <section
+        className={`rounded-2xl border px-4 py-3 ${
+          fvl.suspected
+            ? "border-amber-800/60 bg-amber-950/25"
+            : condition.code === "INSUFFICIENT_EVIDENCE"
+              ? "border-violet-900/50 bg-violet-950/20"
+              : "border-zinc-800 bg-zinc-900/40"
+        }`}
+        data-case-condition-banner
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+          Condición Actual
+        </p>
+        <p className="mt-1 text-sm font-medium text-zinc-100">
+          {condition.statement}
+        </p>
+        <p className="mt-1 text-[11px] text-zinc-500">
+          {condition.code} · {fvl.equationId}:{" "}
+          {fvl.suspected
+            ? `suspected — entryRate=${
+                fvl.inputs.entryRate != null
+                  ? formatPct(fvl.inputs.entryRate)
+                  : "—"
+              }, overOpt=${fvl.inputs.overOptimization}/${fvl.inputs.noEntryDiagnosedDenom}`
+            : "no false-virtuous-loop suspicion"}
+          {" · "}
+          Cards use <span className="text-zinc-400">CURRENT FILTERED</span>{" "}
+          Case universe ({caseView.rows.length}).
+        </p>
+      </section>
+
+      {/* Row 1 — Case accounting */}
+      <section data-case-accounting>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          Case accounting (A / B / C / D)
+        </h2>
+        <p className="mt-1 text-[11px] text-zinc-600">
+          Equations from Learning engine. B = no-entry participation (see filter
+          quality below). Rates vs filtered total Cases.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+          <MetricCard metric={caseView.cards.totalCases} testId="total" />
+          <MetricCard
+            metric={caseView.cards.familyA}
+            active={caseFamily === "A"}
+            onClick={() => applyFamilyFilter("A")}
+            testId="A"
+          />
+          <MetricCard
+            metric={caseView.cards.familyB}
+            active={caseFamily === "B" && noEntryDiagnosis === "all"}
+            onClick={() => applyFamilyFilter("B")}
+            testId="B"
+          />
+          <MetricCard
+            metric={caseView.cards.familyC}
+            active={caseFamily === "C"}
+            onClick={() => applyFamilyFilter("C")}
+            testId="C"
+          />
+          <MetricCard
+            metric={caseView.cards.familyD}
+            active={caseFamily === "D"}
+            onClick={() => applyFamilyFilter("D")}
+            testId="D"
+          />
+          <MetricCard
+            metric={caseView.cards.indeterminate}
+            active={caseFamily === "INDETERMINATE"}
+            onClick={() => applyFamilyFilter("INDETERMINATE")}
+            testId="INDETERMINATE"
+          />
+        </div>
+      </section>
+
+      {/* Row 2 — No-entry filter quality */}
+      <section data-no-entry-filter-quality>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          No-entry filter quality
+        </h2>
+        <p className="mt-1 text-[11px] text-zinc-600">
+          Denominator = no-entry Cases in filtered universe (
+          {caseView.aggregate.noEntryUniverse}). Correct filtering vs possible
+          over-optimization — equations, not narrative.
+        </p>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <MetricCard
+            metric={caseView.cards.goodFilter}
+            active={noEntryDiagnosis === "GOOD_FILTER"}
+            onClick={() => applyNoEntryFilter("GOOD_FILTER")}
+            testId="GOOD_FILTER"
+          />
+          <MetricCard
+            metric={caseView.cards.overOptimization}
+            active={noEntryDiagnosis === "OVER_OPTIMIZATION"}
+            onClick={() => applyNoEntryFilter("OVER_OPTIMIZATION")}
+            testId="OVER_OPTIMIZATION"
+          />
+          <MetricCard
+            metric={caseView.cards.noEntryIndeterminate}
+            active={
+              caseFamily === "B" && noEntryDiagnosis === "INDETERMINATE"
+            }
+            onClick={() => applyNoEntryFilter("INDETERMINATE")}
+            testId="NE_INDETERMINATE"
+          />
+        </div>
+      </section>
+
+      {view.empty && caseView.rows.length === 0 ? (
         <p
           className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-8 text-center text-sm text-zinc-500"
           data-pipeline-empty
         >
-          No pipeline outcomes match these filters. Record Learning Outcomes,
-          plan outcomes, or MAF attributions to populate this view.
+          No pipeline outcomes or Cases match these filters.
         </p>
       ) : (
         <>
@@ -253,7 +547,9 @@ export function PreviewPipelinePerformance({
                 </div>
                 <div>
                   <dt className="text-zinc-500">Realized R</dt>
-                  <dd className={`tabular-nums ${tone(view.realized.realizedRSum)}`}>
+                  <dd
+                    className={`tabular-nums ${tone(view.realized.realizedRSum)}`}
+                  >
                     {formatR(view.realized.realizedRSum)}
                   </dd>
                 </div>
@@ -274,6 +570,10 @@ export function PreviewPipelinePerformance({
               <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Counterfactual performance (Scout — not P/L)
               </h2>
+              <p className="mt-1 text-[11px] text-zinc-600">
+                Counterfactual R measures hypothetical plan path, not whether the
+                original decision was correct.
+              </p>
               <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <dt className="text-zinc-500">Evaluated Scouts</dt>
@@ -325,8 +625,8 @@ export function PreviewPipelinePerformance({
                 <span data-pipeline-pending-obs>
                   {view.pendingObservationCount}
                 </span>
-                . Triggered-without-Trade and thesis rates are Scout/MAF metrics — never
-                Trade P/L.
+                . Triggered-without-Trade and thesis rates are Scout/MAF metrics —
+                never Trade P/L.
               </p>
             </div>
           </section>
@@ -390,9 +690,107 @@ export function PreviewPipelinePerformance({
             )}
           </section>
 
+          {/* Unified Case drill-down */}
+          <section data-case-drilldown>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Case drill-down
+            </h2>
+            <p className="mt-1 text-[11px] text-zinc-600">
+              Showing {caseView.rows.length} Case
+              {caseView.rows.length === 1 ? "" : "s"} (filtered). Record opens
+              Case Review.
+            </p>
+            {caseView.rows.length === 0 ? (
+              <p className="mt-3 text-sm text-zinc-500">
+                No Cases match Case filters.
+              </p>
+            ) : (
+              <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-800">
+                <table className="min-w-[720px] w-full text-left text-sm">
+                  <thead className="border-b border-zinc-800 text-xs uppercase tracking-wide text-zinc-500">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">Date</th>
+                      <th className="px-3 py-2 font-medium">Ticker</th>
+                      <th className="px-3 py-2 font-medium">Plan / Case</th>
+                      <th className="px-3 py-2 font-medium">Family</th>
+                      <th className="px-3 py-2 font-medium">Diagnosis</th>
+                      <th className="px-3 py-2 font-medium">DQ</th>
+                      <th className="px-3 py-2 font-medium">EQ</th>
+                      <th className="px-3 py-2 font-medium">Outcome</th>
+                      <th className="px-3 py-2 font-medium">Realized</th>
+                      <th className="px-3 py-2 font-medium">Counterfactual</th>
+                      <th className="px-3 py-2 font-medium">Record</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800">
+                    {caseView.rows.map((row) => (
+                      <tr
+                        key={row.planId}
+                        className="bg-zinc-950/40"
+                        data-case-row={row.planId}
+                        data-case-family={row.family}
+                        data-case-diagnosis={row.noEntryDiagnosis ?? ""}
+                        title={`${row.equationId}: ${row.diagnosisReason}${
+                          row.missingInputs.length
+                            ? ` · missing: ${row.missingInputs.join(", ")}`
+                            : ""
+                        }`}
+                      >
+                        <td className="px-3 py-2 tabular-nums text-zinc-400">
+                          {row.date.slice(0, 10)}
+                        </td>
+                        <td className="px-3 py-2 text-zinc-100">{row.ticker}</td>
+                        <td className="px-3 py-2 font-mono text-xs text-zinc-300">
+                          {row.planId}
+                        </td>
+                        <td className="px-3 py-2 text-zinc-200">{row.family}</td>
+                        <td className="px-3 py-2 text-xs text-zinc-300">
+                          {diagnosisLabel(row)}
+                          <div className="font-mono text-[10px] text-zinc-600">
+                            {row.equationId}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2 text-xs text-zinc-400">
+                          {row.decisionQuality}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-zinc-400">
+                          {row.executionQuality}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-zinc-400">
+                          {row.outcomeLabel ?? "—"}
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-zinc-300">
+                          {row.realizedR != null ? formatR(row.realizedR) : "—"}
+                          {row.realizedPnL != null
+                            ? ` · ${formatUsd(row.realizedPnL)}`
+                            : ""}
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-zinc-300">
+                          {row.counterfactualR != null
+                            ? formatR(row.counterfactualR)
+                            : "—"}
+                        </td>
+                        <td className="px-3 py-2">
+                          <Link
+                            href={row.caseHref}
+                            className="text-violet-400 hover:text-violet-300 hover:underline"
+                            data-case-drill-href={row.caseHref}
+                          >
+                            Case
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          {/* Legacy LO drill-down preserved */}
           <section data-pipeline-drilldown>
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-              Drill-down
+              Learning Outcome drill-down (path accounting)
             </h2>
             <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-800">
               <table className="min-w-[640px] w-full text-left text-sm">
@@ -414,11 +812,6 @@ export function PreviewPipelinePerformance({
                       className="bg-zinc-950/40"
                       data-pipeline-row={row.id}
                       data-pipeline-outcome={row.outcomeType}
-                      data-learning-outcome-id={row.learningOutcomeId ?? ""}
-                      data-trade-id={row.tradeId ?? ""}
-                      data-plan-id={row.planId ?? ""}
-                      data-observation-id={row.observationId ?? ""}
-                      data-maf-id={row.mafExperimentId ?? ""}
                     >
                       <td className="px-3 py-2 tabular-nums text-zinc-400">
                         {row.date.slice(0, 10)}
@@ -454,7 +847,6 @@ export function PreviewPipelinePerformance({
                         <Link
                           href={row.href}
                           className="text-violet-400 hover:text-violet-300 hover:underline"
-                          data-pipeline-drill-href={row.href}
                         >
                           {row.tradeId ??
                             row.planId ??

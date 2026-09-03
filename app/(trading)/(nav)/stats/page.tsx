@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { PreviewInsightsHub } from "@/app/components/insights-preview/PreviewInsightsHub";
 import type { InsightsTabId } from "@/app/components/insights-preview/PreviewInsightsHub";
 import { loadStatsPageData } from "@/lib/load-stats-page-data";
+import { buildInsightsCaseSpine } from "@/lib/insights-case-spine";
 import { getLearningOutcomes } from "@/lib/learning-outcome-store";
 import { getMafExperiments } from "@/lib/maf-store";
 import { getObservations } from "@/lib/observation-store";
@@ -39,6 +40,7 @@ export default async function StatsPage({
     plans,
     observations,
     mafExperiments,
+    caseSpine,
   ] = await Promise.all([
     loadStatsPageData(),
     getTrades(),
@@ -48,6 +50,7 @@ export default async function StatsPage({
     settled(getPlans(), []),
     settled(getObservations(), []),
     settled(getMafExperiments(), []),
+    settled(buildInsightsCaseSpine(), []),
   ]);
 
   const closed = trades
@@ -73,6 +76,7 @@ export default async function StatsPage({
           observations,
           mafExperiments,
         }}
+        caseSpine={caseSpine}
       />
     </Suspense>
   );
