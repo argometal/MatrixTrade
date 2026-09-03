@@ -37,6 +37,7 @@ export const PREVIEW_NAV_SECTIONS = [
     label: "System",
     items: [
       { href: mxtPath("/inbox"), label: "Proposals", badge: "inbox" as const },
+      { href: mxtPath("/help"), label: "Help" },
       { href: mxtPath("/settings/capital"), label: "Capital Settings" },
       { href: mxtPath("/settings/security"), label: "Security" },
       { href: mxtPath("/system"), label: "System" },
@@ -76,5 +77,6 @@ export function isPreviewNavActive(pathname: string, href: string): boolean {
   }
   if (target === "/trades") return path === "/trades" || path.startsWith("/trades/");
   if (target === "/stats") return path === "/stats" || path.startsWith("/stats/");
+  if (target === "/help") return path === "/help" || path.startsWith("/help/");
   return path === target || path.startsWith(`${target}/`);
 }

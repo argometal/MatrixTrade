@@ -22,6 +22,7 @@ import type {
   MarketRealityLevelGeometry,
   MarketRealityViewModel,
 } from "./market-reality-types";
+import type { ThesisT0Freeze } from "./thesis-t0-types";
 
 export type ExAnteLegacyPacket = {
   integrity: "supported_legacy";
@@ -71,6 +72,36 @@ export function geometryFromPlanAndThesis(
     stop: plan.stopPrice ?? null,
     target: plan.targetPrice ?? null,
   };
+}
+
+/** Prefer immutable T0 freeze geometry over live Plan/Thesis. */
+export function geometryFromThesisT0Freeze(
+  freeze: ThesisT0Freeze
+): MarketRealityLevelGeometry {
+  const zone = freeze.stock.levels?.primaryZone;
+  return {
+    plannedEntry: freeze.plan.plannedEntry ?? null,
+    supportLow: zone?.low ?? null,
+    supportHigh: zone?.high ?? null,
+    stop: freeze.plan.stopPrice ?? null,
+    target: freeze.plan.targetPrice ?? null,
+  };
+}
+
+/**
+ * Case Reality geometry: freeze when usable, else live fallback.
+ * Historical Cases must not silently track later Thesis/Plan edits.
+ */
+export function geometryForCaseEvaluation(input: {
+  freeze: ThesisT0Freeze | null | undefined;
+  plan: TradePlan;
+  thesis?: StockThesis | null;
+}): MarketRealityLevelGeometry {
+  const freeze = input.freeze;
+  if (freeze && freeze.confidence !== "unavailable") {
+    return geometryFromThesisT0Freeze(freeze);
+  }
+  return geometryFromPlanAndThesis(input.plan, input.thesis);
 }
 
 export function buildExAnteLegacyPacket(

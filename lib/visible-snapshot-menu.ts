@@ -130,7 +130,7 @@ export const CONTROL_NAV_LABELS_NOT_COPY_TARGETS = [
   "Playbook",
   "Scout Desk",
   "MAF",
-  "Learning",
+  "Insights",
 ] as const;
 
 /** Internal resources with no dedicated visible copy row (do not invent a label). */
@@ -164,7 +164,7 @@ export function formatSnapshotMenuForMechanics(): string {
     "There is NO Request / Universal Request layer — the human already stated the task in chat.",
     "Control primary nav (opens drawers; not copy buttons): MTA Mechanics · Stock Files · Apply.",
     "Control Library nav (opens drawers; not copy buttons): Technical Analysis · Playbook · Scout Desk · MAF.",
-    "FORBIDDEN: do not ask the human to copy nav names Technical Analysis, Playbook, Scout Desk, Learning, MAF, or Stock Files — open the section, then name the exact copy row below.",
+    "FORBIDDEN: do not ask the human to copy nav names Technical Analysis, Playbook, Scout Desk, Insights, MAF, or Stock Files — open the section, then name the exact copy row below.",
     "FORBIDDEN: do not ask for Control → Closed trade / Session / Case / Request / Update / Train AI — retired labels.",
     "Human copies via Control, Dashboard, Stock File CTA, or the Trade window.",
   ];

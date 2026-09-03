@@ -262,6 +262,25 @@ export function PreviewPipelinePerformance({
     [caseView.rows]
   );
 
+  const casesForReview = useMemo(() => {
+    const scored = caseView.rows.map((row) => {
+      let score = 0;
+      if (!row.t0Available) score += 100;
+      if (row.noEntryDiagnosis === "OVER_OPTIMIZATION") score += 50;
+      if (row.noEntryDiagnosis === "INDETERMINATE") score += 25;
+      if (row.family === "D") score += 45;
+      if (row.decisionQuality === "INDETERMINATE") score += 40;
+      if (row.executionQuality === "violated") score += 35;
+      if (row.linkage?.planThesis === "UNLINKED") score += 20;
+      if (row.linkage?.planPlaybook === "UNLINKED") score += 10;
+      return { row, score };
+    });
+    return scored
+      .filter((x) => x.score > 0)
+      .sort((a, b) => b.score - a.score || a.row.planId.localeCompare(b.row.planId))
+      .slice(0, 12);
+  }, [caseView.rows]);
+
   function applyFamilyFilter(family: InsightsCaseFamily) {
     setCaseFamily((prev) => (prev === family ? "all" : family));
     if (family !== "B") setNoEntryDiagnosis("all");
@@ -624,6 +643,71 @@ export function PreviewPipelinePerformance({
         </div>
       </section>
 
+      {/* Cases needing review */}
+      <section
+        className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4"
+        data-cases-for-review
+      >
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+          Cases needing review
+        </h2>
+        <p className="mt-1 text-[11px] text-zinc-600">
+          Priority queue: missing T0, over-optimization suspicion, D failures,
+          UNLINKED thesis/playbook. Open Case Review for equation evidence.
+        </p>
+        {casesForReview.length === 0 ? (
+          <p className="mt-2 text-sm text-zinc-500">No review priorities in filter.</p>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="border-b border-zinc-800 text-xs uppercase tracking-wide text-zinc-500">
+                <tr>
+                  <th className="px-2 py-2 font-medium">Case</th>
+                  <th className="px-2 py-2 font-medium">Family</th>
+                  <th className="px-2 py-2 font-medium">Why</th>
+                  <th className="px-2 py-2 font-medium">Link</th>
+                  <th className="px-2 py-2 font-medium">Record</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800">
+                {casesForReview.map(({ row }) => (
+                  <tr key={row.planId} className="bg-zinc-950/40">
+                    <td className="px-2 py-2 font-mono text-xs text-zinc-300">
+                      {row.ticker} · {row.planId}
+                    </td>
+                    <td className="px-2 py-2 text-xs text-zinc-200">
+                      {familyChip(row)}
+                    </td>
+                    <td className="px-2 py-2 text-xs text-zinc-400">
+                      {!row.t0Available
+                        ? "Missing T0"
+                        : row.noEntryDiagnosis
+                          ? diagnosisChip(row)
+                          : row.equationId}
+                      <div className="font-mono text-[10px] text-zinc-600">
+                        {row.equationId}
+                      </div>
+                    </td>
+                    <td className="px-2 py-2 text-[10px] text-zinc-500">
+                      Thesis {row.linkage?.planThesis ?? "—"} · PB{" "}
+                      {row.linkage?.planPlaybook ?? "—"}
+                    </td>
+                    <td className="px-2 py-2">
+                      <Link
+                        href={row.caseHref}
+                        className="text-violet-400 hover:underline"
+                      >
+                        Case
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
       {view.empty && caseView.rows.length === 0 ? (
         <p
           className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-8 text-center text-sm text-zinc-500"
@@ -963,6 +1047,7 @@ export function PreviewPipelinePerformance({
                       <th className="px-3 py-2 font-medium">DQ</th>
                       <th className="px-3 py-2 font-medium">EQ</th>
                       <th className="px-3 py-2 font-medium">Reality</th>
+                      <th className="px-3 py-2 font-medium">Linkage</th>
                       <th className="px-3 py-2 font-medium">Outcome</th>
                       <th className="px-3 py-2 font-medium">Realized</th>
                       <th className="px-3 py-2 font-medium">Counterfactual</th>
@@ -1007,6 +1092,13 @@ export function PreviewPipelinePerformance({
                         </td>
                         <td className="px-3 py-2 text-xs text-zinc-400">
                           {row.reality}
+                        </td>
+                        <td className="px-3 py-2 text-[10px] text-zinc-500">
+                          T {row.linkage?.planThesis ?? "—"}
+                          <br />
+                          PB {row.linkage?.planPlaybook ?? "—"}
+                          <br />
+                          Tr {row.linkage?.tradePlan ?? "—"}
                         </td>
                         <td className="px-3 py-2 text-xs text-zinc-400">
                           {row.outcomeLabel ?? "—"}

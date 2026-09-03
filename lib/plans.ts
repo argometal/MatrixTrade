@@ -360,7 +360,16 @@ export async function recordScoutDecision(
   input: DecisionInput,
   probeInput?: ProbeInput,
   layeredEntryInput?: LayeredEntryInput
-): Promise<{ plan?: TradePlan; errors?: string[] }> {
+): Promise<{
+  plan?: TradePlan;
+  errors?: string[];
+  t0?: {
+    status: string;
+    created: boolean;
+    freezeId?: string;
+    error?: string;
+  };
+}> {
   const plan = await getPlanById(planId);
   if (!plan) return { errors: ["Plan not found."] };
 
@@ -372,13 +381,29 @@ export async function recordScoutDecision(
     scoutLifecycle: deriveLifecycleFromPlan(result.plan),
   };
   await getPlansStore().upsert(withLifecycle);
-  try {
-    const { ensureThesisT0OnScoutDecision } = await import("./thesis-t0");
-    await ensureThesisT0OnScoutDecision({ plan: withLifecycle });
-  } catch {
-    // Best-effort T0 freeze — never block Scout decision commit.
+
+  const { ensureThesisT0OnScoutDecision } = await import("./thesis-t0");
+  const t0Result = await ensureThesisT0OnScoutDecision({ plan: withLifecycle });
+  if (
+    t0Result.status === "failed" ||
+    t0Result.status === "skipped_readonly"
+  ) {
+    console.warn(
+      `[recordScoutDecision] T0 freeze ${t0Result.status} for ${planId}: ${
+        t0Result.error ?? "n/a"
+      }`
+    );
   }
-  return { plan: withLifecycle };
+
+  return {
+    plan: withLifecycle,
+    t0: {
+      status: t0Result.status,
+      created: t0Result.created,
+      freezeId: t0Result.freeze?.id,
+      error: t0Result.error,
+    },
+  };
 }
 
 export async function recordScoutDecisionFromProposal(

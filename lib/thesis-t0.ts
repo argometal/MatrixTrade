@@ -13,6 +13,7 @@ import {
   type ThesisT0StockContext,
 } from "./thesis-t0-types";
 import { getThesisT0Store } from "./thesis-t0-store";
+import { isMxtReadOnlyMode } from "./mxt-readonly";
 
 /** Episode key when Plan has no Stock Thesis — reuses freeze store, no new table. */
 export const PLAN_ONLY_THESIS_PREFIX = "PLAN-ONLY:";
@@ -95,6 +96,7 @@ function planGeometryFromPlan(plan: TradePlan): ThesisT0PlanGeometry {
     executionInstruction: plan.executionInstruction ?? null,
     validFrom: plan.validFrom ?? null,
     maximumEntryProxy: maxProxy ?? null,
+    playbookId: plan.playbookId?.trim() ? plan.playbookId.trim() : null,
   };
 }
 
@@ -218,63 +220,109 @@ export function buildThesisT0Freeze(input: {
   };
 }
 
-/**
- * First committed Scout decision creates an immutable T0 freeze.
- * Plans without stockThesisId use PLAN-ONLY:{planId} episode key (same store).
- * Later decisions / Stock File edits must not rewrite an existing open freeze body.
- */
-export async function ensureThesisT0OnScoutDecision(input: {
-  plan: TradePlan;
-  thesis?: StockThesis | null;
-  evaluationHorizonDays?: number;
-}): Promise<{ freeze: ThesisT0Freeze | null; created: boolean }> {
-  const decision = input.plan.decision;
-  if (!decision) {
-    return { freeze: null, created: false };
-  }
-
-  const episodeKey = resolveThesisEpisodeKey(input.plan);
-  const store = getThesisT0Store();
-  await expireOpenEpisodesDue({ nowIso: new Date().toISOString() });
-
-  const open = await store.findOpenByStockThesisId(episodeKey);
-  if (open) {
-    // Immutability: never rewrite freeze payload. Optionally link new plan id.
-    if (
-      input.plan.id &&
-      !open.planIds.some((id) => id.toUpperCase() === input.plan.id.toUpperCase())
-    ) {
-      const linked: ThesisT0Freeze = {
-        ...open,
-        planIds: [...open.planIds, input.plan.id],
-        updatedAt: new Date().toISOString(),
-      };
-      await store.upsert(linked);
-      return { freeze: linked, created: false };
-    }
-    return { freeze: open, created: false };
-  }
-
-  let thesis = input.thesis;
-  const linkedThesisId = input.plan.stockThesisId?.trim();
-  if (thesis === undefined && linkedThesisId) {
-    const { getStockThesisById } = await import("./stock-theses");
-    thesis = await getStockThesisById(linkedThesisId);
-  }
-  if (!linkedThesisId) {
-    thesis = null;
-  }
-
-  const freeze = buildThesisT0Freeze({
-    plan: input.plan,
-    decision,
-    thesis: thesis ?? null,
-    evaluationHorizonDays: input.evaluationHorizonDays,
-  });
-  await store.insert(freeze);
-  return { freeze, created: true };
-}
-
+/**
+ * Result of ensuring a T0 freeze after Scout decision.
+ * Decision commit may succeed while freeze fails — callers must observe this.
+ */
+export type ThesisT0EnsureStatus =
+  | "created"
+  | "linked_existing"
+  | "already_open"
+  | "skipped_readonly"
+  | "failed"
+  | "no_decision";
+
+export type ThesisT0EnsureResult = {
+  freeze: ThesisT0Freeze | null;
+  created: boolean;
+  status: ThesisT0EnsureStatus;
+  error?: string;
+};
+
+/**
+ * First committed Scout decision creates an immutable T0 freeze.
+ * Plans without stockThesisId use PLAN-ONLY:{planId} episode key (same store).
+ * Later decisions / Stock File edits must not rewrite an existing open freeze body.
+ */
+export async function ensureThesisT0OnScoutDecision(input: {
+  plan: TradePlan;
+  thesis?: StockThesis | null;
+  evaluationHorizonDays?: number;
+}): Promise<ThesisT0EnsureResult> {
+  const decision = input.plan.decision;
+  if (!decision) {
+    return { freeze: null, created: false, status: "no_decision" };
+  }
+
+  if (isMxtReadOnlyMode()) {
+    return {
+      freeze: null,
+      created: false,
+      status: "skipped_readonly",
+      error:
+        "[MXT_READ_ONLY] T0 freeze not written — decision persisted without freeze.",
+    };
+  }
+
+  try {
+    const episodeKey = resolveThesisEpisodeKey(input.plan);
+    const store = getThesisT0Store();
+    await expireOpenEpisodesDue({ nowIso: new Date().toISOString() });
+
+    const open = await store.findOpenByStockThesisId(episodeKey);
+    if (open) {
+      if (
+        input.plan.id &&
+        !open.planIds.some(
+          (id) => id.toUpperCase() === input.plan.id.toUpperCase()
+        )
+      ) {
+        const linked: ThesisT0Freeze = {
+          ...open,
+          planIds: [...open.planIds, input.plan.id],
+          updatedAt: new Date().toISOString(),
+        };
+        await store.upsert(linked);
+        return { freeze: linked, created: false, status: "linked_existing" };
+      }
+      return { freeze: open, created: false, status: "already_open" };
+    }
+
+    let thesis = input.thesis;
+    const linkedThesisId = input.plan.stockThesisId?.trim();
+    if (thesis === undefined && linkedThesisId) {
+      const { getStockThesisById } = await import("./stock-theses");
+      thesis = await getStockThesisById(linkedThesisId);
+    }
+    if (!linkedThesisId) {
+      thesis = null;
+    }
+
+    const freeze = buildThesisT0Freeze({
+      plan: input.plan,
+      decision,
+      thesis: thesis ?? null,
+      evaluationHorizonDays: input.evaluationHorizonDays,
+    });
+    await store.insert(freeze);
+    return { freeze, created: true, status: "created" };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      "[thesis-t0] ensureThesisT0OnScoutDecision failed for plan " +
+        input.plan.id +
+        ": " +
+        message
+    );
+    return {
+      freeze: null,
+      created: false,
+      status: "failed",
+      error: message,
+    };
+  }
+}
+
 export async function getOpenThesisT0Freeze(
   stockThesisId: string
 ): Promise<ThesisT0Freeze | null> {

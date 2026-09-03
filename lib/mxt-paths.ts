@@ -28,6 +28,8 @@ export const MXT_LEGACY_PREFIXES = [
   "/system",
   "/stats",
   "/mistakes",
+  "/learning",
+  "/help",
   "/stock-theses",
   "/scout-access",
   "/settings",

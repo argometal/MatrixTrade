@@ -21,7 +21,7 @@ import type { ThesisCase } from "./thesis-case-types";
 import { findMarketRealityWindow } from "./market-reality-store";
 import {
   buildMarketRealityViewModel,
-  geometryFromPlanAndThesis,
+  geometryForCaseEvaluation,
 } from "./market-reality";
 import { getStockThesisById } from "./stock-theses";
 import { mxtPath } from "./mxt-paths";
@@ -114,7 +114,10 @@ function rowFromCase(
  * Attach Case-bound OHLCV from local cache only — never Yahoo ensure/fetch.
  * Orphan windows for other plan ids are rejected by ohlcvEvidenceFromMarketReality.
  */
-async function cachedOhlcvForPlan(plan: TradePlan) {
+async function cachedOhlcvForPlan(
+  plan: TradePlan,
+  freeze?: import("./thesis-t0-types").ThesisT0Freeze | null
+) {
   const window = await findMarketRealityWindow({
     planId: plan.id,
     windowKind: "retrospective_observation",
@@ -129,7 +132,11 @@ async function cachedOhlcvForPlan(plan: TradePlan) {
       thesis = null;
     }
   }
-  const geometry = geometryFromPlanAndThesis(plan, thesis);
+  const geometry = geometryForCaseEvaluation({
+    freeze: freeze ?? null,
+    plan,
+    thesis,
+  });
   const retrospective = buildMarketRealityViewModel({
     window,
     geometry,
@@ -206,14 +213,16 @@ export async function buildLearningOverview(
     skipExpire: deps?.skipExpire ?? true,
   };
 
-  const getOhlcv = deps?.getCachedOhlcv ?? cachedOhlcvForPlan;
+  const getOhlcv = deps?.getCachedOhlcv;
 
   const rows: LearningOverviewRow[] = [];
   const diagnoses = [];
   for (const plan of decided) {
     const thesisCase = await buildCase(plan.id, caseDeps);
     if (!thesisCase) continue;
-    const ohlcv = await getOhlcv(plan);
+    const ohlcv = getOhlcv
+      ? await getOhlcv(plan)
+      : await cachedOhlcvForPlan(plan, thesisCase.freeze);
     const evaluation = evaluateCase({ thesisCase, ohlcv });
     const diagnosis = diagnoseCase({ thesisCase, evaluation });
     diagnoses.push(diagnosis);

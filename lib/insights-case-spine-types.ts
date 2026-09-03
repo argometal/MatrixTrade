@@ -72,6 +72,14 @@ export type InsightsCaseRow = {
    */
   mafAttribution?: InsightsCaseMafAttribution | null;
 
+  /** Deterministic linkage — UNLINKED is explicit, never silently attributed. */
+  linkage?: {
+    tradeId: string | null;
+    planThesis: "linked" | "UNLINKED";
+    planPlaybook: "linked" | "UNLINKED";
+    tradePlan: "linked" | "UNLINKED";
+  };
+
   /** Full diagnosis for aggregation / inspect. */
   diagnosis: CaseDiagnosis;
 };

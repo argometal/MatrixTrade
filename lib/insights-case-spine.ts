@@ -20,7 +20,7 @@ import { participationFromVerdict } from "./learning-overview";
 import { findMarketRealityWindow } from "./market-reality-store";
 import {
   buildMarketRealityViewModel,
-  geometryFromPlanAndThesis,
+  geometryForCaseEvaluation,
 } from "./market-reality";
 import { getStockThesisById } from "./stock-theses";
 import { mxtPath } from "./mxt-paths";
@@ -32,6 +32,7 @@ import {
 import { getMafExperiments } from "./maf-store";
 import type { MafExperiment } from "./maf-types";
 import { attachMafToInsightsCaseRows } from "./insights-maf-join";
+import type { ThesisT0Freeze } from "./thesis-t0-types";
 
 export type { InsightsCaseRow } from "./insights-case-spine-types";
 export {
@@ -90,7 +91,10 @@ export function resolveLearningOutcomeForPlan(input: {
   return null;
 }
 
-async function cachedOhlcvForPlan(plan: TradePlan): Promise<CaseOhlcvEvidence | null> {
+async function cachedOhlcvForPlan(
+  plan: TradePlan,
+  freeze?: ThesisT0Freeze | null
+): Promise<CaseOhlcvEvidence | null> {
   const window = await findMarketRealityWindow({
     planId: plan.id,
     windowKind: "retrospective_observation",
@@ -104,7 +108,11 @@ async function cachedOhlcvForPlan(plan: TradePlan): Promise<CaseOhlcvEvidence | 
       thesis = null;
     }
   }
-  const geometry = geometryFromPlanAndThesis(plan, thesis);
+  const geometry = geometryForCaseEvaluation({
+    freeze: freeze ?? null,
+    plan,
+    thesis,
+  });
   const retrospective = buildMarketRealityViewModel({
     window,
     geometry,
@@ -120,7 +128,10 @@ export type BuildInsightsCaseSpineDeps = BuildCaseDeps & {
   getPlans?: () => Promise<TradePlan[]>;
   getTrades?: () => Promise<Trade[]>;
   getLearningOutcomes?: () => Promise<LearningOutcome[]>;
-  getCachedOhlcv?: (plan: TradePlan) => Promise<CaseOhlcvEvidence | null>;
+  getCachedOhlcv?: (
+    plan: TradePlan,
+    freeze?: ThesisT0Freeze | null
+  ) => Promise<CaseOhlcvEvidence | null>;
   /** Optional MAF experiments (defaults to local JSON store). */
   getMafExperiments?: () => Promise<MafExperiment[]>;
 };
@@ -135,7 +146,6 @@ export async function buildInsightsCaseSpine(
   const listTrades = deps?.getTrades ?? getTrades;
   const listLos = deps?.getLearningOutcomes ?? getLearningOutcomes;
   const listMaf = deps?.getMafExperiments ?? getMafExperiments;
-  const getOhlcv = deps?.getCachedOhlcv ?? cachedOhlcvForPlan;
 
   const [plans, trades, learningOutcomes, mafExperiments] = await Promise.all([
     listPlans(),
@@ -159,7 +169,9 @@ export async function buildInsightsCaseSpine(
   for (const plan of decided) {
     const thesisCase = await buildCase(plan.id, caseDeps);
     if (!thesisCase) continue;
-    const ohlcv = await getOhlcv(plan);
+    const ohlcv = deps?.getCachedOhlcv
+      ? await deps.getCachedOhlcv(plan, thesisCase.freeze)
+      : await cachedOhlcvForPlan(plan, thesisCase.freeze);
     const evaluation = evaluateCase({ thesisCase, ohlcv });
     const diagnosis = diagnoseCase({ thesisCase, evaluation });
     const participation = participationFromVerdict(
@@ -189,22 +201,37 @@ export async function buildInsightsCaseSpine(
       .map((e) => `${e.inputKey}=${e.value}`)
       .join("; ");
 
+    const tradeId =
+      lo?.tradeId ??
+      plan.linkedTradeId ??
+      trades.find((t) => t.planId?.toUpperCase() === plan.id.toUpperCase())
+        ?.id ??
+      null;
+
     loTradeByPlan.set(plan.id.toUpperCase(), {
       learningOutcomeId: lo?.id ?? null,
-      tradeId:
-        lo?.tradeId ??
-        plan.linkedTradeId ??
-        trades.find((t) => t.planId?.toUpperCase() === plan.id.toUpperCase())
-          ?.id ??
-        null,
+      tradeId,
     });
+
+    const freezePlaybook =
+      thesisCase.freeze?.plan.playbookId?.trim() || null;
+    const playbookId = plan.playbookId ?? freezePlaybook;
+    const thesisLink = plan.stockThesisId?.trim()
+      ? ("linked" as const)
+      : ("UNLINKED" as const);
+    const playbookLink = playbookId?.trim()
+      ? ("linked" as const)
+      : ("UNLINKED" as const);
+    const tradePlanLink = tradeId
+      ? ("linked" as const)
+      : ("UNLINKED" as const);
 
     rows.push({
       planId: plan.id,
       caseId: plan.id,
       ticker: plan.ticker,
       date,
-      playbookId: plan.playbookId ?? null,
+      playbookId: playbookId ?? null,
       stockThesisId: plan.stockThesisId ?? null,
       participation,
       verdict:
@@ -231,6 +258,12 @@ export async function buildInsightsCaseSpine(
       evidenceSummary,
       caseHref: mxtPath(`/scout/case?plan=${encodeURIComponent(plan.id)}`),
       diagnosis,
+      linkage: {
+        tradeId,
+        planThesis: thesisLink,
+        planPlaybook: playbookLink,
+        tradePlan: tradePlanLink,
+      },
     });
   }
 

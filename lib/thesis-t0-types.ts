@@ -65,6 +65,8 @@ export type ThesisT0PlanGeometry = {
   validFrom: string | null;
   /** Highest limit / no-chase proxy when layered; not a separate persisted plan field. */
   maximumEntryProxy: number | null;
+  /** Contemporaneous playbook linkage at T0 (optional). */
+  playbookId?: string | null;
 };
 
 /**
