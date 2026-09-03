@@ -16,9 +16,23 @@ import type {
 import type { CaseParticipationClass } from "./learning-overview-types";
 import type { DecisionVerdict } from "./scout-decision-types";
 import type { LearningOutcomeKind } from "./learning-outcome-types";
+import type { MafComponentId } from "./maf-types";
 
 /** Product Case family for Insights cards / filters. */
 export type InsightsCaseFamily = "A" | "B" | "C" | "D" | "INDETERMINATE";
+
+/** Provenance of MAF rows in canonical Insights runtime (local JSON today). */
+export type MafEvidenceSource = "local_json";
+
+/**
+ * Optional MAF attribution evidence attached to a Case row.
+ * Never overrides family / DQ / EQ / Reality / no-entry diagnosis.
+ */
+export type InsightsCaseMafAttribution = {
+  mafExperimentId: string;
+  primaryDragComponent: MafComponentId | null;
+  source: MafEvidenceSource;
+};
 
 export type InsightsCaseRow = {
   planId: string;
@@ -51,6 +65,12 @@ export type InsightsCaseRow = {
   diagnosisReason: string;
   evidenceSummary: string;
   caseHref: string;
+
+  /**
+   * Optional MAF attribution evidence (local JSON today).
+   * Never overrides family / DQ / EQ / Reality / no-entry diagnosis.
+   */
+  mafAttribution?: InsightsCaseMafAttribution | null;
 
   /** Full diagnosis for aggregation / inspect. */
   diagnosis: CaseDiagnosis;

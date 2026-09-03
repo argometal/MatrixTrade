@@ -22,6 +22,16 @@ import type { InsightsCaseRow } from "@/lib/insights-case-spine-types";
 import type { InsightsCaseCardMetric } from "@/lib/insights-case-spine-types";
 import type { DecisionQuality } from "@/lib/case-evaluation-types";
 import type { NoEntryDiagnosisClass } from "@/lib/case-diagnosis-types";
+import {
+  CASE_FAMILY_FILTER_OPTIONS,
+  CASE_FAMILY_LABEL,
+  NO_ENTRY_DIAGNOSIS_FILTER_OPTIONS,
+  NO_ENTRY_DIAGNOSIS_LABEL,
+  caseFamilyLabel,
+  noEntryDiagnosisLabel,
+} from "@/lib/insights-case-labels";
+import { aggregatePlaybookDiagnosis } from "@/lib/insights-playbook-diagnosis";
+import { MAF_SOURCE_HELP } from "@/lib/insights-maf-join";
 
 function formatR(value: number): string {
   const sign = value > 0 ? "+" : "";
@@ -44,16 +54,30 @@ function tone(value: number): string {
   return "text-zinc-300";
 }
 
-function diagnosisLabel(row: InsightsCaseRow): string {
+function familyChip(row: InsightsCaseRow): string {
+  return caseFamilyLabel(row.family);
+}
+
+function diagnosisChip(row: InsightsCaseRow): string {
   if (row.family === "B" && row.noEntryDiagnosis) {
-    if (row.noEntryDiagnosis === "GOOD_FILTER") return "Good Filter";
-    if (row.noEntryDiagnosis === "OVER_OPTIMIZATION") {
-      return "Possible Over-Optimization";
-    }
-    return "Indeterminate";
+    return noEntryDiagnosisLabel(row.noEntryDiagnosis);
   }
-  if (row.family === "INDETERMINATE") return "Indeterminate";
-  return row.family;
+  if (row.family === "INDETERMINATE") {
+    return NO_ENTRY_DIAGNOSIS_LABEL.INDETERMINATE;
+  }
+  return "—";
+}
+
+function countBy<T extends string>(
+  rows: InsightsCaseRow[],
+  pick: (r: InsightsCaseRow) => T
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const r of rows) {
+    const k = pick(r);
+    out[k] = (out[k] ?? 0) + 1;
+  }
+  return out;
 }
 
 function MetricCard({
@@ -76,7 +100,7 @@ function MetricCard({
 
   const body = (
     <>
-      <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+      <p className="text-[10px] font-medium leading-snug tracking-wide text-zinc-500">
         {metric.label}
       </p>
       <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-100">
@@ -206,6 +230,38 @@ export function PreviewPipelinePerformance({
   const fvl = caseView.aggregate.falseVirtuousLoop;
   const condition = caseView.aggregate.currentCondition;
 
+  const playbookNames = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const p of playbooks) m.set(p.id, p.name);
+    return m;
+  }, [playbooks]);
+
+  const playbookLearning = useMemo(
+    () => aggregatePlaybookDiagnosis(caseView.rows, playbookNames),
+    [caseView.rows, playbookNames]
+  );
+
+  const dqCounts = useMemo(
+    () => countBy(caseView.rows, (r) => r.decisionQuality),
+    [caseView.rows]
+  );
+  const eqCounts = useMemo(
+    () => countBy(caseView.rows, (r) => r.executionQuality),
+    [caseView.rows]
+  );
+  const realityCounts = useMemo(
+    () => countBy(caseView.rows, (r) => r.reality),
+    [caseView.rows]
+  );
+  const missingT0Count = useMemo(
+    () => caseView.rows.filter((r) => !r.t0Available).length,
+    [caseView.rows]
+  );
+  const localMafJoined = useMemo(
+    () => caseView.rows.filter((r) => r.mafAttribution?.source === "local_json").length,
+    [caseView.rows]
+  );
+
   function applyFamilyFilter(family: InsightsCaseFamily) {
     setCaseFamily((prev) => (prev === family ? "all" : family));
     if (family !== "B") setNoEntryDiagnosis("all");
@@ -222,9 +278,9 @@ export function PreviewPipelinePerformance({
       data-insights-pipeline-performance
     >
       <p className="text-sm text-zinc-500">
-        Case equations feed this surface. Realized P/L stays separate from
-        counterfactual Scout R. Missed Scouts are never counted as Trade wins or
-        losses.
+        Canonical Learning surface: Plan → T0 → Reality → Case equation →
+        diagnosis. Realized P/L stays separate from counterfactual Scout R.
+        Missed Scouts are never counted as Trade wins or losses.
       </p>
 
       <section
@@ -320,12 +376,11 @@ export function PreviewPipelinePerformance({
             className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm normal-case text-zinc-200"
             data-filter-case-family
           >
-            <option value="all">All</option>
-            <option value="A">A</option>
-            <option value="B">B — No entry</option>
-            <option value="C">C</option>
-            <option value="D">D</option>
-            <option value="INDETERMINATE">Indeterminate</option>
+            {CASE_FAMILY_FILTER_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
         </label>
         <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
@@ -340,10 +395,11 @@ export function PreviewPipelinePerformance({
             className="min-h-11 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm normal-case text-zinc-200"
             data-filter-no-entry-diagnosis
           >
-            <option value="all">All</option>
-            <option value="GOOD_FILTER">Good Filter</option>
-            <option value="OVER_OPTIMIZATION">Possible Over-Optimization</option>
-            <option value="INDETERMINATE">Indeterminate</option>
+            {NO_ENTRY_DIAGNOSIS_FILTER_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </select>
         </label>
         <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
@@ -415,14 +471,33 @@ export function PreviewPipelinePerformance({
         </p>
       </section>
 
+      {/* Evidence visibility */}
+      <section
+        className="rounded-2xl border border-zinc-800 bg-zinc-900/40 px-4 py-3"
+        data-case-evidence-visibility
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+          Decision universe (filtered)
+        </p>
+        <p className="mt-1 text-sm text-zinc-300">
+          Cases {caseView.rows.length} · Missing T0 {missingT0Count} · Entry{" "}
+          {caseView.aggregate.entryUniverse} · No Entry{" "}
+          {caseView.aggregate.noEntryUniverse}
+        </p>
+        <p className="mt-1 text-[11px] text-zinc-600">
+          Missing T0 Cases correctly fall to Insufficient Evidence — do not
+          interpret high No Entry alone as conservatism.
+        </p>
+      </section>
+
       {/* Row 1 — Case accounting */}
       <section data-case-accounting>
         <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-          Case accounting (A / B / C / D)
+          Case accounting
         </h2>
         <p className="mt-1 text-[11px] text-zinc-600">
-          Equations from Learning engine. B = no-entry participation (see filter
-          quality below). Rates vs filtered total Cases.
+          Equations from the Learning engine. B = No Entry (see filter quality).
+          Rates vs filtered total Cases. Use ? Help for family meanings.
         </p>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <MetricCard metric={caseView.cards.totalCases} testId="total" />
@@ -465,9 +540,10 @@ export function PreviewPipelinePerformance({
           No-entry filter quality
         </h2>
         <p className="mt-1 text-[11px] text-zinc-600">
-          Denominator = no-entry Cases in filtered universe (
-          {caseView.aggregate.noEntryUniverse}). Correct filtering vs possible
-          over-optimization — equations, not narrative.
+          Denominator = No Entry Cases in filtered universe (
+          {caseView.aggregate.noEntryUniverse}). Good Filter vs Missed /
+          Over-Optimized Entry — equations, not narrative. Later price alone does
+          not prove a missed entry.
         </p>
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <MetricCard
@@ -490,6 +566,61 @@ export function PreviewPipelinePerformance({
             onClick={() => applyNoEntryFilter("INDETERMINATE")}
             testId="NE_INDETERMINATE"
           />
+        </div>
+      </section>
+
+      {/* Evaluation lanes (parity with Learning Overview) */}
+      <section
+        className="grid gap-3 sm:grid-cols-3"
+        data-case-evaluation-lanes
+      >
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+            Decision Quality
+          </h2>
+          <ul className="mt-2 space-y-1 text-xs text-zinc-400">
+            {Object.entries(dqCounts).map(([k, n]) => (
+              <li key={k} className="flex justify-between gap-2">
+                <span>{k}</span>
+                <span className="tabular-nums text-zinc-200">{n}</span>
+              </li>
+            ))}
+            {Object.keys(dqCounts).length === 0 ? (
+              <li className="text-zinc-600">—</li>
+            ) : null}
+          </ul>
+        </div>
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+            Execution Quality
+          </h2>
+          <ul className="mt-2 space-y-1 text-xs text-zinc-400">
+            {Object.entries(eqCounts).map(([k, n]) => (
+              <li key={k} className="flex justify-between gap-2">
+                <span>{k}</span>
+                <span className="tabular-nums text-zinc-200">{n}</span>
+              </li>
+            ))}
+            {Object.keys(eqCounts).length === 0 ? (
+              <li className="text-zinc-600">—</li>
+            ) : null}
+          </ul>
+        </div>
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500">
+            Reality relationship
+          </h2>
+          <ul className="mt-2 space-y-1 text-xs text-zinc-400">
+            {Object.entries(realityCounts).map(([k, n]) => (
+              <li key={k} className="flex justify-between gap-2">
+                <span>{k}</span>
+                <span className="tabular-nums text-zinc-200">{n}</span>
+              </li>
+            ))}
+            {Object.keys(realityCounts).length === 0 ? (
+              <li className="text-zinc-600">—</li>
+            ) : null}
+          </ul>
         </div>
       </section>
 
@@ -571,8 +702,9 @@ export function PreviewPipelinePerformance({
                 Counterfactual performance (Scout — not P/L)
               </h2>
               <p className="mt-1 text-[11px] text-zinc-600">
-                Counterfactual R measures hypothetical plan path, not whether the
-                original decision was correct.
+                Counterfactual R is hypothetical plan-path magnitude. It is not
+                realized P/L, not Decision Quality, and not proof that a No Entry
+                was wrong.
               </p>
               <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                 <div>
@@ -635,6 +767,12 @@ export function PreviewPipelinePerformance({
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
               Component attribution distribution
             </h2>
+            <p className="mt-1 text-[11px] text-zinc-600" data-maf-source-note>
+              {MAF_SOURCE_HELP}
+              {localMafJoined > 0
+                ? ` · ${localMafJoined} Case(s) joined in current filter.`
+                : ""}
+            </p>
             <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-800">
               <table className="min-w-full text-left text-sm">
                 <thead className="border-b border-zinc-800 text-xs uppercase tracking-wide text-zinc-500">
@@ -690,15 +828,123 @@ export function PreviewPipelinePerformance({
             )}
           </section>
 
+          <section data-playbook-learning>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Playbook Learning
+            </h2>
+            <p className="mt-1 text-[11px] text-zinc-600">
+              Case family rates by playbook from the filtered Case spine. Zero
+              evaluable Cases is valid when evidence is insufficient — no
+              manufactured rates.
+            </p>
+            {playbookLearning.length === 0 ? (
+              <p className="mt-2 text-sm text-zinc-500">No Cases in filter.</p>
+            ) : (
+              <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-800">
+                <table className="min-w-[720px] w-full text-left text-sm">
+                  <thead className="border-b border-zinc-800 text-xs uppercase tracking-wide text-zinc-500">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">Playbook</th>
+                      <th className="px-3 py-2 font-medium">Cases</th>
+                      <th className="px-3 py-2 font-medium">Evaluable</th>
+                      <th className="px-3 py-2 font-medium">
+                        {CASE_FAMILY_LABEL.A}
+                      </th>
+                      <th className="px-3 py-2 font-medium">
+                        {CASE_FAMILY_LABEL.B}
+                      </th>
+                      <th className="px-3 py-2 font-medium">
+                        {CASE_FAMILY_LABEL.C}
+                      </th>
+                      <th className="px-3 py-2 font-medium">
+                        {CASE_FAMILY_LABEL.D}
+                      </th>
+                      <th className="px-3 py-2 font-medium">
+                        {CASE_FAMILY_LABEL.INDETERMINATE}
+                      </th>
+                      <th className="px-3 py-2 font-medium">
+                        {NO_ENTRY_DIAGNOSIS_LABEL.GOOD_FILTER}
+                      </th>
+                      <th className="px-3 py-2 font-medium">
+                        {NO_ENTRY_DIAGNOSIS_LABEL.OVER_OPTIMIZATION}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800">
+                    {playbookLearning.map((row) => (
+                      <tr
+                        key={row.playbookId ?? "__none"}
+                        className="bg-zinc-950/40"
+                        data-playbook-learning-row={row.playbookId ?? "none"}
+                      >
+                        <td className="px-3 py-2 text-zinc-100">
+                          {row.playbookName}
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-zinc-300">
+                          {row.cases}
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-zinc-300">
+                          {row.evaluableCases}
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-zinc-300">
+                          {row.familyA}
+                          <span className="ml-1 text-[10px] text-zinc-600">
+                            {formatPct(row.rates.a)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-zinc-300">
+                          {row.familyB}
+                          <span className="ml-1 text-[10px] text-zinc-600">
+                            {formatPct(row.rates.b)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-zinc-300">
+                          {row.familyC}
+                          <span className="ml-1 text-[10px] text-zinc-600">
+                            {formatPct(row.rates.c)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-zinc-300">
+                          {row.familyD}
+                          <span className="ml-1 text-[10px] text-zinc-600">
+                            {formatPct(row.rates.d)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-zinc-300">
+                          {row.indeterminate}
+                          <span className="ml-1 text-[10px] text-zinc-600">
+                            {formatPct(row.rates.insufficient)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-zinc-300">
+                          {row.goodFilter}
+                          <span className="ml-1 text-[10px] text-zinc-600">
+                            {formatPct(row.rates.goodFilter)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 tabular-nums text-zinc-300">
+                          {row.overOptimization}
+                          <span className="ml-1 text-[10px] text-zinc-600">
+                            {formatPct(row.rates.overOptimization)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
           {/* Unified Case drill-down */}
           <section data-case-drilldown>
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
               Case drill-down
             </h2>
             <p className="mt-1 text-[11px] text-zinc-600">
-              Showing {caseView.rows.length} Case
-              {caseView.rows.length === 1 ? "" : "s"} (filtered). Record opens
-              Case Review.
+              Showing {caseView.rows.length}{" "}
+              {caseView.rows.length === 1 ? "Case" : "Cases"} (filtered). Family and
+              Diagnosis stay distinct. Record opens Case Review.
             </p>
             {caseView.rows.length === 0 ? (
               <p className="mt-3 text-sm text-zinc-500">
@@ -716,6 +962,7 @@ export function PreviewPipelinePerformance({
                       <th className="px-3 py-2 font-medium">Diagnosis</th>
                       <th className="px-3 py-2 font-medium">DQ</th>
                       <th className="px-3 py-2 font-medium">EQ</th>
+                      <th className="px-3 py-2 font-medium">Reality</th>
                       <th className="px-3 py-2 font-medium">Outcome</th>
                       <th className="px-3 py-2 font-medium">Realized</th>
                       <th className="px-3 py-2 font-medium">Counterfactual</th>
@@ -743,9 +990,11 @@ export function PreviewPipelinePerformance({
                         <td className="px-3 py-2 font-mono text-xs text-zinc-300">
                           {row.planId}
                         </td>
-                        <td className="px-3 py-2 text-zinc-200">{row.family}</td>
+                        <td className="px-3 py-2 text-xs text-zinc-200">
+                          {familyChip(row)}
+                        </td>
                         <td className="px-3 py-2 text-xs text-zinc-300">
-                          {diagnosisLabel(row)}
+                          {diagnosisChip(row)}
                           <div className="font-mono text-[10px] text-zinc-600">
                             {row.equationId}
                           </div>
@@ -755,6 +1004,9 @@ export function PreviewPipelinePerformance({
                         </td>
                         <td className="px-3 py-2 text-xs text-zinc-400">
                           {row.executionQuality}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-zinc-400">
+                          {row.reality}
                         </td>
                         <td className="px-3 py-2 text-xs text-zinc-400">
                           {row.outcomeLabel ?? "—"}

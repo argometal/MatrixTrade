@@ -15,6 +15,10 @@ import type {
   InsightsCaseSpineFilters,
   InsightsCaseSpineView,
 } from "./insights-case-spine-types";
+import {
+  CASE_FAMILY_LABEL,
+  NO_ENTRY_DIAGNOSIS_LABEL,
+} from "./insights-case-labels";
 
 export type {
   InsightsCaseRow,
@@ -145,27 +149,43 @@ export function buildInsightsCaseSpineView(
         filtered.map((r) => r.planId),
         total
       ),
-      familyA: cardMetric("A", ids((r) => r.family === "A"), total),
-      familyB: cardMetric("B — NO ENTRY", ids((r) => r.family === "B"), total),
-      familyC: cardMetric("C", ids((r) => r.family === "C"), total),
-      familyD: cardMetric("D", ids((r) => r.family === "D"), total),
+      familyA: cardMetric(
+        CASE_FAMILY_LABEL.A,
+        ids((r) => r.family === "A"),
+        total
+      ),
+      familyB: cardMetric(
+        CASE_FAMILY_LABEL.B,
+        ids((r) => r.family === "B"),
+        total
+      ),
+      familyC: cardMetric(
+        CASE_FAMILY_LABEL.C,
+        ids((r) => r.family === "C"),
+        total
+      ),
+      familyD: cardMetric(
+        CASE_FAMILY_LABEL.D,
+        ids((r) => r.family === "D"),
+        total
+      ),
       indeterminate: cardMetric(
-        "INDETERMINATE",
+        CASE_FAMILY_LABEL.INDETERMINATE,
         ids((r) => r.family === "INDETERMINATE"),
         total
       ),
       goodFilter: cardMetric(
-        "GOOD FILTER",
+        NO_ENTRY_DIAGNOSIS_LABEL.GOOD_FILTER,
         ids((r) => r.noEntryDiagnosis === "GOOD_FILTER"),
         ne
       ),
       overOptimization: cardMetric(
-        "POSSIBLE OVER-OPTIMIZATION",
+        NO_ENTRY_DIAGNOSIS_LABEL.OVER_OPTIMIZATION,
         ids((r) => r.noEntryDiagnosis === "OVER_OPTIMIZATION"),
         ne
       ),
       noEntryIndeterminate: cardMetric(
-        "NO-ENTRY INDETERMINATE",
+        NO_ENTRY_DIAGNOSIS_LABEL.INDETERMINATE,
         ids((r) => r.noEntryDiagnosis === "INDETERMINATE"),
         ne
       ),

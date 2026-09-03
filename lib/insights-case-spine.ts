@@ -29,6 +29,9 @@ import {
   familyFromDiagnosis,
   noEntryDiagnosisFrom,
 } from "./insights-case-spine-view";
+import { getMafExperiments } from "./maf-store";
+import type { MafExperiment } from "./maf-types";
+import { attachMafToInsightsCaseRows } from "./insights-maf-join";
 
 export type { InsightsCaseRow } from "./insights-case-spine-types";
 export {
@@ -118,6 +121,8 @@ export type BuildInsightsCaseSpineDeps = BuildCaseDeps & {
   getTrades?: () => Promise<Trade[]>;
   getLearningOutcomes?: () => Promise<LearningOutcome[]>;
   getCachedOhlcv?: (plan: TradePlan) => Promise<CaseOhlcvEvidence | null>;
+  /** Optional MAF experiments (defaults to local JSON store). */
+  getMafExperiments?: () => Promise<MafExperiment[]>;
 };
 
 /**
@@ -129,12 +134,14 @@ export async function buildInsightsCaseSpine(
   const listPlans = deps?.getPlans ?? getPlans;
   const listTrades = deps?.getTrades ?? getTrades;
   const listLos = deps?.getLearningOutcomes ?? getLearningOutcomes;
+  const listMaf = deps?.getMafExperiments ?? getMafExperiments;
   const getOhlcv = deps?.getCachedOhlcv ?? cachedOhlcvForPlan;
 
-  const [plans, trades, learningOutcomes] = await Promise.all([
+  const [plans, trades, learningOutcomes, mafExperiments] = await Promise.all([
     listPlans(),
     listTrades(),
     listLos(),
+    listMaf().catch(() => [] as MafExperiment[]),
   ]);
   const decided = plans.filter((p) => p.decision != null);
 
@@ -144,6 +151,11 @@ export async function buildInsightsCaseSpine(
   };
 
   const rows: InsightsCaseRow[] = [];
+  const loTradeByPlan = new Map<
+    string,
+    { learningOutcomeId?: string | null; tradeId?: string | null }
+  >();
+
   for (const plan of decided) {
     const thesisCase = await buildCase(plan.id, caseDeps);
     if (!thesisCase) continue;
@@ -176,6 +188,16 @@ export async function buildInsightsCaseSpine(
       .slice(0, 3)
       .map((e) => `${e.inputKey}=${e.value}`)
       .join("; ");
+
+    loTradeByPlan.set(plan.id.toUpperCase(), {
+      learningOutcomeId: lo?.id ?? null,
+      tradeId:
+        lo?.tradeId ??
+        plan.linkedTradeId ??
+        trades.find((t) => t.planId?.toUpperCase() === plan.id.toUpperCase())
+          ?.id ??
+        null,
+    });
 
     rows.push({
       planId: plan.id,
@@ -212,7 +234,13 @@ export async function buildInsightsCaseSpine(
     });
   }
 
-  return rows.sort(
+  const withMaf = attachMafToInsightsCaseRows(
+    rows,
+    mafExperiments,
+    loTradeByPlan
+  );
+
+  return withMaf.sort(
     (a, b) => b.date.localeCompare(a.date) || a.planId.localeCompare(b.planId)
   );
 }

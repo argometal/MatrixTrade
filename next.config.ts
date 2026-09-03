@@ -76,6 +76,10 @@ const nextConfig: NextConfig = {
       { source: "/mistakes", destination: `${MXT_BASE}/stats?tab=mistakes`, permanent: false },
       { source: `${MXT_BASE}/mistakes`, destination: `${MXT_BASE}/stats?tab=mistakes`, permanent: false },
       { source: `${MXT_COMPAT_BASE}/mistakes`, destination: `${MXT_BASE}/stats?tab=mistakes`, permanent: false },
+      // Learning Overview UI → Insights Pipeline (engine preserved).
+      { source: "/learning", destination: `${MXT_BASE}/stats?tab=pipeline`, permanent: false },
+      { source: `${MXT_BASE}/learning`, destination: `${MXT_BASE}/stats?tab=pipeline`, permanent: false },
+      { source: `${MXT_COMPAT_BASE}/learning`, destination: `${MXT_BASE}/stats?tab=pipeline`, permanent: false },
       // Legacy Planning URLs → canonical Scout ontology (#12D).
       { source: `${MXT_BASE}/planning`, destination: `${MXT_BASE}/scout`, permanent: false },
       {
