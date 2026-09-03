@@ -85,7 +85,8 @@ export type InsightsCaseRow = {
   };
 
   /**
-   * Historical/pre-MXT attribution from Trade review + MAF.
+   * Historical Reconstruction from Trade review (P13) — not accepted MAF.
+   * May optionally incorporate MAF vocabulary/hints when an experiment exists.
    * Complements 016a — never overrides family equations; never fabricates T0.
    */
   historicalAttribution?: HistoricalCaseAttribution | null;

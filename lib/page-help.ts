@@ -68,7 +68,7 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
       "MAF attribution describes possible component drag; it does not independently determine Case Family or DQ. Persistence follows the Matrix store gate (local JSON or Supabase maf_experiments).",
       "False Virtuous Loop: the system may look disciplined because it often avoids entries, while evidence suggests excessive filtering may suppress valid participation and learning. High No Entry alone is not failure.",
       "Case Review shows T0 → Reality → Execution → Outcome → Evaluation → Equation → Diagnosis for one Case.",
-      "Historical/pre-MXT closed trades may contribute reconstructed review/MAF attribution inside Pipeline — never as verified T0.",
+      "Historical Reconstruction (pre-MXT) is reconstructed evidence/hints — not accepted MAF and never verified T0. Accepted MAF on a historical Case is separate canonical attribution when present.",
       "Statistics / Journal / Mistakes remain adjacent analytics; they are not a second Learning dashboard.",
     ],
     steps: [

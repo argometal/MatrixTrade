@@ -32,6 +32,12 @@ import {
 } from "@/lib/insights-case-labels";
 import { aggregatePlaybookDiagnosis } from "@/lib/insights-playbook-diagnosis";
 import { MAF_SOURCE_HELP } from "@/lib/insights-maf-join";
+import {
+  countAcceptedMafJoined,
+  formatAcceptedMafDrillCell,
+  formatAcceptedMafUi,
+  formatHistoricalReconstructionUi,
+} from "@/lib/insights-maf-ui";
 
 function formatR(value: number): string {
   const sign = value > 0 ? "+" : "";
@@ -258,7 +264,7 @@ export function PreviewPipelinePerformance({
     [caseView.rows]
   );
   const localMafJoined = useMemo(
-    () => caseView.rows.filter((r) => r.mafAttribution?.source === "local_json").length,
+    () => countAcceptedMafJoined(caseView.rows),
     [caseView.rows]
   );
 
@@ -1025,9 +1031,10 @@ export function PreviewPipelinePerformance({
               Historical recovery (pre-MXT)
             </h2>
             <p className="mt-1 text-[11px] text-zinc-600">
-              Closed trades without contemporaneous T0. Attribution from Trade
-              review / MAF is reconstructed — never verified T0. 016a family stays
-              INDETERMINATE without freeze.
+              Closed trades without contemporaneous T0. Accepted MAF is canonical
+              component attribution when present. Historical Reconstruction is
+              reconstructed evidence/hints — not accepted MAF, never verified T0.
+              016a family stays INDETERMINATE without freeze.
             </p>
             {caseView.rows.filter((r) => r.caseOrigin === "historical_trade")
               .length === 0 ? (
@@ -1038,37 +1045,63 @@ export function PreviewPipelinePerformance({
               <ul className="mt-3 space-y-2">
                 {caseView.rows
                   .filter((r) => r.caseOrigin === "historical_trade")
-                  .map((row) => (
-                    <li
-                      key={row.caseId}
-                      className="rounded-xl border border-amber-900/40 bg-amber-950/15 px-3 py-2 text-sm"
-                      data-historical-case={row.caseId}
-                    >
-                      <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <span className="font-mono text-xs text-zinc-200">
-                          {row.ticker} · {row.caseId}
-                        </span>
-                        <Link
-                          href={row.caseHref}
-                          className="text-xs text-violet-400 hover:underline"
+                  .map((row) => {
+                    const accepted = formatAcceptedMafUi(row.mafAttribution);
+                    const reconstructed = formatHistoricalReconstructionUi(
+                      row.historicalAttribution,
+                      row.diagnosisReason
+                    );
+                    return (
+                      <li
+                        key={row.caseId}
+                        className="rounded-xl border border-amber-900/40 bg-amber-950/15 px-3 py-2 text-sm"
+                        data-historical-case={row.caseId}
+                        data-accepted-maf={
+                          row.mafAttribution?.mafExperimentId ?? ""
+                        }
+                      >
+                        <div className="flex flex-wrap items-baseline justify-between gap-2">
+                          <span className="font-mono text-xs text-zinc-200">
+                            {row.ticker} · {row.caseId}
+                          </span>
+                          <Link
+                            href={row.caseHref}
+                            className="text-xs text-violet-400 hover:underline"
+                          >
+                            Trade
+                          </Link>
+                        </div>
+                        <p
+                          className="mt-2 text-xs text-emerald-300/90"
+                          data-accepted-maf-line
                         >
-                          Trade
-                        </Link>
-                      </div>
-                      <p className="mt-1 text-xs text-zinc-400">
-                        {row.historicalAttribution?.summary ?? row.diagnosisReason}
-                      </p>
-                      <p className="mt-1 text-[10px] text-zinc-600">
-                        Provenance:{" "}
-                        {row.historicalAttribution?.components
-                          .map((c) => `${c.component}=${c.provenance}`)
-                          .join(", ") || "none"}
-                        {" · "}
-                        fabricatedT0=
-                        {String(row.historicalAttribution?.fabricatedT0 ?? false)}
-                      </p>
-                    </li>
-                  ))}
+                          {accepted.acceptedLine}
+                        </p>
+                        <p
+                          className="text-xs text-emerald-300/70"
+                          data-accepted-maf-drag
+                        >
+                          {accepted.primaryDragLine}
+                        </p>
+                        {reconstructed ? (
+                          <div
+                            className="mt-2 border-t border-amber-900/30 pt-2"
+                            data-historical-reconstruction
+                          >
+                            <p className="text-[10px] uppercase tracking-wide text-amber-500/90">
+                              {reconstructed.label}
+                            </p>
+                            <p className="mt-1 text-xs text-zinc-400">
+                              {reconstructed.summary}
+                            </p>
+                            <p className="mt-1 text-[10px] text-zinc-600">
+                              {reconstructed.provenanceLine}
+                            </p>
+                          </div>
+                        ) : null}
+                      </li>
+                    );
+                  })}
               </ul>
             )}
           </section>
@@ -1101,6 +1134,7 @@ export function PreviewPipelinePerformance({
                       <th className="px-3 py-2 font-medium">EQ</th>
                       <th className="px-3 py-2 font-medium">Reality</th>
                       <th className="px-3 py-2 font-medium">Linkage</th>
+                      <th className="px-3 py-2 font-medium">Accepted MAF</th>
                       <th className="px-3 py-2 font-medium">Historical</th>
                       <th className="px-3 py-2 font-medium">Outcome</th>
                       <th className="px-3 py-2 font-medium">Realized</th>
@@ -1154,10 +1188,20 @@ export function PreviewPipelinePerformance({
                           <br />
                           Tr {row.linkage?.tradePlan ?? "—"}
                         </td>
+                        <td
+                          className="px-3 py-2 text-[10px] text-zinc-300"
+                          data-case-accepted-maf={
+                            row.mafAttribution?.mafExperimentId ?? ""
+                          }
+                        >
+                          {formatAcceptedMafDrillCell(row.mafAttribution)}
+                        </td>
                         <td className="px-3 py-2 text-[10px] text-zinc-400">
                           {row.caseOrigin === "historical_trade" ? (
                             <>
-                              <span className="text-amber-400/90">pre-MXT</span>
+                              <span className="text-amber-400/90">
+                                Reconstruction · not accepted
+                              </span>
                               <div>
                                 {row.historicalAttribution?.components
                                   .slice(0, 2)
@@ -1166,7 +1210,7 @@ export function PreviewPipelinePerformance({
                               </div>
                             </>
                           ) : row.historicalAttribution ? (
-                            "attrib+"
+                            "recon+"
                           ) : (
                             "—"
                           )}
