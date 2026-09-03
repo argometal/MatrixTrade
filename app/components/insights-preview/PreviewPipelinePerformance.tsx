@@ -1020,6 +1020,59 @@ export function PreviewPipelinePerformance({
             )}
           </section>
 
+          <section data-historical-recovery>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Historical recovery (pre-MXT)
+            </h2>
+            <p className="mt-1 text-[11px] text-zinc-600">
+              Closed trades without contemporaneous T0. Attribution from Trade
+              review / MAF is reconstructed — never verified T0. 016a family stays
+              INDETERMINATE without freeze.
+            </p>
+            {caseView.rows.filter((r) => r.caseOrigin === "historical_trade")
+              .length === 0 ? (
+              <p className="mt-2 text-sm text-zinc-500">
+                No historical trade Cases in filter.
+              </p>
+            ) : (
+              <ul className="mt-3 space-y-2">
+                {caseView.rows
+                  .filter((r) => r.caseOrigin === "historical_trade")
+                  .map((row) => (
+                    <li
+                      key={row.caseId}
+                      className="rounded-xl border border-amber-900/40 bg-amber-950/15 px-3 py-2 text-sm"
+                      data-historical-case={row.caseId}
+                    >
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <span className="font-mono text-xs text-zinc-200">
+                          {row.ticker} · {row.caseId}
+                        </span>
+                        <Link
+                          href={row.caseHref}
+                          className="text-xs text-violet-400 hover:underline"
+                        >
+                          Trade
+                        </Link>
+                      </div>
+                      <p className="mt-1 text-xs text-zinc-400">
+                        {row.historicalAttribution?.summary ?? row.diagnosisReason}
+                      </p>
+                      <p className="mt-1 text-[10px] text-zinc-600">
+                        Provenance:{" "}
+                        {row.historicalAttribution?.components
+                          .map((c) => `${c.component}=${c.provenance}`)
+                          .join(", ") || "none"}
+                        {" · "}
+                        fabricatedT0=
+                        {String(row.historicalAttribution?.fabricatedT0 ?? false)}
+                      </p>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </section>
+
           {/* Unified Case drill-down */}
           <section data-case-drilldown>
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
@@ -1048,6 +1101,7 @@ export function PreviewPipelinePerformance({
                       <th className="px-3 py-2 font-medium">EQ</th>
                       <th className="px-3 py-2 font-medium">Reality</th>
                       <th className="px-3 py-2 font-medium">Linkage</th>
+                      <th className="px-3 py-2 font-medium">Historical</th>
                       <th className="px-3 py-2 font-medium">Outcome</th>
                       <th className="px-3 py-2 font-medium">Realized</th>
                       <th className="px-3 py-2 font-medium">Counterfactual</th>
@@ -1099,6 +1153,23 @@ export function PreviewPipelinePerformance({
                           PB {row.linkage?.planPlaybook ?? "—"}
                           <br />
                           Tr {row.linkage?.tradePlan ?? "—"}
+                        </td>
+                        <td className="px-3 py-2 text-[10px] text-zinc-400">
+                          {row.caseOrigin === "historical_trade" ? (
+                            <>
+                              <span className="text-amber-400/90">pre-MXT</span>
+                              <div>
+                                {row.historicalAttribution?.components
+                                  .slice(0, 2)
+                                  .map((c) => `${c.label} (${c.provenance})`)
+                                  .join(" · ") || "—"}
+                              </div>
+                            </>
+                          ) : row.historicalAttribution ? (
+                            "attrib+"
+                          ) : (
+                            "—"
+                          )}
                         </td>
                         <td className="px-3 py-2 text-xs text-zinc-400">
                           {row.outcomeLabel ?? "—"}

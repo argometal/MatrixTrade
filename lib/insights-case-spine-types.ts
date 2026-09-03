@@ -17,6 +17,7 @@ import type { CaseParticipationClass } from "./learning-overview-types";
 import type { DecisionVerdict } from "./scout-decision-types";
 import type { LearningOutcomeKind } from "./learning-outcome-types";
 import type { MafComponentId } from "./maf-types";
+import type { HistoricalCaseAttribution } from "./historical-case-attribution";
 
 /** Product Case family for Insights cards / filters. */
 export type InsightsCaseFamily = "A" | "B" | "C" | "D" | "INDETERMINATE";
@@ -36,12 +37,15 @@ export type InsightsCaseMafAttribution = {
 
 export type InsightsCaseRow = {
   planId: string;
-  /** Same as planId — Case identity is plan-anchored. */
+  /** Same as planId for modern Cases; trade id for historical trade-anchored rows. */
   caseId: string;
   ticker: string;
   date: string;
   playbookId: string | null;
   stockThesisId: string | null;
+
+  /** modern = decided Plan Case; historical_trade = pre-MXT / planless closed Trade */
+  caseOrigin?: "modern" | "historical_trade";
 
   participation: CaseParticipationClass | null;
   verdict: DecisionVerdict | null;
@@ -79,6 +83,12 @@ export type InsightsCaseRow = {
     planPlaybook: "linked" | "UNLINKED";
     tradePlan: "linked" | "UNLINKED";
   };
+
+  /**
+   * Historical/pre-MXT attribution from Trade review + MAF.
+   * Complements 016a — never overrides family equations; never fabricates T0.
+   */
+  historicalAttribution?: HistoricalCaseAttribution | null;
 
   /** Full diagnosis for aggregation / inspect. */
   diagnosis: CaseDiagnosis;

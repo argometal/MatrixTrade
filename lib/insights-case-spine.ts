@@ -33,6 +33,12 @@ import { getMafExperiments } from "./maf-store";
 import type { MafExperiment } from "./maf-types";
 import { attachMafToInsightsCaseRows } from "./insights-maf-join";
 import type { ThesisT0Freeze } from "./thesis-t0-types";
+import {
+  buildHistoricalCaseAttribution,
+  isHistoricalTradeCandidate,
+  resolveMafForTrade,
+} from "./historical-case-attribution";
+import type { CaseDiagnosis } from "./case-diagnosis-types";
 
 export type { InsightsCaseRow } from "./insights-case-spine-types";
 export {
@@ -134,6 +140,8 @@ export type BuildInsightsCaseSpineDeps = BuildCaseDeps & {
   ) => Promise<CaseOhlcvEvidence | null>;
   /** Optional MAF experiments (defaults to local JSON store). */
   getMafExperiments?: () => Promise<MafExperiment[]>;
+  /** Optional human reconstruction notes keyed by tradeId (never T0). */
+  historicalReconstructionNotes?: Record<string, string>;
 };
 
 /**
@@ -233,6 +241,7 @@ export async function buildInsightsCaseSpine(
       date,
       playbookId: playbookId ?? null,
       stockThesisId: plan.stockThesisId ?? null,
+      caseOrigin: "modern",
       participation,
       verdict:
         thesisCase.t0Evidence.decision?.verdict ??
@@ -264,6 +273,119 @@ export async function buildInsightsCaseSpine(
         planPlaybook: playbookLink,
         tradePlan: tradePlanLink,
       },
+    });
+  }
+
+  // Historical / pre-MXT closed trades without Plan decision spine membership
+  const linkedTradeIds = new Set(
+    rows
+      .map((r) => r.linkage?.tradeId?.toUpperCase())
+      .filter((id): id is string => Boolean(id))
+  );
+  for (const trade of trades) {
+    if (!isHistoricalTradeCandidate(trade)) continue;
+    if (linkedTradeIds.has(trade.id.toUpperCase())) continue;
+
+    let thesisReconstructed = false;
+    // Stock thesis link is not on Trade — detect reconstructed only via LO notes if present
+    const lo = learningOutcomes.find(
+      (x) => x.tradeId?.toUpperCase() === trade.id.toUpperCase()
+    );
+    if (lo?.stockThesisId) {
+      try {
+        const st = await getStockThesisById(lo.stockThesisId);
+        const blob = `${st?.thesis ?? ""} ${st?.currentHypothesis ?? ""}`;
+        thesisReconstructed = /\[reconstructed\]/i.test(blob);
+      } catch {
+        thesisReconstructed = false;
+      }
+    }
+
+    const maf = resolveMafForTrade(trade.id, mafExperiments);
+    const noteFromTrade =
+      trade.notes?.trim() ||
+      trade.thesis?.trim() ||
+      null;
+    const hist = buildHistoricalCaseAttribution({
+      trade,
+      maf,
+      stockThesisReconstructed: thesisReconstructed,
+      reconstructionNote:
+        deps?.historicalReconstructionNotes?.[trade.id] ?? noteFromTrade,
+    });
+
+    const histDiagnosis: CaseDiagnosis = {
+      planId: `HIST:${trade.id}`,
+      classification: { kind: "unclassified", value: "INDETERMINATE" },
+      equationId: "HIST-ATTRIBUTION",
+      inputsUsed: hist.evidence.slice(0, 6).map((e) => ({
+        inputKey: e.key,
+        value: e.value,
+        evidenceRef: `provenance=${e.provenance}`,
+      })),
+      missingInputs: ["t0_freeze"],
+      reason: hist.summary,
+    };
+
+    const isLoss =
+      trade.exit != null &&
+      ((trade.direction !== "short" && trade.exit < trade.entry) ||
+        (trade.direction === "short" && trade.exit > trade.entry));
+    const realizedR =
+      trade.riskRewardActual ??
+      (trade.exit != null && trade.entry !== trade.stop
+        ? ((trade.direction === "short" ? -1 : 1) *
+            (trade.exit - trade.entry)) /
+          Math.abs(trade.entry - trade.stop)
+        : null);
+
+    rows.push({
+      planId: `HIST:${trade.id}`,
+      caseId: trade.id,
+      ticker: trade.ticker,
+      date: trade.closedAt ?? trade.createdAt,
+      playbookId: trade.playbookId ?? null,
+      stockThesisId: lo?.stockThesisId ?? null,
+      caseOrigin: "historical_trade",
+      participation: "entry",
+      verdict: null,
+      family: "INDETERMINATE",
+      noEntryDiagnosis: null,
+      equationId: "HIST-ATTRIBUTION",
+      decisionQuality: "INDETERMINATE",
+      executionQuality: "INDETERMINATE",
+      reality: "INDETERMINATE",
+      outcomeLabel: isLoss ? "executed_loss" : "executed_win",
+      loKind: lo?.kind ?? null,
+      realizedR,
+      realizedPnL:
+        trade.exit != null
+          ? (trade.direction === "short" ? -1 : 1) *
+            (trade.exit - trade.entry) *
+            trade.shares
+          : null,
+      counterfactualR: null,
+      t0Available: false,
+      missingInputs: ["t0_freeze"],
+      diagnosisReason: hist.summary,
+      evidenceSummary: hist.components
+        .map((c) => `${c.component}:${c.band}/${c.provenance}`)
+        .join("; "),
+      caseHref: mxtPath(`/trades/${encodeURIComponent(trade.id)}`),
+      diagnosis: histDiagnosis,
+      linkage: {
+        tradeId: trade.id,
+        planThesis: lo?.stockThesisId ? "linked" : "UNLINKED",
+        planPlaybook: trade.playbookId
+          ? "linked"
+          : trade.playbookHistoricallyAbsent
+            ? "UNLINKED"
+            : "UNLINKED",
+        tradePlan: trade.planHistoricallyAbsent || !trade.planId
+          ? "UNLINKED"
+          : "linked",
+      },
+      historicalAttribution: hist,
     });
   }
 
