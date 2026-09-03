@@ -49,6 +49,7 @@ export default async function TradeDetailPage({
     linkedThesis,
     plans,
     theses: stockTheses,
+    observation: observation ?? null,
   });
 
   return (

@@ -34,5 +34,7 @@ export function buildMafProtocolBrief(): string {
     "",
     "Return ONE JSON block: type attribution.",
     "proposal: tradeId (and/or planId), components[], optional summary, primaryDragComponent, observation{}.",
+    "Historical / pre-MXT closed trades may attribute by tradeId alone (Plan/T0 may be absent).",
+    "trade-review and reconstructed historical hints are evidence — not accepted MAF until human Accept.",
   ].join("\n");
 }

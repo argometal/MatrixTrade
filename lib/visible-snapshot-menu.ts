@@ -105,6 +105,13 @@ export const VISIBLE_SNAPSHOT_MENU = [
     purpose: "closed-trade evidence only",
   },
   {
+    label: "{TICKER} · {ID} historical attribution evidence",
+    kind: "window_menu",
+    where: "Historical / planless closed trade detail snapshot menu",
+    purpose:
+      "evidence pack for AI attribution proposal (tradeId; Plan/T0 may be absent) — not accepted MAF",
+  },
+  {
     label: "Analyze with AI",
     kind: "cta",
     where: "Stock File window (primary CTA)",

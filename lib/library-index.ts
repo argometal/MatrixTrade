@@ -30,6 +30,7 @@ export function buildLibraryIndexBrief(): string {
     "- Analyze with AI — Stock File window CTA (preferred ticker loop)",
     "- Apply — paste Validate Accept (write path)",
     "- Dashboard snapshot — Dashboard window menu",
+    "- {TICKER} · {ID} historical attribution evidence — historical/planless closed trade detail (not accepted MAF)",
     "",
     "=== REQUEST ===",
     "Ask the human to copy the exact visible copy-row label you need next.",

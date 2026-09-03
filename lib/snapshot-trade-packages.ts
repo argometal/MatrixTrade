@@ -1,4 +1,10 @@
 import { buildAiContextPackage } from "./ai-context";
+import {
+  formatHistoricalAttributionEvidenceBrief,
+  historicalAttributionEvidenceLabel,
+} from "./historical-attribution-evidence";
+import { isHistoricalTradeCandidate } from "./historical-case-attribution";
+import type { ObservationRecord } from "./observation-types";
 import type { Playbook } from "./playbook-types";
 import type { StockThesis } from "./stock-thesis-types";
 import type { SnapshotMenuItem } from "./snapshot-types";
@@ -17,6 +23,7 @@ export function tradeSnapshotItems(input: {
   linkedThesis?: StockThesis;
   plans?: TradePlan[];
   theses?: StockThesis[];
+  observation?: ObservationRecord | null;
 }): SnapshotMenuItem[] {
   const tradeText = formatTradeForSnapshot(input.trade, input.setups, input.playbooks);
   const items: SnapshotMenuItem[] = [
@@ -58,9 +65,43 @@ export function tradeSnapshotItems(input: {
       })
     );
   }
+  if (isHistoricalTradeCandidate(input.trade)) {
+    items.push(
+      historicalAttributionEvidenceSnapshotItem({
+        trade: input.trade,
+        observation: input.observation,
+      })
+    );
+  }
   // Mechanics remains available via Control → MTA Mechanics; keep row for standalone trade window portability.
   items.push(mechanicsSnapshotItem());
   return items;
+}
+
+/** Historical / planless closed trade — evidence for AI attribution proposal (not MAF Accept). */
+export function historicalAttributionEvidenceSnapshotItem(input: {
+  trade: Trade;
+  observation?: ObservationRecord | null;
+  reconstructionNote?: string | null;
+}): SnapshotMenuItem {
+  const label = historicalAttributionEvidenceLabel(input.trade);
+  const noteFromTrade =
+    input.reconstructionNote?.trim() ||
+    input.trade.notes?.trim() ||
+    input.trade.thesis?.trim() ||
+    null;
+  const body = formatHistoricalAttributionEvidenceBrief({
+    trade: input.trade,
+    observation: input.observation,
+    reconstructionNote: noteFromTrade,
+  });
+  return {
+    id: "historical-attribution-evidence",
+    label,
+    description:
+      "Historical evidence for MAF attribution proposal — not accepted MAF; Plan/T0 may be absent",
+    text: wrapSnapshotText(label, body),
+  };
 }
 
 /**
