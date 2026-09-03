@@ -3,10 +3,11 @@
  * Attribution evidence only — never Case family / DQ / EQ authority.
  *
  * Persistence follows Matrix store gate (JSON local or Supabase maf_experiments).
+ * This module must stay client-safe (no fs-backed store imports).
  */
 
 import type { MafExperiment } from "./maf-types";
-import { getMafExperimentsStoreMode } from "./maf-store";
+import { resolveMafEvidenceSource } from "./maf-evidence-source";
 import type {
   InsightsCaseMafAttribution,
   InsightsCaseRow,
@@ -14,13 +15,10 @@ import type {
 } from "./insights-case-spine-types";
 
 export type { InsightsCaseMafAttribution, MafEvidenceSource };
+export { resolveMafEvidenceSource };
 
 /** @deprecated Prefer resolveMafEvidenceSource() — kept for callers that need a constant. */
 export const MAF_EVIDENCE_SOURCE: MafEvidenceSource = "local_json";
-
-export function resolveMafEvidenceSource(): MafEvidenceSource {
-  return getMafExperimentsStoreMode() === "supabase" ? "supabase" : "local_json";
-}
 
 export const MAF_SOURCE_HELP =
   "Attribution source: accepted MAF experiments from the active Matrix store. MAF explains possible component drag; it does not independently determine Case Family or Decision Quality.";

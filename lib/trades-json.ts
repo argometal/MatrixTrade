@@ -1,4 +1,5 @@
 import { createJsonTradesStore } from "./trades-store/json";
+import { createMemoryTradesStore } from "./trades-store/memory";
 import { createSupabaseTradesStore } from "./trades-store/supabase";
 import type { TradesStore, TradesStoreMode } from "./trades-store/types";
 import type { Trade } from "./types";
@@ -15,6 +16,7 @@ export {
   normalizeStoredTrade,
 } from "./trades-store/compare";
 export { readTradesJsonFile } from "./trades-store/json";
+export { createMemoryTradesStore } from "./trades-store/memory";
 
 function hasSupabaseEnv(): boolean {
   return Boolean(
@@ -48,8 +50,10 @@ export function isSupabaseMatrixStore(): boolean {
 
 let cachedStore: TradesStore | null = null;
 let cachedMode: TradesStoreMode | null = null;
+let testStorePinned = false;
 
 function getTradesStore(): TradesStore {
+  if (testStorePinned && cachedStore) return cachedStore;
   const mode = getTradesStoreMode();
   if (cachedStore && cachedMode === mode) {
     return cachedStore;
@@ -57,6 +61,22 @@ function getTradesStore(): TradesStore {
   cachedMode = mode;
   cachedStore = mode === "supabase" ? createSupabaseTradesStore() : createJsonTradesStore();
   return cachedStore;
+}
+
+/**
+ * Test/harness helper — pin an isolated trades store (typically memory).
+ * Null clears the override. Does not change product runtime selection.
+ */
+export function __setTradesStoreForTests(store: TradesStore | null): void {
+  if (store === null) {
+    cachedStore = null;
+    cachedMode = null;
+    testStorePinned = false;
+    return;
+  }
+  cachedStore = store;
+  cachedMode = "json";
+  testStorePinned = true;
 }
 
 /** Read all trades from the active store (Supabase when TRADES_STORE=supabase, else JSON file). */
