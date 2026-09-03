@@ -172,6 +172,9 @@ function buildT0Plan(freeze: ThesisT0Freeze): CaseT0Plan {
   return {
     planId: p.planId,
     plannedEntry: p.plannedEntry,
+    originalEntry: p.originalEntry ?? p.plannedEntry ?? null,
+    participationBlocker: p.participationBlocker ?? null,
+    reviseIf: p.reviseIf ?? null,
     maximumEntryProxy: p.maximumEntryProxy,
     stopPrice: p.stopPrice,
     targetPrice: p.targetPrice,

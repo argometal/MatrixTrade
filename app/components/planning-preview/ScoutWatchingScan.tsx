@@ -74,7 +74,13 @@ export function ScoutWatchingScan({
         {(
           [
             ["Zone", zone],
-            ["Entry", entry !== undefined ? String(entry) : "—"],
+            ["Executable entry", entry !== undefined ? String(entry) : "—"],
+            [
+              "Original entry",
+              plan?.originalEntry !== undefined
+                ? String(plan.originalEntry)
+                : "—",
+            ],
             ["Stop", stop !== undefined ? String(stop) : "—"],
             ["Target", target !== undefined ? String(target) : "—"],
             ["R", rrLabel],
@@ -94,6 +100,24 @@ export function ScoutWatchingScan({
           </div>
         ))}
       </dl>
+
+      {plan?.participationBlocker ||
+      (plan?.reviseIf && plan.reviseIf.length > 0) ? (
+        <div className="mt-3 space-y-1.5 text-xs" data-scout-capture>
+          {plan.participationBlocker ? (
+            <p>
+              <span className="text-zinc-600">Blocks participation · </span>
+              <span className="text-amber-200/90">{plan.participationBlocker}</span>
+            </p>
+          ) : null}
+          {plan.reviseIf && plan.reviseIf.length > 0 ? (
+            <p>
+              <span className="text-zinc-600">Revise if · </span>
+              <span className="text-zinc-300">{plan.reviseIf.join("; ")}</span>
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <p
         className="mt-3 text-xs leading-relaxed text-zinc-400"

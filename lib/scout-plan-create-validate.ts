@@ -65,7 +65,9 @@ export function validateScoutPlanCreateProposal(
 
   const scoutCheck = validateScoutContract(
     {
-      plannedEntry: parseOptionalNumber(proposal.plannedEntry),
+      plannedEntry:
+        parseOptionalNumber(proposal.plannedEntry) ??
+        parseOptionalNumber(proposal.executableEntry),
       stopPrice: parseOptionalNumber(proposal.stopPrice),
       targetPrice: parseOptionalNumber(proposal.targetPrice),
       supportLevel: parseOptionalNumber(proposal.supportLevel),

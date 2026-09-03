@@ -92,11 +92,30 @@ function T0EvidencePanel({ c }: { c: ThesisCase }) {
         </h3>
         <dl className="space-y-2">
           <Field label="Plan" value={t0Evidence.plan?.planId} />
-          <Field label="Entry" value={t0Evidence.plan?.plannedEntry} />
+          <Field
+            label="Executable entry"
+            value={t0Evidence.plan?.plannedEntry}
+          />
+          <Field
+            label="Original entry"
+            value={t0Evidence.plan?.originalEntry}
+          />
           <Field label="Max entry" value={t0Evidence.plan?.maximumEntryProxy} />
           <Field label="Stop" value={t0Evidence.plan?.stopPrice} />
           <Field label="Target" value={t0Evidence.plan?.targetPrice} />
           <Field label="Planned RR" value={t0Evidence.plan?.plannedRR} />
+          <Field
+            label="Blocks participation"
+            value={t0Evidence.plan?.participationBlocker}
+          />
+          <Field
+            label="Revise if"
+            value={
+              t0Evidence.plan?.reviseIf?.length
+                ? t0Evidence.plan.reviseIf.join("\n")
+                : null
+            }
+          />
           <Field
             label="Execution instruction"
             value={t0Evidence.plan?.executionInstruction}

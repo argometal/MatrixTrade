@@ -22,6 +22,10 @@ const ACTIVE_SCOUT_LINK_STATUSES: PlanStatus[] = ["watching", "ready", "entered"
 
 export const DECISION_TACTICAL_FIELDS = [
   "plannedEntry",
+  "executableEntry",
+  "originalEntry",
+  "participationBlocker",
+  "reviseIf",
   "stopPrice",
   "targetPrice",
   "minimumRR",
@@ -179,13 +183,15 @@ export async function updatePlanTacticsFromProposal(
   if (!plan) return { errors: ["Plan not found."] };
 
   const errors: string[] = [];
-  const updated: TradePlan = { ...plan };
+  let updated: TradePlan = { ...plan };
 
-  if (proposal.plannedEntry !== undefined) {
-    const value = Number(proposal.plannedEntry);
-    if (!Number.isFinite(value)) errors.push("proposal.plannedEntry must be a number");
-    else updated.plannedEntry = value;
+  {
+    const { applyScoutCaptureToPlan } = await import("./scout-entry-capture");
+    const capture = applyScoutCaptureToPlan(updated, proposal);
+    if (capture.errors.length) errors.push(...capture.errors);
+    else updated = capture.plan;
   }
+
   if (proposal.stopPrice !== undefined) {
     const value = Number(proposal.stopPrice);
     if (!Number.isFinite(value)) errors.push("proposal.stopPrice must be a number");

@@ -46,7 +46,9 @@ export async function applyScoutPlanCreate(
 
   const playbookIds = parsePlaybookIds(proposal);
   const primaryPlaybook = playbookIds[0];
-  const plannedEntry = parseOptionalNumber(proposal.plannedEntry)!;
+  const plannedEntry =
+    parseOptionalNumber(proposal.plannedEntry) ??
+    parseOptionalNumber(proposal.executableEntry)!;
   const stopPrice = parseOptionalNumber(proposal.stopPrice)!;
   const targetPrice = parseOptionalNumber(proposal.targetPrice)!;
   const status = parseScoutPlanCreateStatus(proposal.status) ?? "watching";
@@ -110,6 +112,16 @@ export async function applyScoutPlanCreate(
     analysisTimeframes: analysisTimeframes.length ? analysisTimeframes : DEFAULT_ANALYSIS,
     entryTimeframe,
     plannedEntry,
+    executableEntry: parseOptionalNumber(proposal.executableEntry),
+    originalEntry:
+      parseOptionalNumber(proposal.originalEntry) ?? plannedEntry,
+    participationBlocker:
+      proposal.participationBlocker !== undefined
+        ? String(proposal.participationBlocker).trim() || undefined
+        : undefined,
+    reviseIf: Array.isArray(proposal.reviseIf)
+      ? proposal.reviseIf.map((x) => String(x).trim()).filter(Boolean)
+      : undefined,
     supportLevel: parseOptionalNumber(proposal.supportLevel),
     stopPrice,
     targetPrice,

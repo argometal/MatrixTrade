@@ -127,7 +127,17 @@ export interface TradePlan {
   status: PlanStatus;
   analysisTimeframes: PlanTimeframe[];
   entryTimeframe: PlanTimeframe;
+  /** Live executable entry (P10: also exposed as executableEntry). */
   plannedEntry?: number;
+  /**
+   * Immutable entry at original CREATE/decision (P10).
+   * Never mutate after set — revise live entry via plannedEntry.
+   */
+  originalEntry?: number;
+  /** Why ENTER is blocked now (WAIT/PASS). Live — may be refined. */
+  participationBlocker?: string;
+  /** Observable conditions that force reconsideration. */
+  reviseIf?: string[];
   supportLevel?: number;
   stopPrice?: number;
   targetPrice?: number;
@@ -181,6 +191,11 @@ export type SavePlanInput = {
   analysisTimeframes: PlanTimeframe[];
   entryTimeframe: PlanTimeframe;
   plannedEntry?: number;
+  /** Alias accepted on CREATE — written to plannedEntry. */
+  executableEntry?: number;
+  originalEntry?: number;
+  participationBlocker?: string;
+  reviseIf?: string[];
   supportLevel?: number;
   stopPrice?: number;
   targetPrice?: number;

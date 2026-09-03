@@ -59,6 +59,9 @@ export type CaseT0PreEvent = {
 export type CaseT0Plan = {
   planId: string;
   plannedEntry: number | null;
+  originalEntry: number | null;
+  participationBlocker: string | null;
+  reviseIf: string[] | null;
   maximumEntryProxy: number | null;
   stopPrice: number | null;
   targetPrice: number | null;

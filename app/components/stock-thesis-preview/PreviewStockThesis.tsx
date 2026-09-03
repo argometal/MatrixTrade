@@ -222,13 +222,21 @@ export function PreviewStockThesis({
               </div>
               <dl className="mt-3 grid gap-2 text-xs text-zinc-400 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
-                  <dt className="text-zinc-600">Entry</dt>
+                  <dt className="text-zinc-600">Executable entry</dt>
                   <dd className="font-medium text-zinc-200">
                     {primaryPlan.plannedEntry !== undefined
                       ? `$${primaryPlan.plannedEntry}`
                       : primaryPlan.layeredEntry?.limits?.[0]?.price !== undefined
                         ? `$${primaryPlan.layeredEntry.limits[0].price}`
                         : "—"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-zinc-600">Original entry</dt>
+                  <dd className="font-medium text-zinc-200">
+                    {primaryPlan.originalEntry !== undefined
+                      ? `$${primaryPlan.originalEntry}`
+                      : "—"}
                   </dd>
                 </div>
                 <div>
@@ -262,7 +270,42 @@ export function PreviewStockThesis({
                   </dd>
                 </div>
               </dl>
-              {primaryPlan.decision?.reasoning ? (
+              {primaryPlan.participationBlocker ||
+              (primaryPlan.reviseIf && primaryPlan.reviseIf.length > 0) ||
+              primaryPlan.decision?.reasoning ? (
+                <div className="mt-3 space-y-2 border-t border-zinc-800 pt-3 text-xs">
+                  {primaryPlan.decision?.reasoning ? (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
+                        Why {primaryPlan.decision.verdict === "wait" ? "WAIT" : primaryPlan.decision.verdict === "no" ? "PASS" : "this decision"}
+                      </p>
+                      <p className="mt-0.5 text-zinc-400">{primaryPlan.decision.reasoning}</p>
+                    </div>
+                  ) : null}
+                  {primaryPlan.participationBlocker ? (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
+                        Blocks participation
+                      </p>
+                      <p className="mt-0.5 text-amber-200/90">
+                        {primaryPlan.participationBlocker}
+                      </p>
+                    </div>
+                  ) : null}
+                  {primaryPlan.reviseIf && primaryPlan.reviseIf.length > 0 ? (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-600">
+                        Revise if
+                      </p>
+                      <ul className="mt-0.5 list-inside list-disc text-zinc-400">
+                        {primaryPlan.reviseIf.map((r) => (
+                          <li key={r}>{r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                </div>
+              ) : primaryPlan.decision?.reasoning ? (
                 <p className="mt-2 text-xs text-zinc-500 line-clamp-2">
                   {primaryPlan.decision.reasoning}
                 </p>

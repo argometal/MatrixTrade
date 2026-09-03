@@ -29,6 +29,10 @@ export const STOCK_CASE_RISK_ALLOWED_KEYS = [
 
 export const STOCK_CASE_SCOUT_ALLOWED_KEYS = [
   "plannedEntry",
+  "executableEntry",
+  "originalEntry",
+  "participationBlocker",
+  "reviseIf",
   "stopPrice",
   "targetPrice",
   "supportLevel",

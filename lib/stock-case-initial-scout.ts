@@ -10,6 +10,11 @@ import {
 
 export type InitialScoutInput = {
   plannedEntry?: number;
+  /** Alias for plannedEntry (P10 executable entry). */
+  executableEntry?: number;
+  originalEntry?: number;
+  participationBlocker?: string;
+  reviseIf?: string[];
   supportLevel?: number;
   stopPrice?: number;
   targetPrice?: number;
@@ -59,7 +64,18 @@ export function parseInitialScout(raw: unknown): InitialScoutInput | undefined {
       : undefined;
 
   return {
-    plannedEntry: parseOptionalNumber(s.plannedEntry),
+    plannedEntry:
+      parseOptionalNumber(s.plannedEntry) ??
+      parseOptionalNumber(s.executableEntry),
+    executableEntry: parseOptionalNumber(s.executableEntry),
+    originalEntry: parseOptionalNumber(s.originalEntry),
+    participationBlocker:
+      s.participationBlocker !== undefined
+        ? String(s.participationBlocker).trim() || undefined
+        : undefined,
+    reviseIf: Array.isArray(s.reviseIf)
+      ? s.reviseIf.map((x) => String(x).trim()).filter(Boolean)
+      : undefined,
     supportLevel: parseOptionalNumber(s.supportLevel),
     stopPrice: parseOptionalNumber(s.stopPrice),
     targetPrice: parseOptionalNumber(s.targetPrice),
@@ -104,7 +120,11 @@ export async function createInitialScoutPlan(
     status: scout.status,
     analysisTimeframes,
     entryTimeframe,
-    plannedEntry: scout.plannedEntry,
+    plannedEntry: scout.plannedEntry ?? scout.executableEntry,
+    executableEntry: scout.executableEntry,
+    originalEntry: scout.originalEntry ?? scout.plannedEntry ?? scout.executableEntry,
+    participationBlocker: scout.participationBlocker,
+    reviseIf: scout.reviseIf,
     supportLevel: scout.supportLevel,
     stopPrice: scout.stopPrice,
     targetPrice: scout.targetPrice,

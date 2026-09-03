@@ -89,6 +89,11 @@ function planGeometryFromPlan(plan: TradePlan): ThesisT0PlanGeometry {
   return {
     planId: plan.id,
     plannedEntry: plan.plannedEntry ?? null,
+    originalEntry: plan.originalEntry ?? plan.plannedEntry ?? null,
+    participationBlocker: plan.participationBlocker?.trim()
+      ? plan.participationBlocker.trim()
+      : null,
+    reviseIf: plan.reviseIf?.length ? [...plan.reviseIf] : null,
     stopPrice: plan.stopPrice ?? null,
     targetPrice: plan.targetPrice ?? null,
     plannedRR: plan.plannedRR ?? null,

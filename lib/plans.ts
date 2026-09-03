@@ -164,7 +164,9 @@ export async function savePlan(input: SavePlanInput): Promise<{
     return { errors: [`Invalid plan id ${requestedId}; expected PLAN-<number>.`] };
   }
 
-  const plannedEntry = parseOptionalNumber(input.plannedEntry);
+  const plannedEntry =
+    parseOptionalNumber(input.plannedEntry) ??
+    parseOptionalNumber(input.executableEntry);
   const stopPrice = parseOptionalNumber(input.stopPrice);
   const targetPrice = parseOptionalNumber(input.targetPrice);
   let plannedRR = parseOptionalNumber(input.plannedRR);
@@ -185,6 +187,14 @@ export async function savePlan(input: SavePlanInput): Promise<{
     planId = await store.allocateNextPlanId();
   }
 
+  // P10: originalEntry immutable once set; seed from CREATE entry when absent.
+  const seededOriginal =
+    existing?.originalEntry != null && Number.isFinite(existing.originalEntry)
+      ? existing.originalEntry
+      : parseOptionalNumber(input.originalEntry) ??
+        (isCreate ? plannedEntry : undefined) ??
+        existing?.plannedEntry;
+
   const plan: TradePlan = {
     id: planId,
     ticker,
@@ -193,7 +203,15 @@ export async function savePlan(input: SavePlanInput): Promise<{
     status: input.status ?? existing?.status ?? "watching",
     analysisTimeframes,
     entryTimeframe: input.entryTimeframe,
-    plannedEntry,
+    plannedEntry: plannedEntry ?? existing?.plannedEntry,
+    originalEntry: seededOriginal,
+    participationBlocker:
+      input.participationBlocker?.trim() ||
+      existing?.participationBlocker,
+    reviseIf:
+      input.reviseIf !== undefined
+        ? input.reviseIf.map((s) => String(s).trim()).filter(Boolean)
+        : existing?.reviseIf,
     supportLevel: parseOptionalNumber(input.supportLevel),
     stopPrice,
     targetPrice,
@@ -380,10 +398,13 @@ export async function recordScoutDecision(
     ...result.plan,
     scoutLifecycle: deriveLifecycleFromPlan(result.plan),
   };
-  await getPlansStore().upsert(withLifecycle);
+  // P10: seed originalEntry on first committed decision if still absent
+  const { seedOriginalEntry } = await import("./scout-entry-capture");
+  const withCapture = seedOriginalEntry(withLifecycle, withLifecycle.plannedEntry);
+  await getPlansStore().upsert(withCapture);
 
   const { ensureThesisT0OnScoutDecision } = await import("./thesis-t0");
-  const t0Result = await ensureThesisT0OnScoutDecision({ plan: withLifecycle });
+  const t0Result = await ensureThesisT0OnScoutDecision({ plan: withCapture });
   if (
     t0Result.status === "failed" ||
     t0Result.status === "skipped_readonly"
@@ -396,7 +417,7 @@ export async function recordScoutDecision(
   }
 
   return {
-    plan: withLifecycle,
+    plan: withCapture,
     t0: {
       status: t0Result.status,
       created: t0Result.created,

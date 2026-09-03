@@ -57,6 +57,10 @@ export type ThesisT0DecisionSlice = {
 export type ThesisT0PlanGeometry = {
   planId: string;
   plannedEntry: number | null;
+  /** Immutable original executable at T0 (P10). */
+  originalEntry?: number | null;
+  participationBlocker?: string | null;
+  reviseIf?: string[] | null;
   stopPrice: number | null;
   targetPrice: number | null;
   plannedRR: number | null;
