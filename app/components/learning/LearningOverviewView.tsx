@@ -1,8 +1,7 @@
 import Link from "next/link";
-import type { LearningOverview } from "@/lib/learning-overview-types";
+import type { LearningOverview, LearningOverviewRow } from "@/lib/learning-overview-types";
 import type {
   DecisionQuality,
-  ExecutionQuality,
   RealityRelationshipLane,
 } from "@/lib/case-evaluation-types";
 
@@ -60,19 +59,6 @@ const DQ_LABELS: Record<DecisionQuality, string> = {
   INDETERMINATE: "INDETERMINATE",
 };
 
-const EQ_ORDER: ExecutionQuality[] = [
-  "respected",
-  "violated",
-  "not_applicable",
-  "INDETERMINATE",
-];
-const EQ_LABELS: Record<ExecutionQuality, string> = {
-  respected: "respected",
-  violated: "violated",
-  not_applicable: "not_applicable",
-  INDETERMINATE: "INDETERMINATE",
-};
-
 const RR_ORDER: RealityRelationshipLane[] = [
   "invalidated",
   "condition_met",
@@ -104,6 +90,38 @@ function verdictBadge(verdict: string | null) {
   );
 }
 
+function diagnosisLabel(row: LearningOverviewRow): string {
+  const d = row.diagnosis;
+  if (!d) return "—";
+  if (d.classification.kind === "no_entry") {
+    if (d.classification.value === "GOOD_FILTER") return "Good Filter";
+    if (d.classification.value === "OVER_OPTIMIZATION") return "Sobre-optimización";
+    return "Indeterminada";
+  }
+  if (d.classification.kind === "entry_family") {
+    if (d.classification.value === "INDETERMINATE") return "Entry · Indet.";
+    return `Familia ${d.classification.value}`;
+  }
+  return "Indeterminada";
+}
+
+function conditionTone(
+  code: LearningOverview["diagnosis"]["currentCondition"]["code"]
+): string {
+  switch (code) {
+    case "POSSIBLE_OVER_FILTERING":
+      return "border-amber-800/60 bg-amber-950/30 text-amber-100";
+    case "INSUFFICIENT_EVIDENCE":
+      return "border-violet-900/50 bg-violet-950/20 text-violet-100";
+    case "FILTERING_DOMINANT_GOOD":
+      return "border-emerald-900/50 bg-emerald-950/20 text-emerald-100";
+    case "PARTICIPATING":
+      return "border-sky-900/50 bg-sky-950/20 text-sky-100";
+    default:
+      return "border-zinc-800 bg-zinc-950/60 text-zinc-200";
+  }
+}
+
 export function LearningOverviewView({ data }: { data: LearningOverview }) {
   const total = data.totalCases;
   const entryPct = pct(data.entryCases, total);
@@ -111,20 +129,41 @@ export function LearningOverviewView({ data }: { data: LearningOverview }) {
   const entryShare = total > 0 ? (data.entryCases / total) * 100 : 0;
   const noEntryShare = total > 0 ? (data.noEntryCases / total) * 100 : 0;
   const probeShare = total > 0 ? (data.probeCases / total) * 100 : 0;
+  const dx = data.diagnosis;
+  const ne = dx.noEntryUniverse;
+  const ent = dx.entryUniverse;
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
       <header className="space-y-1 border-b border-zinc-800 pb-4">
         <h1 className="text-lg font-semibold text-zinc-100">Learning Overview</h1>
         <p className="text-sm text-zinc-500">
-          Decisions → Evidence → Evaluation → Learning
+          From Decisions → Evidence → Evaluation → Diagnosis → Learning
         </p>
         <p className="text-xs text-zinc-600">
           Aggregate is read-only. Drill into Case Review for T0 → Reality → Evaluation
-          evidence. Outcome never defines Decision Quality. Counts describe the Case
-          universe; they do not by themselves prove learning or decision quality.
+          evidence. Outcome never defines Decision Quality. Diagnosis is equation-based
+          (016a), not narrative.
         </p>
       </header>
+
+      {/* CONDICIÓN ACTUAL */}
+      <section
+        className={`rounded-lg border px-4 py-4 ${conditionTone(dx.currentCondition.code)}`}
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-wider opacity-80">
+          Condición Actual
+        </p>
+        <p className="mt-2 text-base font-medium leading-snug">
+          {dx.currentCondition.statement}
+        </p>
+        <p className="mt-2 text-[11px] opacity-70">
+          {dx.currentCondition.code} · {dx.falseVirtuousLoop.equationId}:{" "}
+          {dx.falseVirtuousLoop.suspected
+            ? "posible bucle falso-virtuoso"
+            : "sin sospecha de bucle falso-virtuoso"}
+        </p>
+      </section>
 
       {/* Decision Universe */}
       <section className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
@@ -173,14 +212,60 @@ export function LearningOverviewView({ data }: { data: LearningOverview }) {
               />
             </div>
             <p className="mt-2 text-xs text-zinc-600">
-              Missing T0 freeze: {data.missingT0Cases} (Evaluation Decision Quality =
-              INDETERMINATE)
+              Missing T0 / evidencia insuficiente: {data.missingT0Cases} (
+              {pct(data.missingT0Cases, total)})
             </p>
           </div>
         </div>
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
+        {/* Diagnosis 016a */}
+        <section className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
+          <h2 className="text-sm font-medium text-zinc-200">Diagnóstico (016a)</h2>
+          <p className="mt-1 text-xs text-zinc-500">
+            No-entradas: {ne} · Entradas: {ent}. Clasificación por ecuación, no por P&amp;L.
+          </p>
+          <div className="mt-4 space-y-3 text-sm">
+            <div className="flex justify-between gap-3">
+              <span className="text-emerald-400">Good Filter</span>
+              <span className="tabular-nums text-zinc-200">
+                {dx.goodFilter}{" "}
+                <span className="text-xs text-zinc-600">
+                  ({pct(dx.goodFilter, ne)})
+                </span>
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-amber-400">Sobre-optimización</span>
+              <span className="tabular-nums text-zinc-200">
+                {dx.overOptimization}{" "}
+                <span className="text-xs text-zinc-600">
+                  ({pct(dx.overOptimization, ne)})
+                </span>
+              </span>
+            </div>
+            <div className="flex justify-between gap-3">
+              <span className="text-zinc-400">Indeterminada (no-entry)</span>
+              <span className="tabular-nums text-zinc-200">
+                {dx.indeterminateNoEntry}{" "}
+                <span className="text-xs text-zinc-600">
+                  ({pct(dx.indeterminateNoEntry, ne)})
+                </span>
+              </span>
+            </div>
+            <div className="border-t border-zinc-800 pt-3 text-xs text-zinc-500">
+              Familias entrada — A {dx.entryFamilyA} ({pct(dx.entryFamilyA, ent)}) · C{" "}
+              {dx.entryFamilyC} ({pct(dx.entryFamilyC, ent)}) · D {dx.entryFamilyD} (
+              {pct(dx.entryFamilyD, ent)}) · Indet. {dx.entryFamilyIndeterminate}
+            </div>
+            <p className="text-[11px] text-zinc-600">
+              A buenas entradas · B = filtrado (good/over/indet) · C válidas con pérdida · D
+              fallos atribuibles
+            </p>
+          </div>
+        </section>
+
         {/* Evaluation Summary — P04 vocabulary */}
         <section className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
           <h2 className="text-sm font-medium text-zinc-200">Evaluation Summary</h2>
@@ -201,17 +286,6 @@ export function LearningOverviewView({ data }: { data: LearningOverview }) {
             </div>
             <div>
               <p className="mb-2 text-[11px] uppercase tracking-wide text-zinc-500">
-                Execution Quality
-              </p>
-              <LaneBars
-                counts={data.executionQuality}
-                total={total}
-                order={EQ_ORDER}
-                labels={EQ_LABELS}
-              />
-            </div>
-            <div>
-              <p className="mb-2 text-[11px] uppercase tracking-wide text-zinc-500">
                 Reality Relationship
               </p>
               <LaneBars
@@ -223,45 +297,15 @@ export function LearningOverviewView({ data }: { data: LearningOverview }) {
             </div>
           </div>
         </section>
-
-        {/* No-entry Diagnosis — aggregator slot; UI does not classify */}
-        <section className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
-          <h2 className="text-sm font-medium text-zinc-200">No-entry Diagnosis</h2>
-          <p className="mt-1 text-xs text-zinc-500">
-            Universe: {data.noEntryDiagnosis.noEntryUniverse} no-entry cases
-          </p>
-          {data.noEntryDiagnosis.available === false ? (
-            <div className="mt-6 rounded border border-amber-900/50 bg-amber-950/20 px-3 py-4 text-sm text-amber-100/90">
-              <p className="font-medium">Diagnosis unavailable</p>
-              <p className="mt-2 text-xs text-amber-200/80">
-                {data.noEntryDiagnosis.reason}
-              </p>
-              <p className="mt-3 text-xs text-zinc-500">
-                Speculative buckets (Good Filter / Possible Over-optimization /
-                Families A–D) are not shown as facts. Future Case equations will
-                populate this slot without redesigning the page.
-              </p>
-            </div>
-          ) : (
-            <ul className="mt-4 space-y-2 text-sm text-zinc-300">
-              {Object.entries(data.noEntryDiagnosis.byLabel).map(([label, n]) => (
-                <li key={label} className="flex justify-between gap-3">
-                  <span className="text-zinc-400">{label}</span>
-                  <span className="tabular-nums">{n}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </div>
 
       {/* Cases for Review */}
       <section className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-4">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
-            <h2 className="text-sm font-medium text-zinc-200">Cases for Review</h2>
+            <h2 className="text-sm font-medium text-zinc-200">Casos Para Revisar</h2>
             <p className="mt-1 text-xs text-zinc-500">
-              Prioritized by missing T0, uncertainty, execution violation — not by P&amp;L.
+              Prioridad: missing T0, sobre-optimización, familia D, incertidumbre — no P&amp;L.
             </p>
           </div>
           <p className="text-xs text-zinc-600">
@@ -275,15 +319,14 @@ export function LearningOverviewView({ data }: { data: LearningOverview }) {
           </p>
         ) : (
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[40rem] text-left text-sm">
+            <table className="w-full min-w-[44rem] text-left text-sm">
               <thead>
                 <tr className="border-b border-zinc-800 text-[11px] uppercase tracking-wide text-zinc-500">
                   <th className="py-2 pr-3 font-medium">Case</th>
-                  <th className="py-2 pr-3 font-medium">T0 decision</th>
-                  <th className="py-2 pr-3 font-medium">Decision Q</th>
-                  <th className="py-2 pr-3 font-medium">Execution</th>
+                  <th className="py-2 pr-3 font-medium">Decisión</th>
+                  <th className="py-2 pr-3 font-medium">Diagnóstico</th>
+                  <th className="py-2 pr-3 font-medium">Ecuación</th>
                   <th className="py-2 pr-3 font-medium">Reality</th>
-                  <th className="py-2 pr-3 font-medium">Uncertainty</th>
                   <th className="py-2 font-medium">T0</th>
                 </tr>
               </thead>
@@ -306,14 +349,11 @@ export function LearningOverviewView({ data }: { data: LearningOverview }) {
                       </div>
                     </td>
                     <td className="py-2.5 pr-3">{verdictBadge(row.verdict)}</td>
-                    <td className="py-2.5 pr-3 text-xs">{row.decisionQuality}</td>
-                    <td className="py-2.5 pr-3 text-xs">{row.executionQuality}</td>
-                    <td className="py-2.5 pr-3 text-xs">{row.realityRelationship}</td>
-                    <td className="py-2.5 pr-3 text-xs text-zinc-500">
-                      {row.uncertainty.length
-                        ? row.uncertainty[0]
-                        : "—"}
+                    <td className="py-2.5 pr-3 text-xs">{diagnosisLabel(row)}</td>
+                    <td className="py-2.5 pr-3 font-mono text-[10px] text-zinc-500">
+                      {row.diagnosis?.equationId ?? "—"}
                     </td>
+                    <td className="py-2.5 pr-3 text-xs">{row.realityRelationship}</td>
                     <td className="py-2.5 text-xs text-zinc-500">
                       {row.t0Available ? row.t0Integrity : "unavailable"}
                     </td>
@@ -327,18 +367,24 @@ export function LearningOverviewView({ data }: { data: LearningOverview }) {
         {data.allCases.length > 0 ? (
           <details className="mt-4">
             <summary className="cursor-pointer text-xs text-zinc-500 hover:text-zinc-300">
-              Full universe ({data.allCases.length}) — drill-down for aggregates
+              Full universe ({data.allCases.length}) — evidencia / ecuación por caso
             </summary>
-            <ul className="mt-2 space-y-1 text-xs text-zinc-400">
+            <ul className="mt-2 space-y-2 text-xs text-zinc-400">
               {data.allCases.map((row) => (
-                <li key={`all-${row.planId}`}>
+                <li key={`all-${row.planId}`} className="rounded border border-zinc-900/80 p-2">
                   <Link href={row.caseHref} className="hover:text-zinc-200 hover:underline">
                     {row.planId}
                   </Link>
                   {" · "}
-                  {row.ticker} · {row.verdict ?? "—"} · DQ {row.decisionQuality} ·
-                  Exec {row.executionQuality} · RR {row.realityRelationship}
-                  {row.outcomeFacts[0] ? ` · ${row.outcomeFacts[0]}` : ""}
+                  {row.ticker} · {row.verdict ?? "—"} · {diagnosisLabel(row)}
+                  {row.diagnosis ? (
+                    <div className="mt-1 text-[11px] text-zinc-600">
+                      {row.diagnosis.equationId}: {row.diagnosis.reason}
+                      {row.diagnosis.missingInputs.length
+                        ? ` · missing: ${row.diagnosis.missingInputs.join(", ")}`
+                        : ""}
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -346,7 +392,7 @@ export function LearningOverviewView({ data }: { data: LearningOverview }) {
         ) : null}
 
         <p className="mt-4 text-[11px] text-zinc-600">
-          T0 immutable · Verifiable evidence · No retrospective narrative
+          T0 immutable · Verifiable evidence · Sin narrativa retrospectiva
         </p>
       </section>
     </div>

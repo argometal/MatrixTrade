@@ -1,9 +1,7 @@
 /**
- * Learning Overview aggregation (MXT 016-P05).
- * Pipeline: Plans → buildCase → evaluateCase → counts/rows.
- * Does not mutate T0, does not fetch Yahoo, does not run Case equations.
- * Future deterministic filters (MXT 015) should plug in after evaluateCase
- * (or replace noEntryDiagnosis) — keep classification out of React.
+ * Learning Overview aggregation (MXT 016-P05 + 016a).
+ * Pipeline: Plans → buildCase → evaluateCase → diagnoseCase → counts/rows.
+ * Does not mutate T0, does not fetch Yahoo. Classification lives in case-diagnosis.
  */
 
 import { getPlans } from "./plans";
@@ -14,7 +12,6 @@ import {
 } from "./thesis-case";
 import { evaluateCase, ohlcvEvidenceFromMarketReality } from "./case-evaluation";
 import type {
-  CaseEvaluation,
   CaseOhlcvEvidence,
   DecisionQuality,
   ExecutionQuality,
@@ -28,13 +25,20 @@ import {
 } from "./market-reality";
 import { getStockThesisById } from "./stock-theses";
 import { mxtPath } from "./mxt-paths";
+import {
+  aggregateDiagnoses,
+  diagnoseCase,
+} from "./case-diagnosis";
 import type {
   CaseParticipationClass,
   LaneCountMap,
   LearningOverview,
   LearningOverviewRow,
+  NoEntryDiagnosisSlot,
 } from "./learning-overview-types";
 import type { DecisionVerdict } from "./scout-decision-types";
+import type { CaseEvaluation } from "./case-evaluation-types";
+import type { CaseDiagnosis } from "./case-diagnosis-types";
 
 const DECISION_QUALITY_VALUES: DecisionQuality[] = [
   "supported",
@@ -76,7 +80,8 @@ export function participationFromVerdict(
 
 function rowFromCase(
   c: ThesisCase,
-  evaluation: CaseEvaluation
+  evaluation: CaseEvaluation,
+  diagnosis: CaseDiagnosis
 ): LearningOverviewRow {
   const t0Verdict = c.t0Evidence.decision?.verdict ?? null;
   const execVerdict =
@@ -101,6 +106,7 @@ function rowFromCase(
     caseHref: mxtPath(
       `/scout/case?plan=${encodeURIComponent(c.identity.anchorPlanId)}`
     ),
+    diagnosis,
   };
 }
 
@@ -138,6 +144,13 @@ async function cachedOhlcvForPlan(plan: TradePlan) {
 function reviewPriority(row: LearningOverviewRow): number {
   let score = 0;
   if (!row.t0Available) score += 100;
+  if (row.diagnosis?.classification.kind === "no_entry") {
+    if (row.diagnosis.classification.value === "OVER_OPTIMIZATION") score += 50;
+    if (row.diagnosis.classification.value === "INDETERMINATE") score += 25;
+  }
+  if (row.diagnosis?.classification.kind === "entry_family") {
+    if (row.diagnosis.classification.value === "D") score += 45;
+  }
   if (row.decisionQuality === "INDETERMINATE") score += 40;
   if (row.executionQuality === "violated") score += 35;
   if (row.realityRelationship === "INDETERMINATE") score += 15;
@@ -145,6 +158,30 @@ function reviewPriority(row: LearningOverviewRow): number {
   if (row.decisionQuality === "not_supported") score += 20;
   if (row.decisionQuality === "weakly_supported") score += 10;
   return score;
+}
+
+function legacyNoEntrySlot(
+  diagnosis: LearningOverview["diagnosis"]
+): NoEntryDiagnosisSlot {
+  const caseIdsByLabel: Record<string, string[]> = {
+    GOOD_FILTER: [],
+    OVER_OPTIMIZATION: [],
+    INDETERMINATE: [],
+  };
+  for (const d of Object.values(diagnosis.byPlanId)) {
+    if (d.classification.kind !== "no_entry") continue;
+    caseIdsByLabel[d.classification.value]?.push(d.planId);
+  }
+  return {
+    available: true,
+    noEntryUniverse: diagnosis.noEntryUniverse,
+    byLabel: {
+      GOOD_FILTER: diagnosis.goodFilter,
+      OVER_OPTIMIZATION: diagnosis.overOptimization,
+      INDETERMINATE: diagnosis.indeterminateNoEntry,
+    },
+    caseIdsByLabel,
+  };
 }
 
 export type BuildLearningOverviewDeps = BuildCaseDeps & {
@@ -172,12 +209,15 @@ export async function buildLearningOverview(
   const getOhlcv = deps?.getCachedOhlcv ?? cachedOhlcvForPlan;
 
   const rows: LearningOverviewRow[] = [];
+  const diagnoses = [];
   for (const plan of decided) {
     const thesisCase = await buildCase(plan.id, caseDeps);
     if (!thesisCase) continue;
     const ohlcv = await getOhlcv(plan);
     const evaluation = evaluateCase({ thesisCase, ohlcv });
-    rows.push(rowFromCase(thesisCase, evaluation));
+    const diagnosis = diagnoseCase({ thesisCase, evaluation });
+    diagnoses.push(diagnosis);
+    rows.push(rowFromCase(thesisCase, evaluation, diagnosis));
   }
 
   const decisionQuality = emptyLaneCounts(DECISION_QUALITY_VALUES);
@@ -199,6 +239,14 @@ export async function buildLearningOverview(
     if (!row.t0Available) missingT0Cases += 1;
   }
 
+  const diagnosis = aggregateDiagnoses({
+    diagnoses,
+    totalCases: rows.length,
+    entryCases,
+    noEntryCases,
+    missingT0Cases,
+  });
+
   const casesForReview = [...rows]
     .sort((a, b) => reviewPriority(b) - reviewPriority(a) || a.planId.localeCompare(b.planId))
     .filter((r) => reviewPriority(r) > 0)
@@ -214,12 +262,8 @@ export async function buildLearningOverview(
     decisionQuality,
     executionQuality,
     realityRelationship,
-    noEntryDiagnosis: {
-      available: false,
-      reason:
-        "Good Filter / Possible Over-optimization classification contract is not yet defined. Do not infer from favorable Reality after WAIT/NO.",
-      noEntryUniverse: noEntryCases,
-    },
+    noEntryDiagnosis: legacyNoEntrySlot(diagnosis),
+    diagnosis,
     casesForReview,
     allCases: rows.sort((a, b) => a.planId.localeCompare(b.planId)),
   };

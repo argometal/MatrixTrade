@@ -137,16 +137,18 @@ async function run() {
   assert.ok(overview.missingT0Cases >= 1);
   assert.ok(overview.decisionQuality.INDETERMINATE >= 1);
 
-  assert.equal(overview.noEntryDiagnosis.available, false);
-  assert.ok(overview.noEntryDiagnosis.reason.length > 20);
+  assert.equal(overview.noEntryDiagnosis.available, true);
+  assert.ok(overview.diagnosis.available);
+  assert.ok(overview.diagnosis.currentCondition.statement.length > 10);
+  assert.ok(overview.allCases.every((r) => r.diagnosis != null));
 
   const ids = overview.allCases.map((r) => r.planId).sort();
   assert.deepEqual(ids, ["PLAN-G", "PLAN-G2", "PLAN-W"]);
   assert.ok(overview.allCases.every((r) => r.caseHref.includes("plan=")));
 
-  // No invented High/Medium/Low or A/B/C/D keys
+  // Counts describe universe; diagnosis equations are explicit — no invented Alta/High labels
   const raw = JSON.stringify(overview);
-  assert.ok(!/"Alta"|"High"|"Family A"|"good_filter"|"over.?optimi/i.test(raw));
+  assert.ok(!/"Alta"|"Media"|"Baja"/.test(raw));
 
   // Go with T0 should not force supported from profit — no LO; still countable
   const goRow = overview.allCases.find((r) => r.planId === "PLAN-G");

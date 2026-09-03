@@ -1,9 +1,6 @@
 /**
- * Learning Overview — aggregate read model over Cases (MXT 016-P05).
- * Demonstrable counts only. No invented High/Medium/Low or filter diagnosis.
- *
- * Future Case equations (MXT 015) must enter via this read model (or a successor
- * aggregator), not React. Do not hard-code A/B/C/D as permanent enums here.
+ * Learning Overview — aggregate read model over Cases (MXT 016 / 016a).
+ * Case equations enter via diagnoseCase → DiagnosisAggregate — not React.
  */
 
 import type {
@@ -12,6 +9,7 @@ import type {
   RealityRelationshipLane,
 } from "./case-evaluation-types";
 import type { DecisionVerdict } from "./scout-decision-types";
+import type { CaseDiagnosis, DiagnosisAggregate } from "./case-diagnosis-types";
 
 /** Participation from ScoutDecision.verdict — not Case-equation taxonomy. */
 export type CaseParticipationClass = "entry" | "no_entry" | "probe";
@@ -31,13 +29,15 @@ export type LearningOverviewRow = {
   uncertainty: string[];
   /** Relative Case Review path (under /mxt). */
   caseHref: string;
+  /** 016a diagnosis — null only if classifier not run. */
+  diagnosis: CaseDiagnosis | null;
 };
 
 export type LaneCountMap<T extends string> = Record<T, number>;
 
 /**
- * Slot for future deterministic No-entry diagnosis.
- * P05 always emits available:false until a sealed Case-equation contract exists.
+ * @deprecated Prefer DiagnosisAggregate from case-diagnosis. Kept for
+ * backwards-compatible slot shape during 016a transition.
  */
 export type NoEntryDiagnosisSlot =
   | {
@@ -48,7 +48,6 @@ export type NoEntryDiagnosisSlot =
   | {
       available: true;
       noEntryUniverse: number;
-      /** Opaque counts from future classifier — labels not defined in P05. */
       byLabel: Record<string, number>;
       caseIdsByLabel: Record<string, string[]>;
     };
@@ -65,7 +64,10 @@ export type LearningOverview = {
   decisionQuality: LaneCountMap<DecisionQuality>;
   executionQuality: LaneCountMap<ExecutionQuality>;
   realityRelationship: LaneCountMap<RealityRelationshipLane>;
+  /** Legacy slot mirrored from 016a aggregate for older UI consumers. */
   noEntryDiagnosis: NoEntryDiagnosisSlot;
+  /** Full 016a diagnosis aggregate (equations + rates + condición actual). */
+  diagnosis: DiagnosisAggregate;
   /** Compact review queue — uncertainty / missing T0 / execution violations first. */
   casesForReview: LearningOverviewRow[];
   /** Full universe for drill-down of any aggregate. */

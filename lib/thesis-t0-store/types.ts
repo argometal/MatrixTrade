@@ -1,6 +1,6 @@
 import type { ThesisT0Freeze } from "../thesis-t0-types";
 
-export type ThesisT0StoreMode = "json" | "memory";
+export type ThesisT0StoreMode = "json" | "memory" | "supabase";
 
 export interface ThesisT0Store {
   readAll(): Promise<ThesisT0Freeze[]>;
