@@ -3,11 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node tools/register-local-env.cjs && next dev --turbopack --hostname 0.0.0.0 -p 3002",
+    "dev": "node tools/mxt-next.cjs dev --turbopack --hostname 0.0.0.0 -p 3002",
+    "dev:mxt": "npm run dev",
     "dev:forge": "npm --prefix apps/forge run dev",
-    "build": "next build",
+    "build": "node tools/mxt-next.cjs build",
     "build:forge": "npm --prefix apps/forge run build",
-    "start": "next start --hostname 0.0.0.0",
+    "start": "node tools/mxt-next.cjs start --hostname 0.0.0.0 -p 3002",
+    "start:mxt": "npm run start",
     "lint": "next lint",
     "lint:forge": "npm --prefix apps/forge run lint",
 
