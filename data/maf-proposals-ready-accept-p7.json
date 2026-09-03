@@ -1,0 +1,726 @@
+{
+  "title": "P7 Historical MAF — validated Accept payloads (NOT applied)",
+  "policy": "Accepted into canonical maf_experiments (P7 closeout). H001 untouched.",
+  "asOf": "2026-09-03",
+  "total": 6,
+  "proposals": [
+    {
+      "proposalId": "MAF-PROP-GOOGL-H002",
+      "caseId": "H002",
+      "primaryDrag": "entry_quality",
+      "componentAttribution": {
+        "entry_quality": "failure",
+        "zone_quality": "weak",
+        "timing_quality": "inconclusive",
+        "thesis_quality": "not_applicable",
+        "stop_quality": "inconclusive",
+        "execution_quality": "not_applicable",
+        "trade_management_quality": "not_applicable",
+        "capital_allocation_quality": "inconclusive"
+      },
+      "confidence": "medium",
+      "provenance": "trade_review + historical_reconstruction",
+      "canonicalEvidenceSufficient": "YES",
+      "recommendation": "ACCEPT",
+      "validateAttributionProposal": "PASS",
+      "validateProposalPayload": "PASS",
+      "applied": true,
+      "inboxBlock": {
+        "type": "attribution",
+        "proposal": {
+          "tradeId": "H002",
+          "humanApproved": true,
+          "primaryDragComponent": "entry_quality",
+          "summary": "H002 historical: entry/location weakness per reconstruction. No T0. Align Accepted MAF with hist attribution.",
+          "components": [
+            {
+              "component": "thesis_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "H002 historical: entry/location weakness per reconstruction. No T0. Align Accepted MAF with hist attribution.",
+              "evidenceRefs": [
+                "trade_review",
+                "historical_reconstruction"
+              ]
+            },
+            {
+              "component": "zone_quality",
+              "classification": "weak",
+              "aiInterpretationConfidence": 60,
+              "reasoning": "H002 historical: entry/location weakness per reconstruction. No T0. Align Accepted MAF with hist attribution.",
+              "evidenceRefs": [
+                "trade_review",
+                "historical_reconstruction"
+              ]
+            },
+            {
+              "component": "entry_quality",
+              "classification": "failure",
+              "aiInterpretationConfidence": 70,
+              "reasoning": "H002 historical: entry/location weakness per reconstruction. No T0. Align Accepted MAF with hist attribution.",
+              "evidenceRefs": [
+                "trade_review",
+                "historical_reconstruction"
+              ]
+            },
+            {
+              "component": "stop_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "H002 historical: entry/location weakness per reconstruction. No T0. Align Accepted MAF with hist attribution.",
+              "evidenceRefs": [
+                "trade_review",
+                "historical_reconstruction"
+              ]
+            },
+            {
+              "component": "execution_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "H002 historical: entry/location weakness per reconstruction. No T0. Align Accepted MAF with hist attribution.",
+              "evidenceRefs": [
+                "trade_review",
+                "historical_reconstruction"
+              ]
+            },
+            {
+              "component": "trade_management_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "H002 historical: entry/location weakness per reconstruction. No T0. Align Accepted MAF with hist attribution.",
+              "evidenceRefs": [
+                "trade_review",
+                "historical_reconstruction"
+              ]
+            },
+            {
+              "component": "timing_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "H002 historical: entry/location weakness per reconstruction. No T0. Align Accepted MAF with hist attribution.",
+              "evidenceRefs": [
+                "trade_review",
+                "historical_reconstruction"
+              ]
+            },
+            {
+              "component": "capital_allocation_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "H002 historical: entry/location weakness per reconstruction. No T0. Align Accepted MAF with hist attribution.",
+              "evidenceRefs": [
+                "trade_review",
+                "historical_reconstruction"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "proposalId": "MAF-PROP-MSFT-003",
+      "caseId": "PLAN-003",
+      "primaryDrag": "entry_quality",
+      "componentAttribution": {
+        "entry_quality": "failure",
+        "timing_quality": "failure",
+        "thesis_quality": "inconclusive",
+        "zone_quality": "inconclusive",
+        "stop_quality": "inconclusive",
+        "execution_quality": "not_applicable",
+        "trade_management_quality": "not_applicable",
+        "capital_allocation_quality": "inconclusive"
+      },
+      "confidence": "medium",
+      "provenance": "plan + OBS/LO + yahoo_1d + HUMAN_RECONSTRUCTION",
+      "canonicalEvidenceSufficient": "YES",
+      "recommendation": "ACCEPT",
+      "validateAttributionProposal": "PASS",
+      "validateProposalPayload": "PASS",
+      "applied": true,
+      "inboxBlock": {
+        "type": "attribution",
+        "proposal": {
+          "planId": "PLAN-003",
+          "humanApproved": true,
+          "primaryDragComponent": "entry_quality",
+          "summary": "PLAN-003 WAIT: persisted entry 350 not printed post-decision; target completed. Human reconstruction: tightened entry after ~360 — process over-opt mapped to entry+timing. Non-adaptation = causal note, not separate MAF id. No T0.",
+          "components": [
+            {
+              "component": "thesis_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-003 WAIT: persisted entry 350 not printed post-decision; target completed. Human reconstruction: tightened entry after ~360 — process over-opt mapped to entry+timing. Non-adaptation = causal note, not separate MAF id. No T0.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "human_reconstruction",
+                "OBS-MSFT-001",
+                "LO-MSFT-001"
+              ]
+            },
+            {
+              "component": "zone_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-003 WAIT: persisted entry 350 not printed post-decision; target completed. Human reconstruction: tightened entry after ~360 — process over-opt mapped to entry+timing. Non-adaptation = causal note, not separate MAF id. No T0.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "human_reconstruction",
+                "OBS-MSFT-001",
+                "LO-MSFT-001"
+              ]
+            },
+            {
+              "component": "entry_quality",
+              "classification": "failure",
+              "aiInterpretationConfidence": 68,
+              "reasoning": "PLAN-003 WAIT: persisted entry 350 not printed post-decision; target completed. Human reconstruction: tightened entry after ~360 — process over-opt mapped to entry+timing. Non-adaptation = causal note, not separate MAF id. No T0.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "human_reconstruction",
+                "OBS-MSFT-001",
+                "LO-MSFT-001"
+              ]
+            },
+            {
+              "component": "stop_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-003 WAIT: persisted entry 350 not printed post-decision; target completed. Human reconstruction: tightened entry after ~360 — process over-opt mapped to entry+timing. Non-adaptation = causal note, not separate MAF id. No T0.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "human_reconstruction",
+                "OBS-MSFT-001",
+                "LO-MSFT-001"
+              ]
+            },
+            {
+              "component": "execution_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "PLAN-003 WAIT: persisted entry 350 not printed post-decision; target completed. Human reconstruction: tightened entry after ~360 — process over-opt mapped to entry+timing. Non-adaptation = causal note, not separate MAF id. No T0.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "human_reconstruction",
+                "OBS-MSFT-001",
+                "LO-MSFT-001"
+              ]
+            },
+            {
+              "component": "trade_management_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "PLAN-003 WAIT: persisted entry 350 not printed post-decision; target completed. Human reconstruction: tightened entry after ~360 — process over-opt mapped to entry+timing. Non-adaptation = causal note, not separate MAF id. No T0.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "human_reconstruction",
+                "OBS-MSFT-001",
+                "LO-MSFT-001"
+              ]
+            },
+            {
+              "component": "timing_quality",
+              "classification": "failure",
+              "aiInterpretationConfidence": 68,
+              "reasoning": "PLAN-003 WAIT: persisted entry 350 not printed post-decision; target completed. Human reconstruction: tightened entry after ~360 — process over-opt mapped to entry+timing. Non-adaptation = causal note, not separate MAF id. No T0.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "human_reconstruction",
+                "OBS-MSFT-001",
+                "LO-MSFT-001"
+              ]
+            },
+            {
+              "component": "capital_allocation_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-003 WAIT: persisted entry 350 not printed post-decision; target completed. Human reconstruction: tightened entry after ~360 — process over-opt mapped to entry+timing. Non-adaptation = causal note, not separate MAF id. No T0.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "human_reconstruction",
+                "OBS-MSFT-001",
+                "LO-MSFT-001"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "proposalId": "MAF-PROP-AMZN-008",
+      "caseId": "PLAN-008",
+      "primaryDrag": "entry_quality",
+      "componentAttribution": {
+        "entry_quality": "failure",
+        "timing_quality": "weak",
+        "thesis_quality": "inconclusive",
+        "zone_quality": "inconclusive",
+        "stop_quality": "inconclusive",
+        "execution_quality": "not_applicable",
+        "trade_management_quality": "not_applicable",
+        "capital_allocation_quality": "inconclusive"
+      },
+      "confidence": "medium",
+      "provenance": "plan + LO + yahoo_1d",
+      "canonicalEvidenceSufficient": "YES",
+      "recommendation": "ACCEPT",
+      "validateAttributionProposal": "PASS",
+      "validateProposalPayload": "PASS",
+      "applied": true,
+      "inboxBlock": {
+        "type": "attribution",
+        "proposal": {
+          "planId": "PLAN-008",
+          "humanApproved": true,
+          "primaryDragComponent": "entry_quality",
+          "summary": "PLAN-008 WAIT: entry 206 never reached; target 240 reached. LO missed_opportunity. Entry-condition drag.",
+          "components": [
+            {
+              "component": "thesis_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-008 WAIT: entry 206 never reached; target 240 reached. LO missed_opportunity. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "LO-AMZN-001"
+              ]
+            },
+            {
+              "component": "zone_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-008 WAIT: entry 206 never reached; target 240 reached. LO missed_opportunity. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "LO-AMZN-001"
+              ]
+            },
+            {
+              "component": "entry_quality",
+              "classification": "failure",
+              "aiInterpretationConfidence": 65,
+              "reasoning": "PLAN-008 WAIT: entry 206 never reached; target 240 reached. LO missed_opportunity. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "LO-AMZN-001"
+              ]
+            },
+            {
+              "component": "stop_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-008 WAIT: entry 206 never reached; target 240 reached. LO missed_opportunity. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "LO-AMZN-001"
+              ]
+            },
+            {
+              "component": "execution_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "PLAN-008 WAIT: entry 206 never reached; target 240 reached. LO missed_opportunity. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "LO-AMZN-001"
+              ]
+            },
+            {
+              "component": "trade_management_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "PLAN-008 WAIT: entry 206 never reached; target 240 reached. LO missed_opportunity. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "LO-AMZN-001"
+              ]
+            },
+            {
+              "component": "timing_quality",
+              "classification": "weak",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-008 WAIT: entry 206 never reached; target 240 reached. LO missed_opportunity. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "LO-AMZN-001"
+              ]
+            },
+            {
+              "component": "capital_allocation_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-008 WAIT: entry 206 never reached; target 240 reached. LO missed_opportunity. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d",
+                "LO-AMZN-001"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "proposalId": "MAF-PROP-TSLA-009",
+      "caseId": "PLAN-009",
+      "primaryDrag": "entry_quality",
+      "componentAttribution": {
+        "entry_quality": "failure",
+        "timing_quality": "weak",
+        "thesis_quality": "inconclusive",
+        "zone_quality": "inconclusive",
+        "stop_quality": "inconclusive",
+        "execution_quality": "not_applicable",
+        "trade_management_quality": "not_applicable",
+        "capital_allocation_quality": "inconclusive"
+      },
+      "confidence": "medium",
+      "provenance": "plan + yahoo_1d",
+      "canonicalEvidenceSufficient": "YES",
+      "recommendation": "ACCEPT",
+      "validateAttributionProposal": "PASS",
+      "validateProposalPayload": "PASS",
+      "applied": true,
+      "inboxBlock": {
+        "type": "attribution",
+        "proposal": {
+          "planId": "PLAN-009",
+          "humanApproved": true,
+          "primaryDragComponent": "entry_quality",
+          "summary": "PLAN-009 WAIT: entry 280 never reached; target 350 reached; closest ~297. Entry-condition drag.",
+          "components": [
+            {
+              "component": "thesis_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-009 WAIT: entry 280 never reached; target 350 reached; closest ~297. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "zone_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-009 WAIT: entry 280 never reached; target 350 reached; closest ~297. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "entry_quality",
+              "classification": "failure",
+              "aiInterpretationConfidence": 62,
+              "reasoning": "PLAN-009 WAIT: entry 280 never reached; target 350 reached; closest ~297. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "stop_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-009 WAIT: entry 280 never reached; target 350 reached; closest ~297. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "execution_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "PLAN-009 WAIT: entry 280 never reached; target 350 reached; closest ~297. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "trade_management_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "PLAN-009 WAIT: entry 280 never reached; target 350 reached; closest ~297. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "timing_quality",
+              "classification": "weak",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-009 WAIT: entry 280 never reached; target 350 reached; closest ~297. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "capital_allocation_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-009 WAIT: entry 280 never reached; target 350 reached; closest ~297. Entry-condition drag.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "proposalId": "MAF-PROP-TSLA-001",
+      "caseId": "PLAN-001",
+      "primaryDrag": "timing_quality",
+      "componentAttribution": {
+        "timing_quality": "failure",
+        "entry_quality": "weak",
+        "thesis_quality": "inconclusive",
+        "zone_quality": "inconclusive",
+        "stop_quality": "inconclusive",
+        "execution_quality": "not_applicable",
+        "trade_management_quality": "not_applicable",
+        "capital_allocation_quality": "inconclusive"
+      },
+      "confidence": "medium",
+      "provenance": "plan + yahoo_1d",
+      "canonicalEvidenceSufficient": "YES",
+      "recommendation": "ACCEPT",
+      "validateAttributionProposal": "PASS",
+      "validateProposalPayload": "PASS",
+      "applied": true,
+      "inboxBlock": {
+        "type": "attribution",
+        "proposal": {
+          "planId": "PLAN-001",
+          "humanApproved": true,
+          "primaryDragComponent": "timing_quality",
+          "summary": "PLAN-001 WAIT: planned entry 348 later printed without participation. Primary timing/participation; later stop-side path does not rewrite this.",
+          "components": [
+            {
+              "component": "thesis_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-001 WAIT: planned entry 348 later printed without participation. Primary timing/participation; later stop-side path does not rewrite this.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "zone_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-001 WAIT: planned entry 348 later printed without participation. Primary timing/participation; later stop-side path does not rewrite this.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "entry_quality",
+              "classification": "weak",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-001 WAIT: planned entry 348 later printed without participation. Primary timing/participation; later stop-side path does not rewrite this.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "stop_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-001 WAIT: planned entry 348 later printed without participation. Primary timing/participation; later stop-side path does not rewrite this.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "execution_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "PLAN-001 WAIT: planned entry 348 later printed without participation. Primary timing/participation; later stop-side path does not rewrite this.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "trade_management_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "PLAN-001 WAIT: planned entry 348 later printed without participation. Primary timing/participation; later stop-side path does not rewrite this.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "timing_quality",
+              "classification": "failure",
+              "aiInterpretationConfidence": 65,
+              "reasoning": "PLAN-001 WAIT: planned entry 348 later printed without participation. Primary timing/participation; later stop-side path does not rewrite this.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "capital_allocation_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-001 WAIT: planned entry 348 later printed without participation. Primary timing/participation; later stop-side path does not rewrite this.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "proposalId": "MAF-PROP-SHOP-005",
+      "caseId": "PLAN-005",
+      "primaryDrag": "entry_quality",
+      "componentAttribution": {
+        "entry_quality": "failure",
+        "timing_quality": "failure",
+        "thesis_quality": "inconclusive",
+        "zone_quality": "inconclusive",
+        "stop_quality": "inconclusive",
+        "execution_quality": "not_applicable",
+        "trade_management_quality": "not_applicable",
+        "capital_allocation_quality": "inconclusive"
+      },
+      "confidence": "medium",
+      "provenance": "plan + yahoo_1d",
+      "canonicalEvidenceSufficient": "YES",
+      "recommendation": "ACCEPT",
+      "validateAttributionProposal": "PASS",
+      "validateProposalPayload": "PASS",
+      "applied": true,
+      "inboxBlock": {
+        "type": "attribution",
+        "proposal": {
+          "planId": "PLAN-005",
+          "humanApproved": true,
+          "primaryDragComponent": "entry_quality",
+          "summary": "PLAN-005 WAIT: entry 136 not spanned on 1d (gap-through); price traded below. Entry passed without revalidation.",
+          "components": [
+            {
+              "component": "thesis_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-005 WAIT: entry 136 not spanned on 1d (gap-through); price traded below. Entry passed without revalidation.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "zone_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-005 WAIT: entry 136 not spanned on 1d (gap-through); price traded below. Entry passed without revalidation.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "entry_quality",
+              "classification": "failure",
+              "aiInterpretationConfidence": 60,
+              "reasoning": "PLAN-005 WAIT: entry 136 not spanned on 1d (gap-through); price traded below. Entry passed without revalidation.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "stop_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-005 WAIT: entry 136 not spanned on 1d (gap-through); price traded below. Entry passed without revalidation.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "execution_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "PLAN-005 WAIT: entry 136 not spanned on 1d (gap-through); price traded below. Entry passed without revalidation.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "trade_management_quality",
+              "classification": "not_applicable",
+              "aiInterpretationConfidence": 90,
+              "reasoning": "PLAN-005 WAIT: entry 136 not spanned on 1d (gap-through); price traded below. Entry passed without revalidation.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "timing_quality",
+              "classification": "failure",
+              "aiInterpretationConfidence": 60,
+              "reasoning": "PLAN-005 WAIT: entry 136 not spanned on 1d (gap-through); price traded below. Entry passed without revalidation.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            },
+            {
+              "component": "capital_allocation_quality",
+              "classification": "inconclusive",
+              "aiInterpretationConfidence": 55,
+              "reasoning": "PLAN-005 WAIT: entry 136 not spanned on 1d (gap-through); price traded below. Entry passed without revalidation.",
+              "evidenceRefs": [
+                "plan_decision",
+                "yahoo_1d"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "acceptedIds": {
+    "H002": "MAF-GOOGL-001",
+    "PLAN-003": "MAF-MSFT-001",
+    "PLAN-008": "MAF-AMZN-002",
+    "PLAN-009": "MAF-TSLA-001",
+    "PLAN-001": "MAF-TSLA-002",
+    "PLAN-005": "MAF-SHOP-001"
+  }
+}

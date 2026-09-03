@@ -1,0 +1,111 @@
+{
+  "title": "MXT POST-017 MAF proposals — PENDING HUMAN ACCEPT",
+  "policy": "proposal → validate → HUMAN ACCEPT only. Do not auto-accept. Not written to maf_experiments.",
+  "asOf": "2026-09-03",
+  "proposals": [
+    {
+      "proposalId": "MAF-PROP-MSFT-003",
+      "planId": "PLAN-003",
+      "ticker": "MSFT",
+      "tradeId": null,
+      "humanApproved": false,
+      "status": "pending_human",
+      "primaryDragComponent": "entry_quality",
+      "suggestedComponents": {
+        "entry_quality": "failure",
+        "timing_quality": "failure",
+        "thesis_quality": "inconclusive",
+        "zone_quality": "inconclusive",
+        "stop_quality": "inconclusive",
+        "execution_quality": "not_applicable",
+        "trade_management_quality": "not_applicable",
+        "capital_allocation_quality": "inconclusive"
+      },
+      "reasoning": "Literal persisted entry 350 never printed post-WAIT; target path completed. HUMAN_RECONSTRUCTION: entry was tightened after ~360 return (process over-optimization / non-adaptation). Non-adaptation is causal finding mapped into entry_quality+timing — not a separate MAF component.",
+      "provenance": ["plan_decision", "yahoo_1d", "human_reconstruction", "OBS-MSFT-001", "LO-MSFT-001"],
+      "fabricatedT0": false
+    },
+    {
+      "proposalId": "MAF-PROP-TSLA-001",
+      "planId": "PLAN-001",
+      "ticker": "TSLA",
+      "tradeId": null,
+      "humanApproved": false,
+      "status": "pending_human",
+      "primaryDragComponent": "timing_quality",
+      "suggestedComponents": {
+        "entry_quality": "weak",
+        "timing_quality": "failure",
+        "thesis_quality": "inconclusive"
+      },
+      "reasoning": "WAIT while planned entry 348 later printed on daily bars without participation. Later adverse excursion through stop complicates outcome narrative — do not let PnL rewrite DQ; primary issue is participation timing when condition printed.",
+      "provenance": ["plan_decision", "yahoo_1d"],
+      "fabricatedT0": false
+    },
+    {
+      "proposalId": "MAF-PROP-TSLA-009",
+      "planId": "PLAN-009",
+      "ticker": "TSLA",
+      "tradeId": null,
+      "humanApproved": false,
+      "status": "pending_human",
+      "primaryDragComponent": "entry_quality",
+      "suggestedComponents": {
+        "entry_quality": "failure",
+        "timing_quality": "weak"
+      },
+      "reasoning": "Entry 280 never reached; target 350 reached. Closest low 297. Non-adaptation secondary.",
+      "provenance": ["plan_decision", "yahoo_1d"],
+      "fabricatedT0": false
+    },
+    {
+      "proposalId": "MAF-PROP-AMZN-008",
+      "planId": "PLAN-008",
+      "ticker": "AMZN",
+      "tradeId": null,
+      "humanApproved": false,
+      "status": "pending_human",
+      "primaryDragComponent": "entry_quality",
+      "suggestedComponents": {
+        "entry_quality": "failure",
+        "timing_quality": "weak"
+      },
+      "reasoning": "Entry 206 never reached; target 240 reached (LO missed_opportunity observing). Closest 231.",
+      "provenance": ["plan_decision", "yahoo_1d", "LO-AMZN-001"],
+      "fabricatedT0": false
+    },
+    {
+      "proposalId": "MAF-PROP-SHOP-005",
+      "planId": "PLAN-005",
+      "ticker": "SHOP",
+      "tradeId": null,
+      "humanApproved": false,
+      "status": "pending_human",
+      "primaryDragComponent": "entry_quality",
+      "suggestedComponents": {
+        "entry_quality": "failure",
+        "timing_quality": "failure"
+      },
+      "reasoning": "Daily bars never spanned entry 136 (gap-through); price traded well below. Entry passed without executable revalidation.",
+      "provenance": ["plan_decision", "yahoo_1d"],
+      "fabricatedT0": false
+    },
+    {
+      "proposalId": "MAF-PROP-GOOGL-H002",
+      "planId": null,
+      "ticker": "GOOGL",
+      "tradeId": "H002",
+      "humanApproved": false,
+      "status": "pending_human",
+      "primaryDragComponent": "entry_quality",
+      "suggestedComponents": {
+        "entry_quality": "failure",
+        "zone_quality": "weak",
+        "timing_quality": "inconclusive"
+      },
+      "reasoning": "Align Accepted MAF with existing historical reconstruction (entry/location weakness). No T0 fabrication.",
+      "provenance": ["trade_review", "historical_reconstruction"],
+      "fabricatedT0": false
+    }
+  ]
+}
