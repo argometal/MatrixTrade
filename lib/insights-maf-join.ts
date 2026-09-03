@@ -26,9 +26,9 @@ export const MAF_SOURCE_HELP =
   "Attribution source: accepted MAF experiments from the active Matrix store. MAF explains possible component drag; it does not independently determine Case Family or Decision Quality.";
 
 /**
- * Unambiguous join only: planId match, or LO mafExperimentId / tradeId
- * when the Case already carries a single LO identity via planId.
- * Orphan MAF stays orphan.
+ * Unambiguous join only.
+ * Priority: explicit tradeId → LO mafExperimentId → plan-only MAF (no tradeId).
+ * Orphan MAF stays orphan. Never match by ticker/date/geometry.
  */
 export function resolveMafForCase(input: {
   planId: string;
@@ -39,23 +39,7 @@ export function resolveMafForCase(input: {
   const planNeedle = input.planId.toUpperCase();
   const loNeedle = input.learningOutcomeId?.toUpperCase() ?? null;
   const tradeNeedle = input.tradeId?.toUpperCase() ?? null;
-
-  const byLo =
-    loNeedle == null
-      ? []
-      : input.experiments.filter(
-          (e) => e.learningOutcomeId?.toUpperCase() === loNeedle
-        );
   const source = resolveMafEvidenceSource();
-
-  if (byLo.length === 1) {
-    const e = byLo[0]!;
-    return {
-      mafExperimentId: e.id,
-      primaryDragComponent: e.primaryDragComponent ?? null,
-      source,
-    };
-  }
 
   const byTrade =
     tradeNeedle == null
@@ -65,6 +49,21 @@ export function resolveMafForCase(input: {
         );
   if (byTrade.length === 1) {
     const e = byTrade[0]!;
+    return {
+      mafExperimentId: e.id,
+      primaryDragComponent: e.primaryDragComponent ?? null,
+      source,
+    };
+  }
+
+  const byLo =
+    loNeedle == null
+      ? []
+      : input.experiments.filter(
+          (e) => e.learningOutcomeId?.toUpperCase() === loNeedle
+        );
+  if (byLo.length === 1) {
+    const e = byLo[0]!;
     return {
       mafExperimentId: e.id,
       primaryDragComponent: e.primaryDragComponent ?? null,
@@ -87,7 +86,11 @@ export function resolveMafForCase(input: {
   return null;
 }
 
-/** Attach MAF attribution onto rows without mutating classification fields. */
+/**
+ * Attach MAF attribution onto rows without mutating classification fields.
+ * Historical rows resolve via linkage.tradeId when loTradeByPlan has no entry
+ * for synthetic planId HIST:{tradeId}.
+ */
 export function attachMafToInsightsCaseRows(
   rows: InsightsCaseRow[],
   experiments: MafExperiment[],
@@ -100,8 +103,8 @@ export function attachMafToInsightsCaseRows(
     const ids = loTradeByPlan?.get(row.planId.toUpperCase());
     const maf = resolveMafForCase({
       planId: row.planId,
-      learningOutcomeId: ids?.learningOutcomeId,
-      tradeId: ids?.tradeId,
+      learningOutcomeId: ids?.learningOutcomeId ?? null,
+      tradeId: ids?.tradeId ?? row.linkage?.tradeId ?? null,
       experiments,
     });
     if (!maf) return { ...row, mafAttribution: null };
