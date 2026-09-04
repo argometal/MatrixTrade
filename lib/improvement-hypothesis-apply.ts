@@ -316,7 +316,6 @@ export async function linkPlanToImprovementHypothesis(input: {
   const updatedH: ImprovementHypothesis = {
     ...h,
     evidencePlanIds,
-    status: h.status === "proposed" ? "testing" : h.status,
     updatedAt: now,
   };
   await upsertImprovementHypothesis(updatedH);
