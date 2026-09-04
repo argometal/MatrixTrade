@@ -199,6 +199,8 @@ export function buildTargetTimeframeGovernanceBrief(roles: {
     "VOLUME PROFILE:",
     "POC/VAH/VAL without analysisRange/timeframe/purpose are incomplete — do not treat as absolute.",
     "Distinguish STRUCTURAL/HISTORY profile vs DECISION/REASSESSMENT profile — not interchangeable.",
+    "",
+    "See TARGET DISCIPLINE in Mechanics: TARGET REACHED ≠ invent next target; plausibility ≠ evidence.",
   ]
     .filter((l): l is string => typeof l === "string")
     .join("\n");

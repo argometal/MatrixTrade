@@ -14,6 +14,7 @@ import {
   type ProbableTargetKind,
   longRewardRiskR,
 } from "./entry-solver";
+import { classifyTargetLifecycle } from "./target-discipline";
 
 export type OptimizedEntryCandidate = {
   price: number;
@@ -31,7 +32,9 @@ export type OptimizedEntryStatus =
   | "selected"
   | "unresolved"
   | "needs_evidence"
-  | "wait_extended";
+  | "wait_extended"
+  | "target_reached"
+  | "reassessment_required";
 
 export type OptimizedEntryResult = {
   status: OptimizedEntryStatus;
@@ -66,6 +69,8 @@ export type ResolveOptimizedEntryInput = {
   currentPrice?: number | null;
   structuralInvalidationNote?: string | null;
   calculatedProjections?: Array<{ label: string; price: number }>;
+  /** Independently evidenced next target only — never invent. */
+  nextEvidencedTarget?: number | null;
   /** Optional qualitative hist counts — never converted to fill %. */
   historical?: {
     missedOpportunityCases?: number;
@@ -73,6 +78,7 @@ export type ResolveOptimizedEntryInput = {
   };
   playbookId?: string | null;
   familyHint?: "A" | "B" | null;
+  side?: "long" | "short";
 };
 
 /** shares = floor(R$ / riskPerShare); riskPerShare is NOT 1R. Works long/short via abs. */
@@ -139,6 +145,14 @@ export function resolveOptimizedEntry(
   const stop = input.tacticalStop;
   const target = input.probableTarget;
   const zone = input.opportunityZone ?? null;
+  const side = input.side ?? "long";
+  const lifecycle = classifyTargetLifecycle({
+    side,
+    probableTarget: target,
+    probableTargetKind: input.probableTargetKind,
+    currentPrice: input.currentPrice ?? null,
+    nextEvidencedTarget: input.nextEvidencedTarget ?? null,
+  });
   const extended =
     input.currentPrice != null &&
     zone != null &&
@@ -146,7 +160,7 @@ export function resolveOptimizedEntry(
     input.currentPrice > zone.high;
 
   const ceiling =
-    target != null && stop != null
+    target != null && stop != null && !lifecycle.blockEntrySolverGeometry
       ? computeMaximumEntryCeiling(target, stop, input.minimumRR)
       : null;
 
@@ -160,9 +174,21 @@ export function resolveOptimizedEntry(
       ? `Historical Cases: missed_opportunity=${histMiss}, Possible Over-Optimization=${histOver}. Deeper entries raise R but risk non-participation — no calibrated fill-rate. MAX R ≠ OPTIMIZED ENTRY.`
       : "FILL EVIDENCE: INSUFFICIENT — no calibrated fill-rate. Qualitatively: higher entry → lower R / greater participation likelihood; lower entry → higher R / lower fill likelihood. MAX R ≠ OPTIMIZED ENTRY. Do not invent fill %.";
 
-  const candidates = input.candidates.map((c) =>
-    enrichCandidate(c.price, c.role, stop, target, input.minimumRR, riskBudgetUsd)
-  );
+  const candidates =
+    lifecycle.blockEntrySolverGeometry
+      ? input.candidates.map((c) => ({
+          price: c.price,
+          role: c.role,
+          riskPerShare: null as number | null,
+          rewardPerShare: null as number | null,
+          plannedRR: null as number | null,
+          estimatedShares: null as number | null,
+          meetsMinimumRR: false,
+          fullStopLossUsd: null as number | null,
+        }))
+      : input.candidates.map((c) =>
+          enrichCandidate(c.price, c.role, stop, target, input.minimumRR, riskBudgetUsd)
+        );
 
   const deeper = [...candidates]
     .filter((c) => c.meetsMinimumRR)
@@ -190,6 +216,22 @@ export function resolveOptimizedEntry(
       "Attempt 1 stop-out ≈ -1R (tactical) does not auto-invalidate Stock File thesis. Before Opportunity 2: reassess sweep vs structure break, target, tactical stop, Family/Playbook, thesis validity.",
     optimizedClaimEligible: false,
   };
+
+  if (lifecycle.blockEntrySolverGeometry) {
+    const status: OptimizedEntryStatus =
+      lifecycle.status === "target_reached"
+        ? "target_reached"
+        : "reassessment_required";
+    return {
+      ...base,
+      status,
+      whySelected: `${lifecycle.status}: ${lifecycle.reason}`,
+      reassessmentRequired: true,
+      reassessmentCondition:
+        "TARGET REASSESSMENT REQUIRED — do not invent next probableTarget/extendedTarget for R:R. Wait for independently evidenced next level.",
+      maximumEntryCeiling: null,
+    };
+  }
 
   if (extended) {
     return {

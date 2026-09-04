@@ -134,15 +134,16 @@ Do NOT auto-request extra W/M/3M/6M. Only ask for ONE additional timeframe when 
 
 Then:
 1. TECHNICAL — Evidence First for required role TFs already covered; Integrated; Profile Notes. Patch via technical-assessment when levels/invalidation need refresh (Phase A when volume visible). VP levels need analysisRange + purpose.
-2. ENTRY SOLVER / OPTIMIZED ENTRY (before Scout plannedEntry) — worksheet in mandatory order:
+2. TARGET DISCIPLINE — If the defensible probableTarget is already reached/exceeded: state TARGET REACHED + TARGET REASSESSMENT REQUIRED. Do NOT invent a next probableTarget/extendedTarget from bullish plausibility, Fib, or lack of higher historical resistance. Plausibility ≠ evidence. Do not run Entry Solver R geometry on a consumed target.
+3. ENTRY SOLVER / OPTIMIZED ENTRY (only with a LIVE defensible target) — worksheet in mandatory order:
    TARGET → TACTICAL STOP → RISK/REWARD GEOMETRY → FEASIBILITY BOUND → PARTICIPATION → OPTIMIZED ENTRY → R$ sizing.
    1R = R$ = configured USD risk budget (see R SEMANTICS). riskPerShare = abs(entry−tacticalStop) ≠ 1R.
    shares = floor(R$/riskPerShare). actualRisk$ = shares×riskPerShare. rewardRiskRatio ≠ R$.
    maximumEntry (long) / minimumEntry (short) = feasibility bound only — NEVER auto recommendedEntry.
    MAX R ≠ OPTIMIZED ENTRY. Forbidden: pick entry first then justify with R.
    Apply claim requires optimizedEntryClaim + entrySolver worksheet. Bare plannedEntry ≠ optimized.
-3. OPPORTUNITY + ENTRY + DECISION — dossier + active Scout. Current mutable ≠ frozen T0. Never invent T0.
-4. Apply / Save / Propose JSON → ONE AI Block using SCOPED APPLY CONTRACT in this package only.
+4. OPPORTUNITY + ENTRY + DECISION — dossier + active Scout. Current mutable ≠ frozen T0. Never invent T0.
+5. Apply / Save / Propose JSON → ONE AI Block using SCOPED APPLY CONTRACT in this package only.
 
 Preferred Apply types:
 - technical-assessment | decision-update | scout-plan-create | file-update / evidence-add

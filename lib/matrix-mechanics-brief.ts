@@ -25,6 +25,7 @@ import {
   buildRSemanticsBrief,
   buildTargetTimeframeGovernanceBrief,
 } from "./r-semantics";
+import { buildTargetDisciplineBrief } from "./target-discipline";
 
 /** Default TF role map for Mechanics (same as swing-6m preset — not a second governance system). */
 const MECHANICS_DEFAULT_TF_ROLES = {
@@ -64,6 +65,8 @@ export function buildMatrixMechanicsBrief(): string {
     buildRSemanticsBrief(DEFAULT_RISK_BUDGET_USD),
     "",
     buildTargetTimeframeGovernanceBrief(MECHANICS_DEFAULT_TF_ROLES),
+    "",
+    buildTargetDisciplineBrief(),
     "",
     "AI RESPONSE DISCIPLINE",
     "Complements Mechanics — does not change Matrix behavior, Apply gate, or layer ownership.",
@@ -240,6 +243,7 @@ export function buildMatrixMechanicsBrief(): string {
     "- Prefer patience over premature entries (NO CHASE when extended).",
     "- Accept fewer trades if expectancy improves — without optimizing permanently out of fills.",
     "- Never invent unrealistic prices simply to maximize R.",
+    "- Never invent a next probableTarget/extendedTarget after TARGET REACHED just to keep Entry Solver alive.",
     "- Recommendations must remain consistent with observable market structure.",
     "- If a better entry is likely, explain R gain vs participation risk.",
     "- If waiting materially increases the probability of missing the move, explain that trade-off instead of blindly waiting.",

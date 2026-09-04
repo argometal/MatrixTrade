@@ -13,6 +13,7 @@ import {
   computeLongMaximumEntry,
   computeShortMinimumEntry,
 } from "./r-semantics";
+import { classifyTargetLifecycle } from "./target-discipline";
 
 export { computeShortMinimumEntry };
 
@@ -116,6 +117,9 @@ export function buildEntrySolverMechanicsBrief(): string {
     "   Calculated projections (Fib, measured move, etc.) are REFERENCE ONLY.",
     "   Never persist a projection as probable target without structural evidence.",
     "   If no defendable probable target: say so — do not fabricate definitive R.",
+    "   If price already reached/exceeded that target: TARGET REACHED → REASSESSMENT REQUIRED.",
+    "   Do NOT invent a higher/lower target to continue Entry Solver or improve R:R.",
+    "   See TARGET DISCIPLINE in Mechanics (plausibility ≠ evidence).",
     "2. TACTICAL STOP — price/event that proves THIS setup/entry failed.",
     "   Distinct from Stock File structural invalidation (thesis death).",
     "3. RISK/REWARD GEOMETRY — riskPerShare, rewardPerShare, rewardRiskRatio (see R SEMANTICS).",
@@ -293,6 +297,8 @@ export function adviseBullishContinuationZone(input: {
     missedOpportunityCases?: number;
     possibleOverOptimizationCases?: number;
   };
+  /** Independently evidenced next target only — never a guess. */
+  nextEvidencedTarget?: number | null;
 }): EntrySolverWorksheet {
   const extended = input.currentPrice > input.zoneHigh;
   const stop = input.tacticalStop;
@@ -304,13 +310,21 @@ export function adviseBullishContinuationZone(input: {
     { price: input.zoneLow, role: "opportunity_2_zone_low" },
   ];
 
+  const lifecycle = classifyTargetLifecycle({
+    side: "long",
+    probableTarget: target,
+    probableTargetKind: input.probableTargetKind,
+    currentPrice: input.currentPrice,
+    nextEvidencedTarget: input.nextEvidencedTarget ?? null,
+  });
+
   const ceiling =
-    target != null && stop != null
+    target != null && stop != null && !lifecycle.blockEntrySolverGeometry
       ? computeMaximumEntryCeiling(target, stop, input.minimumRR)
       : null;
 
   const candidates =
-    target != null && stop != null
+    target != null && stop != null && !lifecycle.blockEntrySolverGeometry
       ? buildCandidateRMap({
           prices,
           stop,
@@ -358,6 +372,14 @@ export function adviseBullishContinuationZone(input: {
     verdictHint: "needs_evidence",
     priceExtended: extended,
   };
+
+  if (lifecycle.blockEntrySolverGeometry) {
+    sheet.verdictHint = "needs_evidence";
+    sheet.whySelected = `${lifecycle.status}: ${lifecycle.reason}`;
+    sheet.reassessmentCondition =
+      "TARGET REASSESSMENT REQUIRED — wait for independently evidenced next target; do not invent extension for R:R.";
+    return sheet;
+  }
 
   if (extended) {
     sheet.verdictHint = "wait";
