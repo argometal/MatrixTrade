@@ -465,8 +465,9 @@ export function MatrixControlPanel() {
           <div className="flex min-h-0 flex-1 flex-col gap-2">
             <p className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-3 py-2 text-[11px] text-zinc-400">
               Existing ticker: open the match → use Analyze with AI when the Stock File window is
-              open. New / not listed: do not invent ST-* or PLAN-* ids — continue with chart
-              evidence, then Apply to create.
+              open. New / not listed: do not invent ST-* ids — continue chart evidence, then open
+              sidebar Scout or Trades → New stock case, and persist via Control → Apply (AI JSON
+              type is internal — not a button).
             </p>
             <input
               type="search"
