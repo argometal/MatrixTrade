@@ -298,7 +298,7 @@ export async function syncBridgeFormAction(): Promise<void> {
   if ("error" in result) {
     redirect(`/system?syncError=${encodeURIComponent(result.error)}`);
   }
-  const message = `Snapshot synced (HTTP ${result.httpStatus}) · revision ${result.snapshotRevision} · ${result.updatedAt}`;
+  const message = `Snapshot synced (HTTP ${result.httpStatus}) Â· revision ${result.snapshotRevision} Â· ${result.updatedAt}`;
   redirect(`/system?syncOk=${encodeURIComponent(message)}`);
 }
 
@@ -437,15 +437,15 @@ export async function rejectInboxItemAction(formData: FormData): Promise<void> {
   if (origin === "worker") {
     const ack = await ackBridgeInboxItem(id, "rejected");
     const msg = ack.ok
-      ? `Inbox item rejected · Worker acknowledged (HTTP ${ack.httpStatus})`
-      : `Inbox item rejected · Worker ack failed: ${ack.error ?? "unknown error"}`;
+      ? `Inbox item rejected Â· Worker acknowledged (HTTP ${ack.httpStatus})`
+      : `Inbox item rejected Â· Worker ack failed: ${ack.error ?? "unknown error"}`;
     revalidateTradingPaths();
     redirect(`/inbox?applied=${encodeURIComponent(msg)}`);
   } else {
     await markInboxItemStatus(id, origin, "rejected");
     revalidateTradingPaths();
     redirect(
-      `/inbox?applied=${encodeURIComponent(`Inbox item rejected · marked rejected (${origin})`)}`
+      `/inbox?applied=${encodeURIComponent(`Inbox item rejected Â· marked rejected (${origin})`)}`
     );
   }
 }
