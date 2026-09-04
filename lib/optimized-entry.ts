@@ -218,22 +218,20 @@ export function resolveOptimizedEntry(
   };
 
   if (lifecycle.blockEntrySolverGeometry) {
-    const status: OptimizedEntryStatus =
-      lifecycle.status === "target_reached"
-        ? "target_reached"
-        : "reassessment_required";
     return {
       ...base,
-      status,
+      status: "reassessment_required",
       whySelected: `${lifecycle.status}: ${lifecycle.reason}`,
       reassessmentRequired: true,
       reassessmentCondition:
-        "TARGET REASSESSMENT REQUIRED — do not invent next probableTarget/extendedTarget for R:R. Wait for independently evidenced next level.",
+        "No defensible target — do not invent probableTarget/extendedTarget for R:R.",
       maximumEntryCeiling: null,
     };
   }
 
-  if (extended) {
+  // LIVE chase: price above zone with a STILL-LIVE target ahead → wait.
+  // EVALUATION: target already reached → keep computing R against T (do not wipe).
+  if (extended && lifecycle.status !== "target_reached") {
     return {
       ...base,
       status: "wait_extended",
@@ -342,19 +340,28 @@ export function resolveOptimizedEntry(
     `full stop ≈ -$${pick.fullStopLossUsd?.toFixed(0) ?? "?"} ≈ -1R`,
     `maximumEntry ceiling ${ceiling?.toFixed(2) ?? "na"} (not recommendation)`,
     `participation: ${participationEvidence}`,
+    lifecycle.status === "target_reached"
+      ? "TARGET REACHED — evaluation/reconstruction against T allowed; LIVE new entry against this T alone → REASSESSMENT (do not invent T2)"
+      : null,
     input.familyHint ? `family ${input.familyHint}` : null,
     input.playbookId ? `playbook ${input.playbookId}` : null,
   ]
     .filter(Boolean)
     .join("; ");
 
+  const liveBlocked = lifecycle.liveNewEntryAgainstConsumedTargetBlocked;
+
   return {
     ...base,
-    status: "selected",
+    status: lifecycle.status === "target_reached" ? "target_reached" : "selected",
     selectedEntry: pick.price,
     whySelected: why,
-    optimizedClaimEligible: true,
+    /** LIVE Apply claim not eligible when T is already consumed — evaluation result only. */
+    optimizedClaimEligible: !liveBlocked,
     reassessmentRequired: true,
+    reassessmentCondition: liveBlocked
+      ? "LIVE: REASSESSMENT REQUIRED before new risk against a consumed target. EVALUATION: geometry above is for learning/reconstruction only — do not invent T2; do not mutate T0."
+      : base.reassessmentCondition,
   };
 }
 

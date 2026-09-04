@@ -89,25 +89,27 @@ const reached = classifyTargetLifecycle({
   nextEvidencedTarget: null,
 });
 assert.equal(reached.status, "target_reached");
-assert.equal(reached.blockEntrySolverGeometry, true);
+assert.equal(reached.blockEntrySolverGeometry, false);
+assert.equal(reached.liveNewEntryAgainstConsumedTargetBlocked, true);
 
 const reachedOpt = resolveOptimizedEntry({
   candidates: [
-    { price: 97, role: "a" },
-    { price: 92, role: "b" },
+    { price: 97, role: "opportunity_1_zone_high" },
+    { price: 92, role: "opportunity_2_zone_low" },
   ],
   probableTarget: 100,
   probableTargetKind: "observed_structural",
   tacticalStop: 88,
-  minimumRR: 2.5,
+  minimumRR: 0.5,
   riskBudgetUsd: 100,
   opportunityZone: { low: 90, high: 98 },
   currentPrice: 101,
   calculatedProjections: [{ label: "wish", price: 120 }],
 });
 assert.equal(reachedOpt.status, "target_reached");
-assert.equal(reachedOpt.selectedEntry, null);
-assert.equal(reachedOpt.maximumEntryCeiling, null);
+assert.ok(reachedOpt.candidates.every((c) => c.plannedRR != null));
+assert.ok(reachedOpt.selectedEntry != null);
+assert.equal(reachedOpt.optimizedClaimEligible, false);
 
 // 9–11. Stop → realized loss language + episode cumulative R
 assert.equal(computeEpisodeCumulativeR([-1, 2]), 1);

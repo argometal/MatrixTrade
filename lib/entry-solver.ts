@@ -377,11 +377,13 @@ export function adviseBullishContinuationZone(input: {
     sheet.verdictHint = "needs_evidence";
     sheet.whySelected = `${lifecycle.status}: ${lifecycle.reason}`;
     sheet.reassessmentCondition =
-      "TARGET REASSESSMENT REQUIRED — wait for independently evidenced next target; do not invent extension for R:R.";
+      "No defensible target — do not invent extension for R:R.";
     return sheet;
   }
 
-  if (extended) {
+  // LIVE: no chase when extended with target still ahead.
+  // EVALUATION: if T already reached, continue R map against T (do not wipe).
+  if (extended && lifecycle.status !== "target_reached") {
     sheet.verdictHint = "wait";
     sheet.whySelected =
       "NO CHASE while extended above zone — Entry Solver defers plannedEntry until price re-enters opportunity band.";
@@ -418,7 +420,8 @@ export function adviseBullishContinuationZone(input: {
   }
 
   sheet.selectedEntry = preferred.price;
-  sheet.verdictHint = "wait"; // still waiting for fill at selected level when in zone but not filled
+  sheet.verdictHint =
+    lifecycle.status === "target_reached" ? "wait" : "wait"; // live fill still pending / evaluation advisory
   sheet.whySelected = [
     `target ${target} (${input.probableTargetKind})`,
     `stop ${stop}`,
@@ -426,7 +429,16 @@ export function adviseBullishContinuationZone(input: {
     `${preferred.role} @ ${preferred.price} → ${(preferred.r ?? 0).toFixed(2)}R ≥ min ${input.minimumRR}`,
     `participation: prefer executable Opportunity 1 over max-R Opportunity 2 while FILL EVIDENCE ${fillEvidenceStatus}`,
     `maximumEntry ceiling ${ceiling?.toFixed(2) ?? "na"} not used as recommendation`,
-  ].join("; ");
+    lifecycle.status === "target_reached"
+      ? "TARGET REACHED — evaluation against T allowed; LIVE new entry against this T alone → REASSESSMENT (do not invent T2)"
+      : null,
+  ]
+    .filter(Boolean)
+    .join("; ");
+  if (lifecycle.liveNewEntryAgainstConsumedTargetBlocked) {
+    sheet.reassessmentCondition =
+      "LIVE: REASSESSMENT REQUIRED before new risk against consumed T. EVALUATION: geometry is for learning/reconstruction — do not invent T2; do not mutate T0.";
+  }
 
   return sheet;
 }
