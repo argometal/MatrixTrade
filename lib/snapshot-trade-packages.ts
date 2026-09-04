@@ -73,7 +73,7 @@ export function tradeSnapshotItems(input: {
       })
     );
   }
-  // Mechanics remains available via Control → MTA Mechanics; keep row for standalone trade window portability.
+  // Mechanics remains available via Control → Library → Mechanics; keep row for standalone trade window portability.
   items.push(mechanicsSnapshotItem());
   return items;
 }

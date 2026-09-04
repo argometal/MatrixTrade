@@ -14,37 +14,49 @@ import {
 } from "@/lib/snapshot-aggregate";
 
 /** Local step machine — "apply" is user-facing; internal ControlPanelUpdate unchanged. */
-type Step = "pick" | "apply" | "stock-pick" | "detail";
+type Step = "pick" | "apply" | "library-home" | "stock-pick" | "detail";
 
-/** Primary Control actions — Stock Files stay direct-access (not under Library). */
+type PrimaryId = "start-here" | "stock-file" | "library" | "apply";
+
+/** Exactly four Control primaries — intent-oriented; no secondary list on home. */
 const PRIMARY: {
-  id: "train-ai" | "stock-file" | "apply";
+  id: PrimaryId;
+  label: string;
+  hint: string;
+}[] = [
+  {
+    id: "start-here",
+    label: "Start Here",
+    hint: "Copy once → tell AI what you want → AI guides the workflow.",
+  },
+  {
+    id: "stock-file",
+    label: "Stock Files",
+    hint: "Find or create a ticker → profile → linked opportunities.",
+  },
+  {
+    id: "library",
+    label: "Library",
+    hint: "Deep rules, methods and specialized context requested by AI.",
+  },
+  {
+    id: "apply",
+    label: "Apply",
+    hint: "Paste AI proposal → Validate → Accept.",
+  },
+];
+
+/** Library catalog — migrated specialized protocols (Mechanics included). */
+const LIBRARY: {
+  id: Exclude<ControlPanelSectionId, "start-here" | "stock-file">;
   label: string;
   hint: string;
 }[] = [
   {
     id: "train-ai",
-    label: "MTA Mechanics",
-    hint: "Constitution — copy once for a new AI chat",
+    label: "Mechanics",
+    hint: "Full constitution — R$, Entry Solver, TARGET, MAF, EXECUTABLE PLAN",
   },
-  {
-    id: "stock-file",
-    label: "Stock Files",
-    hint: "One ticker — MTAE request, profile, linked scouts",
-  },
-  {
-    id: "apply",
-    label: "Apply",
-    hint: "Paste AI Block → Validate → Accept",
-  },
-];
-
-/** Library catalog — reusable context only (no Stock Files). */
-const LIBRARY: {
-  id: Exclude<ControlPanelSectionId, "train-ai" | "stock-file">;
-  label: string;
-  hint: string;
-}[] = [
   {
     id: "mtae",
     label: "Technical Analysis",
@@ -63,7 +75,7 @@ const LIBRARY: {
   {
     id: "learning",
     label: "MAF",
-    hint: "Data drawer — protocol lives in MTA Mechanics",
+    hint: "Data drawer — protocol lives in Mechanics",
   },
 ];
 
@@ -210,8 +222,14 @@ export function MatrixControlPanel() {
     };
   }, [open, requestedStep]);
 
-  const allMeta = [...PRIMARY.filter((p) => p.id !== "apply"), ...LIBRARY];
-  const sectionMeta = allMeta.find((entry) => entry.id === section);
+  const libraryMeta = LIBRARY.find((entry) => entry.id === section);
+  const sectionMeta =
+    section === "start-here"
+      ? { label: "Start Here", hint: PRIMARY[0].hint }
+      : libraryMeta ??
+        (section === "stock-file"
+          ? { label: "Stock Files", hint: PRIMARY[1].hint }
+          : null);
 
   const stockPool = showArchived
     ? data.stockFile.archivedTheses
@@ -235,16 +253,11 @@ export function MatrixControlPanel() {
     );
   }, [stockPool, stockQuery]);
 
-  /**
-   * Modular child snapshots for this Control level (canonical sources).
-   * Control filters duplicate Mechanics / protocol rows — builders may still include them elsewhere.
-   * Prompt ID 24-30: aggregate is projected separately; children stay unchanged.
-   */
   const detailSnapshots = useMemo((): SnapshotMenuItem[] => {
     if (!section) return [];
     switch (section) {
+      case "start-here":
       case "train-ai":
-        // PlainCopyRows remain the modular buttons; aggregate uses those texts only.
         return [];
       case "mtae":
         return collectEligibleSnapshotItems(
@@ -267,26 +280,25 @@ export function MatrixControlPanel() {
     }
   }, [data, section, selectedStock]);
 
-  /** Read-only Snapshot general — first button; assembled from PlainCopy + child snapshot texts. */
   const sectionGeneralSnapshot = useMemo((): SnapshotMenuItem | null => {
     if (!section || step !== "detail") return null;
 
     const plainSources: SnapshotMenuItem[] = [];
+    if (section === "start-here") {
+      plainSources.push({
+        id: "start-here-brief",
+        label: "Start Here",
+        description: "Intent + UI router — paste once for a new AI chat",
+        text: data.startHere.brief,
+      });
+    }
     if (section === "train-ai") {
-      plainSources.push(
-        {
-          id: "train-ai-mechanics-brief",
-          label: "MTA Mechanics",
-          description: "Stable constitution — paste once at the start of the AI chat",
-          text: data.trainAi.mechanicsBrief,
-        },
-        {
-          id: "train-ai-schema-contract-brief",
-          label: "Apply schema contract",
-          description: "Schema-first — required fields, allowed keys, layer ownership, examples",
-          text: data.trainAi.schemaContractBrief,
-        }
-      );
+      plainSources.push({
+        id: "train-ai-mechanics-brief",
+        label: "MTA Mechanics",
+        description: "Full constitution — depth on demand from Library",
+        text: data.trainAi.mechanicsBrief,
+      });
     }
     if (section === "mtae") {
       plainSources.push({
@@ -308,22 +320,29 @@ export function MatrixControlPanel() {
     ]);
   }, [section, step, data, detailSnapshots, selectedStock, sectionMeta?.label]);
 
-  function pickSection(id: ControlPanelSectionId) {
+  function pickLibrarySection(id: (typeof LIBRARY)[number]["id"]) {
     setSection(id);
-    if (id === "stock-file") {
-      setStep("stock-pick");
-      return;
-    }
     setStep("detail");
   }
 
-  function handlePrimary(id: (typeof PRIMARY)[number]["id"]) {
+  function handlePrimary(id: PrimaryId) {
     if (id === "apply") {
       setStep("apply");
       setSection(null);
       return;
     }
-    pickSection(id);
+    if (id === "library") {
+      setStep("library-home");
+      setSection(null);
+      return;
+    }
+    if (id === "stock-file") {
+      setSection("stock-file");
+      setStep("stock-pick");
+      return;
+    }
+    setSection("start-here");
+    setStep("detail");
   }
 
   function handleBack() {
@@ -336,7 +355,12 @@ export function MatrixControlPanel() {
       setStockThesisId(null);
       return;
     }
-    if (step === "stock-pick" || step === "detail") {
+    if (step === "detail" && section && section !== "start-here" && section !== "stock-file") {
+      setStep("library-home");
+      setSection(null);
+      return;
+    }
+    if (step === "library-home" || step === "stock-pick" || step === "detail") {
       setStep("pick");
       setSection(null);
       setStockThesisId(null);
@@ -351,18 +375,25 @@ export function MatrixControlPanel() {
   const detailTitle =
     step === "apply"
       ? "Apply"
-      : step === "stock-pick"
-        ? "Pick a Stock File"
-        : section === "stock-file" && selectedStock
-          ? `${selectedStock.thesis.ticker} · ${selectedStock.thesis.id}`
-          : sectionMeta?.label ?? "Control";
+      : step === "library-home"
+        ? "Library"
+        : step === "stock-pick"
+          ? "Stock Files"
+          : section === "stock-file" && selectedStock
+            ? `${selectedStock.thesis.ticker} · ${selectedStock.thesis.id}`
+            : sectionMeta?.label ?? "Control";
 
   const detailHint =
     step === "apply"
-      ? "Paste AI Block — Validate, then Accept"
-      : step === "stock-pick"
-        ? `${data.activeThesisCount} active — pick one`
-        : sectionMeta?.hint ?? "Copy context for your AI";
+      ? "Copy Apply schema if needed — then Paste → Validate → Accept"
+      : step === "library-home"
+        ? "Specialized depth — copy Library Index or open one resource"
+        : step === "stock-pick"
+          ? `${data.activeThesisCount} active — search existing; empty = ticker not created yet`
+          : sectionMeta?.hint ?? "Copy context for your AI";
+
+  const queryTrim = stockQuery.trim();
+  const noStockMatch = filteredStocks.length === 0;
 
   return (
     <div
@@ -383,14 +414,14 @@ export function MatrixControlPanel() {
           <h2 className="text-base font-bold text-zinc-50">{detailTitle}</h2>
           <p className="mt-1 text-[11px] text-zinc-500">
             {step === "pick"
-              ? "Mechanics once per chat → task in natural language → copy only the block AI asks for → Apply."
+              ? "Four actions only — Start Here guides; Library is depth on demand."
               : detailHint}
           </p>
         </header>
 
         {step === "pick" ? (
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain">
-            <nav className="space-y-2">
+            <nav className="space-y-2" data-testid="control-primary-nav">
               {PRIMARY.map((entry) => (
                 <NavRow
                   key={entry.id}
@@ -401,35 +432,51 @@ export function MatrixControlPanel() {
                 />
               ))}
             </nav>
-            <div className="pt-1">
-              <p className="mb-2 px-1 text-[10px] font-bold uppercase tracking-[0.18em] text-zinc-500">
-                Library
-              </p>
-              <div className="mb-2 space-y-2">
-                <PlainCopyRow
-                  label="Library Index"
-                  description="Labels only — then request one section"
-                  text={wrapSnapshotText("Library Index", buildLibraryIndexBrief())}
+          </div>
+        ) : null}
+
+        {step === "library-home" ? (
+          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain">
+            <PlainCopyRow
+              label="Library Index"
+              description="What each resource contains — then request one exact copy row"
+              text={wrapSnapshotText("Library Index", buildLibraryIndexBrief())}
+            />
+            <nav className="space-y-2">
+              {LIBRARY.map((entry) => (
+                <NavRow
+                  key={entry.id}
+                  label={entry.label}
+                  hint={entry.hint}
+                  onClick={() => pickLibrarySection(entry.id)}
                 />
-              </div>
-              <nav className="space-y-2">
-                {LIBRARY.map((entry) => (
-                  <NavRow
-                    key={entry.id}
-                    label={entry.label}
-                    hint={entry.hint}
-                    onClick={() => pickSection(entry.id)}
-                  />
-                ))}
-              </nav>
+              ))}
+            </nav>
+          </div>
+        ) : null}
+
+        {step === "apply" ? (
+          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+            <div className="shrink-0">
+              <PlainCopyRow
+                label="Apply schema contract"
+                description="Schema-first — required fields, allowed keys, layer ownership, examples"
+                text={data.trainAi.schemaContractBrief}
+              />
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              <ControlPanelUpdate onBack={handleBack} />
             </div>
           </div>
         ) : null}
 
-        {step === "apply" ? <ControlPanelUpdate onBack={handleBack} /> : null}
-
         {step === "stock-pick" ? (
           <div className="flex min-h-0 flex-1 flex-col gap-2">
+            <p className="rounded-xl border border-zinc-800/80 bg-zinc-900/30 px-3 py-2 text-[11px] text-zinc-400">
+              Existing ticker: open the match → use Analyze with AI when the Stock File window is
+              open. New / not listed: do not invent ST-* or PLAN-* ids — continue with chart
+              evidence, then Apply to create.
+            </p>
             <input
               type="search"
               value={stockQuery}
@@ -447,11 +494,13 @@ export function MatrixControlPanel() {
               Show archived ({data.stockFile.archivedTheses.length}) — history intact; not deleted
             </label>
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
-              {filteredStocks.length === 0 ? (
+              {noStockMatch ? (
                 <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
                   {showArchived
                     ? "No archived Stock Files match."
-                    : "No active Stock Files match."}
+                    : queryTrim
+                      ? `No Stock File for “${queryTrim}” — treat as new ticker (do not invent IDs).`
+                      : "No active Stock Files match."}
                 </p>
               ) : (
                 filteredStocks.map((entry) => (
@@ -487,19 +536,19 @@ export function MatrixControlPanel() {
             {sectionGeneralSnapshot ? (
               <SnapshotCopyRow item={sectionGeneralSnapshot} />
             ) : null}
+            {section === "start-here" ? (
+              <PlainCopyRow
+                label="Start Here"
+                description="Intent + UI router — paste once for a new AI chat"
+                text={data.startHere.brief}
+              />
+            ) : null}
             {section === "train-ai" ? (
-              <>
-                <PlainCopyRow
-                  label="MTA Mechanics"
-                  description="Stable constitution — paste once at the start of the AI chat"
-                  text={data.trainAi.mechanicsBrief}
-                />
-                <PlainCopyRow
-                  label="Apply schema contract"
-                  description="Schema-first — required fields, allowed keys, layer ownership, examples"
-                  text={data.trainAi.schemaContractBrief}
-                />
-              </>
+              <PlainCopyRow
+                label="MTA Mechanics"
+                description="Full constitution — depth on demand from Library"
+                text={data.trainAi.mechanicsBrief}
+              />
             ) : null}
             {section === "mtae" ? (
               <PlainCopyRow
@@ -510,7 +559,7 @@ export function MatrixControlPanel() {
             ) : null}
             {section === "learning" ? (
               <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-6 text-center text-sm text-zinc-500">
-                MAF protocol is inside MTA Mechanics — copy that row. This drawer is for
+                MAF protocol is inside Library → Mechanics → MTA Mechanics. This drawer is for
                 future MAF experiment/data snapshots only.
               </p>
             ) : null}
@@ -519,6 +568,7 @@ export function MatrixControlPanel() {
             ))}
             {!sectionGeneralSnapshot &&
             detailSnapshots.length === 0 &&
+            section !== "start-here" &&
             section !== "train-ai" &&
             section !== "mtae" &&
             section !== "learning" ? (

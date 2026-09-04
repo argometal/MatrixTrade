@@ -8,13 +8,13 @@ export type ControlPanelThesisEntry = {
 };
 
 /**
- * Control section ids.
- * Primary: train-ai (MTA Mechanics), stock-file (direct access).
- * Library: mtae, playbook, scouting, learning (UI label MAF).
- * Apply is a step, not a section id.
+ * Control section ids (content drawers — not the 4 primary home buttons).
+ * Primary home: start-here | stock-file | library | apply (apply is a step).
+ * Library drawers: train-ai (Mechanics), mtae, playbook, scouting, learning (MAF).
  * Forensic closed-trade export lives on `/trades/[id]`, never here.
  */
 export type ControlPanelSectionId =
+  | "start-here"
   | "train-ai"
   | "mtae"
   | "playbook"
@@ -27,6 +27,11 @@ export type ControlPanelData = {
   activeThesisCount: number;
   activePlanCount: number;
   pendingInboxCount: number;
+  /** Control → Start Here — compact router (not full Mechanics). */
+  startHere: {
+    brief: string;
+  };
+  /** Library → Mechanics — full constitution + (legacy) snapshot items. */
   trainAi: {
     mechanicsBrief: string;
     schemaContractBrief: string;

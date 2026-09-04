@@ -46,7 +46,11 @@ assert.ok(library.includes("Copy row: MTAE protocol"));
 assert.ok(library.includes("do not ask the human to copy Learning"));
 assert.ok(!library.includes("Copy row: MAF attribution protocol"));
 assert.ok(!library.includes("Copy row: Entry Solver"));
-assert.ok(library.includes("MTA Mechanics — canonical constitution"));
+assert.ok(library.includes("MTA Mechanics"));
+assert.ok(library.includes("Library → Mechanics"));
+assert.ok(library.includes("Start Here — intent/UI router"));
+assert.ok(VISIBLE_SNAPSHOT_MENU_LABELS.includes("Start Here"));
+assert.ok(menu.includes("Start Here · Stock Files · Library · Apply"));
 
 assert.ok(
   VISIBLE_SNAPSHOT_MENU.some((e) => e.label === "Apply schema contract" && e.kind === "copy_row")

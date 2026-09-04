@@ -105,7 +105,7 @@ export function buildCandidateRMap(input: {
   });
 }
 
-/** Compact Mechanics copy — Control → MTA Mechanics → Entry Solver. */
+/** Compact Mechanics copy — Control → Library → Mechanics → Entry Solver. */
 export function buildEntrySolverMechanicsBrief(): string {
   return [
     "=== ENTRY SOLVER (Mechanics) ===",

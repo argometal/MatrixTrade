@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 import { buildApplySchemaContractText } from "./apply-schema-contract";
+import { buildStartHereBrief } from "./start-here-brief";
 import { wrapSnapshotText } from "./snapshot-verification";
 import { getMarketEvidence } from "./market-evidence";
 import type { MarketEvidence } from "./market-evidence-types";
@@ -113,20 +114,16 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     activeThesisCount: activeTheses.length,
     activePlanCount: activePlans.length,
     pendingInboxCount: pendingInbox.length,
+    startHere: {
+      brief: wrapSnapshotText("Start Here", buildStartHereBrief()),
+    },
     trainAi: {
       mechanicsBrief: buildMatrixMechanicsBrief({
         riskBudgetUsd: rules.defaultRiskBudget,
       }),
+      /** Still loaded for Apply primary; not shown under Mechanics. */
       schemaContractBrief: buildApplySchemaContractText(),
-      snapshotItems: [
-        mechanicsSnapshot,
-        {
-          id: "apply-schema-contract",
-          label: "Apply schema contract",
-          description: "Schema-first handshake — required fields, allowed keys, examples",
-          text: wrapSnapshotText("MTA Apply schema contract", buildApplySchemaContractText()),
-        },
-      ],
+      snapshotItems: [mechanicsSnapshot],
     },
     mtae: {
       protocolBrief: buildMtaeProtocolBrief(mtaePresets),

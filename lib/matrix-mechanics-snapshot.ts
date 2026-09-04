@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 38;
+export const MATRIX_MECHANICS_REVISION = 39;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -21,7 +21,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "Apply Mode: only after explicit intent (Save, Create, Update, Record, Apply, Import, Propose JSON, Persist to MTA).",
     "External AI proposes. MTA never auto-writes.",
     "Flow: Copy snapshot → discuss in Analysis Mode → user requests Apply → ONE JSON block → Control → Apply → Validate → Accept.",
-    "SCHEMA-FIRST: before Apply JSON, open Control → MTA Mechanics and copy the visible row Apply schema contract. Never invent keys. stock-case-create requires entry+stop+target.",
+    "SCHEMA-FIRST: before Apply JSON, open Control → Apply and copy the visible row Apply schema contract. Never invent keys. stock-case-create requires entry+stop+target.",
     "",
     "=== AI BLOCK TYPES ===",
     "Scouting layer:",

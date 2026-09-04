@@ -33,18 +33,25 @@ export type VisibleSnapshotMenuEntry = {
  */
 export const VISIBLE_SNAPSHOT_MENU = [
   {
+    label: "Start Here",
+    kind: "copy_row",
+    where: "Control → Start Here",
+    purpose:
+      "compact onboarding + intent/UI router — paste once per new AI chat (not full Mechanics)",
+  },
+  {
     label: "MTA Mechanics",
     kind: "copy_row",
-    where: "Control → MTA Mechanics",
+    where: "Control → Library → Mechanics",
     purpose:
-      "canonical operating constitution — MAF, Entry Solver, R$, TF governance, Apply discipline (paste once per new AI chat)",
+      "canonical operating constitution — MAF, Entry Solver, R$, TF governance (depth on demand)",
   },
   {
     label: "Apply schema contract",
     kind: "copy_row",
-    where: "Control → MTA Mechanics (second copy row in that drawer)",
+    where: "Control → Apply (copy row above paste)",
     purpose:
-      "schema-first keys/enums for Apply Mode only — not a primary Control nav item",
+      "schema-first keys/enums for Apply Mode only — not Start Here, not Library Mechanics",
   },
   {
     label: "Snapshot general",
@@ -130,6 +137,8 @@ export const VISIBLE_SNAPSHOT_MENU_LABELS: readonly string[] = VISIBLE_SNAPSHOT_
 /** Nav-only names — open a section; never ask the human to “copy” these. */
 export const CONTROL_NAV_LABELS_NOT_COPY_TARGETS = [
   "Stock Files",
+  "Library",
+  "Mechanics",
   "Technical Analysis",
   "Playbook",
   "Scout Desk",
@@ -141,19 +150,19 @@ export const CONTROL_NAV_LABELS_NOT_COPY_TARGETS = [
 export const INTERNAL_RESOURCES_WITHOUT_DEDICATED_COPY_ROW = [
   {
     resource: "Apply schema JSON keys (protocol body)",
-    note: "Copied only via the visible row Apply schema contract under MTA Mechanics.",
+    note: "Copied only via the visible row Apply schema contract under Control → Apply.",
   },
   {
     resource: "MAF protocol body",
-    note: "Embedded inside MTA Mechanics — no separate Control copy row.",
+    note: "Embedded inside MTA Mechanics (Library → Mechanics) — no separate Control copy row.",
   },
   {
     resource: "Entry Solver pipeline body",
-    note: "Embedded inside MTA Mechanics — no separate Control copy row.",
+    note: "Embedded inside MTA Mechanics (Library → Mechanics) — no separate Control copy row.",
   },
   {
     resource: "R$ / timeframe governance rules",
-    note: "Embedded inside MTA Mechanics — no separate Control copy row.",
+    note: "Embedded inside MTA Mechanics (Library → Mechanics) — no separate Control copy row.",
   },
   {
     resource: "MTAE protocol body",
@@ -174,12 +183,13 @@ export function formatSnapshotMenuForMechanics(): string {
     "SNAPSHOT MENU (ask human to copy ONLY these exact visible labels)",
     "Ontology: UI label = button/row text · Snapshot ID = internal · Protocol/schema = paste body · Route = implementation.",
     "There is NO Request / Universal Request layer — the human already stated the task in chat.",
-    "Control primary nav (opens drawers; not copy buttons): MTA Mechanics · Stock Files · Apply.",
-    "Control Library nav (opens drawers; not copy buttons): Technical Analysis · Playbook · Scout Desk · MAF.",
-    "MECHANICS vs DATA: MTA Mechanics = how to operate MXT. Library/window snapshots = concrete data. Apply schema contract = write contract for Apply Mode only.",
+    "Control primary nav (opens drawers; not copy buttons): Start Here · Stock Files · Library · Apply.",
+    "Control Library nav (opens drawers; not copy buttons): Mechanics · Technical Analysis · Playbook · Scout Desk · MAF.",
+    "START vs MECHANICS: Start Here = intent/UI router (first paste). MTA Mechanics = full constitution (Library depth).",
+    "Apply schema contract = write contract under Control → Apply only — never contaminate Start Here.",
     "FORBIDDEN: do not ask for separate MAF protocol or Entry Solver copies — both live inside MTA Mechanics.",
-    "FORBIDDEN: do not ask the human to copy nav names Technical Analysis, Playbook, Scout Desk, Insights, MAF, Learning, or Stock Files — open the section, then name the exact copy row below.",
-    "FORBIDDEN: do not ask for Control → Closed trade / Session / Case / Request / Update / Train AI — retired labels.",
+    "FORBIDDEN: do not ask the human to copy nav names Library, Mechanics, Technical Analysis, Playbook, Scout Desk, Insights, MAF, Learning, or Stock Files — open the section, then name the exact copy row below.",
+    "FORBIDDEN: do not ask for Control → MTAE / Closed trade / Session / Case / Request / Update / Train AI / MTA Mechanics as a primary — retired or relocated.",
     "Human copies via Control, Dashboard, Stock File CTA, or the Trade window.",
   ];
 

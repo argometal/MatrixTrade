@@ -70,8 +70,8 @@ import type { Trade } from "../lib/types";
   assert.ok(brief.includes("__LEGACY_NONE__"), "brief documents plan absence sentinel");
   assert.ok(contract.includes("LEGACY TRADE COMPLETION"), "contract has legacy section");
   assert.ok(
-    contract.includes("Apply schema contract") && contract.includes("MTA Mechanics"),
-    "contract points at visible MTA Mechanics copy row"
+    contract.includes("Apply schema contract") && contract.includes("Control → Apply"),
+    "contract points at Control → Apply copy row"
   );
   assert.ok(
     snap.includes("Canonical list is in MATRIX MECHANICS above"),

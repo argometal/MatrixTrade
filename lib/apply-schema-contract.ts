@@ -88,9 +88,9 @@ export function buildApplySchemaContract(): ApplySchemaContract {
     schemaVersion: "2026-07-25.obs-legacy-dates",
     product: "MTA",
     rules: [
-      "SCHEMA-FIRST: before any Apply JSON, open Control → MTA Mechanics and copy the visible row Apply schema contract.",
+      "SCHEMA-FIRST: before any Apply JSON, open Control → Apply and copy the visible row Apply schema contract.",
       "Never invent JSON keys, enum values, nesting, or field formats.",
-      "If that exact copy row is unavailable, stop and ask the human to open MTA Mechanics and copy Apply schema contract — do not guess.",
+      "If that exact copy row is unavailable, stop and ask the human to open Control → Apply and copy Apply schema contract — do not guess.",
       "Separate analysis (conceptual levels) from serialization (exact MTA keys).",
       "A validator error on one field does not validate the rest of the object.",
       "stock-case-create REQUIRES initialScout.plannedEntry + stopPrice + targetPrice.",
@@ -361,8 +361,8 @@ export function buildApplySchemaContractText(): string {
     `schemaVersion: ${contract.schemaVersion}`,
     "",
     "WHERE TO COPY THIS",
-    "Open Control → MTA Mechanics, then tap the visible copy row labeled Apply schema contract.",
-    "That row is inside the MTA Mechanics drawer — it is not a primary Control nav button.",
+    "Open Control → Apply, then tap the visible copy row labeled Apply schema contract.",
+    "That row sits above the paste box in Apply — it is not under Start Here or Library → Mechanics.",
     "Write path after JSON: Control → Apply → Validate → Accept.",
     "",
     "RULES",
@@ -411,7 +411,7 @@ const ANALYZE_SCOPED_TYPES = [
 
 /**
  * Scoped Apply contract for Stock File Analyze with AI — one-copy return path.
- * Full Mechanics schema remains available under Control → MTA Mechanics.
+ * Full Mechanics constitution remains available under Control → Library → Mechanics.
  */
 export function buildScopedAnalyzeApplyContractText(): string {
   const contract = buildApplySchemaContract();
