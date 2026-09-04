@@ -63,7 +63,7 @@ export function buildMatrixMechanicsBrief(
     "Trade recording is the floor of the building, not the mission.",
     "",
     "SELF-CONTAINED CONSTITUTION",
-    "MTA Mechanics is the full rules paste (Library → Mechanics). First-contact routing = Control → Start Here.",
+    "MTA Mechanics is the full rules paste (Control → Mechanics). First-contact routing = header Start Here.",
     "It includes: core Mechanics, MTAE ownership, MAF protocol, Entry Solver,",
     "R$ / fixed-risk semantics, timeframe governance, TARGET DISCIPLINE,",
     "EXECUTABLE SWING PLAN (one-pass), Analysis/Apply discipline,",

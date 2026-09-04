@@ -182,6 +182,7 @@ export function PreviewPipelinePerformance({
   const [decisionQuality, setDecisionQuality] = useState<
     DecisionQuality | "all"
   >("all");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const filters: PipelinePerformanceFilters = useMemo(
     () => ({
@@ -297,6 +298,32 @@ export function PreviewPipelinePerformance({
     setNoEntryDiagnosis((prev) => (prev === dx ? "all" : dx));
   }
 
+  const activeFilterCount = useMemo(() => {
+    let n = 0;
+    if (from.trim()) n += 1;
+    if (to.trim()) n += 1;
+    if (ticker.trim()) n += 1;
+    if (playbookId) n += 1;
+    if (outcomeType !== "all") n += 1;
+    if (executedMode !== "all") n += 1;
+    if (caseFamily !== "all") n += 1;
+    if (noEntryDiagnosis !== "all") n += 1;
+    if (decisionQuality !== "all") n += 1;
+    if (pipelineComponent !== "all") n += 1;
+    return n;
+  }, [
+    from,
+    to,
+    ticker,
+    playbookId,
+    outcomeType,
+    executedMode,
+    caseFamily,
+    noEntryDiagnosis,
+    decisionQuality,
+    pipelineComponent,
+  ]);
+
   return (
     <div
       className="space-y-6 px-4 py-4 lg:px-6 lg:py-6"
@@ -309,9 +336,37 @@ export function PreviewPipelinePerformance({
       </p>
 
       <section
-        className="grid gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-3 sm:grid-cols-2 lg:grid-cols-3"
+        className="rounded-2xl border border-zinc-800 bg-zinc-900/40"
         data-pipeline-filters
       >
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((v) => !v)}
+          className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left"
+          aria-expanded={filtersOpen}
+          data-pipeline-filters-toggle
+        >
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-zinc-200">
+              Filters
+            </span>
+            <span className="mt-0.5 block text-xs text-zinc-500">
+              {activeFilterCount === 0
+                ? "All defaults — expand to refine"
+                : `${activeFilterCount} active — expand to edit`}
+            </span>
+          </span>
+          <span
+            className={`shrink-0 text-xs font-medium text-zinc-400 transition-transform ${
+              filtersOpen ? "rotate-180" : ""
+            }`}
+            aria-hidden
+          >
+            ▾
+          </span>
+        </button>
+        {filtersOpen ? (
+          <div className="grid gap-3 border-t border-zinc-800 p-3 sm:grid-cols-2 lg:grid-cols-3">
         <label className="flex flex-col gap-1 text-[11px] uppercase tracking-wide text-zinc-500">
           From
           <input
@@ -462,6 +517,8 @@ export function PreviewPipelinePerformance({
             ))}
           </select>
         </label>
+          </div>
+        ) : null}
       </section>
 
       {/* Condición Actual */}

@@ -638,7 +638,7 @@ export function buildNeedsAttentionTaskSnapshot(
             ]
           : [
               "Respond first with MATRIX TASK DIAGNOSIS (STATUS before any JSON).",
-              "If NEEDS_MECHANICS: ask human Control → Library → Mechanics → copy row MTA Mechanics.",
+              "If NEEDS_MECHANICS: ask human Control → Mechanics → copy row MTA Mechanics.",
               "If NEEDS_LIBRARY: ask for Library Index, then one exact copy-row label (e.g. MTAE protocol, Playbook snapshot, Scout desk overview). MAF/Entry Solver rules → MTA Mechanics only.",
               "If NEEDS_DATA: ask precise factual questions — never invent answers.",
               "Only when READY with zero unverified assumptions: output ONE Apply-ready JSON block.",

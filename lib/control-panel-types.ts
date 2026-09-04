@@ -8,13 +8,13 @@ export type ControlPanelThesisEntry = {
 };
 
 /**
- * Control section ids (content drawers — not the 4 primary home buttons).
- * Primary home: start-here | stock-file | library | apply (apply is a step).
- * Library drawers: train-ai (Mechanics), mtae, playbook, scouting, learning (MAF).
+ * Control section ids (content drawers — not the 4 primary home buttons alone).
+ * Primary home: Mechanics (train-ai) | stock-file | library | apply (apply is a step).
+ * Start Here is GLOBAL chrome (outside Control) — brief still loaded on ControlPanelData.
+ * Library drawers: mtae, playbook, scouting, learning (MAF).
  * Forensic closed-trade export lives on `/trades/[id]`, never here.
  */
 export type ControlPanelSectionId =
-  | "start-here"
   | "train-ai"
   | "mtae"
   | "playbook"
@@ -27,11 +27,11 @@ export type ControlPanelData = {
   activeThesisCount: number;
   activePlanCount: number;
   pendingInboxCount: number;
-  /** Control → Start Here — compact router (not full Mechanics). */
+  /** Global header → Start Here — product map + intent router (not a Control primary). */
   startHere: {
     brief: string;
   };
-  /** Library → Mechanics — full constitution + (legacy) snapshot items. */
+  /** Control → Mechanics — full constitution. */
   trainAi: {
     mechanicsBrief: string;
     schemaContractBrief: string;

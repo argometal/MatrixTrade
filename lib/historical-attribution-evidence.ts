@@ -142,7 +142,7 @@ export function formatHistoricalAttributionEvidenceBrief(
     '{ "type": "attribution", "proposal": { "tradeId": "<this tradeId>", "components": [...], optional primaryDragComponent, summary, observation{} } }',
     "Plan/planId is optional — historical trades may attribute by tradeId alone.",
     "Do not invent planId. Do not invent observation numbers not listed above.",
-    "MAF component/classification schema is inside Control → Library → Mechanics → MTA Mechanics (already embedded below).",
+    "MAF component/classification schema is inside Control → Mechanics → MTA Mechanics (already embedded below).",
     "",
     "=== MAF PROTOCOL (embedded) ===",
     buildMafProtocolBrief()

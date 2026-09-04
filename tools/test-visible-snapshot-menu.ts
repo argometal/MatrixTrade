@@ -47,10 +47,11 @@ assert.ok(library.includes("do not ask the human to copy Learning"));
 assert.ok(!library.includes("Copy row: MAF attribution protocol"));
 assert.ok(!library.includes("Copy row: Entry Solver"));
 assert.ok(library.includes("MTA Mechanics"));
-assert.ok(library.includes("Library → Mechanics"));
-assert.ok(library.includes("Start Here — intent/UI router"));
+assert.ok(library.includes("Control → Mechanics"));
+assert.ok(library.includes("Start Here is GLOBAL") || library.includes("Start Here — product map"));
 assert.ok(VISIBLE_SNAPSHOT_MENU_LABELS.includes("Start Here"));
-assert.ok(menu.includes("Start Here · Stock Files · Library · Apply"));
+assert.ok(menu.includes("Mechanics · Stock Files · Library · Apply"));
+assert.ok(menu.includes("Start Here is the header button next to Control"));
 
 assert.ok(
   VISIBLE_SNAPSHOT_MENU.some((e) => e.label === "Apply schema contract" && e.kind === "copy_row")

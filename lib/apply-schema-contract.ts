@@ -362,7 +362,7 @@ export function buildApplySchemaContractText(): string {
     "",
     "WHERE TO COPY THIS",
     "Open Control → Apply, then tap the visible copy row labeled Apply schema contract.",
-    "That row sits above the paste box in Apply — it is not under Start Here or Library → Mechanics.",
+    "That row sits above the paste box in Apply — it is not under Start Here or Mechanics body.",
     "Write path after JSON: Control → Apply → Validate → Accept.",
     "",
     "RULES",
@@ -411,7 +411,7 @@ const ANALYZE_SCOPED_TYPES = [
 
 /**
  * Scoped Apply contract for Stock File Analyze with AI — one-copy return path.
- * Full Mechanics constitution remains available under Control → Library → Mechanics.
+ * Full Mechanics constitution remains available under Control → Mechanics.
  */
 export function buildScopedAnalyzeApplyContractText(): string {
   const contract = buildApplySchemaContract();

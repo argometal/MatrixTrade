@@ -81,7 +81,7 @@ export type PreviewStatsData = {
 };
 
 export function PreviewStats({ data, embedded = false }: { data: PreviewStatsData; embedded?: boolean }) {
-  const { experiment, monthly } = data;
+  const { monthly } = data;
 
   const body = (
     <div className="space-y-6 px-4 py-4 lg:px-6 lg:py-6">
@@ -90,54 +90,6 @@ export function PreviewStats({ data, embedded = false }: { data: PreviewStatsDat
             <div className="mt-4">
               <DarkEquityChart points={data.equityPoints} lossLimit={monthly.effectiveLossCap} />
             </div>
-          </section>
-
-          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Total trades" value={String(data.trades.length)} />
-            <StatCard label="Closed trades" value={String(experiment.closedTrades)} />
-            <StatCard label="Win rate" value={`${data.winRatePct.toFixed(1)}%`} />
-            <StatCard
-              label="Experiment net P/L"
-              value={formatUsd(experiment.realizedPnL)}
-              valueClass={pnlTone(experiment.realizedPnL)}
-            />
-            <StatCard
-              label="Total losses"
-              value={formatUsd(experiment.grossLoss)}
-              valueClass="text-red-400"
-            />
-            <StatCard
-              label="This month P/L"
-              value={formatUsd(monthly.monthlyRealizedPnL)}
-              valueClass={pnlTone(monthly.monthlyRealizedPnL)}
-            />
-            <StatCard label="Monthly budget" value={`$${monthly.baseCap.toFixed(2)}`} />
-            <StatCard label="Carryover" value={`$${monthly.carryoverIn.toFixed(2)}`} />
-            <StatCard label="Spent this month" value={`$${monthly.lossUsedThisMonth.toFixed(2)}`} />
-            <StatCard label="Monthly room left" value={`$${monthly.monthlyRoomCap.toFixed(2)}`} />
-            <StatCard
-              label="Avg winner"
-              value={data.avgWinner !== null ? formatUsd(data.avgWinner) : "—"}
-              valueClass={data.avgWinner !== null ? "text-emerald-400" : undefined}
-            />
-            <StatCard
-              label="Avg loser"
-              value={data.avgLoser !== null ? formatUsd(data.avgLoser) : "—"}
-              valueClass={data.avgLoser !== null ? "text-red-400" : undefined}
-            />
-            <StatCard label="Profit factor" value={formatPf(data.profitFactor)} />
-            <StatCard
-              label="Expectancy"
-              value={data.expectancy !== null ? `${formatUsd(data.expectancy)}/trade` : "—"}
-            />
-            <StatCard
-              label="Avg R"
-              value={
-                data.avgR !== null ? `${data.avgR >= 0 ? "+" : ""}${data.avgR.toFixed(2)}R` : "—"
-              }
-            />
-            <StatCard label="Max drawdown" value={formatUsd(data.maxDd)} />
-            <StatCard label="Mistakes cost" value={formatUsd(data.mistakesCost)} valueClass="text-red-400" />
           </section>
 
           <section className="grid gap-3 sm:grid-cols-2">

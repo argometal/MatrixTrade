@@ -155,6 +155,6 @@ export function buildExecutableSwingPlanBrief(riskBudgetUsd?: number): string {
     "Existence of Stock Files → Control → Stock Files (pick list) or Analyze with AI on the known ticker window.",
     "Library Index = category labels only — not an inventory of ST-/PLAN- ids.",
     "MTAE protocol → Control → Library → Technical Analysis → copy row 'MTAE protocol'.",
-    "Rules → Control → Library → Mechanics → MTA Mechanics. First paste → Start Here. Never invent routes.",
+    "Rules → Control → Mechanics → MTA Mechanics. First paste → header Start Here. Never invent routes.",
   ].join("\n");
 }

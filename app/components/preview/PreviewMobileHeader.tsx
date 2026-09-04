@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ControlPanelButton } from "@/app/components/control-panel/ControlPanelButton";
+import { StartHereButton } from "@/app/components/control-panel/StartHereButton";
 import { AppExchangeActions } from "@/app/components/AppExchangeActions";
 import { MxtBrandLockup } from "@/app/components/MxtBrandMark";
 import { MobileMenuButton } from "@/app/components/preview/MobileMenuButton";
@@ -17,6 +18,7 @@ export function PreviewMobileHeader({ pendingInboxCount = 0 }: { pendingInboxCou
       </Link>
 
       <div className="flex shrink-0 items-center gap-1.5">
+        <StartHereButton />
         <ControlPanelButton />
         <AppExchangeActions app="matrix" inboxCount={pendingInboxCount} />
         <MobileMenuButton open={open} onClick={toggle} />

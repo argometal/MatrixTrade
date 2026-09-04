@@ -16,18 +16,18 @@ import {
 /** Local step machine — "apply" is user-facing; internal ControlPanelUpdate unchanged. */
 type Step = "pick" | "apply" | "library-home" | "stock-pick" | "detail";
 
-type PrimaryId = "start-here" | "stock-file" | "library" | "apply";
+type PrimaryId = "mechanics" | "stock-file" | "library" | "apply";
 
-/** Exactly four Control primaries — intent-oriented; no secondary list on home. */
+/** Exactly four Control primaries — operational context (Start Here is global, outside Control). */
 const PRIMARY: {
   id: PrimaryId;
   label: string;
   hint: string;
 }[] = [
   {
-    id: "start-here",
-    label: "Start Here",
-    hint: "Copy once → tell AI what you want → AI guides the workflow.",
+    id: "mechanics",
+    label: "Mechanics",
+    hint: "How AI must reason — Target, Stop, R, Entry, MAF, EXECUTABLE PLAN.",
   },
   {
     id: "stock-file",
@@ -37,7 +37,7 @@ const PRIMARY: {
   {
     id: "library",
     label: "Library",
-    hint: "Deep rules, methods and specialized context requested by AI.",
+    hint: "Specialized protocols and deeper context requested by AI.",
   },
   {
     id: "apply",
@@ -46,17 +46,12 @@ const PRIMARY: {
   },
 ];
 
-/** Library catalog — migrated specialized protocols (Mechanics included). */
+/** Library catalog — specialized protocols only (Mechanics is a Control primary). */
 const LIBRARY: {
-  id: Exclude<ControlPanelSectionId, "start-here" | "stock-file">;
+  id: Exclude<ControlPanelSectionId, "stock-file" | "train-ai">;
   label: string;
   hint: string;
 }[] = [
-  {
-    id: "train-ai",
-    label: "Mechanics",
-    hint: "Full constitution — R$, Entry Solver, TARGET, MAF, EXECUTABLE PLAN",
-  },
   {
     id: "mtae",
     label: "Technical Analysis",
@@ -224,8 +219,8 @@ export function MatrixControlPanel() {
 
   const libraryMeta = LIBRARY.find((entry) => entry.id === section);
   const sectionMeta =
-    section === "start-here"
-      ? { label: "Start Here", hint: PRIMARY[0].hint }
+    section === "train-ai"
+      ? { label: "Mechanics", hint: PRIMARY[0].hint }
       : libraryMeta ??
         (section === "stock-file"
           ? { label: "Stock Files", hint: PRIMARY[1].hint }
@@ -256,7 +251,6 @@ export function MatrixControlPanel() {
   const detailSnapshots = useMemo((): SnapshotMenuItem[] => {
     if (!section) return [];
     switch (section) {
-      case "start-here":
       case "train-ai":
         return [];
       case "mtae":
@@ -284,19 +278,11 @@ export function MatrixControlPanel() {
     if (!section || step !== "detail") return null;
 
     const plainSources: SnapshotMenuItem[] = [];
-    if (section === "start-here") {
-      plainSources.push({
-        id: "start-here-brief",
-        label: "Start Here",
-        description: "Intent + UI router — paste once for a new AI chat",
-        text: data.startHere.brief,
-      });
-    }
     if (section === "train-ai") {
       plainSources.push({
         id: "train-ai-mechanics-brief",
         label: "MTA Mechanics",
-        description: "Full constitution — depth on demand from Library",
+        description: "Full operating constitution — how AI must reason in MXT",
         text: data.trainAi.mechanicsBrief,
       });
     }
@@ -341,7 +327,7 @@ export function MatrixControlPanel() {
       setStep("stock-pick");
       return;
     }
-    setSection("start-here");
+    setSection("train-ai");
     setStep("detail");
   }
 
@@ -355,7 +341,12 @@ export function MatrixControlPanel() {
       setStockThesisId(null);
       return;
     }
-    if (step === "detail" && section && section !== "start-here" && section !== "stock-file") {
+    if (
+      step === "detail" &&
+      section &&
+      section !== "train-ai" &&
+      section !== "stock-file"
+    ) {
       setStep("library-home");
       setSection(null);
       return;
@@ -414,7 +405,7 @@ export function MatrixControlPanel() {
           <h2 className="text-base font-bold text-zinc-50">{detailTitle}</h2>
           <p className="mt-1 text-[11px] text-zinc-500">
             {step === "pick"
-              ? "Four actions only — Start Here guides; Library is depth on demand."
+              ? "AI operational context — Mechanics · Stock Files · Library · Apply."
               : detailHint}
           </p>
         </header>
@@ -536,17 +527,10 @@ export function MatrixControlPanel() {
             {sectionGeneralSnapshot ? (
               <SnapshotCopyRow item={sectionGeneralSnapshot} />
             ) : null}
-            {section === "start-here" ? (
-              <PlainCopyRow
-                label="Start Here"
-                description="Intent + UI router — paste once for a new AI chat"
-                text={data.startHere.brief}
-              />
-            ) : null}
             {section === "train-ai" ? (
               <PlainCopyRow
                 label="MTA Mechanics"
-                description="Full constitution — depth on demand from Library"
+                description="Full operating constitution — how AI must reason in MXT"
                 text={data.trainAi.mechanicsBrief}
               />
             ) : null}
@@ -559,7 +543,7 @@ export function MatrixControlPanel() {
             ) : null}
             {section === "learning" ? (
               <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-6 text-center text-sm text-zinc-500">
-                MAF protocol is inside Library → Mechanics → MTA Mechanics. This drawer is for
+                MAF protocol is inside Control → Mechanics → MTA Mechanics. This drawer is for
                 future MAF experiment/data snapshots only.
               </p>
             ) : null}
@@ -568,7 +552,6 @@ export function MatrixControlPanel() {
             ))}
             {!sectionGeneralSnapshot &&
             detailSnapshots.length === 0 &&
-            section !== "start-here" &&
             section !== "train-ai" &&
             section !== "mtae" &&
             section !== "learning" ? (

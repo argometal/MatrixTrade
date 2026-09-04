@@ -35,23 +35,23 @@ export const VISIBLE_SNAPSHOT_MENU = [
   {
     label: "Start Here",
     kind: "copy_row",
-    where: "Control → Start Here",
+    where: "MXT header → Start Here (next to Control — outside Control modal)",
     purpose:
-      "compact onboarding + intent/UI router — paste once per new AI chat (not full Mechanics)",
+      "product map + intent router — paste once per new AI chat (not full Mechanics)",
   },
   {
     label: "MTA Mechanics",
     kind: "copy_row",
-    where: "Control → Library → Mechanics",
+    where: "Control → Mechanics",
     purpose:
-      "canonical operating constitution — MAF, Entry Solver, R$, TF governance (depth on demand)",
+      "canonical operating constitution — MAF, Entry Solver, R$, TF governance (how AI must reason)",
   },
   {
     label: "Apply schema contract",
     kind: "copy_row",
     where: "Control → Apply (copy row above paste)",
     purpose:
-      "schema-first keys/enums for Apply Mode only — not Start Here, not Library Mechanics",
+      "schema-first keys/enums for Apply Mode only — not Start Here, not Mechanics body",
   },
   {
     label: "Snapshot general",
@@ -154,15 +154,15 @@ export const INTERNAL_RESOURCES_WITHOUT_DEDICATED_COPY_ROW = [
   },
   {
     resource: "MAF protocol body",
-    note: "Embedded inside MTA Mechanics (Library → Mechanics) — no separate Control copy row.",
+    note: "Embedded inside MTA Mechanics (Control → Mechanics) — no separate Control copy row.",
   },
   {
     resource: "Entry Solver pipeline body",
-    note: "Embedded inside MTA Mechanics (Library → Mechanics) — no separate Control copy row.",
+    note: "Embedded inside MTA Mechanics (Control → Mechanics) — no separate Control copy row.",
   },
   {
     resource: "R$ / timeframe governance rules",
-    note: "Embedded inside MTA Mechanics (Library → Mechanics) — no separate Control copy row.",
+    note: "Embedded inside MTA Mechanics (Control → Mechanics) — no separate Control copy row.",
   },
   {
     resource: "MTAE protocol body",
@@ -183,14 +183,15 @@ export function formatSnapshotMenuForMechanics(): string {
     "SNAPSHOT MENU (ask human to copy ONLY these exact visible labels)",
     "Ontology: UI label = button/row text · Snapshot ID = internal · Protocol/schema = paste body · Route = implementation.",
     "There is NO Request / Universal Request layer — the human already stated the task in chat.",
-    "Control primary nav (opens drawers; not copy buttons): Start Here · Stock Files · Library · Apply.",
-    "Control Library nav (opens drawers; not copy buttons): Mechanics · Technical Analysis · Playbook · Scout Desk · MAF.",
-    "START vs MECHANICS: Start Here = intent/UI router (first paste). MTA Mechanics = full constitution (Library depth).",
+    "GLOBAL: Start Here is the header button next to Control — product map + intent router (first paste).",
+    "Control primary nav (opens drawers; not copy buttons): Mechanics · Stock Files · Library · Apply.",
+    "Control Library nav (opens drawers; not copy buttons): Technical Analysis · Playbook · Scout Desk · MAF.",
+    "START vs MECHANICS: Start Here (header) = WHERE/what next. MTA Mechanics (Control → Mechanics) = HOW to reason.",
     "Apply schema contract = write contract under Control → Apply only — never contaminate Start Here.",
     "FORBIDDEN: do not ask for separate MAF protocol or Entry Solver copies — both live inside MTA Mechanics.",
     "FORBIDDEN: do not ask the human to copy nav names Library, Mechanics, Technical Analysis, Playbook, Scout Desk, Insights, MAF, Learning, or Stock Files — open the section, then name the exact copy row below.",
-    "FORBIDDEN: do not ask for Control → MTAE / Closed trade / Session / Case / Request / Update / Train AI / MTA Mechanics as a primary — retired or relocated.",
-    "Human copies via Control, Dashboard, Stock File CTA, or the Trade window.",
+    "FORBIDDEN: do not ask for Control → Start Here / MTAE / Closed trade / Session / Case / Request / Update / Train AI — retired or relocated.",
+    "Human copies via header Start Here, Control, Dashboard, Stock File CTA, or the Trade window.",
   ];
 
   for (const entry of VISIBLE_SNAPSHOT_MENU) {
