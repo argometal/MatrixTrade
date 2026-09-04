@@ -90,6 +90,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
 
   const pendingInbox = await listAllPendingInboxItems(workerInbox);
   const activeTheses = stockTheses.filter((t) => isActiveStockThesisStatus(t.status));
+  const archivedTheses = stockTheses.filter((t) => t.status === "archived");
   const activePlans = plans.filter(isWarReadyScoutPlan);
   const evidenceByProfile = groupActiveEvidence(marketEvidence);
 
@@ -135,6 +136,13 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     },
     stockFile: {
       theses: buildThesisEntries(activeTheses, playbooks, plans, evidenceByProfile, mtaePresets),
+      archivedTheses: buildThesisEntries(
+        archivedTheses,
+        playbooks,
+        plans,
+        evidenceByProfile,
+        mtaePresets
+      ),
     },
     scouting: {
       snapshotItems: scoutingSnapshots,

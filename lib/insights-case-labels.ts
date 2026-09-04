@@ -17,14 +17,14 @@ export const CASE_FAMILY_LABEL: Record<InsightsCaseFamily, string> = {
 
 export const NO_ENTRY_DIAGNOSIS_LABEL: Record<NoEntryDiagnosisClass, string> = {
   GOOD_FILTER: "Good Filter",
-  OVER_OPTIMIZATION: "Missed / Over-Optimized Entry",
+  OVER_OPTIMIZATION: "Possible Over-Optimization",
   INDETERMINATE: "Insufficient Evidence",
 };
 
 /** Short Help blurbs for Case families. */
 export const CASE_FAMILY_HELP: Record<InsightsCaseFamily, string> = {
   A: "A valid participation decision that was executed correctly and produced a favorable outcome. A is not simply profit — decision and execution requirements remain part of A.",
-  B: "No participation. B is not automatically a missed entry — it may be Good Filter, Missed / Over-Optimized Entry, or Insufficient Evidence.",
+  B: "No participation. B is not automatically a missed entry — it may be Good Filter, Possible Over-Optimization, or Insufficient Evidence.",
   C: "A loss can occur despite a valid decision and correct execution. Outcome quality is not the same as decision quality.",
   D: "Evidence indicates a problem in the original decision and/or its execution. An adverse outcome alone does not create D.",
   INDETERMINATE:

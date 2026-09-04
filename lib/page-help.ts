@@ -57,11 +57,11 @@ export const PAGE_HELP: Record<PageHelpId, PageHelpContent> = {
     principles: [
       "Chain: Plan → T0 → Reality → Execution/Outcome → Case equation → diagnosis.",
       "A · Good Entry / Profit — valid participation, acceptable DQ/EQ, favorable outcome (not merely profit).",
-      "B · No Entry — may be Good Filter, Missed / Over-Optimized Entry, or Insufficient Evidence. Not automatically a missed opportunity.",
+      "B · No Entry — may be Good Filter, Possible Over-Optimization, or Insufficient Evidence. Not automatically a missed opportunity.",
       "C · Good Entry / Loss — valid decision and execution with adverse outcome. Outcome ≠ Decision Quality.",
       "D · Decision / Execution Failure — DQ not_supported and/or EQ violated. Adverse outcome alone does not create D.",
       "? · Insufficient Evidence — not enough frozen evidence to classify reliably (common when T0 is missing).",
-      "Good Filter: conditions did not justify participation. Missed / Over-Optimized Entry: frozen requirements were met but the system still did not participate. Later price alone does not prove a missed entry.",
+      "Good Filter: conditions did not justify participation. Possible Over-Optimization: frozen requirements were met but the system still did not participate. Later price alone does not prove a missed entry. Missed opportunity (plan-outcome) is a separate accounting path — not the same as over-optimization.",
       "Decision Quality evaluates whether the original T0 decision was supported by frozen evidence — Outcome does not rewrite DQ.",
       "Execution Quality: whether actual execution respected frozen Plan geometry/constraints.",
       "Counterfactual R is hypothetical plan-path magnitude — not realized P/L, not DQ, not proof a No Entry was wrong.",

@@ -41,6 +41,8 @@ export type ControlPanelData = {
   };
   stockFile: {
     theses: ControlPanelThesisEntry[];
+    /** Archived Stock Files — inspect only; default picker hides these. */
+    archivedTheses: ControlPanelThesisEntry[];
   };
   scouting: {
     snapshotItems: SnapshotMenuItem[];

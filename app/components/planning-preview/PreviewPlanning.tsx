@@ -117,6 +117,7 @@ export function PreviewPlanning({
   suggestedTradeId,
   focusPlanId,
   focusThesisId,
+  focusTicker,
   reservations = [],
   capitalAccount = null,
   capitalConfigurationPresent,
@@ -129,6 +130,8 @@ export function PreviewPlanning({
   suggestedTradeId: string;
   focusPlanId?: string;
   focusThesisId?: string;
+  /** Preserved from Needs Attention Go — preselects ticker Case when plan already focused. */
+  focusTicker?: string;
   reservations?: CapitalReservation[];
   capitalAccount?: CapitalAccountSnapshot | null;
   capitalConfigurationPresent?: boolean;
@@ -305,6 +308,15 @@ export function PreviewPlanning({
       setLearningFocusPlanId(focusPlanId);
     }
   }, [focusPlanId, plans]);
+
+  useEffect(() => {
+    if (focusPlanId || focusThesisId || !focusTicker) return;
+    const ticker = focusTicker.trim().toUpperCase();
+    const byTicker = scoutCards.find(
+      (card) => card.ticker.toUpperCase() === ticker
+    );
+    if (byTicker) setScoutCaseKey(byTicker.key);
+  }, [focusTicker, focusPlanId, focusThesisId, scoutCards]);
 
   const hasCases = scoutCards.length > 0;
   const mapFocusCompact = planPanelOpen;

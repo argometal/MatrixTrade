@@ -400,3 +400,48 @@ export function buildApplySchemaContractText(): string {
     JSON.stringify(contract, null, 2),
   ].join("\n");
 }
+
+const ANALYZE_SCOPED_TYPES = [
+  "technical-assessment",
+  "decision-update",
+  "scout-plan-create",
+  "file-update",
+  "plan-outcome",
+] as const;
+
+/**
+ * Scoped Apply contract for Stock File Analyze with AI — one-copy return path.
+ * Full Mechanics schema remains available under Control → MTA Mechanics.
+ */
+export function buildScopedAnalyzeApplyContractText(): string {
+  const contract = buildApplySchemaContract();
+  const required = ANALYZE_SCOPED_TYPES.map((type) => {
+    const fields = contract.requiredFields[type];
+    return fields ? `- ${type}: ${fields.join("; ")}` : null;
+  }).filter(Boolean);
+
+  const examples = ANALYZE_SCOPED_TYPES.map((type) => {
+    const sample = contract.examples[type];
+    if (!sample) return null;
+    return [`--- example:${type} ---`, JSON.stringify(sample, null, 2)].join("\n");
+  }).filter(Boolean);
+
+  return [
+    "=== SCOPED APPLY CONTRACT (Analyze with AI return path) ===",
+    "Write path: Control → Apply → Validate → Accept (human gate — no silent persist).",
+    "Do NOT ask the human to copy the full Apply schema from Mechanics — this scoped contract is enough for this ticker loop.",
+    "If you need a type outside this list, say so explicitly.",
+    "",
+    "SUPPORTED TYPES FOR THIS PACKAGE",
+    ...ANALYZE_SCOPED_TYPES.map((t) => `- ${t}`),
+    "",
+    "REQUIRED FIELDS",
+    ...required,
+    "",
+    "RULES (subset)",
+    ...contract.rules.slice(0, 8).map((r) => `- ${r}`),
+    "",
+    "EXAMPLES",
+    ...examples,
+  ].join("\n");
+}

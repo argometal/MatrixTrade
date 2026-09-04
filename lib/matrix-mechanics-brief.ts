@@ -630,12 +630,17 @@ function formatScoutingStateSection(
     }
   }
 
+  // Same membership as Dashboard active_plans / isWarReadyScoutPlan.
+  // Label uses active_plans for parity with plan-snapshot (avoid active_scouts≠active_plans confusion).
   const tickerPlans = plans.filter(isWarReadyScoutPlan);
   lines.push("");
   if (tickerPlans.length === 0) {
-    lines.push("active_scouts:0");
+    lines.push("active_plans:0");
+    lines.push(
+      "note:active_plans = war-ready Scout PLANs (watching|ready with decision). Linked-but-not-war-ready plans are omitted here."
+    );
   } else {
-    lines.push(`active_scouts:${tickerPlans.length}`);
+    lines.push(`active_plans:${tickerPlans.length}`);
     lines.push(formatPlansSnapshotSection(tickerPlans).replace("=== TRADE PLANS (AI) ===", "").trim());
   }
 
@@ -703,14 +708,17 @@ export function buildScoutingContextText(input: {
   });
 }
 
-/** Stock File detail page — mechanics + file + playbook hint. */
+/** Stock File detail page — mechanics + file + playbook + linked plans. */
 export function buildStockFileTrainingContext(input: {
   thesis: StockThesis;
   playbooks?: Playbook[];
+  /** Linked plans for this Stock File — required for accurate active_plans count. */
+  plans?: TradePlan[];
 }): string {
   return buildMatrixTrainingContext({
     playbooks: input.playbooks,
     stockTheses: [input.thesis],
+    plans: input.plans,
   });
 }
 

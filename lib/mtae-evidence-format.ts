@@ -26,7 +26,40 @@ function formatLevel(level: MtaeRankedLevel): string {
 function formatLevelList(levels: MtaeRankedLevel[]): string {
   if (!levels.length) return "—";
   const sorted = [...levels].sort((a, b) => a.rank - b.rank);
-  return sorted.map((l) => formatLevel(l)).join(" · ");
+  return sorted
+    .map((l) => {
+      const base = formatLevel(l);
+      if (!l.provenance) return base;
+      return `${base} [vp:${l.provenance.purpose}@${l.provenance.analysisRange}]`;
+    })
+    .join(" · ");
+}
+
+function formatParticipationLines(tf: MtaeTimeframeReport): string[] {
+  const p = tf.participation;
+  if (!p) return [];
+  const lines: string[] = ["Participation:"];
+  if (p.volumeBehavior) {
+    const v = p.volumeBehavior;
+    lines.push(
+      `  volumeBehavior: state=${v.state} bias=${v.directionalBias} rel=${v.relativeVolume} conf=${v.confidence} — ${v.interpretation}`
+    );
+  }
+  if (p.movementCharacter) {
+    const m = p.movementCharacter;
+    lines.push(
+      `  movementCharacter: ${m.primary ?? m.state ?? "—"} conf=${m.confidence}`
+    );
+  }
+  if (p.largeParticipantFootprint) {
+    lines.push(
+      `  footprint: ${p.largeParticipantFootprint.signal} conf=${p.largeParticipantFootprint.confidence}`
+    );
+  }
+  if (p.historicalReactionZones?.length) {
+    lines.push(`  reactionZones: ${p.historicalReactionZones.length}`);
+  }
+  return lines;
 }
 
 function formatTargets(tf: MtaeTimeframeReport): string {
@@ -125,6 +158,7 @@ export function formatMtaeEvidenceFirstView(
   const tfBlocks: string[] = [];
   for (const tf of assessment.perTimeframe) {
     const b = formatEvidenceFirstTimeframe(tf);
+    const participationLines = formatParticipationLines(tf);
     tfBlocks.push(
       [
         b.timeframe,
@@ -133,6 +167,7 @@ export function formatMtaeEvidenceFirstView(
         `Bias: ${b.bias}`,
         `Confidence: ${b.confidence}`,
         b.explanation ? b.explanation : null,
+        ...participationLines,
         "",
       ]
         .filter((l) => l !== null)
@@ -141,6 +176,7 @@ export function formatMtaeEvidenceFirstView(
   }
 
   const integ = formatEvidenceFirstIntegrated(assessment);
+  const participationSynth = assessment.integrated.participationSynthesis;
   const integratedBlock = [
     "INTEGRATED",
     `Overall Technical Thesis: ${integ.overallTechnicalThesis}`,
@@ -153,6 +189,17 @@ export function formatMtaeEvidenceFirstView(
     "",
     "Important Notes:",
     ...integ.importantNotes.map((n) => `- ${n}`),
+    "",
+    "Participation Synthesis:",
+    participationSynth
+      ? [
+          `dominantCondition:${participationSynth.dominantCondition}`,
+          `confidence:${participationSynth.confidence}`,
+          `buyingEvidence:${participationSynth.buyingEvidence.join(" | ") || "—"}`,
+          `sellingEvidence:${participationSynth.sellingEvidence.join(" | ") || "—"}`,
+          `unresolved:${participationSynth.unresolvedSignals.join(" | ") || "—"}`,
+        ].join("\n")
+      : "(none — Phase A not assessed or not persisted)",
     "",
   ].join("\n");
 

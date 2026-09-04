@@ -567,7 +567,7 @@ export function PreviewPipelinePerformance({
         <p className="mt-1 text-[11px] text-zinc-600">
           Denominator = No Entry Cases in filtered universe (
           {caseView.aggregate.noEntryUniverse}). Good Filter vs Missed /
-          Over-Optimized Entry — equations, not narrative. Later price alone does
+          Possible Over-Optimization — equations, not narrative. Later price alone does
           not prove a missed entry.
         </p>
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">

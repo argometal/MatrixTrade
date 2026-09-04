@@ -162,6 +162,13 @@ export function PreviewStockThesis({
                 What we currently believe · {thesis.style} · v{thesis.version}
                 {synthesis ? ` · confidence ${synthesis.thesisConfidence}` : ""}
               </p>
+              {thesis.status === "archived" ? (
+                <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-xs text-amber-100">
+                  Archived — hidden from default operational Stock File lists. Plans, Trades,
+                  Cases, MAF, and evidence remain. Set status back to Watching/Actionable to
+                  restore.
+                </p>
+              ) : null}
             </div>
           </div>
 
@@ -175,7 +182,7 @@ export function PreviewStockThesis({
                 {analyzeCopied ? "Copied ✓" : "Analyze with AI"}
               </span>
               <span className="mt-0.5 block text-xs text-emerald-200/70">
-                One package — Mechanics · MTAE · dossier · Scout
+                ONE copy — Mechanics · MTAE · T0 · Scout · Apply contract
               </span>
             </button>
             <button
@@ -546,6 +553,10 @@ export function PreviewStockThesis({
                       ))}
                     </select>
                   </label>
+                  <p className="text-[11px] text-zinc-500">
+                    Archive = status Archived (does not delete Plans/Trades/Cases/MAF). Default
+                    Control Stock Files list hides archived; use Show archived to inspect.
+                  </p>
 
                   <label className="block text-xs text-zinc-500">
                     Current hypothesis

@@ -103,8 +103,10 @@ export function PlanRecordOutcomePanel({ plan }: { plan: TradePlan }) {
               : ""}
           </p>
           <p className="mt-1 text-xs text-zinc-500">
-            Use Retry Learning Sync only — do not re-Apply a new outcome. Execution path
-            remains: approved → armed → alert → human confirmation → submitted
+            Single success path: Record Outcome here OR Control Apply type plan-outcome —
+            both write the same plan.outcome. On sync failure use Retry Learning Sync only
+            (do not create a second outcome). Execution path remains: approved → armed →
+            alert → human confirmation → submitted
             (automaticExecutionEnabled={String(AUTOMATIC_EXECUTION_ENABLED)}).
           </p>
         </div>

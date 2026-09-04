@@ -140,6 +140,14 @@ export function buildMtaeTickerRequest(input: {
     execution_tf: "1W",
   };
 
+  const requiredCharts = [
+    roles.strategic_tf,
+    roles.opportunity_tf,
+    roles.refinement_tf,
+    roles.execution_tf,
+    roles.execution_detail_tf,
+  ].filter(Boolean) as string[];
+
   return [
     "=== MTAE REQUEST (this ticker) ===",
     `ticker:${input.ticker}`,
@@ -151,10 +159,18 @@ export function buildMtaeTickerRequest(input: {
     `execution_tf:${roles.execution_tf}`,
     roles.execution_detail_tf ? `execution_detail_tf:${roles.execution_detail_tf}` : null,
     "",
-    "Attach charts for each role timeframe (include volume bars when possible).",
+    "REQUIRED CHARTS (do not invent alternate windows)",
+    `attach_exactly:${requiredCharts.join(" + ")}`,
+    "Include volume bars on each chart when possible.",
+    "Do NOT ask the human to pick arbitrary 1M/3M/6M — use this map's roles.",
+    "Presets remain configurable via timeframeMapId; this request is map-specific, not a global hardcode.",
+    "",
     "Present Evidence First: per TF Supports → Resistances/Targets → Bias → Confidence,",
     "THEN Integrated (Thesis · Momentum · Structural Risks · Important Notes), THEN Profile Notes.",
     "Run MTAE protocol including Phase A participation when volume is visible.",
+    "If Volume Profile levels are cited: each level needs provenance",
+    "(sourceKind=volume_profile, analysisRange exact window, purpose=structural|decision|reassessment).",
+    "Bare POC/VAH/VAL without analysisRange is invalid.",
     "Return ONE technical-assessment JSON only (Apply Mode when requested).",
     "Forbidden: Go/Wait/No, entry optimization, sizing, maximumEntry, minimumRR, shares, scoutVerdict, whalesAreBuying.",
     "After human Accept, Scout may use the updated Stock File — not in this block.",

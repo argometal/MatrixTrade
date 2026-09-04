@@ -177,9 +177,57 @@ function parseRankedLevels(raw: unknown, label: string, errors: string[]): MtaeR
           : undefined,
       reason,
       confidence,
+      provenance: parseLevelProvenance(
+        row.provenance,
+        `${label}[${i}].provenance`,
+        errors
+      ),
     });
   });
   return out;
+}
+
+function parseLevelProvenance(
+  raw: unknown,
+  label: string,
+  errors: string[]
+): import("./mtae-types").MtaeLevelProvenance | undefined {
+  if (raw === undefined || raw === null) return undefined;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    errors.push(`${label} must be an object`);
+    return undefined;
+  }
+  const row = raw as Record<string, unknown>;
+  const sourceKind = String(row.sourceKind ?? "").trim().toLowerCase();
+  const purpose = String(row.purpose ?? "").trim().toLowerCase();
+  const analysisRange = String(row.analysisRange ?? "").trim();
+  const timeframe = String(row.timeframe ?? "").trim() || undefined;
+  const kinds = ["structure", "volume_profile", "other"];
+  const purposes = ["structural", "decision", "reassessment"];
+  if (!kinds.includes(sourceKind)) {
+    errors.push(`${label}.sourceKind must be structure|volume_profile|other`);
+    return undefined;
+  }
+  if (!purposes.includes(purpose)) {
+    errors.push(`${label}.purpose must be structural|decision|reassessment`);
+    return undefined;
+  }
+  if (sourceKind === "volume_profile" && !analysisRange) {
+    errors.push(
+      `${label}.analysisRange required when sourceKind=volume_profile (no bare POC/VAH/VAL)`
+    );
+    return undefined;
+  }
+  if (!analysisRange) {
+    errors.push(`${label}.analysisRange required`);
+    return undefined;
+  }
+  return {
+    sourceKind: sourceKind as import("./mtae-types").MtaeLevelSourceKind,
+    purpose: purpose as import("./mtae-types").MtaeLevelPurpose,
+    timeframe,
+    analysisRange,
+  };
 }
 
 function parseBattleZones(raw: unknown, label: string, errors: string[]): MtaeBattleZone[] {

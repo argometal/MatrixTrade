@@ -23,7 +23,7 @@ async function settle<T>(promise: Promise<T>): Promise<T | null> {
 export default async function PlanningPage({
   searchParams,
 }: {
-  searchParams: Promise<{ plan?: string; thesis?: string }>;
+  searchParams: Promise<{ plan?: string; thesis?: string; ticker?: string }>;
 }) {
   const [
     plans,
@@ -49,6 +49,7 @@ export default async function PlanningPage({
 
   const focusPlanId = params.plan?.trim() || undefined;
   const focusThesisId = params.thesis?.trim() || undefined;
+  const focusTicker = params.ticker?.trim() || undefined;
   const suggestedTradeId = suggestNextTradeId(trades);
 
   const reservations: CapitalReservation[] = reservationsResult ?? [];
@@ -69,6 +70,7 @@ export default async function PlanningPage({
           suggestedTradeId={suggestedTradeId}
           focusPlanId={focusPlanId}
           focusThesisId={focusThesisId}
+          focusTicker={focusTicker}
           reservations={reservations}
           capitalAccount={capitalAccount}
           capitalConfigurationPresent={capitalConfigurationPresent}

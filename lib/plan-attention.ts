@@ -26,7 +26,11 @@ export function buildPlanAttentionItems(
     items.push({
       id: `plan-review-${plan.id}`,
       label: `Evaluate ${statusLabel.toLowerCase()} plan · ${plan.ticker} (${plan.id})`,
-      href: `/mxt/planning?plan=${plan.id}`,
+      href: `/mxt/planning?plan=${encodeURIComponent(plan.id)}${
+        plan.stockThesisId
+          ? `&thesis=${encodeURIComponent(plan.stockThesisId)}`
+          : ""
+      }&ticker=${encodeURIComponent(plan.ticker)}`,
       priority: 16,
     });
   }
@@ -53,7 +57,11 @@ export function buildPlanAttentionItems(
     items.push({
       id: `plan-outcome-sync-${plan.id}`,
       label: `Learning Sync failed · ${plan.ticker} (${plan.id})`,
-      href: `/mxt/planning?plan=${plan.id}`,
+      href: `/mxt/planning?plan=${encodeURIComponent(plan.id)}${
+        plan.stockThesisId
+          ? `&thesis=${encodeURIComponent(plan.stockThesisId)}`
+          : ""
+      }&ticker=${encodeURIComponent(plan.ticker)}`,
       priority: 14,
     });
   }

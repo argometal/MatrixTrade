@@ -50,6 +50,36 @@ export type MtaeRankedLevel = {
   strength?: number;
   reason: string;
   confidence: number;
+  /**
+   * Provenance for levels derived from Volume Profile or other ranged analysis.
+   * Bare POC/VAH/VAL without analysisRange is invalid when sourceKind=volume_profile.
+   */
+  provenance?: MtaeLevelProvenance;
+};
+
+export const MTAE_LEVEL_SOURCE_KINDS = [
+  "structure",
+  "volume_profile",
+  "other",
+] as const;
+export type MtaeLevelSourceKind = (typeof MTAE_LEVEL_SOURCE_KINDS)[number];
+
+export const MTAE_LEVEL_PURPOSES = [
+  "structural",
+  "decision",
+  "reassessment",
+] as const;
+export type MtaeLevelPurpose = (typeof MTAE_LEVEL_PURPOSES)[number];
+
+/** Exact analysis window that produced a level (esp. Volume Profile). */
+export type MtaeLevelProvenance = {
+  sourceKind: MtaeLevelSourceKind;
+  /** structural vs decision/reassessment — not interchangeable. */
+  purpose: MtaeLevelPurpose;
+  /** Role timeframe when known (e.g. 6M). */
+  timeframe?: string;
+  /** Exact chart/profile analysis range or window label (required for volume_profile). */
+  analysisRange: string;
 };
 
 export type MtaeBattleZone = {

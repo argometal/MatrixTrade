@@ -194,6 +194,7 @@ export function MatrixControlPanel() {
   const [section, setSection] = useState<ControlPanelSectionId | null>(null);
   const [stockThesisId, setStockThesisId] = useState<string | null>(null);
   const [stockQuery, setStockQuery] = useState("");
+  const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -201,6 +202,7 @@ export function MatrixControlPanel() {
     setSection(null);
     setStockThesisId(null);
     setStockQuery("");
+    setShowArchived(false);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -211,20 +213,27 @@ export function MatrixControlPanel() {
   const allMeta = [...PRIMARY.filter((p) => p.id !== "apply"), ...LIBRARY];
   const sectionMeta = allMeta.find((entry) => entry.id === section);
 
+  const stockPool = showArchived
+    ? data.stockFile.archivedTheses
+    : data.stockFile.theses;
+
   const selectedStock = useMemo(
-    () => data.stockFile.theses.find((entry) => entry.thesis.id === stockThesisId) ?? null,
-    [data.stockFile.theses, stockThesisId]
+    () =>
+      data.stockFile.theses.find((entry) => entry.thesis.id === stockThesisId) ??
+      data.stockFile.archivedTheses.find((entry) => entry.thesis.id === stockThesisId) ??
+      null,
+    [data.stockFile.theses, data.stockFile.archivedTheses, stockThesisId]
   );
 
   const filteredStocks = useMemo(() => {
     const query = stockQuery.trim().toLowerCase();
-    if (!query) return data.stockFile.theses;
-    return data.stockFile.theses.filter(
+    if (!query) return stockPool;
+    return stockPool.filter(
       (entry) =>
         entry.thesis.ticker.toLowerCase().includes(query) ||
         entry.thesis.id.toLowerCase().includes(query)
     );
-  }, [data.stockFile.theses, stockQuery]);
+  }, [stockPool, stockQuery]);
 
   /**
    * Modular child snapshots for this Control level (canonical sources).
@@ -436,10 +445,21 @@ export function MatrixControlPanel() {
               placeholder="Search ticker or profile id"
               className="shrink-0 rounded-xl border border-zinc-800 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-violet-500/50 focus:outline-none"
             />
+            <label className="flex shrink-0 items-center gap-2 px-1 text-xs text-zinc-500">
+              <input
+                type="checkbox"
+                checked={showArchived}
+                onChange={(e) => setShowArchived(e.target.checked)}
+                className="rounded border-zinc-700"
+              />
+              Show archived ({data.stockFile.archivedTheses.length}) — history intact; not deleted
+            </label>
             <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain">
               {filteredStocks.length === 0 ? (
                 <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-8 text-center text-sm text-zinc-500">
-                  No active Stock Files match.
+                  {showArchived
+                    ? "No archived Stock Files match."
+                    : "No active Stock Files match."}
                 </p>
               ) : (
                 filteredStocks.map((entry) => (

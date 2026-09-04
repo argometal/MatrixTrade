@@ -78,7 +78,7 @@ function run() {
   assert.equal(noEntryDiagnosisLabel("GOOD_FILTER"), "Good Filter");
   assert.equal(
     noEntryDiagnosisLabel("OVER_OPTIMIZATION"),
-    "Missed / Over-Optimized Entry"
+    "Possible Over-Optimization"
   );
   assert.equal(noEntryDiagnosisLabel("INDETERMINATE"), "Insufficient Evidence");
 
